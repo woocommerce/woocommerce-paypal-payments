@@ -1,0 +1,31 @@
+{
+    "name": "inpsyde/woocommerce-paypal-commerce-gateway",
+    "type": "wordpress-plugin",
+    "description": "PayPal Commerce Platform for WooCommerce",
+    "license": "GPL-2.0",
+    "authors": [
+        {
+            "name": "Inpsyde GmbH",
+            "homepage": "https://inpsyde.com/",
+            "email": "hello@inpsyde.com",
+            "role": "Company"
+        }
+    ],
+    "require": {
+    },
+    "require-dev": {
+        "inpsyde/php-coding-standards": "@stable"
+    },
+    "autoload": {
+        "psr-4": {
+            "Inpsyde\\PayPalCommerce\\": "src/"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "scripts": {
+        "ci": [
+            "vendor/bin/phpcs"
+        ]
+    }
+}
