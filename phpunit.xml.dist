@@ -13,7 +13,7 @@
         </whitelist>
     </filter>
     <testsuites>
-        <testsuite name="WooCommerce PayPal Commerce Gateway PHP unit tests">
+        <testsuite name="unit">
             <directory suffix="Test.php">./tests/PHPUnit</directory>
         </testsuite>
     </testsuites>
