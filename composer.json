@@ -11,7 +11,33 @@
             "role": "Company"
         }
     ],
+    "repositories": [
+        {
+            "type": "path",
+            "url": "modules.local/ppcp-button"
+        },
+        {
+            "type": "path",
+            "url": "modules.local/ppcp-api-client"
+        },
+        {
+            "type": "path",
+            "url": "modules.local/ppcp-wc-gateway"
+        },
+        {
+            "type": "path",
+            "url": "modules.local/ppcp-session"
+        }
+    ],
     "require": {
+        "dhii/module-interface": "0.2.x-dev",
+        "psr/container": "^1.0",
+        "inpsyde/ppcp-button": "dev-master",
+        "inpsyde/ppcp-wc-gateway": "dev-master",
+        "oomphinc/composer-installers-extender": "^1.1",
+        "container-interop/service-provider": "^0.4.0",
+        "dhii/containers": "dev-develop",
+        "dhii/wp-containers": "^0.1.0@alpha"
     },
     "require-dev": {
         "inpsyde/php-coding-standards": "@stable"
@@ -27,5 +53,20 @@
         "ci": [
             "vendor/bin/phpcs"
         ]
+    },
+    "extra": {
+        "installer-types": [
+            "inpsyde-module"
+        ],
+        "installer-paths": {
+            "modules/{$name}/": [
+                "type:inpsyde-module"
+            ]
+        },
+        "hooks": {
+            "pre-commit": [
+                "vendor/bin/phpcbf"
+            ]
+        }
     }
 }

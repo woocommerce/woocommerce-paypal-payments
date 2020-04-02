@@ -1,4 +1,6 @@
 /vendor/
+/modules/
+node_modules
 phpunit.xml
 .phpunit.result.cache
 composer.lock

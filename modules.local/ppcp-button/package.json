@@ -1,0 +1,23 @@
+{
+  "name": "ppc-button",
+  "version": "1.0.0",
+  "license": "GPL-3.0-or-later",
+  "main": "resources/js/button.js",
+  "devDependencies": {
+    "babel-core": "^6.25.0",
+    "babel-loader": "^7.1.1",
+    "babel-preset-env": "^1.6.0",
+    "cross-env": "^5.0.1",
+    "file-loader": "^4.2.0",
+    "node-sass": "^4.13.0",
+    "sass-loader": "^8.0.0",
+    "webpack": "^4.23.1",
+    "webpack-cli": "^3.1.2"
+  },
+  "scripts": {
+    "build": "cross-env BABEL_ENV=default NODE_ENV=production webpack",
+    "watch": "cross-env BABEL_ENV=default NODE_ENV=production webpack --watch",
+    "dev": "cross-env BABEL_ENV=default webpack --watch"
+  },
+  "dependencies": {}
+}
