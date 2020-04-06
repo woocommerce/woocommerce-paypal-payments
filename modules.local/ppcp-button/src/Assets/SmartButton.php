@@ -54,6 +54,7 @@ class SmartButton
 
         $params = [
             'client-id' => 'AcVzowpNCpTxFzLG7onQI4JD0sVcA0BkZv-D42qRZPv_gZ8cNfX9zGL_8bXmSu7cbJ5B2DH7sot8vDpw',
+            'currency' => get_woocommerce_currency(),
         ];
         $smartButtonUrl = add_query_arg($params, 'https://www.paypal.com/sdk/js');
 

@@ -5,6 +5,10 @@ namespace Inpsyde\PayPalCommerce\WcGateway\Gateway;
 
 
 use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
+use Inpsyde\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use Inpsyde\PayPalCommerce\ApiClient\Factory\OrderFactory;
+use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
 use Inpsyde\PayPalCommerce\Session\SessionHandler;
 
 class WcGateway extends \WC_Payment_Gateway
@@ -15,11 +19,20 @@ class WcGateway extends \WC_Payment_Gateway
     private $isSandbox = true;
     private $sessionHandler;
     private $endpoint;
+    private $cartRepository;
+    private $orderFactory;
 
-    public function __construct(SessionHandler $sessionHandler, OrderEndpoint $endpoint)
-    {
+    public function __construct(
+        SessionHandler $sessionHandler,
+        CartRepository $cartRepository,
+        OrderEndpoint $endpoint,
+        OrderFactory $orderFactory
+    ) {
+
         $this->sessionHandler = $sessionHandler;
+        $this->cartRepository = $cartRepository;
         $this->endpoint = $endpoint;
+        $this->orderFactory = $orderFactory;
         $this->id = self::ID;
         $this->method_title = __('PayPal Payments', 'woocommerce-paypal-gateway');
         $this->method_description = __('Provide your customers with the PayPal payment system', 'woocommerce-paypal-gateway');
@@ -49,15 +62,15 @@ class WcGateway extends \WC_Payment_Gateway
         ];
     }
 
-    function process_payment( $order_id ) : ?array
+    function process_payment($orderId) : ?array
     {
         global $woocommerce;
-        $wcOrder = new \WC_Order( $order_id );
+        $wcOrder = new \WC_Order( $orderId );
 
         //ToDo: We need to fetch the order from paypal again to get it with the new status.
         $order = $this->sessionHandler->order();
         $errorMessage = null;
-        if (! $order || ! $order->isApproved()) {
+        if (! $order || ! $order->status()->is(OrderStatus::APPROVED)) {
             $errorMessage = 'not approve yet';
 
         }
@@ -67,15 +80,11 @@ class WcGateway extends \WC_Payment_Gateway
             return null;
         }
 
-        /**
-         * ToDo: If shipping or something else changes, we need to patch the order!
-         * We should also handle the shipping address and update if needed
-         * @see https://developer.paypal.com/docs/api/orders/v2/#orders_patch
-         **/
+        $order = $this->patchOrder($wcOrder, $order);
         $order = $this->endpoint->capture($order);
 
         $wcOrder->update_status('on-hold', __( 'Awaiting payment.', 'woocommerce-paypal-gateway' ));
-        if ($order->isCompleted()) {
+        if ($order->status()->is(OrderStatus::COMPLETED)) {
             $wcOrder->update_status('processing', __( 'Payment received.', 'woocommerce-paypal-gateway' ));
         }
         $woocommerce->cart->empty_cart();
@@ -84,5 +93,12 @@ class WcGateway extends \WC_Payment_Gateway
             'result' => 'success',
             'redirect' => $this->get_return_url( $wcOrder )
         );
+    }
+
+    private function patchOrder(\WC_Order $wcOrder, Order $order) : Order {
+
+        $updatedOrder = $this->orderFactory->fromWcOrder($wcOrder, $order);
+        $order = $this->endpoint->patchOrderWith($order, $updatedOrder);
+        return $order;
     }
 }

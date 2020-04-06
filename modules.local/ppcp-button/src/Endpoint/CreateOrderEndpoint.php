@@ -35,13 +35,13 @@ class CreateOrderEndpoint implements EndpointInterface
 
         try {
             $this->requestData->readRequest($this->nonce());
-            $lineItems = $this->repository->all();
-            $order = $this->apiEndpoint->createForLineItems(
-                ...$lineItems
+            $purchaseUnits = $this->repository->all();
+            $order = $this->apiEndpoint->createForPurchaseUnits(
+                ...$purchaseUnits
             );
             wp_send_json_success($order->toArray());
             return false;
-        } catch (RuntimeException $error ) {
+        } catch (\RuntimeException $error ) {
             wp_send_json_error($error->getMessage());
             return false;
         }

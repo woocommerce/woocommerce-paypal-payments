@@ -6,7 +6,16 @@ namespace Inpsyde\PayPalCommerce\ApiClient;
 use Dhii\Data\Container\ContainerInterface;
 use Inpsyde\PayPalCommerce\ApiClient\Authentication\Bearer;
 use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use Inpsyde\PayPalCommerce\ApiClient\Factory\AddressFactory;
+use Inpsyde\PayPalCommerce\ApiClient\Factory\AmountFactory;
+use Inpsyde\PayPalCommerce\ApiClient\Factory\ItemFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\LineItemFactory;
+use Inpsyde\PayPalCommerce\ApiClient\Factory\OrderFactory;
+use Inpsyde\PayPalCommerce\ApiClient\Factory\PatchCollectionFactory;
+use Inpsyde\PayPalCommerce\ApiClient\Factory\PayeeFactory;
+use Inpsyde\PayPalCommerce\ApiClient\Factory\PayerFactory;
+use Inpsyde\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
+use Inpsyde\PayPalCommerce\ApiClient\Factory\ShippingFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
 
 return [
@@ -29,18 +38,68 @@ return [
     },
     'api.endpoint.order' => function(ContainerInterface $container) : OrderEndpoint {
         $sessionHandler = $container->get('session.handler');
+        $orderFactory = $container->get('api.factory.order');
+        $patchCollectionFactory = $container->get('api.factory.patch-collection-factory');
         return new OrderEndpoint(
             $container->get('api.host'),
             $container->get('api.bearer'),
-            $sessionHandler
+            $sessionHandler,
+            $orderFactory,
+            $patchCollectionFactory
         );
     },
     'api.cart-repository' => function(ContainerInterface $container) : CartRepository {
+        /*
+         * ToDo: We need to watch out and see, if we can load the Cart Repository only on specific situations.
+         * Current problem can be seen here: http://ppc-dev-website.localhost/wp-admin/admin.php?page=wc-settings&tab=tax
+         */
         $cart = WC()->cart;
-        $factory = $container->get('api.line-item-factory');
+        if (! $cart) {
+            // ToDo: The cart repository gets pulled in the wp-admin, where there is no WC Cart loaded. Rethink.
+            $cart = new \WC_Cart();
+        }
+        $factory = $container->get('api.factory.purchase-unit');
         return new CartRepository($cart, $factory);
     },
-    'api.line-item-factory' => function(ContainerInterface $container) : LineItemFactory {
-        return new LineItemFactory();
+    'api.factory.purchase-unit' => function(ContainerInterface $container) : PurchaseUnitFactory {
+
+        $amountFactory = $container->get('api.factory.amount');
+        $payeeFactory = $container->get('api.factory.payee');
+        $itemFactory = $container->get('api.factory.item');
+        $shippingFactory = $container->get('api.factory.shipping');
+        return new PurchaseUnitFactory(
+            $amountFactory,
+            $payeeFactory,
+            $itemFactory,
+            $shippingFactory
+        );
+    },
+    'api.factory.patch-collection-factory' => function(ContainerInterface $container) : PatchCollectionFactory {
+        return new PatchCollectionFactory();
+    },
+    'api.factory.payee' => function(ContainerInterface $container) : PayeeFactory {
+        return new PayeeFactory();
+    },
+    'api.factory.item' => function(ContainerInterface $container) : ItemFactory {
+        return new ItemFactory();
+    },
+    'api.factory.shipping' => function(ContainerInterface $container) : ShippingFactory {
+        $addressFactory = $container->get('api.factory.address');
+        return new ShippingFactory($addressFactory);
+    },
+    'api.factory.amount' => function(ContainerInterface $container) : AmountFactory {
+        return new AmountFactory();
+    },
+    'api.factory.payer' => function(ContainerInterface $container) : PayerFactory {
+        $addressFactory = $container->get('api.factory.address');
+        return new PayerFactory($addressFactory);
+    },
+    'api.factory.address' => function(ContainerInterface $container) : AddressFactory {
+        return new AddressFactory();
+    },
+    'api.factory.order' => function(ContainerInterface $container) : OrderFactory {
+        $purchaseUnitFactory = $container->get('api.factory.purchase-unit');
+        $payerFactory = $container->get('api.factory.payer');
+        return new OrderFactory($purchaseUnitFactory, $payerFactory);
     },
 ];

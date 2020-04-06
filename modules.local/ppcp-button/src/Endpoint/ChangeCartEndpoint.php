@@ -4,7 +4,8 @@ declare(strict_types=1);
 namespace Inpsyde\PayPalCommerce\Button\Endpoint;
 
 
-use Inpsyde\PayPalCommerce\ApiClient\Entity\LineItem;
+use Inpsyde\PayPalCommerce\ApiClient\Entity\Item;
+use Inpsyde\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
 use Inpsyde\PayPalCommerce\Button\Exception\RuntimeException;
 
@@ -103,18 +104,8 @@ class ChangeCartEndpoint implements EndpointInterface
 
     private function generatePurchaseUnits() : array {
 
-        /**
-         * ToDo: Somewhere we need to add shipping costs. Total costs can change later on, but we should
-         * get a good estimate, about the total amount.
-         **/
-
-        /**
-         * ToDo: Currently, although an array, only one purchase_unit is supported!
-         *
-         * @see https://developer.paypal.com/docs/api/orders/v2/#orders-create-request-body
-         */
         return array_map(
-            function(LineItem $lineItem) : array {
+            function(PurchaseUnit $lineItem) : array {
                 return $lineItem->toArray();
             },
             $this->repository->all()

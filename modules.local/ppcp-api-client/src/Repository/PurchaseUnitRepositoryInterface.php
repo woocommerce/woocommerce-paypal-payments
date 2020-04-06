@@ -4,13 +4,13 @@ declare(strict_types=1);
 namespace Inpsyde\PayPalCommerce\ApiClient\Repository;
 
 
-use Inpsyde\PayPalCommerce\ApiClient\Entity\LineItem;
+use Inpsyde\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 
-interface LineItemRepositoryInterface
+interface PurchaseUnitRepositoryInterface
 {
 
     /**
-     * @return LineItem[]
+     * @return PurchaseUnit[]
      */
     public function all() : array;
 }

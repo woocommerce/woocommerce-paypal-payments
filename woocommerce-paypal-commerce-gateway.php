@@ -21,6 +21,7 @@ use Dhii\Container\CompositeCachingServiceProvider;
 use Dhii\Container\DelegatingContainer;
 use Dhii\Container\ProxyContainer;
 use Dhii\Modular\Module\ModuleInterface;
+use Inpsyde\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 
 (function () {
     if (!class_exists(CompositeCachingServiceProvider::class)
@@ -51,6 +52,17 @@ use Dhii\Modular\Module\ModuleInterface;
                 $module->run($container);
             }
             $initialized = true;
+
+            add_action('wp_footer', function() use ($container) {
+                return;
+                $purchaseUnitFactory = $container->get('api.factory.purchase-unit');
+                /**
+                 * @var PurchaseUnitFactory $purchaseUnitFactory
+                 */
+                $cart = \WC()->cart;
+                $purchaseUnit = $purchaseUnitFactory->fromWcCart($cart);
+                return;
+            });
         }
     }
 
@@ -74,4 +86,5 @@ use Dhii\Modular\Module\ModuleInterface;
             do_action('woocommerce-paypal-commerce-gateway.deactivate');
         }
     );
+
 })();
