@@ -18,7 +18,8 @@ class SingleProductConfig {
         this.errorHandler = errorHandler;
     }
 
-    configuration() {
+    configuration()
+    {
 
         if ( this.hasVariations() ) {
             const observer = new ButtonsToggleListener(
@@ -40,7 +41,8 @@ class SingleProductConfig {
         }
     }
 
-    createOrder() {
+    createOrder()
+    {
         const createOrder = (data, actions) => {
             this.errorHandler.clear();
             const product = document.querySelector('[name="add-to-cart"]').value;
@@ -54,9 +56,9 @@ class SingleProductConfig {
                         nonce:this.config.ajax.create_order.nonce,
                         purchase_units
                     })
-                }).then(function(res) {
+                }).then(function (res) {
                     return res.json();
-                }).then(function(data) {
+                }).then(function (data) {
                     if (! data.success) {
                         //Todo: Error handling
                         return;
@@ -71,14 +73,15 @@ class SingleProductConfig {
         return createOrder;
     }
 
-    variations() {
+    variations()
+    {
 
         if (! this.hasVariations()) {
             return null;
         }
         const attributes = [...this.formElement.querySelectorAll("[name^='attribute_']")].map(
             (element) => {
-                return {
+            return {
                     value:element.value,
                     name:element.name
                 }
@@ -87,7 +90,8 @@ class SingleProductConfig {
         return attributes;
     }
 
-    hasVariations() {
+    hasVariations()
+    {
         return this.formElement.classList.contains('variations_form');
     }
 }

@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\ApiClient\Repository;
 
-
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Item;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
@@ -23,8 +22,8 @@ class CartRepository implements PurchaseUnitRepositoryInterface
      *
      * @return PurchaseUnit[]
      */
-    public function all() : array {
-
+    public function all() : array
+    {
         return [$this->factory->fromWcCart($this->cart)];
     }
 }

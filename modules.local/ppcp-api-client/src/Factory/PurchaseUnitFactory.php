@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\ApiClient\Factory;
 
-
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Amount;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\AmountBreakdown;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Item;
@@ -24,17 +23,19 @@ class PurchaseUnitFactory
         ItemFactory $itemFactory,
         ShippingFactory $shippingFactory
     ) {
+
         $this->amountFactory = $amountFactory;
         $this->payeeFactory = $payeeFactory;
         $this->itemFactory = $itemFactory;
         $this->shippingFactory = $shippingFactory;
     }
 
-    public function fromWcOrder(\WC_Order $order) : PurchaseUnit {
+    public function fromWcOrder(\WC_Order $order) : PurchaseUnit
+    {
         $currency = get_woocommerce_currency();
 
         $items = array_map(
-            function(\WC_Order_Item_Product $item) use ($currency, $order): Item {
+            function (\WC_Order_Item_Product $item) use ($currency, $order): Item {
 
                 $product = $item->get_product();
                 /**
@@ -56,7 +57,6 @@ class PurchaseUnitFactory
                     $product->get_sku(),
                     ($product->is_downloadable()) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS
                 );
-
             },
             $order->get_items('line_item')
         );
@@ -64,15 +64,18 @@ class PurchaseUnitFactory
         $total = new Money((float) $order->get_total(), $currency);
         $itemsTotal = new Money(array_reduce(
             $items,
-            function(float $total, Item $item) : float {
+            function (float $total, Item $item) : float {
                 return $total + $item->quantity() * $item->unitAmount()->value();
             },
             0
         ), $currency);
-        $shipping = new Money((float) $order->get_shipping_total() + (float) $order->get_shipping_tax(), $currency);
+        $shipping = new Money(
+            (float) $order->get_shipping_total() + (float) $order->get_shipping_tax(),
+            $currency
+        );
         $taxes = new Money(array_reduce(
             $items,
-            function(float $total, Item $item) : float {
+            function (float $total, Item $item) : float {
                 return $total + $item->quantity() * $item->tax()->value();
             },
             0
@@ -119,13 +122,16 @@ class PurchaseUnitFactory
         return $purchaseUnit;
     }
 
-    public function fromWcCart(\WC_Cart $cart) : PurchaseUnit {
-
+    public function fromWcCart(\WC_Cart $cart) : PurchaseUnit
+    {
         $currency = get_woocommerce_currency();
         $total = new Money((float) $cart->get_total('numeric'), $currency);
         $itemsTotal = $cart->get_cart_contents_total();
         $itemsTotal = new Money((float) $itemsTotal, $currency);
-        $shipping = new Money((float) $cart->get_shipping_total() + $cart->get_shipping_tax(), $currency);
+        $shipping = new Money(
+            (float) $cart->get_shipping_total() + $cart->get_shipping_tax(),
+            $currency
+        );
 
         $taxes = new Money((float) $cart->get_cart_contents_tax(), $currency);
 
@@ -144,7 +150,7 @@ class PurchaseUnitFactory
             $breakdown
         );
         $items = array_map(
-            function(array $item) use ($currency): Item {
+            function (array $item) use ($currency): Item {
                 $product = $item['data'];
                 /**
                  * @var \WC_Product $product
@@ -165,7 +171,6 @@ class PurchaseUnitFactory
                     $product->get_sku(),
                     ($product->is_downloadable()) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS
                 );
-
             },
             $cart->get_cart_contents()
         );
@@ -197,8 +202,8 @@ class PurchaseUnitFactory
         return $purchaseUnit;
     }
 
-    public function fromPayPalResponse(\stdClass $data) : PurchaseUnit {
-
+    public function fromPayPalResponse(\stdClass $data) : PurchaseUnit
+    {
         if (! isset($data->reference_id) || ! is_string($data->reference_id)) {
             throw new RuntimeException(__("No reference ID given.", "woocommercepaypal-commerce-gateway"));
         }
@@ -211,14 +216,16 @@ class PurchaseUnitFactory
         $items = [];
         if (isset($data->items) && is_array($data->items)) {
             $items = array_map(
-                function($item) : Item {
+                function (\stdClass $item) : Item {
                     return $this->itemFactory->fromPayPalRequest($item);
                 },
                 $data->items
             );
         }
         $payee = isset($data->payee) ? $this->payeeFactory->fromPayPalResponse($data->payee) : null;
-        $shipping = isset($data->shipping) ? $this->shippingFactory->fromPayPalResponse($data->shipping) : null;
+        $shipping = isset($data->shipping) ?
+            $this->shippingFactory->fromPayPalResponse($data->shipping)
+            : null;
         return new PurchaseUnit(
             $amount,
             $items,

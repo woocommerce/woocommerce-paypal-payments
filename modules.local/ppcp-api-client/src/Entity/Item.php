@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
 
-
 class Item
 {
 
@@ -30,6 +29,7 @@ class Item
         string $sku = '',
         string $category = 'PHYSICAL_GOODS'
     ) {
+
         $this->name = $name;
         $this->unitAmount = $unitAmount;
         $this->quantity = $quantity;
@@ -39,35 +39,43 @@ class Item
         $this->category = ($category === self::DIGITAL_GOODS) ? self::DIGITAL_GOODS : self::PHYSICAL_GOODS;
     }
 
-    public function name() : string {
+    public function name() : string
+    {
         return $this->name;
     }
 
-    public function unitAmount() : Money {
+    public function unitAmount() : Money
+    {
         return $this->unitAmount;
     }
 
-    public function quantity() : int {
+    public function quantity() : int
+    {
         return $this->quantity;
     }
 
-    public function description() : string {
+    public function description() : string
+    {
         return $this->description;
     }
 
-    public function tax() : ?Money {
+    public function tax() : ?Money
+    {
         return $this->tax;
     }
 
-    public function sku() : string {
+    public function sku() : string
+    {
         return $this->sku;
     }
 
-    public function category() : string {
+    public function category() : string
+    {
         return $this->category;
     }
 
-    public function toArray() : array {
+    public function toArray() : array
+    {
         $item = [
             'name' => $this->name(),
             'unit_amount' => $this->unitAmount()->toArray(),

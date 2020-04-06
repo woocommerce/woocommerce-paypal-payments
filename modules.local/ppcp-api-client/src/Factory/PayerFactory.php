@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\ApiClient\Factory;
 
-
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Payer;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\PayerName;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\PayerTaxInfo;
@@ -21,7 +20,6 @@ class PayerFactory
 
     public function fromPayPalResponse(\stdClass $data) : Payer
     {
-
         $address = $this->addressFactory->fromPayPalRequest($data->address);
         $payerName = new PayerName(
             $data->name->given_name,
@@ -33,8 +31,12 @@ class PayerFactory
                 $data->phone->phone_number->national_number
             )
         ) : null;
-        $taxInfo = (isset($data->tax_info)) ? new PayerTaxInfo($data->tax_info->tax_id,$data->tax_info->tax_id_type) : null;
-        $birthDate = (isset($data->birth_date)) ? \DateTime::createFromFormat('Y-m-d', $data->birth_date) : null;
+        $taxInfo = (isset($data->tax_info)) ?
+            new PayerTaxInfo($data->tax_info->tax_id, $data->tax_info->tax_id_type)
+            : null;
+        $birthDate = (isset($data->birth_date)) ?
+            \DateTime::createFromFormat('Y-m-d', $data->birth_date)
+            : null;
         return new Payer(
             $payerName,
             $data->email_address,

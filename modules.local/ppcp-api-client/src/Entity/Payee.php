@@ -19,19 +19,23 @@ class Payee
         string $email,
         string $merchantId
     ) {
+
         $this->email = $email;
         $this->merchantId = $merchantId;
     }
 
-    public function email() : string {
+    public function email() : string
+    {
         return $this->email;
     }
 
-    public function merchantId() : string {
+    public function merchantId() : string
+    {
         return $this->merchantId;
     }
 
-    public function toArray() : array {
+    public function toArray() : array
+    {
         return [
             'email_address' => $this->email(),
             'merchant_id' => $this->merchantId(),

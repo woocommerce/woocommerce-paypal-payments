@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
 
-
 class PatchCollection
 {
 
@@ -24,7 +23,7 @@ class PatchCollection
     public function toArray() : array
     {
         return array_map(
-            function(Patch $patch) : array {
+            function (Patch $patch) : array {
                 return $patch->toArray();
             },
             $this->patches()

@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\WcGateway;
 
-
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\Exception\ModuleExceptionInterface;
 use Dhii\Modular\Module\ModuleInterface;
@@ -22,21 +21,21 @@ class WcGatewayModule implements ModuleInterface
         );
     }
 
-    public function run(ContainerInterface $c)
+    public function run(ContainerInterface $container)
     {
         add_filter(
             'woocommerce_payment_gateways',
-            function($methods) use ($c) : array {
+            function ($methods) use ($container) : array {
 
-                $methods[] = $c->get('wcgateway.gateway');
+                $methods[] = $container->get('wcgateway.gateway');
                 return (array) $methods;
             }
         );
 
         add_filter(
             'woocommerce_available_payment_gateways',
-            function($methods) use ($c) : array {
-                $disabler = $c->get('wcgateway.disabler');
+            function ($methods) use ($container) : array {
+                $disabler = $container->get('wcgateway.disabler');
                 /**
                  * @var DisableGateways $disabler
                  */

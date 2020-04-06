@@ -1,4 +1,4 @@
-const path         = require( 'path' );
+const path         = require('path');
 const isProduction = process.env.NODE_ENV === 'production';
 
 module.exports = {
@@ -6,10 +6,10 @@ module.exports = {
     mode: isProduction ? 'production' : 'development',
     target: 'web',
     entry: {
-        button: path.resolve( './resources/js/button.js' ),
+        button: path.resolve('./resources/js/button.js'),
     },
     output: {
-        path: path.resolve( __dirname, 'assets/' ),
+        path: path.resolve(__dirname, 'assets/'),
         filename: 'js/[name].js',
     },
     module: {
@@ -27,9 +27,9 @@ module.exports = {
                         options: {
                             name: 'css/[name].css',
                         }
-                    },
+                },
                     {loader:'sass-loader'}
                 ]
-            }]
+        }]
     }
 };

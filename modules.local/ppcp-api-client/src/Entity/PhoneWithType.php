@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
 
-
 class PhoneWithType
 {
     const VALLID_TYPES = [
@@ -18,7 +17,6 @@ class PhoneWithType
     private $phone;
     public function __construct(string $type, Phone $phone)
     {
-
         $this->type = in_array($type, self::VALLID_TYPES, true) ? $type : 'OTHER';
         $this->phone = $phone;
     }
@@ -28,15 +26,16 @@ class PhoneWithType
         return $this->type;
     }
 
-    public function phone() : Phone {
+    public function phone() : Phone
+    {
         return $this->phone;
     }
 
-    public function toArray() : array {
+    public function toArray() : array
+    {
         return [
             'phone_type' => $this->type(),
             'phone_number' => $this->phone()->toArray(),
         ];
     }
-
 }

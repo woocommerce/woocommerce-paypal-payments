@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
 
-
 class Address
 {
     private $countryCode;
@@ -19,8 +18,8 @@ class Address
         string $adminArea1 = '',
         string $adminArea2 = '',
         string $postalCode = ''
-    )
-    {
+    ) {
+
         $this->countryCode = $countryCode;
         $this->addressLine1 = $addressLine1;
         $this->addressLine2 = $addressLine2;
@@ -29,22 +28,33 @@ class Address
         $this->postalCode = $postalCode;
     }
 
-    public function countryCode() : string {
+    public function countryCode() : string
+    {
         return $this->countryCode;
     }
-    public function addressLine1() : string {
+
+    public function addressLine1() : string
+    {
         return $this->addressLine1;
     }
-    public function addressLine2() : string {
+
+    public function addressLine2() : string
+    {
         return $this->addressLine2;
     }
-    public function adminArea1() : string {
+
+    public function adminArea1() : string
+    {
         return $this->adminArea1;
     }
-    public function adminArea2() : string {
+
+    public function adminArea2() : string
+    {
         return $this->adminArea2;
     }
-    public function postalCode() : string {
+
+    public function postalCode() : string
+    {
         return $this->postalCode;
     }
 

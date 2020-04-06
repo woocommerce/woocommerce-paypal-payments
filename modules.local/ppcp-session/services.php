@@ -6,7 +6,7 @@ namespace Inpsyde\PayPalCommerce\Session;
 use Dhii\Data\Container\ContainerInterface;
 
 return [
-    'session.handler' => function(ContainerInterface $container) : SessionHandler {
+    'session.handler' => function (ContainerInterface $container) : SessionHandler {
 
         if (is_admin()) {
             return new SessionHandler();
@@ -18,5 +18,5 @@ return [
         $sessionHandler = new SessionHandler();
         WC()->session->set(SessionHandler::ID, $sessionHandler);
         return $sessionHandler;
-    }
+    },
 ];

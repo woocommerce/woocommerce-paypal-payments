@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\Button;
 
-
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
 use Inpsyde\PayPalCommerce\Button\Assets\SmartButton;
@@ -35,20 +34,20 @@ class ButtonModule implements ModuleInterface
          */
         add_action(
             'wp',
-            function() use ($smartButton) {
+            function () use ($smartButton) {
                 if (is_admin()) {
                     return;
                 }
                 $smartButton->renderWrapper();
             }
         );
-        add_action('wp_enqueue_scripts', function() use ($smartButton) {
+        add_action('wp_enqueue_scripts', function () use ($smartButton) {
             $smartButton->enqueue();
         });
 
         add_action(
             'wc_ajax_' . ChangeCartEndpoint::ENDPOINT,
-            function() use ($container) {
+            function () use ($container) {
                 $endpoint = $container->get('button.endpoint.change-cart');
                 /**
                  * @var ChangeCartEndpoint $endpoint
@@ -59,7 +58,7 @@ class ButtonModule implements ModuleInterface
 
         add_action(
             'wc_ajax_' . CreateOrderEndpoint::ENDPOINT,
-            function() use ($container) {
+            function () use ($container) {
                 $endpoint = $container->get('button.endpoint.create-order');
                 /**
                  * @var ChangeCartEndpoint $endpoint

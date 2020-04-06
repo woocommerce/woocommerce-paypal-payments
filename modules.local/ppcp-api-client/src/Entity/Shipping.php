@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
 
-
 class Shipping
 {
 
@@ -15,15 +14,18 @@ class Shipping
         $this->address = $address;
     }
 
-    public function name() : string {
+    public function name() : string
+    {
         return $this->name;
     }
 
-    public function address() : Address {
+    public function address() : Address
+    {
         return $this->address;
     }
 
-    public function toArray() : array {
+    public function toArray() : array
+    {
         return [
             'name' => [
                 'full_name' => $this->name(),

@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\Session;
 
-
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
 use Interop\Container\ServiceProviderInterface;
@@ -20,12 +19,12 @@ class SessionModule implements ModuleInterface
         );
     }
 
-    public function run(ContainerInterface $c)
+    public function run(ContainerInterface $container)
     {
         add_action(
             'woocommerce_init',
-            function() use ($c) {
-                 $c->get('session.handler');
+            function () use ($container) {
+                $container->get('session.handler');
             }
         );
     }

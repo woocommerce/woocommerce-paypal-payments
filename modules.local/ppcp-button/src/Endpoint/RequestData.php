@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\Button\Endpoint;
 
-
 use Inpsyde\PayPalCommerce\Button\Exception\RuntimeException;
 
 class RequestData
@@ -11,11 +10,9 @@ class RequestData
 
     public function readRequest(string $nonce) : array
     {
-
         $stream = file_get_contents('php://input');
         $json = json_decode($stream, true);
-        if (
-            ! isset($json['nonce'])
+        if (! isset($json['nonce'])
             || !wp_verify_nonce($json['nonce'], $nonce)
         ) {
             throw new RuntimeException(
@@ -26,8 +23,8 @@ class RequestData
         return $this->sanitize($json);
     }
 
-    private function sanitize(array $assocArray) : array {
-
+    private function sanitize(array $assocArray) : array
+    {
         $data = [];
         foreach ((array) $assocArray as $rawKey => $rawValue) {
             if (! is_array($rawValue)) {

@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
 
-
 class PurchaseUnit
 {
 
@@ -32,25 +31,29 @@ class PurchaseUnit
         $this->shipping = $shipping;
         $this->referenceId = $referenceId;
         $this->description = $description;
+        //phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration.NoArgumentType
         $this->items = array_values(
             array_filter(
                 $items,
-                function($item) : bool {
+                function ($item) : bool {
                     return is_a($item, Item::class);
                 }
             )
         );
+        //phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration.NoArgumentType
         $this->payee = $payee;
         $this->customId = $customId;
         $this->invoiceId = $invoiceId;
         $this->softDescriptor = $softDescriptor;
     }
 
-    public function amount() : Amount {
+    public function amount() : Amount
+    {
         return $this->amount;
     }
 
-    public function shipping() : ?Shipping {
+    public function shipping() : ?Shipping
+    {
         return $this->shipping;
     }
 
@@ -63,13 +66,19 @@ class PurchaseUnit
     {
         return $this->description;
     }
-    public function customId() : string {
+
+    public function customId() : string
+    {
         return $this->customId;
     }
-    public function invoiceId() : string {
+
+    public function invoiceId() : string
+    {
         return $this->invoiceId;
     }
-    public function softDescriptor() : string {
+
+    public function softDescriptor() : string
+    {
         return $this->softDescriptor;
     }
 
@@ -86,13 +95,16 @@ class PurchaseUnit
         return $this->items;
     }
 
-    public function toArray() : array {
+    public function toArray() : array
+    {
         $purchaseUnit = [
             'reference_id' => $this->referenceId(),
             'amount' => $this->amount()->toArray(),
             'description' => $this->description(),
             'items' => array_map(
-                function(Item $item) : array { return $item->toArray(); },
+                function (Item $item) : array {
+                    return $item->toArray();
+                },
                 $this->items()
             ),
         ];

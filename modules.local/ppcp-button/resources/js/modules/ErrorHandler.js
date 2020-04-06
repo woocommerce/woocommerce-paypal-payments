@@ -1,21 +1,25 @@
 class ErrorHandler {
 
-    constructor() {
+    constructor()
+    {
         this.wrapper = document.querySelector('.woocommerce-notices-wrapper');
     }
 
-    message(text) {
+    message(text)
+    {
         this.wrapper.classList.add('woocommerce-error');
         this.wrapper.innerText = this.sanitize(text);
     }
 
-    sanitize(text) {
+    sanitize(text)
+    {
         const textarea = document.createElement('textarea');
         textarea.innerHTML = text;
         return textarea.value;
     }
 
-    clear() {
+    clear()
+    {
         if (! this.wrapper.classList.contains('woocommerce-error')) {
             return;
         }

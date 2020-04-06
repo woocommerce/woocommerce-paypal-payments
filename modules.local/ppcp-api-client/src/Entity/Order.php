@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
 
-
 class Order
 {
 
@@ -29,14 +28,17 @@ class Order
         string $intent = 'CAPTURE',
         \DateTime $updateTime = null
     ) {
+
         $this->id = $id;
         $this->createTime = $createTime;
+        //phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration.NoArgumentType
         $this->purchaseUnits = array_values(array_filter(
             $purchaseUnits,
-            function($unit) : bool {
+            function ($unit) : bool {
                 return is_a($unit, PurchaseUnit::class);
             }
         ));
+        //phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration.NoArgumentType
         $this->payer = $payer;
         $this->orderStatus = $orderStatus;
         $this->intent = ($intent === 'CAPTURE') ? 'CAPTURE' : 'AUTHORIZE';
@@ -44,30 +46,36 @@ class Order
         $this->updateTime = $updateTime;
     }
 
-    public function id() : string {
+    public function id() : string
+    {
         return $this->id;
     }
 
-    public function createTime() : \DateTime {
+    public function createTime() : \DateTime
+    {
         return $this->createTime;
     }
 
-    public function updateTime() : ?\DateTime {
+    public function updateTime() : ?\DateTime
+    {
         return $this->updateTime;
     }
 
-    public function intent() : string {
+    public function intent() : string
+    {
         return $this->intent;
     }
 
-    public function payer() : ?Payer {
+    public function payer() : ?Payer
+    {
         return $this->payer;
     }
 
     /**
      * @return PurchaseUnit[]
      */
-    public function purchaseUnits() : array {
+    public function purchaseUnits() : array
+    {
         return $this->purchaseUnits;
     }
 
@@ -76,13 +84,14 @@ class Order
         return $this->orderStatus;
     }
 
-    public function toArray() : array {
+    public function toArray() : array
+    {
         $order = [
             'id' => $this->id(),
             'intent' => $this->intent(),
             'status' => $this->status()->name(),
             'purchase_units' => array_map(
-                function(PurchaseUnit $unit) : array {
+                function (PurchaseUnit $unit) : array {
                     return $unit->toArray();
                 },
                 $this->purchaseUnits()

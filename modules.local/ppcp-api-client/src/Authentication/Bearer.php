@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\ApiClient\Authentication;
 
-
 use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
 class Bearer
@@ -23,7 +22,7 @@ class Bearer
     {
         //ToDo: Do not store with wp_cache_get but as transient.
         $bearer = wp_cache_get(self::CACHE_KEY);
-        if ( ! $bearer) {
+        if (! $bearer) {
             return $this->newBearer();
         }
         return (string) $bearer;

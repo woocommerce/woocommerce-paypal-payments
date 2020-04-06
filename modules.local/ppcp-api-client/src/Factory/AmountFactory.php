@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\ApiClient\Factory;
 
-
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Amount;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\AmountBreakdown;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Money;
@@ -16,8 +15,8 @@ class AmountFactory
     {
     }
 
-    public function fromPayPalResponse(\stdClass $data) : Amount{
-
+    public function fromPayPalResponse(\stdClass $data) : Amount
+    {
         if (! isset($data->value) || ! is_numeric($data->value)) {
             throw new RuntimeException(__("No value given", "woocommerce-paypal-commerce-gateway"));
         }
@@ -30,7 +29,8 @@ class AmountFactory
         return new Amount($money, $breakdown);
     }
 
-    private function breakDown(\stdClass $data) : AmountBreakdown {
+    private function breakDown(\stdClass $data) : AmountBreakdown
+    {
         /**
          * The order of the keys equals the necessary order of the constructor arguments.
          */
@@ -54,12 +54,14 @@ class AmountFactory
 
             if (! isset($item->value) || ! is_numeric($item->value)) {
                 throw new RuntimeException(sprintf(
+                    // translators: %s is the current breakdown key.
                     __("No value given for breakdown %s", "woocommerce-paypal-commerce-gateway"),
                     $key
                 ));
             }
             if (! isset($item->currency_code)) {
                 throw new RuntimeException(sprintf(
+                    // translators: %s is the current breakdown key.
                     __("No currency given for breakdown %s", "woocommerce-paypal-commerce-gateway"),
                     $key
                 ));

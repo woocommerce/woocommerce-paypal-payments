@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\ApiClient\Endpoint;
 
-
 use Inpsyde\PayPalCommerce\ApiClient\Authentication\Bearer;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
@@ -35,14 +34,14 @@ class OrderEndpoint
         $this->patchCollectionFactory = $patchCollectionFactory;
     }
 
-    public function createForPurchaseUnits(PurchaseUnit ...$items) : Order {
-
+    public function createForPurchaseUnits(PurchaseUnit ...$items) : Order
+    {
         $bearer = $this->bearer->bearer();
 
         $data = [
             'intent' => 'CAPTURE',
             'purchase_units' => array_map(
-                function(PurchaseUnit $item) : array {
+                function (PurchaseUnit $item) : array {
                     return $item->toArray();
                 },
                 $items
@@ -63,13 +62,12 @@ class OrderEndpoint
         }
         $json = json_decode($response['body']);
         $order = $this->orderFactory->fromPayPalResponse($json);
-        $this->sessionHandler->setOrder($order);
+        $this->sessionHandler->replaceOrder($order);
         return $order;
     }
 
     public function capture(Order $order) : Order
     {
-
         $bearer = $this->bearer->bearer();
         $url = trailingslashit($this->host) . 'v2/checkout/orders/' . $order->id() . '/capture';
         $args = [
@@ -77,7 +75,7 @@ class OrderEndpoint
                 'Authorization' => 'Bearer ' . $bearer,
                 'Content-Type' => 'application/json',
                 'Prefer' => 'return=representation',
-            ]
+            ],
         ];
         $response = wp_remote_post($url, $args);
         /**
@@ -92,12 +90,12 @@ class OrderEndpoint
         }
         $json = json_decode($response['body']);
         $order = $this->orderFactory->fromPayPalResponse($json);
-        $this->sessionHandler->setOrder($order);
+        $this->sessionHandler->replaceOrder($order);
         return $order;
     }
 
-    public function order(string $id) : Order {
-
+    public function order(string $id) : Order
+    {
         $bearer = $this->bearer->bearer();
         $url = trailingslashit($this->host) . 'v2/checkout/orders/' . $id;
         $args = [
@@ -114,12 +112,12 @@ class OrderEndpoint
         return $this->orderFactory->fromPayPalResponse($json);
     }
 
-    public function patchOrderWith(Order $orderToUpdate, Order $orderToCompare) : Order {
+    public function patchOrderWith(Order $orderToUpdate, Order $orderToCompare) : Order
+    {
         $patches = $this->patchCollectionFactory->fromOrders($orderToCompare, $orderToCompare);
         if (! count($patches->patches())) {
             return $orderToUpdate;
         }
-
 
         $bearer = $this->bearer->bearer();
         $url = trailingslashit($this->host) . 'v2/checkout/orders/' . $orderToUpdate->id();
@@ -138,7 +136,7 @@ class OrderEndpoint
         }
 
         $newOrder = $this->order($orderToUpdate->id());
-        $this->sessionHandler->setOrder($newOrder);
+        $this->sessionHandler->replaceOrder($newOrder);
         return $newOrder;
     }
 }

@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
 
-
 use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
 class OrderStatus
@@ -25,9 +24,11 @@ class OrderStatus
     ];
     private $status;
 
-    public function __construct(string $status) {
+    public function __construct(string $status)
+    {
         if (! in_array($status, self::VALID_STATI, true)) {
             throw new RuntimeException(sprintf(
+                // translators: %s is the current status.
                 __("%s is not a valid status", "woocmmerce-paypal-commerce-gateway"),
                 $status
             ));

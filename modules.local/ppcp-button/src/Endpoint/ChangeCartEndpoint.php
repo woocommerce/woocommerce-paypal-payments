@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\Button\Endpoint;
 
-
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Item;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
@@ -24,6 +23,7 @@ class ChangeCartEndpoint implements EndpointInterface
         RequestData $requestData,
         CartRepository $repository
     ) {
+
         $this->cart = $cart;
         $this->shipping = $shipping;
         $this->requestData = $requestData;
@@ -40,16 +40,25 @@ class ChangeCartEndpoint implements EndpointInterface
         try {
             $data = $this->requestData->readRequest($this->nonce());
 
-            if (
-                ! isset($data['product'])
+            if (! isset($data['product'])
                 || ! isset($data['qty'])
             ) {
-                wp_send_json_error(__('Necessary fields not defined. Action aborted.', 'woocommerce-paypal-commerce-gateway'));
+                wp_send_json_error(
+                    __(
+                        'Necessary fields not defined. Action aborted.',
+                        'woocommerce-paypal-commerce-gateway'
+                    )
+                );
                 return false;
             }
             $product = wc_get_product((int) $data['product']);
             if (! $product) {
-                wp_send_json_error(__('No product defined. Action aborted.', 'woocommerce-paypal-commerce-gateway'));
+                wp_send_json_error(
+                    __(
+                        'No product defined. Action aborted.',
+                        'woocommerce-paypal-commerce-gateway'
+                    )
+                );
                 return false;
             }
 
@@ -60,13 +69,12 @@ class ChangeCartEndpoint implements EndpointInterface
                 $success = $this->addProduct($product, $quantity)
                 : $this->addVariableProduct($product, $quantity, $data['variations']);
             if (! $success) {
-
                 $message = __('Something went wrong. Action aborted', 'woocommerce-paypal-commerce-gateway');
                 $errors = wc_get_notices('error');
                 if (count($errors)) {
                     $message = array_reduce(
                         $errors,
-                        function(string $add, $error) : string {
+                        function (string $add, array $error) : string {
                             return $add . $error['notice'] . ' ';
                         },
                         ''
@@ -85,27 +93,32 @@ class ChangeCartEndpoint implements EndpointInterface
         }
     }
 
-    private function addProduct(\WC_Product $product, int $quantity) : bool {
-
+    private function addProduct(\WC_Product $product, int $quantity) : bool
+    {
         return false !== $this->cart->add_to_cart($product->get_id(), $quantity);
     }
-    private function addVariableProduct(\WC_Product $product, int $quantity, array $postVariations) : bool {
+
+    private function addVariableProduct(
+        \WC_Product $product,
+        int $quantity,
+        array $postVariations
+    ) : bool {
 
         foreach ($postVariations as $key => $value) {
             $variations[$value['name']] = $value['value'];
         }
 
-        $dataStore = \WC_Data_Store::load( 'product' );
-        $variationId = $dataStore->find_matching_product_variation( $product, $variations );
+        $dataStore = \WC_Data_Store::load('product');
+        $variationId = $dataStore->find_matching_product_variation($product, $variations);
 
         //ToDo: Check stock status for variation.
-        return false !== WC()->cart->add_to_cart( $product->get_id(), $quantity, $variationId, $variations );
+        return false !== WC()->cart->add_to_cart($product->get_id(), $quantity, $variationId, $variations);
     }
 
-    private function generatePurchaseUnits() : array {
-
+    private function generatePurchaseUnits() : array
+    {
         return array_map(
-            function(PurchaseUnit $lineItem) : array {
+            function (PurchaseUnit $lineItem) : array {
                 return $lineItem->toArray();
             },
             $this->repository->all()

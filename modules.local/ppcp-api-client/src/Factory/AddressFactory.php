@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\ApiClient\Factory;
 
-
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Address;
 use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
@@ -14,8 +13,8 @@ class AddressFactory
     {
     }
 
-    public function fromPayPalRequest(\stdClass $data) : Address {
-
+    public function fromPayPalRequest(\stdClass $data) : Address
+    {
         if (! isset($data->country_code)) {
             new RuntimeException(__('No country given for address.', 'woocommerce-paypal-commerce-gateway'));
         }

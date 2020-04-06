@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\Button\Assets;
 
-
 use Inpsyde\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
 
@@ -16,13 +15,14 @@ class SmartButton
         string $moduleUrl,
         bool $isSandbox
     ) {
+
         $this->moduleUrl = $moduleUrl;
         $this->isSandbox = $isSandbox;
     }
 
     public function renderWrapper() : bool
     {
-        $renderer = function() {
+        $renderer = function () {
             echo '<div id="ppc-button"></div>';
         };
         if (is_product()) {
@@ -51,7 +51,6 @@ class SmartButton
             $this->moduleUrl . '/assets/js/button.js'
         );
 
-
         $params = [
             'client-id' => 'AcVzowpNCpTxFzLG7onQI4JD0sVcA0BkZv-D42qRZPv_gZ8cNfX9zGL_8bXmSu7cbJ5B2DH7sot8vDpw',
             'currency' => get_woocommerce_currency(),
@@ -63,18 +62,18 @@ class SmartButton
             'context' => $this->context(),
             'ajax' => [
                 'change_cart' => [
-                    'endpoint' => home_url(\WC_AJAX::get_endpoint( ChangeCartEndpoint::ENDPOINT )),
+                    'endpoint' => home_url(\WC_AJAX::get_endpoint(ChangeCartEndpoint::ENDPOINT)),
                     'nonce' => wp_create_nonce(ChangeCartEndpoint::nonce()),
                 ],
                 'create_order' => [
-                    'endpoint' => home_url(\WC_AJAX::get_endpoint( CreateOrderEndpoint::ENDPOINT )),
+                    'endpoint' => home_url(\WC_AJAX::get_endpoint(CreateOrderEndpoint::ENDPOINT)),
                     'nonce' => wp_create_nonce(CreateOrderEndpoint::nonce()),
                 ],
             ],
             'button' => [
                 'wrapper' => '#ppc-button',
                 'url' =>$smartButtonUrl,
-            ]
+            ],
         ];
         wp_localize_script(
             'paypal-smart-button',
@@ -84,7 +83,8 @@ class SmartButton
         return true;
     }
 
-    private function context() : string {
+    private function context() : string
+    {
         $context = 'mini-cart';
         if (is_product()) {
             $context = 'product';

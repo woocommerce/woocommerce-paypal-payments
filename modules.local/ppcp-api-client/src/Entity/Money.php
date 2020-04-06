@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
 
-
 class Money
 {
 
@@ -25,7 +24,8 @@ class Money
         return $this->currencyCode;
     }
 
-    public function toArray() : array {
+    public function toArray() : array
+    {
         return [
             'currency_code' => $this->currencyCode(),
             'value' => $this->value(),

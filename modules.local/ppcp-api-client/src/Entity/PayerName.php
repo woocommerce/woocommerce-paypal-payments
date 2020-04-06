@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
 
-
 class PayerName
 {
 
@@ -13,12 +12,11 @@ class PayerName
     public function __construct(
         string $givenName,
         string $surname
-    )
-    {
+    ) {
+
         $this->givenName = $givenName;
         $this->surname = $surname;
     }
-
 
     public function givenName() : string
     {

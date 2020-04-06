@@ -2,4 +2,9 @@
 <ruleset name="Inpsyde Coding Standard">
     <rule ref="Inpsyde"/>
     <file>./src</file>
+    <file>./modules.local</file>
+
+
+    <exclude-pattern>*\.(inc|css|js)$</exclude-pattern>
+    <exclude-pattern>*\.(inc|css|js)$</exclude-pattern>
 </ruleset>

@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\WcGateway\Gateway;
 
-
 use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\OrderStatus;
@@ -11,6 +10,8 @@ use Inpsyde\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
 use Inpsyde\PayPalCommerce\Session\SessionHandler;
 
+//phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
+//phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration.NoArgumentType
 class WcGateway extends \WC_Payment_Gateway
 {
 
@@ -35,68 +36,79 @@ class WcGateway extends \WC_Payment_Gateway
         $this->orderFactory = $orderFactory;
         $this->id = self::ID;
         $this->method_title = __('PayPal Payments', 'woocommerce-paypal-gateway');
-        $this->method_description = __('Provide your customers with the PayPal payment system', 'woocommerce-paypal-gateway');
+        $this->method_description = __(
+            'Provide your customers with the PayPal payment system',
+            'woocommerce-paypal-gateway'
+        );
         $this->init_form_fields();
         $this->init_settings();
 
-        $this->isSandbox = $this->get_option( 'sandbox_on', 'yes' ) === 'yes';
+        $this->isSandbox = $this->get_option('sandbox_on', 'yes') === 'yes';
 
-        add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this, 'process_admin_options' ) );
+        add_action(
+            'woocommerce_update_options_payment_gateways_' . $this->id,
+            [
+                $this,
+                'process_admin_options',
+            ]
+        );
     }
 
     public function init_form_fields()
     {
         $this->form_fields = [
-            'enabled' => array(
-                'title' => __( 'Enable/Disable', 'woocommerce-paypal-gateway' ),
+            'enabled' => [
+                'title' => __('Enable/Disable', 'woocommerce-paypal-gateway'),
                 'type' => 'checkbox',
-                'label' => __( 'Enable PayPal Payments', 'woocommerce-paypal-gateway' ),
-                'default' => 'yes'
-            ),
-            'sandbox_on' => array(
-                'title' => __( 'Enable Sandbox', 'woocommerce-paypal-gateway' ),
+                'label' => __('Enable PayPal Payments', 'woocommerce-paypal-gateway'),
+                'default' => 'yes',
+            ],
+            'sandbox_on' => [
+                'title' => __('Enable Sandbox', 'woocommerce-paypal-gateway'),
                 'type' => 'checkbox',
-                'label' => __( 'For testing your integration, you can enable the sandbox.', 'woocommerce-paypal-gateway' ),
-                'default' => 'yes'
-            ),
+                'label' => __(
+                    'For testing your integration, you can enable the sandbox.',
+                    'woocommerce-paypal-gateway'
+                ),
+                'default' => 'yes',
+            ],
         ];
     }
 
-    function process_payment($orderId) : ?array
+    public function process_payment($orderId) : ?array
     {
         global $woocommerce;
-        $wcOrder = new \WC_Order( $orderId );
+        $wcOrder = new \WC_Order($orderId);
 
         //ToDo: We need to fetch the order from paypal again to get it with the new status.
         $order = $this->sessionHandler->order();
         $errorMessage = null;
         if (! $order || ! $order->status()->is(OrderStatus::APPROVED)) {
             $errorMessage = 'not approve yet';
-
         }
         $errorMessage = null;
         if ($errorMessage) {
-            wc_add_notice( __('Payment error:', 'woocommerce-paypal-gateway') . $errorMessage, 'error' );
+            wc_add_notice(__('Payment error:', 'woocommerce-paypal-gateway') . $errorMessage, 'error');
             return null;
         }
 
         $order = $this->patchOrder($wcOrder, $order);
         $order = $this->endpoint->capture($order);
 
-        $wcOrder->update_status('on-hold', __( 'Awaiting payment.', 'woocommerce-paypal-gateway' ));
+        $wcOrder->update_status('on-hold', __('Awaiting payment.', 'woocommerce-paypal-gateway'));
         if ($order->status()->is(OrderStatus::COMPLETED)) {
-            $wcOrder->update_status('processing', __( 'Payment received.', 'woocommerce-paypal-gateway' ));
+            $wcOrder->update_status('processing', __('Payment received.', 'woocommerce-paypal-gateway'));
         }
         $woocommerce->cart->empty_cart();
 
-        return array(
+        return [
             'result' => 'success',
-            'redirect' => $this->get_return_url( $wcOrder )
-        );
+            'redirect' => $this->get_return_url($wcOrder),
+        ];
     }
 
-    private function patchOrder(\WC_Order $wcOrder, Order $order) : Order {
-
+    private function patchOrder(\WC_Order $wcOrder, Order $order) : Order
+    {
         $updatedOrder = $this->orderFactory->fromWcOrder($wcOrder, $order);
         $order = $this->endpoint->patchOrderWith($order, $updatedOrder);
         return $order;

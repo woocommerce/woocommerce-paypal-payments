@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\ApiClient;
 
-
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\Exception\ModuleExceptionInterface;
 use Dhii\Modular\Module\ModuleInterface;
@@ -21,7 +20,7 @@ class ApiModule implements ModuleInterface
         );
     }
 
-    public function run(ContainerInterface $c)
+    public function run(ContainerInterface $container)
     {
         // TODO: Implement run() method.
     }

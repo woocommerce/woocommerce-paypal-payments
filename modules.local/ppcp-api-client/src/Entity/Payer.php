@@ -29,6 +29,7 @@ class Payer
         PhoneWithType $phone = null,
         PayerTaxInfo $taxInfo = null
     ) {
+
         $this->name = $name;
         $this->emailAddress = $emailAddress;
         $this->payerId = $payerId;
@@ -38,35 +39,43 @@ class Payer
         $this->taxInfo = $taxInfo;
     }
 
-    public function name() : PayerName {
+    public function name() : PayerName
+    {
         return $this->name;
     }
 
-    public function emailAddress() : string {
-        $this->emailAddress;
+    public function emailAddress() : string
+    {
+        return $this->emailAddress;
     }
 
-    public function payerId() : string {
+    public function payerId() : string
+    {
         return $this->payerId;
     }
 
-    public function birthDate() : \DateTime {
+    public function birthDate() : \DateTime
+    {
         return $this->birthDate;
     }
 
-    public function address() : Address {
+    public function address() : Address
+    {
         return $this->address;
     }
 
-    public function phone() : ?PhoneWithType {
+    public function phone() : ?PhoneWithType
+    {
         return $this->phone;
     }
 
-    public function taxInfo() : ?PayerTaxInfo {
+    public function taxInfo() : ?PayerTaxInfo
+    {
         return $this->taxInfo;
     }
 
-    public function toArray() : array {
+    public function toArray() : array
+    {
         $payer = [
             'name' => $this->name()->toArray(),
             'email_address' => $this->emailAddress(),

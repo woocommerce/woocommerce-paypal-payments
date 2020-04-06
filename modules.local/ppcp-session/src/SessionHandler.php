@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\Session;
 
-
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
 
 class SessionHandler
@@ -11,17 +10,20 @@ class SessionHandler
     const ID = 'ppcp';
 
     private $order;
-    public function order() : ?Order {
+    public function order() : ?Order
+    {
         return $this->order;
     }
 
-    public function setOrder(Order $order) : SessionHandler {
+    public function replaceOrder(Order $order) : SessionHandler
+    {
         $this->order = $order;
         $this->storeSession();
         return $this;
     }
 
-    private function storeSession() {
+    private function storeSession()
+    {
         WC()->session->set(self::ID, $this);
     }
 }

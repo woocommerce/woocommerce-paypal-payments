@@ -18,34 +18,30 @@ document.addEventListener(
         if (context === 'product' && ! document.querySelector('form.cart') ) {
             return;
         }
-
         const errorHandler = new ErrorHandler();
         const renderer = new Renderer({
             url: PayPalCommerceGateway.button.url,
             wrapper:PayPalCommerceGateway.button.wrapper
         });
-
-
-        const updateCart = new UpdateCart(
-            PayPalCommerceGateway.ajax.change_cart.endpoint,
-            PayPalCommerceGateway.ajax.change_cart.nonce
+    const updateCart = new UpdateCart(
+        PayPalCommerceGateway.ajax.change_cart.endpoint,
+        PayPalCommerceGateway.ajax.change_cart.nonce
+    );
+    let configurator = null;
+    if (context === 'product') {
+        configurator = new SingleProductConfig(
+            PayPalCommerceGateway,
+            updateCart,
+            renderer.showButtons.bind(renderer),
+            renderer.hideButtons.bind(renderer),
+            document.querySelector('form.cart'),
+            errorHandler
         );
-        let configurator = null;
-        if (context === 'product') {
-            configurator = new SingleProductConfig(
-                PayPalCommerceGateway,
-                updateCart,
-                renderer.showButtons.bind(renderer),
-                renderer.hideButtons.bind(renderer),
-                document.querySelector('form.cart'),
-                errorHandler
-            );
-        }
-        if (! configurator) {
-            console.error('No context for button found.');
-            return;
-        }
-        renderer.render(configurator.configuration());
-
+    }
+    if (! configurator) {
+        console.error('No context for button found.');
+        return;
+    }
+    renderer.render(configurator.configuration());
     }
 );

@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
 
-
+//phpcs:disable Inpsyde.CodeQuality.ElementNameMinimalLength.TooShort
 class Patch
 {
 
@@ -17,19 +17,25 @@ class Patch
         $this->value = $value;
     }
 
-    public function op() : string {
+    public function op() : string
+    {
         return $this->op;
     }
 
-    public function path() : string {
+    public function path() : string
+    {
         return $this->path;
     }
 
-    public function value() {
+    // phpcs:disable Inpsyde.CodeQuality.ReturnTypeDeclaration.NoReturnType
+    public function value()
+    {
         return $this->value;
     }
+    // phpcs:enable Inpsyde.CodeQuality.ReturnTypeDeclaration.NoReturnType
 
-    public function toArray() : array {
+    public function toArray() : array
+    {
         return [
             'op' => $this->op(),
             'value' => $this->value(),
@@ -43,7 +49,8 @@ class Patch
      *
      * @return string
      */
-    public function from() : string {
+    public function from() : string
+    {
         return '';
     }
 }

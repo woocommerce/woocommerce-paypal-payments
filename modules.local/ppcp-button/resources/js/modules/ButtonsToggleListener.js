@@ -4,14 +4,16 @@
  */
 
 class ButtonsToggleListener {
-    constructor(element, showCallback, hideCallback) {
+    constructor(element, showCallback, hideCallback)
+    {
         this.element = element;
         this.showCallback = showCallback;
         this.hideCallback = hideCallback;
         this.observer = null;
     }
 
-    init() {
+    init()
+    {
         const config = { attributes : true };
         const callback = () => {
             if (this.element.classList.contains('disabled')) {
@@ -24,7 +26,8 @@ class ButtonsToggleListener {
         this.observer.observe(this.element, config);
     }
 
-    disconnect() {
+    disconnect()
+    {
         this.observer.disconnect();
     }
 }
