@@ -157,7 +157,7 @@ class PurchaseUnitFactory
                  */
                 $quantity = (int) $item['quantity'];
 
-                $price = (float) $product->get_price();
+                $price = (float) wc_get_price_including_tax($product);
                 $priceWithoutTax = (float) wc_get_price_excluding_tax($product);
                 $priceWithoutTaxRounded = round($priceWithoutTax, 2);
                 $tax = round($price - $priceWithoutTax + $priceWithoutTax - $priceWithoutTaxRounded, 2);
