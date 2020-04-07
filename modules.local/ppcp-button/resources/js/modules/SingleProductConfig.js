@@ -1,5 +1,5 @@
 import ButtonsToggleListener from "./ButtonsToggleListener";
-
+import Product from "./Product";
 class SingleProductConfig {
 
     constructor(
@@ -43,33 +43,36 @@ class SingleProductConfig {
 
     createOrder()
     {
-        const createOrder = (data, actions) => {
-            this.errorHandler.clear();
-            const product = document.querySelector('[name="add-to-cart"]').value;
-            const qty = document.querySelector('[name="quantity"]').value;
-            const variations = this.variations();
+        if (! this.isGroupedProduct() ) {
+            return (data, actions) => {
+                this.errorHandler.clear();
+                const id = document.querySelector('[name="add-to-cart"]').value;
+                const qty = document.querySelector('[name="quantity"]').value;
+                const variations = this.variations();
+                const product = new Product(id, qty, variations);
 
-            const onResolve = (purchase_units) => {
-                return fetch(this.config.ajax.create_order.endpoint, {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        nonce:this.config.ajax.create_order.nonce,
-                        purchase_units
-                    })
-                }).then(function (res) {
-                    return res.json();
-                }).then(function (data) {
-                    if (! data.success) {
-                        //Todo: Error handling
-                        return;
-                    }
-                    return data.data.id;
-                });
+                const onResolve = (purchase_units) => {
+                    return fetch(this.config.ajax.create_order.endpoint, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            nonce: this.config.ajax.create_order.nonce,
+                            purchase_units
+                        })
+                    }).then(function (res) {
+                        return res.json();
+                    }).then(function (data) {
+                        if (!data.success) {
+                            //Todo: Error handling
+                            return;
+                        }
+                        return data.data.id;
+                    });
+                };
+
+                const promise = this.updateCart.update(onResolve, [product]);
+                return promise;
             };
-
-            const promise = this.updateCart.update(onResolve, product, qty, variations);
-            return promise;
-        };
+        }
         return createOrder;
     }
 
@@ -93,6 +96,11 @@ class SingleProductConfig {
     hasVariations()
     {
         return this.formElement.classList.contains('variations_form');
+    }
+
+    isGroupedProduct()
+    {
+        return this.formElement.querySelector('.woocommerce-grouped-product-list') !== null;
     }
 }
 

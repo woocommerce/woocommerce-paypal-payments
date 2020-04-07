@@ -40,8 +40,8 @@ class ChangeCartEndpoint implements EndpointInterface
         try {
             $data = $this->requestData->readRequest($this->nonce());
 
-            if (! isset($data['product'])
-                || ! isset($data['qty'])
+            if (! isset($data['products'])
+                || ! is_array($data['products'])
             ) {
                 wp_send_json_error(
                     __(
@@ -51,23 +51,45 @@ class ChangeCartEndpoint implements EndpointInterface
                 );
                 return false;
             }
-            $product = wc_get_product((int) $data['product']);
-            if (! $product) {
-                wp_send_json_error(
-                    __(
-                        'No product defined. Action aborted.',
-                        'woocommerce-paypal-commerce-gateway'
-                    )
-                );
-                return false;
+
+            $products = [];
+            foreach ($data['products'] as $product) {
+                if (! isset($product['quantity']) || ! isset($product['id'])) {
+                    wp_send_json_error(
+                        __(
+                            'Necessary fields not defined. Action aborted.',
+                            'woocommerce-paypal-commerce-gateway'
+                        )
+                    );
+                    return false;
+                }
+
+                $wcProduct = wc_get_product((int) $product['id']);
+                if (! $wcProduct) {
+                    wp_send_json_error(
+                        __(
+                            'Product not found. Action aborted.',
+                            'woocommerce-paypal-commerce-gateway'
+                        )
+                    );
+                    return false;
+                }
+                $products[] = [
+                    'product' => $wcProduct,
+                    'quantity' => (int) $product['quantity'],
+                    'variations' => isset($product['variations']) ? $product['variations'] : null,
+                ];
+
             }
 
-            $quantity = (int) $data['qty'];
             $this->shipping->reset_shipping();
             $this->cart->empty_cart(false);
-            $success = (! $product->is_type('variable')) ?
-                $success = $this->addProduct($product, $quantity)
-                : $this->addVariableProduct($product, $quantity, $data['variations']);
+            $success = true;
+            foreach ($products as $product) {
+                $success = $success && (! $product['product']->is_type('variable')) ?
+                    $success = $this->addProduct($product['product'], $product['quantity'])
+                    : $this->addVariableProduct($product['product'], $product['quantity'], $product['variations']);
+            }
             if (! $success) {
                 $message = __('Something went wrong. Action aborted', 'woocommerce-paypal-commerce-gateway');
                 $errors = wc_get_notices('error');

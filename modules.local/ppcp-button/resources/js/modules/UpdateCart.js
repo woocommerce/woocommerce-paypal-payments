@@ -1,3 +1,4 @@
+import Product from "./Product";
 class UpdateCart {
 
     constructor(endpoint, nonce)
@@ -6,7 +7,13 @@ class UpdateCart {
         this.nonce = nonce;
     }
 
-    update(onResolve, product, qty, variations)
+    /**
+     *
+     * @param onResolve
+     * @param {Product[]} products
+     * @returns {Promise<unknown>}
+     */
+    update(onResolve, products)
     {
         return new Promise((resolve, reject) => {
             fetch(
@@ -15,9 +22,7 @@ class UpdateCart {
                     method: 'POST',
                     body: JSON.stringify({
                         nonce: this.nonce,
-                        product,
-                        qty,
-                        variations
+                        products,
                     })
                 }
             ).then(
