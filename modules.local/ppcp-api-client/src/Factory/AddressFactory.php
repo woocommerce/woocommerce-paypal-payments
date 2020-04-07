@@ -13,6 +13,18 @@ class AddressFactory
     {
     }
 
+    public function fromWcOrder(\WC_Order $order) : Address
+    {
+        return new Address(
+            $order->get_shipping_country(),
+            $order->get_shipping_address_1(),
+            $order->get_shipping_address_2(),
+            $order->get_shipping_city(),
+            $order->get_shipping_state(),
+            $order->get_shipping_postcode()
+        );
+    }
+
     public function fromPayPalRequest(\stdClass $data) : Address
     {
         if (! isset($data->country_code)) {

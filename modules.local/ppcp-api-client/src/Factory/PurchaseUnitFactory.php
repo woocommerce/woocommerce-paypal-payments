@@ -8,6 +8,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Entity\AmountBreakdown;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Item;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Money;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
+use Inpsyde\PayPalCommerce\ApiClient\Entity\Shipping;
 use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
 class PurchaseUnitFactory
@@ -95,8 +96,7 @@ class PurchaseUnitFactory
             $total,
             $breakdown
         );
-        //ToDo: We need shipping here.
-        $shipping = null;
+        $shipping = $this->shippingFactory->fromWcOrder($order);
 
         $referenceId = 'default';
         $description = '';

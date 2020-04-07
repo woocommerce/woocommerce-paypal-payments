@@ -15,6 +15,16 @@ class ShippingFactory
         $this->addressFactory = $addressFactory;
     }
 
+    public function fromWcOrder(\WC_Order $order) : Shipping
+    {
+        $fullName = $order->get_formatted_billing_full_name();
+        $address = $this->addressFactory->fromWcOrder($order);
+        return new Shipping(
+            $fullName,
+            $address
+        );
+    }
+
     public function fromPayPalResponse(\stdClass $data) : Shipping
     {
         if (! isset($data->name->full_name)) {

@@ -41,6 +41,7 @@ class PatchCollectionFactory
                     }
                 )
             );
+            $needsUpdate=true;
             if (!$needsUpdate) {
                 continue;
             }
