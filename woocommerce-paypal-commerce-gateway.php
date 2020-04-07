@@ -53,16 +53,6 @@ use Inpsyde\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
             }
             $initialized = true;
 
-            add_action('wp_footer', function() use ($container) {
-                return;
-                $purchaseUnitFactory = $container->get('api.factory.purchase-unit');
-                /**
-                 * @var PurchaseUnitFactory $purchaseUnitFactory
-                 */
-                $cart = \WC()->cart;
-                $purchaseUnit = $purchaseUnitFactory->fromWcCart($cart);
-                return;
-            });
         }
     }
 
