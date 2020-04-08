@@ -126,6 +126,10 @@ const bootstrap = () => {
 
     // Configure checkout buttons
     jQuery(document.body).on('updated_checkout', () => {
+        if (jQuery('.ppcp-cancel').length) {
+            return;
+        }
+
         const renderer = new _modules_Renderer__WEBPACK_IMPORTED_MODULE_0__["default"](PayPalCommerceGateway.button.order_button_wrapper);
         renderer.render(defaultConfigurator.configuration());
 
@@ -241,6 +245,7 @@ class ButtonsToggleListener {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _onApprove__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./onApprove */ "./resources/js/modules/onApprove.js");
 
 
 class CartConfig {
@@ -269,12 +274,9 @@ class CartConfig {
                 return data.data.id;
             });
         };
-        const onApprove = (data, actions) => {
-            return actions.redirect(this.config.redirect);
-        };
         return {
             createOrder,
-            onApprove,
+            onApprove: Object(_onApprove__WEBPACK_IMPORTED_MODULE_0__["default"])(this),
             onError: error => {
                 this.errorHandler.message(error);
             }
@@ -399,6 +401,8 @@ class Renderer {
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _ButtonsToggleListener__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./ButtonsToggleListener */ "./resources/js/modules/ButtonsToggleListener.js");
 /* harmony import */ var _Product__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Product */ "./resources/js/modules/Product.js");
+/* harmony import */ var _onApprove__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./onApprove */ "./resources/js/modules/onApprove.js");
+
 
 
 class SingleProductConfig {
@@ -418,12 +422,10 @@ class SingleProductConfig {
             const observer = new _ButtonsToggleListener__WEBPACK_IMPORTED_MODULE_0__["default"](this.formElement.querySelector('.single_add_to_cart_button'), this.showButtonCallback, this.hideButtonCallback);
             observer.init();
         }
-        const onApprove = (data, actions) => {
-            return actions.redirect(this.config.redirect);
-        };
+
         return {
             createOrder: this.createOrder(),
-            onApprove,
+            onApprove: Object(_onApprove__WEBPACK_IMPORTED_MODULE_2__["default"])(this),
             onError: error => {
                 this.errorHandler.message(error);
             }
@@ -506,7 +508,6 @@ class SingleProductConfig {
         return this.formElement.classList.contains('grouped_form');
     }
 }
-
 /* harmony default export */ __webpack_exports__["default"] = (SingleProductConfig);
 
 /***/ }),
@@ -559,6 +560,39 @@ class UpdateCart {
 }
 
 /* harmony default export */ __webpack_exports__["default"] = (UpdateCart);
+
+/***/ }),
+
+/***/ "./resources/js/modules/onApprove.js":
+/*!*******************************************!*\
+  !*** ./resources/js/modules/onApprove.js ***!
+  \*******************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+const onApprove = context => {
+    return (data, actions) => {
+        return fetch(context.config.ajax.approve_order.endpoint, {
+            method: 'POST',
+            body: JSON.stringify({
+                nonce: context.config.ajax.approve_order.nonce,
+                order_id: data.orderID
+            })
+        }).then(res => {
+            return res.json();
+        }).then(data => {
+            if (!data.success) {
+                //Todo: Error handling
+                return;
+            }
+            location.href = context.config.redirect;
+        });
+    };
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (onApprove);
 
 /***/ })
 
