@@ -2,7 +2,7 @@ import Renderer from './modules/Renderer';
 import SingleProductConfig from './modules/SingleProductConfig';
 import UpdateCart from './modules/UpdateCart';
 import ErrorHandler from './modules/ErrorHandler';
-import CartConfig from "./modules/CartConfig";
+import CartConfig from './modules/CartConfig';
 
 const bootstrap = ()=> {
     const context = PayPalCommerceGateway.context;
@@ -27,6 +27,14 @@ const bootstrap = ()=> {
             PayPalCommerceGateway.button.mini_cart_wrapper
         );
         renderer.render(defaultConfigurator.configuration())
+    } );
+
+    // Configure checkout buttons
+    jQuery( document.body ).on( 'updated_checkout', () => {
+        const renderer = new Renderer(
+            PayPalCommerceGateway.button.order_button_wrapper
+        );
+        renderer.render(defaultConfigurator.configuration());
     } );
 
     // Configure context buttons
