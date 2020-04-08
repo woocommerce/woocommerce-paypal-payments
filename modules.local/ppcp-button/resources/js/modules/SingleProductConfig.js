@@ -1,5 +1,6 @@
 import ButtonsToggleListener from "./ButtonsToggleListener";
 import Product from "./Product";
+import onApprove from "./onApprove";
 class SingleProductConfig {
 
     constructor(
@@ -29,12 +30,10 @@ class SingleProductConfig {
             );
             observer.init();
         }
-        const onApprove = (data, actions) => {
-            return actions.redirect(this.config.redirect);
-        }
+
         return {
             createOrder: this.createOrder(),
-            onApprove,
+            onApprove: onApprove(this),
             onError: (error) => {
                 this.errorHandler.message(error);
             }
@@ -123,5 +122,4 @@ class SingleProductConfig {
         return this.formElement.classList.contains('grouped_form');
     }
 }
-
 export default SingleProductConfig;

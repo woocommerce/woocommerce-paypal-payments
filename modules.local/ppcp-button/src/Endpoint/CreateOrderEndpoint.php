@@ -40,7 +40,7 @@ class CreateOrderEndpoint implements EndpointInterface
                 ...$purchaseUnits
             );
             wp_send_json_success($order->toArray());
-            return false;
+            return true;
         } catch (\RuntimeException $error) {
             wp_send_json_error($error->getMessage());
             return false;

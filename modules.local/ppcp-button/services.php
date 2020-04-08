@@ -5,6 +5,7 @@ namespace Inpsyde\PayPalCommerce\Button;
 
 use Inpsyde\PayPalCommerce\Button\Assets\SmartButton;
 use Dhii\Data\Container\ContainerInterface;
+use Inpsyde\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\RequestData;
@@ -39,5 +40,11 @@ return [
         $repository = $container->get('api.cart-repository');
         $apiClient = $container->get('api.endpoint.order');
         return new CreateOrderEndpoint($requestData, $repository, $apiClient);
+    },
+    'button.endpoint.approve-order' => function (ContainerInterface $container) : ApproveOrderEndpoint {
+        $requestData = $container->get('button.request-data');
+        $apiClient = $container->get('api.endpoint.order');
+        $sessionHandler = $container->get('session.handler');
+        return new ApproveOrderEndpoint($requestData, $apiClient, $sessionHandler);
     },
 ];

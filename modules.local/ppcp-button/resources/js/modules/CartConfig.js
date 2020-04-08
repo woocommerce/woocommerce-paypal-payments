@@ -1,4 +1,4 @@
-
+import onApprove from "./onApprove";
 
 class CartConfig {
 
@@ -26,12 +26,9 @@ class CartConfig {
                 return data.data.id;
             });
         }
-        const onApprove = (data, actions) => {
-            return actions.redirect(this.config.redirect);
-        }
         return {
             createOrder,
-            onApprove,
+            onApprove:onApprove(this),
             onError: (error) => {
                 this.errorHandler.message(error);
             }
