@@ -16,7 +16,7 @@ class CancelView
                 href="<?php echo esc_url($url); ?>"
             ><?php
                 esc_html_e('Cancel', 'woocommerce-paypal-commerce-gateway');
-                ?></a>
+            ?></a>
         </p>
         <?php
     }

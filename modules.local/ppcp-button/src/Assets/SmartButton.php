@@ -42,7 +42,7 @@ class SmartButton
         }
         add_action(
             'woocommerce_review_order_after_submit',
-            function() {
+            function () {
                 echo '<span id="ppc-button-checkout"></span>';
             },
             10
