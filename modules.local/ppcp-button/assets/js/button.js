@@ -130,7 +130,7 @@ const bootstrap = () => {
             return;
         }
 
-        const renderer = new _modules_Renderer__WEBPACK_IMPORTED_MODULE_0__["default"](PayPalCommerceGateway.button.order_button_wrapper);
+        const renderer = new _modules_Renderer__WEBPACK_IMPORTED_MODULE_0__["default"](PayPalCommerceGateway.button.wrapper);
         renderer.render(defaultConfigurator.configuration());
 
         jQuery(document.body).trigger('payment_method_selected');
@@ -140,10 +140,10 @@ const bootstrap = () => {
         const currentPaymentMethod = jQuery('input[name="payment_method"]:checked').val();
 
         if (currentPaymentMethod !== 'ppcp-gateway') {
-            jQuery(PayPalCommerceGateway.button.order_button_wrapper).hide();
+            jQuery(PayPalCommerceGateway.button.wrapper).hide();
             jQuery('#place_order').show();
         } else {
-            jQuery(PayPalCommerceGateway.button.order_button_wrapper).show();
+            jQuery(PayPalCommerceGateway.button.wrapper).show();
             jQuery('#place_order').hide();
         }
     });

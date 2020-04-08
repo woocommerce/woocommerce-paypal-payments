@@ -42,9 +42,7 @@ class SmartButton
         }
         add_action(
             'woocommerce_review_order_after_submit',
-            function () {
-                echo '<span id="ppc-button-checkout"></span>';
-            },
+            $renderer,
             10
         );
         add_action(
@@ -90,7 +88,6 @@ class SmartButton
             'button' => [
                 'wrapper' => '#ppc-button',
                 'mini_cart_wrapper' => '#ppc-button-minicart',
-                'order_button_wrapper' => '#ppc-button-checkout',
                 'cancel_wrapper' => '#ppcp-cancel',
                 'url' =>$smartButtonUrl,
             ],
