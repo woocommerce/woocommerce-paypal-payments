@@ -31,6 +31,10 @@ const bootstrap = ()=> {
 
     // Configure checkout buttons
     jQuery( document.body ).on( 'updated_checkout', () => {
+        if ( jQuery('.ppcp-cancel').length ) {
+            return;
+        }
+
         const renderer = new Renderer(
             PayPalCommerceGateway.button.order_button_wrapper
         );
