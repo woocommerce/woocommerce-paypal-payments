@@ -9,14 +9,14 @@ class CancelView
     public function renderSessionCancelation(string $url)
     {
         ?>
-        <p
+        <p id="ppcp-cancel"
             class="has-text-align-center ppcp-cancel"
         >
             <a
                 href="<?php echo esc_url($url); ?>"
             ><?php
                 esc_html_e('Cancel', 'woocommerce-paypal-commerce-gateway');
-                ?></a>
+            ?></a>
         </p>
         <?php
     }

@@ -2,7 +2,7 @@ import Renderer from './modules/Renderer';
 import SingleProductConfig from './modules/SingleProductConfig';
 import UpdateCart from './modules/UpdateCart';
 import ErrorHandler from './modules/ErrorHandler';
-import CartConfig from "./modules/CartConfig";
+import CartConfig from './modules/CartConfig';
 
 const bootstrap = ()=> {
     const context = PayPalCommerceGateway.context;
@@ -27,6 +27,32 @@ const bootstrap = ()=> {
             PayPalCommerceGateway.button.mini_cart_wrapper
         );
         renderer.render(defaultConfigurator.configuration())
+    } );
+
+    // Configure checkout buttons
+    jQuery( document.body ).on( 'updated_checkout', () => {
+        if (document.querySelector(PayPalCommerceGateway.button.cancel_wrapper)) {
+            return;
+        }
+
+        const renderer = new Renderer(
+            PayPalCommerceGateway.button.order_button_wrapper
+        );
+        renderer.render(defaultConfigurator.configuration());
+
+        jQuery( document.body ).trigger( 'payment_method_selected' )
+    } );
+    jQuery( document.body ).on( 'payment_method_selected', () => {
+        // TODO: replace this dirty check, possible create a separate context config
+        const currentPaymentMethod = jQuery('input[name="payment_method"]:checked').val();
+
+        if (currentPaymentMethod !== 'ppcp-gateway') {
+            jQuery(PayPalCommerceGateway.button.order_button_wrapper).hide();
+            jQuery('#place_order').show();
+        } else {
+            jQuery(PayPalCommerceGateway.button.order_button_wrapper).show();
+            jQuery('#place_order').hide();
+        }
     } );
 
     // Configure context buttons

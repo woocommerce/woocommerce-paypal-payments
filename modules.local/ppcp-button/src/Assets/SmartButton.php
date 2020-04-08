@@ -40,14 +40,13 @@ class SmartButton
                 31
             );
         }
-        if (is_checkout()) {
-            add_action(
-                'wp_footer',
-                $renderer,
-                31
-            );
-        }
-
+        add_action(
+            'woocommerce_review_order_after_submit',
+            function () {
+                echo '<span id="ppc-button-checkout"></span>';
+            },
+            10
+        );
         add_action(
             'woocommerce_widget_shopping_cart_buttons',
             function () {
@@ -91,6 +90,8 @@ class SmartButton
             'button' => [
                 'wrapper' => '#ppc-button',
                 'mini_cart_wrapper' => '#ppc-button-minicart',
+                'order_button_wrapper' => '#ppc-button-checkout',
+                'cancel_wrapper' => '#ppcp-cancel',
                 'url' =>$smartButtonUrl,
             ],
         ];
