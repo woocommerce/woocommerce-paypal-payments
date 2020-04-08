@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\Button\Assets;
 
+use Inpsyde\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
 
@@ -48,7 +49,7 @@ class SmartButton
         );
         add_action(
             'woocommerce_widget_shopping_cart_buttons',
-            function() {
+            function () {
                 echo '<span id="ppc-button-minicart"></span>';
             },
             30
@@ -80,6 +81,10 @@ class SmartButton
                 'create_order' => [
                     'endpoint' => home_url(\WC_AJAX::get_endpoint(CreateOrderEndpoint::ENDPOINT)),
                     'nonce' => wp_create_nonce(CreateOrderEndpoint::nonce()),
+                ],
+                'approve_order' => [
+                    'endpoint' => home_url(\WC_AJAX::get_endpoint(ApproveOrderEndpoint::ENDPOINT)),
+                    'nonce' => wp_create_nonce(ApproveOrderEndpoint::nonce()),
                 ],
             ],
             'button' => [

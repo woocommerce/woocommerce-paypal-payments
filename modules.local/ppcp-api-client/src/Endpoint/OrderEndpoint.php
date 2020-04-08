@@ -16,20 +16,17 @@ class OrderEndpoint
 
     private $host;
     private $bearer;
-    private $sessionHandler;
     private $orderFactory;
     private $patchCollectionFactory;
     public function __construct(
         string $host,
         Bearer $bearer,
-        SessionHandler $sessionHandler,
         OrderFactory $orderFactory,
         PatchCollectionFactory $patchCollectionFactory
     ) {
 
         $this->host = $host;
         $this->bearer = $bearer;
-        $this->sessionHandler = $sessionHandler;
         $this->orderFactory = $orderFactory;
         $this->patchCollectionFactory = $patchCollectionFactory;
     }
@@ -37,7 +34,6 @@ class OrderEndpoint
     public function createForPurchaseUnits(PurchaseUnit ...$items) : Order
     {
         $bearer = $this->bearer->bearer();
-
         $data = [
             'intent' => 'CAPTURE',
             'purchase_units' => array_map(
@@ -62,7 +58,6 @@ class OrderEndpoint
         }
         $json = json_decode($response['body']);
         $order = $this->orderFactory->fromPayPalResponse($json);
-        $this->sessionHandler->replaceOrder($order);
         return $order;
     }
 
@@ -90,7 +85,6 @@ class OrderEndpoint
         }
         $json = json_decode($response['body']);
         $order = $this->orderFactory->fromPayPalResponse($json);
-        $this->sessionHandler->replaceOrder($order);
         return $order;
     }
 
@@ -136,7 +130,6 @@ class OrderEndpoint
         }
 
         $newOrder = $this->order($orderToUpdate->id());
-        $this->sessionHandler->replaceOrder($newOrder);
         return $newOrder;
     }
 }

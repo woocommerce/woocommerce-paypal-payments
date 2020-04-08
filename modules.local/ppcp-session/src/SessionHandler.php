@@ -22,6 +22,13 @@ class SessionHandler
         return $this;
     }
 
+    public function destroySessionData() : SessionHandler
+    {
+        $this->order = null;
+        $this->storeSession();
+        return $this;
+    }
+
     private function storeSession()
     {
         WC()->session->set(self::ID, $this);

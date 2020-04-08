@@ -6,6 +6,7 @@ namespace Inpsyde\PayPalCommerce\Button;
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
 use Inpsyde\PayPalCommerce\Button\Assets\SmartButton;
+use Inpsyde\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\RequestData;
@@ -49,6 +50,17 @@ class ButtonModule implements ModuleInterface
             'wc_ajax_' . ChangeCartEndpoint::ENDPOINT,
             function () use ($container) {
                 $endpoint = $container->get('button.endpoint.change-cart');
+                /**
+                 * @var ChangeCartEndpoint $endpoint
+                 */
+                $endpoint->handleRequest();
+            }
+        );
+
+        add_action(
+            'wc_ajax_' . ApproveOrderEndpoint::ENDPOINT,
+            function () use ($container) {
+                $endpoint = $container->get('button.endpoint.approve-order');
                 /**
                  * @var ChangeCartEndpoint $endpoint
                  */
