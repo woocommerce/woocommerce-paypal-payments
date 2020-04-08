@@ -35,10 +35,11 @@ class CancelController
             return;
         }
 
+        $url = add_query_arg([$paramName => wp_create_nonce($nonce)], wc_get_checkout_url());
         add_action(
             'woocommerce_review_order_after_submit',
-            function () use ($paramName, $nonce) {
-                $this->view->renderSessionCancelation($paramName, wp_create_nonce($nonce));
+            function () use ($url) {
+                $this->view->renderSessionCancelation($url);
             }
         );
     }

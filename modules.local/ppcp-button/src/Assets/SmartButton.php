@@ -49,7 +49,7 @@ class SmartButton
 
         add_action(
             'woocommerce_widget_shopping_cart_buttons',
-            function() {
+            function () {
                 echo '<span id="ppc-button-minicart"></span>';
             },
             30

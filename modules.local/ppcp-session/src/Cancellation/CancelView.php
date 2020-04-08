@@ -6,8 +6,18 @@ namespace Inpsyde\PayPalCommerce\Session\Cancellation;
 class CancelView
 {
 
-    public function renderSessionCancelation(string $paramName, string $nonce)
+    public function renderSessionCancelation(string $url)
     {
-        echo '<a href="' . esc_url(add_query_arg([$paramName => $nonce], wc_get_checkout_url())) . '">' . esc_html('Cancel', 'woocommerce-paypal-commerce-gateway') . '</a>';
+        ?>
+        <p
+            class="has-text-align-center ppcp-cancel"
+        >
+            <a
+                href="<?php echo esc_url($url); ?>"
+            ><?php
+                esc_html_e('Cancel', 'woocommerce-paypal-commerce-gateway');
+                ?></a>
+        </p>
+        <?php
     }
 }
