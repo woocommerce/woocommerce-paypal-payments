@@ -35,6 +35,20 @@ const bootstrap = ()=> {
             PayPalCommerceGateway.button.order_button_wrapper
         );
         renderer.render(defaultConfigurator.configuration());
+
+        jQuery( document.body ).trigger( 'payment_method_selected' )
+    } );
+    jQuery( document.body ).on( 'payment_method_selected', () => {
+        // TODO: replace this dirty check, possible create a separate context config
+        const currentPaymentMethod = jQuery('input[name="payment_method"]:checked').val();
+
+        if (currentPaymentMethod !== 'ppcp-gateway') {
+            jQuery(PayPalCommerceGateway.button.order_button_wrapper).hide();
+            jQuery('#place_order').show();
+        } else {
+            jQuery(PayPalCommerceGateway.button.order_button_wrapper).show();
+            jQuery('#place_order').hide();
+        }
     } );
 
     // Configure context buttons
