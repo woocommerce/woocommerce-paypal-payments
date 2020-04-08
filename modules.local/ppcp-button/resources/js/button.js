@@ -1,115 +1,59 @@
-import Renderer from './modules/Renderer';
-import SingleProductConfig from './modules/SingleProductConfig';
-import UpdateCart from './modules/UpdateCart';
 import ErrorHandler from './modules/ErrorHandler';
 import CartConfig from './modules/CartConfig';
+import MiniCartBootstap from './modules/MiniCartBootstap';
+import SingleProductBootstap from './modules/SingleProductBootstap';
+import CartBootstrap from './modules/CartBootstap';
+import CheckoutBootstap from './modules/CheckoutBootstap';
 
-const bootstrap = ()=> {
+const bootstrap = () => {
     const context = PayPalCommerceGateway.context;
     const errorHandler = new ErrorHandler();
-    const defaultConfigurator = new CartConfig(
+    const defaultConfig = new CartConfig(
         PayPalCommerceGateway,
-        errorHandler
+        errorHandler,
     );
-    // Configure mini cart buttons
-    if (document.querySelector(PayPalCommerceGateway.button.mini_cart_wrapper)) {
 
-        const renderer = new Renderer(
-            PayPalCommerceGateway.button.mini_cart_wrapper
-        );
-        renderer.render(defaultConfigurator.configuration())
+    if (context === 'mini-cart') {
+        const miniCartBootstap = new MiniCartBootstap(defaultConfig);
+
+        miniCartBootstap.init();
     }
-    jQuery( document.body ).on( 'wc_fragments_loaded wc_fragments_refreshed', () => {
-        if (! document.querySelector(PayPalCommerceGateway.button.mini_cart_wrapper)) {
-            return;
-        }
-        const renderer = new Renderer(
-            PayPalCommerceGateway.button.mini_cart_wrapper
-        );
-        renderer.render(defaultConfigurator.configuration())
-    } );
 
-    // Configure checkout buttons
-    jQuery( document.body ).on( 'updated_checkout', () => {
-        if (document.querySelector(PayPalCommerceGateway.button.cancel_wrapper)) {
-            return;
-        }
-
-        const renderer = new Renderer(
-            PayPalCommerceGateway.button.wrapper
-        );
-        renderer.render(defaultConfigurator.configuration());
-
-        jQuery( document.body ).trigger( 'payment_method_selected' )
-    } );
-    jQuery( document.body ).on( 'payment_method_selected', () => {
-        // TODO: replace this dirty check, possible create a separate context config
-        const currentPaymentMethod = jQuery('input[name="payment_method"]:checked').val();
-
-        if (currentPaymentMethod !== 'ppcp-gateway') {
-            jQuery(PayPalCommerceGateway.button.wrapper).hide();
-            jQuery('#place_order').show();
-        } else {
-            jQuery(PayPalCommerceGateway.button.wrapper).show();
-            jQuery('#place_order').hide();
-        }
-    } );
-
-    // Configure context buttons
-    if (! document.querySelector(PayPalCommerceGateway.button.wrapper)) {
-        return;
-    }
-    const renderer = new Renderer(
-        PayPalCommerceGateway.button.wrapper
-    );
-    let configurator = null;
     if (context === 'product') {
-        if (! document.querySelector('form.cart')) {
-            return;
-        }
-        const updateCart = new UpdateCart(
-            PayPalCommerceGateway.ajax.change_cart.endpoint,
-            PayPalCommerceGateway.ajax.change_cart.nonce
-        );
-        configurator = new SingleProductConfig(
-            PayPalCommerceGateway,
-            updateCart,
-            renderer.showButtons.bind(renderer),
-            renderer.hideButtons.bind(renderer),
-            document.querySelector('form.cart'),
-            errorHandler
-        );
+        const singleProductBootstap = new SingleProductBootstap();
+        const miniCartBootstap = new MiniCartBootstap(defaultConfig);
+
+        singleProductBootstap.init();
+        miniCartBootstap.init();
     }
+
     if (context === 'cart') {
-        configurator = defaultConfigurator;
+        const cartBootstrap = new CartBootstrap(defaultConfig);
 
-        jQuery( document.body ).on( 'updated_cart_totals updated_checkout', () => {
-            renderer.render(configurator.configuration())
-        });
-    }
-    if (! configurator) {
-        console.error('No context for button found.');
-        return;
+        cartBootstrap.init();
     }
 
-    renderer.render(configurator.configuration());
-}
+    if (context === 'checkout') {
+        const checkoutBootstap = new CheckoutBootstap(defaultConfig);
+
+        checkoutBootstap.init();
+    }
+};
 document.addEventListener(
     'DOMContentLoaded',
     () => {
-
-        if (! typeof(PayPalCommerceGateway)) {
+        if (!typeof (PayPalCommerceGateway)) {
             console.error('PayPal button could not be configured.');
             return;
         }
 
         const script = document.createElement('script');
+
         script.setAttribute('src', PayPalCommerceGateway.button.url);
         script.addEventListener('load', (event) => {
             bootstrap();
-        })
+        });
+
         document.body.append(script);
-
-
-    }
+    },
 );
