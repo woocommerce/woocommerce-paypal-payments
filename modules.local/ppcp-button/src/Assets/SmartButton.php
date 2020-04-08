@@ -91,6 +91,7 @@ class SmartButton
                 'wrapper' => '#ppc-button',
                 'mini_cart_wrapper' => '#ppc-button-minicart',
                 'order_button_wrapper' => '#ppc-button-checkout',
+                'cancel_wrapper' => '#ppcp-cancel',
                 'url' =>$smartButtonUrl,
             ],
         ];
