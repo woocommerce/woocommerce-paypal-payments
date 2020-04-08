@@ -47,7 +47,7 @@ class PurchaseUnitFactory
                 $price = (float) $order->get_item_subtotal($item, true);
                 $priceWithoutTax = (float) $order->get_item_subtotal($item, false);
                 $priceWithoutTaxRounded = round($priceWithoutTax, 2);
-                $tax = round($price - $priceWithoutTax + $priceWithoutTax - $priceWithoutTaxRounded, 2);
+                $tax = round($price - $priceWithoutTaxRounded, 2);
                 $tax = new Money($tax, $currency);
                 return new Item(
                     mb_substr($product->get_name(), 0, 127),
@@ -160,7 +160,7 @@ class PurchaseUnitFactory
                 $price = (float) wc_get_price_including_tax($product);
                 $priceWithoutTax = (float) wc_get_price_excluding_tax($product);
                 $priceWithoutTaxRounded = round($priceWithoutTax, 2);
-                $tax = round($price - $priceWithoutTax + $priceWithoutTax - $priceWithoutTaxRounded, 2);
+                $tax = round($price - $priceWithoutTaxRounded, 2);
                 $tax = new Money($tax, $currency);
                 return new Item(
                     mb_substr($product->get_name(), 0, 127),
