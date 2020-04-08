@@ -37,13 +37,11 @@ return [
         );
     },
     'api.endpoint.order' => function (ContainerInterface $container) : OrderEndpoint {
-        $sessionHandler = $container->get('session.handler');
         $orderFactory = $container->get('api.factory.order');
         $patchCollectionFactory = $container->get('api.factory.patch-collection-factory');
         return new OrderEndpoint(
             $container->get('api.host'),
             $container->get('api.bearer'),
-            $sessionHandler,
             $orderFactory,
             $patchCollectionFactory
         );
