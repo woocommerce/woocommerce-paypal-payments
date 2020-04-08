@@ -28,7 +28,7 @@ class Money
     {
         return [
             'currency_code' => $this->currencyCode(),
-            'value' => $this->value(),
+            'value' => number_format($this->value(),2),
         ];
     }
 }
