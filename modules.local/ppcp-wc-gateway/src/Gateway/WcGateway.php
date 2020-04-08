@@ -35,6 +35,7 @@ class WcGateway extends \WC_Payment_Gateway
         $this->endpoint = $endpoint;
         $this->orderFactory = $orderFactory;
         $this->id = self::ID;
+        $this->title = __('PayPal Payments', 'woocommerce-paypal-gateway');
         $this->method_title = __('PayPal Payments', 'woocommerce-paypal-gateway');
         $this->method_description = __(
             'Provide your customers with the PayPal payment system',
