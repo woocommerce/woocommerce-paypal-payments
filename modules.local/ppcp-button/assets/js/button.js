@@ -316,13 +316,13 @@ class CheckoutBootstap {
             return;
         }
 
+        if (document.querySelector(cancelWrapper)) {
+            return;
+        }
+
         const renderer = new _Renderer__WEBPACK_IMPORTED_MODULE_0__["default"](buttonWrapper);
 
         jQuery(document.body).on('updated_checkout', () => {
-            if (document.querySelector(cancelWrapper)) {
-                return;
-            }
-
             renderer.render(this.configurator.configuration());
 
             jQuery(document.body).trigger('payment_method_selected');
