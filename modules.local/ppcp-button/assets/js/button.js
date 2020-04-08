@@ -330,7 +330,6 @@ class CheckoutBootstap {
 
         jQuery(document.body).on('payment_method_selected', () => {
             // TODO: replace this dirty check, possible create a separate
-            // context config
             const currentPaymentMethod = jQuery('input[name="payment_method"]:checked').val();
 
             if (currentPaymentMethod !== 'ppcp-gateway') {
@@ -416,7 +415,6 @@ class MiniCartBootstap {
         const renderer = new _Renderer__WEBPACK_IMPORTED_MODULE_0__["default"](miniCartWrapper);
 
         jQuery(document.body).on('wc_fragments_loaded wc_fragments_refreshed', () => {
-            console.log('ok');
             renderer.render(this.configurator.configuration());
         });
 
