@@ -27,7 +27,6 @@ class CheckoutBootstap {
 
         jQuery(document.body).on('payment_method_selected', () => {
             // TODO: replace this dirty check, possible create a separate
-            // context config
             const currentPaymentMethod = jQuery(
                 'input[name="payment_method"]:checked').val();
 
