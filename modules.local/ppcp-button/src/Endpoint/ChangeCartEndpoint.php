@@ -79,7 +79,6 @@ class ChangeCartEndpoint implements EndpointInterface
                     'quantity' => (int) $product['quantity'],
                     'variations' => isset($product['variations']) ? $product['variations'] : null,
                 ];
-
             }
 
             $this->shipping->reset_shipping();

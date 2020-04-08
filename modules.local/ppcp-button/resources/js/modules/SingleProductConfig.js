@@ -43,36 +43,56 @@ class SingleProductConfig {
 
     createOrder()
     {
+        var getProducts = null;
         if (! this.isGroupedProduct() ) {
-            return (data, actions) => {
-                this.errorHandler.clear();
+            getProducts = () => {
                 const id = document.querySelector('[name="add-to-cart"]').value;
                 const qty = document.querySelector('[name="quantity"]').value;
                 const variations = this.variations();
-                const product = new Product(id, qty, variations);
-
-                const onResolve = (purchase_units) => {
-                    return fetch(this.config.ajax.create_order.endpoint, {
-                        method: 'POST',
-                        body: JSON.stringify({
-                            nonce: this.config.ajax.create_order.nonce,
-                            purchase_units
-                        })
-                    }).then(function (res) {
-                        return res.json();
-                    }).then(function (data) {
-                        if (!data.success) {
-                            //Todo: Error handling
-                            return;
-                        }
-                        return data.data.id;
-                    });
-                };
-
-                const promise = this.updateCart.update(onResolve, [product]);
-                return promise;
-            };
+                return [new Product(id, qty, variations)];
+            }
+        } else {
+            getProducts = () => {
+                const products = [];
+                this.formElement.querySelectorAll('input[type="number"]').forEach((element) => {
+                    if (! element.value) {
+                        return;
+                    }
+                    const elementName = element.getAttribute('name').match(/quantity\[([\d]*)\]/);
+                    if (elementName.length !== 2) {
+                        return;
+                    }
+                    const id = parseInt(elementName[1]);
+                    const quantity = parseInt(element.value);
+                    products.push(new Product(id, quantity, null));
+                })
+                return products;
+            }
         }
+        const createOrder = (data, actions) => {
+            this.errorHandler.clear();
+
+            const onResolve = (purchase_units) => {
+                return fetch(this.config.ajax.create_order.endpoint, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        nonce: this.config.ajax.create_order.nonce,
+                        purchase_units
+                    })
+                }).then(function (res) {
+                    return res.json();
+                }).then(function (data) {
+                    if (!data.success) {
+                        //Todo: Error handling
+                        return;
+                    }
+                    return data.data.id;
+                });
+            };
+
+            const promise = this.updateCart.update(onResolve, getProducts());
+            return promise;
+        };
         return createOrder;
     }
 
@@ -100,7 +120,7 @@ class SingleProductConfig {
 
     isGroupedProduct()
     {
-        return this.formElement.querySelector('.woocommerce-grouped-product-list') !== null;
+        return this.formElement.classList.contains('grouped_form');
     }
 }
 
