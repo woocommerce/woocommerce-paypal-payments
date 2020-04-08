@@ -7,7 +7,6 @@ use Dhii\Data\Container\ContainerInterface;
 
 return [
     'session.handler' => function (ContainerInterface $container) : SessionHandler {
-
         if (is_admin()) {
             return new SessionHandler();
         }
