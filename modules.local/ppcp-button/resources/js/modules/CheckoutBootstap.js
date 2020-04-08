@@ -13,13 +13,13 @@ class CheckoutBootstap {
             return;
         }
 
+        if (document.querySelector(cancelWrapper)) {
+            return;
+        }
+
         const renderer = new Renderer(buttonWrapper);
 
         jQuery(document.body).on('updated_checkout', () => {
-            if (document.querySelector(cancelWrapper)) {
-                return;
-            }
-
             renderer.render(this.configurator.configuration());
 
             jQuery(document.body).trigger('payment_method_selected');
