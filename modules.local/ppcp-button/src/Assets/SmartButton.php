@@ -25,13 +25,19 @@ class SmartButton
         $renderer = function () {
             echo '<div id="ppc-button"></div>';
         };
+        if (is_cart()) {
+            add_action(
+                'woocommerce_after_cart_totals',
+                $renderer,
+                20
+            );
+        }
         if (is_product()) {
             add_action(
                 'woocommerce_single_product_summary',
                 $renderer,
                 31
             );
-            return true;
         }
         if (is_checkout()) {
             add_action(
@@ -39,9 +45,16 @@ class SmartButton
                 $renderer,
                 31
             );
-            return true;
         }
-        return false;
+
+        add_action(
+            'woocommerce_widget_shopping_cart_buttons',
+            function() {
+                echo '<span id="ppc-button-minicart"></span>';
+            },
+            30
+        );
+        return true;
     }
 
     public function enqueue() : bool
@@ -72,6 +85,7 @@ class SmartButton
             ],
             'button' => [
                 'wrapper' => '#ppc-button',
+                'mini_cart_wrapper' => '#ppc-button-minicart',
                 'url' =>$smartButtonUrl,
             ],
         ];

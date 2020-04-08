@@ -1,8 +1,9 @@
 class Renderer {
 
-    constructor(config)
+    constructor(url, wrapper)
     {
-        this.config = config;
+        this.url = url;
+        this.wrapper = wrapper;
     }
 
     render(buttonConfig)
@@ -11,7 +12,7 @@ class Renderer {
         const script = document.createElement('script');
 
         if (typeof paypal !== 'object') {
-            script.setAttribute('src', this.config.url);
+            script.setAttribute('src', this.url);
             script.addEventListener('load', (event) => {
                 this.renderButtons(buttonConfig);
             })
@@ -27,17 +28,17 @@ class Renderer {
 
         paypal.Buttons(
             buttonConfig
-        ).render(this.config.wrapper);
+        ).render(this.wrapper);
     }
 
     hideButtons()
     {
-        document.querySelector(this.config.wrapper).style.display = 'none';
+        document.querySelector(this.wrapper).style.display = 'none';
     }
 
     showButtons()
     {
-        document.querySelector(this.config.wrapper).style.display = 'block';
+        document.querySelector(this.wrapper).style.display = 'block';
     }
 }
 
