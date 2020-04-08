@@ -108,6 +108,10 @@ class PurchaseUnit
                 $this->items()
             ),
         ];
+        if ($this->ditchItemsWhenMismatch($this->amount(), ...$this->items())) {
+            unset($purchaseUnit['items']);
+            unset($purchaseUnit['amount']['breakdown']);
+        }
 
         if ($this->payee()) {
             $purchaseUnit['payee'] = $this->payee()->toArray();
@@ -126,5 +130,68 @@ class PurchaseUnit
             $purchaseUnit['soft_descriptor'] = $this->softDescriptor();
         }
         return $purchaseUnit;
+    }
+
+    /**
+     * All money values send to PayPal can only have 2 decimal points. Woocommerce internally does
+     * not have this restriction. Therefore the totals of the cart in Woocommerce and the totals of the
+     * rounded money values of the items, we send to PayPal, can differ. In those cases, we can not send
+     * the line items.
+     *
+     * @param Amount $amount
+     * @param Item ...$items
+     * @return bool
+     */
+    private function ditchItemsWhenMismatch(Amount $amount, Item ...$items) : bool
+    {
+        $feeItemsTotal = ($amount->breakdown()->itemTotal()) ?
+            $amount->breakdown()->itemTotal()->value() : null;
+        $feeTaxTotal = ($amount->breakdown()->taxTotal()) ?
+            $amount->breakdown()->taxTotal()->value() : null;
+
+        foreach ($items as $item) {
+            if (null !== $feeItemsTotal) {
+                $feeItemsTotal -= $item->unitAmount()->value() * $item->quantity();
+            }
+            if (null !== $feeTaxTotal) {
+                $feeTaxTotal -= $item->tax()->value() * $item->quantity();
+            }
+        }
+
+        $feeItemsTotal = round($feeItemsTotal, 2);
+        $feeTaxTotal = round($feeTaxTotal, 2);
+
+        if ($feeItemsTotal !== 0.0 || $feeTaxTotal !== 0.0) {
+            return true;
+        }
+
+        $breakdown = $this->amount()->breakdown();
+        if (! $breakdown) {
+            return false;
+        }
+        $amountTotal = 0;
+        if ($breakdown->shipping()) {
+            $amountTotal += $breakdown->shipping()->value();
+        }
+        if ($breakdown->itemTotal()) {
+            $amountTotal += $breakdown->itemTotal()->value();
+        }
+        if ($breakdown->discount()) {
+            $amountTotal += $breakdown->discount()->value();
+        }
+        if ($breakdown->taxTotal()) {
+            $amountTotal += $breakdown->taxTotal()->value();
+        }
+        if ($breakdown->shippingDiscount()) {
+            $amountTotal += $breakdown->shippingDiscount()->value();
+        }
+        if ($breakdown->handling()) {
+            $amountTotal += $breakdown->handling()->value();
+        }
+        if ($breakdown->insurance()) {
+            $amountTotal += $breakdown->insurance()->value();
+        }
+
+        return $amountTotal !== $this->amount()->value();
     }
 }

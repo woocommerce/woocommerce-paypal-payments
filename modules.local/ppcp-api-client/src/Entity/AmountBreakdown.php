@@ -32,6 +32,41 @@ class AmountBreakdown
         $this->discount = $discount;
     }
 
+    public function itemTotal() : ?Money
+    {
+        return $this->itemTotal;
+    }
+
+    public function shipping() : ?Money
+    {
+        return $this->shipping;
+    }
+
+    public function taxTotal() : ?Money
+    {
+        return $this->taxTotal;
+    }
+
+    public function handling() : ?Money
+    {
+        return $this->handling;
+    }
+
+    public function insurance() : ?Money
+    {
+        return $this->insurance;
+    }
+
+    public function shippingDiscount() : ?Money
+    {
+        return $this->shippingDiscount;
+    }
+
+    public function discount() : ?Money
+    {
+        return $this->discount;
+    }
+
     public function toArray() : array
     {
         $breakdown = [];
