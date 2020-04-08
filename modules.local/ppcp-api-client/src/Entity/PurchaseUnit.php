@@ -144,9 +144,9 @@ class PurchaseUnit
      */
     private function ditchItemsWhenMismatch(Amount $amount, Item ...$items) : bool
     {
-        $feeItemsTotal = ($amount->breakdown()->itemTotal()) ?
+        $feeItemsTotal = ($amount->breakdown() && $amount->breakdown()->itemTotal()) ?
             $amount->breakdown()->itemTotal()->value() : null;
-        $feeTaxTotal = ($amount->breakdown()->taxTotal()) ?
+        $feeTaxTotal = ($amount->breakdown() && $amount->breakdown()->taxTotal()) ?
             $amount->breakdown()->taxTotal()->value() : null;
 
         foreach ($items as $item) {
