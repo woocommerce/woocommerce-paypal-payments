@@ -5,6 +5,7 @@ namespace Inpsyde\PayPalCommerce\Session;
 
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
+use Inpsyde\PayPalCommerce\Session\Cancellation\CancelController;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
 
@@ -24,7 +25,11 @@ class SessionModule implements ModuleInterface
         add_action(
             'woocommerce_init',
             function () use ($container) {
-                $container->get('session.handler');
+                $controller = $container->get('session.cancellation.controller');
+                /**
+                 * @var CancelController $controller
+                 */
+                $controller->run();
             }
         );
     }
