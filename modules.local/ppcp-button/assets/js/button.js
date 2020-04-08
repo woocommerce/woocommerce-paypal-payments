@@ -126,7 +126,7 @@ const bootstrap = () => {
 
     // Configure checkout buttons
     jQuery(document.body).on('updated_checkout', () => {
-        if (jQuery('.ppcp-cancel').length) {
+        if (document.querySelector(PayPalCommerceGateway.button.cancel_wrapper)) {
             return;
         }
 
