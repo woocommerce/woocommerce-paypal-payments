@@ -101,6 +101,7 @@ class WcGateway extends \WC_Payment_Gateway
             $wcOrder->update_status('processing', __('Payment received.', 'woocommerce-paypal-gateway'));
         }
         $woocommerce->cart->empty_cart();
+        $this->sessionHandler->destroySessionData();
 
         return [
             'result' => 'success',

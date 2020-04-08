@@ -22,7 +22,7 @@ class SessionHandler
         return $this;
     }
 
-    public function cancelOrder() : SessionHandler
+    public function destroySessionData() : SessionHandler
     {
         $this->order = null;
         $this->storeSession();

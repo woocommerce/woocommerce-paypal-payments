@@ -29,7 +29,7 @@ class CancelController
                 $nonce
             )
         ) { // Input var ok.
-            $this->sessionHandler->cancelOrder();
+            $this->sessionHandler->destroySessionData();
         }
         if (! $this->sessionHandler->order()) {
             return;
