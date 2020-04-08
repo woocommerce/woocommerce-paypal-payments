@@ -85,6 +85,7 @@ class SmartButton
             'button' => [
                 'wrapper' => '#ppc-button',
                 'mini_cart_wrapper' => '#ppc-button-minicart',
+                'order_button_wrapper' => '#ppc-button-checkout',
                 'url' =>$smartButtonUrl,
             ],
         ];
