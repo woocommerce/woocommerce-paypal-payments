@@ -19,7 +19,8 @@ class Settings implements ContainerInterface
         $this->formFields = $formFields;
     }
 
-    // phpcs:ignore Inpsyde.CodeQuality.ReturnTypeDeclaration.NoReturnType
+    // phpcs:disable Inpsyde.CodeQuality.ReturnTypeDeclaration.NoReturnType
+    // phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration.NoArgumentType
     public function get($id)
     {
         if (!$this->has($id)) {
