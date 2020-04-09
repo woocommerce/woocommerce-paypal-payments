@@ -3,7 +3,8 @@ import UpdateCart from './UpdateCart';
 import SingleProductConfig from './SingleProductConfig';
 
 class SingleProductBootstap {
-    constructor(renderer) {
+    constructor(gateway, renderer) {
+        this.gateway = gateway;
         this.renderer = renderer;
     }
 
@@ -14,24 +15,25 @@ class SingleProductBootstap {
 
         const errorHandler = new ErrorHandler();
         const updateCart = new UpdateCart(
-            PayPalCommerceGateway.ajax.change_cart.endpoint,
-            PayPalCommerceGateway.ajax.change_cart.nonce,
+            this.gateway.ajax.change_cart.endpoint,
+            this.gateway.ajax.change_cart.nonce,
         );
+        const buttonWrapper = this.gateway.button.wrapper;
         const configurator = new SingleProductConfig(
-            PayPalCommerceGateway,
+            this.gateway,
             updateCart,
             () => {
-                this.renderer.showButtons(PayPalCommerceGateway.button.wrapper);
+                this.renderer.showButtons(buttonWrapper);
             },
             () => {
-                this.renderer.hideButtons(PayPalCommerceGateway.button.wrapper);
+                this.renderer.hideButtons(buttonWrapper);
             },
             document.querySelector('form.cart'),
             errorHandler,
         );
 
         this.renderer.render(
-            PayPalCommerceGateway.button.wrapper,
+            buttonWrapper,
             configurator.configuration(),
         );
     }
@@ -41,7 +43,7 @@ class SingleProductBootstap {
             return false;
         }
 
-        return document.querySelector(PayPalCommerceGateway.button.wrapper);
+        return document.querySelector(this.gateway.button.wrapper);
     }
 }
 

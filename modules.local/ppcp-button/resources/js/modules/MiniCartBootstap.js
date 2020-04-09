@@ -1,5 +1,6 @@
 class MiniCartBootstap {
-    constructor(renderer, configurator) {
+    constructor(gateway, renderer, configurator) {
+        this.gateway = gateway;
         this.renderer = renderer;
         this.configurator = configurator;
     }
@@ -15,13 +16,13 @@ class MiniCartBootstap {
             });
 
         this.renderer.render(
-            PayPalCommerceGateway.button.mini_cart_wrapper,
+            this.gateway.button.mini_cart_wrapper,
             this.configurator.configuration(),
         );
     }
 
     shouldRender() {
-        return document.querySelector(PayPalCommerceGateway.button.mini_cart_wrapper);
+        return document.querySelector(this.gateway.button.mini_cart_wrapper);
     }
 }
 

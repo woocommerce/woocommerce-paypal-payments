@@ -7,36 +7,55 @@ import CheckoutBootstap from './modules/CheckoutBootstap';
 import Renderer from './modules/Renderer';
 
 const bootstrap = () => {
-    const context = PayPalCommerceGateway.context;
     const renderer = new Renderer;
     const errorHandler = new ErrorHandler();
     const defaultConfig = new CartConfig(
         PayPalCommerceGateway,
         errorHandler,
     );
+    const context = PayPalCommerceGateway.context;
 
     if (context === 'mini-cart') {
-        const miniCartBootstap = new MiniCartBootstap(renderer, defaultConfig);
+        const miniCartBootstap = new MiniCartBootstap(
+            PayPalCommerceGateway,
+            renderer,
+            defaultConfig,
+        );
 
         miniCartBootstap.init();
     }
 
     if (context === 'product') {
-        const singleProductBootstap = new SingleProductBootstap(renderer);
-        const miniCartBootstap = new MiniCartBootstap(renderer, defaultConfig);
+        const singleProductBootstap = new SingleProductBootstap(
+            PayPalCommerceGateway,
+            renderer,
+        );
+        const miniCartBootstap = new MiniCartBootstap(
+            PayPalCommerceGateway,
+            renderer,
+            defaultConfig,
+        );
 
         singleProductBootstap.init();
         miniCartBootstap.init();
     }
 
     if (context === 'cart') {
-        const cartBootstrap = new CartBootstrap(renderer, defaultConfig);
+        const cartBootstrap = new CartBootstrap(
+            PayPalCommerceGateway,
+            renderer,
+            defaultConfig,
+        );
 
         cartBootstrap.init();
     }
 
     if (context === 'checkout') {
-        const checkoutBootstap = new CheckoutBootstap(renderer, defaultConfig);
+        const checkoutBootstap = new CheckoutBootstap(
+            PayPalCommerceGateway,
+            renderer,
+            defaultConfig,
+        );
 
         checkoutBootstap.init();
     }

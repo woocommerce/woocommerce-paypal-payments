@@ -1,5 +1,6 @@
 class CartBootstrap {
-    constructor(renderer, configurator) {
+    constructor(gateway, renderer, configurator) {
+        this.gateway = gateway;
         this.renderer = renderer;
         this.configurator = configurator;
     }
@@ -14,13 +15,13 @@ class CartBootstrap {
         });
 
         this.renderer.render(
-            PayPalCommerceGateway.button.wrapper,
+            this.gateway.button.wrapper,
             this.configurator.configuration(),
         );
     }
 
     shouldRender() {
-        return document.querySelector(PayPalCommerceGateway.button.wrapper);
+        return document.querySelector(this.gateway.button.wrapper);
     }
 }
 
