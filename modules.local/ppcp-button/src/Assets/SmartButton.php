@@ -62,7 +62,7 @@ class SmartButton implements SmartButtonInterface
         return true;
     }
 
-    public function enqueue() : bool
+    public function enqueue(): bool
     {
         wp_enqueue_script(
             'paypal-smart-button',
@@ -105,7 +105,7 @@ class SmartButton implements SmartButtonInterface
                 'wrapper' => '#ppc-button',
                 'mini_cart_wrapper' => '#ppc-button-minicart',
                 'cancel_wrapper' => '#ppcp-cancel',
-                'url' =>$smartButtonUrl,
+                'url' => $smartButtonUrl,
             ],
         ];
         wp_localize_script(
@@ -116,7 +116,7 @@ class SmartButton implements SmartButtonInterface
         return true;
     }
 
-    private function context() : string
+    private function context(): string
     {
         $context = 'mini-cart';
         if (is_product()) {
@@ -125,7 +125,7 @@ class SmartButton implements SmartButtonInterface
         if (is_cart()) {
             $context = 'cart';
         }
-        if (is_checkout() && ! $this->sessionHandler->order()) {
+        if (is_checkout() && !$this->sessionHandler->order()) {
             $context = 'checkout';
         }
         return $context;
