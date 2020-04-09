@@ -1,26 +1,16 @@
 class Renderer {
-
-    constructor(wrapper)
-    {
-        this.wrapper = wrapper;
-    }
-
-    render(buttonConfig)
-    {
-
+    render(wrapper, buttonConfig) {
         paypal.Buttons(
-            buttonConfig
-        ).render(this.wrapper);
+            buttonConfig,
+        ).render(wrapper);
     }
 
-    hideButtons()
-    {
-        document.querySelector(this.wrapper).style.display = 'none';
+    hideButtons(element) {
+        document.querySelector(element).style.display = 'none';
     }
 
-    showButtons()
-    {
-        document.querySelector(this.wrapper).style.display = 'block';
+    showButtons(element) {
+        document.querySelector(element).style.display = 'block';
     }
 }
 

@@ -4,9 +4,11 @@ import MiniCartBootstap from './modules/MiniCartBootstap';
 import SingleProductBootstap from './modules/SingleProductBootstap';
 import CartBootstrap from './modules/CartBootstap';
 import CheckoutBootstap from './modules/CheckoutBootstap';
+import Renderer from './modules/Renderer';
 
 const bootstrap = () => {
     const context = PayPalCommerceGateway.context;
+    const renderer = new Renderer;
     const errorHandler = new ErrorHandler();
     const defaultConfig = new CartConfig(
         PayPalCommerceGateway,
@@ -14,27 +16,27 @@ const bootstrap = () => {
     );
 
     if (context === 'mini-cart') {
-        const miniCartBootstap = new MiniCartBootstap(defaultConfig);
+        const miniCartBootstap = new MiniCartBootstap(renderer, defaultConfig);
 
         miniCartBootstap.init();
     }
 
     if (context === 'product') {
-        const singleProductBootstap = new SingleProductBootstap();
-        const miniCartBootstap = new MiniCartBootstap(defaultConfig);
+        const singleProductBootstap = new SingleProductBootstap(renderer);
+        const miniCartBootstap = new MiniCartBootstap(renderer, defaultConfig);
 
         singleProductBootstap.init();
         miniCartBootstap.init();
     }
 
     if (context === 'cart') {
-        const cartBootstrap = new CartBootstrap(defaultConfig);
+        const cartBootstrap = new CartBootstrap(renderer, defaultConfig);
 
         cartBootstrap.init();
     }
 
     if (context === 'checkout') {
-        const checkoutBootstap = new CheckoutBootstap(defaultConfig);
+        const checkoutBootstap = new CheckoutBootstap(renderer, defaultConfig);
 
         checkoutBootstap.init();
     }

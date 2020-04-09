@@ -1,7 +1,6 @@
-import Renderer from './Renderer';
-
 class CartBootstrap {
-    constructor(configurator) {
+    constructor(renderer, configurator) {
+        this.renderer = renderer;
         this.configurator = configurator;
     }
 
@@ -10,13 +9,14 @@ class CartBootstrap {
             return;
         }
 
-        const renderer = new Renderer(PayPalCommerceGateway.button.wrapper);
-
         jQuery(document.body).on('updated_cart_totals updated_checkout', () => {
-            renderer.render(this.configurator.configuration());
+            this.renderer.render(this.configurator.configuration());
         });
 
-        renderer.render(this.configurator.configuration());
+        this.renderer.render(
+            PayPalCommerceGateway.button.wrapper,
+            this.configurator.configuration(),
+        );
     }
 
     shouldRender() {

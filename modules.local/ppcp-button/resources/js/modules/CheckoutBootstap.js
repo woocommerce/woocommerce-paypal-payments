@@ -1,7 +1,6 @@
-import Renderer from './Renderer';
-
 class CheckoutBootstap {
-    constructor(configurator) {
+    constructor(renderer, configurator) {
+        this.renderer = renderer;
         this.configurator = configurator;
     }
 
@@ -10,23 +9,25 @@ class CheckoutBootstap {
             return;
         }
 
-        const renderer = new Renderer(PayPalCommerceGateway.button.wrapper);
         const toggleButtons = () => {
             const currentPaymentMethod = jQuery(
                 'input[name="payment_method"]:checked').val();
 
             if (currentPaymentMethod !== 'ppcp-gateway') {
-                renderer.hideButtons();
+                this.renderer.hideButtons(PayPalCommerceGateway.button.wrapper);
                 jQuery('#place_order').show();
             }
             else {
-                renderer.showButtons();
+                this.renderer.showButtons(PayPalCommerceGateway.button.wrapper);
                 jQuery('#place_order').hide();
             }
         };
 
         jQuery(document.body).on('updated_checkout', () => {
-            renderer.render(this.configurator.configuration());
+            this.renderer.render(
+                PayPalCommerceGateway.button.wrapper,
+                this.configurator.configuration(),
+            );
             toggleButtons();
         });
 
@@ -34,7 +35,10 @@ class CheckoutBootstap {
             toggleButtons();
         });
 
-        renderer.render(this.configurator.configuration());
+        this.renderer.render(
+            PayPalCommerceGateway.button.wrapper,
+            this.configurator.configuration(),
+        );
     }
 
     shouldRender() {

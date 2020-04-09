@@ -1,15 +1,17 @@
 import ErrorHandler from './ErrorHandler';
-import Renderer from './Renderer';
 import UpdateCart from './UpdateCart';
 import SingleProductConfig from './SingleProductConfig';
 
 class SingleProductBootstap {
+    constructor(renderer) {
+        this.renderer = renderer;
+    }
+
     init() {
         if (!this.shouldRender()) {
             return;
         }
 
-        const renderer = new Renderer(PayPalCommerceGateway.button.wrapper);
         const errorHandler = new ErrorHandler();
         const updateCart = new UpdateCart(
             PayPalCommerceGateway.ajax.change_cart.endpoint,
@@ -18,13 +20,20 @@ class SingleProductBootstap {
         const configurator = new SingleProductConfig(
             PayPalCommerceGateway,
             updateCart,
-            renderer.showButtons.bind(renderer),
-            renderer.hideButtons.bind(renderer),
+            () => {
+                this.renderer.showButtons(PayPalCommerceGateway.button.wrapper);
+            },
+            () => {
+                this.renderer.hideButtons(PayPalCommerceGateway.button.wrapper);
+            },
             document.querySelector('form.cart'),
             errorHandler,
         );
 
-        renderer.render(configurator.configuration());
+        this.renderer.render(
+            PayPalCommerceGateway.button.wrapper,
+            configurator.configuration(),
+        );
     }
 
     shouldRender() {
