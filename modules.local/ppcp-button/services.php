@@ -14,7 +14,11 @@ use Inpsyde\PayPalCommerce\Button\Exception\RuntimeException;
 return [
     'button.smart-button' => function (ContainerInterface $container) : SmartButton {
         $isSandbox = true;
-        return new SmartButton($container->get('button.url'), $isSandbox);
+        return new SmartButton(
+            $container->get('button.url'),
+            $container->get('session.handler'),
+            $isSandbox
+        );
     },
     'button.url' => function (ContainerInterface $container) : string {
         return plugins_url(
