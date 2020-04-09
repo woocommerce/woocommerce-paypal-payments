@@ -13,6 +13,9 @@ return [
         if (is_admin()) {
             return new SessionHandler();
         }
+        if (is_null(WC()->session)) {
+            return new SessionHandler();
+        }
         $result = WC()->session->get(SessionHandler::ID);
         if (is_a($result, SessionHandler::class)) {
             return $result;
