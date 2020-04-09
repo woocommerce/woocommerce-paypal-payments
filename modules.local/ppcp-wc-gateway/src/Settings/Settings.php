@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\WcGateway\Settings;
 
+use Inpsyde\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGateway;
+use Psr\Container\ContainerInterface;
 
-class Settings
+class Settings implements ContainerInterface
 {
     private $gateway;
     private $formFields;
@@ -18,8 +20,16 @@ class Settings
     }
 
     // phpcs:ignore Inpsyde.CodeQuality.ReturnTypeDeclaration.NoReturnType
-    public function get(string $settingsKey)
+    public function get($id)
     {
-        return $this->gateway->get_option($settingsKey);
+        if (!$this->has($id)) {
+            throw new NotFoundException();
+        }
+        return $this->gateway->get_option($id);
+    }
+
+    public function has($id)
+    {
+        return array_key_exists($id, $this->formFields->fields());
     }
 }
