@@ -9,6 +9,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
 use Inpsyde\PayPalCommerce\Session\SessionHandler;
+use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsFields;
 
 //phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
 //phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration.NoArgumentType
@@ -22,18 +23,21 @@ class WcGateway extends \WC_Payment_Gateway
     private $endpoint;
     private $cartRepository;
     private $orderFactory;
+    private $settingsFields;
 
     public function __construct(
         SessionHandler $sessionHandler,
         CartRepository $cartRepository,
         OrderEndpoint $endpoint,
-        OrderFactory $orderFactory
+        OrderFactory $orderFactory,
+        SettingsFields $settingsFields
     ) {
 
         $this->sessionHandler = $sessionHandler;
         $this->cartRepository = $cartRepository;
         $this->endpoint = $endpoint;
         $this->orderFactory = $orderFactory;
+        $this->settingsFields = $settingsFields;
         $this->id = self::ID;
         $this->title = __('PayPal Payments', 'woocommerce-paypal-gateway');
         $this->method_title = __('PayPal Payments', 'woocommerce-paypal-gateway');
@@ -43,8 +47,6 @@ class WcGateway extends \WC_Payment_Gateway
         );
         $this->init_form_fields();
         $this->init_settings();
-
-        $this->isSandbox = $this->get_option('sandbox_on', 'yes') === 'yes';
 
         add_action(
             'woocommerce_update_options_payment_gateways_' . $this->id,
@@ -57,23 +59,7 @@ class WcGateway extends \WC_Payment_Gateway
 
     public function init_form_fields()
     {
-        $this->form_fields = [
-            'enabled' => [
-                'title' => __('Enable/Disable', 'woocommerce-paypal-gateway'),
-                'type' => 'checkbox',
-                'label' => __('Enable PayPal Payments', 'woocommerce-paypal-gateway'),
-                'default' => 'yes',
-            ],
-            'sandbox_on' => [
-                'title' => __('Enable Sandbox', 'woocommerce-paypal-gateway'),
-                'type' => 'checkbox',
-                'label' => __(
-                    'For testing your integration, you can enable the sandbox.',
-                    'woocommerce-paypal-gateway'
-                ),
-                'default' => 'yes',
-            ],
-        ];
+        $this->form_fields = $this->settingsFields->fields();
     }
 
     public function process_payment($orderId) : ?array
