@@ -15,7 +15,7 @@ const bootstrap = () => {
     );
     const context = PayPalCommerceGateway.context;
 
-    if (context === 'mini-cart') {
+    if (context === 'mini-cart' || context === 'product') {
         const miniCartBootstap = new MiniCartBootstap(
             PayPalCommerceGateway,
             renderer,
@@ -30,14 +30,8 @@ const bootstrap = () => {
             PayPalCommerceGateway,
             renderer,
         );
-        const miniCartBootstap = new MiniCartBootstap(
-            PayPalCommerceGateway,
-            renderer,
-            defaultConfig,
-        );
 
         singleProductBootstap.init();
-        miniCartBootstap.init();
     }
 
     if (context === 'cart') {
