@@ -6,18 +6,22 @@ namespace Inpsyde\PayPalCommerce\Button\Assets;
 use Inpsyde\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
+use Inpsyde\PayPalCommerce\Session\SessionHandler;
 
 class SmartButton
 {
 
     private $moduleUrl;
+    private $sessionHandler;
     private $isSandbox;
     public function __construct(
         string $moduleUrl,
+        SessionHandler $sessionHandler,
         bool $isSandbox
     ) {
 
         $this->moduleUrl = $moduleUrl;
+        $this->sessionHandler = $sessionHandler;
         $this->isSandbox = $isSandbox;
     }
 
@@ -112,7 +116,7 @@ class SmartButton
         if (is_cart()) {
             $context = 'cart';
         }
-        if (is_checkout()) {
+        if (is_checkout() && ! $this->sessionHandler->order()) {
             $context = 'checkout';
         }
         return $context;
