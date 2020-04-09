@@ -5,17 +5,11 @@ import SingleProductConfig from './SingleProductConfig';
 
 class SingleProductBootstap {
     init() {
-        const buttonWrapper = PayPalCommerceGateway.button.wrapper;
-
-        if (!document.querySelector(buttonWrapper)) {
+        if (!this.shouldRender()) {
             return;
         }
 
-        if (!document.querySelector('form.cart')) {
-            return;
-        }
-
-        const renderer = new Renderer(buttonWrapper);
+        const renderer = new Renderer(PayPalCommerceGateway.button.wrapper);
         const errorHandler = new ErrorHandler();
         const updateCart = new UpdateCart(
             PayPalCommerceGateway.ajax.change_cart.endpoint,
@@ -31,6 +25,14 @@ class SingleProductBootstap {
         );
 
         renderer.render(configurator.configuration());
+    }
+
+    shouldRender() {
+        if (document.querySelector('form.cart') === null) {
+            return false;
+        }
+
+        return document.querySelector(PayPalCommerceGateway.button.wrapper);
     }
 }
 

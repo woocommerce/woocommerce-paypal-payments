@@ -6,13 +6,11 @@ class MiniCartBootstap {
     }
 
     init() {
-        const miniCartWrapper = PayPalCommerceGateway.button.mini_cart_wrapper;
-
-        if (!document.querySelector(miniCartWrapper)) {
+        if (!this.shouldRender()) {
             return;
         }
 
-        const renderer = new Renderer(miniCartWrapper);
+        const renderer = new Renderer(PayPalCommerceGateway.button.mini_cart_wrapper);
 
         jQuery(document.body).
             on('wc_fragments_loaded wc_fragments_refreshed', () => {
@@ -20,6 +18,10 @@ class MiniCartBootstap {
             });
 
         renderer.render(this.configurator.configuration());
+    }
+
+    shouldRender() {
+        return document.querySelector(PayPalCommerceGateway.button.mini_cart_wrapper)
     }
 }
 

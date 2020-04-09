@@ -6,19 +6,21 @@ class CartBootstrap {
     }
 
     init() {
-        const buttonWrapper = PayPalCommerceGateway.button.wrapper;
-
-        if (!document.querySelector(buttonWrapper)) {
+        if (!this.shouldRender()) {
             return;
         }
 
-        const renderer = new Renderer(buttonWrapper);
+        const renderer = new Renderer(PayPalCommerceGateway.button.wrapper);
 
         jQuery(document.body).on('updated_cart_totals updated_checkout', () => {
             renderer.render(this.configurator.configuration());
         });
 
         renderer.render(this.configurator.configuration());
+    }
+
+    shouldRender() {
+        return document.querySelector(PayPalCommerceGateway.button.wrapper);
     }
 }
 

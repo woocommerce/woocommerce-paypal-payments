@@ -6,18 +6,11 @@ class CheckoutBootstap {
     }
 
     init() {
-        const buttonWrapper = PayPalCommerceGateway.button.wrapper;
-        const cancelWrapper = PayPalCommerceGateway.button.cancel_wrapper;
-
-        if (!document.querySelector(buttonWrapper)) {
+        if (!this.shouldRender()) {
             return;
         }
 
-        if (document.querySelector(cancelWrapper)) {
-            return;
-        }
-
-        const renderer = new Renderer(buttonWrapper);
+        const renderer = new Renderer(PayPalCommerceGateway.button.wrapper);
 
         jQuery(document.body).on('updated_checkout', () => {
             renderer.render(this.configurator.configuration());
@@ -31,16 +24,24 @@ class CheckoutBootstap {
                 'input[name="payment_method"]:checked').val();
 
             if (currentPaymentMethod !== 'ppcp-gateway') {
-                jQuery(buttonWrapper).hide();
+                jQuery(PayPalCommerceGateway.button.wrapper).hide();
                 jQuery('#place_order').show();
             }
             else {
-                jQuery(buttonWrapper).show();
+                jQuery(PayPalCommerceGateway.button.wrapper).show();
                 jQuery('#place_order').hide();
             }
         });
 
         renderer.render(this.configurator.configuration());
+    }
+
+    shouldRender() {
+        if (document.querySelector(PayPalCommerceGateway.button.cancel_wrapper)) {
+            return false;
+        }
+
+        return document.querySelector(PayPalCommerceGateway.button.wrapper);
     }
 }
 
