@@ -1,4 +1,4 @@
-import onApprove from "./onApproveForContinue.js";
+import onApprove from './onApproveForContinue.js';
 
 class CartConfig {
 
@@ -8,31 +8,34 @@ class CartConfig {
     }
 
     configuration() {
-
         const createOrder = (data, actions) => {
             return fetch(this.config.ajax.create_order.endpoint, {
                 method: 'POST',
                 body: JSON.stringify({
                     nonce: this.config.ajax.create_order.nonce,
-                    purchase_units:[]
-                })
-            }).then(function (res) {
+                    purchase_units: [],
+                }),
+            }).then(function(res) {
                 return res.json();
-            }).then(function (data) {
+            }).then(function(data) {
                 if (!data.success) {
                     //Todo: Error handling
                     return;
                 }
                 return data.data.id;
             });
-        }
+        };
+
+        const style = this.config.button.style;
+
         return {
             createOrder,
-            onApprove:onApprove(this),
+            onApprove: onApprove(this),
             onError: (error) => {
                 this.errorHandler.message(error);
-            }
-        }
+            },
+            style,
+        };
     }
 }
 

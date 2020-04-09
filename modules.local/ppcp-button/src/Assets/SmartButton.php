@@ -106,6 +106,12 @@ class SmartButton implements SmartButtonInterface
                 'mini_cart_wrapper' => '#ppc-button-minicart',
                 'cancel_wrapper' => '#ppcp-cancel',
                 'url' => $smartButtonUrl,
+                'style' => [
+                    'layout' => 'vertical',
+                    'color' => 'gold',
+                    'shape' => 'rect',
+                    'label' => 'paypal',
+                ],
             ],
         ];
         wp_localize_script(
