@@ -1,8 +1,16 @@
 class Renderer {
     render(wrapper, buttonConfig) {
+        if (this.isAlreadyRendered(wrapper)) {
+            return;
+        }
+
         paypal.Buttons(
             buttonConfig,
         ).render(wrapper);
+    }
+
+    isAlreadyRendered(wrapper) {
+        return document.querySelector(wrapper).hasChildNodes();
     }
 
     hideButtons(element) {
