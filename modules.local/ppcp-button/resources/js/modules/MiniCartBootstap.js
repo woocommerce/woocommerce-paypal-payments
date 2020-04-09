@@ -22,7 +22,7 @@ class MiniCartBootstap {
     }
 
     shouldRender() {
-        return document.querySelector(this.gateway.button.mini_cart_wrapper);
+        return document.querySelector(this.gateway.button.mini_cart_wrapper) !== null;
     }
 }
 

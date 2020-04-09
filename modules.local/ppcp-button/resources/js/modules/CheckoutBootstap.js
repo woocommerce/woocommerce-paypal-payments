@@ -49,7 +49,7 @@ class CheckoutBootstap {
             return false;
         }
 
-        return document.querySelector(this.gateway.button.wrapper);
+        return document.querySelector(this.gateway.button.wrapper) !== null;
     }
 }
 
