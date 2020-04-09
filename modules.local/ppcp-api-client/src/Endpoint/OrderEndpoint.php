@@ -5,6 +5,7 @@ namespace Inpsyde\PayPalCommerce\ApiClient\Endpoint;
 
 use Inpsyde\PayPalCommerce\ApiClient\Authentication\Bearer;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
+use Inpsyde\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\OrderFactory;
@@ -62,6 +63,9 @@ class OrderEndpoint
 
     public function capture(Order $order) : Order
     {
+        if ($order->status()->is(OrderStatus::COMPLETED)) {
+            return $order;
+        }
         $bearer = $this->bearer->bearer();
         $url = trailingslashit($this->host) . 'v2/checkout/orders/' . $order->id() . '/capture';
         $args = [
@@ -72,14 +76,24 @@ class OrderEndpoint
             ],
         ];
         $response = wp_remote_post($url, $args);
-        /**
-         * ToDo: If order has already been captured. Do something about it. This could happen
-         * if you click the button twice.
-         *
-         * HTTP Code: 422
-         * body: {"details":[{"issue":"ORDER_ALREADY_CAPTURED"}]}
-         **/
-        if (is_wp_error($response) || wp_remote_retrieve_response_code($response) !== 201) {
+
+        if (is_wp_error($response)) {
+            throw new RuntimeException(__('Could not capture order.', 'woocommerce-paypal-commerce-gateway'));
+        }
+        if (wp_remote_retrieve_response_code($response) !== 422) {
+            $json = json_decode($response['body']);
+            if (is_array($json->details) && count(array_filter(
+                $json->details,
+                function($detail) : bool {
+                    return $detail->issue === 'ORDER_ALREADY_CAPTURED';
+                }
+                ))
+            ) {
+                return $this->order($order->id());
+            }
+        }
+
+        if (wp_remote_retrieve_response_code($response) !== 201) {
             throw new RuntimeException(__('Could not capture order.', 'woocommerce-paypal-commerce-gateway'));
         }
         $json = json_decode($response['body']);
