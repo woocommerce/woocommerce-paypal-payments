@@ -108,8 +108,8 @@ class SmartButton implements SmartButtonInterface
                 'url' => $smartButtonUrl,
                 'style' => [
                     'layout' => 'vertical',
-                    'color' => 'gold',
-                    'shape' => 'rect',
+                    'color' => $this->settings->get('button_color'),
+                    'shape' => $this->settings->get('button_shape'),
                     'label' => 'paypal',
                 ],
             ],

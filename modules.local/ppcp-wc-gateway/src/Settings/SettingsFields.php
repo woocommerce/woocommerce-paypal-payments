@@ -99,6 +99,38 @@ class SettingsFields
                 'label' => __('Enable on Cart', 'woocommerce-paypal-gateway'),
                 'default' => 'yes',
             ],
+            'button_color' => [
+                'title' => __('Color', 'woocommerce-paypal-gateway'),
+                'type' => 'select',
+                'class' => 'wc-enhanced-select',
+                'default' => 'gold',
+                'desc_tip' => true,
+                'description' => __(
+                    'Controls the background color of the primary button. Use "Gold" to leverage PayPal\'s recognition and preference, or change it to match your site design or aesthetic.',
+                    'woocommerce-paypal-gateway'
+                ),
+                'options' => [
+                    'gold' => __('Gold (Recommended)', 'woocommerce-paypal-gateway'),
+                    'blue' => __('Blue', 'woocommerce-paypal-gateway'),
+                    'silver' => __('Silver', 'woocommerce-paypal-gateway'),
+                    'black' => __('Black', 'woocommerce-paypal-gateway'),
+                ],
+            ],
+            'button_shape' => [
+                'title' => __('Shape', 'woocommerce-paypal-gateway'),
+                'type' => 'select',
+                'class' => 'wc-enhanced-select',
+                'default' => 'rect',
+                'desc_tip' => true,
+                'description' => __(
+                    'The pill-shaped button\'s unique and powerful shape signifies PayPal in people\'s minds. Use the rectangular button as an alternative when pill-shaped buttons might pose design challenges.',
+                    'woocommerce-paypal-gateway'
+                ),
+                'options' => [
+                    'pill' => __('Pill', 'woocommerce-paypal-gateway'),
+                    'rect' => __('Rectangle', 'woocommerce-paypal-gateway'),
+                ],
+            ],
         ];
     }
 }
