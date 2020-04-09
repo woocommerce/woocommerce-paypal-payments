@@ -1,6 +1,7 @@
-import ButtonsToggleListener from "./ButtonsToggleListener";
-import Product from "./Product";
-import onApprove from "./onApproveForContinue";
+import ButtonsToggleListener from './ButtonsToggleListener';
+import Product from './Product';
+import onApprove from './onApproveForContinue';
+
 class SingleProductConfig {
 
     constructor(
@@ -31,12 +32,15 @@ class SingleProductConfig {
             observer.init();
         }
 
+        const style = this.config.button.style;
+
         return {
             createOrder: this.createOrder(),
             onApprove: onApprove(this),
             onError: (error) => {
                 this.errorHandler.message(error);
-            }
+            },
+            style,
         }
     }
 
