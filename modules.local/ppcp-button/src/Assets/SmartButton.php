@@ -11,10 +11,9 @@ use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
 
 class SmartButton implements SmartButtonInterface
 {
-
     private $moduleUrl;
     private $sessionHandler;
-    private $settingsContainer;
+    private $settings;
 
     public function __construct(
         string $moduleUrl,
@@ -24,39 +23,41 @@ class SmartButton implements SmartButtonInterface
 
         $this->moduleUrl = $moduleUrl;
         $this->sessionHandler = $sessionHandler;
-        $this->settingsContainer = $settings;
+        $this->settings = $settings;
     }
 
-    public function renderWrapper() : bool
+    public function renderWrapper(): bool
     {
         $renderer = function () {
             echo '<div id="ppc-button"></div>';
         };
-        if (is_cart()) {
+        if (is_cart() && wc_string_to_bool($this->settings->get('button_cart_enabled'))) {
             add_action(
                 'woocommerce_after_cart_totals',
                 $renderer,
                 20
             );
         }
-        if (is_product()) {
+        if (is_product() && wc_string_to_bool($this->settings->get('button_single_product_enabled'))) {
             add_action(
                 'woocommerce_single_product_summary',
                 $renderer,
                 31
             );
         }
+        if (wc_string_to_bool($this->settings->get('button_mini_cart_enabled'))) {
+            add_action(
+                'woocommerce_widget_shopping_cart_after_buttons',
+                function () {
+                    echo '<p id="ppc-button-minicart" class="woocommerce-mini-cart__buttons buttons"></p>';
+                },
+                30
+            );
+        }
         add_action(
             'woocommerce_review_order_after_submit',
             $renderer,
             10
-        );
-        add_action(
-            'woocommerce_widget_shopping_cart_buttons',
-            function () {
-                echo '<span id="ppc-button-minicart"></span>';
-            },
-            30
         );
         return true;
     }
