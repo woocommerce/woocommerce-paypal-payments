@@ -19,8 +19,8 @@ class AddressFactory
             $order->get_shipping_country(),
             $order->get_shipping_address_1(),
             $order->get_shipping_address_2(),
-            $order->get_shipping_city(),
             $order->get_shipping_state(),
+            $order->get_shipping_city(),
             $order->get_shipping_postcode()
         );
     }
