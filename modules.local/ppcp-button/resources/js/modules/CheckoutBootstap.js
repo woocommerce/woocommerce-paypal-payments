@@ -24,11 +24,11 @@ class CheckoutBootstap {
                 'input[name="payment_method"]:checked').val();
 
             if (currentPaymentMethod !== 'ppcp-gateway') {
-                jQuery(PayPalCommerceGateway.button.wrapper).hide();
+                renderer.hideButtons();
                 jQuery('#place_order').show();
             }
             else {
-                jQuery(PayPalCommerceGateway.button.wrapper).show();
+                renderer.showButtons();
                 jQuery('#place_order').hide();
             }
         });
