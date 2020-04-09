@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\Button\Endpoint;
 
-
 use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use Inpsyde\PayPalCommerce\Button\Exception\RuntimeException;
@@ -53,7 +52,6 @@ class ApproveOrderEndpoint implements EndpointInterface
             }
 
             if (! $order->status()->is(OrderStatus::APPROVED)) {
-
                 throw new RuntimeException(
                     sprintf(
                     // translators: %s is the id of the order.

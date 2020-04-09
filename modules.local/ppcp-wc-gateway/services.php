@@ -29,5 +29,5 @@ return [
     },
     'wcgateway.settings.fields' => function (ContainerInterface $container) : SettingsFields {
         return new SettingsFields();
-    }
+    },
 ];
