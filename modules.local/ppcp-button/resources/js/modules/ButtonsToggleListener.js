@@ -24,6 +24,7 @@ class ButtonsToggleListener {
         }
         this.observer = new MutationObserver(callback);
         this.observer.observe(this.element, config);
+        callback();
     }
 
     disconnect()
