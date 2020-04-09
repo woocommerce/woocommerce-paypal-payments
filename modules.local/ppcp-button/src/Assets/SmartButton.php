@@ -7,22 +7,24 @@ use Inpsyde\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
 use Inpsyde\PayPalCommerce\Session\SessionHandler;
+use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
 
-class SmartButton
+class SmartButton implements SmartButtonInterface
 {
 
     private $moduleUrl;
     private $sessionHandler;
-    private $isSandbox;
+    private $settingsContainer;
+
     public function __construct(
         string $moduleUrl,
         SessionHandler $sessionHandler,
-        bool $isSandbox
+        Settings $settings
     ) {
 
         $this->moduleUrl = $moduleUrl;
         $this->sessionHandler = $sessionHandler;
-        $this->isSandbox = $isSandbox;
+        $this->settingsContainer = $settings;
     }
 
     public function renderWrapper() : bool

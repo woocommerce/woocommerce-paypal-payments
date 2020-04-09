@@ -3,8 +3,10 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\Button;
 
-use Inpsyde\PayPalCommerce\Button\Assets\SmartButton;
 use Dhii\Data\Container\ContainerInterface;
+use Inpsyde\PayPalCommerce\Button\Assets\DisabledSmartButton;
+use Inpsyde\PayPalCommerce\Button\Assets\SmartButton;
+use Inpsyde\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use Inpsyde\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
@@ -12,13 +14,16 @@ use Inpsyde\PayPalCommerce\Button\Endpoint\RequestData;
 use Inpsyde\PayPalCommerce\Button\Exception\RuntimeException;
 
 return [
-    'button.smart-button' => function (ContainerInterface $container) : SmartButton {
-        $isSandbox = true;
-        return new SmartButton(
-            $container->get('button.url'),
-            $container->get('session.handler'),
-            $isSandbox
-        );
+    'button.smart-button' => function (ContainerInterface $container): SmartButtonInterface {
+        $settings = $container->get('wcgateway.settings');
+        if (wc_string_to_bool($settings->get('enabled'))) {
+            return new SmartButton(
+                $container->get('button.url'),
+                $container->get('session.handler'),
+                $settings
+            );
+        }
+        return new DisabledSmartButton();
     },
     'button.url' => function (ContainerInterface $container) : string {
         return plugins_url(
