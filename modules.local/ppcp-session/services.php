@@ -10,9 +10,6 @@ use Inpsyde\PayPalCommerce\Session\Cancellation\CancelView;
 return [
     'session.handler' => function (ContainerInterface $container) : SessionHandler {
 
-        if (is_admin()) {
-            return new SessionHandler();
-        }
         if (is_null(WC()->session)) {
             return new SessionHandler();
         }
