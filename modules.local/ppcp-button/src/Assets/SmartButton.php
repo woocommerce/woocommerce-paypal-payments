@@ -33,7 +33,7 @@ class SmartButton implements SmartButtonInterface
         };
         if (is_cart() && wc_string_to_bool($this->settings->get('button_cart_enabled'))) {
             add_action(
-                'woocommerce_after_cart_totals',
+                'woocommerce_proceed_to_checkout',
                 $renderer,
                 20
             );
