@@ -11,15 +11,7 @@ class CheckoutBootstap {
         }
 
         const renderer = new Renderer(PayPalCommerceGateway.button.wrapper);
-
-        jQuery(document.body).on('updated_checkout', () => {
-            renderer.render(this.configurator.configuration());
-
-            jQuery(document.body).trigger('payment_method_selected');
-        });
-
-        jQuery(document.body).on('payment_method_selected', () => {
-            // TODO: replace this dirty check, possible create a separate
+        const toggleButtons = () => {
             const currentPaymentMethod = jQuery(
                 'input[name="payment_method"]:checked').val();
 
@@ -31,13 +23,23 @@ class CheckoutBootstap {
                 renderer.showButtons();
                 jQuery('#place_order').hide();
             }
+        };
+
+        jQuery(document.body).on('updated_checkout', () => {
+            renderer.render(this.configurator.configuration());
+            toggleButtons();
+        });
+
+        jQuery(document.body).on('payment_method_selected', () => {
+            toggleButtons();
         });
 
         renderer.render(this.configurator.configuration());
     }
 
     shouldRender() {
-        if (document.querySelector(PayPalCommerceGateway.button.cancel_wrapper)) {
+        if (document.querySelector(
+            PayPalCommerceGateway.button.cancel_wrapper)) {
             return false;
         }
 
