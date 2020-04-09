@@ -3,11 +3,12 @@ import SingleProductConfig from './modules/SingleProductConfig';
 import UpdateCart from './modules/UpdateCart';
 import ErrorHandler from './modules/ErrorHandler';
 import CartConfig from './modules/CartConfig';
+import CheckoutConfig from './modules/CheckoutConfig';
 
 const bootstrap = ()=> {
     const context = PayPalCommerceGateway.context;
     const errorHandler = new ErrorHandler();
-    const defaultConfigurator = new CartConfig(
+    const cartConfigurator = new CartConfig(
         PayPalCommerceGateway,
         errorHandler
     );
@@ -17,7 +18,7 @@ const bootstrap = ()=> {
         const renderer = new Renderer(
             PayPalCommerceGateway.button.mini_cart_wrapper
         );
-        renderer.render(defaultConfigurator.configuration())
+        renderer.render(cartConfigurator.configuration())
     }
     jQuery( document.body ).on( 'wc_fragments_loaded wc_fragments_refreshed', () => {
         if (! document.querySelector(PayPalCommerceGateway.button.mini_cart_wrapper)) {
@@ -26,7 +27,7 @@ const bootstrap = ()=> {
         const renderer = new Renderer(
             PayPalCommerceGateway.button.mini_cart_wrapper
         );
-        renderer.render(defaultConfigurator.configuration())
+        renderer.render(cartConfigurator.configuration())
     } );
 
     // Configure context buttons
@@ -55,14 +56,17 @@ const bootstrap = ()=> {
         );
     }
     if (context === 'cart') {
-        configurator = defaultConfigurator;
+        configurator = cartConfigurator;
 
         jQuery( document.body ).on( 'updated_cart_totals updated_checkout', () => {
             renderer.render(configurator.configuration())
         });
     }
     if (context === 'checkout' ) {
-        configurator = defaultConfigurator;
+        configurator = new CheckoutConfig(
+            PayPalCommerceGateway,
+            errorHandler
+        );
 
         if (!document.querySelector(PayPalCommerceGateway.button.cancel_wrapper)) {
 
@@ -78,7 +82,7 @@ const bootstrap = ()=> {
                 }
             }
             jQuery(document.body).on('updated_checkout', () => {
-                renderer.render(defaultConfigurator.configuration());
+                renderer.render(configurator.configuration());
                 jQuery(document.body).trigger('payment_method_selected')
             });
             jQuery(document.body).on('payment_method_selected', toggleButtons );

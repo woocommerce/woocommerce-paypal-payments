@@ -1,6 +1,6 @@
 import ButtonsToggleListener from "./ButtonsToggleListener";
 import Product from "./Product";
-import onApprove from "./onApprove";
+import onApprove from "./onApproveForContinue";
 class SingleProductConfig {
 
     constructor(
