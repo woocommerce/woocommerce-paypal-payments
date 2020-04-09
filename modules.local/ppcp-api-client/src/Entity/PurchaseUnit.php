@@ -177,13 +177,13 @@ class PurchaseUnit
             $amountTotal += $breakdown->itemTotal()->value();
         }
         if ($breakdown->discount()) {
-            $amountTotal += $breakdown->discount()->value();
+            $amountTotal -= $breakdown->discount()->value();
         }
         if ($breakdown->taxTotal()) {
             $amountTotal += $breakdown->taxTotal()->value();
         }
         if ($breakdown->shippingDiscount()) {
-            $amountTotal += $breakdown->shippingDiscount()->value();
+            $amountTotal -= $breakdown->shippingDiscount()->value();
         }
         if ($breakdown->handling()) {
             $amountTotal += $breakdown->handling()->value();
@@ -192,6 +192,8 @@ class PurchaseUnit
             $amountTotal += $breakdown->insurance()->value();
         }
 
-        return $amountTotal !== $this->amount()->value();
+        $amountValue = $this->amount()->value();
+        $needsToDitch = (string) $amountTotal !== (string) $amountValue;
+        return $needsToDitch;
     }
 }
