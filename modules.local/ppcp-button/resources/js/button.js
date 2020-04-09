@@ -29,32 +29,6 @@ const bootstrap = ()=> {
         renderer.render(defaultConfigurator.configuration())
     } );
 
-    // Configure checkout buttons
-    jQuery( document.body ).on( 'updated_checkout', () => {
-        if (document.querySelector(PayPalCommerceGateway.button.cancel_wrapper)) {
-            return;
-        }
-
-        const renderer = new Renderer(
-            PayPalCommerceGateway.button.wrapper
-        );
-        renderer.render(defaultConfigurator.configuration());
-
-        jQuery( document.body ).trigger( 'payment_method_selected' )
-    } );
-    jQuery( document.body ).on( 'payment_method_selected', () => {
-        // TODO: replace this dirty check, possible create a separate context config
-        const currentPaymentMethod = jQuery('input[name="payment_method"]:checked').val();
-
-        if (currentPaymentMethod !== 'ppcp-gateway') {
-            jQuery(PayPalCommerceGateway.button.wrapper).hide();
-            jQuery('#place_order').show();
-        } else {
-            jQuery(PayPalCommerceGateway.button.wrapper).show();
-            jQuery('#place_order').hide();
-        }
-    } );
-
     // Configure context buttons
     if (! document.querySelector(PayPalCommerceGateway.button.wrapper)) {
         return;
@@ -86,6 +60,30 @@ const bootstrap = ()=> {
         jQuery( document.body ).on( 'updated_cart_totals updated_checkout', () => {
             renderer.render(configurator.configuration())
         });
+    }
+    if (context === 'checkout' ) {
+        configurator = defaultConfigurator;
+
+        if (!document.querySelector(PayPalCommerceGateway.button.cancel_wrapper)) {
+
+            const toggleButtons = () => {
+                const currentPaymentMethod = jQuery('input[name="payment_method"]:checked').val();
+
+                if (currentPaymentMethod !== 'ppcp-gateway') {
+                    renderer.hideButtons();
+                    jQuery('#place_order').show();
+                } else {
+                    renderer.showButtons();
+                    jQuery('#place_order').hide();
+                }
+            }
+            jQuery(document.body).on('updated_checkout', () => {
+                renderer.render(defaultConfigurator.configuration());
+                jQuery(document.body).trigger('payment_method_selected')
+            });
+            jQuery(document.body).on('payment_method_selected', toggleButtons );
+            toggleButtons();
+        }
     }
     if (! configurator) {
         console.error('No context for button found.');
