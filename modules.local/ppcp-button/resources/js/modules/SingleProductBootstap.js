@@ -18,24 +18,20 @@ class SingleProductBootstap {
             this.gateway.ajax.change_cart.endpoint,
             this.gateway.ajax.change_cart.nonce,
         );
-        const buttonWrapper = this.gateway.button.wrapper;
-        const configurator = new SingleProductConfig(
+        this.configurator = new SingleProductConfig(
             this.gateway,
             updateCart,
             () => {
-                this.renderer.showButtons(buttonWrapper);
+                this.renderer.showButtons(this.gateway.button.wrapper);
             },
             () => {
-                this.renderer.hideButtons(buttonWrapper);
+                this.renderer.hideButtons(this.gateway.button.wrapper);
             },
             document.querySelector('form.cart'),
             errorHandler,
         );
 
-        this.renderer.render(
-            buttonWrapper,
-            configurator.configuration(),
-        );
+        this.render();
     }
 
     shouldRender() {
@@ -44,6 +40,13 @@ class SingleProductBootstap {
         }
 
         return document.querySelector(this.gateway.button.wrapper) !== null;
+    }
+
+    render() {
+        this.renderer.render(
+            this.gateway.button.wrapper,
+            this.configurator.configuration(),
+        );
     }
 }
 

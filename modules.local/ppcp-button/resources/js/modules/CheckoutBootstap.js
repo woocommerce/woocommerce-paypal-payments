@@ -10,38 +10,15 @@ class CheckoutBootstap {
             return;
         }
 
-        const buttonWrapper = this.gateway.button.wrapper;
-
-        const toggleButtons = () => {
-            const currentPaymentMethod = jQuery(
-                'input[name="payment_method"]:checked').val();
-
-            if (currentPaymentMethod !== 'ppcp-gateway') {
-                this.renderer.hideButtons(buttonWrapper);
-                jQuery('#place_order').show();
-            }
-            else {
-                this.renderer.showButtons(buttonWrapper);
-                jQuery('#place_order').hide();
-            }
-        };
+        this.render();
 
         jQuery(document.body).on('updated_checkout', () => {
-            this.renderer.render(
-                buttonWrapper,
-                this.configurator.configuration(),
-            );
-            toggleButtons();
+            this.render();
         });
 
-        jQuery(document.body).on('payment_method_selected', () => {
-            toggleButtons();
+        jQuery(document.body).on('updated_checkout payment_method_selected', () => {
+            this.switchBetweenPayPalandOrderButton();
         });
-
-        this.renderer.render(
-            buttonWrapper,
-            this.configurator.configuration(),
-        );
     }
 
     shouldRender() {
@@ -50,6 +27,26 @@ class CheckoutBootstap {
         }
 
         return document.querySelector(this.gateway.button.wrapper) !== null;
+    }
+
+    render() {
+        this.renderer.render(
+            this.gateway.button.wrapper,
+            this.configurator.configuration(),
+        );
+    }
+
+    switchBetweenPayPalandOrderButton() {
+        const currentPaymentMethod = jQuery('input[name="payment_method"]:checked').val();
+
+        if (currentPaymentMethod !== 'ppcp-gateway') {
+            this.renderer.hideButtons(this.gateway.button.wrapper);
+            jQuery('#place_order').show();
+        }
+        else {
+            this.renderer.showButtons(this.gateway.button.wrapper);
+            jQuery('#place_order').hide();
+        }
     }
 }
 

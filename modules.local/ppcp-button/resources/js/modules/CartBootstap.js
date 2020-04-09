@@ -10,18 +10,22 @@ class CartBootstrap {
             return;
         }
 
-        jQuery(document.body).on('updated_cart_totals updated_checkout', () => {
-            this.renderer.render(this.configurator.configuration());
-        });
+        this.render();
 
-        this.renderer.render(
-            this.gateway.button.wrapper,
-            this.configurator.configuration(),
-        );
+        jQuery(document.body).on('updated_cart_totals updated_checkout', () => {
+            this.render();
+        });
     }
 
     shouldRender() {
         return document.querySelector(this.gateway.button.wrapper) !== null;
+    }
+
+    render() {
+        this.renderer.render(
+            this.gateway.button.wrapper,
+            this.configurator.configuration(),
+        );
     }
 }
 
