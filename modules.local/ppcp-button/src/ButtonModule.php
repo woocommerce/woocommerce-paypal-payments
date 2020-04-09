@@ -29,20 +29,22 @@ class ButtonModule implements ModuleInterface
      */
     public function run(ContainerInterface $container)
     {
-        $smartButton = $container->get('button.smart-button');
         /**
          * @var SmartButton $smartButton
          */
         add_action(
             'wp',
-            function () use ($smartButton) {
+            function () use ($container) {
                 if (is_admin()) {
                     return;
                 }
+                $smartButton = $container->get('button.smart-button');
                 $smartButton->renderWrapper();
             }
         );
-        add_action('wp_enqueue_scripts', function () use ($smartButton) {
+        add_action('wp_enqueue_scripts', function () use ($container) {
+
+            $smartButton = $container->get('button.smart-button');
             $smartButton->enqueue();
         });
 

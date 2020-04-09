@@ -2,6 +2,7 @@
   "name": "inpsyde/ppcp-api-client",
   "type": "inpsyde-module",
   "require": {
+    "ext-json": "*",
     "dhii/module-interface": "0.2.x-dev",
     "inpsyde/ppcp-session": "dev-master"
   },

@@ -6,18 +6,22 @@ namespace Inpsyde\PayPalCommerce\Button\Assets;
 use Inpsyde\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
+use Inpsyde\PayPalCommerce\Session\SessionHandler;
 
 class SmartButton
 {
 
     private $moduleUrl;
+    private $sessionHandler;
     private $isSandbox;
     public function __construct(
         string $moduleUrl,
+        SessionHandler $sessionHandler,
         bool $isSandbox
     ) {
 
         $this->moduleUrl = $moduleUrl;
+        $this->sessionHandler = $sessionHandler;
         $this->isSandbox = $isSandbox;
     }
 
@@ -63,8 +67,17 @@ class SmartButton
         );
 
         $params = [
+            //ToDo: Add the correct client id, toggle when settings is set to sandbox
             'client-id' => 'AcVzowpNCpTxFzLG7onQI4JD0sVcA0BkZv-D42qRZPv_gZ8cNfX9zGL_8bXmSu7cbJ5B2DH7sot8vDpw',
             'currency' => get_woocommerce_currency(),
+            'locale' => get_user_locale(),
+            //'debug' => (defined('WP_DEBUG') && WP_DEBUG) ? 'true' : 'false',
+            //ToDo: Update date on releases.
+            'integration-date' => date('Y-m-d'),
+            'components' => 'marks,buttons',
+            //ToDo: Probably only needed, when DCC
+            'vault' => 'true',
+            'commit' => is_checkout() ? 'true' : 'false',
         ];
         $smartButtonUrl = add_query_arg($params, 'https://www.paypal.com/sdk/js');
 
@@ -109,7 +122,7 @@ class SmartButton
         if (is_cart()) {
             $context = 'cart';
         }
-        if (is_checkout()) {
+        if (is_checkout() && ! $this->sessionHandler->order()) {
             $context = 'checkout';
         }
         return $context;

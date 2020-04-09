@@ -1,5 +1,6 @@
 import ErrorHandler from './modules/ErrorHandler';
 import CartConfig from './modules/CartConfig';
+import CheckoutConfig from "./modules/CheckoutConfig";
 import MiniCartBootstap from './modules/MiniCartBootstap';
 import SingleProductBootstap from './modules/SingleProductBootstap';
 import CartBootstrap from './modules/CartBootstap';
@@ -9,9 +10,13 @@ import Renderer from './modules/Renderer';
 const bootstrap = () => {
     const renderer = new Renderer;
     const errorHandler = new ErrorHandler();
-    const defaultConfig = new CartConfig(
+    const cartConfig = new CartConfig(
         PayPalCommerceGateway,
         errorHandler,
+    );
+    const checkoutConfig = new CheckoutConfig(
+        PayPalCommerceGateway,
+        errorHandler
     );
     const context = PayPalCommerceGateway.context;
 
@@ -19,7 +24,7 @@ const bootstrap = () => {
         const miniCartBootstap = new MiniCartBootstap(
             PayPalCommerceGateway,
             renderer,
-            defaultConfig,
+            cartConfig,
         );
 
         miniCartBootstap.init();
@@ -38,7 +43,7 @@ const bootstrap = () => {
         const cartBootstrap = new CartBootstrap(
             PayPalCommerceGateway,
             renderer,
-            defaultConfig,
+            cartConfig,
         );
 
         cartBootstrap.init();
@@ -48,7 +53,7 @@ const bootstrap = () => {
         const checkoutBootstap = new CheckoutBootstap(
             PayPalCommerceGateway,
             renderer,
-            defaultConfig,
+            checkoutConfig,
         );
 
         checkoutBootstap.init();

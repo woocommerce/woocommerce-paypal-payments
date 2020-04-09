@@ -82,7 +82,15 @@ class PurchaseUnitFactory
             0
         ), $currency);
 
-        //ToDo: Discount, evaluate if more is needed? Fees?
+        $discount = null;
+        if ((float) $order->get_total_discount()) {
+            $discount = new Money(
+                (float) $order->get_total_discount(false),
+                $currency
+            );
+        }
+
+        //ToDo: Evaluate if more is needed? Fees?
         $breakdown = new AmountBreakdown(
             $itemsTotal,
             $shipping,
@@ -90,7 +98,7 @@ class PurchaseUnitFactory
             null, // insurance?
             null, // handling?
             null, //shipping discounts?
-            null //discounts!
+            $discount
         );
         $amount = new Amount(
             $total,
@@ -126,16 +134,23 @@ class PurchaseUnitFactory
     {
         $currency = get_woocommerce_currency();
         $total = new Money((float) $cart->get_total('numeric'), $currency);
-        $itemsTotal = $cart->get_cart_contents_total();
+        $itemsTotal = $cart->get_cart_contents_total() + $cart->get_discount_total();
         $itemsTotal = new Money((float) $itemsTotal, $currency);
         $shipping = new Money(
             (float) $cart->get_shipping_total() + $cart->get_shipping_tax(),
             $currency
         );
 
-        $taxes = new Money((float) $cart->get_cart_contents_tax(), $currency);
+        $taxes = new Money((float) $cart->get_cart_contents_tax() + (float) $cart->get_discount_tax(), $currency);
 
-        //ToDo: Discount, evaluate if more is needed? Fees?
+        $discount = null;
+        if ($cart->get_discount_total()) {
+            $discount = new Money(
+                (float) $cart->get_discount_total() + $cart->get_discount_tax(),
+                $currency
+            );
+        }
+        //ToDo: Evaluate if more is needed? Fees?
         $breakdown = new AmountBreakdown(
             $itemsTotal,
             $shipping,
@@ -143,7 +158,7 @@ class PurchaseUnitFactory
             null, // insurance?
             null, // handling?
             null, //shipping discounts?
-            null //discounts!
+            $discount
         );
         $amount = new Amount(
             $total,
@@ -175,8 +190,17 @@ class PurchaseUnitFactory
             $cart->get_cart_contents()
         );
 
-        //ToDo: Do we need shipping here?
+        /**
+         * // ToDo:
+         * When we send a shipping information while creating the order, this does
+         * currently not mean, this address will be shown as default.
+         *
+         * Maybe discuss.
+         */
         $shipping = null;
+        if (is_a(\WC()->customer, \WC_Customer::class)) {
+            $shipping = $this->shippingFactory->fromWcCustomer(\WC()->customer);
+        }
 
         $referenceId = 'default';
         $description = '';

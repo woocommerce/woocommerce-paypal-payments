@@ -13,14 +13,26 @@ class AddressFactory
     {
     }
 
+    public function fromWcCustomer(\WC_Customer $customer, string $type = 'shipping') : Address
+    {
+        return new Address(
+            ($type === 'shipping') ? $customer->get_shipping_country() : $customer->get_billing_country(),
+            ($type === 'shipping') ? $customer->get_shipping_address_1() : $customer->get_billing_address_1(),
+            ($type === 'shipping') ? $customer->get_shipping_address_2() : $customer->get_billing_address_2(),
+            ($type === 'shipping') ? $customer->get_shipping_state() : $customer->get_billing_state(),
+            ($type === 'shipping') ? $customer->get_shipping_city() : $customer->get_billing_city(),
+            ($type === 'shipping') ? $customer->get_shipping_postcode() : $customer->get_billing_postcode(),
+        );
+    }
+
     public function fromWcOrder(\WC_Order $order) : Address
     {
         return new Address(
             $order->get_shipping_country(),
             $order->get_shipping_address_1(),
             $order->get_shipping_address_2(),
-            $order->get_shipping_city(),
             $order->get_shipping_state(),
+            $order->get_shipping_city(),
             $order->get_shipping_postcode()
         );
     }
