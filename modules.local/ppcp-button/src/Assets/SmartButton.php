@@ -67,13 +67,18 @@ class SmartButton
         );
 
         $params = [
+            //ToDo: Add the correct client id, toggle when settings is set to sandbox
             'client-id' => 'AcVzowpNCpTxFzLG7onQI4JD0sVcA0BkZv-D42qRZPv_gZ8cNfX9zGL_8bXmSu7cbJ5B2DH7sot8vDpw',
             'currency' => get_woocommerce_currency(),
             'locale' => get_user_locale(),
+            //'debug' => (defined('WP_DEBUG') && WP_DEBUG) ? 'true' : 'false',
+            //ToDo: Update date on releases.
+            'integration-date' => date('Y-m-d'),
+            'components' => 'marks,buttons',
+            //ToDo: Probably only needed, when DCC
+            'vault' => 'true',
+            'commit' => is_checkout() ? 'true' : 'false',
         ];
-        if (! is_checkout()) {
-            $params['commit'] = 'false';
-        }
         $smartButtonUrl = add_query_arg($params, 'https://www.paypal.com/sdk/js');
 
         $localize = [
