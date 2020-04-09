@@ -190,8 +190,17 @@ class PurchaseUnitFactory
             $cart->get_cart_contents()
         );
 
-        //ToDo: Do we need shipping here?
+        /**
+         * // ToDo:
+         * When we send a shipping information while creating the order, this does
+         * currently not mean, this address will be shown as default.
+         *
+         * Maybe discuss.
+         */
         $shipping = null;
+        if (is_a(\WC()->customer, \WC_Customer::class)) {
+            $shipping = $this->shippingFactory->fromWcCustomer(\WC()->customer);
+        }
 
         $referenceId = 'default';
         $description = '';

@@ -15,9 +15,24 @@ class ShippingFactory
         $this->addressFactory = $addressFactory;
     }
 
+    public function fromWcCustomer(\WC_Customer $customer) : Shipping
+    {
+        // Replicates the Behavior of \WC_Order::get_formatted_shipping_full_name()
+        $fullName = sprintf(
+            _x( '%1$s %2$s', 'full name', 'woocommerce' ),
+            $customer->get_shipping_first_name(),
+            $customer->get_shipping_last_name()
+        );
+        $address = $this->addressFactory->fromWcCustomer($customer);
+        return new Shipping(
+            $fullName,
+            $address
+        );
+    }
+
     public function fromWcOrder(\WC_Order $order) : Shipping
     {
-        $fullName = $order->get_formatted_billing_full_name();
+        $fullName = $order->get_formatted_shipping_full_name();
         $address = $this->addressFactory->fromWcOrder($order);
         return new Shipping(
             $fullName,
