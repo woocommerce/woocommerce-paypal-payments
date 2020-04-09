@@ -9,7 +9,6 @@ use Inpsyde\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\PatchCollectionFactory;
-use Inpsyde\PayPalCommerce\Session\SessionHandler;
 
 class OrderEndpoint
 {
