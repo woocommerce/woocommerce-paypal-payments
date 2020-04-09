@@ -20,8 +20,7 @@ class Bearer
 
     public function bearer() : string
     {
-        //ToDo: Do not store with wp_cache_get but as transient.
-        $bearer = wp_cache_get(self::CACHE_KEY);
+        $bearer = get_transient(self::CACHE_KEY);
         if (! $bearer) {
             return $this->newBearer();
         }
@@ -50,7 +49,7 @@ class Bearer
             throw new RuntimeException(__('Could not find token.', 'woocommerce-paypal-commerce-gateway'));
         }
         $token = (string) $json->access_token;
-        wp_cache_set(self::CACHE_KEY, $token, $json->expires_in);
+        set_transient(self::CACHE_KEY, $token, $json->expires_in);
         return $token;
     }
 }
