@@ -101,6 +101,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _modules_SingleProductBootstap__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./modules/SingleProductBootstap */ "./resources/js/modules/SingleProductBootstap.js");
 /* harmony import */ var _modules_CartBootstap__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./modules/CartBootstap */ "./resources/js/modules/CartBootstap.js");
 /* harmony import */ var _modules_CheckoutBootstap__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./modules/CheckoutBootstap */ "./resources/js/modules/CheckoutBootstap.js");
+/* harmony import */ var _modules_Renderer__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./modules/Renderer */ "./resources/js/modules/Renderer.js");
+
 
 
 
@@ -109,32 +111,33 @@ __webpack_require__.r(__webpack_exports__);
 
 
 const bootstrap = () => {
-    const context = PayPalCommerceGateway.context;
+    const renderer = new _modules_Renderer__WEBPACK_IMPORTED_MODULE_6__["default"]();
     const errorHandler = new _modules_ErrorHandler__WEBPACK_IMPORTED_MODULE_0__["default"]();
     const defaultConfig = new _modules_CartConfig__WEBPACK_IMPORTED_MODULE_1__["default"](PayPalCommerceGateway, errorHandler);
+    const context = PayPalCommerceGateway.context;
 
     if (context === 'mini-cart') {
-        const miniCartBootstap = new _modules_MiniCartBootstap__WEBPACK_IMPORTED_MODULE_2__["default"](defaultConfig);
+        const miniCartBootstap = new _modules_MiniCartBootstap__WEBPACK_IMPORTED_MODULE_2__["default"](PayPalCommerceGateway, renderer, defaultConfig);
 
         miniCartBootstap.init();
     }
 
     if (context === 'product') {
-        const singleProductBootstap = new _modules_SingleProductBootstap__WEBPACK_IMPORTED_MODULE_3__["default"]();
-        const miniCartBootstap = new _modules_MiniCartBootstap__WEBPACK_IMPORTED_MODULE_2__["default"](defaultConfig);
+        const singleProductBootstap = new _modules_SingleProductBootstap__WEBPACK_IMPORTED_MODULE_3__["default"](PayPalCommerceGateway, renderer);
+        const miniCartBootstap = new _modules_MiniCartBootstap__WEBPACK_IMPORTED_MODULE_2__["default"](PayPalCommerceGateway, renderer, defaultConfig);
 
         singleProductBootstap.init();
         miniCartBootstap.init();
     }
 
     if (context === 'cart') {
-        const cartBootstrap = new _modules_CartBootstap__WEBPACK_IMPORTED_MODULE_4__["default"](defaultConfig);
+        const cartBootstrap = new _modules_CartBootstap__WEBPACK_IMPORTED_MODULE_4__["default"](PayPalCommerceGateway, renderer, defaultConfig);
 
         cartBootstrap.init();
     }
 
     if (context === 'checkout') {
-        const checkoutBootstap = new _modules_CheckoutBootstap__WEBPACK_IMPORTED_MODULE_5__["default"](defaultConfig);
+        const checkoutBootstap = new _modules_CheckoutBootstap__WEBPACK_IMPORTED_MODULE_5__["default"](PayPalCommerceGateway, renderer, defaultConfig);
 
         checkoutBootstap.init();
     }
@@ -190,6 +193,7 @@ class ButtonsToggleListener {
         };
         this.observer = new MutationObserver(callback);
         this.observer.observe(this.element, config);
+        callback();
     }
 
     disconnect() {
@@ -210,28 +214,27 @@ class ButtonsToggleListener {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _Renderer__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Renderer */ "./resources/js/modules/Renderer.js");
-
-
 class CartBootstrap {
-    constructor(configurator) {
+    constructor(gateway, renderer, configurator) {
+        this.gateway = gateway;
+        this.renderer = renderer;
         this.configurator = configurator;
     }
 
     init() {
-        const buttonWrapper = PayPalCommerceGateway.button.wrapper;
-
-        if (!document.querySelector(buttonWrapper)) {
+        if (!this.shouldRender()) {
             return;
         }
 
-        const renderer = new _Renderer__WEBPACK_IMPORTED_MODULE_0__["default"](buttonWrapper);
-
         jQuery(document.body).on('updated_cart_totals updated_checkout', () => {
-            renderer.render(this.configurator.configuration());
+            this.renderer.render(this.configurator.configuration());
         });
 
-        renderer.render(this.configurator.configuration());
+        this.renderer.render(this.gateway.button.wrapper, this.configurator.configuration());
+    }
+
+    shouldRender() {
+        return document.querySelector(this.gateway.button.wrapper);
     }
 }
 
@@ -300,48 +303,50 @@ class CartConfig {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _Renderer__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Renderer */ "./resources/js/modules/Renderer.js");
-
-
 class CheckoutBootstap {
-    constructor(configurator) {
+    constructor(gateway, renderer, configurator) {
+        this.gateway = gateway;
+        this.renderer = renderer;
         this.configurator = configurator;
     }
 
     init() {
-        const buttonWrapper = PayPalCommerceGateway.button.wrapper;
-        const cancelWrapper = PayPalCommerceGateway.button.cancel_wrapper;
-
-        if (!document.querySelector(buttonWrapper)) {
+        if (!this.shouldRender()) {
             return;
         }
 
-        if (document.querySelector(cancelWrapper)) {
-            return;
-        }
+        const buttonWrapper = this.gateway.button.wrapper;
 
-        const renderer = new _Renderer__WEBPACK_IMPORTED_MODULE_0__["default"](buttonWrapper);
-
-        jQuery(document.body).on('updated_checkout', () => {
-            renderer.render(this.configurator.configuration());
-
-            jQuery(document.body).trigger('payment_method_selected');
-        });
-
-        jQuery(document.body).on('payment_method_selected', () => {
-            // TODO: replace this dirty check, possible create a separate
+        const toggleButtons = () => {
             const currentPaymentMethod = jQuery('input[name="payment_method"]:checked').val();
 
             if (currentPaymentMethod !== 'ppcp-gateway') {
-                jQuery(buttonWrapper).hide();
+                this.renderer.hideButtons(buttonWrapper);
                 jQuery('#place_order').show();
             } else {
-                jQuery(buttonWrapper).show();
+                this.renderer.showButtons(buttonWrapper);
                 jQuery('#place_order').hide();
             }
+        };
+
+        jQuery(document.body).on('updated_checkout', () => {
+            this.renderer.render(buttonWrapper, this.configurator.configuration());
+            toggleButtons();
         });
 
-        renderer.render(this.configurator.configuration());
+        jQuery(document.body).on('payment_method_selected', () => {
+            toggleButtons();
+        });
+
+        this.renderer.render(buttonWrapper, this.configurator.configuration());
+    }
+
+    shouldRender() {
+        if (document.querySelector(this.gateway.button.cancel_wrapper)) {
+            return false;
+        }
+
+        return document.querySelector(this.gateway.button.wrapper);
     }
 }
 
@@ -397,28 +402,27 @@ class ErrorHandler {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _Renderer__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Renderer */ "./resources/js/modules/Renderer.js");
-
-
 class MiniCartBootstap {
-    constructor(configurator) {
+    constructor(gateway, renderer, configurator) {
+        this.gateway = gateway;
+        this.renderer = renderer;
         this.configurator = configurator;
     }
 
     init() {
-        const miniCartWrapper = PayPalCommerceGateway.button.mini_cart_wrapper;
-
-        if (!document.querySelector(miniCartWrapper)) {
+        if (!this.shouldRender()) {
             return;
         }
-
-        const renderer = new _Renderer__WEBPACK_IMPORTED_MODULE_0__["default"](miniCartWrapper);
 
         jQuery(document.body).on('wc_fragments_loaded wc_fragments_refreshed', () => {
             renderer.render(this.configurator.configuration());
         });
 
-        renderer.render(this.configurator.configuration());
+        this.renderer.render(this.gateway.button.mini_cart_wrapper, this.configurator.configuration());
+    }
+
+    shouldRender() {
+        return document.querySelector(this.gateway.button.mini_cart_wrapper);
     }
 }
 
@@ -466,22 +470,24 @@ class Product {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 class Renderer {
+    render(wrapper, buttonConfig) {
+        if (this.isAlreadyRendered(wrapper)) {
+            return;
+        }
 
-    constructor(wrapper) {
-        this.wrapper = wrapper;
+        paypal.Buttons(buttonConfig).render(wrapper);
     }
 
-    render(buttonConfig) {
-
-        paypal.Buttons(buttonConfig).render(this.wrapper);
+    isAlreadyRendered(wrapper) {
+        return document.querySelector(wrapper).hasChildNodes();
     }
 
-    hideButtons() {
-        document.querySelector(this.wrapper).style.display = 'none';
+    hideButtons(element) {
+        document.querySelector(element).style.display = 'none';
     }
 
-    showButtons() {
-        document.querySelector(this.wrapper).style.display = 'block';
+    showButtons(element) {
+        document.querySelector(element).style.display = 'block';
     }
 }
 
@@ -499,32 +505,41 @@ class Renderer {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _ErrorHandler__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./ErrorHandler */ "./resources/js/modules/ErrorHandler.js");
-/* harmony import */ var _Renderer__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Renderer */ "./resources/js/modules/Renderer.js");
-/* harmony import */ var _UpdateCart__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./UpdateCart */ "./resources/js/modules/UpdateCart.js");
-/* harmony import */ var _SingleProductConfig__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./SingleProductConfig */ "./resources/js/modules/SingleProductConfig.js");
-
+/* harmony import */ var _UpdateCart__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./UpdateCart */ "./resources/js/modules/UpdateCart.js");
+/* harmony import */ var _SingleProductConfig__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./SingleProductConfig */ "./resources/js/modules/SingleProductConfig.js");
 
 
 
 
 class SingleProductBootstap {
+    constructor(gateway, renderer) {
+        this.gateway = gateway;
+        this.renderer = renderer;
+    }
+
     init() {
-        const buttonWrapper = PayPalCommerceGateway.button.wrapper;
-
-        if (!document.querySelector(buttonWrapper)) {
+        if (!this.shouldRender()) {
             return;
         }
 
-        if (!document.querySelector('form.cart')) {
-            return;
-        }
-
-        const renderer = new _Renderer__WEBPACK_IMPORTED_MODULE_1__["default"](buttonWrapper);
         const errorHandler = new _ErrorHandler__WEBPACK_IMPORTED_MODULE_0__["default"]();
-        const updateCart = new _UpdateCart__WEBPACK_IMPORTED_MODULE_2__["default"](PayPalCommerceGateway.ajax.change_cart.endpoint, PayPalCommerceGateway.ajax.change_cart.nonce);
-        const configurator = new _SingleProductConfig__WEBPACK_IMPORTED_MODULE_3__["default"](PayPalCommerceGateway, updateCart, renderer.showButtons.bind(renderer), renderer.hideButtons.bind(renderer), document.querySelector('form.cart'), errorHandler);
+        const updateCart = new _UpdateCart__WEBPACK_IMPORTED_MODULE_1__["default"](this.gateway.ajax.change_cart.endpoint, this.gateway.ajax.change_cart.nonce);
+        const buttonWrapper = this.gateway.button.wrapper;
+        const configurator = new _SingleProductConfig__WEBPACK_IMPORTED_MODULE_2__["default"](this.gateway, updateCart, () => {
+            this.renderer.showButtons(buttonWrapper);
+        }, () => {
+            this.renderer.hideButtons(buttonWrapper);
+        }, document.querySelector('form.cart'), errorHandler);
 
-        renderer.render(configurator.configuration());
+        this.renderer.render(buttonWrapper, configurator.configuration());
+    }
+
+    shouldRender() {
+        if (document.querySelector('form.cart') === null) {
+            return false;
+        }
+
+        return document.querySelector(this.gateway.button.wrapper);
     }
 }
 
