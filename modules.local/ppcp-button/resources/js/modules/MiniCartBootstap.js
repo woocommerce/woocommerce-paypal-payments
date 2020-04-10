@@ -32,11 +32,7 @@ class MiniCartBootstap {
 
         this.renderer.render(
             this.gateway.button.mini_cart_wrapper,
-            {
-                style: {
-                    shape: 'rect',
-                }, ...actionHandler.configuration(),
-            },
+            actionHandler.configuration()
         );
     }
 }
