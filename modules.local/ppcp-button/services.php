@@ -42,12 +42,12 @@ return [
         $cart = WC()->cart;
         $shipping = WC()->shipping();
         $requestData = $container->get('button.request-data');
-        $repository = $container->get('api.cart-repository');
+        $repository = $container->get('api.repository.cart');
         return new ChangeCartEndpoint($cart, $shipping, $requestData, $repository);
     },
     'button.endpoint.create-order' => function (ContainerInterface $container): CreateOrderEndpoint {
         $requestData = $container->get('button.request-data');
-        $repository = $container->get('api.cart-repository');
+        $repository = $container->get('api.repository.cart');
         $apiClient = $container->get('api.endpoint.order');
         return new CreateOrderEndpoint($requestData, $repository, $apiClient);
     },
