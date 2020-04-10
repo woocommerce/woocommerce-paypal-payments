@@ -5,7 +5,7 @@ namespace Inpsyde\PayPalCommerce\WcGateway\Notice;
 
 use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
 
-class ConnectNotice
+class ConnectAdminNotice
 {
     private $settings;
 

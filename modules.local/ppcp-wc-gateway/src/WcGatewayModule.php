@@ -6,7 +6,7 @@ namespace Inpsyde\PayPalCommerce\WcGateway;
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
 use Inpsyde\PayPalCommerce\WcGateway\Checkout\DisableGateways;
-use Inpsyde\PayPalCommerce\WcGateway\Notice\ConnectNotice;
+use Inpsyde\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
 
@@ -48,7 +48,7 @@ class WcGatewayModule implements ModuleInterface
             function () use ($container) : void {
                 $notice = $container->get('wcgateway.notice.connect');
                 /**
-                 * @var ConnectNotice $notice
+                 * @var ConnectAdminNotice $notice
                  */
                 $notice->display();
             }
