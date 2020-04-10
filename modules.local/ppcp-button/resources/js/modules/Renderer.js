@@ -1,12 +1,18 @@
 class Renderer {
-    render(wrapper, buttonConfig) {
+    constructor(defaultConfig) {
+        this.defaultConfig = defaultConfig;
+    }
+
+    render(wrapper, contextConfig) {
         if (this.isAlreadyRendered(wrapper)) {
             return;
         }
 
-        paypal.Buttons(
-            buttonConfig,
-        ).render(wrapper);
+        const style = this.defaultConfig.button.style;
+        paypal.Buttons({
+            style,
+            ...contextConfig,
+        }).render(wrapper);
     }
 
     isAlreadyRendered(wrapper) {

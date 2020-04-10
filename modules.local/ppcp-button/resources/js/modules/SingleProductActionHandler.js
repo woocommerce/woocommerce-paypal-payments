@@ -2,7 +2,7 @@ import ButtonsToggleListener from './ButtonsToggleListener';
 import Product from './Product';
 import onApprove from './onApproveForContinue';
 
-class SingleProductConfig {
+class SingleProductActionHandler {
 
     constructor(
         config,
@@ -32,15 +32,12 @@ class SingleProductConfig {
             observer.init();
         }
 
-        const style = this.config.button.style;
-
         return {
             createOrder: this.createOrder(),
             onApprove: onApprove(this),
             onError: (error) => {
                 this.errorHandler.message(error);
-            },
-            style,
+            }
         }
     }
 
@@ -126,4 +123,4 @@ class SingleProductConfig {
         return this.formElement.classList.contains('grouped_form');
     }
 }
-export default SingleProductConfig;
+export default SingleProductActionHandler;

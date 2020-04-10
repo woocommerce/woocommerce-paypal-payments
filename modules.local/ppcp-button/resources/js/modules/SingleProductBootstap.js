@@ -1,6 +1,6 @@
 import ErrorHandler from './ErrorHandler';
 import UpdateCart from './UpdateCart';
-import SingleProductConfig from './SingleProductConfig';
+import SingleProductActionHandler from './SingleProductActionHandler';
 
 class SingleProductBootstap {
     constructor(gateway, renderer) {
@@ -12,24 +12,6 @@ class SingleProductBootstap {
         if (!this.shouldRender()) {
             return;
         }
-
-        const errorHandler = new ErrorHandler();
-        const updateCart = new UpdateCart(
-            this.gateway.ajax.change_cart.endpoint,
-            this.gateway.ajax.change_cart.nonce,
-        );
-        this.configurator = new SingleProductConfig(
-            this.gateway,
-            updateCart,
-            () => {
-                this.renderer.showButtons(this.gateway.button.wrapper);
-            },
-            () => {
-                this.renderer.hideButtons(this.gateway.button.wrapper);
-            },
-            document.querySelector('form.cart'),
-            errorHandler,
-        );
 
         this.render();
     }
@@ -43,9 +25,25 @@ class SingleProductBootstap {
     }
 
     render() {
+        const actionHandler = new SingleProductActionHandler(
+            this.gateway,
+            new UpdateCart(
+                this.gateway.ajax.change_cart.endpoint,
+                this.gateway.ajax.change_cart.nonce,
+            ),
+            () => {
+                this.renderer.showButtons(this.gateway.button.wrapper);
+            },
+            () => {
+                this.renderer.hideButtons(this.gateway.button.wrapper);
+            },
+            document.querySelector('form.cart'),
+            new ErrorHandler(),
+        );
+
         this.renderer.render(
             this.gateway.button.wrapper,
-            this.configurator.configuration(),
+            actionHandler.configuration(),
         );
     }
 }

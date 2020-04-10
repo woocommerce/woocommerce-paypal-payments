@@ -1,8 +1,10 @@
+import CartActionHandler from './CartActionHandler';
+import ErrorHandler from './ErrorHandler';
+
 class CartBootstrap {
-    constructor(gateway, renderer, configurator) {
+    constructor(gateway, renderer) {
         this.gateway = gateway;
         this.renderer = renderer;
-        this.configurator = configurator;
     }
 
     init() {
@@ -22,9 +24,14 @@ class CartBootstrap {
     }
 
     render() {
+        const actionHandler = new CartActionHandler(
+            PayPalCommerceGateway,
+            new ErrorHandler(),
+        );
+
         this.renderer.render(
             this.gateway.button.wrapper,
-            this.configurator.configuration(),
+            actionHandler.configuration(),
         );
     }
 }

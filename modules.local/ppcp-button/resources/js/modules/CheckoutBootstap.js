@@ -1,8 +1,10 @@
+import ErrorHandler from './ErrorHandler';
+import CheckoutActionHandler from './CheckoutActionHandler';
+
 class CheckoutBootstap {
-    constructor(gateway, renderer, configurator) {
+    constructor(gateway, renderer) {
         this.gateway = gateway;
         this.renderer = renderer;
-        this.configurator = configurator;
     }
 
     init() {
@@ -16,9 +18,10 @@ class CheckoutBootstap {
             this.render();
         });
 
-        jQuery(document.body).on('updated_checkout payment_method_selected', () => {
-            this.switchBetweenPayPalandOrderButton();
-        });
+        jQuery(document.body).
+            on('updated_checkout payment_method_selected', () => {
+                this.switchBetweenPayPalandOrderButton();
+            });
     }
 
     shouldRender() {
@@ -30,14 +33,20 @@ class CheckoutBootstap {
     }
 
     render() {
+        const actionHandler = new CheckoutActionHandler(
+            PayPalCommerceGateway,
+            new ErrorHandler(),
+        );
+
         this.renderer.render(
             this.gateway.button.wrapper,
-            this.configurator.configuration(),
+            actionHandler.configuration(),
         );
     }
 
     switchBetweenPayPalandOrderButton() {
-        const currentPaymentMethod = jQuery('input[name="payment_method"]:checked').val();
+        const currentPaymentMethod = jQuery(
+            'input[name="payment_method"]:checked').val();
 
         if (currentPaymentMethod !== 'ppcp-gateway') {
             this.renderer.hideButtons(this.gateway.button.wrapper);

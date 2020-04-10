@@ -1,6 +1,6 @@
 import onApprove from './onApproveForContinue.js';
 
-class CartConfig {
+class CartActionHandler {
 
     constructor(config, errorHandler) {
         this.config = config;
@@ -26,17 +26,14 @@ class CartConfig {
             });
         };
 
-        const style = this.config.button.style;
-
         return {
             createOrder,
             onApprove: onApprove(this),
             onError: (error) => {
                 this.errorHandler.message(error);
-            },
-            style,
+            }
         };
     }
 }
 
-export default CartConfig;
+export default CartActionHandler;
