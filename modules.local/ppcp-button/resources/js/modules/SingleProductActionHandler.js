@@ -1,7 +1,8 @@
-import ButtonsToggleListener from "./ButtonsToggleListener";
-import Product from "./Product";
-import onApprove from "./onApproveForContinue";
-class SingleProductConfig {
+import ButtonsToggleListener from './ButtonsToggleListener';
+import Product from './Product';
+import onApprove from './onApproveForContinue';
+
+class SingleProductActionHandler {
 
     constructor(
         config,
@@ -122,4 +123,4 @@ class SingleProductConfig {
         return this.formElement.classList.contains('grouped_form');
     }
 }
-export default SingleProductConfig;
+export default SingleProductActionHandler;

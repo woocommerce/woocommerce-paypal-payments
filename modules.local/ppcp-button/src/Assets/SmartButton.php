@@ -7,41 +7,51 @@ use Inpsyde\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
 use Inpsyde\PayPalCommerce\Session\SessionHandler;
+use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
 
-class SmartButton
+class SmartButton implements SmartButtonInterface
 {
-
     private $moduleUrl;
     private $sessionHandler;
-    private $isSandbox;
+    private $settings;
+
     public function __construct(
         string $moduleUrl,
         SessionHandler $sessionHandler,
-        bool $isSandbox
+        Settings $settings
     ) {
 
         $this->moduleUrl = $moduleUrl;
         $this->sessionHandler = $sessionHandler;
-        $this->isSandbox = $isSandbox;
+        $this->settings = $settings;
     }
 
-    public function renderWrapper() : bool
+    public function renderWrapper(): bool
     {
         $renderer = function () {
             echo '<div id="ppc-button"></div>';
         };
-        if (is_cart()) {
+        if (is_cart() && wc_string_to_bool($this->settings->get('button_cart_enabled'))) {
             add_action(
-                'woocommerce_after_cart_totals',
+                'woocommerce_proceed_to_checkout',
                 $renderer,
                 20
             );
         }
-        if (is_product()) {
+        if (is_product() && wc_string_to_bool($this->settings->get('button_single_product_enabled'))) {
             add_action(
                 'woocommerce_single_product_summary',
                 $renderer,
                 31
+            );
+        }
+        if (wc_string_to_bool($this->settings->get('button_mini_cart_enabled'))) {
+            add_action(
+                'woocommerce_widget_shopping_cart_after_buttons',
+                function () {
+                    echo '<p id="ppc-button-minicart" class="woocommerce-mini-cart__buttons buttons"></p>';
+                },
+                30
             );
         }
         add_action(
@@ -49,17 +59,10 @@ class SmartButton
             $renderer,
             10
         );
-        add_action(
-            'woocommerce_widget_shopping_cart_buttons',
-            function () {
-                echo '<span id="ppc-button-minicart"></span>';
-            },
-            30
-        );
         return true;
     }
 
-    public function enqueue() : bool
+    public function enqueue(): bool
     {
         wp_enqueue_script(
             'paypal-smart-button',
@@ -102,7 +105,13 @@ class SmartButton
                 'wrapper' => '#ppc-button',
                 'mini_cart_wrapper' => '#ppc-button-minicart',
                 'cancel_wrapper' => '#ppcp-cancel',
-                'url' =>$smartButtonUrl,
+                'url' => $smartButtonUrl,
+                'style' => [
+                    'layout' => 'vertical',
+                    'color' => $this->settings->get('button_color'),
+                    'shape' => $this->settings->get('button_shape'),
+                    'label' => 'paypal',
+                ],
             ],
         ];
         wp_localize_script(
@@ -113,7 +122,7 @@ class SmartButton
         return true;
     }
 
-    private function context() : string
+    private function context(): string
     {
         $context = 'mini-cart';
         if (is_product()) {
@@ -122,7 +131,7 @@ class SmartButton
         if (is_cart()) {
             $context = 'cart';
         }
-        if (is_checkout() && ! $this->sessionHandler->order()) {
+        if (is_checkout() && !$this->sessionHandler->order()) {
             $context = 'checkout';
         }
         return $context;

@@ -84,10 +84,10 @@ class OrderEndpoint
             $json = json_decode($response['body']);
             if (is_array($json->details) && count(array_filter(
                 $json->details,
-                function($detail) : bool {
+                function ($detail) : bool {
                     return $detail->issue === 'ORDER_ALREADY_CAPTURED';
                 }
-                ))
+            ))
             ) {
                 return $this->order($order->id());
             }

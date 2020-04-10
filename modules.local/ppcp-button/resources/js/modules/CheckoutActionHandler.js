@@ -1,6 +1,6 @@
-import onApprove from "./onApproveForPayNow.js";
+import onApprove from './onApproveForPayNow.js';
 
-class CheckoutConfig {
+class CheckoutActionHandler {
 
     constructor(config, errorHandler) {
         this.config = config;
@@ -36,4 +36,4 @@ class CheckoutConfig {
     }
 }
 
-export default CheckoutConfig;
+export default CheckoutActionHandler;

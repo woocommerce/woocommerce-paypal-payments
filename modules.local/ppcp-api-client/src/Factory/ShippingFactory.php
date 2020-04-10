@@ -19,7 +19,7 @@ class ShippingFactory
     {
         // Replicates the Behavior of \WC_Order::get_formatted_shipping_full_name()
         $fullName = sprintf(
-            _x( '%1$s %2$s', 'full name', 'woocommerce' ),
+            _x('%1$s %2$s', 'full name', 'woocommerce'),
             $customer->get_shipping_first_name(),
             $customer->get_shipping_last_name()
         );

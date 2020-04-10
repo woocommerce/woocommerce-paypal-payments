@@ -1,26 +1,30 @@
 class Renderer {
-
-    constructor(wrapper)
-    {
-        this.wrapper = wrapper;
+    constructor(defaultConfig) {
+        this.defaultConfig = defaultConfig;
     }
 
-    render(buttonConfig)
-    {
+    render(wrapper, contextConfig) {
+        if (this.isAlreadyRendered(wrapper)) {
+            return;
+        }
 
-        paypal.Buttons(
-            buttonConfig
-        ).render(this.wrapper);
+        const style = this.defaultConfig.button.style;
+        paypal.Buttons({
+            style,
+            ...contextConfig,
+        }).render(wrapper);
     }
 
-    hideButtons()
-    {
-        document.querySelector(this.wrapper).style.display = 'none';
+    isAlreadyRendered(wrapper) {
+        return document.querySelector(wrapper).hasChildNodes();
     }
 
-    showButtons()
-    {
-        document.querySelector(this.wrapper).style.display = 'block';
+    hideButtons(element) {
+        document.querySelector(element).style.display = 'none';
+    }
+
+    showButtons(element) {
+        document.querySelector(element).style.display = 'block';
     }
 }
 
