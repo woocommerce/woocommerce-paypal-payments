@@ -8,7 +8,6 @@ use Inpsyde\PayPalCommerce\ApiClient\Entity\AmountBreakdown;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Item;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Money;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Shipping;
 use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
 class PurchaseUnitFactory
@@ -105,7 +104,9 @@ class PurchaseUnitFactory
             $breakdown
         );
         $shipping = $this->shippingFactory->fromWcOrder($order);
-        if ($shipping->address()->countryCode() && !$shipping->address()->postalCode()) {
+        if (empty($shipping->address()->countryCode()) ||
+            ($shipping->address()->countryCode() && !$shipping->address()->postalCode())
+        ) {
             $shipping = null;
         }
 
