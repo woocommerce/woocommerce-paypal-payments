@@ -105,6 +105,9 @@ class PurchaseUnitFactory
             $breakdown
         );
         $shipping = $this->shippingFactory->fromWcOrder($order);
+        if ($shipping->address()->countryCode() && !$shipping->address()->postalCode()) {
+            $shipping = null;
+        }
 
         $referenceId = 'default';
         $description = '';
@@ -200,6 +203,9 @@ class PurchaseUnitFactory
         $shipping = null;
         if (is_a(\WC()->customer, \WC_Customer::class)) {
             $shipping = $this->shippingFactory->fromWcCustomer(\WC()->customer);
+            if ($shipping->address()->countryCode() && !$shipping->address()->postalCode()) {
+                $shipping = null;
+            }
         }
 
         $referenceId = 'default';
