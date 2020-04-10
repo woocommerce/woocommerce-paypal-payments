@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Inpsyde\PayPalCommerce\ApiClient;
 
 use Dhii\Data\Container\ContainerInterface;
+use Inpsyde\CacheModule\Provider\CacheProviderInterface;
 use Inpsyde\PayPalCommerce\ApiClient\Authentication\Bearer;
 use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\AddressFactory;
@@ -30,7 +31,13 @@ return [
         return 'EILGMYK_0iiSbja8hT-nCBGl0BvKxEB4riHgyEO7QWDeUzCJ5r42JUEvrI7gpGyw0Qww8AIXxSdCIAny';
     },
     'api.bearer' => function (ContainerInterface $container) : Bearer {
+        $provider = $container->get('cache.provider');
+        /**
+         * @var CacheProviderInterface $provider
+         */
+        $cache = $provider->cacheOrTransientForKey('');
         return new Bearer(
+            $cache,
             $container->get('api.host'),
             $container->get('api.key'),
             $container->get('api.secret')

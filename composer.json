@@ -18,6 +18,10 @@
         },
         {
             "type": "path",
+            "url": "modules.local/cache-module"
+        },
+        {
+            "type": "path",
             "url": "modules.local/ppcp-api-client"
         },
         {

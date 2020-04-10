@@ -4,7 +4,8 @@
   "require": {
     "ext-json": "*",
     "dhii/module-interface": "0.2.x-dev",
-    "inpsyde/ppcp-session": "dev-master"
+    "inpsyde/ppcp-session": "dev-master",
+    "inpsyde/cache-module": "dev-master"
   },
   "autoload": {
     "psr-4": {

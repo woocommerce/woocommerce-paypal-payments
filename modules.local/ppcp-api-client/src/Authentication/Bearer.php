@@ -4,15 +4,18 @@ declare(strict_types=1);
 namespace Inpsyde\PayPalCommerce\ApiClient\Authentication;
 
 use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use Psr\SimpleCache\CacheInterface;
 
 class Bearer
 {
     private const CACHE_KEY = 'ppcp-bearer';
+    private $cache;
     private $host;
     private $key;
     private $secret;
-    public function __construct(string $host, string $key, string $secret)
+    public function __construct(CacheInterface $cache, string $host, string $key, string $secret)
     {
+        $this->cache = $cache;
         $this->host = $host;
         $this->key = $key;
         $this->secret = $secret;
@@ -20,7 +23,7 @@ class Bearer
 
     public function bearer() : string
     {
-        $bearer = get_transient(self::CACHE_KEY);
+        $bearer = $this->cache->get(self::CACHE_KEY);
         if (! $bearer) {
             return $this->newBearer();
         }
@@ -49,7 +52,7 @@ class Bearer
             throw new RuntimeException(__('Could not find token.', 'woocommerce-paypal-commerce-gateway'));
         }
         $token = (string) $json->access_token;
-        set_transient(self::CACHE_KEY, $token, $json->expires_in);
+        $this->cache->set(self::CACHE_KEY, $token, $json->expires_in);
         return $token;
     }
 }
