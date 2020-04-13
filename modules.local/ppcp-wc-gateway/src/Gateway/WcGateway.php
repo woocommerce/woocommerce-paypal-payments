@@ -29,7 +29,6 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
         OrderFactory $orderFactory,
         SettingsFields $settingsFields
     ) {
-
         $this->sessionHandler = $sessionHandler;
         $this->cartRepository = $cartRepository;
         $this->endpoint = $endpoint;
@@ -41,6 +40,8 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
             'Provide your customers with the PayPal payment system',
             'woocommerce-paypal-gateway'
         );
+
+        parent::__construct();
 
         $this->title = $this->get_option('title');
         $this->description = $this->get_option('description');
@@ -55,8 +56,6 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
                 'process_admin_options',
             ]
         );
-
-        parent::__construct();
     }
 
     public function init_form_fields()
