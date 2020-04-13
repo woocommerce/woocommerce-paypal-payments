@@ -105,7 +105,7 @@ class OrderEndpoint
         return $order;
     }
 
-    public function authorize(string $orderId) {
+    public function authorize(string $orderId) : bool {
         $bearer = $this->bearer->bearer();
         $url = trailingslashit($this->host) . 'v2/checkout/orders/' . $orderId . '/authorize';
         $args = [
@@ -121,9 +121,9 @@ class OrderEndpoint
             throw new RuntimeException(__('Could not authorize order.', 'woocommerce-paypal-commerce-gateway'));
         }
         if (wp_remote_retrieve_response_code($response) !== 201) {
-            throw new RuntimeException(__('Could not capture order.', 'woocommerce-paypal-commerce-gateway'));
+            throw new RuntimeException(__('Could not authorize order.', 'woocommerce-paypal-commerce-gateway'));
         }
-        return $orderId;
+        return true;
     }
 
     public function order(string $id) : Order

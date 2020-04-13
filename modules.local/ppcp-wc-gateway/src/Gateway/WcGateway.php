@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\WcGateway\Gateway;
@@ -6,6 +7,7 @@ namespace Inpsyde\PayPalCommerce\WcGateway\Gateway;
 use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
 use Inpsyde\PayPalCommerce\Session\SessionHandler;
@@ -66,7 +68,7 @@ class WcGateway extends \WC_Payment_Gateway
         $this->form_fields = $this->settingsFields->fields();
     }
 
-    public function process_payment($orderId) : ?array
+    public function process_payment($orderId): ?array
     {
         global $woocommerce;
         $wcOrder = new \WC_Order($orderId);
@@ -76,7 +78,7 @@ class WcGateway extends \WC_Payment_Gateway
         update_post_meta($orderId, '_paypal_order_id', $order->id());
 
         $errorMessage = null;
-        if (! $order || ! $order->status()->is(OrderStatus::APPROVED)) {
+        if (!$order || !$order->status()->is(OrderStatus::APPROVED)) {
             $errorMessage = 'not approve yet';
         }
         $errorMessage = null;
@@ -103,7 +105,67 @@ class WcGateway extends \WC_Payment_Gateway
         ];
     }
 
-    private function patchOrder(\WC_Order $wcOrder, Order $order) : Order
+    public function authorizeOrder(\WC_Order $wcOrder)
+    {
+        $payPalOrderId = get_post_meta($wcOrder->get_id(), '_paypal_order_id', true);
+
+        try {
+            $order = $this->endpoint->order($payPalOrderId);
+        } catch (RuntimeException $e) {
+            // TODO: add a notice instead
+            $wcOrder->add_order_note(
+                __(
+                    'Unable to capture charge:',
+                    'woocommerce-paypal-gateway'
+                ) . ' ' . $e->getMessage()
+            );
+        }
+
+        if ($order->status()->is(OrderStatus::COMPLETED)) {
+            // TODO: add a notice instead
+            $wcOrder->add_order_note(
+                __(
+                    'Order already completed',
+                    'woocommerce-paypal-gateway'
+                )
+            );
+            return;
+        }
+
+        if (!$order->status()->is(OrderStatus::APPROVED)) {
+            // TODO: add a notice instead
+            $wcOrder->add_order_note(
+                __(
+                    'Order not approved',
+                    'woocommerce-paypal-gateway'
+                )
+            );
+            return;
+        }
+
+        try {
+            $this->endpoint->authorize($payPalOrderId);
+        } catch (RuntimeException $e) {
+            // TODO: display admin error message
+            $wcOrder->add_order_note(
+                __(
+                    'Unable to capture charge:',
+                    'woocommerce-paypal-gateway'
+                ) . ' ' . $e->getMessage()
+            );
+            return;
+        }
+        $wcOrder->add_order_note(
+            __(
+                'Payment authorized.',
+                'woocommerce-paypal-gateway'
+            )
+        );
+
+        $wcOrder->update_status('processing');
+    }
+
+    private function patchOrder(\WC_Order $wcOrder, Order $order): Order
     {
         $updatedOrder = $this->orderFactory->fromWcOrder($wcOrder, $order);
         $order = $this->endpoint->patchOrderWith($order, $updatedOrder);

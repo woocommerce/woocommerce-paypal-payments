@@ -5,8 +5,8 @@ namespace Inpsyde\PayPalCommerce\WcGateway;
 
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use Inpsyde\PayPalCommerce\WcGateway\Checkout\DisableGateways;
+use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGateway;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
 
@@ -57,16 +57,11 @@ class WcGatewayModule implements ModuleInterface
         add_action(
             'woocommerce_order_action_ppcp_authorize_order',
             function (\WC_Order $wcOrder) use ($container) {
-                $payPalOrderId = get_post_meta($wcOrder->get_id(), '_paypal_order_id', true);
-
                 /**
-                 * @var OrderEndpoint $orderEndpoint
+                 * @var WcGateway $gateway
                  */
-                $orderEndpoint = $container->get('api.endpoint.order');
-
-                $orderEndpoint->authorize($payPalOrderId);
-
-                $wcOrder->update_status('processing');
+                $gateway = $container->get('wcgateway.gateway');
+                $gateway->authorizeOrder($wcOrder);
             }
         );
     }
