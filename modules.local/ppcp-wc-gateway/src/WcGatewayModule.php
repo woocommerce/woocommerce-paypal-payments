@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\WcGateway;
@@ -7,6 +8,7 @@ use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
 use Inpsyde\PayPalCommerce\WcGateway\Checkout\DisableGateways;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGateway;
+use Inpsyde\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use Inpsyde\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
@@ -17,8 +19,8 @@ class WcGatewayModule implements ModuleInterface
     public function setup(): ServiceProviderInterface
     {
         return new ServiceProvider(
-            require __DIR__.'/../services.php',
-            require __DIR__.'/../extensions.php'
+            require __DIR__ . '/../services.php',
+            require __DIR__ . '/../extensions.php'
         );
     }
 
@@ -27,9 +29,8 @@ class WcGatewayModule implements ModuleInterface
         add_filter(
             'woocommerce_payment_gateways',
             function ($methods) use ($container) : array {
-
                 $methods[] = $container->get('wcgateway.gateway');
-                return (array) $methods;
+                return (array)$methods;
             }
         );
 
@@ -40,7 +41,7 @@ class WcGatewayModule implements ModuleInterface
                 /**
                  * @var DisableGateways $disabler
                  */
-                return $disabler->handler((array) $methods);
+                return $disabler->handler((array)$methods);
             }
         );
 
@@ -57,9 +58,9 @@ class WcGatewayModule implements ModuleInterface
 
         add_filter(
             'woocommerce_order_actions',
-            function ($orderActions) : array {
+            function ($orderActions): array {
                 $orderActions['ppcp_authorize_order'] = __(
-                    'Authorize PayPal Order',
+                    'Authorize PayPal Payment',
                     'woocommerce-paypal-gateway'
                 );
                 return $orderActions;
@@ -75,6 +76,18 @@ class WcGatewayModule implements ModuleInterface
                 $gateway = $container->get('wcgateway.gateway');
                 $gateway->authorizeOrder($wcOrder);
             }
+        );
+
+        add_filter(
+            'post_updated_messages',
+            function ($messages) use ($container) {
+                /**
+                 * @var AuthorizeOrderActionNotice $authorizeOrderAction
+                 */
+                $authorizeOrderAction = $container->get('wcgateway.notice.authorize-order-action');
+                return $authorizeOrderAction->registerMessages($messages);
+            },
+            20
         );
     }
 }

@@ -7,6 +7,7 @@ use Dhii\Data\Container\ContainerInterface;
 use Inpsyde\PayPalCommerce\WcGateway\Checkout\DisableGateways;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGateway;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGatewayBase;
+use Inpsyde\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use Inpsyde\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsFields;
@@ -36,7 +37,11 @@ return [
         $settings = $container->get('wcgateway.settings');
         return new ConnectAdminNotice($settings);
     },
-    'wcgateway.settings.fields' => function (ContainerInterface $container) : SettingsFields {
+    'wcgateway.notice.authorize-order-action' =>
+        function (ContainerInterface $container): AuthorizeOrderActionNotice {
+            return new AuthorizeOrderActionNotice();
+        },
+    'wcgateway.settings.fields' => function (ContainerInterface $container): SettingsFields {
         return new SettingsFields();
     },
 ];

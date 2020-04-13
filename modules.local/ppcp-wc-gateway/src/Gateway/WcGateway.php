@@ -11,6 +11,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
 use Inpsyde\PayPalCommerce\Session\SessionHandler;
+use Inpsyde\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsFields;
 
 //phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
@@ -31,6 +32,7 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
         OrderFactory $orderFactory,
         SettingsFields $settingsFields
     ) {
+
         $this->sessionHandler = $sessionHandler;
         $this->cartRepository = $cartRepository;
         $this->endpoint = $endpoint;
@@ -108,53 +110,28 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
 
         try {
             $order = $this->endpoint->order($payPalOrderId);
-        } catch (RuntimeException $e) {
-            // TODO: add a notice instead
-            $wcOrder->add_order_note(
-                __(
-                    'Unable to capture charge:',
-                    'woocommerce-paypal-gateway'
-                ) . ' ' . $e->getMessage()
-            );
-        }
-
-        if ($order->status()->is(OrderStatus::COMPLETED)) {
-            // TODO: add a notice instead
-            $wcOrder->add_order_note(
-                __(
-                    'Order already completed',
-                    'woocommerce-paypal-gateway'
-                )
-            );
+        } catch (RuntimeException $exception) {
+            AuthorizeOrderActionNotice::displayMessage(AuthorizeOrderActionNotice::NO_INFO);
             return;
         }
 
-        if (!$order->status()->is(OrderStatus::APPROVED)) {
-            // TODO: add a notice instead
-            $wcOrder->add_order_note(
-                __(
-                    'Order not approved',
-                    'woocommerce-paypal-gateway'
-                )
-            );
+        if ($order->status()->is(OrderStatus::COMPLETED)) {
+            AuthorizeOrderActionNotice::displayMessage(AuthorizeOrderActionNotice::ALREADY_AUTHORIZED);
             return;
         }
 
         try {
             $this->endpoint->authorize($payPalOrderId);
-        } catch (RuntimeException $e) {
-            // TODO: display admin error message
-            $wcOrder->add_order_note(
-                __(
-                    'Unable to capture charge:',
-                    'woocommerce-paypal-gateway'
-                ) . ' ' . $e->getMessage()
-            );
+        } catch (RuntimeException $exception) {
+            AuthorizeOrderActionNotice::displayMessage(AuthorizeOrderActionNotice::FAILED);
             return;
         }
+
+        AuthorizeOrderActionNotice::displayMessage(AuthorizeOrderActionNotice::SUCCESS);
+
         $wcOrder->add_order_note(
             __(
-                'Payment authorized.',
+                'Payment successfully authorized.',
                 'woocommerce-paypal-gateway'
             )
         );
