@@ -21,13 +21,18 @@ class ErrorResponseCollection
         return $this->errors;
     }
 
+    public function codes() : array
+    {
+        return array_values(array_map(
+            function(ErrorResponse $error) : string {
+                return $error->code();
+            },
+            $this->errors()
+        ));
+    }
+
     public function hasErrorCode(string $code) : bool
     {
-        foreach ($this->errors() as $error) {
-            if ($error->is($code)) {
-                return true;
-            }
-        }
-        return false;
+        return in_array($code, $this->codes(), true);
     }
 }
