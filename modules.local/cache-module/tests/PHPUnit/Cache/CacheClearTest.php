@@ -3,14 +3,14 @@ declare(strict_types=1);
 
 namespace Inpsyde\CacheModule\Cache;
 
-
 use PHPUnit\Framework\TestCase;
 use function Brain\Monkey\Functions\expect;
 
 class CacheClearTest extends TestCase
 {
 
-    public function testClear() {
+    public function testClear()
+    {
         $testee = new Cache('group');
         expect('wp_cache_flush')
             ->once()
@@ -18,7 +18,8 @@ class CacheClearTest extends TestCase
         $this->assertTrue($testee->clear());
     }
 
-    public function testClearReturnsFalseWhenCacheWasNotCleared() {
+    public function testClearReturnsFalseWhenCacheWasNotCleared()
+    {
         $testee = new Cache('group');
         expect('wp_cache_flush')
             ->once()

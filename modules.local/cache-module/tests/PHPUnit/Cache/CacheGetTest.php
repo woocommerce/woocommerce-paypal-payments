@@ -10,7 +10,8 @@ use function Brain\Monkey\Functions\expect;
 class CacheGetTest extends TestCase
 {
 
-    public function testGetHasValueInCache() {
+    public function testGetHasValueInCache()
+    {
         $this->markTestIncomplete(
             'This test has not been implemented yet. Problem is the $found reference'
         );
@@ -18,7 +19,7 @@ class CacheGetTest extends TestCase
         $expected = 'value';
         expect('wp_cache_get')
             ->once()
-            ->andReturnUsing(function($key, $group, $force, &$lastFound) use ($expected) {
+            ->andReturnUsing(function ($key, $group, $force, &$lastFound) use ($expected) {
                 $lastFound = true;
                 return $expected;
             });
@@ -26,7 +27,8 @@ class CacheGetTest extends TestCase
         $this->assertEquals($expected, $result);
     }
 
-    public function testGetHasValueNotInCache() {
+    public function testGetHasValueNotInCache()
+    {
         $this->markTestIncomplete(
             'This test has not been implemented yet. Problem is the $found reference'
         );
@@ -40,8 +42,8 @@ class CacheGetTest extends TestCase
         $this->assertEquals($expected, $result);
     }
 
-    public function testGetThrowsExceptionWhenKeyIsNotAString() {
-
+    public function testGetThrowsExceptionWhenKeyIsNotAString()
+    {
         $testee = new Cache('group');
         $this->expectException(InvalidCacheArgumentException::class);
         $testee->get(123);

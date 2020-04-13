@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Inpsyde\CacheModule\Provider;
 
-
 use Inpsyde\CacheModule\Cache\Cache;
 use Inpsyde\CacheModule\Cache\Transient;
 use PHPUnit\Framework\TestCase;
@@ -12,7 +11,8 @@ use function Brain\Monkey\Functions\expect;
 class CacheProviderTest extends TestCase
 {
 
-    public function test_transientForKey() {
+    public function test_transientForKey()
+    {
         $testee = new CacheProvider();
         $result = $testee->transientForKey('group');
 
@@ -23,7 +23,9 @@ class CacheProviderTest extends TestCase
         $this->assertTrue($result->set('key', 'value'), 'Group has not been set correctly.');
         $this->assertTrue(is_a($result, Transient::class));
     }
-    public function test_cacheOrTransientForKeyReturnsCache() {
+
+    public function test_cacheOrTransientForKeyReturnsCache()
+    {
         $testee = new CacheProvider();
         expect('wp_using_ext_object_cache')
             ->once()
@@ -32,7 +34,9 @@ class CacheProviderTest extends TestCase
 
         $this->assertInstanceOf(Cache::class, $result);
     }
-    public function test_cacheOrTransientForKeyReturnsTransient() {
+
+    public function test_cacheOrTransientForKeyReturnsTransient()
+    {
         $testee = new CacheProvider();
         expect('wp_using_ext_object_cache')
             ->once()
@@ -41,7 +45,8 @@ class CacheProviderTest extends TestCase
         $this->assertInstanceOf(Transient::class, $result);
     }
 
-    public function test_cacheForKey() {
+    public function test_cacheForKey()
+    {
         $testee = new CacheProvider();
         $result = $testee->cacheForKey('group');
         expect('wp_cache_set')

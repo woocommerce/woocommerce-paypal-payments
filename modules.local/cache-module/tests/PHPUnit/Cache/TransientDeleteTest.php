@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Inpsyde\CacheModule\Cache;
 
-
 use Inpsyde\CacheModule\Exception\InvalidCacheArgumentException;
 use PHPUnit\Framework\TestCase;
 use function Brain\Monkey\Functions\expect;
@@ -11,7 +10,8 @@ use function Brain\Monkey\Functions\expect;
 class TransientDeleteTest extends TestCase
 {
 
-    public function testDelete() {
+    public function testDelete()
+    {
         $testee = new Transient('group');
         expect('delete_transient')
             ->once()
@@ -20,7 +20,8 @@ class TransientDeleteTest extends TestCase
         $this->assertTrue($testee->delete('key'));
     }
 
-    public function testDeleteFails() {
+    public function testDeleteFails()
+    {
         $testee = new Transient('group');
         expect('delete_transient')
             ->once()
@@ -29,10 +30,10 @@ class TransientDeleteTest extends TestCase
         $this->assertFalse($testee->delete('key'));
     }
 
-    public function testDeleteThrowsErrorIfKeyIsNotAString() {
+    public function testDeleteThrowsErrorIfKeyIsNotAString()
+    {
         $testee = new Transient('group');
         $this->expectException(InvalidCacheArgumentException::class);
         $testee->delete(123);
     }
-
 }

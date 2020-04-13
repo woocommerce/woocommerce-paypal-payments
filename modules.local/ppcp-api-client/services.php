@@ -9,6 +9,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Authentication\Bearer;
 use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\AddressFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\AmountFactory;
+use Inpsyde\PayPalCommerce\ApiClient\Factory\ErrorResponseCollectionFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\ItemFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\LineItemFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\OrderFactory;
@@ -46,6 +47,7 @@ return [
     'api.endpoint.order' => function (ContainerInterface $container) : OrderEndpoint {
         $orderFactory = $container->get('api.factory.order');
         $patchCollectionFactory = $container->get('api.factory.patch-collection-factory');
+        $errorResponseFactory = $container->get('api.factory.response-error');
 
         // TODO: get the settings using the class
         // Using it now throws a maximum nested error because they share the same dependency
@@ -56,7 +58,8 @@ return [
             $container->get('api.bearer'),
             $orderFactory,
             $patchCollectionFactory,
-            $intent
+            $intent,
+            $errorResponseFactory
         );
     },
     'api.cart-repository' => function (ContainerInterface $container) : CartRepository {
@@ -112,6 +115,9 @@ return [
     },
     'api.factory.address' => function (ContainerInterface $container) : AddressFactory {
         return new AddressFactory();
+    },
+    'api.factory.response-error' => function (ContainerInterface $container) : ErrorResponseCollectionFactory {
+        return new ErrorResponseCollectionFactory();
     },
     'api.factory.order' => function (ContainerInterface $container) : OrderFactory {
         $purchaseUnitFactory = $container->get('api.factory.purchase-unit');

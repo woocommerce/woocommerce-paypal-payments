@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Inpsyde\CacheModule\Cache;
 
-
 use Inpsyde\CacheModule\Exception\InvalidCacheArgumentException;
 use PHPUnit\Framework\TestCase;
 use function Brain\Monkey\Functions\expect;
@@ -11,7 +10,8 @@ use function Brain\Monkey\Functions\expect;
 class TransientGetTest extends TestCase
 {
 
-    public function testGetHasValueInCache() {
+    public function testGetHasValueInCache()
+    {
         $testee = new Transient('group');
         $expected = 'value';
         expect('get_transient')
@@ -22,7 +22,8 @@ class TransientGetTest extends TestCase
         $this->assertEquals($expected, $result);
     }
 
-    public function testGetHasValueNotInCache() {
+    public function testGetHasValueNotInCache()
+    {
         $testee = new Transient('group');
         $expected = 'value';
         expect('get_transient')
@@ -33,8 +34,8 @@ class TransientGetTest extends TestCase
         $this->assertEquals($expected, $result);
     }
 
-    public function testGetThrowsExceptionWhenKeyIsNotAString() {
-
+    public function testGetThrowsExceptionWhenKeyIsNotAString()
+    {
         $testee = new Transient('group');
         $this->expectException(InvalidCacheArgumentException::class);
         $testee->get(123);

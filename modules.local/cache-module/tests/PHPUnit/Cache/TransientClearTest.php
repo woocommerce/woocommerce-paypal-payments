@@ -3,14 +3,14 @@ declare(strict_types=1);
 
 namespace Inpsyde\CacheModule\Cache;
 
-
 use PHPUnit\Framework\TestCase;
 use function Brain\Monkey\Functions\expect;
 
 class TransientClearTest extends TestCase
 {
 
-    public function testClearWithObjectCache() {
+    public function testClearWithObjectCache()
+    {
         $testee = new Transient('group');
         expect('wp_using_ext_object_cache')
             ->once()
@@ -20,7 +20,9 @@ class TransientClearTest extends TestCase
             ->andReturn(true);
         $this->assertTrue($testee->clear());
     }
-    public function testClearWithObjectCacheFails() {
+
+    public function testClearWithObjectCacheFails()
+    {
         $testee = new Transient('group');
         expect('wp_using_ext_object_cache')
             ->once()
@@ -31,7 +33,8 @@ class TransientClearTest extends TestCase
         $this->assertFalse($testee->clear());
     }
 
-    public function testClearReturnsFalseWhenObjectCacheIsNotUsed() {
+    public function testClearReturnsFalseWhenObjectCacheIsNotUsed()
+    {
         $testee = new Transient('group');
         expect('wp_using_ext_object_cache')
             ->once()

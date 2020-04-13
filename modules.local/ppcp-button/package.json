@@ -12,12 +12,12 @@
     "node-sass": "^4.13.0",
     "sass-loader": "^8.0.0",
     "webpack": "^4.42.1",
-    "webpack-cli": "^3.1.2"
+    "webpack-cli": "^3.1.2",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0"
   },
   "scripts": {
     "build": "cross-env BABEL_ENV=default NODE_ENV=production webpack",
     "watch": "cross-env BABEL_ENV=default NODE_ENV=production webpack --watch",
     "dev": "cross-env BABEL_ENV=default webpack --watch"
-  },
-  "dependencies": {}
+  }
 }

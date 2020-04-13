@@ -7,6 +7,7 @@ use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
 use Inpsyde\PayPalCommerce\WcGateway\Checkout\DisableGateways;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGateway;
+use Inpsyde\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
 
@@ -40,6 +41,17 @@ class WcGatewayModule implements ModuleInterface
                  * @var DisableGateways $disabler
                  */
                 return $disabler->handler((array) $methods);
+            }
+        );
+
+        add_action(
+            'admin_notices',
+            function () use ($container) : void {
+                $notice = $container->get('wcgateway.notice.connect');
+                /**
+                 * @var ConnectAdminNotice $notice
+                 */
+                $notice->display();
             }
         );
 

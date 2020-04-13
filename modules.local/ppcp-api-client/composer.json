@@ -7,6 +7,12 @@
     "inpsyde/ppcp-session": "dev-master",
     "inpsyde/cache-module": "dev-master"
   },
+
+  "require-dev": {
+    "inpsyde/php-coding-standards": "@stable",
+    "phpunit/phpunit": "^9.1",
+    "brain/monkey": "^2.4"
+  },
   "autoload": {
     "psr-4": {
       "Inpsyde\\PayPalCommerce\\ApiClient\\": "src/"
