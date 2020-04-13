@@ -84,7 +84,9 @@ class WcGateway extends \WC_Payment_Gateway
         }
 
         $order = $this->patchOrder($wcOrder, $order);
-        $order = $this->endpoint->capture($order);
+        if($order->intent() === 'CAPTURE') {
+            $order = $this->endpoint->capture($order);
+        }
 
         $wcOrder->update_status('on-hold', __('Awaiting payment.', 'woocommerce-paypal-gateway'));
         if ($order->status()->is(OrderStatus::COMPLETED)) {
