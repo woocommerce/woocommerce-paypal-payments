@@ -105,6 +105,27 @@ class OrderEndpoint
         return $order;
     }
 
+    public function authorize(string $orderId) {
+        $bearer = $this->bearer->bearer();
+        $url = trailingslashit($this->host) . 'v2/checkout/orders/' . $orderId . '/authorize';
+        $args = [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $bearer,
+                'Content-Type' => 'application/json',
+                'Prefer' => 'return=representation',
+            ],
+        ];
+        $response = wp_remote_post($url, $args);
+
+        if (is_wp_error($response)) {
+            throw new RuntimeException(__('Could not authorize order.', 'woocommerce-paypal-commerce-gateway'));
+        }
+        if (wp_remote_retrieve_response_code($response) !== 201) {
+            throw new RuntimeException(__('Could not capture order.', 'woocommerce-paypal-commerce-gateway'));
+        }
+        return $orderId;
+    }
+
     public function order(string $id) : Order
     {
         $bearer = $this->bearer->bearer();
