@@ -47,6 +47,21 @@ class SettingsFields
                     'woocommerce-paypal-gateway'
                 ),
             ],
+            'intent' => [
+                'title' => __('Intent', 'woocommerce-paypal-gateway'),
+                'type' => 'select',
+                'class' => 'wc-enhanced-select',
+                'default' => 'capture',
+                'desc_tip' => true,
+                'description' => __(
+                    'The intent to either capture payment immediately or authorize a payment for an order after order creation.',
+                    'woocommerce-paypal-gateway'
+                ),
+                'options' => [
+                    'capture' => __('Capture', 'woocommerce-paypal-gateway'),
+                    'authorize' => __('Authorize', 'woocommerce-paypal-gateway'),
+                ],
+            ],
         ];
     }
 
