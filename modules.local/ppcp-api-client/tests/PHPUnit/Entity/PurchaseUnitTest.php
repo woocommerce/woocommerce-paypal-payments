@@ -5,21 +5,23 @@ namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
 
 
 use PHPUnit\Framework\TestCase;
+use Mockery;
 
 class PurchaseUnitTest extends TestCase
 {
 
     public function test() {
 
-        $amount = \Mockery::mock(Amount::class);
+        $amount = Mockery::mock(Amount::class);
         $amount->expects('breakdown')->andReturnNull();
         $amount->expects('toArray')->andReturn(['amount']);
-        $item1 = \Mockery::mock(Item::class);
+        $item1 = Mockery::mock(Item::class);
         $item1->expects('toArray')->andReturn(['item1']);
-        $item2 = \Mockery::mock(Item::class);
+        $item2 = Mockery::mock(Item::class);
         $item2->expects('toArray')->andReturn(['item2']);
-        $shipping = \Mockery::mock(Shipping::class);
+        $shipping = Mockery::mock(Shipping::class);
         $shipping->expects('toArray')->andReturn(['shipping']);
+
         $testee = new PurchaseUnit(
             $amount,
             [],
@@ -56,109 +58,382 @@ class PurchaseUnitTest extends TestCase
         $this->assertEquals($expected, $testee->toArray());
     }
 
-    public function testDontDitchBecauseOfBreakdown() {
-
-        $breakdown = \Mockery::mock(AmountBreakdown::class);
-        $breakdown->expects('shipping')->andReturnNull();
-        $breakdown->expects('itemTotal')->andReturnNull();
-        $breakdown->expects('discount')->andReturnNull();
-        $breakdown->expects('taxTotal')->andReturnNull();
-        $breakdown->expects('shippingDiscount')->andReturnNull();
-        $breakdown->expects('handling')->andReturnNull();
-        $breakdown->expects('insurance')->andReturnNull();
-        $amount = \Mockery::mock(Amount::class);
-        $amount->expects('breakdown')->andReturn($breakdown);
-        $amount->expects('value')->andReturn(0.0);
-        $amount->expects('toArray')->andReturn(['amount']);
-        $item1 = \Mockery::mock(Item::class);
-        $item1->expects('toArray')->andReturn(['item1']);
-        $item2 = \Mockery::mock(Item::class);
-        $item2->expects('toArray')->andReturn(['item2']);
-        $shipping = \Mockery::mock(Shipping::class);
-        $shipping->expects('toArray')->andReturn(['shipping']);
+    /**
+     * @dataProvider dataForDitchTests
+     * @param array $items
+     * @param Amount $amount
+     * @param bool $doDitch
+     */
+    public function testDitchMethod(array $items, Amount $amount, bool $doDitch, string $message) {
         $testee = new PurchaseUnit(
             $amount,
-            [],
-            $shipping,
-            'referenceId',
-            'description',
-            null,
-            'customId',
-            'invoiceId',
-            'softDescriptor'
+            $items
         );
 
-        $expected = [
-            'reference_id' => 'referenceId',
-            'amount' => ['amount'],
-            'description' => 'description',
-            'shipping' => ['shipping'],
-            'custom_id' => 'customId',
-            'items' => [],
-            'invoice_id' => 'invoiceId',
-            'soft_descriptor' => 'softDescriptor',
-        ];
+        $array = $testee->toArray();
+        $resultItems = $doDitch === ! array_key_exists('items', $array);
+        $resultBreakdown = $doDitch === ! array_key_exists('breakdown', $array['amount']);
+        $this->assertTrue($resultItems, $message);
+        $this->assertTrue($resultBreakdown, $message);
 
-        $this->assertEquals($expected, $testee->toArray());
     }
 
-    public function testDitchBecauseOfBreakdown() {
 
-        $breakdown = \Mockery::mock(AmountBreakdown::class);
-        $breakdown->expects('shipping')->andReturnNull();
-        $breakdown->expects('itemTotal')->andReturnNull();
-        $breakdown->expects('discount')->andReturnNull();
-        $breakdown->expects('taxTotal')->andReturnNull();
-        $breakdown->expects('shippingDiscount')->andReturnNull();
-        $breakdown->expects('handling')->andReturnNull();
-        $breakdown->expects('insurance')->andReturnNull();
-        $amount = \Mockery::mock(Amount::class);
-        $amount->expects('breakdown')->andReturn($breakdown);
-        $amount->expects('value')->andReturn(1.00);
-        $amount->expects('toArray')->andReturn(['amount']);
-        $item1 = \Mockery::mock(Item::class);
-        $item1->expects('toArray')->andReturn(['item1']);
-        $item2 = \Mockery::mock(Item::class);
-        $item2->expects('toArray')->andReturn(['item2']);
-        $shipping = \Mockery::mock(Shipping::class);
-        $shipping->expects('toArray')->andReturn(['shipping']);
-        $testee = new PurchaseUnit(
-            $amount,
-            [],
-            $shipping,
-            'referenceId',
-            'description',
-            null,
-            'customId',
-            'invoiceId',
-            'softDescriptor'
-        );
-
-        $expected = [
-            'reference_id' => 'referenceId',
-            'amount' => ['amount'],
-            'description' => 'description',
-            'shipping' => ['shipping'],
-            'custom_id' => 'customId',
-            'invoice_id' => 'invoiceId',
-            'soft_descriptor' => 'softDescriptor',
+    public function dataForDitchTests() : array {
+        $data = [
+            'default' => [
+                'message' => 'Items should not be ditched.',
+                'ditch' => false,
+                'items' => [
+                    [
+                        'value' => 10,
+                        'quantity' => 2,
+                        'tax' => 3,
+                    ],
+                ],
+                'amount' => 26,
+                'breakdown' => [
+                    'itemTotal' => 20,
+                    'taxTotal' => 6,
+                    'shipping' => null,
+                    'discount' => null,
+                    'shippingDiscount' => null,
+                    'handling' => null,
+                    'insurance' => null,
+                ],
+            ],
+            'dont_ditch_with_discount' => [
+                'message' => 'Items should not be ditched.',
+                'ditch' => false,
+                'items' => [
+                    [
+                        'value' => 10,
+                        'quantity' => 2,
+                        'tax' => 3,
+                    ],
+                ],
+                'amount' => 23,
+                'breakdown' => [
+                    'itemTotal' => 20,
+                    'taxTotal' => 6,
+                    'shipping' => null,
+                    'discount' => 3,
+                    'shippingDiscount' => null,
+                    'handling' => null,
+                    'insurance' => null,
+                ],
+            ],
+            'ditch_with_discount' => [
+                'message' => 'Items should be ditched because of discount.',
+                'ditch' => true,
+                'items' => [
+                    [
+                        'value' => 10,
+                        'quantity' => 2,
+                        'tax' => 3,
+                    ],
+                ],
+                'amount' => 25,
+                'breakdown' => [
+                    'itemTotal' => 20,
+                    'taxTotal' => 6,
+                    'shipping' => null,
+                    'discount' => 3,
+                    'shippingDiscount' => null,
+                    'handling' => null,
+                    'insurance' => null,
+                ],
+            ],
+            'dont_ditch_with_shipping_discount' => [
+                'message' => 'Items should not be ditched.',
+                'ditch' => false,
+                'items' => [
+                    [
+                        'value' => 10,
+                        'quantity' => 2,
+                        'tax' => 3,
+                    ],
+                ],
+                'amount' => 23,
+                'breakdown' => [
+                    'itemTotal' => 20,
+                    'taxTotal' => 6,
+                    'shipping' => null,
+                    'discount' => null,
+                    'shippingDiscount' => 3,
+                    'handling' => null,
+                    'insurance' => null,
+                ],
+            ],
+            'ditch_with_handling' => [
+                'message' => 'Items should be ditched because of handling.',
+                'ditch' => true,
+                'items' => [
+                    [
+                        'value' => 10,
+                        'quantity' => 2,
+                        'tax' => 3,
+                    ],
+                ],
+                'amount' => 26,
+                'breakdown' => [
+                    'itemTotal' => 20,
+                    'taxTotal' => 6,
+                    'shipping' => null,
+                    'discount' => null,
+                    'shippingDiscount' => null,
+                    'handling' => 3,
+                    'insurance' => null,
+                ],
+            ],
+            'dont_ditch_with_handling' => [
+                'message' => 'Items should not be ditched.',
+                'ditch' => false,
+                'items' => [
+                    [
+                        'value' => 10,
+                        'quantity' => 2,
+                        'tax' => 3,
+                    ],
+                ],
+                'amount' => 29,
+                'breakdown' => [
+                    'itemTotal' => 20,
+                    'taxTotal' => 6,
+                    'shipping' => null,
+                    'discount' => null,
+                    'shippingDiscount' => null,
+                    'handling' => 3,
+                    'insurance' => null,
+                ],
+            ],
+            'ditch_with_insurance' => [
+                'message' => 'Items should be ditched because of insurance.',
+                'ditch' => true,
+                'items' => [
+                    [
+                        'value' => 10,
+                        'quantity' => 2,
+                        'tax' => 3,
+                    ],
+                ],
+                'amount' => 26,
+                'breakdown' => [
+                    'itemTotal' => 20,
+                    'taxTotal' => 6,
+                    'shipping' => null,
+                    'discount' => null,
+                    'shippingDiscount' => null,
+                    'handling' => null,
+                    'insurance' => 3,
+                ],
+            ],
+            'dont_ditch_with_insurance' => [
+                'message' => 'Items should not be ditched.',
+                'ditch' => false,
+                'items' => [
+                    [
+                        'value' => 10,
+                        'quantity' => 2,
+                        'tax' => 3,
+                    ],
+                ],
+                'amount' => 29,
+                'breakdown' => [
+                    'itemTotal' => 20,
+                    'taxTotal' => 6,
+                    'shipping' => null,
+                    'discount' => null,
+                    'shippingDiscount' => null,
+                    'handling' => null,
+                    'insurance' => 3,
+                ],
+            ],
+            'ditch_with_shipping_discount' => [
+                'message' => 'Items should be ditched because of shipping discount.',
+                'ditch' => true,
+                'items' => [
+                    [
+                        'value' => 10,
+                        'quantity' => 2,
+                        'tax' => 3,
+                    ],
+                ],
+                'amount' => 25,
+                'breakdown' => [
+                    'itemTotal' => 20,
+                    'taxTotal' => 6,
+                    'shipping' => null,
+                    'discount' => null,
+                    'shippingDiscount' => 3,
+                    'handling' => null,
+                    'insurance' => null,
+                ],
+            ],
+            'dont_ditch_with_shipping' => [
+                'message' => 'Items should not be ditched.',
+                'ditch' => false,
+                'items' => [
+                    [
+                        'value' => 10,
+                        'quantity' => 2,
+                        'tax' => 3,
+                    ],
+                ],
+                'amount' => 29,
+                'breakdown' => [
+                    'itemTotal' => 20,
+                    'taxTotal' => 6,
+                    'shipping' => 3,
+                    'discount' => null,
+                    'shippingDiscount' => null,
+                    'handling' => null,
+                    'insurance' => null,
+                ],
+            ],
+            'ditch_because_shipping' => [
+                'message' => 'Items should be ditched because of shipping.',
+                'ditch' => true,
+                'items' => [
+                    [
+                        'value' => 10,
+                        'quantity' => 2,
+                        'tax' => 3,
+                    ],
+                ],
+                'amount' => 28,
+                'breakdown' => [
+                    'itemTotal' => 20,
+                    'taxTotal' => 6,
+                    'shipping' => 3,
+                    'discount' => null,
+                    'shippingDiscount' => null,
+                    'handling' => null,
+                    'insurance' => null,
+                ],
+            ],
+            'ditch_items_total' => [
+                'message' => 'Items should be ditched because the item total does not add up.',
+                'ditch' => true,
+                'items' => [
+                    [
+                        'value' => 10,
+                        'quantity' => 2,
+                        'tax' => 3,
+                    ],
+                ],
+                'amount' => 26,
+                'breakdown' => [
+                    'itemTotal' => 11,
+                    'taxTotal' => 6,
+                    'shipping' => null,
+                    'discount' => null,
+                    'shippingDiscount' => null,
+                    'handling' => null,
+                    'insurance' => null,
+                ],
+            ],
+            'ditch_tax_total' => [
+                'message' => 'Items should be ditched because the tax total does not add up.',
+                'ditch' => true,
+                'items' => [
+                    [
+                        'value' => 10,
+                        'quantity' => 2,
+                        'tax' => 3,
+                    ],
+                ],
+                'amount' => 26,
+                'breakdown' => [
+                    'itemTotal' => 20,
+                    'taxTotal' => 5,
+                    'shipping' => null,
+                    'discount' => null,
+                    'shippingDiscount' => null,
+                    'handling' => null,
+                    'insurance' => null,
+                ],
+            ],
+            'ditch_total_amount' => [
+                'message' => 'Items should be ditched because the total amount is way out of order.',
+                'ditch' => true,
+                'items' => [
+                    [
+                        'value' => 10,
+                        'quantity' => 2,
+                        'tax' => 3,
+                    ],
+                ],
+                'amount' => 260,
+                'breakdown' => [
+                    'itemTotal' => 20,
+                    'taxTotal' => 6,
+                    'shipping' => null,
+                    'discount' => null,
+                    'shippingDiscount' => null,
+                    'handling' => null,
+                    'insurance' => null,
+                ],
+            ],
         ];
 
-        $this->assertEquals($expected, $testee->toArray());
+        $values = [];
+        foreach ($data as $testKey => $test) {
+            $items = [];
+            foreach ($test['items'] as $key => $item) {
+                $unitAmount = Mockery::mock(Money::class);
+                $unitAmount->expects('value')->andReturn($item['value']);
+                $tax = Mockery::mock(Money::class);
+                $tax->expects('value')->andReturn($item['tax']);
+                $items[$key] = Mockery::mock(Item::class);
+                $items[$key]->expects('unitAmount')->andReturn($unitAmount);
+                $items[$key]->expects('tax')->andReturn($tax);
+                $items[$key]->expects('quantity')->andReturn($item['quantity']);
+                $items[$key]->expects('toArray')->andReturn([]);
+            }
+            $breakdown = null;
+            if ($test['breakdown']) {
+                $breakdown = Mockery::mock(AmountBreakdown::class);
+                foreach ($test['breakdown'] as $method => $value) {
+                    $breakdown->expects($method)->andReturnUsing(function() use ($value) {
+                        if (! is_numeric($value)) {
+                            return null;
+                        }
+
+                        $money = Mockery::mock(Money::class);
+                        $money->expects('value')->andReturn($value);
+                        return $money;
+                    });
+                }
+            }
+            $amount = Mockery::mock(Amount::class);
+            $amount->expects('toArray')->andReturn(['value' => [], 'breakdown' => []]);
+            $amount->expects('value')->andReturn($test['amount']);
+            $amount->expects('breakdown')->andReturn($breakdown);
+
+            $values[$testKey] = [
+                $items,
+                $amount,
+                $test['ditch'],
+                $test['message']
+            ];
+        }
+
+        return $values;
     }
 
     public function testPayee() {
 
-        $amount = \Mockery::mock(Amount::class);
+        $amount = Mockery::mock(Amount::class);
         $amount->expects('breakdown')->andReturnNull();
         $amount->expects('toArray')->andReturn(['amount']);
-        $item1 = \Mockery::mock(Item::class);
+        $item1 = Mockery::mock(Item::class);
         $item1->expects('toArray')->andReturn(['item1']);
-        $item2 = \Mockery::mock(Item::class);
+        $item2 = Mockery::mock(Item::class);
         $item2->expects('toArray')->andReturn(['item2']);
-        $shipping = \Mockery::mock(Shipping::class);
+        $shipping = Mockery::mock(Shipping::class);
         $shipping->expects('toArray')->andReturn(['shipping']);
-        $payee = \Mockery::mock(Payee::class);
+        $payee = Mockery::mock(Payee::class);
         $payee->expects('toArray')->andReturn(['payee']);
         $testee = new PurchaseUnit(
             $amount,
