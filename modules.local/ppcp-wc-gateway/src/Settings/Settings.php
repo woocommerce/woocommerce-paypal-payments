@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Inpsyde\PayPalCommerce\WcGateway\Settings;
 
 use Inpsyde\PayPalCommerce\WcGateway\Exception\NotFoundException;
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGateway;
+use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGatewayInterface;
 use Psr\Container\ContainerInterface;
 
 class Settings implements ContainerInterface
@@ -13,7 +13,7 @@ class Settings implements ContainerInterface
     private $gateway;
     private $formFields;
 
-    public function __construct(WcGateway $gateway, SettingsFields $formFields)
+    public function __construct(WcGatewayInterface $gateway, SettingsFields $formFields)
     {
         $this->gateway = $gateway;
         $this->formFields = $formFields;
