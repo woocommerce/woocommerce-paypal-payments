@@ -19,6 +19,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\ShippingFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
+use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
 
 return [
 
@@ -49,9 +50,11 @@ return [
         $patchCollectionFactory = $container->get('api.factory.patch-collection-factory');
         $errorResponseFactory = $container->get('api.factory.response-error');
 
-        // TODO: get the settings using the class
-        // Using it now throws a maximum nested error because they share the same dependency
-        $intent = strtoupper(get_option('woocommerce_ppcp-gateway_settings')['intent']);
+        /**
+         * @var Settings $settings
+         */
+        $settings = $container->get('wcgateway.settings');
+        $intent = strtoupper($settings->get('intent'));
 
         return new OrderEndpoint(
             $container->get('api.host'),
