@@ -73,6 +73,8 @@ class WcGateway extends \WC_Payment_Gateway
 
         //ToDo: We need to fetch the order from paypal again to get it with the new status.
         $order = $this->sessionHandler->order();
+        update_post_meta($orderId, '_paypal_order_id', $order->id());
+
         $errorMessage = null;
         if (! $order || ! $order->status()->is(OrderStatus::APPROVED)) {
             $errorMessage = 'not approve yet';
@@ -84,7 +86,7 @@ class WcGateway extends \WC_Payment_Gateway
         }
 
         $order = $this->patchOrder($wcOrder, $order);
-        if($order->intent() === 'CAPTURE') {
+        if ($order->intent() === 'CAPTURE') {
             $order = $this->endpoint->capture($order);
         }
 
