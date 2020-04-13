@@ -10,7 +10,8 @@ use function Brain\Monkey\Functions\expect;
 class GetMultipleTest extends TestCase
 {
 
-    public function testGetMultiple() {
+    public function testGetMultiple()
+    {
         $testee = new Transient('group');
         expect('get_transient')
             ->times(3)
@@ -27,17 +28,20 @@ class GetMultipleTest extends TestCase
             $this->assertTrue($value === 1);
         }
     }
-    public function testGetMultipleThrowsErrorIfParamIsNotIterateable() {
+
+    public function testGetMultipleThrowsErrorIfParamIsNotIterateable()
+    {
         $testee = new Transient('group');
         $this->expectException(InvalidCacheArgumentException::class);
         $keys = new \stdClass();
         $testee->getMultiple($keys);
     }
-    public function testGetMultipleThrowsErrorIfOneKeyIsNotAString() {
+
+    public function testGetMultipleThrowsErrorIfOneKeyIsNotAString()
+    {
         $testee = new Transient('group');
         $this->expectException(InvalidCacheArgumentException::class);
         $keys = [1];
         $testee->getMultiple($keys);
     }
-
 }

@@ -4,10 +4,12 @@ declare(strict_types=1);
 namespace Inpsyde\PayPalCommerce\ApiClient\Endpoint;
 
 use Inpsyde\PayPalCommerce\ApiClient\Authentication\Bearer;
+use Inpsyde\PayPalCommerce\ApiClient\Entity\ErrorResponse;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use Inpsyde\PayPalCommerce\ApiClient\Factory\ErrorResponseCollectionFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\PatchCollectionFactory;
 
@@ -18,17 +20,20 @@ class OrderEndpoint
     private $bearer;
     private $orderFactory;
     private $patchCollectionFactory;
+    private $errorResponseFactory;
     public function __construct(
         string $host,
         Bearer $bearer,
         OrderFactory $orderFactory,
-        PatchCollectionFactory $patchCollectionFactory
+        PatchCollectionFactory $patchCollectionFactory,
+        ErrorResponseCollectionFactory $errorResponseFactory
     ) {
 
         $this->host = $host;
         $this->bearer = $bearer;
         $this->orderFactory = $orderFactory;
         $this->patchCollectionFactory = $patchCollectionFactory;
+        $this->errorResponseFactory = $errorResponseFactory;
     }
 
     public function createForPurchaseUnits(PurchaseUnit ...$items) : Order
@@ -53,10 +58,21 @@ class OrderEndpoint
             'body' => json_encode($data),
         ];
         $response = wp_remote_post($url, $args);
-        if (is_wp_error($response) || wp_remote_retrieve_response_code($response) !== 201) {
+        if (is_wp_error($response)) {
+            $this->handleResponseWpError($url, $args);
             throw new RuntimeException(__('Could not create order.', 'woocommerce-paypal-commerce-gateway'));
         }
         $json = json_decode($response['body']);
+        if (wp_remote_retrieve_response_code($response) !== 201) {
+            $errors = $this->errorResponseFactory->fromPayPalResponse(
+                $json,
+                (int)wp_remote_retrieve_response_code($response),
+                $url,
+                $args
+            );
+            add_action('woocommerce-paypal-commerce-gateway.error', $errors);
+            throw new RuntimeException(__('Could not create order.', 'woocommerce-paypal-commerce-gateway'));
+        }
         $order = $this->orderFactory->fromPayPalResponse($json);
         return $order;
     }
@@ -78,22 +94,24 @@ class OrderEndpoint
         $response = wp_remote_post($url, $args);
 
         if (is_wp_error($response)) {
+            $this->handleResponseWpError($url, $args);
             throw new RuntimeException(__('Could not capture order.', 'woocommerce-paypal-commerce-gateway'));
         }
-        if (wp_remote_retrieve_response_code($response) !== 422) {
-            $json = json_decode($response['body']);
-            if (is_array($json->details) && count(array_filter(
-                $json->details,
-                function ($detail) : bool {
-                    return $detail->issue === 'ORDER_ALREADY_CAPTURED';
-                }
-            ))
-            ) {
+
+        $json = json_decode($response['body']);
+        if (wp_remote_retrieve_response_code($response) !== 201) {
+            $errors = $this->errorResponseFactory->fromPayPalResponse(
+                $json,
+                (int)wp_remote_retrieve_response_code($response),
+                $url,
+                $args
+            );
+
+            // If the order has already been captured, we return the updated order.
+            if ($errors->hasErrorCode(ErrorResponse::ORDER_ALREADY_CAPTURED)) {
                 return $this->order($order->id());
             }
-        }
-
-        if (wp_remote_retrieve_response_code($response) !== 201) {
+            add_action('woocommerce-paypal-commerce-gateway.error', $errors);
             throw new RuntimeException(__('Could not capture order.', 'woocommerce-paypal-commerce-gateway'));
         }
         $json = json_decode($response['body']);
@@ -112,10 +130,21 @@ class OrderEndpoint
             ],
         ];
         $response = wp_remote_get($url, $args);
-        if (is_wp_error($response) || wp_remote_retrieve_response_code($response) !== 200) {
+        if (is_wp_error($response)) {
+            $this->handleResponseWpError($url, $args);
             throw new RuntimeException(__('Could not retrieve order.', 'woocommerce-paypal-commerce-gateway'));
         }
         $json = json_decode($response['body']);
+        if (wp_remote_retrieve_response_code($response) !== 200) {
+            $errors = $this->errorResponseFactory->fromPayPalResponse(
+                $json,
+                (int) wp_remote_retrieve_response_code($response),
+                $url,
+                $args
+            );
+            add_action('woocommerce-paypal-commerce-gateway.error', $errors);
+            throw new RuntimeException(__('Could not retrieve order.', 'woocommerce-paypal-commerce-gateway'));
+        }
         return $this->orderFactory->fromPayPalResponse($json);
     }
 
@@ -138,11 +167,33 @@ class OrderEndpoint
             'body' => json_encode($patches->toArray()),
         ];
         $response = wp_remote_post($url, $args);
-        if (is_wp_error($response) || wp_remote_retrieve_response_code($response) !== 204) {
+
+        if (is_wp_error($response)) {
+            $this->handleResponseWpError($url, $args);
+            throw new RuntimeException(__('Could not retrieve order.', 'woocommerce-paypal-commerce-gateway'));
+        }
+        if (wp_remote_retrieve_response_code($response) !== 204) {
+            $json = json_decode($response['body']);
+            $errors = $this->errorResponseFactory->fromPayPalResponse(
+                $json,
+                (int)wp_remote_retrieve_response_code($response),
+                $url,
+                $args
+            );
+            add_action('woocommerce-paypal-commerce-gateway.error', $errors);
             throw new RuntimeException(__('Could not patch order.', 'woocommerce-paypal-commerce-gateway'));
         }
 
         $newOrder = $this->order($orderToUpdate->id());
         return $newOrder;
+    }
+
+    private function handleResponseWpError(string $url, array $args)
+    {
+        $errors = $this->errorResponseFactory->unknownError(
+            $url,
+            $args
+        );
+        add_action('woocommerce-paypal-commerce-gateway.error', $errors);
     }
 }
