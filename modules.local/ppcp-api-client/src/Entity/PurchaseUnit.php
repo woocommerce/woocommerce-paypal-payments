@@ -32,14 +32,12 @@ class PurchaseUnit
         $this->referenceId = $referenceId;
         $this->description = $description;
         //phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration.NoArgumentType
-        $this->items = array_values(
-            array_filter(
-                $items,
-                function ($item) : bool {
-                    return is_a($item, Item::class);
-                }
-            )
-        );
+        $this->items = array_values( array_filter(
+            $items,
+            function ($item) : bool {
+                return is_a($item, Item::class);
+            }
+        ));
         //phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration.NoArgumentType
         $this->payee = $payee;
         $this->customId = $customId;
@@ -101,8 +99,7 @@ class PurchaseUnit
             'reference_id' => $this->referenceId(),
             'amount' => $this->amount()->toArray(),
             'description' => $this->description(),
-            'items' => array_map(
-                function (Item $item) : array {
+            'items' => array_map(function (Item $item) : array {
                     return $item->toArray();
                 },
                 $this->items()
