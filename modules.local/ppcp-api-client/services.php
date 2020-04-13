@@ -46,11 +46,17 @@ return [
     'api.endpoint.order' => function (ContainerInterface $container) : OrderEndpoint {
         $orderFactory = $container->get('api.factory.order');
         $patchCollectionFactory = $container->get('api.factory.patch-collection-factory');
+
+        // TODO: get the settings using the class
+        // Using it now throws a maximum nested error because they share the same dependency
+        $intent = strtoupper(get_option('woocommerce_ppcp-gateway_settings')['intent']);
+
         return new OrderEndpoint(
             $container->get('api.host'),
             $container->get('api.bearer'),
             $orderFactory,
-            $patchCollectionFactory
+            $patchCollectionFactory,
+            $intent
         );
     },
     'api.cart-repository' => function (ContainerInterface $container) : CartRepository {

@@ -18,24 +18,28 @@ class OrderEndpoint
     private $bearer;
     private $orderFactory;
     private $patchCollectionFactory;
+    private $intent;
+
     public function __construct(
         string $host,
         Bearer $bearer,
         OrderFactory $orderFactory,
-        PatchCollectionFactory $patchCollectionFactory
+        PatchCollectionFactory $patchCollectionFactory,
+        string $intent
     ) {
 
         $this->host = $host;
         $this->bearer = $bearer;
         $this->orderFactory = $orderFactory;
         $this->patchCollectionFactory = $patchCollectionFactory;
+        $this->intent = $intent;
     }
 
     public function createForPurchaseUnits(PurchaseUnit ...$items) : Order
     {
         $bearer = $this->bearer->bearer();
         $data = [
-            'intent' => 'CAPTURE',
+            'intent' => $this->intent, // TODO: read this from the global settings
             'purchase_units' => array_map(
                 function (PurchaseUnit $item) : array {
                     return $item->toArray();
