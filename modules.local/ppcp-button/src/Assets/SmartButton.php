@@ -81,6 +81,7 @@ class SmartButton implements SmartButtonInterface
             //ToDo: Probably only needed, when DCC
             'vault' => 'true',
             'commit' => is_checkout() ? 'true' : 'false',
+            'intent' => $this->settings->get('intent')
         ];
         $smartButtonUrl = add_query_arg($params, 'https://www.paypal.com/sdk/js');
 
