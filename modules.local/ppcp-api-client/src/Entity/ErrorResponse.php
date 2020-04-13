@@ -6,6 +6,8 @@ namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
 class ErrorResponse
 {
 
+    const UNKNOWN = 'UNKNOWN';
+
     /* Order error codes */
     const ACTION_DOES_NOT_MATCH_INTENT='ACTION_DOES_NOT_MATCH_INTENT';
     const AGREEMENT_ALREADY_CANCELLED='AGREEMENT_ALREADY_CANCELLED';

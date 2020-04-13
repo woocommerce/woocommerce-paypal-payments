@@ -49,7 +49,7 @@ class ErrorResponseCollectionFactory
     {
         return new ErrorResponseCollection(
             new ErrorResponse(
-                'UNKNOWN',
+                ErrorResponse::UNKNOWN,
                 'unknown',
                 0,
                 $url,
