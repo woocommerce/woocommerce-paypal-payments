@@ -17,11 +17,13 @@ use Inpsyde\PayPalCommerce\Button\Exception\RuntimeException;
 return [
     'button.smart-button' => function (ContainerInterface $container): SmartButtonInterface {
         $settings = $container->get('wcgateway.settings');
+        $payeeRepository = $container->get('api.repository.payee');
         if (wc_string_to_bool($settings->get('enabled'))) {
             return new SmartButton(
                 $container->get('button.url'),
                 $container->get('session.handler'),
-                $settings
+                $settings,
+                $payeeRepository
             );
         }
         return new DisabledSmartButton();

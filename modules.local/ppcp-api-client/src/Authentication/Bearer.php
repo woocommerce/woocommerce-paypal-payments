@@ -52,6 +52,11 @@ class Bearer
             throw new RuntimeException(__('Could not find token.', 'woocommerce-paypal-commerce-gateway'));
         }
         $token = (string) $json->access_token;
+
+        /**
+         * ToDo: Does expires_in really work as expected. Woke up after a weekend and bearer did
+         * not work. Validate.
+         **/
         $this->cache->set(self::CACHE_KEY, $token, $json->expires_in);
         return $token;
     }

@@ -8,24 +8,27 @@ use Inpsyde\PayPalCommerce\ApiClient\Entity\AmountBreakdown;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Item;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Money;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Shipping;
 use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use Inpsyde\PayPalCommerce\ApiClient\Repository\PayeeRepository;
 
 class PurchaseUnitFactory
 {
 
     private $amountFactory;
+    private $payeeRepository;
     private $payeeFactory;
     private $itemFactory;
     private $shippingFactory;
     public function __construct(
         AmountFactory $amountFactory,
+        PayeeRepository $payeeRepository,
         PayeeFactory $payeeFactory,
         ItemFactory $itemFactory,
         ShippingFactory $shippingFactory
     ) {
 
         $this->amountFactory = $amountFactory;
+        $this->payeeRepository = $payeeRepository;
         $this->payeeFactory = $payeeFactory;
         $this->itemFactory = $itemFactory;
         $this->shippingFactory = $shippingFactory;
@@ -112,8 +115,7 @@ class PurchaseUnitFactory
         $referenceId = 'default';
         $description = '';
 
-        //ToDo: We need to create a Payee.
-        $payee = null;
+        $payee = $this->payeeRepository->payee();
 
         $customId = '';
         $invoiceId = '';
@@ -144,7 +146,10 @@ class PurchaseUnitFactory
             $currency
         );
 
-        $taxes = new Money((float) $cart->get_cart_contents_tax() + (float) $cart->get_discount_tax(), $currency);
+        $taxes = new Money(
+            (float) $cart->get_cart_contents_tax() + (float) $cart->get_discount_tax(),
+            $currency
+        );
 
         $discount = null;
         if ($cart->get_discount_total()) {
@@ -211,8 +216,7 @@ class PurchaseUnitFactory
         $referenceId = 'default';
         $description = '';
 
-        //ToDo: We need to create a Payee.
-        $payee = null;
+        $payee = $this->payeeRepository->payee();
 
         $customId = '';
         $invoiceId = '';

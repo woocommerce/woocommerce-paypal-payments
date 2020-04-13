@@ -12,7 +12,7 @@ use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsFields;
 return [
     'wcgateway.gateway' => function (ContainerInterface $container) : WcGateway {
         $sessionHandler = $container->get('session.handler');
-        $cartRepository = $container->get('api.cart-repository');
+        $cartRepository = $container->get('api.repository.cart');
         $endpoint = $container->get('api.endpoint.order');
         $orderFactory = $container->get('api.factory.order');
         $settingsFields = $container->get('wcgateway.settings.fields');

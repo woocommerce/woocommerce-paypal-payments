@@ -5,12 +5,12 @@ namespace Inpsyde\PayPalCommerce\ApiClient;
 
 use Dhii\Data\Container\ContainerInterface;
 use Inpsyde\CacheModule\Provider\CacheProviderInterface;
+use Inpsyde\PayPalCommerce\ApiClient\Config\Config;
 use Inpsyde\PayPalCommerce\ApiClient\Authentication\Bearer;
 use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\AddressFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\AmountFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\ItemFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\LineItemFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\PatchCollectionFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\PayeeFactory;
@@ -18,6 +18,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\ShippingFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
+use Inpsyde\PayPalCommerce\ApiClient\Repository\PayeeRepository;
 
 return [
 
@@ -53,7 +54,7 @@ return [
             $patchCollectionFactory
         );
     },
-    'api.cart-repository' => function (ContainerInterface $container) : CartRepository {
+    'api.repository.cart' => function (ContainerInterface $container) : CartRepository {
         /*
          * ToDo: We need to watch out and see, if we can load the Cart Repository
          * only on specific situations.
@@ -70,14 +71,23 @@ return [
         $factory = $container->get('api.factory.purchase-unit');
         return new CartRepository($cart, $factory);
     },
+    'api.config.config' => function (ContainerInterface $container) : Config {
+        return new Config();
+    },
+    'api.repository.payee' => function (ContainerInterface $container) : PayeeRepository {
+        $config = $container->get('api.config.config');
+        return new PayeeRepository($config);
+    },
     'api.factory.purchase-unit' => function (ContainerInterface $container) : PurchaseUnitFactory {
 
         $amountFactory = $container->get('api.factory.amount');
+        $payeeRepository = $container->get('api.repository.payee');
         $payeeFactory = $container->get('api.factory.payee');
         $itemFactory = $container->get('api.factory.item');
         $shippingFactory = $container->get('api.factory.shipping');
         return new PurchaseUnitFactory(
             $amountFactory,
+            $payeeRepository,
             $payeeFactory,
             $itemFactory,
             $shippingFactory
