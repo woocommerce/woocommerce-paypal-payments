@@ -13,11 +13,8 @@ use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsFields;
 
 //phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
 //phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration.NoArgumentType
-class WcGateway extends \WC_Payment_Gateway
+class WcGateway extends WcGatewayBase implements WcGatewayInterface
 {
-
-    const ID = 'ppcp-gateway';
-
     private $isSandbox = true;
     private $sessionHandler;
     private $endpoint;
@@ -38,7 +35,6 @@ class WcGateway extends \WC_Payment_Gateway
         $this->endpoint = $endpoint;
         $this->orderFactory = $orderFactory;
         $this->settingsFields = $settingsFields;
-        $this->id = self::ID;
 
         $this->method_title = __('PayPal Payments', 'woocommerce-paypal-gateway');
         $this->method_description = __(
@@ -59,6 +55,8 @@ class WcGateway extends \WC_Payment_Gateway
                 'process_admin_options',
             ]
         );
+
+        parent::__construct();
     }
 
     public function init_form_fields()
