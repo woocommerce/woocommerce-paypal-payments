@@ -97,7 +97,6 @@ class OrderEndpoint
             $this->handleResponseWpError($url, $args);
             throw new RuntimeException(__('Could not capture order.', 'woocommerce-paypal-commerce-gateway'));
         }
-
         $json = json_decode($response['body']);
         if (wp_remote_retrieve_response_code($response) !== 201) {
             $errors = $this->errorResponseFactory->fromPayPalResponse(

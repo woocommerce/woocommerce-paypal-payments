@@ -36,9 +36,12 @@ class Payee
 
     public function toArray() : array
     {
-        return [
+        $data = [
             'email_address' => $this->email(),
-            'merchant_id' => $this->merchantId(),
         ];
+        if ($this->merchantId) {
+            $data['merchant_id'] = $this->merchantId();
+        }
+        return $data;
     }
 }
