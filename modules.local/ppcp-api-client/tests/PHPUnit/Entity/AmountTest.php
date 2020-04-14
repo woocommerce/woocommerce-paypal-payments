@@ -5,12 +5,13 @@ namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
 
 
 use Inpsyde\PayPalCommerce\ApiClient\TestCase;
+use Mockery;
 
 class AmountTest extends TestCase
 {
 
     public function test() {
-        $money = \Mockery::mock(Money::class);
+        $money = Mockery::mock(Money::class);
         $money->shouldReceive('currencyCode')->andReturn('currencyCode');
         $money->shouldReceive('value')->andReturn(1.10);
         $testee = new Amount($money);
@@ -19,7 +20,7 @@ class AmountTest extends TestCase
         $this->assertEquals(1.10, $testee->value());
     }
     public function testBreakdownIsNull() {
-        $money = \Mockery::mock(Money::class);
+        $money = Mockery::mock(Money::class);
         $money->shouldReceive('currencyCode')->andReturn('currencyCode');
         $money->shouldReceive('value')->andReturn(1.10);
         $testee = new Amount($money);
@@ -33,10 +34,10 @@ class AmountTest extends TestCase
         $this->assertEquals($expectedArray, $testee->toArray());
     }
     public function testBreakdown() {
-        $money = \Mockery::mock(Money::class);
+        $money = Mockery::mock(Money::class);
         $money->shouldReceive('currencyCode')->andReturn('currencyCode');
         $money->shouldReceive('value')->andReturn(1.10);
-        $breakdown = \Mockery::mock(AmountBreakdown::class);
+        $breakdown = Mockery::mock(AmountBreakdown::class);
         $breakdown->shouldReceive('toArray')->andReturn([1]);
         $testee = new Amount($money, $breakdown);
 

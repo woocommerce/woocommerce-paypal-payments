@@ -4,13 +4,14 @@ declare(strict_types=1);
 namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
 
 use Inpsyde\PayPalCommerce\ApiClient\TestCase;
+use Mockery;
 
 class ItemTest extends TestCase
 {
 
     public function test() {
-        $unitAmount = \Mockery::mock(Money::class);
-        $tax = \Mockery::mock(Money::class);
+        $unitAmount = Mockery::mock(Money::class);
+        $tax = Mockery::mock(Money::class);
         $testee = new Item(
             'name',
             $unitAmount,
@@ -31,8 +32,8 @@ class ItemTest extends TestCase
     }
 
     public function testDigitalGoodsCategory() {
-        $unitAmount = \Mockery::mock(Money::class);
-        $tax = \Mockery::mock(Money::class);
+        $unitAmount = Mockery::mock(Money::class);
+        $tax = Mockery::mock(Money::class);
         $testee = new Item(
             'name',
             $unitAmount,
@@ -48,11 +49,11 @@ class ItemTest extends TestCase
 
     public function testToArray() {
 
-        $unitAmount = \Mockery::mock(Money::class);
+        $unitAmount = Mockery::mock(Money::class);
         $unitAmount
             ->expects('toArray')
             ->andReturn([1]);
-        $tax = \Mockery::mock(Money::class);
+        $tax = Mockery::mock(Money::class);
         $tax
             ->expects('toArray')
             ->andReturn([2]);

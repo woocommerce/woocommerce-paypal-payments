@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
 
 use Inpsyde\PayPalCommerce\ApiClient\TestCase;
+use Mockery;
 
 class ErrorResponseTest extends TestCase
 {
