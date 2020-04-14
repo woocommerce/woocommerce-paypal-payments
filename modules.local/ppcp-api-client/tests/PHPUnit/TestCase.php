@@ -13,6 +13,9 @@ class TestCase extends \PHPUnit\Framework\TestCase
     public function setUp(): void
     {
         parent::setUp();
+        expect('__')->andReturnUsing( function(string $text) {
+            return $text;
+        });
         setUp();
     }
     public function tearDown(): void
