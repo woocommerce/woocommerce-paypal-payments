@@ -19,10 +19,11 @@ return [
     'wcgateway.gateway' => function (ContainerInterface $container) : WcGateway {
         $sessionHandler = $container->get('session.handler');
         $cartRepository = $container->get('api.repository.cart');
-        $endpoint = $container->get('api.endpoint.order');
+        $orderEndpoint = $container->get('api.endpoint.order');
+        $paymentsEndpoint = $container->get('api.endpoint.payments');
         $orderFactory = $container->get('api.factory.order');
         $settingsFields = $container->get('wcgateway.settings.fields');
-        return new WcGateway($sessionHandler, $cartRepository, $endpoint, $orderFactory, $settingsFields);
+        return new WcGateway($sessionHandler, $cartRepository, $orderEndpoint, $paymentsEndpoint, $orderFactory, $settingsFields);
     },
     'wcgateway.disabler' => function (ContainerInterface $container) : DisableGateways {
         $sessionHandler = $container->get('session.handler');

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Inpsyde\PayPalCommerce\WcGateway\Gateway;
 
 use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use Inpsyde\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
@@ -20,22 +21,28 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
 {
     private $isSandbox = true;
     private $sessionHandler;
-    private $endpoint;
+    private $orderEndpoint;
     private $cartRepository;
     private $orderFactory;
     private $settingsFields;
+    /**
+     * @var PaymentsEndpoint
+     */
+    private $paymentsEndpoint;
 
     public function __construct(
         SessionHandler $sessionHandler,
         CartRepository $cartRepository,
-        OrderEndpoint $endpoint,
+        OrderEndpoint $orderEndpoint,
+        PaymentsEndpoint $paymentsEndpoint,
         OrderFactory $orderFactory,
         SettingsFields $settingsFields
     ) {
 
         $this->sessionHandler = $sessionHandler;
         $this->cartRepository = $cartRepository;
-        $this->endpoint = $endpoint;
+        $this->orderEndpoint = $orderEndpoint;
+        $this->paymentsEndpoint = $paymentsEndpoint;
         $this->orderFactory = $orderFactory;
         $this->settingsFields = $settingsFields;
 
@@ -89,11 +96,11 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
 
         $order = $this->patchOrder($wcOrder, $order);
         if ($order->intent() === 'CAPTURE') {
-            $order = $this->endpoint->capture($order);
+            $order = $this->orderEndpoint->capture($order);
         }
 
         if ($order->intent() === 'AUTHORIZE') {
-            $order = $this->endpoint->authorize($order);
+            $order = $this->orderEndpoint->authorize($order);
         }
 
         $wcOrder->update_status('on-hold', __('Awaiting payment.', 'woocommerce-paypal-gateway'));
@@ -114,7 +121,7 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
         $payPalOrderId = get_post_meta($wcOrder->get_id(), '_paypal_order_id', true);
 
         try {
-            $order = $this->endpoint->order($payPalOrderId);
+            $order = $this->orderEndpoint->order($payPalOrderId);
         } catch (RuntimeException $exception) {
             AuthorizeOrderActionNotice::displayMessage(AuthorizeOrderActionNotice::NO_INFO);
             return;
@@ -126,7 +133,7 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
         }
 
         try {
-            $this->endpoint->authorize($payPalOrderId);
+            $this->orderEndpoint->authorize($payPalOrderId);
         } catch (RuntimeException $exception) {
             AuthorizeOrderActionNotice::displayMessage(AuthorizeOrderActionNotice::FAILED);
             return;
@@ -147,7 +154,7 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
     private function patchOrder(\WC_Order $wcOrder, Order $order): Order
     {
         $updatedOrder = $this->orderFactory->fromWcOrder($wcOrder, $order);
-        $order = $this->endpoint->patchOrderWith($order, $updatedOrder);
+        $order = $this->orderEndpoint->patchOrderWith($order, $updatedOrder);
         return $order;
     }
 }
