@@ -8,6 +8,7 @@ class AuthorizationStatus
 {
     const INTERNAL = 'INTERNAL';
     const CREATED = 'CREATED';
+    const CAPTURED = 'CAPTURED';
     const DENIED = 'DENIED';
     const EXPIRED = 'EXPIRED';
     const PARTIALLY_CAPTURED = 'PARTIALLY_CAPTURED';
@@ -16,6 +17,7 @@ class AuthorizationStatus
     const VALID_STATUS = [
         self::INTERNAL,
         self::CREATED,
+        self::CAPTURED,
         self::DENIED,
         self::EXPIRED,
         self::PARTIALLY_CAPTURED,
