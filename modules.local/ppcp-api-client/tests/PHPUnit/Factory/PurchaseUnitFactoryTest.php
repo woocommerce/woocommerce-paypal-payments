@@ -9,9 +9,9 @@ use Inpsyde\PayPalCommerce\ApiClient\Entity\Payee;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Shipping;
 use Inpsyde\PayPalCommerce\ApiClient\Repository\PayeeRepository;
-use Mockery;
 use Inpsyde\PayPalCommerce\ApiClient\TestCase;
 use function Brain\Monkey\Functions\expect;
+use Mockery;
 
 class PurchaseUnitFactoryTest extends TestCase
 {
@@ -169,7 +169,7 @@ class PurchaseUnitFactoryTest extends TestCase
         $this->assertEquals(null, $unit->shipping());
     }
 
-    public function testWcCart()
+    public function testWcCartDefault()
     {
 
         $wcCustomer = Mockery::mock(\WC_Customer::class);
@@ -196,15 +196,15 @@ class PurchaseUnitFactoryTest extends TestCase
 
         $address = Mockery::mock(Address::class);
         $address
-            ->expects('countryCode')
+            ->shouldReceive('countryCode')
             ->andReturn('DE');
         $address
-            ->expects('postalCode')
+            ->shouldReceive('postalCode')
             ->andReturn('12345');
         $shipping = Mockery::mock(Shipping::class);
         $shipping
-            ->expects('address')
-            ->times(2)
+            ->shouldReceive('address')
+            ->zeroOrMoreTimes()
             ->andReturn($address);
         $shippingFactory = Mockery::mock(ShippingFactory::class);
         $shippingFactory
@@ -255,6 +255,105 @@ class PurchaseUnitFactoryTest extends TestCase
             ->with($wcCart)
             ->andReturn([]);
         $shippingFactory = Mockery::mock(ShippingFactory::class);
+
+        $testee = new PurchaseUnitFactory(
+            $amountFactory,
+            $payeeRepository,
+            $payeeFactory,
+            $itemFactory,
+            $shippingFactory
+        );
+
+        $unit = $testee->fromWcCart($wcCart);
+        $this->assertNull($unit->shipping());
+    }
+    public function testWcCartShippingGetsDroppendWhenNoPostalCode() {
+
+        expect('WC')
+            ->andReturn((object) ['customer' => Mockery::mock(\WC_Customer::class)]);
+
+        $wcCart = Mockery::mock(\WC_Cart::class);
+        $amount = Mockery::mock(Amount::class);
+        $amountFactory = Mockery::mock(AmountFactory::class);
+        $amountFactory
+            ->expects('fromWcCart')
+            ->with($wcCart)
+            ->andReturn($amount);
+        $payeeFactory = Mockery::mock(PayeeFactory::class);
+        $payeeRepository = Mockery::mock(PayeeRepository::class);
+        $payee = Mockery::mock(Payee::class);
+        $payeeRepository
+            ->expects('payee')->andReturn($payee);
+        $itemFactory = Mockery::mock(ItemFactory::class);
+        $itemFactory
+            ->expects('fromWcCart')
+            ->with($wcCart)
+            ->andReturn([]);
+
+
+        $address = Mockery::mock(Address::class);
+        $address
+            ->shouldReceive('countryCode')
+            ->andReturn('DE');
+        $address
+            ->shouldReceive('postalCode')
+            ->andReturn('');
+        $shipping = Mockery::mock(Shipping::class);
+        $shipping
+            ->shouldReceive('address')
+            ->andReturn($address);
+        $shippingFactory = Mockery::mock(ShippingFactory::class);
+        $shippingFactory
+            ->expects('fromWcCustomer')
+            ->andReturn($shipping);
+
+        $testee = new PurchaseUnitFactory(
+            $amountFactory,
+            $payeeRepository,
+            $payeeFactory,
+            $itemFactory,
+            $shippingFactory
+        );
+
+        $unit = $testee->fromWcCart($wcCart);
+        $this->assertNull($unit->shipping());
+    }
+    public function testWcCartShippingGetsDroppendWhenNoCountryCode() {
+
+        expect('WC')
+            ->andReturn((object) ['customer' => Mockery::mock(\WC_Customer::class)]);
+
+        $wcCart = Mockery::mock(\WC_Cart::class);
+        $amount = Mockery::mock(Amount::class);
+        $amountFactory = Mockery::mock(AmountFactory::class);
+        $amountFactory
+            ->expects('fromWcCart')
+            ->with($wcCart)
+            ->andReturn($amount);
+        $payeeFactory = Mockery::mock(PayeeFactory::class);
+        $payeeRepository = Mockery::mock(PayeeRepository::class);
+        $payee = Mockery::mock(Payee::class);
+        $payeeRepository
+            ->expects('payee')->andReturn($payee);
+        $itemFactory = Mockery::mock(ItemFactory::class);
+        $itemFactory
+            ->expects('fromWcCart')
+            ->with($wcCart)
+            ->andReturn([]);
+
+
+        $address = Mockery::mock(Address::class);
+        $address
+            ->shouldReceive('countryCode')
+            ->andReturn('');
+        $shipping = Mockery::mock(Shipping::class);
+        $shipping
+            ->shouldReceive('address')
+            ->andReturn($address);
+        $shippingFactory = Mockery::mock(ShippingFactory::class);
+        $shippingFactory
+            ->expects('fromWcCustomer')
+            ->andReturn($shipping);
 
         $testee = new PurchaseUnitFactory(
             $amountFactory,

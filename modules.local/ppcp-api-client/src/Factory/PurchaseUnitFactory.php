@@ -77,7 +77,7 @@ class PurchaseUnitFactory
         $customer = \WC()->customer;
         if (is_a($customer, \WC_Customer::class)) {
             $shipping = $this->shippingFactory->fromWcCustomer(\WC()->customer);
-            if ($shipping->address()->countryCode() && !$shipping->address()->postalCode()) {
+            if (! $shipping->address()->countryCode() || ($shipping->address()->countryCode() && !$shipping->address()->postalCode())) {
                 $shipping = null;
             }
         }
