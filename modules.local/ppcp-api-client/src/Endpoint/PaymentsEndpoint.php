@@ -5,26 +5,26 @@ declare(strict_types=1);
 namespace Inpsyde\PayPalCommerce\ApiClient\Endpoint;
 
 use Inpsyde\PayPalCommerce\ApiClient\Authentication\Bearer;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\AuthorizationsFactory;
+use Inpsyde\PayPalCommerce\ApiClient\Factory\AuthorizationFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\ErrorResponseCollectionFactory;
 
 class PaymentsEndpoint
 {
     private $host;
     private $bearer;
-    private $authorizationsFactory;
+    private $authorizationFactory;
     private $errorResponseFactory;
 
     public function __construct(
         string $host,
         Bearer $bearer,
-        AuthorizationsFactory $authorizationsFactory,
+        AuthorizationFactory $authorizationsFactory,
         ErrorResponseCollectionFactory $errorResponseFactory
     ) {
 
         $this->host = $host;
         $this->bearer = $bearer;
-        $this->authorizationsFactory = $authorizationsFactory;
+        $this->authorizationFactory = $authorizationsFactory;
         $this->errorResponseFactory = $errorResponseFactory;
     }
 
@@ -61,11 +61,11 @@ class PaymentsEndpoint
         }
 
         $json = json_decode($response['body']);
-        $authorization = $this->authorizationsFactory->fromPayPalRequest($json);
+        $authorization = $this->authorizationFactory->fromPayPalRequest($json);
         return $authorization;
     }
 
-    public function captureAuthorization($authorizationId)
+    public function capture($authorizationId)
     {
         $bearer = $this->bearer->bearer();
         $url = trailingslashit($this->host) . 'v2/payments/authorizations/' . $authorizationId . '/capture';
@@ -98,6 +98,7 @@ class PaymentsEndpoint
         }
 
         $json = json_decode($response['body']);
-        return $json;
+        $authorization = $this->authorizationFactory->fromPayPalRequest($json);
+        return $authorization;
     }
 }

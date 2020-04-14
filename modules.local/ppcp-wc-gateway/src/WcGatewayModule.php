@@ -74,7 +74,7 @@ class WcGatewayModule implements ModuleInterface
                  * @var WcGateway $gateway
                  */
                 $gateway = $container->get('wcgateway.gateway');
-                $gateway->authorizeOrder($wcOrder);
+                $gateway->captureAuthorizedPayment($wcOrder);
             }
         );
 

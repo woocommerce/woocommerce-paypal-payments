@@ -6,6 +6,8 @@ namespace Inpsyde\PayPalCommerce\WcGateway\Gateway;
 
 use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use Inpsyde\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
+use Inpsyde\PayPalCommerce\ApiClient\Entity\Authorization;
+use Inpsyde\PayPalCommerce\ApiClient\Entity\AuthorizationStatus;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
@@ -116,7 +118,7 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
         ];
     }
 
-    public function authorizeOrder(\WC_Order $wcOrder)
+    public function captureAuthorizedPayment(\WC_Order $wcOrder)
     {
         $payPalOrderId = get_post_meta($wcOrder->get_id(), '_paypal_order_id', true);
 
@@ -127,16 +129,20 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
             return;
         }
 
-        if ($order->status()->is(OrderStatus::COMPLETED)) {
-            AuthorizeOrderActionNotice::displayMessage(AuthorizeOrderActionNotice::ALREADY_AUTHORIZED);
-            return;
-        }
-
-        try {
-            $this->orderEndpoint->authorize($payPalOrderId);
-        } catch (RuntimeException $exception) {
-            AuthorizeOrderActionNotice::displayMessage(AuthorizeOrderActionNotice::FAILED);
-            return;
+        foreach ($order->purchaseUnits() as $purchaseUnit) {
+            foreach ($purchaseUnit->payments()->authorizations() as $authorization) {
+                /**
+                 * @var Authorization $authorization;
+                 */
+                if ($authorization->status()->name() === AuthorizationStatus::CREATED) {
+                    try {
+                        $result = $this->paymentsEndpoint->capture($authorization->id());
+                    } catch (RuntimeException $exception) {
+                        AuthorizeOrderActionNotice::displayMessage(AuthorizeOrderActionNotice::FAILED);
+                        return;
+                    }
+                }
+            }
         }
 
         AuthorizeOrderActionNotice::displayMessage(AuthorizeOrderActionNotice::SUCCESS);
