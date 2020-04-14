@@ -8,7 +8,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Entity\Authorization;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\AuthorizationStatus;
 use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
-class AuthorizationsFactory
+class AuthorizationFactory
 {
     public function fromPayPalRequest(\stdClass $data): Authorization
     {
@@ -21,10 +21,10 @@ class AuthorizationsFactory
             );
         }
 
-        if (!isset($orderData->status)) {
+        if (!isset($data->status)) {
             throw new RuntimeException(
                 __(
-                    'Des not contain status.',
+                    'Does not contain status.',
                     'woocommerce-paypal-commerce-gateway'
                 )
             );
