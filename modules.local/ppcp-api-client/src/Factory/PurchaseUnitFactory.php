@@ -36,27 +36,7 @@ class PurchaseUnitFactory
 
         $items = array_map(
             function (\WC_Order_Item_Product $item) use ($currency, $order): Item {
-
-                $product = $item->get_product();
-                /**
-                 * @var \WC_Product $product
-                 */
-                $quantity = $item->get_quantity();
-
-                $price = (float) $order->get_item_subtotal($item, true);
-                $priceWithoutTax = (float) $order->get_item_subtotal($item, false);
-                $priceWithoutTaxRounded = round($priceWithoutTax, 2);
-                $tax = round($price - $priceWithoutTaxRounded, 2);
-                $tax = new Money($tax, $currency);
-                return new Item(
-                    mb_substr($product->get_name(), 0, 127),
-                    new Money($priceWithoutTaxRounded, $currency),
-                    $quantity,
-                    mb_substr($product->get_description(), 0, 127),
-                    $tax,
-                    $product->get_sku(),
-                    ($product->is_downloadable()) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS
-                );
+                return $this->itemFactory->fromWcOrderLineItem($item, $order, $currency);
             },
             $order->get_items('line_item')
         );
@@ -82,7 +62,7 @@ class PurchaseUnitFactory
         ), $currency);
 
         $discount = null;
-        if ((float) $order->get_total_discount()) {
+        if ((float) $order->get_total_discount(false)) {
             $discount = new Money(
                 (float) $order->get_total_discount(false),
                 $currency
