@@ -5,6 +5,7 @@ namespace Inpsyde\PayPalCommerce\ApiClient\Factory;
 
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Address;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Amount;
+use Inpsyde\PayPalCommerce\ApiClient\Entity\Item;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Payee;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Shipping;
@@ -16,7 +17,7 @@ use Mockery;
 class PurchaseUnitFactoryTest extends TestCase
 {
 
-    public function testWcOrder() {
+    public function testWcOrderDefault() {
 
         $wcOrder = Mockery::mock(\WC_Order::class);
         $amount = Mockery::mock(Amount::class);
@@ -267,6 +268,7 @@ class PurchaseUnitFactoryTest extends TestCase
         $unit = $testee->fromWcCart($wcCart);
         $this->assertNull($unit->shipping());
     }
+
     public function testWcCartShippingGetsDroppendWhenNoPostalCode() {
 
         expect('WC')
@@ -318,6 +320,7 @@ class PurchaseUnitFactoryTest extends TestCase
         $unit = $testee->fromWcCart($wcCart);
         $this->assertNull($unit->shipping());
     }
+
     public function testWcCartShippingGetsDroppendWhenNoCountryCode() {
 
         expect('WC')
@@ -365,6 +368,168 @@ class PurchaseUnitFactoryTest extends TestCase
 
         $unit = $testee->fromWcCart($wcCart);
         $this->assertNull($unit->shipping());
+    }
+
+    public function testFrompayPalResponseDefault() {
+
+        $rawItem = (object) ['items' => 1];
+        $rawAmount =  (object) ['amount' => 1];
+        $rawPayee =  (object) ['payee' => 1];
+        $rawShipping = (object) ['shipping' => 1];
+        $amountFactory = Mockery::mock(AmountFactory::class);
+        $amount = Mockery::mock(Amount::class);
+        $amountFactory->expects('fromPayPalResponse')->with($rawAmount)->andReturn($amount);
+        $payeeFactory = Mockery::mock(PayeeFactory::class);
+        $payee = Mockery::mock(Payee::class);
+        $payeeFactory->expects('fromPayPalResponse')->with($rawPayee)->andReturn($payee);
+        $payeeRepository = Mockery::mock(PayeeRepository::class);
+        $itemFactory = Mockery::mock(ItemFactory::class);
+        $item = Mockery::mock(Item::class);
+        $itemFactory->expects('fromPayPalResponse')->with($rawItem)->andReturn($item);
+        $shippingFactory = Mockery::mock(ShippingFactory::class);
+        $shipping = Mockery::mock(Shipping::class);
+        $shippingFactory->expects('fromPayPalResponse')->with($rawShipping)->andReturn($shipping);
+        $testee = new PurchaseUnitFactory(
+            $amountFactory,
+            $payeeRepository,
+            $payeeFactory,
+            $itemFactory,
+            $shippingFactory
+        );
+
+        $response = (object) [
+            'reference_id' => 'default',
+            'description' => 'description',
+            'customId' => 'customId',
+            'invoiceId' => 'invoiceId',
+            'softDescriptor' => 'softDescriptor',
+            'amount' => $rawAmount,
+            'items' => [$rawItem],
+            'payee' => $rawPayee,
+            'shipping' => $rawShipping,
+        ];
+
+        $unit = $testee->fromPayPalResponse($response);
+        $this->assertTrue(is_a($unit, PurchaseUnit::class));
+        $this->assertEquals($payee, $unit->payee());
+        $this->assertEquals('description', $unit->description());
+        $this->assertEquals('default', $unit->referenceId());
+        $this->assertEquals('customId', $unit->customId());
+        $this->assertEquals('softDescriptor', $unit->softDescriptor());
+        $this->assertEquals('invoiceId', $unit->invoiceId());
+        $this->assertEquals([$item], $unit->items());
+        $this->assertEquals($amount, $unit->amount());
+        $this->assertEquals($shipping, $unit->shipping());
+    }
+
+    public function testFrompayPalResponsePayeeIsNull() {
+
+
+        $rawItem = (object) ['items' => 1];
+        $rawAmount =  (object) ['amount' => 1];
+        $rawPayee =  (object) ['payee' => 1];
+        $rawShipping = (object) ['shipping' => 1];
+        $amountFactory = Mockery::mock(AmountFactory::class);
+        $amount = Mockery::mock(Amount::class);
+        $amountFactory->expects('fromPayPalResponse')->with($rawAmount)->andReturn($amount);
+        $payeeFactory = Mockery::mock(PayeeFactory::class);
+        $payeeRepository = Mockery::mock(PayeeRepository::class);
+        $itemFactory = Mockery::mock(ItemFactory::class);
+        $item = Mockery::mock(Item::class);
+        $itemFactory->expects('fromPayPalResponse')->with($rawItem)->andReturn($item);
+        $shippingFactory = Mockery::mock(ShippingFactory::class);
+        $shipping = Mockery::mock(Shipping::class);
+        $shippingFactory->expects('fromPayPalResponse')->with($rawShipping)->andReturn($shipping);
+        $testee = new PurchaseUnitFactory(
+            $amountFactory,
+            $payeeRepository,
+            $payeeFactory,
+            $itemFactory,
+            $shippingFactory
+        );
+
+        $response = (object) [
+            'reference_id' => 'default',
+            'description' => 'description',
+            'customId' => 'customId',
+            'invoiceId' => 'invoiceId',
+            'softDescriptor' => 'softDescriptor',
+            'amount' => $rawAmount,
+            'items' => [$rawItem],
+            'shipping' => $rawShipping,
+        ];
+
+        $unit = $testee->fromPayPalResponse($response);
+        $this->assertNull($unit->payee());
+    }
+
+    public function testFrompayPalResponseShippingIsNull() {
+
+
+        $rawItem = (object) ['items' => 1];
+        $rawAmount =  (object) ['amount' => 1];
+        $rawPayee =  (object) ['payee' => 1];
+        $amountFactory = Mockery::mock(AmountFactory::class);
+        $amount = Mockery::mock(Amount::class);
+        $amountFactory->expects('fromPayPalResponse')->with($rawAmount)->andReturn($amount);
+        $payeeFactory = Mockery::mock(PayeeFactory::class);
+        $payee = Mockery::mock(Payee::class);
+        $payeeFactory->expects('fromPayPalResponse')->with($rawPayee)->andReturn($payee);
+        $payeeRepository = Mockery::mock(PayeeRepository::class);
+        $itemFactory = Mockery::mock(ItemFactory::class);
+        $item = Mockery::mock(Item::class);
+        $itemFactory->expects('fromPayPalResponse')->with($rawItem)->andReturn($item);
+        $shippingFactory = Mockery::mock(ShippingFactory::class);
+        $testee = new PurchaseUnitFactory(
+            $amountFactory,
+            $payeeRepository,
+            $payeeFactory,
+            $itemFactory,
+            $shippingFactory
+        );
+
+        $response = (object) [
+            'reference_id' => 'default',
+            'description' => 'description',
+            'customId' => 'customId',
+            'invoiceId' => 'invoiceId',
+            'softDescriptor' => 'softDescriptor',
+            'amount' => $rawAmount,
+            'items' => [$rawItem],
+            'payee' => $rawPayee
+        ];
+
+        $unit = $testee->fromPayPalResponse($response);
+        $this->assertNull($unit->shipping());
+    }
+
+    public function testFrompayPalResponseNeedsReferenceId() {
+        $amountFactory = Mockery::mock(AmountFactory::class);
+        $payeeFactory = Mockery::mock(PayeeFactory::class);
+        $payeeRepository = Mockery::mock(PayeeRepository::class);
+        $itemFactory = Mockery::mock(ItemFactory::class);
+        $shippingFactory = Mockery::mock(ShippingFactory::class);
+        $testee = new PurchaseUnitFactory(
+            $amountFactory,
+            $payeeRepository,
+            $payeeFactory,
+            $itemFactory,
+            $shippingFactory
+        );
+
+        $response = (object) [
+            'description' => 'description',
+            'customId' => 'customId',
+            'invoiceId' => 'invoiceId',
+            'softDescriptor' => 'softDescriptor',
+            'amount' => '',
+            'items' => [],
+            'payee' => '',
+            'shipping' => '',
+        ];
+
+        $this->expectException(\Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException::class);
+        $testee->fromPayPalResponse($response);
     }
 
 }

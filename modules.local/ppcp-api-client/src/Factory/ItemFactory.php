@@ -83,7 +83,7 @@ class ItemFactory
         );
     }
 
-    public function fromPayPalRequest(\stdClass $data) : Item
+    public function fromPayPalResponse(\stdClass $data) : Item
     {
         if (! isset($data->name)) {
             throw new RuntimeException(__("No name for item given", "woocommerce-paypal-commerce-gateway"));
