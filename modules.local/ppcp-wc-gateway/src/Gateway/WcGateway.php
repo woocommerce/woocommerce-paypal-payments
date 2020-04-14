@@ -73,6 +73,7 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
         $wcOrder = new \WC_Order($orderId);
 
         //ToDo: We need to fetch the order from paypal again to get it with the new status.
+
         $order = $this->sessionHandler->order();
         update_post_meta($orderId, '_paypal_order_id', $order->id());
 
@@ -89,6 +90,10 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
         $order = $this->patchOrder($wcOrder, $order);
         if ($order->intent() === 'CAPTURE') {
             $order = $this->endpoint->capture($order);
+        }
+
+        if ($order->intent() === 'AUTHORIZE') {
+            $order = $this->endpoint->authorize($order);
         }
 
         $wcOrder->update_status('on-hold', __('Awaiting payment.', 'woocommerce-paypal-gateway'));
