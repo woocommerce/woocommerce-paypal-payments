@@ -14,8 +14,53 @@ class ItemFactory
     {
     }
 
-    public function fromWcOrderLineItem(\WC_Order_Item_Product $item, \WC_Order $order, string $currency) : Item {
+    public function fromWcCart(\WC_Cart $cart) : array {
+        $currency = get_woocommerce_currency();
+        $items = array_map(
+            function (array $item) use ($currency): Item {
+                $product = $item['data'];
+                /**
+                 * @var \WC_Product $product
+                 */
+                $quantity = (int) $item['quantity'];
 
+                $price = (float) wc_get_price_including_tax($product);
+                $priceWithoutTax = (float) wc_get_price_excluding_tax($product);
+                $priceWithoutTaxRounded = round($priceWithoutTax, 2);
+                $tax = round($price - $priceWithoutTaxRounded, 2);
+                $tax = new Money($tax, $currency);
+                return new Item(
+                    mb_substr($product->get_name(), 0, 127),
+                    new Money($priceWithoutTaxRounded, $currency),
+                    $quantity,
+                    mb_substr($product->get_description(), 0, 127),
+                    $tax,
+                    $product->get_sku(),
+                    ($product->is_downloadable()) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS
+                );
+            },
+            $cart->get_cart_contents()
+        );
+        return $items;
+    }
+
+    /**
+     * @param \WC_Order $order
+     * @return Item[]
+     */
+    public function fromWcOrder(\WC_Order $order) : array {
+
+        return array_map(
+            function (\WC_Order_Item_Product $item) use ($order): Item {
+                return $this->fromWcOrderLineItem($item, $order);
+            },
+            $order->get_items('line_item')
+        );
+    }
+
+    private function fromWcOrderLineItem(\WC_Order_Item_Product $item, \WC_Order $order) : Item {
+
+        $currency = $order->get_currency();
         $product = $item->get_product();
         /**
          * @var \WC_Product $product
