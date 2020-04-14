@@ -13,6 +13,7 @@ class Authorization
         string $id,
         AuthorizationStatus $authorizationStatus
     ) {
+
         $this->id = $id;
         $this->authorizationStatus = $authorizationStatus;
     }
