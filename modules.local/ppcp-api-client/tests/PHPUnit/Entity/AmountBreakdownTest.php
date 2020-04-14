@@ -4,31 +4,32 @@ declare(strict_types=1);
 namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
 
 
-use PHPUnit\Framework\TestCase;
+use Inpsyde\PayPalCommerce\ApiClient\TestCase;
+use Mockery;
 
 class AmountBreakdownTest extends TestCase
 {
 
     public function test() {
-        $itemTotal = \Mockery::mock(Money::class);
+        $itemTotal = Mockery::mock(Money::class);
         $itemTotal
             ->expects('toArray')->andReturn(['itemTotal']);
-        $shipping = \Mockery::mock(Money::class);
+        $shipping = Mockery::mock(Money::class);
         $shipping
             ->expects('toArray')->andReturn(['shipping']);
-        $taxTotal = \Mockery::mock(Money::class);
+        $taxTotal = Mockery::mock(Money::class);
         $taxTotal
             ->expects('toArray')->andReturn(['taxTotal']);
-        $handling = \Mockery::mock(Money::class);
+        $handling = Mockery::mock(Money::class);
         $handling
             ->expects('toArray')->andReturn(['handling']);
-        $insurance = \Mockery::mock(Money::class);
+        $insurance = Mockery::mock(Money::class);
         $insurance
             ->expects('toArray')->andReturn(['insurance']);
-        $shippingDiscount = \Mockery::mock(Money::class);
+        $shippingDiscount = Mockery::mock(Money::class);
         $shippingDiscount
             ->expects('toArray')->andReturn(['shippingDiscount']);
-        $discount = \Mockery::mock(Money::class);
+        $discount = Mockery::mock(Money::class);
         $discount
             ->expects('toArray')->andReturn(['discount']);
         $testee = new AmountBreakdown(
@@ -67,27 +68,27 @@ class AmountBreakdownTest extends TestCase
      */
     public function testDropArrayKeyIfNoValueGiven($keyMissing, $methodName) {
 
-        $itemTotal = \Mockery::mock(Money::class);
+        $itemTotal = Mockery::mock(Money::class);
         $itemTotal
-            ->expects('toArray')->andReturn(['itemTotal']);
-        $shipping = \Mockery::mock(Money::class);
+            ->shouldReceive('toArray')->zeroOrMoreTimes()->andReturn(['itemTotal']);
+        $shipping = Mockery::mock(Money::class);
         $shipping
-            ->expects('toArray')->andReturn(['shipping']);
-        $taxTotal = \Mockery::mock(Money::class);
+            ->shouldReceive('toArray')->zeroOrMoreTimes()->andReturn(['shipping']);
+        $taxTotal = Mockery::mock(Money::class);
         $taxTotal
-            ->expects('toArray')->andReturn(['taxTotal']);
-        $handling = \Mockery::mock(Money::class);
+            ->shouldReceive('toArray')->zeroOrMoreTimes()->andReturn(['taxTotal']);
+        $handling = Mockery::mock(Money::class);
         $handling
-            ->expects('toArray')->andReturn(['handling']);
-        $insurance = \Mockery::mock(Money::class);
+            ->shouldReceive('toArray')->zeroOrMoreTimes()->andReturn(['handling']);
+        $insurance = Mockery::mock(Money::class);
         $insurance
-            ->expects('toArray')->andReturn(['insurance']);
-        $shippingDiscount = \Mockery::mock(Money::class);
+            ->shouldReceive('toArray')->zeroOrMoreTimes()->andReturn(['insurance']);
+        $shippingDiscount = Mockery::mock(Money::class);
         $shippingDiscount
-            ->expects('toArray')->andReturn(['shippingDiscount']);
-        $discount = \Mockery::mock(Money::class);
+            ->shouldReceive('toArray')->zeroOrMoreTimes()->andReturn(['shippingDiscount']);
+        $discount = Mockery::mock(Money::class);
         $discount
-            ->expects('toArray')->andReturn(['discount']);
+            ->shouldReceive('toArray')->zeroOrMoreTimes()->andReturn(['discount']);
 
 
         $items = [

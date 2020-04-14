@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\Button\Assets;
 
+use Inpsyde\PayPalCommerce\ApiClient\Repository\PayeeRepository;
 use Inpsyde\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
@@ -14,16 +15,19 @@ class SmartButton implements SmartButtonInterface
     private $moduleUrl;
     private $sessionHandler;
     private $settings;
+    private $payeeRepository;
 
     public function __construct(
         string $moduleUrl,
         SessionHandler $sessionHandler,
-        Settings $settings
+        Settings $settings,
+        PayeeRepository $payeeRepository
     ) {
 
         $this->moduleUrl = $moduleUrl;
         $this->sessionHandler = $sessionHandler;
         $this->settings = $settings;
+        $this->payeeRepository = $payeeRepository;
     }
 
     public function renderWrapper(): bool
@@ -69,22 +73,16 @@ class SmartButton implements SmartButtonInterface
             $this->moduleUrl . '/assets/js/button.js'
         );
 
-        $params = [
-            //ToDo: Add the correct client id, toggle when settings is set to sandbox
-            'client-id' => 'AcVzowpNCpTxFzLG7onQI4JD0sVcA0BkZv-D42qRZPv_gZ8cNfX9zGL_8bXmSu7cbJ5B2DH7sot8vDpw',
-            'currency' => get_woocommerce_currency(),
-            'locale' => get_user_locale(),
-            //'debug' => (defined('WP_DEBUG') && WP_DEBUG) ? 'true' : 'false',
-            //ToDo: Update date on releases.
-            'integration-date' => date('Y-m-d'),
-            'components' => 'marks,buttons',
-            //ToDo: Probably only needed, when DCC
-            'vault' => 'true',
-            'commit' => is_checkout() ? 'true' : 'false',
-            'intent' => $this->settings->get('intent')
-        ];
-        $smartButtonUrl = add_query_arg($params, 'https://www.paypal.com/sdk/js');
+        wp_localize_script(
+            'paypal-smart-button',
+            'PayPalCommerceGateway',
+            $this->localizeScript()
+        );
+        return true;
+    }
 
+    private function localizeScript() : array
+    {
         $localize = [
             'redirect' => wc_get_checkout_url(),
             'context' => $this->context(),
@@ -106,7 +104,7 @@ class SmartButton implements SmartButtonInterface
                 'wrapper' => '#ppc-button',
                 'mini_cart_wrapper' => '#ppc-button-minicart',
                 'cancel_wrapper' => '#ppcp-cancel',
-                'url' => $smartButtonUrl,
+                'url' => $this->url(),
                 'style' => [
                     'layout' => 'vertical',
                     'color' => $this->settings->get('button_color'),
@@ -115,12 +113,31 @@ class SmartButton implements SmartButtonInterface
                 ],
             ],
         ];
-        wp_localize_script(
-            'paypal-smart-button',
-            'PayPalCommerceGateway',
-            $localize
-        );
-        return true;
+        return $localize;
+    }
+
+    private function url() : string
+    {
+        $params = [
+            //ToDo: Add the correct client id, toggle when settings is set to sandbox
+            'client-id' => 'AcVzowpNCpTxFzLG7onQI4JD0sVcA0BkZv-D42qRZPv_gZ8cNfX9zGL_8bXmSu7cbJ5B2DH7sot8vDpw',
+            'currency' => get_woocommerce_currency(),
+            'locale' => get_user_locale(),
+            //'debug' => (defined('WP_DEBUG') && WP_DEBUG) ? 'true' : 'false',
+            //ToDo: Update date on releases.
+            'integration-date' => date('Y-m-d'),
+            'components' => 'marks,buttons',
+            //ToDo: Probably only needed, when DCC
+            'vault' => 'true',
+            'commit' => is_checkout() ? 'true' : 'false',
+            'intent' => $this->settings->get('intent')
+        ];
+        $payee = $this->payeeRepository->payee();
+        if ($payee->merchantId()) {
+            $params['merchant-id'] = $payee->merchantId();
+        }
+        $smartButtonUrl = add_query_arg($params, 'https://www.paypal.com/sdk/js');
+        return $smartButtonUrl;
     }
 
     private function context(): string
