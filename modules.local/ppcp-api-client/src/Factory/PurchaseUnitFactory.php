@@ -120,7 +120,7 @@ class PurchaseUnitFactory
         if (isset($data->items) && is_array($data->items)) {
             $items = array_map(
                 function (\stdClass $item) : Item {
-                    return $this->itemFactory->fromPayPalRequest($item);
+                    return $this->itemFactory->fromPayPalResponse($item);
                 },
                 $data->items
             );
