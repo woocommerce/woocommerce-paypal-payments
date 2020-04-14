@@ -104,7 +104,7 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
         }
 
         $wcOrder->update_status('on-hold', __('Awaiting payment.', 'woocommerce-paypal-gateway'));
-        if ($order->status()->is(OrderStatus::COMPLETED)) {
+        if ($order->status()->is(OrderStatus::COMPLETED) && $order->intent() === 'CAPTURE') {
             $wcOrder->update_status('processing', __('Payment received.', 'woocommerce-paypal-gateway'));
         }
         $woocommerce->cart->empty_cart();
