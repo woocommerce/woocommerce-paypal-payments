@@ -104,6 +104,7 @@ class AmountFactory
             $total,
             $breakdown
         );
+        return $amount;
     }
 
     public function fromPayPalResponse(\stdClass $data) : Amount

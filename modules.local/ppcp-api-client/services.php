@@ -5,8 +5,8 @@ namespace Inpsyde\PayPalCommerce\ApiClient;
 
 use Dhii\Data\Container\ContainerInterface;
 use Inpsyde\CacheModule\Provider\CacheProviderInterface;
-use Inpsyde\PayPalCommerce\ApiClient\Config\Config;
 use Inpsyde\PayPalCommerce\ApiClient\Authentication\Bearer;
+use Inpsyde\PayPalCommerce\ApiClient\Config\Config;
 use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\AddressFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\AmountFactory;
@@ -120,7 +120,8 @@ return [
         return new ShippingFactory($addressFactory);
     },
     'api.factory.amount' => function (ContainerInterface $container) : AmountFactory {
-        return new AmountFactory();
+        $itemFactory = $container->get('api.factory.item');
+        return new AmountFactory($itemFactory);
     },
     'api.factory.payer' => function (ContainerInterface $container) : PayerFactory {
         $addressFactory = $container->get('api.factory.address');
