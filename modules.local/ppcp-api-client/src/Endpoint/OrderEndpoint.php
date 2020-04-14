@@ -122,7 +122,8 @@ class OrderEndpoint
         return $order;
     }
 
-    public function authorize(Order $order) : Order {
+    public function authorize(Order $order): Order
+    {
         $bearer = $this->bearer->bearer();
         $url = trailingslashit($this->host) . 'v2/checkout/orders/' . $order->id() . '/authorize';
         $args = [
@@ -135,12 +136,34 @@ class OrderEndpoint
         $response = wp_remote_post($url, $args);
 
         if (is_wp_error($response)) {
-            throw new RuntimeException(__('Could not authorize order.', 'woocommerce-paypal-commerce-gateway'));
-        }
-        if (wp_remote_retrieve_response_code($response) !== 201) {
-            throw new RuntimeException(__('Could not authorize order.', 'woocommerce-paypal-commerce-gateway'));
+            $this->handleResponseWpError($url, $args);
+            throw new RuntimeException(
+                __(
+                    'Could not authorize order.',
+                    'woocommerce-paypal-commerce-gateway'
+                )
+            );
         }
         $json = json_decode($response['body']);
+        if (wp_remote_retrieve_response_code($response) !== 201) {
+            $errors = $this->errorResponseFactory->fromPayPalResponse(
+                $json,
+                (int)wp_remote_retrieve_response_code($response),
+                $url,
+                $args
+            );
+
+            if ($errors->hasErrorCode(ErrorResponse::ORDER_ALREADY_AUTHORIZED)) {
+                return $this->order($order->id());
+            }
+            add_action('woocommerce-paypal-commerce-gateway.error', $errors);
+            throw new RuntimeException(
+                __(
+                    'Could not authorize order.',
+                    'woocommerce-paypal-commerce-gateway'
+                )
+            );
+        }
         $order = $this->orderFactory->fromPayPalResponse($json);
         return $order;
     }
