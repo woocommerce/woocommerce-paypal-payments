@@ -44,7 +44,7 @@ class OrderEndpoint
     {
         $bearer = $this->bearer->bearer();
         $data = [
-            'intent' => $this->intent, // TODO: read this from the global settings
+            'intent' => $this->intent,
             'purchase_units' => array_map(
                 function (PurchaseUnit $item) : array {
                     return $item->toArray();
