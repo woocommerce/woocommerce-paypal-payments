@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\ApiClient;
@@ -11,13 +12,14 @@ use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use Inpsyde\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\AddressFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\AmountFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\AuthorizationsFactory;
+use Inpsyde\PayPalCommerce\ApiClient\Factory\AuthorizationFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\ErrorResponseCollectionFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\ItemFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\PatchCollectionFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\PayeeFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\PayerFactory;
+use Inpsyde\PayPalCommerce\ApiClient\Factory\PaymentsFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\ShippingFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
@@ -48,7 +50,7 @@ return [
             $container->get('api.secret')
         );
     },
-    'api.endpoint.payments' => function (ContainerInterface $container) : PaymentsEndpoint {
+    'api.endpoint.payments' => function (ContainerInterface $container): PaymentsEndpoint {
         $authorizationFactory = $container->get('api.factory.authorization');
         $errorResponseFactory = $container->get('api.factory.response-error');
 
@@ -59,7 +61,7 @@ return [
             $errorResponseFactory
         );
     },
-    'api.endpoint.order' => function (ContainerInterface $container) : OrderEndpoint {
+    'api.endpoint.order' => function (ContainerInterface $container): OrderEndpoint {
         $orderFactory = $container->get('api.factory.order');
         $patchCollectionFactory = $container->get('api.factory.patch-collection-factory');
         $errorResponseFactory = $container->get('api.factory.response-error');
@@ -110,12 +112,15 @@ return [
         $payeeFactory = $container->get('api.factory.payee');
         $itemFactory = $container->get('api.factory.item');
         $shippingFactory = $container->get('api.factory.shipping');
+        $paymentsFactory = $container->get('api.factory.payments');
+
         return new PurchaseUnitFactory(
             $amountFactory,
             $payeeRepository,
             $payeeFactory,
             $itemFactory,
-            $shippingFactory
+            $shippingFactory,
+            $paymentsFactory
         );
     },
     'api.factory.patch-collection-factory' => function (ContainerInterface $container)
@@ -151,7 +156,11 @@ return [
         $payerFactory = $container->get('api.factory.payer');
         return new OrderFactory($purchaseUnitFactory, $payerFactory);
     },
-    'api.factory.authorization' => function (ContainerInterface $container) : AuthorizationsFactory {
-        return new AuthorizationsFactory();
+    'api.factory.payments' => function (ContainerInterface $container): PaymentsFactory {
+        $authorizationFactory = $container->get('api.factory.authorization');
+        return new PaymentsFactory($authorizationFactory);
+    },
+    'api.factory.authorization' => function (ContainerInterface $container): AuthorizationFactory {
+        return new AuthorizationFactory();
     },
 ];

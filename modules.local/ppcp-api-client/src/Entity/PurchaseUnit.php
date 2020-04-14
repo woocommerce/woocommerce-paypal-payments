@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
@@ -15,6 +16,8 @@ class PurchaseUnit
     private $customId;
     private $invoiceId;
     private $softDescriptor;
+    private $payments;
+
     public function __construct(
         Amount $amount,
         array $items = [],
@@ -24,7 +27,8 @@ class PurchaseUnit
         Payee $payee = null,
         string $customId = '',
         string $invoiceId = '',
-        string $softDescriptor = ''
+        string $softDescriptor = '',
+        Payments $payments = null
     ) {
 
         $this->amount = $amount;
@@ -43,6 +47,7 @@ class PurchaseUnit
         $this->customId = $customId;
         $this->invoiceId = $invoiceId;
         $this->softDescriptor = $softDescriptor;
+        $this->payments = $payments;
     }
 
     public function amount() : Amount
@@ -112,6 +117,10 @@ class PurchaseUnit
 
         if ($this->payee()) {
             $purchaseUnit['payee'] = $this->payee()->toArray();
+        }
+
+        if ($this->payments()) {
+            $purchaseUnit['payments'] = $this->payments()->toArray();
         }
 
         if ($this->shipping()) {
