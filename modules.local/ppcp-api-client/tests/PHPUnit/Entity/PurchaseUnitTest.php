@@ -3,8 +3,7 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
 
-
-use PHPUnit\Framework\TestCase;
+use Inpsyde\PayPalCommerce\ApiClient\TestCase;
 use Mockery;
 
 class PurchaseUnitTest extends TestCase
@@ -13,14 +12,14 @@ class PurchaseUnitTest extends TestCase
     public function test() {
 
         $amount = Mockery::mock(Amount::class);
-        $amount->expects('breakdown')->andReturnNull();
-        $amount->expects('toArray')->andReturn(['amount']);
+        $amount->shouldReceive('breakdown')->andReturnNull();
+        $amount->shouldReceive('toArray')->andReturn(['amount']);
         $item1 = Mockery::mock(Item::class);
-        $item1->expects('toArray')->andReturn(['item1']);
+        $item1->shouldReceive('toArray')->andReturn(['item1']);
         $item2 = Mockery::mock(Item::class);
-        $item2->expects('toArray')->andReturn(['item2']);
+        $item2->shouldReceive('toArray')->andReturn(['item2']);
         $shipping = Mockery::mock(Shipping::class);
-        $shipping->expects('toArray')->andReturn(['shipping']);
+        $shipping->shouldReceive('toArray')->andReturn(['shipping']);
 
         $testee = new PurchaseUnit(
             $amount,
@@ -382,34 +381,34 @@ class PurchaseUnitTest extends TestCase
             $items = [];
             foreach ($test['items'] as $key => $item) {
                 $unitAmount = Mockery::mock(Money::class);
-                $unitAmount->expects('value')->andReturn($item['value']);
+                $unitAmount->shouldReceive('value')->andReturn($item['value']);
                 $tax = Mockery::mock(Money::class);
-                $tax->expects('value')->andReturn($item['tax']);
+                $tax->shouldReceive('value')->andReturn($item['tax']);
                 $items[$key] = Mockery::mock(Item::class);
-                $items[$key]->expects('unitAmount')->andReturn($unitAmount);
-                $items[$key]->expects('tax')->andReturn($tax);
-                $items[$key]->expects('quantity')->andReturn($item['quantity']);
-                $items[$key]->expects('toArray')->andReturn([]);
+                $items[$key]->shouldReceive('unitAmount')->andReturn($unitAmount);
+                $items[$key]->shouldReceive('tax')->andReturn($tax);
+                $items[$key]->shouldReceive('quantity')->andReturn($item['quantity']);
+                $items[$key]->shouldReceive('toArray')->andReturn([]);
             }
             $breakdown = null;
             if ($test['breakdown']) {
                 $breakdown = Mockery::mock(AmountBreakdown::class);
                 foreach ($test['breakdown'] as $method => $value) {
-                    $breakdown->expects($method)->andReturnUsing(function() use ($value) {
+                    $breakdown->shouldReceive($method)->andReturnUsing(function() use ($value) {
                         if (! is_numeric($value)) {
                             return null;
                         }
 
                         $money = Mockery::mock(Money::class);
-                        $money->expects('value')->andReturn($value);
+                        $money->shouldReceive('value')->andReturn($value);
                         return $money;
                     });
                 }
             }
             $amount = Mockery::mock(Amount::class);
-            $amount->expects('toArray')->andReturn(['value' => [], 'breakdown' => []]);
-            $amount->expects('value')->andReturn($test['amount']);
-            $amount->expects('breakdown')->andReturn($breakdown);
+            $amount->shouldReceive('toArray')->andReturn(['value' => [], 'breakdown' => []]);
+            $amount->shouldReceive('value')->andReturn($test['amount']);
+            $amount->shouldReceive('breakdown')->andReturn($breakdown);
 
             $values[$testKey] = [
                 $items,
@@ -425,16 +424,16 @@ class PurchaseUnitTest extends TestCase
     public function testPayee() {
 
         $amount = Mockery::mock(Amount::class);
-        $amount->expects('breakdown')->andReturnNull();
-        $amount->expects('toArray')->andReturn(['amount']);
+        $amount->shouldReceive('breakdown')->andReturnNull();
+        $amount->shouldReceive('toArray')->andReturn(['amount']);
         $item1 = Mockery::mock(Item::class);
-        $item1->expects('toArray')->andReturn(['item1']);
+        $item1->shouldReceive('toArray')->andReturn(['item1']);
         $item2 = Mockery::mock(Item::class);
-        $item2->expects('toArray')->andReturn(['item2']);
+        $item2->shouldReceive('toArray')->andReturn(['item2']);
         $shipping = Mockery::mock(Shipping::class);
-        $shipping->expects('toArray')->andReturn(['shipping']);
+        $shipping->shouldReceive('toArray')->andReturn(['shipping']);
         $payee = Mockery::mock(Payee::class);
-        $payee->expects('toArray')->andReturn(['payee']);
+        $payee->shouldReceive('toArray')->andReturn(['payee']);
         $testee = new PurchaseUnit(
             $amount,
             [],

@@ -4,15 +4,15 @@ declare(strict_types=1);
 namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
 
 
-use PHPUnit\Framework\TestCase;
+use Inpsyde\PayPalCommerce\ApiClient\TestCase;
 
 class AmountTest extends TestCase
 {
 
     public function test() {
         $money = \Mockery::mock(Money::class);
-        $money->expects('currencyCode')->andReturn('currencyCode');
-        $money->expects('value')->andReturn(1.10);
+        $money->shouldReceive('currencyCode')->andReturn('currencyCode');
+        $money->shouldReceive('value')->andReturn(1.10);
         $testee = new Amount($money);
 
         $this->assertEquals('currencyCode', $testee->currencyCode());
@@ -20,8 +20,8 @@ class AmountTest extends TestCase
     }
     public function testBreakdownIsNull() {
         $money = \Mockery::mock(Money::class);
-        $money->expects('currencyCode')->andReturn('currencyCode');
-        $money->expects('value')->andReturn(1.10);
+        $money->shouldReceive('currencyCode')->andReturn('currencyCode');
+        $money->shouldReceive('value')->andReturn(1.10);
         $testee = new Amount($money);
 
         $this->assertNull($testee->breakdown());
@@ -34,10 +34,10 @@ class AmountTest extends TestCase
     }
     public function testBreakdown() {
         $money = \Mockery::mock(Money::class);
-        $money->expects('currencyCode')->andReturn('currencyCode');
-        $money->expects('value')->andReturn(1.10);
+        $money->shouldReceive('currencyCode')->andReturn('currencyCode');
+        $money->shouldReceive('value')->andReturn(1.10);
         $breakdown = \Mockery::mock(AmountBreakdown::class);
-        $breakdown->expects('toArray')->andReturn([1]);
+        $breakdown->shouldReceive('toArray')->andReturn([1]);
         $testee = new Amount($money, $breakdown);
 
         $this->assertEquals($breakdown, $testee->breakdown());

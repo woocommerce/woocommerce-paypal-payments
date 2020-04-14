@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
 
 
-use PHPUnit\Framework\TestCase;
+use Inpsyde\PayPalCommerce\ApiClient\TestCase;
 
 class AmountBreakdownTest extends TestCase
 {
@@ -69,25 +69,25 @@ class AmountBreakdownTest extends TestCase
 
         $itemTotal = \Mockery::mock(Money::class);
         $itemTotal
-            ->expects('toArray')->andReturn(['itemTotal']);
+            ->shouldReceive('toArray')->zeroOrMoreTimes()->andReturn(['itemTotal']);
         $shipping = \Mockery::mock(Money::class);
         $shipping
-            ->expects('toArray')->andReturn(['shipping']);
+            ->shouldReceive('toArray')->zeroOrMoreTimes()->andReturn(['shipping']);
         $taxTotal = \Mockery::mock(Money::class);
         $taxTotal
-            ->expects('toArray')->andReturn(['taxTotal']);
+            ->shouldReceive('toArray')->zeroOrMoreTimes()->andReturn(['taxTotal']);
         $handling = \Mockery::mock(Money::class);
         $handling
-            ->expects('toArray')->andReturn(['handling']);
+            ->shouldReceive('toArray')->zeroOrMoreTimes()->andReturn(['handling']);
         $insurance = \Mockery::mock(Money::class);
         $insurance
-            ->expects('toArray')->andReturn(['insurance']);
+            ->shouldReceive('toArray')->zeroOrMoreTimes()->andReturn(['insurance']);
         $shippingDiscount = \Mockery::mock(Money::class);
         $shippingDiscount
-            ->expects('toArray')->andReturn(['shippingDiscount']);
+            ->shouldReceive('toArray')->zeroOrMoreTimes()->andReturn(['shippingDiscount']);
         $discount = \Mockery::mock(Money::class);
         $discount
-            ->expects('toArray')->andReturn(['discount']);
+            ->shouldReceive('toArray')->zeroOrMoreTimes()->andReturn(['discount']);
 
 
         $items = [

@@ -17,5 +17,13 @@
     "psr-4": {
       "Inpsyde\\PayPalCommerce\\ApiClient\\": "src/"
     }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Inpsyde\\PayPalCommerce\\ApiClient\\": "tests/PHPUnit"
+    }
+  },
+  "scripts": {
+    "unit": "./vendor/bin/phpunit --coverage-html build/coverage-report"
   }
 }

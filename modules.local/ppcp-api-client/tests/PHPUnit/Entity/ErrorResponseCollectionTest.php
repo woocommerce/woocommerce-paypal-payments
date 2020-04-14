@@ -3,8 +3,7 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
 
-
-use PHPUnit\Framework\TestCase;
+use Inpsyde\PayPalCommerce\ApiClient\TestCase;
 
 class ErrorResponseCollectionTest extends TestCase
 {
