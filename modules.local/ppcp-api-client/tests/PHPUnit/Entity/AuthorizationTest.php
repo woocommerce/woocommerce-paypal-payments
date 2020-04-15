@@ -8,7 +8,7 @@ use Inpsyde\PayPalCommerce\ApiClient\TestCase;
 
 class AuthorizationTest extends TestCase
 {
-    public function testIdandStatus()
+    public function testIdAndStatus()
     {
         $authorizationStatus = \Mockery::mock(AuthorizationStatus::class);
         $testee = new Authorization('foo', $authorizationStatus);
