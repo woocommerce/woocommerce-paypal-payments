@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Inpsyde\PayPalCommerce\ApiClient\Endpoint;
 
 use Inpsyde\PayPalCommerce\ApiClient\Authentication\Bearer;
+use Inpsyde\PayPalCommerce\ApiClient\Entity\Authorization;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\AuthorizationFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\ErrorResponseCollectionFactory;
 
@@ -21,14 +22,13 @@ class PaymentsEndpoint
         AuthorizationFactory $authorizationsFactory,
         ErrorResponseCollectionFactory $errorResponseFactory
     ) {
-
         $this->host = $host;
         $this->bearer = $bearer;
         $this->authorizationFactory = $authorizationsFactory;
         $this->errorResponseFactory = $errorResponseFactory;
     }
 
-    public function authorization($authorizationId)
+    public function authorization(string $authorizationId): Authorization
     {
         $bearer = $this->bearer->bearer();
         $url = trailingslashit($this->host) . 'v2/payments/authorizations/' . $authorizationId;
@@ -65,7 +65,7 @@ class PaymentsEndpoint
         return $authorization;
     }
 
-    public function capture($authorizationId)
+    public function capture(string $authorizationId): Authorization
     {
         $bearer = $this->bearer->bearer();
         $url = trailingslashit($this->host) . 'v2/payments/authorizations/' . $authorizationId . '/capture';
