@@ -62,7 +62,7 @@ class PaymentsEndpoint
                 $url,
                 $args
             );
-            add_action('woocommerce-paypal-commerce-gateway.error', $errors);
+            do_action('woocommerce-paypal-commerce-gateway.error', $errors);
             throw new RuntimeException(
                 __(
                     'Could not get authorized payment info.',
@@ -107,7 +107,7 @@ class PaymentsEndpoint
                 $url,
                 $args
             );
-            add_action('woocommerce-paypal-commerce-gateway.error', $errors);
+            do_action('woocommerce-paypal-commerce-gateway.error', $errors);
             throw new RuntimeException(
                 __(
                     'Could not capture authorized payment.',
@@ -126,6 +126,6 @@ class PaymentsEndpoint
             $url,
             $args
         );
-        add_action('woocommerce-paypal-commerce-gateway.error', $errors);
+        do_action('woocommerce-paypal-commerce-gateway.error', $errors);
     }
 }
