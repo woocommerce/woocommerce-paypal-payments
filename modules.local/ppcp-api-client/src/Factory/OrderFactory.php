@@ -28,11 +28,11 @@ class OrderFactory
 
         return new Order(
             $order->id(),
-            $order->createTime(),
             $purchaseUnits,
             $order->status(),
             $order->payer(),
             $order->intent(),
+            $order->createTime(),
             $order->updateTime()
         );
     }
@@ -42,11 +42,6 @@ class OrderFactory
         if (! isset($orderData->id)) {
             throw new RuntimeException(
                 __('Order does not contain an id.', 'woocommerce-paypal-commerce-gateway')
-            );
-        }
-        if (! isset($orderData->create_time)) {
-            throw new RuntimeException(
-                __('Order does not contain a create time.', 'woocommerce-paypal-commerce-gateway')
             );
         }
         if (! isset($orderData->purchase_units) || !is_array($orderData->purchase_units)) {
@@ -72,6 +67,9 @@ class OrderFactory
             $orderData->purchase_units
         );
 
+        $createTime = (isset($orderData->create_time)) ?
+            \DateTime::createFromFormat(\DateTime::ISO8601, $orderData->create_time)
+            : null;
         $updateTime = (isset($orderData->update_time)) ?
             \DateTime::createFromFormat(\DateTime::ISO8601, $orderData->update_time)
             : null;
@@ -81,11 +79,11 @@ class OrderFactory
 
         return new Order(
             $orderData->id,
-            \DateTime::createFromFormat(\DateTime::ISO8601, $orderData->create_time),
             $purchaseUnits,
             new OrderStatus($orderData->status),
             $payer,
             $orderData->intent,
+            $createTime,
             $updateTime
         );
     }
