@@ -41,8 +41,10 @@ class PaymentsEndpoint
         ];
 
         $response = wp_remote_get($url, $args);
+        $json = json_decode($response['body']);
 
         if (is_wp_error($response)) {
+            $this->handleResponseWpError($url, $args);
             throw new RuntimeException(
                 __(
                     'Could not get authorized payment info.',
@@ -52,6 +54,13 @@ class PaymentsEndpoint
         }
 
         if (wp_remote_retrieve_response_code($response) !== 200) {
+            $errors = $this->errorResponseFactory->fromPayPalResponse(
+                $json,
+                (int)wp_remote_retrieve_response_code($response),
+                $url,
+                $args
+            );
+            add_action('woocommerce-paypal-commerce-gateway.error', $errors);
             throw new RuntimeException(
                 __(
                     'Could not get authorized payment info.',
@@ -60,7 +69,6 @@ class PaymentsEndpoint
             );
         }
 
-        $json = json_decode($response['body']);
         $authorization = $this->authorizationFactory->fromPayPalRequest($json);
         return $authorization;
     }
@@ -78,8 +86,10 @@ class PaymentsEndpoint
         ];
 
         $response = wp_remote_post($url, $args);
+        $json = json_decode($response['body']);
 
         if (is_wp_error($response)) {
+            $this->handleResponseWpError($url, $args);
             throw new RuntimeException(
                 __(
                     'Could not capture authorized payment.',
@@ -89,6 +99,13 @@ class PaymentsEndpoint
         }
 
         if (wp_remote_retrieve_response_code($response) !== 201) {
+            $errors = $this->errorResponseFactory->fromPayPalResponse(
+                $json,
+                (int)wp_remote_retrieve_response_code($response),
+                $url,
+                $args
+            );
+            add_action('woocommerce-paypal-commerce-gateway.error', $errors);
             throw new RuntimeException(
                 __(
                     'Could not capture authorized payment.',
@@ -97,8 +114,16 @@ class PaymentsEndpoint
             );
         }
 
-        $json = json_decode($response['body']);
         $authorization = $this->authorizationFactory->fromPayPalRequest($json);
         return $authorization;
+    }
+
+    private function handleResponseWpError(string $url, array $args)
+    {
+        $errors = $this->errorResponseFactory->unknownError(
+            $url,
+            $args
+        );
+        add_action('woocommerce-paypal-commerce-gateway.error', $errors);
     }
 }
