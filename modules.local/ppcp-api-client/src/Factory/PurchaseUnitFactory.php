@@ -33,7 +33,7 @@ class PurchaseUnitFactory
         $this->payeeFactory = $payeeFactory;
         $this->itemFactory = $itemFactory;
         $this->shippingFactory = $shippingFactory;
-        $this->$paymentsFactory = $paymentsFactory;
+        $this->paymentsFactory = $paymentsFactory;
     }
 
     public function fromWcOrder(\WC_Order $order) : PurchaseUnit
