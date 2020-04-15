@@ -26,7 +26,7 @@ class PayerFactory
             $data->name->surname
         );
         $phone = (isset($data->phone)) ? new PhoneWithType(
-            $data->phone->type,
+            (isset($data->phone->type)) ? $data->phone->type : 'undefined',
             new Phone(
                 $data->phone->phone_number->national_number
             )
