@@ -603,4 +603,53 @@ class PurchaseUnitFactoryTest extends TestCase
         $unit = $testee->fromPayPalResponse($response);
         $this->assertEquals($payments, $unit->payments());
     }
+
+    public function testFromPayPalResponsePaymentsIsNull()
+    {
+        $rawItem = (object)['items' => 1];
+        $rawAmount = (object)['amount' => 1];
+        $rawPayee = (object)['payee' => 1];
+        $rawShipping = (object)['shipping' => 1];
+        $rawPayments = (object)['payments' => 1];
+
+        $amountFactory = Mockery::mock(AmountFactory::class);
+        $amount = Mockery::mock(Amount::class);
+        $amountFactory->expects('fromPayPalResponse')->with($rawAmount)->andReturn($amount);
+        $payeeFactory = Mockery::mock(PayeeFactory::class);
+        $payee = Mockery::mock(Payee::class);
+        $payeeFactory->expects('fromPayPalResponse')->with($rawPayee)->andReturn($payee);
+        $payeeRepository = Mockery::mock(PayeeRepository::class);
+        $itemFactory = Mockery::mock(ItemFactory::class);
+        $item = Mockery::mock(Item::class);
+        $itemFactory->expects('fromPayPalResponse')->with($rawItem)->andReturn($item);
+        $shippingFactory = Mockery::mock(ShippingFactory::class);
+        $shipping = Mockery::mock(Shipping::class);
+        $shippingFactory->expects('fromPayPalResponse')->with($rawShipping)->andReturn($shipping);
+
+        $paymentsFactory = Mockery::mock(PaymentsFactory::class);
+
+        $testee = new PurchaseUnitFactory(
+            $amountFactory,
+            $payeeRepository,
+            $payeeFactory,
+            $itemFactory,
+            $shippingFactory,
+            $paymentsFactory
+        );
+
+        $response = (object)[
+            'reference_id' => 'default',
+            'description' => 'description',
+            'customId' => 'customId',
+            'invoiceId' => 'invoiceId',
+            'softDescriptor' => 'softDescriptor',
+            'amount' => $rawAmount,
+            'items' => [$rawItem],
+            'payee' => $rawPayee,
+            'shipping' => $rawShipping,
+        ];
+
+        $unit = $testee->fromPayPalResponse($response);
+        $this->assertNull($unit->payments());
+    }
 }
