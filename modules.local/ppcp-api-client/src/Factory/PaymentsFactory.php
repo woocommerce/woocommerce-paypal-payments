@@ -18,7 +18,7 @@ class PaymentsFactory
         $this->authorizationsFactory = $authorizationsFactory;
     }
 
-    public function fromPayPalResponse(\stdClass $data)
+    public function fromPayPalResponse(\stdClass $data): Payments
     {
         $authorizations = array_map(
             function (\stdClass $authorization): Authorization {
