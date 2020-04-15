@@ -10,6 +10,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Entity\Authorization;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\AuthorizationStatus;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use Inpsyde\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
@@ -130,6 +131,9 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
         }
 
         foreach ($order->purchaseUnits() as $purchaseUnit) {
+            /**
+             * @var PurchaseUnit $purchaseUnit
+             */
             foreach ($purchaseUnit->payments()->authorizations() as $authorization) {
                 /**
                  * @var Authorization $authorization;
