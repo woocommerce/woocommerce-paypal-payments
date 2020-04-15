@@ -8,10 +8,7 @@ class Payments
 {
     private $authorizations;
 
-    /**
-     * @var Authorization[] $authorizations
-     */
-    public function __construct(array $authorizations)
+    public function __construct(Authorization ...$authorizations)
     {
         $this->authorizations = $authorizations;
     }

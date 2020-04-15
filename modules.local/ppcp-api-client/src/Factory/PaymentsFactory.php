@@ -26,7 +26,7 @@ class PaymentsFactory
             },
             $data->authorizations
         );
-        $payments = new Payments($authorizations);
+        $payments = new Payments(...$authorizations);
         return $payments;
     }
 }
