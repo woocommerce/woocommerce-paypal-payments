@@ -40,7 +40,7 @@ class AddressFactory
     public function fromPayPalRequest(\stdClass $data) : Address
     {
         if (! isset($data->country_code)) {
-            new RuntimeException(__('No country given for address.', 'woocommerce-paypal-commerce-gateway'));
+            throw new RuntimeException(__('No country given for address.', 'woocommerce-paypal-commerce-gateway'));
         }
         return new Address(
             $data->country_code,

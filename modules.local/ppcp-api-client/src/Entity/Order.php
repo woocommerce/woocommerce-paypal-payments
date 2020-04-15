@@ -90,8 +90,7 @@ class Order
             'id' => $this->id(),
             'intent' => $this->intent(),
             'status' => $this->status()->name(),
-            'purchase_units' => array_map(
-                function (PurchaseUnit $unit) : array {
+            'purchase_units' => array_map(function (PurchaseUnit $unit) : array {
                     return $unit->toArray();
                 },
                 $this->purchaseUnits()
