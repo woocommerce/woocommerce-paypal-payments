@@ -41,8 +41,7 @@ class OrderEndpoint
         $bearer = $this->bearer->bearer();
         $data = [
             'intent' => 'CAPTURE',
-            'purchase_units' => array_map(
-                function (PurchaseUnit $item) : array {
+            'purchase_units' => array_map(function (PurchaseUnit $item) : array {
                     return $item->toArray();
                 },
                 $items
