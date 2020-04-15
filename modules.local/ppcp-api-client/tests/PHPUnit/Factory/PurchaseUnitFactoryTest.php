@@ -11,8 +11,9 @@ use Inpsyde\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Shipping;
 use Inpsyde\PayPalCommerce\ApiClient\Repository\PayeeRepository;
 use Inpsyde\PayPalCommerce\ApiClient\TestCase;
-use function Brain\Monkey\Functions\expect;
 use Mockery;
+
+use function Brain\Monkey\Functions\expect;
 
 class PurchaseUnitFactoryTest extends TestCase
 {
@@ -54,12 +55,14 @@ class PurchaseUnitFactoryTest extends TestCase
             ->shouldReceive('fromWcOrder')
             ->with($wcOrder)
             ->andReturn($shipping);
+        $paymentsFacory = Mockery::mock(PaymentsFactory::class);
         $testee = new PurchaseUnitFactory(
             $amountFactory,
             $payeeRepository,
             $payeeFactory,
             $itemFactory,
-            $shippingFactory
+            $shippingFactory,
+            $paymentsFacory
         );
 
         $unit = $testee->fromWcOrder($wcOrder);
@@ -113,12 +116,14 @@ class PurchaseUnitFactoryTest extends TestCase
             ->expects('fromWcOrder')
             ->with($wcOrder)
             ->andReturn($shipping);
+        $paymentsFacory = Mockery::mock(PaymentsFactory::class);
         $testee = new PurchaseUnitFactory(
             $amountFactory,
             $payeeRepository,
             $payeeFactory,
             $itemFactory,
-            $shippingFactory
+            $shippingFactory,
+            $paymentsFacory
         );
 
         $unit = $testee->fromWcOrder($wcOrder);
@@ -158,12 +163,14 @@ class PurchaseUnitFactoryTest extends TestCase
             ->expects('fromWcOrder')
             ->with($wcOrder)
             ->andReturn($shipping);
+        $paymentsFacory = Mockery::mock(PaymentsFactory::class);
         $testee = new PurchaseUnitFactory(
             $amountFactory,
             $payeeRepository,
             $payeeFactory,
             $itemFactory,
-            $shippingFactory
+            $shippingFactory,
+            $paymentsFacory
         );
 
         $unit = $testee->fromWcOrder($wcOrder);
@@ -212,12 +219,14 @@ class PurchaseUnitFactoryTest extends TestCase
             ->expects('fromWcCustomer')
             ->with($wcCustomer)
             ->andReturn($shipping);
+        $paymentsFacory = Mockery::mock(PaymentsFactory::class);
         $testee = new PurchaseUnitFactory(
             $amountFactory,
             $payeeRepository,
             $payeeFactory,
             $itemFactory,
-            $shippingFactory
+            $shippingFactory,
+            $paymentsFacory
         );
 
         $unit = $testee->fromWcCart($wcCart);
@@ -256,13 +265,14 @@ class PurchaseUnitFactoryTest extends TestCase
             ->with($wcCart)
             ->andReturn([]);
         $shippingFactory = Mockery::mock(ShippingFactory::class);
-
+        $paymentsFacory = Mockery::mock(PaymentsFactory::class);
         $testee = new PurchaseUnitFactory(
             $amountFactory,
             $payeeRepository,
             $payeeFactory,
             $itemFactory,
-            $shippingFactory
+            $shippingFactory,
+            $paymentsFacory
         );
 
         $unit = $testee->fromWcCart($wcCart);
@@ -308,13 +318,14 @@ class PurchaseUnitFactoryTest extends TestCase
         $shippingFactory
             ->expects('fromWcCustomer')
             ->andReturn($shipping);
-
+        $paymentsFacory = Mockery::mock(PaymentsFactory::class);
         $testee = new PurchaseUnitFactory(
             $amountFactory,
             $payeeRepository,
             $payeeFactory,
             $itemFactory,
-            $shippingFactory
+            $shippingFactory,
+            $paymentsFacory
         );
 
         $unit = $testee->fromWcCart($wcCart);
@@ -357,13 +368,14 @@ class PurchaseUnitFactoryTest extends TestCase
         $shippingFactory
             ->expects('fromWcCustomer')
             ->andReturn($shipping);
-
+        $paymentsFacory = Mockery::mock(PaymentsFactory::class);
         $testee = new PurchaseUnitFactory(
             $amountFactory,
             $payeeRepository,
             $payeeFactory,
             $itemFactory,
-            $shippingFactory
+            $shippingFactory,
+            $paymentsFacory
         );
 
         $unit = $testee->fromWcCart($wcCart);
@@ -389,12 +401,14 @@ class PurchaseUnitFactoryTest extends TestCase
         $shippingFactory = Mockery::mock(ShippingFactory::class);
         $shipping = Mockery::mock(Shipping::class);
         $shippingFactory->expects('fromPayPalResponse')->with($rawShipping)->andReturn($shipping);
+        $paymentsFacory = Mockery::mock(PaymentsFactory::class);
         $testee = new PurchaseUnitFactory(
             $amountFactory,
             $payeeRepository,
             $payeeFactory,
             $itemFactory,
-            $shippingFactory
+            $shippingFactory,
+            $paymentsFacory
         );
 
         $response = (object) [
@@ -440,12 +454,14 @@ class PurchaseUnitFactoryTest extends TestCase
         $shippingFactory = Mockery::mock(ShippingFactory::class);
         $shipping = Mockery::mock(Shipping::class);
         $shippingFactory->expects('fromPayPalResponse')->with($rawShipping)->andReturn($shipping);
+        $paymentsFacory = Mockery::mock(PaymentsFactory::class);
         $testee = new PurchaseUnitFactory(
             $amountFactory,
             $payeeRepository,
             $payeeFactory,
             $itemFactory,
-            $shippingFactory
+            $shippingFactory,
+            $paymentsFacory
         );
 
         $response = (object) [
@@ -480,12 +496,14 @@ class PurchaseUnitFactoryTest extends TestCase
         $item = Mockery::mock(Item::class);
         $itemFactory->expects('fromPayPalResponse')->with($rawItem)->andReturn($item);
         $shippingFactory = Mockery::mock(ShippingFactory::class);
+        $paymentsFacory = Mockery::mock(PaymentsFactory::class);
         $testee = new PurchaseUnitFactory(
             $amountFactory,
             $payeeRepository,
             $payeeFactory,
             $itemFactory,
-            $shippingFactory
+            $shippingFactory,
+            $paymentsFacory
         );
 
         $response = (object) [
@@ -509,12 +527,14 @@ class PurchaseUnitFactoryTest extends TestCase
         $payeeRepository = Mockery::mock(PayeeRepository::class);
         $itemFactory = Mockery::mock(ItemFactory::class);
         $shippingFactory = Mockery::mock(ShippingFactory::class);
+        $paymentsFacory = Mockery::mock(PaymentsFactory::class);
         $testee = new PurchaseUnitFactory(
             $amountFactory,
             $payeeRepository,
             $payeeFactory,
             $itemFactory,
-            $shippingFactory
+            $shippingFactory,
+            $paymentsFacory
         );
 
         $response = (object) [
