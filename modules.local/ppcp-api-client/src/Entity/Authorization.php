@@ -27,4 +27,12 @@ class Authorization
     {
         return $this->authorizationStatus;
     }
+
+    public function toArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'status' => $this->authorizationStatus->name(),
+        ];
+    }
 }

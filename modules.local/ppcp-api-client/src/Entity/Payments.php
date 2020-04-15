@@ -13,10 +13,15 @@ class Payments
         $this->authorizations = $authorizations;
     }
 
-    public function toArray()
+    public function toArray(): array
     {
         return [
-
+            'authorizations' => array_map(
+                function (Authorization $authorization) {
+                    return $authorization->toArray();
+                },
+                $this->authorizations()
+            )
         ];
     }
 
