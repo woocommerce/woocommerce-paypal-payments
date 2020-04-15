@@ -21,16 +21,15 @@ class Order
      */
     public function __construct(
         string $id,
-        \DateTime $createTime,
         array $purchaseUnits,
         OrderStatus $orderStatus,
         Payer $payer = null,
         string $intent = 'CAPTURE',
+        \DateTime $createTime = null,
         \DateTime $updateTime = null
     ) {
 
         $this->id = $id;
-        $this->createTime = $createTime;
         //phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration.NoArgumentType
         $this->purchaseUnits = array_values(array_filter(
             $purchaseUnits,
@@ -43,6 +42,7 @@ class Order
         $this->orderStatus = $orderStatus;
         $this->intent = ($intent === 'CAPTURE') ? 'CAPTURE' : 'AUTHORIZE';
         $this->purchaseUnits = $purchaseUnits;
+        $this->createTime = $createTime;
         $this->updateTime = $updateTime;
     }
 
@@ -51,7 +51,7 @@ class Order
         return $this->id;
     }
 
-    public function createTime() : \DateTime
+    public function createTime() : ?\DateTime
     {
         return $this->createTime;
     }
@@ -96,8 +96,10 @@ class Order
                 },
                 $this->purchaseUnits()
             ),
-            'create_time' => $this->createTime()->format(\DateTimeInterface::ISO8601),
         ];
+        if ($this->createTime()) {
+            $order['create_time'] = $this->createTime()->format(\DateTimeInterface::ISO8601);
+        }
         if ($this->payer()) {
             $order['payer'] =$this->payer()->toArray();
         }
