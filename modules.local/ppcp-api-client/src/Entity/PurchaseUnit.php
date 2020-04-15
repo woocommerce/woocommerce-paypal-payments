@@ -90,6 +90,10 @@ class PurchaseUnit
         return $this->payee;
     }
 
+    public function payments() : ?Payments {
+        return $this->payments;
+    }
+
     /**
      * @return Item[]
      */
