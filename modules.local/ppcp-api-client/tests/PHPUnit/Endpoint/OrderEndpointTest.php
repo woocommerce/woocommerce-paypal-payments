@@ -8,6 +8,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Entity\ErrorResponseCollection;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\PatchCollection;
+use Inpsyde\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\ErrorResponseCollectionFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\OrderFactory;
@@ -653,7 +654,6 @@ class OrderEndpointTest extends TestCase
 
     public function testPatchOrderWithNoPatches() {
 
-        $orderId = 'id';
         $orderToUpdate = Mockery::mock(Order::class);
         $orderToCompare = Mockery::mock(Order::class);
 
@@ -682,5 +682,211 @@ class OrderEndpointTest extends TestCase
 
         $result = $testee->patchOrderWith($orderToUpdate, $orderToCompare);
         $this->assertEquals($orderToUpdate, $result);
+    }
+
+    public function testCreateForPurchaseUnitsDefault() {
+
+        $rawResponse = ['body' => '{"success":true}'];
+        $host = 'https://example.com/';
+        $bearer = Mockery::mock(Bearer::class);
+        $bearer
+            ->expects('bearer')
+            ->andReturn('bearer');
+        $orderFactory = Mockery::mock(OrderFactory::class);
+        $expectedOrder = Mockery::mock(Order::class);
+        $orderFactory
+            ->expects('fromPayPalResponse')
+            ->andReturnUsing(function($json) use ($expectedOrder, $rawResponse) {
+                if (! $json->success) {
+                    return Mockery::mock(Order::class);
+                }
+                return $expectedOrder;
+            });
+        $patchCollectionFactory = Mockery::mock(PatchCollectionFactory::class);
+        $errorResponseCollectionFactory = Mockery::mock(ErrorResponseCollectionFactory::class);
+
+        $testee = new OrderEndpoint(
+            $host,
+            $bearer,
+            $orderFactory,
+            $patchCollectionFactory,
+            $errorResponseCollectionFactory
+        );
+
+        $purchaseUnit = Mockery::mock(PurchaseUnit::class);
+        $purchaseUnit
+            ->expects('toArray')
+            ->andReturn(['singlePurchaseUnit']);
+
+        expect('wp_remote_post')
+            ->andReturnUsing(
+                function($url, $args) use ($rawResponse, $host) {
+                    if ($url !== $host . 'v2/checkout/orders') {
+                        return false;
+                    }
+                    if ($args['headers']['Authorization'] !== 'Bearer bearer') {
+                        return false;
+                    }
+                    if ($args['headers']['Content-Type'] !== 'application/json') {
+                        return false;
+                    }
+                    if ($args['headers']['Prefer'] !== 'return=representation') {
+                        return false;
+                    }
+                    $body = json_decode($args['body'], true);
+                    if ($body['intent'] !== 'CAPTURE') {
+                        return false;
+                    }
+                    if ($body['purchase_units'][0][0] !== 'singlePurchaseUnit') {
+                        return false;
+                    }
+                    return $rawResponse;
+                }
+            );
+        expect('is_wp_error')->with($rawResponse)->andReturn(false);
+        expect('wp_remote_retrieve_response_code')->with($rawResponse)->andReturn(201);
+        $result = $testee->createForPurchaseUnits($purchaseUnit);
+        $this->assertEquals($expectedOrder, $result);
+    }
+
+    public function testCreateForPurchaseUnitsIsWpError() {
+
+        $rawResponse = ['body' => '{"success":true}'];
+        $host = 'https://example.com/';
+        $bearer = Mockery::mock(Bearer::class);
+        $bearer
+            ->expects('bearer')
+            ->andReturn('bearer');
+        $orderFactory = Mockery::mock(OrderFactory::class);
+        $patchCollectionFactory = Mockery::mock(PatchCollectionFactory::class);
+        $errorResponseCollectionFactory = Mockery::mock(ErrorResponseCollectionFactory::class);
+
+        $error = Mockery::mock(ErrorResponseCollection::class);
+        $errorResponseCollectionFactory
+            ->expects('unknownError')
+            ->withSomeOfArgs($host . 'v2/checkout/orders')
+            ->andReturn($error);
+
+        $testee = new OrderEndpoint(
+            $host,
+            $bearer,
+            $orderFactory,
+            $patchCollectionFactory,
+            $errorResponseCollectionFactory
+        );
+
+        $purchaseUnit = Mockery::mock(PurchaseUnit::class);
+        $purchaseUnit
+            ->expects('toArray')
+            ->andReturn(['singlePurchaseUnit']);
+
+        expect('wp_remote_post')
+            ->andReturnUsing(
+                function($url, $args) use ($rawResponse, $host) {
+                    if ($url !== $host . 'v2/checkout/orders') {
+                        return false;
+                    }
+                    if ($args['headers']['Authorization'] !== 'Bearer bearer') {
+                        return false;
+                    }
+                    if ($args['headers']['Content-Type'] !== 'application/json') {
+                        return false;
+                    }
+                    if ($args['headers']['Prefer'] !== 'return=representation') {
+                        return false;
+                    }
+                    $body = json_decode($args['body'], true);
+                    if ($body['intent'] !== 'CAPTURE') {
+                        return false;
+                    }
+                    if ($body['purchase_units'][0][0] !== 'singlePurchaseUnit') {
+                        return false;
+                    }
+                    return $rawResponse;
+                }
+            );
+        expect('is_wp_error')->with($rawResponse)->andReturn(true);
+        expect('do_action')->with('woocommerce-paypal-commerce-gateway.error', $error);
+        $this->expectException(RuntimeException::class);
+        $testee->createForPurchaseUnits($purchaseUnit);
+    }
+
+    public function testCreateForPurchaseUnitsIsNot201() {
+
+        $rawResponse = ['body' => '{"has_error":true}'];
+        $host = 'https://example.com/';
+        $bearer = Mockery::mock(Bearer::class);
+        $bearer
+            ->expects('bearer')
+            ->andReturn('bearer');
+        $orderFactory = Mockery::mock(OrderFactory::class);
+        $patchCollectionFactory = Mockery::mock(PatchCollectionFactory::class);
+        $errorResponseCollectionFactory = Mockery::mock(ErrorResponseCollectionFactory::class);
+
+        $error = Mockery::mock(ErrorResponseCollection::class);
+        $errorResponseCollectionFactory
+            ->expects('fromPayPalResponse')
+            ->andReturnUsing(
+                function($json, $statusCode, $url, $args) use ($host, $error) {
+                    $wrongError = Mockery::mock(ErrorResponseCollection::class);
+                    if ($args['headers']['Authorization'] !== 'Bearer bearer') {
+                        return $wrongError;
+                    }
+                    if ($url !== $host . 'v2/checkout/orders') {
+                        return $wrongError;
+                    }
+                    if ($statusCode !== 500) {
+                        return $wrongError;
+                    }
+                    if (! $json->has_error) {
+                        return $wrongError;
+                    }
+                    return $error;
+                }
+            );
+
+        $testee = new OrderEndpoint(
+            $host,
+            $bearer,
+            $orderFactory,
+            $patchCollectionFactory,
+            $errorResponseCollectionFactory
+        );
+
+        $purchaseUnit = Mockery::mock(PurchaseUnit::class);
+        $purchaseUnit
+            ->expects('toArray')
+            ->andReturn(['singlePurchaseUnit']);
+
+        expect('wp_remote_post')
+            ->andReturnUsing(
+                function($url, $args) use ($rawResponse, $host) {
+                    if ($url !== $host . 'v2/checkout/orders') {
+                        return false;
+                    }
+                    if ($args['headers']['Authorization'] !== 'Bearer bearer') {
+                        return false;
+                    }
+                    if ($args['headers']['Content-Type'] !== 'application/json') {
+                        return false;
+                    }
+                    if ($args['headers']['Prefer'] !== 'return=representation') {
+                        return false;
+                    }
+                    $body = json_decode($args['body'], true);
+                    if ($body['intent'] !== 'CAPTURE') {
+                        return false;
+                    }
+                    if ($body['purchase_units'][0][0] !== 'singlePurchaseUnit') {
+                        return false;
+                    }
+                    return $rawResponse;
+                }
+            );
+        expect('is_wp_error')->with($rawResponse)->andReturn(false);
+        expect('wp_remote_retrieve_response_code')->with($rawResponse)->andReturn(500);
+        expect('do_action')->with('woocommerce-paypal-commerce-gateway.error', $error);
+        $this->expectException(RuntimeException::class);
+        $testee->createForPurchaseUnits($purchaseUnit);
     }
 }
