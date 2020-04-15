@@ -146,6 +146,16 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
             });
 
         if (count($authorizationsWithCapturedStatus) === count($allAuthorizations)) {
+            if ($wcOrder->get_status() === 'on-hold') {
+                $wcOrder->add_order_note(
+                    __(
+                        'Payment successfully authorized.',
+                        'woocommerce-paypal-gateway'
+                    )
+                );
+
+                $wcOrder->update_status('processing');
+            }
             AuthorizeOrderActionNotice::displayMessage(AuthorizeOrderActionNotice::ALREADY_AUTHORIZED);
             return;
         }
