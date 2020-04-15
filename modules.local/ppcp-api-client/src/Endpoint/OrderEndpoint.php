@@ -149,7 +149,7 @@ class OrderEndpoint
 
     public function patchOrderWith(Order $orderToUpdate, Order $orderToCompare) : Order
     {
-        $patches = $this->patchCollectionFactory->fromOrders($orderToCompare, $orderToCompare);
+        $patches = $this->patchCollectionFactory->fromOrders($orderToUpdate, $orderToCompare);
         if (! count($patches->patches())) {
             return $orderToUpdate;
         }
