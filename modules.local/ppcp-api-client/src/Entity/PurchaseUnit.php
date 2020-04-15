@@ -36,7 +36,7 @@ class PurchaseUnit
         $this->referenceId = $referenceId;
         $this->description = $description;
         //phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration.NoArgumentType
-        $this->items = array_values( array_filter(
+        $this->items = array_values(array_filter(
             $items,
             function ($item) : bool {
                 return is_a($item, Item::class);
@@ -90,7 +90,8 @@ class PurchaseUnit
         return $this->payee;
     }
 
-    public function payments() : ?Payments {
+    public function payments() : ?Payments
+    {
         return $this->payments;
     }
 
@@ -110,9 +111,8 @@ class PurchaseUnit
             'description' => $this->description(),
             'items' => array_map(function (Item $item) : array {
                     return $item->toArray();
-                },
-                $this->items()
-            ),
+            },
+                $this->items()),
         ];
         if ($this->ditchItemsWhenMismatch($this->amount(), ...$this->items())) {
             unset($purchaseUnit['items']);

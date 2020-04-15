@@ -21,7 +21,7 @@ class Payments
                     return $authorization->toArray();
                 },
                 $this->authorizations()
-            )
+            ),
         ];
     }
 

@@ -14,7 +14,8 @@ class ItemFactory
     {
     }
 
-    public function fromWcCart(\WC_Cart $cart) : array {
+    public function fromWcCart(\WC_Cart $cart) : array
+    {
         $currency = get_woocommerce_currency();
         $items = array_map(
             function (array $item) use ($currency): Item {
@@ -48,8 +49,8 @@ class ItemFactory
      * @param \WC_Order $order
      * @return Item[]
      */
-    public function fromWcOrder(\WC_Order $order) : array {
-
+    public function fromWcOrder(\WC_Order $order) : array
+    {
         return array_map(
             function (\WC_Order_Item_Product $item) use ($order): Item {
                 return $this->fromWcOrderLineItem($item, $order);
@@ -58,8 +59,8 @@ class ItemFactory
         );
     }
 
-    private function fromWcOrderLineItem(\WC_Order_Item_Product $item, \WC_Order $order) : Item {
-
+    private function fromWcOrderLineItem(\WC_Order_Item_Product $item, \WC_Order $order) : Item
+    {
         $currency = $order->get_currency();
         $product = $item->get_product();
         /**

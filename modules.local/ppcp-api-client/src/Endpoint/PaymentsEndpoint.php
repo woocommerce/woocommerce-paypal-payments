@@ -6,6 +6,7 @@ namespace Inpsyde\PayPalCommerce\ApiClient\Endpoint;
 
 use Inpsyde\PayPalCommerce\ApiClient\Authentication\Bearer;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Authorization;
+use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\AuthorizationFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\ErrorResponseCollectionFactory;
 
@@ -22,6 +23,7 @@ class PaymentsEndpoint
         AuthorizationFactory $authorizationsFactory,
         ErrorResponseCollectionFactory $errorResponseFactory
     ) {
+
         $this->host = $host;
         $this->bearer = $bearer;
         $this->authorizationFactory = $authorizationsFactory;

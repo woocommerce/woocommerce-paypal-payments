@@ -40,6 +40,7 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
         OrderFactory $orderFactory,
         SettingsFields $settingsFields
     ) {
+
         $this->sessionHandler = $sessionHandler;
         $this->cartRepository = $cartRepository;
         $this->orderEndpoint = $orderEndpoint;
@@ -138,12 +139,14 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
             $allAuthorizations,
             function (Authorization $authorization) {
                 return $authorization->status()->is(AuthorizationStatus::CREATED);
-            });
+            }
+        );
         $authorizationsWithCapturedStatus = array_filter(
             $allAuthorizations,
             function (Authorization $authorization) {
                 return $authorization->status()->is(AuthorizationStatus::CAPTURED);
-            });
+            }
+        );
 
         if (count($authorizationsWithCapturedStatus) === count($allAuthorizations)) {
             if ($wcOrder->get_status() === 'on-hold') {
@@ -163,7 +166,7 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
         foreach ($authorizationsWithCreatedStatus as $authorization) {
             try {
                 /**
-                 * @var Authorization $authorization;
+                 * @var Authorization $authorization
                  */
                 $result = $this->paymentsEndpoint->capture($authorization->id());
             } catch (RuntimeException $exception) {
