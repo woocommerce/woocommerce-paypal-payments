@@ -70,7 +70,7 @@ class OrderEndpoint
                 $url,
                 $args
             );
-            add_action('woocommerce-paypal-commerce-gateway.error', $errors);
+            do_action('woocommerce-paypal-commerce-gateway.error', $errors);
             throw new RuntimeException(__('Could not create order.', 'woocommerce-paypal-commerce-gateway'));
         }
         $order = $this->orderFactory->fromPayPalResponse($json);
@@ -110,7 +110,7 @@ class OrderEndpoint
             if ($errors->hasErrorCode(ErrorResponse::ORDER_ALREADY_CAPTURED)) {
                 return $this->order($order->id());
             }
-            add_action('woocommerce-paypal-commerce-gateway.error', $errors);
+            do_action('woocommerce-paypal-commerce-gateway.error', $errors);
             throw new RuntimeException(__('Could not capture order.', 'woocommerce-paypal-commerce-gateway'));
         }
         $json = json_decode($response['body']);
@@ -141,7 +141,7 @@ class OrderEndpoint
                 $url,
                 $args
             );
-            add_action('woocommerce-paypal-commerce-gateway.error', $errors);
+            do_action('woocommerce-paypal-commerce-gateway.error', $errors);
             throw new RuntimeException(__('Could not retrieve order.', 'woocommerce-paypal-commerce-gateway'));
         }
         return $this->orderFactory->fromPayPalResponse($json);
@@ -179,7 +179,7 @@ class OrderEndpoint
                 $url,
                 $args
             );
-            add_action('woocommerce-paypal-commerce-gateway.error', $errors);
+            do_action('woocommerce-paypal-commerce-gateway.error', $errors);
             throw new RuntimeException(__('Could not patch order.', 'woocommerce-paypal-commerce-gateway'));
         }
 
@@ -193,6 +193,6 @@ class OrderEndpoint
             $url,
             $args
         );
-        add_action('woocommerce-paypal-commerce-gateway.error', $errors);
+        do_action('woocommerce-paypal-commerce-gateway.error', $errors);
     }
 }

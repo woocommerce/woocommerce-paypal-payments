@@ -89,7 +89,7 @@ class OrderEndpointTest extends TestCase
         $rawResponse = ['body' => '{"is_correct":true}'];
         expect('wp_remote_get')->andReturn($rawResponse);
         expect('is_wp_error')->with($rawResponse)->andReturn(true);
-        expect('add_action')
+        expect('do_action')
             ->with('woocommerce-paypal-commerce-gateway.error', $error);
 
 
@@ -143,7 +143,7 @@ class OrderEndpointTest extends TestCase
         expect('wp_remote_get')->andReturn($rawResponse);
         expect('is_wp_error')->with($rawResponse)->andReturn(false);
         expect('wp_remote_retrieve_response_code')->with($rawResponse)->andReturn(500);
-        expect('add_action')
+        expect('do_action')
             ->with('woocommerce-paypal-commerce-gateway.error', $error);
 
 
@@ -270,7 +270,7 @@ class OrderEndpointTest extends TestCase
         $rawResponse = ['body' => '{"is_error":true}'];
         expect('wp_remote_post')->andReturn($rawResponse);
         expect('is_wp_error')->with($rawResponse)->andReturn(true);
-        expect('add_action')
+        expect('do_action')
             ->with('woocommerce-paypal-commerce-gateway.error', $error);
         $this->expectException(RuntimeException::class);
         $testee->capture($orderToCapture);
@@ -330,7 +330,7 @@ class OrderEndpointTest extends TestCase
         expect('wp_remote_post')->andReturn($rawResponse);
         expect('is_wp_error')->with($rawResponse)->andReturn(false);
         expect('wp_remote_retrieve_response_code')->with($rawResponse)->andReturn(500);
-        expect('add_action')
+        expect('do_action')
             ->with('woocommerce-paypal-commerce-gateway.error', $error);
         $this->expectException(RuntimeException::class);
         $testee->capture($orderToCapture);
@@ -477,6 +477,180 @@ class OrderEndpointTest extends TestCase
         $this->assertEquals($expectedOrder, $result);
     }
 
+    public function testPatchOrderWithIsNot204() {
+
+        $orderId = 'id';
+        $orderToUpdate = Mockery::mock(Order::class);
+        $orderToUpdate
+            ->shouldReceive('id')
+            ->andReturn($orderId);
+        $orderToCompare = Mockery::mock(Order::class);
+
+        $rawResponse = ['body' => '{"has_error":true}'];
+        $expectedOrder = Mockery::mock(Order::class);
+        $host = 'https://example.com/';
+        $bearer = Mockery::mock(Bearer::class);
+        $bearer
+            ->expects('bearer')->andReturn('bearer');
+        $orderFactory = Mockery::mock(OrderFactory::class);
+        $patches = ['patch-1', 'patch-2'];
+        $patchCollection = Mockery::mock(PatchCollection::class);
+        $patchCollection
+            ->expects('patches')
+            ->andReturn($patches);
+        $patchCollection
+            ->expects('toArray')
+            ->andReturn($patches);
+        $patchCollectionFactory = Mockery::mock(PatchCollectionFactory::class);
+        $patchCollectionFactory
+            ->expects('fromOrders')
+            ->with($orderToUpdate, $orderToCompare)
+            ->andReturn($patchCollection);
+        $errorResponseCollectionFactory = Mockery::mock(ErrorResponseCollectionFactory::class);
+        $error = Mockery::mock(ErrorResponseCollection::class);
+        $errorResponseCollectionFactory
+            ->expects('fromPayPalResponse')
+            ->andReturnUsing(
+                function($json, $statusCode, $url, $args) use ($error, $host, $orderId) {
+                    $wrongError = Mockery::mock(ErrorResponseCollection::class);
+                    if ($statusCode !== 500) {
+                        return $wrongError;
+                    }
+                    if ($url !== $host . 'v2/checkout/orders/' . $orderId) {
+                        return $wrongError;
+                    }
+                    if (! $json->has_error) {
+                        return $wrongError;
+                    }
+                    if ($args['method'] !== 'PATCH') {
+                        return $wrongError;
+                    }
+                    return $error;
+                }
+            );
+
+        $testee = new OrderEndpoint(
+                $host,
+                $bearer,
+                $orderFactory,
+                $patchCollectionFactory,
+                $errorResponseCollectionFactory
+        );
+
+        expect('wp_remote_post')
+            ->andReturnUsing(
+                function($url, $args) use ($host, $orderId, $rawResponse) {
+                    if ($url !== $host . 'v2/checkout/orders/' . $orderId ) {
+                        return false;
+                    }
+                    if ($args['method'] !== 'PATCH') {
+                        return false;
+                    }
+                    if ($args['headers']['Authorization'] !== 'Bearer bearer') {
+                        return false;
+                    }
+                    if ($args['headers']['Content-Type'] !== 'application/json') {
+                        return false;
+                    }
+                    if ($args['headers']['Prefer'] !== 'return=representation') {
+                        return false;
+                    }
+                    $body = json_decode($args['body']);
+                    if (! is_array($body) || $body[0] !== 'patch-1' || $body[1] !== 'patch-2') {
+                        return false;
+                    }
+
+                    return $rawResponse;
+                }
+            );
+        expect('is_wp_error')->with($rawResponse)->andReturn(false);
+        expect('wp_remote_retrieve_response_code')->with($rawResponse)->andReturn(500);
+        expect('do_action')
+            ->with('woocommerce-paypal-commerce-gateway.error',$error);
+        $this->expectException(RuntimeException::class);
+        $testee->patchOrderWith($orderToUpdate, $orderToCompare);
+    }
+
+    public function testPatchOrderWithIsWpError() {
+
+        $orderId = 'id';
+        $orderToUpdate = Mockery::mock(Order::class);
+        $orderToUpdate
+            ->shouldReceive('id')
+            ->andReturn($orderId);
+        $orderToCompare = Mockery::mock(Order::class);
+
+        $rawResponse = ['body' => '{"is_correct":true}'];
+        $expectedOrder = Mockery::mock(Order::class);
+        $host = 'https://example.com/';
+        $bearer = Mockery::mock(Bearer::class);
+        $bearer
+            ->expects('bearer')->andReturn('bearer');
+        $orderFactory = Mockery::mock(OrderFactory::class);
+        $patches = ['patch-1', 'patch-2'];
+        $patchCollection = Mockery::mock(PatchCollection::class);
+        $patchCollection
+            ->expects('patches')
+            ->andReturn($patches);
+        $patchCollection
+            ->expects('toArray')
+            ->andReturn($patches);
+        $patchCollectionFactory = Mockery::mock(PatchCollectionFactory::class);
+        $patchCollectionFactory
+            ->expects('fromOrders')
+            ->with($orderToUpdate, $orderToCompare)
+            ->andReturn($patchCollection);
+        $errorResponseCollectionFactory = Mockery::mock(ErrorResponseCollectionFactory::class);
+        $error = Mockery::mock(ErrorResponseCollection::class);
+        $errorResponseCollectionFactory
+            ->expects('unknownError')
+            ->withSomeOfArgs($host . 'v2/checkout/orders/' . $orderId)
+            ->andReturn($error);
+
+        $testee = Mockery::mock(
+            OrderEndpoint::class,
+            [
+                $host,
+                $bearer,
+                $orderFactory,
+                $patchCollectionFactory,
+                $errorResponseCollectionFactory
+            ]
+        )->makePartial();
+
+        expect('wp_remote_post')
+            ->andReturnUsing(
+                function($url, $args) use ($host, $orderId, $rawResponse) {
+                    if ($url !== $host . 'v2/checkout/orders/' . $orderId ) {
+                        return false;
+                    }
+                    if ($args['method'] !== 'PATCH') {
+                        return false;
+                    }
+                    if ($args['headers']['Authorization'] !== 'Bearer bearer') {
+                        return false;
+                    }
+                    if ($args['headers']['Content-Type'] !== 'application/json') {
+                        return false;
+                    }
+                    if ($args['headers']['Prefer'] !== 'return=representation') {
+                        return false;
+                    }
+                    $body = json_decode($args['body']);
+                    if (! is_array($body) || $body[0] !== 'patch-1' || $body[1] !== 'patch-2') {
+                        return false;
+                    }
+
+                    return $rawResponse;
+                }
+            );
+        expect('is_wp_error')->with($rawResponse)->andReturn(true);
+        expect('do_action')
+            ->with('woocommerce-paypal-commerce-gateway.error',$error);
+        $this->expectException(RuntimeException::class);
+        $testee->patchOrderWith($orderToUpdate, $orderToCompare);
+    }
+
     public function testPatchOrderWithNoPatches() {
 
         $orderId = 'id';
@@ -498,16 +672,13 @@ class OrderEndpointTest extends TestCase
             ->andReturn($patchCollection);
         $errorResponseCollectionFactory = Mockery::mock(ErrorResponseCollectionFactory::class);
 
-        $testee = Mockery::mock(
-            OrderEndpoint::class,
-            [
+        $testee = new OrderEndpoint(
                 $host,
                 $bearer,
                 $orderFactory,
                 $patchCollectionFactory,
                 $errorResponseCollectionFactory
-            ]
-        )->makePartial();
+        );
 
         $result = $testee->patchOrderWith($orderToUpdate, $orderToCompare);
         $this->assertEquals($orderToUpdate, $result);
