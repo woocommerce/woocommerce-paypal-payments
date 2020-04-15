@@ -10,7 +10,6 @@ use Inpsyde\PayPalCommerce\ApiClient\Entity\Authorization;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\AuthorizationStatus;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\OrderStatus;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
@@ -41,7 +40,6 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
         OrderFactory $orderFactory,
         SettingsFields $settingsFields
     ) {
-
         $this->sessionHandler = $sessionHandler;
         $this->cartRepository = $cartRepository;
         $this->orderEndpoint = $orderEndpoint;
@@ -130,22 +128,37 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
             return;
         }
 
+        $allAuthorizations = [];
         foreach ($order->purchaseUnits() as $purchaseUnit) {
-            /**
-             * @var PurchaseUnit $purchaseUnit
-             */
             foreach ($purchaseUnit->payments()->authorizations() as $authorization) {
+                $allAuthorizations[] = $authorization;
+            }
+        }
+        $authorizationsWithCreatedStatus = array_filter(
+            $allAuthorizations,
+            function (Authorization $authorization) {
+                return $authorization->status()->is(AuthorizationStatus::CREATED);
+            });
+        $authorizationsWithCapturedStatus = array_filter(
+            $allAuthorizations,
+            function (Authorization $authorization) {
+                return $authorization->status()->is(AuthorizationStatus::CAPTURED);
+            });
+
+        if (count($authorizationsWithCapturedStatus) === count($allAuthorizations)) {
+            AuthorizeOrderActionNotice::displayMessage(AuthorizeOrderActionNotice::ALREADY_AUTHORIZED);
+            return;
+        }
+
+        foreach ($authorizationsWithCreatedStatus as $authorization) {
+            try {
                 /**
                  * @var Authorization $authorization;
                  */
-                if ($authorization->status()->name() === AuthorizationStatus::CREATED) {
-                    try {
-                        $result = $this->paymentsEndpoint->capture($authorization->id());
-                    } catch (RuntimeException $exception) {
-                        AuthorizeOrderActionNotice::displayMessage(AuthorizeOrderActionNotice::FAILED);
-                        return;
-                    }
-                }
+                $result = $this->paymentsEndpoint->capture($authorization->id());
+            } catch (RuntimeException $exception) {
+                AuthorizeOrderActionNotice::displayMessage(AuthorizeOrderActionNotice::FAILED);
+                return;
             }
         }
 
