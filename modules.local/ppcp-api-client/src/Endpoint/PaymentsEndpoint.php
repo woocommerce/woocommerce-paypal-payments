@@ -23,7 +23,6 @@ class PaymentsEndpoint
         AuthorizationFactory $authorizationsFactory,
         ErrorResponseCollectionFactory $errorResponseFactory
     ) {
-
         $this->host = $host;
         $this->bearer = $bearer;
         $this->authorizationFactory = $authorizationsFactory;
@@ -48,10 +47,7 @@ class PaymentsEndpoint
         if (is_wp_error($response)) {
             $this->handleResponseWpError($url, $args);
             throw new RuntimeException(
-                __(
-                    'Could not get authorized payment info.',
-                    'woocommerce-paypal-commerce-gateway'
-                )
+                __('Could not get authorized payment info.', 'woocommerce-paypal-commerce-gateway')
             );
         }
 
@@ -64,10 +60,7 @@ class PaymentsEndpoint
             );
             do_action('woocommerce-paypal-commerce-gateway.error', $errors);
             throw new RuntimeException(
-                __(
-                    'Could not get authorized payment info.',
-                    'woocommerce-paypal-commerce-gateway'
-                )
+                __('Could not get authorized payment info.', 'woocommerce-paypal-commerce-gateway')
             );
         }
 
@@ -93,10 +86,7 @@ class PaymentsEndpoint
         if (is_wp_error($response)) {
             $this->handleResponseWpError($url, $args);
             throw new RuntimeException(
-                __(
-                    'Could not capture authorized payment.',
-                    'woocommerce-paypal-commerce-gateway'
-                )
+                __('Could not capture authorized payment.', 'woocommerce-paypal-commerce-gateway')
             );
         }
 
@@ -109,10 +99,7 @@ class PaymentsEndpoint
             );
             do_action('woocommerce-paypal-commerce-gateway.error', $errors);
             throw new RuntimeException(
-                __(
-                    'Could not capture authorized payment.',
-                    'woocommerce-paypal-commerce-gateway'
-                )
+                __('Could not capture authorized payment.', 'woocommerce-paypal-commerce-gateway')
             );
         }
 

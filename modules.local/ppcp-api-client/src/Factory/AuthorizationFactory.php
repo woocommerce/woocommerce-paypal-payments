@@ -14,19 +14,13 @@ class AuthorizationFactory
     {
         if (!isset($data->id)) {
             throw new RuntimeException(
-                __(
-                    'Does not contain an id.',
-                    'woocommerce-paypal-commerce-gateway'
-                )
+                __('Does not contain an id.', 'woocommerce-paypal-commerce-gateway')
             );
         }
 
         if (!isset($data->status)) {
             throw new RuntimeException(
-                __(
-                    'Does not contain status.',
-                    'woocommerce-paypal-commerce-gateway'
-                )
+                __('Does not contain status.', 'woocommerce-paypal-commerce-gateway')
             );
         }
 
