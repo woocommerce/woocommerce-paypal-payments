@@ -100,7 +100,8 @@ class PaymentsEndpointTest extends TestCase
         $testee->authorization($authorizationId);
     }
 
-    public function testAuthorizationDefaultIsNot200() {
+    public function testAuthorizationDefaultIsNot200()
+    {
         $host = 'https://example.com/';
         $authorizationId = 'somekindofid';
 
@@ -116,9 +117,9 @@ class PaymentsEndpointTest extends TestCase
         $errorResponseCollectionFactory
             ->expects('fromPayPalResponse')
             ->andReturnUsing(
-                function ($json, $status, $url, $args) use($error, $host, $authorizationId): ?ErrorResponseCollection {
+                function ($json, $status, $url, $args) use ($error, $host, $authorizationId): ?ErrorResponseCollection {
                     $wrongError = Mockery::mock(ErrorResponseCollection::class);
-                    if (! $json->some_error) {
+                    if (!$json->some_error) {
                         return $wrongError;
                     }
                     if ($status !== 500) {
@@ -133,10 +134,10 @@ class PaymentsEndpointTest extends TestCase
                     if ($args['headers']['Content-Type'] !== 'application/json') {
                         return $wrongError;
                     }
+
                     return $error;
                 }
             );
-
 
         $testee = new PaymentsEndpoint(
             $host,
