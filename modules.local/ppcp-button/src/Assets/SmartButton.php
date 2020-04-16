@@ -128,12 +128,16 @@ class SmartButton implements SmartButtonInterface
             'integration-date' => date('Y-m-d'),
             'components' => 'marks,buttons',
             //ToDo: Probably only needed, when DCC
-            'vault' => 'true',
+            'vault' => 'false',
             'commit' => is_checkout() ? 'true' : 'false',
         ];
         $payee = $this->payeeRepository->payee();
         if ($payee->merchantId()) {
             $params['merchant-id'] = $payee->merchantId();
+        }
+        $disableFunding = $this->settings->get('disable_funding');
+        if (is_array($disableFunding) && count($disableFunding)) {
+            $params['disable-funding'] = implode(',', $disableFunding);
         }
         $smartButtonUrl = add_query_arg($params, 'https://www.paypal.com/sdk/js');
         return $smartButtonUrl;
