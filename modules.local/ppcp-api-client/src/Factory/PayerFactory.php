@@ -26,7 +26,7 @@ class PayerFactory
             $data->name->surname
         );
         $phone = (isset($data->phone)) ? new PhoneWithType(
-            $data->phone->type,
+            $data->phone->phone_type,
             new Phone(
                 $data->phone->phone_number->national_number
             )
@@ -40,7 +40,7 @@ class PayerFactory
         return new Payer(
             $payerName,
             $data->email_address,
-            $data->payer_id,
+            (isset($data->payer_id)) ? $data->payer_id : '',
             $address,
             $birthDate,
             $phone,
