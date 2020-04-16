@@ -51,7 +51,8 @@ return [
         $requestData = $container->get('button.request-data');
         $repository = $container->get('api.repository.cart');
         $apiClient = $container->get('api.endpoint.order');
-        return new CreateOrderEndpoint($requestData, $repository, $apiClient);
+        $payerFactory = $container->get('api.factory.payer');
+        return new CreateOrderEndpoint($requestData, $repository, $apiClient, $payerFactory);
     },
     'button.endpoint.approve-order' => function (ContainerInterface $container): ApproveOrderEndpoint {
         $requestData = $container->get('button.request-data');

@@ -79,9 +79,11 @@ class Payer
         $payer = [
             'name' => $this->name()->toArray(),
             'email_address' => $this->emailAddress(),
-            'payer_id' => $this->payerId(),
             'address' => $this->address()->toArray(),
         ];
+        if ($this->payerId()) {
+            $payer['payer_id'] = $this->payerId();
+        }
 
         if ($this->phone()) {
             $payer['phone'] = $this->phone()->toArray();

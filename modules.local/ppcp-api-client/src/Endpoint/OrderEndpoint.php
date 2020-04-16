@@ -7,6 +7,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Authentication\Bearer;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\ErrorResponse;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use Inpsyde\PayPalCommerce\ApiClient\Entity\Payer;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\ErrorResponseCollectionFactory;
@@ -40,8 +41,14 @@ class OrderEndpoint
         $this->errorResponseFactory = $errorResponseFactory;
     }
 
-    public function createForPurchaseUnits(PurchaseUnit ...$items) : Order
+    public function createForPurchaseUnits(array $items, Payer $payer = null) : Order
     {
+        $items = array_filter(
+            $items,
+            function($item) : bool {
+                return is_a($item, PurchaseUnit::class);
+            }
+        );
         $bearer = $this->bearer->bearer();
         $data = [
             'intent' => $this->intent,
@@ -52,6 +59,9 @@ class OrderEndpoint
                 $items
             ),
         ];
+        if ($payer) {
+            $data['payer'] = $payer->toArray();
+        }
         $url = trailingslashit($this->host) . 'v2/checkout/orders';
         $args = [
             'headers' => [

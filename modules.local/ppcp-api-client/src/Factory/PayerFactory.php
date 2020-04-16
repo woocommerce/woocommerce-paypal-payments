@@ -27,7 +27,7 @@ class PayerFactory
         );
         // TODO deal with phones without type instead of passing a invalid type
         $phone = (isset($data->phone)) ? new PhoneWithType(
-            (isset($data->phone->type)) ? $data->phone->type : 'undefined',
+            (isset($data->phone->phone_type)) ? $data->phone->phone_type : 'undefined',
             new Phone(
                 $data->phone->phone_number->national_number
             )
@@ -41,7 +41,7 @@ class PayerFactory
         return new Payer(
             $payerName,
             $data->email_address,
-            $data->payer_id,
+            (isset($data->payer_id)) ? $data->payer_id : '',
             $address,
             $birthDate,
             $phone,
