@@ -796,6 +796,7 @@ class OrderEndpointTest extends TestCase
                 return $expectedOrder;
             });
         $patchCollectionFactory = Mockery::mock(PatchCollectionFactory::class);
+        $intent = 'CAPTURE';
         $errorResponseCollectionFactory = Mockery::mock(ErrorResponseCollectionFactory::class);
 
         $testee = new OrderEndpoint(
@@ -803,6 +804,7 @@ class OrderEndpointTest extends TestCase
             $bearer,
             $orderFactory,
             $patchCollectionFactory,
+            $intent,
             $errorResponseCollectionFactory
         );
 
