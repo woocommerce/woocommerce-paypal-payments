@@ -8,6 +8,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Entity\ErrorResponseCollection;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\PatchCollection;
+use Inpsyde\PayPalCommerce\ApiClient\Entity\Payer;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\ErrorResponseCollectionFactory;
@@ -745,7 +746,60 @@ class OrderEndpointTest extends TestCase
             );
         expect('is_wp_error')->with($rawResponse)->andReturn(false);
         expect('wp_remote_retrieve_response_code')->with($rawResponse)->andReturn(201);
-        $result = $testee->createForPurchaseUnits($purchaseUnit);
+        $result = $testee->createForPurchaseUnits([$purchaseUnit]);
+        $this->assertEquals($expectedOrder, $result);
+    }
+
+    public function testCreateForPurchaseUnitsWithPayer() {
+
+        $rawResponse = ['body' => '{"success":true}'];
+        $host = 'https://example.com/';
+        $bearer = Mockery::mock(Bearer::class);
+        $bearer
+            ->expects('bearer')
+            ->andReturn('bearer');
+        $orderFactory = Mockery::mock(OrderFactory::class);
+        $expectedOrder = Mockery::mock(Order::class);
+        $orderFactory
+            ->expects('fromPayPalResponse')
+            ->andReturnUsing(function($json) use ($expectedOrder, $rawResponse) {
+                if (! $json->success) {
+                    return Mockery::mock(Order::class);
+                }
+                return $expectedOrder;
+            });
+        $patchCollectionFactory = Mockery::mock(PatchCollectionFactory::class);
+        $errorResponseCollectionFactory = Mockery::mock(ErrorResponseCollectionFactory::class);
+
+        $testee = new OrderEndpoint(
+            $host,
+            $bearer,
+            $orderFactory,
+            $patchCollectionFactory,
+            $errorResponseCollectionFactory
+        );
+
+        $purchaseUnit = Mockery::mock(PurchaseUnit::class);
+        $purchaseUnit
+            ->expects('toArray')
+            ->andReturn(['singlePurchaseUnit']);
+
+        expect('wp_remote_post')
+            ->andReturnUsing(
+                function($url, $args) use ($rawResponse, $host) {
+                    $body = json_decode($args['body'], true);
+                    if (! isset($body['payer']) || $body['payer'][0] !== 'payer') {
+                        return false;
+                    }
+                    return $rawResponse;
+                }
+            );
+        expect('is_wp_error')->with($rawResponse)->andReturn(false);
+        expect('wp_remote_retrieve_response_code')->with($rawResponse)->andReturn(201);
+
+        $payer = Mockery::mock(Payer::class);
+        $payer->expects('toArray')->andReturn(['payer']);
+        $result = $testee->createForPurchaseUnits([$purchaseUnit], $payer);
         $this->assertEquals($expectedOrder, $result);
     }
 
@@ -808,7 +862,7 @@ class OrderEndpointTest extends TestCase
         expect('is_wp_error')->with($rawResponse)->andReturn(true);
         expect('do_action')->with('woocommerce-paypal-commerce-gateway.error', $error);
         $this->expectException(RuntimeException::class);
-        $testee->createForPurchaseUnits($purchaseUnit);
+        $testee->createForPurchaseUnits([$purchaseUnit]);
     }
 
     public function testCreateForPurchaseUnitsIsNot201() {
@@ -887,6 +941,6 @@ class OrderEndpointTest extends TestCase
         expect('wp_remote_retrieve_response_code')->with($rawResponse)->andReturn(500);
         expect('do_action')->with('woocommerce-paypal-commerce-gateway.error', $error);
         $this->expectException(RuntimeException::class);
-        $testee->createForPurchaseUnits($purchaseUnit);
+        $testee->createForPurchaseUnits([$purchaseUnit]);
     }
 }
