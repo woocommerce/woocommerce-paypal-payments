@@ -6,26 +6,26 @@ namespace Inpsyde\PayPalCommerce\WcGateway\Notice;
 class AuthorizeOrderActionNotice
 {
     const NO_INFO = 81;
-    const ALREADY_AUTHORIZED = 82;
+    const ALREADY_CAPTURED = 82;
     const FAILED = 83;
     const SUCCESS = 84;
 
     public function registerMessages(array $messages): array
     {
         $messages['shop_order'][self::NO_INFO] = __(
-            'Could not retrieve payment information. Try again.',
+            'Could not retrieve information. Try again later.',
             'woocommerce-paypal-gateway'
         );
-        $messages['shop_order'][self::ALREADY_AUTHORIZED] = __(
-            'Payment was previously authorized.',
+        $messages['shop_order'][self::ALREADY_CAPTURED] = __(
+            'Payment already captured.',
             'woocommerce-paypal-gateway'
         );
         $messages['shop_order'][self::FAILED] = __(
-            'Authorization failed',
+            'Failed to capture. Try again later.',
             'woocommerce-paypal-gateway'
         );
         $messages['shop_order'][self::SUCCESS] = __(
-            'Authorization successful',
+            'Payment successfully captured.',
             'woocommerce-paypal-gateway'
         );
 

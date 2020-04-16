@@ -123,17 +123,19 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
             AuthorizeOrderActionNotice::displayMessage(AuthorizeOrderActionNotice::NO_INFO);
         }
 
-        if ($result === 'ALREADY_CAPTURED' && $wcOrder->get_status() === 'on-hold') {
-            $wcOrder->add_order_note(
-                __(
-                    'Payment successfully authorized.',
-                    'woocommerce-paypal-gateway'
-                )
-            );
+        if ($result === 'ALREADY_CAPTURED') {
+            if ($wcOrder->get_status() === 'on-hold') {
+                $wcOrder->add_order_note(
+                    __(
+                        'Payment successfully captured.',
+                        'woocommerce-paypal-gateway'
+                    )
+                );
 
-            $wcOrder->update_status('processing');
+                $wcOrder->update_status('processing');
+            }
 
-            AuthorizeOrderActionNotice::displayMessage(AuthorizeOrderActionNotice::ALREADY_AUTHORIZED);
+            AuthorizeOrderActionNotice::displayMessage(AuthorizeOrderActionNotice::ALREADY_CAPTURED);
         }
 
         if ($result === 'FAILED') {
@@ -143,7 +145,7 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
         if ($result === 'SUCCESSFUL') {
             $wcOrder->add_order_note(
                 __(
-                    'Payment successfully authorized.',
+                    'Payment successfully captured.',
                     'woocommerce-paypal-gateway'
                 )
             );
