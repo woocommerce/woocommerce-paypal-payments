@@ -7,6 +7,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Entity\Address;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Amount;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Item;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Payee;
+use Inpsyde\PayPalCommerce\ApiClient\Entity\Payments;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Shipping;
 use Inpsyde\PayPalCommerce\ApiClient\Repository\PayeeRepository;
