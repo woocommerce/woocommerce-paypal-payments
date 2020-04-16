@@ -9,11 +9,9 @@ use Inpsyde\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 
 class CartRepository implements PurchaseUnitRepositoryInterface
 {
-    private $cart;
     private $factory;
-    public function __construct(\WC_Cart $cart, PurchaseUnitFactory $factory)
+    public function __construct(PurchaseUnitFactory $factory)
     {
-        $this->cart = $cart;
         $this->factory = $factory;
     }
 
@@ -24,6 +22,7 @@ class CartRepository implements PurchaseUnitRepositoryInterface
      */
     public function all() : array
     {
-        return [$this->factory->fromWcCart($this->cart)];
+        $cart = WC()->cart ?? new \WC_Cart();
+        return [$this->factory->fromWcCart($cart)];
     }
 }
