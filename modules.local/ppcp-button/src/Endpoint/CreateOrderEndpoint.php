@@ -41,7 +41,7 @@ class CreateOrderEndpoint implements EndpointInterface
             $data = $this->requestData->readRequest($this->nonce());
             $purchaseUnits = $this->repository->all();
             $payer = null;
-            if ($data['payer']) {
+            if (isset($data['payer'])) {
                 if (isset($data['payer']['phone']['phone_number']['national_number'])) {
                     // make sure the phone number contains only numbers and is max 14. chars long.
                     $number = $data['payer']['phone']['phone_number']['national_number'];
