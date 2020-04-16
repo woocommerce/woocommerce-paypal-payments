@@ -58,21 +58,8 @@ return [
         );
     },
     'api.repository.cart' => function (ContainerInterface $container) : CartRepository {
-        /*
-         * ToDo: We need to watch out and see, if we can load the Cart Repository
-         * only on specific situations.
-         * @see http://ppc-dev-website.localhost/wp-admin/admin.php?page=wc-settings&tab=tax
-         */
-        $cart = WC()->cart;
-        if (! $cart) {
-            /**
-             *  ToDo: The cart repository gets pulled in the wp-admin,
-             *  where there is no WC Cart loaded. Rethink.
-             **/
-            $cart = new \WC_Cart();
-        }
         $factory = $container->get('api.factory.purchase-unit');
-        return new CartRepository($cart, $factory);
+        return new CartRepository($factory);
     },
     'api.config.config' => function (ContainerInterface $container) : Config {
         return new Config();
