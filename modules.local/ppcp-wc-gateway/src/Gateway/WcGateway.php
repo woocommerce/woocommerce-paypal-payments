@@ -6,15 +6,13 @@ namespace Inpsyde\PayPalCommerce\WcGateway\Gateway;
 
 use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use Inpsyde\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Authorization;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\AuthorizationStatus;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\OrderStatus;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
 use Inpsyde\PayPalCommerce\Session\SessionHandler;
 use Inpsyde\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
+use Inpsyde\PayPalCommerce\WcGateway\Processor\Processor;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsFields;
 
 //phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
@@ -27,10 +25,8 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
     private $cartRepository;
     private $orderFactory;
     private $settingsFields;
-    /**
-     * @var PaymentsEndpoint
-     */
     private $paymentsEndpoint;
+    private $processor;
 
     public function __construct(
         SessionHandler $sessionHandler,
@@ -38,15 +34,16 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
         OrderEndpoint $orderEndpoint,
         PaymentsEndpoint $paymentsEndpoint,
         OrderFactory $orderFactory,
-        SettingsFields $settingsFields
+        SettingsFields $settingsFields,
+        Processor $processor
     ) {
-
         $this->sessionHandler = $sessionHandler;
         $this->cartRepository = $cartRepository;
         $this->orderEndpoint = $orderEndpoint;
         $this->paymentsEndpoint = $paymentsEndpoint;
         $this->orderFactory = $orderFactory;
         $this->settingsFields = $settingsFields;
+        $this->processor = $processor;
 
         $this->method_title = __('PayPal Payments', 'woocommerce-paypal-gateway');
         $this->method_description = __(
@@ -118,73 +115,43 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
         ];
     }
 
-    public function captureAuthorizedPayment(\WC_Order $wcOrder)
+    public function captureAuthorizedPayment(\WC_Order $wcOrder): void
     {
-        $payPalOrderId = get_post_meta($wcOrder->get_id(), '_paypal_order_id', true);
+        $result = $this->processor->authorizedPayments()->process($wcOrder);
 
-        try {
-            $order = $this->orderEndpoint->order($payPalOrderId);
-        } catch (RuntimeException $exception) {
+        if ($result === 'INACCESSIBLE') {
             AuthorizeOrderActionNotice::displayMessage(AuthorizeOrderActionNotice::NO_INFO);
-            return;
         }
 
-        $allAuthorizations = [];
-        foreach ($order->purchaseUnits() as $purchaseUnit) {
-            foreach ($purchaseUnit->payments()->authorizations() as $authorization) {
-                $allAuthorizations[] = $authorization;
-            }
-        }
-        $authorizationsWithCreatedStatus = array_filter(
-            $allAuthorizations,
-            function (Authorization $authorization) {
-                return $authorization->status()->is(AuthorizationStatus::CREATED);
-            }
-        );
-        $authorizationsWithCapturedStatus = array_filter(
-            $allAuthorizations,
-            function (Authorization $authorization) {
-                return $authorization->status()->is(AuthorizationStatus::CAPTURED);
-            }
-        );
+        if ($result === 'ALREADY_CAPTURED' && $wcOrder->get_status() === 'on-hold') {
+            $wcOrder->add_order_note(
+                __(
+                    'Payment successfully authorized.',
+                    'woocommerce-paypal-gateway'
+                )
+            );
 
-        if (count($authorizationsWithCapturedStatus) === count($allAuthorizations)) {
-            if ($wcOrder->get_status() === 'on-hold') {
-                $wcOrder->add_order_note(
-                    __(
-                        'Payment successfully authorized.',
-                        'woocommerce-paypal-gateway'
-                    )
-                );
+            $wcOrder->update_status('processing');
 
-                $wcOrder->update_status('processing');
-            }
             AuthorizeOrderActionNotice::displayMessage(AuthorizeOrderActionNotice::ALREADY_AUTHORIZED);
-            return;
         }
 
-        foreach ($authorizationsWithCreatedStatus as $authorization) {
-            try {
-                /**
-                 * @var Authorization $authorization
-                 */
-                $result = $this->paymentsEndpoint->capture($authorization->id());
-            } catch (RuntimeException $exception) {
-                AuthorizeOrderActionNotice::displayMessage(AuthorizeOrderActionNotice::FAILED);
-                return;
-            }
+        if ($result === 'FAILED') {
+            AuthorizeOrderActionNotice::displayMessage(AuthorizeOrderActionNotice::FAILED);
         }
 
-        AuthorizeOrderActionNotice::displayMessage(AuthorizeOrderActionNotice::SUCCESS);
+        if ($result === 'SUCCESSFUL') {
+            $wcOrder->add_order_note(
+                __(
+                    'Payment successfully authorized.',
+                    'woocommerce-paypal-gateway'
+                )
+            );
 
-        $wcOrder->add_order_note(
-            __(
-                'Payment successfully authorized.',
-                'woocommerce-paypal-gateway'
-            )
-        );
+            $wcOrder->update_status('processing');
 
-        $wcOrder->update_status('processing');
+            AuthorizeOrderActionNotice::displayMessage(AuthorizeOrderActionNotice::SUCCESS);
+        }
     }
 
     private function patchOrder(\WC_Order $wcOrder, Order $order): Order
