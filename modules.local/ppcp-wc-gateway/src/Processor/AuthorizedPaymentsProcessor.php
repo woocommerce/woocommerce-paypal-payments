@@ -55,7 +55,7 @@ class AuthorizedPaymentsProcessor
 
     protected function getPayPalOrderId(\WC_Order $wcOrder): string
     {
-        return get_post_meta($wcOrder->get_id(), '_paypal_order_id', true);
+        return $wcOrder->get_meta('_ppcp_paypal_order_id');
     }
 
     protected function getCurrentOrderInfo(string $orderId): Order
