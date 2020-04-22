@@ -82,6 +82,7 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
 
         $order = $this->sessionHandler->order();
         $wcOrder->update_meta_data('_ppcp_paypal_order_id', $order->id());
+        $wcOrder->update_meta_data('_ppcp_paypal_intent', $order->intent());
 
         $errorMessage = null;
         if (!$order || !$order->status()->is(OrderStatus::APPROVED)) {
