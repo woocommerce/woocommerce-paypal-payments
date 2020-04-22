@@ -6,6 +6,8 @@ namespace Inpsyde\PayPalCommerce\WcGateway;
 
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
+use Inpsyde\PayPalCommerce\WcGateway\Admin\AuthorizedPaymentStatus;
+use Inpsyde\PayPalCommerce\WcGateway\Admin\OrderDetail;
 use Inpsyde\PayPalCommerce\WcGateway\Checkout\DisableGateways;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGateway;
 use Inpsyde\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
@@ -15,7 +17,6 @@ use Psr\Container\ContainerInterface;
 
 class WcGatewayModule implements ModuleInterface
 {
-
     public function setup(): ServiceProviderInterface
     {
         return new ServiceProvider(
@@ -88,6 +89,17 @@ class WcGatewayModule implements ModuleInterface
                 return $authorizeOrderAction->registerMessages($messages);
             },
             20
+        );
+
+        add_action(
+            'woocommerce_order_actions_start',
+            function ($wcOrderId) use ($container) {
+                /**
+                 * @var AuthorizedPaymentStatus $orderDetail
+                 */
+                $orderDetail = $container->get('wcgateway.admin.authorized-payment-status');
+                $orderDetail->render(intval($wcOrderId));
+            }
         );
     }
 }
