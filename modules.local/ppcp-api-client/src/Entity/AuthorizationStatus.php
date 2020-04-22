@@ -11,6 +11,7 @@ class AuthorizationStatus
     const INTERNAL = 'INTERNAL';
     const CREATED = 'CREATED';
     const CAPTURED = 'CAPTURED';
+    const COMPLETED = 'COMPLETED';
     const DENIED = 'DENIED';
     const EXPIRED = 'EXPIRED';
     const PARTIALLY_CAPTURED = 'PARTIALLY_CAPTURED';
@@ -20,6 +21,7 @@ class AuthorizationStatus
         self::INTERNAL,
         self::CREATED,
         self::CAPTURED,
+        self::COMPLETED,
         self::DENIED,
         self::EXPIRED,
         self::PARTIALLY_CAPTURED,

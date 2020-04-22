@@ -132,8 +132,10 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
                         'woocommerce-paypal-gateway'
                     )
                 );
-
                 $wcOrder->update_status('processing');
+                $wcOrder->update_meta_data('_ppcp_paypal_captured', 'true');
+                // TODO investigate why save has to be called
+                $wcOrder->save();
             }
 
             AuthorizeOrderActionNotice::displayMessage(AuthorizeOrderActionNotice::ALREADY_CAPTURED);
@@ -152,6 +154,9 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
             );
 
             $wcOrder->update_status('processing');
+            $wcOrder->update_meta_data('_ppcp_paypal_captured', 'true');
+            // TODO investigate why save has to be called
+            $wcOrder->save();
 
             AuthorizeOrderActionNotice::displayMessage(AuthorizeOrderActionNotice::SUCCESS);
         }

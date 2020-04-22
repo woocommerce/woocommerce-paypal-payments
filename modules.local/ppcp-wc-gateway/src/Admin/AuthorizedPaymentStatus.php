@@ -10,12 +10,15 @@ class AuthorizedPaymentStatus
     {
         $wcOrder = new \WC_Order($wcOrderId);
         $intent = $wcOrder->get_meta('_ppcp_paypal_intent');
+        $captured = $wcOrder->get_meta('_ppcp_paypal_captured');
 
         if ($intent !== 'AUTHORIZE') {
             return;
         }
 
-        //TODO add status check
+        if (!empty($captured) && wc_string_to_bool($captured)) {
+            return;
+        }
 
         printf(
             // @phpcs:ignore Inpsyde.CodeQuality.LineLength.TooLong
