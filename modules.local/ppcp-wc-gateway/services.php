@@ -6,6 +6,7 @@ namespace Inpsyde\PayPalCommerce\WcGateway;
 
 use Dhii\Data\Container\ContainerInterface;
 use Inpsyde\PayPalCommerce\WcGateway\Admin\AuthorizedPaymentStatus;
+use Inpsyde\PayPalCommerce\WcGateway\Admin\AuthorizedPaymentStatusColumn;
 use Inpsyde\PayPalCommerce\WcGateway\Admin\OrderDetail;
 use Inpsyde\PayPalCommerce\WcGateway\Checkout\DisableGateways;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGateway;
@@ -71,5 +72,9 @@ return [
     },
     'wcgateway.admin.authorized-payment-status' => function(ContainerInterface $container): AuthorizedPaymentStatus {
         return new AuthorizedPaymentStatus();
+    },
+    'wcgateway.admin.authorized-payment-status-column' => function(ContainerInterface $container): AuthorizedPaymentStatusColumn {
+        $settings = $container->get('wcgateway.settings');
+        return new AuthorizedPaymentStatusColumn($settings);
     }
 ];

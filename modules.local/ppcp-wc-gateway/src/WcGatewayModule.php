@@ -7,6 +7,7 @@ namespace Inpsyde\PayPalCommerce\WcGateway;
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
 use Inpsyde\PayPalCommerce\WcGateway\Admin\AuthorizedPaymentStatus;
+use Inpsyde\PayPalCommerce\WcGateway\Admin\AuthorizedPaymentStatusColumn;
 use Inpsyde\PayPalCommerce\WcGateway\Admin\OrderDetail;
 use Inpsyde\PayPalCommerce\WcGateway\Checkout\DisableGateways;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGateway;
@@ -95,11 +96,35 @@ class WcGatewayModule implements ModuleInterface
             'woocommerce_order_actions_start',
             function ($wcOrderId) use ($container) {
                 /**
-                 * @var AuthorizedPaymentStatus $orderDetail
+                 * @var AuthorizedPaymentStatus $class
                  */
-                $orderDetail = $container->get('wcgateway.admin.authorized-payment-status');
-                $orderDetail->render(intval($wcOrderId));
+                $class = $container->get('wcgateway.admin.authorized-payment-status');
+                $class->render(intval($wcOrderId));
             }
+        );
+
+        add_filter(
+            'manage_edit-shop_order_columns',
+            function ($columns) use ($container) {
+                /**
+                 * @var AuthorizedPaymentStatusColumn $paymentStatusColumn
+                 */
+                $paymentStatusColumn = $container->get('wcgateway.admin.authorized-payment-status-column');
+                return $paymentStatusColumn->register($columns);
+            }
+        );
+
+        add_action(
+            'manage_shop_order_posts_custom_column',
+            function ($column, $wcOrderId) use ($container) {
+                /**
+                 * @var AuthorizedPaymentStatusColumn $paymentStatusColumn
+                 */
+                $paymentStatusColumn = $container->get('wcgateway.admin.authorized-payment-status-column');
+                $paymentStatusColumn->render($column, intval($wcOrderId));
+            },
+            10,
+            2
         );
     }
 }
