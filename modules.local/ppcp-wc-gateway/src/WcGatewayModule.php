@@ -60,7 +60,7 @@ class WcGatewayModule implements ModuleInterface
             'woocommerce_order_actions',
             function ($orderActions): array {
                 $orderActions['ppcp_authorize_order'] = __(
-                    'Authorize PayPal Payment',
+                    'Capture authorized PayPal payment',
                     'woocommerce-paypal-gateway'
                 );
                 return $orderActions;
