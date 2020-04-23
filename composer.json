@@ -22,10 +22,6 @@
         },
         {
             "type": "path",
-            "url": "modules.local/ppcp-api-client"
-        },
-        {
-            "type": "path",
             "url": "modules.local/ppcp-wc-gateway"
         },
         {
