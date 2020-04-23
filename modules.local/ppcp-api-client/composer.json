@@ -5,7 +5,7 @@
     "ext-json": "*",
     "dhii/module-interface": "0.2.x-dev",
     "inpsyde/ppcp-session": "dev-master",
-    "inpsyde/cache-module": "dev-master"
+    "wp-oop/transient-cache": "^0.1.0-alpha2"
   },
 
   "require-dev": {

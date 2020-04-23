@@ -50,7 +50,7 @@ class Bearer
         }
 
         $token = Token::fromJson($response['body']);
-        $this->cache->set(self::CACHE_KEY, $token, $token->asJson());
+        $this->cache->set(self::CACHE_KEY, $token->asJson());
         return $token;
     }
 }

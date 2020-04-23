@@ -25,6 +25,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Factory\ShippingFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
 use Inpsyde\PayPalCommerce\ApiClient\Repository\PayeeRepository;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
+use WpOop\TransientCache\CachePoolFactory;
 
 return [
 
@@ -38,13 +39,11 @@ return [
         return 'EILGMYK_0iiSbja8hT-nCBGl0BvKxEB4riHgyEO7QWDeUzCJ5r42JUEvrI7gpGyw0Qww8AIXxSdCIAny';
     },
     'api.bearer' => function (ContainerInterface $container) : Bearer {
-        $provider = $container->get('cache.provider');
-        /**
-         * @var CacheProviderInterface $provider
-         */
-        $cache = $provider->cacheOrTransientForKey('');
+        global $wpdb;
+        $cacheFactory = new CachePoolFactory($wpdb);
+        $pool = $cacheFactory->createCachePool('ppcp-token');
         return new Bearer(
-            $cache,
+            $pool,
             $container->get('api.host'),
             $container->get('api.key'),
             $container->get('api.secret')
