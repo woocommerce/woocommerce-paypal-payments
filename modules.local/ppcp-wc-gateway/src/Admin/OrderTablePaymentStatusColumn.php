@@ -6,7 +6,7 @@ namespace Inpsyde\PayPalCommerce\WcGateway\Admin;
 
 use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
 
-class AuthorizedPaymentStatusColumn
+class OrderTablePaymentStatusColumn
 {
     const COLUMN_KEY = 'ppcp_payment_status';
     const INTENT = 'authorize';

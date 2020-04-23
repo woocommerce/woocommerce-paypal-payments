@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Inpsyde\PayPalCommerce\WcGateway;
 
 use Dhii\Data\Container\ContainerInterface;
-use Inpsyde\PayPalCommerce\WcGateway\Admin\AuthorizedPaymentStatus;
-use Inpsyde\PayPalCommerce\WcGateway\Admin\AuthorizedPaymentStatusColumn;
 use Inpsyde\PayPalCommerce\WcGateway\Admin\OrderDetail;
+use Inpsyde\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
+use Inpsyde\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
 use Inpsyde\PayPalCommerce\WcGateway\Checkout\DisableGateways;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGateway;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGatewayBase;
@@ -70,11 +70,11 @@ return [
         $paymentsEndpoint = $container->get('api.endpoint.payments');
         return new AuthorizedPaymentsProcessor($orderEndpoint, $paymentsEndpoint);
     },
-    'wcgateway.admin.authorized-payment-status' => function(ContainerInterface $container): AuthorizedPaymentStatus {
-        return new AuthorizedPaymentStatus();
+    'wcgateway.admin.order-payment-status' => function(ContainerInterface $container): PaymentStatusOrderDetail {
+        return new PaymentStatusOrderDetail();
     },
-    'wcgateway.admin.authorized-payment-status-column' => function(ContainerInterface $container): AuthorizedPaymentStatusColumn {
+    'wcgateway.admin.orders-payment-status-column' => function(ContainerInterface $container): OrderTablePaymentStatusColumn {
         $settings = $container->get('wcgateway.settings');
-        return new AuthorizedPaymentStatusColumn($settings);
+        return new OrderTablePaymentStatusColumn($settings);
     }
 ];

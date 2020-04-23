@@ -6,9 +6,9 @@ namespace Inpsyde\PayPalCommerce\WcGateway;
 
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
-use Inpsyde\PayPalCommerce\WcGateway\Admin\AuthorizedPaymentStatus;
-use Inpsyde\PayPalCommerce\WcGateway\Admin\AuthorizedPaymentStatusColumn;
 use Inpsyde\PayPalCommerce\WcGateway\Admin\OrderDetail;
+use Inpsyde\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
+use Inpsyde\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
 use Inpsyde\PayPalCommerce\WcGateway\Checkout\DisableGateways;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGateway;
 use Inpsyde\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
@@ -96,9 +96,9 @@ class WcGatewayModule implements ModuleInterface
             'woocommerce_order_actions_start',
             function ($wcOrderId) use ($container) {
                 /**
-                 * @var AuthorizedPaymentStatus $class
+                 * @var PaymentStatusOrderDetail $class
                  */
-                $class = $container->get('wcgateway.admin.authorized-payment-status');
+                $class = $container->get('wcgateway.admin.order-payment-status');
                 $class->render(intval($wcOrderId));
             }
         );
@@ -107,9 +107,9 @@ class WcGatewayModule implements ModuleInterface
             'manage_edit-shop_order_columns',
             function ($columns) use ($container) {
                 /**
-                 * @var AuthorizedPaymentStatusColumn $paymentStatusColumn
+                 * @var OrderTablePaymentStatusColumn $paymentStatusColumn
                  */
-                $paymentStatusColumn = $container->get('wcgateway.admin.authorized-payment-status-column');
+                $paymentStatusColumn = $container->get('wcgateway.admin.orders-payment-status-column');
                 return $paymentStatusColumn->register($columns);
             }
         );
@@ -118,9 +118,9 @@ class WcGatewayModule implements ModuleInterface
             'manage_shop_order_posts_custom_column',
             function ($column, $wcOrderId) use ($container) {
                 /**
-                 * @var AuthorizedPaymentStatusColumn $paymentStatusColumn
+                 * @var OrderTablePaymentStatusColumn $paymentStatusColumn
                  */
-                $paymentStatusColumn = $container->get('wcgateway.admin.authorized-payment-status-column');
+                $paymentStatusColumn = $container->get('wcgateway.admin.orders-payment-status-column');
                 $paymentStatusColumn->render($column, intval($wcOrderId));
             },
             10,
