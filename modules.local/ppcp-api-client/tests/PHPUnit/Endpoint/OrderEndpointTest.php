@@ -16,6 +16,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\PatchCollectionFactory;
 use Inpsyde\PayPalCommerce\ApiClient\TestCase;
 use Mockery;
+
 use function Brain\Monkey\Functions\expect;
 
 class OrderEndpointTest extends TestCase
@@ -34,12 +35,14 @@ class OrderEndpointTest extends TestCase
                 return ($object->is_correct) ? $order : null;
             });
         $patchCollectionFactory = Mockery::mock(PatchCollectionFactory::class);
+        $intent = 'CAPTURE';
         $errorResponseCollectionFactory = Mockery::mock(ErrorResponseCollectionFactory::class);
         $testee = new OrderEndpoint(
             $host,
             $bearer,
             $orderFactory,
             $patchCollectionFactory,
+            $intent,
             $errorResponseCollectionFactory
         );
 
@@ -76,6 +79,7 @@ class OrderEndpointTest extends TestCase
         $patchCollectionFactory = Mockery::mock(PatchCollectionFactory::class);
         $errorResponseCollectionFactory = Mockery::mock(ErrorResponseCollectionFactory::class);
         $error = Mockery::mock(ErrorResponseCollection::class);
+        $intent = 'CAPTURE';
         $errorResponseCollectionFactory
             ->expects('unknownError')
             ->withSomeOfArgs($host . 'v2/checkout/orders/' . $orderId)
@@ -85,6 +89,7 @@ class OrderEndpointTest extends TestCase
             $bearer,
             $orderFactory,
             $patchCollectionFactory,
+            $intent,
             $errorResponseCollectionFactory
         );
 
@@ -107,6 +112,7 @@ class OrderEndpointTest extends TestCase
             ->expects('bearer')->andReturn('bearer');
         $orderFactory = Mockery::mock(OrderFactory::class);
         $patchCollectionFactory = Mockery::mock(PatchCollectionFactory::class);
+        $intent = 'CAPTURE';
         $errorResponseCollectionFactory = Mockery::mock(ErrorResponseCollectionFactory::class);
         $rawResponse = ['body' => '{"some_error":true}'];
         $error = Mockery::mock(ErrorResponseCollection::class);
@@ -139,6 +145,7 @@ class OrderEndpointTest extends TestCase
             $bearer,
             $orderFactory,
             $patchCollectionFactory,
+            $intent,
             $errorResponseCollectionFactory
         );
 
@@ -180,6 +187,7 @@ class OrderEndpointTest extends TestCase
                 }
             );
         $patchCollectionFactory = Mockery::mock(PatchCollectionFactory::class);
+        $intent = 'CAPTURE';
         $errorResponseCollectionFactory = Mockery::mock(ErrorResponseCollectionFactory::class);
 
         $testee = new OrderEndpoint(
@@ -187,6 +195,7 @@ class OrderEndpointTest extends TestCase
             $bearer,
             $orderFactory,
             $patchCollectionFactory,
+            $intent,
             $errorResponseCollectionFactory
         );
 
@@ -226,6 +235,7 @@ class OrderEndpointTest extends TestCase
         $bearer = Mockery::mock(Bearer::class);
         $orderFactory = Mockery::mock(OrderFactory::class);
         $patchCollectionFactory = Mockery::mock(PatchCollectionFactory::class);
+        $intent = 'CAPTURE';
         $errorResponseCollectionFactory = Mockery::mock(ErrorResponseCollectionFactory::class);
 
         $testee = new OrderEndpoint(
@@ -233,6 +243,7 @@ class OrderEndpointTest extends TestCase
             $bearer,
             $orderFactory,
             $patchCollectionFactory,
+            $intent,
             $errorResponseCollectionFactory
         );
 
@@ -255,6 +266,7 @@ class OrderEndpointTest extends TestCase
         $bearer->expects('bearer')->andReturn('bearer');
         $orderFactory = Mockery::mock(OrderFactory::class);
         $patchCollectionFactory = Mockery::mock(PatchCollectionFactory::class);
+        $intent = 'CAPTURE';
         $errorResponseCollectionFactory = Mockery::mock(ErrorResponseCollectionFactory::class);
         $error = Mockery::mock(ErrorResponseCollection::class);
         $errorResponseCollectionFactory
@@ -266,6 +278,7 @@ class OrderEndpointTest extends TestCase
             $bearer,
             $orderFactory,
             $patchCollectionFactory,
+            $intent,
             $errorResponseCollectionFactory
         );
 
@@ -293,6 +306,7 @@ class OrderEndpointTest extends TestCase
         $bearer->expects('bearer')->andReturn('bearer');
         $orderFactory = Mockery::mock(OrderFactory::class);
         $patchCollectionFactory = Mockery::mock(PatchCollectionFactory::class);
+        $intent = 'CAPTURE';
         $errorResponseCollectionFactory = Mockery::mock(ErrorResponseCollectionFactory::class);
         $error = Mockery::mock(ErrorResponseCollection::class);
         $error->expects('hasErrorCode')->with('ORDER_ALREADY_CAPTURED')->andReturn(false);
@@ -325,6 +339,7 @@ class OrderEndpointTest extends TestCase
             $bearer,
             $orderFactory,
             $patchCollectionFactory,
+            $intent,
             $errorResponseCollectionFactory
         );
 
@@ -353,6 +368,7 @@ class OrderEndpointTest extends TestCase
         $bearer->expects('bearer')->andReturn('bearer');
         $orderFactory = Mockery::mock(OrderFactory::class);
         $patchCollectionFactory = Mockery::mock(PatchCollectionFactory::class);
+        $intent = 'CAPTURE';
         $errorResponseCollectionFactory = Mockery::mock(ErrorResponseCollectionFactory::class);
         $error = Mockery::mock(ErrorResponseCollection::class);
         $error->expects('hasErrorCode')->with('ORDER_ALREADY_CAPTURED')->andReturn(true);
@@ -387,6 +403,7 @@ class OrderEndpointTest extends TestCase
                 $bearer,
                 $orderFactory,
                 $patchCollectionFactory,
+                $intent,
                 $errorResponseCollectionFactory,
             ]
         )->makePartial();
@@ -430,6 +447,7 @@ class OrderEndpointTest extends TestCase
             ->expects('fromOrders')
             ->with($orderToUpdate, $orderToCompare)
             ->andReturn($patchCollection);
+        $intent = 'CAPTURE';
         $errorResponseCollectionFactory = Mockery::mock(ErrorResponseCollectionFactory::class);
 
         $testee = Mockery::mock(
@@ -439,6 +457,7 @@ class OrderEndpointTest extends TestCase
                 $bearer,
                 $orderFactory,
                 $patchCollectionFactory,
+                $intent,
                 $errorResponseCollectionFactory
             ]
         )->makePartial();
@@ -508,6 +527,7 @@ class OrderEndpointTest extends TestCase
             ->expects('fromOrders')
             ->with($orderToUpdate, $orderToCompare)
             ->andReturn($patchCollection);
+        $intent = 'CAPTURE';
         $errorResponseCollectionFactory = Mockery::mock(ErrorResponseCollectionFactory::class);
         $error = Mockery::mock(ErrorResponseCollection::class);
         $errorResponseCollectionFactory
@@ -536,6 +556,7 @@ class OrderEndpointTest extends TestCase
                 $bearer,
                 $orderFactory,
                 $patchCollectionFactory,
+                $intent,
                 $errorResponseCollectionFactory
         );
 
@@ -602,6 +623,7 @@ class OrderEndpointTest extends TestCase
             ->expects('fromOrders')
             ->with($orderToUpdate, $orderToCompare)
             ->andReturn($patchCollection);
+        $intent = 'CAPTURE';
         $errorResponseCollectionFactory = Mockery::mock(ErrorResponseCollectionFactory::class);
         $error = Mockery::mock(ErrorResponseCollection::class);
         $errorResponseCollectionFactory
@@ -616,6 +638,7 @@ class OrderEndpointTest extends TestCase
                 $bearer,
                 $orderFactory,
                 $patchCollectionFactory,
+                $intent,
                 $errorResponseCollectionFactory
             ]
         )->makePartial();
@@ -671,6 +694,7 @@ class OrderEndpointTest extends TestCase
             ->expects('fromOrders')
             ->with($orderToUpdate, $orderToCompare)
             ->andReturn($patchCollection);
+        $intent = 'CAPTURE';
         $errorResponseCollectionFactory = Mockery::mock(ErrorResponseCollectionFactory::class);
 
         $testee = new OrderEndpoint(
@@ -678,6 +702,7 @@ class OrderEndpointTest extends TestCase
                 $bearer,
                 $orderFactory,
                 $patchCollectionFactory,
+                $intent,
                 $errorResponseCollectionFactory
         );
 
@@ -704,6 +729,7 @@ class OrderEndpointTest extends TestCase
                 return $expectedOrder;
             });
         $patchCollectionFactory = Mockery::mock(PatchCollectionFactory::class);
+        $intent = 'CAPTURE';
         $errorResponseCollectionFactory = Mockery::mock(ErrorResponseCollectionFactory::class);
 
         $testee = new OrderEndpoint(
@@ -711,6 +737,7 @@ class OrderEndpointTest extends TestCase
             $bearer,
             $orderFactory,
             $patchCollectionFactory,
+            $intent,
             $errorResponseCollectionFactory
         );
 
@@ -769,6 +796,7 @@ class OrderEndpointTest extends TestCase
                 return $expectedOrder;
             });
         $patchCollectionFactory = Mockery::mock(PatchCollectionFactory::class);
+        $intent = 'CAPTURE';
         $errorResponseCollectionFactory = Mockery::mock(ErrorResponseCollectionFactory::class);
 
         $testee = new OrderEndpoint(
@@ -776,6 +804,7 @@ class OrderEndpointTest extends TestCase
             $bearer,
             $orderFactory,
             $patchCollectionFactory,
+            $intent,
             $errorResponseCollectionFactory
         );
 
@@ -813,6 +842,7 @@ class OrderEndpointTest extends TestCase
             ->andReturn('bearer');
         $orderFactory = Mockery::mock(OrderFactory::class);
         $patchCollectionFactory = Mockery::mock(PatchCollectionFactory::class);
+        $intent = 'CAPTURE';
         $errorResponseCollectionFactory = Mockery::mock(ErrorResponseCollectionFactory::class);
 
         $error = Mockery::mock(ErrorResponseCollection::class);
@@ -826,6 +856,7 @@ class OrderEndpointTest extends TestCase
             $bearer,
             $orderFactory,
             $patchCollectionFactory,
+            $intent,
             $errorResponseCollectionFactory
         );
 
@@ -875,6 +906,7 @@ class OrderEndpointTest extends TestCase
             ->andReturn('bearer');
         $orderFactory = Mockery::mock(OrderFactory::class);
         $patchCollectionFactory = Mockery::mock(PatchCollectionFactory::class);
+        $intent = 'CAPTURE';
         $errorResponseCollectionFactory = Mockery::mock(ErrorResponseCollectionFactory::class);
 
         $error = Mockery::mock(ErrorResponseCollection::class);
@@ -904,6 +936,7 @@ class OrderEndpointTest extends TestCase
             $bearer,
             $orderFactory,
             $patchCollectionFactory,
+            $intent,
             $errorResponseCollectionFactory
         );
 

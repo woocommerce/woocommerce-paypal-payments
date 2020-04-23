@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\ApiClient\Factory;
@@ -16,12 +17,15 @@ class PurchaseUnitFactory
     private $payeeFactory;
     private $itemFactory;
     private $shippingFactory;
+    private $paymentsFactory;
+
     public function __construct(
         AmountFactory $amountFactory,
         PayeeRepository $payeeRepository,
         PayeeFactory $payeeFactory,
         ItemFactory $itemFactory,
-        ShippingFactory $shippingFactory
+        ShippingFactory $shippingFactory,
+        PaymentsFactory $paymentsFactory
     ) {
 
         $this->amountFactory = $amountFactory;
@@ -29,6 +33,7 @@ class PurchaseUnitFactory
         $this->payeeFactory = $payeeFactory;
         $this->itemFactory = $itemFactory;
         $this->shippingFactory = $shippingFactory;
+        $this->paymentsFactory = $paymentsFactory;
     }
 
     public function fromWcOrder(\WC_Order $order) : PurchaseUnit
@@ -129,7 +134,11 @@ class PurchaseUnitFactory
         $shipping = isset($data->shipping) ?
             $this->shippingFactory->fromPayPalResponse($data->shipping)
             : null;
-        return new PurchaseUnit(
+        $payments = isset($data->payments) ?
+            $this->paymentsFactory->fromPayPalResponse($data->payments) :
+            null;
+
+        $purchaseUnit = new PurchaseUnit(
             $amount,
             $items,
             $shipping,
@@ -138,7 +147,9 @@ class PurchaseUnitFactory
             $payee,
             $customId,
             $invoiceId,
-            $softDescriptor
+            $softDescriptor,
+            $payments
         );
+        return $purchaseUnit;
     }
 }

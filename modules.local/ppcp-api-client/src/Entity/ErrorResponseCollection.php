@@ -24,7 +24,7 @@ class ErrorResponseCollection
     public function codes() : array
     {
         return array_values(array_map(
-            function(ErrorResponse $error) : string {
+            function (ErrorResponse $error) : string {
                 return $error->code();
             },
             $this->errors()

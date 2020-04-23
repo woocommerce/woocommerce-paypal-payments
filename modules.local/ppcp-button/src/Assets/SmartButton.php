@@ -130,6 +130,7 @@ class SmartButton implements SmartButtonInterface
             //ToDo: Probably only needed, when DCC
             'vault' => 'false',
             'commit' => is_checkout() ? 'true' : 'false',
+            'intent' => $this->settings->get('intent')
         ];
         $payee = $this->payeeRepository->payee();
         if ($payee->merchantId()) {

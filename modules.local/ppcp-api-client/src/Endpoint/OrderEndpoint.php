@@ -21,12 +21,15 @@ class OrderEndpoint
     private $bearer;
     private $orderFactory;
     private $patchCollectionFactory;
+    private $intent;
     private $errorResponseFactory;
+
     public function __construct(
         string $host,
         Bearer $bearer,
         OrderFactory $orderFactory,
         PatchCollectionFactory $patchCollectionFactory,
+        string $intent,
         ErrorResponseCollectionFactory $errorResponseFactory
     ) {
 
@@ -34,6 +37,7 @@ class OrderEndpoint
         $this->bearer = $bearer;
         $this->orderFactory = $orderFactory;
         $this->patchCollectionFactory = $patchCollectionFactory;
+        $this->intent = $intent;
         $this->errorResponseFactory = $errorResponseFactory;
     }
 
@@ -47,8 +51,9 @@ class OrderEndpoint
         );
         $bearer = $this->bearer->bearer();
         $data = [
-            'intent' => 'CAPTURE',
-            'purchase_units' => array_map(function (PurchaseUnit $item) : array {
+            'intent' => $this->intent,
+            'purchase_units' => array_map(
+                function (PurchaseUnit $item) : array {
                     return $item->toArray();
                 },
                 $items
@@ -123,6 +128,52 @@ class OrderEndpoint
             throw new RuntimeException(__('Could not capture order.', 'woocommerce-paypal-commerce-gateway'));
         }
         $json = json_decode($response['body']);
+        $order = $this->orderFactory->fromPayPalResponse($json);
+        return $order;
+    }
+
+    public function authorize(Order $order): Order
+    {
+        $bearer = $this->bearer->bearer();
+        $url = trailingslashit($this->host) . 'v2/checkout/orders/' . $order->id() . '/authorize';
+        $args = [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $bearer,
+                'Content-Type' => 'application/json',
+                'Prefer' => 'return=representation',
+            ],
+        ];
+        $response = wp_remote_post($url, $args);
+
+        if (is_wp_error($response)) {
+            $this->handleResponseWpError($url, $args);
+            throw new RuntimeException(
+                __(
+                    'Could not authorize order.',
+                    'woocommerce-paypal-commerce-gateway'
+                )
+            );
+        }
+        $json = json_decode($response['body']);
+        if (wp_remote_retrieve_response_code($response) !== 201) {
+            $errors = $this->errorResponseFactory->fromPayPalResponse(
+                $json,
+                (int)wp_remote_retrieve_response_code($response),
+                $url,
+                $args
+            );
+
+            if ($errors->hasErrorCode(ErrorResponse::ORDER_ALREADY_AUTHORIZED)) {
+                return $this->order($order->id());
+            }
+            add_action('woocommerce-paypal-commerce-gateway.error', $errors);
+            throw new RuntimeException(
+                __(
+                    'Could not authorize order.',
+                    'woocommerce-paypal-commerce-gateway'
+                )
+            );
+        }
         $order = $this->orderFactory->fromPayPalResponse($json);
         return $order;
     }

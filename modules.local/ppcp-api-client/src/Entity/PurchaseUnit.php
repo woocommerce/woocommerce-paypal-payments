@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
@@ -15,6 +16,8 @@ class PurchaseUnit
     private $customId;
     private $invoiceId;
     private $softDescriptor;
+    private $payments;
+
     public function __construct(
         Amount $amount,
         array $items = [],
@@ -24,7 +27,8 @@ class PurchaseUnit
         Payee $payee = null,
         string $customId = '',
         string $invoiceId = '',
-        string $softDescriptor = ''
+        string $softDescriptor = '',
+        Payments $payments = null
     ) {
 
         $this->amount = $amount;
@@ -32,7 +36,7 @@ class PurchaseUnit
         $this->referenceId = $referenceId;
         $this->description = $description;
         //phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration.NoArgumentType
-        $this->items = array_values( array_filter(
+        $this->items = array_values(array_filter(
             $items,
             function ($item) : bool {
                 return is_a($item, Item::class);
@@ -43,6 +47,7 @@ class PurchaseUnit
         $this->customId = $customId;
         $this->invoiceId = $invoiceId;
         $this->softDescriptor = $softDescriptor;
+        $this->payments = $payments;
     }
 
     public function amount() : Amount
@@ -85,6 +90,11 @@ class PurchaseUnit
         return $this->payee;
     }
 
+    public function payments() : ?Payments
+    {
+        return $this->payments;
+    }
+
     /**
      * @return Item[]
      */
@@ -101,9 +111,8 @@ class PurchaseUnit
             'description' => $this->description(),
             'items' => array_map(function (Item $item) : array {
                     return $item->toArray();
-                },
-                $this->items()
-            ),
+            },
+                $this->items()),
         ];
         if ($this->ditchItemsWhenMismatch($this->amount(), ...$this->items())) {
             unset($purchaseUnit['items']);
@@ -112,6 +121,10 @@ class PurchaseUnit
 
         if ($this->payee()) {
             $purchaseUnit['payee'] = $this->payee()->toArray();
+        }
+
+        if ($this->payments()) {
+            $purchaseUnit['payments'] = $this->payments()->toArray();
         }
 
         if ($this->shipping()) {
