@@ -13,6 +13,10 @@
     ],
     "repositories": [
         {
+            "type": "composer",
+            "url": "https://repo.packagist.com/inpsyde/ppc-platform/"
+        },
+        {
             "type": "path",
             "url": "modules.local/ppcp-button"
         },
