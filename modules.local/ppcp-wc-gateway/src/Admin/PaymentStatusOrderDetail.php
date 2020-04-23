@@ -12,7 +12,7 @@ class PaymentStatusOrderDetail
         $intent = $wcOrder->get_meta('_ppcp_paypal_intent');
         $captured = $wcOrder->get_meta('_ppcp_paypal_captured');
 
-        if ($intent !== 'AUTHORIZE') {
+        if (strcasecmp($intent, 'AUTHORIZE') !== 0) {
             return;
         }
 
