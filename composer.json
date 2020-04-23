@@ -27,10 +27,6 @@
         {
             "type": "path",
             "url": "modules.local/ppcp-wc-gateway"
-        },
-        {
-            "type": "path",
-            "url": "modules.local/ppcp-session"
         }
     ],
     "require": {
