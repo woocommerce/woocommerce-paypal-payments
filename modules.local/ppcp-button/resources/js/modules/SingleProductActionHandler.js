@@ -83,8 +83,7 @@ class SingleProductActionHandler {
                     return res.json();
                 }).then(function (data) {
                     if (!data.success) {
-                        //Todo: Error handling
-                        return;
+                        throw Error(data.data);
                     }
                     return data.data.id;
                 });

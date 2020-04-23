@@ -10,8 +10,7 @@ const onApprove = (context) => {
             return res.json();
         }).then((data)=>{
             if (!data.success) {
-                //Todo: Error handling
-                return;
+                throw Error(data.data);
             }
             location.href = context.config.redirect;
         });
