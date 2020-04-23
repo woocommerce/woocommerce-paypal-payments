@@ -44,7 +44,7 @@
         "dhii/wp-containers": "^0.1.0@alpha"
     },
     "require-dev": {
-        "inpsyde/php-coding-standards": "@stable"
+        "inpsyde/php-coding-standards": "^1"
     },
     "autoload": {
         "psr-4": {
