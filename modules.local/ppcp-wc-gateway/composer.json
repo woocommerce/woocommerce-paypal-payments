@@ -10,5 +10,20 @@
     "psr-4": {
       "Inpsyde\\PayPalCommerce\\WcGateway\\": "src/"
     }
-  }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Inpsyde\\PayPalCommerce\\WcGateway\\": "tests/PHPUnit"
+    }
+  },
+  "scripts": {
+    "unit": "./vendor/bin/phpunit --coverage-html build/coverage-report"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^9.1",
+    "brain/monkey": "^2.4",
+    "inpsyde/php-coding-standards": "^1"
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true
 }
