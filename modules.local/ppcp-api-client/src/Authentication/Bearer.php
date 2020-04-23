@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\ApiClient\Authentication;
 
+use Inpsyde\PayPalCommerce\ApiClient\Entity\Token;
 use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use Psr\SimpleCache\CacheInterface;
 
@@ -21,16 +22,17 @@ class Bearer
         $this->secret = $secret;
     }
 
-    public function bearer() : string
+    public function bearer() : Token
     {
-        $bearer = $this->cache->get(self::CACHE_KEY);
-        if (! $bearer) {
+        try {
+            $bearer = Token::fromJson((string) $this->cache->get(self::CACHE_KEY));
+            return ($bearer->isValid()) ? $bearer : $this->newBearer();
+        } catch (RuntimeException $error) {
             return $this->newBearer();
         }
-        return (string) $bearer;
     }
 
-    public function newBearer() : string
+    private function newBearer() : Token
     {
         $url = trailingslashit($this->host) . 'v1/oauth2/token?grant_type=client_credentials';
         $args = [
@@ -47,17 +49,8 @@ class Bearer
             throw new RuntimeException(__('Could not create token.', 'woocommerce-paypal-commerce-gateway'));
         }
 
-        $json = json_decode($response['body']);
-        if (! isset($json->access_token) || ! isset($json->expires_in)) {
-            throw new RuntimeException(__('Could not find token.', 'woocommerce-paypal-commerce-gateway'));
-        }
-        $token = (string) $json->access_token;
-
-        /**
-         * ToDo: Does expires_in really work as expected. Woke up after a weekend and bearer did
-         * not work. Validate.
-         **/
-        $this->cache->set(self::CACHE_KEY, $token, $json->expires_in);
+        $token = Token::fromJson($response['body']);
+        $this->cache->set(self::CACHE_KEY, $token, $token->asJson());
         return $token;
     }
 }

@@ -65,7 +65,7 @@ class OrderEndpoint
         $url = trailingslashit($this->host) . 'v2/checkout/orders';
         $args = [
             'headers' => [
-                'Authorization' => 'Bearer ' . $bearer,
+                'Authorization' => 'Bearer ' . $bearer->token(),
                 'Content-Type' => 'application/json',
                 'Prefer' => 'return=representation',
             ],
@@ -100,7 +100,7 @@ class OrderEndpoint
         $url = trailingslashit($this->host) . 'v2/checkout/orders/' . $order->id() . '/capture';
         $args = [
             'headers' => [
-                'Authorization' => 'Bearer ' . $bearer,
+                'Authorization' => 'Bearer ' . $bearer->token(),
                 'Content-Type' => 'application/json',
                 'Prefer' => 'return=representation',
             ],
@@ -138,7 +138,7 @@ class OrderEndpoint
         $url = trailingslashit($this->host) . 'v2/checkout/orders/' . $order->id() . '/authorize';
         $args = [
             'headers' => [
-                'Authorization' => 'Bearer ' . $bearer,
+                'Authorization' => 'Bearer ' . $bearer->token(),
                 'Content-Type' => 'application/json',
                 'Prefer' => 'return=representation',
             ],
@@ -184,7 +184,7 @@ class OrderEndpoint
         $url = trailingslashit($this->host) . 'v2/checkout/orders/' . $id;
         $args = [
             'headers' => [
-                'Authorization' => 'Bearer ' . $bearer,
+                'Authorization' => 'Bearer ' . $bearer->token(),
                 'Content-Type' => 'application/json',
             ],
         ];
@@ -219,7 +219,7 @@ class OrderEndpoint
         $args = [
             'method' => 'PATCH',
             'headers' => [
-                'Authorization' => 'Bearer ' . $bearer,
+                'Authorization' => 'Bearer ' . $bearer->token(),
                 'Content-Type' => 'application/json',
                 'Prefer' => 'return=representation',
             ],

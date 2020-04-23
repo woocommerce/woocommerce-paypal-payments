@@ -35,7 +35,7 @@ class PaymentsEndpoint
         $url = trailingslashit($this->host) . 'v2/payments/authorizations/' . $authorizationId;
         $args = [
             'headers' => [
-                'Authorization' => 'Bearer ' . $bearer,
+                'Authorization' => 'Bearer ' . $bearer->token(),
                 'Content-Type' => 'application/json',
                 'Prefer' => 'return=representation',
             ],
@@ -74,7 +74,7 @@ class PaymentsEndpoint
         $url = trailingslashit($this->host) . 'v2/payments/authorizations/' . $authorizationId . '/capture';
         $args = [
             'headers' => [
-                'Authorization' => 'Bearer ' . $bearer,
+                'Authorization' => 'Bearer ' . $bearer->token(),
                 'Content-Type' => 'application/json',
                 'Prefer' => 'return=representation',
             ],
