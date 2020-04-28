@@ -15,7 +15,7 @@ class ErrorHandler {
     {
         const textarea = document.createElement('textarea');
         textarea.innerHTML = text;
-        return textarea.value;
+        return textarea.value.replace('Error: ', '');
     }
 
     clear()
