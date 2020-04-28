@@ -6,6 +6,7 @@ namespace Inpsyde\PayPalCommerce\WcGateway;
 
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
+use Inpsyde\PayPalCommerce\AdminNotices\Repository\Repository;
 use Inpsyde\PayPalCommerce\WcGateway\Admin\OrderDetail;
 use Inpsyde\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
 use Inpsyde\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
@@ -47,14 +48,24 @@ class WcGatewayModule implements ModuleInterface
             }
         );
 
-        add_action(
-            'admin_notices',
-            function () use ($container) : void {
+        add_filter(
+            Repository::NOTICES_FILTER,
+            function ($notices) use ($container) : array {
                 $notice = $container->get('wcgateway.notice.connect');
                 /**
                  * @var ConnectAdminNotice $notice
                  */
-                $notice->display();
+                $connectMessage = $notice->connectMessage();
+                if ($connectMessage) {
+                    $notices[] = $connectMessage;
+                }
+                $authorizeOrderAction = $container->get('wcgateway.notice.authorize-order-action');
+                $authorizedMessage = $authorizeOrderAction->message();
+                if ($authorizedMessage) {
+                    $notices[] = $authorizedMessage;
+                }
+
+                return $notices;
             }
         );
 
@@ -78,18 +89,6 @@ class WcGatewayModule implements ModuleInterface
                 $gateway = $container->get('wcgateway.gateway');
                 $gateway->captureAuthorizedPayment($wcOrder);
             }
-        );
-
-        add_filter(
-            'post_updated_messages',
-            function ($messages) use ($container) {
-                /**
-                 * @var AuthorizeOrderActionNotice $authorizeOrderAction
-                 */
-                $authorizeOrderAction = $container->get('wcgateway.notice.authorize-order-action');
-                return $authorizeOrderAction->registerMessages($messages);
-            },
-            20
         );
 
         add_action(

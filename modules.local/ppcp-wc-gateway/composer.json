@@ -4,6 +4,7 @@
   "require": {
     "dhii/module-interface": "0.2.x-dev",
     "inpsyde/ppcp-session": "dev-master",
+    "inpsyde/ppcp-admin-notices": "dev-master",
     "inpsyde/ppcp-api-client": "dev-master"
   },
   "autoload": {

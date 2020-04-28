@@ -23,11 +23,16 @@
         {
             "type": "path",
             "url": "modules.local/ppcp-wc-gateway"
+        },
+        {
+            "type": "path",
+            "url": "modules.local/ppcp-admin-notices"
         }
     ],
     "require": {
         "dhii/module-interface": "0.2.x-dev",
         "psr/container": "^1.0",
+        "inpsyde/ppcp-admin-notices": "dev-master",
         "inpsyde/ppcp-button": "dev-master",
         "inpsyde/ppcp-wc-gateway": "dev-master",
         "oomphinc/composer-installers-extender": "^1.1",

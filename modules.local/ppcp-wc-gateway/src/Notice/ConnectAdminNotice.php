@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\WcGateway\Notice;
 
+use Inpsyde\PayPalCommerce\AdminNotices\Entity\Message;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
 
 class ConnectAdminNotice
@@ -14,26 +15,23 @@ class ConnectAdminNotice
         $this->settings = $settings;
     }
 
-    public function display()
+    public function connectMessage() : ?Message
     {
         if (!$this->shouldDisplay()) {
-            return;
+            return null;
         }
-        echo sprintf(
-            '<div class="notice notice-warning"><p>%s</p></div>',
-            wp_kses_post(
-                sprintf(
-                    /* translators: %1$s the gateway name */
-                    __(
-                        '%1$s is almost ready. To get started, <a href="%2$s">connect your account</a>.',
-                        'woocommerce-paypal-commerce-gateway'
-                    ),
-                    $this->settings->get('title'),
-                    // TODO: find a better way to get the url
-                    admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway')
-                )
-            )
+
+        $message = sprintf(
+            /* translators: %1$s the gateway name */
+            __(
+                '%1$s is almost ready. To get started, <a href="%2$s">connect your account</a>.',
+                'woocommerce-paypal-commerce-gateway'
+            ),
+            $this->settings->get('title'),
+            // TODO: find a better way to get the url
+            admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway')
         );
+        return new Message( $message, 'warning');
     }
 
     protected function shouldDisplay(): bool
