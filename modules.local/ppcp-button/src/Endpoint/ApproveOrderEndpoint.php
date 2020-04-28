@@ -29,7 +29,7 @@ class ApproveOrderEndpoint implements EndpointInterface
 
     public static function nonce(): string
     {
-        return self::ENDPOINT . get_current_user_id();
+        return self::ENDPOINT;
     }
 
     public function handleRequest(): bool
