@@ -14,7 +14,7 @@ use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGatewayBase;
 use Inpsyde\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use Inpsyde\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
 use Inpsyde\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
-use Inpsyde\PayPalCommerce\WcGateway\Processor\Processor;
+use Inpsyde\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsFields;
 
@@ -23,23 +23,14 @@ return [
         return new WcGatewayBase();
     },
     'wcgateway.gateway' => static function (ContainerInterface $container): WcGateway {
-        $sessionHandler = $container->get('session.handler');
-        $cartRepository = $container->get('api.repository.cart');
-        // TODO eventuall get rid of the endpoints as the processor is sufficient
-        $orderEndpoint = $container->get('api.endpoint.order');
-        $paymentsEndpoint = $container->get('api.endpoint.payments');
-        $orderFactory = $container->get('api.factory.order');
+        $orderProcessor = $container->get('wcgateway.order-processor');
         $settingsFields = $container->get('wcgateway.settings.fields');
-        $processor = $container->get('wcgateway.processor');
+        $authorizedPayments = $container->get('wcgateway.processor.authorized-payments');
         $notice = $container->get('wcgateway.notice.authorize-order-action');
         return new WcGateway(
-            $sessionHandler,
-            $cartRepository,
-            $orderEndpoint,
-            $paymentsEndpoint,
-            $orderFactory,
             $settingsFields,
-            $processor,
+            $orderProcessor,
+            $authorizedPayments,
             $notice
         );
     },
@@ -63,9 +54,20 @@ return [
     'wcgateway.settings.fields' => static function (ContainerInterface $container): SettingsFields {
         return new SettingsFields();
     },
-    'wcgateway.processor' => static function (ContainerInterface $container): Processor {
-        $authorizedPaymentsProcessor = $container->get('wcgateway.processor.authorized-payments');
-        return new Processor($authorizedPaymentsProcessor);
+    'wcgateway.order-processor' => static function (ContainerInterface $container): OrderProcessor {
+
+        $sessionHandler = $container->get('session.handler');
+        $cartRepository = $container->get('api.repository.cart');
+        $orderEndpoint = $container->get('api.endpoint.order');
+        $paymentsEndpoint = $container->get('api.endpoint.payments');
+        $orderFactory = $container->get('api.factory.order');
+        return new OrderProcessor(
+            $sessionHandler,
+            $cartRepository,
+            $orderEndpoint,
+            $paymentsEndpoint,
+            $orderFactory
+        );
     },
     'wcgateway.processor.authorized-payments' => static function (ContainerInterface $container): AuthorizedPaymentsProcessor {
         $orderEndpoint = $container->get('api.endpoint.order');

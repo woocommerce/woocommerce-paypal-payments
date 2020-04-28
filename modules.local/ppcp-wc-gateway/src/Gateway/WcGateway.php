@@ -13,7 +13,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
 use Inpsyde\PayPalCommerce\Session\SessionHandler;
 use Inpsyde\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use Inpsyde\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
-use Inpsyde\PayPalCommerce\WcGateway\Processor\Processor;
+use Inpsyde\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsFields;
 
 //phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
@@ -26,34 +26,22 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
     public const ORDER_ID_META_KEY = '_ppcp_paypal_order_id';
 
     private $isSandbox = true;
-    private $sessionHandler;
-    private $orderEndpoint;
-    private $cartRepository;
-    private $orderFactory;
     private $settingsFields;
-    private $paymentsEndpoint;
-    private $processor;
+    private $authorizedPayments;
     private $notice;
+    private $orderProcessor;
 
     public function __construct(
-        SessionHandler $sessionHandler,
-        CartRepository $cartRepository,
-        OrderEndpoint $orderEndpoint,
-        PaymentsEndpoint $paymentsEndpoint,
-        OrderFactory $orderFactory,
         SettingsFields $settingsFields,
-        Processor $processor,
+        OrderProcessor $orderProcessor,
+        AuthorizedPaymentsProcessor $authorizedPayments,
         AuthorizeOrderActionNotice $notice
     ) {
 
-        $this->sessionHandler = $sessionHandler;
-        $this->cartRepository = $cartRepository;
-        $this->orderEndpoint = $orderEndpoint;
-        $this->paymentsEndpoint = $paymentsEndpoint;
-        $this->orderFactory = $orderFactory;
-        $this->settingsFields = $settingsFields;
-        $this->processor = $processor;
+        $this->orderProcessor = $orderProcessor;
+        $this->authorizedPayments = $authorizedPayments;
         $this->notice = $notice;
+        $this->settingsFields = $settingsFields;
 
         $this->method_title = __('PayPal Payments', 'woocommerce-paypal-gateway');
         $this->method_description = __(
@@ -87,51 +75,24 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
     {
         global $woocommerce;
         $wcOrder = new \WC_Order($orderId);
-
-        $order = $this->sessionHandler->order();
-        $wcOrder->update_meta_data(self::ORDER_ID_META_KEY, $order->id());
-        $wcOrder->update_meta_data(self::INTENT_META_KEY, $order->intent());
-
-        $errorMessage = null;
-        if (!$order || !$order->status()->is(OrderStatus::APPROVED)) {
-            $errorMessage = __('The payment has not been approved yet.', 'woocommerce-paypal-gateway');
-        }
-        if ($errorMessage) {
-            $notice = sprintf(
-                // translators %s is the message of the error.
-                __('Payment error: %s', 'woocommerce-paypal-gateway'),
-                $errorMessage
-            );
-            wc_add_notice($notice, 'error');
+        if (! is_a($wcOrder, \WC_Order::class)) {
             return null;
         }
 
-        $order = $this->patchOrder($wcOrder, $order);
-        if ($order->intent() === 'CAPTURE') {
-            $order = $this->orderEndpoint->capture($order);
+        if ($this->orderProcessor->process($wcOrder, $woocommerce)) {
+            return [
+                'result' => 'success',
+                'redirect' => $this->get_return_url($wcOrder),
+            ];
         }
 
-        if ($order->intent() === 'AUTHORIZE') {
-            $order = $this->orderEndpoint->authorize($order);
-            $wcOrder->update_meta_data(self::CAPTURED_META_KEY, 'false');
-        }
-
-        $wcOrder->update_status('on-hold', __('Awaiting payment.', 'woocommerce-paypal-gateway'));
-        if ($order->status()->is(OrderStatus::COMPLETED) && $order->intent() === 'CAPTURE') {
-            $wcOrder->update_status('processing', __('Payment received.', 'woocommerce-paypal-gateway'));
-        }
-        $woocommerce->cart->empty_cart();
-        $this->sessionHandler->destroySessionData();
-
-        return [
-            'result' => 'success',
-            'redirect' => $this->get_return_url($wcOrder),
-        ];
+        wc_add_notice($this->orderProcessor->lastError());
+        return null;
     }
 
     public function captureAuthorizedPayment(\WC_Order $wcOrder): void
     {
-        $result = $this->processor->authorizedPayments()->process($wcOrder);
+        $result = $this->authorizedPayments->process($wcOrder);
 
         if ($result === AuthorizedPaymentsProcessor::INACCESSIBLE) {
             $this->notice->displayMessage(AuthorizeOrderActionNotice::NO_INFO);
@@ -178,10 +139,4 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
         }
     }
 
-    private function patchOrder(\WC_Order $wcOrder, Order $order): Order
-    {
-        $updatedOrder = $this->orderFactory->fromWcOrder($wcOrder, $order);
-        $order = $this->orderEndpoint->patchOrderWith($order, $updatedOrder);
-        return $order;
-    }
 }
