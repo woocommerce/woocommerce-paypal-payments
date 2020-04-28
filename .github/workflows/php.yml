@@ -1,0 +1,32 @@
+name: PHP Composer
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Packagist.com Auth
+      run: composer config --global --auth http-basic.repo.packagist.com token 5863d6c7b313709512b6d5b7f93c7fad8807a5aef92b2155019f7f41ccac
+
+    - name: Validate composer.json and composer.lock
+      run: composer validate
+
+    - name: Install dependencies
+      run: composer install --prefer-dist --no-progress --no-suggest
+
+    # Add a test script to composer.json, for instance: "test": "vendor/bin/phpunit"
+    # Docs: https://getcomposer.org/doc/articles/scripts.md
+
+    - name: Run test suite
+      run: ./vendor/bin/phpunit
+    - name: Run cs
+      run: ./vendor/bin/phpcs src --standard=Inpsyde
