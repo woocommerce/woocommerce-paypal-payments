@@ -36,11 +36,18 @@
         "dhii/wp-containers": "^0.1.0@alpha"
     },
     "require-dev": {
-        "inpsyde/php-coding-standards": "^1"
+        "inpsyde/php-coding-standards": "^1",
+        "phpunit/phpunit": "^9.1",
+        "brain/monkey": "^2.4"
     },
     "autoload": {
         "psr-4": {
             "Inpsyde\\PayPalCommerce\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Inpsyde\\PayPalCommerce\\": "tests/PHPUnit/"
         }
     },
     "minimum-stability": "dev",
@@ -48,7 +55,8 @@
     "scripts": {
         "ci": [
             "vendor/bin/phpcs"
-        ]
+        ],
+        "unit": "./vendor/bin/phpunit --coverage-html build/coverage-report"
     },
     "extra": {
         "installer-types": [

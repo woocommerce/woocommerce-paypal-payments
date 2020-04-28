@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit
-    bootstrap="vendor/autoload.php"
+    bootstrap="tests/PHPUnit/bootstrap.php"
     backupGlobals="false"
     colors="true"
     convertErrorsToExceptions="true"
@@ -10,6 +10,7 @@
     <filter>
         <whitelist processUncoveredFilesFromWhitelist="true">
             <directory suffix=".php">./src</directory>
+            <directory suffix=".php">./modules.local/</directory>
         </whitelist>
     </filter>
     <testsuites>
