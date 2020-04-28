@@ -132,7 +132,6 @@ class WcGateway extends WcGatewayBase
 
             $wcOrder->update_status('processing');
             $wcOrder->update_meta_data(self::CAPTURED_META_KEY, 'true');
-            // TODO investigate why save has to be called
             $wcOrder->save();
 
             $this->notice->displayMessage(AuthorizeOrderActionNotice::SUCCESS);
