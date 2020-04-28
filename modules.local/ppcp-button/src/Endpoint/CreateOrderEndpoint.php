@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\Button\Endpoint;
@@ -30,12 +31,12 @@ class CreateOrderEndpoint implements EndpointInterface
         $this->payerFactory = $payerFactory;
     }
 
-    public static function nonce() : string
+    public static function nonce(): string
     {
         return self::ENDPOINT;
     }
 
-    public function handleRequest() : bool
+    public function handleRequest(): bool
     {
         try {
             $data = $this->requestData->readRequest($this->nonce());
@@ -46,7 +47,7 @@ class CreateOrderEndpoint implements EndpointInterface
                     // make sure the phone number contains only numbers and is max 14. chars long.
                     $number = $data['payer']['phone']['phone_number']['national_number'];
                     $number = preg_replace("/[^0-9]/", "", $number);
-                    $number = substr($number,0,14);
+                    $number = substr($number, 0, 14);
                     $data['payer']['phone']['phone_number']['national_number'] = $number;
                 }
                 $payer = $this->payerFactory->fromPayPalResponse(json_decode(json_encode($data['payer'])));

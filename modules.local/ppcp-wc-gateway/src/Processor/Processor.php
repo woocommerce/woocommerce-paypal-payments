@@ -13,7 +13,9 @@ class Processor
         $this->authorizedPaymentsProcessor = $authorizedPaymentsProcessor;
     }
 
-    public function authorizedPayments() {
+    public function authorizedPayments(): AuthorizedPaymentsProcessor
+    {
+
         return $this->authorizedPaymentsProcessor;
     }
 }

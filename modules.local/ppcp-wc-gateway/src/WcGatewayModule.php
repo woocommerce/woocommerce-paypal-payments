@@ -31,7 +31,7 @@ class WcGatewayModule implements ModuleInterface
     {
         add_filter(
             'woocommerce_payment_gateways',
-            function ($methods) use ($container) : array {
+            static function ($methods) use ($container): array {
                 $methods[] = $container->get('wcgateway.gateway');
                 return (array)$methods;
             }
@@ -39,7 +39,7 @@ class WcGatewayModule implements ModuleInterface
 
         add_filter(
             'woocommerce_available_payment_gateways',
-            function ($methods) use ($container) : array {
+            static function ($methods) use ($container): array {
                 $disabler = $container->get('wcgateway.disabler');
                 /**
                  * @var DisableGateways $disabler
@@ -50,7 +50,7 @@ class WcGatewayModule implements ModuleInterface
 
         add_filter(
             Repository::NOTICES_FILTER,
-            function ($notices) use ($container) : array {
+            static function ($notices) use ($container): array {
                 $notice = $container->get('wcgateway.notice.connect');
                 /**
                  * @var ConnectAdminNotice $notice
@@ -71,7 +71,7 @@ class WcGatewayModule implements ModuleInterface
 
         add_filter(
             'woocommerce_order_actions',
-            function ($orderActions): array {
+            static function ($orderActions): array {
                 $orderActions['ppcp_authorize_order'] = __(
                     'Capture authorized PayPal payment',
                     'woocommerce-paypal-gateway'
@@ -82,7 +82,7 @@ class WcGatewayModule implements ModuleInterface
 
         add_action(
             'woocommerce_order_action_ppcp_authorize_order',
-            function (\WC_Order $wcOrder) use ($container) {
+            static function (\WC_Order $wcOrder) use ($container) {
                 /**
                  * @var WcGateway $gateway
                  */
@@ -93,7 +93,7 @@ class WcGatewayModule implements ModuleInterface
 
         add_action(
             'woocommerce_order_actions_start',
-            function ($wcOrderId) use ($container) {
+            static function ($wcOrderId) use ($container) {
                 /**
                  * @var PaymentStatusOrderDetail $class
                  */
@@ -104,7 +104,7 @@ class WcGatewayModule implements ModuleInterface
 
         add_filter(
             'manage_edit-shop_order_columns',
-            function ($columns) use ($container) {
+            static function ($columns) use ($container) {
                 /**
                  * @var OrderTablePaymentStatusColumn $paymentStatusColumn
                  */
@@ -115,7 +115,7 @@ class WcGatewayModule implements ModuleInterface
 
         add_action(
             'manage_shop_order_posts_custom_column',
-            function ($column, $wcOrderId) use ($container) {
+            static function ($column, $wcOrderId) use ($container) {
                 /**
                  * @var OrderTablePaymentStatusColumn $paymentStatusColumn
                  */

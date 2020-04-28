@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\WcGateway\Settings;
 
+//phpcs:disable Inpsyde.CodeQuality.FunctionLength.TooLong
+
 class SettingsFields
 {
     public function fields(): array
@@ -15,7 +17,7 @@ class SettingsFields
         );
     }
 
-    protected function gateway()
+    protected function gateway(): array
     {
         return [
             'enabled' => [
@@ -65,7 +67,7 @@ class SettingsFields
         ];
     }
 
-    protected function account()
+    private function account(): array
     {
         return [
             'account_settings' => [
@@ -85,7 +87,7 @@ class SettingsFields
         ];
     }
 
-    protected function buttons()
+    private function buttons(): array
     {
         return [
             'button_settings' => [
@@ -168,8 +170,8 @@ class SettingsFields
                     'mybank' => _x('MyBank', 'Name of payment method', 'woocommerce-paypal-gateway'),
                     'p24' => _x('Przelewy24', 'Name of payment method', 'woocommerce-paypal-gateway'),
                     'sofort' => _x('Sofort', 'Name of payment method', 'woocommerce-paypal-gateway'),
-                ]
-            ]
+                ],
+            ],
         ];
     }
 }

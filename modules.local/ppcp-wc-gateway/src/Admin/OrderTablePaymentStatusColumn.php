@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\WcGateway\Admin;
 
+use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGateway;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
 
 class OrderTablePaymentStatusColumn
 {
-    const COLUMN_KEY = 'ppcp_payment_status';
-    const INTENT = 'authorize';
-    const AFTER_COLUMN_KEY = 'order_status';
-    protected $settings;
+    private const COLUMN_KEY = 'ppcp_payment_status';
+    private const INTENT = 'authorize';
+    private const AFTER_COLUMN_KEY = 'order_status';
+    private $settings;
 
     public function __construct(Settings $settings)
     {
@@ -48,31 +49,36 @@ class OrderTablePaymentStatusColumn
             return;
         }
 
-        if ($this->isCaptured($wcOrderId)) {
+        $wcOrder = wc_get_order($wcOrderId);
+
+        if (! is_a($wcOrder, \WC_Order::class) || ! $this->renderForOrder($wcOrder)) {
+            return;
+        }
+
+        if ($this->isCaptured($wcOrder)) {
             $this->renderCompletedStatus();
         } else {
             $this->renderIncompletedStatus();
         }
     }
 
-    protected function isCaptured(int $wcOrderId): bool
+    private function renderForOrder(\WC_Order $order): bool
     {
-        $wcOrder = wc_get_order($wcOrderId);
-        $captured = $wcOrder->get_meta('_ppcp_paypal_captured');
-
-        if (!empty($captured) && wc_string_to_bool($captured)) {
-            return true;
-        }
-
-        return false;
+        return !empty($order->get_meta(WcGateway::CAPTURED_META_KEY));
     }
 
-    protected function renderCompletedStatus()
+    private function isCaptured(\WC_Order $wcOrder): bool
+    {
+        $captured = $wcOrder->get_meta(WcGateway::CAPTURED_META_KEY);
+        return wc_string_to_bool($captured);
+    }
+
+    private function renderCompletedStatus()
     {
         echo '<span class="dashicons dashicons-yes"></span>';
     }
 
-    protected function renderIncompletedStatus()
+    private function renderIncompletedStatus()
     {
         printf(
             '<mark class="onbackorder">%s</mark>',

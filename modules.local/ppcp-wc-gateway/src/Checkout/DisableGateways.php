@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\WcGateway\Checkout;
@@ -15,7 +16,7 @@ class DisableGateways
         $this->sessionHandler = $sessionHandler;
     }
 
-    public function handler(array $methods) : array
+    public function handler(array $methods): array
     {
         if (! $this->needsToDisableGateways()) {
             return $methods;
@@ -24,7 +25,7 @@ class DisableGateways
         return [WcGateway::ID => $methods[WcGateway::ID]];
     }
 
-    private function needsToDisableGateways() : bool
+    private function needsToDisableGateways(): bool
     {
         return $this->sessionHandler->order() !== null;
     }

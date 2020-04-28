@@ -19,13 +19,13 @@ use Inpsyde\PayPalCommerce\Button\Endpoint\RequestData;
 use Inpsyde\PayPalCommerce\Button\Exception\RuntimeException;
 
 return [
-    'admin-notices.renderer' => function(ContainerInterface $container) : RendererInterface {
+    'admin-notices.renderer' => static function (ContainerInterface $container): RendererInterface {
 
         $repository = $container->get('admin-notices.repository');
         return new Renderer($repository);
     },
-    'admin-notices.repository' => function(ContainerInterface $container) : RepositoryInterface {
+    'admin-notices.repository' => static function (ContainerInterface $container): RepositoryInterface {
 
         return new Repository();
-    }
+    },
 ];

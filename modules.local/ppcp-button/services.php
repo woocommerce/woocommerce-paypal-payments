@@ -15,7 +15,7 @@ use Inpsyde\PayPalCommerce\Button\Endpoint\RequestData;
 use Inpsyde\PayPalCommerce\Button\Exception\RuntimeException;
 
 return [
-    'button.smart-button' => function (ContainerInterface $container): SmartButtonInterface {
+    'button.smart-button' => static function (ContainerInterface $container): SmartButtonInterface {
         $settings = $container->get('wcgateway.settings');
         $payeeRepository = $container->get('api.repository.payee');
         if (wc_string_to_bool($settings->get('enabled'))) {
@@ -28,16 +28,16 @@ return [
         }
         return new DisabledSmartButton();
     },
-    'button.url' => function (ContainerInterface $container): string {
+    'button.url' => static function (ContainerInterface $container): string {
         return plugins_url(
             '/modules/ppcp-button/',
             dirname(__FILE__, 3) . '/woocommerce-paypal-commerce-gateway.php'
         );
     },
-    'button.request-data' => function (ContainerInterface $container): RequestData {
+    'button.request-data' => static function (ContainerInterface $container): RequestData {
         return new RequestData();
     },
-    'button.endpoint.change-cart' => function (ContainerInterface $container): ChangeCartEndpoint {
+    'button.endpoint.change-cart' => static function (ContainerInterface $container): ChangeCartEndpoint {
         if (!\WC()->cart) {
             throw new RuntimeException('cant initialize endpoint at this moment');
         }
@@ -47,14 +47,14 @@ return [
         $repository = $container->get('api.repository.cart');
         return new ChangeCartEndpoint($cart, $shipping, $requestData, $repository);
     },
-    'button.endpoint.create-order' => function (ContainerInterface $container): CreateOrderEndpoint {
+    'button.endpoint.create-order' => static function (ContainerInterface $container): CreateOrderEndpoint {
         $requestData = $container->get('button.request-data');
         $repository = $container->get('api.repository.cart');
         $apiClient = $container->get('api.endpoint.order');
         $payerFactory = $container->get('api.factory.payer');
         return new CreateOrderEndpoint($requestData, $repository, $apiClient, $payerFactory);
     },
-    'button.endpoint.approve-order' => function (ContainerInterface $container): ApproveOrderEndpoint {
+    'button.endpoint.approve-order' => static function (ContainerInterface $container): ApproveOrderEndpoint {
         $requestData = $container->get('button.request-data');
         $apiClient = $container->get('api.endpoint.order');
         $sessionHandler = $container->get('session.handler');

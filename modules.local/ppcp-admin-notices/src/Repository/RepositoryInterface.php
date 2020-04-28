@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\AdminNotices\Repository;
@@ -11,5 +12,5 @@ interface RepositoryInterface
     /**
      * @return Message[]
      */
-    public function currentMessages() : array;
+    public function currentMessages(): array;
 }

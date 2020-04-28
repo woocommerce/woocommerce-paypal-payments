@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\Button;
@@ -19,8 +20,8 @@ class ButtonModule implements ModuleInterface
     public function setup(): ServiceProviderInterface
     {
         return new ServiceProvider(
-            require __DIR__.'/../services.php',
-            require __DIR__.'/../extensions.php'
+            require __DIR__ . '/../services.php',
+            require __DIR__ . '/../extensions.php'
         );
     }
 
@@ -34,7 +35,7 @@ class ButtonModule implements ModuleInterface
          */
         add_action(
             'wp',
-            function () use ($container) {
+            static function () use ($container) {
                 if (is_admin()) {
                     return;
                 }
@@ -42,7 +43,7 @@ class ButtonModule implements ModuleInterface
                 $smartButton->renderWrapper();
             }
         );
-        add_action('wp_enqueue_scripts', function () use ($container) {
+        add_action('wp_enqueue_scripts', static function () use ($container) {
 
             $smartButton = $container->get('button.smart-button');
             $smartButton->enqueue();
@@ -50,7 +51,7 @@ class ButtonModule implements ModuleInterface
 
         add_action(
             'wc_ajax_' . ChangeCartEndpoint::ENDPOINT,
-            function () use ($container) {
+            static function () use ($container) {
                 $endpoint = $container->get('button.endpoint.change-cart');
                 /**
                  * @var ChangeCartEndpoint $endpoint
@@ -61,7 +62,7 @@ class ButtonModule implements ModuleInterface
 
         add_action(
             'wc_ajax_' . ApproveOrderEndpoint::ENDPOINT,
-            function () use ($container) {
+            static function () use ($container) {
                 $endpoint = $container->get('button.endpoint.approve-order');
                 /**
                  * @var ChangeCartEndpoint $endpoint
@@ -72,7 +73,7 @@ class ButtonModule implements ModuleInterface
 
         add_action(
             'wc_ajax_' . CreateOrderEndpoint::ENDPOINT,
-            function () use ($container) {
+            static function () use ($container) {
                 $endpoint = $container->get('button.endpoint.create-order');
                 /**
                  * @var ChangeCartEndpoint $endpoint

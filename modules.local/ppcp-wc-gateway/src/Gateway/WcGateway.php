@@ -12,6 +12,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
 use Inpsyde\PayPalCommerce\Session\SessionHandler;
 use Inpsyde\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
+use Inpsyde\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use Inpsyde\PayPalCommerce\WcGateway\Processor\Processor;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsFields;
 
@@ -19,6 +20,11 @@ use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsFields;
 //phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration.NoArgumentType
 class WcGateway extends WcGatewayBase implements WcGatewayInterface
 {
+
+    public const CAPTURED_META_KEY = '_ppcp_paypal_captured';
+    public const INTENT_META_KEY = '_ppcp_paypal_intent';
+    public const ORDER_ID_META_KEY = '_ppcp_paypal_order_id';
+
     private $isSandbox = true;
     private $sessionHandler;
     private $orderEndpoint;
@@ -27,6 +33,7 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
     private $settingsFields;
     private $paymentsEndpoint;
     private $processor;
+    private $notice;
 
     public function __construct(
         SessionHandler $sessionHandler,
@@ -35,8 +42,10 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
         PaymentsEndpoint $paymentsEndpoint,
         OrderFactory $orderFactory,
         SettingsFields $settingsFields,
-        Processor $processor
+        Processor $processor,
+        AuthorizeOrderActionNotice $notice
     ) {
+
         $this->sessionHandler = $sessionHandler;
         $this->cartRepository = $cartRepository;
         $this->orderEndpoint = $orderEndpoint;
@@ -44,6 +53,7 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
         $this->orderFactory = $orderFactory;
         $this->settingsFields = $settingsFields;
         $this->processor = $processor;
+        $this->notice = $notice;
 
         $this->method_title = __('PayPal Payments', 'woocommerce-paypal-gateway');
         $this->method_description = __(
@@ -79,8 +89,8 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
         $wcOrder = new \WC_Order($orderId);
 
         $order = $this->sessionHandler->order();
-        $wcOrder->update_meta_data('_ppcp_paypal_order_id', $order->id());
-        $wcOrder->update_meta_data('_ppcp_paypal_intent', $order->intent());
+        $wcOrder->update_meta_data(self::ORDER_ID_META_KEY, $order->id());
+        $wcOrder->update_meta_data(self::INTENT_META_KEY, $order->intent());
 
         $errorMessage = null;
         if (!$order || !$order->status()->is(OrderStatus::APPROVED)) {
@@ -92,7 +102,7 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
                 __('Payment error: %s', 'woocommerce-paypal-gateway'),
                 $errorMessage
             );
-            wc_add_notice( $notice, 'error');
+            wc_add_notice($notice, 'error');
             return null;
         }
 
@@ -103,6 +113,7 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
 
         if ($order->intent() === 'AUTHORIZE') {
             $order = $this->orderEndpoint->authorize($order);
+            $wcOrder->update_meta_data(self::CAPTURED_META_KEY, 'false');
         }
 
         $wcOrder->update_status('on-hold', __('Awaiting payment.', 'woocommerce-paypal-gateway'));
@@ -122,14 +133,14 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
     {
         $result = $this->processor->authorizedPayments()->process($wcOrder);
 
-        if ($result === 'INACCESSIBLE') {
-            AuthorizeOrderActionNotice::displayMessage(AuthorizeOrderActionNotice::NO_INFO);
+        if ($result === AuthorizedPaymentsProcessor::INACCESSIBLE) {
+            $this->notice->displayMessage(AuthorizeOrderActionNotice::NO_INFO);
         }
-        if ($result === 'NOT_FOUND') {
-            AuthorizeOrderActionNotice::displayMessage(AuthorizeOrderActionNotice::NOT_FOUND);
+        if ($result === AuthorizedPaymentsProcessor::NOT_FOUND) {
+            $this->notice->displayMessage(AuthorizeOrderActionNotice::NOT_FOUND);
         }
 
-        if ($result === 'ALREADY_CAPTURED') {
+        if ($result === AuthorizedPaymentsProcessor::ALREADY_CAPTURED) {
             if ($wcOrder->get_status() === 'on-hold') {
                 $wcOrder->add_order_note(
                     __(
@@ -138,19 +149,19 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
                     )
                 );
                 $wcOrder->update_status('processing');
-                $wcOrder->update_meta_data('_ppcp_paypal_captured', 'true');
+                $wcOrder->update_meta_data(self::CAPTURED_META_KEY, 'true');
                 // TODO investigate why save has to be called
                 $wcOrder->save();
             }
 
-            AuthorizeOrderActionNotice::displayMessage(AuthorizeOrderActionNotice::ALREADY_CAPTURED);
+            $this->notice->displayMessage(AuthorizeOrderActionNotice::ALREADY_CAPTURED);
         }
 
-        if ($result === 'FAILED') {
-            AuthorizeOrderActionNotice::displayMessage(AuthorizeOrderActionNotice::FAILED);
+        if ($result === AuthorizedPaymentsProcessor::FAILED) {
+            $this->notice->displayMessage(AuthorizeOrderActionNotice::FAILED);
         }
 
-        if ($result === 'SUCCESSFUL') {
+        if ($result === AuthorizedPaymentsProcessor::SUCCESSFUL) {
             $wcOrder->add_order_note(
                 __(
                     'Payment successfully captured.',
@@ -159,11 +170,11 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
             );
 
             $wcOrder->update_status('processing');
-            $wcOrder->update_meta_data('_ppcp_paypal_captured', 'true');
+            $wcOrder->update_meta_data(self::CAPTURED_META_KEY, 'true');
             // TODO investigate why save has to be called
             $wcOrder->save();
 
-            AuthorizeOrderActionNotice::displayMessage(AuthorizeOrderActionNotice::SUCCESS);
+            $this->notice->displayMessage(AuthorizeOrderActionNotice::SUCCESS);
         }
     }
 

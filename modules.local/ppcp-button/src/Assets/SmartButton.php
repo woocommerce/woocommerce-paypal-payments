@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\Button\Assets;
@@ -32,7 +33,7 @@ class SmartButton implements SmartButtonInterface
 
     public function renderWrapper(): bool
     {
-        $renderer = function () {
+        $renderer = static function () {
             echo '<div id="ppc-button"></div>';
         };
         if (is_cart() && wc_string_to_bool($this->settings->get('button_cart_enabled'))) {
@@ -52,7 +53,7 @@ class SmartButton implements SmartButtonInterface
         if (wc_string_to_bool($this->settings->get('button_mini_cart_enabled'))) {
             add_action(
                 'woocommerce_widget_shopping_cart_after_buttons',
-                function () {
+                static function () {
                     echo '<p id="ppc-button-minicart" class="woocommerce-mini-cart__buttons buttons"></p>';
                 },
                 30
@@ -70,7 +71,10 @@ class SmartButton implements SmartButtonInterface
     {
         wp_enqueue_script(
             'paypal-smart-button',
-            $this->moduleUrl . '/assets/js/button.js'
+            $this->moduleUrl . '/assets/js/button.js',
+            ['jquery'],
+            1,
+            true
         );
 
         wp_localize_script(
@@ -81,7 +85,7 @@ class SmartButton implements SmartButtonInterface
         return true;
     }
 
-    private function localizeScript() : array
+    private function localizeScript(): array
     {
         $localize = [
             'redirect' => wc_get_checkout_url(),
@@ -117,7 +121,9 @@ class SmartButton implements SmartButtonInterface
         return $localize;
     }
 
-    private function payerData() : ?array {
+    private function payerData(): ?array
+    {
+
         $customer = WC()->customer;
         if (! is_user_logged_in() || ! is_a($customer, \WC_Customer::class)) {
             return null;
@@ -145,7 +151,7 @@ class SmartButton implements SmartButtonInterface
         ];
     }
 
-    private function url() : string
+    private function url(): string
     {
         $params = [
             //ToDo: Add the correct client id, toggle when settings is set to sandbox

@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\Button\Endpoint;
@@ -30,17 +31,18 @@ class ChangeCartEndpoint implements EndpointInterface
         $this->repository = $repository;
     }
 
-    public static function nonce() : string
+    public static function nonce(): string
     {
         return self::ENDPOINT;
     }
 
-    public function handleRequest() : bool
+    public function handleRequest(): bool
     {
         try {
             $data = $this->requestData->readRequest($this->nonce());
 
-            if (! isset($data['products'])
+            if (
+                ! isset($data['products'])
                 || ! is_array($data['products'])
             ) {
                 wp_send_json_error(
@@ -95,7 +97,7 @@ class ChangeCartEndpoint implements EndpointInterface
                 if (count($errors)) {
                     $message = array_reduce(
                         $errors,
-                        function (string $add, array $error) : string {
+                        static function (string $add, array $error): string {
                             return $add . $error['notice'] . ' ';
                         },
                         ''
@@ -114,7 +116,7 @@ class ChangeCartEndpoint implements EndpointInterface
         }
     }
 
-    private function addProduct(\WC_Product $product, int $quantity) : bool
+    private function addProduct(\WC_Product $product, int $quantity): bool
     {
         return false !== $this->cart->add_to_cart($product->get_id(), $quantity);
     }
@@ -123,7 +125,7 @@ class ChangeCartEndpoint implements EndpointInterface
         \WC_Product $product,
         int $quantity,
         array $postVariations
-    ) : bool {
+    ): bool {
 
         foreach ($postVariations as $key => $value) {
             $variations[$value['name']] = $value['value'];
@@ -136,10 +138,10 @@ class ChangeCartEndpoint implements EndpointInterface
         return false !== WC()->cart->add_to_cart($product->get_id(), $quantity, $variationId, $variations);
     }
 
-    private function generatePurchaseUnits() : array
+    private function generatePurchaseUnits(): array
     {
         return array_map(
-            function (PurchaseUnit $lineItem) : array {
+            static function (PurchaseUnit $lineItem): array {
                 return $lineItem->toArray();
             },
             $this->repository->all()

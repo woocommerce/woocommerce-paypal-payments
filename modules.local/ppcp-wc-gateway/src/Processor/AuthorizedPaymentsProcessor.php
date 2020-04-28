@@ -10,6 +10,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Authorization;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\AuthorizationStatus;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
+use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGateway;
 
 class AuthorizedPaymentsProcessor
 {
@@ -25,16 +26,15 @@ class AuthorizedPaymentsProcessor
         OrderEndpoint $orderEndpoint,
         PaymentsEndpoint $paymentsEndpoint
     ) {
+
         $this->orderEndpoint = $orderEndpoint;
         $this->paymentsEndpoint = $paymentsEndpoint;
     }
 
     public function process(\WC_Order $wcOrder): string
     {
-        $orderId = $this->getPayPalOrderId($wcOrder);
-
         try {
-            $order = $this->getCurrentOrderInfo($orderId);
+            $order = $this->payPalOrderFromWcOrder($wcOrder);
         } catch (Exception $exception) {
             if ($exception->getCode() === 404) {
                 return self::NOT_FOUND;
@@ -42,7 +42,7 @@ class AuthorizedPaymentsProcessor
             return self::INACCESSIBLE;
         }
 
-        $authorizations = $this->getAllAuthorizations($order);
+        $authorizations = $this->allAuthorizations($order);
 
         if (!$this->areAuthorizationToCapture(...$authorizations)) {
             return self::ALREADY_CAPTURED;
@@ -57,17 +57,13 @@ class AuthorizedPaymentsProcessor
         return self::SUCCESSFUL;
     }
 
-    protected function getPayPalOrderId(\WC_Order $wcOrder): string
+    protected function payPalOrderFromWcOrder(\WC_Order $wcOrder): Order
     {
-        return $wcOrder->get_meta('_ppcp_paypal_order_id');
-    }
-
-    protected function getCurrentOrderInfo(string $orderId): Order
-    {
+        $orderId = $wcOrder->get_meta(WcGateway::ORDER_ID_META_KEY);
         return $this->orderEndpoint->order($orderId);
     }
 
-    protected function getAllAuthorizations(Order $order): array
+    protected function allAuthorizations(Order $order): array
     {
         $authorizations = [];
         foreach ($order->purchaseUnits() as $purchaseUnit) {
@@ -102,7 +98,7 @@ class AuthorizedPaymentsProcessor
     {
         return array_filter(
             $authorizations,
-            function (Authorization $authorization) {
+            static function (Authorization $authorization): bool {
                 return $authorization->status()->is(AuthorizationStatus::CREATED);
             }
         );
@@ -115,7 +111,7 @@ class AuthorizedPaymentsProcessor
     {
         return array_filter(
             $authorizations,
-            function (Authorization $authorization) {
+            static function (Authorization $authorization): bool {
                 return $authorization->status()->is(AuthorizationStatus::CAPTURED);
             }
         );

@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\WcGateway\Notice;
@@ -15,7 +16,7 @@ class ConnectAdminNotice
         $this->settings = $settings;
     }
 
-    public function connectMessage() : ?Message
+    public function connectMessage(): ?Message
     {
         if (!$this->shouldDisplay()) {
             return null;
@@ -31,7 +32,7 @@ class ConnectAdminNotice
             // TODO: find a better way to get the url
             admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway')
         );
-        return new Message( $message, 'warning');
+        return new Message($message, 'warning');
     }
 
     protected function shouldDisplay(): bool

@@ -19,10 +19,10 @@ use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsFields;
 
 return [
-    'wcgateway.gateway.base' => function (ContainerInterface $container) : WcGatewayBase {
+    'wcgateway.gateway.base' => static function (ContainerInterface $container): WcGatewayBase {
         return new WcGatewayBase();
     },
-    'wcgateway.gateway' => function (ContainerInterface $container) : WcGateway {
+    'wcgateway.gateway' => static function (ContainerInterface $container): WcGateway {
         $sessionHandler = $container->get('session.handler');
         $cartRepository = $container->get('api.repository.cart');
         // TODO eventuall get rid of the endpoints as the processor is sufficient
@@ -31,6 +31,7 @@ return [
         $orderFactory = $container->get('api.factory.order');
         $settingsFields = $container->get('wcgateway.settings.fields');
         $processor = $container->get('wcgateway.processor');
+        $notice = $container->get('wcgateway.notice.authorize-order-action');
         return new WcGateway(
             $sessionHandler,
             $cartRepository,
@@ -38,43 +39,44 @@ return [
             $paymentsEndpoint,
             $orderFactory,
             $settingsFields,
-            $processor
+            $processor,
+            $notice
         );
     },
-    'wcgateway.disabler' => function (ContainerInterface $container) : DisableGateways {
+    'wcgateway.disabler' => static function (ContainerInterface $container): DisableGateways {
         $sessionHandler = $container->get('session.handler');
         return new DisableGateways($sessionHandler);
     },
-    'wcgateway.settings' => function (ContainerInterface $container) : Settings {
+    'wcgateway.settings' => static function (ContainerInterface $container): Settings {
         $gateway = $container->get('wcgateway.gateway.base');
         $settingsField = $container->get('wcgateway.settings.fields');
         return new Settings($gateway, $settingsField);
     },
-    'wcgateway.notice.connect' => function (ContainerInterface $container) : ConnectAdminNotice {
+    'wcgateway.notice.connect' => static function (ContainerInterface $container): ConnectAdminNotice {
         $settings = $container->get('wcgateway.settings');
         return new ConnectAdminNotice($settings);
     },
     'wcgateway.notice.authorize-order-action' =>
-        function (ContainerInterface $container): AuthorizeOrderActionNotice {
+        static function (ContainerInterface $container): AuthorizeOrderActionNotice {
             return new AuthorizeOrderActionNotice();
         },
-    'wcgateway.settings.fields' => function (ContainerInterface $container): SettingsFields {
+    'wcgateway.settings.fields' => static function (ContainerInterface $container): SettingsFields {
         return new SettingsFields();
     },
-    'wcgateway.processor' => function (ContainerInterface $container): Processor {
+    'wcgateway.processor' => static function (ContainerInterface $container): Processor {
         $authorizedPaymentsProcessor = $container->get('wcgateway.processor.authorized-payments');
         return new Processor($authorizedPaymentsProcessor);
     },
-    'wcgateway.processor.authorized-payments' => function (ContainerInterface $container): AuthorizedPaymentsProcessor {
+    'wcgateway.processor.authorized-payments' => static function (ContainerInterface $container): AuthorizedPaymentsProcessor {
         $orderEndpoint = $container->get('api.endpoint.order');
         $paymentsEndpoint = $container->get('api.endpoint.payments');
         return new AuthorizedPaymentsProcessor($orderEndpoint, $paymentsEndpoint);
     },
-    'wcgateway.admin.order-payment-status' => function(ContainerInterface $container): PaymentStatusOrderDetail {
+    'wcgateway.admin.order-payment-status' => static function (ContainerInterface $container): PaymentStatusOrderDetail {
         return new PaymentStatusOrderDetail();
     },
-    'wcgateway.admin.orders-payment-status-column' => function(ContainerInterface $container): OrderTablePaymentStatusColumn {
+    'wcgateway.admin.orders-payment-status-column' => static function (ContainerInterface $container): OrderTablePaymentStatusColumn {
         $settings = $container->get('wcgateway.settings');
         return new OrderTablePaymentStatusColumn($settings);
-    }
+    },
 ];

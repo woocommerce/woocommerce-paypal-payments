@@ -1,8 +1,8 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\AdminNotices\Entity;
-
 
 class Message
 {
@@ -17,17 +17,17 @@ class Message
         $this->dismissable = $dismissable;
     }
 
-    public function message() : string
+    public function message(): string
     {
         return $this->message;
     }
 
-    public function type() : string
+    public function type(): string
     {
         return $this->type;
     }
 
-    public function isDismissable() : bool
+    public function isDismissable(): bool
     {
         return $this->dismissable;
     }

@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\WcGateway\Notice;
@@ -7,16 +8,18 @@ use Inpsyde\PayPalCommerce\AdminNotices\Entity\Message;
 
 class AuthorizeOrderActionNotice
 {
-    const QUERY_PARAM = 'ppcp-authorized-message';
+    public const QUERY_PARAM = 'ppcp-authorized-message';
 
-    const NO_INFO = 81;
-    const ALREADY_CAPTURED = 82;
-    const FAILED = 83;
-    const SUCCESS = 84;
-    const NOT_FOUND = 85;
+    public const NO_INFO = 81;
+    public const ALREADY_CAPTURED = 82;
+    public const FAILED = 83;
+    public const SUCCESS = 84;
+    public const NOT_FOUND = 85;
 
-    public function message() : ?Message {
-        $message = $this->getMessage();
+    public function message(): ?Message
+    {
+
+        $message = $this->currentMessage();
         if (! $message) {
             return null;
         }
@@ -24,7 +27,7 @@ class AuthorizeOrderActionNotice
         return new Message($message['message'], $message['type']);
     }
 
-    public function getMessage(): array
+    private function currentMessage(): array
     {
         $messages[self::NO_INFO] = [
             'message' => __(
@@ -62,18 +65,20 @@ class AuthorizeOrderActionNotice
             'type' => 'success',
         ];
 
-        if (! isset($_GET['ppcp-message'])) {
+        //phpcs:disable WordPress.Security.NonceVerification.Recommended
+        if (! isset($_GET[self::QUERY_PARAM])) { // Input ok.
             return [];
         }
-        $messageId = absint($_GET[self::QUERY_PARAM]);
+        $messageId = absint($_GET[self::QUERY_PARAM]); // Input ok.
+        //phpcs:enable WordPress.Security.NonceVerification.Recommended
         return (isset($messages[$messageId])) ? $messages[$messageId] : [];
     }
 
-    public static function displayMessage(int $messageCode): void
+    public function displayMessage(int $messageCode): void
     {
         add_filter(
             'redirect_post_location',
-            function ($location) use ($messageCode) {
+            static function ($location) use ($messageCode) {
                 return add_query_arg(
                     self::QUERY_PARAM,
                     $messageCode,
