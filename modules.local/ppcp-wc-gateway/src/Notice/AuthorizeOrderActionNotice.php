@@ -9,6 +9,7 @@ class AuthorizeOrderActionNotice
     const ALREADY_CAPTURED = 82;
     const FAILED = 83;
     const SUCCESS = 84;
+    const NOT_FOUND = 85;
 
     public function registerMessages(array $messages): array
     {
@@ -22,6 +23,10 @@ class AuthorizeOrderActionNotice
         );
         $messages['shop_order'][self::FAILED] = __(
             'Failed to capture. Try again later.',
+            'woocommerce-paypal-gateway'
+        );
+        $messages['shop_order'][self::NOT_FOUND] = __(
+            'Could not find payment to process.',
             'woocommerce-paypal-gateway'
         );
         $messages['shop_order'][self::SUCCESS] = __(

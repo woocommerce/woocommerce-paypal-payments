@@ -17,6 +17,7 @@ class AuthorizedPaymentsProcessor
     public const ALREADY_CAPTURED = 'ALREADY_CAPTURED';
     public const FAILED = 'FAILED';
     public const INACCESSIBLE = 'INACCESSIBLE';
+    public const NOT_FOUND = 'NOT_FOUND';
     private $orderEndpoint;
     private $paymentsEndpoint;
 
@@ -35,6 +36,9 @@ class AuthorizedPaymentsProcessor
         try {
             $order = $this->getCurrentOrderInfo($orderId);
         } catch (Exception $exception) {
+            if ($exception->getCode() === 404) {
+                return self::NOT_FOUND;
+            }
             return self::INACCESSIBLE;
         }
 

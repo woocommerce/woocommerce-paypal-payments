@@ -78,19 +78,21 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
         global $woocommerce;
         $wcOrder = new \WC_Order($orderId);
 
-        //ToDo: We need to fetch the order from paypal again to get it with the new status.
-
         $order = $this->sessionHandler->order();
         $wcOrder->update_meta_data('_ppcp_paypal_order_id', $order->id());
         $wcOrder->update_meta_data('_ppcp_paypal_intent', $order->intent());
 
         $errorMessage = null;
         if (!$order || !$order->status()->is(OrderStatus::APPROVED)) {
-            $errorMessage = 'not approve yet';
+            $errorMessage = __('The payment has not been approved yet.', 'woocommerce-paypal-gateway');
         }
-        $errorMessage = null;
         if ($errorMessage) {
-            wc_add_notice(__('Payment error:', 'woocommerce-paypal-gateway') . $errorMessage, 'error');
+            $notice = sprintf(
+                // translators %s is the message of the error.
+                __('Payment error: %s', 'woocommerce-paypal-gateway'),
+                $errorMessage
+            );
+            wc_add_notice( $notice, 'error');
             return null;
         }
 
@@ -122,6 +124,9 @@ class WcGateway extends WcGatewayBase implements WcGatewayInterface
 
         if ($result === 'INACCESSIBLE') {
             AuthorizeOrderActionNotice::displayMessage(AuthorizeOrderActionNotice::NO_INFO);
+        }
+        if ($result === 'NOT_FOUND') {
+            AuthorizeOrderActionNotice::displayMessage(AuthorizeOrderActionNotice::NOT_FOUND);
         }
 
         if ($result === 'ALREADY_CAPTURED') {
