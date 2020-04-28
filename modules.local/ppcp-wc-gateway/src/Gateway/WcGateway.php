@@ -138,5 +138,4 @@ class WcGateway extends WcGatewayBase
             $this->notice->displayMessage(AuthorizeOrderActionNotice::SUCCESS);
         }
     }
-
 }

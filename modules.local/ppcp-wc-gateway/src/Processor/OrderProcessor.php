@@ -30,6 +30,7 @@ class OrderProcessor
         PaymentsEndpoint $paymentsEndpoint,
         OrderFactory $orderFactory
     ) {
+
         $this->sessionHandler = $sessionHandler;
         $this->cartRepository = $cartRepository;
         $this->orderEndpoint = $orderEndpoint;
@@ -37,7 +38,7 @@ class OrderProcessor
         $this->orderFactory = $orderFactory;
     }
 
-    public function process(\WC_Order $wcOrder, $woocommerce) : bool
+    public function process(\WC_Order $wcOrder, $woocommerce): bool
     {
         $order = $this->sessionHandler->order();
         $wcOrder->update_meta_data(WcGateway::ORDER_ID_META_KEY, $order->id());
@@ -76,7 +77,9 @@ class OrderProcessor
         return true;
     }
 
-    public function lastError() : string {
+    public function lastError(): string
+    {
+
         return $this->lastError;
     }
 
