@@ -90,15 +90,17 @@ class WcGateway extends WcGatewayBase
         return null;
     }
 
-    public function captureAuthorizedPayment(\WC_Order $wcOrder): void
+    public function captureAuthorizedPayment(\WC_Order $wcOrder): bool
     {
         $result = $this->authorizedPayments->process($wcOrder);
 
         if ($result === AuthorizedPaymentsProcessor::INACCESSIBLE) {
             $this->notice->displayMessage(AuthorizeOrderActionNotice::NO_INFO);
+            return false;
         }
         if ($result === AuthorizedPaymentsProcessor::NOT_FOUND) {
             $this->notice->displayMessage(AuthorizeOrderActionNotice::NOT_FOUND);
+            return false;
         }
 
         if ($result === AuthorizedPaymentsProcessor::ALREADY_CAPTURED) {
@@ -109,32 +111,33 @@ class WcGateway extends WcGatewayBase
                         'woocommerce-paypal-gateway'
                     )
                 );
-                $wcOrder->update_status('processing');
-                $wcOrder->update_meta_data(self::CAPTURED_META_KEY, 'true');
-                // TODO investigate why save has to be called
-                $wcOrder->save();
+                $wcOrder->set_status('processing');
             }
 
-            $this->notice->displayMessage(AuthorizeOrderActionNotice::ALREADY_CAPTURED);
-        }
-
-        if ($result === AuthorizedPaymentsProcessor::FAILED) {
-            $this->notice->displayMessage(AuthorizeOrderActionNotice::FAILED);
-        }
-
-        if ($result === AuthorizedPaymentsProcessor::SUCCESSFUL) {
-            $wcOrder->add_order_note(
-                __(
-                    'Payment successfully captured.',
-                    'woocommerce-paypal-gateway'
-                )
-            );
-
-            $wcOrder->update_status('processing');
             $wcOrder->update_meta_data(self::CAPTURED_META_KEY, 'true');
             $wcOrder->save();
-
-            $this->notice->displayMessage(AuthorizeOrderActionNotice::SUCCESS);
+            $this->notice->displayMessage(AuthorizeOrderActionNotice::ALREADY_CAPTURED);
+            return true;
         }
+
+
+        if ($result !== AuthorizedPaymentsProcessor::SUCCESSFUL) {
+            $this->notice->displayMessage(AuthorizeOrderActionNotice::FAILED);
+            return false;
+        }
+
+        $wcOrder->add_order_note(
+            __(
+                'Payment successfully captured.',
+                'woocommerce-paypal-gateway'
+            )
+        );
+
+        $wcOrder->set_status('processing');
+        $wcOrder->update_meta_data(self::CAPTURED_META_KEY, 'true');
+        $wcOrder->save();
+
+        $this->notice->displayMessage(AuthorizeOrderActionNotice::SUCCESS);
+        return true;
     }
 }
