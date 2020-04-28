@@ -12,7 +12,7 @@ use Inpsyde\PayPalCommerce\Button\Exception\RuntimeException;
 class ChangeCartEndpoint implements EndpointInterface
 {
 
-    const ENDPOINT = 'ppc-change-cart';
+    public const ENDPOINT = 'ppc-change-cart';
 
     private $cart;
     private $shipping;
@@ -39,81 +39,90 @@ class ChangeCartEndpoint implements EndpointInterface
     public function handleRequest(): bool
     {
         try {
-            $data = $this->requestData->readRequest($this->nonce());
-
-            if (
-                ! isset($data['products'])
-                || ! is_array($data['products'])
-            ) {
-                wp_send_json_error(
-                    __(
-                        'Necessary fields not defined. Action aborted.',
-                        'woocommerce-paypal-commerce-gateway'
-                    )
-                );
-                return false;
-            }
-
-            $products = [];
-            foreach ($data['products'] as $product) {
-                if (! isset($product['quantity']) || ! isset($product['id'])) {
-                    wp_send_json_error(
-                        __(
-                            'Necessary fields not defined. Action aborted.',
-                            'woocommerce-paypal-commerce-gateway'
-                        )
-                    );
-                    return false;
-                }
-
-                $wcProduct = wc_get_product((int) $product['id']);
-                if (! $wcProduct) {
-                    wp_send_json_error(
-                        __(
-                            'Product not found. Action aborted.',
-                            'woocommerce-paypal-commerce-gateway'
-                        )
-                    );
-                    return false;
-                }
-                $products[] = [
-                    'product' => $wcProduct,
-                    'quantity' => (int) $product['quantity'],
-                    'variations' => isset($product['variations']) ? $product['variations'] : null,
-                ];
-            }
-
-            $this->shipping->reset_shipping();
-            $this->cart->empty_cart(false);
-            $success = true;
-            foreach ($products as $product) {
-                $success = $success && (! $product['product']->is_type('variable')) ?
-                    $success = $this->addProduct($product['product'], $product['quantity'])
-                    : $this->addVariableProduct($product['product'], $product['quantity'], $product['variations']);
-            }
-            if (! $success) {
-                $message = __('Something went wrong. Action aborted', 'woocommerce-paypal-commerce-gateway');
-                $errors = wc_get_notices('error');
-                if (count($errors)) {
-                    $message = array_reduce(
-                        $errors,
-                        static function (string $add, array $error): string {
-                            return $add . $error['notice'] . ' ';
-                        },
-                        ''
-                    );
-                    wc_clear_notices();
-                }
-                wp_send_json_error($message);
-                return $success;
-            }
-
-            wp_send_json_success($this->generatePurchaseUnits());
-            return $success;
+            return $this->handleData();
         } catch (RuntimeException $error) {
             wp_send_json_error($error->getMessage());
             return false;
         }
+    }
+
+    private function handleData(): bool
+    {
+        $data = $this->requestData->readRequest($this->nonce());
+        $products = $this->productsFromData($data);
+        if (! $products) {
+            wp_send_json_error(
+                __(
+                    'Necessary fields not defined. Action aborted.',
+                    'woocommerce-paypal-commerce-gateway'
+                )
+            );
+            return false;
+        }
+
+        $this->shipping->reset_shipping();
+        $this->cart->empty_cart(false);
+        $success = true;
+        foreach ($products as $product) {
+            $success = $success && (! $product['product']->is_type('variable')) ?
+                $success = $this->addProduct($product['product'], $product['quantity'])
+                : $this->addVariableProduct($product['product'], $product['quantity'], $product['variations']);
+        }
+        if (! $success) {
+            $this->handleError();
+            return $success;
+        }
+
+        wp_send_json_success($this->generatePurchaseUnits());
+        return $success;
+    }
+
+    private function handleError(): bool
+    {
+
+        $message = __('Something went wrong. Action aborted', 'woocommerce-paypal-commerce-gateway');
+        $errors = wc_get_notices('error');
+        if (count($errors)) {
+            $message = array_reduce(
+                $errors,
+                static function (string $add, array $error): string {
+                    return $add . $error['notice'] . ' ';
+                },
+                ''
+            );
+            wc_clear_notices();
+        }
+        wp_send_json_error($message);
+        return true;
+    }
+
+    private function productsFromData(array $data): ?array
+    {
+
+        $products = [];
+
+        if (
+            ! isset($data['products'])
+            || ! is_array($data['products'])
+        ) {
+            return null;
+        }
+        foreach ($data['products'] as $product) {
+            if (! isset($product['quantity']) || ! isset($product['id'])) {
+                return null;
+            }
+
+            $wcProduct = wc_get_product((int) $product['id']);
+            if (! $wcProduct) {
+                return null;
+            }
+            $products[] = [
+                'product' => $wcProduct,
+                'quantity' => (int) $product['quantity'],
+                'variations' => isset($product['variations']) ? $product['variations'] : null,
+            ];
+        }
+        return $products;
     }
 
     private function addProduct(\WC_Product $product, int $quantity): bool

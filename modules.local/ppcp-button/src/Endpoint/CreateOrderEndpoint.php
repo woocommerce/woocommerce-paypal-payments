@@ -12,7 +12,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 class CreateOrderEndpoint implements EndpointInterface
 {
 
-    const ENDPOINT = 'ppc-create-order';
+    public const ENDPOINT = 'ppc-create-order';
 
     private $requestData;
     private $repository;

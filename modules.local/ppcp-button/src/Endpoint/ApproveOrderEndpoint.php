@@ -12,7 +12,7 @@ use Inpsyde\PayPalCommerce\Session\SessionHandler;
 class ApproveOrderEndpoint implements EndpointInterface
 {
 
-    const ENDPOINT = 'ppc-approve-order';
+    public const ENDPOINT = 'ppc-approve-order';
 
     private $requestData;
     private $sessionHandler;
