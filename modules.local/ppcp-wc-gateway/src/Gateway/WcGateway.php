@@ -18,7 +18,7 @@ use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsFields;
 
 //phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
 //phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration.NoArgumentType
-class WcGateway extends WcGatewayBase implements WcGatewayInterface
+class WcGateway extends WcGatewayBase
 {
 
     public const CAPTURED_META_KEY = '_ppcp_paypal_captured';

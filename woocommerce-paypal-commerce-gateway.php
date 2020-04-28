@@ -34,7 +34,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
     {
         static $initialized;
         if (!$initialized) {
-            $modules = [new PluginModule(__DIR__)];
+            $modules = [new PluginModule()];
             foreach (glob(plugin_dir_path(__FILE__).'modules/*/module.php') as $moduleFile) {
                 $modules[] = (@require $moduleFile)();
             }

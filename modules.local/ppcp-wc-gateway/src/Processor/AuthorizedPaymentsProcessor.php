@@ -57,13 +57,13 @@ class AuthorizedPaymentsProcessor
         return self::SUCCESSFUL;
     }
 
-    protected function payPalOrderFromWcOrder(\WC_Order $wcOrder): Order
+    private function payPalOrderFromWcOrder(\WC_Order $wcOrder): Order
     {
         $orderId = $wcOrder->get_meta(WcGateway::ORDER_ID_META_KEY);
         return $this->orderEndpoint->order($orderId);
     }
 
-    protected function allAuthorizations(Order $order): array
+    private function allAuthorizations(Order $order): array
     {
         $authorizations = [];
         foreach ($order->purchaseUnits() as $purchaseUnit) {
@@ -75,14 +75,14 @@ class AuthorizedPaymentsProcessor
         return $authorizations;
     }
 
-    protected function areAuthorizationToCapture(Authorization ...$authorizations): bool
+    private function areAuthorizationToCapture(Authorization ...$authorizations): bool
     {
         $alreadyCapturedAuthorizations = $this->authorizationsWithCapturedStatus(...$authorizations);
 
         return count($alreadyCapturedAuthorizations) !== count($authorizations);
     }
 
-    protected function captureAuthorizations(Authorization ...$authorizations)
+    private function captureAuthorizations(Authorization ...$authorizations)
     {
         $uncapturedAuthorizations = $this->authorizationsWithCreatedStatus(...$authorizations);
 
@@ -94,7 +94,7 @@ class AuthorizedPaymentsProcessor
     /**
      * @return Authorization[]
      */
-    protected function authorizationsWithCreatedStatus(Authorization ...$authorizations): array
+    private function authorizationsWithCreatedStatus(Authorization ...$authorizations): array
     {
         return array_filter(
             $authorizations,
@@ -107,7 +107,7 @@ class AuthorizedPaymentsProcessor
     /**
      * @return Authorization[]
      */
-    protected function authorizationsWithCapturedStatus(Authorization ...$authorizations): array
+    private function authorizationsWithCapturedStatus(Authorization ...$authorizations): array
     {
         return array_filter(
             $authorizations,
