@@ -1,4 +1,5 @@
 import onApprove from './onApproveForContinue.js';
+import {payerData} from "./Payer";
 
 class CartActionHandler {
 
@@ -9,11 +10,13 @@ class CartActionHandler {
 
     configuration() {
         const createOrder = (data, actions) => {
+            const payer = payerData();
             return fetch(this.config.ajax.create_order.endpoint, {
                 method: 'POST',
                 body: JSON.stringify({
                     nonce: this.config.ajax.create_order.nonce,
                     purchase_units: [],
+                    payer
                 }),
             }).then(function(res) {
                 return res.json();

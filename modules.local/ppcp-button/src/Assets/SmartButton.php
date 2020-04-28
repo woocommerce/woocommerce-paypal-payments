@@ -100,6 +100,7 @@ class SmartButton implements SmartButtonInterface
                     'nonce' => wp_create_nonce(ApproveOrderEndpoint::nonce()),
                 ],
             ],
+            'payer' => $this->payerData(),
             'button' => [
                 'wrapper' => '#ppc-button',
                 'mini_cart_wrapper' => '#ppc-button-minicart',
@@ -116,6 +117,34 @@ class SmartButton implements SmartButtonInterface
         return $localize;
     }
 
+    private function payerData() : ?array {
+        $customer = WC()->customer;
+        if (! is_user_logged_in() || ! is_a($customer, \WC_Customer::class)) {
+            return null;
+        }
+        return [
+            'email_address' => $customer->get_billing_email(),
+            'name' => [
+                'surname' => $customer->get_billing_last_name(),
+                'given_name' => $customer->get_billing_last_name(),
+            ],
+            'address' => [
+                'country_code' => $customer->get_billing_country(),
+                'address_line_1' => $customer->get_billing_address_1(),
+                'address_line_2' => $customer->get_billing_address_2(),
+                'admin_area_1' => $customer->get_billing_city(),
+                'admin_area_2' => $customer->get_billing_state(),
+                'postal_code' => $customer->get_billing_postcode(),
+            ],
+            'phone' => [
+                'phone_type' => 'HOME',
+                'phone_number' => [
+                    'national_number' => $customer->get_billing_phone(),
+                ],
+            ],
+        ];
+    }
+
     private function url() : string
     {
         $params = [
@@ -130,7 +159,7 @@ class SmartButton implements SmartButtonInterface
             //ToDo: Probably only needed, when DCC
             'vault' => 'false',
             'commit' => is_checkout() ? 'true' : 'false',
-            'intent' => $this->settings->get('intent')
+            'intent' => $this->settings->get('intent'),
         ];
         $payee = $this->payeeRepository->payee();
         if ($payee->merchantId()) {

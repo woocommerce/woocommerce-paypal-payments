@@ -1,6 +1,7 @@
 import ButtonsToggleListener from './ButtonsToggleListener';
 import Product from './Product';
 import onApprove from './onApproveForContinue';
+import {payerData} from "./Payer";
 
 class SingleProductActionHandler {
 
@@ -73,11 +74,13 @@ class SingleProductActionHandler {
             this.errorHandler.clear();
 
             const onResolve = (purchase_units) => {
+                const payer = payerData();
                 return fetch(this.config.ajax.create_order.endpoint, {
                     method: 'POST',
                     body: JSON.stringify({
                         nonce: this.config.ajax.create_order.nonce,
-                        purchase_units
+                        purchase_units,
+                        payer
                     })
                 }).then(function (res) {
                     return res.json();
