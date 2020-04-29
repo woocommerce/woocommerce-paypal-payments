@@ -24,10 +24,6 @@ class AuthorizedPaymentsProcessorTest extends TestCase
         $authorizationStatus = Mockery::mock(AuthorizationStatus::class);
         $authorizationStatus
             ->shouldReceive('is')
-            ->with(AuthorizationStatus::CAPTURED)
-            ->andReturn(false);
-        $authorizationStatus
-            ->shouldReceive('is')
             ->with(AuthorizationStatus::CREATED)
             ->andReturn(true);
         $authorization = Mockery::mock(Authorization::class);
@@ -114,10 +110,6 @@ class AuthorizedPaymentsProcessorTest extends TestCase
         $authorizationStatus = Mockery::mock(AuthorizationStatus::class);
         $authorizationStatus
             ->shouldReceive('is')
-            ->with(AuthorizationStatus::CAPTURED)
-            ->andReturn(false);
-        $authorizationStatus
-            ->shouldReceive('is')
             ->with(AuthorizationStatus::CREATED)
             ->andReturn(true);
         $authorization = Mockery::mock(Authorization::class);
@@ -166,12 +158,8 @@ class AuthorizedPaymentsProcessorTest extends TestCase
         $authorizationStatus = Mockery::mock(AuthorizationStatus::class);
         $authorizationStatus
             ->shouldReceive('is')
-            ->with(AuthorizationStatus::CAPTURED)
-            ->andReturn(true);
-        $authorizationStatus
-            ->shouldReceive('is')
             ->with(AuthorizationStatus::CREATED)
-            ->andReturn(true);
+            ->andReturn(false);
         $authorization = Mockery::mock(Authorization::class);
         $authorization
             ->shouldReceive('id')
