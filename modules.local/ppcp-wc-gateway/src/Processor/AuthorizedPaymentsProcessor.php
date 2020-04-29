@@ -21,6 +21,7 @@ class AuthorizedPaymentsProcessor
     public const NOT_FOUND = 'NOT_FOUND';
     private $orderEndpoint;
     private $paymentsEndpoint;
+    private $lastStatus = '';
 
     public function __construct(
         OrderEndpoint $orderEndpoint,
@@ -31,30 +32,39 @@ class AuthorizedPaymentsProcessor
         $this->paymentsEndpoint = $paymentsEndpoint;
     }
 
-    public function process(\WC_Order $wcOrder): string
+    public function process(\WC_Order $wcOrder): bool
     {
         try {
             $order = $this->payPalOrderFromWcOrder($wcOrder);
         } catch (Exception $exception) {
             if ($exception->getCode() === 404) {
-                return self::NOT_FOUND;
+                $this->lastStatus = self::NOT_FOUND;
+                return false;
             }
-            return self::INACCESSIBLE;
+            $this->lastStatus = self::INACCESSIBLE;
+            return false;
         }
 
         $authorizations = $this->allAuthorizations($order);
 
         if (!$this->areAuthorizationToCapture(...$authorizations)) {
-            return self::ALREADY_CAPTURED;
+            $this->lastStatus = self::ALREADY_CAPTURED;
+            return false;
         }
 
         try {
             $this->captureAuthorizations(...$authorizations);
         } catch (Exception $exception) {
-            return self::FAILED;
+            $this->lastStatus = self::FAILED;
+            return false;
         }
 
-        return self::SUCCESSFUL;
+        $this->lastStatus = self::SUCCESSFUL;
+        return true;
+    }
+
+    public function lastStatus() : string {
+        return $this->lastStatus;
     }
 
     private function payPalOrderFromWcOrder(\WC_Order $wcOrder): Order

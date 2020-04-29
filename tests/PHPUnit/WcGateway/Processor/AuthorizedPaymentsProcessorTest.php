@@ -66,8 +66,8 @@ class AuthorizedPaymentsProcessorTest extends TestCase
             ->expects('get_meta')
             ->with(WcGateway::ORDER_ID_META_KEY)
             ->andReturn($orderId);
-        $result = $testee->process($wcOrder);
-        $this->assertEquals(AuthorizedPaymentsProcessor::SUCCESSFUL, $result);
+        $this->assertTrue($testee->process($wcOrder));
+        $this->assertEquals(AuthorizedPaymentsProcessor::SUCCESSFUL, $testee->lastStatus());
     }
 
     public function testInaccessible() {
@@ -85,8 +85,8 @@ class AuthorizedPaymentsProcessorTest extends TestCase
             ->expects('get_meta')
             ->with(WcGateway::ORDER_ID_META_KEY)
             ->andReturn($orderId);
-        $result = $testee->process($wcOrder);
-        $this->assertEquals(AuthorizedPaymentsProcessor::INACCESSIBLE, $result);
+        $this->assertFalse($testee->process($wcOrder));
+        $this->assertEquals(AuthorizedPaymentsProcessor::INACCESSIBLE, $testee->lastStatus());
     }
 
     public function testNotFound() {
@@ -104,8 +104,8 @@ class AuthorizedPaymentsProcessorTest extends TestCase
             ->expects('get_meta')
             ->with(WcGateway::ORDER_ID_META_KEY)
             ->andReturn($orderId);
-        $result = $testee->process($wcOrder);
-        $this->assertEquals(AuthorizedPaymentsProcessor::NOT_FOUND, $result);
+        $this->assertFalse($testee->process($wcOrder));
+        $this->assertEquals(AuthorizedPaymentsProcessor::NOT_FOUND, $testee->lastStatus());
     }
 
     public function testCaptureFails() {
@@ -156,8 +156,8 @@ class AuthorizedPaymentsProcessorTest extends TestCase
             ->expects('get_meta')
             ->with(WcGateway::ORDER_ID_META_KEY)
             ->andReturn($orderId);
-        $result = $testee->process($wcOrder);
-        $this->assertEquals(AuthorizedPaymentsProcessor::FAILED, $result);
+        $this->assertFalse($testee->process($wcOrder));
+        $this->assertEquals(AuthorizedPaymentsProcessor::FAILED, $testee->lastStatus());
     }
 
     public function testAllAreCaptured() {
@@ -204,7 +204,7 @@ class AuthorizedPaymentsProcessorTest extends TestCase
             ->expects('get_meta')
             ->with(WcGateway::ORDER_ID_META_KEY)
             ->andReturn($orderId);
-        $result = $testee->process($wcOrder);
-        $this->assertEquals(AuthorizedPaymentsProcessor::ALREADY_CAPTURED, $result);
+        $this->assertFalse($testee->process($wcOrder));
+        $this->assertEquals(AuthorizedPaymentsProcessor::ALREADY_CAPTURED, $testee->lastStatus());
     }
 }

@@ -92,18 +92,24 @@ class WcGateway extends WcGatewayBase
 
     public function captureAuthorizedPayment(\WC_Order $wcOrder): bool
     {
-        $result = $this->authorizedPayments->process($wcOrder);
+        $isProcessed = $this->authorizedPayments->process($wcOrder);
+        $this->renderAuthorizationMessageForStatus($this->authorizedPayments->lastStatus());
 
-        if ($result === AuthorizedPaymentsProcessor::INACCESSIBLE) {
-            $this->notice->displayMessage(AuthorizeOrderActionNotice::NO_INFO);
-            return false;
-        }
-        if ($result === AuthorizedPaymentsProcessor::NOT_FOUND) {
-            $this->notice->displayMessage(AuthorizeOrderActionNotice::NOT_FOUND);
-            return false;
+        if ($isProcessed) {
+            $wcOrder->add_order_note(
+                __(
+                    'Payment successfully captured.',
+                    'woocommerce-paypal-gateway'
+                )
+            );
+
+            $wcOrder->set_status('processing');
+            $wcOrder->update_meta_data(self::CAPTURED_META_KEY, 'true');
+            $wcOrder->save();
+            return true;
         }
 
-        if ($result === AuthorizedPaymentsProcessor::ALREADY_CAPTURED) {
+        if ($this->authorizedPayments->lastStatus() === AuthorizedPaymentsProcessor::ALREADY_CAPTURED) {
             if ($wcOrder->get_status() === 'on-hold') {
                 $wcOrder->add_order_note(
                     __(
@@ -116,28 +122,19 @@ class WcGateway extends WcGatewayBase
 
             $wcOrder->update_meta_data(self::CAPTURED_META_KEY, 'true');
             $wcOrder->save();
-            $this->notice->displayMessage(AuthorizeOrderActionNotice::ALREADY_CAPTURED);
             return true;
         }
+    }
 
+    private function renderAuthorizationMessageForStatus(string $status) {
 
-        if ($result !== AuthorizedPaymentsProcessor::SUCCESSFUL) {
-            $this->notice->displayMessage(AuthorizeOrderActionNotice::FAILED);
-            return false;
-        }
-
-        $wcOrder->add_order_note(
-            __(
-                'Payment successfully captured.',
-                'woocommerce-paypal-gateway'
-            )
-        );
-
-        $wcOrder->set_status('processing');
-        $wcOrder->update_meta_data(self::CAPTURED_META_KEY, 'true');
-        $wcOrder->save();
-
-        $this->notice->displayMessage(AuthorizeOrderActionNotice::SUCCESS);
-        return true;
+        $messageMapping = [
+            AuthorizedPaymentsProcessor::SUCCESSFUL => AuthorizeOrderActionNotice::SUCCESS,
+            AuthorizedPaymentsProcessor::ALREADY_CAPTURED => AuthorizeOrderActionNotice::ALREADY_CAPTURED,
+            AuthorizedPaymentsProcessor::INACCESSIBLE => AuthorizeOrderActionNotice::NO_INFO,
+            AuthorizedPaymentsProcessor::NOT_FOUND => AuthorizeOrderActionNotice::NOT_FOUND,
+        ];
+        $displayMessage = (isset($messageMapping[$status])) ? $messageMapping[$status] : AuthorizeOrderActionNotice::FAILED;
+        $this->notice->displayMessage($displayMessage);
     }
 }
