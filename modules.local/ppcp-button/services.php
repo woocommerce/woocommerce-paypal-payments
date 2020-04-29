@@ -45,7 +45,8 @@ return [
         $shipping = WC()->shipping();
         $requestData = $container->get('button.request-data');
         $repository = $container->get('api.repository.cart');
-        return new ChangeCartEndpoint($cart, $shipping, $requestData, $repository);
+        $dataStore = \WC_Data_Store::load('product');
+        return new ChangeCartEndpoint($cart, $shipping, $requestData, $repository, $dataStore);
     },
     'button.endpoint.create-order' => static function (ContainerInterface $container): CreateOrderEndpoint {
         $requestData = $container->get('button.request-data');

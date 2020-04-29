@@ -18,17 +18,20 @@ class ChangeCartEndpoint implements EndpointInterface
     private $shipping;
     private $requestData;
     private $repository;
+    private $productDataStore;
     public function __construct(
         \WC_Cart $cart,
         \WC_Shipping $shipping,
         RequestData $requestData,
-        CartRepository $repository
+        CartRepository $repository,
+        \WC_Data_Store $productDataStore
     ) {
 
         $this->cart = $cart;
         $this->shipping = $shipping;
         $this->requestData = $requestData;
         $this->repository = $repository;
+        $this->productDataStore = $productDataStore;
     }
 
     public static function nonce(): string
@@ -65,7 +68,7 @@ class ChangeCartEndpoint implements EndpointInterface
         $success = true;
         foreach ($products as $product) {
             $success = $success && (! $product['product']->is_type('variable')) ?
-                $success = $this->addProduct($product['product'], $product['quantity'])
+                $this->addProduct($product['product'], $product['quantity'])
                 : $this->addVariableProduct($product['product'], $product['quantity'], $product['variations']);
         }
         if (! $success) {
@@ -113,6 +116,7 @@ class ChangeCartEndpoint implements EndpointInterface
             }
 
             $wcProduct = wc_get_product((int) $product['id']);
+
             if (! $wcProduct) {
                 return null;
             }
@@ -136,15 +140,15 @@ class ChangeCartEndpoint implements EndpointInterface
         array $postVariations
     ): bool {
 
+        $variations = [];
         foreach ($postVariations as $key => $value) {
             $variations[$value['name']] = $value['value'];
         }
 
-        $dataStore = \WC_Data_Store::load('product');
-        $variationId = $dataStore->find_matching_product_variation($product, $variations);
+        $variationId = $this->productDataStore->find_matching_product_variation($product, $variations);
 
         //ToDo: Check stock status for variation.
-        return false !== WC()->cart->add_to_cart($product->get_id(), $quantity, $variationId, $variations);
+        return false !== $this->cart->add_to_cart($product->get_id(), $quantity, $variationId, $variations);
     }
 
     private function generatePurchaseUnits(): array
