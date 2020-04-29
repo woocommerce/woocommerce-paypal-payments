@@ -87,42 +87,27 @@ class AuthorizedPaymentsProcessor
 
     private function areAuthorizationToCapture(Authorization ...$authorizations): bool
     {
-        $alreadyCapturedAuthorizations = $this->authorizationsWithCapturedStatus(...$authorizations);
-
-        return count($alreadyCapturedAuthorizations) !== count($authorizations);
+        return (bool) count($this->authorizationsToCapture(...$authorizations));
     }
 
     private function captureAuthorizations(Authorization ...$authorizations)
     {
-        $uncapturedAuthorizations = $this->authorizationsWithCreatedStatus(...$authorizations);
-
+        $uncapturedAuthorizations = $this->authorizationsToCapture(...$authorizations);
         foreach ($uncapturedAuthorizations as $authorization) {
             $this->paymentsEndpoint->capture($authorization->id());
         }
     }
 
     /**
+     * @param Authorization ...$authorizations
      * @return Authorization[]
      */
-    private function authorizationsWithCreatedStatus(Authorization ...$authorizations): array
+    private function authorizationsToCapture(Authorization ...$authorizations): array
     {
         return array_filter(
             $authorizations,
             static function (Authorization $authorization): bool {
                 return $authorization->status()->is(AuthorizationStatus::CREATED);
-            }
-        );
-    }
-
-    /**
-     * @return Authorization[]
-     */
-    private function authorizationsWithCapturedStatus(Authorization ...$authorizations): array
-    {
-        return array_filter(
-            $authorizations,
-            static function (Authorization $authorization): bool {
-                return $authorization->status()->is(AuthorizationStatus::CAPTURED);
             }
         );
     }
