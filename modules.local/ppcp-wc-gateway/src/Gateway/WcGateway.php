@@ -74,7 +74,7 @@ class WcGateway extends WcGatewayBase
     public function process_payment($orderId): ?array
     {
         global $woocommerce;
-        $wcOrder = new \WC_Order($orderId);
+        $wcOrder = wc_get_order($orderId);
         if (! is_a($wcOrder, \WC_Order::class)) {
             return null;
         }
@@ -97,10 +97,7 @@ class WcGateway extends WcGatewayBase
 
         if ($isProcessed) {
             $wcOrder->add_order_note(
-                __(
-                    'Payment successfully captured.',
-                    'woocommerce-paypal-gateway'
-                )
+                __('Payment successfully captured.', 'woocommerce-paypal-gateway')
             );
 
             $wcOrder->set_status('processing');
@@ -112,10 +109,7 @@ class WcGateway extends WcGatewayBase
         if ($this->authorizedPayments->lastStatus() === AuthorizedPaymentsProcessor::ALREADY_CAPTURED) {
             if ($wcOrder->get_status() === 'on-hold') {
                 $wcOrder->add_order_note(
-                    __(
-                        'Payment successfully captured.',
-                        'woocommerce-paypal-gateway'
-                    )
+                    __('Payment successfully captured.','woocommerce-paypal-gateway')
                 );
                 $wcOrder->set_status('processing');
             }
@@ -124,6 +118,7 @@ class WcGateway extends WcGatewayBase
             $wcOrder->save();
             return true;
         }
+        return false;
     }
 
     private function renderAuthorizationMessageForStatus(string $status) {
