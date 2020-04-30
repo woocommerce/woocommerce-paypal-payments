@@ -20,15 +20,15 @@ class CreditCardRenderer {
             createOrder: contextConfig.createOrder,
             fields: {
                 number: {
-                    selector: '#ppcp-credit-card',
+                    selector: wrapper + ' .ppcp-credit-card',
                     placeholder: this.defaultConfig.hosted_fields.labels.credit_card_number,
                 },
                 cvv: {
-                    selector: '#ppcp-cvv',
+                    selector: wrapper + ' .ppcp-cvv',
                     placeholder: this.defaultConfig.hosted_fields.labels.cvv,
                 },
                 expirationDate: {
-                    selector: '#ppcp-expiration-date',
+                    selector: wrapper + ' .ppcp-expiration-date',
                     placeholder: this.defaultConfig.hosted_fields.labels.mm_yyyy,
                 }
             }

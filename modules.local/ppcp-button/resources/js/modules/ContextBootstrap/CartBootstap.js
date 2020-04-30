@@ -20,7 +20,9 @@ class CartBootstrap {
     }
 
     shouldRender() {
-        return document.querySelector(this.gateway.button.wrapper) !== null;
+        return document.querySelector(this.gateway.button.wrapper) !==
+            null || document.querySelector(this.gateway.hosted_fields.wrapper) !==
+            null;
     }
 
     render() {

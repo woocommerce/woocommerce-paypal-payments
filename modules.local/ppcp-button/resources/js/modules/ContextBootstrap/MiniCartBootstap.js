@@ -5,9 +5,15 @@ class MiniCartBootstap {
     constructor(gateway, renderer) {
         this.gateway = gateway;
         this.renderer = renderer;
+        this.actionHandler = null;
     }
 
     init() {
+
+        this.actionHandler = new CartActionHandler(
+            PayPalCommerceGateway,
+            new ErrorHandler(),
+        );
         this.render();
 
         jQuery(document.body).on('wc_fragments_loaded wc_fragments_refreshed', () => {
@@ -17,7 +23,8 @@ class MiniCartBootstap {
 
     shouldRender() {
         return document.querySelector(this.gateway.button.mini_cart_wrapper) !==
-            null;
+            null || document.querySelector(this.gateway.hosted_fields.mini_cart_wrapper) !==
+        null;
     }
 
     render() {
@@ -25,15 +32,10 @@ class MiniCartBootstap {
             return;
         }
 
-        const actionHandler = new CartActionHandler(
-            PayPalCommerceGateway,
-            new ErrorHandler(),
-        );
-
         this.renderer.render(
             this.gateway.button.mini_cart_wrapper,
-            null,
-            actionHandler.configuration()
+            this.gateway.hosted_fields.mini_cart_wrapper,
+            this.actionHandler.configuration()
         );
     }
 }

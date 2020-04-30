@@ -5,7 +5,13 @@ class Renderer {
     }
 
     render(wrapper, hostedFieldsWrapper, contextConfig) {
-        if (this.isAlreadyRendered(wrapper)) {
+
+        this.renderButtons(wrapper, contextConfig);
+        this.creditCardRenderer.render(hostedFieldsWrapper, contextConfig);
+    }
+
+    renderButtons(wrapper, contextConfig) {
+        if (! document.querySelector(wrapper) || this.isAlreadyRendered(wrapper)) {
             return;
         }
 
@@ -14,9 +20,7 @@ class Renderer {
             style,
             ...contextConfig,
         }).render(wrapper);
-
-        this.creditCardRenderer.render(hostedFieldsWrapper, contextConfig);
-}
+    }
 
     isAlreadyRendered(wrapper) {
         return document.querySelector(wrapper).hasChildNodes();

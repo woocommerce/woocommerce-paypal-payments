@@ -187,10 +187,28 @@ class SettingsFields
                     'woocommerce-paypal-gateway'
                 ),
             ],
-            'enable_dcc' => [
-                'title' => __('Enable credit card payment', 'woocommerce-paypal-gateway'),
+            'dcc_cart_enabled' => [
+                'title' => __('Enable credit card on cart', 'woocommerce-paypal-gateway'),
                 'type' => 'checkbox',
-                'label' => __('Enable credit card payments.', 'woocommerce-paypal-gateway'),
+                'label' => __('Allow your customers to pay with credit card directly in your cart.', 'woocommerce-paypal-gateway'),
+                'default' => 'yes',
+            ],
+            'dcc_mini_cart_enabled' => [
+                'title' => __('Enable credit card on mini cart', 'woocommerce-paypal-gateway'),
+                'type' => 'checkbox',
+                'label' => __('Allow your customers to pay with credit card directly in your mini cart.', 'woocommerce-paypal-gateway'),
+                'default' => 'yes',
+            ],
+            'dcc_checkout_enabled' => [
+                'title' => __('Enable credit card on checkout', 'woocommerce-paypal-gateway'),
+                'type' => 'checkbox',
+                'label' => __('Allow your customers to pay with credit card in the checkout.', 'woocommerce-paypal-gateway'),
+                'default' => 'yes',
+            ],
+            'dcc_single_product_enabled' => [
+                'title' => __('Enable credit card on products', 'woocommerce-paypal-gateway'),
+                'type' => 'checkbox',
+                'label' => __('Allow your customers to pay with credit card instantly on the product page.', 'woocommerce-paypal-gateway'),
                 'default' => 'yes',
             ],
             'disable_cards' => [
