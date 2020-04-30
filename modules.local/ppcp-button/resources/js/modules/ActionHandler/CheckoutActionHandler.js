@@ -1,5 +1,5 @@
-import onApprove from './onApproveForPayNow.js';
-import {payerData} from "./Payer";
+import onApprove from '../OnApproveHandler/onApproveForPayNow.js';
+import {payerData} from "../Helper/PayerData";
 
 class CheckoutActionHandler {
 

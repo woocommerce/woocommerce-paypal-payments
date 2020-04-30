@@ -1,7 +1,7 @@
-import ButtonsToggleListener from './ButtonsToggleListener';
-import Product from './Product';
-import onApprove from './onApproveForContinue';
-import {payerData} from "./Payer";
+import ButtonsToggleListener from '../Helper/ButtonsToggleListener';
+import Product from '../Entity/Product';
+import onApprove from '../OnApproveHandler/onApproveForContinue';
+import {payerData} from "../Helper/PayerData";
 
 class SingleProductActionHandler {
 

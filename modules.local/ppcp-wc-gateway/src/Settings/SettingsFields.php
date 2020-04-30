@@ -14,10 +14,11 @@ class SettingsFields
             $this->gateway(),
             $this->account(),
             $this->buttons(),
+            $this->creditCards(),
         );
     }
 
-    protected function gateway(): array
+    private function gateway(): array
     {
         return [
             'enabled' => [
@@ -91,7 +92,7 @@ class SettingsFields
     {
         return [
             'button_settings' => [
-                'title' => __('Button Settings', 'woocommerce-paypal-gateway'),
+                'title' => __('SmartButton Settings', 'woocommerce-paypal-gateway'),
                 'type' => 'title',
                 'description' => __(
                     'Customize the appearance of PayPal Payments on your site.',
@@ -170,6 +171,46 @@ class SettingsFields
                     'mybank' => _x('MyBank', 'Name of payment method', 'woocommerce-paypal-gateway'),
                     'p24' => _x('Przelewy24', 'Name of payment method', 'woocommerce-paypal-gateway'),
                     'sofort' => _x('Sofort', 'Name of payment method', 'woocommerce-paypal-gateway'),
+                ],
+            ],
+        ];
+    }
+
+    private function creditCards() : array {
+        return [
+
+            'credit_card_settings' => [
+                'title' => __('Credit Card Settings', 'woocommerce-paypal-gateway'),
+                'type' => 'title',
+                'description' => __(
+                    'Customize the appearance of Credit Card Payments on your site.',
+                    'woocommerce-paypal-gateway'
+                ),
+            ],
+            'enable_dcc' => [
+                'title' => __('Enable credit card payment', 'woocommerce-paypal-gateway'),
+                'type' => 'checkbox',
+                'label' => __('Enable credit card payments.', 'woocommerce-paypal-gateway'),
+                'default' => 'yes',
+            ],
+            'disable_cards' => [
+                'title' => __('Disable specific credid cards', 'woocommerce-paypal-gateway'),
+                'type' => 'multiselect',
+                'class' => 'wc-enhanced-select',
+                'default' => [],
+                'desc_tip' => true,
+                'description' => __(
+                    'By default all possible credit cards will be shown. You can disable some cards, if you wish.',
+                    'woocommerce-paypal-gateway'
+                ),
+                'options' => [
+                    'visa' => _x('Visa', 'Name of credit card', 'woocommerce-paypal-gateway'),
+                    'mastercard' => _x('Mastercard', 'Name of credit card', 'woocommerce-paypal-gateway'),
+                    'amex' => _x('American Express', 'Name of credit card', 'woocommerce-paypal-gateway'),
+                    'discover' => _x('Discover', 'Name of credit card', 'woocommerce-paypal-gateway'),
+                    'jcb' => _x('JCB', 'Name of credit card', 'woocommerce-paypal-gateway'),
+                    'elo' => _x('Elo', 'Name of credit card', 'woocommerce-paypal-gateway'),
+                    'hiper' => _x('Hiper', 'Name of credit card', 'woocommerce-paypal-gateway'),
                 ],
             ],
         ];

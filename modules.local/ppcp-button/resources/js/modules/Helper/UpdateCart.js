@@ -1,4 +1,4 @@
-import Product from "./Product";
+import Product from "../Entity/Product";
 class UpdateCart {
 
     constructor(endpoint, nonce)

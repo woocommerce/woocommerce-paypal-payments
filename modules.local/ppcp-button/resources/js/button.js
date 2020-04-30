@@ -1,11 +1,13 @@
-import MiniCartBootstap from './modules/MiniCartBootstap';
-import SingleProductBootstap from './modules/SingleProductBootstap';
-import CartBootstrap from './modules/CartBootstap';
-import CheckoutBootstap from './modules/CheckoutBootstap';
-import Renderer from './modules/Renderer';
+import MiniCartBootstap from './modules/ContextBootstrap/MiniCartBootstap';
+import SingleProductBootstap from './modules/ContextBootstrap/SingleProductBootstap';
+import CartBootstrap from './modules/ContextBootstrap/CartBootstap';
+import CheckoutBootstap from './modules/ContextBootstrap/CheckoutBootstap';
+import Renderer from './modules/Renderer/Renderer';
+import CreditCardRenderer from "./modules/Renderer/CreditCardRenderer";
 
 const bootstrap = () => {
-    const renderer = new Renderer(PayPalCommerceGateway);
+    const creditCardRenderer = new CreditCardRenderer(PayPalCommerceGateway);
+    const renderer = new Renderer(creditCardRenderer, PayPalCommerceGateway);
     const context = PayPalCommerceGateway.context;
 
     if (context === 'mini-cart' || context === 'product') {
@@ -55,6 +57,11 @@ document.addEventListener(
         const script = document.createElement('script');
 
         script.setAttribute('src', PayPalCommerceGateway.button.url);
+        Object.entries(PayPalCommerceGateway.script_attributes).forEach(
+            (keyValue) => {
+                script.setAttribute(keyValue[0], keyValue[1]);
+            }
+        );
         script.addEventListener('load', (event) => {
             bootstrap();
         });

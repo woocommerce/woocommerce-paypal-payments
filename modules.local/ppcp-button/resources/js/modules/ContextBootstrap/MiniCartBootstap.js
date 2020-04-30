@@ -1,5 +1,5 @@
-import ErrorHandler from './ErrorHandler';
-import CartActionHandler from './CartActionHandler';
+import ErrorHandler from '../ErrorHandler';
+import CartActionHandler from '../ActionHandler/CartActionHandler';
 
 class MiniCartBootstap {
     constructor(gateway, renderer) {
@@ -32,6 +32,7 @@ class MiniCartBootstap {
 
         this.renderer.render(
             this.gateway.button.mini_cart_wrapper,
+            null,
             actionHandler.configuration()
         );
     }

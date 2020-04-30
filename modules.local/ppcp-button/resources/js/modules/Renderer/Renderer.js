@@ -1,9 +1,10 @@
 class Renderer {
-    constructor(defaultConfig) {
+    constructor(creditCardRenderer, defaultConfig) {
         this.defaultConfig = defaultConfig;
+        this.creditCardRenderer = creditCardRenderer;
     }
 
-    render(wrapper, contextConfig) {
+    render(wrapper, hostedFieldsWrapper, contextConfig) {
         if (this.isAlreadyRendered(wrapper)) {
             return;
         }
@@ -13,7 +14,9 @@ class Renderer {
             style,
             ...contextConfig,
         }).render(wrapper);
-    }
+
+        this.creditCardRenderer.render(hostedFieldsWrapper, contextConfig);
+}
 
     isAlreadyRendered(wrapper) {
         return document.querySelector(wrapper).hasChildNodes();

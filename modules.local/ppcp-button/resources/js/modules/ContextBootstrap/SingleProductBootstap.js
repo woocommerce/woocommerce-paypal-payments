@@ -1,6 +1,6 @@
-import ErrorHandler from './ErrorHandler';
-import UpdateCart from './UpdateCart';
-import SingleProductActionHandler from './SingleProductActionHandler';
+import ErrorHandler from '../ErrorHandler';
+import UpdateCart from "../Helper/UpdateCart";
+import SingleProductActionHandler from "../ActionHandler/SingleProductActionHandler";
 
 class SingleProductBootstap {
     constructor(gateway, renderer) {
@@ -43,6 +43,7 @@ class SingleProductBootstap {
 
         this.renderer.render(
             this.gateway.button.wrapper,
+            this.gateway.hosted_fields.wrapper,
             actionHandler.configuration(),
         );
     }

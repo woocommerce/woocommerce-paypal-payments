@@ -1,5 +1,5 @@
-import ErrorHandler from './ErrorHandler';
-import CheckoutActionHandler from './CheckoutActionHandler';
+import ErrorHandler from '../ErrorHandler';
+import CheckoutActionHandler from '../ActionHandler/CheckoutActionHandler';
 
 class CheckoutBootstap {
     constructor(gateway, renderer) {
@@ -22,6 +22,7 @@ class CheckoutBootstap {
             on('updated_checkout payment_method_selected', () => {
                 this.switchBetweenPayPalandOrderButton();
             });
+        this.switchBetweenPayPalandOrderButton();
     }
 
     shouldRender() {
@@ -40,6 +41,7 @@ class CheckoutBootstap {
 
         this.renderer.render(
             this.gateway.button.wrapper,
+            this.gateway.hosted_fields.wrapper,
             actionHandler.configuration(),
         );
     }
@@ -50,10 +52,12 @@ class CheckoutBootstap {
 
         if (currentPaymentMethod !== 'ppcp-gateway') {
             this.renderer.hideButtons(this.gateway.button.wrapper);
+            this.renderer.hideButtons(this.gateway.hosted_fields.wrapper);
             jQuery('#place_order').show();
         }
         else {
             this.renderer.showButtons(this.gateway.button.wrapper);
+            this.renderer.showButtons(this.gateway.hosted_fields.wrapper);
             jQuery('#place_order').hide();
         }
     }

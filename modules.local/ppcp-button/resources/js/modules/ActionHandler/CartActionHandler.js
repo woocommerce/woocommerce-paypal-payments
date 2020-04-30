@@ -1,5 +1,5 @@
-import onApprove from './onApproveForContinue.js';
-import {payerData} from "./Payer";
+import onApprove from '../OnApproveHandler/onApproveForContinue.js';
+import {payerData} from "../Helper/PayerData";
 
 class CartActionHandler {
 

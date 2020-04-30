@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\Button\Assets;
 
+use Inpsyde\PayPalCommerce\ApiClient\Endpoint\IdentityToken;
+use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use Inpsyde\PayPalCommerce\ApiClient\Repository\PayeeRepository;
 use Inpsyde\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
@@ -17,24 +19,39 @@ class SmartButton implements SmartButtonInterface
     private $sessionHandler;
     private $settings;
     private $payeeRepository;
+    private $identityToken;
 
     public function __construct(
         string $moduleUrl,
         SessionHandler $sessionHandler,
         Settings $settings,
-        PayeeRepository $payeeRepository
+        PayeeRepository $payeeRepository,
+        IdentityToken $identityToken
     ) {
 
         $this->moduleUrl = $moduleUrl;
         $this->sessionHandler = $sessionHandler;
         $this->settings = $settings;
         $this->payeeRepository = $payeeRepository;
+        $this->identityToken = $identityToken;
     }
 
     public function renderWrapper(): bool
     {
-        $renderer = static function () {
+
+        $hostedFieldsEnabled = $this->dccIsEnabled();
+        $renderer = static function () use ($hostedFieldsEnabled) {
             echo '<div id="ppc-button"></div>';
+            if (! $hostedFieldsEnabled) {
+                return;
+            }
+            printf(
+                '<form id="ppc-hosted-fields"><label for="ppcp-credit-card">%s</label><div id="ppcp-credit-card"></div><label for="ppcp-expiration-date">%s</label><div id="ppcp-expiration-date"></div><label for="ppcp-cvv">%s</label><div id="ppcp-cvv"></div><button>%s</button></form>',
+                __('Card number', 'woocommerce-paypal-commerce-gateway'),
+                __('Expiration Date', 'woocommerce-paypal-commerce-gateway'),
+                __('CVV', 'woocommerce-paypal-commerce-gateway'),
+                __('Pay with Card', 'woocommerce-paypal-commerce-gateway')
+            );
         };
         if (is_cart() && wc_string_to_bool($this->settings->get('button_cart_enabled'))) {
             add_action(
@@ -88,6 +105,7 @@ class SmartButton implements SmartButtonInterface
     private function localizeScript(): array
     {
         $localize = [
+            'script_attributes' => $this->attributes(),
             'redirect' => wc_get_checkout_url(),
             'context' => $this->context(),
             'ajax' => [
@@ -115,6 +133,14 @@ class SmartButton implements SmartButtonInterface
                     'color' => $this->settings->get('button_color'),
                     'shape' => $this->settings->get('button_shape'),
                     'label' => 'paypal',
+                ],
+            ],
+            'hosted_fields' => [
+                'wrapper' => '#ppc-hosted-fields',
+                'labels' => [
+                    'credit_card_number' => __('Credit Card Number', 'woocommerce-paypal-commerce-gateway'),
+                    'cvv' => __('CVV', 'woocommerce-paypal-commerce-gateway'),
+                    'mm_yyyy' => __('MM/YYYY', 'woocommerce-paypal-commerce-gateway'),
                 ],
             ],
         ];
@@ -155,18 +181,21 @@ class SmartButton implements SmartButtonInterface
     {
         $params = [
             //ToDo: Add the correct client id, toggle when settings is set to sandbox
-            'client-id' => 'AcVzowpNCpTxFzLG7onQI4JD0sVcA0BkZv-D42qRZPv_gZ8cNfX9zGL_8bXmSu7cbJ5B2DH7sot8vDpw',
+            'client-id' => 'AQB97CzMsd58-It1vxbcDAGvMuXNCXRD9le_XUaMlHB_U7XsU9IiItBwGQOtZv9sEeD6xs2vlIrL4NiD',
             'currency' => get_woocommerce_currency(),
             'locale' => get_user_locale(),
             //'debug' => (defined('WP_DEBUG') && WP_DEBUG) ? 'true' : 'false',
             //ToDo: Update date on releases.
             'integration-date' => date('Y-m-d'),
-            'components' => 'marks,buttons',
+            'components' => implode(',', $this->components()),
             //ToDo: Probably only needed, when DCC
-            'vault' => 'false',
+            'vault' => $this->dccIsEnabled() ? 'false' : 'false',
             'commit' => is_checkout() ? 'true' : 'false',
             'intent' => $this->settings->get('intent'),
         ];
+        if (defined('WP_DEBUG') && \WP_DEBUG && WC()->customer) {
+            $params['buyer-country'] = WC()->customer->get_billing_country();
+        }
         $payee = $this->payeeRepository->payee();
         if ($payee->merchantId()) {
             $params['merchant-id'] = $payee->merchantId();
@@ -177,6 +206,28 @@ class SmartButton implements SmartButtonInterface
         }
         $smartButtonUrl = add_query_arg($params, 'https://www.paypal.com/sdk/js');
         return $smartButtonUrl;
+    }
+
+    private function attributes() : array {
+        $attributes = [
+            //'data-partner-attribution-id' => '',
+        ];
+        try {
+            $clientToken = $this->identityToken->generate();
+            $attributes['data-client-token'] = $clientToken->token();
+            return $attributes;
+        } catch (RuntimeException $exception) {
+            return $attributes;
+        }
+    }
+
+    private function components() : array
+    {
+        $components = ['buttons'];
+        if ($this->dccIsEnabled()) {
+            $components[] = 'hosted-fields';
+        }
+        return $components;
     }
 
     private function context(): string
@@ -192,5 +243,10 @@ class SmartButton implements SmartButtonInterface
             $context = 'checkout';
         }
         return $context;
+    }
+
+    private function dccIsEnabled() : bool
+    {
+        return wc_string_to_bool($this->settings->get('enable_dcc'));
     }
 }

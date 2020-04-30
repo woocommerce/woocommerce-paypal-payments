@@ -1,5 +1,5 @@
-import CartActionHandler from './CartActionHandler';
-import ErrorHandler from './ErrorHandler';
+import CartActionHandler from '../ActionHandler/CartActionHandler';
+import ErrorHandler from '../ErrorHandler';
 
 class CartBootstrap {
     constructor(gateway, renderer) {
@@ -31,6 +31,7 @@ class CartBootstrap {
 
         this.renderer.render(
             this.gateway.button.wrapper,
+            this.gateway.hosted_fields.wrapper,
             actionHandler.configuration(),
         );
     }
