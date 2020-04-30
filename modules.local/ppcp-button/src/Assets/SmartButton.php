@@ -43,22 +43,21 @@ class SmartButton implements SmartButtonInterface
             echo '<div id="ppc-button"></div>';
         };
 
-        $dccRenderer = static function ($id = null, $class = null) {
+        $dccRenderer = static function ($id = null) {
             if (!$id) {
                 $id = 'ppcp-hosted-fields';
             }
             printf(
-                '<form id="%1$s" class="%2$s">
-                            <label for="ppcp-credit-card-%1$s">%3$s</label>
-                            <div id="ppcp-credit-card-%1$s" class="ppcp-credit-card"></div>
-                            <label for="ppcp-expiration-date-%1$s">%4$s</label>
-                            <div id="ppcp-expiration-date-%1$s" class="ppcp-expiration-date"></div>
-                            <label for="ppcp-cvv-%1$s">%5$s</label>
-                            <div id="ppcp-cvv-%1$s" class="ppcp-cvv"></div>
-                            <button>%6$s</button>
+                '<form id="%1$s">
+                            <label for="ppcp-credit-card-%1$s">%2$s</label>
+                            <span id="ppcp-credit-card-%1$s" class="ppcp-credit-card"></span>
+                            <label for="ppcp-expiration-date-%1$s">%3$s</label>
+                            <span id="ppcp-expiration-date-%1$s" class="ppcp-expiration-date"></span>
+                            <label for="ppcp-cvv-%1$s">%4$s</label>
+                            <span id="ppcp-cvv-%1$s" class="ppcp-cvv"></span>
+                            <button>%5$s</button>
                         </form>',
                 esc_attr($id),
-                esc_attr($class),
                 esc_html__('Card number', 'woocommerce-paypal-commerce-gateway'),
                 esc_html__('Expiration Date', 'woocommerce-paypal-commerce-gateway'),
                 esc_html__('CVV', 'woocommerce-paypal-commerce-gateway'),
@@ -106,7 +105,7 @@ class SmartButton implements SmartButtonInterface
             add_action(
                 'woocommerce_widget_shopping_cart_after_buttons',
                 static function () use ($dccRenderer) {
-                    $dccRenderer('ppcp-hosted-fields-mini-cart', 'woocommerce-mini-cart__buttons buttons');
+                    $dccRenderer('ppcp-hosted-fields-mini-cart');
                 },
                 31
             );
