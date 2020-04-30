@@ -23,11 +23,21 @@ class Renderer {
     }
 
     hideButtons(element) {
-        document.querySelector(element).style.display = 'none';
+        const domElement = document.querySelector(element);
+        if (! domElement ) {
+            return false;
+        }
+        domElement.style.display = 'none';
+        return true;
     }
 
     showButtons(element) {
-        document.querySelector(element).style.display = 'block';
+        const domElement = document.querySelector(element);
+        if (! domElement ) {
+            return false;
+        }
+        domElement.style.display = 'block';
+        return true;
     }
 }
 
