@@ -44,25 +44,19 @@ class SmartButton implements SmartButtonInterface
         };
 
         $dccRenderer = static function ($id = null, $class = null) {
-            static $times;
             if (!$id) {
                 $id = 'ppcp-hosted-fields';
             }
-            if (! $times) {
-                $times = 0;
-            }
-            $times++;
             printf(
-                '<form id="%2$s" class="%3$s">
-                            <label for="ppcp-credit-card-%1$d">%4$s</label>
-                            <div id="ppcp-credit-card-%1$d" class="ppcp-credit-card"></div>
-                            <label for="ppcp-expiration-date-%1$d">%5$s</label>
-                            <div id="ppcp-expiration-date-%1$d" class="ppcp-expiration-date"></div>
-                            <label for="ppcp-cvv">%6$s</label>
-                            <div id="ppcp-cvv" class="ppcp-cvv"></div>
-                            <button>%7$s</button>
+                '<form id="%1$s" class="%2$s">
+                            <label for="ppcp-credit-card-%1$s">%3$s</label>
+                            <div id="ppcp-credit-card-%1$s" class="ppcp-credit-card"></div>
+                            <label for="ppcp-expiration-date-%1$s">%4$s</label>
+                            <div id="ppcp-expiration-date-%1$s" class="ppcp-expiration-date"></div>
+                            <label for="ppcp-cvv-%1$s">%5$s</label>
+                            <div id="ppcp-cvv-%1$s" class="ppcp-cvv"></div>
+                            <button>%6$s</button>
                         </form>',
-                $times,
                 esc_attr($id),
                 esc_attr($class),
                 esc_html__('Card number', 'woocommerce-paypal-commerce-gateway'),
