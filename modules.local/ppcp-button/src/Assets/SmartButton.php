@@ -6,6 +6,7 @@ namespace Inpsyde\PayPalCommerce\Button\Assets;
 
 use Inpsyde\PayPalCommerce\ApiClient\Endpoint\IdentityToken;
 use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use Inpsyde\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Repository\PayeeRepository;
 use Inpsyde\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
@@ -20,13 +21,15 @@ class SmartButton implements SmartButtonInterface
     private $settings;
     private $payeeRepository;
     private $identityToken;
+    private $payerFactory;
 
     public function __construct(
         string $moduleUrl,
         SessionHandler $sessionHandler,
         Settings $settings,
         PayeeRepository $payeeRepository,
-        IdentityToken $identityToken
+        IdentityToken $identityToken,
+        PayerFactory $payerFactory
     ) {
 
         $this->moduleUrl = $moduleUrl;
@@ -34,6 +37,7 @@ class SmartButton implements SmartButtonInterface
         $this->settings = $settings;
         $this->payeeRepository = $payeeRepository;
         $this->identityToken = $identityToken;
+        $this->payerFactory = $payerFactory;
     }
 
     public function renderWrapper(): bool
@@ -196,27 +200,7 @@ class SmartButton implements SmartButtonInterface
         if (! is_user_logged_in() || ! is_a($customer, \WC_Customer::class)) {
             return null;
         }
-        return [
-            'email_address' => $customer->get_billing_email(),
-            'name' => [
-                'surname' => $customer->get_billing_last_name(),
-                'given_name' => $customer->get_billing_last_name(),
-            ],
-            'address' => [
-                'country_code' => $customer->get_billing_country(),
-                'address_line_1' => $customer->get_billing_address_1(),
-                'address_line_2' => $customer->get_billing_address_2(),
-                'admin_area_1' => $customer->get_billing_city(),
-                'admin_area_2' => $customer->get_billing_state(),
-                'postal_code' => $customer->get_billing_postcode(),
-            ],
-            'phone' => [
-                'phone_type' => 'HOME',
-                'phone_number' => [
-                    'national_number' => $customer->get_billing_phone(),
-                ],
-            ],
-        ];
+        return $this->payerFactory->fromCustomer($customer)->toArray();
     }
 
     private function url(): string

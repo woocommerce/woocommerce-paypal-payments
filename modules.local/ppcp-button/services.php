@@ -23,12 +23,14 @@ return [
         }
         $payeeRepository = $container->get('api.repository.payee');
         $identityToken = $container->get('api.endpoint.identity-token');
+        $payerFactory = $container->get('api.factory.payer');
         return new SmartButton(
             $container->get('button.url'),
             $container->get('session.handler'),
             $settings,
             $payeeRepository,
-            $identityToken
+            $identityToken,
+            $payerFactory
         );
 
     },
