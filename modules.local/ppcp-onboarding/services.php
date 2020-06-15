@@ -23,6 +23,28 @@ use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsFields;
 
 return [
 
+    'api.host' => static function (ContainerInterface $container): string {
+        $state = $container->get('onboarding.state');
+        $environment = $container->get('onboarding.environment');
+
+        //ToDo: Correct the URLs
+        /**
+         * @var Environment $environment
+         * @var State $state
+         */
+        if ($state->currentState() >= State::STATE_ONBOARDED) {
+            if ($environment->currentEnvironmentIs(Environment::SANDBOX)) {
+                return 'https://api.sandbox.paypal.com';
+            }
+            return 'https://api.sandbox.paypal.com';
+        }
+
+        if ($environment->currentEnvironmentIs(Environment::SANDBOX)) {
+            return 'https://api.sandbox.paypal.com';
+        }
+        return 'https://api.sandbox.paypal.com';
+
+    },
     'onboarding.state' => function(ContainerInterface $container) : State {
         $environment = $container->get('onboarding.environment');
         $settings = $container->get('wcgateway.settings');
