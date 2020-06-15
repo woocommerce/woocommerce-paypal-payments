@@ -13,12 +13,20 @@ use Inpsyde\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\RequestData;
 use Inpsyde\PayPalCommerce\Button\Exception\RuntimeException;
+use Inpsyde\PayPalCommerce\Onboarding\State;
 
 return [
     'button.smart-button' => static function (ContainerInterface $container): SmartButtonInterface {
 
+        $state = $container->get('onboarding.state');
+        /**
+         * @var State $state
+         */
+        if ($state->currentState() < State::STATE_PROGRESSIVE) {
+            return new DisabledSmartButton();
+        }
         $settings = $container->get('wcgateway.settings');
-        if (! wc_string_to_bool($settings->get('enabled'))) {
+        if (!$settings->has('enabled') || ! wc_string_to_bool($settings->get('enabled'))) {
             return new DisabledSmartButton();
         }
         $payeeRepository = $container->get('api.repository.payee');

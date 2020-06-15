@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Inpsyde\PayPalCommerce\WcGateway;
 
 use Dhii\Data\Container\ContainerInterface;
-use Inpsyde\PayPalCommerce\WcGateway\Admin\OrderDetail;
+use Inpsyde\PayPalCommerce\Onboarding\State;
 use Inpsyde\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
 use Inpsyde\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
 use Inpsyde\PayPalCommerce\WcGateway\Checkout\DisableGateways;
@@ -15,8 +15,11 @@ use Inpsyde\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use Inpsyde\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
 use Inpsyde\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use Inpsyde\PayPalCommerce\WcGateway\Processor\OrderProcessor;
+use Inpsyde\PayPalCommerce\WcGateway\Settings\FullyOnboardedSettings;
+use Inpsyde\PayPalCommerce\WcGateway\Settings\ProgressiveSettings;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsFields;
+use Inpsyde\PayPalCommerce\WcGateway\Settings\StartSettings;
 
 return [
     'wcgateway.gateway.base' => static function (ContainerInterface $container): WcGatewayBase {
@@ -27,11 +30,13 @@ return [
         $settingsFields = $container->get('wcgateway.settings.fields');
         $authorizedPayments = $container->get('wcgateway.processor.authorized-payments');
         $notice = $container->get('wcgateway.notice.authorize-order-action');
+        $onboardingRender = $container->get('onboarding.render');
         return new WcGateway(
             $settingsFields,
             $orderProcessor,
             $authorizedPayments,
-            $notice
+            $notice,
+            $onboardingRender
         );
     },
     'wcgateway.disabler' => static function (ContainerInterface $container): DisableGateways {
@@ -40,19 +45,29 @@ return [
     },
     'wcgateway.settings' => static function (ContainerInterface $container): Settings {
         $gateway = $container->get('wcgateway.gateway.base');
-        $settingsField = $container->get('wcgateway.settings.fields');
-        return new Settings($gateway, $settingsField);
+        return new Settings($gateway);
     },
     'wcgateway.notice.connect' => static function (ContainerInterface $container): ConnectAdminNotice {
+        $state = $container->get('onboarding.state');
         $settings = $container->get('wcgateway.settings');
-        return new ConnectAdminNotice($settings);
+        return new ConnectAdminNotice($state, $settings);
     },
     'wcgateway.notice.authorize-order-action' =>
         static function (ContainerInterface $container): AuthorizeOrderActionNotice {
             return new AuthorizeOrderActionNotice();
         },
     'wcgateway.settings.fields' => static function (ContainerInterface $container): SettingsFields {
-        return new SettingsFields();
+        $state = $container->get('onboarding.state');
+        /**
+         * @var State $state
+         */
+        if ($state->currentState() === State::STATE_START) {
+            return new StartSettings();
+        }
+        if ($state->currentState() === State::STATE_PROGRESSIVE) {
+            return new ProgressiveSettings();
+        }
+        return new FullyOnboardedSettings();
     },
     'wcgateway.order-processor' => static function (ContainerInterface $container): OrderProcessor {
 

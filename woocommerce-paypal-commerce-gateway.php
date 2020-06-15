@@ -14,6 +14,7 @@ declare( strict_types = 1 );
  * Network:     TODO: Specify value 'true' or remove line
  */
 
+
 namespace Inpsyde\PayPalCommerce;
 
 use Dhii\Container\CachingContainer;
@@ -36,6 +37,9 @@ use Inpsyde\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
         if (!$initialized) {
             $modules = [new PluginModule()];
             foreach (glob(plugin_dir_path(__FILE__).'modules/*/module.php') as $moduleFile) {
+                $modules[] = (@require $moduleFile)();
+            }
+            foreach (glob(plugin_dir_path(__FILE__).'modules.local/*/module.php') as $moduleFile) {
                 $modules[] = (@require $moduleFile)();
             }
             $providers = [];

@@ -10,6 +10,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
+use Inpsyde\PayPalCommerce\Onboarding\Render\OnboardingRenderer;
 use Inpsyde\PayPalCommerce\Session\SessionHandler;
 use Inpsyde\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use Inpsyde\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
@@ -30,18 +31,21 @@ class WcGateway extends WcGatewayBase
     private $authorizedPayments;
     private $notice;
     private $orderProcessor;
+    private $onboardingRenderer;
 
     public function __construct(
         SettingsFields $settingsFields,
         OrderProcessor $orderProcessor,
         AuthorizedPaymentsProcessor $authorizedPayments,
-        AuthorizeOrderActionNotice $notice
+        AuthorizeOrderActionNotice $notice,
+        OnboardingRenderer $onboardingRenderer
     ) {
 
         $this->orderProcessor = $orderProcessor;
         $this->authorizedPayments = $authorizedPayments;
         $this->notice = $notice;
         $this->settingsFields = $settingsFields;
+        $this->onboardingRenderer = $onboardingRenderer;
 
         $this->method_title = __('PayPal Payments', 'woocommerce-paypal-gateway');
         $this->method_description = __(
@@ -131,5 +135,9 @@ class WcGateway extends WcGatewayBase
         ];
         $displayMessage = (isset($messageMapping[$status])) ? $messageMapping[$status] : AuthorizeOrderActionNotice::FAILED;
         $this->notice->displayMessage($displayMessage);
+    }
+
+    public function generate_ppcp_onboarding_html($a, $b) {
+        $this->onboardingRenderer->render();
     }
 }

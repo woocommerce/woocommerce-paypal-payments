@@ -18,16 +18,13 @@
         },
         {
             "type": "path",
-            "url": "modules.local/ppcp-button"
-        },
-        {
-            "type": "path",
-            "url": "modules.local/ppcp-wc-gateway"
+            "url": "modules.local/ppcp-onboarding"
         }
     ],
     "require": {
         "dhii/module-interface": "0.2.x-dev",
         "psr/container": "^1.0",
+        "inpsyde/ppcp-onboarding": "dev-master",
         "inpsyde/ppcp-button": "dev-master",
         "inpsyde/ppcp-wc-gateway": "dev-master",
         "oomphinc/composer-installers-extender": "^1.1",
@@ -42,7 +39,9 @@
     },
     "autoload": {
         "psr-4": {
-            "Inpsyde\\PayPalCommerce\\": "src/"
+            "Inpsyde\\PayPalCommerce\\": "src/",
+            "Inpsyde\\PayPalCommerce\\Button\\": "modules.local/ppcp-button/src/",
+            "Inpsyde\\PayPalCommerce\\WcGateway\\": "modules.local/ppcp-wc-gateway/src/"
         }
     },
     "autoload-dev": {

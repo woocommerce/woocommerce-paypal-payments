@@ -68,35 +68,54 @@ class SmartButton implements SmartButtonInterface
                 esc_html__('Pay with Card', 'woocommerce-paypal-commerce-gateway')
             );
         };
-        if (is_cart() && wc_string_to_bool($this->settings->get('button_cart_enabled'))) {
+        if (
+            is_cart()
+            && $this->settings->has('button_cart_enabled')
+            && wc_string_to_bool($this->settings->get('button_cart_enabled'))
+        ) {
             add_action(
                 'woocommerce_proceed_to_checkout',
                 $buttonRenderer,
                 20
             );
         }
-        if (is_cart() && wc_string_to_bool($this->settings->get('dcc_cart_enabled'))) {
+        if (
+            is_cart()
+            && $this->settings->has('dcc_cart_enabled')
+            && wc_string_to_bool($this->settings->get('dcc_cart_enabled'))
+        ) {
             add_action(
                 'woocommerce_proceed_to_checkout',
                 $dccRenderer,
                 20
             );
         }
-        if (is_product() && wc_string_to_bool($this->settings->get('button_single_product_enabled'))) {
+        if (
+            is_product()
+            && $this->settings->has('button_single_product_enabled')
+            && wc_string_to_bool($this->settings->get('button_single_product_enabled'))
+        ) {
             add_action(
                 'woocommerce_single_product_summary',
                 $buttonRenderer,
                 31
             );
         }
-        if (is_product() && wc_string_to_bool($this->settings->get('dcc_single_product_enabled'))) {
+        if (
+            is_product()
+            && $this->settings->has('dcc_single_product_enabled')
+            && wc_string_to_bool($this->settings->get('dcc_single_product_enabled'))
+        ) {
             add_action(
                 'woocommerce_single_product_summary',
                 $dccRenderer,
                 31
             );
         }
-        if (wc_string_to_bool($this->settings->get('button_mini_cart_enabled'))) {
+        if (
+            $this->settings->has('button_mini_cart_enabled')
+            && wc_string_to_bool($this->settings->get('button_mini_cart_enabled'))
+        ) {
             add_action(
                 'woocommerce_widget_shopping_cart_after_buttons',
                 static function () {
@@ -105,7 +124,10 @@ class SmartButton implements SmartButtonInterface
                 30
             );
         }
-        if (wc_string_to_bool($this->settings->get('dcc_mini_cart_enabled'))) {
+        if (
+            $this->settings->has('dcc_mini_cart_enabled')
+            && wc_string_to_bool($this->settings->get('dcc_mini_cart_enabled'))
+        ) {
             add_action(
                 'woocommerce_widget_shopping_cart_after_buttons',
                 static function () use ($dccRenderer) {
@@ -119,7 +141,11 @@ class SmartButton implements SmartButtonInterface
             $buttonRenderer,
             10
         );
-        if (wc_string_to_bool($this->settings->get('dcc_checkout_enabled'))) {
+        if (
+
+            $this->settings->has('dcc_checkout_enabled')
+            && wc_string_to_bool($this->settings->get('dcc_checkout_enabled'))
+        ) {
             add_action(
                 'woocommerce_review_order_after_submit',
                 $dccRenderer,
@@ -132,7 +158,7 @@ class SmartButton implements SmartButtonInterface
     public function enqueue(): bool
     {
         wp_enqueue_script(
-            'paypal-smart-button',
+            'ppcp-smart-button',
             $this->moduleUrl . '/assets/js/button.js',
             ['jquery'],
             1,
@@ -140,7 +166,7 @@ class SmartButton implements SmartButtonInterface
         );
 
         wp_localize_script(
-            'paypal-smart-button',
+            'ppcp-smart-button',
             'PayPalCommerceGateway',
             $this->localizeScript()
         );
@@ -149,6 +175,7 @@ class SmartButton implements SmartButtonInterface
 
     private function localizeScript(): array
     {
+        the_post_thumbnail();
         $localize = [
             'script_attributes' => $this->attributes(),
             'redirect' => wc_get_checkout_url(),
@@ -175,8 +202,8 @@ class SmartButton implements SmartButtonInterface
                 'url' => $this->url(),
                 'style' => [
                     'layout' => 'vertical',
-                    'color' => $this->settings->get('button_color'),
-                    'shape' => $this->settings->get('button_shape'),
+                    'color' => ($this->settings->has('button_color')) ? $this->settings->get('button_color') : null,
+                    'shape' => ($this->settings->has('button_shape')) ? $this->settings->get('button_shape') : null,
                     'label' => 'paypal',
                 ],
             ],
@@ -217,7 +244,7 @@ class SmartButton implements SmartButtonInterface
             //ToDo: Probably only needed, when DCC
             'vault' => $this->dccIsEnabled() ? 'false' : 'false',
             'commit' => is_checkout() ? 'true' : 'false',
-            'intent' => $this->settings->get('intent'),
+            'intent' => ($this->settings->has('intent')) ? $this->settings->get('intent') : 'commit',
         ];
         if (defined('WP_DEBUG') && \WP_DEBUG && WC()->customer) {
             $params['buyer-country'] = WC()->customer->get_billing_country();
@@ -226,7 +253,7 @@ class SmartButton implements SmartButtonInterface
         if ($payee->merchantId()) {
             $params['merchant-id'] = $payee->merchantId();
         }
-        $disableFunding = $this->settings->get('disable_funding');
+        $disableFunding = $this->settings->has('disable_funding') ? $this->settings->get('disable_funding') : [];
         if (is_array($disableFunding) && count($disableFunding)) {
             $params['disable-funding'] = implode(',', $disableFunding);
         }
@@ -273,10 +300,17 @@ class SmartButton implements SmartButtonInterface
 
     private function dccIsEnabled() : bool
     {
-        return
-            wc_string_to_bool($this->settings->get('dcc_cart_enabled'))
-            || wc_string_to_bool($this->settings->get('dcc_mini_cart_enabled'))
-            || wc_string_to_bool($this->settings->get('dcc_checkout_enabled'))
-            || wc_string_to_bool($this->settings->get('dcc_single_product_enabled'));
+        $keys = [
+            'dcc_cart_enabled',
+            'dcc_mini_cart_enabled',
+            'dcc_checkout_enabled',
+            'dcc_single_product_enabled',
+        ];
+        foreach ($keys as $key) {
+            if ($this->settings->has($key) && wc_string_to_bool($this->settings->get($key))) {
+                return true;
+            }
+        }
+        return false;
     }
 }

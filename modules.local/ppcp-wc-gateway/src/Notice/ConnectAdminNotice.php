@@ -5,14 +5,18 @@ declare(strict_types=1);
 namespace Inpsyde\PayPalCommerce\WcGateway\Notice;
 
 use Inpsyde\PayPalCommerce\AdminNotices\Entity\Message;
+use Inpsyde\PayPalCommerce\Onboarding\State;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
+use Psr\Container\ContainerInterface;
 
 class ConnectAdminNotice
 {
+    private $state;
     private $settings;
 
-    public function __construct(Settings $settings)
+    public function __construct(State $state, ContainerInterface $settings)
     {
+        $this->state = $state;
         $this->settings = $settings;
     }
 
@@ -28,7 +32,7 @@ class ConnectAdminNotice
                 '%1$s is almost ready. To get started, <a href="%2$s">connect your account</a>.',
                 'woocommerce-paypal-commerce-gateway'
             ),
-            $this->settings->get('title'),
+            $this->settings->has('title') ? $this->settings->get('title') : '',
             // TODO: find a better way to get the url
             admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway')
         );
@@ -38,6 +42,6 @@ class ConnectAdminNotice
     protected function shouldDisplay(): bool
     {
         // TODO: decide on what condition to display
-        return !wc_string_to_bool($this->settings->get('enabled'));
+        return $this->state->currentState() < State::STATE_PROGRESSIVE;
     }
 }

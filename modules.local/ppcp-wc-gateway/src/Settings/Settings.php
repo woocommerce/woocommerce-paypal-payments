@@ -11,12 +11,10 @@ use Psr\Container\ContainerInterface;
 class Settings implements ContainerInterface
 {
     private $gateway;
-    private $formFields;
 
-    public function __construct(WcGatewayInterface $gateway, SettingsFields $formFields)
+    public function __construct(WcGatewayInterface $gateway)
     {
         $this->gateway = $gateway;
-        $this->formFields = $formFields;
     }
 
     // phpcs:disable Inpsyde.CodeQuality.ReturnTypeDeclaration.NoReturnType
@@ -31,6 +29,6 @@ class Settings implements ContainerInterface
 
     public function has($id)
     {
-        return array_key_exists($id, $this->formFields->fields());
+        return !!$this->gateway->get_option($id);
     }
 }

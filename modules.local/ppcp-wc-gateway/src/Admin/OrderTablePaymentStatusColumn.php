@@ -21,7 +21,7 @@ class OrderTablePaymentStatusColumn
 
     public function register(array $columns): array
     {
-        if ($this->settings->get('intent') !== self::INTENT) {
+        if (! $this->settings->has('intent') || $this->settings->get('intent') !== self::INTENT) {
             return $columns;
         }
 
@@ -41,7 +41,7 @@ class OrderTablePaymentStatusColumn
 
     public function render(string $column, int $wcOrderId)
     {
-        if ($this->settings->get('intent') !== self::INTENT) {
+        if (! $this->settings->has('intent') || $this->settings->get('intent') !== self::INTENT) {
             return;
         }
 
