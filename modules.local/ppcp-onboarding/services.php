@@ -50,6 +50,13 @@ return [
         return 'http://connect-woo.wpcust.com';
 
     },
+    'api.paypal-host' => function(ContainerInterface $container) : string {
+        $environment = $container->get('onboarding.environment');
+        if ($environment->currentEnvironmentIs(Environment::SANDBOX)) {
+            return 'https://api.sandbox.paypal.com';
+        }
+        return 'https://api.paypal.com';
+    },
 
     'api.bearer' => static function (ContainerInterface $container): Bearer {
 
