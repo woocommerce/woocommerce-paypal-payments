@@ -4,13 +4,12 @@ declare(strict_types=1);
 namespace Inpsyde\PayPalCommerce\WcGateway\Settings;
 
 
-class FullyOnboardedSettings implements SettingsFields
+class FullyOnboardedSettings extends StartSettings implements SettingsFields
 {
     public function fields(): array
     {
         return array_merge(
             $this->gateway(),
-            $this->account(),
             $this->buttons(),
             $this->creditCards(),
         );
@@ -18,36 +17,9 @@ class FullyOnboardedSettings implements SettingsFields
 
     private function gateway(): array
     {
-        return [
-            'enabled' => [
-                'title' => __('Enable/Disable', 'woocommerce-paypal-gateway'),
-                'type' => 'checkbox',
-                'label' => __('Enable PayPal Payments', 'woocommerce-paypal-gateway'),
-                'default' => 'yes',
-            ],
-            'title' => [
-                'title' => __('Title', 'woocommerce-paypal-gateway'),
-                'type' => 'text',
-                'description' => __(
-                    'This controls the title which the user sees during checkout.',
-                    'woocommerce-paypal-gateway'
-                ),
-                'default' => __('PayPal', 'woocommerce-paypal-gateway'),
-                'desc_tip' => true,
-            ],
-            'description' => [
-                'title' => __('Description', 'woocommerce-paypal-gateway'),
-                'type' => 'text',
-                'desc_tip' => true,
-                'description' => __(
-                    'This controls the description which the user sees during checkout.',
-                    'woocommerce-paypal-gateway'
-                ),
-                'default' => __(
-                    'Pay via PayPal; you can pay with your credit card if you don\'t have a PayPal account.',
-                    'woocommerce-paypal-gateway'
-                ),
-            ],
+        return array_merge(
+            parent::fields(),
+            [
             'intent' => [
                 'title' => __('Intent', 'woocommerce-paypal-gateway'),
                 'type' => 'select',
@@ -63,27 +35,8 @@ class FullyOnboardedSettings implements SettingsFields
                     'authorize' => __('Authorize', 'woocommerce-paypal-gateway'),
                 ],
             ],
-        ];
-    }
-
-    private function account(): array
-    {
-        return [
-            'account_settings' => [
-                'title' => __('Account Settings', 'woocommerce-paypal-gateway'),
-                'type' => 'title',
-                'description' => '',
-            ],
-            'sandbox_on' => [
-                'title' => __('Enable Sandbox', 'woocommerce-paypal-gateway'),
-                'type' => 'checkbox',
-                'label' => __(
-                    'For testing your integration, you can enable the sandbox.',
-                    'woocommerce-paypal-gateway'
-                ),
-                'default' => 'yes',
-            ],
-        ];
+        ]
+        );
     }
 
     private function buttons(): array
