@@ -24,11 +24,21 @@ class OnboardingRenderer
         );
         ?>
         <script>
-            function onboardedCallback(authCode, sharedId) {
-                onboardingCallback(authCode, sharedId);
+            function onboardingCallback(authCode, sharedId) => {
+                fetch(PayPalCommerceGatewayOnboarding.endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'content-type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        authCode: authCode,
+                        sharedId: sharedId,
+                        nonce: PayPalCommerceGatewayOnboarding.nonce
+                    })
+                });
             }
         </script>
-        <a target="_blank" data-paypal-onboard-complete="onboardedCallback" href="<?php echo $url; ?>" data-paypal-button="true">Sign up for PayPal</a>
+        <a target="_blank" data-paypal-onboard-complete="onboardingCallback" href="<?php echo $url; ?>" data-paypal-button="true">Sign up for PayPal</a>
         <script id="paypal-js" src="https://www.sandbox.paypal.com/webapps/merchantboarding/js/lib/lightbox/partner.js"></script>
         <?php
     }
