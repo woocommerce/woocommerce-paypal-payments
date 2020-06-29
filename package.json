@@ -1,0 +1,21 @@
+{
+  "name": "izettle-woocommerce",
+  "version": "0.1.0",
+  "description": "iZettle WooCommerce",
+  "repository": "https://github.com/inpsyde/izettle-woocommerce",
+  "license": "GPL-2.0",
+  "author": "Inpsyde GmbH",
+  "scripts": {
+    "install:assets:ppcp-button": "cd modules.local/ppcp-button && yarn install",
+    "install:assets:ppcp-onboarding" : "cd modules.local/ppcp-onboarding && yarn install",
+    "install:assets": "yarn run install:assets:ppcp-button && yarn run install:assets:ppcp-onboarding",
+    "build:assets:ppcp-button": "cd modules.local/ppcp-button && yarn run build",
+    "build:assets:ppcp-onboarding" : "cd modules.local/ppcp-onboarding && yarn run build",
+    "build:assets": "yarn run build:assets:ppcp-button && yarn run build:assets:ppcp-onboarding",
+    "build": "yarn run install:assets && yarn run build:assets"
+  },
+  "dependencies": {
+  },
+  "devDependencies": {
+  }
+}

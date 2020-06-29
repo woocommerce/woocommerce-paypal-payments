@@ -66,7 +66,7 @@ return [
 
     'onboarding.url' => static function (ContainerInterface $container): string {
         return plugins_url(
-            '/modules/ppcp-onboarding/',
+            '/modules.local/ppcp-onboarding/',
             dirname(__FILE__, 3) . '/woocommerce-paypal-commerce-gateway.php'
         );
     },

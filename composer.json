@@ -15,18 +15,14 @@
         {
             "type": "composer",
             "url": "https://repo.packagist.com/inpsyde/ppc-platform/"
-        },
-        {
-            "type": "path",
-            "url": "modules.local/ppcp-onboarding"
         }
     ],
     "require": {
         "dhii/module-interface": "0.2.x-dev",
         "psr/container": "^1.0",
-        "inpsyde/ppcp-onboarding": "dev-master",
-        "inpsyde/ppcp-button": "dev-master",
-        "inpsyde/ppcp-wc-gateway": "dev-master",
+        "inpsyde/ppcp-admin-notices": "dev-master",
+        "inpsyde/ppcp-api-client": "dev-master",
+        "inpsyde/ppcp-session": "dev-master",
         "oomphinc/composer-installers-extender": "^1.1",
         "container-interop/service-provider": "^0.4.0",
         "dhii/containers": "dev-develop",
@@ -41,7 +37,8 @@
         "psr-4": {
             "Inpsyde\\PayPalCommerce\\": "src/",
             "Inpsyde\\PayPalCommerce\\Button\\": "modules.local/ppcp-button/src/",
-            "Inpsyde\\PayPalCommerce\\WcGateway\\": "modules.local/ppcp-wc-gateway/src/"
+            "Inpsyde\\PayPalCommerce\\WcGateway\\": "modules.local/ppcp-wc-gateway/src/",
+            "Inpsyde\\PayPalCommerce\\Onboarding\\": "modules.local/ppcp-onboarding/src/"
         }
     },
     "autoload-dev": {

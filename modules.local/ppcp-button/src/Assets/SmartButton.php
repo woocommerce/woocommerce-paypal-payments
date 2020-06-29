@@ -175,7 +175,6 @@ class SmartButton implements SmartButtonInterface
 
     private function localizeScript(): array
     {
-        the_post_thumbnail();
         $localize = [
             'script_attributes' => $this->attributes(),
             'redirect' => wc_get_checkout_url(),
