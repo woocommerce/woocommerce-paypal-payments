@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Inpsyde\PayPalCommerce\WcGateway\Gateway;
 
 
+use Inpsyde\PayPalCommerce\Onboarding\Render\OnboardingRenderer;
 use Inpsyde\PayPalCommerce\TestCase;
 use Inpsyde\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use Inpsyde\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
@@ -27,11 +28,13 @@ class WcGatewayTest extends TestCase
         $orderProcessor = Mockery::mock(OrderProcessor::class);
         $authorizedPaymentsProcessor = Mockery::mock(AuthorizedPaymentsProcessor::class);
         $authorizedOrderActionNotice = Mockery::mock(AuthorizeOrderActionNotice::class);
+        $onboardingRenderer = Mockery::mock(OnboardingRenderer::class);
         $testee = new WcGateway(
             $settingsFields,
             $orderProcessor,
             $authorizedPaymentsProcessor,
-            $authorizedOrderActionNotice
+            $authorizedOrderActionNotice,
+            $onboardingRenderer
         );
         $this->assertEquals($testee->form_fields, $expectedFields);
     }
@@ -55,11 +58,13 @@ class WcGatewayTest extends TestCase
             );
         $authorizedPaymentsProcessor = Mockery::mock(AuthorizedPaymentsProcessor::class);
         $authorizedOrderActionNotice = Mockery::mock(AuthorizeOrderActionNotice::class);
+        $onboardingRenderer = Mockery::mock(OnboardingRenderer::class);
         $testee = new WcGateway(
             $settingsFields,
             $orderProcessor,
             $authorizedPaymentsProcessor,
-            $authorizedOrderActionNotice
+            $authorizedOrderActionNotice,
+            $onboardingRenderer
         );
 
         expect('wc_get_order')
@@ -82,11 +87,13 @@ class WcGatewayTest extends TestCase
         $orderProcessor = Mockery::mock(OrderProcessor::class);
         $authorizedPaymentsProcessor = Mockery::mock(AuthorizedPaymentsProcessor::class);
         $authorizedOrderActionNotice = Mockery::mock(AuthorizeOrderActionNotice::class);
+        $onboardingRenderer = Mockery::mock(OnboardingRenderer::class);
         $testee = new WcGateway(
             $settingsFields,
             $orderProcessor,
             $authorizedPaymentsProcessor,
-            $authorizedOrderActionNotice
+            $authorizedOrderActionNotice,
+            $onboardingRenderer
         );
 
         expect('wc_get_order')
@@ -115,11 +122,13 @@ class WcGatewayTest extends TestCase
             ->andReturn($lastError);
         $authorizedPaymentsProcessor = Mockery::mock(AuthorizedPaymentsProcessor::class);
         $authorizedOrderActionNotice = Mockery::mock(AuthorizeOrderActionNotice::class);
+        $onboardingRenderer = Mockery::mock(OnboardingRenderer::class);
         $testee = new WcGateway(
             $settingsFields,
             $orderProcessor,
             $authorizedPaymentsProcessor,
-            $authorizedOrderActionNotice
+            $authorizedOrderActionNotice,
+            $onboardingRenderer
         );
 
         expect('wc_get_order')
@@ -162,11 +171,14 @@ class WcGatewayTest extends TestCase
         $authorizedOrderActionNotice
             ->expects('displayMessage')
             ->with(AuthorizeOrderActionNotice::SUCCESS);
+
+        $onboardingRenderer = Mockery::mock(OnboardingRenderer::class);
         $testee = new WcGateway(
             $settingsFields,
             $orderProcessor,
             $authorizedPaymentsProcessor,
-            $authorizedOrderActionNotice
+            $authorizedOrderActionNotice,
+            $onboardingRenderer
         );
 
         $this->assertTrue($testee->captureAuthorizedPayment($wcOrder));
@@ -205,11 +217,13 @@ class WcGatewayTest extends TestCase
         $authorizedOrderActionNotice
             ->expects('displayMessage')
             ->with(AuthorizeOrderActionNotice::ALREADY_CAPTURED);
+        $onboardingRenderer = Mockery::mock(OnboardingRenderer::class);
         $testee = new WcGateway(
             $settingsFields,
             $orderProcessor,
             $authorizedPaymentsProcessor,
-            $authorizedOrderActionNotice
+            $authorizedOrderActionNotice,
+            $onboardingRenderer
         );
 
         $this->assertTrue($testee->captureAuthorizedPayment($wcOrder));
@@ -241,11 +255,13 @@ class WcGatewayTest extends TestCase
         $authorizedOrderActionNotice
             ->expects('displayMessage')
             ->with($expectedMessage);
+        $onboardingRenderer = Mockery::mock(OnboardingRenderer::class);
         $testee = new WcGateway(
             $settingsFields,
             $orderProcessor,
             $authorizedPaymentsProcessor,
-            $authorizedOrderActionNotice
+            $authorizedOrderActionNotice,
+            $onboardingRenderer
         );
 
         $this->assertFalse($testee->captureAuthorizedPayment($wcOrder));
