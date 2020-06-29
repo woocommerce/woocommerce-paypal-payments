@@ -1,8 +1,8 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\WcGateway\Settings;
-
 
 class FullyOnboardedSettings extends StartSettings implements SettingsFields
 {
@@ -35,7 +35,7 @@ class FullyOnboardedSettings extends StartSettings implements SettingsFields
                     'authorize' => __('Authorize', 'woocommerce-paypal-gateway'),
                 ],
             ],
-        ]
+            ]
         );
     }
 
@@ -127,7 +127,9 @@ class FullyOnboardedSettings extends StartSettings implements SettingsFields
         ];
     }
 
-    private function creditCards() : array {
+    private function creditCards(): array
+    {
+
         return [
 
             'credit_card_settings' => [

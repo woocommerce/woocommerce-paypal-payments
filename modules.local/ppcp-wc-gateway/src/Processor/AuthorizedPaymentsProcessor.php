@@ -63,7 +63,9 @@ class AuthorizedPaymentsProcessor
         return true;
     }
 
-    public function lastStatus() : string {
+    public function lastStatus(): string
+    {
+
         return $this->lastStatus;
     }
 

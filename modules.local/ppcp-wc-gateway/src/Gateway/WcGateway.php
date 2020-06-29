@@ -113,7 +113,7 @@ class WcGateway extends WcGatewayBase
         if ($this->authorizedPayments->lastStatus() === AuthorizedPaymentsProcessor::ALREADY_CAPTURED) {
             if ($wcOrder->get_status() === 'on-hold') {
                 $wcOrder->add_order_note(
-                    __('Payment successfully captured.','woocommerce-paypal-gateway')
+                    __('Payment successfully captured.', 'woocommerce-paypal-gateway')
                 );
                 $wcOrder->set_status('processing');
             }
@@ -125,7 +125,8 @@ class WcGateway extends WcGatewayBase
         return false;
     }
 
-    private function renderAuthorizationMessageForStatus(string $status) {
+    private function renderAuthorizationMessageForStatus(string $status)
+    {
 
         $messageMapping = [
             AuthorizedPaymentsProcessor::SUCCESSFUL => AuthorizeOrderActionNotice::SUCCESS,
@@ -137,7 +138,9 @@ class WcGateway extends WcGatewayBase
         $this->notice->displayMessage($displayMessage);
     }
 
-    public function generate_ppcp_onboarding_html($a, $b) {
+    public function generate_ppcp_onboarding_html($a, $b)
+    {
+
         $this->onboardingRenderer->render();
     }
 }

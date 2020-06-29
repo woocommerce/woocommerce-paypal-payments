@@ -1,13 +1,13 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\WcGateway\Settings;
 
-
 trait SettingsTrait
 {
 
-    private function defaultFields() : array
+    private function defaultFields(): array
     {
         return [
             'enabled' => [

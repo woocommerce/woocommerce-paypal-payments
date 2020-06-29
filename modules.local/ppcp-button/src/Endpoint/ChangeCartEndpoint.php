@@ -148,7 +148,12 @@ class ChangeCartEndpoint implements EndpointInterface
         $variationId = $this->productDataStore->find_matching_product_variation($product, $variations);
 
         //ToDo: Check stock status for variation.
-        return false !== $this->cart->add_to_cart($product->get_id(), $quantity, $variationId, $variations);
+        return false !== $this->cart->add_to_cart(
+            $product->get_id(),
+            $quantity,
+            $variationId,
+            $variations
+        );
     }
 
     private function generatePurchaseUnits(): array

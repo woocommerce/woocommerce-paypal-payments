@@ -47,7 +47,7 @@ class SmartButton implements SmartButtonInterface
             echo '<div id="ppc-button"></div>';
         };
 
-        $dccRenderer = static function ($id = null) {
+        $dccRenderer = static function (string $id = null) {
             if (!$id) {
                 $id = 'ppcp-hosted-fields';
             }
@@ -142,7 +142,6 @@ class SmartButton implements SmartButtonInterface
             10
         );
         if (
-
             $this->settings->has('dcc_checkout_enabled')
             && wc_string_to_bool($this->settings->get('dcc_checkout_enabled'))
         ) {
@@ -252,7 +251,8 @@ class SmartButton implements SmartButtonInterface
         if ($payee->merchantId()) {
             $params['merchant-id'] = $payee->merchantId();
         }
-        $disableFunding = $this->settings->has('disable_funding') ? $this->settings->get('disable_funding') : [];
+        $disableFunding = $this->settings->has('disable_funding') ?
+            $this->settings->get('disable_funding') : [];
         if (is_array($disableFunding) && count($disableFunding)) {
             $params['disable-funding'] = implode(',', $disableFunding);
         }
@@ -260,10 +260,9 @@ class SmartButton implements SmartButtonInterface
         return $smartButtonUrl;
     }
 
-    private function attributes() : array {
-        $attributes = [
-            //'data-partner-attribution-id' => '',
-        ];
+    private function attributes(): array
+    {
+        $attributes = [];
         try {
             $clientToken = $this->identityToken->generate();
             $attributes['data-client-token'] = $clientToken->token();
@@ -273,7 +272,7 @@ class SmartButton implements SmartButtonInterface
         }
     }
 
-    private function components() : array
+    private function components(): array
     {
         $components = ['buttons'];
         if ($this->dccIsEnabled()) {
@@ -297,7 +296,7 @@ class SmartButton implements SmartButtonInterface
         return $context;
     }
 
-    private function dccIsEnabled() : bool
+    private function dccIsEnabled(): bool
     {
         $keys = [
             'dcc_cart_enabled',

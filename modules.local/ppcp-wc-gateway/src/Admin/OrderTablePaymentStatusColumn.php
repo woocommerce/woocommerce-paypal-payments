@@ -57,9 +57,10 @@ class OrderTablePaymentStatusColumn
 
         if ($this->isCaptured($wcOrder)) {
             $this->renderCompletedStatus();
-        } else {
-            $this->renderIncompletedStatus();
+            return;
         }
+
+        $this->renderIncompletedStatus();
     }
 
     private function renderForOrder(\WC_Order $order): bool
