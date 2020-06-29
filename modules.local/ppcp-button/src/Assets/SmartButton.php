@@ -243,7 +243,7 @@ class SmartButton implements SmartButtonInterface
             //ToDo: Probably only needed, when DCC
             'vault' => $this->dccIsEnabled() ? 'false' : 'false',
             'commit' => is_checkout() ? 'true' : 'false',
-            'intent' => ($this->settings->has('intent')) ? $this->settings->get('intent') : 'commit',
+            'intent' => ($this->settings->has('intent')) ? $this->settings->get('intent') : 'capture',
         ];
         if (defined('WP_DEBUG') && \WP_DEBUG && WC()->customer) {
             $params['buyer-country'] = WC()->customer->get_billing_country();
