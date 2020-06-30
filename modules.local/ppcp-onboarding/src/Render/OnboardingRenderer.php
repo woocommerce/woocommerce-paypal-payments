@@ -23,23 +23,41 @@ class OnboardingRenderer
             $this->partnerReferrals->signupLink()
         );
         ?>
-        <script>
-            function onboardingCallback(authCode, sharedId) => {
-                fetch(PayPalCommerceGatewayOnboarding.endpoint, {
-                    method: 'POST',
-                    headers: {
-                        'content-type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        authCode: authCode,
-                        sharedId: sharedId,
-                        nonce: PayPalCommerceGatewayOnboarding.nonce
-                    })
-                });
-            }
-        </script>
-        <a target="_blank" data-paypal-onboard-complete="onboardingCallback" href="<?php echo $url; ?>" data-paypal-button="true">Sign up for PayPal</a>
-        <script id="paypal-js" src="https://www.sandbox.paypal.com/webapps/merchantboarding/js/lib/lightbox/partner.js"></script>
+        <tr valign="top">
+            <th scope="row" class="titledesc">
+                <?php echo esc_html_e('Connect to PayPal', 'woocommerce-paypal-commerce-gateway'); ?>
+            </th>
+            <td class="forminp">
+                <script>
+                    function onboardingCallback(authCode, sharedId) {
+                        fetch(PayPalCommerceGatewayOnboarding.endpoint, {
+                            method: 'POST',
+                            headers: {
+                                'content-type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                authCode: authCode,
+                                sharedId: sharedId,
+                                nonce: PayPalCommerceGatewayOnboarding.nonce
+                            })
+                        });
+                    }
+                </script>
+                <a
+                    target="_blank"
+                    class="button-primary"
+                    data-paypal-onboard-complete="onboardingCallback"
+                    href="<?php echo esc_url($url); ?>"
+                    data-paypal-button="true"
+                ><?php
+                    esc_html_e('Sign up for PayPal', 'woocommerce-paypal-commerce-gateway');
+                    ?></a>
+                <script
+                    id="paypal-js"
+                    src="https://www.sandbox.paypal.com/webapps/merchantboarding/js/lib/lightbox/partner.js"
+                ></script>
+            </td>
+        </tr>
         <?php
     }
 }
