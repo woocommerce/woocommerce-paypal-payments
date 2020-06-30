@@ -12,7 +12,7 @@ class Settings implements ContainerInterface
 {
     private $gateway;
 
-    public function __construct(WcGatewayInterface $gateway)
+    public function __construct(\WC_Payment_Gateway $gateway)
     {
         $this->gateway = $gateway;
     }
@@ -30,5 +30,24 @@ class Settings implements ContainerInterface
     public function has($id)
     {
         return !!$this->gateway->get_option($id);
+    }
+
+
+
+    public function reset() : bool
+    {
+        $fieldsToReset = [
+            'enabled',
+            'intent',
+            'client_id',
+            'client_secret',
+            'merchant_email',
+        ];
+
+        foreach ($fieldsToReset as $key) {
+            $this->gateway->update_option($key, '');
+        }
+
+        return true;
     }
 }

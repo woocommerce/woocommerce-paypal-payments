@@ -9,4 +9,5 @@ namespace Inpsyde\PayPalCommerce\WcGateway\Settings;
 interface SettingsFields
 {
     public function fields(): array;
+
 }

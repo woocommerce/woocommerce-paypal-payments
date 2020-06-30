@@ -9,10 +9,18 @@ class ProgressiveSettings extends StartSettings implements SettingsFields
 
     public function fields(): array
     {
-        $fields = parent::fields();
-        $fields[] = [
-            'type' => 'ppcp_onboarding',
-        ];
-        return $fields;
+        return array_merge(
+            [
+                'onboarding' => [
+                    'type' => 'ppcp_onboarding',
+                ],
+            ],
+            parent::fields(),
+            [
+                'reset' => [
+                    'type' => 'ppcp_reset',
+                ],
+            ]
+        );
     }
 }

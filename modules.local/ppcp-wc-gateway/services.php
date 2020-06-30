@@ -9,6 +9,7 @@ use Inpsyde\PayPalCommerce\Onboarding\State;
 use Inpsyde\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
 use Inpsyde\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
 use Inpsyde\PayPalCommerce\WcGateway\Checkout\DisableGateways;
+use Inpsyde\PayPalCommerce\WcGateway\Gateway\ResetGateway;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGateway;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGatewayBase;
 use Inpsyde\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
@@ -25,18 +26,26 @@ return [
     'wcgateway.gateway.base' => static function (ContainerInterface $container): WcGatewayBase {
         return new WcGatewayBase();
     },
+    'wcgateway.gateway.reset' => static function (ContainerInterface $container): ResetGateway {
+        return new ResetGateway(
+            $container->get('wcgateway.settings')
+        );
+    },
     'wcgateway.gateway' => static function (ContainerInterface $container): WcGateway {
         $orderProcessor = $container->get('wcgateway.order-processor');
         $settingsFields = $container->get('wcgateway.settings.fields');
         $authorizedPayments = $container->get('wcgateway.processor.authorized-payments');
         $notice = $container->get('wcgateway.notice.authorize-order-action');
         $onboardingRender = $container->get('onboarding.render');
+        $reset = $container->get('wcgateway.gateway.reset');
+
         return new WcGateway(
             $settingsFields,
             $orderProcessor,
             $authorizedPayments,
             $notice,
-            $onboardingRender
+            $onboardingRender,
+            $reset
         );
     },
     'wcgateway.disabler' => static function (ContainerInterface $container): DisableGateways {

@@ -26,19 +26,20 @@ class WcGateway extends WcGatewayBase
     public const INTENT_META_KEY = '_ppcp_paypal_intent';
     public const ORDER_ID_META_KEY = '_ppcp_paypal_order_id';
 
-    private $isSandbox = true;
     private $settingsFields;
     private $authorizedPayments;
     private $notice;
     private $orderProcessor;
     private $onboardingRenderer;
+    private $resetGateway;
 
     public function __construct(
         SettingsFields $settingsFields,
         OrderProcessor $orderProcessor,
         AuthorizedPaymentsProcessor $authorizedPayments,
         AuthorizeOrderActionNotice $notice,
-        OnboardingRenderer $onboardingRenderer
+        OnboardingRenderer $onboardingRenderer,
+        ResetGateway $resetGateway
     ) {
 
         $this->orderProcessor = $orderProcessor;
@@ -46,6 +47,7 @@ class WcGateway extends WcGatewayBase
         $this->notice = $notice;
         $this->settingsFields = $settingsFields;
         $this->onboardingRenderer = $onboardingRenderer;
+        $this->resetGateway = $resetGateway;
 
         $this->method_title = __('PayPal Payments', 'woocommerce-paypal-gateway');
         $this->method_description = __(
@@ -138,9 +140,23 @@ class WcGateway extends WcGatewayBase
         $this->notice->displayMessage($displayMessage);
     }
 
-    public function generate_ppcp_onboarding_html($a, $b)
+    public function generate_ppcp_onboarding_html() : string
     {
 
+        ob_start();
         $this->onboardingRenderer->render();
+        $content = ob_get_contents();
+        ob_end_clean();
+        return $content;
+    }
+
+    public function generate_ppcp_reset_html() : string
+    {
+
+        ob_start();
+        $this->resetGateway->render();
+        $content = ob_get_contents();
+        ob_end_clean();
+        return $content;
     }
 }

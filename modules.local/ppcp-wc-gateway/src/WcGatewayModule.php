@@ -48,6 +48,14 @@ class WcGatewayModule implements ModuleInterface
             }
         );
 
+        add_action(
+            'admin_init',
+            function() use ($container) {
+                $resetGateway = $container->get('wcgateway.gateway.reset');
+                $resetGateway->listen();
+            }
+        );
+
         add_filter(
             Repository::NOTICES_FILTER,
             static function ($notices) use ($container): array {

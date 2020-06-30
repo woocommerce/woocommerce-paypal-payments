@@ -12,6 +12,11 @@ class FullyOnboardedSettings extends StartSettings implements SettingsFields
             $this->gateway(),
             $this->buttons(),
             $this->creditCards(),
+            [
+                [
+                    'type' => 'ppcp_reset',
+                ],
+            ]
         );
     }
 
