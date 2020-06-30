@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace Inpsyde\PayPalCommerce\Onboarding;
 
 
+use Psr\Container\ContainerInterface;
+
 class Environment
 {
 
@@ -16,9 +18,17 @@ class Environment
 
     public const OPTION_KEY = 'ppcp-env';
 
+    private $settings;
+    public function __construct(ContainerInterface $settings)
+    {
+        $this->settings = $settings;
+    }
+
     public function currentEnvironment() : string
     {
-        return (string) get_option(self::OPTION_KEY, self::PRODUCTION);
+        return (
+            $this->settings->has('sandbox_on') && wc_string_to_bool($this->settings->get('sandbox_on'))
+        ) ? self::SANDBOX : self::PRODUCTION;
     }
 
     public function currentEnvironmentIs(string $environment) : bool {

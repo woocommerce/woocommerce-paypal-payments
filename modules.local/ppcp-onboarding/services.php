@@ -87,7 +87,8 @@ return [
         return new State($environment, $settings);
     },
     'onboarding.environment' => function(ContainerInterface $container) : Environment {
-        return new Environment();
+        $settings = $container->get('wcgateway.settings');
+        return new Environment($settings);
     },
 
     'onboarding.assets' => function(ContainerInterface $container) : OnboardingAssets {
