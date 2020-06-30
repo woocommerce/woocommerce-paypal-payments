@@ -4,23 +4,33 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\WcGateway\Settings;
 
-class ProgressiveSettings extends StartSettings implements SettingsFields
+use Inpsyde\PayPalCommerce\Onboarding\Environment;
+
+class ProgressiveSettings implements SettingsFields
 {
+
+    use SettingsTrait;
+
+    public function __construct(Environment $environment)
+    {
+        $this->environment = $environment;
+    }
 
     public function fields(): array
     {
-        return array_merge(
+        $fields = array_merge(
             [
                 'onboarding' => [
                     'type' => 'ppcp_onboarding',
                 ],
             ],
-            parent::fields(),
+            $this->defaultFields(),
             [
                 'reset' => [
                     'type' => 'ppcp_reset',
                 ],
             ]
         );
+        return $fields;
     }
 }

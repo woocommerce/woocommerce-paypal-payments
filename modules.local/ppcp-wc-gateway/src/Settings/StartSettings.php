@@ -13,15 +13,14 @@ class StartSettings implements SettingsFields
         return array_merge(
             $this->defaultFields(),
             [
-                'merchant_email' => [
-                    'title' => __('PayPal Email', 'woocommerce-paypal-gateway'),
-                    'type' => 'email',
-                    'description' => __(
-                        'Please enter the email address with which you want to receive payments.',
+                'sandbox_on' => [
+                    'title' => __('Enable Sandbox', 'woocommerce-paypal-gateway'),
+                    'type' => 'checkbox',
+                    'label' => __(
+                        'For testing your integration, you can enable the sandbox.',
                         'woocommerce-paypal-gateway'
                     ),
-                    'default' => '',
-                    'desc_tip' => true,
+                    'default' => 'no',
                 ],
             ]
         );

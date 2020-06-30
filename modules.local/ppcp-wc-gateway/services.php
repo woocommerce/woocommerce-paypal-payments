@@ -73,10 +73,11 @@ return [
         if ($state->currentState() === State::STATE_START) {
             return new StartSettings();
         }
+        $environment = $container->get('onboarding.environment');
         if ($state->currentState() === State::STATE_PROGRESSIVE) {
-            return new ProgressiveSettings();
+            return new ProgressiveSettings($environment);
         }
-        return new FullyOnboardedSettings();
+        return new FullyOnboardedSettings($environment);
     },
     'wcgateway.order-processor' => static function (ContainerInterface $container): OrderProcessor {
 

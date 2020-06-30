@@ -4,8 +4,17 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\WcGateway\Settings;
 
+use Inpsyde\PayPalCommerce\Onboarding\Environment;
+
 class FullyOnboardedSettings extends StartSettings implements SettingsFields
 {
+
+    use SettingsTrait;
+    public function __construct(Environment $environment)
+    {
+        $this->environment = $environment;
+    }
+
     public function fields(): array
     {
         return array_merge(
@@ -23,7 +32,7 @@ class FullyOnboardedSettings extends StartSettings implements SettingsFields
     private function gateway(): array
     {
         return array_merge(
-            parent::fields(),
+            $this->defaultFields(),
             [
             'intent' => [
                 'title' => __('Intent', 'woocommerce-paypal-gateway'),

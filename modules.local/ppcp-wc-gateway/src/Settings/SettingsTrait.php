@@ -4,11 +4,23 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\WcGateway\Settings;
 
+use Inpsyde\PayPalCommerce\Onboarding\Environment;
+
 trait SettingsTrait
 {
+    /**
+     * @var Environment
+     */
+    private $environment;
 
     private function defaultFields(): array
     {
+        $isSandbox = ($this->environment) ? $this->environment->currentEnvironmentIs(Environment::SANDBOX) : false;
+        $sandbox = [
+            'type' => 'ppcp_info',
+            'title' => __('Sandbox'),
+            'text' => ($isSandbox) ? __('You are currently in the sandbox mode. Click Reset if you want to change your mode.', 'woocommerce-paypal-commerce-gateway') : __('You are in production mode. Click Reset if you want to change your mode.', 'woocommerce-paypal-commerce-gateway'),
+        ];
         return [
             'enabled' => [
                 'title' => __('Enable/Disable', 'woocommerce-paypal-gateway'),
@@ -45,15 +57,17 @@ trait SettingsTrait
                 'type' => 'title',
                 'description' => '',
             ],
-            'sandbox_on' => [
-                'title' => __('Enable Sandbox', 'woocommerce-paypal-gateway'),
-                'type' => 'checkbox',
-                'label' => __(
-                    'For testing your integration, you can enable the sandbox.',
+            'merchant_email' => [
+                'title' => __('PayPal Email', 'woocommerce-paypal-gateway'),
+                'type' => 'email',
+                'description' => __(
+                    'Please enter the email address with which you want to receive payments.',
                     'woocommerce-paypal-gateway'
                 ),
-                'default' => 'yes',
+                'default' => '',
+                'desc_tip' => true,
             ],
+            'sandbox_on' => $sandbox,
         ];
     }
 }

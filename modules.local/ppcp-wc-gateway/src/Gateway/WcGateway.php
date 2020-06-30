@@ -159,4 +159,23 @@ class WcGateway extends WcGatewayBase
         ob_end_clean();
         return $content;
     }
+
+    public function generate_ppcp_info_html($type, $data) : string
+    {
+
+        ob_start();
+        ?>
+		<tr valign="top">
+			<th scope="row" class="titledesc">
+				<?php echo wp_kses_post( $data['title'] ); ?>
+			</th>
+			<td class="forminp">
+                <?php echo wp_kses_post( $data['text'] ); ?>
+			</td>
+		</tr>
+        <?php
+        $content = ob_get_contents();
+        ob_end_clean();
+        return $content;
+    }
 }
