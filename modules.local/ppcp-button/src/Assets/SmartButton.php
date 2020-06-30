@@ -22,6 +22,7 @@ class SmartButton implements SmartButtonInterface
     private $payeeRepository;
     private $identityToken;
     private $payerFactory;
+    private $clientId;
 
     public function __construct(
         string $moduleUrl,
@@ -29,7 +30,8 @@ class SmartButton implements SmartButtonInterface
         Settings $settings,
         PayeeRepository $payeeRepository,
         IdentityToken $identityToken,
-        PayerFactory $payerFactory
+        PayerFactory $payerFactory,
+        string $clientId
     ) {
 
         $this->moduleUrl = $moduleUrl;
@@ -38,6 +40,7 @@ class SmartButton implements SmartButtonInterface
         $this->payeeRepository = $payeeRepository;
         $this->identityToken = $identityToken;
         $this->payerFactory = $payerFactory;
+        $this->clientId = $clientId;
     }
 
     public function renderWrapper(): bool
@@ -47,7 +50,11 @@ class SmartButton implements SmartButtonInterface
             echo '<div id="ppc-button"></div>';
         };
 
-        $dccRenderer = static function (string $id = null) {
+        $canRenderDcc = $this->settings->has('client_id') && $this->settings->get('client_id');
+        $dccRenderer = static function (string $id = null) use ($canRenderDcc) {
+            if (! $canRenderDcc) {
+                return;
+            }
             if (!$id) {
                 $id = 'ppcp-hosted-fields';
             }
@@ -231,8 +238,7 @@ class SmartButton implements SmartButtonInterface
     private function url(): string
     {
         $params = [
-            //ToDo: Add the correct client id, toggle when settings is set to sandbox
-            'client-id' => 'AQB97CzMsd58-It1vxbcDAGvMuXNCXRD9le_XUaMlHB_U7XsU9IiItBwGQOtZv9sEeD6xs2vlIrL4NiD',
+            'client-id' => $this->clientId,
             'currency' => get_woocommerce_currency(),
             'locale' => get_user_locale(),
             //'debug' => (defined('WP_DEBUG') && WP_DEBUG) ? 'true' : 'false',

@@ -13,9 +13,29 @@ use Inpsyde\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\RequestData;
 use Inpsyde\PayPalCommerce\Button\Exception\RuntimeException;
+use Inpsyde\PayPalCommerce\Onboarding\Environment;
 use Inpsyde\PayPalCommerce\Onboarding\State;
 
 return [
+    'button.client_id' => static function(ContainerInterface $container) : string {
+
+        $settings = $container->get('wcgateway.settings');
+        $clientId = $settings->has('client_id') ? $settings->get('client_id') : '';
+        if ($clientId) {
+            return $clientId;
+        }
+
+        $env = $container->get('onboarding.environment');
+        /**
+         * @var Environment $env
+         */
+
+        /**
+         * ToDo: Add production platform client Id.
+         */
+        return $env->currentEnvironmentIs(Environment::SANDBOX) ?
+            'AQB97CzMsd58-It1vxbcDAGvMuXNCXRD9le_XUaMlHB_U7XsU9IiItBwGQOtZv9sEeD6xs2vlIrL4NiD' : '';
+    },
     'button.smart-button' => static function (ContainerInterface $container): SmartButtonInterface {
 
         $state = $container->get('onboarding.state');
@@ -32,13 +52,16 @@ return [
         $payeeRepository = $container->get('api.repository.payee');
         $identityToken = $container->get('api.endpoint.identity-token');
         $payerFactory = $container->get('api.factory.payer');
+
+        $clientId = $container->get('button.client_id');
         return new SmartButton(
             $container->get('button.url'),
             $container->get('session.handler'),
             $settings,
             $payeeRepository,
             $identityToken,
-            $payerFactory
+            $payerFactory,
+            $clientId
         );
 
     },
