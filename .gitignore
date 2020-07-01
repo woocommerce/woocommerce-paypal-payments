@@ -5,3 +5,4 @@ node_modules
 phpunit.xml
 .phpunit.result.cache
 composer.lock
+modules.local/ppcp-button/assets/*
