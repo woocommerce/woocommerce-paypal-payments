@@ -29,10 +29,9 @@ class ConnectAdminNotice
         $message = sprintf(
             /* translators: %1$s the gateway name */
             __(
-                '%1$s is almost ready. To get started, <a href="%2$s">connect your account</a>.',
+                'PayPal Payments is almost ready. To get started, <a href="%2$s">connect your account</a>.',
                 'woocommerce-paypal-commerce-gateway'
             ),
-            $this->settings->has('title') ? $this->settings->get('title') : '',
             // TODO: find a better way to get the url
             admin_url('admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway')
         );
