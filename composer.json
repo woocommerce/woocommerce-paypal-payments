@@ -10,7 +10,7 @@
             "email": "hello@inpsyde.com",
             "role": "Company"
         }
-    ],,
+    ],
     "repositories": [
         {
             "type": "composer",
