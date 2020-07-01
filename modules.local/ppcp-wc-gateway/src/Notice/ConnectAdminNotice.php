@@ -29,7 +29,7 @@ class ConnectAdminNotice
         $message = sprintf(
             /* translators: %1$s the gateway name */
             __(
-                'PayPal Payments is almost ready. To get started, <a href="%2$s">connect your account</a>.',
+                'PayPal Payments is almost ready. To get started, <a href="%1$s">connect your account</a>.',
                 'woocommerce-paypal-commerce-gateway'
             ),
             // TODO: find a better way to get the url
