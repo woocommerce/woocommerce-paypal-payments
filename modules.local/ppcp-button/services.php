@@ -32,9 +32,10 @@ return [
 
         /**
          * ToDo: Add production platform client Id.
+         * ToDo: We do not correctly detect sandbox mode when we use the current sandbox field switch in Settings. Bugfix needs to be fixed asap.
          */
         return $env->currentEnvironmentIs(Environment::SANDBOX) ?
-            'AQB97CzMsd58-It1vxbcDAGvMuXNCXRD9le_XUaMlHB_U7XsU9IiItBwGQOtZv9sEeD6xs2vlIrL4NiD' : '';
+            'AQB97CzMsd58-It1vxbcDAGvMuXNCXRD9le_XUaMlHB_U7XsU9IiItBwGQOtZv9sEeD6xs2vlIrL4NiD' : 'AQB97CzMsd58-It1vxbcDAGvMuXNCXRD9le_XUaMlHB_U7XsU9IiItBwGQOtZv9sEeD6xs2vlIrL4NiD';
     },
     'button.smart-button' => static function (ContainerInterface $container): SmartButtonInterface {
 
