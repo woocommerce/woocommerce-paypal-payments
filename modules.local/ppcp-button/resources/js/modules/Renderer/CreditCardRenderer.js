@@ -8,10 +8,16 @@ class CreditCardRenderer {
 
         if (
             wrapper === null
-            || typeof paypal.HostedFields === 'undefined'
-            || ! paypal.HostedFields.isEligible()
             || document.querySelector(wrapper) === null
         ) {
+            return;
+        }
+        wrapper = document.querySelector(wrapper);
+        if (
+            typeof paypal.HostedFields === 'undefined'
+            || ! paypal.HostedFields.isEligible()
+        ) {
+            wrapper.parentNode.removeChild(wrapper);
             return;
         }
 
