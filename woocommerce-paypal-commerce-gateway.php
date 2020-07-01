@@ -25,11 +25,13 @@ use Dhii\Modular\Module\ModuleInterface;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 
 (function () {
-    if (!class_exists(CompositeCachingServiceProvider::class)
-        && file_exists(__DIR__.'/vendor/autoload.php')
-    ) {
-        include_once __DIR__.'/vendor/autoload.php';
-    }
+
+    /**
+     * ToDo: Check if we always need autoloader. This is a current
+     * workaround because of the wpcust setup
+     **/
+
+    include_once __DIR__.'/vendor/autoload.php';
 
     function init()
     {
