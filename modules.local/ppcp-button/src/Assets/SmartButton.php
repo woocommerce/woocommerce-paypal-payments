@@ -75,10 +75,12 @@ class SmartButton implements SmartButtonInterface
                 esc_html__('Pay with Card', 'woocommerce-paypal-commerce-gateway')
             );
         };
+
+        $notEnabledOnCart = $this->settings->has('button_cart_enabled') &&
+            !wc_string_to_bool($this->settings->get('button_cart_enabled'));
         if (
             is_cart()
-            && $this->settings->has('button_cart_enabled')
-            && wc_string_to_bool($this->settings->get('button_cart_enabled'))
+            && !$notEnabledOnCart
         ) {
             add_action(
                 'woocommerce_proceed_to_checkout',
@@ -97,10 +99,12 @@ class SmartButton implements SmartButtonInterface
                 20
             );
         }
+
+        $notEnabledOnProductPage = $this->settings->has('button_single_product_enabled') &&
+            !wc_string_to_bool($this->settings->get('button_single_product_enabled'));
         if (
             is_product()
-            && $this->settings->has('button_single_product_enabled')
-            && wc_string_to_bool($this->settings->get('button_single_product_enabled'))
+            && !$notEnabledOnProductPage
         ) {
             add_action(
                 'woocommerce_single_product_summary',
@@ -119,9 +123,10 @@ class SmartButton implements SmartButtonInterface
                 31
             );
         }
+        $notEnabledOnMiniCart = $this->settings->has('button_mini_cart_enabled') &&
+            !wc_string_to_bool($this->settings->get('button_mini_cart_enabled'));
         if (
-            $this->settings->has('button_mini_cart_enabled')
-            && wc_string_to_bool($this->settings->get('button_mini_cart_enabled'))
+            ! $notEnabledOnMiniCart
         ) {
             add_action(
                 'woocommerce_widget_shopping_cart_after_buttons',
