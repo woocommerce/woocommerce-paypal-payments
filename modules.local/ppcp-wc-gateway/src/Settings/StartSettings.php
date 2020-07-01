@@ -10,19 +10,26 @@ class StartSettings implements SettingsFields
 
     public function fields(): array
     {
-        return array_merge(
-            $this->defaultFields(),
-            [
-                'sandbox_on' => [
-                    'title' => __('Enable Sandbox', 'woocommerce-paypal-gateway'),
-                    'type' => 'checkbox',
-                    'label' => __(
-                        'For testing your integration, you can enable the sandbox.',
-                        'woocommerce-paypal-gateway'
-                    ),
-                    'default' => 'no',
-                ],
-            ]
-        );
+        return [
+            'merchant_email' => [
+                'title' => __('PayPal Email', 'woocommerce-paypal-gateway'),
+                'type' => 'email',
+                'description' => __(
+                    'Please enter the email address with which you want to receive payments.',
+                    'woocommerce-paypal-gateway'
+                ),
+                'default' => '',
+                'desc_tip' => true,
+            ],
+            'sandbox_on' => [
+                'title' => __('Enable Sandbox', 'woocommerce-paypal-gateway'),
+                'type' => 'checkbox',
+                'label' => __(
+                    'For testing your integration, you can enable the sandbox.',
+                    'woocommerce-paypal-gateway'
+                ),
+                'default' => 'no',
+            ],
+        ];
     }
 }
