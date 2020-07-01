@@ -74,11 +74,13 @@ return [
         //$secret = 'EILGMYK_0iiSbja8hT-nCBGl0BvKxEB4riHgyEO7QWDeUzCJ5r42JUEvrI7gpGyw0Qww8AIXxSdCIAny';
 
         $host = $container->get('api.host');
+        $logger = $container->get('woocommerce.logger.woocommerce');
         return new PayPalBearer(
             $pool,
             $host,
             $key,
-            $secret
+            $secret,
+            $logger
         );
     },
     'onboarding.state' => function(ContainerInterface $container) : State {
