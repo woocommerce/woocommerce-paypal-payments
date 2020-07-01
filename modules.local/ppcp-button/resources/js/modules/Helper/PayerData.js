@@ -3,6 +3,8 @@ export const payerData = () => {
     if (! payer) {
         return null;
     }
+
+    const phone = (typeof payer.phone !== 'undefined') ? payer.phone.phone_number.national_number : '';
     return {
         email_address:(document.querySelector('#billing_email')) ? document.querySelector('#billing_email').value : payer.email_address,
         name : {
@@ -20,7 +22,7 @@ export const payerData = () => {
         phone : {
             phone_type:"HOME",
             phone_number:{
-                national_number : (document.querySelector('#billing_phone')) ? document.querySelector('#billing_phone').value : payer.phone.phone_number.national_number
+                national_number : (document.querySelector('#billing_phone')) ? document.querySelector('#billing_phone').value : phone
             }
         }
     };
