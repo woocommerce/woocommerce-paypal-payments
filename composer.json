@@ -10,11 +10,14 @@
             "email": "hello@inpsyde.com",
             "role": "Company"
         }
-    ],
+    ],,
     "repositories": [
         {
             "type": "composer",
             "url": "https://repo.packagist.com/inpsyde/ppc-platform/"
+        },
+        {
+            "packagist.org": false
         }
     ],
     "require": {
