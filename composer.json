@@ -29,7 +29,8 @@
         "oomphinc/composer-installers-extender": "^1.1",
         "container-interop/service-provider": "^0.4.0",
         "dhii/containers": "dev-develop",
-        "dhii/wp-containers": "^0.1.0@alpha"
+        "dhii/wp-containers": "^0.1.0@alpha",
+        "psr/log": "^1.1"
     },
     "require-dev": {
         "inpsyde/php-coding-standards": "^1",
@@ -41,7 +42,8 @@
             "Inpsyde\\PayPalCommerce\\": "src/",
             "Inpsyde\\PayPalCommerce\\Button\\": "modules.local/ppcp-button/src/",
             "Inpsyde\\PayPalCommerce\\WcGateway\\": "modules.local/ppcp-wc-gateway/src/",
-            "Inpsyde\\PayPalCommerce\\Onboarding\\": "modules.local/ppcp-onboarding/src/"
+            "Inpsyde\\PayPalCommerce\\Onboarding\\": "modules.local/ppcp-onboarding/src/",
+            "Inpsyde\\Woocommerce\\Logging\\": "modules.local/woocommerce-logging/src/"
         }
     },
     "autoload-dev": {
