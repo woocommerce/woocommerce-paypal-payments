@@ -23,10 +23,12 @@ class WooCommerceLogger implements LoggerInterface
      * @var \WC_Logger_Interface
      */
     private $wcLogger;
+    private $source;
 
-    public function __construct(\WC_Logger_Interface $wcLogger)
+    public function __construct(\WC_Logger_Interface $wcLogger, string $source)
     {
         $this->wcLogger = $wcLogger;
+        $this->source = $source;
     }
 
     /**
@@ -37,7 +39,7 @@ class WooCommerceLogger implements LoggerInterface
     public function log($level, $message, array $context = [])
     {
         if (!isset($context['source'])) {
-            $context['source'] = 'izettle-woocommerce';
+            $context['source'] = $this->source;
         }
         $this->wcLogger->log($level, $message, $context);
     }
