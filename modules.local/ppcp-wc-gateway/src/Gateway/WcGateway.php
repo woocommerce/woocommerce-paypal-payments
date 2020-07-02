@@ -21,9 +21,10 @@ use Psr\Container\ContainerInterface;
 
 //phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
 //phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration.NoArgumentType
-class WcGateway extends WcGatewayBase
+class WcGateway extends \WC_Payment_Gateway
 {
 
+    public const ID = 'ppcp-gateway';
     public const CAPTURED_META_KEY = '_ppcp_paypal_captured';
     public const INTENT_META_KEY = '_ppcp_paypal_intent';
     public const ORDER_ID_META_KEY = '_ppcp_paypal_order_id';
@@ -42,6 +43,7 @@ class WcGateway extends WcGatewayBase
         ContainerInterface $config
     ) {
 
+        $this->id = self::ID;
         $this->orderProcessor = $orderProcessor;
         $this->authorizedPayments = $authorizedPayments;
         $this->notice = $notice;
@@ -53,9 +55,6 @@ class WcGateway extends WcGatewayBase
             'Provide your customers with the PayPal payment system',
             'woocommerce-paypal-gateway'
         );
-
-        parent::__construct();
-
         $this->title = $this->config->has('title') ? $this->config->get('title') : $this->method_title;
         $this->description = $this->config->has('description') ? $this->config->get('description') : $this->method_description;
 
