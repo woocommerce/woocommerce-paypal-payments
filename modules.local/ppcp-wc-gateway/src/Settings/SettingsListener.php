@@ -35,16 +35,14 @@ class SettingsListener
             return;
         }
 
-        $settings = [
-            'enabled' => isset($_POST['woocommerce_ppcp-gateway_enabled'])
-                && absint($_POST['woocommerce_ppcp-gateway_enabled']) === 1,
-        ];
         //phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         /**
          * Sanitization is done at a later stage.
          */
         $rawData = (isset($_POST['ppcp'])) ? (array) wp_unslash($_POST['ppcp']) : [];
         $settings = $this->retrieveSettingsFromRawData($rawData);
+        $settings['enabled'] =  isset($_POST['woocommerce_ppcp-gateway_enabled'])
+            && absint($_POST['woocommerce_ppcp-gateway_enabled']) === 1;
         foreach ($settings as $id => $value) {
             $this->settings->set($id, $value);
         }

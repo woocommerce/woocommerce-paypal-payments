@@ -9,38 +9,29 @@ use Inpsyde\PayPalCommerce\Onboarding\State;
 use Inpsyde\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
 use Inpsyde\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
 use Inpsyde\PayPalCommerce\WcGateway\Checkout\DisableGateways;
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\ResetGateway;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGateway;
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGatewayBase;
 use Inpsyde\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use Inpsyde\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
 use Inpsyde\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use Inpsyde\PayPalCommerce\WcGateway\Processor\OrderProcessor;
-use Inpsyde\PayPalCommerce\WcGateway\Settings\FullyOnboardedSettings;
-use Inpsyde\PayPalCommerce\WcGateway\Settings\ProgressiveSettings;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
-use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsFields;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsListener;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
-use Inpsyde\PayPalCommerce\WcGateway\Settings\StartSettings;
 
 return [
-    'wcgateway.gateway.base' => static function (ContainerInterface $container): WcGatewayBase {
-        return new WcGatewayBase();
-    },
     'wcgateway.gateway' => static function (ContainerInterface $container): WcGateway {
         $orderProcessor = $container->get('wcgateway.order-processor');
         $settingsRenderer = $container->get('wcgateway.settings.render');
         $authorizedPayments = $container->get('wcgateway.processor.authorized-payments');
         $notice = $container->get('wcgateway.notice.authorize-order-action');
-        $onboardingRender = $container->get('onboarding.render');
+        $settings = $container->get('wcgateway.settings');
 
         return new WcGateway(
             $settingsRenderer,
             $orderProcessor,
             $authorizedPayments,
             $notice,
-            $onboardingRender
+            $settings
         );
     },
     'wcgateway.disabler' => static function (ContainerInterface $container): DisableGateways {
@@ -48,8 +39,7 @@ return [
         return new DisableGateways($sessionHandler);
     },
     'wcgateway.settings' => static function (ContainerInterface $container): Settings {
-        $gateway = $container->get('wcgateway.gateway.base');
-        return new Settings($gateway);
+        return new Settings();
     },
     'wcgateway.notice.connect' => static function (ContainerInterface $container): ConnectAdminNotice {
         $state = $container->get('onboarding.state');

@@ -17,6 +17,7 @@ use Inpsyde\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use Inpsyde\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsFields;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
+use Psr\Container\ContainerInterface;
 
 //phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
 //phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration.NoArgumentType
@@ -31,21 +32,21 @@ class WcGateway extends WcGatewayBase
     private $authorizedPayments;
     private $notice;
     private $orderProcessor;
-    private $onboardingRenderer;
+    private $config;
 
     public function __construct(
         SettingsRenderer $settingsRenderer,
         OrderProcessor $orderProcessor,
         AuthorizedPaymentsProcessor $authorizedPayments,
         AuthorizeOrderActionNotice $notice,
-        OnboardingRenderer $onboardingRenderer
+        ContainerInterface $config
     ) {
 
         $this->orderProcessor = $orderProcessor;
         $this->authorizedPayments = $authorizedPayments;
         $this->notice = $notice;
         $this->settingsRenderer = $settingsRenderer;
-        $this->onboardingRenderer = $onboardingRenderer;
+        $this->config = $config;
 
         $this->method_title = __('PayPal Payments', 'woocommerce-paypal-gateway');
         $this->method_description = __(
@@ -55,8 +56,8 @@ class WcGateway extends WcGatewayBase
 
         parent::__construct();
 
-        $this->title = $this->get_option('title');
-        $this->description = $this->get_option('description');
+        $this->title = $this->config->has('title') ? $this->config->get('title') : $this->method_title;
+        $this->description = $this->config->has('description') ? $this->config->get('description') : $this->method_description;
 
         $this->init_form_fields();
         $this->init_settings();
