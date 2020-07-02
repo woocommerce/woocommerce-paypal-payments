@@ -43,6 +43,11 @@ class SmartButton implements SmartButtonInterface
         $this->clientId = $clientId;
     }
 
+    // phpcs:disable Inpsyde.CodeQuality.FunctionLength.TooLong
+    /**
+     * ToDo: Refactor
+     * @return bool
+     */
     public function renderWrapper(): bool
     {
 
@@ -165,6 +170,7 @@ class SmartButton implements SmartButtonInterface
         }
         return true;
     }
+    // phpcs:enable Inpsyde.CodeQuality.FunctionLength.TooLong
 
     public function enqueue(): bool
     {
