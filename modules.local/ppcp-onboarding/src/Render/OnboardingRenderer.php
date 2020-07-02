@@ -25,26 +25,6 @@ class OnboardingRenderer
                 $this->partnerReferrals->signupLink()
             );
             ?>
-            <tr valign="top">
-                <th scope="row" class="titledesc">
-                    <?php echo esc_html_e('Connect to PayPal', 'woocommerce-paypal-commerce-gateway'); ?>
-                </th>
-                <td class="forminp">
-                    <script>
-                        function onboardingCallback(authCode, sharedId) {
-                            fetch(PayPalCommerceGatewayOnboarding.endpoint, {
-                                method: 'POST',
-                                headers: {
-                                    'content-type': 'application/json'
-                                },
-                                body: JSON.stringify({
-                                    authCode: authCode,
-                                    sharedId: sharedId,
-                                    nonce: PayPalCommerceGatewayOnboarding.nonce
-                                })
-                            });
-                        }
-                    </script>
                     <a
                             target="_blank"
                             class="button-primary"
@@ -58,23 +38,12 @@ class OnboardingRenderer
                             id="paypal-js"
                             src="https://www.sandbox.paypal.com/webapps/merchantboarding/js/lib/lightbox/partner.js"
                     ></script>
-                </td>
-            </tr>
             <?php
         } catch(RuntimeException $exception) {
-            ?>
-            <tr valign="top">
-                <th scope="row" class="titledesc">
-                    <?php echo esc_html_e('Connect to PayPal', 'woocommerce-paypal-commerce-gateway'); ?>
-                </th>
-                <td>
-                    <?php echo esc_html_e(
-                            'We could not properly connect to PayPal. Please reload the page to continue',
-                            'woocommerce-paypal-commerce-gateway'
-                    ); ?>
-                </td>
-            </tr>
-            <?php
+             esc_html_e(
+                 'We could not properly connect to PayPal. Please reload the page to continue',
+                 'woocommerce-paypal-commerce-gateway'
+            );
         }
     }
 }

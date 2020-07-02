@@ -9,6 +9,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
 use Inpsyde\PayPalCommerce\Button\Endpoint\EndpointInterface;
 use Inpsyde\PayPalCommerce\Button\Endpoint\RequestData;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGatewayInterface;
+use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
 
 class LoginSellerEndpoint implements EndpointInterface
 {
@@ -17,18 +18,18 @@ class LoginSellerEndpoint implements EndpointInterface
     private $requestData;
     private $loginSellerEndpoint;
     private $partnerReferralsData;
-    private $gateway;
+    private $settings;
     public function __construct(
         RequestData $requestData,
         LoginSeller $loginSellerEndpoint,
         PartnerReferralsData $partnerReferralsData,
-        \WC_Payment_Gateway $gateway
+        Settings $settings
     ) {
 
         $this->requestData = $requestData;
         $this->loginSellerEndpoint = $loginSellerEndpoint;
         $this->partnerReferralsData = $partnerReferralsData;
-        $this->gateway = $gateway;
+        $this->settings = $settings;
     }
 
     public static function nonce(): string
@@ -46,8 +47,9 @@ class LoginSellerEndpoint implements EndpointInterface
                 $data['authCode'],
                 $this->partnerReferralsData->nonce()
             );
-            $this->gateway->update_option('client_secret', $credentials->client_secret);
-            $this->gateway->update_option('client_id', $credentials->client_id);
+            $this->settings->set('client_secret', $credentials->client_secret);
+            $this->settings->set('client_id', $credentials->client_id);
+            $this->settings->persist();
             wp_send_json_success();
             return true;
         } catch (\RuntimeException $error) {
