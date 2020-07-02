@@ -67,6 +67,12 @@ class SettingsRenderer
                 <label
                     for="<?php echo esc_attr($id); ?>"
                 ><?php echo esc_html($config['title']); ?></label>
+                <?php if (isset($config['desc_tip'])) : ?>
+                <span class="woocommerce-help-tip" data-tip="<?php echo esc_attr($config['description']); ?>"></span>
+                <?php
+                    unset($config['description']);
+                    endif;
+                ?>
             </th>
             <td><?php
                 if ($config['type'] === 'ppcp-text' ) {
