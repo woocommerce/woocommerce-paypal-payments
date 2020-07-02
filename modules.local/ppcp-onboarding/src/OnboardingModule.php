@@ -44,8 +44,6 @@ class OnboardingModule implements ModuleInterface
             ]
         );
 
-
-
         add_filter(
             'woocommerce_form_field',
             static function ($field, $key, $config) use ($container) {
