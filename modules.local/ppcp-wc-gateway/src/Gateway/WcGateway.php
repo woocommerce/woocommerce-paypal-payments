@@ -16,6 +16,7 @@ use Inpsyde\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use Inpsyde\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use Inpsyde\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsFields;
+use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 
 //phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
 //phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration.NoArgumentType
@@ -26,28 +27,25 @@ class WcGateway extends WcGatewayBase
     public const INTENT_META_KEY = '_ppcp_paypal_intent';
     public const ORDER_ID_META_KEY = '_ppcp_paypal_order_id';
 
-    private $settingsFields;
+    private $settingsRenderer;
     private $authorizedPayments;
     private $notice;
     private $orderProcessor;
     private $onboardingRenderer;
-    private $resetGateway;
 
     public function __construct(
-        SettingsFields $settingsFields,
+        SettingsRenderer $settingsRenderer,
         OrderProcessor $orderProcessor,
         AuthorizedPaymentsProcessor $authorizedPayments,
         AuthorizeOrderActionNotice $notice,
-        OnboardingRenderer $onboardingRenderer,
-        ResetGateway $resetGateway
+        OnboardingRenderer $onboardingRenderer
     ) {
 
         $this->orderProcessor = $orderProcessor;
         $this->authorizedPayments = $authorizedPayments;
         $this->notice = $notice;
-        $this->settingsFields = $settingsFields;
+        $this->settingsRenderer = $settingsRenderer;
         $this->onboardingRenderer = $onboardingRenderer;
-        $this->resetGateway = $resetGateway;
 
         $this->method_title = __('PayPal Payments', 'woocommerce-paypal-gateway');
         $this->method_description = __(
@@ -74,7 +72,17 @@ class WcGateway extends WcGatewayBase
 
     public function init_form_fields()
     {
-        $this->form_fields = $this->settingsFields->fields();
+        $this->form_fields = [
+            'enabled' => [
+                'title' => __('Enable/Disable', 'woocommerce-paypal-gateway'),
+                'type' => 'checkbox',
+                'label' => __('Enable PayPal Payments', 'woocommerce-paypal-gateway'),
+                'default' => 'yes',
+            ],
+            'ppcp' => [
+                'type' => 'ppcp',
+            ],
+        ];
     }
 
     public function process_payment($orderId): ?array
@@ -136,44 +144,17 @@ class WcGateway extends WcGatewayBase
             AuthorizedPaymentsProcessor::INACCESSIBLE => AuthorizeOrderActionNotice::NO_INFO,
             AuthorizedPaymentsProcessor::NOT_FOUND => AuthorizeOrderActionNotice::NOT_FOUND,
         ];
-        $displayMessage = (isset($messageMapping[$status])) ? $messageMapping[$status] : AuthorizeOrderActionNotice::FAILED;
+        $displayMessage = (isset($messageMapping[$status])) ?
+            $messageMapping[$status]
+            : AuthorizeOrderActionNotice::FAILED;
         $this->notice->displayMessage($displayMessage);
     }
 
-    public function generate_ppcp_onboarding_html() : string
+    public function generate_ppcp_html(): string
     {
 
         ob_start();
-        $this->onboardingRenderer->render();
-        $content = ob_get_contents();
-        ob_end_clean();
-        return $content;
-    }
-
-    public function generate_ppcp_reset_html() : string
-    {
-
-        ob_start();
-        $this->resetGateway->render();
-        $content = ob_get_contents();
-        ob_end_clean();
-        return $content;
-    }
-
-    public function generate_ppcp_info_html($type, $data) : string
-    {
-
-        ob_start();
-        ?>
-		<tr valign="top">
-			<th scope="row" class="titledesc">
-				<?php echo wp_kses_post( $data['title'] ); ?>
-			</th>
-			<td class="forminp">
-                <?php echo wp_kses_post( $data['text'] ); ?>
-			</td>
-		</tr>
-        <?php
+        $this->settingsRenderer->render();
         $content = ob_get_contents();
         ob_end_clean();
         return $content;

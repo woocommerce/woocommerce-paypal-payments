@@ -115,12 +115,12 @@ return [
         $requestData = $container->get('button.request-data');
         $loginSellerEndpoint = $container->get('api.endpoint.login-seller');
         $partnerReferralsData = $container->get('api.repository.partner-referrals-data');
-        $gateway = $container->get('wcgateway.gateway.base');
+        $settings = $container->get('wcgateway.settings');
         return new LoginSellerEndpoint(
             $requestData,
             $loginSellerEndpoint,
             $partnerReferralsData,
-            $gateway
+            $settings
         );
     },
     'onboarding.render' => static function (ContainerInterface $container) : OnboardingRenderer {

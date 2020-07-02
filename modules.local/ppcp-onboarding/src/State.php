@@ -1,16 +1,16 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\Onboarding;
-
 
 use Psr\Container\ContainerInterface;
 
 class State
 {
-    const STATE_START = 0;
-    const STATE_PROGRESSIVE = 4;
-    const STATE_ONBOARDED = 8;
+    public const STATE_START = 0;
+    public const STATE_PROGRESSIVE = 4;
+    public const STATE_ONBOARDED = 8;
 
     private $environment;
     private $settings;
@@ -18,11 +18,13 @@ class State
         Environment $environment,
         ContainerInterface $settings
     ) {
+
         $this->environment = $environment;
         $this->settings = $settings;
     }
 
-    public function currentState() : int {
+    public function currentState(): int
+    {
         $value = self::STATE_START;
         /**
          * Having provided the merchant email means, we are at least
@@ -35,7 +37,7 @@ class State
         /**
          * Once we can fetch credentials we are completely onboarded.
          */
-        if ($this->settings->has('client_id')) {
+        if ($this->settings->has('client_id') && $this->settings->get('client_id')) {
             $value = self::STATE_ONBOARDED;
         }
         return $value;

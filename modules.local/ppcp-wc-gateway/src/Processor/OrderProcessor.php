@@ -38,7 +38,7 @@ class OrderProcessor
         $this->orderFactory = $orderFactory;
     }
 
-    public function process(\WC_Order $wcOrder, $woocommerce): bool
+    public function process(\WC_Order $wcOrder, \WooCommerce $woocommerce): bool
     {
         $order = $this->sessionHandler->order();
         $wcOrder->update_meta_data(WcGateway::ORDER_ID_META_KEY, $order->id());
@@ -50,7 +50,7 @@ class OrderProcessor
         }
         if ($errorMessage) {
             $this->lastError = sprintf(
-            // translators %s is the message of the error.
+                // translators: %s is the message of the error.
                 __('Payment error: %s', 'woocommerce-paypal-gateway'),
                 $errorMessage
             );

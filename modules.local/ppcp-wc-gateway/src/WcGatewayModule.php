@@ -14,6 +14,7 @@ use Inpsyde\PayPalCommerce\WcGateway\Checkout\DisableGateways;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGateway;
 use Inpsyde\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use Inpsyde\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
+use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
 
@@ -29,32 +30,9 @@ class WcGatewayModule implements ModuleInterface
 
     public function run(ContainerInterface $container)
     {
-        add_filter(
-            'woocommerce_payment_gateways',
-            static function ($methods) use ($container): array {
-                $methods[] = $container->get('wcgateway.gateway');
-                return (array)$methods;
-            }
-        );
-
-        add_filter(
-            'woocommerce_available_payment_gateways',
-            static function ($methods) use ($container): array {
-                $disabler = $container->get('wcgateway.disabler');
-                /**
-                 * @var DisableGateways $disabler
-                 */
-                return $disabler->handler((array)$methods);
-            }
-        );
-
-        add_action(
-            'admin_init',
-            function() use ($container) {
-                $resetGateway = $container->get('wcgateway.gateway.reset');
-                $resetGateway->listen();
-            }
-        );
+        $this->registerPaymentGateway($container);
+        $this->registerOrderFunctionality($container);
+        $this->registerColumns($container);
 
         add_filter(
             Repository::NOTICES_FILTER,
@@ -76,7 +54,54 @@ class WcGatewayModule implements ModuleInterface
                 return $notices;
             }
         );
+    }
 
+    private function registerPaymentGateWay(ContainerInterface $container)
+    {
+
+        add_filter(
+            'woocommerce_payment_gateways',
+            static function ($methods) use ($container): array {
+                $methods[] = $container->get('wcgateway.gateway');
+                return (array)$methods;
+            }
+        );
+
+        add_action(
+            'woocommerce_settings_save_checkout',
+            static function () use ($container) {
+                $listener = $container->get('wcgateway.settings.listener');
+                $listener->listen();
+            }
+        );
+
+        add_filter(
+            'woocommerce_form_field',
+            static function ($field, $key, $args, $value) use ($container) {
+                $renderer = $container->get('wcgateway.settings.render');
+                /**
+                 * @var SettingsRenderer $renderer
+                 */
+                return $renderer->renderMultiSelect($field, $key, $args, $value);
+            },
+            10,
+            4
+        );
+
+        add_filter(
+            'woocommerce_available_payment_gateways',
+            static function ($methods) use ($container): array {
+                $disabler = $container->get('wcgateway.disabler');
+                /**
+                 * @var DisableGateways $disabler
+                 */
+                return $disabler->handler((array)$methods);
+            }
+        );
+    }
+
+    private function registerOrderFunctionality(ContainerInterface $container)
+    {
         add_filter(
             'woocommerce_order_actions',
             static function ($orderActions): array {
@@ -98,7 +123,10 @@ class WcGatewayModule implements ModuleInterface
                 $gateway->captureAuthorizedPayment($wcOrder);
             }
         );
+    }
 
+    private function registerColumns(ContainerInterface $container)
+    {
         add_action(
             'woocommerce_order_actions_start',
             static function ($wcOrderId) use ($container) {

@@ -1,8 +1,8 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\Onboarding\Assets;
-
 
 use Inpsyde\PayPalCommerce\ApiClient\Endpoint\PartnerReferrals;
 use Inpsyde\PayPalCommerce\Onboarding\Endpoint\LoginSellerEndpoint;
@@ -19,12 +19,13 @@ class OnboardingAssets
         State $state,
         LoginSellerEndpoint $loginSellerEndpoint
     ) {
+
         $this->moduleUrl = $moduleUrl;
         $this->state = $state;
         $this->loginSellerEndpoint = $loginSellerEndpoint;
     }
 
-    public function register() : bool
+    public function register(): bool
     {
 
         if (!$this->shouldRender()) {
@@ -51,8 +52,8 @@ class OnboardingAssets
         return true;
     }
 
-    public function enqueue() : bool {
-
+    public function enqueue(): bool
+    {
         if (! $this->shouldRender()) {
             return false;
         }
@@ -61,7 +62,9 @@ class OnboardingAssets
         return true;
     }
 
-    private function shouldRender() : bool {
+    private function shouldRender(): bool
+    {
+        // phpcs:disable Inpsyde.CodeQuality.VariablesName.SnakeCaseVar
         global $current_section;
         if ($current_section !== 'ppcp-gateway') {
             return false;

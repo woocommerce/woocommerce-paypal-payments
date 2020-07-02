@@ -10,6 +10,7 @@ use Inpsyde\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use Inpsyde\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use Inpsyde\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsFields;
+use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use Mockery;
 use function Brain\Monkey\Functions\expect;
 
@@ -17,37 +18,11 @@ class WcGatewayTest extends TestCase
 {
 
 
-    public function testFormFieldsAreSet()
-    {
-
-        $expectedFields = ['key' => 'value'];
-        $settingsFields = Mockery::mock(SettingsFields::class);
-        $settingsFields
-            ->expects('fields')
-            ->andReturn($expectedFields);
-        $orderProcessor = Mockery::mock(OrderProcessor::class);
-        $authorizedPaymentsProcessor = Mockery::mock(AuthorizedPaymentsProcessor::class);
-        $authorizedOrderActionNotice = Mockery::mock(AuthorizeOrderActionNotice::class);
-        $onboardingRenderer = Mockery::mock(OnboardingRenderer::class);
-        $testee = new WcGateway(
-            $settingsFields,
-            $orderProcessor,
-            $authorizedPaymentsProcessor,
-            $authorizedOrderActionNotice,
-            $onboardingRenderer
-        );
-        $this->assertEquals($testee->form_fields, $expectedFields);
-    }
-
-
     public function testProcessPaymentSuccess() {
 
         $orderId = 1;
         $wcOrder = Mockery::mock(\WC_Order::class);
-        $settingsFields = Mockery::mock(SettingsFields::class);
-        $settingsFields
-            ->expects('fields')
-            ->andReturn([]);
+        $settingsRenderer = Mockery::mock(SettingsRenderer::class);
         $orderProcessor = Mockery::mock(OrderProcessor::class);
         $orderProcessor
             ->expects('process')
@@ -60,7 +35,7 @@ class WcGatewayTest extends TestCase
         $authorizedOrderActionNotice = Mockery::mock(AuthorizeOrderActionNotice::class);
         $onboardingRenderer = Mockery::mock(OnboardingRenderer::class);
         $testee = new WcGateway(
-            $settingsFields,
+            $settingsRenderer,
             $orderProcessor,
             $authorizedPaymentsProcessor,
             $authorizedOrderActionNotice,
@@ -71,7 +46,10 @@ class WcGatewayTest extends TestCase
             ->with($orderId)
             ->andReturn($wcOrder);
 
+        global $woocommerce;
+        $woocommerce = Mockery::mock(\WooCommerce::class);
         $result = $testee->process_payment($orderId);
+        unset($woocommerce);
         $this->assertIsArray($result);
         $this->assertEquals('success', $result['result']);
         $this->assertEquals($result['redirect'], $wcOrder);
@@ -80,16 +58,13 @@ class WcGatewayTest extends TestCase
     public function testProcessPaymentOrderNotFound() {
 
         $orderId = 1;
-        $settingsFields = Mockery::mock(SettingsFields::class);
-        $settingsFields
-            ->expects('fields')
-            ->andReturn([]);
+        $settingsRenderer = Mockery::mock(SettingsRenderer::class);
         $orderProcessor = Mockery::mock(OrderProcessor::class);
         $authorizedPaymentsProcessor = Mockery::mock(AuthorizedPaymentsProcessor::class);
         $authorizedOrderActionNotice = Mockery::mock(AuthorizeOrderActionNotice::class);
         $onboardingRenderer = Mockery::mock(OnboardingRenderer::class);
         $testee = new WcGateway(
-            $settingsFields,
+            $settingsRenderer,
             $orderProcessor,
             $authorizedPaymentsProcessor,
             $authorizedOrderActionNotice,
@@ -100,7 +75,10 @@ class WcGatewayTest extends TestCase
             ->with($orderId)
             ->andReturn(false);
 
+        global $woocommerce;
+        $woocommerce = Mockery::mock(\WooCommerce::class);
         $this->assertNull($testee->process_payment($orderId));
+        unset($woocommerce);
     }
 
 
@@ -109,10 +87,7 @@ class WcGatewayTest extends TestCase
         $orderId = 1;
         $wcOrder = Mockery::mock(\WC_Order::class);
         $lastError = 'some-error';
-        $settingsFields = Mockery::mock(SettingsFields::class);
-        $settingsFields
-            ->expects('fields')
-            ->andReturn([]);
+        $settingsRenderer = Mockery::mock(SettingsRenderer::class);
         $orderProcessor = Mockery::mock(OrderProcessor::class);
         $orderProcessor
             ->expects('process')
@@ -124,7 +99,7 @@ class WcGatewayTest extends TestCase
         $authorizedOrderActionNotice = Mockery::mock(AuthorizeOrderActionNotice::class);
         $onboardingRenderer = Mockery::mock(OnboardingRenderer::class);
         $testee = new WcGateway(
-            $settingsFields,
+            $settingsRenderer,
             $orderProcessor,
             $authorizedPaymentsProcessor,
             $authorizedOrderActionNotice,
@@ -137,7 +112,10 @@ class WcGatewayTest extends TestCase
         expect('wc_add_notice')
             ->with($lastError);
 
+        global $woocommerce;
+        $woocommerce = Mockery::mock(\WooCommerce::class);
         $result = $testee->process_payment($orderId);
+        unset($woocommerce);
         $this->assertNull($result);
     }
 
@@ -154,10 +132,7 @@ class WcGatewayTest extends TestCase
             ->with(WcGateway::CAPTURED_META_KEY, 'true');
         $wcOrder
             ->expects('save');
-        $settingsFields = Mockery::mock(SettingsFields::class);
-        $settingsFields
-            ->expects('fields')
-            ->andReturn([]);
+        $settingsRenderer = Mockery::mock(SettingsRenderer::class);
         $orderProcessor = Mockery::mock(OrderProcessor::class);
         $authorizedPaymentsProcessor = Mockery::mock(AuthorizedPaymentsProcessor::class);
         $authorizedPaymentsProcessor
@@ -174,7 +149,7 @@ class WcGatewayTest extends TestCase
 
         $onboardingRenderer = Mockery::mock(OnboardingRenderer::class);
         $testee = new WcGateway(
-            $settingsFields,
+            $settingsRenderer,
             $orderProcessor,
             $authorizedPaymentsProcessor,
             $authorizedOrderActionNotice,
@@ -200,10 +175,7 @@ class WcGatewayTest extends TestCase
             ->with(WcGateway::CAPTURED_META_KEY, 'true');
         $wcOrder
             ->expects('save');
-        $settingsFields = Mockery::mock(SettingsFields::class);
-        $settingsFields
-            ->expects('fields')
-            ->andReturn([]);
+        $settingsRenderer = Mockery::mock(SettingsRenderer::class);
         $orderProcessor = Mockery::mock(OrderProcessor::class);
         $authorizedPaymentsProcessor = Mockery::mock(AuthorizedPaymentsProcessor::class);
         $authorizedPaymentsProcessor
@@ -219,7 +191,7 @@ class WcGatewayTest extends TestCase
             ->with(AuthorizeOrderActionNotice::ALREADY_CAPTURED);
         $onboardingRenderer = Mockery::mock(OnboardingRenderer::class);
         $testee = new WcGateway(
-            $settingsFields,
+            $settingsRenderer,
             $orderProcessor,
             $authorizedPaymentsProcessor,
             $authorizedOrderActionNotice,
@@ -238,10 +210,7 @@ class WcGatewayTest extends TestCase
     public function testCaptureAuthorizedPaymentNoActionableFailures($lastStatus, $expectedMessage) {
 
         $wcOrder = Mockery::mock(\WC_Order::class);
-        $settingsFields = Mockery::mock(SettingsFields::class);
-        $settingsFields
-            ->expects('fields')
-            ->andReturn([]);
+        $settingsRenderer = Mockery::mock(SettingsRenderer::class);
         $orderProcessor = Mockery::mock(OrderProcessor::class);
         $authorizedPaymentsProcessor = Mockery::mock(AuthorizedPaymentsProcessor::class);
         $authorizedPaymentsProcessor
@@ -257,7 +226,7 @@ class WcGatewayTest extends TestCase
             ->with($expectedMessage);
         $onboardingRenderer = Mockery::mock(OnboardingRenderer::class);
         $testee = new WcGateway(
-            $settingsFields,
+            $settingsRenderer,
             $orderProcessor,
             $authorizedPaymentsProcessor,
             $authorizedOrderActionNotice,

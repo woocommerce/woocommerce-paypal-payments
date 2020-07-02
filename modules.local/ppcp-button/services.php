@@ -17,7 +17,7 @@ use Inpsyde\PayPalCommerce\Onboarding\Environment;
 use Inpsyde\PayPalCommerce\Onboarding\State;
 
 return [
-    'button.client_id' => static function(ContainerInterface $container) : string {
+    'button.client_id' => static function (ContainerInterface $container): string {
 
         $settings = $container->get('wcgateway.settings');
         $clientId = $settings->has('client_id') ? $settings->get('client_id') : '';
@@ -32,10 +32,9 @@ return [
 
         /**
          * ToDo: Add production platform client Id.
-         * ToDo: We do not correctly detect sandbox mode when we use the current sandbox field switch in Settings. Bugfix needs to be fixed asap.
          */
         return $env->currentEnvironmentIs(Environment::SANDBOX) ?
-            'AQB97CzMsd58-It1vxbcDAGvMuXNCXRD9le_XUaMlHB_U7XsU9IiItBwGQOtZv9sEeD6xs2vlIrL4NiD' : 'AQB97CzMsd58-It1vxbcDAGvMuXNCXRD9le_XUaMlHB_U7XsU9IiItBwGQOtZv9sEeD6xs2vlIrL4NiD';
+            'AQB97CzMsd58-It1vxbcDAGvMuXNCXRD9le_XUaMlHB_U7XsU9IiItBwGQOtZv9sEeD6xs2vlIrL4NiD' : '';
     },
     'button.smart-button' => static function (ContainerInterface $container): SmartButtonInterface {
 
@@ -47,7 +46,7 @@ return [
             return new DisabledSmartButton();
         }
         $settings = $container->get('wcgateway.settings');
-        if (!$settings->has('enabled') || ! wc_string_to_bool($settings->get('enabled'))) {
+        if (!$settings->has('enabled') || ! $settings->get('enabled')) {
             return new DisabledSmartButton();
         }
         $payeeRepository = $container->get('api.repository.payee');
@@ -64,7 +63,6 @@ return [
             $payerFactory,
             $clientId
         );
-
     },
     'button.url' => static function (ContainerInterface $container): string {
         return plugins_url(
