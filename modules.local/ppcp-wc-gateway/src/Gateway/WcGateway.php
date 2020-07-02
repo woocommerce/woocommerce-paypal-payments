@@ -55,8 +55,10 @@ class WcGateway extends \WC_Payment_Gateway
             'Provide your customers with the PayPal payment system',
             'woocommerce-paypal-gateway'
         );
-        $this->title = $this->config->has('title') ? $this->config->get('title') : $this->method_title;
-        $this->description = $this->config->has('description') ? $this->config->get('description') : $this->method_description;
+        $this->title = $this->config->has('title') ?
+            $this->config->get('title') : $this->method_title;
+        $this->description = $this->config->has('description') ?
+            $this->config->get('description') : $this->method_description;
 
         $this->init_form_fields();
         $this->init_settings();

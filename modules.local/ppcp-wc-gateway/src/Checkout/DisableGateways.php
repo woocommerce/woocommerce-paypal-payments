@@ -17,21 +17,23 @@ class DisableGateways
         SessionHandler $sessionHandler,
         ContainerInterface $settings
     ) {
+
         $this->sessionHandler = $sessionHandler;
         $this->settings = $settings;
     }
 
     public function handler(array $methods): array
     {
-        if (! $this->settings->has('merchant_email') || ! is_email($this->settings->get('merchant_email'))) {
+        if (
+            ! $this->settings->has('merchant_email')
+            || ! is_email($this->settings->get('merchant_email'))
+        ) {
             unset($methods[WcGateway::ID]);
             return $methods;
         }
         if (! $this->needsToDisableGateways()) {
             return $methods;
         }
-
-
 
         return [WcGateway::ID => $methods[WcGateway::ID]];
     }
