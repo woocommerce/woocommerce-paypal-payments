@@ -35,7 +35,7 @@ class State
         /**
          * Once we can fetch credentials we are completely onboarded.
          */
-        if ($this->settings->has('client_id')) {
+        if ($this->settings->has('client_id') && $this->settings->get('client_id')) {
             $value = self::STATE_ONBOARDED;
         }
         return $value;

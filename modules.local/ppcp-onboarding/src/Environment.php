@@ -27,7 +27,7 @@ class Environment
     public function currentEnvironment() : string
     {
         return (
-            $this->settings->has('sandbox_on') && wc_string_to_bool($this->settings->get('sandbox_on'))
+            $this->settings->has('sandbox_on') && $this->settings->get('sandbox_on')
         ) ? self::SANDBOX : self::PRODUCTION;
     }
 

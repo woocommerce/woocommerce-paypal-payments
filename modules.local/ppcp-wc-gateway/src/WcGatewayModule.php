@@ -14,6 +14,7 @@ use Inpsyde\PayPalCommerce\WcGateway\Checkout\DisableGateways;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGateway;
 use Inpsyde\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use Inpsyde\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
+use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
 
@@ -37,6 +38,27 @@ class WcGatewayModule implements ModuleInterface
             }
         );
 
+        add_action(
+            'woocommerce_settings_save_checkout',
+            static function () use ($container) {
+                $listener = $container->get('wcgateway.settings.listener');
+                $listener->listen();
+            }
+        );
+
+        add_filter(
+            'woocommerce_form_field',
+            static function ($field, $key, $args, $value) use ($container) {
+                $renderer = $container->get('wcgateway.settings.render');
+                /**
+                 * @var SettingsRenderer $renderer
+                 */
+                return $renderer->renderMultiSelect($field, $key, $args, $value);
+            },
+            10,
+            4
+        );
+
         add_filter(
             'woocommerce_available_payment_gateways',
             static function ($methods) use ($container): array {
@@ -45,14 +67,6 @@ class WcGatewayModule implements ModuleInterface
                  * @var DisableGateways $disabler
                  */
                 return $disabler->handler((array)$methods);
-            }
-        );
-
-        add_action(
-            'admin_init',
-            function() use ($container) {
-                $resetGateway = $container->get('wcgateway.gateway.reset');
-                $resetGateway->listen();
             }
         );
 

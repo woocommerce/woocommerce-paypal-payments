@@ -77,7 +77,7 @@ class SmartButton implements SmartButtonInterface
         };
 
         $notEnabledOnCart = $this->settings->has('button_cart_enabled') &&
-            !wc_string_to_bool($this->settings->get('button_cart_enabled'));
+            !$this->settings->get('button_cart_enabled');
         if (
             is_cart()
             && !$notEnabledOnCart
@@ -91,7 +91,7 @@ class SmartButton implements SmartButtonInterface
         if (
             is_cart()
             && $this->settings->has('dcc_cart_enabled')
-            && wc_string_to_bool($this->settings->get('dcc_cart_enabled'))
+            && $this->settings->get('dcc_cart_enabled')
         ) {
             add_action(
                 'woocommerce_proceed_to_checkout',
@@ -101,7 +101,7 @@ class SmartButton implements SmartButtonInterface
         }
 
         $notEnabledOnProductPage = $this->settings->has('button_single_product_enabled') &&
-            !wc_string_to_bool($this->settings->get('button_single_product_enabled'));
+            !$this->settings->get('button_single_product_enabled');
         if (
             is_product()
             && !$notEnabledOnProductPage
@@ -115,7 +115,7 @@ class SmartButton implements SmartButtonInterface
         if (
             is_product()
             && $this->settings->has('dcc_single_product_enabled')
-            && wc_string_to_bool($this->settings->get('dcc_single_product_enabled'))
+            && $this->settings->get('dcc_single_product_enabled')
         ) {
             add_action(
                 'woocommerce_single_product_summary',
@@ -124,7 +124,7 @@ class SmartButton implements SmartButtonInterface
             );
         }
         $notEnabledOnMiniCart = $this->settings->has('button_mini_cart_enabled') &&
-            !wc_string_to_bool($this->settings->get('button_mini_cart_enabled'));
+            !$this->settings->get('button_mini_cart_enabled');
         if (
             ! $notEnabledOnMiniCart
         ) {
@@ -138,7 +138,7 @@ class SmartButton implements SmartButtonInterface
         }
         if (
             $this->settings->has('dcc_mini_cart_enabled')
-            && wc_string_to_bool($this->settings->get('dcc_mini_cart_enabled'))
+            && $this->settings->get('dcc_mini_cart_enabled')
         ) {
             add_action(
                 'woocommerce_widget_shopping_cart_after_buttons',
@@ -155,7 +155,7 @@ class SmartButton implements SmartButtonInterface
         );
         if (
             $this->settings->has('dcc_checkout_enabled')
-            && wc_string_to_bool($this->settings->get('dcc_checkout_enabled'))
+            && $this->settings->get('dcc_checkout_enabled')
         ) {
             add_action(
                 'woocommerce_review_order_after_submit',
@@ -316,7 +316,7 @@ class SmartButton implements SmartButtonInterface
             'dcc_single_product_enabled',
         ];
         foreach ($keys as $key) {
-            if ($this->settings->has($key) && wc_string_to_bool($this->settings->get($key))) {
+            if ($this->settings->has($key) && $this->settings->get($key)) {
                 return true;
             }
         }
