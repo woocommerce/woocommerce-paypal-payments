@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\WcGateway\Settings;
@@ -17,11 +18,17 @@ class SettingsListener
         $this->settingFields = $settingFields;
     }
 
-    public function listen() {
+    public function listen()
+    {
+
         if (! $this->isValidUpdateRequest()) {
             return;
         }
 
+        /**
+         * Nonce verification is done in self::isValidUpdateRequest
+         */
+        //phpcs:disable WordPress.Security.NonceVerification.Missing
         if (isset($_POST['save']) && sanitize_text_field(wp_unslash($_POST['save'])) === 'reset') {
             $this->settings->reset();
             $this->settings->persist();
@@ -29,9 +36,25 @@ class SettingsListener
         }
 
         $settings = [
-            'enabled' => isset($_POST['woocommerce_ppcp-gateway_enabled']) && absint($_POST['woocommerce_ppcp-gateway_enabled']) === 1,
+            'enabled' => isset($_POST['woocommerce_ppcp-gateway_enabled'])
+                && absint($_POST['woocommerce_ppcp-gateway_enabled']) === 1,
         ];
-        $rawData = (isset($_POST['ppcp'])) ? (array) $_POST['ppcp'] : [];
+        //phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        /**
+         * Sanitization is done at a later stage.
+         */
+        $rawData = (isset($_POST['ppcp'])) ? (array) wp_unslash($_POST['ppcp']) : [];
+        $settings = $this->retrieveSettingsFromRawData($rawData);
+        foreach ($settings as $id => $value) {
+            $this->settings->set($id, $value);
+        }
+        $this->settings->persist();
+    }
+
+    //phpcs:disable Inpsyde.CodeQuality.NestingLevel.MaxExceeded
+    private function retrieveSettingsFromRawData(array $rawData): array
+    {
+        $settings = [];
         foreach ($this->settingFields as $key => $config) {
             switch ($config['type']) {
                 case 'checkbox':
@@ -53,21 +76,25 @@ class SettingsListener
                     $settings[$key] = $valuesToSave;
                     break;
                 case 'select':
-                    $settings[$key] = isset($rawData[$key]) && in_array(sanitize_text_field($rawData[$key]), $config['options'], true) ? sanitize_text_field($rawData[$key]) : null;
+                    $settings[$key] = isset($rawData[$key]) && in_array(
+                        sanitize_text_field($rawData[$key]),
+                        $config['options'],
+                        true
+                    ) ? sanitize_text_field($rawData[$key]) : null;
                     break;
             }
         }
-        foreach ($settings as $id => $value) {
-            $this->settings->set($id, $value);
-        }
-        $this->settings->persist();
-        return;
+        return $settings;
     }
+    //phpcs:enable Inpsyde.CodeQuality.NestingLevel.MaxExceeded
 
-    private function isValidUpdateRequest() : bool
+    private function isValidUpdateRequest(): bool
     {
 
-        if (! isset($_REQUEST['section']) || sanitize_text_field(wp_unslash($_REQUEST['section'])) !== 'ppcp-gateway') {
+        if (
+            ! isset($_REQUEST['section'])
+            || sanitize_text_field(wp_unslash($_REQUEST['section'])) !== 'ppcp-gateway'
+        ) {
             return false;
         }
 
@@ -75,7 +102,13 @@ class SettingsListener
             return false;
         }
 
-        if (! isset($_POST['ppcp-nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['ppcp-nonce'])), self::NONCE)) {
+        if (
+            ! isset($_POST['ppcp-nonce'])
+            || !wp_verify_nonce(
+                sanitize_text_field(wp_unslash($_POST['ppcp-nonce'])),
+                self::NONCE
+            )
+        ) {
             return false;
         }
         return true;

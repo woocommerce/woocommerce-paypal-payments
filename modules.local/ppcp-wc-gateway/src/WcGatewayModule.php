@@ -30,6 +30,35 @@ class WcGatewayModule implements ModuleInterface
 
     public function run(ContainerInterface $container)
     {
+        $this->registerPaymentGateway($container);
+        $this->registerOrderFunctionality($container);
+        $this->registerColumns($container);
+
+        add_filter(
+            Repository::NOTICES_FILTER,
+            static function ($notices) use ($container): array {
+                $notice = $container->get('wcgateway.notice.connect');
+                /**
+                 * @var ConnectAdminNotice $notice
+                 */
+                $connectMessage = $notice->connectMessage();
+                if ($connectMessage) {
+                    $notices[] = $connectMessage;
+                }
+                $authorizeOrderAction = $container->get('wcgateway.notice.authorize-order-action');
+                $authorizedMessage = $authorizeOrderAction->message();
+                if ($authorizedMessage) {
+                    $notices[] = $authorizedMessage;
+                }
+
+                return $notices;
+            }
+        );
+    }
+
+    private function registerPaymentGateWay(ContainerInterface $container)
+    {
+
         add_filter(
             'woocommerce_payment_gateways',
             static function ($methods) use ($container): array {
@@ -69,28 +98,10 @@ class WcGatewayModule implements ModuleInterface
                 return $disabler->handler((array)$methods);
             }
         );
+    }
 
-        add_filter(
-            Repository::NOTICES_FILTER,
-            static function ($notices) use ($container): array {
-                $notice = $container->get('wcgateway.notice.connect');
-                /**
-                 * @var ConnectAdminNotice $notice
-                 */
-                $connectMessage = $notice->connectMessage();
-                if ($connectMessage) {
-                    $notices[] = $connectMessage;
-                }
-                $authorizeOrderAction = $container->get('wcgateway.notice.authorize-order-action');
-                $authorizedMessage = $authorizeOrderAction->message();
-                if ($authorizedMessage) {
-                    $notices[] = $authorizedMessage;
-                }
-
-                return $notices;
-            }
-        );
-
+    private function registerOrderFunctionality(ContainerInterface $container)
+    {
         add_filter(
             'woocommerce_order_actions',
             static function ($orderActions): array {
@@ -112,7 +123,10 @@ class WcGatewayModule implements ModuleInterface
                 $gateway->captureAuthorizedPayment($wcOrder);
             }
         );
+    }
 
+    private function registerColumns(ContainerInterface $container)
+    {
         add_action(
             'woocommerce_order_actions_start',
             static function ($wcOrderId) use ($container) {

@@ -1,8 +1,8 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\Onboarding\Endpoint;
-
 
 use Inpsyde\PayPalCommerce\ApiClient\Endpoint\LoginSeller;
 use Inpsyde\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
@@ -24,6 +24,7 @@ class LoginSellerEndpoint implements EndpointInterface
         PartnerReferralsData $partnerReferralsData,
         \WC_Payment_Gateway $gateway
     ) {
+
         $this->requestData = $requestData;
         $this->loginSellerEndpoint = $loginSellerEndpoint;
         $this->partnerReferralsData = $partnerReferralsData;

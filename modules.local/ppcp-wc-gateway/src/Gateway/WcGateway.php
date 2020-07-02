@@ -144,11 +144,13 @@ class WcGateway extends WcGatewayBase
             AuthorizedPaymentsProcessor::INACCESSIBLE => AuthorizeOrderActionNotice::NO_INFO,
             AuthorizedPaymentsProcessor::NOT_FOUND => AuthorizeOrderActionNotice::NOT_FOUND,
         ];
-        $displayMessage = (isset($messageMapping[$status])) ? $messageMapping[$status] : AuthorizeOrderActionNotice::FAILED;
+        $displayMessage = (isset($messageMapping[$status])) ?
+            $messageMapping[$status]
+            : AuthorizeOrderActionNotice::FAILED;
         $this->notice->displayMessage($displayMessage);
     }
 
-    public function generate_ppcp_html() : string
+    public function generate_ppcp_html(): string
     {
 
         ob_start();

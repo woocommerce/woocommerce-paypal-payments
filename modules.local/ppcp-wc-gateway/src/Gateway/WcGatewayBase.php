@@ -8,7 +8,7 @@ use WC_Payment_Gateway;
 
 class WcGatewayBase extends WC_Payment_Gateway implements WcGatewayInterface
 {
-    const ID = 'ppcp-gateway';
+    public const ID = 'ppcp-gateway';
 
     public function __construct()
     {

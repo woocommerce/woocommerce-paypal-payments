@@ -99,7 +99,7 @@ return [
         return new OrderTablePaymentStatusColumn($settings);
     },
 
-    'wcgateway.settings.fields' => function(ContainerInterface $container) : array {
+    'wcgateway.settings.fields' => static function (ContainerInterface $container): array {
         $settings = $container->get('wcgateway.settings');
         $sandboxText = $settings->has('sandbox_on') && $settings->get('sandbox_on') ?
             __(
@@ -353,5 +353,5 @@ return [
                 ],
             ],
         ];
-    }
+    },
 ];

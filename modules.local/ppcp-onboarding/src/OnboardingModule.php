@@ -43,7 +43,6 @@ class OnboardingModule implements ModuleInterface
             ]
         );
 
-
         add_action(
             'wc_ajax_' . LoginSellerEndpoint::ENDPOINT,
             static function () use ($container) {
