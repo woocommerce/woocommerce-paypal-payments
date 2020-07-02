@@ -46,7 +46,10 @@ class WcGatewayTest extends TestCase
             ->with($orderId)
             ->andReturn($wcOrder);
 
+        global $woocommerce;
+        $woocommerce = Mockery::mock(\WooCommerce::class);
         $result = $testee->process_payment($orderId);
+        unset($woocommerce);
         $this->assertIsArray($result);
         $this->assertEquals('success', $result['result']);
         $this->assertEquals($result['redirect'], $wcOrder);
@@ -72,7 +75,10 @@ class WcGatewayTest extends TestCase
             ->with($orderId)
             ->andReturn(false);
 
+        global $woocommerce;
+        $woocommerce = Mockery::mock(\WooCommerce::class);
         $this->assertNull($testee->process_payment($orderId));
+        unset($woocommerce);
     }
 
 
@@ -106,7 +112,10 @@ class WcGatewayTest extends TestCase
         expect('wc_add_notice')
             ->with($lastError);
 
+        global $woocommerce;
+        $woocommerce = Mockery::mock(\WooCommerce::class);
         $result = $testee->process_payment($orderId);
+        unset($woocommerce);
         $this->assertNull($result);
     }
 

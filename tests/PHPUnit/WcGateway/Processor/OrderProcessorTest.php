@@ -13,6 +13,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
 use Inpsyde\PayPalCommerce\Session\SessionHandler;
 use Inpsyde\PayPalCommerce\TestCase;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGateway;
+use Inpsyde\Woocommerce\Logging\WoocommerceLoggingModule;
 use Mockery;
 
 class OrderProcessorTest extends TestCase
@@ -75,7 +76,8 @@ class OrderProcessorTest extends TestCase
         $cart = Mockery::mock(\WC_Cart::class);
         $cart
             ->expects('empty_cart');
-        $woocommerce = (object) ['cart' => $cart];
+        $woocommerce = Mockery::mock(\WooCommerce::class);
+        $woocommerce->cart = $cart;
 
         $wcOrder
             ->expects('update_meta_data')
@@ -158,7 +160,8 @@ class OrderProcessorTest extends TestCase
         $cart = Mockery::mock(\WC_Cart::class);
         $cart
             ->expects('empty_cart');
-        $woocommerce = (object) ['cart' => $cart];
+        $woocommerce = Mockery::mock(\WooCommerce::class);
+        $woocommerce->cart = $cart;
 
         $wcOrder
             ->expects('update_meta_data')
@@ -218,7 +221,8 @@ class OrderProcessorTest extends TestCase
         );
 
         $cart = Mockery::mock(\WC_Cart::class);
-        $woocommerce = (object) ['cart' => $cart];
+        $woocommerce = Mockery::mock(\WooCommerce::class);
+        $woocommerce->cart = $cart;
 
         $wcOrder
             ->expects('update_meta_data')
