@@ -36,7 +36,8 @@ return [
     },
     'wcgateway.disabler' => static function (ContainerInterface $container): DisableGateways {
         $sessionHandler = $container->get('session.handler');
-        return new DisableGateways($sessionHandler);
+        $settings = $container->get('wcgateway.settings');
+        return new DisableGateways($sessionHandler, $settings);
     },
     'wcgateway.settings' => static function (ContainerInterface $container): Settings {
         return new Settings();
