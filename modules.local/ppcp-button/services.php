@@ -17,7 +17,7 @@ use Inpsyde\PayPalCommerce\Onboarding\Environment;
 use Inpsyde\PayPalCommerce\Onboarding\State;
 
 return [
-    'button.client_id' => static function(ContainerInterface $container) : string {
+    'button.client_id' => static function (ContainerInterface $container): string {
 
         $settings = $container->get('wcgateway.settings');
         $clientId = $settings->has('client_id') ? $settings->get('client_id') : '';
@@ -63,7 +63,6 @@ return [
             $payerFactory,
             $clientId
         );
-
     },
     'button.url' => static function (ContainerInterface $container): string {
         return plugins_url(
