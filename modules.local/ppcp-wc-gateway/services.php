@@ -126,6 +126,13 @@ return [
             'reset'
         );
         return [
+            'ppcp_onboarding' => [
+                'title' => __('Connect to PayPal', 'woocommerce-paypal-gateway'),
+                'type' => 'ppcp_onboarding',
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                ],
+            ],
             'sandbox_on' => [
                 'title' => __('Sandbox', 'woocommerce-paypal-gateway'),
                 'type' => 'checkbox',
