@@ -61,12 +61,12 @@ class SettingsListener
                 case 'text':
                     $settings[$key] = isset($rawData[$key]) ? sanitize_text_field($rawData[$key]) : '';
                     break;
-                case 'multiselect':
+                case 'ppcp-multiselect':
                     $values = isset($rawData[$key]) ? (array) $rawData[$key] : [];
                     $valuesToSave = [];
                     foreach ($values as $index => $rawValue) {
                         $value = sanitize_text_field($rawValue);
-                        if (! in_array($value, $config['options'], true)) {
+                        if (! in_array($value, array_keys($config['options']), true)) {
                             continue;
                         }
                         $valuesToSave[] = $value;

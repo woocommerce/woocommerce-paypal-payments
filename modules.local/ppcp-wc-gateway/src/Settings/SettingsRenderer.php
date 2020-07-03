@@ -48,7 +48,7 @@ class SettingsRenderer
                          name="%s"
                      >%s</select>',
             implode(' ', $config['class']),
-            $key,
+            $key . '[]',
             implode('', $options)
         );
 
