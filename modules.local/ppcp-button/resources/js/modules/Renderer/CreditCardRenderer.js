@@ -12,12 +12,12 @@ class CreditCardRenderer {
         ) {
             return;
         }
-        wrapper = document.querySelector(wrapper);
         if (
             typeof paypal.HostedFields === 'undefined'
             || ! paypal.HostedFields.isEligible()
         ) {
-            wrapper.parentNode.removeChild(wrapper);
+            const wrapperElement = document.querySelector(wrapper);
+            wrapperElement.parentNode.removeChild(wrapperElement);
             return;
         }
 
