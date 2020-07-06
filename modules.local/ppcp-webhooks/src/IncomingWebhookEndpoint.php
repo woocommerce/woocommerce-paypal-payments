@@ -9,7 +9,7 @@ use Inpsyde\PayPalCommerce\Webhooks\Handler\RequestHandler;
 class IncomingWebhookEndpoint
 {
 
-    public const NAMESPACE = 'paypal/v1/';
+    public const NAMESPACE = 'paypal/v1';
     public const ROUTE = 'incoming';
     private $handlers;
     public function __construct(RequestHandler ...$handlers)
@@ -44,7 +44,7 @@ class IncomingWebhookEndpoint
     }
 
     public function url() : string {
-        return rest_url(self::NAMESPACE . self::ROUTE );
+        return str_replace('http://', 'https://', rest_url(self::NAMESPACE . '/' . self::ROUTE ));
     }
 
     public function handledEventTypes() : array {

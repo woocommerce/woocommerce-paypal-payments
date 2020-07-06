@@ -6,6 +6,7 @@ namespace Inpsyde\PayPalCommerce\Webhooks;
 
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
+use Inpsyde\PayPalCommerce\ApiClient\Entity\Webhook;
 use Inpsyde\PayPalCommerce\Onboarding\Assets\OnboardingAssets;
 use Inpsyde\PayPalCommerce\Onboarding\Endpoint\LoginSellerEndpoint;
 use Inpsyde\PayPalCommerce\Onboarding\Render\OnboardingRenderer;
@@ -25,13 +26,21 @@ class WebhookModule implements ModuleInterface
     public function run(ContainerInterface $container)
     {
         add_action(
-            'rest_init',
+            'rest_api_init',
             function() use ($container) {
                 $endpoint = $container->get('webhook.endpoint.controller');
                 /**
                  * @var IncomingWebhookEndpoint $endpoint
                  */
                 $endpoint->register();
+            }
+        );
+
+        add_action(
+            WebhookRegistrar::EVENT_HOOK,
+            function() use ($container) {
+                $registrar = $container->get('webhook.registrar');
+                $registrar->register();
             }
         );
 

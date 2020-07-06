@@ -11,6 +11,9 @@ use Inpsyde\PayPalCommerce\ApiClient\Factory\WebhookFactory;
 class WebhookRegistrar
 {
 
+    public const EVENT_HOOK = 'ppcp-register-event';
+    public const KEY = 'ppcp-webhook';
+
     private $webhookFactory;
     private $endpoint;
     private $restEndpoint;
@@ -33,8 +36,19 @@ class WebhookRegistrar
 
         try {
             $created = $this->endpoint->create($webhook);
-            return ! empty($created->id());
+            if(empty($created->id())) {
+                return false;
+            }
+            update_option(
+                self::KEY,
+                $webhook->toArray()
+            );
+            return true;
         } catch (RuntimeException $error) {
+            wp_schedule_single_event(
+                time() - 1,
+                self::EVENT_HOOK
+            );
             return false;
         }
     }

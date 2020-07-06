@@ -10,6 +10,7 @@ use Inpsyde\PayPalCommerce\Button\Endpoint\EndpointInterface;
 use Inpsyde\PayPalCommerce\Button\Endpoint\RequestData;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGatewayInterface;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
+use Inpsyde\PayPalCommerce\Webhooks\WebhookRegistrar;
 
 class LoginSellerEndpoint implements EndpointInterface
 {
@@ -50,6 +51,10 @@ class LoginSellerEndpoint implements EndpointInterface
             $this->settings->set('client_secret', $credentials->client_secret);
             $this->settings->set('client_id', $credentials->client_id);
             $this->settings->persist();
+            wp_schedule_single_event(
+                time() - 1,
+                WebhookRegistrar::EVENT_HOOK
+            );
             wp_send_json_success();
             return true;
         } catch (\RuntimeException $error) {
