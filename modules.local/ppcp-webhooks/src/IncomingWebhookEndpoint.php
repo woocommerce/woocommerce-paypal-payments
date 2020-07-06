@@ -24,7 +24,7 @@ class IncomingWebhookEndpoint
             self::ROUTE,
             [
                 'methods' => [
-                    'GET',
+                    'POST',
                 ],
                 'callback' => [
                     $this,
@@ -44,7 +44,7 @@ class IncomingWebhookEndpoint
     }
 
     public function url() : string {
-        return str_replace('http://', 'https://', rest_url(self::NAMESPACE . '/' . self::ROUTE ));
+        return rest_url(self::NAMESPACE . '/' . self::ROUTE);
     }
 
     public function handledEventTypes() : array {
