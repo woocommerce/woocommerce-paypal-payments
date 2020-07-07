@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\Webhooks;
 
-use Inpsyde\PayPalCommerce\Webhooks\Handler\PaymentCaptureCompleted;
+use Inpsyde\PayPalCommerce\Webhooks\Handler\CheckoutOrderCompleted;
 use Psr\Container\ContainerInterface;
 
 return [
@@ -24,8 +24,9 @@ return [
         return new IncomingWebhookEndpoint(... $handler);
     },
     'webhook.endpoint.handler' => function(ContainerInterface $container) : array {
+        $logger = $container->get('woocommerce.logger.woocommerce');
         return [
-            new PaymentCaptureCompleted(),
+            new CheckoutOrderCompleted($logger),
         ];
     }
 ];

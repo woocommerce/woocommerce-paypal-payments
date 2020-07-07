@@ -36,6 +36,9 @@ class IncomingWebhookEndpoint
 
     public function handleRequest(\WP_REST_Request $request) : \WP_REST_Response {
 
+        /**
+         * ToDo: Ensure Request is valid
+         */
         foreach ($this->handlers as $handler) {
             if ($handler->responsibleForRequest($request)) {
                 return $handler->handleRequest($request);
