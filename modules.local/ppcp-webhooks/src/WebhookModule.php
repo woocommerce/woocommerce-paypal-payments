@@ -44,5 +44,12 @@ class WebhookModule implements ModuleInterface
             }
         );
 
+        add_action(
+            'woocommerce-paypal-commerce-gateway.deactivate',
+            function() use ($container) {
+                $registrar = $container->get('webhook.registrar');
+                $registrar->unregister();
+            }
+        );
     }
 }
