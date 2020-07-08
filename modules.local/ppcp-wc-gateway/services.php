@@ -60,7 +60,8 @@ return [
     'wcgateway.settings.listener' => static function (ContainerInterface $container): SettingsListener {
         $settings = $container->get('wcgateway.settings');
         $fields = $container->get('wcgateway.settings.fields');
-        return new SettingsListener($settings, $fields);
+        $webhookRegistrar = $container->get('webhook.registrar');
+        return new SettingsListener($settings, $fields, $webhookRegistrar);
     },
     'wcgateway.order-processor' => static function (ContainerInterface $container): OrderProcessor {
 
@@ -146,7 +147,8 @@ return [
             'merchant_email' => [
                 'title' => __('Email address', 'woocommerce-paypal-gateway'),
                 'type' => 'text',
-                'label' => __('The email address of your PayPal account.', 'woocommerce-paypal-gateway'),
+                'desc_tip' => true,
+                'description' => __('The email address of your PayPal account.', 'woocommerce-paypal-gateway'),
                 'default' => '',
                 'screens' => [
                     State::STATE_START,
@@ -190,6 +192,24 @@ return [
                 ),
                 'screens' => [
                     State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+            ],
+            'intent' => [
+                'title' => __('Intent', 'woocommerce-paypal-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => 'capture',
+                'desc_tip' => true,
+                'description' => __(
+                    'The intent to either capture payment immediately or authorize a payment for an order after order creation.',
+                    'woocommerce-paypal-gateway'
+                ),
+                'options' => [
+                    'capture' => __('Capture', 'woocommerce-paypal-gateway'),
+                    'authorize' => __('Authorize', 'woocommerce-paypal-gateway'),
+                ],
+                'screens' => [
                     State::STATE_ONBOARDED,
                 ],
             ],
