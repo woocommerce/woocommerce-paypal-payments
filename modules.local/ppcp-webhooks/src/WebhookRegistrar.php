@@ -41,7 +41,7 @@ class WebhookRegistrar
             }
             update_option(
                 self::KEY,
-                $webhook->toArray()
+                $created->toArray()
             );
             return true;
         } catch (RuntimeException $error) {
@@ -51,5 +51,23 @@ class WebhookRegistrar
             );
             return false;
         }
+    }
+
+    public function unregister() : bool {
+        $data = (array) get_option(self::KEY, []);
+        if (! $data) {
+            return false;
+        }
+        try {
+            $webhook = $this->webhookFactory->fromArray($data);
+            $success = $this->endpoint->delete($webhook);
+        } catch (RuntimeException $error) {
+            return false;
+        }
+
+        if ($success) {
+            delete_option(self::KEY);
+        }
+        return $success;
     }
 }

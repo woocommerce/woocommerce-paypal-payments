@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Inpsyde\PayPalCommerce\WcGateway\Settings;
 
 use Inpsyde\PayPalCommerce\Onboarding\State;
+use Inpsyde\PayPalCommerce\Webhooks\WebhookRegistrar;
 
 class SettingsListener
 {
@@ -12,10 +13,15 @@ class SettingsListener
     public const NONCE = 'ppcp-settings';
     private $settings;
     private $settingFields;
-    public function __construct(Settings $settings, array $settingFields)
-    {
+    private $webhookRegistrar;
+    public function __construct(
+        Settings $settings,
+        array $settingFields,
+        WebhookRegistrar $webhookRegistrar
+    ) {
         $this->settings = $settings;
         $this->settingFields = $settingFields;
+        $this->webhookRegistrar = $webhookRegistrar;
     }
 
     public function listen()
@@ -32,6 +38,7 @@ class SettingsListener
         if (isset($_POST['save']) && sanitize_text_field(wp_unslash($_POST['save'])) === 'reset') {
             $this->settings->reset();
             $this->settings->persist();
+            $this->webhookRegistrar->unregister();
             return;
         }
 
@@ -74,9 +81,10 @@ class SettingsListener
                     $settings[$key] = $valuesToSave;
                     break;
                 case 'select':
+                    $options = array_keys($config['options']);
                     $settings[$key] = isset($rawData[$key]) && in_array(
                         sanitize_text_field($rawData[$key]),
-                        $config['options'],
+                        $options,
                         true
                     ) ? sanitize_text_field($rawData[$key]) : null;
                     break;
