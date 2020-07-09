@@ -27,7 +27,7 @@ class PaymentCaptureRefunded implements RequestHandler
     public function handleRequest(\WP_REST_Request $request): \WP_REST_Response
     {
         $response = ['success' => false];
-        $orderId = isset($request['custom_id']) ? (int) $request['custom_id'] : 0;
+        $orderId = isset($request['resource']['custom_id']) ? (int) $request['resource']['custom_id'] : 0;
         if (! $orderId) {
             $message = sprintf(
             // translators: %s is the PayPal webhook Id.
