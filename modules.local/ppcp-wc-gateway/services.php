@@ -61,7 +61,11 @@ return [
         $settings = $container->get('wcgateway.settings');
         $fields = $container->get('wcgateway.settings.fields');
         $webhookRegistrar = $container->get('webhook.registrar');
-        return new SettingsListener($settings, $fields, $webhookRegistrar);
+
+        global $wpdb;
+        $cacheFactory = new CachePoolFactory($wpdb);
+        $pool = $cacheFactory->createCachePool('ppcp-token');
+        return new SettingsListener($settings, $fields, $webhookRegistrar, $pool);
     },
     'wcgateway.order-processor' => static function (ContainerInterface $container): OrderProcessor {
 

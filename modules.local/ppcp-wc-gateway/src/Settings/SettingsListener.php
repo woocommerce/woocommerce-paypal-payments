@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\WcGateway\Settings;
 
+use Inpsyde\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
 use Inpsyde\PayPalCommerce\Onboarding\State;
 use Inpsyde\PayPalCommerce\Webhooks\WebhookRegistrar;
+use Psr\SimpleCache\CacheInterface;
 
 class SettingsListener
 {
@@ -14,14 +16,17 @@ class SettingsListener
     private $settings;
     private $settingFields;
     private $webhookRegistrar;
+    private $cache;
     public function __construct(
         Settings $settings,
         array $settingFields,
-        WebhookRegistrar $webhookRegistrar
+        WebhookRegistrar $webhookRegistrar,
+        CacheInterface $cache
     ) {
         $this->settings = $settings;
         $this->settingFields = $settingFields;
         $this->webhookRegistrar = $webhookRegistrar;
+        $this->cache = $cache;
     }
 
     public function listen()
@@ -39,6 +44,7 @@ class SettingsListener
             $this->settings->reset();
             $this->settings->persist();
             $this->webhookRegistrar->unregister();
+            $this->cache->delete(PayPalBearer::CACHE_KEY);
             return;
         }
 
@@ -54,6 +60,7 @@ class SettingsListener
             $this->settings->set($id, $value);
         }
         $this->settings->persist();
+        $this->cache->delete(PayPalBearer::CACHE_KEY);
     }
 
     //phpcs:disable Inpsyde.CodeQuality.NestingLevel.MaxExceeded
