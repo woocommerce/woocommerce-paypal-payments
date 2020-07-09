@@ -39,6 +39,23 @@ class CheckoutOrderCompleted implements RequestHandler
             }
         );
 
+        if (empty($orderIds)) {
+
+            $message = sprintf(
+                // translators: %s is the PayPal webhook Id.
+                __('No order for webhook event %s was found.', 'woocommerce-paypal-commerce-gateway'),
+                isset($request['id']) ? $request['id'] : ''
+            );
+            $this->logger->log(
+                'warning',
+                $message,
+                [
+                    'request' => $request,
+                ]
+            );
+            return rest_ensure_response(new \WP_Error($message));
+        }
+
         $args = [
             'post__in' => $orderIds,
             'limit' => -1,
