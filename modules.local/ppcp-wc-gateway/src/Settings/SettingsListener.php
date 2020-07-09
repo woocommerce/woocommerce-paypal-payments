@@ -23,6 +23,7 @@ class SettingsListener
         WebhookRegistrar $webhookRegistrar,
         CacheInterface $cache
     ) {
+
         $this->settings = $settings;
         $this->settingFields = $settingFields;
         $this->webhookRegistrar = $webhookRegistrar;
@@ -44,7 +45,7 @@ class SettingsListener
             $this->settings->reset();
             $this->settings->persist();
             $this->webhookRegistrar->unregister();
-            if ($this->cache->has(PayPalBearer::CACHE_KEY) ) {
+            if ($this->cache->has(PayPalBearer::CACHE_KEY)) {
                 $this->cache->delete(PayPalBearer::CACHE_KEY);
             }
             return;
@@ -62,7 +63,7 @@ class SettingsListener
             $this->settings->set($id, $value);
         }
         $this->settings->persist();
-        if ($this->cache->has(PayPalBearer::CACHE_KEY) ) {
+        if ($this->cache->has(PayPalBearer::CACHE_KEY)) {
             $this->cache->delete(PayPalBearer::CACHE_KEY);
         }
     }
