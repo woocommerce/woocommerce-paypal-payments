@@ -5,6 +5,7 @@ namespace Inpsyde\PayPalCommerce\Webhooks;
 
 
 use Inpsyde\PayPalCommerce\Webhooks\Handler\RequestHandler;
+use Psr\Log\LoggerInterface;
 
 class IncomingWebhookEndpoint
 {
@@ -12,9 +13,11 @@ class IncomingWebhookEndpoint
     public const NAMESPACE = 'paypal/v1';
     public const ROUTE = 'incoming';
     private $handlers;
-    public function __construct(RequestHandler ...$handlers)
+    private $logger;
+    public function __construct(LoggerInterface $logger, RequestHandler ...$handlers)
     {
         $this->handlers = $handlers;
+        $this->logger = $logger;
     }
 
     public function register() : bool
@@ -41,7 +44,19 @@ class IncomingWebhookEndpoint
          */
         foreach ($this->handlers as $handler) {
             if ($handler->responsibleForRequest($request)) {
-                return $handler->handleRequest($request);
+                $response = $handler->handleRequest($request);
+                $this->logger->log(
+                    'info',
+                    sprintf(
+                        __('Webhook has been handled by %s', 'woocommerce-paypal-commerce-gateway'),
+                        $handler->eventType()
+                    ),
+                    [
+                        'request' => $request,
+                        'response' => $response,
+                    ]
+                );
+                return $response;
             }
         }
     }

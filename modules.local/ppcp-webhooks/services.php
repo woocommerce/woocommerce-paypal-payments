@@ -21,7 +21,9 @@ return [
     },
     'webhook.endpoint.controller' => function(ContainerInterface $container) : IncomingWebhookEndpoint {
         $handler = $container->get('webhook.endpoint.handler');
-        return new IncomingWebhookEndpoint(... $handler);
+        $logger = $container->get('woocommerce.logger.woocommerce');
+
+        return new IncomingWebhookEndpoint($logger, ... $handler);
     },
     'webhook.endpoint.handler' => function(ContainerInterface $container) : array {
         $logger = $container->get('woocommerce.logger.woocommerce');
