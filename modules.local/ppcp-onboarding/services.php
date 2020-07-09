@@ -11,18 +11,6 @@ use Inpsyde\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
 use Inpsyde\PayPalCommerce\Onboarding\Assets\OnboardingAssets;
 use Inpsyde\PayPalCommerce\Onboarding\Endpoint\LoginSellerEndpoint;
 use Inpsyde\PayPalCommerce\Onboarding\Render\OnboardingRenderer;
-use Inpsyde\PayPalCommerce\WcGateway\Admin\OrderDetail;
-use Inpsyde\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
-use Inpsyde\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
-use Inpsyde\PayPalCommerce\WcGateway\Checkout\DisableGateways;
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGateway;
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGatewayBase;
-use Inpsyde\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
-use Inpsyde\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
-use Inpsyde\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
-use Inpsyde\PayPalCommerce\WcGateway\Processor\OrderProcessor;
-use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
-use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsFields;
 use WpOop\TransientCache\CachePoolFactory;
 
 return [
@@ -113,11 +101,16 @@ return [
         $loginSellerEndpoint = $container->get('api.endpoint.login-seller');
         $partnerReferralsData = $container->get('api.repository.partner-referrals-data');
         $settings = $container->get('wcgateway.settings');
+
+        global $wpdb;
+        $cacheFactory = new CachePoolFactory($wpdb);
+        $pool = $cacheFactory->createCachePool('ppcp-token');
         return new LoginSellerEndpoint(
             $requestData,
             $loginSellerEndpoint,
             $partnerReferralsData,
-            $settings
+            $settings,
+            $pool
         );
     },
     'onboarding.render' => static function (ContainerInterface $container) : OnboardingRenderer {

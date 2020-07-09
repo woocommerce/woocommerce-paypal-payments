@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\Onboarding\Endpoint;
 
+use Inpsyde\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
 use Inpsyde\PayPalCommerce\ApiClient\Endpoint\LoginSeller;
 use Inpsyde\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
 use Inpsyde\PayPalCommerce\Button\Endpoint\EndpointInterface;
@@ -11,6 +12,7 @@ use Inpsyde\PayPalCommerce\Button\Endpoint\RequestData;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGatewayInterface;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
 use Inpsyde\PayPalCommerce\Webhooks\WebhookRegistrar;
+use Psr\SimpleCache\CacheInterface;
 
 class LoginSellerEndpoint implements EndpointInterface
 {
@@ -20,17 +22,20 @@ class LoginSellerEndpoint implements EndpointInterface
     private $loginSellerEndpoint;
     private $partnerReferralsData;
     private $settings;
+    private $cache;
     public function __construct(
         RequestData $requestData,
         LoginSeller $loginSellerEndpoint,
         PartnerReferralsData $partnerReferralsData,
-        Settings $settings
+        Settings $settings,
+        CacheInterface $cache
     ) {
 
         $this->requestData = $requestData;
         $this->loginSellerEndpoint = $loginSellerEndpoint;
         $this->partnerReferralsData = $partnerReferralsData;
         $this->settings = $settings;
+        $this->cache = $cache;
     }
 
     public static function nonce(): string
@@ -51,6 +56,9 @@ class LoginSellerEndpoint implements EndpointInterface
             $this->settings->set('client_secret', $credentials->client_secret);
             $this->settings->set('client_id', $credentials->client_id);
             $this->settings->persist();
+            if ($this->cache->has(PayPalBearer::CACHE_KEY)) {
+                $this->cache->delete(PayPalBearer::CACHE_KEY);
+            }
             wp_schedule_single_event(
                 time() - 1,
                 WebhookRegistrar::EVENT_HOOK
