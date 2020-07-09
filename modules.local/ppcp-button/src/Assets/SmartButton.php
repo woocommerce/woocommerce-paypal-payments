@@ -161,6 +161,7 @@ class SmartButton implements SmartButtonInterface
         if (
             $this->settings->has('dcc_checkout_enabled')
             && $this->settings->get('dcc_checkout_enabled')
+            && ! $this->sessionHandler->order()
         ) {
             add_action(
                 'woocommerce_review_order_after_submit',
