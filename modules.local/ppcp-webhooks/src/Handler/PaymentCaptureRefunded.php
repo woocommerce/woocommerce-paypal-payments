@@ -45,12 +45,8 @@ class PaymentCaptureRefunded implements RequestHandler
             return rest_ensure_response($response);
         }
 
-        $args = [
-            'post__in' => [$orderId],
-            'limit' => -1,
-        ];
-        $wcOrders = wc_get_orders($args);
-        if (! $wcOrders) {
+        $wcOrder = wc_get_order($orderId);
+        if (! is_a($wcOrder, \WC_Order::class)) {
             $message = sprintf(
             // translators: %s is the PayPal refund Id.
                 __('Order for PayPal refund %s not found.', 'woocommerce-paypal-commerce-gateway'),
@@ -67,23 +63,21 @@ class PaymentCaptureRefunded implements RequestHandler
             return rest_ensure_response($response);
         }
 
-        foreach ($wcOrders as $wcOrder) {
-            /**
-             * @var \WC_Product $wcOrder
-             */
-            $wcOrder->update_status(
-                'refunded',
-                __('Payment Refunded.', 'woocommerce-paypal-gateway')
-            );
-            $this->logger->log(
-                'info',
-                __('Order ' . $wcOrder->get_id() . ' has been updated through PayPal' , 'woocommerce-paypal-gateway'),
-                [
-                    'request' => $request,
-                    'order' => $wcOrder,
-                ]
-            );
-        }
+        /**
+         * @var \WC_Order $wcOrder
+         */
+        $wcOrder->update_status(
+            'refunded',
+            __('Payment Refunded.', 'woocommerce-paypal-gateway')
+        );
+        $this->logger->log(
+            'info',
+            __('Order ' . $wcOrder->get_id() . ' has been updated through PayPal' , 'woocommerce-paypal-gateway'),
+            [
+                'request' => $request,
+                'order' => $wcOrder,
+            ]
+        );
         $response['success'] = true;
         return rest_ensure_response($response);
     }
