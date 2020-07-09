@@ -66,13 +66,33 @@ class PaymentCaptureRefunded implements RequestHandler
         /**
          * @var \WC_Order $wcOrder
          */
-        $wcOrder->update_status(
-            'refunded',
-            __('Payment Refunded.', 'woocommerce-paypal-gateway')
-        );
+        $refund = wc_create_refund([
+            'order_id' => $wcOrder->get_id(),
+            'amount' => $request['resource']['amount']['value']
+        ]);
+        if (is_wp_error($refund)) {
+
+            $this->logger->log(
+                'warning',
+                __('Order ' . $wcOrder->get_id() . ' could not be refunded' , 'woocommerce-paypal-gateway'),
+                [
+                    'request' => $request,
+                    'error' => $refund,
+                ]
+            );
+
+            $response['message'] = $refund->get_error_message();
+            return rest_ensure_response($response);
+        }
+
         $this->logger->log(
             'info',
-            __('Order ' . $wcOrder->get_id() . ' has been updated through PayPal' , 'woocommerce-paypal-gateway'),
+            sprintf(
+                //translators: %1$s is the order id %2$s is the amount which has been refunded.
+                __('Order %1$s has been refunded with %2$s through PayPal' , 'woocommerce-paypal-gateway'),
+                (string) $wcOrder->get_id(),
+                (string) $refund->get_amount()
+            ),
             [
                 'request' => $request,
                 'order' => $wcOrder,
