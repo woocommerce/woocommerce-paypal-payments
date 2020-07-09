@@ -30,7 +30,9 @@
         "container-interop/service-provider": "^0.4.0",
         "dhii/containers": "dev-develop",
         "dhii/wp-containers": "^0.1.0@alpha",
-        "psr/log": "^1.1"
+        "psr/log": "^1.1",
+        "ext-json": "*",
+        "ext-apache": "*"
     },
     "require-dev": {
         "inpsyde/php-coding-standards": "^1",

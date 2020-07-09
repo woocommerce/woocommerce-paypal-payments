@@ -21,10 +21,12 @@ return [
         );
     },
     'webhook.endpoint.controller' => function(ContainerInterface $container) : IncomingWebhookEndpoint {
+        $webhookEndpoint = $container->get('api.endpoint.webhook');
+        $webhookFactory = $container->get('api.factory.webhook');
         $handler = $container->get('webhook.endpoint.handler');
         $logger = $container->get('woocommerce.logger.woocommerce');
 
-        return new IncomingWebhookEndpoint($logger, ... $handler);
+        return new IncomingWebhookEndpoint($webhookEndpoint, $webhookFactory, $logger, ... $handler);
     },
     'webhook.endpoint.handler' => function(ContainerInterface $container) : array {
         $logger = $container->get('woocommerce.logger.woocommerce');
