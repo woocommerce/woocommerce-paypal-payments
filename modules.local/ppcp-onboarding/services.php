@@ -69,9 +69,6 @@ return [
         $pool = $cacheFactory->createCachePool('ppcp-token');
         $key = $container->get('api.key');
         $secret = $container->get('api.secret');
-        //ToDo: Remove Test Key and Secret
-        //$key = 'AQB97CzMsd58-It1vxbcDAGvMuXNCXRD9le_XUaMlHB_U7XsU9IiItBwGQOtZv9sEeD6xs2vlIrL4NiD';
-        //$secret = 'EILGMYK_0iiSbja8hT-nCBGl0BvKxEB4riHgyEO7QWDeUzCJ5r42JUEvrI7gpGyw0Qww8AIXxSdCIAny';
 
         $host = $container->get('api.host');
         $logger = $container->get('woocommerce.logger.woocommerce');
