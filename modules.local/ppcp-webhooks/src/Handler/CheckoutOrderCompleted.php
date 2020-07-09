@@ -71,6 +71,14 @@ class CheckoutOrderCompleted implements RequestHandler
                 'processing',
                 __('Payment received.', 'woocommerce-paypal-gateway')
             );
+            $this->logger->log(
+                'info',
+                __('Order ' . $wcOrder->get_id() . ' has been updated through PayPal' , 'woocommerce-paypal-gateway'),
+                [
+                    'request' => $request,
+                    'order' => $wcOrder,
+                ]
+            );
         }
         $response['success'] = true;
         return rest_ensure_response($response);
