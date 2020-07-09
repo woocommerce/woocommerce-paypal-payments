@@ -17,6 +17,7 @@ use Inpsyde\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsListener;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
+use WpOop\TransientCache\CachePoolFactory;
 
 return [
     'wcgateway.gateway' => static function (ContainerInterface $container): WcGateway {
