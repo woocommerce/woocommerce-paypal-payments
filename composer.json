@@ -31,8 +31,7 @@
         "dhii/containers": "dev-develop",
         "dhii/wp-containers": "^0.1.0@alpha",
         "psr/log": "^1.1",
-        "ext-json": "*",
-        "ext-apache": "*"
+        "ext-json": "*"
     },
     "require-dev": {
         "inpsyde/php-coding-standards": "^1",
