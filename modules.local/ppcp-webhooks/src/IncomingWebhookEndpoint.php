@@ -59,6 +59,9 @@ class IncomingWebhookEndpoint
                 return $response;
             }
         }
+
+        $response = ['success' => false];
+        return rest_ensure_response($response);
     }
 
     public function url() : string {
