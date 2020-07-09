@@ -84,7 +84,7 @@ class CheckoutOrderCompleted implements RequestHandler
                 continue;
             }
             /**
-             * @var \WC_Product $wcOrder
+             * @var \WC_Order $wcOrder
              */
             $wcOrder->update_status(
                 'processing',
