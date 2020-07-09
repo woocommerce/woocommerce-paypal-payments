@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Inpsyde\PayPalCommerce\Webhooks;
 
 use Inpsyde\PayPalCommerce\Webhooks\Handler\CheckoutOrderCompleted;
+use Inpsyde\PayPalCommerce\Webhooks\Handler\PaymentCaptureRefunded;
 use Psr\Container\ContainerInterface;
 
 return [
@@ -29,6 +30,7 @@ return [
         $logger = $container->get('woocommerce.logger.woocommerce');
         return [
             new CheckoutOrderCompleted($logger),
+            new PaymentCaptureRefunded($logger),
         ];
     }
 ];
