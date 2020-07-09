@@ -53,7 +53,8 @@ class CheckoutOrderCompleted implements RequestHandler
                     'request' => $request,
                 ]
             );
-            return rest_ensure_response(new \WP_Error($message));
+            $response['message'] = $message;
+            return rest_ensure_response($response);
         }
 
         $args = [
@@ -74,7 +75,8 @@ class CheckoutOrderCompleted implements RequestHandler
                     'request' => $request,
                 ]
             );
-            return rest_ensure_response(new \WP_Error($message));
+            $response['message'] = $message;
+            return rest_ensure_response($response);
         }
 
         foreach ($wcOrders as $wcOrder) {
