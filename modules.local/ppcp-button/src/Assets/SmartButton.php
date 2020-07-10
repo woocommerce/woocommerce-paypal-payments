@@ -52,12 +52,20 @@ class SmartButton implements SmartButtonInterface
     {
 
         $buttonRenderer = static function () {
+            $product = wc_get_product();
+            if ($product->is_type(['external', 'grouped'])) {
+                return;
+            }
             echo '<div id="ppc-button"></div>';
         };
 
         $canRenderDcc = $this->settings->has('client_id') && $this->settings->get('client_id');
         $dccRenderer = static function (string $id = null) use ($canRenderDcc) {
             if (! $canRenderDcc) {
+                return;
+            }
+            $product = wc_get_product();
+            if ($product->is_type(['external', 'grouped'])) {
                 return;
             }
             if (!$id) {
@@ -108,31 +116,25 @@ class SmartButton implements SmartButtonInterface
         $notEnabledOnProductPage = $this->settings->has('button_single_product_enabled') &&
             !$this->settings->get('button_single_product_enabled');
         if (
-            is_product()
+            (is_product() || wc_post_content_has_shortcode('product_page'))
             && !$notEnabledOnProductPage
         ) {
-            $product = wc_get_product();
-            if (! $product->is_type(['external', 'grouped'])) {
-                add_action(
-                    'woocommerce_single_product_summary',
-                    $buttonRenderer,
-                    31
-                );
-            }
+            add_action(
+                'woocommerce_single_product_summary',
+                $buttonRenderer,
+                31
+            );
         }
         if (
-            is_product()
+            (is_product() || wc_post_content_has_shortcode('product_page'))
             && $this->settings->has('dcc_single_product_enabled')
             && $this->settings->get('dcc_single_product_enabled')
         ) {
-            $product = wc_get_product();
-            if (! $product->is_type(['external', 'grouped'])) {
-                add_action(
-                    'woocommerce_single_product_summary',
-                    $dccRenderer,
-                    31
-                );
-            }
+            add_action(
+                'woocommerce_single_product_summary',
+                $dccRenderer,
+                31
+            );
         }
         $notEnabledOnMiniCart = $this->settings->has('button_mini_cart_enabled') &&
             !$this->settings->get('button_mini_cart_enabled');
@@ -308,7 +310,7 @@ class SmartButton implements SmartButtonInterface
     private function context(): string
     {
         $context = 'mini-cart';
-        if (is_product()) {
+        if (is_product() || wc_post_content_has_shortcode('product_page')) {
             $context = 'product';
         }
         if (is_cart()) {
