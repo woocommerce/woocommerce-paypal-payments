@@ -80,6 +80,7 @@ class Settings implements ContainerInterface
             'dcc_mini_cart_enabled' => true,
             'dcc_checkout_enabled' => true,
             'dcc_single_product_enabled' => true,
+            'brand_name' => get_bloginfo('name'),
         ];
         foreach ($defaults as $key => $value) {
             if (isset($this->settings[$key])) {

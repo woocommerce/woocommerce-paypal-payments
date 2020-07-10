@@ -270,6 +270,20 @@ return [
                     State::STATE_ONBOARDED,
                 ],
             ],
+            'brand_name' => [
+                'title' => __('Brand Name', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'text',
+                'default' => get_bloginfo('name'),
+                'desc_tip' => true,
+                'description' => __(
+                    'Control the name of your shop, customers will see in the PayPal process.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+            ],
             'button_color' => [
                 'title' => __('Color', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'select',
