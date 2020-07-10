@@ -94,7 +94,10 @@ class PaymentCaptureRefunded implements RequestHandler
             'info',
             sprintf(
                 // translators: %1$s is the order id %2$s is the amount which has been refunded.
-                __('Order %1$s has been refunded with %2$s through PayPal', 'woocommerce-paypal-commerce-gateway'),
+                __(
+                    'Order %1$s has been refunded with %2$s through PayPal',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
                 (string) $wcOrder->get_id(),
                 (string) $refund->get_amount()
             ),

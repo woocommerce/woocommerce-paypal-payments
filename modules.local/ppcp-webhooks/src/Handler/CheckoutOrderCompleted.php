@@ -34,7 +34,8 @@ class CheckoutOrderCompleted implements RequestHandler
                 static function (array $purchaseUnit): string {
                     return isset($purchaseUnit['custom_id']) ? (string) $purchaseUnit['custom_id'] : '';
                 },
-                isset($request['resource']['purchase_units']) ? (array) $request['resource']['purchase_units'] : []
+                isset($request['resource']['purchase_units']) ?
+                    (array) $request['resource']['purchase_units'] : []
             ),
             static function (string $orderId): bool {
                 return ! empty($orderId);
