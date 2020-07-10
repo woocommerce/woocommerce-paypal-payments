@@ -249,6 +249,27 @@ return [
                     State::STATE_ONBOARDED,
                 ],
             ],
+            'button_label' => [
+                'title' => __('Button Label', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => 'paypal',
+                'desc_tip' => true,
+                'description' => __(
+                    'This controls the label on the primary button.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    'paypal' => __('PayPal', 'woocommerce-paypal-commerce-gateway'),
+                    'checkout' => __('PayPal Checkout', 'woocommerce-paypal-commerce-gateway'),
+                    'buynow' => __('PayPal Buy Now', 'woocommerce-paypal-commerce-gateway'),
+                    'pay' => __('Pay with PayPal', 'woocommerce-paypal-commerce-gateway'),
+                ],
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+            ],
             'button_color' => [
                 'title' => __('Color', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'select',

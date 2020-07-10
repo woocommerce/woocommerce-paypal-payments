@@ -229,7 +229,7 @@ class SmartButton implements SmartButtonInterface
                     'layout' => 'vertical',
                     'color' => ($this->settings->has('button_color')) ? $this->settings->get('button_color') : null,
                     'shape' => ($this->settings->has('button_shape')) ? $this->settings->get('button_shape') : null,
-                    'label' => 'paypal',
+                    'label' => ($this->settings->has('button_label')) ? $this->settings->get('button_label') : 'paypal',
                 ],
             ],
             'hosted_fields' => [
