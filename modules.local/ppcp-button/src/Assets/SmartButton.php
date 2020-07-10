@@ -53,7 +53,7 @@ class SmartButton implements SmartButtonInterface
 
         $buttonRenderer = static function () {
             $product = wc_get_product();
-            if ($product->is_type(['external', 'grouped'])) {
+            if ($product->is_type(['external', 'grouped']) || ! $product->is_in_stock()) {
                 return;
             }
             echo '<div id="ppc-button"></div>';
@@ -65,7 +65,7 @@ class SmartButton implements SmartButtonInterface
                 return;
             }
             $product = wc_get_product();
-            if ($product->is_type(['external', 'grouped'])) {
+            if ($product->is_type(['external', 'grouped']) || ! $product->is_in_stock()) {
                 return;
             }
             if (!$id) {
