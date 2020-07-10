@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\Webhooks\Handler;
@@ -24,6 +25,7 @@ class PaymentCaptureRefunded implements RequestHandler
         return in_array($request['event_type'], $this->eventTypes(), true);
     }
 
+    // phpcs:disable Inpsyde.CodeQuality.FunctionLength.TooLong
     public function handleRequest(\WP_REST_Request $request): \WP_REST_Response
     {
         $response = ['success' => false];
@@ -68,13 +70,16 @@ class PaymentCaptureRefunded implements RequestHandler
          */
         $refund = wc_create_refund([
             'order_id' => $wcOrder->get_id(),
-            'amount' => $request['resource']['amount']['value']
+            'amount' => $request['resource']['amount']['value'],
         ]);
         if (is_wp_error($refund)) {
-
             $this->logger->log(
                 'warning',
-                __('Order ' . $wcOrder->get_id() . ' could not be refunded' , 'woocommerce-paypal-commerce-gateway'),
+                sprintf(
+                    // translators: %s is the order id.
+                    __('Order %s could not be refunded', 'woocommerce-paypal-commerce-gateway'),
+                    (string) $wcOrder->get_id()
+                ),
                 [
                     'request' => $request,
                     'error' => $refund,
@@ -88,8 +93,8 @@ class PaymentCaptureRefunded implements RequestHandler
         $this->logger->log(
             'info',
             sprintf(
-                //translators: %1$s is the order id %2$s is the amount which has been refunded.
-                __('Order %1$s has been refunded with %2$s through PayPal' , 'woocommerce-paypal-commerce-gateway'),
+                // translators: %1$s is the order id %2$s is the amount which has been refunded.
+                __('Order %1$s has been refunded with %2$s through PayPal', 'woocommerce-paypal-commerce-gateway'),
                 (string) $wcOrder->get_id(),
                 (string) $refund->get_amount()
             ),
@@ -101,4 +106,5 @@ class PaymentCaptureRefunded implements RequestHandler
         $response['success'] = true;
         return rest_ensure_response($response);
     }
+    // phpcs:enable Inpsyde.CodeQuality.FunctionLength.TooLong
 }

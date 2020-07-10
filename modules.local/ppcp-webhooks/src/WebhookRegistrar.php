@@ -1,8 +1,8 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\Webhooks;
-
 
 use Inpsyde\PayPalCommerce\ApiClient\Endpoint\WebhookEndpoint;
 use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
@@ -22,12 +22,13 @@ class WebhookRegistrar
         WebhookEndpoint $endpoint,
         IncomingWebhookEndpoint $restEndpoint
     ) {
+
         $this->webhookFactory = $webhookFactory;
         $this->endpoint = $endpoint;
         $this->restEndpoint = $restEndpoint;
     }
 
-    public function register() : bool
+    public function register(): bool
     {
         $webhook = $this->webhookFactory->forUrlAndEvents(
             $this->restEndpoint->url(),
@@ -36,7 +37,7 @@ class WebhookRegistrar
 
         try {
             $created = $this->endpoint->create($webhook);
-            if(empty($created->id())) {
+            if (empty($created->id())) {
                 return false;
             }
             update_option(
@@ -53,7 +54,8 @@ class WebhookRegistrar
         }
     }
 
-    public function unregister() : bool {
+    public function unregister(): bool
+    {
         $data = (array) get_option(self::KEY, []);
         if (! $data) {
             return false;

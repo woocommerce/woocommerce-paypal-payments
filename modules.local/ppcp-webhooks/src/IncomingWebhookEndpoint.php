@@ -1,8 +1,8 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\Webhooks;
-
 
 use Inpsyde\PayPalCommerce\ApiClient\Endpoint\WebhookEndpoint;
 use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
@@ -32,7 +32,7 @@ class IncomingWebhookEndpoint
         $this->logger = $logger;
     }
 
-    public function register() : bool
+    public function register(): bool
     {
         return (bool) register_rest_route(
             self::NAMESPACE,
@@ -54,7 +54,8 @@ class IncomingWebhookEndpoint
         );
     }
 
-    public function verifyRequest() : bool {
+    public function verifyRequest(): bool
+    {
         try {
             $data = (array) get_option(WebhookRegistrar::KEY, []);
             $webhook = $this->webhookFactory->fromArray($data);
@@ -64,7 +65,8 @@ class IncomingWebhookEndpoint
         }
     }
 
-    public function handleRequest(\WP_REST_Request $request) : \WP_REST_Response {
+    public function handleRequest(\WP_REST_Request $request): \WP_REST_Response
+    {
 
         foreach ($this->handlers as $handler) {
             if ($handler->responsibleForRequest($request)) {
@@ -72,8 +74,9 @@ class IncomingWebhookEndpoint
                 $this->logger->log(
                     'info',
                     sprintf(
+                        // translators: %s is the event type
                         __('Webhook has been handled by %s', 'woocommerce-paypal-commerce-gateway'),
-                        ($handler->eventTypes())?current($handler->eventTypes()):''
+                        ($handler->eventTypes()) ? current($handler->eventTypes()) : ''
                     ),
                     [
                         'request' => $request,
@@ -88,11 +91,13 @@ class IncomingWebhookEndpoint
         return rest_ensure_response($response);
     }
 
-    public function url() : string {
-        return str_replace('http', 'https', rest_url(self::NAMESPACE . '/' . self::ROUTE));
+    public function url(): string
+    {
+        return rest_url(self::NAMESPACE . '/' . self::ROUTE);
     }
 
-    public function handledEventTypes() : array {
+    public function handledEventTypes(): array
+    {
         $eventTypes = [];
         foreach ($this->handlers as $handler) {
             $eventTypes = array_merge($eventTypes, $handler->eventTypes());

@@ -1,8 +1,8 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\Webhooks\Handler;
-
 
 use Psr\Log\LoggerInterface;
 
@@ -29,6 +29,7 @@ class PaymentCaptureReversed implements RequestHandler
         return in_array($request['event_type'], $this->eventTypes(), true);
     }
 
+    // phpcs:disable Inpsyde.CodeQuality.FunctionLength.TooLong
     public function handleRequest(\WP_REST_Request $request): \WP_REST_Response
     {
         $response = ['success' => false];
@@ -74,12 +75,12 @@ class PaymentCaptureReversed implements RequestHandler
         $response['success'] = (bool) $wcOrder->update_status('cancelled');
 
         $message = $response['success'] ? sprintf(
-            //translators: %1$s is the order id.
-            __('Order %1$s has been cancelled through PayPal' , 'woocommerce-paypal-commerce-gateway'),
+            // translators: %1$s is the order id.
+            __('Order %1$s has been cancelled through PayPal', 'woocommerce-paypal-commerce-gateway'),
             (string) $wcOrder->get_id()
         ) : sprintf(
-            //translators: %1$s is the order id.
-            __('Failed to cancel order %1$s through PayPal' , 'woocommerce-paypal-commerce-gateway'),
+            // translators: %1$s is the order id.
+            __('Failed to cancel order %1$s through PayPal', 'woocommerce-paypal-commerce-gateway'),
             (string) $wcOrder->get_id()
         );
         $this->logger->log(
@@ -92,4 +93,5 @@ class PaymentCaptureReversed implements RequestHandler
         );
         return rest_ensure_response($response);
     }
+    // phpcs:enable Inpsyde.CodeQuality.FunctionLength.TooLong
 }
