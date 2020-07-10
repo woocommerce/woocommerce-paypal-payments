@@ -49,7 +49,7 @@ class OnboardingAssets
                 'error' => __(
                     'We could not properly onboard you. Please reload and try again.',
                     'woocommerce-paypal-commerce-gateway'
-                )
+                ),
             ]
         );
 

@@ -58,14 +58,14 @@ class WcGatewayModule implements ModuleInterface
 
         add_action(
             'wp_ajax_woocommerce_toggle_gateway_enabled',
-            function() use ($container) {
+            static function () use ($container) {
                 if (
-                    ! current_user_can( 'manage_woocommerce' )
+                    ! current_user_can('manage_woocommerce')
                     || ! check_ajax_referer(
                         'woocommerce-toggle-payment-gateway-enabled',
                         'security'
                     )
-                    || ! isset( $_POST['gateway_id'] )
+                    || ! isset($_POST['gateway_id'])
                 ) {
                     return;
                 }
@@ -85,11 +85,10 @@ class WcGatewayModule implements ModuleInterface
         );
         add_action(
             'woocommerce-paypal-commerce-gateway.deactivate',
-            function() use ($container) {
+            static function () use ($container) {
                 delete_option(Settings::KEY);
             }
         );
-
     }
 
     private function registerPaymentGateWay(ContainerInterface $container)

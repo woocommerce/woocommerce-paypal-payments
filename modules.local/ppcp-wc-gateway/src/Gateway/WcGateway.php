@@ -72,7 +72,9 @@ class WcGateway extends \WC_Payment_Gateway
         );
     }
 
-    public function needs_setup() {
+    public function needs_setup()
+    {
+
         return true;
     }
 
