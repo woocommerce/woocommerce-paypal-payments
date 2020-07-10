@@ -24,6 +24,9 @@ class DisableGateways
 
     public function handler(array $methods): array
     {
+        if (! isset($methods[WcGateway::ID])) {
+            return $methods;
+        }
         if (
             ! $this->settings->has('merchant_email')
             || ! is_email($this->settings->get('merchant_email'))

@@ -72,6 +72,10 @@ class WcGateway extends \WC_Payment_Gateway
         );
     }
 
+    public function needs_setup() {
+        return true;
+    }
+
     public function init_form_fields()
     {
         $this->form_fields = [

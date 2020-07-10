@@ -14,6 +14,7 @@ use Inpsyde\PayPalCommerce\WcGateway\Checkout\DisableGateways;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGateway;
 use Inpsyde\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use Inpsyde\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
+use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
@@ -54,6 +55,35 @@ class WcGatewayModule implements ModuleInterface
                 return $notices;
             }
         );
+
+        add_action(
+            'wp_ajax_woocommerce_toggle_gateway_enabled',
+            function() use ($container) {
+                if (
+                    ! current_user_can( 'manage_woocommerce' )
+                    || ! check_ajax_referer(
+                        'woocommerce-toggle-payment-gateway-enabled',
+                        'security'
+                    )
+                    || ! isset( $_POST['gateway_id'] )
+                ) {
+                    return;
+                }
+
+                /**
+                 * @var Settings $settings
+                 */
+                $settings = $container->get('wcgateway.settings');
+                $enabled = $settings->has('enabled') ? $settings->get('enabled') : false;
+                if (! $enabled) {
+                    return;
+                }
+                $settings->set('enabled', false);
+                $settings->persist();
+            },
+            9
+        );
+
     }
 
     private function registerPaymentGateWay(ContainerInterface $container)
