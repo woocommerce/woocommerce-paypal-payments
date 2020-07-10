@@ -59,7 +59,7 @@ class IncomingWebhookEndpoint
 
     public function verifyRequest(): bool
     {
-        if ( ! $this->verifyRequest) {
+        if (! $this->verifyRequest) {
             return true;
         }
         try {

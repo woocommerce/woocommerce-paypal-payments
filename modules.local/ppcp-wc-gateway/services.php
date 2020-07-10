@@ -17,9 +17,6 @@ use Inpsyde\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsListener;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
-use Inpsyde\Woocommerce\Logging\Logger\NullLogger;
-use Inpsyde\Woocommerce\Logging\Logger\WooCommerceLogger;
-use Psr\Log\LoggerInterface;
 use WpOop\TransientCache\CachePoolFactory;
 
 return [
