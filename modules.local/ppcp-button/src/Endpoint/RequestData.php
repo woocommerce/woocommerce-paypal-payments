@@ -9,11 +9,21 @@ use Inpsyde\PayPalCommerce\Button\Exception\RuntimeException;
 class RequestData
 {
 
+    public function enqueueNonceFix()
+    {
+        add_filter('nonce_user_logged_out', [$this, 'nonceFix'], 100);
+    }
+
+    public function dequeueNonceFix()
+    {
+        remove_filter('nonce_user_logged_out', [$this, 'nonceFix'], 100);
+    }
+
     public function readRequest(string $nonce): array
     {
         $stream = file_get_contents('php://input');
         $json = json_decode($stream, true);
-        add_filter('nonce_user_logged_out', [$this, 'nonceFix'], 100);
+        $this->enqueueNonceFix();
         if (
             ! isset($json['nonce'])
             || !wp_verify_nonce($json['nonce'], $nonce)
@@ -23,7 +33,7 @@ class RequestData
                 __('Could not validate nonce.', 'woocommerce-paypal-commerce-gateway')
             );
         }
-        remove_filter('nonce_user_logged_out', [$this, 'nonceFix'], 100);
+        $this->dequeueNonceFix();
 
         return $this->sanitize($json);
     }

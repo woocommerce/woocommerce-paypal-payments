@@ -11,6 +11,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Repository\PayeeRepository;
 use Inpsyde\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
+use Inpsyde\PayPalCommerce\Button\Endpoint\RequestData;
 use Inpsyde\PayPalCommerce\Session\SessionHandler;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
 
@@ -23,6 +24,7 @@ class SmartButton implements SmartButtonInterface
     private $identityToken;
     private $payerFactory;
     private $clientId;
+    private $requestData;
 
     public function __construct(
         string $moduleUrl,
@@ -31,7 +33,8 @@ class SmartButton implements SmartButtonInterface
         PayeeRepository $payeeRepository,
         IdentityToken $identityToken,
         PayerFactory $payerFactory,
-        string $clientId
+        string $clientId,
+        RequestData $requestData
     ) {
 
         $this->moduleUrl = $moduleUrl;
@@ -41,6 +44,7 @@ class SmartButton implements SmartButtonInterface
         $this->identityToken = $identityToken;
         $this->payerFactory = $payerFactory;
         $this->clientId = $clientId;
+        $this->requestData = $requestData;
     }
 
     // phpcs:disable Inpsyde.CodeQuality.FunctionLength.TooLong
@@ -201,6 +205,7 @@ class SmartButton implements SmartButtonInterface
 
     private function localizeScript(): array
     {
+        $this->requestData->enqueueNonceFix();
         $localize = [
             'script_attributes' => $this->attributes(),
             'redirect' => wc_get_checkout_url(),
@@ -242,6 +247,8 @@ class SmartButton implements SmartButtonInterface
                 ],
             ],
         ];
+
+        $this->requestData->dequeueNonceFix();
         return $localize;
     }
 

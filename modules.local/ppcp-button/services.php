@@ -52,6 +52,7 @@ return [
         $payeeRepository = $container->get('api.repository.payee');
         $identityToken = $container->get('api.endpoint.identity-token');
         $payerFactory = $container->get('api.factory.payer');
+        $requestData = $container->get('button.request-data');
 
         $clientId = $container->get('button.client_id');
         return new SmartButton(
@@ -61,7 +62,8 @@ return [
             $payeeRepository,
             $identityToken,
             $payerFactory,
-            $clientId
+            $clientId,
+            $requestData
         );
     },
     'button.url' => static function (ContainerInterface $container): string {
