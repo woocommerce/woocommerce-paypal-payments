@@ -26,8 +26,15 @@ return [
         $webhookFactory = $container->get('api.factory.webhook');
         $handler = $container->get('webhook.endpoint.handler');
         $logger = $container->get('woocommerce.logger.woocommerce');
+        $verifyRequest = ! defined('PAYPAL_WEBHOOK_REQUEST_VERIFICATION') || PAYPAL_WEBHOOK_REQUEST_VERIFICATION;
 
-        return new IncomingWebhookEndpoint($webhookEndpoint, $webhookFactory, $logger, ... $handler);
+        return new IncomingWebhookEndpoint(
+            $webhookEndpoint,
+            $webhookFactory,
+            $logger,
+            $verifyRequest,
+            ... $handler
+        );
     },
     'webhook.endpoint.handler' => function(ContainerInterface $container) : array {
         $logger = $container->get('woocommerce.logger.woocommerce');

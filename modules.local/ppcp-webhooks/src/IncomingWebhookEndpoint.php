@@ -19,10 +19,12 @@ class IncomingWebhookEndpoint
     private $webhookFactory;
     private $handlers;
     private $logger;
+    private $verifyRequest;
     public function __construct(
         WebhookEndpoint $webhookEndpoint,
         WebhookFactory $webhookFactory,
         LoggerInterface $logger,
+        bool $verifyRequest,
         RequestHandler ...$handlers
     ) {
 
@@ -30,6 +32,7 @@ class IncomingWebhookEndpoint
         $this->webhookFactory = $webhookFactory;
         $this->handlers = $handlers;
         $this->logger = $logger;
+        $this->verifyRequest = $verifyRequest;
     }
 
     public function register(): bool
@@ -56,6 +59,9 @@ class IncomingWebhookEndpoint
 
     public function verifyRequest(): bool
     {
+        if ( ! $this->verifyRequest) {
+            return true;
+        }
         try {
             $data = (array) get_option(WebhookRegistrar::KEY, []);
             $webhook = $this->webhookFactory->fromArray($data);
