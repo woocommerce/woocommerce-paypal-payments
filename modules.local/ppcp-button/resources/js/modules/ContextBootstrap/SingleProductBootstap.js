@@ -25,6 +25,7 @@ class SingleProductBootstap {
     }
 
     render() {
+        console.log(this);
         const actionHandler = new SingleProductActionHandler(
             this.gateway,
             new UpdateCart(
@@ -33,9 +34,11 @@ class SingleProductBootstap {
             ),
             () => {
                 this.renderer.showButtons(this.gateway.button.wrapper);
+                this.renderer.showButtons(this.gateway.hosted_fields.wrapper);
             },
             () => {
                 this.renderer.hideButtons(this.gateway.button.wrapper);
+                this.renderer.hideButtons(this.gateway.hosted_fields.wrapper);
             },
             document.querySelector('form.cart'),
             new ErrorHandler(),
