@@ -10,6 +10,7 @@ class SingleProductBootstap {
 
     init() {
         if (!this.shouldRender()) {
+           this.renderer.hideButtons(this.gateway.hosted_fields.wrapper);
             return;
         }
 
@@ -25,7 +26,6 @@ class SingleProductBootstap {
     }
 
     render() {
-        console.log(this);
         const actionHandler = new SingleProductActionHandler(
             this.gateway,
             new UpdateCart(
