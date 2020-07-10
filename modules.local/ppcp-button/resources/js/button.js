@@ -53,7 +53,12 @@ document.addEventListener(
             console.error('PayPal button could not be configured.');
             return;
         }
-
+        if (
+            ! document.querySelector(PayPalCommerceGateway.button.wrapper) &&
+            ! document.querySelector(PayPalCommerceGateway.hosted_fields.wrapper)
+        ) {
+            return;
+        }
         const script = document.createElement('script');
 
         script.setAttribute('src', PayPalCommerceGateway.button.url);
