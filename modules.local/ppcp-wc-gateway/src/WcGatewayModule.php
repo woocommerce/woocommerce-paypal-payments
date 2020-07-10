@@ -83,6 +83,12 @@ class WcGatewayModule implements ModuleInterface
             },
             9
         );
+        add_action(
+            'woocommerce-paypal-commerce-gateway.deactivate',
+            function() use ($container) {
+                delete_option(Settings::KEY);
+            }
+        );
 
     }
 
