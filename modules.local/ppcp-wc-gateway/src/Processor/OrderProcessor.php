@@ -46,7 +46,10 @@ class OrderProcessor
 
         $errorMessage = null;
         if (!$order || !$order->status()->is(OrderStatus::APPROVED)) {
-            $errorMessage = __('The payment has not been approved yet.', 'woocommerce-paypal-commerce-gateway');
+            $errorMessage = __(
+                'The payment has not been approved yet.',
+                'woocommerce-paypal-commerce-gateway'
+            );
         }
         if ($errorMessage) {
             $this->lastError = sprintf(
@@ -67,9 +70,15 @@ class OrderProcessor
             $wcOrder->update_meta_data(WcGateway::CAPTURED_META_KEY, 'false');
         }
 
-        $wcOrder->update_status('on-hold', __('Awaiting payment.', 'woocommerce-paypal-commerce-gateway'));
+        $wcOrder->update_status(
+            'on-hold',
+            __('Awaiting payment.', 'woocommerce-paypal-commerce-gateway')
+        );
         if ($order->status()->is(OrderStatus::COMPLETED) && $order->intent() === 'CAPTURE') {
-            $wcOrder->update_status('processing', __('Payment received.', 'woocommerce-paypal-commerce-gateway'));
+            $wcOrder->update_status(
+                'processing',
+                __('Payment received.', 'woocommerce-paypal-commerce-gateway')
+            );
         }
         $woocommerce->cart->empty_cart();
         $this->sessionHandler->destroySessionData();

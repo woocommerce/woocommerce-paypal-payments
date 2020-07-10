@@ -48,6 +48,7 @@ class SmartButton implements SmartButtonInterface
     }
 
     // phpcs:disable Inpsyde.CodeQuality.FunctionLength.TooLong
+    // phpcs:disable Generic.Metrics.CyclomaticComplexity.TooHigh
     /**
      * ToDo: Refactor
      * @return bool
@@ -184,6 +185,7 @@ class SmartButton implements SmartButtonInterface
         return true;
     }
     // phpcs:enable Inpsyde.CodeQuality.FunctionLength.TooLong
+    // phpcs:enable Generic.Metrics.CyclomaticComplexity.TooHigh
 
     public function enqueue(): bool
     {
@@ -232,9 +234,12 @@ class SmartButton implements SmartButtonInterface
                 'url' => $this->url(),
                 'style' => [
                     'layout' => 'vertical',
-                    'color' => ($this->settings->has('button_color')) ? $this->settings->get('button_color') : null,
-                    'shape' => ($this->settings->has('button_shape')) ? $this->settings->get('button_shape') : null,
-                    'label' => ($this->settings->has('button_label')) ? $this->settings->get('button_label') : 'paypal',
+                    'color' => ($this->settings->has('button_color')) ?
+                        $this->settings->get('button_color') : null,
+                    'shape' => ($this->settings->has('button_shape')) ?
+                        $this->settings->get('button_shape') : null,
+                    'label' => ($this->settings->has('button_label')) ?
+                        $this->settings->get('button_label') : 'paypal',
                 ],
             ],
             'hosted_fields' => [
