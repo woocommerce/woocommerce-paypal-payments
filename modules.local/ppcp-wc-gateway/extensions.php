@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\WcGateway;
 
+use Inpsyde\Woocommerce\Logging\Logger\NullLogger;
+use Inpsyde\Woocommerce\Logging\Logger\WooCommerceLogger;
 use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 
 return [
 
@@ -28,5 +31,17 @@ return [
     'api.secret' => static function (ContainerInterface $container): string {
         $settings = $container->get('wcgateway.settings');
         return $settings->has('client_secret') ? (string) $settings->get('client_secret') : '';
+    },
+    'woocommerce.logger.woocommerce' => function (ContainerInterface $container): LoggerInterface {
+        $settings = $container->get('wcgateway.settings');
+        if (! $settings->has('logging_enabled') || ! $settings->get('logging_enabled')) {
+            return new NullLogger();
+        }
+
+        $source = $container->get('woocommerce.logger.source');
+        return new WooCommerceLogger(
+            wc_get_logger(),
+            $source
+        );
     },
 ];

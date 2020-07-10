@@ -17,6 +17,9 @@ use Inpsyde\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsListener;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
+use Inpsyde\Woocommerce\Logging\Logger\NullLogger;
+use Inpsyde\Woocommerce\Logging\Logger\WooCommerceLogger;
+use Psr\Log\LoggerInterface;
 use WpOop\TransientCache\CachePoolFactory;
 
 return [
@@ -408,6 +411,19 @@ return [
                     'hiper' => _x('Hiper', 'Name of credit card', 'woocommerce-paypal-commerce-gateway'),
                 ],
                 'screens' => [
+                    State::STATE_ONBOARDED,
+                ],
+            ],
+            'logging_enabled' => [
+                'title' => __('Logging', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'checkbox',
+                'desc_tip' => true,
+                'label' => __('Enable logging', 'woocommerce-paypal-commerce-gateway'),
+                'description' => __('Enable logging of unexpected behavior. This can also log private data and should only be enabled in a development or stage environment.', 'woocommerce-paypal-commerce-gateway'),
+                'default' => false,
+                'screens' => [
+                    State::STATE_START,
+                    State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
             ],
