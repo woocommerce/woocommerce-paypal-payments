@@ -3,9 +3,10 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\Webhooks\Handler;
 
+
 use Psr\Log\LoggerInterface;
 
-class PaymentCaptureRefunded implements RequestHandler
+class PaymentCaptureReversed implements RequestHandler
 {
 
     private $logger;
@@ -16,7 +17,11 @@ class PaymentCaptureRefunded implements RequestHandler
 
     public function eventTypes(): array
     {
-        return ['PAYMENT.CAPTURE.REFUNDED'];
+        return [
+            'PAYMENT.CAPTURE.REVERSED',
+            'PAYMENT.ORDER.CANCELLED',
+            'PAYMENT.CAPTURE.DENIED',
+        ];
     }
 
     public function responsibleForRequest(\WP_REST_Request $request): bool
@@ -66,39 +71,25 @@ class PaymentCaptureRefunded implements RequestHandler
         /**
          * @var \WC_Order $wcOrder
          */
-        $refund = wc_create_refund([
-            'order_id' => $wcOrder->get_id(),
-            'amount' => $request['resource']['amount']['value']
-        ]);
-        if (is_wp_error($refund)) {
+        $response['success'] = (bool) $wcOrder->update_status('cancelled');
 
-            $this->logger->log(
-                'warning',
-                __('Order ' . $wcOrder->get_id() . ' could not be refunded' , 'woocommerce-paypal-commerce-gateway'),
-                [
-                    'request' => $request,
-                    'error' => $refund,
-                ]
-            );
-
-            $response['message'] = $refund->get_error_message();
-            return rest_ensure_response($response);
-        }
-
+        $message = $response['success'] ? sprintf(
+            //translators: %1$s is the order id.
+            __('Order %1$s has been cancelled through PayPal' , 'woocommerce-paypal-commerce-gateway'),
+            (string) $wcOrder->get_id()
+        ) : sprintf(
+            //translators: %1$s is the order id.
+            __('Failed to cancel order %1$s through PayPal' , 'woocommerce-paypal-commerce-gateway'),
+            (string) $wcOrder->get_id()
+        );
         $this->logger->log(
-            'info',
-            sprintf(
-                //translators: %1$s is the order id %2$s is the amount which has been refunded.
-                __('Order %1$s has been refunded with %2$s through PayPal' , 'woocommerce-paypal-commerce-gateway'),
-                (string) $wcOrder->get_id(),
-                (string) $refund->get_amount()
-            ),
+            $response['success'] ? 'info' : 'warning',
+            $message,
             [
                 'request' => $request,
                 'order' => $wcOrder,
             ]
         );
-        $response['success'] = true;
         return rest_ensure_response($response);
     }
 }

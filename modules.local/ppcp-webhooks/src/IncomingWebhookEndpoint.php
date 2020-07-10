@@ -73,7 +73,7 @@ class IncomingWebhookEndpoint
                     'info',
                     sprintf(
                         __('Webhook has been handled by %s', 'woocommerce-paypal-commerce-gateway'),
-                        $handler->eventType()
+                        ($handler->eventTypes())?current($handler->eventTypes()):''
                     ),
                     [
                         'request' => $request,
@@ -93,11 +93,10 @@ class IncomingWebhookEndpoint
     }
 
     public function handledEventTypes() : array {
-        return array_map(
-            function(RequestHandler $handler) : string {
-                return $handler->eventType();
-            },
-            $this->handlers
-        );
+        $eventTypes = [];
+        foreach ($this->handlers as $handler) {
+            $eventTypes = array_merge($eventTypes, $handler->eventTypes());
+        }
+        return array_unique($eventTypes);
     }
 }

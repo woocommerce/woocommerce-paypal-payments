@@ -14,14 +14,14 @@ class CheckoutOrderCompleted implements RequestHandler
         $this->logger = $logger;
     }
 
-    public function eventType(): string
+    public function eventTypes(): array
     {
-        return 'CHECKOUT.ORDER.COMPLETED';
+        return ['CHECKOUT.ORDER.COMPLETED'];
     }
 
     public function responsibleForRequest(\WP_REST_Request $request): bool
     {
-        return $request['event_type'] === $this->eventType();
+        return in_array($request['event_type'], $this->eventTypes(), true);
     }
 
     public function handleRequest(\WP_REST_Request $request): \WP_REST_Response

@@ -7,7 +7,7 @@ namespace Inpsyde\PayPalCommerce\Webhooks\Handler;
 interface RequestHandler
 {
 
-    public function eventType() : string;
+    public function eventTypes() : array;
 
     public function responsibleForRequest(\WP_REST_Request $request) : bool;
 

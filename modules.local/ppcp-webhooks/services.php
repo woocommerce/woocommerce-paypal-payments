@@ -6,6 +6,7 @@ namespace Inpsyde\PayPalCommerce\Webhooks;
 
 use Inpsyde\PayPalCommerce\Webhooks\Handler\CheckoutOrderCompleted;
 use Inpsyde\PayPalCommerce\Webhooks\Handler\PaymentCaptureRefunded;
+use Inpsyde\PayPalCommerce\Webhooks\Handler\PaymentCaptureReversed;
 use Psr\Container\ContainerInterface;
 
 return [
@@ -33,6 +34,7 @@ return [
         return [
             new CheckoutOrderCompleted($logger),
             new PaymentCaptureRefunded($logger),
+            new PaymentCaptureReversed($logger),
         ];
     }
 ];
