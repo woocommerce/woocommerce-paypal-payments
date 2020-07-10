@@ -17,17 +17,20 @@ class SettingsListener
     private $settingFields;
     private $webhookRegistrar;
     private $cache;
+    private $state;
     public function __construct(
         Settings $settings,
         array $settingFields,
         WebhookRegistrar $webhookRegistrar,
-        CacheInterface $cache
+        CacheInterface $cache,
+        State $state
     ) {
 
         $this->settings = $settings;
         $this->settingFields = $settingFields;
         $this->webhookRegistrar = $webhookRegistrar;
         $this->cache = $cache;
+        $this->state = $state;
     }
 
     public function listen()
@@ -73,6 +76,9 @@ class SettingsListener
     {
         $settings = [];
         foreach ($this->settingFields as $key => $config) {
+            if (! in_array($this->state->currentState(), $config['screens'], true)) {
+                continue;
+            }
             switch ($config['type']) {
                 case 'checkbox':
                     $settings[$key] = isset($rawData[$key]);
