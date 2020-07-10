@@ -223,7 +223,7 @@ return [
                 'title' => __('Buttons on Single Product', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'checkbox',
                 'label' => __('Enable on Single Product', 'woocommerce-paypal-commerce-gateway'),
-                'default' => 1,
+                'default' => true,
                 'screens' => [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
@@ -233,7 +233,7 @@ return [
                 'title' => __('Buttons on Mini Cart', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'checkbox',
                 'label' => __('Enable on Mini Cart', 'woocommerce-paypal-commerce-gateway'),
-                'default' => 1,
+                'default' => true,
                 'screens' => [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
@@ -243,7 +243,7 @@ return [
                 'title' => __('Buttons on Cart', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'checkbox',
                 'label' => __('Enable on Cart', 'woocommerce-paypal-commerce-gateway'),
-                'default' => 1,
+                'default' => true,
                 'screens' => [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
@@ -321,7 +321,7 @@ return [
                 'title' => __('Enable credit card on cart', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'checkbox',
                 'label' => __('Allow your customers to pay with credit card directly in your cart.', 'woocommerce-paypal-commerce-gateway'),
-                'default' => 1,
+                'default' => true,
                 'screens' => [
                     State::STATE_ONBOARDED,
                 ],
@@ -330,7 +330,7 @@ return [
                 'title' => __('Enable credit card on mini cart', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'checkbox',
                 'label' => __('Allow your customers to pay with credit card directly in your mini cart.', 'woocommerce-paypal-commerce-gateway'),
-                'default' => 1,
+                'default' => true,
                 'screens' => [
                     State::STATE_ONBOARDED,
                 ],
@@ -339,7 +339,7 @@ return [
                 'title' => __('Enable credit card on checkout', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'checkbox',
                 'label' => __('Allow your customers to pay with credit card in the checkout.', 'woocommerce-paypal-commerce-gateway'),
-                'default' => 1,
+                'default' => true,
                 'screens' => [
                     State::STATE_ONBOARDED,
                 ],
@@ -348,7 +348,7 @@ return [
                 'title' => __('Enable credit card on products', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'checkbox',
                 'label' => __('Allow your customers to pay with credit card instantly on the product page.', 'woocommerce-paypal-commerce-gateway'),
-                'default' => 1,
+                'default' => true,
                 'screens' => [
                     State::STATE_ONBOARDED,
                 ],

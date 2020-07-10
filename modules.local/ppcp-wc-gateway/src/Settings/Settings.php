@@ -70,6 +70,23 @@ class Settings implements ContainerInterface
         }
         $this->settings = get_option(self::KEY, []);
 
+        $defaults = [
+            'title' => __('PayPal', 'woocommerce-paypal-commerce-gateway'),
+            'description' => __('Pay via PayPal; you can pay with your credit card if you don\'t have a PayPal account.', 'woocommerce-paypal-commerce-gateway'),
+            'button_single_product_enabled' => true,
+            'button_mini_cart_enabled' => true,
+            'button_cart_enabled' => true,
+            'dcc_cart_enabled' => true,
+            'dcc_mini_cart_enabled' => true,
+            'dcc_checkout_enabled' => true,
+            'dcc_single_product_enabled' => true,
+        ];
+        foreach ($defaults as $key => $value) {
+            if (isset($this->settings[$key])) {
+                continue;
+            }
+            $this->settings[$key] = $value;
+        }
         return true;
     }
 }
