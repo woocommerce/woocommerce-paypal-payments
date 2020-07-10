@@ -88,11 +88,11 @@ class CheckoutOrderCompleted implements RequestHandler
              */
             $wcOrder->update_status(
                 'processing',
-                __('Payment received.', 'woocommerce-paypal-gateway')
+                __('Payment received.', 'woocommerce-paypal-commerce-gateway')
             );
             $this->logger->log(
                 'info',
-                __('Order ' . $wcOrder->get_id() . ' has been updated through PayPal' , 'woocommerce-paypal-gateway'),
+                __('Order ' . $wcOrder->get_id() . ' has been updated through PayPal' , 'woocommerce-paypal-commerce-gateway'),
                 [
                     'request' => $request,
                     'order' => $wcOrder,

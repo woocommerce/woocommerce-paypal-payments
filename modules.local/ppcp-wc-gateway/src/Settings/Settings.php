@@ -69,6 +69,7 @@ class Settings implements ContainerInterface
             return false;
         }
         $this->settings = get_option(self::KEY, []);
+
         return true;
     }
 }

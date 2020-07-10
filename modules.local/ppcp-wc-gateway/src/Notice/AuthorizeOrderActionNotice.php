@@ -32,35 +32,35 @@ class AuthorizeOrderActionNotice
         $messages[self::NO_INFO] = [
             'message' => __(
                 'Could not retrieve information. Try again later.',
-                'woocommerce-paypal-gateway'
+                'woocommerce-paypal-commerce-gateway'
             ),
             'type' => 'error',
         ];
         $messages[self::ALREADY_CAPTURED] = [
             'message' => __(
                 'Payment already captured.',
-                'woocommerce-paypal-gateway'
+                'woocommerce-paypal-commerce-gateway'
             ),
             'type' => 'error',
         ];
         $messages[self::FAILED] = [
             'message' => __(
                 'Failed to capture. Try again later.',
-                'woocommerce-paypal-gateway'
+                'woocommerce-paypal-commerce-gateway'
             ),
             'type' => 'error',
         ];
         $messages[self::NOT_FOUND] = [
             'message' => __(
                 'Could not find payment to process.',
-                'woocommerce-paypal-gateway'
+                'woocommerce-paypal-commerce-gateway'
             ),
             'type' => 'error',
         ];
         $messages[self::SUCCESS] = [
             'message' => __(
                 'Payment successfully captured.',
-                'woocommerce-paypal-gateway'
+                'woocommerce-paypal-commerce-gateway'
             ),
             'type' => 'success',
         ];

@@ -31,7 +31,7 @@ class OrderTablePaymentStatusColumn
         $columns = array_merge(
             array_slice($columns, 0, $toInsertPosition),
             [
-                self::COLUMN_KEY => __('Payment Captured', 'woocommerce-paypal-gateway'),
+                self::COLUMN_KEY => __('Payment Captured', 'woocommerce-paypal-commerce-gateway'),
             ],
             array_slice($columns, $toInsertPosition)
         );
@@ -86,7 +86,7 @@ class OrderTablePaymentStatusColumn
     {
         printf(
             '<mark class="onbackorder">%s</mark>',
-            esc_html__('Not captured', 'woocommerce-paypal-gateway')
+            esc_html__('Not captured', 'woocommerce-paypal-commerce-gateway')
         );
     }
 }

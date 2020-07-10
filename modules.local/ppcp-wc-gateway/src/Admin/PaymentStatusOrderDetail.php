@@ -27,11 +27,11 @@ class PaymentStatusOrderDetail
             '<li class="wide"><p><mark class="order-status status-on-hold"><span>%1$s</span></mark></p><p>%2$s</p></li>',
             esc_html__(
                 'Not captured',
-                'woocommerce-paypal-gateway'
+                'woocommerce-paypal-commerce-gateway'
             ),
             esc_html__(
                 'To capture the payment select capture action from the list below.',
-                'woocommerce-paypal-gateway'
+                'woocommerce-paypal-commerce-gateway'
             ),
         );
     }

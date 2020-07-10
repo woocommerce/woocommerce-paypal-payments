@@ -74,7 +74,7 @@ class PaymentCaptureRefunded implements RequestHandler
 
             $this->logger->log(
                 'warning',
-                __('Order ' . $wcOrder->get_id() . ' could not be refunded' , 'woocommerce-paypal-gateway'),
+                __('Order ' . $wcOrder->get_id() . ' could not be refunded' , 'woocommerce-paypal-commerce-gateway'),
                 [
                     'request' => $request,
                     'error' => $refund,
@@ -89,7 +89,7 @@ class PaymentCaptureRefunded implements RequestHandler
             'info',
             sprintf(
                 //translators: %1$s is the order id %2$s is the amount which has been refunded.
-                __('Order %1$s has been refunded with %2$s through PayPal' , 'woocommerce-paypal-gateway'),
+                __('Order %1$s has been refunded with %2$s through PayPal' , 'woocommerce-paypal-commerce-gateway'),
                 (string) $wcOrder->get_id(),
                 (string) $refund->get_amount()
             ),

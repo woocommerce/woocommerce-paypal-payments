@@ -125,23 +125,23 @@ return [
         );
         return [
             'ppcp_onboarding' => [
-                'title' => __('Connect to PayPal', 'woocommerce-paypal-gateway'),
+                'title' => __('Connect to PayPal', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'ppcp_onboarding',
                 'screens' => [
                     State::STATE_PROGRESSIVE,
                 ],
             ],
             'sandbox_on' => [
-                'title' => __('Sandbox', 'woocommerce-paypal-gateway'),
+                'title' => __('Sandbox', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'checkbox',
-                'label' => __('To test your Woocommerce installation, you can use the sandbox mode.', 'woocommerce-paypal-gateway'),
+                'label' => __('To test your Woocommerce installation, you can use the sandbox mode.', 'woocommerce-paypal-commerce-gateway'),
                 'default' => 0,
                 'screens' => [
                     State::STATE_START,
                 ],
             ],
             'sandbox_on_info' => [
-                'title' => __('Sandbox', 'woocommerce-paypal-gateway'),
+                'title' => __('Sandbox', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'ppcp-text',
                 'text' => $sandboxText,
                 'screens' => [
@@ -151,17 +151,17 @@ return [
                 'hidden' => 'sandbox_on',
             ],
             'merchant_email' => [
-                'title' => __('Email address', 'woocommerce-paypal-gateway'),
+                'title' => __('Email address', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'text',
                 'desc_tip' => true,
-                'description' => __('The email address of your PayPal account.', 'woocommerce-paypal-gateway'),
+                'description' => __('The email address of your PayPal account.', 'woocommerce-paypal-commerce-gateway'),
                 'default' => '',
                 'screens' => [
                     State::STATE_START,
                 ],
             ],
             'merchant_email_info' => [
-                'title' => __('Email address', 'woocommerce-paypal-gateway'),
+                'title' => __('Email address', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'ppcp-text',
                 'text' => $merchantEmailText,
                 'screens' => [
@@ -171,13 +171,13 @@ return [
                 'hidden' => 'merchant_email',
             ],
             'title' => [
-                'title' => __('Title', 'woocommerce-paypal-gateway'),
+                'title' => __('Title', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'text',
                 'description' => __(
                     'This controls the title which the user sees during checkout.',
-                    'woocommerce-paypal-gateway'
+                    'woocommerce-paypal-commerce-gateway'
                 ),
-                'default' => __('PayPal', 'woocommerce-paypal-gateway'),
+                'default' => __('PayPal', 'woocommerce-paypal-commerce-gateway'),
                 'desc_tip' => true,
                 'screens' => [
                     State::STATE_PROGRESSIVE,
@@ -185,16 +185,16 @@ return [
                 ],
             ],
             'description' => [
-                'title' => __('Description', 'woocommerce-paypal-gateway'),
+                'title' => __('Description', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'text',
                 'desc_tip' => true,
                 'description' => __(
                     'This controls the description which the user sees during checkout.',
-                    'woocommerce-paypal-gateway'
+                    'woocommerce-paypal-commerce-gateway'
                 ),
                 'default' => __(
                     'Pay via PayPal; you can pay with your credit card if you don\'t have a PayPal account.',
-                    'woocommerce-paypal-gateway'
+                    'woocommerce-paypal-commerce-gateway'
                 ),
                 'screens' => [
                     State::STATE_PROGRESSIVE,
@@ -202,27 +202,27 @@ return [
                 ],
             ],
             'intent' => [
-                'title' => __('Intent', 'woocommerce-paypal-gateway'),
+                'title' => __('Intent', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'select',
                 'class' => ['wc-enhanced-select'],
                 'default' => 'capture',
                 'desc_tip' => true,
                 'description' => __(
                     'The intent to either capture payment immediately or authorize a payment for an order after order creation.',
-                    'woocommerce-paypal-gateway'
+                    'woocommerce-paypal-commerce-gateway'
                 ),
                 'options' => [
-                    'capture' => __('Capture', 'woocommerce-paypal-gateway'),
-                    'authorize' => __('Authorize', 'woocommerce-paypal-gateway'),
+                    'capture' => __('Capture', 'woocommerce-paypal-commerce-gateway'),
+                    'authorize' => __('Authorize', 'woocommerce-paypal-commerce-gateway'),
                 ],
                 'screens' => [
                     State::STATE_ONBOARDED,
                 ],
             ],
             'button_single_product_enabled' => [
-                'title' => __('Buttons on Single Product', 'woocommerce-paypal-gateway'),
+                'title' => __('Buttons on Single Product', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'checkbox',
-                'label' => __('Enable on Single Product', 'woocommerce-paypal-gateway'),
+                'label' => __('Enable on Single Product', 'woocommerce-paypal-commerce-gateway'),
                 'default' => 1,
                 'screens' => [
                     State::STATE_PROGRESSIVE,
@@ -230,9 +230,9 @@ return [
                 ],
             ],
             'button_mini_cart_enabled' => [
-                'title' => __('Buttons on Mini Cart', 'woocommerce-paypal-gateway'),
+                'title' => __('Buttons on Mini Cart', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'checkbox',
-                'label' => __('Enable on Mini Cart', 'woocommerce-paypal-gateway'),
+                'label' => __('Enable on Mini Cart', 'woocommerce-paypal-commerce-gateway'),
                 'default' => 1,
                 'screens' => [
                     State::STATE_PROGRESSIVE,
@@ -240,9 +240,9 @@ return [
                 ],
             ],
             'button_cart_enabled' => [
-                'title' => __('Buttons on Cart', 'woocommerce-paypal-gateway'),
+                'title' => __('Buttons on Cart', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'checkbox',
-                'label' => __('Enable on Cart', 'woocommerce-paypal-gateway'),
+                'label' => __('Enable on Cart', 'woocommerce-paypal-commerce-gateway'),
                 'default' => 1,
                 'screens' => [
                     State::STATE_PROGRESSIVE,
@@ -250,20 +250,20 @@ return [
                 ],
             ],
             'button_color' => [
-                'title' => __('Color', 'woocommerce-paypal-gateway'),
+                'title' => __('Color', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'select',
                 'class' => ['wc-enhanced-select'],
                 'default' => 'gold',
                 'desc_tip' => true,
                 'description' => __(
                     'Controls the background color of the primary button. Use "Gold" to leverage PayPal\'s recognition and preference, or change it to match your site design or aesthetic.',
-                    'woocommerce-paypal-gateway'
+                    'woocommerce-paypal-commerce-gateway'
                 ),
                 'options' => [
-                    'gold' => __('Gold (Recommended)', 'woocommerce-paypal-gateway'),
-                    'blue' => __('Blue', 'woocommerce-paypal-gateway'),
-                    'silver' => __('Silver', 'woocommerce-paypal-gateway'),
-                    'black' => __('Black', 'woocommerce-paypal-gateway'),
+                    'gold' => __('Gold (Recommended)', 'woocommerce-paypal-commerce-gateway'),
+                    'blue' => __('Blue', 'woocommerce-paypal-commerce-gateway'),
+                    'silver' => __('Silver', 'woocommerce-paypal-commerce-gateway'),
+                    'black' => __('Black', 'woocommerce-paypal-commerce-gateway'),
                 ],
                 'screens' => [
                     State::STATE_PROGRESSIVE,
@@ -271,18 +271,18 @@ return [
                 ],
             ],
             'button_shape' => [
-                'title' => __('Shape', 'woocommerce-paypal-gateway'),
+                'title' => __('Shape', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'select',
                 'class' => ['wc-enhanced-select'],
                 'default' => 'rect',
                 'desc_tip' => true,
                 'description' => __(
                     'The pill-shaped button\'s unique and powerful shape signifies PayPal in people\'s minds. Use the rectangular button as an alternative when pill-shaped buttons might pose design challenges.',
-                    'woocommerce-paypal-gateway'
+                    'woocommerce-paypal-commerce-gateway'
                 ),
                 'options' => [
-                    'pill' => __('Pill', 'woocommerce-paypal-gateway'),
-                    'rect' => __('Rectangle', 'woocommerce-paypal-gateway'),
+                    'pill' => __('Pill', 'woocommerce-paypal-commerce-gateway'),
+                    'rect' => __('Rectangle', 'woocommerce-paypal-commerce-gateway'),
                 ],
                 'screens' => [
                     State::STATE_PROGRESSIVE,
@@ -290,27 +290,27 @@ return [
                 ],
             ],
             'disable_funding' => [
-                'title' => __('Disable funding sources', 'woocommerce-paypal-gateway'),
+                'title' => __('Disable funding sources', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'ppcp-multiselect',
                 'class' => ['wc-enhanced-select'],
                 'default' => [],
                 'desc_tip' => true,
                 'description' => __(
                     'By default all possible funding sources will be shown. You can disable some sources, if you wish.',
-                    'woocommerce-paypal-gateway'
+                    'woocommerce-paypal-commerce-gateway'
                 ),
                 'options' => [
-                    'card' => _x('Credit or debit cards', 'Name of payment method', 'woocommerce-paypal-gateway'),
-                    'credit' => _x('PayPal Credit', 'Name of payment method', 'woocommerce-paypal-gateway'),
-                    'venmo' => _x('Venmo', 'Name of payment method', 'woocommerce-paypal-gateway'),
-                    'sepa' => _x('SEPA-Lastschrift', 'Name of payment method', 'woocommerce-paypal-gateway'),
-                    'bancontact' => _x('Bancontact', 'Name of payment method', 'woocommerce-paypal-gateway'),
-                    'eps' => _x('eps', 'Name of payment method', 'woocommerce-paypal-gateway'),
-                    'giropay' => _x('giropay', 'Name of payment method', 'woocommerce-paypal-gateway'),
-                    'ideal' => _x('iDEAL', 'Name of payment method', 'woocommerce-paypal-gateway'),
-                    'mybank' => _x('MyBank', 'Name of payment method', 'woocommerce-paypal-gateway'),
-                    'p24' => _x('Przelewy24', 'Name of payment method', 'woocommerce-paypal-gateway'),
-                    'sofort' => _x('Sofort', 'Name of payment method', 'woocommerce-paypal-gateway'),
+                    'card' => _x('Credit or debit cards', 'Name of payment method', 'woocommerce-paypal-commerce-gateway'),
+                    'credit' => _x('PayPal Credit', 'Name of payment method', 'woocommerce-paypal-commerce-gateway'),
+                    'venmo' => _x('Venmo', 'Name of payment method', 'woocommerce-paypal-commerce-gateway'),
+                    'sepa' => _x('SEPA-Lastschrift', 'Name of payment method', 'woocommerce-paypal-commerce-gateway'),
+                    'bancontact' => _x('Bancontact', 'Name of payment method', 'woocommerce-paypal-commerce-gateway'),
+                    'eps' => _x('eps', 'Name of payment method', 'woocommerce-paypal-commerce-gateway'),
+                    'giropay' => _x('giropay', 'Name of payment method', 'woocommerce-paypal-commerce-gateway'),
+                    'ideal' => _x('iDEAL', 'Name of payment method', 'woocommerce-paypal-commerce-gateway'),
+                    'mybank' => _x('MyBank', 'Name of payment method', 'woocommerce-paypal-commerce-gateway'),
+                    'p24' => _x('Przelewy24', 'Name of payment method', 'woocommerce-paypal-commerce-gateway'),
+                    'sofort' => _x('Sofort', 'Name of payment method', 'woocommerce-paypal-commerce-gateway'),
                 ],
                 'screens' => [
                     State::STATE_PROGRESSIVE,
@@ -318,59 +318,59 @@ return [
                 ],
             ],
             'dcc_cart_enabled' => [
-                'title' => __('Enable credit card on cart', 'woocommerce-paypal-gateway'),
+                'title' => __('Enable credit card on cart', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'checkbox',
-                'label' => __('Allow your customers to pay with credit card directly in your cart.', 'woocommerce-paypal-gateway'),
+                'label' => __('Allow your customers to pay with credit card directly in your cart.', 'woocommerce-paypal-commerce-gateway'),
                 'default' => 1,
                 'screens' => [
                     State::STATE_ONBOARDED,
                 ],
             ],
             'dcc_mini_cart_enabled' => [
-                'title' => __('Enable credit card on mini cart', 'woocommerce-paypal-gateway'),
+                'title' => __('Enable credit card on mini cart', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'checkbox',
-                'label' => __('Allow your customers to pay with credit card directly in your mini cart.', 'woocommerce-paypal-gateway'),
+                'label' => __('Allow your customers to pay with credit card directly in your mini cart.', 'woocommerce-paypal-commerce-gateway'),
                 'default' => 1,
                 'screens' => [
                     State::STATE_ONBOARDED,
                 ],
             ],
             'dcc_checkout_enabled' => [
-                'title' => __('Enable credit card on checkout', 'woocommerce-paypal-gateway'),
+                'title' => __('Enable credit card on checkout', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'checkbox',
-                'label' => __('Allow your customers to pay with credit card in the checkout.', 'woocommerce-paypal-gateway'),
+                'label' => __('Allow your customers to pay with credit card in the checkout.', 'woocommerce-paypal-commerce-gateway'),
                 'default' => 1,
                 'screens' => [
                     State::STATE_ONBOARDED,
                 ],
             ],
             'dcc_single_product_enabled' => [
-                'title' => __('Enable credit card on products', 'woocommerce-paypal-gateway'),
+                'title' => __('Enable credit card on products', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'checkbox',
-                'label' => __('Allow your customers to pay with credit card instantly on the product page.', 'woocommerce-paypal-gateway'),
+                'label' => __('Allow your customers to pay with credit card instantly on the product page.', 'woocommerce-paypal-commerce-gateway'),
                 'default' => 1,
                 'screens' => [
                     State::STATE_ONBOARDED,
                 ],
             ],
             'disable_cards' => [
-                'title' => __('Disable specific credid cards', 'woocommerce-paypal-gateway'),
+                'title' => __('Disable specific credid cards', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'ppcp-multiselect',
                 'class' => ['wc-enhanced-select'],
                 'default' => [],
                 'desc_tip' => true,
                 'description' => __(
                     'By default all possible credit cards will be shown. You can disable some cards, if you wish.',
-                    'woocommerce-paypal-gateway'
+                    'woocommerce-paypal-commerce-gateway'
                 ),
                 'options' => [
-                    'visa' => _x('Visa', 'Name of credit card', 'woocommerce-paypal-gateway'),
-                    'mastercard' => _x('Mastercard', 'Name of credit card', 'woocommerce-paypal-gateway'),
-                    'amex' => _x('American Express', 'Name of credit card', 'woocommerce-paypal-gateway'),
-                    'discover' => _x('Discover', 'Name of credit card', 'woocommerce-paypal-gateway'),
-                    'jcb' => _x('JCB', 'Name of credit card', 'woocommerce-paypal-gateway'),
-                    'elo' => _x('Elo', 'Name of credit card', 'woocommerce-paypal-gateway'),
-                    'hiper' => _x('Hiper', 'Name of credit card', 'woocommerce-paypal-gateway'),
+                    'visa' => _x('Visa', 'Name of credit card', 'woocommerce-paypal-commerce-gateway'),
+                    'mastercard' => _x('Mastercard', 'Name of credit card', 'woocommerce-paypal-commerce-gateway'),
+                    'amex' => _x('American Express', 'Name of credit card', 'woocommerce-paypal-commerce-gateway'),
+                    'discover' => _x('Discover', 'Name of credit card', 'woocommerce-paypal-commerce-gateway'),
+                    'jcb' => _x('JCB', 'Name of credit card', 'woocommerce-paypal-commerce-gateway'),
+                    'elo' => _x('Elo', 'Name of credit card', 'woocommerce-paypal-commerce-gateway'),
+                    'hiper' => _x('Hiper', 'Name of credit card', 'woocommerce-paypal-commerce-gateway'),
                 ],
                 'screens' => [
                     State::STATE_ONBOARDED,

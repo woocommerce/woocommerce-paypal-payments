@@ -50,10 +50,10 @@ class WcGateway extends \WC_Payment_Gateway
         $this->settingsRenderer = $settingsRenderer;
         $this->config = $config;
 
-        $this->method_title = __('PayPal Payments', 'woocommerce-paypal-gateway');
+        $this->method_title = __('PayPal Payments', 'woocommerce-paypal-commerce-gateway');
         $this->method_description = __(
             'Provide your customers with the PayPal payment system',
-            'woocommerce-paypal-gateway'
+            'woocommerce-paypal-commerce-gateway'
         );
         $this->title = $this->config->has('title') ?
             $this->config->get('title') : $this->method_title;
@@ -80,9 +80,9 @@ class WcGateway extends \WC_Payment_Gateway
     {
         $this->form_fields = [
             'enabled' => [
-                'title' => __('Enable/Disable', 'woocommerce-paypal-gateway'),
+                'title' => __('Enable/Disable', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'checkbox',
-                'label' => __('Enable PayPal Payments', 'woocommerce-paypal-gateway'),
+                'label' => __('Enable PayPal Payments', 'woocommerce-paypal-commerce-gateway'),
                 'default' => 'yes',
             ],
             'ppcp' => [
@@ -117,7 +117,7 @@ class WcGateway extends \WC_Payment_Gateway
 
         if ($isProcessed) {
             $wcOrder->add_order_note(
-                __('Payment successfully captured.', 'woocommerce-paypal-gateway')
+                __('Payment successfully captured.', 'woocommerce-paypal-commerce-gateway')
             );
 
             $wcOrder->set_status('processing');
@@ -129,7 +129,7 @@ class WcGateway extends \WC_Payment_Gateway
         if ($this->authorizedPayments->lastStatus() === AuthorizedPaymentsProcessor::ALREADY_CAPTURED) {
             if ($wcOrder->get_status() === 'on-hold') {
                 $wcOrder->add_order_note(
-                    __('Payment successfully captured.', 'woocommerce-paypal-gateway')
+                    __('Payment successfully captured.', 'woocommerce-paypal-commerce-gateway')
                 );
                 $wcOrder->set_status('processing');
             }
