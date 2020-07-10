@@ -111,22 +111,28 @@ class SmartButton implements SmartButtonInterface
             is_product()
             && !$notEnabledOnProductPage
         ) {
-            add_action(
-                'woocommerce_single_product_summary',
-                $buttonRenderer,
-                31
-            );
+            $product = wc_get_product();
+            if (! $product->is_type(['external', 'grouped'])) {
+                add_action(
+                    'woocommerce_single_product_summary',
+                    $buttonRenderer,
+                    31
+                );
+            }
         }
         if (
             is_product()
             && $this->settings->has('dcc_single_product_enabled')
             && $this->settings->get('dcc_single_product_enabled')
         ) {
-            add_action(
-                'woocommerce_single_product_summary',
-                $dccRenderer,
-                31
-            );
+            $product = wc_get_product();
+            if (! $product->is_type(['external', 'grouped'])) {
+                add_action(
+                    'woocommerce_single_product_summary',
+                    $dccRenderer,
+                    31
+                );
+            }
         }
         $notEnabledOnMiniCart = $this->settings->has('button_mini_cart_enabled') &&
             !$this->settings->get('button_mini_cart_enabled');
