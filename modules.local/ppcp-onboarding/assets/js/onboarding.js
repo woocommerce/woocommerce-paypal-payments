@@ -9,5 +9,12 @@ function onboardingCallback(authCode, sharedId) {
             sharedId: sharedId,
             nonce: PayPalCommerceGatewayOnboarding.nonce
         })
-    });
+    })
+        .then(response => response.json())
+        .then((data) => {
+            if (data.success) {
+                return;
+            }
+            alert(PayPalCommerceGatewayOnboarding.error)
+        });
 }

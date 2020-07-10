@@ -46,6 +46,10 @@ class OnboardingAssets
             [
                 'endpoint' => home_url(\WC_AJAX::get_endpoint(LoginSellerEndpoint::ENDPOINT)),
                 'nonce' => wp_create_nonce($this->loginSellerEndpoint::nonce()),
+                'error' => __(
+                    'We could not properly onboard you. Please reload and try again.',
+                    'woocommerce-paypal-commerce-gateway'
+                )
             ]
         );
 
