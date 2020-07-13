@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Inpsyde\PayPalCommerce\WcGateway;
 
 use Dhii\Data\Container\ContainerInterface;
+use Inpsyde\PayPalCommerce\ApiClient\Entity\ApplicationContext;
 use Inpsyde\PayPalCommerce\Onboarding\State;
 use Inpsyde\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
 use Inpsyde\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
@@ -279,6 +280,25 @@ return [
                     'Control the name of your shop, customers will see in the PayPal process.',
                     'woocommerce-paypal-commerce-gateway'
                 ),
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+            ],
+            'landing_page' => [
+                'title' => __('Landing Page', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => 'gold',
+                'desc_tip' => true,
+                'description' => __(
+                    'Type of PayPla page to display.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    ApplicationContext::LANDING_PAGE_LOGIN => __('Login (PayPal account login)', 'woocommerce-paypal-commerce-gateway'),
+                    ApplicationContext::LANDING_PAGE_BILLING => __('Billing (Non-PayPal account)', 'woocommerce-paypal-commerce-gateway'),
+                ],
                 'screens' => [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
