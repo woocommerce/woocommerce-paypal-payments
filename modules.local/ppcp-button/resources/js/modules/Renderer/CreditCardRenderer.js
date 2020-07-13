@@ -43,9 +43,17 @@ class CreditCardRenderer {
                 'submit',
                 event => {
                     event.preventDefault();
-                    hostedFields.submit().then(payload => {
+                    hostedFields.submit({
+                        contingencies: ['3D_SECURE']
+                    }).then((payload) => {
                         payload.orderID = payload.orderId;
-                        return contextConfig.onApprove(payload);
+                        if (payload.liabilityShift === 'POSSIBLE') {
+                            return contextConfig.onApprove(payload);
+                        }
+
+                        if (payload.liabilityShift) {
+                            // Handle buyer confirmed 3D Secure successfully
+                        }
                     });
                 }
             );
