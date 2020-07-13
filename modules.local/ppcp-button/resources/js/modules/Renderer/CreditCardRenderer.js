@@ -47,7 +47,7 @@ class CreditCardRenderer {
                         contingencies: ['3D_SECURE']
                     }).then((payload) => {
                         payload.orderID = payload.orderId;
-                        console.log(paypload);
+                        console.log(payload);
 
                         if (payload.liabilityShift === 'POSSIBLE') {
                             return contextConfig.onApprove(payload);
