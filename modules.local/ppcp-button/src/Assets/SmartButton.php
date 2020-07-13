@@ -85,7 +85,7 @@ class SmartButton implements SmartButtonInterface
                             <label for="ppcp-cvv-%1$s">%4$s</label>
                             <span id="ppcp-cvv-%1$s" class="ppcp-cvv"></span>
                             <button>%5$s</button>
-                        </form>',
+                        </form><div id="payments-sdk__contingency-lightbox"></div>',
                 esc_attr($id),
                 esc_html__('Card number', 'woocommerce-paypal-commerce-gateway'),
                 esc_html__('Expiration Date', 'woocommerce-paypal-commerce-gateway'),
