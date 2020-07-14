@@ -58,7 +58,7 @@ class SmartButton implements SmartButtonInterface
 
         $buttonRenderer = static function () {
             $product = wc_get_product();
-            if (is_a($product, \WC_Product::class)
+            if (! is_checkout() && is_a($product, \WC_Product::class)
                 && (
                     $product->is_type(['external', 'grouped'])
                     || ! $product->is_in_stock()
@@ -75,7 +75,7 @@ class SmartButton implements SmartButtonInterface
                 return;
             }
             $product = wc_get_product();
-            if (is_a($product, \WC_Product::class)
+            if (! is_checkout() && is_a($product, \WC_Product::class)
                 && (
                     $product->is_type(['external', 'grouped'])
                     || ! $product->is_in_stock()
