@@ -278,7 +278,7 @@ class SmartButton implements SmartButtonInterface
             'integration-date' => date('Y-m-d'),
             'components' => implode(',', $this->components()),
             //ToDo: Probably only needed, when DCC
-            'vault' => $this->dccIsEnabled() ? 'false' : 'false',
+            'vault' => $this->dccIsEnabled() ? 'true' : 'false',
             'commit' => is_checkout() ? 'true' : 'false',
             'intent' => ($this->settings->has('intent')) ? $this->settings->get('intent') : 'capture',
         ];
