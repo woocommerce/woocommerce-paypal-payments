@@ -52,8 +52,10 @@ class CreateOrderEndpoint implements EndpointInterface
                 }
                 $payer = $this->payerFactory->fromPayPalResponse(json_decode(json_encode($data['payer'])));
             }
+            $bnCode = isset($data['bn_code']) ? (string) $data['bn_code'] : '';
             $order = $this->apiEndpoint->createForPurchaseUnits(
                 $purchaseUnits,
+                $bnCode,
                 $payer
             );
             wp_send_json_success($order->toArray());

@@ -238,6 +238,7 @@ class SmartButton implements SmartButtonInterface
                     'nonce' => wp_create_nonce(ApproveOrderEndpoint::nonce()),
                 ],
             ],
+            'bn_codes' => $this->bnCodes(),
             'payer' => $this->payerData(),
             'button' => [
                 'wrapper' => '#ppc-button',
@@ -312,7 +313,9 @@ class SmartButton implements SmartButtonInterface
 
     private function attributes(): array
     {
-        $attributes = [];
+        $attributes = [
+            'data-partner-attribution-id' => $this->bnCodeForContext($this->context()),
+        ];
         try {
             $clientToken = $this->identityToken->generate();
             $attributes['data-client-token'] = $clientToken->token();
@@ -320,6 +323,34 @@ class SmartButton implements SmartButtonInterface
         } catch (RuntimeException $exception) {
             return $attributes;
         }
+    }
+
+    /**
+     * @param string $context
+     * @return string
+     */
+    private function bnCodeForContext(string $context): string
+    {
+
+        $codes = $this->bnCodes();
+        return (isset($codes[$context])) ? $codes[$context] : '';
+    }
+
+    /**
+     * BN Codes
+     *
+     * @ToDo Replace with the real codes once given.
+     * @return array
+     */
+    private function bnCodes(): array
+    {
+
+        return [
+            'checkout' => 'Woo_PPCP_checkout',
+            'cart' => 'Woo_PPCP_cart',
+            'mini-cart' => 'Woo_PPCP_mini-cart',
+            'product' => 'Woo_PPCP_product',
+        ];
     }
 
     private function components(): array
