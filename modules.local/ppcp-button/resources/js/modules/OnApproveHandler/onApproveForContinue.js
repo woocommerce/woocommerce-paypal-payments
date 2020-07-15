@@ -1,4 +1,4 @@
-const onApprove = (context) => {
+const onApprove = (context, errorHandler) => {
     return (data, actions) => {
         return fetch(context.config.ajax.approve_order.endpoint, {
             method: 'POST',
@@ -10,7 +10,8 @@ const onApprove = (context) => {
             return res.json();
         }).then((data)=>{
             if (!data.success) {
-                throw Error(data.data);
+                errorHandler.message(data.data);
+                throw new Error(data.data);
             }
             location.href = context.config.redirect;
         });

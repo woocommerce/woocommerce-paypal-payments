@@ -30,7 +30,7 @@ class CartActionHandler {
 
         return {
             createOrder,
-            onApprove: onApprove(this),
+            onApprove: onApprove(this, this.errorHandler),
             onError: (error) => {
                 this.errorHandler.message(error);
             }

@@ -60,10 +60,17 @@ class ApproveOrderEndpoint implements EndpointInterface
             if ($order->paymentSource() && $order->paymentSource()->card()) {
                 $proceed = $this->threedSecure->proceedWithOrder($order);
                 if ($proceed === ThreeDSecure::RETRY) {
-                    wp_send_json_error(['3d_secure' => 'retry']);
+                    throw new RuntimeException(
+                        __('Something went wrong. Please try again.', 'woocommerce-paypal-commerce-gateway')
+                    );
                 }
                 if ($proceed === ThreeDSecure::REJECT) {
-                    wp_send_json_error(['3d_secure' => 'reject']);
+                    throw new RuntimeException(
+                        __(
+                            'Unfortunatly, we can\'t accept your card. Please choose a different payment method.',
+                            'woocommerce-paypal-commerce-gateway'
+                        )
+                    );
                 }
             }
 
