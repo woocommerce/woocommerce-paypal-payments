@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Inpsyde\PayPalCommerce\Button\Endpoint;
 
 use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use Inpsyde\PayPalCommerce\Button\Exception\RuntimeException;
+use Inpsyde\PayPalCommerce\Button\Helper\ThreeDSecure;
 use Inpsyde\PayPalCommerce\Session\SessionHandler;
 
 class ApproveOrderEndpoint implements EndpointInterface
@@ -17,15 +19,18 @@ class ApproveOrderEndpoint implements EndpointInterface
     private $requestData;
     private $sessionHandler;
     private $apiEndpoint;
+    private $threedSecure;
     public function __construct(
         RequestData $requestData,
         OrderEndpoint $apiEndpoint,
-        SessionHandler $sessionHandler
+        SessionHandler $sessionHandler,
+        ThreeDSecure $threedSecure
     ) {
 
         $this->requestData = $requestData;
         $this->apiEndpoint = $apiEndpoint;
         $this->sessionHandler = $sessionHandler;
+        $this->threedSecure = $threedSecure;
     }
 
     public static function nonce(): string
@@ -50,6 +55,16 @@ class ApproveOrderEndpoint implements EndpointInterface
                         $data['order_id']
                     )
                 );
+            }
+
+            if ($order->paymentSource() && $order->paymentSource()->card()) {
+                $proceed = $this->threedSecure->proceedWithOrder($order);
+                if ($proceed === ThreeDSecure::RETRY) {
+                    wp_send_json_error(['3d_secure' => 'retry']);
+                }
+                if ($proceed === ThreeDSecure::REJECT) {
+                    wp_send_json_error(['3d_secure' => 'reject']);
+                }
             }
 
             if (! $order->status()->is(OrderStatus::APPROVED)) {
