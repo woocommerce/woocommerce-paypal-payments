@@ -8,6 +8,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use Inpsyde\PayPalCommerce\Button\Exception\RuntimeException;
 use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
 use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use Inpsyde\PayPalCommerce\Session\SessionHandler;
 
 class CreateOrderEndpoint implements EndpointInterface
 {
@@ -18,17 +19,20 @@ class CreateOrderEndpoint implements EndpointInterface
     private $repository;
     private $apiEndpoint;
     private $payerFactory;
+    private $sessionHandler;
     public function __construct(
         RequestData $requestData,
         CartRepository $repository,
         OrderEndpoint $apiEndpoint,
-        PayerFactory $payerFactory
+        PayerFactory $payerFactory,
+        SessionHandler $sessionHandler
     ) {
 
         $this->requestData = $requestData;
         $this->repository = $repository;
         $this->apiEndpoint = $apiEndpoint;
         $this->payerFactory = $payerFactory;
+        $this->sessionHandler = $sessionHandler;
     }
 
     public static function nonce(): string
@@ -53,9 +57,12 @@ class CreateOrderEndpoint implements EndpointInterface
                 $payer = $this->payerFactory->fromPayPalResponse(json_decode(json_encode($data['payer'])));
             }
             $bnCode = isset($data['bn_code']) ? (string) $data['bn_code'] : '';
+            if ($bnCode) {
+                $this->sessionHandler->replaceBnCode($bnCode);
+                $this->apiEndpoint->withBnCode($bnCode);
+            }
             $order = $this->apiEndpoint->createForPurchaseUnits(
                 $purchaseUnits,
-                $bnCode,
                 $payer
             );
             wp_send_json_success($order->toArray());
