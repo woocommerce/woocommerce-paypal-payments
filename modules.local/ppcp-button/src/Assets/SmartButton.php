@@ -291,7 +291,7 @@ class SmartButton implements SmartButtonInterface
             'integration-date' => date('Y-m-d'),
             'components' => implode(',', $this->components()),
             //ToDo: Probably only needed, when DCC
-            'vault' => $this->dccIsEnabled() ? 'true' : 'false',
+            'vault' => is_user_logged_in() ? 'true' : 'false',
             'commit' => is_checkout() ? 'true' : 'false',
             'intent' => ($this->settings->has('intent')) ? $this->settings->get('intent') : 'capture',
         ];
@@ -317,7 +317,10 @@ class SmartButton implements SmartButtonInterface
             'data-partner-attribution-id' => $this->bnCodeForContext($this->context()),
         ];
         try {
-            $clientToken = $this->identityToken->generate();
+            if (! is_user_logged_in()) {
+                return $attributes;
+            }
+            $clientToken = $this->identityToken->generateForCustomer((int) get_current_user_id());
             $attributes['data-client-token'] = $clientToken->token();
             return $attributes;
         } catch (RuntimeException $exception) {
