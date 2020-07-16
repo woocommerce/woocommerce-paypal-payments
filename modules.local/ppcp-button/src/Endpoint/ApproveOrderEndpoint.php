@@ -72,6 +72,8 @@ class ApproveOrderEndpoint implements EndpointInterface
                         )
                     );
                 }
+                $this->sessionHandler->replaceOrder($order);
+                wp_send_json_success($order);
             }
 
             if (! $order->status()->is(OrderStatus::APPROVED)) {
