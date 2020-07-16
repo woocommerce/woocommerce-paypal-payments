@@ -11,7 +11,7 @@ const onApprove = (context, errorHandler) => {
         }).then((data)=>{
             if (!data.success) {
                 errorHandler.message(data.data);
-                throw new Error(data.data);
+                return actions.restart();
             }
             location.href = context.config.redirect;
         });

@@ -11,7 +11,7 @@ const onApprove = (context) => {
         }).then((data)=>{
             if (!data.success) {
                 errorHandler.message(data.data);
-                throw new Error(data.data);
+                return actions.restart();
             }
             document.querySelector('#place_order').click()
         });
