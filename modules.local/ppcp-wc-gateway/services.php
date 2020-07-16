@@ -77,12 +77,14 @@ return [
         $orderEndpoint = $container->get('api.endpoint.order');
         $paymentsEndpoint = $container->get('api.endpoint.payments');
         $orderFactory = $container->get('api.factory.order');
+        $threeDsecure = $container->get('button.helper.three-d-secure');
         return new OrderProcessor(
             $sessionHandler,
             $cartRepository,
             $orderEndpoint,
             $paymentsEndpoint,
-            $orderFactory
+            $orderFactory,
+            $threeDsecure
         );
     },
     'wcgateway.processor.authorized-payments' => static function (ContainerInterface $container): AuthorizedPaymentsProcessor {

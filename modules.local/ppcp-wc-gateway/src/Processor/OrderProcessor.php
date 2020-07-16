@@ -10,6 +10,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
+use Inpsyde\PayPalCommerce\Button\Helper\ThreeDSecure;
 use Inpsyde\PayPalCommerce\Session\SessionHandler;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGateway;
 
@@ -20,6 +21,7 @@ class OrderProcessor
     private $orderEndpoint;
     private $paymentsEndpoint;
     private $orderFactory;
+    private $threedSecure;
 
     private $lastError = '';
 
@@ -28,7 +30,8 @@ class OrderProcessor
         CartRepository $cartRepository,
         OrderEndpoint $orderEndpoint,
         PaymentsEndpoint $paymentsEndpoint,
-        OrderFactory $orderFactory
+        OrderFactory $orderFactory,
+        ThreeDSecure $threedSecure
     ) {
 
         $this->sessionHandler = $sessionHandler;
@@ -36,6 +39,7 @@ class OrderProcessor
         $this->orderEndpoint = $orderEndpoint;
         $this->paymentsEndpoint = $paymentsEndpoint;
         $this->orderFactory = $orderFactory;
+        $this->threedSecure = $threedSecure;
     }
 
     public function process(\WC_Order $wcOrder, \WooCommerce $woocommerce): bool
@@ -45,7 +49,7 @@ class OrderProcessor
         $wcOrder->update_meta_data(WcGateway::INTENT_META_KEY, $order->intent());
 
         $errorMessage = null;
-        if (!$order || !$order->status()->is(OrderStatus::APPROVED)) {
+        if (!$order || ! $this->orderIsApproved($order)) {
             $errorMessage = __(
                 'The payment has not been approved yet.',
                 'woocommerce-paypal-commerce-gateway'
@@ -97,5 +101,15 @@ class OrderProcessor
         $updatedOrder = $this->orderFactory->fromWcOrder($wcOrder, $order);
         $order = $this->orderEndpoint->patchOrderWith($order, $updatedOrder);
         return $order;
+    }
+
+    private function orderIsApproved(Order $order): bool
+    {
+
+        if ($order->status()->is(OrderStatus::APPROVED)) {
+            return true;
+        }
+
+        return $this->threedSecure->proceedWithOrder($order) === ThreeDSecure::PROCCEED;
     }
 }

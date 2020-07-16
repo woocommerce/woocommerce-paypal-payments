@@ -10,6 +10,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
+use Inpsyde\PayPalCommerce\Button\Helper\ThreeDSecure;
 use Inpsyde\PayPalCommerce\Session\SessionHandler;
 use Inpsyde\PayPalCommerce\TestCase;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGateway;
@@ -64,13 +65,15 @@ class OrderProcessorTest extends TestCase
             ->expects('fromWcOrder')
             ->with($wcOrder, $currentOrder)
             ->andReturn($currentOrder);
+        $threeDSecure = Mockery::mock(ThreeDSecure::class);
 
         $testee = new OrderProcessor(
             $sessionHandler,
             $cartRepository,
             $orderEndpoint,
             $paymentsEndpoint,
-            $orderFactory
+            $orderFactory,
+            $threeDSecure
         );
 
         $cart = Mockery::mock(\WC_Cart::class);
@@ -148,13 +151,15 @@ class OrderProcessorTest extends TestCase
             ->expects('fromWcOrder')
             ->with($wcOrder, $currentOrder)
             ->andReturn($currentOrder);
+        $threeDSecure = Mockery::mock(ThreeDSecure::class);
 
         $testee = new OrderProcessor(
             $sessionHandler,
             $cartRepository,
             $orderEndpoint,
             $paymentsEndpoint,
-            $orderFactory
+            $orderFactory,
+            $threeDSecure
         );
 
         $cart = Mockery::mock(\WC_Cart::class);
@@ -211,13 +216,16 @@ class OrderProcessorTest extends TestCase
         $orderEndpoint = Mockery::mock(OrderEndpoint::class);
         $paymentsEndpoint = Mockery::mock(PaymentsEndpoint::class);
         $orderFactory = Mockery::mock(OrderFactory::class);
+        $threeDSecure = Mockery::mock(ThreeDSecure::class);
+        $threeDSecure->expects('proceedWithOrder')->andReturn(ThreeDSecure::NO_DECISION);
 
         $testee = new OrderProcessor(
             $sessionHandler,
             $cartRepository,
             $orderEndpoint,
             $paymentsEndpoint,
-            $orderFactory
+            $orderFactory,
+            $threeDSecure
         );
 
         $cart = Mockery::mock(\WC_Cart::class);

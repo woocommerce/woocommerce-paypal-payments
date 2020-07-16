@@ -99,10 +99,10 @@ return [
         $requestData = $container->get('button.request-data');
         $apiClient = $container->get('api.endpoint.order');
         $sessionHandler = $container->get('session.handler');
-        $threeDSecure = $container->get('button.endpoint.helper.three-d-secure');
+        $threeDSecure = $container->get('button.helper.three-d-secure');
         return new ApproveOrderEndpoint($requestData, $apiClient, $sessionHandler, $threeDSecure);
     },
-    'button.endpoint.helper.three-d-secure' => static function (ContainerInterface $container): ThreeDSecure {
+    'button.helper.three-d-secure' => static function (ContainerInterface $container): ThreeDSecure {
         return new ThreeDSecure();
     },
 ];
