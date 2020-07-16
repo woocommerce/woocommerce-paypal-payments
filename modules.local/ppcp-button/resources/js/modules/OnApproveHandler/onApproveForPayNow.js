@@ -1,4 +1,4 @@
-const onApprove = (context) => {
+const onApprove = (context, errorHandler) => {
     return (data, actions) => {
         return fetch(context.config.ajax.approve_order.endpoint, {
             method: 'POST',
