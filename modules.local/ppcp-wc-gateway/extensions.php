@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\WcGateway;
 
+use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use Inpsyde\PayPalCommerce\Session\SessionHandler;
+use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
 use Inpsyde\Woocommerce\Logging\Logger\NullLogger;
 use Inpsyde\Woocommerce\Logging\Logger\WooCommerceLogger;
 use Psr\Container\ContainerInterface;
@@ -31,6 +34,33 @@ return [
     'api.secret' => static function (ContainerInterface $container): string {
         $settings = $container->get('wcgateway.settings');
         return $settings->has('client_secret') ? (string) $settings->get('client_secret') : '';
+    },
+    'api.endpoint.order' => static function (ContainerInterface $container): OrderEndpoint {
+        $orderFactory = $container->get('api.factory.order');
+        $patchCollectionFactory = $container->get('api.factory.patch-collection-factory');
+        $logger = $container->get('woocommerce.logger.woocommerce');
+        /**
+         * @var SessionHandler $sessionHandler
+         */
+        $sessionHandler = $container->get('session.handler');
+        $bnCode = $sessionHandler->bnCode();
+
+        /**
+         * @var Settings $settings
+         */
+        $settings = $container->get('wcgateway.settings');
+        $intent = $settings->has('intent') && strtoupper((string) $settings->get('intent')) === 'AUTHORIZE' ? 'AUTHORIZE' : 'CAPTURE';
+        $applicationContextRepository = $container->get('api.repository.application-context');
+        return new OrderEndpoint(
+            $container->get('api.host'),
+            $container->get('api.bearer'),
+            $orderFactory,
+            $patchCollectionFactory,
+            $intent,
+            $logger,
+            $applicationContextRepository,
+            $bnCode
+        );
     },
     'woocommerce.logger.woocommerce' => function (ContainerInterface $container): LoggerInterface {
         $settings = $container->get('wcgateway.settings');

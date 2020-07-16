@@ -10,7 +10,8 @@ const onApprove = (context) => {
             return res.json();
         }).then((data)=>{
             if (!data.success) {
-                throw Error(data.data);
+                errorHandler.message(data.data);
+                throw new Error(data.data);
             }
             document.querySelector('#place_order').click()
         });

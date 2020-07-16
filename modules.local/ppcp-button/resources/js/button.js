@@ -55,6 +55,7 @@ document.addEventListener(
         }
         if (
             ! document.querySelector(PayPalCommerceGateway.button.wrapper) &&
+            ! document.querySelector(PayPalCommerceGateway.button.mini_cart_wrapper) &&
             ! document.querySelector(PayPalCommerceGateway.hosted_fields.wrapper)
         ) {
             return;

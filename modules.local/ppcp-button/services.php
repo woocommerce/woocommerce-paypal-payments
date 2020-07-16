@@ -13,6 +13,7 @@ use Inpsyde\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\RequestData;
 use Inpsyde\PayPalCommerce\Button\Exception\RuntimeException;
+use Inpsyde\PayPalCommerce\Button\Helper\ThreeDSecure;
 use Inpsyde\PayPalCommerce\Onboarding\Environment;
 use Inpsyde\PayPalCommerce\Onboarding\State;
 
@@ -91,12 +92,17 @@ return [
         $repository = $container->get('api.repository.cart');
         $apiClient = $container->get('api.endpoint.order');
         $payerFactory = $container->get('api.factory.payer');
-        return new CreateOrderEndpoint($requestData, $repository, $apiClient, $payerFactory);
+        $sessionHandler = $container->get('session.handler');
+        return new CreateOrderEndpoint($requestData, $repository, $apiClient, $payerFactory, $sessionHandler);
     },
     'button.endpoint.approve-order' => static function (ContainerInterface $container): ApproveOrderEndpoint {
         $requestData = $container->get('button.request-data');
         $apiClient = $container->get('api.endpoint.order');
         $sessionHandler = $container->get('session.handler');
-        return new ApproveOrderEndpoint($requestData, $apiClient, $sessionHandler);
+        $threeDSecure = $container->get('button.endpoint.helper.three-d-secure');
+        return new ApproveOrderEndpoint($requestData, $apiClient, $sessionHandler, $threeDSecure);
+    },
+    'button.endpoint.helper.three-d-secure' => static function (ContainerInterface $container): ThreeDSecure {
+        return new ThreeDSecure();
     },
 ];
