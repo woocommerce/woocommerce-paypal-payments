@@ -9,6 +9,7 @@ class ErrorHandler {
     {
         this.wrapper.classList.add('woocommerce-error');
         this.wrapper.innerText = this.sanitize(text);
+        jQuery.scroll_to_notices(jQuery('.woocommerce-notices-wrapper'))
     }
 
     sanitize(text)
