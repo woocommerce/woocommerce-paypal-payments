@@ -339,17 +339,16 @@ class SmartButton implements SmartButtonInterface
     /**
      * BN Codes
      *
-     * @ToDo Replace with the real codes once given.
      * @return array
      */
     private function bnCodes(): array
     {
 
         return [
-            'checkout' => 'Woo_PPCP_checkout',
-            'cart' => 'Woo_PPCP_cart',
-            'mini-cart' => 'Woo_PPCP_mini-cart',
-            'product' => 'Woo_PPCP_product',
+            'checkout' => 'Woo_PPCP',
+            'cart' => 'Woo_PPCP',
+            'mini-cart' => 'Woo_PPCP',
+            'product' => 'Woo_PPCP',
         ];
     }
 
