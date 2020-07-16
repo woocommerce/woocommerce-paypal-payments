@@ -11,7 +11,10 @@ const onApprove = (context, errorHandler) => {
         }).then((data)=>{
             if (!data.success) {
                 errorHandler.message(data.data);
-                return actions.restart();
+                if (typeof actions.restart !== 'undefined') {
+                    return actions.restart();
+                }
+                throw new Error(data.data);
             }
             document.querySelector('#place_order').click()
         });
