@@ -1,0 +1,22 @@
+#ppcp-hosted-fields {
+    display: table !important;
+    div {
+        display: table-row;
+    }
+    label, span {
+        display: table-cell;
+        height: 30px;
+        padding: 0;
+        margin: 0;
+        overflow: hidden;
+        position: relative;
+        vertical-align: bottom;
+    }
+    label {
+        line-height: 30px;
+    }
+}
+
+
+
+

@@ -88,14 +88,19 @@ class SmartButton implements SmartButtonInterface
             if (!$id) {
                 $id = 'ppcp-hosted-fields';
             }
+            wp_enqueue_style('ppcp-hosted-fields');
             printf(
                 '<form id="%1$s">
+                            <div>
                             <label for="ppcp-credit-card-%1$s">%2$s</label>
                             <span id="ppcp-credit-card-%1$s" class="ppcp-credit-card"></span>
+                            </div><div>
                             <label for="ppcp-expiration-date-%1$s">%3$s</label>
                             <span id="ppcp-expiration-date-%1$s" class="ppcp-expiration-date"></span>
+                            </div><div>
                             <label for="ppcp-cvv-%1$s">%4$s</label>
                             <span id="ppcp-cvv-%1$s" class="ppcp-cvv"></span>
+                            </div>
                             <button>%5$s</button>
                         </form><div id="payments-sdk__contingency-lightbox"></div>',
                 esc_attr($id),
@@ -201,6 +206,10 @@ class SmartButton implements SmartButtonInterface
 
     public function enqueue(): bool
     {
+        wp_register_style(
+            'ppcp-hosted-fields',
+            $this->moduleUrl . '/assets/css/hosted-fields.css'
+        );
         wp_enqueue_script(
             'ppcp-smart-button',
             $this->moduleUrl . '/assets/js/button.js',

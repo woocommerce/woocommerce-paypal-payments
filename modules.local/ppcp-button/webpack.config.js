@@ -7,6 +7,7 @@ module.exports = {
     target: 'web',
     entry: {
         button: path.resolve('./resources/js/button.js'),
+        hostedfields: path.resolve('./resources/css/hosted-fields.scss'),
     },
     output: {
         path: path.resolve(__dirname, 'assets/'),
