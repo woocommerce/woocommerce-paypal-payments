@@ -1,21 +1,29 @@
 #ppcp-hosted-fields,
 #ppcp-hosted-fields-mini-cart {
-    display: table !important;
-    div {
-        display: table-row;
+
+    .ppcp-dcc-credit-card-wrapper {
+        width: 100%;
+        display: table !important;
+
+        div {
+            display: table-row;
+        }
+
+        label, span {
+            display: table-cell;
+            height: 30px;
+            padding: 0;
+            margin: 0;
+            overflow: hidden;
+            position: relative;
+            vertical-align: bottom;
+        }
+
+        label {
+            line-height: 30px;
+        }
     }
-    label, span {
-        display: table-cell;
-        height: 30px;
-        padding: 0;
-        margin: 0;
-        overflow: hidden;
-        position: relative;
-        vertical-align: bottom;
-    }
-    label {
-        line-height: 30px;
-    }
+
 }
 
 

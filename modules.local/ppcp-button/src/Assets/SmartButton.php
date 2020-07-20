@@ -89,6 +89,7 @@ class SmartButton implements SmartButtonInterface
             wp_enqueue_style('ppcp-hosted-fields');
             printf(
                 '<form id="%1$s">
+                            <div class="ppcp-dcc-credit-card-wrapper">
                             <div>
                             <label for="ppcp-credit-card-%1$s">%2$s</label>
                             <span id="ppcp-credit-card-%1$s" class="ppcp-credit-card"></span>
@@ -98,6 +99,7 @@ class SmartButton implements SmartButtonInterface
                             </div><div>
                             <label for="ppcp-cvv-%1$s">%4$s</label>
                             <span id="ppcp-cvv-%1$s" class="ppcp-cvv"></span>
+                            </div>
                             </div>
                             <button>%5$s</button>
                         </form><div id="payments-sdk__contingency-lightbox"></div>',
