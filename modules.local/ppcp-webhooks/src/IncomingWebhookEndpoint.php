@@ -107,7 +107,18 @@ class IncomingWebhookEndpoint
             }
         }
 
-        $response = ['success' => false];
+        $message = sprintf(
+            __('Could not find handler for request type %s', 'woocommerce-paypal-commerce-gateway'),
+            $request['event_type']
+        );
+        $this->logger->log(
+            'warning',
+            $message,
+            [
+                'request' => $request,
+            ]
+        );
+        $response = ['success' => false, 'message' => $message];
         return rest_ensure_response($response);
     }
 
