@@ -86,7 +86,6 @@ class SmartButton implements SmartButtonInterface
             ) {
                 return;
             }
-            wp_enqueue_style('ppcp-hosted-fields');
             printf(
                 '<form id="%1$s">
                             <div class="ppcp-dcc-credit-card-wrapper">
@@ -206,7 +205,7 @@ class SmartButton implements SmartButtonInterface
 
     public function enqueue(): bool
     {
-        wp_register_style(
+        wp_enqueue_style(
             'ppcp-hosted-fields',
             $this->moduleUrl . '/assets/css/hosted-fields.css'
         );
