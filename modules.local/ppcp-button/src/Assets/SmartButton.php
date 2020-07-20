@@ -71,22 +71,20 @@ class SmartButton implements SmartButtonInterface
         };
 
         $canRenderDcc = $this->settings->has('client_id') && $this->settings->get('client_id');
-        $dccRenderer = static function (string $id = null) use ($canRenderDcc) {
+        $dccRenderer = static function (bool $miniCart = false) use ($canRenderDcc) {
+            $id = ($miniCart) ? 'ppcp-hosted-fields-mini-cart' : 'ppcp-hosted-fields';
             if (! $canRenderDcc) {
                 return;
             }
             $product = wc_get_product();
             if (
-                ! is_checkout() && is_a($product, \WC_Product::class)
+                ! $miniCart && !is_checkout() && is_a($product, \WC_Product::class)
                 && (
                     $product->is_type(['external', 'grouped'])
-                    || ! $product->is_in_stock()
+                    || !$product->is_in_stock()
                 )
             ) {
                 return;
-            }
-            if (!$id) {
-                $id = 'ppcp-hosted-fields';
             }
             wp_enqueue_style('ppcp-hosted-fields');
             printf(
@@ -178,7 +176,7 @@ class SmartButton implements SmartButtonInterface
             add_action(
                 'woocommerce_widget_shopping_cart_after_buttons',
                 static function () use ($dccRenderer) {
-                    $dccRenderer('ppcp-hosted-fields-mini-cart');
+                    $dccRenderer(true);
                 },
                 31
             );
