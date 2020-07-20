@@ -65,8 +65,22 @@ class IncomingWebhookEndpoint
         try {
             $data = (array) get_option(WebhookRegistrar::KEY, []);
             $webhook = $this->webhookFactory->fromArray($data);
-            return $this->webhookEndpoint->verifyCurrentRequestForWebhook($webhook);
+            $result = $this->webhookEndpoint->verifyCurrentRequestForWebhook($webhook);
+            if (! $result) {
+                $this->logger->log(
+                    'error',
+                    __('Illegit Webhook request detected.', 'woocommerce-paypal-commerce-gateway'),
+                );
+            }
+            return $result;
         } catch (RuntimeException $exception) {
+            $this->logger->log(
+                'error',
+                sprintf(
+                    __('Illegit Webhook request detected: %s', 'woocommerce-paypal-commerce-gateway'),
+                    $exception->getMessage()
+                )
+            );
             return false;
         }
     }
