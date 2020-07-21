@@ -217,7 +217,7 @@ class OrderProcessorTest extends TestCase
         $paymentsEndpoint = Mockery::mock(PaymentsEndpoint::class);
         $orderFactory = Mockery::mock(OrderFactory::class);
         $threeDSecure = Mockery::mock(ThreeDSecure::class);
-        $threeDSecure->expects('proceedWithOrder')->andReturn(ThreeDSecure::NO_DECISION);
+        $threeDSecure->expects('proceedWithOrder')->andReturn(ThreeDSecure::REJECT);
 
         $testee = new OrderProcessor(
             $sessionHandler,
