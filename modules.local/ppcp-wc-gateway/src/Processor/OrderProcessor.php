@@ -110,6 +110,13 @@ class OrderProcessor
             return true;
         }
 
-        return $this->threedSecure->proceedWithOrder($order) === ThreeDSecure::PROCCEED;
+        $isApproved = in_array(
+            $this->threedSecure->proceedWithOrder($order),
+            [
+                ThreeDSecure::NO_DECISION,
+                ThreeDSecure::PROCCEED,
+            ]
+        );
+        return $isApproved;
     }
 }
