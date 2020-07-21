@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\Button\Helper;
 
-use Inpsyde\PayPalCommerce\ApiClient\Entity\CardAuthenticationResult;
+use Inpsyde\PayPalCommerce\ApiClient\Entity\CardAuthenticationResult as AuthResult;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
 
 class ThreeDSecure
@@ -34,14 +34,14 @@ class ThreeDSecure
             return self::NO_DECISION;
         }
         $result = $order->paymentSource()->card()->authenticationResult();
-        if ($result->liabilityShift() === CardAuthenticationResult::LIABILITY_SHIFT_POSSIBLE) {
+        if ($result->liabilityShift() === AuthResult::LIABILITY_SHIFT_POSSIBLE) {
             return self::PROCCEED;
         }
 
-        if ($result->liabilityShift() === CardAuthenticationResult::LIABILITY_SHIFT_UNKNOWN) {
+        if ($result->liabilityShift() === AuthResult::LIABILITY_SHIFT_UNKNOWN) {
             return self::RETRY;
         }
-        if ($result->liabilityShift() === CardAuthenticationResult::LIABILITY_SHIFT_NO) {
+        if ($result->liabilityShift() === AuthResult::LIABILITY_SHIFT_NO) {
             return $this->noLiabilityShift($result);
         }
         return self::NO_DECISION;
@@ -50,37 +50,37 @@ class ThreeDSecure
     /**
      * @return int
      */
-    private function noLiabilityShift(CardAuthenticationResult $result): int
+    private function noLiabilityShift(AuthResult $result): int
     {
 
         if (
-            $result->enrollmentStatus() === CardAuthenticationResult::ENROLLMENT_STATUS_BYPASS
+            $result->enrollmentStatus() === AuthResult::ENROLLMENT_STATUS_BYPASS
             && ! $result->authenticationResult()
         ) {
             return self::PROCCEED;
         }
         if (
-            $result->enrollmentStatus() === CardAuthenticationResult::ENROLLMENT_STATUS_UNAVAILABLE
+            $result->enrollmentStatus() === AuthResult::ENROLLMENT_STATUS_UNAVAILABLE
             && ! $result->authenticationResult()
         ) {
             return self::PROCCEED;
         }
         if (
-            $result->enrollmentStatus() === CardAuthenticationResult::ENROLLMENT_STATUS_NO
+            $result->enrollmentStatus() === AuthResult::ENROLLMENT_STATUS_NO
             && ! $result->authenticationResult()
         ) {
             return self::PROCCEED;
         }
 
-        if ($result->authenticationResult() === CardAuthenticationResult::AUTHENTICATION_RESULT_REJECTED) {
+        if ($result->authenticationResult() === AuthResult::AUTHENTICATION_RESULT_REJECTED) {
             return self::REJECT;
         }
 
-        if ($result->authenticationResult() === CardAuthenticationResult::AUTHENTICATION_RESULT_NO) {
+        if ($result->authenticationResult() === AuthResult::AUTHENTICATION_RESULT_NO) {
             return self::REJECT;
         }
 
-        if ($result->authenticationResult() === CardAuthenticationResult::AUTHENTICATION_RESULT_UNABLE) {
+        if ($result->authenticationResult() === AuthResult::AUTHENTICATION_RESULT_UNABLE) {
             return self::RETRY;
         }
 
