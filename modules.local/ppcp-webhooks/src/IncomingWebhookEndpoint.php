@@ -77,6 +77,7 @@ class IncomingWebhookEndpoint
             $this->logger->log(
                 'error',
                 sprintf(
+                    // translators: %s is the error message.
                     __('Illegit Webhook request detected: %s', 'woocommerce-paypal-commerce-gateway'),
                     $exception->getMessage()
                 )
@@ -108,6 +109,7 @@ class IncomingWebhookEndpoint
         }
 
         $message = sprintf(
+            // translators: %s is the request type.
             __('Could not find handler for request type %s', 'woocommerce-paypal-commerce-gateway'),
             $request['event_type']
         );

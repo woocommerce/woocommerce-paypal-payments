@@ -207,7 +207,9 @@ class SmartButton implements SmartButtonInterface
     {
         wp_enqueue_style(
             'ppcp-hosted-fields',
-            $this->moduleUrl . '/assets/css/hosted-fields.css'
+            $this->moduleUrl . '/assets/css/hosted-fields.css',
+            [],
+            1
         );
         wp_enqueue_script(
             'ppcp-smart-button',

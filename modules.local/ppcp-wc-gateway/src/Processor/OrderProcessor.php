@@ -115,7 +115,8 @@ class OrderProcessor
             [
                 ThreeDSecure::NO_DECISION,
                 ThreeDSecure::PROCCEED,
-            ]
+            ],
+            true
         );
         return $isApproved;
     }
