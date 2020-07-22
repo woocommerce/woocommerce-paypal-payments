@@ -64,7 +64,7 @@ return [
     },
     'woocommerce.logger.woocommerce' => function (ContainerInterface $container): LoggerInterface {
         $settings = $container->get('wcgateway.settings');
-        if (! $settings->has('logging_enabled') || ! $settings->get('logging_enabled')) {
+        if (! function_exists('wc_get_logger') || ! $settings->has('logging_enabled') || ! $settings->get('logging_enabled')) {
             return new NullLogger();
         }
 
