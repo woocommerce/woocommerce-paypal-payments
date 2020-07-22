@@ -40,28 +40,34 @@ class CreditCardRenderer {
                 }
             }
         }).then(hostedFields => {
+            const submitEvent = (event) => {
+                if (event) {
+                    event.preventDefault();
+                }
+                this.errorHandler.clear();
+                const state = hostedFields.getState();
+                const formValid = Object.keys(state.fields).every(function (key) {
+                    return state.fields[key].isValid;
+                });
+
+                if (formValid) {
+
+                    hostedFields.submit({
+                        contingencies: ['3D_SECURE']
+                    }).then((payload) => {
+                        payload.orderID = payload.orderId;
+                        return contextConfig.onApprove(payload);
+                    });
+                } else {
+                    this.errorHandler.message(this.defaultConfig.hosted_fields.labels.fields_not_valid);
+                }
+            }
+            hostedFields.on('inputSubmitRequest', function () {
+                submitEvent(null);
+            });
             document.querySelector(wrapper).addEventListener(
                 'submit',
-                event => {
-                    event.preventDefault();
-                    this.errorHandler.clear();
-                    const state = hostedFields.getState();
-                    const formValid = Object.keys(state.fields).every(function (key) {
-                        return state.fields[key].isValid;
-                    });
-
-                    if (formValid) {
-
-                        hostedFields.submit({
-                            contingencies: ['3D_SECURE']
-                        }).then((payload) => {
-                            payload.orderID = payload.orderId;
-                            return contextConfig.onApprove(payload);
-                        });
-                    } else {
-                        this.errorHandler.message(this.defaultConfig.hosted_fields.labels.fields_not_valid);
-                    }
-                }
+                submitEvent
             );
         });
     }
