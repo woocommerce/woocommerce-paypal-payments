@@ -294,7 +294,7 @@ return [
                 'default' => 'gold',
                 'desc_tip' => true,
                 'description' => __(
-                    'Type of PayPla page to display.',
+                    'Type of PayPal page to display.',
                     'woocommerce-paypal-commerce-gateway'
                 ),
                 'options' => [
