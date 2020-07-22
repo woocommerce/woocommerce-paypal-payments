@@ -272,6 +272,10 @@ class SmartButton implements SmartButtonInterface
                     'credit_card_number' => __('Credit Card Number', 'woocommerce-paypal-commerce-gateway'),
                     'cvv' => __('CVV', 'woocommerce-paypal-commerce-gateway'),
                     'mm_yyyy' => __('MM/YYYY', 'woocommerce-paypal-commerce-gateway'),
+                    'fields_not_valid' => __(
+                        'Unfortunatly, your credit card details are not valid.',
+                        'woocommerce-paypal-commerce-gateway'
+                    ),
                 ],
             ],
         ];

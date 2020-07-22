@@ -1,7 +1,8 @@
 class CreditCardRenderer {
 
-    constructor(defaultConfig) {
+    constructor(defaultConfig, errorHandler) {
         this.defaultConfig = defaultConfig;
+        this.errorHandler = errorHandler;
     }
 
     render(wrapper, contextConfig) {
@@ -43,12 +44,23 @@ class CreditCardRenderer {
                 'submit',
                 event => {
                     event.preventDefault();
-                    hostedFields.submit({
-                        contingencies: ['3D_SECURE']
-                    }).then((payload) => {
-                        payload.orderID = payload.orderId;
-                        return contextConfig.onApprove(payload);
+                    this.errorHandler.clear();
+                    const state = hostedFields.getState();
+                    const formValid = Object.keys(state.fields).every(function (key) {
+                        return state.fields[key].isValid;
                     });
+
+                    if (formValid) {
+
+                        hostedFields.submit({
+                            contingencies: ['3D_SECURE']
+                        }).then((payload) => {
+                            payload.orderID = payload.orderId;
+                            return contextConfig.onApprove(payload);
+                        });
+                    } else {
+                        this.errorHandler.message(this.defaultConfig.hosted_fields.labels.fields_not_valid);
+                    }
                 }
             );
         });

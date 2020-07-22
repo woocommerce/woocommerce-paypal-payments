@@ -3,10 +3,12 @@ import SingleProductBootstap from './modules/ContextBootstrap/SingleProductBoots
 import CartBootstrap from './modules/ContextBootstrap/CartBootstap';
 import CheckoutBootstap from './modules/ContextBootstrap/CheckoutBootstap';
 import Renderer from './modules/Renderer/Renderer';
+import ErrorHandler from './modules/ErrorHandler';
 import CreditCardRenderer from "./modules/Renderer/CreditCardRenderer";
 
 const bootstrap = () => {
-    const creditCardRenderer = new CreditCardRenderer(PayPalCommerceGateway);
+    const errorHandler = new ErrorHandler();
+    const creditCardRenderer = new CreditCardRenderer(PayPalCommerceGateway, errorHandler);
     const renderer = new Renderer(creditCardRenderer, PayPalCommerceGateway);
     const context = PayPalCommerceGateway.context;
 
