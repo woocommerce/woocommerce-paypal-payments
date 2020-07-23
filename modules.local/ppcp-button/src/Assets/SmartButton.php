@@ -229,7 +229,7 @@ class SmartButton implements SmartButtonInterface
             return;
         }
         $saveCard = $this->saveVaultToken() ? sprintf(
-    '<div>
+            '<div>
 
                 <label for="ppcp-vault-%1$s">%2$s</label>
                 <input
