@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\WcGateway\Settings;
 
+use Inpsyde\PayPalCommerce\ApiClient\Helper\DccApplies;
 use Inpsyde\PayPalCommerce\Onboarding\State;
 use Psr\Container\ContainerInterface;
 
@@ -13,15 +14,18 @@ class SettingsRenderer
     private $settings;
     private $state;
     private $fields;
+    private $dccApplies;
     public function __construct(
         ContainerInterface $settings,
         State $state,
-        array $fields
+        array $fields,
+        DccApplies $dccApplies
     ) {
 
         $this->settings = $settings;
         $this->state = $state;
         $this->fields = $fields;
+        $this->dccApplies = $dccApplies;
     }
 
     //phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration.NoArgumentType
@@ -65,6 +69,9 @@ class SettingsRenderer
         <?php
         foreach ($this->fields as $field => $config) :
             if (! in_array($this->state->currentState(), $config['screens'], true)) {
+                continue;
+            }
+            if (in_array('dcc', $config['requirements'], true) && ! $this->dccApplies->forCountryCurrency()) {
                 continue;
             }
             $value = $this->settings->has($field) ? $this->settings->get($field) : null;

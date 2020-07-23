@@ -7,6 +7,7 @@ namespace Inpsyde\PayPalCommerce\Button\Assets;
 use Inpsyde\PayPalCommerce\ApiClient\Endpoint\IdentityToken;
 use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\PayerFactory;
+use Inpsyde\PayPalCommerce\ApiClient\Helper\DccApplies;
 use Inpsyde\PayPalCommerce\ApiClient\Repository\PayeeRepository;
 use Inpsyde\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
@@ -25,6 +26,7 @@ class SmartButton implements SmartButtonInterface
     private $payerFactory;
     private $clientId;
     private $requestData;
+    private $dccApplies;
 
     public function __construct(
         string $moduleUrl,
@@ -34,7 +36,8 @@ class SmartButton implements SmartButtonInterface
         IdentityToken $identityToken,
         PayerFactory $payerFactory,
         string $clientId,
-        RequestData $requestData
+        RequestData $requestData,
+        DccApplies $dccApplies
     ) {
 
         $this->moduleUrl = $moduleUrl;
@@ -45,6 +48,7 @@ class SmartButton implements SmartButtonInterface
         $this->payerFactory = $payerFactory;
         $this->clientId = $clientId;
         $this->requestData = $requestData;
+        $this->dccApplies = $dccApplies;
     }
 
     // phpcs:disable Inpsyde.CodeQuality.FunctionLength.TooLong
@@ -70,7 +74,7 @@ class SmartButton implements SmartButtonInterface
             echo '<div id="ppc-button"></div>';
         };
 
-        $canRenderDcc = $this->settings->has('client_id') && $this->settings->get('client_id');
+        $canRenderDcc = $this->dccApplies->forCountryCurrency() && $this->settings->has('client_id') && $this->settings->get('client_id');
         $dccRenderer = static function (bool $miniCart = false) use ($canRenderDcc) {
             $id = ($miniCart) ? 'ppcp-hosted-fields-mini-cart' : 'ppcp-hosted-fields';
             if (! $canRenderDcc) {
@@ -305,7 +309,7 @@ class SmartButton implements SmartButtonInterface
             'integration-date' => date('Y-m-d'),
             'components' => implode(',', $this->components()),
             //ToDo: Probably only needed, when DCC
-            'vault' => is_user_logged_in() ? 'true' : 'false',
+            'vault' => $this->dccIsEnabled() ? 'true' : 'false',
             'commit' => is_checkout() ? 'true' : 'false',
             'intent' => ($this->settings->has('intent')) ? $this->settings->get('intent') : 'capture',
         ];
@@ -331,7 +335,7 @@ class SmartButton implements SmartButtonInterface
             'data-partner-attribution-id' => $this->bnCodeForContext($this->context()),
         ];
         try {
-            if (! is_user_logged_in()) {
+            if (! is_user_logged_in() || ! $this->dccIsEnabled()) {
                 return $attributes;
             }
             $clientToken = $this->identityToken->generateForCustomer((int) get_current_user_id());
@@ -395,6 +399,9 @@ class SmartButton implements SmartButtonInterface
 
     private function dccIsEnabled(): bool
     {
+        if (! $this->dccApplies->forCountryCurrency()) {
+            return false;
+        }
         $keys = [
             'dcc_cart_enabled',
             'dcc_mini_cart_enabled',

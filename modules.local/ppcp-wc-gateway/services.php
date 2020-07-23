@@ -57,7 +57,8 @@ return [
         $settings = $container->get('wcgateway.settings');
         $state = $container->get('onboarding.state');
         $fields = $container->get('wcgateway.settings.fields');
-        return new SettingsRenderer($settings, $state, $fields);
+        $dccApplies = $container->get('api.helpers.dccapplies');
+        return new SettingsRenderer($settings, $state, $fields, $dccApplies);
     },
     'wcgateway.settings.listener' => static function (ContainerInterface $container): SettingsListener {
         $settings = $container->get('wcgateway.settings');
@@ -133,6 +134,7 @@ return [
                 'screens' => [
                     State::STATE_PROGRESSIVE,
                 ],
+                'requirements' => [],
             ],
             'sandbox_on' => [
                 'title' => __('Sandbox', 'woocommerce-paypal-commerce-gateway'),
@@ -142,6 +144,7 @@ return [
                 'screens' => [
                     State::STATE_START,
                 ],
+                'requirements' => [],
             ],
             'sandbox_on_info' => [
                 'title' => __('Sandbox', 'woocommerce-paypal-commerce-gateway'),
@@ -152,6 +155,7 @@ return [
                     State::STATE_ONBOARDED,
                 ],
                 'hidden' => 'sandbox_on',
+                'requirements' => [],
             ],
             'merchant_email' => [
                 'title' => __('Email address', 'woocommerce-paypal-commerce-gateway'),
@@ -162,6 +166,7 @@ return [
                 'screens' => [
                     State::STATE_START,
                 ],
+                'requirements' => [],
             ],
             'merchant_email_info' => [
                 'title' => __('Email address', 'woocommerce-paypal-commerce-gateway'),
@@ -172,6 +177,7 @@ return [
                     State::STATE_ONBOARDED,
                 ],
                 'hidden' => 'merchant_email',
+                'requirements' => [],
             ],
             'title' => [
                 'title' => __('Title', 'woocommerce-paypal-commerce-gateway'),
@@ -186,6 +192,7 @@ return [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
+                'requirements' => [],
             ],
             'description' => [
                 'title' => __('Description', 'woocommerce-paypal-commerce-gateway'),
@@ -203,6 +210,7 @@ return [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
+                'requirements' => [],
             ],
             'intent' => [
                 'title' => __('Intent', 'woocommerce-paypal-commerce-gateway'),
@@ -221,6 +229,7 @@ return [
                 'screens' => [
                     State::STATE_ONBOARDED,
                 ],
+                'requirements' => [],
             ],
             'button_single_product_enabled' => [
                 'title' => __('Buttons on Single Product', 'woocommerce-paypal-commerce-gateway'),
@@ -231,6 +240,7 @@ return [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
+                'requirements' => [],
             ],
             'button_mini_cart_enabled' => [
                 'title' => __('Buttons on Mini Cart', 'woocommerce-paypal-commerce-gateway'),
@@ -241,6 +251,7 @@ return [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
+                'requirements' => [],
             ],
             'button_cart_enabled' => [
                 'title' => __('Buttons on Cart', 'woocommerce-paypal-commerce-gateway'),
@@ -251,6 +262,7 @@ return [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
+                'requirements' => [],
             ],
             'button_label' => [
                 'title' => __('Button Label', 'woocommerce-paypal-commerce-gateway'),
@@ -272,6 +284,7 @@ return [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
+                'requirements' => [],
             ],
             'brand_name' => [
                 'title' => __('Brand Name', 'woocommerce-paypal-commerce-gateway'),
@@ -286,6 +299,7 @@ return [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
+                'requirements' => [],
             ],
             'landing_page' => [
                 'title' => __('Landing Page', 'woocommerce-paypal-commerce-gateway'),
@@ -305,6 +319,7 @@ return [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
+                'requirements' => [],
             ],
             'button_color' => [
                 'title' => __('Color', 'woocommerce-paypal-commerce-gateway'),
@@ -326,6 +341,7 @@ return [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
+                'requirements' => [],
             ],
             'button_shape' => [
                 'title' => __('Shape', 'woocommerce-paypal-commerce-gateway'),
@@ -345,6 +361,7 @@ return [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
+                'requirements' => [],
             ],
             'disable_funding' => [
                 'title' => __('Disable funding sources', 'woocommerce-paypal-commerce-gateway'),
@@ -373,6 +390,7 @@ return [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
+                'requirements' => [],
             ],
             'dcc_cart_enabled' => [
                 'title' => __('Enable credit card on cart', 'woocommerce-paypal-commerce-gateway'),
@@ -381,6 +399,9 @@ return [
                 'default' => true,
                 'screens' => [
                     State::STATE_ONBOARDED,
+                ],
+                'requirements' => [
+                    'dcc',
                 ],
             ],
             'dcc_mini_cart_enabled' => [
@@ -391,6 +412,9 @@ return [
                 'screens' => [
                     State::STATE_ONBOARDED,
                 ],
+                'requirements' => [
+                    'dcc',
+                ],
             ],
             'dcc_checkout_enabled' => [
                 'title' => __('Enable credit card on checkout', 'woocommerce-paypal-commerce-gateway'),
@@ -400,6 +424,9 @@ return [
                 'screens' => [
                     State::STATE_ONBOARDED,
                 ],
+                'requirements' => [
+                    'dcc',
+                ],
             ],
             'dcc_single_product_enabled' => [
                 'title' => __('Enable credit card on products', 'woocommerce-paypal-commerce-gateway'),
@@ -408,6 +435,9 @@ return [
                 'default' => true,
                 'screens' => [
                     State::STATE_ONBOARDED,
+                ],
+                'requirements' => [
+                    'dcc',
                 ],
             ],
             'disable_cards' => [
@@ -432,6 +462,9 @@ return [
                 'screens' => [
                     State::STATE_ONBOARDED,
                 ],
+                'requirements' => [
+                    'dcc',
+                ],
             ],
             'logging_enabled' => [
                 'title' => __('Logging', 'woocommerce-paypal-commerce-gateway'),
@@ -445,6 +478,7 @@ return [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
+                'requirements' => [],
             ],
         ];
     },

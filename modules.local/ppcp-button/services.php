@@ -56,6 +56,7 @@ return [
         $requestData = $container->get('button.request-data');
 
         $clientId = $container->get('button.client_id');
+        $dccApplies = $container->get('api.helpers.dccapplies');
         return new SmartButton(
             $container->get('button.url'),
             $container->get('session.handler'),
@@ -64,7 +65,8 @@ return [
             $identityToken,
             $payerFactory,
             $clientId,
-            $requestData
+            $requestData,
+            $dccApplies
         );
     },
     'button.url' => static function (ContainerInterface $container): string {
