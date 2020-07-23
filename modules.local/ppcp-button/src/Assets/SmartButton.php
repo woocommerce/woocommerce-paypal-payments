@@ -60,6 +60,9 @@ class SmartButton implements SmartButtonInterface
     public function renderWrapper(): bool
     {
 
+        if (! $this->saveVaultToken() && $this->hasSubscription()) {
+            return false;
+        }
         $buttonRenderer = static function () {
             $product = wc_get_product();
             if (
@@ -72,46 +75,6 @@ class SmartButton implements SmartButtonInterface
                 return;
             }
             echo '<div id="ppc-button"></div>';
-        };
-
-        $canRenderDcc = $this->dccApplies->forCountryCurrency() && $this->settings->has('client_id') && $this->settings->get('client_id');
-        $dccRenderer = static function (bool $miniCart = false) use ($canRenderDcc) {
-            $id = ($miniCart) ? 'ppcp-hosted-fields-mini-cart' : 'ppcp-hosted-fields';
-            if (! $canRenderDcc) {
-                return;
-            }
-            $product = wc_get_product();
-            if (
-                ! $miniCart && !is_checkout() && is_a($product, \WC_Product::class)
-                && (
-                    $product->is_type(['external', 'grouped'])
-                    || !$product->is_in_stock()
-                )
-            ) {
-                return;
-            }
-            printf(
-                '<form id="%1$s">
-                            <div class="ppcp-dcc-credit-card-wrapper">
-                            <div>
-                            <label for="ppcp-credit-card-%1$s">%2$s</label>
-                            <span id="ppcp-credit-card-%1$s" class="ppcp-credit-card"></span>
-                            </div><div>
-                            <label for="ppcp-expiration-date-%1$s">%3$s</label>
-                            <span id="ppcp-expiration-date-%1$s" class="ppcp-expiration-date"></span>
-                            </div><div>
-                            <label for="ppcp-cvv-%1$s">%4$s</label>
-                            <span id="ppcp-cvv-%1$s" class="ppcp-cvv"></span>
-                            </div>
-                            </div>
-                            <button>%5$s</button>
-                        </form><div id="payments-sdk__contingency-lightbox"></div>',
-                esc_attr($id),
-                esc_html__('Card number', 'woocommerce-paypal-commerce-gateway'),
-                esc_html__('Expiration Date', 'woocommerce-paypal-commerce-gateway'),
-                esc_html__('CVV', 'woocommerce-paypal-commerce-gateway'),
-                esc_html__('Pay with Card', 'woocommerce-paypal-commerce-gateway')
-            );
         };
 
         $notEnabledOnCart = $this->settings->has('button_cart_enabled') &&
@@ -133,7 +96,10 @@ class SmartButton implements SmartButtonInterface
         ) {
             add_action(
                 'woocommerce_proceed_to_checkout',
-                $dccRenderer,
+                [
+                    $this,
+                    'dccRenderer',
+                ],
                 20
             );
         }
@@ -157,7 +123,10 @@ class SmartButton implements SmartButtonInterface
         ) {
             add_action(
                 'woocommerce_single_product_summary',
-                $dccRenderer,
+                [
+                    $this,
+                    'dccRenderer',
+                ],
                 31
             );
         }
@@ -180,8 +149,8 @@ class SmartButton implements SmartButtonInterface
         ) {
             add_action(
                 'woocommerce_widget_shopping_cart_after_buttons',
-                static function () use ($dccRenderer) {
-                    $dccRenderer(true);
+                function () {
+                    $this->dccRenderer(true);
                 },
                 31
             );
@@ -198,7 +167,10 @@ class SmartButton implements SmartButtonInterface
         ) {
             add_action(
                 'woocommerce_review_order_after_submit',
-                $dccRenderer,
+                [
+                    $this,
+                    'dccRenderer',
+                ],
                 11
             );
         }
@@ -209,6 +181,9 @@ class SmartButton implements SmartButtonInterface
 
     public function enqueue(): bool
     {
+        if (! $this->saveVaultToken() && $this->hasSubscription()) {
+            return false;
+        }
         wp_enqueue_style(
             'ppcp-hosted-fields',
             $this->moduleUrl . '/assets/css/hosted-fields.css',
@@ -229,6 +204,97 @@ class SmartButton implements SmartButtonInterface
             $this->localizeScript()
         );
         return true;
+    }
+
+    public function dccRenderer(bool $miniCart = false) {
+        {
+            $id = ($miniCart) ? 'ppcp-hosted-fields-mini-cart' : 'ppcp-hosted-fields';
+            $canRenderDcc = $canRenderDcc = $this->dccApplies->forCountryCurrency() && $this->settings->has('client_id') && $this->settings->get('client_id');
+            if (! $canRenderDcc) {
+                return;
+            }
+            $product = wc_get_product();
+            if (
+                ! $miniCart && !is_checkout() && is_a($product, \WC_Product::class)
+                && (
+                    $product->is_type(['external', 'grouped'])
+                    || !$product->is_in_stock()
+                )
+            ) {
+                return;
+            }
+            $saveCard = $this->saveVaultToken() ? sprintf(
+                '<div>
+
+                            <label for="ppcp-vault-%1$s">%2$s</label>
+                            <input
+                                type="checkbox"
+                                id="ppcp-vault-%1$s"
+                                class="ppcp-credit-card-vault"
+                                name="vault"
+                            >
+                        </div>',
+                $id,
+                esc_html__('Save your card', 'woocommerce-paypal-commerce-gateway')
+            ) : '';
+            printf(
+                '<form id="%1$s">
+                            <div class="ppcp-dcc-credit-card-wrapper">
+                            <div>
+                            <label for="ppcp-credit-card-%1$s">%2$s</label>
+                            <span id="ppcp-credit-card-%1$s" class="ppcp-credit-card"></span>
+                            </div><div>
+                            <label for="ppcp-expiration-date-%1$s">%3$s</label>
+                            <span id="ppcp-expiration-date-%1$s" class="ppcp-expiration-date"></span>
+                            </div><div>
+                            <label for="ppcp-cvv-%1$s">%4$s</label>
+                            <span id="ppcp-cvv-%1$s" class="ppcp-cvv"></span>
+                            </div>
+                            %5$s
+                            </div>
+                            <button>%6$s</button>
+                        </form><div id="payments-sdk__contingency-lightbox"></div>',
+                esc_attr($id),
+                esc_html__('Card number', 'woocommerce-paypal-commerce-gateway'),
+                esc_html__('Expiration Date', 'woocommerce-paypal-commerce-gateway'),
+                esc_html__('CVV', 'woocommerce-paypal-commerce-gateway'),
+                $saveCard,
+                esc_html__('Pay with Card', 'woocommerce-paypal-commerce-gateway')
+            );
+        };
+    }
+
+    private function saveVaultToken() : bool {
+        if (! $this->settings->has('client_id') || ! $this->settings->get('client_id')) {
+            return false;
+        }
+        if (! $this->settings->has('vault_enabled') || ! $this->settings->get('vault_enabled')) {
+            return false;
+        }
+        return is_user_logged_in();
+    }
+
+    private function hasSubscription() : bool {
+        if (is_product()) {
+            $product = wc_get_product();
+            return is_a($product, \WC_Product::class) && $product->is_type('subscription');
+        }
+
+        $cart = WC()->cart;
+        if (! $cart || $cart->is_empty()) {
+            return false;
+        }
+
+        foreach ($cart->get_cart() as $item) {
+            if (! isset($item['data']) || ! is_a($item['data'], \WC_Product::class)) {
+                continue;
+            }
+            if ($item['data']->is_type('subscription')) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function localizeScript(): array
@@ -308,8 +374,7 @@ class SmartButton implements SmartButtonInterface
             //ToDo: Update date on releases.
             'integration-date' => date('Y-m-d'),
             'components' => implode(',', $this->components()),
-            //ToDo: Probably only needed, when DCC
-            'vault' => $this->dccIsEnabled() ? 'true' : 'false',
+            'vault' => $this->dccIsEnabled() || $this->saveVaultToken() ? 'true' : 'false',
             'commit' => is_checkout() ? 'true' : 'false',
             'intent' => ($this->settings->has('intent')) ? $this->settings->get('intent') : 'capture',
         ];
@@ -334,7 +399,7 @@ class SmartButton implements SmartButtonInterface
             'data-partner-attribution-id' => $this->bnCodeForContext($this->context()),
         ];
         try {
-            if (! is_user_logged_in() || ! $this->dccIsEnabled()) {
+            if (! $this->saveVaultToken()) {
                 return $attributes;
             }
             $clientToken = $this->identityToken->generateForCustomer((int) get_current_user_id());

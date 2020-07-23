@@ -52,8 +52,12 @@ class CreditCardRenderer {
 
                 if (formValid) {
 
+                    const vault = document.querySelector(wrapper + ' .ppcp-credit-card-vault') ?
+                        document.querySelector(wrapper + ' .ppcp-credit-card-vault').checked : false;
+
                     hostedFields.submit({
-                        contingencies: ['3D_SECURE']
+                        contingencies: ['3D_SECURE'],
+                        vault
                     }).then((payload) => {
                         payload.orderID = payload.orderId;
                         return contextConfig.onApprove(payload);
