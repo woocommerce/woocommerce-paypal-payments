@@ -391,6 +391,18 @@ return [
                 ],
                 'requirements' => [],
             ],
+            'vault_enabled' => [
+                'title' => __('Vaulting', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'checkbox',
+                'desc_tip' => true,
+                'label' => __('Enable vaulting', 'woocommerce-paypal-commerce-gateway'),
+                'description' => __('Enables you to store payment tokens for subscriptions.', 'woocommerce-paypal-commerce-gateway'),
+                'default' => true,
+                'screens' => [
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+            ],
             'dcc_cart_enabled' => [
                 'title' => __('Enable credit card on cart', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'checkbox',
@@ -464,18 +476,6 @@ return [
                 'requirements' => [
                     'dcc',
                 ],
-            ],
-            'vault_enabled' => [
-                'title' => __('Vaulting', 'woocommerce-paypal-commerce-gateway'),
-                'type' => 'checkbox',
-                'desc_tip' => true,
-                'label' => __('Enable vaulting', 'woocommerce-paypal-commerce-gateway'),
-                'description' => __('Enables you to store payment tokens for subscriptions', 'woocommerce-paypal-commerce-gateway'),
-                'default' => true,
-                'screens' => [
-                    State::STATE_ONBOARDED,
-                ],
-                'requirements' => [],
             ],
             'logging_enabled' => [
                 'title' => __('Logging', 'woocommerce-paypal-commerce-gateway'),
