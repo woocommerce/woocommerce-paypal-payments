@@ -376,7 +376,6 @@ return [
                 'options' => [
                     'card' => _x('Credit or debit cards', 'Name of payment method', 'woocommerce-paypal-commerce-gateway'),
                     'credit' => _x('PayPal Credit', 'Name of payment method', 'woocommerce-paypal-commerce-gateway'),
-                    'venmo' => _x('Venmo', 'Name of payment method', 'woocommerce-paypal-commerce-gateway'),
                     'sepa' => _x('SEPA-Lastschrift', 'Name of payment method', 'woocommerce-paypal-commerce-gateway'),
                     'bancontact' => _x('Bancontact', 'Name of payment method', 'woocommerce-paypal-commerce-gateway'),
                     'eps' => _x('eps', 'Name of payment method', 'woocommerce-paypal-commerce-gateway'),
