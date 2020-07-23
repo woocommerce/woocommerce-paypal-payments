@@ -484,13 +484,13 @@ class SmartButton implements SmartButtonInterface
             return false;
         }
         $keys = [
-            'dcc_cart_enabled',
-            'dcc_mini_cart_enabled',
-            'dcc_checkout_enabled',
-            'dcc_single_product_enabled',
+            'dcc_cart_enabled' => 'is_cart',
+            'dcc_mini_cart_enabled' => '__return_true',
+            'dcc_checkout_enabled' => 'is_checkout',
+            'dcc_single_product_enabled' => 'is_product',
         ];
-        foreach ($keys as $key) {
-            if ($this->settings->has($key) && $this->settings->get($key)) {
+        foreach ($keys as $key => $callback) {
+            if ($this->settings->has($key) && $this->settings->get($key) && $callback()) {
                 return true;
             }
         }
