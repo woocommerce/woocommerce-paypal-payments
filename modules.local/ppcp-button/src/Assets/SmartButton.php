@@ -60,7 +60,7 @@ class SmartButton implements SmartButtonInterface
     public function renderWrapper(): bool
     {
 
-        if (! $this->saveVaultToken() && $this->hasSubscription()) {
+        if (! $this->canSaveVaultToken() && $this->hasSubscription()) {
             return false;
         }
         $buttonRenderer = static function () {
@@ -116,10 +116,11 @@ class SmartButton implements SmartButtonInterface
                 31
             );
         }
+        $dccNotEnabledOnProductPage = $this->settings->has('dcc_single_product_enabled') &&
+            !$this->settings->get('dcc_single_product_enabled');
         if (
             (is_product() || wc_post_content_has_shortcode('product_page'))
-            && $this->settings->has('dcc_single_product_enabled')
-            && $this->settings->get('dcc_single_product_enabled')
+            && ! $dccNotEnabledOnProductPage
         ) {
             add_action(
                 'woocommerce_single_product_summary',
@@ -181,7 +182,7 @@ class SmartButton implements SmartButtonInterface
 
     public function enqueue(): bool
     {
-        if (! $this->saveVaultToken() && $this->hasSubscription()) {
+        if (! $this->canSaveVaultToken() && $this->hasSubscription()) {
             return false;
         }
         wp_enqueue_style(
@@ -228,7 +229,7 @@ class SmartButton implements SmartButtonInterface
         ) {
             return;
         }
-        $saveCard = $this->saveVaultToken() ? sprintf(
+        $saveCard = $this->canSaveVaultToken() ? sprintf(
             '<div>
 
                 <label for="ppcp-vault-%1$s">%2$s</label>
@@ -271,7 +272,7 @@ class SmartButton implements SmartButtonInterface
     }
     // phpcs:enable Inpsyde.CodeQuality.FunctionLength.TooLong
 
-    private function saveVaultToken(): bool
+    public function canSaveVaultToken(): bool
     {
 
         if (! $this->settings->has('client_id') || ! $this->settings->get('client_id')) {
@@ -283,7 +284,7 @@ class SmartButton implements SmartButtonInterface
         return is_user_logged_in();
     }
 
-    private function hasSubscription(): bool
+    public function hasSubscription(): bool
     {
 
         if (is_product()) {
@@ -388,7 +389,7 @@ class SmartButton implements SmartButtonInterface
             //ToDo: Update date on releases.
             'integration-date' => date('Y-m-d'),
             'components' => implode(',', $this->components()),
-            'vault' => $this->dccIsEnabled() || $this->saveVaultToken() ? 'true' : 'false',
+            'vault' => $this->dccIsEnabled() || $this->canSaveVaultToken() ? 'true' : 'false',
             'commit' => is_checkout() ? 'true' : 'false',
             'intent' => ($this->settings->has('intent')) ? $this->settings->get('intent') : 'capture',
         ];
@@ -416,7 +417,7 @@ class SmartButton implements SmartButtonInterface
             if (!is_user_logged_in()) {
                 return $attributes;
             }
-            if (! $this->dccIsEnabled() && ! $this->saveVaultToken()) {
+            if (! $this->dccIsEnabled() && ! $this->canSaveVaultToken()) {
                 return $attributes;
             }
             $clientToken = $this->identityToken->generateForCustomer((int) get_current_user_id());

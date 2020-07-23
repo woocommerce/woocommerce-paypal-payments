@@ -28,18 +28,23 @@ return [
         $notice = $container->get('wcgateway.notice.authorize-order-action');
         $settings = $container->get('wcgateway.settings');
 
+        $smartButton = $container->get('button.smart-button');
+        $supportsSubscription = $smartButton->canSaveVaultToken();
         return new WcGateway(
             $settingsRenderer,
             $orderProcessor,
             $authorizedPayments,
             $notice,
-            $settings
+            $settings,
+            $supportsSubscription
         );
     },
     'wcgateway.disabler' => static function (ContainerInterface $container): DisableGateways {
         $sessionHandler = $container->get('session.handler');
         $settings = $container->get('wcgateway.settings');
-        return new DisableGateways($sessionHandler, $settings);
+        $smartButton = $container->get('button.smart-button');
+        $subscriptionDisable = ! $smartButton->canSaveVaultToken() && $smartButton->hasSubscription();
+        return new DisableGateways($sessionHandler, $settings, $subscriptionDisable);
     },
     'wcgateway.settings' => static function (ContainerInterface $container): Settings {
         return new Settings();

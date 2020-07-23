@@ -10,6 +10,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
+use Inpsyde\PayPalCommerce\Button\Assets\SmartButton;
 use Inpsyde\PayPalCommerce\Onboarding\Render\OnboardingRenderer;
 use Inpsyde\PayPalCommerce\Session\SessionHandler;
 use Inpsyde\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
@@ -40,7 +41,8 @@ class WcGateway extends \WC_Payment_Gateway
         OrderProcessor $orderProcessor,
         AuthorizedPaymentsProcessor $authorizedPayments,
         AuthorizeOrderActionNotice $notice,
-        ContainerInterface $config
+        ContainerInterface $config,
+        bool $supportsSubscription
     ) {
 
         $this->id = self::ID;
@@ -49,6 +51,9 @@ class WcGateway extends \WC_Payment_Gateway
         $this->notice = $notice;
         $this->settingsRenderer = $settingsRenderer;
         $this->config = $config;
+        if ($supportsSubscription) {
+            $this->supports = array('subscriptions', 'products');
+        }
 
         $this->method_title = __('PayPal Payments', 'woocommerce-paypal-commerce-gateway');
         $this->method_description = __(

@@ -9,4 +9,8 @@ interface SmartButtonInterface
     public function renderWrapper(): bool;
 
     public function enqueue(): bool;
+
+    public function canSaveVaultToken(): bool;
+
+    public function hasSubscription(): bool;
 }

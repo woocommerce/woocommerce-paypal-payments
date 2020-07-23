@@ -13,13 +13,16 @@ class DisableGateways
 
     private $sessionHandler;
     private $settings;
+    private $subscriptionDisable;
     public function __construct(
         SessionHandler $sessionHandler,
-        ContainerInterface $settings
+        ContainerInterface $settings,
+        bool $subscriptionDisable
     ) {
 
         $this->sessionHandler = $sessionHandler;
         $this->settings = $settings;
+        $this->subscriptionDisable = $subscriptionDisable;
     }
 
     public function handler(array $methods): array
@@ -34,6 +37,12 @@ class DisableGateways
             unset($methods[WcGateway::ID]);
             return $methods;
         }
+
+        if ($this->subscriptionDisable) {
+            unset($methods[WcGateway::ID]);
+            return $methods;
+        }
+
         if (! $this->needsToDisableGateways()) {
             return $methods;
         }
