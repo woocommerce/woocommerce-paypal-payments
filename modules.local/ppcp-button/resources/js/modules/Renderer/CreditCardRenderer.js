@@ -21,8 +21,13 @@ class CreditCardRenderer {
             wrapperElement.parentNode.removeChild(wrapperElement);
             return;
         }
-
-        //ToDo: Styles
+        if (
+            this.defaultConfig.enforce_vault
+            && document.querySelector(wrapper + ' .ppcp-credit-card-vault')
+        ) {
+            document.querySelector(wrapper + ' .ppcp-credit-card-vault').checked = true;
+            document.querySelector(wrapper + ' .ppcp-credit-card-vault').setAttribute('disabled', true);
+        }
         paypal.HostedFields.render({
             createOrder: contextConfig.createOrder,
             fields: {
@@ -52,8 +57,9 @@ class CreditCardRenderer {
 
                 if (formValid) {
 
-                    const vault = document.querySelector(wrapper + ' .ppcp-credit-card-vault') ?
+                    let vault = document.querySelector(wrapper + ' .ppcp-credit-card-vault') ?
                         document.querySelector(wrapper + ' .ppcp-credit-card-vault').checked : false;
+                    vault = this.defaultConfig.enforce_vault || vault;
 
                     hostedFields.submit({
                         contingencies: ['3D_SECURE'],

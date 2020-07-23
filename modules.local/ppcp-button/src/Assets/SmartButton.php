@@ -330,6 +330,7 @@ class SmartButton implements SmartButtonInterface
                     'nonce' => wp_create_nonce(ApproveOrderEndpoint::nonce()),
                 ],
             ],
+            'enforce_vault' => $this->hasSubscription(),
             'bn_codes' => $this->bnCodes(),
             'payer' => $this->payerData(),
             'button' => [
