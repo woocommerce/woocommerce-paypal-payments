@@ -17,7 +17,10 @@ class CheckoutOrderCompleted implements RequestHandler
 
     public function eventTypes(): array
     {
-        return ['CHECKOUT.ORDER.COMPLETED'];
+        return [
+            'CHECKOUT.ORDER.COMPLETED',
+            'CHECKOUT.ORDER.APPROVED',
+        ];
     }
 
     public function responsibleForRequest(\WP_REST_Request $request): bool
