@@ -76,8 +76,9 @@ class SettingsRenderer
             }
             $value = $this->settings->has($field) ? $this->settings->get($field) : null;
             $id = 'ppcp[' . $field . ']';
+
             ?>
-        <tr valign="top">
+        <tr valign="top" id="<?php echo esc_attr('field-' . $field); ?>">
             <th>
                 <label
                     for="<?php echo esc_attr($id); ?>"

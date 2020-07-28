@@ -1,0 +1,21 @@
+.optional {
+    display: none;
+}
+
+#field-client_secret,
+#field-client_id {
+    display: none;
+}
+
+#field-toggle_manual_input button {
+    color: #0073aa;
+    transition-property: border, background, color;
+    transition-duration: .05s;
+    transition-timing-function: ease-in-out;
+    background: none;
+    border: none;
+    text-decoration: underline;
+    cursor: pointer;
+    margin: 0;
+    padding: 0;
+}

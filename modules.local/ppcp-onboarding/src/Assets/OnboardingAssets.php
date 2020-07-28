@@ -28,7 +28,17 @@ class OnboardingAssets
     public function register(): bool
     {
 
-        if (!$this->shouldRender()) {
+        $url = $this->moduleUrl . '/assets/css/onboarding.css';
+        wp_register_style(
+            'ppcp-onboarding',
+            $url
+        );
+        $url = $this->moduleUrl . '/assets/js/settings.js';
+        wp_register_script(
+            'ppcp-settings',
+            $url
+        );
+        if (!$this->shouldRenderOnboardingScript()) {
             return false;
         }
 
@@ -53,12 +63,15 @@ class OnboardingAssets
             ]
         );
 
+
         return true;
     }
 
     public function enqueue(): bool
     {
-        if (! $this->shouldRender()) {
+        wp_enqueue_style('ppcp-onboarding');
+        wp_enqueue_script('ppcp-settings');
+        if (! $this->shouldRenderOnboardingScript()) {
             return false;
         }
 
@@ -66,7 +79,7 @@ class OnboardingAssets
         return true;
     }
 
-    private function shouldRender(): bool
+    private function shouldRenderOnboardingScript(): bool
     {
         // phpcs:disable Inpsyde.CodeQuality.VariablesName.SnakeCaseVar
         global $current_section;
