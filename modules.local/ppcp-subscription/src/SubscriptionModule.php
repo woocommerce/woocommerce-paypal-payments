@@ -28,7 +28,7 @@ class SubscriptionModule implements ModuleInterface
     {
         add_action(
             'woocommerce_scheduled_subscription_payment_' . WcGateway::ID,
-            function($amount, $order) use ($container) {
+            static function ($amount, $order) use ($container) {
                 if (! is_a($order, \WC_Order::class)) {
                     return;
                 }
@@ -39,19 +39,5 @@ class SubscriptionModule implements ModuleInterface
             2
         );
 
-        add_action(
-            'init',
-            function () {
-                if (! isset($_GET['doit'])) {
-                    return;
-                }
-                $order = wc_get_order(202);
-                do_action(
-                    'woocommerce_scheduled_subscription_payment_' . WcGateway::ID,
-                    0,
-                    $order
-                );
-            }
-        );
     }
 }
