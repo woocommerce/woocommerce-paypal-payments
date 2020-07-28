@@ -35,6 +35,10 @@ return [
         $settings = $container->get('wcgateway.settings');
         return $settings->has('client_secret') ? (string) $settings->get('client_secret') : '';
     },
+    'api.prefix' => static function (ContainerInterface $container): string {
+        $settings = $container->get('wcgateway.settings');
+        return $settings->has('prefix') ? (string) $settings->get('prefix') : 'WC-';
+    },
     'api.endpoint.order' => static function (ContainerInterface $container): OrderEndpoint {
         $orderFactory = $container->get('api.factory.order');
         $patchCollectionFactory = $container->get('api.factory.patch-collection-factory');

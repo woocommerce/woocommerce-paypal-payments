@@ -529,6 +529,19 @@ return [
                 ],
                 'requirements' => [],
             ],
+            'prefix' => [
+                'title' => __('Installation prefix', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'text',
+                'desc_tip' => true,
+                'description' => __('If you use your PayPal account with more than one installation, please use a distinct prefix to seperate those installations. Please do not use numbers in your prefix.', 'woocommerce-paypal-commerce-gateway'),
+                'default' => 'WC-',
+                'screens' => [
+                    State::STATE_START,
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+            ],
         ];
     },
 ];

@@ -10,11 +10,12 @@ use Psr\Log\LoggerInterface;
 class PaymentCaptureCompleted implements RequestHandler
 {
 
+    use PrefixTrait;
     private $logger;
-
-    public function __construct(LoggerInterface $logger)
+    public function __construct(LoggerInterface $logger, string $prefix)
     {
         $this->logger = $logger;
+        $this->prefix = $prefix;
     }
 
     public function eventTypes(): array
@@ -31,7 +32,23 @@ class PaymentCaptureCompleted implements RequestHandler
     public function handleRequest(\WP_REST_Request $request): \WP_REST_Response
     {
         $response = ['success' => false];
-        $orderId = (int) $request['resource']['custom_id'];
+        $orderId = isset($request['resource']['custom_id']) ? $this->sanitizeCustomId($request['resource']['custom_id']) : 0;
+        if (! $orderId) {
+            $message = sprintf(
+                // translators: %s is the PayPal webhook Id.
+                __('No order for webhook event %s was found.', 'woocommerce-paypal-commerce-gateway'),
+                isset($request['id']) ? $request['id'] : ''
+            );
+            $this->logger->log(
+                'warning',
+                $message,
+                [
+                    'request' => $request,
+                ]
+            );
+            $response['message'] = $message;
+            return rest_ensure_response($response);
+        }
         $wcOrder = wc_get_order($orderId);
 
         if (! is_a($wcOrder, \WC_Order::class)) {

@@ -86,6 +86,12 @@ class SettingsListener
                 case 'text':
                     $settings[$key] = isset($rawData[$key]) ? sanitize_text_field($rawData[$key]) : '';
                     break;
+                case 'password':
+                    if (empty($rawData[$key])) {
+                        break;
+                    }
+                    $settings[$key] = sanitize_text_field($rawData[$key]);
+                    break;
                 case 'ppcp-multiselect':
                     $values = isset($rawData[$key]) ? (array) $rawData[$key] : [];
                     $valuesToSave = [];

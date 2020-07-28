@@ -39,11 +39,12 @@ return [
     },
     'webhook.endpoint.handler' => function(ContainerInterface $container) : array {
         $logger = $container->get('woocommerce.logger.woocommerce');
+        $prefix = $container->get('api.prefix');
         return [
-            new CheckoutOrderCompleted($logger),
-            new PaymentCaptureRefunded($logger),
-            new PaymentCaptureReversed($logger),
-            new PaymentCaptureCompleted($logger),
+            new CheckoutOrderCompleted($logger, $prefix),
+            new PaymentCaptureRefunded($logger, $prefix),
+            new PaymentCaptureReversed($logger, $prefix),
+            new PaymentCaptureCompleted($logger, $prefix),
         ];
     }
 ];

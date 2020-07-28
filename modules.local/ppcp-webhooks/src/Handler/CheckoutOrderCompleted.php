@@ -9,10 +9,12 @@ use Psr\Log\LoggerInterface;
 class CheckoutOrderCompleted implements RequestHandler
 {
 
+    use PrefixTrait;
     private $logger;
-    public function __construct(LoggerInterface $logger)
+    public function __construct(LoggerInterface $logger, string $prefix)
     {
         $this->logger = $logger;
+        $this->prefix = $prefix;
     }
 
     public function eventTypes(): array
@@ -32,7 +34,7 @@ class CheckoutOrderCompleted implements RequestHandler
     public function handleRequest(\WP_REST_Request $request): \WP_REST_Response
     {
         $response = ['success' => false];
-        $orderIds = array_filter(
+        $customIds = array_filter(
             array_map(
                 static function (array $purchaseUnit): string {
                     return isset($purchaseUnit['custom_id']) ? (string) $purchaseUnit['custom_id'] : '';
@@ -45,7 +47,7 @@ class CheckoutOrderCompleted implements RequestHandler
             }
         );
 
-        if (empty($orderIds)) {
+        if (empty($customIds)) {
             $message = sprintf(
                 // translators: %s is the PayPal webhook Id.
                 __('No order for webhook event %s was found.', 'woocommerce-paypal-commerce-gateway'),
@@ -62,6 +64,13 @@ class CheckoutOrderCompleted implements RequestHandler
             return rest_ensure_response($response);
         }
 
+        $orderIds = array_map(
+            [
+                $this,
+                'sanitizeCustomId',
+            ],
+            $customIds
+        );
         $args = [
             'post__in' => $orderIds,
             'limit' => -1,
