@@ -14,6 +14,7 @@ use Inpsyde\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\RequestData;
 use Inpsyde\PayPalCommerce\Session\SessionHandler;
+use Inpsyde\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
 
 class SmartButton implements SmartButtonInterface
@@ -27,6 +28,7 @@ class SmartButton implements SmartButtonInterface
     private $clientId;
     private $requestData;
     private $dccApplies;
+    private $subscriptionHelper;
 
     public function __construct(
         string $moduleUrl,
@@ -37,7 +39,8 @@ class SmartButton implements SmartButtonInterface
         PayerFactory $payerFactory,
         string $clientId,
         RequestData $requestData,
-        DccApplies $dccApplies
+        DccApplies $dccApplies,
+        SubscriptionHelper $subscriptionHelper
     ) {
 
         $this->moduleUrl = $moduleUrl;
@@ -49,6 +52,7 @@ class SmartButton implements SmartButtonInterface
         $this->clientId = $clientId;
         $this->requestData = $requestData;
         $this->dccApplies = $dccApplies;
+        $this->subscriptionHelper = $subscriptionHelper;
     }
 
     // phpcs:disable Inpsyde.CodeQuality.FunctionLength.TooLong
@@ -284,29 +288,15 @@ class SmartButton implements SmartButtonInterface
         return is_user_logged_in();
     }
 
-    public function hasSubscription(): bool
+    private function hasSubscription(): bool
     {
-
-        if (is_product()) {
-            $product = wc_get_product();
-            return is_a($product, \WC_Product::class) && $product->is_type('subscription');
-        }
-
-        $cart = WC()->cart;
-        if (! $cart || $cart->is_empty()) {
+        if (! $this->subscriptionHelper->acceptOnlyAutomaticPaymentGateways()) {
             return false;
         }
-
-        foreach ($cart->get_cart() as $item) {
-            if (! isset($item['data']) || ! is_a($item['data'], \WC_Product::class)) {
-                continue;
-            }
-            if ($item['data']->is_type('subscription')) {
-                return true;
-            }
+        if (is_product()) {
+            return $this->subscriptionHelper->currentProductIsSubscription();
         }
-
-        return false;
+        return $this->subscriptionHelper->cartContainsSubscription();
     }
 
     //phpcs:disable Inpsyde.CodeQuality.FunctionLength.TooLong

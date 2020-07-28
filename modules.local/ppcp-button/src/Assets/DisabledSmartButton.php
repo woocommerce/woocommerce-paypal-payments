@@ -20,7 +20,4 @@ class DisabledSmartButton implements SmartButtonInterface
     public function canSaveVaultToken(): bool {
         return false;
     }
-    public function hasSubscription(): bool {
-        return false;
-    }
 }

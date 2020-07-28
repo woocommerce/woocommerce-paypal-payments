@@ -13,16 +13,13 @@ class DisableGateways
 
     private $sessionHandler;
     private $settings;
-    private $subscriptionDisable;
     public function __construct(
         SessionHandler $sessionHandler,
-        ContainerInterface $settings,
-        bool $subscriptionDisable
+        ContainerInterface $settings
     ) {
 
         $this->sessionHandler = $sessionHandler;
         $this->settings = $settings;
-        $this->subscriptionDisable = $subscriptionDisable;
     }
 
     public function handler(array $methods): array
@@ -34,11 +31,6 @@ class DisableGateways
             ! $this->settings->has('merchant_email')
             || ! is_email($this->settings->get('merchant_email'))
         ) {
-            unset($methods[WcGateway::ID]);
-            return $methods;
-        }
-
-        if ($this->subscriptionDisable) {
             unset($methods[WcGateway::ID]);
             return $methods;
         }

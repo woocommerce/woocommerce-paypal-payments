@@ -41,8 +41,7 @@ class WcGateway extends \WC_Payment_Gateway
         OrderProcessor $orderProcessor,
         AuthorizedPaymentsProcessor $authorizedPayments,
         AuthorizeOrderActionNotice $notice,
-        ContainerInterface $config,
-        bool $supportsSubscription
+        ContainerInterface $config
     ) {
 
         $this->id = self::ID;
@@ -51,8 +50,8 @@ class WcGateway extends \WC_Payment_Gateway
         $this->notice = $notice;
         $this->settingsRenderer = $settingsRenderer;
         $this->config = $config;
-        if ($supportsSubscription) {
-            $this->supports = array('subscriptions', 'products');
+        if ($this->config->has('vault_enabled') && $this->config->get('vault_enabled')) {
+            $this->supports = array('subscriptions', 'products', 'subscription_date_changes');
         }
 
         $this->method_title = __('PayPal Payments', 'woocommerce-paypal-commerce-gateway');

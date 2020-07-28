@@ -45,7 +45,8 @@
             "Inpsyde\\PayPalCommerce\\WcGateway\\": "modules.local/ppcp-wc-gateway/src/",
             "Inpsyde\\PayPalCommerce\\Onboarding\\": "modules.local/ppcp-onboarding/src/",
             "Inpsyde\\Woocommerce\\Logging\\": "modules.local/woocommerce-logging/src/",
-            "Inpsyde\\PayPalCommerce\\Webhooks\\": "modules.local/ppcp-webhooks/src/"
+            "Inpsyde\\PayPalCommerce\\Webhooks\\": "modules.local/ppcp-webhooks/src/",
+            "Inpsyde\\PayPalCommerce\\Subscription\\": "modules.local/ppcp-subscription/src/"
         }
     },
     "autoload-dev": {

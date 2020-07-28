@@ -28,23 +28,18 @@ return [
         $notice = $container->get('wcgateway.notice.authorize-order-action');
         $settings = $container->get('wcgateway.settings');
 
-        $smartButton = $container->get('button.smart-button');
-        $supportsSubscription = $smartButton->canSaveVaultToken();
         return new WcGateway(
             $settingsRenderer,
             $orderProcessor,
             $authorizedPayments,
             $notice,
-            $settings,
-            $supportsSubscription
+            $settings
         );
     },
     'wcgateway.disabler' => static function (ContainerInterface $container): DisableGateways {
         $sessionHandler = $container->get('session.handler');
         $settings = $container->get('wcgateway.settings');
-        $smartButton = $container->get('button.smart-button');
-        $subscriptionDisable = ! $smartButton->canSaveVaultToken() && $smartButton->hasSubscription();
-        return new DisableGateways($sessionHandler, $settings, $subscriptionDisable);
+        return new DisableGateways($sessionHandler, $settings);
     },
     'wcgateway.settings' => static function (ContainerInterface $container): Settings {
         return new Settings();
@@ -485,6 +480,34 @@ return [
             'logging_enabled' => [
                 'title' => __('Logging', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'checkbox',
+                'desc_tip' => true,
+                'label' => __('Enable logging', 'woocommerce-paypal-commerce-gateway'),
+                'description' => __('Enable logging of unexpected behavior. This can also log private data and should only be enabled in a development or stage environment.', 'woocommerce-paypal-commerce-gateway'),
+                'default' => false,
+                'screens' => [
+                    State::STATE_START,
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+            ],
+            'client_id' => [
+                'title' => __('Client Id', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'text',
+                'desc_tip' => true,
+                'label' => __('Enable logging', 'woocommerce-paypal-commerce-gateway'),
+                'description' => __('Enable logging of unexpected behavior. This can also log private data and should only be enabled in a development or stage environment.', 'woocommerce-paypal-commerce-gateway'),
+                'default' => false,
+                'screens' => [
+                    State::STATE_START,
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+            ],
+            'client_secret' => [
+                'title' => __('Secret Id', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'text',
                 'desc_tip' => true,
                 'label' => __('Enable logging', 'woocommerce-paypal-commerce-gateway'),
                 'description' => __('Enable logging of unexpected behavior. This can also log private data and should only be enabled in a development or stage environment.', 'woocommerce-paypal-commerce-gateway'),

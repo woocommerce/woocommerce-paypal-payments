@@ -12,5 +12,4 @@ interface SmartButtonInterface
 
     public function canSaveVaultToken(): bool;
 
-    public function hasSubscription(): bool;
 }
