@@ -131,15 +131,12 @@ class RenewalHandler
     private function captureOrder(Order $order, \WC_Order $wcOrder)
     {
 
-        if ($order->intent() === 'CAPTURE') {
-            $order = $this->orderEndpoint->capture($order);
-            if ($order->status()->is(OrderStatus::COMPLETED)) {
-                $wcOrder->update_status(
-                    'processing',
-                    __('Payment received.', 'woocommerce-paypal-commerce-gateway')
-                );
-                \WC_Subscriptions_Manager::process_subscription_payments_on_order($wcOrder);
-            }
+        if ($order->intent() === 'CAPTURE' && $order->status()->is(OrderStatus::COMPLETED)) {
+            $wcOrder->update_status(
+                'processing',
+                __('Payment received.', 'woocommerce-paypal-commerce-gateway')
+            );
+            \WC_Subscriptions_Manager::process_subscription_payments_on_order($wcOrder);
         }
 
         if ($order->intent() === 'AUTHORIZE') {
