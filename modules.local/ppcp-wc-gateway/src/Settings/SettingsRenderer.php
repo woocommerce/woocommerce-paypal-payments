@@ -81,6 +81,29 @@ class SettingsRenderer
 
         return $html;
     }
+
+    public function renderTextInput($field, $key, $config, $value): string
+    {
+
+        if ($config['type'] !== 'ppcp-text-input') {
+            return $field;
+        }
+
+        $html = sprintf(
+            '<input
+                        type="text"
+                        autocomplete="off"
+                        class="%s"
+                        name="%s"
+                        value="%s"
+                     >',
+            esc_attr(implode(' ', $config['class'])),
+            esc_attr($key),
+            esc_attr($value)
+        );
+
+        return $html;
+    }
     //phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration.NoArgumentType
 
     public function render()

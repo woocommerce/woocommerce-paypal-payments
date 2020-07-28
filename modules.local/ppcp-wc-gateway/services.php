@@ -193,7 +193,7 @@ return [
             ],
             'client_id' => [
                 'title' => __('Client Id', 'woocommerce-paypal-commerce-gateway'),
-                'type' => 'text',
+                'type' => 'ppcp-text-input',
                 'desc_tip' => true,
                 'description' => __('The client id of your api ', 'woocommerce-paypal-commerce-gateway'),
                 'default' => false,
