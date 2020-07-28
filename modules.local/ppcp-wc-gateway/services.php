@@ -490,7 +490,7 @@ return [
                 ],
             ],
             'disable_cards' => [
-                'title' => __('Disable specific credid cards', 'woocommerce-paypal-commerce-gateway'),
+                'title' => __('Disable specific credit cards', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'ppcp-multiselect',
                 'class' => ['wc-enhanced-select'],
                 'default' => [],
