@@ -51,9 +51,32 @@ class SettingsRenderer
                          class="%s"
                          name="%s"
                      >%s</select>',
-            implode(' ', $config['class']),
-            $key . '[]',
+            esc_attr(implode(' ', $config['class'])),
+            esc_attr($key) . '[]',
             implode('', $options)
+        );
+
+        return $html;
+    }
+
+    public function renderPassword($field, $key, $config, $value): string
+    {
+
+        if ($config['type'] !== 'ppcp-password') {
+            return $field;
+        }
+
+        $html = sprintf(
+            '<input
+                        type="password"
+                        autocomplete="new-password"
+                        class="%s"
+                        name="%s"
+                        value="%s"
+                     >',
+            esc_attr(implode(' ', $config['class'])),
+            esc_attr($key),
+            esc_attr($value)
         );
 
         return $html;

@@ -206,7 +206,7 @@ return [
             ],
             'client_secret' => [
                 'title' => __('Secret Key', 'woocommerce-paypal-commerce-gateway'),
-                'type' => 'password',
+                'type' => 'ppcp-password',
                 'desc_tip' => true,
                 'description' => __('The secret key of your api', 'woocommerce-paypal-commerce-gateway'),
                 'default' => false,
