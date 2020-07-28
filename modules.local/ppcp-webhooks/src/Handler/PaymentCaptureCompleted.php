@@ -9,8 +9,8 @@ use Psr\Log\LoggerInterface;
 
 class PaymentCaptureCompleted implements RequestHandler
 {
-
     use PrefixTrait;
+
     private $logger;
     public function __construct(LoggerInterface $logger, string $prefix)
     {
@@ -32,7 +32,8 @@ class PaymentCaptureCompleted implements RequestHandler
     public function handleRequest(\WP_REST_Request $request): \WP_REST_Response
     {
         $response = ['success' => false];
-        $orderId = isset($request['resource']['custom_id']) ? $this->sanitizeCustomId($request['resource']['custom_id']) : 0;
+        $orderId = isset($request['resource']['custom_id']) ?
+            $this->sanitizeCustomId($request['resource']['custom_id']) : 0;
         if (! $orderId) {
             $message = sprintf(
                 // translators: %s is the PayPal webhook Id.

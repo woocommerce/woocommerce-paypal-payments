@@ -31,12 +31,17 @@ class OnboardingAssets
         $url = $this->moduleUrl . '/assets/css/onboarding.css';
         wp_register_style(
             'ppcp-onboarding',
-            $url
+            $url,
+            [],
+            1
         );
         $url = $this->moduleUrl . '/assets/js/settings.js';
         wp_register_script(
             'ppcp-settings',
-            $url
+            $url,
+            [],
+            1,
+            true
         );
         if (!$this->shouldRenderOnboardingScript()) {
             return false;
@@ -62,7 +67,6 @@ class OnboardingAssets
                 ),
             ]
         );
-
 
         return true;
     }

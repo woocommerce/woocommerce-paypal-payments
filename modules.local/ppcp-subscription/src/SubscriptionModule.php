@@ -38,6 +38,5 @@ class SubscriptionModule implements ModuleInterface
             10,
             2
         );
-
     }
 }

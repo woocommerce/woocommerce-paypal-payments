@@ -8,8 +8,8 @@ use Psr\Log\LoggerInterface;
 
 class CheckoutOrderCompleted implements RequestHandler
 {
-
     use PrefixTrait;
+
     private $logger;
     public function __construct(LoggerInterface $logger, string $prefix)
     {

@@ -1,8 +1,8 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\Subscription\Repository;
-
 
 use Inpsyde\PayPalCommerce\ApiClient\Endpoint\PaymentTokenEndpoint;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\PaymentToken;
@@ -18,13 +18,13 @@ class PaymentTokenRepository
     public function __construct(
         PaymentTokenFactory $factory,
         PaymentTokenEndpoint $endpoint
-    )
-    {
+    ) {
+
         $this->factory = $factory;
         $this->endpoint = $endpoint;
     }
 
-    public function forUserId(int $id) : ?PaymentToken
+    public function forUserId(int $id): ?PaymentToken
     {
         try {
             $token = (array) get_user_meta($id, self::USER_META, true);
@@ -39,13 +39,14 @@ class PaymentTokenRepository
         }
     }
 
-    public function deleteToken(int $userId, PaymentToken $token) : bool
+    public function deleteToken(int $userId, PaymentToken $token): bool
     {
         delete_user_meta($userId, self::USER_META);
         return $this->endpoint->deleteToken($token);
     }
 
-    private function fetchForUserId(int $id) : PaymentToken {
+    private function fetchForUserId(int $id): PaymentToken
+    {
 
         $tokens = $this->endpoint->forUser($id);
         $token = current($tokens);

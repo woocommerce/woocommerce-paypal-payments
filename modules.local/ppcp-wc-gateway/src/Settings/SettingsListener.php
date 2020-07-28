@@ -72,6 +72,7 @@ class SettingsListener
     }
 
     //phpcs:disable Inpsyde.CodeQuality.NestingLevel.MaxExceeded
+    //phpcs:disable Generic.Metrics.CyclomaticComplexity.TooHigh
     private function retrieveSettingsFromRawData(array $rawData): array
     {
         $settings = [];
@@ -117,6 +118,7 @@ class SettingsListener
         return $settings;
     }
     //phpcs:enable Inpsyde.CodeQuality.NestingLevel.MaxExceeded
+    //phpcs:enable Generic.Metrics.CyclomaticComplexity.TooHigh
 
     private function isValidUpdateRequest(): bool
     {

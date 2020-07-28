@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\Subscription;
@@ -36,7 +37,9 @@ class RenewalHandler
         $this->payerFactory = $payerFactory;
     }
 
-    public function renew(\WC_Order $wcOrder) {
+    public function renew(\WC_Order $wcOrder)
+    {
+
         $this->logger->log(
             'info',
             sprintf(
@@ -50,16 +53,7 @@ class RenewalHandler
         );
 
         try {
-            $userId = (int)$wcOrder->get_customer_id();
-            $customer = new \WC_Customer($userId);
-            $token = $this->getTokenForCustomer($customer, $wcOrder);
-            if (! $token) {
-                return;
-            }
-            $purchaseUnits = $this->purchaseUnitFactory->fromWcOrder($wcOrder);
-            $payer = $this->payerFactory->fromCustomer($customer);
-            $order = $this->orderEndpoint->createForPurchaseUnits([$purchaseUnits], $payer, $token, (string) $wcOrder->get_id());
-            $this->captureOrder($order, $wcOrder);
+            $this->processOrder($wcOrder);
         } catch (\Exception $error) {
             $this->logger->log(
                 'error',
@@ -92,7 +86,28 @@ class RenewalHandler
         );
     }
 
-    private function getTokenForCustomer(\WC_Customer $customer, \WC_Order $wcOrder) : ?PaymentToken {
+    private function processOrder(\WC_Order $wcOrder)
+    {
+
+        $userId = (int)$wcOrder->get_customer_id();
+        $customer = new \WC_Customer($userId);
+        $token = $this->getTokenForCustomer($customer, $wcOrder);
+        if (! $token) {
+            return;
+        }
+        $purchaseUnits = $this->purchaseUnitFactory->fromWcOrder($wcOrder);
+        $payer = $this->payerFactory->fromCustomer($customer);
+        $order = $this->orderEndpoint->createForPurchaseUnits(
+            [$purchaseUnits],
+            $payer,
+            $token,
+            (string) $wcOrder->get_id()
+        );
+        $this->captureOrder($order, $wcOrder);
+    }
+
+    private function getTokenForCustomer(\WC_Customer $customer, \WC_Order $wcOrder): ?PaymentToken
+    {
 
         $token = $this->repository->forUserId((int) $customer->get_id());
         if (!$token) {
@@ -113,7 +128,8 @@ class RenewalHandler
         return $token;
     }
 
-    private function captureOrder(Order $order, \WC_Order $wcOrder) {
+    private function captureOrder(Order $order, \WC_Order $wcOrder)
+    {
 
         if ($order->intent() === 'CAPTURE') {
             $order = $this->orderEndpoint->capture($order);
@@ -122,14 +138,14 @@ class RenewalHandler
                     'processing',
                     __('Payment received.', 'woocommerce-paypal-commerce-gateway')
                 );
-                \WC_Subscriptions_Manager::process_subscription_payments_on_order( $wcOrder );
+                \WC_Subscriptions_Manager::process_subscription_payments_on_order($wcOrder);
             }
         }
 
         if ($order->intent() === 'AUTHORIZE') {
             $this->orderEndpoint->authorize($order);
             $wcOrder->update_meta_data(WcGateway::CAPTURED_META_KEY, 'false');
-            \WC_Subscriptions_Manager::process_subscription_payments_on_order( $wcOrder );
+            \WC_Subscriptions_Manager::process_subscription_payments_on_order($wcOrder);
         }
     }
 }

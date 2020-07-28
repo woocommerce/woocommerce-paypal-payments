@@ -11,5 +11,4 @@ interface SmartButtonInterface
     public function enqueue(): bool;
 
     public function canSaveVaultToken(): bool;
-
 }

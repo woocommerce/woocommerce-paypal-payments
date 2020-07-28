@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\Subscription\Helper;
@@ -6,7 +7,7 @@ namespace Inpsyde\PayPalCommerce\Subscription\Helper;
 class SubscriptionHelper
 {
 
-    public function currentProductIsSubscription() : bool
+    public function currentProductIsSubscription(): bool
     {
         if (! $this->pluginIsActive()) {
             return false;
@@ -15,7 +16,7 @@ class SubscriptionHelper
         return is_a($product, \WC_Product::class) && $product->is_type('subscription');
     }
 
-    public function cartContainsSubscription() : bool
+    public function cartContainsSubscription(): bool
     {
         if (! $this->pluginIsActive()) {
             return false;
@@ -37,15 +38,24 @@ class SubscriptionHelper
         return false;
     }
 
-    public function acceptOnlyAutomaticPaymentGateways() : bool {
+    public function acceptOnlyAutomaticPaymentGateways(): bool
+    {
+
         if (! $this->pluginIsActive()) {
             return false;
         }
-        $accept_manual_renewals = ( 'no' !== get_option( \WC_Subscriptions_Admin::$option_prefix . '_accept_manual_renewals', 'no' ) ) ? true : false;
-        return ! $accept_manual_renewals;
+        $acceptManualRenewals = ( 'no' !== get_option(
+            //phpcs:disable Inpsyde.CodeQuality.VariablesName.SnakeCaseVar
+            \WC_Subscriptions_Admin::$option_prefix . '_accept_manual_renewals',
+            //phpcs:enable Inpsyde.CodeQuality.VariablesName.SnakeCaseVar
+            'no'
+        ) ) ? true : false;
+        return ! $acceptManualRenewals;
     }
 
-    public function pluginIsActive() {
+    public function pluginIsActive(): bool
+    {
+
         return class_exists(\WC_Subscriptions::class);
     }
 }
