@@ -1,8 +1,14 @@
 class ErrorHandler {
 
-    constructor()
+    constructor(genericErrorText)
     {
+        this.genericErrorText = genericErrorText;
         this.wrapper = document.querySelector('.woocommerce-notices-wrapper');
+    }
+
+    genericError() {
+        this.clear();
+        this.message(this.genericErrorText)
     }
 
     message(text)

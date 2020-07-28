@@ -28,7 +28,7 @@ class CartBootstrap {
     render() {
         const actionHandler = new CartActionHandler(
             PayPalCommerceGateway,
-            new ErrorHandler(),
+            new ErrorHandler(this.gateway.labels.error.generic),
         );
 
         this.renderer.render(

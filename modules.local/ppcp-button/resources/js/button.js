@@ -7,7 +7,7 @@ import ErrorHandler from './modules/ErrorHandler';
 import CreditCardRenderer from "./modules/Renderer/CreditCardRenderer";
 
 const bootstrap = () => {
-    const errorHandler = new ErrorHandler();
+    const errorHandler = new ErrorHandler(PayPalCommerceGateway.labels.error.generic);
     const creditCardRenderer = new CreditCardRenderer(PayPalCommerceGateway, errorHandler);
     const renderer = new Renderer(creditCardRenderer, PayPalCommerceGateway);
     const context = PayPalCommerceGateway.context;

@@ -36,7 +36,7 @@ class CheckoutBootstap {
     render() {
         const actionHandler = new CheckoutActionHandler(
             PayPalCommerceGateway,
-            new ErrorHandler(),
+            new ErrorHandler(this.gateway.labels.error.generic),
         );
 
         this.renderer.render(

@@ -34,7 +34,7 @@ class CheckoutActionHandler {
             createOrder,
             onApprove:onApprove(this, this.errorHandler),
             onError: (error) => {
-                this.errorHandler.message(error);
+                this.errorHandler.genericError();
             }
         }
     }

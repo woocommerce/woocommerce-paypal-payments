@@ -41,7 +41,7 @@ class SingleProductBootstap {
                 this.renderer.hideButtons(this.gateway.hosted_fields.wrapper);
             },
             document.querySelector('form.cart'),
-            new ErrorHandler(),
+            new ErrorHandler(this.gateway.labels.error.generic),
         );
 
         this.renderer.render(

@@ -12,7 +12,7 @@ class MiniCartBootstap {
 
         this.actionHandler = new CartActionHandler(
             PayPalCommerceGateway,
-            new ErrorHandler(),
+            new ErrorHandler(this.gateway.labels.error.generic),
         );
         this.render();
 

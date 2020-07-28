@@ -10,8 +10,10 @@ const onApprove = (context, errorHandler) => {
             return res.json();
         }).then((data)=>{
             if (!data.success) {
-                errorHandler.message(data.data);
-                return actions.restart();
+                errorHandler.genericError();
+                return actions.restart().catch(err => {
+                    errorHandler.genericError();
+                });;
             }
             location.href = context.config.redirect;
         });

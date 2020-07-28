@@ -10,7 +10,7 @@ const onApprove = (context, errorHandler) => {
             return res.json();
         }).then((data)=>{
             if (!data.success) {
-                errorHandler.message(data.data);
+                errorHandler.genericError();
                 if (typeof actions.restart !== 'undefined') {
                     return actions.restart();
                 }
