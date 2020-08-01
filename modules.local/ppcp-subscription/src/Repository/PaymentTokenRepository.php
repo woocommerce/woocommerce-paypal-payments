@@ -28,7 +28,7 @@ class PaymentTokenRepository
     {
         try {
             $token = (array) get_user_meta($id, self::USER_META, true);
-            if (! $token) {
+            if (! $token || ! isset($token['id'])) {
                 return $this->fetchForUserId($id);
             }
 
