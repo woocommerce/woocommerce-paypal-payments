@@ -51,7 +51,19 @@ class WcGateway extends \WC_Payment_Gateway
         $this->settingsRenderer = $settingsRenderer;
         $this->config = $config;
         if ($this->config->has('vault_enabled') && $this->config->get('vault_enabled')) {
-            $this->supports = array('subscriptions', 'products', 'subscription_date_changes');
+            $this->supports = [
+                'products',
+                'subscriptions',
+                'subscription_cancellation',
+                'subscription_suspension',
+                'subscription_reactivation',
+                'subscription_amount_changes',
+                'subscription_date_changes',
+                'subscription_payment_method_change',
+                'subscription_payment_method_change_customer',
+                'subscription_payment_method_change_admin',
+                'multiple_subscriptions',
+            ];
         }
 
         $this->method_title = __('PayPal Payments', 'woocommerce-paypal-commerce-gateway');
