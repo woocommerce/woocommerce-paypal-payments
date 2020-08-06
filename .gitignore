@@ -5,4 +5,5 @@ node_modules
 phpunit.xml
 .phpunit.result.cache
 composer.lock
+yarn-error.log
 modules.local/ppcp-button/assets/*
