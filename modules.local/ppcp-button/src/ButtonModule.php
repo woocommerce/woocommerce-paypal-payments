@@ -65,7 +65,7 @@ class ButtonModule implements ModuleInterface
             static function () use ($container) {
                 $endpoint = $container->get('button.endpoint.approve-order');
                 /**
-                 * @var ChangeCartEndpoint $endpoint
+                 * @var ApproveOrderEndpoint $endpoint
                  */
                 $endpoint->handleRequest();
             }
@@ -76,7 +76,7 @@ class ButtonModule implements ModuleInterface
             static function () use ($container) {
                 $endpoint = $container->get('button.endpoint.create-order');
                 /**
-                 * @var ChangeCartEndpoint $endpoint
+                 * @var CreateOrderEndpoint $endpoint
                  */
                 $endpoint->handleRequest();
             }
