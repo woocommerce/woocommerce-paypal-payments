@@ -18,7 +18,12 @@ class ApplicationContextRepositoryTest extends TestCase
     /**
      * @dataProvider currentContextData
      */
-    public function testCurrentContext(array $container, string $userLocale, array $expected): void
+    public function testCurrentContext(
+        array $container,
+        string $userLocale,
+        string $shippingPreference,
+        array $expected
+    ): void
     {
         $brandName = 'Acme Corp.';
 
@@ -38,7 +43,7 @@ class ApplicationContextRepositoryTest extends TestCase
         /* @var ApplicationContextRepository $testee */
         $testee = $this->buildTestee()[1];
 
-        $context = $testee->currentContext();
+        $context = $testee->currentContext($shippingPreference);
 
         self::assertInstanceOf(
             ApplicationContext::class,
@@ -66,10 +71,12 @@ class ApplicationContextRepositoryTest extends TestCase
                     'landing_page' => ApplicationContext::LANDING_PAGE_BILLING,
                 ],
                 'user_locale' => 'de_DE',
+                'shippingPreference' => ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING,
                 'expected' => [
                     'locale' => 'de-DE',
                     'brandName' => 'Acme corp.',
-                    'landingPage' =>  ApplicationContext::LANDING_PAGE_BILLING,
+                    'landingPage' => ApplicationContext::LANDING_PAGE_BILLING,
+                    'shippingPreference' => ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING,
                 ],
             ],
         ];
