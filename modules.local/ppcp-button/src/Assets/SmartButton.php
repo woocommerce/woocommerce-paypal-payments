@@ -12,6 +12,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Repository\PayeeRepository;
 use Inpsyde\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
+use Inpsyde\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\RequestData;
 use Inpsyde\PayPalCommerce\Session\SessionHandler;
 use Inpsyde\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
@@ -305,6 +306,12 @@ class SmartButton implements SmartButtonInterface
         $this->requestData->enqueueNonceFix();
         $localize = [
             'script_attributes' => $this->attributes(),
+            'data_client_id' => [
+                'set_attribute' => $this->dccIsEnabled() || $this->canSaveVaultToken(),
+                'endpoint' => home_url(\WC_AJAX::get_endpoint(DataClientIdEndpoint::ENDPOINT)),
+                'nonce' => wp_create_nonce(DataClientIdEndpoint::nonce()),
+                'user' => get_current_user_id(),
+            ],
             'redirect' => wc_get_checkout_url(),
             'context' => $this->context(),
             'ajax' => [
@@ -408,22 +415,9 @@ class SmartButton implements SmartButtonInterface
 
     private function attributes(): array
     {
-        $attributes = [
+        return [
             'data-partner-attribution-id' => $this->bnCodeForContext($this->context()),
         ];
-        try {
-            if (!is_user_logged_in()) {
-                return $attributes;
-            }
-            if (! $this->dccIsEnabled() && ! $this->canSaveVaultToken()) {
-                return $attributes;
-            }
-            $clientToken = $this->identityToken->generateForCustomer((int) get_current_user_id());
-            $attributes['data-client-token'] = $clientToken->token();
-            return $attributes;
-        } catch (RuntimeException $exception) {
-            return $attributes;
-        }
     }
 
     /**

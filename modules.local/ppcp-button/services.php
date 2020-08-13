@@ -11,6 +11,7 @@ use Inpsyde\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use Inpsyde\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
+use Inpsyde\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\RequestData;
 use Inpsyde\PayPalCommerce\Button\Exception\RuntimeException;
 use Inpsyde\PayPalCommerce\Button\Helper\ThreeDSecure;
@@ -105,6 +106,14 @@ return [
         $sessionHandler = $container->get('session.handler');
         $threeDSecure = $container->get('button.helper.three-d-secure');
         return new ApproveOrderEndpoint($requestData, $apiClient, $sessionHandler, $threeDSecure);
+    },
+    'button.endpoint.data-client-id' => static function(ContainerInterface $container) : DataClientIdEndpoint {
+        $requestData = $container->get('button.request-data');
+        $tokenEndpoint = $container->get('api.endpoint.identity-token');
+        return new DataClientIdEndpoint(
+            $requestData,
+            $tokenEndpoint
+        );
     },
     'button.helper.three-d-secure' => static function (ContainerInterface $container): ThreeDSecure {
         return new ThreeDSecure();

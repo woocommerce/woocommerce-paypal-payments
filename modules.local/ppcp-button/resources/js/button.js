@@ -5,6 +5,7 @@ import CheckoutBootstap from './modules/ContextBootstrap/CheckoutBootstap';
 import Renderer from './modules/Renderer/Renderer';
 import ErrorHandler from './modules/ErrorHandler';
 import CreditCardRenderer from "./modules/Renderer/CreditCardRenderer";
+import dataClientIdAttributeHandler from "./modules/DataClientIdAttributeHandler";
 
 const bootstrap = () => {
     const errorHandler = new ErrorHandler(PayPalCommerceGateway.labels.error.generic);
@@ -57,15 +58,20 @@ document.addEventListener(
         }
         const script = document.createElement('script');
 
+        script.addEventListener('load', (event) => {
+            bootstrap();
+        });
         script.setAttribute('src', PayPalCommerceGateway.button.url);
         Object.entries(PayPalCommerceGateway.script_attributes).forEach(
             (keyValue) => {
                 script.setAttribute(keyValue[0], keyValue[1]);
             }
         );
-        script.addEventListener('load', (event) => {
-            bootstrap();
-        });
+
+        if (PayPalCommerceGateway.data_client_id.set_attribute) {
+            dataClientIdAttributeHandler(script, PayPalCommerceGateway.data_client_id);
+            return;
+        }
 
         document.body.append(script);
     },
