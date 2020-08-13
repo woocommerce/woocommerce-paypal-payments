@@ -10,7 +10,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
 class DataClientIdEndpoint implements EndpointInterface
 {
 
-    public const ENDPOINT = 'data-client-id';
+    public const ENDPOINT = 'ppc-data-client-id';
 
     private $requestData;
     private $identityToken;
