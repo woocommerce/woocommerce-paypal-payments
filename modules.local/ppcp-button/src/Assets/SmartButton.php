@@ -501,7 +501,8 @@ class SmartButton implements SmartButtonInterface
         return false;
     }
 
-    private function styleForContext(string $style, string $context) : string {
+    private function styleForContext(string $style, string $context): string
+    {
         $defaults = [
             'layout' => 'vertical',
             'size' => 'responsive',
@@ -510,9 +511,12 @@ class SmartButton implements SmartButtonInterface
             'label' => 'paypal',
         ];
 
-        $value = isset($defaults[$style]) ? $defaults[$style] : '';
-        $value = $this->settings->has('button_' . $style) ? $this->settings->get('button_' . $style) : $value;
-        $value = $this->settings->has('button_' . $context . '_' . $style) ? $this->settings->get('button_' . $context . '_' . $style) : $value;
+        $value = isset($defaults[$style]) ?
+            $defaults[$style] : '';
+        $value = $this->settings->has('button_' . $style) ?
+            $this->settings->get('button_' . $style) : $value;
+        $value = $this->settings->has('button_' . $context . '_' . $style) ?
+            $this->settings->get('button_' . $context . '_' . $style) : $value;
         return $value;
     }
 }

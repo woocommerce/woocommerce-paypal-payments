@@ -122,6 +122,7 @@ class SettingsRenderer
     }
     //phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration.NoArgumentType
 
+    //phpcs:disable Inpsyde.CodeQuality.NestingLevel.High
     public function render()
     {
 
@@ -163,6 +164,7 @@ class SettingsRenderer
         </tr>
         <?php endforeach;
     }
+    //phpcs:enable Inpsyde.CodeQuality.NestingLevel.High
 
     private function renderText(array $config)
     {
