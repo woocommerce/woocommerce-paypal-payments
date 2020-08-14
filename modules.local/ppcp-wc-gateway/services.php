@@ -462,10 +462,20 @@ return [
                 'requirements' => [],
             ],
 
+            //Single product page
+            'button_single_product_heading' => [
+                'heading' => __('Single Product page', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'ppcp-heading',
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+            ],
             'button_single_product_enabled' => [
                 'title' => __('Enable buttons on Single Product', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'checkbox',
-                'label' => __('enable on Single Product', 'woocommerce-paypal-commerce-gateway'),
+                'label' => __('Enable on Single Product', 'woocommerce-paypal-commerce-gateway'),
                 'default' => true,
                 'screens' => [
                     State::STATE_PROGRESSIVE,
@@ -473,11 +483,245 @@ return [
                 ],
                 'requirements' => [],
             ],
-            'button_mini_cart_enabled' => [
+            'button_single_product_layout' => [
+                'title' => __('Button Layout', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => 'vertical',
+                'desc_tip' => true,
+                'description' => __(
+                    'If additional funding sources are available to the buyer through PayPal, such as Venmo, then multiple buttons are displayed in the space provided. Choose "vertical" for a dynamic list of alternative and local payment options, or "horizontal" when space is limited.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    'vertical' => __('Vertical', 'woocommerce-paypal-commerce-gateway'),
+                    'horizontal' => __('Horizontal', 'woocommerce-paypal-commerce-gateway'),
+                ],
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+            ],
+            'button_single_product_size' => [
+                'title' => __('Button Size', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => 'responsive',
+                'desc_tip' => true,
+                'description' => __(
+                    'PayPal offers different sizes of the "PayPal Checkout" buttons, allowing you to select a size that best fits your site\'s theme. This setting will allow you to choose which size button(s) appear on your page. (The "Responsive" option adjusts to container size, and is available and recommended for Smart Payment Buttons.)',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    'small' => __('Small', 'woocommerce-paypal-commerce-gateway'),
+                    'medium' => __('Medium', 'woocommerce-paypal-commerce-gateway'),
+                    'large' => __('Large', 'woocommerce-paypal-commerce-gateway'),
+                    'responsive' => __('Responsive', 'woocommerce-paypal-commerce-gateway'),
+                ],
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+            ],
+            'button_single_product_label' => [
+                'title' => __('Button Label', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => 'paypal',
+                'desc_tip' => true,
+                'description' => __(
+                    'This controls the label on the primary button.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    'paypal' => __('PayPal', 'woocommerce-paypal-commerce-gateway'),
+                    'checkout' => __('PayPal Checkout', 'woocommerce-paypal-commerce-gateway'),
+                    'buynow' => __('PayPal Buy Now', 'woocommerce-paypal-commerce-gateway'),
+                    'pay' => __('Pay with PayPal', 'woocommerce-paypal-commerce-gateway'),
+                ],
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+            ],
+            'button_single_product_color' => [
+                'title' => __('Color', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => 'gold',
+                'desc_tip' => true,
+                'description' => __(
+                    'Controls the background color of the primary button. Use "Gold" to leverage PayPal\'s recognition and preference, or change it to match your site design or aesthetic.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    'gold' => __('Gold (Recommended)', 'woocommerce-paypal-commerce-gateway'),
+                    'blue' => __('Blue', 'woocommerce-paypal-commerce-gateway'),
+                    'silver' => __('Silver', 'woocommerce-paypal-commerce-gateway'),
+                    'black' => __('Black', 'woocommerce-paypal-commerce-gateway'),
+                ],
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+            ],
+            'button_single_product_shape' => [
+                'title' => __('Shape', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => 'rect',
+                'desc_tip' => true,
+                'description' => __(
+                    'The pill-shaped button\'s unique and powerful shape signifies PayPal in people\'s minds. Use the rectangular button as an alternative when pill-shaped buttons might pose design challenges.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    'pill' => __('Pill', 'woocommerce-paypal-commerce-gateway'),
+                    'rect' => __('Rectangle', 'woocommerce-paypal-commerce-gateway'),
+                ],
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+            ],
+
+            //Mini cart settings
+            'button_mini-cart_heading' => [
+                'heading' => __('Mini Cart', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'ppcp-heading',
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+            ],
+            'button_mini-cart_enabled' => [
                 'title' => __('Buttons on Mini Cart', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'checkbox',
                 'label' => __('Enable on Mini Cart', 'woocommerce-paypal-commerce-gateway'),
                 'default' => true,
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+            ],
+            'button_mini-cart_layout' => [
+                'title' => __('Button Layout', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => 'vertical',
+                'desc_tip' => true,
+                'description' => __(
+                    'If additional funding sources are available to the buyer through PayPal, such as Venmo, then multiple buttons are displayed in the space provided. Choose "vertical" for a dynamic list of alternative and local payment options, or "horizontal" when space is limited.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    'vertical' => __('Vertical', 'woocommerce-paypal-commerce-gateway'),
+                    'horizontal' => __('Horizontal', 'woocommerce-paypal-commerce-gateway'),
+                ],
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+            ],
+            'button_mini-cart_size' => [
+                'title' => __('Button Size', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => 'responsive',
+                'desc_tip' => true,
+                'description' => __(
+                    'PayPal offers different sizes of the "PayPal Checkout" buttons, allowing you to select a size that best fits your site\'s theme. This setting will allow you to choose which size button(s) appear on your page. (The "Responsive" option adjusts to container size, and is available and recommended for Smart Payment Buttons.)',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    'small' => __('Small', 'woocommerce-paypal-commerce-gateway'),
+                    'medium' => __('Medium', 'woocommerce-paypal-commerce-gateway'),
+                    'large' => __('Large', 'woocommerce-paypal-commerce-gateway'),
+                    'responsive' => __('Responsive', 'woocommerce-paypal-commerce-gateway'),
+                ],
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+            ],
+            'button_mini-cart_label' => [
+                'title' => __('Button Label', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => 'paypal',
+                'desc_tip' => true,
+                'description' => __(
+                    'This controls the label on the primary button.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    'paypal' => __('PayPal', 'woocommerce-paypal-commerce-gateway'),
+                    'checkout' => __('PayPal Checkout', 'woocommerce-paypal-commerce-gateway'),
+                    'buynow' => __('PayPal Buy Now', 'woocommerce-paypal-commerce-gateway'),
+                    'pay' => __('Pay with PayPal', 'woocommerce-paypal-commerce-gateway'),
+                ],
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+            ],
+            'button_mini-cart_color' => [
+                'title' => __('Color', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => 'gold',
+                'desc_tip' => true,
+                'description' => __(
+                    'Controls the background color of the primary button. Use "Gold" to leverage PayPal\'s recognition and preference, or change it to match your site design or aesthetic.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    'gold' => __('Gold (Recommended)', 'woocommerce-paypal-commerce-gateway'),
+                    'blue' => __('Blue', 'woocommerce-paypal-commerce-gateway'),
+                    'silver' => __('Silver', 'woocommerce-paypal-commerce-gateway'),
+                    'black' => __('Black', 'woocommerce-paypal-commerce-gateway'),
+                ],
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+            ],
+            'button_mini-cart_shape' => [
+                'title' => __('Shape', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => 'rect',
+                'desc_tip' => true,
+                'description' => __(
+                    'The pill-shaped button\'s unique and powerful shape signifies PayPal in people\'s minds. Use the rectangular button as an alternative when pill-shaped buttons might pose design challenges.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    'pill' => __('Pill', 'woocommerce-paypal-commerce-gateway'),
+                    'rect' => __('Rectangle', 'woocommerce-paypal-commerce-gateway'),
+                ],
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+            ],
+
+            //Cart settings
+            'button_cart_heading' => [
+                'heading' => __('Cart', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'ppcp-heading',
                 'screens' => [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
@@ -489,6 +733,112 @@ return [
                 'type' => 'checkbox',
                 'label' => __('Enable on Cart', 'woocommerce-paypal-commerce-gateway'),
                 'default' => true,
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+            ],
+            'button_cart_layout' => [
+                'title' => __('Button Layout', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => 'vertical',
+                'desc_tip' => true,
+                'description' => __(
+                    'If additional funding sources are available to the buyer through PayPal, such as Venmo, then multiple buttons are displayed in the space provided. Choose "vertical" for a dynamic list of alternative and local payment options, or "horizontal" when space is limited.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    'vertical' => __('Vertical', 'woocommerce-paypal-commerce-gateway'),
+                    'horizontal' => __('Horizontal', 'woocommerce-paypal-commerce-gateway'),
+                ],
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+            ],
+            'button_cart_size' => [
+                'title' => __('Button Size', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => 'responsive',
+                'desc_tip' => true,
+                'description' => __(
+                    'PayPal offers different sizes of the "PayPal Checkout" buttons, allowing you to select a size that best fits your site\'s theme. This setting will allow you to choose which size button(s) appear on your page. (The "Responsive" option adjusts to container size, and is available and recommended for Smart Payment Buttons.)',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    'small' => __('Small', 'woocommerce-paypal-commerce-gateway'),
+                    'medium' => __('Medium', 'woocommerce-paypal-commerce-gateway'),
+                    'large' => __('Large', 'woocommerce-paypal-commerce-gateway'),
+                    'responsive' => __('Responsive', 'woocommerce-paypal-commerce-gateway'),
+                ],
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+            ],
+            'button_cart_label' => [
+                'title' => __('Button Label', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => 'paypal',
+                'desc_tip' => true,
+                'description' => __(
+                    'This controls the label on the primary button.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    'paypal' => __('PayPal', 'woocommerce-paypal-commerce-gateway'),
+                    'checkout' => __('PayPal Checkout', 'woocommerce-paypal-commerce-gateway'),
+                    'buynow' => __('PayPal Buy Now', 'woocommerce-paypal-commerce-gateway'),
+                    'pay' => __('Pay with PayPal', 'woocommerce-paypal-commerce-gateway'),
+                ],
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+            ],
+            'button_cart_color' => [
+                'title' => __('Color', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => 'gold',
+                'desc_tip' => true,
+                'description' => __(
+                    'Controls the background color of the primary button. Use "Gold" to leverage PayPal\'s recognition and preference, or change it to match your site design or aesthetic.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    'gold' => __('Gold (Recommended)', 'woocommerce-paypal-commerce-gateway'),
+                    'blue' => __('Blue', 'woocommerce-paypal-commerce-gateway'),
+                    'silver' => __('Silver', 'woocommerce-paypal-commerce-gateway'),
+                    'black' => __('Black', 'woocommerce-paypal-commerce-gateway'),
+                ],
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+            ],
+            'button_cart_shape' => [
+                'title' => __('Shape', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => 'rect',
+                'desc_tip' => true,
+                'description' => __(
+                    'The pill-shaped button\'s unique and powerful shape signifies PayPal in people\'s minds. Use the rectangular button as an alternative when pill-shaped buttons might pose design challenges.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    'pill' => __('Pill', 'woocommerce-paypal-commerce-gateway'),
+                    'rect' => __('Rectangle', 'woocommerce-paypal-commerce-gateway'),
+                ],
                 'screens' => [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,

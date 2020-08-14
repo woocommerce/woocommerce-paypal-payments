@@ -77,7 +77,7 @@ class Settings implements ContainerInterface
                 'woocommerce-paypal-commerce-gateway'
             ),
             'button_single_product_enabled' => true,
-            'button_mini_cart_enabled' => true,
+            'button_mini-cart_enabled' => true,
             'button_cart_enabled' => true,
             'dcc_cart_enabled' => true,
             'dcc_mini_cart_enabled' => true,
