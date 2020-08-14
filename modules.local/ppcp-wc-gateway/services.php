@@ -346,8 +346,15 @@ return [
             ],
 
             //General button styles
-
-            // General button styles
+            'button_style_heading' => [
+                'heading' => __('General styles', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'ppcp-heading',
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+            ],
             'button_layout' => [
                 'title' => __('Button Layout', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'select',

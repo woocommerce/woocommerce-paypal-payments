@@ -104,6 +104,22 @@ class SettingsRenderer
 
         return $html;
     }
+
+    public function renderHeading($field, $key, $config, $value): string
+    {
+
+        if ($config['type'] !== 'ppcp-heading') {
+            return $field;
+        }
+
+        $html = sprintf(
+            '<h2 class="%s">%s</h2>',
+            esc_attr(implode(' ', $config['class'])),
+            esc_html($config['heading'])
+        );
+
+        return $html;
+    }
     //phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration.NoArgumentType
 
     public function render()
@@ -122,9 +138,11 @@ class SettingsRenderer
             }
             $value = $this->settings->has($field) ? $this->settings->get($field) : null;
             $id = 'ppcp[' . $field . ']';
+            $colspan = $config['type'] !== 'ppcp-heading' ? 1 : 2;
 
             ?>
         <tr valign="top" id="<?php echo esc_attr('field-' . $field); ?>">
+            <?php if ($config['type'] !== 'ppcp-heading') : ?>
             <th>
                 <label
                     for="<?php echo esc_attr($id); ?>"
@@ -137,7 +155,8 @@ class SettingsRenderer
                     <?php unset($config['description']);
                 endif; ?>
             </th>
-            <td><?php
+            <?php endif; ?>
+            <td colspan="<?php echo (int) $colspan; ?>"><?php
                 $config['type'] === 'ppcp-text' ?
                     $this->renderText($config)
                     : woocommerce_form_field($id, $config, $value); ?></td>
