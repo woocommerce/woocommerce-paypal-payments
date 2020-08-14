@@ -269,61 +269,6 @@ return [
                 ],
                 'requirements' => [],
             ],
-            'button_single_product_enabled' => [
-                'title' => __('Buttons on Single Product', 'woocommerce-paypal-commerce-gateway'),
-                'type' => 'checkbox',
-                'label' => __('Enable on Single Product', 'woocommerce-paypal-commerce-gateway'),
-                'default' => true,
-                'screens' => [
-                    State::STATE_PROGRESSIVE,
-                    State::STATE_ONBOARDED,
-                ],
-                'requirements' => [],
-            ],
-            'button_mini_cart_enabled' => [
-                'title' => __('Buttons on Mini Cart', 'woocommerce-paypal-commerce-gateway'),
-                'type' => 'checkbox',
-                'label' => __('Enable on Mini Cart', 'woocommerce-paypal-commerce-gateway'),
-                'default' => true,
-                'screens' => [
-                    State::STATE_PROGRESSIVE,
-                    State::STATE_ONBOARDED,
-                ],
-                'requirements' => [],
-            ],
-            'button_cart_enabled' => [
-                'title' => __('Buttons on Cart', 'woocommerce-paypal-commerce-gateway'),
-                'type' => 'checkbox',
-                'label' => __('Enable on Cart', 'woocommerce-paypal-commerce-gateway'),
-                'default' => true,
-                'screens' => [
-                    State::STATE_PROGRESSIVE,
-                    State::STATE_ONBOARDED,
-                ],
-                'requirements' => [],
-            ],
-            'button_label' => [
-                'title' => __('Button Label', 'woocommerce-paypal-commerce-gateway'),
-                'type' => 'select',
-                'class' => ['wc-enhanced-select'],
-                'default' => 'paypal',
-                'desc_tip' => true,
-                'description' => __(
-                    'This controls the label on the primary button.',
-                    'woocommerce-paypal-commerce-gateway'
-                ),
-                'options' => [
-                    'paypal' => __('PayPal', 'woocommerce-paypal-commerce-gateway'),
-                    'checkout' => __('PayPal Checkout', 'woocommerce-paypal-commerce-gateway'),
-                    'buynow' => __('PayPal Buy Now', 'woocommerce-paypal-commerce-gateway'),
-                    'pay' => __('Pay with PayPal', 'woocommerce-paypal-commerce-gateway'),
-                ],
-                'screens' => [
-                    State::STATE_PROGRESSIVE,
-                    State::STATE_ONBOARDED,
-                ],
-                'requirements' => [],
-            ],
             'brand_name' => [
                 'title' => __('Brand Name', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'text',
@@ -352,6 +297,114 @@ return [
                 'options' => [
                     ApplicationContext::LANDING_PAGE_LOGIN => __('Login (PayPal account login)', 'woocommerce-paypal-commerce-gateway'),
                     ApplicationContext::LANDING_PAGE_BILLING => __('Billing (Non-PayPal account)', 'woocommerce-paypal-commerce-gateway'),
+                ],
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+            ],
+            'disable_funding' => [
+                'title' => __('Disable funding sources', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'ppcp-multiselect',
+                'class' => ['wc-enhanced-select'],
+                'default' => [],
+                'desc_tip' => true,
+                'description' => __(
+                    'By default all possible funding sources will be shown. You can disable some sources, if you wish.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    'card' => _x('Credit or debit cards', 'Name of payment method', 'woocommerce-paypal-commerce-gateway'),
+                    'credit' => _x('PayPal Credit', 'Name of payment method', 'woocommerce-paypal-commerce-gateway'),
+                    'sepa' => _x('SEPA-Lastschrift', 'Name of payment method', 'woocommerce-paypal-commerce-gateway'),
+                    'bancontact' => _x('Bancontact', 'Name of payment method', 'woocommerce-paypal-commerce-gateway'),
+                    'eps' => _x('eps', 'Name of payment method', 'woocommerce-paypal-commerce-gateway'),
+                    'giropay' => _x('giropay', 'Name of payment method', 'woocommerce-paypal-commerce-gateway'),
+                    'ideal' => _x('iDEAL', 'Name of payment method', 'woocommerce-paypal-commerce-gateway'),
+                    'mybank' => _x('MyBank', 'Name of payment method', 'woocommerce-paypal-commerce-gateway'),
+                    'p24' => _x('Przelewy24', 'Name of payment method', 'woocommerce-paypal-commerce-gateway'),
+                    'sofort' => _x('Sofort', 'Name of payment method', 'woocommerce-paypal-commerce-gateway'),
+                ],
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+            ],
+            'vault_enabled' => [
+                'title' => __('Vaulting', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'checkbox',
+                'desc_tip' => true,
+                'label' => __('Enable vaulting', 'woocommerce-paypal-commerce-gateway'),
+                'description' => __('Enables you to store payment tokens for subscriptions.', 'woocommerce-paypal-commerce-gateway'),
+                'default' => true,
+                'screens' => [
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+            ],
+
+            //General button styles
+
+            // General button styles
+            'button_layout' => [
+                'title' => __('Button Layout', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => 'vertical',
+                'desc_tip' => true,
+                'description' => __(
+                    'If additional funding sources are available to the buyer through PayPal, such as Venmo, then multiple buttons are displayed in the space provided. Choose "vertical" for a dynamic list of alternative and local payment options, or "horizontal" when space is limited.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    'vertical' => __('Vertical', 'woocommerce-paypal-commerce-gateway'),
+                    'horizontal' => __('Horizontal', 'woocommerce-paypal-commerce-gateway'),
+                ],
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+            ],
+            'button_size' => [
+                'title' => __('Button Size', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => 'responsive',
+                'desc_tip' => true,
+                'description' => __(
+                    'PayPal offers different sizes of the "PayPal Checkout" buttons, allowing you to select a size that best fits your site\'s theme. This setting will allow you to choose which size button(s) appear on your page. (The "Responsive" option adjusts to container size, and is available and recommended for Smart Payment Buttons.)',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    'small' => __('Small', 'woocommerce-paypal-commerce-gateway'),
+                    'medium' => __('Medium', 'woocommerce-paypal-commerce-gateway'),
+                    'large' => __('Large', 'woocommerce-paypal-commerce-gateway'),
+                    'responsive' => __('Responsive', 'woocommerce-paypal-commerce-gateway'),
+                ],
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+            ],
+            'button_label' => [
+                'title' => __('Button Label', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => 'paypal',
+                'desc_tip' => true,
+                'description' => __(
+                    'This controls the label on the primary button.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    'paypal' => __('PayPal', 'woocommerce-paypal-commerce-gateway'),
+                    'checkout' => __('PayPal Checkout', 'woocommerce-paypal-commerce-gateway'),
+                    'buynow' => __('PayPal Buy Now', 'woocommerce-paypal-commerce-gateway'),
+                    'pay' => __('Pay with PayPal', 'woocommerce-paypal-commerce-gateway'),
                 ],
                 'screens' => [
                     State::STATE_PROGRESSIVE,
@@ -401,46 +454,41 @@ return [
                 ],
                 'requirements' => [],
             ],
-            'disable_funding' => [
-                'title' => __('Disable funding sources', 'woocommerce-paypal-commerce-gateway'),
-                'type' => 'ppcp-multiselect',
-                'class' => ['wc-enhanced-select'],
-                'default' => [],
-                'desc_tip' => true,
-                'description' => __(
-                    'By default all possible funding sources will be shown. You can disable some sources, if you wish.',
-                    'woocommerce-paypal-commerce-gateway'
-                ),
-                'options' => [
-                    'card' => _x('Credit or debit cards', 'Name of payment method', 'woocommerce-paypal-commerce-gateway'),
-                    'credit' => _x('PayPal Credit', 'Name of payment method', 'woocommerce-paypal-commerce-gateway'),
-                    'sepa' => _x('SEPA-Lastschrift', 'Name of payment method', 'woocommerce-paypal-commerce-gateway'),
-                    'bancontact' => _x('Bancontact', 'Name of payment method', 'woocommerce-paypal-commerce-gateway'),
-                    'eps' => _x('eps', 'Name of payment method', 'woocommerce-paypal-commerce-gateway'),
-                    'giropay' => _x('giropay', 'Name of payment method', 'woocommerce-paypal-commerce-gateway'),
-                    'ideal' => _x('iDEAL', 'Name of payment method', 'woocommerce-paypal-commerce-gateway'),
-                    'mybank' => _x('MyBank', 'Name of payment method', 'woocommerce-paypal-commerce-gateway'),
-                    'p24' => _x('Przelewy24', 'Name of payment method', 'woocommerce-paypal-commerce-gateway'),
-                    'sofort' => _x('Sofort', 'Name of payment method', 'woocommerce-paypal-commerce-gateway'),
-                ],
+
+            'button_single_product_enabled' => [
+                'title' => __('Enable buttons on Single Product', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'checkbox',
+                'label' => __('enable on Single Product', 'woocommerce-paypal-commerce-gateway'),
+                'default' => true,
                 'screens' => [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
                 'requirements' => [],
             ],
-            'vault_enabled' => [
-                'title' => __('Vaulting', 'woocommerce-paypal-commerce-gateway'),
+            'button_mini_cart_enabled' => [
+                'title' => __('Buttons on Mini Cart', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'checkbox',
-                'desc_tip' => true,
-                'label' => __('Enable vaulting', 'woocommerce-paypal-commerce-gateway'),
-                'description' => __('Enables you to store payment tokens for subscriptions.', 'woocommerce-paypal-commerce-gateway'),
+                'label' => __('Enable on Mini Cart', 'woocommerce-paypal-commerce-gateway'),
                 'default' => true,
                 'screens' => [
+                    State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
                 'requirements' => [],
             ],
+            'button_cart_enabled' => [
+                'title' => __('Buttons on Cart', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'checkbox',
+                'label' => __('Enable on Cart', 'woocommerce-paypal-commerce-gateway'),
+                'default' => true,
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+            ],
+
             'dcc_cart_enabled' => [
                 'title' => __('Enable credit card on cart', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'checkbox',

@@ -330,7 +330,10 @@ class SmartButton implements SmartButtonInterface
                 'cancel_wrapper' => '#ppcp-cancel',
                 'url' => $this->url(),
                 'style' => [
-                    'layout' => 'vertical',
+                    'layout' => ($this->settings->has('button_layout')) ?
+                        $this->settings->get('button_layout') : 'vertical',
+                    'size' => ($this->settings->has('button_size')) ?
+                        $this->settings->get('button_size') : 'responsive',
                     'color' => ($this->settings->has('button_color')) ?
                         $this->settings->get('button_color') : null,
                     'shape' => ($this->settings->has('button_shape')) ?
