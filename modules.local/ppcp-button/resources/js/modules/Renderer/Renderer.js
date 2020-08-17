@@ -15,7 +15,7 @@ class Renderer {
             return;
         }
 
-        const style = this.defaultConfig.button.style;
+        const style = wrapper === this.defaultConfig.button.wrapper ? this.defaultConfig.button.style : this.defaultConfig.button.mini_cart_style;
         paypal.Buttons({
             style,
             ...contextConfig,

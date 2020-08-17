@@ -136,8 +136,8 @@ class SmartButton implements SmartButtonInterface
                 31
             );
         }
-        $notEnabledOnMiniCart = $this->settings->has('button_mini_cart_enabled') &&
-            !$this->settings->get('button_mini_cart_enabled');
+        $notEnabledOnMiniCart = $this->settings->has('button_mini-cart_enabled') &&
+            !$this->settings->get('button_mini-cart_enabled');
         if (
             ! $notEnabledOnMiniCart
         ) {
@@ -336,14 +336,19 @@ class SmartButton implements SmartButtonInterface
                 'mini_cart_wrapper' => '#ppc-button-minicart',
                 'cancel_wrapper' => '#ppcp-cancel',
                 'url' => $this->url(),
+                'mini_cart_style' => [
+                    'layout' => $this->styleForContext('layout', 'mini-cart'),
+                    'size' => $this->styleForContext('size', 'mini-cart'),
+                    'color' => $this->styleForContext('color', 'mini-cart'),
+                    'shape' => $this->styleForContext('shape', 'mini-cart'),
+                    'label' => $this->styleForContext('label', 'mini-cart'),
+                ],
                 'style' => [
-                    'layout' => 'vertical',
-                    'color' => ($this->settings->has('button_color')) ?
-                        $this->settings->get('button_color') : null,
-                    'shape' => ($this->settings->has('button_shape')) ?
-                        $this->settings->get('button_shape') : null,
-                    'label' => ($this->settings->has('button_label')) ?
-                        $this->settings->get('button_label') : 'paypal',
+                    'layout' => $this->styleForContext('layout', $this->context()),
+                    'size' => $this->styleForContext('size', $this->context()),
+                    'color' => $this->styleForContext('color', $this->context()),
+                    'shape' => $this->styleForContext('shape', $this->context()),
+                    'label' => $this->styleForContext('label', $this->context()),
                 ],
             ],
             'hosted_fields' => [
@@ -488,5 +493,24 @@ class SmartButton implements SmartButtonInterface
             }
         }
         return false;
+    }
+
+    private function styleForContext(string $style, string $context): string
+    {
+        $defaults = [
+            'layout' => 'vertical',
+            'size' => 'responsive',
+            'color' => 'gold',
+            'shape' => 'pill',
+            'label' => 'paypal',
+        ];
+
+        $value = isset($defaults[$style]) ?
+            $defaults[$style] : '';
+        $value = $this->settings->has('button_' . $style) ?
+            $this->settings->get('button_' . $style) : $value;
+        $value = $this->settings->has('button_' . $context . '_' . $style) ?
+            $this->settings->get('button_' . $context . '_' . $style) : $value;
+        return $value;
     }
 }

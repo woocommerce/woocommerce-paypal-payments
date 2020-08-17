@@ -104,8 +104,25 @@ class SettingsRenderer
 
         return $html;
     }
+
+    public function renderHeading($field, $key, $config, $value): string
+    {
+
+        if ($config['type'] !== 'ppcp-heading') {
+            return $field;
+        }
+
+        $html = sprintf(
+            '<h3 class="%s">%s</h3>',
+            esc_attr(implode(' ', $config['class'])),
+            esc_html($config['heading'])
+        );
+
+        return $html;
+    }
     //phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration.NoArgumentType
 
+    //phpcs:disable Inpsyde.CodeQuality.NestingLevel.High
     public function render()
     {
 
@@ -122,9 +139,12 @@ class SettingsRenderer
             }
             $value = $this->settings->has($field) ? $this->settings->get($field) : null;
             $id = 'ppcp[' . $field . ']';
+            $thTd = $config['type'] !== 'ppcp-heading' ? 'td' : 'th';
+            $colspan = $config['type'] !== 'ppcp-heading' ? 1 : 2;
 
             ?>
         <tr valign="top" id="<?php echo esc_attr('field-' . $field); ?>">
+            <?php if ($config['type'] !== 'ppcp-heading') : ?>
             <th>
                 <label
                     for="<?php echo esc_attr($id); ?>"
@@ -137,13 +157,15 @@ class SettingsRenderer
                     <?php unset($config['description']);
                 endif; ?>
             </th>
-            <td><?php
+            <?php endif; ?>
+            <<?php echo $thTd; ?> colspan="<?php echo (int) $colspan; ?>"><?php
                 $config['type'] === 'ppcp-text' ?
                     $this->renderText($config)
-                    : woocommerce_form_field($id, $config, $value); ?></td>
+                    : woocommerce_form_field($id, $config, $value); ?></<?php echo $thTd; ?>>
         </tr>
         <?php endforeach;
     }
+    //phpcs:enable Inpsyde.CodeQuality.NestingLevel.High
 
     private function renderText(array $config)
     {
