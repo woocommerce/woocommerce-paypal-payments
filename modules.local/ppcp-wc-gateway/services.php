@@ -9,6 +9,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Entity\ApplicationContext;
 use Inpsyde\PayPalCommerce\Onboarding\State;
 use Inpsyde\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
 use Inpsyde\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
+use Inpsyde\PayPalCommerce\WcGateway\Checkout\CheckoutPayPalAddressPreset;
 use Inpsyde\PayPalCommerce\WcGateway\Checkout\DisableGateways;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGateway;
 use Inpsyde\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
@@ -948,5 +949,12 @@ return [
                 'requirements' => [],
             ],
         ];
+    },
+
+    'wcgateway.checkout.address-preset' => static function(ContainerInterface $container): CheckoutPayPalAddressPreset {
+
+        return new CheckoutPayPalAddressPreset(
+            $container->get('session.handler')
+        );
     },
 ];

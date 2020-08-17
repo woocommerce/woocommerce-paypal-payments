@@ -10,9 +10,9 @@ use Inpsyde\PayPalCommerce\AdminNotices\Repository\Repository;
 use Inpsyde\PayPalCommerce\WcGateway\Admin\OrderDetail;
 use Inpsyde\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
 use Inpsyde\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
+use Inpsyde\PayPalCommerce\WcGateway\Checkout\CheckoutPayPalAddressPreset;
 use Inpsyde\PayPalCommerce\WcGateway\Checkout\DisableGateways;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGateway;
-use Inpsyde\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use Inpsyde\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
@@ -34,6 +34,7 @@ class WcGatewayModule implements ModuleInterface
         $this->registerPaymentGateway($container);
         $this->registerOrderFunctionality($container);
         $this->registerColumns($container);
+        $this->registerCheckoutAddressPreset($container);
 
         add_filter(
             Repository::NOTICES_FILTER,
@@ -196,6 +197,23 @@ class WcGatewayModule implements ModuleInterface
                  */
                 $paymentStatusColumn = $container->get('wcgateway.admin.orders-payment-status-column');
                 $paymentStatusColumn->render($column, intval($wcOrderId));
+            },
+            10,
+            2
+        );
+    }
+
+    private function registerCheckoutAddressPreset(ContainerInterface $container): void
+    {
+        add_filter(
+            'woocommerce_checkout_get_value',
+            static function (...$args) use ($container) {
+                // It's important to not instantiate the service to early
+                // as it depends on SessionHandler and WooCommerce Session
+                /* @var CheckoutPayPalAddressPreset $service */
+                $service = $container->get('wcgateway.checkout.address-preset');
+
+                return $service->filterCheckoutFiled(...$args);
             },
             10,
             2
