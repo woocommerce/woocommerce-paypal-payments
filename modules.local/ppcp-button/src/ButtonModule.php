@@ -10,6 +10,7 @@ use Inpsyde\PayPalCommerce\Button\Assets\SmartButton;
 use Inpsyde\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
+use Inpsyde\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\RequestData;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
@@ -48,6 +49,17 @@ class ButtonModule implements ModuleInterface
             $smartButton = $container->get('button.smart-button');
             $smartButton->enqueue();
         });
+
+        add_action(
+            'wc_ajax_' . DataClientIdEndpoint::ENDPOINT,
+            static function () use ($container) {
+                $endpoint = $container->get('button.endpoint.data-client-id');
+                /**
+                 * @var DataClientIdEndpoint $endpoint
+                 */
+                $endpoint->handleRequest();
+            }
+        );
 
         add_action(
             'wc_ajax_' . ChangeCartEndpoint::ENDPOINT,
