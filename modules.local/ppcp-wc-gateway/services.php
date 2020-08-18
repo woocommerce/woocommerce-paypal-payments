@@ -430,7 +430,7 @@ return [
                 'default' => 'vertical',
                 'desc_tip' => true,
                 'description' => __(
-                    'If additional funding sources are available to the buyer through PayPal, such as Venmo, then multiple buttons are displayed in the space provided. Choose "vertical" for a dynamic list of alternative and local payment options, or "horizontal" when space is limited.',
+                    'If additional funding sources are available to the buyer through PayPal, then multiple buttons are displayed in the space provided. Choose "vertical" for a dynamic list of alternative and local payment options, or "horizontal" when space is limited.',
                     'woocommerce-paypal-commerce-gateway'
                 ),
                 'options' => [
@@ -443,6 +443,22 @@ return [
                 ],
                 'requirements' => [],
                 'gateway' => 'paypal',
+            ],
+            'button_tagline' => [
+                'title' => __('Tagline', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'checkbox',
+                'default' => true,
+                'label' => __('Enable tagline', 'woocommerce-paypal-commerce-gateway'),
+                'desc_tip' => true,
+                'description' => __(
+                    'Add the tagline. This line will only show up, if you select a horizontal layout.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
             ],
             'button_label' => [
                 'title' => __('Button Label', 'woocommerce-paypal-commerce-gateway'),
@@ -513,7 +529,7 @@ return [
             ],
 
             //Single product page
-            'button_single_product_heading' => [
+            'button_product_heading' => [
                 'heading' => __('Single Product page', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'ppcp-heading',
                 'screens' => [
@@ -523,7 +539,7 @@ return [
                 'requirements' => [],
                 'gateway' => 'paypal',
             ],
-            'button_single_product_enabled' => [
+            'button_product_enabled' => [
                 'title' => __('Enable buttons on Single Product', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'checkbox',
                 'label' => __('Enable on Single Product', 'woocommerce-paypal-commerce-gateway'),
@@ -535,11 +551,11 @@ return [
                 'requirements' => [],
                 'gateway' => 'paypal',
             ],
-            'button_single_product_layout' => [
+            'button_product_layout' => [
                 'title' => __('Button Layout', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'select',
                 'class' => ['wc-enhanced-select'],
-                'default' => 'vertical',
+                'default' => 'horizontal',
                 'desc_tip' => true,
                 'description' => __(
                     'If additional funding sources are available to the buyer through PayPal, such as Venmo, then multiple buttons are displayed in the space provided. Choose "vertical" for a dynamic list of alternative and local payment options, or "horizontal" when space is limited.',
@@ -556,7 +572,23 @@ return [
                 'requirements' => [],
                 'gateway' => 'paypal',
             ],
-            'button_single_product_label' => [
+            'button_product_tagline' => [
+                'title' => __('Tagline', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'checkbox',
+                'label' => __('Enable tagline', 'woocommerce-paypal-commerce-gateway'),
+                'default' => true,
+                'desc_tip' => true,
+                'description' => __(
+                    'Add the tagline. This line will only show up, if you select a horizontal layout.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+            ],
+            'button_product_label' => [
                 'title' => __('Button Label', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'select',
                 'class' => ['wc-enhanced-select'],
@@ -579,7 +611,7 @@ return [
                 'requirements' => [],
                 'gateway' => 'paypal',
             ],
-            'button_single_product_color' => [
+            'button_product_color' => [
                 'title' => __('Color', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'select',
                 'class' => ['wc-enhanced-select'],
@@ -602,7 +634,7 @@ return [
                 'requirements' => [],
                 'gateway' => 'paypal',
             ],
-            'button_single_product_shape' => [
+            'button_product_shape' => [
                 'title' => __('Shape', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'select',
                 'class' => ['wc-enhanced-select'],
@@ -651,7 +683,7 @@ return [
                 'title' => __('Button Layout', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'select',
                 'class' => ['wc-enhanced-select'],
-                'default' => 'vertical',
+                'default' => 'horizontal',
                 'desc_tip' => true,
                 'description' => __(
                     'If additional funding sources are available to the buyer through PayPal, such as Venmo, then multiple buttons are displayed in the space provided. Choose "vertical" for a dynamic list of alternative and local payment options, or "horizontal" when space is limited.',
@@ -667,6 +699,22 @@ return [
                 ],
                 'requirements' => [],
                 'gateway' => 'paypal',
+            ],
+            'button_mini-cart_tagline' => [
+                'title' => __('Tagline', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'checkbox',
+                'label' => __('Enable tagline', 'woocommerce-paypal-commerce-gateway'),
+                'default' => false,
+                'desc_tip' => true,
+                'description' => __(
+                    'Add the tagline. This line will only show up, if you select a horizontal layout.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
             ],
             'button_mini-cart_label' => [
                 'title' => __('Button Label', 'woocommerce-paypal-commerce-gateway'),
@@ -763,7 +811,7 @@ return [
                 'title' => __('Button Layout', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'select',
                 'class' => ['wc-enhanced-select'],
-                'default' => 'vertical',
+                'default' => 'horizontal',
                 'desc_tip' => true,
                 'description' => __(
                     'If additional funding sources are available to the buyer through PayPal, such as Venmo, then multiple buttons are displayed in the space provided. Choose "vertical" for a dynamic list of alternative and local payment options, or "horizontal" when space is limited.',
@@ -779,6 +827,22 @@ return [
                 ],
                 'requirements' => [],
                 'gateway' => 'paypal',
+            ],
+            'button_cart_tagline' => [
+                'title' => __('Tagline', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'checkbox',
+                'label' => __('Enable tagline', 'woocommerce-paypal-commerce-gateway'),
+                'default' => true,
+                'desc_tip' => true,
+                'description' => __(
+                    'Add the tagline. This line will only show up, if you select a horizontal layout.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
             ],
             'button_cart_label' => [
                 'title' => __('Button Label', 'woocommerce-paypal-commerce-gateway'),

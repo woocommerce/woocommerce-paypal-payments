@@ -288,12 +288,14 @@ class SmartButton implements SmartButtonInterface
                     'color' => $this->styleForContext('color', 'mini-cart'),
                     'shape' => $this->styleForContext('shape', 'mini-cart'),
                     'label' => $this->styleForContext('label', 'mini-cart'),
+                    'tagline' => $this->styleForContext('tagline', 'mini-cart'),
                 ],
                 'style' => [
                     'layout' => $this->styleForContext('layout', $this->context()),
                     'color' => $this->styleForContext('color', $this->context()),
                     'shape' => $this->styleForContext('shape', $this->context()),
                     'label' => $this->styleForContext('label', $this->context()),
+                    'tagline' => $this->styleForContext('tagline', $this->context()),
                 ],
             ],
             'hosted_fields' => [
@@ -318,6 +320,13 @@ class SmartButton implements SmartButtonInterface
                 ],
             ],
         ];
+
+        if ($this->styleForContext('layout', 'mini-cart') !== 'horizontal') {
+            unset($localize['button']['mini_cart_style']['tagline']);
+        }
+        if ($this->styleForContext('layout', $this->context()) !== 'horizontal') {
+            unset($localize['button']['style']['tagline']);
+        }
 
         $this->requestData->dequeueNonceFix();
         return $localize;
@@ -451,6 +460,7 @@ class SmartButton implements SmartButtonInterface
             'color' => 'gold',
             'shape' => 'pill',
             'label' => 'paypal',
+            'tagline' => true,
         ];
 
         $value = isset($defaults[$style]) ?
@@ -459,6 +469,10 @@ class SmartButton implements SmartButtonInterface
             $this->settings->get('button_' . $style) : $value;
         $value = $this->settings->has('button_' . $context . '_' . $style) ?
             $this->settings->get('button_' . $context . '_' . $style) : $value;
+
+        if (is_bool($value)) {
+            $value = $value ? 'true' : 'false';
+        }
         return $value;
     }
 }
