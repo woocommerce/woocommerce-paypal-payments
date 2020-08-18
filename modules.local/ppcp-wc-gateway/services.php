@@ -459,6 +459,7 @@ return [
                     State::STATE_ONBOARDED,
                 ],
                 'requirements' => [],
+                'gateway' => 'paypal',
             ],
             'button_label' => [
                 'title' => __('Button Label', 'woocommerce-paypal-commerce-gateway'),
@@ -587,6 +588,7 @@ return [
                     State::STATE_ONBOARDED,
                 ],
                 'requirements' => [],
+                'gateway' => 'paypal',
             ],
             'button_product_label' => [
                 'title' => __('Button Label', 'woocommerce-paypal-commerce-gateway'),
@@ -715,6 +717,7 @@ return [
                     State::STATE_ONBOARDED,
                 ],
                 'requirements' => [],
+                'gateway' => 'paypal',
             ],
             'button_mini-cart_label' => [
                 'title' => __('Button Label', 'woocommerce-paypal-commerce-gateway'),
@@ -843,6 +846,7 @@ return [
                     State::STATE_ONBOARDED,
                 ],
                 'requirements' => [],
+                'gateway' => 'paypal',
             ],
             'button_cart_label' => [
                 'title' => __('Button Label', 'woocommerce-paypal-commerce-gateway'),
