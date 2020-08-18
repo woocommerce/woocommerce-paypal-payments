@@ -285,14 +285,12 @@ class SmartButton implements SmartButtonInterface
                 'url' => $this->url(),
                 'mini_cart_style' => [
                     'layout' => $this->styleForContext('layout', 'mini-cart'),
-                    'size' => $this->styleForContext('size', 'mini-cart'),
                     'color' => $this->styleForContext('color', 'mini-cart'),
                     'shape' => $this->styleForContext('shape', 'mini-cart'),
                     'label' => $this->styleForContext('label', 'mini-cart'),
                 ],
                 'style' => [
                     'layout' => $this->styleForContext('layout', $this->context()),
-                    'size' => $this->styleForContext('size', $this->context()),
                     'color' => $this->styleForContext('color', $this->context()),
                     'shape' => $this->styleForContext('shape', $this->context()),
                     'label' => $this->styleForContext('label', $this->context()),
