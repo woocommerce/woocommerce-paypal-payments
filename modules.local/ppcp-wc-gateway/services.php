@@ -258,6 +258,22 @@ return [
                 'requirements' => [],
                 'gateway' => 'paypal',
             ],
+            'dcc_gateway_title' => [
+                'title' => __('Title', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'text',
+                'description' => __(
+                    'This controls the title which the user sees during checkout.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'default' => __('PayPal', 'woocommerce-paypal-commerce-gateway'),
+                'desc_tip' => true,
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+                'gateway' => 'dcc',
+            ],
             'description' => [
                 'title' => __('Description', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'text',
@@ -276,6 +292,25 @@ return [
                 ],
                 'requirements' => [],
                 'gateway' => 'paypal',
+            ],
+            'dcc_gateway_description' => [
+                'title' => __('Description', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'text',
+                'desc_tip' => true,
+                'description' => __(
+                    'This controls the description which the user sees during checkout.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'default' => __(
+                    'Pay via PayPal; you can pay with your credit card if you don\'t have a PayPal account.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+                'gateway' => 'dcc',
             ],
             'intent' => [
                 'title' => __('Intent', 'woocommerce-paypal-commerce-gateway'),

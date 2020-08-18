@@ -45,15 +45,15 @@ class CreditCardGateway extends PayPalGateway
             ];
         }
 
-        $this->method_title = __('Credit Card Payments', 'woocommerce-paypal-commerce-gateway');
+        $this->method_title = __('PayPal Credit Card', 'woocommerce-paypal-commerce-gateway');
         $this->method_description = __(
             'Provide your customers with the option to pay with credit card.',
             'woocommerce-paypal-commerce-gateway'
         );
-        $this->title = $this->config->has('title') ?
-            $this->config->get('title') : $this->method_title;
-        $this->description = $this->config->has('description') ?
-            $this->config->get('description') : $this->method_description;
+        $this->title = $this->config->has('dcc_gateway_title') ?
+            $this->config->get('dcc_gateway_title') : $this->method_title;
+        $this->description = $this->config->has('dcc_gateway_description') ?
+            $this->config->get('dcc_gateway_description') : $this->method_description;
 
         $this->init_form_fields();
         $this->init_settings();
@@ -66,6 +66,8 @@ class CreditCardGateway extends PayPalGateway
             ]
         );
     }
+
+
     public function generate_ppcp_html(): string
     {
 
