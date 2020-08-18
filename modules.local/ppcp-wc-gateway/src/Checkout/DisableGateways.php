@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Inpsyde\PayPalCommerce\WcGateway\Checkout;
 
 use Inpsyde\PayPalCommerce\Session\SessionHandler;
+use Inpsyde\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Psr\Container\ContainerInterface;
 
@@ -32,8 +33,14 @@ class DisableGateways
             || ! is_email($this->settings->get('merchant_email'))
         ) {
             unset($methods[PayPalGateway::ID]);
+            unset($methods[CreditCardGateway::ID]);
             return $methods;
         }
+
+        if (! $this->settings->has('client_id') || empty($this->settings->get('client_id'))) {
+            unset($methods[CreditCardGateway::ID]);
+        }
+
 
         if (! $this->needsToDisableGateways()) {
             return $methods;
