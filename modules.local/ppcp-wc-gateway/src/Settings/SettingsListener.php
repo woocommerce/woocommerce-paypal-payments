@@ -6,6 +6,8 @@ namespace Inpsyde\PayPalCommerce\WcGateway\Settings;
 
 use Inpsyde\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
 use Inpsyde\PayPalCommerce\Onboarding\State;
+use Inpsyde\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Inpsyde\PayPalCommerce\Webhooks\WebhookRegistrar;
 use Psr\SimpleCache\CacheInterface;
 
@@ -60,10 +62,14 @@ class SettingsListener
          */
         $rawData = (isset($_POST['ppcp'])) ? (array) wp_unslash($_POST['ppcp']) : [];
         $settings = $this->retrieveSettingsFromRawData($rawData);
-        $settings['enabled'] = isset($_POST['woocommerce_ppcp-gateway_enabled'])
+        if ($_GET['section'] === PayPalGateway::ID) {
+            $settings['enabled'] = isset($_POST['woocommerce_ppcp-gateway_enabled'])
                 && absint($_POST['woocommerce_ppcp-gateway_enabled']) === 1;
-        $settings['dcc_gateway_enabled'] = isset($_POST['woocommerce_ppcp-credit-card-gateway_enabled'])
-            && absint($_POST['woocommerce_ppcp-credit-card-gateway_enabled']) === 1;
+        }
+        if ($_GET['section'] === CreditCardGateway::ID) {
+            $settings['dcc_gateway_enabled'] = isset($_POST['woocommerce_ppcp-credit-card-gateway_enabled'])
+                && absint($_POST['woocommerce_ppcp-credit-card-gateway_enabled']) === 1;
+        }
         foreach ($settings as $id => $value) {
             $this->settings->set($id, $value);
         }
