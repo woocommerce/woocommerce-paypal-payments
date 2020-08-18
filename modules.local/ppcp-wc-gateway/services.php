@@ -396,7 +396,7 @@ return [
                     State::STATE_ONBOARDED,
                 ],
                 'requirements' => [],
-                'gateway' => 'dcc',
+                'gateway' => 'paypal',
             ],
             'vault_enabled' => [
                 'title' => __('Vaulting', 'woocommerce-paypal-commerce-gateway'),
