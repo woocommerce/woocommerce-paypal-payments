@@ -203,23 +203,19 @@ class SmartButton implements SmartButtonInterface
         printf(
             '<form id="%1$s">
                         <div class="ppcp-dcc-credit-card-wrapper">
-                        <div>
-                        <label for="ppcp-credit-card-%1$s">%2$s</label>
-                        <span id="ppcp-credit-card-%1$s" class="ppcp-credit-card"></span>
-                        </div><div>
-                        <label for="ppcp-expiration-date-%1$s">%3$s</label>
-                        <span id="ppcp-expiration-date-%1$s" class="ppcp-expiration-date"></span>
-                        </div><div>
-                        <label for="ppcp-cvv-%1$s">%4$s</label>
-                        <span id="ppcp-cvv-%1$s" class="ppcp-cvv"></span>
+                            <label for="ppcp-credit-card-%1$s">%2$s</label>
+                            <span id="ppcp-credit-card-%1$s" class="ppcp-credit-card"></span>
+                            <label for="ppcp-expiration-date-%1$s">%3$s</label>
+                            <span id="ppcp-expiration-date-%1$s" class="ppcp-expiration-date"></span>
+                            <label for="ppcp-cvv-%1$s">%4$s</label>
+                            <span id="ppcp-cvv-%1$s" class="ppcp-cvv"></span>
                         </div>
                         %5$s
-                        </div>
                         <button class="button alt">%6$s</button>
                     </form><div id="payments-sdk__contingency-lightbox"></div>',
             esc_attr($id),
-            esc_html__('Card number', 'woocommerce-paypal-commerce-gateway'),
-            esc_html__('Expiration Date', 'woocommerce-paypal-commerce-gateway'),
+            esc_html__('Credit Card number', 'woocommerce-paypal-commerce-gateway'),
+            esc_html__('Expiration', 'woocommerce-paypal-commerce-gateway'),
             esc_html__('CVV', 'woocommerce-paypal-commerce-gateway'),
             //phpcs:ignore
             $saveCard,
