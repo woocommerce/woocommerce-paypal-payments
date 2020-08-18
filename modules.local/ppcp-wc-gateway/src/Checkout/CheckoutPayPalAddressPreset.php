@@ -72,7 +72,9 @@ class CheckoutPayPalAddressPreset
         ];
         $payerMap = [
             'billing_email' => 'emailAddress',
-            'billing_phone' => 'phone',
+        ];
+        $payerPhoneMap = [
+            'billing_phone' => 'nationalNumber',
         ];
 
         if(array_key_exists($fieldId, $addressMap) && $shipping) {
@@ -85,6 +87,10 @@ class CheckoutPayPalAddressPreset
 
         if(array_key_exists($fieldId, $payerMap) && $payer) {
             return $payer->{$payerMap[$fieldId]}() ?: null;
+        }
+
+        if(array_key_exists($fieldId, $payerPhoneMap) && $payer && $payer->phone() && $payer->phone()->phone()) {
+            return $payer->phone()->phone()->{$payerPhoneMap[$fieldId]}() ?: null;
         }
 
         return null;
