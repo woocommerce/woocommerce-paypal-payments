@@ -8,7 +8,7 @@ class CreditCardRenderer {
     render(wrapper, contextConfig) {
 
         if (
-            this.defaultConfig !== 'checkout'
+            this.defaultConfig.context !== 'checkout'
             || wrapper === null
             || document.querySelector(wrapper) === null
         ) {
