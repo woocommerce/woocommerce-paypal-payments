@@ -376,28 +376,6 @@ return [
                 ],
                 'requirements' => [],
             ],
-            'button_size' => [
-                'title' => __('Button Size', 'woocommerce-paypal-commerce-gateway'),
-                'type' => 'select',
-                'class' => ['wc-enhanced-select'],
-                'default' => 'responsive',
-                'desc_tip' => true,
-                'description' => __(
-                    'PayPal offers different sizes of the "PayPal Checkout" buttons, allowing you to select a size that best fits your site\'s theme. This setting will allow you to choose which size button(s) appear on your page. (The "Responsive" option adjusts to container size, and is available and recommended for Smart Payment Buttons.)',
-                    'woocommerce-paypal-commerce-gateway'
-                ),
-                'options' => [
-                    'small' => __('Small', 'woocommerce-paypal-commerce-gateway'),
-                    'medium' => __('Medium', 'woocommerce-paypal-commerce-gateway'),
-                    'large' => __('Large', 'woocommerce-paypal-commerce-gateway'),
-                    'responsive' => __('Responsive', 'woocommerce-paypal-commerce-gateway'),
-                ],
-                'screens' => [
-                    State::STATE_PROGRESSIVE,
-                    State::STATE_ONBOARDED,
-                ],
-                'requirements' => [],
-            ],
             'button_label' => [
                 'title' => __('Button Label', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'select',
@@ -497,28 +475,6 @@ return [
                 'options' => [
                     'vertical' => __('Vertical', 'woocommerce-paypal-commerce-gateway'),
                     'horizontal' => __('Horizontal', 'woocommerce-paypal-commerce-gateway'),
-                ],
-                'screens' => [
-                    State::STATE_PROGRESSIVE,
-                    State::STATE_ONBOARDED,
-                ],
-                'requirements' => [],
-            ],
-            'button_single_product_size' => [
-                'title' => __('Button Size', 'woocommerce-paypal-commerce-gateway'),
-                'type' => 'select',
-                'class' => ['wc-enhanced-select'],
-                'default' => 'responsive',
-                'desc_tip' => true,
-                'description' => __(
-                    'PayPal offers different sizes of the "PayPal Checkout" buttons, allowing you to select a size that best fits your site\'s theme. This setting will allow you to choose which size button(s) appear on your page. (The "Responsive" option adjusts to container size, and is available and recommended for Smart Payment Buttons.)',
-                    'woocommerce-paypal-commerce-gateway'
-                ),
-                'options' => [
-                    'small' => __('Small', 'woocommerce-paypal-commerce-gateway'),
-                    'medium' => __('Medium', 'woocommerce-paypal-commerce-gateway'),
-                    'large' => __('Large', 'woocommerce-paypal-commerce-gateway'),
-                    'responsive' => __('Responsive', 'woocommerce-paypal-commerce-gateway'),
                 ],
                 'screens' => [
                     State::STATE_PROGRESSIVE,
@@ -632,28 +588,6 @@ return [
                 ],
                 'requirements' => [],
             ],
-            'button_mini-cart_size' => [
-                'title' => __('Button Size', 'woocommerce-paypal-commerce-gateway'),
-                'type' => 'select',
-                'class' => ['wc-enhanced-select'],
-                'default' => 'responsive',
-                'desc_tip' => true,
-                'description' => __(
-                    'PayPal offers different sizes of the "PayPal Checkout" buttons, allowing you to select a size that best fits your site\'s theme. This setting will allow you to choose which size button(s) appear on your page. (The "Responsive" option adjusts to container size, and is available and recommended for Smart Payment Buttons.)',
-                    'woocommerce-paypal-commerce-gateway'
-                ),
-                'options' => [
-                    'small' => __('Small', 'woocommerce-paypal-commerce-gateway'),
-                    'medium' => __('Medium', 'woocommerce-paypal-commerce-gateway'),
-                    'large' => __('Large', 'woocommerce-paypal-commerce-gateway'),
-                    'responsive' => __('Responsive', 'woocommerce-paypal-commerce-gateway'),
-                ],
-                'screens' => [
-                    State::STATE_PROGRESSIVE,
-                    State::STATE_ONBOARDED,
-                ],
-                'requirements' => [],
-            ],
             'button_mini-cart_label' => [
                 'title' => __('Button Label', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'select',
@@ -753,28 +687,6 @@ return [
                 'options' => [
                     'vertical' => __('Vertical', 'woocommerce-paypal-commerce-gateway'),
                     'horizontal' => __('Horizontal', 'woocommerce-paypal-commerce-gateway'),
-                ],
-                'screens' => [
-                    State::STATE_PROGRESSIVE,
-                    State::STATE_ONBOARDED,
-                ],
-                'requirements' => [],
-            ],
-            'button_cart_size' => [
-                'title' => __('Button Size', 'woocommerce-paypal-commerce-gateway'),
-                'type' => 'select',
-                'class' => ['wc-enhanced-select'],
-                'default' => 'responsive',
-                'desc_tip' => true,
-                'description' => __(
-                    'PayPal offers different sizes of the "PayPal Checkout" buttons, allowing you to select a size that best fits your site\'s theme. This setting will allow you to choose which size button(s) appear on your page. (The "Responsive" option adjusts to container size, and is available and recommended for Smart Payment Buttons.)',
-                    'woocommerce-paypal-commerce-gateway'
-                ),
-                'options' => [
-                    'small' => __('Small', 'woocommerce-paypal-commerce-gateway'),
-                    'medium' => __('Medium', 'woocommerce-paypal-commerce-gateway'),
-                    'large' => __('Large', 'woocommerce-paypal-commerce-gateway'),
-                    'responsive' => __('Responsive', 'woocommerce-paypal-commerce-gateway'),
                 ],
                 'screens' => [
                     State::STATE_PROGRESSIVE,
