@@ -90,6 +90,8 @@ class SettingsListener
                     $settings[$key] = isset($rawData[$key]);
                     break;
                 case 'text':
+                case 'ppcp-text-input':
+                case 'ppcp-password':
                     $settings[$key] = isset($rawData[$key]) ? sanitize_text_field($rawData[$key]) : '';
                     break;
                 case 'password':
@@ -130,7 +132,7 @@ class SettingsListener
 
         if (
             ! isset($_REQUEST['section'])
-            || sanitize_text_field(wp_unslash($_REQUEST['section'])) !== 'ppcp-gateway'
+            || ! in_array(sanitize_text_field(wp_unslash($_REQUEST['section'])), ['ppcp-gateway', 'ppcp-credit-card-gateway'],true)
         ) {
             return false;
         }
