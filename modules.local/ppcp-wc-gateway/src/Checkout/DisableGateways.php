@@ -46,11 +46,26 @@ class DisableGateways
             return $methods;
         }
 
+        if ($this->isCreditCard()) {
+            return [CreditCardGateway::ID => $methods[CreditCardGateway::ID]];
+        }
         return [PayPalGateway::ID => $methods[PayPalGateway::ID]];
     }
 
     private function needsToDisableGateways(): bool
     {
         return $this->sessionHandler->order() !== null;
+    }
+
+    private function isCreditCard() : bool
+    {
+        $order =$this->sessionHandler->order();
+        if (! $order) {
+            return false;
+        }
+        if ( ! $order->paymentSource() || ! $order->paymentSource()->card()) {
+            return false;
+        }
+        return true;
     }
 }
