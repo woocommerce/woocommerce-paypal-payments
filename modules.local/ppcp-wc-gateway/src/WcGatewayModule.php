@@ -7,6 +7,7 @@ namespace Inpsyde\PayPalCommerce\WcGateway;
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
 use Inpsyde\PayPalCommerce\AdminNotices\Repository\Repository;
+use Inpsyde\PayPalCommerce\ApiClient\Helper\DccApplies;
 use Inpsyde\PayPalCommerce\WcGateway\Admin\OrderDetail;
 use Inpsyde\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
 use Inpsyde\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
@@ -99,7 +100,13 @@ class WcGatewayModule implements ModuleInterface
             'woocommerce_payment_gateways',
             static function ($methods) use ($container): array {
                 $methods[] = $container->get('wcgateway.paypal-gateway');
-                $methods[] = $container->get('wcgateway.credit-card-gateway');
+                $dccApplies = $container->get('api.helpers.dccapplies');
+                /**
+                 * @var DccApplies $dccApplies
+                 */
+                if ($dccApplies->forCountryCurrency()) {
+                    $methods[] = $container->get('wcgateway.credit-card-gateway');
+                }
                 return (array)$methods;
             }
         );
