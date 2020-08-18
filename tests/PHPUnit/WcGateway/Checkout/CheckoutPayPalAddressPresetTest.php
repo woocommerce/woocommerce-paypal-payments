@@ -157,6 +157,50 @@ class CheckoutPayPalAddressPresetTest extends TestCase
         ];
     }
 
+    public function testReadShippingFromOrder(): void
+    {
+        $shipping = \Mockery::mock(Shipping::class);
+        $purchaseUnit = \Mockery::mock(PurchaseUnit::class);
+        $purchaseUnit->shouldReceive('shipping')
+            ->once()
+            ->andReturn($shipping);
+        $purchaseUnitLast = \Mockery::mock(PurchaseUnit::class);
+        $purchaseUnitLast->shouldReceive('shipping')
+            ->never();
+        $order = \Mockery::mock(
+            Order::class,
+            [
+                'id' => 'whatever',
+            ]
+        );
+        $order->shouldReceive('purchaseUnits')
+            ->once()
+            ->andReturn(
+                [
+                    \Mockery::mock(PurchaseUnit::class, ['shipping' => null]),
+                    $purchaseUnit,
+                    $purchaseUnitLast,
+                ]
+            );
+
+        $this->buildTestee()[0]->shouldReceive('order')
+            ->andReturn($order);
+
+        $testee = $this->buildTestee()[1];
+        $method = (new \ReflectionClass($testee))
+            ->getMethod('readShippingFromOrder');
+        $method->setAccessible(true);
+
+        self::assertSame(
+            $shipping,
+            $method->invoke($testee)
+        );
+        self::assertSame(
+            $shipping,
+            $method->invoke($testee)
+        );
+    }
+
     /**
      * @return MockInterface[]
      */
