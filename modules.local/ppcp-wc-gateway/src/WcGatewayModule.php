@@ -119,22 +119,11 @@ class WcGatewayModule implements ModuleInterface
                 /**
                  * @var SettingsRenderer $renderer
                  */
-                return $renderer->renderPassword(
-                    $renderer->renderTextInput(
-                        $renderer->renderMultiSelect(
-                            $field,
-                            $key,
-                            $args,
-                            $value
-                        ),
-                        $key,
-                        $args,
-                        $value
-                    ),
-                    $key,
-                    $args,
-                    $value
-                );
+                $field = $renderer->renderMultiSelect($field, $key, $args, $value);
+                $field = $renderer->renderPassword($field, $key, $args, $value);
+                $field = $renderer->renderTextInput($field, $key, $args, $value);
+                $field = $renderer->renderHeading($field, $key, $args, $value);
+                return $field;
             },
             10,
             4
