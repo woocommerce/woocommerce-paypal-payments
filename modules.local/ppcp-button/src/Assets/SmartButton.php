@@ -215,7 +215,7 @@ class SmartButton implements SmartButtonInterface
                         </div>
                         %5$s
                         </div>
-                        <button>%6$s</button>
+                        <button class="button alt">%6$s</button>
                     </form><div id="payments-sdk__contingency-lightbox"></div>',
             esc_attr($id),
             esc_html__('Card number', 'woocommerce-paypal-commerce-gateway'),
@@ -223,7 +223,7 @@ class SmartButton implements SmartButtonInterface
             esc_html__('CVV', 'woocommerce-paypal-commerce-gateway'),
             //phpcs:ignore
             $saveCard,
-            esc_html__('Pay with Card', 'woocommerce-paypal-commerce-gateway')
+            esc_html__('Place order', 'woocommerce')
         );
     }
     // phpcs:enable Inpsyde.CodeQuality.FunctionLength.TooLong
