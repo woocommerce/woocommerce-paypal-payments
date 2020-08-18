@@ -99,6 +99,7 @@ class WcGatewayModule implements ModuleInterface
             'woocommerce_payment_gateways',
             static function ($methods) use ($container): array {
                 $methods[] = $container->get('wcgateway.paypal-gateway');
+                $methods[] = $container->get('wcgateway.credit-card-gateway');
                 return (array)$methods;
             }
         );

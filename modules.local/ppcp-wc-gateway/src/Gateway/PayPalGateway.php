@@ -30,11 +30,11 @@ class PayPalGateway extends \WC_Payment_Gateway
     public const INTENT_META_KEY = '_ppcp_paypal_intent';
     public const ORDER_ID_META_KEY = '_ppcp_paypal_order_id';
 
-    private $settingsRenderer;
-    private $authorizedPayments;
-    private $notice;
-    private $orderProcessor;
-    private $config;
+    protected $settingsRenderer;
+    protected $authorizedPayments;
+    protected $notice;
+    protected $orderProcessor;
+    protected $config;
 
     public function __construct(
         SettingsRenderer $settingsRenderer,
@@ -178,7 +178,7 @@ class PayPalGateway extends \WC_Payment_Gateway
     {
 
         ob_start();
-        $this->settingsRenderer->render();
+        $this->settingsRenderer->render(false);
         $content = ob_get_contents();
         ob_end_clean();
         return $content;

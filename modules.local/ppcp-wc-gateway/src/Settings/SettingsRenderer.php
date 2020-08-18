@@ -106,7 +106,7 @@ class SettingsRenderer
     }
     //phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration.NoArgumentType
 
-    public function render()
+    public function render(bool $isDcc)
     {
 
         $nonce = wp_create_nonce(SettingsListener::NONCE);
@@ -115,6 +115,12 @@ class SettingsRenderer
         <?php
         foreach ($this->fields as $field => $config) :
             if (! in_array($this->state->currentState(), $config['screens'], true)) {
+                continue;
+            }
+            if ($isDcc && ! in_array($config['gateway'], ['all', 'dcc'],true)) {
+                continue;
+            }
+            if (! $isDcc && ! in_array($config['gateway'], ['all', 'paypal'],true)) {
                 continue;
             }
             if (in_array('dcc', $config['requirements'], true) && ! $this->dccApplies->forCountryCurrency()) {
