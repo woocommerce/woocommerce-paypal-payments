@@ -22,7 +22,7 @@ use Psr\Container\ContainerInterface;
 
 //phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
 //phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration.NoArgumentType
-class WcGateway extends \WC_Payment_Gateway
+class PayPalGateway extends \WC_Payment_Gateway
 {
 
     public const ID = 'ppcp-gateway';

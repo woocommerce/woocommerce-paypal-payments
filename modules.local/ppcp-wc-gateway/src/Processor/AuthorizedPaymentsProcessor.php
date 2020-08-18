@@ -10,7 +10,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Authorization;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\AuthorizationStatus;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGateway;
+use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 class AuthorizedPaymentsProcessor
 {
@@ -71,7 +71,7 @@ class AuthorizedPaymentsProcessor
 
     private function payPalOrderFromWcOrder(\WC_Order $wcOrder): Order
     {
-        $orderId = $wcOrder->get_meta(WcGateway::ORDER_ID_META_KEY);
+        $orderId = $wcOrder->get_meta(PayPalGateway::ORDER_ID_META_KEY);
         return $this->orderEndpoint->order($orderId);
     }
 

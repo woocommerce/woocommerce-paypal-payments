@@ -37,7 +37,7 @@ class WcGatewayTest extends TestCase
         $settings = Mockery::mock(Settings::class);
         $settings
             ->shouldReceive('has')->andReturnFalse();
-        $testee = new WcGateway(
+        $testee = new PayPalGateway(
             $settingsRenderer,
             $orderProcessor,
             $authorizedPaymentsProcessor,
@@ -68,7 +68,7 @@ class WcGatewayTest extends TestCase
         $settings = Mockery::mock(Settings::class);
         $settings
             ->shouldReceive('has')->andReturnFalse();
-        $testee = new WcGateway(
+        $testee = new PayPalGateway(
             $settingsRenderer,
             $orderProcessor,
             $authorizedPaymentsProcessor,
@@ -105,7 +105,7 @@ class WcGatewayTest extends TestCase
         $settings = Mockery::mock(Settings::class);
         $settings
             ->shouldReceive('has')->andReturnFalse();
-        $testee = new WcGateway(
+        $testee = new PayPalGateway(
             $settingsRenderer,
             $orderProcessor,
             $authorizedPaymentsProcessor,
@@ -136,7 +136,7 @@ class WcGatewayTest extends TestCase
             ->with('processing');
         $wcOrder
             ->expects('update_meta_data')
-            ->with(WcGateway::CAPTURED_META_KEY, 'true');
+            ->with(PayPalGateway::CAPTURED_META_KEY, 'true');
         $wcOrder
             ->expects('save');
         $settingsRenderer = Mockery::mock(SettingsRenderer::class);
@@ -157,7 +157,7 @@ class WcGatewayTest extends TestCase
         $settings = Mockery::mock(Settings::class);
         $settings
             ->shouldReceive('has')->andReturnFalse();
-        $testee = new WcGateway(
+        $testee = new PayPalGateway(
             $settingsRenderer,
             $orderProcessor,
             $authorizedPaymentsProcessor,
@@ -181,7 +181,7 @@ class WcGatewayTest extends TestCase
             ->with('processing');
         $wcOrder
             ->expects('update_meta_data')
-            ->with(WcGateway::CAPTURED_META_KEY, 'true');
+            ->with(PayPalGateway::CAPTURED_META_KEY, 'true');
         $wcOrder
             ->expects('save');
         $settingsRenderer = Mockery::mock(SettingsRenderer::class);
@@ -201,7 +201,7 @@ class WcGatewayTest extends TestCase
         $settings = Mockery::mock(Settings::class);
         $settings
             ->shouldReceive('has')->andReturnFalse();
-        $testee = new WcGateway(
+        $testee = new PayPalGateway(
             $settingsRenderer,
             $orderProcessor,
             $authorizedPaymentsProcessor,
@@ -238,7 +238,7 @@ class WcGatewayTest extends TestCase
         $settings = Mockery::mock(Settings::class);
         $settings
             ->shouldReceive('has')->andReturnFalse();
-        $testee = new WcGateway(
+        $testee = new PayPalGateway(
             $settingsRenderer,
             $orderProcessor,
             $authorizedPaymentsProcessor,

@@ -11,7 +11,7 @@ use Inpsyde\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
 use Inpsyde\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
 use Inpsyde\PayPalCommerce\WcGateway\Checkout\CheckoutPayPalAddressPreset;
 use Inpsyde\PayPalCommerce\WcGateway\Checkout\DisableGateways;
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGateway;
+use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Inpsyde\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use Inpsyde\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
 use Inpsyde\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
@@ -22,14 +22,14 @@ use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use WpOop\TransientCache\CachePoolFactory;
 
 return [
-    'wcgateway.gateway' => static function (ContainerInterface $container): WcGateway {
+    'wcgateway.paypal-gateway' => static function (ContainerInterface $container): PayPalGateway {
         $orderProcessor = $container->get('wcgateway.order-processor');
         $settingsRenderer = $container->get('wcgateway.settings.render');
         $authorizedPayments = $container->get('wcgateway.processor.authorized-payments');
         $notice = $container->get('wcgateway.notice.authorize-order-action');
         $settings = $container->get('wcgateway.settings');
 
-        return new WcGateway(
+        return new PayPalGateway(
             $settingsRenderer,
             $orderProcessor,
             $authorizedPayments,

@@ -6,7 +6,7 @@ namespace Inpsyde\PayPalCommerce\Subscription;
 
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGateway;
+use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
 
@@ -27,7 +27,7 @@ class SubscriptionModule implements ModuleInterface
     public function run(ContainerInterface $container)
     {
         add_action(
-            'woocommerce_scheduled_subscription_payment_' . WcGateway::ID,
+            'woocommerce_scheduled_subscription_payment_' . PayPalGateway::ID,
             static function ($amount, $order) use ($container) {
                 if (! is_a($order, \WC_Order::class)) {
                     return;

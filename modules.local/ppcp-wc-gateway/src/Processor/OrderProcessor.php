@@ -12,7 +12,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
 use Inpsyde\PayPalCommerce\Button\Helper\ThreeDSecure;
 use Inpsyde\PayPalCommerce\Session\SessionHandler;
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGateway;
+use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 class OrderProcessor
 {
@@ -45,8 +45,8 @@ class OrderProcessor
     public function process(\WC_Order $wcOrder, \WooCommerce $woocommerce): bool
     {
         $order = $this->sessionHandler->order();
-        $wcOrder->update_meta_data(WcGateway::ORDER_ID_META_KEY, $order->id());
-        $wcOrder->update_meta_data(WcGateway::INTENT_META_KEY, $order->intent());
+        $wcOrder->update_meta_data(PayPalGateway::ORDER_ID_META_KEY, $order->id());
+        $wcOrder->update_meta_data(PayPalGateway::INTENT_META_KEY, $order->intent());
 
         $errorMessage = null;
         if (!$order || ! $this->orderIsApproved($order)) {
@@ -71,7 +71,7 @@ class OrderProcessor
 
         if ($order->intent() === 'AUTHORIZE') {
             $order = $this->orderEndpoint->authorize($order);
-            $wcOrder->update_meta_data(WcGateway::CAPTURED_META_KEY, 'false');
+            $wcOrder->update_meta_data(PayPalGateway::CAPTURED_META_KEY, 'false');
         }
 
         $wcOrder->update_status(

@@ -13,7 +13,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Entity\Payments;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use Inpsyde\PayPalCommerce\TestCase;
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGateway;
+use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Mockery;
 class AuthorizedPaymentsProcessorTest extends TestCase
 {
@@ -60,7 +60,7 @@ class AuthorizedPaymentsProcessorTest extends TestCase
         $wcOrder = Mockery::mock(\WC_Order::class);
         $wcOrder
             ->expects('get_meta')
-            ->with(WcGateway::ORDER_ID_META_KEY)
+            ->with(PayPalGateway::ORDER_ID_META_KEY)
             ->andReturn($orderId);
         $this->assertTrue($testee->process($wcOrder));
         $this->assertEquals(AuthorizedPaymentsProcessor::SUCCESSFUL, $testee->lastStatus());
@@ -79,7 +79,7 @@ class AuthorizedPaymentsProcessorTest extends TestCase
         $wcOrder = Mockery::mock(\WC_Order::class);
         $wcOrder
             ->expects('get_meta')
-            ->with(WcGateway::ORDER_ID_META_KEY)
+            ->with(PayPalGateway::ORDER_ID_META_KEY)
             ->andReturn($orderId);
         $this->assertFalse($testee->process($wcOrder));
         $this->assertEquals(AuthorizedPaymentsProcessor::INACCESSIBLE, $testee->lastStatus());
@@ -98,7 +98,7 @@ class AuthorizedPaymentsProcessorTest extends TestCase
         $wcOrder = Mockery::mock(\WC_Order::class);
         $wcOrder
             ->expects('get_meta')
-            ->with(WcGateway::ORDER_ID_META_KEY)
+            ->with(PayPalGateway::ORDER_ID_META_KEY)
             ->andReturn($orderId);
         $this->assertFalse($testee->process($wcOrder));
         $this->assertEquals(AuthorizedPaymentsProcessor::NOT_FOUND, $testee->lastStatus());
@@ -146,7 +146,7 @@ class AuthorizedPaymentsProcessorTest extends TestCase
         $wcOrder = Mockery::mock(\WC_Order::class);
         $wcOrder
             ->expects('get_meta')
-            ->with(WcGateway::ORDER_ID_META_KEY)
+            ->with(PayPalGateway::ORDER_ID_META_KEY)
             ->andReturn($orderId);
         $this->assertFalse($testee->process($wcOrder));
         $this->assertEquals(AuthorizedPaymentsProcessor::FAILED, $testee->lastStatus());
@@ -190,7 +190,7 @@ class AuthorizedPaymentsProcessorTest extends TestCase
         $wcOrder = Mockery::mock(\WC_Order::class);
         $wcOrder
             ->expects('get_meta')
-            ->with(WcGateway::ORDER_ID_META_KEY)
+            ->with(PayPalGateway::ORDER_ID_META_KEY)
             ->andReturn($orderId);
         $this->assertFalse($testee->process($wcOrder));
         $this->assertEquals(AuthorizedPaymentsProcessor::ALREADY_CAPTURED, $testee->lastStatus());

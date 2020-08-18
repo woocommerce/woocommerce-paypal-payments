@@ -12,7 +12,7 @@ use Inpsyde\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
 use Inpsyde\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
 use Inpsyde\PayPalCommerce\WcGateway\Checkout\CheckoutPayPalAddressPreset;
 use Inpsyde\PayPalCommerce\WcGateway\Checkout\DisableGateways;
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGateway;
+use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Inpsyde\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
@@ -98,7 +98,7 @@ class WcGatewayModule implements ModuleInterface
         add_filter(
             'woocommerce_payment_gateways',
             static function ($methods) use ($container): array {
-                $methods[] = $container->get('wcgateway.gateway');
+                $methods[] = $container->get('wcgateway.paypal-gateway');
                 return (array)$methods;
             }
         );
@@ -168,9 +168,9 @@ class WcGatewayModule implements ModuleInterface
             'woocommerce_order_action_ppcp_authorize_order',
             static function (\WC_Order $wcOrder) use ($container) {
                 /**
-                 * @var WcGateway $gateway
+                 * @var PayPalGateway $gateway
                  */
-                $gateway = $container->get('wcgateway.gateway');
+                $gateway = $container->get('wcgateway.paypal-gateway');
                 $gateway->captureAuthorizedPayment($wcOrder);
             }
         );
