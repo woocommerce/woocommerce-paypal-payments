@@ -85,6 +85,12 @@ class SettingsListener
             if (! in_array($this->state->currentState(), $config['screens'], true)) {
                 continue;
             }
+            if ($config['gateway'] === 'dcc' && wp_unslash(sanitize_text_field($_GET['section'])) !== 'ppcp-credit-card-gateway') {
+                continue;
+            }
+            if ($config['gateway'] === 'paypal' && wp_unslash(sanitize_text_field($_GET['section'])) !== 'ppcp-gateway') {
+                continue;
+            }
             switch ($config['type']) {
                 case 'checkbox':
                     $settings[$key] = isset($rawData[$key]);
