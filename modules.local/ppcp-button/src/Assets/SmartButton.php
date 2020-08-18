@@ -68,19 +68,6 @@ class SmartButton implements SmartButtonInterface
         if (! $this->canSaveVaultToken() && $this->hasSubscription()) {
             return false;
         }
-        $buttonRenderer = static function () {
-            $product = wc_get_product();
-            if (
-                ! is_checkout() && is_a($product, \WC_Product::class)
-                && (
-                    $product->is_type(['external', 'grouped'])
-                    || ! $product->is_in_stock()
-                )
-            ) {
-                return;
-            }
-            echo '<div id="ppc-button"></div>';
-        };
 
         $notEnabledOnCart = $this->settings->has('button_cart_enabled') &&
             !$this->settings->get('button_cart_enabled');
@@ -90,7 +77,10 @@ class SmartButton implements SmartButtonInterface
         ) {
             add_action(
                 'woocommerce_proceed_to_checkout',
-                $buttonRenderer,
+                [
+                    $this,
+                    'buttonRenderer',
+                ],
                 20
             );
         }
@@ -117,7 +107,10 @@ class SmartButton implements SmartButtonInterface
         ) {
             add_action(
                 'woocommerce_single_product_summary',
-                $buttonRenderer,
+                [
+                    $this,
+                    'buttonRenderer',
+                ],
                 31
             );
         }
@@ -163,7 +156,10 @@ class SmartButton implements SmartButtonInterface
         }
         add_action(
             'woocommerce_review_order_after_submit',
-            $buttonRenderer,
+            [
+                $this,
+                'buttonRenderer',
+            ],
             10
         );
         if (
@@ -212,6 +208,41 @@ class SmartButton implements SmartButtonInterface
         return true;
     }
 
+    public function buttonRenderer() {
+        $product = wc_get_product();
+        if (
+            ! is_checkout() && is_a($product, \WC_Product::class)
+            && (
+                $product->is_type(['external', 'grouped'])
+                || ! $product->is_in_stock()
+            )
+        ) {
+            return;
+        }
+
+        $markup = '<div id="ppc-button"></div><div
+                    data-pp-message
+                    data-pp-placement="%s"
+                    data-pp-amount="%s"
+                ></div>';
+
+        $placement = 'product';
+        $amount = (is_a($product, \WC_Product::class)) ? wc_get_price_including_tax($product) : 0;
+        if (is_checkout()) {
+            $placement = 'payment';
+            $amount = WC()->cart->get_total('raw');
+        }
+        if (is_cart()) {
+            $placement = 'cart';
+            $amount = WC()->cart->get_total('raw');
+        }
+
+        printf(
+            $markup,
+            $placement,
+            (string) $amount
+        );
+    }
     // phpcs:disable Inpsyde.CodeQuality.FunctionLength.TooLong
     public function dccRenderer(bool $miniCart = false)
     {
@@ -464,7 +495,7 @@ class SmartButton implements SmartButtonInterface
 
     private function components(): array
     {
-        $components = ['buttons'];
+        $components = ['buttons', 'messages'];
         if ($this->dccIsEnabled()) {
             $components[] = 'hosted-fields';
         }
