@@ -12,7 +12,6 @@ const bootstrap = () => {
     const creditCardRenderer = new CreditCardRenderer(PayPalCommerceGateway, errorHandler);
     const renderer = new Renderer(creditCardRenderer, PayPalCommerceGateway);
     const context = PayPalCommerceGateway.context;
-
     if (context === 'mini-cart' || context === 'product') {
         const miniCartBootstrap = new MiniCartBootstap(
             PayPalCommerceGateway,

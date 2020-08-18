@@ -94,20 +94,6 @@ class SmartButton implements SmartButtonInterface
                 20
             );
         }
-        if (
-            is_cart()
-            && $this->settings->has('dcc_cart_enabled')
-            && $this->settings->get('dcc_cart_enabled')
-        ) {
-            add_action(
-                'woocommerce_proceed_to_checkout',
-                [
-                    $this,
-                    'dccRenderer',
-                ],
-                20
-            );
-        }
 
         $notEnabledOnProductPage = $this->settings->has('button_single_product_enabled') &&
             !$this->settings->get('button_single_product_enabled');
@@ -118,21 +104,6 @@ class SmartButton implements SmartButtonInterface
             add_action(
                 'woocommerce_single_product_summary',
                 $buttonRenderer,
-                31
-            );
-        }
-        $dccNotEnabledOnProductPage = $this->settings->has('dcc_single_product_enabled') &&
-            !$this->settings->get('dcc_single_product_enabled');
-        if (
-            (is_product() || wc_post_content_has_shortcode('product_page'))
-            && ! $dccNotEnabledOnProductPage
-        ) {
-            add_action(
-                'woocommerce_single_product_summary',
-                [
-                    $this,
-                    'dccRenderer',
-                ],
                 31
             );
         }
@@ -149,18 +120,7 @@ class SmartButton implements SmartButtonInterface
                 30
             );
         }
-        if (
-            $this->settings->has('dcc_mini_cart_enabled')
-            && $this->settings->get('dcc_mini_cart_enabled')
-        ) {
-            add_action(
-                'woocommerce_widget_shopping_cart_after_buttons',
-                function () {
-                    $this->dccRenderer(true);
-                },
-                31
-            );
-        }
+
         add_action(
             'woocommerce_review_order_after_submit',
             $buttonRenderer,
@@ -213,10 +173,10 @@ class SmartButton implements SmartButtonInterface
     }
 
     // phpcs:disable Inpsyde.CodeQuality.FunctionLength.TooLong
-    public function dccRenderer(bool $miniCart = false)
+    public function dccRenderer()
     {
 
-        $id = ($miniCart) ? 'ppcp-hosted-fields-mini-cart' : 'ppcp-hosted-fields';
+        $id = 'ppcp-hosted-fields';
         $canRenderDcc = $this->dccApplies->forCountryCurrency()
                 && $this->settings->has('client_id')
                 && $this->settings->get('client_id');
@@ -224,16 +184,6 @@ class SmartButton implements SmartButtonInterface
             return;
         }
 
-        $product = wc_get_product();
-        if (
-            ! $miniCart && !is_checkout() && is_a($product, \WC_Product::class)
-            && (
-                $product->is_type(['external', 'grouped'])
-                || !$product->is_in_stock()
-            )
-        ) {
-            return;
-        }
         $saveCard = $this->canSaveVaultToken() ? sprintf(
             '<div>
 
@@ -307,7 +257,7 @@ class SmartButton implements SmartButtonInterface
         $localize = [
             'script_attributes' => $this->attributes(),
             'data_client_id' => [
-                'set_attribute' => $this->dccIsEnabled() || $this->canSaveVaultToken(),
+                'set_attribute' => (is_checkout() && $this->dccIsEnabled()) || $this->canSaveVaultToken(),
                 'endpoint' => home_url(\WC_AJAX::get_endpoint(DataClientIdEndpoint::ENDPOINT)),
                 'nonce' => wp_create_nonce(DataClientIdEndpoint::nonce()),
                 'user' => get_current_user_id(),
@@ -394,7 +344,7 @@ class SmartButton implements SmartButtonInterface
             //ToDo: Update date on releases.
             'integration-date' => date('Y-m-d'),
             'components' => implode(',', $this->components()),
-            'vault' => $this->dccIsEnabled() || $this->canSaveVaultToken() ? 'true' : 'false',
+            'vault' => (is_checkout() && $this->dccIsEnabled()) || $this->canSaveVaultToken() ? 'true' : 'false',
             'commit' => is_checkout() ? 'true' : 'false',
             'intent' => ($this->settings->has('intent')) ? $this->settings->get('intent') : 'capture',
         ];
