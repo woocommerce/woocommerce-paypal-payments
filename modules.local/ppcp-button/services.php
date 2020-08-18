@@ -48,7 +48,9 @@ return [
             return new DisabledSmartButton();
         }
         $settings = $container->get('wcgateway.settings');
-        if (!$settings->has('enabled') || ! $settings->get('enabled')) {
+        $paypalDisabled = !$settings->has('enabled') || ! $settings->get('enabled');
+        $creditCardDisabled = !$settings->has('dcc_gateway_enabled') || ! $settings->get('dcc_gateway_enabled');
+        if ($paypalDisabled && $creditCardDisabled) {
             return new DisabledSmartButton();
         }
         $payeeRepository = $container->get('api.repository.payee');
