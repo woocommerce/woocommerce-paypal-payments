@@ -466,7 +466,7 @@ return [
                 'title' => __('Button Layout', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'select',
                 'class' => ['wc-enhanced-select'],
-                'default' => 'vertical',
+                'default' => 'horizontal',
                 'desc_tip' => true,
                 'description' => __(
                     'If additional funding sources are available to the buyer through PayPal, such as Venmo, then multiple buttons are displayed in the space provided. Choose "vertical" for a dynamic list of alternative and local payment options, or "horizontal" when space is limited.',
@@ -572,7 +572,7 @@ return [
                 'title' => __('Button Layout', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'select',
                 'class' => ['wc-enhanced-select'],
-                'default' => 'vertical',
+                'default' => 'horizontal',
                 'desc_tip' => true,
                 'description' => __(
                     'If additional funding sources are available to the buyer through PayPal, such as Venmo, then multiple buttons are displayed in the space provided. Choose "vertical" for a dynamic list of alternative and local payment options, or "horizontal" when space is limited.',
@@ -678,7 +678,7 @@ return [
                 'title' => __('Button Layout', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'select',
                 'class' => ['wc-enhanced-select'],
-                'default' => 'vertical',
+                'default' => 'horizontal',
                 'desc_tip' => true,
                 'description' => __(
                     'If additional funding sources are available to the buyer through PayPal, such as Venmo, then multiple buttons are displayed in the space provided. Choose "vertical" for a dynamic list of alternative and local payment options, or "horizontal" when space is limited.',
