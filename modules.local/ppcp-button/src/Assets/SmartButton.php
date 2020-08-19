@@ -14,6 +14,7 @@ use Inpsyde\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\RequestData;
+use Inpsyde\PayPalCommerce\Button\Helper\MessagesApply;
 use Inpsyde\PayPalCommerce\Session\SessionHandler;
 use Inpsyde\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
@@ -30,6 +31,7 @@ class SmartButton implements SmartButtonInterface
     private $requestData;
     private $dccApplies;
     private $subscriptionHelper;
+    private $messagesApply;
 
     public function __construct(
         string $moduleUrl,
@@ -41,7 +43,8 @@ class SmartButton implements SmartButtonInterface
         string $clientId,
         RequestData $requestData,
         DccApplies $dccApplies,
-        SubscriptionHelper $subscriptionHelper
+        SubscriptionHelper $subscriptionHelper,
+        MessagesApply $messagesApply
     ) {
 
         $this->moduleUrl = $moduleUrl;
@@ -54,6 +57,7 @@ class SmartButton implements SmartButtonInterface
         $this->requestData = $requestData;
         $this->dccApplies = $dccApplies;
         $this->subscriptionHelper = $subscriptionHelper;
+        $this->messagesApply = $messagesApply;
     }
 
     // phpcs:disable Inpsyde.CodeQuality.FunctionLength.TooLong
@@ -514,7 +518,10 @@ class SmartButton implements SmartButtonInterface
 
     private function components(): array
     {
-        $components = ['buttons', 'messages'];
+        $components = ['buttons'];
+        if ($this->messagesApply->forCountry()) {
+            $components[] = 'messages';
+        }
         if ($this->dccIsEnabled()) {
             $components[] = 'hosted-fields';
         }

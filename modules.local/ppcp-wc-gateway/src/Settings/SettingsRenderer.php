@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Inpsyde\PayPalCommerce\WcGateway\Settings;
 
 use Inpsyde\PayPalCommerce\ApiClient\Helper\DccApplies;
+use Inpsyde\PayPalCommerce\Button\Helper\MessagesApply;
 use Inpsyde\PayPalCommerce\Onboarding\State;
 use Psr\Container\ContainerInterface;
 
@@ -15,17 +16,20 @@ class SettingsRenderer
     private $state;
     private $fields;
     private $dccApplies;
+    private $messagesApply;
     public function __construct(
         ContainerInterface $settings,
         State $state,
         array $fields,
-        DccApplies $dccApplies
+        DccApplies $dccApplies,
+        MessagesApply $messagesApply
     ) {
 
         $this->settings = $settings;
         $this->state = $state;
         $this->fields = $fields;
         $this->dccApplies = $dccApplies;
+        $this->messagesApply = $messagesApply;
     }
 
     //phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration.NoArgumentType
@@ -140,7 +144,16 @@ class SettingsRenderer
             if (! $isDcc && ! in_array($config['gateway'], ['all', 'paypal'], true)) {
                 continue;
             }
-            if (in_array('dcc', $config['requirements'], true) && ! $this->dccApplies->forCountryCurrency()) {
+            if (
+                in_array('dcc', $config['requirements'], true)
+                && ! $this->dccApplies->forCountryCurrency()
+            ) {
+                continue;
+            }
+            if (
+                in_array('messages', $config['requirements'], true)
+                && ! $this->messagesApply->forCountry()
+            ) {
                 continue;
             }
             $value = $this->settings->has($field) ? $this->settings->get($field) : null;

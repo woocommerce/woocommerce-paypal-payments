@@ -75,7 +75,14 @@ return [
         $state = $container->get('onboarding.state');
         $fields = $container->get('wcgateway.settings.fields');
         $dccApplies = $container->get('api.helpers.dccapplies');
-        return new SettingsRenderer($settings, $state, $fields, $dccApplies);
+        $messagesApply = $container->get('button.helper.messages-apply');
+        return new SettingsRenderer(
+            $settings,
+            $state,
+            $fields,
+            $dccApplies,
+            $messagesApply
+        );
     },
     'wcgateway.settings.listener' => static function (ContainerInterface $container): SettingsListener {
         $settings = $container->get('wcgateway.settings');
@@ -565,7 +572,7 @@ return [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
-                'requirements' => [],
+                'requirements' => ['messages'],
                 'gateway' => 'paypal',
             ],
             'message_enabled' => [
@@ -577,7 +584,7 @@ return [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
-                'requirements' => [],
+                'requirements' => ['messages'],
                 'gateway' => 'paypal',
             ],
             'message_layout' => [
@@ -598,7 +605,7 @@ return [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
-                'requirements' => [],
+                'requirements' => ['messages'],
                 'gateway' => 'paypal',
             ],
             'message_logo' => [
@@ -621,7 +628,7 @@ return [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
-                'requirements' => [],
+                'requirements' => ['messages'],
                 'gateway' => 'paypal',
             ],
             'message_position' => [
@@ -643,7 +650,7 @@ return [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
-                'requirements' => [],
+                'requirements' => ['messages'],
                 'gateway' => 'paypal',
             ],
             'message_color' => [
@@ -666,7 +673,7 @@ return [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
-                'requirements' => [],
+                'requirements' => ['messages'],
                 'gateway' => 'paypal',
             ],
             'message_flex_color' => [
@@ -692,7 +699,7 @@ return [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
-                'requirements' => [],
+                'requirements' => ['messages'],
                 'gateway' => 'paypal',
             ],
             'message_flex_ratio' => [
@@ -715,7 +722,7 @@ return [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
-                'requirements' => [],
+                'requirements' => ['messages'],
                 'gateway' => 'paypal',
             ],
 
@@ -855,7 +862,7 @@ return [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
-                'requirements' => [],
+                'requirements' => ['messages'],
                 'gateway' => 'paypal',
             ],
             'message_product_enabled' => [
@@ -867,7 +874,7 @@ return [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
-                'requirements' => [],
+                'requirements' => ['messages'],
                 'gateway' => 'paypal',
             ],
             'message_product_layout' => [
@@ -888,7 +895,7 @@ return [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
-                'requirements' => [],
+                'requirements' => ['messages'],
                 'gateway' => 'paypal',
             ],
             'message_product_logo' => [
@@ -911,7 +918,7 @@ return [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
-                'requirements' => [],
+                'requirements' => ['messages'],
                 'gateway' => 'paypal',
             ],
             'message_product_position' => [
@@ -933,7 +940,7 @@ return [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
-                'requirements' => [],
+                'requirements' => ['messages'],
                 'gateway' => 'paypal',
             ],
             'message_product_color' => [
@@ -956,7 +963,7 @@ return [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
-                'requirements' => [],
+                'requirements' => ['messages'],
                 'gateway' => 'paypal',
             ],
             'message_product_flex_color' => [
@@ -982,7 +989,7 @@ return [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
-                'requirements' => [],
+                'requirements' => ['messages'],
                 'gateway' => 'paypal',
             ],
             'message_product_flex_ratio' => [
@@ -1005,7 +1012,7 @@ return [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
-                'requirements' => [],
+                'requirements' => ['messages'],
                 'gateway' => 'paypal',
             ],
 
@@ -1267,8 +1274,6 @@ return [
                 'gateway' => 'paypal',
             ],
 
-
-
             'message_cart_heading' => [
                 'heading' => __('Message on Cart', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'ppcp-heading',
@@ -1276,7 +1281,7 @@ return [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
-                'requirements' => [],
+                'requirements' => ['messages'],
                 'gateway' => 'paypal',
             ],
             'message_cart_enabled' => [
@@ -1288,7 +1293,7 @@ return [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
-                'requirements' => [],
+                'requirements' => ['messages'],
                 'gateway' => 'paypal',
             ],
             'message_cart_layout' => [
@@ -1309,7 +1314,7 @@ return [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
-                'requirements' => [],
+                'requirements' => ['messages'],
                 'gateway' => 'paypal',
             ],
             'message_cart_logo' => [
@@ -1332,7 +1337,7 @@ return [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
-                'requirements' => [],
+                'requirements' => ['messages'],
                 'gateway' => 'paypal',
             ],
             'message_cart_position' => [
@@ -1354,7 +1359,7 @@ return [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
-                'requirements' => [],
+                'requirements' => ['messages'],
                 'gateway' => 'paypal',
             ],
             'message_cart_color' => [
@@ -1377,7 +1382,7 @@ return [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
-                'requirements' => [],
+                'requirements' => ['messages'],
                 'gateway' => 'paypal',
             ],
             'message_cart_flex_color' => [
@@ -1403,7 +1408,7 @@ return [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
-                'requirements' => [],
+                'requirements' => ['messages'],
                 'gateway' => 'paypal',
             ],
             'message_cart_flex_ratio' => [
@@ -1426,7 +1431,7 @@ return [
                     State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
-                'requirements' => [],
+                'requirements' => ['messages'],
                 'gateway' => 'paypal',
             ],
 

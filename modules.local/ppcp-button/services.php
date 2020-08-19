@@ -14,6 +14,7 @@ use Inpsyde\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\RequestData;
 use Inpsyde\PayPalCommerce\Button\Exception\RuntimeException;
+use Inpsyde\PayPalCommerce\Button\Helper\MessagesApply;
 use Inpsyde\PayPalCommerce\Button\Helper\ThreeDSecure;
 use Inpsyde\PayPalCommerce\Onboarding\Environment;
 use Inpsyde\PayPalCommerce\Onboarding\State;
@@ -61,6 +62,7 @@ return [
         $clientId = $container->get('button.client_id');
         $dccApplies = $container->get('api.helpers.dccapplies');
         $subscriptionHelper = $container->get('subscription.helper');
+        $messagesApply = $container->get('button.helper.messages-apply');
         return new SmartButton(
             $container->get('button.url'),
             $container->get('session.handler'),
@@ -71,7 +73,8 @@ return [
             $clientId,
             $requestData,
             $dccApplies,
-            $subscriptionHelper
+            $subscriptionHelper,
+            $messagesApply
         );
     },
     'button.url' => static function (ContainerInterface $container): string {
@@ -119,5 +122,8 @@ return [
     },
     'button.helper.three-d-secure' => static function (ContainerInterface $container): ThreeDSecure {
         return new ThreeDSecure();
+    },
+    'button.helper.messages-apply' => static function (ContainerInterface $container): MessagesApply {
+        return new MessagesApply();
     },
 ];
