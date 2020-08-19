@@ -44,13 +44,14 @@ return [
         $authorizedPayments = $container->get('wcgateway.processor.authorized-payments');
         $notice = $container->get('wcgateway.notice.authorize-order-action');
         $settings = $container->get('wcgateway.settings');
-
+        $moduleUrl = $container->get('wcgateway.url');
         return new CreditCardGateway(
             $settingsRenderer,
             $orderProcessor,
             $authorizedPayments,
             $notice,
-            $settings
+            $settings,
+            $moduleUrl
         );
     },
     'wcgateway.disabler' => static function (ContainerInterface $container): DisableGateways {
@@ -337,7 +338,7 @@ return [
                     State::STATE_ONBOARDED,
                 ],
                 'requirements' => [],
-                'gateway' => 'paypal',
+                'gateway' => 'both',
             ],
             'brand_name' => [
                 'title' => __('Brand Name', 'woocommerce-paypal-commerce-gateway'),
@@ -1455,7 +1456,34 @@ return [
                 'default' => [],
                 'desc_tip' => true,
                 'description' => __(
-                    'By default all possible credit cards will be shown. You can disable some cards, if you wish.',
+                    'By default all possible credit cards will be accepted. You can disable some cards, if you wish.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    'visa' => _x('Visa', 'Name of credit card', 'woocommerce-paypal-commerce-gateway'),
+                    'mastercard' => _x('Mastercard', 'Name of credit card', 'woocommerce-paypal-commerce-gateway'),
+                    'amex' => _x('American Express', 'Name of credit card', 'woocommerce-paypal-commerce-gateway'),
+                    'discover' => _x('Discover', 'Name of credit card', 'woocommerce-paypal-commerce-gateway'),
+                    'jcb' => _x('JCB', 'Name of credit card', 'woocommerce-paypal-commerce-gateway'),
+                    'elo' => _x('Elo', 'Name of credit card', 'woocommerce-paypal-commerce-gateway'),
+                    'hiper' => _x('Hiper', 'Name of credit card', 'woocommerce-paypal-commerce-gateway'),
+                ],
+                'screens' => [
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [
+                    'dcc',
+                ],
+                'gateway' => 'dcc',
+            ],
+            'card_icons' => [
+                'title' => __('Show logo of the following credit cards', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'ppcp-multiselect',
+                'class' => ['wc-enhanced-select'],
+                'default' => [],
+                'desc_tip' => true,
+                'description' => __(
+                    'Define, which cards you want to display in your checkout..',
                     'woocommerce-paypal-commerce-gateway'
                 ),
                 'options' => [
@@ -1486,6 +1514,12 @@ return [
 
         return new CheckoutPayPalAddressPreset(
             $container->get('session.handler')
+        );
+    },
+    'wcgateway.url' => static function (ContainerInterface $container): string {
+        return plugins_url(
+            '/modules.local/ppcp-wc-gateway/',
+            dirname(__FILE__, 3) . '/woocommerce-paypal-commerce-gateway.php'
         );
     },
 ];

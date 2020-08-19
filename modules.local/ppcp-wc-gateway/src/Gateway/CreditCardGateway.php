@@ -16,12 +16,14 @@ class CreditCardGateway extends PayPalGateway
 {
     public const ID = 'ppcp-credit-card-gateway';
 
+    private $moduleUrl;
     public function __construct(
         SettingsRenderer $settingsRenderer,
         OrderProcessor $orderProcessor,
         AuthorizedPaymentsProcessor $authorizedPayments,
         AuthorizeOrderActionNotice $notice,
-        ContainerInterface $config
+        ContainerInterface $config,
+        string $moduleUrl
     ) {
 
         $this->id = self::ID;
@@ -66,6 +68,8 @@ class CreditCardGateway extends PayPalGateway
                 'process_admin_options',
             ]
         );
+
+        $this->moduleUrl = $moduleUrl;
     }
 
     public function init_form_fields()
@@ -91,5 +95,34 @@ class CreditCardGateway extends PayPalGateway
         $content = ob_get_contents();
         ob_end_clean();
         return $content;
+    }
+
+    public function get_title() {
+        $title = parent::get_title();
+        $icons = $this->config->has('card_icons') ? (array) $this->config->get('card_icons') : [];
+        if (empty($icons)) {
+            return $title;
+        }
+
+        $titleOptions = [
+            'visa' => _x('Visa', 'Name of credit card', 'woocommerce-paypal-commerce-gateway'),
+            'mastercard' => _x('Mastercard', 'Name of credit card', 'woocommerce-paypal-commerce-gateway'),
+            'amex' => _x('American Express', 'Name of credit card', 'woocommerce-paypal-commerce-gateway'),
+            'discover' => _x('Discover', 'Name of credit card', 'woocommerce-paypal-commerce-gateway'),
+            'jcb' => _x('JCB', 'Name of credit card', 'woocommerce-paypal-commerce-gateway'),
+            'elo' => _x('Elo', 'Name of credit card', 'woocommerce-paypal-commerce-gateway'),
+            'hiper' => _x('Hiper', 'Name of credit card', 'woocommerce-paypal-commerce-gateway'),
+        ];
+        $images = array_map(
+            function(string $type) use ($titleOptions) : string {
+                return '<img
+                 title="' . esc_attr($titleOptions[$type]) . '"
+                 src="' . esc_url($this->moduleUrl) . '/assets/images/' . esc_attr($type) . '.svg"
+                 class="ppcp-card-icon"
+                > ';
+            },
+            $icons
+        );
+        return $title . implode('', $images);
     }
 }
