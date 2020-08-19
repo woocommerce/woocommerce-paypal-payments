@@ -3,9 +3,10 @@ import UpdateCart from "../Helper/UpdateCart";
 import SingleProductActionHandler from "../ActionHandler/SingleProductActionHandler";
 
 class SingleProductBootstap {
-    constructor(gateway, renderer) {
+    constructor(gateway, renderer, messages) {
         this.gateway = gateway;
         this.renderer = renderer;
+        this.messages = messages;
     }
 
     init() {
@@ -35,6 +36,15 @@ class SingleProductBootstap {
             () => {
                 this.renderer.showButtons(this.gateway.button.wrapper);
                 this.renderer.showButtons(this.gateway.hosted_fields.wrapper);
+                let priceText = "0";
+                if (document.querySelector('form.cart ins .woocommerce-Price-amount')) {
+                    priceText = document.querySelector('form.cart ins .woocommerce-Price-amount').innerText;
+                }
+                else if (document.querySelector('form.cart .woocommerce-Price-amount')) {
+                    priceText = document.querySelector('form.cart .woocommerce-Price-amount').innerText;
+                }
+                const amount = parseInt(priceText.replace(/([^\d,\.\s]*)/g, ''));
+                this.messages.renderWithAmount(amount)
             },
             () => {
                 this.renderer.hideButtons(this.gateway.button.wrapper);

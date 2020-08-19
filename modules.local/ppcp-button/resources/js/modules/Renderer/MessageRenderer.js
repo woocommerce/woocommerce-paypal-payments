@@ -5,10 +5,7 @@ class MessageRenderer {
     }
 
     render() {
-        if (typeof paypal.Messages === 'undefined' || typeof this.config.wrapper === 'undefined' ) {
-            return;
-        }
-        if (! document.querySelector(this.config.wrapper)) {
+        if (! this.shouldRender()) {
             return;
         }
 
@@ -17,6 +14,31 @@ class MessageRenderer {
             placement: this.config.placement,
             style: this.config.style
         }).render(this.config.wrapper);
+    }
+
+    renderWithAmount(amount) {
+
+        if (! this.shouldRender()) {
+            return;
+        }
+
+        console.log(amount);
+        paypal.Messages({
+            amount,
+            placement: this.config.placement,
+            style: this.config.style
+        }).render(this.config.wrapper);
+    }
+
+    shouldRender() {
+
+        if (typeof paypal.Messages === 'undefined' || typeof this.config.wrapper === 'undefined' ) {
+            return false;
+        }
+        if (! document.querySelector(this.config.wrapper)) {
+            return false;
+        }
+        return true;
     }
 }
 export default MessageRenderer;

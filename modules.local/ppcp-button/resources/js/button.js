@@ -27,6 +27,7 @@ const bootstrap = () => {
         const singleProductBootstrap = new SingleProductBootstap(
             PayPalCommerceGateway,
             renderer,
+            messageRenderer,
         );
 
         singleProductBootstrap.init();
