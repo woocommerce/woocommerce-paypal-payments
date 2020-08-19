@@ -13,7 +13,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
 use Inpsyde\PayPalCommerce\Button\Helper\ThreeDSecure;
 use Inpsyde\PayPalCommerce\Session\SessionHandler;
 use Inpsyde\PayPalCommerce\TestCase;
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGateway;
+use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Inpsyde\Woocommerce\Logging\WoocommerceLoggingModule;
 use Mockery;
 
@@ -85,19 +85,19 @@ class OrderProcessorTest extends TestCase
         $wcOrder
             ->expects('update_meta_data')
             ->with(
-                WcGateway::ORDER_ID_META_KEY,
+                PayPalGateway::ORDER_ID_META_KEY,
                 $orderId
             );
         $wcOrder
             ->expects('update_meta_data')
             ->with(
-                WcGateway::CAPTURED_META_KEY,
+                PayPalGateway::CAPTURED_META_KEY,
                 'false'
             );
         $wcOrder
             ->expects('update_meta_data')
             ->with(
-                WcGateway::INTENT_META_KEY,
+                PayPalGateway::INTENT_META_KEY,
                 $orderIntent
             );
         $wcOrder
@@ -171,13 +171,13 @@ class OrderProcessorTest extends TestCase
         $wcOrder
             ->expects('update_meta_data')
             ->with(
-                WcGateway::ORDER_ID_META_KEY,
+                PayPalGateway::ORDER_ID_META_KEY,
                 $orderId
             );
         $wcOrder
             ->expects('update_meta_data')
             ->with(
-                WcGateway::INTENT_META_KEY,
+                PayPalGateway::INTENT_META_KEY,
                 $orderIntent
             );
         $wcOrder
@@ -235,13 +235,13 @@ class OrderProcessorTest extends TestCase
         $wcOrder
             ->expects('update_meta_data')
             ->with(
-                WcGateway::ORDER_ID_META_KEY,
+                PayPalGateway::ORDER_ID_META_KEY,
                 $orderId
             );
         $wcOrder
             ->expects('update_meta_data')
             ->with(
-                WcGateway::INTENT_META_KEY,
+                PayPalGateway::INTENT_META_KEY,
                 $orderIntent
             );
         $this->assertFalse($testee->process($wcOrder, $woocommerce));

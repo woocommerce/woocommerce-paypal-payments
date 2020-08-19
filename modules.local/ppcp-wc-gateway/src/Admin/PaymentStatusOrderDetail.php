@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\WcGateway\Admin;
 
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGateway;
+use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 class PaymentStatusOrderDetail
 {
     public function render(int $wcOrderId)
     {
         $wcOrder = new \WC_Order($wcOrderId);
-        $intent = $wcOrder->get_meta(WcGateway::INTENT_META_KEY);
-        $captured = $wcOrder->get_meta(WcGateway::CAPTURED_META_KEY);
+        $intent = $wcOrder->get_meta(PayPalGateway::INTENT_META_KEY);
+        $captured = $wcOrder->get_meta(PayPalGateway::CAPTURED_META_KEY);
 
         if (strcasecmp($intent, 'AUTHORIZE') !== 0) {
             return;

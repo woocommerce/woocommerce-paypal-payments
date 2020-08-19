@@ -6,6 +6,8 @@ namespace Inpsyde\PayPalCommerce\WcGateway\Settings;
 
 use Inpsyde\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
 use Inpsyde\PayPalCommerce\Onboarding\State;
+use Inpsyde\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Inpsyde\PayPalCommerce\Webhooks\WebhookRegistrar;
 use Psr\SimpleCache\CacheInterface;
 
@@ -60,8 +62,14 @@ class SettingsListener
          */
         $rawData = (isset($_POST['ppcp'])) ? (array) wp_unslash($_POST['ppcp']) : [];
         $settings = $this->retrieveSettingsFromRawData($rawData);
-        $settings['enabled'] =  isset($_POST['woocommerce_ppcp-gateway_enabled'])
-            && absint($_POST['woocommerce_ppcp-gateway_enabled']) === 1;
+        if ($_GET['section'] === PayPalGateway::ID) {
+            $settings['enabled'] = isset($_POST['woocommerce_ppcp-gateway_enabled'])
+                && absint($_POST['woocommerce_ppcp-gateway_enabled']) === 1;
+        }
+        if ($_GET['section'] === CreditCardGateway::ID) {
+            $settings['dcc_gateway_enabled'] = isset($_POST['woocommerce_ppcp-credit-card-gateway_enabled'])
+                && absint($_POST['woocommerce_ppcp-credit-card-gateway_enabled']) === 1;
+        }
         foreach ($settings as $id => $value) {
             $this->settings->set($id, $value);
         }
@@ -80,11 +88,19 @@ class SettingsListener
             if (! in_array($this->state->currentState(), $config['screens'], true)) {
                 continue;
             }
+            if ($config['gateway'] === 'dcc' && wp_unslash(sanitize_text_field($_GET['section'])) !== 'ppcp-credit-card-gateway') {
+                continue;
+            }
+            if ($config['gateway'] === 'paypal' && wp_unslash(sanitize_text_field($_GET['section'])) !== 'ppcp-gateway') {
+                continue;
+            }
             switch ($config['type']) {
                 case 'checkbox':
                     $settings[$key] = isset($rawData[$key]);
                     break;
                 case 'text':
+                case 'ppcp-text-input':
+                case 'ppcp-password':
                     $settings[$key] = isset($rawData[$key]) ? sanitize_text_field($rawData[$key]) : '';
                     break;
                 case 'password':
@@ -125,7 +141,7 @@ class SettingsListener
 
         if (
             ! isset($_REQUEST['section'])
-            || sanitize_text_field(wp_unslash($_REQUEST['section'])) !== 'ppcp-gateway'
+            || ! in_array(sanitize_text_field(wp_unslash($_REQUEST['section'])), ['ppcp-gateway', 'ppcp-credit-card-gateway'],true)
         ) {
             return false;
         }

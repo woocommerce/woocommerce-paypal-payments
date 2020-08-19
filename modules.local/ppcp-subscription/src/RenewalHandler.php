@@ -11,7 +11,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use Inpsyde\PayPalCommerce\Subscription\Repository\PaymentTokenRepository;
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGateway;
+use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Psr\Log\LoggerInterface;
 
 class RenewalHandler
@@ -141,7 +141,7 @@ class RenewalHandler
 
         if ($order->intent() === 'AUTHORIZE') {
             $this->orderEndpoint->authorize($order);
-            $wcOrder->update_meta_data(WcGateway::CAPTURED_META_KEY, 'false');
+            $wcOrder->update_meta_data(PayPalGateway::CAPTURED_META_KEY, 'false');
             \WC_Subscriptions_Manager::process_subscription_payments_on_order($wcOrder);
         }
     }

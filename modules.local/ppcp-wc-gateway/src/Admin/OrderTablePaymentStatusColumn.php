@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\WcGateway\Admin;
 
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGateway;
+use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
 
 class OrderTablePaymentStatusColumn
@@ -65,12 +65,12 @@ class OrderTablePaymentStatusColumn
 
     private function renderForOrder(\WC_Order $order): bool
     {
-        return !empty($order->get_meta(WcGateway::CAPTURED_META_KEY));
+        return !empty($order->get_meta(PayPalGateway::CAPTURED_META_KEY));
     }
 
     private function isCaptured(\WC_Order $wcOrder): bool
     {
-        $captured = $wcOrder->get_meta(WcGateway::CAPTURED_META_KEY);
+        $captured = $wcOrder->get_meta(PayPalGateway::CAPTURED_META_KEY);
         return wc_string_to_bool($captured);
     }
 

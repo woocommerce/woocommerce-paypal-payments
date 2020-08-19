@@ -50,6 +50,7 @@ class Settings implements ContainerInterface
         $this->load();
         $fieldsToReset = [
             'enabled',
+            'dcc_gateway_enabled',
             'intent',
             'client_id',
             'client_secret',

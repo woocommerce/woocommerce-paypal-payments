@@ -50,15 +50,21 @@ class CheckoutBootstap {
         const currentPaymentMethod = jQuery(
             'input[name="payment_method"]:checked').val();
 
-        if (currentPaymentMethod !== 'ppcp-gateway') {
+        if (currentPaymentMethod !== 'ppcp-gateway' && currentPaymentMethod !== 'ppcp-credit-card-gateway') {
             this.renderer.hideButtons(this.gateway.button.wrapper);
             this.renderer.hideButtons(this.gateway.hosted_fields.wrapper);
             jQuery('#place_order').show();
         }
         else {
-            this.renderer.showButtons(this.gateway.button.wrapper);
-            this.renderer.showButtons(this.gateway.hosted_fields.wrapper);
             jQuery('#place_order').hide();
+            if (currentPaymentMethod === 'ppcp-gateway') {
+                this.renderer.showButtons(this.gateway.button.wrapper);
+                this.renderer.hideButtons(this.gateway.hosted_fields.wrapper);
+            }
+            if (currentPaymentMethod === 'ppcp-credit-card-gateway') {
+                this.renderer.hideButtons(this.gateway.button.wrapper);
+                this.renderer.showButtons(this.gateway.hosted_fields.wrapper);
+            }
         }
     }
 }

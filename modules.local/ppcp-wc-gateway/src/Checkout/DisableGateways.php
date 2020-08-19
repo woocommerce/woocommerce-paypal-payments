@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace Inpsyde\PayPalCommerce\WcGateway\Checkout;
 
 use Inpsyde\PayPalCommerce\Session\SessionHandler;
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGateway;
+use Inpsyde\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Psr\Container\ContainerInterface;
 
 class DisableGateways
@@ -24,26 +25,47 @@ class DisableGateways
 
     public function handler(array $methods): array
     {
-        if (! isset($methods[WcGateway::ID])) {
+        if (! isset($methods[PayPalGateway::ID])) {
             return $methods;
         }
         if (
             ! $this->settings->has('merchant_email')
             || ! is_email($this->settings->get('merchant_email'))
         ) {
-            unset($methods[WcGateway::ID]);
+            unset($methods[PayPalGateway::ID]);
+            unset($methods[CreditCardGateway::ID]);
             return $methods;
         }
+
+        if (! $this->settings->has('client_id') || empty($this->settings->get('client_id'))) {
+            unset($methods[CreditCardGateway::ID]);
+        }
+
 
         if (! $this->needsToDisableGateways()) {
             return $methods;
         }
 
-        return [WcGateway::ID => $methods[WcGateway::ID]];
+        if ($this->isCreditCard()) {
+            return [CreditCardGateway::ID => $methods[CreditCardGateway::ID]];
+        }
+        return [PayPalGateway::ID => $methods[PayPalGateway::ID]];
     }
 
     private function needsToDisableGateways(): bool
     {
         return $this->sessionHandler->order() !== null;
+    }
+
+    private function isCreditCard() : bool
+    {
+        $order =$this->sessionHandler->order();
+        if (! $order) {
+            return false;
+        }
+        if ( ! $order->paymentSource() || ! $order->paymentSource()->card()) {
+            return false;
+        }
+        return true;
     }
 }

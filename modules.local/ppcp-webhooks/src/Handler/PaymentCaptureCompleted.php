@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\Webhooks\Handler;
 
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGateway;
+use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Psr\Log\LoggerInterface;
 
 class PaymentCaptureCompleted implements RequestHandler
@@ -78,7 +78,7 @@ class PaymentCaptureCompleted implements RequestHandler
         );
 
         $wcOrder->set_status('processing');
-        $wcOrder->update_meta_data(WcGateway::CAPTURED_META_KEY, 'true');
+        $wcOrder->update_meta_data(PayPalGateway::CAPTURED_META_KEY, 'true');
         $wcOrder->save();
         $this->logger->log(
             'info',

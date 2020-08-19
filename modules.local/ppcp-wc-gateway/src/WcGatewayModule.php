@@ -7,12 +7,14 @@ namespace Inpsyde\PayPalCommerce\WcGateway;
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
 use Inpsyde\PayPalCommerce\AdminNotices\Repository\Repository;
+use Inpsyde\PayPalCommerce\ApiClient\Helper\DccApplies;
 use Inpsyde\PayPalCommerce\WcGateway\Admin\OrderDetail;
 use Inpsyde\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
 use Inpsyde\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
 use Inpsyde\PayPalCommerce\WcGateway\Checkout\CheckoutPayPalAddressPreset;
 use Inpsyde\PayPalCommerce\WcGateway\Checkout\DisableGateways;
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\WcGateway;
+use Inpsyde\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Inpsyde\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
@@ -75,11 +77,18 @@ class WcGatewayModule implements ModuleInterface
                  * @var Settings $settings
                  */
                 $settings = $container->get('wcgateway.settings');
-                $enabled = $settings->has('enabled') ? $settings->get('enabled') : false;
+                $key = $_POST['gateway_id'] === PayPalGateway::ID ? 'enabled' : '';
+                if ($_POST['gateway_id'] === CreditCardGateway::ID ) {
+                    $key = 'dcc_gateway_enabled';
+                }
+                if (! $key) {
+                    return;
+                }
+                $enabled = $settings->has($key) ? $settings->get($key) : false;
                 if (! $enabled) {
                     return;
                 }
-                $settings->set('enabled', false);
+                $settings->set($key, false);
                 $settings->persist();
             },
             9
@@ -98,7 +107,14 @@ class WcGatewayModule implements ModuleInterface
         add_filter(
             'woocommerce_payment_gateways',
             static function ($methods) use ($container): array {
-                $methods[] = $container->get('wcgateway.gateway');
+                $methods[] = $container->get('wcgateway.paypal-gateway');
+                $dccApplies = $container->get('api.helpers.dccapplies');
+                /**
+                 * @var DccApplies $dccApplies
+                 */
+                if ($dccApplies->forCountryCurrency()) {
+                    $methods[] = $container->get('wcgateway.credit-card-gateway');
+                }
                 return (array)$methods;
             }
         );
@@ -157,9 +173,9 @@ class WcGatewayModule implements ModuleInterface
             'woocommerce_order_action_ppcp_authorize_order',
             static function (\WC_Order $wcOrder) use ($container) {
                 /**
-                 * @var WcGateway $gateway
+                 * @var PayPalGateway $gateway
                  */
-                $gateway = $container->get('wcgateway.gateway');
+                $gateway = $container->get('wcgateway.paypal-gateway');
                 $gateway->captureAuthorizedPayment($wcOrder);
             }
         );

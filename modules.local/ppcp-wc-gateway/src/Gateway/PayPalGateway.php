@@ -22,7 +22,7 @@ use Psr\Container\ContainerInterface;
 
 //phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
 //phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration.NoArgumentType
-class WcGateway extends \WC_Payment_Gateway
+class PayPalGateway extends \WC_Payment_Gateway
 {
 
     public const ID = 'ppcp-gateway';
@@ -30,11 +30,11 @@ class WcGateway extends \WC_Payment_Gateway
     public const INTENT_META_KEY = '_ppcp_paypal_intent';
     public const ORDER_ID_META_KEY = '_ppcp_paypal_order_id';
 
-    private $settingsRenderer;
-    private $authorizedPayments;
-    private $notice;
-    private $orderProcessor;
-    private $config;
+    protected $settingsRenderer;
+    protected $authorizedPayments;
+    protected $notice;
+    protected $orderProcessor;
+    protected $config;
 
     public function __construct(
         SettingsRenderer $settingsRenderer,
@@ -178,7 +178,7 @@ class WcGateway extends \WC_Payment_Gateway
     {
 
         ob_start();
-        $this->settingsRenderer->render();
+        $this->settingsRenderer->render(false);
         $content = ob_get_contents();
         ob_end_clean();
         return $content;
