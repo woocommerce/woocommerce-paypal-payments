@@ -55,6 +55,7 @@ return [
         $settings = $container->get('wcgateway.settings');
         $intent = $settings->has('intent') && strtoupper((string) $settings->get('intent')) === 'AUTHORIZE' ? 'AUTHORIZE' : 'CAPTURE';
         $applicationContextRepository = $container->get('api.repository.application-context');
+        $paypalRequestId = $container->get('api.repository.paypal-request-id');
         return new OrderEndpoint(
             $container->get('api.host'),
             $container->get('api.bearer'),
@@ -63,6 +64,7 @@ return [
             $intent,
             $logger,
             $applicationContextRepository,
+            $paypalRequestId,
             $bnCode
         );
     },
