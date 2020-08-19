@@ -151,7 +151,7 @@ return [
             'save',
             'reset'
         );
-        return [
+        $fields = [
             'ppcp_onboarding' => [
                 'title' => __('Connect to PayPal', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'ppcp_onboarding',
@@ -1476,6 +1476,10 @@ return [
                 'gateway' => 'dcc',
             ],
         ];
+        if (! defined('PPCP_FLAG_SUBSCRIPTION') || ! PPCP_FLAG_SUBSCRIPTION) {
+            unset($fields['vault_enabled']);
+        }
+        return $fields;
     },
 
     'wcgateway.checkout.address-preset' => static function(ContainerInterface $container): CheckoutPayPalAddressPreset {

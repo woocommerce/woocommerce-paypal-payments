@@ -30,7 +30,7 @@ class CreditCardGateway extends PayPalGateway
         $this->notice = $notice;
         $this->settingsRenderer = $settingsRenderer;
         $this->config = $config;
-        if ($this->config->has('vault_enabled') && $this->config->get('vault_enabled')) {
+        if (defined('PPCP_FLAG_SUBSCRIPTION') && PPCP_FLAG_SUBSCRIPTION && $this->config->has('vault_enabled') && $this->config->get('vault_enabled')) {
             $this->supports = [
                 'products',
                 'subscriptions',
