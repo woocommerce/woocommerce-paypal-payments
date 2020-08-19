@@ -1,5 +1,8 @@
 const groupToggle = (selector, group) => {
     const toggleElement = document.querySelector(selector);
+    if (! toggleElement) {
+        return;
+    }
     if (! toggleElement.checked) {
         group.forEach( (elementToHide) => {
             document.querySelector(elementToHide).style.display = 'none';
@@ -27,6 +30,9 @@ const groupToggle = (selector, group) => {
 
 const groupToggleSelect = (selector, group) => {
     const toggleElement = document.querySelector(selector);
+    if (! toggleElement) {
+        return;
+    }
     const value = toggleElement.value;
     group.forEach( (elementToHide) => {
         if (value === elementToHide.value) {
