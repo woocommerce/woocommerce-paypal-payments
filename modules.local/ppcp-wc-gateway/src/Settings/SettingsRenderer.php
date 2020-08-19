@@ -157,7 +157,9 @@ class SettingsRenderer
                 continue;
             }
             $value = $this->settings->has($field) ? $this->settings->get($field) : null;
-            $id = 'ppcp[' . $field . ']';
+            $key = 'ppcp[' . $field . ']';
+            $id = 'ppcp-' . $field;
+            $config['id'] = $id;
             $thTd = $config['type'] !== 'ppcp-heading' ? 'td' : 'th';
             $colspan = $config['type'] !== 'ppcp-heading' ? 1 : 2;
 
@@ -180,7 +182,7 @@ class SettingsRenderer
             <<?php echo esc_attr($thTd); ?> colspan="<?php echo (int) $colspan; ?>"><?php
                 $config['type'] === 'ppcp-text' ?
                     $this->renderText($config)
-                    : woocommerce_form_field($id, $config, $value); ?></<?php echo esc_attr($thTd); ?>>
+                    : woocommerce_form_field($key, $config, $value); ?></<?php echo esc_attr($thTd); ?>>
         </tr>
         <?php endforeach;
     }
