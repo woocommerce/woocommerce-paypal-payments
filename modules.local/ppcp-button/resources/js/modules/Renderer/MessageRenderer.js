@@ -22,7 +22,12 @@ class MessageRenderer {
             return;
         }
 
-        console.log(amount);
+        const newWrapper = document.createElement('div');
+        newWrapper.setAttribute('id', this.config.wrapper.replace('#', ''));
+
+        const sibling = document.querySelector(this.config.wrapper).nextSibling;
+        document.querySelector(this.config.wrapper).parentElement.removeChild(document.querySelector(this.config.wrapper));
+        sibling.parentElement.insertBefore(newWrapper, sibling);
         paypal.Messages({
             amount,
             placement: this.config.placement,
