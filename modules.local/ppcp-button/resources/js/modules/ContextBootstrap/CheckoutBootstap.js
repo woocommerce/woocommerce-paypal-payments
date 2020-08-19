@@ -45,7 +45,6 @@ class CheckoutBootstap {
             this.gateway.hosted_fields.wrapper,
             actionHandler.configuration(),
         );
-        this.messages.render();
     }
 
     switchBetweenPayPalandOrderButton() {
@@ -63,6 +62,7 @@ class CheckoutBootstap {
             if (currentPaymentMethod === 'ppcp-gateway') {
                 this.renderer.showButtons(this.gateway.button.wrapper);
                 this.renderer.showButtons(this.gateway.messages.wrapper);
+                this.messages.render();
                 this.renderer.hideButtons(this.gateway.hosted_fields.wrapper);
             }
             if (currentPaymentMethod === 'ppcp-credit-card-gateway') {

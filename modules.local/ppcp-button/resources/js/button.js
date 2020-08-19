@@ -51,7 +51,9 @@ const bootstrap = () => {
         checkoutBootstap.init();
     }
 
-    messageRenderer.render();
+    if (context !== 'checkout') {
+        messageRenderer.render();
+    }
 };
 document.addEventListener(
     'DOMContentLoaded',
