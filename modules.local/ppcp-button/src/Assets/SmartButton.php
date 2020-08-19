@@ -60,10 +60,7 @@ class SmartButton implements SmartButtonInterface
         $this->messagesApply = $messagesApply;
     }
 
-    // phpcs:disable Inpsyde.CodeQuality.FunctionLength.TooLong
-    // phpcs:disable Generic.Metrics.CyclomaticComplexity.TooHigh
     /**
-     * ToDo: Refactor
      * @return bool
      */
     public function renderWrapper(): bool
@@ -72,6 +69,77 @@ class SmartButton implements SmartButtonInterface
         if (! $this->canSaveVaultToken() && $this->hasSubscription()) {
             return false;
         }
+
+        $this->renderButtonWrapperRegistrar();
+        $this->renderMessageWrapperRegistrar();
+
+        if (
+            $this->settings->has('dcc_checkout_enabled')
+            && $this->settings->get('dcc_checkout_enabled')
+            && ! $this->sessionHandler->order()
+        ) {
+            add_action(
+                'woocommerce_review_order_after_submit',
+                [
+                    $this,
+                    'dccRenderer',
+                ],
+                11
+            );
+        }
+        return true;
+    }
+
+    private function renderMessageWrapperRegistrar() : bool {
+
+        $notEnabledOnCart = $this->settings->has('message_cart_enabled') &&
+            !$this->settings->get('message_cart_enabled');
+        if (
+            is_cart()
+            && !$notEnabledOnCart
+        ) {
+            add_action(
+                'woocommerce_proceed_to_checkout',
+                [
+                    $this,
+                    'messageRenderer',
+                ],
+                19
+            );
+        }
+
+        $notEnabledOnProductPage = $this->settings->has('message_product_enabled') &&
+            !$this->settings->get('message_product_enabled');
+        if (
+            (is_product() || wc_post_content_has_shortcode('product_page'))
+            && !$notEnabledOnProductPage
+        ) {
+            add_action(
+                'woocommerce_single_product_summary',
+                [
+                    $this,
+                    'messageRenderer',
+                ],
+                30
+            );
+        }
+
+
+        $notEnabledOnCheckout = $this->settings->has('message_enabled') &&
+            !$this->settings->get('message_enabled');
+        if (! $notEnabledOnCheckout) {
+            add_action(
+                'woocommerce_review_order_after_submit',
+                [
+                    $this,
+                    'messageRenderer',
+                ],
+                11
+            );
+        }
+        return true;
+    }
+    private function renderButtonWrapperRegistrar() : bool {
 
         $notEnabledOnCart = $this->settings->has('button_cart_enabled') &&
             !$this->settings->get('button_cart_enabled');
@@ -108,7 +176,7 @@ class SmartButton implements SmartButtonInterface
         $notEnabledOnMiniCart = $this->settings->has('button_mini_cart_enabled') &&
             !$this->settings->get('button_mini_cart_enabled');
         if (
-            ! $notEnabledOnMiniCart
+        ! $notEnabledOnMiniCart
         ) {
             add_action(
                 'woocommerce_widget_shopping_cart_after_buttons',
@@ -127,24 +195,9 @@ class SmartButton implements SmartButtonInterface
             ],
             10
         );
-        if (
-            $this->settings->has('dcc_checkout_enabled')
-            && $this->settings->get('dcc_checkout_enabled')
-            && ! $this->sessionHandler->order()
-        ) {
-            add_action(
-                'woocommerce_review_order_after_submit',
-                [
-                    $this,
-                    'dccRenderer',
-                ],
-                11
-            );
-        }
+
         return true;
     }
-    // phpcs:enable Inpsyde.CodeQuality.FunctionLength.TooLong
-    // phpcs:enable Generic.Metrics.CyclomaticComplexity.TooHigh
 
     public function enqueue(): bool
     {
@@ -186,7 +239,11 @@ class SmartButton implements SmartButtonInterface
             return;
         }
 
-        echo '<div id="ppc-button"></div><div id="ppcp-messages"></div>';
+        echo '<div id="ppc-button"></div>';
+    }
+
+    public function messageRenderer() {
+        echo '<div id="ppcp-messages"></div>';
     }
 
     private function messageValues() : array {
