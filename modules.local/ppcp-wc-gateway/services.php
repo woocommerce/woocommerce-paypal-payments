@@ -576,9 +576,9 @@ return [
                 'gateway' => 'paypal',
             ],
             'message_enabled' => [
-                'title' => __('Enable message on Single Product', 'woocommerce-paypal-commerce-gateway'),
+                'title' => __('Enable message on Checkout', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'checkbox',
-                'label' => __('Enable on Single Product', 'woocommerce-paypal-commerce-gateway'),
+                'label' => __('Enable on Checkout', 'woocommerce-paypal-commerce-gateway'),
                 'default' => true,
                 'screens' => [
                     State::STATE_PROGRESSIVE,
