@@ -16,10 +16,11 @@ class Renderer {
         }
 
         const style = wrapper === this.defaultConfig.button.wrapper ? this.defaultConfig.button.style : this.defaultConfig.button.mini_cart_style;
-        paypal.Buttons({
+        const result = paypal.Buttons({
             style,
             ...contextConfig,
         }).render(wrapper);
+        console.log(result);
     }
 
     isAlreadyRendered(wrapper) {

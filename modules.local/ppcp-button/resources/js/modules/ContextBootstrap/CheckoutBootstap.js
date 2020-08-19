@@ -2,9 +2,10 @@ import ErrorHandler from '../ErrorHandler';
 import CheckoutActionHandler from '../ActionHandler/CheckoutActionHandler';
 
 class CheckoutBootstap {
-    constructor(gateway, renderer) {
+    constructor(gateway, renderer, messages) {
         this.gateway = gateway;
         this.renderer = renderer;
+        this.messages = messages
     }
 
     init() {
@@ -44,6 +45,7 @@ class CheckoutBootstap {
             this.gateway.hosted_fields.wrapper,
             actionHandler.configuration(),
         );
+        this.messages.render();
     }
 
     switchBetweenPayPalandOrderButton() {
@@ -52,6 +54,7 @@ class CheckoutBootstap {
 
         if (currentPaymentMethod !== 'ppcp-gateway' && currentPaymentMethod !== 'ppcp-credit-card-gateway') {
             this.renderer.hideButtons(this.gateway.button.wrapper);
+            this.renderer.hideButtons(this.gateway.messages.wrapper);
             this.renderer.hideButtons(this.gateway.hosted_fields.wrapper);
             jQuery('#place_order').show();
         }
@@ -59,10 +62,12 @@ class CheckoutBootstap {
             jQuery('#place_order').hide();
             if (currentPaymentMethod === 'ppcp-gateway') {
                 this.renderer.showButtons(this.gateway.button.wrapper);
+                this.renderer.showButtons(this.gateway.messages.wrapper);
                 this.renderer.hideButtons(this.gateway.hosted_fields.wrapper);
             }
             if (currentPaymentMethod === 'ppcp-credit-card-gateway') {
                 this.renderer.hideButtons(this.gateway.button.wrapper);
+                this.renderer.hideButtons(this.gateway.messages.wrapper);
                 this.renderer.showButtons(this.gateway.hosted_fields.wrapper);
             }
         }

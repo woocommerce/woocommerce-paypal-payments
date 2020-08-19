@@ -6,11 +6,13 @@ import Renderer from './modules/Renderer/Renderer';
 import ErrorHandler from './modules/ErrorHandler';
 import CreditCardRenderer from "./modules/Renderer/CreditCardRenderer";
 import dataClientIdAttributeHandler from "./modules/DataClientIdAttributeHandler";
+import MessageRenderer from "./modules/Renderer/MessageRenderer";
 
 const bootstrap = () => {
     const errorHandler = new ErrorHandler(PayPalCommerceGateway.labels.error.generic);
     const creditCardRenderer = new CreditCardRenderer(PayPalCommerceGateway, errorHandler);
     const renderer = new Renderer(creditCardRenderer, PayPalCommerceGateway);
+    const messageRenderer = new MessageRenderer(PayPalCommerceGateway.messages);
     const context = PayPalCommerceGateway.context;
     if (context === 'mini-cart' || context === 'product') {
         const miniCartBootstrap = new MiniCartBootstap(
@@ -42,11 +44,14 @@ const bootstrap = () => {
     if (context === 'checkout') {
         const checkoutBootstap = new CheckoutBootstap(
             PayPalCommerceGateway,
-            renderer
+            renderer,
+            messageRenderer
         );
 
         checkoutBootstap.init();
     }
+
+    messageRenderer.render();
 };
 document.addEventListener(
     'DOMContentLoaded',

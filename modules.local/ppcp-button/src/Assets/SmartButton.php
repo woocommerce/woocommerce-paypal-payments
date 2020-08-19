@@ -186,21 +186,17 @@ class SmartButton implements SmartButtonInterface
             return;
         }
 
-        echo '<div id="ppc-button"></div>';
-        $this->renderMessage();
+        echo '<div id="ppc-button"></div><div id="ppcp-messages"></div>';
     }
 
-    //phpcs:disable Inpsyde.CodeQuality.FunctionLength.TooLong
-    private function renderMessage()
-    {
-        $markup = '<div
-                    data-pp-message
-                    data-pp-placement="%s"
-                    data-pp-amount="%s"
-                    data-pp-style-layout="%s"
-                   
-                ></div>';
+    private function messageValues() : array {
 
+        if (
+            $this->settings->has('disable_funding')
+            && in_array('credit', (array) $this->settings->get('disable_funding'), true)
+        ) {
+            return [];
+        }
         $placement = 'product';
         $product = wc_get_product();
         $amount = (is_a($product, \WC_Product::class)) ? wc_get_price_including_tax($product) : 0;
@@ -256,28 +252,28 @@ class SmartButton implements SmartButtonInterface
         }
 
         if (! $shouldShow) {
-            return;
-        }
-        $attributes = [
-            'data-pp-message' => '',
-            'data-pp-placement' => $placement,
-            'data-pp-amount' => $amount,
-            'data-pp-style-layout' => $layout,
-        ];
-        if ($layout === 'text') {
-            $attributes['data-pp-style-logo-type'] = $logoType;
-            $attributes['data-pp-style-logo-position'] = $logoPosition;
-            $attributes['data-pp-style-text-color'] = $textColor;
-        } elseif ($layout === 'flex') {
-            $attributes['data-pp-style-color'] = $styleColor;
-            $attributes['data-pp-style-ratio'] = $ratio;
+            return [];
         }
 
-        echo '<div ';
-        foreach ($attributes as $attribute => $value) {
-            echo esc_attr($attribute) . '="' . esc_attr($value) . '" ';
-        }
-        echo '></div>';
+        $values = [
+            'wrapper' => '#ppcp-messages',
+            'amount' => $amount,
+            'placement' => $placement,
+            'style' => [
+                'layout' => $layout,
+                'logo' => [
+                    'type' => $logoType,
+                    'position' => $logoPosition,
+                ],
+                'text' => [
+                    'color' => $textColor,
+                ],
+                'color' => $styleColor,
+                'ratio' => $ratio,
+            ],
+        ];
+
+        return $values;
     }
 
     public function dccRenderer()
@@ -417,6 +413,7 @@ class SmartButton implements SmartButtonInterface
                     ),
                 ],
             ],
+            'messages' => $this->messageValues(),
             'labels' => [
                 'error' => [
                     'generic' => __(
@@ -477,7 +474,7 @@ class SmartButton implements SmartButtonInterface
         if (! is_checkout()) {
             $disableFunding[] = 'card';
         }
-        $params['disable-funding'] = implode(',', $disableFunding);
+        $params['disable-funding'] = implode(',', array_unique($disableFunding));
         $smartButtonUrl = add_query_arg($params, 'https://www.paypal.com/sdk/js');
         return $smartButtonUrl;
     }
