@@ -1436,19 +1436,6 @@ return [
                 'gateway' => 'paypal',
             ],
 
-            'dcc_checkout_enabled' => [
-                'title' => __('Enable credit card on checkout', 'woocommerce-paypal-commerce-gateway'),
-                'type' => 'checkbox',
-                'label' => __('Allow your customers to pay with credit card in the checkout.', 'woocommerce-paypal-commerce-gateway'),
-                'default' => true,
-                'screens' => [
-                    State::STATE_ONBOARDED,
-                ],
-                'requirements' => [
-                    'dcc',
-                ],
-                'gateway' => 'dcc',
-            ],
             'disable_cards' => [
                 'title' => __('Disable specific credit cards', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'ppcp-multiselect',

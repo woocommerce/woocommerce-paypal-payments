@@ -82,7 +82,6 @@ class Settings implements ContainerInterface
             'button_cart_enabled' => true,
             'dcc_cart_enabled' => true,
             'dcc_mini_cart_enabled' => true,
-            'dcc_checkout_enabled' => true,
             'dcc_single_product_enabled' => true,
             'brand_name' => get_bloginfo('name'),
         ];
