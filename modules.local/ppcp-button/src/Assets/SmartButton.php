@@ -181,29 +181,78 @@ class SmartButton implements SmartButtonInterface
             return;
         }
 
-        $markup = '<div id="ppc-button"></div><div
+        echo '<div id="ppc-button"></div>';
+        $this->renderMessage();
+    }
+
+    private function renderMessage() {
+        $markup = '<div
                     data-pp-message
                     data-pp-placement="%s"
                     data-pp-amount="%s"
+                    data-pp-style-layout="%s"
+                   
                 ></div>';
 
+
         $placement = 'product';
+        $product = wc_get_product();
         $amount = (is_a($product, \WC_Product::class)) ? wc_get_price_including_tax($product) : 0;
+        $layout = $this->settings->has('message_product_layout') ? $this->settings->get('message_product_layout') : 'text';
+        $logoType = $this->settings->has('message_product_logo') ? $this->settings->get('message_product_logo') : 'primary';
+        $logoPosition = $this->settings->has('message_product_position') ? $this->settings->get('message_product_position') : 'left';
+        $textColor = $this->settings->has('message_product_color') ? $this->settings->get('message_product_color') : 'black';
+        $styleColor = $this->settings->has('message_product_flex_color') ? $this->settings->get('message_product_flex_color') : 'blue';
+        $ratio = $this->settings->has('message_product_flex_ratio') ? $this->settings->get('message_product_flex_ratio') : '1x1';
+        $shouldShow = $this->settings->has('message_product_enabled') && $this->settings->get('message_product_enabled');
         if (is_checkout()) {
             $placement = 'payment';
             $amount = WC()->cart->get_total('raw');
+            $layout = $this->settings->has('message_layout') ? $this->settings->get('message_layout') : 'text';
+            $logoType = $this->settings->has('message_logo') ? $this->settings->get('message_logo') : 'primary';
+            $logoPosition = $this->settings->has('message_position') ? $this->settings->get('message_position') : 'left';
+            $textColor = $this->settings->has('message_color') ? $this->settings->get('message_color') : 'black';
+            $styleColor = $this->settings->has('message_flex_color') ? $this->settings->get('message_flex_color') : 'blue';
+            $ratio = $this->settings->has('message_flex_ratio') ? $this->settings->get('message_flex_ratio') : '1x1';
+            $shouldShow = $this->settings->has('message_enabled') && $this->settings->get('message_enabled');
         }
         if (is_cart()) {
             $placement = 'cart';
             $amount = WC()->cart->get_total('raw');
+            $layout = $this->settings->has('message_cart_layout') ? $this->settings->get('message_cart_layout') : 'text';
+            $logoType = $this->settings->has('message_cart_logo') ? $this->settings->get('message_cart_logo') : 'primary';
+            $logoPosition = $this->settings->has('message_cart_position') ? $this->settings->get('message_cart_position') : 'left';
+            $textColor = $this->settings->has('message_cart_color') ? $this->settings->get('message_cart_color') : 'black';
+            $styleColor = $this->settings->has('message_cart_flex_color') ? $this->settings->get('message_cart_flex_color') : 'blue';
+            $ratio = $this->settings->has('message_cart_flex_ratio') ? $this->settings->get('message_cart_flex_ratio') : '1x1';
+            $shouldShow = $this->settings->has('message_cart_enabled') && $this->settings->get('message_cart_enabled');
         }
 
-        printf(
-            $markup,
-            $placement,
-            (string) $amount
-        );
+        if (! $shouldShow) {
+            return;
+        }
+        $attributes = [
+            'data-pp-message' => '',
+            'data-pp-placement' => $placement,
+            'data-pp-amount' => $amount,
+            'data-pp-style-layout' => $layout
+        ];
+        if ($layout === 'text') {
+            $attributes['data-pp-style-logo-type'] = $logoType;
+            $attributes['data-pp-style-logo-position'] = $logoPosition;
+            $attributes['data-pp-style-text-color'] = $textColor;
+        } elseif ($layout === 'flex') {
+            $attributes['data-pp-style-color'] = $styleColor;
+            $attributes['data-pp-style-ratio'] = $ratio;
+        }
+
+        echo '<div ';
+        foreach ($attributes as $attribute => $value) {
+            echo esc_attr($attribute) . '="' . esc_attr($value) . '" ';
+        }
+        echo '></div>';
     }
+
     // phpcs:disable Inpsyde.CodeQuality.FunctionLength.TooLong
     public function dccRenderer()
     {

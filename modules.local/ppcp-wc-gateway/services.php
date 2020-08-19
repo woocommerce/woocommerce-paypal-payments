@@ -412,9 +412,39 @@ return [
                 'gateway' => 'paypal',
             ],
 
+            'logging_enabled' => [
+                'title' => __('Logging', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'checkbox',
+                'desc_tip' => true,
+                'label' => __('Enable logging', 'woocommerce-paypal-commerce-gateway'),
+                'description' => __('Enable logging of unexpected behavior. This can also log private data and should only be enabled in a development or stage environment.', 'woocommerce-paypal-commerce-gateway'),
+                'default' => false,
+                'screens' => [
+                    State::STATE_START,
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+                'gateway' => 'all',
+            ],
+            'prefix' => [
+                'title' => __('Installation prefix', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'text',
+                'desc_tip' => true,
+                'description' => __('If you use your PayPal account with more than one installation, please use a distinct prefix to seperate those installations. Please do not use numbers in your prefix.', 'woocommerce-paypal-commerce-gateway'),
+                'default' => 'WC-',
+                'screens' => [
+                    State::STATE_START,
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+                'gateway' => 'all',
+            ],
+
             //General button styles
             'button_style_heading' => [
-                'heading' => __('General styles', 'woocommerce-paypal-commerce-gateway'),
+                'heading' => __('Checkout', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'ppcp-heading',
                 'screens' => [
                     State::STATE_PROGRESSIVE,
@@ -528,10 +558,170 @@ return [
                 'requirements' => [],
                 'gateway' => 'paypal',
             ],
+            'message_heading' => [
+                'heading' => __('Message on Checkout', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'ppcp-heading',
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+                'gateway' => 'paypal',
+            ],
+            'message_enabled' => [
+                'title' => __('Enable message on Single Product', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'checkbox',
+                'label' => __('Enable on Single Product', 'woocommerce-paypal-commerce-gateway'),
+                'default' => true,
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+                'gateway' => 'paypal',
+            ],
+            'message_layout' => [
+                'title' => __('Message layout', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => 'text',
+                'desc_tip' => true,
+                'description' => __(
+                    'The layout of the message.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    'text' => __('Text', 'woocommerce-paypal-commerce-gateway'),
+                    'flex' => __('Flex', 'woocommerce-paypal-commerce-gateway'),
+                ],
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+                'gateway' => 'paypal',
+            ],
+            'message_logo' => [
+                'title' => __('Message logo', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => 'primary',
+                'desc_tip' => true,
+                'description' => __(
+                    'What logo the text message contains. Only applicable, when the layout style Text is used.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    'primary' => __('Primary', 'woocommerce-paypal-commerce-gateway'),
+                    'alternative' => __('Alternative', 'woocommerce-paypal-commerce-gateway'),
+                    'inline' => __('Inline', 'woocommerce-paypal-commerce-gateway'),
+                    'none' => __('None', 'woocommerce-paypal-commerce-gateway'),
+                ],
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+                'gateway' => 'paypal',
+            ],
+            'message_position' => [
+                'title' => __('Message logo position', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => 'left',
+                'desc_tip' => true,
+                'description' => __(
+                    'The position of the logo. Only applicable, when the layout style Text is used.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    'left' => __('Left', 'woocommerce-paypal-commerce-gateway'),
+                    'right' => __('Right', 'woocommerce-paypal-commerce-gateway'),
+                    'top' => __('Top', 'woocommerce-paypal-commerce-gateway'),
+                ],
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+                'gateway' => 'paypal',
+            ],
+            'message_color' => [
+                'title' => __('Message text color', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => 'black',
+                'desc_tip' => true,
+                'description' => __(
+                    'The color of the text. Only applicable, when the layout style Text is used.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    'black' => __('Black', 'woocommerce-paypal-commerce-gateway'),
+                    'white' => __('White', 'woocommerce-paypal-commerce-gateway'),
+                    'monochrome' => __('Monochrome', 'woocommerce-paypal-commerce-gateway'),
+                    'grayscale' => __('Grayscale', 'woocommerce-paypal-commerce-gateway'),
+                ],
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+                'gateway' => 'paypal',
+            ],
+            'message_flex_color' => [
+                'title' => __('Message color', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => 'blue',
+                'desc_tip' => true,
+                'description' => __(
+                    'The color of the text. Only applicable, when the layout style Flex is used.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    'blue' => __('Blue', 'woocommerce-paypal-commerce-gateway'),
+                    'black' => __('Black', 'woocommerce-paypal-commerce-gateway'),
+                    'white' => __('White', 'woocommerce-paypal-commerce-gateway'),
+                    'white-no-border' => __('White no border', 'woocommerce-paypal-commerce-gateway'),
+                    'gray' => __('Gray', 'woocommerce-paypal-commerce-gateway'),
+                    'monochrome' => __('Monochrome', 'woocommerce-paypal-commerce-gateway'),
+                    'grayscale' => __('Grayscale', 'woocommerce-paypal-commerce-gateway'),
+                ],
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+                'gateway' => 'paypal',
+            ],
+            'message_flex_ratio' => [
+                'title' => __('Message ratio', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => '1x1',
+                'desc_tip' => true,
+                'description' => __(
+                    'The color of the text. Only applicable, when the layout style Flex is used.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    '1x1' => __('1x1', 'woocommerce-paypal-commerce-gateway'),
+                    '1x4' => __('1x4', 'woocommerce-paypal-commerce-gateway'),
+                    '8x1' => __('8x1', 'woocommerce-paypal-commerce-gateway'),
+                    '20x1' => __('20x1', 'woocommerce-paypal-commerce-gateway'),
+                ],
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+                'gateway' => 'paypal',
+            ],
 
             //Single product page
             'button_product_heading' => [
-                'heading' => __('Single Product page', 'woocommerce-paypal-commerce-gateway'),
+                'heading' => __('Button on Single product', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'ppcp-heading',
                 'screens' => [
                     State::STATE_PROGRESSIVE,
@@ -649,6 +839,167 @@ return [
                 'options' => [
                     'pill' => __('Pill', 'woocommerce-paypal-commerce-gateway'),
                     'rect' => __('Rectangle', 'woocommerce-paypal-commerce-gateway'),
+                ],
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+                'gateway' => 'paypal',
+            ],
+
+            'message_product_heading' => [
+                'heading' => __('Message on Single product', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'ppcp-heading',
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+                'gateway' => 'paypal',
+            ],
+            'message_product_enabled' => [
+                'title' => __('Enable message on Single Product', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'checkbox',
+                'label' => __('Enable on Single Product', 'woocommerce-paypal-commerce-gateway'),
+                'default' => true,
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+                'gateway' => 'paypal',
+            ],
+            'message_product_layout' => [
+                'title' => __('Message layout', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => 'text',
+                'desc_tip' => true,
+                'description' => __(
+                    'The layout of the message.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    'text' => __('Text', 'woocommerce-paypal-commerce-gateway'),
+                    'flex' => __('Flex', 'woocommerce-paypal-commerce-gateway'),
+                ],
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+                'gateway' => 'paypal',
+            ],
+            'message_product_logo' => [
+                'title' => __('Message logo', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => 'primary',
+                'desc_tip' => true,
+                'description' => __(
+                    'What logo the text message contains. Only applicable, when the layout style Text is used.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    'primary' => __('Primary', 'woocommerce-paypal-commerce-gateway'),
+                    'alternative' => __('Alternative', 'woocommerce-paypal-commerce-gateway'),
+                    'inline' => __('Inline', 'woocommerce-paypal-commerce-gateway'),
+                    'none' => __('None', 'woocommerce-paypal-commerce-gateway'),
+                ],
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+                'gateway' => 'paypal',
+            ],
+            'message_product_position' => [
+                'title' => __('Message logo position', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => 'left',
+                'desc_tip' => true,
+                'description' => __(
+                    'The position of the logo. Only applicable, when the layout style Text is used.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    'left' => __('Left', 'woocommerce-paypal-commerce-gateway'),
+                    'right' => __('Right', 'woocommerce-paypal-commerce-gateway'),
+                    'top' => __('Top', 'woocommerce-paypal-commerce-gateway'),
+                ],
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+                'gateway' => 'paypal',
+            ],
+            'message_product_color' => [
+                'title' => __('Message text color', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => 'black',
+                'desc_tip' => true,
+                'description' => __(
+                    'The color of the text. Only applicable, when the layout style Text is used.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    'black' => __('Black', 'woocommerce-paypal-commerce-gateway'),
+                    'white' => __('White', 'woocommerce-paypal-commerce-gateway'),
+                    'monochrome' => __('Monochrome', 'woocommerce-paypal-commerce-gateway'),
+                    'grayscale' => __('Grayscale', 'woocommerce-paypal-commerce-gateway'),
+                ],
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+                'gateway' => 'paypal',
+            ],
+            'message_product_flex_color' => [
+                'title' => __('Message color', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => 'blue',
+                'desc_tip' => true,
+                'description' => __(
+                    'The color of the text. Only applicable, when the layout style Flex is used.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    'blue' => __('Blue', 'woocommerce-paypal-commerce-gateway'),
+                    'black' => __('Black', 'woocommerce-paypal-commerce-gateway'),
+                    'white' => __('White', 'woocommerce-paypal-commerce-gateway'),
+                    'white-no-border' => __('White no border', 'woocommerce-paypal-commerce-gateway'),
+                    'gray' => __('Gray', 'woocommerce-paypal-commerce-gateway'),
+                    'monochrome' => __('Monochrome', 'woocommerce-paypal-commerce-gateway'),
+                    'grayscale' => __('Grayscale', 'woocommerce-paypal-commerce-gateway'),
+                ],
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+                'gateway' => 'paypal',
+            ],
+            'message_product_flex_ratio' => [
+                'title' => __('Message ratio', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => '1x1',
+                'desc_tip' => true,
+                'description' => __(
+                    'The color of the text. Only applicable, when the layout style Flex is used.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    '1x1' => __('1x1', 'woocommerce-paypal-commerce-gateway'),
+                    '1x4' => __('1x4', 'woocommerce-paypal-commerce-gateway'),
+                    '8x1' => __('8x1', 'woocommerce-paypal-commerce-gateway'),
+                    '20x1' => __('20x1', 'woocommerce-paypal-commerce-gateway'),
                 ],
                 'screens' => [
                     State::STATE_PROGRESSIVE,
@@ -916,6 +1267,169 @@ return [
                 'gateway' => 'paypal',
             ],
 
+
+
+            'message_cart_heading' => [
+                'heading' => __('Message on Cart', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'ppcp-heading',
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+                'gateway' => 'paypal',
+            ],
+            'message_cart_enabled' => [
+                'title' => __('Enable message on Single Product', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'checkbox',
+                'label' => __('Enable on Single Product', 'woocommerce-paypal-commerce-gateway'),
+                'default' => true,
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+                'gateway' => 'paypal',
+            ],
+            'message_cart_layout' => [
+                'title' => __('Message layout', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => 'text',
+                'desc_tip' => true,
+                'description' => __(
+                    'The layout of the message.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    'text' => __('Text', 'woocommerce-paypal-commerce-gateway'),
+                    'flex' => __('Flex', 'woocommerce-paypal-commerce-gateway'),
+                ],
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+                'gateway' => 'paypal',
+            ],
+            'message_cart_logo' => [
+                'title' => __('Message logo', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => 'primary',
+                'desc_tip' => true,
+                'description' => __(
+                    'What logo the text message contains. Only applicable, when the layout style Text is used.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    'primary' => __('Primary', 'woocommerce-paypal-commerce-gateway'),
+                    'alternative' => __('Alternative', 'woocommerce-paypal-commerce-gateway'),
+                    'inline' => __('Inline', 'woocommerce-paypal-commerce-gateway'),
+                    'none' => __('None', 'woocommerce-paypal-commerce-gateway'),
+                ],
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+                'gateway' => 'paypal',
+            ],
+            'message_cart_position' => [
+                'title' => __('Message logo position', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => 'left',
+                'desc_tip' => true,
+                'description' => __(
+                    'The position of the logo. Only applicable, when the layout style Text is used.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    'left' => __('Left', 'woocommerce-paypal-commerce-gateway'),
+                    'right' => __('Right', 'woocommerce-paypal-commerce-gateway'),
+                    'top' => __('Top', 'woocommerce-paypal-commerce-gateway'),
+                ],
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+                'gateway' => 'paypal',
+            ],
+            'message_cart_color' => [
+                'title' => __('Message text color', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => 'black',
+                'desc_tip' => true,
+                'description' => __(
+                    'The color of the text. Only applicable, when the layout style Text is used.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    'black' => __('Black', 'woocommerce-paypal-commerce-gateway'),
+                    'white' => __('White', 'woocommerce-paypal-commerce-gateway'),
+                    'monochrome' => __('Monochrome', 'woocommerce-paypal-commerce-gateway'),
+                    'grayscale' => __('Grayscale', 'woocommerce-paypal-commerce-gateway'),
+                ],
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+                'gateway' => 'paypal',
+            ],
+            'message_cart_flex_color' => [
+                'title' => __('Message color', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => 'blue',
+                'desc_tip' => true,
+                'description' => __(
+                    'The color of the text. Only applicable, when the layout style Flex is used.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    'blue' => __('Blue', 'woocommerce-paypal-commerce-gateway'),
+                    'black' => __('Black', 'woocommerce-paypal-commerce-gateway'),
+                    'white' => __('White', 'woocommerce-paypal-commerce-gateway'),
+                    'white-no-border' => __('White no border', 'woocommerce-paypal-commerce-gateway'),
+                    'gray' => __('Gray', 'woocommerce-paypal-commerce-gateway'),
+                    'monochrome' => __('Monochrome', 'woocommerce-paypal-commerce-gateway'),
+                    'grayscale' => __('Grayscale', 'woocommerce-paypal-commerce-gateway'),
+                ],
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+                'gateway' => 'paypal',
+            ],
+            'message_cart_flex_ratio' => [
+                'title' => __('Message ratio', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'select',
+                'class' => ['wc-enhanced-select'],
+                'default' => '1x1',
+                'desc_tip' => true,
+                'description' => __(
+                    'The color of the text. Only applicable, when the layout style Flex is used.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'options' => [
+                    '1x1' => __('1x1', 'woocommerce-paypal-commerce-gateway'),
+                    '1x4' => __('1x4', 'woocommerce-paypal-commerce-gateway'),
+                    '8x1' => __('8x1', 'woocommerce-paypal-commerce-gateway'),
+                    '20x1' => __('20x1', 'woocommerce-paypal-commerce-gateway'),
+                ],
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+                'gateway' => 'paypal',
+            ],
+
             'dcc_checkout_enabled' => [
                 'title' => __('Enable credit card on checkout', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'checkbox',
@@ -955,35 +1469,6 @@ return [
                     'dcc',
                 ],
                 'gateway' => 'dcc',
-            ],
-            'logging_enabled' => [
-                'title' => __('Logging', 'woocommerce-paypal-commerce-gateway'),
-                'type' => 'checkbox',
-                'desc_tip' => true,
-                'label' => __('Enable logging', 'woocommerce-paypal-commerce-gateway'),
-                'description' => __('Enable logging of unexpected behavior. This can also log private data and should only be enabled in a development or stage environment.', 'woocommerce-paypal-commerce-gateway'),
-                'default' => false,
-                'screens' => [
-                    State::STATE_START,
-                    State::STATE_PROGRESSIVE,
-                    State::STATE_ONBOARDED,
-                ],
-                'requirements' => [],
-                'gateway' => 'all',
-            ],
-            'prefix' => [
-                'title' => __('Installation prefix', 'woocommerce-paypal-commerce-gateway'),
-                'type' => 'text',
-                'desc_tip' => true,
-                'description' => __('If you use your PayPal account with more than one installation, please use a distinct prefix to seperate those installations. Please do not use numbers in your prefix.', 'woocommerce-paypal-commerce-gateway'),
-                'default' => 'WC-',
-                'screens' => [
-                    State::STATE_START,
-                    State::STATE_PROGRESSIVE,
-                    State::STATE_ONBOARDED,
-                ],
-                'requirements' => [],
-                'gateway' => 'all',
             ],
         ];
     },
