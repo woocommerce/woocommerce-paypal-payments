@@ -169,7 +169,8 @@ class SmartButton implements SmartButtonInterface
         return true;
     }
 
-    public function buttonRenderer() {
+    public function buttonRenderer()
+    {
         $product = wc_get_product();
         if (
             ! is_checkout() && is_a($product, \WC_Product::class)
@@ -185,7 +186,9 @@ class SmartButton implements SmartButtonInterface
         $this->renderMessage();
     }
 
-    private function renderMessage() {
+    //phpcs:disable Inpsyde.CodeQuality.FunctionLength.TooLong
+    private function renderMessage()
+    {
         $markup = '<div
                     data-pp-message
                     data-pp-placement="%s"
@@ -194,38 +197,58 @@ class SmartButton implements SmartButtonInterface
                    
                 ></div>';
 
-
         $placement = 'product';
         $product = wc_get_product();
         $amount = (is_a($product, \WC_Product::class)) ? wc_get_price_including_tax($product) : 0;
-        $layout = $this->settings->has('message_product_layout') ? $this->settings->get('message_product_layout') : 'text';
-        $logoType = $this->settings->has('message_product_logo') ? $this->settings->get('message_product_logo') : 'primary';
-        $logoPosition = $this->settings->has('message_product_position') ? $this->settings->get('message_product_position') : 'left';
-        $textColor = $this->settings->has('message_product_color') ? $this->settings->get('message_product_color') : 'black';
-        $styleColor = $this->settings->has('message_product_flex_color') ? $this->settings->get('message_product_flex_color') : 'blue';
-        $ratio = $this->settings->has('message_product_flex_ratio') ? $this->settings->get('message_product_flex_ratio') : '1x1';
-        $shouldShow = $this->settings->has('message_product_enabled') && $this->settings->get('message_product_enabled');
+        $layout = $this->settings->has('message_product_layout') ?
+            $this->settings->get('message_product_layout') : 'text';
+        $logoType = $this->settings->has('message_product_logo') ?
+            $this->settings->get('message_product_logo') : 'primary';
+        $logoPosition = $this->settings->has('message_product_position') ?
+            $this->settings->get('message_product_position') : 'left';
+        $textColor = $this->settings->has('message_product_color') ?
+            $this->settings->get('message_product_color') : 'black';
+        $styleColor = $this->settings->has('message_product_flex_color') ?
+            $this->settings->get('message_product_flex_color') : 'blue';
+        $ratio = $this->settings->has('message_product_flex_ratio') ?
+            $this->settings->get('message_product_flex_ratio') : '1x1';
+        $shouldShow = $this->settings->has('message_product_enabled')
+            && $this->settings->get('message_product_enabled');
         if (is_checkout()) {
             $placement = 'payment';
             $amount = WC()->cart->get_total('raw');
-            $layout = $this->settings->has('message_layout') ? $this->settings->get('message_layout') : 'text';
-            $logoType = $this->settings->has('message_logo') ? $this->settings->get('message_logo') : 'primary';
-            $logoPosition = $this->settings->has('message_position') ? $this->settings->get('message_position') : 'left';
-            $textColor = $this->settings->has('message_color') ? $this->settings->get('message_color') : 'black';
-            $styleColor = $this->settings->has('message_flex_color') ? $this->settings->get('message_flex_color') : 'blue';
-            $ratio = $this->settings->has('message_flex_ratio') ? $this->settings->get('message_flex_ratio') : '1x1';
-            $shouldShow = $this->settings->has('message_enabled') && $this->settings->get('message_enabled');
+            $layout = $this->settings->has('message_layout') ?
+                $this->settings->get('message_layout') : 'text';
+            $logoType = $this->settings->has('message_logo') ?
+                $this->settings->get('message_logo') : 'primary';
+            $logoPosition = $this->settings->has('message_position') ?
+                $this->settings->get('message_position') : 'left';
+            $textColor = $this->settings->has('message_color') ?
+                $this->settings->get('message_color') : 'black';
+            $styleColor = $this->settings->has('message_flex_color') ?
+                $this->settings->get('message_flex_color') : 'blue';
+            $ratio = $this->settings->has('message_flex_ratio') ?
+                $this->settings->get('message_flex_ratio') : '1x1';
+            $shouldShow = $this->settings->has('message_enabled')
+                && $this->settings->get('message_enabled');
         }
         if (is_cart()) {
             $placement = 'cart';
             $amount = WC()->cart->get_total('raw');
-            $layout = $this->settings->has('message_cart_layout') ? $this->settings->get('message_cart_layout') : 'text';
-            $logoType = $this->settings->has('message_cart_logo') ? $this->settings->get('message_cart_logo') : 'primary';
-            $logoPosition = $this->settings->has('message_cart_position') ? $this->settings->get('message_cart_position') : 'left';
-            $textColor = $this->settings->has('message_cart_color') ? $this->settings->get('message_cart_color') : 'black';
-            $styleColor = $this->settings->has('message_cart_flex_color') ? $this->settings->get('message_cart_flex_color') : 'blue';
-            $ratio = $this->settings->has('message_cart_flex_ratio') ? $this->settings->get('message_cart_flex_ratio') : '1x1';
-            $shouldShow = $this->settings->has('message_cart_enabled') && $this->settings->get('message_cart_enabled');
+            $layout = $this->settings->has('message_cart_layout') ?
+                $this->settings->get('message_cart_layout') : 'text';
+            $logoType = $this->settings->has('message_cart_logo') ?
+                $this->settings->get('message_cart_logo') : 'primary';
+            $logoPosition = $this->settings->has('message_cart_position') ?
+                $this->settings->get('message_cart_position') : 'left';
+            $textColor = $this->settings->has('message_cart_color') ?
+                $this->settings->get('message_cart_color') : 'black';
+            $styleColor = $this->settings->has('message_cart_flex_color') ?
+                $this->settings->get('message_cart_flex_color') : 'blue';
+            $ratio = $this->settings->has('message_cart_flex_ratio') ?
+                $this->settings->get('message_cart_flex_ratio') : '1x1';
+            $shouldShow = $this->settings->has('message_cart_enabled')
+                && $this->settings->get('message_cart_enabled');
         }
 
         if (! $shouldShow) {
@@ -235,7 +258,7 @@ class SmartButton implements SmartButtonInterface
             'data-pp-message' => '',
             'data-pp-placement' => $placement,
             'data-pp-amount' => $amount,
-            'data-pp-style-layout' => $layout
+            'data-pp-style-layout' => $layout,
         ];
         if ($layout === 'text') {
             $attributes['data-pp-style-logo-type'] = $logoType;
@@ -253,7 +276,6 @@ class SmartButton implements SmartButtonInterface
         echo '></div>';
     }
 
-    // phpcs:disable Inpsyde.CodeQuality.FunctionLength.TooLong
     public function dccRenderer()
     {
 
@@ -433,7 +455,8 @@ class SmartButton implements SmartButtonInterface
             //ToDo: Update date on releases.
             'integration-date' => date('Y-m-d'),
             'components' => implode(',', $this->components()),
-            'vault' => (is_checkout() && $this->dccIsEnabled()) || $this->canSaveVaultToken() ? 'true' : 'false',
+            'vault' => (is_checkout() && $this->dccIsEnabled()) || $this->canSaveVaultToken() ?
+                'true' : 'false',
             'commit' => is_checkout() ? 'true' : 'false',
             'intent' => ($this->settings->has('intent')) ? $this->settings->get('intent') : 'capture',
         ];

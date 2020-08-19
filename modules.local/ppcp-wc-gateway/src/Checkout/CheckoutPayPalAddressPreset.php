@@ -38,11 +38,11 @@ class CheckoutPayPalAddressPreset
      */
     public function filterCheckoutFiled($defaultValue, $fieldId): ?string
     {
-        if(! is_string($defaultValue)) {
+        if (! is_string($defaultValue)) {
             $defaultValue = null;
         }
 
-        if(!is_string($fieldId)) {
+        if (!is_string($fieldId)) {
             return $defaultValue;
         }
 
@@ -51,7 +51,8 @@ class CheckoutPayPalAddressPreset
 
     private function readPresetForField(string $fieldId): ?string
     {
-        if(!$order = $this->sessionHandler->order()) {
+        $order = $this->sessionHandler->order();
+        if (! $order) {
             return null;
         }
 
@@ -64,7 +65,7 @@ class CheckoutPayPalAddressPreset
             'billing_postcode' => 'postalCode',
             'billing_country' => 'countryCode',
             'billing_city' => 'adminArea2',
-            'billing_state' => 'adminArea1'
+            'billing_state' => 'adminArea1',
         ];
         $payerNameMap = [
             'billing_last_name' => 'surname',
@@ -77,19 +78,24 @@ class CheckoutPayPalAddressPreset
             'billing_phone' => 'nationalNumber',
         ];
 
-        if(array_key_exists($fieldId, $addressMap) && $shipping) {
+        if (array_key_exists($fieldId, $addressMap) && $shipping) {
             return $shipping->address()->{$addressMap[$fieldId]}() ?: null;
         }
 
-        if(array_key_exists($fieldId, $payerNameMap) && $payer) {
+        if (array_key_exists($fieldId, $payerNameMap) && $payer) {
             return $payer->name()->{$payerNameMap[$fieldId]}() ?: null;
         }
 
-        if(array_key_exists($fieldId, $payerMap) && $payer) {
+        if (array_key_exists($fieldId, $payerMap) && $payer) {
             return $payer->{$payerMap[$fieldId]}() ?: null;
         }
 
-        if(array_key_exists($fieldId, $payerPhoneMap) && $payer && $payer->phone() && $payer->phone()->phone()) {
+        if (
+            array_key_exists($fieldId, $payerPhoneMap)
+            && $payer
+            && $payer->phone()
+            && $payer->phone()->phone()
+        ) {
             return $payer->phone()->phone()->{$payerPhoneMap[$fieldId]}() ?: null;
         }
 
@@ -98,17 +104,19 @@ class CheckoutPayPalAddressPreset
 
     private function readShippingFromOrder(): ?Shipping
     {
-        if(!$order = $this->sessionHandler->order()) {
+        $order = $this->sessionHandler->order();
+        if (! $order) {
             return null;
         }
 
-        if(array_key_exists($order->id(), $this->shippingCache)) {
+        if (array_key_exists($order->id(), $this->shippingCache)) {
             return $this->shippingCache[$order->id()];
         }
 
         $shipping = null;
-        foreach($this->sessionHandler->order()->purchaseUnits() as $unit) {
-            if($shipping = $unit->shipping()) {
+        foreach ($this->sessionHandler->order()->purchaseUnits() as $unit) {
+            $shipping = $unit->shipping();
+            if ($shipping) {
                 break;
             }
         }

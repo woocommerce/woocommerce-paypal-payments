@@ -1,8 +1,8 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\WcGateway\Gateway;
-
 
 use Inpsyde\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use Inpsyde\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
@@ -10,10 +10,11 @@ use Inpsyde\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use Psr\Container\ContainerInterface;
 
+//phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
+//phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration.NoArgumentType
 class CreditCardGateway extends PayPalGateway
 {
     public const ID = 'ppcp-credit-card-gateway';
-
 
     public function __construct(
         SettingsRenderer $settingsRenderer,
@@ -82,7 +83,6 @@ class CreditCardGateway extends PayPalGateway
         ];
     }
 
-
     public function generate_ppcp_html(): string
     {
 
@@ -92,5 +92,4 @@ class CreditCardGateway extends PayPalGateway
         ob_end_clean();
         return $content;
     }
-
 }

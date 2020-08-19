@@ -134,10 +134,10 @@ class SettingsRenderer
             if (! in_array($this->state->currentState(), $config['screens'], true)) {
                 continue;
             }
-            if ($isDcc && ! in_array($config['gateway'], ['all', 'dcc'],true)) {
+            if ($isDcc && ! in_array($config['gateway'], ['all', 'dcc'], true)) {
                 continue;
             }
-            if (! $isDcc && ! in_array($config['gateway'], ['all', 'paypal'],true)) {
+            if (! $isDcc && ! in_array($config['gateway'], ['all', 'paypal'], true)) {
                 continue;
             }
             if (in_array('dcc', $config['requirements'], true) && ! $this->dccApplies->forCountryCurrency()) {
@@ -164,10 +164,10 @@ class SettingsRenderer
                 endif; ?>
             </th>
             <?php endif; ?>
-            <<?php echo $thTd; ?> colspan="<?php echo (int) $colspan; ?>"><?php
+            <<?php echo esc_attr($thTd); ?> colspan="<?php echo (int) $colspan; ?>"><?php
                 $config['type'] === 'ppcp-text' ?
                     $this->renderText($config)
-                    : woocommerce_form_field($id, $config, $value); ?></<?php echo $thTd; ?>>
+                    : woocommerce_form_field($id, $config, $value); ?></<?php echo esc_attr($thTd); ?>>
         </tr>
         <?php endforeach;
     }

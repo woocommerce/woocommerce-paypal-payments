@@ -46,6 +46,7 @@ class SettingsListener
          * Nonce verification is done in self::isValidUpdateRequest
          */
         //phpcs:disable WordPress.Security.NonceVerification.Missing
+        //phpcs:disable WordPress.Security.NonceVerification.Recommended
         if (isset($_POST['save']) && sanitize_text_field(wp_unslash($_POST['save'])) === 'reset') {
             $this->settings->reset();
             $this->settings->persist();
@@ -57,6 +58,7 @@ class SettingsListener
         }
 
         //phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        //phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotValidated
         /**
          * Sanitization is done at a later stage.
          */
@@ -77,21 +79,34 @@ class SettingsListener
         if ($this->cache->has(PayPalBearer::CACHE_KEY)) {
             $this->cache->delete(PayPalBearer::CACHE_KEY);
         }
+        //phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotValidated
+        //phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        //phpcs:enable WordPress.Security.NonceVerification.Missing
     }
 
     //phpcs:disable Inpsyde.CodeQuality.NestingLevel.MaxExceeded
     //phpcs:disable Generic.Metrics.CyclomaticComplexity.TooHigh
+    //phpcs:disable Inpsyde.CodeQuality.FunctionLength.TooLong
     private function retrieveSettingsFromRawData(array $rawData): array
     {
+        if (! isset($_GET['section'])) {
+            return [];
+        }
         $settings = [];
         foreach ($this->settingFields as $key => $config) {
             if (! in_array($this->state->currentState(), $config['screens'], true)) {
                 continue;
             }
-            if ($config['gateway'] === 'dcc' && wp_unslash(sanitize_text_field($_GET['section'])) !== 'ppcp-credit-card-gateway') {
+            if (
+                $config['gateway'] === 'dcc'
+                && sanitize_text_field(wp_unslash($_GET['section'])) !== 'ppcp-credit-card-gateway'
+            ) {
                 continue;
             }
-            if ($config['gateway'] === 'paypal' && wp_unslash(sanitize_text_field($_GET['section'])) !== 'ppcp-gateway') {
+            if (
+                $config['gateway'] === 'paypal'
+                && sanitize_text_field(wp_unslash($_GET['section'])) !== 'ppcp-gateway'
+            ) {
                 continue;
             }
             switch ($config['type']) {
@@ -141,7 +156,11 @@ class SettingsListener
 
         if (
             ! isset($_REQUEST['section'])
-            || ! in_array(sanitize_text_field(wp_unslash($_REQUEST['section'])), ['ppcp-gateway', 'ppcp-credit-card-gateway'],true)
+            || ! in_array(
+                sanitize_text_field(wp_unslash($_REQUEST['section'])),
+                ['ppcp-gateway', 'ppcp-credit-card-gateway'],
+                true
+            )
         ) {
             return false;
         }

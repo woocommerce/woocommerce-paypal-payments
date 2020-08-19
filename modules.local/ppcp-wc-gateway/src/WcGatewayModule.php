@@ -37,6 +37,7 @@ class WcGatewayModule implements ModuleInterface
         $this->registerOrderFunctionality($container);
         $this->registerColumns($container);
         $this->registerCheckoutAddressPreset($container);
+        $this->ajaxGatewayEnabler($container);
 
         add_filter(
             Repository::NOTICES_FILTER,
@@ -58,7 +59,16 @@ class WcGatewayModule implements ModuleInterface
                 return $notices;
             }
         );
+        add_action(
+            'woocommerce-paypal-commerce-gateway.deactivate',
+            static function () use ($container) {
+                delete_option(Settings::KEY);
+            }
+        );
+    }
 
+    private function ajaxGatewayEnabler(ContainerInterface $container)
+    {
         add_action(
             'wp_ajax_woocommerce_toggle_gateway_enabled',
             static function () use ($container) {
@@ -78,7 +88,7 @@ class WcGatewayModule implements ModuleInterface
                  */
                 $settings = $container->get('wcgateway.settings');
                 $key = $_POST['gateway_id'] === PayPalGateway::ID ? 'enabled' : '';
-                if ($_POST['gateway_id'] === CreditCardGateway::ID ) {
+                if ($_POST['gateway_id'] === CreditCardGateway::ID) {
                     $key = 'dcc_gateway_enabled';
                 }
                 if (! $key) {
@@ -92,12 +102,6 @@ class WcGatewayModule implements ModuleInterface
                 $settings->persist();
             },
             9
-        );
-        add_action(
-            'woocommerce-paypal-commerce-gateway.deactivate',
-            static function () use ($container) {
-                delete_option(Settings::KEY);
-            }
         );
     }
 
@@ -224,9 +228,13 @@ class WcGatewayModule implements ModuleInterface
         add_filter(
             'woocommerce_checkout_get_value',
             static function (...$args) use ($container) {
-                // It's important to not instantiate the service to early
-                // as it depends on SessionHandler and WooCommerce Session
-                /* @var CheckoutPayPalAddressPreset $service */
+
+                // Its important to not instantiate the service too early as it
+                // depends on SessionHandler and WooCommerce Session
+
+                /**
+                 * @var CheckoutPayPalAddressPreset $service
+                 */
                 $service = $container->get('wcgateway.checkout.address-preset');
 
                 return $service->filterCheckoutFiled(...$args);

@@ -41,7 +41,6 @@ class DisableGateways
             unset($methods[CreditCardGateway::ID]);
         }
 
-
         if (! $this->needsToDisableGateways()) {
             return $methods;
         }
@@ -57,13 +56,13 @@ class DisableGateways
         return $this->sessionHandler->order() !== null;
     }
 
-    private function isCreditCard() : bool
+    private function isCreditCard(): bool
     {
-        $order =$this->sessionHandler->order();
+        $order = $this->sessionHandler->order();
         if (! $order) {
             return false;
         }
-        if ( ! $order->paymentSource() || ! $order->paymentSource()->card()) {
+        if (! $order->paymentSource() || ! $order->paymentSource()->card()) {
             return false;
         }
         return true;
