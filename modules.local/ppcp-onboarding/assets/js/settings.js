@@ -25,6 +25,31 @@ const groupToggle = (selector, group) => {
 
 }
 
+const groupToggleSelect = (selector, group) => {
+    const toggleElement = document.querySelector(selector);
+    const value = toggleElement.value;
+    group.forEach( (elementToHide) => {
+        if (value === elementToHide.value) {
+            document.querySelector(elementToHide.selector).style.display = 'table-row';
+            return;
+        }
+        document.querySelector(elementToHide.selector).style.display = 'none';
+    })
+    toggleElement.addEventListener(
+        'change',
+        (event) => {
+            const value = event.target.value;
+            group.forEach( (elementToHide) => {
+                if (value === elementToHide.value) {
+                    document.querySelector(elementToHide.selector).style.display = 'table-row';
+                    return;
+                }
+                document.querySelector(elementToHide.selector).style.display = 'none';
+            })
+        }
+    );
+}
+
 (() => {
     document.querySelector('#field-toggle_manual_input').addEventListener(
         'click',
@@ -101,6 +126,82 @@ const groupToggle = (selector, group) => {
             '#field-message_cart_color',
             '#field-message_cart_flex_color',
             '#field-message_cart_flex_ratio',
+        ]
+    );
+
+    groupToggleSelect(
+        '#ppcp-message_product_layout',
+        [
+            {
+                value:'text',
+                selector:'#field-message_product_logo'
+            },
+            {
+                value:'text',
+                selector:'#field-message_product_position'
+            },
+            {
+                value:'text',
+                selector:'#field-message_product_color'
+            },
+            {
+                value:'flex',
+                selector:'#field-message_product_flex_ratio'
+            },
+            {
+                value:'flex',
+                selector:'#field-message_product_flex_color'
+            }
+        ]
+    );
+    groupToggleSelect(
+        '#ppcp-message_cart_layout',
+        [
+            {
+                value:'text',
+                selector:'#field-message_cart_logo'
+            },
+            {
+                value:'text',
+                selector:'#field-message_cart_position'
+            },
+            {
+                value:'text',
+                selector:'#field-message_cart_color'
+            },
+            {
+                value:'flex',
+                selector:'#field-message_cart_flex_ratio'
+            },
+            {
+                value:'flex',
+                selector:'#field-message_cart_flex_color'
+            }
+        ]
+    );
+    groupToggleSelect(
+        '#ppcp-message_layout',
+        [
+            {
+                value:'text',
+                selector:'#field-message_logo'
+            },
+            {
+                value:'text',
+                selector:'#field-message_position'
+            },
+            {
+                value:'text',
+                selector:'#field-message_color'
+            },
+            {
+                value:'flex',
+                selector:'#field-message_flex_ratio'
+            },
+            {
+                value:'flex',
+                selector:'#field-message_flex_color'
+            }
         ]
     );
 })()
