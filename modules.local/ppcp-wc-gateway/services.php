@@ -338,7 +338,7 @@ return [
                     State::STATE_ONBOARDED,
                 ],
                 'requirements' => [],
-                'gateway' => 'both',
+                'gateway' => 'all',
             ],
             'brand_name' => [
                 'title' => __('Brand Name', 'woocommerce-paypal-commerce-gateway'),
