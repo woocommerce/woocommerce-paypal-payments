@@ -34,7 +34,7 @@ class OnboardingRenderer
                             data-paypal-button="true"
                     ><?php
                         esc_html_e(
-                            'Sign up for PayPal',
+                            'Connect to PayPal',
                             'woocommerce-paypal-commerce-gateway'
                         );
                         ?></a>

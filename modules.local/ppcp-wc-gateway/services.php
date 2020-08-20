@@ -567,7 +567,7 @@ return [
                 'gateway' => 'paypal',
             ],
             'message_heading' => [
-                'heading' => __('Message on Checkout', 'woocommerce-paypal-commerce-gateway'),
+                'heading' => __('Credit Messaging on Checkout', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'ppcp-heading',
                 'screens' => [
                     State::STATE_PROGRESSIVE,
@@ -589,7 +589,7 @@ return [
                 'gateway' => 'paypal',
             ],
             'message_layout' => [
-                'title' => __('Message layout', 'woocommerce-paypal-commerce-gateway'),
+                'title' => __('Credit Messaging layout', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'select',
                 'class' => ['wc-enhanced-select'],
                 'default' => 'text',
@@ -610,7 +610,7 @@ return [
                 'gateway' => 'paypal',
             ],
             'message_logo' => [
-                'title' => __('Message logo', 'woocommerce-paypal-commerce-gateway'),
+                'title' => __('Credit Messaging logo', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'select',
                 'class' => ['wc-enhanced-select'],
                 'default' => 'primary',
@@ -633,7 +633,7 @@ return [
                 'gateway' => 'paypal',
             ],
             'message_position' => [
-                'title' => __('Message logo position', 'woocommerce-paypal-commerce-gateway'),
+                'title' => __('Credit Messaging logo position', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'select',
                 'class' => ['wc-enhanced-select'],
                 'default' => 'left',
@@ -655,7 +655,7 @@ return [
                 'gateway' => 'paypal',
             ],
             'message_color' => [
-                'title' => __('Message text color', 'woocommerce-paypal-commerce-gateway'),
+                'title' => __('Credit Messaging text color', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'select',
                 'class' => ['wc-enhanced-select'],
                 'default' => 'black',
@@ -678,7 +678,7 @@ return [
                 'gateway' => 'paypal',
             ],
             'message_flex_color' => [
-                'title' => __('Message color', 'woocommerce-paypal-commerce-gateway'),
+                'title' => __('Credit Messaging color', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'select',
                 'class' => ['wc-enhanced-select'],
                 'default' => 'blue',
@@ -704,7 +704,7 @@ return [
                 'gateway' => 'paypal',
             ],
             'message_flex_ratio' => [
-                'title' => __('Message ratio', 'woocommerce-paypal-commerce-gateway'),
+                'title' => __('Credit Messaging ratio', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'select',
                 'class' => ['wc-enhanced-select'],
                 'default' => '1x1',
@@ -857,7 +857,7 @@ return [
             ],
 
             'message_product_heading' => [
-                'heading' => __('Message on Single product', 'woocommerce-paypal-commerce-gateway'),
+                'heading' => __('Credit Messaging on Single product', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'ppcp-heading',
                 'screens' => [
                     State::STATE_PROGRESSIVE,
@@ -879,7 +879,7 @@ return [
                 'gateway' => 'paypal',
             ],
             'message_product_layout' => [
-                'title' => __('Message layout', 'woocommerce-paypal-commerce-gateway'),
+                'title' => __('Credit Messaging layout', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'select',
                 'class' => ['wc-enhanced-select'],
                 'default' => 'text',
@@ -900,7 +900,7 @@ return [
                 'gateway' => 'paypal',
             ],
             'message_product_logo' => [
-                'title' => __('Message logo', 'woocommerce-paypal-commerce-gateway'),
+                'title' => __('Credit Messaging logo', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'select',
                 'class' => ['wc-enhanced-select'],
                 'default' => 'primary',
@@ -923,7 +923,7 @@ return [
                 'gateway' => 'paypal',
             ],
             'message_product_position' => [
-                'title' => __('Message logo position', 'woocommerce-paypal-commerce-gateway'),
+                'title' => __('Credit Messaging logo position', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'select',
                 'class' => ['wc-enhanced-select'],
                 'default' => 'left',
@@ -945,7 +945,7 @@ return [
                 'gateway' => 'paypal',
             ],
             'message_product_color' => [
-                'title' => __('Message text color', 'woocommerce-paypal-commerce-gateway'),
+                'title' => __('Credit Messaging text color', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'select',
                 'class' => ['wc-enhanced-select'],
                 'default' => 'black',
@@ -968,7 +968,7 @@ return [
                 'gateway' => 'paypal',
             ],
             'message_product_flex_color' => [
-                'title' => __('Message color', 'woocommerce-paypal-commerce-gateway'),
+                'title' => __('Credit Messaging color', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'select',
                 'class' => ['wc-enhanced-select'],
                 'default' => 'blue',
@@ -994,7 +994,7 @@ return [
                 'gateway' => 'paypal',
             ],
             'message_product_flex_ratio' => [
-                'title' => __('Message ratio', 'woocommerce-paypal-commerce-gateway'),
+                'title' => __('Credit Messaging ratio', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'select',
                 'class' => ['wc-enhanced-select'],
                 'default' => '1x1',
@@ -1276,7 +1276,7 @@ return [
             ],
 
             'message_cart_heading' => [
-                'heading' => __('Message on Cart', 'woocommerce-paypal-commerce-gateway'),
+                'heading' => __('Credit Messaging on Cart', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'ppcp-heading',
                 'screens' => [
                     State::STATE_PROGRESSIVE,
@@ -1298,7 +1298,7 @@ return [
                 'gateway' => 'paypal',
             ],
             'message_cart_layout' => [
-                'title' => __('Message layout', 'woocommerce-paypal-commerce-gateway'),
+                'title' => __('Credit Messaging layout', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'select',
                 'class' => ['wc-enhanced-select'],
                 'default' => 'text',
@@ -1319,7 +1319,7 @@ return [
                 'gateway' => 'paypal',
             ],
             'message_cart_logo' => [
-                'title' => __('Message logo', 'woocommerce-paypal-commerce-gateway'),
+                'title' => __('Credit Messaging logo', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'select',
                 'class' => ['wc-enhanced-select'],
                 'default' => 'primary',
@@ -1342,7 +1342,7 @@ return [
                 'gateway' => 'paypal',
             ],
             'message_cart_position' => [
-                'title' => __('Message logo position', 'woocommerce-paypal-commerce-gateway'),
+                'title' => __('Credit Messaging logo position', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'select',
                 'class' => ['wc-enhanced-select'],
                 'default' => 'left',
@@ -1364,7 +1364,7 @@ return [
                 'gateway' => 'paypal',
             ],
             'message_cart_color' => [
-                'title' => __('Message text color', 'woocommerce-paypal-commerce-gateway'),
+                'title' => __('Credit Messaging text color', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'select',
                 'class' => ['wc-enhanced-select'],
                 'default' => 'black',
@@ -1387,7 +1387,7 @@ return [
                 'gateway' => 'paypal',
             ],
             'message_cart_flex_color' => [
-                'title' => __('Message color', 'woocommerce-paypal-commerce-gateway'),
+                'title' => __('Credit Messaging color', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'select',
                 'class' => ['wc-enhanced-select'],
                 'default' => 'blue',
@@ -1413,7 +1413,7 @@ return [
                 'gateway' => 'paypal',
             ],
             'message_cart_flex_ratio' => [
-                'title' => __('Message ratio', 'woocommerce-paypal-commerce-gateway'),
+                'title' => __('Credit Messaging ratio', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'select',
                 'class' => ['wc-enhanced-select'],
                 'default' => '1x1',

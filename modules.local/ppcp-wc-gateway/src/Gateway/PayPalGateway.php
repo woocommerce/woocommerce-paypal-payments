@@ -66,7 +66,7 @@ class PayPalGateway extends \WC_Payment_Gateway
             ];
         }
 
-        $this->method_title = __('PayPal Payments', 'woocommerce-paypal-commerce-gateway');
+        $this->method_title = __('PayPal', 'woocommerce-paypal-commerce-gateway');
         $this->method_description = __(
             'Provide your customers with the PayPal payment option.',
             'woocommerce-paypal-commerce-gateway'

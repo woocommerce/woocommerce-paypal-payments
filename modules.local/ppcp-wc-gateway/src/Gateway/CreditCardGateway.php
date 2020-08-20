@@ -48,7 +48,7 @@ class CreditCardGateway extends PayPalGateway
             ];
         }
 
-        $this->method_title = __('PayPal Credit Card', 'woocommerce-paypal-commerce-gateway');
+        $this->method_title = __('PayPal Credit Card Processing', 'woocommerce-paypal-commerce-gateway');
         $this->method_description = __(
             'Provide your customers with the option to pay with credit card.',
             'woocommerce-paypal-commerce-gateway'

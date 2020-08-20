@@ -185,6 +185,34 @@ class SettingsRenderer
                     : woocommerce_form_field($key, $config, $value); ?></<?php echo esc_attr($thTd); ?>>
         </tr>
         <?php endforeach;
+
+        if ($isDcc) :
+        ?>
+        <tr>
+            <th><?php esc_html_e('3D Secure', 'woocommerce-paypal-commerce-gateway'); ?></th>
+            <td>
+                <p>
+                    <?php
+                     echo wp_kses_post(
+                            sprintf(
+                                    //translators: %s is a link tag.
+                                    __(
+                                        '3D Secure benefits cardholders and merchants by providing an additional
+                                        layer of verification using Verified by Visa, MasterCard SecureCode and
+                                        American Express SafeKey. %sLearn more about 3D Secure.%s',
+                                        'woocommerce-paypal-commerce-gateway'
+                                    ),
+
+                                    //ToDo: Provide link to documentation.
+                                    '<a href="#">',
+                                    '</a>'
+                            )
+                    ); ?>
+                </p>
+            </td>
+        </tr>
+        <?php
+        endif;
     }
     //phpcs:enable Inpsyde.CodeQuality.NestingLevel.High
 
