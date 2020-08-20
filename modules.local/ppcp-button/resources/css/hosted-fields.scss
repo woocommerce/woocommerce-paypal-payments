@@ -4,7 +4,7 @@
         width: 100%;
         display: grid;
         grid-template-columns: 55% 1fr 1fr;
-        grid-template-rows: 1fr 1fr;
+        grid-template-rows: 1fr 1fr auto;
         grid-column-gap: 15px;
         margin-bottom: 15px;
 
@@ -26,6 +26,11 @@
             background:white;
             border: 1px #666;
             padding: 5px;
+        }
+
+        button {
+            grid-row: 3/4;
+            grid-column: 1/4;
         }
 
         label {

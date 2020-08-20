@@ -363,16 +363,16 @@ class SmartButton implements SmartButtonInterface
 
         printf(
             '<form id="%1$s">
-                        <div class="ppcp-dcc-credit-card-wrapper">
+                        <div class="ppcp-dcc-credit-card-wrapper" style="display: none">
                             <label for="ppcp-credit-card-%1$s">%2$s</label>
                             <span id="ppcp-credit-card-%1$s" class="ppcp-credit-card"></span>
                             <label for="ppcp-expiration-date-%1$s">%3$s</label>
                             <span id="ppcp-expiration-date-%1$s" class="ppcp-expiration-date"></span>
                             <label for="ppcp-cvv-%1$s">%4$s</label>
                             <span id="ppcp-cvv-%1$s" class="ppcp-cvv"></span>
+                            %5$s
+                            <button class="button alt">%6$s</button>
                         </div>
-                        %5$s
-                        <button class="button alt">%6$s</button>
                     </form><div id="payments-sdk__contingency-lightbox"></div>',
             esc_attr($id),
             esc_html__('Credit Card number', 'woocommerce-paypal-commerce-gateway'),
