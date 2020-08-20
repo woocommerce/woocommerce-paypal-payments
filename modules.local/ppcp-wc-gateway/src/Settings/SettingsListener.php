@@ -72,6 +72,8 @@ class SettingsListener
             $settings['dcc_gateway_enabled'] = isset($_POST['woocommerce_ppcp-credit-card-gateway_enabled'])
                 && absint($_POST['woocommerce_ppcp-credit-card-gateway_enabled']) === 1;
         }
+        $this->maybeRegisterWebhooks($settings);
+
         foreach ($settings as $id => $value) {
             $this->settings->set($id, $value);
         }
@@ -82,6 +84,24 @@ class SettingsListener
         //phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotValidated
         //phpcs:enable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         //phpcs:enable WordPress.Security.NonceVerification.Missing
+    }
+
+    private function maybeRegisterWebhooks(array $settings)
+    {
+
+        if (! $this->settings->has('client_id') && $settings['client_id']) {
+            $this->webhookRegistrar->register();
+        }
+        if ($this->settings->has('client_id')) {
+            $currentSecret = $this->settings->has('client_secret') ? $this->settings->get('client_secret') : '';
+            if (
+                $settings['client_id'] !== $this->settings->get('client_id')
+                || $settings['client_secret'] !== $currentSecret
+            ) {
+                $this->webhookRegistrar->unregister();
+                $this->webhookRegistrar->register();
+            }
+        }
     }
 
     //phpcs:disable Inpsyde.CodeQuality.NestingLevel.MaxExceeded
