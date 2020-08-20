@@ -70,8 +70,10 @@ class SmartButton implements SmartButtonInterface
             return false;
         }
 
-        $this->renderButtonWrapperRegistrar();
-        $this->renderMessageWrapperRegistrar();
+        if ($this->settings->has('enabled') && $this->settings->get('enabled')) {
+            $this->renderButtonWrapperRegistrar();
+            $this->renderMessageWrapperRegistrar();
+        }
 
         if (
             $this->settings->has('dcc_gateway_enabled')
