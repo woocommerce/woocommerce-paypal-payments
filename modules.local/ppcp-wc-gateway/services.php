@@ -273,7 +273,7 @@ return [
                     'This controls the title which the user sees during checkout.',
                     'woocommerce-paypal-commerce-gateway'
                 ),
-                'default' => __('PayPal', 'woocommerce-paypal-commerce-gateway'),
+                'default' => __('Credit Cards', 'woocommerce-paypal-commerce-gateway'),
                 'desc_tip' => true,
                 'screens' => [
                     State::STATE_PROGRESSIVE,
@@ -310,7 +310,7 @@ return [
                     'woocommerce-paypal-commerce-gateway'
                 ),
                 'default' => __(
-                    'Pay via PayPal; you can pay with your credit card if you don\'t have a PayPal account.',
+                    'Pay with your credit card.',
                     'woocommerce-paypal-commerce-gateway'
                 ),
                 'screens' => [
