@@ -79,7 +79,7 @@ class CreditCardGateway extends PayPalGateway
                 'title' => __('Enable/Disable', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'checkbox',
                 'label' => __('Enable Credit Card Payments', 'woocommerce-paypal-commerce-gateway'),
-                'default' => 'yes',
+                'default' => 'no',
             ],
             'ppcp' => [
                 'type' => 'ppcp',

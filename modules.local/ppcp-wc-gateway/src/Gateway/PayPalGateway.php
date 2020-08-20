@@ -68,7 +68,7 @@ class PayPalGateway extends \WC_Payment_Gateway
 
         $this->method_title = __('PayPal Payments', 'woocommerce-paypal-commerce-gateway');
         $this->method_description = __(
-            'Provide your customers with the PayPal payment system',
+            'Provide your customers with the PayPal payment option.',
             'woocommerce-paypal-commerce-gateway'
         );
         $this->title = $this->config->has('title') ?
@@ -101,7 +101,7 @@ class PayPalGateway extends \WC_Payment_Gateway
                 'title' => __('Enable/Disable', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'checkbox',
                 'label' => __('Enable PayPal Payments', 'woocommerce-paypal-commerce-gateway'),
-                'default' => 'yes',
+                'default' => 'no',
             ],
             'ppcp' => [
                 'type' => 'ppcp',
