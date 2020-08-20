@@ -35,6 +35,9 @@ class CheckoutBootstap {
         if (!this.shouldRender()) {
             return;
         }
+        if (document.querySelector(this.gateway.hosted_fields.wrapper + '>div')) {
+            document.querySelector(this.gateway.hosted_fields.wrapper + '>div').setAttribute('style', '');
+        }
         const actionHandler = new CheckoutActionHandler(
             PayPalCommerceGateway,
             new ErrorHandler(this.gateway.labels.error.generic),
