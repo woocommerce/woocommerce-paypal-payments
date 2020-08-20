@@ -8,6 +8,7 @@ use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
 use Inpsyde\PayPalCommerce\AdminNotices\Repository\Repository;
 use Inpsyde\PayPalCommerce\ApiClient\Helper\DccApplies;
+use Inpsyde\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
 use Inpsyde\PayPalCommerce\WcGateway\Admin\OrderDetail;
 use Inpsyde\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
 use Inpsyde\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
@@ -63,6 +64,9 @@ class WcGatewayModule implements ModuleInterface
             'woocommerce-paypal-commerce-gateway.deactivate',
             static function () use ($container) {
                 delete_option(Settings::KEY);
+                delete_option(PayPalRequestIdRepository::KEY);
+                delete_option('woocommerce_' . PayPalGateway::ID . '_settings');
+                delete_option('woocommerce_' . CreditCardGateway::ID . '_settings');
             }
         );
     }
