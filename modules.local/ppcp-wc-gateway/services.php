@@ -340,6 +340,23 @@ return [
                 'requirements' => [],
                 'gateway' => 'all',
             ],
+            'payee_preferred' => [
+                'title' => __('Instant Payments ', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'checkbox',
+                'default' => false,
+                'desc_tip' => true,
+                'description' => __(
+                    'If you enable this setting, PayPal will be instructed not to allow the buyer to use funding sources that take additional time to complete (for example, eChecks). Instead, the buyer will be required to use an instant funding source, such as an instant transfer, a credit/debit card, or PayPal Credit.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'label' => __('Require Instant Payment', 'woocommerce-paypal-commerce-gateway'),
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+                'gateway' => 'paypal',
+            ],
             'brand_name' => [
                 'title' => __('Brand Name', 'woocommerce-paypal-commerce-gateway'),
                 'type' => 'text',

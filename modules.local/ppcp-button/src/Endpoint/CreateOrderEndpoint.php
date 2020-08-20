@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\Button\Endpoint;
 
+use Inpsyde\PayPalCommerce\ApiClient\Entity\PaymentMethod;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use Inpsyde\PayPalCommerce\Button\Exception\RuntimeException;
 use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
 use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use Inpsyde\PayPalCommerce\Session\SessionHandler;
+use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
 
 class CreateOrderEndpoint implements EndpointInterface
 {
@@ -20,12 +22,14 @@ class CreateOrderEndpoint implements EndpointInterface
     private $apiEndpoint;
     private $payerFactory;
     private $sessionHandler;
+    private $settings;
     public function __construct(
         RequestData $requestData,
         CartRepository $repository,
         OrderEndpoint $apiEndpoint,
         PayerFactory $payerFactory,
-        SessionHandler $sessionHandler
+        SessionHandler $sessionHandler,
+        Settings $settings
     ) {
 
         $this->requestData = $requestData;
@@ -33,6 +37,7 @@ class CreateOrderEndpoint implements EndpointInterface
         $this->apiEndpoint = $apiEndpoint;
         $this->payerFactory = $payerFactory;
         $this->sessionHandler = $sessionHandler;
+        $this->settings = $settings;
     }
 
     public static function nonce(): string
@@ -61,9 +66,14 @@ class CreateOrderEndpoint implements EndpointInterface
                 $this->sessionHandler->replaceBnCode($bnCode);
                 $this->apiEndpoint->withBnCode($bnCode);
             }
+            $payeePreferred = $this->settings->has('payee_preferred') && $this->settings->get('payee_preferred') ?
+                PaymentMethod::PAYEE_PREFERRED_IMMEDIATE_PAYMENT_REQUIRED :PaymentMethod::PAYEE_PREFERRED_UNRESTRICTED;
+            $paymentMethod = new PaymentMethod($payeePreferred);
             $order = $this->apiEndpoint->createForPurchaseUnits(
                 $purchaseUnits,
-                $payer
+                $payer,
+                null,
+                $paymentMethod
             );
             wp_send_json_success($order->toArray());
             return true;
