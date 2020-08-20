@@ -203,6 +203,10 @@ class SmartButton implements SmartButtonInterface
 
     public function enqueue(): bool
     {
+        $buttonsEnabled = $this->settings->has('enabled') && $this->settings->get('enabled');
+        if (! is_checkout() && !$buttonsEnabled) {
+            return false;
+        }
         if (! $this->canSaveVaultToken() && $this->hasSubscription()) {
             return false;
         }
