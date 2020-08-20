@@ -25,7 +25,7 @@ class DisableGateways
 
     public function handler(array $methods): array
     {
-        if (! isset($methods[PayPalGateway::ID])) {
+        if (! isset($methods[PayPalGateway::ID]) && ! isset($methods[CreditCardGateway::ID])) {
             return $methods;
         }
         if (
