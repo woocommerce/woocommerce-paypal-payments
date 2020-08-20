@@ -9,9 +9,6 @@ class CheckoutBootstap {
     }
 
     init() {
-        if (!this.shouldRender()) {
-            return;
-        }
 
         this.render();
 
@@ -31,10 +28,13 @@ class CheckoutBootstap {
             return false;
         }
 
-        return document.querySelector(this.gateway.button.wrapper) !== null;
+        return document.querySelector(this.gateway.button.wrapper) !== null || document.querySelector(this.gateway.hosted_fields.wrapper) !== null;
     }
 
     render() {
+        if (!this.shouldRender()) {
+            return;
+        }
         const actionHandler = new CheckoutActionHandler(
             PayPalCommerceGateway,
             new ErrorHandler(this.gateway.labels.error.generic),
