@@ -117,13 +117,41 @@ class CreditCardGateway extends PayPalGateway
         }
 
         $titleOptions = [
-            'visa' => _x('Visa', 'Name of credit card', 'woocommerce-paypal-commerce-gateway'),
-            'mastercard' => _x('Mastercard', 'Name of credit card', 'woocommerce-paypal-commerce-gateway'),
-            'amex' => _x('American Express', 'Name of credit card', 'woocommerce-paypal-commerce-gateway'),
-            'discover' => _x('Discover', 'Name of credit card', 'woocommerce-paypal-commerce-gateway'),
-            'jcb' => _x('JCB', 'Name of credit card', 'woocommerce-paypal-commerce-gateway'),
-            'elo' => _x('Elo', 'Name of credit card', 'woocommerce-paypal-commerce-gateway'),
-            'hiper' => _x('Hiper', 'Name of credit card', 'woocommerce-paypal-commerce-gateway'),
+            'visa' => _x(
+                'Visa',
+                'Name of credit card',
+                'woocommerce-paypal-commerce-gateway'
+            ),
+            'mastercard' => _x(
+                'Mastercard',
+                'Name of credit card',
+                'woocommerce-paypal-commerce-gateway'
+            ),
+            'amex' => _x(
+                'American Express',
+                'Name of credit card',
+                'woocommerce-paypal-commerce-gateway'
+            ),
+            'discover' => _x(
+                'Discover',
+                'Name of credit card',
+                'woocommerce-paypal-commerce-gateway'
+            ),
+            'jcb' => _x(
+                'JCB',
+                'Name of credit card',
+                'woocommerce-paypal-commerce-gateway'
+            ),
+            'elo' => _x(
+                'Elo',
+                'Name of credit card',
+                'woocommerce-paypal-commerce-gateway'
+            ),
+            'hiper' => _x(
+                'Hiper',
+                'Name of credit card',
+                'woocommerce-paypal-commerce-gateway'
+            ),
         ];
         $images = array_map(
             function (string $type) use ($titleOptions): string {
