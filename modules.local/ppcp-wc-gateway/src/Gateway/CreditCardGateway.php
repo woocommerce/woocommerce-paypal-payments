@@ -116,7 +116,23 @@ class CreditCardGateway extends PayPalGateway
             return $title;
         }
 
-        $titleOptions = [
+        $titleOptions = $this->cardLabels();
+        $images = array_map(
+            function (string $type) use ($titleOptions): string {
+                return '<img
+                 title="' . esc_attr($titleOptions[$type]) . '"
+                 src="' . esc_url($this->moduleUrl) . '/assets/images/' . esc_attr($type) . '.svg"
+                 class="ppcp-card-icon"
+                > ';
+            },
+            $icons
+        );
+        return $title . implode('', $images);
+    }
+
+    private function cardLabels(): array
+    {
+        return [
             'visa' => _x(
                 'Visa',
                 'Name of credit card',
@@ -153,16 +169,5 @@ class CreditCardGateway extends PayPalGateway
                 'woocommerce-paypal-commerce-gateway'
             ),
         ];
-        $images = array_map(
-            function (string $type) use ($titleOptions): string {
-                return '<img
-                 title="' . esc_attr($titleOptions[$type]) . '"
-                 src="' . esc_url($this->moduleUrl) . '/assets/images/' . esc_attr($type) . '.svg"
-                 class="ppcp-card-icon"
-                > ';
-            },
-            $icons
-        );
-        return $title . implode('', $images);
     }
 }

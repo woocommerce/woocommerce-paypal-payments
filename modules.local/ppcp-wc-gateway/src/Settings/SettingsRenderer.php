@@ -183,7 +183,8 @@ class SettingsRenderer
             <<?php echo esc_attr($thTd); ?> colspan="<?php echo (int) $colspan; ?>"><?php
                 $config['type'] === 'ppcp-text' ?
                     $this->renderText($config)
-                    : woocommerce_form_field($key, $config, $value); ?></<?php echo esc_attr($thTd); ?>>
+                    : woocommerce_form_field($key, $config, $value); ?>
+            </<?php echo esc_attr($thTd); ?>>
         </tr>
         <?php endforeach;
 
@@ -201,9 +202,10 @@ class SettingsRenderer
                          sprintf(
                              // translators: %1$s and %2$s is a link tag.
                              __(
-                                 '3D Secure benefits cardholders and merchants by providing an additional
-                                  layer of verification using Verified by Visa, MasterCard SecureCode and
-                                  American Express SafeKey. %1$sLearn more about 3D Secure.%2$s',
+                                 '3D Secure benefits cardholders and merchants by providing
+                                  an additional layer of verification using Verified by Visa,
+                                  MasterCard SecureCode and American Express SafeKey.
+                                  %1$sLearn more about 3D Secure.%2$s',
                                  'woocommerce - paypal - commerce - gateway'
                              ),
                              '<a href = "#">',
