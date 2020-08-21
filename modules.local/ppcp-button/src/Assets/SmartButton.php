@@ -19,6 +19,7 @@ use Inpsyde\PayPalCommerce\Session\SessionHandler;
 use Inpsyde\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
 
+//phpcs:disable Inpsyde.CodeQuality.PropertyPerClassLimit.TooMuchProperties
 class SmartButton implements SmartButtonInterface
 {
     private $moduleUrl;
@@ -92,7 +93,8 @@ class SmartButton implements SmartButtonInterface
         return true;
     }
 
-    private function renderMessageWrapperRegistrar() : bool {
+    private function renderMessageWrapperRegistrar(): bool
+    {
 
         $notEnabledOnCart = $this->settings->has('message_cart_enabled') &&
             !$this->settings->get('message_cart_enabled');
@@ -126,7 +128,6 @@ class SmartButton implements SmartButtonInterface
             );
         }
 
-
         $notEnabledOnCheckout = $this->settings->has('message_enabled') &&
             !$this->settings->get('message_enabled');
         if (! $notEnabledOnCheckout) {
@@ -141,7 +142,9 @@ class SmartButton implements SmartButtonInterface
         }
         return true;
     }
-    private function renderButtonWrapperRegistrar() : bool {
+
+    private function renderButtonWrapperRegistrar(): bool
+    {
 
         $notEnabledOnCart = $this->settings->has('button_cart_enabled') &&
             !$this->settings->get('button_cart_enabled');
@@ -178,7 +181,7 @@ class SmartButton implements SmartButtonInterface
         $notEnabledOnMiniCart = $this->settings->has('button_mini_cart_enabled') &&
             !$this->settings->get('button_mini_cart_enabled');
         if (
-        ! $notEnabledOnMiniCart
+            ! $notEnabledOnMiniCart
         ) {
             add_action(
                 'woocommerce_widget_shopping_cart_after_buttons',
@@ -189,14 +192,7 @@ class SmartButton implements SmartButtonInterface
             );
         }
 
-        add_action(
-            'woocommerce_review_order_after_submit',
-            [
-                $this,
-                'buttonRenderer',
-            ],
-            10
-        );
+        add_action('woocommerce_review_order_after_submit', [$this, 'buttonRenderer'], 10);
 
         return true;
     }
@@ -248,11 +244,15 @@ class SmartButton implements SmartButtonInterface
         echo '<div id="ppc-button"></div>';
     }
 
-    public function messageRenderer() {
+    public function messageRenderer()
+    {
+
         echo '<div id="ppcp-messages"></div>';
     }
 
-    private function messageValues() : array {
+    //phpcs:disable Inpsyde.CodeQuality.FunctionLength.TooLong
+    private function messageValues(): array
+    {
 
         if (
             $this->settings->has('disable_funding')
@@ -338,6 +338,7 @@ class SmartButton implements SmartButtonInterface
 
         return $values;
     }
+    //phpcs:enable Inpsyde.CodeQuality.FunctionLength.TooLong
 
     public function dccRenderer()
     {

@@ -66,8 +66,10 @@ class CreateOrderEndpoint implements EndpointInterface
                 $this->sessionHandler->replaceBnCode($bnCode);
                 $this->apiEndpoint->withBnCode($bnCode);
             }
-            $payeePreferred = $this->settings->has('payee_preferred') && $this->settings->get('payee_preferred') ?
-                PaymentMethod::PAYEE_PREFERRED_IMMEDIATE_PAYMENT_REQUIRED :PaymentMethod::PAYEE_PREFERRED_UNRESTRICTED;
+            $payeePreferred = $this->settings->has('payee_preferred')
+            && $this->settings->get('payee_preferred') ?
+                PaymentMethod::PAYEE_PREFERRED_IMMEDIATE_PAYMENT_REQUIRED
+                : PaymentMethod::PAYEE_PREFERRED_UNRESTRICTED;
             $paymentMethod = new PaymentMethod($payeePreferred);
             $order = $this->apiEndpoint->createForPurchaseUnits(
                 $purchaseUnits,

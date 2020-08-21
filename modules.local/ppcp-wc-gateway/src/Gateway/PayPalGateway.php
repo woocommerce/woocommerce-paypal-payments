@@ -50,7 +50,12 @@ class PayPalGateway extends \WC_Payment_Gateway
         $this->notice = $notice;
         $this->settingsRenderer = $settingsRenderer;
         $this->config = $config;
-        if (defined('PPCP_FLAG_SUBSCRIPTION') && PPCP_FLAG_SUBSCRIPTION && $this->config->has('vault_enabled') && $this->config->get('vault_enabled')) {
+        if (
+            defined('PPCP_FLAG_SUBSCRIPTION')
+            && PPCP_FLAG_SUBSCRIPTION
+            && $this->config->has('vault_enabled')
+            && $this->config->get('vault_enabled')
+        ) {
             $this->supports = [
                 'products',
                 'subscriptions',

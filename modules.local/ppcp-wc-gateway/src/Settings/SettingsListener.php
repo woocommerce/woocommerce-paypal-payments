@@ -93,7 +93,8 @@ class SettingsListener
             $this->webhookRegistrar->register();
         }
         if ($this->settings->has('client_id')) {
-            $currentSecret = $this->settings->has('client_secret') ? $this->settings->get('client_secret') : '';
+            $currentSecret = $this->settings->has('client_secret') ?
+                $this->settings->get('client_secret') : '';
             if (
                 $settings['client_id'] !== $this->settings->get('client_id')
                 || $settings['client_secret'] !== $currentSecret

@@ -45,8 +45,8 @@ class SettingsRenderer
             $selected = (in_array($optionKey, $value, true)) ? 'selected="selected"' : '';
 
             $options[] = '<option value="' . esc_attr($optionKey) . '" ' . $selected . '>' .
-                esc_html($optionValue) .
-                '</option>';
+            esc_html($optionValue) .
+            '</option>';
         }
 
         $html = sprintf(
@@ -127,6 +127,7 @@ class SettingsRenderer
     //phpcs:enable Inpsyde.CodeQuality.ArgumentTypeDeclaration.NoArgumentType
 
     //phpcs:disable Inpsyde.CodeQuality.NestingLevel.High
+    //phpcs:disable Inpsyde.CodeQuality.FunctionLength.TooLong
     public function render(bool $isDcc)
     {
 
@@ -187,31 +188,32 @@ class SettingsRenderer
         <?php endforeach;
 
         if ($isDcc) :
-        ?>
+            ?>
         <tr>
             <th><?php esc_html_e('3D Secure', 'woocommerce-paypal-commerce-gateway'); ?></th>
             <td>
                 <p>
                     <?php
+                     /**
+                      * @todo: Provide link to documentation.
+                      */
                      echo wp_kses_post(
-                            sprintf(
-                                    //translators: %s is a link tag.
-                                    __(
-                                        '3D Secure benefits cardholders and merchants by providing an additional
-                                        layer of verification using Verified by Visa, MasterCard SecureCode and
-                                        American Express SafeKey. %sLearn more about 3D Secure.%s',
-                                        'woocommerce-paypal-commerce-gateway'
-                                    ),
-
-                                    //ToDo: Provide link to documentation.
-                                    '<a href="#">',
-                                    '</a>'
-                            )
-                    ); ?>
+                         sprintf(
+                             // translators: %1$s and %2$s is a link tag.
+                             __(
+                                 '3D Secure benefits cardholders and merchants by providing an additional
+                                  layer of verification using Verified by Visa, MasterCard SecureCode and
+                                  American Express SafeKey. %1$sLearn more about 3D Secure.%2$s',
+                                 'woocommerce - paypal - commerce - gateway'
+                             ),
+                             '<a href = "#">',
+                             '</a>'
+                         )
+                     ); ?>
                 </p>
             </td>
         </tr>
-        <?php
+            <?php
         endif;
     }
     //phpcs:enable Inpsyde.CodeQuality.NestingLevel.High
@@ -223,11 +225,11 @@ class SettingsRenderer
             $value = $this->settings->has($config['hidden']) ?
                 (string) $this->settings->get($config['hidden'])
                 : '';
-            echo '<input
-             type="hidden"
-             name="ppcp[' . esc_attr($config['hidden']) . ']"
-             value="' . esc_attr($value) . '"
-             >';
+            echo ' < input
+                    type = "hidden"
+                    name = "ppcp[' . esc_attr($config['hidden']) . ']"
+                    value = "' . esc_attr($value) . '"
+                    > ';
         }
     }
 }

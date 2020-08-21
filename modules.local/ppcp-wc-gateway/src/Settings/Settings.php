@@ -82,7 +82,10 @@ class Settings implements ContainerInterface
             'button_cart_enabled' => true,
             'brand_name' => get_bloginfo('name'),
             'dcc_gateway_title' => __('Credit Cards', 'woocommerce-paypal-commerce-gateway'),
-            'dcc_gateway_description' => __('Pay with your credit card.', 'woocommerce-paypal-commerce-gateway'),
+            'dcc_gateway_description' => __(
+                'Pay with your credit card.',
+                'woocommerce-paypal-commerce-gateway'
+            ),
         ];
         foreach ($defaults as $key => $value) {
             if (isset($this->settings[$key])) {

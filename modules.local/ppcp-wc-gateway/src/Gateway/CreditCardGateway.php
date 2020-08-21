@@ -12,6 +12,8 @@ use Psr\Container\ContainerInterface;
 
 //phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
 //phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration.NoArgumentType
+//phpcs:disable Inpsyde.CodeQuality.NoAccessors.NoGetter
+//phpcs:disable Inpsyde.CodeQuality.ReturnTypeDeclaration.NoReturnType
 class CreditCardGateway extends PayPalGateway
 {
     public const ID = 'ppcp-credit-card-gateway';
@@ -32,7 +34,12 @@ class CreditCardGateway extends PayPalGateway
         $this->notice = $notice;
         $this->settingsRenderer = $settingsRenderer;
         $this->config = $config;
-        if (defined('PPCP_FLAG_SUBSCRIPTION') && PPCP_FLAG_SUBSCRIPTION && $this->config->has('vault_enabled') && $this->config->get('vault_enabled')) {
+        if (
+            defined('PPCP_FLAG_SUBSCRIPTION')
+            && PPCP_FLAG_SUBSCRIPTION
+            && $this->config->has('vault_enabled')
+            && $this->config->get('vault_enabled')
+        ) {
             $this->supports = [
                 'products',
                 'subscriptions',
@@ -97,7 +104,9 @@ class CreditCardGateway extends PayPalGateway
         return $content;
     }
 
-    public function get_title() {
+    public function get_title()
+    {
+
         if (is_admin()) {
             return parent::get_title();
         }
@@ -117,7 +126,7 @@ class CreditCardGateway extends PayPalGateway
             'hiper' => _x('Hiper', 'Name of credit card', 'woocommerce-paypal-commerce-gateway'),
         ];
         $images = array_map(
-            function(string $type) use ($titleOptions) : string {
+            function (string $type) use ($titleOptions): string {
                 return '<img
                  title="' . esc_attr($titleOptions[$type]) . '"
                  src="' . esc_url($this->moduleUrl) . '/assets/images/' . esc_attr($type) . '.svg"
