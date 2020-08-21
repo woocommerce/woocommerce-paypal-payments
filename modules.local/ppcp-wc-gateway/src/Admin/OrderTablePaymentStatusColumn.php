@@ -77,7 +77,9 @@ class OrderTablePaymentStatusColumn
     private function renderCompletedStatus()
     {
         printf(
-            '<span class="dashicons dashicons-yes"><span class="screen-reader-text">%s</span></span>',
+            '<span class="dashicons dashicons-yes">
+                        <span class="screen-reader-text">%s</span>
+                    </span>',
             esc_html__('Payment captured', 'woocommerce-paypal-commerce-gateway')
         );
     }

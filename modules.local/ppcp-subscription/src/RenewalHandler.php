@@ -77,7 +77,10 @@ class RenewalHandler
             'info',
             sprintf(
                 // translators: %d is the order number
-                __('Moneytransfer for order %d is completed.', 'woocommerce-paypal-commerce-gateway'),
+                __(
+                    'Moneytransfer for order %d is completed.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
                 (int) $wcOrder->get_id()
             ),
             [
@@ -115,7 +118,10 @@ class RenewalHandler
                 'error',
                 sprintf(
                     // translators: %d is the customer id
-                    __('No payment token found for customer %d', 'woocommerce-paypal-commerce-gateway'),
+                    __(
+                        'No payment token found for customer %d',
+                        'woocommerce-paypal-commerce-gateway'
+                    ),
                     (int) $customer->get_id()
                 ),
                 [

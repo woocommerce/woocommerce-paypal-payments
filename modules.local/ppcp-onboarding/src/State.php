@@ -30,7 +30,10 @@ class State
          * Having provided the merchant email means, we are at least
          * in the progressive phase of our onboarding.
          **/
-        if ($this->settings->has('merchant_email') && is_email($this->settings->get('merchant_email'))) {
+        if (
+            $this->settings->has('merchant_email')
+            && is_email($this->settings->get('merchant_email'))
+        ) {
             $value = self::STATE_PROGRESSIVE;
         }
 

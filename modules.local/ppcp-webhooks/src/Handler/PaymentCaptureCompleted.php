@@ -37,7 +37,10 @@ class PaymentCaptureCompleted implements RequestHandler
         if (! $orderId) {
             $message = sprintf(
                 // translators: %s is the PayPal webhook Id.
-                __('No order for webhook event %s was found.', 'woocommerce-paypal-commerce-gateway'),
+                __(
+                    'No order for webhook event %s was found.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
                 isset($request['id']) ? $request['id'] : ''
             );
             $this->logger->log(
@@ -55,7 +58,10 @@ class PaymentCaptureCompleted implements RequestHandler
         if (! is_a($wcOrder, \WC_Order::class)) {
             $message = sprintf(
             // translators: %s is the PayPal webhook Id.
-                __('No order for webhook event %s was found.', 'woocommerce-paypal-commerce-gateway'),
+                __(
+                    'No order for webhook event %s was found.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
                 isset($request['id']) ? $request['id'] : ''
             );
             $this->logger->log(
@@ -84,7 +90,10 @@ class PaymentCaptureCompleted implements RequestHandler
             'info',
             sprintf(
             // translators: %s is the order ID.
-                __('Order %s has been updated through PayPal', 'woocommerce-paypal-commerce-gateway'),
+                __(
+                    'Order %s has been updated through PayPal',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
                 (string)$wcOrder->get_id()
             ),
             [

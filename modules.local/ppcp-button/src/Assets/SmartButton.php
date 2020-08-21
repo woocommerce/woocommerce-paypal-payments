@@ -19,7 +19,7 @@ use Inpsyde\PayPalCommerce\Session\SessionHandler;
 use Inpsyde\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
 
-//phpcs:disable Inpsyde.CodeQuality.PropertyPerClassLimit.TooMuchProperties
+//phpcs:disable Inpsyde.CodeQuality.PropertyPerClassLimit.TooManyProperties
 class SmartButton implements SmartButtonInterface
 {
     private $moduleUrl;
@@ -186,7 +186,10 @@ class SmartButton implements SmartButtonInterface
             add_action(
                 'woocommerce_widget_shopping_cart_after_buttons',
                 static function () {
-                    echo '<p id="ppc-button-minicart" class="woocommerce-mini-cart__buttons buttons"></p>';
+                    echo '<p
+                                id="ppc-button-minicart"
+                                class="woocommerce-mini-cart__buttons buttons"
+                          ></p>';
                 },
                 30
             );
@@ -372,7 +375,10 @@ class SmartButton implements SmartButtonInterface
                             <label for="ppcp-credit-card-%1$s">%2$s</label>
                             <span id="ppcp-credit-card-%1$s" class="ppcp-credit-card"></span>
                             <label for="ppcp-expiration-date-%1$s">%3$s</label>
-                            <span id="ppcp-expiration-date-%1$s" class="ppcp-expiration-date"></span>
+                            <span
+                             id="ppcp-expiration-date-%1$s"
+                             class="ppcp-expiration-date"
+                            ></span>
                             <label for="ppcp-cvv-%1$s">%4$s</label>
                             <span id="ppcp-cvv-%1$s" class="ppcp-cvv"></span>
                             %5$s
@@ -420,7 +426,8 @@ class SmartButton implements SmartButtonInterface
         $localize = [
             'script_attributes' => $this->attributes(),
             'data_client_id' => [
-                'set_attribute' => (is_checkout() && $this->dccIsEnabled()) || $this->canSaveVaultToken(),
+                'set_attribute' => (is_checkout() && $this->dccIsEnabled())
+                    || $this->canSaveVaultToken(),
                 'endpoint' => home_url(\WC_AJAX::get_endpoint(DataClientIdEndpoint::ENDPOINT)),
                 'nonce' => wp_create_nonce(DataClientIdEndpoint::nonce()),
                 'user' => get_current_user_id(),
@@ -523,7 +530,8 @@ class SmartButton implements SmartButtonInterface
             'vault' => (is_checkout() && $this->dccIsEnabled()) || $this->canSaveVaultToken() ?
                 'true' : 'false',
             'commit' => is_checkout() ? 'true' : 'false',
-            'intent' => ($this->settings->has('intent')) ? $this->settings->get('intent') : 'capture',
+            'intent' => ($this->settings->has('intent')) ?
+                $this->settings->get('intent') : 'capture',
         ];
         if (defined('WP_DEBUG') && \WP_DEBUG && WC()->customer) {
             $params['buyer-country'] = WC()->customer->get_billing_country();

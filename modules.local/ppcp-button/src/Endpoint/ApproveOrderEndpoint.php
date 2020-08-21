@@ -38,12 +38,15 @@ class ApproveOrderEndpoint implements EndpointInterface
         return self::ENDPOINT;
     }
 
+    //phpcs:disable Inpsyde.CodeQuality.FunctionLength.TooLong
     public function handleRequest(): bool
     {
         try {
             $data = $this->requestData->readRequest($this->nonce());
             if (! isset($data['order_id'])) {
-                throw new RuntimeException(__("No order id given", "woocommerce-paypal-commerce-gateway"));
+                throw new RuntimeException(
+                    __("No order id given", "woocommerce-paypal-commerce-gateway")
+                );
             }
 
             $order = $this->apiEndpoint->order($data['order_id']);
@@ -61,7 +64,10 @@ class ApproveOrderEndpoint implements EndpointInterface
                 $proceed = $this->threedSecure->proceedWithOrder($order);
                 if ($proceed === ThreeDSecure::RETRY) {
                     throw new RuntimeException(
-                        __('Something went wrong. Please try again.', 'woocommerce-paypal-commerce-gateway')
+                        __(
+                            'Something went wrong. Please try again.',
+                            'woocommerce-paypal-commerce-gateway'
+                        )
                     );
                 }
                 if ($proceed === ThreeDSecure::REJECT) {
@@ -94,4 +100,5 @@ class ApproveOrderEndpoint implements EndpointInterface
             return false;
         }
     }
+    //phpcs:enable Inpsyde.CodeQuality.FunctionLength.TooLong
 }

@@ -227,7 +227,7 @@ class SettingsRenderer
             $value = $this->settings->has($config['hidden']) ?
                 (string) $this->settings->get($config['hidden'])
                 : '';
-            echo ' < input
+            echo ' <input
                     type = "hidden"
                     name = "ppcp[' . esc_attr($config['hidden']) . ']"
                     value = "' . esc_attr($value) . '"

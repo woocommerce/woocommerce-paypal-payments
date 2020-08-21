@@ -78,7 +78,10 @@ class IncomingWebhookEndpoint
                 'error',
                 sprintf(
                     // translators: %s is the error message.
-                    __('Illegit Webhook request detected: %s', 'woocommerce-paypal-commerce-gateway'),
+                    __(
+                        'Illegit Webhook request detected: %s',
+                        'woocommerce-paypal-commerce-gateway'
+                    ),
                     $exception->getMessage()
                 )
             );

@@ -37,7 +37,8 @@ class CheckoutOrderCompleted implements RequestHandler
         $customIds = array_filter(
             array_map(
                 static function (array $purchaseUnit): string {
-                    return isset($purchaseUnit['custom_id']) ? (string) $purchaseUnit['custom_id'] : '';
+                    return isset($purchaseUnit['custom_id']) ?
+                        (string) $purchaseUnit['custom_id'] : '';
                 },
                 isset($request['resource']['purchase_units']) ?
                     (array) $request['resource']['purchase_units'] : []
@@ -50,7 +51,10 @@ class CheckoutOrderCompleted implements RequestHandler
         if (empty($customIds)) {
             $message = sprintf(
                 // translators: %s is the PayPal webhook Id.
-                __('No order for webhook event %s was found.', 'woocommerce-paypal-commerce-gateway'),
+                __(
+                    'No order for webhook event %s was found.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
                 isset($request['id']) ? $request['id'] : ''
             );
             $this->logger->log(
@@ -108,7 +112,10 @@ class CheckoutOrderCompleted implements RequestHandler
                 'info',
                 sprintf(
                     // translators: %s is the order ID.
-                    __('Order %s has been updated through PayPal', 'woocommerce-paypal-commerce-gateway'),
+                    __(
+                        'Order %s has been updated through PayPal',
+                        'woocommerce-paypal-commerce-gateway'
+                    ),
                     (string) $wcOrder->get_id()
                 ),
                 [

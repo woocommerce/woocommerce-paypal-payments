@@ -69,7 +69,11 @@ class ChangeCartEndpoint implements EndpointInterface
         foreach ($products as $product) {
             $success = $success && (! $product['product']->is_type('variable')) ?
                 $this->addProduct($product['product'], $product['quantity'])
-                : $this->addVariableProduct($product['product'], $product['quantity'], $product['variations']);
+                : $this->addVariableProduct(
+                    $product['product'],
+                    $product['quantity'],
+                    $product['variations']
+                );
         }
         if (! $success) {
             $this->handleError();
@@ -83,7 +87,10 @@ class ChangeCartEndpoint implements EndpointInterface
     private function handleError(): bool
     {
 
-        $message = __('Something went wrong. Action aborted', 'woocommerce-paypal-commerce-gateway');
+        $message = __(
+            'Something went wrong. Action aborted',
+            'woocommerce-paypal-commerce-gateway'
+        );
         $errors = wc_get_notices('error');
         if (count($errors)) {
             $message = array_reduce(

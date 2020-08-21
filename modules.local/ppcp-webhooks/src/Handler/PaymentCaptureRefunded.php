@@ -35,8 +35,11 @@ class PaymentCaptureRefunded implements RequestHandler
             $this->sanitizeCustomId($request['resource']['custom_id']) : 0;
         if (! $orderId) {
             $message = sprintf(
-            // translators: %s is the PayPal webhook Id.
-                __('No order for webhook event %s was found.', 'woocommerce-paypal-commerce-gateway'),
+                // translators: %s is the PayPal webhook Id.
+                __(
+                    'No order for webhook event %s was found.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
                 isset($request['id']) ? $request['id'] : ''
             );
             $this->logger->log(

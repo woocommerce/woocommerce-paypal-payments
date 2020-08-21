@@ -39,8 +39,11 @@ class PaymentCaptureReversed implements RequestHandler
             $this->sanitizeCustomId($request['resource']['custom_id']) : 0;
         if (! $orderId) {
             $message = sprintf(
-            // translators: %s is the PayPal webhook Id.
-                __('No order for webhook event %s was found.', 'woocommerce-paypal-commerce-gateway'),
+                // translators: %s is the PayPal webhook Id.
+                __(
+                    'No order for webhook event %s was found.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
                 isset($request['id']) ? $request['id'] : ''
             );
             $this->logger->log(
@@ -79,7 +82,10 @@ class PaymentCaptureReversed implements RequestHandler
 
         $message = $response['success'] ? sprintf(
             // translators: %1$s is the order id.
-            __('Order %1$s has been cancelled through PayPal', 'woocommerce-paypal-commerce-gateway'),
+            __(
+                'Order %1$s has been cancelled through PayPal',
+                'woocommerce-paypal-commerce-gateway'
+            ),
             (string) $wcOrder->get_id()
         ) : sprintf(
             // translators: %1$s is the order id.
