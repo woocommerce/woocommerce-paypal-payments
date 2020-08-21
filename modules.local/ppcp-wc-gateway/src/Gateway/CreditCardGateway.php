@@ -98,6 +98,9 @@ class CreditCardGateway extends PayPalGateway
     }
 
     public function get_title() {
+        if (is_admin()) {
+            return parent::get_title();
+        }
         $title = parent::get_title();
         $icons = $this->config->has('card_icons') ? (array) $this->config->get('card_icons') : [];
         if (empty($icons)) {
