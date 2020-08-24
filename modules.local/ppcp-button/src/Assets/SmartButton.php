@@ -533,7 +533,7 @@ class SmartButton implements SmartButtonInterface
             'intent' => ($this->settings->has('intent')) ?
                 $this->settings->get('intent') : 'capture',
         ];
-        if (defined('WP_DEBUG') && \WP_DEBUG && WC()->customer) {
+        if (defined('WP_DEBUG') && \WP_DEBUG && WC()->customer && WC()->customer->get_billing_country()) {
             $params['buyer-country'] = WC()->customer->get_billing_country();
         }
         $payee = $this->payeeRepository->payee();
