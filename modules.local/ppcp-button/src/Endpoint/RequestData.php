@@ -35,7 +35,8 @@ class RequestData
         }
         $this->dequeueNonceFix();
 
-        return $this->sanitize($json);
+        $sanitized = $this->sanitize($json);
+        return $sanitized;
     }
 
     /**
@@ -57,10 +58,10 @@ class RequestData
         $data = [];
         foreach ((array) $assocArray as $rawKey => $rawValue) {
             if (! is_array($rawValue)) {
-                $data[sanitize_text_field($rawKey)] = sanitize_text_field($rawValue);
+                $data[sanitize_text_field(urldecode($rawKey))] = sanitize_text_field(urldecode($rawValue));
                 continue;
             }
-            $data[sanitize_text_field($rawKey)] = $this->sanitize($rawValue);
+            $data[sanitize_text_field(urldecode($rawKey))] = $this->sanitize($rawValue);
         }
         return $data;
     }
