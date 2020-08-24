@@ -19,7 +19,8 @@ class CheckoutActionHandler {
                 body: JSON.stringify({
                     nonce: this.config.ajax.create_order.nonce,
                     payer,
-                    bn_code:bnCode
+                    bn_code:bnCode,
+                    context:this.config.context
                 })
             }).then(function (res) {
                 return res.json();

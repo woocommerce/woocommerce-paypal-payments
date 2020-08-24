@@ -19,7 +19,8 @@ class CartActionHandler {
                     nonce: this.config.ajax.create_order.nonce,
                     purchase_units: [],
                     bn_code:bnCode,
-                    payer
+                    payer,
+                    context:this.config.context
                 }),
             }).then(function(res) {
                 return res.json();
