@@ -96,7 +96,7 @@ class OrderProcessor
         return $this->lastError;
     }
 
-    private function patchOrder(\WC_Order $wcOrder, Order $order): Order
+    public function patchOrder(\WC_Order $wcOrder, Order $order): Order
     {
         $updatedOrder = $this->orderFactory->fromWcOrder($wcOrder, $order);
         $order = $this->orderEndpoint->patchOrderWith($order, $updatedOrder);
