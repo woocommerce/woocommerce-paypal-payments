@@ -122,6 +122,16 @@ class PayPalGateway extends \WC_Payment_Gateway
             return null;
         }
 
+        /**
+         * If the WC_Order is payed through the approved webhook.
+         */
+        if (isset($_REQUEST['ppcp-resume-order']) && $wcOrder->has_status('processing')) {
+            return [
+                'result' => 'success',
+                'redirect' => $this->get_return_url($wcOrder),
+            ];
+        }
+
         if ($this->orderProcessor->process($wcOrder, $woocommerce)) {
             return [
                 'result' => 'success',
