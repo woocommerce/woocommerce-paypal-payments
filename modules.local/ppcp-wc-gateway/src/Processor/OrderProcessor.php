@@ -110,6 +110,10 @@ class OrderProcessor
             return true;
         }
 
+        if (! $order->paymentSource() || ! $order->paymentSource()->card()) {
+            return false;
+        }
+
         $isApproved = in_array(
             $this->threedSecure->proceedWithOrder($order),
             [
