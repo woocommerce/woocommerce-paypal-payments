@@ -161,6 +161,15 @@ const groupToggleSelect = (selector, group) => {
         ]
     );
     groupToggleSelect(
+        '#ppcp-intent',
+        [
+            {
+                value:'authorize',
+                selector:'#field-capture_for_virtual_only'
+            }
+        ]
+    );
+    groupToggleSelect(
         '#ppcp-message_cart_layout',
         [
             {

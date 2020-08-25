@@ -104,13 +104,17 @@ return [
         $paymentsEndpoint = $container->get('api.endpoint.payments');
         $orderFactory = $container->get('api.factory.order');
         $threeDsecure = $container->get('button.helper.three-d-secure');
+        $authorizedPaymentsProcessor = $container->get('wcgateway.processor.authorized-payments');
+        $settings = $container->get('wcgateway.settings');
         return new OrderProcessor(
             $sessionHandler,
             $cartRepository,
             $orderEndpoint,
             $paymentsEndpoint,
             $orderFactory,
-            $threeDsecure
+            $threeDsecure,
+            $authorizedPaymentsProcessor,
+            $settings
         );
     },
     'wcgateway.processor.authorized-payments' => static function (ContainerInterface $container): AuthorizedPaymentsProcessor {
@@ -335,6 +339,23 @@ return [
                     'authorize' => __('Authorize', 'woocommerce-paypal-commerce-gateway'),
                 ],
                 'screens' => [
+                    State::STATE_ONBOARDED,
+                ],
+                'requirements' => [],
+                'gateway' => 'all',
+            ],
+            'capture_for_virtual_only' => [
+                'title' => __('Capture Virtual-Only Orders ', 'woocommerce-paypal-commerce-gateway'),
+                'type' => 'checkbox',
+                'default' => false,
+                'desc_tip' => true,
+                'description' => __(
+                    'If the order contains exclusively virtual items, enable this to immediately capture, rather than authorize, the transaction.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'label' => __('Capture Virtual-Only Orders', 'woocommerce-paypal-commerce-gateway'),
+                'screens' => [
+                    State::STATE_PROGRESSIVE,
                     State::STATE_ONBOARDED,
                 ],
                 'requirements' => [],

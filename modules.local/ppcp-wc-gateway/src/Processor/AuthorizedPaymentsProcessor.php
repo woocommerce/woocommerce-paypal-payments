@@ -109,7 +109,8 @@ class AuthorizedPaymentsProcessor
         return array_filter(
             $authorizations,
             static function (Authorization $authorization): bool {
-                return $authorization->status()->is(AuthorizationStatus::CREATED);
+                return $authorization->status()->is(AuthorizationStatus::CREATED)
+                    || $authorization->status()->is(AuthorizationStatus::PENDING);
             }
         );
     }

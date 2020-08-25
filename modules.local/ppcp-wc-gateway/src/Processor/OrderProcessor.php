@@ -13,6 +13,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
 use Inpsyde\PayPalCommerce\Button\Helper\ThreeDSecure;
 use Inpsyde\PayPalCommerce\Session\SessionHandler;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
 
 class OrderProcessor
 {
@@ -22,6 +23,8 @@ class OrderProcessor
     private $paymentsEndpoint;
     private $orderFactory;
     private $threedSecure;
+    private $authorizedPaymentsProcessor;
+    private $settings;
 
     private $lastError = '';
 
@@ -31,7 +34,9 @@ class OrderProcessor
         OrderEndpoint $orderEndpoint,
         PaymentsEndpoint $paymentsEndpoint,
         OrderFactory $orderFactory,
-        ThreeDSecure $threedSecure
+        ThreeDSecure $threedSecure,
+        AuthorizedPaymentsProcessor $authorizedPaymentsProcessor,
+        Settings $settings
     ) {
 
         $this->sessionHandler = $sessionHandler;
@@ -40,6 +45,8 @@ class OrderProcessor
         $this->paymentsEndpoint = $paymentsEndpoint;
         $this->orderFactory = $orderFactory;
         $this->threedSecure = $threedSecure;
+        $this->authorizedPaymentsProcessor = $authorizedPaymentsProcessor;
+        $this->settings = $settings;
     }
 
     public function process(\WC_Order $wcOrder, \WooCommerce $woocommerce): bool
@@ -84,9 +91,42 @@ class OrderProcessor
                 __('Payment received.', 'woocommerce-paypal-commerce-gateway')
             );
         }
+
+        if ($this->captureAuthorizedDownloads($order) && $this->authorizedPaymentsProcessor->process($wcOrder)) {
+            $wcOrder->add_order_note(
+                __('Payment successfully captured.', 'woocommerce-paypal-commerce-gateway')
+            );
+            $wcOrder->update_meta_data(PayPalGateway::CAPTURED_META_KEY, 'true');
+            $wcOrder->update_status('processing');
+        }
         $woocommerce->cart->empty_cart();
         $this->sessionHandler->destroySessionData();
         $this->lastError = '';
+        return true;
+    }
+
+    private function captureAuthorizedDownloads(Order $order): bool
+    {
+        if (! $this->settings->has('capture_for_virtual_only') || ! $this->settings->get('capture_for_virtual_only')) {
+            return false;
+        }
+
+        if ($order->intent() === 'CAPTURE') {
+            return false;
+        }
+
+        /**
+         * We fetch the order again as the authorize endpoint (from which the Order derives)
+         * drops the item's category, making it impossible to check, if purchase units contain
+         * physical goods.
+         */
+        $order = $this->orderEndpoint->order($order->id());
+
+        foreach ($order->purchaseUnits() as $unit) {
+            if ($unit->containsPhysicalGoodsItems()) {
+                return false;
+            }
+        }
         return true;
     }
 
