@@ -34,6 +34,11 @@ class CheckoutActionHandler {
                     errorHandler.message(data.data, true);
                     return;
                 }
+                const input = document.createElement('input');
+                input.setAttribute('type', 'hidden');
+                input.setAttribute('name', 'ppcp-resume-order');
+                input.setAttribute('value', data.data.purchase_units[0].custom_id);
+                document.querySelector('form.checkout').append(input);
                 return data.data.id;
             });
         }
