@@ -58,10 +58,10 @@ class RequestData
         $data = [];
         foreach ((array) $assocArray as $rawKey => $rawValue) {
             if (! is_array($rawValue)) {
-                $data[sanitize_text_field(urldecode($rawKey))] = sanitize_text_field(urldecode($rawValue));
+                $data[sanitize_text_field(urldecode((string) $rawKey))] = sanitize_text_field(urldecode((string) $rawValue));
                 continue;
             }
-            $data[sanitize_text_field(urldecode($rawKey))] = $this->sanitize($rawValue);
+            $data[sanitize_text_field(urldecode((string) $rawKey))] = $this->sanitize($rawValue);
         }
         return $data;
     }
