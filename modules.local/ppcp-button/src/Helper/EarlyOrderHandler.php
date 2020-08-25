@@ -6,29 +6,63 @@ namespace Inpsyde\PayPalCommerce\Button\Helper;
 
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
 use Inpsyde\PayPalCommerce\Onboarding\State;
+use Inpsyde\PayPalCommerce\Session\SessionHandler;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Inpsyde\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
+use Inpsyde\PayPalCommerce\Webhooks\Handler\PrefixTrait;
 
 class EarlyOrderHandler
 {
 
+    use PrefixTrait;
     private $state;
     private $orderProcessor;
+    private $sessionHandler;
 
 
     public function __construct(
         State $state,
-        OrderProcessor $orderProcessor
+        OrderProcessor $orderProcessor,
+        SessionHandler $sessionHandler,
+        string $prefix
     ) {
 
         $this->state = $state;
         $this->orderProcessor = $orderProcessor;
+        $this->sessionHandler = $sessionHandler;
+        $this->prefix = $prefix;
     }
 
     public function shouldCreateEarlyOrder() : bool
     {
         return $this->state->currentState() === State::STATE_ONBOARDED;
+    }
+
+    public function determineWcOrderId($value) : ?int {
+        if (! is_null($value)) {
+            $value = (int) $value;
+        }
+        if (! isset($_REQUEST['ppcp-resume-order'])) {
+            return $value;
+        }
+
+        $resumeOrderId = (int) WC()->session->get('order_awaiting_payment');
+
+        $order = $this->sessionHandler->order();
+        if (! $order) {
+            return $value;
+        }
+
+        foreach ($order->purchaseUnits() as $purchaseUnit) {
+            if ($purchaseUnit->customId() === sanitize_text_field(wp_unslash($_REQUEST['ppcp-resume-order']))) {
+                $orderId = (int) $this->sanitizeCustomId($purchaseUnit->customId());
+                if ($orderId === $resumeOrderId) {
+                    $value = $orderId;
+                }
+            }
+        }
+        return $value;
     }
 
     public function registerForOrder(Order $order): bool {

@@ -12,6 +12,7 @@ use Inpsyde\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\RequestData;
+use Inpsyde\PayPalCommerce\Button\Helper\EarlyOrderHandler;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
 
@@ -49,6 +50,22 @@ class ButtonModule implements ModuleInterface
             $smartButton = $container->get('button.smart-button');
             $smartButton->enqueue();
         });
+
+        add_action(
+            'woocommerce_create_order',
+            static function ($value) use ($container) {
+                $earlyOrderHelper = $container->get('button.helper.early-order-handler');
+                /**
+                 * @var EarlyOrderHandler $earlyOrderHelper
+                 */
+                return $earlyOrderHelper->determineWcOrderId($value);
+            }
+        );
+
+        $this->registerAjaxEndpoints($container);
+    }
+
+    private function registerAjaxEndpoints(ContainerInterface $container) {
 
         add_action(
             'wc_ajax_' . DataClientIdEndpoint::ENDPOINT,
