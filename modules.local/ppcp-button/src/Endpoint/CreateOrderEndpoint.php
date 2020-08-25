@@ -106,7 +106,7 @@ class CreateOrderEndpoint implements EndpointInterface
         $_REQUEST = $parsedValues;
         add_filter(
             'woocommerce_after_checkout_validation',
-            function($data, \WP_Error $errors) use ($parsedValues, $order) {
+            function($data, \WP_Error $errors) use ($order) {
                 if (! $errors->errors) {
 
                     /**
@@ -116,7 +116,7 @@ class CreateOrderEndpoint implements EndpointInterface
                      * during the "onApprove"-JS callback or the webhook listener.
                      */
                     if ($this->state->currentState() === State::STATE_ONBOARDED) {
-                        $this->createOrder($parsedValues, $order);
+                        $this->createOrder($order);
                         return $data;
                     }
                     wp_send_json_success($order->toArray());
@@ -130,7 +130,7 @@ class CreateOrderEndpoint implements EndpointInterface
         $checkout->process_checkout();
     }
 
-    private function createOrder(array $parsedValues, Order $order) {
+    private function createOrder(Order $order) {
         add_action(
             'woocommerce_checkout_order_processed',
             function($orderId) use ($order) {
