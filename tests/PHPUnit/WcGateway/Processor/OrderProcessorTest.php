@@ -14,6 +14,7 @@ use Inpsyde\PayPalCommerce\Button\Helper\ThreeDSecure;
 use Inpsyde\PayPalCommerce\Session\SessionHandler;
 use Inpsyde\PayPalCommerce\TestCase;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
 use Inpsyde\Woocommerce\Logging\WoocommerceLoggingModule;
 use Mockery;
 
@@ -66,6 +67,11 @@ class OrderProcessorTest extends TestCase
             ->with($wcOrder, $currentOrder)
             ->andReturn($currentOrder);
         $threeDSecure = Mockery::mock(ThreeDSecure::class);
+        $authorizedPaymentProcessor = Mockery::mock(AuthorizedPaymentsProcessor::class);
+        $settings = Mockery::mock(Settings::class);
+        $settings
+            ->shouldReceive('has')
+            ->andReturnFalse();
 
         $testee = new OrderProcessor(
             $sessionHandler,
@@ -73,7 +79,9 @@ class OrderProcessorTest extends TestCase
             $orderEndpoint,
             $paymentsEndpoint,
             $orderFactory,
-            $threeDSecure
+            $threeDSecure,
+            $authorizedPaymentProcessor,
+            $settings
         );
 
         $cart = Mockery::mock(\WC_Cart::class);
@@ -152,6 +160,11 @@ class OrderProcessorTest extends TestCase
             ->with($wcOrder, $currentOrder)
             ->andReturn($currentOrder);
         $threeDSecure = Mockery::mock(ThreeDSecure::class);
+        $authorizedPaymentProcessor = Mockery::mock(AuthorizedPaymentsProcessor::class);
+        $settings = Mockery::mock(Settings::class);
+        $settings
+            ->shouldReceive('has')
+            ->andReturnFalse();
 
         $testee = new OrderProcessor(
             $sessionHandler,
@@ -159,7 +172,9 @@ class OrderProcessorTest extends TestCase
             $orderEndpoint,
             $paymentsEndpoint,
             $orderFactory,
-            $threeDSecure
+            $threeDSecure,
+            $authorizedPaymentProcessor,
+            $settings
         );
 
         $cart = Mockery::mock(\WC_Cart::class);
@@ -208,6 +223,9 @@ class OrderProcessorTest extends TestCase
         $currentOrder
             ->shouldReceive('status')
             ->andReturn($orderStatus);
+        $currentOrder
+            ->shouldReceive('paymentSource')
+            ->andReturnNull();
         $sessionHandler = Mockery::mock(SessionHandler::class);
         $sessionHandler
             ->expects('order')
@@ -217,7 +235,8 @@ class OrderProcessorTest extends TestCase
         $paymentsEndpoint = Mockery::mock(PaymentsEndpoint::class);
         $orderFactory = Mockery::mock(OrderFactory::class);
         $threeDSecure = Mockery::mock(ThreeDSecure::class);
-        $threeDSecure->expects('proceedWithOrder')->andReturn(ThreeDSecure::REJECT);
+        $authorizedPaymentProcessor = Mockery::mock(AuthorizedPaymentsProcessor::class);
+        $settings = Mockery::mock(Settings::class);
 
         $testee = new OrderProcessor(
             $sessionHandler,
@@ -225,7 +244,9 @@ class OrderProcessorTest extends TestCase
             $orderEndpoint,
             $paymentsEndpoint,
             $orderFactory,
-            $threeDSecure
+            $threeDSecure,
+            $authorizedPaymentProcessor,
+            $settings
         );
 
         $cart = Mockery::mock(\WC_Cart::class);

@@ -160,6 +160,10 @@ class AuthorizedPaymentsProcessorTest extends TestCase
             ->shouldReceive('is')
             ->with(AuthorizationStatus::CREATED)
             ->andReturn(false);
+        $authorizationStatus
+            ->shouldReceive('is')
+            ->with(AuthorizationStatus::PENDING)
+            ->andReturn(false);
         $authorization = Mockery::mock(Authorization::class);
         $authorization
             ->shouldReceive('id')
