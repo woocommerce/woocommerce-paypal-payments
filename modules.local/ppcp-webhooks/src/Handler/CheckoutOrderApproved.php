@@ -1,26 +1,33 @@
 <?php
-
 declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\Webhooks\Handler;
 
+
+use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
+use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use Psr\Log\LoggerInterface;
 
-class CheckoutOrderCompleted implements RequestHandler
+class CheckoutOrderApproved implements RequestHandler
 {
+
     use PrefixTrait;
 
     private $logger;
-    public function __construct(LoggerInterface $logger, string $prefix)
+    private $orderEndpoint;
+
+    public function __construct(LoggerInterface $logger, string $prefix, OrderEndpoint $orderEndpoint)
     {
         $this->logger = $logger;
         $this->prefix = $prefix;
+        $this->orderEndpoint = $orderEndpoint;
     }
 
     public function eventTypes(): array
     {
         return [
-            'CHECKOUT.ORDER.COMPLETED',
+            'CHECKOUT.ORDER.APPROVED',
         ];
     }
 
@@ -29,7 +36,6 @@ class CheckoutOrderCompleted implements RequestHandler
         return in_array($request['event_type'], $this->eventTypes(), true);
     }
 
-    // phpcs:disable Inpsyde.CodeQuality.FunctionLength.TooLong
     public function handleRequest(\WP_REST_Request $request): \WP_REST_Response
     {
         $response = ['success' => false];
@@ -49,7 +55,7 @@ class CheckoutOrderCompleted implements RequestHandler
 
         if (empty($customIds)) {
             $message = sprintf(
-                // translators: %s is the PayPal webhook Id.
+            // translators: %s is the PayPal webhook Id.
                 __(
                     'No order for webhook event %s was found.',
                     'woocommerce-paypal-commerce-gateway'
@@ -67,7 +73,52 @@ class CheckoutOrderCompleted implements RequestHandler
             return rest_ensure_response($response);
         }
 
-        $orderIds = array_map(
+        try {
+            $order = isset($request['resource']['id']) ? $this->orderEndpoint->order($request['resource']['id']) : null;
+            if (! $order) {
+                $message = sprintf(
+                // translators: %s is the PayPal webhook Id.
+                    __(
+                        'No paypal payment for webhook event %s was found.',
+                        'woocommerce-paypal-commerce-gateway'
+                    ),
+                    isset($request['id']) ? $request['id'] : ''
+                );
+                $this->logger->log(
+                    'warning',
+                    $message,
+                    [
+                        'request' => $request,
+                    ]
+                );
+                $response['message'] = $message;
+                return rest_ensure_response($response);
+            }
+
+            if ($order->intent() === 'CAPTURE') {
+                    $this->orderEndpoint->capture($order);
+            }
+        } catch (RuntimeException $error) {
+            $message = sprintf(
+            // translators: %s is the PayPal webhook Id.
+                __(
+                    'Could not capture payment for webhook event %s.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                isset($request['id']) ? $request['id'] : ''
+            );
+            $this->logger->log(
+                'warning',
+                $message,
+                [
+                    'request' => $request,
+                ]
+            );
+            $response['message'] = $message;
+            return rest_ensure_response($response);
+        }
+
+        $wcOrderIds = array_map(
             [
                 $this,
                 'sanitizeCustomId',
@@ -75,7 +126,7 @@ class CheckoutOrderCompleted implements RequestHandler
             $customIds
         );
         $args = [
-            'post__in' => $orderIds,
+            'post__in' => $wcOrderIds,
             'limit' => -1,
         ];
         $wcOrders = wc_get_orders($args);
@@ -96,6 +147,10 @@ class CheckoutOrderCompleted implements RequestHandler
             return rest_ensure_response($response);
         }
 
+        $newStatus = $order->intent() === 'CAPTURE' ? 'processing' : 'on-hold';
+        $statusMessage = $order->intent() === 'CAPTURE' ?
+            __('Payment received.', 'woocommerce-paypal-commerce-gateway')
+            :  __('Payment can be captured.', 'woocommerce-paypal-commerce-gateway');
         foreach ($wcOrders as $wcOrder) {
             if (! in_array($wcOrder->get_status(),['pending', 'on-hold'])) {
                 continue;
@@ -104,13 +159,13 @@ class CheckoutOrderCompleted implements RequestHandler
              * @var \WC_Order $wcOrder
              */
             $wcOrder->update_status(
-                'processing',
-                __('Payment received.', 'woocommerce-paypal-commerce-gateway')
+                $newStatus,
+                $statusMessage
             );
             $this->logger->log(
                 'info',
                 sprintf(
-                    // translators: %s is the order ID.
+                // translators: %s is the order ID.
                     __(
                         'Order %s has been updated through PayPal',
                         'woocommerce-paypal-commerce-gateway'
@@ -126,5 +181,4 @@ class CheckoutOrderCompleted implements RequestHandler
         $response['success'] = true;
         return rest_ensure_response($response);
     }
-    // phpcs:enable Inpsyde.CodeQuality.FunctionLength.TooLong
 }

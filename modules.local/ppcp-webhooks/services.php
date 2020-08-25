@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\Webhooks;
 
+use Inpsyde\PayPalCommerce\Webhooks\Handler\CheckoutOrderApproved;
 use Inpsyde\PayPalCommerce\Webhooks\Handler\CheckoutOrderCompleted;
 use Inpsyde\PayPalCommerce\Webhooks\Handler\PaymentCaptureCompleted;
 use Inpsyde\PayPalCommerce\Webhooks\Handler\PaymentCaptureRefunded;
@@ -40,7 +41,9 @@ return [
     'webhook.endpoint.handler' => function(ContainerInterface $container) : array {
         $logger = $container->get('woocommerce.logger.woocommerce');
         $prefix = $container->get('api.prefix');
+        $orderEndpoint = $container->get('api.endpoint.order');
         return [
+            new CheckoutOrderApproved($logger, $prefix, $orderEndpoint),
             new CheckoutOrderCompleted($logger, $prefix),
             new PaymentCaptureRefunded($logger, $prefix),
             new PaymentCaptureReversed($logger, $prefix),
