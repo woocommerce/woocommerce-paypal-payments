@@ -83,7 +83,8 @@ class SingleProductActionHandler {
                         nonce: this.config.ajax.create_order.nonce,
                         purchase_units,
                         payer,
-                        bn_code:bnCode
+                        bn_code:bnCode,
+                        context:this.config.context
                     })
                 }).then(function (res) {
                     return res.json();

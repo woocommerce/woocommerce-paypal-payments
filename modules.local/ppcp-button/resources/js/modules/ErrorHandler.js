@@ -7,13 +7,21 @@ class ErrorHandler {
     }
 
     genericError() {
+        if (this.wrapper.classList.contains('ppcp-persist')) {
+            return;
+        }
         this.clear();
         this.message(this.genericErrorText)
     }
 
-    message(text)
+    message(text, persist = false)
     {
         this.wrapper.classList.add('woocommerce-error');
+        if (persist) {
+            this.wrapper.classList.add('ppcp-persist');
+        } else {
+            this.wrapper.classList.remove('ppcp-persist');
+        }
         this.wrapper.innerText = this.sanitize(text);
         jQuery.scroll_to_notices(jQuery('.woocommerce-notices-wrapper'))
     }

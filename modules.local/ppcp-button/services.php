@@ -104,13 +104,17 @@ return [
         $payerFactory = $container->get('api.factory.payer');
         $sessionHandler = $container->get('session.handler');
         $settings = $container->get('wcgateway.settings');
+        $state = $container->get('onboarding.state');
+        $orderProcessor = $container->get('wcgateway.order-processor');
         return new CreateOrderEndpoint(
             $requestData,
             $repository,
             $apiClient,
             $payerFactory,
             $sessionHandler,
-            $settings
+            $settings,
+            $state,
+            $orderProcessor
         );
     },
     'button.endpoint.approve-order' => static function (ContainerInterface $container): ApproveOrderEndpoint {
