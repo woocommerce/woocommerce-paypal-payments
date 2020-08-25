@@ -51,10 +51,13 @@ class ButtonModule implements ModuleInterface
             $smartButton->enqueue();
         });
 
-        add_action(
+        add_filter(
             'woocommerce_create_order',
             static function ($value) use ($container) {
                 $earlyOrderHelper = $container->get('button.helper.early-order-handler');
+                if (! is_null($value)) {
+                    $value = (int) $value;
+                }
                 /**
                  * @var EarlyOrderHandler $earlyOrderHelper
                  */
@@ -65,8 +68,8 @@ class ButtonModule implements ModuleInterface
         $this->registerAjaxEndpoints($container);
     }
 
-    private function registerAjaxEndpoints(ContainerInterface $container) {
-
+    private function registerAjaxEndpoints(ContainerInterface $container)
+    {
         add_action(
             'wc_ajax_' . DataClientIdEndpoint::ENDPOINT,
             static function () use ($container) {

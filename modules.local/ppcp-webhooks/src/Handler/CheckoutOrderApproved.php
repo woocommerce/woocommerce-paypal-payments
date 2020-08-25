@@ -1,17 +1,15 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\Webhooks\Handler;
 
-
 use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
 use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use Psr\Log\LoggerInterface;
 
 class CheckoutOrderApproved implements RequestHandler
 {
-
     use PrefixTrait;
 
     private $logger;
@@ -36,6 +34,7 @@ class CheckoutOrderApproved implements RequestHandler
         return in_array($request['event_type'], $this->eventTypes(), true);
     }
 
+    //phpcs:disable Inpsyde.CodeQuality.FunctionLength.TooLong
     public function handleRequest(\WP_REST_Request $request): \WP_REST_Response
     {
         $response = ['success' => false];
@@ -74,7 +73,8 @@ class CheckoutOrderApproved implements RequestHandler
         }
 
         try {
-            $order = isset($request['resource']['id']) ? $this->orderEndpoint->order($request['resource']['id']) : null;
+            $order = isset($request['resource']['id']) ?
+                $this->orderEndpoint->order($request['resource']['id']) : null;
             if (! $order) {
                 $message = sprintf(
                 // translators: %s is the PayPal webhook Id.
@@ -152,7 +152,7 @@ class CheckoutOrderApproved implements RequestHandler
             __('Payment received.', 'woocommerce-paypal-commerce-gateway')
             :  __('Payment can be captured.', 'woocommerce-paypal-commerce-gateway');
         foreach ($wcOrders as $wcOrder) {
-            if (! in_array($wcOrder->get_status(),['pending', 'on-hold'])) {
+            if (! in_array($wcOrder->get_status(), ['pending', 'on-hold'], true)) {
                 continue;
             }
             /**
@@ -181,4 +181,5 @@ class CheckoutOrderApproved implements RequestHandler
         $response['success'] = true;
         return rest_ensure_response($response);
     }
+    //phpcs:enable Inpsyde.CodeQuality.FunctionLength.TooLong
 }

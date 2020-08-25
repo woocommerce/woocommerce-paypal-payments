@@ -125,12 +125,14 @@ class PayPalGateway extends \WC_Payment_Gateway
         /**
          * If the WC_Order is payed through the approved webhook.
          */
+        //phpcs:disable WordPress.Security.NonceVerification.Recommended
         if (isset($_REQUEST['ppcp-resume-order']) && $wcOrder->has_status('processing')) {
             return [
                 'result' => 'success',
                 'redirect' => $this->get_return_url($wcOrder),
             ];
         }
+        //phpcs:enable WordPress.Security.NonceVerification.Recommended
 
         if ($this->orderProcessor->process($wcOrder, $woocommerce)) {
             return [

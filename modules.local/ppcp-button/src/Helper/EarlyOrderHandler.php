@@ -14,12 +14,11 @@ use Inpsyde\PayPalCommerce\Webhooks\Handler\PrefixTrait;
 
 class EarlyOrderHandler
 {
-
     use PrefixTrait;
+
     private $state;
     private $orderProcessor;
     private $sessionHandler;
-
 
     public function __construct(
         State $state,
@@ -34,15 +33,15 @@ class EarlyOrderHandler
         $this->prefix = $prefix;
     }
 
-    public function shouldCreateEarlyOrder() : bool
+    public function shouldCreateEarlyOrder(): bool
     {
         return $this->state->currentState() === State::STATE_ONBOARDED;
     }
 
-    public function determineWcOrderId($value) : ?int {
-        if (! is_null($value)) {
-            $value = (int) $value;
-        }
+    //phpcs:disable WordPress.Security.NonceVerification.Recommended
+    public function determineWcOrderId(int $value = null): ?int
+    {
+
         if (! isset($_REQUEST['ppcp-resume-order'])) {
             return $value;
         }
@@ -54,31 +53,35 @@ class EarlyOrderHandler
             return $value;
         }
 
+        $orderId = false;
         foreach ($order->purchaseUnits() as $purchaseUnit) {
             if ($purchaseUnit->customId() === sanitize_text_field(wp_unslash($_REQUEST['ppcp-resume-order']))) {
                 $orderId = (int) $this->sanitizeCustomId($purchaseUnit->customId());
-                if ($orderId === $resumeOrderId) {
-                    $value = $orderId;
-                }
             }
+        }
+        if ($orderId === $resumeOrderId) {
+            $value = $orderId;
         }
         return $value;
     }
+    //phpcs:enable WordPress.Security.NonceVerification.Recommended
 
-    public function registerForOrder(Order $order): bool {
+    public function registerForOrder(Order $order): bool
+    {
 
         $success = (bool) add_action(
             'woocommerce_checkout_order_processed',
-            function($orderId) use ($order) {
+            function ($orderId) use ($order) {
                 try {
                     $order = $this->configureSessionAndOrder((int) $orderId, $order);
                     wp_send_json_success($order->toArray());
-                    return true;
-                }  catch (\RuntimeException $error) {
+                } catch (\RuntimeException $error) {
                     wp_send_json_error(
-                        __('Something went wrong. Please try again or choose another payment source.', 'woocommerce-paypal-commerce-gateway')
+                        __(
+                            'Something went wrong. Please try again or choose another payment source.',
+                            'woocommerce-paypal-commerce-gateway'
+                        )
                     );
-                    return false;
                 }
             }
         );

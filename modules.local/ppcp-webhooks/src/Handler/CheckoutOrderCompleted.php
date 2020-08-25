@@ -97,7 +97,7 @@ class CheckoutOrderCompleted implements RequestHandler
         }
 
         foreach ($wcOrders as $wcOrder) {
-            if (! in_array($wcOrder->get_status(),['pending', 'on-hold'])) {
+            if (! in_array($wcOrder->get_status(), ['pending', 'on-hold'], true)) {
                 continue;
             }
             /**

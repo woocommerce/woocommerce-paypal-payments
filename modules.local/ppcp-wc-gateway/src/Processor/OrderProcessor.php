@@ -107,7 +107,10 @@ class OrderProcessor
 
     private function captureAuthorizedDownloads(Order $order): bool
     {
-        if (! $this->settings->has('capture_for_virtual_only') || ! $this->settings->get('capture_for_virtual_only')) {
+        if (
+            ! $this->settings->has('capture_for_virtual_only')
+            || ! $this->settings->get('capture_for_virtual_only')
+        ) {
             return false;
         }
 

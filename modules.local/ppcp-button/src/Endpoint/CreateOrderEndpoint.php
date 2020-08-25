@@ -29,6 +29,8 @@ class CreateOrderEndpoint implements EndpointInterface
     private $sessionHandler;
     private $settings;
     private $earlyOrderHandler;
+
+    private $order;
     public function __construct(
         RequestData $requestData,
         CartRepository $repository,
@@ -92,36 +94,28 @@ class CreateOrderEndpoint implements EndpointInterface
             return true;
         } catch (\RuntimeException $error) {
             wp_send_json_error(
-                __('Something went wrong. Please try again or choose another payment source.', 'woocommerce-paypal-commerce-gateway')
+                __(
+                    'Something went wrong. Please try again or choose another payment source.',
+                    'woocommerce-paypal-commerce-gateway'
+                )
             );
             return false;
         }
     }
 
-    private function validateForm(string $formValues, Order $order) {
+    private function validateForm(string $formValues, Order $order)
+    {
+        $this->order = $order;
         $parsedValues = wp_parse_args($formValues);
         $_POST = $parsedValues;
         $_REQUEST = $parsedValues;
 
         add_filter(
             'woocommerce_after_checkout_validation',
-            function($data, \WP_Error $errors) use ($order) {
-                if (! $errors->errors) {
-
-                    /**
-                     * In case we are onboarded and everything is fine with the \WC_Order
-                     * we want this order to be created. We will intercept it and leave it
-                     * in the "Pending payment" status though, which than later will change
-                     * during the "onApprove"-JS callback or the webhook listener.
-                     */
-                    if (! $this->earlyOrderHandler->shouldCreateEarlyOrder()) {
-                        wp_send_json_success($order->toArray());
-                    }
-                    $this->earlyOrderHandler->registerForOrder($order);
-                    return $data;
-                }
-                wp_send_json_error($errors->get_error_message());
-            },
+            [
+                $this,
+                'afterCheckoutValidation',
+            ],
             10,
             2
         );
@@ -129,4 +123,25 @@ class CreateOrderEndpoint implements EndpointInterface
         $checkout->process_checkout();
     }
 
+    public function afterCheckoutValidation(array $data, \WP_Error $errors): array
+    {
+
+        $order = $this->order;
+        if (! $errors->errors) {
+
+            /**
+             * In case we are onboarded and everything is fine with the \WC_Order
+             * we want this order to be created. We will intercept it and leave it
+             * in the "Pending payment" status though, which than later will change
+             * during the "onApprove"-JS callback or the webhook listener.
+             */
+            if (! $this->earlyOrderHandler->shouldCreateEarlyOrder()) {
+                wp_send_json_success($order->toArray());
+            }
+            $this->earlyOrderHandler->registerForOrder($order);
+            return $data;
+        }
+        wp_send_json_error($errors->get_error_message());
+        return $data;
+    }
 }
