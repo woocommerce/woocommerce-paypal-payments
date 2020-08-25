@@ -10,6 +10,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use Inpsyde\PayPalCommerce\Button\Exception\RuntimeException;
 use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
 use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use Inpsyde\PayPalCommerce\Button\Helper\EarlyOrderHandler;
 use Inpsyde\PayPalCommerce\Onboarding\State;
 use Inpsyde\PayPalCommerce\Session\SessionHandler;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
@@ -27,8 +28,7 @@ class CreateOrderEndpoint implements EndpointInterface
     private $payerFactory;
     private $sessionHandler;
     private $settings;
-    private $state;
-    private $orderProcessor;
+    private $earlyOrderHandler;
     public function __construct(
         RequestData $requestData,
         CartRepository $repository,
@@ -36,8 +36,7 @@ class CreateOrderEndpoint implements EndpointInterface
         PayerFactory $payerFactory,
         SessionHandler $sessionHandler,
         Settings $settings,
-        State $state,
-        OrderProcessor $orderProcessor
+        EarlyOrderHandler $earlyOrderHandler
     ) {
 
         $this->requestData = $requestData;
@@ -46,8 +45,7 @@ class CreateOrderEndpoint implements EndpointInterface
         $this->payerFactory = $payerFactory;
         $this->sessionHandler = $sessionHandler;
         $this->settings = $settings;
-        $this->state = $state;
-        $this->orderProcessor = $orderProcessor;
+        $this->earlyOrderHandler = $earlyOrderHandler;
     }
 
     public static function nonce(): string
@@ -104,6 +102,7 @@ class CreateOrderEndpoint implements EndpointInterface
         $parsedValues = wp_parse_args($formValues);
         $_POST = $parsedValues;
         $_REQUEST = $parsedValues;
+
         add_filter(
             'woocommerce_after_checkout_validation',
             function($data, \WP_Error $errors) use ($order) {
@@ -115,11 +114,11 @@ class CreateOrderEndpoint implements EndpointInterface
                      * in the "Pending payment" status though, which than later will change
                      * during the "onApprove"-JS callback or the webhook listener.
                      */
-                    if ($this->state->currentState() === State::STATE_ONBOARDED) {
-                        $this->createOrder($order);
-                        return $data;
+                    if (! $this->earlyOrderHandler->shouldCreateEarlyOrder()) {
+                        wp_send_json_success($order->toArray());
                     }
-                    wp_send_json_success($order->toArray());
+                    $this->earlyOrderHandler->registerForOrder($order);
+                    return $data;
                 }
                 wp_send_json_error($errors->get_error_message());
             },
@@ -130,25 +129,4 @@ class CreateOrderEndpoint implements EndpointInterface
         $checkout->process_checkout();
     }
 
-    private function createOrder(Order $order) {
-        add_action(
-            'woocommerce_checkout_order_processed',
-            function($orderId) use ($order) {
-                try {
-                    $wcOrder = wc_get_order($orderId);
-                    $wcOrder->update_meta_data(PayPalGateway::ORDER_ID_META_KEY, $order->id());
-                    $wcOrder->update_meta_data(PayPalGateway::INTENT_META_KEY, $order->intent());
-                    $wcOrder->save_meta_data();
-                    WC()->session->set('order_awaiting_payment', $orderId);
-                    $order = $this->orderProcessor->patchOrder($wcOrder, $order);
-                    wp_send_json_success($order->toArray());
-                }  catch (\RuntimeException $error) {
-                    wp_send_json_error(
-                        __('Something went wrong. Please try again or choose another payment source.', 'woocommerce-paypal-commerce-gateway')
-                    );
-                    return false;
-                }
-            }
-        );
-    }
 }

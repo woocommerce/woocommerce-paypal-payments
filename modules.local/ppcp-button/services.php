@@ -14,6 +14,7 @@ use Inpsyde\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\RequestData;
 use Inpsyde\PayPalCommerce\Button\Exception\RuntimeException;
+use Inpsyde\PayPalCommerce\Button\Helper\EarlyOrderHandler;
 use Inpsyde\PayPalCommerce\Button\Helper\MessagesApply;
 use Inpsyde\PayPalCommerce\Button\Helper\ThreeDSecure;
 use Inpsyde\PayPalCommerce\Onboarding\Environment;
@@ -104,8 +105,7 @@ return [
         $payerFactory = $container->get('api.factory.payer');
         $sessionHandler = $container->get('session.handler');
         $settings = $container->get('wcgateway.settings');
-        $state = $container->get('onboarding.state');
-        $orderProcessor = $container->get('wcgateway.order-processor');
+        $earlyOrderHandler = $container->get('button.helper.early-order-handler');
         return new CreateOrderEndpoint(
             $requestData,
             $repository,
@@ -113,9 +113,14 @@ return [
             $payerFactory,
             $sessionHandler,
             $settings,
-            $state,
-            $orderProcessor
+            $earlyOrderHandler
         );
+    },
+    'button.helper.early-order-handler' => static function (ContainerInterface $container) : EarlyOrderHandler {
+
+        $state = $container->get('onboarding.state');
+        $orderProcessor = $container->get('wcgateway.order-processor');
+        return new EarlyOrderHandler($state, $orderProcessor);
     },
     'button.endpoint.approve-order' => static function (ContainerInterface $container): ApproveOrderEndpoint {
         $requestData = $container->get('button.request-data');
