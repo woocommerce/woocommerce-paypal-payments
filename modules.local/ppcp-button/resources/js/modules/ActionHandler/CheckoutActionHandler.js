@@ -31,7 +31,7 @@ class CheckoutActionHandler {
                 return res.json();
             }).then(function (data) {
                 if (!data.success) {
-                    errorHandler.message(data.data, true);
+                    errorHandler.message(data.data.message, true);
                     return;
                 }
                 const input = document.createElement('input');

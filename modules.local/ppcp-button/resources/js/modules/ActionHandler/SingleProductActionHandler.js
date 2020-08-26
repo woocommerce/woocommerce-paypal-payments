@@ -90,7 +90,8 @@ class SingleProductActionHandler {
                     return res.json();
                 }).then(function (data) {
                     if (!data.success) {
-                        throw Error(data.data);
+                        console.error(data);
+                        throw Error(data.data.message);
                     }
                     return data.data.id;
                 });
