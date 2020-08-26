@@ -6,6 +6,7 @@ namespace Inpsyde\PayPalCommerce\Button\Endpoint;
 
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\PaymentMethod;
+use Inpsyde\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use Inpsyde\PayPalCommerce\Button\Exception\RuntimeException;
 use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
@@ -94,10 +95,12 @@ class CreateOrderEndpoint implements EndpointInterface
             return true;
         } catch (\RuntimeException $error) {
             wp_send_json_error(
-                __(
-                    'Something went wrong. Please try again or choose another payment source.',
-                    'woocommerce-paypal-commerce-gateway'
-                )
+                [
+                    'name' => is_a($error, PayPalApiException::class) ? $error->name() : '',
+                    'message' => $error->getMessage(),
+                    'code' => $error->getCode(),
+                    'details' => is_a($error, PayPalApiException::class) ? $error->details() : [],
+                ]
             );
             return false;
         }
@@ -141,7 +144,15 @@ class CreateOrderEndpoint implements EndpointInterface
             $this->earlyOrderHandler->registerForOrder($order);
             return $data;
         }
-        wp_send_json_error($errors->get_error_message());
+
+        wp_send_json_error(
+            [
+                'name' => '',
+                'message' => $errors->get_error_message(),
+                'code' => (int) $errors->get_error_code(),
+                'details' => [],
+            ]
+        );
         return $data;
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Inpsyde\PayPalCommerce\Button\Helper;
 
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
+use Inpsyde\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use Inpsyde\PayPalCommerce\Onboarding\State;
 use Inpsyde\PayPalCommerce\Session\SessionHandler;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
@@ -77,10 +78,13 @@ class EarlyOrderHandler
                     wp_send_json_success($order->toArray());
                 } catch (\RuntimeException $error) {
                     wp_send_json_error(
-                        __(
-                            'Something went wrong. Please try again or choose another payment source.',
-                            'woocommerce-paypal-commerce-gateway'
-                        )
+                        [
+                            'name' => is_a($error, PayPalApiException::class) ? $error->name() : '',
+                            'message' => $error->getMessage(),
+                            'code' => $error->getCode(),
+                            'details' => is_a($error, PayPalApiException::class) ? $error->details() : [],
+
+                        ]
                     );
                 }
             }

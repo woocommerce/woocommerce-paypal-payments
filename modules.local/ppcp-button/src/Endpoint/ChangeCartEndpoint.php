@@ -6,6 +6,7 @@ namespace Inpsyde\PayPalCommerce\Button\Endpoint;
 
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Item;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
+use Inpsyde\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
 use Inpsyde\PayPalCommerce\Button\Exception\RuntimeException;
 
@@ -44,7 +45,15 @@ class ChangeCartEndpoint implements EndpointInterface
         try {
             return $this->handleData();
         } catch (RuntimeException $error) {
-            wp_send_json_error($error->getMessage());
+
+            wp_send_json_error(
+                [
+                    'name' => is_a($error, PayPalApiException::class) ? $error->name() : '',
+                    'message' => $error->getMessage(),
+                    'code' => $error->getCode(),
+                    'details' => is_a($error, PayPalApiException::class) ? $error->details() : [],
+                ]
+            );
             return false;
         }
     }
@@ -55,10 +64,15 @@ class ChangeCartEndpoint implements EndpointInterface
         $products = $this->productsFromData($data);
         if (! $products) {
             wp_send_json_error(
-                __(
-                    'Necessary fields not defined. Action aborted.',
-                    'woocommerce-paypal-commerce-gateway'
-                )
+                [
+                    'name' => '',
+                    'message' => __(
+                        'Necessary fields not defined. Action aborted.',
+                        'woocommerce-paypal-commerce-gateway'
+                    ),
+                    'code' => 0,
+                    'details' => [],
+                ]
             );
             return false;
         }
@@ -102,7 +116,14 @@ class ChangeCartEndpoint implements EndpointInterface
             );
             wc_clear_notices();
         }
-        wp_send_json_error($message);
+
+        wp_send_json_error(
+            [
+                'name' => '',
+                'message' => $message,
+                'code' => 0,
+                'details' => [],
+            ]);
         return true;
     }
 

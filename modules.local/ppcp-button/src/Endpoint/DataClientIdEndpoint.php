@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Inpsyde\PayPalCommerce\Button\Endpoint;
 
 use Inpsyde\PayPalCommerce\ApiClient\Endpoint\IdentityToken;
+use Inpsyde\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
 class DataClientIdEndpoint implements EndpointInterface
@@ -41,7 +42,13 @@ class DataClientIdEndpoint implements EndpointInterface
             ]);
             return true;
         } catch (RuntimeException $error) {
-            wp_send_json_error($error->getMessage());
+            wp_send_json_error(
+                [
+                    'name' => is_a($error, PayPalApiException::class) ? $error->name() : '',
+                    'message' => $error->getMessage(),
+                    'code' => $error->getCode(),
+                    'details' => is_a($error, PayPalApiException::class) ? $error->details() : [],
+                ]);
             return false;
         }
     }

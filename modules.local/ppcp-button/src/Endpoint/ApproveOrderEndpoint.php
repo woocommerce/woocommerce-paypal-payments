@@ -7,6 +7,7 @@ namespace Inpsyde\PayPalCommerce\Button\Endpoint;
 use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use Inpsyde\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use Inpsyde\PayPalCommerce\Button\Exception\RuntimeException;
 use Inpsyde\PayPalCommerce\Button\Helper\ThreeDSecure;
 use Inpsyde\PayPalCommerce\Session\SessionHandler;
@@ -96,7 +97,14 @@ class ApproveOrderEndpoint implements EndpointInterface
             wp_send_json_success($order);
             return true;
         } catch (\RuntimeException $error) {
-            wp_send_json_error($error->getMessage());
+            wp_send_json_error(
+                [
+                    'name' => is_a($error, PayPalApiException::class) ? $error->name() : '',
+                    'message' => $error->getMessage(),
+                    'code' => $error->getCode(),
+                    'details' => is_a($error, PayPalApiException::class) ? $error->details() : [],
+                ]
+            );
             return false;
         }
     }
