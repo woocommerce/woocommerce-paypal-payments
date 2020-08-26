@@ -48,7 +48,8 @@ class DataClientIdEndpoint implements EndpointInterface
                     'message' => $error->getMessage(),
                     'code' => $error->getCode(),
                     'details' => is_a($error, PayPalApiException::class) ? $error->details() : [],
-                ]);
+                ]
+            );
             return false;
         }
     }

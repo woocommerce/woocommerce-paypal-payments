@@ -147,7 +147,6 @@ class PayPalGateway extends \WC_Payment_Gateway
             }
         } catch (PayPalApiException $error) {
             if ($error->hasDetail('INSTRUMENT_DECLINED')) {
-
                 $this->sessionHandler->destroySessionData();
                 wc_add_notice(
                     __(

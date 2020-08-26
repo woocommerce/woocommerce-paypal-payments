@@ -45,7 +45,6 @@ class ChangeCartEndpoint implements EndpointInterface
         try {
             return $this->handleData();
         } catch (RuntimeException $error) {
-
             wp_send_json_error(
                 [
                     'name' => is_a($error, PayPalApiException::class) ? $error->name() : '',
@@ -123,7 +122,8 @@ class ChangeCartEndpoint implements EndpointInterface
                 'message' => $message,
                 'code' => 0,
                 'details' => [],
-            ]);
+            ]
+        );
         return true;
     }
 
