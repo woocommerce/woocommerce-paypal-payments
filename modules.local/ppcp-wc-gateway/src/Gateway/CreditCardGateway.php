@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\WcGateway\Gateway;
 
+use Inpsyde\PayPalCommerce\Session\SessionHandler;
 use Inpsyde\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use Inpsyde\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use Inpsyde\PayPalCommerce\WcGateway\Processor\OrderProcessor;
@@ -25,7 +26,8 @@ class CreditCardGateway extends PayPalGateway
         AuthorizedPaymentsProcessor $authorizedPayments,
         AuthorizeOrderActionNotice $notice,
         ContainerInterface $config,
-        string $moduleUrl
+        string $moduleUrl,
+        SessionHandler $sessionHandler
     ) {
 
         $this->id = self::ID;
@@ -34,6 +36,7 @@ class CreditCardGateway extends PayPalGateway
         $this->notice = $notice;
         $this->settingsRenderer = $settingsRenderer;
         $this->config = $config;
+        $this->sessionHandler = $sessionHandler;
         if (
             defined('PPCP_FLAG_SUBSCRIPTION')
             && PPCP_FLAG_SUBSCRIPTION

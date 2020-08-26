@@ -8,6 +8,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use Inpsyde\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use Inpsyde\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
 use Inpsyde\PayPalCommerce\Button\Assets\SmartButton;
@@ -35,13 +36,15 @@ class PayPalGateway extends \WC_Payment_Gateway
     protected $notice;
     protected $orderProcessor;
     protected $config;
+    protected $sessionHandler;
 
     public function __construct(
         SettingsRenderer $settingsRenderer,
         OrderProcessor $orderProcessor,
         AuthorizedPaymentsProcessor $authorizedPayments,
         AuthorizeOrderActionNotice $notice,
-        ContainerInterface $config
+        ContainerInterface $config,
+        SessionHandler $sessionHandler
     ) {
 
         $this->id = self::ID;
@@ -50,6 +53,7 @@ class PayPalGateway extends \WC_Payment_Gateway
         $this->notice = $notice;
         $this->settingsRenderer = $settingsRenderer;
         $this->config = $config;
+        $this->sessionHandler = $sessionHandler;
         if (
             defined('PPCP_FLAG_SUBSCRIPTION')
             && PPCP_FLAG_SUBSCRIPTION
@@ -134,11 +138,31 @@ class PayPalGateway extends \WC_Payment_Gateway
         }
         //phpcs:enable WordPress.Security.NonceVerification.Recommended
 
-        if ($this->orderProcessor->process($wcOrder, $woocommerce)) {
-            return [
-                'result' => 'success',
-                'redirect' => $this->get_return_url($wcOrder),
-            ];
+        try {
+            if ($this->orderProcessor->process($wcOrder, $woocommerce)) {
+                return [
+                    'result' => 'success',
+                    'redirect' => $this->get_return_url($wcOrder),
+                ];
+            }
+        } catch (PayPalApiException $error) {
+            if ($error->hasDetail('INSTRUMENT_DECLINED')) {
+
+                $this->sessionHandler->destroySessionData();
+                wc_add_notice(
+                    __(
+                        'The payment provider refused the payout. Please choose a different payment method.',
+                        'woocommerce-paypal-commerce-gateway'
+                    ),
+                    'error'
+                );
+                return [
+                    'result' => 'success',
+                    'redirect' => wc_get_checkout_url(),
+                ];
+            }
+
+            throw $error;
         }
 
         wc_add_notice($this->orderProcessor->lastError());

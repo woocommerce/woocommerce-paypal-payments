@@ -29,13 +29,15 @@ return [
         $authorizedPayments = $container->get('wcgateway.processor.authorized-payments');
         $notice = $container->get('wcgateway.notice.authorize-order-action');
         $settings = $container->get('wcgateway.settings');
+        $sessionHandler = $container->get('session.handler');
 
         return new PayPalGateway(
             $settingsRenderer,
             $orderProcessor,
             $authorizedPayments,
             $notice,
-            $settings
+            $settings,
+            $sessionHandler
         );
     },
     'wcgateway.credit-card-gateway' => static function (ContainerInterface $container): CreditCardGateway {
@@ -45,13 +47,15 @@ return [
         $notice = $container->get('wcgateway.notice.authorize-order-action');
         $settings = $container->get('wcgateway.settings');
         $moduleUrl = $container->get('wcgateway.url');
+        $sessionHandler = $container->get('session.handler');
         return new CreditCardGateway(
             $settingsRenderer,
             $orderProcessor,
             $authorizedPayments,
             $notice,
             $settings,
-            $moduleUrl
+            $moduleUrl,
+            $sessionHandler
         );
     },
     'wcgateway.disabler' => static function (ContainerInterface $container): DisableGateways {
