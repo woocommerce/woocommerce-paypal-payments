@@ -1,8 +1,11 @@
-<?php declare(strict_types=1);
+<?php
 /**
- * phpcs:disable Inpsyde.CodeQuality.ReturnTypeDeclaration
- * phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration
+ * The logging services.
+ *
+ * @package Inpsyde\Woocommerce\Logging
  */
+
+declare(strict_types=1);
 
 namespace Inpsyde\Woocommerce\Logging;
 
@@ -11,20 +14,20 @@ use Inpsyde\Woocommerce\Logging\Logger\WooCommerceLogger;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
-return [
-    'woocommerce.logger.source' => function(): string {
-        return 'woocommerce-paypal-commerce-gateway';
-    },
-    'woocommerce.logger.woocommerce' => function (ContainerInterface $container): LoggerInterface {
-        if (!class_exists(\WC_Logger::class)) {
-            return new NullLogger();
-        }
+return array(
+	'woocommerce.logger.source'      => function(): string {
+		return 'woocommerce-paypal-commerce-gateway';
+	},
+	'woocommerce.logger.woocommerce' => function ( ContainerInterface $container ): LoggerInterface {
+		if ( ! class_exists( \WC_Logger::class ) ) {
+			return new NullLogger();
+		}
 
-        $source = $container->get('woocommerce.logger.source');
+		$source = $container->get( 'woocommerce.logger.source' );
 
-        return new WooCommerceLogger(
-            wc_get_logger(),
-            $source
-        );
-    },
-];
+		return new WooCommerceLogger(
+			wc_get_logger(),
+			$source
+		);
+	},
+);
