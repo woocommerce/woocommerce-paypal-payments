@@ -6,27 +6,24 @@ namespace Inpsyde\PayPalCommerce\Onboarding;
 
 use Psr\Container\ContainerInterface;
 
-class Environment
-{
+class Environment {
 
-    public const PRODUCTION = 'production';
-    public const SANDBOX = 'sandbox';
 
-    private $settings;
-    public function __construct(ContainerInterface $settings)
-    {
-        $this->settings = $settings;
-    }
+	public const PRODUCTION = 'production';
+	public const SANDBOX    = 'sandbox';
 
-    public function currentEnvironment(): string
-    {
-        return (
-            $this->settings->has('sandbox_on') && $this->settings->get('sandbox_on')
-        ) ? self::SANDBOX : self::PRODUCTION;
-    }
+	private $settings;
+	public function __construct( ContainerInterface $settings ) {
+		$this->settings = $settings;
+	}
 
-    public function currentEnvironmentIs(string $environment): bool
-    {
-        return $this->currentEnvironment() === $environment;
-    }
+	public function currentEnvironment(): string {
+		return (
+			$this->settings->has( 'sandbox_on' ) && $this->settings->get( 'sandbox_on' )
+		) ? self::SANDBOX : self::PRODUCTION;
+	}
+
+	public function currentEnvironmentIs( string $environment ): bool {
+		return $this->currentEnvironment() === $environment;
+	}
 }

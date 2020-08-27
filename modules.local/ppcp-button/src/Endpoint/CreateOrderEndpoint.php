@@ -18,141 +18,137 @@ use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Inpsyde\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
 
-class CreateOrderEndpoint implements EndpointInterface
-{
+class CreateOrderEndpoint implements EndpointInterface {
 
-    public const ENDPOINT = 'ppc-create-order';
 
-    private $requestData;
-    private $repository;
-    private $apiEndpoint;
-    private $payerFactory;
-    private $sessionHandler;
-    private $settings;
-    private $earlyOrderHandler;
+	public const ENDPOINT = 'ppc-create-order';
 
-    private $order;
-    public function __construct(
-        RequestData $requestData,
-        CartRepository $repository,
-        OrderEndpoint $apiEndpoint,
-        PayerFactory $payerFactory,
-        SessionHandler $sessionHandler,
-        Settings $settings,
-        EarlyOrderHandler $earlyOrderHandler
-    ) {
+	private $requestData;
+	private $repository;
+	private $apiEndpoint;
+	private $payerFactory;
+	private $sessionHandler;
+	private $settings;
+	private $earlyOrderHandler;
 
-        $this->requestData = $requestData;
-        $this->repository = $repository;
-        $this->apiEndpoint = $apiEndpoint;
-        $this->payerFactory = $payerFactory;
-        $this->sessionHandler = $sessionHandler;
-        $this->settings = $settings;
-        $this->earlyOrderHandler = $earlyOrderHandler;
-    }
+	private $order;
+	public function __construct(
+		RequestData $requestData,
+		CartRepository $repository,
+		OrderEndpoint $apiEndpoint,
+		PayerFactory $payerFactory,
+		SessionHandler $sessionHandler,
+		Settings $settings,
+		EarlyOrderHandler $earlyOrderHandler
+	) {
 
-    public static function nonce(): string
-    {
-        return self::ENDPOINT;
-    }
+		$this->requestData       = $requestData;
+		$this->repository        = $repository;
+		$this->apiEndpoint       = $apiEndpoint;
+		$this->payerFactory      = $payerFactory;
+		$this->sessionHandler    = $sessionHandler;
+		$this->settings          = $settings;
+		$this->earlyOrderHandler = $earlyOrderHandler;
+	}
 
-    public function handleRequest(): bool
-    {
-        try {
-            $data = $this->requestData->readRequest($this->nonce());
-            $purchaseUnits = $this->repository->all();
-            $payer = null;
-            if (isset($data['payer']) && $data['payer']) {
-                if (isset($data['payer']['phone']['phone_number']['national_number'])) {
-                    // make sure the phone number contains only numbers and is max 14. chars long.
-                    $number = $data['payer']['phone']['phone_number']['national_number'];
-                    $number = preg_replace("/[^0-9]/", "", $number);
-                    $number = substr($number, 0, 14);
-                    $data['payer']['phone']['phone_number']['national_number'] = $number;
-                }
-                $payer = $this->payerFactory->fromPayPalResponse(json_decode(json_encode($data['payer'])));
-            }
-            $bnCode = isset($data['bn_code']) ? (string) $data['bn_code'] : '';
-            if ($bnCode) {
-                $this->sessionHandler->replaceBnCode($bnCode);
-                $this->apiEndpoint->withBnCode($bnCode);
-            }
-            $payeePreferred = $this->settings->has('payee_preferred')
-            && $this->settings->get('payee_preferred') ?
-                PaymentMethod::PAYEE_PREFERRED_IMMEDIATE_PAYMENT_REQUIRED
-                : PaymentMethod::PAYEE_PREFERRED_UNRESTRICTED;
-            $paymentMethod = new PaymentMethod($payeePreferred);
-            $order = $this->apiEndpoint->createForPurchaseUnits(
-                $purchaseUnits,
-                $payer,
-                null,
-                $paymentMethod
-            );
-            if ($data['context'] === 'checkout') {
-                    $this->validateForm($data['form'], $order);
-            }
-            wp_send_json_success($order->toArray());
-            return true;
-        } catch (\RuntimeException $error) {
-            wp_send_json_error(
-                [
-                    'name' => is_a($error, PayPalApiException::class) ? $error->name() : '',
-                    'message' => $error->getMessage(),
-                    'code' => $error->getCode(),
-                    'details' => is_a($error, PayPalApiException::class) ? $error->details() : [],
-                ]
-            );
-            return false;
-        }
-    }
+	public static function nonce(): string {
+		return self::ENDPOINT;
+	}
 
-    private function validateForm(string $formValues, Order $order)
-    {
-        $this->order = $order;
-        $parsedValues = wp_parse_args($formValues);
-        $_POST = $parsedValues;
-        $_REQUEST = $parsedValues;
+	public function handleRequest(): bool {
+		try {
+			$data          = $this->requestData->readRequest( $this->nonce() );
+			$purchaseUnits = $this->repository->all();
+			$payer         = null;
+			if ( isset( $data['payer'] ) && $data['payer'] ) {
+				if ( isset( $data['payer']['phone']['phone_number']['national_number'] ) ) {
+					// make sure the phone number contains only numbers and is max 14. chars long.
+					$number = $data['payer']['phone']['phone_number']['national_number'];
+					$number = preg_replace( '/[^0-9]/', '', $number );
+					$number = substr( $number, 0, 14 );
+					$data['payer']['phone']['phone_number']['national_number'] = $number;
+				}
+				$payer = $this->payerFactory->fromPayPalResponse( json_decode( json_encode( $data['payer'] ) ) );
+			}
+			$bnCode = isset( $data['bn_code'] ) ? (string) $data['bn_code'] : '';
+			if ( $bnCode ) {
+				$this->sessionHandler->replaceBnCode( $bnCode );
+				$this->apiEndpoint->withBnCode( $bnCode );
+			}
+			$payeePreferred = $this->settings->has( 'payee_preferred' )
+			&& $this->settings->get( 'payee_preferred' ) ?
+				PaymentMethod::PAYEE_PREFERRED_IMMEDIATE_PAYMENT_REQUIRED
+				: PaymentMethod::PAYEE_PREFERRED_UNRESTRICTED;
+			$paymentMethod  = new PaymentMethod( $payeePreferred );
+			$order          = $this->apiEndpoint->createForPurchaseUnits(
+				$purchaseUnits,
+				$payer,
+				null,
+				$paymentMethod
+			);
+			if ( $data['context'] === 'checkout' ) {
+					$this->validateForm( $data['form'], $order );
+			}
+			wp_send_json_success( $order->toArray() );
+			return true;
+		} catch ( \RuntimeException $error ) {
+			wp_send_json_error(
+				array(
+					'name'    => is_a( $error, PayPalApiException::class ) ? $error->name() : '',
+					'message' => $error->getMessage(),
+					'code'    => $error->getCode(),
+					'details' => is_a( $error, PayPalApiException::class ) ? $error->details() : array(),
+				)
+			);
+			return false;
+		}
+	}
 
-        add_filter(
-            'woocommerce_after_checkout_validation',
-            [
-                $this,
-                'afterCheckoutValidation',
-            ],
-            10,
-            2
-        );
-        $checkout = \WC()->checkout();
-        $checkout->process_checkout();
-    }
+	private function validateForm( string $formValues, Order $order ) {
+		$this->order  = $order;
+		$parsedValues = wp_parse_args( $formValues );
+		$_POST        = $parsedValues;
+		$_REQUEST     = $parsedValues;
 
-    public function afterCheckoutValidation(array $data, \WP_Error $errors): array
-    {
+		add_filter(
+			'woocommerce_after_checkout_validation',
+			array(
+				$this,
+				'afterCheckoutValidation',
+			),
+			10,
+			2
+		);
+		$checkout = \WC()->checkout();
+		$checkout->process_checkout();
+	}
 
-        $order = $this->order;
-        if (! $errors->errors) {
+	public function afterCheckoutValidation( array $data, \WP_Error $errors ): array {
 
-            /**
-             * In case we are onboarded and everything is fine with the \WC_Order
-             * we want this order to be created. We will intercept it and leave it
-             * in the "Pending payment" status though, which than later will change
-             * during the "onApprove"-JS callback or the webhook listener.
-             */
-            if (! $this->earlyOrderHandler->shouldCreateEarlyOrder()) {
-                wp_send_json_success($order->toArray());
-            }
-            $this->earlyOrderHandler->registerForOrder($order);
-            return $data;
-        }
+		$order = $this->order;
+		if ( ! $errors->errors ) {
 
-        wp_send_json_error(
-            [
-                'name' => '',
-                'message' => $errors->get_error_message(),
-                'code' => (int) $errors->get_error_code(),
-                'details' => [],
-            ]
-        );
-        return $data;
-    }
+			/**
+			 * In case we are onboarded and everything is fine with the \WC_Order
+			 * we want this order to be created. We will intercept it and leave it
+			 * in the "Pending payment" status though, which than later will change
+			 * during the "onApprove"-JS callback or the webhook listener.
+			 */
+			if ( ! $this->earlyOrderHandler->shouldCreateEarlyOrder() ) {
+				wp_send_json_success( $order->toArray() );
+			}
+			$this->earlyOrderHandler->registerForOrder( $order );
+			return $data;
+		}
+
+		wp_send_json_error(
+			array(
+				'name'    => '',
+				'message' => $errors->get_error_message(),
+				'code'    => (int) $errors->get_error_code(),
+				'details' => array(),
+			)
+		);
+		return $data;
+	}
 }

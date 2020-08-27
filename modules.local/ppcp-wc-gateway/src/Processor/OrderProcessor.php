@@ -15,156 +15,151 @@ use Inpsyde\PayPalCommerce\Session\SessionHandler;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
 
-class OrderProcessor
-{
-    private $sessionHandler;
-    private $cartRepository;
-    private $orderEndpoint;
-    private $paymentsEndpoint;
-    private $orderFactory;
-    private $threedSecure;
-    private $authorizedPaymentsProcessor;
-    private $settings;
+class OrderProcessor {
 
-    private $lastError = '';
+	private $sessionHandler;
+	private $cartRepository;
+	private $orderEndpoint;
+	private $paymentsEndpoint;
+	private $orderFactory;
+	private $threedSecure;
+	private $authorizedPaymentsProcessor;
+	private $settings;
 
-    public function __construct(
-        SessionHandler $sessionHandler,
-        CartRepository $cartRepository,
-        OrderEndpoint $orderEndpoint,
-        PaymentsEndpoint $paymentsEndpoint,
-        OrderFactory $orderFactory,
-        ThreeDSecure $threedSecure,
-        AuthorizedPaymentsProcessor $authorizedPaymentsProcessor,
-        Settings $settings
-    ) {
+	private $lastError = '';
 
-        $this->sessionHandler = $sessionHandler;
-        $this->cartRepository = $cartRepository;
-        $this->orderEndpoint = $orderEndpoint;
-        $this->paymentsEndpoint = $paymentsEndpoint;
-        $this->orderFactory = $orderFactory;
-        $this->threedSecure = $threedSecure;
-        $this->authorizedPaymentsProcessor = $authorizedPaymentsProcessor;
-        $this->settings = $settings;
-    }
+	public function __construct(
+		SessionHandler $sessionHandler,
+		CartRepository $cartRepository,
+		OrderEndpoint $orderEndpoint,
+		PaymentsEndpoint $paymentsEndpoint,
+		OrderFactory $orderFactory,
+		ThreeDSecure $threedSecure,
+		AuthorizedPaymentsProcessor $authorizedPaymentsProcessor,
+		Settings $settings
+	) {
 
-    public function process(\WC_Order $wcOrder, \WooCommerce $woocommerce): bool
-    {
-        $order = $this->sessionHandler->order();
-        $wcOrder->update_meta_data(PayPalGateway::ORDER_ID_META_KEY, $order->id());
-        $wcOrder->update_meta_data(PayPalGateway::INTENT_META_KEY, $order->intent());
+		$this->sessionHandler              = $sessionHandler;
+		$this->cartRepository              = $cartRepository;
+		$this->orderEndpoint               = $orderEndpoint;
+		$this->paymentsEndpoint            = $paymentsEndpoint;
+		$this->orderFactory                = $orderFactory;
+		$this->threedSecure                = $threedSecure;
+		$this->authorizedPaymentsProcessor = $authorizedPaymentsProcessor;
+		$this->settings                    = $settings;
+	}
 
-        $errorMessage = null;
-        if (!$order || ! $this->orderIsApproved($order)) {
-            $errorMessage = __(
-                'The payment has not been approved yet.',
-                'woocommerce-paypal-commerce-gateway'
-            );
-        }
-        if ($errorMessage) {
-            $this->lastError = sprintf(
-                // translators: %s is the message of the error.
-                __('Payment error: %s', 'woocommerce-paypal-commerce-gateway'),
-                $errorMessage
-            );
-            return false;
-        }
+	public function process( \WC_Order $wcOrder, \WooCommerce $woocommerce ): bool {
+		$order = $this->sessionHandler->order();
+		$wcOrder->update_meta_data( PayPalGateway::ORDER_ID_META_KEY, $order->id() );
+		$wcOrder->update_meta_data( PayPalGateway::INTENT_META_KEY, $order->intent() );
 
-        $order = $this->patchOrder($wcOrder, $order);
-        if ($order->intent() === 'CAPTURE') {
-            $order = $this->orderEndpoint->capture($order);
-        }
+		$errorMessage = null;
+		if ( ! $order || ! $this->orderIsApproved( $order ) ) {
+			$errorMessage = __(
+				'The payment has not been approved yet.',
+				'woocommerce-paypal-commerce-gateway'
+			);
+		}
+		if ( $errorMessage ) {
+			$this->lastError = sprintf(
+				// translators: %s is the message of the error.
+				__( 'Payment error: %s', 'woocommerce-paypal-commerce-gateway' ),
+				$errorMessage
+			);
+			return false;
+		}
 
-        if ($order->intent() === 'AUTHORIZE') {
-            $order = $this->orderEndpoint->authorize($order);
-            $wcOrder->update_meta_data(PayPalGateway::CAPTURED_META_KEY, 'false');
-        }
+		$order = $this->patchOrder( $wcOrder, $order );
+		if ( $order->intent() === 'CAPTURE' ) {
+			$order = $this->orderEndpoint->capture( $order );
+		}
 
-        $wcOrder->update_status(
-            'on-hold',
-            __('Awaiting payment.', 'woocommerce-paypal-commerce-gateway')
-        );
-        if ($order->status()->is(OrderStatus::COMPLETED) && $order->intent() === 'CAPTURE') {
-            $wcOrder->update_status(
-                'processing',
-                __('Payment received.', 'woocommerce-paypal-commerce-gateway')
-            );
-        }
+		if ( $order->intent() === 'AUTHORIZE' ) {
+			$order = $this->orderEndpoint->authorize( $order );
+			$wcOrder->update_meta_data( PayPalGateway::CAPTURED_META_KEY, 'false' );
+		}
 
-        if ($this->captureAuthorizedDownloads($order) && $this->authorizedPaymentsProcessor->process($wcOrder)) {
-            $wcOrder->add_order_note(
-                __('Payment successfully captured.', 'woocommerce-paypal-commerce-gateway')
-            );
-            $wcOrder->update_meta_data(PayPalGateway::CAPTURED_META_KEY, 'true');
-            $wcOrder->update_status('processing');
-        }
-        $woocommerce->cart->empty_cart();
-        $this->sessionHandler->destroySessionData();
-        $this->lastError = '';
-        return true;
-    }
+		$wcOrder->update_status(
+			'on-hold',
+			__( 'Awaiting payment.', 'woocommerce-paypal-commerce-gateway' )
+		);
+		if ( $order->status()->is( OrderStatus::COMPLETED ) && $order->intent() === 'CAPTURE' ) {
+			$wcOrder->update_status(
+				'processing',
+				__( 'Payment received.', 'woocommerce-paypal-commerce-gateway' )
+			);
+		}
 
-    private function captureAuthorizedDownloads(Order $order): bool
-    {
-        if (
-            ! $this->settings->has('capture_for_virtual_only')
-            || ! $this->settings->get('capture_for_virtual_only')
-        ) {
-            return false;
-        }
+		if ( $this->captureAuthorizedDownloads( $order ) && $this->authorizedPaymentsProcessor->process( $wcOrder ) ) {
+			$wcOrder->add_order_note(
+				__( 'Payment successfully captured.', 'woocommerce-paypal-commerce-gateway' )
+			);
+			$wcOrder->update_meta_data( PayPalGateway::CAPTURED_META_KEY, 'true' );
+			$wcOrder->update_status( 'processing' );
+		}
+		$woocommerce->cart->empty_cart();
+		$this->sessionHandler->destroySessionData();
+		$this->lastError = '';
+		return true;
+	}
 
-        if ($order->intent() === 'CAPTURE') {
-            return false;
-        }
+	private function captureAuthorizedDownloads( Order $order ): bool {
+		if (
+			! $this->settings->has( 'capture_for_virtual_only' )
+			|| ! $this->settings->get( 'capture_for_virtual_only' )
+		) {
+			return false;
+		}
 
-        /**
-         * We fetch the order again as the authorize endpoint (from which the Order derives)
-         * drops the item's category, making it impossible to check, if purchase units contain
-         * physical goods.
-         */
-        $order = $this->orderEndpoint->order($order->id());
+		if ( $order->intent() === 'CAPTURE' ) {
+			return false;
+		}
 
-        foreach ($order->purchaseUnits() as $unit) {
-            if ($unit->containsPhysicalGoodsItems()) {
-                return false;
-            }
-        }
-        return true;
-    }
+		/**
+		 * We fetch the order again as the authorize endpoint (from which the Order derives)
+		 * drops the item's category, making it impossible to check, if purchase units contain
+		 * physical goods.
+		 */
+		$order = $this->orderEndpoint->order( $order->id() );
 
-    public function lastError(): string
-    {
+		foreach ( $order->purchaseUnits() as $unit ) {
+			if ( $unit->containsPhysicalGoodsItems() ) {
+				return false;
+			}
+		}
+		return true;
+	}
 
-        return $this->lastError;
-    }
+	public function lastError(): string {
 
-    public function patchOrder(\WC_Order $wcOrder, Order $order): Order
-    {
-        $updatedOrder = $this->orderFactory->fromWcOrder($wcOrder, $order);
-        $order = $this->orderEndpoint->patchOrderWith($order, $updatedOrder);
-        return $order;
-    }
+		return $this->lastError;
+	}
 
-    private function orderIsApproved(Order $order): bool
-    {
+	public function patchOrder( \WC_Order $wcOrder, Order $order ): Order {
+		$updatedOrder = $this->orderFactory->fromWcOrder( $wcOrder, $order );
+		$order        = $this->orderEndpoint->patchOrderWith( $order, $updatedOrder );
+		return $order;
+	}
 
-        if ($order->status()->is(OrderStatus::APPROVED)) {
-            return true;
-        }
+	private function orderIsApproved( Order $order ): bool {
 
-        if (! $order->paymentSource() || ! $order->paymentSource()->card()) {
-            return false;
-        }
+		if ( $order->status()->is( OrderStatus::APPROVED ) ) {
+			return true;
+		}
 
-        $isApproved = in_array(
-            $this->threedSecure->proceedWithOrder($order),
-            [
-                ThreeDSecure::NO_DECISION,
-                ThreeDSecure::PROCCEED,
-            ],
-            true
-        );
-        return $isApproved;
-    }
+		if ( ! $order->paymentSource() || ! $order->paymentSource()->card() ) {
+			return false;
+		}
+
+		$isApproved = in_array(
+			$this->threedSecure->proceedWithOrder( $order ),
+			array(
+				ThreeDSecure::NO_DECISION,
+				ThreeDSecure::PROCCEED,
+			),
+			true
+		);
+		return $isApproved;
+	}
 }

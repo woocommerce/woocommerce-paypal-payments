@@ -8,49 +8,49 @@ use Inpsyde\PayPalCommerce\ApiClient\Endpoint\IdentityToken;
 use Inpsyde\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
-class DataClientIdEndpoint implements EndpointInterface
-{
+class DataClientIdEndpoint implements EndpointInterface {
 
-    public const ENDPOINT = 'ppc-data-client-id';
 
-    private $requestData;
-    private $identityToken;
-    public function __construct(
-        RequestData $requestData,
-        IdentityToken $identityToken
-    ) {
+	public const ENDPOINT = 'ppc-data-client-id';
 
-        $this->requestData = $requestData;
-        $this->identityToken = $identityToken;
-    }
+	private $requestData;
+	private $identityToken;
+	public function __construct(
+		RequestData $requestData,
+		IdentityToken $identityToken
+	) {
 
-    public static function nonce(): string
-    {
-        return self::ENDPOINT;
-    }
+		$this->requestData   = $requestData;
+		$this->identityToken = $identityToken;
+	}
 
-    public function handleRequest(): bool
-    {
-        try {
-            $this->requestData->readRequest($this->nonce());
-            $userId = get_current_user_id();
-            $token = $this->identityToken->generateForCustomer($userId);
-            wp_send_json([
-                'token' => $token->token(),
-                'expiration' => $token->expirationTimestamp(),
-                'user' => get_current_user_id(),
-            ]);
-            return true;
-        } catch (RuntimeException $error) {
-            wp_send_json_error(
-                [
-                    'name' => is_a($error, PayPalApiException::class) ? $error->name() : '',
-                    'message' => $error->getMessage(),
-                    'code' => $error->getCode(),
-                    'details' => is_a($error, PayPalApiException::class) ? $error->details() : [],
-                ]
-            );
-            return false;
-        }
-    }
+	public static function nonce(): string {
+		return self::ENDPOINT;
+	}
+
+	public function handleRequest(): bool {
+		try {
+			$this->requestData->readRequest( $this->nonce() );
+			$userId = get_current_user_id();
+			$token  = $this->identityToken->generateForCustomer( $userId );
+			wp_send_json(
+				array(
+					'token'      => $token->token(),
+					'expiration' => $token->expirationTimestamp(),
+					'user'       => get_current_user_id(),
+				)
+			);
+			return true;
+		} catch ( RuntimeException $error ) {
+			wp_send_json_error(
+				array(
+					'name'    => is_a( $error, PayPalApiException::class ) ? $error->name() : '',
+					'message' => $error->getMessage(),
+					'code'    => $error->getCode(),
+					'details' => is_a( $error, PayPalApiException::class ) ? $error->details() : array(),
+				)
+			);
+			return false;
+		}
+	}
 }

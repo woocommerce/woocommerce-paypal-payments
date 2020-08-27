@@ -4,15 +4,14 @@ declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\Webhooks\Handler;
 
-trait PrefixTrait
-{
+trait PrefixTrait {
 
-    private $prefix = '';
 
-    private function sanitizeCustomId(string $customId): int
-    {
+	private $prefix = '';
 
-        $orderId = str_replace($this->prefix, '', $customId);
-        return (int) $orderId;
-    }
+	private function sanitizeCustomId( string $customId ): int {
+
+		$orderId = str_replace( $this->prefix, '', $customId );
+		return (int) $orderId;
+	}
 }

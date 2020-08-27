@@ -9,16 +9,14 @@ use Dhii\Modular\Module\ModuleInterface;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
 
-class PluginModule implements ModuleInterface
-{
+class PluginModule implements ModuleInterface {
 
-    public function setup(): ServiceProviderInterface
-    {
-        return new ServiceProvider([], []);
-    }
 
-    public function run(ContainerInterface $container)
-    {
-        // TODO: Implement run() method.
-    }
+	public function setup(): ServiceProviderInterface {
+		return new ServiceProvider( array(), array() );
+	}
+
+	public function run( ContainerInterface $container ) {
+		// TODO: Implement run() method.
+	}
 }

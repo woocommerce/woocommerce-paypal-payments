@@ -23,206 +23,200 @@ use Psr\Container\ContainerInterface;
 
 //phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
 //phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration.NoArgumentType
-class PayPalGateway extends \WC_Payment_Gateway
-{
+class PayPalGateway extends \WC_Payment_Gateway {
 
-    public const ID = 'ppcp-gateway';
-    public const CAPTURED_META_KEY = '_ppcp_paypal_captured';
-    public const INTENT_META_KEY = '_ppcp_paypal_intent';
-    public const ORDER_ID_META_KEY = '_ppcp_paypal_order_id';
 
-    protected $settingsRenderer;
-    protected $authorizedPayments;
-    protected $notice;
-    protected $orderProcessor;
-    protected $config;
-    protected $sessionHandler;
+	public const ID                = 'ppcp-gateway';
+	public const CAPTURED_META_KEY = '_ppcp_paypal_captured';
+	public const INTENT_META_KEY   = '_ppcp_paypal_intent';
+	public const ORDER_ID_META_KEY = '_ppcp_paypal_order_id';
 
-    public function __construct(
-        SettingsRenderer $settingsRenderer,
-        OrderProcessor $orderProcessor,
-        AuthorizedPaymentsProcessor $authorizedPayments,
-        AuthorizeOrderActionNotice $notice,
-        ContainerInterface $config,
-        SessionHandler $sessionHandler
-    ) {
+	protected $settingsRenderer;
+	protected $authorizedPayments;
+	protected $notice;
+	protected $orderProcessor;
+	protected $config;
+	protected $sessionHandler;
 
-        $this->id = self::ID;
-        $this->orderProcessor = $orderProcessor;
-        $this->authorizedPayments = $authorizedPayments;
-        $this->notice = $notice;
-        $this->settingsRenderer = $settingsRenderer;
-        $this->config = $config;
-        $this->sessionHandler = $sessionHandler;
-        if (
-            defined('PPCP_FLAG_SUBSCRIPTION')
-            && PPCP_FLAG_SUBSCRIPTION
-            && $this->config->has('vault_enabled')
-            && $this->config->get('vault_enabled')
-        ) {
-            $this->supports = [
-                'products',
-                'subscriptions',
-                'subscription_cancellation',
-                'subscription_suspension',
-                'subscription_reactivation',
-                'subscription_amount_changes',
-                'subscription_date_changes',
-                'subscription_payment_method_change',
-                'subscription_payment_method_change_customer',
-                'subscription_payment_method_change_admin',
-                'multiple_subscriptions',
-            ];
-        }
+	public function __construct(
+		SettingsRenderer $settingsRenderer,
+		OrderProcessor $orderProcessor,
+		AuthorizedPaymentsProcessor $authorizedPayments,
+		AuthorizeOrderActionNotice $notice,
+		ContainerInterface $config,
+		SessionHandler $sessionHandler
+	) {
 
-        $this->method_title = __('PayPal', 'woocommerce-paypal-commerce-gateway');
-        $this->method_description = __(
-            'Provide your customers with the PayPal payment option.',
-            'woocommerce-paypal-commerce-gateway'
-        );
-        $this->title = $this->config->has('title') ?
-            $this->config->get('title') : $this->method_title;
-        $this->description = $this->config->has('description') ?
-            $this->config->get('description') : $this->method_description;
+		$this->id                 = self::ID;
+		$this->orderProcessor     = $orderProcessor;
+		$this->authorizedPayments = $authorizedPayments;
+		$this->notice             = $notice;
+		$this->settingsRenderer   = $settingsRenderer;
+		$this->config             = $config;
+		$this->sessionHandler     = $sessionHandler;
+		if (
+			defined( 'PPCP_FLAG_SUBSCRIPTION' )
+			&& PPCP_FLAG_SUBSCRIPTION
+			&& $this->config->has( 'vault_enabled' )
+			&& $this->config->get( 'vault_enabled' )
+		) {
+			$this->supports = array(
+				'products',
+				'subscriptions',
+				'subscription_cancellation',
+				'subscription_suspension',
+				'subscription_reactivation',
+				'subscription_amount_changes',
+				'subscription_date_changes',
+				'subscription_payment_method_change',
+				'subscription_payment_method_change_customer',
+				'subscription_payment_method_change_admin',
+				'multiple_subscriptions',
+			);
+		}
 
-        $this->init_form_fields();
-        $this->init_settings();
+		$this->method_title       = __( 'PayPal', 'woocommerce-paypal-commerce-gateway' );
+		$this->method_description = __(
+			'Provide your customers with the PayPal payment option.',
+			'woocommerce-paypal-commerce-gateway'
+		);
+		$this->title              = $this->config->has( 'title' ) ?
+			$this->config->get( 'title' ) : $this->method_title;
+		$this->description        = $this->config->has( 'description' ) ?
+			$this->config->get( 'description' ) : $this->method_description;
 
-        add_action(
-            'woocommerce_update_options_payment_gateways_' . $this->id,
-            [
-                $this,
-                'process_admin_options',
-            ]
-        );
-    }
+		$this->init_form_fields();
+		$this->init_settings();
 
-    public function needs_setup(): bool
-    {
+		add_action(
+			'woocommerce_update_options_payment_gateways_' . $this->id,
+			array(
+				$this,
+				'process_admin_options',
+			)
+		);
+	}
 
-        return true;
-    }
+	public function needs_setup(): bool {
 
-    public function init_form_fields()
-    {
-        $this->form_fields = [
-            'enabled' => [
-                'title' => __('Enable/Disable', 'woocommerce-paypal-commerce-gateway'),
-                'type' => 'checkbox',
-                'label' => __('Enable PayPal Payments', 'woocommerce-paypal-commerce-gateway'),
-                'default' => 'no',
-            ],
-            'ppcp' => [
-                'type' => 'ppcp',
-            ],
-        ];
-    }
+		return true;
+	}
 
-    public function process_payment($orderId): ?array
-    {
-        global $woocommerce;
-        $wcOrder = wc_get_order($orderId);
-        if (! is_a($wcOrder, \WC_Order::class)) {
-            return null;
-        }
+	public function init_form_fields() {
+		$this->form_fields = array(
+			'enabled' => array(
+				'title'   => __( 'Enable/Disable', 'woocommerce-paypal-commerce-gateway' ),
+				'type'    => 'checkbox',
+				'label'   => __( 'Enable PayPal Payments', 'woocommerce-paypal-commerce-gateway' ),
+				'default' => 'no',
+			),
+			'ppcp'    => array(
+				'type' => 'ppcp',
+			),
+		);
+	}
 
-        /**
-         * If the WC_Order is payed through the approved webhook.
-         */
+	public function process_payment( $orderId ): ?array {
+		global $woocommerce;
+		$wcOrder = wc_get_order( $orderId );
+		if ( ! is_a( $wcOrder, \WC_Order::class ) ) {
+			return null;
+		}
+
+		/**
+		 * If the WC_Order is payed through the approved webhook.
+		 */
         //phpcs:disable WordPress.Security.NonceVerification.Recommended
-        if (isset($_REQUEST['ppcp-resume-order']) && $wcOrder->has_status('processing')) {
-            return [
-                'result' => 'success',
-                'redirect' => $this->get_return_url($wcOrder),
-            ];
-        }
+		if ( isset( $_REQUEST['ppcp-resume-order'] ) && $wcOrder->has_status( 'processing' ) ) {
+			return array(
+				'result'   => 'success',
+				'redirect' => $this->get_return_url( $wcOrder ),
+			);
+		}
         //phpcs:enable WordPress.Security.NonceVerification.Recommended
 
-        try {
-            if ($this->orderProcessor->process($wcOrder, $woocommerce)) {
-                return [
-                    'result' => 'success',
-                    'redirect' => $this->get_return_url($wcOrder),
-                ];
-            }
-        } catch (PayPalApiException $error) {
-            if ($error->hasDetail('INSTRUMENT_DECLINED')) {
-                $host = $this->config->has('sandbox_on') && $this->config->get('sandbox_on') ?
-                    'https://www.sandbox.paypal.com/' : 'https://www.paypal.com/';
-                $url =  $host . 'checkoutnow?token=' . $this->sessionHandler->order()->id();
+		try {
+			if ( $this->orderProcessor->process( $wcOrder, $woocommerce ) ) {
+				return array(
+					'result'   => 'success',
+					'redirect' => $this->get_return_url( $wcOrder ),
+				);
+			}
+		} catch ( PayPalApiException $error ) {
+			if ( $error->hasDetail( 'INSTRUMENT_DECLINED' ) ) {
+				$host = $this->config->has( 'sandbox_on' ) && $this->config->get( 'sandbox_on' ) ?
+					'https://www.sandbox.paypal.com/' : 'https://www.paypal.com/';
+				$url  = $host . 'checkoutnow?token=' . $this->sessionHandler->order()->id();
 
-                return [
-                    'result' => 'success',
-                    'redirect' => $url,
-                ];
-            }
+				return array(
+					'result'   => 'success',
+					'redirect' => $url,
+				);
+			}
 
-            $this->sessionHandler->destroySessionData();
-            wc_add_notice(
-                __(
-                    'Something went wrong. Please try again.',
-                    'woocommerce-paypal-commerce-gateway'
-                ),
-                'error'
-            );
-        }
+			$this->sessionHandler->destroySessionData();
+			wc_add_notice(
+				__(
+					'Something went wrong. Please try again.',
+					'woocommerce-paypal-commerce-gateway'
+				),
+				'error'
+			);
+		}
 
-        return null;
-    }
+		return null;
+	}
 
-    public function captureAuthorizedPayment(\WC_Order $wcOrder): bool
-    {
-        $isProcessed = $this->authorizedPayments->process($wcOrder);
-        $this->renderAuthorizationMessageForStatus($this->authorizedPayments->lastStatus());
+	public function captureAuthorizedPayment( \WC_Order $wcOrder ): bool {
+		$isProcessed = $this->authorizedPayments->process( $wcOrder );
+		$this->renderAuthorizationMessageForStatus( $this->authorizedPayments->lastStatus() );
 
-        if ($isProcessed) {
-            $wcOrder->add_order_note(
-                __('Payment successfully captured.', 'woocommerce-paypal-commerce-gateway')
-            );
+		if ( $isProcessed ) {
+			$wcOrder->add_order_note(
+				__( 'Payment successfully captured.', 'woocommerce-paypal-commerce-gateway' )
+			);
 
-            $wcOrder->set_status('processing');
-            $wcOrder->update_meta_data(self::CAPTURED_META_KEY, 'true');
-            $wcOrder->save();
-            return true;
-        }
+			$wcOrder->set_status( 'processing' );
+			$wcOrder->update_meta_data( self::CAPTURED_META_KEY, 'true' );
+			$wcOrder->save();
+			return true;
+		}
 
-        if ($this->authorizedPayments->lastStatus() === AuthorizedPaymentsProcessor::ALREADY_CAPTURED) {
-            if ($wcOrder->get_status() === 'on-hold') {
-                $wcOrder->add_order_note(
-                    __('Payment successfully captured.', 'woocommerce-paypal-commerce-gateway')
-                );
-                $wcOrder->set_status('processing');
-            }
+		if ( $this->authorizedPayments->lastStatus() === AuthorizedPaymentsProcessor::ALREADY_CAPTURED ) {
+			if ( $wcOrder->get_status() === 'on-hold' ) {
+				$wcOrder->add_order_note(
+					__( 'Payment successfully captured.', 'woocommerce-paypal-commerce-gateway' )
+				);
+				$wcOrder->set_status( 'processing' );
+			}
 
-            $wcOrder->update_meta_data(self::CAPTURED_META_KEY, 'true');
-            $wcOrder->save();
-            return true;
-        }
-        return false;
-    }
+			$wcOrder->update_meta_data( self::CAPTURED_META_KEY, 'true' );
+			$wcOrder->save();
+			return true;
+		}
+		return false;
+	}
 
-    private function renderAuthorizationMessageForStatus(string $status)
-    {
+	private function renderAuthorizationMessageForStatus( string $status ) {
 
-        $messageMapping = [
-            AuthorizedPaymentsProcessor::SUCCESSFUL => AuthorizeOrderActionNotice::SUCCESS,
-            AuthorizedPaymentsProcessor::ALREADY_CAPTURED => AuthorizeOrderActionNotice::ALREADY_CAPTURED,
-            AuthorizedPaymentsProcessor::INACCESSIBLE => AuthorizeOrderActionNotice::NO_INFO,
-            AuthorizedPaymentsProcessor::NOT_FOUND => AuthorizeOrderActionNotice::NOT_FOUND,
-        ];
-        $displayMessage = (isset($messageMapping[$status])) ?
-            $messageMapping[$status]
-            : AuthorizeOrderActionNotice::FAILED;
-        $this->notice->displayMessage($displayMessage);
-    }
+		$messageMapping = array(
+			AuthorizedPaymentsProcessor::SUCCESSFUL       => AuthorizeOrderActionNotice::SUCCESS,
+			AuthorizedPaymentsProcessor::ALREADY_CAPTURED => AuthorizeOrderActionNotice::ALREADY_CAPTURED,
+			AuthorizedPaymentsProcessor::INACCESSIBLE     => AuthorizeOrderActionNotice::NO_INFO,
+			AuthorizedPaymentsProcessor::NOT_FOUND        => AuthorizeOrderActionNotice::NOT_FOUND,
+		);
+		$displayMessage = ( isset( $messageMapping[ $status ] ) ) ?
+			$messageMapping[ $status ]
+			: AuthorizeOrderActionNotice::FAILED;
+		$this->notice->displayMessage( $displayMessage );
+	}
 
-    public function generate_ppcp_html(): string
-    {
+	public function generate_ppcp_html(): string {
 
-        ob_start();
-        $this->settingsRenderer->render(false);
-        $content = ob_get_contents();
-        ob_end_clean();
-        return $content;
-    }
+		ob_start();
+		$this->settingsRenderer->render( false );
+		$content = ob_get_contents();
+		ob_end_clean();
+		return $content;
+	}
 }

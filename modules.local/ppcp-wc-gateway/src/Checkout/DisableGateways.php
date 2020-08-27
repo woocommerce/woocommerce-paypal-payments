@@ -9,62 +9,59 @@ use Inpsyde\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Psr\Container\ContainerInterface;
 
-class DisableGateways
-{
+class DisableGateways {
 
-    private $sessionHandler;
-    private $settings;
-    public function __construct(
-        SessionHandler $sessionHandler,
-        ContainerInterface $settings
-    ) {
 
-        $this->sessionHandler = $sessionHandler;
-        $this->settings = $settings;
-    }
+	private $sessionHandler;
+	private $settings;
+	public function __construct(
+		SessionHandler $sessionHandler,
+		ContainerInterface $settings
+	) {
 
-    public function handler(array $methods): array
-    {
-        if (! isset($methods[PayPalGateway::ID]) && ! isset($methods[CreditCardGateway::ID])) {
-            return $methods;
-        }
-        if (
-            ! $this->settings->has('merchant_email')
-            || ! is_email($this->settings->get('merchant_email'))
-        ) {
-            unset($methods[PayPalGateway::ID]);
-            unset($methods[CreditCardGateway::ID]);
-            return $methods;
-        }
+		$this->sessionHandler = $sessionHandler;
+		$this->settings       = $settings;
+	}
 
-        if (! $this->settings->has('client_id') || empty($this->settings->get('client_id'))) {
-            unset($methods[CreditCardGateway::ID]);
-        }
+	public function handler( array $methods ): array {
+		if ( ! isset( $methods[ PayPalGateway::ID ] ) && ! isset( $methods[ CreditCardGateway::ID ] ) ) {
+			return $methods;
+		}
+		if (
+			! $this->settings->has( 'merchant_email' )
+			|| ! is_email( $this->settings->get( 'merchant_email' ) )
+		) {
+			unset( $methods[ PayPalGateway::ID ] );
+			unset( $methods[ CreditCardGateway::ID ] );
+			return $methods;
+		}
 
-        if (! $this->needsToDisableGateways()) {
-            return $methods;
-        }
+		if ( ! $this->settings->has( 'client_id' ) || empty( $this->settings->get( 'client_id' ) ) ) {
+			unset( $methods[ CreditCardGateway::ID ] );
+		}
 
-        if ($this->isCreditCard()) {
-            return [CreditCardGateway::ID => $methods[CreditCardGateway::ID]];
-        }
-        return [PayPalGateway::ID => $methods[PayPalGateway::ID]];
-    }
+		if ( ! $this->needsToDisableGateways() ) {
+			return $methods;
+		}
 
-    private function needsToDisableGateways(): bool
-    {
-        return $this->sessionHandler->order() !== null;
-    }
+		if ( $this->isCreditCard() ) {
+			return array( CreditCardGateway::ID => $methods[ CreditCardGateway::ID ] );
+		}
+		return array( PayPalGateway::ID => $methods[ PayPalGateway::ID ] );
+	}
 
-    private function isCreditCard(): bool
-    {
-        $order = $this->sessionHandler->order();
-        if (! $order) {
-            return false;
-        }
-        if (! $order->paymentSource() || ! $order->paymentSource()->card()) {
-            return false;
-        }
-        return true;
-    }
+	private function needsToDisableGateways(): bool {
+		return $this->sessionHandler->order() !== null;
+	}
+
+	private function isCreditCard(): bool {
+		$order = $this->sessionHandler->order();
+		if ( ! $order ) {
+			return false;
+		}
+		if ( ! $order->paymentSource() || ! $order->paymentSource()->card() ) {
+			return false;
+		}
+		return true;
+	}
 }

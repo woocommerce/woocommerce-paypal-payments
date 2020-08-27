@@ -12,106 +12,99 @@ use Inpsyde\PayPalCommerce\ApiClient\Entity\AuthorizationStatus;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
-class AuthorizedPaymentsProcessor
-{
-    public const SUCCESSFUL = 'SUCCESSFUL';
-    public const ALREADY_CAPTURED = 'ALREADY_CAPTURED';
-    public const FAILED = 'FAILED';
-    public const INACCESSIBLE = 'INACCESSIBLE';
-    public const NOT_FOUND = 'NOT_FOUND';
-    private $orderEndpoint;
-    private $paymentsEndpoint;
-    private $lastStatus = '';
+class AuthorizedPaymentsProcessor {
 
-    public function __construct(
-        OrderEndpoint $orderEndpoint,
-        PaymentsEndpoint $paymentsEndpoint
-    ) {
+	public const SUCCESSFUL       = 'SUCCESSFUL';
+	public const ALREADY_CAPTURED = 'ALREADY_CAPTURED';
+	public const FAILED           = 'FAILED';
+	public const INACCESSIBLE     = 'INACCESSIBLE';
+	public const NOT_FOUND        = 'NOT_FOUND';
+	private $orderEndpoint;
+	private $paymentsEndpoint;
+	private $lastStatus = '';
 
-        $this->orderEndpoint = $orderEndpoint;
-        $this->paymentsEndpoint = $paymentsEndpoint;
-    }
+	public function __construct(
+		OrderEndpoint $orderEndpoint,
+		PaymentsEndpoint $paymentsEndpoint
+	) {
 
-    public function process(\WC_Order $wcOrder): bool
-    {
-        try {
-            $order = $this->payPalOrderFromWcOrder($wcOrder);
-        } catch (Exception $exception) {
-            if ($exception->getCode() === 404) {
-                $this->lastStatus = self::NOT_FOUND;
-                return false;
-            }
-            $this->lastStatus = self::INACCESSIBLE;
-            return false;
-        }
+		$this->orderEndpoint    = $orderEndpoint;
+		$this->paymentsEndpoint = $paymentsEndpoint;
+	}
 
-        $authorizations = $this->allAuthorizations($order);
+	public function process( \WC_Order $wcOrder ): bool {
+		try {
+			$order = $this->payPalOrderFromWcOrder( $wcOrder );
+		} catch ( Exception $exception ) {
+			if ( $exception->getCode() === 404 ) {
+				$this->lastStatus = self::NOT_FOUND;
+				return false;
+			}
+			$this->lastStatus = self::INACCESSIBLE;
+			return false;
+		}
 
-        if (!$this->areAuthorizationToCapture(...$authorizations)) {
-            $this->lastStatus = self::ALREADY_CAPTURED;
-            return false;
-        }
+		$authorizations = $this->allAuthorizations( $order );
 
-        try {
-            $this->captureAuthorizations(...$authorizations);
-        } catch (Exception $exception) {
-            $this->lastStatus = self::FAILED;
-            return false;
-        }
+		if ( ! $this->areAuthorizationToCapture( ...$authorizations ) ) {
+			$this->lastStatus = self::ALREADY_CAPTURED;
+			return false;
+		}
 
-        $this->lastStatus = self::SUCCESSFUL;
-        return true;
-    }
+		try {
+			$this->captureAuthorizations( ...$authorizations );
+		} catch ( Exception $exception ) {
+			$this->lastStatus = self::FAILED;
+			return false;
+		}
 
-    public function lastStatus(): string
-    {
+		$this->lastStatus = self::SUCCESSFUL;
+		return true;
+	}
 
-        return $this->lastStatus;
-    }
+	public function lastStatus(): string {
 
-    private function payPalOrderFromWcOrder(\WC_Order $wcOrder): Order
-    {
-        $orderId = $wcOrder->get_meta(PayPalGateway::ORDER_ID_META_KEY);
-        return $this->orderEndpoint->order($orderId);
-    }
+		return $this->lastStatus;
+	}
 
-    private function allAuthorizations(Order $order): array
-    {
-        $authorizations = [];
-        foreach ($order->purchaseUnits() as $purchaseUnit) {
-            foreach ($purchaseUnit->payments()->authorizations() as $authorization) {
-                $authorizations[] = $authorization;
-            }
-        }
+	private function payPalOrderFromWcOrder( \WC_Order $wcOrder ): Order {
+		$orderId = $wcOrder->get_meta( PayPalGateway::ORDER_ID_META_KEY );
+		return $this->orderEndpoint->order( $orderId );
+	}
 
-        return $authorizations;
-    }
+	private function allAuthorizations( Order $order ): array {
+		$authorizations = array();
+		foreach ( $order->purchaseUnits() as $purchaseUnit ) {
+			foreach ( $purchaseUnit->payments()->authorizations() as $authorization ) {
+				$authorizations[] = $authorization;
+			}
+		}
 
-    private function areAuthorizationToCapture(Authorization ...$authorizations): bool
-    {
-        return (bool) count($this->authorizationsToCapture(...$authorizations));
-    }
+		return $authorizations;
+	}
 
-    private function captureAuthorizations(Authorization ...$authorizations)
-    {
-        $uncapturedAuthorizations = $this->authorizationsToCapture(...$authorizations);
-        foreach ($uncapturedAuthorizations as $authorization) {
-            $this->paymentsEndpoint->capture($authorization->id());
-        }
-    }
+	private function areAuthorizationToCapture( Authorization ...$authorizations ): bool {
+		return (bool) count( $this->authorizationsToCapture( ...$authorizations ) );
+	}
 
-    /**
-     * @param Authorization ...$authorizations
-     * @return Authorization[]
-     */
-    private function authorizationsToCapture(Authorization ...$authorizations): array
-    {
-        return array_filter(
-            $authorizations,
-            static function (Authorization $authorization): bool {
-                return $authorization->status()->is(AuthorizationStatus::CREATED)
-                    || $authorization->status()->is(AuthorizationStatus::PENDING);
-            }
-        );
-    }
+	private function captureAuthorizations( Authorization ...$authorizations ) {
+		$uncapturedAuthorizations = $this->authorizationsToCapture( ...$authorizations );
+		foreach ( $uncapturedAuthorizations as $authorization ) {
+			$this->paymentsEndpoint->capture( $authorization->id() );
+		}
+	}
+
+	/**
+	 * @param Authorization ...$authorizations
+	 * @return Authorization[]
+	 */
+	private function authorizationsToCapture( Authorization ...$authorizations ): array {
+		return array_filter(
+			$authorizations,
+			static function ( Authorization $authorization ): bool {
+				return $authorization->status()->is( AuthorizationStatus::CREATED )
+					|| $authorization->status()->is( AuthorizationStatus::PENDING );
+			}
+		);
+	}
 }
