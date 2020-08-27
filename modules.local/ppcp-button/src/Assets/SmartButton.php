@@ -400,13 +400,13 @@ class SmartButton implements SmartButtonInterface {
 	}
 
 	private function hasSubscription(): bool {
-		if ( ! $this->subscriptionHelper->acceptOnlyAutomaticPaymentGateways() ) {
+		if ( ! $this->subscriptionHelper->accept_only_automatic_payment_gateways() ) {
 			return false;
 		}
 		if ( is_product() ) {
-			return $this->subscriptionHelper->currentProductIsSubscription();
+			return $this->subscriptionHelper->current_product_is_subscription();
 		}
-		return $this->subscriptionHelper->cartContainsSubscription();
+		return $this->subscriptionHelper->cart_contains_subscription();
 	}
 
     //phpcs:disable Inpsyde.CodeQuality.FunctionLength.TooLong

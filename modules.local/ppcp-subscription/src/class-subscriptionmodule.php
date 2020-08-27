@@ -1,4 +1,9 @@
 <?php
+/**
+ * The subscription module.
+ *
+ * @package Inpsyde\PayPalCommerce\Subscription
+ */
 
 declare(strict_types=1);
 
@@ -10,9 +15,16 @@ use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
 
+/**
+ * Class SubscriptionModule
+ */
 class SubscriptionModule implements ModuleInterface {
 
-
+	/**
+	 * Setup the module.
+	 *
+	 * @return ServiceProviderInterface
+	 */
 	public function setup(): ServiceProviderInterface {
 		return new ServiceProvider(
 			require __DIR__ . '/../services.php',
@@ -21,7 +33,9 @@ class SubscriptionModule implements ModuleInterface {
 	}
 
 	/**
-	 * @inheritDoc
+	 * Runs the module.
+	 *
+	 * @param ContainerInterface $container The container.
 	 */
 	public function run( ContainerInterface $container ) {
 		add_action(
