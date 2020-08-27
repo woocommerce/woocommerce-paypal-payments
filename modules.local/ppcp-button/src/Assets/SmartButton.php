@@ -488,7 +488,7 @@ class SmartButton implements SmartButtonInterface
             'labels' => [
                 'error' => [
                     'generic' => __(
-                        'Something went wrong. Please try again or choose another payment source',
+                        'Something went wrong. Please try again or choose another payment source.',
                         'woocommerce-paypal-commerce-gateway'
                     ),
                 ],
