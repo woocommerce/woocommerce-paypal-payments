@@ -1,10 +1,21 @@
 <?xml version="1.0"?>
-<ruleset name="Inpsyde Coding Standard">
-    <rule ref="Inpsyde"/>
-    <file>./src</file>
-    <file>./modules.local</file>
+<ruleset name="WooCommerce Coding Standards">
+	<description>My projects ruleset.</description>
 
+	<!-- Configs -->
+	<config name="minimum_supported_wp_version" value="4.7" />
+	<config name="testVersion" value="7.2-" />
 
-    <exclude-pattern>*\.(inc|css|js)$</exclude-pattern>
-    <exclude-pattern>*\.(inc|css|js)$</exclude-pattern>
+	<!-- Rules -->
+	<rule ref="WooCommerce-Core" />
+
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array" value="woocommerce-paypal-commerce-gateway" />
+		</properties>
+	</rule>
+
+	<rule ref="PHPCompatibility">
+		<exclude-pattern>tests/</exclude-pattern>
+	</rule>
 </ruleset>

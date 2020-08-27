@@ -34,7 +34,7 @@
         "ext-json": "*"
     },
     "require-dev": {
-        "inpsyde/php-coding-standards": "^1",
+        "woocommerce/woocommerce-sniffs": "^0.1.0",
         "phpunit/phpunit": "^9.1",
         "brain/monkey": "^2.4"
     },
