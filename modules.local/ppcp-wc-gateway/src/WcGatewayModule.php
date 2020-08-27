@@ -14,6 +14,7 @@ use Inpsyde\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
 use Inpsyde\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
 use Inpsyde\PayPalCommerce\WcGateway\Checkout\CheckoutPayPalAddressPreset;
 use Inpsyde\PayPalCommerce\WcGateway\Checkout\DisableGateways;
+use Inpsyde\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Inpsyde\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
@@ -67,6 +68,17 @@ class WcGatewayModule implements ModuleInterface
                 delete_option(PayPalRequestIdRepository::KEY);
                 delete_option('woocommerce_' . PayPalGateway::ID . '_settings');
                 delete_option('woocommerce_' . CreditCardGateway::ID . '_settings');
+            }
+        );
+
+        add_action(
+            'wc_ajax_' . ReturnUrlEndpoint::ENDPOINT,
+            static function () use ($container) {
+                $endpoint = $container->get('wcgateway.endpoint.return-url');
+                /**
+                 * @var ReturnUrlEndpoint $endpoint
+                 */
+                $endpoint->handleRequest();
             }
         );
     }

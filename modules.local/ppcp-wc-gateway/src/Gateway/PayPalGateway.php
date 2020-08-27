@@ -147,24 +147,26 @@ class PayPalGateway extends \WC_Payment_Gateway
             }
         } catch (PayPalApiException $error) {
             if ($error->hasDetail('INSTRUMENT_DECLINED')) {
-                $this->sessionHandler->destroySessionData();
-                wc_add_notice(
-                    __(
-                        'The payment provider refused the payout. Please choose a different payment method.',
-                        'woocommerce-paypal-commerce-gateway'
-                    ),
-                    'error'
-                );
+                $host = $this->config->has('sandbox_on') && $this->config->get('sandbox_on') ?
+                    'https://www.sandbox.paypal.com/' : 'https://www.paypal.com/';
+                $url =  $host . 'checkoutnow?token=' . $this->sessionHandler->order()->id();
+
                 return [
                     'result' => 'success',
-                    'redirect' => wc_get_checkout_url(),
+                    'redirect' => $url,
                 ];
             }
 
-            throw $error;
+            $this->sessionHandler->destroySessionData();
+            wc_add_notice(
+                __(
+                    'Something went wrong. Please try again.',
+                    'woocommerce-paypal-commerce-gateway'
+                ),
+                'error'
+            );
         }
 
-        wc_add_notice($this->orderProcessor->lastError());
         return null;
     }
 

@@ -11,6 +11,7 @@ use Inpsyde\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
 use Inpsyde\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
 use Inpsyde\PayPalCommerce\WcGateway\Checkout\CheckoutPayPalAddressPreset;
 use Inpsyde\PayPalCommerce\WcGateway\Checkout\DisableGateways;
+use Inpsyde\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Inpsyde\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
@@ -1549,6 +1550,16 @@ return [
         return plugins_url(
             '/modules.local/ppcp-wc-gateway/',
             dirname(__FILE__, 3) . '/woocommerce-paypal-commerce-gateway.php'
+        );
+    },
+    'wcgateway.endpoint.return-url' => static function (ContainerInterface $container) : ReturnUrlEndpoint {
+        $gateway = $container->get('wcgateway.paypal-gateway');
+        $endpoint = $container->get('api.endpoint.order');
+        $prefix = $container->get('api.prefix');
+        return new ReturnUrlEndpoint(
+            $gateway,
+            $endpoint,
+            $prefix
         );
     },
 ];
