@@ -1,4 +1,9 @@
 <?php
+/**
+ * The webhook module.
+ *
+ * @package Inpsyde\PayPalCommerce\Webhooks
+ */
 
 declare(strict_types=1);
 
@@ -6,15 +11,19 @@ namespace Inpsyde\PayPalCommerce\Webhooks;
 
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Webhook;
-use Inpsyde\PayPalCommerce\Onboarding\Assets\OnboardingAssets;
-use Inpsyde\PayPalCommerce\Onboarding\Endpoint\LoginSellerEndpoint;
-use Inpsyde\PayPalCommerce\Onboarding\Render\OnboardingRenderer;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
 
+/**
+ * Class WebhookModule
+ */
 class WebhookModule implements ModuleInterface {
 
+	/**
+	 * Setup the Webhook module.
+	 *
+	 * @return ServiceProviderInterface
+	 */
 	public function setup(): ServiceProviderInterface {
 		return new ServiceProvider(
 			require __DIR__ . '/../services.php',
@@ -22,12 +31,19 @@ class WebhookModule implements ModuleInterface {
 		);
 	}
 
+	/**
+	 * Run the Webhook module.
+	 *
+	 * @param ContainerInterface $container The Container.
+	 */
 	public function run( ContainerInterface $container ) {
 		add_action(
 			'rest_api_init',
 			static function () use ( $container ) {
 				$endpoint = $container->get( 'webhook.endpoint.controller' );
 				/**
+				 * The Incoming Webhook Endpoint.
+				 *
 				 * @var IncomingWebhookEndpoint $endpoint
 				 */
 				$endpoint->register();
@@ -38,6 +54,11 @@ class WebhookModule implements ModuleInterface {
 			WebhookRegistrar::EVENT_HOOK,
 			static function () use ( $container ) {
 				$registrar = $container->get( 'webhook.registrar' );
+				/**
+				 * The Webhook Registrar.
+				 *
+				 * @var WebhookRegistrar $endpoint
+				 */
 				$registrar->register();
 			}
 		);
@@ -46,6 +67,11 @@ class WebhookModule implements ModuleInterface {
 			'woocommerce-paypal-commerce-gateway.deactivate',
 			static function () use ( $container ) {
 				$registrar = $container->get( 'webhook.registrar' );
+				/**
+				 * The Webhook Registrar.
+				 *
+				 * @var WebhookRegistrar $endpoint
+				 */
 				$registrar->unregister();
 			}
 		);

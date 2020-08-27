@@ -1,4 +1,9 @@
 <?php
+/**
+ * The webhook module services.
+ *
+ * @package Inpsyde\PayPalCommerce\Webhooks
+ */
 
 declare(strict_types=1);
 
@@ -11,43 +16,43 @@ use Inpsyde\PayPalCommerce\Webhooks\Handler\PaymentCaptureRefunded;
 use Inpsyde\PayPalCommerce\Webhooks\Handler\PaymentCaptureReversed;
 use Psr\Container\ContainerInterface;
 
-return [
+return array(
 
-    'webhook.registrar' => function(ContainerInterface $container) : WebhookRegistrar {
-        $factory = $container->get('api.factory.webhook');
-        $endpoint = $container->get('api.endpoint.webhook');
-        $restEndpoint = $container->get('webhook.endpoint.controller');
-        return new WebhookRegistrar(
-            $factory,
-            $endpoint,
-            $restEndpoint
-        );
-    },
-    'webhook.endpoint.controller' => function(ContainerInterface $container) : IncomingWebhookEndpoint {
-        $webhookEndpoint = $container->get('api.endpoint.webhook');
-        $webhookFactory = $container->get('api.factory.webhook');
-        $handler = $container->get('webhook.endpoint.handler');
-        $logger = $container->get('woocommerce.logger.woocommerce');
-        $verifyRequest = ! defined('PAYPAL_WEBHOOK_REQUEST_VERIFICATION') || PAYPAL_WEBHOOK_REQUEST_VERIFICATION;
+	'webhook.registrar'           => function( ContainerInterface $container ) : WebhookRegistrar {
+		$factory      = $container->get( 'api.factory.webhook' );
+		$endpoint     = $container->get( 'api.endpoint.webhook' );
+		$rest_endpoint = $container->get( 'webhook.endpoint.controller' );
+		return new WebhookRegistrar(
+			$factory,
+			$endpoint,
+			$rest_endpoint
+		);
+	},
+	'webhook.endpoint.controller' => function( ContainerInterface $container ) : IncomingWebhookEndpoint {
+		$webhook_endpoint = $container->get( 'api.endpoint.webhook' );
+		$webhook_factory  = $container->get( 'api.factory.webhook' );
+		$handler          = $container->get( 'webhook.endpoint.handler' );
+		$logger           = $container->get( 'woocommerce.logger.woocommerce' );
+		$verify_request   = ! defined( 'PAYPAL_WEBHOOK_REQUEST_VERIFICATION' ) || PAYPAL_WEBHOOK_REQUEST_VERIFICATION;
 
-        return new IncomingWebhookEndpoint(
-            $webhookEndpoint,
-            $webhookFactory,
-            $logger,
-            $verifyRequest,
-            ... $handler
-        );
-    },
-    'webhook.endpoint.handler' => function(ContainerInterface $container) : array {
-        $logger = $container->get('woocommerce.logger.woocommerce');
-        $prefix = $container->get('api.prefix');
-        $orderEndpoint = $container->get('api.endpoint.order');
-        return [
-            new CheckoutOrderApproved($logger, $prefix, $orderEndpoint),
-            new CheckoutOrderCompleted($logger, $prefix),
-            new PaymentCaptureRefunded($logger, $prefix),
-            new PaymentCaptureReversed($logger, $prefix),
-            new PaymentCaptureCompleted($logger, $prefix),
-        ];
-    }
-];
+		return new IncomingWebhookEndpoint(
+			$webhook_endpoint,
+			$webhook_factory,
+			$logger,
+			$verify_request,
+			... $handler
+		);
+	},
+	'webhook.endpoint.handler'    => function( ContainerInterface $container ) : array {
+		$logger         = $container->get( 'woocommerce.logger.woocommerce' );
+		$prefix         = $container->get( 'api.prefix' );
+		$order_endpoint = $container->get( 'api.endpoint.order' );
+		return array(
+			new CheckoutOrderApproved( $logger, $prefix, $order_endpoint ),
+			new CheckoutOrderCompleted( $logger, $prefix ),
+			new PaymentCaptureRefunded( $logger, $prefix ),
+			new PaymentCaptureReversed( $logger, $prefix ),
+			new PaymentCaptureCompleted( $logger, $prefix ),
+		);
+	},
+);

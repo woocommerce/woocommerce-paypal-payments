@@ -55,7 +55,7 @@ class EarlyOrderHandler {
 		$orderId = false;
 		foreach ( $order->purchaseUnits() as $purchaseUnit ) {
 			if ( $purchaseUnit->customId() === sanitize_text_field( wp_unslash( $_REQUEST['ppcp-resume-order'] ) ) ) {
-				$orderId = (int) $this->sanitizeCustomId( $purchaseUnit->customId() );
+				$orderId = (int) $this->sanitize_custom_id( $purchaseUnit->customId() );
 			}
 		}
 		if ( $orderId === $resumeOrderId ) {

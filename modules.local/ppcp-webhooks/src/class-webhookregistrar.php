@@ -1,0 +1,116 @@
+<?php
+/**
+ * The WebhookRegistrar registers and unregisters webhooks with PayPal.
+ *
+ * @package Inpsyde\PayPalCommerce\Webhooks
+ */
+
+declare(strict_types=1);
+
+namespace Inpsyde\PayPalCommerce\Webhooks;
+
+use Inpsyde\PayPalCommerce\ApiClient\Endpoint\WebhookEndpoint;
+use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use Inpsyde\PayPalCommerce\ApiClient\Factory\WebhookFactory;
+
+/**
+ * Class WebhookRegistrar
+ */
+class WebhookRegistrar {
+
+
+	public const EVENT_HOOK = 'ppcp-register-event';
+	public const KEY        = 'ppcp-webhook';
+
+	/**
+	 * The Webhook factory.
+	 *
+	 * @var WebhookFactory
+	 */
+	private $webhook_factory;
+
+	/**
+	 * The Webhook endpoint.
+	 *
+	 * @var WebhookEndpoint
+	 */
+	private $endpoint;
+
+	/**
+	 * The WordPress Rest API endpoint.
+	 *
+	 * @var IncomingWebhookEndpoint
+	 */
+	private $rest_endpoint;
+
+	/**
+	 * WebhookRegistrar constructor.
+	 *
+	 * @param WebhookFactory          $webhook_factory The Webhook factory.
+	 * @param WebhookEndpoint         $endpoint The Webhook endpoint.
+	 * @param IncomingWebhookEndpoint $rest_endpoint The WordPress Rest API endpoint.
+	 */
+	public function __construct(
+		WebhookFactory $webhook_factory,
+		WebhookEndpoint $endpoint,
+		IncomingWebhookEndpoint $rest_endpoint
+	) {
+
+		$this->webhook_factory = $webhook_factory;
+		$this->endpoint        = $endpoint;
+		$this->rest_endpoint   = $rest_endpoint;
+	}
+
+	/**
+	 * Register Webhooks with PayPal.
+	 *
+	 * @return bool
+	 */
+	public function register(): bool {
+		$webhook = $this->webhook_factory->forUrlAndEvents(
+			$this->rest_endpoint->url(),
+			$this->rest_endpoint->handled_event_types()
+		);
+
+		try {
+			$created = $this->endpoint->create( $webhook );
+			if ( empty( $created->id() ) ) {
+				return false;
+			}
+			update_option(
+				self::KEY,
+				$created->toArray()
+			);
+			return true;
+		} catch ( RuntimeException $error ) {
+			wp_schedule_single_event(
+				time() - 1,
+				self::EVENT_HOOK
+			);
+			return false;
+		}
+	}
+
+	/**
+	 * Unregister webhooks with PayPal.
+	 *
+	 * @return bool
+	 */
+	public function unregister(): bool {
+		$data = (array) get_option( self::KEY, array() );
+		if ( ! $data ) {
+			return false;
+		}
+		try {
+			$webhook = $this->webhook_factory->fromArray( $data );
+			$success = $this->endpoint->delete( $webhook );
+		} catch ( RuntimeException $error ) {
+			return false;
+		}
+
+		if ( $success ) {
+			delete_option( self::KEY );
+		}
+		return $success;
+	}
+}
