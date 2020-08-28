@@ -40,7 +40,7 @@ class CheckoutPayPalAddressPresetTest extends TestCase
 
         self::assertSame(
             $expected,
-            $testee->filterCheckoutFiled(null, $fieldId)
+            $testee->filter_checkout_field(null, $fieldId)
         );
     }
 

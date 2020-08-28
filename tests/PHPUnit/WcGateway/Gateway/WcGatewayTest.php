@@ -174,7 +174,7 @@ class WcGatewayTest extends TestCase
             $sessionHandler
         );
 
-        $this->assertTrue($testee->captureAuthorizedPayment($wcOrder));
+        $this->assertTrue($testee->capture_authorized_payment($wcOrder));
     }
 
     public function testCaptureAuthorizedPaymentHasAlreadyBeenCaptured() {
@@ -220,7 +220,7 @@ class WcGatewayTest extends TestCase
             $sessionHandler
         );
 
-        $this->assertTrue($testee->captureAuthorizedPayment($wcOrder));
+        $this->assertTrue($testee->capture_authorized_payment($wcOrder));
     }
 
     /**
@@ -259,7 +259,7 @@ class WcGatewayTest extends TestCase
             $sessionHandler
         );
 
-        $this->assertFalse($testee->captureAuthorizedPayment($wcOrder));
+        $this->assertFalse($testee->capture_authorized_payment($wcOrder));
     }
 
     public function dataForTestCaptureAuthorizedPaymentNoActionableFailures() : array

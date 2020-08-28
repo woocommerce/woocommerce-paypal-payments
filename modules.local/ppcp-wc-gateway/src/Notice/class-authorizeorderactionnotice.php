@@ -1,4 +1,9 @@
 <?php
+/**
+ * Contains the messages to display, when capturing an authorization manually.
+ *
+ * @package Inpsyde\PayPalCommerce\WcGateway\Notice
+ */
 
 declare(strict_types=1);
 
@@ -6,6 +11,9 @@ namespace Inpsyde\PayPalCommerce\WcGateway\Notice;
 
 use Inpsyde\PayPalCommerce\AdminNotices\Entity\Message;
 
+/**
+ * Class AuthorizeOrderActionNotice
+ */
 class AuthorizeOrderActionNotice {
 
 	public const QUERY_PARAM = 'ppcp-authorized-message';
@@ -16,9 +24,14 @@ class AuthorizeOrderActionNotice {
 	public const SUCCESS          = 84;
 	public const NOT_FOUND        = 85;
 
+	/**
+	 * Returns the current message if there is one.
+	 *
+	 * @return Message|null
+	 */
 	public function message(): ?Message {
 
-		$message = $this->currentMessage();
+		$message = $this->current_message();
 		if ( ! $message ) {
 			return null;
 		}
@@ -26,7 +39,12 @@ class AuthorizeOrderActionNotice {
 		return new Message( $message['message'], $message['type'] );
 	}
 
-	private function currentMessage(): array {
+	/**
+	 * Returns the current message.
+	 *
+	 * @return array
+	 */
+	private function current_message(): array {
 		$messages[ self::NO_INFO ]          = array(
 			'message' => __(
 				'Could not retrieve information. Try again later.',
@@ -67,18 +85,23 @@ class AuthorizeOrderActionNotice {
 		if ( ! isset( $_GET[ self::QUERY_PARAM ] ) ) { // Input ok.
 			return array();
 		}
-		$messageId = absint( $_GET[ self::QUERY_PARAM ] ); // Input ok.
+		$message_id = absint( $_GET[ self::QUERY_PARAM ] ); // Input ok.
         //phpcs:enable WordPress.Security.NonceVerification.Recommended
-		return ( isset( $messages[ $messageId ] ) ) ? $messages[ $messageId ] : array();
+		return ( isset( $messages[ $message_id ] ) ) ? $messages[ $message_id ] : array();
 	}
 
-	public function displayMessage( int $messageCode ): void {
+	/**
+	 * Adds the query parameter for the message to 'redirect_post_location'.
+	 *
+	 * @param int $message_code The message code.
+	 */
+	public function display_message( int $message_code ): void {
 		add_filter(
 			'redirect_post_location',
-			static function ( $location ) use ( $messageCode ) {
+			static function ( $location ) use ( $message_code ) {
 				return add_query_arg(
 					self::QUERY_PARAM,
-					$messageCode,
+					$message_code,
 					$location
 				);
 			}

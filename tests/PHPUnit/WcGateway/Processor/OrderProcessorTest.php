@@ -266,7 +266,7 @@ class OrderProcessorTest extends TestCase
                 $orderIntent
             );
         $this->assertFalse($testee->process($wcOrder, $woocommerce));
-        $this->assertNotEmpty($testee->lastError());
+        $this->assertNotEmpty($testee->last_error());
     }
 
 

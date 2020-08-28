@@ -1,4 +1,9 @@
 <?php
+/**
+ * Renders the not captured information.
+ *
+ * @package Inpsyde\PayPalCommerce\WcGateway\Admin
+ */
 
 declare(strict_types=1);
 
@@ -6,12 +11,20 @@ namespace Inpsyde\PayPalCommerce\WcGateway\Admin;
 
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
+/**
+ * Class PaymentStatusOrderDetail
+ */
 class PaymentStatusOrderDetail {
 
-	public function render( int $wcOrderId ) {
-		$wcOrder  = new \WC_Order( $wcOrderId );
-		$intent   = $wcOrder->get_meta( PayPalGateway::INTENT_META_KEY );
-		$captured = $wcOrder->get_meta( PayPalGateway::CAPTURED_META_KEY );
+	/**
+	 * Renders the not captured information.
+	 *
+	 * @param int $wc_order_id The Woocommerce order id.
+	 */
+	public function render( int $wc_order_id ) {
+		$wc_order = new \WC_Order( $wc_order_id );
+		$intent   = $wc_order->get_meta( PayPalGateway::INTENT_META_KEY );
+		$captured = $wc_order->get_meta( PayPalGateway::CAPTURED_META_KEY );
 
 		if ( strcasecmp( $intent, 'AUTHORIZE' ) !== 0 ) {
 			return;
@@ -31,7 +44,7 @@ class PaymentStatusOrderDetail {
 			esc_html__(
 				'To capture the payment select capture action from the list below.',
 				'woocommerce-paypal-commerce-gateway'
-			),
+			)
 		);
 	}
 }

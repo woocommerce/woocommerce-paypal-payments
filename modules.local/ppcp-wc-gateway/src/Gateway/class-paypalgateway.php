@@ -1,59 +1,100 @@
 <?php
+/**
+ * The PayPal Payment Gateway
+ *
+ * @package Inpsyde\PayPalCommerce\WcGateway\Gateway
+ */
 
 declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\WcGateway\Gateway;
 
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use Inpsyde\PayPalCommerce\ApiClient\Exception\PayPalApiException;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\OrderFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
-use Inpsyde\PayPalCommerce\Button\Assets\SmartButton;
-use Inpsyde\PayPalCommerce\Onboarding\Render\OnboardingRenderer;
 use Inpsyde\PayPalCommerce\Session\SessionHandler;
 use Inpsyde\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use Inpsyde\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use Inpsyde\PayPalCommerce\WcGateway\Processor\OrderProcessor;
-use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsFields;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use Psr\Container\ContainerInterface;
 
-//phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-//phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration.NoArgumentType
+/**
+ * Class PayPalGateway
+ */
 class PayPalGateway extends \WC_Payment_Gateway {
-
 
 	public const ID                = 'ppcp-gateway';
 	public const CAPTURED_META_KEY = '_ppcp_paypal_captured';
 	public const INTENT_META_KEY   = '_ppcp_paypal_intent';
 	public const ORDER_ID_META_KEY = '_ppcp_paypal_order_id';
 
-	protected $settingsRenderer;
-	protected $authorizedPayments;
-	protected $notice;
-	protected $orderProcessor;
-	protected $config;
-	protected $sessionHandler;
+	/**
+	 * The Settings Renderer.
+	 *
+	 * @var SettingsRenderer
+	 */
+	protected $settings_renderer;
 
+	/**
+	 * The processor for authorized payments.
+	 *
+	 * @var AuthorizedPaymentsProcessor
+	 */
+	protected $authorized_payments;
+
+	/**
+	 * The Authorized Order Action Notice.
+	 *
+	 * @var AuthorizeOrderActionNotice
+	 */
+	protected $notice;
+
+	/**
+	 * The processor for orders.
+	 *
+	 * @var OrderProcessor
+	 */
+	protected $order_processor;
+
+	/**
+	 * The settings.
+	 *
+	 * @var ContainerInterface
+	 */
+	protected $config;
+
+	/**
+	 * The Session Handler.
+	 *
+	 * @var SessionHandler
+	 */
+	protected $session_handler;
+
+	/**
+	 * PayPalGateway constructor.
+	 *
+	 * @param SettingsRenderer            $settings_renderer The Settings Renderer.
+	 * @param OrderProcessor              $order_processor The Order Processor.
+	 * @param AuthorizedPaymentsProcessor $authorized_payments_processor The Authorized Payments Processor.
+	 * @param AuthorizeOrderActionNotice  $notice The Order Action Notice object.
+	 * @param ContainerInterface          $config The settings.
+	 * @param SessionHandler              $session_handler The Session Handler.
+	 */
 	public function __construct(
-		SettingsRenderer $settingsRenderer,
-		OrderProcessor $orderProcessor,
-		AuthorizedPaymentsProcessor $authorizedPayments,
+		SettingsRenderer $settings_renderer,
+		OrderProcessor $order_processor,
+		AuthorizedPaymentsProcessor $authorized_payments_processor,
 		AuthorizeOrderActionNotice $notice,
 		ContainerInterface $config,
-		SessionHandler $sessionHandler
+		SessionHandler $session_handler
 	) {
 
-		$this->id                 = self::ID;
-		$this->orderProcessor     = $orderProcessor;
-		$this->authorizedPayments = $authorizedPayments;
-		$this->notice             = $notice;
-		$this->settingsRenderer   = $settingsRenderer;
-		$this->config             = $config;
-		$this->sessionHandler     = $sessionHandler;
+		$this->id                  = self::ID;
+		$this->order_processor     = $order_processor;
+		$this->authorized_payments = $authorized_payments_processor;
+		$this->notice              = $notice;
+		$this->settings_renderer   = $settings_renderer;
+		$this->config              = $config;
+		$this->session_handler     = $session_handler;
 		if (
 			defined( 'PPCP_FLAG_SUBSCRIPTION' )
 			&& PPCP_FLAG_SUBSCRIPTION
@@ -97,11 +138,19 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		);
 	}
 
+	/**
+	 * Whether the Gateway needs to be setup.
+	 *
+	 * @return bool
+	 */
 	public function needs_setup(): bool {
 
 		return true;
 	}
 
+	/**
+	 * Initializes the form fields.
+	 */
 	public function init_form_fields() {
 		$this->form_fields = array(
 			'enabled' => array(
@@ -116,10 +165,17 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		);
 	}
 
-	public function process_payment( $orderId ): ?array {
+	/**
+	 * Process a payment for an Woocommerce order.
+	 *
+	 * @param int $order_id The Woocommerce order id.
+	 *
+	 * @return array|null
+	 */
+	public function process_payment( $order_id ): ?array {
 		global $woocommerce;
-		$wcOrder = wc_get_order( $orderId );
-		if ( ! is_a( $wcOrder, \WC_Order::class ) ) {
+		$wc_order = wc_get_order( $order_id );
+		if ( ! is_a( $wc_order, \WC_Order::class ) ) {
 			return null;
 		}
 
@@ -127,26 +183,26 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		 * If the WC_Order is payed through the approved webhook.
 		 */
         //phpcs:disable WordPress.Security.NonceVerification.Recommended
-		if ( isset( $_REQUEST['ppcp-resume-order'] ) && $wcOrder->has_status( 'processing' ) ) {
+		if ( isset( $_REQUEST['ppcp-resume-order'] ) && $wc_order->has_status( 'processing' ) ) {
 			return array(
 				'result'   => 'success',
-				'redirect' => $this->get_return_url( $wcOrder ),
+				'redirect' => $this->get_return_url( $wc_order ),
 			);
 		}
         //phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		try {
-			if ( $this->orderProcessor->process( $wcOrder, $woocommerce ) ) {
+			if ( $this->order_processor->process( $wc_order, $woocommerce ) ) {
 				return array(
 					'result'   => 'success',
-					'redirect' => $this->get_return_url( $wcOrder ),
+					'redirect' => $this->get_return_url( $wc_order ),
 				);
 			}
 		} catch ( PayPalApiException $error ) {
 			if ( $error->hasDetail( 'INSTRUMENT_DECLINED' ) ) {
 				$host = $this->config->has( 'sandbox_on' ) && $this->config->get( 'sandbox_on' ) ?
 					'https://www.sandbox.paypal.com/' : 'https://www.paypal.com/';
-				$url  = $host . 'checkoutnow?token=' . $this->sessionHandler->order()->id();
+				$url  = $host . 'checkoutnow?token=' . $this->session_handler->order()->id();
 
 				return array(
 					'result'   => 'success',
@@ -154,7 +210,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 				);
 			}
 
-			$this->sessionHandler->destroySessionData();
+			$this->session_handler->destroySessionData();
 			wc_add_notice(
 				__(
 					'Something went wrong. Please try again.',
@@ -167,54 +223,71 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		return null;
 	}
 
-	public function captureAuthorizedPayment( \WC_Order $wcOrder ): bool {
-		$isProcessed = $this->authorizedPayments->process( $wcOrder );
-		$this->renderAuthorizationMessageForStatus( $this->authorizedPayments->lastStatus() );
+	/**
+	 * Captures an authorized payment for an Woocommerce order.
+	 *
+	 * @param \WC_Order $wc_order The Woocommerce order.
+	 *
+	 * @return bool
+	 */
+	public function capture_authorized_payment( \WC_Order $wc_order ): bool {
+		$is_processed = $this->authorized_payments->process( $wc_order );
+		$this->render_authorization_message_for_status( $this->authorized_payments->last_status() );
 
-		if ( $isProcessed ) {
-			$wcOrder->add_order_note(
+		if ( $is_processed ) {
+			$wc_order->add_order_note(
 				__( 'Payment successfully captured.', 'woocommerce-paypal-commerce-gateway' )
 			);
 
-			$wcOrder->set_status( 'processing' );
-			$wcOrder->update_meta_data( self::CAPTURED_META_KEY, 'true' );
-			$wcOrder->save();
+			$wc_order->set_status( 'processing' );
+			$wc_order->update_meta_data( self::CAPTURED_META_KEY, 'true' );
+			$wc_order->save();
 			return true;
 		}
 
-		if ( $this->authorizedPayments->lastStatus() === AuthorizedPaymentsProcessor::ALREADY_CAPTURED ) {
-			if ( $wcOrder->get_status() === 'on-hold' ) {
-				$wcOrder->add_order_note(
+		if ( $this->authorized_payments->last_status() === AuthorizedPaymentsProcessor::ALREADY_CAPTURED ) {
+			if ( $wc_order->get_status() === 'on-hold' ) {
+				$wc_order->add_order_note(
 					__( 'Payment successfully captured.', 'woocommerce-paypal-commerce-gateway' )
 				);
-				$wcOrder->set_status( 'processing' );
+				$wc_order->set_status( 'processing' );
 			}
 
-			$wcOrder->update_meta_data( self::CAPTURED_META_KEY, 'true' );
-			$wcOrder->save();
+			$wc_order->update_meta_data( self::CAPTURED_META_KEY, 'true' );
+			$wc_order->save();
 			return true;
 		}
 		return false;
 	}
 
-	private function renderAuthorizationMessageForStatus( string $status ) {
+	/**
+	 * Displays the notice for a status.
+	 *
+	 * @param string $status The status.
+	 */
+	private function render_authorization_message_for_status( string $status ) {
 
-		$messageMapping = array(
+		$message_mapping = array(
 			AuthorizedPaymentsProcessor::SUCCESSFUL       => AuthorizeOrderActionNotice::SUCCESS,
 			AuthorizedPaymentsProcessor::ALREADY_CAPTURED => AuthorizeOrderActionNotice::ALREADY_CAPTURED,
 			AuthorizedPaymentsProcessor::INACCESSIBLE     => AuthorizeOrderActionNotice::NO_INFO,
 			AuthorizedPaymentsProcessor::NOT_FOUND        => AuthorizeOrderActionNotice::NOT_FOUND,
 		);
-		$displayMessage = ( isset( $messageMapping[ $status ] ) ) ?
-			$messageMapping[ $status ]
+		$display_message = ( isset( $message_mapping[ $status ] ) ) ?
+			$message_mapping[ $status ]
 			: AuthorizeOrderActionNotice::FAILED;
-		$this->notice->displayMessage( $displayMessage );
+		$this->notice->display_message( $display_message );
 	}
 
+	/**
+	 * Renders the settings.
+	 *
+	 * @return string
+	 */
 	public function generate_ppcp_html(): string {
 
 		ob_start();
-		$this->settingsRenderer->render( false );
+		$this->settings_renderer->render( false );
 		$content = ob_get_contents();
 		ob_end_clean();
 		return $content;

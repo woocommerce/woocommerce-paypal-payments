@@ -1,4 +1,9 @@
 <?php
+/**
+ * The Credit card gateway.
+ *
+ * @package Inpsyde\PayPalCommerce\WcGateway\Gateway
+ */
 
 declare(strict_types=1);
 
@@ -11,32 +16,48 @@ use Inpsyde\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use Psr\Container\ContainerInterface;
 
-//phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
-//phpcs:disable Inpsyde.CodeQuality.ArgumentTypeDeclaration.NoArgumentType
-//phpcs:disable Inpsyde.CodeQuality.NoAccessors.NoGetter
-//phpcs:disable Inpsyde.CodeQuality.ReturnTypeDeclaration.NoReturnType
+/**
+ * Class CreditCardGateway
+ */
 class CreditCardGateway extends PayPalGateway {
 
 	public const ID = 'ppcp-credit-card-gateway';
 
-	private $moduleUrl;
+	/**
+	 * The URL to the module.
+	 *
+	 * @var string
+	 */
+	private $module_url;
+
+	/**
+	 * CreditCardGateway constructor.
+	 *
+	 * @param SettingsRenderer            $settings_renderer The Settings Renderer.
+	 * @param OrderProcessor              $order_processor The Order processor.
+	 * @param AuthorizedPaymentsProcessor $authorized_payments_processor The Authorized Payments processor.
+	 * @param AuthorizeOrderActionNotice  $notice The Notices.
+	 * @param ContainerInterface          $config The settings.
+	 * @param string                      $module_url The URL to the module.
+	 * @param SessionHandler              $session_handler The Session Handler.
+	 */
 	public function __construct(
-		SettingsRenderer $settingsRenderer,
-		OrderProcessor $orderProcessor,
-		AuthorizedPaymentsProcessor $authorizedPayments,
+		SettingsRenderer $settings_renderer,
+		OrderProcessor $order_processor,
+		AuthorizedPaymentsProcessor $authorized_payments_processor,
 		AuthorizeOrderActionNotice $notice,
 		ContainerInterface $config,
-		string $moduleUrl,
-		SessionHandler $sessionHandler
+		string $module_url,
+		SessionHandler $session_handler
 	) {
 
-		$this->id                 = self::ID;
-		$this->orderProcessor     = $orderProcessor;
-		$this->authorizedPayments = $authorizedPayments;
-		$this->notice             = $notice;
-		$this->settingsRenderer   = $settingsRenderer;
-		$this->config             = $config;
-		$this->sessionHandler     = $sessionHandler;
+		$this->id                  = self::ID;
+		$this->order_processor     = $order_processor;
+		$this->authorized_payments = $authorized_payments_processor;
+		$this->notice              = $notice;
+		$this->settings_renderer   = $settings_renderer;
+		$this->config              = $config;
+		$this->session_handler     = $session_handler;
 		if (
 			defined( 'PPCP_FLAG_SUBSCRIPTION' )
 			&& PPCP_FLAG_SUBSCRIPTION
@@ -82,9 +103,12 @@ class CreditCardGateway extends PayPalGateway {
 			)
 		);
 
-		$this->moduleUrl = $moduleUrl;
+		$this->module_url = $module_url;
 	}
 
+	/**
+	 * Initialize the form fields.
+	 */
 	public function init_form_fields() {
 		$this->form_fields = array(
 			'enabled' => array(
@@ -99,15 +123,25 @@ class CreditCardGateway extends PayPalGateway {
 		);
 	}
 
+	/**
+	 * Renders the settings.
+	 *
+	 * @return string
+	 */
 	public function generate_ppcp_html(): string {
 
 		ob_start();
-		$this->settingsRenderer->render( true );
+		$this->settings_renderer->render( true );
 		$content = ob_get_contents();
 		ob_end_clean();
 		return $content;
 	}
 
+	/**
+	 * Returns the title of the gateway.
+	 *
+	 * @return string
+	 */
 	public function get_title() {
 
 		if ( is_admin() ) {
@@ -119,12 +153,12 @@ class CreditCardGateway extends PayPalGateway {
 			return $title;
 		}
 
-		$titleOptions = $this->cardLabels();
-		$images       = array_map(
-			function ( string $type ) use ( $titleOptions ): string {
+		$title_options = $this->card_labels();
+		$images        = array_map(
+			function ( string $type ) use ( $title_options ): string {
 				return '<img
-                 title="' . esc_attr( $titleOptions[ $type ] ) . '"
-                 src="' . esc_url( $this->moduleUrl ) . '/assets/images/' . esc_attr( $type ) . '.svg"
+                 title="' . esc_attr( $title_options[ $type ] ) . '"
+                 src="' . esc_url( $this->module_url ) . '/assets/images/' . esc_attr( $type ) . '.svg"
                  class="ppcp-card-icon"
                 > ';
 			},
@@ -133,7 +167,12 @@ class CreditCardGateway extends PayPalGateway {
 		return $title . implode( '', $images );
 	}
 
-	private function cardLabels(): array {
+	/**
+	 * Returns an array of credit card names.
+	 *
+	 * @return array
+	 */
+	private function card_labels(): array {
 		return array(
 			'visa'       => _x(
 				'Visa',

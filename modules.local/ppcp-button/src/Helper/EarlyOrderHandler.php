@@ -108,6 +108,6 @@ class EarlyOrderHandler {
 		/**
 		 * Patch Order so we have the \WC_Order id added.
 		 */
-		return $this->orderProcessor->patchOrder( $wcOrder, $order );
+		return $this->orderProcessor->patch_order( $wcOrder, $order );
 	}
 }

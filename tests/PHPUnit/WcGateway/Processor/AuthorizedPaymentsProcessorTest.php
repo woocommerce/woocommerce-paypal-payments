@@ -63,7 +63,7 @@ class AuthorizedPaymentsProcessorTest extends TestCase
             ->with(PayPalGateway::ORDER_ID_META_KEY)
             ->andReturn($orderId);
         $this->assertTrue($testee->process($wcOrder));
-        $this->assertEquals(AuthorizedPaymentsProcessor::SUCCESSFUL, $testee->lastStatus());
+        $this->assertEquals(AuthorizedPaymentsProcessor::SUCCESSFUL, $testee->last_status());
     }
 
     public function testInaccessible() {
@@ -82,7 +82,7 @@ class AuthorizedPaymentsProcessorTest extends TestCase
             ->with(PayPalGateway::ORDER_ID_META_KEY)
             ->andReturn($orderId);
         $this->assertFalse($testee->process($wcOrder));
-        $this->assertEquals(AuthorizedPaymentsProcessor::INACCESSIBLE, $testee->lastStatus());
+        $this->assertEquals(AuthorizedPaymentsProcessor::INACCESSIBLE, $testee->last_status());
     }
 
     public function testNotFound() {
@@ -101,7 +101,7 @@ class AuthorizedPaymentsProcessorTest extends TestCase
             ->with(PayPalGateway::ORDER_ID_META_KEY)
             ->andReturn($orderId);
         $this->assertFalse($testee->process($wcOrder));
-        $this->assertEquals(AuthorizedPaymentsProcessor::NOT_FOUND, $testee->lastStatus());
+        $this->assertEquals(AuthorizedPaymentsProcessor::NOT_FOUND, $testee->last_status());
     }
 
     public function testCaptureFails() {
@@ -149,7 +149,7 @@ class AuthorizedPaymentsProcessorTest extends TestCase
             ->with(PayPalGateway::ORDER_ID_META_KEY)
             ->andReturn($orderId);
         $this->assertFalse($testee->process($wcOrder));
-        $this->assertEquals(AuthorizedPaymentsProcessor::FAILED, $testee->lastStatus());
+        $this->assertEquals(AuthorizedPaymentsProcessor::FAILED, $testee->last_status());
     }
 
     public function testAllAreCaptured() {
@@ -197,6 +197,6 @@ class AuthorizedPaymentsProcessorTest extends TestCase
             ->with(PayPalGateway::ORDER_ID_META_KEY)
             ->andReturn($orderId);
         $this->assertFalse($testee->process($wcOrder));
-        $this->assertEquals(AuthorizedPaymentsProcessor::ALREADY_CAPTURED, $testee->lastStatus());
+        $this->assertEquals(AuthorizedPaymentsProcessor::ALREADY_CAPTURED, $testee->last_status());
     }
 }
