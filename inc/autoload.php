@@ -27,6 +27,12 @@ function autoload() {
 				'Logging' => $module_dir . 'woocommerce-logging/src/',
 			];
 
+			if (isset($class_parts[2]) && ! isset($class_parts[3])) {
+				$file_path = dirname(__DIR__) . '/src/class-' . strtolower($class_parts[2]) . '.php';
+				include $file_path;
+				return;
+			}
+
 			if (! isset($modules[$class_parts[2]])) {
 				return;
 			}
