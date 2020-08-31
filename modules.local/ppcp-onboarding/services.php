@@ -61,7 +61,13 @@ return array(
 	'api.bearer'                       => static function ( ContainerInterface $container ): Bearer {
 
 		$state = $container->get( 'onboarding.state' );
-		if ( $state->currentState() < State::STATE_ONBOARDED ) {
+
+		/**
+		 * The State.
+		 *
+		 * @var State $state
+		 */
+		if ( $state->current_state() < State::STATE_ONBOARDED ) {
 			return new ConnectBearer();
 		}
 		global $wpdb;
