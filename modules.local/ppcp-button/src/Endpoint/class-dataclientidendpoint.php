@@ -1,4 +1,9 @@
 <?php
+/**
+ * The Data Client ID endpoint.
+ *
+ * @package Inpsyde\PayPalCommerce\Button\Endpoint
+ */
 
 declare(strict_types=1);
 
@@ -8,31 +13,62 @@ use Inpsyde\PayPalCommerce\ApiClient\Endpoint\IdentityToken;
 use Inpsyde\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
+/**
+ * Class DataClientIdEndpoint
+ */
 class DataClientIdEndpoint implements EndpointInterface {
 
 
 	public const ENDPOINT = 'ppc-data-client-id';
 
-	private $requestData;
-	private $identityToken;
+	/**
+	 * The Request Data Helper.
+	 *
+	 * @var RequestData
+	 */
+	private $request_data;
+
+	/**
+	 * The Identity Token.
+	 *
+	 * @var IdentityToken
+	 */
+	private $identity_token;
+
+	/**
+	 * DataClientIdEndpoint constructor.
+	 *
+	 * @param RequestData   $request_data The Request Data Helper.
+	 * @param IdentityToken $identity_token The Identity Token.
+	 */
 	public function __construct(
-		RequestData $requestData,
-		IdentityToken $identityToken
+		RequestData $request_data,
+		IdentityToken $identity_token
 	) {
 
-		$this->requestData   = $requestData;
-		$this->identityToken = $identityToken;
+		$this->request_data   = $request_data;
+		$this->identity_token = $identity_token;
 	}
 
+	/**
+	 * Returns the nonce.
+	 *
+	 * @return string
+	 */
 	public static function nonce(): string {
 		return self::ENDPOINT;
 	}
 
-	public function handleRequest(): bool {
+	/**
+	 * Handles the request.
+	 *
+	 * @return bool
+	 */
+	public function handle_request(): bool {
 		try {
-			$this->requestData->readRequest( $this->nonce() );
-			$userId = get_current_user_id();
-			$token  = $this->identityToken->generateForCustomer( $userId );
+			$this->request_data->read_request( $this->nonce() );
+			$user_id = get_current_user_id();
+			$token   = $this->identity_token->generateForCustomer( $user_id );
 			wp_send_json(
 				array(
 					'token'      => $token->token(),

@@ -99,10 +99,10 @@ class LoginSellerEndpoint implements EndpointInterface {
 	 * @return bool
 	 * @throws \Psr\SimpleCache\InvalidArgumentException When a cache item was not found.
 	 */
-	public function handleRequest(): bool {
+	public function handle_request(): bool {
 
 		try {
-			$data        = $this->request_data->readRequest( $this->nonce() );
+			$data        = $this->request_data->read_request( $this->nonce() );
 			$credentials = $this->login_seller_endpoint->credentialsFor(
 				$data['sharedId'],
 				$data['authCode'],

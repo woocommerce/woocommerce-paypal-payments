@@ -96,7 +96,7 @@ class OnboardingModule implements ModuleInterface {
 				 *
 				 * @var ChangeCartEndpoint $endpoint
 				 */
-				$endpoint->handleRequest();
+				$endpoint->handle_request();
 			}
 		);
 	}

@@ -1,54 +1,104 @@
 <?php
+/**
+ * Endpoint to verify if an order has been approved. An approved order
+ * will be stored in the current session.
+ *
+ * @package Inpsyde\PayPalCommerce\Button\Endpoint
+ */
 
 declare(strict_types=1);
 
 namespace Inpsyde\PayPalCommerce\Button\Endpoint;
 
 use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use Inpsyde\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use Inpsyde\PayPalCommerce\Button\Exception\RuntimeException;
 use Inpsyde\PayPalCommerce\Button\Helper\ThreeDSecure;
 use Inpsyde\PayPalCommerce\Session\SessionHandler;
 
+/**
+ * Class ApproveOrderEndpoint
+ */
 class ApproveOrderEndpoint implements EndpointInterface {
 
 
 	public const ENDPOINT = 'ppc-approve-order';
 
-	private $requestData;
-	private $sessionHandler;
-	private $apiEndpoint;
-	private $threedSecure;
+	/**
+	 * The request data helper.
+	 *
+	 * @var RequestData
+	 */
+	private $request_data;
+
+	/**
+	 * The session handler.
+	 *
+	 * @var SessionHandler
+	 */
+	private $session_handler;
+
+	/**
+	 * The order endpoint.
+	 *
+	 * @var OrderEndpoint
+	 */
+	private $api_endpoint;
+
+	/**
+	 * The 3d secure helper object.
+	 *
+	 * @var ThreeDSecure
+	 */
+	private $threed_secure;
+
+	/**
+	 * ApproveOrderEndpoint constructor.
+	 *
+	 * @param RequestData    $request_data The request data helper.
+	 * @param OrderEndpoint  $order_endpoint The order endpoint.
+	 * @param SessionHandler $session_handler The session handler.
+	 * @param ThreeDSecure   $three_d_secure The 3d secure helper object.
+	 */
 	public function __construct(
-		RequestData $requestData,
-		OrderEndpoint $apiEndpoint,
-		SessionHandler $sessionHandler,
-		ThreeDSecure $threedSecure
+		RequestData $request_data,
+		OrderEndpoint $order_endpoint,
+		SessionHandler $session_handler,
+		ThreeDSecure $three_d_secure
 	) {
 
-		$this->requestData    = $requestData;
-		$this->apiEndpoint    = $apiEndpoint;
-		$this->sessionHandler = $sessionHandler;
-		$this->threedSecure   = $threedSecure;
+		$this->request_data    = $request_data;
+		$this->api_endpoint    = $order_endpoint;
+		$this->session_handler = $session_handler;
+		$this->threed_secure   = $three_d_secure;
 	}
 
+	/**
+	 * The nonce.
+	 *
+	 * @return string
+	 */
 	public static function nonce(): string {
 		return self::ENDPOINT;
 	}
 
-    //phpcs:disable Inpsyde.CodeQuality.FunctionLength.TooLong
-	public function handleRequest(): bool {
+	/**
+	 * Handles the request.
+	 *
+	 * @return bool
+	 * @throws RuntimeException When no order was found.
+	 */
+	public function handle_request(): bool {
 		try {
-			$data = $this->requestData->readRequest( $this->nonce() );
+			$data = $this->request_data->read_request( $this->nonce() );
 			if ( ! isset( $data['order_id'] ) ) {
 				throw new RuntimeException(
 					__( 'No order id given', 'woocommerce-paypal-commerce-gateway' )
 				);
 			}
 
-			$order = $this->apiEndpoint->order( $data['order_id'] );
+			$order = $this->api_endpoint->order( $data['order_id'] );
 			if ( ! $order ) {
 				throw new RuntimeException(
 					sprintf(
@@ -60,8 +110,8 @@ class ApproveOrderEndpoint implements EndpointInterface {
 			}
 
 			if ( $order->paymentSource() && $order->paymentSource()->card() ) {
-				$proceed = $this->threedSecure->proceedWithOrder( $order );
-				if ( $proceed === ThreeDSecure::RETRY ) {
+				$proceed = $this->threed_secure->proceed_with_order( $order );
+				if ( ThreeDSecure::RETRY === $proceed ) {
 					throw new RuntimeException(
 						__(
 							'Something went wrong. Please try again.',
@@ -69,7 +119,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 						)
 					);
 				}
-				if ( $proceed === ThreeDSecure::REJECT ) {
+				if ( ThreeDSecure::REJECT === $proceed ) {
 					throw new RuntimeException(
 						__(
 							'Unfortunatly, we can\'t accept your card. Please choose a different payment method.',
@@ -77,7 +127,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 						)
 					);
 				}
-				$this->sessionHandler->replaceOrder( $order );
+				$this->session_handler->replaceOrder( $order );
 				wp_send_json_success( $order );
 			}
 
@@ -91,7 +141,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 				);
 			}
 
-			$this->sessionHandler->replaceOrder( $order );
+			$this->session_handler->replaceOrder( $order );
 			wp_send_json_success( $order );
 			return true;
 		} catch ( \RuntimeException $error ) {
@@ -106,5 +156,4 @@ class ApproveOrderEndpoint implements EndpointInterface {
 			return false;
 		}
 	}
-    //phpcs:enable Inpsyde.CodeQuality.FunctionLength.TooLong
 }

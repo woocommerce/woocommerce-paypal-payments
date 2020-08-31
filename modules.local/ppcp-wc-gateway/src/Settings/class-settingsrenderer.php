@@ -236,7 +236,7 @@ class SettingsRenderer {
 			}
 			if (
 				in_array( 'messages', $config['requirements'], true )
-				&& ! $this->messages_apply->forCountry()
+				&& ! $this->messages_apply->for_country()
 			) {
 				continue;
 			}

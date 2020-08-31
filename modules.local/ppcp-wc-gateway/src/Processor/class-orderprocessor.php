@@ -260,7 +260,7 @@ class OrderProcessor {
 		}
 
 		$is_approved = in_array(
-			$this->threed_secure->proceedWithOrder( $order ),
+			$this->threed_secure->proceed_with_order( $order ),
 			array(
 				ThreeDSecure::NO_DECISION,
 				ThreeDSecure::PROCCEED,
