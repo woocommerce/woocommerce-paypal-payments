@@ -4,19 +4,6 @@
   "require": {
     "dhii/module-interface": "0.2.x-dev"
   },
-  "autoload": {
-    "psr-4": {
-      "Inpsyde\\PayPalCommerce\\Onboarding\\": "src/"
-    }
-  },
-  "autoload-dev": {
-    "psr-4": {
-      "Inpsyde\\PayPalCommerce\\Onboarding\\": "tests/PHPUnit"
-    }
-  },
-  "scripts": {
-    "unit": "./vendor/bin/phpunit --coverage-html build/coverage-report"
-  },
   "require-dev": {
     "phpunit/phpunit": "^9.1",
     "brain/monkey": "^2.4",

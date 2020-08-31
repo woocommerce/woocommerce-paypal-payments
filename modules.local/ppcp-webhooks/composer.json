@@ -4,16 +4,6 @@
   "require": {
     "dhii/module-interface": "0.2.x-dev"
   },
-  "autoload": {
-    "psr-4": {
-      "Inpsyde\\PayPalCommerce\\Webhooks\\": "src/"
-    }
-  },
-  "autoload-dev": {
-    "psr-4": {
-      "Inpsyde\\PayPalCommerce\\Webhooks\\": "tests/PHPUnit"
-    }
-  },
   "scripts": {
     "unit": "./vendor/bin/phpunit --coverage-html build/coverage-report"
   },

@@ -4,10 +4,5 @@
   "require": {
     "dhii/module-interface": "0.2.x-dev",
     "inpsyde/ppcp-api-client": "dev-master"
-  },
-  "autoload": {
-    "psr-4": {
-      "Inpsyde\\PayPalCommerce\\Button\\": "src/"
-    }
   }
 }

@@ -8,8 +8,6 @@
 declare(strict_types=1);
 
 
-namespace Inpsyde\IZettle\Logging;
-
-use Psr\Container\ContainerInterface;
+namespace Inpsyde\PayPalCommerce\Logging;
 
 return array();

@@ -4,10 +4,5 @@
     "require": {
         "dhii/module-interface": "0.2.x-dev",
         "psr/log": "^1.1"
-    },
-    "autoload": {
-        "psr-4": {
-            "Inpsyde\\Woocommerce\\Logging\\": "src/"
-        }
     }
 }
