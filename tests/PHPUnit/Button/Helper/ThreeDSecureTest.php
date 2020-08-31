@@ -32,7 +32,7 @@ class ThreeDSecureTest extends TestCase
         $order = \Mockery::mock(Order::class);
         $order->shouldReceive('paymentSource')->andReturn($source);
         $testee = new ThreeDSecure();
-        $result = $testee->proceedWithOrder($order);
+        $result = $testee->proceed_with_order($order);
         $this->assertEquals($expected, $result);
     }
 

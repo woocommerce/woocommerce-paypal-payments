@@ -73,7 +73,7 @@ class ChangeCartEndpointTest extends TestCase
 
         expect('wp_send_json_success')
             ->with($responseExpectation);
-        $this->assertTrue($testee->handleRequest());
+        $this->assertTrue($testee->handle_request());
     }
 
     public function dataForTestProducts() : array {
