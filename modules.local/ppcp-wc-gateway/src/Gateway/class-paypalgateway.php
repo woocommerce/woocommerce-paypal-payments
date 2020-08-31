@@ -211,14 +211,11 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			}
 
 			$this->session_handler->destroySessionData();
-			wc_add_notice(
-				__(
-					'Something went wrong. Please try again.',
-					'woocommerce-paypal-commerce-gateway'
-				),
-				'error'
-			);
 		}
+		wc_add_notice(
+			$this->order_processor->last_error(),
+			'error'
+		);
 
 		return null;
 	}

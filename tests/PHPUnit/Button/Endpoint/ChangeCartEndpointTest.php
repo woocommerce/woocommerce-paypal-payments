@@ -55,7 +55,7 @@ class ChangeCartEndpointTest extends TestCase
             ->expects('reset_shipping');
         $requestData = Mockery::mock(RequestData::class);
         $requestData
-            ->expects('readRequest')
+            ->expects('read_request')
             ->with(ChangeCartEndpoint::nonce())
             ->andReturn($data);
         $cartRepository = Mockery::mock(CartRepository::class);

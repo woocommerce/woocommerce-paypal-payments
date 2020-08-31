@@ -188,7 +188,7 @@ class CheckoutPayPalAddressPresetTest extends TestCase
 
         $testee = $this->buildTestee()[1];
         $method = (new \ReflectionClass($testee))
-            ->getMethod('readShippingFromOrder');
+            ->getMethod('read_shipping_from_order');
         $method->setAccessible(true);
 
         self::assertSame(
