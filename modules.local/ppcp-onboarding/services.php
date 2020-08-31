@@ -1,4 +1,9 @@
 <?php
+/**
+ * The onboarding module services.
+ *
+ * @package Inpsyde\PayPalCommerce\Onboarding
+ */
 
 declare(strict_types=1);
 
@@ -13,111 +18,113 @@ use Inpsyde\PayPalCommerce\Onboarding\Endpoint\LoginSellerEndpoint;
 use Inpsyde\PayPalCommerce\Onboarding\Render\OnboardingRenderer;
 use WpOop\TransientCache\CachePoolFactory;
 
-return [
+return array(
 
-    'api.host' => static function (ContainerInterface $container): string {
-        $state = $container->get('onboarding.state');
-        $environment = $container->get('onboarding.environment');
+	'api.host'                         => static function ( ContainerInterface $container ): string {
+		$state       = $container->get( 'onboarding.state' );
+		$environment = $container->get( 'onboarding.environment' );
 
-        //ToDo: Correct the URLs
-        /**
-         * @var Environment $environment
-         * @var State $state
-         */
-        if ($state->currentState() >= State::STATE_ONBOARDED) {
-            if ($environment->currentEnvironmentIs(Environment::SANDBOX)) {
-                return 'https://api.sandbox.paypal.com';
-            }
-            return 'https://api.sandbox.paypal.com';
-        }
+		// ToDo: Correct the URLs.
+		/**
+		 * The Environment and State variables.
+		 *
+		 * @var Environment $environment
+		 * @var State $state
+		 */
+		if ( $state->current_state() >= State::STATE_ONBOARDED ) {
+			if ( $environment->current_environment_is( Environment::SANDBOX ) ) {
+				return 'https://api.sandbox.paypal.com';
+			}
+			return 'https://api.sandbox.paypal.com';
+		}
 
-        //ToDo: Real connect.woocommerce.com
-        if ($environment->currentEnvironmentIs(Environment::SANDBOX)) {
-            return 'http://connect-woo.wpcust.com';
-        }
-        return 'http://connect-woo.wpcust.com';
+		// ToDo: Real connect.woocommerce.com.
+		if ( $environment->current_environment_is( Environment::SANDBOX ) ) {
+			return 'http://connect-woo.wpcust.com';
+		}
+		return 'http://connect-woo.wpcust.com';
 
-    },
-    'api.paypal-host' => function(ContainerInterface $container) : string {
-        $environment = $container->get('onboarding.environment');
-        if ($environment->currentEnvironmentIs(Environment::SANDBOX)) {
-            return 'https://api.sandbox.paypal.com';
-        }
-        return 'https://api.paypal.com';
-    },
+	},
+	'api.paypal-host'                  => function( ContainerInterface $container ) : string {
+		$environment = $container->get( 'onboarding.environment' );
+		if ( $environment->currentEnvironmentIs( Environment::SANDBOX ) ) {
+			return 'https://api.sandbox.paypal.com';
+		}
+		return 'https://api.paypal.com';
+	},
 
-    'api.bearer' => static function (ContainerInterface $container): Bearer {
+	'api.bearer'                       => static function ( ContainerInterface $container ): Bearer {
 
-        $state = $container->get('onboarding.state');
-        if ($state->currentState() < State::STATE_ONBOARDED) {
-            return new ConnectBearer();
-        }
-        global $wpdb;
-        $cacheFactory = new CachePoolFactory($wpdb);
-        $pool = $cacheFactory->createCachePool('ppcp-token');
-        $key = $container->get('api.key');
-        $secret = $container->get('api.secret');
+		$state = $container->get( 'onboarding.state' );
+		if ( $state->currentState() < State::STATE_ONBOARDED ) {
+			return new ConnectBearer();
+		}
+		global $wpdb;
+		$cache_pool_factory = new CachePoolFactory( $wpdb );
+		$pool               = $cache_pool_factory->createCachePool( 'ppcp-token' );
+		$key                = $container->get( 'api.key' );
+		$secret             = $container->get( 'api.secret' );
 
-        $host = $container->get('api.host');
-        $logger = $container->get('woocommerce.logger.woocommerce');
-        return new PayPalBearer(
-            $pool,
-            $host,
-            $key,
-            $secret,
-            $logger
-        );
-    },
-    'onboarding.state' => function(ContainerInterface $container) : State {
-        $environment = $container->get('onboarding.environment');
-        $settings = $container->get('wcgateway.settings');
-        return new State($environment, $settings);
-    },
-    'onboarding.environment' => function(ContainerInterface $container) : Environment {
-        $settings = $container->get('wcgateway.settings');
-        return new Environment($settings);
-    },
+		$host   = $container->get( 'api.host' );
+		$logger = $container->get( 'woocommerce.logger.woocommerce' );
+		return new PayPalBearer(
+			$pool,
+			$host,
+			$key,
+			$secret,
+			$logger
+		);
+	},
+	'onboarding.state'                 => function( ContainerInterface $container ) : State {
+		$environment = $container->get( 'onboarding.environment' );
+		$settings    = $container->get( 'wcgateway.settings' );
+		return new State( $environment, $settings );
+	},
+	'onboarding.environment'           => function( ContainerInterface $container ) : Environment {
+		$settings = $container->get( 'wcgateway.settings' );
+		return new Environment( $settings );
+	},
 
-    'onboarding.assets' => function(ContainerInterface $container) : OnboardingAssets {
-        $state = $container->get('onboarding.state');
-        $loginSellerEndpoint = $container->get('onboarding.endpoint.login-seller');
-        return new OnboardingAssets(
-            $container->get('onboarding.url'),
-            $state,
-            $loginSellerEndpoint
-        );
-    },
+	'onboarding.assets'                => function( ContainerInterface $container ) : OnboardingAssets {
+		$state                 = $container->get( 'onboarding.state' );
+		$login_seller_endpoint = $container->get( 'onboarding.endpoint.login-seller' );
+		return new OnboardingAssets(
+			$container->get( 'onboarding.url' ),
+			$state,
+			$login_seller_endpoint
+		);
+	},
 
-    'onboarding.url' => static function (ContainerInterface $container): string {
-        return plugins_url(
-            '/modules.local/ppcp-onboarding/',
-            dirname(__FILE__, 3) . '/woocommerce-paypal-commerce-gateway.php'
-        );
-    },
+	'onboarding.url'                   => static function ( ContainerInterface $container ): string {
+		return plugins_url(
+			'/modules.local/ppcp-onboarding/',
+			dirname( __FILE__, 3 ) . '/woocommerce-paypal-commerce-gateway.php'
+		);
+	},
 
-    'onboarding.endpoint.login-seller' => static function (ContainerInterface $container) : LoginSellerEndpoint {
+	'onboarding.endpoint.login-seller' => static function ( ContainerInterface $container ) : LoginSellerEndpoint {
 
-        $requestData = $container->get('button.request-data');
-        $loginSellerEndpoint = $container->get('api.endpoint.login-seller');
-        $partnerReferralsData = $container->get('api.repository.partner-referrals-data');
-        $settings = $container->get('wcgateway.settings');
+		$request_data           = $container->get( 'button.request-data' );
+		$login_seller           = $container->get( 'api.endpoint.login-seller' );
+		$partner_referrals_data = $container->get( 'api.repository.partner-referrals-data' );
+		$settings               = $container->get( 'wcgateway.settings' );
 
-        global $wpdb;
-        $cacheFactory = new CachePoolFactory($wpdb);
-        $pool = $cacheFactory->createCachePool('ppcp-token');
-        return new LoginSellerEndpoint(
-            $requestData,
-            $loginSellerEndpoint,
-            $partnerReferralsData,
-            $settings,
-            $pool
-        );
-    },
-    'onboarding.render' => static function (ContainerInterface $container) : OnboardingRenderer {
+		global $wpdb;
+		$cache_pool_factory = new CachePoolFactory( $wpdb );
+		$pool         = $cache_pool_factory->createCachePool( 'ppcp-token' );
+		return new LoginSellerEndpoint(
+			$request_data,
+			$login_seller,
+			$partner_referrals_data,
+			$settings,
+			$pool
+		);
+	},
+	'onboarding.render'                => static function ( ContainerInterface $container ) : OnboardingRenderer {
 
-        $partnerReferrals = $container->get('api.endpoint.partner-referrals');
-        return new OnboardingRenderer(
-            $partnerReferrals,
-        );
-    },
-];
+		$partner_referrals = $container->get( 'api.endpoint.partner-referrals' );
+		return new OnboardingRenderer(
+			$partner_referrals
+		);
+	},
+);

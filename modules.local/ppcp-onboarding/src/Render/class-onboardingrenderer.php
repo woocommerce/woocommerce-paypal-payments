@@ -1,4 +1,9 @@
 <?php
+/**
+ * Renders the "Connect to PayPal" button.
+ *
+ * @package Inpsyde\PayPalCommerce\Onboarding\Render
+ */
 
 declare(strict_types=1);
 
@@ -7,21 +12,37 @@ namespace Inpsyde\PayPalCommerce\Onboarding\Render;
 use Inpsyde\PayPalCommerce\ApiClient\Endpoint\PartnerReferrals;
 use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
+/**
+ * Class OnboardingRenderer
+ */
 class OnboardingRenderer {
 
+	/**
+	 * The partner referrals object.
+	 *
+	 * @var PartnerReferrals
+	 */
+	private $partner_referrals;
 
-	private $partnerReferrals;
-	public function __construct( PartnerReferrals $partnerReferrals ) {
-		$this->partnerReferrals = $partnerReferrals;
+	/**
+	 * OnboardingRenderer constructor.
+	 *
+	 * @param PartnerReferrals $partner_referrals The PartnerReferrals.
+	 */
+	public function __construct( PartnerReferrals $partner_referrals ) {
+		$this->partner_referrals = $partner_referrals;
 	}
 
+	/**
+	 * Renders the "Connect to PayPal" button.
+	 */
 	public function render() {
 		try {
 			$url = add_query_arg(
 				array(
 					'displayMode' => 'minibrowser',
 				),
-				$this->partnerReferrals->signupLink()
+				$this->partner_referrals->signupLink()
 			);
 			?>
 					<a
