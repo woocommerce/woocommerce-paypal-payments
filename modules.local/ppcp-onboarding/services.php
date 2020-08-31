@@ -47,7 +47,12 @@ return array(
 	},
 	'api.paypal-host'                  => function( ContainerInterface $container ) : string {
 		$environment = $container->get( 'onboarding.environment' );
-		if ( $environment->currentEnvironmentIs( Environment::SANDBOX ) ) {
+		/**
+		 * The current environment.
+		 *
+		 * @var Environment $environment
+		 */
+		if ( $environment->current_environment_is( Environment::SANDBOX ) ) {
 			return 'https://api.sandbox.paypal.com';
 		}
 		return 'https://api.paypal.com';
