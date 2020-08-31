@@ -37,7 +37,7 @@ return [
         /**
          * ToDo: Add production platform client Id.
          */
-        return $env->currentEnvironmentIs(Environment::SANDBOX) ?
+        return $env->current_environment_is(Environment::SANDBOX) ?
             'AQB97CzMsd58-It1vxbcDAGvMuXNCXRD9le_XUaMlHB_U7XsU9IiItBwGQOtZv9sEeD6xs2vlIrL4NiD' : '';
     },
     'button.smart-button' => static function (ContainerInterface $container): SmartButtonInterface {
@@ -46,7 +46,7 @@ return [
         /**
          * @var State $state
          */
-        if ($state->currentState() < State::STATE_PROGRESSIVE) {
+        if ( $state->current_state() < State::STATE_PROGRESSIVE) {
             return new DisabledSmartButton();
         }
         $settings = $container->get('wcgateway.settings');

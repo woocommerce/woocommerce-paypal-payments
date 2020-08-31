@@ -184,7 +184,7 @@ class SettingsListener {
 		}
 		$settings = array();
 		foreach ( $this->setting_fields as $key => $config ) {
-			if ( ! in_array( $this->state->currentState(), $config['screens'], true ) ) {
+			if ( ! in_array( $this->state->current_state(), $config['screens'], true ) ) {
 				continue;
 			}
 			if (

@@ -35,7 +35,7 @@ class EarlyOrderHandler {
 	}
 
 	public function shouldCreateEarlyOrder(): bool {
-		return $this->state->currentState() === State::STATE_ONBOARDED;
+		return $this->state->current_state() === State::STATE_ONBOARDED;
 	}
 
     //phpcs:disable WordPress.Security.NonceVerification.Recommended

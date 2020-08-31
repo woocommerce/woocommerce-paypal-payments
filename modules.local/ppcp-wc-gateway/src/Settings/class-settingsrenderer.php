@@ -219,7 +219,7 @@ class SettingsRenderer {
 		<input type="hidden" name="ppcp-nonce" value="<?php echo esc_attr( $nonce ); ?>">
 		<?php
 		foreach ( $this->fields as $field => $config ) :
-			if ( ! in_array( $this->state->currentState(), $config['screens'], true ) ) {
+			if ( ! in_array( $this->state->current_state(), $config['screens'], true ) ) {
 				continue;
 			}
 			if ( $is_dcc && ! in_array( $config['gateway'], array( 'all', 'dcc' ), true ) ) {
