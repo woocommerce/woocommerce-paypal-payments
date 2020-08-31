@@ -4,6 +4,7 @@
  *
  * @package Inpsyde\PayPalCommerce
  */
+
 declare( strict_types=1 );
 
 namespace Inpsyde\PayPalCommerce;
