@@ -29,7 +29,7 @@ class PluginModule implements ModuleInterface {
 	/**
 	 * Runs the module.
 	 *
-	 * @param ContainerInterface $container
+	 * @param ContainerInterface $container The Container.
 	 */
 	public function run( ContainerInterface $container ) {
 		// TODO: Implement run() method.
