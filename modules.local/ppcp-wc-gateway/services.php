@@ -50,9 +50,9 @@ return array(
 		$order_processor     = $container->get( 'wcgateway.order-processor' );
 		$settings_renderer   = $container->get( 'wcgateway.settings.render' );
 		$authorized_payments = $container->get( 'wcgateway.processor.authorized-payments' );
-		$notice             = $container->get( 'wcgateway.notice.authorize-order-action' );
-		$settings           = $container->get( 'wcgateway.settings' );
-		$moduleUrl          = $container->get( 'wcgateway.url' );
+		$notice              = $container->get( 'wcgateway.notice.authorize-order-action' );
+		$settings            = $container->get( 'wcgateway.settings' );
+		$module_url          = $container->get( 'wcgateway.url' );
 		$session_handler     = $container->get( 'session.handler' );
 		return new CreditCardGateway(
 			$settings_renderer,
@@ -60,7 +60,7 @@ return array(
 			$authorized_payments,
 			$notice,
 			$settings,
-			$moduleUrl,
+			$module_url,
 			$session_handler
 		);
 	},
@@ -143,28 +143,32 @@ return array(
 	'wcgateway.settings.fields'                    => static function ( ContainerInterface $container ): array {
 		$settings     = $container->get( 'wcgateway.settings' );
 		$sandbox_text = $settings->has( 'sandbox_on' ) && $settings->get( 'sandbox_on' ) ?
+			// translators: %1$s and %2$s are button tags.
 			__(
-				'You are currently in the sandbox mode to test your installation. You can switch this, by clicking <button name="%1$s" value="%2$s">Reset</button>',
+				'You are currently in the sandbox mode to test your installation. You can switch this, by clicking %1$sReset%2$s',
 				'woocommerce-paypal-commerce-gateway'
-			) : __(
-				'You are in live mode. This means, you can receive money into your account. You can switch this, by clicking <button name="%1$s" value="%2$s">Reset</button>',
+			) :
+			// translators: %1$s and %2$s are button tags.
+			__(
+				'You are in live mode. This means, you can receive money into your account. You can switch this, by clicking %1$sReset%2$s',
 				'woocommerce-paypal-commerce-gateway'
 			);
 		$sandbox_text = sprintf(
 			$sandbox_text,
-			'save',
-			'reset'
+			'<button name="save" value="reset">',
+			'</button>'
 		);
 
 		$merchant_email_text = sprintf(
+			// translators: %1$s is the email address %2$s and %3$s are button tags.
 			__(
-				'You are connected with your email address <mark>%1$s</mark>.
-                If you want to change this settings, please click <button name="%2$s" value="%3$s">Reset</button>',
+				'You are connected with your email address %1$s.
+                If you want to change this settings, please click %2$sReset%3$s',
 				'woocommerce-paypal-commerce-gateway'
 			),
-			$settings->has( 'merchant_email' ) ? $settings->get( 'merchant_email' ) : '',
-			'save',
-			'reset'
+			'<mark>' . $settings->has( 'merchant_email' ) ? $settings->get( 'merchant_email' ) . '</mark>' : '',
+			'<button name="save" value="reset">',
+			'</button>'
 		);
 		$fields              = array(
 			'ppcp_onboarding'            => array(
@@ -226,7 +230,7 @@ return array(
 			),
 			'toggle_manual_input'        => array(
 				'type'         => 'ppcp-text',
-				'title'        => __( 'Manual mode', 'woocommerce-paypla-commerce-gateway' ),
+				'title'        => __( 'Manual mode', 'woocommerce-paypal-commerce-gateway' ),
 				'text'         => '<button id="ppcp[toggle_manual_input]">' . __( 'Toggle to manual credential input', 'woocommerce-paypal-commerce-gateway' ) . '</button>',
 				'screens'      => array(
 					State::STATE_START,
@@ -498,7 +502,7 @@ return array(
 				'gateway'      => 'all',
 			),
 
-			// General button styles
+			// General button styles.
 			'button_style_heading'       => array(
 				'heading'      => __( 'Checkout', 'woocommerce-paypal-commerce-gateway' ),
 				'type'         => 'ppcp-heading',
@@ -775,7 +779,7 @@ return array(
 				'gateway'      => 'paypal',
 			),
 
-			// Single product page
+			// Single product page.
 			'button_product_heading'     => array(
 				'heading'      => __( 'Button on Single product', 'woocommerce-paypal-commerce-gateway' ),
 				'type'         => 'ppcp-heading',
@@ -1065,7 +1069,7 @@ return array(
 				'gateway'      => 'paypal',
 			),
 
-			// Mini cart settings
+			// Mini cart settings.
 			'button_mini-cart_heading'   => array(
 				'heading'      => __( 'Mini Cart', 'woocommerce-paypal-commerce-gateway' ),
 				'type'         => 'ppcp-heading',
@@ -1194,7 +1198,7 @@ return array(
 				'gateway'      => 'paypal',
 			),
 
-			// Cart settings
+			// Cart settings.
 			'button_cart_heading'        => array(
 				'heading'      => __( 'Cart', 'woocommerce-paypal-commerce-gateway' ),
 				'type'         => 'ppcp-heading',
