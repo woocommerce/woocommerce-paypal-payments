@@ -25,8 +25,7 @@ use Dhii\Modular\Module\ModuleInterface;
 use Inpsyde\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 
 (function () {
-    include_once __DIR__.'/inc/autoload.php';
-    autoload();
+	include __DIR__ . '/vendor/autoload.php';
 
     function init()
     {
