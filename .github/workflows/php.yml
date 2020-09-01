@@ -28,5 +28,5 @@ jobs:
 
     - name: Run test suite
       run: ./vendor/bin/phpunit
-    - name: Run cs
+    - name: Run Woocommerce coding standards
       run: ./vendor/bin/phpcs src inc modules.local --extensions=php
