@@ -1,4 +1,9 @@
 <?php
+/**
+ * The services of the admin notice module.
+ *
+ * @package Inpsyde\PayPalCommerce\Button
+ */
 
 declare(strict_types=1);
 
@@ -18,14 +23,14 @@ use Inpsyde\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
 use Inpsyde\PayPalCommerce\Button\Endpoint\RequestData;
 use Inpsyde\PayPalCommerce\Button\Exception\RuntimeException;
 
-return [
-    'admin-notices.renderer' => static function (ContainerInterface $container): RendererInterface {
+return array(
+	'admin-notices.renderer'   => static function ( ContainerInterface $container ): RendererInterface {
 
-        $repository = $container->get('admin-notices.repository');
-        return new Renderer($repository);
-    },
-    'admin-notices.repository' => static function (ContainerInterface $container): RepositoryInterface {
+		$repository = $container->get( 'admin-notices.repository' );
+		return new Renderer( $repository );
+	},
+	'admin-notices.repository' => static function ( ContainerInterface $container ): RepositoryInterface {
 
-        return new Repository();
-    },
-];
+		return new Repository();
+	},
+);
