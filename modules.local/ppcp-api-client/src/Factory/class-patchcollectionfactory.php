@@ -38,8 +38,8 @@ class PatchCollectionFactory {
 	/**
 	 * Returns patches from purchase units diffs.
 	 *
-	 * @param array $from The Purchase Units to start with.
-	 * @param array $to The Purchase Units to end with after patches where applied.
+	 * @param PurchaseUnit[] $from The Purchase Units to start with.
+	 * @param PurchaseUnit[] $to The Purchase Units to end with after patches where applied.
 	 *
 	 * @return Patch[]
 	 */
@@ -67,15 +67,15 @@ class PatchCollectionFactory {
 				array_filter(
 					$from,
 					static function ( PurchaseUnit $unit ) use ( $purchase_unit_to ): bool {
-						return $purchase_unit_to->referenceId() === $unit->reference_id();
+						return $purchase_unit_to->reference_id() === $unit->reference_id();
 					}
 				)
 			);
 			$operation          = $purchase_unit_from ? 'replace' : 'add';
-			$value              = $purchase_unit_to->toArray();
+			$value              = $purchase_unit_to->to_array();
 			$patches[]          = new Patch(
 				$operation,
-				$path . "/@reference_id=='" . $purchase_unit_to->referenceId() . "'",
+				$path . "/@reference_id=='" . $purchase_unit_to->reference_id() . "'",
 				$value
 			);
 		}

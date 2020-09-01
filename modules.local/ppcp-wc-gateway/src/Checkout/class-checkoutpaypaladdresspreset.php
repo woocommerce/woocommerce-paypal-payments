@@ -80,22 +80,22 @@ class CheckoutPayPalAddressPreset {
 		$payer    = $order->payer();
 
 		$address_map     = array(
-			'billing_address_1' => 'addressLine1',
-			'billing_address_2' => 'addressLine2',
-			'billing_postcode'  => 'postalCode',
-			'billing_country'   => 'countryCode',
-			'billing_city'      => 'adminArea2',
-			'billing_state'     => 'adminArea1',
+			'billing_address_1' => 'address_line_1',
+			'billing_address_2' => 'address_line_2',
+			'billing_postcode'  => 'postal_code',
+			'billing_country'   => 'country_code',
+			'billing_city'      => 'admin_area_2',
+			'billing_state'     => 'admin_area_1',
 		);
 		$payer_name_map  = array(
 			'billing_last_name'  => 'surname',
-			'billing_first_name' => 'givenName',
+			'billing_first_name' => 'given_name',
 		);
 		$payer_map       = array(
-			'billing_email' => 'emailAddress',
+			'billing_email' => 'email_address',
 		);
 		$payer_phone_map = array(
-			'billing_phone' => 'nationalNumber',
+			'billing_phone' => 'national_number',
 		);
 
 		if ( array_key_exists( $field_id, $address_map ) && $shipping ) {
