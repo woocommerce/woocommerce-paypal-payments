@@ -26,7 +26,7 @@ function autoload() {
 				return;
 			}
 			$class_parts = explode( '\\', $class_name );
-			$module_dir  = dirname( __DIR__ ) . '/modules.local/';
+			$module_dir  = dirname( __DIR__ ) . '/modules/';
 			$modules     = array(
 				'AdminNotices' => $module_dir . 'ppcp-admin-notices/src/',
 				'ApiClient'    => $module_dir . 'ppcp-api-client/src/',
