@@ -210,7 +210,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 				);
 			}
 
-			$this->session_handler->destroySessionData();
+			$this->session_handler->destroy_session_data();
 		}
 		wc_add_notice(
 			$this->order_processor->last_error(),

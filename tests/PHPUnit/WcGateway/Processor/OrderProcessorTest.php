@@ -49,7 +49,7 @@ class OrderProcessorTest extends TestCase
             ->expects('order')
             ->andReturn($currentOrder);
         $sessionHandler
-            ->expects('destroySessionData');
+            ->expects('destroy_session_data');
         $cartRepository = Mockery::mock(CartRepository::class);
         $orderEndpoint = Mockery::mock(OrderEndpoint::class);
         $orderEndpoint
@@ -142,7 +142,7 @@ class OrderProcessorTest extends TestCase
             ->expects('order')
             ->andReturn($currentOrder);
         $sessionHandler
-            ->expects('destroySessionData');
+            ->expects('destroy_session_data');
         $cartRepository = Mockery::mock(CartRepository::class);
         $orderEndpoint = Mockery::mock(OrderEndpoint::class);
         $orderEndpoint

@@ -145,7 +145,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 			}
 			$bn_code = isset( $data['bn_code'] ) ? (string) $data['bn_code'] : '';
 			if ( $bn_code ) {
-				$this->session_handler->replaceBnCode( $bn_code );
+				$this->session_handler->replace_bn_code( $bn_code );
 				$this->api_endpoint->with_bn_code( $bn_code );
 			}
 			$payee_preferred = $this->settings->has( 'payee_preferred' )

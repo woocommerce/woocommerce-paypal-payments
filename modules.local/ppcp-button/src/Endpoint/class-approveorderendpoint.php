@@ -127,7 +127,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 						)
 					);
 				}
-				$this->session_handler->replaceOrder( $order );
+				$this->session_handler->replace_order( $order );
 				wp_send_json_success( $order );
 			}
 
@@ -141,7 +141,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 				);
 			}
 
-			$this->session_handler->replaceOrder( $order );
+			$this->session_handler->replace_order( $order );
 			wp_send_json_success( $order );
 			return true;
 		} catch ( \RuntimeException $error ) {

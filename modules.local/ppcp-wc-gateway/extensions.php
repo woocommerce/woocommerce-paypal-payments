@@ -54,7 +54,7 @@ return array(
 		 * @var SessionHandler $session_handler
 		 */
 		$session_handler = $container->get( 'session.handler' );
-		$bn_code         = $session_handler->bnCode();
+		$bn_code         = $session_handler->bn_code();
 
 		/**
 		 * The settings.

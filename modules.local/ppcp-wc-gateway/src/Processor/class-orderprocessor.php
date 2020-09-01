@@ -179,7 +179,7 @@ class OrderProcessor {
 			$wc_order->update_status( 'processing' );
 		}
 		$woocommerce->cart->empty_cart();
-		$this->session_handler->destroySessionData();
+		$this->session_handler->destroy_session_data();
 		$this->last_error = '';
 		return true;
 	}
