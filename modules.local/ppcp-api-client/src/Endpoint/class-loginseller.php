@@ -89,7 +89,7 @@ class LoginSeller {
 		$response = $this->request( $url, $args );
 		if ( is_wp_error( $response ) ) {
 			$error = new RuntimeException(
-				__( 'Could not fetch credentials.', 'woocommerce-paypal-commerce-gateway' )
+				__( 'Could not fetch credentials.', 'paypal-for-woocommerce' )
 			);
 			$this->logger->log(
 				'warning',
@@ -109,7 +109,7 @@ class LoginSeller {
 					$json,
 					$status_code
 				) : new RuntimeException(
-					__( 'Credentials not found.', 'woocommerce-paypal-commerce-gateway' )
+					__( 'Credentials not found.', 'paypal-for-woocommerce' )
 				);
 			$this->logger->log(
 				'warning',
@@ -158,7 +158,7 @@ class LoginSeller {
 
 		if ( is_wp_error( $response ) ) {
 			$error = new RuntimeException(
-				__( 'Could not create token.', 'woocommerce-paypal-commerce-gateway' )
+				__( 'Could not create token.', 'paypal-for-woocommerce' )
 			);
 			$this->logger->log(
 				'warning',
@@ -179,7 +179,7 @@ class LoginSeller {
 					$json,
 					$status_code
 				) : new RuntimeException(
-					__( 'No token found.', 'woocommerce-paypal-commerce-gateway' )
+					__( 'No token found.', 'paypal-for-woocommerce' )
 				);
 			$this->logger->log(
 				'warning',

@@ -28,7 +28,7 @@ class PayeeFactory {
 	public function from_paypal_response( \stdClass $data ): ?Payee {
 		if ( ! isset( $data->email_address ) ) {
 			throw new RuntimeException(
-				__( 'No email for payee given.', 'woocommerce-paypal-commerce-gateway' )
+				__( 'No email for payee given.', 'paypal-for-woocommerce' )
 			);
 		}
 

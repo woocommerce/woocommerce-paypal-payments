@@ -52,7 +52,7 @@ class PayerTaxInfo {
 			throw new RuntimeException(
 				sprintf(
 				// translators: %s is the current type.
-					__( '%s is not a valid tax type.', 'woocommerce-paypal-commerce-gateway' ),
+					__( '%s is not a valid tax type.', 'paypal-for-woocommerce' ),
 					$type
 				)
 			);

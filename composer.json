@@ -1,5 +1,5 @@
 {
-    "name": "inpsyde/woocommerce-paypal-commerce-gateway",
+    "name": "inpsyde/paypal-for-woocommerce",
     "type": "wordpress-plugin",
     "description": "PayPal Commerce Platform for WooCommerce",
     "license": "GPL-2.0",

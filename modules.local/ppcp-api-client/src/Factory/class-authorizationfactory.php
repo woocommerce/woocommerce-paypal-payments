@@ -29,13 +29,13 @@ class AuthorizationFactory {
 	public function from_paypal_response( \stdClass $data ): Authorization {
 		if ( ! isset( $data->id ) ) {
 			throw new RuntimeException(
-				__( 'Does not contain an id.', 'woocommerce-paypal-commerce-gateway' )
+				__( 'Does not contain an id.', 'paypal-for-woocommerce' )
 			);
 		}
 
 		if ( ! isset( $data->status ) ) {
 			throw new RuntimeException(
-				__( 'Does not contain status.', 'woocommerce-paypal-commerce-gateway' )
+				__( 'Does not contain status.', 'paypal-for-woocommerce' )
 			);
 		}
 

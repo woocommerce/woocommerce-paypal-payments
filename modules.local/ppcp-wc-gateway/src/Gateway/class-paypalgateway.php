@@ -116,10 +116,10 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			);
 		}
 
-		$this->method_title       = __( 'PayPal', 'woocommerce-paypal-commerce-gateway' );
+		$this->method_title       = __( 'PayPal', 'paypal-for-woocommerce' );
 		$this->method_description = __(
 			'Provide your customers with the PayPal payment option.',
-			'woocommerce-paypal-commerce-gateway'
+			'paypal-for-woocommerce'
 		);
 		$this->title              = $this->config->has( 'title' ) ?
 			$this->config->get( 'title' ) : $this->method_title;
@@ -154,9 +154,9 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	public function init_form_fields() {
 		$this->form_fields = array(
 			'enabled' => array(
-				'title'   => __( 'Enable/Disable', 'woocommerce-paypal-commerce-gateway' ),
+				'title'   => __( 'Enable/Disable', 'paypal-for-woocommerce' ),
 				'type'    => 'checkbox',
-				'label'   => __( 'Enable PayPal Payments', 'woocommerce-paypal-commerce-gateway' ),
+				'label'   => __( 'Enable PayPal Payments', 'paypal-for-woocommerce' ),
 				'default' => 'no',
 			),
 			'ppcp'    => array(
@@ -233,7 +233,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 
 		if ( $is_processed ) {
 			$wc_order->add_order_note(
-				__( 'Payment successfully captured.', 'woocommerce-paypal-commerce-gateway' )
+				__( 'Payment successfully captured.', 'paypal-for-woocommerce' )
 			);
 
 			$wc_order->set_status( 'processing' );
@@ -245,7 +245,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		if ( $this->authorized_payments->last_status() === AuthorizedPaymentsProcessor::ALREADY_CAPTURED ) {
 			if ( $wc_order->get_status() === 'on-hold' ) {
 				$wc_order->add_order_note(
-					__( 'Payment successfully captured.', 'woocommerce-paypal-commerce-gateway' )
+					__( 'Payment successfully captured.', 'paypal-for-woocommerce' )
 				);
 				$wc_order->set_status( 'processing' );
 			}

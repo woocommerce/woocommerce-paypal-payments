@@ -279,7 +279,7 @@ class SettingsRenderer {
 		if ( $is_dcc ) :
 			?>
 		<tr>
-			<th><?php esc_html_e( '3D Secure', 'woocommerce-paypal-commerce-gateway' ); ?></th>
+			<th><?php esc_html_e( '3D Secure', 'paypal-for-woocommerce' ); ?></th>
 			<td>
 				<p>
 					<?php
@@ -296,7 +296,7 @@ class SettingsRenderer {
                                   an additional layer of verification using Verified by Visa,
                                   MasterCard SecureCode and American Express SafeKey.
                                   %1$sLearn more about 3D Secure.%2$s',
-								'woocommerce-paypal-commerce-gateway'
+								'paypal-for-woocommerce'
 							),
 							'<a href = "#">',
 							'</a>'

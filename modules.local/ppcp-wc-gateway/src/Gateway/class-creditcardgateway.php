@@ -81,11 +81,11 @@ class CreditCardGateway extends PayPalGateway {
 
 		$this->method_title       = __(
 			'PayPal Credit Card Processing',
-			'woocommerce-paypal-commerce-gateway'
+			'paypal-for-woocommerce'
 		);
 		$this->method_description = __(
 			'Provide your customers with the option to pay with credit card.',
-			'woocommerce-paypal-commerce-gateway'
+			'paypal-for-woocommerce'
 		);
 		$this->title              = $this->config->has( 'dcc_gateway_title' ) ?
 			$this->config->get( 'dcc_gateway_title' ) : $this->method_title;
@@ -112,9 +112,9 @@ class CreditCardGateway extends PayPalGateway {
 	public function init_form_fields() {
 		$this->form_fields = array(
 			'enabled' => array(
-				'title'   => __( 'Enable/Disable', 'woocommerce-paypal-commerce-gateway' ),
+				'title'   => __( 'Enable/Disable', 'paypal-for-woocommerce' ),
 				'type'    => 'checkbox',
-				'label'   => __( 'Enable Credit Card Payments', 'woocommerce-paypal-commerce-gateway' ),
+				'label'   => __( 'Enable Credit Card Payments', 'paypal-for-woocommerce' ),
 				'default' => 'no',
 			),
 			'ppcp'    => array(
@@ -177,37 +177,37 @@ class CreditCardGateway extends PayPalGateway {
 			'visa'       => _x(
 				'Visa',
 				'Name of credit card',
-				'woocommerce-paypal-commerce-gateway'
+				'paypal-for-woocommerce'
 			),
 			'mastercard' => _x(
 				'Mastercard',
 				'Name of credit card',
-				'woocommerce-paypal-commerce-gateway'
+				'paypal-for-woocommerce'
 			),
 			'amex'       => _x(
 				'American Express',
 				'Name of credit card',
-				'woocommerce-paypal-commerce-gateway'
+				'paypal-for-woocommerce'
 			),
 			'discover'   => _x(
 				'Discover',
 				'Name of credit card',
-				'woocommerce-paypal-commerce-gateway'
+				'paypal-for-woocommerce'
 			),
 			'jcb'        => _x(
 				'JCB',
 				'Name of credit card',
-				'woocommerce-paypal-commerce-gateway'
+				'paypal-for-woocommerce'
 			),
 			'elo'        => _x(
 				'Elo',
 				'Name of credit card',
-				'woocommerce-paypal-commerce-gateway'
+				'paypal-for-woocommerce'
 			),
 			'hiper'      => _x(
 				'Hiper',
 				'Name of credit card',
-				'woocommerce-paypal-commerce-gateway'
+				'paypal-for-woocommerce'
 			),
 		);
 	}

@@ -105,7 +105,7 @@ class PaymentTokenEndpoint {
 		$response = $this->request( $url, $args );
 		if ( is_wp_error( $response ) ) {
 			$error = new RuntimeException(
-				__( 'Could not fetch payment token.', 'woocommerce-paypal-commerce-gateway' )
+				__( 'Could not fetch payment token.', 'paypal-for-woocommerce' )
 			);
 			$this->logger->log(
 				'warning',
@@ -143,7 +143,7 @@ class PaymentTokenEndpoint {
 			$error = new RuntimeException(
 				sprintf(
 					// translators: %d is the customer id.
-					__( 'No token stored for customer %d.', 'woocommerce-paypal-commerce-gateway' ),
+					__( 'No token stored for customer %d.', 'paypal-for-woocommerce' ),
 					$id
 				)
 			);
@@ -185,7 +185,7 @@ class PaymentTokenEndpoint {
 
 		if ( is_wp_error( $response ) ) {
 			$error = new RuntimeException(
-				__( 'Could not delete payment token.', 'woocommerce-paypal-commerce-gateway' )
+				__( 'Could not delete payment token.', 'paypal-for-woocommerce' )
 			);
 			$this->logger->log(
 				'warning',

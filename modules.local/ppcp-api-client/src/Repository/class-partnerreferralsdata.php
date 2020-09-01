@@ -80,7 +80,7 @@ class PartnerReferralsData {
 				),
 				'return_url_description' => __(
 					'Return to your shop.',
-					'woocommerce-paypal-commerce-gateway'
+					'paypal-for-woocommerce'
 				),
 				'show_add_credit_card'   => true,
 			),

@@ -55,7 +55,7 @@ class OnboardingRenderer {
 					<?php
 						esc_html_e(
 							'Connect to PayPal',
-							'woocommerce-paypal-commerce-gateway'
+							'paypal-for-woocommerce'
 						);
 					?>
 						</a>
@@ -67,7 +67,7 @@ class OnboardingRenderer {
 		} catch ( RuntimeException $exception ) {
 			esc_html_e(
 				'We could not properly connect to PayPal. Please reload the page to continue',
-				'woocommerce-paypal-commerce-gateway'
+				'paypal-for-woocommerce'
 			);
 		}
 	}

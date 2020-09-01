@@ -94,7 +94,7 @@ class PartnerReferrals {
 
 		if ( is_wp_error( $response ) ) {
 			$error = new RuntimeException(
-				__( 'Could not create referral.', 'woocommerce-paypal-commerce-gateway' )
+				__( 'Could not create referral.', 'paypal-for-woocommerce' )
 			);
 			$this->logger->log(
 				'warning',
@@ -131,7 +131,7 @@ class PartnerReferrals {
 		}
 
 		$error = new RuntimeException(
-			__( 'Action URL not found.', 'woocommerce-paypal-commerce-gateway' )
+			__( 'Action URL not found.', 'paypal-for-woocommerce' )
 		);
 		$this->logger->log(
 			'warning',

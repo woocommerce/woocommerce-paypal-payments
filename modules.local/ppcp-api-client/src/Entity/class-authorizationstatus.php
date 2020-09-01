@@ -55,7 +55,7 @@ class AuthorizationStatus {
 			throw new RuntimeException(
 				sprintf(
 					// translators: %s is the current status.
-					__( '%s is not a valid status', 'woocommerce-paypal-commerce-gateway' ),
+					__( '%s is not a valid status', 'paypal-for-woocommerce' ),
 					$status
 				)
 			);

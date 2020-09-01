@@ -480,7 +480,7 @@ class SmartButton implements SmartButtonInterface {
                 >
             </div>',
 			esc_attr( $id ),
-			esc_html__( 'Save your card', 'woocommerce-paypal-commerce-gateway' )
+			esc_html__( 'Save your card', 'paypal-for-woocommerce' )
 		) : '';
 
 		printf(
@@ -500,12 +500,12 @@ class SmartButton implements SmartButtonInterface {
                         </div>
                     </form><div id="payments-sdk__contingency-lightbox"></div>',
 			esc_attr( $id ),
-			esc_html__( 'Credit Card number', 'woocommerce-paypal-commerce-gateway' ),
-			esc_html__( 'Expiration', 'woocommerce-paypal-commerce-gateway' ),
-			esc_html__( 'CVV', 'woocommerce-paypal-commerce-gateway' ),
+			esc_html__( 'Credit Card number', 'paypal-for-woocommerce' ),
+			esc_html__( 'Expiration', 'paypal-for-woocommerce' ),
+			esc_html__( 'CVV', 'paypal-for-woocommerce' ),
             //phpcs:ignore
             $save_card,
-			esc_html__( 'Place order', 'woocommerce-paypal-commerce-gateway' )
+			esc_html__( 'Place order', 'paypal-for-woocommerce' )
 		);
 	}
 
@@ -603,10 +603,10 @@ class SmartButton implements SmartButtonInterface {
 				'labels'            => array(
 					'credit_card_number' => '',
 					'cvv'                => '',
-					'mm_yyyy'            => __( 'MM/YYYY', 'woocommerce-paypal-commerce-gateway' ),
+					'mm_yyyy'            => __( 'MM/YYYY', 'paypal-for-woocommerce' ),
 					'fields_not_valid'   => __(
 						'Unfortunatly, your credit card details are not valid.',
-						'woocommerce-paypal-commerce-gateway'
+						'paypal-for-woocommerce'
 					),
 				),
 			),
@@ -615,7 +615,7 @@ class SmartButton implements SmartButtonInterface {
 				'error' => array(
 					'generic' => __(
 						'Something went wrong. Please try again or choose another payment source.',
-						'woocommerce-paypal-commerce-gateway'
+						'paypal-for-woocommerce'
 					),
 				),
 			),

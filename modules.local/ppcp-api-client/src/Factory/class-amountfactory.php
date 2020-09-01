@@ -153,11 +153,11 @@ class AmountFactory {
 	 */
 	public function from_paypal_response( \stdClass $data ): Amount {
 		if ( ! isset( $data->value ) || ! is_numeric( $data->value ) ) {
-			throw new RuntimeException( __( 'No value given', 'woocommerce-paypal-commerce-gateway' ) );
+			throw new RuntimeException( __( 'No value given', 'paypal-for-woocommerce' ) );
 		}
 		if ( ! isset( $data->currency_code ) ) {
 			throw new RuntimeException(
-				__( 'No currency given', 'woocommerce-paypal-commerce-gateway' )
+				__( 'No currency given', 'paypal-for-woocommerce' )
 			);
 		}
 
@@ -200,7 +200,7 @@ class AmountFactory {
 				throw new RuntimeException(
 					sprintf(
 					// translators: %s is the current breakdown key.
-						__( 'No value given for breakdown %s', 'woocommerce-paypal-commerce-gateway' ),
+						__( 'No value given for breakdown %s', 'paypal-for-woocommerce' ),
 						$key
 					)
 				);
@@ -209,7 +209,7 @@ class AmountFactory {
 				throw new RuntimeException(
 					sprintf(
 					// translators: %s is the current breakdown key.
-						__( 'No currency given for breakdown %s', 'woocommerce-paypal-commerce-gateway' ),
+						__( 'No currency given for breakdown %s', 'paypal-for-woocommerce' ),
 						$key
 					)
 				);
