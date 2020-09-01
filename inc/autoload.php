@@ -28,6 +28,7 @@ function autoload() {
 			$class_parts = explode( '\\', $class_name );
 			$module_dir  = dirname( __DIR__ ) . '/modules.local/';
 			$modules     = array(
+				'AdminNotices' => $module_dir . 'ppcp-admin-notices/src/',
 				'ApiClient'    => $module_dir . 'ppcp-api-client/src/',
 				'Button'       => $module_dir . 'ppcp-button/src/',
 				'Logging'      => $module_dir . 'woocommerce-logging/src/',
