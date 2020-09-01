@@ -28,13 +28,14 @@ function autoload() {
 			$class_parts = explode( '\\', $class_name );
 			$module_dir  = dirname( __DIR__ ) . '/modules.local/';
 			$modules     = array(
-				'ApiClient'       => $module_dir . 'ppcp-api-client/src/',
+				'ApiClient'    => $module_dir . 'ppcp-api-client/src/',
 				'Button'       => $module_dir . 'ppcp-button/src/',
+				'Logging'      => $module_dir . 'woocommerce-logging/src/',
 				'Onboarding'   => $module_dir . 'ppcp-onboarding/src/',
+				'Session'      => $module_dir . 'ppcp-sesion/src/',
 				'Subscription' => $module_dir . 'ppcp-subscription/src/',
 				'WcGateway'    => $module_dir . 'ppcp-wc-gateway/src/',
 				'Webhooks'     => $module_dir . 'ppcp-webhooks/src/',
-				'Logging'      => $module_dir . 'woocommerce-logging/src/',
 			);
 
 			if ( isset( $class_parts[2] ) && ! isset( $class_parts[3] ) ) {

@@ -24,7 +24,6 @@
         "dhii/module-interface": "0.2.x-dev",
         "psr/container": "^1.0",
         "inpsyde/ppcp-admin-notices": "dev-master",
-        "inpsyde/ppcp-session": "dev-master",
         "oomphinc/composer-installers-extender": "^1.1",
         "container-interop/service-provider": "^0.4.0",
         "dhii/containers": "dev-develop",
