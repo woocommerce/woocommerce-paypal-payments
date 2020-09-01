@@ -49,7 +49,7 @@ class ItemFactoryTest extends TestCase
             ->with($product)
             ->andReturn(1);
 
-        $result = $testee->fromWcCart($cart);
+        $result = $testee->from_wc_cart($cart);
 
         $this->assertCount(1, $result);
         $item = current($result);
@@ -62,7 +62,7 @@ class ItemFactoryTest extends TestCase
         $this->assertEquals(1, $item->quantity());
         $this->assertEquals('name', $item->name());
         $this->assertEquals('sku', $item->sku());
-        $this->assertEquals(1, $item->unitAmount()->value());
+        $this->assertEquals(1, $item->unit_amount()->value());
         $this->assertEquals(2, $item->tax()->value());
     }
 
@@ -103,7 +103,7 @@ class ItemFactoryTest extends TestCase
             ->with($product)
             ->andReturn(1);
 
-        $result = $testee->fromWcCart($cart);
+        $result = $testee->from_wc_cart($cart);
 
         $item = current($result);
         $this->assertEquals(Item::DIGITAL_GOODS, $item->category());
@@ -151,7 +151,7 @@ class ItemFactoryTest extends TestCase
             ->with($item, false)
             ->andReturn(1);
 
-        $result = $testee->fromWcOrder($order);
+        $result = $testee->from_wc_order($order);
         $this->assertCount(1, $result);
         $item = current($result);
         /**
@@ -162,7 +162,7 @@ class ItemFactoryTest extends TestCase
         $this->assertEquals('description', $item->description());
         $this->assertEquals(1, $item->quantity());
         $this->assertEquals(Item::PHYSICAL_GOODS, $item->category());
-        $this->assertEquals(1, $item->unitAmount()->value());
+        $this->assertEquals(1, $item->unit_amount()->value());
         $this->assertEquals(2, $item->tax()->value());
     }
 
@@ -208,7 +208,7 @@ class ItemFactoryTest extends TestCase
             ->with($item, false)
             ->andReturn(1);
 
-        $result = $testee->fromWcOrder($order);
+        $result = $testee->from_wc_order($order);
         $item = current($result);
         /**
          * @var Item $item
@@ -260,7 +260,7 @@ class ItemFactoryTest extends TestCase
             ->with($item, false)
             ->andReturn(1);
 
-        $result = $testee->fromWcOrder($order);
+        $result = $testee->from_wc_order($order);
         $item = current($result);
         /**
          * @var Item $item
@@ -282,7 +282,7 @@ class ItemFactoryTest extends TestCase
                 'currency_code' => 'EUR',
             ],
         ];
-        $item = $testee->fromPayPalResponse($response);
+        $item = $testee->from_paypal_response($response);
         $this->assertInstanceOf(Item::class, $item);
         /**
          * @var Item $item
@@ -292,7 +292,7 @@ class ItemFactoryTest extends TestCase
         $this->assertEquals('description', $item->description());
         $this->assertEquals(1, $item->quantity());
         $this->assertEquals(Item::PHYSICAL_GOODS, $item->category());
-        $this->assertEquals(1, $item->unitAmount()->value());
+        $this->assertEquals(1, $item->unit_amount()->value());
         $this->assertNull($item->tax());
     }
 
@@ -310,7 +310,7 @@ class ItemFactoryTest extends TestCase
             ],
             'category' => Item::DIGITAL_GOODS,
         ];
-        $item = $testee->fromPayPalResponse($response);
+        $item = $testee->from_paypal_response($response);
         /**
          * @var Item $item
          */
@@ -334,7 +334,7 @@ class ItemFactoryTest extends TestCase
                 'currency_code' => 'EUR',
             ],
         ];
-        $item = $testee->fromPayPalResponse($response);
+        $item = $testee->from_paypal_response($response);
         $this->assertEquals(100, $item->tax()->value());
     }
 
@@ -355,7 +355,7 @@ class ItemFactoryTest extends TestCase
             ],
         ];
         $this->expectException(RuntimeException::class);
-        $testee->fromPayPalResponse($response);
+        $testee->from_paypal_response($response);
     }
 
     public function testFromPayPalResponseThrowsWithoutQuantity()
@@ -375,7 +375,7 @@ class ItemFactoryTest extends TestCase
             ],
         ];
         $this->expectException(RuntimeException::class);
-        $testee->fromPayPalResponse($response);
+        $testee->from_paypal_response($response);
     }
 
     public function testFromPayPalResponseThrowsWithStringInQuantity()
@@ -396,7 +396,7 @@ class ItemFactoryTest extends TestCase
             ],
         ];
         $this->expectException(RuntimeException::class);
-        $testee->fromPayPalResponse($response);
+        $testee->from_paypal_response($response);
     }
 
     public function testFromPayPalResponseThrowsWithWrongUnitAmount()
@@ -415,6 +415,6 @@ class ItemFactoryTest extends TestCase
             ],
         ];
         $this->expectException(RuntimeException::class);
-        $testee->fromPayPalResponse($response);
+        $testee->from_paypal_response($response);
     }
 }

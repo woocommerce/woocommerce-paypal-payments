@@ -32,19 +32,19 @@ class PayerFactoryTest extends TestCase
             ->andReturn($expectedFirstName);
         $addressFactory = Mockery::mock(AddressFactory::class);
         $addressFactory
-            ->expects('fromWcCustomer')
+            ->expects('from_wc_customer')
             ->with($customer, 'billing')
             ->andReturn($address);
         $testee = new PayerFactory($addressFactory);
-        $result = $testee->fromCustomer($customer);
+        $result = $testee->from_customer($customer);
 
-        $this->assertEquals($expectedEmail, $result->emailAddress());
+        $this->assertEquals($expectedEmail, $result->email_address());
         $this->assertEquals($expectedLastName, $result->name()->surname());
-        $this->assertEquals($expectedFirstName, $result->name()->givenName());
+        $this->assertEquals($expectedFirstName, $result->name()->given_name());
         $this->assertEquals($address, $result->address());
-        $this->assertEquals($expectedPhone, $result->phone()->phone()->nationalNumber());
-        $this->assertNull($result->birthDate());
-        $this->assertEmpty($result->payerId());
+        $this->assertEquals($expectedPhone, $result->phone()->phone()->national_number());
+        $this->assertNull($result->birthdate());
+        $this->assertEmpty($result->payer_id());
     }
 
     /**
@@ -74,13 +74,13 @@ class PayerFactoryTest extends TestCase
             ->andReturn($expectedFirstName);
         $addressFactory = Mockery::mock(AddressFactory::class);
         $addressFactory
-            ->expects('fromWcCustomer')
+            ->expects('from_wc_customer')
             ->with($customer, 'billing')
             ->andReturn($address);
         $testee = new PayerFactory($addressFactory);
-        $result = $testee->fromCustomer($customer);
+        $result = $testee->from_customer($customer);
 
-        $this->assertEquals($expectedPhone, $result->phone()->phone()->nationalNumber());
+        $this->assertEquals($expectedPhone, $result->phone()->phone()->national_number());
     }
 
     public function testFromWcCustomerNoNumber()
@@ -104,11 +104,11 @@ class PayerFactoryTest extends TestCase
             ->andReturn($expectedFirstName);
         $addressFactory = Mockery::mock(AddressFactory::class);
         $addressFactory
-            ->expects('fromWcCustomer')
+            ->expects('from_wc_customer')
             ->with($customer, 'billing')
             ->andReturn($address);
         $testee = new PayerFactory($addressFactory);
-        $result = $testee->fromCustomer($customer);
+        $result = $testee->from_customer($customer);
 
         $this->assertNull($result->phone());
     }
@@ -139,13 +139,13 @@ class PayerFactoryTest extends TestCase
             ->andReturn($expectedFirstName);
         $addressFactory = Mockery::mock(AddressFactory::class);
         $addressFactory
-            ->expects('fromWcCustomer')
+            ->expects('from_wc_customer')
             ->with($customer, 'billing')
             ->andReturn($address);
         $testee = new PayerFactory($addressFactory);
-        $result = $testee->fromCustomer($customer);
+        $result = $testee->from_customer($customer);
 
-        $this->assertEquals($expectedPhone, $result->phone()->phone()->nationalNumber());
+        $this->assertEquals($expectedPhone, $result->phone()->phone()->national_number());
     }
 
     /**
@@ -155,32 +155,32 @@ class PayerFactoryTest extends TestCase
     {
         $addressFactory = Mockery::mock(AddressFactory::class);
         $addressFactory
-            ->expects('fromPayPalRequest')
+            ->expects('from_paypal_response')
             ->with($data->address)
             ->andReturn(Mockery::mock(Address::class));
         $testee = new PayerFactory($addressFactory);
-        $payer = $testee->fromPayPalResponse($data);
-        $this->assertEquals($data->email_address, $payer->emailAddress());
-        $this->assertEquals($data->payer_id, $payer->payerId());
-        $this->assertEquals($data->name->given_name, $payer->name()->givenName());
+        $payer = $testee->from_paypal_response($data);
+        $this->assertEquals($data->email_address, $payer->email_address());
+        $this->assertEquals($data->payer_id, $payer->payer_id());
+        $this->assertEquals($data->name->given_name, $payer->name()->given_name());
         $this->assertEquals($data->name->surname, $payer->name()->surname());
         if (isset($data->phone)) {
             $this->assertEquals($data->phone->phone_type, $payer->phone()->type());
-            $this->assertEquals($data->phone->phone_number->national_number, $payer->phone()->phone()->nationalNumber());
+            $this->assertEquals($data->phone->phone_number->national_number, $payer->phone()->phone()->national_number());
         } else {
             $this->assertNull($payer->phone());
         }
         $this->assertInstanceOf(Address::class, $payer->address());
         if (isset($data->tax_info)) {
-            $this->assertEquals($data->tax_info->tax_id, $payer->taxInfo()->taxId());
-            $this->assertEquals($data->tax_info->tax_id_type, $payer->taxInfo()->type());
+            $this->assertEquals($data->tax_info->tax_id, $payer->tax_info()->tax_id());
+            $this->assertEquals($data->tax_info->tax_id_type, $payer->tax_info()->type());
         } else {
-            $this->assertNull($payer->taxInfo());
+            $this->assertNull($payer->tax_info());
         }
         if (isset($data->birth_date)) {
-            $this->assertEquals($data->birth_date, $payer->birthDate()->format('Y-m-d'));
+            $this->assertEquals($data->birth_date, $payer->birthdate()->format('Y-m-d'));
         } else {
-            $this->assertNull($payer->birthDate());
+            $this->assertNull($payer->birthdate());
         }
     }
 

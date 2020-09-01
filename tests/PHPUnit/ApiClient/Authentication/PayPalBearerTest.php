@@ -14,8 +14,9 @@ use function Brain\Monkey\Functions\expect;
 class PayPalBearerTest extends TestCase
 {
 
-    public function testDefault()
+	public function testDefault()
     {
+	    expect('wp_json_encode')->andReturnUsing('json_encode');
         $json = '{"access_token":"abc","expires_in":100, "created":' . time() . '}';
         $cache = Mockery::mock(CacheInterface::class);
         $cache
@@ -59,11 +60,12 @@ class PayPalBearerTest extends TestCase
 
         $token = $bearer->bearer();
         $this->assertEquals("abc", $token->token());
-        $this->assertTrue($token->isValid());
+        $this->assertTrue($token->is_valid());
     }
 
     public function testNoTokenCached()
     {
+	    expect('wp_json_encode')->andReturnUsing('json_encode');
         $json = '{"access_token":"abc","expires_in":100, "created":' . time() . '}';
         $cache = Mockery::mock(CacheInterface::class);
         $cache
@@ -107,7 +109,7 @@ class PayPalBearerTest extends TestCase
 
         $token = $bearer->bearer();
         $this->assertEquals("abc", $token->token());
-        $this->assertTrue($token->isValid());
+        $this->assertTrue($token->is_valid());
     }
 
     public function testCachedTokenIsStillValid()
@@ -127,7 +129,7 @@ class PayPalBearerTest extends TestCase
 
         $token = $bearer->bearer();
         $this->assertEquals("abc", $token->token());
-        $this->assertTrue($token->isValid());
+        $this->assertTrue($token->is_valid());
     }
 
     public function testExceptionThrownOnError()

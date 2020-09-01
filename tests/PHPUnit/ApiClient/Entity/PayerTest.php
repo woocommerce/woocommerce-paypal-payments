@@ -14,19 +14,19 @@ class PayerTest extends TestCase
         $birthday = new \DateTime();
         $address = Mockery::mock(Address::class);
         $address
-            ->expects('toArray')
+            ->expects('to_array')
             ->andReturn(['address']);
         $phone = Mockery::mock(PhoneWithType::class);
         $phone
-            ->expects('toArray')
+            ->expects('to_array')
             ->andReturn(['phone']);
         $taxInfo = Mockery::mock(PayerTaxInfo::class);
         $taxInfo
-            ->expects('toArray')
+            ->expects('to_array')
             ->andReturn(['taxInfo']);
         $payerName = Mockery::mock(PayerName::class);
         $payerName
-            ->expects('toArray')
+            ->expects('to_array')
             ->andReturn(['payerName']);
         $email = 'email@example.com';
         $payerId = 'payerId';
@@ -41,14 +41,14 @@ class PayerTest extends TestCase
         );
 
         $this->assertEquals($payerName, $payer->name());
-        $this->assertEquals($email, $payer->emailAddress());
-        $this->assertEquals($payerId, $payer->payerId());
+        $this->assertEquals($email, $payer->email_address());
+        $this->assertEquals($payerId, $payer->payer_id());
         $this->assertEquals($address, $payer->address());
-        $this->assertEquals($birthday, $payer->birthDate());
+        $this->assertEquals($birthday, $payer->birthdate());
         $this->assertEquals($phone, $payer->phone());
-        $this->assertEquals($taxInfo, $payer->taxInfo());
+        $this->assertEquals($taxInfo, $payer->tax_info());
 
-        $array = $payer->toArray();
+        $array = $payer->to_array();
         $this->assertEquals($birthday->format('Y-m-d'), $array['birth_date']);
         $this->assertEquals(['payerName'], $array['name']);
         $this->assertEquals($email, $array['email_address']);
@@ -63,19 +63,19 @@ class PayerTest extends TestCase
         $birthday = new \DateTime();
         $address = Mockery::mock(Address::class);
         $address
-            ->expects('toArray')
+            ->expects('to_array')
             ->andReturn(['address']);
         $phone = Mockery::mock(PhoneWithType::class);
         $phone
-            ->expects('toArray')
+            ->expects('to_array')
             ->andReturn(['phone']);
         $taxInfo = Mockery::mock(PayerTaxInfo::class);
         $taxInfo
-            ->expects('toArray')
+            ->expects('to_array')
             ->andReturn(['taxInfo']);
         $payerName = Mockery::mock(PayerName::class);
         $payerName
-            ->expects('toArray')
+            ->expects('to_array')
             ->andReturn(['payerName']);
         $email = 'email@example.com';
         $payerId = '';
@@ -89,9 +89,9 @@ class PayerTest extends TestCase
             $taxInfo
         );
 
-        $this->assertEquals($payerId, $payer->payerId());
+        $this->assertEquals($payerId, $payer->payer_id());
 
-        $array = $payer->toArray();
+        $array = $payer->to_array();
         $this->assertArrayNotHasKey('payer_id', $array);
     }
 
@@ -100,16 +100,16 @@ class PayerTest extends TestCase
         $birthday = new \DateTime();
         $address = Mockery::mock(Address::class);
         $address
-            ->expects('toArray')
+            ->expects('to_array')
             ->andReturn(['address']);
         $phone = null;
         $taxInfo = Mockery::mock(PayerTaxInfo::class);
         $taxInfo
-            ->expects('toArray')
+            ->expects('to_array')
             ->andReturn(['taxInfo']);
         $payerName = Mockery::mock(PayerName::class);
         $payerName
-            ->expects('toArray')
+            ->expects('to_array')
             ->andReturn(['payerName']);
         $email = 'email@example.com';
         $payerId = 'payerId';
@@ -125,7 +125,7 @@ class PayerTest extends TestCase
 
         $this->assertEquals($phone, $payer->phone());
 
-        $array = $payer->toArray();
+        $array = $payer->to_array();
         $this->assertArrayNotHasKey('phone', $array);
     }
 
@@ -134,16 +134,16 @@ class PayerTest extends TestCase
         $birthday = new \DateTime();
         $address = Mockery::mock(Address::class);
         $address
-            ->expects('toArray')
+            ->expects('to_array')
             ->andReturn(['address']);
         $phone = Mockery::mock(PhoneWithType::class);
         $phone
-            ->expects('toArray')
+            ->expects('to_array')
             ->andReturn(['phone']);
         $taxInfo = null;
         $payerName = Mockery::mock(PayerName::class);
         $payerName
-            ->expects('toArray')
+            ->expects('to_array')
             ->andReturn(['payerName']);
         $email = 'email@example.com';
         $payerId = 'payerId';
@@ -157,9 +157,9 @@ class PayerTest extends TestCase
             $taxInfo
         );
 
-        $this->assertEquals($taxInfo, $payer->taxInfo());
+        $this->assertEquals($taxInfo, $payer->tax_info());
 
-        $array = $payer->toArray();
+        $array = $payer->to_array();
         $this->assertArrayNotHasKey('tax_info', $array);
     }
 
@@ -168,19 +168,19 @@ class PayerTest extends TestCase
         $birthday = null;
         $address = Mockery::mock(Address::class);
         $address
-            ->expects('toArray')
+            ->expects('to_array')
             ->andReturn(['address']);
         $phone = Mockery::mock(PhoneWithType::class);
         $phone
-            ->expects('toArray')
+            ->expects('to_array')
             ->andReturn(['phone']);
         $taxInfo = Mockery::mock(PayerTaxInfo::class);
         $taxInfo
-            ->expects('toArray')
+            ->expects('to_array')
             ->andReturn(['taxInfo']);
         $payerName = Mockery::mock(PayerName::class);
         $payerName
-            ->expects('toArray')
+            ->expects('to_array')
             ->andReturn(['payerName']);
         $email = 'email@example.com';
         $payerId = 'payerId';
@@ -194,9 +194,9 @@ class PayerTest extends TestCase
             $taxInfo
         );
 
-        $this->assertEquals($birthday, $payer->birthDate());
+        $this->assertEquals($birthday, $payer->birthdate());
 
-        $array = $payer->toArray();
+        $array = $payer->to_array();
         $this->assertArrayNotHasKey('birth_date', $array);
     }
 }

@@ -28,6 +28,6 @@ class AuthorizationTest extends TestCase
             'id' => 'foo',
             'status' => 'CAPTURED',
         ];
-        $this->assertEquals($expected, $testee->toArray());
+        $this->assertEquals($expected, $testee->to_array());
     }
 }

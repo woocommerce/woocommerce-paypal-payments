@@ -43,7 +43,7 @@ class AuthorizedPaymentsProcessorTest extends TestCase
             ->andReturn($payments);
         $order = Mockery::mock(Order::class);
         $order
-            ->expects('purchaseUnits')
+            ->expects('purchase_units')
             ->andReturn([$purchaseUnit]);
         $orderEndpoint = Mockery::mock(OrderEndpoint::class);
         $orderEndpoint
@@ -129,7 +129,7 @@ class AuthorizedPaymentsProcessorTest extends TestCase
             ->andReturn($payments);
         $order = Mockery::mock(Order::class);
         $order
-            ->expects('purchaseUnits')
+            ->expects('purchase_units')
             ->andReturn([$purchaseUnit]);
         $orderEndpoint = Mockery::mock(OrderEndpoint::class);
         $orderEndpoint
@@ -181,7 +181,7 @@ class AuthorizedPaymentsProcessorTest extends TestCase
             ->andReturn($payments);
         $order = Mockery::mock(Order::class);
         $order
-            ->expects('purchaseUnits')
+            ->expects('purchase_units')
             ->andReturn([$purchaseUnit]);
         $orderEndpoint = Mockery::mock(OrderEndpoint::class);
         $orderEndpoint

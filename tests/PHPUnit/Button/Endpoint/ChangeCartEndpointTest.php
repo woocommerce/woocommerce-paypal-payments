@@ -97,11 +97,11 @@ class ChangeCartEndpointTest extends TestCase
 
         $defaultLineItem = Mockery::mock(PurchaseUnit::class);
         $defaultLineItem
-            ->shouldReceive('toArray')
+            ->shouldReceive('to_array')
             ->andReturn([1]);
         $variationLineItem = Mockery::mock(PurchaseUnit::class);
         $variationLineItem
-            ->shouldReceive('toArray')
+            ->shouldReceive('to_array')
             ->andReturn([2]);
 
         $testData = [

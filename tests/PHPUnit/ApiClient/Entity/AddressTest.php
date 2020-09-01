@@ -19,12 +19,12 @@ class AddressTest extends TestCase
             'postalCode'
         );
 
-        $this->assertEquals('countryCode', $testee->countryCode());
-        $this->assertEquals('addressLine1', $testee->addressLine1());
-        $this->assertEquals('addressLine2', $testee->addressLine2());
-        $this->assertEquals('adminArea1', $testee->adminArea1());
-        $this->assertEquals('adminArea2', $testee->adminArea2());
-        $this->assertEquals('postalCode', $testee->postalCode());
+        $this->assertEquals('countryCode', $testee->country_code());
+        $this->assertEquals('addressLine1', $testee->address_line_1());
+        $this->assertEquals('addressLine2', $testee->address_line_2());
+        $this->assertEquals('adminArea1', $testee->admin_area_1());
+        $this->assertEquals('adminArea2', $testee->admin_area_2());
+        $this->assertEquals('postalCode', $testee->postal_code());
     }
 
     public function testToArray()
@@ -47,7 +47,7 @@ class AddressTest extends TestCase
             'postal_code' => 'postalCode',
         ];
 
-        $actual = $testee->toArray();
+        $actual = $testee->to_array();
         $this->assertEquals($expected, $actual);
     }
 }

@@ -13,25 +13,25 @@ class AmountBreakdownTest extends TestCase
     {
         $itemTotal = Mockery::mock(Money::class);
         $itemTotal
-            ->expects('toArray')->andReturn(['itemTotal']);
+            ->expects('to_array')->andReturn(['itemTotal']);
         $shipping = Mockery::mock(Money::class);
         $shipping
-            ->expects('toArray')->andReturn(['shipping']);
+            ->expects('to_array')->andReturn(['shipping']);
         $taxTotal = Mockery::mock(Money::class);
         $taxTotal
-            ->expects('toArray')->andReturn(['taxTotal']);
+            ->expects('to_array')->andReturn(['taxTotal']);
         $handling = Mockery::mock(Money::class);
         $handling
-            ->expects('toArray')->andReturn(['handling']);
+            ->expects('to_array')->andReturn(['handling']);
         $insurance = Mockery::mock(Money::class);
         $insurance
-            ->expects('toArray')->andReturn(['insurance']);
+            ->expects('to_array')->andReturn(['insurance']);
         $shippingDiscount = Mockery::mock(Money::class);
         $shippingDiscount
-            ->expects('toArray')->andReturn(['shippingDiscount']);
+            ->expects('to_array')->andReturn(['shippingDiscount']);
         $discount = Mockery::mock(Money::class);
         $discount
-            ->expects('toArray')->andReturn(['discount']);
+            ->expects('to_array')->andReturn(['discount']);
         $testee = new AmountBreakdown(
             $itemTotal,
             $shipping,
@@ -42,12 +42,12 @@ class AmountBreakdownTest extends TestCase
             $discount
         );
 
-        $this->assertEquals($itemTotal, $testee->itemTotal());
+        $this->assertEquals($itemTotal, $testee->item_total());
         $this->assertEquals($shipping, $testee->shipping());
-        $this->assertEquals($taxTotal, $testee->taxTotal());
+        $this->assertEquals($taxTotal, $testee->tax_total());
         $this->assertEquals($handling, $testee->handling());
         $this->assertEquals($insurance, $testee->insurance());
-        $this->assertEquals($shippingDiscount, $testee->shippingDiscount());
+        $this->assertEquals($shippingDiscount, $testee->shipping_discount());
         $this->assertEquals($discount, $testee->discount());
 
         $expected = [
@@ -60,7 +60,7 @@ class AmountBreakdownTest extends TestCase
             'discount' => ['discount'],
         ];
 
-        $this->assertEquals($expected, $testee->toArray());
+        $this->assertEquals($expected, $testee->to_array());
     }
 
     /**
@@ -70,25 +70,25 @@ class AmountBreakdownTest extends TestCase
     {
         $itemTotal = Mockery::mock(Money::class);
         $itemTotal
-            ->shouldReceive('toArray')->zeroOrMoreTimes()->andReturn(['itemTotal']);
+            ->shouldReceive('to_array')->zeroOrMoreTimes()->andReturn(['itemTotal']);
         $shipping = Mockery::mock(Money::class);
         $shipping
-            ->shouldReceive('toArray')->zeroOrMoreTimes()->andReturn(['shipping']);
+            ->shouldReceive('to_array')->zeroOrMoreTimes()->andReturn(['shipping']);
         $taxTotal = Mockery::mock(Money::class);
         $taxTotal
-            ->shouldReceive('toArray')->zeroOrMoreTimes()->andReturn(['taxTotal']);
+            ->shouldReceive('to_array')->zeroOrMoreTimes()->andReturn(['taxTotal']);
         $handling = Mockery::mock(Money::class);
         $handling
-            ->shouldReceive('toArray')->zeroOrMoreTimes()->andReturn(['handling']);
+            ->shouldReceive('to_array')->zeroOrMoreTimes()->andReturn(['handling']);
         $insurance = Mockery::mock(Money::class);
         $insurance
-            ->shouldReceive('toArray')->zeroOrMoreTimes()->andReturn(['insurance']);
+            ->shouldReceive('to_array')->zeroOrMoreTimes()->andReturn(['insurance']);
         $shippingDiscount = Mockery::mock(Money::class);
         $shippingDiscount
-            ->shouldReceive('toArray')->zeroOrMoreTimes()->andReturn(['shippingDiscount']);
+            ->shouldReceive('to_array')->zeroOrMoreTimes()->andReturn(['shippingDiscount']);
         $discount = Mockery::mock(Money::class);
         $discount
-            ->shouldReceive('toArray')->zeroOrMoreTimes()->andReturn(['discount']);
+            ->shouldReceive('to_array')->zeroOrMoreTimes()->andReturn(['discount']);
 
         $items = [
             'item_total' => $itemTotal,
@@ -102,7 +102,7 @@ class AmountBreakdownTest extends TestCase
         $items[$keyMissing] = null;
 
         $testee = new AmountBreakdown(...array_values($items));
-        $array = $testee->toArray();
+        $array = $testee->to_array();
         $result = ! array_key_exists($keyMissing, $array);
         $this->assertTrue($result);
         $this->assertNull($testee->{$methodName}(), "$methodName should return null");
@@ -111,12 +111,12 @@ class AmountBreakdownTest extends TestCase
     public function dataDropArrayKeyIfNoValueGiven() : array
     {
         return [
-            ['item_total', 'itemTotal'],
+            ['item_total', 'item_total'],
             ['shipping', 'shipping'],
-            ['tax_total', 'taxTotal'],
+            ['tax_total', 'tax_total'],
             ['handling', 'handling'],
             ['insurance', 'insurance'],
-            ['shipping_discount', 'shippingDiscount'],
+            ['shipping_discount', 'shipping_discount'],
             ['discount', 'discount'],
         ];
     }

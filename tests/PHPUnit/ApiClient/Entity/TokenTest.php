@@ -5,6 +5,7 @@ namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
 
 use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use Inpsyde\PayPalCommerce\ApiClient\TestCase;
+use function Brain\Monkey\Functions\expect;
 
 class TokenTest extends TestCase
 {
@@ -17,7 +18,7 @@ class TokenTest extends TestCase
     {
         $token = new Token($data);
         $this->assertEquals($data->token, $token->token());
-        $this->assertTrue($token->isValid());
+        $this->assertTrue($token->is_valid());
     }
 
     public function dataForTestDefault() : array
@@ -48,7 +49,7 @@ class TokenTest extends TestCase
         ];
 
         $token = new Token($data);
-        $this->assertFalse($token->isValid());
+        $this->assertFalse($token->is_valid());
     }
 
     public function testFromBearerJson()
@@ -58,9 +59,9 @@ class TokenTest extends TestCase
             'access_token' => 'abc',
         ]);
 
-        $token = Token::fromJson($data);
+        $token = Token::from_json($data);
         $this->assertEquals('abc', $token->token());
-        $this->assertTrue($token->isValid());
+        $this->assertTrue($token->is_valid());
     }
 
     public function testFromIdentityJson()
@@ -70,13 +71,14 @@ class TokenTest extends TestCase
             'client_token' => 'abc',
         ]);
 
-        $token = Token::fromJson($data);
+        $token = Token::from_json($data);
         $this->assertEquals('abc', $token->token());
-        $this->assertTrue($token->isValid());
+        $this->assertTrue($token->is_valid());
     }
 
     public function testAsJson()
     {
+	    expect('wp_json_encode')->andReturnUsing('json_encode');
         $data = (object) [
             'created' => 100,
             'expires_in' => 100,
@@ -84,7 +86,7 @@ class TokenTest extends TestCase
         ];
 
         $token = new Token($data);
-        $json = json_decode($token->asJson());
+        $json = json_decode($token->as_json());
         $this->assertEquals($data->token, $json->token);
         $this->assertEquals($data->created, $json->created);
         $this->assertEquals($data->expires_in, $json->expires_in);

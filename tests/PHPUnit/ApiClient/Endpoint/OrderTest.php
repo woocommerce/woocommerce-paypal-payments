@@ -21,20 +21,20 @@ class OrderTest extends TestCase
         $createTime = new \DateTime();
         $updateTime = new \DateTime();
         $unit = Mockery::mock(PurchaseUnit::class);
-        $unit->expects('toArray')->andReturn([1]);
+        $unit->expects('to_array')->andReturn([1]);
         $status = Mockery::mock(OrderStatus::class);
         $status->expects('name')->andReturn('CREATED');
         $payer = Mockery::mock(Payer::class);
         $payer
-            ->expects('toArray')->andReturn(['payer']);
+            ->expects('to_array')->andReturn(['payer']);
         $intent = 'AUTHORIZE';
         $applicationContext = Mockery::mock(ApplicationContext::class);
         $applicationContext
-            ->expects('toArray')
+            ->expects('to_array')
             ->andReturn(['applicationContext']);
         $paymentSource = Mockery::mock(PaymentSource::class);
         $paymentSource
-            ->expects('toArray')
+            ->expects('to_array')
             ->andReturn(['paymentSource']);
 
         $testee = new Order(
@@ -50,9 +50,9 @@ class OrderTest extends TestCase
         );
 
         $this->assertEquals($id, $testee->id());
-        $this->assertEquals($createTime, $testee->createTime());
-        $this->assertEquals($updateTime, $testee->updateTime());
-        $this->assertEquals([$unit], $testee->purchaseUnits());
+        $this->assertEquals($createTime, $testee->create_time());
+        $this->assertEquals($updateTime, $testee->update_time());
+        $this->assertEquals([$unit], $testee->purchase_units());
         $this->assertEquals($payer, $testee->payer());
         $this->assertEquals($intent, $testee->intent());
         $this->assertEquals($status, $testee->status());
@@ -70,14 +70,14 @@ class OrderTest extends TestCase
             'application_context' => ['applicationContext'],
             'payment_source' => ['paymentSource']
         ];
-        $this->assertEquals($expected, $testee->toArray());
+        $this->assertEquals($expected, $testee->to_array());
     }
 
     public function testOrderNoDatesOrPayer()
     {
         $id = 'id';
         $unit = Mockery::mock(PurchaseUnit::class);
-        $unit->expects('toArray')->andReturn([1]);
+        $unit->expects('to_array')->andReturn([1]);
         $status = Mockery::mock(OrderStatus::class);
         $status->expects('name')->andReturn('CREATED');
 
@@ -87,12 +87,12 @@ class OrderTest extends TestCase
             $status
         );
 
-        $this->assertEquals(null, $testee->createTime());
-        $this->assertEquals(null, $testee->updateTime());
+        $this->assertEquals(null, $testee->create_time());
+        $this->assertEquals(null, $testee->update_time());
         $this->assertEquals(null, $testee->payer());
         $this->assertEquals('CAPTURE', $testee->intent());
 
-        $array = $testee->toArray();
+        $array = $testee->to_array();
         $this->assertFalse(array_key_exists('payer', $array));
         $this->assertFalse(array_key_exists('create_time', $array));
         $this->assertFalse(array_key_exists('update_time', $array));

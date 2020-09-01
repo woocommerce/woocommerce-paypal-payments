@@ -14,10 +14,10 @@ class PaymentsFactoryTest extends TestCase
     public function testFromPayPalResponse()
     {
         $authorization = Mockery::mock(Authorization::class);
-        $authorization->shouldReceive('toArray')->andReturn(['id' => 'foo', 'status' => 'CREATED']);
+        $authorization->shouldReceive('to_array')->andReturn(['id' => 'foo', 'status' => 'CREATED']);
 
         $authorizationsFactory = Mockery::mock(AuthorizationFactory::class);
-        $authorizationsFactory->shouldReceive('fromPayPalRequest')->andReturn($authorization);
+        $authorizationsFactory->shouldReceive('from_paypal_response')->andReturn($authorization);
 
         $response = (object)[
             'authorizations' => [
@@ -26,7 +26,7 @@ class PaymentsFactoryTest extends TestCase
         ];
 
         $testee = new PaymentsFactory($authorizationsFactory);
-        $result = $testee->fromPayPalResponse($response);
+        $result = $testee->from_paypal_response($response);
 
         $this->assertInstanceOf(Payments::class, $result);
 
@@ -35,6 +35,6 @@ class PaymentsFactoryTest extends TestCase
                 ['id' => 'foo', 'status' => 'CREATED'],
             ],
         ];
-        $this->assertEquals($expectedToArray, $result->toArray());
+        $this->assertEquals($expectedToArray, $result->to_array());
     }
 }

@@ -147,7 +147,7 @@ class Order {
 	 *
 	 * @return \DateTime|null
 	 */
-	public function udpate_time(): ?\DateTime {
+	public function update_time(): ?\DateTime {
 		return $this->update_time;
 	}
 
@@ -230,8 +230,8 @@ class Order {
 		if ( $this->payer() ) {
 			$order['payer'] = $this->payer()->to_array();
 		}
-		if ( $this->udpate_time() ) {
-			$order['update_time'] = $this->udpate_time()->format( \DateTimeInterface::ISO8601 );
+		if ( $this->update_time() ) {
+			$order['update_time'] = $this->update_time()->format( \DateTimeInterface::ISO8601 );
 		}
 		if ( $this->application_context() ) {
 			$order['application_context'] = $this->application_context()->to_array();

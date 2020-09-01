@@ -21,7 +21,7 @@ class PaymentsTest extends TestCase
     public function testToArray()
     {
         $authorization = \Mockery::mock(Authorization::class);
-        $authorization->shouldReceive('toArray')->andReturn(
+        $authorization->shouldReceive('to_array')->andReturn(
             [
                 'id' => 'foo',
                 'status' => 'CREATED',
@@ -40,7 +40,7 @@ class PaymentsTest extends TestCase
                     ],
                 ],
             ],
-            $testee->toArray()
+            $testee->to_array()
         );
     }
 }

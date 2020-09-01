@@ -27,14 +27,14 @@ class OrderFactoryTest extends TestCase
         $order->expects('status')->andReturn($status);
         $order->expects('payer')->andReturn($payer);
         $order->expects('intent')->andReturn('intent');
-        $order->expects('createTime')->andReturn($createTime);
-        $order->expects('updateTime')->andReturn($updateTime);
-        $order->expects('applicationContext')->andReturnNull();
-        $order->expects('paymentSource')->andReturnNull();
+        $order->expects('create_time')->andReturn($createTime);
+        $order->expects('update_time')->andReturn($updateTime);
+        $order->expects('application_context')->andReturnNull();
+        $order->expects('payment_source')->andReturnNull();
         $wcOrder = Mockery::mock(\WC_Order::class);
         $purchaseUnitFactory = Mockery::mock(PurchaseUnitFactory::class);
         $purchaseUnit = Mockery::mock(PurchaseUnit::class);
-        $purchaseUnitFactory->expects('fromWcOrder')->with($wcOrder)->andReturn($purchaseUnit);
+        $purchaseUnitFactory->expects('from_wc_order')->with($wcOrder)->andReturn($purchaseUnit);
         $payerFactory = Mockery::mock(PayerFactory::class);
         $applicationRepository = Mockery::mock(ApplicationContextRepository::class);
         $applicationFactory = Mockery::mock(ApplicationContextFactory::class);
@@ -48,8 +48,8 @@ class OrderFactoryTest extends TestCase
             $applicationFactory,
             $paymentSourceFactory
         );
-        $result = $testee->fromWcOrder($wcOrder, $order);
-        $resultPurchaseUnit = current($result->purchaseUnits());
+        $result = $testee->from_wc_order($wcOrder, $order);
+        $resultPurchaseUnit = current($result->purchase_units());
         $this->assertEquals($purchaseUnit, $resultPurchaseUnit);
     }
 
@@ -62,14 +62,14 @@ class OrderFactoryTest extends TestCase
         $purchaseUnitFactory = Mockery::mock(PurchaseUnitFactory::class);
         if (count($orderData->purchase_units)) {
             $purchaseUnitFactory
-                ->expects('fromPayPalResponse')
+                ->expects('from_paypal_response')
                 ->times(count($orderData->purchase_units))
                 ->andReturn(Mockery::mock(PurchaseUnit::class));
         }
         $payerFactory = Mockery::mock(PayerFactory::class);
         if (isset($orderData->payer)) {
             $payerFactory
-                ->expects('fromPayPalResponse')
+                ->expects('from_paypal_response')
                 ->andReturn(Mockery::mock(Payer::class));
         }
         $applicationRepository = Mockery::mock(ApplicationContextRepository::class);
@@ -83,16 +83,16 @@ class OrderFactoryTest extends TestCase
             $applicationFactory,
             $paymentSourceFactory
         );
-        $order = $testee->fromPayPalResponse($orderData);
+        $order = $testee->from_paypal_response($orderData);
 
-        $this->assertCount(count($orderData->purchase_units), $order->purchaseUnits());
+        $this->assertCount(count($orderData->purchase_units), $order->purchase_units());
         $this->assertEquals($orderData->id, $order->id());
         $this->assertEquals($orderData->status, $order->status()->name());
         $this->assertEquals($orderData->intent, $order->intent());
         if (! isset($orderData->create_time)) {
-            $this->assertNull($order->createTime());
+            $this->assertNull($order->create_time());
         } else {
-            $this->assertEquals($orderData->create_time, $order->createTime()->format(\DateTime::ISO8601));
+            $this->assertEquals($orderData->create_time, $order->create_time()->format(\DateTime::ISO8601));
         }
         if (! isset($orderData->payer)) {
             $this->assertNull($order->payer());
@@ -100,9 +100,9 @@ class OrderFactoryTest extends TestCase
             $this->assertInstanceOf(Payer::class, $order->payer());
         }
         if (! isset($orderData->update_time)) {
-            $this->assertNull($order->updateTime());
+            $this->assertNull($order->update_time());
         } else {
-            $this->assertEquals($orderData->update_time, $order->updateTime()->format(\DateTime::ISO8601));
+            $this->assertEquals($orderData->update_time, $order->update_time()->format(\DateTime::ISO8601));
         }
     }
 
@@ -174,7 +174,7 @@ class OrderFactoryTest extends TestCase
         );
 
         $this->expectException(RuntimeException::class);
-        $testee->fromPayPalResponse($orderData);
+        $testee->from_paypal_response($orderData);
     }
 
     public function dataForTestFromPayPalResponseExceptionsTest() : array

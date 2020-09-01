@@ -12,18 +12,18 @@ class AmountTest extends TestCase
     public function test()
     {
         $money = Mockery::mock(Money::class);
-        $money->shouldReceive('currencyCode')->andReturn('currencyCode');
+        $money->shouldReceive('currency_code')->andReturn('currencyCode');
         $money->shouldReceive('value')->andReturn(1.10);
         $testee = new Amount($money);
 
-        $this->assertEquals('currencyCode', $testee->currencyCode());
+        $this->assertEquals('currencyCode', $testee->currency_code());
         $this->assertEquals(1.10, $testee->value());
     }
 
     public function testBreakdownIsNull()
     {
         $money = Mockery::mock(Money::class);
-        $money->shouldReceive('currencyCode')->andReturn('currencyCode');
+        $money->shouldReceive('currency_code')->andReturn('currencyCode');
         $money->shouldReceive('value')->andReturn(1.10);
         $testee = new Amount($money);
 
@@ -33,16 +33,16 @@ class AmountTest extends TestCase
             'currency_code' => 'currencyCode',
             'value' => 1.10,
         ];
-        $this->assertEquals($expectedArray, $testee->toArray());
+        $this->assertEquals($expectedArray, $testee->to_array());
     }
 
     public function testBreakdown()
     {
         $money = Mockery::mock(Money::class);
-        $money->shouldReceive('currencyCode')->andReturn('currencyCode');
+        $money->shouldReceive('currency_code')->andReturn('currencyCode');
         $money->shouldReceive('value')->andReturn(1.10);
         $breakdown = Mockery::mock(AmountBreakdown::class);
-        $breakdown->shouldReceive('toArray')->andReturn([1]);
+        $breakdown->shouldReceive('to_array')->andReturn([1]);
         $testee = new Amount($money, $breakdown);
 
         $this->assertEquals($breakdown, $testee->breakdown());
@@ -52,6 +52,6 @@ class AmountTest extends TestCase
             'value' => 1.10,
             'breakdown' => [1],
         ];
-        $this->assertEquals($expectedArray, $testee->toArray());
+        $this->assertEquals($expectedArray, $testee->to_array());
     }
 }

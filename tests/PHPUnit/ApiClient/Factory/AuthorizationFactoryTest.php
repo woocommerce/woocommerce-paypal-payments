@@ -19,7 +19,7 @@ class AuthorizationFactoryTest extends TestCase
         ];
 
         $testee = new AuthorizationFactory();
-        $result = $testee->fromPayPalRequest($response);
+        $result = $testee->from_paypal_response($response);
 
         $this->assertInstanceOf(Authorization::class, $result);
 
@@ -37,7 +37,7 @@ class AuthorizationFactoryTest extends TestCase
         ];
 
         $testee = new AuthorizationFactory();
-        $testee->fromPayPalRequest($response);
+        $testee->from_paypal_response($response);
     }
 
     public function testReturnExceptionStatusIsMissing()
@@ -48,6 +48,6 @@ class AuthorizationFactoryTest extends TestCase
         ];
 
         $testee = new AuthorizationFactory();
-        $testee->fromPayPalRequest($response);
+        $testee->from_paypal_response($response);
     }
 }

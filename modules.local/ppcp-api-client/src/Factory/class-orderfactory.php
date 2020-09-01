@@ -99,7 +99,7 @@ class OrderFactory {
 			$order->payer(),
 			$order->intent(),
 			$order->create_time(),
-			$order->udpate_time()
+			$order->update_time()
 		);
 	}
 

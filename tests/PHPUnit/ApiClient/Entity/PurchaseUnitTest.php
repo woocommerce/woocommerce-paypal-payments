@@ -16,14 +16,14 @@ class PurchaseUnitTest extends TestCase
             Amount::class,
             [
                 'breakdown' => null,
-                'toArray' => ['amount'],
+                'to_array' => ['amount'],
             ]
         );
 
         $item1 = Mockery::mock(
             Item::class,
             [
-                'toArray' => ['item1'],
+                'to_array' => ['item1'],
                 'category' => Item::DIGITAL_GOODS,
             ]
         );
@@ -31,12 +31,12 @@ class PurchaseUnitTest extends TestCase
         $item2 = Mockery::mock(
             Item::class,
             [
-                'toArray' => ['item2'],
+                'to_array' => ['item2'],
                 'category' => Item::PHYSICAL_GOODS,
             ]
         );
 
-        $shipping = Mockery::mock(Shipping::class, ['toArray' => ['shipping']]);
+        $shipping = Mockery::mock(Shipping::class, ['to_array' => ['shipping']]);
 
         $testee = new PurchaseUnit(
             $amount,
@@ -51,15 +51,15 @@ class PurchaseUnitTest extends TestCase
         );
 
         $this->assertEquals($amount, $testee->amount());
-        $this->assertEquals('referenceId', $testee->referenceId());
+        $this->assertEquals('referenceId', $testee->reference_id());
         $this->assertEquals('description', $testee->description());
         $this->assertNull($testee->payee());
-        $this->assertEquals('customId', $testee->customId());
-        $this->assertEquals('invoiceId', $testee->invoiceId());
-        $this->assertEquals('softDescriptor', $testee->softDescriptor());
+        $this->assertEquals('customId', $testee->custom_id());
+        $this->assertEquals('invoiceId', $testee->invoice_id());
+        $this->assertEquals('softDescriptor', $testee->soft_descriptor());
         $this->assertEquals($shipping, $testee->shipping());
         $this->assertEquals([$item1, $item2], $testee->items());
-        self::assertTrue($testee->containsPhysicalGoodsItems());
+        self::assertTrue($testee->contains_physical_goods());
 
         $expected = [
             'reference_id' => 'referenceId',
@@ -72,7 +72,7 @@ class PurchaseUnitTest extends TestCase
             'soft_descriptor' => 'softDescriptor',
         ];
 
-        $this->assertEquals($expected, $testee->toArray());
+        $this->assertEquals($expected, $testee->to_array());
     }
 
     /**
@@ -88,7 +88,7 @@ class PurchaseUnitTest extends TestCase
             $items
         );
 
-        $array = $testee->toArray();
+        $array = $testee->to_array();
         $resultItems = $doDitch === ! array_key_exists('items', $array);
         $resultBreakdown = $doDitch === ! array_key_exists('breakdown', $array['amount']);
         $this->assertTrue($resultItems, $message);
@@ -111,11 +111,11 @@ class PurchaseUnitTest extends TestCase
                 ],
                 'amount' => 26,
                 'breakdown' => [
-                    'itemTotal' => 20,
-                    'taxTotal' => 6,
+                    'item_total' => 20,
+                    'tax_total' => 6,
                     'shipping' => null,
                     'discount' => null,
-                    'shippingDiscount' => null,
+                    'shipping_discount' => null,
                     'handling' => null,
                     'insurance' => null,
                 ],
@@ -133,11 +133,11 @@ class PurchaseUnitTest extends TestCase
                 ],
                 'amount' => 23,
                 'breakdown' => [
-                    'itemTotal' => 20,
-                    'taxTotal' => 6,
+                    'item_total' => 20,
+                    'tax_total' => 6,
                     'shipping' => null,
                     'discount' => 3,
-                    'shippingDiscount' => null,
+                    'shipping_discount' => null,
                     'handling' => null,
                     'insurance' => null,
                 ],
@@ -155,11 +155,11 @@ class PurchaseUnitTest extends TestCase
                 ],
                 'amount' => 25,
                 'breakdown' => [
-                    'itemTotal' => 20,
-                    'taxTotal' => 6,
+                    'item_total' => 20,
+                    'tax_total' => 6,
                     'shipping' => null,
                     'discount' => 3,
-                    'shippingDiscount' => null,
+                    'shipping_discount' => null,
                     'handling' => null,
                     'insurance' => null,
                 ],
@@ -177,11 +177,11 @@ class PurchaseUnitTest extends TestCase
                 ],
                 'amount' => 23,
                 'breakdown' => [
-                    'itemTotal' => 20,
-                    'taxTotal' => 6,
+                    'item_total' => 20,
+                    'tax_total' => 6,
                     'shipping' => null,
                     'discount' => null,
-                    'shippingDiscount' => 3,
+                    'shipping_discount' => 3,
                     'handling' => null,
                     'insurance' => null,
                 ],
@@ -199,11 +199,11 @@ class PurchaseUnitTest extends TestCase
                 ],
                 'amount' => 26,
                 'breakdown' => [
-                    'itemTotal' => 20,
-                    'taxTotal' => 6,
+                    'item_total' => 20,
+                    'tax_total' => 6,
                     'shipping' => null,
                     'discount' => null,
-                    'shippingDiscount' => null,
+                    'shipping_discount' => null,
                     'handling' => 3,
                     'insurance' => null,
                 ],
@@ -221,11 +221,11 @@ class PurchaseUnitTest extends TestCase
                 ],
                 'amount' => 29,
                 'breakdown' => [
-                    'itemTotal' => 20,
-                    'taxTotal' => 6,
+                    'item_total' => 20,
+                    'tax_total' => 6,
                     'shipping' => null,
                     'discount' => null,
-                    'shippingDiscount' => null,
+                    'shipping_discount' => null,
                     'handling' => 3,
                     'insurance' => null,
                 ],
@@ -243,11 +243,11 @@ class PurchaseUnitTest extends TestCase
                 ],
                 'amount' => 26,
                 'breakdown' => [
-                    'itemTotal' => 20,
-                    'taxTotal' => 6,
+                    'item_total' => 20,
+                    'tax_total' => 6,
                     'shipping' => null,
                     'discount' => null,
-                    'shippingDiscount' => null,
+                    'shipping_discount' => null,
                     'handling' => null,
                     'insurance' => 3,
                 ],
@@ -265,11 +265,11 @@ class PurchaseUnitTest extends TestCase
                 ],
                 'amount' => 29,
                 'breakdown' => [
-                    'itemTotal' => 20,
-                    'taxTotal' => 6,
+                    'item_total' => 20,
+                    'tax_total' => 6,
                     'shipping' => null,
                     'discount' => null,
-                    'shippingDiscount' => null,
+                    'shipping_discount' => null,
                     'handling' => null,
                     'insurance' => 3,
                 ],
@@ -287,11 +287,11 @@ class PurchaseUnitTest extends TestCase
                 ],
                 'amount' => 25,
                 'breakdown' => [
-                    'itemTotal' => 20,
-                    'taxTotal' => 6,
+                    'item_total' => 20,
+                    'tax_total' => 6,
                     'shipping' => null,
                     'discount' => null,
-                    'shippingDiscount' => 3,
+                    'shipping_discount' => 3,
                     'handling' => null,
                     'insurance' => null,
                 ],
@@ -309,11 +309,11 @@ class PurchaseUnitTest extends TestCase
                 ],
                 'amount' => 29,
                 'breakdown' => [
-                    'itemTotal' => 20,
-                    'taxTotal' => 6,
+                    'item_total' => 20,
+                    'tax_total' => 6,
                     'shipping' => 3,
                     'discount' => null,
-                    'shippingDiscount' => null,
+                    'shipping_discount' => null,
                     'handling' => null,
                     'insurance' => null,
                 ],
@@ -331,11 +331,11 @@ class PurchaseUnitTest extends TestCase
                 ],
                 'amount' => 28,
                 'breakdown' => [
-                    'itemTotal' => 20,
-                    'taxTotal' => 6,
+                    'item_total' => 20,
+                    'tax_total' => 6,
                     'shipping' => 3,
                     'discount' => null,
-                    'shippingDiscount' => null,
+                    'shipping_discount' => null,
                     'handling' => null,
                     'insurance' => null,
                 ],
@@ -353,11 +353,11 @@ class PurchaseUnitTest extends TestCase
                 ],
                 'amount' => 26,
                 'breakdown' => [
-                    'itemTotal' => 11,
-                    'taxTotal' => 6,
+                    'item_total' => 11,
+                    'tax_total' => 6,
                     'shipping' => null,
                     'discount' => null,
-                    'shippingDiscount' => null,
+                    'shipping_discount' => null,
                     'handling' => null,
                     'insurance' => null,
                 ],
@@ -375,11 +375,11 @@ class PurchaseUnitTest extends TestCase
                 ],
                 'amount' => 26,
                 'breakdown' => [
-                    'itemTotal' => 20,
-                    'taxTotal' => 5,
+                    'item_total' => 20,
+                    'tax_total' => 5,
                     'shipping' => null,
                     'discount' => null,
-                    'shippingDiscount' => null,
+                    'shipping_discount' => null,
                     'handling' => null,
                     'insurance' => null,
                 ],
@@ -397,11 +397,11 @@ class PurchaseUnitTest extends TestCase
                 ],
                 'amount' => 260,
                 'breakdown' => [
-                    'itemTotal' => 20,
-                    'taxTotal' => 6,
+                    'item_total' => 20,
+                    'tax_total' => 6,
                     'shipping' => null,
                     'discount' => null,
-                    'shippingDiscount' => null,
+                    'shipping_discount' => null,
                     'handling' => null,
                     'insurance' => null,
                 ],
@@ -419,11 +419,11 @@ class PurchaseUnitTest extends TestCase
                 $items[$key] = Mockery::mock(
                     Item::class,
                     [
-                        'unitAmount' => $unitAmount,
+                        'unit_amount' => $unitAmount,
                         'tax' => $tax,
                         'quantity'=> $item['quantity'],
                         'category' => $item['category'],
-                        'toArray' => [],
+                        'to_array' => [],
                     ]
                 );
             }
@@ -443,7 +443,7 @@ class PurchaseUnitTest extends TestCase
                 }
             }
             $amount = Mockery::mock(Amount::class);
-            $amount->shouldReceive('toArray')->andReturn(['value' => [], 'breakdown' => []]);
+            $amount->shouldReceive('to_array')->andReturn(['value' => [], 'breakdown' => []]);
             $amount->shouldReceive('value')->andReturn($test['amount']);
             $amount->shouldReceive('breakdown')->andReturn($breakdown);
 
@@ -462,15 +462,15 @@ class PurchaseUnitTest extends TestCase
     {
         $amount = Mockery::mock(Amount::class);
         $amount->shouldReceive('breakdown')->andReturnNull();
-        $amount->shouldReceive('toArray')->andReturn(['amount']);
+        $amount->shouldReceive('to_array')->andReturn(['amount']);
         $item1 = Mockery::mock(Item::class);
-        $item1->shouldReceive('toArray')->andReturn(['item1']);
+        $item1->shouldReceive('to_array')->andReturn(['item1']);
         $item2 = Mockery::mock(Item::class);
-        $item2->shouldReceive('toArray')->andReturn(['item2']);
+        $item2->shouldReceive('to_array')->andReturn(['item2']);
         $shipping = Mockery::mock(Shipping::class);
-        $shipping->shouldReceive('toArray')->andReturn(['shipping']);
+        $shipping->shouldReceive('to_array')->andReturn(['shipping']);
         $payee = Mockery::mock(Payee::class);
-        $payee->shouldReceive('toArray')->andReturn(['payee']);
+        $payee->shouldReceive('to_array')->andReturn(['payee']);
         $testee = new PurchaseUnit(
             $amount,
             [],
@@ -497,6 +497,6 @@ class PurchaseUnitTest extends TestCase
             'payee' => ['payee'],
         ];
 
-        $this->assertEquals($expected, $testee->toArray());
+        $this->assertEquals($expected, $testee->to_array());
     }
 }

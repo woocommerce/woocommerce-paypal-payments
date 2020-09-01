@@ -53,7 +53,7 @@ class OrderProcessorTest extends TestCase
         $cartRepository = Mockery::mock(CartRepository::class);
         $orderEndpoint = Mockery::mock(OrderEndpoint::class);
         $orderEndpoint
-            ->expects('patchOrderWith')
+            ->expects('patch_order_with')
             ->with($currentOrder, $currentOrder)
             ->andReturn($currentOrder);
         $orderEndpoint
@@ -63,7 +63,7 @@ class OrderProcessorTest extends TestCase
         $paymentsEndpoint = Mockery::mock(PaymentsEndpoint::class);
         $orderFactory = Mockery::mock(OrderFactory::class);
         $orderFactory
-            ->expects('fromWcOrder')
+            ->expects('from_wc_order')
             ->with($wcOrder, $currentOrder)
             ->andReturn($currentOrder);
         $threeDSecure = Mockery::mock(ThreeDSecure::class);
@@ -146,7 +146,7 @@ class OrderProcessorTest extends TestCase
         $cartRepository = Mockery::mock(CartRepository::class);
         $orderEndpoint = Mockery::mock(OrderEndpoint::class);
         $orderEndpoint
-            ->expects('patchOrderWith')
+            ->expects('patch_order_with')
             ->with($currentOrder, $currentOrder)
             ->andReturn($currentOrder);
         $orderEndpoint
@@ -156,7 +156,7 @@ class OrderProcessorTest extends TestCase
         $paymentsEndpoint = Mockery::mock(PaymentsEndpoint::class);
         $orderFactory = Mockery::mock(OrderFactory::class);
         $orderFactory
-            ->expects('fromWcOrder')
+            ->expects('from_wc_order')
             ->with($wcOrder, $currentOrder)
             ->andReturn($currentOrder);
         $threeDSecure = Mockery::mock(ThreeDSecure::class);
@@ -224,7 +224,7 @@ class OrderProcessorTest extends TestCase
             ->shouldReceive('status')
             ->andReturn($orderStatus);
         $currentOrder
-            ->shouldReceive('paymentSource')
+            ->shouldReceive('payment_source')
             ->andReturnNull();
         $sessionHandler = Mockery::mock(SessionHandler::class);
         $sessionHandler

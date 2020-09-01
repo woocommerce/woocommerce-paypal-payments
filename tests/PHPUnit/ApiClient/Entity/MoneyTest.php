@@ -12,12 +12,12 @@ class MoneyTest extends TestCase
     {
         $testee = new Money(1.10, 'currencyCode');
         $this->assertEquals(1.10, $testee->value());
-        $this->assertEquals('currencyCode', $testee->currencyCode());
+        $this->assertEquals('currencyCode', $testee->currency_code());
 
         $expected = [
             'currency_code' => 'currencyCode',
             'value' => 1.10,
         ];
-        $this->assertEquals($expected, $testee->toArray());
+        $this->assertEquals($expected, $testee->to_array());
     }
 }

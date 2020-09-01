@@ -16,7 +16,7 @@ class PayeeRepositoryTest extends TestCase
         $merchantId = 'merchant_id';
         $testee = new PayeeRepository($merchantEmail, $merchantId);
         $payee = $testee->payee();
-        $this->assertEquals($merchantId, $payee->merchantId());
+        $this->assertEquals($merchantId, $payee->merchant_id());
         $this->assertEquals($merchantEmail, $payee->email());
     }
 }

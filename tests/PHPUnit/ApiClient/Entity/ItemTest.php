@@ -24,7 +24,7 @@ class ItemTest extends TestCase
         );
 
         $this->assertEquals('name', $testee->name());
-        $this->assertEquals($unitAmount, $testee->unitAmount());
+        $this->assertEquals($unitAmount, $testee->unit_amount());
         $this->assertEquals(1, $testee->quantity());
         $this->assertEquals('description', $testee->description());
         $this->assertEquals($tax, $testee->tax());
@@ -53,11 +53,11 @@ class ItemTest extends TestCase
     {
         $unitAmount = Mockery::mock(Money::class);
         $unitAmount
-            ->expects('toArray')
+            ->expects('to_array')
             ->andReturn([1]);
         $tax = Mockery::mock(Money::class);
         $tax
-            ->expects('toArray')
+            ->expects('to_array')
             ->andReturn([2]);
         $testee = new Item(
             'name',
@@ -79,6 +79,6 @@ class ItemTest extends TestCase
             'tax' => [2],
         ];
 
-        $this->assertEquals($expected, $testee->toArray());
+        $this->assertEquals($expected, $testee->to_array());
     }
 }

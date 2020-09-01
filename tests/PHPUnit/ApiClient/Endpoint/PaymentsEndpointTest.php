@@ -21,6 +21,7 @@ class PaymentsEndpointTest extends TestCase
 {
     public function testAuthorizationDefault()
     {
+	    expect('wp_json_encode')->andReturnUsing('json_encode');
         $host = 'https://example.com/';
         $authorizationId = 'somekindofid';
 
@@ -34,7 +35,7 @@ class PaymentsEndpointTest extends TestCase
         $authorization = Mockery::mock(Authorization::class);
         $authorizationFactory = Mockery::mock(AuthorizationFactory::class);
         $authorizationFactory
-            ->expects('fromPayPalRequest')
+            ->expects('from_paypal_response')
             ->andReturn($authorization);
 
         $logger = Mockery::mock(LoggerInterface::class);
@@ -73,6 +74,7 @@ class PaymentsEndpointTest extends TestCase
 
     public function testAuthorizationWpError()
     {
+	    expect('wp_json_encode')->andReturnUsing('json_encode');
         $host = 'https://example.com/';
         $authorizationId = 'somekindofid';
 
@@ -105,6 +107,7 @@ class PaymentsEndpointTest extends TestCase
 
     public function testAuthorizationIsNot200()
     {
+	    expect('wp_json_encode')->andReturnUsing('json_encode');
         $host = 'https://example.com/';
         $authorizationId = 'somekindofid';
 
@@ -138,6 +141,7 @@ class PaymentsEndpointTest extends TestCase
 
     public function testCaptureDefault()
     {
+	    expect('wp_json_encode')->andReturnUsing('json_encode');
         $host = 'https://example.com/';
         $authorizationId = 'somekindofid';
 
@@ -151,7 +155,7 @@ class PaymentsEndpointTest extends TestCase
         $authorization = Mockery::mock(Authorization::class);
         $authorizationFactory = Mockery::mock(AuthorizationFactory::class);
         $authorizationFactory
-            ->expects('fromPayPalRequest')
+            ->expects('from_paypal_response')
             ->andReturn($authorization);
 
 
@@ -194,6 +198,7 @@ class PaymentsEndpointTest extends TestCase
 
     public function testCaptureIsWpError()
     {
+	    expect('wp_json_encode')->andReturnUsing('json_encode');
         $host = 'https://example.com/';
         $authorizationId = 'somekindofid';
 
@@ -226,6 +231,7 @@ class PaymentsEndpointTest extends TestCase
 
     public function testAuthorizationIsNot201()
     {
+	    expect('wp_json_encode')->andReturnUsing('json_encode');
         $host = 'https://example.com/';
         $authorizationId = 'somekindofid';
 

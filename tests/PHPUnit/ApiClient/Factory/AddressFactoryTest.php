@@ -33,13 +33,13 @@ class AddressFactoryTest extends TestCase
             ->expects('get_shipping_postcode')
             ->andReturn('shipping_postcode');
 
-        $result = $testee->fromWcCustomer($customer);
-        $this->assertEquals('shipping_country', $result->countryCode());
-        $this->assertEquals('shipping_address_1', $result->addressLine1());
-        $this->assertEquals('shipping_address_2', $result->addressLine2());
-        $this->assertEquals('shipping_state', $result->adminArea1());
-        $this->assertEquals('shipping_city', $result->adminArea2());
-        $this->assertEquals('shipping_postcode', $result->postalCode());
+        $result = $testee->from_wc_customer($customer);
+        $this->assertEquals('shipping_country', $result->country_code());
+        $this->assertEquals('shipping_address_1', $result->address_line_1());
+        $this->assertEquals('shipping_address_2', $result->address_line_2());
+        $this->assertEquals('shipping_state', $result->admin_area_1());
+        $this->assertEquals('shipping_city', $result->admin_area_2());
+        $this->assertEquals('shipping_postcode', $result->postal_code());
     }
 
     public function testFromWcCustomersBillingAddress()
@@ -65,13 +65,13 @@ class AddressFactoryTest extends TestCase
             ->expects('get_billing_postcode')
             ->andReturn('billing_postcode');
 
-        $result = $testee->fromWcCustomer($customer, 'billing');
-        $this->assertEquals('billing_country', $result->countryCode());
-        $this->assertEquals('billing_address_1', $result->addressLine1());
-        $this->assertEquals('billing_address_2', $result->addressLine2());
-        $this->assertEquals('billing_state', $result->adminArea1());
-        $this->assertEquals('billing_city', $result->adminArea2());
-        $this->assertEquals('billing_postcode', $result->postalCode());
+        $result = $testee->from_wc_customer($customer, 'billing');
+        $this->assertEquals('billing_country', $result->country_code());
+        $this->assertEquals('billing_address_1', $result->address_line_1());
+        $this->assertEquals('billing_address_2', $result->address_line_2());
+        $this->assertEquals('billing_state', $result->admin_area_1());
+        $this->assertEquals('billing_city', $result->admin_area_2());
+        $this->assertEquals('billing_postcode', $result->postal_code());
     }
 
     public function testFromWcOrder()
@@ -97,13 +97,13 @@ class AddressFactoryTest extends TestCase
             ->expects('get_shipping_postcode')
             ->andReturn('shipping_postcode');
 
-        $result = $testee->fromWcOrder($order);
-        $this->assertEquals('shipping_country', $result->countryCode());
-        $this->assertEquals('shipping_address_1', $result->addressLine1());
-        $this->assertEquals('shipping_address_2', $result->addressLine2());
-        $this->assertEquals('shipping_state', $result->adminArea1());
-        $this->assertEquals('shipping_city', $result->adminArea2());
-        $this->assertEquals('shipping_postcode', $result->postalCode());
+        $result = $testee->from_wc_order($order);
+        $this->assertEquals('shipping_country', $result->country_code());
+        $this->assertEquals('shipping_address_1', $result->address_line_1());
+        $this->assertEquals('shipping_address_2', $result->address_line_2());
+        $this->assertEquals('shipping_state', $result->admin_area_1());
+        $this->assertEquals('shipping_city', $result->admin_area_2());
+        $this->assertEquals('shipping_postcode', $result->postal_code());
     }
 
     /**
@@ -113,18 +113,18 @@ class AddressFactoryTest extends TestCase
     {
         $testee = new AddressFactory();
 
-        $result = $testee->fromPayPalRequest($data);
+        $result = $testee->from_paypal_response($data);
         $expectedAddressLine1 = (isset($data->address_line_1)) ? $data->address_line_1 : '';
         $expectedAddressLine2 = (isset($data->address_line_2)) ? $data->address_line_2 : '';
         $expectedAdminArea1 = (isset($data->admin_area_1)) ? $data->admin_area_1 : '';
         $expectedAdminArea2 = (isset($data->admin_area_2)) ? $data->admin_area_2 : '';
         $expectedPostalCode = (isset($data->postal_code)) ? $data->postal_code : '';
-        $this->assertEquals($data->country_code, $result->countryCode());
-        $this->assertEquals($expectedAddressLine1, $result->addressLine1());
-        $this->assertEquals($expectedAddressLine2, $result->addressLine2());
-        $this->assertEquals($expectedAdminArea1, $result->adminArea1());
-        $this->assertEquals($expectedAdminArea2, $result->adminArea2());
-        $this->assertEquals($expectedPostalCode, $result->postalCode());
+        $this->assertEquals($data->country_code, $result->country_code());
+        $this->assertEquals($expectedAddressLine1, $result->address_line_1());
+        $this->assertEquals($expectedAddressLine2, $result->address_line_2());
+        $this->assertEquals($expectedAdminArea1, $result->admin_area_1());
+        $this->assertEquals($expectedAdminArea2, $result->admin_area_2());
+        $this->assertEquals($expectedPostalCode, $result->postal_code());
     }
 
     public function testFromPayPalRequestThrowsError()
@@ -139,7 +139,7 @@ class AddressFactoryTest extends TestCase
             'postal_code' => 'shipping_postcode',
         ];
         $this->expectException(RuntimeException::class);
-        $testee->fromPayPalRequest($data);
+        $testee->from_paypal_response($data);
     }
 
     public function dataFromPayPalRequest() : array

@@ -45,17 +45,17 @@ class AmountFactoryTest extends TestCase
             ->andReturn(7);
 
         expect('get_woocommerce_currency')->andReturn($expectedCurrency);
-        $result = $testee->fromWcCart($cart);
-        $this->assertEquals($expectedCurrency, $result->currencyCode());
+        $result = $testee->from_wc_cart($cart);
+        $this->assertEquals($expectedCurrency, $result->currency_code());
         $this->assertEquals((float) 1, $result->value());
         $this->assertEquals((float) 10, $result->breakdown()->discount()->value());
-        $this->assertEquals($expectedCurrency, $result->breakdown()->discount()->currencyCode());
+        $this->assertEquals($expectedCurrency, $result->breakdown()->discount()->currency_code());
         $this->assertEquals((float) 9, $result->breakdown()->shipping()->value());
-        $this->assertEquals($expectedCurrency, $result->breakdown()->shipping()->currencyCode());
-        $this->assertEquals((float) 5, $result->breakdown()->itemTotal()->value());
-        $this->assertEquals($expectedCurrency, $result->breakdown()->itemTotal()->currencyCode());
-        $this->assertEquals((float) 13, $result->breakdown()->taxTotal()->value());
-        $this->assertEquals($expectedCurrency, $result->breakdown()->taxTotal()->currencyCode());
+        $this->assertEquals($expectedCurrency, $result->breakdown()->shipping()->currency_code());
+        $this->assertEquals((float) 5, $result->breakdown()->item_total()->value());
+        $this->assertEquals($expectedCurrency, $result->breakdown()->item_total()->currency_code());
+        $this->assertEquals((float) 13, $result->breakdown()->tax_total()->value());
+        $this->assertEquals($expectedCurrency, $result->breakdown()->tax_total()->currency_code());
     }
 
     public function testFromWcCartNoDiscount()
@@ -90,7 +90,7 @@ class AmountFactoryTest extends TestCase
             ->andReturn(0);
 
         expect('get_woocommerce_currency')->andReturn($expectedCurrency);
-        $result = $testee->fromWcCart($cart);
+        $result = $testee->from_wc_cart($cart);
         $this->assertNull($result->breakdown()->discount());
     }
 
@@ -111,13 +111,13 @@ class AmountFactoryTest extends TestCase
             ->shouldReceive('quantity')
             ->andReturn(2);
         $item
-            ->shouldReceive('unitAmount')
+            ->shouldReceive('unit_amount')
             ->andReturn($unitAmount);
         $item
             ->shouldReceive('tax')
             ->andReturn($tax);
         $itemFactory
-            ->expects('fromWcOrder')
+            ->expects('from_wc_order')
             ->with($order)
             ->andReturn([$item]);
         $testee = new AmountFactory($itemFactory);
@@ -140,17 +140,17 @@ class AmountFactoryTest extends TestCase
             ->with(false)
             ->andReturn(3);
 
-        $result = $testee->fromWcOrder($order);
+        $result = $testee->from_wc_order($order);
         $this->assertEquals((float) 3, $result->breakdown()->discount()->value());
-        $this->assertEquals((float) 6, $result->breakdown()->itemTotal()->value());
+        $this->assertEquals((float) 6, $result->breakdown()->item_total()->value());
         $this->assertEquals((float) 1.5, $result->breakdown()->shipping()->value());
         $this->assertEquals((float) 100, $result->value());
-        $this->assertEquals((float) 2, $result->breakdown()->taxTotal()->value());
-        $this->assertEquals($expectedCurrency, $result->breakdown()->discount()->currencyCode());
-        $this->assertEquals($expectedCurrency, $result->breakdown()->itemTotal()->currencyCode());
-        $this->assertEquals($expectedCurrency, $result->breakdown()->shipping()->currencyCode());
-        $this->assertEquals($expectedCurrency, $result->breakdown()->taxTotal()->currencyCode());
-        $this->assertEquals($expectedCurrency, $result->currencyCode());
+        $this->assertEquals((float) 2, $result->breakdown()->tax_total()->value());
+        $this->assertEquals($expectedCurrency, $result->breakdown()->discount()->currency_code());
+        $this->assertEquals($expectedCurrency, $result->breakdown()->item_total()->currency_code());
+        $this->assertEquals($expectedCurrency, $result->breakdown()->shipping()->currency_code());
+        $this->assertEquals($expectedCurrency, $result->breakdown()->tax_total()->currency_code());
+        $this->assertEquals($expectedCurrency, $result->currency_code());
     }
 
     public function testFromWcOrderDiscountIsNull()
@@ -170,13 +170,13 @@ class AmountFactoryTest extends TestCase
             ->shouldReceive('quantity')
             ->andReturn(2);
         $item
-            ->shouldReceive('unitAmount')
+            ->shouldReceive('unit_amount')
             ->andReturn($unitAmount);
         $item
             ->shouldReceive('tax')
             ->andReturn($tax);
         $itemFactory
-            ->expects('fromWcOrder')
+            ->expects('from_wc_order')
             ->with($order)
             ->andReturn([$item]);
         $testee = new AmountFactory($itemFactory);
@@ -199,7 +199,7 @@ class AmountFactoryTest extends TestCase
             ->with(false)
             ->andReturn(0);
 
-        $result = $testee->fromWcOrder($order);
+        $result = $testee->from_wc_order($order);
         $this->assertNull($result->breakdown()->discount());
     }
 
@@ -214,12 +214,12 @@ class AmountFactoryTest extends TestCase
         if ($expectsException) {
             $this->expectException(RuntimeException::class);
         }
-        $result = $testee->fromPayPalResponse($response);
+        $result = $testee->from_paypal_response($response);
         if ($expectsException) {
             return;
         }
         $this->assertEquals($response->value, $result->value());
-        $this->assertEquals($response->currency_code, $result->currencyCode());
+        $this->assertEquals($response->currency_code, $result->currency_code());
         $breakdown = $result->breakdown();
         if (! isset($response->breakdown)) {
             $this->assertNull($breakdown);
@@ -227,43 +227,43 @@ class AmountFactoryTest extends TestCase
         }
         if ($breakdown->shipping()) {
             $this->assertEquals($response->breakdown->shipping->value, $breakdown->shipping()->value());
-            $this->assertEquals($response->breakdown->shipping->currency_code, $breakdown->shipping()->currencyCode());
+            $this->assertEquals($response->breakdown->shipping->currency_code, $breakdown->shipping()->currency_code());
         } else {
             $this->assertTrue(! isset($response->breakdown->shipping));
         }
-        if ($breakdown->itemTotal()) {
-            $this->assertEquals($response->breakdown->item_total->value, $breakdown->itemTotal()->value());
-            $this->assertEquals($response->breakdown->item_total->currency_code, $breakdown->itemTotal()->currencyCode());
+        if ($breakdown->item_total()) {
+            $this->assertEquals($response->breakdown->item_total->value, $breakdown->item_total()->value());
+            $this->assertEquals($response->breakdown->item_total->currency_code, $breakdown->item_total()->currency_code());
         } else {
             $this->assertTrue(! isset($response->breakdown->item_total));
         }
-        if ($breakdown->taxTotal()) {
-            $this->assertEquals($response->breakdown->tax_total->value, $breakdown->taxTotal()->value());
-            $this->assertEquals($response->breakdown->tax_total->currency_code, $breakdown->taxTotal()->currencyCode());
+        if ($breakdown->tax_total()) {
+            $this->assertEquals($response->breakdown->tax_total->value, $breakdown->tax_total()->value());
+            $this->assertEquals($response->breakdown->tax_total->currency_code, $breakdown->tax_total()->currency_code());
         } else {
             $this->assertTrue(! isset($response->breakdown->tax_total));
         }
         if ($breakdown->handling()) {
             $this->assertEquals($response->breakdown->handling->value, $breakdown->handling()->value());
-            $this->assertEquals($response->breakdown->handling->currency_code, $breakdown->handling()->currencyCode());
+            $this->assertEquals($response->breakdown->handling->currency_code, $breakdown->handling()->currency_code());
         } else {
             $this->assertTrue(! isset($response->breakdown->handling));
         }
         if ($breakdown->insurance()) {
             $this->assertEquals($response->breakdown->insurance->value, $breakdown->insurance()->value());
-            $this->assertEquals($response->breakdown->insurance->currency_code, $breakdown->insurance()->currencyCode());
+            $this->assertEquals($response->breakdown->insurance->currency_code, $breakdown->insurance()->currency_code());
         } else {
             $this->assertTrue(! isset($response->breakdown->insurance));
         }
-        if ($breakdown->shippingDiscount()) {
-            $this->assertEquals($response->breakdown->shipping_discount->value, $breakdown->shippingDiscount()->value());
-            $this->assertEquals($response->breakdown->shipping_discount->currency_code, $breakdown->shippingDiscount()->currencyCode());
+        if ($breakdown->shipping_discount()) {
+            $this->assertEquals($response->breakdown->shipping_discount->value, $breakdown->shipping_discount()->value());
+            $this->assertEquals($response->breakdown->shipping_discount->currency_code, $breakdown->shipping_discount()->currency_code());
         } else {
             $this->assertTrue(! isset($response->breakdown->shipping_discount));
         }
         if ($breakdown->discount()) {
             $this->assertEquals($response->breakdown->discount->value, $breakdown->discount()->value());
-            $this->assertEquals($response->breakdown->discount->currency_code, $breakdown->discount()->currencyCode());
+            $this->assertEquals($response->breakdown->discount->currency_code, $breakdown->discount()->currency_code());
         } else {
             $this->assertTrue(! isset($response->breakdown->discount));
         }

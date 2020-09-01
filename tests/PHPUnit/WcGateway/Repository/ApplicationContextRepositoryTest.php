@@ -48,7 +48,7 @@ class ApplicationContextRepositoryTest extends TestCase
         /* @var ApplicationContextRepository $testee */
         $testee = $this->buildTestee()[1];
 
-        $context = $testee->currentContext($shippingPreference);
+        $context = $testee->current_context($shippingPreference);
 
         self::assertInstanceOf(
             ApplicationContext::class,
@@ -79,9 +79,9 @@ class ApplicationContextRepositoryTest extends TestCase
                 'shippingPreference' => ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING,
                 'expected' => [
                     'locale' => 'de-DE',
-                    'brandName' => 'Acme corp.',
-                    'landingPage' => ApplicationContext::LANDING_PAGE_BILLING,
-                    'shippingPreference' => ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING,
+                    'brand_name' => 'Acme corp.',
+                    'landing_page' => ApplicationContext::LANDING_PAGE_BILLING,
+                    'shipping_preference' => ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING,
                 ],
             ],
         ];
