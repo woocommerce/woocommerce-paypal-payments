@@ -22,17 +22,17 @@ class ThreeDSecureTest extends TestCase
     public function testDefault(int $expected, string $liabilityShift, string $authenticationResult, string $enrollment)
     {
         $result = \Mockery::mock(CardAuthenticationResult::class);
-        $result->shouldReceive('liabilityShift')->andReturn($liabilityShift);
-        $result->shouldReceive('authenticationResult')->andReturn($authenticationResult);
-        $result->shouldReceive('enrollmentStatus')->andReturn($enrollment);
+        $result->shouldReceive('liability_shift')->andReturn($liabilityShift);
+        $result->shouldReceive('authentication_result')->andReturn($authenticationResult);
+        $result->shouldReceive('enrollment_status')->andReturn($enrollment);
         $card = \Mockery::mock(PaymentSourceCard::class);
-        $card->shouldReceive('authenticationResult')->andReturn($result);
+        $card->shouldReceive('authentication_result')->andReturn($result);
         $source = \Mockery::mock(PaymentSource::class);
         $source->shouldReceive('card')->andReturn($card);
         $order = \Mockery::mock(Order::class);
-        $order->shouldReceive('paymentSource')->andReturn($source);
+        $order->shouldReceive('payment_source')->andReturn($source);
         $testee = new ThreeDSecure();
-        $result = $testee->proceedWithOrder($order);
+        $result = $testee->proceed_with_order($order);
         $this->assertEquals($expected, $result);
     }
 

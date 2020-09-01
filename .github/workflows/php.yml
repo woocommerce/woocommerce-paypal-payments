@@ -28,5 +28,5 @@ jobs:
 
     - name: Run test suite
       run: ./vendor/bin/phpunit
-    - name: Run cs
-      run: ./vendor/bin/phpcs src modules.local/ppcp-wc-gateway/src/ modules.local/ppcp-webhooks/src/ modules.local/ppcp-button/src/ modules.local/ppcp-onboarding/src/ modules.local/ppcp-subscription/src  --standard=Inpsyde
+    - name: Run Woocommerce coding standards
+      run: ./vendor/bin/phpcs src inc modules --extensions=php

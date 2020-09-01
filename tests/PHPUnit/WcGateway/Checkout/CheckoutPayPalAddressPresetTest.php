@@ -40,7 +40,7 @@ class CheckoutPayPalAddressPresetTest extends TestCase
 
         self::assertSame(
             $expected,
-            $testee->filterCheckoutFiled(null, $fieldId)
+            $testee->filter_checkout_field(null, $fieldId)
         );
     }
 
@@ -53,7 +53,7 @@ class CheckoutPayPalAddressPresetTest extends TestCase
             Order::class,
             [
                 'id' => 'abc123def',
-                'purchaseUnits' => [
+                'purchase_units' => [
                     \Mockery::mock(
                         PurchaseUnit::class,
                         [
@@ -63,12 +63,12 @@ class CheckoutPayPalAddressPresetTest extends TestCase
                                     'address' => \Mockery::mock(
                                         Address::class,
                                         [
-                                            'addressLine1' => 'Unter den Linden 1',
-                                            'addressLine2' => '2. Stock Hinterhaus',
-                                            'postalCode' => '10117',
-                                            'countryCode' => 'DE',
-                                            'adminArea1' => 'BE',
-                                            'adminArea2' => 'Berlin',
+                                            'address_line_1' => 'Unter den Linden 1',
+                                            'address_line_2' => '2. Stock Hinterhaus',
+                                            'postal_code' => '10117',
+                                            'country_code' => 'DE',
+                                            'admin_area_1' => 'BE',
+                                            'admin_area_2' => 'Berlin',
                                         ]
                                     ),
                                 ]
@@ -82,18 +82,18 @@ class CheckoutPayPalAddressPresetTest extends TestCase
                         'name' => \Mockery::mock(
                             PayerName::class,
                             [
-                                'givenName' => 'John',
+                                'given_name' => 'John',
                                 'surname' => 'Doe',
                             ]
                         ),
-                        'emailAddress' => 'mail@domain.tld',
+                        'email_address' => 'mail@domain.tld',
                         'phone' => \Mockery::mock(
                             PhoneWithType::class,
                             [
                                 'phone' => \Mockery::mock(
                                     Phone::class,
                                     [
-                                        'nationalNumber' => '+4912345678',
+                                        'national_number' => '+4912345678',
                                     ]
                                 ),
                             ]
@@ -173,7 +173,7 @@ class CheckoutPayPalAddressPresetTest extends TestCase
                 'id' => 'whatever',
             ]
         );
-        $order->shouldReceive('purchaseUnits')
+        $order->shouldReceive('purchase_units')
             ->once()
             ->andReturn(
                 [
@@ -188,7 +188,7 @@ class CheckoutPayPalAddressPresetTest extends TestCase
 
         $testee = $this->buildTestee()[1];
         $method = (new \ReflectionClass($testee))
-            ->getMethod('readShippingFromOrder');
+            ->getMethod('read_shipping_from_order');
         $method->setAccessible(true);
 
         self::assertSame(

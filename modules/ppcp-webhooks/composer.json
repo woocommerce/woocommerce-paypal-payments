@@ -1,0 +1,17 @@
+{
+  "name": "inpsyde/ppcp-webhooks",
+  "type": "inpsyde-module",
+  "require": {
+    "dhii/module-interface": "0.2.x-dev"
+  },
+  "scripts": {
+    "unit": "./vendor/bin/phpunit --coverage-html build/coverage-report"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^9.1",
+    "brain/monkey": "^2.4",
+    "inpsyde/php-coding-standards": "^1"
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true
+}

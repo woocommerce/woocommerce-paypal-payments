@@ -55,7 +55,7 @@ class ChangeCartEndpointTest extends TestCase
             ->expects('reset_shipping');
         $requestData = Mockery::mock(RequestData::class);
         $requestData
-            ->expects('readRequest')
+            ->expects('read_request')
             ->with(ChangeCartEndpoint::nonce())
             ->andReturn($data);
         $cartRepository = Mockery::mock(CartRepository::class);
@@ -73,7 +73,7 @@ class ChangeCartEndpointTest extends TestCase
 
         expect('wp_send_json_success')
             ->with($responseExpectation);
-        $this->assertTrue($testee->handleRequest());
+        $this->assertTrue($testee->handle_request());
     }
 
     public function dataForTestProducts() : array {
@@ -97,11 +97,11 @@ class ChangeCartEndpointTest extends TestCase
 
         $defaultLineItem = Mockery::mock(PurchaseUnit::class);
         $defaultLineItem
-            ->shouldReceive('toArray')
+            ->shouldReceive('to_array')
             ->andReturn([1]);
         $variationLineItem = Mockery::mock(PurchaseUnit::class);
         $variationLineItem
-            ->shouldReceive('toArray')
+            ->shouldReceive('to_array')
             ->andReturn([2]);
 
         $testData = [

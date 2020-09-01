@@ -1,5 +1,5 @@
 {
-    "name": "inpsyde/woocommerce-paypal-commerce-gateway",
+    "name": "inpsyde/paypal-for-woocommerce",
     "type": "wordpress-plugin",
     "description": "PayPal Commerce Platform for WooCommerce",
     "license": "GPL-2.0",
@@ -23,9 +23,6 @@
     "require": {
         "dhii/module-interface": "0.2.x-dev",
         "psr/container": "^1.0",
-        "inpsyde/ppcp-admin-notices": "dev-master",
-        "inpsyde/ppcp-api-client": "dev-master",
-        "inpsyde/ppcp-session": "dev-master",
         "oomphinc/composer-installers-extender": "^1.1",
         "container-interop/service-provider": "^0.4.0",
         "dhii/containers": "dev-develop",
@@ -34,20 +31,9 @@
         "ext-json": "*"
     },
     "require-dev": {
-        "inpsyde/php-coding-standards": "^1",
+        "woocommerce/woocommerce-sniffs": "^0.1.0",
         "phpunit/phpunit": "^9.1",
         "brain/monkey": "^2.4"
-    },
-    "autoload": {
-        "psr-4": {
-            "Inpsyde\\PayPalCommerce\\": "src/",
-            "Inpsyde\\PayPalCommerce\\Button\\": "modules.local/ppcp-button/src/",
-            "Inpsyde\\PayPalCommerce\\WcGateway\\": "modules.local/ppcp-wc-gateway/src/",
-            "Inpsyde\\PayPalCommerce\\Onboarding\\": "modules.local/ppcp-onboarding/src/",
-            "Inpsyde\\Woocommerce\\Logging\\": "modules.local/woocommerce-logging/src/",
-            "Inpsyde\\PayPalCommerce\\Webhooks\\": "modules.local/ppcp-webhooks/src/",
-            "Inpsyde\\PayPalCommerce\\Subscription\\": "modules.local/ppcp-subscription/src/"
-        }
     },
     "autoload-dev": {
         "psr-4": {

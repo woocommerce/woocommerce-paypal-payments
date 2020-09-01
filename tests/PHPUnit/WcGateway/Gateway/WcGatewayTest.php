@@ -103,7 +103,7 @@ class WcGatewayTest extends TestCase
             ->expects('process')
             ->andReturnFalse();
         $orderProcessor
-            ->expects('lastError')
+            ->expects('last_error')
             ->andReturn($lastError);
         $authorizedPaymentsProcessor = Mockery::mock(AuthorizedPaymentsProcessor::class);
         $authorizedOrderActionNotice = Mockery::mock(AuthorizeOrderActionNotice::class);
@@ -124,7 +124,7 @@ class WcGatewayTest extends TestCase
             ->with($orderId)
             ->andReturn($wcOrder);
         expect('wc_add_notice')
-            ->with($lastError);
+            ->with($lastError, 'error');
 
         global $woocommerce;
         $woocommerce = Mockery::mock(\WooCommerce::class);
@@ -154,11 +154,11 @@ class WcGatewayTest extends TestCase
             ->with($wcOrder)
             ->andReturnTrue();
         $authorizedPaymentsProcessor
-            ->expects('lastStatus')
+            ->expects('last_status')
             ->andReturn(AuthorizedPaymentsProcessor::SUCCESSFUL);
         $authorizedOrderActionNotice = Mockery::mock(AuthorizeOrderActionNotice::class);
         $authorizedOrderActionNotice
-            ->expects('displayMessage')
+            ->expects('display_message')
             ->with(AuthorizeOrderActionNotice::SUCCESS);
 
         $settings = Mockery::mock(Settings::class);
@@ -174,7 +174,7 @@ class WcGatewayTest extends TestCase
             $sessionHandler
         );
 
-        $this->assertTrue($testee->captureAuthorizedPayment($wcOrder));
+        $this->assertTrue($testee->capture_authorized_payment($wcOrder));
     }
 
     public function testCaptureAuthorizedPaymentHasAlreadyBeenCaptured() {
@@ -201,11 +201,11 @@ class WcGatewayTest extends TestCase
             ->with($wcOrder)
             ->andReturnFalse();
         $authorizedPaymentsProcessor
-            ->shouldReceive('lastStatus')
+            ->shouldReceive('last_status')
             ->andReturn(AuthorizedPaymentsProcessor::ALREADY_CAPTURED);
         $authorizedOrderActionNotice = Mockery::mock(AuthorizeOrderActionNotice::class);
         $authorizedOrderActionNotice
-            ->expects('displayMessage')
+            ->expects('display_message')
             ->with(AuthorizeOrderActionNotice::ALREADY_CAPTURED);
         $settings = Mockery::mock(Settings::class);
         $settings
@@ -220,7 +220,7 @@ class WcGatewayTest extends TestCase
             $sessionHandler
         );
 
-        $this->assertTrue($testee->captureAuthorizedPayment($wcOrder));
+        $this->assertTrue($testee->capture_authorized_payment($wcOrder));
     }
 
     /**
@@ -240,11 +240,11 @@ class WcGatewayTest extends TestCase
             ->with($wcOrder)
             ->andReturnFalse();
         $authorizedPaymentsProcessor
-            ->shouldReceive('lastStatus')
+            ->shouldReceive('last_status')
             ->andReturn($lastStatus);
         $authorizedOrderActionNotice = Mockery::mock(AuthorizeOrderActionNotice::class);
         $authorizedOrderActionNotice
-            ->expects('displayMessage')
+            ->expects('display_message')
             ->with($expectedMessage);
         $settings = Mockery::mock(Settings::class);
         $settings
@@ -259,7 +259,7 @@ class WcGatewayTest extends TestCase
             $sessionHandler
         );
 
-        $this->assertFalse($testee->captureAuthorizedPayment($wcOrder));
+        $this->assertFalse($testee->capture_authorized_payment($wcOrder));
     }
 
     public function dataForTestCaptureAuthorizedPaymentNoActionableFailures() : array
