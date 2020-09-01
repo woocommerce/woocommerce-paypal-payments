@@ -131,6 +131,9 @@ class OrderProcessor {
 	 */
 	public function process( \WC_Order $wc_order, \WooCommerce $woocommerce ): bool {
 		$order = $this->session_handler->order();
+		if (! $order) {
+			return false;
+		}
 		$wc_order->update_meta_data( PayPalGateway::ORDER_ID_META_KEY, $order->id() );
 		$wc_order->update_meta_data( PayPalGateway::INTENT_META_KEY, $order->intent() );
 
