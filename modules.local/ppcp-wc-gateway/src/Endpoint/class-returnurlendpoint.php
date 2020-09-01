@@ -65,7 +65,7 @@ class ReturnUrlEndpoint {
 			exit();
 		}
 
-		$wc_order_id = $this->sanitize_custom_id( $order->purchaseUnits()[0]->customId() );
+		$wc_order_id = $this->sanitize_custom_id( $order->purchase_units()[0]->custom_id() );
 		if ( ! $wc_order_id ) {
 			exit();
 		}

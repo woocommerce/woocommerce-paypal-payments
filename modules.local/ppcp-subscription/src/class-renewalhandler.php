@@ -154,9 +154,9 @@ class RenewalHandler {
 		if ( ! $token ) {
 			return;
 		}
-		$purchase_unit = $this->purchase_unit_factory->fromWcOrder( $wc_order );
-		$payer         = $this->payer_factory->fromCustomer( $customer );
-		$order         = $this->order_endpoint->createForPurchaseUnits(
+		$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
+		$payer         = $this->payer_factory->from_customer( $customer );
+		$order         = $this->order_endpoint->create(
 			array( $purchase_unit ),
 			$payer,
 			$token,

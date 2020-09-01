@@ -281,7 +281,7 @@ class ChangeCartEndpoint implements EndpointInterface {
 	private function generate_purchase_units(): array {
 		return array_map(
 			static function ( PurchaseUnit $line_item ): array {
-				return $line_item->toArray();
+				return $line_item->to_array();
 			},
 			$this->repository->all()
 		);

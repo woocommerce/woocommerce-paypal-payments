@@ -65,7 +65,7 @@ class PaymentTokenRepository {
 				return $this->fetch_for_user_id( $id );
 			}
 
-			$token = $this->factory->fromArray( $token );
+			$token = $this->factory->from_array( $token );
 			return $token;
 		} catch ( RuntimeException $error ) {
 			return null;
@@ -82,7 +82,7 @@ class PaymentTokenRepository {
 	 */
 	public function delete_token( int $user_id, PaymentToken $token ): bool {
 		delete_user_meta( $user_id, self::USER_META );
-		return $this->endpoint->deleteToken( $token );
+		return $this->endpoint->delete_token( $token );
 	}
 
 	/**
@@ -93,9 +93,9 @@ class PaymentTokenRepository {
 	 */
 	private function fetch_for_user_id( int $id ): PaymentToken {
 
-		$tokens      = $this->endpoint->forUser( $id );
+		$tokens      = $this->endpoint->for_user( $id );
 		$token       = current( $tokens );
-		$token_array = $token->toArray();
+		$token_array = $token->to_array();
 		update_user_meta( $id, self::USER_META, $token_array );
 		return $token;
 	}

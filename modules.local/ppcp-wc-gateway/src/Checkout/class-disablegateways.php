@@ -104,7 +104,7 @@ class DisableGateways {
 		if ( ! $order ) {
 			return false;
 		}
-		if ( ! $order->paymentSource() || ! $order->paymentSource()->card() ) {
+		if ( ! $order->payment_source() || ! $order->payment_source()->card() ) {
 			return false;
 		}
 		return true;

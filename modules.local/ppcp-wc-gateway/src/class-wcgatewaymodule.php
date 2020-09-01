@@ -163,7 +163,7 @@ class WcGatewayModule implements ModuleInterface {
 				 *
 				 * @var DccApplies $dcc_applies
 				 */
-				if ( $dcc_applies->forCountryCurrency() ) {
+				if ( $dcc_applies->for_country_currency() ) {
 					$methods[] = $container->get( 'wcgateway.credit-card-gateway' );
 				}
 				return (array) $methods;

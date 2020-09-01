@@ -109,7 +109,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 				);
 			}
 
-			if ( $order->paymentSource() && $order->paymentSource()->card() ) {
+			if ( $order->payment_source() && $order->payment_source()->card() ) {
 				$proceed = $this->threed_secure->proceed_with_order( $order );
 				if ( ThreeDSecure::RETRY === $proceed ) {
 					throw new RuntimeException(

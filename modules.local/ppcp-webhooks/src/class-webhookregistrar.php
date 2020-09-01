@@ -67,7 +67,7 @@ class WebhookRegistrar {
 	 * @return bool
 	 */
 	public function register(): bool {
-		$webhook = $this->webhook_factory->forUrlAndEvents(
+		$webhook = $this->webhook_factory->for_url_and_events(
 			$this->rest_endpoint->url(),
 			$this->rest_endpoint->handled_event_types()
 		);
@@ -79,7 +79,7 @@ class WebhookRegistrar {
 			}
 			update_option(
 				self::KEY,
-				$created->toArray()
+				$created->to_array()
 			);
 			return true;
 		} catch ( RuntimeException $error ) {
@@ -102,7 +102,7 @@ class WebhookRegistrar {
 			return false;
 		}
 		try {
-			$webhook = $this->webhook_factory->fromArray( $data );
+			$webhook = $this->webhook_factory->from_array( $data );
 			$success = $this->endpoint->delete( $webhook );
 		} catch ( RuntimeException $error ) {
 			return false;

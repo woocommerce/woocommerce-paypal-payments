@@ -132,7 +132,7 @@ class AuthorizedPaymentsProcessor {
 	 */
 	private function all_authorizations( Order $order ): array {
 		$authorizations = array();
-		foreach ( $order->purchaseUnits() as $purchase_unit ) {
+		foreach ( $order->purchase_units() as $purchase_unit ) {
 			foreach ( $purchase_unit->payments()->authorizations() as $authorization ) {
 				$authorizations[] = $authorization;
 			}

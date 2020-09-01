@@ -230,7 +230,7 @@ class SettingsRenderer {
 			}
 			if (
 				in_array( 'dcc', $config['requirements'], true )
-				&& ! $this->dcc_applies->forCountryCurrency()
+				&& ! $this->dcc_applies->for_country_currency()
 			) {
 				continue;
 			}

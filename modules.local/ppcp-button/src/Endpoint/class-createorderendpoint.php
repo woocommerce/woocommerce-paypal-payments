@@ -141,19 +141,19 @@ class CreateOrderEndpoint implements EndpointInterface {
 					$number = substr( $number, 0, 14 );
 					$data['payer']['phone']['phone_number']['national_number'] = $number;
 				}
-				$payer = $this->payer_factory->fromPayPalResponse( json_decode( wp_json_encode( $data['payer'] ) ) );
+				$payer = $this->payer_factory->from_paypal_response( json_decode( wp_json_encode( $data['payer'] ) ) );
 			}
 			$bn_code = isset( $data['bn_code'] ) ? (string) $data['bn_code'] : '';
 			if ( $bn_code ) {
 				$this->session_handler->replaceBnCode( $bn_code );
-				$this->api_endpoint->withBnCode( $bn_code );
+				$this->api_endpoint->with_bn_code( $bn_code );
 			}
 			$payee_preferred = $this->settings->has( 'payee_preferred' )
 			&& $this->settings->get( 'payee_preferred' ) ?
 				PaymentMethod::PAYEE_PREFERRED_IMMEDIATE_PAYMENT_REQUIRED
 				: PaymentMethod::PAYEE_PREFERRED_UNRESTRICTED;
 			$payment_method  = new PaymentMethod( $payee_preferred );
-			$order           = $this->api_endpoint->createForPurchaseUnits(
+			$order           = $this->api_endpoint->create(
 				$purchase_units,
 				$payer,
 				null,
@@ -162,7 +162,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 			if ( 'checkout' === $data['context'] ) {
 					$this->validateForm( $data['form'], $order );
 			}
-			wp_send_json_success( $order->toArray() );
+			wp_send_json_success( $order->to_array() );
 			return true;
 		} catch ( \RuntimeException $error ) {
 			wp_send_json_error(
@@ -224,7 +224,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 			 * during the "onApprove"-JS callback or the webhook listener.
 			 */
 			if ( ! $this->early_order_handler->should_create_early_order() ) {
-				wp_send_json_success( $order->toArray() );
+				wp_send_json_success( $order->to_array() );
 			}
 			$this->early_order_handler->register_for_order( $order );
 			return $data;

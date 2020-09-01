@@ -33,24 +33,24 @@ class ThreeDSecure {
 	 * @return int
 	 */
 	public function proceed_with_order( Order $order ): int {
-		if ( ! $order->paymentSource() ) {
+		if ( ! $order->payment_source() ) {
 			return self::NO_DECISION;
 		}
-		if ( ! $order->paymentSource()->card() ) {
+		if ( ! $order->payment_source()->card() ) {
 			return self::NO_DECISION;
 		}
-		if ( ! $order->paymentSource()->card()->authenticationResult() ) {
+		if ( ! $order->payment_source()->card()->authentication_result() ) {
 			return self::NO_DECISION;
 		}
-		$result = $order->paymentSource()->card()->authenticationResult();
-		if ( $result->liabilityShift() === AuthResult::LIABILITY_SHIFT_POSSIBLE ) {
+		$result = $order->payment_source()->card()->authentication_result();
+		if ( $result->liability_shift() === AuthResult::LIABILITY_SHIFT_POSSIBLE ) {
 			return self::PROCCEED;
 		}
 
-		if ( $result->liabilityShift() === AuthResult::LIABILITY_SHIFT_UNKNOWN ) {
+		if ( $result->liability_shift() === AuthResult::LIABILITY_SHIFT_UNKNOWN ) {
 			return self::RETRY;
 		}
-		if ( $result->liabilityShift() === AuthResult::LIABILITY_SHIFT_NO ) {
+		if ( $result->liability_shift() === AuthResult::LIABILITY_SHIFT_NO ) {
 			return $this->no_liability_shift( $result );
 		}
 		return self::NO_DECISION;
@@ -66,37 +66,37 @@ class ThreeDSecure {
 	private function no_liability_shift( AuthResult $result ): int {
 
 		if (
-			$result->enrollmentStatus() === AuthResult::ENROLLMENT_STATUS_BYPASS
-			&& ! $result->authenticationResult()
+			$result->enrollment_status() === AuthResult::ENROLLMENT_STATUS_BYPASS
+			&& ! $result->authentication_result()
 		) {
 			return self::PROCCEED;
 		}
 		if (
-			$result->enrollmentStatus() === AuthResult::ENROLLMENT_STATUS_UNAVAILABLE
-			&& ! $result->authenticationResult()
+			$result->enrollment_status() === AuthResult::ENROLLMENT_STATUS_UNAVAILABLE
+			&& ! $result->authentication_result()
 		) {
 			return self::PROCCEED;
 		}
 		if (
-			$result->enrollmentStatus() === AuthResult::ENROLLMENT_STATUS_NO
-			&& ! $result->authenticationResult()
+			$result->enrollment_status() === AuthResult::ENROLLMENT_STATUS_NO
+			&& ! $result->authentication_result()
 		) {
 			return self::PROCCEED;
 		}
 
-		if ( $result->authenticationResult() === AuthResult::AUTHENTICATION_RESULT_REJECTED ) {
+		if ( $result->authentication_result() === AuthResult::AUTHENTICATION_RESULT_REJECTED ) {
 			return self::REJECT;
 		}
 
-		if ( $result->authenticationResult() === AuthResult::AUTHENTICATION_RESULT_NO ) {
+		if ( $result->authentication_result() === AuthResult::AUTHENTICATION_RESULT_NO ) {
 			return self::REJECT;
 		}
 
-		if ( $result->authenticationResult() === AuthResult::AUTHENTICATION_RESULT_UNABLE ) {
+		if ( $result->authentication_result() === AuthResult::AUTHENTICATION_RESULT_UNABLE ) {
 			return self::RETRY;
 		}
 
-		if ( ! $result->authenticationResult() ) {
+		if ( ! $result->authentication_result() ) {
 			return self::RETRY;
 		}
 		return self::NO_DECISION;

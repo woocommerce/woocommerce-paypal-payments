@@ -103,7 +103,7 @@ class LoginSellerEndpoint implements EndpointInterface {
 
 		try {
 			$data        = $this->request_data->read_request( $this->nonce() );
-			$credentials = $this->login_seller_endpoint->credentialsFor(
+			$credentials = $this->login_seller_endpoint->credentials_for(
 				$data['sharedId'],
 				$data['authCode'],
 				$this->partner_referrals_data->nonce()

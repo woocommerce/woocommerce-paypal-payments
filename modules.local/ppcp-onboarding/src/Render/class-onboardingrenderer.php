@@ -42,7 +42,7 @@ class OnboardingRenderer {
 				array(
 					'displayMode' => 'minibrowser',
 				),
-				$this->partner_referrals->signupLink()
+				$this->partner_referrals->signup_link()
 			);
 			?>
 					<a

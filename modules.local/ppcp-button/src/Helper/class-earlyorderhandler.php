@@ -99,9 +99,9 @@ class EarlyOrderHandler {
 		}
 
 		$order_id = false;
-		foreach ( $order->purchaseUnits() as $purchase_unit ) {
-			if ( $purchase_unit->customId() === sanitize_text_field( wp_unslash( $_REQUEST['ppcp-resume-order'] ) ) ) {
-				$order_id = (int) $this->sanitize_custom_id( $purchase_unit->customId() );
+		foreach ( $order->purchase_units() as $purchase_unit ) {
+			if ( $purchase_unit->custom_id() === sanitize_text_field( wp_unslash( $_REQUEST['ppcp-resume-order'] ) ) ) {
+				$order_id = (int) $this->sanitize_custom_id( $purchase_unit->custom_id() );
 			}
 		}
 		if ( $order_id === $resume_order_id ) {
@@ -125,7 +125,7 @@ class EarlyOrderHandler {
 			function ( $order_id ) use ( $order ) {
 				try {
 					$order = $this->configure_session_and_order( (int) $order_id, $order );
-					wp_send_json_success( $order->toArray() );
+					wp_send_json_success( $order->to_array() );
 				} catch ( \RuntimeException $error ) {
 					wp_send_json_error(
 						array(

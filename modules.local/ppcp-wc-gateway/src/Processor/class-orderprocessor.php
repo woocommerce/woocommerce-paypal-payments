@@ -210,8 +210,8 @@ class OrderProcessor {
 		 */
 		$order = $this->order_endpoint->order( $order->id() );
 
-		foreach ( $order->purchaseUnits() as $unit ) {
-			if ( $unit->containsPhysicalGoodsItems() ) {
+		foreach ( $order->purchase_units() as $unit ) {
+			if ( $unit->contains_physical_goods() ) {
 				return false;
 			}
 		}
@@ -237,8 +237,8 @@ class OrderProcessor {
 	 * @return Order
 	 */
 	public function patch_order( \WC_Order $wc_order, Order $order ): Order {
-		$updated_order = $this->order_factory->fromWcOrder( $wc_order, $order );
-		$order         = $this->order_endpoint->patchOrderWith( $order, $updated_order );
+		$updated_order = $this->order_factory->from_wc_order( $wc_order, $order );
+		$order         = $this->order_endpoint->patch_order_with( $order, $updated_order );
 		return $order;
 	}
 
@@ -255,7 +255,7 @@ class OrderProcessor {
 			return true;
 		}
 
-		if ( ! $order->paymentSource() || ! $order->paymentSource()->card() ) {
+		if ( ! $order->payment_source() || ! $order->payment_source()->card() ) {
 			return false;
 		}
 

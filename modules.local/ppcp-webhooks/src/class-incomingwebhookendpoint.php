@@ -118,8 +118,8 @@ class IncomingWebhookEndpoint {
 		}
 		try {
 			$data    = (array) get_option( WebhookRegistrar::KEY, array() );
-			$webhook = $this->webhook_factory->fromArray( $data );
-			$result  = $this->webhook_endpoint->verifyCurrentRequestForWebhook( $webhook );
+			$webhook = $this->webhook_factory->from_array( $data );
+			$result  = $this->webhook_endpoint->verify_current_request_for_webhook( $webhook );
 			if ( ! $result ) {
 				$this->logger->log(
 					'error',

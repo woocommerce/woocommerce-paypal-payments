@@ -461,7 +461,7 @@ class SmartButton implements SmartButtonInterface {
 	public function dcc_renderer() {
 
 		$id             = 'ppcp-hosted-fields';
-		$can_render_dcc = $this->dcc_applies->forCountryCurrency()
+		$can_render_dcc = $this->dcc_applies->for_country_currency()
 				&& $this->settings->has( 'client_id' )
 				&& $this->settings->get( 'client_id' );
 		if ( ! $can_render_dcc ) {
@@ -643,7 +643,7 @@ class SmartButton implements SmartButtonInterface {
 		if ( ! is_user_logged_in() || ! is_a( $customer, \WC_Customer::class ) ) {
 			return null;
 		}
-		return $this->payer_factory->fromCustomer( $customer )->toArray();
+		return $this->payer_factory->from_customer( $customer )->to_array();
 	}
 
 	/**
@@ -673,8 +673,8 @@ class SmartButton implements SmartButtonInterface {
 			$params['buyer-country'] = WC()->customer->get_billing_country();
 		}
 		$payee = $this->payee_repository->payee();
-		if ( $payee->merchantId() ) {
-			$params['merchant-id'] = $payee->merchantId();
+		if ( $payee->merchant_id() ) {
+			$params['merchant-id'] = $payee->merchant_id();
 		}
 		$disable_funding   = $this->settings->has( 'disable_funding' ) ?
 			$this->settings->get( 'disable_funding' ) : array();
@@ -768,7 +768,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @throws \Inpsyde\PayPalCommerce\WcGateway\Exception\NotFoundException If a setting has not been found.
 	 */
 	private function dcc_is_enabled(): bool {
-		if ( ! $this->dcc_applies->forCountryCurrency() ) {
+		if ( ! $this->dcc_applies->for_country_currency() ) {
 			return false;
 		}
 		$keys = array(

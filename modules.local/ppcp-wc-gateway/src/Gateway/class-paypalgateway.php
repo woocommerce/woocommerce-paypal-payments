@@ -199,7 +199,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 				);
 			}
 		} catch ( PayPalApiException $error ) {
-			if ( $error->hasDetail( 'INSTRUMENT_DECLINED' ) ) {
+			if ( $error->has_detail( 'INSTRUMENT_DECLINED' ) ) {
 				$host = $this->config->has( 'sandbox_on' ) && $this->config->get( 'sandbox_on' ) ?
 					'https://www.sandbox.paypal.com/' : 'https://www.paypal.com/';
 				$url  = $host . 'checkoutnow?token=' . $this->session_handler->order()->id();
