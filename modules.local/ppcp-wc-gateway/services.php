@@ -369,7 +369,6 @@ return array(
 				),
 				'label'        => __( 'Capture Virtual-Only Orders', 'paypal-for-woocommerce' ),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
