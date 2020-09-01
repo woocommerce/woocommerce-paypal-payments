@@ -1556,7 +1556,7 @@ return array(
 	},
 	'wcgateway.url'                                => static function ( ContainerInterface $container ): string {
 		return plugins_url(
-			'/modules.local/ppcp-wc-gateway/',
+			'/modules/ppcp-wc-gateway/',
 			dirname( __FILE__, 3 ) . '/woocommerce-paypal-commerce-gateway.php'
 		);
 	},

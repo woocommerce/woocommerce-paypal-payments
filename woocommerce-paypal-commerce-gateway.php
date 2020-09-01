@@ -36,9 +36,6 @@ use Inpsyde\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
             foreach (glob(plugin_dir_path(__FILE__).'modules/*/module.php') as $moduleFile) {
                 $modules[] = (@require $moduleFile)();
             }
-            foreach (glob(plugin_dir_path(__FILE__).'modules.local/*/module.php') as $moduleFile) {
-                $modules[] = (@require $moduleFile)();
-            }
             $providers = [];
             foreach ($modules as $module) {
                 /* @var $module ModuleInterface */

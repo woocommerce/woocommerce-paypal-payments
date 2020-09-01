@@ -10,7 +10,7 @@
     <filter>
         <whitelist processUncoveredFilesFromWhitelist="true">
             <directory suffix=".php">./src</directory>
-            <directory suffix=".php">./modules.local/</directory>
+            <directory suffix=".php">./modules/</directory>
         </whitelist>
     </filter>
     <testsuites>

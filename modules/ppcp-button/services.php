@@ -89,7 +89,7 @@ return array(
 	},
 	'button.url'                        => static function ( ContainerInterface $container ): string {
 		return plugins_url(
-			'/modules.local/ppcp-button/',
+			'/modules/ppcp-button/',
 			dirname( __FILE__, 3 ) . '/woocommerce-paypal-commerce-gateway.php'
 		);
 	},
