@@ -32,7 +32,7 @@ function autoload() {
 				'Button'       => $module_dir . 'ppcp-button/src/',
 				'Logging'      => $module_dir . 'woocommerce-logging/src/',
 				'Onboarding'   => $module_dir . 'ppcp-onboarding/src/',
-				'Session'      => $module_dir . 'ppcp-sesion/src/',
+				'Session'      => $module_dir . 'ppcp-session/src/',
 				'Subscription' => $module_dir . 'ppcp-subscription/src/',
 				'WcGateway'    => $module_dir . 'ppcp-wc-gateway/src/',
 				'Webhooks'     => $module_dir . 'ppcp-webhooks/src/',
