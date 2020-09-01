@@ -166,7 +166,7 @@ return array(
                 If you want to change this settings, please click %2$sReset%3$s',
 				'paypal-for-woocommerce'
 			),
-			'<mark>' . $settings->has( 'merchant_email' ) ? $settings->get( 'merchant_email' ) . '</mark>' : '',
+			$settings->has( 'merchant_email' ) ? '<mark>' . $settings->get( 'merchant_email' ) . '</mark>' : '',
 			'<button name="save" value="reset">',
 			'</button>'
 		);
