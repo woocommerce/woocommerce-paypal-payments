@@ -12,6 +12,7 @@ namespace Inpsyde\PayPalCommerce\WcGateway\Settings;
 use Inpsyde\PayPalCommerce\ApiClient\Helper\DccApplies;
 use Inpsyde\PayPalCommerce\Button\Helper\MessagesApply;
 use Inpsyde\PayPalCommerce\Onboarding\State;
+use Inpsyde\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use Psr\Container\ContainerInterface;
 
 /**
@@ -213,7 +214,7 @@ class SettingsRenderer {
 	public function render() {
 
 	    //phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$is_dcc = isset( $_GET[ SectionsRenderer::KEY ] ) && 'dcc' === sanitize_text_field( wp_unslash( $_GET[ SectionsRenderer::KEY ] ) );
+		$is_dcc = isset( $_GET[ SectionsRenderer::KEY ] ) && CreditCardGateway::ID === sanitize_text_field( wp_unslash( $_GET[ SectionsRenderer::KEY ] ) );
 		$nonce  = wp_create_nonce( SettingsListener::NONCE );
 		?>
 		<input type="hidden" name="ppcp-nonce" value="<?php echo esc_attr( $nonce ); ?>">

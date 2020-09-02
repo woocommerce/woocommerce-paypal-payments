@@ -119,11 +119,11 @@ class SettingsListener {
 		$raw_data = ( isset( $_POST['ppcp'] ) ) ? (array) wp_unslash( $_POST['ppcp'] ) : array();
 		// phpcs:enable phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$settings = $this->retrieve_settings_from_raw_data( $raw_data );
-		if ( isset( $_GET['section'] ) && PayPalGateway::ID === $_GET['section'] ) {
+		if ( ! isset( $_GET[SectionsRenderer::KEY] ) || PayPalGateway::ID === $_GET[SectionsRenderer::KEY] ) {
 			$settings['enabled'] = isset( $_POST['woocommerce_ppcp-gateway_enabled'] )
 				&& 1 === absint( $_POST['woocommerce_ppcp-gateway_enabled'] );
 		}
-		if ( isset( $_GET['section'] ) && CreditCardGateway::ID === $_GET['section'] ) {
+		if ( isset( $_GET[SectionsRenderer::KEY] ) && CreditCardGateway::ID === $_GET[SectionsRenderer::KEY] ) {
 			$dcc_enabled_post_key            = 'woocommerce_ppcp-credit-card-gateway_enabled';
 			$settings['dcc_gateway_enabled'] = isset( $_POST[ $dcc_enabled_post_key ] )
 				&& 1 === absint( $_POST[ $dcc_enabled_post_key ] );

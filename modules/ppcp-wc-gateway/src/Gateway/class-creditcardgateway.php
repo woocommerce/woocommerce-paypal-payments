@@ -80,11 +80,11 @@ class CreditCardGateway extends PayPalGateway {
 		}
 
 		$this->method_title       = __(
-			'PayPal Credit Card Processing',
+			'PayPal Card Processing',
 			'paypal-for-woocommerce'
 		);
 		$this->method_description = __(
-			'Provide your customers with the option to pay with credit card.',
+			'Accept debit and credit cards, and local payment methods with PayPal’s latest solution.',
 			'paypal-for-woocommerce'
 		);
 		$this->title              = $this->config->has( 'dcc_gateway_title' ) ?

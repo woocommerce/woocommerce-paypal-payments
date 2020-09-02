@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace Inpsyde\PayPalCommerce\WcGateway\Settings;
 
+use Inpsyde\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 /**
@@ -38,10 +39,10 @@ class SectionsRenderer {
 		}
 
 		//phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$current  = ! isset( $_GET[ self::KEY ] ) ? 'paypal' : sanitize_text_field( wp_unslash( $_GET[ self::KEY ] ) );
+		$current  = ! isset( $_GET[ self::KEY ] ) ? PayPalGateway::ID : sanitize_text_field( wp_unslash( $_GET[ self::KEY ] ) );
 		$sections = array(
-			'paypal' => __( 'PayPal', 'paypal-for-woocommerce' ),
-			'dcc'    => __( 'Credit Card', 'paypal-for-woocommerce' ),
+			PayPalGateway::ID => __( 'PayPal', 'paypal-for-woocommerce' ),
+			CreditCardGateway::ID    => __( 'Credit Card', 'paypal-for-woocommerce' ),
 		);
 
 		echo '<ul class="subsubsub">';
