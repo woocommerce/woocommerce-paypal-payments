@@ -161,6 +161,9 @@ class PayPalGateway extends \WC_Payment_Gateway {
 				'type' => 'ppcp',
 			),
 		);
+		if ( $this->is_credit_card_tab() ) {
+			unset( $this->form_fields['enabled'] );
+		}
 	}
 
 	/**
@@ -298,14 +301,13 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		return $content;
 	}
 
-	// phpcs:disable WordPress.Security.NonceVerification.Recommended
 	/**
 	 * Defines the method title. If we are on the credit card tab in the settings, we want to change this.
 	 *
 	 * @return string
 	 */
 	private function define_method_title(): string {
-		if ( is_admin() && isset( $_GET[ SectionsRenderer::KEY ] ) && CreditCardGateway::ID === sanitize_text_field( wp_unslash( $_GET[ SectionsRenderer::KEY ] ) ) ) {
+		if ( $this->is_credit_card_tab() ) {
 			return __( 'PayPal Card Processing', 'paypal-for-woocommerce' );
 		}
 		return __( 'PayPal Checkout', 'paypal-for-woocommerce' );
@@ -317,7 +319,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @return string
 	 */
 	private function define_method_description(): string {
-		if ( is_admin() && isset( $_GET[ SectionsRenderer::KEY ] ) && CreditCardGateway::ID === sanitize_text_field( wp_unslash( $_GET[ SectionsRenderer::KEY ] ) ) ) {
+		if ( $this->is_credit_card_tab() ) {
 			return __(
 				'Accept debit and credit cards, and local payment methods with PayPal’s latest solution.',
 				'paypal-for-woocommerce'
@@ -328,6 +330,13 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			'Accept PayPal, PayPal Credit and alternative payment types with PayPal’s latest solution.',
 			'paypal-for-woocommerce'
 		);
+	}
+
+	// phpcs:disable WordPress.Security.NonceVerification.Recommended
+	private function is_credit_card_tab() : bool
+	{
+		return is_admin() && isset( $_GET[ SectionsRenderer::KEY ] ) && CreditCardGateway::ID === sanitize_text_field( wp_unslash( $_GET[ SectionsRenderer::KEY ] ) );
+
 	}
 	// phpcs:enable WordPress.Security.NonceVerification.Recommended
 }
