@@ -298,14 +298,15 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		return $content;
 	}
 
+	// phpcs:disable WordPress.Security.NonceVerification.Recommended
 	/**
 	 * Defines the method title. If we are on the credit card tab in the settings, we want to change this.
 	 *
 	 * @return string
 	 */
 	private function define_method_title(): string {
-		if (is_admin() && isset($_GET[SectionsRenderer::KEY]) && CreditCardGateway::ID === sanitize_text_field(wp_unslash($_GET[SectionsRenderer::KEY]))) {
-			return __('PayPal Card Processing', 'paypal-for-woocommerce');
+		if ( is_admin() && isset( $_GET[ SectionsRenderer::KEY ] ) && CreditCardGateway::ID === sanitize_text_field( wp_unslash( $_GET[ SectionsRenderer::KEY ] ) ) ) {
+			return __( 'PayPal Card Processing', 'paypal-for-woocommerce' );
 		}
 		return __( 'PayPal Checkout', 'paypal-for-woocommerce' );
 	}
@@ -316,7 +317,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @return string
 	 */
 	private function define_method_description(): string {
-		if (is_admin() && isset($_GET[SectionsRenderer::KEY]) && CreditCardGateway::ID === sanitize_text_field(wp_unslash($_GET[SectionsRenderer::KEY]))) {
+		if ( is_admin() && isset( $_GET[ SectionsRenderer::KEY ] ) && CreditCardGateway::ID === sanitize_text_field( wp_unslash( $_GET[ SectionsRenderer::KEY ] ) ) ) {
 			return __(
 				'Accept debit and credit cards, and local payment methods with PayPal’s latest solution.',
 				'paypal-for-woocommerce'
@@ -328,4 +329,5 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			'paypal-for-woocommerce'
 		);
 	}
+	// phpcs:enable WordPress.Security.NonceVerification.Recommended
 }
