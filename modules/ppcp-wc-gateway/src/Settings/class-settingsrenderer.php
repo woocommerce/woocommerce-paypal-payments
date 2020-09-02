@@ -209,11 +209,10 @@ class SettingsRenderer {
 
 	/**
 	 * Renders the settings.
-	 *
-	 * @param bool $is_dcc Whether it is the DCC gateway or not.
 	 */
-	public function render( bool $is_dcc ) {
+	public function render() {
 
+	    $is_dcc = isset($_GET[SectionsRenderer::KEY]) && 'dcc' === sanitize_text_field(wp_unslash($_GET[SectionsRenderer::KEY]));
 		$nonce = wp_create_nonce( SettingsListener::NONCE );
 		?>
 		<input type="hidden" name="ppcp-nonce" value="<?php echo esc_attr( $nonce ); ?>">

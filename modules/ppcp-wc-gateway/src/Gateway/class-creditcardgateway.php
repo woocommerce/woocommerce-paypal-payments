@@ -124,20 +124,6 @@ class CreditCardGateway extends PayPalGateway {
 	}
 
 	/**
-	 * Renders the settings.
-	 *
-	 * @return string
-	 */
-	public function generate_ppcp_html(): string {
-
-		ob_start();
-		$this->settings_renderer->render( true );
-		$content = ob_get_contents();
-		ob_end_clean();
-		return $content;
-	}
-
-	/**
 	 * Returns the title of the gateway.
 	 *
 	 * @return string

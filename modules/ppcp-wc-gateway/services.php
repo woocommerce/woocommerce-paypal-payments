@@ -23,6 +23,7 @@ use Inpsyde\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use Inpsyde\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
 use Inpsyde\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use Inpsyde\PayPalCommerce\WcGateway\Processor\OrderProcessor;
+use Inpsyde\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsListener;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
@@ -81,6 +82,9 @@ return array(
 		static function ( ContainerInterface $container ): AuthorizeOrderActionNotice {
 			return new AuthorizeOrderActionNotice();
 		},
+	'wcgateway.settings.sections-renderer'         => static function ( ContainerInterface $container ): SectionsRenderer {
+		return new SectionsRenderer();
+	},
 	'wcgateway.settings.render'                    => static function ( ContainerInterface $container ): SettingsRenderer {
 		$settings      = $container->get( 'wcgateway.settings' );
 		$state         = $container->get( 'onboarding.state' );

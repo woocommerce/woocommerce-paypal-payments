@@ -22,6 +22,7 @@ use Inpsyde\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Inpsyde\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
+use Inpsyde\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use Interop\Container\ServiceProviderInterface;
@@ -55,6 +56,19 @@ class WcGatewayModule implements ModuleInterface {
 		$this->register_columns( $container );
 		$this->register_checkout_paypal_address_preset( $container );
 		$this->ajax_gateway_enabler( $container );
+
+		add_action(
+			'woocommerce_sections_checkout',
+			function() use ($container) {
+				$section_renderer = $container->get('wcgateway.settings.sections-renderer');
+				/**
+				 * The Section Renderer.
+				 *
+				 * @var SectionsRenderer $section_renderer
+				 */
+				$section_renderer->render();
+			}
+		);
 
 		add_filter(
 			Repository::NOTICES_FILTER,
