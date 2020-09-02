@@ -154,7 +154,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			'enabled' => array(
 				'title'   => __( 'Enable/Disable', 'paypal-for-woocommerce' ),
 				'type'    => 'checkbox',
-				'label'   => __( 'Enable PayPal Payments', 'paypal-for-woocommerce' ),
+				'label'   => __( 'Enable PayPal Checkout', 'paypal-for-woocommerce' ),
 				'default' => 'no',
 			),
 			'ppcp'    => array(
