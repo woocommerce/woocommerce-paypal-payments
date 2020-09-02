@@ -212,8 +212,9 @@ class SettingsRenderer {
 	 */
 	public function render() {
 
-	    $is_dcc = isset($_GET[SectionsRenderer::KEY]) && 'dcc' === sanitize_text_field(wp_unslash($_GET[SectionsRenderer::KEY]));
-		$nonce = wp_create_nonce( SettingsListener::NONCE );
+	    //phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$is_dcc = isset( $_GET[ SectionsRenderer::KEY ] ) && 'dcc' === sanitize_text_field( wp_unslash( $_GET[ SectionsRenderer::KEY ] ) );
+		$nonce  = wp_create_nonce( SettingsListener::NONCE );
 		?>
 		<input type="hidden" name="ppcp-nonce" value="<?php echo esc_attr( $nonce ); ?>">
 		<?php

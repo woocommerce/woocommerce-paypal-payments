@@ -59,8 +59,8 @@ class WcGatewayModule implements ModuleInterface {
 
 		add_action(
 			'woocommerce_sections_checkout',
-			function() use ($container) {
-				$section_renderer = $container->get('wcgateway.settings.sections-renderer');
+			function() use ( $container ) {
+				$section_renderer = $container->get( 'wcgateway.settings.sections-renderer' );
 				/**
 				 * The Section Renderer.
 				 *
@@ -173,13 +173,13 @@ class WcGatewayModule implements ModuleInterface {
 				$methods[]   = $container->get( 'wcgateway.paypal-gateway' );
 				$dcc_applies = $container->get( 'api.helpers.dccapplies' );
 
-				$screen = ! function_exists('get_current_screen') ? (object) ['id' => 'front'] : get_current_screen();
+				$screen = ! function_exists( 'get_current_screen' ) ? (object) array( 'id' => 'front' ) : get_current_screen();
 				/**
 				 * The DCC Applies object.
 				 *
 				 * @var DccApplies $dcc_applies
 				 */
-				if ( $screen->id !== 'woocommerce_page_wc-settings' && $dcc_applies->for_country_currency() ) {
+				if ( 'woocommerce_page_wc-settings' !== $screen->id && $dcc_applies->for_country_currency() ) {
 					$methods[] = $container->get( 'wcgateway.credit-card-gateway' );
 				}
 				return (array) $methods;
