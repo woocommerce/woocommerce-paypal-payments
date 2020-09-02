@@ -60,7 +60,7 @@ return array(
 		}
 		$settings           = $container->get( 'wcgateway.settings' );
 		$paypal_disabled     = ! $settings->has( 'enabled' ) || ! $settings->get( 'enabled' );
-		$credit_card_disabled = ! $settings->has( 'dcc_gateway_enabled' ) || ! $settings->get( 'dcc_gateway_enabled' );
+		$credit_card_disabled = ! $settings->has( 'dcc_enabled' ) || ! $settings->get( 'dcc_enabled' );
 		if ( $paypal_disabled && $credit_card_disabled ) {
 			return new DisabledSmartButton();
 		}

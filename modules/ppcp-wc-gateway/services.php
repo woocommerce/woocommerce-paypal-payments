@@ -288,6 +288,16 @@ return array(
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
+			'dcc_enabled'                => array(
+				'title'        => __( 'Enable/Disable' ),
+				'type'         => 'checkbox',
+				'default'      => false,
+				'gateway'      => 'dcc',
+				'requirements' => array(),
+				'screens'      => array(
+					State::STATE_ONBOARDED,
+				),
+			),
 			'dcc_gateway_title'          => array(
 				'title'        => __( 'Title', 'paypal-for-woocommerce' ),
 				'type'         => 'text',
@@ -298,7 +308,6 @@ return array(
 				'default'      => __( 'Credit Cards', 'paypal-for-woocommerce' ),
 				'desc_tip'     => true,
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -336,7 +345,6 @@ return array(
 					'paypal-for-woocommerce'
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),

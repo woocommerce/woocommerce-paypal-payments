@@ -144,7 +144,7 @@ class WcGatewayModule implements ModuleInterface {
 				$settings = $container->get( 'wcgateway.settings' );
 				$key      = PayPalGateway::ID === $_POST['gateway_id'] ? 'enabled' : '';
 				if ( CreditCardGateway::ID === $_POST['gateway_id'] ) {
-					$key = 'dcc_gateway_enabled';
+					$key = 'dcc_enabled';
 				}
 				if ( ! $key ) {
 					return;

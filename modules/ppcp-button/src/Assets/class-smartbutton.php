@@ -165,8 +165,8 @@ class SmartButton implements SmartButtonInterface {
 		}
 
 		if (
-			$this->settings->has( 'dcc_gateway_enabled' )
-			&& $this->settings->get( 'dcc_gateway_enabled' )
+			$this->settings->has( 'dcc_enabled' )
+			&& $this->settings->get( 'dcc_enabled' )
 			&& ! $this->session_handler->order()
 		) {
 			add_action(
@@ -772,7 +772,7 @@ class SmartButton implements SmartButtonInterface {
 			return false;
 		}
 		$keys = array(
-			'dcc_gateway_enabled' => 'is_checkout',
+			'dcc_enabled' => 'is_checkout',
 		);
 		foreach ( $keys as $key => $callback ) {
 			if ( $this->settings->has( $key ) && $this->settings->get( $key ) && $callback() ) {
