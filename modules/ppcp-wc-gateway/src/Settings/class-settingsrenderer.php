@@ -277,7 +277,7 @@ class SettingsRenderer {
 			<?php
 		endforeach;
 
-		if ( $is_dcc ) :
+		if ( $is_dcc && State::STATE_ONBOARDED === $this->state->current_state() ) :
 			?>
 		<tr>
 			<th><?php esc_html_e( '3D Secure', 'paypal-for-woocommerce' ); ?></th>
