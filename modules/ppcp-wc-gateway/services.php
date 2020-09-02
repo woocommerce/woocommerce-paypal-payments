@@ -182,7 +182,7 @@ return array(
 					State::STATE_PROGRESSIVE,
 				),
 				'requirements' => array(),
-				'gateway'      => 'all',
+				'gateway'      => 'paypal',
 			),
 			'sandbox_on'                 => array(
 				'title'        => __( 'Sandbox', 'paypal-for-woocommerce' ),
@@ -193,7 +193,7 @@ return array(
 					State::STATE_START,
 				),
 				'requirements' => array(),
-				'gateway'      => 'all',
+				'gateway'      => 'paypal',
 			),
 			'sandbox_on_info'            => array(
 				'title'        => __( 'Sandbox', 'paypal-for-woocommerce' ),
@@ -205,7 +205,7 @@ return array(
 				),
 				'hidden'       => 'sandbox_on',
 				'requirements' => array(),
-				'gateway'      => 'all',
+				'gateway'      => 'paypal',
 			),
 			'merchant_email'             => array(
 				'title'        => __( 'Email address', 'paypal-for-woocommerce' ),
@@ -218,7 +218,7 @@ return array(
 					State::STATE_START,
 				),
 				'requirements' => array(),
-				'gateway'      => 'all',
+				'gateway'      => 'paypal',
 			),
 			'merchant_email_info'        => array(
 				'title'        => __( 'Email address', 'paypal-for-woocommerce' ),
@@ -230,7 +230,7 @@ return array(
 				),
 				'hidden'       => 'merchant_email',
 				'requirements' => array(),
-				'gateway'      => 'all',
+				'gateway'      => 'paypal',
 			),
 			'toggle_manual_input'        => array(
 				'type'         => 'ppcp-text',
@@ -242,7 +242,7 @@ return array(
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
-				'gateway'      => 'all',
+				'gateway'      => 'paypal',
 			),
 			'client_id'                  => array(
 				'title'        => __( 'Client Id', 'paypal-for-woocommerce' ),
@@ -256,7 +256,7 @@ return array(
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
-				'gateway'      => 'all',
+				'gateway'      => 'paypal',
 			),
 			'client_secret'              => array(
 				'title'        => __( 'Secret Key', 'paypal-for-woocommerce' ),
@@ -270,7 +270,7 @@ return array(
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
-				'gateway'      => 'all',
+				'gateway'      => 'paypal',
 			),
 			'title'                      => array(
 				'title'        => __( 'Title', 'paypal-for-woocommerce' ),
@@ -360,7 +360,7 @@ return array(
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
-				'gateway'      => 'all',
+				'gateway'      => 'paypal',
 			),
 			'capture_for_virtual_only'   => array(
 				'title'        => __( 'Capture Virtual-Only Orders ', 'paypal-for-woocommerce' ),
@@ -376,7 +376,7 @@ return array(
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
-				'gateway'      => 'all',
+				'gateway'      => 'paypal',
 			),
 			'payee_preferred'            => array(
 				'title'        => __( 'Instant Payments ', 'paypal-for-woocommerce' ),
@@ -488,7 +488,7 @@ return array(
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
-				'gateway'      => 'all',
+				'gateway'      => 'paypal',
 			),
 			'prefix'                     => array(
 				'title'        => __( 'Installation prefix', 'paypal-for-woocommerce' ),
@@ -502,7 +502,7 @@ return array(
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
-				'gateway'      => 'all',
+				'gateway'      => 'paypal',
 			),
 
 			// General button styles.
