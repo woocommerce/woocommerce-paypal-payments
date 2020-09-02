@@ -28,7 +28,8 @@
         "dhii/containers": "dev-develop",
         "dhii/wp-containers": "^0.1.0@alpha",
         "psr/log": "^1.1",
-        "ext-json": "*"
+        "ext-json": "*",
+        "wp-oop/transient-cache": "^0.1.0@alpha"
     },
     "require-dev": {
         "woocommerce/woocommerce-sniffs": "^0.1.0",
