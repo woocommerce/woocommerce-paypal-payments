@@ -77,6 +77,14 @@ class ReturnUrlEndpoint {
 
 		$success = $this->gateway->process_payment( $wc_order_id );
 		if ( isset( $success['result'] ) && 'success' === $success['result'] ) {
+			add_filter(
+				'allowed_redirect_hosts',
+				function( $allowed_hosts ) : array {
+					$allowed_hosts[] = 'www.paypal.com';
+					$allowed_hosts[] = 'www.sandbox.paypal.com';
+					return (array) $allowed_hosts;
+				}
+			);
 			wp_safe_redirect( $success['redirect'] );
 			exit();
 		}

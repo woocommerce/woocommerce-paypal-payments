@@ -37,6 +37,8 @@ class WcGatewayTest extends TestCase
         $authorizedOrderActionNotice = Mockery::mock(AuthorizeOrderActionNotice::class);
         $settings = Mockery::mock(Settings::class);
         $sessionHandler = Mockery::mock(SessionHandler::class);
+        $sessionHandler
+	        ->shouldReceive('destroy_session_data');
         $settings
             ->shouldReceive('has')->andReturnFalse();
         $testee = new PayPalGateway(

@@ -184,6 +184,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		 */
         //phpcs:disable WordPress.Security.NonceVerification.Recommended
 		if ( isset( $_REQUEST['ppcp-resume-order'] ) && $wc_order->has_status( 'processing' ) ) {
+			$this->session_handler->destroy_session_data();
 			return array(
 				'result'   => 'success',
 				'redirect' => $this->get_return_url( $wc_order ),
@@ -193,6 +194,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 
 		try {
 			if ( $this->order_processor->process( $wc_order, $woocommerce ) ) {
+				$this->session_handler->destroy_session_data();
 				return array(
 					'result'   => 'success',
 					'redirect' => $this->get_return_url( $wc_order ),
@@ -200,10 +202,18 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			}
 		} catch ( PayPalApiException $error ) {
 			if ( $error->has_detail( 'INSTRUMENT_DECLINED' ) ) {
+				$this->session_handler->increment_insufficient_funding_tries();
 				$host = $this->config->has( 'sandbox_on' ) && $this->config->get( 'sandbox_on' ) ?
 					'https://www.sandbox.paypal.com/' : 'https://www.paypal.com/';
 				$url  = $host . 'checkoutnow?token=' . $this->session_handler->order()->id();
-
+				if ( $this->session_handler->insufficient_funding_tries() >= 3 ) {
+					$this->session_handler->destroy_session_data();
+					wc_add_notice(
+						__( 'Please use a different payment method.', 'paypal-for-woocommerce' ),
+						'error'
+					);
+					return null;
+				}
 				return array(
 					'result'   => 'success',
 					'redirect' => $url,

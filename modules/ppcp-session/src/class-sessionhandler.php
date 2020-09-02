@@ -33,6 +33,14 @@ class SessionHandler {
 	private $bn_code = '';
 
 	/**
+	 * If PayPal respondes with INSTRUMENT_DECLINED, we only
+	 * want to go max. three times through the process of trying again.
+	 *
+	 * @var int
+	 */
+	private $insufficient_funding_tries = 0;
+
+	/**
 	 * Returns the order.
 	 *
 	 * @return Order|null
@@ -77,13 +85,34 @@ class SessionHandler {
 	}
 
 	/**
+	 * Returns how many times the customer tried to use the PayPal Gateway in this session.
+	 *
+	 * @return int
+	 */
+	public function insufficient_funding_tries() : int {
+		return $this->insufficient_funding_tries;
+	}
+
+	/**
+	 * Increments the number of tries, the customer has done in this session.
+	 *
+	 * @return SessionHandler
+	 */
+	public function increment_insufficient_funding_tries() : SessionHandler {
+		$this->insufficient_funding_tries++;
+		$this->store_session();
+		return $this;
+	}
+
+	/**
 	 * Destroys the session data.
 	 *
 	 * @return SessionHandler
 	 */
 	public function destroy_session_data() : SessionHandler {
-		$this->order   = null;
-		$this->bn_code = '';
+		$this->order                      = null;
+		$this->bn_code                    = '';
+		$this->insufficient_funding_tries = 0;
 		$this->store_session();
 		return $this;
 	}
