@@ -14,6 +14,7 @@ use Inpsyde\PayPalCommerce\Session\SessionHandler;
 use Inpsyde\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use Inpsyde\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use Inpsyde\PayPalCommerce\WcGateway\Processor\OrderProcessor;
+use Inpsyde\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use Psr\Container\ContainerInterface;
 
@@ -116,11 +117,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			);
 		}
 
-		$this->method_title       = __( 'PayPal Checkout', 'paypal-for-woocommerce' );
-		$this->method_description = __(
-			'Accept PayPal, PayPal Credit and alternative payment types with PayPal’s latest solution.',
-			'paypal-for-woocommerce'
-		);
+		$this->method_title       = $this->define_method_title();
+		$this->method_description = $this->define_method_description();
 		$this->title              = $this->config->has( 'title' ) ?
 			$this->config->get( 'title' ) : $this->method_title;
 		$this->description        = $this->config->has( 'description' ) ?
@@ -298,5 +296,36 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$content = ob_get_contents();
 		ob_end_clean();
 		return $content;
+	}
+
+	/**
+	 * Defines the method title. If we are on the credit card tab in the settings, we want to change this.
+	 *
+	 * @return string
+	 */
+	private function define_method_title(): string {
+		if (is_admin() && isset($_GET[SectionsRenderer::KEY]) && CreditCardGateway::ID === sanitize_text_field(wp_unslash($_GET[SectionsRenderer::KEY]))) {
+			return __('PayPal Card Processing', 'paypal-for-woocommerce');
+		}
+		return __( 'PayPal Checkout', 'paypal-for-woocommerce' );
+	}
+
+	/**
+	 * Defines the method description. If we are on the credit card tab in the settings, we want to change this.
+	 *
+	 * @return string
+	 */
+	private function define_method_description(): string {
+		if (is_admin() && isset($_GET[SectionsRenderer::KEY]) && CreditCardGateway::ID === sanitize_text_field(wp_unslash($_GET[SectionsRenderer::KEY]))) {
+			return __(
+				'Accept debit and credit cards, and local payment methods with PayPal’s latest solution.',
+				'paypal-for-woocommerce'
+			);
+		}
+
+		return __(
+			'Accept PayPal, PayPal Credit and alternative payment types with PayPal’s latest solution.',
+			'paypal-for-woocommerce'
+		);
 	}
 }
