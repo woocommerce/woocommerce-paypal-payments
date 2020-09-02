@@ -173,7 +173,7 @@ class WcGatewayModule implements ModuleInterface {
 				$methods[]   = $container->get( 'wcgateway.paypal-gateway' );
 				$dcc_applies = $container->get( 'api.helpers.dccapplies' );
 
-				$screen = get_current_screen();
+				$screen = ! function_exists('get_current_screen') ? (object) ['id' => 'front'] : get_current_screen();
 				/**
 				 * The DCC Applies object.
 				 *
