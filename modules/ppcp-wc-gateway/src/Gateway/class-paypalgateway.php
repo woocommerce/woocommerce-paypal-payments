@@ -116,9 +116,9 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			);
 		}
 
-		$this->method_title       = __( 'PayPal', 'paypal-for-woocommerce' );
+		$this->method_title       = __( 'PayPal Checkout', 'paypal-for-woocommerce' );
 		$this->method_description = __(
-			'Provide your customers with the PayPal payment option.',
+			'Accept PayPal, PayPal Credit and alternative payment types with PayPal’s latest solution.',
 			'paypal-for-woocommerce'
 		);
 		$this->title              = $this->config->has( 'title' ) ?
