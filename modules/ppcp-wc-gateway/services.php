@@ -1341,9 +1341,9 @@ return array(
 				'gateway'      => 'paypal',
 			),
 			'message_cart_enabled'       => array(
-				'title'        => __( 'Enable message on Single Product', 'paypal-for-woocommerce' ),
+				'title'        => __( 'Enable message on Cart', 'paypal-for-woocommerce' ),
 				'type'         => 'checkbox',
-				'label'        => __( 'Enable on Single Product', 'paypal-for-woocommerce' ),
+				'label'        => __( 'Enable on Cart', 'paypal-for-woocommerce' ),
 				'default'      => true,
 				'screens'      => array(
 					State::STATE_PROGRESSIVE,
