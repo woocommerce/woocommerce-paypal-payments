@@ -811,6 +811,6 @@ class SmartButton implements SmartButtonInterface {
 		if ( is_bool( $value ) ) {
 			$value = $value ? 'true' : 'false';
 		}
-		return $value;
+		return (string) $value;
 	}
 }
