@@ -125,7 +125,7 @@ class SettingsListener {
 			$this->maybe_register_webhooks( $settings );
 		}
 		if ( isset( $_GET[ SectionsRenderer::KEY ] ) && CreditCardGateway::ID === $_GET[ SectionsRenderer::KEY ] ) {
-			$dcc_enabled_post_key            = 'woocommerce_ppcp-credit-card-gateway_enabled';
+			$dcc_enabled_post_key    = 'woocommerce_ppcp-credit-card-gateway_enabled';
 			$settings['dcc_enabled'] = isset( $_POST[ $dcc_enabled_post_key ] )
 				&& 1 === absint( $_POST[ $dcc_enabled_post_key ] );
 		}
@@ -189,13 +189,17 @@ class SettingsListener {
 			}
 			if (
 				'dcc' === $config['gateway']
-				&& sanitize_text_field( wp_unslash( $_GET[SectionsRenderer::KEY] ) ) !== CreditCardGateway::ID
+				&& (
+					! isset( $_GET[ SectionsRenderer::KEY ] )
+					|| sanitize_text_field( wp_unslash( $_GET[ SectionsRenderer::KEY ] ) ) !== CreditCardGateway::ID
+				)
 			) {
 				continue;
 			}
 			if (
 			'paypal' === $config['gateway']
-				&& sanitize_text_field( wp_unslash( $_GET[SectionsRenderer::KEY] ) ) !== PayPalGateway::ID
+				&& isset( $_GET[ SectionsRenderer::KEY ] )
+				&& sanitize_text_field( wp_unslash( $_GET[ SectionsRenderer::KEY ] ) ) !== PayPalGateway::ID
 			) {
 				continue;
 			}

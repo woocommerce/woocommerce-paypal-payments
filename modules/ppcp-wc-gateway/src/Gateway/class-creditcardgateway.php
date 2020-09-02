@@ -198,7 +198,12 @@ class CreditCardGateway extends PayPalGateway {
 		);
 	}
 
+	/**
+	 * Whether the gateway is available or not.
+	 *
+	 * @return bool
+	 */
 	public function is_available() : bool {
-		return $this->config->has('dcc_enabled') && $this->config->get('dcc_enabled');
+		return $this->config->has( 'dcc_enabled' ) && $this->config->get( 'dcc_enabled' );
 	}
 }

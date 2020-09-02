@@ -289,7 +289,7 @@ return array(
 				'gateway'      => 'paypal',
 			),
 			'dcc_enabled'                => array(
-				'title'        => __( 'Enable/Disable' ),
+				'title'        => __( 'Enable/Disable', 'paypal-for-woocommerce' ),
 				'type'         => 'checkbox',
 				'default'      => false,
 				'gateway'      => 'dcc',

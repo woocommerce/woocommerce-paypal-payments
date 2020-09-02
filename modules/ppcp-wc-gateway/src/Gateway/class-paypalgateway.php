@@ -333,8 +333,13 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	}
 
 	// phpcs:disable WordPress.Security.NonceVerification.Recommended
-	private function is_credit_card_tab() : bool
-	{
+
+	/**
+	 * Determines, whether the current session is on the credit card tab in the admin settings.
+	 *
+	 * @return bool
+	 */
+	private function is_credit_card_tab() : bool {
 		return is_admin() && isset( $_GET[ SectionsRenderer::KEY ] ) && CreditCardGateway::ID === sanitize_text_field( wp_unslash( $_GET[ SectionsRenderer::KEY ] ) );
 
 	}
