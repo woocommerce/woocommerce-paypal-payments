@@ -189,13 +189,13 @@ class SettingsListener {
 			}
 			if (
 				'dcc' === $config['gateway']
-				&& sanitize_text_field( wp_unslash( $_GET['section'] ) ) !== 'ppcp-credit-card-gateway'
+				&& sanitize_text_field( wp_unslash( $_GET[SectionsRenderer::KEY] ) ) !== CreditCardGateway::ID
 			) {
 				continue;
 			}
 			if (
 			'paypal' === $config['gateway']
-				&& sanitize_text_field( wp_unslash( $_GET['section'] ) ) !== 'ppcp-gateway'
+				&& sanitize_text_field( wp_unslash( $_GET[SectionsRenderer::KEY] ) ) !== PayPalGateway::ID
 			) {
 				continue;
 			}
