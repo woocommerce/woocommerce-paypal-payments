@@ -124,11 +124,6 @@ class SettingsListener {
 				&& 1 === absint( $_POST['woocommerce_ppcp-gateway_enabled'] );
 			$this->maybe_register_webhooks( $settings );
 		}
-		if ( isset( $_GET[ SectionsRenderer::KEY ] ) && CreditCardGateway::ID === $_GET[ SectionsRenderer::KEY ] ) {
-			$dcc_enabled_post_key    = 'woocommerce_ppcp-credit-card-gateway_enabled';
-			$settings['dcc_enabled'] = isset( $_POST[ $dcc_enabled_post_key ] )
-				&& 1 === absint( $_POST[ $dcc_enabled_post_key ] );
-		}
 
 		foreach ( $settings as $id => $value ) {
 			$this->settings->set( $id, $value );
