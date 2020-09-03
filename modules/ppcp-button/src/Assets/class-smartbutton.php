@@ -312,12 +312,15 @@ class SmartButton implements SmartButtonInterface {
 		if ( ! $this->can_save_vault_token() && $this->has_subscriptions() ) {
 			return false;
 		}
-		wp_enqueue_style(
-			'ppcp-hosted-fields',
-			$this->module_url . '/assets/css/hosted-fields.css',
-			array(),
-			1
-		);
+
+		if ( $this->settings->has( 'dcc_enabled' ) && $this->settings->get( 'dcc_enabled' ) ) {
+			wp_enqueue_style(
+				'ppcp-hosted-fields',
+				$this->module_url . '/assets/css/hosted-fields.css',
+				array(),
+				1
+			);
+		}
 		wp_enqueue_script(
 			'ppcp-smart-button',
 			$this->module_url . '/assets/js/button.js',
@@ -732,7 +735,40 @@ class SmartButton implements SmartButtonInterface {
 	 * @throws \Inpsyde\PayPalCommerce\WcGateway\Exception\NotFoundException If a setting was not found.
 	 */
 	private function components(): array {
-		$components = array( 'buttons' );
+		$components = array();
+
+		$load_buttons = false;
+		if (
+			$this->context() === 'checkout'
+			&& $this->settings->has( 'button_enabled' )
+			&& $this->settings->get( 'button_enabled' )
+		) {
+			$load_buttons = true;
+		}
+		if (
+			$this->context() === 'product'
+			&& $this->settings->has( 'button_product_enabled' )
+			&& $this->settings->get( 'button_product_enabled' )
+		) {
+			$load_buttons = true;
+		}
+		if (
+			$this->context() === 'mini-cart'
+			&& $this->settings->has( 'button_mini-cart_enabled' )
+			&& $this->settings->get( 'button_mini-cart_enabled' )
+		) {
+			$load_buttons = true;
+		}
+		if (
+			$this->context() === 'cart'
+			&& $this->settings->has( 'button_cart_enabled' )
+			&& $this->settings->get( 'button_cart_enabled' )
+		) {
+			$load_buttons = true;
+		}
+		if ( $load_buttons ) {
+			$components[] = 'buttons';
+		}
 		if ( $this->messages_apply->for_country() ) {
 			$components[] = 'messages';
 		}
