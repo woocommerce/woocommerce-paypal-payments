@@ -293,8 +293,8 @@ class PurchaseUnit {
 	}
 
 	/**
-	 * All money values send to PayPal can only have 2 decimal points. Woocommerce internally does
-	 * not have this restriction. Therefore the totals of the cart in Woocommerce and the totals
+	 * All money values send to PayPal can only have 2 decimal points. WooCommerce internally does
+	 * not have this restriction. Therefore the totals of the cart in WooCommerce and the totals
 	 * of the rounded money values of the items, we send to PayPal, can differ. In those cases,
 	 * we can not send the line items.
 	 *

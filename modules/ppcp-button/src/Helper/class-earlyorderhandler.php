@@ -148,7 +148,7 @@ class EarlyOrderHandler {
 	/**
 	 * Configures the session, so we can pick up the order, once we pass through the checkout.
 	 *
-	 * @param int   $order_id The Woocommerce order id.
+	 * @param int   $order_id The WooCommerce order id.
 	 * @param Order $order The PayPal order.
 	 *
 	 * @return Order

@@ -68,7 +68,7 @@ class OrderTablePaymentStatusColumn {
 	 * Render the column.
 	 *
 	 * @param string $column The column.
-	 * @param int    $wc_order_id The id or the Woocommerce order.
+	 * @param int    $wc_order_id The id or the WooCommerce order.
 	 */
 	public function render( string $column, int $wc_order_id ) {
 		if ( ! $this->settings->has( 'intent' ) || $this->settings->get( 'intent' ) !== self::INTENT ) {
@@ -96,7 +96,7 @@ class OrderTablePaymentStatusColumn {
 	/**
 	 * Whether to render the authorization status of an order or not.
 	 *
-	 * @param \WC_Order $order The Woocommerce order.
+	 * @param \WC_Order $order The WooCommerce order.
 	 *
 	 * @return bool
 	 */
@@ -107,7 +107,7 @@ class OrderTablePaymentStatusColumn {
 	/**
 	 * Whether the order has been captured or not.
 	 *
-	 * @param \WC_Order $wc_order The Woocommerce order.
+	 * @param \WC_Order $wc_order The WooCommerce order.
 	 *
 	 * @return bool
 	 */

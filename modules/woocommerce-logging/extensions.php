@@ -2,7 +2,7 @@
 /**
  * The logging extensions.
  *
- * @package Inpsyde\Woocommerce\Logging
+ * @package Inpsyde\WooCommerce\Logging
  */
 
 declare(strict_types=1);

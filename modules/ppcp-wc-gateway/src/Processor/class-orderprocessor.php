@@ -122,10 +122,10 @@ class OrderProcessor {
 	}
 
 	/**
-	 * Processes a given Woocommerce order and captured/authorizes the connected PayPal orders.
+	 * Processes a given WooCommerce order and captured/authorizes the connected PayPal orders.
 	 *
-	 * @param \WC_Order    $wc_order The Woocommerce order.
-	 * @param \WooCommerce $woocommerce The Woocommerce object.
+	 * @param \WC_Order    $wc_order The WooCommerce order.
+	 * @param \WooCommerce $woocommerce The WooCommerce object.
 	 *
 	 * @return bool
 	 */
@@ -232,9 +232,9 @@ class OrderProcessor {
 	}
 
 	/**
-	 * Patches a given PayPal order with a Woocommerce order.
+	 * Patches a given PayPal order with a WooCommerce order.
 	 *
-	 * @param \WC_Order $wc_order The Woocommerce order.
+	 * @param \WC_Order $wc_order The WooCommerce order.
 	 * @param Order     $order The PayPal order.
 	 *
 	 * @return Order

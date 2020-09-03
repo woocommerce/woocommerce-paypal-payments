@@ -86,7 +86,7 @@ class RenewalHandler {
 	/**
 	 * Renew an order.
 	 *
-	 * @param \WC_Order $wc_order The Woocommerce order.
+	 * @param \WC_Order $wc_order The WooCommerce order.
 	 */
 	public function renew( \WC_Order $wc_order ) {
 
@@ -140,9 +140,9 @@ class RenewalHandler {
 	}
 
 	/**
-	 * Process a Woocommerce order.
+	 * Process a WooCommerce order.
 	 *
-	 * @param \WC_Order $wc_order The Woocommerce order.
+	 * @param \WC_Order $wc_order The WooCommerce order.
 	 *
 	 * @throws \Exception If customer cannot be read/found.
 	 */
@@ -169,7 +169,7 @@ class RenewalHandler {
 	 * Returns a payment token for a customer.
 	 *
 	 * @param \WC_Customer $customer The customer.
-	 * @param \WC_Order    $wc_order The current Woocommerce order we want to process.
+	 * @param \WC_Order    $wc_order The current WooCommerce order we want to process.
 	 *
 	 * @return PaymentToken|null
 	 */
@@ -198,10 +198,10 @@ class RenewalHandler {
 	}
 
 	/**
-	 * If the PayPal order is captured/authorized the Woocommerce order gets updated accordingly.
+	 * If the PayPal order is captured/authorized the WooCommerce order gets updated accordingly.
 	 *
 	 * @param Order     $order The PayPal order.
-	 * @param \WC_Order $wc_order The related Woocommerce order.
+	 * @param \WC_Order $wc_order The related WooCommerce order.
 	 */
 	private function capture_order( Order $order, \WC_Order $wc_order ) {
 

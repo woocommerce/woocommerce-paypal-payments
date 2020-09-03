@@ -12,8 +12,8 @@ namespace Inpsyde\PayPalCommerce\WcGateway;
 use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use Inpsyde\PayPalCommerce\Session\SessionHandler;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
-use Inpsyde\Woocommerce\Logging\Logger\NullLogger;
-use Inpsyde\Woocommerce\Logging\Logger\WooCommerceLogger;
+use Inpsyde\WooCommerce\Logging\Logger\NullLogger;
+use Inpsyde\WooCommerce\Logging\Logger\WooCommerceLogger;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 

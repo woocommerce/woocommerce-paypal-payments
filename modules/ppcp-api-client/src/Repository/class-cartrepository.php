@@ -35,7 +35,7 @@ class CartRepository implements PurchaseUnitRepositoryInterface {
 	}
 
 	/**
-	 * Returns all Pur of the Woocommerce cart.
+	 * Returns all Pur of the WooCommerce cart.
 	 *
 	 * @return PurchaseUnit[]
 	 */

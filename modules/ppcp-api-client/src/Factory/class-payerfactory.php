@@ -37,9 +37,9 @@ class PayerFactory {
 	}
 
 	/**
-	 * Returns a Payer object based off a Woocommerce customer.
+	 * Returns a Payer object based off a WooCommerce customer.
 	 *
-	 * @param \WC_Customer $customer The Woocommerce customer.
+	 * @param \WC_Customer $customer The WooCommerce customer.
 	 *
 	 * @return Payer
 	 */

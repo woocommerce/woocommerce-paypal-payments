@@ -19,7 +19,7 @@ class PaymentStatusOrderDetail {
 	/**
 	 * Renders the not captured information.
 	 *
-	 * @param int $wc_order_id The Woocommerce order id.
+	 * @param int $wc_order_id The WooCommerce order id.
 	 */
 	public function render( int $wc_order_id ) {
 		$wc_order = new \WC_Order( $wc_order_id );

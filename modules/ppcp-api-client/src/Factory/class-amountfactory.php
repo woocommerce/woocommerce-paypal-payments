@@ -38,7 +38,7 @@ class AmountFactory {
 	}
 
 	/**
-	 * Returns an Amount object based off a Woocommerce cart.
+	 * Returns an Amount object based off a WooCommerce cart.
 	 *
 	 * @param \WC_Cart $cart The cart.
 	 *
@@ -84,7 +84,7 @@ class AmountFactory {
 	}
 
 	/**
-	 * Returns an Amount object based off a Woocommerce order.
+	 * Returns an Amount object based off a WooCommerce order.
 	 *
 	 * @param \WC_Order $order The order.
 	 *

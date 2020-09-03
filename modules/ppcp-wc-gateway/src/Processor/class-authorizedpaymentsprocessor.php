@@ -1,6 +1,6 @@
 <?php
 /**
- * Authorizes payments for a given Woocommerce order.
+ * Authorizes payments for a given WooCommerce order.
  *
  * @package Inpsyde\PayPalCommerce\WcGateway\Processor
  */
@@ -65,9 +65,9 @@ class AuthorizedPaymentsProcessor {
 	}
 
 	/**
-	 * Process a Woocommerce order.
+	 * Process a WooCommerce order.
 	 *
-	 * @param \WC_Order $wc_order The Woocommerce order.
+	 * @param \WC_Order $wc_order The WooCommerce order.
 	 *
 	 * @return bool
 	 */
@@ -112,9 +112,9 @@ class AuthorizedPaymentsProcessor {
 	}
 
 	/**
-	 * Returns the PayPal order from a given Woocommerce order.
+	 * Returns the PayPal order from a given WooCommerce order.
 	 *
-	 * @param \WC_Order $wc_order The Woocommerce order.
+	 * @param \WC_Order $wc_order The WooCommerce order.
 	 *
 	 * @return Order
 	 */

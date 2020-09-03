@@ -113,7 +113,7 @@ class PaymentCaptureReversed implements RequestHandler {
 		}
 
 		/**
-		 * The Woocommerce order.
+		 * The WooCommerce order.
 		 *
 		 * @var \WC_Order $wc_order
 		 */

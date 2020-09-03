@@ -20,7 +20,7 @@ class ItemFactory {
 
 
 	/**
-	 * Creates items based off a Woocommerce cart.
+	 * Creates items based off a WooCommerce cart.
 	 *
 	 * @param \WC_Cart $cart The cart.
 	 *
@@ -33,7 +33,7 @@ class ItemFactory {
 				$product = $item['data'];
 
 				/**
-				 * The Woocommerce product.
+				 * The WooCommerce product.
 				 *
 				 * @var \WC_Product $product
 				 */
@@ -60,7 +60,7 @@ class ItemFactory {
 	}
 
 	/**
-	 * Creates Items based off a Woocommerce order.
+	 * Creates Items based off a WooCommerce order.
 	 *
 	 * @param \WC_Order $order The order.
 	 * @return Item[]
@@ -75,10 +75,10 @@ class ItemFactory {
 	}
 
 	/**
-	 * Creates an Item based off a Woocommerce Order Item.
+	 * Creates an Item based off a WooCommerce Order Item.
 	 *
-	 * @param \WC_Order_Item_Product $item The Woocommerce order item.
-	 * @param \WC_Order              $order The Woocommerce order.
+	 * @param \WC_Order_Item_Product $item The WooCommerce order item.
+	 * @param \WC_Order              $order The WooCommerce order.
 	 *
 	 * @return Item
 	 */
@@ -87,7 +87,7 @@ class ItemFactory {
 		$product  = $item->get_product();
 
 		/**
-		 * The Woocommerce product.
+		 * The WooCommerce product.
 		 *
 		 * @var \WC_Product $product
 		 */

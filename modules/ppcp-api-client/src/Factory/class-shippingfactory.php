@@ -34,9 +34,9 @@ class ShippingFactory {
 	}
 
 	/**
-	 * Creates a shipping object based off a Woocommerce customer.
+	 * Creates a shipping object based off a WooCommerce customer.
 	 *
-	 * @param \WC_Customer $customer The Woocommerce customer.
+	 * @param \WC_Customer $customer The WooCommerce customer.
 	 *
 	 * @return Shipping
 	 */
@@ -56,9 +56,9 @@ class ShippingFactory {
 	}
 
 	/**
-	 * Creates a Shipping object based off a Woocommerce order.
+	 * Creates a Shipping object based off a WooCommerce order.
 	 *
-	 * @param \WC_Order $order The Woocommerce order.
+	 * @param \WC_Order $order The WooCommerce order.
 	 *
 	 * @return Shipping
 	 */

@@ -166,9 +166,9 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	}
 
 	/**
-	 * Process a payment for an Woocommerce order.
+	 * Process a payment for an WooCommerce order.
 	 *
-	 * @param int $order_id The Woocommerce order id.
+	 * @param int $order_id The WooCommerce order id.
 	 *
 	 * @return array|null
 	 */
@@ -231,9 +231,9 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	}
 
 	/**
-	 * Captures an authorized payment for an Woocommerce order.
+	 * Captures an authorized payment for an WooCommerce order.
 	 *
-	 * @param \WC_Order $wc_order The Woocommerce order.
+	 * @param \WC_Order $wc_order The WooCommerce order.
 	 *
 	 * @return bool
 	 */

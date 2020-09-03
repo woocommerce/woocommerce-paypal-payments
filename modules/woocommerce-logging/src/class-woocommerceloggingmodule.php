@@ -2,12 +2,12 @@
 /**
  * The logging module.
  *
- * @package Inpsyde\Woocommerce\Logging
+ * @package Inpsyde\WooCommerce\Logging
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\Woocommerce\Logging;
+namespace Inpsyde\WooCommerce\Logging;
 
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
@@ -15,9 +15,9 @@ use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
 
 /**
- * Class WoocommerceLoggingModule
+ * Class WooCommerceLoggingModule
  */
-class WoocommerceLoggingModule implements ModuleInterface {
+class WooCommerceLoggingModule implements ModuleInterface {
 
 	/**
 	 * Setup the module.

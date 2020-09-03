@@ -58,7 +58,7 @@ class RequestData {
 	}
 
 	/**
-	 * Woocommerce will give you a customer object on your 2nd request. the first page
+	 * WooCommerce will give you a customer object on your 2nd request. the first page
 	 * load will not yet have this customer object, but the ajax request will. Therefore
 	 * the nonce validation will fail. this fixes this problem:
 	 *

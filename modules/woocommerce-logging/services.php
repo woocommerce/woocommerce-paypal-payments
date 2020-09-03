@@ -2,15 +2,15 @@
 /**
  * The logging services.
  *
- * @package Inpsyde\Woocommerce\Logging
+ * @package Inpsyde\WooCommerce\Logging
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\Woocommerce\Logging;
+namespace Inpsyde\WooCommerce\Logging;
 
-use Inpsyde\Woocommerce\Logging\Logger\NullLogger;
-use Inpsyde\Woocommerce\Logging\Logger\WooCommerceLogger;
+use Inpsyde\WooCommerce\Logging\Logger\NullLogger;
+use Inpsyde\WooCommerce\Logging\Logger\WooCommerceLogger;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 

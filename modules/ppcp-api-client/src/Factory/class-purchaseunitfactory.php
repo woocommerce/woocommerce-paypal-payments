@@ -99,7 +99,7 @@ class PurchaseUnitFactory {
 	}
 
 	/**
-	 * Creates a PurchaseUnit based off a Woocommerce order.
+	 * Creates a PurchaseUnit based off a WooCommerce order.
 	 *
 	 * @param \WC_Order $order The order.
 	 *
@@ -137,7 +137,7 @@ class PurchaseUnitFactory {
 	}
 
 	/**
-	 * Creates a PurchaseUnit based off a Woocommerce cart.
+	 * Creates a PurchaseUnit based off a WooCommerce cart.
 	 *
 	 * @param \WC_Cart $cart The cart.
 	 *

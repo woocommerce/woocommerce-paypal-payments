@@ -15,7 +15,7 @@ use Inpsyde\PayPalCommerce\Session\SessionHandler;
 use Inpsyde\PayPalCommerce\TestCase;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
-use Inpsyde\Woocommerce\Logging\WoocommerceLoggingModule;
+use Inpsyde\WooCommerce\Logging\WooCommerceLoggingModule;
 use Mockery;
 
 class OrderProcessorTest extends TestCase

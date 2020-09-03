@@ -80,9 +80,9 @@ class OrderFactory {
 	}
 
 	/**
-	 * Creates an Order object based off a Woocommerce order and another Order object.
+	 * Creates an Order object based off a WooCommerce order and another Order object.
 	 *
-	 * @param \WC_Order $wc_order The Woocommerce order.
+	 * @param \WC_Order $wc_order The WooCommerce order.
 	 * @param Order     $order The order object.
 	 *
 	 * @return Order

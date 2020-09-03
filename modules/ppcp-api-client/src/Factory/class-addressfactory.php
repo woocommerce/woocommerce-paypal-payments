@@ -20,7 +20,7 @@ class AddressFactory {
 	/**
 	 * Returns either the shipping or billing Address object of a customer.
 	 *
-	 * @param \WC_Customer $customer The Woocommerce customer.
+	 * @param \WC_Customer $customer The WooCommerce customer.
 	 * @param string       $type Either 'shipping' or 'billing'.
 	 *
 	 * @return Address
@@ -43,7 +43,7 @@ class AddressFactory {
 	}
 
 	/**
-	 * Returns an Address object based of a Woocommerce order.
+	 * Returns an Address object based of a WooCommerce order.
 	 *
 	 * @param \WC_Order $order The order.
 	 *

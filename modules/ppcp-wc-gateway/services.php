@@ -183,7 +183,7 @@ return array(
 			'sandbox_on'                 => array(
 				'title'        => __( 'Sandbox', 'paypal-for-woocommerce' ),
 				'type'         => 'checkbox',
-				'label'        => __( 'To test your Woocommerce installation, you can use the sandbox mode.', 'paypal-for-woocommerce' ),
+				'label'        => __( 'To test your WooCommerce installation, you can use the sandbox mode.', 'paypal-for-woocommerce' ),
 				'default'      => 0,
 				'screens'      => array(
 					State::STATE_START,

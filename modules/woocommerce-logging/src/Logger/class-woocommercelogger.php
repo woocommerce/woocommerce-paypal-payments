@@ -5,12 +5,12 @@
  *
  * This is a decorator that makes any WooCommerce Logger PSR-3-compatible
  *
- * @package Inpsyde\Woocommerce\Logging\Logger
+ * @package Inpsyde\WooCommerce\Logging\Logger
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\Woocommerce\Logging\Logger;
+namespace Inpsyde\WooCommerce\Logging\Logger;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\LoggerTrait;
@@ -24,7 +24,7 @@ class WooCommerceLogger implements LoggerInterface {
 	use LoggerTrait;
 
 	/**
-	 * The Woocommerce logger.
+	 * The WooCommerce logger.
 	 *
 	 * @var \WC_Logger_Interface
 	 */
@@ -40,7 +40,7 @@ class WooCommerceLogger implements LoggerInterface {
 	/**
 	 * WooCommerceLogger constructor.
 	 *
-	 * @param \WC_Logger_Interface $wc_logger The Woocommerce logger.
+	 * @param \WC_Logger_Interface $wc_logger The WooCommerce logger.
 	 * @param string               $source                  The source.
 	 */
 	public function __construct( \WC_Logger_Interface $wc_logger, string $source ) {
