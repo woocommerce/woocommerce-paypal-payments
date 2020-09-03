@@ -152,10 +152,12 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	public function init_form_fields() {
 		$this->form_fields = array(
 			'enabled' => array(
-				'title'   => __( 'Enable/Disable', 'paypal-for-woocommerce' ),
-				'type'    => 'checkbox',
-				'label'   => __( 'Enable PayPal Checkout', 'paypal-for-woocommerce' ),
-				'default' => 'no',
+				'title'       => __( 'Enable/Disable', 'paypal-for-woocommerce' ),
+				'type'        => 'checkbox',
+				'desc_tip'    => true,
+				'description' => __( 'In order to use PayPal or PayPal Card Processing, you need to enable the Gateway.', 'paypal-for-woocommerce' ),
+				'label'       => __( 'Enable the PayPal Gateway', 'paypal-for-woocommerce' ),
+				'default'     => 'no',
 			),
 			'ppcp'    => array(
 				'type' => 'ppcp',
