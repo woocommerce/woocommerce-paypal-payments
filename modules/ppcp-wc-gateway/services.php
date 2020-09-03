@@ -290,6 +290,9 @@ return array(
 			),
 			'dcc_enabled'                => array(
 				'title'        => __( 'Enable/Disable', 'paypal-for-woocommerce' ),
+				'desc_tip'     => true,
+				'description'  => __( 'Once enabled, the Credit Card option will show up in the checkout.', 'paypal-for-woocommerce' ),
+				'label'        => __( 'Enable PayPal Card Processing', 'paypal-for-woocommerce' ),
 				'type'         => 'checkbox',
 				'default'      => false,
 				'gateway'      => 'dcc',
