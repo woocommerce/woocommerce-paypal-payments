@@ -277,38 +277,18 @@ class SettingsRenderer {
 			<?php
 		endforeach;
 
-		if ( $is_dcc && State::STATE_ONBOARDED === $this->state->current_state() ) :
-			?>
-		<tr>
-			<th><?php esc_html_e( '3D Secure', 'paypal-for-woocommerce' ); ?></th>
-			<td>
-				<p>
-					<?php
-					/**
-					 * We still need to provide a docs link.
-					 *
-					 * @todo: Provide link to documentation.
-					 */
-					echo wp_kses_post(
-						sprintf(
-							// translators: %1$s and %2$s is a link tag.
-							__(
-								'3D Secure benefits cardholders and merchants by providing
-                                  an additional layer of verification using Verified by Visa,
-                                  MasterCard SecureCode and American Express SafeKey.
-                                  %1$sLearn more about 3D Secure.%2$s',
-								'paypal-for-woocommerce'
-							),
-							'<a href = "#">',
-							'</a>'
-						)
-					);
-					?>
-				</p>
-			</td>
-		</tr>
-			<?php
-		endif;
+		if ( $is_dcc ) {
+			if ( $this->dcc_applies->for_country_currency() ) {
+				if ( State::STATE_ONBOARDED > $this->state->current_state() ) {
+					$this->render_dcc_onboarding_info();
+				}
+				if ( State::STATE_ONBOARDED === $this->state->current_state() ) {
+					$this->render_3d_secure_info();
+				}
+			} else {
+				$this->render_dcc_does_not_apply_info();
+			}
+		}
 	}
 
 	/**
@@ -328,5 +308,102 @@ class SettingsRenderer {
                     value = "' . esc_attr( $value ) . '"
                     > ';
 		}
+	}
+
+	/**
+	 * Renders the 3d secure info text.
+	 */
+	private function render_3d_secure_info() {
+		?>
+<tr>
+	<th><?php esc_html_e( '3D Secure', 'paypal-for-woocommerce' ); ?></th>
+	<td>
+		<p>
+			<?php
+			/**
+			 * We still need to provide a docs link.
+			 *
+			 * @todo: Provide link to documentation.
+			 */
+			echo wp_kses_post(
+				sprintf(
+				// translators: %1$s and %2$s is a link tag.
+					__(
+						'3D Secure benefits cardholders and merchants by providing
+                                  an additional layer of verification using Verified by Visa,
+                                  MasterCard SecureCode and American Express SafeKey.
+                                  %1$sLearn more about 3D Secure.%2$s',
+						'paypal-for-woocommerce'
+					),
+					'<a href = "#">',
+					'</a>'
+				)
+			);
+			?>
+		</p>
+	</td>
+</tr>
+		<?php
+	}
+
+	/**
+	 * Renders the DCC onboarding info.
+	 */
+	private function render_dcc_onboarding_info() {
+		?>
+<tr>
+	<th><?php esc_html_e( 'Onboarding', 'paypal-for-woocommerce' ); ?></th>
+<td class="notice notice-error">
+	<p>
+		<?php
+			esc_html_e(
+				'You need to complete your onboarding, before you can use the PayPal Card Processing option.',
+				'paypal-for-woocommerce'
+			);
+		?>
+
+		<a
+			href="<?php echo esc_url( admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ) ); ?>"
+			>
+			<?php esc_html_e( 'Click here to complete your onboarding.', 'paypal-for-woocommerce' ); ?>
+		</a>
+	</p>
+</td>
+</tr>
+		<?php
+	}
+
+	/**
+	 * Renders the info, that DCC is not available in the merchant's country.
+	 */
+	private function render_dcc_does_not_apply_info() {
+		?>
+		<tr>
+			<th><?php esc_html_e( 'Card Processing not available', 'paypal-for-woocommerce' ); ?></th>
+			<td class="notice notice-error">
+				<p>
+					<?php
+					esc_html_e(
+						'Unfortunatly, the card processing option is not yet available in your country.',
+						'paypal-for-woocommerce'
+					);
+					?>
+
+					<a
+							href="https://developer.paypal.com/docs/platforms/checkout/reference/country-availability-advanced-cards/"
+							target="_blank"
+							rel="noreferrer noopener"
+					>
+						<?php
+						esc_html_e(
+							'Click here to see, in which countries this option is currently available.',
+							'paypal-for-woocommerce'
+						);
+						?>
+					</a>
+				</p>
+			</td>
+		</tr>
+		<?php
 	}
 }
