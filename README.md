@@ -12,11 +12,10 @@ PayPal Commerce Platform for WooCommerce
 
 ## Installation
 
-The best way to use this package is through Composer:
-
-```BASH
-$ composer require inpsyde/woocommerce-paypal-commerce-gateway
-```
+1. Clone repository
+2. `$ cd paypal-for-woocommerce`
+3. `$ composer install`
+4. `$ yarn run build`
 
 ## Usage
 
