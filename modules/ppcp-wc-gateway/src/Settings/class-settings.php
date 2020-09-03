@@ -79,17 +79,7 @@ class Settings implements ContainerInterface {
 	 */
 	public function reset(): bool {
 		$this->load();
-		$fields_to_reset = array(
-			'enabled',
-			'dcc_gateway_enabled',
-			'intent',
-			'client_id',
-			'client_secret',
-			'merchant_email',
-		);
-		foreach ( $fields_to_reset as $id ) {
-			$this->settings[ $id ] = null;
-		}
+		$this->settings = array();
 
 		return true;
 	}

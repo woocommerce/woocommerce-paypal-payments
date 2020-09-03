@@ -14,6 +14,7 @@ use Inpsyde\PayPalCommerce\Session\SessionHandler;
 use Inpsyde\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use Inpsyde\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use Inpsyde\PayPalCommerce\WcGateway\Processor\OrderProcessor;
+use Inpsyde\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use Psr\Container\ContainerInterface;
 
@@ -116,11 +117,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			);
 		}
 
-		$this->method_title       = __( 'PayPal Checkout', 'paypal-for-woocommerce' );
-		$this->method_description = __(
-			'Accept PayPal, PayPal Credit and alternative payment types with PayPal’s latest solution.',
-			'paypal-for-woocommerce'
-		);
+		$this->method_title       = $this->define_method_title();
+		$this->method_description = $this->define_method_description();
 		$this->title              = $this->config->has( 'title' ) ?
 			$this->config->get( 'title' ) : $this->method_title;
 		$this->description        = $this->config->has( 'description' ) ?
@@ -154,15 +152,20 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	public function init_form_fields() {
 		$this->form_fields = array(
 			'enabled' => array(
-				'title'   => __( 'Enable/Disable', 'paypal-for-woocommerce' ),
-				'type'    => 'checkbox',
-				'label'   => __( 'Enable PayPal Payments', 'paypal-for-woocommerce' ),
-				'default' => 'no',
+				'title'       => __( 'Enable/Disable', 'paypal-for-woocommerce' ),
+				'type'        => 'checkbox',
+				'desc_tip'    => true,
+				'description' => __( 'In order to use PayPal or PayPal Card Processing, you need to enable the Gateway.', 'paypal-for-woocommerce' ),
+				'label'       => __( 'Enable the PayPal Gateway', 'paypal-for-woocommerce' ),
+				'default'     => 'no',
 			),
 			'ppcp'    => array(
 				'type' => 'ppcp',
 			),
 		);
+		if ( $this->is_credit_card_tab() ) {
+			unset( $this->form_fields['enabled'] );
+		}
 	}
 
 	/**
@@ -299,4 +302,65 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		ob_end_clean();
 		return $content;
 	}
+
+	/**
+	 * Defines the method title. If we are on the credit card tab in the settings, we want to change this.
+	 *
+	 * @return string
+	 */
+	private function define_method_title(): string {
+		if ( $this->is_credit_card_tab() ) {
+			return __( 'PayPal Card Processing', 'paypal-for-woocommerce' );
+		}
+		if ( $this->is_paypal_tab() ) {
+			return __( 'PayPal Checkout', 'paypal-for-woocommerce' );
+		}
+		return __( 'PayPal', 'paypal-for-woocommerce' );
+	}
+
+	/**
+	 * Defines the method description. If we are on the credit card tab in the settings, we want to change this.
+	 *
+	 * @return string
+	 */
+	private function define_method_description(): string {
+		if ( $this->is_credit_card_tab() ) {
+			return __(
+				'Accept debit and credit cards, and local payment methods with PayPal’s latest solution.',
+				'paypal-for-woocommerce'
+			);
+		}
+
+		return __(
+			'Accept PayPal, PayPal Credit and alternative payment types with PayPal’s latest solution.',
+			'paypal-for-woocommerce'
+		);
+	}
+
+	// phpcs:disable WordPress.Security.NonceVerification.Recommended
+
+	/**
+	 * Determines, whether the current session is on the credit card tab in the admin settings.
+	 *
+	 * @return bool
+	 */
+	private function is_credit_card_tab() : bool {
+		return is_admin()
+			&& isset( $_GET[ SectionsRenderer::KEY ] )
+			&& CreditCardGateway::ID === sanitize_text_field( wp_unslash( $_GET[ SectionsRenderer::KEY ] ) );
+
+	}
+
+	/**
+	 * Whether we are on the PayPal settings tab.
+	 *
+	 * @return bool
+	 */
+	private function is_paypal_tab() : bool {
+		return ! $this->is_credit_card_tab()
+			&& is_admin()
+			&& isset( $_GET['section'] )
+			&& self::ID === sanitize_text_field( wp_unslash( $_GET['section'] ) );
+	}
+	// phpcs:enable WordPress.Security.NonceVerification.Recommended
 }

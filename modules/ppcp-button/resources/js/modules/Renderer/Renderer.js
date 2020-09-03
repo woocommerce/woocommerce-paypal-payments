@@ -11,7 +11,7 @@ class Renderer {
     }
 
     renderButtons(wrapper, contextConfig) {
-        if (! document.querySelector(wrapper) || this.isAlreadyRendered(wrapper)) {
+        if (! document.querySelector(wrapper) || this.isAlreadyRendered(wrapper) || 'undefined' === typeof paypal.Buttons ) {
             return;
         }
 

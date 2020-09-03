@@ -80,11 +80,11 @@ class CreditCardGateway extends PayPalGateway {
 		}
 
 		$this->method_title       = __(
-			'PayPal Credit Card Processing',
+			'PayPal Card Processing',
 			'paypal-for-woocommerce'
 		);
 		$this->method_description = __(
-			'Provide your customers with the option to pay with credit card.',
+			'Accept debit and credit cards, and local payment methods with PayPal’s latest solution.',
 			'paypal-for-woocommerce'
 		);
 		$this->title              = $this->config->has( 'dcc_gateway_title' ) ?
@@ -121,20 +121,6 @@ class CreditCardGateway extends PayPalGateway {
 				'type' => 'ppcp',
 			),
 		);
-	}
-
-	/**
-	 * Renders the settings.
-	 *
-	 * @return string
-	 */
-	public function generate_ppcp_html(): string {
-
-		ob_start();
-		$this->settings_renderer->render( true );
-		$content = ob_get_contents();
-		ob_end_clean();
-		return $content;
 	}
 
 	/**
@@ -210,5 +196,14 @@ class CreditCardGateway extends PayPalGateway {
 				'paypal-for-woocommerce'
 			),
 		);
+	}
+
+	/**
+	 * Whether the gateway is available or not.
+	 *
+	 * @return bool
+	 */
+	public function is_available() : bool {
+		return $this->config->has( 'dcc_enabled' ) && $this->config->get( 'dcc_enabled' );
 	}
 }

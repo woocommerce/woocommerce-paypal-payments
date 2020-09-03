@@ -23,6 +23,7 @@ use Inpsyde\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use Inpsyde\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
 use Inpsyde\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use Inpsyde\PayPalCommerce\WcGateway\Processor\OrderProcessor;
+use Inpsyde\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsListener;
 use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
@@ -81,6 +82,9 @@ return array(
 		static function ( ContainerInterface $container ): AuthorizeOrderActionNotice {
 			return new AuthorizeOrderActionNotice();
 		},
+	'wcgateway.settings.sections-renderer'         => static function ( ContainerInterface $container ): SectionsRenderer {
+		return new SectionsRenderer();
+	},
 	'wcgateway.settings.render'                    => static function ( ContainerInterface $container ): SettingsRenderer {
 		$settings      = $container->get( 'wcgateway.settings' );
 		$state         = $container->get( 'onboarding.state' );
@@ -178,7 +182,7 @@ return array(
 					State::STATE_PROGRESSIVE,
 				),
 				'requirements' => array(),
-				'gateway'      => 'all',
+				'gateway'      => 'paypal',
 			),
 			'sandbox_on'                 => array(
 				'title'        => __( 'Sandbox', 'paypal-for-woocommerce' ),
@@ -189,7 +193,7 @@ return array(
 					State::STATE_START,
 				),
 				'requirements' => array(),
-				'gateway'      => 'all',
+				'gateway'      => 'paypal',
 			),
 			'sandbox_on_info'            => array(
 				'title'        => __( 'Sandbox', 'paypal-for-woocommerce' ),
@@ -201,7 +205,7 @@ return array(
 				),
 				'hidden'       => 'sandbox_on',
 				'requirements' => array(),
-				'gateway'      => 'all',
+				'gateway'      => 'paypal',
 			),
 			'merchant_email'             => array(
 				'title'        => __( 'Email address', 'paypal-for-woocommerce' ),
@@ -214,7 +218,7 @@ return array(
 					State::STATE_START,
 				),
 				'requirements' => array(),
-				'gateway'      => 'all',
+				'gateway'      => 'paypal',
 			),
 			'merchant_email_info'        => array(
 				'title'        => __( 'Email address', 'paypal-for-woocommerce' ),
@@ -226,7 +230,7 @@ return array(
 				),
 				'hidden'       => 'merchant_email',
 				'requirements' => array(),
-				'gateway'      => 'all',
+				'gateway'      => 'paypal',
 			),
 			'toggle_manual_input'        => array(
 				'type'         => 'ppcp-text',
@@ -238,7 +242,7 @@ return array(
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
-				'gateway'      => 'all',
+				'gateway'      => 'paypal',
 			),
 			'client_id'                  => array(
 				'title'        => __( 'Client Id', 'paypal-for-woocommerce' ),
@@ -252,7 +256,7 @@ return array(
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
-				'gateway'      => 'all',
+				'gateway'      => 'paypal',
 			),
 			'client_secret'              => array(
 				'title'        => __( 'Secret Key', 'paypal-for-woocommerce' ),
@@ -266,7 +270,7 @@ return array(
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
-				'gateway'      => 'all',
+				'gateway'      => 'paypal',
 			),
 			'title'                      => array(
 				'title'        => __( 'Title', 'paypal-for-woocommerce' ),
@@ -284,6 +288,21 @@ return array(
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
+			'dcc_enabled'                => array(
+				'title'        => __( 'Enable/Disable', 'paypal-for-woocommerce' ),
+				'desc_tip'     => true,
+				'description'  => __( 'Once enabled, the Credit Card option will show up in the checkout.', 'paypal-for-woocommerce' ),
+				'label'        => __( 'Enable PayPal Card Processing', 'paypal-for-woocommerce' ),
+				'type'         => 'checkbox',
+				'default'      => false,
+				'gateway'      => 'dcc',
+				'requirements' => array(
+					'dcc',
+				),
+				'screens'      => array(
+					State::STATE_ONBOARDED,
+				),
+			),
 			'dcc_gateway_title'          => array(
 				'title'        => __( 'Title', 'paypal-for-woocommerce' ),
 				'type'         => 'text',
@@ -294,10 +313,11 @@ return array(
 				'default'      => __( 'Credit Cards', 'paypal-for-woocommerce' ),
 				'desc_tip'     => true,
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
 					State::STATE_ONBOARDED,
 				),
-				'requirements' => array(),
+				'requirements' => array(
+					'dcc',
+				),
 				'gateway'      => 'dcc',
 			),
 			'description'                => array(
@@ -332,10 +352,11 @@ return array(
 					'paypal-for-woocommerce'
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
 					State::STATE_ONBOARDED,
 				),
-				'requirements' => array(),
+				'requirements' => array(
+					'dcc',
+				),
 				'gateway'      => 'dcc',
 			),
 			'intent'                     => array(
@@ -356,7 +377,7 @@ return array(
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
-				'gateway'      => 'all',
+				'gateway'      => 'paypal',
 			),
 			'capture_for_virtual_only'   => array(
 				'title'        => __( 'Capture Virtual-Only Orders ', 'paypal-for-woocommerce' ),
@@ -372,7 +393,7 @@ return array(
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
-				'gateway'      => 'all',
+				'gateway'      => 'paypal',
 			),
 			'payee_preferred'            => array(
 				'title'        => __( 'Instant Payments ', 'paypal-for-woocommerce' ),
@@ -484,7 +505,7 @@ return array(
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
-				'gateway'      => 'all',
+				'gateway'      => 'paypal',
 			),
 			'prefix'                     => array(
 				'title'        => __( 'Installation prefix', 'paypal-for-woocommerce' ),
@@ -498,13 +519,25 @@ return array(
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
-				'gateway'      => 'all',
+				'gateway'      => 'paypal',
 			),
 
 			// General button styles.
 			'button_style_heading'       => array(
 				'heading'      => __( 'Checkout', 'paypal-for-woocommerce' ),
 				'type'         => 'ppcp-heading',
+				'screens'      => array(
+					State::STATE_PROGRESSIVE,
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
+			'button_enabled'     => array(
+				'title'        => __( 'Enable buttons on Checkout', 'paypal-for-woocommerce' ),
+				'type'         => 'checkbox',
+				'label'        => __( 'Enable on Checkout', 'paypal-for-woocommerce' ),
+				'default'      => true,
 				'screens'      => array(
 					State::STATE_PROGRESSIVE,
 					State::STATE_ONBOARDED,
@@ -1337,9 +1370,9 @@ return array(
 				'gateway'      => 'paypal',
 			),
 			'message_cart_enabled'       => array(
-				'title'        => __( 'Enable message on Single Product', 'paypal-for-woocommerce' ),
+				'title'        => __( 'Enable message on Cart', 'paypal-for-woocommerce' ),
 				'type'         => 'checkbox',
-				'label'        => __( 'Enable on Single Product', 'paypal-for-woocommerce' ),
+				'label'        => __( 'Enable on Cart', 'paypal-for-woocommerce' ),
 				'default'      => true,
 				'screens'      => array(
 					State::STATE_PROGRESSIVE,

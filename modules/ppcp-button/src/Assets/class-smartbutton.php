@@ -165,8 +165,8 @@ class SmartButton implements SmartButtonInterface {
 		}
 
 		if (
-			$this->settings->has( 'dcc_gateway_enabled' )
-			&& $this->settings->get( 'dcc_gateway_enabled' )
+			$this->settings->has( 'dcc_enabled' )
+			&& $this->settings->get( 'dcc_enabled' )
 			&& ! $this->session_handler->order()
 		) {
 			add_action(
@@ -312,25 +312,39 @@ class SmartButton implements SmartButtonInterface {
 		if ( ! $this->can_save_vault_token() && $this->has_subscriptions() ) {
 			return false;
 		}
-		wp_enqueue_style(
-			'ppcp-hosted-fields',
-			$this->module_url . '/assets/css/hosted-fields.css',
-			array(),
-			1
-		);
-		wp_enqueue_script(
-			'ppcp-smart-button',
-			$this->module_url . '/assets/js/button.js',
-			array( 'jquery' ),
-			1,
-			true
-		);
 
-		wp_localize_script(
-			'ppcp-smart-button',
-			'PayPalCommerceGateway',
-			$this->localize_script()
-		);
+		if ( $this->settings->has( 'dcc_enabled' ) && $this->settings->get( 'dcc_enabled' ) ) {
+			wp_enqueue_style(
+				'ppcp-hosted-fields',
+				$this->module_url . '/assets/css/hosted-fields.css',
+				array(),
+				1
+			);
+		}
+
+		$load_script = false;
+		if ( is_checkout() && $this->settings->has( 'dcc_enabled' ) && $this->settings->get( 'dcc_enabled' ) ) {
+			$load_script = true;
+		}
+		if ( $this->load_button_component() ) {
+			$load_script = true;
+		}
+
+		if ( $load_script ) {
+			wp_enqueue_script(
+				'ppcp-smart-button',
+				$this->module_url . '/assets/js/button.js',
+				array( 'jquery' ),
+				1,
+				true
+			);
+
+			wp_localize_script(
+				'ppcp-smart-button',
+				'PayPalCommerceGateway',
+				$this->localize_script()
+			);
+		}
 		return true;
 	}
 
@@ -732,7 +746,11 @@ class SmartButton implements SmartButtonInterface {
 	 * @throws \Inpsyde\PayPalCommerce\WcGateway\Exception\NotFoundException If a setting was not found.
 	 */
 	private function components(): array {
-		$components = array( 'buttons' );
+		$components = array();
+
+		if ( $this->load_button_component() ) {
+			$components[] = 'buttons';
+		}
 		if ( $this->messages_apply->for_country() ) {
 			$components[] = 'messages';
 		}
@@ -740,6 +758,45 @@ class SmartButton implements SmartButtonInterface {
 			$components[] = 'hosted-fields';
 		}
 		return $components;
+	}
+
+	/**
+	 * Determines whether the button component should be loaded.
+	 *
+	 * @return bool
+	 * @throws \Inpsyde\PayPalCommerce\WcGateway\Exception\NotFoundException If a setting has not been found.
+	 */
+	private function load_button_component() : bool {
+
+		$load_buttons = false;
+		if (
+			$this->context() === 'checkout'
+			&& $this->settings->has( 'button_enabled' )
+			&& $this->settings->get( 'button_enabled' )
+		) {
+			$load_buttons = true;
+		}
+		if (
+			$this->context() === 'product'
+			&& $this->settings->has( 'button_product_enabled' )
+			&& $this->settings->get( 'button_product_enabled' )
+		) {
+			$load_buttons = true;
+		}
+		if (
+			$this->settings->has( 'button_mini-cart_enabled' )
+			&& $this->settings->get( 'button_mini-cart_enabled' )
+		) {
+			$load_buttons = true;
+		}
+		if (
+			$this->context() === 'cart'
+			&& $this->settings->has( 'button_cart_enabled' )
+			&& $this->settings->get( 'button_cart_enabled' )
+		) {
+			$load_buttons = true;
+		}
+		return $load_buttons;
 	}
 
 	/**
@@ -772,7 +829,7 @@ class SmartButton implements SmartButtonInterface {
 			return false;
 		}
 		$keys = array(
-			'dcc_gateway_enabled' => 'is_checkout',
+			'dcc_enabled' => 'is_checkout',
 		);
 		foreach ( $keys as $key => $callback ) {
 			if ( $this->settings->has( $key ) && $this->settings->get( $key ) && $callback() ) {
@@ -811,6 +868,6 @@ class SmartButton implements SmartButtonInterface {
 		if ( is_bool( $value ) ) {
 			$value = $value ? 'true' : 'false';
 		}
-		return $value;
+		return (string) $value;
 	}
 }
