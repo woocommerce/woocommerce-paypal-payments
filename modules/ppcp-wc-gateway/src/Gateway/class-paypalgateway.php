@@ -310,7 +310,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		if ( $this->is_credit_card_tab() ) {
 			return __( 'PayPal Card Processing', 'paypal-for-woocommerce' );
 		}
-		return __( 'PayPal Checkout', 'paypal-for-woocommerce' );
+		return __( 'PayPal', 'paypal-for-woocommerce' );
 	}
 
 	/**
