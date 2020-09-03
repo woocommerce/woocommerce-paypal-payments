@@ -293,7 +293,9 @@ return array(
 				'type'         => 'checkbox',
 				'default'      => false,
 				'gateway'      => 'dcc',
-				'requirements' => array(),
+				'requirements' => array(
+					'dcc',
+				),
 				'screens'      => array(
 					State::STATE_ONBOARDED,
 				),
@@ -310,7 +312,9 @@ return array(
 				'screens'      => array(
 					State::STATE_ONBOARDED,
 				),
-				'requirements' => array(),
+				'requirements' => array(
+					'dcc',
+				),
 				'gateway'      => 'dcc',
 			),
 			'description'                => array(
@@ -347,7 +351,9 @@ return array(
 				'screens'      => array(
 					State::STATE_ONBOARDED,
 				),
-				'requirements' => array(),
+				'requirements' => array(
+					'dcc',
+				),
 				'gateway'      => 'dcc',
 			),
 			'intent'                     => array(

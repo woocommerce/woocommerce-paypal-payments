@@ -79,7 +79,7 @@ class Settings implements ContainerInterface {
 	 */
 	public function reset(): bool {
 		$this->load();
-		$this->settings = [];
+		$this->settings = array();
 
 		return true;
 	}
