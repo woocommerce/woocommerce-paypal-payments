@@ -9,9 +9,7 @@ declare( strict_types = 1 );
  * Author:      Inpsyde GmbH
  * Author URI:  https://inpsyde.com/
  * License:     GPL-2.0
- * Text Domain: woocommerce-paypal-commerce-gateway
- * Domain Path: /languages
- * Network:     TODO: Specify value 'true' or remove line
+ * Text Domain: paypal-for-woocommerce
  */
 
 
