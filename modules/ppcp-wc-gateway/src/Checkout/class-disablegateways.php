@@ -73,6 +73,10 @@ class DisableGateways {
 			unset( $methods[ CreditCardGateway::ID ] );
 		}
 
+		if ( $this->settings->has('button_enabled') && ! $this->settings->get('button_enabled') && ! $this->session_handler->order()) {
+			unset( $methods[ PayPalGateway::ID] );
+		}
+
 		if ( ! $this->needs_to_disable_gateways() ) {
 			return $methods;
 		}

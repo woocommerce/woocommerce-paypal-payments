@@ -533,6 +533,18 @@ return array(
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
+			'button_enabled'     => array(
+				'title'        => __( 'Enable buttons on Checkout', 'paypal-for-woocommerce' ),
+				'type'         => 'checkbox',
+				'label'        => __( 'Enable on Checkout', 'paypal-for-woocommerce' ),
+				'default'      => true,
+				'screens'      => array(
+					State::STATE_PROGRESSIVE,
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
 			'button_layout'              => array(
 				'title'        => __( 'Button Layout', 'paypal-for-woocommerce' ),
 				'type'         => 'select',
