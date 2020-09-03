@@ -321,19 +321,30 @@ class SmartButton implements SmartButtonInterface {
 				1
 			);
 		}
-		wp_enqueue_script(
-			'ppcp-smart-button',
-			$this->module_url . '/assets/js/button.js',
-			array( 'jquery' ),
-			1,
-			true
-		);
 
-		wp_localize_script(
-			'ppcp-smart-button',
-			'PayPalCommerceGateway',
-			$this->localize_script()
-		);
+		$load_script = false;
+		if ( is_checkout() && $this->settings->has( 'dcc_enabled' ) && $this->settings->get( 'dcc_enabled' ) ) {
+			$load_script = true;
+		}
+		if ( $this->load_button_component() ) {
+			$load_script = true;
+		}
+
+		if ( $load_script ) {
+			wp_enqueue_script(
+				'ppcp-smart-button',
+				$this->module_url . '/assets/js/button.js',
+				array( 'jquery' ),
+				1,
+				true
+			);
+
+			wp_localize_script(
+				'ppcp-smart-button',
+				'PayPalCommerceGateway',
+				$this->localize_script()
+			);
+		}
 		return true;
 	}
 
@@ -737,6 +748,26 @@ class SmartButton implements SmartButtonInterface {
 	private function components(): array {
 		$components = array();
 
+		if ( $this->load_button_component() ) {
+			$components[] = 'buttons';
+		}
+		if ( $this->messages_apply->for_country() ) {
+			$components[] = 'messages';
+		}
+		if ( $this->dcc_is_enabled() ) {
+			$components[] = 'hosted-fields';
+		}
+		return $components;
+	}
+
+	/**
+	 * Determines whether the button component should be loaded.
+	 *
+	 * @return bool
+	 * @throws \Inpsyde\PayPalCommerce\WcGateway\Exception\NotFoundException If a setting has not been found.
+	 */
+	private function load_button_component() : bool {
+
 		$load_buttons = false;
 		if (
 			$this->context() === 'checkout'
@@ -753,8 +784,7 @@ class SmartButton implements SmartButtonInterface {
 			$load_buttons = true;
 		}
 		if (
-			$this->context() === 'mini-cart'
-			&& $this->settings->has( 'button_mini-cart_enabled' )
+			$this->settings->has( 'button_mini-cart_enabled' )
 			&& $this->settings->get( 'button_mini-cart_enabled' )
 		) {
 			$load_buttons = true;
@@ -766,16 +796,7 @@ class SmartButton implements SmartButtonInterface {
 		) {
 			$load_buttons = true;
 		}
-		if ( $load_buttons ) {
-			$components[] = 'buttons';
-		}
-		if ( $this->messages_apply->for_country() ) {
-			$components[] = 'messages';
-		}
-		if ( $this->dcc_is_enabled() ) {
-			$components[] = 'hosted-fields';
-		}
-		return $components;
+		return $load_buttons;
 	}
 
 	/**
