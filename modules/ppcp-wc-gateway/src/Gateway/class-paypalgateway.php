@@ -310,6 +310,9 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		if ( $this->is_credit_card_tab() ) {
 			return __( 'PayPal Card Processing', 'paypal-for-woocommerce' );
 		}
+		if ( $this->is_paypal_tab() ) {
+			return __( 'PayPal Checkout', 'paypal-for-woocommerce' );
+		}
 		return __( 'PayPal', 'paypal-for-woocommerce' );
 	}
 
@@ -340,8 +343,22 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @return bool
 	 */
 	private function is_credit_card_tab() : bool {
-		return is_admin() && isset( $_GET[ SectionsRenderer::KEY ] ) && CreditCardGateway::ID === sanitize_text_field( wp_unslash( $_GET[ SectionsRenderer::KEY ] ) );
+		return is_admin()
+			&& isset( $_GET[ SectionsRenderer::KEY ] )
+			&& CreditCardGateway::ID === sanitize_text_field( wp_unslash( $_GET[ SectionsRenderer::KEY ] ) );
 
+	}
+
+	/**
+	 * Whether we are on the PayPal settings tab.
+	 *
+	 * @return bool
+	 */
+	private function is_paypal_tab() : bool {
+		return ! $this->is_credit_card_tab()
+			&& is_admin()
+			&& isset( $_GET['section'] )
+			&& self::ID === sanitize_text_field( wp_unslash( $_GET['section'] ) );
 	}
 	// phpcs:enable WordPress.Security.NonceVerification.Recommended
 }
