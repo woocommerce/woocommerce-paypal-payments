@@ -71,6 +71,17 @@ const groupToggleSelect = (selector, group) => {
     )
 
     groupToggle(
+        '#ppcp-button_enabled',
+        [
+            '#field-button_layout',
+            '#field-button_tagline',
+            '#field-button_label',
+            '#field-button_color',
+            '#field-button_shape',
+        ]
+    );
+
+    groupToggle(
         '#ppcp-message_enabled',
         [
             '#field-message_layout',
