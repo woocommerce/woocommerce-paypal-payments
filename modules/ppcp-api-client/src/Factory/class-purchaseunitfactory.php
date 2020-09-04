@@ -149,7 +149,13 @@ class PurchaseUnitFactory {
 
 		$shipping = null;
 		$customer = \WC()->customer;
-		if ( is_a( $customer, \WC_Customer::class ) ) {
+		$needs_shipping = false;
+		foreach ( $items as $item) {
+			if ( $item->category() !== Item::DIGITAL_GOODS ) {
+				$needs_shipping = true;
+			}
+		}
+		if ( $needs_shipping && is_a( $customer, \WC_Customer::class ) ) {
 			$shipping = $this->shipping_factory->from_wc_customer( \WC()->customer );
 			if (
 				! $shipping->address()->country_code()
