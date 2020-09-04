@@ -110,6 +110,7 @@ class PurchaseUnitFactory {
 		$items    = $this->item_factory->from_wc_order( $order );
 		$shipping = $this->shipping_factory->from_wc_order( $order );
 		if (
+			! $this->shipping_needed( ... array_values( $items ) ) ||
 			empty( $shipping->address()->country_code() ) ||
 			( $shipping->address()->country_code() && ! $shipping->address()->postal_code() )
 		) {
@@ -149,13 +150,7 @@ class PurchaseUnitFactory {
 
 		$shipping = null;
 		$customer = \WC()->customer;
-		$needs_shipping = false;
-		foreach ( $items as $item) {
-			if ( $item->category() !== Item::DIGITAL_GOODS ) {
-				$needs_shipping = true;
-			}
-		}
-		if ( $needs_shipping && is_a( $customer, \WC_Customer::class ) ) {
+		if ( $this->shipping_needed( ... array_values( $items ) ) && is_a( $customer, \WC_Customer::class ) ) {
 			$shipping = $this->shipping_factory->from_wc_customer( \WC()->customer );
 			if (
 				! $shipping->address()->country_code()
@@ -248,5 +243,22 @@ class PurchaseUnitFactory {
 			$payments
 		);
 		return $purchase_unit;
+	}
+
+	/**
+	 * Whether we need a shipping address for a set of items or not.
+	 *
+	 * @param Item ...$items The items on based which the decision is made.
+	 *
+	 * @return bool
+	 */
+	private function shipping_needed( Item ...$items ): bool {
+
+		foreach ( $items as $item ) {
+			if ( $item->category() !== Item::DIGITAL_GOODS ) {
+				return true;
+			}
+		}
+		return false;
 	}
 }
