@@ -59,7 +59,7 @@ class OnboardingRenderer {
 						);
 					?>
 						</a>
-			<script>document.querySelector('[data-paypal-onboard-complete=onboardingCallback]').addEventListener('click', (e) => {e.preventDefault(); });</script>
+            <script>document.querySelector('[data-paypal-onboard-complete=onboardingCallback]').addEventListener('click', (e) => {if ('undefined' === typeof PAYPAL ) e.preventDefault(); });</script>
 					<script
 							id="paypal-js"
 							src="https://www.sandbox.paypal.com/webapps/merchantboarding/js/lib/lightbox/partner.js"
