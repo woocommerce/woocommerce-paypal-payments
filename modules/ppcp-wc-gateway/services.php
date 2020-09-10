@@ -1578,6 +1578,14 @@ return array(
 		if ( ! defined( 'PPCP_FLAG_SUBSCRIPTION' ) || ! PPCP_FLAG_SUBSCRIPTION ) {
 			unset( $fields['vault_enabled'] );
 		}
+		/**
+		 * Disable card for UK.
+		 */
+		$region  = wc_get_base_location();
+		$country = $region['country'];
+		if ( 'GB' === $country ) {
+			unset( $fields['disable_funding']['options']['card'] );
+		}
 		return $fields;
 	},
 
