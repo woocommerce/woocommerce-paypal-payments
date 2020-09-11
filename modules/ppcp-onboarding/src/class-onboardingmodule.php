@@ -2,19 +2,19 @@
 /**
  * The onboarding module.
  *
- * @package Inpsyde\PayPalCommerce\Onboarding
+ * @package WooCommerce\PayPalCommerce\Onboarding
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Onboarding;
+namespace WooCommerce\PayPalCommerce\Onboarding;
 
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
-use Inpsyde\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
-use Inpsyde\PayPalCommerce\Onboarding\Assets\OnboardingAssets;
-use Inpsyde\PayPalCommerce\Onboarding\Endpoint\LoginSellerEndpoint;
-use Inpsyde\PayPalCommerce\Onboarding\Render\OnboardingRenderer;
+use WooCommerce\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
+use WooCommerce\PayPalCommerce\Onboarding\Assets\OnboardingAssets;
+use WooCommerce\PayPalCommerce\Onboarding\Endpoint\LoginSellerEndpoint;
+use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingRenderer;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
 

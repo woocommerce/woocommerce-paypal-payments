@@ -2,15 +2,15 @@
 /**
  * Renders the "Connect to PayPal" button.
  *
- * @package Inpsyde\PayPalCommerce\Onboarding\Render
+ * @package WooCommerce\PayPalCommerce\Onboarding\Render
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Onboarding\Render;
+namespace WooCommerce\PayPalCommerce\Onboarding\Render;
 
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\PartnerReferrals;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnerReferrals;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
 /**
  * Class OnboardingRenderer

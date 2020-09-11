@@ -2,12 +2,12 @@
 /**
  * A Collection of all error responses for the order endpoint.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Helper
+ * @package WooCommerce\PayPalCommerce\ApiClient\Helper
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Helper;
+namespace WooCommerce\PayPalCommerce\ApiClient\Helper;
 
 /**
  * Class ErrorResponse

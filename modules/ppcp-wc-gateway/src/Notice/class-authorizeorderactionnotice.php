@@ -2,14 +2,14 @@
 /**
  * Contains the messages to display, when capturing an authorization manually.
  *
- * @package Inpsyde\PayPalCommerce\WcGateway\Notice
+ * @package WooCommerce\PayPalCommerce\WcGateway\Notice
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\WcGateway\Notice;
+namespace WooCommerce\PayPalCommerce\WcGateway\Notice;
 
-use Inpsyde\PayPalCommerce\AdminNotices\Entity\Message;
+use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
 
 /**
  * Class AuthorizeOrderActionNotice

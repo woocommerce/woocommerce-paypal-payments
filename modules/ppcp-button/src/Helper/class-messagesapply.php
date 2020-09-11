@@ -2,12 +2,12 @@
 /**
  * Helper class to determine if credit messaging should be displayed.
  *
- * @package Inpsyde\PayPalCommerce\Button\Helper
+ * @package WooCommerce\PayPalCommerce\Button\Helper
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Button\Helper;
+namespace WooCommerce\PayPalCommerce\Button\Helper;
 
 /**
  * Class MessagesApply

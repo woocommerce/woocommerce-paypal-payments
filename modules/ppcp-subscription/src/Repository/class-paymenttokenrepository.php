@@ -2,17 +2,17 @@
 /**
  * The payment token repository returns or deletes payment tokens for users.
  *
- * @package Inpsyde\PayPalCommerce\Subscription\Repository
+ * @package WooCommerce\PayPalCommerce\Subscription\Repository
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Subscription\Repository;
+namespace WooCommerce\PayPalCommerce\Subscription\Repository;
 
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\PaymentTokenEndpoint;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\PaymentToken;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokenEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
 
 /**
  * Class PaymentTokenRepository

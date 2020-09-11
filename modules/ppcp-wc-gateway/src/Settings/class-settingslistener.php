@@ -2,19 +2,19 @@
 /**
  * Listens to requests and updates the settings if necessary.
  *
- * @package Inpsyde\PayPalCommerce\WcGateway\Settings
+ * @package WooCommerce\PayPalCommerce\WcGateway\Settings
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\WcGateway\Settings;
+namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
-use Inpsyde\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
-use Inpsyde\PayPalCommerce\ApiClient\Helper\Cache;
-use Inpsyde\PayPalCommerce\Onboarding\State;
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use Inpsyde\PayPalCommerce\Webhooks\WebhookRegistrar;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
+use WooCommerce\PayPalCommerce\Onboarding\State;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar;
 use Psr\SimpleCache\CacheInterface;
 
 /**
@@ -87,7 +87,7 @@ class SettingsListener {
 	/**
 	 * Listens to the request.
 	 *
-	 * @throws \Inpsyde\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting was not found.
+	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting was not found.
 	 * @throws \Psr\SimpleCache\InvalidArgumentException  When the argument was invalid.
 	 */
 	public function listen() {
@@ -143,7 +143,7 @@ class SettingsListener {
 	 *
 	 * @param array $settings The settings.
 	 *
-	 * @throws \Inpsyde\PayPalCommerce\WcGateway\Exception\NotFoundException If a setting hasn't been found.
+	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException If a setting hasn't been found.
 	 */
 	private function maybe_register_webhooks( array $settings ) {
 

@@ -2,15 +2,15 @@
 /**
  * The services
  *
- * @package Inpsyde\PayPalCommerce\Subscription
+ * @package WooCommerce\PayPalCommerce\Subscription
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Subscription;
+namespace WooCommerce\PayPalCommerce\Subscription;
 
-use Inpsyde\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
-use Inpsyde\PayPalCommerce\Subscription\Repository\PaymentTokenRepository;
+use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\Subscription\Repository\PaymentTokenRepository;
 use Psr\Container\ContainerInterface;
 
 return array(

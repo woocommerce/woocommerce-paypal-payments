@@ -2,15 +2,15 @@
 /**
  * The Payments factory.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Factory
+ * @package WooCommerce\PayPalCommerce\ApiClient\Factory
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Factory;
+namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Authorization;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Payments;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Payments;
 
 /**
  * Class PaymentsFactory

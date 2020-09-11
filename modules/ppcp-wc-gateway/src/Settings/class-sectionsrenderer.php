@@ -2,15 +2,15 @@
 /**
  * Renders the Sections Tab.
  *
- * @package Inpsyde\PayPalCommerce\WcGateway\Settings
+ * @package WooCommerce\PayPalCommerce\WcGateway\Settings
  */
 
 declare( strict_types=1 );
 
-namespace Inpsyde\PayPalCommerce\WcGateway\Settings;
+namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 /**
  * Class SectionsRenderer

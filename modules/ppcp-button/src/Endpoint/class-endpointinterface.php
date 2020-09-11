@@ -2,12 +2,12 @@
 /**
  * The Endpoint interface.
  *
- * @package Inpsyde\PayPalCommerce\Button\Endpoint
+ * @package WooCommerce\PayPalCommerce\Button\Endpoint
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Button\Endpoint;
+namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 
 /**
  * Interface EndpointInterface

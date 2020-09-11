@@ -2,12 +2,12 @@
 /**
  * The message entity.
  *
- * @package Inpsyde\PayPalCommerce\AdminNotices\Entity
+ * @package WooCommerce\PayPalCommerce\AdminNotices\Entity
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\AdminNotices\Entity;
+namespace WooCommerce\PayPalCommerce\AdminNotices\Entity;
 
 /**
  * Class Message

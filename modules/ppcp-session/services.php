@@ -2,16 +2,16 @@
 /**
  * The services of the session module.
  *
- * @package Inpsyde\PayPalCommerce\Session
+ * @package WooCommerce\PayPalCommerce\Session
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Session;
+namespace WooCommerce\PayPalCommerce\Session;
 
 use Dhii\Data\Container\ContainerInterface;
-use Inpsyde\PayPalCommerce\Session\Cancellation\CancelController;
-use Inpsyde\PayPalCommerce\Session\Cancellation\CancelView;
+use WooCommerce\PayPalCommerce\Session\Cancellation\CancelController;
+use WooCommerce\PayPalCommerce\Session\Cancellation\CancelView;
 
 return array(
 	'session.handler'                 => function ( $container ) : SessionHandler {

@@ -2,12 +2,12 @@
 /**
  * The Payments object.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Entity
+ * @package WooCommerce\PayPalCommerce\ApiClient\Entity
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
+namespace WooCommerce\PayPalCommerce\ApiClient\Entity;
 
 /**
  * Class Payments

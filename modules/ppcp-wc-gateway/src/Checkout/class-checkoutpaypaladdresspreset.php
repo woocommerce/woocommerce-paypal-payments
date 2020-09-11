@@ -3,15 +3,15 @@
  * Service that fills checkout address fields
  * with address selected via PayPal
  *
- * @package Inpsyde\PayPalCommerce\WcGateway\Checkout
+ * @package WooCommerce\PayPalCommerce\WcGateway\Checkout
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\WcGateway\Checkout;
+namespace WooCommerce\PayPalCommerce\WcGateway\Checkout;
 
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Shipping;
-use Inpsyde\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Shipping;
+use WooCommerce\PayPalCommerce\Session\SessionHandler;
 
 /**
  * Class CheckoutPayPalAddressPreset

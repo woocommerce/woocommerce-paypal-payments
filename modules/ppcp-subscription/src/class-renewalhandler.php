@@ -2,21 +2,21 @@
 /**
  * Handles subscription renewals.
  *
- * @package Inpsyde\PayPalCommerce\Subscription
+ * @package WooCommerce\PayPalCommerce\Subscription
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Subscription;
+namespace WooCommerce\PayPalCommerce\Subscription;
 
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\OrderStatus;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\PaymentToken;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\PayerFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
-use Inpsyde\PayPalCommerce\Subscription\Repository\PaymentTokenRepository;
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
+use WooCommerce\PayPalCommerce\Subscription\Repository\PaymentTokenRepository;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Psr\Log\LoggerInterface;
 
 /**

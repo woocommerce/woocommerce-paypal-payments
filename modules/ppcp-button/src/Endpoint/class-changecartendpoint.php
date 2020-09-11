@@ -2,17 +2,17 @@
 /**
  * Endpoint to update the cart.
  *
- * @package Inpsyde\PayPalCommerce\Button\Endpoint
+ * @package WooCommerce\PayPalCommerce\Button\Endpoint
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Button\Endpoint;
+namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 
-use Inpsyde\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\PayPalApiException;
-use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
-use Inpsyde\PayPalCommerce\Button\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\CartRepository;
+use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 
 /**
  * Class ChangeCartEndpoint

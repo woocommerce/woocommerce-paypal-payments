@@ -2,15 +2,15 @@
 /**
  * Helper class to determine how to proceed with an order depending on the 3d secure feedback.
  *
- * @package Inpsyde\PayPalCommerce\Button\Helper
+ * @package WooCommerce\PayPalCommerce\Button\Helper
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Button\Helper;
+namespace WooCommerce\PayPalCommerce\Button\Helper;
 
-use Inpsyde\PayPalCommerce\ApiClient\Entity\CardAuthenticationResult as AuthResult;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\CardAuthenticationResult as AuthResult;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 
 /**
  * Class ThreeDSecure

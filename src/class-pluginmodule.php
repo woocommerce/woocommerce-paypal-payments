@@ -2,12 +2,12 @@
 /**
  * The plugin module.
  *
- * @package Inpsyde\PayPalCommerce
+ * @package WooCommerce\PayPalCommerce
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce;
+namespace WooCommerce\PayPalCommerce;
 
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;

@@ -2,15 +2,15 @@
 /**
  * Handles the Webhook CHECKOUT.ORDER.APPROVED
  *
- * @package Inpsyde\PayPalCommerce\Webhooks\Handler
+ * @package WooCommerce\PayPalCommerce\Webhooks\Handler
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Webhooks\Handler;
+namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
 
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use Psr\Log\LoggerInterface;
 
 /**

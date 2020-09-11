@@ -2,21 +2,21 @@
 /**
  * Handles the login seller incoming request to receive the credentials from Paypal.
  *
- * @package Inpsyde\PayPalCommerce\Onboarding\Endpoint
+ * @package WooCommerce\PayPalCommerce\Onboarding\Endpoint
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Onboarding\Endpoint;
+namespace WooCommerce\PayPalCommerce\Onboarding\Endpoint;
 
-use Inpsyde\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\LoginSeller;
-use Inpsyde\PayPalCommerce\ApiClient\Helper\Cache;
-use Inpsyde\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
-use Inpsyde\PayPalCommerce\Button\Endpoint\EndpointInterface;
-use Inpsyde\PayPalCommerce\Button\Endpoint\RequestData;
-use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
-use Inpsyde\PayPalCommerce\Webhooks\WebhookRegistrar;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\LoginSeller;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
+use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
+use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar;
 use Psr\SimpleCache\CacheInterface;
 
 /**

@@ -2,12 +2,12 @@
 /**
  * The renderer interface.
  *
- * @package Inpsyde\PayPalCommerce\AdminNotices\Renderer
+ * @package WooCommerce\PayPalCommerce\AdminNotices\Renderer
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\AdminNotices\Renderer;
+namespace WooCommerce\PayPalCommerce\AdminNotices\Renderer;
 
 /**
  * Interface RendererInterface

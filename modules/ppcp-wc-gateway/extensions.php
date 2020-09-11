@@ -2,18 +2,18 @@
 /**
  * The extensions of the gateway module.
  *
- * @package Inpsyde\PayPalCommerce\WcGateway
+ * @package WooCommerce\PayPalCommerce\WcGateway
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\WcGateway;
+namespace WooCommerce\PayPalCommerce\WcGateway;
 
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
-use Inpsyde\PayPalCommerce\Session\SessionHandler;
-use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
-use Inpsyde\WooCommerce\Logging\Logger\NullLogger;
-use Inpsyde\WooCommerce\Logging\Logger\WooCommerceLogger;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
+use WooCommerce\WooCommerce\Logging\Logger\WooCommerceLogger;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 

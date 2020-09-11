@@ -2,46 +2,46 @@
 /**
  * The services of the API client.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient
+ * @package WooCommerce\PayPalCommerce\ApiClient
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient;
+namespace WooCommerce\PayPalCommerce\ApiClient;
 
 use Dhii\Data\Container\ContainerInterface;
-use Inpsyde\PayPalCommerce\ApiClient\Authentication\Bearer;
-use Inpsyde\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\IdentityToken;
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\LoginSeller;
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\PartnerReferrals;
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\PaymentTokenEndpoint;
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\WebhookEndpoint;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\AddressFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\AmountFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\ApplicationContextFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\AuthorizationFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\ItemFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\OrderFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\PatchCollectionFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\PayeeFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\PayerFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\PaymentsFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\PaymentSourceFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\ShippingFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\WebhookFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Helper\Cache;
-use Inpsyde\PayPalCommerce\ApiClient\Helper\DccApplies;
-use Inpsyde\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
-use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
-use Inpsyde\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
-use Inpsyde\PayPalCommerce\ApiClient\Repository\PayeeRepository;
-use Inpsyde\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
-use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\IdentityToken;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\LoginSeller;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnerReferrals;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokenEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\WebhookEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\AddressFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\AmountFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ApplicationContextFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\AuthorizationFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ItemFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PatchCollectionFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PayeeFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentsFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentSourceFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\CartRepository;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\PayeeRepository;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WpOop\TransientCache\CachePoolFactory;
 
 return array(

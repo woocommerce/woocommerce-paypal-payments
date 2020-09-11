@@ -2,16 +2,16 @@
 /**
  * The subscription module.
  *
- * @package Inpsyde\PayPalCommerce\Subscription
+ * @package WooCommerce\PayPalCommerce\Subscription
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Subscription;
+namespace WooCommerce\PayPalCommerce\Subscription;
 
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
 

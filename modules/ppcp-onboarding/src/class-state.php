@@ -2,12 +2,12 @@
 /**
  * Used to determine the current state of onboarding.
  *
- * @package Inpsyde\PayPalCommerce\Onboarding
+ * @package WooCommerce\PayPalCommerce\Onboarding
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Onboarding;
+namespace WooCommerce\PayPalCommerce\Onboarding;
 
 use Psr\Container\ContainerInterface;
 

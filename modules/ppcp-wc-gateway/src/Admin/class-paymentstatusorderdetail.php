@@ -2,14 +2,14 @@
 /**
  * Renders the not captured information.
  *
- * @package Inpsyde\PayPalCommerce\WcGateway\Admin
+ * @package WooCommerce\PayPalCommerce\WcGateway\Admin
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\WcGateway\Admin;
+namespace WooCommerce\PayPalCommerce\WcGateway\Admin;
 
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 /**
  * Class PaymentStatusOrderDetail

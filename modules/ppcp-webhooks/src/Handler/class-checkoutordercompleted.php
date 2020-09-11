@@ -2,12 +2,12 @@
 /**
  * Handles the Webhook CHECKOUT.ORDER.COMPLETED
  *
- * @package Inpsyde\PayPalCommerce\Webhooks\Handler
+ * @package WooCommerce\PayPalCommerce\Webhooks\Handler
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Webhooks\Handler;
+namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
 
 use Psr\Log\LoggerInterface;
 

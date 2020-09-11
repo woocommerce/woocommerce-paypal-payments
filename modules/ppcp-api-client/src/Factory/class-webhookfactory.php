@@ -2,15 +2,15 @@
 /**
  * Creates Webhooks.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Factory
+ * @package WooCommerce\PayPalCommerce\ApiClient\Factory
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Factory;
+namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Webhook;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Webhook;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
 /**
  * Class WebhookFactory

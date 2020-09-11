@@ -13,14 +13,13 @@ declare( strict_types = 1 );
  */
 
 
-namespace Inpsyde\PayPalCommerce;
+namespace WooCommerce\PayPalCommerce;
 
 use Dhii\Container\CachingContainer;
 use Dhii\Container\CompositeCachingServiceProvider;
 use Dhii\Container\DelegatingContainer;
 use Dhii\Container\ProxyContainer;
 use Dhii\Modular\Module\ModuleInterface;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 
 (function () {
 	include __DIR__ . '/vendor/autoload.php';

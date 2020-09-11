@@ -3,19 +3,19 @@
  * Endpoint to verify if an order has been approved. An approved order
  * will be stored in the current session.
  *
- * @package Inpsyde\PayPalCommerce\Button\Endpoint
+ * @package WooCommerce\PayPalCommerce\Button\Endpoint
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Button\Endpoint;
+namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\OrderStatus;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\PayPalApiException;
-use Inpsyde\PayPalCommerce\Button\Exception\RuntimeException;
-use Inpsyde\PayPalCommerce\Button\Helper\ThreeDSecure;
-use Inpsyde\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
+use WooCommerce\PayPalCommerce\Session\SessionHandler;
 
 /**
  * Class ApproveOrderEndpoint

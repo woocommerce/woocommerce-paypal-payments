@@ -2,17 +2,17 @@
 /**
  * The PurchaseUnit factory.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Factory
+ * @package WooCommerce\PayPalCommerce\ApiClient\Factory
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Factory;
+namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Item;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use Inpsyde\PayPalCommerce\ApiClient\Repository\PayeeRepository;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\PayeeRepository;
 
 /**
  * Class PurchaseUnitFactory

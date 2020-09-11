@@ -2,14 +2,14 @@
 /**
  * Helper to read request data for the endpoints.
  *
- * @package Inpsyde\PayPalCommerce\Button\Endpoint
+ * @package WooCommerce\PayPalCommerce\Button\Endpoint
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Button\Endpoint;
+namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 
-use Inpsyde\PayPalCommerce\Button\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 
 /**
  * Class RequestData

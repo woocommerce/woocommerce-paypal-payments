@@ -2,14 +2,14 @@
 /**
  * The PaymentToken object.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Entity
+ * @package WooCommerce\PayPalCommerce\ApiClient\Entity
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
+namespace WooCommerce\PayPalCommerce\ApiClient\Entity;
 
-use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
 /**
  * Class PaymentToken

@@ -2,14 +2,14 @@
 /**
  * Handles the Webhook PAYMENT.CAPTURE.COMPLETED
  *
- * @package Inpsyde\PayPalCommerce\Webhooks\Handler
+ * @package WooCommerce\PayPalCommerce\Webhooks\Handler
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Webhooks\Handler;
+namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
 
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Psr\Log\LoggerInterface;
 
 /**

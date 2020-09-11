@@ -2,18 +2,18 @@
 /**
  * The payment token endpoint.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Endpoint
+ * @package WooCommerce\PayPalCommerce\ApiClient\Endpoint
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Endpoint;
+namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 
-use Inpsyde\PayPalCommerce\ApiClient\Authentication\Bearer;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\PaymentToken;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\PayPalApiException;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
 use Psr\Log\LoggerInterface;
 
 /**

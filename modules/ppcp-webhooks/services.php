@@ -2,18 +2,18 @@
 /**
  * The webhook module services.
  *
- * @package Inpsyde\PayPalCommerce\Webhooks
+ * @package WooCommerce\PayPalCommerce\Webhooks
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Webhooks;
+namespace WooCommerce\PayPalCommerce\Webhooks;
 
-use Inpsyde\PayPalCommerce\Webhooks\Handler\CheckoutOrderApproved;
-use Inpsyde\PayPalCommerce\Webhooks\Handler\CheckoutOrderCompleted;
-use Inpsyde\PayPalCommerce\Webhooks\Handler\PaymentCaptureCompleted;
-use Inpsyde\PayPalCommerce\Webhooks\Handler\PaymentCaptureRefunded;
-use Inpsyde\PayPalCommerce\Webhooks\Handler\PaymentCaptureReversed;
+use WooCommerce\PayPalCommerce\Webhooks\Handler\CheckoutOrderApproved;
+use WooCommerce\PayPalCommerce\Webhooks\Handler\CheckoutOrderCompleted;
+use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureCompleted;
+use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureRefunded;
+use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureReversed;
 use Psr\Container\ContainerInterface;
 
 return array(

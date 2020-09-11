@@ -2,21 +2,21 @@
 /**
  * The onboarding module services.
  *
- * @package Inpsyde\PayPalCommerce\Onboarding
+ * @package WooCommerce\PayPalCommerce\Onboarding
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Onboarding;
+namespace WooCommerce\PayPalCommerce\Onboarding;
 
 use Dhii\Data\Container\ContainerInterface;
-use Inpsyde\PayPalCommerce\ApiClient\Authentication\Bearer;
-use Inpsyde\PayPalCommerce\ApiClient\Authentication\ConnectBearer;
-use Inpsyde\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
-use Inpsyde\PayPalCommerce\ApiClient\Helper\Cache;
-use Inpsyde\PayPalCommerce\Onboarding\Assets\OnboardingAssets;
-use Inpsyde\PayPalCommerce\Onboarding\Endpoint\LoginSellerEndpoint;
-use Inpsyde\PayPalCommerce\Onboarding\Render\OnboardingRenderer;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\ConnectBearer;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
+use WooCommerce\PayPalCommerce\Onboarding\Assets\OnboardingAssets;
+use WooCommerce\PayPalCommerce\Onboarding\Endpoint\LoginSellerEndpoint;
+use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingRenderer;
 use WpOop\TransientCache\CachePoolFactory;
 
 return array(

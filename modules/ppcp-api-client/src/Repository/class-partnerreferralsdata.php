@@ -2,14 +2,14 @@
 /**
  * The partner referrals data object.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Repository
+ * @package WooCommerce\PayPalCommerce\ApiClient\Repository
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Repository;
+namespace WooCommerce\PayPalCommerce\ApiClient\Repository;
 
-use Inpsyde\PayPalCommerce\ApiClient\Helper\DccApplies;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 
 /**
  * Class PartnerReferralsData

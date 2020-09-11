@@ -2,26 +2,26 @@
 /**
  * Registers and configures the necessary Javascript for the button, credit messaging and DCC fields.
  *
- * @package Inpsyde\PayPalCommerce\Button\Assets
+ * @package WooCommerce\PayPalCommerce\Button\Assets
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Button\Assets;
+namespace WooCommerce\PayPalCommerce\Button\Assets;
 
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\IdentityToken;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\PayerFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Helper\DccApplies;
-use Inpsyde\PayPalCommerce\ApiClient\Repository\PayeeRepository;
-use Inpsyde\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
-use Inpsyde\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
-use Inpsyde\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
-use Inpsyde\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
-use Inpsyde\PayPalCommerce\Button\Endpoint\RequestData;
-use Inpsyde\PayPalCommerce\Button\Helper\MessagesApply;
-use Inpsyde\PayPalCommerce\Session\SessionHandler;
-use Inpsyde\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
-use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\IdentityToken;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\PayeeRepository;
+use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
+use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class SmartButton
@@ -151,7 +151,7 @@ class SmartButton implements SmartButtonInterface {
 	 * Registers the necessary action hooks to render the HTML depending on the settings.
 	 *
 	 * @return bool
-	 * @throws \Inpsyde\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting was not found.
+	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting was not found.
 	 */
 	public function render_wrapper(): bool {
 
@@ -185,7 +185,7 @@ class SmartButton implements SmartButtonInterface {
 	 * Registers the hooks to render the credit messaging HTML depending on the settings.
 	 *
 	 * @return bool
-	 * @throws \Inpsyde\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting was not found.
+	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting was not found.
 	 */
 	private function render_message_wrapper_registrar(): bool {
 
@@ -240,7 +240,7 @@ class SmartButton implements SmartButtonInterface {
 	 * Registers the hooks where to render the button HTML according to the settings.
 	 *
 	 * @return bool
-	 * @throws \Inpsyde\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting was not found.
+	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting was not found.
 	 */
 	private function render_button_wrapper_registrar(): bool {
 
@@ -302,7 +302,7 @@ class SmartButton implements SmartButtonInterface {
 	 * Enqueues the script.
 	 *
 	 * @return bool
-	 * @throws \Inpsyde\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting was not found.
+	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting was not found.
 	 */
 	public function enqueue(): bool {
 		$buttons_enabled = $this->settings->has( 'enabled' ) && $this->settings->get( 'enabled' );
@@ -378,7 +378,7 @@ class SmartButton implements SmartButtonInterface {
 	 * The values for the credit messaging.
 	 *
 	 * @return array
-	 * @throws \Inpsyde\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting was not found.
+	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting was not found.
 	 */
 	private function message_values(): array {
 
@@ -470,7 +470,7 @@ class SmartButton implements SmartButtonInterface {
 	/**
 	 * Renders the HTML for the DCC fields.
 	 *
-	 * @throws \Inpsyde\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting hasnt been found.
+	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting hasnt been found.
 	 */
 	public function dcc_renderer() {
 
@@ -527,7 +527,7 @@ class SmartButton implements SmartButtonInterface {
 	 * Whether we can store vault tokens or not.
 	 *
 	 * @return bool
-	 * @throws \Inpsyde\PayPalCommerce\WcGateway\Exception\NotFoundException If a setting hasnt been found.
+	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException If a setting hasnt been found.
 	 */
 	public function can_save_vault_token(): bool {
 
@@ -559,7 +559,7 @@ class SmartButton implements SmartButtonInterface {
 	 * The localized data for the smart button.
 	 *
 	 * @return array
-	 * @throws \Inpsyde\PayPalCommerce\WcGateway\Exception\NotFoundException If a setting hasn't been found.
+	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException If a setting hasn't been found.
 	 */
 	private function localize_script(): array {
 		$this->request_data->enqueue_nonce_fix();
@@ -664,7 +664,7 @@ class SmartButton implements SmartButtonInterface {
 	 * The JavaScript SDK url to load.
 	 *
 	 * @return string
-	 * @throws \Inpsyde\PayPalCommerce\WcGateway\Exception\NotFoundException If a setting was not found.
+	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException If a setting was not found.
 	 */
 	private function url(): string {
 		$params = array(
@@ -753,7 +753,7 @@ class SmartButton implements SmartButtonInterface {
 	 * The JS SKD components we need to load.
 	 *
 	 * @return array
-	 * @throws \Inpsyde\PayPalCommerce\WcGateway\Exception\NotFoundException If a setting was not found.
+	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException If a setting was not found.
 	 */
 	private function components(): array {
 		$components = array();
@@ -774,7 +774,7 @@ class SmartButton implements SmartButtonInterface {
 	 * Determines whether the button component should be loaded.
 	 *
 	 * @return bool
-	 * @throws \Inpsyde\PayPalCommerce\WcGateway\Exception\NotFoundException If a setting has not been found.
+	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException If a setting has not been found.
 	 */
 	private function load_button_component() : bool {
 
@@ -832,7 +832,7 @@ class SmartButton implements SmartButtonInterface {
 	 * Whether DCC is enabled or not.
 	 *
 	 * @return bool
-	 * @throws \Inpsyde\PayPalCommerce\WcGateway\Exception\NotFoundException If a setting has not been found.
+	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException If a setting has not been found.
 	 */
 	private function dcc_is_enabled(): bool {
 		if ( ! $this->dcc_applies->for_country_currency() ) {
@@ -856,7 +856,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @param string $context The context.
 	 *
 	 * @return string
-	 * @throws \Inpsyde\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting hasn't been found.
+	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting hasn't been found.
 	 */
 	private function style_for_context( string $style, string $context ): string {
 		$defaults = array(

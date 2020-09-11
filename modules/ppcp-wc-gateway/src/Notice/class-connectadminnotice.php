@@ -2,16 +2,16 @@
 /**
  * Registers the admin message to "connect your account" if necessary.
  *
- * @package Inpsyde\PayPalCommerce\WcGateway\Notice
+ * @package WooCommerce\PayPalCommerce\WcGateway\Notice
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\WcGateway\Notice;
+namespace WooCommerce\PayPalCommerce\WcGateway\Notice;
 
-use Inpsyde\PayPalCommerce\AdminNotices\Entity\Message;
-use Inpsyde\PayPalCommerce\Onboarding\State;
-use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
+use WooCommerce\PayPalCommerce\Onboarding\State;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use Psr\Container\ContainerInterface;
 
 /**

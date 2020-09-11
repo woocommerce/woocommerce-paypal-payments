@@ -2,14 +2,14 @@
 /**
  * The Purchase Unit Repository interface.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Repository
+ * @package WooCommerce\PayPalCommerce\ApiClient\Repository
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Repository;
+namespace WooCommerce\PayPalCommerce\ApiClient\Repository;
 
-use Inpsyde\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 
 /**
  * Interface PurchaseUnitRepositoryInterface

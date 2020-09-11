@@ -2,15 +2,15 @@
 /**
  * Registers and enqueues the assets for the Onboarding process.
  *
- * @package Inpsyde\PayPalCommerce\Onboarding\Assets
+ * @package WooCommerce\PayPalCommerce\Onboarding\Assets
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Onboarding\Assets;
+namespace WooCommerce\PayPalCommerce\Onboarding\Assets;
 
-use Inpsyde\PayPalCommerce\Onboarding\Endpoint\LoginSellerEndpoint;
-use Inpsyde\PayPalCommerce\Onboarding\State;
+use WooCommerce\PayPalCommerce\Onboarding\Endpoint\LoginSellerEndpoint;
+use WooCommerce\PayPalCommerce\Onboarding\State;
 
 /**
  * Class OnboardingAssets

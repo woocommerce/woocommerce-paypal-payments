@@ -2,12 +2,12 @@
 /**
  * Renders the cancel view for the order on the checkout.
  *
- * @package Inpsyde\PayPalCommerce\Session\Cancellation
+ * @package WooCommerce\PayPalCommerce\Session\Cancellation
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Session\Cancellation;
+namespace WooCommerce\PayPalCommerce\Session\Cancellation;
 
 /**
  * Class CancelView

@@ -2,20 +2,20 @@
 /**
  * Authorizes payments for a given WooCommerce order.
  *
- * @package Inpsyde\PayPalCommerce\WcGateway\Processor
+ * @package WooCommerce\PayPalCommerce\WcGateway\Processor
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\WcGateway\Processor;
+namespace WooCommerce\PayPalCommerce\WcGateway\Processor;
 
 use Exception;
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Authorization;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\AuthorizationStatus;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\AuthorizationStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 /**
  * Class AuthorizedPaymentsProcessor

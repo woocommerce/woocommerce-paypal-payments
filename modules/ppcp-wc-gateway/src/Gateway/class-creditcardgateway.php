@@ -2,18 +2,18 @@
 /**
  * The Credit card gateway.
  *
- * @package Inpsyde\PayPalCommerce\WcGateway\Gateway
+ * @package WooCommerce\PayPalCommerce\WcGateway\Gateway
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\WcGateway\Gateway;
+namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
-use Inpsyde\PayPalCommerce\Session\SessionHandler;
-use Inpsyde\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
-use Inpsyde\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
-use Inpsyde\PayPalCommerce\WcGateway\Processor\OrderProcessor;
-use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
+use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use Psr\Container\ContainerInterface;
 
 /**

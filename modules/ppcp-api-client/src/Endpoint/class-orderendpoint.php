@@ -2,28 +2,28 @@
 /**
  * The order endpoint.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Endpoint
+ * @package WooCommerce\PayPalCommerce\ApiClient\Endpoint
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Endpoint;
+namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 
-use Inpsyde\PayPalCommerce\ApiClient\Authentication\Bearer;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\ApplicationContext;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\OrderStatus;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Payer;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\PaymentMethod;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\PaymentToken;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\PayPalApiException;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\OrderFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\PatchCollectionFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Helper\ErrorResponse;
-use Inpsyde\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
-use Inpsyde\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentMethod;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PatchCollectionFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\ErrorResponse;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
 use Psr\Log\LoggerInterface;
 
 /**

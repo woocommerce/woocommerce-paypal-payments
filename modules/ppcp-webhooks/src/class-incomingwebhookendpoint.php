@@ -2,17 +2,17 @@
 /**
  * Controls the endpoint for the incoming webhooks.
  *
- * @package Inpsyde\PayPalCommerce\Webhooks
+ * @package WooCommerce\PayPalCommerce\Webhooks
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Webhooks;
+namespace WooCommerce\PayPalCommerce\Webhooks;
 
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\WebhookEndpoint;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\WebhookFactory;
-use Inpsyde\PayPalCommerce\Webhooks\Handler\RequestHandler;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\WebhookEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
+use WooCommerce\PayPalCommerce\Webhooks\Handler\RequestHandler;
 use Psr\Log\LoggerInterface;
 
 /**

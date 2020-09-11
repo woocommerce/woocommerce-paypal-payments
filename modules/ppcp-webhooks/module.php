@@ -2,12 +2,12 @@
 /**
  * The webhook module.
  *
- * @package Inpsyde\PayPalCommerce\Webhooks
+ * @package WooCommerce\PayPalCommerce\Webhooks
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Webhooks;
+namespace WooCommerce\PayPalCommerce\Webhooks;
 
 use Dhii\Modular\Module\ModuleInterface;
 

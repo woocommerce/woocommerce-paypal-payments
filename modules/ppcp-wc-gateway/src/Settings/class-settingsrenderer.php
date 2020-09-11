@@ -2,17 +2,17 @@
 /**
  * Renders the settings of the Gateways.
  *
- * @package Inpsyde\PayPalCommerce\WcGateway\Settings
+ * @package WooCommerce\PayPalCommerce\WcGateway\Settings
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\WcGateway\Settings;
+namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
-use Inpsyde\PayPalCommerce\ApiClient\Helper\DccApplies;
-use Inpsyde\PayPalCommerce\Button\Helper\MessagesApply;
-use Inpsyde\PayPalCommerce\Onboarding\State;
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
+use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
+use WooCommerce\PayPalCommerce\Onboarding\State;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use Psr\Container\ContainerInterface;
 
 /**

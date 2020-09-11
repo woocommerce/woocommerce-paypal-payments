@@ -2,12 +2,12 @@
 /**
  * The button module.
  *
- * @package Inpsyde\PayPalCommerce\Button
+ * @package WooCommerce\PayPalCommerce\Button
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Button;
+namespace WooCommerce\PayPalCommerce\Button;
 
 use Dhii\Modular\Module\ModuleInterface;
 

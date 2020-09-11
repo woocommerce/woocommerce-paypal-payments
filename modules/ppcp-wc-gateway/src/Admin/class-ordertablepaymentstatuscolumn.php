@@ -3,15 +3,15 @@
  * Renders the columns to display to the merchant, which orders have been authorized and
  * which have not been authorized yet.
  *
- * @package Inpsyde\PayPalCommerce\WcGateway\Admin
+ * @package WooCommerce\PayPalCommerce\WcGateway\Admin
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\WcGateway\Admin;
+namespace WooCommerce\PayPalCommerce\WcGateway\Admin;
 
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class OrderTablePaymentStatusColumn

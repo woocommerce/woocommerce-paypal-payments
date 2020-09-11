@@ -2,17 +2,17 @@
 /**
  * The PayPal bearer.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Authentication
+ * @package WooCommerce\PayPalCommerce\ApiClient\Authentication
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Authentication;
+namespace WooCommerce\PayPalCommerce\ApiClient\Authentication;
 
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\RequestTrait;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Token;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use Inpsyde\PayPalCommerce\ApiClient\Helper\Cache;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\RequestTrait;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Token;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use Psr\Log\LoggerInterface;
 use Psr\SimpleCache\CacheInterface;
 

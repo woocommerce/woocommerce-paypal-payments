@@ -2,32 +2,32 @@
 /**
  * The services of the Gateway module.
  *
- * @package Inpsyde\PayPalCommerce\WcGateway
+ * @package WooCommerce\PayPalCommerce\WcGateway
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\WcGateway;
+namespace WooCommerce\PayPalCommerce\WcGateway;
 
 use Dhii\Data\Container\ContainerInterface;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\ApplicationContext;
-use Inpsyde\PayPalCommerce\ApiClient\Helper\Cache;
-use Inpsyde\PayPalCommerce\Onboarding\State;
-use Inpsyde\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
-use Inpsyde\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
-use Inpsyde\PayPalCommerce\WcGateway\Checkout\CheckoutPayPalAddressPreset;
-use Inpsyde\PayPalCommerce\WcGateway\Checkout\DisableGateways;
-use Inpsyde\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use Inpsyde\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
-use Inpsyde\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
-use Inpsyde\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
-use Inpsyde\PayPalCommerce\WcGateway\Processor\OrderProcessor;
-use Inpsyde\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
-use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
-use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsListener;
-use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
+use WooCommerce\PayPalCommerce\Onboarding\State;
+use WooCommerce\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
+use WooCommerce\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
+use WooCommerce\PayPalCommerce\WcGateway\Checkout\CheckoutPayPalAddressPreset;
+use WooCommerce\PayPalCommerce\WcGateway\Checkout\DisableGateways;
+use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
+use WooCommerce\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use WpOop\TransientCache\CachePoolFactory;
 
 return array(

@@ -2,15 +2,15 @@
 /**
  * Fetches credentials for an instance.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Endpoint
+ * @package WooCommerce\PayPalCommerce\ApiClient\Endpoint
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Endpoint;
+namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 
-use Inpsyde\PayPalCommerce\ApiClient\Exception\PayPalApiException;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use Psr\Log\LoggerInterface;
 
 /**

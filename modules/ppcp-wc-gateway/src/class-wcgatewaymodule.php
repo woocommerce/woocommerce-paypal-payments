@@ -2,29 +2,29 @@
 /**
  * The Gateway module.
  *
- * @package Inpsyde\PayPalCommerce\WcGateway
+ * @package WooCommerce\PayPalCommerce\WcGateway
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\WcGateway;
+namespace WooCommerce\PayPalCommerce\WcGateway;
 
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
-use Inpsyde\PayPalCommerce\AdminNotices\Repository\Repository;
-use Inpsyde\PayPalCommerce\ApiClient\Helper\DccApplies;
-use Inpsyde\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
-use Inpsyde\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
-use Inpsyde\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
-use Inpsyde\PayPalCommerce\WcGateway\Checkout\CheckoutPayPalAddressPreset;
-use Inpsyde\PayPalCommerce\WcGateway\Checkout\DisableGateways;
-use Inpsyde\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use Inpsyde\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
-use Inpsyde\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
-use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
-use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
+use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
+use WooCommerce\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
+use WooCommerce\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
+use WooCommerce\PayPalCommerce\WcGateway\Checkout\CheckoutPayPalAddressPreset;
+use WooCommerce\PayPalCommerce\WcGateway\Checkout\DisableGateways;
+use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
 
