@@ -19,8 +19,8 @@ use Inpsyde\PayPalCommerce\ApiClient\Factory\WebhookFactory;
 class WebhookRegistrar {
 
 
-	public const EVENT_HOOK = 'ppcp-register-event';
-	public const KEY        = 'ppcp-webhook';
+	const EVENT_HOOK = 'ppcp-register-event';
+	const KEY        = 'ppcp-webhook';
 
 	/**
 	 * The Webhook factory.

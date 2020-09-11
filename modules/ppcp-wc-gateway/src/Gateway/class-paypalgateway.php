@@ -23,10 +23,10 @@ use Psr\Container\ContainerInterface;
  */
 class PayPalGateway extends \WC_Payment_Gateway {
 
-	public const ID                = 'ppcp-gateway';
-	public const CAPTURED_META_KEY = '_ppcp_paypal_captured';
-	public const INTENT_META_KEY   = '_ppcp_paypal_intent';
-	public const ORDER_ID_META_KEY = '_ppcp_paypal_order_id';
+	const ID                = 'ppcp-gateway';
+	const CAPTURED_META_KEY = '_ppcp_paypal_captured';
+	const INTENT_META_KEY   = '_ppcp_paypal_intent';
+	const ORDER_ID_META_KEY = '_ppcp_paypal_order_id';
 
 	/**
 	 * The Settings Renderer.
@@ -175,7 +175,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 *
 	 * @return array|null
 	 */
-	public function process_payment( $order_id ): ?array {
+	public function process_payment( $order_id ) {
 		global $woocommerce;
 		$wc_order = wc_get_order( $order_id );
 		if ( ! is_a( $wc_order, \WC_Order::class ) ) {

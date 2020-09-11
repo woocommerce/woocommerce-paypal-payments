@@ -162,7 +162,7 @@ class PurchaseUnit {
 	 *
 	 * @return Shipping|null
 	 */
-	public function shipping(): ?Shipping {
+	public function shipping() {
 		return $this->shipping;
 	}
 
@@ -216,7 +216,7 @@ class PurchaseUnit {
 	 *
 	 * @return Payee|null
 	 */
-	public function payee(): ?Payee {
+	public function payee() {
 		return $this->payee;
 	}
 
@@ -225,7 +225,7 @@ class PurchaseUnit {
 	 *
 	 * @return Payments|null
 	 */
-	public function payments(): ?Payments {
+	public function payments() {
 		return $this->payments;
 	}
 

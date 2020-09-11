@@ -19,7 +19,7 @@ use Inpsyde\PayPalCommerce\Webhooks\Handler\PrefixTrait;
 class ReturnUrlEndpoint {
 
 	use PrefixTrait;
-	public const ENDPOINT = 'ppc-return-url';
+	const ENDPOINT = 'ppc-return-url';
 
 	/**
 	 * The PayPal Gateway.

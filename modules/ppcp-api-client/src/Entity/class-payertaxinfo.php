@@ -17,7 +17,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
 class PayerTaxInfo {
 
 
-	public const VALID_TYPES = array(
+	const VALID_TYPES = array(
 		'BR_CPF',
 		'BR_CNPJ',
 	);

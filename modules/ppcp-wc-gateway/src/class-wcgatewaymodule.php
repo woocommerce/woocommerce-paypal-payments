@@ -314,7 +314,7 @@ class WcGatewayModule implements ModuleInterface {
 	 *
 	 * @param ContainerInterface $container The container.
 	 */
-	private function register_checkout_paypal_address_preset( ContainerInterface $container ): void {
+	private function register_checkout_paypal_address_preset( ContainerInterface $container ) {
 		add_filter(
 			'woocommerce_checkout_get_value',
 			static function ( ...$args ) use ( $container ) {

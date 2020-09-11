@@ -14,7 +14,7 @@ namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
  */
 class PhoneWithType {
 
-	public const VALLID_TYPES = array(
+	const VALLID_TYPES = array(
 		'FAX',
 		'HOME',
 		'MOBILE',

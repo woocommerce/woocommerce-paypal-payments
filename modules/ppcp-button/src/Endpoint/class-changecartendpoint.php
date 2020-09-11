@@ -20,7 +20,7 @@ use Inpsyde\PayPalCommerce\Button\Exception\RuntimeException;
 class ChangeCartEndpoint implements EndpointInterface {
 
 
-	public const ENDPOINT = 'ppc-change-cart';
+	const ENDPOINT = 'ppc-change-cart';
 
 	/**
 	 * The current cart object.
@@ -198,7 +198,7 @@ class ChangeCartEndpoint implements EndpointInterface {
 	 *
 	 * @return array|null
 	 */
-	private function products_from_data( array $data ): ?array {
+	private function products_from_data( array $data ) {
 
 		$products = array();
 

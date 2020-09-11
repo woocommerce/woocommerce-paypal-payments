@@ -16,7 +16,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
  */
 class PayPalRequestIdRepository {
 
-	public const KEY = 'ppcp-request-ids';
+	const KEY = 'ppcp-request-ids';
 
 	/**
 	 * Returns a request ID based on the order ID.

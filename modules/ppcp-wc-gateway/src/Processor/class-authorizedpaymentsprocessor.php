@@ -22,11 +22,11 @@ use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
  */
 class AuthorizedPaymentsProcessor {
 
-	public const SUCCESSFUL       = 'SUCCESSFUL';
-	public const ALREADY_CAPTURED = 'ALREADY_CAPTURED';
-	public const FAILED           = 'FAILED';
-	public const INACCESSIBLE     = 'INACCESSIBLE';
-	public const NOT_FOUND        = 'NOT_FOUND';
+	const SUCCESSFUL       = 'SUCCESSFUL';
+	const ALREADY_CAPTURED = 'ALREADY_CAPTURED';
+	const FAILED           = 'FAILED';
+	const INACCESSIBLE     = 'INACCESSIBLE';
+	const NOT_FOUND        = 'NOT_FOUND';
 
 	/**
 	 * The Order endpoint.

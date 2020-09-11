@@ -62,7 +62,7 @@ class Amount {
 	 *
 	 * @return AmountBreakdown|null
 	 */
-	public function breakdown(): ?AmountBreakdown {
+	public function breakdown(): AmountBreakdown {
 		return $this->breakdown;
 	}
 

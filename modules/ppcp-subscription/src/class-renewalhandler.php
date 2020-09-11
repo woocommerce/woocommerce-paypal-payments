@@ -173,7 +173,7 @@ class RenewalHandler {
 	 *
 	 * @return PaymentToken|null
 	 */
-	private function get_token_for_customer( \WC_Customer $customer, \WC_Order $wc_order ): ?PaymentToken {
+	private function get_token_for_customer( \WC_Customer $customer, \WC_Order $wc_order ) {
 
 		$token = $this->repository->for_user_id( (int) $customer->get_id() );
 		if ( ! $token ) {

@@ -17,7 +17,7 @@ use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
  */
 class SectionsRenderer {
 
-	public const KEY = 'ppcp-tab';
+	const KEY = 'ppcp-tab';
 
 	/**
 	 * Whether the sections tab should be rendered.

@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace Inpsyde\PayPalCommerce\WcGateway\Settings;
 
 use Inpsyde\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
+use Inpsyde\PayPalCommerce\ApiClient\Helper\Cache;
 use Inpsyde\PayPalCommerce\Onboarding\State;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
@@ -22,7 +23,7 @@ use Psr\SimpleCache\CacheInterface;
 class SettingsListener {
 
 
-	public const NONCE = 'ppcp-settings';
+	const NONCE = 'ppcp-settings';
 
 	/**
 	 * The Settings.
@@ -48,7 +49,7 @@ class SettingsListener {
 	/**
 	 * The Cache.
 	 *
-	 * @var CacheInterface
+	 * @var Cache
 	 */
 	private $cache;
 
@@ -65,14 +66,14 @@ class SettingsListener {
 	 * @param Settings         $settings The settings.
 	 * @param array            $setting_fields The setting fields.
 	 * @param WebhookRegistrar $webhook_registrar The Webhook Registrar.
-	 * @param CacheInterface   $cache The Cache.
+	 * @param Cache            $cache The Cache.
 	 * @param State            $state The state.
 	 */
 	public function __construct(
 		Settings $settings,
 		array $setting_fields,
 		WebhookRegistrar $webhook_registrar,
-		CacheInterface $cache,
+		Cache $cache,
 		State $state
 	) {
 

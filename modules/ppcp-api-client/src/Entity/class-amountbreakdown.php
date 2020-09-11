@@ -98,7 +98,7 @@ class AmountBreakdown {
 	 *
 	 * @return Money|null
 	 */
-	public function item_total(): ?Money {
+	public function item_total() {
 		return $this->item_total;
 	}
 
@@ -107,7 +107,7 @@ class AmountBreakdown {
 	 *
 	 * @return Money|null
 	 */
-	public function shipping(): ?Money {
+	public function shipping() {
 		return $this->shipping;
 	}
 
@@ -116,7 +116,7 @@ class AmountBreakdown {
 	 *
 	 * @return Money|null
 	 */
-	public function tax_total(): ?Money {
+	public function tax_total() {
 		return $this->tax_total;
 	}
 
@@ -125,7 +125,7 @@ class AmountBreakdown {
 	 *
 	 * @return Money|null
 	 */
-	public function handling(): ?Money {
+	public function handling() {
 		return $this->handling;
 	}
 
@@ -134,7 +134,7 @@ class AmountBreakdown {
 	 *
 	 * @return Money|null
 	 */
-	public function insurance(): ?Money {
+	public function insurance() {
 		return $this->insurance;
 	}
 
@@ -143,7 +143,7 @@ class AmountBreakdown {
 	 *
 	 * @return Money|null
 	 */
-	public function shipping_discount(): ?Money {
+	public function shipping_discount() {
 		return $this->shipping_discount;
 	}
 
@@ -152,7 +152,7 @@ class AmountBreakdown {
 	 *
 	 * @return Money|null
 	 */
-	public function discount(): ?Money {
+	public function discount() {
 		return $this->discount;
 	}
 
@@ -161,7 +161,7 @@ class AmountBreakdown {
 	 *
 	 * @return array
 	 */
-	public function to_array(): array {
+	public function to_array() {
 		$breakdown = array();
 		if ( $this->item_total ) {
 			$breakdown['item_total'] = $this->item_total->to_array();

@@ -12,6 +12,7 @@ namespace Inpsyde\PayPalCommerce\ApiClient\Authentication;
 use Inpsyde\PayPalCommerce\ApiClient\Endpoint\RequestTrait;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\Token;
 use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use Inpsyde\PayPalCommerce\ApiClient\Helper\Cache;
 use Psr\Log\LoggerInterface;
 use Psr\SimpleCache\CacheInterface;
 
@@ -22,12 +23,12 @@ class PayPalBearer implements Bearer {
 
 	use RequestTrait;
 
-	public const CACHE_KEY = 'ppcp-bearer';
+	const CACHE_KEY = 'ppcp-bearer';
 
 	/**
 	 * The cache.
 	 *
-	 * @var CacheInterface
+	 * @var Cache
 	 */
 	private $cache;
 
@@ -62,14 +63,14 @@ class PayPalBearer implements Bearer {
 	/**
 	 * PayPalBearer constructor.
 	 *
-	 * @param CacheInterface  $cache The cache.
+	 * @param Cache           $cache The cache.
 	 * @param string          $host The host.
 	 * @param string          $key The key.
 	 * @param string          $secret The secret.
 	 * @param LoggerInterface $logger The logger.
 	 */
 	public function __construct(
-		CacheInterface $cache,
+		Cache $cache,
 		string $host,
 		string $key,
 		string $secret,

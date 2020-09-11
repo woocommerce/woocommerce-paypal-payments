@@ -48,7 +48,7 @@ class PaymentSource {
 	 *
 	 * @return PaymentSourceCard|null
 	 */
-	public function card(): ?PaymentSourceCard {
+	public function card() {
 
 		return $this->card;
 	}
@@ -58,7 +58,7 @@ class PaymentSource {
 	 *
 	 * @return PaymentSourceWallet|null
 	 */
-	public function wallet(): ?PaymentSourceWallet {
+	public function wallet() {
 
 		return $this->wallet;
 	}

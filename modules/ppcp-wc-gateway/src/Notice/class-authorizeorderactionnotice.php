@@ -16,20 +16,20 @@ use Inpsyde\PayPalCommerce\AdminNotices\Entity\Message;
  */
 class AuthorizeOrderActionNotice {
 
-	public const QUERY_PARAM = 'ppcp-authorized-message';
+	const QUERY_PARAM = 'ppcp-authorized-message';
 
-	public const NO_INFO          = 81;
-	public const ALREADY_CAPTURED = 82;
-	public const FAILED           = 83;
-	public const SUCCESS          = 84;
-	public const NOT_FOUND        = 85;
+	const NO_INFO          = 81;
+	const ALREADY_CAPTURED = 82;
+	const FAILED           = 83;
+	const SUCCESS          = 84;
+	const NOT_FOUND        = 85;
 
 	/**
 	 * Returns the current message if there is one.
 	 *
 	 * @return Message|null
 	 */
-	public function message(): ?Message {
+	public function message() {
 
 		$message = $this->current_message();
 		if ( ! $message ) {
@@ -95,7 +95,7 @@ class AuthorizeOrderActionNotice {
 	 *
 	 * @param int $message_code The message code.
 	 */
-	public function display_message( int $message_code ): void {
+	public function display_message( int $message_code ) {
 		add_filter(
 			'redirect_post_location',
 			static function ( $location ) use ( $message_code ) {

@@ -98,7 +98,7 @@ class PaymentSourceCard {
 	 *
 	 * @return CardAuthenticationResult|null
 	 */
-	public function authentication_result(): ?CardAuthenticationResult {
+	public function authentication_result() {
 
 		return $this->authentication_result;
 	}

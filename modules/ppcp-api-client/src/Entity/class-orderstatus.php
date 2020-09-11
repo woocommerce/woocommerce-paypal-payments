@@ -17,13 +17,13 @@ use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
 class OrderStatus {
 
 
-	public const INTERNAL    = 'INTERNAL';
-	public const CREATED     = 'CREATED';
-	public const SAVED       = 'SAVED';
-	public const APPROVED    = 'APPROVED';
-	public const VOIDED      = 'VOIDED';
-	public const COMPLETED   = 'COMPLETED';
-	public const VALID_STATI = array(
+	const INTERNAL    = 'INTERNAL';
+	const CREATED     = 'CREATED';
+	const SAVED       = 'SAVED';
+	const APPROVED    = 'APPROVED';
+	const VOIDED      = 'VOIDED';
+	const COMPLETED   = 'COMPLETED';
+	const VALID_STATI = array(
 		self::INTERNAL,
 		self::CREATED,
 		self::SAVED,

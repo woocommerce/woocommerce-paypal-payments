@@ -11,6 +11,7 @@ namespace Inpsyde\PayPalCommerce\WcGateway;
 
 use Dhii\Data\Container\ContainerInterface;
 use Inpsyde\PayPalCommerce\ApiClient\Entity\ApplicationContext;
+use Inpsyde\PayPalCommerce\ApiClient\Helper\Cache;
 use Inpsyde\PayPalCommerce\Onboarding\State;
 use Inpsyde\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
 use Inpsyde\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
@@ -30,7 +31,7 @@ use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use WpOop\TransientCache\CachePoolFactory;
 
 return array(
-	'wcgateway.paypal-gateway'                     => static function ( ContainerInterface $container ): PayPalGateway {
+	'wcgateway.paypal-gateway'                     => static function ( $container ): PayPalGateway {
 		$order_processor     = $container->get( 'wcgateway.order-processor' );
 		$settings_renderer   = $container->get( 'wcgateway.settings.render' );
 		$authorized_payments = $container->get( 'wcgateway.processor.authorized-payments' );
@@ -47,7 +48,7 @@ return array(
 			$session_handler
 		);
 	},
-	'wcgateway.credit-card-gateway'                => static function ( ContainerInterface $container ): CreditCardGateway {
+	'wcgateway.credit-card-gateway'                => static function ( $container ): CreditCardGateway {
 		$order_processor     = $container->get( 'wcgateway.order-processor' );
 		$settings_renderer   = $container->get( 'wcgateway.settings.render' );
 		$authorized_payments = $container->get( 'wcgateway.processor.authorized-payments' );
@@ -65,27 +66,27 @@ return array(
 			$session_handler
 		);
 	},
-	'wcgateway.disabler'                           => static function ( ContainerInterface $container ): DisableGateways {
+	'wcgateway.disabler'                           => static function ( $container ): DisableGateways {
 		$session_handler = $container->get( 'session.handler' );
 		$settings       = $container->get( 'wcgateway.settings' );
 		return new DisableGateways( $session_handler, $settings );
 	},
-	'wcgateway.settings'                           => static function ( ContainerInterface $container ): Settings {
+	'wcgateway.settings'                           => static function ( $container ): Settings {
 		return new Settings();
 	},
-	'wcgateway.notice.connect'                     => static function ( ContainerInterface $container ): ConnectAdminNotice {
+	'wcgateway.notice.connect'                     => static function ( $container ): ConnectAdminNotice {
 		$state    = $container->get( 'onboarding.state' );
 		$settings = $container->get( 'wcgateway.settings' );
 		return new ConnectAdminNotice( $state, $settings );
 	},
 	'wcgateway.notice.authorize-order-action'      =>
-		static function ( ContainerInterface $container ): AuthorizeOrderActionNotice {
+		static function ( $container ): AuthorizeOrderActionNotice {
 			return new AuthorizeOrderActionNotice();
 		},
-	'wcgateway.settings.sections-renderer'         => static function ( ContainerInterface $container ): SectionsRenderer {
+	'wcgateway.settings.sections-renderer'         => static function ( $container ): SectionsRenderer {
 		return new SectionsRenderer();
 	},
-	'wcgateway.settings.render'                    => static function ( ContainerInterface $container ): SettingsRenderer {
+	'wcgateway.settings.render'                    => static function ( $container ): SettingsRenderer {
 		$settings      = $container->get( 'wcgateway.settings' );
 		$state         = $container->get( 'onboarding.state' );
 		$fields        = $container->get( 'wcgateway.settings.fields' );
@@ -99,18 +100,15 @@ return array(
 			$messages_apply
 		);
 	},
-	'wcgateway.settings.listener'                  => static function ( ContainerInterface $container ): SettingsListener {
+	'wcgateway.settings.listener'                  => static function ( $container ): SettingsListener {
 		$settings         = $container->get( 'wcgateway.settings' );
 		$fields           = $container->get( 'wcgateway.settings.fields' );
 		$webhook_registrar = $container->get( 'webhook.registrar' );
 		$state            = $container->get( 'onboarding.state' );
-
-		global $wpdb;
-		$cache_pool_factory = new CachePoolFactory( $wpdb );
-		$pool         = $cache_pool_factory->createCachePool( 'ppcp-token' );
-		return new SettingsListener( $settings, $fields, $webhook_registrar, $pool, $state );
+		$cache = new Cache('ppcp-token');
+		return new SettingsListener( $settings, $fields, $webhook_registrar, $cache, $state );
 	},
-	'wcgateway.order-processor'                    => static function ( ContainerInterface $container ): OrderProcessor {
+	'wcgateway.order-processor'                    => static function ( $container ): OrderProcessor {
 
 		$session_handler              = $container->get( 'session.handler' );
 		$cart_repository              = $container->get( 'api.repository.cart' );
@@ -131,20 +129,20 @@ return array(
 			$settings
 		);
 	},
-	'wcgateway.processor.authorized-payments'      => static function ( ContainerInterface $container ): AuthorizedPaymentsProcessor {
+	'wcgateway.processor.authorized-payments'      => static function ( $container ): AuthorizedPaymentsProcessor {
 		$order_endpoint    = $container->get( 'api.endpoint.order' );
 		$payments_endpoint = $container->get( 'api.endpoint.payments' );
 		return new AuthorizedPaymentsProcessor( $order_endpoint, $payments_endpoint );
 	},
-	'wcgateway.admin.order-payment-status'         => static function ( ContainerInterface $container ): PaymentStatusOrderDetail {
+	'wcgateway.admin.order-payment-status'         => static function ( $container ): PaymentStatusOrderDetail {
 		return new PaymentStatusOrderDetail();
 	},
-	'wcgateway.admin.orders-payment-status-column' => static function ( ContainerInterface $container ): OrderTablePaymentStatusColumn {
+	'wcgateway.admin.orders-payment-status-column' => static function ( $container ): OrderTablePaymentStatusColumn {
 		$settings = $container->get( 'wcgateway.settings' );
 		return new OrderTablePaymentStatusColumn( $settings );
 	},
 
-	'wcgateway.settings.fields'                    => static function ( ContainerInterface $container ): array {
+	'wcgateway.settings.fields'                    => static function ( $container ): array {
 		$settings     = $container->get( 'wcgateway.settings' );
 		$sandbox_text = $settings->has( 'sandbox_on' ) && $settings->get( 'sandbox_on' ) ?
 			// translators: %1$s and %2$s are button tags.
@@ -1589,19 +1587,19 @@ return array(
 		return $fields;
 	},
 
-	'wcgateway.checkout.address-preset'            => static function( ContainerInterface $container ): CheckoutPayPalAddressPreset {
+	'wcgateway.checkout.address-preset'            => static function( $container ): CheckoutPayPalAddressPreset {
 
 		return new CheckoutPayPalAddressPreset(
 			$container->get( 'session.handler' )
 		);
 	},
-	'wcgateway.url'                                => static function ( ContainerInterface $container ): string {
+	'wcgateway.url'                                => static function ( $container ): string {
 		return plugins_url(
 			'/modules/ppcp-wc-gateway/',
 			dirname( __FILE__, 3 ) . '/woocommerce-paypal-commerce-gateway.php'
 		);
 	},
-	'wcgateway.endpoint.return-url'                => static function ( ContainerInterface $container ) : ReturnUrlEndpoint {
+	'wcgateway.endpoint.return-url'                => static function ( $container ) : ReturnUrlEndpoint {
 		$gateway  = $container->get( 'wcgateway.paypal-gateway' );
 		$endpoint = $container->get( 'api.endpoint.order' );
 		$prefix   = $container->get( 'api.prefix' );

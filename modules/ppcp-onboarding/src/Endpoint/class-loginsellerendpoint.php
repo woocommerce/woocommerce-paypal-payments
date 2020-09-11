@@ -11,6 +11,7 @@ namespace Inpsyde\PayPalCommerce\Onboarding\Endpoint;
 
 use Inpsyde\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
 use Inpsyde\PayPalCommerce\ApiClient\Endpoint\LoginSeller;
+use Inpsyde\PayPalCommerce\ApiClient\Helper\Cache;
 use Inpsyde\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
 use Inpsyde\PayPalCommerce\Button\Endpoint\EndpointInterface;
 use Inpsyde\PayPalCommerce\Button\Endpoint\RequestData;
@@ -23,7 +24,7 @@ use Psr\SimpleCache\CacheInterface;
  */
 class LoginSellerEndpoint implements EndpointInterface {
 
-	public const ENDPOINT = 'ppc-login-seller';
+	const ENDPOINT = 'ppc-login-seller';
 
 	/**
 	 * The Request Data helper object.
@@ -56,7 +57,7 @@ class LoginSellerEndpoint implements EndpointInterface {
 	/**
 	 * The Cache.
 	 *
-	 * @var CacheInterface
+	 * @var Cache
 	 */
 	private $cache;
 
@@ -67,14 +68,14 @@ class LoginSellerEndpoint implements EndpointInterface {
 	 * @param LoginSeller          $login_seller The Login Seller.
 	 * @param PartnerReferralsData $partner_referrals_data The Partner Referrals Data.
 	 * @param Settings             $settings The Settings.
-	 * @param CacheInterface       $cache The Cache.
+	 * @param Cache                $cache The Cache.
 	 */
 	public function __construct(
 		RequestData $request_data,
 		LoginSeller $login_seller,
 		PartnerReferralsData $partner_referrals_data,
 		Settings $settings,
-		CacheInterface $cache
+		Cache $cache
 	) {
 
 		$this->request_data           = $request_data;

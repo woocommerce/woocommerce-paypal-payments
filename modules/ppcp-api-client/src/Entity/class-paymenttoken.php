@@ -17,8 +17,8 @@ use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
 class PaymentToken {
 
 
-	public const TYPE_PAYMENT_METHOD_TOKEN = 'PAYMENT_METHOD_TOKEN';
-	public const VALID_TYPES               = array(
+	const TYPE_PAYMENT_METHOD_TOKEN = 'PAYMENT_METHOD_TOKEN';
+	const VALID_TYPES               = array(
 		self::TYPE_PAYMENT_METHOD_TOKEN,
 	);
 

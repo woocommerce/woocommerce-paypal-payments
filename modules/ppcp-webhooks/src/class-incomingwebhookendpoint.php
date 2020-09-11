@@ -20,8 +20,8 @@ use Psr\Log\LoggerInterface;
  */
 class IncomingWebhookEndpoint {
 
-	public const NAMESPACE = 'paypal/v1';
-	public const ROUTE     = 'incoming';
+	const NAMESPACE = 'paypal/v1';
+	const ROUTE     = 'incoming';
 
 	/**
 	 * The Webhook endpoint.

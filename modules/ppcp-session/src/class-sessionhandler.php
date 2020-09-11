@@ -45,7 +45,7 @@ class SessionHandler {
 	 *
 	 * @return Order|null
 	 */
-	public function order() : ?Order {
+	public function order() {
 		return $this->order;
 	}
 

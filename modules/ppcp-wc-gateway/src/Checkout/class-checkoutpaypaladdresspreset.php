@@ -51,7 +51,7 @@ class CheckoutPayPalAddressPreset {
 	 *
 	 * @return string|null
 	 */
-	public function filter_checkout_field( $default_value, $field_id ): ?string {
+	public function filter_checkout_field( $default_value, $field_id ) {
 		if ( ! is_string( $default_value ) ) {
 			$default_value = null;
 		}
@@ -70,7 +70,7 @@ class CheckoutPayPalAddressPreset {
 	 *
 	 * @return string|null
 	 */
-	private function read_preset_for_field( string $field_id ): ?string {
+	private function read_preset_for_field( string $field_id ) {
 		$order = $this->session_handler->order();
 		if ( ! $order ) {
 			return null;
@@ -127,7 +127,7 @@ class CheckoutPayPalAddressPreset {
 	 *
 	 * @return Shipping|null
 	 */
-	private function read_shipping_from_order(): ?Shipping {
+	private function read_shipping_from_order() {
 		$order = $this->session_handler->order();
 		if ( ! $order ) {
 			return null;

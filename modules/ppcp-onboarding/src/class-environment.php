@@ -17,8 +17,8 @@ use Psr\Container\ContainerInterface;
 class Environment {
 
 
-	public const PRODUCTION = 'production';
-	public const SANDBOX    = 'sandbox';
+	const PRODUCTION = 'production';
+	const SANDBOX    = 'sandbox';
 
 	/**
 	 * The Settings.

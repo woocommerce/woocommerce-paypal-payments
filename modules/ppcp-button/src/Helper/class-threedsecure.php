@@ -18,10 +18,10 @@ use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
 class ThreeDSecure {
 
 
-	public const NO_DECISION = 0;
-	public const PROCCEED    = 1;
-	public const REJECT      = 2;
-	public const RETRY       = 3;
+	const NO_DECISION = 0;
+	const PROCCEED    = 1;
+	const REJECT      = 2;
+	const RETRY       = 3;
 
 	/**
 	 * Determine, how we proceed with a given order.

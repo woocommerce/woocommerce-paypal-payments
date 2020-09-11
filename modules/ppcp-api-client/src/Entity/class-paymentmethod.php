@@ -15,10 +15,10 @@ namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
 class PaymentMethod {
 
 
-	public const PAYER_SELECTED_DEFAULT = 'PAYPAL';
+	const PAYER_SELECTED_DEFAULT = 'PAYPAL';
 
-	public const PAYEE_PREFERRED_UNRESTRICTED               = 'UNRESTRICTED';
-	public const PAYEE_PREFERRED_IMMEDIATE_PAYMENT_REQUIRED = 'IMMEDIATE_PAYMENT_REQUIRED';
+	const PAYEE_PREFERRED_UNRESTRICTED               = 'UNRESTRICTED';
+	const PAYEE_PREFERRED_IMMEDIATE_PAYMENT_REQUIRED = 'IMMEDIATE_PAYMENT_REQUIRED';
 
 	/**
 	 * The preferred value.

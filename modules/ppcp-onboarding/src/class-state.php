@@ -16,9 +16,9 @@ use Psr\Container\ContainerInterface;
  */
 class State {
 
-	public const STATE_START       = 0;
-	public const STATE_PROGRESSIVE = 4;
-	public const STATE_ONBOARDED   = 8;
+	const STATE_START       = 0;
+	const STATE_PROGRESSIVE = 4;
+	const STATE_ONBOARDED   = 8;
 
 	/**
 	 * The Environment.

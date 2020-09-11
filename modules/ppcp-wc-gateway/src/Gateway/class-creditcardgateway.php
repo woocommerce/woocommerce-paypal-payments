@@ -21,7 +21,7 @@ use Psr\Container\ContainerInterface;
  */
 class CreditCardGateway extends PayPalGateway {
 
-	public const ID = 'ppcp-credit-card-gateway';
+	const ID = 'ppcp-credit-card-gateway';
 
 	/**
 	 * The URL to the module.

@@ -14,10 +14,10 @@ use Inpsyde\PayPalCommerce\Subscription\Repository\PaymentTokenRepository;
 use Psr\Container\ContainerInterface;
 
 return array(
-	'subscription.helper'                   => static function ( ContainerInterface $container ): SubscriptionHelper {
+	'subscription.helper'                   => static function ( $container ): SubscriptionHelper {
 		return new SubscriptionHelper();
 	},
-	'subscription.renewal-handler'          => static function ( ContainerInterface $container ): RenewalHandler {
+	'subscription.renewal-handler'          => static function ( $container ): RenewalHandler {
 		$logger                = $container->get( 'woocommerce.logger.woocommerce' );
 		$repository            = $container->get( 'subscription.repository.payment-token' );
 		$endpoint              = $container->get( 'api.endpoint.order' );
@@ -31,7 +31,7 @@ return array(
 			$payer_factory
 		);
 	},
-	'subscription.repository.payment-token' => static function ( ContainerInterface $container ): PaymentTokenRepository {
+	'subscription.repository.payment-token' => static function ( $container ): PaymentTokenRepository {
 		$factory  = $container->get( 'api.factory.payment-token' );
 		$endpoint = $container->get( 'api.endpoint.payment-token' );
 		return new PaymentTokenRepository( $factory, $endpoint );

@@ -651,7 +651,7 @@ class SmartButton implements SmartButtonInterface {
 	 *
 	 * @return array|null
 	 */
-	private function payerData(): ?array {
+	private function payerData() {
 
 		$customer = WC()->customer;
 		if ( ! is_user_logged_in() || ! is_a( $customer, \WC_Customer::class ) ) {

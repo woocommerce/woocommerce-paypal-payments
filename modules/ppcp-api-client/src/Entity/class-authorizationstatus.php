@@ -16,16 +16,16 @@ use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
  */
 class AuthorizationStatus {
 
-	public const INTERNAL           = 'INTERNAL';
-	public const CREATED            = 'CREATED';
-	public const CAPTURED           = 'CAPTURED';
-	public const COMPLETED          = 'COMPLETED';
-	public const DENIED             = 'DENIED';
-	public const EXPIRED            = 'EXPIRED';
-	public const PARTIALLY_CAPTURED = 'PARTIALLY_CAPTURED';
-	public const VOIDED             = 'VOIDED';
-	public const PENDING            = 'PENDING';
-	public const VALID_STATUS       = array(
+	const INTERNAL           = 'INTERNAL';
+	const CREATED            = 'CREATED';
+	const CAPTURED           = 'CAPTURED';
+	const COMPLETED          = 'COMPLETED';
+	const DENIED             = 'DENIED';
+	const EXPIRED            = 'EXPIRED';
+	const PARTIALLY_CAPTURED = 'PARTIALLY_CAPTURED';
+	const VOIDED             = 'VOIDED';
+	const PENDING            = 'PENDING';
+	const VALID_STATUS       = array(
 		self::INTERNAL,
 		self::CREATED,
 		self::CAPTURED,

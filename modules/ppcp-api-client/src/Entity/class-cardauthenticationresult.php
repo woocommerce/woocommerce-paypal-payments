@@ -15,23 +15,23 @@ namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
 class CardAuthenticationResult {
 
 
-	public const LIABILITY_SHIFT_POSSIBLE = 'POSSIBLE';
-	public const LIABILITY_SHIFT_NO       = 'NO';
-	public const LIABILITY_SHIFT_UNKNOWN  = 'UNKNOWN';
+	const LIABILITY_SHIFT_POSSIBLE = 'POSSIBLE';
+	const LIABILITY_SHIFT_NO       = 'NO';
+	const LIABILITY_SHIFT_UNKNOWN  = 'UNKNOWN';
 
-	public const ENROLLMENT_STATUS_YES         = 'Y';
-	public const ENROLLMENT_STATUS_NO          = 'N';
-	public const ENROLLMENT_STATUS_UNAVAILABLE = 'U';
-	public const ENROLLMENT_STATUS_BYPASS      = 'B';
+	const ENROLLMENT_STATUS_YES         = 'Y';
+	const ENROLLMENT_STATUS_NO          = 'N';
+	const ENROLLMENT_STATUS_UNAVAILABLE = 'U';
+	const ENROLLMENT_STATUS_BYPASS      = 'B';
 
-	public const AUTHENTICATION_RESULT_YES                = 'Y';
-	public const AUTHENTICATION_RESULT_NO                 = 'N';
-	public const AUTHENTICATION_RESULT_REJECTED           = 'R';
-	public const AUTHENTICATION_RESULT_ATTEMPTED          = 'A';
-	public const AUTHENTICATION_RESULT_UNABLE             = 'U';
-	public const AUTHENTICATION_RESULT_CHALLENGE_REQUIRED = 'C';
-	public const AUTHENTICATION_RESULT_INFO               = 'I';
-	public const AUTHENTICATION_RESULT_DECOUPLED          = 'D';
+	const AUTHENTICATION_RESULT_YES                = 'Y';
+	const AUTHENTICATION_RESULT_NO                 = 'N';
+	const AUTHENTICATION_RESULT_REJECTED           = 'R';
+	const AUTHENTICATION_RESULT_ATTEMPTED          = 'A';
+	const AUTHENTICATION_RESULT_UNABLE             = 'U';
+	const AUTHENTICATION_RESULT_CHALLENGE_REQUIRED = 'C';
+	const AUTHENTICATION_RESULT_INFO               = 'I';
+	const AUTHENTICATION_RESULT_DECOUPLED          = 'D';
 
 	/**
 	 * The liability shift.

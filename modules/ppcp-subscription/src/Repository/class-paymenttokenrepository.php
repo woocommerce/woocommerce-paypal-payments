@@ -20,7 +20,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
 class PaymentTokenRepository {
 
 
-	public const USER_META = 'ppcp-vault-token';
+	const USER_META = 'ppcp-vault-token';
 
 	/**
 	 * The payment token factory.
@@ -58,7 +58,7 @@ class PaymentTokenRepository {
 	 *
 	 * @return PaymentToken|null
 	 */
-	public function for_user_id( int $id ): ?PaymentToken {
+	public function for_user_id( int $id ) {
 		try {
 			$token = (array) get_user_meta( $id, self::USER_META, true );
 			if ( ! $token || ! isset( $token['id'] ) ) {

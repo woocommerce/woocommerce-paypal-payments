@@ -25,7 +25,7 @@ use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
 class CreateOrderEndpoint implements EndpointInterface {
 
 
-	public const ENDPOINT = 'ppc-create-order';
+	const ENDPOINT = 'ppc-create-order';
 
 	/**
 	 * The request data helper.

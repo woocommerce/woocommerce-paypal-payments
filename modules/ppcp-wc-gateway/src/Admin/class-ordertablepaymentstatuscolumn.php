@@ -18,9 +18,9 @@ use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
  */
 class OrderTablePaymentStatusColumn {
 
-	private const COLUMN_KEY       = 'ppcp_payment_status';
-	private const INTENT           = 'authorize';
-	private const AFTER_COLUMN_KEY = 'order_status';
+	const COLUMN_KEY       = 'ppcp_payment_status';
+	const INTENT           = 'authorize';
+	const AFTER_COLUMN_KEY = 'order_status';
 
 	/**
 	 * The settings.
