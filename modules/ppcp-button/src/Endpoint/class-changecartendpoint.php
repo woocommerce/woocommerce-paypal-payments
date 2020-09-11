@@ -127,7 +127,7 @@ class ChangeCartEndpoint implements EndpointInterface {
 					'name'    => '',
 					'message' => __(
 						'Necessary fields not defined. Action aborted.',
-						'paypal-for-woocommerce'
+						'paypal-payments-for-woocommerce'
 					),
 					'code'    => 0,
 					'details' => array(),
@@ -166,7 +166,7 @@ class ChangeCartEndpoint implements EndpointInterface {
 
 		$message = __(
 			'Something went wrong. Action aborted',
-			'paypal-for-woocommerce'
+			'paypal-payments-for-woocommerce'
 		);
 		$errors  = wc_get_notices( 'error' );
 		if ( count( $errors ) ) {

@@ -50,7 +50,7 @@ class OrderStatus {
 			throw new RuntimeException(
 				sprintf(
 					// translators: %s is the current status.
-					__( '%s is not a valid status', 'paypal-for-woocommerce' ),
+					__( '%s is not a valid status', 'paypal-payments-for-woocommerce' ),
 					$status
 				)
 			);

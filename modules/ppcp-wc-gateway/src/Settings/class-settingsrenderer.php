@@ -316,7 +316,7 @@ class SettingsRenderer {
 	private function render_3d_secure_info() {
 		?>
 <tr>
-	<th><?php esc_html_e( '3D Secure', 'paypal-for-woocommerce' ); ?></th>
+	<th><?php esc_html_e( '3D Secure', 'paypal-payments-for-woocommerce' ); ?></th>
 	<td>
 		<p>
 			<?php
@@ -333,7 +333,7 @@ class SettingsRenderer {
                                   an additional layer of verification using Verified by Visa,
                                   MasterCard SecureCode and American Express SafeKey.
                                   %1$sLearn more about 3D Secure.%2$s',
-						'paypal-for-woocommerce'
+						'paypal-payments-for-woocommerce'
 					),
 					'<a href = "#">',
 					'</a>'
@@ -352,20 +352,20 @@ class SettingsRenderer {
 	private function render_dcc_onboarding_info() {
 		?>
 <tr>
-	<th><?php esc_html_e( 'Onboarding', 'paypal-for-woocommerce' ); ?></th>
+	<th><?php esc_html_e( 'Onboarding', 'paypal-payments-for-woocommerce' ); ?></th>
 <td class="notice notice-error">
 	<p>
 		<?php
 			esc_html_e(
 				'You need to complete your onboarding, before you can use the PayPal Card Processing option.',
-				'paypal-for-woocommerce'
+				'paypal-payments-for-woocommerce'
 			);
 		?>
 
 		<a
 			href="<?php echo esc_url( admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ) ); ?>"
 			>
-			<?php esc_html_e( 'Click here to complete your onboarding.', 'paypal-for-woocommerce' ); ?>
+			<?php esc_html_e( 'Click here to complete your onboarding.', 'paypal-payments-for-woocommerce' ); ?>
 		</a>
 	</p>
 </td>
@@ -379,13 +379,13 @@ class SettingsRenderer {
 	private function render_dcc_does_not_apply_info() {
 		?>
 		<tr>
-			<th><?php esc_html_e( 'Card Processing not available', 'paypal-for-woocommerce' ); ?></th>
+			<th><?php esc_html_e( 'Card Processing not available', 'paypal-payments-for-woocommerce' ); ?></th>
 			<td class="notice notice-error">
 				<p>
 					<?php
 					esc_html_e(
 						'Unfortunatly, the card processing option is not yet available in your country.',
-						'paypal-for-woocommerce'
+						'paypal-payments-for-woocommerce'
 					);
 					?>
 
@@ -397,7 +397,7 @@ class SettingsRenderer {
 						<?php
 						esc_html_e(
 							'Click here to see, in which countries this option is currently available.',
-							'paypal-for-woocommerce'
+							'paypal-payments-for-woocommerce'
 						);
 						?>
 					</a>

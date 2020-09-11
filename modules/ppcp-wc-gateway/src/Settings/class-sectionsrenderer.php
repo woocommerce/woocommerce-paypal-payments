@@ -41,8 +41,8 @@ class SectionsRenderer {
 		//phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$current  = ! isset( $_GET[ self::KEY ] ) ? PayPalGateway::ID : sanitize_text_field( wp_unslash( $_GET[ self::KEY ] ) );
 		$sections = array(
-			PayPalGateway::ID     => __( 'PayPal Checkout', 'paypal-for-woocommerce' ),
-			CreditCardGateway::ID => __( 'PayPal Card Processing', 'paypal-for-woocommerce' ),
+			PayPalGateway::ID     => __( 'PayPal Checkout', 'paypal-payments-for-woocommerce' ),
+			CreditCardGateway::ID => __( 'PayPal Card Processing', 'paypal-payments-for-woocommerce' ),
 		);
 
 		echo '<ul class="subsubsub">';

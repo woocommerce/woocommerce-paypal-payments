@@ -44,7 +44,7 @@ class ShippingFactory {
 		// Replicates the Behavior of \WC_Order::get_formatted_shipping_full_name().
 		$full_name = sprintf(
 			// translators: %1$s is the first name and %2$s is the second name. wc translation.
-			_x( '%1$s %2$s', 'full name', 'paypal-for-woocommerce' ),
+			_x( '%1$s %2$s', 'full name', 'paypal-payments-for-woocommerce' ),
 			$customer->get_shipping_first_name(),
 			$customer->get_shipping_last_name()
 		);
@@ -82,12 +82,12 @@ class ShippingFactory {
 	public function from_paypal_response( \stdClass $data ): Shipping {
 		if ( ! isset( $data->name->full_name ) ) {
 			throw new RuntimeException(
-				__( 'No name was given for shipping.', 'paypal-for-woocommerce' )
+				__( 'No name was given for shipping.', 'paypal-payments-for-woocommerce' )
 			);
 		}
 		if ( ! isset( $data->address ) ) {
 			throw new RuntimeException(
-				__( 'No address was given for shipping.', 'paypal-for-woocommerce' )
+				__( 'No address was given for shipping.', 'paypal-payments-for-woocommerce' )
 			);
 		}
 		$address = $this->address_factory->from_paypal_response( $data->address );

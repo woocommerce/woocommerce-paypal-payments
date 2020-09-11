@@ -94,7 +94,7 @@ class IdentityToken {
 			$error = new RuntimeException(
 				__(
 					'Could not create identity token.',
-					'paypal-for-woocommerce'
+					'paypal-payments-for-woocommerce'
 				)
 			);
 

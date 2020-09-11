@@ -16,7 +16,7 @@ use Psr\Log\LoggerInterface;
 
 return array(
 	'woocommerce.logger.source'      => function(): string {
-		return 'paypal-for-woocommerce';
+		return 'paypal-payments-for-woocommerce';
 	},
 	'woocommerce.logger.woocommerce' => function ( ContainerInterface $container ): LoggerInterface {
 		if ( ! class_exists( \WC_Logger::class ) ) {

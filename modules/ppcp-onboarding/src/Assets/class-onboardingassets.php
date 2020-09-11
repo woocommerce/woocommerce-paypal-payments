@@ -98,7 +98,7 @@ class OnboardingAssets {
 				'nonce'    => wp_create_nonce( $this->login_seller_endpoint::nonce() ),
 				'error'    => __(
 					'We could not properly onboard you. Please reload and try again.',
-					'paypal-for-woocommerce'
+					'paypal-payments-for-woocommerce'
 				),
 			)
 		);

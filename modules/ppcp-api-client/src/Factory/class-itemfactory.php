@@ -120,17 +120,17 @@ class ItemFactory {
 	public function from_paypal_response( \stdClass $data ): Item {
 		if ( ! isset( $data->name ) ) {
 			throw new RuntimeException(
-				__( 'No name for item given', 'paypal-for-woocommerce' )
+				__( 'No name for item given', 'paypal-payments-for-woocommerce' )
 			);
 		}
 		if ( ! isset( $data->quantity ) || ! is_numeric( $data->quantity ) ) {
 			throw new RuntimeException(
-				__( 'No quantity for item given', 'paypal-for-woocommerce' )
+				__( 'No quantity for item given', 'paypal-payments-for-woocommerce' )
 			);
 		}
 		if ( ! isset( $data->unit_amount->value ) || ! isset( $data->unit_amount->currency_code ) ) {
 			throw new RuntimeException(
-				__( 'No money values for item given', 'paypal-for-woocommerce' )
+				__( 'No money values for item given', 'paypal-payments-for-woocommerce' )
 			);
 		}
 

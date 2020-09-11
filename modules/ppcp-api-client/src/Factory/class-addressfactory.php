@@ -71,7 +71,7 @@ class AddressFactory {
 	public function from_paypal_response( \stdClass $data ): Address {
 		if ( ! isset( $data->country_code ) ) {
 			throw new RuntimeException(
-				__( 'No country given for address.', 'paypal-for-woocommerce' )
+				__( 'No country given for address.', 'paypal-payments-for-woocommerce' )
 			);
 		}
 		return new Address(

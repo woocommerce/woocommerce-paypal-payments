@@ -30,7 +30,7 @@ class CancelView {
 				esc_html__(
 					'You are currently paying with PayPal. If you want to cancel
                             this process, please click %1$shere%2$s.',
-					'paypal-for-woocommerce'
+					'paypal-payments-for-woocommerce'
 				),
 				'<a href="' . esc_url( $url ) . '">',
 				'</a>'

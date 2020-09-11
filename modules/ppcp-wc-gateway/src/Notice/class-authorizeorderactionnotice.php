@@ -48,35 +48,35 @@ class AuthorizeOrderActionNotice {
 		$messages[ self::NO_INFO ]          = array(
 			'message' => __(
 				'Could not retrieve information. Try again later.',
-				'paypal-for-woocommerce'
+				'paypal-payments-for-woocommerce'
 			),
 			'type'    => 'error',
 		);
 		$messages[ self::ALREADY_CAPTURED ] = array(
 			'message' => __(
 				'Payment already captured.',
-				'paypal-for-woocommerce'
+				'paypal-payments-for-woocommerce'
 			),
 			'type'    => 'error',
 		);
 		$messages[ self::FAILED ]           = array(
 			'message' => __(
 				'Failed to capture. Try again later.',
-				'paypal-for-woocommerce'
+				'paypal-payments-for-woocommerce'
 			),
 			'type'    => 'error',
 		);
 		$messages[ self::NOT_FOUND ]        = array(
 			'message' => __(
 				'Could not find payment to process.',
-				'paypal-for-woocommerce'
+				'paypal-payments-for-woocommerce'
 			),
 			'type'    => 'error',
 		);
 		$messages[ self::SUCCESS ]          = array(
 			'message' => __(
 				'Payment successfully captured.',
-				'paypal-for-woocommerce'
+				'paypal-payments-for-woocommerce'
 			),
 			'type'    => 'success',
 		);

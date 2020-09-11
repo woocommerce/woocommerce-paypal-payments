@@ -46,7 +46,7 @@ class PaymentToken {
 	public function __construct( string $id, string $type = self::TYPE_PAYMENT_METHOD_TOKEN ) {
 		if ( ! in_array( $type, self::VALID_TYPES, true ) ) {
 			throw new RuntimeException(
-				__( 'Not a valid payment source type.', 'paypal-for-woocommerce' )
+				__( 'Not a valid payment source type.', 'paypal-payments-for-woocommerce' )
 			);
 		}
 		$this->id   = $id;

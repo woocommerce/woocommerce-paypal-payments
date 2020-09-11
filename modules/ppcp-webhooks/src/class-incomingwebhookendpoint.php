@@ -123,7 +123,7 @@ class IncomingWebhookEndpoint {
 			if ( ! $result ) {
 				$this->logger->log(
 					'error',
-					__( 'Illegit Webhook request detected.', 'paypal-for-woocommerce' )
+					__( 'Illegit Webhook request detected.', 'paypal-payments-for-woocommerce' )
 				);
 			}
 			return $result;
@@ -134,7 +134,7 @@ class IncomingWebhookEndpoint {
 					// translators: %s is the error message.
 					__(
 						'Illegit Webhook request detected: %s',
-						'paypal-for-woocommerce'
+						'paypal-payments-for-woocommerce'
 					),
 					$exception->getMessage()
 				)
@@ -159,7 +159,7 @@ class IncomingWebhookEndpoint {
 					'info',
 					sprintf(
 						// translators: %s is the event type.
-						__( 'Webhook has been handled by %s', 'paypal-for-woocommerce' ),
+						__( 'Webhook has been handled by %s', 'paypal-payments-for-woocommerce' ),
 						( $handler->event_types() ) ? current( $handler->event_types() ) : ''
 					),
 					array(
@@ -173,7 +173,7 @@ class IncomingWebhookEndpoint {
 
 		$message = sprintf(
 			// translators: %s is the request type.
-			__( 'Could not find handler for request type %s', 'paypal-for-woocommerce' ),
+			__( 'Could not find handler for request type %s', 'paypal-payments-for-woocommerce' ),
 			$request['event_type']
 		);
 		$this->logger->log(

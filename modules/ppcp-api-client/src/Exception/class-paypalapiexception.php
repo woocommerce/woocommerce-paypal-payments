@@ -41,11 +41,11 @@ class PayPalApiException extends RuntimeException {
 		if ( ! isset( $response->message ) ) {
 			$response->message = __(
 				'Unknown error while connecting to PayPal.',
-				'paypal-for-woocommerce'
+				'paypal-payments-for-woocommerce'
 			);
 		}
 		if ( ! isset( $response->name ) ) {
-			$response->name = __( 'Error', 'paypal-for-woocommerce' );
+			$response->name = __( 'Error', 'paypal-payments-for-woocommerce' );
 		}
 		if ( ! isset( $response->details ) ) {
 			$response->details = array();
