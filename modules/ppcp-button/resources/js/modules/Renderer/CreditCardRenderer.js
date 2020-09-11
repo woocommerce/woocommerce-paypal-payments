@@ -81,6 +81,13 @@ class CreditCardRenderer {
                 submitEvent
             );
         });
+
+        document.querySelector('#payment_method_ppcp-credit-card-gateway').addEventListener(
+            'click',
+            () => {
+                document.querySelector('label[for=ppcp-credit-card-ppcp-hosted-fields]').click();
+            }
+        )
     }
 }
 export default CreditCardRenderer;
