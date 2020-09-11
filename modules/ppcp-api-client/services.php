@@ -71,7 +71,7 @@ return array(
 	},
 	'api.bearer'                            => static function ( $container ): Bearer {
 
-		$cache              = new Cache('ppcp-paypal-bearer');
+		$cache              = new Cache( 'ppcp-paypal-bearer' );
 		$key                = $container->get( 'api.key' );
 		$secret             = $container->get( 'api.secret' );
 

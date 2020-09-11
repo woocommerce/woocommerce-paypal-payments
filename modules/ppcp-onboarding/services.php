@@ -71,7 +71,7 @@ return array(
 		if ( $state->current_state() < State::STATE_ONBOARDED ) {
 			return new ConnectBearer();
 		}
-		$cache  = new Cache('ppcp-paypal-bearer');
+		$cache  = new Cache( 'ppcp-paypal-bearer' );
 		$key    = $container->get( 'api.key' );
 		$secret = $container->get( 'api.secret' );
 
@@ -119,7 +119,7 @@ return array(
 		$partner_referrals_data = $container->get( 'api.repository.partner-referrals-data' );
 		$settings               = $container->get( 'wcgateway.settings' );
 
-		$cache = new Cache('ppcp-token');
+		$cache = new Cache( 'ppcp-token' );
 		return new LoginSellerEndpoint(
 			$request_data,
 			$login_seller,

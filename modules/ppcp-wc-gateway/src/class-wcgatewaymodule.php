@@ -174,7 +174,7 @@ class WcGatewayModule implements ModuleInterface {
 				$dcc_applies = $container->get( 'api.helpers.dccapplies' );
 
 				$screen = ! function_exists( 'get_current_screen' ) ? (object) array( 'id' => 'front' ) : get_current_screen();
-				if (! $screen) {
+				if ( ! $screen ) {
 					$screen = (object) array( 'id' => 'front' );
 				}
 				/**

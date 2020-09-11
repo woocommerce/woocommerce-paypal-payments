@@ -105,7 +105,7 @@ return array(
 		$fields           = $container->get( 'wcgateway.settings.fields' );
 		$webhook_registrar = $container->get( 'webhook.registrar' );
 		$state            = $container->get( 'onboarding.state' );
-		$cache = new Cache('ppcp-token');
+		$cache = new Cache( 'ppcp-token' );
 		return new SettingsListener( $settings, $fields, $webhook_registrar, $cache, $state );
 	},
 	'wcgateway.order-processor'                    => static function ( $container ): OrderProcessor {
@@ -531,7 +531,7 @@ return array(
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
-			'button_enabled'     => array(
+			'button_enabled'             => array(
 				'title'        => __( 'Enable buttons on Checkout', 'paypal-payments-for-woocommerce' ),
 				'type'         => 'checkbox',
 				'label'        => __( 'Enable on Checkout', 'paypal-payments-for-woocommerce' ),

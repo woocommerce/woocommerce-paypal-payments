@@ -225,13 +225,13 @@ class Order {
 			),
 		);
 		if ( $this->create_time() ) {
-			$order['create_time'] = $this->create_time()->format( "Y-m-d\TH:i:sO" );
+			$order['create_time'] = $this->create_time()->format( 'Y-m-d\TH:i:sO' );
 		}
 		if ( $this->payer() ) {
 			$order['payer'] = $this->payer()->to_array();
 		}
 		if ( $this->update_time() ) {
-			$order['update_time'] = $this->update_time()->format( "Y-m-d\TH:i:sO" );
+			$order['update_time'] = $this->update_time()->format( 'Y-m-d\TH:i:sO' );
 		}
 		if ( $this->application_context() ) {
 			$order['application_context'] = $this->application_context()->to_array();

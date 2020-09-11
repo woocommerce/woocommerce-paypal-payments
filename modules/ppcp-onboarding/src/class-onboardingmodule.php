@@ -38,7 +38,7 @@ class OnboardingModule implements ModuleInterface {
 	/**
 	 * Runs the module.
 	 *
-	 * @param $container The container.
+	 * @param ContainerInterface $container The container.
 	 */
 	public function run( ContainerInterface $container ) {
 

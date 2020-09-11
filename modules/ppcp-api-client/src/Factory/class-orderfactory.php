@@ -141,10 +141,10 @@ class OrderFactory {
 		);
 
 		$create_time         = ( isset( $order_data->create_time ) ) ?
-			\DateTime::createFromFormat( "Y-m-d\TH:i:sO", $order_data->create_time )
+			\DateTime::createFromFormat( 'Y-m-d\TH:i:sO', $order_data->create_time )
 			: null;
 		$update_time         = ( isset( $order_data->update_time ) ) ?
-			\DateTime::createFromFormat( "Y-m-d\TH:i:sO", $order_data->update_time )
+			\DateTime::createFromFormat( 'Y-m-d\TH:i:sO', $order_data->update_time )
 			: null;
 		$payer               = ( isset( $order_data->payer ) ) ?
 			$this->payer_factory->from_paypal_response( $order_data->payer )
