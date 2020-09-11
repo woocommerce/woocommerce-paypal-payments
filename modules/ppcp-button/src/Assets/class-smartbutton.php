@@ -681,7 +681,7 @@ class SmartButton implements SmartButtonInterface {
 				$this->settings->get( 'intent' ) : 'capture',
 		);
 		if (
-			defined( 'WP_DEBUG' ) && \WP_DEBUG
+			defined( 'WP_DEBUG' ) && \WP_DEBUG && is_user_logged_in()
 			&& WC()->customer && WC()->customer->get_billing_country()
 		) {
 			$params['buyer-country'] = WC()->customer->get_billing_country();
