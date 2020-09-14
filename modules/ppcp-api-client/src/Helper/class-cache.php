@@ -42,6 +42,26 @@ class Cache {
 	}
 
 	/**
+	 * Whether a value is stored or not.
+	 *
+	 * @param string $key The key for the value.
+	 *
+	 * @return bool
+	 */
+	public function has( string $key ): bool {
+		return $this->get( $key ) !== false;
+	}
+
+	/**
+	 * Deletes a cache.
+	 *
+	 * @param string $key The key.
+	 */
+	public function delete( string $key ) {
+		delete_transient( $this->prefix . $key );
+	}
+
+	/**
 	 * Caches a value.
 	 *
 	 * @param string $key The key under which the value should be cached.
