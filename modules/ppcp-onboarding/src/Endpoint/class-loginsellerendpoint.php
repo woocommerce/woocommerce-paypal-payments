@@ -17,7 +17,6 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar;
-use Psr\SimpleCache\CacheInterface;
 
 /**
  * Class LoginSellerEndpoint
@@ -98,7 +97,6 @@ class LoginSellerEndpoint implements EndpointInterface {
 	 * Handles the incoming request.
 	 *
 	 * @return bool
-	 * @throws \Psr\SimpleCache\InvalidArgumentException When a cache item was not found.
 	 */
 	public function handle_request(): bool {
 

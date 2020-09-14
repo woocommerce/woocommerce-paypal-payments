@@ -4,10 +4,10 @@ declare(strict_types=1);
 namespace Inpsyde\PayPalCommerce\ApiClient\Authentication;
 
 use Brain\Monkey\Expectation\Exception\ExpectationArgsRequired;
+
 use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use Inpsyde\PayPalCommerce\ApiClient\TestCase;
 use Psr\Log\LoggerInterface;
-use Psr\SimpleCache\CacheInterface;
 use Mockery;
 use function Brain\Monkey\Functions\expect;
 

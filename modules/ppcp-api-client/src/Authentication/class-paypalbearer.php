@@ -14,7 +14,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Token;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use Psr\Log\LoggerInterface;
-use Psr\SimpleCache\CacheInterface;
 
 /**
  * Class PayPalBearer
@@ -88,7 +87,6 @@ class PayPalBearer implements Bearer {
 	 * Returns a bearer token.
 	 *
 	 * @return Token
-	 * @throws \Psr\SimpleCache\InvalidArgumentException When cache is invalid.
 	 * @throws RuntimeException When request fails.
 	 */
 	public function bearer(): Token {
@@ -104,7 +102,6 @@ class PayPalBearer implements Bearer {
 	 * Creates a new bearer token.
 	 *
 	 * @return Token
-	 * @throws \Psr\SimpleCache\InvalidArgumentException When cache is invalid.
 	 * @throws RuntimeException When request fails.
 	 */
 	private function newBearer(): Token {

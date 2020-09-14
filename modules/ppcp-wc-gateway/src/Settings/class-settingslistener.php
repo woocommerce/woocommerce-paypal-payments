@@ -15,7 +15,6 @@ use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar;
-use Psr\SimpleCache\CacheInterface;
 
 /**
  * Class SettingsListener
@@ -88,7 +87,6 @@ class SettingsListener {
 	 * Listens to the request.
 	 *
 	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting was not found.
-	 * @throws \Psr\SimpleCache\InvalidArgumentException  When the argument was invalid.
 	 */
 	public function listen() {
 
