@@ -34,7 +34,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Inpsyde\\PayPalCommerce\\": "tests/PHPUnit/"
+            "WooCommerce\\PayPalCommerce\\": "tests/PHPUnit/"
         }
     },
     "minimum-stability": "dev",

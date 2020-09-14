@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\WcGateway\Checkout;
+namespace WooCommerce\PayPalCommerce\WcGateway\Checkout;
 
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Address;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Payer;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\PayerName;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Phone;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\PhoneWithType;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Shipping;
-use Inpsyde\PayPalCommerce\Session\SessionHandler;
-use Inpsyde\PayPalCommerce\TestCase;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Address;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PayerName;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Phone;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PhoneWithType;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Shipping;
+use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\TestCase;
 use Mockery\MockInterface;
 
 class CheckoutPayPalAddressPresetTest extends TestCase

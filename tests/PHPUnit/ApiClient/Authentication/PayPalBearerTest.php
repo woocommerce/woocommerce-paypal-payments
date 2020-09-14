@@ -1,12 +1,11 @@
 <?php
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Authentication;
+namespace WooCommerce\PayPalCommerce\ApiClient\Authentication;
 
-use Brain\Monkey\Expectation\Exception\ExpectationArgsRequired;
-
-use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use Inpsyde\PayPalCommerce\ApiClient\TestCase;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
+use WooCommerce\PayPalCommerce\ApiClient\TestCase;
 use Psr\Log\LoggerInterface;
 use Mockery;
 use function Brain\Monkey\Functions\expect;
@@ -18,7 +17,7 @@ class PayPalBearerTest extends TestCase
     {
 	    expect('wp_json_encode')->andReturnUsing('json_encode');
         $json = '{"access_token":"abc","expires_in":100, "created":' . time() . '}';
-        $cache = Mockery::mock(CacheInterface::class);
+        $cache = Mockery::mock(Cache::class);
         $cache
             ->expects('get')
             ->andReturn('{"access_token":"abc","expires_in":100, "created":100}');
@@ -67,7 +66,7 @@ class PayPalBearerTest extends TestCase
     {
 	    expect('wp_json_encode')->andReturnUsing('json_encode');
         $json = '{"access_token":"abc","expires_in":100, "created":' . time() . '}';
-        $cache = Mockery::mock(CacheInterface::class);
+        $cache = Mockery::mock(Cache::class);
         $cache
             ->expects('get')
             ->andReturn('');
@@ -115,7 +114,7 @@ class PayPalBearerTest extends TestCase
     public function testCachedTokenIsStillValid()
     {
         $json = '{"access_token":"abc","expires_in":100, "created":' . time() . '}';
-        $cache = Mockery::mock(CacheInterface::class);
+        $cache = Mockery::mock(Cache::class);
         $cache
             ->expects('get')
             ->andReturn($json);
@@ -135,7 +134,7 @@ class PayPalBearerTest extends TestCase
     public function testExceptionThrownOnError()
     {
         $json = '{"access_token":"abc","expires_in":100, "created":' . time() . '}';
-        $cache = Mockery::mock(CacheInterface::class);
+        $cache = Mockery::mock(Cache::class);
         $cache
             ->expects('get')
             ->andReturn('');
@@ -178,7 +177,7 @@ class PayPalBearerTest extends TestCase
     public function testExceptionThrownBecauseOfHttpStatusCode()
     {
         $json = '{"access_token":"abc","expires_in":100, "created":' . time() . '}';
-        $cache = Mockery::mock(CacheInterface::class);
+        $cache = Mockery::mock(Cache::class);
         $cache
             ->expects('get')
             ->andReturn('');

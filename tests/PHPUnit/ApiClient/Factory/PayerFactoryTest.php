@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Factory;
+namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Address;
-use Inpsyde\PayPalCommerce\ApiClient\TestCase;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Address;
+use WooCommerce\PayPalCommerce\ApiClient\TestCase;
 use Mockery;
 
 class PayerFactoryTest extends TestCase
