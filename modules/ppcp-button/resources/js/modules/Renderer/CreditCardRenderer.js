@@ -1,3 +1,5 @@
+import dccInputFactory from "../Helper/DccInputFactory";
+
 class CreditCardRenderer {
 
     constructor(defaultConfig, errorHandler) {
@@ -23,28 +25,46 @@ class CreditCardRenderer {
             return;
         }
 
+        const gateWayBox = document.querySelector('.payment_box.payment_method_ppcp-credit-card-gateway');
+        const oldDisplayStyle = gateWayBox.style.display;
+        gateWayBox.style.display = 'block';
         document.querySelector('#ppcp-hide-dcc').parentNode.removeChild(document.querySelector('#ppcp-hide-dcc'));
 
+        const cardNumberField = document.querySelector('#ppcp-credit-card-gateway-card-number');
+        const cardNumber = dccInputFactory(cardNumberField);
+        cardNumberField.parentNode.replaceChild(cardNumber, cardNumberField);
+
+        const cardExpiryField = document.querySelector('#ppcp-credit-card-gateway-card-expiry');
+        const cardExpiry = dccInputFactory(cardExpiryField);
+        cardExpiryField.parentNode.replaceChild(cardExpiry, cardExpiryField);
+
+        const cardCodeField = document.querySelector('#ppcp-credit-card-gateway-card-cvc');
+        const cardCode = dccInputFactory(cardCodeField);
+        cardCodeField.parentNode.replaceChild(cardCode, cardCodeField);
+
+        gateWayBox.style.display = oldDisplayStyle;
+
+        const formWrapper = '.payment_box payment_method_ppcp-credit-card-gateway';
         if (
             this.defaultConfig.enforce_vault
-            && document.querySelector(wrapper + ' .ppcp-credit-card-vault')
+            && document.querySelector(formWrapper + ' .ppcp-credit-card-vault')
         ) {
-            document.querySelector(wrapper + ' .ppcp-credit-card-vault').checked = true;
-            document.querySelector(wrapper + ' .ppcp-credit-card-vault').setAttribute('disabled', true);
+            document.querySelector(formWrapper + ' .ppcp-credit-card-vault').checked = true;
+            document.querySelector(formWrapper + ' .ppcp-credit-card-vault').setAttribute('disabled', true);
         }
         paypal.HostedFields.render({
             createOrder: contextConfig.createOrder,
             fields: {
                 number: {
-                    selector: wrapper + ' .ppcp-credit-card',
+                    selector: '#ppcp-credit-card-gateway-card-number',
                     placeholder: this.defaultConfig.hosted_fields.labels.credit_card_number,
                 },
                 cvv: {
-                    selector: wrapper + ' .ppcp-cvv',
+                    selector: '#ppcp-credit-card-gateway-card-cvc',
                     placeholder: this.defaultConfig.hosted_fields.labels.cvv,
                 },
                 expirationDate: {
-                    selector: wrapper + ' .ppcp-expiration-date',
+                    selector: '#ppcp-credit-card-gateway-card-expiry',
                     placeholder: this.defaultConfig.hosted_fields.labels.mm_yyyy,
                 }
             }
@@ -79,8 +99,8 @@ class CreditCardRenderer {
             hostedFields.on('inputSubmitRequest', function () {
                 submitEvent(null);
             });
-            document.querySelector(wrapper).addEventListener(
-                'submit',
+            document.querySelector(wrapper + ' button').addEventListener(
+                'click',
                 submitEvent
             );
         });
@@ -88,7 +108,7 @@ class CreditCardRenderer {
         document.querySelector('#payment_method_ppcp-credit-card-gateway').addEventListener(
             'click',
             () => {
-                document.querySelector('label[for=ppcp-credit-card-ppcp-hosted-fields]').click();
+                document.querySelector('label[for=ppcp-credit-card-gateway-card-number]').click();
             }
         )
     }

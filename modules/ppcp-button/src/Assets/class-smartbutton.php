@@ -313,15 +313,6 @@ class SmartButton implements SmartButtonInterface {
 			return false;
 		}
 
-		if ( $this->settings->has( 'dcc_enabled' ) && $this->settings->get( 'dcc_enabled' ) ) {
-			wp_enqueue_style(
-				'ppcp-hosted-fields',
-				$this->module_url . '/assets/css/hosted-fields.css',
-				array(),
-				1
-			);
-		}
-
 		$load_script = false;
 		if ( is_checkout() && $this->settings->has( 'dcc_enabled' ) && $this->settings->get( 'dcc_enabled' ) ) {
 			$load_script = true;
@@ -498,21 +489,9 @@ class SmartButton implements SmartButtonInterface {
 		) : '';
 
 		printf(
-			'<form id="%1$s">
-                        <div class="ppcp-dcc-credit-card-wrapper" style="display: none">
-                            <label for="ppcp-credit-card-%1$s">%2$s</label>
-                            <span id="ppcp-credit-card-%1$s" class="ppcp-credit-card"></span>
-                            <label for="ppcp-expiration-date-%1$s">%3$s</label>
-                            <span
-                             id="ppcp-expiration-date-%1$s"
-                             class="ppcp-expiration-date"
-                            ></span>
-                            <label for="ppcp-cvv-%1$s">%4$s</label>
-                            <span id="ppcp-cvv-%1$s" class="ppcp-cvv"></span>
-                            %5$s
-                            <button class="button alt">%6$s</button>
-                        </div>
-                    </form><div id="payments-sdk__contingency-lightbox"></div><style id="ppcp-hide-dcc">.payment_method_ppcp-credit-card-gateway {display:none;}</style>',
+			'<div id="%1$s">
+                        <button class="button alt">%6$s</button>
+                    </div><div id="payments-sdk__contingency-lightbox"></div><style id="ppcp-hide-dcc">.payment_method_ppcp-credit-card-gateway {display:none;}</style>',
 			esc_attr( $id ),
 			esc_html__( 'Credit Card number', 'paypal-payments-for-woocommerce' ),
 			esc_html__( 'Expiration', 'paypal-payments-for-woocommerce' ),

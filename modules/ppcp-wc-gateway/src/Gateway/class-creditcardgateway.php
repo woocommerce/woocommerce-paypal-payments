@@ -19,7 +19,9 @@ use Psr\Container\ContainerInterface;
 /**
  * Class CreditCardGateway
  */
-class CreditCardGateway extends PayPalGateway {
+class CreditCardGateway extends \WC_Payment_Gateway_CC {
+
+	use ProcessPaymentTrait;
 
 	const ID = 'ppcp-credit-card-gateway';
 
@@ -76,6 +78,7 @@ class CreditCardGateway extends PayPalGateway {
 				'subscription_payment_method_change_customer',
 				'subscription_payment_method_change_admin',
 				'multiple_subscriptions',
+				'credit_card_form_cvc_on_saved_method',
 			);
 		}
 
