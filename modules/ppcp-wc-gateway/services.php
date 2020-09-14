@@ -337,26 +337,6 @@ return array(
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
-			'dcc_gateway_description'    => array(
-				'title'        => __( 'Description', 'paypal-payments-for-woocommerce' ),
-				'type'         => 'text',
-				'desc_tip'     => true,
-				'description'  => __(
-					'This controls the description which the user sees during checkout.',
-					'paypal-payments-for-woocommerce'
-				),
-				'default'      => __(
-					'Pay with your credit card.',
-					'paypal-payments-for-woocommerce'
-				),
-				'screens'      => array(
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(
-					'dcc',
-				),
-				'gateway'      => 'dcc',
-			),
 			'intent'                     => array(
 				'title'        => __( 'Intent', 'paypal-payments-for-woocommerce' ),
 				'type'         => 'select',
