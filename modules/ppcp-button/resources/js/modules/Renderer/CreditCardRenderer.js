@@ -22,6 +22,9 @@ class CreditCardRenderer {
             wrapperElement.parentNode.removeChild(wrapperElement);
             return;
         }
+
+        document.querySelector('#ppcp-hide-dcc').parentNode.removeChild(document.querySelector('#ppcp-hide-dcc'));
+
         if (
             this.defaultConfig.enforce_vault
             && document.querySelector(wrapper + ' .ppcp-credit-card-vault')

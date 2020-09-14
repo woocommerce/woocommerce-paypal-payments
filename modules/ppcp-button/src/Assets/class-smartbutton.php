@@ -512,7 +512,7 @@ class SmartButton implements SmartButtonInterface {
                             %5$s
                             <button class="button alt">%6$s</button>
                         </div>
-                    </form><div id="payments-sdk__contingency-lightbox"></div>',
+                    </form><div id="payments-sdk__contingency-lightbox"></div><style id="ppcp-hide-dcc">.payment_method_ppcp-credit-card-gateway {display:none;}</style>',
 			esc_attr( $id ),
 			esc_html__( 'Credit Card number', 'paypal-payments-for-woocommerce' ),
 			esc_html__( 'Expiration', 'paypal-payments-for-woocommerce' ),
