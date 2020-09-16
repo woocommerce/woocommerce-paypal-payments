@@ -16,8 +16,8 @@
         "psr/container": "^1.0",
         "oomphinc/composer-installers-extender": "^1.1",
         "container-interop/service-provider": "^0.4.0",
-        "dhii/containers": "dev-develop",
-        "dhii/wp-containers": "^0.1.0@alpha",
+        "dhii/containers": "v0.1.0-alpha1",
+        "dhii/wp-containers": "v0.1.0-alpha1",
         "psr/log": "^1.1",
         "ext-json": "*"
     },
