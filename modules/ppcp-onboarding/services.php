@@ -119,7 +119,7 @@ return array(
 		$partner_referrals_data = $container->get( 'api.repository.partner-referrals-data' );
 		$settings               = $container->get( 'wcgateway.settings' );
 
-		$cache = new Cache( 'ppcp-token' );
+		$cache = new Cache( 'ppcp-paypal-bearer' );
 		return new LoginSellerEndpoint(
 			$request_data,
 			$login_seller,

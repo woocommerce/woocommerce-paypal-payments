@@ -9,13 +9,13 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient;
 
-use Dhii\Data\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\IdentityToken;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\LoginSeller;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnerReferrals;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokenEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\WebhookEndpoint;
@@ -32,6 +32,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentsFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentSourceFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\SellerStatusFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
@@ -84,6 +85,19 @@ return array(
 			$secret,
 			$logger
 		);
+	},
+	'api.endpoint.partners'                 => static function ( $container ) : PartnersEndpoint {
+		return new PartnersEndpoint(
+			$container->get( 'api.host' ),
+			$container->get( 'api.bearer' ),
+			$container->get( 'woocommerce.logger.woocommerce' ),
+			$container->get( 'api.factory.sellerstatus' ),
+			$container->get( 'api.partner_merchant_id' ),
+			$container->get( 'api.merchant_id' )
+		);
+	},
+	'api.factory.sellerstatus'              => static function ( $container ) : SellerStatusFactory {
+		return new SellerStatusFactory();
 	},
 	'api.endpoint.payment-token'            => static function ( $container ) : PaymentTokenEndpoint {
 		return new PaymentTokenEndpoint(

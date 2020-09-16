@@ -84,6 +84,29 @@ class SettingsListener {
 	}
 
 	/**
+	 * Listens if the merchant ID should be updated.
+	 */
+	public function listen_for_merchant_id() {
+
+		if ( ! $this->is_valid_site_request() ) {
+			return;
+		}
+
+		/**
+		 * No nonce provided.
+		 * phpcs:disable WordPress.Security.NonceVerification.Missing
+		 * phpcs:disable WordPress.Security.NonceVerification.Recommended
+		 */
+		if ( isset( $_GET['merchantIdInPayPal'] ) ) {
+			$this->settings->set( 'merchant_id', sanitize_text_field( wp_unslash( $_GET['merchantIdInPayPal'] ) ) );
+			$this->settings->persist();
+		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+	}
+
+	/**
 	 * Listens to the request.
 	 *
 	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting was not found.
@@ -246,6 +269,35 @@ class SettingsListener {
 	 */
 	private function is_valid_update_request(): bool {
 
+		if ( ! $this->is_valid_site_request() ) {
+			return false;
+		}
+
+		if (
+			! isset( $_POST['ppcp-nonce'] )
+			|| ! wp_verify_nonce(
+				sanitize_text_field( wp_unslash( $_POST['ppcp-nonce'] ) ),
+				self::NONCE
+			)
+		) {
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Whether we are on the settings page and are allowed to be here.
+	 *
+	 * @return bool
+	 */
+	private function is_valid_site_request() : bool {
+
+		/**
+		 * No nonce needed at this point.
+		 *
+		 * phpcs:disable WordPress.Security.NonceVerification.Missing
+		 * phpcs:disable WordPress.Security.NonceVerification.Recommended
+		 */
 		if (
 			! isset( $_REQUEST['section'] )
 			|| ! in_array(
@@ -257,17 +309,10 @@ class SettingsListener {
 			return false;
 		}
 
-		if ( ! current_user_can( 'manage_options' ) ) {
-			return false;
-		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
-		if (
-			! isset( $_POST['ppcp-nonce'] )
-			|| ! wp_verify_nonce(
-				sanitize_text_field( wp_unslash( $_POST['ppcp-nonce'] ) ),
-				self::NONCE
-			)
-		) {
+		if ( ! current_user_can( 'manage_options' ) ) {
 			return false;
 		}
 		return true;

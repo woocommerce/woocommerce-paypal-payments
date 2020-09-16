@@ -24,6 +24,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
@@ -193,7 +194,25 @@ class WcGatewayModule implements ModuleInterface {
 			'woocommerce_settings_save_checkout',
 			static function () use ( $container ) {
 				$listener = $container->get( 'wcgateway.settings.listener' );
+
+				/**
+				 * The settings listener.
+				 *
+				 * @var SettingsListener $listener
+				 */
 				$listener->listen();
+			}
+		);
+		add_action(
+			'admin_init',
+			static function () use ( $container ) {
+				$listener = $container->get( 'wcgateway.settings.listener' );
+				/**
+				 * The settings listener.
+				 *
+				 * @var SettingsListener $listener
+				 */
+				$listener->listen_for_merchant_id();
 			}
 		);
 

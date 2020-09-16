@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use Psr\Container\ContainerInterface;
+use Woocommerce\PayPalCommerce\WcGateway\Helper\DccProductStatus;
 
 /**
  * Class SettingsRenderer
@@ -56,27 +57,37 @@ class SettingsRenderer {
 	private $messages_apply;
 
 	/**
+	 * The DCC Product Status.
+	 *
+	 * @var DccProductStatus
+	 */
+	private $dcc_product_status;
+
+	/**
 	 * SettingsRenderer constructor.
 	 *
 	 * @param ContainerInterface $settings The Settings.
-	 * @param State              $state                 The current state.
-	 * @param array              $fields                The setting fields.
-	 * @param DccApplies         $dcc_applies       Whether DCC gateway can be shown.
+	 * @param State              $state The current state.
+	 * @param array              $fields The setting fields.
+	 * @param DccApplies         $dcc_applies Whether DCC gateway can be shown.
 	 * @param MessagesApply      $messages_apply Whether messages can be shown.
+	 * @param DccProductStatus   $dcc_product_status The product status.
 	 */
 	public function __construct(
 		ContainerInterface $settings,
 		State $state,
 		array $fields,
 		DccApplies $dcc_applies,
-		MessagesApply $messages_apply
+		MessagesApply $messages_apply,
+		DccProductStatus $dcc_product_status
 	) {
 
-		$this->settings       = $settings;
-		$this->state          = $state;
-		$this->fields         = $fields;
-		$this->dcc_applies    = $dcc_applies;
-		$this->messages_apply = $messages_apply;
+		$this->settings           = $settings;
+		$this->state              = $state;
+		$this->fields             = $fields;
+		$this->dcc_applies        = $dcc_applies;
+		$this->messages_apply     = $messages_apply;
+		$this->dcc_product_status = $dcc_product_status;
 	}
 
 	/**
@@ -236,6 +247,12 @@ class SettingsRenderer {
 				continue;
 			}
 			if (
+				in_array( 'dcc', $config['requirements'], true )
+				&& ! $this->dcc_product_status->dcc_is_active()
+			) {
+				continue;
+			}
+			if (
 				in_array( 'messages', $config['requirements'], true )
 				&& ! $this->messages_apply->for_country()
 			) {
@@ -281,9 +298,10 @@ class SettingsRenderer {
 			if ( $this->dcc_applies->for_country_currency() ) {
 				if ( State::STATE_ONBOARDED > $this->state->current_state() ) {
 					$this->render_dcc_onboarding_info();
-				}
-				if ( State::STATE_ONBOARDED === $this->state->current_state() ) {
+				} elseif ( State::STATE_ONBOARDED === $this->state->current_state() && $this->dcc_product_status->dcc_is_active() ) {
 					$this->render_3d_secure_info();
+				} elseif ( ! $this->dcc_product_status->dcc_is_active() ) {
+					$this->render_dcc_not_active_yet();
 				}
 			} else {
 				$this->render_dcc_does_not_apply_info();
@@ -308,6 +326,27 @@ class SettingsRenderer {
                     value = "' . esc_attr( $value ) . '"
                     > ';
 		}
+	}
+
+	/**
+	 * Renders the information that the PayPal account can not yet process DCC.
+	 */
+	private function render_dcc_not_active_yet() {
+		?>
+		<tr>
+			<th><?php esc_html_e( 'Onboarding', 'paypal-payments-for-woocommerce' ); ?></th>
+			<td class="notice notice-error">
+				<p>
+					<?php
+					esc_html_e(
+						'Credit Card processing for your account has not yet been activated by PayPal. If your account is new, this can take some days. Otherwise, please get in contact with PayPal.',
+						'paypal-payments-for-woocommerce'
+					);
+					?>
+				</p>
+			</td>
+		</tr>
+		<?php
 	}
 
 	/**

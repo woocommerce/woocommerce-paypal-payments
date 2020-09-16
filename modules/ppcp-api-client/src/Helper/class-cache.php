@@ -49,7 +49,8 @@ class Cache {
 	 * @return bool
 	 */
 	public function has( string $key ): bool {
-		return $this->get( $key ) !== false;
+		$value = $this->get( $key );
+		return false !== $value;
 	}
 
 	/**

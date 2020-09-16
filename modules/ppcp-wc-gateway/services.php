@@ -20,6 +20,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Checkout\DisableGateways;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use Woocommerce\PayPalCommerce\WcGateway\Helper\DccProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
@@ -92,12 +93,14 @@ return array(
 		$fields        = $container->get( 'wcgateway.settings.fields' );
 		$dcc_applies    = $container->get( 'api.helpers.dccapplies' );
 		$messages_apply = $container->get( 'button.helper.messages-apply' );
+		$dcc_product_status = $container->get( 'wcgateway.helper.dcc-product-status' );
 		return new SettingsRenderer(
 			$settings,
 			$state,
 			$fields,
 			$dcc_applies,
-			$messages_apply
+			$messages_apply,
+			$dcc_product_status
 		);
 	},
 	'wcgateway.settings.listener'                  => static function ( $container ): SettingsListener {
@@ -105,7 +108,7 @@ return array(
 		$fields           = $container->get( 'wcgateway.settings.fields' );
 		$webhook_registrar = $container->get( 'webhook.registrar' );
 		$state            = $container->get( 'onboarding.state' );
-		$cache = new Cache( 'ppcp-token' );
+		$cache = new Cache( 'ppcp-paypal-bearer' );
 		return new SettingsListener( $settings, $fields, $webhook_registrar, $cache, $state );
 	},
 	'wcgateway.order-processor'                    => static function ( $container ): OrderProcessor {
@@ -234,6 +237,20 @@ return array(
 				'type'         => 'ppcp-text',
 				'title'        => __( 'Manual mode', 'paypal-payments-for-woocommerce' ),
 				'text'         => '<button id="ppcp[toggle_manual_input]">' . __( 'Toggle to manual credential input', 'paypal-payments-for-woocommerce' ) . '</button>',
+				'screens'      => array(
+					State::STATE_START,
+					State::STATE_PROGRESSIVE,
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
+			'merchant_id'                => array(
+				'title'        => __( 'Merchant Id', 'paypal-payments-for-woocommerce' ),
+				'type'         => 'ppcp-text-input',
+				'desc_tip'     => true,
+				'description'  => __( 'The merchant id of your account ', 'paypal-payments-for-woocommerce' ),
+				'default'      => false,
 				'screens'      => array(
 					State::STATE_START,
 					State::STATE_PROGRESSIVE,
@@ -1588,5 +1605,11 @@ return array(
 			$endpoint,
 			$prefix
 		);
+	},
+	'wcgateway.helper.dcc-product-status'          => static function ( $container ) : DccProductStatus {
+
+		$settings         = $container->get( 'wcgateway.settings' );
+		$partner_endpoint = $container->get( 'api.endpoint.partners' );
+		return new DccProductStatus( $settings, $partner_endpoint );
 	},
 );
