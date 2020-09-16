@@ -41,9 +41,9 @@ class ButtonModule implements ModuleInterface {
 	/**
 	 * Runs the module.
 	 *
-	 * @param ContainerInterface $container The Container.
+	 * @param ContainerInterface|null $container The Container.
 	 */
-	public function run( ContainerInterface $container ) {
+	public function run( ContainerInterface $container = null ) {
 
 		add_action(
 			'wp',
@@ -150,5 +150,13 @@ class ButtonModule implements ModuleInterface {
 				$endpoint->handle_request();
 			}
 		);
+	}
+
+	/**
+	 * Returns the key for the module.
+	 *
+	 * @return string|void
+	 */
+	public function getKey() {
 	}
 }

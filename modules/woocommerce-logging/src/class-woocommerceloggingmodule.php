@@ -36,6 +36,15 @@ class WooCommerceLoggingModule implements ModuleInterface {
 	 *
 	 * @param ContainerInterface $container The container.
 	 */
-	public function run( ContainerInterface $container ) {
+	public function run( ContainerInterface $container = null ) {
+	}
+
+
+	/**
+	 * Returns the key for the module.
+	 *
+	 * @return string|void
+	 */
+	public function getKey() {
 	}
 }

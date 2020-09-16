@@ -35,9 +35,9 @@ class SessionModule implements ModuleInterface {
 	/**
 	 * Run the module.
 	 *
-	 * @param ContainerInterface $container The container.
+	 * @param ContainerInterface|null $container The container.
 	 */
-	public function run( ContainerInterface $container ) {
+	public function run( ContainerInterface $container = null ) {
 		add_action(
 			'woocommerce_init',
 			function () use ( $container ) {
@@ -50,5 +50,13 @@ class SessionModule implements ModuleInterface {
 				$controller->run();
 			}
 		);
+	}
+
+	/**
+	 * Returns the key for the module.
+	 *
+	 * @return string|void
+	 */
+	public function getKey() {
 	}
 }

@@ -34,9 +34,9 @@ class WebhookModule implements ModuleInterface {
 	/**
 	 * Run the Webhook module.
 	 *
-	 * @param ContainerInterface $container The Container.
+	 * @param ContainerInterface|null $container The Container.
 	 */
-	public function run( ContainerInterface $container ) {
+	public function run( ContainerInterface $container = null ) {
 		add_action(
 			'rest_api_init',
 			static function () use ( $container ) {
@@ -75,5 +75,13 @@ class WebhookModule implements ModuleInterface {
 				$registrar->unregister();
 			}
 		);
+	}
+
+	/**
+	 * Returns the key for the module.
+	 *
+	 * @return string|void
+	 */
+	public function getKey() {
 	}
 }

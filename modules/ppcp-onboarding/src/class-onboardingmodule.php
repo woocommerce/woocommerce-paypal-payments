@@ -38,9 +38,9 @@ class OnboardingModule implements ModuleInterface {
 	/**
 	 * Runs the module.
 	 *
-	 * @param ContainerInterface $container The container.
+	 * @param ContainerInterface|null $container The container.
 	 */
-	public function run( ContainerInterface $container ) {
+	public function run( ContainerInterface $container = null ) {
 
 		$asset_loader = $container->get( 'onboarding.assets' );
 		/**
@@ -99,5 +99,13 @@ class OnboardingModule implements ModuleInterface {
 				$endpoint->handle_request();
 			}
 		);
+	}
+
+	/**
+	 * Returns the key for the module.
+	 *
+	 * @return string|void
+	 */
+	public function getKey() {
 	}
 }

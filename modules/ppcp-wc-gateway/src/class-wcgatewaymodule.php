@@ -49,9 +49,9 @@ class WcGatewayModule implements ModuleInterface {
 	/**
 	 * Runs the module.
 	 *
-	 * @param ContainerInterface $container The container.
+	 * @param ContainerInterface|null $container The container.
 	 */
-	public function run( ContainerInterface $container ) {
+	public function run( ContainerInterface $container = null ) {
 		$this->register_payment_gateways( $container );
 		$this->register_order_functionality( $container );
 		$this->register_columns( $container );
@@ -164,9 +164,9 @@ class WcGatewayModule implements ModuleInterface {
 	/**
 	 * Registers the payment gateways.
 	 *
-	 * @param ContainerInterface $container The container.
+	 * @param ContainerInterface|null $container The container.
 	 */
-	private function register_payment_gateways( ContainerInterface $container ) {
+	private function register_payment_gateways( ContainerInterface $container = null ) {
 
 		add_filter(
 			'woocommerce_payment_gateways',
@@ -355,5 +355,14 @@ class WcGatewayModule implements ModuleInterface {
 			10,
 			2
 		);
+	}
+
+
+	/**
+	 * Returns the key for the module.
+	 *
+	 * @return string|void
+	 */
+	public function getKey() {
 	}
 }

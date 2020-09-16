@@ -35,9 +35,9 @@ class SubscriptionModule implements ModuleInterface {
 	/**
 	 * Runs the module.
 	 *
-	 * @param ContainerInterface $container The container.
+	 * @param ContainerInterface|null $container The container.
 	 */
-	public function run( ContainerInterface $container ) {
+	public function run( ContainerInterface $container = null ) {
 		add_action(
 			'woocommerce_scheduled_subscription_payment_' . PayPalGateway::ID,
 			static function ( $amount, $order ) use ( $container ) {
@@ -50,5 +50,13 @@ class SubscriptionModule implements ModuleInterface {
 			10,
 			2
 		);
+	}
+
+	/**
+	 * Returns the key for the module.
+	 *
+	 * @return string|void
+	 */
+	public function getKey() {
 	}
 }

@@ -12,7 +12,7 @@
         }
     ],
     "require": {
-        "dhii/module-interface": "0.2.x-dev",
+        "dhii/module-interface": "0.1",
         "psr/container": "^1.0",
         "oomphinc/composer-installers-extender": "^1.1",
         "container-interop/service-provider": "^0.4.0",

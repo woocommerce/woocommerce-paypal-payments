@@ -29,9 +29,16 @@ class PluginModule implements ModuleInterface {
 	/**
 	 * Runs the module.
 	 *
-	 * @param ContainerInterface $container The Container.
+	 * @param ContainerInterface|null $container The Container.
 	 */
-	public function run( ContainerInterface $container ) {
-		// TODO: Implement run() method.
+	public function run( ContainerInterface $container = null ) {
+	}
+
+	/**
+	 * Returns the key for the module.
+	 *
+	 * @return string|void
+	 */
+	public function getKey() {
 	}
 }

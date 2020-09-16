@@ -36,7 +36,7 @@ class AdminNotices implements ModuleInterface {
 	 *
 	 * @param ContainerInterface $container The container.
 	 */
-	public function run( ContainerInterface $container ) {
+	public function run( ContainerInterface $container = null ) {
 		add_action(
 			'admin_notices',
 			function() use ( $container ) {
@@ -44,5 +44,13 @@ class AdminNotices implements ModuleInterface {
 				$renderer->render();
 			}
 		);
+	}
+
+	/**
+	 * Returns the key for the module.
+	 *
+	 * @return string|void
+	 */
+	public function getKey() {
 	}
 }
