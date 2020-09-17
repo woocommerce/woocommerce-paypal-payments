@@ -2,12 +2,12 @@
 /**
  * Handels the Webhook PAYMENT.CAPTURE.REFUNDED
  *
- * @package Inpsyde\PayPalCommerce\Webhooks\Handler
+ * @package WooCommerce\PayPalCommerce\Webhooks\Handler
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Webhooks\Handler;
+namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
 
 use Psr\Log\LoggerInterface;
 
@@ -72,7 +72,7 @@ class PaymentCaptureRefunded implements RequestHandler {
 				// translators: %s is the PayPal webhook Id.
 				__(
 					'No order for webhook event %s was found.',
-					'paypal-for-woocommerce'
+					'paypal-payments-for-woocommerce'
 				),
 				isset( $request['id'] ) ? $request['id'] : ''
 			);
@@ -91,7 +91,7 @@ class PaymentCaptureRefunded implements RequestHandler {
 		if ( ! is_a( $wc_order, \WC_Order::class ) ) {
 			$message = sprintf(
 			// translators: %s is the PayPal refund Id.
-				__( 'Order for PayPal refund %s not found.', 'paypal-for-woocommerce' ),
+				__( 'Order for PayPal refund %s not found.', 'paypal-payments-for-woocommerce' ),
 				isset( $request['resource']['id'] ) ? $request['resource']['id'] : ''
 			);
 			$this->logger->log(
@@ -121,7 +121,7 @@ class PaymentCaptureRefunded implements RequestHandler {
 				'warning',
 				sprintf(
 					// translators: %s is the order id.
-					__( 'Order %s could not be refunded', 'paypal-for-woocommerce' ),
+					__( 'Order %s could not be refunded', 'paypal-payments-for-woocommerce' ),
 					(string) $wc_order->get_id()
 				),
 				array(
@@ -140,7 +140,7 @@ class PaymentCaptureRefunded implements RequestHandler {
 				// translators: %1$s is the order id %2$s is the amount which has been refunded.
 				__(
 					'Order %1$s has been refunded with %2$s through PayPal',
-					'paypal-for-woocommerce'
+					'paypal-payments-for-woocommerce'
 				),
 				(string) $wc_order->get_id(),
 				(string) $refund->get_amount()

@@ -2,12 +2,12 @@
 /**
  * The session module.
  *
- * @package Inpsyde\PayPalCommerce\Session
+ * @package WooCommerce\PayPalCommerce\Session
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Session;
+namespace WooCommerce\PayPalCommerce\Session;
 
 use Dhii\Modular\Module\ModuleInterface;
 

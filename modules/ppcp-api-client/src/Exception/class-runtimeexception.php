@@ -2,12 +2,12 @@
 /**
  * The modules runtime exception.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Exception
+ * @package WooCommerce\PayPalCommerce\ApiClient\Exception
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Exception;
+namespace WooCommerce\PayPalCommerce\ApiClient\Exception;
 
 /**
  * Class RuntimeException

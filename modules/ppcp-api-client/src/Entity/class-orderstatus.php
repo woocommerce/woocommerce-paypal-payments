@@ -2,14 +2,14 @@
 /**
  * The OrderStatus object.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Entity
+ * @package WooCommerce\PayPalCommerce\ApiClient\Entity
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
+namespace WooCommerce\PayPalCommerce\ApiClient\Entity;
 
-use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
 /**
  * Class OrderStatus
@@ -17,13 +17,13 @@ use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
 class OrderStatus {
 
 
-	public const INTERNAL    = 'INTERNAL';
-	public const CREATED     = 'CREATED';
-	public const SAVED       = 'SAVED';
-	public const APPROVED    = 'APPROVED';
-	public const VOIDED      = 'VOIDED';
-	public const COMPLETED   = 'COMPLETED';
-	public const VALID_STATI = array(
+	const INTERNAL    = 'INTERNAL';
+	const CREATED     = 'CREATED';
+	const SAVED       = 'SAVED';
+	const APPROVED    = 'APPROVED';
+	const VOIDED      = 'VOIDED';
+	const COMPLETED   = 'COMPLETED';
+	const VALID_STATI = array(
 		self::INTERNAL,
 		self::CREATED,
 		self::SAVED,
@@ -50,7 +50,7 @@ class OrderStatus {
 			throw new RuntimeException(
 				sprintf(
 					// translators: %s is the current status.
-					__( '%s is not a valid status', 'paypal-for-woocommerce' ),
+					__( '%s is not a valid status', 'paypal-payments-for-woocommerce' ),
 					$status
 				)
 			);

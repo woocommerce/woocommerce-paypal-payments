@@ -1,12 +1,12 @@
 <?php
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Button\Endpoint;
+namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 
 
-use Inpsyde\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
-use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
-use Inpsyde\PayPalCommerce\TestCase;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\CartRepository;
+use WooCommerce\PayPalCommerce\TestCase;
 use Mockery;
 use function Brain\Monkey\Functions\expect;
 

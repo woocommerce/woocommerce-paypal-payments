@@ -2,12 +2,12 @@
 /**
  * The modules Runtime Exception.
  *
- * @package Inpsyde\PayPalCommerce\Button\Exception
+ * @package WooCommerce\PayPalCommerce\Button\Exception
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Button\Exception;
+namespace WooCommerce\PayPalCommerce\Button\Exception;
 
 /**
  * Class RuntimeException

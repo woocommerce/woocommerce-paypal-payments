@@ -2,12 +2,12 @@
 /**
  * The Not Found Exception for the Settings Container.
  *
- * @package Inpsyde\PayPalCommerce\WcGateway\Exception
+ * @package WooCommerce\PayPalCommerce\WcGateway\Exception
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\WcGateway\Exception;
+namespace WooCommerce\PayPalCommerce\WcGateway\Exception;
 
 use Exception;
 use Psr\Container\NotFoundExceptionInterface;

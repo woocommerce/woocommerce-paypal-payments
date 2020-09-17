@@ -2,41 +2,41 @@
 /**
  * The application context object.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Entity
+ * @package WooCommerce\PayPalCommerce\ApiClient\Entity
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
+namespace WooCommerce\PayPalCommerce\ApiClient\Entity;
 
-use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
 /**
  * Class ApplicationContext
  */
 class ApplicationContext {
 
-	public const LANDING_PAGE_LOGIN         = 'LOGIN';
-	public const LANDING_PAGE_BILLING       = 'BILLING';
-	public const LANDING_PAGE_NO_PREFERENCE = 'NO_PREFERENCE';
-	private const VALID_LANDING_PAGE_VALUES = array(
+	const LANDING_PAGE_LOGIN         = 'LOGIN';
+	const LANDING_PAGE_BILLING       = 'BILLING';
+	const LANDING_PAGE_NO_PREFERENCE = 'NO_PREFERENCE';
+	const VALID_LANDING_PAGE_VALUES  = array(
 		self::LANDING_PAGE_LOGIN,
 		self::LANDING_PAGE_BILLING,
 		self::LANDING_PAGE_NO_PREFERENCE,
 	);
 
-	public const SHIPPING_PREFERENCE_GET_FROM_FILE        = 'GET_FROM_FILE';
-	public const SHIPPING_PREFERENCE_NO_SHIPPING          = 'NO_SHIPPING';
-	public const SHIPPING_PREFERENCE_SET_PROVIDED_ADDRESS = 'SET_PROVIDED_ADDRESS';
-	private const VALID_SHIPPING_PREFERENCE_VALUES        = array(
+	const SHIPPING_PREFERENCE_GET_FROM_FILE        = 'GET_FROM_FILE';
+	const SHIPPING_PREFERENCE_NO_SHIPPING          = 'NO_SHIPPING';
+	const SHIPPING_PREFERENCE_SET_PROVIDED_ADDRESS = 'SET_PROVIDED_ADDRESS';
+	const VALID_SHIPPING_PREFERENCE_VALUES         = array(
 		self::SHIPPING_PREFERENCE_GET_FROM_FILE,
 		self::SHIPPING_PREFERENCE_NO_SHIPPING,
 		self::SHIPPING_PREFERENCE_SET_PROVIDED_ADDRESS,
 	);
 
-	public const USER_ACTION_CONTINUE      = 'CONTINUE';
-	public const USER_ACTION_PAY_NOW       = 'PAY_NOW';
-	private const VALID_USER_ACTION_VALUES = array(
+	const USER_ACTION_CONTINUE     = 'CONTINUE';
+	const USER_ACTION_PAY_NOW      = 'PAY_NOW';
+	const VALID_USER_ACTION_VALUES = array(
 		self::USER_ACTION_CONTINUE,
 		self::USER_ACTION_PAY_NOW,
 	);
@@ -209,7 +209,7 @@ class ApplicationContext {
 	 *
 	 * @return PaymentMethod|null
 	 */
-	public function payment_method(): ?PaymentMethod {
+	public function payment_method() {
 		return $this->payment_method;
 	}
 

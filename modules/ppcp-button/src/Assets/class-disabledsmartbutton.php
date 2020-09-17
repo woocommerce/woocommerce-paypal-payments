@@ -2,12 +2,12 @@
 /**
  * If we can't render our buttons, this Null object will be used.
  *
- * @package Inpsyde\PayPalCommerce\Button\Assets
+ * @package WooCommerce\PayPalCommerce\Button\Assets
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Button\Assets;
+namespace WooCommerce\PayPalCommerce\Button\Assets;
 
 /**
  * Class DisabledSmartButton

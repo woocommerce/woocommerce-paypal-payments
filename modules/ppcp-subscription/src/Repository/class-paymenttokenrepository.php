@@ -2,17 +2,17 @@
 /**
  * The payment token repository returns or deletes payment tokens for users.
  *
- * @package Inpsyde\PayPalCommerce\Subscription\Repository
+ * @package WooCommerce\PayPalCommerce\Subscription\Repository
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Subscription\Repository;
+namespace WooCommerce\PayPalCommerce\Subscription\Repository;
 
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\PaymentTokenEndpoint;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\PaymentToken;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokenEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
 
 /**
  * Class PaymentTokenRepository
@@ -20,7 +20,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
 class PaymentTokenRepository {
 
 
-	public const USER_META = 'ppcp-vault-token';
+	const USER_META = 'ppcp-vault-token';
 
 	/**
 	 * The payment token factory.
@@ -58,7 +58,7 @@ class PaymentTokenRepository {
 	 *
 	 * @return PaymentToken|null
 	 */
-	public function for_user_id( int $id ): ?PaymentToken {
+	public function for_user_id( int $id ) {
 		try {
 			$token = (array) get_user_meta( $id, self::USER_META, true );
 			if ( ! $token || ! isset( $token['id'] ) ) {

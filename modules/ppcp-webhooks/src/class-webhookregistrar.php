@@ -2,16 +2,16 @@
 /**
  * The WebhookRegistrar registers and unregisters webhooks with PayPal.
  *
- * @package Inpsyde\PayPalCommerce\Webhooks
+ * @package WooCommerce\PayPalCommerce\Webhooks
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Webhooks;
+namespace WooCommerce\PayPalCommerce\Webhooks;
 
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\WebhookEndpoint;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\WebhookFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\WebhookEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
 
 /**
  * Class WebhookRegistrar
@@ -19,8 +19,8 @@ use Inpsyde\PayPalCommerce\ApiClient\Factory\WebhookFactory;
 class WebhookRegistrar {
 
 
-	public const EVENT_HOOK = 'ppcp-register-event';
-	public const KEY        = 'ppcp-webhook';
+	const EVENT_HOOK = 'ppcp-register-event';
+	const KEY        = 'ppcp-webhook';
 
 	/**
 	 * The Webhook factory.

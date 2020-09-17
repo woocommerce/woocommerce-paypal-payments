@@ -2,17 +2,17 @@
 /**
  * Endpoint to update the cart.
  *
- * @package Inpsyde\PayPalCommerce\Button\Endpoint
+ * @package WooCommerce\PayPalCommerce\Button\Endpoint
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Button\Endpoint;
+namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 
-use Inpsyde\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\PayPalApiException;
-use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
-use Inpsyde\PayPalCommerce\Button\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\CartRepository;
+use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 
 /**
  * Class ChangeCartEndpoint
@@ -20,7 +20,7 @@ use Inpsyde\PayPalCommerce\Button\Exception\RuntimeException;
 class ChangeCartEndpoint implements EndpointInterface {
 
 
-	public const ENDPOINT = 'ppc-change-cart';
+	const ENDPOINT = 'ppc-change-cart';
 
 	/**
 	 * The current cart object.
@@ -127,7 +127,7 @@ class ChangeCartEndpoint implements EndpointInterface {
 					'name'    => '',
 					'message' => __(
 						'Necessary fields not defined. Action aborted.',
-						'paypal-for-woocommerce'
+						'paypal-payments-for-woocommerce'
 					),
 					'code'    => 0,
 					'details' => array(),
@@ -166,7 +166,7 @@ class ChangeCartEndpoint implements EndpointInterface {
 
 		$message = __(
 			'Something went wrong. Action aborted',
-			'paypal-for-woocommerce'
+			'paypal-payments-for-woocommerce'
 		);
 		$errors  = wc_get_notices( 'error' );
 		if ( count( $errors ) ) {
@@ -198,7 +198,7 @@ class ChangeCartEndpoint implements EndpointInterface {
 	 *
 	 * @return array|null
 	 */
-	private function products_from_data( array $data ): ?array {
+	private function products_from_data( array $data ) {
 
 		$products = array();
 

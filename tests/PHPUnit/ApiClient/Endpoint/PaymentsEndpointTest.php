@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Endpoint;
+namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 
-use Inpsyde\PayPalCommerce\ApiClient\Authentication\Bearer;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Authorization;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\ErrorResponseCollection;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Token;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\AuthorizationFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\ErrorResponseCollectionFactory;
-use Inpsyde\PayPalCommerce\ApiClient\TestCase;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\ErrorResponseCollection;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Token;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\AuthorizationFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ErrorResponseCollectionFactory;
+use WooCommerce\PayPalCommerce\ApiClient\TestCase;
 use Mockery;
 
 use Psr\Log\LoggerInterface;

@@ -2,29 +2,30 @@
 /**
  * The Gateway module.
  *
- * @package Inpsyde\PayPalCommerce\WcGateway
+ * @package WooCommerce\PayPalCommerce\WcGateway
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\WcGateway;
+namespace WooCommerce\PayPalCommerce\WcGateway;
 
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
-use Inpsyde\PayPalCommerce\AdminNotices\Repository\Repository;
-use Inpsyde\PayPalCommerce\ApiClient\Helper\DccApplies;
-use Inpsyde\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
-use Inpsyde\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
-use Inpsyde\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
-use Inpsyde\PayPalCommerce\WcGateway\Checkout\CheckoutPayPalAddressPreset;
-use Inpsyde\PayPalCommerce\WcGateway\Checkout\DisableGateways;
-use Inpsyde\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use Inpsyde\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
-use Inpsyde\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
-use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
-use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
+use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
+use WooCommerce\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
+use WooCommerce\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
+use WooCommerce\PayPalCommerce\WcGateway\Checkout\CheckoutPayPalAddressPreset;
+use WooCommerce\PayPalCommerce\WcGateway\Checkout\DisableGateways;
+use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
 
@@ -48,9 +49,9 @@ class WcGatewayModule implements ModuleInterface {
 	/**
 	 * Runs the module.
 	 *
-	 * @param ContainerInterface $container The container.
+	 * @param ContainerInterface|null $container The container.
 	 */
-	public function run( ContainerInterface $container ) {
+	public function run( ContainerInterface $container = null ) {
 		$this->register_payment_gateways( $container );
 		$this->register_order_functionality( $container );
 		$this->register_columns( $container );
@@ -163,9 +164,9 @@ class WcGatewayModule implements ModuleInterface {
 	/**
 	 * Registers the payment gateways.
 	 *
-	 * @param ContainerInterface $container The container.
+	 * @param ContainerInterface|null $container The container.
 	 */
-	private function register_payment_gateways( ContainerInterface $container ) {
+	private function register_payment_gateways( ContainerInterface $container = null ) {
 
 		add_filter(
 			'woocommerce_payment_gateways',
@@ -174,6 +175,9 @@ class WcGatewayModule implements ModuleInterface {
 				$dcc_applies = $container->get( 'api.helpers.dccapplies' );
 
 				$screen = ! function_exists( 'get_current_screen' ) ? (object) array( 'id' => 'front' ) : get_current_screen();
+				if ( ! $screen ) {
+					$screen = (object) array( 'id' => 'front' );
+				}
 				/**
 				 * The DCC Applies object.
 				 *
@@ -190,7 +194,25 @@ class WcGatewayModule implements ModuleInterface {
 			'woocommerce_settings_save_checkout',
 			static function () use ( $container ) {
 				$listener = $container->get( 'wcgateway.settings.listener' );
+
+				/**
+				 * The settings listener.
+				 *
+				 * @var SettingsListener $listener
+				 */
 				$listener->listen();
+			}
+		);
+		add_action(
+			'admin_init',
+			static function () use ( $container ) {
+				$listener = $container->get( 'wcgateway.settings.listener' );
+				/**
+				 * The settings listener.
+				 *
+				 * @var SettingsListener $listener
+				 */
+				$listener->listen_for_merchant_id();
 			}
 		);
 
@@ -238,7 +260,7 @@ class WcGatewayModule implements ModuleInterface {
 			static function ( $order_actions ): array {
 				$order_actions['ppcp_authorize_order'] = __(
 					'Capture authorized PayPal payment',
-					'paypal-for-woocommerce'
+					'paypal-payments-for-woocommerce'
 				);
 				return $order_actions;
 			}
@@ -311,7 +333,7 @@ class WcGatewayModule implements ModuleInterface {
 	 *
 	 * @param ContainerInterface $container The container.
 	 */
-	private function register_checkout_paypal_address_preset( ContainerInterface $container ): void {
+	private function register_checkout_paypal_address_preset( ContainerInterface $container ) {
 		add_filter(
 			'woocommerce_checkout_get_value',
 			static function ( ...$args ) use ( $container ) {
@@ -333,5 +355,14 @@ class WcGatewayModule implements ModuleInterface {
 			10,
 			2
 		);
+	}
+
+
+	/**
+	 * Returns the key for the module.
+	 *
+	 * @return string|void
+	 */
+	public function getKey() {
 	}
 }

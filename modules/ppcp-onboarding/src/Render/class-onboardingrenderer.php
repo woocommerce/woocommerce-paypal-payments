@@ -2,15 +2,15 @@
 /**
  * Renders the "Connect to PayPal" button.
  *
- * @package Inpsyde\PayPalCommerce\Onboarding\Render
+ * @package WooCommerce\PayPalCommerce\Onboarding\Render
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Onboarding\Render;
+namespace WooCommerce\PayPalCommerce\Onboarding\Render;
 
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\PartnerReferrals;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnerReferrals;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
 /**
  * Class OnboardingRenderer
@@ -55,11 +55,11 @@ class OnboardingRenderer {
 					<?php
 						esc_html_e(
 							'Connect to PayPal',
-							'paypal-for-woocommerce'
+							'paypal-payments-for-woocommerce'
 						);
 					?>
 						</a>
-            <script>document.querySelector('[data-paypal-onboard-complete=onboardingCallback]').addEventListener('click', (e) => {if ('undefined' === typeof PAYPAL ) e.preventDefault(); });</script>
+			<script>document.querySelector('[data-paypal-onboard-complete=onboardingCallback]').addEventListener('click', (e) => {if ('undefined' === typeof PAYPAL ) e.preventDefault(); });</script>
 					<script
 							id="paypal-js"
 							src="https://www.sandbox.paypal.com/webapps/merchantboarding/js/lib/lightbox/partner.js"
@@ -68,7 +68,7 @@ class OnboardingRenderer {
 		} catch ( RuntimeException $exception ) {
 			esc_html_e(
 				'We could not properly connect to PayPal. Please reload the page to continue',
-				'paypal-for-woocommerce'
+				'paypal-payments-for-woocommerce'
 			);
 		}
 	}

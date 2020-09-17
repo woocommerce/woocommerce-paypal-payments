@@ -2,20 +2,20 @@
 /**
  * Handles the Early Order logic, when we need to create the WC_Order by ourselfs.
  *
- * @package Inpsyde\PayPalCommerce\Button\Helper
+ * @package WooCommerce\PayPalCommerce\Button\Helper
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Button\Helper;
+namespace WooCommerce\PayPalCommerce\Button\Helper;
 
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\PayPalApiException;
-use Inpsyde\PayPalCommerce\Onboarding\State;
-use Inpsyde\PayPalCommerce\Session\SessionHandler;
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use Inpsyde\PayPalCommerce\WcGateway\Processor\OrderProcessor;
-use Inpsyde\PayPalCommerce\Webhooks\Handler\PrefixTrait;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\Onboarding\State;
+use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
+use WooCommerce\PayPalCommerce\Webhooks\Handler\PrefixTrait;
 
 /**
  * Class EarlyOrderHandler
@@ -85,7 +85,7 @@ class EarlyOrderHandler {
 	 *
 	 * @return int|null
 	 */
-	public function determine_wc_order_id( int $value = null ): ?int {
+	public function determine_wc_order_id( int $value = null ) {
 
 		if ( ! isset( $_REQUEST['ppcp-resume-order'] ) ) {
 			return $value;

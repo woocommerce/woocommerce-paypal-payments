@@ -2,28 +2,28 @@
 /**
  * The order endpoint.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Endpoint
+ * @package WooCommerce\PayPalCommerce\ApiClient\Endpoint
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Endpoint;
+namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 
-use Inpsyde\PayPalCommerce\ApiClient\Authentication\Bearer;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\ApplicationContext;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\OrderStatus;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Payer;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\PaymentMethod;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\PaymentToken;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\PayPalApiException;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\OrderFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\PatchCollectionFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Helper\ErrorResponse;
-use Inpsyde\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
-use Inpsyde\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentMethod;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PatchCollectionFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\ErrorResponse;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -226,7 +226,7 @@ class OrderEndpoint {
 		$response = $this->request( $url, $args );
 		if ( is_wp_error( $response ) ) {
 			$error = new RuntimeException(
-				__( 'Could not create order.', 'paypal-for-woocommerce' )
+				__( 'Could not create order.', 'paypal-payments-for-woocommerce' )
 			);
 			$this->logger->log(
 				'warning',
@@ -290,7 +290,7 @@ class OrderEndpoint {
 
 		if ( is_wp_error( $response ) ) {
 			$error = new RuntimeException(
-				__( 'Could not capture order.', 'paypal-for-woocommerce' )
+				__( 'Could not capture order.', 'paypal-payments-for-woocommerce' )
 			);
 			$this->logger->log(
 				'warning',
@@ -357,7 +357,7 @@ class OrderEndpoint {
 			$error = new RuntimeException(
 				__(
 					'Could not authorize order.',
-					'paypal-for-woocommerce'
+					'paypal-payments-for-woocommerce'
 				)
 			);
 			$this->logger->log(
@@ -418,7 +418,7 @@ class OrderEndpoint {
 		$response = $this->request( $url, $args );
 		if ( is_wp_error( $response ) ) {
 			$error = new RuntimeException(
-				__( 'Could not retrieve order.', 'paypal-for-woocommerce' )
+				__( 'Could not retrieve order.', 'paypal-payments-for-woocommerce' )
 			);
 			$this->logger->log(
 				'warning',
@@ -434,7 +434,7 @@ class OrderEndpoint {
 		$status_code = (int) wp_remote_retrieve_response_code( $response );
 		if ( 404 === $status_code || empty( $response['body'] ) ) {
 			$error = new RuntimeException(
-				__( 'Could not retrieve order.', 'paypal-for-woocommerce' ),
+				__( 'Could not retrieve order.', 'paypal-payments-for-woocommerce' ),
 				404
 			);
 			$this->logger->log(
@@ -502,7 +502,7 @@ class OrderEndpoint {
 
 		if ( is_wp_error( $response ) ) {
 			$error = new RuntimeException(
-				__( 'Could not retrieve order.', 'paypal-for-woocommerce' )
+				__( 'Could not retrieve order.', 'paypal-payments-for-woocommerce' )
 			);
 			$this->logger->log(
 				'warning',

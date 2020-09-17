@@ -4,14 +4,14 @@
 
 	<!-- Configs -->
 	<config name="minimum_supported_wp_version" value="4.7" />
-	<config name="testVersion" value="7.2-" />
+	<config name="testVersion" value="7.0-" />
 
 	<!-- Rules -->
 	<rule ref="WooCommerce-Core" />
 
 	<rule ref="WordPress.WP.I18n">
 		<properties>
-			<property name="text_domain" type="array" value="paypal-for-woocommerce" />
+			<property name="text_domain" type="array" value="paypal-payments-for-woocommerce" />
 		</properties>
 	</rule>
 

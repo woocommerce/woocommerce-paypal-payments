@@ -2,15 +2,15 @@
 /**
  * The PaymentToken Factory.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Factory
+ * @package WooCommerce\PayPalCommerce\ApiClient\Factory
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Factory;
+namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
-use Inpsyde\PayPalCommerce\ApiClient\Entity\PaymentToken;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
 /**
  * Class PaymentTokenFactory
@@ -28,7 +28,7 @@ class PaymentTokenFactory {
 	public function from_paypal_response( \stdClass $data ): PaymentToken {
 		if ( ! isset( $data->id ) ) {
 			throw new RuntimeException(
-				__( 'No id for payment token given', 'paypal-for-woocommerce' )
+				__( 'No id for payment token given', 'paypal-payments-for-woocommerce' )
 			);
 		}
 		return new PaymentToken(

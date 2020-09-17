@@ -2,12 +2,12 @@
 /**
  * The order object.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Entity
+ * @package WooCommerce\PayPalCommerce\ApiClient\Entity
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
+namespace WooCommerce\PayPalCommerce\ApiClient\Entity;
 
 /**
  * Class Order
@@ -138,7 +138,7 @@ class Order {
 	 *
 	 * @return \DateTime|null
 	 */
-	public function create_time(): ?\DateTime {
+	public function create_time() {
 		return $this->create_time;
 	}
 
@@ -147,7 +147,7 @@ class Order {
 	 *
 	 * @return \DateTime|null
 	 */
-	public function update_time(): ?\DateTime {
+	public function update_time() {
 		return $this->update_time;
 	}
 
@@ -156,7 +156,7 @@ class Order {
 	 *
 	 * @return string
 	 */
-	public function intent(): string {
+	public function intent() {
 		return $this->intent;
 	}
 
@@ -165,7 +165,7 @@ class Order {
 	 *
 	 * @return Payer|null
 	 */
-	public function payer(): ?Payer {
+	public function payer() {
 		return $this->payer;
 	}
 
@@ -174,7 +174,7 @@ class Order {
 	 *
 	 * @return PurchaseUnit[]
 	 */
-	public function purchase_units(): array {
+	public function purchase_units() {
 		return $this->purchase_units;
 	}
 
@@ -183,7 +183,7 @@ class Order {
 	 *
 	 * @return OrderStatus
 	 */
-	public function status(): OrderStatus {
+	public function status() {
 		return $this->order_status;
 	}
 
@@ -192,7 +192,7 @@ class Order {
 	 *
 	 * @return ApplicationContext|null
 	 */
-	public function application_context(): ?ApplicationContext {
+	public function application_context() {
 
 		return $this->application_context;
 	}
@@ -202,7 +202,7 @@ class Order {
 	 *
 	 * @return PaymentSource|null
 	 */
-	public function payment_source(): ?PaymentSource {
+	public function payment_source() {
 
 		return $this->payment_source;
 	}
@@ -212,7 +212,7 @@ class Order {
 	 *
 	 * @return array
 	 */
-	public function to_array(): array {
+	public function to_array() {
 		$order = array(
 			'id'             => $this->id(),
 			'intent'         => $this->intent(),
@@ -225,13 +225,13 @@ class Order {
 			),
 		);
 		if ( $this->create_time() ) {
-			$order['create_time'] = $this->create_time()->format( \DateTimeInterface::ISO8601 );
+			$order['create_time'] = $this->create_time()->format( 'Y-m-d\TH:i:sO' );
 		}
 		if ( $this->payer() ) {
 			$order['payer'] = $this->payer()->to_array();
 		}
 		if ( $this->update_time() ) {
-			$order['update_time'] = $this->update_time()->format( \DateTimeInterface::ISO8601 );
+			$order['update_time'] = $this->update_time()->format( 'Y-m-d\TH:i:sO' );
 		}
 		if ( $this->application_context() ) {
 			$order['application_context'] = $this->application_context()->to_array();

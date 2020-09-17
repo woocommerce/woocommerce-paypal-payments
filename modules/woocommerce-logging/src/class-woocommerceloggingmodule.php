@@ -2,12 +2,12 @@
 /**
  * The logging module.
  *
- * @package Inpsyde\WooCommerce\Logging
+ * @package WooCommerce\WooCommerce\Logging
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\WooCommerce\Logging;
+namespace WooCommerce\WooCommerce\Logging;
 
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
@@ -36,6 +36,15 @@ class WooCommerceLoggingModule implements ModuleInterface {
 	 *
 	 * @param ContainerInterface $container The container.
 	 */
-	public function run( ContainerInterface $container ) {
+	public function run( ContainerInterface $container = null ) {
+	}
+
+
+	/**
+	 * Returns the key for the module.
+	 *
+	 * @return string|void
+	 */
+	public function getKey() {
 	}
 }

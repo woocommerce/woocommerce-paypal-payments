@@ -1,9 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
+namespace WooCommerce\PayPalCommerce\ApiClient\Entity;
 
-use Inpsyde\PayPalCommerce\ApiClient\TestCase;
+use WooCommerce\PayPalCommerce\ApiClient\TestCase;
 use Mockery;
 
 class PayerTest extends TestCase

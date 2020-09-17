@@ -2,21 +2,21 @@
 /**
  * Handles subscription renewals.
  *
- * @package Inpsyde\PayPalCommerce\Subscription
+ * @package WooCommerce\PayPalCommerce\Subscription
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Subscription;
+namespace WooCommerce\PayPalCommerce\Subscription;
 
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\OrderStatus;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\PaymentToken;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\PayerFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
-use Inpsyde\PayPalCommerce\Subscription\Repository\PaymentTokenRepository;
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
+use WooCommerce\PayPalCommerce\Subscription\Repository\PaymentTokenRepository;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -94,7 +94,7 @@ class RenewalHandler {
 			'info',
 			sprintf(
 				// translators: %d is the id of the order.
-				__( 'Start moneytransfer for order %d', 'paypal-for-woocommerce' ),
+				__( 'Start moneytransfer for order %d', 'paypal-payments-for-woocommerce' ),
 				(int) $wc_order->get_id()
 			),
 			array(
@@ -111,7 +111,7 @@ class RenewalHandler {
 					// translators: %1$d is the order number, %2$s the error message.
 					__(
 						'An error occured while trying to renew the subscription for order %1$d: %2$s',
-						'paypal-for-woocommerce'
+						'paypal-payments-for-woocommerce'
 					),
 					(int) $wc_order->get_id(),
 					$error->getMessage()
@@ -129,7 +129,7 @@ class RenewalHandler {
 				// translators: %d is the order number.
 				__(
 					'Moneytransfer for order %d is completed.',
-					'paypal-for-woocommerce'
+					'paypal-payments-for-woocommerce'
 				),
 				(int) $wc_order->get_id()
 			),
@@ -173,7 +173,7 @@ class RenewalHandler {
 	 *
 	 * @return PaymentToken|null
 	 */
-	private function get_token_for_customer( \WC_Customer $customer, \WC_Order $wc_order ): ?PaymentToken {
+	private function get_token_for_customer( \WC_Customer $customer, \WC_Order $wc_order ) {
 
 		$token = $this->repository->for_user_id( (int) $customer->get_id() );
 		if ( ! $token ) {
@@ -183,7 +183,7 @@ class RenewalHandler {
 					// translators: %d is the customer id.
 					__(
 						'No payment token found for customer %d',
-						'paypal-for-woocommerce'
+						'paypal-payments-for-woocommerce'
 					),
 					(int) $customer->get_id()
 				),
@@ -208,7 +208,7 @@ class RenewalHandler {
 		if ( $order->intent() === 'CAPTURE' && $order->status()->is( OrderStatus::COMPLETED ) ) {
 			$wc_order->update_status(
 				'processing',
-				__( 'Payment received.', 'paypal-for-woocommerce' )
+				__( 'Payment received.', 'paypal-payments-for-woocommerce' )
 			);
 			\WC_Subscriptions_Manager::process_subscription_payments_on_order( $wc_order );
 		}

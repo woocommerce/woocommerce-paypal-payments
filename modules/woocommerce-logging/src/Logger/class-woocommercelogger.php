@@ -5,12 +5,12 @@
  *
  * This is a decorator that makes any WooCommerce Logger PSR-3-compatible
  *
- * @package Inpsyde\WooCommerce\Logging\Logger
+ * @package WooCommerce\WooCommerce\Logging\Logger
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\WooCommerce\Logging\Logger;
+namespace WooCommerce\WooCommerce\Logging\Logger;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\LoggerTrait;

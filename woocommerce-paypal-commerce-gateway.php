@@ -2,25 +2,24 @@
 declare( strict_types = 1 );
 
 /**
- * Plugin Name: PayPal for WooCommerce
+ * Plugin Name: PayPal Payments for WooCommerce
  * Plugin URI:  TODO
  * Description: PayPal's latest complete payments processing solution. Accept PayPal. PayPal Credit, credit/debit cards, alternative digital wallets local payment types and bank accounts. Turn on only PayPal options or process a full suite of payment methods. Enable global transaction with extensive currency and country coverage.
  * Version:     dev-master
- * Author:      Inpsyde GmbH
+ * Author:      WooCommerce
  * Author URI:  https://inpsyde.com/
  * License:     GPL-2.0
- * Text Domain: paypal-for-woocommerce
+ * Text Domain: paypal-payments-for-woocommerce
  */
 
 
-namespace Inpsyde\PayPalCommerce;
+namespace WooCommerce\PayPalCommerce;
 
 use Dhii\Container\CachingContainer;
 use Dhii\Container\CompositeCachingServiceProvider;
 use Dhii\Container\DelegatingContainer;
 use Dhii\Container\ProxyContainer;
 use Dhii\Modular\Module\ModuleInterface;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 
 (function () {
 	include __DIR__ . '/vendor/autoload.php';

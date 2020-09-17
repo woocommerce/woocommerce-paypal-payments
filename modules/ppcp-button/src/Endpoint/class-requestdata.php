@@ -2,14 +2,14 @@
 /**
  * Helper to read request data for the endpoints.
  *
- * @package Inpsyde\PayPalCommerce\Button\Endpoint
+ * @package WooCommerce\PayPalCommerce\Button\Endpoint
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Button\Endpoint;
+namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 
-use Inpsyde\PayPalCommerce\Button\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 
 /**
  * Class RequestData
@@ -48,7 +48,7 @@ class RequestData {
 		) {
 			remove_filter( 'nonce_user_logged_out', array( $this, 'nonce_fix' ), 100 );
 			throw new RuntimeException(
-				__( 'Could not validate nonce.', 'paypal-for-woocommerce' )
+				__( 'Could not validate nonce.', 'paypal-payments-for-woocommerce' )
 			);
 		}
 		$this->dequeue_nonce_fix();

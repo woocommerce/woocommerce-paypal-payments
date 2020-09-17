@@ -2,15 +2,15 @@
 /**
  * Returns the current application context.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Repository
+ * @package WooCommerce\PayPalCommerce\ApiClient\Repository
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Repository;
+namespace WooCommerce\PayPalCommerce\ApiClient\Repository;
 
-use Inpsyde\PayPalCommerce\ApiClient\Entity\ApplicationContext;
-use Inpsyde\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
+use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
 use Psr\Container\ContainerInterface;
 
 /**

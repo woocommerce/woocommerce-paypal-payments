@@ -2,21 +2,21 @@
 /**
  * The repository for the request IDs.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Repository
+ * @package WooCommerce\PayPalCommerce\ApiClient\Repository
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Repository;
+namespace WooCommerce\PayPalCommerce\ApiClient\Repository;
 
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 
 /**
  * Class PayPalRequestIdRepository
  */
 class PayPalRequestIdRepository {
 
-	public const KEY = 'ppcp-request-ids';
+	const KEY = 'ppcp-request-ids';
 
 	/**
 	 * Returns a request ID based on the order ID.

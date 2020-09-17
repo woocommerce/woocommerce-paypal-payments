@@ -2,17 +2,17 @@
 /**
  * The PurchaseUnit factory.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Factory
+ * @package WooCommerce\PayPalCommerce\ApiClient\Factory
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Factory;
+namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Item;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use Inpsyde\PayPalCommerce\ApiClient\Repository\PayeeRepository;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\PayeeRepository;
 
 /**
  * Class PurchaseUnitFactory
@@ -194,7 +194,7 @@ class PurchaseUnitFactory {
 	public function from_paypal_response( \stdClass $data ): PurchaseUnit {
 		if ( ! isset( $data->reference_id ) || ! is_string( $data->reference_id ) ) {
 			throw new RuntimeException(
-				__( 'No reference ID given.', 'paypal-for-woocommerce' )
+				__( 'No reference ID given.', 'paypal-payments-for-woocommerce' )
 			);
 		}
 

@@ -1,14 +1,14 @@
 <?php
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Button\Helper;
+namespace WooCommerce\PayPalCommerce\Button\Helper;
 
 
-use Inpsyde\PayPalCommerce\ApiClient\Entity\CardAuthenticationResult;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\PaymentSource;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\PaymentSourceCard;
-use Inpsyde\PayPalCommerce\TestCase;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\CardAuthenticationResult;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSourceCard;
+use WooCommerce\PayPalCommerce\TestCase;
 use Mockery\Mock;
 
 class ThreeDSecureTest extends TestCase

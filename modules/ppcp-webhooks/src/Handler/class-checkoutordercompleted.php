@@ -2,12 +2,12 @@
 /**
  * Handles the Webhook CHECKOUT.ORDER.COMPLETED
  *
- * @package Inpsyde\PayPalCommerce\Webhooks\Handler
+ * @package WooCommerce\PayPalCommerce\Webhooks\Handler
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Webhooks\Handler;
+namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
 
 use Psr\Log\LoggerInterface;
 
@@ -86,7 +86,7 @@ class CheckoutOrderCompleted implements RequestHandler {
 				// translators: %s is the PayPal webhook Id.
 				__(
 					'No order for webhook event %s was found.',
-					'paypal-for-woocommerce'
+					'paypal-payments-for-woocommerce'
 				),
 				isset( $request['id'] ) ? $request['id'] : ''
 			);
@@ -116,7 +116,7 @@ class CheckoutOrderCompleted implements RequestHandler {
 		if ( ! $wc_orders ) {
 			$message = sprintf(
 			// translators: %s is the PayPal order Id.
-				__( 'Order for PayPal order %s not found.', 'paypal-for-woocommerce' ),
+				__( 'Order for PayPal order %s not found.', 'paypal-payments-for-woocommerce' ),
 				isset( $request['resource']['id'] ) ? $request['resource']['id'] : ''
 			);
 			$this->logger->log(
@@ -141,7 +141,7 @@ class CheckoutOrderCompleted implements RequestHandler {
 			 */
 			$wc_order->update_status(
 				'processing',
-				__( 'Payment received.', 'paypal-for-woocommerce' )
+				__( 'Payment received.', 'paypal-payments-for-woocommerce' )
 			);
 			$this->logger->log(
 				'info',
@@ -149,7 +149,7 @@ class CheckoutOrderCompleted implements RequestHandler {
 					// translators: %s is the order ID.
 					__(
 						'Order %s has been updated through PayPal',
-						'paypal-for-woocommerce'
+						'paypal-payments-for-woocommerce'
 					),
 					(string) $wc_order->get_id()
 				),

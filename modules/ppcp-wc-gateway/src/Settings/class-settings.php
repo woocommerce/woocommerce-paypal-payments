@@ -2,14 +2,14 @@
 /**
  * The settings object.
  *
- * @package Inpsyde\PayPalCommerce\WcGateway\Settings
+ * @package WooCommerce\PayPalCommerce\WcGateway\Settings
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\WcGateway\Settings;
+namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
-use Inpsyde\PayPalCommerce\WcGateway\Exception\NotFoundException;
+use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use Psr\Container\ContainerInterface;
 
 /**
@@ -17,7 +17,7 @@ use Psr\Container\ContainerInterface;
  */
 class Settings implements ContainerInterface {
 
-	public const KEY = 'woocommerce-ppcp-settings';
+	const KEY = 'woocommerce-ppcp-settings';
 
 	/**
 	 * The settings.
@@ -97,19 +97,19 @@ class Settings implements ContainerInterface {
 		$this->settings = get_option( self::KEY, array() );
 
 		$defaults = array(
-			'title'                         => __( 'PayPal', 'paypal-for-woocommerce' ),
+			'title'                         => __( 'PayPal', 'paypal-payments-for-woocommerce' ),
 			'description'                   => __(
 				'Pay via PayPal.',
-				'paypal-for-woocommerce'
+				'paypal-payments-for-woocommerce'
 			),
 			'button_single_product_enabled' => true,
 			'button_mini-cart_enabled'      => true,
 			'button_cart_enabled'           => true,
 			'brand_name'                    => get_bloginfo( 'name' ),
-			'dcc_gateway_title'             => __( 'Credit Cards', 'paypal-for-woocommerce' ),
+			'dcc_gateway_title'             => __( 'Credit Cards', 'paypal-payments-for-woocommerce' ),
 			'dcc_gateway_description'       => __(
 				'Pay with your credit card.',
-				'paypal-for-woocommerce'
+				'paypal-payments-for-woocommerce'
 			),
 		);
 		foreach ( $defaults as $key => $value ) {

@@ -2,12 +2,12 @@
 /**
  * The PaymentSourceCard object.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Entity
+ * @package WooCommerce\PayPalCommerce\ApiClient\Entity
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
+namespace WooCommerce\PayPalCommerce\ApiClient\Entity;
 
 /**
  * Class PaymentSourceCard
@@ -98,7 +98,7 @@ class PaymentSourceCard {
 	 *
 	 * @return CardAuthenticationResult|null
 	 */
-	public function authentication_result(): ?CardAuthenticationResult {
+	public function authentication_result() {
 
 		return $this->authentication_result;
 	}

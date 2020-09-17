@@ -2,14 +2,14 @@
 /**
  * Renders the not captured information.
  *
- * @package Inpsyde\PayPalCommerce\WcGateway\Admin
+ * @package WooCommerce\PayPalCommerce\WcGateway\Admin
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\WcGateway\Admin;
+namespace WooCommerce\PayPalCommerce\WcGateway\Admin;
 
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 /**
  * Class PaymentStatusOrderDetail
@@ -39,11 +39,11 @@ class PaymentStatusOrderDetail {
 			'<li class="wide"><p><mark class="order-status status-on-hold"><span>%1$s</span></mark></p><p>%2$s</p></li>',
 			esc_html__(
 				'Not captured',
-				'paypal-for-woocommerce'
+				'paypal-payments-for-woocommerce'
 			),
 			esc_html__(
 				'To capture the payment select capture action from the list below.',
-				'paypal-for-woocommerce'
+				'paypal-payments-for-woocommerce'
 			)
 		);
 	}

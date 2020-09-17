@@ -2,7 +2,7 @@
 /**
  * The extensions.
  *
- * @package Inpsyde\PayPalCommerce\Subscription
+ * @package WooCommerce\PayPalCommerce\Subscription
  */
 
 declare(strict_types=1);

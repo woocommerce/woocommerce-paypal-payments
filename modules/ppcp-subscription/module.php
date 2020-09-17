@@ -2,12 +2,12 @@
 /**
  * The module.
  *
- * @package Inpsyde\PayPalCommerce\Subscription
+ * @package WooCommerce\PayPalCommerce\Subscription
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Subscription;
+namespace WooCommerce\PayPalCommerce\Subscription;
 
 use Dhii\Modular\Module\ModuleInterface;
 

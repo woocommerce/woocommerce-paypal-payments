@@ -2,30 +2,30 @@
 /**
  * The AuthorizationStatus object.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Entity
+ * @package WooCommerce\PayPalCommerce\ApiClient\Entity
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
+namespace WooCommerce\PayPalCommerce\ApiClient\Entity;
 
-use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
 /**
  * Class AuthorizationStatus
  */
 class AuthorizationStatus {
 
-	public const INTERNAL           = 'INTERNAL';
-	public const CREATED            = 'CREATED';
-	public const CAPTURED           = 'CAPTURED';
-	public const COMPLETED          = 'COMPLETED';
-	public const DENIED             = 'DENIED';
-	public const EXPIRED            = 'EXPIRED';
-	public const PARTIALLY_CAPTURED = 'PARTIALLY_CAPTURED';
-	public const VOIDED             = 'VOIDED';
-	public const PENDING            = 'PENDING';
-	public const VALID_STATUS       = array(
+	const INTERNAL           = 'INTERNAL';
+	const CREATED            = 'CREATED';
+	const CAPTURED           = 'CAPTURED';
+	const COMPLETED          = 'COMPLETED';
+	const DENIED             = 'DENIED';
+	const EXPIRED            = 'EXPIRED';
+	const PARTIALLY_CAPTURED = 'PARTIALLY_CAPTURED';
+	const VOIDED             = 'VOIDED';
+	const PENDING            = 'PENDING';
+	const VALID_STATUS       = array(
 		self::INTERNAL,
 		self::CREATED,
 		self::CAPTURED,
@@ -55,7 +55,7 @@ class AuthorizationStatus {
 			throw new RuntimeException(
 				sprintf(
 					// translators: %s is the current status.
-					__( '%s is not a valid status', 'paypal-for-woocommerce' ),
+					__( '%s is not a valid status', 'paypal-payments-for-woocommerce' ),
 					$status
 				)
 			);

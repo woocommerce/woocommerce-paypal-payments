@@ -2,52 +2,54 @@
 /**
  * The services of the API client.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient
+ * @package WooCommerce\PayPalCommerce\ApiClient
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient;
+namespace WooCommerce\PayPalCommerce\ApiClient;
 
-use Dhii\Data\Container\ContainerInterface;
-use Inpsyde\PayPalCommerce\ApiClient\Authentication\Bearer;
-use Inpsyde\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\IdentityToken;
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\LoginSeller;
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\PartnerReferrals;
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\PaymentTokenEndpoint;
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\WebhookEndpoint;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\AddressFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\AmountFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\ApplicationContextFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\AuthorizationFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\ItemFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\OrderFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\PatchCollectionFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\PayeeFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\PayerFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\PaymentsFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\PaymentSourceFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\ShippingFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\WebhookFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Helper\DccApplies;
-use Inpsyde\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
-use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
-use Inpsyde\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
-use Inpsyde\PayPalCommerce\ApiClient\Repository\PayeeRepository;
-use Inpsyde\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
-use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\IdentityToken;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\LoginSeller;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnerReferrals;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokenEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\WebhookEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\AddressFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\AmountFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ApplicationContextFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\AuthorizationFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ItemFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PatchCollectionFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PayeeFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentsFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentSourceFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\SellerStatusFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\CartRepository;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\PayeeRepository;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WpOop\TransientCache\CachePoolFactory;
 
 return array(
-	'api.host'                              => function( ContainerInterface $container ) : string {
+	'api.host'                              => function( $container ) : string {
 		return 'https://api.paypal.com';
 	},
-	'api.paypal-host'                       => function( ContainerInterface $container ) : string {
+	'api.paypal-host'                       => function( $container ) : string {
 		return 'https://api.paypal.com';
 	},
 	'api.partner_merchant_id'               => static function () : string {
@@ -68,24 +70,36 @@ return array(
 	'api.prefix'                            => static function (): string {
 		return 'WC-';
 	},
-	'api.bearer'                            => static function ( ContainerInterface $container ): Bearer {
-		global $wpdb;
-		$cache_pool_factory = new CachePoolFactory( $wpdb );
-		$pool               = $cache_pool_factory->createCachePool( 'ppcp-token' );
+	'api.bearer'                            => static function ( $container ): Bearer {
+
+		$cache              = new Cache( 'ppcp-paypal-bearer' );
 		$key                = $container->get( 'api.key' );
 		$secret             = $container->get( 'api.secret' );
 
 		$host   = $container->get( 'api.host' );
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
 		return new PayPalBearer(
-			$pool,
+			$cache,
 			$host,
 			$key,
 			$secret,
 			$logger
 		);
 	},
-	'api.endpoint.payment-token'            => static function ( ContainerInterface $container ) : PaymentTokenEndpoint {
+	'api.endpoint.partners'                 => static function ( $container ) : PartnersEndpoint {
+		return new PartnersEndpoint(
+			$container->get( 'api.host' ),
+			$container->get( 'api.bearer' ),
+			$container->get( 'woocommerce.logger.woocommerce' ),
+			$container->get( 'api.factory.sellerstatus' ),
+			$container->get( 'api.partner_merchant_id' ),
+			$container->get( 'api.merchant_id' )
+		);
+	},
+	'api.factory.sellerstatus'              => static function ( $container ) : SellerStatusFactory {
+		return new SellerStatusFactory();
+	},
+	'api.endpoint.payment-token'            => static function ( $container ) : PaymentTokenEndpoint {
 		return new PaymentTokenEndpoint(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
@@ -94,7 +108,7 @@ return array(
 			$container->get( 'api.prefix' )
 		);
 	},
-	'api.endpoint.webhook'                  => static function ( ContainerInterface $container ) : WebhookEndpoint {
+	'api.endpoint.webhook'                  => static function ( $container ) : WebhookEndpoint {
 
 		return new WebhookEndpoint(
 			$container->get( 'api.host' ),
@@ -103,7 +117,7 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'api.endpoint.partner-referrals'        => static function ( ContainerInterface $container ) : PartnerReferrals {
+	'api.endpoint.partner-referrals'        => static function ( $container ) : PartnerReferrals {
 
 		return new PartnerReferrals(
 			$container->get( 'api.host' ),
@@ -112,7 +126,7 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'api.endpoint.identity-token'           => static function ( ContainerInterface $container ) : IdentityToken {
+	'api.endpoint.identity-token'           => static function ( $container ) : IdentityToken {
 
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
 		$prefix = $container->get( 'api.prefix' );
@@ -123,7 +137,7 @@ return array(
 			$prefix
 		);
 	},
-	'api.endpoint.payments'                 => static function ( ContainerInterface $container ): PaymentsEndpoint {
+	'api.endpoint.payments'                 => static function ( $container ): PaymentsEndpoint {
 		$authorizations_factory = $container->get( 'api.factory.authorization' );
 		$logger                 = $container->get( 'woocommerce.logger.woocommerce' );
 
@@ -134,7 +148,7 @@ return array(
 			$logger
 		);
 	},
-	'api.endpoint.login-seller'             => static function ( ContainerInterface $container ) : LoginSeller {
+	'api.endpoint.login-seller'             => static function ( $container ) : LoginSeller {
 
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
 		return new LoginSeller(
@@ -143,7 +157,7 @@ return array(
 			$logger
 		);
 	},
-	'api.endpoint.order'                    => static function ( ContainerInterface $container ): OrderEndpoint {
+	'api.endpoint.order'                    => static function ( $container ): OrderEndpoint {
 		$order_factory            = $container->get( 'api.factory.order' );
 		$patch_collection_factory = $container->get( 'api.factory.patch-collection-factory' );
 		$logger                   = $container->get( 'woocommerce.logger.woocommerce' );
@@ -168,39 +182,39 @@ return array(
 			$paypal_request_id
 		);
 	},
-	'api.repository.paypal-request-id'      => static function( ContainerInterface $container ) : PayPalRequestIdRepository {
+	'api.repository.paypal-request-id'      => static function( $container ) : PayPalRequestIdRepository {
 		return new PayPalRequestIdRepository();
 	},
-	'api.repository.application-context'    => static function( ContainerInterface $container ) : ApplicationContextRepository {
+	'api.repository.application-context'    => static function( $container ) : ApplicationContextRepository {
 
 		$settings = $container->get( 'wcgateway.settings' );
 		return new ApplicationContextRepository( $settings );
 	},
-	'api.repository.partner-referrals-data' => static function ( ContainerInterface $container ) : PartnerReferralsData {
+	'api.repository.partner-referrals-data' => static function ( $container ) : PartnerReferralsData {
 
 		$merchant_email = $container->get( 'api.merchant_email' );
 		$dcc_applies    = $container->get( 'api.helpers.dccapplies' );
 		return new PartnerReferralsData( $merchant_email, $dcc_applies );
 	},
-	'api.repository.cart'                   => static function ( ContainerInterface $container ): CartRepository {
+	'api.repository.cart'                   => static function ( $container ): CartRepository {
 		$factory = $container->get( 'api.factory.purchase-unit' );
 		return new CartRepository( $factory );
 	},
-	'api.repository.payee'                  => static function ( ContainerInterface $container ): PayeeRepository {
+	'api.repository.payee'                  => static function ( $container ): PayeeRepository {
 		$merchant_email = $container->get( 'api.merchant_email' );
 		$merchant_id    = $container->get( 'api.merchant_id' );
 		return new PayeeRepository( $merchant_email, $merchant_id );
 	},
-	'api.factory.application-context'       => static function ( ContainerInterface $container ) : ApplicationContextFactory {
+	'api.factory.application-context'       => static function ( $container ) : ApplicationContextFactory {
 		return new ApplicationContextFactory();
 	},
-	'api.factory.payment-token'             => static function ( ContainerInterface $container ) : PaymentTokenFactory {
+	'api.factory.payment-token'             => static function ( $container ) : PaymentTokenFactory {
 		return new PaymentTokenFactory();
 	},
-	'api.factory.webhook'                   => static function ( ContainerInterface $container ): WebhookFactory {
+	'api.factory.webhook'                   => static function ( $container ): WebhookFactory {
 		return new WebhookFactory();
 	},
-	'api.factory.purchase-unit'             => static function ( ContainerInterface $container ): PurchaseUnitFactory {
+	'api.factory.purchase-unit'             => static function ( $container ): PurchaseUnitFactory {
 
 		$amount_factory   = $container->get( 'api.factory.amount' );
 		$payee_repository = $container->get( 'api.repository.payee' );
@@ -220,34 +234,34 @@ return array(
 			$prefix
 		);
 	},
-	'api.factory.patch-collection-factory'  => static function ( ContainerInterface $container ): PatchCollectionFactory {
+	'api.factory.patch-collection-factory'  => static function ( $container ): PatchCollectionFactory {
 		return new PatchCollectionFactory();
 	},
-	'api.factory.payee'                     => static function ( ContainerInterface $container ): PayeeFactory {
+	'api.factory.payee'                     => static function ( $container ): PayeeFactory {
 		return new PayeeFactory();
 	},
-	'api.factory.item'                      => static function ( ContainerInterface $container ): ItemFactory {
+	'api.factory.item'                      => static function ( $container ): ItemFactory {
 		return new ItemFactory();
 	},
-	'api.factory.shipping'                  => static function ( ContainerInterface $container ): ShippingFactory {
+	'api.factory.shipping'                  => static function ( $container ): ShippingFactory {
 		$address_factory = $container->get( 'api.factory.address' );
 		return new ShippingFactory( $address_factory );
 	},
-	'api.factory.amount'                    => static function ( ContainerInterface $container ): AmountFactory {
+	'api.factory.amount'                    => static function ( $container ): AmountFactory {
 		$item_factory = $container->get( 'api.factory.item' );
 		return new AmountFactory( $item_factory );
 	},
-	'api.factory.payer'                     => static function ( ContainerInterface $container ): PayerFactory {
+	'api.factory.payer'                     => static function ( $container ): PayerFactory {
 		$address_factory = $container->get( 'api.factory.address' );
 		return new PayerFactory( $address_factory );
 	},
-	'api.factory.address'                   => static function ( ContainerInterface $container ): AddressFactory {
+	'api.factory.address'                   => static function ( $container ): AddressFactory {
 		return new AddressFactory();
 	},
-	'api.factory.payment-source'            => static function ( ContainerInterface $container ): PaymentSourceFactory {
+	'api.factory.payment-source'            => static function ( $container ): PaymentSourceFactory {
 		return new PaymentSourceFactory();
 	},
-	'api.factory.order'                     => static function ( ContainerInterface $container ): OrderFactory {
+	'api.factory.order'                     => static function ( $container ): OrderFactory {
 		$purchase_unit_factory          = $container->get( 'api.factory.purchase-unit' );
 		$payer_factory                  = $container->get( 'api.factory.payer' );
 		$application_context_repository = $container->get( 'api.repository.application-context' );
@@ -261,14 +275,14 @@ return array(
 			$payment_source_factory
 		);
 	},
-	'api.factory.payments'                  => static function ( ContainerInterface $container ): PaymentsFactory {
+	'api.factory.payments'                  => static function ( $container ): PaymentsFactory {
 		$authorizations_factory = $container->get( 'api.factory.authorization' );
 		return new PaymentsFactory( $authorizations_factory );
 	},
-	'api.factory.authorization'             => static function ( ContainerInterface $container ): AuthorizationFactory {
+	'api.factory.authorization'             => static function ( $container ): AuthorizationFactory {
 		return new AuthorizationFactory();
 	},
-	'api.helpers.dccapplies'                => static function ( ContainerInterface $container ) : DccApplies {
+	'api.helpers.dccapplies'                => static function ( $container ) : DccApplies {
 		return new DccApplies();
 	},
 );

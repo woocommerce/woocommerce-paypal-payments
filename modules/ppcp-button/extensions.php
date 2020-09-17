@@ -2,7 +2,7 @@
 /**
  * The button module extensions.
  *
- * @package Inpsyde\PayPalCommerce\Button
+ * @package WooCommerce\PayPalCommerce\Button
  */
 
 declare(strict_types=1);

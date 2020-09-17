@@ -2,18 +2,18 @@
 /**
  * The payments endpoint.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Endpoint
+ * @package WooCommerce\PayPalCommerce\ApiClient\Endpoint
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Endpoint;
+namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 
-use Inpsyde\PayPalCommerce\ApiClient\Authentication\Bearer;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Authorization;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\PayPalApiException;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\AuthorizationFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\AuthorizationFactory;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -96,7 +96,7 @@ class PaymentsEndpoint {
 
 		if ( is_wp_error( $response ) ) {
 			$error = new RuntimeException(
-				__( 'Could not get authorized payment info.', 'paypal-for-woocommerce' )
+				__( 'Could not get authorized payment info.', 'paypal-payments-for-woocommerce' )
 			);
 			$this->logger->log(
 				'warning',
@@ -155,7 +155,7 @@ class PaymentsEndpoint {
 
 		if ( is_wp_error( $response ) ) {
 			$error = new RuntimeException(
-				__( 'Could not capture authorized payment.', 'paypal-for-woocommerce' )
+				__( 'Could not capture authorized payment.', 'paypal-payments-for-woocommerce' )
 			);
 			$this->logger->log(
 				'warning',

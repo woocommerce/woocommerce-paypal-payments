@@ -2,12 +2,12 @@
 /**
  * The PaymentSource object.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Entity
+ * @package WooCommerce\PayPalCommerce\ApiClient\Entity
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
+namespace WooCommerce\PayPalCommerce\ApiClient\Entity;
 
 /**
  * Class PaymentSource
@@ -48,7 +48,7 @@ class PaymentSource {
 	 *
 	 * @return PaymentSourceCard|null
 	 */
-	public function card(): ?PaymentSourceCard {
+	public function card() {
 
 		return $this->card;
 	}
@@ -58,7 +58,7 @@ class PaymentSource {
 	 *
 	 * @return PaymentSourceWallet|null
 	 */
-	public function wallet(): ?PaymentSourceWallet {
+	public function wallet() {
 
 		return $this->wallet;
 	}

@@ -2,16 +2,16 @@
 /**
  * The session module.
  *
- * @package Inpsyde\PayPalCommerce\Session
+ * @package WooCommerce\PayPalCommerce\Session
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Session;
+namespace WooCommerce\PayPalCommerce\Session;
 
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
-use Inpsyde\PayPalCommerce\Session\Cancellation\CancelController;
+use WooCommerce\PayPalCommerce\Session\Cancellation\CancelController;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
 
@@ -35,9 +35,9 @@ class SessionModule implements ModuleInterface {
 	/**
 	 * Run the module.
 	 *
-	 * @param ContainerInterface $container The container.
+	 * @param ContainerInterface|null $container The container.
 	 */
-	public function run( ContainerInterface $container ) {
+	public function run( ContainerInterface $container = null ) {
 		add_action(
 			'woocommerce_init',
 			function () use ( $container ) {
@@ -50,5 +50,13 @@ class SessionModule implements ModuleInterface {
 				$controller->run();
 			}
 		);
+	}
+
+	/**
+	 * Returns the key for the module.
+	 *
+	 * @return string|void
+	 */
+	public function getKey() {
 	}
 }

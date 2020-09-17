@@ -2,16 +2,16 @@
 /**
  * Registers the admin message to "connect your account" if necessary.
  *
- * @package Inpsyde\PayPalCommerce\WcGateway\Notice
+ * @package WooCommerce\PayPalCommerce\WcGateway\Notice
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\WcGateway\Notice;
+namespace WooCommerce\PayPalCommerce\WcGateway\Notice;
 
-use Inpsyde\PayPalCommerce\AdminNotices\Entity\Message;
-use Inpsyde\PayPalCommerce\Onboarding\State;
-use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
+use WooCommerce\PayPalCommerce\Onboarding\State;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use Psr\Container\ContainerInterface;
 
 /**
@@ -49,7 +49,7 @@ class ConnectAdminNotice {
 	 *
 	 * @return Message|null
 	 */
-	public function connect_message(): ?Message {
+	public function connect_message() {
 		if ( ! $this->should_display() ) {
 			return null;
 		}
@@ -58,7 +58,7 @@ class ConnectAdminNotice {
 			/* translators: %1$s the gateway name. */
 			__(
 				'PayPal Checkout is almost ready. To get started, <a href="%1$s">connect your account</a>.',
-				'paypal-for-woocommerce'
+				'paypal-payments-for-woocommerce'
 			),
 			admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' )
 		);

@@ -2,14 +2,14 @@
 /**
  * The repository interface.
  *
- * @package Inpsyde\PayPalCommerce\AdminNotices\Repository
+ * @package WooCommerce\PayPalCommerce\AdminNotices\Repository
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\AdminNotices\Repository;
+namespace WooCommerce\PayPalCommerce\AdminNotices\Repository;
 
-use Inpsyde\PayPalCommerce\AdminNotices\Entity\Message;
+use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
 
 /**
  * Interface RepositoryInterface

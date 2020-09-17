@@ -2,16 +2,16 @@
 /**
  * The cart repository returns the purchase units from the current \WC_Cart.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Repository
+ * @package WooCommerce\PayPalCommerce\ApiClient\Repository
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Repository;
+namespace WooCommerce\PayPalCommerce\ApiClient\Repository;
 
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Item;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 
 /**
  * Class CartRepository

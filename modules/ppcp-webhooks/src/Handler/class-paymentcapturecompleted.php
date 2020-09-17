@@ -2,14 +2,14 @@
 /**
  * Handles the Webhook PAYMENT.CAPTURE.COMPLETED
  *
- * @package Inpsyde\PayPalCommerce\Webhooks\Handler
+ * @package WooCommerce\PayPalCommerce\Webhooks\Handler
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Webhooks\Handler;
+namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
 
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -73,7 +73,7 @@ class PaymentCaptureCompleted implements RequestHandler {
 				// translators: %s is the PayPal webhook Id.
 				__(
 					'No order for webhook event %s was found.',
-					'paypal-for-woocommerce'
+					'paypal-payments-for-woocommerce'
 				),
 				isset( $request['id'] ) ? $request['id'] : ''
 			);
@@ -94,7 +94,7 @@ class PaymentCaptureCompleted implements RequestHandler {
 			// translators: %s is the PayPal webhook Id.
 				__(
 					'No order for webhook event %s was found.',
-					'paypal-for-woocommerce'
+					'paypal-payments-for-woocommerce'
 				),
 				isset( $request['id'] ) ? $request['id'] : ''
 			);
@@ -114,7 +114,7 @@ class PaymentCaptureCompleted implements RequestHandler {
 			return rest_ensure_response( $response );
 		}
 		$wc_order->add_order_note(
-			__( 'Payment successfully captured.', 'paypal-for-woocommerce' )
+			__( 'Payment successfully captured.', 'paypal-payments-for-woocommerce' )
 		);
 
 		$wc_order->set_status( 'processing' );
@@ -126,7 +126,7 @@ class PaymentCaptureCompleted implements RequestHandler {
 			// translators: %s is the order ID.
 				__(
 					'Order %s has been updated through PayPal',
-					'paypal-for-woocommerce'
+					'paypal-payments-for-woocommerce'
 				),
 				(string) $wc_order->get_id()
 			),

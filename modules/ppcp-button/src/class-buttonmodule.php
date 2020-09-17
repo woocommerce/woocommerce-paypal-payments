@@ -2,21 +2,21 @@
 /**
  * The button module.
  *
- * @package Inpsyde\PayPalCommerce\Button
+ * @package WooCommerce\PayPalCommerce\Button
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Button;
+namespace WooCommerce\PayPalCommerce\Button;
 
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
-use Inpsyde\PayPalCommerce\Button\Assets\SmartButtonInterface;
-use Inpsyde\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
-use Inpsyde\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
-use Inpsyde\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
-use Inpsyde\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
-use Inpsyde\PayPalCommerce\Button\Helper\EarlyOrderHandler;
+use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
+use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
+use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
 
@@ -41,9 +41,9 @@ class ButtonModule implements ModuleInterface {
 	/**
 	 * Runs the module.
 	 *
-	 * @param ContainerInterface $container The Container.
+	 * @param ContainerInterface|null $container The Container.
 	 */
-	public function run( ContainerInterface $container ) {
+	public function run( ContainerInterface $container = null ) {
 
 		add_action(
 			'wp',
@@ -150,5 +150,13 @@ class ButtonModule implements ModuleInterface {
 				$endpoint->handle_request();
 			}
 		);
+	}
+
+	/**
+	 * Returns the key for the module.
+	 *
+	 * @return string|void
+	 */
+	public function getKey() {
 	}
 }

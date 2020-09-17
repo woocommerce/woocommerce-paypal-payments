@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient;
+namespace WooCommerce\PayPalCommerce\ApiClient;
 
 use function Brain\Monkey\setUp;
 use function Brain\Monkey\tearDown;

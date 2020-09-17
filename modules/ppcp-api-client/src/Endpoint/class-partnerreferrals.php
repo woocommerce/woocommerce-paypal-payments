@@ -2,17 +2,17 @@
 /**
  * The partner referrals endpoint.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Endpoint
+ * @package WooCommerce\PayPalCommerce\ApiClient\Endpoint
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Endpoint;
+namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 
-use Inpsyde\PayPalCommerce\ApiClient\Authentication\Bearer;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\PayPalApiException;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use Inpsyde\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -94,7 +94,7 @@ class PartnerReferrals {
 
 		if ( is_wp_error( $response ) ) {
 			$error = new RuntimeException(
-				__( 'Could not create referral.', 'paypal-for-woocommerce' )
+				__( 'Could not create referral.', 'paypal-payments-for-woocommerce' )
 			);
 			$this->logger->log(
 				'warning',
@@ -131,7 +131,7 @@ class PartnerReferrals {
 		}
 
 		$error = new RuntimeException(
-			__( 'Action URL not found.', 'paypal-for-woocommerce' )
+			__( 'Action URL not found.', 'paypal-payments-for-woocommerce' )
 		);
 		$this->logger->log(
 			'warning',

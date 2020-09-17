@@ -2,11 +2,11 @@
 /**
  * The onboarding module extensions.
  *
- * @package Inpsyde\PayPalCommerce\Onboarding
+ * @package WooCommerce\PayPalCommerce\Onboarding
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Onboarding;
+namespace WooCommerce\PayPalCommerce\Onboarding;
 
 return array();

@@ -2,26 +2,28 @@
 /**
  * The Credit card gateway.
  *
- * @package Inpsyde\PayPalCommerce\WcGateway\Gateway
+ * @package WooCommerce\PayPalCommerce\WcGateway\Gateway
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\WcGateway\Gateway;
+namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
-use Inpsyde\PayPalCommerce\Session\SessionHandler;
-use Inpsyde\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
-use Inpsyde\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
-use Inpsyde\PayPalCommerce\WcGateway\Processor\OrderProcessor;
-use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
+use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use Psr\Container\ContainerInterface;
 
 /**
  * Class CreditCardGateway
  */
-class CreditCardGateway extends PayPalGateway {
+class CreditCardGateway extends \WC_Payment_Gateway_CC {
 
-	public const ID = 'ppcp-credit-card-gateway';
+	use ProcessPaymentTrait;
+
+	const ID = 'ppcp-credit-card-gateway';
 
 	/**
 	 * The URL to the module.
@@ -76,16 +78,17 @@ class CreditCardGateway extends PayPalGateway {
 				'subscription_payment_method_change_customer',
 				'subscription_payment_method_change_admin',
 				'multiple_subscriptions',
+				'credit_card_form_cvc_on_saved_method',
 			);
 		}
 
 		$this->method_title       = __(
 			'PayPal Card Processing',
-			'paypal-for-woocommerce'
+			'paypal-payments-for-woocommerce'
 		);
 		$this->method_description = __(
 			'Accept debit and credit cards, and local payment methods with PayPal’s latest solution.',
-			'paypal-for-woocommerce'
+			'paypal-payments-for-woocommerce'
 		);
 		$this->title              = $this->config->has( 'dcc_gateway_title' ) ?
 			$this->config->get( 'dcc_gateway_title' ) : $this->method_title;
@@ -112,9 +115,9 @@ class CreditCardGateway extends PayPalGateway {
 	public function init_form_fields() {
 		$this->form_fields = array(
 			'enabled' => array(
-				'title'   => __( 'Enable/Disable', 'paypal-for-woocommerce' ),
+				'title'   => __( 'Enable/Disable', 'paypal-payments-for-woocommerce' ),
 				'type'    => 'checkbox',
-				'label'   => __( 'Enable Credit Card Payments', 'paypal-for-woocommerce' ),
+				'label'   => __( 'Enable Credit Card Payments', 'paypal-payments-for-woocommerce' ),
 				'default' => 'no',
 			),
 			'ppcp'    => array(
@@ -163,37 +166,37 @@ class CreditCardGateway extends PayPalGateway {
 			'visa'       => _x(
 				'Visa',
 				'Name of credit card',
-				'paypal-for-woocommerce'
+				'paypal-payments-for-woocommerce'
 			),
 			'mastercard' => _x(
 				'Mastercard',
 				'Name of credit card',
-				'paypal-for-woocommerce'
+				'paypal-payments-for-woocommerce'
 			),
 			'amex'       => _x(
 				'American Express',
 				'Name of credit card',
-				'paypal-for-woocommerce'
+				'paypal-payments-for-woocommerce'
 			),
 			'discover'   => _x(
 				'Discover',
 				'Name of credit card',
-				'paypal-for-woocommerce'
+				'paypal-payments-for-woocommerce'
 			),
 			'jcb'        => _x(
 				'JCB',
 				'Name of credit card',
-				'paypal-for-woocommerce'
+				'paypal-payments-for-woocommerce'
 			),
 			'elo'        => _x(
 				'Elo',
 				'Name of credit card',
-				'paypal-for-woocommerce'
+				'paypal-payments-for-woocommerce'
 			),
 			'hiper'      => _x(
 				'Hiper',
 				'Name of credit card',
-				'paypal-for-woocommerce'
+				'paypal-payments-for-woocommerce'
 			),
 		);
 	}
