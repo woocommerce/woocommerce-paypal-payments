@@ -94,7 +94,7 @@ class WcGatewayModule implements ModuleInterface {
 			}
 		);
 		add_action(
-			'woocommerce-paypal-commerce-gateway.deactivate',
+			'woocommerce_paypal_commerce_gateway_deactivate',
 			static function () use ( $container ) {
 				delete_option( Settings::KEY );
 				delete_option( PayPalRequestIdRepository::KEY );
