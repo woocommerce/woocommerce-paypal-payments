@@ -64,7 +64,7 @@ class WebhookModule implements ModuleInterface {
 		);
 
 		add_action(
-			'woocommerce-paypal-commerce-gateway.deactivate',
+			'woocommerce_paypal_commerce_gateway_deactivate',
 			static function () use ( $container ) {
 				$registrar = $container->get( 'webhook.registrar' );
 				/**

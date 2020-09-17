@@ -18,5 +18,5 @@ script: |
 
   if [ "$CHANGED_FILES" != "" ]; then
     composer global require woocommerce/woocommerce-sniffs --update-with-all-dependencies
-    .config/composer/vendor/bin/phpcs -p $CHANGED_FILES
+    $HOME/.config/composer/vendor/bin/phpcs -p $CHANGED_FILES
   fi
