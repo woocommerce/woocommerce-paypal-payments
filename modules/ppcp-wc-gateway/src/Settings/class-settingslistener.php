@@ -2,19 +2,19 @@
 /**
  * Listens to requests and updates the settings if necessary.
  *
- * @package Inpsyde\PayPalCommerce\WcGateway\Settings
+ * @package WooCommerce\PayPalCommerce\WcGateway\Settings
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\WcGateway\Settings;
+namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
-use Inpsyde\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
-use Inpsyde\PayPalCommerce\Onboarding\State;
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use Inpsyde\PayPalCommerce\Webhooks\WebhookRegistrar;
-use Psr\SimpleCache\CacheInterface;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
+use WooCommerce\PayPalCommerce\Onboarding\State;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar;
 
 /**
  * Class SettingsListener
@@ -22,7 +22,7 @@ use Psr\SimpleCache\CacheInterface;
 class SettingsListener {
 
 
-	public const NONCE = 'ppcp-settings';
+	const NONCE = 'ppcp-settings';
 
 	/**
 	 * The Settings.
@@ -48,7 +48,7 @@ class SettingsListener {
 	/**
 	 * The Cache.
 	 *
-	 * @var CacheInterface
+	 * @var Cache
 	 */
 	private $cache;
 
@@ -65,14 +65,14 @@ class SettingsListener {
 	 * @param Settings         $settings The settings.
 	 * @param array            $setting_fields The setting fields.
 	 * @param WebhookRegistrar $webhook_registrar The Webhook Registrar.
-	 * @param CacheInterface   $cache The Cache.
+	 * @param Cache            $cache The Cache.
 	 * @param State            $state The state.
 	 */
 	public function __construct(
 		Settings $settings,
 		array $setting_fields,
 		WebhookRegistrar $webhook_registrar,
-		CacheInterface $cache,
+		Cache $cache,
 		State $state
 	) {
 
@@ -84,10 +84,32 @@ class SettingsListener {
 	}
 
 	/**
+	 * Listens if the merchant ID should be updated.
+	 */
+	public function listen_for_merchant_id() {
+
+		if ( ! $this->is_valid_site_request() ) {
+			return;
+		}
+
+		/**
+		 * No nonce provided.
+		 * phpcs:disable WordPress.Security.NonceVerification.Missing
+		 * phpcs:disable WordPress.Security.NonceVerification.Recommended
+		 */
+		if ( isset( $_GET['merchantIdInPayPal'] ) ) {
+			$this->settings->set( 'merchant_id', sanitize_text_field( wp_unslash( $_GET['merchantIdInPayPal'] ) ) );
+			$this->settings->persist();
+		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+	}
+
+	/**
 	 * Listens to the request.
 	 *
-	 * @throws \Inpsyde\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting was not found.
-	 * @throws \Psr\SimpleCache\InvalidArgumentException  When the argument was invalid.
+	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting was not found.
 	 */
 	public function listen() {
 
@@ -119,16 +141,11 @@ class SettingsListener {
 		$raw_data = ( isset( $_POST['ppcp'] ) ) ? (array) wp_unslash( $_POST['ppcp'] ) : array();
 		// phpcs:enable phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$settings = $this->retrieve_settings_from_raw_data( $raw_data );
-		if ( isset( $_GET['section'] ) && PayPalGateway::ID === $_GET['section'] ) {
+		if ( ! isset( $_GET[ SectionsRenderer::KEY ] ) || PayPalGateway::ID === $_GET[ SectionsRenderer::KEY ] ) {
 			$settings['enabled'] = isset( $_POST['woocommerce_ppcp-gateway_enabled'] )
 				&& 1 === absint( $_POST['woocommerce_ppcp-gateway_enabled'] );
+			$this->maybe_register_webhooks( $settings );
 		}
-		if ( isset( $_GET['section'] ) && CreditCardGateway::ID === $_GET['section'] ) {
-			$dcc_enabled_post_key            = 'woocommerce_ppcp-credit-card-gateway_enabled';
-			$settings['dcc_gateway_enabled'] = isset( $_POST[ $dcc_enabled_post_key ] )
-				&& 1 === absint( $_POST[ $dcc_enabled_post_key ] );
-		}
-		$this->maybe_register_webhooks( $settings );
 
 		foreach ( $settings as $id => $value ) {
 			$this->settings->set( $id, $value );
@@ -147,7 +164,7 @@ class SettingsListener {
 	 *
 	 * @param array $settings The settings.
 	 *
-	 * @throws \Inpsyde\PayPalCommerce\WcGateway\Exception\NotFoundException If a setting hasn't been found.
+	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException If a setting hasn't been found.
 	 */
 	private function maybe_register_webhooks( array $settings ) {
 
@@ -189,13 +206,17 @@ class SettingsListener {
 			}
 			if (
 				'dcc' === $config['gateway']
-				&& sanitize_text_field( wp_unslash( $_GET['section'] ) ) !== 'ppcp-credit-card-gateway'
+				&& (
+					! isset( $_GET[ SectionsRenderer::KEY ] )
+					|| sanitize_text_field( wp_unslash( $_GET[ SectionsRenderer::KEY ] ) ) !== CreditCardGateway::ID
+				)
 			) {
 				continue;
 			}
 			if (
 			'paypal' === $config['gateway']
-				&& sanitize_text_field( wp_unslash( $_GET['section'] ) ) !== 'ppcp-gateway'
+				&& isset( $_GET[ SectionsRenderer::KEY ] )
+				&& sanitize_text_field( wp_unslash( $_GET[ SectionsRenderer::KEY ] ) ) !== PayPalGateway::ID
 			) {
 				continue;
 			}
@@ -248,6 +269,35 @@ class SettingsListener {
 	 */
 	private function is_valid_update_request(): bool {
 
+		if ( ! $this->is_valid_site_request() ) {
+			return false;
+		}
+
+		if (
+			! isset( $_POST['ppcp-nonce'] )
+			|| ! wp_verify_nonce(
+				sanitize_text_field( wp_unslash( $_POST['ppcp-nonce'] ) ),
+				self::NONCE
+			)
+		) {
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Whether we are on the settings page and are allowed to be here.
+	 *
+	 * @return bool
+	 */
+	private function is_valid_site_request() : bool {
+
+		/**
+		 * No nonce needed at this point.
+		 *
+		 * phpcs:disable WordPress.Security.NonceVerification.Missing
+		 * phpcs:disable WordPress.Security.NonceVerification.Recommended
+		 */
 		if (
 			! isset( $_REQUEST['section'] )
 			|| ! in_array(
@@ -259,17 +309,10 @@ class SettingsListener {
 			return false;
 		}
 
-		if ( ! current_user_can( 'manage_options' ) ) {
-			return false;
-		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
-		if (
-			! isset( $_POST['ppcp-nonce'] )
-			|| ! wp_verify_nonce(
-				sanitize_text_field( wp_unslash( $_POST['ppcp-nonce'] ) ),
-				self::NONCE
-			)
-		) {
+		if ( ! current_user_can( 'manage_options' ) ) {
 			return false;
 		}
 		return true;

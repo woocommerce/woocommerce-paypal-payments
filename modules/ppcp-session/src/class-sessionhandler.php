@@ -2,14 +2,14 @@
 /**
  * The Session Handler.
  *
- * @package Inpsyde\PayPalCommerce\Session
+ * @package WooCommerce\PayPalCommerce\Session
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Session;
+namespace WooCommerce\PayPalCommerce\Session;
 
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 
 /**
  * Class SessionHandler
@@ -45,7 +45,7 @@ class SessionHandler {
 	 *
 	 * @return Order|null
 	 */
-	public function order() : ?Order {
+	public function order() {
 		return $this->order;
 	}
 

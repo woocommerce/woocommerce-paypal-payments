@@ -1,32 +1,32 @@
 <?php
 /**
- * Authorizes payments for a given Woocommerce order.
+ * Authorizes payments for a given WooCommerce order.
  *
- * @package Inpsyde\PayPalCommerce\WcGateway\Processor
+ * @package WooCommerce\PayPalCommerce\WcGateway\Processor
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\WcGateway\Processor;
+namespace WooCommerce\PayPalCommerce\WcGateway\Processor;
 
 use Exception;
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Authorization;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\AuthorizationStatus;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\AuthorizationStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 /**
  * Class AuthorizedPaymentsProcessor
  */
 class AuthorizedPaymentsProcessor {
 
-	public const SUCCESSFUL       = 'SUCCESSFUL';
-	public const ALREADY_CAPTURED = 'ALREADY_CAPTURED';
-	public const FAILED           = 'FAILED';
-	public const INACCESSIBLE     = 'INACCESSIBLE';
-	public const NOT_FOUND        = 'NOT_FOUND';
+	const SUCCESSFUL       = 'SUCCESSFUL';
+	const ALREADY_CAPTURED = 'ALREADY_CAPTURED';
+	const FAILED           = 'FAILED';
+	const INACCESSIBLE     = 'INACCESSIBLE';
+	const NOT_FOUND        = 'NOT_FOUND';
 
 	/**
 	 * The Order endpoint.
@@ -65,9 +65,9 @@ class AuthorizedPaymentsProcessor {
 	}
 
 	/**
-	 * Process a Woocommerce order.
+	 * Process a WooCommerce order.
 	 *
-	 * @param \WC_Order $wc_order The Woocommerce order.
+	 * @param \WC_Order $wc_order The WooCommerce order.
 	 *
 	 * @return bool
 	 */
@@ -112,9 +112,9 @@ class AuthorizedPaymentsProcessor {
 	}
 
 	/**
-	 * Returns the PayPal order from a given Woocommerce order.
+	 * Returns the PayPal order from a given WooCommerce order.
 	 *
-	 * @param \WC_Order $wc_order The Woocommerce order.
+	 * @param \WC_Order $wc_order The WooCommerce order.
 	 *
 	 * @return Order
 	 */

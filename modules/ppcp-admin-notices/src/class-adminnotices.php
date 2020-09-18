@@ -2,12 +2,12 @@
 /**
  * The admin notice module.
  *
- * @package Inpsyde\PayPalCommerce\Button
+ * @package WooCommerce\PayPalCommerce\Button
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\AdminNotices;
+namespace WooCommerce\PayPalCommerce\AdminNotices;
 
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
@@ -36,7 +36,7 @@ class AdminNotices implements ModuleInterface {
 	 *
 	 * @param ContainerInterface $container The container.
 	 */
-	public function run( ContainerInterface $container ) {
+	public function run( ContainerInterface $container = null ) {
 		add_action(
 			'admin_notices',
 			function() use ( $container ) {
@@ -44,5 +44,13 @@ class AdminNotices implements ModuleInterface {
 				$renderer->render();
 			}
 		);
+	}
+
+	/**
+	 * Returns the key for the module.
+	 *
+	 * @return string|void
+	 */
+	public function getKey() {
 	}
 }

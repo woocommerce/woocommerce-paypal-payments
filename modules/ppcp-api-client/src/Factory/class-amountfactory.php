@@ -2,18 +2,18 @@
 /**
  * The Amount factory.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Factory
+ * @package WooCommerce\PayPalCommerce\ApiClient\Factory
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Factory;
+namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Amount;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\AmountBreakdown;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Item;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Money;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Amount;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\AmountBreakdown;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
 /**
  * Class AmountFactory
@@ -38,7 +38,7 @@ class AmountFactory {
 	}
 
 	/**
-	 * Returns an Amount object based off a Woocommerce cart.
+	 * Returns an Amount object based off a WooCommerce cart.
 	 *
 	 * @param \WC_Cart $cart The cart.
 	 *
@@ -84,7 +84,7 @@ class AmountFactory {
 	}
 
 	/**
-	 * Returns an Amount object based off a Woocommerce order.
+	 * Returns an Amount object based off a WooCommerce order.
 	 *
 	 * @param \WC_Order $order The order.
 	 *
@@ -153,11 +153,11 @@ class AmountFactory {
 	 */
 	public function from_paypal_response( \stdClass $data ): Amount {
 		if ( ! isset( $data->value ) || ! is_numeric( $data->value ) ) {
-			throw new RuntimeException( __( 'No value given', 'paypal-for-woocommerce' ) );
+			throw new RuntimeException( __( 'No value given', 'paypal-payments-for-woocommerce' ) );
 		}
 		if ( ! isset( $data->currency_code ) ) {
 			throw new RuntimeException(
-				__( 'No currency given', 'paypal-for-woocommerce' )
+				__( 'No currency given', 'paypal-payments-for-woocommerce' )
 			);
 		}
 
@@ -200,7 +200,7 @@ class AmountFactory {
 				throw new RuntimeException(
 					sprintf(
 					// translators: %s is the current breakdown key.
-						__( 'No value given for breakdown %s', 'paypal-for-woocommerce' ),
+						__( 'No value given for breakdown %s', 'paypal-payments-for-woocommerce' ),
 						$key
 					)
 				);
@@ -209,7 +209,7 @@ class AmountFactory {
 				throw new RuntimeException(
 					sprintf(
 					// translators: %s is the current breakdown key.
-						__( 'No currency given for breakdown %s', 'paypal-for-woocommerce' ),
+						__( 'No currency given for breakdown %s', 'paypal-payments-for-woocommerce' ),
 						$key
 					)
 				);

@@ -2,15 +2,15 @@
 /**
  * The Address factory.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Factory
+ * @package WooCommerce\PayPalCommerce\ApiClient\Factory
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Factory;
+namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Address;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Address;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
 /**
  * Class AddressFactory
@@ -20,7 +20,7 @@ class AddressFactory {
 	/**
 	 * Returns either the shipping or billing Address object of a customer.
 	 *
-	 * @param \WC_Customer $customer The Woocommerce customer.
+	 * @param \WC_Customer $customer The WooCommerce customer.
 	 * @param string       $type Either 'shipping' or 'billing'.
 	 *
 	 * @return Address
@@ -43,7 +43,7 @@ class AddressFactory {
 	}
 
 	/**
-	 * Returns an Address object based of a Woocommerce order.
+	 * Returns an Address object based of a WooCommerce order.
 	 *
 	 * @param \WC_Order $order The order.
 	 *
@@ -71,7 +71,7 @@ class AddressFactory {
 	public function from_paypal_response( \stdClass $data ): Address {
 		if ( ! isset( $data->country_code ) ) {
 			throw new RuntimeException(
-				__( 'No country given for address.', 'paypal-for-woocommerce' )
+				__( 'No country given for address.', 'paypal-payments-for-woocommerce' )
 			);
 		}
 		return new Address(

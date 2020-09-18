@@ -2,14 +2,14 @@
 /**
  * The renderer.
  *
- * @package Inpsyde\PayPalCommerce\AdminNotices\Renderer
+ * @package WooCommerce\PayPalCommerce\AdminNotices\Renderer
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\AdminNotices\Renderer;
+namespace WooCommerce\PayPalCommerce\AdminNotices\Renderer;
 
-use Inpsyde\PayPalCommerce\AdminNotices\Repository\RepositoryInterface;
+use WooCommerce\PayPalCommerce\AdminNotices\Repository\RepositoryInterface;
 
 /**
  * Class Renderer

@@ -12,7 +12,6 @@ const groupToggle = (selector, group) => {
         'change',
         (event) => {
 
-
             if (! event.target.checked) {
                 group.forEach( (elementToHide) => {
                     document.querySelector(elementToHide).style.display = 'none';
@@ -20,8 +19,8 @@ const groupToggle = (selector, group) => {
                 return;
             }
 
-            group.forEach( (elementToHide) => {
-                document.querySelector(elementToHide).style.display = 'table-row';
+            group.forEach( (elementToShow) => {
+                document.querySelector(elementToShow).style.display = 'table-row';
             })
         }
     );
@@ -34,23 +33,27 @@ const groupToggleSelect = (selector, group) => {
         return;
     }
     const value = toggleElement.value;
-    group.forEach( (elementToHide) => {
-        if (value === elementToHide.value) {
-            document.querySelector(elementToHide.selector).style.display = 'table-row';
+    group.forEach( (elementToToggle) => {
+        const domElement = document.querySelector(elementToToggle.selector);
+        if (! domElement) {
             return;
         }
-        document.querySelector(elementToHide.selector).style.display = 'none';
+        if (value === elementToToggle.value && domElement.style.display !== 'none') {
+            domElement.style.display = 'table-row';
+            return;
+        }
+        domElement.style.display = 'none';
     })
     toggleElement.addEventListener(
         'change',
         (event) => {
             const value = event.target.value;
-            group.forEach( (elementToHide) => {
-                if (value === elementToHide.value) {
-                    document.querySelector(elementToHide.selector).style.display = 'table-row';
+            group.forEach( (elementToToggle) => {
+                if (value === elementToToggle.value) {
+                    document.querySelector(elementToToggle.selector).style.display = 'table-row';
                     return;
                 }
-                document.querySelector(elementToHide.selector).style.display = 'none';
+                document.querySelector(elementToToggle.selector).style.display = 'none';
             })
         }
     );
@@ -62,10 +65,22 @@ const groupToggleSelect = (selector, group) => {
         (event) => {
             event.preventDefault();
             document.querySelector('#field-toggle_manual_input').style.display = 'none';
+            document.querySelector('#field-merchant_id').style.display = 'table-row';
             document.querySelector('#field-client_id').style.display = 'table-row';
             document.querySelector('#field-client_secret').style.display = 'table-row';
         }
     )
+
+    groupToggle(
+        '#ppcp-button_enabled',
+        [
+            '#field-button_layout',
+            '#field-button_tagline',
+            '#field-button_label',
+            '#field-button_color',
+            '#field-button_shape',
+        ]
+    );
 
     groupToggle(
         '#ppcp-message_enabled',

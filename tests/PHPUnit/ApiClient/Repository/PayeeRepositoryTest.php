@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Repository;
+namespace WooCommerce\PayPalCommerce\ApiClient\Repository;
 
-use Inpsyde\PayPalCommerce\ApiClient\Config\Config;
-use Inpsyde\PayPalCommerce\ApiClient\TestCase;
+use WooCommerce\PayPalCommerce\ApiClient\Config\Config;
+use WooCommerce\PayPalCommerce\ApiClient\TestCase;
 use Mockery;
 
 class PayeeRepositoryTest extends TestCase

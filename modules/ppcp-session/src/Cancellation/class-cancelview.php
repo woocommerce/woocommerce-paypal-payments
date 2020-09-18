@@ -2,12 +2,12 @@
 /**
  * Renders the cancel view for the order on the checkout.
  *
- * @package Inpsyde\PayPalCommerce\Session\Cancellation
+ * @package WooCommerce\PayPalCommerce\Session\Cancellation
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Session\Cancellation;
+namespace WooCommerce\PayPalCommerce\Session\Cancellation;
 
 /**
  * Class CancelView
@@ -30,7 +30,7 @@ class CancelView {
 				esc_html__(
 					'You are currently paying with PayPal. If you want to cancel
                             this process, please click %1$shere%2$s.',
-					'paypal-for-woocommerce'
+					'paypal-payments-for-woocommerce'
 				),
 				'<a href="' . esc_url( $url ) . '">',
 				'</a>'

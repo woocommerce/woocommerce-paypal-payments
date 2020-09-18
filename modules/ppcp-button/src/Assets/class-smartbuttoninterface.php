@@ -2,12 +2,12 @@
 /**
  * The interface for the smart button asset renderer.
  *
- * @package Inpsyde\PayPalCommerce\Button\Assets
+ * @package WooCommerce\PayPalCommerce\Button\Assets
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Button\Assets;
+namespace WooCommerce\PayPalCommerce\Button\Assets;
 
 /**
  * Interface SmartButtonInterface

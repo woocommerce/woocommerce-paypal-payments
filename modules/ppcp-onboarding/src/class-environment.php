@@ -2,12 +2,12 @@
 /**
  * Used to detect the current environment.
  *
- * @package Inpsyde\PayPalCommerce\Onboarding
+ * @package WooCommerce\PayPalCommerce\Onboarding
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Onboarding;
+namespace WooCommerce\PayPalCommerce\Onboarding;
 
 use Psr\Container\ContainerInterface;
 
@@ -17,8 +17,8 @@ use Psr\Container\ContainerInterface;
 class Environment {
 
 
-	public const PRODUCTION = 'production';
-	public const SANDBOX    = 'sandbox';
+	const PRODUCTION = 'production';
+	const SANDBOX    = 'sandbox';
 
 	/**
 	 * The Settings.

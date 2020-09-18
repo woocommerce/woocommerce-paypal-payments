@@ -2,12 +2,12 @@
 /**
  * The purchase unit object.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Entity
+ * @package WooCommerce\PayPalCommerce\ApiClient\Entity
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
+namespace WooCommerce\PayPalCommerce\ApiClient\Entity;
 
 /**
  * Class PurchaseUnit
@@ -162,7 +162,7 @@ class PurchaseUnit {
 	 *
 	 * @return Shipping|null
 	 */
-	public function shipping(): ?Shipping {
+	public function shipping() {
 		return $this->shipping;
 	}
 
@@ -216,7 +216,7 @@ class PurchaseUnit {
 	 *
 	 * @return Payee|null
 	 */
-	public function payee(): ?Payee {
+	public function payee() {
 		return $this->payee;
 	}
 
@@ -225,7 +225,7 @@ class PurchaseUnit {
 	 *
 	 * @return Payments|null
 	 */
-	public function payments(): ?Payments {
+	public function payments() {
 		return $this->payments;
 	}
 
@@ -293,8 +293,8 @@ class PurchaseUnit {
 	}
 
 	/**
-	 * All money values send to PayPal can only have 2 decimal points. Woocommerce internally does
-	 * not have this restriction. Therefore the totals of the cart in Woocommerce and the totals
+	 * All money values send to PayPal can only have 2 decimal points. WooCommerce internally does
+	 * not have this restriction. Therefore the totals of the cart in WooCommerce and the totals
 	 * of the rounded money values of the items, we send to PayPal, can differ. In those cases,
 	 * we can not send the line items.
 	 *

@@ -2,12 +2,12 @@
 /**
  * The API module.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient
+ * @package WooCommerce\PayPalCommerce\ApiClient
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient;
+namespace WooCommerce\PayPalCommerce\ApiClient;
 
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\Exception\ModuleExceptionInterface;
@@ -37,6 +37,14 @@ class ApiModule implements ModuleInterface {
 	 *
 	 * @param ContainerInterface $container The container.
 	 */
-	public function run( ContainerInterface $container ) {
+	public function run( ContainerInterface $container = null ) {
+	}
+
+	/**
+	 * Returns the key for the module.
+	 *
+	 * @return string|void
+	 */
+	public function getKey() {
 	}
 }

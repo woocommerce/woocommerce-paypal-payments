@@ -2,7 +2,7 @@
 /**
  * The extensions of the admin notice module.
  *
- * @package Inpsyde\PayPalCommerce\Button
+ * @package WooCommerce\PayPalCommerce\Button
  */
 
 declare(strict_types=1);

@@ -3,7 +3,8 @@
 }
 
 #field-client_secret,
-#field-client_id {
+#field-client_id,
+#field-merchant_id {
 	display: none;
 }
 

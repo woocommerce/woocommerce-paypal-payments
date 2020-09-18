@@ -2,12 +2,12 @@
 /**
  * The payer object.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Entity
+ * @package WooCommerce\PayPalCommerce\ApiClient\Entity
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
+namespace WooCommerce\PayPalCommerce\ApiClient\Entity;
 
 /**
  * Class Payer
@@ -126,7 +126,7 @@ class Payer {
 	 *
 	 * @return \DateTime|null
 	 */
-	public function birthdate(): ?\DateTime {
+	public function birthdate() {
 		return $this->birthdate;
 	}
 
@@ -144,7 +144,7 @@ class Payer {
 	 *
 	 * @return PhoneWithType|null
 	 */
-	public function phone(): ?PhoneWithType {
+	public function phone() {
 		return $this->phone;
 	}
 
@@ -153,7 +153,7 @@ class Payer {
 	 *
 	 * @return PayerTaxInfo|null
 	 */
-	public function tax_info(): ?PayerTaxInfo {
+	public function tax_info() {
 		return $this->tax_info;
 	}
 
@@ -162,7 +162,7 @@ class Payer {
 	 *
 	 * @return array
 	 */
-	public function to_array(): array {
+	public function to_array() {
 		$payer = array(
 			'name'          => $this->name()->to_array(),
 			'email_address' => $this->email_address(),

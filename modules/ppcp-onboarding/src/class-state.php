@@ -2,12 +2,12 @@
 /**
  * Used to determine the current state of onboarding.
  *
- * @package Inpsyde\PayPalCommerce\Onboarding
+ * @package WooCommerce\PayPalCommerce\Onboarding
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Onboarding;
+namespace WooCommerce\PayPalCommerce\Onboarding;
 
 use Psr\Container\ContainerInterface;
 
@@ -16,9 +16,9 @@ use Psr\Container\ContainerInterface;
  */
 class State {
 
-	public const STATE_START       = 0;
-	public const STATE_PROGRESSIVE = 4;
-	public const STATE_ONBOARDED   = 8;
+	const STATE_START       = 0;
+	const STATE_PROGRESSIVE = 4;
+	const STATE_ONBOARDED   = 8;
 
 	/**
 	 * The Environment.

@@ -2,12 +2,12 @@
 /**
  * The item object.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Entity
+ * @package WooCommerce\PayPalCommerce\ApiClient\Entity
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
+namespace WooCommerce\PayPalCommerce\ApiClient\Entity;
 
 /**
  * Class Item
@@ -15,8 +15,8 @@ namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
 class Item {
 
 
-	public const PHYSICAL_GOODS = 'PHYSICAL_GOODS';
-	public const DIGITAL_GOODS  = 'DIGITAL_GOODS';
+	const PHYSICAL_GOODS = 'PHYSICAL_GOODS';
+	const DIGITAL_GOODS  = 'DIGITAL_GOODS';
 
 	/**
 	 * The name.
@@ -139,7 +139,7 @@ class Item {
 	 *
 	 * @return Money|null
 	 */
-	public function tax(): ?Money {
+	public function tax() {
 		return $this->tax;
 	}
 
@@ -148,7 +148,7 @@ class Item {
 	 *
 	 * @return string
 	 */
-	public function sku(): string {
+	public function sku() {
 		return $this->sku;
 	}
 
@@ -157,7 +157,7 @@ class Item {
 	 *
 	 * @return string
 	 */
-	public function category(): string {
+	public function category() {
 		return $this->category;
 	}
 
@@ -166,7 +166,7 @@ class Item {
 	 *
 	 * @return array
 	 */
-	public function to_array(): array {
+	public function to_array() {
 		$item = array(
 			'name'        => $this->name(),
 			'unit_amount' => $this->unit_amount()->to_array(),

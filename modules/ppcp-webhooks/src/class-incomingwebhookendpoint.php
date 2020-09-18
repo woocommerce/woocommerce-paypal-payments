@@ -2,17 +2,17 @@
 /**
  * Controls the endpoint for the incoming webhooks.
  *
- * @package Inpsyde\PayPalCommerce\Webhooks
+ * @package WooCommerce\PayPalCommerce\Webhooks
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Webhooks;
+namespace WooCommerce\PayPalCommerce\Webhooks;
 
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\WebhookEndpoint;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\WebhookFactory;
-use Inpsyde\PayPalCommerce\Webhooks\Handler\RequestHandler;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\WebhookEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
+use WooCommerce\PayPalCommerce\Webhooks\Handler\RequestHandler;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -20,8 +20,8 @@ use Psr\Log\LoggerInterface;
  */
 class IncomingWebhookEndpoint {
 
-	public const NAMESPACE = 'paypal/v1';
-	public const ROUTE     = 'incoming';
+	const NAMESPACE = 'paypal/v1';
+	const ROUTE     = 'incoming';
 
 	/**
 	 * The Webhook endpoint.
@@ -123,7 +123,7 @@ class IncomingWebhookEndpoint {
 			if ( ! $result ) {
 				$this->logger->log(
 					'error',
-					__( 'Illegit Webhook request detected.', 'paypal-for-woocommerce' )
+					__( 'Illegit Webhook request detected.', 'paypal-payments-for-woocommerce' )
 				);
 			}
 			return $result;
@@ -134,7 +134,7 @@ class IncomingWebhookEndpoint {
 					// translators: %s is the error message.
 					__(
 						'Illegit Webhook request detected: %s',
-						'paypal-for-woocommerce'
+						'paypal-payments-for-woocommerce'
 					),
 					$exception->getMessage()
 				)
@@ -159,7 +159,7 @@ class IncomingWebhookEndpoint {
 					'info',
 					sprintf(
 						// translators: %s is the event type.
-						__( 'Webhook has been handled by %s', 'paypal-for-woocommerce' ),
+						__( 'Webhook has been handled by %s', 'paypal-payments-for-woocommerce' ),
 						( $handler->event_types() ) ? current( $handler->event_types() ) : ''
 					),
 					array(
@@ -173,7 +173,7 @@ class IncomingWebhookEndpoint {
 
 		$message = sprintf(
 			// translators: %s is the request type.
-			__( 'Could not find handler for request type %s', 'paypal-for-woocommerce' ),
+			__( 'Could not find handler for request type %s', 'paypal-payments-for-woocommerce' ),
 			$request['event_type']
 		);
 		$this->logger->log(

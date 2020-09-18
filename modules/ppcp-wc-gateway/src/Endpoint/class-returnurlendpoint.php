@@ -2,16 +2,16 @@
 /**
  * Controls the endpoint for customers returning from PayPal.
  *
- * @package Inpsyde\PayPalCommerce\WcGateway\Endpoint
+ * @package WooCommerce\PayPalCommerce\WcGateway\Endpoint
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\WcGateway\Endpoint;
+namespace WooCommerce\PayPalCommerce\WcGateway\Endpoint;
 
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use Inpsyde\PayPalCommerce\Webhooks\Handler\PrefixTrait;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\Webhooks\Handler\PrefixTrait;
 
 /**
  * Class ReturnUrlEndpoint
@@ -19,7 +19,7 @@ use Inpsyde\PayPalCommerce\Webhooks\Handler\PrefixTrait;
 class ReturnUrlEndpoint {
 
 	use PrefixTrait;
-	public const ENDPOINT = 'ppc-return-url';
+	const ENDPOINT = 'ppc-return-url';
 
 	/**
 	 * The PayPal Gateway.

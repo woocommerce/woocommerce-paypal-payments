@@ -2,23 +2,23 @@
 /**
  * Processes orders for the gateways.
  *
- * @package Inpsyde\PayPalCommerce\WcGateway\Processor
+ * @package WooCommerce\PayPalCommerce\WcGateway\Processor
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\WcGateway\Processor;
+namespace WooCommerce\PayPalCommerce\WcGateway\Processor;
 
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\OrderStatus;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\OrderFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
-use Inpsyde\PayPalCommerce\Button\Helper\ThreeDSecure;
-use Inpsyde\PayPalCommerce\Session\SessionHandler;
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\CartRepository;
+use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
+use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class OrderProcessor
@@ -122,10 +122,10 @@ class OrderProcessor {
 	}
 
 	/**
-	 * Processes a given Woocommerce order and captured/authorizes the connected PayPal orders.
+	 * Processes a given WooCommerce order and captured/authorizes the connected PayPal orders.
 	 *
-	 * @param \WC_Order    $wc_order The Woocommerce order.
-	 * @param \WooCommerce $woocommerce The Woocommerce object.
+	 * @param \WC_Order    $wc_order The WooCommerce order.
+	 * @param \WooCommerce $woocommerce The WooCommerce object.
 	 *
 	 * @return bool
 	 */
@@ -141,13 +141,13 @@ class OrderProcessor {
 		if ( ! $order || ! $this->order_is_approved( $order ) ) {
 			$error_message = __(
 				'The payment has not been approved yet.',
-				'paypal-for-woocommerce'
+				'paypal-payments-for-woocommerce'
 			);
 		}
 		if ( $error_message ) {
 			$this->last_error = sprintf(
 				// translators: %s is the message of the error.
-				__( 'Payment error: %s', 'paypal-for-woocommerce' ),
+				__( 'Payment error: %s', 'paypal-payments-for-woocommerce' ),
 				$error_message
 			);
 			return false;
@@ -165,18 +165,18 @@ class OrderProcessor {
 
 		$wc_order->update_status(
 			'on-hold',
-			__( 'Awaiting payment.', 'paypal-for-woocommerce' )
+			__( 'Awaiting payment.', 'paypal-payments-for-woocommerce' )
 		);
 		if ( $order->status()->is( OrderStatus::COMPLETED ) && $order->intent() === 'CAPTURE' ) {
 			$wc_order->update_status(
 				'processing',
-				__( 'Payment received.', 'paypal-for-woocommerce' )
+				__( 'Payment received.', 'paypal-payments-for-woocommerce' )
 			);
 		}
 
 		if ( $this->capture_authorized_downloads( $order ) && $this->authorized_payments_processor->process( $wc_order ) ) {
 			$wc_order->add_order_note(
-				__( 'Payment successfully captured.', 'paypal-for-woocommerce' )
+				__( 'Payment successfully captured.', 'paypal-payments-for-woocommerce' )
 			);
 			$wc_order->update_meta_data( PayPalGateway::CAPTURED_META_KEY, 'true' );
 			$wc_order->update_status( 'processing' );
@@ -232,9 +232,9 @@ class OrderProcessor {
 	}
 
 	/**
-	 * Patches a given PayPal order with a Woocommerce order.
+	 * Patches a given PayPal order with a WooCommerce order.
 	 *
-	 * @param \WC_Order $wc_order The Woocommerce order.
+	 * @param \WC_Order $wc_order The WooCommerce order.
 	 * @param Order     $order The PayPal order.
 	 *
 	 * @return Order

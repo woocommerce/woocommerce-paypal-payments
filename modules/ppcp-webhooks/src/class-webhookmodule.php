@@ -2,12 +2,12 @@
 /**
  * The webhook module.
  *
- * @package Inpsyde\PayPalCommerce\Webhooks
+ * @package WooCommerce\PayPalCommerce\Webhooks
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Webhooks;
+namespace WooCommerce\PayPalCommerce\Webhooks;
 
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
@@ -34,9 +34,9 @@ class WebhookModule implements ModuleInterface {
 	/**
 	 * Run the Webhook module.
 	 *
-	 * @param ContainerInterface $container The Container.
+	 * @param ContainerInterface|null $container The Container.
 	 */
-	public function run( ContainerInterface $container ) {
+	public function run( ContainerInterface $container = null ) {
 		add_action(
 			'rest_api_init',
 			static function () use ( $container ) {
@@ -64,7 +64,7 @@ class WebhookModule implements ModuleInterface {
 		);
 
 		add_action(
-			'woocommerce-paypal-commerce-gateway.deactivate',
+			'woocommerce_paypal_commerce_gateway_deactivate',
 			static function () use ( $container ) {
 				$registrar = $container->get( 'webhook.registrar' );
 				/**
@@ -75,5 +75,13 @@ class WebhookModule implements ModuleInterface {
 				$registrar->unregister();
 			}
 		);
+	}
+
+	/**
+	 * Returns the key for the module.
+	 *
+	 * @return string|void
+	 */
+	public function getKey() {
 	}
 }

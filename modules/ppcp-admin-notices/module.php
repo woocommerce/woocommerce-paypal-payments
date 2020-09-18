@@ -2,12 +2,12 @@
 /**
  * The admin notice module.
  *
- * @package Inpsyde\PayPalCommerce\Button
+ * @package WooCommerce\PayPalCommerce\Button
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\AdminNotices;
+namespace WooCommerce\PayPalCommerce\AdminNotices;
 
 use Dhii\Modular\Module\ModuleInterface;
 

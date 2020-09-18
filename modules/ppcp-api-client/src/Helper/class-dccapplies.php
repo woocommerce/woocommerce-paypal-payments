@@ -2,12 +2,12 @@
 /**
  * The DCC Applies helper checks if the current installation can use DCC or not.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Helper
+ * @package WooCommerce\PayPalCommerce\ApiClient\Helper
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Helper;
+namespace WooCommerce\PayPalCommerce\ApiClient\Helper;
 
 /**
  * Class DccApplies

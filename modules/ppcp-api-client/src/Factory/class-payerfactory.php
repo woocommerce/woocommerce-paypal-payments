@@ -2,18 +2,18 @@
 /**
  * The Payer factory.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Factory
+ * @package WooCommerce\PayPalCommerce\ApiClient\Factory
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Factory;
+namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Payer;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\PayerName;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\PayerTaxInfo;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Phone;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\PhoneWithType;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PayerName;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PayerTaxInfo;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Phone;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PhoneWithType;
 
 /**
  * Class PayerFactory
@@ -37,9 +37,9 @@ class PayerFactory {
 	}
 
 	/**
-	 * Returns a Payer object based off a Woocommerce customer.
+	 * Returns a Payer object based off a WooCommerce customer.
 	 *
-	 * @param \WC_Customer $customer The Woocommerce customer.
+	 * @param \WC_Customer $customer The WooCommerce customer.
 	 *
 	 * @return Payer
 	 */

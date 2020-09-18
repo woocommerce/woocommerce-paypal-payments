@@ -2,19 +2,19 @@
 /**
  * The PhoneWithType object
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Entity
+ * @package WooCommerce\PayPalCommerce\ApiClient\Entity
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
+namespace WooCommerce\PayPalCommerce\ApiClient\Entity;
 
 /**
  * Class PhoneWithType
  */
 class PhoneWithType {
 
-	public const VALLID_TYPES = array(
+	const VALLID_TYPES = array(
 		'FAX',
 		'HOME',
 		'MOBILE',

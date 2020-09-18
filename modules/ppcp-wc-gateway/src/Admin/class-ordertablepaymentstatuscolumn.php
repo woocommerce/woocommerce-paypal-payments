@@ -3,24 +3,24 @@
  * Renders the columns to display to the merchant, which orders have been authorized and
  * which have not been authorized yet.
  *
- * @package Inpsyde\PayPalCommerce\WcGateway\Admin
+ * @package WooCommerce\PayPalCommerce\WcGateway\Admin
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\WcGateway\Admin;
+namespace WooCommerce\PayPalCommerce\WcGateway\Admin;
 
-use Inpsyde\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class OrderTablePaymentStatusColumn
  */
 class OrderTablePaymentStatusColumn {
 
-	private const COLUMN_KEY       = 'ppcp_payment_status';
-	private const INTENT           = 'authorize';
-	private const AFTER_COLUMN_KEY = 'order_status';
+	const COLUMN_KEY       = 'ppcp_payment_status';
+	const INTENT           = 'authorize';
+	const AFTER_COLUMN_KEY = 'order_status';
 
 	/**
 	 * The settings.
@@ -56,7 +56,7 @@ class OrderTablePaymentStatusColumn {
 		$columns = array_merge(
 			array_slice( $columns, 0, $to_insert_position ),
 			array(
-				self::COLUMN_KEY => __( 'Payment Captured', 'paypal-for-woocommerce' ),
+				self::COLUMN_KEY => __( 'Payment Captured', 'paypal-payments-for-woocommerce' ),
 			),
 			array_slice( $columns, $to_insert_position )
 		);
@@ -68,7 +68,7 @@ class OrderTablePaymentStatusColumn {
 	 * Render the column.
 	 *
 	 * @param string $column The column.
-	 * @param int    $wc_order_id The id or the Woocommerce order.
+	 * @param int    $wc_order_id The id or the WooCommerce order.
 	 */
 	public function render( string $column, int $wc_order_id ) {
 		if ( ! $this->settings->has( 'intent' ) || $this->settings->get( 'intent' ) !== self::INTENT ) {
@@ -96,7 +96,7 @@ class OrderTablePaymentStatusColumn {
 	/**
 	 * Whether to render the authorization status of an order or not.
 	 *
-	 * @param \WC_Order $order The Woocommerce order.
+	 * @param \WC_Order $order The WooCommerce order.
 	 *
 	 * @return bool
 	 */
@@ -107,7 +107,7 @@ class OrderTablePaymentStatusColumn {
 	/**
 	 * Whether the order has been captured or not.
 	 *
-	 * @param \WC_Order $wc_order The Woocommerce order.
+	 * @param \WC_Order $wc_order The WooCommerce order.
 	 *
 	 * @return bool
 	 */
@@ -124,7 +124,7 @@ class OrderTablePaymentStatusColumn {
 			'<span class="dashicons dashicons-yes">
                         <span class="screen-reader-text">%s</span>
                     </span>',
-			esc_html__( 'Payment captured', 'paypal-for-woocommerce' )
+			esc_html__( 'Payment captured', 'paypal-payments-for-woocommerce' )
 		);
 	}
 
@@ -134,7 +134,7 @@ class OrderTablePaymentStatusColumn {
 	private function render_incomplete_status() {
 		printf(
 			'<mark class="onbackorder">%s</mark>',
-			esc_html__( 'Not captured', 'paypal-for-woocommerce' )
+			esc_html__( 'Not captured', 'paypal-payments-for-woocommerce' )
 		);
 	}
 }

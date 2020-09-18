@@ -2,16 +2,16 @@
 /**
  * The Data Client ID endpoint.
  *
- * @package Inpsyde\PayPalCommerce\Button\Endpoint
+ * @package WooCommerce\PayPalCommerce\Button\Endpoint
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Button\Endpoint;
+namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\IdentityToken;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\PayPalApiException;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\IdentityToken;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
 /**
  * Class DataClientIdEndpoint
@@ -19,7 +19,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
 class DataClientIdEndpoint implements EndpointInterface {
 
 
-	public const ENDPOINT = 'ppc-data-client-id';
+	const ENDPOINT = 'ppc-data-client-id';
 
 	/**
 	 * The Request Data Helper.

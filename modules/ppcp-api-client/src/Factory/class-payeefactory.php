@@ -2,15 +2,15 @@
 /**
  * The Payee Factory.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Factory
+ * @package WooCommerce\PayPalCommerce\ApiClient\Factory
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Factory;
+namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Payee;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Payee;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
 /**
  * Class PayeeFactory
@@ -25,10 +25,10 @@ class PayeeFactory {
 	 * @return Payee|null
 	 * @throws RuntimeException When JSON object is malformed.
 	 */
-	public function from_paypal_response( \stdClass $data ): ?Payee {
+	public function from_paypal_response( \stdClass $data ) {
 		if ( ! isset( $data->email_address ) ) {
 			throw new RuntimeException(
-				__( 'No email for payee given.', 'paypal-for-woocommerce' )
+				__( 'No email for payee given.', 'paypal-payments-for-woocommerce' )
 			);
 		}
 

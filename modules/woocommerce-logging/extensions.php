@@ -2,12 +2,12 @@
 /**
  * The logging extensions.
  *
- * @package Inpsyde\Woocommerce\Logging
+ * @package WooCommerce\WooCommerce\Logging
  */
 
 declare(strict_types=1);
 
 
-namespace Inpsyde\PayPalCommerce\Logging;
+namespace WooCommerce\PayPalCommerce\Logging;
 
 return array();

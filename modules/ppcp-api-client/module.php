@@ -2,12 +2,12 @@
 /**
  * The api client module.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient
+ * @package WooCommerce\PayPalCommerce\ApiClient
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient;
+namespace WooCommerce\PayPalCommerce\ApiClient;
 
 use Dhii\Modular\Module\ModuleInterface;
 

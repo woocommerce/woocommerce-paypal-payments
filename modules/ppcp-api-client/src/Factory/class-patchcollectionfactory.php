@@ -2,17 +2,17 @@
 /**
  * The PatchCollection factory.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Factory
+ * @package WooCommerce\PayPalCommerce\ApiClient\Factory
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Factory;
+namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Patch;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\PatchCollection;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Patch;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PatchCollection;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 
 /**
  * Class PatchCollectionFactory

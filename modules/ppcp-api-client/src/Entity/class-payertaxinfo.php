@@ -2,14 +2,14 @@
 /**
  * The PayerTaxInfo object.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Entity
+ * @package WooCommerce\PayPalCommerce\ApiClient\Entity
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Entity;
+namespace WooCommerce\PayPalCommerce\ApiClient\Entity;
 
-use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
 /**
  * Class PayerTaxInfo
@@ -17,7 +17,7 @@ use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
 class PayerTaxInfo {
 
 
-	public const VALID_TYPES = array(
+	const VALID_TYPES = array(
 		'BR_CPF',
 		'BR_CNPJ',
 	);
@@ -52,7 +52,7 @@ class PayerTaxInfo {
 			throw new RuntimeException(
 				sprintf(
 				// translators: %s is the current type.
-					__( '%s is not a valid tax type.', 'paypal-for-woocommerce' ),
+					__( '%s is not a valid tax type.', 'paypal-payments-for-woocommerce' ),
 					$type
 				)
 			);

@@ -2,18 +2,18 @@
 /**
  * The Order factory.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Factory
+ * @package WooCommerce\PayPalCommerce\ApiClient\Factory
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Factory;
+namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\OrderStatus;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use Inpsyde\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
 
 /**
  * Class OrderFactory
@@ -80,9 +80,9 @@ class OrderFactory {
 	}
 
 	/**
-	 * Creates an Order object based off a Woocommerce order and another Order object.
+	 * Creates an Order object based off a WooCommerce order and another Order object.
 	 *
-	 * @param \WC_Order $wc_order The Woocommerce order.
+	 * @param \WC_Order $wc_order The WooCommerce order.
 	 * @param Order     $order The order object.
 	 *
 	 * @return Order
@@ -114,22 +114,22 @@ class OrderFactory {
 	public function from_paypal_response( \stdClass $order_data ): Order {
 		if ( ! isset( $order_data->id ) ) {
 			throw new RuntimeException(
-				__( 'Order does not contain an id.', 'paypal-for-woocommerce' )
+				__( 'Order does not contain an id.', 'paypal-payments-for-woocommerce' )
 			);
 		}
 		if ( ! isset( $order_data->purchase_units ) || ! is_array( $order_data->purchase_units ) ) {
 			throw new RuntimeException(
-				__( 'Order does not contain items.', 'paypal-for-woocommerce' )
+				__( 'Order does not contain items.', 'paypal-payments-for-woocommerce' )
 			);
 		}
 		if ( ! isset( $order_data->status ) ) {
 			throw new RuntimeException(
-				__( 'Order does not contain status.', 'paypal-for-woocommerce' )
+				__( 'Order does not contain status.', 'paypal-payments-for-woocommerce' )
 			);
 		}
 		if ( ! isset( $order_data->intent ) ) {
 			throw new RuntimeException(
-				__( 'Order does not contain intent.', 'paypal-for-woocommerce' )
+				__( 'Order does not contain intent.', 'paypal-payments-for-woocommerce' )
 			);
 		}
 
@@ -141,10 +141,10 @@ class OrderFactory {
 		);
 
 		$create_time         = ( isset( $order_data->create_time ) ) ?
-			\DateTime::createFromFormat( \DateTime::ISO8601, $order_data->create_time )
+			\DateTime::createFromFormat( 'Y-m-d\TH:i:sO', $order_data->create_time )
 			: null;
 		$update_time         = ( isset( $order_data->update_time ) ) ?
-			\DateTime::createFromFormat( \DateTime::ISO8601, $order_data->update_time )
+			\DateTime::createFromFormat( 'Y-m-d\TH:i:sO', $order_data->update_time )
 			: null;
 		$payer               = ( isset( $order_data->payer ) ) ?
 			$this->payer_factory->from_paypal_response( $order_data->payer )

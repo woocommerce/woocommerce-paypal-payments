@@ -3,19 +3,19 @@
  * Endpoint to verify if an order has been approved. An approved order
  * will be stored in the current session.
  *
- * @package Inpsyde\PayPalCommerce\Button\Endpoint
+ * @package WooCommerce\PayPalCommerce\Button\Endpoint
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Button\Endpoint;
+namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\OrderStatus;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\PayPalApiException;
-use Inpsyde\PayPalCommerce\Button\Exception\RuntimeException;
-use Inpsyde\PayPalCommerce\Button\Helper\ThreeDSecure;
-use Inpsyde\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
+use WooCommerce\PayPalCommerce\Session\SessionHandler;
 
 /**
  * Class ApproveOrderEndpoint
@@ -23,7 +23,7 @@ use Inpsyde\PayPalCommerce\Session\SessionHandler;
 class ApproveOrderEndpoint implements EndpointInterface {
 
 
-	public const ENDPOINT = 'ppc-approve-order';
+	const ENDPOINT = 'ppc-approve-order';
 
 	/**
 	 * The request data helper.
@@ -94,7 +94,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 			$data = $this->request_data->read_request( $this->nonce() );
 			if ( ! isset( $data['order_id'] ) ) {
 				throw new RuntimeException(
-					__( 'No order id given', 'paypal-for-woocommerce' )
+					__( 'No order id given', 'paypal-payments-for-woocommerce' )
 				);
 			}
 
@@ -103,7 +103,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 				throw new RuntimeException(
 					sprintf(
 						// translators: %s is the id of the order.
-						__( 'Order %s not found.', 'paypal-for-woocommerce' ),
+						__( 'Order %s not found.', 'paypal-payments-for-woocommerce' ),
 						$data['order_id']
 					)
 				);
@@ -115,7 +115,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 					throw new RuntimeException(
 						__(
 							'Something went wrong. Please try again.',
-							'paypal-for-woocommerce'
+							'paypal-payments-for-woocommerce'
 						)
 					);
 				}
@@ -123,7 +123,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 					throw new RuntimeException(
 						__(
 							'Unfortunatly, we can\'t accept your card. Please choose a different payment method.',
-							'paypal-for-woocommerce'
+							'paypal-payments-for-woocommerce'
 						)
 					);
 				}
@@ -135,7 +135,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 				throw new RuntimeException(
 					sprintf(
 					// translators: %s is the id of the order.
-						__( 'Order %s is not approved yet.', 'paypal-for-woocommerce' ),
+						__( 'Order %s is not approved yet.', 'paypal-payments-for-woocommerce' ),
 						$data['order_id']
 					)
 				);

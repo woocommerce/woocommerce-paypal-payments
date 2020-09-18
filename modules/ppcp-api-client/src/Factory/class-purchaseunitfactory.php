@@ -2,17 +2,17 @@
 /**
  * The PurchaseUnit factory.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Factory
+ * @package WooCommerce\PayPalCommerce\ApiClient\Factory
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Factory;
+namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Item;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use Inpsyde\PayPalCommerce\ApiClient\Repository\PayeeRepository;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\PayeeRepository;
 
 /**
  * Class PurchaseUnitFactory
@@ -99,7 +99,7 @@ class PurchaseUnitFactory {
 	}
 
 	/**
-	 * Creates a PurchaseUnit based off a Woocommerce order.
+	 * Creates a PurchaseUnit based off a WooCommerce order.
 	 *
 	 * @param \WC_Order $order The order.
 	 *
@@ -110,6 +110,7 @@ class PurchaseUnitFactory {
 		$items    = $this->item_factory->from_wc_order( $order );
 		$shipping = $this->shipping_factory->from_wc_order( $order );
 		if (
+			! $this->shipping_needed( ... array_values( $items ) ) ||
 			empty( $shipping->address()->country_code() ) ||
 			( $shipping->address()->country_code() && ! $shipping->address()->postal_code() )
 		) {
@@ -137,7 +138,7 @@ class PurchaseUnitFactory {
 	}
 
 	/**
-	 * Creates a PurchaseUnit based off a Woocommerce cart.
+	 * Creates a PurchaseUnit based off a WooCommerce cart.
 	 *
 	 * @param \WC_Cart $cart The cart.
 	 *
@@ -149,7 +150,7 @@ class PurchaseUnitFactory {
 
 		$shipping = null;
 		$customer = \WC()->customer;
-		if ( is_a( $customer, \WC_Customer::class ) ) {
+		if ( $this->shipping_needed( ... array_values( $items ) ) && is_a( $customer, \WC_Customer::class ) ) {
 			$shipping = $this->shipping_factory->from_wc_customer( \WC()->customer );
 			if (
 				! $shipping->address()->country_code()
@@ -193,7 +194,7 @@ class PurchaseUnitFactory {
 	public function from_paypal_response( \stdClass $data ): PurchaseUnit {
 		if ( ! isset( $data->reference_id ) || ! is_string( $data->reference_id ) ) {
 			throw new RuntimeException(
-				__( 'No reference ID given.', 'paypal-for-woocommerce' )
+				__( 'No reference ID given.', 'paypal-payments-for-woocommerce' )
 			);
 		}
 
@@ -242,5 +243,22 @@ class PurchaseUnitFactory {
 			$payments
 		);
 		return $purchase_unit;
+	}
+
+	/**
+	 * Whether we need a shipping address for a set of items or not.
+	 *
+	 * @param Item ...$items The items on based which the decision is made.
+	 *
+	 * @return bool
+	 */
+	private function shipping_needed( Item ...$items ): bool {
+
+		foreach ( $items as $item ) {
+			if ( $item->category() !== Item::DIGITAL_GOODS ) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

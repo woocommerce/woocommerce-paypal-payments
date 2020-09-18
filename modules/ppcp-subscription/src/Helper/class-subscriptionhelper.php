@@ -4,12 +4,12 @@
  * whether the cart contains a subscription, the current product is
  * a subscription or the subscription plugin is activated in the first place.
  *
- * @package Inpsyde\PayPalCommerce\Subscription\Helper
+ * @package WooCommerce\PayPalCommerce\Subscription\Helper
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Subscription\Helper;
+namespace WooCommerce\PayPalCommerce\Subscription\Helper;
 
 /**
  * Class SubscriptionHelper

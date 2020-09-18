@@ -1,18 +1,18 @@
 <?php
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\WcGateway\Gateway;
+namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
 
-use Inpsyde\PayPalCommerce\Onboarding\Render\OnboardingRenderer;
-use Inpsyde\PayPalCommerce\Session\SessionHandler;
-use Inpsyde\PayPalCommerce\TestCase;
-use Inpsyde\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
-use Inpsyde\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
-use Inpsyde\PayPalCommerce\WcGateway\Processor\OrderProcessor;
-use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
-use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsFields;
-use Inpsyde\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
+use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingRenderer;
+use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\TestCase;
+use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsFields;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use Mockery;
 use function Brain\Monkey\Functions\expect;
 
@@ -21,6 +21,7 @@ class WcGatewayTest extends TestCase
 
 
     public function testProcessPaymentSuccess() {
+	    expect('is_admin')->andReturn(false);
 
         $orderId = 1;
         $wcOrder = Mockery::mock(\WC_Order::class);
@@ -64,6 +65,7 @@ class WcGatewayTest extends TestCase
     }
 
     public function testProcessPaymentOrderNotFound() {
+	    expect('is_admin')->andReturn(false);
 
         $orderId = 1;
         $settingsRenderer = Mockery::mock(SettingsRenderer::class);
@@ -95,6 +97,7 @@ class WcGatewayTest extends TestCase
 
 
     public function testProcessPaymentFails() {
+    	expect('is_admin')->andReturn(false);
 
         $orderId = 1;
         $wcOrder = Mockery::mock(\WC_Order::class);
@@ -136,6 +139,7 @@ class WcGatewayTest extends TestCase
     }
 
     public function testCaptureAuthorizedPayment() {
+	    expect('is_admin')->andReturn(false);
 
         $wcOrder = Mockery::mock(\WC_Order::class);
         $wcOrder
@@ -181,6 +185,7 @@ class WcGatewayTest extends TestCase
 
     public function testCaptureAuthorizedPaymentHasAlreadyBeenCaptured() {
 
+	    expect('is_admin')->andReturn(false);
         $wcOrder = Mockery::mock(\WC_Order::class);
         $wcOrder
             ->expects('get_status')
@@ -233,6 +238,7 @@ class WcGatewayTest extends TestCase
      */
     public function testCaptureAuthorizedPaymentNoActionableFailures($lastStatus, $expectedMessage) {
 
+    	expect('is_admin')->andReturn(false);
         $wcOrder = Mockery::mock(\WC_Order::class);
         $settingsRenderer = Mockery::mock(SettingsRenderer::class);
         $orderProcessor = Mockery::mock(OrderProcessor::class);

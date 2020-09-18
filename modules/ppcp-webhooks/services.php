@@ -2,23 +2,23 @@
 /**
  * The webhook module services.
  *
- * @package Inpsyde\PayPalCommerce\Webhooks
+ * @package WooCommerce\PayPalCommerce\Webhooks
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Webhooks;
+namespace WooCommerce\PayPalCommerce\Webhooks;
 
-use Inpsyde\PayPalCommerce\Webhooks\Handler\CheckoutOrderApproved;
-use Inpsyde\PayPalCommerce\Webhooks\Handler\CheckoutOrderCompleted;
-use Inpsyde\PayPalCommerce\Webhooks\Handler\PaymentCaptureCompleted;
-use Inpsyde\PayPalCommerce\Webhooks\Handler\PaymentCaptureRefunded;
-use Inpsyde\PayPalCommerce\Webhooks\Handler\PaymentCaptureReversed;
+use WooCommerce\PayPalCommerce\Webhooks\Handler\CheckoutOrderApproved;
+use WooCommerce\PayPalCommerce\Webhooks\Handler\CheckoutOrderCompleted;
+use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureCompleted;
+use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureRefunded;
+use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureReversed;
 use Psr\Container\ContainerInterface;
 
 return array(
 
-	'webhook.registrar'           => function( ContainerInterface $container ) : WebhookRegistrar {
+	'webhook.registrar'           => function( $container ) : WebhookRegistrar {
 		$factory      = $container->get( 'api.factory.webhook' );
 		$endpoint     = $container->get( 'api.endpoint.webhook' );
 		$rest_endpoint = $container->get( 'webhook.endpoint.controller' );
@@ -28,7 +28,7 @@ return array(
 			$rest_endpoint
 		);
 	},
-	'webhook.endpoint.controller' => function( ContainerInterface $container ) : IncomingWebhookEndpoint {
+	'webhook.endpoint.controller' => function( $container ) : IncomingWebhookEndpoint {
 		$webhook_endpoint = $container->get( 'api.endpoint.webhook' );
 		$webhook_factory  = $container->get( 'api.factory.webhook' );
 		$handler          = $container->get( 'webhook.endpoint.handler' );
@@ -43,7 +43,7 @@ return array(
 			... $handler
 		);
 	},
-	'webhook.endpoint.handler'    => function( ContainerInterface $container ) : array {
+	'webhook.endpoint.handler'    => function( $container ) : array {
 		$logger         = $container->get( 'woocommerce.logger.woocommerce' );
 		$prefix         = $container->get( 'api.prefix' );
 		$order_endpoint = $container->get( 'api.endpoint.order' );

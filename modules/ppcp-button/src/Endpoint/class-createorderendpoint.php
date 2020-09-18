@@ -2,22 +2,22 @@
 /**
  * The endpoint to create an PayPal order.
  *
- * @package Inpsyde\PayPalCommerce\Button\Endpoint
+ * @package WooCommerce\PayPalCommerce\Button\Endpoint
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Button\Endpoint;
+namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Order;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\PaymentMethod;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\PayPalApiException;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\PayerFactory;
-use Inpsyde\PayPalCommerce\ApiClient\Repository\CartRepository;
-use Inpsyde\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
-use Inpsyde\PayPalCommerce\Button\Helper\EarlyOrderHandler;
-use Inpsyde\PayPalCommerce\Session\SessionHandler;
-use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentMethod;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\CartRepository;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
+use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class CreateOrderEndpoint
@@ -25,7 +25,7 @@ use Inpsyde\PayPalCommerce\WcGateway\Settings\Settings;
 class CreateOrderEndpoint implements EndpointInterface {
 
 
-	public const ENDPOINT = 'ppc-create-order';
+	const ENDPOINT = 'ppc-create-order';
 
 	/**
 	 * The request data helper.
@@ -126,7 +126,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 * Handles the request.
 	 *
 	 * @return bool
-	 * @throws \Inpsyde\PayPalCommerce\WcGateway\Exception\NotFoundException In case a setting was not found.
+	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException In case a setting was not found.
 	 */
 	public function handle_request(): bool {
 		try {

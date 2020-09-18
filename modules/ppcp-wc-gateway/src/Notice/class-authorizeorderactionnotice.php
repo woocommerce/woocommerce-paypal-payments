@@ -2,34 +2,34 @@
 /**
  * Contains the messages to display, when capturing an authorization manually.
  *
- * @package Inpsyde\PayPalCommerce\WcGateway\Notice
+ * @package WooCommerce\PayPalCommerce\WcGateway\Notice
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\WcGateway\Notice;
+namespace WooCommerce\PayPalCommerce\WcGateway\Notice;
 
-use Inpsyde\PayPalCommerce\AdminNotices\Entity\Message;
+use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
 
 /**
  * Class AuthorizeOrderActionNotice
  */
 class AuthorizeOrderActionNotice {
 
-	public const QUERY_PARAM = 'ppcp-authorized-message';
+	const QUERY_PARAM = 'ppcp-authorized-message';
 
-	public const NO_INFO          = 81;
-	public const ALREADY_CAPTURED = 82;
-	public const FAILED           = 83;
-	public const SUCCESS          = 84;
-	public const NOT_FOUND        = 85;
+	const NO_INFO          = 81;
+	const ALREADY_CAPTURED = 82;
+	const FAILED           = 83;
+	const SUCCESS          = 84;
+	const NOT_FOUND        = 85;
 
 	/**
 	 * Returns the current message if there is one.
 	 *
 	 * @return Message|null
 	 */
-	public function message(): ?Message {
+	public function message() {
 
 		$message = $this->current_message();
 		if ( ! $message ) {
@@ -48,35 +48,35 @@ class AuthorizeOrderActionNotice {
 		$messages[ self::NO_INFO ]          = array(
 			'message' => __(
 				'Could not retrieve information. Try again later.',
-				'paypal-for-woocommerce'
+				'paypal-payments-for-woocommerce'
 			),
 			'type'    => 'error',
 		);
 		$messages[ self::ALREADY_CAPTURED ] = array(
 			'message' => __(
 				'Payment already captured.',
-				'paypal-for-woocommerce'
+				'paypal-payments-for-woocommerce'
 			),
 			'type'    => 'error',
 		);
 		$messages[ self::FAILED ]           = array(
 			'message' => __(
 				'Failed to capture. Try again later.',
-				'paypal-for-woocommerce'
+				'paypal-payments-for-woocommerce'
 			),
 			'type'    => 'error',
 		);
 		$messages[ self::NOT_FOUND ]        = array(
 			'message' => __(
 				'Could not find payment to process.',
-				'paypal-for-woocommerce'
+				'paypal-payments-for-woocommerce'
 			),
 			'type'    => 'error',
 		);
 		$messages[ self::SUCCESS ]          = array(
 			'message' => __(
 				'Payment successfully captured.',
-				'paypal-for-woocommerce'
+				'paypal-payments-for-woocommerce'
 			),
 			'type'    => 'success',
 		);
@@ -95,7 +95,7 @@ class AuthorizeOrderActionNotice {
 	 *
 	 * @param int $message_code The message code.
 	 */
-	public function display_message( int $message_code ): void {
+	public function display_message( int $message_code ) {
 		add_filter(
 			'redirect_post_location',
 			static function ( $location ) use ( $message_code ) {

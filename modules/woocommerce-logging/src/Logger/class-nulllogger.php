@@ -3,12 +3,12 @@
  * The Null logger is used, when logging is disabled. It does not log at all
  * but complies with the LoggerInterface.
  *
- * @package Inpsyde\Woocommerce\Logging\Logger
+ * @package WooCommerce\WooCommerce\Logging\Logger
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\Woocommerce\Logging\Logger;
+namespace WooCommerce\WooCommerce\Logging\Logger;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\LoggerTrait;

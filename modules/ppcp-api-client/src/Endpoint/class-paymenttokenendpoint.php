@@ -2,18 +2,18 @@
 /**
  * The payment token endpoint.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Endpoint
+ * @package WooCommerce\PayPalCommerce\ApiClient\Endpoint
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Endpoint;
+namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 
-use Inpsyde\PayPalCommerce\ApiClient\Authentication\Bearer;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\PaymentToken;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\PayPalApiException;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -105,7 +105,7 @@ class PaymentTokenEndpoint {
 		$response = $this->request( $url, $args );
 		if ( is_wp_error( $response ) ) {
 			$error = new RuntimeException(
-				__( 'Could not fetch payment token.', 'paypal-for-woocommerce' )
+				__( 'Could not fetch payment token.', 'paypal-payments-for-woocommerce' )
 			);
 			$this->logger->log(
 				'warning',
@@ -143,7 +143,7 @@ class PaymentTokenEndpoint {
 			$error = new RuntimeException(
 				sprintf(
 					// translators: %d is the customer id.
-					__( 'No token stored for customer %d.', 'paypal-for-woocommerce' ),
+					__( 'No token stored for customer %d.', 'paypal-payments-for-woocommerce' ),
 					$id
 				)
 			);
@@ -185,7 +185,7 @@ class PaymentTokenEndpoint {
 
 		if ( is_wp_error( $response ) ) {
 			$error = new RuntimeException(
-				__( 'Could not delete payment token.', 'paypal-for-woocommerce' )
+				__( 'Could not delete payment token.', 'paypal-payments-for-woocommerce' )
 			);
 			$this->logger->log(
 				'warning',

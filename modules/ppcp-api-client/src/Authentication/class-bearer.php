@@ -2,14 +2,14 @@
 /**
  * The bearer interface.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Authentication
+ * @package WooCommerce\PayPalCommerce\ApiClient\Authentication
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Authentication;
+namespace WooCommerce\PayPalCommerce\ApiClient\Authentication;
 
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Token;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Token;
 
 /**
  * Interface Bearer

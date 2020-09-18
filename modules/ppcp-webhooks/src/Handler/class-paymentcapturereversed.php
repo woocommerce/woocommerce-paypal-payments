@@ -5,12 +5,12 @@
  * - PAYMENT.ORDER.CANCELLED
  * - PAYMENT.CAPTURE.DENIED
  *
- * @package Inpsyde\PayPalCommerce\Webhooks\Handler
+ * @package WooCommerce\PayPalCommerce\Webhooks\Handler
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Webhooks\Handler;
+namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
 
 use Psr\Log\LoggerInterface;
 
@@ -79,7 +79,7 @@ class PaymentCaptureReversed implements RequestHandler {
 				// translators: %s is the PayPal webhook Id.
 				__(
 					'No order for webhook event %s was found.',
-					'paypal-for-woocommerce'
+					'paypal-payments-for-woocommerce'
 				),
 				isset( $request['id'] ) ? $request['id'] : ''
 			);
@@ -98,7 +98,7 @@ class PaymentCaptureReversed implements RequestHandler {
 		if ( ! is_a( $wc_order, \WC_Order::class ) ) {
 			$message = sprintf(
 			// translators: %s is the PayPal refund Id.
-				__( 'Order for PayPal refund %s not found.', 'paypal-for-woocommerce' ),
+				__( 'Order for PayPal refund %s not found.', 'paypal-payments-for-woocommerce' ),
 				isset( $request['resource']['id'] ) ? $request['resource']['id'] : ''
 			);
 			$this->logger->log(
@@ -113,7 +113,7 @@ class PaymentCaptureReversed implements RequestHandler {
 		}
 
 		/**
-		 * The Woocommerce order.
+		 * The WooCommerce order.
 		 *
 		 * @var \WC_Order $wc_order
 		 */
@@ -123,12 +123,12 @@ class PaymentCaptureReversed implements RequestHandler {
 			// translators: %1$s is the order id.
 			__(
 				'Order %1$s has been cancelled through PayPal',
-				'paypal-for-woocommerce'
+				'paypal-payments-for-woocommerce'
 			),
 			(string) $wc_order->get_id()
 		) : sprintf(
 			// translators: %1$s is the order id.
-			__( 'Failed to cancel order %1$s through PayPal', 'paypal-for-woocommerce' ),
+			__( 'Failed to cancel order %1$s through PayPal', 'paypal-payments-for-woocommerce' ),
 			(string) $wc_order->get_id()
 		);
 		$this->logger->log(

@@ -2,16 +2,16 @@
 /**
  * The Authorization factory.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Factory
+ * @package WooCommerce\PayPalCommerce\ApiClient\Factory
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Factory;
+namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Authorization;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\AuthorizationStatus;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\AuthorizationStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
 /**
  * Class AuthorizationFactory
@@ -29,13 +29,13 @@ class AuthorizationFactory {
 	public function from_paypal_response( \stdClass $data ): Authorization {
 		if ( ! isset( $data->id ) ) {
 			throw new RuntimeException(
-				__( 'Does not contain an id.', 'paypal-for-woocommerce' )
+				__( 'Does not contain an id.', 'paypal-payments-for-woocommerce' )
 			);
 		}
 
 		if ( ! isset( $data->status ) ) {
 			throw new RuntimeException(
-				__( 'Does not contain status.', 'paypal-for-woocommerce' )
+				__( 'Does not contain status.', 'paypal-payments-for-woocommerce' )
 			);
 		}
 

@@ -2,12 +2,12 @@
 /**
  * The module.
  *
- * @package Inpsyde\PayPalCommerce\WcGateway
+ * @package WooCommerce\PayPalCommerce\WcGateway
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\WcGateway;
+namespace WooCommerce\PayPalCommerce\WcGateway;
 
 use Dhii\Modular\Module\ModuleInterface;
 

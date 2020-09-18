@@ -2,31 +2,31 @@
 /**
  * The button module services.
  *
- * @package Inpsyde\PayPalCommerce\Button
+ * @package WooCommerce\PayPalCommerce\Button
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Button;
+namespace WooCommerce\PayPalCommerce\Button;
 
 use Dhii\Data\Container\ContainerInterface;
-use Inpsyde\PayPalCommerce\Button\Assets\DisabledSmartButton;
-use Inpsyde\PayPalCommerce\Button\Assets\SmartButton;
-use Inpsyde\PayPalCommerce\Button\Assets\SmartButtonInterface;
-use Inpsyde\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
-use Inpsyde\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
-use Inpsyde\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
-use Inpsyde\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
-use Inpsyde\PayPalCommerce\Button\Endpoint\RequestData;
-use Inpsyde\PayPalCommerce\Button\Exception\RuntimeException;
-use Inpsyde\PayPalCommerce\Button\Helper\EarlyOrderHandler;
-use Inpsyde\PayPalCommerce\Button\Helper\MessagesApply;
-use Inpsyde\PayPalCommerce\Button\Helper\ThreeDSecure;
-use Inpsyde\PayPalCommerce\Onboarding\Environment;
-use Inpsyde\PayPalCommerce\Onboarding\State;
+use WooCommerce\PayPalCommerce\Button\Assets\DisabledSmartButton;
+use WooCommerce\PayPalCommerce\Button\Assets\SmartButton;
+use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
+use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
+use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
+use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
+use WooCommerce\PayPalCommerce\Onboarding\Environment;
+use WooCommerce\PayPalCommerce\Onboarding\State;
 
 return array(
-	'button.client_id'                  => static function ( ContainerInterface $container ): string {
+	'button.client_id'                  => static function ( $container ): string {
 
 		$settings = $container->get( 'wcgateway.settings' );
 		$client_id = $settings->has( 'client_id' ) ? $settings->get( 'client_id' ) : '';
@@ -47,7 +47,7 @@ return array(
 		return $env->current_environment_is( Environment::SANDBOX ) ?
 			'AQB97CzMsd58-It1vxbcDAGvMuXNCXRD9le_XUaMlHB_U7XsU9IiItBwGQOtZv9sEeD6xs2vlIrL4NiD' : '';
 	},
-	'button.smart-button'               => static function ( ContainerInterface $container ): SmartButtonInterface {
+	'button.smart-button'               => static function ( $container ): SmartButtonInterface {
 
 		$state = $container->get( 'onboarding.state' );
 		/**
@@ -60,8 +60,7 @@ return array(
 		}
 		$settings           = $container->get( 'wcgateway.settings' );
 		$paypal_disabled     = ! $settings->has( 'enabled' ) || ! $settings->get( 'enabled' );
-		$credit_card_disabled = ! $settings->has( 'dcc_gateway_enabled' ) || ! $settings->get( 'dcc_gateway_enabled' );
-		if ( $paypal_disabled && $credit_card_disabled ) {
+		if ( $paypal_disabled ) {
 			return new DisabledSmartButton();
 		}
 		$payee_repository = $container->get( 'api.repository.payee' );
@@ -87,16 +86,16 @@ return array(
 			$messages_apply
 		);
 	},
-	'button.url'                        => static function ( ContainerInterface $container ): string {
+	'button.url'                        => static function ( $container ): string {
 		return plugins_url(
 			'/modules/ppcp-button/',
 			dirname( __FILE__, 3 ) . '/woocommerce-paypal-commerce-gateway.php'
 		);
 	},
-	'button.request-data'               => static function ( ContainerInterface $container ): RequestData {
+	'button.request-data'               => static function ( $container ): RequestData {
 		return new RequestData();
 	},
-	'button.endpoint.change-cart'       => static function ( ContainerInterface $container ): ChangeCartEndpoint {
+	'button.endpoint.change-cart'       => static function ( $container ): ChangeCartEndpoint {
 		if ( ! \WC()->cart ) {
 			throw new RuntimeException( 'cant initialize endpoint at this moment' );
 		}
@@ -107,7 +106,7 @@ return array(
 		$data_store   = \WC_Data_Store::load( 'product' );
 		return new ChangeCartEndpoint( $cart, $shipping, $request_data, $repository, $data_store );
 	},
-	'button.endpoint.create-order'      => static function ( ContainerInterface $container ): CreateOrderEndpoint {
+	'button.endpoint.create-order'      => static function ( $container ): CreateOrderEndpoint {
 		$request_data       = $container->get( 'button.request-data' );
 		$repository        = $container->get( 'api.repository.cart' );
 		$order_endpoint         = $container->get( 'api.endpoint.order' );
@@ -125,7 +124,7 @@ return array(
 			$early_order_handler
 		);
 	},
-	'button.helper.early-order-handler' => static function ( ContainerInterface $container ) : EarlyOrderHandler {
+	'button.helper.early-order-handler' => static function ( $container ) : EarlyOrderHandler {
 
 		$state          = $container->get( 'onboarding.state' );
 		$order_processor = $container->get( 'wcgateway.order-processor' );
@@ -133,14 +132,14 @@ return array(
 		$prefix         = $container->get( 'api.prefix' );
 		return new EarlyOrderHandler( $state, $order_processor, $session_handler, $prefix );
 	},
-	'button.endpoint.approve-order'     => static function ( ContainerInterface $container ): ApproveOrderEndpoint {
+	'button.endpoint.approve-order'     => static function ( $container ): ApproveOrderEndpoint {
 		$request_data    = $container->get( 'button.request-data' );
 		$order_endpoint      = $container->get( 'api.endpoint.order' );
 		$session_handler = $container->get( 'session.handler' );
 		$three_d_secure   = $container->get( 'button.helper.three-d-secure' );
 		return new ApproveOrderEndpoint( $request_data, $order_endpoint, $session_handler, $three_d_secure );
 	},
-	'button.endpoint.data-client-id'    => static function( ContainerInterface $container ) : DataClientIdEndpoint {
+	'button.endpoint.data-client-id'    => static function( $container ) : DataClientIdEndpoint {
 		$request_data   = $container->get( 'button.request-data' );
 		$identity_token = $container->get( 'api.endpoint.identity-token' );
 		return new DataClientIdEndpoint(
@@ -148,10 +147,10 @@ return array(
 			$identity_token
 		);
 	},
-	'button.helper.three-d-secure'      => static function ( ContainerInterface $container ): ThreeDSecure {
+	'button.helper.three-d-secure'      => static function ( $container ): ThreeDSecure {
 		return new ThreeDSecure();
 	},
-	'button.helper.messages-apply'      => static function ( ContainerInterface $container ): MessagesApply {
+	'button.helper.messages-apply'      => static function ( $container ): MessagesApply {
 		return new MessagesApply();
 	},
 );

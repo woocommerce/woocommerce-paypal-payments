@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Repository;
+namespace WooCommerce\PayPalCommerce\ApiClient\Repository;
 
 use Hamcrest\Matchers;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\ApplicationContext;
-use Inpsyde\PayPalCommerce\TestCase;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
+use WooCommerce\PayPalCommerce\TestCase;
 use Mockery\MockInterface;
 use Psr\Container\ContainerInterface;
 use function Brain\Monkey\Functions\expect;

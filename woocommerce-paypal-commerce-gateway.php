@@ -1,77 +1,77 @@
-<?php # -*- coding: utf-8 -*-
-declare( strict_types = 1 );
-
+<?php
 /**
- * Plugin Name: WooCommerce PayPal Commerce Gateway
+ * Plugin Name: PayPal Payments for WooCommerce
  * Plugin URI:  TODO
- * Description: PayPal Commerce Platform for WooCommerce
+ * Description: PayPal's latest complete payments processing solution. Accept PayPal, PayPal Credit, credit/debit cards, alternative digital wallets local payment types and bank accounts. Turn on only PayPal options or process a full suite of payment methods. Enable global transaction with extensive currency and country coverage.
  * Version:     dev-master
- * Author:      Inpsyde GmbH
+ * Author:      WooCommerce
  * Author URI:  https://inpsyde.com/
  * License:     GPL-2.0
- * Text Domain: woocommerce-paypal-commerce-gateway
- * Domain Path: /languages
- * Network:     TODO: Specify value 'true' or remove line
+ * Text Domain: paypal-payments-for-woocommerce
+ *
+ * @package WooCommerce\PayPalCommerce
  */
 
+declare( strict_types = 1 );
 
-namespace Inpsyde\PayPalCommerce;
+namespace WooCommerce\PayPalCommerce;
 
 use Dhii\Container\CachingContainer;
 use Dhii\Container\CompositeCachingServiceProvider;
 use Dhii\Container\DelegatingContainer;
 use Dhii\Container\ProxyContainer;
 use Dhii\Modular\Module\ModuleInterface;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 
-(function () {
+( function () {
 	include __DIR__ . '/vendor/autoload.php';
 
-    function init()
-    {
-        static $initialized;
-        if (!$initialized) {
-            $modules = [new PluginModule()];
-            foreach (glob(plugin_dir_path(__FILE__).'modules/*/module.php') as $moduleFile) {
-                $modules[] = (@require $moduleFile)();
-            }
-            $providers = [];
-            foreach ($modules as $module) {
-                /* @var $module ModuleInterface */
-                $providers[] = $module->setup();
-            }
-            $proxy = new ProxyContainer();
-            $provider = new CompositeCachingServiceProvider($providers);
-            $container = new CachingContainer(new DelegatingContainer($provider));
-            $proxy->setInnerContainer($container);
-            foreach ($modules as $module) {
-                /* @var $module ModuleInterface */
-                $module->run($container);
-            }
-            $initialized = true;
+	/**
+	 * Initialize the plugin and its modules.
+	 */
+	function init() {
+		static $initialized;
+		if ( ! $initialized ) {
+			$modules = array( new PluginModule() );
+			foreach ( glob( plugin_dir_path( __FILE__ ) . 'modules/*/module.php' ) as $module_file ) {
+				$modules[] = ( require $module_file )();
+			}
+			$providers = array();
+			foreach ( $modules as $module ) {
+				/* @var $module ModuleInterface module */
+				$providers[] = $module->setup();
+			}
+			$proxy     = new ProxyContainer();
+			$provider  = new CompositeCachingServiceProvider( $providers );
+			$container = new CachingContainer( new DelegatingContainer( $provider ) );
+			$proxy->setInnerContainer( $container );
+			foreach ( $modules as $module ) {
+				/* @var $module ModuleInterface module */
+				$module->run( $container );
+			}
+			$initialized = true;
 
-        }
-    }
+		}
+	}
 
-    add_action(
-        'plugins_loaded',
-        function () {
-            init();
-        }
-    );
-    register_activation_hook(
-        __FILE__,
-        function () {
-            init();
-            do_action('woocommerce-paypal-commerce-gateway.activate');
-        }
-    );
-    register_deactivation_hook(
-        __FILE__,
-        function () {
-            init();
-            do_action('woocommerce-paypal-commerce-gateway.deactivate');
-        }
-    );
+	add_action(
+		'plugins_loaded',
+		function () {
+			init();
+		}
+	);
+	register_activation_hook(
+		__FILE__,
+		function () {
+			init();
+			do_action( 'woocommerce_paypal_commerce_gateway_activate' );
+		}
+	);
+	register_deactivation_hook(
+		__FILE__,
+		function () {
+			init();
+			do_action( 'woocommerce_paypal_commerce_gateway_deactivate' );
+		}
+	);
 
-})();
+} )();

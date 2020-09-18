@@ -2,14 +2,14 @@
 /**
  * Controlls the cancel mechanism to step out of the PayPal order session.
  *
- * @package Inpsyde\PayPalCommerce\Session\Cancellation
+ * @package WooCommerce\PayPalCommerce\Session\Cancellation
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\Session\Cancellation;
+namespace WooCommerce\PayPalCommerce\Session\Cancellation;
 
-use Inpsyde\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\Session\SessionHandler;
 
 /**
  * Class CancelController

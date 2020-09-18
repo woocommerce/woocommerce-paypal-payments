@@ -2,18 +2,18 @@
 /**
  * The webhook endpoint.
  *
- * @package Inpsyde\PayPalCommerce\ApiClient\Endpoint
+ * @package WooCommerce\PayPalCommerce\ApiClient\Endpoint
  */
 
 declare(strict_types=1);
 
-namespace Inpsyde\PayPalCommerce\ApiClient\Endpoint;
+namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 
-use Inpsyde\PayPalCommerce\ApiClient\Authentication\Bearer;
-use Inpsyde\PayPalCommerce\ApiClient\Entity\Webhook;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\PayPalApiException;
-use Inpsyde\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use Inpsyde\PayPalCommerce\ApiClient\Factory\WebhookFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Webhook;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -101,7 +101,7 @@ class WebhookEndpoint {
 
 		if ( is_wp_error( $response ) ) {
 			$error = new RuntimeException(
-				__( 'Not able to create a webhook.', 'paypal-for-woocommerce' )
+				__( 'Not able to create a webhook.', 'paypal-payments-for-woocommerce' )
 			);
 			$this->logger->log(
 				'warning',
@@ -161,7 +161,7 @@ class WebhookEndpoint {
 
 		if ( is_wp_error( $response ) ) {
 			$error = new RuntimeException(
-				__( 'Not able to delete the webhook.', 'paypal-for-woocommerce' )
+				__( 'Not able to delete the webhook.', 'paypal-payments-for-woocommerce' )
 			);
 			$this->logger->log(
 				'warning',
@@ -223,7 +223,7 @@ class WebhookEndpoint {
 		$response = $this->request( $url, $args );
 		if ( is_wp_error( $response ) ) {
 			$error = new RuntimeException(
-				__( 'Not able to verify webhook event.', 'paypal-for-woocommerce' )
+				__( 'Not able to verify webhook event.', 'paypal-payments-for-woocommerce' )
 			);
 			$this->logger->log(
 				'warning',
@@ -251,7 +251,7 @@ class WebhookEndpoint {
 
 		if ( ! $webhook->id() ) {
 			$error = new RuntimeException(
-				__( 'Not a valid webhook to verify.', 'paypal-for-woocommerce' )
+				__( 'Not a valid webhook to verify.', 'paypal-payments-for-woocommerce' )
 			);
 			$this->logger->log( 'warning', $error->getMessage(), array( 'webhook' => $webhook ) );
 			throw $error;
@@ -282,7 +282,7 @@ class WebhookEndpoint {
 					// translators: %s is the headers key.
 					__(
 						'Not a valid webhook event. Header %s is missing',
-						'paypal-for-woocommerce'
+						'paypal-payments-for-woocommerce'
 					),
 					$key
 				)
