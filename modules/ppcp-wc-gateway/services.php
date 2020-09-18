@@ -789,7 +789,7 @@ return array(
 				'default'      => '1x1',
 				'desc_tip'     => true,
 				'description'  => __(
-					'The color of the text. Only applicable, when the layout style Flex is used.',
+					'The width/height ratio of the banner. Only applicable, when the layout style Flex is used.',
 					'paypal-payments-for-woocommerce'
 				),
 				'options'      => array(
@@ -1079,7 +1079,7 @@ return array(
 				'default'      => '1x1',
 				'desc_tip'     => true,
 				'description'  => __(
-					'The color of the text. Only applicable, when the layout style Flex is used.',
+					'The width/height ratio of the banner. Only applicable, when the layout style Flex is used.',
 					'paypal-payments-for-woocommerce'
 				),
 				'options'      => array(
@@ -1498,7 +1498,7 @@ return array(
 				'default'      => '1x1',
 				'desc_tip'     => true,
 				'description'  => __(
-					'The color of the text. Only applicable, when the layout style Flex is used.',
+					'The width/height ratio of the banner. Only applicable, when the layout style Flex is used.',
 					'paypal-payments-for-woocommerce'
 				),
 				'options'      => array(
