@@ -54,6 +54,11 @@ class ApproveOrderEndpoint implements EndpointInterface {
 	 */
 	private $threed_secure;
 
+	/**
+	 * The settings.
+	 *
+	 * @var Settings
+	 */
 	private $settings;
 
 	/**
@@ -63,6 +68,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 	 * @param OrderEndpoint  $order_endpoint The order endpoint.
 	 * @param SessionHandler $session_handler The session handler.
 	 * @param ThreeDSecure   $three_d_secure The 3d secure helper object.
+	 * @param Settings       $settings The settings.
 	 */
 	public function __construct(
 		RequestData $request_data,
@@ -116,8 +122,8 @@ class ApproveOrderEndpoint implements EndpointInterface {
 
 			if ( $order->payment_source() && $order->payment_source()->card() ) {
 				if (
-					$this->settings->has('disable_cards')
-					&& in_array( strtolower($order->payment_source()->card()->brand()), (array) $this->settings->get( 'disable_cards' ), true )
+					$this->settings->has( 'disable_cards' )
+					&& in_array( strtolower( $order->payment_source()->card()->brand() ), (array) $this->settings->get( 'disable_cards' ), true )
 				) {
 					throw new RuntimeException(
 						__(
