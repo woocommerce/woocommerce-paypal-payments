@@ -684,8 +684,8 @@ class SmartButton implements SmartButtonInterface {
 		if ( 'GB' === $country ) {
 			$disable_funding[] = 'card';
 		}
-
 		$params['disable-funding'] = implode( ',', array_unique( $disable_funding ) );
+
 		$smart_button_url          = add_query_arg( $params, 'https://www.paypal.com/sdk/js' );
 		return $smart_button_url;
 	}

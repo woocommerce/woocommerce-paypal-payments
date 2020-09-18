@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class ApproveOrderEndpoint
@@ -53,6 +54,8 @@ class ApproveOrderEndpoint implements EndpointInterface {
 	 */
 	private $threed_secure;
 
+	private $settings;
+
 	/**
 	 * ApproveOrderEndpoint constructor.
 	 *
@@ -65,13 +68,15 @@ class ApproveOrderEndpoint implements EndpointInterface {
 		RequestData $request_data,
 		OrderEndpoint $order_endpoint,
 		SessionHandler $session_handler,
-		ThreeDSecure $three_d_secure
+		ThreeDSecure $three_d_secure,
+		Settings $settings
 	) {
 
 		$this->request_data    = $request_data;
 		$this->api_endpoint    = $order_endpoint;
 		$this->session_handler = $session_handler;
 		$this->threed_secure   = $three_d_secure;
+		$this->settings        = $settings;
 	}
 
 	/**
@@ -110,6 +115,18 @@ class ApproveOrderEndpoint implements EndpointInterface {
 			}
 
 			if ( $order->payment_source() && $order->payment_source()->card() ) {
+				if (
+					$this->settings->has('disable_cards')
+					&& in_array( strtolower($order->payment_source()->card()->brand()), (array) $this->settings->get( 'disable_cards' ), true )
+				) {
+					throw new RuntimeException(
+						__(
+							'Unfortunately, we do not accept this card.',
+							'paypal-payments-for-woocommerce'
+						),
+						100
+					);
+				}
 				$proceed = $this->threed_secure->proceed_with_order( $order );
 				if ( ThreeDSecure::RETRY === $proceed ) {
 					throw new RuntimeException(

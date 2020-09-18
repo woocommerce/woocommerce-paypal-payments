@@ -134,10 +134,11 @@ return array(
 	},
 	'button.endpoint.approve-order'     => static function ( $container ): ApproveOrderEndpoint {
 		$request_data    = $container->get( 'button.request-data' );
-		$order_endpoint      = $container->get( 'api.endpoint.order' );
+		$order_endpoint  = $container->get( 'api.endpoint.order' );
 		$session_handler = $container->get( 'session.handler' );
-		$three_d_secure   = $container->get( 'button.helper.three-d-secure' );
-		return new ApproveOrderEndpoint( $request_data, $order_endpoint, $session_handler, $three_d_secure );
+		$three_d_secure  = $container->get( 'button.helper.three-d-secure' );
+		$settings        = $container->get( 'wcgateway.settings' );
+		return new ApproveOrderEndpoint( $request_data, $order_endpoint, $session_handler, $three_d_secure, $settings );
 	},
 	'button.endpoint.data-client-id'    => static function( $container ) : DataClientIdEndpoint {
 		$request_data   = $container->get( 'button.request-data' );
