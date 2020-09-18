@@ -236,7 +236,7 @@ return array(
 			'toggle_manual_input'        => array(
 				'type'         => 'ppcp-text',
 				'title'        => __( 'Manual mode', 'paypal-payments-for-woocommerce' ),
-				'text'         => '<button id="ppcp[toggle_manual_input]">' . __( 'Toggle to manual credential input', 'paypal-payments-for-woocommerce' ) . '</button>',
+				'text'         => '<button id="ppcp[toggle_manual_input]"><span class="show">' . __( 'Show manual credential input', 'paypal-payments-for-woocommerce' ) . '</span><span class="hide">' . __( 'Hide manual credential input', 'paypal-payments-for-woocommerce' ) . '</span></button>',
 				'screens'      => array(
 					State::STATE_START,
 					State::STATE_PROGRESSIVE,
