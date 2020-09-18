@@ -133,9 +133,11 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 */
 	public function get_title() {
 
-		if ( is_admin() ) {
+		//phpcs:disable WordPress.Security.NonceVerification.Recommended
+		if ( ! is_checkout() || ( is_ajax() && isset( $_GET['wc-ajax'] ) && 'update_order_review' !== $_GET['wc-ajax'] ) ) {
 			return parent::get_title();
 		}
+		//phpcs:enable WordPress.Security.NonceVerification.Recommended
 		$title = parent::get_title();
 		$icons = $this->config->has( 'card_icons' ) ? (array) $this->config->get( 'card_icons' ) : array();
 		if ( empty( $icons ) ) {
