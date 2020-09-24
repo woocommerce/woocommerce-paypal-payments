@@ -180,7 +180,7 @@ return array(
 				'title'        => __( 'Connect to PayPal', 'paypal-payments-for-woocommerce' ),
 				'type'         => 'ppcp_onboarding',
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 				),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
