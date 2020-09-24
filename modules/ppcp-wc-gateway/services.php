@@ -495,7 +495,6 @@ return array(
 				'description'  => __( 'Enable logging of unexpected behavior. This can also log private data and should only be enabled in a development or stage environment.', 'paypal-payments-for-woocommerce' ),
 				'default'      => false,
 				'screens'      => array(
-					State::STATE_START,
 					State::STATE_PROGRESSIVE,
 					State::STATE_ONBOARDED,
 				),
@@ -509,7 +508,6 @@ return array(
 				'description'  => __( 'If you use your PayPal account with more than one installation, please use a distinct prefix to seperate those installations. Please do not use numbers in your prefix.', 'paypal-payments-for-woocommerce' ),
 				'default'      => 'WC-',
 				'screens'      => array(
-					State::STATE_START,
 					State::STATE_PROGRESSIVE,
 					State::STATE_ONBOARDED,
 				),
