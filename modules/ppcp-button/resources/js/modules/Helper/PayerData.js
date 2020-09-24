@@ -21,8 +21,8 @@ export const payerData = () => {
             country_code : (document.querySelector('#billing_country')) ? document.querySelector('#billing_country').value : payer.address.country_code,
             address_line_1 : (document.querySelector('#billing_address_1')) ? document.querySelector('#billing_address_1').value : payer.address.address_line_1,
             address_line_2 : (document.querySelector('#billing_address_2')) ? document.querySelector('#billing_address_2').value : payer.address.address_line_2,
-            admin_area_1 : (document.querySelector('#billing_city')) ? document.querySelector('#billing_city').value : payer.address.admin_area_1,
-            admin_area_2 : (document.querySelector('#billing_state')) ? document.querySelector('#billing_state').value : payer.address.admin_area_2,
+            admin_area_1 : (document.querySelector('#billing_state')) ? document.querySelector('#billing_state').value : payer.address.admin_area_1,
+            admin_area_2 : (document.querySelector('#billing_city')) ? document.querySelector('#billing_city').value : payer.address.admin_area_2,
             postal_code : (document.querySelector('#billing_postcode')) ? document.querySelector('#billing_postcode').value : payer.address.postal_code
         }
     };

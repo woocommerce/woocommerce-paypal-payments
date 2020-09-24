@@ -236,7 +236,7 @@ return array(
 			'toggle_manual_input'        => array(
 				'type'         => 'ppcp-text',
 				'title'        => __( 'Manual mode', 'paypal-payments-for-woocommerce' ),
-				'text'         => '<button id="ppcp[toggle_manual_input]">' . __( 'Toggle to manual credential input', 'paypal-payments-for-woocommerce' ) . '</button>',
+				'text'         => '<button id="ppcp[toggle_manual_input]"><span class="show">' . __( 'Show manual credential input', 'paypal-payments-for-woocommerce' ) . '</span><span class="hide">' . __( 'Hide manual credential input', 'paypal-payments-for-woocommerce' ) . '</span></button>',
 				'screens'      => array(
 					State::STATE_START,
 					State::STATE_PROGRESSIVE,
@@ -281,6 +281,17 @@ return array(
 				'default'      => false,
 				'screens'      => array(
 					State::STATE_START,
+					State::STATE_PROGRESSIVE,
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
+
+			'checkout_settings_heading'  => array(
+				'heading'      => __( 'PayPal Checkout Plugin Settings', 'paypal-payments-for-woocommerce' ),
+				'type'         => 'ppcp-heading',
+				'screens'      => array(
 					State::STATE_PROGRESSIVE,
 					State::STATE_ONBOARDED,
 				),
@@ -503,7 +514,7 @@ return array(
 				'gateway'      => 'paypal',
 			),
 			'prefix'                     => array(
-				'title'        => __( 'Installation prefix', 'paypal-payments-for-woocommerce' ),
+				'title'        => __( 'Invoice prefix', 'paypal-payments-for-woocommerce' ),
 				'type'         => 'text',
 				'desc_tip'     => true,
 				'description'  => __( 'If you use your PayPal account with more than one installation, please use a distinct prefix to seperate those installations. Please do not use numbers in your prefix.', 'paypal-payments-for-woocommerce' ),
@@ -789,7 +800,7 @@ return array(
 				'default'      => '1x1',
 				'desc_tip'     => true,
 				'description'  => __(
-					'The color of the text. Only applicable, when the layout style Flex is used.',
+					'The width/height ratio of the banner. Only applicable, when the layout style Flex is used.',
 					'paypal-payments-for-woocommerce'
 				),
 				'options'      => array(
@@ -1079,7 +1090,7 @@ return array(
 				'default'      => '1x1',
 				'desc_tip'     => true,
 				'description'  => __(
-					'The color of the text. Only applicable, when the layout style Flex is used.',
+					'The width/height ratio of the banner. Only applicable, when the layout style Flex is used.',
 					'paypal-payments-for-woocommerce'
 				),
 				'options'      => array(
@@ -1498,7 +1509,7 @@ return array(
 				'default'      => '1x1',
 				'desc_tip'     => true,
 				'description'  => __(
-					'The color of the text. Only applicable, when the layout style Flex is used.',
+					'The width/height ratio of the banner. Only applicable, when the layout style Flex is used.',
 					'paypal-payments-for-woocommerce'
 				),
 				'options'      => array(
