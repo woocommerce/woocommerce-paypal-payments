@@ -31,6 +31,16 @@ class CreditCardRenderer {
         document.querySelector('#ppcp-hide-dcc').parentNode.removeChild(document.querySelector('#ppcp-hide-dcc'));
 
         const cardNumberField = document.querySelector('#ppcp-credit-card-gateway-card-number');
+
+        const stylesRaw = window.getComputedStyle(cardNumberField);
+        let styles = {};
+        Object.values(stylesRaw).forEach( (prop) => {
+            if (! stylesRaw[prop]) {
+                return;
+            }
+            styles[prop] = '' + stylesRaw[prop];
+        });
+
         const cardNumber = dccInputFactory(cardNumberField);
         cardNumberField.parentNode.replaceChild(cardNumber, cardNumberField);
 
@@ -54,6 +64,9 @@ class CreditCardRenderer {
         }
         paypal.HostedFields.render({
             createOrder: contextConfig.createOrder,
+            styles: {
+                'input': styles
+            },
             fields: {
                 number: {
                     selector: '#ppcp-credit-card-gateway-card-number',
