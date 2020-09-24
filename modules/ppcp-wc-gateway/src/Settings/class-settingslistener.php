@@ -97,8 +97,9 @@ class SettingsListener {
 		 * phpcs:disable WordPress.Security.NonceVerification.Missing
 		 * phpcs:disable WordPress.Security.NonceVerification.Recommended
 		 */
-		if ( isset( $_GET['merchantIdInPayPal'] ) ) {
+		if ( isset( $_GET['merchantIdInPayPal'] ) && isset( $_GET['merchantId'] )  ) {
 			$this->settings->set( 'merchant_id', sanitize_text_field( wp_unslash( $_GET['merchantIdInPayPal'] ) ) );
+			$this->settings->set( 'merchant_email', sanitize_text_field( wp_unslash( $_GET['merchantId'] ) ) );
 			$this->settings->persist();
 		}
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
