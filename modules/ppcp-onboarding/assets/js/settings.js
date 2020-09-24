@@ -64,10 +64,10 @@ const groupToggleSelect = (selector, group) => {
         'click',
         (event) => {
             event.preventDefault();
-            document.querySelector('#field-toggle_manual_input').style.display = 'none';
-            document.querySelector('#field-merchant_id').style.display = 'table-row';
-            document.querySelector('#field-client_id').style.display = 'table-row';
-            document.querySelector('#field-client_secret').style.display = 'table-row';
+            document.querySelector('#field-toggle_manual_input').classList.toggle('show');
+            document.querySelector('#field-merchant_id').classList.toggle('show');
+            document.querySelector('#field-client_id').classList.toggle('show');
+            document.querySelector('#field-client_secret').classList.toggle('show');
         }
     )
 

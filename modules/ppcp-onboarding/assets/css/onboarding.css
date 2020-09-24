@@ -4,8 +4,21 @@
 
 #field-client_secret,
 #field-client_id,
-#field-merchant_id {
+#field-merchant_id{
 	display: none;
+}
+#field-client_secret.show,
+#field-client_id.show,
+#field-merchant_id.show {
+	display: table-row;
+}
+
+#field-toggle_manual_input span.hide,
+#field-toggle_manual_input.show span.show{
+	display: none;
+}
+#field-toggle_manual_input.show span.hide {
+	display: unset;
 }
 
 #field-toggle_manual_input button {

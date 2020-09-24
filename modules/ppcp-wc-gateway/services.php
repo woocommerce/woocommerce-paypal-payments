@@ -236,7 +236,7 @@ return array(
 			'toggle_manual_input'        => array(
 				'type'         => 'ppcp-text',
 				'title'        => __( 'Manual mode', 'paypal-payments-for-woocommerce' ),
-				'text'         => '<button id="ppcp[toggle_manual_input]">' . __( 'Toggle to manual credential input', 'paypal-payments-for-woocommerce' ) . '</button>',
+				'text'         => '<button id="ppcp[toggle_manual_input]"><span class="show">' . __( 'Show manual credential input', 'paypal-payments-for-woocommerce' ) . '</span><span class="hide">' . __( 'Hide manual credential input', 'paypal-payments-for-woocommerce' ) . '</span></button>',
 				'screens'      => array(
 					State::STATE_START,
 					State::STATE_PROGRESSIVE,
@@ -281,6 +281,17 @@ return array(
 				'default'      => false,
 				'screens'      => array(
 					State::STATE_START,
+					State::STATE_PROGRESSIVE,
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
+
+			'checkout_settings_heading'  => array(
+				'heading'      => __( 'PayPal Checkout Plugin Settings', 'paypal-payments-for-woocommerce' ),
+				'type'         => 'ppcp-heading',
+				'screens'      => array(
 					State::STATE_PROGRESSIVE,
 					State::STATE_ONBOARDED,
 				),
