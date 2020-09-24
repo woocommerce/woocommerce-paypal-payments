@@ -287,6 +287,17 @@ return array(
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
+
+			'checkout_settings_heading'  => array(
+				'heading'      => __( 'PayPal Checkout Plugin Settings', 'paypal-payments-for-woocommerce' ),
+				'type'         => 'ppcp-heading',
+				'screens'      => array(
+					State::STATE_PROGRESSIVE,
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
 			'title'                      => array(
 				'title'        => __( 'Title', 'paypal-payments-for-woocommerce' ),
 				'type'         => 'text',
