@@ -28,6 +28,24 @@ function onboardingCallback(authCode, sharedId) {
 		);
 }
 
+/**
+ * Since the PayPal modal will redirect the user a dirty form
+ * provokes an alert if the user wants to leave the page. Since the user
+ * needs to toggle the sandbox switch, we disable this dirty state with the
+ * following workaround for checkboxes.
+ *
+ * @param event
+ */
+const checkBoxOnClick = (event) => {
+	const value = event.target.checked;
+	event.preventDefault();
+	event.stopPropagation();
+	setTimeout( () => {
+		event.target.checked = value;
+		},1
+	);
+}
+
 const sandboxSwitch = (element) => {
 
 	const toggleConnectButtons = (showProduction) => {
@@ -54,4 +72,11 @@ const sandboxSwitch = (element) => {
 	if (sandboxSwitchElement) {
 		sandboxSwitch(sandboxSwitchElement);
 	}
+
+	document.querySelectorAll('#mainform input[type="checkbox"]').forEach(
+		(checkbox) => {
+			checkbox.addEventListener('click', checkBoxOnClick);
+		}
+	);
+
 })();
