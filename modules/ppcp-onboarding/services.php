@@ -20,12 +20,10 @@ use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingRenderer;
 use WpOop\TransientCache\CachePoolFactory;
 
 return array(
+	'api.sandbox-host'                 => static function ( $container ): string {
 
-	'api.host'                         => static function ( $container ): string {
 		$state       = $container->get( 'onboarding.state' );
-		$environment = $container->get( 'onboarding.environment' );
 
-		// ToDo: Correct the URLs.
 		/**
 		 * The Environment and State variables.
 		 *
@@ -33,17 +31,37 @@ return array(
 		 * @var State $state
 		 */
 		if ( $state->current_state() >= State::STATE_ONBOARDED ) {
-			if ( $environment->current_environment_is( Environment::SANDBOX ) ) {
-				return 'https://api.sandbox.paypal.com';
-			}
 			return 'https://api.sandbox.paypal.com';
 		}
-
-		// ToDo: Real connect.woocommerce.com.
-		if ( $environment->current_environment_is( Environment::SANDBOX ) ) {
-			return 'http://connect-woo.wpcust.com';
-		}
+		// ToDo: Real connect.woocommerce.com sandbox link.
 		return 'http://connect-woo.wpcust.com';
+	},
+	'api.production-host'                 => static function ( $container ): string {
+
+		$state       = $container->get( 'onboarding.state' );
+
+		/**
+		 * The Environment and State variables.
+		 *
+		 * @var Environment $environment
+		 * @var State $state
+		 */
+		if ( $state->current_state() >= State::STATE_ONBOARDED ) {
+			return 'https://api.paypal.com';
+		}
+		// ToDo: Real connect.woocommerce.com production link.
+		return 'http://connect-woo.wpcust.com';
+	},
+	'api.host'                         => static function ( $container ): string {
+		$environment = $container->get( 'onboarding.environment' );
+
+		/**
+		 * The Environment and State variables.
+		 *
+		 * @var Environment $environment
+		 */
+		return $environment->current_environment_is( Environment::SANDBOX )
+			? (string) $container->get('api.sandbox-host') : (string) $container->get('api.production-host');
 
 	},
 	'api.paypal-host'                  => function( $container ) : string {
