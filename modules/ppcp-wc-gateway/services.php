@@ -164,17 +164,6 @@ return array(
 			'</button>'
 		);
 
-		$merchant_email_text = sprintf(
-			// translators: %1$s is the email address %2$s and %3$s are button tags.
-			__(
-				'You are connected with your email address %1$s.
-                If you want to change this settings, please click %2$sReset%3$s',
-				'paypal-payments-for-woocommerce'
-			),
-			$settings->has( 'merchant_email' ) ? '<mark>' . $settings->get( 'merchant_email' ) . '</mark>' : '',
-			'<button name="save" value="reset">',
-			'</button>'
-		);
 		$fields              = array(
 			'ppcp_onboarding'            => array(
 				'title'        => __( 'Connect to PayPal', 'paypal-payments-for-woocommerce' ),
@@ -217,19 +206,9 @@ return array(
 				'default'      => '',
 				'screens'      => array(
 					State::STATE_START,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
-			'merchant_email_info'        => array(
-				'title'        => __( 'Email address', 'paypal-payments-for-woocommerce' ),
-				'type'         => 'ppcp-text',
-				'text'         => $merchant_email_text,
-				'screens'      => array(
 					State::STATE_PROGRESSIVE,
 					State::STATE_ONBOARDED,
 				),
-				'hidden'       => 'merchant_email',
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
