@@ -33,11 +33,18 @@ class LoginSellerEndpoint implements EndpointInterface {
 	private $request_data;
 
 	/**
-	 * The Login Seller Endpoint.
+	 * The Login Seller Endpoint for the production environment
 	 *
 	 * @var LoginSeller
 	 */
-	private $login_seller_endpoint;
+	private $login_seller_production;
+
+	/**
+	 * The Login Seller Endpoint for the sandbox environment
+	 *
+	 * @var LoginSeller
+	 */
+	private $login_seller_sandbox;
 
 	/**
 	 * The Partner Referrals Data.
@@ -64,24 +71,27 @@ class LoginSellerEndpoint implements EndpointInterface {
 	 * LoginSellerEndpoint constructor.
 	 *
 	 * @param RequestData          $request_data The Request Data.
-	 * @param LoginSeller          $login_seller The Login Seller.
+	 * @param LoginSeller          $login_seller_production The Login Seller for the production environment.
+	 * @param LoginSeller          $login_seller_sandbox The Login Seller for the sandbox environment.
 	 * @param PartnerReferralsData $partner_referrals_data The Partner Referrals Data.
 	 * @param Settings             $settings The Settings.
 	 * @param Cache                $cache The Cache.
 	 */
 	public function __construct(
 		RequestData $request_data,
-		LoginSeller $login_seller,
+		LoginSeller $login_seller_production,
+		LoginSeller $login_seller_sandbox,
 		PartnerReferralsData $partner_referrals_data,
 		Settings $settings,
 		Cache $cache
 	) {
 
-		$this->request_data           = $request_data;
-		$this->login_seller_endpoint  = $login_seller;
-		$this->partner_referrals_data = $partner_referrals_data;
-		$this->settings               = $settings;
-		$this->cache                  = $cache;
+		$this->request_data            = $request_data;
+		$this->login_seller_production = $login_seller_production;
+		$this->login_seller_sandbox    = $login_seller_sandbox;
+		$this->partner_referrals_data  = $partner_referrals_data;
+		$this->settings                = $settings;
+		$this->cache                   = $cache;
 	}
 
 	/**
@@ -102,13 +112,16 @@ class LoginSellerEndpoint implements EndpointInterface {
 
 		try {
 			$data        = $this->request_data->read_request( $this->nonce() );
-			$credentials = $this->login_seller_endpoint->credentials_for(
+			$is_sandbox  = isset( $data['env'] ) && 'sandbox' === $data['env'];
+			$endpoint    = $is_sandbox ? $this->login_seller_sandbox : $this->login_seller_production;
+			$credentials = $endpoint->credentials_for(
 				$data['sharedId'],
 				$data['authCode'],
 				$this->partner_referrals_data->nonce()
 			);
 			$this->settings->set( 'client_secret', $credentials->client_secret );
 			$this->settings->set( 'client_id', $credentials->client_id );
+			$this->settings->set( 'sandbox_on', $is_sandbox );
 			$this->settings->persist();
 			if ( $this->cache->has( PayPalBearer::CACHE_KEY ) ) {
 				$this->cache->delete( PayPalBearer::CACHE_KEY );

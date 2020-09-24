@@ -1,4 +1,5 @@
 function onboardingCallback(authCode, sharedId) {
+	const sandboxSwitchElement = document.querySelector('#ppcp-sandbox_on')
 	fetch(
 		PayPalCommerceGatewayOnboarding.endpoint,
 		{
@@ -10,7 +11,8 @@ function onboardingCallback(authCode, sharedId) {
 				{
 					authCode: authCode,
 					sharedId: sharedId,
-					nonce: PayPalCommerceGatewayOnboarding.nonce
+					nonce: PayPalCommerceGatewayOnboarding.nonce,
+					env: sandboxSwitchElement && sandboxSwitchElement.checked ? 'sandbox' : 'production'
 				}
 			)
 		}

@@ -13,6 +13,7 @@ use Dhii\Data\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\ConnectBearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\LoginSeller;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnerReferrals;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Onboarding\Assets\OnboardingAssets;
@@ -65,6 +66,12 @@ return array(
 			? (string) $container->get( 'api.sandbox-host' ) : (string) $container->get( 'api.production-host' );
 
 	},
+	'api.paypal-host-production'                => static function( $container ) : string {
+		return 'https://api.paypal.com';
+	},
+	'api.paypal-host-sandbox'                   => static function( $container ) : string {
+		return 'https://api.sandbox.paypal.com';
+	},
 	'api.paypal-host'                           => function( $container ) : string {
 		$environment = $container->get( 'onboarding.environment' );
 		/**
@@ -73,9 +80,10 @@ return array(
 		 * @var Environment $environment
 		 */
 		if ( $environment->current_environment_is( Environment::SANDBOX ) ) {
-			return 'https://api.sandbox.paypal.com';
+			return $container->get( 'api.paypal-host-sandbox' );
 		}
-		return 'https://api.paypal.com';
+		return $container->get( 'api.paypal-host-production' );
+
 	},
 
 	'api.bearer'                                => static function ( $container ): Bearer {
@@ -131,17 +139,39 @@ return array(
 		);
 	},
 
+	'api.endpoint.login-seller-production'      => static function ( $container ) : LoginSeller {
+
+		$logger = $container->get( 'woocommerce.logger.woocommerce' );
+		return new LoginSeller(
+			$container->get( 'api.paypal-host-production' ),
+			$container->get( 'api.partner_merchant_id' ),
+			$logger
+		);
+	},
+
+	'api.endpoint.login-seller-sandbox'         => static function ( $container ) : LoginSeller {
+
+		$logger = $container->get( 'woocommerce.logger.woocommerce' );
+		return new LoginSeller(
+			$container->get( 'api.paypal-host-sandbox' ),
+			$container->get( 'api.partner_merchant_id' ),
+			$logger
+		);
+	},
+
 	'onboarding.endpoint.login-seller'          => static function ( $container ) : LoginSellerEndpoint {
 
-		$request_data           = $container->get( 'button.request-data' );
-		$login_seller           = $container->get( 'api.endpoint.login-seller' );
-		$partner_referrals_data = $container->get( 'api.repository.partner-referrals-data' );
-		$settings               = $container->get( 'wcgateway.settings' );
+		$request_data            = $container->get( 'button.request-data' );
+		$login_seller_production = $container->get( 'api.endpoint.login-seller-production' );
+		$login_seller_sandbox    = $container->get( 'api.endpoint.login-seller-sandbox' );
+		$partner_referrals_data  = $container->get( 'api.repository.partner-referrals-data' );
+		$settings                = $container->get( 'wcgateway.settings' );
 
 		$cache = new Cache( 'ppcp-paypal-bearer' );
 		return new LoginSellerEndpoint(
 			$request_data,
-			$login_seller,
+			$login_seller_production,
+			$login_seller_sandbox,
 			$partner_referrals_data,
 			$settings,
 			$cache
