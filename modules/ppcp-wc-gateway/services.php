@@ -197,13 +197,10 @@ return array(
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
-			'merchant_email'             => array(
-				'title'        => __( 'Email address', 'paypal-payments-for-woocommerce' ),
-				'type'         => 'text',
-				'required'     => true,
-				'desc_tip'     => true,
-				'description'  => __( 'The email address of your PayPal account.', 'paypal-payments-for-woocommerce' ),
-				'default'      => '',
+			'toggle_manual_input'        => array(
+				'type'         => 'ppcp-text',
+				'title'        => __( 'Manual mode', 'paypal-payments-for-woocommerce' ),
+				'text'         => '<button id="ppcp[toggle_manual_input]">' . __( 'Toggle to manual credential input', 'paypal-payments-for-woocommerce' ) . '</button>',
 				'screens'      => array(
 					State::STATE_START,
 					State::STATE_PROGRESSIVE,
@@ -212,10 +209,13 @@ return array(
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
-			'toggle_manual_input'        => array(
-				'type'         => 'ppcp-text',
-				'title'        => __( 'Manual mode', 'paypal-payments-for-woocommerce' ),
-				'text'         => '<button id="ppcp[toggle_manual_input]">' . __( 'Toggle to manual credential input', 'paypal-payments-for-woocommerce' ) . '</button>',
+			'merchant_email'             => array(
+				'title'        => __( 'Email address', 'paypal-payments-for-woocommerce' ),
+				'type'         => 'text',
+				'required'     => true,
+				'desc_tip'     => true,
+				'description'  => __( 'The email address of your PayPal account.', 'paypal-payments-for-woocommerce' ),
+				'default'      => '',
 				'screens'      => array(
 					State::STATE_START,
 					State::STATE_PROGRESSIVE,

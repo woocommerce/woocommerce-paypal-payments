@@ -4,7 +4,8 @@
 
 #field-client_secret,
 #field-client_id,
-#field-merchant_id {
+#field-merchant_id,
+#field-merchant_email{
 	display: none;
 }
 
