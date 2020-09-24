@@ -514,7 +514,7 @@ return array(
 				'gateway'      => 'paypal',
 			),
 			'prefix'                     => array(
-				'title'        => __( 'Installation prefix', 'paypal-payments-for-woocommerce' ),
+				'title'        => __( 'Invoice prefix', 'paypal-payments-for-woocommerce' ),
 				'type'         => 'text',
 				'desc_tip'     => true,
 				'description'  => __( 'If you use your PayPal account with more than one installation, please use a distinct prefix to seperate those installations. Please do not use numbers in your prefix.', 'paypal-payments-for-woocommerce' ),
