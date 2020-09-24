@@ -38,6 +38,9 @@ function onboardingCallback(authCode, sharedId) {
  */
 const checkBoxOnClick = (event) => {
 	const value = event.target.checked;
+	if (event.target.getAttribute('id') === 'ppcp-sandbox_on') {
+		toggleConnectButtons(! value);
+	}
 	event.preventDefault();
 	event.stopPropagation();
 	setTimeout( () => {
@@ -46,31 +49,20 @@ const checkBoxOnClick = (event) => {
 	);
 }
 
-const sandboxSwitch = (element) => {
-
-	const toggleConnectButtons = (showProduction) => {
-		if (showProduction) {
-			document.querySelector('#connect-to-production').style.display = '';
-			document.querySelector('#connect-to-sandbox').style.display = 'none';
-			return;
-		}
-		document.querySelector('#connect-to-production').style.display = 'none';
-		document.querySelector('#connect-to-sandbox').style.display = '';
+const toggleConnectButtons = (showProduction) => {
+	if (showProduction) {
+		document.querySelector('#connect-to-production').style.display = '';
+		document.querySelector('#connect-to-sandbox').style.display = 'none';
+		return;
 	}
-	toggleConnectButtons(! element.checked);
-
-	element.addEventListener(
-		'change',
-		(event) => {
-			toggleConnectButtons(! element.checked);
-		}
-	);
-};
+	document.querySelector('#connect-to-production').style.display = 'none';
+	document.querySelector('#connect-to-sandbox').style.display = '';
+}
 
 (() => {
 	const sandboxSwitchElement = document.querySelector('#ppcp-sandbox_on');
 	if (sandboxSwitchElement) {
-		sandboxSwitch(sandboxSwitchElement);
+		toggleConnectButtons(! sandboxSwitchElement.checked);
 	}
 
 	document.querySelectorAll('#mainform input[type="checkbox"]').forEach(
