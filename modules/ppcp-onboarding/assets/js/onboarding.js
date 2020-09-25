@@ -111,8 +111,14 @@ const toggleSandboxProduction = (showProduction) => {
 		document.querySelectorAll(sandboxDisplaySelectors.join()).forEach(
 			(element) => {element.style.display = 'none'}
 		)
+		document.querySelectorAll(productionClassSelectors.join()).forEach(
+			(element) => {element.classList.remove('hide')}
+		)
 		document.querySelectorAll(sandboxClassSelectors.join()).forEach(
-			(element) => {element.classList.remove('show')}
+			(element) => {
+				element.classList.remove('show')
+				element.classList.add('hide')
+			}
 		)
 		return;
 	}
@@ -122,8 +128,15 @@ const toggleSandboxProduction = (showProduction) => {
 	document.querySelectorAll(sandboxDisplaySelectors.join()).forEach(
 		(element) => {element.style.display = ''}
 	)
+
+	document.querySelectorAll(sandboxClassSelectors.join()).forEach(
+		(element) => {element.classList.remove('hide')}
+	)
 	document.querySelectorAll(productionClassSelectors.join()).forEach(
-		(element) => {element.classList.remove('show')}
+		(element) => {
+			element.classList.remove('show')
+			element.classList.add('hide')
+		}
 	)
 }
 

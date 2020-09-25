@@ -44,3 +44,30 @@
 	margin: 0;
 	padding: 0;
 }
+
+#field-sandbox_toggle_manual_input.onboarded,
+#field-production_toggle_manual_input.onboarded {
+	display: none;
+}
+
+
+#field-merchant_email_sandbox.onboarded,
+#field-merchant_id_sandbox.onboarded,
+#field-client_id_sandbox.onboarded,
+#field-client_secret_sandbox.onboarded,
+#field-merchant_email_production.onboarded,
+#field-merchant_id_production.onboarded,
+#field-client_id_production.onboarded,
+#field-client_secret_production.onboarded {
+	display:table-row;
+}
+#field-merchant_email_sandbox.onboarded.hide,
+#field-merchant_id_sandbox.onboarded.hide,
+#field-client_id_sandbox.onboarded.hide,
+#field-client_secret_sandbox.onboarded.hide,
+#field-merchant_email_production.onboarded.hide,
+#field-merchant_id_production.onboarded.hide,
+#field-client_id_production.onboarded.hide,
+#field-client_secret_production.onboarded.hide {
+	display:none;
+}

@@ -264,9 +264,9 @@ class SettingsRenderer {
 			$config['id'] = $id;
 			$th_td        = 'ppcp-heading' !== $config['type'] ? 'td' : 'th';
 			$colspan      = 'ppcp-heading' !== $config['type'] ? 1 : 2;
-
+			$classes      = isset( $config['classes'] ) ? $config['classes'] : array();
 			?>
-		<tr valign="top" id="<?php echo esc_attr( 'field-' . $field ); ?>">
+		<tr valign="top" id="<?php echo esc_attr( 'field-' . $field ); ?>" class="<?php echo esc_attr( implode( ' ', $classes ) ); ?>">
 			<?php if ( 'ppcp-heading' !== $config['type'] ) : ?>
 			<th>
 				<label

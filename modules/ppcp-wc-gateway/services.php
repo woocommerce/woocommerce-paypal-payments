@@ -146,6 +146,14 @@ return array(
 	},
 
 	'wcgateway.settings.fields'                    => static function ( $container ): array {
+
+		$state = $container->get( 'onboarding.state' );
+		/**
+		 * The state.
+		 *
+		 * @var State $state
+		 */
+
 		$settings     = $container->get( 'wcgateway.settings' );
 		$sandbox_text = $settings->has( 'sandbox_on' ) && $settings->get( 'sandbox_on' ) ?
 			// translators: %1$s and %2$s are button tags.
@@ -205,6 +213,7 @@ return array(
 			'production_toggle_manual_input' => array(
 				'type'         => 'ppcp-text',
 				'title'        => __( 'Manual mode', 'paypal-payments-for-woocommerce' ),
+				'classes'      => array( State::STATE_ONBOARDED === $state->production_state() ? 'onboarded' : '' ),
 				'text'         => '<button id="ppcp[production_toggle_manual_input]" class="production-toggle">' . __( 'Toggle to manual credential input', 'paypal-payments-for-woocommerce' ) . '</button>',
 				'screens'      => array(
 					State::STATE_START,
@@ -216,6 +225,7 @@ return array(
 			),
 			'merchant_email_production'      => array(
 				'title'        => __( 'Live Email address', 'paypal-payments-for-woocommerce' ),
+				'classes'      => array( State::STATE_ONBOARDED === $state->production_state() ? 'onboarded' : '' ),
 				'type'         => 'text',
 				'required'     => true,
 				'desc_tip'     => true,
@@ -231,6 +241,7 @@ return array(
 			),
 			'merchant_id_production'         => array(
 				'title'        => __( 'Live Merchant Id', 'paypal-payments-for-woocommerce' ),
+				'classes'      => array( State::STATE_ONBOARDED === $state->production_state() ? 'onboarded' : '' ),
 				'type'         => 'ppcp-text-input',
 				'desc_tip'     => true,
 				'description'  => __( 'The merchant id of your account ', 'paypal-payments-for-woocommerce' ),
@@ -245,6 +256,7 @@ return array(
 			),
 			'client_id_production'           => array(
 				'title'        => __( 'Live Client Id', 'paypal-payments-for-woocommerce' ),
+				'classes'      => array( State::STATE_ONBOARDED === $state->production_state() ? 'onboarded' : '' ),
 				'type'         => 'ppcp-text-input',
 				'desc_tip'     => true,
 				'description'  => __( 'The client id of your api ', 'paypal-payments-for-woocommerce' ),
@@ -259,6 +271,7 @@ return array(
 			),
 			'client_secret_production'       => array(
 				'title'        => __( 'Live Secret Key', 'paypal-payments-for-woocommerce' ),
+				'classes'      => array( State::STATE_ONBOARDED === $state->production_state() ? 'onboarded' : '' ),
 				'type'         => 'ppcp-password',
 				'desc_tip'     => true,
 				'description'  => __( 'The secret key of your api', 'paypal-payments-for-woocommerce' ),
@@ -298,6 +311,7 @@ return array(
 			'sandbox_toggle_manual_input'    => array(
 				'type'         => 'ppcp-text',
 				'title'        => __( 'Manual mode', 'paypal-payments-for-woocommerce' ),
+				'classes'      => array( State::STATE_ONBOARDED === $state->sandbox_state() ? 'onboarded' : '' ),
 				'text'         => '<button id="ppcp[sandbox_toggle_manual_input]" class="sandbox-toggle">' . __( 'Toggle to manual credential input', 'paypal-payments-for-woocommerce' ) . '</button>',
 				'screens'      => array(
 					State::STATE_START,
@@ -309,6 +323,7 @@ return array(
 			),
 			'merchant_email_sandbox'         => array(
 				'title'        => __( 'Sandbox Email address', 'paypal-payments-for-woocommerce' ),
+				'classes'      => array( State::STATE_ONBOARDED === $state->sandbox_state() ? 'onboarded' : '' ),
 				'type'         => 'text',
 				'required'     => true,
 				'desc_tip'     => true,
@@ -324,6 +339,7 @@ return array(
 			),
 			'merchant_id_sandbox'            => array(
 				'title'        => __( 'Sandbox Merchant Id', 'paypal-payments-for-woocommerce' ),
+				'classes'      => array( State::STATE_ONBOARDED === $state->sandbox_state() ? 'onboarded' : '' ),
 				'type'         => 'ppcp-text-input',
 				'desc_tip'     => true,
 				'description'  => __( 'The merchant id of your account ', 'paypal-payments-for-woocommerce' ),
@@ -338,6 +354,7 @@ return array(
 			),
 			'client_id_sandbox'              => array(
 				'title'        => __( 'Sandbox Client Id', 'paypal-payments-for-woocommerce' ),
+				'classes'      => array( State::STATE_ONBOARDED === $state->sandbox_state() ? 'onboarded' : '' ),
 				'type'         => 'ppcp-text-input',
 				'desc_tip'     => true,
 				'description'  => __( 'The client id of your api ', 'paypal-payments-for-woocommerce' ),
@@ -352,6 +369,7 @@ return array(
 			),
 			'client_secret_sandbox'          => array(
 				'title'        => __( 'Sandbox Secret Key', 'paypal-payments-for-woocommerce' ),
+				'classes'      => array( State::STATE_ONBOARDED === $state->sandbox_state() ? 'onboarded' : '' ),
 				'type'         => 'ppcp-password',
 				'desc_tip'     => true,
 				'description'  => __( 'The secret key of your api', 'paypal-payments-for-woocommerce' ),
@@ -1659,13 +1677,6 @@ return array(
 		if ( ! defined( 'PPCP_FLAG_SUBSCRIPTION' ) || ! PPCP_FLAG_SUBSCRIPTION ) {
 			unset( $fields['vault_enabled'] );
 		}
-
-		$state = $container->get('onboarding.state');
-		/**
-		 * The state.
-		 *
-		 * @var State $state
-		 */
 
 		if ( State::STATE_ONBOARDED === $state->production_state() ) {
 			unset( $fields['ppcp_onboarding_production'] );
