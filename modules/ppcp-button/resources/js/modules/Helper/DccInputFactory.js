@@ -3,7 +3,10 @@ const dccInputFactory = (original) => {
     const newElement = document.createElement('span');
     newElement.setAttribute('id', original.id);
     Object.values(styles).forEach( (prop) => {
-        newElement.style[prop] = '' + styles[prop];
+        if (! styles[prop] || ! isNaN(prop) ) {
+            return;
+        }
+        newElement.style.setProperty(prop,'' + styles[prop]);
     });
     return newElement;
 }
