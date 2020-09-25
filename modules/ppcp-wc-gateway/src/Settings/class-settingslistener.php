@@ -134,22 +134,6 @@ class SettingsListener {
 		}
 
 		/**
-		 * Nonce verification has been done in is_valid_update_request().
-		 *
-		 * phpcs:disable WordPress.Security.NonceVerification.Missing
-		 * phpcs:disable WordPress.Security.NonceVerification.Recommended
-		 */
-		if ( isset( $_POST['save'] ) && sanitize_text_field( wp_unslash( $_POST['save'] ) ) === 'reset' ) {
-			$this->settings->reset();
-			$this->settings->persist();
-			$this->webhook_registrar->unregister();
-			if ( $this->cache->has( PayPalBearer::CACHE_KEY ) ) {
-				$this->cache->delete( PayPalBearer::CACHE_KEY );
-			}
-			return;
-		}
-
-		/**
 		 * Sanitization is done in retrieve_settings_from_raw_data().
 		 *
 		 * phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
