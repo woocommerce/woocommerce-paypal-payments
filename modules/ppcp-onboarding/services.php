@@ -178,17 +178,22 @@ return array(
 		);
 	},
 	'api.endpoint.partner-referrals-sandbox'    => static function ( $container ) : PartnerReferrals {
+
+		// ToDo: Real connect sandbox URL.
+		$host_url = 'http://connect-woo.wpcust.com';
 		return new PartnerReferrals(
-			$container->get( 'api.sandbox-host' ),
-			$container->get( 'api.bearer' ),
+			$host_url,
+			new ConnectBearer(),
 			$container->get( 'api.repository.partner-referrals-data' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 	'api.endpoint.partner-referrals-production' => static function ( $container ) : PartnerReferrals {
+		// ToDo: Real connect production URL.
+		$host_url = 'http://connect-woo.wpcust.com';
 		return new PartnerReferrals(
-			$container->get( 'api.production-host' ),
-			$container->get( 'api.bearer' ),
+			$host_url,
+			new ConnectBearer(),
 			$container->get( 'api.repository.partner-referrals-data' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
