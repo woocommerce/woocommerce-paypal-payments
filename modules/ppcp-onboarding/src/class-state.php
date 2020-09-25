@@ -70,7 +70,12 @@ class State {
 		/**
 		 * Once we can fetch credentials we are completely onboarded.
 		 */
-		if ( $this->settings->has( 'client_id' ) && $this->settings->get( 'client_id' ) ) {
+		if (
+			$this->settings->has( 'client_id' ) && $this->settings->get( 'client_id' )
+			&& $this->settings->has( 'client_secret' ) && $this->settings->get( 'client_secret' )
+			&& $this->settings->has( 'merchant_email' ) && $this->settings->get( 'merchant_email' )
+			&& $this->settings->has( 'merchant_id' ) && $this->settings->get( 'merchant_id' )
+		) {
 			$value = self::STATE_ONBOARDED;
 		}
 		return $value;
