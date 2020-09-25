@@ -1,3 +1,5 @@
+import {fetch} from "whatwg-fetch";
+
 const onApprove = (context, errorHandler) => {
     return (data, actions) => {
         return fetch(context.config.ajax.approve_order.endpoint, {

@@ -1,5 +1,6 @@
 import onApprove from '../OnApproveHandler/onApproveForPayNow.js';
 import {payerData} from "../Helper/PayerData";
+import {fetch} from "whatwg-fetch";
 
 class CheckoutActionHandler {
 
@@ -38,7 +39,7 @@ class CheckoutActionHandler {
                 input.setAttribute('type', 'hidden');
                 input.setAttribute('name', 'ppcp-resume-order');
                 input.setAttribute('value', data.data.purchase_units[0].custom_id);
-                document.querySelector('form.checkout').append(input);
+                document.querySelector('form.checkout').appendChild(input);
                 return data.data.id;
             });
         }

@@ -1,4 +1,6 @@
+import {fetch} from "whatwg-fetch";
 import Product from "../Entity/Product";
+
 class UpdateCart {
 
     constructor(endpoint, nonce)

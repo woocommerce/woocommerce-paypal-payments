@@ -2,6 +2,7 @@ import ButtonsToggleListener from '../Helper/ButtonsToggleListener';
 import Product from '../Entity/Product';
 import onApprove from '../OnApproveHandler/onApproveForContinue';
 import {payerData} from "../Helper/PayerData";
+import {fetch} from "whatwg-fetch";
 
 class SingleProductActionHandler {
 

@@ -1,5 +1,6 @@
 import onApprove from '../OnApproveHandler/onApproveForContinue.js';
 import {payerData} from "../Helper/PayerData";
+import {fetch} from "whatwg-fetch";
 
 class CartActionHandler {
 

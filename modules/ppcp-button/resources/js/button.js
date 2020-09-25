@@ -8,6 +8,8 @@ import CreditCardRenderer from "./modules/Renderer/CreditCardRenderer";
 import dataClientIdAttributeHandler from "./modules/DataClientIdAttributeHandler";
 import MessageRenderer from "./modules/Renderer/MessageRenderer";
 
+import '@babel/polyfill';
+
 const bootstrap = () => {
     const errorHandler = new ErrorHandler(PayPalCommerceGateway.labels.error.generic);
     const creditCardRenderer = new CreditCardRenderer(PayPalCommerceGateway, errorHandler);
@@ -80,6 +82,6 @@ document.addEventListener(
             return;
         }
 
-        document.body.append(script);
+        document.body.appendChild(script);
     },
 );

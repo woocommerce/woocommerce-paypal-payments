@@ -17,6 +17,21 @@ module.exports = {
             test: /\.js?$/,
             exclude: /node_modules/,
             loader: 'babel-loader',
+            options: {
+                presets: [
+                    [
+                        '@babel/preset-env',
+                        {
+                            targets: {
+                                ie: "11"
+                            }
+                        }
+                    ]
+                ],
+                plugins: [
+                    "babel-plugin-transform-object-rest-spread"
+                ]
+            }
         },
             {
                 test: /\.scss$/,
@@ -27,9 +42,9 @@ module.exports = {
                         options: {
                             name: 'css/[name].css',
                         }
-                },
+                    },
                     {loader:'sass-loader'}
                 ]
-        }]
+            }]
     }
 };

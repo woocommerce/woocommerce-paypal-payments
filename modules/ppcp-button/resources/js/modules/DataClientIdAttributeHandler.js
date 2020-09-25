@@ -1,3 +1,5 @@
+import {fetch} from "whatwg-fetch";
+
 const storageKey = 'ppcp-data-client-id';
 
 const validateToken = (token, user) => {
@@ -28,7 +30,7 @@ const dataClientIdAttributeHandler = (script, config) => {
     const token = storedTokenForUser(config.user);
     if (token) {
         script.setAttribute('data-client-token', token);
-        document.body.append(script);
+        document.body.appendChild(script);
         return;
     }
     fetch(config.endpoint, {
@@ -45,7 +47,7 @@ const dataClientIdAttributeHandler = (script, config) => {
         }
         storeToken(data);
         script.setAttribute('data-client-token', data.token);
-        document.body.append(script);
+        document.body.appendChild(script);
     });
 }
 
