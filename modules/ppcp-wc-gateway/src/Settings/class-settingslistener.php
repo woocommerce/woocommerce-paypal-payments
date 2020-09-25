@@ -97,25 +97,29 @@ class SettingsListener {
 		 * phpcs:disable WordPress.Security.NonceVerification.Missing
 		 * phpcs:disable WordPress.Security.NonceVerification.Recommended
 		 */
-		if ( isset( $_GET['merchantIdInPayPal'] ) && isset( $_GET['merchantId'] ) ) {
-			$merchant_id    = sanitize_text_field( wp_unslash( $_GET['merchantIdInPayPal'] ) );
-			$merchant_email = sanitize_text_field( wp_unslash( $_GET['merchantId'] ) );
-			$this->settings->set( 'merchant_id', $merchant_id );
-			$this->settings->set( 'merchant_email', $merchant_email );
-
-			$is_sandbox = $this->settings->has( 'sandbox_on' ) && $this->settings->get( 'sandbox_on' );
-			if ( $is_sandbox ) {
-				$this->settings->set( 'merchant_id_sandbox', $merchant_id );
-				$this->settings->set( 'merchant_email_sandbox', $merchant_email );
-			} else {
-				$this->settings->set( 'merchant_id_production', $merchant_id );
-				$this->settings->set( 'merchant_email_production', $merchant_email );
-			}
-			$this->settings->persist();
+		if ( ! isset( $_GET['merchantIdInPayPal'] ) || ! isset( $_GET['merchantId'] ) ) {
+			return;
 		}
+		$merchant_id    = sanitize_text_field( wp_unslash( $_GET['merchantIdInPayPal'] ) );
+		$merchant_email = sanitize_text_field( wp_unslash( $_GET['merchantId'] ) );
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
+		$this->settings->set( 'merchant_id', $merchant_id );
+		$this->settings->set( 'merchant_email', $merchant_email );
+
+		$is_sandbox = $this->settings->has( 'sandbox_on' ) && $this->settings->get( 'sandbox_on' );
+		if ( $is_sandbox ) {
+			$this->settings->set( 'merchant_id_sandbox', $merchant_id );
+			$this->settings->set( 'merchant_email_sandbox', $merchant_email );
+		} else {
+			$this->settings->set( 'merchant_id_production', $merchant_id );
+			$this->settings->set( 'merchant_email_production', $merchant_email );
+		}
+		$this->settings->persist();
+		$redirect_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' );
+		wp_safe_redirect( $redirect_url, 302 );
+		exit;
 	}
 
 	/**
