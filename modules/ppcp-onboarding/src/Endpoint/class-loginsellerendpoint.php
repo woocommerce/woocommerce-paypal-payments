@@ -119,6 +119,13 @@ class LoginSellerEndpoint implements EndpointInterface {
 				$data['authCode'],
 				$this->partner_referrals_data->nonce()
 			);
+			if ( $is_sandbox ) {
+				$this->settings->set( 'client_secret_sandbox', $credentials->client_secret );
+				$this->settings->set( 'client_id_sandbox', $credentials->client_id );
+			} else {
+				$this->settings->set( 'client_secret_production', $credentials->client_secret );
+				$this->settings->set( 'client_id_production', $credentials->client_id );
+			}
 			$this->settings->set( 'client_secret', $credentials->client_secret );
 			$this->settings->set( 'client_id', $credentials->client_id );
 			$this->settings->set( 'sandbox_on', $is_sandbox );
