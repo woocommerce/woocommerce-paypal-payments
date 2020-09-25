@@ -137,6 +137,11 @@ class SettingsListener {
 		 * Sanitization is done in retrieve_settings_from_raw_data().
 		 *
 		 * phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		 *
+		 * Nonce verification is done in is_valid_update_request().
+		 *
+		 * phpcs:disable WordPress.Security.NonceVerification.Missing
+		 * phpcs:disable WordPress.Security.NonceVerification.Recommended
 		 */
 		$raw_data = ( isset( $_POST['ppcp'] ) ) ? (array) wp_unslash( $_POST['ppcp'] ) : array();
 		// phpcs:enable phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -149,6 +154,8 @@ class SettingsListener {
 				&& 1 === absint( $_POST['woocommerce_ppcp-gateway_enabled'] );
 			$this->maybe_register_webhooks( $settings );
 		}
+		// phpcs:enable phpcs:disable WordPress.Security.NonceVerification.Missing
+		// phpcs:enable phpcs:disable WordPress.Security.NonceVerification.Missing
 
 		foreach ( $settings as $id => $value ) {
 			$this->settings->set( $id, $value );
