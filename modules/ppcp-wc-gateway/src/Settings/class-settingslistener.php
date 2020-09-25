@@ -153,6 +153,9 @@ class SettingsListener {
 		$raw_data = ( isset( $_POST['ppcp'] ) ) ? (array) wp_unslash( $_POST['ppcp'] ) : array();
 		// phpcs:enable phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$settings = $this->retrieve_settings_from_raw_data( $raw_data );
+
+		$settings = $this->read_active_credentials_from_settings( $settings );
+
 		if ( ! isset( $_GET[ SectionsRenderer::KEY ] ) || PayPalGateway::ID === $_GET[ SectionsRenderer::KEY ] ) {
 			$settings['enabled'] = isset( $_POST['woocommerce_ppcp-gateway_enabled'] )
 				&& 1 === absint( $_POST['woocommerce_ppcp-gateway_enabled'] );
@@ -169,6 +172,23 @@ class SettingsListener {
 
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+	}
+
+	/**
+	 * The actual used client credentials are stored in 'client_secret', 'client_id', 'merchant_id' and 'merchant_email'.
+	 * This method populates those fields depending on the sandbox status.
+	 *
+	 * @param array $settings The settings array.
+	 *
+	 * @return array
+	 */
+	private function read_active_credentials_from_settings( array $settings ) : array {
+		$is_sandbox                 = isset( $settings['sandbox_on'] ) && $settings['sandbox_on'];
+		$settings['client_id']      = $is_sandbox ? $settings['client_id_sandbox'] : $settings['client_id_production'];
+		$settings['client_secret']  = $is_sandbox ? $settings['client_secret_sandbox'] : $settings['client_secret_production'];
+		$settings['merchant_id']    = $is_sandbox ? $settings['merchant_id_sandbox'] : $settings['merchant_id_production'];
+		$settings['merchant_email'] = $is_sandbox ? $settings['merchant_email_sandbox'] : $settings['merchant_email_production'];
+		return $settings;
 	}
 
 	/**
