@@ -1660,10 +1660,17 @@ return array(
 			unset( $fields['vault_enabled'] );
 		}
 
-		if ( $settings->has( 'merchant_email_production' ) && $settings->get( 'merchant_email_production' ) ) {
+		$state = $container->get('onboarding.state');
+		/**
+		 * The state.
+		 *
+		 * @var State $state
+		 */
+
+		if ( State::STATE_ONBOARDED === $state->production_state() ) {
 			unset( $fields['ppcp_onboarding_production'] );
 		}
-		if ( $settings->has( 'merchant_email_sandbox' ) && $settings->get( 'merchant_email_sandbox' ) ) {
+		if ( State::STATE_ONBOARDED === $state->sandbox_state() ) {
 			unset( $fields['ppcp_onboarding_sandbox'] );
 		}
 
