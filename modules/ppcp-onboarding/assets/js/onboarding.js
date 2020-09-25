@@ -39,7 +39,7 @@ function onboardingCallback(authCode, sharedId) {
 const checkBoxOnClick = (event) => {
 	const value = event.target.checked;
 	if (event.target.getAttribute('id') === 'ppcp-sandbox_on') {
-		toggleConnectButtons(! value);
+		toggleSandboxProduction(! value);
 	}
 	event.preventDefault();
 	event.stopPropagation();
@@ -49,20 +49,88 @@ const checkBoxOnClick = (event) => {
 	);
 }
 
-const toggleConnectButtons = (showProduction) => {
+/**
+ * Toggles the credential input fields.
+ *
+ * @param forProduction
+ */
+const credentialToggle = (forProduction) => {
+
+	const sandboxClassSelectors = [
+		'#field-merchant_email_sandbox',
+		'#field-merchant_id_sandbox',
+		'#field-client_id_sandbox',
+		'#field-client_secret_sandbox',
+	];
+	const productionClassSelectors = [
+		'#field-merchant_email_production',
+		'#field-merchant_id_production',
+		'#field-client_id_production',
+		'#field-client_secret_production',
+	];
+
+	const selectors = forProduction ? productionClassSelectors : sandboxClassSelectors;
+	document.querySelectorAll(selectors.join()).forEach(
+		(element) => {element.classList.toggle('show')}
+	)
+}
+
+/**
+ * Toggles the visibility of the sandbox/production input fields.
+ *
+ * @param showProduction
+ */
+const toggleSandboxProduction = (showProduction) => {
+	const productionDisplaySelectors = [
+		'#field-credentials_production_heading',
+		'#field-production_toggle_manual_input',
+		'#field-ppcp_onboarding_production',
+	];
+	const productionClassSelectors = [
+		'#field-merchant_email_production',
+		'#field-merchant_id_production',
+		'#field-client_id_production',
+		'#field-client_secret_production',
+	];
+	const sandboxDisplaySelectors = [
+		'#field-credentials_sandbox_heading',
+		'#field-sandbox_toggle_manual_input',
+		'#field-ppcp_onboarding_sandbox',
+	];
+	const sandboxClassSelectors = [
+		'#field-merchant_email_sandbox',
+		'#field-merchant_id_sandbox',
+		'#field-client_id_sandbox',
+		'#field-client_secret_sandbox',
+	];
+
 	if (showProduction) {
-		document.querySelector('#connect-to-production').style.display = '';
-		document.querySelector('#connect-to-sandbox').style.display = 'none';
+		document.querySelectorAll(productionDisplaySelectors.join()).forEach(
+			(element) => {element.style.display = ''}
+		)
+		document.querySelectorAll(sandboxDisplaySelectors.join()).forEach(
+			(element) => {element.style.display = 'none'}
+		)
+		document.querySelectorAll(sandboxClassSelectors.join()).forEach(
+			(element) => {element.classList.remove('show')}
+		)
 		return;
 	}
-	document.querySelector('#connect-to-production').style.display = 'none';
-	document.querySelector('#connect-to-sandbox').style.display = '';
+	document.querySelectorAll(productionDisplaySelectors.join()).forEach(
+		(element) => {element.style.display = 'none'}
+	)
+	document.querySelectorAll(sandboxDisplaySelectors.join()).forEach(
+		(element) => {element.style.display = ''}
+	)
+	document.querySelectorAll(productionClassSelectors.join()).forEach(
+		(element) => {element.classList.remove('show')}
+	)
 }
 
 (() => {
 	const sandboxSwitchElement = document.querySelector('#ppcp-sandbox_on');
 	if (sandboxSwitchElement) {
-		toggleConnectButtons(! sandboxSwitchElement.checked);
+		toggleSandboxProduction(! sandboxSwitchElement.checked);
 	}
 
 	document.querySelectorAll('#mainform input[type="checkbox"]').forEach(
@@ -70,5 +138,18 @@ const toggleConnectButtons = (showProduction) => {
 			checkbox.addEventListener('click', checkBoxOnClick);
 		}
 	);
+
+	document.querySelectorAll('#field-sandbox_toggle_manual_input button, #field-production_toggle_manual_input button').forEach(
+		(button) => {
+			button.addEventListener(
+				'click',
+				(event) => {
+					event.preventDefault();
+					const isProduction = event.target.classList.contains('production-toggle');
+					credentialToggle(isProduction);
+				}
+			)
+		}
+	)
 
 })();

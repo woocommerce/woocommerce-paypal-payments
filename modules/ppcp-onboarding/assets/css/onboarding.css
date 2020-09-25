@@ -2,16 +2,24 @@
 	display: none;
 }
 
-#field-client_secret,
-#field-client_id,
-#field-merchant_id,
-#field-merchant_email{
+#field-merchant_email_production,
+#field-merchant_id_production,
+#field-client_id_production,
+#field-client_secret_production,
+#field-merchant_email_sandbox,
+#field-merchant_id_sandbox,
+#field-client_id_sandbox,
+#field-client_secret_sandbox{
 	display: none;
 }
-#field-client_secret.show,
-#field-client_id.show,
-#field-merchant_id.show,
-#field-merchant_email.show {
+#field-merchant_email_production.show,
+#field-merchant_id_production.show,
+#field-client_id_production.show,
+#field-client_secret_production.show,
+#field-merchant_email_sandbox.show,
+#field-merchant_id_sandbox.show,
+#field-client_id_sandbox.show,
+#field-client_secret_sandbox.show {
 	display: table-row;
 }
 

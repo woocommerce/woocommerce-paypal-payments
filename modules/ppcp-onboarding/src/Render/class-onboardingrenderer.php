@@ -54,34 +54,26 @@ class OnboardingRenderer {
 
 	/**
 	 * Renders the "Connect to PayPal" button.
+	 *
+	 * @param bool $is_production Whether the production or sandbox button should be rendered.
 	 */
-	public function render() {
+	public function render( bool $is_production ) {
 		try {
-			$args           = array(
+			$args = array(
 				'displayMode' => 'minibrowser',
 			);
-			$production_url = add_query_arg( $args, $this->production_partner_referrals->signup_link() );
-			$sandbox_url    = add_query_arg( $args, $this->sandbox_partner_referrals->signup_link() );
-			$this->render_button(
-				$production_url,
-				'connect-to-production',
-				__(
-					'Connect to PayPal',
-					'paypal-payments-for-woocommerce'
-				)
-			);
-			$this->render_button(
-				$sandbox_url,
-				'connect-to-sandbox',
-				__(
-					'Connect to PayPal Sandbox',
-					'paypal-payments-for-woocommerce'
-				)
-			);
 
-			$script_url = $this->settings->has( 'sandbox_on' ) && $this->settings->get( 'sandbox_on' ) ?
-				'https://www.sandbox.paypal.com/webapps/merchantboarding/js/lib/lightbox/partner.js' : 'https://www.paypal.com/webapps/merchantboarding/js/lib/lightbox/partner.js';
-			?>
+			$url   = $is_production ? $this->production_partner_referrals->signup_link() : $this->sandbox_partner_referrals->signup_link();
+			$url   = add_query_arg( $args, $url );
+			$id    = $is_production ? 'connect-to-production' : 'connect-to-sandbox';
+			$label = $is_production ? __( 'Connect to PayPal', 'paypal-payments-for-woocommerce' ) : __( 'Connect to PayPal Sandbox', 'paypal-payments-for-woocommerce' );
+				$this->render_button(
+					$url,
+					$id,
+					$label
+				);
+
+			$script_url = 'https://www.paypal.com/webapps/merchantboarding/js/lib/lightbox/partner.js'; ?>
 			<script>document.querySelectorAll('[data-paypal-onboard-complete=onboardingCallback]').forEach( (element) => { element.addEventListener('click', (e) => {if ('undefined' === typeof PAYPAL ) e.preventDefault(); }) });</script>
 			<script
 					id="paypal-js"

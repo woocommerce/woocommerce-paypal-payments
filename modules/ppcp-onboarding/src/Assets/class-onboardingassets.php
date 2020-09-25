@@ -132,8 +132,6 @@ class OnboardingAssets {
 		if ( 'ppcp-gateway' !== $current_section ) {
 			return false;
 		}
-
-		$should_render = $this->state->current_state() === State::STATE_START;
-		return $should_render;
+		return true;
 	}
 }

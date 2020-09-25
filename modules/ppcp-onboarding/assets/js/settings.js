@@ -60,17 +60,6 @@ const groupToggleSelect = (selector, group) => {
 }
 
 (() => {
-    document.querySelector('#field-toggle_manual_input').addEventListener(
-        'click',
-        (event) => {
-            event.preventDefault();
-            document.querySelector('#field-toggle_manual_input').classList.toggle('show');
-            document.querySelector('#field-merchant_id').classList.toggle('show');
-            document.querySelector('#field-merchant_email').classList.toggle('show');
-            document.querySelector('#field-client_id').classList.toggle('show');
-            document.querySelector('#field-client_secret').classList.toggle('show');
-        }
-    )
 
     groupToggle(
         '#ppcp-button_enabled',
