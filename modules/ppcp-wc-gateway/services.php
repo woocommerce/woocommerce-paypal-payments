@@ -181,23 +181,25 @@ return array(
 				'default'      => 0,
 				'screens'      => array(
 					State::STATE_START,
+					State::STATE_PROGRESSIVE,
+					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
-			'sandbox_on_info'            => array(
-				'title'        => __( 'Sandbox', 'paypal-payments-for-woocommerce' ),
-				'type'         => 'ppcp-text',
-				'text'         => $sandbox_text,
+
+			// Production credentials.
+			'credentials_production_heading'  => array(
+				'heading'      => __( 'API', 'paypal-payments-for-woocommerce' ),
+				'type'         => 'ppcp-heading',
 				'screens'      => array(
 					State::STATE_PROGRESSIVE,
 					State::STATE_ONBOARDED,
 				),
-				'hidden'       => 'sandbox_on',
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
-			'toggle_manual_input'        => array(
+			'production_toggle_manual_input'        => array(
 				'type'         => 'ppcp-text',
 				'title'        => __( 'Manual mode', 'paypal-payments-for-woocommerce' ),
 				'text'         => '<button id="ppcp[toggle_manual_input]">' . __( 'Toggle to manual credential input', 'paypal-payments-for-woocommerce' ) . '</button>',
@@ -209,8 +211,8 @@ return array(
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
-			'merchant_email'             => array(
-				'title'        => __( 'Email address', 'paypal-payments-for-woocommerce' ),
+			'merchant_email_production'             => array(
+				'title'        => __( 'Live Email address', 'paypal-payments-for-woocommerce' ),
 				'type'         => 'text',
 				'required'     => true,
 				'desc_tip'     => true,
@@ -224,8 +226,8 @@ return array(
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
-			'merchant_id'                => array(
-				'title'        => __( 'Merchant Id', 'paypal-payments-for-woocommerce' ),
+			'merchant_id_production'                => array(
+				'title'        => __( 'Live Merchant Id', 'paypal-payments-for-woocommerce' ),
 				'type'         => 'ppcp-text-input',
 				'desc_tip'     => true,
 				'description'  => __( 'The merchant id of your account ', 'paypal-payments-for-woocommerce' ),
@@ -238,8 +240,8 @@ return array(
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
-			'client_id'                  => array(
-				'title'        => __( 'Client Id', 'paypal-payments-for-woocommerce' ),
+			'client_id_production'                  => array(
+				'title'        => __( 'Live Client Id', 'paypal-payments-for-woocommerce' ),
 				'type'         => 'ppcp-text-input',
 				'desc_tip'     => true,
 				'description'  => __( 'The client id of your api ', 'paypal-payments-for-woocommerce' ),
@@ -252,8 +254,89 @@ return array(
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
-			'client_secret'              => array(
-				'title'        => __( 'Secret Key', 'paypal-payments-for-woocommerce' ),
+			'client_secret_production'              => array(
+				'title'        => __( 'Live Secret Key', 'paypal-payments-for-woocommerce' ),
+				'type'         => 'ppcp-password',
+				'desc_tip'     => true,
+				'description'  => __( 'The secret key of your api', 'paypal-payments-for-woocommerce' ),
+				'default'      => false,
+				'screens'      => array(
+					State::STATE_START,
+					State::STATE_PROGRESSIVE,
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
+
+			// Sandbox credentials.
+			'credentials_sandbox_heading'  => array(
+				'heading'      => __( 'Sandbox API', 'paypal-payments-for-woocommerce' ),
+				'type'         => 'ppcp-heading',
+				'screens'      => array(
+					State::STATE_PROGRESSIVE,
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
+			'sandbox_toggle_manual_input'        => array(
+				'type'         => 'ppcp-text',
+				'title'        => __( 'Manual mode', 'paypal-payments-for-woocommerce' ),
+				'text'         => '<button id="ppcp[toggle_manual_input]">' . __( 'Toggle to manual credential input', 'paypal-payments-for-woocommerce' ) . '</button>',
+				'screens'      => array(
+					State::STATE_START,
+					State::STATE_PROGRESSIVE,
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
+			'merchant_email_sandbox'             => array(
+				'title'        => __( 'Sandbox Email address', 'paypal-payments-for-woocommerce' ),
+				'type'         => 'text',
+				'required'     => true,
+				'desc_tip'     => true,
+				'description'  => __( 'The email address of your PayPal account.', 'paypal-payments-for-woocommerce' ),
+				'default'      => '',
+				'screens'      => array(
+					State::STATE_START,
+					State::STATE_PROGRESSIVE,
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
+			'merchant_id_sandbox'                => array(
+				'title'        => __( 'Sandbox Merchant Id', 'paypal-payments-for-woocommerce' ),
+				'type'         => 'ppcp-text-input',
+				'desc_tip'     => true,
+				'description'  => __( 'The merchant id of your account ', 'paypal-payments-for-woocommerce' ),
+				'default'      => false,
+				'screens'      => array(
+					State::STATE_START,
+					State::STATE_PROGRESSIVE,
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
+			'client_id_sandbox'                  => array(
+				'title'        => __( 'Sandbox Client Id', 'paypal-payments-for-woocommerce' ),
+				'type'         => 'ppcp-text-input',
+				'desc_tip'     => true,
+				'description'  => __( 'The client id of your api ', 'paypal-payments-for-woocommerce' ),
+				'default'      => false,
+				'screens'      => array(
+					State::STATE_START,
+					State::STATE_PROGRESSIVE,
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
+			'client_secret_sandbox'              => array(
+				'title'        => __( 'Sandbox Secret Key', 'paypal-payments-for-woocommerce' ),
 				'type'         => 'ppcp-password',
 				'desc_tip'     => true,
 				'description'  => __( 'The secret key of your api', 'paypal-payments-for-woocommerce' ),

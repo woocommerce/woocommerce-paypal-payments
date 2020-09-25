@@ -23,7 +23,8 @@
 	display: unset;
 }
 
-#field-toggle_manual_input button {
+#field-production_toggle_manual_input button,
+#field-sandbox_toggle_manual_input button {
 	color: #0073aa;
 	transition-property: border, background, color;
 	transition-duration: .05s;
