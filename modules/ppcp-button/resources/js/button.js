@@ -7,10 +7,12 @@ import ErrorHandler from './modules/ErrorHandler';
 import CreditCardRenderer from "./modules/Renderer/CreditCardRenderer";
 import dataClientIdAttributeHandler from "./modules/DataClientIdAttributeHandler";
 import MessageRenderer from "./modules/Renderer/MessageRenderer";
+import Spinner from "./modules/Helper/Spinner";
 
 const bootstrap = () => {
     const errorHandler = new ErrorHandler(PayPalCommerceGateway.labels.error.generic);
-    const creditCardRenderer = new CreditCardRenderer(PayPalCommerceGateway, errorHandler);
+    const spinner = new Spinner();
+    const creditCardRenderer = new CreditCardRenderer(PayPalCommerceGateway, errorHandler, spinner);
     const renderer = new Renderer(creditCardRenderer, PayPalCommerceGateway);
     const messageRenderer = new MessageRenderer(PayPalCommerceGateway.messages);
     const context = PayPalCommerceGateway.context;
@@ -46,7 +48,8 @@ const bootstrap = () => {
         const checkoutBootstap = new CheckoutBootstap(
             PayPalCommerceGateway,
             renderer,
-            messageRenderer
+            messageRenderer,
+            spinner
         );
 
         checkoutBootstap.init();

@@ -2,9 +2,10 @@ import dccInputFactory from "../Helper/DccInputFactory";
 
 class CreditCardRenderer {
 
-    constructor(defaultConfig, errorHandler) {
+    constructor(defaultConfig, errorHandler, spinner) {
         this.defaultConfig = defaultConfig;
         this.errorHandler = errorHandler;
+        this.spinner = spinner;
     }
 
     render(wrapper, contextConfig) {
@@ -83,6 +84,7 @@ class CreditCardRenderer {
             }
         }).then(hostedFields => {
             const submitEvent = (event) => {
+                this.spinner.block();
                 if (event) {
                     event.preventDefault();
                 }
@@ -103,9 +105,11 @@ class CreditCardRenderer {
                         vault
                     }).then((payload) => {
                         payload.orderID = payload.orderId;
+                        this.spinner.unblock();
                         return contextConfig.onApprove(payload);
                     });
                 } else {
+                    this.spinner.unblock();
                     this.errorHandler.message(this.defaultConfig.hosted_fields.labels.fields_not_valid);
                 }
             }
