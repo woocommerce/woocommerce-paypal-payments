@@ -60,6 +60,12 @@ class DisableGateways {
 		if ( ! isset( $methods[ PayPalGateway::ID ] ) && ! isset( $methods[ CreditCardGateway::ID ] ) ) {
 			return $methods;
 		}
+		if ( ! $this->settings->has( 'enabled' ) || ! $this->settings->get( 'enabled' ) ) {
+
+			unset( $methods[ PayPalGateway::ID ] );
+			unset( $methods[ CreditCardGateway::ID ] );
+			return $methods;
+		}
 		if (
 			! $this->settings->has( 'merchant_email' )
 			|| ! is_email( $this->settings->get( 'merchant_email' ) )
