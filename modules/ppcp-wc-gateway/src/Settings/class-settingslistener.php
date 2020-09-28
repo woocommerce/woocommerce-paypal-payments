@@ -178,6 +178,9 @@ class SettingsListener {
 	 * @return array
 	 */
 	private function read_active_credentials_from_settings( array $settings ) : array {
+		if ( ! isset( $settings['client_id_sandbox'] ) && ! isset( $settings['client_id_production'] ) ) {
+			return $settings;
+		}
 		$is_sandbox                 = isset( $settings['sandbox_on'] ) && $settings['sandbox_on'];
 		$settings['client_id']      = $is_sandbox ? $settings['client_id_sandbox'] : $settings['client_id_production'];
 		$settings['client_secret']  = $is_sandbox ? $settings['client_secret_sandbox'] : $settings['client_secret_production'];
