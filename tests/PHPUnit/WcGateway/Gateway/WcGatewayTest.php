@@ -5,11 +5,13 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
 
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingRenderer;
+use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsFields;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
@@ -42,13 +44,19 @@ class WcGatewayTest extends TestCase
 	        ->shouldReceive('destroy_session_data');
         $settings
             ->shouldReceive('has')->andReturnFalse();
+        $refundProcessor = Mockery::mock(RefundProcessor::class);
+        $state = Mockery::mock(State::class);
+        $state
+	        ->shouldReceive('current_state')->andReturn(State::STATE_ONBOARDED);
         $testee = new PayPalGateway(
             $settingsRenderer,
             $orderProcessor,
             $authorizedPaymentsProcessor,
             $authorizedOrderActionNotice,
             $settings,
-            $sessionHandler
+            $sessionHandler,
+	        $refundProcessor,
+	        $state
         );
 
         expect('wc_get_order')
@@ -76,13 +84,19 @@ class WcGatewayTest extends TestCase
         $settings
             ->shouldReceive('has')->andReturnFalse();
         $sessionHandler = Mockery::mock(SessionHandler::class);
+	    $refundProcessor = Mockery::mock(RefundProcessor::class);
+	    $state = Mockery::mock(State::class);
+	    $state
+		    ->shouldReceive('current_state')->andReturn(State::STATE_ONBOARDED);
         $testee = new PayPalGateway(
             $settingsRenderer,
             $orderProcessor,
             $authorizedPaymentsProcessor,
             $authorizedOrderActionNotice,
             $settings,
-            $sessionHandler
+            $sessionHandler,
+	        $refundProcessor,
+	        $state
         );
 
         expect('wc_get_order')
@@ -116,13 +130,19 @@ class WcGatewayTest extends TestCase
         $settings
             ->shouldReceive('has')->andReturnFalse();
         $sessionHandler = Mockery::mock(SessionHandler::class);
+	    $refundProcessor = Mockery::mock(RefundProcessor::class);
+	    $state = Mockery::mock(State::class);
+	    $state
+		    ->shouldReceive('current_state')->andReturn(State::STATE_ONBOARDED);
         $testee = new PayPalGateway(
             $settingsRenderer,
             $orderProcessor,
             $authorizedPaymentsProcessor,
             $authorizedOrderActionNotice,
             $settings,
-            $sessionHandler
+            $sessionHandler,
+	        $refundProcessor,
+	        $state
         );
 
         expect('wc_get_order')
@@ -171,13 +191,19 @@ class WcGatewayTest extends TestCase
         $settings
             ->shouldReceive('has')->andReturnFalse();
         $sessionHandler = Mockery::mock(SessionHandler::class);
+	    $refundProcessor = Mockery::mock(RefundProcessor::class);
+	    $state = Mockery::mock(State::class);
+	    $state
+		    ->shouldReceive('current_state')->andReturn(State::STATE_ONBOARDED);
         $testee = new PayPalGateway(
             $settingsRenderer,
             $orderProcessor,
             $authorizedPaymentsProcessor,
             $authorizedOrderActionNotice,
             $settings,
-            $sessionHandler
+            $sessionHandler,
+	        $refundProcessor,
+	        $state
         );
 
         $this->assertTrue($testee->capture_authorized_payment($wcOrder));
@@ -218,13 +244,19 @@ class WcGatewayTest extends TestCase
         $settings
             ->shouldReceive('has')->andReturnFalse();
         $sessionHandler = Mockery::mock(SessionHandler::class);
+	    $refundProcessor = Mockery::mock(RefundProcessor::class);
+	    $state = Mockery::mock(State::class);
+	    $state
+		    ->shouldReceive('current_state')->andReturn(State::STATE_ONBOARDED);
         $testee = new PayPalGateway(
             $settingsRenderer,
             $orderProcessor,
             $authorizedPaymentsProcessor,
             $authorizedOrderActionNotice,
             $settings,
-            $sessionHandler
+            $sessionHandler,
+	        $refundProcessor,
+	        $state
         );
 
         $this->assertTrue($testee->capture_authorized_payment($wcOrder));
@@ -258,13 +290,19 @@ class WcGatewayTest extends TestCase
         $settings
             ->shouldReceive('has')->andReturnFalse();
         $sessionHandler = Mockery::mock(SessionHandler::class);
+	    $refundProcessor = Mockery::mock(RefundProcessor::class);
+	    $state = Mockery::mock(State::class);
+	    $state
+		    ->shouldReceive('current_state')->andReturn(State::STATE_ONBOARDED);
         $testee = new PayPalGateway(
             $settingsRenderer,
             $orderProcessor,
             $authorizedPaymentsProcessor,
             $authorizedOrderActionNotice,
             $settings,
-            $sessionHandler
+            $sessionHandler,
+	        $refundProcessor,
+	        $state
         );
 
         $this->assertFalse($testee->capture_authorized_payment($wcOrder));
