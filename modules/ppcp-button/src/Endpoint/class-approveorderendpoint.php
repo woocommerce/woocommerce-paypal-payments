@@ -121,17 +121,21 @@ class ApproveOrderEndpoint implements EndpointInterface {
 			}
 
 			if ( $order->payment_source() && $order->payment_source()->card() ) {
-				if (
-					$this->settings->has( 'disable_cards' )
-					&& in_array( strtolower( $order->payment_source()->card()->brand() ), (array) $this->settings->get( 'disable_cards' ), true )
-				) {
-					throw new RuntimeException(
-						__(
-							'Unfortunately, we do not accept this card.',
-							'paypal-payments-for-woocommerce'
-						),
-						100
-					);
+				if ( $this->settings->has( 'disable_cards' ) ) {
+					$disabled_cards = (array) $this->settings->get( 'disable_cards' );
+					if ( in_array( 'mastercard', $disabled_cards, true ) ) {
+						$disabled_cards[] = 'master_card';
+					}
+					$card = strtolower( $order->payment_source()->card()->brand() );
+					if ( in_array( $card, $disabled_cards, true ) ) {
+						throw new RuntimeException(
+							__(
+								'Unfortunately, we do not accept this card.',
+								'paypal-payments-for-woocommerce'
+							),
+							100
+						);
+					}
 				}
 				$proceed = $this->threed_secure->proceed_with_order( $order );
 				if ( ThreeDSecure::RETRY === $proceed ) {
