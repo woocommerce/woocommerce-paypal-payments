@@ -42,10 +42,11 @@ class CaptureFactory {
 	 */
 	public function from_paypal_response( \stdClass $data ) : Capture {
 
+		$reason = isset ( $data->status_details->reason ) ? (string) $data->status_details->reason : '';
 		return new Capture(
 			(string) $data->id,
 			(string) $data->status,
-			(string) $data->status_details->reason,
+			$reason,
 			$this->amount_factory->from_paypal_response( $data->amount ),
 			(bool) $data->final_capture,
 			(string) $data->seller_protection->status,
