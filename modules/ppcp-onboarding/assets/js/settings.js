@@ -59,8 +59,42 @@ const groupToggleSelect = (selector, group) => {
     );
 }
 
-(() => {
+const disableOptions = (sourceSelector, targetSelector) => {
 
+    const source = jQuery(sourceSelector);
+    const target = document.querySelector(targetSelector);
+    if (! target) {
+        return;
+    }
+    const allOptions = Array.from(document.querySelectorAll('select[name="ppcp[disable_cards][]"] option'));
+    const replace = () => {
+        const validOptions = allOptions.filter(
+            (option) => {
+
+                return ! option.selected
+            }
+        );
+        const selectedValidOptions = validOptions.map(
+            (option) => {
+                option = option.cloneNode(true);
+                option.selected = target.querySelector('option[value="' + option.value + '"]') && target.querySelector('option[value="' + option.value + '"]').selected;
+                return option;
+            }
+        );
+        target.innerHTML = '';
+        selectedValidOptions.forEach(
+            (option) => {
+                target.append(option);
+            }
+        );
+    }
+
+    source.on('change',replace);
+    replace();
+}
+
+(() => {
+    disableOptions('select[name="ppcp[disable_cards][]"]', 'select[name="ppcp[card_icons][]"]');
     groupToggle(
         '#ppcp-button_enabled',
         [

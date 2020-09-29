@@ -28,7 +28,11 @@ class CreditCardRenderer {
         const gateWayBox = document.querySelector('.payment_box.payment_method_ppcp-credit-card-gateway');
         const oldDisplayStyle = gateWayBox.style.display;
         gateWayBox.style.display = 'block';
-        document.querySelector('#ppcp-hide-dcc').parentNode.removeChild(document.querySelector('#ppcp-hide-dcc'));
+
+        const hideDccGateway = document.querySelector('#ppcp-hide-dcc');
+        if (hideDccGateway) {
+            hideDccGateway.parentNode.removeChild(hideDccGateway);
+        }
 
         const cardNumberField = document.querySelector('#ppcp-credit-card-gateway-card-number');
 
