@@ -1,8 +1,11 @@
 class Spinner {
 
+    constructor() {
+        this.target = 'form.woocommerce-checkout';
+    }
     block() {
 
-        jQuery( '.woocommerce-checkout-payment, .woocommerce-checkout-review-order-table' ).block({
+        jQuery( this.target ).block({
             message: null,
             overlayCSS: {
                 background: '#fff',
@@ -13,7 +16,7 @@ class Spinner {
 
     unblock() {
 
-        jQuery( '.woocommerce-checkout-payment, .woocommerce-checkout-review-order-table' ).unblock();
+        jQuery( this.target ).unblock();
     }
 }
 
