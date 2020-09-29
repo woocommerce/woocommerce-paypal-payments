@@ -68,7 +68,17 @@ class RefundProcessor {
 				return false;
 			}
 
-			$capture = $order->purchase_units()[0]->payments()->captures()[0];
+			$purchase_units = $order->purchase_units();
+			if ( ! $purchase_units ) {
+				return false;
+			}
+
+			$captures = $purchase_units[0]->payments()->captures();
+			if ( ! $captures ) {
+				return false;
+			}
+
+			$capture = $captures[0];
 			$refund  = new Refund(
 				$capture,
 				$capture->invoice_id(),
