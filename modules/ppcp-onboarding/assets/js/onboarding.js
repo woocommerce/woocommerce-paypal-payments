@@ -57,12 +57,14 @@ const checkBoxOnClick = (event) => {
 const credentialToggle = (forProduction) => {
 
 	const sandboxClassSelectors = [
+		'#field-ppcp_disconnect_sandbox',
 		'#field-merchant_email_sandbox',
 		'#field-merchant_id_sandbox',
 		'#field-client_id_sandbox',
 		'#field-client_secret_sandbox',
 	];
 	const productionClassSelectors = [
+		'#field-ppcp_disconnect_production',
 		'#field-merchant_email_production',
 		'#field-merchant_id_production',
 		'#field-client_id_production',
@@ -87,6 +89,8 @@ const toggleSandboxProduction = (showProduction) => {
 		'#field-ppcp_onboarding_production',
 	];
 	const productionClassSelectors = [
+
+		'#field-ppcp_disconnect_production',
 		'#field-merchant_email_production',
 		'#field-merchant_id_production',
 		'#field-client_id_production',
@@ -98,6 +102,7 @@ const toggleSandboxProduction = (showProduction) => {
 		'#field-ppcp_onboarding_sandbox',
 	];
 	const sandboxClassSelectors = [
+		'#field-ppcp_disconnect_sandbox',
 		'#field-merchant_email_sandbox',
 		'#field-merchant_id_sandbox',
 		'#field-client_id_sandbox',
@@ -140,11 +145,43 @@ const toggleSandboxProduction = (showProduction) => {
 	)
 }
 
+const disconnect = (event) => {
+	event.preventDefault();
+	const fields = event.target.classList.contains('production') ? [
+		'#field-merchant_email_production input',
+		'#field-merchant_id_production input',
+		'#field-client_id_production input',
+		'#field-client_secret_production input',
+	] : [
+		'#field-merchant_email_sandbox input',
+		'#field-merchant_id_sandbox input',
+		'#field-client_id_sandbox input',
+		'#field-client_secret_sandbox input',
+	];
+
+	document.querySelectorAll(fields.join()).forEach(
+		(element) => {
+			element.value = '';
+		}
+	);
+
+	document.querySelector('.woocommerce-save-button').click();
+}
+
 (() => {
 	const sandboxSwitchElement = document.querySelector('#ppcp-sandbox_on');
 	if (sandboxSwitchElement) {
 		toggleSandboxProduction(! sandboxSwitchElement.checked);
 	}
+
+	document.querySelectorAll('.ppcp-disconnect').forEach(
+		(button) => {
+			button.addEventListener(
+				'click',
+				disconnect
+			);
+		}
+	);
 
 	document.querySelectorAll('#mainform input[type="checkbox"]').forEach(
 		(checkbox) => {

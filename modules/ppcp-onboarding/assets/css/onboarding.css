@@ -3,6 +3,8 @@
 }
 
 #field-merchant_email_production,
+#field-ppcp_disconnect_sandbox,
+#field-ppcp_disconnect_production,
 #field-merchant_id_production,
 #field-client_id_production,
 #field-client_secret_production,
@@ -13,6 +15,8 @@
 	display: none;
 }
 #field-merchant_email_production.show,
+#field-ppcp_disconnect_sandbox.show,
+#field-ppcp_disconnect_production.show,
 #field-merchant_id_production.show,
 #field-client_id_production.show,
 #field-client_secret_production.show,
@@ -51,6 +55,8 @@
 }
 
 
+#field-ppcp_disconnect_sandbox.onboarded,
+#field-ppcp_disconnect_production.onboarded,
 #field-merchant_email_sandbox.onboarded,
 #field-merchant_id_sandbox.onboarded,
 #field-client_id_sandbox.onboarded,
@@ -61,6 +67,8 @@
 #field-client_secret_production.onboarded {
 	display:table-row;
 }
+#field-ppcp_disconnect_sandbox.onboarded.hide,
+#field-ppcp_disconnect_production.onboarded.hide,
 #field-merchant_email_sandbox.onboarded.hide,
 #field-merchant_id_sandbox.onboarded.hide,
 #field-client_id_sandbox.onboarded.hide,
