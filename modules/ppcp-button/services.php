@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Button;
 
-use Dhii\Data\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\DisabledSmartButton;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButton;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
@@ -138,7 +137,15 @@ return array(
 		$session_handler = $container->get( 'session.handler' );
 		$three_d_secure  = $container->get( 'button.helper.three-d-secure' );
 		$settings        = $container->get( 'wcgateway.settings' );
-		return new ApproveOrderEndpoint( $request_data, $order_endpoint, $session_handler, $three_d_secure, $settings );
+		$dcc_applies     = $container->get( 'api.helpers.dccapplies' );
+		return new ApproveOrderEndpoint(
+			$request_data,
+			$order_endpoint,
+			$session_handler,
+			$three_d_secure,
+			$settings,
+			$dcc_applies
+		);
 	},
 	'button.endpoint.data-client-id'    => static function( $container ) : DataClientIdEndpoint {
 		$request_data   = $container->get( 'button.request-data' );
