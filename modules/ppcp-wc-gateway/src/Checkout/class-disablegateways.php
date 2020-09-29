@@ -60,16 +60,7 @@ class DisableGateways {
 		if ( ! isset( $methods[ PayPalGateway::ID ] ) && ! isset( $methods[ CreditCardGateway::ID ] ) ) {
 			return $methods;
 		}
-		if ( ! $this->settings->has( 'enabled' ) || ! $this->settings->get( 'enabled' ) ) {
-
-			unset( $methods[ PayPalGateway::ID ] );
-			unset( $methods[ CreditCardGateway::ID ] );
-			return $methods;
-		}
-		if (
-			! $this->settings->has( 'merchant_email' )
-			|| ! is_email( $this->settings->get( 'merchant_email' ) )
-		) {
+		if ( $this->disable_both_gateways() ) {
 			unset( $methods[ PayPalGateway::ID ] );
 			unset( $methods[ CreditCardGateway::ID ] );
 			return $methods;
@@ -91,6 +82,22 @@ class DisableGateways {
 			return array( CreditCardGateway::ID => $methods[ CreditCardGateway::ID ] );
 		}
 		return array( PayPalGateway::ID => $methods[ PayPalGateway::ID ] );
+	}
+
+	/**
+	 * Whether both gateways should be disabled or not.
+	 *
+	 * @return bool
+	 */
+	private function disable_both_gateways() : bool {
+		if ( ! $this->settings->has( 'enabled' ) || ! $this->settings->get( 'enabled' ) ) {
+			return true;
+		}
+		if ( ! $this->settings->has( 'merchant_email' ) || ! is_email( $this->settings->get( 'merchant_email' ) ) ) {
+			return true;
+		}
+
+		return false;
 	}
 
 	/**
