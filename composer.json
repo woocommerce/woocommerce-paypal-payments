@@ -19,7 +19,8 @@
         "dhii/containers": "v0.1.0-alpha1",
         "dhii/wp-containers": "v0.1.0-alpha1",
         "psr/log": "^1.1",
-        "ext-json": "*"
+        "ext-json": "*",
+        "ralouphie/getallheaders": "^3.0"
     },
     "require-dev": {
         "woocommerce/woocommerce-sniffs": "^0.1.0",
