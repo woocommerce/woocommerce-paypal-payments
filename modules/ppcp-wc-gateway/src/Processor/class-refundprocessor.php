@@ -73,7 +73,11 @@ class RefundProcessor {
 				return false;
 			}
 
-			$captures = $purchase_units[0]->payments()->captures();
+			$payments = $purchase_units[0]->payments();
+			if ( ! $payments ) {
+				return false;
+			}
+			$captures = $payments->captures();
 			if ( ! $captures ) {
 				return false;
 			}
