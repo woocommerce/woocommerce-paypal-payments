@@ -43,7 +43,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayeeRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WpOop\TransientCache\CachePoolFactory;
 
 return array(
 	'api.host'                              => function( $container ) : string {

@@ -177,6 +177,15 @@ class SmartButton implements SmartButtonInterface {
 				),
 				11
 			);
+
+			add_action(
+				'woocommerce_pay_order_after_submit',
+				array(
+					$this,
+					'dcc_renderer',
+				),
+				11
+			);
 		}
 		return true;
 	}
@@ -226,6 +235,14 @@ class SmartButton implements SmartButtonInterface {
 		if ( ! $not_enabled_on_checkout ) {
 			add_action(
 				'woocommerce_review_order_after_submit',
+				array(
+					$this,
+					'message_renderer',
+				),
+				11
+			);
+			add_action(
+				'woocommerce_pay_order_after_submit',
 				array(
 					$this,
 					'message_renderer',
@@ -294,6 +311,7 @@ class SmartButton implements SmartButtonInterface {
 		}
 
 		add_action( 'woocommerce_review_order_after_submit', array( $this, 'button_renderer' ), 10 );
+		add_action( 'woocommerce_pay_order_after_submit', array( $this, 'button_renderer' ), 10 );
 
 		return true;
 	}
@@ -321,7 +339,7 @@ class SmartButton implements SmartButtonInterface {
 			$load_script = true;
 		}
 
-		if ( is_checkout() && $this->can_render_dcc() ) {
+		if ( in_array( $this->context(), array( 'pay-now', 'checkout' ), true ) && $this->can_render_dcc() ) {
 			wp_enqueue_style(
 				'ppcp-hosted-fields',
 				$this->module_url . '/assets/css/hosted-fields.css',
@@ -474,7 +492,8 @@ class SmartButton implements SmartButtonInterface {
 	 */
 	private function can_render_dcc() : bool {
 
-		return $this->settings->has( 'dcc_enabled' ) && $this->settings->get( 'dcc_enabled' ) && $this->settings->has( 'client_id' ) && $this->settings->get( 'client_id' ) && $this->dcc_applies->for_country_currency();
+		$can_render = $this->settings->has( 'dcc_enabled' ) && $this->settings->get( 'dcc_enabled' ) && $this->settings->has( 'client_id' ) && $this->settings->get( 'client_id' ) && $this->dcc_applies->for_country_currency();
+		return $can_render;
 	}
 
 	/**
@@ -502,6 +521,8 @@ class SmartButton implements SmartButtonInterface {
 			esc_html__( 'Save your card', 'paypal-payments-for-woocommerce' )
 		) : '';
 
+		$label = 'checkout' === $this->context() ? __( 'Place order', 'paypal-payments-for-woocommerce' ) : __( 'Pay for order', 'paypal-payments-for-woocommerce' );
+
 		printf(
 			'<div id="%1$s" style="display:none;">
                         <button class="button alt">%6$s</button>
@@ -512,7 +533,7 @@ class SmartButton implements SmartButtonInterface {
 			esc_html__( 'CVV', 'paypal-payments-for-woocommerce' ),
             //phpcs:ignore
             $save_card,
-			esc_html__( 'Place order', 'paypal-payments-for-woocommerce' )
+			esc_html( $label )
 		);
 	}
 
@@ -555,6 +576,8 @@ class SmartButton implements SmartButtonInterface {
 	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException If a setting hasn't been found.
 	 */
 	private function localize_script(): array {
+		global $wp;
+
 		$this->request_data->enqueue_nonce_fix();
 		$localize = array(
 			'script_attributes' => $this->attributes(),
@@ -626,6 +649,7 @@ class SmartButton implements SmartButtonInterface {
 					),
 				),
 			),
+			'order_id'          => 'pay-now' === $this->context() ? absint( $wp->query_vars['order-pay'] ) : 0,
 		);
 
 		if ( $this->style_for_context( 'layout', 'mini-cart' ) !== 'horizontal' ) {
@@ -817,6 +841,9 @@ class SmartButton implements SmartButtonInterface {
 		}
 		if ( is_checkout() && ! $this->session_handler->order() ) {
 			$context = 'checkout';
+		}
+		if ( is_checkout_pay_page() ) {
+			$context = 'pay-now';
 		}
 		return $context;
 	}

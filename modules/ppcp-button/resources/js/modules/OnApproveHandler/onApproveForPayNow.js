@@ -12,7 +12,7 @@ const onApprove = (context, errorHandler) => {
             if (!data.success) {
                 errorHandler.genericError();
                 console.error(data);
-                if (typeof actions.restart !== 'undefined') {
+                if (typeof actions !== 'undefined' && typeof actions.restart !== 'undefined') {
                     return actions.restart();
                 }
                 throw new Error(data.data.message);

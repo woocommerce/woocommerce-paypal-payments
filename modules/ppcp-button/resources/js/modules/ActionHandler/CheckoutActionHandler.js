@@ -16,7 +16,8 @@ class CheckoutActionHandler {
 
 
             const errorHandler = this.errorHandler;
-            const formValues = jQuery('form.checkout').serialize();
+            const formSelector = this.config.context === 'checkout' ? 'form.checkout' : 'form#order_review';
+            const formValues = jQuery(formSelector).serialize();
 
             return fetch(this.config.ajax.create_order.endpoint, {
                 method: 'POST',
@@ -25,6 +26,7 @@ class CheckoutActionHandler {
                     payer,
                     bn_code:bnCode,
                     context:this.config.context,
+                    order_id:this.config.order_id,
                     form:formValues
                 })
             }).then(function (res) {
@@ -38,7 +40,7 @@ class CheckoutActionHandler {
                 input.setAttribute('type', 'hidden');
                 input.setAttribute('name', 'ppcp-resume-order');
                 input.setAttribute('value', data.data.purchase_units[0].custom_id);
-                document.querySelector('form.checkout').append(input);
+                document.querySelector(formSelector).append(input);
                 return data.data.id;
             });
         }
