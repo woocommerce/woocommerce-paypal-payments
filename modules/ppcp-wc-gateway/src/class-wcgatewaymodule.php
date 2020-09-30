@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
+use WooCommerce\PayPalCommerce\WcGateway\Admin\RenderAuthorizeAction;
 use WooCommerce\PayPalCommerce\WcGateway\Checkout\CheckoutPayPalAddressPreset;
 use WooCommerce\PayPalCommerce\WcGateway\Checkout\DisableGateways;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
@@ -257,12 +258,20 @@ class WcGatewayModule implements ModuleInterface {
 	private function register_order_functionality( ContainerInterface $container ) {
 		add_filter(
 			'woocommerce_order_actions',
-			static function ( $order_actions ): array {
-				$order_actions['ppcp_authorize_order'] = __(
-					'Capture authorized PayPal payment',
-					'paypal-payments-for-woocommerce'
-				);
-				return $order_actions;
+			static function ( $order_actions ) use ( $container ): array {
+				global $theorder;
+
+				if ( ! is_a( $theorder, \WC_Order::class ) ) {
+					return $order_actions;
+				}
+
+				$render = $container->get( 'wcgateway.admin.render-authorize-action' );
+				/**
+				 * Renders the authorize action in the select field.
+				 *
+				 * @var RenderAuthorizeAction $render
+				 */
+				return $render->render( $order_actions, $theorder );
 			}
 		);
 
