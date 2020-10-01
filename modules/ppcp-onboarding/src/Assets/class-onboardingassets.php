@@ -129,9 +129,6 @@ class OnboardingAssets {
 	 */
 	private function should_render_onboarding_script(): bool {
 		global $current_section;
-		if ( 'ppcp-gateway' !== $current_section ) {
-			return false;
-		}
-		return true;
+		return 'ppcp-gateway' === $current_section;
 	}
 }
