@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Onboarding;
 
-use Dhii\Data\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\ConnectBearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
@@ -19,7 +18,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Onboarding\Assets\OnboardingAssets;
 use WooCommerce\PayPalCommerce\Onboarding\Endpoint\LoginSellerEndpoint;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingRenderer;
-use WpOop\TransientCache\CachePoolFactory;
 
 return array(
 	'api.sandbox-host'                          => static function ( $container ): string {
@@ -27,16 +25,15 @@ return array(
 		$state       = $container->get( 'onboarding.state' );
 
 		/**
-		 * The Environment and State variables.
+		 * The State object.
 		 *
-		 * @var Environment $environment
 		 * @var State $state
 		 */
 		if ( $state->current_state() >= State::STATE_ONBOARDED ) {
-			return 'https://api.sandbox.paypal.com';
+			return PAYPAL_SANDBOX_API_URL;
 		}
 		// ToDo: Real connect.woocommerce.com sandbox link.
-		return 'http://connect-woo.wpcust.com';
+		return CONNECT_WOO_SANDBOX_URL;
 	},
 	'api.production-host'                       => static function ( $container ): string {
 
@@ -49,10 +46,9 @@ return array(
 		 * @var State $state
 		 */
 		if ( $state->current_state() >= State::STATE_ONBOARDED ) {
-			return 'https://api.paypal.com';
+			return PAYPAL_API_URL;
 		}
-		// ToDo: Real connect.woocommerce.com production link.
-		return 'http://connect-woo.wpcust.com';
+		return CONNECT_WOO_URL;
 	},
 	'api.host'                                  => static function ( $container ): string {
 		$environment = $container->get( 'onboarding.environment' );
@@ -67,10 +63,10 @@ return array(
 
 	},
 	'api.paypal-host-production'                => static function( $container ) : string {
-		return 'https://api.paypal.com';
+		return PAYPAL_API_URL;
 	},
 	'api.paypal-host-sandbox'                   => static function( $container ) : string {
-		return 'https://api.sandbox.paypal.com';
+		return PAYPAL_SANDBOX_API_URL;
 	},
 	'api.paypal-host'                           => function( $container ) : string {
 		$environment = $container->get( 'onboarding.environment' );
@@ -179,20 +175,17 @@ return array(
 	},
 	'api.endpoint.partner-referrals-sandbox'    => static function ( $container ) : PartnerReferrals {
 
-		// ToDo: Real connect sandbox URL.
-		$host_url = 'http://connect-woo.wpcust.com';
 		return new PartnerReferrals(
-			$host_url,
+			CONNECT_WOO_SANDBOX_URL,
 			new ConnectBearer(),
 			$container->get( 'api.repository.partner-referrals-data' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 	'api.endpoint.partner-referrals-production' => static function ( $container ) : PartnerReferrals {
-		// ToDo: Real connect production URL.
-		$host_url = 'http://connect-woo.wpcust.com';
+
 		return new PartnerReferrals(
-			$host_url,
+			CONNECT_WOO_SANDBOX_URL,
 			new ConnectBearer(),
 			$container->get( 'api.repository.partner-referrals-data' ),
 			$container->get( 'woocommerce.logger.woocommerce' )

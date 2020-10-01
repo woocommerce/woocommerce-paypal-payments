@@ -22,6 +22,13 @@ use Dhii\Container\DelegatingContainer;
 use Dhii\Container\ProxyContainer;
 use Dhii\Modular\Module\ModuleInterface;
 
+define( 'PAYPAL_API_URL', 'https://api.paypal.com' );
+define( 'PAYPAL_SANDBOX_API_URL', 'https://api.sandbox.paypal.com' );
+
+// @ToDo: Real connect.woocommerce.com production link.
+define( 'CONNECT_WOO_URL', 'http://connect-woo.wpcust.com' );
+define( 'CONNECT_WOO_SANDBOX_URL', 'http://connect-woo.wpcust.com' );
+
 ( function () {
 	include __DIR__ . '/vendor/autoload.php';
 
