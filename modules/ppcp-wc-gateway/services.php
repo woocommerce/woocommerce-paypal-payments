@@ -12,9 +12,11 @@ namespace WooCommerce\PayPalCommerce\WcGateway;
 use Dhii\Data\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
+use WooCommerce\PayPalCommerce\WcGateway\Admin\RenderAuthorizeAction;
 use WooCommerce\PayPalCommerce\WcGateway\Checkout\CheckoutPayPalAddressPreset;
 use WooCommerce\PayPalCommerce\WcGateway\Checkout\DisableGateways;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
@@ -136,6 +138,10 @@ return array(
 		$order_endpoint    = $container->get( 'api.endpoint.order' );
 		$payments_endpoint = $container->get( 'api.endpoint.payments' );
 		return new AuthorizedPaymentsProcessor( $order_endpoint, $payments_endpoint );
+	},
+	'wcgateway.admin.render-authorize-action'      => static function ( $container ): RenderAuthorizeAction {
+
+		return new RenderAuthorizeAction();
 	},
 	'wcgateway.admin.order-payment-status'         => static function ( $container ): PaymentStatusOrderDetail {
 		return new PaymentStatusOrderDetail();
@@ -1592,6 +1598,25 @@ return array(
 		if ( 'GB' === $country ) {
 			unset( $fields['disable_funding']['options']['card'] );
 		}
+
+		$dcc_applies = $container->get( 'api.helpers.dccapplies' );
+		/**
+		 * Depending on your store location, some credit cards can't be used.
+		 * Here, we filter them out.
+		 *
+		 * The DCC Applies object.
+		 *
+		 * @var DccApplies $dcc_applies
+		 */
+		$card_options = $fields['disable_cards']['options'];
+		foreach ( $card_options as $card => $label ) {
+			if ( $dcc_applies->can_process_card( $card ) ) {
+				continue;
+			}
+			unset( $card_options[ $card ] );
+		}
+		$fields['disable_cards']['options'] = $card_options;
+		$fields['card_icons']['options'] = $card_options;
 		return $fields;
 	},
 

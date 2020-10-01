@@ -12,7 +12,11 @@ const onApprove = (context, errorHandler, spinner) => {
         }).then((data)=>{
             spinner.unblock();
             if (!data.success) {
-                errorHandler.genericError();
+                if (data.data.code === 100) {
+                    errorHandler.message(data.data.message);
+                } else {
+                    errorHandler.genericError();
+                }
                 if (typeof actions.restart !== 'undefined') {
                     return actions.restart();
                 }

@@ -321,6 +321,14 @@ class SmartButton implements SmartButtonInterface {
 			$load_script = true;
 		}
 
+		if ( is_checkout() && $this->can_render_dcc() ) {
+			wp_enqueue_style(
+				'ppcp-hosted-fields',
+				$this->module_url . '/assets/css/hosted-fields.css',
+				array(),
+				1
+			);
+		}
 		if ( $load_script ) {
 			wp_enqueue_script(
 				'ppcp-smart-button',
@@ -459,17 +467,23 @@ class SmartButton implements SmartButtonInterface {
 	}
 
 	/**
-	 * Renders the HTML for the DCC fields.
+	 * Whether DCC fields can be rendered.
 	 *
-	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting hasnt been found.
+	 * @return bool
+	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting was not found.
+	 */
+	private function can_render_dcc() : bool {
+
+		return $this->settings->has( 'dcc_enabled' ) && $this->settings->get( 'dcc_enabled' ) && $this->settings->has( 'client_id' ) && $this->settings->get( 'client_id' ) && $this->dcc_applies->for_country_currency();
+	}
+
+	/**
+	 * Renders the HTML for the DCC fields.
 	 */
 	public function dcc_renderer() {
 
-		$id             = 'ppcp-hosted-fields';
-		$can_render_dcc = $this->dcc_applies->for_country_currency()
-				&& $this->settings->has( 'client_id' )
-				&& $this->settings->get( 'client_id' );
-		if ( ! $can_render_dcc ) {
+		$id = 'ppcp-hosted-fields';
+		if ( ! $this->can_render_dcc() ) {
 			return;
 		}
 
@@ -489,7 +503,7 @@ class SmartButton implements SmartButtonInterface {
 		) : '';
 
 		printf(
-			'<div id="%1$s">
+			'<div id="%1$s" style="display:none;">
                         <button class="button alt">%6$s</button>
                     </div><div id="payments-sdk__contingency-lightbox"></div><style id="ppcp-hide-dcc">.payment_method_ppcp-credit-card-gateway {display:none;}</style>',
 			esc_attr( $id ),
@@ -601,7 +615,12 @@ class SmartButton implements SmartButtonInterface {
 						'Unfortunatly, your credit card details are not valid.',
 						'paypal-payments-for-woocommerce'
 					),
+					'card_not_supported' => __(
+						'Unfortunatly, we do not support your credit card.',
+						'paypal-payments-for-woocommerce'
+					),
 				),
+				'valid_cards'       => $this->dcc_applies->valid_cards(),
 			),
 			'messages'          => $this->message_values(),
 			'labels'            => array(
@@ -684,9 +703,9 @@ class SmartButton implements SmartButtonInterface {
 		if ( 'GB' === $country ) {
 			$disable_funding[] = 'card';
 		}
-
 		$params['disable-funding'] = implode( ',', array_unique( $disable_funding ) );
-		$smart_button_url          = add_query_arg( $params, 'https://www.paypal.com/sdk/js' );
+
+		$smart_button_url = add_query_arg( $params, 'https://www.paypal.com/sdk/js' );
 		return $smart_button_url;
 	}
 
