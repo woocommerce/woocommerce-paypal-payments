@@ -13,9 +13,11 @@ namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class ApproveOrderEndpoint
@@ -54,24 +56,44 @@ class ApproveOrderEndpoint implements EndpointInterface {
 	private $threed_secure;
 
 	/**
+	 * The settings.
+	 *
+	 * @var Settings
+	 */
+	private $settings;
+
+	/**
+	 * The DCC applies object.
+	 *
+	 * @var DccApplies
+	 */
+	private $dcc_applies;
+
+	/**
 	 * ApproveOrderEndpoint constructor.
 	 *
 	 * @param RequestData    $request_data The request data helper.
 	 * @param OrderEndpoint  $order_endpoint The order endpoint.
 	 * @param SessionHandler $session_handler The session handler.
 	 * @param ThreeDSecure   $three_d_secure The 3d secure helper object.
+	 * @param Settings       $settings The settings.
+	 * @param DccApplies     $dcc_applies The DCC applies object.
 	 */
 	public function __construct(
 		RequestData $request_data,
 		OrderEndpoint $order_endpoint,
 		SessionHandler $session_handler,
-		ThreeDSecure $three_d_secure
+		ThreeDSecure $three_d_secure,
+		Settings $settings,
+		DccApplies $dcc_applies
 	) {
 
 		$this->request_data    = $request_data;
 		$this->api_endpoint    = $order_endpoint;
 		$this->session_handler = $session_handler;
 		$this->threed_secure   = $three_d_secure;
+		$this->settings        = $settings;
+		$this->dcc_applies     = $dcc_applies;
 	}
 
 	/**
@@ -110,6 +132,23 @@ class ApproveOrderEndpoint implements EndpointInterface {
 			}
 
 			if ( $order->payment_source() && $order->payment_source()->card() ) {
+				if ( $this->settings->has( 'disable_cards' ) ) {
+					$disabled_cards = (array) $this->settings->get( 'disable_cards' );
+					$card           = strtolower( $order->payment_source()->card()->brand() );
+					if ( 'master_card' === $card ) {
+						$card = 'mastercard';
+					}
+
+					if ( ! $this->dcc_applies->can_process_card( $card ) || in_array( $card, $disabled_cards, true ) ) {
+						throw new RuntimeException(
+							__(
+								'Unfortunately, we do not accept this card.',
+								'paypal-payments-for-woocommerce'
+							),
+							100
+						);
+					}
+				}
 				$proceed = $this->threed_secure->proceed_with_order( $order );
 				if ( ThreeDSecure::RETRY === $proceed ) {
 					throw new RuntimeException(

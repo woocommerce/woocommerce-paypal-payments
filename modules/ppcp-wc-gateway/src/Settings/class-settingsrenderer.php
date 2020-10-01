@@ -427,19 +427,6 @@ class SettingsRenderer {
 						'paypal-payments-for-woocommerce'
 					);
 					?>
-
-					<a
-							href="https://developer.paypal.com/docs/platforms/checkout/reference/country-availability-advanced-cards/"
-							target="_blank"
-							rel="noreferrer noopener"
-					>
-						<?php
-						esc_html_e(
-							'Click here to see, in which countries this option is currently available.',
-							'paypal-payments-for-woocommerce'
-						);
-						?>
-					</a>
 				</p>
 			</td>
 		</tr>

@@ -5,6 +5,7 @@ class CreditCardRenderer {
     constructor(defaultConfig, errorHandler) {
         this.defaultConfig = defaultConfig;
         this.errorHandler = errorHandler;
+        this.cardValid = false;
     }
 
     render(wrapper, contextConfig) {
@@ -96,7 +97,7 @@ class CreditCardRenderer {
                     return state.fields[key].isValid;
                 });
 
-                if (formValid) {
+                if (formValid && this.cardValid) {
 
                     let vault = document.querySelector(wrapper + ' .ppcp-credit-card-vault') ?
                         document.querySelector(wrapper + ' .ppcp-credit-card-vault').checked : false;
@@ -110,12 +111,21 @@ class CreditCardRenderer {
                         return contextConfig.onApprove(payload);
                     });
                 } else {
-                    this.errorHandler.message(this.defaultConfig.hosted_fields.labels.fields_not_valid);
+                    const message = ! this.cardValid ? this.defaultConfig.hosted_fields.labels.card_not_supported : this.defaultConfig.hosted_fields.labels.fields_not_valid;
+                    this.errorHandler.message(message);
                 }
             }
             hostedFields.on('inputSubmitRequest', function () {
                 submitEvent(null);
             });
+            hostedFields.on('cardTypeChange', (event) => {
+                if ( ! event.cards.length ) {
+                    this.cardValid = false;
+                    return;
+                }
+                const validCards = this.defaultConfig.hosted_fields.valid_cards;
+                this.cardValid = validCards.indexOf(event.cards[0].type) !== -1;
+            })
             document.querySelector(wrapper + ' button').addEventListener(
                 'click',
                 submitEvent
