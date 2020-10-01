@@ -15,7 +15,7 @@ const groupToggle = (selector, group) => {
             if (! event.target.checked) {
                 group.forEach( (elementToHide) => {
                     document.querySelector(elementToHide).style.display = 'none';
-                })
+                });
                 return;
             }
 
@@ -24,8 +24,7 @@ const groupToggle = (selector, group) => {
             })
         }
     );
-
-}
+};
 
 const groupToggleSelect = (selector, group) => {
     const toggleElement = document.querySelector(selector);
@@ -43,7 +42,7 @@ const groupToggleSelect = (selector, group) => {
             return;
         }
         domElement.style.display = 'none';
-    })
+    });
     toggleElement.addEventListener(
         'change',
         (event) => {
@@ -57,7 +56,7 @@ const groupToggleSelect = (selector, group) => {
             })
         }
     );
-}
+};
 
 const disableOptions = (sourceSelector, targetSelector) => {
 
@@ -87,11 +86,11 @@ const disableOptions = (sourceSelector, targetSelector) => {
                 target.append(option);
             }
         );
-    }
+    };
 
     source.on('change',replace);
     replace();
-}
+};
 
 (() => {
     disableOptions('select[name="ppcp[disable_cards][]"]', 'select[name="ppcp[card_icons][]"]');
@@ -258,4 +257,4 @@ const disableOptions = (sourceSelector, targetSelector) => {
             }
         ]
     );
-})()
+})();

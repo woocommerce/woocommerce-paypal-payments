@@ -1,5 +1,5 @@
 function onboardingCallback(authCode, sharedId) {
-	const sandboxSwitchElement = document.querySelector('#ppcp-sandbox_on')
+	const sandboxSwitchElement = document.querySelector('#ppcp-sandbox_on');
 	fetch(
 		PayPalCommerceGatewayOnboarding.endpoint,
 		{
@@ -47,7 +47,7 @@ const checkBoxOnClick = (event) => {
 		event.target.checked = value;
 		},1
 	);
-}
+};
 
 /**
  * Toggles the credential input fields.
@@ -75,7 +75,7 @@ const credentialToggle = (forProduction) => {
 	document.querySelectorAll(selectors.join()).forEach(
 		(element) => {element.classList.toggle('show')}
 	)
-}
+};
 
 /**
  * Toggles the visibility of the sandbox/production input fields.
@@ -112,38 +112,38 @@ const toggleSandboxProduction = (showProduction) => {
 	if (showProduction) {
 		document.querySelectorAll(productionDisplaySelectors.join()).forEach(
 			(element) => {element.style.display = ''}
-		)
+		);
 		document.querySelectorAll(sandboxDisplaySelectors.join()).forEach(
 			(element) => {element.style.display = 'none'}
-		)
+		);
 		document.querySelectorAll(productionClassSelectors.join()).forEach(
 			(element) => {element.classList.remove('hide')}
-		)
+		);
 		document.querySelectorAll(sandboxClassSelectors.join()).forEach(
 			(element) => {
-				element.classList.remove('show')
-				element.classList.add('hide')
+				element.classList.remove('show');
+				element.classList.add('hide');
 			}
-		)
+		);
 		return;
 	}
 	document.querySelectorAll(productionDisplaySelectors.join()).forEach(
 		(element) => {element.style.display = 'none'}
-	)
+	);
 	document.querySelectorAll(sandboxDisplaySelectors.join()).forEach(
 		(element) => {element.style.display = ''}
-	)
+	);
 
 	document.querySelectorAll(sandboxClassSelectors.join()).forEach(
 		(element) => {element.classList.remove('hide')}
-	)
+	);
 	document.querySelectorAll(productionClassSelectors.join()).forEach(
 		(element) => {
-			element.classList.remove('show')
-			element.classList.add('hide')
+			element.classList.remove('show');
+			element.classList.add('hide');
 		}
 	)
-}
+};
 
 const disconnect = (event) => {
 	event.preventDefault();
@@ -166,7 +166,7 @@ const disconnect = (event) => {
 	);
 
 	document.querySelector('.woocommerce-save-button').click();
-}
+};
 
 (() => {
 	const sandboxSwitchElement = document.querySelector('#ppcp-sandbox_on');
