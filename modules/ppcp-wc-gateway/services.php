@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
+use WooCommerce\PayPalCommerce\WcGateway\Admin\RenderAuthorizeAction;
 use WooCommerce\PayPalCommerce\WcGateway\Checkout\CheckoutPayPalAddressPreset;
 use WooCommerce\PayPalCommerce\WcGateway\Checkout\DisableGateways;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
@@ -136,6 +137,10 @@ return array(
 		$order_endpoint    = $container->get( 'api.endpoint.order' );
 		$payments_endpoint = $container->get( 'api.endpoint.payments' );
 		return new AuthorizedPaymentsProcessor( $order_endpoint, $payments_endpoint );
+	},
+	'wcgateway.admin.render-authorize-action'      => static function ( $container ): RenderAuthorizeAction {
+
+		return new RenderAuthorizeAction();
 	},
 	'wcgateway.admin.order-payment-status'         => static function ( $container ): PaymentStatusOrderDetail {
 		return new PaymentStatusOrderDetail();
