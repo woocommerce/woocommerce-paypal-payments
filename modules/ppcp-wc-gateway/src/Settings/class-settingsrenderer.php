@@ -224,6 +224,21 @@ class SettingsRenderer {
 	 */
 	public function render() {
 
+		//phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( isset( $_GET['ppcp-onboarding-error'] ) ) :
+			?>
+			<div class="notice notice-error">
+				<p><strong>
+				<?php
+					esc_html_e(
+						'We could not properly fetch the necessary credentials. Please try again.',
+						'paypal-payments-for-woocommerce'
+					);
+				?>
+				</strong></p>
+			</div>
+			<?php
+		endif;
 	    //phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$is_dcc = isset( $_GET[ SectionsRenderer::KEY ] ) && CreditCardGateway::ID === sanitize_text_field( wp_unslash( $_GET[ SectionsRenderer::KEY ] ) );
 		$nonce  = wp_create_nonce( SettingsListener::NONCE );

@@ -108,6 +108,12 @@ class SettingsListener {
 		$this->settings->set( 'merchant_id', $merchant_id );
 		$this->settings->set( 'merchant_email', $merchant_email );
 
+		if ( ! $this->settings->has( 'client_id' ) || ! $this->settings->get( 'client_id' ) ) {
+			$redirect_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-onboarding-error=1' );
+			wp_safe_redirect( $redirect_url, 302 );
+			exit;
+		}
+
 		$is_sandbox = $this->settings->has( 'sandbox_on' ) && $this->settings->get( 'sandbox_on' );
 		if ( $is_sandbox ) {
 			$this->settings->set( 'merchant_id_sandbox', $merchant_id );
