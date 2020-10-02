@@ -638,7 +638,12 @@ class SmartButton implements SmartButtonInterface {
 						'Unfortunatly, your credit card details are not valid.',
 						'paypal-payments-for-woocommerce'
 					),
+					'card_not_supported' => __(
+						'Unfortunatly, we do not support your credit card.',
+						'paypal-payments-for-woocommerce'
+					),
 				),
+				'valid_cards'       => $this->dcc_applies->valid_cards(),
 			),
 			'messages'          => $this->message_values(),
 			'labels'            => array(
@@ -722,9 +727,9 @@ class SmartButton implements SmartButtonInterface {
 		if ( 'GB' === $country ) {
 			$disable_funding[] = 'card';
 		}
-
 		$params['disable-funding'] = implode( ',', array_unique( $disable_funding ) );
-		$smart_button_url          = add_query_arg( $params, 'https://www.paypal.com/sdk/js' );
+
+		$smart_button_url = add_query_arg( $params, 'https://www.paypal.com/sdk/js' );
 		return $smart_button_url;
 	}
 

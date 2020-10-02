@@ -1,5 +1,6 @@
-const onApprove = (context, errorHandler) => {
+const onApprove = (context, errorHandler, spinner) => {
     return (data, actions) => {
+        spinner.block();
         return fetch(context.config.ajax.approve_order.endpoint, {
             method: 'POST',
             body: JSON.stringify({
@@ -9,9 +10,13 @@ const onApprove = (context, errorHandler) => {
         }).then((res)=>{
             return res.json();
         }).then((data)=>{
+            spinner.unblock();
             if (!data.success) {
-                errorHandler.genericError();
-                console.error(data);
+                if (data.data.code === 100) {
+                    errorHandler.message(data.data.message);
+                } else {
+                    errorHandler.genericError();
+                }
                 if (typeof actions !== 'undefined' && typeof actions.restart !== 'undefined') {
                     return actions.restart();
                 }

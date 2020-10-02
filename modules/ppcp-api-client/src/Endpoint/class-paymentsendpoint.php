@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Refund;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\AuthorizationFactory;
@@ -187,5 +188,64 @@ class PaymentsEndpoint {
 
 		$authorization = $this->authorizations_factory->from_paypal_response( $json );
 		return $authorization;
+	}
+
+	/**
+	 * Refunds a payment.
+	 *
+	 * @param Refund $refund The refund to be processed.
+	 *
+	 * @return bool
+	 * @throws RuntimeException If the request fails.
+	 */
+	public function refund( Refund $refund ) : bool {
+		$bearer = $this->bearer->bearer();
+		$url    = trailingslashit( $this->host ) . 'v2/payments/captures/' . $refund->for_capture()->id() . '/refund';
+		$args   = array(
+			'method'  => 'POST',
+			'headers' => array(
+				'Authorization' => 'Bearer ' . $bearer->token(),
+				'Content-Type'  => 'application/json',
+				'Prefer'        => 'return=representation',
+			),
+			'body'    => wp_json_encode( $refund->to_array() ),
+		);
+
+		$response = $this->request( $url, $args );
+		$json     = json_decode( $response['body'] );
+
+		if ( is_wp_error( $response ) ) {
+			$error = new RuntimeException(
+				__( 'Could not refund payment.', 'paypal-payments-for-woocommerce' )
+			);
+			$this->logger->log(
+				'warning',
+				$error->getMessage(),
+				array(
+					'args'     => $args,
+					'response' => $response,
+				)
+			);
+			throw $error;
+		}
+
+		$status_code = (int) wp_remote_retrieve_response_code( $response );
+		if ( 201 !== $status_code ) {
+			$error = new PayPalApiException(
+				$json,
+				$status_code
+			);
+			$this->logger->log(
+				'warning',
+				$error->getMessage(),
+				array(
+					'args'     => $args,
+					'response' => $response,
+				)
+			);
+			throw $error;
+		}
+
+		return true;
 	}
 }

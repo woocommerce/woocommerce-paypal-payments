@@ -3,12 +3,14 @@ import {payerData} from "../Helper/PayerData";
 
 class CheckoutActionHandler {
 
-    constructor(config, errorHandler) {
+    constructor(config, errorHandler, spinner) {
         this.config = config;
         this.errorHandler = errorHandler;
+        this.spinner = spinner;
     }
 
     configuration() {
+        const spinner = this.spinner;
         const createOrder = (data, actions) => {
             const payer = payerData();
             const bnCode = typeof this.config.bn_codes[this.config.context] !== 'undefined' ?
@@ -33,6 +35,7 @@ class CheckoutActionHandler {
                 return res.json();
             }).then(function (data) {
                 if (!data.success) {
+                    spinner.unblock();
                     errorHandler.message(data.data.message, true);
                     return;
                 }
@@ -46,7 +49,7 @@ class CheckoutActionHandler {
         }
         return {
             createOrder,
-            onApprove:onApprove(this, this.errorHandler),
+            onApprove:onApprove(this, this.errorHandler, this.spinner),
             onError: (error) => {
                 this.errorHandler.genericError();
             }
