@@ -168,6 +168,12 @@ class SettingsListener {
 			$this->cache->delete( PayPalBearer::CACHE_KEY );
 		}
 
+		if ( isset( $_GET['ppcp-onboarding-error'] ) ) {
+			$url = remove_query_arg( 'ppcp-onboarding-error' );
+			wp_safe_redirect( $url, 302 );
+			exit;
+		}
+
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 	}
