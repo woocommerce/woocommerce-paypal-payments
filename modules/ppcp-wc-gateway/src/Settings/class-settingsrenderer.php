@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
+use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
+use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Onboarding\State;
@@ -88,6 +90,30 @@ class SettingsRenderer {
 		$this->dcc_applies        = $dcc_applies;
 		$this->messages_apply     = $messages_apply;
 		$this->dcc_product_status = $dcc_product_status;
+	}
+
+	/**
+	 * Returns the notice, when onboarding failed.
+	 *
+	 * @return array
+	 */
+	public function messages() : array {
+	    //phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( ! isset( $_GET['ppcp-onboarding-error'] ) ) {
+			return array();
+		}
+
+		$messages = array(
+			new Message(
+				__(
+					'We could not complete the onboarding process. Some features, such as card processing, will not be available. To fix this, please try again.',
+					'paypal-payments-for-woocommerce'
+				),
+				'error',
+				false
+			),
+		);
+		return $messages;
 	}
 
 	/**
@@ -224,21 +250,6 @@ class SettingsRenderer {
 	 */
 	public function render() {
 
-		//phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		if ( isset( $_GET['ppcp-onboarding-error'] ) ) :
-			?>
-			<div class="notice notice-error">
-				<p><strong>
-				<?php
-					esc_html_e(
-						'We could not properly fetch the necessary credentials. Please try again.',
-						'paypal-payments-for-woocommerce'
-					);
-				?>
-				</strong></p>
-			</div>
-			<?php
-		endif;
 	    //phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$is_dcc = isset( $_GET[ SectionsRenderer::KEY ] ) && CreditCardGateway::ID === sanitize_text_field( wp_unslash( $_GET[ SectionsRenderer::KEY ] ) );
 		$nonce  = wp_create_nonce( SettingsListener::NONCE );
