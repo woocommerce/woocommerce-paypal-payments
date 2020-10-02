@@ -96,10 +96,6 @@ class OnboardingAssets {
 			array(
 				'endpoint' => home_url( \WC_AJAX::get_endpoint( LoginSellerEndpoint::ENDPOINT ) ),
 				'nonce'    => wp_create_nonce( $this->login_seller_endpoint::nonce() ),
-				'error'    => __(
-					'We could not properly onboard you. Please reload and try again.',
-					'paypal-payments-for-woocommerce'
-				),
 			)
 		);
 

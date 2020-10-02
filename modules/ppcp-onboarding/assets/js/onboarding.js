@@ -16,16 +16,7 @@ function onboardingCallback(authCode, sharedId) {
 				}
 			)
 		}
-	)
-		.then( response => response.json() )
-		.then(
-			(data) => {
-				if (data.success) {
-					return;
-				}
-				alert( PayPalCommerceGatewayOnboarding.error )
-			}
-		);
+	);
 }
 
 /**
