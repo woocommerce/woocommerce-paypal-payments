@@ -10,10 +10,12 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use Psr\Container\ContainerInterface;
@@ -73,6 +75,13 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	protected $session_handler;
 
 	/**
+	 * The Refund Processor.
+	 *
+	 * @var RefundProcessor
+	 */
+	private $refund_processor;
+
+	/**
 	 * PayPalGateway constructor.
 	 *
 	 * @param SettingsRenderer            $settings_renderer The Settings Renderer.
@@ -81,6 +90,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @param AuthorizeOrderActionNotice  $notice The Order Action Notice object.
 	 * @param ContainerInterface          $config The settings.
 	 * @param SessionHandler              $session_handler The Session Handler.
+	 * @param RefundProcessor             $refund_processor The Refund Processor.
+	 * @param State                       $state The state.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
@@ -88,7 +99,9 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		AuthorizedPaymentsProcessor $authorized_payments_processor,
 		AuthorizeOrderActionNotice $notice,
 		ContainerInterface $config,
-		SessionHandler $session_handler
+		SessionHandler $session_handler,
+		RefundProcessor $refund_processor,
+		State $state
 	) {
 
 		$this->id                  = self::ID;
@@ -98,6 +111,11 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->settings_renderer   = $settings_renderer;
 		$this->config              = $config;
 		$this->session_handler     = $session_handler;
+		$this->refund_processor    = $refund_processor;
+
+		if ( $state->current_state() === State::STATE_ONBOARDED ) {
+			$this->supports = array( 'refunds' );
+		}
 		if (
 			defined( 'PPCP_FLAG_SUBSCRIPTION' )
 			&& PPCP_FLAG_SUBSCRIPTION
@@ -105,6 +123,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			&& $this->config->get( 'vault_enabled' )
 		) {
 			$this->supports = array(
+				'refunds',
 				'products',
 				'subscriptions',
 				'subscription_cancellation',
@@ -300,4 +319,23 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			&& self::ID === sanitize_text_field( wp_unslash( $_GET['section'] ) );
 	}
 	// phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+	/**
+	 * Process refund.
+	 *
+	 * If the gateway declares 'refunds' support, this will allow it to refund.
+	 * a passed in amount.
+	 *
+	 * @param  int    $order_id Order ID.
+	 * @param  float  $amount Refund amount.
+	 * @param  string $reason Refund reason.
+	 * @return boolean True or false based on success, or a WP_Error object.
+	 */
+	public function process_refund( $order_id, $amount = null, $reason = '' ) {
+		$order = wc_get_order( $order_id );
+		if ( ! is_a( $order, \WC_Order::class ) ) {
+			return false;
+		}
+		return $this->refund_processor->process( $order, (float) $amount, (string) $reason );
+	}
 }

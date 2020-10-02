@@ -23,6 +23,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\AddressFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\AmountFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ApplicationContextFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\AuthorizationFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\CaptureFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ItemFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PatchCollectionFactory;
@@ -214,6 +215,11 @@ return array(
 	'api.factory.webhook'                   => static function ( $container ): WebhookFactory {
 		return new WebhookFactory();
 	},
+	'api.factory.capture'                   => static function ( $container ): CaptureFactory {
+
+		$amount_factory   = $container->get( 'api.factory.amount' );
+		return new CaptureFactory( $amount_factory );
+	},
 	'api.factory.purchase-unit'             => static function ( $container ): PurchaseUnitFactory {
 
 		$amount_factory   = $container->get( 'api.factory.amount' );
@@ -277,7 +283,8 @@ return array(
 	},
 	'api.factory.payments'                  => static function ( $container ): PaymentsFactory {
 		$authorizations_factory = $container->get( 'api.factory.authorization' );
-		return new PaymentsFactory( $authorizations_factory );
+		$capture_factory        = $container->get( 'api.factory.capture' );
+		return new PaymentsFactory( $authorizations_factory, $capture_factory );
 	},
 	'api.factory.authorization'             => static function ( $container ): AuthorizationFactory {
 		return new AuthorizationFactory();
