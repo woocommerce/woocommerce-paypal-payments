@@ -12,7 +12,10 @@ class CreditCardRenderer {
     render(wrapper, contextConfig) {
 
         if (
-            this.defaultConfig.context !== 'checkout'
+            (
+                this.defaultConfig.context !== 'checkout'
+                && this.defaultConfig.context !== 'pay-now'
+            )
             || wrapper === null
             || document.querySelector(wrapper) === null
         ) {

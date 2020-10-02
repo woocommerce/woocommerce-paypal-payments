@@ -10,9 +10,11 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentMethod;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CartRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
@@ -39,7 +41,14 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 *
 	 * @var CartRepository
 	 */
-	private $repository;
+	private $cart_repository;
+
+	/**
+	 * The PurchaseUnit factory.
+	 *
+	 * @var PurchaseUnitFactory
+	 */
+	private $purchase_unit_factory;
 
 	/**
 	 * The order endpoint.
@@ -86,17 +95,19 @@ class CreateOrderEndpoint implements EndpointInterface {
 	/**
 	 * CreateOrderEndpoint constructor.
 	 *
-	 * @param RequestData       $request_data The RequestData object.
-	 * @param CartRepository    $repository The CartRepository object.
-	 * @param OrderEndpoint     $order_endpoint The OrderEndpoint object.
-	 * @param PayerFactory      $payer_factory The PayerFactory object.
-	 * @param SessionHandler    $session_handler The SessionHandler object.
-	 * @param Settings          $settings The Settings object.
-	 * @param EarlyOrderHandler $early_order_handler The EarlyOrderHandler object.
+	 * @param RequestData         $request_data The RequestData object.
+	 * @param CartRepository      $cart_repository The CartRepository object.
+	 * @param PurchaseUnitFactory $purchase_unit_factory The Purchaseunit factory.
+	 * @param OrderEndpoint       $order_endpoint The OrderEndpoint object.
+	 * @param PayerFactory        $payer_factory The PayerFactory object.
+	 * @param SessionHandler      $session_handler The SessionHandler object.
+	 * @param Settings            $settings The Settings object.
+	 * @param EarlyOrderHandler   $early_order_handler The EarlyOrderHandler object.
 	 */
 	public function __construct(
 		RequestData $request_data,
-		CartRepository $repository,
+		CartRepository $cart_repository,
+		PurchaseUnitFactory $purchase_unit_factory,
 		OrderEndpoint $order_endpoint,
 		PayerFactory $payer_factory,
 		SessionHandler $session_handler,
@@ -104,13 +115,14 @@ class CreateOrderEndpoint implements EndpointInterface {
 		EarlyOrderHandler $early_order_handler
 	) {
 
-		$this->request_data        = $request_data;
-		$this->repository          = $repository;
-		$this->api_endpoint        = $order_endpoint;
-		$this->payer_factory       = $payer_factory;
-		$this->session_handler     = $session_handler;
-		$this->settings            = $settings;
-		$this->early_order_handler = $early_order_handler;
+		$this->request_data          = $request_data;
+		$this->cart_repository       = $cart_repository;
+		$this->purchase_unit_factory = $purchase_unit_factory;
+		$this->api_endpoint          = $order_endpoint;
+		$this->payer_factory         = $payer_factory;
+		$this->session_handler       = $session_handler;
+		$this->settings              = $settings;
+		$this->early_order_handler   = $early_order_handler;
 	}
 
 	/**
@@ -130,37 +142,37 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 */
 	public function handle_request(): bool {
 		try {
-			$data           = $this->request_data->read_request( $this->nonce() );
-			$purchase_units = $this->repository->all();
-			$payer          = null;
-			if ( isset( $data['payer'] ) && $data['payer'] ) {
-				if ( isset( $data['payer']['phone']['phone_number']['national_number'] ) ) {
-					// make sure the phone number contains only numbers and is max 14. chars long.
-					$number = $data['payer']['phone']['phone_number']['national_number'];
-					$number = preg_replace( '/[^0-9]/', '', $number );
-					$number = substr( $number, 0, 14 );
-					$data['payer']['phone']['phone_number']['national_number'] = $number;
+			$data     = $this->request_data->read_request( $this->nonce() );
+			$wc_order = null;
+			if ( 'pay-now' === $data['context'] ) {
+				$wc_order = wc_get_order( (int) $data['order_id'] );
+				if ( ! is_a( $wc_order, \WC_Order::class ) ) {
+					wp_send_json_error(
+						array(
+							'name'    => 'order-not-found',
+							'message' => __( 'Order not found', 'paypal-payments-for-woocommerce' ),
+							'code'    => 0,
+							'details' => array(),
+						)
+					);
 				}
-				$payer = $this->payer_factory->from_paypal_response( json_decode( wp_json_encode( $data['payer'] ) ) );
+				$purchase_units = array( $this->purchase_unit_factory->from_wc_order( $wc_order ) );
+			} else {
+				$purchase_units = $this->cart_repository->all();
 			}
-			$bn_code = isset( $data['bn_code'] ) ? (string) $data['bn_code'] : '';
-			if ( $bn_code ) {
-				$this->session_handler->replace_bn_code( $bn_code );
-				$this->api_endpoint->with_bn_code( $bn_code );
-			}
-			$payee_preferred = $this->settings->has( 'payee_preferred' )
-			&& $this->settings->get( 'payee_preferred' ) ?
-				PaymentMethod::PAYEE_PREFERRED_IMMEDIATE_PAYMENT_REQUIRED
-				: PaymentMethod::PAYEE_PREFERRED_UNRESTRICTED;
-			$payment_method  = new PaymentMethod( $payee_preferred );
-			$order           = $this->api_endpoint->create(
+
+			$this->set_bn_code( $data );
+			$order = $this->api_endpoint->create(
 				$purchase_units,
-				$payer,
+				$this->payer( $data, $wc_order ),
 				null,
-				$payment_method
+				$this->payment_method()
 			);
 			if ( 'checkout' === $data['context'] ) {
-					$this->validateForm( $data['form'], $order );
+					$this->validate_checkout_form( $data['form'], $order );
+			}
+			if ( 'pay-now' === $data['context'] ) {
+				$this->validate_paynow_form( $data['form'] );
 			}
 			wp_send_json_success( $order->to_array() );
 			return true;
@@ -178,6 +190,64 @@ class CreateOrderEndpoint implements EndpointInterface {
 	}
 
 	/**
+	 * Returns the Payer entity based on the request data.
+	 *
+	 * @param array     $data The request data.
+	 * @param \WC_Order $wc_order The order.
+	 *
+	 * @return Payer|null
+	 */
+	private function payer( array $data, \WC_Order $wc_order = null ) {
+		if ( 'pay-now' === $data['context'] ) {
+			$payer = $this->payer_factory->from_wc_order( $wc_order );
+			return $payer;
+		}
+
+		$payer = null;
+		if ( isset( $data['payer'] ) && $data['payer'] ) {
+			if ( isset( $data['payer']['phone']['phone_number']['national_number'] ) ) {
+				// make sure the phone number contains only numbers and is max 14. chars long.
+				$number = $data['payer']['phone']['phone_number']['national_number'];
+				$number = preg_replace( '/[^0-9]/', '', $number );
+				$number = substr( $number, 0, 14 );
+				$data['payer']['phone']['phone_number']['national_number'] = $number;
+			}
+			$payer = $this->payer_factory->from_paypal_response( json_decode( wp_json_encode( $data['payer'] ) ) );
+		}
+		return $payer;
+	}
+
+
+	/**
+	 * Sets the BN Code for the following request.
+	 *
+	 * @param array $data The request data.
+	 */
+	private function set_bn_code( array $data ) {
+		$bn_code = isset( $data['bn_code'] ) ? (string) $data['bn_code'] : '';
+		if ( ! $bn_code ) {
+			return;
+		}
+
+		$this->session_handler->replace_bn_code( $bn_code );
+		$this->api_endpoint->with_bn_code( $bn_code );
+	}
+
+	/**
+	 * Returns the PaymentMethod object for the order.
+	 *
+	 * @return PaymentMethod
+	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException In case a setting would not be found.
+	 */
+	private function payment_method() : PaymentMethod {
+		$payee_preferred = $this->settings->has( 'payee_preferred' ) && $this->settings->get( 'payee_preferred' ) ?
+			PaymentMethod::PAYEE_PREFERRED_IMMEDIATE_PAYMENT_REQUIRED
+			: PaymentMethod::PAYEE_PREFERRED_UNRESTRICTED;
+		$payment_method  = new PaymentMethod( $payee_preferred );
+		return $payment_method;
+	}
+
+	/**
 	 * Prepare the Request parameter and process the checkout form and validate it.
 	 *
 	 * @param string $form_values The values of the form.
@@ -185,7 +255,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 *
 	 * @throws \Exception On Error.
 	 */
-	private function validateForm( string $form_values, Order $order ) {
+	private function validate_checkout_form( string $form_values, Order $order ) {
 		$this->order   = $order;
 		$parsed_values = wp_parse_args( $form_values );
 		$_POST         = $parsed_values;
@@ -202,6 +272,21 @@ class CreateOrderEndpoint implements EndpointInterface {
 		);
 		$checkout = \WC()->checkout();
 		$checkout->process_checkout();
+	}
+
+	/**
+	 * Checks whether the terms input field is checked.
+	 *
+	 * @param string $form_values The form values.
+	 * @throws \RuntimeException When field is not checked.
+	 */
+	private function validate_paynow_form( string $form_values ) {
+		$parsed_values = wp_parse_args( $form_values );
+		if ( ! isset( $parsed_values['terms'] ) ) {
+			throw new \RuntimeException(
+				__( 'Please read and accept the terms and conditions to proceed with your order.', 'paypal-payments-for-woocommerce' )
+			);
+		}
 	}
 
 	/**

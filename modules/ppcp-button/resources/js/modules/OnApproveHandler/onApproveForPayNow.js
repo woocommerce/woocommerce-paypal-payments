@@ -17,7 +17,7 @@ const onApprove = (context, errorHandler, spinner) => {
                 } else {
                     errorHandler.genericError();
                 }
-                if (typeof actions.restart !== 'undefined') {
+                if (typeof actions !== 'undefined' && typeof actions.restart !== 'undefined') {
                     return actions.restart();
                 }
                 throw new Error(data.data.message);

@@ -2,6 +2,7 @@ import MiniCartBootstap from './modules/ContextBootstrap/MiniCartBootstap';
 import SingleProductBootstap from './modules/ContextBootstrap/SingleProductBootstap';
 import CartBootstrap from './modules/ContextBootstrap/CartBootstap';
 import CheckoutBootstap from './modules/ContextBootstrap/CheckoutBootstap';
+import PayNowBootstrap from "./modules/ContextBootstrap/PayNowBootstrap";
 import Renderer from './modules/Renderer/Renderer';
 import ErrorHandler from './modules/ErrorHandler';
 import CreditCardRenderer from "./modules/Renderer/CreditCardRenderer";
@@ -53,6 +54,15 @@ const bootstrap = () => {
         );
 
         checkoutBootstap.init();
+    }
+
+    if (context === 'pay-now' ) {
+        const payNowBootstrap = new PayNowBootstrap(
+            PayPalCommerceGateway,
+            renderer,
+            messageRenderer
+        );
+        payNowBootstrap.init();
     }
 
     if (context !== 'checkout') {

@@ -106,16 +106,18 @@ return array(
 		return new ChangeCartEndpoint( $cart, $shipping, $request_data, $repository, $data_store );
 	},
 	'button.endpoint.create-order'      => static function ( $container ): CreateOrderEndpoint {
-		$request_data       = $container->get( 'button.request-data' );
-		$repository        = $container->get( 'api.repository.cart' );
-		$order_endpoint         = $container->get( 'api.endpoint.order' );
-		$payer_factory      = $container->get( 'api.factory.payer' );
-		$session_handler    = $container->get( 'session.handler' );
-		$settings          = $container->get( 'wcgateway.settings' );
-		$early_order_handler = $container->get( 'button.helper.early-order-handler' );
+		$request_data          = $container->get( 'button.request-data' );
+		$cart_repository       = $container->get( 'api.repository.cart' );
+		$purchase_unit_factory = $container->get( 'api.factory.purchase-unit' );
+		$order_endpoint        = $container->get( 'api.endpoint.order' );
+		$payer_factory         = $container->get( 'api.factory.payer' );
+		$session_handler       = $container->get( 'session.handler' );
+		$settings              = $container->get( 'wcgateway.settings' );
+		$early_order_handler   = $container->get( 'button.helper.early-order-handler' );
 		return new CreateOrderEndpoint(
 			$request_data,
-			$repository,
+			$cart_repository,
+			$purchase_unit_factory,
 			$order_endpoint,
 			$payer_factory,
 			$session_handler,
