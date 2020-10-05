@@ -6,7 +6,8 @@ module.exports = {
     mode: isProduction ? 'production' : 'development',
     target: 'web',
     entry: {
-        button: path.resolve('./resources/js/button.js')
+        button: path.resolve('./resources/js/button.js'),
+        "hosted-fields": path.resolve('./resources/css/hosted-fields.scss')
     },
     output: {
         path: path.resolve(__dirname, 'assets/'),

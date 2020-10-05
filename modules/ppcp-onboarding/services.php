@@ -41,9 +41,9 @@ return array(
 
 		// ToDo: Real connect.woocommerce.com.
 		if ( $environment->current_environment_is( Environment::SANDBOX ) ) {
-			return 'http://connect-woo.wpcust.com';
+			return 'http://connect-woo.wpcust.com/ppcsandbox';
 		}
-		return 'http://connect-woo.wpcust.com';
+		return 'http://connect-woo.wpcust.com/ppc';
 
 	},
 	'api.paypal-host'                  => function( $container ) : string {

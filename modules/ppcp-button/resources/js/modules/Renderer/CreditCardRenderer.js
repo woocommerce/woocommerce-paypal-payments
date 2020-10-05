@@ -2,15 +2,20 @@ import dccInputFactory from "../Helper/DccInputFactory";
 
 class CreditCardRenderer {
 
-    constructor(defaultConfig, errorHandler) {
+    constructor(defaultConfig, errorHandler, spinner) {
         this.defaultConfig = defaultConfig;
         this.errorHandler = errorHandler;
+        this.spinner = spinner;
+        this.cardValid = false;
     }
 
     render(wrapper, contextConfig) {
 
         if (
-            this.defaultConfig.context !== 'checkout'
+            (
+                this.defaultConfig.context !== 'checkout'
+                && this.defaultConfig.context !== 'pay-now'
+            )
             || wrapper === null
             || document.querySelector(wrapper) === null
         ) {
@@ -28,7 +33,11 @@ class CreditCardRenderer {
         const gateWayBox = document.querySelector('.payment_box.payment_method_ppcp-credit-card-gateway');
         const oldDisplayStyle = gateWayBox.style.display;
         gateWayBox.style.display = 'block';
-        document.querySelector('#ppcp-hide-dcc').parentNode.removeChild(document.querySelector('#ppcp-hide-dcc'));
+
+        const hideDccGateway = document.querySelector('#ppcp-hide-dcc');
+        if (hideDccGateway) {
+            hideDccGateway.parentNode.removeChild(hideDccGateway);
+        }
 
         const cardNumberField = document.querySelector('#ppcp-credit-card-gateway-card-number');
 
@@ -83,6 +92,7 @@ class CreditCardRenderer {
             }
         }).then(hostedFields => {
             const submitEvent = (event) => {
+                this.spinner.block();
                 if (event) {
                     event.preventDefault();
                 }
@@ -92,7 +102,7 @@ class CreditCardRenderer {
                     return state.fields[key].isValid;
                 });
 
-                if (formValid) {
+                if (formValid && this.cardValid) {
 
                     let vault = document.querySelector(wrapper + ' .ppcp-credit-card-vault') ?
                         document.querySelector(wrapper + ' .ppcp-credit-card-vault').checked : false;
@@ -103,15 +113,26 @@ class CreditCardRenderer {
                         vault
                     }).then((payload) => {
                         payload.orderID = payload.orderId;
+                        this.spinner.unblock();
                         return contextConfig.onApprove(payload);
                     });
                 } else {
-                    this.errorHandler.message(this.defaultConfig.hosted_fields.labels.fields_not_valid);
+                    this.spinner.unblock();
+                    const message = ! this.cardValid ? this.defaultConfig.hosted_fields.labels.card_not_supported : this.defaultConfig.hosted_fields.labels.fields_not_valid;
+                    this.errorHandler.message(message);
                 }
             }
             hostedFields.on('inputSubmitRequest', function () {
                 submitEvent(null);
             });
+            hostedFields.on('cardTypeChange', (event) => {
+                if ( ! event.cards.length ) {
+                    this.cardValid = false;
+                    return;
+                }
+                const validCards = this.defaultConfig.hosted_fields.valid_cards;
+                this.cardValid = validCards.indexOf(event.cards[0].type) !== -1;
+            })
             document.querySelector(wrapper + ' button').addEventListener(
                 'click',
                 submitEvent
