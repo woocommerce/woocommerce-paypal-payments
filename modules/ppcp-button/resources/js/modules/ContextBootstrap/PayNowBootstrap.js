@@ -1,12 +1,11 @@
 import ErrorHandler from '../ErrorHandler';
 import CheckoutActionHandler from '../ActionHandler/CheckoutActionHandler';
 
-class CheckoutBootstap {
-    constructor(gateway, renderer, messages, spinner) {
+class PayNowBootstrap {
+    constructor(gateway, renderer, messages) {
         this.gateway = gateway;
         this.renderer = renderer;
-        this.messages = messages;
-        this.spinner = spinner;
+        this.messages = messages
     }
 
     init() {
@@ -18,9 +17,9 @@ class CheckoutBootstap {
         });
 
         jQuery(document.body).
-            on('updated_checkout payment_method_selected', () => {
-                this.switchBetweenPayPalandOrderButton();
-            });
+        on('updated_checkout payment_method_selected', () => {
+            this.switchBetweenPayPalandOrderButton();
+        });
         this.switchBetweenPayPalandOrderButton();
     }
 
@@ -42,7 +41,6 @@ class CheckoutBootstap {
         const actionHandler = new CheckoutActionHandler(
             PayPalCommerceGateway,
             new ErrorHandler(this.gateway.labels.error.generic),
-            this.spinner
         );
 
         this.renderer.render(
@@ -79,4 +77,4 @@ class CheckoutBootstap {
     }
 }
 
-export default CheckoutBootstap;
+export default PayNowBootstrap;

@@ -22,12 +22,33 @@ class Payments {
 	private $authorizations;
 
 	/**
+	 * The Captures.
+	 *
+	 * @var Capture[]
+	 */
+	private $captures;
+
+	/**
 	 * Payments constructor.
 	 *
-	 * @param Authorization ...$authorizations The Authorizations.
+	 * @param array $authorizations The Authorizations.
+	 * @param array $captures The Captures.
 	 */
-	public function __construct( Authorization ...$authorizations ) {
+	public function __construct( array $authorizations, array $captures ) {
+		foreach ( $authorizations as $key => $authorization ) {
+			if ( is_a( $authorization, Authorization::class ) ) {
+				continue;
+			}
+			unset( $authorizations[ $key ] );
+		}
+		foreach ( $captures as $key => $capture ) {
+			if ( is_a( $capture, Capture::class ) ) {
+				continue;
+			}
+			unset( $captures[ $key ] );
+		}
 		$this->authorizations = $authorizations;
+		$this->captures       = $captures;
 	}
 
 	/**
@@ -43,6 +64,12 @@ class Payments {
 				},
 				$this->authorizations()
 			),
+			'captures'       => array_map(
+				static function ( Capture $capture ): array {
+					return $capture->to_array();
+				},
+				$this->captures()
+			),
 		);
 	}
 
@@ -53,5 +80,14 @@ class Payments {
 	 **/
 	public function authorizations(): array {
 		return $this->authorizations;
+	}
+
+	/**
+	 * Returns the Captures.
+	 *
+	 * @return Capture[]
+	 **/
+	public function captures(): array {
+		return $this->captures;
 	}
 }

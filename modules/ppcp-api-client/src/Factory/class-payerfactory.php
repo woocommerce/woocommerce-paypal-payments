@@ -37,6 +37,42 @@ class PayerFactory {
 	}
 
 	/**
+	 * Returns a Payer entity from a WooCommerce order.
+	 *
+	 * @param \WC_Order $wc_order The WooCommerce order.
+	 *
+	 * @return Payer
+	 */
+	public function from_wc_order( \WC_Order $wc_order ): Payer {
+		$payer_id  = '';
+		$birthdate = null;
+
+		$phone = null;
+		if ( $wc_order->get_billing_phone() ) {
+			// make sure the phone number contains only numbers and is max 14. chars long.
+			$national_number = $wc_order->get_billing_phone();
+			$national_number = preg_replace( '/[^0-9]/', '', $national_number );
+			$national_number = substr( $national_number, 0, 14 );
+
+			$phone = new PhoneWithType(
+				'HOME',
+				new Phone( $national_number )
+			);
+		}
+		return new Payer(
+			new PayerName(
+				$wc_order->get_billing_first_name(),
+				$wc_order->get_billing_last_name()
+			),
+			$wc_order->get_billing_email(),
+			$payer_id,
+			$this->address_factory->from_wc_order( $wc_order, 'billing' ),
+			$birthdate,
+			$phone
+		);
+	}
+
+	/**
 	 * Returns a Payer object based off a WooCommerce customer.
 	 *
 	 * @param \WC_Customer $customer The WooCommerce customer.

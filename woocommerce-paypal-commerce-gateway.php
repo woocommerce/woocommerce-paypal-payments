@@ -26,8 +26,8 @@ define( 'PAYPAL_API_URL', 'https://api.paypal.com' );
 define( 'PAYPAL_SANDBOX_API_URL', 'https://api.sandbox.paypal.com' );
 
 // @ToDo: Real connect.woocommerce.com production link.
-define( 'CONNECT_WOO_URL', 'http://connect-woo.wpcust.com' );
-define( 'CONNECT_WOO_SANDBOX_URL', 'http://connect-woo.wpcust.com' );
+define( 'CONNECT_WOO_URL', 'http://connect-woo.wpcust.com/ppc' );
+define( 'CONNECT_WOO_SANDBOX_URL', 'http://connect-woo.wpcust.com/ppcsandbox' );
 
 ( function () {
 	include __DIR__ . '/vendor/autoload.php';

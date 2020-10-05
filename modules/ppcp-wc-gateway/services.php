@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway;
 use Dhii\Data\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
@@ -26,6 +27,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
@@ -37,9 +39,11 @@ return array(
 		$order_processor     = $container->get( 'wcgateway.order-processor' );
 		$settings_renderer   = $container->get( 'wcgateway.settings.render' );
 		$authorized_payments = $container->get( 'wcgateway.processor.authorized-payments' );
-		$notice             = $container->get( 'wcgateway.notice.authorize-order-action' );
-		$settings           = $container->get( 'wcgateway.settings' );
+		$notice              = $container->get( 'wcgateway.notice.authorize-order-action' );
+		$settings            = $container->get( 'wcgateway.settings' );
 		$session_handler     = $container->get( 'session.handler' );
+		$refund_processor    = $container->get( 'wcgateway.processor.refunds' );
+		$state               = $container->get( 'onboarding.state' );
 
 		return new PayPalGateway(
 			$settings_renderer,
@@ -47,7 +51,9 @@ return array(
 			$authorized_payments,
 			$notice,
 			$settings,
-			$session_handler
+			$session_handler,
+			$refund_processor,
+			$state
 		);
 	},
 	'wcgateway.credit-card-gateway'                => static function ( $container ): CreditCardGateway {
@@ -58,6 +64,8 @@ return array(
 		$settings            = $container->get( 'wcgateway.settings' );
 		$module_url          = $container->get( 'wcgateway.url' );
 		$session_handler     = $container->get( 'session.handler' );
+		$refund_processor    = $container->get( 'wcgateway.processor.refunds' );
+		$state               = $container->get( 'onboarding.state' );
 		return new CreditCardGateway(
 			$settings_renderer,
 			$order_processor,
@@ -65,7 +73,9 @@ return array(
 			$notice,
 			$settings,
 			$module_url,
-			$session_handler
+			$session_handler,
+			$refund_processor,
+			$state
 		);
 	},
 	'wcgateway.disabler'                           => static function ( $container ): DisableGateways {
@@ -132,6 +142,11 @@ return array(
 			$authorized_payments_processor,
 			$settings
 		);
+	},
+	'wcgateway.processor.refunds'                  => static function ( $container ): RefundProcessor {
+		$order_endpoint    = $container->get( 'api.endpoint.order' );
+		$payments_endpoint    = $container->get( 'api.endpoint.payments' );
+		return new RefundProcessor( $order_endpoint, $payments_endpoint );
 	},
 	'wcgateway.processor.authorized-payments'      => static function ( $container ): AuthorizedPaymentsProcessor {
 		$order_endpoint    = $container->get( 'api.endpoint.order' );
@@ -1714,6 +1729,25 @@ return array(
 		if ( 'GB' === $country ) {
 			unset( $fields['disable_funding']['options']['card'] );
 		}
+
+		$dcc_applies = $container->get( 'api.helpers.dccapplies' );
+		/**
+		 * Depending on your store location, some credit cards can't be used.
+		 * Here, we filter them out.
+		 *
+		 * The DCC Applies object.
+		 *
+		 * @var DccApplies $dcc_applies
+		 */
+		$card_options = $fields['disable_cards']['options'];
+		foreach ( $card_options as $card => $label ) {
+			if ( $dcc_applies->can_process_card( $card ) ) {
+				continue;
+			}
+			unset( $card_options[ $card ] );
+		}
+		$fields['disable_cards']['options'] = $card_options;
+		$fields['card_icons']['options'] = $card_options;
 		return $fields;
 	},
 
