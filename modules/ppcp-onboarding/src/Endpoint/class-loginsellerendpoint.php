@@ -111,8 +111,8 @@ class LoginSellerEndpoint implements EndpointInterface {
 	public function handle_request(): bool {
 
 		try {
-			$data        = $this->request_data->read_request( $this->nonce() );
-			$is_sandbox  = isset( $data['env'] ) && 'sandbox' === $data['env'];
+			$data       = $this->request_data->read_request( $this->nonce() );
+			$is_sandbox = isset( $data['env'] ) && 'sandbox' === $data['env'];
 			$this->settings->set( 'sandbox_on', $is_sandbox );
 			$this->settings->persist();
 			$endpoint    = $is_sandbox ? $this->login_seller_sandbox : $this->login_seller_production;
