@@ -113,6 +113,8 @@ class LoginSellerEndpoint implements EndpointInterface {
 		try {
 			$data        = $this->request_data->read_request( $this->nonce() );
 			$is_sandbox  = isset( $data['env'] ) && 'sandbox' === $data['env'];
+			$this->settings->set( 'sandbox_on', $is_sandbox );
+			$this->settings->persist();
 			$endpoint    = $is_sandbox ? $this->login_seller_sandbox : $this->login_seller_production;
 			$credentials = $endpoint->credentials_for(
 				$data['sharedId'],
@@ -128,7 +130,6 @@ class LoginSellerEndpoint implements EndpointInterface {
 			}
 			$this->settings->set( 'client_secret', $credentials->client_secret );
 			$this->settings->set( 'client_id', $credentials->client_id );
-			$this->settings->set( 'sandbox_on', $is_sandbox );
 			$this->settings->persist();
 			if ( $this->cache->has( PayPalBearer::CACHE_KEY ) ) {
 				$this->cache->delete( PayPalBearer::CACHE_KEY );
