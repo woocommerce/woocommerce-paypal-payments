@@ -860,18 +860,23 @@ class SmartButton implements SmartButtonInterface {
 	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException If a setting has not been found.
 	 */
 	private function dcc_is_enabled(): bool {
+		if ( ! is_checkout() ) {
+			return false;
+		}
 		if ( ! $this->dcc_applies->for_country_currency() ) {
 			return false;
 		}
 		$keys = array(
-			'dcc_enabled' => 'is_checkout',
+			'client_id',
+			'client_secret',
+			'dcc_enabled',
 		);
-		foreach ( $keys as $key => $callback ) {
-			if ( $this->settings->has( $key ) && $this->settings->get( $key ) && $callback() ) {
-				return true;
+		foreach ( $keys as $key ) {
+			if ( ! $this->settings->has( $key ) || ! $this->settings->get( $key ) ) {
+				return false;
 			}
 		}
-		return false;
+		return true;
 	}
 
 	/**

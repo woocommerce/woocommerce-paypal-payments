@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
+use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
+use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Onboarding\State;
@@ -88,6 +90,34 @@ class SettingsRenderer {
 		$this->dcc_applies        = $dcc_applies;
 		$this->messages_apply     = $messages_apply;
 		$this->dcc_product_status = $dcc_product_status;
+	}
+
+	/**
+	 * Returns the notice, when onboarding failed.
+	 *
+	 * @return array
+	 */
+	public function messages() : array {
+
+        //phpcs:disable WordPress.Security.NonceVerification.Recommended
+        //phpcs:disable WordPress.Security.NonceVerification.Missing
+		if ( ! isset( $_GET['ppcp-onboarding-error'] ) || ! empty( $_POST ) ) {
+			return array();
+		}
+		//phpcs:enable WordPress.Security.NonceVerification.Recommended
+		//phpcs:enable WordPress.Security.NonceVerification.Missing
+
+		$messages = array(
+			new Message(
+				__(
+					'We could not complete the onboarding process. Some features, such as card processing, will not be available. To fix this, please try again.',
+					'paypal-payments-for-woocommerce'
+				),
+				'error',
+				false
+			),
+		);
+		return $messages;
 	}
 
 	/**
@@ -224,9 +254,12 @@ class SettingsRenderer {
 	 */
 	public function render() {
 
-	    //phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		//phpcs:disable WordPress.Security.NonceVerification.Recommended
+		//phpcs:disable WordPress.Security.NonceVerification.Missing
 		$is_dcc = isset( $_GET[ SectionsRenderer::KEY ] ) && CreditCardGateway::ID === sanitize_text_field( wp_unslash( $_GET[ SectionsRenderer::KEY ] ) );
-		$nonce  = wp_create_nonce( SettingsListener::NONCE );
+		//phpcs:enable WordPress.Security.NonceVerification.Recommended
+		//phpcs:enable WordPress.Security.NonceVerification.Missing
+		$nonce = wp_create_nonce( SettingsListener::NONCE );
 		?>
 		<input type="hidden" name="ppcp-nonce" value="<?php echo esc_attr( $nonce ); ?>">
 		<?php
@@ -264,9 +297,9 @@ class SettingsRenderer {
 			$config['id'] = $id;
 			$th_td        = 'ppcp-heading' !== $config['type'] ? 'td' : 'th';
 			$colspan      = 'ppcp-heading' !== $config['type'] ? 1 : 2;
-
+			$classes      = isset( $config['classes'] ) ? $config['classes'] : array();
 			?>
-		<tr valign="top" id="<?php echo esc_attr( 'field-' . $field ); ?>">
+		<tr valign="top" id="<?php echo esc_attr( 'field-' . $field ); ?>" class="<?php echo esc_attr( implode( ' ', $classes ) ); ?>">
 			<?php if ( 'ppcp-heading' !== $config['type'] ) : ?>
 			<th>
 				<label

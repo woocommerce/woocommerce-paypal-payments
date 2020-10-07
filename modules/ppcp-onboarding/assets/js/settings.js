@@ -15,7 +15,7 @@ const groupToggle = (selector, group) => {
             if (! event.target.checked) {
                 group.forEach( (elementToHide) => {
                     document.querySelector(elementToHide).style.display = 'none';
-                })
+                });
                 return;
             }
 
@@ -24,8 +24,7 @@ const groupToggle = (selector, group) => {
             })
         }
     );
-
-}
+};
 
 const groupToggleSelect = (selector, group) => {
     const toggleElement = document.querySelector(selector);
@@ -43,7 +42,7 @@ const groupToggleSelect = (selector, group) => {
             return;
         }
         domElement.style.display = 'none';
-    })
+    });
     toggleElement.addEventListener(
         'change',
         (event) => {
@@ -57,7 +56,7 @@ const groupToggleSelect = (selector, group) => {
             })
         }
     );
-}
+};
 
 const disableOptions = (sourceSelector, targetSelector) => {
 
@@ -87,28 +86,14 @@ const disableOptions = (sourceSelector, targetSelector) => {
                 target.append(option);
             }
         );
-    }
+    };
 
     source.on('change',replace);
     replace();
-}
+};
 
 (() => {
-    const manualInputToggle = document.querySelector('#field-toggle_manual_input');
-    if (manualInputToggle) {
-        manualInputToggle.addEventListener(
-            'click',
-            (event) => {
-                event.preventDefault();
-                document.querySelector('#field-toggle_manual_input').classList.toggle('show');
-                document.querySelector('#field-merchant_id').classList.toggle('show');
-                document.querySelector('#field-client_id').classList.toggle('show');
-                document.querySelector('#field-client_secret').classList.toggle('show');
-            }
-        )
-    }
     disableOptions('select[name="ppcp[disable_cards][]"]', 'select[name="ppcp[card_icons][]"]');
-
     groupToggle(
         '#ppcp-button_enabled',
         [
@@ -272,4 +257,4 @@ const disableOptions = (sourceSelector, targetSelector) => {
             }
         ]
     );
-})()
+})();

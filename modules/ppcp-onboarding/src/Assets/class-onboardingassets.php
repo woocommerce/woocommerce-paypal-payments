@@ -96,10 +96,6 @@ class OnboardingAssets {
 			array(
 				'endpoint' => home_url( \WC_AJAX::get_endpoint( LoginSellerEndpoint::ENDPOINT ) ),
 				'nonce'    => wp_create_nonce( $this->login_seller_endpoint::nonce() ),
-				'error'    => __(
-					'We could not properly onboard you. Please reload and try again.',
-					'paypal-payments-for-woocommerce'
-				),
 			)
 		);
 
@@ -129,11 +125,6 @@ class OnboardingAssets {
 	 */
 	private function should_render_onboarding_script(): bool {
 		global $current_section;
-		if ( 'ppcp-gateway' !== $current_section ) {
-			return false;
-		}
-
-		$should_render = $this->state->current_state() === State::STATE_PROGRESSIVE;
-		return $should_render;
+		return 'ppcp-gateway' === $current_section;
 	}
 }

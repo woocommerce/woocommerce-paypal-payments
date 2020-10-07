@@ -97,13 +97,32 @@ class SettingsListener {
 		 * phpcs:disable WordPress.Security.NonceVerification.Missing
 		 * phpcs:disable WordPress.Security.NonceVerification.Recommended
 		 */
-		if ( isset( $_GET['merchantIdInPayPal'] ) ) {
-			$this->settings->set( 'merchant_id', sanitize_text_field( wp_unslash( $_GET['merchantIdInPayPal'] ) ) );
-			$this->settings->persist();
+		if ( ! isset( $_GET['merchantIdInPayPal'] ) || ! isset( $_GET['merchantId'] ) ) {
+			return;
 		}
+		$merchant_id    = sanitize_text_field( wp_unslash( $_GET['merchantIdInPayPal'] ) );
+		$merchant_email = sanitize_text_field( wp_unslash( $_GET['merchantId'] ) );
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
+		$this->settings->set( 'merchant_id', $merchant_id );
+		$this->settings->set( 'merchant_email', $merchant_email );
+
+		$is_sandbox = $this->settings->has( 'sandbox_on' ) && $this->settings->get( 'sandbox_on' );
+		if ( $is_sandbox ) {
+			$this->settings->set( 'merchant_id_sandbox', $merchant_id );
+			$this->settings->set( 'merchant_email_sandbox', $merchant_email );
+		} else {
+			$this->settings->set( 'merchant_id_production', $merchant_id );
+			$this->settings->set( 'merchant_email_production', $merchant_email );
+		}
+		$this->settings->persist();
+		$redirect_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' );
+		if ( ! $this->settings->has( 'client_id' ) || ! $this->settings->get( 'client_id' ) ) {
+			$redirect_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-onboarding-error=1' );
+		}
+		wp_safe_redirect( $redirect_url, 302 );
+		exit;
 	}
 
 	/**
@@ -118,34 +137,28 @@ class SettingsListener {
 		}
 
 		/**
-		 * Nonce verification has been done in is_valid_update_request().
+		 * Sanitization is done in retrieve_settings_from_raw_data().
+		 *
+		 * phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		 *
+		 * Nonce verification is done in is_valid_update_request().
 		 *
 		 * phpcs:disable WordPress.Security.NonceVerification.Missing
 		 * phpcs:disable WordPress.Security.NonceVerification.Recommended
 		 */
-		if ( isset( $_POST['save'] ) && sanitize_text_field( wp_unslash( $_POST['save'] ) ) === 'reset' ) {
-			$this->settings->reset();
-			$this->settings->persist();
-			$this->webhook_registrar->unregister();
-			if ( $this->cache->has( PayPalBearer::CACHE_KEY ) ) {
-				$this->cache->delete( PayPalBearer::CACHE_KEY );
-			}
-			return;
-		}
-
-		/**
-		 * Sanitization is done in retrieve_settings_from_raw_data().
-		 *
-		 * phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		 */
 		$raw_data = ( isset( $_POST['ppcp'] ) ) ? (array) wp_unslash( $_POST['ppcp'] ) : array();
 		// phpcs:enable phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$settings = $this->retrieve_settings_from_raw_data( $raw_data );
+
+		$settings = $this->read_active_credentials_from_settings( $settings );
+
 		if ( ! isset( $_GET[ SectionsRenderer::KEY ] ) || PayPalGateway::ID === $_GET[ SectionsRenderer::KEY ] ) {
 			$settings['enabled'] = isset( $_POST['woocommerce_ppcp-gateway_enabled'] )
 				&& 1 === absint( $_POST['woocommerce_ppcp-gateway_enabled'] );
 			$this->maybe_register_webhooks( $settings );
 		}
+		// phpcs:enable phpcs:disable WordPress.Security.NonceVerification.Missing
+		// phpcs:enable phpcs:disable WordPress.Security.NonceVerification.Missing
 
 		foreach ( $settings as $id => $value ) {
 			$this->settings->set( $id, $value );
@@ -155,8 +168,34 @@ class SettingsListener {
 			$this->cache->delete( PayPalBearer::CACHE_KEY );
 		}
 
+		if ( isset( $_GET['ppcp-onboarding-error'] ) ) {
+			$url = remove_query_arg( 'ppcp-onboarding-error' );
+			wp_safe_redirect( $url, 302 );
+			exit;
+		}
+
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+	}
+
+	/**
+	 * The actual used client credentials are stored in 'client_secret', 'client_id', 'merchant_id' and 'merchant_email'.
+	 * This method populates those fields depending on the sandbox status.
+	 *
+	 * @param array $settings The settings array.
+	 *
+	 * @return array
+	 */
+	private function read_active_credentials_from_settings( array $settings ) : array {
+		if ( ! isset( $settings['client_id_sandbox'] ) && ! isset( $settings['client_id_production'] ) ) {
+			return $settings;
+		}
+		$is_sandbox                 = isset( $settings['sandbox_on'] ) && $settings['sandbox_on'];
+		$settings['client_id']      = $is_sandbox ? $settings['client_id_sandbox'] : $settings['client_id_production'];
+		$settings['client_secret']  = $is_sandbox ? $settings['client_secret_sandbox'] : $settings['client_secret_production'];
+		$settings['merchant_id']    = $is_sandbox ? $settings['merchant_id_sandbox'] : $settings['merchant_id_production'];
+		$settings['merchant_email'] = $is_sandbox ? $settings['merchant_email_sandbox'] : $settings['merchant_email_production'];
+		return $settings;
 	}
 
 	/**
