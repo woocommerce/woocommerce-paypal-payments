@@ -2,14 +2,28 @@
 	display: none;
 }
 
-#field-client_secret,
-#field-client_id,
-#field-merchant_id{
+#field-merchant_email_production,
+#field-ppcp_disconnect_sandbox,
+#field-ppcp_disconnect_production,
+#field-merchant_id_production,
+#field-client_id_production,
+#field-client_secret_production,
+#field-merchant_email_sandbox,
+#field-merchant_id_sandbox,
+#field-client_id_sandbox,
+#field-client_secret_sandbox{
 	display: none;
 }
-#field-client_secret.show,
-#field-client_id.show,
-#field-merchant_id.show {
+#field-merchant_email_production.show,
+#field-ppcp_disconnect_sandbox.show,
+#field-ppcp_disconnect_production.show,
+#field-merchant_id_production.show,
+#field-client_id_production.show,
+#field-client_secret_production.show,
+#field-merchant_email_sandbox.show,
+#field-merchant_id_sandbox.show,
+#field-client_id_sandbox.show,
+#field-client_secret_sandbox.show {
 	display: table-row;
 }
 
@@ -21,7 +35,8 @@
 	display: unset;
 }
 
-#field-toggle_manual_input button {
+#field-production_toggle_manual_input button,
+#field-sandbox_toggle_manual_input button {
 	color: #0073aa;
 	transition-property: border, background, color;
 	transition-duration: .05s;
@@ -32,4 +47,35 @@
 	cursor: pointer;
 	margin: 0;
 	padding: 0;
+}
+
+#field-sandbox_toggle_manual_input.onboarded,
+#field-production_toggle_manual_input.onboarded {
+	display: none;
+}
+
+
+#field-ppcp_disconnect_sandbox.onboarded,
+#field-ppcp_disconnect_production.onboarded,
+#field-merchant_email_sandbox.onboarded,
+#field-merchant_id_sandbox.onboarded,
+#field-client_id_sandbox.onboarded,
+#field-client_secret_sandbox.onboarded,
+#field-merchant_email_production.onboarded,
+#field-merchant_id_production.onboarded,
+#field-client_id_production.onboarded,
+#field-client_secret_production.onboarded {
+	display:table-row;
+}
+#field-ppcp_disconnect_sandbox.onboarded.hide,
+#field-ppcp_disconnect_production.onboarded.hide,
+#field-merchant_email_sandbox.onboarded.hide,
+#field-merchant_id_sandbox.onboarded.hide,
+#field-client_id_sandbox.onboarded.hide,
+#field-client_secret_sandbox.onboarded.hide,
+#field-merchant_email_production.onboarded.hide,
+#field-merchant_id_production.onboarded.hide,
+#field-client_id_production.onboarded.hide,
+#field-client_secret_production.onboarded.hide {
+	display:none;
 }

@@ -72,17 +72,6 @@ class Settings implements ContainerInterface {
 		update_option( self::KEY, $this->settings );
 	}
 
-	/**
-	 * Resets the onboarding.
-	 *
-	 * @return bool
-	 */
-	public function reset(): bool {
-		$this->load();
-		$this->settings = array();
-
-		return true;
-	}
 
 	/**
 	 * Loads the settings.

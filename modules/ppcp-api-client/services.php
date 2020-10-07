@@ -47,10 +47,10 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 return array(
 	'api.host'                              => function( $container ) : string {
-		return 'https://api.paypal.com';
+		return PAYPAL_API_URL;
 	},
 	'api.paypal-host'                       => function( $container ) : string {
-		return 'https://api.paypal.com';
+		return PAYPAL_API_URL;
 	},
 	'api.partner_merchant_id'               => static function () : string {
 		return '';

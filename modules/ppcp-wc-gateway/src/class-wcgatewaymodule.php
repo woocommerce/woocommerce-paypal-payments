@@ -91,6 +91,15 @@ class WcGatewayModule implements ModuleInterface {
 					$notices[] = $authorized_message;
 				}
 
+				$settings_renderer = $container->get( 'wcgateway.settings.render' );
+				/**
+				 * The settings renderer.
+				 *
+				 * @var SettingsRenderer $settings_renderer
+				 */
+				$messages = $settings_renderer->messages();
+				$notices  = array_merge( $notices, $messages );
+
 				return $notices;
 			}
 		);

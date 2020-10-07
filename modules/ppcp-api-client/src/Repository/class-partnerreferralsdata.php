@@ -72,7 +72,6 @@ class PartnerReferralsData {
 	private function default_data(): array {
 
 		return array(
-			'email'                   => $this->merchant_email,
 			'partner_config_override' => array(
 				'partner_logo_url'       => 'https://connect.woocommerce.com/images/woocommerce_logo.png',
 				'return_url'             => admin_url(

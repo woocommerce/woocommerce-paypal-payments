@@ -184,7 +184,9 @@ class PayPalGateway extends \WC_Payment_Gateway {
 				'type' => 'ppcp',
 			),
 		);
-		if ( $this->is_credit_card_tab() ) {
+
+		$should_show_enabled_checkbox = ! $this->is_credit_card_tab() && ( $this->config->has( 'merchant_email' ) && $this->config->get( 'merchant_email' ) );
+		if ( ! $should_show_enabled_checkbox ) {
 			unset( $this->form_fields['enabled'] );
 		}
 	}

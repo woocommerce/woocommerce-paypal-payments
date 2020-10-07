@@ -9,23 +9,36 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Onboarding;
 
-use Dhii\Data\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\ConnectBearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\LoginSeller;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnerReferrals;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Onboarding\Assets\OnboardingAssets;
 use WooCommerce\PayPalCommerce\Onboarding\Endpoint\LoginSellerEndpoint;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingRenderer;
-use WpOop\TransientCache\CachePoolFactory;
 
 return array(
+	'api.sandbox-host'                          => static function ( $container ): string {
 
-	'api.host'                         => static function ( $container ): string {
 		$state       = $container->get( 'onboarding.state' );
-		$environment = $container->get( 'onboarding.environment' );
 
-		// ToDo: Correct the URLs.
+		/**
+		 * The State object.
+		 *
+		 * @var State $state
+		 */
+		if ( $state->current_state() >= State::STATE_ONBOARDED ) {
+			return PAYPAL_SANDBOX_API_URL;
+		}
+		// ToDo: Real connect.woocommerce.com sandbox link.
+		return CONNECT_WOO_SANDBOX_URL;
+	},
+	'api.production-host'                       => static function ( $container ): string {
+
+		$state       = $container->get( 'onboarding.state' );
+
 		/**
 		 * The Environment and State variables.
 		 *
@@ -33,20 +46,29 @@ return array(
 		 * @var State $state
 		 */
 		if ( $state->current_state() >= State::STATE_ONBOARDED ) {
-			if ( $environment->current_environment_is( Environment::SANDBOX ) ) {
-				return 'https://api.sandbox.paypal.com';
-			}
-			return 'https://api.sandbox.paypal.com';
+			return PAYPAL_API_URL;
 		}
+		return CONNECT_WOO_URL;
+	},
+	'api.host'                                  => static function ( $container ): string {
+		$environment = $container->get( 'onboarding.environment' );
 
-		// ToDo: Real connect.woocommerce.com.
-		if ( $environment->current_environment_is( Environment::SANDBOX ) ) {
-			return 'http://connect-woo.wpcust.com/ppcsandbox';
-		}
-		return 'http://connect-woo.wpcust.com/ppc';
+		/**
+		 * The Environment and State variables.
+		 *
+		 * @var Environment $environment
+		 */
+		return $environment->current_environment_is( Environment::SANDBOX )
+			? (string) $container->get( 'api.sandbox-host' ) : (string) $container->get( 'api.production-host' );
 
 	},
-	'api.paypal-host'                  => function( $container ) : string {
+	'api.paypal-host-production'                => static function( $container ) : string {
+		return PAYPAL_API_URL;
+	},
+	'api.paypal-host-sandbox'                   => static function( $container ) : string {
+		return PAYPAL_SANDBOX_API_URL;
+	},
+	'api.paypal-host'                           => function( $container ) : string {
 		$environment = $container->get( 'onboarding.environment' );
 		/**
 		 * The current environment.
@@ -54,12 +76,13 @@ return array(
 		 * @var Environment $environment
 		 */
 		if ( $environment->current_environment_is( Environment::SANDBOX ) ) {
-			return 'https://api.sandbox.paypal.com';
+			return $container->get( 'api.paypal-host-sandbox' );
 		}
-		return 'https://api.paypal.com';
+		return $container->get( 'api.paypal-host-production' );
+
 	},
 
-	'api.bearer'                       => static function ( $container ): Bearer {
+	'api.bearer'                                => static function ( $container ): Bearer {
 
 		$state = $container->get( 'onboarding.state' );
 
@@ -85,17 +108,17 @@ return array(
 			$logger
 		);
 	},
-	'onboarding.state'                 => function( $container ) : State {
+	'onboarding.state'                          => function( $container ) : State {
 		$environment = $container->get( 'onboarding.environment' );
 		$settings    = $container->get( 'wcgateway.settings' );
 		return new State( $environment, $settings );
 	},
-	'onboarding.environment'           => function( $container ) : Environment {
+	'onboarding.environment'                    => function( $container ) : Environment {
 		$settings = $container->get( 'wcgateway.settings' );
 		return new Environment( $settings );
 	},
 
-	'onboarding.assets'                => function( $container ) : OnboardingAssets {
+	'onboarding.assets'                         => function( $container ) : OnboardingAssets {
 		$state                 = $container->get( 'onboarding.state' );
 		$login_seller_endpoint = $container->get( 'onboarding.endpoint.login-seller' );
 		return new OnboardingAssets(
@@ -105,34 +128,78 @@ return array(
 		);
 	},
 
-	'onboarding.url'                   => static function ( $container ): string {
+	'onboarding.url'                            => static function ( $container ): string {
 		return plugins_url(
 			'/modules/ppcp-onboarding/',
 			dirname( __FILE__, 3 ) . '/woocommerce-paypal-commerce-gateway.php'
 		);
 	},
 
-	'onboarding.endpoint.login-seller' => static function ( $container ) : LoginSellerEndpoint {
+	'api.endpoint.login-seller-production'      => static function ( $container ) : LoginSeller {
 
-		$request_data           = $container->get( 'button.request-data' );
-		$login_seller           = $container->get( 'api.endpoint.login-seller' );
-		$partner_referrals_data = $container->get( 'api.repository.partner-referrals-data' );
-		$settings               = $container->get( 'wcgateway.settings' );
+		$logger = $container->get( 'woocommerce.logger.woocommerce' );
+		return new LoginSeller(
+			$container->get( 'api.paypal-host-production' ),
+			$container->get( 'api.partner_merchant_id' ),
+			$logger
+		);
+	},
+
+	'api.endpoint.login-seller-sandbox'         => static function ( $container ) : LoginSeller {
+
+		$logger = $container->get( 'woocommerce.logger.woocommerce' );
+		return new LoginSeller(
+			$container->get( 'api.paypal-host-sandbox' ),
+			$container->get( 'api.partner_merchant_id' ),
+			$logger
+		);
+	},
+
+	'onboarding.endpoint.login-seller'          => static function ( $container ) : LoginSellerEndpoint {
+
+		$request_data            = $container->get( 'button.request-data' );
+		$login_seller_production = $container->get( 'api.endpoint.login-seller-production' );
+		$login_seller_sandbox    = $container->get( 'api.endpoint.login-seller-sandbox' );
+		$partner_referrals_data  = $container->get( 'api.repository.partner-referrals-data' );
+		$settings                = $container->get( 'wcgateway.settings' );
 
 		$cache = new Cache( 'ppcp-paypal-bearer' );
 		return new LoginSellerEndpoint(
 			$request_data,
-			$login_seller,
+			$login_seller_production,
+			$login_seller_sandbox,
 			$partner_referrals_data,
 			$settings,
 			$cache
 		);
 	},
-	'onboarding.render'                => static function ( $container ) : OnboardingRenderer {
+	'api.endpoint.partner-referrals-sandbox'    => static function ( $container ) : PartnerReferrals {
 
-		$partner_referrals = $container->get( 'api.endpoint.partner-referrals' );
+		return new PartnerReferrals(
+			CONNECT_WOO_SANDBOX_URL,
+			new ConnectBearer(),
+			$container->get( 'api.repository.partner-referrals-data' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
+	'api.endpoint.partner-referrals-production' => static function ( $container ) : PartnerReferrals {
+
+		return new PartnerReferrals(
+			CONNECT_WOO_SANDBOX_URL,
+			new ConnectBearer(),
+			$container->get( 'api.repository.partner-referrals-data' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
+	'onboarding.render'                         => static function ( $container ) : OnboardingRenderer {
+
+		$partner_referrals         = $container->get( 'api.endpoint.partner-referrals-production' );
+		$partner_referrals_sandbox = $container->get( 'api.endpoint.partner-referrals-sandbox' );
+		$settings                  = $container->get( 'wcgateway.settings' );
 		return new OnboardingRenderer(
-			$partner_referrals
+			$settings,
+			$partner_referrals,
+			$partner_referrals_sandbox
 		);
 	},
 );
