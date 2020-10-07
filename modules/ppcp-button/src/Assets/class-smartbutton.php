@@ -696,7 +696,7 @@ class SmartButton implements SmartButtonInterface {
 			// ToDo: Update date on releases.
 			'integration-date' => gmdate( 'Y-m-d' ),
 			'components'       => implode( ',', $this->components() ),
-			'vault'            => ( is_checkout() && $this->dcc_is_enabled() ) || $this->can_save_vault_token() ?
+			'vault'            => $this->can_save_vault_token() ?
 				'true' : 'false',
 			'commit'           => is_checkout() ? 'true' : 'false',
 			'intent'           => ( $this->settings->has( 'intent' ) ) ?
