@@ -24,6 +24,8 @@ use Dhii\Modular\Module\ModuleInterface;
 
 define( 'PAYPAL_API_URL', 'https://api.paypal.com' );
 define( 'PAYPAL_SANDBOX_API_URL', 'https://api.sandbox.paypal.com' );
+// @ToDo: Update date on releases.
+define( 'PAYPAL_INTEGRATION_DATE', gmdate( 'Y-m-d' ));
 
 // @ToDo: Real connect.woocommerce.com production link.
 define( 'CONNECT_WOO_URL', 'http://connect-woo.wpcust.com/ppc' );
