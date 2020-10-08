@@ -94,7 +94,7 @@ class RenewalHandler {
 			'info',
 			sprintf(
 				// translators: %d is the id of the order.
-				__( 'Start moneytransfer for order %d', 'paypal-payments-for-woocommerce' ),
+				__( 'Start moneytransfer for order %d', 'woocommerce-paypal-payments' ),
 				(int) $wc_order->get_id()
 			),
 			array(
@@ -111,7 +111,7 @@ class RenewalHandler {
 					// translators: %1$d is the order number, %2$s the error message.
 					__(
 						'An error occured while trying to renew the subscription for order %1$d: %2$s',
-						'paypal-payments-for-woocommerce'
+						'woocommerce-paypal-payments'
 					),
 					(int) $wc_order->get_id(),
 					$error->getMessage()
@@ -129,7 +129,7 @@ class RenewalHandler {
 				// translators: %d is the order number.
 				__(
 					'Moneytransfer for order %d is completed.',
-					'paypal-payments-for-woocommerce'
+					'woocommerce-paypal-payments'
 				),
 				(int) $wc_order->get_id()
 			),
@@ -183,7 +183,7 @@ class RenewalHandler {
 					// translators: %d is the customer id.
 					__(
 						'No payment token found for customer %d',
-						'paypal-payments-for-woocommerce'
+						'woocommerce-paypal-payments'
 					),
 					(int) $customer->get_id()
 				),
@@ -208,7 +208,7 @@ class RenewalHandler {
 		if ( $order->intent() === 'CAPTURE' && $order->status()->is( OrderStatus::COMPLETED ) ) {
 			$wc_order->update_status(
 				'processing',
-				__( 'Payment received.', 'paypal-payments-for-woocommerce' )
+				__( 'Payment received.', 'woocommerce-paypal-payments' )
 			);
 			\WC_Subscriptions_Manager::process_subscription_payments_on_order( $wc_order );
 		}

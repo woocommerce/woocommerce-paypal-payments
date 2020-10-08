@@ -116,7 +116,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 			$data = $this->request_data->read_request( $this->nonce() );
 			if ( ! isset( $data['order_id'] ) ) {
 				throw new RuntimeException(
-					__( 'No order id given', 'paypal-payments-for-woocommerce' )
+					__( 'No order id given', 'woocommerce-paypal-payments' )
 				);
 			}
 
@@ -125,7 +125,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 				throw new RuntimeException(
 					sprintf(
 						// translators: %s is the id of the order.
-						__( 'Order %s not found.', 'paypal-payments-for-woocommerce' ),
+						__( 'Order %s not found.', 'woocommerce-paypal-payments' ),
 						$data['order_id']
 					)
 				);
@@ -143,7 +143,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 						throw new RuntimeException(
 							__(
 								'Unfortunately, we do not accept this card.',
-								'paypal-payments-for-woocommerce'
+								'woocommerce-paypal-payments'
 							),
 							100
 						);
@@ -154,7 +154,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 					throw new RuntimeException(
 						__(
 							'Something went wrong. Please try again.',
-							'paypal-payments-for-woocommerce'
+							'woocommerce-paypal-payments'
 						)
 					);
 				}
@@ -162,7 +162,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 					throw new RuntimeException(
 						__(
 							'Unfortunatly, we can\'t accept your card. Please choose a different payment method.',
-							'paypal-payments-for-woocommerce'
+							'woocommerce-paypal-payments'
 						)
 					);
 				}
@@ -174,7 +174,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 				throw new RuntimeException(
 					sprintf(
 					// translators: %s is the id of the order.
-						__( 'Order %s is not approved yet.', 'paypal-payments-for-woocommerce' ),
+						__( 'Order %s is not approved yet.', 'woocommerce-paypal-payments' ),
 						$data['order_id']
 					)
 				);

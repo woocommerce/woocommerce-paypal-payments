@@ -226,7 +226,7 @@ class OrderEndpoint {
 		$response = $this->request( $url, $args );
 		if ( is_wp_error( $response ) ) {
 			$error = new RuntimeException(
-				__( 'Could not create order.', 'paypal-payments-for-woocommerce' )
+				__( 'Could not create order.', 'woocommerce-paypal-payments' )
 			);
 			$this->logger->log(
 				'warning',
@@ -290,7 +290,7 @@ class OrderEndpoint {
 
 		if ( is_wp_error( $response ) ) {
 			$error = new RuntimeException(
-				__( 'Could not capture order.', 'paypal-payments-for-woocommerce' )
+				__( 'Could not capture order.', 'woocommerce-paypal-payments' )
 			);
 			$this->logger->log(
 				'warning',
@@ -357,7 +357,7 @@ class OrderEndpoint {
 			$error = new RuntimeException(
 				__(
 					'Could not authorize order.',
-					'paypal-payments-for-woocommerce'
+					'woocommerce-paypal-payments'
 				)
 			);
 			$this->logger->log(
@@ -418,7 +418,7 @@ class OrderEndpoint {
 		$response = $this->request( $url, $args );
 		if ( is_wp_error( $response ) ) {
 			$error = new RuntimeException(
-				__( 'Could not retrieve order.', 'paypal-payments-for-woocommerce' )
+				__( 'Could not retrieve order.', 'woocommerce-paypal-payments' )
 			);
 			$this->logger->log(
 				'warning',
@@ -434,7 +434,7 @@ class OrderEndpoint {
 		$status_code = (int) wp_remote_retrieve_response_code( $response );
 		if ( 404 === $status_code || empty( $response['body'] ) ) {
 			$error = new RuntimeException(
-				__( 'Could not retrieve order.', 'paypal-payments-for-woocommerce' ),
+				__( 'Could not retrieve order.', 'woocommerce-paypal-payments' ),
 				404
 			);
 			$this->logger->log(
@@ -502,7 +502,7 @@ class OrderEndpoint {
 
 		if ( is_wp_error( $response ) ) {
 			$error = new RuntimeException(
-				__( 'Could not retrieve order.', 'paypal-payments-for-woocommerce' )
+				__( 'Could not retrieve order.', 'woocommerce-paypal-payments' )
 			);
 			$this->logger->log(
 				'warning',

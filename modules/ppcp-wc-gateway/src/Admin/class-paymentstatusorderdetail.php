@@ -39,11 +39,11 @@ class PaymentStatusOrderDetail {
 			'<li class="wide"><p><mark class="order-status status-on-hold"><span>%1$s</span></mark></p><p>%2$s</p></li>',
 			esc_html__(
 				'Not captured',
-				'paypal-payments-for-woocommerce'
+				'woocommerce-paypal-payments'
 			),
 			esc_html__(
 				'To capture the payment select capture action from the list below.',
-				'paypal-payments-for-woocommerce'
+				'woocommerce-paypal-payments'
 			)
 		);
 	}

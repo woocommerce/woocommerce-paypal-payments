@@ -86,7 +86,7 @@ class CheckoutOrderCompleted implements RequestHandler {
 				// translators: %s is the PayPal webhook Id.
 				__(
 					'No order for webhook event %s was found.',
-					'paypal-payments-for-woocommerce'
+					'woocommerce-paypal-payments'
 				),
 				isset( $request['id'] ) ? $request['id'] : ''
 			);
@@ -116,7 +116,7 @@ class CheckoutOrderCompleted implements RequestHandler {
 		if ( ! $wc_orders ) {
 			$message = sprintf(
 			// translators: %s is the PayPal order Id.
-				__( 'Order for PayPal order %s not found.', 'paypal-payments-for-woocommerce' ),
+				__( 'Order for PayPal order %s not found.', 'woocommerce-paypal-payments' ),
 				isset( $request['resource']['id'] ) ? $request['resource']['id'] : ''
 			);
 			$this->logger->log(
@@ -141,7 +141,7 @@ class CheckoutOrderCompleted implements RequestHandler {
 			 */
 			$wc_order->update_status(
 				'processing',
-				__( 'Payment received.', 'paypal-payments-for-woocommerce' )
+				__( 'Payment received.', 'woocommerce-paypal-payments' )
 			);
 			$this->logger->log(
 				'info',
@@ -149,7 +149,7 @@ class CheckoutOrderCompleted implements RequestHandler {
 					// translators: %s is the order ID.
 					__(
 						'Order %s has been updated through PayPal',
-						'paypal-payments-for-woocommerce'
+						'woocommerce-paypal-payments'
 					),
 					(string) $wc_order->get_id()
 				),

@@ -141,13 +141,13 @@ class OrderProcessor {
 		if ( ! $order || ! $this->order_is_approved( $order ) ) {
 			$error_message = __(
 				'The payment has not been approved yet.',
-				'paypal-payments-for-woocommerce'
+				'woocommerce-paypal-payments'
 			);
 		}
 		if ( $error_message ) {
 			$this->last_error = sprintf(
 				// translators: %s is the message of the error.
-				__( 'Payment error: %s', 'paypal-payments-for-woocommerce' ),
+				__( 'Payment error: %s', 'woocommerce-paypal-payments' ),
 				$error_message
 			);
 			return false;
@@ -165,18 +165,18 @@ class OrderProcessor {
 
 		$wc_order->update_status(
 			'on-hold',
-			__( 'Awaiting payment.', 'paypal-payments-for-woocommerce' )
+			__( 'Awaiting payment.', 'woocommerce-paypal-payments' )
 		);
 		if ( $order->status()->is( OrderStatus::COMPLETED ) && $order->intent() === 'CAPTURE' ) {
 			$wc_order->update_status(
 				'processing',
-				__( 'Payment received.', 'paypal-payments-for-woocommerce' )
+				__( 'Payment received.', 'woocommerce-paypal-payments' )
 			);
 		}
 
 		if ( $this->capture_authorized_downloads( $order ) && $this->authorized_payments_processor->process( $wc_order ) ) {
 			$wc_order->add_order_note(
-				__( 'Payment successfully captured.', 'paypal-payments-for-woocommerce' )
+				__( 'Payment successfully captured.', 'woocommerce-paypal-payments' )
 			);
 			$wc_order->update_meta_data( PayPalGateway::CAPTURED_META_KEY, 'true' );
 			$wc_order->update_status( 'processing' );

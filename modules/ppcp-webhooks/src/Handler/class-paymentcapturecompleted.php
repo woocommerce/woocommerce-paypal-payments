@@ -73,7 +73,7 @@ class PaymentCaptureCompleted implements RequestHandler {
 				// translators: %s is the PayPal webhook Id.
 				__(
 					'No order for webhook event %s was found.',
-					'paypal-payments-for-woocommerce'
+					'woocommerce-paypal-payments'
 				),
 				isset( $request['id'] ) ? $request['id'] : ''
 			);
@@ -94,7 +94,7 @@ class PaymentCaptureCompleted implements RequestHandler {
 			// translators: %s is the PayPal webhook Id.
 				__(
 					'No order for webhook event %s was found.',
-					'paypal-payments-for-woocommerce'
+					'woocommerce-paypal-payments'
 				),
 				isset( $request['id'] ) ? $request['id'] : ''
 			);
@@ -114,7 +114,7 @@ class PaymentCaptureCompleted implements RequestHandler {
 			return rest_ensure_response( $response );
 		}
 		$wc_order->add_order_note(
-			__( 'Payment successfully captured.', 'paypal-payments-for-woocommerce' )
+			__( 'Payment successfully captured.', 'woocommerce-paypal-payments' )
 		);
 
 		$wc_order->set_status( 'processing' );
@@ -126,7 +126,7 @@ class PaymentCaptureCompleted implements RequestHandler {
 			// translators: %s is the order ID.
 				__(
 					'Order %s has been updated through PayPal',
-					'paypal-payments-for-woocommerce'
+					'woocommerce-paypal-payments'
 				),
 				(string) $wc_order->get_id()
 			),
