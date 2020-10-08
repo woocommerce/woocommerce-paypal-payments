@@ -693,8 +693,7 @@ class SmartButton implements SmartButtonInterface {
 			'client-id'        => $this->client_id,
 			'currency'         => get_woocommerce_currency(),
 			'locale'           => get_user_locale(),
-			// ToDo: Update date on releases.
-			'integration-date' => gmdate( 'Y-m-d' ),
+			'integration-date' => PAYPAL_INTEGRATION_DATE,
 			'components'       => implode( ',', $this->components() ),
 			'vault'            => $this->can_save_vault_token() ?
 				'true' : 'false',
