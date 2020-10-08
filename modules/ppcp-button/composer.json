@@ -1,8 +1,0 @@
-{
-  "name": "inpsyde/ppcp-button",
-  "type": "inpsyde-module",
-  "require": {
-    "dhii/module-interface": "0.2.x-dev",
-    "inpsyde/ppcp-api-client": "dev-master"
-  }
-}
