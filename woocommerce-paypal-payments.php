@@ -72,14 +72,14 @@ define( 'CONNECT_WOO_SANDBOX_URL', 'http://connect-woo.wpcust.com/ppcsandbox' );
 		__FILE__,
 		function () {
 			init();
-			do_action( 'woocommerce_paypal_commerce_gateway_activate' );
+			do_action( 'woocommerce_paypal_payments_gateway_activate' );
 		}
 	);
 	register_deactivation_hook(
 		__FILE__,
 		function () {
 			init();
-			do_action( 'woocommerce_paypal_commerce_gateway_deactivate' );
+			do_action( 'woocommerce_paypal_payments_gateway_deactivate' );
 		}
 	);
 
