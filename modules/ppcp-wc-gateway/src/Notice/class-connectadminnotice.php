@@ -58,7 +58,7 @@ class ConnectAdminNotice {
 			/* translators: %1$s the gateway name. */
 			__(
 				'PayPal Checkout is almost ready. To get started, <a href="%1$s">connect your account</a>.',
-				'paypal-payments-for-woocommerce'
+				'woocommerce-paypal-payments'
 			),
 			admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' )
 		);

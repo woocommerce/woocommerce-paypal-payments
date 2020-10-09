@@ -114,22 +114,22 @@ class OrderFactory {
 	public function from_paypal_response( \stdClass $order_data ): Order {
 		if ( ! isset( $order_data->id ) ) {
 			throw new RuntimeException(
-				__( 'Order does not contain an id.', 'paypal-payments-for-woocommerce' )
+				__( 'Order does not contain an id.', 'woocommerce-paypal-payments' )
 			);
 		}
 		if ( ! isset( $order_data->purchase_units ) || ! is_array( $order_data->purchase_units ) ) {
 			throw new RuntimeException(
-				__( 'Order does not contain items.', 'paypal-payments-for-woocommerce' )
+				__( 'Order does not contain items.', 'woocommerce-paypal-payments' )
 			);
 		}
 		if ( ! isset( $order_data->status ) ) {
 			throw new RuntimeException(
-				__( 'Order does not contain status.', 'paypal-payments-for-woocommerce' )
+				__( 'Order does not contain status.', 'woocommerce-paypal-payments' )
 			);
 		}
 		if ( ! isset( $order_data->intent ) ) {
 			throw new RuntimeException(
-				__( 'Order does not contain intent.', 'paypal-payments-for-woocommerce' )
+				__( 'Order does not contain intent.', 'woocommerce-paypal-payments' )
 			);
 		}
 

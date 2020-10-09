@@ -32,7 +32,7 @@ class RenderAuthorizeAction {
 
 		$order_actions['ppcp_authorize_order'] = esc_html__(
 			'Capture authorized PayPal payment',
-			'paypal-payments-for-woocommerce'
+			'woocommerce-paypal-payments'
 		);
 		return $order_actions;
 	}

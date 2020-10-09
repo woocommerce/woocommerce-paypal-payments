@@ -131,7 +131,7 @@ return array(
 	'onboarding.url'                            => static function ( $container ): string {
 		return plugins_url(
 			'/modules/ppcp-onboarding/',
-			dirname( __FILE__, 3 ) . '/woocommerce-paypal-commerce-gateway.php'
+			dirname( __FILE__, 3 ) . '/woocommerce-paypal-payments.php'
 		);
 	},
 

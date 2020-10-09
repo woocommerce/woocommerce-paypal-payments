@@ -150,7 +150,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 					wp_send_json_error(
 						array(
 							'name'    => 'order-not-found',
-							'message' => __( 'Order not found', 'paypal-payments-for-woocommerce' ),
+							'message' => __( 'Order not found', 'woocommerce-paypal-payments' ),
 							'code'    => 0,
 							'details' => array(),
 						)
@@ -284,7 +284,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 		$parsed_values = wp_parse_args( $form_values );
 		if ( ! isset( $parsed_values['terms'] ) ) {
 			throw new \RuntimeException(
-				__( 'Please read and accept the terms and conditions to proceed with your order.', 'paypal-payments-for-woocommerce' )
+				__( 'Please read and accept the terms and conditions to proceed with your order.', 'woocommerce-paypal-payments' )
 			);
 		}
 	}

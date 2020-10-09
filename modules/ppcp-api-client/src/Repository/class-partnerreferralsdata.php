@@ -79,7 +79,7 @@ class PartnerReferralsData {
 				),
 				'return_url_description' => __(
 					'Return to your shop.',
-					'paypal-payments-for-woocommerce'
+					'woocommerce-paypal-payments'
 				),
 				'show_add_credit_card'   => true,
 			),

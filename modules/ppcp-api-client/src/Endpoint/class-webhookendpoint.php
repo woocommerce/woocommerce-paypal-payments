@@ -101,7 +101,7 @@ class WebhookEndpoint {
 
 		if ( is_wp_error( $response ) ) {
 			$error = new RuntimeException(
-				__( 'Not able to create a webhook.', 'paypal-payments-for-woocommerce' )
+				__( 'Not able to create a webhook.', 'woocommerce-paypal-payments' )
 			);
 			$this->logger->log(
 				'warning',
@@ -161,7 +161,7 @@ class WebhookEndpoint {
 
 		if ( is_wp_error( $response ) ) {
 			$error = new RuntimeException(
-				__( 'Not able to delete the webhook.', 'paypal-payments-for-woocommerce' )
+				__( 'Not able to delete the webhook.', 'woocommerce-paypal-payments' )
 			);
 			$this->logger->log(
 				'warning',
@@ -223,7 +223,7 @@ class WebhookEndpoint {
 		$response = $this->request( $url, $args );
 		if ( is_wp_error( $response ) ) {
 			$error = new RuntimeException(
-				__( 'Not able to verify webhook event.', 'paypal-payments-for-woocommerce' )
+				__( 'Not able to verify webhook event.', 'woocommerce-paypal-payments' )
 			);
 			$this->logger->log(
 				'warning',
@@ -251,7 +251,7 @@ class WebhookEndpoint {
 
 		if ( ! $webhook->id() ) {
 			$error = new RuntimeException(
-				__( 'Not a valid webhook to verify.', 'paypal-payments-for-woocommerce' )
+				__( 'Not a valid webhook to verify.', 'woocommerce-paypal-payments' )
 			);
 			$this->logger->log( 'warning', $error->getMessage(), array( 'webhook' => $webhook ) );
 			throw $error;
@@ -282,7 +282,7 @@ class WebhookEndpoint {
 					// translators: %s is the headers key.
 					__(
 						'Not a valid webhook event. Header %s is missing',
-						'paypal-payments-for-woocommerce'
+						'woocommerce-paypal-payments'
 					),
 					$key
 				)

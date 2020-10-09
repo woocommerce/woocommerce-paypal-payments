@@ -111,7 +111,7 @@ class SettingsRenderer {
 			new Message(
 				__(
 					'We could not complete the onboarding process. Some features, such as card processing, will not be available. To fix this, please try again.',
-					'paypal-payments-for-woocommerce'
+					'woocommerce-paypal-payments'
 				),
 				'error',
 				false
@@ -367,13 +367,13 @@ class SettingsRenderer {
 	private function render_dcc_not_active_yet() {
 		?>
 		<tr>
-			<th><?php esc_html_e( 'Onboarding', 'paypal-payments-for-woocommerce' ); ?></th>
+			<th><?php esc_html_e( 'Onboarding', 'woocommerce-paypal-payments' ); ?></th>
 			<td class="notice notice-error">
 				<p>
 					<?php
 					esc_html_e(
 						'Credit Card processing for your account has not yet been activated by PayPal. If your account is new, this can take some days. Otherwise, please get in contact with PayPal.',
-						'paypal-payments-for-woocommerce'
+						'woocommerce-paypal-payments'
 					);
 					?>
 				</p>
@@ -388,7 +388,7 @@ class SettingsRenderer {
 	private function render_3d_secure_info() {
 		?>
 <tr>
-	<th><?php esc_html_e( '3D Secure', 'paypal-payments-for-woocommerce' ); ?></th>
+	<th><?php esc_html_e( '3D Secure', 'woocommerce-paypal-payments' ); ?></th>
 	<td>
 		<p>
 			<?php
@@ -405,7 +405,7 @@ class SettingsRenderer {
                                   an additional layer of verification using Verified by Visa,
                                   MasterCard SecureCode and American Express SafeKey.
                                   %1$sLearn more about 3D Secure.%2$s',
-						'paypal-payments-for-woocommerce'
+						'woocommerce-paypal-payments'
 					),
 					'<a href = "#">',
 					'</a>'
@@ -424,20 +424,20 @@ class SettingsRenderer {
 	private function render_dcc_onboarding_info() {
 		?>
 <tr>
-	<th><?php esc_html_e( 'Onboarding', 'paypal-payments-for-woocommerce' ); ?></th>
+	<th><?php esc_html_e( 'Onboarding', 'woocommerce-paypal-payments' ); ?></th>
 <td class="notice notice-error">
 	<p>
 		<?php
 			esc_html_e(
 				'You need to complete your onboarding, before you can use the PayPal Card Processing option.',
-				'paypal-payments-for-woocommerce'
+				'woocommerce-paypal-payments'
 			);
 		?>
 
 		<a
 			href="<?php echo esc_url( admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ) ); ?>"
 			>
-			<?php esc_html_e( 'Click here to complete your onboarding.', 'paypal-payments-for-woocommerce' ); ?>
+			<?php esc_html_e( 'Click here to complete your onboarding.', 'woocommerce-paypal-payments' ); ?>
 		</a>
 	</p>
 </td>
@@ -451,13 +451,13 @@ class SettingsRenderer {
 	private function render_dcc_does_not_apply_info() {
 		?>
 		<tr>
-			<th><?php esc_html_e( 'Card Processing not available', 'paypal-payments-for-woocommerce' ); ?></th>
+			<th><?php esc_html_e( 'Card Processing not available', 'woocommerce-paypal-payments' ); ?></th>
 			<td class="notice notice-error">
 				<p>
 					<?php
 					esc_html_e(
 						'Unfortunatly, the card processing option is not yet available in your country.',
-						'paypal-payments-for-woocommerce'
+						'woocommerce-paypal-payments'
 					);
 					?>
 				</p>

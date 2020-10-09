@@ -88,7 +88,7 @@ return array(
 	'button.url'                        => static function ( $container ): string {
 		return plugins_url(
 			'/modules/ppcp-button/',
-			dirname( __FILE__, 3 ) . '/woocommerce-paypal-commerce-gateway.php'
+			dirname( __FILE__, 3 ) . '/woocommerce-paypal-payments.php'
 		);
 	},
 	'button.request-data'               => static function ( $container ): RequestData {

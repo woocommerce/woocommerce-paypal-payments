@@ -1,4 +1,4 @@
-# PayPal Payments for WooCommerce
+# WooCommerce PayPal Payments
 
 PayPal's latest complete payments processing solution. Accept PayPal, PayPal Credit, credit/debit cards, alternative digital wallets local payment types and bank accounts. Turn on only PayPal options or process a full suite of payment methods. Enable global transaction with extensive currency and country coverage.
 
@@ -11,7 +11,7 @@ PayPal's latest complete payments processing solution. Accept PayPal, PayPal Cre
 ## Development
 
 1. Clone repository
-2. `$ cd paypal-for-woocommerce`
+2. `$ cd woocommerce-paypal-payments`
 3. `$ composer install`
 4. `$ yarn run dev`
 5. Change the `PAYPAL_INTEGRATION_DATE` constant to `gmdate( 'Y-m-d' )` to run the latest PayPal JavaScript SDK
@@ -22,7 +22,7 @@ Note: PHPUnit needs at least PHP 7.3.
 
 1. `$ composer install`
 2. `$ ./vendor/bin/phpunit`
-3. `$ ./vendor/bin/phpcs src modules woocommerce-paypal-commerce-gateway.php --extensions=php`
+3. `$ ./vendor/bin/phpcs src modules woocommerce-paypal-payments.php --extensions=php`
 
 ## Preparation for wordpress.org release
 

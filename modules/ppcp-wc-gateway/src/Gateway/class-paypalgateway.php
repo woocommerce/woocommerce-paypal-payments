@@ -173,11 +173,11 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	public function init_form_fields() {
 		$this->form_fields = array(
 			'enabled' => array(
-				'title'       => __( 'Enable/Disable', 'paypal-payments-for-woocommerce' ),
+				'title'       => __( 'Enable/Disable', 'woocommerce-paypal-payments' ),
 				'type'        => 'checkbox',
 				'desc_tip'    => true,
-				'description' => __( 'In order to use PayPal or PayPal Card Processing, you need to enable the Gateway.', 'paypal-payments-for-woocommerce' ),
-				'label'       => __( 'Enable the PayPal Gateway', 'paypal-payments-for-woocommerce' ),
+				'description' => __( 'In order to use PayPal or PayPal Card Processing, you need to enable the Gateway.', 'woocommerce-paypal-payments' ),
+				'label'       => __( 'Enable the PayPal Gateway', 'woocommerce-paypal-payments' ),
 				'default'     => 'no',
 			),
 			'ppcp'    => array(
@@ -204,7 +204,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 
 		if ( $is_processed ) {
 			$wc_order->add_order_note(
-				__( 'Payment successfully captured.', 'paypal-payments-for-woocommerce' )
+				__( 'Payment successfully captured.', 'woocommerce-paypal-payments' )
 			);
 
 			$wc_order->set_status( 'processing' );
@@ -216,7 +216,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		if ( $this->authorized_payments->last_status() === AuthorizedPaymentsProcessor::ALREADY_CAPTURED ) {
 			if ( $wc_order->get_status() === 'on-hold' ) {
 				$wc_order->add_order_note(
-					__( 'Payment successfully captured.', 'paypal-payments-for-woocommerce' )
+					__( 'Payment successfully captured.', 'woocommerce-paypal-payments' )
 				);
 				$wc_order->set_status( 'processing' );
 			}
@@ -268,12 +268,12 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 */
 	private function define_method_title(): string {
 		if ( $this->is_credit_card_tab() ) {
-			return __( 'PayPal Card Processing', 'paypal-payments-for-woocommerce' );
+			return __( 'PayPal Card Processing', 'woocommerce-paypal-payments' );
 		}
 		if ( $this->is_paypal_tab() ) {
-			return __( 'PayPal Checkout', 'paypal-payments-for-woocommerce' );
+			return __( 'PayPal Checkout', 'woocommerce-paypal-payments' );
 		}
-		return __( 'PayPal', 'paypal-payments-for-woocommerce' );
+		return __( 'PayPal', 'woocommerce-paypal-payments' );
 	}
 
 	/**
@@ -285,13 +285,13 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		if ( $this->is_credit_card_tab() ) {
 			return __(
 				'Accept debit and credit cards, and local payment methods with PayPal’s latest solution.',
-				'paypal-payments-for-woocommerce'
+				'woocommerce-paypal-payments'
 			);
 		}
 
 		return __(
 			'Accept PayPal, PayPal Credit and alternative payment types with PayPal’s latest solution.',
-			'paypal-payments-for-woocommerce'
+			'woocommerce-paypal-payments'
 		);
 	}
 

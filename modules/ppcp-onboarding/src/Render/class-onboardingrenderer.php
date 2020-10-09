@@ -66,7 +66,7 @@ class OnboardingRenderer {
 			$url   = $is_production ? $this->production_partner_referrals->signup_link() : $this->sandbox_partner_referrals->signup_link();
 			$url   = add_query_arg( $args, $url );
 			$id    = $is_production ? 'connect-to-production' : 'connect-to-sandbox';
-			$label = $is_production ? __( 'Connect to PayPal', 'paypal-payments-for-woocommerce' ) : __( 'Connect to PayPal Sandbox', 'paypal-payments-for-woocommerce' );
+			$label = $is_production ? __( 'Connect to PayPal', 'woocommerce-paypal-payments' ) : __( 'Connect to PayPal Sandbox', 'woocommerce-paypal-payments' );
 				$this->render_button(
 					$url,
 					$id,
@@ -83,7 +83,7 @@ class OnboardingRenderer {
 		} catch ( RuntimeException $exception ) {
 			esc_html_e(
 				'We could not properly connect to PayPal. Please reload the page to continue',
-				'paypal-payments-for-woocommerce'
+				'woocommerce-paypal-payments'
 			);
 		}
 	}

@@ -48,7 +48,7 @@ class RequestData {
 		) {
 			remove_filter( 'nonce_user_logged_out', array( $this, 'nonce_fix' ), 100 );
 			throw new RuntimeException(
-				__( 'Could not validate nonce.', 'paypal-payments-for-woocommerce' )
+				__( 'Could not validate nonce.', 'woocommerce-paypal-payments' )
 			);
 		}
 		$this->dequeue_nonce_fix();

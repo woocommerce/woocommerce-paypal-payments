@@ -97,7 +97,7 @@ class PaymentsEndpoint {
 
 		if ( is_wp_error( $response ) ) {
 			$error = new RuntimeException(
-				__( 'Could not get authorized payment info.', 'paypal-payments-for-woocommerce' )
+				__( 'Could not get authorized payment info.', 'woocommerce-paypal-payments' )
 			);
 			$this->logger->log(
 				'warning',
@@ -156,7 +156,7 @@ class PaymentsEndpoint {
 
 		if ( is_wp_error( $response ) ) {
 			$error = new RuntimeException(
-				__( 'Could not capture authorized payment.', 'paypal-payments-for-woocommerce' )
+				__( 'Could not capture authorized payment.', 'woocommerce-paypal-payments' )
 			);
 			$this->logger->log(
 				'warning',
@@ -216,7 +216,7 @@ class PaymentsEndpoint {
 
 		if ( is_wp_error( $response ) ) {
 			$error = new RuntimeException(
-				__( 'Could not refund payment.', 'paypal-payments-for-woocommerce' )
+				__( 'Could not refund payment.', 'woocommerce-paypal-payments' )
 			);
 			$this->logger->log(
 				'warning',

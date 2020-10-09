@@ -518,19 +518,19 @@ class SmartButton implements SmartButtonInterface {
                 >
             </div>',
 			esc_attr( $id ),
-			esc_html__( 'Save your card', 'paypal-payments-for-woocommerce' )
+			esc_html__( 'Save your card', 'woocommerce-paypal-payments' )
 		) : '';
 
-		$label = 'checkout' === $this->context() ? __( 'Place order', 'paypal-payments-for-woocommerce' ) : __( 'Pay for order', 'paypal-payments-for-woocommerce' );
+		$label = 'checkout' === $this->context() ? __( 'Place order', 'woocommerce-paypal-payments' ) : __( 'Pay for order', 'woocommerce-paypal-payments' );
 
 		printf(
 			'<div id="%1$s" style="display:none;">
                         <button class="button alt">%6$s</button>
                     </div><div id="payments-sdk__contingency-lightbox"></div><style id="ppcp-hide-dcc">.payment_method_ppcp-credit-card-gateway {display:none;}</style>',
 			esc_attr( $id ),
-			esc_html__( 'Credit Card number', 'paypal-payments-for-woocommerce' ),
-			esc_html__( 'Expiration', 'paypal-payments-for-woocommerce' ),
-			esc_html__( 'CVV', 'paypal-payments-for-woocommerce' ),
+			esc_html__( 'Credit Card number', 'woocommerce-paypal-payments' ),
+			esc_html__( 'Expiration', 'woocommerce-paypal-payments' ),
+			esc_html__( 'CVV', 'woocommerce-paypal-payments' ),
             //phpcs:ignore
             $save_card,
 			esc_html( $label )
@@ -633,14 +633,14 @@ class SmartButton implements SmartButtonInterface {
 				'labels'            => array(
 					'credit_card_number' => '',
 					'cvv'                => '',
-					'mm_yyyy'            => __( 'MM/YYYY', 'paypal-payments-for-woocommerce' ),
+					'mm_yyyy'            => __( 'MM/YYYY', 'woocommerce-paypal-payments' ),
 					'fields_not_valid'   => __(
 						'Unfortunatly, your credit card details are not valid.',
-						'paypal-payments-for-woocommerce'
+						'woocommerce-paypal-payments'
 					),
 					'card_not_supported' => __(
 						'Unfortunatly, we do not support your credit card.',
-						'paypal-payments-for-woocommerce'
+						'woocommerce-paypal-payments'
 					),
 				),
 				'valid_cards'       => $this->dcc_applies->valid_cards(),
@@ -650,7 +650,7 @@ class SmartButton implements SmartButtonInterface {
 				'error' => array(
 					'generic' => __(
 						'Something went wrong. Please try again or choose another payment source.',
-						'paypal-payments-for-woocommerce'
+						'woocommerce-paypal-payments'
 					),
 				),
 			),

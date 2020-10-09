@@ -59,7 +59,7 @@ trait ProcessPaymentTrait {
 				if ( $this->session_handler->insufficient_funding_tries() >= 3 ) {
 					$this->session_handler->destroy_session_data();
 					wc_add_notice(
-						__( 'Please use a different payment method.', 'paypal-payments-for-woocommerce' ),
+						__( 'Please use a different payment method.', 'woocommerce-paypal-payments' ),
 						'error'
 					);
 					return null;
