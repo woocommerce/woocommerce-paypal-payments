@@ -81,10 +81,18 @@ class RequestData {
 		$data = array();
 		foreach ( (array) $assoc_array as $raw_key => $raw_value ) {
 			if ( ! is_array( $raw_value ) ) {
-				$data[ sanitize_text_field( urldecode( (string) $raw_key ) ) ] = sanitize_text_field( urldecode( (string) $raw_value ) );
+				/**
+				 * The 'form' key is preserved for url encoded data and needs different
+				 * sanitization.
+				 */
+				if ( 'form' !== $raw_key ) {
+					$data[ sanitize_text_field( (string) $raw_key ) ] = sanitize_text_field( (string) $raw_value );
+				} else {
+					$data[ sanitize_text_field( (string) $raw_key ) ] = sanitize_text_field( urldecode( (string) $raw_value ) );
+				}
 				continue;
 			}
-			$data[ sanitize_text_field( urldecode( (string) $raw_key ) ) ] = $this->sanitize( $raw_value );
+			$data[ sanitize_text_field( (string) $raw_key ) ] = $this->sanitize( $raw_value );
 		}
 		return $data;
 	}
