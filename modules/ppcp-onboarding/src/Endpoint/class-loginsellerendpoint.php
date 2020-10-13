@@ -114,6 +114,7 @@ class LoginSellerEndpoint implements EndpointInterface {
 			$data       = $this->request_data->read_request( $this->nonce() );
 			$is_sandbox = isset( $data['env'] ) && 'sandbox' === $data['env'];
 			$this->settings->set( 'sandbox_on', $is_sandbox );
+			$this->settings->set( 'products_dcc_enabled', null );
 			$this->settings->persist();
 			$endpoint    = $is_sandbox ? $this->login_seller_sandbox : $this->login_seller_production;
 			$credentials = $endpoint->credentials_for(
