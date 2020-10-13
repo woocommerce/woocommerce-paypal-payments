@@ -326,7 +326,6 @@ class SettingsRenderer {
 		</tr>
 			<?php
 		endforeach;
-
 		if ( $is_dcc ) {
 			if ( $this->dcc_applies->for_country_currency() ) {
 				if ( State::STATE_ONBOARDED > $this->state->current_state() ) {
@@ -407,7 +406,10 @@ class SettingsRenderer {
                                   %1$sLearn more about 3D Secure.%2$s',
 						'woocommerce-paypal-payments'
 					),
-					'<a href = "#">',
+					'<a
+                            rel="noreferrer noopener"
+                            href="https://woocommerce.com/posts/introducing-strong-customer-authentication-sca/"
+                            >',
 					'</a>'
 				)
 			);
