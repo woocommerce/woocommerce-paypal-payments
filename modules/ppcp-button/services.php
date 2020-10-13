@@ -40,11 +40,8 @@ return array(
 		 * @var Environment $env
 		 */
 
-		/**
-		 * ToDo: Add production platform client Id.
-		 */
 		return $env->current_environment_is( Environment::SANDBOX ) ?
-			'AQB97CzMsd58-It1vxbcDAGvMuXNCXRD9le_XUaMlHB_U7XsU9IiItBwGQOtZv9sEeD6xs2vlIrL4NiD' : '';
+			CONNECT_WOO_SANDBOX_CLIENT_ID : CONNECT_WOO_CLIENT_ID;
 	},
 	'button.smart-button'               => static function ( $container ): SmartButtonInterface {
 

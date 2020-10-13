@@ -32,7 +32,6 @@ return array(
 		if ( $state->current_state() >= State::STATE_ONBOARDED ) {
 			return PAYPAL_SANDBOX_API_URL;
 		}
-		// ToDo: Real connect.woocommerce.com sandbox link.
 		return CONNECT_WOO_SANDBOX_URL;
 	},
 	'api.production-host'                       => static function ( $container ): string {
@@ -67,6 +66,12 @@ return array(
 	},
 	'api.paypal-host-sandbox'                   => static function( $container ) : string {
 		return PAYPAL_SANDBOX_API_URL;
+	},
+	'api.partner_merchant_id-production'        => static function( $container ) : string {
+		return CONNECT_WOO_MERCHANT_ID;
+	},
+	'api.partner_merchant_id-sandbox'           => static function( $container ) : string {
+		return CONNECT_WOO_SANDBOX_MERCHANT_ID;
 	},
 	'api.paypal-host'                           => function( $container ) : string {
 		$environment = $container->get( 'onboarding.environment' );
@@ -140,7 +145,7 @@ return array(
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
 		return new LoginSeller(
 			$container->get( 'api.paypal-host-production' ),
-			$container->get( 'api.partner_merchant_id' ),
+			$container->get( 'api.partner_merchant_id-production' ),
 			$logger
 		);
 	},
@@ -150,7 +155,7 @@ return array(
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
 		return new LoginSeller(
 			$container->get( 'api.paypal-host-sandbox' ),
-			$container->get( 'api.partner_merchant_id' ),
+			$container->get( 'api.partner_merchant_id-sandbox' ),
 			$logger
 		);
 	},
@@ -185,7 +190,7 @@ return array(
 	'api.endpoint.partner-referrals-production' => static function ( $container ) : PartnerReferrals {
 
 		return new PartnerReferrals(
-			CONNECT_WOO_SANDBOX_URL,
+			CONNECT_WOO_URL,
 			new ConnectBearer(),
 			$container->get( 'api.repository.partner-referrals-data' ),
 			$container->get( 'woocommerce.logger.woocommerce' )

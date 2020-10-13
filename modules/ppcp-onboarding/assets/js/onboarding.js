@@ -155,7 +155,6 @@ const disconnect = (event) => {
 			element.value = '';
 		}
 	);
-
 	document.querySelector('.woocommerce-save-button').click();
 };
 

@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway;
 
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
@@ -27,9 +28,16 @@ return array(
 		$settings = $container->get( 'wcgateway.settings' );
 		return $settings->has( 'merchant_id' ) ? (string) $settings->get( 'merchant_id' ) : '';
 	},
-	'api.partner_merchant_id'        => static function (): string {
-		// @ToDo: Replace with the real merchant id of platform
-		return 'KQ8FCM66JFGDL';
+	'api.partner_merchant_id'        => static function ( $container ): string {
+		$environment = $container->get( 'onboarding.environment' );
+
+		/**
+		 * The environment.
+		 *
+		 * @var Environment $environment
+		 */
+		return $environment->current_environment_is( Environment::SANDBOX ) ?
+			(string) $container->get( 'api.partner_merchant_id-sandbox' ) : (string) $container->get( 'api.partner_merchant_id-production' );
 	},
 	'api.key'                        => static function ( $container ): string {
 		$settings = $container->get( 'wcgateway.settings' );

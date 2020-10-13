@@ -208,6 +208,7 @@ class SettingsListener {
 	private function maybe_register_webhooks( array $settings ) {
 
 		if ( ! $this->settings->has( 'client_id' ) && $settings['client_id'] ) {
+			$this->settings->set( 'products_dcc_enabled', null );
 			$this->webhook_registrar->register();
 		}
 		if ( $this->settings->has( 'client_id' ) && $this->settings->get( 'client_id' ) ) {
@@ -217,6 +218,7 @@ class SettingsListener {
 				$settings['client_id'] !== $this->settings->get( 'client_id' )
 				|| $settings['client_secret'] !== $current_secret
 			) {
+				$this->settings->set( 'products_dcc_enabled', null );
 				$this->webhook_registrar->unregister();
 				$this->webhook_registrar->register();
 			}
