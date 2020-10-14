@@ -85,4 +85,21 @@ define( 'PAYPAL_INTEGRATION_DATE', '2020-10-13' );
 		}
 	);
 
+	// Add "Settings" link to Plugins screen.
+	add_filter(
+		'plugin_action_links_' . plugin_basename( __FILE__ ),
+		function( $links ) {
+			array_unshift(
+				$links,
+				sprintf(
+					'<a href="%1$s">%2$s</a>',
+					admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
+					__( 'Settings', 'woocommerce-paypal-payments' )
+				)
+			);
+
+			return $links;
+		}
+	);
+
 } )();
