@@ -47,6 +47,15 @@ Follow the steps below to connect the plugin to your PayPal account:
 7. After you have successfully connected your PayPal account, click on the **Enable the PayPal Gateway** checkbox to enable PayPal.
 8. Click **Save changes**.
 
+== Screenshots ==
+
+1. PayPal buttons on a single product page.
+2. Cart page.
+3. Checkout page.
+4. Enable "PayPal" on the Payment methods tab in WooCommerce.
+5. Click "Connect to PayPal" to link your site to your PayPal account.
+6. Main settings screen.
+
 == Changelog ==
 
 = 1.0 =
