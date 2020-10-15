@@ -34,7 +34,7 @@ To install WooCommerce PayPal Payments, you need:
 4. Click on **Install Now** and wait until the plugin is installed successfully.
 5. You can activate the plugin immediately by clicking on **Activate** now on the success page. If you want to activate it later, you can do so via **Plugins > Installed Plugins**.
 
-== Setup and Configuration ==
+= Setup and Configuration =
 
 Follow the steps below to connect the plugin to your PayPal account:
 
