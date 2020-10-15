@@ -284,13 +284,13 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	private function define_method_description(): string {
 		if ( $this->is_credit_card_tab() ) {
 			return __(
-				'Accept debit and credit cards, and local payment methods with PayPal’s latest solution.',
+				'Accept debit and credit cards, and local payment methods.',
 				'woocommerce-paypal-payments'
 			);
 		}
 
 		return __(
-			'Accept PayPal, PayPal Credit and alternative payment types with PayPal’s latest solution.',
+			'Accept PayPal, PayPal Credit and alternative payment types.',
 			'woocommerce-paypal-payments'
 		);
 	}
