@@ -173,11 +173,28 @@ const disconnect = (event) => {
 		}
 	);
 
-	document.querySelectorAll('#mainform input[type="checkbox"]').forEach(
-		(checkbox) => {
-			checkbox.addEventListener('click', checkBoxOnClick);
+	// Prevent a possibly dirty form arising from this particular checkbox.
+	sandboxSwitchElement.addEventListener(
+		'click',
+		(event) => {
+			const value = event.target.checked;
+
+			toggleSandboxProduction( ! value );
+
+			event.preventDefault();
+			event.stopPropagation();
+			setTimeout( () => {
+				event.target.checked = value;
+				}, 1
+			);
 		}
 	);
+
+	// document.querySelectorAll('#mainform input[type="checkbox"]').forEach(
+	// 	(checkbox) => {
+	// 		checkbox.addEventListener('click', checkBoxOnClick);
+	// 	}
+	// );
 
 	document.querySelectorAll('#field-sandbox_toggle_manual_input button, #field-production_toggle_manual_input button').forEach(
 		(button) => {
