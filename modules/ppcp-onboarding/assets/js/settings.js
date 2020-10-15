@@ -43,7 +43,9 @@ const groupToggleSelect = (selector, group) => {
         }
         domElement.style.display = 'none';
     });
-    toggleElement.addEventListener(
+
+    // We need to use jQuery here as the select might be a select2 element, which doesn't use native events.
+    jQuery(toggleElement).on(
         'change',
         (event) => {
             const value = event.target.value;

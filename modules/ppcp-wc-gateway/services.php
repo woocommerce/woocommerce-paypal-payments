@@ -193,7 +193,7 @@ return array(
 
 			// Production credentials.
 			'credentials_production_heading' => array(
-				'heading'      => __( 'API', 'woocommerce-paypal-payments' ),
+				'heading'      => __( 'API Credentials', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-heading',
 				'screens'      => array(
 					State::STATE_PROGRESSIVE,
@@ -213,6 +213,7 @@ return array(
 				'env'          => 'production',
 				'requirements' => array(),
 				'gateway'      => 'paypal',
+				'description'  => __( 'Setup or link an existing PayPal account.', 'woocommerce-paypal-payments' ),
 			),
 			'ppcp_disconnect_production'     => array(
 				'title'        => __( 'Disconnect from PayPal', 'woocommerce-paypal-payments' ),
@@ -227,6 +228,7 @@ return array(
 				'env'          => 'production',
 				'requirements' => array(),
 				'gateway'      => 'paypal',
+				'description'  => __( 'Click to reset current credentials and use another account.', 'woocommerce-paypal-payments' ),
 			),
 			'production_toggle_manual_input' => array(
 				'type'         => 'ppcp-text',
@@ -305,7 +307,7 @@ return array(
 
 			// Sandbox credentials.
 			'credentials_sandbox_heading'    => array(
-				'heading'      => __( 'Sandbox API', 'woocommerce-paypal-payments' ),
+				'heading'      => __( 'Sandbox API Credentials', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-heading',
 				'screens'      => array(
 					State::STATE_PROGRESSIVE,
@@ -313,7 +315,9 @@ return array(
 				),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
+				'description'  => __( 'Your account setting is set to sandbox, no real charging takes place. To accept live payments, switch your environment to live and connect your PayPal account.', 'woocommerce-paypal-payments' ),
 			),
+
 			'ppcp_onboarding_sandbox'        => array(
 				'title'        => __( 'Connect to PayPal', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp_onboarding',
@@ -325,6 +329,7 @@ return array(
 				'env'          => 'sandbox',
 				'requirements' => array(),
 				'gateway'      => 'paypal',
+				'description'  => __( 'Setup or link an existing PayPal Sandbox account.', 'woocommerce-paypal-payments' ),
 			),
 			'ppcp_disconnect_sandbox'        => array(
 				'title'        => __( 'Disconnect from PayPal Sandbox', 'woocommerce-paypal-payments' ),
@@ -339,6 +344,7 @@ return array(
 				'env'          => 'production',
 				'requirements' => array(),
 				'gateway'      => 'paypal',
+				'description'  => __( 'Click to reset current credentials and use another account.', 'woocommerce-paypal-payments' ),
 			),
 			'sandbox_toggle_manual_input'    => array(
 				'type'         => 'ppcp-text',
@@ -416,7 +422,7 @@ return array(
 			),
 
 			'checkout_settings_heading'      => array(
-				'heading'      => __( 'PayPal Checkout Plugin Settings', 'woocommerce-paypal-payments' ),
+				'heading'      => __( 'PayPal Checkout Settings', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-heading',
 				'screens'      => array(
 					State::STATE_PROGRESSIVE,
@@ -495,7 +501,8 @@ return array(
 			'intent'                         => array(
 				'title'        => __( 'Intent', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
-				'class'        => array( 'wc-enhanced-select' ),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
 				'default'      => 'capture',
 				'desc_tip'     => true,
 				'description'  => __(
@@ -564,7 +571,8 @@ return array(
 			'landing_page'                   => array(
 				'title'        => __( 'Landing Page', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
-				'class'        => array( 'wc-enhanced-select' ),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
 				'default'      => 'gold',
 				'desc_tip'     => true,
 				'description'  => __(
@@ -585,7 +593,8 @@ return array(
 			'disable_funding'                => array(
 				'title'        => __( 'Disable funding sources', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-multiselect',
-				'class'        => array( 'wc-enhanced-select' ),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
 				'default'      => array(),
 				'desc_tip'     => true,
 				'description'  => __(
@@ -663,6 +672,7 @@ return array(
 				),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
+				'description'  => __( 'Customize the appearance of PayPal Checkout on the checkout page.', 'woocommerce-paypal-payments' ),
 			),
 			'button_enabled'                 => array(
 				'title'        => __( 'Enable buttons on Checkout', 'woocommerce-paypal-payments' ),
@@ -679,7 +689,8 @@ return array(
 			'button_layout'                  => array(
 				'title'        => __( 'Button Layout', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
-				'class'        => array( 'wc-enhanced-select' ),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
 				'default'      => 'vertical',
 				'desc_tip'     => true,
 				'description'  => __(
@@ -717,7 +728,8 @@ return array(
 			'button_label'                   => array(
 				'title'        => __( 'Button Label', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
-				'class'        => array( 'wc-enhanced-select' ),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
 				'default'      => 'paypal',
 				'desc_tip'     => true,
 				'description'  => __(
@@ -740,7 +752,8 @@ return array(
 			'button_color'                   => array(
 				'title'        => __( 'Color', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
-				'class'        => array( 'wc-enhanced-select' ),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
 				'default'      => 'gold',
 				'desc_tip'     => true,
 				'description'  => __(
@@ -763,7 +776,8 @@ return array(
 			'button_shape'                   => array(
 				'title'        => __( 'Shape', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
-				'class'        => array( 'wc-enhanced-select' ),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
 				'default'      => 'rect',
 				'desc_tip'     => true,
 				'description'  => __(
@@ -790,6 +804,8 @@ return array(
 				),
 				'requirements' => array( 'messages' ),
 				'gateway'      => 'paypal',
+				'description'  => str_replace( '<a>', '<a href="https://www.paypal.com/us/business/buy-now-pay-later">', __( 'Customize the appearance of <a>PayPal Credit messages</a> on checkout to promote special financing offers, which help increase sales.', 'woocommerce-paypal-payments' ) ),
+				'class'        => array( 'ppcp-subheading' ),
 			),
 			'message_enabled'                => array(
 				'title'        => __( 'Enable message on Checkout', 'woocommerce-paypal-payments' ),
@@ -806,7 +822,8 @@ return array(
 			'message_layout'                 => array(
 				'title'        => __( 'Credit Messaging layout', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
-				'class'        => array( 'wc-enhanced-select' ),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
 				'default'      => 'text',
 				'desc_tip'     => true,
 				'description'  => __(
@@ -827,7 +844,8 @@ return array(
 			'message_logo'                   => array(
 				'title'        => __( 'Credit Messaging logo', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
-				'class'        => array( 'wc-enhanced-select' ),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
 				'default'      => 'primary',
 				'desc_tip'     => true,
 				'description'  => __(
@@ -850,7 +868,8 @@ return array(
 			'message_position'               => array(
 				'title'        => __( 'Credit Messaging logo position', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
-				'class'        => array( 'wc-enhanced-select' ),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
 				'default'      => 'left',
 				'desc_tip'     => true,
 				'description'  => __(
@@ -872,7 +891,8 @@ return array(
 			'message_color'                  => array(
 				'title'        => __( 'Credit Messaging text color', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
-				'class'        => array( 'wc-enhanced-select' ),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
 				'default'      => 'black',
 				'desc_tip'     => true,
 				'description'  => __(
@@ -895,7 +915,8 @@ return array(
 			'message_flex_color'             => array(
 				'title'        => __( 'Credit Messaging color', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
-				'class'        => array( 'wc-enhanced-select' ),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
 				'default'      => 'blue',
 				'desc_tip'     => true,
 				'description'  => __(
@@ -921,7 +942,8 @@ return array(
 			'message_flex_ratio'             => array(
 				'title'        => __( 'Credit Messaging ratio', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
-				'class'        => array( 'wc-enhanced-select' ),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
 				'default'      => '1x1',
 				'desc_tip'     => true,
 				'description'  => __(
@@ -944,7 +966,7 @@ return array(
 
 			// Single product page.
 			'button_product_heading'         => array(
-				'heading'      => __( 'Button on Single product', 'woocommerce-paypal-payments' ),
+				'heading'      => __( 'Single Product Page', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-heading',
 				'screens'      => array(
 					State::STATE_PROGRESSIVE,
@@ -952,6 +974,7 @@ return array(
 				),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
+				'description'  => __( 'Customize the appearance of PayPal Checkout on the single product page.', 'woocommerce-paypal-payments' ),
 			),
 			'button_product_enabled'         => array(
 				'title'        => __( 'Enable buttons on Single Product', 'woocommerce-paypal-payments' ),
@@ -968,7 +991,8 @@ return array(
 			'button_product_layout'          => array(
 				'title'        => __( 'Button Layout', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
-				'class'        => array( 'wc-enhanced-select' ),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
 				'default'      => 'horizontal',
 				'desc_tip'     => true,
 				'description'  => __(
@@ -1006,7 +1030,8 @@ return array(
 			'button_product_label'           => array(
 				'title'        => __( 'Button Label', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
-				'class'        => array( 'wc-enhanced-select' ),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
 				'default'      => 'paypal',
 				'desc_tip'     => true,
 				'description'  => __(
@@ -1029,7 +1054,8 @@ return array(
 			'button_product_color'           => array(
 				'title'        => __( 'Color', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
-				'class'        => array( 'wc-enhanced-select' ),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
 				'default'      => 'gold',
 				'desc_tip'     => true,
 				'description'  => __(
@@ -1052,7 +1078,8 @@ return array(
 			'button_product_shape'           => array(
 				'title'        => __( 'Shape', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
-				'class'        => array( 'wc-enhanced-select' ),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
 				'default'      => 'rect',
 				'desc_tip'     => true,
 				'description'  => __(
@@ -1072,7 +1099,7 @@ return array(
 			),
 
 			'message_product_heading'        => array(
-				'heading'      => __( 'Credit Messaging on Single product', 'woocommerce-paypal-payments' ),
+				'heading'      => __( 'Credit Messaging on Single Product Page', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-heading',
 				'screens'      => array(
 					State::STATE_PROGRESSIVE,
@@ -1080,6 +1107,8 @@ return array(
 				),
 				'requirements' => array( 'messages' ),
 				'gateway'      => 'paypal',
+				'description'  => str_replace( '<a>', '<a href="https://www.paypal.com/us/business/buy-now-pay-later">', __( 'Customize the appearance of <a>PayPal Credit messages</a> on product pages to promote special financing offers, which help increase sales.', 'woocommerce-paypal-payments' ) ),
+				'class'        => array( 'ppcp-subheading' ),
 			),
 			'message_product_enabled'        => array(
 				'title'        => __( 'Enable message on Single Product', 'woocommerce-paypal-payments' ),
@@ -1096,7 +1125,8 @@ return array(
 			'message_product_layout'         => array(
 				'title'        => __( 'Credit Messaging layout', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
-				'class'        => array( 'wc-enhanced-select' ),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
 				'default'      => 'text',
 				'desc_tip'     => true,
 				'description'  => __(
@@ -1117,7 +1147,8 @@ return array(
 			'message_product_logo'           => array(
 				'title'        => __( 'Credit Messaging logo', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
-				'class'        => array( 'wc-enhanced-select' ),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
 				'default'      => 'primary',
 				'desc_tip'     => true,
 				'description'  => __(
@@ -1140,7 +1171,8 @@ return array(
 			'message_product_position'       => array(
 				'title'        => __( 'Credit Messaging logo position', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
-				'class'        => array( 'wc-enhanced-select' ),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
 				'default'      => 'left',
 				'desc_tip'     => true,
 				'description'  => __(
@@ -1162,7 +1194,8 @@ return array(
 			'message_product_color'          => array(
 				'title'        => __( 'Credit Messaging text color', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
-				'class'        => array( 'wc-enhanced-select' ),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
 				'default'      => 'black',
 				'desc_tip'     => true,
 				'description'  => __(
@@ -1185,7 +1218,8 @@ return array(
 			'message_product_flex_color'     => array(
 				'title'        => __( 'Credit Messaging color', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
-				'class'        => array( 'wc-enhanced-select' ),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
 				'default'      => 'blue',
 				'desc_tip'     => true,
 				'description'  => __(
@@ -1211,7 +1245,8 @@ return array(
 			'message_product_flex_ratio'     => array(
 				'title'        => __( 'Credit Messaging ratio', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
-				'class'        => array( 'wc-enhanced-select' ),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
 				'default'      => '1x1',
 				'desc_tip'     => true,
 				'description'  => __(
@@ -1232,135 +1267,6 @@ return array(
 				'gateway'      => 'paypal',
 			),
 
-			// Mini cart settings.
-			'button_mini-cart_heading'       => array(
-				'heading'      => __( 'Mini Cart', 'woocommerce-paypal-payments' ),
-				'type'         => 'ppcp-heading',
-				'screens'      => array(
-					State::STATE_PROGRESSIVE,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
-			'button_mini-cart_enabled'       => array(
-				'title'        => __( 'Buttons on Mini Cart', 'woocommerce-paypal-payments' ),
-				'type'         => 'checkbox',
-				'label'        => __( 'Enable on Mini Cart', 'woocommerce-paypal-payments' ),
-				'default'      => true,
-				'screens'      => array(
-					State::STATE_PROGRESSIVE,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
-			'button_mini-cart_layout'        => array(
-				'title'        => __( 'Button Layout', 'woocommerce-paypal-payments' ),
-				'type'         => 'select',
-				'class'        => array( 'wc-enhanced-select' ),
-				'default'      => 'horizontal',
-				'desc_tip'     => true,
-				'description'  => __(
-					'If additional funding sources are available to the buyer through PayPal, such as Venmo, then multiple buttons are displayed in the space provided. Choose "vertical" for a dynamic list of alternative and local payment options, or "horizontal" when space is limited.',
-					'woocommerce-paypal-payments'
-				),
-				'options'      => array(
-					'vertical'   => __( 'Vertical', 'woocommerce-paypal-payments' ),
-					'horizontal' => __( 'Horizontal', 'woocommerce-paypal-payments' ),
-				),
-				'screens'      => array(
-					State::STATE_PROGRESSIVE,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
-			'button_mini-cart_tagline'       => array(
-				'title'        => __( 'Tagline', 'woocommerce-paypal-payments' ),
-				'type'         => 'checkbox',
-				'label'        => __( 'Enable tagline', 'woocommerce-paypal-payments' ),
-				'default'      => false,
-				'desc_tip'     => true,
-				'description'  => __(
-					'Add the tagline. This line will only show up, if you select a horizontal layout.',
-					'woocommerce-paypal-payments'
-				),
-				'screens'      => array(
-					State::STATE_PROGRESSIVE,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
-			'button_mini-cart_label'         => array(
-				'title'        => __( 'Button Label', 'woocommerce-paypal-payments' ),
-				'type'         => 'select',
-				'class'        => array( 'wc-enhanced-select' ),
-				'default'      => 'paypal',
-				'desc_tip'     => true,
-				'description'  => __(
-					'This controls the label on the primary button.',
-					'woocommerce-paypal-payments'
-				),
-				'options'      => array(
-					'paypal'   => __( 'PayPal', 'woocommerce-paypal-payments' ),
-					'checkout' => __( 'PayPal Checkout', 'woocommerce-paypal-payments' ),
-					'buynow'   => __( 'PayPal Buy Now', 'woocommerce-paypal-payments' ),
-					'pay'      => __( 'Pay with PayPal', 'woocommerce-paypal-payments' ),
-				),
-				'screens'      => array(
-					State::STATE_PROGRESSIVE,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
-			'button_mini-cart_color'         => array(
-				'title'        => __( 'Color', 'woocommerce-paypal-payments' ),
-				'type'         => 'select',
-				'class'        => array( 'wc-enhanced-select' ),
-				'default'      => 'gold',
-				'desc_tip'     => true,
-				'description'  => __(
-					'Controls the background color of the primary button. Use "Gold" to leverage PayPal\'s recognition and preference, or change it to match your site design or aesthetic.',
-					'woocommerce-paypal-payments'
-				),
-				'options'      => array(
-					'gold'   => __( 'Gold (Recommended)', 'woocommerce-paypal-payments' ),
-					'blue'   => __( 'Blue', 'woocommerce-paypal-payments' ),
-					'silver' => __( 'Silver', 'woocommerce-paypal-payments' ),
-					'black'  => __( 'Black', 'woocommerce-paypal-payments' ),
-				),
-				'screens'      => array(
-					State::STATE_PROGRESSIVE,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
-			'button_mini-cart_shape'         => array(
-				'title'        => __( 'Shape', 'woocommerce-paypal-payments' ),
-				'type'         => 'select',
-				'class'        => array( 'wc-enhanced-select' ),
-				'default'      => 'rect',
-				'desc_tip'     => true,
-				'description'  => __(
-					'The pill-shaped button\'s unique and powerful shape signifies PayPal in people\'s minds. Use the rectangular button as an alternative when pill-shaped buttons might pose design challenges.',
-					'woocommerce-paypal-payments'
-				),
-				'options'      => array(
-					'pill' => __( 'Pill', 'woocommerce-paypal-payments' ),
-					'rect' => __( 'Rectangle', 'woocommerce-paypal-payments' ),
-				),
-				'screens'      => array(
-					State::STATE_PROGRESSIVE,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
-
 			// Cart settings.
 			'button_cart_heading'            => array(
 				'heading'      => __( 'Cart', 'woocommerce-paypal-payments' ),
@@ -1371,6 +1277,7 @@ return array(
 				),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
+				'description'  => __( 'Customize the appearance of PayPal Checkout on the cart page.', 'woocommerce-paypal-payments' ),
 			),
 			'button_cart_enabled'            => array(
 				'title'        => __( 'Buttons on Cart', 'woocommerce-paypal-payments' ),
@@ -1387,7 +1294,8 @@ return array(
 			'button_cart_layout'             => array(
 				'title'        => __( 'Button Layout', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
-				'class'        => array( 'wc-enhanced-select' ),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
 				'default'      => 'horizontal',
 				'desc_tip'     => true,
 				'description'  => __(
@@ -1425,7 +1333,8 @@ return array(
 			'button_cart_label'              => array(
 				'title'        => __( 'Button Label', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
-				'class'        => array( 'wc-enhanced-select' ),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
 				'default'      => 'paypal',
 				'desc_tip'     => true,
 				'description'  => __(
@@ -1448,7 +1357,8 @@ return array(
 			'button_cart_color'              => array(
 				'title'        => __( 'Color', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
-				'class'        => array( 'wc-enhanced-select' ),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
 				'default'      => 'gold',
 				'desc_tip'     => true,
 				'description'  => __(
@@ -1471,7 +1381,8 @@ return array(
 			'button_cart_shape'              => array(
 				'title'        => __( 'Shape', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
-				'class'        => array( 'wc-enhanced-select' ),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
 				'default'      => 'rect',
 				'desc_tip'     => true,
 				'description'  => __(
@@ -1499,6 +1410,8 @@ return array(
 				),
 				'requirements' => array( 'messages' ),
 				'gateway'      => 'paypal',
+				'description'  => str_replace( '<a>', '<a href="https://www.paypal.com/us/business/buy-now-pay-later">', __( 'Customize the appearance of <a>PayPal Credit messages</a> on your cart page to promote special financing offers, which help increase sales.', 'woocommerce-paypal-payments' ) ),
+				'class'        => array( 'ppcp-subheading' ),
 			),
 			'message_cart_enabled'           => array(
 				'title'        => __( 'Enable message on Cart', 'woocommerce-paypal-payments' ),
@@ -1515,7 +1428,8 @@ return array(
 			'message_cart_layout'            => array(
 				'title'        => __( 'Credit Messaging layout', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
-				'class'        => array( 'wc-enhanced-select' ),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
 				'default'      => 'text',
 				'desc_tip'     => true,
 				'description'  => __(
@@ -1536,7 +1450,8 @@ return array(
 			'message_cart_logo'              => array(
 				'title'        => __( 'Credit Messaging logo', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
-				'class'        => array( 'wc-enhanced-select' ),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
 				'default'      => 'primary',
 				'desc_tip'     => true,
 				'description'  => __(
@@ -1559,7 +1474,8 @@ return array(
 			'message_cart_position'          => array(
 				'title'        => __( 'Credit Messaging logo position', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
-				'class'        => array( 'wc-enhanced-select' ),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
 				'default'      => 'left',
 				'desc_tip'     => true,
 				'description'  => __(
@@ -1581,7 +1497,8 @@ return array(
 			'message_cart_color'             => array(
 				'title'        => __( 'Credit Messaging text color', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
-				'class'        => array( 'wc-enhanced-select' ),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
 				'default'      => 'black',
 				'desc_tip'     => true,
 				'description'  => __(
@@ -1604,7 +1521,8 @@ return array(
 			'message_cart_flex_color'        => array(
 				'title'        => __( 'Credit Messaging color', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
-				'class'        => array( 'wc-enhanced-select' ),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
 				'default'      => 'blue',
 				'desc_tip'     => true,
 				'description'  => __(
@@ -1630,7 +1548,8 @@ return array(
 			'message_cart_flex_ratio'        => array(
 				'title'        => __( 'Credit Messaging ratio', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
-				'class'        => array( 'wc-enhanced-select' ),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
 				'default'      => '1x1',
 				'desc_tip'     => true,
 				'description'  => __(
@@ -1651,10 +1570,145 @@ return array(
 				'gateway'      => 'paypal',
 			),
 
+			// Mini cart settings.
+			'button_mini-cart_heading'       => array(
+				'heading'      => __( 'Mini Cart', 'woocommerce-paypal-payments' ),
+				'type'         => 'ppcp-heading',
+				'screens'      => array(
+					State::STATE_PROGRESSIVE,
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+				'description'  => __( 'Customize the appearance of PayPal Checkout on the Mini Cart.', 'woocommerce-paypal-payments' ),
+			),
+			'button_mini-cart_enabled'       => array(
+				'title'        => __( 'Buttons on Mini Cart', 'woocommerce-paypal-payments' ),
+				'type'         => 'checkbox',
+				'label'        => __( 'Enable on Mini Cart', 'woocommerce-paypal-payments' ),
+				'default'      => true,
+				'screens'      => array(
+					State::STATE_PROGRESSIVE,
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
+			'button_mini-cart_layout'        => array(
+				'title'        => __( 'Button Layout', 'woocommerce-paypal-payments' ),
+				'type'         => 'select',
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
+				'default'      => 'horizontal',
+				'desc_tip'     => true,
+				'description'  => __(
+					'If additional funding sources are available to the buyer through PayPal, such as Venmo, then multiple buttons are displayed in the space provided. Choose "vertical" for a dynamic list of alternative and local payment options, or "horizontal" when space is limited.',
+					'woocommerce-paypal-payments'
+				),
+				'options'      => array(
+					'vertical'   => __( 'Vertical', 'woocommerce-paypal-payments' ),
+					'horizontal' => __( 'Horizontal', 'woocommerce-paypal-payments' ),
+				),
+				'screens'      => array(
+					State::STATE_PROGRESSIVE,
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
+			'button_mini-cart_tagline'       => array(
+				'title'        => __( 'Tagline', 'woocommerce-paypal-payments' ),
+				'type'         => 'checkbox',
+				'label'        => __( 'Enable tagline', 'woocommerce-paypal-payments' ),
+				'default'      => false,
+				'desc_tip'     => true,
+				'description'  => __(
+					'Add the tagline. This line will only show up, if you select a horizontal layout.',
+					'woocommerce-paypal-payments'
+				),
+				'screens'      => array(
+					State::STATE_PROGRESSIVE,
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
+			'button_mini-cart_label'         => array(
+				'title'        => __( 'Button Label', 'woocommerce-paypal-payments' ),
+				'type'         => 'select',
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
+				'default'      => 'paypal',
+				'desc_tip'     => true,
+				'description'  => __(
+					'This controls the label on the primary button.',
+					'woocommerce-paypal-payments'
+				),
+				'options'      => array(
+					'paypal'   => __( 'PayPal', 'woocommerce-paypal-payments' ),
+					'checkout' => __( 'PayPal Checkout', 'woocommerce-paypal-payments' ),
+					'buynow'   => __( 'PayPal Buy Now', 'woocommerce-paypal-payments' ),
+					'pay'      => __( 'Pay with PayPal', 'woocommerce-paypal-payments' ),
+				),
+				'screens'      => array(
+					State::STATE_PROGRESSIVE,
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
+			'button_mini-cart_color'         => array(
+				'title'        => __( 'Color', 'woocommerce-paypal-payments' ),
+				'type'         => 'select',
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
+				'default'      => 'gold',
+				'desc_tip'     => true,
+				'description'  => __(
+					'Controls the background color of the primary button. Use "Gold" to leverage PayPal\'s recognition and preference, or change it to match your site design or aesthetic.',
+					'woocommerce-paypal-payments'
+				),
+				'options'      => array(
+					'gold'   => __( 'Gold (Recommended)', 'woocommerce-paypal-payments' ),
+					'blue'   => __( 'Blue', 'woocommerce-paypal-payments' ),
+					'silver' => __( 'Silver', 'woocommerce-paypal-payments' ),
+					'black'  => __( 'Black', 'woocommerce-paypal-payments' ),
+				),
+				'screens'      => array(
+					State::STATE_PROGRESSIVE,
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
+			'button_mini-cart_shape'         => array(
+				'title'        => __( 'Shape', 'woocommerce-paypal-payments' ),
+				'type'         => 'select',
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
+				'default'      => 'rect',
+				'desc_tip'     => true,
+				'description'  => __(
+					'The pill-shaped button\'s unique and powerful shape signifies PayPal in people\'s minds. Use the rectangular button as an alternative when pill-shaped buttons might pose design challenges.',
+					'woocommerce-paypal-payments'
+				),
+				'options'      => array(
+					'pill' => __( 'Pill', 'woocommerce-paypal-payments' ),
+					'rect' => __( 'Rectangle', 'woocommerce-paypal-payments' ),
+				),
+				'screens'      => array(
+					State::STATE_PROGRESSIVE,
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
+
 			'disable_cards'                  => array(
 				'title'        => __( 'Disable specific credit cards', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-multiselect',
-				'class'        => array( 'wc-enhanced-select' ),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
 				'default'      => array(),
 				'desc_tip'     => true,
 				'description'  => __(
@@ -1681,11 +1735,12 @@ return array(
 			'card_icons'                     => array(
 				'title'        => __( 'Show logo of the following credit cards', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-multiselect',
-				'class'        => array( 'wc-enhanced-select' ),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
 				'default'      => array(),
 				'desc_tip'     => true,
 				'description'  => __(
-					'Define, which cards you want to display in your checkout..',
+					'Define which cards you want to display in your checkout.',
 					'woocommerce-paypal-payments'
 				),
 				'options'      => array(
