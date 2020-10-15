@@ -79,3 +79,12 @@
 #field-client_secret_production.onboarded.hide {
 	display:none;
 }
+
+/* Probably not the best location for this but will do until there's a general purpose settings CSS file. */
+.ppcp-settings-field-heading td, .ppcp-settings-field-heading th {
+	padding-left: 0;
+}
+
+.woocommerce_page_wc-settings h3.ppcp-subheading {
+	font-size: 1.1em;
+}

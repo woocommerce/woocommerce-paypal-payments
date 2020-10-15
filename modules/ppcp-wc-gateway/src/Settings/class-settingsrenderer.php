@@ -151,7 +151,7 @@ class SettingsRenderer {
                          class="%s"
                          name="%s"
                      >%s</select>',
-			esc_attr( implode( ' ', $config['class'] ) ),
+			esc_attr( implode( ' ', isset( $config['input_class'] ) ? $config['input_class'] : array() ) ),
 			esc_attr( $key ) . '[]',
 			implode( '', $options )
 		);
@@ -241,7 +241,7 @@ class SettingsRenderer {
 		}
 
 		$html = sprintf(
-			'<h3 class="%s">%s</h3>',
+			'<h3 class="wc-settings-sub-title %s">%s</h3>',
 			esc_attr( implode( ' ', $config['class'] ) ),
 			esc_html( $config['heading'] )
 		);
@@ -295,33 +295,40 @@ class SettingsRenderer {
 			$key          = 'ppcp[' . $field . ']';
 			$id           = 'ppcp-' . $field;
 			$config['id'] = $id;
-			$th_td        = 'ppcp-heading' !== $config['type'] ? 'td' : 'th';
+			$th_td        = 'ppcp-heading' !== $config['type'] ? 'td' : 'td';
 			$colspan      = 'ppcp-heading' !== $config['type'] ? 1 : 2;
 			$classes      = isset( $config['classes'] ) ? $config['classes'] : array();
+			$classes[]    = sprintf( 'ppcp-settings-field-%s', str_replace( 'ppcp-', '', $config['type'] ) );
+			$description  = isset( $config['description'] ) ? $config['description'] : '';
+			unset( $config['description'] );
 			?>
 		<tr valign="top" id="<?php echo esc_attr( 'field-' . $field ); ?>" class="<?php echo esc_attr( implode( ' ', $classes ) ); ?>">
 			<?php if ( 'ppcp-heading' !== $config['type'] ) : ?>
-			<th>
+			<th scope="row">
 				<label
 					for="<?php echo esc_attr( $id ); ?>"
 				><?php echo esc_html( $config['title'] ); ?></label>
 				<?php if ( isset( $config['desc_tip'] ) && $config['desc_tip'] ) : ?>
 				<span
 						class="woocommerce-help-tip"
-						data-tip="<?php echo esc_attr( $config['description'] ); ?>"
+						data-tip="<?php echo esc_attr( $description ); ?>"
 				></span>
 					<?php
-					unset( $config['description'] );
+					$description = '';
 				endif;
 				?>
 			</th>
 			<?php endif; ?>
 			<<?php echo esc_attr( $th_td ); ?> colspan="<?php echo (int) $colspan; ?>">
-						<?php
-						'ppcp-text' === $config['type'] ?
-						$this->render_text( $config )
-						: woocommerce_form_field( $key, $config, $value );
-						?>
+					<?php
+					'ppcp-text' === $config['type'] ?
+					$this->render_text( $config )
+					: woocommerce_form_field( $key, $config, $value );
+					?>
+
+				<?php if ( $description ) : ?>
+				<p class="<?php echo 'ppcp-heading' === $config['type'] ? '' : 'description'; ?>"><?php echo wp_kses_post( $description ); ?></p>
+				<?php endif; ?>
 			</<?php echo esc_attr( $th_td ); ?>>
 		</tr>
 			<?php
