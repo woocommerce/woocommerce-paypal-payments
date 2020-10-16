@@ -68,6 +68,7 @@ return array(
 		$dcc_applies         = $container->get( 'api.helpers.dccapplies' );
 		$subscription_helper = $container->get( 'subscription.helper' );
 		$messages_apply      = $container->get( 'button.helper.messages-apply' );
+		$environment         = $container->get( 'onboarding.environment' );
 		return new SmartButton(
 			$container->get( 'button.url' ),
 			$container->get( 'session.handler' ),
@@ -79,7 +80,8 @@ return array(
 			$request_data,
 			$dcc_applies,
 			$subscription_helper,
-			$messages_apply
+			$messages_apply,
+			$environment
 		);
 	},
 	'button.url'                        => static function ( $container ): string {
