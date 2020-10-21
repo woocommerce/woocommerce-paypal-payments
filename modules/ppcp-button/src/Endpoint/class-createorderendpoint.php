@@ -162,11 +162,14 @@ class CreateOrderEndpoint implements EndpointInterface {
 			}
 
 			$this->set_bn_code( $data );
-			$order = $this->api_endpoint->create(
+			$shipping_address_is_fix = 'checkout' === $data['context'] ? true : false;
+			$order                   = $this->api_endpoint->create(
 				$purchase_units,
 				$this->payer( $data, $wc_order ),
 				null,
-				$this->payment_method()
+				$this->payment_method(),
+				'',
+				$shipping_address_is_fix
 			);
 			if ( 'checkout' === $data['context'] ) {
 					$this->validate_checkout_form( $data['form'], $order );
