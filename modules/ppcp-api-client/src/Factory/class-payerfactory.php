@@ -116,7 +116,10 @@ class PayerFactory {
 	 * @return Payer
 	 */
 	public function from_paypal_response( \stdClass $data ): Payer {
-		$address    = $this->address_factory->from_paypal_response( $data->address );
+		$address = null;
+		if ( isset( $data->address ) ) {
+			$address = $this->address_factory->from_paypal_response( $data->address );
+		}
 		$payer_name = new PayerName(
 			isset( $data->name->given_name ) ? (string) $data->name->given_name : '',
 			isset( $data->name->surname ) ? (string) $data->name->surname : ''

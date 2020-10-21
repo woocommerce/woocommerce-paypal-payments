@@ -70,7 +70,7 @@ class Payer {
 	 * @param PayerName          $name The name.
 	 * @param string             $email_address The email.
 	 * @param string             $payer_id The payer id.
-	 * @param Address            $address The address.
+	 * @param Address|null       $address The address.
 	 * @param \DateTime|null     $birthdate The birth date.
 	 * @param PhoneWithType|null $phone The phone.
 	 * @param PayerTaxInfo|null  $tax_info The tax info.
@@ -79,7 +79,7 @@ class Payer {
 		PayerName $name,
 		string $email_address,
 		string $payer_id,
-		Address $address,
+		Address $address = null,
 		\DateTime $birthdate = null,
 		PhoneWithType $phone = null,
 		PayerTaxInfo $tax_info = null
@@ -133,9 +133,9 @@ class Payer {
 	/**
 	 * Returns the address.
 	 *
-	 * @return Address
+	 * @return Address|null
 	 */
-	public function address(): Address {
+	public function address() {
 		return $this->address;
 	}
 
@@ -166,8 +166,13 @@ class Payer {
 		$payer = array(
 			'name'          => $this->name()->to_array(),
 			'email_address' => $this->email_address(),
-			'address'       => $this->address()->to_array(),
 		);
+		if ( $this->address() ) {
+			$payer['address'] = $this->address->to_array();
+			if ( 2 !== strlen( $this->address()->country_code() ) ) {
+				unset( $payer['address'] );
+			}
+		}
 		if ( $this->payer_id() ) {
 			$payer['payer_id'] = $this->payer_id();
 		}
