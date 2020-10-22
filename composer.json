@@ -3,14 +3,6 @@
     "type": "wordpress-plugin",
     "description": "PayPal Commerce Platform for WooCommerce",
     "license": "GPL-2.0",
-    "authors": [
-        {
-            "name": "Inpsyde GmbH",
-            "homepage": "https://inpsyde.com/",
-            "email": "hello@inpsyde.com",
-            "role": "Company"
-        }
-    ],
     "require": {
         "dhii/module-interface": "0.1",
         "psr/container": "^1.0",
