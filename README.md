@@ -38,7 +38,7 @@ Build the plugin and remove unnecessary files:
 ```
 composer install --no-dev
 yarn run build
-rm -rf ./{tests,.git,.github,.gitignore,.travis.yml,composer.json,composer.lock,package.json,phpcs.xml.dist,phpunit.xml.dist,yarn.lock}
+rm -rf ./{tests,.git,.github,.gitignore,.travis.yml,composer.json,composer.lock,package.json,phpcs.xml.dist,phpunit.xml.dist,.phpunit.result.cache,yarn.lock}
 rm -rf ./modules/ppcp-button/{node_modules/,.babelrc,package.json,webpack.config.js,yarn.lock}
 ```
 
