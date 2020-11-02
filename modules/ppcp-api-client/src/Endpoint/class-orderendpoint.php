@@ -154,6 +154,7 @@ class OrderEndpoint {
 	 * @param PaymentToken|null  $payment_token The payment token.
 	 * @param PaymentMethod|null $payment_method The payment method.
 	 * @param string             $paypal_request_id The paypal request id.
+	 * @param bool               $shipping_address_is_fixed Whether the shipping address is changeable or not.
 	 *
 	 * @return Order
 	 * @throws RuntimeException If the request fails.
@@ -163,7 +164,8 @@ class OrderEndpoint {
 		Payer $payer = null,
 		PaymentToken $payment_token = null,
 		PaymentMethod $payment_method = null,
-		string $paypal_request_id = ''
+		string $paypal_request_id = '',
+		bool $shipping_address_is_fixed = false
 	): Order {
 
 		$contains_physical_goods = false;
@@ -184,10 +186,13 @@ class OrderEndpoint {
 			}
 		);
 		$shipping_preferences    = $contains_physical_goods
-			? ApplicationContext::SHIPPING_PREFERENCE_GET_FROM_FILE
+			? $shipping_address_is_fixed ?
+				ApplicationContext::SHIPPING_PREFERENCE_SET_PROVIDED_ADDRESS
+				: ApplicationContext::SHIPPING_PREFERENCE_GET_FROM_FILE
 			: ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING;
-		$bearer                  = $this->bearer->bearer();
-		$data                    = array(
+
+		$bearer = $this->bearer->bearer();
+		$data   = array(
 			'intent'              => $this->intent,
 			'purchase_units'      => array_map(
 				static function ( PurchaseUnit $item ): array {
