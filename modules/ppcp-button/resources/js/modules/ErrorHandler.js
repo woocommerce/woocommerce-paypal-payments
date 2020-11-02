@@ -22,7 +22,7 @@ class ErrorHandler {
         } else {
             this.wrapper.classList.remove('ppcp-persist');
         }
-        this.wrapper.innerText = this.sanitize(text);
+        this.wrapper.innerHTML = this.sanitize(text);
         jQuery.scroll_to_notices(jQuery('.woocommerce-notices-wrapper'))
     }
 

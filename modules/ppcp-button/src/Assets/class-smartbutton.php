@@ -716,6 +716,7 @@ class SmartButton implements SmartButtonInterface {
 			$this->environment->current_environment_is( Environment::SANDBOX )
 			&& defined( 'WP_DEBUG' ) && \WP_DEBUG && is_user_logged_in()
 			&& WC()->customer && WC()->customer->get_billing_country()
+			&& 2 === strlen( WC()->customer->get_billing_country() )
 		) {
 			$params['buyer-country'] = WC()->customer->get_billing_country();
 		}
