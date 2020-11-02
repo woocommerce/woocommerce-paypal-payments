@@ -256,10 +256,20 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 * @throws \Exception On Error.
 	 */
 	private function validate_checkout_form( string $form_values, Order $order ) {
-		$this->order   = $order;
-		$parsed_values = wp_parse_args( $form_values );
-		$_POST         = $parsed_values;
-		$_REQUEST      = $parsed_values;
+		$this->order = $order;
+		$form_values = explode( '&', $form_values );
+
+		$parsed_values = array();
+		foreach ( $form_values as $field ) {
+			$field = explode( '=', $field );
+
+			if ( count( $field ) !== 2 ) {
+				continue;
+			}
+			$parsed_values[ $field[0] ] = $field[1];
+		}
+		$_POST    = $parsed_values;
+		$_REQUEST = $parsed_values;
 
 		add_filter(
 			'woocommerce_after_checkout_validation',
