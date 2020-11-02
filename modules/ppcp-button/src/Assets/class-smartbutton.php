@@ -19,6 +19,7 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
+use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
@@ -106,6 +107,13 @@ class SmartButton implements SmartButtonInterface {
 	private $messages_apply;
 
 	/**
+	 * The environment object.
+	 *
+	 * @var Environment
+	 */
+	private $environment;
+
+	/**
 	 * SmartButton constructor.
 	 *
 	 * @param string             $module_url The URL to the module.
@@ -119,6 +127,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @param DccApplies         $dcc_applies The DCC applies helper.
 	 * @param SubscriptionHelper $subscription_helper The subscription helper.
 	 * @param MessagesApply      $messages_apply The Messages apply helper.
+	 * @param Environment        $environment The environment object.
 	 */
 	public function __construct(
 		string $module_url,
@@ -131,7 +140,8 @@ class SmartButton implements SmartButtonInterface {
 		RequestData $request_data,
 		DccApplies $dcc_applies,
 		SubscriptionHelper $subscription_helper,
-		MessagesApply $messages_apply
+		MessagesApply $messages_apply,
+		Environment $environment
 	) {
 
 		$this->module_url          = $module_url;
@@ -145,6 +155,7 @@ class SmartButton implements SmartButtonInterface {
 		$this->dcc_applies         = $dcc_applies;
 		$this->subscription_helper = $subscription_helper;
 		$this->messages_apply      = $messages_apply;
+		$this->environment         = $environment;
 	}
 
 	/**
@@ -702,7 +713,8 @@ class SmartButton implements SmartButtonInterface {
 				$this->settings->get( 'intent' ) : 'capture',
 		);
 		if (
-			defined( 'WP_DEBUG' ) && \WP_DEBUG && is_user_logged_in()
+			$this->environment->current_environment_is( Environment::SANDBOX )
+			&& defined( 'WP_DEBUG' ) && \WP_DEBUG && is_user_logged_in()
 			&& WC()->customer && WC()->customer->get_billing_country()
 		) {
 			$params['buyer-country'] = WC()->customer->get_billing_country();
