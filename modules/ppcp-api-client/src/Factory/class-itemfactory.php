@@ -48,7 +48,7 @@ class ItemFactory {
 					mb_substr( $product->get_name(), 0, 127 ),
 					new Money( $price_without_tax_rounded, $currency ),
 					$quantity,
-					mb_substr( $product->get_description(), 0, 127 ),
+					mb_substr( wp_strip_all_tags( $product->get_description() ), 0, 127 ),
 					$tax,
 					$product->get_sku(),
 					( $product->is_virtual() ) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS
@@ -102,7 +102,7 @@ class ItemFactory {
 			mb_substr( $product->get_name(), 0, 127 ),
 			new Money( $price_without_tax_rounded, $currency ),
 			$quantity,
-			mb_substr( $product->get_description(), 0, 127 ),
+			mb_substr( wp_strip_all_tags( $product->get_description() ), 0, 127 ),
 			$tax,
 			$product->get_sku(),
 			( $product->is_virtual() ) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS
