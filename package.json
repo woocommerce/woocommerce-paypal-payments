@@ -1,6 +1,6 @@
 {
   "name": "woocommerce-paypal-payments",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "WooCommerce PayPal Payments",
   "repository": "https://github.com/woocommerce/woocommerce-paypal-payments",
   "license": "GPL-2.0",
@@ -15,9 +15,9 @@
     "prebuild": "rm -rf ./vendor",
     "build": "composer install --no-dev && npm run build:dev && npm run archive",
     "prearchive": "rm -rf $npm_package_name.zip",
-    "archive": "composer archive --file=$npm_package_name --format=zip && npm run archive:cleanup",
-    "archive:cleanup": "zip -d $npm_package_name.zip tests/\\* .github/\\* wordpress_org_assets/\\* modules/ppcp-button/node_modules/\\* \\*.DS_Store README.md .gitattributes .gitignore .travis.yml composer.json composer.lock package.json yarn.lock phpunit.xml.dist .phpunit.result.cache phpcs.xml.dist modules/ppcp-button/.babelrc modules/ppcp-button/package.json modules/ppcp-button/webpack.config.js modules/ppcp-button/yarn.lock vendor/\\*/.idea/\\* vendor/\\*/.gitignore vendor/\\*/.gitattributes vendor/\\*/.travis.yml",
-    "postarchive": "rm -rf $npm_package_name && unzip $npm_package_name.zip -d $npm_package_name && rm $npm_package_name.zip && zip -r $npm_package_name.zip $npm_package_name && rm -rf $npm_package_name"
+    "archive": "zip -r $npm_package_name.zip . -x **.git/\\* **node_modules/\\*",
+    "postarchive": "npm run archive:cleanup && rm -rf $npm_package_name && unzip $npm_package_name.zip -d $npm_package_name && rm $npm_package_name.zip && zip -r $npm_package_name.zip $npm_package_name && rm -rf $npm_package_name",
+    "archive:cleanup": "zip -d $npm_package_name.zip tests/\\* .github/\\* wordpress_org_assets/\\* \\*.DS_Store README.md .gitattributes .gitignore .travis.yml composer.json composer.lock package.json yarn.lock phpunit.xml.dist .phpunit.result.cache phpcs.xml.dist modules/ppcp-button/.babelrc modules/ppcp-button/package.json modules/ppcp-button/webpack.config.js modules/ppcp-button/yarn.lock vendor/\\*/.idea/\\* vendor/\\*/.gitignore vendor/\\*/.gitattributes vendor/\\*/.travis.yml"
   },
   "dependencies": {
   },
