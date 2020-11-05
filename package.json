@@ -19,6 +19,9 @@
     "postarchive": "npm run archive:cleanup && rm -rf $npm_package_name && unzip $npm_package_name.zip -d $npm_package_name && rm $npm_package_name.zip && zip -r $npm_package_name.zip $npm_package_name && rm -rf $npm_package_name",
     "archive:cleanup": "zip -d $npm_package_name.zip tests/\\* .github/\\* wordpress_org_assets/\\* \\*.DS_Store README.md .gitattributes .gitignore .travis.yml composer.json composer.lock package.json yarn.lock phpunit.xml.dist .phpunit.result.cache phpcs.xml.dist modules/ppcp-button/.babelrc modules/ppcp-button/package.json modules/ppcp-button/webpack.config.js modules/ppcp-button/yarn.lock vendor/\\*/.idea/\\* vendor/\\*/.gitignore vendor/\\*/.gitattributes vendor/\\*/.travis.yml"
   },
+  "config": {
+    "wp_org_slug": "woocommerce-paypal-payments"
+  },
   "dependencies": {
   },
   "devDependencies": {
