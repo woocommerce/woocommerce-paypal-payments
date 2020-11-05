@@ -13,7 +13,7 @@ PayPal's latest complete payments processing solution. Accept PayPal, PayPal Cre
 1. Clone repository
 2. `$ cd woocommerce-paypal-payments`
 3. `$ composer install`
-4. `$ yarn run dev`
+4. `$ yarn run build:dev`
 5. Change the `PAYPAL_INTEGRATION_DATE` constant to `gmdate( 'Y-m-d' )` to run the latest PayPal JavaScript SDK
 
 Note: PHPUnit needs at least PHP 7.3.
@@ -34,12 +34,10 @@ Clone the repository and `cd` into it
 
 ### Build
 
-Build the plugin and remove unnecessary files:
+The following command should get you a ZIP file ready to be used on a WordPress site.
+
 ```
-composer install --no-dev
-yarn run build
-rm -rf ./{tests,.git,.github,.gitignore,.travis.yml,composer.json,composer.lock,package.json,phpcs.xml.dist,phpunit.xml.dist,.phpunit.result.cache,yarn.lock}
-rm -rf ./modules/ppcp-button/{node_modules/,.babelrc,package.json,webpack.config.js,yarn.lock}
+npm run build
 ```
 
 ### Update version
