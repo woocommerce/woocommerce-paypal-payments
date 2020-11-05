@@ -12,7 +12,7 @@
     "build:modules": "yarn run build:modules:ppcp-button",
     "build:dev": "yarn run install:modules && yarn run build:modules",
 
-    "prebuild": "exit 0; rm -rf ./vendor",
+    "prebuild": "rm -rf ./vendor",
     "build": "composer install --no-dev && npm run build:dev && npm run archive",
     "prearchive": "rm -rf $npm_package_name.zip",
     "archive": "composer archive --file=$npm_package_name --format=zip && npm run archive:cleanup",
