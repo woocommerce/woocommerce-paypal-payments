@@ -1,8 +1,9 @@
 /vendor/
 /build/
 node_modules
-phpunit.xml
 .phpunit.result.cache
 composer.lock
 yarn-error.log
 modules/ppcp-button/assets/*
+.idea/
+*.zip

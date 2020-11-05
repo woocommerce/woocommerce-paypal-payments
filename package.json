@@ -1,16 +1,23 @@
 {
-  "name": "izettle-woocommerce",
-  "version": "0.1.0",
-  "description": "iZettle WooCommerce",
-  "repository": "https://github.com/inpsyde/izettle-woocommerce",
+  "name": "woocommerce-paypal-payments",
+  "version": "1.0.0",
+  "description": "WooCommerce PayPal Payments",
+  "repository": "https://github.com/woocommerce/woocommerce-paypal-payments",
   "license": "GPL-2.0",
-  "author": "Inpsyde GmbH",
+  "author": "WooCommerce",
   "scripts": {
-    "install:assets:ppcp-button": "cd modules/ppcp-button && yarn install",
-    "install:assets": "yarn run install:assets:ppcp-button",
-    "build:assets:ppcp-button": "cd modules/ppcp-button && yarn run build",
-    "build:assets": "yarn run build:assets:ppcp-button",
-    "build": "yarn run install:assets && yarn run build:assets"
+    "install:modules:ppcp-button": "cd modules/ppcp-button && yarn install",
+    "install:modules": "yarn run install:modules:ppcp-button",
+    "build:modules:ppcp-button": "cd modules/ppcp-button && yarn run build",
+    "build:modules": "yarn run build:modules:ppcp-button",
+    "build:dev": "yarn run install:modules && yarn run build:modules",
+
+    "prebuild": "rm -rf ./vendor",
+    "build": "composer install --no-dev && npm run build:dev && npm run archive",
+    "prearchive": "rm -rf $npm_package_name.zip",
+    "archive": "composer archive --file=$npm_package_name --format=zip && npm run archive:cleanup",
+    "archive:cleanup": "zip -d $npm_package_name.zip tests/\\* .github/\\* wordpress_org_assets/\\* modules/ppcp-button/node_modules/\\* \\*.DS_Store README.md .gitattributes .gitignore .travis.yml composer.json composer.lock package.json yarn.lock phpunit.xml.dist .phpunit.result.cache phpcs.xml.dist modules/ppcp-button/.babelrc modules/ppcp-button/package.json modules/ppcp-button/webpack.config.js modules/ppcp-button/yarn.lock vendor/\\*/.idea/\\* vendor/\\*/.gitignore vendor/\\*/.gitattributes vendor/\\*/.travis.yml",
+    "postarchive": "rm -rf $npm_package_name && unzip $npm_package_name.zip -d $npm_package_name && rm $npm_package_name.zip && zip -r $npm_package_name.zip $npm_package_name && rm -rf $npm_package_name"
   },
   "dependencies": {
   },
