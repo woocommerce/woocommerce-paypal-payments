@@ -65,7 +65,7 @@ class Money {
 	public function to_array(): array {
 		return array(
 			'currency_code' => $this->currency_code(),
-			'value'         => number_format( $this->value(), 2 ),
+			'value'         => number_format( $this->value(), 2, '.', '' ),
 		);
 	}
 }

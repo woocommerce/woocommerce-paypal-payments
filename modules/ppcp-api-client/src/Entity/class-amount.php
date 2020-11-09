@@ -74,7 +74,7 @@ class Amount {
 	public function to_array(): array {
 		$amount = array(
 			'currency_code' => $this->currency_code(),
-			'value'         => number_format( $this->value(), 2 ),
+			'value'         => number_format( $this->value(), 2, '.', '' ),
 		);
 		if ( $this->breakdown() && count( $this->breakdown()->to_array() ) ) {
 			$amount['breakdown'] = $this->breakdown()->to_array();
