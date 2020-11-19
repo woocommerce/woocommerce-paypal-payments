@@ -169,8 +169,8 @@ class OrderProcessor {
 		);
 		if ( $order->status()->is( OrderStatus::COMPLETED ) && $order->intent() === 'CAPTURE' ) {
 
-			$purchaseUnitsPaymentsCapturesStatus = $order->purchase_units()[0]->payments()->captures()[0]->status() ?? '';
-			if ( $purchaseUnitsPaymentsCapturesStatus && $purchaseUnitsPaymentsCapturesStatus !== 'DECLINED' ) {
+			$purchase_units_payments_captures_status = $order->purchase_units()[0]->payments()->captures()[0]->status() ?? '';
+			if ( $purchase_units_payments_captures_status && 'DECLINED' !== $purchase_units_payments_captures_status ) {
 				$wc_order->update_status(
 					'processing',
 					__( 'Payment received.', 'woocommerce-paypal-payments' )
