@@ -336,7 +336,7 @@ class OrderEndpoint {
 		if ( $purchase_units_payments_captures_status && 'DECLINED' === $purchase_units_payments_captures_status ) {
 			throw new RuntimeException(
 				sprintf(
-				// translators: %s is the current status.
+				// translators: %s is the purchase units payments captures status value.
 					__( 'Purchase units payments captures status %s', 'woocommerce-paypal-payments' ),
 					$purchase_units_payments_captures_status
 				)
