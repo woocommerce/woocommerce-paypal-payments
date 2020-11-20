@@ -168,14 +168,10 @@ class OrderProcessor {
 			__( 'Awaiting payment.', 'woocommerce-paypal-payments' )
 		);
 		if ( $order->status()->is( OrderStatus::COMPLETED ) && $order->intent() === 'CAPTURE' ) {
-
-			$purchase_units_payments_captures_status = $order->purchase_units()[0]->payments()->captures()[0]->status() ?? '';
-			if ( $purchase_units_payments_captures_status && 'DECLINED' !== $purchase_units_payments_captures_status ) {
-				$wc_order->update_status(
-					'processing',
-					__( 'Payment received.', 'woocommerce-paypal-payments' )
-				);
-			}
+			$wc_order->update_status(
+				'processing',
+				__( 'Payment received.', 'woocommerce-paypal-payments' )
+			);
 		}
 
 		if ( $this->capture_authorized_downloads( $order ) && $this->authorized_payments_processor->process( $wc_order ) ) {

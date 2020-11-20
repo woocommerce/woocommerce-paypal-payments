@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
 /**
  * Trait ProcessPaymentTrait
@@ -71,7 +72,15 @@ trait ProcessPaymentTrait {
 			}
 
 			$this->session_handler->destroy_session_data();
+		} catch ( RuntimeException $error ) {
+			$this->session_handler->destroy_session_data();
+			wc_add_notice(
+				__( 'Payment provider declined the payment, please use a different payment method.', 'woocommerce-paypal-payments' ),
+				'error'
+			);
+			return null;
 		}
+
 		wc_add_notice(
 			$this->order_processor->last_error(),
 			'error'
