@@ -329,7 +329,14 @@ class OrderEndpoint {
 			);
 			throw $error;
 		}
+
 		$order = $this->order_factory->from_paypal_response( $json );
+
+		$purchase_units_payments_captures_status = $order->purchase_units()[0]->payments()->captures()[0]->status() ?? '';
+		if ( $purchase_units_payments_captures_status && 'DECLINED' === $purchase_units_payments_captures_status ) {
+			throw new RuntimeException( __( 'Payment provider declined the payment, please use a different payment method.', 'woocommerce-paypal-payments' ) );
+		}
+
 		return $order;
 	}
 
