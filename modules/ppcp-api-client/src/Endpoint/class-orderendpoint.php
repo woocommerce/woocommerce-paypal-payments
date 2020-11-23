@@ -334,13 +334,7 @@ class OrderEndpoint {
 
 		$purchase_units_payments_captures_status = $order->purchase_units()[0]->payments()->captures()[0]->status() ?? '';
 		if ( $purchase_units_payments_captures_status && 'DECLINED' === $purchase_units_payments_captures_status ) {
-			throw new RuntimeException(
-				sprintf(
-				// translators: %s is the purchase units payments captures status value.
-					__( 'Purchase units payments captures status %s', 'woocommerce-paypal-payments' ),
-					$purchase_units_payments_captures_status
-				)
-			);
+			throw new RuntimeException( __( 'Payment provider declined the payment, please use a different payment method.', 'woocommerce-paypal-payments' ) );
 		}
 
 		return $order;

@@ -74,10 +74,7 @@ trait ProcessPaymentTrait {
 			$this->session_handler->destroy_session_data();
 		} catch ( RuntimeException $error ) {
 			$this->session_handler->destroy_session_data();
-			wc_add_notice(
-				__( 'Payment provider declined the payment, please use a different payment method.', 'woocommerce-paypal-payments' ),
-				'error'
-			);
+			wc_add_notice( $error->getMessage(), 'error' );
 			return null;
 		}
 
