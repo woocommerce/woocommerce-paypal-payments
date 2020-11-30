@@ -1,5 +1,8 @@
 *** Changelog ***
 
+= 1.0.3 - 2020-11-30 =
+* Fix - Order with Payment received when Hosted Fields transaction is declined. #88
+
 = 1.0.2 - 2020-11-09 =
 * Fix - Purchases over 1.000 USD fail. #84
 
