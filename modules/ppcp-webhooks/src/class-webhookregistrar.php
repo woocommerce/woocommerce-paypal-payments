@@ -83,10 +83,6 @@ class WebhookRegistrar {
 			);
 			return true;
 		} catch ( RuntimeException $error ) {
-			wp_schedule_single_event(
-				time() - 1,
-				self::EVENT_HOOK
-			);
 			return false;
 		}
 	}
