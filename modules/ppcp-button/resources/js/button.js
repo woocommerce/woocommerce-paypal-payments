@@ -60,7 +60,8 @@ const bootstrap = () => {
         const payNowBootstrap = new PayNowBootstrap(
             PayPalCommerceGateway,
             renderer,
-            messageRenderer
+            messageRenderer,
+            spinner
         );
         payNowBootstrap.init();
     }
