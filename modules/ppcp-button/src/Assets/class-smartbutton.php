@@ -840,6 +840,10 @@ class SmartButton implements SmartButtonInterface {
 		) {
 			$load_buttons = true;
 		}
+		if ( $this->context() === 'pay-now' ) {
+			$load_buttons = true;
+		}
+
 		return $load_buttons;
 	}
 
