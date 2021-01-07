@@ -175,7 +175,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 			if ( 'checkout' === $data['context'] ) {
 					$this->validate_checkout_form( $data['form'], $order );
 			}
-			if ( 'pay-now' === $data['context'] ) {
+			if ( 'pay-now' === $data['context'] && get_option( 'woocommerce_terms_page_id', '' ) !== '' ) {
 				$this->validate_paynow_form( $data['form'] );
 			}
 			wp_send_json_success( $order->to_array() );
