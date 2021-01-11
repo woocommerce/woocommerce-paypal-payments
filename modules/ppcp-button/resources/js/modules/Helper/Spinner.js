@@ -3,6 +3,11 @@ class Spinner {
     constructor() {
         this.target = 'form.woocommerce-checkout';
     }
+
+    setTarget(target) {
+        this.target = target;
+    }
+
     block() {
 
         jQuery( this.target ).block({

@@ -16,9 +16,12 @@ class CheckoutActionHandler {
             const bnCode = typeof this.config.bn_codes[this.config.context] !== 'undefined' ?
                 this.config.bn_codes[this.config.context] : '';
 
-
             const errorHandler = this.errorHandler;
+
             const formSelector = this.config.context === 'checkout' ? 'form.checkout' : 'form#order_review';
+            spinner.setTarget(formSelector);
+            spinner.block();
+
             const formValues = jQuery(formSelector).serialize();
 
             return fetch(this.config.ajax.create_order.endpoint, {
