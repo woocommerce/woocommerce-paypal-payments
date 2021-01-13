@@ -737,7 +737,7 @@ class SmartButton implements SmartButtonInterface {
 		$region  = wc_get_base_location();
 		$country = $region['country'];
 		if ( 'GB' === $country ) {
-			$disable_funding[] = 'card';
+			$disable_funding[] = 'credit';
 		}
 		$params['disable-funding'] = implode( ',', array_unique( $disable_funding ) );
 
