@@ -4,8 +4,9 @@
     "description": "PayPal Commerce Platform for WooCommerce",
     "license": "GPL-2.0",
     "require": {
-        "dhii/module-interface": "0.1",
+        "dhii/module-interface": "0.2.x-dev",
         "psr/container": "1.0.0",
+        "oomphinc/composer-installers-extender": "^1.1",
         "container-interop/service-provider": "^0.4.0",
         "dhii/containers": "v0.1.0-alpha1",
         "dhii/wp-containers": "v0.1.0-alpha1",
