@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, e-commerce, store, sales, sell, 
 Requires at least: 5.3
 Tested up to: 5.6
 Requires PHP: 7.0
-Stable tag: 1.0.3
+Stable tag: 1.0.4
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -57,6 +57,11 @@ Follow the steps below to connect the plugin to your PayPal account:
 6. Main settings screen.
 
 == Changelog ==
+
+= 1.0.4 =
+* Fix - Payment buttons only visible on order-pay site when Mini Cart is enabled; payment fails. #96
+* Fix - High volume of failed calls to /v1/notifications/webhooks #93
+* Fix - GB country has ACDC blocked. #91
 
 = 1.0.3 =
 * Fix - Order with Payment received when Hosted Fields transaction is declined. #88
