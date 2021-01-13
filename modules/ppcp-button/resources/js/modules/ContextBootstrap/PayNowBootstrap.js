@@ -2,10 +2,11 @@ import ErrorHandler from '../ErrorHandler';
 import CheckoutActionHandler from '../ActionHandler/CheckoutActionHandler';
 
 class PayNowBootstrap {
-    constructor(gateway, renderer, messages) {
+    constructor(gateway, renderer, messages, spinner) {
         this.gateway = gateway;
         this.renderer = renderer;
-        this.messages = messages
+        this.messages = messages;
+        this.spinner = spinner;
     }
 
     init() {
@@ -41,6 +42,7 @@ class PayNowBootstrap {
         const actionHandler = new CheckoutActionHandler(
             PayPalCommerceGateway,
             new ErrorHandler(this.gateway.labels.error.generic),
+            this.spinner
         );
 
         this.renderer.render(
