@@ -40,6 +40,21 @@ define( 'PAYPAL_INTEGRATION_DATE', '2020-10-15' );
 	 * Initialize the plugin and its modules.
 	 */
 	function init() {
+		if ( ! function_exists( 'is_plugin_active' ) ) {
+			require_once ABSPATH . '/wp-admin/includes/plugin.php';
+		}
+		if ( ! is_plugin_active( 'woocommerce/woocommerce.php' ) ) {
+			add_action(
+				'admin_notices',
+				function() {
+					/* translators: 1. URL link. */
+					echo '<div class="error"><p><strong>' . sprintf( esc_html__( 'WooCommerce PayPal Payments requires WooCommerce to be installed and active. You can download %s here.', 'woocommerce-paypal-payments' ), '<a href="https://woocommerce.com/" target="_blank">WooCommerce</a>' ) . '</strong></p></div>';
+				}
+			);
+
+			return;
+		}
+
 		static $initialized;
 		if ( ! $initialized ) {
 			$modules = array( new PluginModule() );
@@ -89,6 +104,13 @@ define( 'PAYPAL_INTEGRATION_DATE', '2020-10-15' );
 	add_filter(
 		'plugin_action_links_' . plugin_basename( __FILE__ ),
 		function( $links ) {
+			if ( ! function_exists( 'is_plugin_active' ) ) {
+				require_once ABSPATH . '/wp-admin/includes/plugin.php';
+			}
+			if ( ! is_plugin_active( 'woocommerce/woocommerce.php' ) ) {
+				return $links;
+			}
+
 			array_unshift(
 				$links,
 				sprintf(
