@@ -59,6 +59,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 == Changelog ==
 
 = 1.0.4 =
+* Fix - Check if WooCommerce is active before initialize. #99
 * Fix - Payment buttons only visible on order-pay site when Mini Cart is enabled; payment fails. #96
 * Fix - High volume of failed calls to /v1/notifications/webhooks #93
 * Fix - GB country has ACDC blocked. #91
