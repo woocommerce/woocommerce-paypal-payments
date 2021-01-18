@@ -1801,6 +1801,30 @@ return array(
                 'description'  => __( 'Display pay later messaging on your site for offers like Pay in 3, which lets customers pay with 3 interest-free monthly payments. We’ll show messages on your site to promote this feature for you. You may not promote pay later offers with any other content, marketing, or materials.', 'woocommerce-paypal-payments' ),
                 'class'        => array( 'ppcp-subheading' ),
             ];
+            $fields['message_product_heading'] = [
+                'heading'      => __( 'Pay Later Messaging on Single Product Page', 'woocommerce-paypal-payments' ),
+                'type'         => 'ppcp-heading',
+                'screens'      => array(
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ),
+                'requirements' => array( 'messages' ),
+                'gateway'      => 'paypal',
+                'description'  => __( 'Display pay later messaging on your site for offers like Pay in 3, which lets customers pay with 3 interest-free monthly payments. We’ll show messages on your site to promote this feature for you. You may not promote pay later offers with any other content, marketing, or materials.', 'woocommerce-paypal-payments' ),
+                'class'        => array( 'ppcp-subheading' ),
+            ];
+            $fields['message_cart_heading'] = [
+                'heading'      => __( 'Pay Later Messaging on Cart', 'woocommerce-paypal-payments' ),
+                'type'         => 'ppcp-heading',
+                'screens'      => array(
+                    State::STATE_PROGRESSIVE,
+                    State::STATE_ONBOARDED,
+                ),
+                'requirements' => array( 'messages' ),
+                'gateway'      => 'paypal',
+                'description'  => __( 'Display pay later messaging on your site for offers like Pay in 3, which lets customers pay with 3 interest-free monthly payments. We’ll show messages on your site to promote this feature for you. You may not promote pay later offers with any other content, marketing, or materials.', 'woocommerce-paypal-payments' ),
+                'class'        => array( 'ppcp-subheading' ),
+            ];
         }
 
 		$dcc_applies = $container->get( 'api.helpers.dccapplies' );
