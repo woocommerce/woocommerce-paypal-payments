@@ -1,5 +1,11 @@
 *** Changelog ***
 
+= 1.0.4 - 2021-01-18 =
+* Fix - Check if WooCommerce is active before initialize. #99
+* Fix - Payment buttons only visible on order-pay site when Mini Cart is enabled; payment fails. #96
+* Fix - High volume of failed calls to /v1/notifications/webhooks #93
+* Fix - GB country has ACDC blocked. #91
+
 = 1.0.3 - 2020-11-30 =
 * Fix - Order with Payment received when Hosted Fields transaction is declined. #88
 
