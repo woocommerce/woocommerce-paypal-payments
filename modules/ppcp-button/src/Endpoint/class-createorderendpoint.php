@@ -215,9 +215,9 @@ class CreateOrderEndpoint implements EndpointInterface {
 				$number = preg_replace( '/[^0-9]/', '', $number );
 				$number = substr( $number, 0, 14 );
 				$data['payer']['phone']['phone_number']['national_number'] = $number;
-				if( empty($data['payer']['phone']['phone_number']['national_number'] ) ) {
-				    unset($data['payer']['phone']);
-                }
+				if ( empty( $data['payer']['phone']['phone_number']['national_number'] ) ) {
+					unset( $data['payer']['phone'] );
+				}
 			}
 
 			$payer = $this->payer_factory->from_paypal_response( json_decode( wp_json_encode( $data['payer'] ) ) );
