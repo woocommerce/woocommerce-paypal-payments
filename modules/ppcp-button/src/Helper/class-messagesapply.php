@@ -22,6 +22,7 @@ class MessagesApply {
 	 */
 	private $countries = array(
 		'US',
+		'FR',
 	);
 
 	/**
