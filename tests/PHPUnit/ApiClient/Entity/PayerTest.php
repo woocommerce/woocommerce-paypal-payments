@@ -16,6 +16,9 @@ class PayerTest extends TestCase
         $address
             ->expects('to_array')
             ->andReturn(['address']);
+	    $address
+		    ->expects('country_code')
+		    ->andReturn('UK');
         $phone = Mockery::mock(PhoneWithType::class);
         $phone
             ->expects('to_array')
