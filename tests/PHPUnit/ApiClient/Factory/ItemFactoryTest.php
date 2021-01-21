@@ -48,7 +48,9 @@ class ItemFactoryTest extends TestCase
         expect('wc_get_price_excluding_tax')
             ->with($product)
             ->andReturn(1);
-
+	    expect('wp_strip_all_tags')
+		    ->with('description')
+		    ->andReturn('description');
         $result = $testee->from_wc_cart($cart);
 
         $this->assertCount(1, $result);
@@ -102,6 +104,9 @@ class ItemFactoryTest extends TestCase
         expect('wc_get_price_excluding_tax')
             ->with($product)
             ->andReturn(1);
+	    expect('wp_strip_all_tags')
+		    ->with('description')
+		    ->andReturn('description');
 
         $result = $testee->from_wc_cart($cart);
 
@@ -126,6 +131,9 @@ class ItemFactoryTest extends TestCase
         $product
             ->expects('is_virtual')
             ->andReturn(false);
+	    expect('wp_strip_all_tags')
+		    ->with('description')
+		    ->andReturn('description');
 
         $item = Mockery::mock(\WC_Order_Item_Product::class);
         $item
@@ -183,6 +191,9 @@ class ItemFactoryTest extends TestCase
         $product
             ->expects('is_virtual')
             ->andReturn(true);
+	    expect('wp_strip_all_tags')
+		    ->with('description')
+		    ->andReturn('description');
 
         $item = Mockery::mock(\WC_Order_Item_Product::class);
         $item
@@ -235,6 +246,9 @@ class ItemFactoryTest extends TestCase
         $product
             ->expects('is_virtual')
             ->andReturn(true);
+	    expect('wp_strip_all_tags')
+		    ->with($description)
+		    ->andReturn(mb_substr( $description, 0, 127 ));
 
         $item = Mockery::mock(\WC_Order_Item_Product::class);
         $item
