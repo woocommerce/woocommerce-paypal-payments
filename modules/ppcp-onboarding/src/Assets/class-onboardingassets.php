@@ -90,14 +90,23 @@ class OnboardingAssets {
 		wp_localize_script(
 			'ppcp-onboarding',
 			'PayPalCommerceGatewayOnboarding',
-			array(
-				'endpoint'      => home_url( \WC_AJAX::get_endpoint( LoginSellerEndpoint::ENDPOINT ) ),
-				'nonce'         => wp_create_nonce( $this->login_seller_endpoint::nonce() ),
-				'paypal_js_url' => 'https://www.paypal.com/webapps/merchantboarding/js/lib/lightbox/partner.js',
-			)
+			$this->get_script_data()
 		);
 
 		return true;
+	}
+
+	/**
+	 * Returns the data associated to the onboarding script.
+	 *
+	 * @return array
+	 */
+	public function get_script_data() {
+		return array(
+			'endpoint'      => home_url( \WC_AJAX::get_endpoint( LoginSellerEndpoint::ENDPOINT ) ),
+			'nonce'         => wp_create_nonce( $this->login_seller_endpoint::nonce() ),
+			'paypal_js_url' => 'https://www.paypal.com/webapps/merchantboarding/js/lib/lightbox/partner.js',
+		);
 	}
 
 	/**
