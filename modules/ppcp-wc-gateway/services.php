@@ -1786,46 +1786,27 @@ return array(
 		}
 
 		/**
-		 * Enable Pay in 3 for UK.
+		 * Set Pay in 3 heading and description for UK.
 		 */
 		if ( 'GB' === $country ) {
-			$fields['message_heading'] = array(
-				'heading'      => __( 'Pay Later Messaging on Checkout', 'woocommerce-paypal-payments' ),
-				'type'         => 'ppcp-heading',
-				'screens'      => array(
-					State::STATE_PROGRESSIVE,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array( 'messages' ),
-				'gateway'      => 'paypal',
-				'description'  => __( 'Display pay later messaging on your site for offers like Pay in 3, which lets customers pay with 3 interest-free monthly payments. We’ll show messages on your site to promote this feature for you. You may not promote pay later offers with any other content, marketing, or materials.', 'woocommerce-paypal-payments' ),
-				'class'        => array( 'ppcp-subheading' ),
-			);
-			$fields['message_product_heading'] = array(
-				'heading'      => __( 'Pay Later Messaging on Single Product Page', 'woocommerce-paypal-payments' ),
-				'type'         => 'ppcp-heading',
-				'screens'      => array(
-					State::STATE_PROGRESSIVE,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array( 'messages' ),
-				'gateway'      => 'paypal',
-				'description'  => __( 'Display pay later messaging on your site for offers like Pay in 3, which lets customers pay with 3 interest-free monthly payments. We’ll show messages on your site to promote this feature for you. You may not promote pay later offers with any other content, marketing, or materials.', 'woocommerce-paypal-payments' ),
-				'class'        => array( 'ppcp-subheading' ),
-			);
-			$fields['message_cart_heading'] = array(
-				'heading'      => __( 'Pay Later Messaging on Cart', 'woocommerce-paypal-payments' ),
-				'type'         => 'ppcp-heading',
-				'screens'      => array(
-					State::STATE_PROGRESSIVE,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array( 'messages' ),
-				'gateway'      => 'paypal',
-				'description'  => __( 'Display pay later messaging on your site for offers like Pay in 3, which lets customers pay with 3 interest-free monthly payments. We’ll show messages on your site to promote this feature for you. You may not promote pay later offers with any other content, marketing, or materials.', 'woocommerce-paypal-payments' ),
-				'class'        => array( 'ppcp-subheading' ),
-			);
+            $fields['message_heading']['heading'] = __( 'Pay Later Messaging on Checkout', 'woocommerce-paypal-payments' );
+            $fields['message_heading']['description'] = __( 'Display pay later messaging on your site for offers like Pay in 3, which lets customers pay with 3 interest-free monthly payments. We’ll show messages on your site to promote this feature for you. You may not promote pay later offers with any other content, marketing, or materials.', 'woocommerce-paypal-payments' );
+
+            $fields['message_product_heading']['heading'] = __( 'Pay Later Messaging on Checkout', 'woocommerce-paypal-payments' );
+            $fields['message_product_heading']['description'] = __( 'Display pay later messaging on your site for offers like Pay in 3, which lets customers pay with 3 interest-free monthly payments. We’ll show messages on your site to promote this feature for you. You may not promote pay later offers with any other content, marketing, or materials.', 'woocommerce-paypal-payments' );
+
+            $fields['message_cart_heading']['heading'] = __( 'Pay Later Messaging on Checkout', 'woocommerce-paypal-payments' );
+            $fields['message_cart_heading']['description'] = __( 'Display pay later messaging on your site for offers like Pay in 3, which lets customers pay with 3 interest-free monthly payments. We’ll show messages on your site to promote this feature for you. You may not promote pay later offers with any other content, marketing, or materials.', 'woocommerce-paypal-payments' );
 		}
+
+        /**
+         * Set Pay Later link for DE
+         */
+        if ( 'DE' === $country ) {
+            $fields['message_heading']['description'] = str_replace( '<a>', '<a href="https://www.paypal.com/de/webapps/mpp/installments">', __( 'Customize the appearance of <a>Pay Later messages</a> on checkout to promote special financing offers, which help increase sales.', 'woocommerce-paypal-payments' ) );
+            $fields['message_product_heading']['description'] = str_replace( '<a>', '<a href="https://www.paypal.com/de/webapps/mpp/installments">', __( 'Customize the appearance of <a>Pay Later messages</a> on checkout to promote special financing offers, which help increase sales.', 'woocommerce-paypal-payments' ) );
+            $fields['message_cart_heading']['description'] = str_replace( '<a>', '<a href="https://www.paypal.com/de/webapps/mpp/installments">', __( 'Customize the appearance of <a>Pay Later messages</a> on checkout to promote special financing offers, which help increase sales.', 'woocommerce-paypal-payments' ) );
+        }
 
 		$dcc_applies = $container->get( 'api.helpers.dccapplies' );
 		/**
