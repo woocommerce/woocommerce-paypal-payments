@@ -796,7 +796,7 @@ return array(
 				'gateway'      => 'paypal',
 			),
 			'message_heading'                => array(
-				'heading'      => __( 'Credit Messaging on Checkout', 'woocommerce-paypal-payments' ),
+				'heading'      => __( 'Pay Later on Checkout', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-heading',
 				'screens'      => array(
 					State::STATE_PROGRESSIVE,
@@ -820,7 +820,7 @@ return array(
 				'gateway'      => 'paypal',
 			),
 			'message_layout'                 => array(
-				'title'        => __( 'Credit Messaging layout', 'woocommerce-paypal-payments' ),
+				'title'        => __( 'Pay Later Messaging layout', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
 				'class'        => array(),
 				'input_class'  => array( 'wc-enhanced-select' ),
@@ -842,7 +842,7 @@ return array(
 				'gateway'      => 'paypal',
 			),
 			'message_logo'                   => array(
-				'title'        => __( 'Credit Messaging logo', 'woocommerce-paypal-payments' ),
+				'title'        => __( 'Pay Later Messaging logo', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
 				'class'        => array(),
 				'input_class'  => array( 'wc-enhanced-select' ),
@@ -866,7 +866,7 @@ return array(
 				'gateway'      => 'paypal',
 			),
 			'message_position'               => array(
-				'title'        => __( 'Credit Messaging logo position', 'woocommerce-paypal-payments' ),
+				'title'        => __( 'Pay Later Messaging logo position', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
 				'class'        => array(),
 				'input_class'  => array( 'wc-enhanced-select' ),
@@ -889,7 +889,7 @@ return array(
 				'gateway'      => 'paypal',
 			),
 			'message_color'                  => array(
-				'title'        => __( 'Credit Messaging text color', 'woocommerce-paypal-payments' ),
+				'title'        => __( 'Pay Later Messaging text color', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
 				'class'        => array(),
 				'input_class'  => array( 'wc-enhanced-select' ),
@@ -913,7 +913,7 @@ return array(
 				'gateway'      => 'paypal',
 			),
 			'message_flex_color'             => array(
-				'title'        => __( 'Credit Messaging color', 'woocommerce-paypal-payments' ),
+				'title'        => __( 'Pay Later Messaging color', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
 				'class'        => array(),
 				'input_class'  => array( 'wc-enhanced-select' ),
@@ -940,7 +940,7 @@ return array(
 				'gateway'      => 'paypal',
 			),
 			'message_flex_ratio'             => array(
-				'title'        => __( 'Credit Messaging ratio', 'woocommerce-paypal-payments' ),
+				'title'        => __( 'Pay Later Messaging ratio', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
 				'class'        => array(),
 				'input_class'  => array( 'wc-enhanced-select' ),
@@ -1099,7 +1099,7 @@ return array(
 			),
 
 			'message_product_heading'        => array(
-				'heading'      => __( 'Credit Messaging on Single Product Page', 'woocommerce-paypal-payments' ),
+				'heading'      => __( 'Pay Later on Single Product Page', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-heading',
 				'screens'      => array(
 					State::STATE_PROGRESSIVE,
@@ -1123,7 +1123,7 @@ return array(
 				'gateway'      => 'paypal',
 			),
 			'message_product_layout'         => array(
-				'title'        => __( 'Credit Messaging layout', 'woocommerce-paypal-payments' ),
+				'title'        => __( 'Pay Later Messaging layout', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
 				'class'        => array(),
 				'input_class'  => array( 'wc-enhanced-select' ),
@@ -1145,7 +1145,7 @@ return array(
 				'gateway'      => 'paypal',
 			),
 			'message_product_logo'           => array(
-				'title'        => __( 'Credit Messaging logo', 'woocommerce-paypal-payments' ),
+				'title'        => __( 'Pay Later Messaging logo', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
 				'class'        => array(),
 				'input_class'  => array( 'wc-enhanced-select' ),
@@ -1169,7 +1169,7 @@ return array(
 				'gateway'      => 'paypal',
 			),
 			'message_product_position'       => array(
-				'title'        => __( 'Credit Messaging logo position', 'woocommerce-paypal-payments' ),
+				'title'        => __( 'Pay Later Messaging logo position', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
 				'class'        => array(),
 				'input_class'  => array( 'wc-enhanced-select' ),
@@ -1192,7 +1192,7 @@ return array(
 				'gateway'      => 'paypal',
 			),
 			'message_product_color'          => array(
-				'title'        => __( 'Credit Messaging text color', 'woocommerce-paypal-payments' ),
+				'title'        => __( 'Pay Later Messaging text color', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
 				'class'        => array(),
 				'input_class'  => array( 'wc-enhanced-select' ),
@@ -1216,7 +1216,7 @@ return array(
 				'gateway'      => 'paypal',
 			),
 			'message_product_flex_color'     => array(
-				'title'        => __( 'Credit Messaging color', 'woocommerce-paypal-payments' ),
+				'title'        => __( 'Pay Later Messaging color', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
 				'class'        => array(),
 				'input_class'  => array( 'wc-enhanced-select' ),
@@ -1243,7 +1243,7 @@ return array(
 				'gateway'      => 'paypal',
 			),
 			'message_product_flex_ratio'     => array(
-				'title'        => __( 'Credit Messaging ratio', 'woocommerce-paypal-payments' ),
+				'title'        => __( 'Pay Later Messaging ratio', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
 				'class'        => array(),
 				'input_class'  => array( 'wc-enhanced-select' ),
@@ -1402,7 +1402,7 @@ return array(
 			),
 
 			'message_cart_heading'           => array(
-				'heading'      => __( 'Credit Messaging on Cart', 'woocommerce-paypal-payments' ),
+				'heading'      => __( 'Pay Later on Cart', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-heading',
 				'screens'      => array(
 					State::STATE_PROGRESSIVE,
@@ -1426,7 +1426,7 @@ return array(
 				'gateway'      => 'paypal',
 			),
 			'message_cart_layout'            => array(
-				'title'        => __( 'Credit Messaging layout', 'woocommerce-paypal-payments' ),
+				'title'        => __( 'Pay Later Messaging layout', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
 				'class'        => array(),
 				'input_class'  => array( 'wc-enhanced-select' ),
@@ -1448,7 +1448,7 @@ return array(
 				'gateway'      => 'paypal',
 			),
 			'message_cart_logo'              => array(
-				'title'        => __( 'Credit Messaging logo', 'woocommerce-paypal-payments' ),
+				'title'        => __( 'Pay Later Messaging logo', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
 				'class'        => array(),
 				'input_class'  => array( 'wc-enhanced-select' ),
@@ -1472,7 +1472,7 @@ return array(
 				'gateway'      => 'paypal',
 			),
 			'message_cart_position'          => array(
-				'title'        => __( 'Credit Messaging logo position', 'woocommerce-paypal-payments' ),
+				'title'        => __( 'Pay Later Messaging logo position', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
 				'class'        => array(),
 				'input_class'  => array( 'wc-enhanced-select' ),
@@ -1495,7 +1495,7 @@ return array(
 				'gateway'      => 'paypal',
 			),
 			'message_cart_color'             => array(
-				'title'        => __( 'Credit Messaging text color', 'woocommerce-paypal-payments' ),
+				'title'        => __( 'Pay Later Messaging text color', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
 				'class'        => array(),
 				'input_class'  => array( 'wc-enhanced-select' ),
@@ -1519,7 +1519,7 @@ return array(
 				'gateway'      => 'paypal',
 			),
 			'message_cart_flex_color'        => array(
-				'title'        => __( 'Credit Messaging color', 'woocommerce-paypal-payments' ),
+				'title'        => __( 'Pay Later Messaging color', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
 				'class'        => array(),
 				'input_class'  => array( 'wc-enhanced-select' ),
@@ -1546,7 +1546,7 @@ return array(
 				'gateway'      => 'paypal',
 			),
 			'message_cart_flex_ratio'        => array(
-				'title'        => __( 'Credit Messaging ratio', 'woocommerce-paypal-payments' ),
+				'title'        => __( 'Pay Later Messaging ratio', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
 				'class'        => array(),
 				'input_class'  => array( 'wc-enhanced-select' ),
@@ -1786,45 +1786,26 @@ return array(
 		}
 
 		/**
-		 * Enable Pay in 3 for UK.
+		 * Set Pay in 3 heading and description for UK.
 		 */
 		if ( 'GB' === $country ) {
-			$fields['message_heading'] = array(
-				'heading'      => __( 'Pay Later Messaging on Checkout', 'woocommerce-paypal-payments' ),
-				'type'         => 'ppcp-heading',
-				'screens'      => array(
-					State::STATE_PROGRESSIVE,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array( 'messages' ),
-				'gateway'      => 'paypal',
-				'description'  => __( 'Display pay later messaging on your site for offers like Pay in 3, which lets customers pay with 3 interest-free monthly payments. We’ll show messages on your site to promote this feature for you. You may not promote pay later offers with any other content, marketing, or materials.', 'woocommerce-paypal-payments' ),
-				'class'        => array( 'ppcp-subheading' ),
-			);
-			$fields['message_product_heading'] = array(
-				'heading'      => __( 'Pay Later Messaging on Single Product Page', 'woocommerce-paypal-payments' ),
-				'type'         => 'ppcp-heading',
-				'screens'      => array(
-					State::STATE_PROGRESSIVE,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array( 'messages' ),
-				'gateway'      => 'paypal',
-				'description'  => __( 'Display pay later messaging on your site for offers like Pay in 3, which lets customers pay with 3 interest-free monthly payments. We’ll show messages on your site to promote this feature for you. You may not promote pay later offers with any other content, marketing, or materials.', 'woocommerce-paypal-payments' ),
-				'class'        => array( 'ppcp-subheading' ),
-			);
-			$fields['message_cart_heading'] = array(
-				'heading'      => __( 'Pay Later Messaging on Cart', 'woocommerce-paypal-payments' ),
-				'type'         => 'ppcp-heading',
-				'screens'      => array(
-					State::STATE_PROGRESSIVE,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array( 'messages' ),
-				'gateway'      => 'paypal',
-				'description'  => __( 'Display pay later messaging on your site for offers like Pay in 3, which lets customers pay with 3 interest-free monthly payments. We’ll show messages on your site to promote this feature for you. You may not promote pay later offers with any other content, marketing, or materials.', 'woocommerce-paypal-payments' ),
-				'class'        => array( 'ppcp-subheading' ),
-			);
+			$fields['message_heading']['heading'] = __( 'Pay Later Messaging on Checkout', 'woocommerce-paypal-payments' );
+			$fields['message_heading']['description'] = __( 'Display pay later messaging on your site for offers like Pay in 3, which lets customers pay with 3 interest-free monthly payments. We’ll show messages on your site to promote this feature for you. You may not promote pay later offers with any other content, marketing, or materials.', 'woocommerce-paypal-payments' );
+
+			$fields['message_product_heading']['heading'] = __( 'Pay Later Messaging on Single Product Page', 'woocommerce-paypal-payments' );
+			$fields['message_product_heading']['description'] = __( 'Display pay later messaging on your site for offers like Pay in 3, which lets customers pay with 3 interest-free monthly payments. We’ll show messages on your site to promote this feature for you. You may not promote pay later offers with any other content, marketing, or materials.', 'woocommerce-paypal-payments' );
+
+			$fields['message_cart_heading']['heading'] = __( 'Pay Later Messaging on Cart', 'woocommerce-paypal-payments' );
+			$fields['message_cart_heading']['description'] = __( 'Display pay later messaging on your site for offers like Pay in 3, which lets customers pay with 3 interest-free monthly payments. We’ll show messages on your site to promote this feature for you. You may not promote pay later offers with any other content, marketing, or materials.', 'woocommerce-paypal-payments' );
+		}
+
+		/**
+		 * Set Pay Later link for DE
+		 */
+		if ( 'DE' === $country ) {
+			$fields['message_heading']['description'] = str_replace( '<a>', '<a href="https://www.paypal.com/de/webapps/mpp/installments">', __( 'Customize the appearance of <a>Pay Later messages</a> on checkout to promote special financing offers, which help increase sales.', 'woocommerce-paypal-payments' ) );
+			$fields['message_product_heading']['description'] = str_replace( '<a>', '<a href="https://www.paypal.com/de/webapps/mpp/installments">', __( 'Customize the appearance of <a>Pay Later messages</a> on checkout to promote special financing offers, which help increase sales.', 'woocommerce-paypal-payments' ) );
+			$fields['message_cart_heading']['description'] = str_replace( '<a>', '<a href="https://www.paypal.com/de/webapps/mpp/installments">', __( 'Customize the appearance of <a>Pay Later messages</a> on checkout to promote special financing offers, which help increase sales.', 'woocommerce-paypal-payments' ) );
 		}
 
 		$dcc_applies = $container->get( 'api.helpers.dccapplies' );
