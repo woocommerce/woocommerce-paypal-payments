@@ -1,5 +1,10 @@
 *** Changelog ***
 
+= 1.1.0 - 2021-02-01 =
+* Add - Buy Now Pay Later for UK. #104
+* Add - DE now has 12 month installments. #106
+* Fix - Check phone for empty string. #102
+
 = 1.0.4 - 2021-01-18 =
 * Fix - Check if WooCommerce is active before initialize. #99
 * Fix - Payment buttons only visible on order-pay site when Mini Cart is enabled; payment fails. #96
