@@ -1,32 +1,35 @@
-name: PHP Composer
+name: CI
 
-on:
-  push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+on: [push]
 
 jobs:
-  build:
-
+  run:
     runs-on: ubuntu-latest
-
+    strategy:
+      matrix:
+        php-versions: ['7.0', '7.2', '7.3', '7.4']
+    name: PHP ${{ matrix.php-versions }}
     steps:
-    - uses: actions/checkout@v2
+      -   uses: actions/checkout@v2
 
-    - name: Packagist.com Auth
-      run: composer config --global --auth http-basic.repo.packagist.com token 5863d6c7b313709512b6d5b7f93c7fad8807a5aef92b2155019f7f41ccac
+      -   name: Setup PHP
+          uses: shivammathur/setup-php@v2
+          with:
+            php-version: ${{ matrix.php-versions }}
+            coverage: none
+            tools: composer:v1
 
-    - name: Validate composer.json and composer.lock
-      run: composer validate
+      -   name: Packagist.com Auth
+          run: composer config --global --auth http-basic.repo.packagist.com token ${{ secrets.PACKAGIST_TOKEN }}
 
-    - name: Install dependencies
-      run: composer install --prefer-dist --no-progress --no-suggest
+      -   name: Validate composer.json and composer.lock
+          run: composer validate
 
-    # Add a test script to composer.json, for instance: "test": "vendor/bin/phpunit"
-    # Docs: https://getcomposer.org/doc/articles/scripts.md
+      -   name: Install dependencies
+          run: composer install --prefer-dist --no-progress --no-suggest
 
-    - name: Run test suite
-      run: ./vendor/bin/phpunit
-    - name: Run Woocommerce coding standards
-      run: ./vendor/bin/phpcs src modules woocommerce-paypal-payments.php --extensions=php
+      -   name: Run PHPUnit
+          run: vendor/bin/phpunit
+
+      -   name: Run PHPCS
+          run: ./vendor/bin/phpcs--runtime-set ignore_warnings_on_exit 1 src modules woocommerce-paypal-payments.php --extensions=php
