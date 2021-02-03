@@ -33,7 +33,6 @@ services:
     volumes:
       - wordpress:${DOCROOT_PATH}
       - ${BASE_PATH}:${PROJECT_MOUNT_PATH}
-      - ${BASE_PATH}/vendor/inpsyde/multilingualpress:/var/www/html/wp-content/plugins/multilingualpress
     ports:
       - 80:80
 

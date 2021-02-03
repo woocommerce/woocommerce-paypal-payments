@@ -40,8 +40,6 @@ EOF
   wp plugin is-installed akismet --allow-root && wp plugin uninstall akismet --allow-root --path="${DOCROOT_PATH}"
   wp plugin is-installed hello --allow-root && wp plugin uninstall hello --allow-root --path="${DOCROOT_PATH}"
   wp plugin activate "${PLUGIN_NAME}" --network --allow-root --path="${DOCROOT_PATH}"
-  # Must be activate after main plugin, because relies on main plugin's autoloader
-  wp plugin activate multilingualpress --network --allow-root --path="${DOCROOT_PATH}"
 
   # Custom setup instructions
 fi
