@@ -14,9 +14,6 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Packagist.com Auth
-      run: composer config --global --auth http-basic.repo.packagist.com token 5863d6c7b313709512b6d5b7f93c7fad8807a5aef92b2155019f7f41ccac
-
     - name: Validate composer.json and composer.lock
       run: composer validate
 
