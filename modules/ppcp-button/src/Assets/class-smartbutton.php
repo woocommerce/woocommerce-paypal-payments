@@ -517,7 +517,7 @@ class SmartButton implements SmartButtonInterface {
 			return;
 		}
 
-		$save_card = $this->can_save_vault_token() ? sprintf(
+		$save_card = $this->can_save_credit_card() ? sprintf(
 			'<div>
 
                 <label for="ppcp-vault-%1$s">%2$s</label>
@@ -536,12 +536,10 @@ class SmartButton implements SmartButtonInterface {
 
 		printf(
 			'<div id="%1$s" style="display:none;">
-                        <button class="button alt">%6$s</button>
+                        <button class="button alt">%3$s</button>
+                        %2$s
                     </div><div id="payments-sdk__contingency-lightbox"></div><style id="ppcp-hide-dcc">.payment_method_ppcp-credit-card-gateway {display:none;}</style>',
 			esc_attr( $id ),
-			esc_html__( 'Credit Card number', 'woocommerce-paypal-payments' ),
-			esc_html__( 'Expiration', 'woocommerce-paypal-payments' ),
-			esc_html__( 'CVV', 'woocommerce-paypal-payments' ),
             //phpcs:ignore
             $save_card,
 			esc_html( $label )
@@ -564,6 +562,17 @@ class SmartButton implements SmartButtonInterface {
 		}
 		return is_user_logged_in();
 	}
+
+	private function can_save_credit_card() {
+		if ( ! $this->settings->has( 'client_id' ) || ! $this->settings->get( 'client_id' ) ) {
+			return false;
+		}
+		if ( ! $this->settings->has( 'dcc_save_card' ) || ! $this->settings->get( 'dcc_save_card' ) ) {
+			return false;
+		}
+		return is_user_logged_in();
+	}
+
 
 	/**
 	 * Whether we need to initialize the script to enable tokenization for subscriptions or not.
@@ -593,11 +602,12 @@ class SmartButton implements SmartButtonInterface {
 		$localize = array(
 			'script_attributes' => $this->attributes(),
 			'data_client_id'    => array(
-				'set_attribute' => ( is_checkout() && $this->dcc_is_enabled() )
+				'set_attribute'       => ( is_checkout() && $this->dcc_is_enabled() )
 					|| $this->can_save_vault_token(),
-				'endpoint'      => home_url( \WC_AJAX::get_endpoint( DataClientIdEndpoint::ENDPOINT ) ),
-				'nonce'         => wp_create_nonce( DataClientIdEndpoint::nonce() ),
-				'user'          => get_current_user_id(),
+				'save_paypal_account' => $this->save_paypal_account(),
+				'endpoint'            => home_url( \WC_AJAX::get_endpoint( DataClientIdEndpoint::ENDPOINT ) ),
+				'nonce'               => wp_create_nonce( DataClientIdEndpoint::nonce() ),
+				'user'                => get_current_user_id(),
 			),
 			'redirect'          => wc_get_checkout_url(),
 			'context'           => $this->context(),
@@ -891,6 +901,13 @@ class SmartButton implements SmartButtonInterface {
 			if ( ! $this->settings->has( $key ) || ! $this->settings->get( $key ) ) {
 				return false;
 			}
+		}
+		return true;
+	}
+
+	private function save_paypal_account(): bool {
+		if ( ! $this->settings->has( 'save_paypal_account' ) || ! $this->settings->get( 'save_paypal_account' ) ) {
+			return false;
 		}
 		return true;
 	}
