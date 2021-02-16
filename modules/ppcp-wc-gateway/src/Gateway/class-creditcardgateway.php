@@ -97,7 +97,6 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 				'subscription_payment_method_change_customer',
 				'subscription_payment_method_change_admin',
 				'multiple_subscriptions',
-				'credit_card_form_cvc_on_saved_method',
 			);
 		}
 

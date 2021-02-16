@@ -197,6 +197,21 @@ class SmartButton implements SmartButtonInterface {
 				),
 				11
 			);
+
+			add_filter(
+				'woocommerce_credit_card_form_fields',
+				function ( $default_fields, $id ) {
+					if ( $this->can_save_credit_card() ) {
+						$default_fields['card-vault'] = sprintf(
+							'<p class="form-row form-row-wide"><label for="vault"><input class="ppcp-credit-card-vault" type="checkbox" id="ppcp-credit-card-vault" name="vault">%1$s</label></p>',
+							esc_html( 'Save your Credit Card', 'woocommerce-paypal-payments' )
+						);
+					}
+					return $default_fields;
+				},
+				10,
+				2
+			);
 		}
 		return true;
 	}
@@ -517,31 +532,13 @@ class SmartButton implements SmartButtonInterface {
 			return;
 		}
 
-		$save_card = $this->can_save_credit_card() ? sprintf(
-			'<div>
-
-                <label for="ppcp-vault-%1$s">%2$s</label>
-                <input
-                    type="checkbox"
-                    id="ppcp-vault-%1$s"
-                    class="ppcp-credit-card-vault"
-                    name="vault"
-                >
-            </div>',
-			esc_attr( $id ),
-			esc_html__( 'Save your card', 'woocommerce-paypal-payments' )
-		) : '';
-
 		$label = 'checkout' === $this->context() ? __( 'Place order', 'woocommerce-paypal-payments' ) : __( 'Pay for order', 'woocommerce-paypal-payments' );
 
 		printf(
 			'<div id="%1$s" style="display:none;">
-                        <button class="button alt">%3$s</button>
-                        %2$s
+                        <button class="button alt">%2$s</button>
                     </div><div id="payments-sdk__contingency-lightbox"></div><style id="ppcp-hide-dcc">.payment_method_ppcp-credit-card-gateway {display:none;}</style>',
 			esc_attr( $id ),
-            //phpcs:ignore
-            $save_card,
 			esc_html( $label )
 		);
 	}
