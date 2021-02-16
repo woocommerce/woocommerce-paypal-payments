@@ -1,22 +1,104 @@
-function onboardingCallback(authCode, sharedId) {
-	const sandboxSwitchElement = document.querySelector('#ppcp-sandbox_on');
-	fetch(
-		PayPalCommerceGatewayOnboarding.endpoint,
-		{
-			method: 'POST',
-			headers: {
-				'content-type': 'application/json'
-			},
-			body: JSON.stringify(
-				{
-					authCode: authCode,
-					sharedId: sharedId,
-					nonce: PayPalCommerceGatewayOnboarding.nonce,
-					env: sandboxSwitchElement && sandboxSwitchElement.checked ? 'sandbox' : 'production'
-				}
-			)
+// Onboarding.
+const ppcp_onboarding = {
+	BUTTON_SELECTOR: '[data-paypal-onboard-button]',
+	PAYPAL_JS_ID: 'ppcp-onboarding-paypal-js',
+	_timeout: false,
+
+	init: function() {
+		document.addEventListener('DOMContentLoaded', this.reload);
+	},
+
+	reload: function() {
+		const buttons = document.querySelectorAll(ppcp_onboarding.BUTTON_SELECTOR);
+
+		if (0 === buttons.length) {
+			return;
 		}
-	);
+
+		// Add event listeners to buttons.
+		buttons.forEach(
+			(element) => {
+				if (element.hasAttribute('data-ppcp-button-initialized')) {
+					return;
+				}
+
+				element.addEventListener(
+					'click',
+					(e) => {
+						if (!element.hasAttribute('data-ppcp-button-initialized') || 'undefined' === typeof window.PAYPAL) {
+							e.preventDefault();
+						}
+					}
+				);
+			}
+		);
+
+		// Clear any previous PayPal scripts.
+		[ppcp_onboarding.PAYPAL_JS_ID, 'signup-js', 'biz-js'].forEach(
+			(scriptID) => {
+				const scriptTag = document.getElementById(scriptID);
+
+				if (scriptTag) {
+					scriptTag.parentNode.removeChild(scriptTag);
+				}
+
+				if ('undefined' !== typeof window.PAYPAL) {
+					delete window.PAYPAL;
+				}
+			}
+		);
+
+		// Load PayPal scripts.
+		const paypalScriptTag = document.createElement('script');
+		paypalScriptTag.id = ppcp_onboarding.PAYPAL_JS_ID;
+		paypalScriptTag.src = PayPalCommerceGatewayOnboarding.paypal_js_url;
+		document.body.append(paypalScriptTag);
+
+		if (ppcp_onboarding._timeout) {
+			clearTimeout(ppcp_onboarding._timeout);
+		}
+
+		ppcp_onboarding._timeout = setTimeout(
+			() => {
+				buttons.forEach((element) => { element.setAttribute('data-ppcp-button-initialized', 'true'); });
+
+				if ('undefined' !== window.PAYPAL.apps.Signup) {
+					window.PAYPAL.apps.Signup.render();
+				}
+			},
+			1000
+		);
+	},
+
+	loginSeller: function(env, authCode, sharedId) {
+		fetch(
+			PayPalCommerceGatewayOnboarding.endpoint,
+			{
+				method: 'POST',
+				headers: {
+					'content-type': 'application/json'
+				},
+				body: JSON.stringify(
+					{
+						authCode: authCode,
+						sharedId: sharedId,
+						nonce: PayPalCommerceGatewayOnboarding.nonce,
+						env: env
+					}
+				)
+			}
+		);
+	},
+
+
+};
+
+function ppcp_onboarding_sandboxCallback(...args) {
+	return ppcp_onboarding.loginSeller('sandbox', ...args);
+}
+
+function ppcp_onboarding_productionCallback(...args) {
+	return ppcp_onboarding.loginSeller('production', ...args);
 }
 
 /**
@@ -174,21 +256,23 @@ const disconnect = (event) => {
 	);
 
 	// Prevent a possibly dirty form arising from this particular checkbox.
-	sandboxSwitchElement.addEventListener(
-		'click',
-		(event) => {
-			const value = event.target.checked;
+	if (sandboxSwitchElement) {
+		sandboxSwitchElement.addEventListener(
+			'click',
+			(event) => {
+				const value = event.target.checked;
 
-			toggleSandboxProduction( ! value );
+				toggleSandboxProduction( ! value );
 
-			event.preventDefault();
-			event.stopPropagation();
-			setTimeout( () => {
-				event.target.checked = value;
-				}, 1
-			);
-		}
-	);
+				event.preventDefault();
+				event.stopPropagation();
+				setTimeout( () => {
+					event.target.checked = value;
+					}, 1
+				);
+			}
+		);
+	}
 
 	// document.querySelectorAll('#mainform input[type="checkbox"]').forEach(
 	// 	(checkbox) => {
@@ -207,6 +291,8 @@ const disconnect = (event) => {
 				}
 			)
 		}
-	)
+	);
 
+	// Onboarding buttons.
+	ppcp_onboarding.init();
 })();
