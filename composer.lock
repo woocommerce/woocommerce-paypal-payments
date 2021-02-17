@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "cb4cb0947eb5ae20089b14c7aae578e7",
+    "content-hash": "f1506b4fde8d76007bbe350b9c332e9b",
     "packages": [
         {
             "name": "container-interop/service-provider",
@@ -199,48 +199,6 @@
             "time": "2019-05-10T14:17:29+00:00"
         },
         {
-            "name": "dhii/data-key-value-aware-interface",
-            "version": "v0.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/Dhii/data-key-value-aware-interface.git",
-                "reference": "220232bc9040fab78a6c039f5a4a5f9542317bdc"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/Dhii/data-key-value-aware-interface/zipball/220232bc9040fab78a6c039f5a4a5f9542317bdc",
-                "reference": "220232bc9040fab78a6c039f5a4a5f9542317bdc",
-                "shasum": ""
-            },
-            "require": {
-                "php": "^5.3 | ^7.0"
-            },
-            "require-dev": {
-                "codeclimate/php-test-reporter": "<=0.3.2",
-                "dhii/php-cs-fixer-config": "dev-php-5.3",
-                "phpunit/phpunit": "4.*",
-                "ptrofimov/xpmock": "^1.1"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "Dhii\\Data\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Dhii Team",
-                    "email": "development@dhii.co"
-                }
-            ],
-            "description": "Interfaces that aim to increase interoperability of value objects",
-            "time": "2017-01-21T17:35:30+00:00"
-        },
-        {
             "name": "dhii/exception-interface",
             "version": "v0.2",
             "source": {
@@ -341,36 +299,30 @@
         },
         {
             "name": "dhii/module-interface",
-            "version": "v0.1",
+            "version": "v0.2.0-alpha1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Dhii/module-interface.git",
-                "reference": "a4271f2040e54f81cb7c4d5b3f18cb4a7532c277"
+                "reference": "cb2eaaac0fa4bd4a82bc2b38c10e3a794ce32d52"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Dhii/module-interface/zipball/a4271f2040e54f81cb7c4d5b3f18cb4a7532c277",
-                "reference": "a4271f2040e54f81cb7c4d5b3f18cb4a7532c277",
+                "url": "https://api.github.com/repos/Dhii/module-interface/zipball/cb2eaaac0fa4bd4a82bc2b38c10e3a794ce32d52",
+                "reference": "cb2eaaac0fa4bd4a82bc2b38c10e3a794ce32d52",
                 "shasum": ""
             },
             "require": {
-                "dhii/data-key-value-aware-interface": "^0.1",
-                "dhii/exception-interface": "^0.1 | ^0.2",
-                "dhii/factory-interface": "^0.1-alpha1",
-                "php": "^5.3 | ^7.0"
+                "container-interop/service-provider": "^0.4",
+                "php": "^7.1",
+                "psr/container": "^1.0"
             },
             "require-dev": {
-                "codeclimate/php-test-reporter": "<=0.3.2",
-                "dhii/php-cs-fixer-config": "dev-php-5.3",
-                "dhii/stringable-interface": "^0.1",
-                "phpunit/phpunit": "^4.8",
-                "psr/container": "^1.0",
-                "ptrofimov/xpmock": "^1.1"
+                "phpunit/phpunit": "^6.0 | ^7.0"
             },
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-develop": "0.1.x-dev"
+                    "dev-develop": "0.2.x-dev"
                 }
             },
             "autoload": {
@@ -389,7 +341,7 @@
                 }
             ],
             "description": "Interfaces for modules",
-            "time": "2019-11-05T18:25:12+00:00"
+            "time": "2020-04-10T14:27:05+00:00"
         },
         {
             "name": "dhii/stringable-interface",
