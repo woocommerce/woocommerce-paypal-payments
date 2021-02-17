@@ -9,11 +9,12 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Session;
 
+use Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Session\Cancellation\CancelController;
 use WooCommerce\PayPalCommerce\Session\Cancellation\CancelView;
 
 return array(
-	'session.handler'                 => function ( $container ) : SessionHandler {
+	'session.handler'                 => function ( ContainerInterface $container ) : SessionHandler {
 
 		if ( is_null( WC()->session ) ) {
 			return new SessionHandler();
@@ -26,10 +27,10 @@ return array(
 		WC()->session->set( SessionHandler::ID, $session_handler );
 		return $session_handler;
 	},
-	'session.cancellation.view'       => function ( $container ) : CancelView {
+	'session.cancellation.view'       => function ( ContainerInterface $container ) : CancelView {
 		return new CancelView();
 	},
-	'session.cancellation.controller' => function ( $container ) : CancelController {
+	'session.cancellation.controller' => function ( ContainerInterface $container ) : CancelController {
 		return new CancelController(
 			$container->get( 'session.handler' ),
 			$container->get( 'session.cancellation.view' )
