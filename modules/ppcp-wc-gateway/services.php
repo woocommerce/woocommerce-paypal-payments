@@ -24,7 +24,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
-use Woocommerce\PayPalCommerce\WcGateway\Helper\DccProductStatus;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\DccProductStatus;
 use Woocommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
@@ -646,7 +646,7 @@ return array(
 				'label'        => sprintf(
 					// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
 					__( 'Enable saved cards and subscription features on your store. To use vaulting features, you must %1$senable vaulting on your account%2$s.', 'woocommerce-paypal-payments' ),
-					'<a 
+					'<a
 						href="https://docs.woocommerce.com/document/woocommerce-paypal-payments/#enable-vaulting-on-your-live-account"
 						target="_blank"
 					>',
