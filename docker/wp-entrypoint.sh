@@ -39,6 +39,10 @@ EOF
 
   wp plugin is-installed akismet --allow-root && wp plugin uninstall akismet --allow-root --path="${DOCROOT_PATH}"
   wp plugin is-installed hello --allow-root && wp plugin uninstall hello --allow-root --path="${DOCROOT_PATH}"
+
+  wp plugin install woocommerce --version="${WC_VERSION}" --allow-root --path="${DOCROOT_PATH}" \
+    && wp plugin activate woocommerce --network --allow-root --path="${DOCROOT_PATH}"
+
   wp plugin activate "${PLUGIN_NAME}" --network --allow-root --path="${DOCROOT_PATH}"
 
   # Custom setup instructions

@@ -13,6 +13,7 @@ services:
         BUILD_ROOT_PATH: $BUILD_ROOT_PATH
         DOCROOT_PATH: $DOCROOT_PATH
         WP_DOMAIN: ${WP_DOMAIN}
+        WP_VERSION: $WP_VERSION
     container_name: "${PROJECT_NAME}_wp_dev"
     depends_on:
       - db
@@ -30,6 +31,8 @@ services:
       ADMIN_EMAIL: ${ADMIN_EMAIL}
       WP_DOMAIN: ${WP_DOMAIN}
       WP_TITLE: ${WP_TITLE}
+      WC_VERSION: $WC_VERSION
+
     volumes:
       - wordpress:${DOCROOT_PATH}
       - ${BASE_PATH}:${PROJECT_MOUNT_PATH}
@@ -87,6 +90,7 @@ services:
         PHP_DEPS_VERSION: $PHP_DEPS_VERSION
         PHP_BUILD_VERSION: $PHP_BUILD_VERSION
         BUILD_ROOT_PATH: $BUILD_ROOT_PATH
+        WP_VERSION: $WP_VERSION
     container_name: "${PROJECT_NAME}_build"
     working_dir: ${BUILD_ROOT_PATH}
     volumes:
