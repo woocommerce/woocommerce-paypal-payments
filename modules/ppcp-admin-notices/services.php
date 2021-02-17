@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\AdminNotices;
 
-use Dhii\Data\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\AdminNotices\Renderer\Renderer;
 use WooCommerce\PayPalCommerce\AdminNotices\Renderer\RendererInterface;
 use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
