@@ -35,6 +35,7 @@ jobs:
               phpdocumentor/reflection-docblock \
               phpdocumentor/type-resolver \
               sebastian/global-state \
+              phar-io/manifest \
             --prefer-dist --no-progress --no-suggest \
             && composer install --prefer-dist --no-progress --no-suggest
 
