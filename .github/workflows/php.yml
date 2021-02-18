@@ -33,7 +33,8 @@ jobs:
               phpspec/prophecy \
               theseer/tokenizer \
               phpdocumentor/reflection-docblock \
-              phpdocumentor/type-resolver
+              phpdocumentor/type-resolver \
+              sebastian/global-state \
             --prefer-dist --no-progress --no-suggest \
             && composer install --prefer-dist --no-progress --no-suggest
 
