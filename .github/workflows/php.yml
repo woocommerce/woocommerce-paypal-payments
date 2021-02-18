@@ -36,6 +36,7 @@ jobs:
               phpdocumentor/type-resolver \
               sebastian/global-state \
               phar-io/manifest \
+              phar-io/version \
             --prefer-dist --no-progress --no-suggest \
             && composer install --prefer-dist --no-progress --no-suggest
 
