@@ -35,6 +35,7 @@ jobs:
               phpdocumentor/reflection-docblock \
               phpdocumentor/type-resolver \
               sebastian/global-state \
+              sebastian/version \
               phar-io/manifest \
               phar-io/version \
               phpunit/php-code-coverage \
