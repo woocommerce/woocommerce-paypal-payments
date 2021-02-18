@@ -27,7 +27,15 @@ jobs:
           run: composer validate
 
       -   name: Install dependencies
-          run: composer update phpunit/phpunit phpspec/prophecy theseer/tokenizer phpdocumentor/reflection-docblock --prefer-dist --no-progress --no-suggest && composer install --prefer-dist --no-progress --no-suggest
+          run: |
+            composer update \
+              phpunit/phpunit \
+              phpspec/prophecy \
+              theseer/tokenizer \
+              phpdocumentor/reflection-docblock \
+              phpdocumentor/type-resolver
+            --prefer-dist --no-progress --no-suggest \
+            && composer install --prefer-dist --no-progress --no-suggest
 
       -   name: Run PHPUnit
           run: vendor/bin/phpunit
