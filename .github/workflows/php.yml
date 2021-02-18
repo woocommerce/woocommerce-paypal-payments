@@ -33,6 +33,7 @@ jobs:
               phpspec/prophecy \
               theseer/tokenizer \
               phpdocumentor/reflection-docblock \
+              phpdocumentor/reflection-common \
               phpdocumentor/type-resolver \
               sebastian/global-state \
               sebastian/version \
