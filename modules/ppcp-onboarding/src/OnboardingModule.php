@@ -24,9 +24,7 @@ use Psr\Container\ContainerInterface;
 class OnboardingModule implements ModuleInterface {
 
 	/**
-	 * Sets up the module.
-	 *
-	 * @return ServiceProviderInterface
+     * {@inheritDoc}
 	 */
 	public function setup(): ServiceProviderInterface {
 		return new ServiceProvider(
@@ -36,9 +34,7 @@ class OnboardingModule implements ModuleInterface {
 	}
 
 	/**
-	 * Runs the module.
-	 *
-	 * @param ContainerInterface|null $container The container.
+     * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $container ): void {
 

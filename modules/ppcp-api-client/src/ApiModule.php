@@ -20,9 +20,7 @@ use Psr\Container\ContainerInterface;
 class ApiModule implements ModuleInterface {
 
 	/**
-	 * Sets up the module.
-	 *
-	 * @return ServiceProviderInterface
+     * {@inheritDoc}
 	 */
 	public function setup(): ServiceProviderInterface {
 		return new ServiceProvider(
@@ -32,9 +30,7 @@ class ApiModule implements ModuleInterface {
 	}
 
 	/**
-	 * Runs the module.
-	 *
-	 * @param ContainerInterface $container The container.
+     * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $container ): void {
 		add_action(
