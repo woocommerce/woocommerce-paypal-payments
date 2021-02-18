@@ -21,9 +21,7 @@ use Psr\Container\ContainerInterface;
 class SubscriptionModule implements ModuleInterface {
 
 	/**
-	 * Setup the module.
-	 *
-	 * @return ServiceProviderInterface
+     * {@inheritDoc}
 	 */
 	public function setup(): ServiceProviderInterface {
 		return new ServiceProvider(
@@ -33,11 +31,9 @@ class SubscriptionModule implements ModuleInterface {
 	}
 
 	/**
-	 * Runs the module.
-	 *
-	 * @param ContainerInterface|null $container The container.
+     * {@inheritDoc}
 	 */
-	public function run( ContainerInterface $container = null ) {
+	public function run( ContainerInterface $container ): void {
 		add_action(
 			'woocommerce_scheduled_subscription_payment_' . PayPalGateway::ID,
 			static function ( $amount, $order ) use ( $container ) {

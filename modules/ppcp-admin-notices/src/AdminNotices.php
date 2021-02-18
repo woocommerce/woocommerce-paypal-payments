@@ -20,9 +20,7 @@ use Psr\Container\ContainerInterface;
 class AdminNotices implements ModuleInterface {
 
 	/**
-	 * Sets up the module.
-	 *
-	 * @return ServiceProviderInterface
+     * {@inheritDoc}
 	 */
 	public function setup(): ServiceProviderInterface {
 		return new ServiceProvider(
@@ -32,11 +30,9 @@ class AdminNotices implements ModuleInterface {
 	}
 
 	/**
-	 * Runs the module.
-	 *
-	 * @param ContainerInterface $container The container.
+     * {@inheritDoc}
 	 */
-	public function run( ContainerInterface $container = null ) {
+	public function run( ContainerInterface $container ): void {
 		add_action(
 			'admin_notices',
 			function() use ( $container ) {

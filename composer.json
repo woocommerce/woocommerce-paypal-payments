@@ -5,7 +5,7 @@
     "license": "GPL-2.0",
     "require": {
         "php": "^7.1 | ^8.0",
-        "dhii/module-interface": "^0.2",
+        "dhii/module-interface": "^0.3.0-alpha1",
         "psr/container": "^1.0",
         "container-interop/service-provider": "^0.4.0",
         "dhii/containers": "^0.1.0-alpha1",

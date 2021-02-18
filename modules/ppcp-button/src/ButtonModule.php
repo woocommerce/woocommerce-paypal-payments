@@ -27,9 +27,7 @@ class ButtonModule implements ModuleInterface {
 
 
 	/**
-	 * Sets up the module.
-	 *
-	 * @return ServiceProviderInterface
+     * {@inheritDoc}
 	 */
 	public function setup(): ServiceProviderInterface {
 		return new ServiceProvider(
@@ -39,11 +37,9 @@ class ButtonModule implements ModuleInterface {
 	}
 
 	/**
-	 * Runs the module.
-	 *
-	 * @param ContainerInterface|null $container The Container.
+     * {@inheritDoc}
 	 */
-	public function run( ContainerInterface $container = null ) {
+	public function run( ContainerInterface $container ): void {
 
 		add_action(
 			'wp',

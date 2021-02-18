@@ -21,9 +21,7 @@ use Psr\Container\ContainerInterface;
 class SessionModule implements ModuleInterface {
 
 	/**
-	 * Sets up the module.
-	 *
-	 * @return ServiceProviderInterface
+     * {@inheritDoc}
 	 */
 	public function setup(): ServiceProviderInterface {
 		return new ServiceProvider(
@@ -33,11 +31,9 @@ class SessionModule implements ModuleInterface {
 	}
 
 	/**
-	 * Run the module.
-	 *
-	 * @param ContainerInterface|null $container The container.
+     * {@inheritDoc}
 	 */
-	public function run( ContainerInterface $container = null ) {
+	public function run( ContainerInterface $container ): void {
 		add_action(
 			'woocommerce_init',
 			function () use ( $container ) {

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "45e5f413bbd8adb785d4cac9f30128e3",
+    "content-hash": "44a5b22c378d64deaf1c789c430c7c0e",
     "packages": [
         {
             "name": "container-interop/service-provider",
@@ -145,30 +145,32 @@
         },
         {
             "name": "dhii/module-interface",
-            "version": "v0.2.0-alpha1",
+            "version": "v0.3.0-alpha1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Dhii/module-interface.git",
-                "reference": "cb2eaaac0fa4bd4a82bc2b38c10e3a794ce32d52"
+                "reference": "e93feaf37e183ac22114e3fd86650bd987fa83d1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Dhii/module-interface/zipball/cb2eaaac0fa4bd4a82bc2b38c10e3a794ce32d52",
-                "reference": "cb2eaaac0fa4bd4a82bc2b38c10e3a794ce32d52",
+                "url": "https://api.github.com/repos/Dhii/module-interface/zipball/e93feaf37e183ac22114e3fd86650bd987fa83d1",
+                "reference": "e93feaf37e183ac22114e3fd86650bd987fa83d1",
                 "shasum": ""
             },
             "require": {
                 "container-interop/service-provider": "^0.4",
-                "php": "^7.1",
+                "php": "^7.1 | ^8.0",
                 "psr/container": "^1.0"
             },
             "require-dev": {
-                "phpunit/phpunit": "^6.0 | ^7.0"
+                "phpunit/phpunit": "^7.0 | ^8.0 | ^9.0",
+                "slevomat/coding-standard": "^6.0",
+                "vimeo/psalm": "^3.11.7 | ^4.0"
             },
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-develop": "0.2.x-dev"
+                    "dev-develop": "0.3.x-dev"
                 }
             },
             "autoload": {
@@ -187,7 +189,7 @@
                 }
             ],
             "description": "Interfaces for modules",
-            "time": "2020-04-10T14:27:05+00:00"
+            "time": "2021-01-14T19:21:28+00:00"
         },
         {
             "name": "psr/container",
