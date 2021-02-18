@@ -32,7 +32,7 @@ class CreateOrderEndpointTest extends TestCase
     {
         list($payer_factory, $testee) = $this->mockTestee();
 
-        $method = $this->testPrivateMethod(CreateOrderEndpoint::class, 'payer');
+        $method = $this->getProtectedMethodAccessibleReflection(CreateOrderEndpoint::class, 'payer');
         $dataString = wp_json_encode($expectedResult['payer']);
         $dataObj = json_decode(wp_json_encode($expectedResult['payer']));
 
@@ -173,7 +173,7 @@ class CreateOrderEndpointTest extends TestCase
      * @return \ReflectionMethod
      * @throws \ReflectionException
      */
-    protected function testPrivateMethod($class, $method)
+    protected function getProtectedMethodAccessibleReflection($class, $method)
     {
         $reflector = new ReflectionClass($class);
         $method = $reflector->getMethod($method);
