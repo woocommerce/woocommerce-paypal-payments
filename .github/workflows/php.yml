@@ -37,6 +37,7 @@ jobs:
               sebastian/global-state \
               phar-io/manifest \
               phar-io/version \
+              phpunit/php-code-coverage \
             --prefer-dist --no-progress --no-suggest \
             && composer install --prefer-dist --no-progress --no-suggest
 
