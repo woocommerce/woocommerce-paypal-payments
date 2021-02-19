@@ -69,6 +69,8 @@ return array(
 		$session_handler     = $container->get( 'session.handler' );
 		$refund_processor    = $container->get( 'wcgateway.processor.refunds' );
 		$state               = $container->get( 'onboarding.state' );
+        $transaction_url_provider = $container->get( 'wcgateway.transaction-url-provider' );
+
 		return new CreditCardGateway(
 			$settings_renderer,
 			$order_processor,
@@ -78,7 +80,8 @@ return array(
 			$module_url,
 			$session_handler,
 			$refund_processor,
-			$state
+			$state,
+            $transaction_url_provider
 		);
 	},
 	'wcgateway.disabler'                           => static function ( $container ): DisableGateways {

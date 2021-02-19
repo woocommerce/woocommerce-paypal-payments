@@ -27,7 +27,12 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 
 	const ID = 'ppcp-credit-card-gateway';
 
-	/**
+    /**
+     * @var TransactionUrlProvider
+     */
+    protected $transaction_url_provider;
+
+    /**
 	 * The URL to the module.
 	 *
 	 * @var string
@@ -41,19 +46,20 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 */
 	private $refund_processor;
 
-	/**
-	 * CreditCardGateway constructor.
-	 *
-	 * @param SettingsRenderer            $settings_renderer The Settings Renderer.
-	 * @param OrderProcessor              $order_processor The Order processor.
-	 * @param AuthorizedPaymentsProcessor $authorized_payments_processor The Authorized Payments processor.
-	 * @param AuthorizeOrderActionNotice  $notice The Notices.
-	 * @param ContainerInterface          $config The settings.
-	 * @param string                      $module_url The URL to the module.
-	 * @param SessionHandler              $session_handler The Session Handler.
-	 * @param RefundProcessor             $refund_processor The refund processor.
-	 * @param State                       $state The state.
-	 */
+    /**
+     * CreditCardGateway constructor.
+     *
+     * @param SettingsRenderer $settings_renderer The Settings Renderer.
+     * @param OrderProcessor $order_processor The Order processor.
+     * @param AuthorizedPaymentsProcessor $authorized_payments_processor The Authorized Payments processor.
+     * @param AuthorizeOrderActionNotice $notice The Notices.
+     * @param ContainerInterface $config The settings.
+     * @param string $module_url The URL to the module.
+     * @param SessionHandler $session_handler The Session Handler.
+     * @param RefundProcessor $refund_processor The refund processor.
+     * @param State $state The state.
+     * @param TransactionUrlProvider $transaction_url_provider Service able to provide view transaction url base.
+     */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
 		OrderProcessor $order_processor,
@@ -63,7 +69,8 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		string $module_url,
 		SessionHandler $session_handler,
 		RefundProcessor $refund_processor,
-		State $state
+		State $state,
+        TransactionUrlProvider $transaction_url_provider
 	) {
 
 		$this->id                  = self::ID;
@@ -126,7 +133,8 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		);
 
 		$this->module_url = $module_url;
-	}
+        $this->transaction_url_provider = $transaction_url_provider;
+    }
 
 	/**
 	 * Initialize the form fields.
@@ -250,4 +258,14 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		}
 		return $this->refund_processor->process( $order, (float) $amount, (string) $reason );
 	}
+
+    /**
+     * @inheritDoc
+     */
+    public function get_transaction_url($order): string
+    {
+        $this->view_transaction_url = $this->transaction_url_provider->get_transaction_url_base($order);
+
+        return parent::get_transaction_url($order);
+    }
 }
