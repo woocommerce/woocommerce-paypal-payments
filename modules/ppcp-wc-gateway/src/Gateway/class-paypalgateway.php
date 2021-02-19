@@ -76,7 +76,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
     /**
      * @var TransactionUrlProvider
      */
-    protected $transactionUrlProvider;
+    protected $transaction_url_provider;
 
     /**
 	 * The Refund Processor.
@@ -96,7 +96,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
      * @param SessionHandler $session_handler The Session Handler.
      * @param RefundProcessor $refund_processor The Refund Processor.
      * @param State $state The state.
-     * @param TransactionUrlProvider $transactionUrlProvider Service providing transaction view URL based on order.
+     * @param TransactionUrlProvider $transaction_url_provider Service providing transaction view URL based on order.
      */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
@@ -107,7 +107,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		SessionHandler $session_handler,
 		RefundProcessor $refund_processor,
 		State $state,
-        TransactionUrlProvider $transactionUrlProvider
+        TransactionUrlProvider $transaction_url_provider
 	) {
 
 		$this->id                  = self::ID;
@@ -118,7 +118,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->config              = $config;
         $this->session_handler     = $session_handler;
         $this->refund_processor    = $refund_processor;
-        $this->transactionUrlProvider = $transactionUrlProvider;
+        $this->transaction_url_provider = $transaction_url_provider;
 
         if ( $state->current_state() === State::STATE_ONBOARDED ) {
             $this->supports = array( 'refunds' );
@@ -353,7 +353,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
      */
 	public function get_transaction_url($order): string
     {
-        $this->view_transaction_url = $this->transactionUrlProvider->get_transaction_url_base($order);
+        $this->view_transaction_url = $this->transaction_url_provider->get_transaction_url_base($order);
 
         return parent::get_transaction_url($order);
     }
