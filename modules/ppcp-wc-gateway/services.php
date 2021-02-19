@@ -46,6 +46,7 @@ return array(
 		$session_handler     = $container->get( 'session.handler' );
 		$refund_processor    = $container->get( 'wcgateway.processor.refunds' );
 		$state               = $container->get( 'onboarding.state' );
+		$transaction_url_provider = $container->get( 'wcgateway.transaction-url-provider' );
 
 		return new PayPalGateway(
 			$settings_renderer,
@@ -55,7 +56,8 @@ return array(
 			$settings,
 			$session_handler,
 			$refund_processor,
-			$state
+			$state,
+            $transaction_url_provider
 		);
 	},
 	'wcgateway.credit-card-gateway'                => static function ( $container ): CreditCardGateway {
