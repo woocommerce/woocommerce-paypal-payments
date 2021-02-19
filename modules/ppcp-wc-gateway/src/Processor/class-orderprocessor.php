@@ -24,6 +24,10 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
  * Class OrderProcessor
  */
 class OrderProcessor {
+    /**
+     * @var bool
+     */
+    protected $sandbox_mode;
 
 	/**
 	 * The Session Handler.
@@ -88,18 +92,19 @@ class OrderProcessor {
 	 */
 	private $last_error = '';
 
-	/**
-	 * OrderProcessor constructor.
-	 *
-	 * @param SessionHandler              $session_handler The Session Handler.
-	 * @param CartRepository              $cart_repository The Cart Repository.
-	 * @param OrderEndpoint               $order_endpoint The Order Endpoint.
-	 * @param PaymentsEndpoint            $payments_endpoint The Payments Endpoint.
-	 * @param OrderFactory                $order_factory The Order Factory.
-	 * @param ThreeDSecure                $three_d_secure The ThreeDSecure Helper.
-	 * @param AuthorizedPaymentsProcessor $authorized_payments_processor The Authorized Payments Processor.
-	 * @param Settings                    $settings The Settings.
-	 */
+    /**
+     * OrderProcessor constructor.
+     *
+     * @param SessionHandler $session_handler The Session Handler.
+     * @param CartRepository $cart_repository The Cart Repository.
+     * @param OrderEndpoint $order_endpoint The Order Endpoint.
+     * @param PaymentsEndpoint $payments_endpoint The Payments Endpoint.
+     * @param OrderFactory $order_factory The Order Factory.
+     * @param ThreeDSecure $three_d_secure The ThreeDSecure Helper.
+     * @param AuthorizedPaymentsProcessor $authorized_payments_processor The Authorized Payments Processor.
+     * @param Settings $settings The Settings.
+     * @param bool $sandbox_mode Whether sandbox mode enabled.
+     */
 	public function __construct(
 		SessionHandler $session_handler,
 		CartRepository $cart_repository,
@@ -108,7 +113,8 @@ class OrderProcessor {
 		OrderFactory $order_factory,
 		ThreeDSecure $three_d_secure,
 		AuthorizedPaymentsProcessor $authorized_payments_processor,
-		Settings $settings
+		Settings $settings,
+        bool $sandbox_mode
 	) {
 
 		$this->session_handler               = $session_handler;
@@ -119,7 +125,8 @@ class OrderProcessor {
 		$this->threed_secure                 = $three_d_secure;
 		$this->authorized_payments_processor = $authorized_payments_processor;
 		$this->settings                      = $settings;
-	}
+        $this->sandbox_mode = $sandbox_mode;
+    }
 
 	/**
 	 * Processes a given WooCommerce order and captured/authorizes the connected PayPal orders.
@@ -136,6 +143,10 @@ class OrderProcessor {
 		}
 		$wc_order->update_meta_data( PayPalGateway::ORDER_ID_META_KEY, $order->id() );
 		$wc_order->update_meta_data( PayPalGateway::INTENT_META_KEY, $order->intent() );
+		$wc_order->update_meta_data(
+		    PayPalGateway::ORDER_PAYMENT_MODE_META_KEY,
+            $this->sandbox_mode ? 'sandbox' : 'live'
+        );
 
 		$error_message = null;
 		if ( ! $this->order_is_approved( $order ) ) {

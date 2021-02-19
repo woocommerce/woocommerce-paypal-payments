@@ -13,6 +13,7 @@ use Dhii\Data\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
+use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
@@ -131,7 +132,10 @@ return array(
 		$order_factory                = $container->get( 'api.factory.order' );
 		$threed_secure                = $container->get( 'button.helper.three-d-secure' );
 		$authorized_payments_processor = $container->get( 'wcgateway.processor.authorized-payments' );
-		$settings                    = $container->get( 'wcgateway.settings' );
+		$settings                      = $container->get( 'wcgateway.settings' );
+		/** @var Environment $environment */
+        $environment                   = $container->get( 'onboarding.environment' );
+
 		return new OrderProcessor(
 			$session_handler,
 			$cart_repository,
@@ -140,7 +144,8 @@ return array(
 			$order_factory,
 			$threed_secure,
 			$authorized_payments_processor,
-			$settings
+			$settings,
+            $environment->current_environment_is(Environment::SANDBOX)
 		);
 	},
 	'wcgateway.processor.refunds'                  => static function ( $container ): RefundProcessor {
