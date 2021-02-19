@@ -163,6 +163,12 @@ class OrderProcessor {
 			$wc_order->update_meta_data( PayPalGateway::CAPTURED_META_KEY, 'false' );
 		}
 
+		$transaction_id = $this->get_paypal_order_transaction_id($order);
+
+		if($transaction_id !== ''){
+            $wc_order->set_transaction_id($transaction_id);
+        }
+
 		$wc_order->update_status(
 			'on-hold',
 			__( 'Awaiting payment.', 'woocommerce-paypal-payments' )
@@ -186,6 +192,36 @@ class OrderProcessor {
 		$this->last_error = '';
 		return true;
 	}
+
+    /**
+     * Retrieve transaction id from PayPal order.
+     *
+     * @param Order $order Order to get transaction id from.
+     *
+     * @return string
+     */
+	private function get_paypal_order_transaction_id(Order $order): string
+    {
+        $purchase_units = $order->purchase_units();
+
+        if(! isset($purchase_units[0])){
+            return '';
+        }
+
+        $payments = $purchase_units[0]->payments();
+
+        if($payments === null){
+            return '';
+        }
+
+        $captures = $payments->captures();
+
+        if(isset($captures[0])){
+            return $captures[0]->id();
+        }
+
+        return '';
+    }
 
 	/**
 	 * Returns if an order should be captured immediately.
