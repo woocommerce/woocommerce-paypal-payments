@@ -23,6 +23,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Checkout\DisableGateways;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use Woocommerce\PayPalCommerce\WcGateway\Helper\DccProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
@@ -1856,6 +1857,22 @@ return array(
 			$prefix
 		);
 	},
+
+    'wcgateway.transaction-url-sandbox'            => static function ( $container ): string {
+        return 'https://www.sandbox.paypal.com/cgi-bin/webscr?cmd=_view-a-trans&id=%s';
+    },
+
+    'wcgateway.transaction-url-live'               => static function ( $container ): string {
+        return 'https://www.paypal.com/cgi-bin/webscr?cmd=_view-a-trans&id=%s';
+    },
+
+    'wcgateway.transaction-url-provider'           => static function ( $container ): TransactionUrlProvider {
+	    $sandbox_url_base = $container->get('wcgateway.transaction-url-sandbox');
+	    $live_url_base    = $container->get('wcgateway.transaction-url-live');
+
+        return new TransactionUrlProvider($sandbox_url_base, $live_url_base);
+    },
+
 	'wcgateway.helper.dcc-product-status'          => static function ( $container ) : DccProductStatus {
 
 		$settings         = $container->get( 'wcgateway.settings' );
