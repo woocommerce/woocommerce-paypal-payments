@@ -73,26 +73,31 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @var SessionHandler
 	 */
 	protected $session_handler;
+    /**
+     * @var TransactionUrlProvider
+     */
+    protected $transactionUrlProvider;
 
-	/**
+    /**
 	 * The Refund Processor.
 	 *
 	 * @var RefundProcessor
 	 */
 	private $refund_processor;
 
-	/**
-	 * PayPalGateway constructor.
-	 *
-	 * @param SettingsRenderer            $settings_renderer The Settings Renderer.
-	 * @param OrderProcessor              $order_processor The Order Processor.
-	 * @param AuthorizedPaymentsProcessor $authorized_payments_processor The Authorized Payments Processor.
-	 * @param AuthorizeOrderActionNotice  $notice The Order Action Notice object.
-	 * @param ContainerInterface          $config The settings.
-	 * @param SessionHandler              $session_handler The Session Handler.
-	 * @param RefundProcessor             $refund_processor The Refund Processor.
-	 * @param State                       $state The state.
-	 */
+    /**
+     * PayPalGateway constructor.
+     *
+     * @param SettingsRenderer $settings_renderer The Settings Renderer.
+     * @param OrderProcessor $order_processor The Order Processor.
+     * @param AuthorizedPaymentsProcessor $authorized_payments_processor The Authorized Payments Processor.
+     * @param AuthorizeOrderActionNotice $notice The Order Action Notice object.
+     * @param ContainerInterface $config The settings.
+     * @param SessionHandler $session_handler The Session Handler.
+     * @param RefundProcessor $refund_processor The Refund Processor.
+     * @param State $state The state.
+     * @param TransactionUrlProvider $transactionUrlProvider Service providing transaction view URL based on order.
+     */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
 		OrderProcessor $order_processor,
@@ -101,7 +106,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		ContainerInterface $config,
 		SessionHandler $session_handler,
 		RefundProcessor $refund_processor,
-		State $state
+		State $state,
+        TransactionUrlProvider $transactionUrlProvider
 	) {
 
 		$this->id                  = self::ID;
@@ -110,19 +116,20 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->notice              = $notice;
 		$this->settings_renderer   = $settings_renderer;
 		$this->config              = $config;
-		$this->session_handler     = $session_handler;
-		$this->refund_processor    = $refund_processor;
+        $this->session_handler     = $session_handler;
+        $this->refund_processor    = $refund_processor;
+        $this->transactionUrlProvider = $transactionUrlProvider;
 
-		if ( $state->current_state() === State::STATE_ONBOARDED ) {
-			$this->supports = array( 'refunds' );
-		}
-		if (
+        if ( $state->current_state() === State::STATE_ONBOARDED ) {
+            $this->supports = array( 'refunds' );
+        }
+        if (
 			defined( 'PPCP_FLAG_SUBSCRIPTION' )
 			&& PPCP_FLAG_SUBSCRIPTION
 			&& $this->config->has( 'vault_enabled' )
 			&& $this->config->get( 'vault_enabled' )
 		) {
-			$this->supports = array(
+            $this->supports = array(
 				'refunds',
 				'products',
 				'subscriptions',
@@ -136,26 +143,26 @@ class PayPalGateway extends \WC_Payment_Gateway {
 				'subscription_payment_method_change_admin',
 				'multiple_subscriptions',
 			);
-		}
+        }
 
-		$this->method_title       = $this->define_method_title();
-		$this->method_description = $this->define_method_description();
-		$this->title              = $this->config->has( 'title' ) ?
+        $this->method_title       = $this->define_method_title();
+        $this->method_description = $this->define_method_description();
+        $this->title              = $this->config->has( 'title' ) ?
 			$this->config->get( 'title' ) : $this->method_title;
-		$this->description        = $this->config->has( 'description' ) ?
+        $this->description        = $this->config->has( 'description' ) ?
 			$this->config->get( 'description' ) : $this->method_description;
 
-		$this->init_form_fields();
-		$this->init_settings();
+        $this->init_form_fields();
+        $this->init_settings();
 
-		add_action(
+        add_action(
 			'woocommerce_update_options_payment_gateways_' . $this->id,
 			array(
 				$this,
 				'process_admin_options',
 			)
 		);
-	}
+    }
 
 	/**
 	 * Whether the Gateway needs to be setup.
@@ -340,4 +347,14 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		}
 		return $this->refund_processor->process( $order, (float) $amount, (string) $reason );
 	}
+
+    /**
+     * @inheritDoc
+     */
+	public function get_transaction_url($order): string
+    {
+        $this->view_transaction_url = $this->transactionUrlProvider->get_transaction_url_base($order);
+
+        return parent::get_transaction_url($order);
+    }
 }
