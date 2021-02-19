@@ -138,7 +138,7 @@ class OrderProcessor {
 		$wc_order->update_meta_data( PayPalGateway::INTENT_META_KEY, $order->intent() );
 
 		$error_message = null;
-		if ( ! $order || ! $this->order_is_approved( $order ) ) {
+		if ( ! $this->order_is_approved( $order ) ) {
 			$error_message = __(
 				'The payment has not been approved yet.',
 				'woocommerce-paypal-payments'
