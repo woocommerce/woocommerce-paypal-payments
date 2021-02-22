@@ -24,10 +24,13 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
  * Class OrderProcessor
  */
 class OrderProcessor {
-    /**
-     * @var bool
-     */
-    protected $sandbox_mode;
+
+	/**
+	 * Whether current payment mode is sandbox.
+	 *
+	 * @var bool
+	 */
+	protected $sandbox_mode;
 
 	/**
 	 * The Session Handler.
@@ -92,19 +95,19 @@ class OrderProcessor {
 	 */
 	private $last_error = '';
 
-    /**
-     * OrderProcessor constructor.
-     *
-     * @param SessionHandler $session_handler The Session Handler.
-     * @param CartRepository $cart_repository The Cart Repository.
-     * @param OrderEndpoint $order_endpoint The Order Endpoint.
-     * @param PaymentsEndpoint $payments_endpoint The Payments Endpoint.
-     * @param OrderFactory $order_factory The Order Factory.
-     * @param ThreeDSecure $three_d_secure The ThreeDSecure Helper.
-     * @param AuthorizedPaymentsProcessor $authorized_payments_processor The Authorized Payments Processor.
-     * @param Settings $settings The Settings.
-     * @param bool $sandbox_mode Whether sandbox mode enabled.
-     */
+	/**
+	 * OrderProcessor constructor.
+	 *
+	 * @param SessionHandler              $session_handler The Session Handler.
+	 * @param CartRepository              $cart_repository The Cart Repository.
+	 * @param OrderEndpoint               $order_endpoint The Order Endpoint.
+	 * @param PaymentsEndpoint            $payments_endpoint The Payments Endpoint.
+	 * @param OrderFactory                $order_factory The Order Factory.
+	 * @param ThreeDSecure                $three_d_secure The ThreeDSecure Helper.
+	 * @param AuthorizedPaymentsProcessor $authorized_payments_processor The Authorized Payments Processor.
+	 * @param Settings                    $settings The Settings.
+	 * @param bool                        $sandbox_mode Whether sandbox mode enabled.
+	 */
 	public function __construct(
 		SessionHandler $session_handler,
 		CartRepository $cart_repository,
@@ -114,7 +117,7 @@ class OrderProcessor {
 		ThreeDSecure $three_d_secure,
 		AuthorizedPaymentsProcessor $authorized_payments_processor,
 		Settings $settings,
-        bool $sandbox_mode
+		bool $sandbox_mode
 	) {
 
 		$this->session_handler               = $session_handler;
@@ -125,8 +128,8 @@ class OrderProcessor {
 		$this->threed_secure                 = $three_d_secure;
 		$this->authorized_payments_processor = $authorized_payments_processor;
 		$this->settings                      = $settings;
-        $this->sandbox_mode = $sandbox_mode;
-    }
+		$this->sandbox_mode                  = $sandbox_mode;
+	}
 
 	/**
 	 * Processes a given WooCommerce order and captured/authorizes the connected PayPal orders.
@@ -144,9 +147,9 @@ class OrderProcessor {
 		$wc_order->update_meta_data( PayPalGateway::ORDER_ID_META_KEY, $order->id() );
 		$wc_order->update_meta_data( PayPalGateway::INTENT_META_KEY, $order->intent() );
 		$wc_order->update_meta_data(
-		    PayPalGateway::ORDER_PAYMENT_MODE_META_KEY,
-            $this->sandbox_mode ? 'sandbox' : 'live'
-        );
+			PayPalGateway::ORDER_PAYMENT_MODE_META_KEY,
+			$this->sandbox_mode ? 'sandbox' : 'live'
+		);
 
 		$error_message = null;
 		if ( ! $this->order_is_approved( $order ) ) {
@@ -174,11 +177,11 @@ class OrderProcessor {
 			$wc_order->update_meta_data( PayPalGateway::CAPTURED_META_KEY, 'false' );
 		}
 
-		$transaction_id = $this->get_paypal_order_transaction_id($order);
+		$transaction_id = $this->get_paypal_order_transaction_id( $order );
 
-		if($transaction_id !== ''){
-            $wc_order->set_transaction_id($transaction_id);
-        }
+		if ( '' !== $transaction_id ) {
+			$wc_order->set_transaction_id( $transaction_id );
+		}
 
 		$wc_order->update_status(
 			'on-hold',
@@ -204,35 +207,34 @@ class OrderProcessor {
 		return true;
 	}
 
-    /**
-     * Retrieve transaction id from PayPal order.
-     *
-     * @param Order $order Order to get transaction id from.
-     *
-     * @return string
-     */
-	private function get_paypal_order_transaction_id(Order $order): string
-    {
-        $purchase_units = $order->purchase_units();
+	/**
+	 * Retrieve transaction id from PayPal order.
+	 *
+	 * @param Order $order Order to get transaction id from.
+	 *
+	 * @return string
+	 */
+	private function get_paypal_order_transaction_id( Order $order ): string {
+		$purchase_units = $order->purchase_units();
 
-        if(! isset($purchase_units[0])){
-            return '';
-        }
+		if ( ! isset( $purchase_units[0] ) ) {
+			return '';
+		}
 
-        $payments = $purchase_units[0]->payments();
+		$payments = $purchase_units[0]->payments();
 
-        if($payments === null){
-            return '';
-        }
+		if ( null === $payments ) {
+			return '';
+		}
 
-        $captures = $payments->captures();
+		$captures = $payments->captures();
 
-        if(isset($captures[0])){
-            return $captures[0]->id();
-        }
+		if ( isset( $captures[0] ) ) {
+			return $captures[0]->id();
+		}
 
-        return '';
-    }
+		return '';
+	}
 
 	/**
 	 * Returns if an order should be captured immediately.
