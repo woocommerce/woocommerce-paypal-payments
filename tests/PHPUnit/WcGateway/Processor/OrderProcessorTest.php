@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Processor;
 
 
+use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
 use Woocommerce\PayPalCommerce\ApiClient\Entity\Capture;
@@ -106,6 +107,8 @@ class OrderProcessorTest extends TestCase
             ->shouldReceive('has')
             ->andReturnFalse();
 
+        $logger = Mockery::mock(LoggerInterface::class);
+
         $testee = new OrderProcessor(
             $sessionHandler,
             $cartRepository,
@@ -115,6 +118,7 @@ class OrderProcessorTest extends TestCase
             $threeDSecure,
             $authorizedPaymentProcessor,
             $settings,
+            $logger,
             false
         );
 
@@ -217,7 +221,10 @@ class OrderProcessorTest extends TestCase
             ->shouldReceive('has')
             ->andReturnFalse();
 
-        $testee = new OrderProcessor(
+		$logger = Mockery::mock(LoggerInterface::class);
+
+
+		$testee = new OrderProcessor(
             $sessionHandler,
             $cartRepository,
             $orderEndpoint,
@@ -226,6 +233,7 @@ class OrderProcessorTest extends TestCase
             $threeDSecure,
             $authorizedPaymentProcessor,
             $settings,
+            $logger,
             false
         );
 
@@ -316,7 +324,9 @@ class OrderProcessorTest extends TestCase
         $authorizedPaymentProcessor = Mockery::mock(AuthorizedPaymentsProcessor::class);
         $settings = Mockery::mock(Settings::class);
 
-        $testee = new OrderProcessor(
+		$logger = Mockery::mock(LoggerInterface::class);
+
+		$testee = new OrderProcessor(
             $sessionHandler,
             $cartRepository,
             $orderEndpoint,
@@ -325,6 +335,7 @@ class OrderProcessorTest extends TestCase
             $threeDSecure,
             $authorizedPaymentProcessor,
             $settings,
+            $logger,
             false
         );
 
