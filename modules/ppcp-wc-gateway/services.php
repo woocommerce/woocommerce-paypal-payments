@@ -33,7 +33,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
-use WpOop\TransientCache\CachePoolFactory;
 
 return array(
 	'wcgateway.paypal-gateway'                     => static function ( $container ): PayPalGateway {
