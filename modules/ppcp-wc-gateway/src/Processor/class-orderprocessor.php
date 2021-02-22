@@ -95,7 +95,10 @@ class OrderProcessor {
 	 * @var string
 	 */
 	private $last_error = '';
+
 	/**
+	 * A logger.
+	 *
 	 * @var LoggerInterface
 	 */
 	private $logger;
