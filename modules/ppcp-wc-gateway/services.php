@@ -138,7 +138,7 @@ return array(
 		$authorized_payments_processor = $container->get( 'wcgateway.processor.authorized-payments' );
 		$settings                      = $container->get( 'wcgateway.settings' );
 		$environment                   = $container->get( 'onboarding.environment' );
-		$logger						   = $container->get( 'woocommerce.logger.woocommerce' );
+		$logger                        = $container->get( 'woocommerce.logger.woocommerce' );
 
 		return new OrderProcessor(
 			$session_handler,
