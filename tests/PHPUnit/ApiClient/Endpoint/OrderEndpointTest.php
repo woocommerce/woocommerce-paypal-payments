@@ -6,10 +6,12 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 use Hamcrest\Matchers;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
+use Woocommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PatchCollection;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Payments;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Token;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
@@ -238,6 +240,13 @@ class OrderEndpointTest extends TestCase
             );
         expect('is_wp_error')->with($rawResponse)->andReturn(false);
         expect('wp_remote_retrieve_response_code')->with($rawResponse)->andReturn(201);
+        $purchaseUnit = Mockery::mock(PurchaseUnit::class);
+	    $payment = Mockery::mock(Payments::class);
+	    $capture = Mockery::mock(Capture::class);
+	    $expectedOrder->shouldReceive('purchase_units')->once()->andReturn(['0'=>$purchaseUnit]);
+	    $purchaseUnit->shouldReceive('payments')->once()->andReturn($payment);
+	    $payment->shouldReceive('captures')->once()->andReturn(['0'=>$capture]);
+	    $capture->shouldReceive('status')->once()->andReturn('');
 
         $result = $testee->capture($orderToCapture);
         $this->assertEquals($expectedOrder, $result);

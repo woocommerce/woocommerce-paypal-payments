@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentMethod;
@@ -16,7 +17,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CartRepository;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
@@ -215,7 +215,11 @@ class CreateOrderEndpoint implements EndpointInterface {
 				$number = preg_replace( '/[^0-9]/', '', $number );
 				$number = substr( $number, 0, 14 );
 				$data['payer']['phone']['phone_number']['national_number'] = $number;
+				if ( empty( $data['payer']['phone']['phone_number']['national_number'] ) ) {
+					unset( $data['payer']['phone'] );
+				}
 			}
+
 			$payer = $this->payer_factory->from_paypal_response( json_decode( wp_json_encode( $data['payer'] ) ) );
 		}
 		return $payer;
