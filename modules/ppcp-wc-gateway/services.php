@@ -1800,7 +1800,7 @@ return array(
 		}
 
 		if ( 'FR' === $country ) {
-			//todo: replace this with the text in English and use this text for French translation when it will be created.
+			// todo: replace this with the text in English and use this text for French translation when it will be created.
 			$french_pay_later_description = 'Affichez le Paiement en 4X PayPal sur votre site.' .
 				'Le Paiement en 4X PayPal permet aux consommateurs français de payer en 4 versements égaux.' .
 				'Vous pouvez promouvoir le Paiement en 4X PayPal uniquement si vous êtes un commerçant basé en France, ' .
