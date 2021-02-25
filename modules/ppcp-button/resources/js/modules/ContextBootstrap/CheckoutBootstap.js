@@ -11,6 +11,9 @@ class CheckoutBootstap {
 
     init() {
 
+        if(PayPalCommerceGateway.checkoutUpdatedFlag){
+            this.render();
+        }
         jQuery(document.body).on('updated_checkout', () => {
             this.render();
         });

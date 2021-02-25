@@ -79,6 +79,11 @@ document.addEventListener(
         }
         const script = document.createElement('script');
 
+        PayPalCommerceGateway.checkoutUpdatedFlag = false;
+        jQuery(document.body).on('updated_checkout', () => {
+            PayPalCommerceGateway.checkoutUpdatedFlag = true;
+        });
+
         script.addEventListener('load', (event) => {
             bootstrap();
         });
