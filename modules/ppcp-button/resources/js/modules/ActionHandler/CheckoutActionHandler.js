@@ -39,7 +39,7 @@ class CheckoutActionHandler {
             }).then(function (data) {
                 if (!data.success) {
                     spinner.unblock();
-                    errorHandler.message(data.data.message, true);
+                    errorHandler.message(data.messages);
                     return;
                 }
                 const input = document.createElement('input');
