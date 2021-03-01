@@ -11,7 +11,10 @@ namespace WooCommerce\PayPalCommerce\Subscription;
 
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokenEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
 
@@ -40,16 +43,36 @@ class SubscriptionModule implements ModuleInterface {
 	public function run( ContainerInterface $container = null ) {
 		add_action(
 			'woocommerce_scheduled_subscription_payment_' . PayPalGateway::ID,
-			static function ( $amount, $order ) use ( $container ) {
-				if ( ! is_a( $order, \WC_Order::class ) ) {
-					return;
-				}
-				$handler = $container->get( 'subscription.renewal-handler' );
-				$handler->renew( $order );
+			function ( $amount, $order ) use ( $container ) {
+				$this->renew( $order, $container );
 			},
 			10,
 			2
 		);
+
+		add_action(
+			'woocommerce_scheduled_subscription_payment_' . CreditCardGateway::ID,
+			function ( $amount, $order ) use ( $container ) {
+				$this->renew( $order, $container );
+			},
+			10,
+			2
+		);
+	}
+
+	/**
+	 * @param $order
+	 * @param ContainerInterface|null $container
+	 * @return void
+	 */
+	protected function renew( $order, ?ContainerInterface $container ) {
+		if ( ! is_a( $order, \WC_Order::class ) ) {
+			return;
+		}
+
+		/** @var RenewalHandler $handler */
+		$handler = $container->get( 'subscription.renewal-handler' );
+		$handler->renew( $order );
 	}
 
 	/**

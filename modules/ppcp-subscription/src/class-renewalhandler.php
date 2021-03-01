@@ -120,7 +120,7 @@ class RenewalHandler {
 					'order' => $wc_order,
 				)
 			);
-			\WC_Subscriptions_Manager::process_subscription_payment_failure_on_order( $wc_order );
+
 			return;
 		}
 		$this->logger->log(
@@ -156,12 +156,13 @@ class RenewalHandler {
 		}
 		$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
 		$payer         = $this->payer_factory->from_customer( $customer );
-		$order         = $this->order_endpoint->create(
+
+		$order = $this->order_endpoint->create(
 			array( $purchase_unit ),
 			$payer,
-			$token,
-			(string) $wc_order->get_id()
+			$token
 		);
+
 		$this->capture_order( $order, $wc_order );
 	}
 
@@ -192,7 +193,6 @@ class RenewalHandler {
 					'order'    => $wc_order,
 				)
 			);
-			\WC_Subscriptions_Manager::process_subscription_payment_failure_on_order( $wc_order );
 		}
 		return $token;
 	}
@@ -210,13 +210,11 @@ class RenewalHandler {
 				'processing',
 				__( 'Payment received.', 'woocommerce-paypal-payments' )
 			);
-			\WC_Subscriptions_Manager::process_subscription_payments_on_order( $wc_order );
 		}
 
 		if ( $order->intent() === 'AUTHORIZE' ) {
 			$this->order_endpoint->authorize( $order );
 			$wc_order->update_meta_data( PayPalGateway::CAPTURED_META_KEY, 'false' );
-			\WC_Subscriptions_Manager::process_subscription_payments_on_order( $wc_order );
 		}
 	}
 }
