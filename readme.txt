@@ -8,7 +8,7 @@ Stable tag: 1.1.0
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-PayPal's latest payments processing solution. Accept PayPal, PayPal Credit, credit/debit cards, alternative digital wallets and bank accounts.
+PayPal's latest payments processing solution. Accept PayPal, PayPal PayLater, credit/debit cards, alternative digital wallets and bank accounts.
 
 == Description ==
 
