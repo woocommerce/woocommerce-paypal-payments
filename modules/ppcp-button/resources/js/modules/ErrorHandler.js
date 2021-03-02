@@ -4,6 +4,7 @@ class ErrorHandler {
     {
         this.genericErrorText = genericErrorText;
         this.wrapper = document.querySelector('.woocommerce-notices-wrapper');
+        this.messagesList = document.querySelector('ul.woocommerce-error');
     }
 
     genericError() {
@@ -16,7 +17,14 @@ class ErrorHandler {
 
     message(text, persist = false)
     {
-        let messagesList = this.prepareMessagesList();
+        if(! typeof String || text.length === 0){
+            throw new Error('A new message text must be a non-empty string.');
+        }
+
+        if(this.messagesList === null){
+            this.prepareMessagesList();
+        }
+
         if (persist) {
             this.wrapper.classList.add('ppcp-persist');
         } else {
@@ -24,23 +32,19 @@ class ErrorHandler {
         }
 
         let messageNode = this.prepareMessagesListItem(text);
-        messagesList.appendChild(messageNode);
+        this.messagesList.appendChild(messageNode);
 
         jQuery.scroll_to_notices(jQuery('.woocommerce-notices-wrapper'))
     }
 
     prepareMessagesList()
     {
-        let messagesList = document.querySelector('ul.woocommerce-error');
-
-        if(messagesList === null){
-            messagesList = document.createElement('ul');
-            messagesList.setAttribute('class', 'woocommerce-error');
-            messagesList.setAttribute('role', 'alert');
-            this.wrapper.appendChild(messagesList);
+        if(this.messagesList === null){
+            this.messagesList = document.createElement('ul');
+            this.messagesList.setAttribute('class', 'woocommerce-error');
+            this.messagesList.setAttribute('role', 'alert');
+            this.wrapper.appendChild(this.messagesList);
         }
-
-        return messagesList;
     }
 
     prepareMessagesListItem(message)
