@@ -40,8 +40,17 @@ class CheckoutActionHandler {
                 if (!data.success) {
                     spinner.unblock();
                     //handle both messages sent from Woocommerce (data.messages) and this plugin (data.data.message)
-                    const message = typeof(data.messages) !== 'undefined' ? data.messages : data.data.message;
-                    errorHandler.message(message, true);
+                    if (typeof(data.messages) !== 'undefined' )
+                    {
+                        const domParser = new DOMParser();
+                        errorHandler.appendPreparedErrorMessageElement(
+                            domParser.parseFromString(data.messages, 'text/html')
+                                .querySelector('ul')
+                        );
+                    } else {
+                        errorHandler.message(data.data.message, true);
+                    }
+
                     return;
                 }
                 const input = document.createElement('input');

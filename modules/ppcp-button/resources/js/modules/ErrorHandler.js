@@ -15,6 +15,15 @@ class ErrorHandler {
         this.message(this.genericErrorText)
     }
 
+    appendPreparedErrorMessageElement(errorMessageElement)
+    {
+        if(this.messagesList === null) {
+            this.prepareMessagesList();
+        }
+
+        this.messagesList.replaceWith(errorMessageElement);
+    }
+
     message(text, persist = false)
     {
         if(! typeof String || text.length === 0){
