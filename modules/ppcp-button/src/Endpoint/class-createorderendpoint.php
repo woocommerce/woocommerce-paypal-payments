@@ -173,7 +173,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 				$shipping_address_is_fix
 			);
 			if ( 'checkout' === $data['context'] ) {
-					$this->validate_checkout_form( $data['form'], $order );
+					$this->process_checkout_form( $data['form'], $order );
 			}
 			if ( 'pay-now' === $data['context'] && get_option( 'woocommerce_terms_page_id', '' ) !== '' ) {
 				$this->validate_paynow_form( $data['form'] );
@@ -263,7 +263,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 *
 	 * @throws \Exception On Error.
 	 */
-	private function validate_checkout_form( string $form_values, Order $order ) {
+	private function process_checkout_form( string $form_values, Order $order ) {
 		$this->order = $order;
 		$form_values = explode( '&', $form_values );
 
