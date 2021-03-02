@@ -16,14 +16,39 @@ class ErrorHandler {
 
     message(text, persist = false)
     {
-        this.wrapper.classList.add('woocommerce-error');
+        let messagesList = this.prepareMessagesList();
         if (persist) {
             this.wrapper.classList.add('ppcp-persist');
         } else {
             this.wrapper.classList.remove('ppcp-persist');
         }
-        this.wrapper.innerHTML = this.sanitize(text);
+
+        let messageNode = this.prepareMessagesListItem(text);
+        messagesList.appendChild(messageNode);
+
         jQuery.scroll_to_notices(jQuery('.woocommerce-notices-wrapper'))
+    }
+
+    prepareMessagesList()
+    {
+        let messagesList = document.querySelector('ul.woocommerce-error');
+
+        if(messagesList === null){
+            messagesList = document.createElement('ul');
+            messagesList.setAttribute('class', 'woocommerce-error');
+            messagesList.setAttribute('role', 'alert');
+            this.wrapper.appendChild(messagesList);
+        }
+
+        return messagesList;
+    }
+
+    prepareMessagesListItem(message)
+    {
+        const li = document.createElement('li');
+        li.innerHTML = message;
+
+        return li;
     }
 
     sanitize(text)
