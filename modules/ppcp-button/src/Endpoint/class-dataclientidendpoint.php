@@ -73,7 +73,7 @@ class DataClientIdEndpoint implements EndpointInterface {
 				array(
 					'token'      => $token->token(),
 					'expiration' => $token->expiration_timestamp(),
-					'user'       => get_current_user_id(),
+					'user'       => $user_id,
 				)
 			);
 			return true;
