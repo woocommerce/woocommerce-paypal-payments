@@ -46,6 +46,10 @@ class RenewalHandlerTest extends TestCase
         );
     }
 
+    /**
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
     public function testRenewProcessOrder()
     {
         $wcOrder = Mockery::mock(\WC_Order::class);
