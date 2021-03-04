@@ -115,6 +115,9 @@ class CreditCardRenderer {
                         payload.orderID = payload.orderId;
                         this.spinner.unblock();
                         return contextConfig.onApprove(payload);
+                    }).catch(() => {
+                        this.spinner.unblock();
+                        this.errorHandler.genericError()
                     });
                 } else {
                     this.spinner.unblock();
