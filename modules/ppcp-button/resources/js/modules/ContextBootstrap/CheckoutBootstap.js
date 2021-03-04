@@ -11,6 +11,8 @@ class CheckoutBootstap {
 
     init() {
 
+        this.render();
+
         jQuery(document.body).on('updated_checkout', () => {
             this.render();
         });
