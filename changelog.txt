@@ -1,5 +1,8 @@
 *** Changelog ***
 
+= 1.2.1 - 2021-03-08 =
+* Fix - Address compatibility issue with Jetpack.
+
 = 1.2.0 - 2021-03-08 =
 * Add - Rework onboarding code and add REST controller for integration with the OBW. #121
 * Fix - Remove spinner on click, on cancel and on error. #124
