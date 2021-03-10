@@ -11,16 +11,11 @@ class CheckoutBootstap {
 
     init() {
 
-        setTimeout(() => {
+        setTimeout(() => this.render(), 1000);
 
+        jQuery(document.body).on('updated_checkout', () => {
             this.render();
-
-            jQuery(document.body).on('updated_checkout', () => {
-                this.render();
-            });
-        }, 3000);
-
-
+        });
 
         jQuery(document.body).
             on('updated_checkout payment_method_selected', () => {
