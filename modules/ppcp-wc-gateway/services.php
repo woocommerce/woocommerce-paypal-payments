@@ -482,7 +482,7 @@ return array(
 			'dcc_vault_enabled'              => array(
 				'title'        => __( 'Vaulting For Credit Cards', 'woocommerce-paypal-payments' ),
 				'desc_tip'     => true,
-				'description'  => __( '', 'woocommerce-paypal-payments' ),
+				'description'  => __( 'Enable Payment Tokens for WooCommerce Subscription renewals', 'woocommerce-paypal-payments' ),
 				'label'        => __( 'Enable Vaulting For Credit Cards', 'woocommerce-paypal-payments' ),
 				'type'         => 'checkbox',
 				'default'      => false,
@@ -653,7 +653,7 @@ return array(
 				'type'         => 'checkbox',
 				'desc_tip'     => true,
 				'label'        => __( 'Enable Vaulting for PayPal Accounts', 'woocommerce-paypal-payments' ),
-				'description'  => __( '', 'woocommerce-paypal-payments' ),
+				'description'  => __( 'Enable Payment Tokens for WooCommerce Subscription renewals', 'woocommerce-paypal-payments' ),
 				'default'      => false,
 				'screens'      => array(
 					State::STATE_ONBOARDED,

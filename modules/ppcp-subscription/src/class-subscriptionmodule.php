@@ -61,16 +61,17 @@ class SubscriptionModule implements ModuleInterface {
 	}
 
 	/**
-	 * @param $order
-	 * @param ContainerInterface|null $container
+	 * Handles a Subscription product renewal.
+	 *
+	 * @param \WC_Order               $order WooCommerce order.
+	 * @param ContainerInterface|null $container The container.
 	 * @return void
 	 */
-	protected function renew( $order, ?ContainerInterface $container ) {
+	protected function renew( $order, $container ) {
 		if ( ! is_a( $order, \WC_Order::class ) ) {
 			return;
 		}
 
-		/** @var RenewalHandler $handler */
 		$handler = $container->get( 'subscription.renewal-handler' );
 		$handler->renew( $order );
 	}

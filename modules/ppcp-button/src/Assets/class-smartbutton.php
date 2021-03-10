@@ -204,7 +204,7 @@ class SmartButton implements SmartButtonInterface {
 					if ( $this->can_save_credit_card() ) {
 						$default_fields['card-vault'] = sprintf(
 							'<p class="form-row form-row-wide"><label for="vault"><input class="ppcp-credit-card-vault" type="checkbox" id="ppcp-credit-card-vault" name="vault">%1$s</label></p>',
-							esc_html( 'Save your Credit Card', 'woocommerce-paypal-payments' )
+							esc_html__( 'Save your Credit Card', 'woocommerce-paypal-payments' )
 						);
 					}
 					return $default_fields;
@@ -560,6 +560,12 @@ class SmartButton implements SmartButtonInterface {
 		return is_user_logged_in();
 	}
 
+	/**
+	 * Checks whether it can save credit cards.
+	 *
+	 * @return bool
+	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When nothing was found.
+	 */
 	private function can_save_credit_card() {
 		if ( ! $this->settings->has( 'client_id' ) || ! $this->settings->get( 'client_id' ) ) {
 			return false;
@@ -903,6 +909,12 @@ class SmartButton implements SmartButtonInterface {
 		return true;
 	}
 
+	/**
+	 * Checks if can save PayPal accounts.
+	 *
+	 * @return bool Whether it can save it or not.
+	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException If a setting has not been found.
+	 */
 	private function save_paypal_account(): bool {
 		if ( ! $this->settings->has( 'save_paypal_account' ) || ! $this->settings->get( 'save_paypal_account' ) ) {
 			return false;
@@ -943,8 +955,10 @@ class SmartButton implements SmartButtonInterface {
 	}
 
 	/**
-	 * @return bool
-	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException
+	 * Checks if vault setting is either enabled for PayPal or credit card.
+	 *
+	 * @return bool Whether any of them is enabled or not.
+	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting hasn't been found.
 	 */
 	protected function vault_settings_enabled(): bool {
 		if ( ! $this->settings->has( 'vault_enabled' ) && ! $this->settings->has( 'dcc_vault_enabled' )
@@ -954,6 +968,12 @@ class SmartButton implements SmartButtonInterface {
 		return true;
 	}
 
+	/**
+	 * Checks if vaulting for credit card is enabled.
+	 *
+	 * @return bool Whether if it is enabled or not.
+	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting hasn't been found.
+	 */
 	protected function vault_card_setting_enabled(): bool {
 		if ( ! $this->settings->get( 'dcc_vault_enabled' ) && ! $this->settings->get( 'dcc_vault_enabled' ) ) {
 			return false;

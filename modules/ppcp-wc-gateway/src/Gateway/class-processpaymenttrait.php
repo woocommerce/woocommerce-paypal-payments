@@ -87,8 +87,10 @@ trait ProcessPaymentTrait {
 	}
 
 	/**
-	 * @return bool
-	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException
+	 * Checks if vault setting is either enabled for PayPal or Credit Card.
+	 *
+	 * @return bool Whether vault settings are enabled or not.
+	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting hasn't been found.
 	 */
 	protected function vault_settings_enabled(): bool {
 		if ( ! $this->config->has( 'vault_enabled' ) && ! $this->config->has( 'dcc_vault_enabled' )
