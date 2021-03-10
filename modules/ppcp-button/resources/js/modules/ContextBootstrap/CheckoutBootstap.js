@@ -11,7 +11,7 @@ class CheckoutBootstap {
 
     init() {
 
-        setTimeout(() => this.render(), 1000);
+        this.render();
 
         jQuery(document.body).on('updated_checkout', () => {
             this.render();
