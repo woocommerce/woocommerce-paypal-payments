@@ -654,7 +654,7 @@ return array(
 				'desc_tip'     => true,
 				'label'        => __( 'Enable Vaulting for PayPal Accounts', 'woocommerce-paypal-payments' ),
 				'description'  => __( '', 'woocommerce-paypal-payments' ),
-				'default'      => true,
+				'default'      => false,
 				'screens'      => array(
 					State::STATE_ONBOARDED,
 				),
@@ -667,7 +667,7 @@ return array(
 				'desc_tip'     => true,
 				'label'        => __( 'Allow Registered Buyers to Save PayPal Account', 'woocommerce-paypal-payments' ),
 				'description'  => __( 'Buyers that create an account on your store may save their PayPal account for faster checkout. Note that you may not present Pay Later messages when using this feature.', 'woocommerce-paypal-payments' ),
-				'default'      => true,
+				'default'      => false,
 				'screens'      => array(
 					State::STATE_ONBOARDED,
 				),

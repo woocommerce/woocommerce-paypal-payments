@@ -554,7 +554,7 @@ class SmartButton implements SmartButtonInterface {
 		if ( ! $this->settings->has( 'client_id' ) || ! $this->settings->get( 'client_id' ) ) {
 			return false;
 		}
-		if ( ! $this->settings->has( 'vault_enabled' ) || ! $this->settings->get( 'vault_enabled' ) ) {
+		if ( ! $this->vault_settings_enabled() ) {
 			return false;
 		}
 		return is_user_logged_in();
@@ -597,8 +597,8 @@ class SmartButton implements SmartButtonInterface {
 
 		$this->request_data->enqueue_nonce_fix();
 		$localize = array(
-			'script_attributes' => $this->attributes(),
-			'data_client_id'    => array(
+			'script_attributes'          => $this->attributes(),
+			'data_client_id'             => array(
 				'set_attribute'       => ( is_checkout() && $this->dcc_is_enabled() )
 					|| $this->can_save_vault_token(),
 				'save_paypal_account' => $this->save_paypal_account(),
@@ -606,9 +606,9 @@ class SmartButton implements SmartButtonInterface {
 				'nonce'               => wp_create_nonce( DataClientIdEndpoint::nonce() ),
 				'user'                => get_current_user_id(),
 			),
-			'redirect'          => wc_get_checkout_url(),
-			'context'           => $this->context(),
-			'ajax'              => array(
+			'redirect'                   => wc_get_checkout_url(),
+			'context'                    => $this->context(),
+			'ajax'                       => array(
 				'change_cart'   => array(
 					'endpoint' => home_url( \WC_AJAX::get_endpoint( ChangeCartEndpoint::ENDPOINT ) ),
 					'nonce'    => wp_create_nonce( ChangeCartEndpoint::nonce() ),
@@ -622,10 +622,11 @@ class SmartButton implements SmartButtonInterface {
 					'nonce'    => wp_create_nonce( ApproveOrderEndpoint::nonce() ),
 				),
 			),
-			'enforce_vault'     => $this->has_subscriptions(),
-			'bn_codes'          => $this->bn_codes(),
-			'payer'             => $this->payerData(),
-			'button'            => array(
+			'enforce_vault'              => $this->has_subscriptions(),
+			'vault_card_setting_enabled' => $this->vault_card_setting_enabled(),
+			'bn_codes'                   => $this->bn_codes(),
+			'payer'                      => $this->payerData(),
+			'button'                     => array(
 				'wrapper'           => '#ppc-button',
 				'mini_cart_wrapper' => '#ppc-button-minicart',
 				'cancel_wrapper'    => '#ppcp-cancel',
@@ -645,7 +646,7 @@ class SmartButton implements SmartButtonInterface {
 					'tagline' => $this->style_for_context( 'tagline', $this->context() ),
 				),
 			),
-			'hosted_fields'     => array(
+			'hosted_fields'              => array(
 				'wrapper'           => '#ppcp-hosted-fields',
 				'mini_cart_wrapper' => '#ppcp-hosted-fields-mini-cart',
 				'labels'            => array(
@@ -663,8 +664,8 @@ class SmartButton implements SmartButtonInterface {
 				),
 				'valid_cards'       => $this->dcc_applies->valid_cards(),
 			),
-			'messages'          => $this->message_values(),
-			'labels'            => array(
+			'messages'                   => $this->message_values(),
+			'labels'                     => array(
 				'error' => array(
 					'generic' => __(
 						'Something went wrong. Please try again or choose another payment source.',
@@ -672,7 +673,7 @@ class SmartButton implements SmartButtonInterface {
 					),
 				),
 			),
-			'order_id'          => 'pay-now' === $this->context() ? absint( $wp->query_vars['order-pay'] ) : 0,
+			'order_id'                   => 'pay-now' === $this->context() ? absint( $wp->query_vars['order-pay'] ) : 0,
 		);
 
 		if ( $this->style_for_context( 'layout', 'mini-cart' ) !== 'horizontal' ) {
@@ -939,5 +940,24 @@ class SmartButton implements SmartButtonInterface {
 			$value = $value ? 'true' : 'false';
 		}
 		return (string) $value;
+	}
+
+	/**
+	 * @return bool
+	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException
+	 */
+	protected function vault_settings_enabled(): bool {
+		if ( ! $this->settings->has( 'vault_enabled' ) && ! $this->settings->has( 'dcc_vault_enabled' )
+			|| ! $this->settings->get( 'dcc_vault_enabled' ) && ! $this->settings->get( 'dcc_vault_enabled' ) ) {
+			return false;
+		}
+		return true;
+	}
+
+	protected function vault_card_setting_enabled(): bool {
+		if ( ! $this->settings->get( 'dcc_vault_enabled' ) && ! $this->settings->get( 'dcc_vault_enabled' ) ) {
+			return false;
+		}
+		return true;
 	}
 }

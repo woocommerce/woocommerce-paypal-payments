@@ -103,8 +103,9 @@ class CreditCardRenderer {
                 });
 
                 if (formValid && this.cardValid) {
+                    const vault_card_setting_enabled = this.defaultConfig.vault_card_setting_enabled ? true : false;
                     const vault = document.getElementById('ppcp-credit-card-vault') ?
-                      document.getElementById('ppcp-credit-card-vault').checked : false;
+                      document.getElementById('ppcp-credit-card-vault').checked : vault_card_setting_enabled;
                     hostedFields.submit({
                         contingencies: ['3D_SECURE'],
                         vault: vault

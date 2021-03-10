@@ -85,4 +85,17 @@ trait ProcessPaymentTrait {
 
 		return null;
 	}
+
+	/**
+	 * @return bool
+	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException
+	 */
+	protected function vault_settings_enabled(): bool {
+		if ( ! $this->config->has( 'vault_enabled' ) && ! $this->config->has( 'dcc_vault_enabled' )
+			|| ! $this->config->get( 'dcc_vault_enabled' ) && ! $this->config->get( 'dcc_vault_enabled' ) ) {
+			return false;
+		}
+
+		return true;
+	}
 }
