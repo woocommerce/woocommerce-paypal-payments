@@ -116,8 +116,8 @@ class CreditCardRenderer {
                         this.spinner.unblock();
                         return contextConfig.onApprove(payload);
                     }).catch(() => {
+                        this.errorHandler.genericError();
                         this.spinner.unblock();
-                        this.errorHandler.genericError()
                     });
                 } else {
                     this.spinner.unblock();
