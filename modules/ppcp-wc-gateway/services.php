@@ -1809,6 +1809,28 @@ return array(
 			$fields['message_cart_heading']['description'] = __( 'Display pay later messaging on your site for offers like Pay in 3, which lets customers pay with 3 interest-free monthly payments. We’ll show messages on your site to promote this feature for you. You may not promote pay later offers with any other content, marketing, or materials.', 'woocommerce-paypal-payments' );
 		}
 
+		if ( 'FR' === $country ) {
+			// todo: replace this with the text in English and use this text for French translation when it will be created.
+			$french_pay_later_description = 'Affichez le Paiement en 4X PayPal sur votre site.' .
+				'Le Paiement en 4X PayPal permet aux consommateurs français de payer en 4 versements égaux.' .
+				'Vous pouvez promouvoir le Paiement en 4X PayPal uniquement si vous êtes un commerçant basé en France, ' .
+				'avec un site internet en français et uneintégration PayPal standard. ' .
+				'Les marchands ayantl’outil Vaulting(coffre-fort numérique) ou une intégration de paiements récurrents/abonnement, ' .
+				'ainsi que ceux présentant certaines activités (vente de biens numériques / de biens non physiques) ' .
+				'ne sont pas éligibles pour promouvoir le Paiement en 4X PayPal.' .
+				'Nous afficherons des messages sur votre site pour promouvoir le Paiement en 4X PayPal. ' .
+				'Vous ne pouvez pas promouvoir le Paiement en 4X PayPal avec un autre contenu, quel qu’il soit.';
+
+			$fields['message_heading']['heading'] = __( 'Pay Later Messaging on Checkout', 'woocommerce-paypal-payments' );
+			$fields['message_heading']['description'] = $french_pay_later_description;
+
+			$fields['message_product_heading']['heading'] = __( 'Pay Later Messaging on Single Product Page', 'woocommerce-paypal-payments' );
+			$fields['message_product_heading']['description'] = $french_pay_later_description;
+
+			$fields['message_cart_heading']['heading'] = __( 'Pay Later Messaging on Cart', 'woocommerce-paypal-payments' );
+			$fields['message_cart_heading']['description'] = $french_pay_later_description;
+		}
+
 		/**
 		 * Set Pay Later link for DE
 		 */
