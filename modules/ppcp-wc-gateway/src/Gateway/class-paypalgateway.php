@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
-use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
@@ -27,10 +26,11 @@ class PayPalGateway extends \WC_Payment_Gateway {
 
 	use ProcessPaymentTrait;
 
-	const ID                = 'ppcp-gateway';
-	const CAPTURED_META_KEY = '_ppcp_paypal_captured';
-	const INTENT_META_KEY   = '_ppcp_paypal_intent';
-	const ORDER_ID_META_KEY = '_ppcp_paypal_order_id';
+	const ID                          = 'ppcp-gateway';
+	const CAPTURED_META_KEY           = '_ppcp_paypal_captured';
+	const INTENT_META_KEY             = '_ppcp_paypal_intent';
+	const ORDER_ID_META_KEY           = '_ppcp_paypal_order_id';
+	const ORDER_PAYMENT_MODE_META_KEY = '_ppcp_paypal_payment_mode';
 
 	/**
 	 * The Settings Renderer.
@@ -75,6 +75,13 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	protected $session_handler;
 
 	/**
+	 * Service able to provide transaction url for an order.
+	 *
+	 * @var TransactionUrlProvider
+	 */
+	protected $transaction_url_provider;
+
+	/**
 	 * The Refund Processor.
 	 *
 	 * @var RefundProcessor
@@ -92,6 +99,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @param SessionHandler              $session_handler The Session Handler.
 	 * @param RefundProcessor             $refund_processor The Refund Processor.
 	 * @param State                       $state The state.
+	 * @param TransactionUrlProvider      $transaction_url_provider Service providing transaction view URL based on order.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
@@ -101,17 +109,19 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		ContainerInterface $config,
 		SessionHandler $session_handler,
 		RefundProcessor $refund_processor,
-		State $state
+		State $state,
+		TransactionUrlProvider $transaction_url_provider
 	) {
 
-		$this->id                  = self::ID;
-		$this->order_processor     = $order_processor;
-		$this->authorized_payments = $authorized_payments_processor;
-		$this->notice              = $notice;
-		$this->settings_renderer   = $settings_renderer;
-		$this->config              = $config;
-		$this->session_handler     = $session_handler;
-		$this->refund_processor    = $refund_processor;
+		$this->id                       = self::ID;
+		$this->order_processor          = $order_processor;
+		$this->authorized_payments      = $authorized_payments_processor;
+		$this->notice                   = $notice;
+		$this->settings_renderer        = $settings_renderer;
+		$this->config                   = $config;
+		$this->session_handler          = $session_handler;
+		$this->refund_processor         = $refund_processor;
+		$this->transaction_url_provider = $transaction_url_provider;
 
 		if ( $state->current_state() === State::STATE_ONBOARDED ) {
 			$this->supports = array( 'refunds' );
@@ -339,5 +349,18 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			return false;
 		}
 		return $this->refund_processor->process( $order, (float) $amount, (string) $reason );
+	}
+
+	/**
+	 * Return transaction url for this gateway and given order.
+	 *
+	 * @param \WC_Order $order WC order to get transaction url by.
+	 *
+	 * @return string
+	 */
+	public function get_transaction_url( $order ): string {
+		$this->view_transaction_url = $this->transaction_url_provider->get_transaction_url_base( $order );
+
+		return parent::get_transaction_url( $order );
 	}
 }

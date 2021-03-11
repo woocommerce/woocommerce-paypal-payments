@@ -9,10 +9,10 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway;
 
-use Dhii\Data\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
+use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
@@ -22,6 +22,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Checkout\DisableGateways;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use Woocommerce\PayPalCommerce\WcGateway\Helper\DccProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
@@ -32,7 +33,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
-use WpOop\TransientCache\CachePoolFactory;
 
 return array(
 	'wcgateway.paypal-gateway'                     => static function ( $container ): PayPalGateway {
@@ -44,6 +44,7 @@ return array(
 		$session_handler     = $container->get( 'session.handler' );
 		$refund_processor    = $container->get( 'wcgateway.processor.refunds' );
 		$state               = $container->get( 'onboarding.state' );
+		$transaction_url_provider = $container->get( 'wcgateway.transaction-url-provider' );
 
 		return new PayPalGateway(
 			$settings_renderer,
@@ -53,7 +54,8 @@ return array(
 			$settings,
 			$session_handler,
 			$refund_processor,
-			$state
+			$state,
+			$transaction_url_provider
 		);
 	},
 	'wcgateway.credit-card-gateway'                => static function ( $container ): CreditCardGateway {
@@ -66,6 +68,8 @@ return array(
 		$session_handler     = $container->get( 'session.handler' );
 		$refund_processor    = $container->get( 'wcgateway.processor.refunds' );
 		$state               = $container->get( 'onboarding.state' );
+		$transaction_url_provider = $container->get( 'wcgateway.transaction-url-provider' );
+
 		return new CreditCardGateway(
 			$settings_renderer,
 			$order_processor,
@@ -75,7 +79,8 @@ return array(
 			$module_url,
 			$session_handler,
 			$refund_processor,
-			$state
+			$state,
+			$transaction_url_provider
 		);
 	},
 	'wcgateway.disabler'                           => static function ( $container ): DisableGateways {
@@ -131,7 +136,10 @@ return array(
 		$order_factory                = $container->get( 'api.factory.order' );
 		$threed_secure                = $container->get( 'button.helper.three-d-secure' );
 		$authorized_payments_processor = $container->get( 'wcgateway.processor.authorized-payments' );
-		$settings                    = $container->get( 'wcgateway.settings' );
+		$settings                      = $container->get( 'wcgateway.settings' );
+		$environment                   = $container->get( 'onboarding.environment' );
+		$logger                        = $container->get( 'woocommerce.logger.woocommerce' );
+
 		return new OrderProcessor(
 			$session_handler,
 			$cart_repository,
@@ -140,7 +148,9 @@ return array(
 			$order_factory,
 			$threed_secure,
 			$authorized_payments_processor,
-			$settings
+			$settings,
+			$logger,
+			$environment->current_environment_is( Environment::SANDBOX )
 		);
 	},
 	'wcgateway.processor.refunds'                  => static function ( $container ): RefundProcessor {
@@ -1851,6 +1861,22 @@ return array(
 			$prefix
 		);
 	},
+
+	'wcgateway.transaction-url-sandbox'            => static function ( $container ): string {
+		return 'https://www.sandbox.paypal.com/cgi-bin/webscr?cmd=_view-a-trans&id=%s';
+	},
+
+	'wcgateway.transaction-url-live'               => static function ( $container ): string {
+		return 'https://www.paypal.com/cgi-bin/webscr?cmd=_view-a-trans&id=%s';
+	},
+
+	'wcgateway.transaction-url-provider'           => static function ( $container ): TransactionUrlProvider {
+		$sandbox_url_base = $container->get( 'wcgateway.transaction-url-sandbox' );
+		$live_url_base    = $container->get( 'wcgateway.transaction-url-live' );
+
+		return new TransactionUrlProvider( $sandbox_url_base, $live_url_base );
+	},
+
 	'wcgateway.helper.dcc-product-status'          => static function ( $container ) : DccProductStatus {
 
 		$settings         = $container->get( 'wcgateway.settings' );
