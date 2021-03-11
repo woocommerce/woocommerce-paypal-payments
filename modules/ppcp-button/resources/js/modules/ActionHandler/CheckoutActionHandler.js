@@ -19,9 +19,6 @@ class CheckoutActionHandler {
             const errorHandler = this.errorHandler;
 
             const formSelector = this.config.context === 'checkout' ? 'form.checkout' : 'form#order_review';
-            spinner.setTarget(formSelector);
-            spinner.block();
-
             const formValues = jQuery(formSelector).serialize();
 
             return fetch(this.config.ajax.create_order.endpoint, {
@@ -64,8 +61,12 @@ class CheckoutActionHandler {
         return {
             createOrder,
             onApprove:onApprove(this, this.errorHandler, this.spinner),
-            onError: (error) => {
+            onCancel: () => {
+                spinner.unblock();
+            },
+            onError: () => {
                 this.errorHandler.genericError();
+                spinner.unblock();
             }
         }
     }
