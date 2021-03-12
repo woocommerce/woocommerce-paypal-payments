@@ -955,17 +955,19 @@ class SmartButton implements SmartButtonInterface {
 	}
 
 	/**
-	 * Checks if vault setting is either enabled for PayPal or credit card.
+	 * Checks if vault enabled setting for PayPal or credit card is enabled.
 	 *
 	 * @return bool Whether any of them is enabled or not.
 	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting hasn't been found.
 	 */
 	protected function vault_settings_enabled(): bool {
-		if ( ! $this->settings->has( 'vault_enabled' ) && ! $this->settings->has( 'dcc_vault_enabled' )
-			|| ! $this->settings->get( 'dcc_vault_enabled' ) && ! $this->settings->get( 'dcc_vault_enabled' ) ) {
-			return false;
+		if ( $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ) ) {
+			return true;
 		}
-		return true;
+		if ( $this->settings->has( 'dcc_vault_enabled' ) && $this->settings->get( 'dcc_vault_enabled' ) ) {
+			return true;
+		}
+		return false;
 	}
 
 	/**
@@ -975,7 +977,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting hasn't been found.
 	 */
 	protected function vault_card_setting_enabled(): bool {
-		if ( ! $this->settings->get( 'dcc_vault_enabled' ) && ! $this->settings->get( 'dcc_vault_enabled' ) ) {
+		if ( ! $this->settings->has( 'dcc_vault_enabled' ) && ! $this->settings->get( 'dcc_vault_enabled' ) ) {
 			return false;
 		}
 		return true;
