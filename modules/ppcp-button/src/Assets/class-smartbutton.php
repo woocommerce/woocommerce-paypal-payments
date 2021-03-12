@@ -362,9 +362,17 @@ class SmartButton implements SmartButtonInterface {
 			wp_enqueue_script(
 				'ppcp-smart-button',
 				$this->module_url . '/assets/js/button.js',
-				array( 'jquery' ),
+				array( 'jquery', 'ppcp-paypal-buttons' ),
 				1,
 				true
+			);
+
+			wp_enqueue_script(
+				'ppcp-paypal-buttons',
+				$this->url(),
+				array('jquery'),
+				null,
+				false
 			);
 
 			wp_localize_script(
