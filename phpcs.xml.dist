@@ -24,6 +24,12 @@
 		<exclude name="WordPress.Files.FileName.InvalidClassFileName" />
 	</rule>
 
+	<rule ref="Squiz.Commenting.FunctionComment">
+		<properties>
+			<property name="skipIfInheritdoc" value="true" />
+		</properties>
+	</rule>
+
 	<arg name="extensions" value="php"/>
 
 	<file>src</file>
