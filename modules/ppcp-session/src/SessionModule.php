@@ -21,7 +21,7 @@ use Psr\Container\ContainerInterface;
 class SessionModule implements ModuleInterface {
 
 	/**
-     * {@inheritDoc}
+	 * {@inheritDoc}
 	 */
 	public function setup(): ServiceProviderInterface {
 		return new ServiceProvider(
@@ -31,7 +31,7 @@ class SessionModule implements ModuleInterface {
 	}
 
 	/**
-     * {@inheritDoc}
+	 * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $container ): void {
 		add_action(
