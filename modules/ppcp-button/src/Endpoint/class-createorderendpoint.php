@@ -13,12 +13,15 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentMethod;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CartRepository;
 use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
@@ -162,16 +165,9 @@ class CreateOrderEndpoint implements EndpointInterface {
 			}
 
 			$this->set_bn_code( $data );
-			$needs_shipping          = WC()->cart && WC()->cart->needs_shipping();
-			$shipping_address_is_fix = $needs_shipping && 'checkout' === $data['context'];
-			$order                   = $this->api_endpoint->create(
-				$purchase_units,
-				$this->payer( $data, $wc_order ),
-				null,
-				$this->payment_method(),
-				'',
-				$shipping_address_is_fix
-			);
+
+			$order = $this->create_paypal_order($data, $purchase_units, $wc_order);
+
 			if ( 'checkout' === $data['context'] ) {
 					$this->process_checkout_form( $data['form'], $order );
 			}
@@ -191,6 +187,29 @@ class CreateOrderEndpoint implements EndpointInterface {
 			);
 			return false;
 		}
+	}
+
+	/**
+	 * @param array $request_data Parsed data of the checkout or pay now form.
+	 * @param PurchaseUnit[] $purchase_units The list of order items.
+	 * @param \WC_Order $wc_order The respective WC order to get data from.
+	 *
+	 * @return Order Created PayPal order.
+	 *
+	 * @throws RuntimeException If create order request fails.
+	 */
+	private function create_paypal_order(array $request_data, array $purchase_units, \WC_Order $wc_order): Order {
+		$needs_shipping          = WC()->cart && WC()->cart->needs_shipping();
+		$shipping_address_is_fix = $needs_shipping && 'checkout' === $request_data['context'];
+
+		return $this->api_endpoint->create(
+			$purchase_units,
+			$this->payer( $request_data, $wc_order ),
+			null,
+			$this->payment_method(),
+			'',
+			$shipping_address_is_fix
+		);
 	}
 
 	/**
