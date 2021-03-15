@@ -146,11 +146,10 @@ class OrderProcessor {
 	 * Processes a given WooCommerce order and captured/authorizes the connected PayPal orders.
 	 *
 	 * @param \WC_Order    $wc_order The WooCommerce order.
-	 * @param \WooCommerce $woocommerce The WooCommerce object.
 	 *
 	 * @return bool
 	 */
-	public function process( \WC_Order $wc_order, \WooCommerce $woocommerce ): bool {
+	public function process( \WC_Order $wc_order): bool {
 		$order = $this->session_handler->order();
 		if ( ! $order ) {
 			return false;
@@ -212,7 +211,7 @@ class OrderProcessor {
 			$wc_order->update_meta_data( PayPalGateway::CAPTURED_META_KEY, 'true' );
 			$wc_order->update_status( 'processing' );
 		}
-		$woocommerce->cart->empty_cart();
+		wc()->cart->empty_cart();
 		$this->session_handler->destroy_session_data();
 		$this->last_error = '';
 		return true;

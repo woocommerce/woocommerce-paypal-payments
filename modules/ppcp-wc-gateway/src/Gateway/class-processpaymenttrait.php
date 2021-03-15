@@ -24,7 +24,6 @@ trait ProcessPaymentTrait {
 	 * @return array
 	 */
 	public function process_payment( $order_id ) {
-		global $woocommerce;
 
 		$failure_data = array(
 			'result'   => 'failure',
@@ -55,7 +54,7 @@ trait ProcessPaymentTrait {
 		//phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		try {
-			if ( $this->order_processor->process( $wc_order, $woocommerce ) ) {
+			if ( $this->order_processor->process( $wc_order ) ) {
 				$this->session_handler->destroy_session_data();
 				return array(
 					'result'   => 'success',
