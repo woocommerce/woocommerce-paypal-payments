@@ -245,12 +245,16 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 * Returns the PaymentMethod object for the order.
 	 *
 	 * @return PaymentMethod
-	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException In case a setting would not be found.
 	 */
 	private function payment_method() : PaymentMethod {
-		$payee_preferred = $this->settings->has( 'payee_preferred' ) && $this->settings->get( 'payee_preferred' ) ?
-			PaymentMethod::PAYEE_PREFERRED_IMMEDIATE_PAYMENT_REQUIRED
-			: PaymentMethod::PAYEE_PREFERRED_UNRESTRICTED;
+		try {
+			$payee_preferred = $this->settings->has( 'payee_preferred' ) && $this->settings->get( 'payee_preferred' ) ?
+				PaymentMethod::PAYEE_PREFERRED_IMMEDIATE_PAYMENT_REQUIRED
+				: PaymentMethod::PAYEE_PREFERRED_UNRESTRICTED;
+		} catch (NotFoundException $exception){
+			$payee_preferred = PaymentMethod::PAYEE_PREFERRED_UNRESTRICTED;
+		}
+		
 		$payment_method  = new PaymentMethod( $payee_preferred );
 		return $payment_method;
 	}
