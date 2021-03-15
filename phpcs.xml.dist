@@ -24,11 +24,11 @@
 		<exclude name="WordPress.Files.FileName.InvalidClassFileName" />
 	</rule>
 
-	<rule ref="Squiz.Commenting.FunctionComment">
-		<properties>
-			<property name="skipIfInheritdoc" value="true" />
-		</properties>
+	<rule ref="Squiz.Commenting.FunctionComment.MissingParamTag">
+		<type>warning</type>
 	</rule>
+
+	<rule ref="Squiz.Commenting.FunctionComment" />
 
 	<arg name="extensions" value="php"/>
 
