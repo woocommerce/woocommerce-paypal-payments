@@ -21,13 +21,19 @@ trait ProcessPaymentTrait {
 	 *
 	 * @param int $order_id The WooCommerce order id.
 	 *
-	 * @return array|null
+	 * @return array
 	 */
 	public function process_payment( $order_id ) {
 		global $woocommerce;
+
+		$failure_data = array(
+			'result'   => 'failure',
+			'redirect' => wc_get_checkout_url(),
+		);
+
 		$wc_order = wc_get_order( $order_id );
 		if ( ! is_a( $wc_order, \WC_Order::class ) ) {
-			return null;
+			return $failure_data;
 		}
 
 		/**
@@ -63,7 +69,7 @@ trait ProcessPaymentTrait {
 						__( 'Please use a different payment method.', 'woocommerce-paypal-payments' ),
 						'error'
 					);
-					return null;
+					return $failure_data;
 				}
 				return array(
 					'result'   => 'success',
@@ -75,7 +81,7 @@ trait ProcessPaymentTrait {
 		} catch ( RuntimeException $error ) {
 			$this->session_handler->destroy_session_data();
 			wc_add_notice( $error->getMessage(), 'error' );
-			return null;
+			return $failure_data;
 		}
 
 		wc_add_notice(
@@ -83,6 +89,6 @@ trait ProcessPaymentTrait {
 			'error'
 		);
 
-		return null;
+		return $failure_data;
 	}
 }
