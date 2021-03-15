@@ -130,9 +130,7 @@ return array(
 	'wcgateway.order-processor'                    => static function ( $container ): OrderProcessor {
 
 		$session_handler              = $container->get( 'session.handler' );
-		$cart_repository              = $container->get( 'api.repository.cart' );
 		$order_endpoint               = $container->get( 'api.endpoint.order' );
-		$payments_endpoint            = $container->get( 'api.endpoint.payments' );
 		$order_factory                = $container->get( 'api.factory.order' );
 		$threed_secure                = $container->get( 'button.helper.three-d-secure' );
 		$authorized_payments_processor = $container->get( 'wcgateway.processor.authorized-payments' );
@@ -142,9 +140,7 @@ return array(
 
 		return new OrderProcessor(
 			$session_handler,
-			$cart_repository,
 			$order_endpoint,
-			$payments_endpoint,
 			$order_factory,
 			$threed_secure,
 			$authorized_payments_processor,
