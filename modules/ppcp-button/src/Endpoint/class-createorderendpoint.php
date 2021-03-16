@@ -141,7 +141,6 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 * Handles the request.
 	 *
 	 * @return bool
-	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException In case a setting was not found.
 	 */
 	public function handle_request(): bool {
 		try {
@@ -185,8 +184,11 @@ class CreateOrderEndpoint implements EndpointInterface {
 					'details' => is_a( $error, PayPalApiException::class ) ? $error->details() : array(),
 				)
 			);
-			return false;
+		} catch (\Exception $exception){
+			wc_add_notice($exception->getMessage(), 'error');
 		}
+
+		return false;
 	}
 
 	/**
