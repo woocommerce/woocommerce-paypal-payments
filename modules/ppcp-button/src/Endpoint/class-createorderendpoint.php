@@ -96,6 +96,20 @@ class CreateOrderEndpoint implements EndpointInterface {
 	private $order;
 
 	/**
+	 * Data from the request.
+	 *
+	 * @var array
+	 */
+	private $parsed_request_data;
+
+	/**
+	 * The array of purchase units for order.
+	 *
+	 * @var PurchaseUnit[]
+	 */
+	private $purchase_units;
+
+	/**
 	 * CreateOrderEndpoint constructor.
 	 *
 	 * @param RequestData         $request_data The RequestData object.
@@ -145,6 +159,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 	public function handle_request(): bool {
 		try {
 			$data     = $this->request_data->read_request( $this->nonce() );
+			$this->parsed_request_data = $data;
 			$wc_order = null;
 			if ( 'pay-now' === $data['context'] ) {
 				$wc_order = wc_get_order( (int) $data['order_id'] );
@@ -158,14 +173,14 @@ class CreateOrderEndpoint implements EndpointInterface {
 						)
 					);
 				}
-				$purchase_units = array( $this->purchase_unit_factory->from_wc_order( $wc_order ) );
+				$this->purchase_units = array( $this->purchase_unit_factory->from_wc_order( $wc_order ) );
 			} else {
-				$purchase_units = $this->cart_repository->all();
+				$this->purchase_units = $this->cart_repository->all();
 			}
 
 			$this->set_bn_code( $data );
 
-			$order = $this->create_paypal_order($data, $purchase_units, $wc_order);
+			$order = $this->create_paypal_order($wc_order);
 
 			if ( 'checkout' === $data['context'] ) {
 					$this->process_checkout_form( $data['form'], $order );
@@ -192,21 +207,19 @@ class CreateOrderEndpoint implements EndpointInterface {
 	}
 
 	/**
-	 * @param array $request_data Parsed data of the checkout or pay now form.
-	 * @param PurchaseUnit[] $purchase_units The list of order items.
-	 * @param \WC_Order $wc_order The respective WC order to get data from.
+	 * @param \WC_Order|null $wc_order WC order to get data from.
 	 *
 	 * @return Order Created PayPal order.
 	 *
 	 * @throws RuntimeException If create order request fails.
 	 */
-	private function create_paypal_order(array $request_data, array $purchase_units, \WC_Order $wc_order): Order {
+	private function create_paypal_order(\WC_Order $wc_order = null): Order {
 		$needs_shipping          = WC()->cart && WC()->cart->needs_shipping();
-		$shipping_address_is_fix = $needs_shipping && 'checkout' === $request_data['context'];
+		$shipping_address_is_fix = $needs_shipping && 'checkout' === $this->parsed_request_data['context'];
 
 		return $this->api_endpoint->create(
-			$purchase_units,
-			$this->payer( $request_data, $wc_order ),
+			$this->purchase_units,
+			$this->payer( $this->parsed_request_data, $wc_order ),
 			null,
 			$this->payment_method(),
 			'',
