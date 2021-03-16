@@ -173,14 +173,16 @@ class CreateOrderEndpoint implements EndpointInterface {
 
 			$this->set_bn_code( $data );
 
-			$order = $this->create_paypal_order($wc_order);
-
 			if ( 'checkout' === $data['context'] ) {
 					$this->process_checkout_form( $data['form'] );
 			}
 			if ( 'pay-now' === $data['context'] && get_option( 'woocommerce_terms_page_id', '' ) !== '' ) {
 				$this->validate_paynow_form( $data['form'] );
 			}
+
+			//if we are here so the context is not 'checkout' as it exits before. Therefore, a PayPal order is not created yet.
+			//It would be a good idea to refactor the checkout process in the future.
+			$order = $this->create_paypal_order($wc_order);
 			wp_send_json_success( $order->to_array() );
 			return true;
 		} catch ( \RuntimeException $error ) {
@@ -224,7 +226,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 * Returns the Payer entity based on the request data.
 	 *
 	 * @param array     $data The request data.
-	 * @param \WC_Order $wc_order The order.
+	 * @param \WC_Order|null $wc_order The order.
 	 *
 	 * @return Payer|null
 	 */
