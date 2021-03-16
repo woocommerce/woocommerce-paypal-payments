@@ -89,13 +89,6 @@ class CreateOrderEndpoint implements EndpointInterface {
 	private $early_order_handler;
 
 	/**
-	 * The current PayPal order in a process.
-	 *
-	 * @var Order|null
-	 */
-	private $order;
-
-	/**
 	 * Data from the request.
 	 *
 	 * @var array
@@ -183,7 +176,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 			$order = $this->create_paypal_order($wc_order);
 
 			if ( 'checkout' === $data['context'] ) {
-					$this->process_checkout_form( $data['form'], $order );
+					$this->process_checkout_form( $data['form'] );
 			}
 			if ( 'pay-now' === $data['context'] && get_option( 'woocommerce_terms_page_id', '' ) !== '' ) {
 				$this->validate_paynow_form( $data['form'] );
@@ -297,12 +290,10 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 * Prepare the Request parameter and process the checkout form and validate it.
 	 *
 	 * @param string $form_values The values of the form.
-	 * @param Order  $order The Order.
 	 *
 	 * @throws \Exception On Error.
 	 */
-	private function process_checkout_form(string $form_values, Order $order ) {
-		$this->order = $order;
+	private function process_checkout_form(string $form_values ) {
 		$form_values = explode( '&', $form_values );
 
 		$parsed_values = array();
@@ -354,8 +345,6 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 * @return array
 	 */
 	public function after_checkout_validation( array $data, \WP_Error $errors ): array {
-
-		$order = $this->order;
 		if ( ! $errors->errors ) {
 
 			/**
