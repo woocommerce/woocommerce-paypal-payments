@@ -22,6 +22,7 @@ use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
@@ -977,9 +978,14 @@ class SmartButton implements SmartButtonInterface {
 	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting hasn't been found.
 	 */
 	protected function vault_card_setting_enabled(): bool {
-		if ( ! $this->settings->has( 'dcc_vault_enabled' ) && ! $this->settings->get( 'dcc_vault_enabled' ) ) {
+		try {
+			if ( ! $this->settings->has( 'dcc_vault_enabled' ) && ! $this->settings->get( 'dcc_vault_enabled' ) ) {
+				return false;
+			}
+		} catch ( NotFoundException $exception ) {
 			return false;
 		}
+
 		return true;
 	}
 }
