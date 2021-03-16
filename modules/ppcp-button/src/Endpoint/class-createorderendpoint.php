@@ -347,6 +347,8 @@ class CreateOrderEndpoint implements EndpointInterface {
 	public function after_checkout_validation( array $data, \WP_Error $errors ): array {
 		if ( ! $errors->errors ) {
 
+			$order = $this->create_paypal_order();
+
 			/**
 			 * In case we are onboarded and everything is fine with the \WC_Order
 			 * we want this order to be created. We will intercept it and leave it
