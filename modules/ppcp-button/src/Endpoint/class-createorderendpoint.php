@@ -203,7 +203,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 
 	/**
 	 * Creates the order in the PayPal, uses data from WC order if provided.
-	 * 
+	 *
 	 * @param \WC_Order|null $wc_order WC order to get data from.
 	 *
 	 * @return Order Created PayPal order.
