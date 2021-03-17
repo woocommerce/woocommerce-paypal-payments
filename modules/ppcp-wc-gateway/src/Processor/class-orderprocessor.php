@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Processor;
 
+use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
@@ -24,6 +25,13 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
  * Class OrderProcessor
  */
 class OrderProcessor {
+
+	/**
+	 * Whether current payment mode is sandbox.
+	 *
+	 * @var bool
+	 */
+	protected $sandbox_mode;
 
 	/**
 	 * The Session Handler.
@@ -89,6 +97,13 @@ class OrderProcessor {
 	private $last_error = '';
 
 	/**
+	 * A logger.
+	 *
+	 * @var LoggerInterface
+	 */
+	private $logger;
+
+	/**
 	 * OrderProcessor constructor.
 	 *
 	 * @param SessionHandler              $session_handler The Session Handler.
@@ -99,6 +114,8 @@ class OrderProcessor {
 	 * @param ThreeDSecure                $three_d_secure The ThreeDSecure Helper.
 	 * @param AuthorizedPaymentsProcessor $authorized_payments_processor The Authorized Payments Processor.
 	 * @param Settings                    $settings The Settings.
+	 * @param LoggerInterface             $logger A logger service.
+	 * @param bool                        $sandbox_mode Whether sandbox mode enabled.
 	 */
 	public function __construct(
 		SessionHandler $session_handler,
@@ -108,7 +125,9 @@ class OrderProcessor {
 		OrderFactory $order_factory,
 		ThreeDSecure $three_d_secure,
 		AuthorizedPaymentsProcessor $authorized_payments_processor,
-		Settings $settings
+		Settings $settings,
+		LoggerInterface $logger,
+		bool $sandbox_mode
 	) {
 
 		$this->session_handler               = $session_handler;
@@ -119,6 +138,8 @@ class OrderProcessor {
 		$this->threed_secure                 = $three_d_secure;
 		$this->authorized_payments_processor = $authorized_payments_processor;
 		$this->settings                      = $settings;
+		$this->sandbox_mode                  = $sandbox_mode;
+		$this->logger                        = $logger;
 	}
 
 	/**
@@ -136,9 +157,13 @@ class OrderProcessor {
 		}
 		$wc_order->update_meta_data( PayPalGateway::ORDER_ID_META_KEY, $order->id() );
 		$wc_order->update_meta_data( PayPalGateway::INTENT_META_KEY, $order->intent() );
+		$wc_order->update_meta_data(
+			PayPalGateway::ORDER_PAYMENT_MODE_META_KEY,
+			$this->sandbox_mode ? 'sandbox' : 'live'
+		);
 
 		$error_message = null;
-		if ( ! $order || ! $this->order_is_approved( $order ) ) {
+		if ( ! $this->order_is_approved( $order ) ) {
 			$error_message = __(
 				'The payment has not been approved yet.',
 				'woocommerce-paypal-payments'
@@ -163,6 +188,12 @@ class OrderProcessor {
 			$wc_order->update_meta_data( PayPalGateway::CAPTURED_META_KEY, 'false' );
 		}
 
+		$transaction_id = $this->get_paypal_order_transaction_id( $order );
+
+		if ( '' !== $transaction_id ) {
+			$this->set_order_transaction_id( $transaction_id, $wc_order );
+		}
+
 		$wc_order->update_status(
 			'on-hold',
 			__( 'Awaiting payment.', 'woocommerce-paypal-payments' )
@@ -185,6 +216,55 @@ class OrderProcessor {
 		$this->session_handler->destroy_session_data();
 		$this->last_error = '';
 		return true;
+	}
+
+	/**
+	 * Set transaction id to WC order meta data.
+	 *
+	 * @param string    $transaction_id Transaction id to set.
+	 * @param \WC_Order $wc_order Order to set transaction ID to.
+	 */
+	public function set_order_transaction_id( string $transaction_id, \WC_Order $wc_order ) {
+		try {
+			$wc_order->set_transaction_id( $transaction_id );
+		} catch ( \WC_Data_Exception $exception ) {
+			$this->logger->log(
+				'warning',
+				sprintf(
+					'Failed to set transaction ID. Exception caught when tried: %1$s',
+					$exception->getMessage()
+				)
+			);
+		}
+	}
+
+	/**
+	 * Retrieve transaction id from PayPal order.
+	 *
+	 * @param Order $order Order to get transaction id from.
+	 *
+	 * @return string
+	 */
+	private function get_paypal_order_transaction_id( Order $order ): string {
+		$purchase_units = $order->purchase_units();
+
+		if ( ! isset( $purchase_units[0] ) ) {
+			return '';
+		}
+
+		$payments = $purchase_units[0]->payments();
+
+		if ( null === $payments ) {
+			return '';
+		}
+
+		$captures = $payments->captures();
+
+		if ( isset( $captures[0] ) ) {
+			return $captures[0]->id();
+		}
+
+		return '';
 	}
 
 	/**

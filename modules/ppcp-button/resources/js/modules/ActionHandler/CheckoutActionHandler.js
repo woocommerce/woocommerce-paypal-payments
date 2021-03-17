@@ -36,7 +36,18 @@ class CheckoutActionHandler {
             }).then(function (data) {
                 if (!data.success) {
                     spinner.unblock();
-                    errorHandler.message(data.data.message, true);
+                    //handle both messages sent from Woocommerce (data.messages) and this plugin (data.data.message)
+                    if (typeof(data.messages) !== 'undefined' )
+                    {
+                        const domParser = new DOMParser();
+                        errorHandler.appendPreparedErrorMessageElement(
+                            domParser.parseFromString(data.messages, 'text/html')
+                                .querySelector('ul')
+                        );
+                    } else {
+                        errorHandler.message(data.data.message, true);
+                    }
+
                     return;
                 }
                 const input = document.createElement('input');
