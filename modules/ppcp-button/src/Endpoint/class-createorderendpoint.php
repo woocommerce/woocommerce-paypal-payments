@@ -151,9 +151,9 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 */
 	public function handle_request(): bool {
 		try {
-			$data     = $this->request_data->read_request( $this->nonce() );
+			$data                      = $this->request_data->read_request( $this->nonce() );
 			$this->parsed_request_data = $data;
-			$wc_order = null;
+			$wc_order                  = null;
 			if ( 'pay-now' === $data['context'] ) {
 				$wc_order = wc_get_order( (int) $data['order_id'] );
 				if ( ! is_a( $wc_order, \WC_Order::class ) ) {
@@ -180,9 +180,9 @@ class CreateOrderEndpoint implements EndpointInterface {
 				$this->validate_paynow_form( $data['form'] );
 			}
 
-			//if we are here so the context is not 'checkout' as it exits before. Therefore, a PayPal order is not created yet.
-			//It would be a good idea to refactor the checkout process in the future.
-			$order = $this->create_paypal_order($wc_order);
+			// if we are here so the context is not 'checkout' as it exits before. Therefore, a PayPal order is not created yet.
+			// It would be a good idea to refactor the checkout process in the future.
+			$order = $this->create_paypal_order( $wc_order );
 			wp_send_json_success( $order->to_array() );
 			return true;
 		} catch ( \RuntimeException $error ) {
@@ -194,8 +194,8 @@ class CreateOrderEndpoint implements EndpointInterface {
 					'details' => is_a( $error, PayPalApiException::class ) ? $error->details() : array(),
 				)
 			);
-		} catch (\Exception $exception){
-			wc_add_notice($exception->getMessage(), 'error');
+		} catch ( \Exception $exception ) {
+			wc_add_notice( $exception->getMessage(), 'error' );
 		}
 
 		return false;
@@ -208,7 +208,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 *
 	 * @throws RuntimeException If create order request fails.
 	 */
-	private function create_paypal_order(\WC_Order $wc_order = null): Order {
+	private function create_paypal_order( \WC_Order $wc_order = null ): Order {
 		$needs_shipping          = WC()->cart && WC()->cart->needs_shipping();
 		$shipping_address_is_fix = $needs_shipping && 'checkout' === $this->parsed_request_data['context'];
 
@@ -225,7 +225,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 	/**
 	 * Returns the Payer entity based on the request data.
 	 *
-	 * @param array     $data The request data.
+	 * @param array          $data The request data.
 	 * @param \WC_Order|null $wc_order The order.
 	 *
 	 * @return Payer|null
@@ -280,11 +280,11 @@ class CreateOrderEndpoint implements EndpointInterface {
 			$payee_preferred = $this->settings->has( 'payee_preferred' ) && $this->settings->get( 'payee_preferred' ) ?
 				PaymentMethod::PAYEE_PREFERRED_IMMEDIATE_PAYMENT_REQUIRED
 				: PaymentMethod::PAYEE_PREFERRED_UNRESTRICTED;
-		} catch (NotFoundException $exception){
+		} catch ( NotFoundException $exception ) {
 			$payee_preferred = PaymentMethod::PAYEE_PREFERRED_UNRESTRICTED;
 		}
-		
-		$payment_method  = new PaymentMethod( $payee_preferred );
+
+		$payment_method = new PaymentMethod( $payee_preferred );
 		return $payment_method;
 	}
 
@@ -295,7 +295,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 *
 	 * @throws \Exception On Error.
 	 */
-	private function process_checkout_form(string $form_values ) {
+	private function process_checkout_form( string $form_values ) {
 		$form_values = explode( '&', $form_values );
 
 		$parsed_values = array();

@@ -33,7 +33,7 @@ trait ProcessPaymentTrait {
 		$wc_order = wc_get_order( $order_id );
 		if ( ! is_a( $wc_order, \WC_Order::class ) ) {
 			wc_add_notice(
-				__('Couldn\'t find order to process', 'woocommerce-paypal-payments' ),
+				__( 'Couldn\'t find order to process', 'woocommerce-paypal-payments' ),
 				'error'
 			);
 

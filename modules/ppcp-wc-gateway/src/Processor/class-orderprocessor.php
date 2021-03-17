@@ -123,11 +123,11 @@ class OrderProcessor {
 	/**
 	 * Processes a given WooCommerce order and captured/authorizes the connected PayPal orders.
 	 *
-	 * @param \WC_Order    $wc_order The WooCommerce order.
+	 * @param \WC_Order $wc_order The WooCommerce order.
 	 *
 	 * @return bool
 	 */
-	public function process( \WC_Order $wc_order): bool {
+	public function process( \WC_Order $wc_order ): bool {
 		$order = $this->session_handler->order();
 		if ( ! $order ) {
 			return false;
