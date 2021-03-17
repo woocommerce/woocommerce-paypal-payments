@@ -189,7 +189,7 @@ class OrderProcessor {
 			$wc_order->update_meta_data( PayPalGateway::CAPTURED_META_KEY, 'true' );
 			$wc_order->update_status( 'processing' );
 		}
-		wc()->cart->empty_cart();
+		WC()->cart->empty_cart();
 		$this->session_handler->destroy_session_data();
 		$this->last_error = '';
 		return true;
