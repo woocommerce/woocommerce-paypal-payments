@@ -724,14 +724,15 @@ class SmartButton implements SmartButtonInterface {
 		if ( $payee->merchant_id() ) {
 			$params['merchant-id'] = $payee->merchant_id();
 		}
-		$disable_funding   = $this->settings->has( 'disable_funding' ) ?
+		$disable_funding = $this->settings->has( 'disable_funding' ) ?
 			$this->settings->get( 'disable_funding' ) : array();
-		$disable_funding[] = 'venmo';
 		if ( ! is_checkout() ) {
 			$disable_funding[] = 'card';
 		}
 
-		$params['disable-funding'] = implode( ',', array_unique( $disable_funding ) );
+		if ( count( $disable_funding ) > 0 ) {
+			$params['disable-funding'] = implode( ',', array_unique( $disable_funding ) );
+		}
 
 		$smart_button_url = add_query_arg( $params, 'https://www.paypal.com/sdk/js' );
 		return $smart_button_url;
