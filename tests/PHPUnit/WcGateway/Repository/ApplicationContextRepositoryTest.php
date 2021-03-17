@@ -2,10 +2,11 @@
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\ApiClient\Repository;
+namespace WooCommerce\PayPalCommerce\WcGateway\Repository;
 
 use Hamcrest\Matchers;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
 use WooCommerce\PayPalCommerce\TestCase;
 use Mockery\MockInterface;
 use Psr\Container\ContainerInterface;
@@ -25,8 +26,6 @@ class ApplicationContextRepositoryTest extends TestCase
         array $expected
     ): void
     {
-        $brandName = 'Acme Corp.';
-
         // Config
         foreach ($container as $key => $value) {
             $this->buildTestee()[0]->shouldReceive('has')

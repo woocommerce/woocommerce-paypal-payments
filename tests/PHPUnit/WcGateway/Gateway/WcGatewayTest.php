@@ -12,10 +12,10 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsFields;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use Mockery;
 use function Brain\Monkey\Functions\expect;
+use function Brain\Monkey\Functions\when;
 
 class WcGatewayTest extends TestCase
 {
@@ -31,7 +31,7 @@ class WcGatewayTest extends TestCase
         $orderProcessor
             ->expects('process')
             ->andReturnUsing(
-                function(\WC_Order $order, $woocommerce) use ($wcOrder) : bool {
+                function(\WC_Order $order) use ($wcOrder) : bool {
                     return $order === $wcOrder;
                 }
             );
@@ -64,11 +64,14 @@ class WcGatewayTest extends TestCase
             ->with($orderId)
             ->andReturn($wcOrder);
 
-        global $woocommerce;
-        $woocommerce = Mockery::mock(\WooCommerce::class);
+
+        when('wc_get_checkout_url')
+		->justReturn('test');
+
         $result = $testee->process_payment($orderId);
-        unset($woocommerce);
+
         $this->assertIsArray($result);
+
         $this->assertEquals('success', $result['result']);
         $this->assertEquals($result['redirect'], $wcOrder);
     }
@@ -106,10 +109,21 @@ class WcGatewayTest extends TestCase
             ->with($orderId)
             ->andReturn(false);
 
-        global $woocommerce;
-        $woocommerce = Mockery::mock(\WooCommerce::class);
-        $this->assertNull($testee->process_payment($orderId));
-        unset($woocommerce);
+        $redirectUrl = 'http://example.com/checkout';
+
+        when('wc_get_checkout_url')
+			->justReturn($redirectUrl);
+
+        expect('wc_add_notice')
+			->with('Couldn\'t find order to process','error');
+
+        $this->assertEquals(
+        	[
+        		'result' => 'failure',
+				'redirect' => $redirectUrl
+			],
+			$testee->process_payment($orderId)
+		);
     }
 
 
@@ -156,11 +170,19 @@ class WcGatewayTest extends TestCase
         expect('wc_add_notice')
             ->with($lastError, 'error');
 
-        global $woocommerce;
-        $woocommerce = Mockery::mock(\WooCommerce::class);
+		$redirectUrl = 'http://example.com/checkout';
+
+		when('wc_get_checkout_url')
+			->justReturn($redirectUrl);
+		
         $result = $testee->process_payment($orderId);
-        unset($woocommerce);
-        $this->assertNull($result);
+        $this->assertEquals(
+        	[
+        		'result' => 'failure',
+				'redirect' => $redirectUrl
+			],
+			$result
+		);
     }
 
     public function testCaptureAuthorizedPayment() {
