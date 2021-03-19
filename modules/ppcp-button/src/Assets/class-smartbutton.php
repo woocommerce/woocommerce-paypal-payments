@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Button\Assets;
 
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\IdentityToken;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayeeRepository;
@@ -56,13 +55,6 @@ class SmartButton implements SmartButtonInterface {
 	 * @var PayeeRepository
 	 */
 	private $payee_repository;
-
-	/**
-	 * The Identity Token.
-	 *
-	 * @var IdentityToken
-	 */
-	private $identity_token;
 
 	/**
 	 * The Payer Factory.
@@ -120,7 +112,6 @@ class SmartButton implements SmartButtonInterface {
 	 * @param SessionHandler     $session_handler The Session Handler.
 	 * @param Settings           $settings The Settings.
 	 * @param PayeeRepository    $payee_repository The Payee Repository.
-	 * @param IdentityToken      $identity_token The Identity Token.
 	 * @param PayerFactory       $payer_factory The Payer factory.
 	 * @param string             $client_id The client ID.
 	 * @param RequestData        $request_data The Request Data helper.
@@ -134,7 +125,6 @@ class SmartButton implements SmartButtonInterface {
 		SessionHandler $session_handler,
 		Settings $settings,
 		PayeeRepository $payee_repository,
-		IdentityToken $identity_token,
 		PayerFactory $payer_factory,
 		string $client_id,
 		RequestData $request_data,
@@ -148,7 +138,6 @@ class SmartButton implements SmartButtonInterface {
 		$this->session_handler     = $session_handler;
 		$this->settings            = $settings;
 		$this->payee_repository    = $payee_repository;
-		$this->identity_token      = $identity_token;
 		$this->payer_factory       = $payer_factory;
 		$this->client_id           = $client_id;
 		$this->request_data        = $request_data;

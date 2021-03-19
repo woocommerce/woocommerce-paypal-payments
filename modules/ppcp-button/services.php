@@ -60,7 +60,6 @@ return array(
 			return new DisabledSmartButton();
 		}
 		$payee_repository = $container->get( 'api.repository.payee' );
-		$identity_token   = $container->get( 'api.endpoint.identity-token' );
 		$payer_factory    = $container->get( 'api.factory.payer' );
 		$request_data     = $container->get( 'button.request-data' );
 
@@ -74,7 +73,6 @@ return array(
 			$container->get( 'session.handler' ),
 			$settings,
 			$payee_repository,
-			$identity_token,
 			$payer_factory,
 			$client_id,
 			$request_data,
