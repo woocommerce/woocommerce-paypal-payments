@@ -73,6 +73,27 @@ const bootstrap = () => {
 document.addEventListener(
     'DOMContentLoaded',
     () => {
-        bootstrap();
+        if (!typeof (PayPalCommerceGateway)) {
+            console.error('PayPal button could not be configured.');
+            return;
+        }
+        const script = document.createElement('script');
+
+        script.addEventListener('load', (event) => {
+            bootstrap();
+        });
+        script.setAttribute('src', PayPalCommerceGateway.button.url);
+        Object.entries(PayPalCommerceGateway.script_attributes).forEach(
+            (keyValue) => {
+                script.setAttribute(keyValue[0], keyValue[1]);
+            }
+        );
+
+        if (PayPalCommerceGateway.data_client_id.set_attribute) {
+            dataClientIdAttributeHandler(script, PayPalCommerceGateway.data_client_id);
+            return;
+        }
+
+        document.body.append(script);
     },
 );
