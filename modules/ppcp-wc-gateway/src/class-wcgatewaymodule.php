@@ -223,6 +223,7 @@ class WcGatewayModule implements ModuleInterface {
 				 * @var SettingsListener $listener
 				 */
 				$listener->listen_for_merchant_id();
+				$listener->listen_for_vaulting_enabled();
 			}
 		);
 
