@@ -321,7 +321,7 @@ class SmartButton implements SmartButtonInterface {
 			);
 		}
 
-		add_action( 'woocommerce_review_order_after_submit', array( $this, 'button_renderer' ), 10 );
+		add_action( 'woocommerce_review_order_after_payment', array( $this, 'button_renderer' ), 10 );
 		add_action( 'woocommerce_pay_order_after_submit', array( $this, 'button_renderer' ), 10 );
 
 		return true;
