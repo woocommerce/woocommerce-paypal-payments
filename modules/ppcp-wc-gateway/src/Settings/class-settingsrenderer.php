@@ -295,7 +295,7 @@ class SettingsRenderer {
 			$key          = 'ppcp[' . $field . ']';
 			$id           = 'ppcp-' . $field;
 			$config['id'] = $id;
-			$th_td        = 'ppcp-heading' !== $config['type'] ? 'td' : 'td';
+			$th_td        = 'ppcp-heading' !== $config['type'] ? 'td' : 'th';
 			$colspan      = 'ppcp-heading' !== $config['type'] ? 1 : 2;
 			$classes      = isset( $config['classes'] ) ? $config['classes'] : array();
 			$classes[]    = sprintf( 'ppcp-settings-field-%s', str_replace( 'ppcp-', '', $config['type'] ) );
