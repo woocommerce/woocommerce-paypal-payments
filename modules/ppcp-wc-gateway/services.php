@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway;
 
-use Psr\Container\ContainerInterface;
+use Dhii\Data\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
@@ -173,6 +173,8 @@ return array(
 		 *
 		 * @var State $state
 		 */
+
+		$settings     = $container->get( 'wcgateway.settings' );
 
 		$fields              = array(
 			'sandbox_on'                     => array(
@@ -1812,33 +1814,6 @@ return array(
 			unset( $fields['ppcp_onboarding_sandbox'] );
 		} else {
 			unset( $fields['ppcp_disconnect_sandbox'] );
-		}
-
-		/**
-		 * Disable vaulting if credit message is enabled and vise versa.
-		 */
-
-		/**
-		 * The settings container.
-		 *
-		 * @var ContainerInterface $settings
-		 */
-		$settings     = $container->get( 'wcgateway.settings' );
-
-		$product_message_enabled = $settings->has('message_product_enabled') && (bool) $settings->get('message_product_enabled');
-		$cart_message_enabled = $settings->has('message_cart_enabled') && (bool) $settings->get('message_cart_enabled');
-		$checkout_message_enabled = $settings->has('message_enabled') && (bool) $settings->get('message_enabled');
-
-		$messaging_enabled = $product_message_enabled || $cart_message_enabled || $checkout_message_enabled;
-		$vaulting_enabled = $settings->has('vault_enabled') && (bool)$settings->get('vault_enabled');
-
-		if($messaging_enabled && isset($fields['vault_enabled'])){
-			$fields['vault_enabled']['disabled'] = 'disabled';
-		}
-		elseif($vaulting_enabled) {
-			isset($fields['enabled']) && $fields['message_enabled']['disabled'] = 'disabled';
-			isset($fields['message_product_enabled']) && $fields['message_product_enabled']['disabled'] = 'disabled';
-			isset($fields['message_product_enabled']) && $fields['message_cart_enabled']['disabled'] = 'disabled';
 		}
 
 		/**
