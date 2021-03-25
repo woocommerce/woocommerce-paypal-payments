@@ -101,13 +101,14 @@ class SettingsRenderer {
 		$messages = array();
 
 		if ( $this->paypal_vaulting_is_enabled() || $this->pay_later_messaging_is_enabled() ) {
-		    $vaulting_title = __( 'PayPal vaulting', 'woocommerce-paypal-payments' );
-		    $pay_later_messages_title = __( 'Pay Later Messaging', 'woocommerce-paypal-payments' );
-		    
+			$vaulting_title           = __( 'PayPal vaulting', 'woocommerce-paypal-payments' );
+			$pay_later_messages_title = __( 'Pay Later Messaging', 'woocommerce-paypal-payments' );
+
 			$enabled  = $this->paypal_vaulting_is_enabled() ? $vaulting_title : $pay_later_messages_title;
 			$disabled = $this->pay_later_messaging_is_enabled() ? $vaulting_title : $pay_later_messages_title;
 
 			$pay_later_messages_or_vaulting_text = sprintf(
+				// translators: %1$s and %2$s is translated PayPal vaulting and Pay Later Messaging strings.
 				__(
 					'You have %1$s enabled, that\'s why %2$s options are unavailable now. You cannot use both features at the same time',
 					'woocommerce-paypal-payments'
@@ -115,7 +116,7 @@ class SettingsRenderer {
 				$enabled,
 				$disabled
 			);
-			$messages[]                          = new Message( $pay_later_messages_or_vaulting_text, 'warning' );
+			$messages[] = new Message( $pay_later_messages_or_vaulting_text, 'warning' );
 		}
 
         //phpcs:disable WordPress.Security.NonceVerification.Recommended
