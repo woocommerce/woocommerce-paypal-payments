@@ -6,7 +6,7 @@
         )
 
         const vaultingCheckboxes = document.querySelectorAll(
-            "#ppcp-vault_enabled, #ppcp-save-paypal-account"
+            "#ppcp-vault_enabled, #ppcp-save_paypal_account"
         )
 
         function atLeastOneChecked(checkboxesNodeList) {
