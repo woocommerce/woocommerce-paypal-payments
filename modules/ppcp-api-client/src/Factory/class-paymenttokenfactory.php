@@ -35,7 +35,7 @@ class PaymentTokenFactory {
 		return new PaymentToken(
 			$data->id,
 			( isset( $data->type ) ) ? $data->type : PaymentToken::TYPE_PAYMENT_METHOD_TOKEN,
-            $data->source
+			$data->source
 		);
 	}
 

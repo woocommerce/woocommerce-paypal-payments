@@ -45,27 +45,35 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 */
 	private $refund_processor;
 
-    /**
-     * @var PaymentTokenRepository
-     */
-    private $payment_token_repository;
+	/**
+	 * The payment token repository.
+	 *
+	 * @var PaymentTokenRepository
+	 */
+	private $payment_token_repository;
 
-    /**
-     * @var PurchaseUnitFactory
-     */
-    private $purchase_unit_factory;
+	/**
+	 * The purchase unit factory.
+	 *
+	 * @var PurchaseUnitFactory
+	 */
+	private $purchase_unit_factory;
 
-    /**
-     * @var PayerFactory
-     */
-    private $payer_factory;
+	/**
+	 * The payer factory.
+	 *
+	 * @var PayerFactory
+	 */
+	private $payer_factory;
 
-    /**
-     * @var OrderEndpoint
-     */
-    private $order_endpoint;
+	/**
+	 * The order endpoint.
+	 *
+	 * @var OrderEndpoint
+	 */
+	private $order_endpoint;
 
-    /**
+	/**
 	 * CreditCardGateway constructor.
 	 *
 	 * @param SettingsRenderer            $settings_renderer The Settings Renderer.
@@ -77,6 +85,10 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 * @param SessionHandler              $session_handler The Session Handler.
 	 * @param RefundProcessor             $refund_processor The refund processor.
 	 * @param State                       $state The state.
+	 * @param PaymentTokenRepository      $payment_token_repository The payment token repository.
+	 * @param PurchaseUnitFactory         $purchase_unit_factory The purchase unit factory.
+	 * @param PayerFactory                $payer_factory The payer factory.
+	 * @param  OrderEndpoint               $order_endpoint The order endpoint.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
@@ -88,10 +100,10 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		SessionHandler $session_handler,
 		RefundProcessor $refund_processor,
 		State $state,
-        PaymentTokenRepository $payment_token_repository,
-        PurchaseUnitFactory $purchase_unit_factory,
-        PayerFactory $payer_factory,
-        OrderEndpoint $order_endpoint
+		PaymentTokenRepository $payment_token_repository,
+		PurchaseUnitFactory $purchase_unit_factory,
+		PayerFactory $payer_factory,
+		OrderEndpoint $order_endpoint
 	) {
 
 		$this->id                  = self::ID;
@@ -151,12 +163,12 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 			)
 		);
 
-		$this->module_url = $module_url;
-        $this->payment_token_repository = $payment_token_repository;
-        $this->purchase_unit_factory = $purchase_unit_factory;
-        $this->payer_factory = $payer_factory;
-        $this->order_endpoint = $order_endpoint;
-    }
+		$this->module_url               = $module_url;
+		$this->payment_token_repository = $payment_token_repository;
+		$this->purchase_unit_factory    = $purchase_unit_factory;
+		$this->payer_factory            = $payer_factory;
+		$this->order_endpoint           = $order_endpoint;
+	}
 
 	/**
 	 * Initialize the form fields.

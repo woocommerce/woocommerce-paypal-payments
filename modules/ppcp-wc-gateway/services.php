@@ -66,10 +66,10 @@ return array(
 		$session_handler     = $container->get( 'session.handler' );
 		$refund_processor    = $container->get( 'wcgateway.processor.refunds' );
 		$state               = $container->get( 'onboarding.state' );
-		$payment_token_repository = $container->get('subscription.repository.payment-token');
-        $purchase_unit_factory = $container->get('api.factory.purchase-unit');
-        $payer_factory = $container->get('api.factory.payer');
-        $order_endpoint = $container->get('api.endpoint.order');
+		$payment_token_repository = $container->get( 'subscription.repository.payment-token' );
+		$purchase_unit_factory = $container->get( 'api.factory.purchase-unit' );
+		$payer_factory = $container->get( 'api.factory.payer' );
+		$order_endpoint = $container->get( 'api.endpoint.order' );
 		return new CreditCardGateway(
 			$settings_renderer,
 			$order_processor,
@@ -80,11 +80,11 @@ return array(
 			$session_handler,
 			$refund_processor,
 			$state,
-            $payment_token_repository,
-            $purchase_unit_factory,
-            $payer_factory,
-            $order_endpoint
-        );
+			$payment_token_repository,
+			$purchase_unit_factory,
+			$payer_factory,
+			$order_endpoint
+		);
 	},
 	'wcgateway.disabler'                           => static function ( $container ): DisableGateways {
 		$session_handler = $container->get( 'session.handler' );

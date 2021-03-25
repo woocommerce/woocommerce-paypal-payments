@@ -116,26 +116,29 @@ class SmartButton implements SmartButtonInterface {
 	 */
 	private $environment;
 
-    /**
-     * @var PaymentTokenRepository
-     */
-    private $payment_token_repository;
+	/**
+	 * The payment token repository.
+	 *
+	 * @var PaymentTokenRepository
+	 */
+	private $payment_token_repository;
 
-    /**
+	/**
 	 * SmartButton constructor.
 	 *
-	 * @param string             $module_url The URL to the module.
-	 * @param SessionHandler     $session_handler The Session Handler.
-	 * @param Settings           $settings The Settings.
-	 * @param PayeeRepository    $payee_repository The Payee Repository.
-	 * @param IdentityToken      $identity_token The Identity Token.
-	 * @param PayerFactory       $payer_factory The Payer factory.
-	 * @param string             $client_id The client ID.
-	 * @param RequestData        $request_data The Request Data helper.
-	 * @param DccApplies         $dcc_applies The DCC applies helper.
-	 * @param SubscriptionHelper $subscription_helper The subscription helper.
-	 * @param MessagesApply      $messages_apply The Messages apply helper.
-	 * @param Environment        $environment The environment object.
+	 * @param string                 $module_url The URL to the module.
+	 * @param SessionHandler         $session_handler The Session Handler.
+	 * @param Settings               $settings The Settings.
+	 * @param PayeeRepository        $payee_repository The Payee Repository.
+	 * @param IdentityToken          $identity_token The Identity Token.
+	 * @param PayerFactory           $payer_factory The Payer factory.
+	 * @param string                 $client_id The client ID.
+	 * @param RequestData            $request_data The Request Data helper.
+	 * @param DccApplies             $dcc_applies The DCC applies helper.
+	 * @param SubscriptionHelper     $subscription_helper The subscription helper.
+	 * @param MessagesApply          $messages_apply The Messages apply helper.
+	 * @param Environment            $environment The environment object.
+	 * @param PaymentTokenRepository $payment_token_repository The payment token repository.
 	 */
 	public function __construct(
 		string $module_url,
@@ -150,23 +153,23 @@ class SmartButton implements SmartButtonInterface {
 		SubscriptionHelper $subscription_helper,
 		MessagesApply $messages_apply,
 		Environment $environment,
-        PaymentTokenRepository $payment_token_repository
+		PaymentTokenRepository $payment_token_repository
 	) {
 
-		$this->module_url          = $module_url;
-		$this->session_handler     = $session_handler;
-		$this->settings            = $settings;
-		$this->payee_repository    = $payee_repository;
-		$this->identity_token      = $identity_token;
-		$this->payer_factory       = $payer_factory;
-		$this->client_id           = $client_id;
-		$this->request_data        = $request_data;
-		$this->dcc_applies         = $dcc_applies;
-		$this->subscription_helper = $subscription_helper;
-		$this->messages_apply      = $messages_apply;
-		$this->environment         = $environment;
-        $this->payment_token_repository = $payment_token_repository;
-    }
+		$this->module_url               = $module_url;
+		$this->session_handler          = $session_handler;
+		$this->settings                 = $settings;
+		$this->payee_repository         = $payee_repository;
+		$this->identity_token           = $identity_token;
+		$this->payer_factory            = $payer_factory;
+		$this->client_id                = $client_id;
+		$this->request_data             = $request_data;
+		$this->dcc_applies              = $dcc_applies;
+		$this->subscription_helper      = $subscription_helper;
+		$this->messages_apply           = $messages_apply;
+		$this->environment              = $environment;
+		$this->payment_token_repository = $payment_token_repository;
+	}
 
 	/**
 	 * Registers the necessary action hooks to render the HTML depending on the settings.
@@ -208,37 +211,37 @@ class SmartButton implements SmartButtonInterface {
 				11
 			);
 
-            $payment_token_repository = $this->payment_token_repository;
+			$payment_token_repository = $this->payment_token_repository;
 			add_filter(
 				'woocommerce_credit_card_form_fields',
-				function ( $default_fields, $id ) use( $payment_token_repository ) {
+				function ( $default_fields, $id ) use ( $payment_token_repository ) {
 					if ( $this->can_save_credit_card() ) {
 						$default_fields['card-vault'] = sprintf(
 							'<p class="form-row form-row-wide"><label for="vault"><input class="ppcp-credit-card-vault" type="checkbox" id="ppcp-credit-card-vault" name="vault">%s</label></p>',
 							esc_html__( 'Save your Credit Card', 'woocommerce-paypal-payments' )
 						);
 
-                        $tokens = $payment_token_repository->all_for_user_id( 1 );
-                        if($tokens && $this->tokens_contains_card($tokens) ) {
+						$tokens = $payment_token_repository->all_for_user_id( 1 );
+						if ( $tokens && $this->tokens_contains_card( $tokens ) ) {
 
-                            $output = sprintf(
-                                '<select id="saved-credit-card" name="saved_credit_card"><option value="">%s</option>',
-                                esc_html__( 'Choose a saved payment', 'woocommerce-paypal-payments' )
-                            );
-                            foreach ($tokens as $token) {
-                                if(isset($token->source()->card)) {
-                                    $output .= sprintf(
-                                        '<option value="%1$s">%2$s ...%3$s</option>',
-                                        $token->id(),
-                                        $token->source()->card->brand,
-                                        $token->source()->card->last_digits
-                                    );
-                                }
-                            }
-                            $output .= '</select>';
+							$output = sprintf(
+								'<select id="saved-credit-card" name="saved_credit_card"><option value="">%s</option>',
+								esc_html__( 'Choose a saved payment', 'woocommerce-paypal-payments' )
+							);
+							foreach ( $tokens as $token ) {
+								if ( isset( $token->source()->card ) ) {
+									$output .= sprintf(
+										'<option value="%1$s">%2$s ...%3$s</option>',
+										$token->id(),
+										$token->source()->card->brand,
+										$token->source()->card->last_digits
+									);
+								}
+							}
+							$output .= '</select>';
 
-                            $default_fields['saved-credit-card'] = $output;
-                        }
+							$default_fields['saved-credit-card'] = $output;
+						}
 					}
 
 					return $default_fields;
@@ -1022,18 +1025,18 @@ class SmartButton implements SmartButtonInterface {
 		return true;
 	}
 
-    /**
-     * Check if tokens has card source.
-     *
-     * @param PaymentToken[] $tokens
-     * @return bool
-     */
-	protected function tokens_contains_card($tokens) {
-        foreach ($tokens as $token) {
-            if(isset($token->source()->card)) {
-                return true;
-            }
-        }
-	    return false;
-    }
+	/**
+	 * Check if tokens has card source.
+	 *
+	 * @param PaymentToken[] $tokens The tokens.
+	 * @return bool Wether tokens contains card or not.
+	 */
+	protected function tokens_contains_card( $tokens ) {
+		foreach ( $tokens as $token ) {
+			if ( isset( $token->source()->card ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
 }

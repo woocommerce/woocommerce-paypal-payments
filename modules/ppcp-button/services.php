@@ -69,7 +69,7 @@ return array(
 		$subscription_helper = $container->get( 'subscription.helper' );
 		$messages_apply      = $container->get( 'button.helper.messages-apply' );
 		$environment         = $container->get( 'onboarding.environment' );
-		$payment_token_repository = $container->get('subscription.repository.payment-token');
+		$payment_token_repository = $container->get( 'subscription.repository.payment-token' );
 		return new SmartButton(
 			$container->get( 'button.url' ),
 			$container->get( 'session.handler' ),
@@ -83,7 +83,7 @@ return array(
 			$subscription_helper,
 			$messages_apply,
 			$environment,
-            $payment_token_repository
+			$payment_token_repository
 		);
 	},
 	'button.url'                        => static function ( $container ): string {
