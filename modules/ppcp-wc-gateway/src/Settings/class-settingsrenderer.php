@@ -101,12 +101,15 @@ class SettingsRenderer {
 		$messages = array();
 
 		if ( $this->paypal_vaulting_is_enabled() || $this->pay_later_messaging_is_enabled() ) {
-			$enabled  = $this->paypal_vaulting_is_enabled() ? __( 'PayPal vaulting', 'woocommerce-paypal-payments' ) : __( 'Pay Later Messaging', 'woocommerce-paypal-payments' );
-			$disabled = $this->pay_later_messaging_is_enabled() ? __( 'PayPal vaulting', 'woocommerce-paypal-payments' ) : __( 'Pay Later Messaging', 'woocommerce-paypal-payments' );
+		    $vaulting_title = __( 'PayPal vaulting', 'woocommerce-paypal-payments' );
+		    $pay_later_messages_title = __( 'Pay Later Messaging', 'woocommerce-paypal-payments' );
+		    
+			$enabled  = $this->paypal_vaulting_is_enabled() ? $vaulting_title : $pay_later_messages_title;
+			$disabled = $this->pay_later_messaging_is_enabled() ? $vaulting_title : $pay_later_messages_title;
 
 			$pay_later_messages_or_vaulting_text = sprintf(
 				__(
-					'You have %1$s enabled, that\'s why %2$s is unavailable now. You cannot use both at the same time',
+					'You have %1$s enabled, that\'s why %2$s options are unavailable now. You cannot use both features at the same time',
 					'woocommerce-paypal-payments'
 				),
 				$enabled,
