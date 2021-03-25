@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway;
 
-use Dhii\Data\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
@@ -1886,9 +1885,18 @@ return array(
 	},
 	'wcgateway.url'                                => static function ( $container ): string {
 		return plugins_url(
-			'/modules/ppcp-wc-gateway/',
+			$container->get( 'wcgateway.relative-path' ),
 			dirname( __FILE__, 3 ) . '/woocommerce-paypal-payments.php'
 		);
+	},
+	'wcgateway.relative-path'                      => static function( $container ): string {
+		return 'modules/ppcp-wc-gateway/';
+	},
+	'wcgateway.absolute-path'                      => static function( $container ): string {
+		return plugin_dir_path(
+			dirname( __FILE__, 3 ) . '/woocommerce-paypal-payments.php'
+		) .
+			$container->get( 'wcgateway.relative-path' );
 	},
 	'wcgateway.endpoint.return-url'                => static function ( $container ) : ReturnUrlEndpoint {
 		$gateway  = $container->get( 'wcgateway.paypal-gateway' );
