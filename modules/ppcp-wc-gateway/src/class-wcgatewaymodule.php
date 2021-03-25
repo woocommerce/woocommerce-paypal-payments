@@ -73,11 +73,10 @@ class WcGatewayModule implements ModuleInterface {
 			}
 		);
 
-		if($container->has('wcgateway.url')) {
-			$assets = new SettingsPageAssets($container->get('wcgateway.url'));
+		if ( $container->has( 'wcgateway.url' ) ) {
+			$assets = new SettingsPageAssets( $container->get( 'wcgateway.url' ) );
 			$assets->register_assets();
 		}
-
 
 		add_filter(
 			Repository::NOTICES_FILTER,
