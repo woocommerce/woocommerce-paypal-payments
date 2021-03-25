@@ -1,16 +1,22 @@
 <?php
-
 /**
  * Register and configure assets provided by this module.
+ *
+ * @package WooCommerce\PayPalCommerce\WcGateway\Assets
  */
 
 declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Assets;
 
+/**
+ * Class SettingsPageAssets
+ */
 class SettingsPageAssets {
 
 	/**
+	 * The URL of this module.
+	 *
 	 * @var string
 	 */
 	private $module_url;
