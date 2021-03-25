@@ -129,7 +129,7 @@ class SettingsListener {
         if ( ! $this->is_valid_site_request() ) {
             return;
         }
-        if ( ! isset( $_POST['ppcp']['vault_enabled'] ) && ! isset( $_POST['ppcp']['save_paypal_account'] ) && ! isset( $_POST['ppcp']['dcc_vault_enabled'] ) && ! isset( $_POST['ppcp']['dcc_save_card'] ) ) {
+        if ( ! isset( $_POST['ppcp']['vault_enabled'] ) && ! isset( $_POST['ppcp']['save_paypal_account'] ) ) {
             return;
         }
 
