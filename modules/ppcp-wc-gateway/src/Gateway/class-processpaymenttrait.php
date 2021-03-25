@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
+use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
@@ -29,6 +30,56 @@ trait ProcessPaymentTrait {
 		if ( ! is_a( $wc_order, \WC_Order::class ) ) {
 			return null;
 		}
+
+        /**
+         * If customer has chosed a saved credit card payment.
+         */
+        $saved_credit_card = filter_input(INPUT_POST, 'saved_credit_card', FILTER_SANITIZE_STRING);
+		if($saved_credit_card) {
+
+            $user_id  = (int) $wc_order->get_customer_id();
+            $customer = new \WC_Customer( $user_id );
+            $tokens = $this->payment_token_repository->all_for_user_id( (int) $customer->get_id() );
+
+            $selected_token = null;
+            foreach ($tokens as $token) {
+                if($token->id() === $saved_credit_card) {
+                    $selected_token = $token;
+                    break;
+                }
+            }
+
+            if(!$selected_token) {
+                return null;
+            }
+
+            $purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
+            $payer         = $this->payer_factory->from_customer( $customer );
+            try {
+                $order = $this->order_endpoint->create(
+                    array( $purchase_unit ),
+                    $payer,
+                    $selected_token
+                );
+
+                if ( $order->status()->is( OrderStatus::COMPLETED ) && $order->intent() === 'CAPTURE' ) {
+                    $wc_order->update_status(
+                        'processing',
+                        __( 'Payment received.', 'woocommerce-paypal-payments' )
+                    );
+
+                    $this->session_handler->destroy_session_data();
+                    return array(
+                        'result'   => 'success',
+                        'redirect' => $this->get_return_url( $wc_order ),
+                    );
+                }
+            } catch (RuntimeException $error) {
+                $this->session_handler->destroy_session_data();
+                wc_add_notice( $error->getMessage(), 'error' );
+                return null;
+            }
+        }
 
 		/**
 		 * If the WC_Order is payed through the approved webhook.

@@ -9,8 +9,12 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\Subscription\Repository\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
@@ -41,7 +45,27 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 */
 	private $refund_processor;
 
-	/**
+    /**
+     * @var PaymentTokenRepository
+     */
+    private $payment_token_repository;
+
+    /**
+     * @var PurchaseUnitFactory
+     */
+    private $purchase_unit_factory;
+
+    /**
+     * @var PayerFactory
+     */
+    private $payer_factory;
+
+    /**
+     * @var OrderEndpoint
+     */
+    private $order_endpoint;
+
+    /**
 	 * CreditCardGateway constructor.
 	 *
 	 * @param SettingsRenderer            $settings_renderer The Settings Renderer.
@@ -63,7 +87,11 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		string $module_url,
 		SessionHandler $session_handler,
 		RefundProcessor $refund_processor,
-		State $state
+		State $state,
+        PaymentTokenRepository $payment_token_repository,
+        PurchaseUnitFactory $purchase_unit_factory,
+        PayerFactory $payer_factory,
+        OrderEndpoint $order_endpoint
 	) {
 
 		$this->id                  = self::ID;
@@ -124,7 +152,11 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		);
 
 		$this->module_url = $module_url;
-	}
+        $this->payment_token_repository = $payment_token_repository;
+        $this->purchase_unit_factory = $purchase_unit_factory;
+        $this->payer_factory = $payer_factory;
+        $this->order_endpoint = $order_endpoint;
+    }
 
 	/**
 	 * Initialize the form fields.

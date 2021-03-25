@@ -36,14 +36,19 @@ class PaymentToken {
 	 */
 	private $type;
 
-	/**
+    /**
+     * @var \stdClass
+     */
+    private $source;
+
+    /**
 	 * PaymentToken constructor.
 	 *
 	 * @param string $id The Id.
 	 * @param string $type The type.
 	 * @throws RuntimeException When the type is not valid.
 	 */
-	public function __construct( string $id, string $type = self::TYPE_PAYMENT_METHOD_TOKEN ) {
+	public function __construct( string $id, string $type = self::TYPE_PAYMENT_METHOD_TOKEN, \stdClass $source ) {
 		if ( ! in_array( $type, self::VALID_TYPES, true ) ) {
 			throw new RuntimeException(
 				__( 'Not a valid payment source type.', 'woocommerce-paypal-payments' )
@@ -51,7 +56,8 @@ class PaymentToken {
 		}
 		$this->id   = $id;
 		$this->type = $type;
-	}
+        $this->source = $source;
+    }
 
 	/**
 	 * Returns the ID.
@@ -71,6 +77,16 @@ class PaymentToken {
 		return $this->type;
 	}
 
+    /**
+     * Returns the source.
+     *
+     * @return \stdClass
+     */
+    public function source(): \stdClass
+    {
+        return $this->source;
+    }
+
 	/**
 	 * Returns the object as array.
 	 *
@@ -80,6 +96,7 @@ class PaymentToken {
 		return array(
 			'id'   => $this->id(),
 			'type' => $this->type(),
+			'source' => $this->source(),
 		);
 	}
 }

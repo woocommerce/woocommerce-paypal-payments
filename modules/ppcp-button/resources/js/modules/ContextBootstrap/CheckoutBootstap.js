@@ -15,6 +15,20 @@ class CheckoutBootstap {
 
         jQuery(document.body).on('updated_checkout', () => {
             this.render();
+
+            jQuery('#saved-credit-card').on('change', () => {
+                if(jQuery('#saved-credit-card').val() !== '') {
+                    this.renderer.hideButtons(this.gateway.button.wrapper);
+                    this.renderer.hideButtons(this.gateway.messages.wrapper);
+                    this.renderer.hideButtons(this.gateway.hosted_fields.wrapper);
+                    jQuery('#place_order').show();
+                } else {
+                    jQuery('#place_order').hide();
+                    this.renderer.hideButtons(this.gateway.button.wrapper);
+                    this.renderer.hideButtons(this.gateway.messages.wrapper);
+                    this.renderer.showButtons(this.gateway.hosted_fields.wrapper);
+                }
+            })
         });
 
         jQuery(document.body).
