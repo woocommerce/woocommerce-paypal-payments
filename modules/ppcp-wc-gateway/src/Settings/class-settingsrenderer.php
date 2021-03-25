@@ -92,7 +92,7 @@ class SettingsRenderer {
 	}
 
 	/**
-	 * Returns the notice, when onboarding failed.
+	 * Returns notices list.
 	 *
 	 * @return array
 	 */
