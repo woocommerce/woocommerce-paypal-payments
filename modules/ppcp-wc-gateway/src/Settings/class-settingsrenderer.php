@@ -98,21 +98,21 @@ class SettingsRenderer {
 	 */
 	public function messages() : array {
 
-	    $messages = array();
+		$messages = array();
 
-		if ($this->paypal_vaulting_is_enabled() || $this->pay_later_messaging_is_enabled()) {
-			$enabled = $this->paypal_vaulting_is_enabled() ? __('PayPal vaulting', 'woo-ecurring') : __('Pay Later Messaging', 'woo-ecurring');
-			$disabled = $this->pay_later_messaging_is_enabled() ? __('PayPal vaulting', 'woo-ecurring') : __('Pay Later Messaging', 'woo-ecurring');
+		if ( $this->paypal_vaulting_is_enabled() || $this->pay_later_messaging_is_enabled() ) {
+			$enabled  = $this->paypal_vaulting_is_enabled() ? __( 'PayPal vaulting', 'woocommerce-paypal-payments' ) : __( 'Pay Later Messaging', 'woocommerce-paypal-payments' );
+			$disabled = $this->pay_later_messaging_is_enabled() ? __( 'PayPal vaulting', 'woocommerce-paypal-payments' ) : __( 'Pay Later Messaging', 'woocommerce-paypal-payments' );
 
 			$pay_later_messages_or_vaulting_text = sprintf(
 				__(
 					'You have %1$s enabled, that\'s why %2$s is unavailable now. You cannot use both at the same time',
-					'woo-ecurring'
+					'woocommerce-paypal-payments'
 				),
 				$enabled,
 				$disabled
 			);
-			$messages[] = new Message($pay_later_messages_or_vaulting_text, 'warning');
+			$messages[]                          = new Message( $pay_later_messages_or_vaulting_text, 'warning' );
 		}
 
         //phpcs:disable WordPress.Security.NonceVerification.Recommended
@@ -124,55 +124,52 @@ class SettingsRenderer {
 		//phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		$messages[] = new Message(
-				__(
-					'We could not complete the onboarding process. Some features, such as card processing, will not be available. To fix this, please try again.',
-					'woocommerce-paypal-payments'
-				),
-				'error',
-				false
+			__(
+				'We could not complete the onboarding process. Some features, such as card processing, will not be available. To fix this, please try again.',
+				'woocommerce-paypal-payments'
+			),
+			'error',
+			false
 		);
-		
+
 		return $messages;
 	}
 
 
 	/**
-     * Check whether PayPal vaulting is enabled.
-     *
+	 * Check whether PayPal vaulting is enabled.
+	 *
 	 * @return bool
 	 */
-	private function paypal_vaulting_is_enabled(): bool
-    {
-        $saving_paypal_account_is_enabled = $this->settings->has('save_paypal_account') &&
-            (bool) $this->settings->get('save_paypal_account');
+	private function paypal_vaulting_is_enabled(): bool {
+		$saving_paypal_account_is_enabled = $this->settings->has( 'save_paypal_account' ) &&
+			(bool) $this->settings->get( 'save_paypal_account' );
 
-        $vault_is_enabled = $this->settings->has('vault_enabled') &&
-            (bool) $this->settings->get('vault_enabled');
+		$vault_is_enabled = $this->settings->has( 'vault_enabled' ) &&
+			(bool) $this->settings->get( 'vault_enabled' );
 
-        return $saving_paypal_account_is_enabled || $vault_is_enabled;
-    }
+		return $saving_paypal_account_is_enabled || $vault_is_enabled;
+	}
 
 	/**
-     * Check whether Pay Later message is enabled either for checkout, cart or product page.
-     *
+	 * Check whether Pay Later message is enabled either for checkout, cart or product page.
+	 *
 	 * @return bool
 	 */
-    private function pay_later_messaging_is_enabled(): bool
-    {
-        $pay_later_message_enabled_for_checkout = $this->settings->has('message_enabled')
-            && (bool) $this->settings->get('message_enabled');
+	private function pay_later_messaging_is_enabled(): bool {
+		$pay_later_message_enabled_for_checkout = $this->settings->has( 'message_enabled' )
+			&& (bool) $this->settings->get( 'message_enabled' );
 
-        $pay_later_message_enabled_for_cart = $this->settings->has('message_cart_enabled')
-			&& (bool) $this->settings->get('message_cart_enabled');
+		$pay_later_message_enabled_for_cart = $this->settings->has( 'message_cart_enabled' )
+			&& (bool) $this->settings->get( 'message_cart_enabled' );
 
-        $pay_later_message_enabled_for_product = $this->settings->has('message_product_enabled')
-            && (bool) $this->settings->get('message_product_enabled');
+		$pay_later_message_enabled_for_product = $this->settings->has( 'message_product_enabled' )
+			&& (bool) $this->settings->get( 'message_product_enabled' );
 
-
-        return $pay_later_message_enabled_for_checkout ||
-            $pay_later_message_enabled_for_cart ||
-            $pay_later_message_enabled_for_product;
-    }
+		return $pay_later_message_enabled_for_checkout ||
+			$pay_later_message_enabled_for_cart ||
+			$pay_later_message_enabled_for_product;
+	}
 
 	/**
 	 * Renders the multiselect field.
