@@ -58,6 +58,24 @@ class SubscriptionModule implements ModuleInterface {
 			10,
 			2
 		);
+
+		/*
+		add_action('woocommerce_init', function () use($container) {
+            $api = $container->get('api.endpoint.payment-token' );
+            try {
+                $tokens = $api->for_user(1);
+
+                for($i = 0; $i < count($tokens); $i++) {
+                    $api->delete_token($tokens[$i]);
+                }
+
+                $a = 1;
+            } catch (RuntimeException $exception) {
+                $a = 1;
+            }
+
+        });
+		*/
 	}
 
 	/**
