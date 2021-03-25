@@ -125,10 +125,20 @@ class SettingsListener {
 		exit;
 	}
 
+	/**
+	 * Prevent enabling both Pay Later messaging and PayPal vaulting
+	 */
 	public function listen_for_vaulting_enabled() {
 		if ( ! $this->is_valid_site_request() ) {
 			return;
 		}
+
+		/**
+		 * No need to verify nonce here.
+		 *
+		 * phpcs:disable WordPress.Security.NonceVerification.Missing
+		 * phpcs:disable WordPress.Security.NonceVerification.Recommended
+		 */
 		if ( ! isset( $_POST['ppcp']['vault_enabled'] ) && ! isset( $_POST['ppcp']['save_paypal_account'] ) ) {
 			return;
 		}
