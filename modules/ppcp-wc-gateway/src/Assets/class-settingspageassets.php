@@ -27,7 +27,7 @@ class SettingsPageAssets {
 	/**
 	 * Register assets provided by this module.
 	 */
-	public function register_assets(): void {
+	public function register_assets() {
 		if ( is_admin() && ! is_ajax() ) {
 			$this->register_admin_assets();
 		}
@@ -36,7 +36,7 @@ class SettingsPageAssets {
 	/**
 	 * Register assets for admin pages.
 	 */
-	private function register_admin_assets(): void {
+	private function register_admin_assets() {
 		add_action(
 			'admin_enqueue_scripts',
 			function() {
