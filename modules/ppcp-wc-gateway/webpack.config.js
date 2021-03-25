@@ -1,8 +1,6 @@
 const path         = require('path');
 const isProduction = process.env.NODE_ENV === 'production';
 
-debugger
-
 module.exports = {
     devtool: 'sourcemap',
     mode: isProduction ? 'production' : 'development',
