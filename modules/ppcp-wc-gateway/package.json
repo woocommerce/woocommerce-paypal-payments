@@ -1,0 +1,21 @@
+{
+  "name": "ppcp-wc-gateway",
+  "version": "1.0.0",
+  "license": "GPL-3.0-or-later",
+  "main": "resources/js/gateway-settings.js",
+  "devDependencies": {
+    "@babel/core": "^7.9.0",
+    "@babel/preset-env": "^7.9.5",
+    "babel-loader": "^8.1.0",
+    "cross-env": "^5.0.1",
+    "file-loader": "^4.2.0",
+    "webpack": "^4.42.1",
+    "webpack-cli": "^3.1.2",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0"
+  },
+  "scripts": {
+    "build": "cross-env BABEL_ENV=default NODE_ENV=production webpack",
+    "watch": "cross-env BABEL_ENV=default NODE_ENV=production webpack --watch",
+    "dev": "cross-env BABEL_ENV=default webpack --watch"
+  }
+}

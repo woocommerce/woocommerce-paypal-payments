@@ -6,10 +6,12 @@
   "license": "GPL-2.0",
   "author": "WooCommerce",
   "scripts": {
-    "install:modules:ppcp-button": "cd modules/ppcp-button && yarn install",
-    "install:modules": "yarn run install:modules:ppcp-button",
-    "build:modules:ppcp-button": "cd modules/ppcp-button && yarn run build",
-    "build:modules": "yarn run build:modules:ppcp-button",
+    "install:modules:ppcp-button": "cd modules/ppcp-button && yarn install && cd -",
+    "install:modules:ppcp-wc-gateway": "cd modules/ppcp-wc-gateway && yarn install && cd -",
+    "install:modules": "yarn run install:modules:ppcp-button && yarn run install:modules:ppcp-wc-gateway",
+    "build:modules:ppcp-button": "cd modules/ppcp-button && yarn run build && cd -",
+    "build:modules:ppcp-wc-gateway": "cd modules/ppcp-wc-gateway && yarn run build && cd -",
+    "build:modules": "yarn run build:modules:ppcp-button && yarn build:modules:ppcp-wc-gateway",
     "build:dev": "yarn run install:modules && yarn run build:modules",
 
     "prebuild": "rm -rf ./vendor",
