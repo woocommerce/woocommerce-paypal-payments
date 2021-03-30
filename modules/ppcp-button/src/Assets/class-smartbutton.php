@@ -221,7 +221,7 @@ class SmartButton implements SmartButtonInterface {
 							esc_html__( 'Save your Credit Card', 'woocommerce-paypal-payments' )
 						);
 
-						$tokens = $payment_token_repository->all_for_user_id( 1 );
+						$tokens = $payment_token_repository->all_for_user_id( get_current_user_id() );
 						if ( $tokens && $this->tokens_contains_card( $tokens ) ) {
 							$output = sprintf(
 								'<p class="form-row form-row-wide"><label>Or select a saved Credit Card payment</label><select id="saved-credit-card" name="saved_credit_card"><option value="">%s</option>',
