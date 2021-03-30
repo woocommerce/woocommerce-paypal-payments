@@ -100,7 +100,9 @@ class SettingsRenderer {
 
 		$messages = array();
 
-		if ( $this->paypal_vaulting_is_enabled() || $this->pay_later_messaging_is_enabled() ) {
+		if ( $this->is_paypal_checkout_screen() && $this->paypal_vaulting_is_enabled()
+			|| $this->is_paypal_checkout_screen() && $this->pay_later_messaging_is_enabled() ) {
+
 			$vaulting_title           = __( 'PayPal vaulting', 'woocommerce-paypal-payments' );
 			$pay_later_messages_title = __( 'Pay Later Messaging', 'woocommerce-paypal-payments' );
 
@@ -139,7 +141,6 @@ class SettingsRenderer {
 		return $messages;
 	}
 
-
 	/**
 	 * Check whether PayPal vaulting is enabled.
 	 *
@@ -173,6 +174,25 @@ class SettingsRenderer {
 		return $pay_later_message_enabled_for_checkout ||
 			$pay_later_message_enabled_for_cart ||
 			$pay_later_message_enabled_for_product;
+	}
+
+	/**
+	 * Check if current screen is PayPal checkout settings screen.
+	 *
+	 * @return bool Whether is PayPal checkout screen or not.
+	 */
+	private function is_paypal_checkout_screen(): bool {
+		$current_screen = get_current_screen();
+        //phpcs:disable WordPress.Security.NonceVerification.Recommended
+        //phpcs:disable WordPress.Security.NonceVerification.Missing
+		if ( isset( $current_screen->id ) && 'woocommerce_page_wc-settings' === $current_screen->id
+			&& isset( $_GET['ppcp-tab'] ) && 'ppcp-gateway' === $_GET['ppcp-tab'] ) {
+
+			return true;
+		}
+        //phpcs:enable
+
+		return false;
 	}
 
 	/**
