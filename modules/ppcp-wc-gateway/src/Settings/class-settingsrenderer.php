@@ -186,7 +186,11 @@ class SettingsRenderer {
         //phpcs:disable WordPress.Security.NonceVerification.Recommended
         //phpcs:disable WordPress.Security.NonceVerification.Missing
 		if ( isset( $current_screen->id ) && 'woocommerce_page_wc-settings' === $current_screen->id
-			&& isset( $_GET['ppcp-tab'] ) && 'ppcp-gateway' === $_GET['ppcp-tab'] ) {
+			&& isset( $_GET['section'] ) && 'ppcp-gateway' === $_GET['section'] ) {
+
+			if ( isset( $_GET['ppcp-tab'] ) && $_GET['ppcp-tab'] !== 'ppcp-gateway' ) {
+				return false;
+			}
 
 			return true;
 		}
