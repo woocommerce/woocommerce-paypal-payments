@@ -188,7 +188,7 @@ return array(
 
 		$state = $container->get( 'onboarding.state' );
 		$settings     = $container->get( 'wcgateway.settings' );
-		$messages_disclaimers = $container->get('button.helper.messages-disclaimers');
+		$messages_disclaimers = $container->get( 'button.helper.messages-disclaimers' );
 
 		$fields              = array(
 			'sandbox_on'                     => array(
@@ -859,7 +859,7 @@ return array(
 				),
 				'requirements' => array( 'messages' ),
 				'gateway'      => 'paypal',
-				'description'  => str_replace( '<a>', '<a href="'.$messages_disclaimers->link_for_country().'" target="_blank">', __( 'Displays Pay Later messaging for available offers. Restrictions apply. <a>Click here to learn more.</a>', 'woocommerce-paypal-payments' ) ),
+				'description'  => str_replace( '<a>', '<a href="' . $messages_disclaimers->link_for_country() . '" target="_blank">', __( 'Displays Pay Later messaging for available offers. Restrictions apply. <a>Click here to learn more.</a>', 'woocommerce-paypal-payments' ) ),
 				'class'        => array( 'ppcp-subheading' ),
 			),
 			'message_enabled'                => array(
@@ -1162,7 +1162,7 @@ return array(
 				),
 				'requirements' => array( 'messages' ),
 				'gateway'      => 'paypal',
-                'description'  => str_replace( '<a>', '<a href="'.$messages_disclaimers->link_for_country().'" target="_blank">', __( 'Displays Pay Later messaging for available offers. Restrictions apply. <a>Click here to learn more.</a>', 'woocommerce-paypal-payments' ) ),
+				'description'  => str_replace( '<a>', '<a href="' . $messages_disclaimers->link_for_country() . '" target="_blank">', __( 'Displays Pay Later messaging for available offers. Restrictions apply. <a>Click here to learn more.</a>', 'woocommerce-paypal-payments' ) ),
 				'class'        => array( 'ppcp-subheading' ),
 			),
 			'message_product_enabled'        => array(
@@ -1465,7 +1465,7 @@ return array(
 				),
 				'requirements' => array( 'messages' ),
 				'gateway'      => 'paypal',
-                'description'  => str_replace( '<a>', '<a href="'.$messages_disclaimers->link_for_country().'" target="_blank">', __( 'Displays Pay Later messaging for available offers. Restrictions apply. <a>Click here to learn more.</a>', 'woocommerce-paypal-payments' ) ),
+				'description'  => str_replace( '<a>', '<a href="' . $messages_disclaimers->link_for_country() . '" target="_blank">', __( 'Displays Pay Later messaging for available offers. Restrictions apply. <a>Click here to learn more.</a>', 'woocommerce-paypal-payments' ) ),
 				'class'        => array( 'ppcp-subheading' ),
 			),
 			'message_cart_enabled'           => array(
@@ -1915,7 +1915,7 @@ return array(
 		return new DccProductStatus( $settings, $partner_endpoint );
 	},
 
-    'button.helper.messages-disclaimers'      => static function ( $container ): MessagesDisclaimers {
-        return new MessagesDisclaimers();
-    },
+	'button.helper.messages-disclaimers'           => static function ( $container ): MessagesDisclaimers {
+		return new MessagesDisclaimers();
+	},
 );
