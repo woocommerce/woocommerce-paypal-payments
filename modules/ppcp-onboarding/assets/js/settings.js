@@ -280,6 +280,7 @@ document.addEventListener(
                 ]
             );
             updateCheckoutMessageFields();
+            updateProductMessageFields();
         })();
     }
 )
