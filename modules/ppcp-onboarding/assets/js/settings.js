@@ -28,6 +28,7 @@ document.addEventListener(
 
                     if('ppcp-message_enabled' === event.target.getAttribute('id')){
                         updateCheckoutMessageFields();
+                        return;
                     }
 
                     if('ppcp-message_product_enabled' === event.target.getAttribute('id')){
