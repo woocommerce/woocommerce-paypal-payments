@@ -33,6 +33,11 @@ document.addEventListener(
 
                     if('ppcp-message_product_enabled' === event.target.getAttribute('id')){
                         updateProductMessageFields();
+                        return;
+                    }
+
+                    if('ppcp-message_cart_enabled' === event.target.getAttribute('id')){
+                        updateCartMessageFields();
                     }
 
                 }
@@ -124,6 +129,35 @@ document.addEventListener(
                     {
                         value:'flex',
                         selector:'#field-message_product_flex_color'
+                    }
+                ]
+            );
+        }
+
+        const updateCartMessageFields = () =>
+        {
+            groupToggleSelect(
+                '#ppcp-message_cart_layout',
+                [
+                    {
+                        value:'text',
+                        selector:'#field-message_cart_logo'
+                    },
+                    {
+                        value:'text',
+                        selector:'#field-message_cart_position'
+                    },
+                    {
+                        value:'text',
+                        selector:'#field-message_cart_color'
+                    },
+                    {
+                        value:'flex',
+                        selector:'#field-message_cart_flex_ratio'
+                    },
+                    {
+                        value:'flex',
+                        selector:'#field-message_cart_flex_color'
                     }
                 ]
             );
@@ -254,33 +288,10 @@ document.addEventListener(
                     }
                 ]
             );
-            groupToggleSelect(
-                '#ppcp-message_cart_layout',
-                [
-                    {
-                        value:'text',
-                        selector:'#field-message_cart_logo'
-                    },
-                    {
-                        value:'text',
-                        selector:'#field-message_cart_position'
-                    },
-                    {
-                        value:'text',
-                        selector:'#field-message_cart_color'
-                    },
-                    {
-                        value:'flex',
-                        selector:'#field-message_cart_flex_ratio'
-                    },
-                    {
-                        value:'flex',
-                        selector:'#field-message_cart_flex_color'
-                    }
-                ]
-            );
+
             updateCheckoutMessageFields();
             updateProductMessageFields();
+            updateCartMessageFields();
         })();
     }
 )
