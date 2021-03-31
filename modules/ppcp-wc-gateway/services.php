@@ -13,6 +13,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
+use WooCommerce\PayPalCommerce\Button\Helper\MessagesDisclaimers;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
@@ -186,13 +187,8 @@ return array(
 	'wcgateway.settings.fields'                    => static function ( $container ): array {
 
 		$state = $container->get( 'onboarding.state' );
-		/**
-		 * The state.
-		 *
-		 * @var State $state
-		 */
-
 		$settings     = $container->get( 'wcgateway.settings' );
+		$messages_disclaimers = $container->get('button.helper.messages-disclaimers');
 
 		$fields              = array(
 			'sandbox_on'                     => array(
@@ -863,7 +859,7 @@ return array(
 				),
 				'requirements' => array( 'messages' ),
 				'gateway'      => 'paypal',
-				'description'  => str_replace( '<a>', '<a href="https://www.paypal.com/us/business/buy-now-pay-later">', __( 'Customize the appearance of <a>Pay Later messages</a> on checkout to promote special financing offers, which help increase sales.', 'woocommerce-paypal-payments' ) ),
+				'description'  => str_replace( '<a>', '<a href="'.$messages_disclaimers->link_for_country().'" target="_blank">', __( 'Displays Pay Later messaging for available offers. Restrictions apply. <a>Click here to learn more.</a>', 'woocommerce-paypal-payments' ) ),
 				'class'        => array( 'ppcp-subheading' ),
 			),
 			'message_enabled'                => array(
@@ -1166,7 +1162,7 @@ return array(
 				),
 				'requirements' => array( 'messages' ),
 				'gateway'      => 'paypal',
-				'description'  => str_replace( '<a>', '<a href="https://www.paypal.com/us/business/buy-now-pay-later">', __( 'Customize the appearance of <a>Pay Later messages</a> on product pages to promote special financing offers, which help increase sales.', 'woocommerce-paypal-payments' ) ),
+                'description'  => str_replace( '<a>', '<a href="'.$messages_disclaimers->link_for_country().'" target="_blank">', __( 'Displays Pay Later messaging for available offers. Restrictions apply. <a>Click here to learn more.</a>', 'woocommerce-paypal-payments' ) ),
 				'class'        => array( 'ppcp-subheading' ),
 			),
 			'message_product_enabled'        => array(
@@ -1469,7 +1465,7 @@ return array(
 				),
 				'requirements' => array( 'messages' ),
 				'gateway'      => 'paypal',
-				'description'  => str_replace( '<a>', '<a href="https://www.paypal.com/us/business/buy-now-pay-later">', __( 'Customize the appearance of <a>Pay Later messages</a> on your cart page to promote special financing offers, which help increase sales.', 'woocommerce-paypal-payments' ) ),
+                'description'  => str_replace( '<a>', '<a href="'.$messages_disclaimers->link_for_country().'" target="_blank">', __( 'Displays Pay Later messaging for available offers. Restrictions apply. <a>Click here to learn more.</a>', 'woocommerce-paypal-payments' ) ),
 				'class'        => array( 'ppcp-subheading' ),
 			),
 			'message_cart_enabled'           => array(
@@ -1844,51 +1840,6 @@ return array(
 			unset( $fields['disable_funding']['options']['card'] );
 		}
 
-		/**
-		 * Set Pay in 3 heading and description for UK.
-		 */
-		if ( 'GB' === $country ) {
-			$fields['message_heading']['heading'] = __( 'Pay Later Messaging on Checkout', 'woocommerce-paypal-payments' );
-			$fields['message_heading']['description'] = __( 'Display pay later messaging on your site for offers like Pay in 3, which lets customers pay with 3 interest-free monthly payments. We’ll show messages on your site to promote this feature for you. You may not promote pay later offers with any other content, marketing, or materials.', 'woocommerce-paypal-payments' );
-
-			$fields['message_product_heading']['heading'] = __( 'Pay Later Messaging on Single Product Page', 'woocommerce-paypal-payments' );
-			$fields['message_product_heading']['description'] = __( 'Display pay later messaging on your site for offers like Pay in 3, which lets customers pay with 3 interest-free monthly payments. We’ll show messages on your site to promote this feature for you. You may not promote pay later offers with any other content, marketing, or materials.', 'woocommerce-paypal-payments' );
-
-			$fields['message_cart_heading']['heading'] = __( 'Pay Later Messaging on Cart', 'woocommerce-paypal-payments' );
-			$fields['message_cart_heading']['description'] = __( 'Display pay later messaging on your site for offers like Pay in 3, which lets customers pay with 3 interest-free monthly payments. We’ll show messages on your site to promote this feature for you. You may not promote pay later offers with any other content, marketing, or materials.', 'woocommerce-paypal-payments' );
-		}
-
-		if ( 'FR' === $country ) {
-			// todo: replace this with the text in English and use this text for French translation when it will be created.
-			$french_pay_later_description = 'Affichez le Paiement en 4X PayPal sur votre site.' .
-				'Le Paiement en 4X PayPal permet aux consommateurs français de payer en 4 versements égaux.' .
-				'Vous pouvez promouvoir le Paiement en 4X PayPal uniquement si vous êtes un commerçant basé en France, ' .
-				'avec un site internet en français et uneintégration PayPal standard. ' .
-				'Les marchands ayantl’outil Vaulting(coffre-fort numérique) ou une intégration de paiements récurrents/abonnement, ' .
-				'ainsi que ceux présentant certaines activités (vente de biens numériques / de biens non physiques) ' .
-				'ne sont pas éligibles pour promouvoir le Paiement en 4X PayPal.' .
-				'Nous afficherons des messages sur votre site pour promouvoir le Paiement en 4X PayPal. ' .
-				'Vous ne pouvez pas promouvoir le Paiement en 4X PayPal avec un autre contenu, quel qu’il soit.';
-
-			$fields['message_heading']['heading'] = __( 'Pay Later Messaging on Checkout', 'woocommerce-paypal-payments' );
-			$fields['message_heading']['description'] = $french_pay_later_description;
-
-			$fields['message_product_heading']['heading'] = __( 'Pay Later Messaging on Single Product Page', 'woocommerce-paypal-payments' );
-			$fields['message_product_heading']['description'] = $french_pay_later_description;
-
-			$fields['message_cart_heading']['heading'] = __( 'Pay Later Messaging on Cart', 'woocommerce-paypal-payments' );
-			$fields['message_cart_heading']['description'] = $french_pay_later_description;
-		}
-
-		/**
-		 * Set Pay Later link for DE
-		 */
-		if ( 'DE' === $country ) {
-			$fields['message_heading']['description'] = str_replace( '<a>', '<a href="https://www.paypal.com/de/webapps/mpp/installments">', __( 'Customize the appearance of <a>Pay Later messages</a> on checkout to promote special financing offers, which help increase sales.', 'woocommerce-paypal-payments' ) );
-			$fields['message_product_heading']['description'] = str_replace( '<a>', '<a href="https://www.paypal.com/de/webapps/mpp/installments">', __( 'Customize the appearance of <a>Pay Later messages</a> on checkout to promote special financing offers, which help increase sales.', 'woocommerce-paypal-payments' ) );
-			$fields['message_cart_heading']['description'] = str_replace( '<a>', '<a href="https://www.paypal.com/de/webapps/mpp/installments">', __( 'Customize the appearance of <a>Pay Later messages</a> on checkout to promote special financing offers, which help increase sales.', 'woocommerce-paypal-payments' ) );
-		}
-
 		$dcc_applies = $container->get( 'api.helpers.dccapplies' );
 		/**
 		 * Depending on your store location, some credit cards can't be used.
@@ -1963,4 +1914,8 @@ return array(
 		$partner_endpoint = $container->get( 'api.endpoint.partners' );
 		return new DccProductStatus( $settings, $partner_endpoint );
 	},
+
+    'button.helper.messages-disclaimers'      => static function ( $container ): MessagesDisclaimers {
+        return new MessagesDisclaimers();
+    },
 );
