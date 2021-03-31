@@ -30,6 +30,10 @@ document.addEventListener(
                         updateCheckoutMessageFields();
                     }
 
+                    if('ppcp-message_product_enabled' === event.target.getAttribute('id')){
+                        updateProductMessageFields();
+                    }
+
                 }
             );
         };
@@ -91,6 +95,34 @@ document.addEventListener(
                     {
                         value:'flex',
                         selector:'#field-message_flex_color'
+                    }
+                ]
+            );
+        }
+
+        const updateProductMessageFields = () => {
+            groupToggleSelect(
+                '#ppcp-message_product_layout',
+                [
+                    {
+                        value:'text',
+                        selector:'#field-message_product_logo'
+                    },
+                    {
+                        value:'text',
+                        selector:'#field-message_product_position'
+                    },
+                    {
+                        value:'text',
+                        selector:'#field-message_product_color'
+                    },
+                    {
+                        value:'flex',
+                        selector:'#field-message_product_flex_ratio'
+                    },
+                    {
+                        value:'flex',
+                        selector:'#field-message_product_flex_color'
                     }
                 ]
             );
@@ -211,31 +243,7 @@ document.addEventListener(
                 ]
             );
 
-            groupToggleSelect(
-                '#ppcp-message_product_layout',
-                [
-                    {
-                        value:'text',
-                        selector:'#field-message_product_logo'
-                    },
-                    {
-                        value:'text',
-                        selector:'#field-message_product_position'
-                    },
-                    {
-                        value:'text',
-                        selector:'#field-message_product_color'
-                    },
-                    {
-                        value:'flex',
-                        selector:'#field-message_product_flex_ratio'
-                    },
-                    {
-                        value:'flex',
-                        selector:'#field-message_product_flex_color'
-                    }
-                ]
-            );
+
             groupToggleSelect(
                 '#ppcp-intent',
                 [
