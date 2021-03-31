@@ -19,9 +19,6 @@ class CheckoutActionHandler {
             const errorHandler = this.errorHandler;
 
             const formSelector = this.config.context === 'checkout' ? 'form.checkout' : 'form#order_review';
-            spinner.setTarget(formSelector);
-            spinner.block();
-
             const formValues = jQuery(formSelector).serialize();
 
             return fetch(this.config.ajax.create_order.endpoint, {
@@ -39,7 +36,18 @@ class CheckoutActionHandler {
             }).then(function (data) {
                 if (!data.success) {
                     spinner.unblock();
-                    errorHandler.message(data.data.message, true);
+                    //handle both messages sent from Woocommerce (data.messages) and this plugin (data.data.message)
+                    if (typeof(data.messages) !== 'undefined' )
+                    {
+                        const domParser = new DOMParser();
+                        errorHandler.appendPreparedErrorMessageElement(
+                            domParser.parseFromString(data.messages, 'text/html')
+                                .querySelector('ul')
+                        );
+                    } else {
+                        errorHandler.message(data.data.message, true);
+                    }
+
                     return;
                 }
                 const input = document.createElement('input');
@@ -53,8 +61,12 @@ class CheckoutActionHandler {
         return {
             createOrder,
             onApprove:onApprove(this, this.errorHandler, this.spinner),
-            onError: (error) => {
+            onCancel: () => {
+                spinner.unblock();
+            },
+            onError: () => {
                 this.errorHandler.genericError();
+                spinner.unblock();
             }
         }
     }

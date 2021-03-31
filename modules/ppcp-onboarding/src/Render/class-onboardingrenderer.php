@@ -53,33 +53,35 @@ class OnboardingRenderer {
 	}
 
 	/**
+	 * Returns the action URL for the onboarding button/link.
+	 *
+	 * @param boolean $is_production Whether the production or sandbox button should be rendered.
+	 * @return string URL.
+	 */
+	public function get_signup_link( bool $is_production ) {
+		$args = array(
+			'displayMode' => 'minibrowser',
+		);
+
+		$url = $is_production ? $this->production_partner_referrals->signup_link() : $this->sandbox_partner_referrals->signup_link();
+		$url = add_query_arg( $args, $url );
+
+		return $url;
+	}
+
+	/**
 	 * Renders the "Connect to PayPal" button.
 	 *
 	 * @param bool $is_production Whether the production or sandbox button should be rendered.
 	 */
 	public function render( bool $is_production ) {
 		try {
-			$args = array(
-				'displayMode' => 'minibrowser',
+			$this->render_button(
+				$this->get_signup_link( $is_production ),
+				$is_production ? 'connect-to-production' : 'connect-to-sandbox',
+				$is_production ? __( 'Connect to PayPal', 'woocommerce-paypal-payments' ) : __( 'Connect to PayPal Sandbox', 'woocommerce-paypal-payments' ),
+				$is_production ? 'production' : 'sandbox'
 			);
-
-			$url   = $is_production ? $this->production_partner_referrals->signup_link() : $this->sandbox_partner_referrals->signup_link();
-			$url   = add_query_arg( $args, $url );
-			$id    = $is_production ? 'connect-to-production' : 'connect-to-sandbox';
-			$label = $is_production ? __( 'Connect to PayPal', 'woocommerce-paypal-payments' ) : __( 'Connect to PayPal Sandbox', 'woocommerce-paypal-payments' );
-				$this->render_button(
-					$url,
-					$id,
-					$label
-				);
-
-			$script_url = 'https://www.paypal.com/webapps/merchantboarding/js/lib/lightbox/partner.js'; ?>
-			<script>document.querySelectorAll('[data-paypal-onboard-complete=onboardingCallback]').forEach( (element) => { element.addEventListener('click', (e) => {if ('undefined' === typeof PAYPAL ) e.preventDefault(); }) });</script>
-			<script
-					id="paypal-js"
-					src="<?php echo esc_url( $script_url ); ?>"
-			></script>
-			<?php
 		} catch ( RuntimeException $exception ) {
 			esc_html_e(
 				'We could not properly connect to PayPal. Please reload the page to continue',
@@ -94,14 +96,16 @@ class OnboardingRenderer {
 	 * @param string $url The url of the button.
 	 * @param string $id The ID of the button.
 	 * @param string $label The button text.
+	 * @param string $env The environment ('production' or 'sandbox').
 	 */
-	private function render_button( string $url, string $id, string $label ) {
+	private function render_button( string $url, string $id, string $label, string $env ) {
 		?>
 					<a
 							target="_blank"
 							class="button-primary"
 							id="<?php echo esc_attr( $id ); ?>"
-							data-paypal-onboard-complete="onboardingCallback"
+							data-paypal-onboard-complete="ppcp_onboarding_<?php echo esc_attr( $env ); ?>Callback"
+							data-paypal-onboard-button="true"
 							href="<?php echo esc_url( $url ); ?>"
 							data-paypal-button="true"
 					>

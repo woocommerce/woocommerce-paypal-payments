@@ -117,10 +117,14 @@ class SettingsListener {
 			$this->settings->set( 'merchant_email_production', $merchant_email );
 		}
 		$this->settings->persist();
-		$redirect_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' );
+
+		do_action( 'woocommerce_paypal_payments_onboarding_before_redirect' );
+
+		$redirect_url = apply_filters( 'woocommerce_paypal_payments_onboarding_redirect_url', admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ) );
 		if ( ! $this->settings->has( 'client_id' ) || ! $this->settings->get( 'client_id' ) ) {
-			$redirect_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-onboarding-error=1' );
+			$redirect_url = add_query_arg( 'ppcp-onboarding-error', '1', $redirect_url );
 		}
+
 		wp_safe_redirect( $redirect_url, 302 );
 		exit;
 	}

@@ -32,6 +32,13 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	const ID = 'ppcp-credit-card-gateway';
 
 	/**
+	 * Service to get transaction url for an order.
+	 *
+	 * @var TransactionUrlProvider
+	 */
+	protected $transaction_url_provider;
+
+	/**
 	 * The URL to the module.
 	 *
 	 * @var string
@@ -89,6 +96,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 * @param PurchaseUnitFactory         $purchase_unit_factory The purchase unit factory.
 	 * @param PayerFactory                $payer_factory The payer factory.
 	 * @param  OrderEndpoint               $order_endpoint The order endpoint.
+	 * @param TransactionUrlProvider      $transaction_url_provider Service able to provide view transaction url base.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
@@ -99,7 +107,8 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		string $module_url,
 		SessionHandler $session_handler,
 		RefundProcessor $refund_processor,
-		State $state,
+        State $state,
+        TransactionUrlProvider $transaction_url_provider,
 		PaymentTokenRepository $payment_token_repository,
 		PurchaseUnitFactory $purchase_unit_factory,
 		PayerFactory $payer_factory,
@@ -168,6 +177,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		$this->purchase_unit_factory    = $purchase_unit_factory;
 		$this->payer_factory            = $payer_factory;
 		$this->order_endpoint           = $order_endpoint;
+		$this->transaction_url_provider = $transaction_url_provider;
 	}
 
 	/**
@@ -291,5 +301,18 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 			return false;
 		}
 		return $this->refund_processor->process( $order, (float) $amount, (string) $reason );
+	}
+
+	/**
+	 * Set the class property then call parent function.
+	 *
+	 * @param \WC_Order $order WC Order to get transaction url for.
+	 *
+	 * @inheritDoc
+	 */
+	public function get_transaction_url( $order ): string {
+		$this->view_transaction_url = $this->transaction_url_provider->get_transaction_url_base( $order );
+
+		return parent::get_transaction_url( $order );
 	}
 }

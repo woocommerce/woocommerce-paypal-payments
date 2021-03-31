@@ -69,7 +69,7 @@ class Settings implements ContainerInterface {
 	 */
 	public function persist() {
 
-		update_option( self::KEY, $this->settings );
+		return update_option( self::KEY, $this->settings );
 	}
 
 

@@ -61,13 +61,6 @@ class SmartButton implements SmartButtonInterface {
 	private $payee_repository;
 
 	/**
-	 * The Identity Token.
-	 *
-	 * @var IdentityToken
-	 */
-	private $identity_token;
-
-	/**
 	 * The Payer Factory.
 	 *
 	 * @var PayerFactory
@@ -145,7 +138,6 @@ class SmartButton implements SmartButtonInterface {
 		SessionHandler $session_handler,
 		Settings $settings,
 		PayeeRepository $payee_repository,
-		IdentityToken $identity_token,
 		PayerFactory $payer_factory,
 		string $client_id,
 		RequestData $request_data,
@@ -160,7 +152,6 @@ class SmartButton implements SmartButtonInterface {
 		$this->session_handler          = $session_handler;
 		$this->settings                 = $settings;
 		$this->payee_repository         = $payee_repository;
-		$this->identity_token           = $identity_token;
 		$this->payer_factory            = $payer_factory;
 		$this->client_id                = $client_id;
 		$this->request_data             = $request_data;
@@ -373,7 +364,7 @@ class SmartButton implements SmartButtonInterface {
 			);
 		}
 
-		add_action( 'woocommerce_review_order_after_submit', array( $this, 'button_renderer' ), 10 );
+		add_action( 'woocommerce_review_order_after_payment', array( $this, 'button_renderer' ), 10 );
 		add_action( 'woocommerce_pay_order_after_submit', array( $this, 'button_renderer' ), 10 );
 
 		return true;
@@ -613,7 +604,6 @@ class SmartButton implements SmartButtonInterface {
 		return is_user_logged_in();
 	}
 
-
 	/**
 	 * Whether we need to initialize the script to enable tokenization for subscriptions or not.
 	 *
@@ -775,22 +765,15 @@ class SmartButton implements SmartButtonInterface {
 		if ( $payee->merchant_id() ) {
 			$params['merchant-id'] = $payee->merchant_id();
 		}
-		$disable_funding   = $this->settings->has( 'disable_funding' ) ?
+		$disable_funding = $this->settings->has( 'disable_funding' ) ?
 			$this->settings->get( 'disable_funding' ) : array();
-		$disable_funding[] = 'venmo';
 		if ( ! is_checkout() ) {
 			$disable_funding[] = 'card';
 		}
 
-		/**
-		 * Disable card for UK.
-		 */
-		$region  = wc_get_base_location();
-		$country = $region['country'];
-		if ( 'GB' === $country ) {
-			$disable_funding[] = 'credit';
+		if ( count( $disable_funding ) > 0 ) {
+			$params['disable-funding'] = implode( ',', array_unique( $disable_funding ) );
 		}
-		$params['disable-funding'] = implode( ',', array_unique( $disable_funding ) );
 
 		$smart_button_url = add_query_arg( $params, 'https://www.paypal.com/sdk/js' );
 		return $smart_button_url;
