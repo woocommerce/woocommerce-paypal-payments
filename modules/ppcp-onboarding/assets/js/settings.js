@@ -25,6 +25,11 @@ document.addEventListener(
                     group.forEach( (elementToShow) => {
                         document.querySelector(elementToShow).style.display = 'table-row';
                     })
+
+                    if('ppcp-message_enabled' === event.target.getAttribute('id')){
+                        updateCheckoutMessageFields();
+                    }
+
                 }
             );
         };
@@ -62,6 +67,34 @@ document.addEventListener(
                 }
             );
         };
+
+        const updateCheckoutMessageFields = () => {
+            groupToggleSelect(
+                '#ppcp-message_layout',
+                [
+                    {
+                        value:'text',
+                        selector:'#field-message_logo'
+                    },
+                    {
+                        value:'text',
+                        selector:'#field-message_position'
+                    },
+                    {
+                        value:'text',
+                        selector:'#field-message_color'
+                    },
+                    {
+                        value:'flex',
+                        selector:'#field-message_flex_ratio'
+                    },
+                    {
+                        value:'flex',
+                        selector:'#field-message_flex_color'
+                    }
+                ]
+            );
+        }
 
         const disableOptions = (sourceSelector, targetSelector) => {
 
@@ -237,31 +270,7 @@ document.addEventListener(
                     }
                 ]
             );
-            groupToggleSelect(
-                '#ppcp-message_layout',
-                [
-                    {
-                        value:'text',
-                        selector:'#field-message_logo'
-                    },
-                    {
-                        value:'text',
-                        selector:'#field-message_position'
-                    },
-                    {
-                        value:'text',
-                        selector:'#field-message_color'
-                    },
-                    {
-                        value:'flex',
-                        selector:'#field-message_flex_ratio'
-                    },
-                    {
-                        value:'flex',
-                        selector:'#field-message_flex_color'
-                    }
-                ]
-            );
+            updateCheckoutMessageFields();
         })();
     }
 )
