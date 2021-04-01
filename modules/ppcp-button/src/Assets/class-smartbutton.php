@@ -216,7 +216,7 @@ class SmartButton implements SmartButtonInterface {
 							$output = sprintf(
 								'<p class="form-row form-row-wide"><label>%1$s</label><select id="saved-credit-card" name="saved_credit_card"><option value="">%2$s</option>',
 								esc_html__( 'Or select a saved Credit Card payment', 'woocommerce-paypal-payments' ),
-								esc_html__( 'Choose a saved payment', 'woocommerce-paypal-payments' ),
+								esc_html__( 'Choose a saved payment', 'woocommerce-paypal-payments' )
 							);
 							foreach ( $tokens as $token ) {
 								if ( isset( $token->source()->card ) ) {
