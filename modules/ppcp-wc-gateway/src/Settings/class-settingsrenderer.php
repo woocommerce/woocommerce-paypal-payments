@@ -188,7 +188,7 @@ class SettingsRenderer {
 		if ( isset( $current_screen->id ) && 'woocommerce_page_wc-settings' === $current_screen->id
 			&& isset( $_GET['section'] ) && 'ppcp-gateway' === $_GET['section'] ) {
 
-			if ( isset( $_GET['ppcp-tab'] ) && $_GET['ppcp-tab'] !== 'ppcp-gateway' ) {
+			if ( isset( $_GET['ppcp-tab'] ) && 'ppcp-gateway' !== $_GET['ppcp-tab'] ) {
 				return false;
 			}
 
