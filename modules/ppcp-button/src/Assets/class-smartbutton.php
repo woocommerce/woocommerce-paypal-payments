@@ -123,7 +123,6 @@ class SmartButton implements SmartButtonInterface {
 	 * @param SessionHandler         $session_handler The Session Handler.
 	 * @param Settings               $settings The Settings.
 	 * @param PayeeRepository        $payee_repository The Payee Repository.
-	 * @param IdentityToken          $identity_token The Identity Token.
 	 * @param PayerFactory           $payer_factory The Payer factory.
 	 * @param string                 $client_id The client ID.
 	 * @param RequestData            $request_data The Request Data helper.
