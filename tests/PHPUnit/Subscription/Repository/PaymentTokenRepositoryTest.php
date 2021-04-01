@@ -33,7 +33,9 @@ class PaymentTokenRepositoryTest extends TestCase
     {
         $id = 1;
         $token = ['id' => 'foo'];
-        $paymentToken = new PaymentToken('foo', 'PAYMENT_METHOD_TOKEN');
+	    $paymentToken = Mockery::mock(PaymentToken::class);
+	    $paymentToken->shouldReceive('id')
+		    ->andReturn('foo');
 
         expect('get_user_meta')->with($id, $this->sut::USER_META, true)
             ->andReturn($token);
@@ -48,7 +50,8 @@ class PaymentTokenRepositoryTest extends TestCase
     public function testFetchForUserId()
     {
         $id = 1;
-        $paymentToken = new PaymentToken('foo', 'PAYMENT_METHOD_TOKEN');
+        $source = new \stdClass();
+        $paymentToken = new PaymentToken('foo', 'PAYMENT_METHOD_TOKEN', $source);
 
         when('get_user_meta')->justReturn([]);
         $this->endpoint->shouldReceive('for_user')
@@ -77,7 +80,9 @@ class PaymentTokenRepositoryTest extends TestCase
     public function testDeleteToken()
     {
         $id = 1;
-        $paymentToken = new PaymentToken('foo', 'PAYMENT_METHOD_TOKEN');
+	    $paymentToken = Mockery::mock(PaymentToken::class);
+	    $paymentToken->shouldReceive('id')
+		    ->andReturn('foo');
 
         expect('delete_user_meta')->with($id, $this->sut::USER_META);
         $this->endpoint->shouldReceive('delete_token')

@@ -49,7 +49,9 @@ class PaymentTokenEndpointTest extends TestCase
         $id = 1;
 		$token = Mockery::mock(Token::class);
         $rawResponse = ['body' => '{"payment_tokens":[{"id": "123abc"}]}'];
-        $paymentToken = new PaymentToken('foo', 'PAYMENT_METHOD_TOKEN');
+	    $paymentToken = Mockery::mock(PaymentToken::class);
+	    $paymentToken->shouldReceive('id')
+		    ->andReturn('foo');
 
         $this->bearer->shouldReceive('bearer')
             ->andReturn($token);
@@ -131,7 +133,9 @@ class PaymentTokenEndpointTest extends TestCase
 
     public function testDeleteToken()
     {
-        $paymentToken = new PaymentToken('foo', 'PAYMENT_METHOD_TOKEN');
+        $paymentToken = $paymentToken = Mockery::mock(PaymentToken::class);
+	    $paymentToken->shouldReceive('id')
+		    ->andReturn('foo');
         $token = Mockery::mock(Token::class);
         $this->bearer->shouldReceive('bearer')
             ->andReturn($token);
@@ -147,7 +151,9 @@ class PaymentTokenEndpointTest extends TestCase
 
     public function testDeleteTokenFails()
     {
-        $paymentToken = new PaymentToken('foo', 'PAYMENT_METHOD_TOKEN');
+        $paymentToken = Mockery::mock(PaymentToken::class);
+        $paymentToken->shouldReceive('id')
+	        ->andReturn('foo');
         $token = Mockery::mock(Token::class);
         $this->bearer->shouldReceive('bearer')
             ->andReturn($token);
