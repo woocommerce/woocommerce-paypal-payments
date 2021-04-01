@@ -92,11 +92,11 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 * @param SessionHandler              $session_handler The Session Handler.
 	 * @param RefundProcessor             $refund_processor The refund processor.
 	 * @param State                       $state The state.
+	 * @param TransactionUrlProvider      $transaction_url_provider Service able to provide view transaction url base.
 	 * @param PaymentTokenRepository      $payment_token_repository The payment token repository.
 	 * @param PurchaseUnitFactory         $purchase_unit_factory The purchase unit factory.
 	 * @param PayerFactory                $payer_factory The payer factory.
 	 * @param  OrderEndpoint               $order_endpoint The order endpoint.
-	 * @param TransactionUrlProvider      $transaction_url_provider Service able to provide view transaction url base.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
