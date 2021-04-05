@@ -322,7 +322,10 @@ class OrderEndpoint {
 			}
 			$this->logger->log(
 				'warning',
-				$error->getMessage(),
+				sprintf(
+					'Failed to capture order. PayPal API response: %1$s',
+					$error->getMessage()
+				),
 				array(
 					'args'     => $args,
 					'response' => $response,
