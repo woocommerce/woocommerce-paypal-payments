@@ -711,7 +711,7 @@ return array(
 				'title'        => __( 'Invoice prefix', 'woocommerce-paypal-payments' ),
 				'type'         => 'text',
 				'desc_tip'     => true,
-				'description'  => __( 'If you use your PayPal account with more than one installation, please use a distinct prefix to seperate those installations. Please do not use numbers in your prefix.', 'woocommerce-paypal-payments' ),
+				'description'  => __( 'If you use your PayPal account with more than one installation, please use a distinct prefix to separate those installations. Please do not use numbers in your prefix.', 'woocommerce-paypal-payments' ),
 				'default'      => 'WC-',
 				'screens'      => array(
 					State::STATE_PROGRESSIVE,
