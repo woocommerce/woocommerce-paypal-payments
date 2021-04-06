@@ -11,11 +11,9 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Processor;
 
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
-use WooCommerce\PayPalCommerce\ApiClient\Repository\CartRepository;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
@@ -41,25 +39,11 @@ class OrderProcessor {
 	private $session_handler;
 
 	/**
-	 * The Cart Repository.
-	 *
-	 * @var CartRepository
-	 */
-	private $cart_repository;
-
-	/**
 	 * The Order Endpoint.
 	 *
 	 * @var OrderEndpoint
 	 */
 	private $order_endpoint;
-
-	/**
-	 * The Payments Endpoint.
-	 *
-	 * @var PaymentsEndpoint
-	 */
-	private $payments_endpoint;
 
 	/**
 	 * The Order Factory.
@@ -107,9 +91,7 @@ class OrderProcessor {
 	 * OrderProcessor constructor.
 	 *
 	 * @param SessionHandler              $session_handler The Session Handler.
-	 * @param CartRepository              $cart_repository The Cart Repository.
 	 * @param OrderEndpoint               $order_endpoint The Order Endpoint.
-	 * @param PaymentsEndpoint            $payments_endpoint The Payments Endpoint.
 	 * @param OrderFactory                $order_factory The Order Factory.
 	 * @param ThreeDSecure                $three_d_secure The ThreeDSecure Helper.
 	 * @param AuthorizedPaymentsProcessor $authorized_payments_processor The Authorized Payments Processor.
@@ -119,9 +101,7 @@ class OrderProcessor {
 	 */
 	public function __construct(
 		SessionHandler $session_handler,
-		CartRepository $cart_repository,
 		OrderEndpoint $order_endpoint,
-		PaymentsEndpoint $payments_endpoint,
 		OrderFactory $order_factory,
 		ThreeDSecure $three_d_secure,
 		AuthorizedPaymentsProcessor $authorized_payments_processor,
@@ -131,9 +111,7 @@ class OrderProcessor {
 	) {
 
 		$this->session_handler               = $session_handler;
-		$this->cart_repository               = $cart_repository;
 		$this->order_endpoint                = $order_endpoint;
-		$this->payments_endpoint             = $payments_endpoint;
 		$this->order_factory                 = $order_factory;
 		$this->threed_secure                 = $three_d_secure;
 		$this->authorized_payments_processor = $authorized_payments_processor;
@@ -145,12 +123,11 @@ class OrderProcessor {
 	/**
 	 * Processes a given WooCommerce order and captured/authorizes the connected PayPal orders.
 	 *
-	 * @param \WC_Order    $wc_order The WooCommerce order.
-	 * @param \WooCommerce $woocommerce The WooCommerce object.
+	 * @param \WC_Order $wc_order The WooCommerce order.
 	 *
 	 * @return bool
 	 */
-	public function process( \WC_Order $wc_order, \WooCommerce $woocommerce ): bool {
+	public function process( \WC_Order $wc_order ): bool {
 		$order = $this->session_handler->order();
 		if ( ! $order ) {
 			return false;
@@ -212,7 +189,7 @@ class OrderProcessor {
 			$wc_order->update_meta_data( PayPalGateway::CAPTURED_META_KEY, 'true' );
 			$wc_order->update_status( 'processing' );
 		}
-		$woocommerce->cart->empty_cart();
+		WC()->cart->empty_cart();
 		$this->session_handler->destroy_session_data();
 		$this->last_error = '';
 		return true;

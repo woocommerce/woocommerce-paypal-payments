@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\ApiClient\Repository;
+namespace WooCommerce\PayPalCommerce\WcGateway\Repository;
 
 use Mockery\Adapter\Phpunit\MockeryTestCase;
 
