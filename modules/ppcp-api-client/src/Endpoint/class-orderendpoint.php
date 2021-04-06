@@ -223,8 +223,7 @@ class OrderEndpoint {
 			'body'    => wp_json_encode( $data ),
 		);
 
-		$paypal_request_id = '' === $paypal_request_id ? $this->generate_request_id() : $paypal_request_id;
-
+		$paypal_request_id                    = $paypal_request_id ?: $this->generate_request_id();
 		$args['headers']['PayPal-Request-Id'] = $paypal_request_id;
 		if ( $this->bn_code ) {
 			$args['headers']['PayPal-Partner-Attribution-Id'] = $this->bn_code;
