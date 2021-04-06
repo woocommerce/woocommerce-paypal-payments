@@ -223,7 +223,7 @@ class OrderEndpoint {
 			'body'    => wp_json_encode( $data ),
 		);
 
-		$paypal_request_id                    = '' === $paypal_request_id ? $this->generate_request_id() : $paypal_request_id;
+		$paypal_request_id = '' === $paypal_request_id ? $this->generate_request_id() : $paypal_request_id;
 
 		$args['headers']['PayPal-Request-Id'] = $paypal_request_id;
 		if ( $this->bn_code ) {
@@ -557,14 +557,13 @@ class OrderEndpoint {
 		$new_order = $this->order( $order_to_update->id() );
 		return $new_order;
 	}
-	
+
 	/**
 	 * Generate a new invoice id.
 	 *
 	 * @return string
 	 */
-	private function generate_request_id(): string
-	{
+	private function generate_request_id(): string {
 		return uniqid( 'ppcp-', true );
 	}
 }

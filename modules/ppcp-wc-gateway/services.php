@@ -711,12 +711,12 @@ return array(
 				'type'         => 'text',
 				'desc_tip'     => true,
 				'description'  => __( 'If you use your PayPal account with more than one installation, please use a distinct prefix to separate those installations. Please do not use numbers in your prefix.', 'woocommerce-paypal-payments' ),
-				'default' => (static function (array $allowedSymbols): string {
-					$default_prefix_chars = array_rand(array_flip($allowedSymbols), 4);
-					$random_prefix = implode('', $default_prefix_chars) . '-';
-					$site_domain = parse_url(get_site_url(get_current_blog_id()), PHP_URL_HOST);
+				'default'      => ( static function ( array $allowedSymbols ): string {
+					$default_prefix_chars = array_rand( array_flip( $allowedSymbols ), 4 );
+					$random_prefix = implode( '', $default_prefix_chars ) . '-';
+					$site_domain = parse_url( get_site_url( get_current_blog_id() ), PHP_URL_HOST );
 					return $random_prefix . $site_domain;
-				})(range('A', 'Z')),
+				} )( range( 'A', 'Z' ) ),
 				'screens'      => array(
 					State::STATE_PROGRESSIVE,
 					State::STATE_ONBOARDED,
