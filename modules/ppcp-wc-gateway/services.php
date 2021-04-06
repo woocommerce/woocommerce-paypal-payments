@@ -711,7 +711,10 @@ return array(
 				'type'         => 'text',
 				'desc_tip'     => true,
 				'description'  => __( 'If you use your PayPal account with more than one installation, please use a distinct prefix to separate those installations. Please do not use numbers in your prefix.', 'woocommerce-paypal-payments' ),
-				'default'      => 'WC-',
+				'default' => (static function (array $allowedSymbols): string { //Generate random string from 4 letters and -.
+					$default_prefix_chars = array_rand(array_flip($allowedSymbols), 4);
+					return implode('', $default_prefix_chars) . '-';
+				})(range('A', 'Z')),
 				'screens'      => array(
 					State::STATE_PROGRESSIVE,
 					State::STATE_ONBOARDED,
