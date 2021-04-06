@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway;
 
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
@@ -711,8 +710,13 @@ return array(
 				'title'        => __( 'Invoice prefix', 'woocommerce-paypal-payments' ),
 				'type'         => 'text',
 				'desc_tip'     => true,
-				'description'  => __( 'If you use your PayPal account with more than one installation, please use a distinct prefix to seperate those installations. Please do not use numbers in your prefix.', 'woocommerce-paypal-payments' ),
-				'default'      => 'WC-',
+				'description'  => __( 'If you use your PayPal account with more than one installation, please use a distinct prefix to separate those installations. Please do not use numbers in your prefix.', 'woocommerce-paypal-payments' ),
+				'default'      => ( static function ( array $char_list ): string {
+					$default_prefix_chars = array_rand( array_flip( $char_list ), 4 );
+					$random_prefix = implode( '', $default_prefix_chars ) . '-';
+					$site_domain = parse_url( get_site_url( get_current_blog_id() ), PHP_URL_HOST );
+					return $random_prefix . $site_domain;
+				} )( range( 'A', 'Z' ) ),
 				'screens'      => array(
 					State::STATE_PROGRESSIVE,
 					State::STATE_ONBOARDED,
