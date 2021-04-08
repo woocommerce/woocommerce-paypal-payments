@@ -25,6 +25,11 @@ const storeToken = (token) => {
 }
 
 const dataClientIdAttributeHandler = (script, config) => {
+    if(config.user === 0) {
+        document.body.append(script);
+        return;
+    }
+
     const token = storedTokenForUser(config.user);
     if (token) {
         script.setAttribute('data-client-token', token);

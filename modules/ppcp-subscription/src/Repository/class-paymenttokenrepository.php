@@ -73,6 +73,23 @@ class PaymentTokenRepository {
 	}
 
 	/**
+	 * Return all tokens for a user.
+	 *
+	 * @param int $id The user id.
+	 * @return PaymentToken[]
+	 */
+	public function all_for_user_id( int $id ) {
+		$tokens_array = array();
+		try {
+			$tokens = $this->endpoint->for_user( $id );
+			update_user_meta( $id, self::USER_META, $tokens );
+			return $tokens;
+		} catch ( RuntimeException $exception ) {
+			return array();
+		}
+	}
+
+	/**
 	 * Delete a token for a user.
 	 *
 	 * @param int          $user_id The user id.

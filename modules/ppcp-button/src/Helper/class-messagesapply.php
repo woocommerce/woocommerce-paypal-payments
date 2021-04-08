@@ -25,6 +25,7 @@ class MessagesApply {
 		'DE',
 		'GB',
 		'FR',
+		'AU',
 	);
 
 	/**

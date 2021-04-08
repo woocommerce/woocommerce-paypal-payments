@@ -9,8 +9,12 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\Subscription\Repository\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
@@ -49,6 +53,34 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	private $refund_processor;
 
 	/**
+	 * The payment token repository.
+	 *
+	 * @var PaymentTokenRepository
+	 */
+	private $payment_token_repository;
+
+	/**
+	 * The purchase unit factory.
+	 *
+	 * @var PurchaseUnitFactory
+	 */
+	private $purchase_unit_factory;
+
+	/**
+	 * The payer factory.
+	 *
+	 * @var PayerFactory
+	 */
+	private $payer_factory;
+
+	/**
+	 * The order endpoint.
+	 *
+	 * @var OrderEndpoint
+	 */
+	private $order_endpoint;
+
+	/**
 	 * CreditCardGateway constructor.
 	 *
 	 * @param SettingsRenderer            $settings_renderer The Settings Renderer.
@@ -61,6 +93,10 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 * @param RefundProcessor             $refund_processor The refund processor.
 	 * @param State                       $state The state.
 	 * @param TransactionUrlProvider      $transaction_url_provider Service able to provide view transaction url base.
+	 * @param PaymentTokenRepository      $payment_token_repository The payment token repository.
+	 * @param PurchaseUnitFactory         $purchase_unit_factory The purchase unit factory.
+	 * @param PayerFactory                $payer_factory The payer factory.
+	 * @param  OrderEndpoint               $order_endpoint The order endpoint.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
@@ -72,7 +108,11 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		SessionHandler $session_handler,
 		RefundProcessor $refund_processor,
 		State $state,
-		TransactionUrlProvider $transaction_url_provider
+		TransactionUrlProvider $transaction_url_provider,
+		PaymentTokenRepository $payment_token_repository,
+		PurchaseUnitFactory $purchase_unit_factory,
+		PayerFactory $payer_factory,
+		OrderEndpoint $order_endpoint
 	) {
 
 		$this->id                  = self::ID;
@@ -90,8 +130,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		if (
 			defined( 'PPCP_FLAG_SUBSCRIPTION' )
 			&& PPCP_FLAG_SUBSCRIPTION
-			&& $this->config->has( 'vault_enabled' )
-			&& $this->config->get( 'vault_enabled' )
+			&& $this->vault_settings_enabled()
 		) {
 			$this->supports = array(
 				'refunds',
@@ -106,7 +145,6 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 				'subscription_payment_method_change_customer',
 				'subscription_payment_method_change_admin',
 				'multiple_subscriptions',
-				'credit_card_form_cvc_on_saved_method',
 			);
 		}
 
@@ -135,6 +173,10 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		);
 
 		$this->module_url               = $module_url;
+		$this->payment_token_repository = $payment_token_repository;
+		$this->purchase_unit_factory    = $purchase_unit_factory;
+		$this->payer_factory            = $payer_factory;
+		$this->order_endpoint           = $order_endpoint;
 		$this->transaction_url_provider = $transaction_url_provider;
 	}
 

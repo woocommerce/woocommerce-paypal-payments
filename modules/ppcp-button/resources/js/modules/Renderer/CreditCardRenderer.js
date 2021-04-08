@@ -103,14 +103,12 @@ class CreditCardRenderer {
                 });
 
                 if (formValid && this.cardValid) {
-
-                    let vault = document.querySelector(wrapper + ' .ppcp-credit-card-vault') ?
-                        document.querySelector(wrapper + ' .ppcp-credit-card-vault').checked : false;
-                    vault = this.defaultConfig.enforce_vault || vault;
-
+                    const vault_card_setting_enabled = this.defaultConfig.vault_card_setting_enabled ? true : false;
+                    const vault = document.getElementById('ppcp-credit-card-vault') ?
+                      document.getElementById('ppcp-credit-card-vault').checked : vault_card_setting_enabled;
                     hostedFields.submit({
                         contingencies: ['3D_SECURE'],
-                        vault
+                        vault: vault
                     }).then((payload) => {
                         payload.orderID = payload.orderId;
                         this.spinner.unblock();

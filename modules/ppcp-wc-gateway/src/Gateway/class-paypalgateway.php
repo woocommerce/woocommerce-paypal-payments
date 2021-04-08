@@ -129,8 +129,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		if (
 			defined( 'PPCP_FLAG_SUBSCRIPTION' )
 			&& PPCP_FLAG_SUBSCRIPTION
-			&& $this->config->has( 'vault_enabled' )
-			&& $this->config->get( 'vault_enabled' )
+			&& $this->vault_settings_enabled()
 		) {
 			$this->supports = array(
 				'refunds',

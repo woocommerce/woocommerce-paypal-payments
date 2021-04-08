@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
+use WooCommerce\PayPalCommerce\Button\Helper\MessagesDisclaimers;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
@@ -69,7 +70,10 @@ return array(
 		$refund_processor    = $container->get( 'wcgateway.processor.refunds' );
 		$state               = $container->get( 'onboarding.state' );
 		$transaction_url_provider = $container->get( 'wcgateway.transaction-url-provider' );
-
+		$payment_token_repository = $container->get( 'subscription.repository.payment-token' );
+		$purchase_unit_factory = $container->get( 'api.factory.purchase-unit' );
+		$payer_factory = $container->get( 'api.factory.payer' );
+		$order_endpoint = $container->get( 'api.endpoint.order' );
 		return new CreditCardGateway(
 			$settings_renderer,
 			$order_processor,
@@ -80,7 +84,11 @@ return array(
 			$session_handler,
 			$refund_processor,
 			$state,
-			$transaction_url_provider
+			$transaction_url_provider,
+			$payment_token_repository,
+			$purchase_unit_factory,
+			$payer_factory,
+			$order_endpoint
 		);
 	},
 	'wcgateway.disabler'                           => static function ( $container ): DisableGateways {
@@ -174,13 +182,8 @@ return array(
 	'wcgateway.settings.fields'                    => static function ( $container ): array {
 
 		$state = $container->get( 'onboarding.state' );
-		/**
-		 * The state.
-		 *
-		 * @var State $state
-		 */
-
 		$settings     = $container->get( 'wcgateway.settings' );
+		$messages_disclaimers = $container->get( 'button.helper.messages-disclaimers' );
 
 		$fields              = array(
 			'sandbox_on'                     => array(
@@ -485,6 +488,34 @@ return array(
 				),
 				'gateway'      => 'dcc',
 			),
+			'dcc_vault_enabled'              => array(
+				'title'        => __( 'Vaulting For Credit Cards', 'woocommerce-paypal-payments' ),
+				'desc_tip'     => true,
+				'description'  => __( 'Enable Payment Tokens for WooCommerce Subscription renewals', 'woocommerce-paypal-payments' ),
+				'label'        => __( 'Enable Vaulting For Credit Cards', 'woocommerce-paypal-payments' ),
+				'type'         => 'checkbox',
+				'default'      => false,
+				'gateway'      => 'dcc',
+				'requirements' => array(
+					'dcc',
+				),
+				'screens'      => array(
+					State::STATE_ONBOARDED,
+				),
+			),
+			'dcc_save_card'                  => array(
+				'title'        => __( 'Save Credit Card', 'woocommerce-paypal-payments' ),
+				'type'         => 'checkbox',
+				'desc_tip'     => true,
+				'label'        => __( 'Allow Registered Buyers to Save Credit Card', 'woocommerce-paypal-payments' ),
+				'description'  => __( 'Buyers that create an account on your store may save their Credit Card for faster checkout.', 'woocommerce-paypal-payments' ),
+				'default'      => true,
+				'screens'      => array(
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'dcc',
+			),
 			'description'                    => array(
 				'title'        => __( 'Description', 'woocommerce-paypal-payments' ),
 				'type'         => 'text',
@@ -628,19 +659,31 @@ return array(
 				'gateway'      => 'paypal',
 			),
 			'vault_enabled'                  => array(
-				'title'        => __( 'Vaulting', 'woocommerce-paypal-payments' ),
+				'title'        => __( 'Vaulting for PayPal Accounts', 'woocommerce-paypal-payments' ),
 				'type'         => 'checkbox',
 				'desc_tip'     => true,
-				'label'        => __( 'Enable vaulting', 'woocommerce-paypal-payments' ),
-				'description'  => __( 'Enables you to store payment tokens for subscriptions.', 'woocommerce-paypal-payments' ),
-				'default'      => true,
+				'label'        => __( 'Enable Vaulting for PayPal Accounts', 'woocommerce-paypal-payments' ),
+				'description'  => __( 'Enable Payment Tokens for WooCommerce Subscription renewals', 'woocommerce-paypal-payments' ),
+				'default'      => false,
 				'screens'      => array(
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
-
+			'save_paypal_account'            => array(
+				'title'        => __( 'Save PayPal Account', 'woocommerce-paypal-payments' ),
+				'type'         => 'checkbox',
+				'desc_tip'     => true,
+				'label'        => __( 'Allow Registered Buyers to Save PayPal Account', 'woocommerce-paypal-payments' ),
+				'description'  => __( 'Buyers that create an account on your store may save their PayPal account for faster checkout. Note that you may not present Pay Later messages when using this feature.', 'woocommerce-paypal-payments' ),
+				'default'      => false,
+				'screens'      => array(
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
 			'logging_enabled'                => array(
 				'title'        => __( 'Logging', 'woocommerce-paypal-payments' ),
 				'type'         => 'checkbox',
@@ -659,8 +702,13 @@ return array(
 				'title'        => __( 'Invoice prefix', 'woocommerce-paypal-payments' ),
 				'type'         => 'text',
 				'desc_tip'     => true,
-				'description'  => __( 'If you use your PayPal account with more than one installation, please use a distinct prefix to seperate those installations. Please do not use numbers in your prefix.', 'woocommerce-paypal-payments' ),
-				'default'      => 'WC-',
+				'description'  => __( 'If you use your PayPal account with more than one installation, please use a distinct prefix to separate those installations. Please do not use numbers in your prefix.', 'woocommerce-paypal-payments' ),
+				'default'      => ( static function (): string {
+					$site_url = get_site_url( get_current_blog_id() );
+					$hash = md5( $site_url );
+					$letters = preg_replace( '~\d~', '', $hash );
+					return substr( $letters, 0, 6 ) . '-';
+				} )(),
 				'screens'      => array(
 					State::STATE_PROGRESSIVE,
 					State::STATE_ONBOARDED,
@@ -811,7 +859,7 @@ return array(
 				),
 				'requirements' => array( 'messages' ),
 				'gateway'      => 'paypal',
-				'description'  => str_replace( '<a>', '<a href="https://www.paypal.com/us/business/buy-now-pay-later">', __( 'Customize the appearance of <a>Pay Later messages</a> on checkout to promote special financing offers, which help increase sales.', 'woocommerce-paypal-payments' ) ),
+				'description'  => str_replace( '<a>', '<a href="' . $messages_disclaimers->link_for_country() . '" target="_blank">', __( 'Displays Pay Later messaging for available offers. Restrictions apply. <a>Click here to learn more.</a>', 'woocommerce-paypal-payments' ) ),
 				'class'        => array( 'ppcp-subheading' ),
 			),
 			'message_enabled'                => array(
@@ -1114,7 +1162,7 @@ return array(
 				),
 				'requirements' => array( 'messages' ),
 				'gateway'      => 'paypal',
-				'description'  => str_replace( '<a>', '<a href="https://www.paypal.com/us/business/buy-now-pay-later">', __( 'Customize the appearance of <a>Pay Later messages</a> on product pages to promote special financing offers, which help increase sales.', 'woocommerce-paypal-payments' ) ),
+				'description'  => str_replace( '<a>', '<a href="' . $messages_disclaimers->link_for_country() . '" target="_blank">', __( 'Displays Pay Later messaging for available offers. Restrictions apply. <a>Click here to learn more.</a>', 'woocommerce-paypal-payments' ) ),
 				'class'        => array( 'ppcp-subheading' ),
 			),
 			'message_product_enabled'        => array(
@@ -1417,7 +1465,7 @@ return array(
 				),
 				'requirements' => array( 'messages' ),
 				'gateway'      => 'paypal',
-				'description'  => str_replace( '<a>', '<a href="https://www.paypal.com/us/business/buy-now-pay-later">', __( 'Customize the appearance of <a>Pay Later messages</a> on your cart page to promote special financing offers, which help increase sales.', 'woocommerce-paypal-payments' ) ),
+				'description'  => str_replace( '<a>', '<a href="' . $messages_disclaimers->link_for_country() . '" target="_blank">', __( 'Displays Pay Later messaging for available offers. Restrictions apply. <a>Click here to learn more.</a>', 'woocommerce-paypal-payments' ) ),
 				'class'        => array( 'ppcp-subheading' ),
 			),
 			'message_cart_enabled'           => array(
@@ -1792,51 +1840,6 @@ return array(
 			unset( $fields['disable_funding']['options']['card'] );
 		}
 
-		/**
-		 * Set Pay in 3 heading and description for UK.
-		 */
-		if ( 'GB' === $country ) {
-			$fields['message_heading']['heading'] = __( 'Pay Later Messaging on Checkout', 'woocommerce-paypal-payments' );
-			$fields['message_heading']['description'] = __( 'Display pay later messaging on your site for offers like Pay in 3, which lets customers pay with 3 interest-free monthly payments. We’ll show messages on your site to promote this feature for you. You may not promote pay later offers with any other content, marketing, or materials.', 'woocommerce-paypal-payments' );
-
-			$fields['message_product_heading']['heading'] = __( 'Pay Later Messaging on Single Product Page', 'woocommerce-paypal-payments' );
-			$fields['message_product_heading']['description'] = __( 'Display pay later messaging on your site for offers like Pay in 3, which lets customers pay with 3 interest-free monthly payments. We’ll show messages on your site to promote this feature for you. You may not promote pay later offers with any other content, marketing, or materials.', 'woocommerce-paypal-payments' );
-
-			$fields['message_cart_heading']['heading'] = __( 'Pay Later Messaging on Cart', 'woocommerce-paypal-payments' );
-			$fields['message_cart_heading']['description'] = __( 'Display pay later messaging on your site for offers like Pay in 3, which lets customers pay with 3 interest-free monthly payments. We’ll show messages on your site to promote this feature for you. You may not promote pay later offers with any other content, marketing, or materials.', 'woocommerce-paypal-payments' );
-		}
-
-		if ( 'FR' === $country ) {
-			// todo: replace this with the text in English and use this text for French translation when it will be created.
-			$french_pay_later_description = 'Affichez le Paiement en 4X PayPal sur votre site.' .
-				'Le Paiement en 4X PayPal permet aux consommateurs français de payer en 4 versements égaux.' .
-				'Vous pouvez promouvoir le Paiement en 4X PayPal uniquement si vous êtes un commerçant basé en France, ' .
-				'avec un site internet en français et uneintégration PayPal standard. ' .
-				'Les marchands ayantl’outil Vaulting(coffre-fort numérique) ou une intégration de paiements récurrents/abonnement, ' .
-				'ainsi que ceux présentant certaines activités (vente de biens numériques / de biens non physiques) ' .
-				'ne sont pas éligibles pour promouvoir le Paiement en 4X PayPal.' .
-				'Nous afficherons des messages sur votre site pour promouvoir le Paiement en 4X PayPal. ' .
-				'Vous ne pouvez pas promouvoir le Paiement en 4X PayPal avec un autre contenu, quel qu’il soit.';
-
-			$fields['message_heading']['heading'] = __( 'Pay Later Messaging on Checkout', 'woocommerce-paypal-payments' );
-			$fields['message_heading']['description'] = $french_pay_later_description;
-
-			$fields['message_product_heading']['heading'] = __( 'Pay Later Messaging on Single Product Page', 'woocommerce-paypal-payments' );
-			$fields['message_product_heading']['description'] = $french_pay_later_description;
-
-			$fields['message_cart_heading']['heading'] = __( 'Pay Later Messaging on Cart', 'woocommerce-paypal-payments' );
-			$fields['message_cart_heading']['description'] = $french_pay_later_description;
-		}
-
-		/**
-		 * Set Pay Later link for DE
-		 */
-		if ( 'DE' === $country ) {
-			$fields['message_heading']['description'] = str_replace( '<a>', '<a href="https://www.paypal.com/de/webapps/mpp/installments">', __( 'Customize the appearance of <a>Pay Later messages</a> on checkout to promote special financing offers, which help increase sales.', 'woocommerce-paypal-payments' ) );
-			$fields['message_product_heading']['description'] = str_replace( '<a>', '<a href="https://www.paypal.com/de/webapps/mpp/installments">', __( 'Customize the appearance of <a>Pay Later messages</a> on checkout to promote special financing offers, which help increase sales.', 'woocommerce-paypal-payments' ) );
-			$fields['message_cart_heading']['description'] = str_replace( '<a>', '<a href="https://www.paypal.com/de/webapps/mpp/installments">', __( 'Customize the appearance of <a>Pay Later messages</a> on checkout to promote special financing offers, which help increase sales.', 'woocommerce-paypal-payments' ) );
-		}
-
 		$dcc_applies = $container->get( 'api.helpers.dccapplies' );
 		/**
 		 * Depending on your store location, some credit cards can't be used.
@@ -1866,9 +1869,18 @@ return array(
 	},
 	'wcgateway.url'                                => static function ( $container ): string {
 		return plugins_url(
-			'/modules/ppcp-wc-gateway/',
+			$container->get( 'wcgateway.relative-path' ),
 			dirname( __FILE__, 3 ) . '/woocommerce-paypal-payments.php'
 		);
+	},
+	'wcgateway.relative-path'                      => static function( $container ): string {
+		return 'modules/ppcp-wc-gateway/';
+	},
+	'wcgateway.absolute-path'                      => static function( $container ): string {
+		return plugin_dir_path(
+			dirname( __FILE__, 3 ) . '/woocommerce-paypal-payments.php'
+		) .
+			$container->get( 'wcgateway.relative-path' );
 	},
 	'wcgateway.endpoint.return-url'                => static function ( $container ) : ReturnUrlEndpoint {
 		$gateway  = $container->get( 'wcgateway.paypal-gateway' );
@@ -1901,5 +1913,9 @@ return array(
 		$settings         = $container->get( 'wcgateway.settings' );
 		$partner_endpoint = $container->get( 'api.endpoint.partners' );
 		return new DccProductStatus( $settings, $partner_endpoint );
+	},
+
+	'button.helper.messages-disclaimers'           => static function ( $container ): MessagesDisclaimers {
+		return new MessagesDisclaimers();
 	},
 );

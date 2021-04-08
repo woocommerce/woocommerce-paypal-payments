@@ -130,6 +130,34 @@ class SettingsListener {
 	}
 
 	/**
+	 * Prevent enabling both Pay Later messaging and PayPal vaulting
+	 */
+	public function listen_for_vaulting_enabled() {
+		if ( ! $this->is_valid_site_request() ) {
+			return;
+		}
+
+		/**
+		 * No need to verify nonce here.
+		 *
+		 * phpcs:disable WordPress.Security.NonceVerification.Missing
+		 * phpcs:disable WordPress.Security.NonceVerification.Recommended
+		 */
+		if ( ! isset( $_POST['ppcp']['vault_enabled'] ) && ! isset( $_POST['ppcp']['save_paypal_account'] ) ) {
+			return;
+		}
+
+		$this->settings->set( 'message_enabled', false );
+		$this->settings->set( 'message_product_enabled', false );
+		$this->settings->set( 'message_cart_enabled', false );
+		$this->settings->persist();
+
+		$redirect_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' );
+		wp_safe_redirect( $redirect_url, 302 );
+		exit;
+	}
+
+	/**
 	 * Listens to the request.
 	 *
 	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting was not found.

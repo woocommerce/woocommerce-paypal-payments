@@ -31,9 +31,11 @@ class PaymentTokenFactory {
 				__( 'No id for payment token given', 'woocommerce-paypal-payments' )
 			);
 		}
+
 		return new PaymentToken(
 			$data->id,
-			( isset( $data->type ) ) ? $data->type : PaymentToken::TYPE_PAYMENT_METHOD_TOKEN
+			( isset( $data->type ) ) ? $data->type : PaymentToken::TYPE_PAYMENT_METHOD_TOKEN,
+			$data->source
 		);
 	}
 

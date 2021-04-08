@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Button\Assets;
 
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayeeRepository;
@@ -21,6 +22,8 @@ use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\Subscription\Repository\PaymentTokenRepository;
+use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
@@ -106,19 +109,27 @@ class SmartButton implements SmartButtonInterface {
 	private $environment;
 
 	/**
+	 * The payment token repository.
+	 *
+	 * @var PaymentTokenRepository
+	 */
+	private $payment_token_repository;
+
+	/**
 	 * SmartButton constructor.
 	 *
-	 * @param string             $module_url The URL to the module.
-	 * @param SessionHandler     $session_handler The Session Handler.
-	 * @param Settings           $settings The Settings.
-	 * @param PayeeRepository    $payee_repository The Payee Repository.
-	 * @param PayerFactory       $payer_factory The Payer factory.
-	 * @param string             $client_id The client ID.
-	 * @param RequestData        $request_data The Request Data helper.
-	 * @param DccApplies         $dcc_applies The DCC applies helper.
-	 * @param SubscriptionHelper $subscription_helper The subscription helper.
-	 * @param MessagesApply      $messages_apply The Messages apply helper.
-	 * @param Environment        $environment The environment object.
+	 * @param string                 $module_url The URL to the module.
+	 * @param SessionHandler         $session_handler The Session Handler.
+	 * @param Settings               $settings The Settings.
+	 * @param PayeeRepository        $payee_repository The Payee Repository.
+	 * @param PayerFactory           $payer_factory The Payer factory.
+	 * @param string                 $client_id The client ID.
+	 * @param RequestData            $request_data The Request Data helper.
+	 * @param DccApplies             $dcc_applies The DCC applies helper.
+	 * @param SubscriptionHelper     $subscription_helper The subscription helper.
+	 * @param MessagesApply          $messages_apply The Messages apply helper.
+	 * @param Environment            $environment The environment object.
+	 * @param PaymentTokenRepository $payment_token_repository The payment token repository.
 	 */
 	public function __construct(
 		string $module_url,
@@ -131,20 +142,22 @@ class SmartButton implements SmartButtonInterface {
 		DccApplies $dcc_applies,
 		SubscriptionHelper $subscription_helper,
 		MessagesApply $messages_apply,
-		Environment $environment
+		Environment $environment,
+		PaymentTokenRepository $payment_token_repository
 	) {
 
-		$this->module_url          = $module_url;
-		$this->session_handler     = $session_handler;
-		$this->settings            = $settings;
-		$this->payee_repository    = $payee_repository;
-		$this->payer_factory       = $payer_factory;
-		$this->client_id           = $client_id;
-		$this->request_data        = $request_data;
-		$this->dcc_applies         = $dcc_applies;
-		$this->subscription_helper = $subscription_helper;
-		$this->messages_apply      = $messages_apply;
-		$this->environment         = $environment;
+		$this->module_url               = $module_url;
+		$this->session_handler          = $session_handler;
+		$this->settings                 = $settings;
+		$this->payee_repository         = $payee_repository;
+		$this->payer_factory            = $payer_factory;
+		$this->client_id                = $client_id;
+		$this->request_data             = $request_data;
+		$this->dcc_applies              = $dcc_applies;
+		$this->subscription_helper      = $subscription_helper;
+		$this->messages_apply           = $messages_apply;
+		$this->environment              = $environment;
+		$this->payment_token_repository = $payment_token_repository;
 	}
 
 	/**
@@ -185,6 +198,45 @@ class SmartButton implements SmartButtonInterface {
 					'dcc_renderer',
 				),
 				11
+			);
+
+			$payment_token_repository = $this->payment_token_repository;
+			add_filter(
+				'woocommerce_credit_card_form_fields',
+				function ( $default_fields, $id ) use ( $payment_token_repository ) {
+					if ( $this->can_save_credit_card() ) {
+						$default_fields['card-vault'] = sprintf(
+							'<p class="form-row form-row-wide"><label for="vault"><input class="ppcp-credit-card-vault" type="checkbox" id="ppcp-credit-card-vault" name="vault">%s</label></p>',
+							esc_html__( 'Save your Credit Card', 'woocommerce-paypal-payments' )
+						);
+
+						$tokens = $payment_token_repository->all_for_user_id( get_current_user_id() );
+						if ( $tokens && $this->tokens_contains_card( $tokens ) ) {
+							$output = sprintf(
+								'<p class="form-row form-row-wide"><label>%1$s</label><select id="saved-credit-card" name="saved_credit_card"><option value="">%2$s</option>',
+								esc_html__( 'Or select a saved Credit Card payment', 'woocommerce-paypal-payments' ),
+								esc_html__( 'Choose a saved payment', 'woocommerce-paypal-payments' )
+							);
+							foreach ( $tokens as $token ) {
+								if ( isset( $token->source()->card ) ) {
+									$output .= sprintf(
+										'<option value="%1$s">%2$s ...%3$s</option>',
+										$token->id(),
+										$token->source()->card->brand,
+										$token->source()->card->last_digits
+									);
+								}
+							}
+							$output .= '</select></p>';
+
+							$default_fields['saved-credit-card'] = $output;
+						}
+					}
+
+					return $default_fields;
+				},
+				10,
+				2
 			);
 		}
 		return true;
@@ -506,33 +558,13 @@ class SmartButton implements SmartButtonInterface {
 			return;
 		}
 
-		$save_card = $this->can_save_vault_token() ? sprintf(
-			'<div>
-
-                <label for="ppcp-vault-%1$s">%2$s</label>
-                <input
-                    type="checkbox"
-                    id="ppcp-vault-%1$s"
-                    class="ppcp-credit-card-vault"
-                    name="vault"
-                >
-            </div>',
-			esc_attr( $id ),
-			esc_html__( 'Save your card', 'woocommerce-paypal-payments' )
-		) : '';
-
 		$label = 'checkout' === $this->context() ? __( 'Place order', 'woocommerce-paypal-payments' ) : __( 'Pay for order', 'woocommerce-paypal-payments' );
 
 		printf(
 			'<div id="%1$s" style="display:none;">
-                        <button class="button alt">%6$s</button>
+                        <button class="button alt">%2$s</button>
                     </div><div id="payments-sdk__contingency-lightbox"></div><style id="ppcp-hide-dcc">.payment_method_ppcp-credit-card-gateway {display:none;}</style>',
 			esc_attr( $id ),
-			esc_html__( 'Credit Card number', 'woocommerce-paypal-payments' ),
-			esc_html__( 'Expiration', 'woocommerce-paypal-payments' ),
-			esc_html__( 'CVV', 'woocommerce-paypal-payments' ),
-            //phpcs:ignore
-            $save_card,
 			esc_html( $label )
 		);
 	}
@@ -548,7 +580,23 @@ class SmartButton implements SmartButtonInterface {
 		if ( ! $this->settings->has( 'client_id' ) || ! $this->settings->get( 'client_id' ) ) {
 			return false;
 		}
-		if ( ! $this->settings->has( 'vault_enabled' ) || ! $this->settings->get( 'vault_enabled' ) ) {
+		if ( ! $this->vault_settings_enabled() ) {
+			return false;
+		}
+		return is_user_logged_in();
+	}
+
+	/**
+	 * Checks whether it can save credit cards.
+	 *
+	 * @return bool
+	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When nothing was found.
+	 */
+	private function can_save_credit_card() {
+		if ( ! $this->settings->has( 'client_id' ) || ! $this->settings->get( 'client_id' ) ) {
+			return false;
+		}
+		if ( ! $this->settings->has( 'dcc_save_card' ) || ! $this->settings->get( 'dcc_save_card' ) ) {
 			return false;
 		}
 		return is_user_logged_in();
@@ -580,17 +628,18 @@ class SmartButton implements SmartButtonInterface {
 
 		$this->request_data->enqueue_nonce_fix();
 		$localize = array(
-			'script_attributes' => $this->attributes(),
-			'data_client_id'    => array(
-				'set_attribute' => ( is_checkout() && $this->dcc_is_enabled() )
+			'script_attributes'          => $this->attributes(),
+			'data_client_id'             => array(
+				'set_attribute'       => ( is_checkout() && $this->dcc_is_enabled() )
 					|| $this->can_save_vault_token(),
-				'endpoint'      => home_url( \WC_AJAX::get_endpoint( DataClientIdEndpoint::ENDPOINT ) ),
-				'nonce'         => wp_create_nonce( DataClientIdEndpoint::nonce() ),
-				'user'          => get_current_user_id(),
+				'save_paypal_account' => $this->save_paypal_account(),
+				'endpoint'            => home_url( \WC_AJAX::get_endpoint( DataClientIdEndpoint::ENDPOINT ) ),
+				'nonce'               => wp_create_nonce( DataClientIdEndpoint::nonce() ),
+				'user'                => get_current_user_id(),
 			),
-			'redirect'          => wc_get_checkout_url(),
-			'context'           => $this->context(),
-			'ajax'              => array(
+			'redirect'                   => wc_get_checkout_url(),
+			'context'                    => $this->context(),
+			'ajax'                       => array(
 				'change_cart'   => array(
 					'endpoint' => home_url( \WC_AJAX::get_endpoint( ChangeCartEndpoint::ENDPOINT ) ),
 					'nonce'    => wp_create_nonce( ChangeCartEndpoint::nonce() ),
@@ -604,10 +653,11 @@ class SmartButton implements SmartButtonInterface {
 					'nonce'    => wp_create_nonce( ApproveOrderEndpoint::nonce() ),
 				),
 			),
-			'enforce_vault'     => $this->has_subscriptions(),
-			'bn_codes'          => $this->bn_codes(),
-			'payer'             => $this->payerData(),
-			'button'            => array(
+			'enforce_vault'              => $this->has_subscriptions(),
+			'vault_card_setting_enabled' => $this->vault_card_setting_enabled(),
+			'bn_codes'                   => $this->bn_codes(),
+			'payer'                      => $this->payerData(),
+			'button'                     => array(
 				'wrapper'           => '#ppc-button',
 				'mini_cart_wrapper' => '#ppc-button-minicart',
 				'cancel_wrapper'    => '#ppcp-cancel',
@@ -627,7 +677,7 @@ class SmartButton implements SmartButtonInterface {
 					'tagline' => $this->style_for_context( 'tagline', $this->context() ),
 				),
 			),
-			'hosted_fields'     => array(
+			'hosted_fields'              => array(
 				'wrapper'           => '#ppcp-hosted-fields',
 				'mini_cart_wrapper' => '#ppcp-hosted-fields-mini-cart',
 				'labels'            => array(
@@ -645,8 +695,8 @@ class SmartButton implements SmartButtonInterface {
 				),
 				'valid_cards'       => $this->dcc_applies->valid_cards(),
 			),
-			'messages'          => $this->message_values(),
-			'labels'            => array(
+			'messages'                   => $this->message_values(),
+			'labels'                     => array(
 				'error' => array(
 					'generic' => __(
 						'Something went wrong. Please try again or choose another payment source.',
@@ -654,7 +704,7 @@ class SmartButton implements SmartButtonInterface {
 					),
 				),
 			),
-			'order_id'          => 'pay-now' === $this->context() ? absint( $wp->query_vars['order-pay'] ) : 0,
+			'order_id'                   => 'pay-now' === $this->context() ? absint( $wp->query_vars['order-pay'] ) : 0,
 		);
 
 		if ( $this->style_for_context( 'layout', 'mini-cart' ) !== 'horizontal' ) {
@@ -878,6 +928,19 @@ class SmartButton implements SmartButtonInterface {
 	}
 
 	/**
+	 * Checks if can save PayPal accounts.
+	 *
+	 * @return bool Whether it can save it or not.
+	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException If a setting has not been found.
+	 */
+	private function save_paypal_account(): bool {
+		if ( ! $this->settings->has( 'save_paypal_account' ) || ! $this->settings->get( 'save_paypal_account' ) ) {
+			return false;
+		}
+		return true;
+	}
+
+	/**
 	 * Determines the style for a given indicator in a given context.
 	 *
 	 * @param string $style The style.
@@ -907,5 +970,54 @@ class SmartButton implements SmartButtonInterface {
 			$value = $value ? 'true' : 'false';
 		}
 		return (string) $value;
+	}
+
+	/**
+	 * Checks if vault enabled setting for PayPal or credit card is enabled.
+	 *
+	 * @return bool Whether any of them is enabled or not.
+	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting hasn't been found.
+	 */
+	protected function vault_settings_enabled(): bool {
+		if ( $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ) ) {
+			return true;
+		}
+		if ( $this->settings->has( 'dcc_vault_enabled' ) && $this->settings->get( 'dcc_vault_enabled' ) ) {
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Checks if vaulting for credit card is enabled.
+	 *
+	 * @return bool Whether if it is enabled or not.
+	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting hasn't been found.
+	 */
+	protected function vault_card_setting_enabled(): bool {
+		try {
+			if ( ! $this->settings->has( 'dcc_vault_enabled' ) && ! $this->settings->get( 'dcc_vault_enabled' ) ) {
+				return false;
+			}
+		} catch ( NotFoundException $exception ) {
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Check if tokens has card source.
+	 *
+	 * @param PaymentToken[] $tokens The tokens.
+	 * @return bool Wether tokens contains card or not.
+	 */
+	protected function tokens_contains_card( $tokens ) {
+		foreach ( $tokens as $token ) {
+			if ( isset( $token->source()->card ) ) {
+				return true;
+			}
+		}
+		return false;
 	}
 }
