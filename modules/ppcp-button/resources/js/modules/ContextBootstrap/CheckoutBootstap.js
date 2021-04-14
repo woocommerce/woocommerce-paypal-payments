@@ -67,6 +67,8 @@ class CheckoutBootstap {
     }
 
     switchBetweenPayPalandOrderButton() {
+        jQuery('#saved-credit-card').val(jQuery('#saved-credit-card option:first').val());
+
         const currentPaymentMethod = jQuery(
             'input[name="payment_method"]:checked').val();
 
