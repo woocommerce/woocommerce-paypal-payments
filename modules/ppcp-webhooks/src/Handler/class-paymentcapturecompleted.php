@@ -117,7 +117,7 @@ class PaymentCaptureCompleted implements RequestHandler {
 			__( 'Payment successfully captured.', 'woocommerce-paypal-payments' )
 		);
 
-		$wc_order->set_status( 'processing' );
+		$wc_order->payment_complete();
 		$wc_order->update_meta_data( PayPalGateway::CAPTURED_META_KEY, 'true' );
 		$wc_order->save();
 		$this->logger->log(
