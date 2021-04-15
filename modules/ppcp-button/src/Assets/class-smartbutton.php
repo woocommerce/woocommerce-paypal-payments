@@ -685,11 +685,11 @@ class SmartButton implements SmartButtonInterface {
 					'cvv'                => '',
 					'mm_yyyy'            => __( 'MM/YYYY', 'woocommerce-paypal-payments' ),
 					'fields_not_valid'   => __(
-						'Unfortunatly, your credit card details are not valid.',
+						'Unfortunately, your credit card details are not valid.',
 						'woocommerce-paypal-payments'
 					),
 					'card_not_supported' => __(
-						'Unfortunatly, we do not support your credit card.',
+						'Unfortunately, we do not support your credit card.',
 						'woocommerce-paypal-payments'
 					),
 				),

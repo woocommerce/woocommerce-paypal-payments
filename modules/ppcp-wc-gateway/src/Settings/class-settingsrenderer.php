@@ -544,7 +544,7 @@ class SettingsRenderer {
 				<p>
 					<?php
 					esc_html_e(
-						'Unfortunatly, the card processing option is not yet available in your country.',
+						'Unfortunately, the card processing option is not yet available in your country.',
 						'woocommerce-paypal-payments'
 					);
 					?>
