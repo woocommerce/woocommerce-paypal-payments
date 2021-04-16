@@ -100,8 +100,7 @@ class SettingsRenderer {
 
 		$messages = array();
 
-		if ( $this->is_paypal_checkout_screen() && $this->paypal_vaulting_is_enabled()
-			|| $this->is_paypal_checkout_screen() && $this->pay_later_messaging_is_enabled() ) {
+		if ( $this->can_display_vaulting_admin_message() ) {
 
 			$vaulting_title           = __( 'PayPal vaulting', 'woocommerce-paypal-payments' );
 			$pay_later_messages_title = __( 'Pay Later Messaging', 'woocommerce-paypal-payments' );
@@ -551,5 +550,19 @@ class SettingsRenderer {
 			</td>
 		</tr>
 		<?php
+	}
+
+	/**
+	 * Checks if vaulting admin message can be displayed.
+	 *
+	 * @return bool Whether the message can be displayed or not.
+	 */
+	private function can_display_vaulting_admin_message(): bool {
+		if ( State::STATE_ONBOARDED !== $this->state->current_state() ) {
+			return false;
+		}
+
+		return $this->is_paypal_checkout_screen() && $this->paypal_vaulting_is_enabled()
+			|| $this->is_paypal_checkout_screen() && $this->pay_later_messaging_is_enabled();
 	}
 }
