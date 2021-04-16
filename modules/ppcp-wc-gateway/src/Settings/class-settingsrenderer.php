@@ -374,7 +374,6 @@ class SettingsRenderer {
 			$key          = 'ppcp[' . $field . ']';
 			$id           = 'ppcp-' . $field;
 			$config['id'] = $id;
-			$th_td        = 'ppcp-heading' !== $config['type'] ? 'td' : 'th';
 			$colspan      = 'ppcp-heading' !== $config['type'] ? 1 : 2;
 			$classes      = isset( $config['classes'] ) ? $config['classes'] : array();
 			$classes[]    = sprintf( 'ppcp-settings-field-%s', str_replace( 'ppcp-', '', $config['type'] ) );
@@ -398,7 +397,7 @@ class SettingsRenderer {
 				?>
 			</th>
 			<?php endif; ?>
-			<<?php echo esc_attr( $th_td ); ?> colspan="<?php echo (int) $colspan; ?>">
+			<td colspan="<?php echo (int) $colspan; ?>">
 					<?php
 					'ppcp-text' === $config['type'] ?
 					$this->render_text( $config )
@@ -408,7 +407,7 @@ class SettingsRenderer {
 				<?php if ( $description ) : ?>
 				<p class="<?php echo 'ppcp-heading' === $config['type'] ? '' : 'description'; ?>"><?php echo wp_kses_post( $description ); ?></p>
 				<?php endif; ?>
-			</<?php echo esc_attr( $th_td ); ?>>
+			</td>
 		</tr>
 			<?php
 		endforeach;
