@@ -111,7 +111,7 @@ class SettingsRenderer {
 			$pay_later_messages_or_vaulting_text = sprintf(
 				// translators: %1$s and %2$s is translated PayPal vaulting and Pay Later Messaging strings.
 				__(
-					'You have %1$s enabled, that\'s why %2$s options are unavailable now. You cannot use both features at the same time',
+					'You have %1$s enabled, that\'s why %2$s options are unavailable now. You cannot use both features at the same time.',
 					'woocommerce-paypal-payments'
 				),
 				$enabled,
