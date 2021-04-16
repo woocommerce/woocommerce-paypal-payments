@@ -176,7 +176,7 @@ class OrderProcessor {
 			__( 'Awaiting payment.', 'woocommerce-paypal-payments' )
 		);
 		if ( $order->status()->is( OrderStatus::COMPLETED ) && $order->intent() === 'CAPTURE' ) {
-			
+
 			$wc_order->payment_complete();
 		}
 
