@@ -59,6 +59,16 @@ define( 'PPCP_FLAG_SUBSCRIPTION', true );
 
 			return;
 		}
+		if ( version_compare( PHP_VERSION, '7.1', '<' ) ) {
+			add_action(
+				'admin_notices',
+				function() {
+					echo '<div class="error"><p>' . esc_html__( 'WooCommerce PayPal Payments requires PHP 7.1 or above.', 'woocommerce-paypal-payments' ), '</p></div>';
+				}
+			);
+
+			return;
+		}
 
 		static $initialized;
 		if ( ! $initialized ) {
