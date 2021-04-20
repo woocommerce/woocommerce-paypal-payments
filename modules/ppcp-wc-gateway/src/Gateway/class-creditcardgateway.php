@@ -209,9 +209,9 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	/**
 	 * Replace WooCommerce credit card field label.
 	 *
-	 * @param $translation string Translated text.
-	 * @param $text string Original text to translate.
-	 * @param $domain string Text domain.
+	 * @param string $translation Translated text.
+	 * @param string $text Original text to translate.
+	 * @param string $domain Text domain.
 	 *
 	 * @return string Translated field.
 	 */
