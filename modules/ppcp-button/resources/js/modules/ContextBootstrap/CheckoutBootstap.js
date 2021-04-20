@@ -89,6 +89,12 @@ class CheckoutBootstap {
     }
 
     displayPlaceOrderButtonForSavedCreditCards() {
+        const currentPaymentMethod = jQuery(
+          'input[name="payment_method"]:checked').val();
+        if (currentPaymentMethod !== 'ppcp-credit-card-gateway') {
+            return;
+        }
+
         if (jQuery('#saved-credit-card').length && jQuery('#saved-credit-card').val() !== '') {
             this.renderer.hideButtons(this.gateway.button.wrapper)
             this.renderer.hideButtons(this.gateway.messages.wrapper)

@@ -231,7 +231,11 @@ class OrderEndpoint {
 		$response = $this->request( $url, $args );
 		if ( is_wp_error( $response ) ) {
 			$error = new RuntimeException(
-				__( 'Could not create order.', 'woocommerce-paypal-payments' )
+				sprintf(
+					// translators: %s is the error message.
+					__( 'Could not create order: %s', 'woocommerce-paypal-payments' ),
+					$response->get_error_message()
+				)
 			);
 			$this->logger->log(
 				'warning',
