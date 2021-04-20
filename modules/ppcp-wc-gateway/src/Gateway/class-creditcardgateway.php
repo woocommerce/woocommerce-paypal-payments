@@ -198,6 +198,34 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	}
 
 	/**
+	 * Render the credit card fields.
+	 */
+	public function form()
+	{
+		add_action('gettext', array($this, 'replace_credit_card_cvv_label'), 10, 3);
+		parent::form();
+		remove_action('gettext', 'replace_credit_card_cvv_label');
+	}
+	
+	/**
+	 * Replace WooCommerce credit card field label.
+	 *
+	 * @param $translation string Translated text.
+	 * @param $text string Original text to translate.
+	 * @param $domain string Text domain.
+	 *
+	 * @return string Translated field.
+	 */
+	public function replace_credit_card_cvv_label(string $translation, string $text, string $domain): string
+	{
+		if('woocommerce' !== $domain || 'Card code' !== $text) {
+			return $translation;
+		}
+		
+		return __('CVV', 'woocommerce-paypal-payments');
+	}
+
+	/**
 	 * Returns the title of the gateway.
 	 *
 	 * @return string
