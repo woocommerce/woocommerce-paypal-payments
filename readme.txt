@@ -23,7 +23,7 @@ To install WooCommerce PayPal Payments, you need:
 
 * WordPress Version 5.3 or newer (installed)
 * WooCommerce Version 3.9 or newer (installed and activated)
-* PHP Version 7.0 or newer
+* PHP Version 7.1 or newer
 * PayPal business account
 
 = Instructions =
