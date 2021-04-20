@@ -200,13 +200,12 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	/**
 	 * Render the credit card fields.
 	 */
-	public function form()
-	{
-		add_action('gettext', array($this, 'replace_credit_card_cvv_label'), 10, 3);
+	public function form() {
+		add_action( 'gettext', array( $this, 'replace_credit_card_cvv_label' ), 10, 3 );
 		parent::form();
-		remove_action('gettext', 'replace_credit_card_cvv_label');
+		remove_action( 'gettext', 'replace_credit_card_cvv_label' );
 	}
-	
+
 	/**
 	 * Replace WooCommerce credit card field label.
 	 *
@@ -216,13 +215,12 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 *
 	 * @return string Translated field.
 	 */
-	public function replace_credit_card_cvv_label(string $translation, string $text, string $domain): string
-	{
-		if('woocommerce' !== $domain || 'Card code' !== $text) {
+	public function replace_credit_card_cvv_label( string $translation, string $text, string $domain ): string {
+		if ( 'woocommerce' !== $domain || 'Card code' !== $text ) {
 			return $translation;
 		}
-		
-		return __('CVV', 'woocommerce-paypal-payments');
+
+		return __( 'CVV', 'woocommerce-paypal-payments' );
 	}
 
 	/**
