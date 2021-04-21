@@ -982,7 +982,7 @@ class SmartButton implements SmartButtonInterface {
 		if ( $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ) ) {
 			return true;
 		}
-		if ( $this->settings->has( 'dcc_vault_enabled' ) && $this->settings->get( 'dcc_vault_enabled' ) ) {
+		if ( $this->settings->has( 'dcc_enabled' ) && $this->settings->get( 'dcc_enabled' ) && $this->settings->has( 'dcc_vault_enabled' ) && $this->settings->get( 'dcc_vault_enabled' ) ) {
 			return true;
 		}
 		return false;
