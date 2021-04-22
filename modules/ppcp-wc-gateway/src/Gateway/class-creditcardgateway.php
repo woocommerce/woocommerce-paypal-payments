@@ -130,6 +130,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		if (
 			defined( 'PPCP_FLAG_SUBSCRIPTION' )
 			&& PPCP_FLAG_SUBSCRIPTION
+			&& $this->gateways_enabled()
 			&& $this->vault_settings_enabled()
 		) {
 			$this->supports = array(

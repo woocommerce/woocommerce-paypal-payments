@@ -148,6 +148,21 @@ trait ProcessPaymentTrait {
 	}
 
 	/**
+	 * Checks if PayPal or Credit Card gateways are enabled.
+	 *
+	 * @return bool Whether any of the gateways is enabled.
+	 */
+	protected function gateways_enabled(): bool {
+		if ( $this->config->has( 'enabled' ) && $this->config->get( 'enabled' ) ) {
+			return true;
+		}
+		if ( $this->config->has( 'dcc_enabled' ) && $this->config->get( 'dcc_enabled' ) ) {
+			return true;
+		}
+		return false;
+	}
+
+	/**
 	 * Checks if vault enabled setting for PayPal or credit card is enabled.
 	 *
 	 * @return bool Whether vault settings are enabled or not.
