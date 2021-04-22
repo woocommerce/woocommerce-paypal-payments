@@ -580,9 +580,13 @@ class SmartButton implements SmartButtonInterface {
 		if ( ! $this->settings->has( 'client_id' ) || ! $this->settings->get( 'client_id' ) ) {
 			return false;
 		}
-		if ( ! $this->vault_settings_enabled() ) {
+
+		if ( $this->context() === 'checkout' && ! $this->vault_settings_enabled() ) {
+			return false;
+		} elseif ( ! $this->vault_setting_enabled_for_paypal() ) {
 			return false;
 		}
+
 		return is_user_logged_in();
 	}
 
@@ -983,6 +987,19 @@ class SmartButton implements SmartButtonInterface {
 			return true;
 		}
 		if ( $this->settings->has( 'dcc_enabled' ) && $this->settings->get( 'dcc_enabled' ) && $this->settings->has( 'dcc_vault_enabled' ) && $this->settings->get( 'dcc_vault_enabled' ) ) {
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Checks if vault enabled setting for PayPal is enabled.
+	 *
+	 * @return bool Wheter vault setting is enabled for PayPal.
+	 * @throws NotFoundException When a setting hasn't been found.
+	 */
+	protected function vault_setting_enabled_for_paypal() {
+		if ( $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ) ) {
 			return true;
 		}
 		return false;
