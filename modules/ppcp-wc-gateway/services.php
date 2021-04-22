@@ -509,7 +509,7 @@ return array(
 				'desc_tip'     => true,
 				'label'        => __( 'Allow Registered Buyers to Save Credit Card', 'woocommerce-paypal-payments' ),
 				'description'  => __( 'Buyers that create an account on your store may save their Credit Card for faster checkout.', 'woocommerce-paypal-payments' ),
-				'default'      => true,
+				'default'      => false,
 				'screens'      => array(
 					State::STATE_ONBOARDED,
 				),
