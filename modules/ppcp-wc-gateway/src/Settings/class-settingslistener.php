@@ -143,7 +143,7 @@ class SettingsListener {
 		 * phpcs:disable WordPress.Security.NonceVerification.Missing
 		 * phpcs:disable WordPress.Security.NonceVerification.Recommended
 		 */
-		if ( ! isset( $_POST['ppcp']['vault_enabled'] ) && ! isset( $_POST['ppcp']['save_paypal_account'] ) ) {
+		if ( ! isset( $_POST['ppcp']['vault_enabled'] ) ) {
 			return;
 		}
 

@@ -89,7 +89,7 @@ document.addEventListener(
             }
         );
 
-        if (PayPalCommerceGateway.data_client_id.set_attribute || PayPalCommerceGateway.data_client_id.save_paypal_account) {
+        if (PayPalCommerceGateway.data_client_id.set_attribute) {
             dataClientIdAttributeHandler(script, PayPalCommerceGateway.data_client_id);
             return;
         }

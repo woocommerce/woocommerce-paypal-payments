@@ -141,18 +141,12 @@ class SettingsRenderer {
 	}
 
 	/**
-	 * Check whether PayPal vaulting is enabled.
+	 * Check whether vaulting is enabled.
 	 *
 	 * @return bool
 	 */
 	private function paypal_vaulting_is_enabled(): bool {
-		$saving_paypal_account_is_enabled = $this->settings->has( 'save_paypal_account' ) &&
-			(bool) $this->settings->get( 'save_paypal_account' );
-
-		$vault_is_enabled = $this->settings->has( 'vault_enabled' ) &&
-			(bool) $this->settings->get( 'vault_enabled' );
-
-		return $saving_paypal_account_is_enabled || $vault_is_enabled;
+		return $this->settings->has( 'vault_enabled' ) && (bool) $this->settings->get( 'vault_enabled' );
 	}
 
 	/**
