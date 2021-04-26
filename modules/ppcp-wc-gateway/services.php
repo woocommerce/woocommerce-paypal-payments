@@ -634,7 +634,7 @@ return array(
 				'title'        => __( 'Vaulting', 'woocommerce-paypal-payments' ),
 				'type'         => 'checkbox',
 				'desc_tip'     => true,
-				'label'        => __( 'Enable Vaulting', 'woocommerce-paypal-payments' ),
+				'label'        => __( 'To use vaulting features, you must enable vaulting on your account.', 'woocommerce-paypal-payments' ),
 				'description'  => __( 'Allow registered buyers to save PayPal and Credit Card accounts. Allow Subscription renewals.', 'woocommerce-paypal-payments' ),
 				'default'      => false,
 				'screens'      => array(
