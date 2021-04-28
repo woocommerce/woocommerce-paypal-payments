@@ -636,7 +636,7 @@ return array(
 				'desc_tip'     => true,
 				'label' => sprintf(
 					__('To use vaulting features, you must %1$senable vaulting on your account%2$s.', 'woocommerce-paypal-payments'),
-			'<a 
+					'<a 
 						href="https://docs.woocommerce.com/document/woocommerce-paypal-payments/#enable-vaulting-on-your-live-account"
 						target="_blank"
 					>',
