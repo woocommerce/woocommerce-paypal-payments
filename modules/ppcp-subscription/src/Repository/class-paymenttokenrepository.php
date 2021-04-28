@@ -79,7 +79,6 @@ class PaymentTokenRepository {
 	 * @return PaymentToken[]
 	 */
 	public function all_for_user_id( int $id ) {
-		$tokens_array = array();
 		try {
 			$tokens = $this->endpoint->for_user( $id );
 			update_user_meta( $id, self::USER_META, $tokens );

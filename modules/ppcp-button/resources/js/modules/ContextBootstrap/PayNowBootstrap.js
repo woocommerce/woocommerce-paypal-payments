@@ -53,6 +53,11 @@ class PayNowBootstrap {
     }
 
     switchBetweenPayPalandOrderButton() {
+        const urlParams = new URLSearchParams(window.location.search)
+        if (urlParams.has('change_payment_method')) {
+            return
+        }
+
         const currentPaymentMethod = jQuery(
             'input[name="payment_method"]:checked').val();
 

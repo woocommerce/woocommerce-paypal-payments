@@ -30,12 +30,6 @@ const dataClientIdAttributeHandler = (script, config) => {
         return;
     }
 
-    const token = storedTokenForUser(config.user);
-    if (token) {
-        script.setAttribute('data-client-token', token);
-        document.body.append(script);
-        return;
-    }
     fetch(config.endpoint, {
         method: 'POST',
         body: JSON.stringify({

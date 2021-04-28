@@ -176,25 +176,34 @@ class RenewalHandler {
 	 */
 	private function get_token_for_customer( \WC_Customer $customer, \WC_Order $wc_order ) {
 
-		$token = $this->repository->for_user_id( (int) $customer->get_id() );
-		if ( ! $token ) {
+		$tokens = $this->repository->all_for_user_id( (int) $customer->get_id() );
+		if ( ! $tokens ) {
+
+			$error_message = sprintf(
+			// translators: %d is the customer id.
+				__(
+					'Payment failed. No payment tokens found for customer %d.',
+					'woocommerce-paypal-payments'
+				),
+				(int) $customer->get_id()
+			);
+
+			$wc_order->update_status(
+				'failed',
+				$error_message
+			);
+
 			$this->logger->log(
 				'error',
-				sprintf(
-					// translators: %d is the customer id.
-					__(
-						'No payment token found for customer %d',
-						'woocommerce-paypal-payments'
-					),
-					(int) $customer->get_id()
-				),
+				$error_message,
 				array(
 					'customer' => $customer,
 					'order'    => $wc_order,
 				)
 			);
 		}
-		return $token;
+
+		return current( $tokens );
 	}
 
 	/**

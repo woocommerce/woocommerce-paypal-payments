@@ -100,8 +100,7 @@ class SettingsRenderer {
 
 		$messages = array();
 
-		if ( $this->is_paypal_checkout_screen() && $this->paypal_vaulting_is_enabled()
-			|| $this->is_paypal_checkout_screen() && $this->pay_later_messaging_is_enabled() ) {
+		if ( $this->can_display_vaulting_admin_message() ) {
 
 			$vaulting_title           = __( 'PayPal vaulting', 'woocommerce-paypal-payments' );
 			$pay_later_messages_title = __( 'Pay Later Messaging', 'woocommerce-paypal-payments' );
@@ -112,7 +111,7 @@ class SettingsRenderer {
 			$pay_later_messages_or_vaulting_text = sprintf(
 				// translators: %1$s and %2$s is translated PayPal vaulting and Pay Later Messaging strings.
 				__(
-					'You have %1$s enabled, that\'s why %2$s options are unavailable now. You cannot use both features at the same time',
+					'You have %1$s enabled, that\'s why %2$s options are unavailable now. You cannot use both features at the same time.',
 					'woocommerce-paypal-payments'
 				),
 				$enabled,
@@ -142,18 +141,12 @@ class SettingsRenderer {
 	}
 
 	/**
-	 * Check whether PayPal vaulting is enabled.
+	 * Check whether vaulting is enabled.
 	 *
 	 * @return bool
 	 */
 	private function paypal_vaulting_is_enabled(): bool {
-		$saving_paypal_account_is_enabled = $this->settings->has( 'save_paypal_account' ) &&
-			(bool) $this->settings->get( 'save_paypal_account' );
-
-		$vault_is_enabled = $this->settings->has( 'vault_enabled' ) &&
-			(bool) $this->settings->get( 'vault_enabled' );
-
-		return $saving_paypal_account_is_enabled || $vault_is_enabled;
+		return $this->settings->has( 'vault_enabled' ) && (bool) $this->settings->get( 'vault_enabled' );
 	}
 
 	/**
@@ -374,7 +367,6 @@ class SettingsRenderer {
 			$key          = 'ppcp[' . $field . ']';
 			$id           = 'ppcp-' . $field;
 			$config['id'] = $id;
-			$th_td        = 'ppcp-heading' !== $config['type'] ? 'td' : 'th';
 			$colspan      = 'ppcp-heading' !== $config['type'] ? 1 : 2;
 			$classes      = isset( $config['classes'] ) ? $config['classes'] : array();
 			$classes[]    = sprintf( 'ppcp-settings-field-%s', str_replace( 'ppcp-', '', $config['type'] ) );
@@ -398,7 +390,7 @@ class SettingsRenderer {
 				?>
 			</th>
 			<?php endif; ?>
-			<<?php echo esc_attr( $th_td ); ?> colspan="<?php echo (int) $colspan; ?>">
+			<td colspan="<?php echo (int) $colspan; ?>">
 					<?php
 					'ppcp-text' === $config['type'] ?
 					$this->render_text( $config )
@@ -408,7 +400,7 @@ class SettingsRenderer {
 				<?php if ( $description ) : ?>
 				<p class="<?php echo 'ppcp-heading' === $config['type'] ? '' : 'description'; ?>"><?php echo wp_kses_post( $description ); ?></p>
 				<?php endif; ?>
-			</<?php echo esc_attr( $th_td ); ?>>
+			</td>
 		</tr>
 			<?php
 		endforeach;
@@ -544,7 +536,7 @@ class SettingsRenderer {
 				<p>
 					<?php
 					esc_html_e(
-						'Unfortunatly, the card processing option is not yet available in your country.',
+						'Unfortunately, the card processing option is not yet available in your country.',
 						'woocommerce-paypal-payments'
 					);
 					?>
@@ -552,5 +544,19 @@ class SettingsRenderer {
 			</td>
 		</tr>
 		<?php
+	}
+
+	/**
+	 * Checks if vaulting admin message can be displayed.
+	 *
+	 * @return bool Whether the message can be displayed or not.
+	 */
+	private function can_display_vaulting_admin_message(): bool {
+		if ( State::STATE_ONBOARDED !== $this->state->current_state() ) {
+			return false;
+		}
+
+		return $this->is_paypal_checkout_screen() && $this->paypal_vaulting_is_enabled()
+			|| $this->is_paypal_checkout_screen() && $this->pay_later_messaging_is_enabled();
 	}
 }

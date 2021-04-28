@@ -1,5 +1,15 @@
 *** Changelog ***
 
+= 1.3.0 - 2021-04-28 =
+* Add - Client-side vaulting and allow WooCommerce Subscriptions product renewals through payment tokens. #134
+* Add - Send transaction ids to woocommerce. #125
+* Fix - Validate checkout form before sending request to PayPal #137
+* Fix - Duplicate Invoice Id error. #143
+* Fix - Unblock UI if Credit Card payment failed. #122
+* Fix - Detected container element removed from DOM. #123
+* Fix - Remove disabling credit for UK. #127
+* Fix - Show WC message on account creating error. #136
+
 = 1.2.1 - 2021-03-08 =
 * Fix - Address compatibility issue with Jetpack.
 

@@ -204,7 +204,7 @@ class SmartButton implements SmartButtonInterface {
 			add_filter(
 				'woocommerce_credit_card_form_fields',
 				function ( $default_fields, $id ) use ( $payment_token_repository ) {
-					if ( $this->can_save_credit_card() ) {
+					if ( $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ) ) {
 						$default_fields['card-vault'] = sprintf(
 							'<p class="form-row form-row-wide"><label for="vault"><input class="ppcp-credit-card-vault" type="checkbox" id="ppcp-credit-card-vault" name="vault">%s</label></p>',
 							esc_html__( 'Save your Credit Card', 'woocommerce-paypal-payments' )
@@ -573,32 +573,18 @@ class SmartButton implements SmartButtonInterface {
 	 * Whether we can store vault tokens or not.
 	 *
 	 * @return bool
-	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException If a setting hasnt been found.
+	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException If a setting hasn't been found.
 	 */
 	public function can_save_vault_token(): bool {
 
 		if ( ! $this->settings->has( 'client_id' ) || ! $this->settings->get( 'client_id' ) ) {
 			return false;
 		}
-		if ( ! $this->vault_settings_enabled() ) {
-			return false;
-		}
-		return is_user_logged_in();
-	}
 
-	/**
-	 * Checks whether it can save credit cards.
-	 *
-	 * @return bool
-	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When nothing was found.
-	 */
-	private function can_save_credit_card() {
-		if ( ! $this->settings->has( 'client_id' ) || ! $this->settings->get( 'client_id' ) ) {
+		if ( ! $this->settings->has( 'vault_enabled' ) || ! $this->settings->get( 'vault_enabled' ) ) {
 			return false;
 		}
-		if ( ! $this->settings->has( 'dcc_save_card' ) || ! $this->settings->get( 'dcc_save_card' ) ) {
-			return false;
-		}
+
 		return is_user_logged_in();
 	}
 
@@ -628,18 +614,16 @@ class SmartButton implements SmartButtonInterface {
 
 		$this->request_data->enqueue_nonce_fix();
 		$localize = array(
-			'script_attributes'          => $this->attributes(),
-			'data_client_id'             => array(
-				'set_attribute'       => ( is_checkout() && $this->dcc_is_enabled() )
-					|| $this->can_save_vault_token(),
-				'save_paypal_account' => $this->save_paypal_account(),
-				'endpoint'            => home_url( \WC_AJAX::get_endpoint( DataClientIdEndpoint::ENDPOINT ) ),
-				'nonce'               => wp_create_nonce( DataClientIdEndpoint::nonce() ),
-				'user'                => get_current_user_id(),
+			'script_attributes' => $this->attributes(),
+			'data_client_id'    => array(
+				'set_attribute' => ( is_checkout() && $this->dcc_is_enabled() ) || $this->can_save_vault_token(),
+				'endpoint'      => home_url( \WC_AJAX::get_endpoint( DataClientIdEndpoint::ENDPOINT ) ),
+				'nonce'         => wp_create_nonce( DataClientIdEndpoint::nonce() ),
+				'user'          => get_current_user_id(),
 			),
-			'redirect'                   => wc_get_checkout_url(),
-			'context'                    => $this->context(),
-			'ajax'                       => array(
+			'redirect'          => wc_get_checkout_url(),
+			'context'           => $this->context(),
+			'ajax'              => array(
 				'change_cart'   => array(
 					'endpoint' => home_url( \WC_AJAX::get_endpoint( ChangeCartEndpoint::ENDPOINT ) ),
 					'nonce'    => wp_create_nonce( ChangeCartEndpoint::nonce() ),
@@ -653,11 +637,11 @@ class SmartButton implements SmartButtonInterface {
 					'nonce'    => wp_create_nonce( ApproveOrderEndpoint::nonce() ),
 				),
 			),
-			'enforce_vault'              => $this->has_subscriptions(),
-			'vault_card_setting_enabled' => $this->vault_card_setting_enabled(),
-			'bn_codes'                   => $this->bn_codes(),
-			'payer'                      => $this->payerData(),
-			'button'                     => array(
+			'enforce_vault'     => $this->has_subscriptions(),
+			'save_card'         => $this->can_save_vault_token(),
+			'bn_codes'          => $this->bn_codes(),
+			'payer'             => $this->payerData(),
+			'button'            => array(
 				'wrapper'           => '#ppc-button',
 				'mini_cart_wrapper' => '#ppc-button-minicart',
 				'cancel_wrapper'    => '#ppcp-cancel',
@@ -677,7 +661,7 @@ class SmartButton implements SmartButtonInterface {
 					'tagline' => $this->style_for_context( 'tagline', $this->context() ),
 				),
 			),
-			'hosted_fields'              => array(
+			'hosted_fields'     => array(
 				'wrapper'           => '#ppcp-hosted-fields',
 				'mini_cart_wrapper' => '#ppcp-hosted-fields-mini-cart',
 				'labels'            => array(
@@ -685,18 +669,18 @@ class SmartButton implements SmartButtonInterface {
 					'cvv'                => '',
 					'mm_yyyy'            => __( 'MM/YYYY', 'woocommerce-paypal-payments' ),
 					'fields_not_valid'   => __(
-						'Unfortunatly, your credit card details are not valid.',
+						'Unfortunately, your credit card details are not valid.',
 						'woocommerce-paypal-payments'
 					),
 					'card_not_supported' => __(
-						'Unfortunatly, we do not support your credit card.',
+						'Unfortunately, we do not support your credit card.',
 						'woocommerce-paypal-payments'
 					),
 				),
 				'valid_cards'       => $this->dcc_applies->valid_cards(),
 			),
-			'messages'                   => $this->message_values(),
-			'labels'                     => array(
+			'messages'          => $this->message_values(),
+			'labels'            => array(
 				'error' => array(
 					'generic' => __(
 						'Something went wrong. Please try again or choose another payment source.',
@@ -704,7 +688,7 @@ class SmartButton implements SmartButtonInterface {
 					),
 				),
 			),
-			'order_id'                   => 'pay-now' === $this->context() ? absint( $wp->query_vars['order-pay'] ) : 0,
+			'order_id'          => 'pay-now' === $this->context() ? absint( $wp->query_vars['order-pay'] ) : 0,
 		);
 
 		if ( $this->style_for_context( 'layout', 'mini-cart' ) !== 'horizontal' ) {
@@ -928,19 +912,6 @@ class SmartButton implements SmartButtonInterface {
 	}
 
 	/**
-	 * Checks if can save PayPal accounts.
-	 *
-	 * @return bool Whether it can save it or not.
-	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException If a setting has not been found.
-	 */
-	private function save_paypal_account(): bool {
-		if ( ! $this->settings->has( 'save_paypal_account' ) || ! $this->settings->get( 'save_paypal_account' ) ) {
-			return false;
-		}
-		return true;
-	}
-
-	/**
 	 * Determines the style for a given indicator in a given context.
 	 *
 	 * @param string $style The style.
@@ -970,40 +941,6 @@ class SmartButton implements SmartButtonInterface {
 			$value = $value ? 'true' : 'false';
 		}
 		return (string) $value;
-	}
-
-	/**
-	 * Checks if vault enabled setting for PayPal or credit card is enabled.
-	 *
-	 * @return bool Whether any of them is enabled or not.
-	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting hasn't been found.
-	 */
-	protected function vault_settings_enabled(): bool {
-		if ( $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ) ) {
-			return true;
-		}
-		if ( $this->settings->has( 'dcc_vault_enabled' ) && $this->settings->get( 'dcc_vault_enabled' ) ) {
-			return true;
-		}
-		return false;
-	}
-
-	/**
-	 * Checks if vaulting for credit card is enabled.
-	 *
-	 * @return bool Whether if it is enabled or not.
-	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting hasn't been found.
-	 */
-	protected function vault_card_setting_enabled(): bool {
-		try {
-			if ( ! $this->settings->has( 'dcc_vault_enabled' ) && ! $this->settings->get( 'dcc_vault_enabled' ) ) {
-				return false;
-			}
-		} catch ( NotFoundException $exception ) {
-			return false;
-		}
-
-		return true;
 	}
 
 	/**

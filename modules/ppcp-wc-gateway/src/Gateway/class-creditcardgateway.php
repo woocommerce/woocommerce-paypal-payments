@@ -130,7 +130,8 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		if (
 			defined( 'PPCP_FLAG_SUBSCRIPTION' )
 			&& PPCP_FLAG_SUBSCRIPTION
-			&& $this->vault_settings_enabled()
+			&& $this->gateways_enabled()
+			&& $this->vault_setting_enabled()
 		) {
 			$this->supports = array(
 				'refunds',

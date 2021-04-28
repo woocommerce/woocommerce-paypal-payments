@@ -161,7 +161,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 				if ( ThreeDSecure::REJECT === $proceed ) {
 					throw new RuntimeException(
 						__(
-							'Unfortunatly, we can\'t accept your card. Please choose a different payment method.',
+							'Unfortunately, we can\'t accept your card. Please choose a different payment method.',
 							'woocommerce-paypal-payments'
 						)
 					);

@@ -488,34 +488,6 @@ return array(
 				),
 				'gateway'      => 'dcc',
 			),
-			'dcc_vault_enabled'              => array(
-				'title'        => __( 'Vaulting For Credit Cards', 'woocommerce-paypal-payments' ),
-				'desc_tip'     => true,
-				'description'  => __( 'Enable Payment Tokens for WooCommerce Subscription renewals', 'woocommerce-paypal-payments' ),
-				'label'        => __( 'Enable Vaulting For Credit Cards', 'woocommerce-paypal-payments' ),
-				'type'         => 'checkbox',
-				'default'      => false,
-				'gateway'      => 'dcc',
-				'requirements' => array(
-					'dcc',
-				),
-				'screens'      => array(
-					State::STATE_ONBOARDED,
-				),
-			),
-			'dcc_save_card'                  => array(
-				'title'        => __( 'Save Credit Card', 'woocommerce-paypal-payments' ),
-				'type'         => 'checkbox',
-				'desc_tip'     => true,
-				'label'        => __( 'Allow Registered Buyers to Save Credit Card', 'woocommerce-paypal-payments' ),
-				'description'  => __( 'Buyers that create an account on your store may save their Credit Card for faster checkout.', 'woocommerce-paypal-payments' ),
-				'default'      => true,
-				'screens'      => array(
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'dcc',
-			),
 			'description'                    => array(
 				'title'        => __( 'Description', 'woocommerce-paypal-payments' ),
 				'type'         => 'text',
@@ -659,30 +631,24 @@ return array(
 				'gateway'      => 'paypal',
 			),
 			'vault_enabled'                  => array(
-				'title'        => __( 'Vaulting for PayPal Accounts', 'woocommerce-paypal-payments' ),
+				'title'        => __( 'Vaulting', 'woocommerce-paypal-payments' ),
 				'type'         => 'checkbox',
 				'desc_tip'     => true,
-				'label'        => __( 'Enable Vaulting for PayPal Accounts', 'woocommerce-paypal-payments' ),
-				'description'  => __( 'Enable Payment Tokens for WooCommerce Subscription renewals', 'woocommerce-paypal-payments' ),
+				'label' => sprintf(
+					__('To use vaulting features, you must %1$senable vaulting on your account%2$s.', 'woocommerce-paypal-payments'),
+					'<a 
+						href="https://docs.woocommerce.com/document/woocommerce-paypal-payments/#enable-vaulting-on-your-live-account"
+						target="_blank"
+					>',
+					'</a>'
+				),
+				'description'  => __( 'Allow registered buyers to save PayPal and Credit Card accounts. Allow Subscription renewals.', 'woocommerce-paypal-payments' ),
 				'default'      => false,
 				'screens'      => array(
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
-			'save_paypal_account'            => array(
-				'title'        => __( 'Save PayPal Account', 'woocommerce-paypal-payments' ),
-				'type'         => 'checkbox',
-				'desc_tip'     => true,
-				'label'        => __( 'Allow Registered Buyers to Save PayPal Account', 'woocommerce-paypal-payments' ),
-				'description'  => __( 'Buyers that create an account on your store may save their PayPal account for faster checkout. Note that you may not present Pay Later messages when using this feature.', 'woocommerce-paypal-payments' ),
-				'default'      => false,
-				'screens'      => array(
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
+				'gateway'      => 'all',
 			),
 			'logging_enabled'                => array(
 				'title'        => __( 'Logging', 'woocommerce-paypal-payments' ),
