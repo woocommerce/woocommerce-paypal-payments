@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Onboarding\State;
@@ -20,7 +21,6 @@ use WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar;
  * Class SettingsListener
  */
 class SettingsListener {
-
 
 	const NONCE = 'ppcp-settings';
 
@@ -60,6 +60,13 @@ class SettingsListener {
 	private $state;
 
 	/**
+	 * The Bearer.
+	 *
+	 * @var Bearer
+	 */
+	private $bearer;
+
+	/**
 	 * SettingsListener constructor.
 	 *
 	 * @param Settings         $settings The settings.
@@ -67,13 +74,15 @@ class SettingsListener {
 	 * @param WebhookRegistrar $webhook_registrar The Webhook Registrar.
 	 * @param Cache            $cache The Cache.
 	 * @param State            $state The state.
+	 * @param Bearer           $bearer The bearer.
 	 */
 	public function __construct(
 		Settings $settings,
 		array $setting_fields,
 		WebhookRegistrar $webhook_registrar,
 		Cache $cache,
-		State $state
+		State $state,
+		Bearer $bearer
 	) {
 
 		$this->settings          = $settings;
@@ -81,6 +90,7 @@ class SettingsListener {
 		$this->webhook_registrar = $webhook_registrar;
 		$this->cache             = $cache;
 		$this->state             = $state;
+		$this->bearer            = $bearer;
 	}
 
 	/**
@@ -135,6 +145,17 @@ class SettingsListener {
 	public function listen_for_vaulting_enabled() {
 		if ( ! $this->is_valid_site_request() ) {
 			return;
+		}
+
+		$redirect_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' );
+
+		$token = $this->bearer->bearer();
+		if ( ! $token->vaulting_available() ) {
+			$this->settings->set( 'vault_enabled', false );
+			$this->settings->persist();
+
+			wp_safe_redirect( $redirect_url, 302 );
+			exit;
 		}
 
 		/**

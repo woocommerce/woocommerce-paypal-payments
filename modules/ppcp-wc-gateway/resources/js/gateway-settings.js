@@ -24,6 +24,10 @@
         function updateCheckboxes() {
             atLeastOneChecked(payLaterMessagingCheckboxes) ? disableAll(vaultingCheckboxes) : enableAll(vaultingCheckboxes)
             atLeastOneChecked(vaultingCheckboxes) ? disableAll(payLaterMessagingCheckboxes) : enableAll(payLaterMessagingCheckboxes)
+
+            if(PayPalCommerceGatewaySettings.vaulting_features_available !== '1' ) {
+                disableAll(vaultingCheckboxes)
+            }
         }
 
         updateCheckboxes()

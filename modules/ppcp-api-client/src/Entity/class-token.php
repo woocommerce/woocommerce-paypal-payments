@@ -100,6 +100,22 @@ class Token {
 	}
 
 	/**
+	 * Checks if vaulting is available in access token scope.
+	 *
+	 * @return bool Whether vaulting features are enabled or not.
+	 */
+	public function vaulting_available() {
+		if ( strpos(
+			$this->json->scope,
+			'https://uri.paypal.com/services/vault/payment-tokens/readwrite'
+		) !== false ) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
 	 * Validates whether a JSON object can be transformed to a Token object.
 	 *
 	 * @param \stdClass $json The JSON object.
