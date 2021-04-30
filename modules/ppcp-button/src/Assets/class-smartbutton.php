@@ -404,7 +404,7 @@ class SmartButton implements SmartButtonInterface {
 				'ppcp-smart-button',
 				$this->module_url . '/assets/js/button.js',
 				array( 'jquery' ),
-				1,
+				'1.3.1',
 				true
 			);
 
