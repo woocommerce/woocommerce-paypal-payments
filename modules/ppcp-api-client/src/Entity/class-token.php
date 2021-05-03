@@ -104,7 +104,11 @@ class Token {
 	 *
 	 * @return bool Whether vaulting features are enabled or not.
 	 */
-	public function vaulting_available() {
+	public function vaulting_available(): bool {
+		if ( ! isset( $this->json->scope ) ) {
+			return false;
+		}
+
 		if ( strpos(
 			$this->json->scope,
 			'https://uri.paypal.com/services/vault/payment-tokens/readwrite'

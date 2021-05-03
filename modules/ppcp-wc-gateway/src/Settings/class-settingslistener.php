@@ -147,15 +147,11 @@ class SettingsListener {
 			return;
 		}
 
-		$redirect_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' );
-
 		$token = $this->bearer->bearer();
 		if ( ! $token->vaulting_available() ) {
 			$this->settings->set( 'vault_enabled', false );
 			$this->settings->persist();
-
-			wp_safe_redirect( $redirect_url, 302 );
-			exit;
+			return;
 		}
 
 		/**
