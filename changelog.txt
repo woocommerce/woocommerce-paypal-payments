@@ -1,5 +1,8 @@
 *** Changelog ***
 
+= 1.3.1 - 2021-04-30 =
+* Fix - Fix Credit Card fields for non logged-in users. #152
+
 = 1.3.0 - 2021-04-28 =
 * Add - Client-side vaulting and allow WooCommerce Subscriptions product renewals through payment tokens. #134
 * Add - Send transaction ids to woocommerce. #125

@@ -25,11 +25,6 @@ const storeToken = (token) => {
 }
 
 const dataClientIdAttributeHandler = (script, config) => {
-    if(config.user === 0) {
-        document.body.append(script);
-        return;
-    }
-
     fetch(config.endpoint, {
         method: 'POST',
         body: JSON.stringify({
