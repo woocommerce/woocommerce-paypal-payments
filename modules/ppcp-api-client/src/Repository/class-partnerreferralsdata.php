@@ -106,6 +106,7 @@ class PartnerReferralsData {
 									'FUTURE_PAYMENT',
 									'REFUND',
 									'ADVANCED_TRANSACTIONS_SEARCH',
+									'VAULT',
 								),
 								'seller_nonce' => $this->nonce(),
 							),
