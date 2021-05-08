@@ -98,6 +98,7 @@ define( 'PPCP_FLAG_SUBSCRIPTION', true );
 		'plugins_loaded',
 		function () {
 			init();
+			add_woocommerce_inbox_variant();
 		}
 	);
 	register_activation_hook(
@@ -140,3 +141,19 @@ define( 'PPCP_FLAG_SUBSCRIPTION', true );
 	);
 
 } )();
+
+
+/**
+ * Add woocommerce_inbox_variant for the Remote Inbox Notification.
+ *
+ * P2 post can be found at https://wp.me/paJDYF-1uJ.
+ */
+if ( ! function_exists( 'add_woocommerce_inbox_variant' ) ) {
+	function add_woocommerce_inbox_variant() {
+		$config_name = 'woocommerce_inbox_variant';
+		if ( false === get_option( $config_name, false ) ) {
+			update_option( $config_name, wp_rand( 1, 5 ) );
+		}
+	}
+}
+register_activation_hook( __FILE__, 'add_woocommerce_inbox_variant' );
