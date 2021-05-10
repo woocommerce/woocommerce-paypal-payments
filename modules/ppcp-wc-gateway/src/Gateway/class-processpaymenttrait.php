@@ -42,10 +42,11 @@ trait ProcessPaymentTrait {
 		}
 
 		/**
-		 * If customer has chosed a saved credit card payment.
+		 * If customer has chosen a saved credit card payment.
 		 */
 		$saved_credit_card = filter_input( INPUT_POST, 'saved_credit_card', FILTER_SANITIZE_STRING );
-		if ( $saved_credit_card ) {
+		$pay_for_order     = filter_input( INPUT_GET, 'pay_for_order', FILTER_SANITIZE_STRING );
+		if ( $saved_credit_card && ! isset( $pay_for_order ) ) {
 
 			$user_id  = (int) $wc_order->get_customer_id();
 			$customer = new \WC_Customer( $user_id );

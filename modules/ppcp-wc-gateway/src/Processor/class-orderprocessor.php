@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\Subscription\Repository\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
@@ -30,6 +31,13 @@ class OrderProcessor {
 	 * @var bool
 	 */
 	protected $sandbox_mode;
+
+	/**
+	 * The payment token repository.
+	 *
+	 * @var PaymentTokenRepository
+	 */
+	protected $payment_token_repository;
 
 	/**
 	 * The Session Handler.
@@ -98,6 +106,7 @@ class OrderProcessor {
 	 * @param Settings                    $settings The Settings.
 	 * @param LoggerInterface             $logger A logger service.
 	 * @param bool                        $sandbox_mode Whether sandbox mode enabled.
+	 * @param PaymentTokenRepository      $payment_token_repository The payment token repository.
 	 */
 	public function __construct(
 		SessionHandler $session_handler,
@@ -107,7 +116,8 @@ class OrderProcessor {
 		AuthorizedPaymentsProcessor $authorized_payments_processor,
 		Settings $settings,
 		LoggerInterface $logger,
-		bool $sandbox_mode
+		bool $sandbox_mode,
+		PaymentTokenRepository $payment_token_repository
 	) {
 
 		$this->session_handler               = $session_handler;
@@ -118,6 +128,7 @@ class OrderProcessor {
 		$this->settings                      = $settings;
 		$this->sandbox_mode                  = $sandbox_mode;
 		$this->logger                        = $logger;
+		$this->payment_token_repository      = $payment_token_repository;
 	}
 
 	/**

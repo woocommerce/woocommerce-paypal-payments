@@ -11,8 +11,9 @@ namespace WooCommerce\PayPalCommerce\Subscription;
 
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokenEndpoint;
+use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\Subscription\Repository\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use Interop\Container\ServiceProviderInterface;
@@ -58,6 +59,16 @@ class SubscriptionModule implements ModuleInterface {
 			10,
 			2
 		);
+
+		add_action(
+			'woocommerce_subscription_payment_complete',
+			function ( $subscription ) use ( $container ) {
+				$payment_token_repository = $container->get( 'subscription.repository.payment-token' );
+				$logger                   = $container->get( 'woocommerce.logger.woocommerce' );
+
+				$this->add_payment_token_id( $subscription, $payment_token_repository, $logger );
+			}
+		);
 	}
 
 	/**
@@ -82,5 +93,39 @@ class SubscriptionModule implements ModuleInterface {
 	 * @return string|void
 	 */
 	public function getKey() {
+	}
+
+	/**
+	 * Adds Payment token ID to subscription.
+	 *
+	 * @param \WC_Subscription       $subscription The subscription.
+	 * @param PaymentTokenRepository $payment_token_repository The payment repository.
+	 * @param LoggerInterface        $logger The logger.
+	 */
+	private function add_payment_token_id(
+		\WC_Subscription $subscription,
+		PaymentTokenRepository $payment_token_repository,
+		LoggerInterface $logger
+	) {
+		try {
+			$tokens = $payment_token_repository->all_for_user_id( $subscription->get_customer_id() );
+			if ( $tokens ) {
+				$subscription_id = $subscription->get_id();
+				$latest_token_id = end( $tokens )->id() ?: '';
+				update_post_meta( $subscription_id, 'payment_token_id', $latest_token_id, true );
+			}
+		} catch ( RuntimeException $error ) {
+			$message = sprintf(
+				// translators: %1$s is the payment token Id, %2$s is the error message.
+				__(
+					'Could not add token Id to subscription %1$s: %2$s',
+					'woocommerce-paypal-payments'
+				),
+				$subscription->get_id(),
+				$error->getMessage()
+			);
+
+			$logger->log( 'warning', $message );
+		}
 	}
 }

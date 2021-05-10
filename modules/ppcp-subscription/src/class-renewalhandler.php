@@ -203,6 +203,19 @@ class RenewalHandler {
 			);
 		}
 
+		$subscription = wcs_get_subscription( $wc_order->get_meta( '_subscription_renewal' ) );
+		if ( $subscription ) {
+			$subscription_id = $subscription->get_id();
+			$token_id        = get_post_meta( $subscription_id, 'payment_token_id', true );
+			if ( $token_id ) {
+				foreach ( $tokens as $token ) {
+					if ( $token_id === $token->id() ) {
+						return $token;
+					}
+				}
+			}
+		}
+
 		return current( $tokens );
 	}
 
