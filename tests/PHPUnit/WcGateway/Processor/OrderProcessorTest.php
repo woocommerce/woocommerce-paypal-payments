@@ -272,8 +272,7 @@ class OrderProcessorTest extends TestCase
         $wcOrder->expects('set_transaction_id')
             ->with($transactionId);
         $wcOrder
-            ->expects('update_status')
-            ->with('processing', 'Payment received.');
+	        ->expects('payment_complete');
         $this->assertTrue($testee->process($wcOrder));
     }
 

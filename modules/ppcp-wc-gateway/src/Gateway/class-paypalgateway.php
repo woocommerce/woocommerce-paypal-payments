@@ -216,10 +216,9 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			$wc_order->add_order_note(
 				__( 'Payment successfully captured.', 'woocommerce-paypal-payments' )
 			);
-
-			$wc_order->set_status( 'processing' );
 			$wc_order->update_meta_data( self::CAPTURED_META_KEY, 'true' );
 			$wc_order->save();
+			$wc_order->payment_complete();
 			return true;
 		}
 
@@ -228,11 +227,11 @@ class PayPalGateway extends \WC_Payment_Gateway {
 				$wc_order->add_order_note(
 					__( 'Payment successfully captured.', 'woocommerce-paypal-payments' )
 				);
-				$wc_order->set_status( 'processing' );
 			}
 
 			$wc_order->update_meta_data( self::CAPTURED_META_KEY, 'true' );
 			$wc_order->save();
+			$wc_order->payment_complete();
 			return true;
 		}
 		return false;
