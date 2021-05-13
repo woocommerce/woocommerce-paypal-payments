@@ -150,9 +150,9 @@ define( 'PPCP_FLAG_SUBSCRIPTION', true );
  */
 if ( ! function_exists( 'add_woocommerce_inbox_variant' ) ) {
 	function add_woocommerce_inbox_variant() {
-		$option = 'woocommerce_inbox_variant_binary';
+		$option = 'woocommerce_inbox_variant_assignment';
 		if ( false === get_option( $option, false ) ) {
-			update_option( $option, wp_rand( 1, 2 ) );
+			update_option( $option, wp_rand( 1, 12 ) );
 		}
 	}
 }
