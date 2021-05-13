@@ -31,6 +31,8 @@ class ApplicationContextRepositoryTest extends TestCase
         return [
             'de-DE' => ['de-DE', 'de-DE'],
             'de-DE-formal' => ['de-DE-formal', 'de-DE'],
+            'de' => ['de', 'de'],
+            'ceb' => ['ceb', 'en'],
         ];
     }
 }

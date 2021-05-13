@@ -67,12 +67,16 @@ class ApplicationContextRepository {
 	 */
 	protected function valid_bcp47_code() {
 		$locale = str_replace( '_', '-', get_user_locale() );
-		$parts  = explode( '-', $locale );
 
-		if ( count( $parts ) < 3 ) {
+		if ( preg_match( '/^[a-z]{2}(?:-[A-Z][a-z]{3})?(?:-(?:[A-Z]{2}))?$/', $locale ) ) {
 			return $locale;
 		}
 
-		return substr( $locale, 0, strrpos( $locale, '-' ) );
+		$parts = explode( '-', $locale );
+		if ( count( $parts ) === 3 ) {
+			return substr( $locale, 0, strrpos( $locale, '-' ) );
+		}
+
+		return 'en';
 	}
 }

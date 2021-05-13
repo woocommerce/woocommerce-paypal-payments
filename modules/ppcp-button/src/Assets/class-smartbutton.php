@@ -726,7 +726,6 @@ class SmartButton implements SmartButtonInterface {
 		$params = array(
 			'client-id'        => $this->client_id,
 			'currency'         => get_woocommerce_currency(),
-			'locale'           => $this->valid_locale_code(),
 			'integration-date' => PAYPAL_INTEGRATION_DATE,
 			'components'       => implode( ',', $this->components() ),
 			'vault'            => $this->can_save_vault_token() ?
@@ -956,21 +955,5 @@ class SmartButton implements SmartButtonInterface {
 			}
 		}
 		return false;
-	}
-
-	/**
-	 * Returns a PayPal-supported locale code, for example de_DE_formal becomes de_DE.
-	 *
-	 * @return string
-	 */
-	protected function valid_locale_code(): string {
-		$locale = get_user_locale();
-		$parts  = explode( '_', $locale );
-
-		if ( count( $parts ) < 3 ) {
-			return $locale;
-		}
-
-		return substr( $locale, 0, strrpos( $locale, '_' ) );
 	}
 }
