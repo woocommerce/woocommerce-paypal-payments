@@ -102,6 +102,22 @@ class PaymentTokenRepository {
 	}
 
 	/**
+	 * Create payment token for customer.
+	 *
+	 * @param int   $customer_id The customer Id.
+	 * @param array $source The payment source.
+	 * @return PaymentToken
+	 * @throws RuntimeException If the request fails.
+	 */
+	public function create( $customer_id, $source ): PaymentToken {
+		try {
+			return $this->endpoint->create( $customer_id, $source );
+		} catch ( RuntimeException $exception ) {
+			throw new RuntimeException( $exception->getMessage() );
+		}
+	}
+
+	/**
 	 * Fetch PaymentToken from PayPal for a user.
 	 *
 	 * @param int $id The user id.
