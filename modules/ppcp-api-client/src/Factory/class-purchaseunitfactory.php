@@ -119,7 +119,7 @@ class PurchaseUnitFactory {
 		$reference_id    = 'default';
 		$description     = '';
 		$payee           = $this->payee_repository->payee();
-		$wc_order_id     = $order->get_id();
+		$wc_order_id     = $order->get_order_number();
 		$custom_id       = $this->prefix . $wc_order_id;
 		$invoice_id      = $this->prefix . $wc_order_id;
 		$soft_descriptor = '';
@@ -134,7 +134,11 @@ class PurchaseUnitFactory {
 			$invoice_id,
 			$soft_descriptor
 		);
-		return $purchase_unit;
+		return apply_filters(
+			'woocommerce-paypal-payments.purchase-unit.from-wc-order',
+			$purchase_unit,
+			$order
+		);
 	}
 
 	/**
