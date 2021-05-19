@@ -148,7 +148,6 @@ return array(
 		$settings                      = $container->get( 'wcgateway.settings' );
 		$environment                   = $container->get( 'onboarding.environment' );
 		$logger                        = $container->get( 'woocommerce.logger.woocommerce' );
-		$payment_token_repository = $container->get( 'subscription.repository.payment-token' );
 		return new OrderProcessor(
 			$session_handler,
 			$order_endpoint,
@@ -157,8 +156,7 @@ return array(
 			$authorized_payments_processor,
 			$settings,
 			$logger,
-			$environment->current_environment_is( Environment::SANDBOX ),
-			$payment_token_repository
+			$environment->current_environment_is( Environment::SANDBOX )
 		);
 	},
 	'wcgateway.processor.refunds'                  => static function ( $container ): RefundProcessor {

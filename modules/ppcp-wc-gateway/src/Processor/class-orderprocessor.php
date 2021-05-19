@@ -106,7 +106,6 @@ class OrderProcessor {
 	 * @param Settings                    $settings The Settings.
 	 * @param LoggerInterface             $logger A logger service.
 	 * @param bool                        $sandbox_mode Whether sandbox mode enabled.
-	 * @param PaymentTokenRepository      $payment_token_repository The payment token repository.
 	 */
 	public function __construct(
 		SessionHandler $session_handler,
@@ -116,8 +115,7 @@ class OrderProcessor {
 		AuthorizedPaymentsProcessor $authorized_payments_processor,
 		Settings $settings,
 		LoggerInterface $logger,
-		bool $sandbox_mode,
-		PaymentTokenRepository $payment_token_repository
+		bool $sandbox_mode
 	) {
 
 		$this->session_handler               = $session_handler;
@@ -128,7 +126,6 @@ class OrderProcessor {
 		$this->settings                      = $settings;
 		$this->sandbox_mode                  = $sandbox_mode;
 		$this->logger                        = $logger;
-		$this->payment_token_repository      = $payment_token_repository;
 	}
 
 	/**
