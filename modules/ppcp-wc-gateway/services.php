@@ -46,7 +46,7 @@ return array(
 		$refund_processor    = $container->get( 'wcgateway.processor.refunds' );
 		$state               = $container->get( 'onboarding.state' );
 		$transaction_url_provider = $container->get( 'wcgateway.transaction-url-provider' );
-
+		$subscription_helper = $container->get( 'subscription.helper' );
 		return new PayPalGateway(
 			$settings_renderer,
 			$order_processor,
@@ -56,7 +56,8 @@ return array(
 			$session_handler,
 			$refund_processor,
 			$state,
-			$transaction_url_provider
+			$transaction_url_provider,
+			$subscription_helper
 		);
 	},
 	'wcgateway.credit-card-gateway'                => static function ( $container ): CreditCardGateway {
@@ -74,6 +75,7 @@ return array(
 		$purchase_unit_factory = $container->get( 'api.factory.purchase-unit' );
 		$payer_factory = $container->get( 'api.factory.payer' );
 		$order_endpoint = $container->get( 'api.endpoint.order' );
+		$subscription_helper = $container->get( 'subscription.helper' );
 		return new CreditCardGateway(
 			$settings_renderer,
 			$order_processor,
@@ -88,7 +90,8 @@ return array(
 			$payment_token_repository,
 			$purchase_unit_factory,
 			$payer_factory,
-			$order_endpoint
+			$order_endpoint,
+			$subscription_helper
 		);
 	},
 	'wcgateway.disabler'                           => static function ( $container ): DisableGateways {

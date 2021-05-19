@@ -95,8 +95,8 @@ trait ProcessPaymentTrait {
 		/**
 		 * If customer has chosen change Subscription payment.
 		 */
-		if ( $this->has_subscription( $order_id ) && $this->is_subscription_change_payment() ) {
-			if ( $saved_credit_card ) {
+		if ( $this->subscription_helper->has_subscription( $order_id ) && $this->subscription_helper->is_subscription_change_payment() ) {
+			if ( 'ppcp-credit-card-gateway' === $this->id && $saved_credit_card ) {
 				update_post_meta( $order_id, 'payment_token_id', $saved_credit_card );
 
 				$this->session_handler->destroy_session_data();
@@ -106,40 +106,15 @@ trait ProcessPaymentTrait {
 				);
 			}
 
-			$credit_card_number = filter_input( INPUT_POST, 'ppcp-credit-card-gateway-card-number', FILTER_SANITIZE_STRING );
-			$credit_card_expiry = filter_input( INPUT_POST, 'ppcp-credit-card-gateway-card-expiry', FILTER_SANITIZE_STRING );
-			$credit_card_cvc    = filter_input( INPUT_POST, 'ppcp-credit-card-gateway-card-cvc', FILTER_SANITIZE_STRING );
+			$saved_paypal_payment = filter_input( INPUT_POST, 'saved_paypal_payment', FILTER_SANITIZE_STRING );
+			if ( 'ppcp-gateway' === $this->id && $saved_paypal_payment ) {
+				update_post_meta( $order_id, 'payment_token_id', $saved_paypal_payment );
 
-			if ( $credit_card_number && $credit_card_expiry && $credit_card_cvc ) {
-				try {
-					$token = $this->payment_token_repository->create(
-						$wc_order->get_customer_id(),
-						array(
-							'credit_card_number' => $credit_card_number,
-							'credit_card_expiry' => $credit_card_expiry,
-							'credit_card_cvc'    => $credit_card_cvc,
-						)
-					);
-
-					update_post_meta( $order_id, 'payment_token_id', $token->id() );
-
-					$this->session_handler->destroy_session_data();
-					return array(
-						'result'   => 'success',
-						'redirect' => $this->get_return_url( $wc_order ),
-					);
-				} catch ( RuntimeException $exception ) {
-					wc_add_notice(
-						$exception->getMessage(),
-						'error'
-					);
-
-					$this->session_handler->destroy_session_data();
-					return array(
-						'result'   => 'failure',
-						'redirect' => $this->get_return_url( $wc_order ),
-					);
-				}
+				$this->session_handler->destroy_session_data();
+				return array(
+					'result'   => 'success',
+					'redirect' => $this->get_return_url( $wc_order ),
+				);
 			}
 		}
 
@@ -225,26 +200,5 @@ trait ProcessPaymentTrait {
 			return true;
 		}
 		return false;
-	}
-
-	/**
-	 * Is $order_id a subscription?
-	 *
-	 * @param  int $order_id The order Id.
-	 * @return boolean Whether order is a subscription or not.
-	 */
-	private function has_subscription( $order_id ): bool {
-		return ( function_exists( 'wcs_order_contains_subscription' ) && ( wcs_order_contains_subscription( $order_id ) || wcs_is_subscription( $order_id ) || wcs_order_contains_renewal( $order_id ) ) );
-	}
-
-	/**
-	 * Checks if page is pay for order and change subscription payment page.
-	 *
-	 * @return bool
-	 */
-	private function is_subscription_change_payment(): bool {
-		$pay_for_order         = filter_input( INPUT_GET, 'pay_for_order', FILTER_SANITIZE_STRING );
-		$change_payment_method = filter_input( INPUT_GET, 'change_payment_method', FILTER_SANITIZE_STRING );
-		return ( isset( $pay_for_order ) && isset( $change_payment_method ) );
 	}
 }

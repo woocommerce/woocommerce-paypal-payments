@@ -83,4 +83,25 @@ class SubscriptionHelper {
 
 		return class_exists( \WC_Subscriptions::class );
 	}
+
+	/**
+	 * Checks if order contains subscription.
+	 *
+	 * @param  int $order_id The order Id.
+	 * @return boolean Whether order is a subscription or not.
+	 */
+	public function has_subscription( $order_id ): bool {
+		return ( function_exists( 'wcs_order_contains_subscription' ) && ( wcs_order_contains_subscription( $order_id ) || wcs_is_subscription( $order_id ) || wcs_order_contains_renewal( $order_id ) ) );
+	}
+
+	/**
+	 * Checks if page is pay for order and change subscription payment page.
+	 *
+	 * @return bool Whether page is change subscription or not.
+	 */
+	public function is_subscription_change_payment(): bool {
+		$pay_for_order         = filter_input( INPUT_GET, 'pay_for_order', FILTER_SANITIZE_STRING );
+		$change_payment_method = filter_input( INPUT_GET, 'change_payment_method', FILTER_SANITIZE_STRING );
+		return ( isset( $pay_for_order ) && isset( $change_payment_method ) );
+	}
 }
