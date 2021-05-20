@@ -726,7 +726,6 @@ class SmartButton implements SmartButtonInterface {
 		$params = array(
 			'client-id'        => $this->client_id,
 			'currency'         => get_woocommerce_currency(),
-			'locale'           => get_user_locale(),
 			'integration-date' => PAYPAL_INTEGRATION_DATE,
 			'components'       => implode( ',', $this->components() ),
 			'vault'            => $this->can_save_vault_token() ?
