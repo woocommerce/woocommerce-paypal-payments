@@ -135,7 +135,7 @@ class PurchaseUnitFactory {
 			$soft_descriptor
 		);
 		return apply_filters(
-			'woocommerce-paypal-payments.purchase-unit.from-wc-order',
+			'woocommerce_paypal_payments_purchase_unit_from_wc_order',
 			$purchase_unit,
 			$order
 		);
