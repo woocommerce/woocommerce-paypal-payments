@@ -133,7 +133,8 @@ return array(
 		$webhook_registrar = $container->get( 'webhook.registrar' );
 		$state            = $container->get( 'onboarding.state' );
 		$cache = new Cache( 'ppcp-paypal-bearer' );
-		return new SettingsListener( $settings, $fields, $webhook_registrar, $cache, $state );
+		$bearer = $container->get( 'api.bearer' );
+		return new SettingsListener( $settings, $fields, $webhook_registrar, $cache, $state, $bearer );
 	},
 	'wcgateway.order-processor'                    => static function ( $container ): OrderProcessor {
 
@@ -182,7 +183,6 @@ return array(
 	'wcgateway.settings.fields'                    => static function ( $container ): array {
 
 		$state = $container->get( 'onboarding.state' );
-		$settings     = $container->get( 'wcgateway.settings' );
 		$messages_disclaimers = $container->get( 'button.helper.messages-disclaimers' );
 
 		$fields              = array(
@@ -634,8 +634,9 @@ return array(
 				'title'        => __( 'Vaulting', 'woocommerce-paypal-payments' ),
 				'type'         => 'checkbox',
 				'desc_tip'     => true,
-				'label' => sprintf(
-					__('To use vaulting features, you must %1$senable vaulting on your account%2$s.', 'woocommerce-paypal-payments'),
+				'label'        => sprintf(
+					// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+					__( 'To use vaulting features, you must %1$senable vaulting on your account%2$s.', 'woocommerce-paypal-payments' ),
 					'<a 
 						href="https://docs.woocommerce.com/document/woocommerce-paypal-payments/#enable-vaulting-on-your-live-account"
 						target="_blank"

@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Assets;
 
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
+
 /**
  * Class SettingsPageAssets
  */
@@ -20,6 +22,7 @@ class SettingsPageAssets {
 	 * @var string
 	 */
 	private $module_url;
+
 	/**
 	 * The filesystem path to the module dir.
 	 *
@@ -28,23 +31,33 @@ class SettingsPageAssets {
 	private $module_path;
 
 	/**
+	 * The bearer.
+	 *
+	 * @var Bearer
+	 */
+	private $bearer;
+
+	/**
 	 * Assets constructor.
 	 *
 	 * @param string $module_url The url of this module.
 	 * @param string $module_path The filesystem path to this module.
+	 * @param Bearer $bearer The bearer.
 	 */
-	public function __construct( string $module_url, string $module_path ) {
+	public function __construct( string $module_url, string $module_path, Bearer $bearer ) {
 		$this->module_url  = $module_url;
 		$this->module_path = $module_path;
+		$this->bearer      = $bearer;
 	}
 
 	/**
 	 * Register assets provided by this module.
 	 */
 	public function register_assets() {
+		$bearer = $this->bearer;
 		add_action(
 			'admin_enqueue_scripts',
-			function() {
+			function() use ( $bearer ) {
 				if ( ! is_admin() || is_ajax() ) {
 					return;
 				}
@@ -53,7 +66,7 @@ class SettingsPageAssets {
 					return;
 				}
 
-				$this->register_admin_assets();
+				$this->register_admin_assets( $bearer );
 			}
 		);
 
@@ -84,8 +97,10 @@ class SettingsPageAssets {
 
 	/**
 	 * Register assets for admin pages.
+	 *
+	 * @param Bearer $bearer The bearer.
 	 */
-	private function register_admin_assets() {
+	private function register_admin_assets( Bearer $bearer ) {
 		$gateway_settings_script_path = trailingslashit( $this->module_path ) . 'assets/js/gateway-settings.js';
 
 		wp_enqueue_script(
@@ -94,6 +109,15 @@ class SettingsPageAssets {
 			array(),
 			file_exists( $gateway_settings_script_path ) ? (string) filemtime( $gateway_settings_script_path ) : null,
 			true
+		);
+
+		$token = $bearer->bearer();
+		wp_localize_script(
+			'ppcp-gateway-settings',
+			'PayPalCommerceGatewaySettings',
+			array(
+				'vaulting_features_available' => $token->vaulting_available(),
+			)
 		);
 	}
 }
