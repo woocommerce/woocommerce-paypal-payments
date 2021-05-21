@@ -445,4 +445,41 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	protected function environment(): Environment {
 		return $this->environment;
 	}
+
+	/**
+	 * Get required setting keys for setup.
+	 *
+	 * @return array Array of setting keys used for setup.
+	 */
+	public function get_required_settings_keys() {
+		return array(
+			'merchant_email',
+			'merchant_id',
+			'client_id',
+			'client_secret',
+		);
+	}
+
+	/**
+	 * Get the oAuth connection URL.
+	 *
+	 * @return string Connection URL.
+	 */
+	public function get_oauth_connection_url( $return_url = '' ) {
+		// @todo This will need to load a new script or two that handles the onboarding script and window data.
+		return null;
+	}
+
+	/**
+	 * Get help text to display during quick setup.
+	 */
+	public function get_setup_help_text() {
+		return sprintf(
+			__( 'Your API details can be obtained from your <a href="%s">Paypal developer account</a>, and your Merchant Id from your <a href="%s">Paypal Business account</a>. Don’t have a Paypal account? <a href="%s">Create one.</a>', 'woocommerce-paypal-payments' ),
+			'https://developer.paypal.com/docs/api-basics/manage-apps/#create-or-edit-sandbox-and-live-apps',
+			'https://www.paypal.com/ca/smarthelp/article/FAQ3850',
+			'https://www.paypal.com/us/business'
+		);
+	}
+
 }
