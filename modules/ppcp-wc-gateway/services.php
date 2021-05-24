@@ -636,7 +636,7 @@ return array(
 				'desc_tip'     => true,
 				'label'        => sprintf(
 					// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
-					__( 'To use vaulting features, you must %1$senable vaulting on your account%2$s.', 'woocommerce-paypal-payments' ),
+					__( 'Enable saved cards and subscription features on your store. To use vaulting features, you must %1$senable vaulting on your account%2$s.', 'woocommerce-paypal-payments' ),
 					'<a 
 						href="https://docs.woocommerce.com/document/woocommerce-paypal-payments/#enable-vaulting-on-your-live-account"
 						target="_blank"
@@ -1807,7 +1807,6 @@ return array(
 			unset( $fields['disable_funding']['options']['card'] );
 		}
 
-		$dcc_applies = $container->get( 'api.helpers.dccapplies' );
 		/**
 		 * Depending on your store location, some credit cards can't be used.
 		 * Here, we filter them out.
@@ -1816,6 +1815,7 @@ return array(
 		 *
 		 * @var DccApplies $dcc_applies
 		 */
+		$dcc_applies = $container->get( 'api.helpers.dccapplies' );
 		$card_options = $fields['disable_cards']['options'];
 		foreach ( $card_options as $card => $label ) {
 			if ( $dcc_applies->can_process_card( $card ) ) {
@@ -1825,6 +1825,18 @@ return array(
 		}
 		$fields['disable_cards']['options'] = $card_options;
 		$fields['card_icons']['options'] = $card_options;
+
+		/**
+		 * Display vault message on Pay Later label if vault is enabled.
+		 */
+		$settings = $container->get( 'wcgateway.settings' );
+		if ( $settings->has( 'vault_enabled' ) && $settings->get( 'vault_enabled' ) ) {
+			$message = __( "You have PayPal vaulting enabled, that's why Pay Later Messaging options are unavailable now. You cannot use both features at the same time.", 'woocommerce-paypal-payments' );
+			$fields['message_enabled']['label'] = $message;
+			$fields['message_product_enabled']['label'] = $message;
+			$fields['message_cart_enabled']['label'] = $message;
+		}
+
 		return $fields;
 	},
 
