@@ -42,10 +42,11 @@ trait ProcessPaymentTrait {
 		}
 
 		/**
-		 * If customer has chosed a saved credit card payment.
+		 * If customer has chosen a saved credit card payment.
 		 */
 		$saved_credit_card = filter_input( INPUT_POST, 'saved_credit_card', FILTER_SANITIZE_STRING );
-		if ( $saved_credit_card ) {
+		$pay_for_order     = filter_input( INPUT_GET, 'pay_for_order', FILTER_SANITIZE_STRING );
+		if ( $saved_credit_card && ! isset( $pay_for_order ) ) {
 
 			$user_id  = (int) $wc_order->get_customer_id();
 			$customer = new \WC_Customer( $user_id );
@@ -88,6 +89,32 @@ trait ProcessPaymentTrait {
 				$this->session_handler->destroy_session_data();
 				wc_add_notice( $error->getMessage(), 'error' );
 				return null;
+			}
+		}
+
+		/**
+		 * If customer has chosen change Subscription payment.
+		 */
+		if ( $this->subscription_helper->has_subscription( $order_id ) && $this->subscription_helper->is_subscription_change_payment() ) {
+			if ( 'ppcp-credit-card-gateway' === $this->id && $saved_credit_card ) {
+				update_post_meta( $order_id, 'payment_token_id', $saved_credit_card );
+
+				$this->session_handler->destroy_session_data();
+				return array(
+					'result'   => 'success',
+					'redirect' => $this->get_return_url( $wc_order ),
+				);
+			}
+
+			$saved_paypal_payment = filter_input( INPUT_POST, 'saved_paypal_payment', FILTER_SANITIZE_STRING );
+			if ( 'ppcp-gateway' === $this->id && $saved_paypal_payment ) {
+				update_post_meta( $order_id, 'payment_token_id', $saved_paypal_payment );
+
+				$this->session_handler->destroy_session_data();
+				return array(
+					'result'   => 'success',
+					'redirect' => $this->get_return_url( $wc_order ),
+				);
 			}
 		}
 

@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 
+use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
@@ -70,14 +71,22 @@ class ApproveOrderEndpoint implements EndpointInterface {
 	private $dcc_applies;
 
 	/**
+	 * The logger.
+	 *
+	 * @var LoggerInterface
+	 */
+	protected $logger;
+
+	/**
 	 * ApproveOrderEndpoint constructor.
 	 *
-	 * @param RequestData    $request_data The request data helper.
-	 * @param OrderEndpoint  $order_endpoint The order endpoint.
-	 * @param SessionHandler $session_handler The session handler.
-	 * @param ThreeDSecure   $three_d_secure The 3d secure helper object.
-	 * @param Settings       $settings The settings.
-	 * @param DccApplies     $dcc_applies The DCC applies object.
+	 * @param RequestData     $request_data The request data helper.
+	 * @param OrderEndpoint   $order_endpoint The order endpoint.
+	 * @param SessionHandler  $session_handler The session handler.
+	 * @param ThreeDSecure    $three_d_secure The 3d secure helper object.
+	 * @param Settings        $settings The settings.
+	 * @param DccApplies      $dcc_applies The DCC applies object.
+	 * @param LoggerInterface $logger The logger.
 	 */
 	public function __construct(
 		RequestData $request_data,
@@ -85,7 +94,8 @@ class ApproveOrderEndpoint implements EndpointInterface {
 		SessionHandler $session_handler,
 		ThreeDSecure $three_d_secure,
 		Settings $settings,
-		DccApplies $dcc_applies
+		DccApplies $dcc_applies,
+		LoggerInterface $logger
 	) {
 
 		$this->request_data    = $request_data;
@@ -94,6 +104,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 		$this->threed_secure   = $three_d_secure;
 		$this->settings        = $settings;
 		$this->dcc_applies     = $dcc_applies;
+		$this->logger          = $logger;
 	}
 
 	/**
@@ -171,13 +182,14 @@ class ApproveOrderEndpoint implements EndpointInterface {
 			}
 
 			if ( ! $order->status()->is( OrderStatus::APPROVED ) ) {
-				throw new RuntimeException(
-					sprintf(
-					// translators: %s is the id of the order.
-						__( 'Order %s is not approved yet.', 'woocommerce-paypal-payments' ),
-						$data['order_id']
-					)
+				$message = sprintf(
+				// translators: %s is the id of the order.
+					__( 'Order %s is not approved yet.', 'woocommerce-paypal-payments' ),
+					$data['order_id']
 				);
+
+				$this->logger->log( 'error', $message );
+				throw new RuntimeException( $message );
 			}
 
 			$this->session_handler->replace_order( $order );

@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
@@ -82,6 +83,13 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	protected $transaction_url_provider;
 
 	/**
+	 * The subscription helper.
+	 *
+	 * @var SubscriptionHelper
+	 */
+	protected $subscription_helper;
+
+	/**
 	 * The Refund Processor.
 	 *
 	 * @var RefundProcessor
@@ -100,6 +108,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @param RefundProcessor             $refund_processor The Refund Processor.
 	 * @param State                       $state The state.
 	 * @param TransactionUrlProvider      $transaction_url_provider Service providing transaction view URL based on order.
+	 * @param SubscriptionHelper          $subscription_helper The subscription helper.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
@@ -110,7 +119,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		SessionHandler $session_handler,
 		RefundProcessor $refund_processor,
 		State $state,
-		TransactionUrlProvider $transaction_url_provider
+		TransactionUrlProvider $transaction_url_provider,
+		SubscriptionHelper $subscription_helper
 	) {
 
 		$this->id                       = self::ID;
@@ -165,6 +175,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 				'process_admin_options',
 			)
 		);
+		$this->subscription_helper = $subscription_helper;
 	}
 
 	/**

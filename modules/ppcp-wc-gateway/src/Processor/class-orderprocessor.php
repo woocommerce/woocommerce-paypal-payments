@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\Subscription\Repository\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
@@ -30,6 +31,13 @@ class OrderProcessor {
 	 * @var bool
 	 */
 	protected $sandbox_mode;
+
+	/**
+	 * The payment token repository.
+	 *
+	 * @var PaymentTokenRepository
+	 */
+	protected $payment_token_repository;
 
 	/**
 	 * The Session Handler.

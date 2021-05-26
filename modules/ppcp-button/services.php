@@ -139,13 +139,15 @@ return array(
 		$three_d_secure  = $container->get( 'button.helper.three-d-secure' );
 		$settings        = $container->get( 'wcgateway.settings' );
 		$dcc_applies     = $container->get( 'api.helpers.dccapplies' );
+		$logger                        = $container->get( 'woocommerce.logger.woocommerce' );
 		return new ApproveOrderEndpoint(
 			$request_data,
 			$order_endpoint,
 			$session_handler,
 			$three_d_secure,
 			$settings,
-			$dcc_applies
+			$dcc_applies,
+			$logger
 		);
 	},
 	'button.endpoint.data-client-id'    => static function( $container ) : DataClientIdEndpoint {
