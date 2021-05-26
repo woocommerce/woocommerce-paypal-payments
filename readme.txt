@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, e-commerce, store, sales, sell, 
 Requires at least: 5.3
 Tested up to: 5.7
 Requires PHP: 7.1
-Stable tag: 1.3.1
+Stable tag: 1.3.2
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -57,6 +57,17 @@ Follow the steps below to connect the plugin to your PayPal account:
 6. Main settings screen.
 
 == Changelog ==
+
+= 1.3.1 =
+* Fix - Improve Subscription plugin support. #161
+* Fix - Disable vault setting if vaulting feature is not available. #150
+* Fix - Cast item get_quantity into int. #168
+* Fix - Fix Credit Card form fields placeholder and label. #146
+* Fix - Filter PayPal-supported language codes. #154
+* Fix - Wrong order status for orders with contain only products which are both virtual and downloadable. #145
+* Fix - Use order_number instead of internal id when creating invoice Id. #163
+* Fix - Fix pay later messaging options. #141
+* Fix - UI/UX for vaulting settings. #166
 
 = 1.3.1 =
 * Fix - Fix Credit Card fields for non logged-in users. #152
