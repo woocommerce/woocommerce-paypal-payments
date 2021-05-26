@@ -17,7 +17,7 @@ namespace WooCommerce\PayPalCommerce\Button\Helper;
 class MessagesDisclaimers {
 
 	/**
-	 * Disclainers content by country.
+	 * Disclaimers content by country.
 	 *
 	 * @var array
 	 */

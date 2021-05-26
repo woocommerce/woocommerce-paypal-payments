@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Button\Assets;
 
-use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayeeRepository;
@@ -23,7 +22,7 @@ use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Subscription\Repository\PaymentTokenRepository;
-use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
@@ -200,18 +199,17 @@ class SmartButton implements SmartButtonInterface {
 				11
 			);
 
-			$payment_token_repository = $this->payment_token_repository;
 			add_filter(
 				'woocommerce_credit_card_form_fields',
-				function ( $default_fields, $id ) use ( $payment_token_repository ) {
-					if ( $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ) ) {
+				function ( $default_fields, $id ) {
+					if ( $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ) && CreditCardGateway::ID === $id ) {
 						$default_fields['card-vault'] = sprintf(
 							'<p class="form-row form-row-wide"><label for="vault"><input class="ppcp-credit-card-vault" type="checkbox" id="ppcp-credit-card-vault" name="vault">%s</label></p>',
 							esc_html__( 'Save your Credit Card', 'woocommerce-paypal-payments' )
 						);
 
-						$tokens = $payment_token_repository->all_for_user_id( get_current_user_id() );
-						if ( $tokens && $this->tokens_contains_card( $tokens ) ) {
+						$tokens = $this->payment_token_repository->all_for_user_id( get_current_user_id() );
+						if ( $tokens && $this->payment_token_repository->tokens_contains_card( $tokens ) ) {
 							$output = sprintf(
 								'<p class="form-row form-row-wide"><label>%1$s</label><select id="saved-credit-card" name="saved_credit_card"><option value="">%2$s</option>',
 								esc_html__( 'Or select a saved Credit Card payment', 'woocommerce-paypal-payments' ),
@@ -940,20 +938,5 @@ class SmartButton implements SmartButtonInterface {
 			$value = $value ? 'true' : 'false';
 		}
 		return (string) $value;
-	}
-
-	/**
-	 * Check if tokens has card source.
-	 *
-	 * @param PaymentToken[] $tokens The tokens.
-	 * @return bool Wether tokens contains card or not.
-	 */
-	protected function tokens_contains_card( $tokens ) {
-		foreach ( $tokens as $token ) {
-			if ( isset( $token->source()->card ) ) {
-				return true;
-			}
-		}
-		return false;
 	}
 }

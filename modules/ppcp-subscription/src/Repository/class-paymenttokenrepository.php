@@ -102,6 +102,36 @@ class PaymentTokenRepository {
 	}
 
 	/**
+	 * Check if tokens has card source.
+	 *
+	 * @param PaymentToken[] $tokens The tokens.
+	 * @return bool Whether tokens contains card or not.
+	 */
+	public function tokens_contains_card( $tokens ): bool {
+		foreach ( $tokens as $token ) {
+			if ( isset( $token->source()->card ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Check if tokens has PayPal source.
+	 *
+	 * @param PaymentToken[] $tokens The tokens.
+	 * @return bool Whether tokens contains card or not.
+	 */
+	public function tokens_contains_paypal( $tokens ): bool {
+		foreach ( $tokens as $token ) {
+			if ( isset( $token->source()->paypal ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * Fetch PaymentToken from PayPal for a user.
 	 *
 	 * @param int $id The user id.

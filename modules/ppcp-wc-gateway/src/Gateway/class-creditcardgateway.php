@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Subscription\Repository\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
@@ -37,6 +38,13 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 * @var TransactionUrlProvider
 	 */
 	protected $transaction_url_provider;
+
+	/**
+	 * The subscription helper.
+	 *
+	 * @var SubscriptionHelper
+	 */
+	protected $subscription_helper;
 
 	/**
 	 * The URL to the module.
@@ -97,6 +105,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 * @param PurchaseUnitFactory         $purchase_unit_factory The purchase unit factory.
 	 * @param PayerFactory                $payer_factory The payer factory.
 	 * @param  OrderEndpoint               $order_endpoint The order endpoint.
+	 * @param SubscriptionHelper          $subscription_helper The subscription helper.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
@@ -112,7 +121,8 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		PaymentTokenRepository $payment_token_repository,
 		PurchaseUnitFactory $purchase_unit_factory,
 		PayerFactory $payer_factory,
-		OrderEndpoint $order_endpoint
+		OrderEndpoint $order_endpoint,
+		SubscriptionHelper $subscription_helper
 	) {
 
 		$this->id                  = self::ID;
@@ -179,6 +189,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		$this->payer_factory            = $payer_factory;
 		$this->order_endpoint           = $order_endpoint;
 		$this->transaction_url_provider = $transaction_url_provider;
+		$this->subscription_helper      = $subscription_helper;
 	}
 
 	/**
