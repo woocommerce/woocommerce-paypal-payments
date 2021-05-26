@@ -184,10 +184,8 @@ class OrderProcessor {
 			__( 'Awaiting payment.', 'woocommerce-paypal-payments' )
 		);
 		if ( $order->status()->is( OrderStatus::COMPLETED ) && $order->intent() === 'CAPTURE' ) {
-			$wc_order->update_status(
-				'processing',
-				__( 'Payment received.', 'woocommerce-paypal-payments' )
-			);
+
+			$wc_order->payment_complete();
 		}
 
 		if ( $this->capture_authorized_downloads( $order ) && $this->authorized_payments_processor->process( $wc_order ) ) {

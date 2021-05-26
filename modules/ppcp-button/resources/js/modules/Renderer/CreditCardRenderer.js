@@ -87,7 +87,7 @@ class CreditCardRenderer {
                 },
                 expirationDate: {
                     selector: '#ppcp-credit-card-gateway-card-expiry',
-                    placeholder: this.defaultConfig.hosted_fields.labels.mm_yyyy,
+                    placeholder: this.defaultConfig.hosted_fields.labels.mm_yy,
                 }
             }
         }).then(hostedFields => {
