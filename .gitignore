@@ -6,6 +6,7 @@ node_modules
 yarn-error.log
 modules/ppcp-button/assets/*
 modules/ppcp-wc-gateway/assets/*
+modules/ppcp-wc-onboarding/assets/*
 *.zip
 .env
 auth.json
