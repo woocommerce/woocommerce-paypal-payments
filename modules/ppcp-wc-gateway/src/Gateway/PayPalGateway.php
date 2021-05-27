@@ -265,7 +265,6 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @return bool
 	 */
 	public function needs_setup(): bool {
-
 		return ! $this->onboarded;
 	}
 
@@ -463,6 +462,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	/**
 	 * Get the oAuth connection URL.
 	 *
+	 * @param string $return_url The URL to return to after the oAuth connection has been established.
 	 * @return string Connection URL.
 	 */
 	public function get_oauth_connection_url( $return_url = '' ) {
@@ -475,9 +475,10 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 */
 	public function get_setup_help_text() {
 		return sprintf(
-			__( 'Your API details can be obtained from your <a href="%s">Paypal developer account</a>, and your Merchant Id from your <a href="%s">Paypal Business account</a>. Don’t have a Paypal account? <a href="%s">Create one.</a>', 'woocommerce-paypal-payments' ),
+			// translators: %1$s is the URL on info to create API credentials, %2$s is the URL on info find the secure Merchant ID, %3$s is the URL to create a new PayPal business account.
+			__( 'Your API details can be obtained from your <a href="%1$s">PayPal developer account</a>, and your Merchant ID from your <a href="%2$s">PayPal Business account</a>. Don’t have a PayPal account? <a href="%3$s">Create one.</a>', 'woocommerce-paypal-payments' ),
 			'https://developer.paypal.com/docs/api-basics/manage-apps/#create-or-edit-sandbox-and-live-apps',
-			'https://www.paypal.com/ca/smarthelp/article/FAQ3850',
+			'https://www.paypal.com/us/smarthelp/article/FAQ3850',
 			'https://www.paypal.com/us/business'
 		);
 	}
