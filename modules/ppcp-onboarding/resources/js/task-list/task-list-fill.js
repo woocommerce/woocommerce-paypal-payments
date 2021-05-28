@@ -11,7 +11,7 @@ import { useState } from '@wordpress/element';
 import { ConnectionButton } from './connection-button';
 import { ConnectionForm } from './connection-form';
 
-const PpcpWcOnboardingFill = () => {
+const TaskListFill = () => {
 	const [ showConnectionForm, setShowConnectionForm ] = useState( false );
 
 	return (
@@ -33,6 +33,6 @@ const PpcpWcOnboardingFill = () => {
 	);
 };
 
-registerPlugin( 'ppcp-wc-onboarding-fill', {
-	render: PpcpWcOnboardingFill,
+registerPlugin( 'ppcp-onboarding-fill', {
+	render: TaskListFill,
 } );

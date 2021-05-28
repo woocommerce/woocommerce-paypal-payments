@@ -93,6 +93,15 @@ class OnboardingAssets {
 			$this->get_script_data()
 		);
 
+		$url = $this->module_url . '/assets/js/task-list-fill.js';
+		wp_register_script(
+			'ppcp-task-list-fill',
+			$url,
+			array(),
+			1,
+			true
+		);
+
 		return true;
 	}
 

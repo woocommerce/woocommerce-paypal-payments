@@ -5,7 +5,9 @@ const WooCommerceDependencyExtractionWebpackPlugin = require( '@woocommerce/depe
 module.exports = {
 	...defaultConfig,
 	entry: {
-		fill: path.resolve( './resources/js/fill.js' ),
+		'task-list-fill': path.resolve(
+			'./resources/js/task-list/task-list-fill.js'
+		),
 	},
 	output: {
 		path: path.resolve( __dirname, 'assets/' ),
