@@ -15,7 +15,7 @@ const TaskListFill = () => {
 	const [ showConnectionForm, setShowConnectionForm ] = useState( false );
 
 	return (
-		<WooRemotePaymentForm id="payfast">
+		<WooRemotePaymentForm id="ppcp-gateway">
 			{ ( { markConfigured, paymentGateway } ) => {
 				return showConnectionForm ? (
 					<ConnectionForm
@@ -33,6 +33,6 @@ const TaskListFill = () => {
 	);
 };
 
-registerPlugin( 'ppcp-onboarding-fill', {
+registerPlugin( 'ppcp-task-list-fill', {
 	render: TaskListFill,
 } );

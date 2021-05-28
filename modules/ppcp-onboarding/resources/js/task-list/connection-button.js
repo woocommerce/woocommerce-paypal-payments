@@ -42,14 +42,20 @@ export const ConnectionButton = ( { onError = () => {} } ) => {
 	const [ isPending, setIsPending ] = useState( false );
 
 	useEffect( () => {
+		fetchOauthConnectionUrl();
+	}, [] );
+
+	useEffect( () => {
+		if ( ! connectionUrl ) {
+			return;
+		}
+
 		// eslint-disable-next-line camelcase
-		if ( ppcp_onboarding ) {
+		if ( global.ppcp_onboarding ) {
 			// Makes sure the onboarding is hooked up to the Connect button rendered.
 			ppcp_onboarding.reload();
 		}
-
-		fetchOauthConnectionUrl();
-	}, [] );
+	}, [ connectionUrl ] );
 
 	const fetchOauthConnectionUrl = () => {
 		setIsPending( true );
