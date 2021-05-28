@@ -32,6 +32,7 @@
 		"@wordpress/element": "^2.20.3",
 		"@wordpress/i18n": "^4.1.0",
 		"@wordpress/plugins": "^2.25.3",
-		"@wordpress/url": "^3.1.0"
+		"@wordpress/url": "^3.1.0",
+		"interpolate-components": "^1.1.1"
 	}
 }

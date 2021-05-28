@@ -479,17 +479,4 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		return array( 'ppcp-task-list-fill' );
 	}
 
-	/**
-	 * Get help text to display during quick setup.
-	 */
-	public function get_setup_help_text() {
-		return sprintf(
-			// translators: %1$s is the URL on info to create API credentials, %2$s is the URL on info find the secure Merchant ID, %3$s is the URL to create a new PayPal business account.
-			__( 'Your API details can be obtained from your <a href="%1$s">PayPal developer account</a>, and your Merchant ID from your <a href="%2$s">PayPal Business account</a>. Don’t have a PayPal account? <a href="%3$s">Create one.</a>', 'woocommerce-paypal-payments' ),
-			'https://developer.paypal.com/docs/api-basics/manage-apps/#create-or-edit-sandbox-and-live-apps',
-			'https://www.paypal.com/us/smarthelp/article/FAQ3850',
-			'https://www.paypal.com/us/business'
-		);
-	}
-
 }

@@ -4,20 +4,56 @@
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
 import { Button } from '@wordpress/components';
-import { Form, TextControl } from '@woocommerce/components';
+import { Form, Link, TextControl } from '@woocommerce/components';
+import interpolateComponents from 'interpolate-components';
 import { isEmail } from '@wordpress/url';
 import { OPTIONS_STORE_NAME } from '@woocommerce/data';
 import { useDispatch, useSelect } from '@wordpress/data';
 
 const WC_PAYPAL_NAMESPACE = '/wc-paypal/v1';
 
-export const ConnectionForm = ( { markConfigured, paymentGateway } ) => {
+const ConnectionHelpText = () => {
+	return (
+		<p>
+			{ interpolateComponents( {
+				mixedString: __(
+					'Your API details can be obtained from your {{docsLink}}PayPal developer account{{/docsLink}}, and your Merchant Id from your {{merchantLink}}PayPal Business account{{/merchantLink}}. Don’t have a PayPal account? {{registerLink}}Create one.{{/registerLink}}',
+					'woocommerce-admin'
+				),
+				components: {
+					docsLink: (
+						<Link
+							href="https://developer.paypal.com/docs/api-basics/manage-apps/#create-or-edit-sandbox-and-live-apps"
+							target="_blank"
+							type="external"
+						/>
+					),
+					merchantLink: (
+						<Link
+							href="https://www.paypal.com/us/smarthelp/article/FAQ3850"
+							target="_blank"
+							type="external"
+						/>
+					),
+					registerLink: (
+						<Link
+							href="https://www.paypal.com/us/business"
+							target="_blank"
+							type="external"
+						/>
+					),
+				},
+			} ) }
+		</p>
+	);
+};
+
+export const ConnectionForm = ( { markConfigured } ) => {
 	const { createNotice } = useDispatch( 'core/notices' );
 	const { updateOptions } = useDispatch( OPTIONS_STORE_NAME );
 	const isOptionsUpdating = useSelect( ( select ) => {
 		return select( OPTIONS_STORE_NAME ).isOptionsUpdating();
 	} );
-	const { setup_help_text: setupHelpText } = paymentGateway;
 
 	const updateSettingsManually = ( values ) => {
 		const productionValues = Object.keys( values ).reduce(
@@ -191,13 +227,14 @@ export const ConnectionForm = ( { markConfigured, paymentGateway } ) => {
 						/>
 						<Button
 							isPrimary
+							disabled={ isOptionsUpdating }
 							isBusy={ isOptionsUpdating }
 							onClick={ handleSubmit }
 						>
 							{ __( 'Proceed', 'woocommerce-paypal-payments' ) }
 						</Button>
 
-						<p>{ setupHelpText }</p>
+						<ConnectionHelpText />
 					</>
 				);
 			} }
