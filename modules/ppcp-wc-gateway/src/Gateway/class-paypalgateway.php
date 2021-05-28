@@ -184,8 +184,10 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @return bool
 	 */
 	public function needs_setup(): bool {
-
-		return true;
+		return ! $this->get_option( 'merchant_email' ) ||
+			! $this->get_option( 'merchant_id' ) ||
+			! get_option( 'client_id' ) ||
+			! get_option( 'client_secret' );
 	}
 
 	/**
@@ -373,4 +375,43 @@ class PayPalGateway extends \WC_Payment_Gateway {
 
 		return parent::get_transaction_url( $order );
 	}
+
+	/**
+	 * Get required setting keys for setup.
+	 *
+	 * @return array Array of setting keys used for setup.
+	 */
+	public function get_required_settings_keys() {
+		return array(
+			'merchant_email',
+			'merchant_id',
+			'client_id',
+			'client_secret',
+		);
+	}
+
+	/**
+	 * Get the oAuth connection URL.
+	 *
+	 * @param string $return_url The URL to return to after the oAuth connection has been established.
+	 * @return string Connection URL.
+	 */
+	public function get_oauth_connection_url( $return_url = '' ) {
+		// @todo This will need to load a new script or two that handles the onboarding script and window data.
+		return null;
+	}
+
+	/**
+	 * Get help text to display during quick setup.
+	 */
+	public function get_setup_help_text() {
+		return sprintf(
+			// translators: %1$s is the URL on info to create API credentials, %2$s is the URL on info find the secure Merchant ID, %3$s is the URL to create a new PayPal business account.
+			__( 'Your API details can be obtained from your <a href="%1$s">PayPal developer account</a>, and your Merchant ID from your <a href="%2$s">PayPal Business account</a>. Don’t have a PayPal account? <a href="%3$s">Create one.</a>', 'woocommerce-paypal-payments' ),
+			'https://developer.paypal.com/docs/api-basics/manage-apps/#create-or-edit-sandbox-and-live-apps',
+			'https://www.paypal.com/us/smarthelp/article/FAQ3850',
+			'https://www.paypal.com/us/business'
+		);
+	}
+
 }

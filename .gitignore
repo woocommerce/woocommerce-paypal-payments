@@ -6,5 +6,6 @@ composer.lock
 yarn-error.log
 modules/ppcp-button/assets/*
 modules/ppcp-wc-gateway/assets/*
+modules/ppcp-wc-onboarding/assets/*
 .idea/
 *.zip

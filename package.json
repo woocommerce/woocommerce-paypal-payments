@@ -8,10 +8,12 @@
   "scripts": {
     "install:modules:ppcp-button": "cd modules/ppcp-button && yarn install && cd -",
     "install:modules:ppcp-wc-gateway": "cd modules/ppcp-wc-gateway && yarn install && cd -",
-    "install:modules": "yarn run install:modules:ppcp-button && yarn run install:modules:ppcp-wc-gateway",
+    "install:modules:ppcp-wc-onboarding": "cd modules/ppcp-wc-onboarding && yarn install && cd -",
+    "install:modules": "yarn run install:modules:ppcp-button && yarn run install:modules:ppcp-wc-gateway && yarn run install:modules:ppcp-wc-onboarding",
     "build:modules:ppcp-button": "cd modules/ppcp-button && yarn run build && cd -",
     "build:modules:ppcp-wc-gateway": "cd modules/ppcp-wc-gateway && yarn run build && cd -",
-    "build:modules": "yarn run build:modules:ppcp-button && yarn build:modules:ppcp-wc-gateway",
+    "build:modules:ppcp-wc-onboarding": "cd modules/ppcp-wc-onboarding && yarn run build && cd -",
+    "build:modules": "yarn run build:modules:ppcp-button && yarn build:modules:ppcp-wc-gateway && yarn build:modules:ppcp-wc-onboarding",
     "build:dev": "yarn run install:modules && yarn run build:modules",
 
     "prebuild": "rm -rf ./vendor",
