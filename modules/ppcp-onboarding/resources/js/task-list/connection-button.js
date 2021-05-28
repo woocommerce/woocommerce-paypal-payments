@@ -3,6 +3,7 @@
  */
 import { __ } from '@wordpress/i18n';
 import apiFetch from '@wordpress/api-fetch';
+import { Spinner } from '@wordpress/components';
 import { useDispatch } from '@wordpress/data';
 import { useEffect, useState } from '@wordpress/element';
 
@@ -78,8 +79,8 @@ export const ConnectionButton = ( { onError = () => {} } ) => {
 					result.scriptURL,
 					result.scriptData,
 					() => {
-						setConnectionUrl( result.signupLink );
 						setIsPending( false );
+						setConnectionUrl( result.signupLink );
 					}
 				);
 			} )
@@ -95,6 +96,10 @@ export const ConnectionButton = ( { onError = () => {} } ) => {
 				onError();
 			} );
 	};
+
+	if ( isPending ) {
+		return <Spinner />;
+	}
 
 	return (
 		<>
