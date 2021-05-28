@@ -51,7 +51,7 @@ export const ConnectionButton = ( { onError = () => {} } ) => {
 		}
 
 		// eslint-disable-next-line camelcase
-		if ( global.ppcp_onboarding ) {
+		if ( typeof ppcp_onboarding !== 'undefined' ) {
 			// Makes sure the onboarding is hooked up to the Connect button rendered.
 			ppcp_onboarding.reload();
 		}
@@ -110,10 +110,12 @@ export const ConnectionButton = ( { onError = () => {} } ) => {
 			>
 				{ __( 'Connect', 'woocommerce-paypal-payments' ) }
 			</a>
-			{ __(
-				'You will be redirected to the PayPal website to create the connection.',
-				'woocommerce-paypal-payments'
-			) }
+			<p>
+				{ __(
+					'You will be redirected to the PayPal website to create the connection.',
+					'woocommerce-paypal-payments'
+				) }
+			</p>
 		</>
 	);
 };
