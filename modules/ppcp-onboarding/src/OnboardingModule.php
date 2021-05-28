@@ -52,6 +52,13 @@ class OnboardingModule implements ModuleInterface {
 			)
 		);
 		add_action(
+			'rest_api_init',
+			array(
+				$asset_loader,
+				'register',
+			)
+		);
+		add_action(
 			'woocommerce_settings_checkout',
 			array(
 				$asset_loader,

@@ -471,6 +471,15 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	}
 
 	/**
+	 * Get a list of scripts to enqueue after plugin install.
+	 *
+	 * @return array
+	 */
+	public function get_post_install_script_handles() {
+		return array( 'ppcp-task-list-fill' );
+	}
+
+	/**
 	 * Get help text to display during quick setup.
 	 */
 	public function get_setup_help_text() {
