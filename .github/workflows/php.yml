@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        php-versions: ['7.0', '7.1', '7.2', '7.3', '7.4']
+        php-versions: ['7.1', '7.2', '7.3', '7.4', '8.0']
 
     name: PHP ${{ matrix.php-versions }}
     steps:
@@ -28,10 +28,28 @@ jobs:
           run: composer validate
 
       -   name: Install dependencies
-          run: composer install --prefer-dist --no-progress --no-suggest
+          run: |
+            composer update \
+              phpunit/phpunit \
+              phpspec/prophecy \
+              theseer/tokenizer \
+              phpdocumentor/reflection-docblock \
+              phpdocumentor/reflection-common \
+              phpdocumentor/type-resolver \
+              sebastian/global-state \
+              sebastian/version \
+              phar-io/manifest \
+              phar-io/version \
+              phpunit/php-code-coverage \
+            --prefer-dist --no-progress --no-suggest \
+            && composer install --prefer-dist --no-progress --no-suggest
 
       -   name: Run PHPUnit
           run: vendor/bin/phpunit
 
+      -   name: Psalm
+          run: ./vendor/bin/psalm --show-info=false --threads=8 --diff
+          continue-on-error: true
+
       -   name: Run PHPCS
-          run: ./vendor/bin/phpcs--runtime-set ignore_warnings_on_exit 1 src modules woocommerce-paypal-payments.php --extensions=php
+          run: ./vendor/bin/phpcs -s --runtime-set ignore_warnings_on_exit 1

@@ -4,26 +4,28 @@
     "description": "PayPal Commerce Platform for WooCommerce",
     "license": "GPL-2.0",
     "require": {
-        "php": "^7.0 | ^8.0",
-        "dhii/module-interface": "0.1",
-        "psr/container": "1.0.0",
+        "php": "^7.1 | ^8.0",
+        "dhii/module-interface": "^0.3.0-alpha1",
+        "psr/container": "^1.0",
         "container-interop/service-provider": "^0.4.0",
         "dhii/containers": "^0.1.0-alpha1",
-        "dhii/wp-containers": "^0.1.0-alpha1",
         "psr/log": "^1.1",
         "ext-json": "*",
-        "ralouphie/getallheaders": "^3.0"
+        "ralouphie/getallheaders": "^3.0",
+        "wikimedia/composer-merge-plugin": "^1.4"
     },
     "require-dev": {
         "woocommerce/woocommerce-sniffs": "^0.1.0",
         "phpunit/phpunit": "^6.0 | ^7.0 | ^8.0 | ^9.0",
-        "brain/monkey": "^2.4"
+        "brain/monkey": "^2.4",
+		"php-stubs/wordpress-stubs": "^5.0@stable",
+		"php-stubs/woocommerce-stubs": "^5.0@stable",
+		"vimeo/psalm": "^4.0"
     },
     "autoload": {
-        "classmap": [
-            "modules/",
-            "src/"
-        ]
+        "psr-4": {
+            "WooCommerce\\PayPalCommerce\\": "src"
+        }
     },
     "autoload-dev": {
         "psr-4": {
@@ -45,6 +47,11 @@
         "installer-paths": {
             "modules/{$name}/": [
                 "type:inpsyde-module"
+            ]
+        },
+        "merge-plugin": {
+            "include": [
+                "modules/*/composer.json"
             ]
         },
         "hooks": {

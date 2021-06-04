@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway;
 
+use Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
@@ -24,7 +25,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
-use Woocommerce\PayPalCommerce\WcGateway\Helper\DccProductStatus;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\DccProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
@@ -36,7 +37,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 
 return array(
-	'wcgateway.paypal-gateway'                     => static function ( $container ): PayPalGateway {
+	'wcgateway.paypal-gateway'                     => static function ( ContainerInterface $container ): PayPalGateway {
 		$order_processor     = $container->get( 'wcgateway.order-processor' );
 		$settings_renderer   = $container->get( 'wcgateway.settings.render' );
 		$authorized_payments = $container->get( 'wcgateway.processor.authorized-payments' );
@@ -60,7 +61,7 @@ return array(
 			$subscription_helper
 		);
 	},
-	'wcgateway.credit-card-gateway'                => static function ( $container ): CreditCardGateway {
+	'wcgateway.credit-card-gateway'                => static function ( ContainerInterface $container ): CreditCardGateway {
 		$order_processor     = $container->get( 'wcgateway.order-processor' );
 		$settings_renderer   = $container->get( 'wcgateway.settings.render' );
 		$authorized_payments = $container->get( 'wcgateway.processor.authorized-payments' );
@@ -94,15 +95,15 @@ return array(
 			$subscription_helper
 		);
 	},
-	'wcgateway.disabler'                           => static function ( $container ): DisableGateways {
+	'wcgateway.disabler'                           => static function ( ContainerInterface $container ): DisableGateways {
 		$session_handler = $container->get( 'session.handler' );
 		$settings       = $container->get( 'wcgateway.settings' );
 		return new DisableGateways( $session_handler, $settings );
 	},
-	'wcgateway.settings'                           => static function ( $container ): Settings {
+	'wcgateway.settings'                           => static function ( ContainerInterface $container ): Settings {
 		return new Settings();
 	},
-	'wcgateway.notice.connect'                     => static function ( $container ): ConnectAdminNotice {
+	'wcgateway.notice.connect'                     => static function ( ContainerInterface $container ): ConnectAdminNotice {
 		$state    = $container->get( 'onboarding.state' );
 		$settings = $container->get( 'wcgateway.settings' );
 		return new ConnectAdminNotice( $state, $settings );
@@ -111,10 +112,10 @@ return array(
 		static function ( $container ): AuthorizeOrderActionNotice {
 			return new AuthorizeOrderActionNotice();
 		},
-	'wcgateway.settings.sections-renderer'         => static function ( $container ): SectionsRenderer {
+	'wcgateway.settings.sections-renderer'         => static function ( ContainerInterface $container ): SectionsRenderer {
 		return new SectionsRenderer();
 	},
-	'wcgateway.settings.render'                    => static function ( $container ): SettingsRenderer {
+	'wcgateway.settings.render'                    => static function ( ContainerInterface $container ): SettingsRenderer {
 		$settings      = $container->get( 'wcgateway.settings' );
 		$state         = $container->get( 'onboarding.state' );
 		$fields        = $container->get( 'wcgateway.settings.fields' );
@@ -130,7 +131,7 @@ return array(
 			$dcc_product_status
 		);
 	},
-	'wcgateway.settings.listener'                  => static function ( $container ): SettingsListener {
+	'wcgateway.settings.listener'                  => static function ( ContainerInterface $container ): SettingsListener {
 		$settings         = $container->get( 'wcgateway.settings' );
 		$fields           = $container->get( 'wcgateway.settings.fields' );
 		$webhook_registrar = $container->get( 'webhook.registrar' );
@@ -139,7 +140,7 @@ return array(
 		$bearer = $container->get( 'api.bearer' );
 		return new SettingsListener( $settings, $fields, $webhook_registrar, $cache, $state, $bearer );
 	},
-	'wcgateway.order-processor'                    => static function ( $container ): OrderProcessor {
+	'wcgateway.order-processor'                    => static function ( ContainerInterface $container ): OrderProcessor {
 
 		$session_handler              = $container->get( 'session.handler' );
 		$order_endpoint               = $container->get( 'api.endpoint.order' );
@@ -160,29 +161,29 @@ return array(
 			$environment->current_environment_is( Environment::SANDBOX )
 		);
 	},
-	'wcgateway.processor.refunds'                  => static function ( $container ): RefundProcessor {
+	'wcgateway.processor.refunds'                  => static function ( ContainerInterface $container ): RefundProcessor {
 		$order_endpoint    = $container->get( 'api.endpoint.order' );
 		$payments_endpoint    = $container->get( 'api.endpoint.payments' );
 		return new RefundProcessor( $order_endpoint, $payments_endpoint );
 	},
-	'wcgateway.processor.authorized-payments'      => static function ( $container ): AuthorizedPaymentsProcessor {
+	'wcgateway.processor.authorized-payments'      => static function ( ContainerInterface $container ): AuthorizedPaymentsProcessor {
 		$order_endpoint    = $container->get( 'api.endpoint.order' );
 		$payments_endpoint = $container->get( 'api.endpoint.payments' );
 		return new AuthorizedPaymentsProcessor( $order_endpoint, $payments_endpoint );
 	},
-	'wcgateway.admin.render-authorize-action'      => static function ( $container ): RenderAuthorizeAction {
+	'wcgateway.admin.render-authorize-action'      => static function ( ContainerInterface $container ): RenderAuthorizeAction {
 
 		return new RenderAuthorizeAction();
 	},
-	'wcgateway.admin.order-payment-status'         => static function ( $container ): PaymentStatusOrderDetail {
+	'wcgateway.admin.order-payment-status'         => static function ( ContainerInterface $container ): PaymentStatusOrderDetail {
 		return new PaymentStatusOrderDetail();
 	},
-	'wcgateway.admin.orders-payment-status-column' => static function ( $container ): OrderTablePaymentStatusColumn {
+	'wcgateway.admin.orders-payment-status-column' => static function ( ContainerInterface $container ): OrderTablePaymentStatusColumn {
 		$settings = $container->get( 'wcgateway.settings' );
 		return new OrderTablePaymentStatusColumn( $settings );
 	},
 
-	'wcgateway.settings.fields'                    => static function ( $container ): array {
+	'wcgateway.settings.fields'                    => static function ( ContainerInterface $container ): array {
 
 		$state = $container->get( 'onboarding.state' );
 		$messages_disclaimers = $container->get( 'button.helper.messages-disclaimers' );
@@ -639,7 +640,7 @@ return array(
 				'label'        => sprintf(
 					// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
 					__( 'Enable saved cards and subscription features on your store. To use vaulting features, you must %1$senable vaulting on your account%2$s.', 'woocommerce-paypal-payments' ),
-					'<a 
+					'<a
 						href="https://docs.woocommerce.com/document/woocommerce-paypal-payments/#enable-vaulting-on-your-live-account"
 						target="_blank"
 					>',
@@ -1842,28 +1843,28 @@ return array(
 		return $fields;
 	},
 
-	'wcgateway.checkout.address-preset'            => static function( $container ): CheckoutPayPalAddressPreset {
+	'wcgateway.checkout.address-preset'            => static function( ContainerInterface $container ): CheckoutPayPalAddressPreset {
 
 		return new CheckoutPayPalAddressPreset(
 			$container->get( 'session.handler' )
 		);
 	},
-	'wcgateway.url'                                => static function ( $container ): string {
+	'wcgateway.url'                                => static function ( ContainerInterface $container ): string {
 		return plugins_url(
 			$container->get( 'wcgateway.relative-path' ),
 			dirname( __FILE__, 3 ) . '/woocommerce-paypal-payments.php'
 		);
 	},
-	'wcgateway.relative-path'                      => static function( $container ): string {
+	'wcgateway.relative-path'                      => static function( ContainerInterface $container ): string {
 		return 'modules/ppcp-wc-gateway/';
 	},
-	'wcgateway.absolute-path'                      => static function( $container ): string {
+	'wcgateway.absolute-path'                      => static function( ContainerInterface $container ): string {
 		return plugin_dir_path(
 			dirname( __FILE__, 3 ) . '/woocommerce-paypal-payments.php'
 		) .
 			$container->get( 'wcgateway.relative-path' );
 	},
-	'wcgateway.endpoint.return-url'                => static function ( $container ) : ReturnUrlEndpoint {
+	'wcgateway.endpoint.return-url'                => static function ( ContainerInterface $container ) : ReturnUrlEndpoint {
 		$gateway  = $container->get( 'wcgateway.paypal-gateway' );
 		$endpoint = $container->get( 'api.endpoint.order' );
 		$prefix   = $container->get( 'api.prefix' );
@@ -1874,15 +1875,15 @@ return array(
 		);
 	},
 
-	'wcgateway.transaction-url-sandbox'            => static function ( $container ): string {
+	'wcgateway.transaction-url-sandbox'            => static function ( ContainerInterface $container ): string {
 		return 'https://www.sandbox.paypal.com/cgi-bin/webscr?cmd=_view-a-trans&id=%s';
 	},
 
-	'wcgateway.transaction-url-live'               => static function ( $container ): string {
+	'wcgateway.transaction-url-live'               => static function ( ContainerInterface $container ): string {
 		return 'https://www.paypal.com/cgi-bin/webscr?cmd=_view-a-trans&id=%s';
 	},
 
-	'wcgateway.transaction-url-provider'           => static function ( $container ): TransactionUrlProvider {
+	'wcgateway.transaction-url-provider'           => static function ( ContainerInterface $container ): TransactionUrlProvider {
 		$sandbox_url_base = $container->get( 'wcgateway.transaction-url-sandbox' );
 		$live_url_base    = $container->get( 'wcgateway.transaction-url-live' );
 
