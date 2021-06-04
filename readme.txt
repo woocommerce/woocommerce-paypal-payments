@@ -2,13 +2,13 @@
 Contributors: woocommerce, automattic
 Tags: woocommerce, paypal, payments, ecommerce, e-commerce, store, sales, sell, shop, shopping, cart, checkout
 Requires at least: 5.3
-Tested up to: 5.6
-Requires PHP: 7.0
-Stable tag: 1.1.0
+Tested up to: 5.7
+Requires PHP: 7.1
+Stable tag: 1.3.1
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
-PayPal's latest payments processing solution. Accept PayPal, PayPal Credit, credit/debit cards, alternative digital wallets and bank accounts.
+PayPal's latest payments processing solution. Accept PayPal, Pay Later, credit/debit cards, alternative digital wallets and bank accounts.
 
 == Description ==
 
@@ -23,7 +23,7 @@ To install WooCommerce PayPal Payments, you need:
 
 * WordPress Version 5.3 or newer (installed)
 * WooCommerce Version 3.9 or newer (installed and activated)
-* PHP Version 7.0 or newer
+* PHP Version 7.1 or newer
 * PayPal business account
 
 = Instructions =
@@ -57,6 +57,26 @@ Follow the steps below to connect the plugin to your PayPal account:
 6. Main settings screen.
 
 == Changelog ==
+
+= 1.3.1 =
+* Fix - Fix Credit Card fields for non logged-in users. #152
+
+= 1.3.0 =
+* Add - Client-side vaulting and allow WooCommerce Subscriptions product renewals through payment tokens. #134
+* Add - Send transaction ids to woocommerce. #125
+* Fix - Validate checkout form before sending request to PayPal #137
+* Fix - Duplicate Invoice Id error. #143
+* Fix - Unblock UI if Credit Card payment failed. #122
+* Fix - Detected container element removed from DOM. #123
+* Fix - Remove disabling credit for UK. #127
+* Fix - Show WC message on account creating error. #136
+
+= 1.2.1 =
+* Fix - Address compatibility issue with Jetpack.
+
+= 1.2.0 =
+* Add - Rework onboarding code and add REST controller for integration with the OBW. #121
+* Fix - Remove spinner on click, on cancel and on error. #124
 
 = 1.1.0 =
 * Add - Buy Now Pay Later for UK. #104

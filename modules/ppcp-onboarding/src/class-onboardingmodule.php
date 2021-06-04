@@ -41,7 +41,6 @@ class OnboardingModule implements ModuleInterface {
 	 * @param ContainerInterface|null $container The container.
 	 */
 	public function run( ContainerInterface $container = null ) {
-
 		$asset_loader = $container->get( 'onboarding.assets' );
 		/**
 		 * The OnboardingAssets.
@@ -100,6 +99,10 @@ class OnboardingModule implements ModuleInterface {
 				$endpoint->handle_request();
 			}
 		);
+
+		// Initialize REST routes at the appropriate time.
+		$rest_controller = $container->get( 'onboarding.rest' );
+		add_action( 'rest_api_init', array( $rest_controller, 'register_routes' ) );
 	}
 
 	/**

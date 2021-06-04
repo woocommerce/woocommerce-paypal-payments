@@ -60,7 +60,6 @@ return array(
 			return new DisabledSmartButton();
 		}
 		$payee_repository = $container->get( 'api.repository.payee' );
-		$identity_token   = $container->get( 'api.endpoint.identity-token' );
 		$payer_factory    = $container->get( 'api.factory.payer' );
 		$request_data     = $container->get( 'button.request-data' );
 
@@ -69,19 +68,20 @@ return array(
 		$subscription_helper = $container->get( 'subscription.helper' );
 		$messages_apply      = $container->get( 'button.helper.messages-apply' );
 		$environment         = $container->get( 'onboarding.environment' );
+		$payment_token_repository = $container->get( 'subscription.repository.payment-token' );
 		return new SmartButton(
 			$container->get( 'button.url' ),
 			$container->get( 'session.handler' ),
 			$settings,
 			$payee_repository,
-			$identity_token,
 			$payer_factory,
 			$client_id,
 			$request_data,
 			$dcc_applies,
 			$subscription_helper,
 			$messages_apply,
-			$environment
+			$environment,
+			$payment_token_repository
 		);
 	},
 	'button.url'                        => static function ( $container ): string {
@@ -139,13 +139,15 @@ return array(
 		$three_d_secure  = $container->get( 'button.helper.three-d-secure' );
 		$settings        = $container->get( 'wcgateway.settings' );
 		$dcc_applies     = $container->get( 'api.helpers.dccapplies' );
+		$logger                        = $container->get( 'woocommerce.logger.woocommerce' );
 		return new ApproveOrderEndpoint(
 			$request_data,
 			$order_endpoint,
 			$session_handler,
 			$three_d_secure,
 			$settings,
-			$dcc_applies
+			$dcc_applies,
+			$logger
 		);
 	},
 	'button.endpoint.data-client-id'    => static function( $container ) : DataClientIdEndpoint {

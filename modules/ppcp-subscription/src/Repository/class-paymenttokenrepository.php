@@ -73,6 +73,22 @@ class PaymentTokenRepository {
 	}
 
 	/**
+	 * Return all tokens for a user.
+	 *
+	 * @param int $id The user id.
+	 * @return PaymentToken[]
+	 */
+	public function all_for_user_id( int $id ) {
+		try {
+			$tokens = $this->endpoint->for_user( $id );
+			update_user_meta( $id, self::USER_META, $tokens );
+			return $tokens;
+		} catch ( RuntimeException $exception ) {
+			return array();
+		}
+	}
+
+	/**
 	 * Delete a token for a user.
 	 *
 	 * @param int          $user_id The user id.
@@ -83,6 +99,36 @@ class PaymentTokenRepository {
 	public function delete_token( int $user_id, PaymentToken $token ): bool {
 		delete_user_meta( $user_id, self::USER_META );
 		return $this->endpoint->delete_token( $token );
+	}
+
+	/**
+	 * Check if tokens has card source.
+	 *
+	 * @param PaymentToken[] $tokens The tokens.
+	 * @return bool Whether tokens contains card or not.
+	 */
+	public function tokens_contains_card( $tokens ): bool {
+		foreach ( $tokens as $token ) {
+			if ( isset( $token->source()->card ) ) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Check if tokens has PayPal source.
+	 *
+	 * @param PaymentToken[] $tokens The tokens.
+	 * @return bool Whether tokens contains card or not.
+	 */
+	public function tokens_contains_paypal( $tokens ): bool {
+		foreach ( $tokens as $token ) {
+			if ( isset( $token->source()->paypal ) ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

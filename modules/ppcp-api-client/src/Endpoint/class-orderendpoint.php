@@ -231,7 +231,11 @@ class OrderEndpoint {
 		$response = $this->request( $url, $args );
 		if ( is_wp_error( $response ) ) {
 			$error = new RuntimeException(
-				__( 'Could not create order.', 'woocommerce-paypal-payments' )
+				sprintf(
+					// translators: %s is the error message.
+					__( 'Could not create order: %s', 'woocommerce-paypal-payments' ),
+					$response->get_error_message()
+				)
 			);
 			$this->logger->log(
 				'warning',
@@ -252,7 +256,10 @@ class OrderEndpoint {
 			);
 			$this->logger->log(
 				'warning',
-				$error->getMessage(),
+				sprintf(
+					'Failed to create order. PayPal API response: %1$s',
+					$error->getMessage()
+				),
 				array(
 					'args'     => $args,
 					'response' => $response,
@@ -321,7 +328,10 @@ class OrderEndpoint {
 			}
 			$this->logger->log(
 				'warning',
-				$error->getMessage(),
+				sprintf(
+					'Failed to capture order. PayPal API response: %1$s',
+					$error->getMessage()
+				),
 				array(
 					'args'     => $args,
 					'response' => $response,
@@ -394,7 +404,10 @@ class OrderEndpoint {
 			);
 			$this->logger->log(
 				'warning',
-				$error->getMessage(),
+				sprintf(
+					'Failed to authorize order. PayPal API response: %1$s',
+					$error->getMessage()
+				),
 				array(
 					'args'     => $args,
 					'response' => $response,

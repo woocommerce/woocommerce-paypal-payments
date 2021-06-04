@@ -120,7 +120,7 @@ class RenewalHandler {
 					'order' => $wc_order,
 				)
 			);
-			\WC_Subscriptions_Manager::process_subscription_payment_failure_on_order( $wc_order );
+
 			return;
 		}
 		$this->logger->log(
@@ -156,12 +156,13 @@ class RenewalHandler {
 		}
 		$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
 		$payer         = $this->payer_factory->from_customer( $customer );
-		$order         = $this->order_endpoint->create(
+
+		$order = $this->order_endpoint->create(
 			array( $purchase_unit ),
 			$payer,
-			$token,
-			(string) $wc_order->get_id()
+			$token
 		);
+
 		$this->capture_order( $order, $wc_order );
 	}
 
@@ -175,26 +176,47 @@ class RenewalHandler {
 	 */
 	private function get_token_for_customer( \WC_Customer $customer, \WC_Order $wc_order ) {
 
-		$token = $this->repository->for_user_id( (int) $customer->get_id() );
-		if ( ! $token ) {
+		$tokens = $this->repository->all_for_user_id( (int) $customer->get_id() );
+		if ( ! $tokens ) {
+
+			$error_message = sprintf(
+			// translators: %d is the customer id.
+				__(
+					'Payment failed. No payment tokens found for customer %d.',
+					'woocommerce-paypal-payments'
+				),
+				(int) $customer->get_id()
+			);
+
+			$wc_order->update_status(
+				'failed',
+				$error_message
+			);
+
 			$this->logger->log(
 				'error',
-				sprintf(
-					// translators: %d is the customer id.
-					__(
-						'No payment token found for customer %d',
-						'woocommerce-paypal-payments'
-					),
-					(int) $customer->get_id()
-				),
+				$error_message,
 				array(
 					'customer' => $customer,
 					'order'    => $wc_order,
 				)
 			);
-			\WC_Subscriptions_Manager::process_subscription_payment_failure_on_order( $wc_order );
 		}
-		return $token;
+
+		$subscription = function_exists( 'wcs_get_subscription' ) ? wcs_get_subscription( $wc_order->get_meta( '_subscription_renewal' ) ) : null;
+		if ( $subscription ) {
+			$subscription_id = $subscription->get_id();
+			$token_id        = get_post_meta( $subscription_id, 'payment_token_id', true );
+			if ( $token_id ) {
+				foreach ( $tokens as $token ) {
+					if ( $token_id === $token->id() ) {
+						return $token;
+					}
+				}
+			}
+		}
+
+		return current( $tokens );
 	}
 
 	/**
@@ -210,13 +232,11 @@ class RenewalHandler {
 				'processing',
 				__( 'Payment received.', 'woocommerce-paypal-payments' )
 			);
-			\WC_Subscriptions_Manager::process_subscription_payments_on_order( $wc_order );
 		}
 
 		if ( $order->intent() === 'AUTHORIZE' ) {
 			$this->order_endpoint->authorize( $order );
 			$wc_order->update_meta_data( PayPalGateway::CAPTURED_META_KEY, 'false' );
-			\WC_Subscriptions_Manager::process_subscription_payments_on_order( $wc_order );
 		}
 	}
 }

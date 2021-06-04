@@ -1,15 +1,17 @@
 {
   "name": "woocommerce-paypal-payments",
-  "version": "1.1.0",
+  "version": "1.3.1",
   "description": "WooCommerce PayPal Payments",
   "repository": "https://github.com/woocommerce/woocommerce-paypal-payments",
   "license": "GPL-2.0",
   "author": "WooCommerce",
   "scripts": {
-    "install:modules:ppcp-button": "cd modules/ppcp-button && yarn install",
-    "install:modules": "yarn run install:modules:ppcp-button",
-    "build:modules:ppcp-button": "cd modules/ppcp-button && yarn run build",
-    "build:modules": "yarn run build:modules:ppcp-button",
+    "install:modules:ppcp-button": "cd modules/ppcp-button && yarn install && cd -",
+    "install:modules:ppcp-wc-gateway": "cd modules/ppcp-wc-gateway && yarn install && cd -",
+    "install:modules": "yarn run install:modules:ppcp-button && yarn run install:modules:ppcp-wc-gateway",
+    "build:modules:ppcp-button": "cd modules/ppcp-button && yarn run build && cd -",
+    "build:modules:ppcp-wc-gateway": "cd modules/ppcp-wc-gateway && yarn run build && cd -",
+    "build:modules": "yarn run build:modules:ppcp-button && yarn build:modules:ppcp-wc-gateway",
     "build:dev": "yarn run install:modules && yarn run build:modules",
 
     "prebuild": "rm -rf ./vendor",
@@ -17,7 +19,7 @@
     "prearchive": "rm -rf $npm_package_name.zip",
     "archive": "zip -r $npm_package_name.zip . -x **.git/\\* **node_modules/\\*",
     "postarchive": "npm run archive:cleanup && rm -rf $npm_package_name && unzip $npm_package_name.zip -d $npm_package_name && rm $npm_package_name.zip && zip -r $npm_package_name.zip $npm_package_name && rm -rf $npm_package_name",
-    "archive:cleanup": "zip -d $npm_package_name.zip tests/\\* .github/\\* wordpress_org_assets/\\* \\*.DS_Store README.md .gitattributes .gitignore .travis.yml composer.json composer.lock package.json yarn.lock phpunit.xml.dist .phpunit.result.cache phpcs.xml.dist modules/ppcp-button/.babelrc modules/ppcp-button/package.json modules/ppcp-button/webpack.config.js modules/ppcp-button/yarn.lock vendor/\\*/.idea/\\* vendor/\\*/.gitignore vendor/\\*/.gitattributes vendor/\\*/.travis.yml"
+    "archive:cleanup": "zip -d $npm_package_name.zip tests/\\* .github/\\* wordpress_org_assets/\\* \\*.DS_Store README.md .gitattributes .gitignore .travis.yml composer.json composer.lock package.json package-lock.json patchwork.json yarn.lock phpunit.xml.dist .phpunit.result.cache phpcs.xml.dist modules/ppcp-button/.babelrc modules/ppcp-button/package.json modules/ppcp-button/webpack.config.js modules/ppcp-button/yarn.lock vendor/\\*/.idea/\\* vendor/\\*/.gitignore vendor/\\*/.gitattributes vendor/\\*/.travis.yml"
   },
   "config": {
     "wp_org_slug": "woocommerce-paypal-payments"
