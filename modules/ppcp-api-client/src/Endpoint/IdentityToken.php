@@ -111,7 +111,7 @@ class IdentityToken {
 
 		$status_code = (int) wp_remote_retrieve_response_code( $response );
 		if ( 200 !== $status_code ) {
-			$json        = is_array($response) ? json_decode( $response['body'] ) : null;
+			$json  = is_array( $response ) ? json_decode( $response['body'] ) : null;
 			$error = new PayPalApiException(
 				$json,
 				$status_code
