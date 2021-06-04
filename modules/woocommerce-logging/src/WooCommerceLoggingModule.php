@@ -32,7 +32,7 @@ class WooCommerceLoggingModule implements ModuleInterface {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function run( ContainerInterface $container ): void {
+	public function run( ContainerInterface $c ): void {
 	}
 
 

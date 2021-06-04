@@ -32,11 +32,11 @@ class AdminNotices implements ModuleInterface {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function run( ContainerInterface $container ): void {
+	public function run( ContainerInterface $c ): void {
 		add_action(
 			'admin_notices',
-			function() use ( $container ) {
-				$renderer = $container->get( 'admin-notices.renderer' );
+			function() use ( $c ) {
+				$renderer = $c->get( 'admin-notices.renderer' );
 				$renderer->render();
 			}
 		);

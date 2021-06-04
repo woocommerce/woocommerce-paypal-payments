@@ -32,11 +32,11 @@ class WebhookModule implements ModuleInterface {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function run( ContainerInterface $container ): void {
+	public function run( ContainerInterface $c ): void {
 		add_action(
 			'rest_api_init',
-			static function () use ( $container ) {
-				$endpoint = $container->get( 'webhook.endpoint.controller' );
+			static function () use ( $c ) {
+				$endpoint = $c->get( 'webhook.endpoint.controller' );
 				/**
 				 * The Incoming Webhook Endpoint.
 				 *
@@ -48,8 +48,8 @@ class WebhookModule implements ModuleInterface {
 
 		add_action(
 			WebhookRegistrar::EVENT_HOOK,
-			static function () use ( $container ) {
-				$registrar = $container->get( 'webhook.registrar' );
+			static function () use ( $c ) {
+				$registrar = $c->get( 'webhook.registrar' );
 				/**
 				 * The Webhook Registrar.
 				 *
@@ -61,8 +61,8 @@ class WebhookModule implements ModuleInterface {
 
 		add_action(
 			'woocommerce_paypal_payments_gateway_deactivate',
-			static function () use ( $container ) {
-				$registrar = $container->get( 'webhook.registrar' );
+			static function () use ( $c ) {
+				$registrar = $c->get( 'webhook.registrar' );
 				/**
 				 * The Webhook Registrar.
 				 *

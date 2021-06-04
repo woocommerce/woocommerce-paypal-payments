@@ -36,9 +36,9 @@ class OnboardingModule implements ModuleInterface {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function run( ContainerInterface $container ): void {
+	public function run( ContainerInterface $c ): void {
 
-		$asset_loader = $container->get( 'onboarding.assets' );
+		$asset_loader = $c->get( 'onboarding.assets' );
 		/**
 		 * The OnboardingAssets.
 		 *
@@ -61,11 +61,11 @@ class OnboardingModule implements ModuleInterface {
 
 		add_filter(
 			'woocommerce_form_field',
-			static function ( $field, $key, $config ) use ( $container ) {
+			static function ( $field, $key, $config ) use ( $c ) {
 				if ( 'ppcp_onboarding' !== $config['type'] ) {
 					return $field;
 				}
-				$renderer      = $container->get( 'onboarding.render' );
+				$renderer      = $c->get( 'onboarding.render' );
 				$is_production = 'production' === $config['env'];
 
 				/**
@@ -85,8 +85,8 @@ class OnboardingModule implements ModuleInterface {
 
 		add_action(
 			'wc_ajax_' . LoginSellerEndpoint::ENDPOINT,
-			static function () use ( $container ) {
-				$endpoint = $container->get( 'onboarding.endpoint.login-seller' );
+			static function () use ( $c ) {
+				$endpoint = $c->get( 'onboarding.endpoint.login-seller' );
 
 				/**
 				 * The ChangeCartEndpoint.
@@ -98,7 +98,7 @@ class OnboardingModule implements ModuleInterface {
 		);
 
 		// Initialize REST routes at the appropriate time.
-		$rest_controller = $container->get( 'onboarding.rest' );
+		$rest_controller = $c->get( 'onboarding.rest' );
 		add_action( 'rest_api_init', array( $rest_controller, 'register_routes' ) );
 	}
 
