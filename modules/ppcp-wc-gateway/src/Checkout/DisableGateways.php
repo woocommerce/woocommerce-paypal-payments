@@ -79,7 +79,10 @@ class DisableGateways {
 		}
 
 		if ( $this->is_credit_card() ) {
-			return array( CreditCardGateway::ID => $methods[ CreditCardGateway::ID ] );
+			return array(
+				CreditCardGateway::ID => $methods[ CreditCardGateway::ID ],
+				PayPalGateway::ID     => $methods[ PayPalGateway::ID ],
+			);
 		}
 		return array( PayPalGateway::ID => $methods[ PayPalGateway::ID ] );
 	}

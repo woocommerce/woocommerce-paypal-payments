@@ -19,6 +19,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Onboarding\Assets\OnboardingAssets;
 use WooCommerce\PayPalCommerce\Onboarding\Endpoint\LoginSellerEndpoint;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingRenderer;
+use WooCommerce\PayPalCommerce\Onboarding\Onboarding_REST_Controller;
 
 return array(
 	'api.sandbox-host'                          => static function ( ContainerInterface $container ): string {
@@ -207,5 +208,8 @@ return array(
 			$partner_referrals,
 			$partner_referrals_sandbox
 		);
+	},
+	'onboarding.rest'                           => static function( $container ) : Onboarding_REST_Controller {
+		return new Onboarding_REST_Controller( $container );
 	},
 );

@@ -96,6 +96,10 @@ class OnboardingModule implements ModuleInterface {
 				$endpoint->handle_request();
 			}
 		);
+
+		// Initialize REST routes at the appropriate time.
+		$rest_controller = $container->get( 'onboarding.rest' );
+		add_action( 'rest_api_init', array( $rest_controller, 'register_routes' ) );
 	}
 
 	/**

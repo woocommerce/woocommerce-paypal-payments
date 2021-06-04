@@ -14,14 +14,22 @@ class CheckoutBootstap {
         this.render();
 
         jQuery(document.body).on('updated_checkout', () => {
-            this.render();
+            this.render()
         });
 
         jQuery(document.body).
-            on('updated_checkout payment_method_selected', () => {
-                this.switchBetweenPayPalandOrderButton();
-            });
-        this.switchBetweenPayPalandOrderButton();
+          on('updated_checkout payment_method_selected', () => {
+              this.switchBetweenPayPalandOrderButton()
+              this.displayPlaceOrderButtonForSavedCreditCards()
+
+          })
+
+        jQuery('#saved-credit-card').on('change', () => {
+            this.displayPlaceOrderButtonForSavedCreditCards()
+        })
+
+        this.switchBetweenPayPalandOrderButton()
+        this.displayPlaceOrderButtonForSavedCreditCards()
     }
 
     shouldRender() {
@@ -53,6 +61,8 @@ class CheckoutBootstap {
     }
 
     switchBetweenPayPalandOrderButton() {
+        jQuery('#saved-credit-card').val(jQuery('#saved-credit-card option:first').val());
+
         const currentPaymentMethod = jQuery(
             'input[name="payment_method"]:checked').val();
 
@@ -67,16 +77,36 @@ class CheckoutBootstap {
             if (currentPaymentMethod === 'ppcp-gateway') {
                 this.renderer.showButtons(this.gateway.button.wrapper);
                 this.renderer.showButtons(this.gateway.messages.wrapper);
-                this.messages.render();
-                this.renderer.hideButtons(this.gateway.hosted_fields.wrapper);
+                this.messages.render()
+                this.renderer.hideButtons(this.gateway.hosted_fields.wrapper)
             }
             if (currentPaymentMethod === 'ppcp-credit-card-gateway') {
-                this.renderer.hideButtons(this.gateway.button.wrapper);
-                this.renderer.hideButtons(this.gateway.messages.wrapper);
-                this.renderer.showButtons(this.gateway.hosted_fields.wrapper);
+                this.renderer.hideButtons(this.gateway.button.wrapper)
+                this.renderer.hideButtons(this.gateway.messages.wrapper)
+                this.renderer.showButtons(this.gateway.hosted_fields.wrapper)
             }
+        }
+    }
+
+    displayPlaceOrderButtonForSavedCreditCards() {
+        const currentPaymentMethod = jQuery(
+          'input[name="payment_method"]:checked').val();
+        if (currentPaymentMethod !== 'ppcp-credit-card-gateway') {
+            return;
+        }
+
+        if (jQuery('#saved-credit-card').length && jQuery('#saved-credit-card').val() !== '') {
+            this.renderer.hideButtons(this.gateway.button.wrapper)
+            this.renderer.hideButtons(this.gateway.messages.wrapper)
+            this.renderer.hideButtons(this.gateway.hosted_fields.wrapper)
+            jQuery('#place_order').show()
+        } else {
+            jQuery('#place_order').hide()
+            this.renderer.hideButtons(this.gateway.button.wrapper)
+            this.renderer.hideButtons(this.gateway.messages.wrapper)
+            this.renderer.showButtons(this.gateway.hosted_fields.wrapper)
         }
     }
 }
 
-export default CheckoutBootstap;
+export default CheckoutBootstap

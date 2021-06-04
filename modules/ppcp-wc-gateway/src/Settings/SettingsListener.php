@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Onboarding\State;
@@ -20,7 +21,6 @@ use WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar;
  * Class SettingsListener
  */
 class SettingsListener {
-
 
 	const NONCE = 'ppcp-settings';
 
@@ -60,6 +60,13 @@ class SettingsListener {
 	private $state;
 
 	/**
+	 * The Bearer.
+	 *
+	 * @var Bearer
+	 */
+	private $bearer;
+
+	/**
 	 * SettingsListener constructor.
 	 *
 	 * @param Settings         $settings The settings.
@@ -67,13 +74,15 @@ class SettingsListener {
 	 * @param WebhookRegistrar $webhook_registrar The Webhook Registrar.
 	 * @param Cache            $cache The Cache.
 	 * @param State            $state The state.
+	 * @param Bearer           $bearer The bearer.
 	 */
 	public function __construct(
 		Settings $settings,
 		array $setting_fields,
 		WebhookRegistrar $webhook_registrar,
 		Cache $cache,
-		State $state
+		State $state,
+		Bearer $bearer
 	) {
 
 		$this->settings          = $settings;
@@ -81,6 +90,7 @@ class SettingsListener {
 		$this->webhook_registrar = $webhook_registrar;
 		$this->cache             = $cache;
 		$this->state             = $state;
+		$this->bearer            = $bearer;
 	}
 
 	/**
@@ -117,10 +127,49 @@ class SettingsListener {
 			$this->settings->set( 'merchant_email_production', $merchant_email );
 		}
 		$this->settings->persist();
-		$redirect_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' );
+
+		do_action( 'woocommerce_paypal_payments_onboarding_before_redirect' );
+
+		$redirect_url = apply_filters( 'woocommerce_paypal_payments_onboarding_redirect_url', admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ) );
 		if ( ! $this->settings->has( 'client_id' ) || ! $this->settings->get( 'client_id' ) ) {
-			$redirect_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-onboarding-error=1' );
+			$redirect_url = add_query_arg( 'ppcp-onboarding-error', '1', $redirect_url );
 		}
+
+		wp_safe_redirect( $redirect_url, 302 );
+		exit;
+	}
+
+	/**
+	 * Prevent enabling both Pay Later messaging and PayPal vaulting
+	 */
+	public function listen_for_vaulting_enabled() {
+		if ( ! $this->is_valid_site_request() ) {
+			return;
+		}
+
+		$token = $this->bearer->bearer();
+		if ( ! $token->vaulting_available() ) {
+			$this->settings->set( 'vault_enabled', false );
+			$this->settings->persist();
+			return;
+		}
+
+		/**
+		 * No need to verify nonce here.
+		 *
+		 * phpcs:disable WordPress.Security.NonceVerification.Missing
+		 * phpcs:disable WordPress.Security.NonceVerification.Recommended
+		 */
+		if ( ! isset( $_POST['ppcp']['vault_enabled'] ) ) {
+			return;
+		}
+
+		$this->settings->set( 'message_enabled', false );
+		$this->settings->set( 'message_product_enabled', false );
+		$this->settings->set( 'message_cart_enabled', false );
+		$this->settings->persist();
+
+		$redirect_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' );
 		wp_safe_redirect( $redirect_url, 302 );
 		exit;
 	}

@@ -87,7 +87,7 @@ class CreditCardRenderer {
                 },
                 expirationDate: {
                     selector: '#ppcp-credit-card-gateway-card-expiry',
-                    placeholder: this.defaultConfig.hosted_fields.labels.mm_yyyy,
+                    placeholder: this.defaultConfig.hosted_fields.labels.mm_yy,
                 }
             }
         }).then(hostedFields => {
@@ -103,18 +103,19 @@ class CreditCardRenderer {
                 });
 
                 if (formValid && this.cardValid) {
-
-                    let vault = document.querySelector(wrapper + ' .ppcp-credit-card-vault') ?
-                        document.querySelector(wrapper + ' .ppcp-credit-card-vault').checked : false;
-                    vault = this.defaultConfig.enforce_vault || vault;
-
+                    const save_card = this.defaultConfig.save_card ? true : false;
+                    const vault = document.getElementById('ppcp-credit-card-vault') ?
+                      document.getElementById('ppcp-credit-card-vault').checked : save_card;
                     hostedFields.submit({
                         contingencies: ['3D_SECURE'],
-                        vault
+                        vault: vault
                     }).then((payload) => {
                         payload.orderID = payload.orderId;
                         this.spinner.unblock();
                         return contextConfig.onApprove(payload);
+                    }).catch(() => {
+                        this.errorHandler.genericError();
+                        this.spinner.unblock();
                     });
                 } else {
                     this.spinner.unblock();

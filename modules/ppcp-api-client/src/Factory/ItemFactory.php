@@ -91,7 +91,7 @@ class ItemFactory {
 		 *
 		 * @var \WC_Product $product
 		 */
-		$quantity = $item->get_quantity();
+		$quantity = (int) $item->get_quantity();
 
 		$price                     = (float) $order->get_item_subtotal( $item, true );
 		$price_without_tax         = (float) $order->get_item_subtotal( $item, false );

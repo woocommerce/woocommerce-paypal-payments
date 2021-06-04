@@ -4,6 +4,7 @@ node_modules
 .phpunit.result.cache
 yarn-error.log
 modules/ppcp-button/assets/*
+modules/ppcp-wc-gateway/assets/*
 /.idea/workspace.xml
 *.zip
 /.env
