@@ -58,7 +58,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 
 == Changelog ==
 
-= 1.3.1 =
+= 1.3.2 =
 * Fix - Improve Subscription plugin support. #161
 * Fix - Disable vault setting if vaulting feature is not available. #150
 * Fix - Cast item get_quantity into int. #168
