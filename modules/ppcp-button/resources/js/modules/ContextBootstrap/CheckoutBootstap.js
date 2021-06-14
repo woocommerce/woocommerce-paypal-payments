@@ -73,7 +73,10 @@ class CheckoutBootstap {
             jQuery('#place_order').show();
         }
         else {
-            jQuery('#place_order').hide();
+            setTimeout(() => {
+                jQuery('#place_order').hide();
+            }, 300)
+
             if (currentPaymentMethod === 'ppcp-gateway') {
                 this.renderer.showButtons(this.gateway.button.wrapper);
                 this.renderer.showButtons(this.gateway.messages.wrapper);
