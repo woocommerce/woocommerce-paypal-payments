@@ -174,6 +174,36 @@ class CreateOrderEndpoint implements EndpointInterface {
 			$this->set_bn_code( $data );
 
 			if ( 'checkout' === $data['context'] ) {
+				if ( '1' === $data['createaccount'] ) {
+					$form_values   = explode( '&', $data['form'] );
+					$parsed_values = array();
+					foreach ( $form_values as $field ) {
+						$field = explode( '=', $field );
+
+						if ( count( $field ) !== 2 ) {
+							continue;
+						}
+						$parsed_values[ $field[0] ] = $field[1];
+					}
+					$_POST    = $parsed_values;
+					$_REQUEST = $parsed_values;
+
+					add_action(
+						'woocommerce_after_checkout_validation',
+						function( array $data, \WP_Error $errors ) use ( $wc_order ) {
+							if ( ! $errors->errors ) {
+								$order = $this->create_paypal_order( $wc_order );
+								wp_send_json_success( $order->to_array() );
+								return true;
+							}
+						},
+						10,
+						2
+					);
+
+					$checkout = \WC()->checkout();
+					$checkout->process_checkout();
+				}
 					$this->process_checkout_form( $data['form'] );
 			}
 			if ( 'pay-now' === $data['context'] && get_option( 'woocommerce_terms_page_id', '' ) !== '' ) {
