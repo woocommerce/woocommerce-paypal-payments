@@ -740,10 +740,6 @@ class SmartButton implements SmartButtonInterface {
 		) {
 			$params['buyer-country'] = WC()->customer->get_billing_country();
 		}
-		$payee = $this->payee_repository->payee();
-		if ( $payee->merchant_id() ) {
-			$params['merchant-id'] = $payee->merchant_id();
-		}
 		$disable_funding = $this->settings->has( 'disable_funding' ) ?
 			$this->settings->get( 'disable_funding' ) : array();
 		if ( ! is_checkout() ) {
