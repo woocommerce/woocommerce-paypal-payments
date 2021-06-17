@@ -1727,6 +1727,19 @@ return array(
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
+			'button_mini-cart_height'        => array(
+				'title'        => __( 'Button Height', 'woocommerce-paypal-payments' ),
+				'type'         => 'number',
+				'default'      => '35',
+				'desc_tip'     => true,
+				'description'  => __( 'Add a value from 25 to 55.', 'woocommerce-paypal-payments' ),
+				'screens'      => array(
+					State::STATE_PROGRESSIVE,
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
 
 			'disable_cards'                  => array(
 				'title'        => __( 'Disable specific credit cards', 'woocommerce-paypal-payments' ),

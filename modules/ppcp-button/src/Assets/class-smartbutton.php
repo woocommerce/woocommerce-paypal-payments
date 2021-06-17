@@ -650,6 +650,7 @@ class SmartButton implements SmartButtonInterface {
 					'shape'   => $this->style_for_context( 'shape', 'mini-cart' ),
 					'label'   => $this->style_for_context( 'label', 'mini-cart' ),
 					'tagline' => $this->style_for_context( 'tagline', 'mini-cart' ),
+					'height'  => $this->settings->has( 'button_mini-cart_height' ) && $this->settings->get( 'button_mini-cart_height' ) ? $this->normalize_height( (int) $this->settings->get( 'button_mini-cart_height' ) ) : 35,
 				),
 				'style'             => array(
 					'layout'  => $this->style_for_context( 'layout', $this->context() ),
@@ -938,5 +939,22 @@ class SmartButton implements SmartButtonInterface {
 			$value = $value ? 'true' : 'false';
 		}
 		return (string) $value;
+	}
+
+	/**
+	 * Returns a value between 25 and 55.
+	 *
+	 * @param int $height The input value.
+	 * @return int The normalized output value.
+	 */
+	private function normalize_height( int $height ): int {
+		if ( $height < 25 ) {
+			return 25;
+		}
+		if ( $height > 55 ) {
+			return 55;
+		}
+
+		return $height;
 	}
 }
