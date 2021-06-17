@@ -11,7 +11,6 @@ namespace WooCommerce\PayPalCommerce\Button\Assets;
 
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
-use WooCommerce\PayPalCommerce\ApiClient\Repository\PayeeRepository;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
@@ -50,13 +49,6 @@ class SmartButton implements SmartButtonInterface {
 	 * @var Settings
 	 */
 	private $settings;
-
-	/**
-	 * The Payee Repository.
-	 *
-	 * @var PayeeRepository
-	 */
-	private $payee_repository;
 
 	/**
 	 * The Payer Factory.
@@ -120,7 +112,6 @@ class SmartButton implements SmartButtonInterface {
 	 * @param string                 $module_url The URL to the module.
 	 * @param SessionHandler         $session_handler The Session Handler.
 	 * @param Settings               $settings The Settings.
-	 * @param PayeeRepository        $payee_repository The Payee Repository.
 	 * @param PayerFactory           $payer_factory The Payer factory.
 	 * @param string                 $client_id The client ID.
 	 * @param RequestData            $request_data The Request Data helper.
@@ -134,7 +125,6 @@ class SmartButton implements SmartButtonInterface {
 		string $module_url,
 		SessionHandler $session_handler,
 		Settings $settings,
-		PayeeRepository $payee_repository,
 		PayerFactory $payer_factory,
 		string $client_id,
 		RequestData $request_data,
@@ -148,7 +138,6 @@ class SmartButton implements SmartButtonInterface {
 		$this->module_url               = $module_url;
 		$this->session_handler          = $session_handler;
 		$this->settings                 = $settings;
-		$this->payee_repository         = $payee_repository;
 		$this->payer_factory            = $payer_factory;
 		$this->client_id                = $client_id;
 		$this->request_data             = $request_data;
