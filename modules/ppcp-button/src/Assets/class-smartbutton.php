@@ -23,12 +23,20 @@ use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Subscription\Repository\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use Woocommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class SmartButton
  */
 class SmartButton implements SmartButtonInterface {
+
+	/**
+	 * The Settings status helper.
+	 *
+	 * @var SettingsStatus
+	 */
+	protected $settings_status;
 
 	/**
 	 * The URL to the module.
@@ -129,6 +137,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @param MessagesApply          $messages_apply The Messages apply helper.
 	 * @param Environment            $environment The environment object.
 	 * @param PaymentTokenRepository $payment_token_repository The payment token repository.
+	 * @param SettingsStatus         $settings_status The Settings status helper.
 	 */
 	public function __construct(
 		string $module_url,
@@ -142,7 +151,8 @@ class SmartButton implements SmartButtonInterface {
 		SubscriptionHelper $subscription_helper,
 		MessagesApply $messages_apply,
 		Environment $environment,
-		PaymentTokenRepository $payment_token_repository
+		PaymentTokenRepository $payment_token_repository,
+		SettingsStatus $settings_status
 	) {
 
 		$this->module_url               = $module_url;
@@ -157,6 +167,7 @@ class SmartButton implements SmartButtonInterface {
 		$this->messages_apply           = $messages_apply;
 		$this->environment              = $environment;
 		$this->payment_token_repository = $payment_token_repository;
+		$this->settings_status          = $settings_status;
 	}
 
 	/**
@@ -752,6 +763,14 @@ class SmartButton implements SmartButtonInterface {
 
 		if ( count( $disable_funding ) > 0 ) {
 			$params['disable-funding'] = implode( ',', array_unique( $disable_funding ) );
+		}
+
+		$enable_funding = array();
+		if ( $this->settings_status->pay_later_messaging_is_enabled() ) {
+			$enable_funding[] = 'paylater';
+		}
+		if ( count( $enable_funding ) > 0 ) {
+			$params['enable-funding'] = implode( ',', array_unique( $enable_funding ) );
 		}
 
 		$smart_button_url = add_query_arg( $params, 'https://www.paypal.com/sdk/js' );

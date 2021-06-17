@@ -16,11 +16,19 @@ use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use Psr\Container\ContainerInterface;
 use Woocommerce\PayPalCommerce\WcGateway\Helper\DccProductStatus;
+use Woocommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 
 /**
  * Class SettingsRenderer
  */
 class SettingsRenderer {
+
+	/**
+	 * The Settings status helper.
+	 *
+	 * @var SettingsStatus
+	 */
+	protected $settings_status;
 
 	/**
 	 * The settings.
@@ -73,6 +81,7 @@ class SettingsRenderer {
 	 * @param DccApplies         $dcc_applies Whether DCC gateway can be shown.
 	 * @param MessagesApply      $messages_apply Whether messages can be shown.
 	 * @param DccProductStatus   $dcc_product_status The product status.
+	 * @param SettingsStatus     $settings_status The Settings status helper.
 	 */
 	public function __construct(
 		ContainerInterface $settings,
@@ -80,7 +89,8 @@ class SettingsRenderer {
 		array $fields,
 		DccApplies $dcc_applies,
 		MessagesApply $messages_apply,
-		DccProductStatus $dcc_product_status
+		DccProductStatus $dcc_product_status,
+		SettingsStatus $settings_status
 	) {
 
 		$this->settings           = $settings;
@@ -89,6 +99,7 @@ class SettingsRenderer {
 		$this->dcc_applies        = $dcc_applies;
 		$this->messages_apply     = $messages_apply;
 		$this->dcc_product_status = $dcc_product_status;
+		$this->settings_status    = $settings_status;
 	}
 
 	/**
@@ -106,7 +117,7 @@ class SettingsRenderer {
 			$pay_later_messages_title = __( 'Pay Later Messaging', 'woocommerce-paypal-payments' );
 
 			$enabled  = $this->paypal_vaulting_is_enabled() ? $vaulting_title : $pay_later_messages_title;
-			$disabled = $this->pay_later_messaging_is_enabled() ? $vaulting_title : $pay_later_messages_title;
+			$disabled = $this->settings_status->pay_later_messaging_is_enabled() ? $vaulting_title : $pay_later_messages_title;
 
 			$pay_later_messages_or_vaulting_text = sprintf(
 				// translators: %1$s and %2$s is translated PayPal vaulting and Pay Later Messaging strings.
@@ -147,26 +158,6 @@ class SettingsRenderer {
 	 */
 	private function paypal_vaulting_is_enabled(): bool {
 		return $this->settings->has( 'vault_enabled' ) && (bool) $this->settings->get( 'vault_enabled' );
-	}
-
-	/**
-	 * Check whether Pay Later message is enabled either for checkout, cart or product page.
-	 *
-	 * @return bool
-	 */
-	private function pay_later_messaging_is_enabled(): bool {
-		$pay_later_message_enabled_for_checkout = $this->settings->has( 'message_enabled' )
-			&& (bool) $this->settings->get( 'message_enabled' );
-
-		$pay_later_message_enabled_for_cart = $this->settings->has( 'message_cart_enabled' )
-			&& (bool) $this->settings->get( 'message_cart_enabled' );
-
-		$pay_later_message_enabled_for_product = $this->settings->has( 'message_product_enabled' )
-			&& (bool) $this->settings->get( 'message_product_enabled' );
-
-		return $pay_later_message_enabled_for_checkout ||
-			$pay_later_message_enabled_for_cart ||
-			$pay_later_message_enabled_for_product;
 	}
 
 	/**
@@ -557,6 +548,6 @@ class SettingsRenderer {
 		}
 
 		return $this->is_paypal_checkout_screen() && $this->paypal_vaulting_is_enabled()
-			|| $this->is_paypal_checkout_screen() && $this->pay_later_messaging_is_enabled();
+			|| $this->is_paypal_checkout_screen() && $this->settings_status->pay_later_messaging_is_enabled();
 	}
 }
