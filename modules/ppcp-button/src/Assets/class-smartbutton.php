@@ -766,7 +766,7 @@ class SmartButton implements SmartButtonInterface {
 		}
 
 		$enable_funding = array();
-		if ( $this->settings_status->pay_later_messaging_is_enabled() ) {
+		if ( $this->settings_status->pay_later_messaging_is_enabled() || ! in_array( 'credit', $disable_funding, true ) ) {
 			$enable_funding[] = 'paylater';
 		}
 		if ( count( $enable_funding ) > 0 ) {
