@@ -449,7 +449,7 @@ class SmartButton implements SmartButtonInterface {
 	 */
 	public function message_renderer() {
 
-		echo '<div id="ppcp-messages"></div>';
+		echo '<div id="ppcp-messages" data-partner-attribution-id="Woo_PPCP"></div>';
 	}
 
 	/**
