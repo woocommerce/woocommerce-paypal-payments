@@ -1,7 +1,7 @@
 /**
  * External dependencies
  */
-import { WooRemotePaymentForm } from '@woocommerce/components';
+import { WooPaymentGatewayConnect } from '@woocommerce/onboarding';
 import { registerPlugin } from '@wordpress/plugins';
 import { useState } from '@wordpress/element';
 
@@ -15,7 +15,7 @@ const TaskListFill = () => {
 	const [ showConnectionForm, setShowConnectionForm ] = useState( false );
 
 	return (
-		<WooRemotePaymentForm id="ppcp-gateway">
+		<WooPaymentGatewayConnect id="ppcp-gateway">
 			{ ( { markConfigured, paymentGateway } ) => {
 				return showConnectionForm ? (
 					<ConnectionForm
@@ -29,7 +29,7 @@ const TaskListFill = () => {
 					/>
 				);
 			} }
-		</WooRemotePaymentForm>
+		</WooPaymentGatewayConnect>
 	);
 };
 
