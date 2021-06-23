@@ -135,6 +135,18 @@ class WcGatewayModule implements ModuleInterface {
 				$endpoint->handle_request();
 			}
 		);
+
+		add_filter(
+			'woocommerce_email_recipient_customer_on_hold_order',
+			function( $recipient, $order ) {
+				if ( $order->get_payment_method() === PayPalGateway::ID || $order->get_payment_method() === CreditCardGateway::ID ) {
+					$recipient = '';
+				}
+				return $recipient;
+			},
+			10,
+			2
+		);
 	}
 
 	/**
