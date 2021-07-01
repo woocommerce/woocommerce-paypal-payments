@@ -25,6 +25,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use Woocommerce\PayPalCommerce\WcGateway\Helper\DccProductStatus;
+use Woocommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
@@ -114,6 +115,10 @@ return array(
 	'wcgateway.settings.sections-renderer'         => static function ( $container ): SectionsRenderer {
 		return new SectionsRenderer();
 	},
+	'wcgateway.settings.status'                    => static function ( $container ): SettingsStatus {
+		$settings      = $container->get( 'wcgateway.settings' );
+		return new SettingsStatus( $settings );
+	},
 	'wcgateway.settings.render'                    => static function ( $container ): SettingsRenderer {
 		$settings      = $container->get( 'wcgateway.settings' );
 		$state         = $container->get( 'onboarding.state' );
@@ -121,13 +126,15 @@ return array(
 		$dcc_applies    = $container->get( 'api.helpers.dccapplies' );
 		$messages_apply = $container->get( 'button.helper.messages-apply' );
 		$dcc_product_status = $container->get( 'wcgateway.helper.dcc-product-status' );
+		$settings_status = $container->get( 'wcgateway.settings.status' );
 		return new SettingsRenderer(
 			$settings,
 			$state,
 			$fields,
 			$dcc_applies,
 			$messages_apply,
-			$dcc_product_status
+			$dcc_product_status,
+			$settings_status
 		);
 	},
 	'wcgateway.settings.listener'                  => static function ( $container ): SettingsListener {
@@ -828,7 +835,7 @@ return array(
 				),
 				'requirements' => array( 'messages' ),
 				'gateway'      => 'paypal',
-				'description'  => str_replace( '<a>', '<a href="' . $messages_disclaimers->link_for_country() . '" target="_blank">', __( 'Displays Pay Later messaging for available offers. Restrictions apply. <a>Click here to learn more.</a>', 'woocommerce-paypal-payments' ) ),
+				'description'  => str_replace( '<a>', '<a href="' . $messages_disclaimers->link_for_country() . '" target="_blank">', __( 'Displays Pay Later messaging for available offers. Restrictions apply. <a>Click here to learn more</a>. Pay Later button will show for eligible buyers and PayPal determines eligibility.', 'woocommerce-paypal-payments' ) ),
 				'class'        => array( 'ppcp-subheading' ),
 			),
 			'message_enabled'                => array(
@@ -1131,7 +1138,7 @@ return array(
 				),
 				'requirements' => array( 'messages' ),
 				'gateway'      => 'paypal',
-				'description'  => str_replace( '<a>', '<a href="' . $messages_disclaimers->link_for_country() . '" target="_blank">', __( 'Displays Pay Later messaging for available offers. Restrictions apply. <a>Click here to learn more.</a>', 'woocommerce-paypal-payments' ) ),
+				'description'  => str_replace( '<a>', '<a href="' . $messages_disclaimers->link_for_country() . '" target="_blank">', __( 'Displays Pay Later messaging for available offers. Restrictions apply. <a>Click here to learn more</a>. Pay Later button will show for eligible buyers and PayPal determines eligibility.', 'woocommerce-paypal-payments' ) ),
 				'class'        => array( 'ppcp-subheading' ),
 			),
 			'message_product_enabled'        => array(
@@ -1434,7 +1441,7 @@ return array(
 				),
 				'requirements' => array( 'messages' ),
 				'gateway'      => 'paypal',
-				'description'  => str_replace( '<a>', '<a href="' . $messages_disclaimers->link_for_country() . '" target="_blank">', __( 'Displays Pay Later messaging for available offers. Restrictions apply. <a>Click here to learn more.</a>', 'woocommerce-paypal-payments' ) ),
+				'description'  => str_replace( '<a>', '<a href="' . $messages_disclaimers->link_for_country() . '" target="_blank">', __( 'Displays Pay Later messaging for available offers. Restrictions apply. <a>Click here to learn more</a>. Pay Later button will show for eligible buyers and PayPal determines eligibility.', 'woocommerce-paypal-payments' ) ),
 				'class'        => array( 'ppcp-subheading' ),
 			),
 			'message_cart_enabled'           => array(
