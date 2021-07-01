@@ -502,6 +502,14 @@ class OrderEndpoint {
 			return $order_to_update;
 		}
 
+		$patches_array = $patches->to_array();
+		if ( ! isset( $patches_array[0]['value']['shipping'] ) ) {
+			$shipping = isset( $order_to_update->purchase_units()[0] ) && null !== $order_to_update->purchase_units()[0]->shipping() ? $order_to_update->purchase_units()[0]->shipping() : null;
+			if ( $shipping ) {
+				$patches_array[0]['value']['shipping'] = $shipping->to_array();
+			}
+		}
+
 		$bearer = $this->bearer->bearer();
 		$url    = trailingslashit( $this->host ) . 'v2/checkout/orders/' . $order_to_update->id();
 		$args   = array(
@@ -514,7 +522,7 @@ class OrderEndpoint {
 					$order_to_update
 				),
 			),
-			'body'    => wp_json_encode( $patches->to_array() ),
+			'body'    => wp_json_encode( $patches_array ),
 		);
 		if ( $this->bn_code ) {
 			$args['headers']['PayPal-Partner-Attribution-Id'] = $this->bn_code;
