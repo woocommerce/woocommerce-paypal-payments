@@ -754,6 +754,8 @@ class SmartButton implements SmartButtonInterface {
 			$params['disable-funding'] = implode( ',', array_unique( $disable_funding ) );
 		}
 
+		$params['enable-funding'] = 'venmo';
+
 		$smart_button_url = add_query_arg( $params, 'https://www.paypal.com/sdk/js' );
 		return $smart_button_url;
 	}
