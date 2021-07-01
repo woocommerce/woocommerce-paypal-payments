@@ -24,6 +24,8 @@ trait RequestTrait {
 	 */
 	private function request( string $url, array $args ) {
 
+		$args['timeout'] = 30;
+
 		/**
 		 * This filter can be used to alter the request args.
 		 * For example, during testing, the PayPal-Mock-Response header could be
