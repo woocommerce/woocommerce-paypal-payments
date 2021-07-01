@@ -765,11 +765,10 @@ class SmartButton implements SmartButtonInterface {
 			$params['disable-funding'] = implode( ',', array_unique( $disable_funding ) );
 		}
 
-		$enable_funding = array();
+		$enable_funding = array( 'venmo' );
 		if ( $this->settings_status->pay_later_messaging_is_enabled() || ! in_array( 'credit', $disable_funding, true ) ) {
 			$enable_funding[] = 'paylater';
 		}
-        $params['enable-funding'] = 'venmo';
 		if ( count( $enable_funding ) > 0 ) {
 			$params['enable-funding'] = implode( ',', array_unique( $enable_funding ) );
 		}
