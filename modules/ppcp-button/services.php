@@ -59,7 +59,6 @@ return array(
 		if ( $paypal_disabled ) {
 			return new DisabledSmartButton();
 		}
-		$payee_repository = $container->get( 'api.repository.payee' );
 		$payer_factory    = $container->get( 'api.factory.payer' );
 		$request_data     = $container->get( 'button.request-data' );
 
@@ -74,7 +73,6 @@ return array(
 			$container->get( 'button.url' ),
 			$container->get( 'session.handler' ),
 			$settings,
-			$payee_repository,
 			$payer_factory,
 			$client_id,
 			$request_data,
