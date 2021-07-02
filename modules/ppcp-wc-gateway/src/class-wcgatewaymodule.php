@@ -11,7 +11,6 @@ namespace WooCommerce\PayPalCommerce\WcGateway;
 
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
-use http\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
