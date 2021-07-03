@@ -1,0 +1,17 @@
+{
+    "name": "woocommerce/ppcp-onboarding",
+    "type": "dhii-mod",
+    "description": "Onboarding module for PPCP",
+    "license": "GPL-2.0",
+    "require": {
+        "php": "^7.1 | ^8.0",
+        "dhii/module-interface": "^0.3.0-alpha1"
+    },
+    "autoload": {
+        "psr-4": {
+            "WooCommerce\\PayPalCommerce\\Onboarding\\": "src"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

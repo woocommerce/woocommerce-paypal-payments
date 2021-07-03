@@ -317,8 +317,8 @@ class PurchaseUnit {
 			}
 		}
 
-		$fee_items_total = round( $fee_items_total, 2 );
-		$fee_tax_total   = round( $fee_tax_total, 2 );
+		$fee_items_total = round( (float) $fee_items_total, 2 );
+		$fee_tax_total   = round( (float) $fee_tax_total, 2 );
 
 		if ( 0.0 !== $fee_items_total || 0.0 !== $fee_tax_total ) {
 			return true;

@@ -27,9 +27,7 @@ class ButtonModule implements ModuleInterface {
 
 
 	/**
-	 * Sets up the module.
-	 *
-	 * @return ServiceProviderInterface
+	 * {@inheritDoc}
 	 */
 	public function setup(): ServiceProviderInterface {
 		return new ServiceProvider(
@@ -39,19 +37,17 @@ class ButtonModule implements ModuleInterface {
 	}
 
 	/**
-	 * Runs the module.
-	 *
-	 * @param ContainerInterface|null $container The Container.
+	 * {@inheritDoc}
 	 */
-	public function run( ContainerInterface $container = null ) {
+	public function run( ContainerInterface $c ): void {
 
 		add_action(
 			'wp',
-			static function () use ( $container ) {
+			static function () use ( $c ) {
 				if ( is_admin() ) {
 					return;
 				}
-				$smart_button = $container->get( 'button.smart-button' );
+				$smart_button = $c->get( 'button.smart-button' );
 				/**
 				 * The Smart Button.
 				 *
@@ -62,9 +58,9 @@ class ButtonModule implements ModuleInterface {
 		);
 		add_action(
 			'wp_enqueue_scripts',
-			static function () use ( $container ) {
+			static function () use ( $c ) {
 
-				$smart_button = $container->get( 'button.smart-button' );
+				$smart_button = $c->get( 'button.smart-button' );
 				/**
 				 * The Smart Button.
 				 *
@@ -76,8 +72,8 @@ class ButtonModule implements ModuleInterface {
 
 		add_filter(
 			'woocommerce_create_order',
-			static function ( $value ) use ( $container ) {
-				$early_order_handler = $container->get( 'button.helper.early-order-handler' );
+			static function ( $value ) use ( $c ) {
+				$early_order_handler = $c->get( 'button.helper.early-order-handler' );
 				if ( ! is_null( $value ) ) {
 					$value = (int) $value;
 				}
@@ -90,7 +86,7 @@ class ButtonModule implements ModuleInterface {
 			}
 		);
 
-		$this->register_ajax_endpoints( $container );
+		$this->register_ajax_endpoints( $c );
 	}
 
 	/**

@@ -1,29 +1,55 @@
-name: PHP Composer
+name: CI
 
-on:
-  push:
-    branches: [ trunk ]
-  pull_request:
-    branches: [ trunk ]
+on: [push]
 
 jobs:
   build:
 
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php-versions: ['7.1', '7.2', '7.3', '7.4', '8.0']
 
+    name: PHP ${{ matrix.php-versions }}
     steps:
-    - uses: actions/checkout@v2
+      -   uses: actions/checkout@v2
 
-    - name: Validate composer.json and composer.lock
-      run: composer validate
+      -   name: Setup PHP
+          uses: shivammathur/setup-php@v2
+          with:
+            php-version: ${{ matrix.php-versions }}
+            coverage: none
+            tools: composer:v1
 
-    - name: Install dependencies
-      run: composer install --prefer-dist --no-progress --no-suggest
+      -   name: Packagist.com Auth
+          run: composer config --global --auth http-basic.repo.packagist.com token ${{ secrets.PACKAGIST_TOKEN }}
 
-    # Add a test script to composer.json, for instance: "test": "vendor/bin/phpunit"
-    # Docs: https://getcomposer.org/doc/articles/scripts.md
+      -   name: Validate composer.json and composer.lock
+          run: composer validate
 
-    - name: Run test suite
-      run: ./vendor/bin/phpunit
-    - name: Run Woocommerce coding standards
-      run: ./vendor/bin/phpcs src modules woocommerce-paypal-payments.php --extensions=php
+      -   name: Install dependencies
+          run: |
+            composer update \
+              phpunit/phpunit \
+              phpspec/prophecy \
+              theseer/tokenizer \
+              phpdocumentor/reflection-docblock \
+              phpdocumentor/reflection-common \
+              phpdocumentor/type-resolver \
+              sebastian/global-state \
+              sebastian/version \
+              phar-io/manifest \
+              phar-io/version \
+              phpunit/php-code-coverage \
+            --prefer-dist --no-progress --no-suggest \
+            && composer install --prefer-dist --no-progress --no-suggest
+
+      -   name: Run PHPUnit
+          run: vendor/bin/phpunit
+
+      -   name: Psalm
+          run: ./vendor/bin/psalm --show-info=false --threads=8 --diff
+          continue-on-error: true
+
+      -   name: Run PHPCS
+          run: ./vendor/bin/phpcs -s --runtime-set ignore_warnings_on_exit 1

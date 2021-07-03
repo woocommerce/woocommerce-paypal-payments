@@ -4,7 +4,7 @@
 
 	<!-- Configs -->
 	<config name="minimum_supported_wp_version" value="4.7" />
-	<config name="testVersion" value="7.0-" />
+	<config name="testVersion" value="7.1-" />
 
 	<!-- Rules -->
 	<rule ref="WooCommerce-Core" />
@@ -19,8 +19,21 @@
 		<exclude-pattern>tests/</exclude-pattern>
 	</rule>
 
+	<rule ref="WordPress">
+		<exclude name="WordPress.Files.FileName.NotHyphenatedLowercase" />
+		<exclude name="WordPress.Files.FileName.InvalidClassFileName" />
+	</rule>
+
+	<rule ref="Squiz.Commenting.FunctionComment.MissingParamTag">
+		<type>warning</type>
+	</rule>
+
+	<rule ref="Squiz.Commenting.FunctionComment" />
+
 	<arg name="extensions" value="php"/>
-	<file>.</file>
+
+	<file>src</file>
+	<file>modules</file>
 
 	<exclude-pattern>*/node_modules/*</exclude-pattern>
 	<exclude-pattern>*/vendor/*</exclude-pattern>

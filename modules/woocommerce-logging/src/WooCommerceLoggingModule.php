@@ -1,29 +1,26 @@
 <?php
 /**
- * The API module.
+ * The logging module.
  *
- * @package WooCommerce\PayPalCommerce\ApiClient
+ * @package WooCommerce\WooCommerce\Logging
  */
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\ApiClient;
+namespace WooCommerce\WooCommerce\Logging;
 
 use Dhii\Container\ServiceProvider;
-use Dhii\Modular\Module\Exception\ModuleExceptionInterface;
 use Dhii\Modular\Module\ModuleInterface;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
 
 /**
- * Class ApiModule
+ * Class WooCommerceLoggingModule
  */
-class ApiModule implements ModuleInterface {
+class WooCommerceLoggingModule implements ModuleInterface {
 
 	/**
-	 * Sets up the module.
-	 *
-	 * @return ServiceProviderInterface
+	 * {@inheritDoc}
 	 */
 	public function setup(): ServiceProviderInterface {
 		return new ServiceProvider(
@@ -33,12 +30,11 @@ class ApiModule implements ModuleInterface {
 	}
 
 	/**
-	 * Runs the module.
-	 *
-	 * @param ContainerInterface $container The container.
+	 * {@inheritDoc}
 	 */
-	public function run( ContainerInterface $container = null ) {
+	public function run( ContainerInterface $c ): void {
 	}
+
 
 	/**
 	 * Returns the key for the module.

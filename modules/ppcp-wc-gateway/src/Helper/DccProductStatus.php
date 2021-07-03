@@ -7,7 +7,7 @@
 
 declare( strict_types=1 );
 
-namespace Woocommerce\PayPalCommerce\WcGateway\Helper;
+namespace WooCommerce\PayPalCommerce\WcGateway\Helper;
 
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatusProduct;

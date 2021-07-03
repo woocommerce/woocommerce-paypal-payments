@@ -1,13 +1,13 @@
 <?php
 /**
- * The logging module.
+ * The admin notice module.
  *
- * @package WooCommerce\WooCommerce\Logging
+ * @package WooCommerce\PayPalCommerce\Button
  */
 
 declare(strict_types=1);
 
-namespace WooCommerce\WooCommerce\Logging;
+namespace WooCommerce\PayPalCommerce\AdminNotices;
 
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
@@ -15,14 +15,12 @@ use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
 
 /**
- * Class WooCommerceLoggingModule
+ * Class AdminNotices
  */
-class WooCommerceLoggingModule implements ModuleInterface {
+class AdminNotices implements ModuleInterface {
 
 	/**
-	 * Setup the module.
-	 *
-	 * @return ServiceProviderInterface
+	 * {@inheritDoc}
 	 */
 	public function setup(): ServiceProviderInterface {
 		return new ServiceProvider(
@@ -32,13 +30,17 @@ class WooCommerceLoggingModule implements ModuleInterface {
 	}
 
 	/**
-	 * Run the module.
-	 *
-	 * @param ContainerInterface $container The container.
+	 * {@inheritDoc}
 	 */
-	public function run( ContainerInterface $container = null ) {
+	public function run( ContainerInterface $c ): void {
+		add_action(
+			'admin_notices',
+			function() use ( $c ) {
+				$renderer = $c->get( 'admin-notices.renderer' );
+				$renderer->render();
+			}
+		);
 	}
-
 
 	/**
 	 * Returns the key for the module.
