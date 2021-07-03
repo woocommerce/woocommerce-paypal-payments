@@ -315,6 +315,7 @@ class SettingsListener {
 					$settings[ $key ] = isset( $raw_data[ $key ] );
 					break;
 				case 'text':
+				case 'number':
 				case 'ppcp-text-input':
 				case 'ppcp-password':
 					$settings[ $key ] = isset( $raw_data[ $key ] ) ? sanitize_text_field( $raw_data[ $key ] ) : '';

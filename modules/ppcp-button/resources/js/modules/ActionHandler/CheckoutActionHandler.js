@@ -21,6 +21,8 @@ class CheckoutActionHandler {
             const formSelector = this.config.context === 'checkout' ? 'form.checkout' : 'form#order_review';
             const formValues = jQuery(formSelector).serialize();
 
+            const createaccount = jQuery('#createaccount').is(":checked") ? true : false;
+
             return fetch(this.config.ajax.create_order.endpoint, {
                 method: 'POST',
                 body: JSON.stringify({
@@ -29,7 +31,8 @@ class CheckoutActionHandler {
                     bn_code:bnCode,
                     context:this.config.context,
                     order_id:this.config.order_id,
-                    form:formValues
+                    form:formValues,
+                    createaccount: createaccount
                 })
             }).then(function (res) {
                 return res.json();

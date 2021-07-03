@@ -11,7 +11,6 @@ namespace WooCommerce\PayPalCommerce\Button\Assets;
 
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
-use WooCommerce\PayPalCommerce\ApiClient\Repository\PayeeRepository;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
@@ -23,12 +22,20 @@ use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Subscription\Repository\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use Woocommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class SmartButton
  */
 class SmartButton implements SmartButtonInterface {
+
+	/**
+	 * The Settings status helper.
+	 *
+	 * @var SettingsStatus
+	 */
+	protected $settings_status;
 
 	/**
 	 * The URL to the module.
@@ -50,13 +57,6 @@ class SmartButton implements SmartButtonInterface {
 	 * @var Settings
 	 */
 	private $settings;
-
-	/**
-	 * The Payee Repository.
-	 *
-	 * @var PayeeRepository
-	 */
-	private $payee_repository;
 
 	/**
 	 * The Payer Factory.
@@ -120,7 +120,6 @@ class SmartButton implements SmartButtonInterface {
 	 * @param string                 $module_url The URL to the module.
 	 * @param SessionHandler         $session_handler The Session Handler.
 	 * @param Settings               $settings The Settings.
-	 * @param PayeeRepository        $payee_repository The Payee Repository.
 	 * @param PayerFactory           $payer_factory The Payer factory.
 	 * @param string                 $client_id The client ID.
 	 * @param RequestData            $request_data The Request Data helper.
@@ -129,12 +128,12 @@ class SmartButton implements SmartButtonInterface {
 	 * @param MessagesApply          $messages_apply The Messages apply helper.
 	 * @param Environment            $environment The environment object.
 	 * @param PaymentTokenRepository $payment_token_repository The payment token repository.
+	 * @param SettingsStatus         $settings_status The Settings status helper.
 	 */
 	public function __construct(
 		string $module_url,
 		SessionHandler $session_handler,
 		Settings $settings,
-		PayeeRepository $payee_repository,
 		PayerFactory $payer_factory,
 		string $client_id,
 		RequestData $request_data,
@@ -142,13 +141,13 @@ class SmartButton implements SmartButtonInterface {
 		SubscriptionHelper $subscription_helper,
 		MessagesApply $messages_apply,
 		Environment $environment,
-		PaymentTokenRepository $payment_token_repository
+		PaymentTokenRepository $payment_token_repository,
+		SettingsStatus $settings_status
 	) {
 
 		$this->module_url               = $module_url;
 		$this->session_handler          = $session_handler;
 		$this->settings                 = $settings;
-		$this->payee_repository         = $payee_repository;
 		$this->payer_factory            = $payer_factory;
 		$this->client_id                = $client_id;
 		$this->request_data             = $request_data;
@@ -157,6 +156,7 @@ class SmartButton implements SmartButtonInterface {
 		$this->messages_apply           = $messages_apply;
 		$this->environment              = $environment;
 		$this->payment_token_repository = $payment_token_repository;
+		$this->settings_status          = $settings_status;
 	}
 
 	/**
@@ -402,7 +402,7 @@ class SmartButton implements SmartButtonInterface {
 				'ppcp-smart-button',
 				$this->module_url . '/assets/js/button.js',
 				array( 'jquery' ),
-				'1.3.1',
+				'1.3.2',
 				true
 			);
 
@@ -650,6 +650,7 @@ class SmartButton implements SmartButtonInterface {
 					'shape'   => $this->style_for_context( 'shape', 'mini-cart' ),
 					'label'   => $this->style_for_context( 'label', 'mini-cart' ),
 					'tagline' => $this->style_for_context( 'tagline', 'mini-cart' ),
+					'height'  => $this->settings->has( 'button_mini-cart_height' ) && $this->settings->get( 'button_mini-cart_height' ) ? $this->normalize_height( (int) $this->settings->get( 'button_mini-cart_height' ) ) : 35,
 				),
 				'style'             => array(
 					'layout'  => $this->style_for_context( 'layout', $this->context() ),
@@ -740,10 +741,6 @@ class SmartButton implements SmartButtonInterface {
 		) {
 			$params['buyer-country'] = WC()->customer->get_billing_country();
 		}
-		$payee = $this->payee_repository->payee();
-		if ( $payee->merchant_id() ) {
-			$params['merchant-id'] = $payee->merchant_id();
-		}
 		$disable_funding = $this->settings->has( 'disable_funding' ) ?
 			$this->settings->get( 'disable_funding' ) : array();
 		if ( ! is_checkout() ) {
@@ -752,6 +749,14 @@ class SmartButton implements SmartButtonInterface {
 
 		if ( count( $disable_funding ) > 0 ) {
 			$params['disable-funding'] = implode( ',', array_unique( $disable_funding ) );
+		}
+
+		$enable_funding = array( 'venmo' );
+		if ( $this->settings_status->pay_later_messaging_is_enabled() || ! in_array( 'credit', $disable_funding, true ) ) {
+			$enable_funding[] = 'paylater';
+		}
+		if ( count( $enable_funding ) > 0 ) {
+			$params['enable-funding'] = implode( ',', array_unique( $enable_funding ) );
 		}
 
 		$smart_button_url = add_query_arg( $params, 'https://www.paypal.com/sdk/js' );
@@ -938,5 +943,22 @@ class SmartButton implements SmartButtonInterface {
 			$value = $value ? 'true' : 'false';
 		}
 		return (string) $value;
+	}
+
+	/**
+	 * Returns a value between 25 and 55.
+	 *
+	 * @param int $height The input value.
+	 * @return int The normalized output value.
+	 */
+	private function normalize_height( int $height ): int {
+		if ( $height < 25 ) {
+			return 25;
+		}
+		if ( $height > 55 ) {
+			return 55;
+		}
+
+		return $height;
 	}
 }

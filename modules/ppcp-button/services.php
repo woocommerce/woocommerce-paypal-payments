@@ -60,7 +60,6 @@ return array(
 		if ( $paypal_disabled ) {
 			return new DisabledSmartButton();
 		}
-		$payee_repository = $container->get( 'api.repository.payee' );
 		$payer_factory    = $container->get( 'api.factory.payer' );
 		$request_data     = $container->get( 'button.request-data' );
 
@@ -70,11 +69,11 @@ return array(
 		$messages_apply      = $container->get( 'button.helper.messages-apply' );
 		$environment         = $container->get( 'onboarding.environment' );
 		$payment_token_repository = $container->get( 'subscription.repository.payment-token' );
+		$settings_status = $container->get( 'wcgateway.settings.status' );
 		return new SmartButton(
 			$container->get( 'button.url' ),
 			$container->get( 'session.handler' ),
 			$settings,
-			$payee_repository,
 			$payer_factory,
 			$client_id,
 			$request_data,
@@ -82,7 +81,8 @@ return array(
 			$subscription_helper,
 			$messages_apply,
 			$environment,
-			$payment_token_repository
+			$payment_token_repository,
+			$settings_status
 		);
 	},
 	'button.url'                        => static function ( ContainerInterface $container ): string {
