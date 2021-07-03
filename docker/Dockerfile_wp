@@ -77,6 +77,15 @@ RUN docker-php-ext-install intl json && \
 RUN curl -sL https://deb.nodesource.com/setup_15.x | bash -
 RUN apt-get install -y nodejs
 
+# Install Phive
+RUN wget -O phive.phar "https://phar.io/releases/phive.phar"
+RUN wget -O phive.phar.asc "https://phar.io/releases/phive.phar.asc"
+RUN gpg --keyserver keyserver.ubuntu.com --recv-keys 0x9D8A98B29B2D5D79
+RUN gpg --verify phive.phar.asc phive.phar
+RUN rm phive.phar.asc && \
+    chmod +x phive.phar && \
+    mv phive.phar /usr/local/bin/phive
+
 WORKDIR ${BUILD_ROOT_PATH}
 COPY . ./
 
