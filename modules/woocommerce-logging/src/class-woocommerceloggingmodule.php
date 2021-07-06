@@ -36,7 +36,7 @@ class WooCommerceLoggingModule implements ModuleInterface {
 	 *
 	 * @param ContainerInterface $container The container.
 	 */
-	public function run( ContainerInterface $container = null ) {
+	public function run( ContainerInterface $container ) {
 	}
 
 
