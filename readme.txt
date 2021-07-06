@@ -15,6 +15,29 @@ PayPal's latest payments processing solution. Accept PayPal, Pay Later, credit/d
 PayPal's latest, most complete payment processing solution. Accept PayPal exclusives, credit/debit cards and local payment methods. Turn on only PayPal options or process a full suite of payment methods. Enable global transactions with extensive currency and country coverage.
 Built and supported by [WooCommerce](https://woocommerce.com) and [PayPal](https://paypal.com).
 
+= Give your customers their preferred ways to pay with one checkout solution =
+
+Streamline your business with one simple, powerful solution.
+
+With the latest PayPal extension, your customers can pay with PayPal, Pay Later options, credit & debit cards, and country-specific, local payment methods on any device — all with one seamless checkout experience.
+
+= Reach more customers in 200+ markets worldwide =
+
+Expand your business by connecting with over 370+ million active PayPal accounts around the globe. With PayPal, you can:
+
+- Sell in 200+ markets and accept 100+ currencies
+- Identify customer locations and offer country-specific, local payment methods
+
+= Offer subscription payments to help drive repeat business =
+
+Create stable, predictable income by offering subscription plans.
+
+With the vaulting feature on PayPal, you can offer flexible plans with fixed or quantity pricing, set billing cycles for the time period you want, and offer subscriptions with discounted trial periods.
+
+It’s easy for shoppers, simple for you, and great for your business–with no monthly or setup fees.
+
+PayPal is also compatible with [WooCommerce Subscriptions](https://woocommerce.com/products/woocommerce-subscriptions/).
+
 == Installation ==
 
 = Requirements =
