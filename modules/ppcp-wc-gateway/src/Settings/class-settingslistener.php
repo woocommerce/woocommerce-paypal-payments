@@ -161,7 +161,7 @@ class SettingsListener {
 				function () use ( $exception ) {
 					printf(
 						'<div class="notice notice-error"><p>%s</p></div>',
-						$exception->getMessage()
+						esc_attr( $exception->getMessage() )
 					);
 				}
 			);
