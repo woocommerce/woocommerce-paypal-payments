@@ -122,7 +122,7 @@ class SettingsPageAssets {
 				)
 			);
 		} catch ( RuntimeException $exception ) {
-			// Already displaying an admin message in SettingsListener.
+			return;
 		}
 	}
 }

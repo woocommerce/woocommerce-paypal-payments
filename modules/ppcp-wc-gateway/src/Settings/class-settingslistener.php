@@ -160,7 +160,6 @@ class SettingsListener {
 				'admin_notices',
 				function () use ( $exception ) {
 					printf(
-						// translators: %s is the error message.
 						'<div class="notice notice-error"><p>%s</p></div>',
 						$exception->getMessage()
 					);
