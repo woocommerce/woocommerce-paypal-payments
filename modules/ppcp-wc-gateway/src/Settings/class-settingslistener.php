@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
@@ -147,11 +148,23 @@ class SettingsListener {
 			return;
 		}
 
-		$token = $this->bearer->bearer();
-		if ( ! $token->vaulting_available() ) {
-			$this->settings->set( 'vault_enabled', false );
-			$this->settings->persist();
-			return;
+		try {
+			$token = $this->bearer->bearer();
+			if ( ! $token->vaulting_available() ) {
+				$this->settings->set( 'vault_enabled', false );
+				$this->settings->persist();
+				return;
+			}
+		} catch ( RuntimeException $exception ) {
+			add_action(
+				'admin_notices',
+				function () use ( $exception ) {
+					printf(
+						'<div class="notice notice-error"><p>%s</p></div>',
+						esc_attr( $exception->getMessage() )
+					);
+				}
+			);
 		}
 
 		/**
