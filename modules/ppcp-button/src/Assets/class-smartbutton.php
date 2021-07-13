@@ -689,7 +689,7 @@ class SmartButton implements SmartButtonInterface {
 			),
 			'order_id'                       => 'pay-now' === $this->context() ? absint( $wp->query_vars['order-pay'] ) : 0,
 			'single_product_buttons_enabled' => $this->settings->has( 'button_product_enabled' ) && $this->settings->get( 'button_product_enabled' ),
-			'mini_card_buttons_enabled'      => $this->settings->has( 'button_mini-cart_enabled' ) && $this->settings->get( 'button_mini-cart_enabled' ),
+			'mini_cart_buttons_enabled'      => $this->settings->has( 'button_mini-cart_enabled' ) && $this->settings->get( 'button_mini-cart_enabled' ),
 		);
 
 		if ( $this->style_for_context( 'layout', 'mini-cart' ) !== 'horizontal' ) {

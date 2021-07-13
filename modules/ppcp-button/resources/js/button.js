@@ -18,7 +18,7 @@ const bootstrap = () => {
     const messageRenderer = new MessageRenderer(PayPalCommerceGateway.messages);
     const context = PayPalCommerceGateway.context;
     if (context === 'mini-cart' || context === 'product') {
-        if (PayPalCommerceGateway.mini_card_buttons_enabled === '1') {
+        if (PayPalCommerceGateway.mini_cart_buttons_enabled === '1') {
             const miniCartBootstrap = new MiniCartBootstap(
                 PayPalCommerceGateway,
                 renderer
