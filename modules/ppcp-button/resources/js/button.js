@@ -18,15 +18,17 @@ const bootstrap = () => {
     const messageRenderer = new MessageRenderer(PayPalCommerceGateway.messages);
     const context = PayPalCommerceGateway.context;
     if (context === 'mini-cart' || context === 'product') {
-        const miniCartBootstrap = new MiniCartBootstap(
-            PayPalCommerceGateway,
-            renderer
-        );
+        if (PayPalCommerceGateway.mini_cart_buttons_enabled === '1') {
+            const miniCartBootstrap = new MiniCartBootstap(
+                PayPalCommerceGateway,
+                renderer
+            );
 
-        miniCartBootstrap.init();
+            miniCartBootstrap.init();
+        }
     }
 
-    if (context === 'product') {
+    if (context === 'product' && PayPalCommerceGateway.single_product_buttons_enabled === '1') {
         const singleProductBootstrap = new SingleProductBootstap(
             PayPalCommerceGateway,
             renderer,
