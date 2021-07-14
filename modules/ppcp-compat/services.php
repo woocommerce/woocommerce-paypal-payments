@@ -30,4 +30,10 @@ return array(
 		return new PPEC\SubscriptionsHandler( $ppcp_renewal_handler, $gateway );
 	},
 
+	'compat.ppec.settings_importer'     => static function( $container ) : PPEC\SettingsImporter {
+		$settings = $container->get( 'wcgateway.settings' );
+
+		return new PPEC\SettingsImporter( $settings );
+	},
+
 );

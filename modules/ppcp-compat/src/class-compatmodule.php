@@ -59,6 +59,10 @@ class CompatModule implements ModuleInterface {
 		// Process PPEC subscription renewals through PayPal Payments.
 		$handler = $container->get( 'compat.ppec.subscriptions-handler' );
 		$handler->maybe_hook();
+
+		// Settings.
+		$ppec_import = $container->get( 'compat.ppec.settings_importer' );
+		$ppec_import->maybe_hook();
 	}
 
 }
