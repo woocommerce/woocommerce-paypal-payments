@@ -1630,7 +1630,7 @@ return array(
 				'type'         => 'select',
 				'class'        => array(),
 				'input_class'  => array( 'wc-enhanced-select' ),
-				'default'      => 'horizontal',
+				'default'      => 'vertical',
 				'desc_tip'     => true,
 				'description'  => __(
 					'If additional funding sources are available to the buyer through PayPal, such as Venmo, then multiple buttons are displayed in the space provided. Choose "vertical" for a dynamic list of alternative and local payment options, or "horizontal" when space is limited.',
