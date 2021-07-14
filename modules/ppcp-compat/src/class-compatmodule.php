@@ -37,6 +37,9 @@ class CompatModule implements ModuleInterface {
 	 * @param ContainerInterface|null $container The Container.
 	 */
 	public function run( ContainerInterface $container ) {
+		// Settings.
+		$ppec_import = $container->get( 'compat.ppec.settings_importer' );
+		$ppec_import->maybe_hook();
 	}
 
 	/**
