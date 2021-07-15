@@ -37,7 +37,7 @@ class ApiModule implements ModuleInterface {
 	 *
 	 * @param ContainerInterface $container The container.
 	 */
-	public function run( ContainerInterface $container ) {
+	public function run( ContainerInterface $container ): void {
 	}
 
 	/**

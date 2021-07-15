@@ -53,7 +53,7 @@ class WcGatewayModule implements ModuleInterface {
 	 *
 	 * @param ContainerInterface|null $container The container.
 	 */
-	public function run( ContainerInterface $container ) {
+	public function run( ContainerInterface $container ): void {
 		$this->register_payment_gateways( $container );
 		$this->register_order_functionality( $container );
 		$this->register_columns( $container );
