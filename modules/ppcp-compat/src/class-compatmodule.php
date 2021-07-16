@@ -36,7 +36,7 @@ class CompatModule implements ModuleInterface {
 	 *
 	 * @param ContainerInterface|null $container The Container.
 	 */
-	public function run( ContainerInterface $container ) {
+	public function run( ContainerInterface $container ): void {
 	}
 
 	/**
