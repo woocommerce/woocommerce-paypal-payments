@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, e-commerce, store, sales, sell, 
 Requires at least: 5.3
 Tested up to: 5.7
 Requires PHP: 7.1
-Stable tag: 1.3.2
+Stable tag: 1.4.0
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -57,6 +57,22 @@ Follow the steps below to connect the plugin to your PayPal account:
 6. Main settings screen.
 
 == Changelog ==
+
+= 1.4.0 =
+* Add - Venmo update #169
+* Add - Pay Later Button –Global Expansion #182
+* Add - Add Canada to advanced credit and debit card #180
+* Add - Add button height setting for mini cart #181
+* Add - Add BN Code to Pay Later Messaging #183
+* Add - Add 30 seconds timeout by default to all API requests #184
+* Fix - ACDC checkout error: "Card Details not valid"; but payment completes #193
+* Fix - Incorrect API credentials cause fatal error #187
+* Fix - PayPal payment fails if a new user account is created during the checkout process #177
+* Fix - Disabled PayPal button appears when another button is loaded on the same page #192
+* Fix - [UNPROCESSABLE_ENTITY] error during checkout #172
+* Fix - Do not send customer email when order status is on hold #173
+* Fix - Remove merchant-id query parameter in JSSDK #179
+* Fix - Error on Plugin activation with Zettle POS Integration for WooCommerce #195
 
 = 1.3.2 =
 * Fix - Improve Subscription plugin support. #161
