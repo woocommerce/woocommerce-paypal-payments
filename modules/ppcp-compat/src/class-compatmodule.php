@@ -1,13 +1,13 @@
 <?php
 /**
- * The logging module.
+ * The compatibility module.
  *
- * @package WooCommerce\WooCommerce\Logging
+ * @package WooCommerce\PayPalCommerce\Compat
  */
 
 declare(strict_types=1);
 
-namespace WooCommerce\WooCommerce\Logging;
+namespace WooCommerce\PayPalCommerce\Compat;
 
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
@@ -15,12 +15,12 @@ use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
 
 /**
- * Class WooCommerceLoggingModule
+ * Class CompatModule
  */
-class WooCommerceLoggingModule implements ModuleInterface {
+class CompatModule implements ModuleInterface {
 
 	/**
-	 * Setup the module.
+	 * Setup the compatibility module.
 	 *
 	 * @return ServiceProviderInterface
 	 */
@@ -32,13 +32,12 @@ class WooCommerceLoggingModule implements ModuleInterface {
 	}
 
 	/**
-	 * Run the module.
+	 * Run the compatibility module.
 	 *
-	 * @param ContainerInterface $container The container.
+	 * @param ContainerInterface|null $container The Container.
 	 */
-	public function run( ContainerInterface $container ): void {
+	public function run( ContainerInterface $container ) {
 	}
-
 
 	/**
 	 * Returns the key for the module.
