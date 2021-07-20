@@ -25,9 +25,7 @@ use WooCommerce\PayPalCommerce\Onboarding\State;
 class StatusReportModule implements ModuleInterface {
 
 	/**
-	 * Setup the compatibility module.
-	 *
-	 * @return ServiceProviderInterface
+     * @inheritDoc
 	 */
 	public function setup(): ServiceProviderInterface {
 		return new ServiceProvider(
@@ -37,9 +35,7 @@ class StatusReportModule implements ModuleInterface {
 	}
 
 	/**
-	 * Run the compatibility module.
-	 *
-	 * @param ContainerInterface|null $container The Container.
+	 * @inheritDoc
 	 */
 	public function run( ContainerInterface $container ): void {
 		/* @var State $state The state */
@@ -131,9 +127,7 @@ class StatusReportModule implements ModuleInterface {
 	}
 
 	/**
-	 * Returns the key for the module.
-	 *
-	 * @return string|void
+	 * @inheritDoc
 	 */
 	public function getKey() {
 	}
