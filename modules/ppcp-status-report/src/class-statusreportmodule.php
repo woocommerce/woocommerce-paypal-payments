@@ -25,7 +25,7 @@ use WooCommerce\PayPalCommerce\Onboarding\State;
 class StatusReportModule implements ModuleInterface {
 
 	/**
-     * @inheritDoc
+	 * {@inheritDoc}
 	 */
 	public function setup(): ServiceProviderInterface {
 		return new ServiceProvider(
@@ -35,19 +35,21 @@ class StatusReportModule implements ModuleInterface {
 	}
 
 	/**
-	 * @inheritDoc
+	 * {@inheritDoc}
+	 *
+	 * @param ContainerInterface $container A services container instance.
 	 */
 	public function run( ContainerInterface $container ): void {
-		/* @var State $state The state */
+		/* @var State $state The state. */
 		$state = $container->get( 'onboarding.state' );
 
-		/* @var Bearer $bearer The bearer */
+		/* @var Bearer $bearer The bearer. */
 		$bearer = $container->get( 'api.bearer' );
 
-		/* @var DccApplies $dcc_applies The ddc applies */
+		/* @var DccApplies $dcc_applies The ddc applies. */
 		$dcc_applies = $container->get( 'api.helpers.dccapplies' );
 
-		/* @var MessagesApply $messages_apply The messages apply */
+		/* @var MessagesApply $messages_apply The messages apply. */
 		$messages_apply = $container->get( 'button.helper.messages-apply' );
 
 		add_action(
@@ -102,7 +104,7 @@ class StatusReportModule implements ModuleInterface {
 						</td>
 					</tr>
 					<tr>
-						<td data-export-label="Messaging apply"><?php esc_html_e( 'Messaging apply', 'woocommerce-paypal-payments' ); ?></td>
+						<td data-export-label="Pay Later messaging"><?php esc_html_e( 'Pay Later messaging', 'woocommerce-paypal-payments' ); ?></td>
 						<td><?php echo esc_attr( $messages_apply->for_country() ? esc_html__( 'Yes', 'woocommerce-paypal-payments' ) : esc_html__( 'No', 'woocommerce-paypal-payments' ) ); ?>
 						</td>
 					</tr>
@@ -127,7 +129,7 @@ class StatusReportModule implements ModuleInterface {
 	}
 
 	/**
-	 * @inheritDoc
+	 * {@inheritDoc}
 	 */
 	public function getKey() {
 	}
