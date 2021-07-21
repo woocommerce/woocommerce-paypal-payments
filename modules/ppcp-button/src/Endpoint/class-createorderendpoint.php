@@ -174,7 +174,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 			$this->set_bn_code( $data );
 
 			if ( 'checkout' === $data['context'] ) {
-				if ( '1' === $data['createaccount'] ) {
+				if ( isset( $data['createaccount'] ) && '1' === $data['createaccount'] ) {
 					$this->process_checkout_form_when_creating_account( $data['form'], $wc_order );
 				}
 
