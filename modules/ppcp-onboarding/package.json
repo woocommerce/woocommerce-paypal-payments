@@ -26,7 +26,7 @@
 	"dependencies": {
 		"@woocommerce/components": "^6.1.2",
 		"@woocommerce/data": "^1.3.0",
-		"@woocommerce/onboarding": "^1.0.0",
+		"@woocommerce/onboarding": "^2.1.0",
 		"@wordpress/api-fetch": "^5.1.0",
 		"@wordpress/components": "^14.1.0",
 		"@wordpress/data": "^5.1.0",

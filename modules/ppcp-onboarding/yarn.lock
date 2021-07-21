@@ -2144,6 +2144,16 @@
     "@babel/runtime-corejs2" "7.10.5"
     locutus "2.0.11"
 
+"@woocommerce/onboarding@^2.1.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@woocommerce/onboarding/-/onboarding-2.0.0.tgz#0f591ea40b18034277ecfc7561795421dbc893b6"
+  integrity sha512-OalUVqypPHrPOByCW6hwX8+0UtOg1HoaWxa5MZ+LutYjOiEeyOn5OXzKazXm/0BwJD8gVBipqU/up3TSa3U6kQ==
+  dependencies:
+    "@wordpress/components" "^14.1.0"
+    "@wordpress/i18n" "^4.1.0"
+    gridicons "^3.3.1"
+    interpolate-components "^1.1.1"
+
 "@wordpress/a11y@^2.12.0":
   version "2.15.3"
   resolved "https://registry.yarnpkg.com/@wordpress/a11y/-/a11y-2.15.3.tgz#6644aeec483d18c872003b281a0e05f4633ad735"
@@ -6527,7 +6537,7 @@ gradient-parser@^0.1.5:
   resolved "https://registry.yarnpkg.com/gradient-parser/-/gradient-parser-0.1.5.tgz#0c7e2179559e5ce7d8d71f4423af937100b2248c"
   integrity sha1-DH4heVWeXOfY1x9EI6+TcQCyJIw=
 
-gridicons@3.3.1:
+gridicons@3.3.1, gridicons@^3.3.1:
   version "3.3.1"
   resolved "https://registry.yarnpkg.com/gridicons/-/gridicons-3.3.1.tgz#12c098fac5f6b59aecd42082ed5ef5edc391dfd4"
   integrity sha512-eQsmujjLptLtyhGuu31US3mXkcptYHkgEE/s277HWv+j6c3Z2gYyjoHcBKwSFbQwxbfhToRd5uzYimR2ExWJdQ==
