@@ -52,78 +52,46 @@ class StatusReportModule implements ModuleInterface {
 		/* @var MessagesApply $messages_apply The messages apply. */
 		$messages_apply = $container->get( 'button.helper.messages-apply' );
 
+		/* @var Renderer $renderer The renderer. */
+		$renderer = $container->get( 'status-report.renderer' );
+
+		$items = array(
+			array(
+				'label' => esc_html__( 'Onboarding state', 'woocommerce-paypal-payments' ),
+				'value' => $this->onboarding_state( $state ),
+			),
+			array(
+				'label' => esc_html__( 'Shop country code', 'woocommerce-paypal-payments' ),
+				'value' => wc_get_base_location()['country'],
+			),
+			array(
+				'label' => esc_html__( 'PayPal card processing', 'woocommerce-paypal-payments' ),
+				'value' => $dcc_applies->for_country_currency()
+					? esc_html__( 'Yes', 'woocommerce-paypal-payments' )
+					: esc_html__( 'No', 'woocommerce-paypal-payments' ),
+			),
+			array(
+				'label' => esc_html__( 'Pay Later messaging', 'woocommerce-paypal-payments' ),
+				'value' => $messages_apply->for_country()
+					? esc_html__( 'Yes', 'woocommerce-paypal-payments' )
+					: esc_html__( 'No', 'woocommerce-paypal-payments' ),
+			),
+			array(
+				'label' => esc_html__( 'Vault enabled', 'woocommerce-paypal-payments' ),
+				'value' => $this->vault_enabled( $bearer ),
+			),
+		);
+
 		add_action(
 			'woocommerce_system_status_report',
-			function() use ( $state, $bearer, $dcc_applies, $messages_apply ) { ?>
-			<table class="wc_status_table widefat" id="status">
-				<thead>
-					<tr>
-						<th colspan="3" data-export-label="WooCommerce PayPal Payments">
-							<h2><?php esc_html_e( 'WooCommerce PayPal Payments', 'woocommerce-paypal-payments' ); ?></h2>
-						</th>
-					</tr>
-				</thead>
-
-				<tbody>
-					<tr>
-						<td data-export-label="Onboarding state"><?php esc_html_e( 'Onboarding state', 'woocommerce-paypal-payments' ); ?></td>
-						<td>
-						<?php
-							$current_state = $state->current_state();
-						switch ( $current_state ) {
-							case $state::STATE_START:
-								echo esc_html__( 'Start', 'woocommerce-paypal-payments' );
-								break;
-							case $state::STATE_PROGRESSIVE:
-								echo esc_html__( 'Progressive', 'woocommerce-paypal-payments' );
-								break;
-							case $state::STATE_ONBOARDED:
-								echo esc_html__( 'Onboarded', 'woocommerce-paypal-payments' );
-								break;
-							default:
-								echo esc_html__( 'Unknown', 'woocommerce-paypal-payments' );
-						}
-						?>
-							</td>
-					</tr>
-					<tr>
-						<td data-export-label="Shop country code"><?php esc_html_e( 'Shop country code', 'woocommerce-paypal-payments' ); ?></td>
-						<td>
-						<?php
-							$region = wc_get_base_location();
-							echo esc_attr( $region['country'] );
-						?>
-							</td>
-					</tr>
-					<tr>
-						<td data-export-label="PayPal card processing"><?php esc_html_e( 'PayPal card processing', 'woocommerce-paypal-payments' ); ?></td>
-						<td>
-						<?php
-							echo esc_attr( $dcc_applies->for_country_currency() ? esc_html__( 'Yes', 'woocommerce-paypal-payments' ) : esc_html__( 'No', 'woocommerce-paypal-payments' ) );
-						?>
-						</td>
-					</tr>
-					<tr>
-						<td data-export-label="Pay Later messaging"><?php esc_html_e( 'Pay Later messaging', 'woocommerce-paypal-payments' ); ?></td>
-						<td><?php echo esc_attr( $messages_apply->for_country() ? esc_html__( 'Yes', 'woocommerce-paypal-payments' ) : esc_html__( 'No', 'woocommerce-paypal-payments' ) ); ?>
-						</td>
-					</tr>
-					<tr>
-						<td data-export-label="Vault enabled"><?php esc_html_e( 'Vault enabled', 'woocommerce-paypal-payments' ); ?></td>
-						<td>
-						<?php
-						try {
-							$token = $bearer->bearer();
-							echo esc_attr( $token->vaulting_available() ? esc_html__( 'Yes', 'woocommerce-paypal-payments' ) : esc_html__( 'No', 'woocommerce-paypal-payments' ) );
-						} catch ( RuntimeException $exception ) {
-							echo esc_html__( 'No', 'woocommerce-paypal-payments' );
-						}
-						?>
-						</td>
-					</tr>
-				</tbody>
-			</table>
+			function () use ( $renderer, $items ) { ?>
 				<?php
+				echo wp_kses_post(
+					$renderer->render(
+						esc_html__( 'WooCommerce PayPal Payments', 'woocommerce-paypal-payments' ),
+						$items
+					)
+				);
 			}
 		);
 	}
@@ -131,6 +99,42 @@ class StatusReportModule implements ModuleInterface {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function getKey() {
+	public function getKey() {  }
+
+	/**
+	 * It returns the current onboarding state.
+	 *
+	 * @param State $state The state.
+	 * @return string
+	 */
+	private function onboarding_state( $state ): string {
+		$current_state = $state->current_state();
+		switch ( $current_state ) {
+			case $state::STATE_START:
+				return esc_html__( 'Start', 'woocommerce-paypal-payments' );
+			case $state::STATE_PROGRESSIVE:
+				return esc_html__( 'Progressive', 'woocommerce-paypal-payments' );
+			case $state::STATE_ONBOARDED:
+				return esc_html__( 'Onboarded', 'woocommerce-paypal-payments' );
+			default:
+				return esc_html__( 'Unknown', 'woocommerce-paypal-payments' );
+		}
+	}
+
+	/**
+	 * It returns whether vaulting is enabled or not.
+	 *
+	 * @param Bearer $bearer The bearer.
+	 * @return string
+	 */
+	private function vault_enabled( $bearer ) {
+		try {
+			$token = $bearer->bearer();
+			return $token->vaulting_available()
+				? esc_html__( 'Yes', 'woocommerce-paypal-payments' )
+				: esc_html__( 'No', 'woocommerce-paypal-payments' );
+		} catch ( RuntimeException $exception ) {
+			return esc_html__( 'No', 'woocommerce-paypal-payments' );
+		}
 	}
 }

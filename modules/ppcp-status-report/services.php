@@ -9,4 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\StatusReport;
 
-return array();
+return array(
+	'status-report.renderer' => static function ( $container ): Renderer {
+		return new Renderer();
+	},
+);
