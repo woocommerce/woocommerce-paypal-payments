@@ -991,7 +991,7 @@ class SmartButton implements SmartButtonInterface {
 	 */
 	private function pay_order_renderer_hook(): string
 	{
-		return (string) apply_filters('woocommerce_paypal_payments-pay-order_dcc_renderer_hook', 'woocommerce_pay_order_after_submit');
+		return (string) apply_filters('woocommerce_paypal_payments_pay_order_dcc_renderer_hook', 'woocommerce_pay_order_after_submit');
 	}
 	
 	/**
