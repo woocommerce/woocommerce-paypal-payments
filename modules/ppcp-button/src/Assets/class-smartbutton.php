@@ -349,7 +349,7 @@ class SmartButton implements SmartButtonInterface {
 			! $not_enabled_on_minicart
 		) {
 			add_action(
-				'woocommerce_widget_shopping_cart_after_buttons',
+				$this->mini_cart_button_renderer_hook(),
 				static function () {
 					echo '<p
                                 id="ppc-button-minicart"
@@ -995,7 +995,7 @@ class SmartButton implements SmartButtonInterface {
 	}
 	
 	/**
-	 * Return action name PayPal will be rendered next to Proceed to checkout button (normally displayed in cart).
+	 * Return action name PayPal button will be rendered next to Proceed to checkout button (normally displayed in cart).
 	 *
 	 * @return string
 	 */
@@ -1004,6 +1004,19 @@ class SmartButton implements SmartButtonInterface {
 		return (string) apply_filters(
 			'woocommerce_paypal_payments_to_checkout_button_renderer_hook',
 			'woocommerce_proceed_to_checkout'
+		);
+	}
+	
+	/**
+	 * Return action name PayPal button will be rendered in the WC mini cart.
+	 *
+	 * @return string
+	 */
+	private function mini_cart_button_renderer_hook(): string
+	{
+		return (string) apply_filters(
+			'woocommerce_paypal_payments_mini_cart_button_renderer_hook',
+			'woocommerce_widget_shopping_cart_after_buttons'
 		);
 	}
 }
