@@ -318,7 +318,7 @@ class SmartButton implements SmartButtonInterface {
 			&& ! $not_enabled_on_cart
 		) {
 			add_action(
-				'woocommerce_proceed_to_checkout',
+				$this->proceed_to_checkout_button_renderer_hook(),
 				array(
 					$this,
 					'button_renderer',
@@ -965,12 +965,25 @@ class SmartButton implements SmartButtonInterface {
 	}
 	
 	/**
-	 * Return action name PayPal buttons will be rendered at.
+	 * Return action name PayPal buttons will be rendered at on checkout page.
 	 *
 	 * @return string Action name.
 	 */
 	private function checkout_button_renderer_hook(): string
 	{
 		return (string) apply_filters('woocommerce_paypal_payments_checkout_button_renderer_hook', 'woocommerce_review_order_after_payment');
+	}
+	
+	/**
+	 * Return action name PayPal will be rendered next to Proceed to checkout button (normally displayed in cart).
+	 *
+	 * @return string
+	 */
+	private function proceed_to_checkout_button_renderer_hook(): string
+	{
+		return (string) apply_filters(
+			'woocommerce_paypal_payments_to_checkout_button_renderer_hook',
+			'woocommerce_proceed_to_checkout'
+		);
 	}
 }
