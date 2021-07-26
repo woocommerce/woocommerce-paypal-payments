@@ -1002,7 +1002,7 @@ class SmartButton implements SmartButtonInterface {
 	private function proceed_to_checkout_button_renderer_hook(): string
 	{
 		return (string) apply_filters(
-			'woocommerce_paypal_payments_to_checkout_button_renderer_hook',
+			'woocommerce_paypal_payments_proceed_to_checkout_button_renderer_hook',
 			'woocommerce_proceed_to_checkout'
 		);
 	}
