@@ -255,7 +255,7 @@ class SmartButton implements SmartButtonInterface {
 			&& ! $not_enabled_on_cart
 		) {
 			add_action(
-				'woocommerce_proceed_to_checkout',
+				$this->proceed_to_checkout_button_renderer_hook(),
 				array(
 					$this,
 					'message_renderer',
@@ -284,7 +284,7 @@ class SmartButton implements SmartButtonInterface {
 			! $this->settings->get( 'message_enabled' );
 		if ( ! $not_enabled_on_checkout ) {
 			add_action(
-				'woocommerce_review_order_after_submit',
+				$this->checkout_dcc_button_renderer_hook(),
 				array(
 					$this,
 					'message_renderer',
@@ -292,7 +292,7 @@ class SmartButton implements SmartButtonInterface {
 				11
 			);
 			add_action(
-				'woocommerce_pay_order_after_submit',
+				$this->pay_order_dcc_button_renderer_hook(),
 				array(
 					$this,
 					'message_renderer',
@@ -361,7 +361,7 @@ class SmartButton implements SmartButtonInterface {
 		}
 
 		add_action( $this->checkout_button_renderer_hook(), array( $this, 'button_renderer' ), 10 );
-		add_action( 'woocommerce_pay_order_after_submit', array( $this, 'button_renderer' ), 10 );
+		add_action( $this->pay_order_dcc_button_renderer_hook(), array( $this, 'button_renderer' ), 10 );
 
 		return true;
 	}
