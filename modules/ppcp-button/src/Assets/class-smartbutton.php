@@ -271,7 +271,7 @@ class SmartButton implements SmartButtonInterface {
 			&& ! $not_enabled_on_product_page
 		) {
 			add_action(
-				'woocommerce_single_product_summary',
+				$this->single_product_renderer_hook(),
 				array(
 					$this,
 					'message_renderer',
@@ -334,7 +334,7 @@ class SmartButton implements SmartButtonInterface {
 			&& ! $not_enabled_on_product_page
 		) {
 			add_action(
-				'woocommerce_single_product_summary',
+				$this->single_product_renderer_hook(),
 				array(
 					$this,
 					'button_renderer',
@@ -1018,5 +1018,15 @@ class SmartButton implements SmartButtonInterface {
 			'woocommerce_paypal_payments_mini_cart_button_renderer_hook',
 			'woocommerce_widget_shopping_cart_after_buttons'
 		);
+	}
+	
+	/**
+	 * Return action name PayPal button and Pay Later message will be rendered at on the single product page.
+	 *
+	 * @return string
+	 */
+	private function single_product_renderer_hook(): string
+	{
+		return (string) apply_filters('woocommerce_paypal_payments_single_product_renderer_hook', 'woocommerce_single_product_summary');
 	}
 }
