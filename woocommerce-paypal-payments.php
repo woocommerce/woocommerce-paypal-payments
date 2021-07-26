@@ -73,11 +73,7 @@ define( 'PPCP_FLAG_SUBSCRIPTION', true );
 		static $initialized;
 		if ( ! $initialized ) {
 			$modules = array( new PluginModule() );
-			$module_files = glob( plugin_dir_path( __FILE__ ) . 'modules/*/module.php' );
-			
-			//Use this filter to add custom module or remove some of added ones.
-			$module_files = apply_filters('woocommerce_paypal_payments_module_files_list', $module_files);
-			foreach ( $module_files as $module_file ) {
+			foreach ( glob( plugin_dir_path( __FILE__ ) . 'modules/*/module.php' ) as $module_file ) {
 				$modules[] = ( require $module_file )();
 			}
 			$providers = array();
