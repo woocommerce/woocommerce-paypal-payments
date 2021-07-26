@@ -191,7 +191,7 @@ class SmartButton implements SmartButtonInterface {
 			);
 
 			add_action(
-				'woocommerce_pay_order_after_submit',
+				$this->pay_order_dcc_button_renderer_hook(),
 				array(
 					$this,
 					'dcc_renderer',
@@ -982,6 +982,16 @@ class SmartButton implements SmartButtonInterface {
 	private function checkout_dcc_button_renderer_hook(): string
 	{
 		return (string) apply_filters('woocommerce_paypal_payments_checkout_dcc_renderer_hook', 'woocommerce_review_order_after_submit');
+	}
+	
+	/**
+	 * Return action name PayPal DCC button will be rendered at on pay-order page.
+	 *
+	 * @return string
+	 */
+	private function pay_order_dcc_button_renderer_hook(): string
+	{
+		return (string) apply_filters('woocommerce_paypal_payments-pay-order_dcc_renderer_hook', 'woocommerce_pay_order_after_submit');
 	}
 	
 	/**
