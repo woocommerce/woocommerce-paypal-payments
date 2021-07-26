@@ -360,7 +360,7 @@ class SmartButton implements SmartButtonInterface {
 			);
 		}
 
-		add_action( 'woocommerce_review_order_after_payment', array( $this, 'button_renderer' ), 10 );
+		add_action( $this->checkout_button_renderer_hook(), array( $this, 'button_renderer' ), 10 );
 		add_action( 'woocommerce_pay_order_after_submit', array( $this, 'button_renderer' ), 10 );
 
 		return true;
@@ -962,5 +962,15 @@ class SmartButton implements SmartButtonInterface {
 		}
 
 		return $height;
+	}
+	
+	/**
+	 * Return action name PayPal buttons will be rendered at.
+	 *
+	 * @return string Action name.
+	 */
+	private function checkout_button_renderer_hook(): string
+	{
+		return (string) apply_filters('woocommerce_paypal_payments_checkout_button_renderer_hook', 'woocommerce_review_order_after_payment');
 	}
 }
