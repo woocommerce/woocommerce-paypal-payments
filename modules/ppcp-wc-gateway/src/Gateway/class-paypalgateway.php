@@ -95,14 +95,14 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @var RefundProcessor
 	 */
 	private $refund_processor;
-	
+
 	/**
 	 * Whether the plugin is in onboarded state.
 	 *
 	 * @var bool
 	 */
 	private $onboarded;
-	
+
 	/**
 	 * PayPalGateway constructor.
 	 *
