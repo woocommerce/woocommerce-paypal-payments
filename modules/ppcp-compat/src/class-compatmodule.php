@@ -37,6 +37,7 @@ class CompatModule implements ModuleInterface {
 	 * @param ContainerInterface|null $container The Container.
 	 */
 	public function run( ContainerInterface $container ): void {
+		$this->initialize_ppec_compat_layer( $container );
 	}
 
 	/**
@@ -46,4 +47,14 @@ class CompatModule implements ModuleInterface {
 	 */
 	public function getKey() {
 	}
+
+	/**
+	 * Sets up the PayPal Express Checkout compatibility layer.
+	 *
+	 * @param ContainerInterface|null $container The Container.
+	 * @return void
+	 */
+	private function initialize_ppec_compat_layer( $container ): void {
+	}
+
 }
