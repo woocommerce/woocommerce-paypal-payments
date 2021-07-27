@@ -43,7 +43,7 @@ class StatusReportModule implements ModuleInterface {
 	public function run( ContainerInterface $container ): void {
 		add_action(
 			'woocommerce_system_status_report',
-			function () use ($container) {
+			function () use ( $container ) {
 
 				/* @var State $state The state. */
 				$state = $container->get( 'onboarding.state' );
@@ -106,22 +106,22 @@ class StatusReportModule implements ModuleInterface {
 	 * It returns the current onboarding status.
 	 *
 	 * @param Bearer $bearer The bearer.
-	 * @param State $state The state.
+	 * @param State  $state The state.
 	 * @return string
 	 */
-	private function onboarded( $bearer, $state): string {
+	private function onboarded( $bearer, $state ): string {
 		try {
 			$token = $bearer->bearer();
 		} catch ( RuntimeException $exception ) {
-			return esc_html__('No', 'woocommerce-paypal-payments');
+			return esc_html__( 'No', 'woocommerce-paypal-payments' );
 		}
 
 		$current_state = $state->current_state();
-		if($token->is_valid() && $current_state === $state::STATE_ONBOARDED) {
-			return esc_html__('Yes', 'woocommerce-paypal-payments');
+		if ( $token->is_valid() && $current_state === $state::STATE_ONBOARDED ) {
+			return esc_html__( 'Yes', 'woocommerce-paypal-payments' );
 		}
 
-		return esc_html__('No', 'woocommerce-paypal-payments');
+		return esc_html__( 'No', 'woocommerce-paypal-payments' );
 	}
 
 	/**

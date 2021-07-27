@@ -24,12 +24,15 @@ class PayPalBearer implements Bearer {
 	use RequestTrait;
 
 	const CACHE_KEY = 'ppcp-bearer';
-    /**
-     * @var Settings
-     */
-    protected $settings;
 
-    /**
+	/**
+	 * The settings.
+	 *
+	 * @var Settings
+	 */
+	protected $settings;
+
+	/**
 	 * The cache.
 	 *
 	 * @var Cache
@@ -72,6 +75,7 @@ class PayPalBearer implements Bearer {
 	 * @param string          $key The key.
 	 * @param string          $secret The secret.
 	 * @param LoggerInterface $logger The logger.
+	 * @param Settings        $settings The settings.
 	 */
 	public function __construct(
 		Cache $cache,
@@ -79,16 +83,16 @@ class PayPalBearer implements Bearer {
 		string $key,
 		string $secret,
 		LoggerInterface $logger,
-        Settings $settings
+		Settings $settings
 	) {
 
-		$this->cache  = $cache;
-		$this->host   = $host;
-		$this->key    = $key;
-		$this->secret = $secret;
-		$this->logger = $logger;
-        $this->settings = $settings;
-    }
+		$this->cache    = $cache;
+		$this->host     = $host;
+		$this->key      = $key;
+		$this->secret   = $secret;
+		$this->logger   = $logger;
+		$this->settings = $settings;
+	}
 
 	/**
 	 * Returns a bearer token.
@@ -112,15 +116,15 @@ class PayPalBearer implements Bearer {
 	 * @throws RuntimeException When request fails.
 	 */
 	private function newBearer(): Token {
-        $key = $this->settings->has('client_id') && $this->settings->get('client_id') ? $this->settings->get('client_id') : $this->key;
-        $secret = $this->settings->has('client_secret') && $this->settings->get('client_secret') ? $this->settings->get('client_secret') : $this->secret;
-		$url      = trailingslashit( $this->host ) . 'v1/oauth2/token?grant_type=client_credentials';
+		$key    = $this->settings->has( 'client_id' ) && $this->settings->get( 'client_id' ) ? $this->settings->get( 'client_id' ) : $this->key;
+		$secret = $this->settings->has( 'client_secret' ) && $this->settings->get( 'client_secret' ) ? $this->settings->get( 'client_secret' ) : $this->secret;
+		$url    = trailingslashit( $this->host ) . 'v1/oauth2/token?grant_type=client_credentials';
 
-        $args     = array(
+		$args     = array(
 			'method'  => 'POST',
 			'headers' => array(
 				// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
-				'Authorization' => 'Basic ' . base64_encode( $key . ':' . $secret),
+				'Authorization' => 'Basic ' . base64_encode( $key . ':' . $secret ),
 			),
 		);
 		$response = $this->request(

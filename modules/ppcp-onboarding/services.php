@@ -105,14 +105,14 @@ return array(
 		$secret = $container->get( 'api.secret' );
 		$host   = $container->get( 'api.host' );
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
-		$settings = $container->get('wcgateway.settings');
+		$settings = $container->get( 'wcgateway.settings' );
 		return new PayPalBearer(
 			$cache,
 			$host,
 			$key,
 			$secret,
 			$logger,
-            $settings
+			$settings
 		);
 	},
 	'onboarding.state'                          => function( $container ) : State {
