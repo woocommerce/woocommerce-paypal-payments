@@ -156,6 +156,9 @@ class SettingsListener {
 				return;
 			}
 		} catch ( RuntimeException $exception ) {
+			$this->settings->set( 'vault_enabled', false );
+			$this->settings->persist();
+
 			add_action(
 				'admin_notices',
 				function () use ( $exception ) {
