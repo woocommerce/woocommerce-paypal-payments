@@ -95,7 +95,14 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @var RefundProcessor
 	 */
 	private $refund_processor;
-
+	
+	/**
+	 * Whether the plugin is in onboarded state.
+	 *
+	 * @var bool
+	 */
+	private $onboarded;
+	
 	/**
 	 * PayPalGateway constructor.
 	 *
@@ -132,8 +139,9 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->session_handler          = $session_handler;
 		$this->refund_processor         = $refund_processor;
 		$this->transaction_url_provider = $transaction_url_provider;
+		$this->onboarded                = $state->current_state() === State::STATE_ONBOARDED;
 
-		if ( $state->current_state() === State::STATE_ONBOARDED ) {
+		if ( $this->onboarded ) {
 			$this->supports = array( 'refunds' );
 		}
 		if (
