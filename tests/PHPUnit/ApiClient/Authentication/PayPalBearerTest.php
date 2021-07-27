@@ -8,6 +8,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\TestCase;
 use Psr\Log\LoggerInterface;
 use Mockery;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use function Brain\Monkey\Functions\expect;
 
 class PayPalBearerTest extends TestCase
@@ -28,8 +29,11 @@ class PayPalBearerTest extends TestCase
         $secret = 'secret';
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldNotReceive('log');
+        $settings = Mockery::mock(Settings::class);
+        $settings->shouldReceive('has')->andReturn(true);
+        $settings->shouldReceive('get')->andReturn('');
 
-        $bearer = new PayPalBearer($cache, $host, $key, $secret, $logger);
+        $bearer = new PayPalBearer($cache, $host, $key, $secret, $logger, $settings);
 
         expect('trailingslashit')
             ->with($host)
@@ -77,8 +81,11 @@ class PayPalBearerTest extends TestCase
         $secret = 'secret';
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldNotReceive('log');
+        $settings = Mockery::mock(Settings::class);
+        $settings->shouldReceive('has')->andReturn(true);
+        $settings->shouldReceive('get')->andReturn('');
 
-        $bearer = new PayPalBearer($cache, $host, $key, $secret, $logger);
+        $bearer = new PayPalBearer($cache, $host, $key, $secret, $logger, $settings);
 
         expect('trailingslashit')
             ->with($host)
@@ -123,8 +130,11 @@ class PayPalBearerTest extends TestCase
         $secret = 'secret';
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldNotReceive('log');
+        $settings = Mockery::mock(Settings::class);
+        $settings->shouldReceive('has')->andReturn(true);
+        $settings->shouldReceive('get')->andReturn('');
 
-        $bearer = new PayPalBearer($cache, $host, $key, $secret, $logger);
+        $bearer = new PayPalBearer($cache, $host, $key, $secret, $logger, $settings);
 
         $token = $bearer->bearer();
         $this->assertEquals("abc", $token->token());
@@ -143,8 +153,11 @@ class PayPalBearerTest extends TestCase
         $secret = 'secret';
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldReceive('log');
+        $settings = Mockery::mock(Settings::class);
+        $settings->shouldReceive('has')->andReturn(true);
+        $settings->shouldReceive('get')->andReturn('');
 
-        $bearer = new PayPalBearer($cache, $host, $key, $secret, $logger);
+        $bearer = new PayPalBearer($cache, $host, $key, $secret, $logger, $settings);
 
         expect('trailingslashit')
             ->with($host)
@@ -186,8 +199,11 @@ class PayPalBearerTest extends TestCase
         $secret = 'secret';
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldReceive('log');
+        $settings = Mockery::mock(Settings::class);
+        $settings->shouldReceive('has')->andReturn(true);
+        $settings->shouldReceive('get')->andReturn('');
 
-        $bearer = new PayPalBearer($cache, $host, $key, $secret, $logger);
+        $bearer = new PayPalBearer($cache, $host, $key, $secret, $logger, $settings);
 
         expect('trailingslashit')
             ->with($host)
