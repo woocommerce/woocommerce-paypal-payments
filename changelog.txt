@@ -1,5 +1,21 @@
 *** Changelog ***
 
+= 1.4.0 - 2021-07-27 =
+* Add - Venmo update #169
+* Add - Pay Later Button –Global Expansion #182
+* Add - Add Canada to advanced credit and debit card #180
+* Add - Add button height setting for mini cart #181
+* Add - Add BN Code to Pay Later Messaging #183
+* Add - Add 30 seconds timeout by default to all API requests #184
+* Fix - ACDC checkout error: "Card Details not valid"; but payment completes #193
+* Fix - Incorrect API credentials cause fatal error #187
+* Fix - PayPal payment fails if a new user account is created during the checkout process #177
+* Fix - Disabled PayPal button appears when another button is loaded on the same page #192
+* Fix - [UNPROCESSABLE_ENTITY] error during checkout #172
+* Fix - Do not send customer email when order status is on hold #173
+* Fix - Remove merchant-id query parameter in JSSDK #179
+* Fix - Error on Plugin activation with Zettle POS Integration for WooCommerce #195
+
 = 1.3.2 - 2021-06-08 =
 * Fix - Improve Subscription plugin support. #161
 * Fix - Disable vault setting if vaulting feature is not available. #150
