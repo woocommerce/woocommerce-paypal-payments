@@ -1,6 +1,6 @@
 *** Changelog ***
 
-= 1.4.0 - TBD =
+= 1.4.0 - 2021-07-27 =
 * Add - Venmo update #169
 * Add - Pay Later Button –Global Expansion #182
 * Add - Add Canada to advanced credit and debit card #180
