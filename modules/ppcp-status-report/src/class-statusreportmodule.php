@@ -87,7 +87,7 @@ class StatusReportModule implements ModuleInterface {
 					),
 					array(
 						'label'       => esc_html__( 'Vault enabled', 'woocommerce-paypal-payments' ),
-						'description' => esc_html__( 'Whether vaulting is enabled for the PayPal account or not.', 'woocommerce-paypal-payments' ),
+						'description' => esc_html__( 'Whether vaulting is enabled on PayPal account or not.', 'woocommerce-paypal-payments' ),
 						'value'       => $this->vault_enabled( $bearer ),
 					),
 				);
