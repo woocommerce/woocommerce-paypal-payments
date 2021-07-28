@@ -62,28 +62,33 @@ class StatusReportModule implements ModuleInterface {
 
 				$items = array(
 					array(
-						'label' => esc_html__( 'Onboarded', 'woocommerce-paypal-payments' ),
-						'value' => $this->onboarded( $bearer, $state ),
+						'label'       => esc_html__( 'Onboarded', 'woocommerce-paypal-payments' ),
+						'description' => esc_html__( 'Whether PayPal account is correctly configured or not.', 'woocommerce-paypal-payments' ),
+						'value'       => $this->onboarded( $bearer, $state ),
 					),
 					array(
-						'label' => esc_html__( 'Shop country code', 'woocommerce-paypal-payments' ),
-						'value' => wc_get_base_location()['country'],
+						'label'       => esc_html__( 'Shop country code', 'woocommerce-paypal-payments' ),
+						'description' => esc_html__( 'Country / State value on Settings / General / Store Address.', 'woocommerce-paypal-payments' ),
+						'value'       => wc_get_base_location()['country'],
 					),
 					array(
-						'label' => esc_html__( 'PayPal card processing available in country', 'woocommerce-paypal-payments' ),
-						'value' => $dcc_applies->for_country_currency()
+						'label'       => esc_html__( 'PayPal card processing available in country', 'woocommerce-paypal-payments' ),
+						'description' => esc_html__( 'Whether PayPal card processing is available in country or not.', 'woocommerce-paypal-payments' ),
+						'value'       => $dcc_applies->for_country_currency()
 							? esc_html__( 'Yes', 'woocommerce-paypal-payments' )
 							: esc_html__( 'No', 'woocommerce-paypal-payments' ),
 					),
 					array(
-						'label' => esc_html__( 'Pay Later messaging available in country', 'woocommerce-paypal-payments' ),
-						'value' => $messages_apply->for_country()
+						'label'       => esc_html__( 'Pay Later messaging available in country', 'woocommerce-paypal-payments' ),
+						'description' => esc_html__( 'Whether Pay Later is available in country or not.', 'woocommerce-paypal-payments' ),
+						'value'       => $messages_apply->for_country()
 							? esc_html__( 'Yes', 'woocommerce-paypal-payments' )
 							: esc_html__( 'No', 'woocommerce-paypal-payments' ),
 					),
 					array(
-						'label' => esc_html__( 'Vault enabled', 'woocommerce-paypal-payments' ),
-						'value' => $this->vault_enabled( $bearer ),
+						'label'       => esc_html__( 'Vault enabled', 'woocommerce-paypal-payments' ),
+						'description' => esc_html__( 'Whether vaulting is enabled or not.', 'woocommerce-paypal-payments' ),
+						'value'       => $this->vault_enabled( $bearer ),
 					),
 				);
 
