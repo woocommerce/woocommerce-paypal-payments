@@ -134,11 +134,7 @@ class PayPalBearer implements Bearer {
 
 		if ( is_wp_error( $response ) || wp_remote_retrieve_response_code( $response ) !== 200 ) {
 			$error = new RuntimeException(
-				sprintf(
-					// translators: %s is the error description.
-					__( 'Could not create token. %s', 'woocommerce-paypal-payments' ),
-					isset( json_decode( $response['body'] )->error_description ) ? json_decode( $response['body'] )->error_description : ''
-				)
+				__( 'Could not create token.', 'woocommerce-paypal-payments' )
 			);
 			$this->logger->log(
 				'warning',
