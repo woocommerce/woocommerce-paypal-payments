@@ -236,21 +236,16 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	}
 
 	/**
-	 * Returns the title of the gateway.
+	 * Returns the icons of the gateway.
 	 *
 	 * @return string
 	 */
-	public function get_title() {
+	public function get_icon() {
+		$icon = parent::get_icon();
 
-		//phpcs:disable WordPress.Security.NonceVerification.Recommended
-		if ( ! is_checkout() || ( is_ajax() && isset( $_GET['wc-ajax'] ) && 'update_order_review' !== $_GET['wc-ajax'] ) ) {
-			return parent::get_title();
-		}
-		//phpcs:enable WordPress.Security.NonceVerification.Recommended
-		$title = parent::get_title();
 		$icons = $this->config->has( 'card_icons' ) ? (array) $this->config->get( 'card_icons' ) : array();
 		if ( empty( $icons ) ) {
-			return $title;
+			return $icon;
 		}
 
 		$title_options = $this->card_labels();
@@ -264,7 +259,8 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 			},
 			$icons
 		);
-		return $title . implode( '', $images );
+
+		return implode( '', $images );
 	}
 
 	/**
