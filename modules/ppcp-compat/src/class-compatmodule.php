@@ -63,6 +63,17 @@ class CompatModule implements ModuleInterface {
 		// Settings.
 		$ppec_import = $container->get( 'compat.ppec.settings_importer' );
 		$ppec_import->maybe_hook();
+
+		// Inbox note inviting merchant to disable PayPal Express Checkout.
+		add_action(
+			'woocommerce_init',
+			function() {
+				if ( is_callable( array( WC(), 'is_wc_admin_active' ) ) && WC()->is_wc_admin_active() ) {
+					PPEC\DeactivateNote::init();
+				}
+			}
+		);
+
 	}
 
 }
