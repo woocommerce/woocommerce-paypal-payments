@@ -131,6 +131,16 @@ class SettingsRenderer {
 			$messages[] = new Message( $pay_later_messages_or_vaulting_text, 'warning' );
 		}
 
+		if ( ! $this->currency_supports_decimals() && $this->is_paypal_checkout_screen() ) {
+			$messages[] = new Message(
+				sprintf(
+					esc_html__( 'Currency %s does not support decimals, total amount will be sent rounded without decimals to PayPal.', 'woocommerce-paypal-payments' ),
+					get_woocommerce_currency()
+				),
+				'warning'
+			);
+		}
+
         //phpcs:disable WordPress.Security.NonceVerification.Recommended
         //phpcs:disable WordPress.Security.NonceVerification.Missing
 		if ( ! isset( $_GET['ppcp-onboarding-error'] ) || ! empty( $_POST ) ) {
@@ -550,4 +560,9 @@ class SettingsRenderer {
 		return $this->is_paypal_checkout_screen() && $this->paypal_vaulting_is_enabled()
 			|| $this->is_paypal_checkout_screen() && $this->settings_status->pay_later_messaging_is_enabled();
 	}
+
+	private function currency_supports_decimals() {
+		return ! in_array( get_woocommerce_currency(), array( 'HUF', 'JPY', 'TWD' ), true );
+	}
 }
+
