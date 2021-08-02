@@ -2,7 +2,7 @@
 Contributors: woocommerce, automattic
 Tags: woocommerce, paypal, payments, ecommerce, e-commerce, store, sales, sell, shop, shopping, cart, checkout
 Requires at least: 5.3
-Tested up to: 5.7
+Tested up to: 5.8
 Requires PHP: 7.1
 Stable tag: 1.4.0
 License: GPLv2
