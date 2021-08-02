@@ -381,4 +381,20 @@ class PayPalGateway extends \WC_Payment_Gateway {
 
 		return parent::get_transaction_url( $order );
 	}
+
+	/**
+	 * Updates WooCommerce gateway option.
+	 *
+	 * @param string $key The option key.
+	 * @param string $value The option value.
+	 * @return bool|void
+	 */
+	public function update_option( $key, $value = '' ) {
+		parent::update_option( $key, $value );
+
+		if ( 'enabled' === $key ) {
+			$this->config->set( 'enabled', 'yes' === $value );
+			$this->config->persist();
+		}
+	}
 }
