@@ -16,11 +16,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
  */
 class PaymentToken {
 
-
 	const TYPE_PAYMENT_METHOD_TOKEN = 'PAYMENT_METHOD_TOKEN';
-	const VALID_TYPES               = array(
-		self::TYPE_PAYMENT_METHOD_TOKEN,
-	);
 
 	/**
 	 * The Id.
@@ -52,7 +48,7 @@ class PaymentToken {
 	 * @throws RuntimeException When the type is not valid.
 	 */
 	public function __construct( string $id, string $type = self::TYPE_PAYMENT_METHOD_TOKEN, \stdClass $source ) {
-		if ( ! in_array( $type, self::VALID_TYPES, true ) ) {
+		if ( ! in_array( $type, self::get_valid_types(), true ) ) {
 			throw new RuntimeException(
 				__( 'Not a valid payment source type.', 'woocommerce-paypal-payments' )
 			);
@@ -101,4 +97,20 @@ class PaymentToken {
 			'source' => $this->source(),
 		);
 	}
+
+	/**
+	 * Returns a list of valid token types.
+	 * Can be modified through the `woocommerce_paypal_payments_valid_payment_token_types` filter.
+	 *
+	 * @return array
+	 */
+	public static function get_valid_types() {
+		return apply_filters(
+			'woocommerce_paypal_payments_valid_payment_token_types',
+			array(
+				self::TYPE_PAYMENT_METHOD_TOKEN,
+			)
+		);
+	}
+
 }

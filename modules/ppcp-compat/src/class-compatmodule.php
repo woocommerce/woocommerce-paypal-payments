@@ -13,6 +13,7 @@ use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\Compat\PPEC\PPECHelper;
 
 /**
  * Class CompatModule
@@ -55,6 +56,9 @@ class CompatModule implements ModuleInterface {
 	 * @return void
 	 */
 	private function initialize_ppec_compat_layer( $container ): void {
+		// Process PPEC subscription renewals through PayPal Payments.
+		$handler = $container->get( 'compat.ppec.subscriptions-handler' );
+		$handler->maybe_hook();
 	}
 
 }
