@@ -202,7 +202,7 @@ class SmartButton implements SmartButtonInterface {
 			add_filter(
 				'woocommerce_credit_card_form_fields',
 				function ( $default_fields, $id ) {
-					if ( $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ) && CreditCardGateway::ID === $id ) {
+					if ( is_user_logged_in() && $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ) && CreditCardGateway::ID === $id ) {
 						$default_fields['card-vault'] = sprintf(
 							'<p class="form-row form-row-wide"><label for="vault"><input class="ppcp-credit-card-vault" type="checkbox" id="ppcp-credit-card-vault" name="vault">%s</label></p>',
 							esc_html__( 'Save your Credit Card', 'woocommerce-paypal-payments' )
