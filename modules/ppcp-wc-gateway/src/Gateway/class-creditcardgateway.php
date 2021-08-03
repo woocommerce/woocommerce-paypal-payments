@@ -253,7 +253,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 			function ( string $type ) use ( $title_options ): string {
 				return '<img
                  title="' . esc_attr( $title_options[ $type ] ) . '"
-                 src="' . esc_url( $this->module_url ) . '/assets/images/' . esc_attr( $type ) . '.svg"
+                 src="' . esc_url( $this->module_url ) . 'assets/images/' . esc_attr( $type ) . '.svg"
                  class="ppcp-card-icon"
                 > ';
 			},
