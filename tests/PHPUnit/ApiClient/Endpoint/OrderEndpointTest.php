@@ -432,6 +432,9 @@ class OrderEndpointTest extends TestCase
         $orderToUpdate
             ->shouldReceive('id')
             ->andReturn($orderId);
+        $orderToUpdate
+            ->shouldReceive('purchase_units')
+            ->andReturn([]);
         $orderToCompare = Mockery::mock(Order::class);
 
         $rawResponse = ['body' => '{"is_correct":true}'];
@@ -526,6 +529,9 @@ class OrderEndpointTest extends TestCase
         $orderToUpdate
             ->shouldReceive('id')
             ->andReturn($orderId);
+        $orderToUpdate
+            ->shouldReceive('purchase_units')
+            ->andReturn([]);
         $orderToCompare = Mockery::mock(Order::class);
 
         $rawResponse = ['body' => '{"has_error":true}'];
@@ -614,6 +620,9 @@ class OrderEndpointTest extends TestCase
         $orderToUpdate
             ->shouldReceive('id')
             ->andReturn($orderId);
+        $orderToUpdate
+            ->shouldReceive('purchase_units')
+            ->andReturn([]);
         $orderToCompare = Mockery::mock(Order::class);
 
         $rawResponse = ['body' => '{"is_correct":true}'];

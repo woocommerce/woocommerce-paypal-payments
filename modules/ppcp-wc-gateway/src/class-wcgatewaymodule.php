@@ -53,7 +53,7 @@ class WcGatewayModule implements ModuleInterface {
 	 *
 	 * @param ContainerInterface|null $container The container.
 	 */
-	public function run( ContainerInterface $container = null ) {
+	public function run( ContainerInterface $container ): void {
 		$this->register_payment_gateways( $container );
 		$this->register_order_functionality( $container );
 		$this->register_columns( $container );
@@ -134,6 +134,18 @@ class WcGatewayModule implements ModuleInterface {
 				 */
 				$endpoint->handle_request();
 			}
+		);
+
+		add_filter(
+			'woocommerce_email_recipient_customer_on_hold_order',
+			function( $recipient, $order ) {
+				if ( $order->get_payment_method() === PayPalGateway::ID || $order->get_payment_method() === CreditCardGateway::ID ) {
+					$recipient = '';
+				}
+				return $recipient;
+			},
+			10,
+			2
 		);
 	}
 

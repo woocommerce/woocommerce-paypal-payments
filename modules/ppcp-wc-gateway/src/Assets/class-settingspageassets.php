@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Assets;
 
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
 /**
  * Class SettingsPageAssets
@@ -111,13 +112,17 @@ class SettingsPageAssets {
 			true
 		);
 
-		$token = $bearer->bearer();
-		wp_localize_script(
-			'ppcp-gateway-settings',
-			'PayPalCommerceGatewaySettings',
-			array(
-				'vaulting_features_available' => $token->vaulting_available(),
-			)
-		);
+		try {
+			$token = $bearer->bearer();
+			wp_localize_script(
+				'ppcp-gateway-settings',
+				'PayPalCommerceGatewaySettings',
+				array(
+					'vaulting_features_available' => $token->vaulting_available(),
+				)
+			);
+		} catch ( RuntimeException $exception ) {
+			return;
+		}
 	}
 }

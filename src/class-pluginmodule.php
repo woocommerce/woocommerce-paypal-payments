@@ -31,7 +31,7 @@ class PluginModule implements ModuleInterface {
 	 *
 	 * @param ContainerInterface|null $container The Container.
 	 */
-	public function run( ContainerInterface $container = null ) {
+	public function run( ContainerInterface $container ): void {
 	}
 
 	/**

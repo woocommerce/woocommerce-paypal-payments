@@ -36,7 +36,7 @@ class WebhookModule implements ModuleInterface {
 	 *
 	 * @param ContainerInterface|null $container The Container.
 	 */
-	public function run( ContainerInterface $container = null ) {
+	public function run( ContainerInterface $container ): void {
 		add_action(
 			'rest_api_init',
 			static function () use ( $container ) {

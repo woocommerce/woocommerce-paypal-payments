@@ -37,7 +37,7 @@ class SessionModule implements ModuleInterface {
 	 *
 	 * @param ContainerInterface|null $container The container.
 	 */
-	public function run( ContainerInterface $container = null ) {
+	public function run( ContainerInterface $container ): void {
 		add_action(
 			'woocommerce_init',
 			function () use ( $container ) {

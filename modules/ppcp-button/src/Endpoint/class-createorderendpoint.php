@@ -174,7 +174,11 @@ class CreateOrderEndpoint implements EndpointInterface {
 			$this->set_bn_code( $data );
 
 			if ( 'checkout' === $data['context'] ) {
-					$this->process_checkout_form( $data['form'] );
+				if ( isset( $data['createaccount'] ) && '1' === $data['createaccount'] ) {
+					$this->process_checkout_form_when_creating_account( $data['form'], $wc_order );
+				}
+
+				$this->process_checkout_form( $data['form'] );
 			}
 			if ( 'pay-now' === $data['context'] && get_option( 'woocommerce_terms_page_id', '' ) !== '' ) {
 				$this->validate_paynow_form( $data['form'] );
@@ -199,6 +203,43 @@ class CreateOrderEndpoint implements EndpointInterface {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Once the checkout has been validated we execute this method.
+	 *
+	 * @param array     $data The data.
+	 * @param \WP_Error $errors The errors, which occurred.
+	 *
+	 * @return array
+	 */
+	public function after_checkout_validation( array $data, \WP_Error $errors ): array {
+		if ( ! $errors->errors ) {
+
+			$order = $this->create_paypal_order();
+
+			/**
+			 * In case we are onboarded and everything is fine with the \WC_Order
+			 * we want this order to be created. We will intercept it and leave it
+			 * in the "Pending payment" status though, which than later will change
+			 * during the "onApprove"-JS callback or the webhook listener.
+			 */
+			if ( ! $this->early_order_handler->should_create_early_order() ) {
+				wp_send_json_success( $order->to_array() );
+			}
+			$this->early_order_handler->register_for_order( $order );
+			return $data;
+		}
+
+		wp_send_json_error(
+			array(
+				'name'    => '',
+				'message' => $errors->get_error_message(),
+				'code'    => (int) $errors->get_error_code(),
+				'details' => array(),
+			)
+		);
+		return $data;
 	}
 
 	/**
@@ -341,39 +382,40 @@ class CreateOrderEndpoint implements EndpointInterface {
 	}
 
 	/**
-	 * Once the checkout has been validated we execute this method.
+	 * Processes checkout and creates the PayPal order after success form validation.
 	 *
-	 * @param array     $data The data.
-	 * @param \WP_Error $errors The errors, which occurred.
-	 *
-	 * @return array
+	 * @param string         $form_values The values of the form.
+	 * @param \WC_Order|null $wc_order WC order to get data from.
+	 * @throws \Exception On Error.
 	 */
-	public function after_checkout_validation( array $data, \WP_Error $errors ): array {
-		if ( ! $errors->errors ) {
+	private function process_checkout_form_when_creating_account( string $form_values, \WC_Order $wc_order = null ) {
+		$form_values   = explode( '&', $form_values );
+		$parsed_values = array();
+		foreach ( $form_values as $field ) {
+			$field = explode( '=', $field );
 
-			$order = $this->create_paypal_order();
-
-			/**
-			 * In case we are onboarded and everything is fine with the \WC_Order
-			 * we want this order to be created. We will intercept it and leave it
-			 * in the "Pending payment" status though, which than later will change
-			 * during the "onApprove"-JS callback or the webhook listener.
-			 */
-			if ( ! $this->early_order_handler->should_create_early_order() ) {
-				wp_send_json_success( $order->to_array() );
+			if ( count( $field ) !== 2 ) {
+				continue;
 			}
-			$this->early_order_handler->register_for_order( $order );
-			return $data;
+			$parsed_values[ $field[0] ] = $field[1];
 		}
+		$_POST    = $parsed_values;
+		$_REQUEST = $parsed_values;
 
-		wp_send_json_error(
-			array(
-				'name'    => '',
-				'message' => $errors->get_error_message(),
-				'code'    => (int) $errors->get_error_code(),
-				'details' => array(),
-			)
+		add_action(
+			'woocommerce_after_checkout_validation',
+			function ( array $data, \WP_Error $errors ) use ( $wc_order ) {
+				if ( ! $errors->errors ) {
+					$order = $this->create_paypal_order( $wc_order );
+					wp_send_json_success( $order->to_array() );
+					return true;
+				}
+			},
+			10,
+			2
 		);
-		return $data;
+
+		$checkout = \WC()->checkout();
+		$checkout->process_checkout();
 	}
 }

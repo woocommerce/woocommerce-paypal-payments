@@ -36,7 +36,7 @@ class AdminNotices implements ModuleInterface {
 	 *
 	 * @param ContainerInterface $container The container.
 	 */
-	public function run( ContainerInterface $container = null ) {
+	public function run( ContainerInterface $container ): void {
 		add_action(
 			'admin_notices',
 			function() use ( $container ) {
