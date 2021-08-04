@@ -253,6 +253,7 @@ document.addEventListener(
                     '#field-button_mini-cart_label',
                     '#field-button_mini-cart_color',
                     '#field-button_mini-cart_shape',
+                    '#field-button_mini-cart_height',
                 ]
             );
 
