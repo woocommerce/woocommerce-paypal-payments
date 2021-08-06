@@ -148,25 +148,28 @@ class SubscriptionsHandler {
 			return true;
 		}
 
-		// My Account > Subscriptions > (Subscription).
-		if ( wcs_is_view_subscription_page() ) {
-			$subscription = wcs_get_subscription( absint( get_query_var( 'view-subscription' ) ) );
+		// Checks that require Subscriptions.
+		if ( class_exists( \WC_Subscriptions::class ) ) {
+			// My Account > Subscriptions > (Subscription).
+			if ( wcs_is_view_subscription_page() ) {
+				$subscription = wcs_get_subscription( absint( get_query_var( 'view-subscription' ) ) );
 
-			return ( $subscription && PPECHelper::PPEC_GATEWAY_ID === $subscription->get_payment_method() );
-		}
+				return ( $subscription && PPECHelper::PPEC_GATEWAY_ID === $subscription->get_payment_method() );
+			}
 
-		// Changing payment method?
-		if ( is_wc_endpoint_url( 'order-pay' ) && isset( $_GET['change_payment_method'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			$subscription = wcs_get_subscription( absint( get_query_var( 'order-pay' ) ) );
+			// Changing payment method?
+			if ( is_wc_endpoint_url( 'order-pay' ) && isset( $_GET['change_payment_method'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				$subscription = wcs_get_subscription( absint( get_query_var( 'order-pay' ) ) );
 
-			return ( $subscription && PPECHelper::PPEC_GATEWAY_ID === $subscription->get_payment_method() );
-		}
+				return ( $subscription && PPECHelper::PPEC_GATEWAY_ID === $subscription->get_payment_method() );
+			}
 
-		// Early renew (via modal).
-		if ( isset( $_GET['process_early_renewal'], $_GET['subscription_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			$subscription = wcs_get_subscription( absint( $_GET['subscription_id'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+			// Early renew (via modal).
+			if ( isset( $_GET['process_early_renewal'], $_GET['subscription_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				$subscription = wcs_get_subscription( absint( $_GET['subscription_id'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
-			return ( $subscription && PPECHelper::PPEC_GATEWAY_ID === $subscription->get_payment_method() );
+				return ( $subscription && PPECHelper::PPEC_GATEWAY_ID === $subscription->get_payment_method() );
+			}
 		}
 
 		// Admin-only from here onwards.
