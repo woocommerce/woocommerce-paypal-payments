@@ -77,6 +77,11 @@ define( 'PPCP_FLAG_SUBSCRIPTION', true );
 				$modules[] = ( require $module_file )();
 			}
 			$providers = array();
+
+			// Use this filter to add custom module or remove some of existing ones.
+			// Modules able to access container, add services and modify existing ones.
+			$modules = apply_filters( 'woocommerce_paypal_payments_modules', $modules );
+
 			foreach ( $modules as $module ) {
 				/* @var $module ModuleInterface module */
 				$providers[] = $module->setup();
