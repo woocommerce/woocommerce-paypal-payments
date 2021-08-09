@@ -13,6 +13,7 @@ use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\Compat\PPEC\PPECHelper;
 
 /**
  * Class CompatModule
@@ -37,6 +38,7 @@ class CompatModule implements ModuleInterface {
 	 * @param ContainerInterface|null $container The Container.
 	 */
 	public function run( ContainerInterface $container ): void {
+		$this->initialize_ppec_compat_layer( $container );
 	}
 
 	/**
@@ -46,4 +48,32 @@ class CompatModule implements ModuleInterface {
 	 */
 	public function getKey() {
 	}
+
+	/**
+	 * Sets up the PayPal Express Checkout compatibility layer.
+	 *
+	 * @param ContainerInterface|null $container The Container.
+	 * @return void
+	 */
+	private function initialize_ppec_compat_layer( $container ): void {
+		// Process PPEC subscription renewals through PayPal Payments.
+		$handler = $container->get( 'compat.ppec.subscriptions-handler' );
+		$handler->maybe_hook();
+
+		// Settings.
+		$ppec_import = $container->get( 'compat.ppec.settings_importer' );
+		$ppec_import->maybe_hook();
+
+		// Inbox note inviting merchant to disable PayPal Express Checkout.
+		add_action(
+			'woocommerce_init',
+			function() {
+				if ( is_callable( array( WC(), 'is_wc_admin_active' ) ) && WC()->is_wc_admin_active() ) {
+					PPEC\DeactivateNote::init();
+				}
+			}
+		);
+
+	}
+
 }
