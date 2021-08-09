@@ -97,6 +97,13 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	private $refund_processor;
 
 	/**
+	 * Whether the plugin is in onboarded state.
+	 *
+	 * @var bool
+	 */
+	private $onboarded;
+
+	/**
 	 * PayPalGateway constructor.
 	 *
 	 * @param SettingsRenderer            $settings_renderer The Settings Renderer.
@@ -132,8 +139,9 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->session_handler          = $session_handler;
 		$this->refund_processor         = $refund_processor;
 		$this->transaction_url_provider = $transaction_url_provider;
+		$this->onboarded                = $state->current_state() === State::STATE_ONBOARDED;
 
-		if ( $state->current_state() === State::STATE_ONBOARDED ) {
+		if ( $this->onboarded ) {
 			$this->supports = array( 'refunds' );
 		}
 		if (
@@ -185,7 +193,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 */
 	public function needs_setup(): bool {
 
-		return true;
+		return ! $this->onboarded;
 	}
 
 	/**
@@ -372,5 +380,21 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->view_transaction_url = $this->transaction_url_provider->get_transaction_url_base( $order );
 
 		return parent::get_transaction_url( $order );
+	}
+
+	/**
+	 * Updates WooCommerce gateway option.
+	 *
+	 * @param string $key The option key.
+	 * @param string $value The option value.
+	 * @return bool|void
+	 */
+	public function update_option( $key, $value = '' ) {
+		parent::update_option( $key, $value );
+
+		if ( 'enabled' === $key ) {
+			$this->config->set( 'enabled', 'yes' === $value );
+			$this->config->persist();
+		}
 	}
 }

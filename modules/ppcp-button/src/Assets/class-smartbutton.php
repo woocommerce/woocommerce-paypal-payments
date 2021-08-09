@@ -182,7 +182,7 @@ class SmartButton implements SmartButtonInterface {
 			&& ! $this->session_handler->order()
 		) {
 			add_action(
-				'woocommerce_review_order_after_submit',
+				$this->checkout_dcc_button_renderer_hook(),
 				array(
 					$this,
 					'dcc_renderer',
@@ -191,7 +191,7 @@ class SmartButton implements SmartButtonInterface {
 			);
 
 			add_action(
-				'woocommerce_pay_order_after_submit',
+				$this->pay_order_renderer_hook(),
 				array(
 					$this,
 					'dcc_renderer',
@@ -202,7 +202,7 @@ class SmartButton implements SmartButtonInterface {
 			add_filter(
 				'woocommerce_credit_card_form_fields',
 				function ( $default_fields, $id ) {
-					if ( $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ) && CreditCardGateway::ID === $id ) {
+					if ( is_user_logged_in() && $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ) && CreditCardGateway::ID === $id ) {
 						$default_fields['card-vault'] = sprintf(
 							'<p class="form-row form-row-wide"><label for="vault"><input class="ppcp-credit-card-vault" type="checkbox" id="ppcp-credit-card-vault" name="vault">%s</label></p>',
 							esc_html__( 'Save your Credit Card', 'woocommerce-paypal-payments' )
@@ -255,7 +255,7 @@ class SmartButton implements SmartButtonInterface {
 			&& ! $not_enabled_on_cart
 		) {
 			add_action(
-				'woocommerce_proceed_to_checkout',
+				$this->proceed_to_checkout_button_renderer_hook(),
 				array(
 					$this,
 					'message_renderer',
@@ -271,7 +271,7 @@ class SmartButton implements SmartButtonInterface {
 			&& ! $not_enabled_on_product_page
 		) {
 			add_action(
-				'woocommerce_single_product_summary',
+				$this->single_product_renderer_hook(),
 				array(
 					$this,
 					'message_renderer',
@@ -284,7 +284,7 @@ class SmartButton implements SmartButtonInterface {
 			! $this->settings->get( 'message_enabled' );
 		if ( ! $not_enabled_on_checkout ) {
 			add_action(
-				'woocommerce_review_order_after_submit',
+				$this->checkout_dcc_button_renderer_hook(),
 				array(
 					$this,
 					'message_renderer',
@@ -292,7 +292,7 @@ class SmartButton implements SmartButtonInterface {
 				11
 			);
 			add_action(
-				'woocommerce_pay_order_after_submit',
+				$this->pay_order_renderer_hook(),
 				array(
 					$this,
 					'message_renderer',
@@ -318,7 +318,7 @@ class SmartButton implements SmartButtonInterface {
 			&& ! $not_enabled_on_cart
 		) {
 			add_action(
-				'woocommerce_proceed_to_checkout',
+				$this->proceed_to_checkout_button_renderer_hook(),
 				array(
 					$this,
 					'button_renderer',
@@ -334,7 +334,7 @@ class SmartButton implements SmartButtonInterface {
 			&& ! $not_enabled_on_product_page
 		) {
 			add_action(
-				'woocommerce_single_product_summary',
+				$this->single_product_renderer_hook(),
 				array(
 					$this,
 					'button_renderer',
@@ -349,7 +349,7 @@ class SmartButton implements SmartButtonInterface {
 			! $not_enabled_on_minicart
 		) {
 			add_action(
-				'woocommerce_widget_shopping_cart_after_buttons',
+				$this->mini_cart_button_renderer_hook(),
 				static function () {
 					echo '<p
                                 id="ppc-button-minicart"
@@ -360,8 +360,8 @@ class SmartButton implements SmartButtonInterface {
 			);
 		}
 
-		add_action( 'woocommerce_review_order_after_payment', array( $this, 'button_renderer' ), 10 );
-		add_action( 'woocommerce_pay_order_after_submit', array( $this, 'button_renderer' ), 10 );
+		add_action( $this->checkout_button_renderer_hook(), array( $this, 'button_renderer' ), 10 );
+		add_action( $this->pay_order_renderer_hook(), array( $this, 'button_renderer' ), 10 );
 
 		return true;
 	}
@@ -962,5 +962,65 @@ class SmartButton implements SmartButtonInterface {
 		}
 
 		return $height;
+	}
+
+	/**
+	 * Return action name PayPal buttons will be rendered at on checkout page.
+	 *
+	 * @return string Action name.
+	 */
+	private function checkout_button_renderer_hook(): string {
+		return (string) apply_filters( 'woocommerce_paypal_payments_checkout_button_renderer_hook', 'woocommerce_review_order_after_payment' );
+	}
+
+	/**
+	 * Return action name PayPal DCC button will be rendered at on checkout page.
+	 *
+	 * @return string
+	 */
+	private function checkout_dcc_button_renderer_hook(): string {
+		return (string) apply_filters( 'woocommerce_paypal_payments_checkout_dcc_renderer_hook', 'woocommerce_review_order_after_submit' );
+	}
+
+	/**
+	 * Return action name PayPal button and Pay Later message will be rendered at on pay-order page.
+	 *
+	 * @return string
+	 */
+	private function pay_order_renderer_hook(): string {
+		return (string) apply_filters( 'woocommerce_paypal_payments_pay_order_dcc_renderer_hook', 'woocommerce_pay_order_after_submit' );
+	}
+
+	/**
+	 * Return action name PayPal button will be rendered next to Proceed to checkout button (normally displayed in cart).
+	 *
+	 * @return string
+	 */
+	private function proceed_to_checkout_button_renderer_hook(): string {
+		return (string) apply_filters(
+			'woocommerce_paypal_payments_proceed_to_checkout_button_renderer_hook',
+			'woocommerce_proceed_to_checkout'
+		);
+	}
+
+	/**
+	 * Return action name PayPal button will be rendered in the WC mini cart.
+	 *
+	 * @return string
+	 */
+	private function mini_cart_button_renderer_hook(): string {
+		return (string) apply_filters(
+			'woocommerce_paypal_payments_mini_cart_button_renderer_hook',
+			'woocommerce_widget_shopping_cart_after_buttons'
+		);
+	}
+
+	/**
+	 * Return action name PayPal button and Pay Later message will be rendered at on the single product page.
+	 *
+	 * @return string
+	 */
+	private function single_product_renderer_hook(): string {
+		return (string) apply_filters( 'woocommerce_paypal_payments_single_product_renderer_hook', 'woocommerce_single_product_summary' );
 	}
 }

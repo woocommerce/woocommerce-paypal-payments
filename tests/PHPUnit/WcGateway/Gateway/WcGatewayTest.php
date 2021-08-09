@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
 
+use Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
@@ -365,6 +366,45 @@ class WcGatewayTest extends TestCase
 
         $this->assertFalse($testee->capture_authorized_payment($wcOrder));
     }
+    
+    /**
+     * @dataProvider dataForTestNeedsSetup
+     */
+    public function testNeedsSetup($currentState, $needSetup)
+    {
+    	expect('is_admin')->andReturn(true);
+    	$settingsRenderer = Mockery::mock(SettingsRenderer::class);
+    	$orderProcessor = Mockery::mock(OrderProcessor::class);
+    	$authorizedOrdersProcessor = Mockery::mock(AuthorizedPaymentsProcessor::class);
+    	$authorizeOrderActionNotice = Mockery::mock(AuthorizeOrderActionNotice::class);
+    	$config = Mockery::mock(ContainerInterface::class);
+    	$config
+		    ->shouldReceive('has')
+		    ->andReturn(false);
+    	$sessionHandler = Mockery::mock(SessionHandler::class);
+    	$refundProcessor = Mockery::mock(RefundProcessor::class);
+    	$onboardingState = Mockery::mock(State::class);
+    	$onboardingState
+		    ->expects('current_state')
+		    ->andReturn($currentState);
+    	$transactionUrlProvider = Mockery::mock(TransactionUrlProvider::class);
+    	$subscriptionHelper = Mockery::mock(SubscriptionHelper::class);
+    	
+    	$testee = new PayPalGateway(
+    		$settingsRenderer,
+		    $orderProcessor,
+		    $authorizedOrdersProcessor,
+		    $authorizeOrderActionNotice,
+		    $config,
+		    $sessionHandler,
+		    $refundProcessor,
+		    $onboardingState,
+		    $transactionUrlProvider,
+		    $subscriptionHelper
+	    );
+    	
+    	$this->assertSame($needSetup, $testee->needs_setup());
+    }
 
     public function dataForTestCaptureAuthorizedPaymentNoActionableFailures() : array
     {
@@ -382,5 +422,14 @@ class WcGatewayTest extends TestCase
                 AuthorizeOrderActionNotice::FAILED,
             ],
         ];
+    }
+    
+    public function dataForTestNeedsSetup(): array
+    {
+    	return [
+    		[State::STATE_START, true],
+		    [State::STATE_PROGRESSIVE, true],
+		    [State::STATE_ONBOARDED, false]
+	    ];
     }
 }
