@@ -34,7 +34,11 @@ class DeactivateNote {
 			return;
 		}
 
-		self::possibly_add_note();
+		try {
+			self::possibly_add_note();
+		} catch ( \Exception $e ) {
+			return;
+		}
 	}
 
 	/**
