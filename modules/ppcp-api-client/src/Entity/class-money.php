@@ -29,6 +29,13 @@ class Money {
 	private $value;
 
 	/**
+	 * Currencies that does not support decimals.
+	 *
+	 * @var array
+	 */
+	private $currencies_without_decimals = array( 'HUF', 'JPY', 'TWD' );
+
+	/**
 	 * Money constructor.
 	 *
 	 * @param float  $value The value.
@@ -65,7 +72,9 @@ class Money {
 	public function to_array(): array {
 		return array(
 			'currency_code' => $this->currency_code(),
-			'value'         => number_format( $this->value(), 2, '.', '' ),
+			'value'         => in_array( $this->currency_code(), $this->currencies_without_decimals, true )
+				? round( $this->value(), 0 )
+				: number_format( $this->value(), 2, '.', '' ),
 		);
 	}
 }

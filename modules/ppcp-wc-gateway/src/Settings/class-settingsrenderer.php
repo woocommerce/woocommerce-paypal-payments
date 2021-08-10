@@ -551,3 +551,4 @@ class SettingsRenderer {
 			|| $this->is_paypal_checkout_screen() && $this->settings_status->pay_later_messaging_is_enabled();
 	}
 }
+
