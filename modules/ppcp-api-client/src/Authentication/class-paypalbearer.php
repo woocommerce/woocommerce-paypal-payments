@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Token;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class PayPalBearer
@@ -23,6 +24,13 @@ class PayPalBearer implements Bearer {
 	use RequestTrait;
 
 	const CACHE_KEY = 'ppcp-bearer';
+
+	/**
+	 * The settings.
+	 *
+	 * @var Settings
+	 */
+	protected $settings;
 
 	/**
 	 * The cache.
@@ -67,20 +75,23 @@ class PayPalBearer implements Bearer {
 	 * @param string          $key The key.
 	 * @param string          $secret The secret.
 	 * @param LoggerInterface $logger The logger.
+	 * @param Settings        $settings The settings.
 	 */
 	public function __construct(
 		Cache $cache,
 		string $host,
 		string $key,
 		string $secret,
-		LoggerInterface $logger
+		LoggerInterface $logger,
+		Settings $settings
 	) {
 
-		$this->cache  = $cache;
-		$this->host   = $host;
-		$this->key    = $key;
-		$this->secret = $secret;
-		$this->logger = $logger;
+		$this->cache    = $cache;
+		$this->host     = $host;
+		$this->key      = $key;
+		$this->secret   = $secret;
+		$this->logger   = $logger;
+		$this->settings = $settings;
 	}
 
 	/**
@@ -105,12 +116,15 @@ class PayPalBearer implements Bearer {
 	 * @throws RuntimeException When request fails.
 	 */
 	private function newBearer(): Token {
-		$url      = trailingslashit( $this->host ) . 'v1/oauth2/token?grant_type=client_credentials';
+		$key    = $this->settings->has( 'client_id' ) && $this->settings->get( 'client_id' ) ? $this->settings->get( 'client_id' ) : $this->key;
+		$secret = $this->settings->has( 'client_secret' ) && $this->settings->get( 'client_secret' ) ? $this->settings->get( 'client_secret' ) : $this->secret;
+		$url    = trailingslashit( $this->host ) . 'v1/oauth2/token?grant_type=client_credentials';
+
 		$args     = array(
 			'method'  => 'POST',
 			'headers' => array(
 				// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
-				'Authorization' => 'Basic ' . base64_encode( $this->key . ':' . $this->secret ),
+				'Authorization' => 'Basic ' . base64_encode( $key . ':' . $secret ),
 			),
 		);
 		$response = $this->request(
@@ -120,11 +134,7 @@ class PayPalBearer implements Bearer {
 
 		if ( is_wp_error( $response ) || wp_remote_retrieve_response_code( $response ) !== 200 ) {
 			$error = new RuntimeException(
-				sprintf(
-					// translators: %s is the error description.
-					__( 'Could not create token. %s', 'woocommerce-paypal-payments' ),
-					isset( json_decode( $response['body'] )->error_description ) ? json_decode( $response['body'] )->error_description : ''
-				)
+				__( 'Could not create token.', 'woocommerce-paypal-payments' )
 			);
 			$this->logger->log(
 				'warning',

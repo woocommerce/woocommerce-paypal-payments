@@ -103,15 +103,16 @@ return array(
 		$cache  = new Cache( 'ppcp-paypal-bearer' );
 		$key    = $container->get( 'api.key' );
 		$secret = $container->get( 'api.secret' );
-
 		$host   = $container->get( 'api.host' );
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
+		$settings = $container->get( 'wcgateway.settings' );
 		return new PayPalBearer(
 			$cache,
 			$host,
 			$key,
 			$secret,
-			$logger
+			$logger,
+			$settings
 		);
 	},
 	'onboarding.state'                          => function( $container ) : State {

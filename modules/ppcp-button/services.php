@@ -51,7 +51,7 @@ return array(
 		 *
 		 * @var State $state
 		 */
-		if ( $state->current_state() < State::STATE_PROGRESSIVE ) {
+		if ( $state->current_state() <= State::STATE_PROGRESSIVE ) {
 			return new DisabledSmartButton();
 		}
 		$settings           = $container->get( 'wcgateway.settings' );
