@@ -158,6 +158,9 @@ class ItemFactoryTest extends TestCase
             ->expects('get_item_subtotal')
             ->with($item, false)
             ->andReturn(1);
+        $order
+            ->expects('get_fees')
+            ->andReturn([]);
 
         $result = $testee->from_wc_order($order);
         $this->assertCount(1, $result);
@@ -218,6 +221,9 @@ class ItemFactoryTest extends TestCase
             ->expects('get_item_subtotal')
             ->with($item, false)
             ->andReturn(1);
+        $order
+            ->expects('get_fees')
+            ->andReturn([]);
 
         $result = $testee->from_wc_order($order);
         $item = current($result);
@@ -273,6 +279,9 @@ class ItemFactoryTest extends TestCase
             ->expects('get_item_subtotal')
             ->with($item, false)
             ->andReturn(1);
+        $order
+            ->expects('get_fees')
+            ->andReturn([]);
 
         $result = $testee->from_wc_order($order);
         $item = current($result);
