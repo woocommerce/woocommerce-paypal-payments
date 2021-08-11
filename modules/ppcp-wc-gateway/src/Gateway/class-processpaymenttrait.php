@@ -141,6 +141,11 @@ trait ProcessPaymentTrait {
 			}
 		} catch ( PayPalApiException $error ) {
 			if ( $error->has_detail( 'INSTRUMENT_DECLINED' ) ) {
+				$wc_order->update_status(
+					'failed',
+					__( 'Instrument declined.', 'woocommerce-paypal-payments' )
+				);
+
 				$this->session_handler->increment_insufficient_funding_tries();
 				$host = $this->config->has( 'sandbox_on' ) && $this->config->get( 'sandbox_on' ) ?
 					'https://www.sandbox.paypal.com/' : 'https://www.paypal.com/';
