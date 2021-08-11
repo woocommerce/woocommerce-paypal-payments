@@ -89,14 +89,13 @@ define( 'PPCP_FLAG_SUBSCRIPTION', true );
 			$proxy     = new ProxyContainer();
 			$provider  = new CompositeCachingServiceProvider( $providers );
 			$container = new CachingContainer( new DelegatingContainer( $provider ) );
-			$container = apply_filters( 'woocommerce_paypal_payments_built_container', $container );
 			$proxy->setInnerContainer( $container );
 			foreach ( $modules as $module ) {
 				/* @var $module ModuleInterface module */
 				$module->run( $container );
 			}
 			$initialized = true;
-
+			do_action( 'woocommerce_paypal_payments_built_container', $proxy );
 		}
 	}
 
