@@ -38,6 +38,15 @@ class ApiModule implements ModuleInterface {
 	 * @param ContainerInterface $container The container.
 	 */
 	public function run( ContainerInterface $container ): void {
+		add_action(
+			'woocommerce_after_calculate_totals',
+			function ( \WC_Cart $cart ) {
+				$fees = $cart->fees_api()->get_fees();
+				if ( $fees ) {
+					WC()->session->set( 'fees', $fees );
+				}
+			}
+		);
 	}
 
 	/**

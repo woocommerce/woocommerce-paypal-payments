@@ -56,7 +56,21 @@ class ItemFactory {
 			},
 			$cart->get_cart_contents()
 		);
-		return $items;
+
+		$fees = array_map(
+			static function ( \stdClass $fee ) use ( $currency ): Item {
+				return new Item(
+					$fee->name,
+					new Money( (float) $fee->amount, $currency ),
+					1,
+					'',
+					new Money( (float) $fee->tax, $currency )
+				);
+			},
+			WC()->session->get( 'fees' )
+		);
+
+		return array_merge( $items, $fees );
 	}
 
 	/**
