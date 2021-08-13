@@ -169,6 +169,7 @@ class WcGatewayTest extends TestCase
         $subscriptionHelper = Mockery::mock(SubscriptionHelper::class);
         $subscriptionHelper->shouldReceive('has_subscription')->with($orderId)->andReturn(true);
         $subscriptionHelper->shouldReceive('is_subscription_change_payment')->andReturn(true);
+        $wcOrder->shouldReceive('update_status')->andReturn(true);
 
         $testee = new PayPalGateway(
             $settingsRenderer,

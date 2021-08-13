@@ -94,7 +94,7 @@ class IdentityTokenTest extends TestCase
         $this->bearer
             ->expects('bearer')->andReturn($token);
 
-        expect('wp_remote_get')->andReturn();
+        expect('wp_remote_get')->andReturn(['body' => '',]);
         expect('is_wp_error')->andReturn(false);
         expect('wp_remote_retrieve_response_code')->andReturn(500);
         $this->logger->shouldReceive('log');

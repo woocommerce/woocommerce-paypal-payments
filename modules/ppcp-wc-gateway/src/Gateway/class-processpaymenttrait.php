@@ -141,6 +141,11 @@ trait ProcessPaymentTrait {
 			}
 		} catch ( PayPalApiException $error ) {
 			if ( $error->has_detail( 'INSTRUMENT_DECLINED' ) ) {
+				$wc_order->update_status(
+					'failed',
+					__( 'Instrument declined.', 'woocommerce-paypal-payments' )
+				);
+
 				$this->session_handler->increment_insufficient_funding_tries();
 				$host = $this->config->has( 'sandbox_on' ) && $this->config->get( 'sandbox_on' ) ?
 					'https://www.sandbox.paypal.com/' : 'https://www.paypal.com/';
@@ -161,6 +166,10 @@ trait ProcessPaymentTrait {
 
 			$this->session_handler->destroy_session_data();
 		} catch ( RuntimeException $error ) {
+			$wc_order->update_status(
+				'failed',
+				__( 'Could not process order.', 'woocommerce-paypal-payments' )
+			);
 			$this->session_handler->destroy_session_data();
 			wc_add_notice( $error->getMessage(), 'error' );
 			return $failure_data;
@@ -169,6 +178,10 @@ trait ProcessPaymentTrait {
 		wc_add_notice(
 			$this->order_processor->last_error(),
 			'error'
+		);
+		$wc_order->update_status(
+			'failed',
+			__( 'Could not process order.', 'woocommerce-paypal-payments' )
 		);
 
 		return $failure_data;
