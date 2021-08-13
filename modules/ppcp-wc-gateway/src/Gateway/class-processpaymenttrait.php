@@ -166,6 +166,10 @@ trait ProcessPaymentTrait {
 
 			$this->session_handler->destroy_session_data();
 		} catch ( RuntimeException $error ) {
+			$wc_order->update_status(
+				'failed',
+				__( 'Could not process order.', 'woocommerce-paypal-payments' )
+			);
 			$this->session_handler->destroy_session_data();
 			wc_add_notice( $error->getMessage(), 'error' );
 			return $failure_data;
@@ -174,6 +178,10 @@ trait ProcessPaymentTrait {
 		wc_add_notice(
 			$this->order_processor->last_error(),
 			'error'
+		);
+		$wc_order->update_status(
+			'failed',
+			__( 'Could not process order.', 'woocommerce-paypal-payments' )
 		);
 
 		return $failure_data;
