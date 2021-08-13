@@ -95,7 +95,7 @@ define( 'PPCP_FLAG_SUBSCRIPTION', true );
 				$module->run( $container );
 			}
 			$initialized = true;
-
+			do_action( 'woocommerce_paypal_payments_built_container', $proxy );
 		}
 	}
 
