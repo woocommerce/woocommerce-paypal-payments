@@ -3,13 +3,13 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
-use WooCommerce\PayPalCommerce\ApiClient\Entity\Amount;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\TestCase;
 use Mockery;
 use function Brain\Monkey\Functions\expect;
+use function Brain\Monkey\Functions\when;
 
 class AmountFactoryTest extends TestCase
 {
@@ -45,6 +45,13 @@ class AmountFactoryTest extends TestCase
             ->andReturn(7);
 
         expect('get_woocommerce_currency')->andReturn($expectedCurrency);
+
+        $woocommerce = Mockery::mock(\WooCommerce::class);
+        $session = Mockery::mock(\WC_Session::class);
+        when('WC')->justReturn($woocommerce);
+        $woocommerce->session = $session;
+        $session->shouldReceive('get')->andReturn([]);
+
         $result = $testee->from_wc_cart($cart);
         $this->assertEquals($expectedCurrency, $result->currency_code());
         $this->assertEquals((float) 1, $result->value());
@@ -90,6 +97,12 @@ class AmountFactoryTest extends TestCase
             ->andReturn(0);
 
         expect('get_woocommerce_currency')->andReturn($expectedCurrency);
+
+        $woocommerce = Mockery::mock(\WooCommerce::class);
+        $session = Mockery::mock(\WC_Session::class);
+        when('WC')->justReturn($woocommerce);
+        $woocommerce->session = $session;
+        $session->shouldReceive('get')->andReturn([]);
         $result = $testee->from_wc_cart($cart);
         $this->assertNull($result->breakdown()->discount());
     }
