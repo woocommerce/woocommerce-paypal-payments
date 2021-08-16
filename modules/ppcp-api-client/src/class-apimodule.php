@@ -10,7 +10,6 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\ApiClient;
 
 use Dhii\Container\ServiceProvider;
-use Dhii\Modular\Module\Exception\ModuleExceptionInterface;
 use Dhii\Modular\Module\ModuleInterface;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
@@ -43,7 +42,7 @@ class ApiModule implements ModuleInterface {
 			function ( \WC_Cart $cart ) {
 				$fees = $cart->fees_api()->get_fees();
 				if ( $fees ) {
-					WC()->session->set( 'fees', $fees );
+					WC()->session->set( 'ppcp_fees', $fees );
 				}
 			}
 		);

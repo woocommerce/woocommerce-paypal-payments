@@ -57,18 +57,22 @@ class ItemFactory {
 			$cart->get_cart_contents()
 		);
 
-		$fees = array_map(
-			static function ( \stdClass $fee ) use ( $currency ): Item {
-				return new Item(
-					$fee->name,
-					new Money( (float) $fee->amount, $currency ),
-					1,
-					'',
-					new Money( (float) $fee->tax, $currency )
-				);
-			},
-			WC()->session->get( 'fees' )
-		);
+		$fees              = array();
+		$fees_from_session = WC()->session->get( 'ppcp_fees' );
+		if ( $fees_from_session ) {
+			$fees = array_map(
+				static function ( \stdClass $fee ) use ( $currency ): Item {
+					return new Item(
+						$fee->name,
+						new Money( (float) $fee->amount, $currency ),
+						1,
+						'',
+						new Money( (float) $fee->tax, $currency )
+					);
+				},
+				$fees_from_session
+			);
+		}
 
 		return array_merge( $items, $fees );
 	}
