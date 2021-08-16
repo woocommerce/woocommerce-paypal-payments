@@ -295,60 +295,6 @@ class PurchaseUnitFactoryTest extends TestCase
         $this->assertNull($unit->shipping());
     }
 
-    public function testWcCartShippingGetsDroppendWhenNoPostalCode()
-    {
-        expect('WC')
-            ->andReturn((object) ['customer' => Mockery::mock(\WC_Customer::class)]);
-
-        $wcCart = Mockery::mock(\WC_Cart::class);
-        $amount = Mockery::mock(Amount::class);
-        $amountFactory = Mockery::mock(AmountFactory::class);
-        $amountFactory
-            ->expects('from_wc_cart')
-            ->with($wcCart)
-            ->andReturn($amount);
-        $payeeFactory = Mockery::mock(PayeeFactory::class);
-        $payeeRepository = Mockery::mock(PayeeRepository::class);
-        $payee = Mockery::mock(Payee::class);
-        $payeeRepository
-            ->expects('payee')->andReturn($payee);
-	    $item = Mockery::mock(Item::class);
-	    $item->shouldReceive('category')->andReturn(Item::PHYSICAL_GOODS);
-        $itemFactory = Mockery::mock(ItemFactory::class);
-        $itemFactory
-            ->expects('from_wc_cart')
-            ->with($wcCart)
-            ->andReturn([$item]);
-
-        $address = Mockery::mock(Address::class);
-        $address
-            ->shouldReceive('country_code')
-            ->andReturn('DE');
-        $address
-            ->shouldReceive('postal_code')
-            ->andReturn('');
-        $shipping = Mockery::mock(Shipping::class);
-        $shipping
-            ->shouldReceive('address')
-            ->andReturn($address);
-        $shippingFactory = Mockery::mock(ShippingFactory::class);
-        $shippingFactory
-            ->expects('from_wc_customer')
-            ->andReturn($shipping);
-        $paymentsFacory = Mockery::mock(PaymentsFactory::class);
-        $testee = new PurchaseUnitFactory(
-            $amountFactory,
-            $payeeRepository,
-            $payeeFactory,
-            $itemFactory,
-            $shippingFactory,
-            $paymentsFacory
-        );
-
-        $unit = $testee->from_wc_cart($wcCart);
-        $this->assertNull($unit->shipping());
-    }
-
     public function testWcCartShippingGetsDroppendWhenNoCountryCode()
     {
         expect('WC')
