@@ -45,9 +45,18 @@ class AmountFactory {
 	 * @return Amount
 	 */
 	public function from_wc_cart( \WC_Cart $cart ): Amount {
-		$currency   = get_woocommerce_currency();
-		$total      = new Money( (float) $cart->get_total( 'numeric' ), $currency );
-		$item_total = $cart->get_cart_contents_total() + $cart->get_discount_total();
+		$currency = get_woocommerce_currency();
+		$total    = new Money( (float) $cart->get_total( 'numeric' ), $currency );
+
+		$total_fees_amount = 0;
+		$fees              = WC()->session->get( 'ppcp_fees' );
+		if ( $fees ) {
+			foreach ( WC()->session->get( 'ppcp_fees' ) as $fee ) {
+				$total_fees_amount += (float) $fee->amount;
+			}
+		}
+
+		$item_total = $cart->get_cart_contents_total() + $cart->get_discount_total() + $total_fees_amount;
 		$item_total = new Money( (float) $item_total, $currency );
 		$shipping   = new Money(
 			(float) $cart->get_shipping_total() + $cart->get_shipping_tax(),

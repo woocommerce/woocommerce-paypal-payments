@@ -56,7 +56,25 @@ class ItemFactory {
 			},
 			$cart->get_cart_contents()
 		);
-		return $items;
+
+		$fees              = array();
+		$fees_from_session = WC()->session->get( 'ppcp_fees' );
+		if ( $fees_from_session ) {
+			$fees = array_map(
+				static function ( \stdClass $fee ) use ( $currency ): Item {
+					return new Item(
+						$fee->name,
+						new Money( (float) $fee->amount, $currency ),
+						1,
+						'',
+						new Money( (float) $fee->tax, $currency )
+					);
+				},
+				$fees_from_session
+			);
+		}
+
+		return array_merge( $items, $fees );
 	}
 
 	/**
@@ -66,12 +84,21 @@ class ItemFactory {
 	 * @return Item[]
 	 */
 	public function from_wc_order( \WC_Order $order ): array {
-		return array_map(
+		$items = array_map(
 			function ( \WC_Order_Item_Product $item ) use ( $order ): Item {
 				return $this->from_wc_order_line_item( $item, $order );
 			},
 			$order->get_items( 'line_item' )
 		);
+
+		$fees = array_map(
+			function ( \WC_Order_Item_Fee $item ) use ( $order ): Item {
+				return $this->from_wc_order_fee( $item, $order );
+			},
+			$order->get_fees()
+		);
+
+		return array_merge( $items, $fees );
 	}
 
 	/**
@@ -106,6 +133,24 @@ class ItemFactory {
 			$tax,
 			$product->get_sku(),
 			( $product->is_virtual() ) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS
+		);
+	}
+
+	/**
+	 * Creates an Item based off a WooCommerce Fee Item.
+	 *
+	 * @param \WC_Order_Item_Fee $item The WooCommerce order item.
+	 * @param \WC_Order          $order The WooCommerce order.
+	 *
+	 * @return Item
+	 */
+	private function from_wc_order_fee( \WC_Order_Item_Fee $item, \WC_Order $order ): Item {
+		return new Item(
+			$item->get_name(),
+			new Money( (float) $item->get_amount(), $order->get_currency() ),
+			$item->get_quantity(),
+			'',
+			new Money( (float) $item->get_total_tax(), $order->get_currency() )
 		);
 	}
 

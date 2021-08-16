@@ -7,6 +7,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\TestCase;
 use function Brain\Monkey\Functions\expect;
+use function Brain\Monkey\Functions\when;
 use Mockery;
 
 class ItemFactoryTest extends TestCase
@@ -51,6 +52,13 @@ class ItemFactoryTest extends TestCase
 	    expect('wp_strip_all_tags')
 		    ->with('description')
 		    ->andReturn('description');
+
+        $woocommerce = Mockery::mock(\WooCommerce::class);
+        $session = Mockery::mock(\WC_Session::class);
+        when('WC')->justReturn($woocommerce);
+        $woocommerce->session = $session;
+        $session->shouldReceive('get')->andReturn([]);
+
         $result = $testee->from_wc_cart($cart);
 
         $this->assertCount(1, $result);
@@ -108,6 +116,12 @@ class ItemFactoryTest extends TestCase
 		    ->with('description')
 		    ->andReturn('description');
 
+        $woocommerce = Mockery::mock(\WooCommerce::class);
+        $session = Mockery::mock(\WC_Session::class);
+        when('WC')->justReturn($woocommerce);
+        $woocommerce->session = $session;
+        $session->shouldReceive('get')->andReturn([]);
+
         $result = $testee->from_wc_cart($cart);
 
         $item = current($result);
@@ -158,6 +172,9 @@ class ItemFactoryTest extends TestCase
             ->expects('get_item_subtotal')
             ->with($item, false)
             ->andReturn(1);
+        $order
+            ->expects('get_fees')
+            ->andReturn([]);
 
         $result = $testee->from_wc_order($order);
         $this->assertCount(1, $result);
@@ -218,6 +235,9 @@ class ItemFactoryTest extends TestCase
             ->expects('get_item_subtotal')
             ->with($item, false)
             ->andReturn(1);
+        $order
+            ->expects('get_fees')
+            ->andReturn([]);
 
         $result = $testee->from_wc_order($order);
         $item = current($result);
@@ -273,6 +293,9 @@ class ItemFactoryTest extends TestCase
             ->expects('get_item_subtotal')
             ->with($item, false)
             ->andReturn(1);
+        $order
+            ->expects('get_fees')
+            ->andReturn([]);
 
         $result = $testee->from_wc_order($order);
         $item = current($result);
