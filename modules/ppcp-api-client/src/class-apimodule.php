@@ -41,9 +41,7 @@ class ApiModule implements ModuleInterface {
 			'woocommerce_after_calculate_totals',
 			function ( \WC_Cart $cart ) {
 				$fees = $cart->fees_api()->get_fees();
-				if ( $fees ) {
-					WC()->session->set( 'ppcp_fees', $fees );
-				}
+				WC()->session->set( 'ppcp_fees', $fees );
 			}
 		);
 	}
