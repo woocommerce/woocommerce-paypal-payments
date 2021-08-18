@@ -27,7 +27,9 @@ jobs:
       run: composer validate
 
     - name: Install dependencies
-      run: composer install --prefer-dist --no-progress --no-suggest
+      uses: ramsey/composer-install@v1
+      with:
+        composer-options: "--prefer-dist"
 
     - name: Run test suite
       run: ./vendor/bin/phpunit
