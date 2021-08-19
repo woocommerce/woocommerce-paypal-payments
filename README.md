@@ -4,7 +4,7 @@ PayPal's latest complete payments processing solution. Accept PayPal, Pay Later,
 
 ## Requirements
 
-* PHP >= 7.0
+* PHP >= 7.1
 * WordPress >=5.3
 * WooCommerce >=4.5
 
