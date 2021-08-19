@@ -1,6 +1,6 @@
 *** Changelog ***
 
-= 1.5.1 - TBD =
+= 1.5.1 - 2021-08-19 =
 * Fix - Set 3DS contingencies to "SCA_WHEN_REQUIRED". #178
 * Fix - Plugin conflict blocking line item details. #221
 * Fix - WooCommerce orders left in "Pending Payment" after a decline. #222
