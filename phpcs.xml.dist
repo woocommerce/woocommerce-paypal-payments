@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <ruleset name="WooCommerce Coding Standards">
-	<description>My projects ruleset.</description>
+	<description>WooCommerce PayPal Payments ruleset.</description>
 
 	<!-- Configs -->
-	<config name="minimum_supported_wp_version" value="4.7" />
+	<config name="minimum_supported_wp_version" value="5.3" />
 	<config name="testVersion" value="7.1-" />
 
 	<!-- Rules -->
