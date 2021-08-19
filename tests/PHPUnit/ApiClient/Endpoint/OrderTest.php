@@ -14,6 +14,7 @@ use Mockery;
 
 class OrderTest extends TestCase
 {
+    private $dateFormat = 'Y-m-d\TH:i:sO'; // no DateTimeInterface::ISO8601 in 7.1
 
     public function testOrder()
     {
@@ -64,8 +65,8 @@ class OrderTest extends TestCase
             'purchase_units' => [
                 [1],
             ],
-            'create_time' => $createTime->format(\DateTimeInterface::ISO8601),
-            'update_time' => $updateTime->format(\DateTimeInterface::ISO8601),
+            'create_time' => $createTime->format($this->dateFormat),
+            'update_time' => $updateTime->format($this->dateFormat),
             'payer' => ['payer'],
             'application_context' => ['applicationContext'],
             'payment_source' => ['paymentSource']
