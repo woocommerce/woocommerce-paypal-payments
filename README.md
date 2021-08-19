@@ -16,8 +16,6 @@ PayPal's latest complete payments processing solution. Accept PayPal, Pay Later,
 4. `$ yarn run build:dev`
 5. Change the `PAYPAL_INTEGRATION_DATE` constant to `gmdate( 'Y-m-d' )` to run the latest PayPal JavaScript SDK
 
-Note: PHPUnit needs at least PHP 7.3.
-
 ### Unit tests and code style
 
 1. `$ composer install`
