@@ -20,7 +20,7 @@ PayPal's latest complete payments processing solution. Accept PayPal, Pay Later,
 
 1. `$ composer install`
 2. `$ ./vendor/bin/phpunit`
-3. `$ ./vendor/bin/phpcs src modules woocommerce-paypal-payments.php --extensions=php`
+3. `$ ./vendor/bin/phpcs`
 
 ## Preparation for wordpress.org release
 
