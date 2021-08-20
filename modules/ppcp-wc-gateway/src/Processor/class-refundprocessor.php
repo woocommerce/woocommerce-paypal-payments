@@ -88,7 +88,7 @@ class RefundProcessor {
 				$capture->invoice_id(),
 				$reason,
 				new Amount(
-					new Money( $amount, get_woocommerce_currency() )
+					new Money( $amount, $wc_order->get_currency() )
 				)
 			);
 			return $this->payments_endpoint->refund( $refund );
