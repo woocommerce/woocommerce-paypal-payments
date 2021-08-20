@@ -104,7 +104,7 @@ class CreditCardRenderer {
                     const vault = document.getElementById('ppcp-credit-card-vault') ?
                       document.getElementById('ppcp-credit-card-vault').checked : save_card;
                     hostedFields.submit({
-                        contingencies: ['SCA_WHEN_REQUIRED'],
+                        contingencies: [this.defaultConfig.hosted_fields.contingency],
                         vault: vault
                     }).then((payload) => {
                         payload.orderID = payload.orderId;
