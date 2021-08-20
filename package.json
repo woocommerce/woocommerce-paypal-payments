@@ -14,12 +14,25 @@
     "build:modules": "yarn run build:modules:ppcp-button && yarn build:modules:ppcp-wc-gateway",
     "build:dev": "yarn run install:modules && yarn run build:modules",
 
+    "docker:build": "docker-compose build",
+    "docker:start": "docker-compose up -d wp_dev",
+    "docker:stop": "docker-compose down",
+    "docker:destroy": "docker-compose down -v",
+    "docker:logs": "docker-compose logs",
+    "docker:shell": "docker-compose run --rm wp_dev bash",
+    "docker:install": "docker-compose run --rm composer composer install && yarn run docker:build-js",
+    "docker:build-js": "docker-compose run --rm build yarn run build:dev",
+    "docker:composer-update": "docker-compose run --rm composer composer update",
+    "docker:test": "docker-compose run --rm test vendor/bin/phpunit",
+    "docker:lint": "docker-compose run --rm test vendor/bin/phpcs --parallel=8 -n -s",
+    "docker:fix-lint": "docker-compose run --rm test vendor/bin/phpcbf",
+
     "prebuild": "rm -rf ./vendor",
     "build": "composer install --no-dev && npm run build:dev && npm run archive",
     "prearchive": "rm -rf $npm_package_name.zip",
     "archive": "zip -r $npm_package_name.zip . -x **.git/\\* **node_modules/\\*",
     "postarchive": "npm run archive:cleanup && rm -rf $npm_package_name && unzip $npm_package_name.zip -d $npm_package_name && rm $npm_package_name.zip && zip -r $npm_package_name.zip $npm_package_name && rm -rf $npm_package_name",
-    "archive:cleanup": "zip -d $npm_package_name.zip tests/\\* .github/\\* wordpress_org_assets/\\* \\*.DS_Store README.md .gitattributes .gitignore .travis.yml composer.json composer.lock package.json package-lock.json patchwork.json yarn.lock phpunit.xml.dist .phpunit.result.cache phpcs.xml.dist modules/ppcp-button/.babelrc modules/ppcp-button/package.json modules/ppcp-button/webpack.config.js modules/ppcp-button/yarn.lock vendor/\\*/.idea/\\* vendor/\\*/.gitignore vendor/\\*/.gitattributes vendor/\\*/.travis.yml"
+    "archive:cleanup": "zip -d $npm_package_name.zip .env* docker/\\* docker-compose.yml tests/\\* .github/\\* wordpress_org_assets/\\* \\*.DS_Store README.md .gitattributes .gitignore .travis.yml composer.json composer.lock package.json package-lock.json patchwork.json yarn.lock phpunit.xml.dist .phpunit.result.cache phpcs.xml.dist modules/ppcp-button/.babelrc modules/ppcp-button/package.json modules/ppcp-button/webpack.config.js modules/ppcp-button/yarn.lock vendor/\\*/.idea/\\* vendor/\\*/.gitignore vendor/\\*/.gitattributes vendor/\\*/.travis.yml"
   },
   "config": {
     "wp_org_slug": "woocommerce-paypal-payments"

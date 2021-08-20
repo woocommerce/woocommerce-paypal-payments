@@ -22,6 +22,28 @@ PayPal's latest complete payments processing solution. Accept PayPal, Pay Later,
 2. `$ ./vendor/bin/phpunit`
 3. `$ ./vendor/bin/phpcs`
 
+### Docker
+
+You can also use the Docker environment which includes WP, WC and all developments tools.
+
+0. Install Docker and Docker Compose.
+1. `$ cp .env.example .env` and edit the configuration in the `.env` file if needed.
+2. `$ yarn run docker:build` (or copy the commands from [package.json](/package.json) if you do not have `yarn`).
+3. `$ yarn docker:install`
+4. `$ yarn docker:start`
+5. Add `127.0.0.1 wc-pp.myhost` to your `hosts` file and open http://wc-pp.myhost (the default value of `WP_DOMAIN` in `.env`).
+
+Tests and code style:
+- `$ yarn run docker:test` 
+- `$ yarn run docker:lint`
+
+After some changes in `.env` (such as PHP, WP versions) you may need to rebuild the Docker image:
+
+1. `$ yarn run docker:destroy` (all data will be lost)
+2. `$ yarn run docker:build`
+
+See [package.json](/package.json) for other useful commands.
+
 ## Preparation for wordpress.org release
 
 If you want to deploy a new version, you need to do some preparation:
