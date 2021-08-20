@@ -1804,6 +1804,53 @@ return array(
 				),
 				'gateway'      => 'dcc',
 			),
+			'3d_secure_heading'              => array(
+				'heading'      => __( '3D Secure', 'woocommerce-paypal-payments' ),
+				'type'         => 'ppcp-heading',
+				'description'  => wp_kses_post(
+					sprintf(
+					// translators: %1$s and %2$s is a link tag.
+						__(
+							'3D Secure benefits cardholders and merchants by providing
+                                  an additional layer of verification using Verified by Visa,
+                                  MasterCard SecureCode and American Express SafeKey.
+                                  %1$sLearn more about 3D Secure.%2$s',
+							'woocommerce-paypal-payments'
+						),
+						'<a
+                            rel="noreferrer noopener"
+                            href="https://woocommerce.com/posts/introducing-strong-customer-authentication-sca/"
+                            >',
+						'</a>'
+					)
+				),
+				'screens'      => array(
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(
+					'dcc',
+				),
+				'gateway'      => 'dcc',
+			),
+			'3d_secure_contingency'          => array(
+				'title'        => __( 'Contingency for 3D Secure', 'woocommerce-paypal-payments' ),
+				'type'         => 'select',
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
+				'default'      => 'SCA_WHEN_REQUIRED',
+				'desc_tip'     => false,
+				'options'      => array(
+					'SCA_WHEN_REQUIRED' => __( 'When required', 'woocommerce-paypal-payments' ),
+					'3D_SECURE'         => __( 'Always', 'woocommerce-paypal-payments' ),
+				),
+				'screens'      => array(
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(
+					'dcc',
+				),
+				'gateway'      => 'dcc',
+			),
 		);
 		if ( ! defined( 'PPCP_FLAG_SUBSCRIPTION' ) || ! PPCP_FLAG_SUBSCRIPTION ) {
 			unset( $fields['vault_enabled'] );
