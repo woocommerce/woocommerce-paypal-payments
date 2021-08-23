@@ -103,10 +103,14 @@ class CreditCardRenderer {
                     const save_card = this.defaultConfig.save_card ? true : false;
                     const vault = document.getElementById('ppcp-credit-card-vault') ?
                       document.getElementById('ppcp-credit-card-vault').checked : save_card;
-                    hostedFields.submit({
-                        contingencies: [this.defaultConfig.hosted_fields.contingency],
+                    const contingency = this.defaultConfig.hosted_fields.contingency;
+                    const hostedFieldsData = {
                         vault: vault
-                    }).then((payload) => {
+                    };
+                    if (contingency !== 'NO_3D_SECURE') {
+                        hostedFieldsData.contingencies = [contingency];
+                    }
+                    hostedFields.submit(hostedFieldsData).then((payload) => {
                         payload.orderID = payload.orderId;
                         this.spinner.unblock();
                         return contextConfig.onApprove(payload);
