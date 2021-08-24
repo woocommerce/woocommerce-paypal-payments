@@ -206,16 +206,12 @@ class WcGatewayModule implements ModuleInterface {
 				$methods[]   = $container->get( 'wcgateway.paypal-gateway' );
 				$dcc_applies = $container->get( 'api.helpers.dccapplies' );
 
-				$screen = ! function_exists( 'get_current_screen' ) ? (object) array( 'id' => 'front' ) : get_current_screen();
-				if ( ! $screen ) {
-					$screen = (object) array( 'id' => 'front' );
-				}
 				/**
 				 * The DCC Applies object.
 				 *
 				 * @var DccApplies $dcc_applies
 				 */
-				if ( 'woocommerce_page_wc-settings' !== $screen->id && $dcc_applies->for_country_currency() ) {
+				if ( $dcc_applies->for_country_currency() ) {
 					$methods[] = $container->get( 'wcgateway.credit-card-gateway' );
 				}
 				return (array) $methods;
