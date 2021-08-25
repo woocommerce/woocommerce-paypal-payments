@@ -2,7 +2,6 @@
 /build/
 node_modules
 .phpunit.result.cache
-composer.lock
 yarn-error.log
 modules/ppcp-button/assets/*
 modules/ppcp-wc-gateway/assets/*
