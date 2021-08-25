@@ -1,0 +1,21 @@
+/.github/ export-ignore
+/.psalm/ export-ignore
+/docker/ export-ignore
+/tests/ export-ignore
+.env export-ignore
+.env.example export-ignore
+.travis.yml export-ignore
+auth.json export-ignore
+composer.json export-ignore
+composer.lock export-ignore
+DEVELOPMENT.md export-ignore
+docker-compose.yml export-ignore
+grumphp.yml export-ignore
+gulpfile.js export-ignore
+package.json export-ignore
+phpcs.xml export-ignore
+phpunit.xml export-ignore
+psalm.xml export-ignore
+yarn.lock export-ignore
+
+* text eol=lf
