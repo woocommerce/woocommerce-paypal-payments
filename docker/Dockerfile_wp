@@ -74,7 +74,7 @@ RUN docker-php-ext-install intl json && \
     docker-php-ext-enable intl json
 
 # Install Node
-RUN curl -sL https://deb.nodesource.com/setup_15.x | bash -
+RUN curl -sL https://deb.nodesource.com/setup_16.x | bash -
 RUN apt-get install -y nodejs
 
 # Install Phive
