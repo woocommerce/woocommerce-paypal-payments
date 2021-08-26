@@ -18,7 +18,7 @@ class MockGateway extends \WC_Payment_Gateway {
 	 * @param string $title Gateway title.
 	 */
 	public function __construct( $title ) {
-		$this->id           = PPECHelper::PPEC_GATEWAY_ID;
+		$this->id           = PpecHelper::PPEC_GATEWAY_ID;
 		$this->title        = $title;
 		$this->method_title = $this->title;
 		$this->description  = '';

@@ -11,7 +11,7 @@ namespace WooCommerce\PayPalCommerce\Compat\PPEC;
  * Helper class with various constants associated to the PayPal Express Checkout plugin, as well as methods for figuring
  * out the status of the gateway.
  */
-class PPECHelper {
+class PpecHelper {
 
 	/**
 	 * The PayPal Express Checkout gateway ID.

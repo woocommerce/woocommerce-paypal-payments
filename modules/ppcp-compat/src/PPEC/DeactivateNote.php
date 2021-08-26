@@ -29,7 +29,7 @@ class DeactivateNote {
 	 * Note initialization.
 	 */
 	public static function init() {
-		if ( ! PPECHelper::is_plugin_active() ) {
+		if ( ! PpecHelper::is_plugin_active() ) {
 			self::maybe_mark_note_as_actioned();
 			return;
 		}
@@ -47,7 +47,7 @@ class DeactivateNote {
 	 * @return Automatic\WooCommerce\Admin\Notes\Note
 	 */
 	public static function get_note() {
-		if ( PPECHelper::site_has_ppec_subscriptions() ) {
+		if ( PpecHelper::site_has_ppec_subscriptions() ) {
 			$msg = __(
 				'As of 1 Sept 2021, PayPal Checkout will be officially retired from WooCommerce.com, and support for this product will end as of 1 March 2022. PayPal Payments can now handle all your subscription renewals even if they were first created using PayPal Checkout. To fully switch over, all you need to do is deactivate and/or remove the PayPal Checkout plugin from your store.',
 				'woocommerce-paypal-payments'
@@ -70,7 +70,7 @@ class DeactivateNote {
 		$note->add_action(
 			'deactivate-paypal-checkout-plugin',
 			__( 'Deactivate PayPal Checkout', 'woocommerce-paypal-payments' ),
-			admin_url( 'plugins.php?action=deactivate&plugin=' . rawurlencode( PPECHelper::PPEC_PLUGIN_FILE ) . '&plugin_status=all&paged=1&_wpnonce=' . wp_create_nonce( 'deactivate-plugin_' . PPECHelper::PPEC_PLUGIN_FILE ) ),
+			admin_url( 'plugins.php?action=deactivate&plugin=' . rawurlencode( PpecHelper::PPEC_PLUGIN_FILE ) . '&plugin_status=all&paged=1&_wpnonce=' . wp_create_nonce( 'deactivate-plugin_' . PpecHelper::PPEC_PLUGIN_FILE ) ),
 			Note::E_WC_ADMIN_NOTE_UNACTIONED,
 			true
 		);
