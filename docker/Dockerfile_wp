@@ -64,7 +64,7 @@ RUN apt-get install -y \
     wget
 
 RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" && \
-    php composer-setup.php --install-dir=/usr/bin --filename=composer --version=1.10.19 && \
+    php composer-setup.php --install-dir=/usr/bin --filename=composer --version=1.10.22 && \
     php -r "unlink('composer-setup.php');"
 
 RUN mkdir -p ~/.ssh
