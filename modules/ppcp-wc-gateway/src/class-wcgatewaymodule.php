@@ -58,7 +58,6 @@ class WcGatewayModule implements ModuleInterface {
 		$this->register_order_functionality( $container );
 		$this->register_columns( $container );
 		$this->register_checkout_paypal_address_preset( $container );
-		$this->ajax_gateway_enabler( $container );
 
 		add_action(
 			'woocommerce_sections_checkout',
@@ -150,50 +149,6 @@ class WcGatewayModule implements ModuleInterface {
 	}
 
 	/**
-	 * Adds the functionality to listen to the ajax enable gateway switch.
-	 *
-	 * @param ContainerInterface $container The container.
-	 */
-	private function ajax_gateway_enabler( ContainerInterface $container ) {
-		add_action(
-			'wp_ajax_woocommerce_toggle_gateway_enabled',
-			static function () use ( $container ) {
-				if (
-					! current_user_can( 'manage_woocommerce' )
-					|| ! check_ajax_referer(
-						'woocommerce-toggle-payment-gateway-enabled',
-						'security'
-					)
-					|| ! isset( $_POST['gateway_id'] )
-				) {
-					return;
-				}
-
-				/**
-				 * The settings.
-				 *
-				 * @var Settings $settings
-				 */
-				$settings = $container->get( 'wcgateway.settings' );
-				$key      = PayPalGateway::ID === $_POST['gateway_id'] ? 'enabled' : '';
-				if ( CreditCardGateway::ID === $_POST['gateway_id'] ) {
-					$key = 'dcc_enabled';
-				}
-				if ( ! $key ) {
-					return;
-				}
-				$enabled = $settings->has( $key ) ? $settings->get( $key ) : false;
-				if ( ! $enabled ) {
-					return;
-				}
-				$settings->set( $key, false );
-				$settings->persist();
-			},
-			9
-		);
-	}
-
-	/**
 	 * Registers the payment gateways.
 	 *
 	 * @param ContainerInterface|null $container The container.
@@ -206,16 +161,12 @@ class WcGatewayModule implements ModuleInterface {
 				$methods[]   = $container->get( 'wcgateway.paypal-gateway' );
 				$dcc_applies = $container->get( 'api.helpers.dccapplies' );
 
-				$screen = ! function_exists( 'get_current_screen' ) ? (object) array( 'id' => 'front' ) : get_current_screen();
-				if ( ! $screen ) {
-					$screen = (object) array( 'id' => 'front' );
-				}
 				/**
 				 * The DCC Applies object.
 				 *
 				 * @var DccApplies $dcc_applies
 				 */
-				if ( 'woocommerce_page_wc-settings' !== $screen->id && $dcc_applies->for_country_currency() ) {
+				if ( $dcc_applies->for_country_currency() ) {
 					$methods[] = $container->get( 'wcgateway.credit-card-gateway' );
 				}
 				return (array) $methods;
