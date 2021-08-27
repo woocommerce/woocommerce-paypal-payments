@@ -542,8 +542,8 @@ class SettingsRenderer {
 			return false;
 		}
 
-		return $this->is_paypal_checkout_screen() && $this->paypal_vaulting_is_enabled()
-			|| $this->is_paypal_checkout_screen() && $this->settings_status->pay_later_messaging_is_enabled();
+		return $this->is_paypal_checkout_screen()
+			&& ( $this->paypal_vaulting_is_enabled() || $this->settings_status->pay_later_messaging_is_enabled() );
 	}
 }
 
