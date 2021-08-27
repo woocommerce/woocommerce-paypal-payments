@@ -395,14 +395,18 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 *
 	 * @param string $key The option key.
 	 * @param string $value The option value.
-	 * @return bool|void
+	 * @return bool was anything saved?
 	 */
 	public function update_option( $key, $value = '' ) {
-		parent::update_option( $key, $value );
+		$ret = parent::update_option( $key, $value );
 
 		if ( 'enabled' === $key ) {
 			$this->config->set( 'enabled', 'yes' === $value );
 			$this->config->persist();
+
+			return true;
 		}
+
+		return $ret;
 	}
 }
