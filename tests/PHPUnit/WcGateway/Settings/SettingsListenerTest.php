@@ -4,25 +4,41 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
+use WooCommerce\PayPalCommerce\ModularTestCase;
 use WooCommerce\PayPalCommerce\Onboarding\State;
-use WooCommerce\PayPalCommerce\TestCase;
 use Mockery;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar;
 use function Brain\Monkey\Functions\when;
-use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 
-class SettingsListenerTest extends TestCase
+class SettingsListenerTest extends ModularTestCase
 {
-    use MockeryPHPUnitIntegration;
+    private $appContainer;
 
-    public function testListen()
+    public function setUp(): void
+	{
+		parent::setUp();
+
+		$this->appContainer = $this->bootstrapModule();
+	}
+
+	public function testListen()
     {
         $settings = Mockery::mock(Settings::class);
-        $setting_fields = [];
+        $settings->shouldReceive('set');
+
+        $setting_fields = $this->appContainer->get('wcgateway.settings.fields');
+
         $webhook_registrar = Mockery::mock(WebhookRegistrar::class);
+        $webhook_registrar->shouldReceive('unregister')->andReturnTrue();
+        $webhook_registrar->shouldReceive('register')->andReturnTrue();
+
         $cache = Mockery::mock(Cache::class);
+
         $state = Mockery::mock(State::class);
+        $state->shouldReceive('current_state')->andReturn(State::STATE_ONBOARDED);
         $bearer = Mockery::mock(Bearer::class);
+
 
         $testee = new SettingsListener(
             $settings,
@@ -30,18 +46,17 @@ class SettingsListenerTest extends TestCase
             $webhook_registrar,
             $cache,
             $state,
-            $bearer
+            $bearer,
+			PayPalGateway::ID
         );
 
-        $_REQUEST['section'] = 'ppcp-gateway';
+        $_GET['section'] = PayPalGateway::ID;
         $_POST['ppcp-nonce'] = 'foo';
         $_POST['ppcp'] = [
             'client_id' => 'client_id',
         ];
-        $_GET['ppcp-tab'] = 'just-a-tab';
+        $_GET['ppcp-tab'] = PayPalGateway::ID;
 
-        when('sanitize_text_field')->justReturn('ppcp-gateway');
-        when('wp_unslash')->justReturn('ppcp-gateway');
         when('current_user_can')->justReturn(true);
         when('wp_verify_nonce')->justReturn(true);
 
