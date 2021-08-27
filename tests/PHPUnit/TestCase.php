@@ -3,9 +3,9 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce;
 
+use function Brain\Monkey\Functions\when;
 use function Brain\Monkey\setUp;
 use function Brain\Monkey\tearDown;
-use function Brain\Monkey\Functions\expect;
 use Mockery;
 
 class TestCase extends \PHPUnit\Framework\TestCase
@@ -13,9 +13,9 @@ class TestCase extends \PHPUnit\Framework\TestCase
     public function setUp(): void
     {
         parent::setUp();
-        expect('__')->andReturnUsing(function (string $text) {
-            return $text;
-        });
+
+        when('__')->returnArg();
+
         setUp();
     }
 
