@@ -19,9 +19,6 @@ jobs:
           php-version: ${{ matrix.php-versions }}
           tools: composer:v1
 
-    - name: Packagist.com Auth
-      run: composer config --global --auth http-basic.repo.packagist.com token ${{ secrets.PACKAGIST_TOKEN }}
-
     - name: Validate composer.json and composer.lock
       run: composer validate
 
