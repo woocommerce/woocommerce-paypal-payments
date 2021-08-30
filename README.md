@@ -29,8 +29,8 @@ You can also use the Docker environment which includes WP, WC and all developmen
 0. Install Docker and Docker Compose.
 1. `$ cp .env.example .env` and edit the configuration in the `.env` file if needed.
 2. `$ yarn run docker:build` (or copy the commands from [package.json](/package.json) if you do not have `yarn`).
-3. `$ yarn docker:install`
-4. `$ yarn docker:start`
+3. `$ yarn run docker:install`
+4. `$ yarn run docker:start`
 5. Add `127.0.0.1 wc-pp.myhost` to your `hosts` file and open http://wc-pp.myhost (the default value of `WP_DOMAIN` in `.env`).
 
 Tests and code style:
