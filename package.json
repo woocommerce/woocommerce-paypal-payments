@@ -28,10 +28,10 @@
     "docker:fix-lint": "docker-compose run --rm test vendor/bin/phpcbf",
 
     "prebuild": "rm -rf ./vendor",
-    "build": "composer install --no-dev && npm run build:dev && npm run archive",
+    "build": "composer install --no-dev && yarn run build:dev && yarn run archive",
     "prearchive": "rm -rf $npm_package_name.zip",
     "archive": "zip -r $npm_package_name.zip . -x **.git/\\* **node_modules/\\*",
-    "postarchive": "npm run archive:cleanup && rm -rf $npm_package_name && unzip $npm_package_name.zip -d $npm_package_name && rm $npm_package_name.zip && zip -r $npm_package_name.zip $npm_package_name && rm -rf $npm_package_name",
+    "postarchive": "yarn run archive:cleanup && rm -rf $npm_package_name && unzip $npm_package_name.zip -d $npm_package_name && rm $npm_package_name.zip && zip -r $npm_package_name.zip $npm_package_name && rm -rf $npm_package_name",
     "archive:cleanup": "zip -d $npm_package_name.zip .env* docker/\\* docker-compose.yml .editorconfig tests/\\* .github/\\* wordpress_org_assets/\\* \\*.DS_Store README.md .gitattributes .gitignore .travis.yml composer.json composer.lock package.json package-lock.json patchwork.json yarn.lock phpunit.xml.dist .phpunit.result.cache phpcs.xml.dist modules/ppcp-button/.babelrc modules/ppcp-button/package.json modules/ppcp-button/webpack.config.js modules/ppcp-button/yarn.lock vendor/\\*/.idea/\\* vendor/\\*/.gitignore vendor/\\*/.gitattributes vendor/\\*/.travis.yml"
   },
   "config": {
