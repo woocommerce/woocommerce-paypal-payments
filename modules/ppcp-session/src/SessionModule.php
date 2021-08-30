@@ -33,11 +33,11 @@ class SessionModule implements ModuleInterface {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function run( ContainerInterface $container ): void {
+	public function run( ContainerInterface $c ): void {
 		add_action(
 			'woocommerce_init',
-			function () use ( $container ) {
-				$controller = $container->get( 'session.cancellation.controller' );
+			function () use ( $c ) {
+				$controller = $c->get( 'session.cancellation.controller' );
 				/**
 				 * The Cancel controller.
 				 *

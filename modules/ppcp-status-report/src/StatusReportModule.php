@@ -38,27 +38,27 @@ class StatusReportModule implements ModuleInterface {
 	/**
 	 * {@inheritDoc}
 	 *
-	 * @param ContainerInterface $container A services container instance.
+	 * @param ContainerInterface $c A services container instance.
 	 */
-	public function run( ContainerInterface $container ): void {
+	public function run( ContainerInterface $c ): void {
 		add_action(
 			'woocommerce_system_status_report',
-			function () use ( $container ) {
+			function () use ( $c ) {
 
 				/* @var State $state The state. */
-				$state = $container->get( 'onboarding.state' );
+				$state = $c->get( 'onboarding.state' );
 
 				/* @var Bearer $bearer The bearer. */
-				$bearer = $container->get( 'api.bearer' );
+				$bearer = $c->get( 'api.bearer' );
 
 				/* @var DccApplies $dcc_applies The ddc applies. */
-				$dcc_applies = $container->get( 'api.helpers.dccapplies' );
+				$dcc_applies = $c->get( 'api.helpers.dccapplies' );
 
 				/* @var MessagesApply $messages_apply The messages apply. */
-				$messages_apply = $container->get( 'button.helper.messages-apply' );
+				$messages_apply = $c->get( 'button.helper.messages-apply' );
 
 				/* @var Renderer $renderer The renderer. */
-				$renderer = $container->get( 'status-report.renderer' );
+				$renderer = $c->get( 'status-report.renderer' );
 
 				$items = array(
 					array(

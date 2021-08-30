@@ -32,7 +32,7 @@ class ApiModule implements ModuleInterface {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function run( ContainerInterface $container ): void {
+	public function run( ContainerInterface $c ): void {
 		add_action(
 			'woocommerce_after_calculate_totals',
 			function ( \WC_Cart $cart ) {
