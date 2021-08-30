@@ -20,14 +20,14 @@ use Psr\Container\ContainerInterface;
 class PluginModule implements ModuleInterface {
 
 	/**
-     * {@inheritDoc}
+	 * {@inheritDoc}
 	 */
 	public function setup(): ServiceProviderInterface {
 		return new ServiceProvider( array(), array() );
 	}
 
 	/**
-     * {@inheritDoc}
+	 * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $container ): void {
 	}

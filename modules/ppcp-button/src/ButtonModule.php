@@ -27,7 +27,7 @@ class ButtonModule implements ModuleInterface {
 
 
 	/**
-     * {@inheritDoc}
+	 * {@inheritDoc}
 	 */
 	public function setup(): ServiceProviderInterface {
 		return new ServiceProvider(
@@ -37,7 +37,7 @@ class ButtonModule implements ModuleInterface {
 	}
 
 	/**
-     * {@inheritDoc}
+	 * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $container ): void {
 

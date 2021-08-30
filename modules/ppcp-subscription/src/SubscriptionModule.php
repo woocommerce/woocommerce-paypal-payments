@@ -28,7 +28,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 class SubscriptionModule implements ModuleInterface {
 
 	/**
-     * {@inheritDoc}
+	 * {@inheritDoc}
 	 */
 	public function setup(): ServiceProviderInterface {
 		return new ServiceProvider(
@@ -38,7 +38,7 @@ class SubscriptionModule implements ModuleInterface {
 	}
 
 	/**
-     * {@inheritDoc}
+	 * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $container ): void {
 		add_action(

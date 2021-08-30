@@ -20,7 +20,7 @@ use Psr\Container\ContainerInterface;
 class WooCommerceLoggingModule implements ModuleInterface {
 
 	/**
-     * {@inheritDoc}
+	 * {@inheritDoc}
 	 */
 	public function setup(): ServiceProviderInterface {
 		return new ServiceProvider(
@@ -30,7 +30,7 @@ class WooCommerceLoggingModule implements ModuleInterface {
 	}
 
 	/**
-     * {@inheritDoc}
+	 * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $container ): void {
 	}

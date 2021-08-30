@@ -37,7 +37,7 @@ use Psr\Container\ContainerInterface;
 class WcGatewayModule implements ModuleInterface {
 
 	/**
-     * {@inheritDoc}
+	 * {@inheritDoc}
 	 */
 	public function setup(): ServiceProviderInterface {
 		return new ServiceProvider(
@@ -47,7 +47,7 @@ class WcGatewayModule implements ModuleInterface {
 	}
 
 	/**
-     * {@inheritDoc}
+	 * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $container ): void {
 		$this->register_payment_gateways( $container );
