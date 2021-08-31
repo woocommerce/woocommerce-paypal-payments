@@ -24,6 +24,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
+use WooCommerce\PayPalCommerce\WcGateway\Notice\DccWithoutPayPalAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
@@ -94,6 +95,14 @@ class WcGatewayModule implements ModuleInterface {
 				if ( $connect_message ) {
 					$notices[] = $connect_message;
 				}
+
+				$dcc_without_paypal_notice = $container->get( 'wcgateway.notice.dcc-without-paypal' );
+				assert( $dcc_without_paypal_notice instanceof DccWithoutPayPalAdminNotice );
+				$dcc_without_paypal_message = $dcc_without_paypal_notice->message();
+				if ( $dcc_without_paypal_message ) {
+					$notices[] = $dcc_without_paypal_message;
+				}
+
 				$authorize_order_action = $container->get( 'wcgateway.notice.authorize-order-action' );
 				$authorized_message     = $authorize_order_action->message();
 				if ( $authorized_message ) {

@@ -30,6 +30,7 @@ use Woocommerce\PayPalCommerce\WcGateway\Helper\DccProductStatus;
 use Woocommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
+use WooCommerce\PayPalCommerce\WcGateway\Notice\DccWithoutPayPalAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
@@ -138,6 +139,11 @@ return array(
 		$state    = $container->get( 'onboarding.state' );
 		$settings = $container->get( 'wcgateway.settings' );
 		return new ConnectAdminNotice( $state, $settings );
+	},
+	'wcgateway.notice.dcc-without-paypal'          => static function ( $container ): DccWithoutPayPalAdminNotice {
+		$state    = $container->get( 'onboarding.state' );
+		$settings = $container->get( 'wcgateway.settings' );
+		return new DccWithoutPayPalAdminNotice( $state, $settings );
 	},
 	'wcgateway.notice.authorize-order-action'      =>
 		static function ( $container ): AuthorizeOrderActionNotice {
