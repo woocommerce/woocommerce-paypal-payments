@@ -86,11 +86,7 @@ class WcGatewayModule implements ModuleInterface {
 			Repository::NOTICES_FILTER,
 			static function ( $notices ) use ( $container ): array {
 				$notice = $container->get( 'wcgateway.notice.connect' );
-				/**
-				 * The Connect Admin Notice object.
-				 *
-				 * @var ConnectAdminNotice $notice
-				 */
+				assert( $notice instanceof ConnectAdminNotice );
 				$connect_message = $notice->connect_message();
 				if ( $connect_message ) {
 					$notices[] = $connect_message;
@@ -110,11 +106,7 @@ class WcGatewayModule implements ModuleInterface {
 				}
 
 				$settings_renderer = $container->get( 'wcgateway.settings.render' );
-				/**
-				 * The settings renderer.
-				 *
-				 * @var SettingsRenderer $settings_renderer
-				 */
+				assert( $settings_renderer instanceof SettingsRenderer );
 				$messages = $settings_renderer->messages();
 				$notices  = array_merge( $notices, $messages );
 
