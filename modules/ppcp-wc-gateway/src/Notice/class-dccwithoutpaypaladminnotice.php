@@ -33,14 +33,37 @@ class DccWithoutPayPalAdminNotice {
 	private $settings;
 
 	/**
+	 * Whether the current page is the WC payment page.
+	 *
+	 * @var bool
+	 */
+	private $is_payments_page;
+
+	/**
+	 * Whether the current page is the PPCP settings page.
+	 *
+	 * @var bool
+	 */
+	private $is_ppcp_settings_page;
+
+	/**
 	 * ConnectAdminNotice constructor.
 	 *
 	 * @param State              $state The state.
 	 * @param ContainerInterface $settings The settings.
+	 * @param bool               $is_payments_page Whether the current page is the WC payment page.
+	 * @param bool               $is_ppcp_settings_page Whether the current page is the PPCP settings page.
 	 */
-	public function __construct( State $state, ContainerInterface $settings ) {
-		$this->state    = $state;
-		$this->settings = $settings;
+	public function __construct(
+		State $state,
+		ContainerInterface $settings,
+		bool $is_payments_page,
+		bool $is_ppcp_settings_page
+	) {
+		$this->state                 = $state;
+		$this->settings              = $settings;
+		$this->is_payments_page      = $is_payments_page;
+		$this->is_ppcp_settings_page = $is_ppcp_settings_page;
 	}
 
 	/**
@@ -71,6 +94,7 @@ class DccWithoutPayPalAdminNotice {
 	 */
 	protected function should_display(): bool {
 		return State::STATE_ONBOARDED === $this->state->current_state()
+				&& ( $this->is_payments_page || $this->is_ppcp_settings_page )
 			&& ( $this->settings->has( 'dcc_enabled' ) && $this->settings->get( 'dcc_enabled' ) )
 			&& ( ! $this->settings->has( 'enabled' ) || ! $this->settings->get( 'enabled' ) );
 	}

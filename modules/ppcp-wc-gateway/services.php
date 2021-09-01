@@ -143,7 +143,9 @@ return array(
 	'wcgateway.notice.dcc-without-paypal'          => static function ( $container ): DccWithoutPayPalAdminNotice {
 		$state    = $container->get( 'onboarding.state' );
 		$settings = $container->get( 'wcgateway.settings' );
-		return new DccWithoutPayPalAdminNotice( $state, $settings );
+		$is_payments_page = $container->get( 'wcgateway.is-wc-payments-page' );
+		$is_ppcp_settings_page = $container->get( 'wcgateway.is-ppcp-settings-page' );
+		return new DccWithoutPayPalAdminNotice( $state, $settings, $is_payments_page, $is_ppcp_settings_page );
 	},
 	'wcgateway.notice.authorize-order-action'      =>
 		static function ( $container ): AuthorizeOrderActionNotice {
