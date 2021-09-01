@@ -56,7 +56,7 @@ class DccWithoutPayPalAdminNotice {
 		$message = sprintf(
 			/* translators: %1$s the gateway name. */
 			__(
-				'PayPal Card Processing cannot be used without the PayPal gateway. <a href="%1$s">Enable  the PayPal Gateway</a>.',
+				'PayPal Card Processing cannot be used without the PayPal gateway. <a href="%1$s">Enable the PayPal Gateway</a>.',
 				'woocommerce-paypal-payments'
 			),
 			admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' )
