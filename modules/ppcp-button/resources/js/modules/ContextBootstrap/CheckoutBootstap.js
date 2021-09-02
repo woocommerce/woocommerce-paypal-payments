@@ -13,10 +13,6 @@ class CheckoutBootstap {
 
         this.render();
 
-        jQuery(document.body).on('updated_checkout', () => {
-            this.render()
-        });
-
         jQuery(document.body).
           on('updated_checkout payment_method_selected', () => {
               this.switchBetweenPayPalandOrderButton()
