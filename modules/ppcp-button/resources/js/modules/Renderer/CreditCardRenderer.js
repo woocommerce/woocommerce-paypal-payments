@@ -35,11 +35,6 @@ class CreditCardRenderer {
         const oldDisplayStyle = gateWayBox.style.display;
         gateWayBox.style.display = 'block';
 
-        const hideDccGateway = document.querySelector('#ppcp-hide-dcc');
-        if (hideDccGateway) {
-            hideDccGateway.parentNode.removeChild(hideDccGateway);
-        }
-
         const cardNumberField = document.querySelector('#ppcp-credit-card-gateway-card-number');
 
         const stylesRaw = window.getComputedStyle(cardNumberField);
