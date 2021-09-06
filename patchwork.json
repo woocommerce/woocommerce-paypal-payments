@@ -1,5 +1,6 @@
 {
   "redefinable-internals": [
-   "json_decode"
+   "json_decode",
+   "file_get_contents"
   ]
 }

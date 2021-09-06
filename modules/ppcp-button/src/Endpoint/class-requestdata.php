@@ -36,16 +36,27 @@ class RequestData {
 	 * @param string $nonce The nonce.
 	 *
 	 * @return array
-	 * @throws RuntimeException When nonce validation fails.
+	 * @throws RuntimeException When read request fails.
 	 */
 	public function read_request( string $nonce ): array {
 		$stream = file_get_contents( 'php://input' );
-		$json   = json_decode( $stream, true );
+		if ( ! $stream ) {
+			remove_filter( 'nonce_user_logged_out', array( $this, 'nonce_fix' ), 100 );
+			throw new RuntimeException(
+				__( 'Could not get stream.', 'woocommerce-paypal-payments' )
+			);
+		}
+
+		$json = json_decode( $stream, true );
+		if ( json_last_error() !== JSON_ERROR_NONE || ! isset( $json['nonce'] ) ) {
+			remove_filter( 'nonce_user_logged_out', array( $this, 'nonce_fix' ), 100 );
+			throw new RuntimeException(
+				__( 'Could not decode JSON.', 'woocommerce-paypal-payments' )
+			);
+		}
+
 		$this->enqueue_nonce_fix();
-		if (
-			! isset( $json['nonce'] )
-			|| ! wp_verify_nonce( $json['nonce'], $nonce )
-		) {
+		if ( ! wp_verify_nonce( $json['nonce'], $nonce ) ) {
 			remove_filter( 'nonce_user_logged_out', array( $this, 'nonce_fix' ), 100 );
 			throw new RuntimeException(
 				__( 'Could not validate nonce.', 'woocommerce-paypal-payments' )
