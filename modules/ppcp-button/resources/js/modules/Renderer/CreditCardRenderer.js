@@ -9,6 +9,7 @@ class CreditCardRenderer {
         this.cardValid = false;
         this.formValid = false;
         this.currentHostedFieldsInstance = null;
+        this.formSubmissionSubscribed = false;
     }
 
     render(wrapper, contextConfig) {
@@ -100,36 +101,9 @@ class CreditCardRenderer {
             }
         }).then(hostedFields => {
             this.currentHostedFieldsInstance = hostedFields;
-            const submitEvent = (event) => {
-                this.spinner.block();
-                if (event) {
-                    event.preventDefault();
-                }
-                this.errorHandler.clear();
 
-                if (this.formValid && this.cardValid) {
-                    const save_card = this.defaultConfig.save_card ? true : false;
-                    const vault = document.getElementById('ppcp-credit-card-vault') ?
-                      document.getElementById('ppcp-credit-card-vault').checked : save_card;
-                    hostedFields.submit({
-                        contingencies: ['SCA_WHEN_REQUIRED'],
-                        vault: vault
-                    }).then((payload) => {
-                        payload.orderID = payload.orderId;
-                        this.spinner.unblock();
-                        return contextConfig.onApprove(payload);
-                    }).catch(() => {
-                        this.errorHandler.genericError();
-                        this.spinner.unblock();
-                    });
-                } else {
-                    this.spinner.unblock();
-                    const message = ! this.cardValid ? this.defaultConfig.hosted_fields.labels.card_not_supported : this.defaultConfig.hosted_fields.labels.fields_not_valid;
-                    this.errorHandler.message(message);
-                }
-            }
-            hostedFields.on('inputSubmitRequest', function () {
-                submitEvent(null);
+            hostedFields.on('inputSubmitRequest', () => {
+                this._submit(contextConfig);
             });
             hostedFields.on('cardTypeChange', (event) => {
                 if ( ! event.cards.length ) {
@@ -145,11 +119,18 @@ class CreditCardRenderer {
                 });
                this.formValid = formValid;
 
-            })
-            document.querySelector(wrapper + ' button').addEventListener(
-                'click',
-                submitEvent
-            );
+            });
+
+            if (!this.formSubmissionSubscribed) {
+                document.querySelector(wrapper + ' button').addEventListener(
+                    'click',
+                    event => {
+                        event.preventDefault();
+                        this._submit(contextConfig);
+                    }
+                );
+                this.formSubmissionSubscribed = true;
+            }
         });
 
         document.querySelector('#payment_method_ppcp-credit-card-gateway').addEventListener(
@@ -158,6 +139,33 @@ class CreditCardRenderer {
                 document.querySelector('label[for=ppcp-credit-card-gateway-card-number]').click();
             }
         )
+    }
+
+    _submit(contextConfig) {
+        this.spinner.block();
+        this.errorHandler.clear();
+
+        if (this.formValid && this.cardValid) {
+            const save_card = this.defaultConfig.save_card ? true : false;
+            const vault = document.getElementById('ppcp-credit-card-vault') ?
+                document.getElementById('ppcp-credit-card-vault').checked : save_card;
+            this.currentHostedFieldsInstance.submit({
+                contingencies: ['SCA_WHEN_REQUIRED'],
+                vault: vault
+            }).then((payload) => {
+                payload.orderID = payload.orderId;
+                this.spinner.unblock();
+                return contextConfig.onApprove(payload);
+            }).catch(err => {
+                console.error(err);
+                this.errorHandler.genericError();
+                this.spinner.unblock();
+            });
+        } else {
+            this.spinner.unblock();
+            const message = ! this.cardValid ? this.defaultConfig.hosted_fields.labels.card_not_supported : this.defaultConfig.hosted_fields.labels.fields_not_valid;
+            this.errorHandler.message(message);
+        }
     }
 }
 export default CreditCardRenderer;
