@@ -10,7 +10,7 @@ use function Brain\Monkey\Functions\when;
 
 class RequestDataTest extends TestCase
 {
-	public function testReadRequestReturnsJson()
+	public function testReadRequestReturnsRequestData()
 	{
 		$nonce = 'foo';
 		$stream = '{"nonce":"foo"}';
@@ -72,6 +72,7 @@ class RequestDataTest extends TestCase
 			->andReturn(false);
 
 		$this->expectException(RuntimeException::class);
+		$this->expectExceptionMessage('Could not validate nonce.');
 		$testee->read_request($nonce);
 	}
 }
