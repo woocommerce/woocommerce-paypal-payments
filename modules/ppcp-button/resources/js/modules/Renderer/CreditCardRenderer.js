@@ -8,6 +8,7 @@ class CreditCardRenderer {
         this.spinner = spinner;
         this.cardValid = false;
         this.formValid = false;
+        this.currentHostedFieldsInstance = null;
     }
 
     render(wrapper, contextConfig) {
@@ -29,6 +30,12 @@ class CreditCardRenderer {
             const wrapperElement = document.querySelector(wrapper);
             wrapperElement.parentNode.removeChild(wrapperElement);
             return;
+        }
+
+        if (this.currentHostedFieldsInstance) {
+            this.currentHostedFieldsInstance.teardown()
+                .catch(err => console.error(`Hosted fields teardown error: ${err}`));
+            this.currentHostedFieldsInstance = null;
         }
 
         const gateWayBox = document.querySelector('.payment_box.payment_method_ppcp-credit-card-gateway');
@@ -92,6 +99,7 @@ class CreditCardRenderer {
                 }
             }
         }).then(hostedFields => {
+            this.currentHostedFieldsInstance = hostedFields;
             const submitEvent = (event) => {
                 this.spinner.block();
                 if (event) {
