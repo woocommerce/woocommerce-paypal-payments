@@ -1804,6 +1804,62 @@ return array(
 				),
 				'gateway'      => 'dcc',
 			),
+			'3d_secure_heading'              => array(
+				'heading'      => __( '3D Secure', 'woocommerce-paypal-payments' ),
+				'type'         => 'ppcp-heading',
+				'description'  => wp_kses_post(
+					sprintf(
+					// translators: %1$s and %2$s is a link tag.
+						__(
+							'3D Secure benefits cardholders and merchants by providing
+                                  an additional layer of verification using Verified by Visa,
+                                  MasterCard SecureCode and American Express SafeKey.
+                                  %1$sLearn more about 3D Secure.%2$s',
+							'woocommerce-paypal-payments'
+						),
+						'<a
+                            rel="noreferrer noopener"
+                            href="https://woocommerce.com/posts/introducing-strong-customer-authentication-sca/"
+                            >',
+						'</a>'
+					)
+				),
+				'screens'      => array(
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(
+					'dcc',
+				),
+				'gateway'      => 'dcc',
+			),
+			'3d_secure_contingency'          => array(
+				'title'        => __( 'Contingency for 3D Secure', 'woocommerce-paypal-payments' ),
+				'type'         => 'select',
+				'description'  => sprintf(
+				// translators: %1$s and %2$s opening and closing ul tag, %3$s and %4$s opening and closing li tag.
+					__( '%1$s%3$sNo 3D Secure will cause transactions to be denied if 3D Secure is required by the bank of the cardholder.%4$s%3$sSCA_WHEN_REQUIRED returns a 3D Secure contingency when it is a mandate in the region where you operate.%4$s%3$sSCA_ALWAYS triggers 3D Secure for every transaction, regardless of SCA requirements.%4$s%2$s', 'woocommerce-paypal-payments' ),
+					'<ul>',
+					'</ul>',
+					'<li>',
+					'</li>'
+				),
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
+				'default'      => 'SCA_WHEN_REQUIRED',
+				'desc_tip'     => true,
+				'options'      => array(
+					'NO_3D_SECURE'      => __( 'No 3D Secure (transaction will be denied if 3D Secure is required)', 'woocommerce-paypal-payments' ),
+					'SCA_WHEN_REQUIRED' => __( '3D Secure when required', 'woocommerce-paypal-payments' ),
+					'3D_SECURE'         => __( 'Always trigger 3D Secure', 'woocommerce-paypal-payments' ),
+				),
+				'screens'      => array(
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(
+					'dcc',
+				),
+				'gateway'      => 'dcc',
+			),
 		);
 		if ( ! defined( 'PPCP_FLAG_SUBSCRIPTION' ) || ! PPCP_FLAG_SUBSCRIPTION ) {
 			unset( $fields['vault_enabled'] );
