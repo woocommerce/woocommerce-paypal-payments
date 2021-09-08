@@ -646,7 +646,7 @@ return array(
 				'label'        => sprintf(
 					// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
 					__( 'Enable saved cards and subscription features on your store. To use vaulting features, you must %1$senable vaulting on your account%2$s.', 'woocommerce-paypal-payments' ),
-					'<a 
+					'<a
 						href="https://docs.woocommerce.com/document/woocommerce-paypal-payments/#enable-vaulting-on-your-live-account"
 						target="_blank"
 					>',
@@ -1818,15 +1818,6 @@ return array(
 			unset( $fields['ppcp_onboarding_sandbox'] );
 		} else {
 			unset( $fields['ppcp_disconnect_sandbox'] );
-		}
-
-		/**
-		 * Disable card for UK.
-		 */
-		$region  = wc_get_base_location();
-		$country = $region['country'];
-		if ( 'GB' === $country ) {
-			unset( $fields['disable_funding']['options']['card'] );
 		}
 
 		/**
