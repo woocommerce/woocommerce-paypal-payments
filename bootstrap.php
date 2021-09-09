@@ -33,8 +33,11 @@ return function (
 
 	$provider        = new CompositeCachingServiceProvider( $providers );
 	$proxy_container = new ProxyContainer();
-	$container       = new DelegatingContainer( $provider, $proxy_container );
-	$app_container   = new CachingContainer(
+	// TODO: caching does not work currently,
+	// may want to consider fixing it later (pass proxy as parent to DelegatingContainer)
+	// for now not fixed since we were using this behavior for long time and fixing it now may break things.
+	$container     = new DelegatingContainer( $provider );
+	$app_container = new CachingContainer(
 		new CompositeContainer(
 			array_merge(
 				$additional_containers,
