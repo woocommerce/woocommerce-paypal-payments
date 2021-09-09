@@ -394,8 +394,6 @@ class SettingsRenderer {
 			if ( $this->dcc_applies->for_country_currency() ) {
 				if ( State::STATE_ONBOARDED > $this->state->current_state() ) {
 					$this->render_dcc_onboarding_info();
-				} elseif ( State::STATE_ONBOARDED === $this->state->current_state() && $this->dcc_product_status->dcc_is_active() ) {
-					$this->render_3d_secure_info();
 				} elseif ( ! $this->dcc_product_status->dcc_is_active() ) {
 					$this->render_dcc_not_active_yet();
 				}
@@ -442,45 +440,6 @@ class SettingsRenderer {
 				</p>
 			</td>
 		</tr>
-		<?php
-	}
-
-	/**
-	 * Renders the 3d secure info text.
-	 */
-	private function render_3d_secure_info() {
-		?>
-<tr>
-	<th><?php esc_html_e( '3D Secure', 'woocommerce-paypal-payments' ); ?></th>
-	<td>
-		<p>
-			<?php
-			/**
-			 * We still need to provide a docs link.
-			 *
-			 * @todo: Provide link to documentation.
-			 */
-			echo wp_kses_post(
-				sprintf(
-				// translators: %1$s and %2$s is a link tag.
-					__(
-						'3D Secure benefits cardholders and merchants by providing
-                                  an additional layer of verification using Verified by Visa,
-                                  MasterCard SecureCode and American Express SafeKey.
-                                  %1$sLearn more about 3D Secure.%2$s',
-						'woocommerce-paypal-payments'
-					),
-					'<a
-                            rel="noreferrer noopener"
-                            href="https://woocommerce.com/posts/introducing-strong-customer-authentication-sca/"
-                            >',
-					'</a>'
-				)
-			);
-			?>
-		</p>
-	</td>
-</tr>
 		<?php
 	}
 

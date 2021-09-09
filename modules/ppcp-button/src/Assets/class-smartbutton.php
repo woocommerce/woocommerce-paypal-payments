@@ -602,6 +602,19 @@ class SmartButton implements SmartButtonInterface {
 	}
 
 	/**
+	 * Retrieves the 3D Secure contingency settings.
+	 *
+	 * @return string
+	 */
+	private function get_3ds_contingency(): string {
+		if ( $this->settings->has( '3d_secure_contingency' ) ) {
+			return $this->settings->get( '3d_secure_contingency' );
+		}
+
+		return 'SCA_WHEN_REQUIRED';
+	}
+
+	/**
 	 * The localized data for the smart button.
 	 *
 	 * @return array
@@ -677,6 +690,7 @@ class SmartButton implements SmartButtonInterface {
 					),
 				),
 				'valid_cards'       => $this->dcc_applies->valid_cards(),
+				'contingency'       => $this->get_3ds_contingency(),
 			),
 			'messages'                       => $this->message_values(),
 			'labels'                         => array(
