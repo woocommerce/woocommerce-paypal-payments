@@ -10,12 +10,12 @@ use Mockery;
 
 class TestCase extends \PHPUnit\Framework\TestCase
 {
-    public function setUp(): void
-    {
-        parent::setUp();
+	public function setUp(): void
+	{
+		parent::setUp();
 
-        when('__')->returnArg();
-        when('_x')->returnArg();
+		when('__')->returnArg();
+		when('_x')->returnArg();
 		when('esc_url')->returnArg();
 		when('esc_attr')->returnArg();
 		when('esc_attr__')->returnArg();
@@ -23,15 +23,16 @@ class TestCase extends \PHPUnit\Framework\TestCase
 		when('esc_html__')->returnArg();
 		when('esc_textarea')->returnArg();
 		when('sanitize_text_field')->returnArg();
+		when('wp_kses_post')->returnArg();
 		when('wp_unslash')->returnArg();
 
-        setUp();
-    }
+		setUp();
+	}
 
-    public function tearDown(): void
-    {
-        tearDown();
-        Mockery::close();
-        parent::tearDown();
-    }
+	public function tearDown(): void
+	{
+		tearDown();
+		Mockery::close();
+		parent::tearDown();
+	}
 }
