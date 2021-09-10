@@ -5,6 +5,8 @@
  * @package WooCommerce\PayPalCommerce\WcGateway
  */
 
+// phpcs:disable WordPress.Security.NonceVerification.Recommended
+
 declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway;
@@ -28,6 +30,7 @@ use Woocommerce\PayPalCommerce\WcGateway\Helper\DccProductStatus;
 use Woocommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
+use WooCommerce\PayPalCommerce\WcGateway\Notice\DccWithoutPayPalAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
@@ -48,6 +51,7 @@ return array(
 		$state               = $container->get( 'onboarding.state' );
 		$transaction_url_provider = $container->get( 'wcgateway.transaction-url-provider' );
 		$subscription_helper = $container->get( 'subscription.helper' );
+		$page_id             = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
 		return new PayPalGateway(
 			$settings_renderer,
 			$order_processor,
@@ -58,7 +62,8 @@ return array(
 			$refund_processor,
 			$state,
 			$transaction_url_provider,
-			$subscription_helper
+			$subscription_helper,
+			$page_id
 		);
 	},
 	'wcgateway.credit-card-gateway'                => static function ( $container ): CreditCardGateway {
@@ -100,6 +105,33 @@ return array(
 		$settings       = $container->get( 'wcgateway.settings' );
 		return new DisableGateways( $session_handler, $settings );
 	},
+
+	'wcgateway.is-wc-payments-page'                => static function ( $container ): bool {
+		$page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : '';
+		$tab = isset( $_GET['tab'] ) ? sanitize_text_field( wp_unslash( $_GET['tab'] ) ) : '';
+		return 'wc-settings' === $page && 'checkout' === $tab;
+	},
+
+	'wcgateway.is-ppcp-settings-page'              => static function ( $container ): bool {
+		if ( ! $container->get( 'wcgateway.is-wc-payments-page' ) ) {
+			return false;
+		}
+
+		$section = isset( $_GET['section'] ) ? sanitize_text_field( wp_unslash( $_GET['section'] ) ) : '';
+		return in_array( $section, array( PayPalGateway::ID, CreditCardGateway::ID ), true );
+	},
+
+	'wcgateway.current-ppcp-settings-page-id'      => static function ( $container ): string {
+		if ( ! $container->get( 'wcgateway.is-ppcp-settings-page' ) ) {
+			return '';
+		}
+
+		$section = isset( $_GET['section'] ) ? sanitize_text_field( wp_unslash( $_GET['section'] ) ) : '';
+		$ppcp_tab = isset( $_GET[ SectionsRenderer::KEY ] ) ? sanitize_text_field( wp_unslash( $_GET[ SectionsRenderer::KEY ] ) ) : '';
+
+		return $ppcp_tab ? $ppcp_tab : $section;
+	},
+
 	'wcgateway.settings'                           => static function ( $container ): Settings {
 		return new Settings();
 	},
@@ -108,12 +140,19 @@ return array(
 		$settings = $container->get( 'wcgateway.settings' );
 		return new ConnectAdminNotice( $state, $settings );
 	},
+	'wcgateway.notice.dcc-without-paypal'          => static function ( $container ): DccWithoutPayPalAdminNotice {
+		$state    = $container->get( 'onboarding.state' );
+		$settings = $container->get( 'wcgateway.settings' );
+		$is_payments_page = $container->get( 'wcgateway.is-wc-payments-page' );
+		$is_ppcp_settings_page = $container->get( 'wcgateway.is-ppcp-settings-page' );
+		return new DccWithoutPayPalAdminNotice( $state, $settings, $is_payments_page, $is_ppcp_settings_page );
+	},
 	'wcgateway.notice.authorize-order-action'      =>
 		static function ( $container ): AuthorizeOrderActionNotice {
 			return new AuthorizeOrderActionNotice();
 		},
 	'wcgateway.settings.sections-renderer'         => static function ( $container ): SectionsRenderer {
-		return new SectionsRenderer();
+		return new SectionsRenderer( $container->get( 'wcgateway.current-ppcp-settings-page-id' ) );
 	},
 	'wcgateway.settings.status'                    => static function ( $container ): SettingsStatus {
 		$settings      = $container->get( 'wcgateway.settings' );
@@ -127,6 +166,7 @@ return array(
 		$messages_apply = $container->get( 'button.helper.messages-apply' );
 		$dcc_product_status = $container->get( 'wcgateway.helper.dcc-product-status' );
 		$settings_status = $container->get( 'wcgateway.settings.status' );
+		$page_id         = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
 		return new SettingsRenderer(
 			$settings,
 			$state,
@@ -134,7 +174,8 @@ return array(
 			$dcc_applies,
 			$messages_apply,
 			$dcc_product_status,
-			$settings_status
+			$settings_status,
+			$page_id
 		);
 	},
 	'wcgateway.settings.listener'                  => static function ( $container ): SettingsListener {
@@ -144,7 +185,8 @@ return array(
 		$state            = $container->get( 'onboarding.state' );
 		$cache = new Cache( 'ppcp-paypal-bearer' );
 		$bearer = $container->get( 'api.bearer' );
-		return new SettingsListener( $settings, $fields, $webhook_registrar, $cache, $state, $bearer );
+		$page_id = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
+		return new SettingsListener( $settings, $fields, $webhook_registrar, $cache, $state, $bearer, $page_id );
 	},
 	'wcgateway.order-processor'                    => static function ( $container ): OrderProcessor {
 
@@ -646,7 +688,7 @@ return array(
 				'label'        => sprintf(
 					// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
 					__( 'Enable saved cards and subscription features on your store. To use vaulting features, you must %1$senable vaulting on your account%2$s.', 'woocommerce-paypal-payments' ),
-					'<a 
+					'<a
 						href="https://docs.woocommerce.com/document/woocommerce-paypal-payments/#enable-vaulting-on-your-live-account"
 						target="_blank"
 					>',
