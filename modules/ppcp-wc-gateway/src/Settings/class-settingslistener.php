@@ -68,6 +68,13 @@ class SettingsListener {
 	private $bearer;
 
 	/**
+	 * ID of the current PPCP gateway settings page, or empty if it is not such page.
+	 *
+	 * @var string
+	 */
+	protected $page_id;
+
+	/**
 	 * SettingsListener constructor.
 	 *
 	 * @param Settings         $settings The settings.
@@ -76,6 +83,7 @@ class SettingsListener {
 	 * @param Cache            $cache The Cache.
 	 * @param State            $state The state.
 	 * @param Bearer           $bearer The bearer.
+	 * @param string           $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
 	 */
 	public function __construct(
 		Settings $settings,
@@ -83,7 +91,8 @@ class SettingsListener {
 		WebhookRegistrar $webhook_registrar,
 		Cache $cache,
 		State $state,
-		Bearer $bearer
+		Bearer $bearer,
+		string $page_id
 	) {
 
 		$this->settings          = $settings;
@@ -92,6 +101,7 @@ class SettingsListener {
 		$this->cache             = $cache;
 		$this->state             = $state;
 		$this->bearer            = $bearer;
+		$this->page_id           = $page_id;
 	}
 
 	/**
@@ -218,7 +228,7 @@ class SettingsListener {
 
 		$settings = $this->read_active_credentials_from_settings( $settings );
 
-		if ( ! isset( $_GET[ SectionsRenderer::KEY ] ) || PayPalGateway::ID === $_GET[ SectionsRenderer::KEY ] ) {
+		if ( PayPalGateway::ID === $this->page_id ) {
 			$settings['enabled'] = isset( $_POST['woocommerce_ppcp-gateway_enabled'] )
 				&& 1 === absint( $_POST['woocommerce_ppcp-gateway_enabled'] );
 			$this->maybe_register_webhooks( $settings );
@@ -313,17 +323,13 @@ class SettingsListener {
 			}
 			if (
 				'dcc' === $config['gateway']
-				&& (
-					! isset( $_GET[ SectionsRenderer::KEY ] )
-					|| sanitize_text_field( wp_unslash( $_GET[ SectionsRenderer::KEY ] ) ) !== CreditCardGateway::ID
-				)
+				&& CreditCardGateway::ID !== $this->page_id
 			) {
 				continue;
 			}
 			if (
 			'paypal' === $config['gateway']
-				&& isset( $_GET[ SectionsRenderer::KEY ] )
-				&& sanitize_text_field( wp_unslash( $_GET[ SectionsRenderer::KEY ] ) ) !== PayPalGateway::ID
+				&& PayPalGateway::ID !== $this->page_id
 			) {
 				continue;
 			}
@@ -406,14 +412,7 @@ class SettingsListener {
 		 * phpcs:disable WordPress.Security.NonceVerification.Missing
 		 * phpcs:disable WordPress.Security.NonceVerification.Recommended
 		 */
-		if (
-			! isset( $_REQUEST['section'] )
-			|| ! in_array(
-				sanitize_text_field( wp_unslash( $_REQUEST['section'] ) ),
-				array( 'ppcp-gateway', 'ppcp-credit-card-gateway' ),
-				true
-			)
-		) {
+		if ( empty( $this->page_id ) ) {
 			return false;
 		}
 
