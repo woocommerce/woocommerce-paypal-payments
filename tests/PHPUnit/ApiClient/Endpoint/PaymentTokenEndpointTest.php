@@ -110,27 +110,6 @@ class PaymentTokenEndpointTest extends TestCase
         $this->sut->for_user($id);
     }
 
-    public function testForUserFailBecauseEmptyTokens()
-    {
-        $id = 1;
-        $token = Mockery::mock(Token::class);
-        $rawResponse = ['body' => '{"payment_tokens":[]}'];
-        $this->bearer->shouldReceive('bearer')
-            ->andReturn($token);
-        $token->shouldReceive('token')
-            ->andReturn('bearer');
-        $this->ensureRequestForUser($rawResponse, $id);
-
-
-        expect('wp_remote_get')->andReturn($rawResponse);
-        expect('is_wp_error')->with($rawResponse)->andReturn(false);
-        expect('wp_remote_retrieve_response_code')->with($rawResponse)->andReturn(200);
-        $this->logger->shouldReceive('log');
-
-        $this->expectException(RuntimeException::class);
-        $this->sut->for_user($id);
-    }
-
     public function testDeleteToken()
     {
         $paymentToken = $paymentToken = Mockery::mock(PaymentToken::class);
