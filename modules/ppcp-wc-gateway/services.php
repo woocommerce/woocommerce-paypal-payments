@@ -1919,15 +1919,6 @@ return array(
 		}
 
 		/**
-		 * Disable card for UK.
-		 */
-		$region  = wc_get_base_location();
-		$country = $region['country'];
-		if ( 'GB' === $country ) {
-			unset( $fields['disable_funding']['options']['card'] );
-		}
-
-		/**
 		 * Depending on your store location, some credit cards can't be used.
 		 * Here, we filter them out.
 		 *
