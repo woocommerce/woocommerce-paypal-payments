@@ -34,7 +34,7 @@ use Psr\Container\ContainerInterface;
 /**
  * Class WcGatewayModule
  */
-class WcGatewayModule implements ModuleInterface {
+class WCGatewayModule implements ModuleInterface {
 
 	/**
 	 * {@inheritDoc}
