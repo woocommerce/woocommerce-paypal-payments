@@ -36,6 +36,26 @@ trait RequestTrait {
 			$args['headers']['PayPal-Partner-Attribution-Id'] = 'Woo_PPCP';
 		}
 
-		return wp_remote_get( $url, $args );
+		$response = wp_remote_get( $url, $args );
+
+		$this->logger->log( 'info', '--------------------------------------------------------------------' );
+		$this->logger->log( 'info', 'URL: ' . wc_print_r( $url, true ) );
+		if ( isset( $args['method'] ) ) {
+			$this->logger->log( 'info', 'Method: ' . wc_print_r( $args['method'], true ) );
+		}
+		if ( isset( $args['headers']['body'] ) ) {
+			$this->logger->log( 'info', 'Request Body: ' . wc_print_r( $args['headers']['body'], true ) );
+		}
+		if ( isset( $response['headers']->getAll()['paypal-debug-id'] ) ) {
+			$this->logger->log( 'info', 'Response Debug ID: ' . wc_print_r( $response['headers']->getAll()['paypal-debug-id'], true ) );
+		}
+		if ( isset( $response['response'] ) ) {
+			$this->logger->log( 'info', 'Response: ' . wc_print_r( $response['response'], true ) );
+		}
+		if ( isset( $response['body'] ) ) {
+			$this->logger->log( 'info', 'Response Body: ' . wc_print_r( $response['body'], true ) );
+		}
+
+		return $response;
 	}
 }
