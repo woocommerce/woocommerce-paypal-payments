@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 
+use WooCommerce\WooCommerce\Logging\Logger\WooCommerceLogger;
+
 /**
  * Trait RequestTrait
  */
@@ -38,29 +40,12 @@ trait RequestTrait {
 
 		$response = wp_remote_get( $url, $args );
 
-		$this->logger->log( 'info', '--------------------------------------------------------------------' );
-		$this->logger->log( 'info', 'URL: ' . wc_print_r( $url, true ) );
-		if ( isset( $args['method'] ) ) {
-			$this->logger->log( 'info', 'Method: ' . wc_print_r( $args['method'], true ) );
-		}
-		if ( isset( $args['body'] ) ) {
-			$this->logger->log( 'info', 'Request Body: ' . wc_print_r( $args['body'], true ) );
-		}
-
-		if ( ! is_wp_error( $response ) ) {
-			if ( isset( $response['headers']->getAll()['paypal-debug-id'] ) ) {
-				$this->logger->log( 'info', 'Response Debug ID: ' . wc_print_r( $response['headers']->getAll()['paypal-debug-id'], true ) );
-			}
-			if ( isset( $response['response'] ) ) {
-				$this->logger->log( 'info', 'Response: ' . wc_print_r( $response['response'], true ) );
-			}
-			if ( isset( $response['body'] ) ) {
-				$this->logger->log( 'info', 'Response Body: ' . wc_print_r( $response['body'], true ) );
-			}
-		} else {
-			$this->logger->log( 'error', 'WP Error: ' . wc_print_r( $response->get_error_code() . ' ' . $response->get_error_message(), true ) );
+		if ( $this->logger instanceof WooCommerceLogger ) {
+			$this->logger->logRequestResponse( $url, $args, $response );
 		}
 
 		return $response;
 	}
+
+
 }

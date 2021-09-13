@@ -14,6 +14,7 @@ namespace WooCommerce\WooCommerce\Logging\Logger;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\LoggerTrait;
+use WP_Error;
 
 /**
  * Class WooCommerceLogger
@@ -60,5 +61,47 @@ class WooCommerceLogger implements LoggerInterface {
 			$context['source'] = $this->source;
 		}
 		$this->wc_logger->log( $level, $message, $context );
+	}
+
+	/**
+	 * Logs request and response information.
+	 *
+	 * @param string         $url The request URL.
+	 * @param array          $args The request arguments.
+	 * @param array|WP_Error $response The response or WP_Error on failure.
+	 * @return void
+	 */
+	public function logRequestResponse( string $url, array $args, $response ) {
+		$this->log( 'info', '--------------------------------------------------------------------' );
+		$this->log( 'info', 'URL: ' . wc_print_r( $url, true ) );
+		if ( isset( $args['method'] ) ) {
+			$this->log( 'info', 'Method: ' . wc_print_r( $args['method'], true ) );
+		}
+		if ( isset( $args['body'] ) ) {
+			$this->log( 'info', 'Request Body: ' . wc_print_r( $args['body'], true ) );
+		}
+
+		if ( ! is_wp_error( $response ) ) {
+			if ( isset( $response['headers']->getAll()['paypal-debug-id'] ) ) {
+				$this->log(
+					'info',
+					'Response Debug ID: ' . wc_print_r(
+						$response['headers']->getAll()['paypal-debug-id'],
+						true
+					)
+				);
+			}
+			if ( isset( $response['response'] ) ) {
+				$this->log( 'info', 'Response: ' . wc_print_r( $response['response'], true ) );
+			}
+			if ( isset( $response['body'] ) ) {
+				$this->log( 'info', 'Response Body: ' . wc_print_r( $response['body'], true ) );
+			}
+		} else {
+			$this->log(
+				'error',
+				'WP Error: ' . $response->get_error_code() . ' ' . $response->get_error_message()
+			);
+		}
 	}
 }
