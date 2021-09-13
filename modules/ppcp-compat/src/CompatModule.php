@@ -13,7 +13,7 @@ use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\Compat\PPEC\PpecHelper;
+use WooCommerce\PayPalCommerce\Compat\PPEC\PPECHelper;
 
 /**
  * Class CompatModule

@@ -38,7 +38,7 @@ class SettingsImporter {
 	 */
 	public function __construct( Settings $settings ) {
 		$this->ppcp_settings = $settings;
-		$this->ppec_settings = (array) get_option( PpecHelper::PPEC_SETTINGS_OPTION_NAME, array() );
+		$this->ppec_settings = (array) get_option( PPECHelper::PPEC_SETTINGS_OPTION_NAME, array() );
 	}
 
 	/**
@@ -48,7 +48,7 @@ class SettingsImporter {
 	 */
 	public function maybe_hook() {
 		// Import settings the first time the PPCP option is created.
-		if ( PpecHelper::is_gateway_available() && false === get_option( $this->ppcp_settings::KEY ) ) {
+		if ( PPECHelper::is_gateway_available() && false === get_option( $this->ppcp_settings::KEY ) ) {
 			add_action( 'add_option_' . $this->ppcp_settings::KEY, array( $this, 'import_settings' ), 10, 2 );
 		}
 	}

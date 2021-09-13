@@ -51,7 +51,7 @@ class SubscriptionsHandler {
 	 * @return void
 	 */
 	public function maybe_hook() {
-		if ( ! PpecHelper::use_ppec_compat_layer_for_subscriptions() ) {
+		if ( ! PPECHelper::use_ppec_compat_layer_for_subscriptions() ) {
 			return;
 		}
 
@@ -62,7 +62,7 @@ class SubscriptionsHandler {
 		add_filter( 'woocommerce_paypal_payments_valid_payment_token_types', array( $this, 'add_billing_agreement_as_token_type' ) );
 
 		// Process PPEC renewals through PayPal Payments.
-		add_action( 'woocommerce_scheduled_subscription_payment_' . PpecHelper::PPEC_GATEWAY_ID, array( $this, 'process_renewal' ), 10, 2 );
+		add_action( 'woocommerce_scheduled_subscription_payment_' . PPECHelper::PPEC_GATEWAY_ID, array( $this, 'process_renewal' ), 10, 2 );
 	}
 
 	/**
@@ -74,8 +74,8 @@ class SubscriptionsHandler {
 	 * @return array
 	 */
 	public function add_mock_ppec_gateway( $gateways ) {
-		if ( ! isset( $gateways[ PpecHelper::PPEC_GATEWAY_ID ] ) && $this->should_mock_ppec_gateway() ) {
-			$gateways[ PpecHelper::PPEC_GATEWAY_ID ] = $this->mock_gateway;
+		if ( ! isset( $gateways[ PPECHelper::PPEC_GATEWAY_ID ] ) && $this->should_mock_ppec_gateway() ) {
+			$gateways[ PPECHelper::PPEC_GATEWAY_ID ] = $this->mock_gateway;
 		}
 
 		return $gateways;
@@ -121,7 +121,7 @@ class SubscriptionsHandler {
 	 * @return null|PaymentToken
 	 */
 	public function use_billing_agreement_as_token( $token, $customer, $order ) {
-		if ( PpecHelper::PPEC_GATEWAY_ID === $order->get_payment_method() && wcs_order_contains_renewal( $order ) ) {
+		if ( PPECHelper::PPEC_GATEWAY_ID === $order->get_payment_method() && wcs_order_contains_renewal( $order ) ) {
 			$billing_agreement_id = $order->get_meta( '_ppec_billing_agreement_id', true );
 
 			if ( $billing_agreement_id ) {
@@ -154,21 +154,21 @@ class SubscriptionsHandler {
 			if ( wcs_is_view_subscription_page() ) {
 				$subscription = wcs_get_subscription( absint( get_query_var( 'view-subscription' ) ) );
 
-				return ( $subscription && PpecHelper::PPEC_GATEWAY_ID === $subscription->get_payment_method() );
+				return ( $subscription && PPECHelper::PPEC_GATEWAY_ID === $subscription->get_payment_method() );
 			}
 
 			// Changing payment method?
 			if ( is_wc_endpoint_url( 'order-pay' ) && isset( $_GET['change_payment_method'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				$subscription = wcs_get_subscription( absint( get_query_var( 'order-pay' ) ) );
 
-				return ( $subscription && PpecHelper::PPEC_GATEWAY_ID === $subscription->get_payment_method() );
+				return ( $subscription && PPECHelper::PPEC_GATEWAY_ID === $subscription->get_payment_method() );
 			}
 
 			// Early renew (via modal).
 			if ( isset( $_GET['process_early_renewal'], $_GET['subscription_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				$subscription = wcs_get_subscription( absint( $_GET['subscription_id'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
-				return ( $subscription && PpecHelper::PPEC_GATEWAY_ID === $subscription->get_payment_method() );
+				return ( $subscription && PPECHelper::PPEC_GATEWAY_ID === $subscription->get_payment_method() );
 			}
 		}
 
@@ -192,7 +192,7 @@ class SubscriptionsHandler {
 			if ( in_array( get_current_screen()->id, array( 'shop_subscription', 'shop_order' ), true ) ) {
 				$order = wc_get_order( $GLOBALS['post']->ID );
 
-				return ( $order && PpecHelper::PPEC_GATEWAY_ID === $order->get_payment_method() );
+				return ( $order && PPECHelper::PPEC_GATEWAY_ID === $order->get_payment_method() );
 			}
 		}
 
