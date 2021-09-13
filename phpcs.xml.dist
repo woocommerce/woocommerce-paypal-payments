@@ -22,6 +22,7 @@
 	<rule ref="WordPress">
 		<exclude name="WordPress.Files.FileName.NotHyphenatedLowercase" />
 		<exclude name="WordPress.Files.FileName.InvalidClassFileName" />
+		<exclude name="WordWordPress.PHP.DisallowShortTernary" />
 	</rule>
 
 	<rule ref="Squiz.Commenting.FunctionComment">
