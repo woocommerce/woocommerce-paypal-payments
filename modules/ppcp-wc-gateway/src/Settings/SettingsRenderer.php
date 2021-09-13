@@ -15,7 +15,7 @@ use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use Psr\Container\ContainerInterface;
-use Woocommerce\PayPalCommerce\WcGateway\Helper\DccProductStatus;
+use Woocommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
 use Woocommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 
 /**
@@ -68,7 +68,7 @@ class SettingsRenderer {
 	/**
 	 * The DCC Product Status.
 	 *
-	 * @var DccProductStatus
+	 * @var DCCProductStatus
 	 */
 	private $dcc_product_status;
 
@@ -80,17 +80,17 @@ class SettingsRenderer {
 	 * @param array              $fields The setting fields.
 	 * @param DccApplies         $dcc_applies Whether DCC gateway can be shown.
 	 * @param MessagesApply      $messages_apply Whether messages can be shown.
-	 * @param DccProductStatus   $dcc_product_status The product status.
+	 * @param DCCProductStatus   $dcc_product_status The product status.
 	 * @param SettingsStatus     $settings_status The Settings status helper.
 	 */
 	public function __construct(
-		ContainerInterface $settings,
-		State $state,
-		array $fields,
-		DccApplies $dcc_applies,
-		MessagesApply $messages_apply,
-		DccProductStatus $dcc_product_status,
-		SettingsStatus $settings_status
+        ContainerInterface $settings,
+        State              $state,
+        array              $fields,
+        DccApplies         $dcc_applies,
+        MessagesApply      $messages_apply,
+        DCCProductStatus   $dcc_product_status,
+        SettingsStatus     $settings_status
 	) {
 
 		$this->settings           = $settings;

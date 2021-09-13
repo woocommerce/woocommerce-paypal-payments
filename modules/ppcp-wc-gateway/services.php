@@ -25,7 +25,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\DccProductStatus;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
 use Woocommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
@@ -1911,11 +1911,11 @@ return array(
 		return new TransactionUrlProvider( $sandbox_url_base, $live_url_base );
 	},
 
-	'wcgateway.helper.dcc-product-status'          => static function ( ContainerInterface $container ) : DccProductStatus {
+	'wcgateway.helper.dcc-product-status'          => static function ( ContainerInterface $container ) : DCCProductStatus {
 
 		$settings         = $container->get( 'wcgateway.settings' );
 		$partner_endpoint = $container->get( 'api.endpoint.partners' );
-		return new DccProductStatus( $settings, $partner_endpoint );
+		return new DCCProductStatus( $settings, $partner_endpoint );
 	},
 
 	'button.helper.messages-disclaimers'           => static function ( $container ): MessagesDisclaimers {

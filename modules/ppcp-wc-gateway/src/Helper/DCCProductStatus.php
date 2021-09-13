@@ -17,7 +17,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 /**
  * Class DccProductStatus
  */
-class DccProductStatus {
+class DCCProductStatus {
 
 	/**
 	 * Caches the status for the current load.
