@@ -72,36 +72,30 @@ class WooCommerceLogger implements LoggerInterface {
 	 * @return void
 	 */
 	public function logRequestResponse( string $url, array $args, $response ) {
-		$this->log( 'info', '--------------------------------------------------------------------' );
-		$this->log( 'info', 'URL: ' . wc_print_r( $url, true ) );
-		if ( isset( $args['method'] ) ) {
-			$this->log( 'info', 'Method: ' . wc_print_r( $args['method'], true ) );
-		}
-		if ( isset( $args['body'] ) ) {
-			$this->log( 'info', 'Request Body: ' . wc_print_r( $args['body'], true ) );
+
+		if ( is_wp_error( $response ) ) {
+			$this->error( $response->get_error_code() . ' ' . $response->get_error_message() );
+			return;
 		}
 
-		if ( ! is_wp_error( $response ) ) {
+		$method = $args['method'] ?? '';
+		$output = $method . ' ' . $url . "\n";
+		if ( isset( $args['body'] ) ) {
+			$output .= 'Request Body: ' . wc_print_r( $args['body'], true ) . "\n";
+		}
+
+		if ( is_array( $response ) ) {
 			if ( isset( $response['headers']->getAll()['paypal-debug-id'] ) ) {
-				$this->log(
-					'info',
-					'Response Debug ID: ' . wc_print_r(
-						$response['headers']->getAll()['paypal-debug-id'],
-						true
-					)
-				);
+				$output .= 'Response Debug ID: ' . $response['headers']->getAll()['paypal-debug-id'] . "\n";
 			}
 			if ( isset( $response['response'] ) ) {
-				$this->log( 'info', 'Response: ' . wc_print_r( $response['response'], true ) );
+				$output .= 'Response: ' . wc_print_r( $response['response'], true ) . "\n";
 			}
 			if ( isset( $response['body'] ) ) {
-				$this->log( 'info', 'Response Body: ' . wc_print_r( $response['body'], true ) );
+				$output .= 'Response Body: ' . wc_print_r( $response['body'], true ) . "\n";
 			}
-		} else {
-			$this->log(
-				'error',
-				'WP Error: ' . $response->get_error_code() . ' ' . $response->get_error_message()
-			);
 		}
+
+		$this->info( $output );
 	}
 }
