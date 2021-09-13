@@ -16,7 +16,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 /**
  * Exposes and handles REST routes related to onboarding.
  */
-class OnboardingRestController {
+class OnboardingRESTController {
 
 	/**
 	 * REST namespace.
