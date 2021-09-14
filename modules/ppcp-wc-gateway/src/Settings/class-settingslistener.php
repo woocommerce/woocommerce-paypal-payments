@@ -233,25 +233,29 @@ class SettingsListener {
 
 		$settings = $this->read_active_credentials_from_settings( $settings );
 
-		$credentials_change_status = $this->determine_credentials_change_status( $settings );
+		$credentials_change_status = null; // Cannot detect on Card Processing page.
 
 		if ( PayPalGateway::ID === $this->page_id ) {
 			$settings['enabled'] = isset( $_POST['woocommerce_ppcp-gateway_enabled'] )
 				&& 1 === absint( $_POST['woocommerce_ppcp-gateway_enabled'] );
+
+			$credentials_change_status = $this->determine_credentials_change_status( $settings );
 		}
 		// phpcs:enable phpcs:disable WordPress.Security.NonceVerification.Missing
 		// phpcs:enable phpcs:disable WordPress.Security.NonceVerification.Missing
 
-		if ( self::CREDENTIALS_UNCHANGED !== $credentials_change_status ) {
-			$this->settings->set( 'products_dcc_enabled', null );
-		}
+		if ( $credentials_change_status ) {
+			if ( self::CREDENTIALS_UNCHANGED !== $credentials_change_status ) {
+				$this->settings->set( 'products_dcc_enabled', null );
+			}
 
-		if ( in_array(
-			$credentials_change_status,
-			array( self::CREDENTIALS_REMOVED, self::CREDENTIALS_CHANGED ),
-			true
-		) ) {
-			$this->webhook_registrar->unregister();
+			if ( in_array(
+				$credentials_change_status,
+				array( self::CREDENTIALS_REMOVED, self::CREDENTIALS_CHANGED ),
+				true
+			) ) {
+				$this->webhook_registrar->unregister();
+			}
 		}
 
 		foreach ( $settings as $id => $value ) {
@@ -259,12 +263,14 @@ class SettingsListener {
 		}
 		$this->settings->persist();
 
-		if ( in_array(
-			$credentials_change_status,
-			array( self::CREDENTIALS_ADDED, self::CREDENTIALS_CHANGED ),
-			true
-		) ) {
-			$this->webhook_registrar->register();
+		if ( $credentials_change_status ) {
+			if ( in_array(
+				$credentials_change_status,
+				array( self::CREDENTIALS_ADDED, self::CREDENTIALS_CHANGED ),
+				true
+			) ) {
+				$this->webhook_registrar->register();
+			}
 		}
 
 		if ( $this->cache->has( PayPalBearer::CACHE_KEY ) ) {
