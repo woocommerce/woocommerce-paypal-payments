@@ -136,7 +136,7 @@ class LoginSellerEndpoint implements EndpointInterface {
 				$this->cache->delete( PayPalBearer::CACHE_KEY );
 			}
 			wp_schedule_single_event(
-				time() - 1,
+				time() + 5,
 				WebhookRegistrar::EVENT_HOOK
 			);
 			wp_send_json_success();
