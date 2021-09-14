@@ -92,6 +92,7 @@ class WebhookRegistrar {
 				self::KEY,
 				$created->to_array()
 			);
+			$this->logger->info( 'Webhooks registered.' );
 			return true;
 		} catch ( RuntimeException $error ) {
 			$this->logger->error( 'Failed to register webhooks: ' . $error->getMessage() );
@@ -119,6 +120,7 @@ class WebhookRegistrar {
 
 		if ( $success ) {
 			delete_option( self::KEY );
+			$this->logger->info( 'Webhooks deleted.' );
 		}
 		return $success;
 	}
