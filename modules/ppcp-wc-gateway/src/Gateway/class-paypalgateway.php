@@ -104,6 +104,13 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	private $onboarded;
 
 	/**
+	 * ID of the current PPCP gateway settings page, or empty if it is not such page.
+	 *
+	 * @var string
+	 */
+	protected $page_id;
+
+	/**
 	 * PayPalGateway constructor.
 	 *
 	 * @param SettingsRenderer            $settings_renderer The Settings Renderer.
@@ -116,6 +123,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @param State                       $state The state.
 	 * @param TransactionUrlProvider      $transaction_url_provider Service providing transaction view URL based on order.
 	 * @param SubscriptionHelper          $subscription_helper The subscription helper.
+	 * @param string                      $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
@@ -127,7 +135,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		RefundProcessor $refund_processor,
 		State $state,
 		TransactionUrlProvider $transaction_url_provider,
-		SubscriptionHelper $subscription_helper
+		SubscriptionHelper $subscription_helper,
+		string $page_id
 	) {
 
 		$this->id                       = self::ID;
@@ -139,6 +148,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->session_handler          = $session_handler;
 		$this->refund_processor         = $refund_processor;
 		$this->transaction_url_provider = $transaction_url_provider;
+		$this->page_id                  = $page_id;
 		$this->onboarded                = $state->current_state() === State::STATE_ONBOARDED;
 
 		if ( $this->onboarded ) {
@@ -332,8 +342,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 */
 	private function is_credit_card_tab() : bool {
 		return is_admin()
-			&& isset( $_GET[ SectionsRenderer::KEY ] )
-			&& CreditCardGateway::ID === sanitize_text_field( wp_unslash( $_GET[ SectionsRenderer::KEY ] ) );
+			&& CreditCardGateway::ID === $this->page_id;
 
 	}
 
@@ -345,8 +354,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	private function is_paypal_tab() : bool {
 		return ! $this->is_credit_card_tab()
 			&& is_admin()
-			&& isset( $_GET['section'] )
-			&& self::ID === sanitize_text_field( wp_unslash( $_GET['section'] ) );
+			&& self::ID === $this->page_id;
 	}
 	// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
@@ -387,14 +395,18 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 *
 	 * @param string $key The option key.
 	 * @param string $value The option value.
-	 * @return bool|void
+	 * @return bool was anything saved?
 	 */
 	public function update_option( $key, $value = '' ) {
-		parent::update_option( $key, $value );
+		$ret = parent::update_option( $key, $value );
 
 		if ( 'enabled' === $key ) {
 			$this->config->set( 'enabled', 'yes' === $value );
 			$this->config->persist();
+
+			return true;
 		}
+
+		return $ret;
 	}
 }

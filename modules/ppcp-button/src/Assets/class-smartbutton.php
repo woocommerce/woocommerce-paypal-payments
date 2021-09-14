@@ -602,6 +602,19 @@ class SmartButton implements SmartButtonInterface {
 	}
 
 	/**
+	 * Retrieves the 3D Secure contingency settings.
+	 *
+	 * @return string
+	 */
+	private function get_3ds_contingency(): string {
+		if ( $this->settings->has( '3d_secure_contingency' ) ) {
+			return $this->settings->get( '3d_secure_contingency' );
+		}
+
+		return 'SCA_WHEN_REQUIRED';
+	}
+
+	/**
 	 * The localized data for the smart button.
 	 *
 	 * @return array
@@ -677,6 +690,7 @@ class SmartButton implements SmartButtonInterface {
 					),
 				),
 				'valid_cards'       => $this->dcc_applies->valid_cards(),
+				'contingency'       => $this->get_3ds_contingency(),
 			),
 			'messages'                       => $this->message_values(),
 			'labels'                         => array(
@@ -729,8 +743,7 @@ class SmartButton implements SmartButtonInterface {
 			'currency'         => get_woocommerce_currency(),
 			'integration-date' => PAYPAL_INTEGRATION_DATE,
 			'components'       => implode( ',', $this->components() ),
-			'vault'            => $this->can_save_vault_token() ?
-				'true' : 'false',
+			'vault'            => $this->can_save_vault_token() ? 'true' : 'false',
 			'commit'           => is_checkout() ? 'true' : 'false',
 			'intent'           => ( $this->settings->has( 'intent' ) ) ?
 				$this->settings->get( 'intent' ) : 'capture',
@@ -743,10 +756,19 @@ class SmartButton implements SmartButtonInterface {
 		) {
 			$params['buyer-country'] = WC()->customer->get_billing_country();
 		}
-		$disable_funding = $this->settings->has( 'disable_funding' ) ?
-			$this->settings->get( 'disable_funding' ) : array();
+
+		$disable_funding = $this->settings->has( 'disable_funding' )
+			? $this->settings->get( 'disable_funding' )
+			: array();
+
 		if ( ! is_checkout() ) {
 			$disable_funding[] = 'card';
+		}
+		if ( is_checkout() && $this->settings->has( 'dcc_enabled' ) && $this->settings->get( 'dcc_enabled' ) ) {
+			$key = array_search( 'card', $disable_funding, true );
+			if ( false !== $key ) {
+				unset( $disable_funding[ $key ] );
+			}
 		}
 
 		if ( count( $disable_funding ) > 0 ) {
