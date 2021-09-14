@@ -24,11 +24,11 @@ class CheckoutBootstap {
 
           })
 
-        setTimeout(() => {
+        jQuery(document).on('hosted_fields_loaded', () => {
             jQuery('#saved-credit-card').on('change', () => {
                 this.displayPlaceOrderButtonForSavedCreditCards()
             })
-        }, 3000)
+        });
 
         this.switchBetweenPayPalandOrderButton()
         this.displayPlaceOrderButtonForSavedCreditCards()

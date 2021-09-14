@@ -100,6 +100,7 @@ class CreditCardRenderer {
                 }
             }
         }).then(hostedFields => {
+            document.dispatchEvent(new CustomEvent("hosted_fields_loaded"));
             this.currentHostedFieldsInstance = hostedFields;
 
             hostedFields.on('inputSubmitRequest', () => {
