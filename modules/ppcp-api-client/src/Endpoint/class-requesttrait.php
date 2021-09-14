@@ -40,13 +40,7 @@ trait RequestTrait {
 		}
 
 		$response = wp_remote_get( $url, $args );
-
-		if ( is_wp_error( $response ) ) {
-			$this->logger->error( $response->get_error_code() . ' ' . $response->get_error_message() );
-			return $response;
-		}
-
-		$this->logger->info( $this->request_response_string( $url, $args, $response ) );
+		$this->logger->debug( $this->request_response_string( $url, $args, $response ) );
 		return $response;
 	}
 
