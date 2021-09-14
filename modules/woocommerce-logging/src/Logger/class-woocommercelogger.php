@@ -69,9 +69,10 @@ class WooCommerceLogger implements LoggerInterface {
 	 * @param string         $url The request URL.
 	 * @param array          $args The request arguments.
 	 * @param array|WP_Error $response The response or WP_Error on failure.
+	 * @param string         $host The host.
 	 * @return void
 	 */
-	public function logRequestResponse( string $url, array $args, $response ) {
+	public function logRequestResponse( string $url, array $args, $response, string $host ) {
 
 		if ( is_wp_error( $response ) ) {
 			$this->error( $response->get_error_code() . ' ' . $response->get_error_message() );
@@ -81,7 +82,16 @@ class WooCommerceLogger implements LoggerInterface {
 		$method = $args['method'] ?? '';
 		$output = $method . ' ' . $url . "\n";
 		if ( isset( $args['body'] ) ) {
-			$output .= 'Request Body: ' . wc_print_r( $args['body'], true ) . "\n";
+			if ( ! in_array(
+				$url,
+				array(
+					trailingslashit( $host ) . 'v1/oauth2/token/',
+					trailingslashit( $host ) . 'v1/oauth2/token?grant_type=client_credentials',
+				),
+				true
+			) ) {
+				$output .= 'Request Body: ' . wc_print_r( $args['body'], true ) . "\n";
+			}
 		}
 
 		if ( is_array( $response ) ) {
@@ -90,9 +100,12 @@ class WooCommerceLogger implements LoggerInterface {
 			}
 			if ( isset( $response['response'] ) ) {
 				$output .= 'Response: ' . wc_print_r( $response['response'], true ) . "\n";
-			}
-			if ( isset( $response['body'] ) ) {
-				$output .= 'Response Body: ' . wc_print_r( $response['body'], true ) . "\n";
+
+				if ( isset( $response['body'] )
+					&& isset( $response['response']['code'] )
+					&& ! in_array( $response['response']['code'], array( 200, 201, 202, 204 ), true ) ) {
+					$output .= 'Response Body: ' . wc_print_r( $response['body'], true ) . "\n";
+				}
 			}
 		}
 

@@ -41,7 +41,7 @@ trait RequestTrait {
 		$response = wp_remote_get( $url, $args );
 
 		if ( $this->logger instanceof WooCommerceLogger ) {
-			$this->logger->logRequestResponse( $url, $args, $response );
+			$this->logger->logRequestResponse( $url, $args, $response, $this->host );
 		}
 
 		return $response;
