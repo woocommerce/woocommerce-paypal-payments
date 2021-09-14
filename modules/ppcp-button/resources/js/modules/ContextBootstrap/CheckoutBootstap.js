@@ -113,32 +113,32 @@ class CheckoutBootstap {
     }
 
     disableCreditCardFields() {
-        jQuery('label[for="ppcp-credit-card-gateway-card-number"]').css({ opacity: 0.4 })
-        jQuery('#ppcp-credit-card-gateway-card-number').css({ opacity: 0.4 })
-        jQuery('#ppcp-credit-card-gateway-card-number').attr("disabled", true);
-        jQuery('label[for="ppcp-credit-card-gateway-card-expiry"]').css({ opacity: 0.4 })
-        jQuery('#ppcp-credit-card-gateway-card-expiry').css({ opacity: 0.4 })
+        jQuery('label[for="ppcp-credit-card-gateway-card-number"]').addClass('ppcp-credit-card-gateway-form-field')
+        jQuery('#ppcp-credit-card-gateway-card-number').addClass('ppcp-credit-card-gateway-form-field')
+        jQuery('#ppcp-credit-card-gateway-card-number').attr("disabled", true)
+        jQuery('label[for="ppcp-credit-card-gateway-card-expiry"]').addClass('ppcp-credit-card-gateway-form-field')
+        jQuery('#ppcp-credit-card-gateway-card-expiry').addClass('ppcp-credit-card-gateway-form-field')
         jQuery('#ppcp-credit-card-gateway-card-expiry').attr("disabled", true)
-        jQuery('label[for="ppcp-credit-card-gateway-card-cvc"]').css({ opacity: 0.4 })
-        jQuery('#ppcp-credit-card-gateway-card-cvc').css({ opacity: 0.4 })
+        jQuery('label[for="ppcp-credit-card-gateway-card-cvc"]').addClass('ppcp-credit-card-gateway-form-field')
+        jQuery('#ppcp-credit-card-gateway-card-cvc').addClass('ppcp-credit-card-gateway-form-field')
         jQuery('#ppcp-credit-card-gateway-card-cvc').attr("disabled", true)
-        jQuery('label[for="vault"]').css({ opacity: 0.4 })
-        jQuery('#ppcp-credit-card-vault').css({ opacity: 0.4 })
+        jQuery('label[for="vault"]').addClass('ppcp-credit-card-gateway-form-field')
+        jQuery('#ppcp-credit-card-vault').addClass('ppcp-credit-card-gateway-form-field')
         jQuery('#ppcp-credit-card-vault').attr("disabled", true)
     }
 
     enableCreditCardFields() {
-        jQuery('label[for="ppcp-credit-card-gateway-card-number"]').css({ opacity: 1 })
-        jQuery('#ppcp-credit-card-gateway-card-number').css({ opacity: 1 })
+        jQuery('label[for="ppcp-credit-card-gateway-card-number"]').removeClass('ppcp-credit-card-gateway-form-field')
+        jQuery('#ppcp-credit-card-gateway-card-number').removeClass('ppcp-credit-card-gateway-form-field')
         jQuery('#ppcp-credit-card-gateway-card-number').attr("disabled", false)
-        jQuery('label[for="ppcp-credit-card-gateway-card-expiry"]').css({ opacity: 1 })
-        jQuery('#ppcp-credit-card-gateway-card-expiry').css({ opacity: 1 })
-        jQuery('#ppcp-credit-card-gateway-card-expiry').attr("disabled", false);
-        jQuery('label[for="ppcp-credit-card-gateway-card-cvc"]').css({ opacity: 1 })
-        jQuery('#ppcp-credit-card-gateway-card-cvc').css({ opacity: 1 })
+        jQuery('label[for="ppcp-credit-card-gateway-card-expiry"]').removeClass('ppcp-credit-card-gateway-form-field')
+        jQuery('#ppcp-credit-card-gateway-card-expiry').removeClass('ppcp-credit-card-gateway-form-field')
+        jQuery('#ppcp-credit-card-gateway-card-expiry').attr("disabled", false)
+        jQuery('label[for="ppcp-credit-card-gateway-card-cvc"]').removeClass('ppcp-credit-card-gateway-form-field')
+        jQuery('#ppcp-credit-card-gateway-card-cvc').removeClass('ppcp-credit-card-gateway-form-field')
         jQuery('#ppcp-credit-card-gateway-card-cvc').attr("disabled", false)
-        jQuery('label[for="vault"]').css({ opacity: 1 })
-        jQuery('#ppcp-credit-card-vault').css({ opacity: 1 })
+        jQuery('label[for="vault"]').removeClass('ppcp-credit-card-gateway-form-field')
+        jQuery('#ppcp-credit-card-vault').removeClass('ppcp-credit-card-gateway-form-field')
         jQuery('#ppcp-credit-card-vault').attr("disabled", false)
     }
 }
