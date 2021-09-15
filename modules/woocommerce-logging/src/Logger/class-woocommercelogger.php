@@ -14,7 +14,6 @@ namespace WooCommerce\WooCommerce\Logging\Logger;
 
 use Psr\Log\LoggerInterface;
 use Psr\Log\LoggerTrait;
-use WP_Error;
 
 /**
  * Class WooCommerceLogger
