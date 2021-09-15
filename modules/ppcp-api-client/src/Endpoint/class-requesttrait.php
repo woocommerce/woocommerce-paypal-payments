@@ -9,9 +9,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 
-use WooCommerce\WooCommerce\Logging\Logger\WooCommerceLogger;
-use WP_Error;
-
 /**
  * Trait RequestTrait
  */
