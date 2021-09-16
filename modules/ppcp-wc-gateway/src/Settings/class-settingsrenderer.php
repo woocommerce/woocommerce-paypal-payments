@@ -24,6 +24,8 @@ use Woocommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
  */
 class SettingsRenderer {
 
+	use PageMatcherTrait;
+
 	/**
 	 * The Settings status helper.
 	 *
@@ -325,10 +327,7 @@ class SettingsRenderer {
 			if ( ! in_array( $this->state->current_state(), $config['screens'], true ) ) {
 				continue;
 			}
-			if ( $is_dcc && ! in_array( $config['gateway'], array( 'all', 'dcc' ), true ) ) {
-				continue;
-			}
-			if ( ! $is_dcc && ! in_array( $config['gateway'], array( 'all', 'paypal' ), true ) ) {
+			if ( ! $this->field_matches_page( $config, $this->page_id ) ) {
 				continue;
 			}
 			if (

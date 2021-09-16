@@ -700,7 +700,7 @@ return array(
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
-				'gateway'      => 'all',
+				'gateway'      => array( 'paypal', 'dcc' ),
 			),
 			'logging_enabled'                => array(
 				'title'        => __( 'Logging', 'woocommerce-paypal-payments' ),
