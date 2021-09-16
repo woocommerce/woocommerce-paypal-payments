@@ -13,6 +13,7 @@ use Exception;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\WebhookEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Webhook;
 use WooCommerce\PayPalCommerce\WcGateway\Assets\WebhooksStatusPageAssets;
+use WooCommerce\PayPalCommerce\Webhooks\Endpoint\ResubscribeEndpoint;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\CheckoutOrderApproved;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\CheckoutOrderCompleted;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureCompleted;
@@ -109,6 +110,16 @@ return array(
 	'webhook.status.assets'                   => function( $container ) : WebhooksStatusPageAssets {
 		return new WebhooksStatusPageAssets(
 			$container->get( 'webhook.module-url' )
+		);
+	},
+
+	'webhook.endpoint.resubscribe'            => static function ( $container ) : ResubscribeEndpoint {
+		$registrar = $container->get( 'webhook.registrar' );
+		$request_data            = $container->get( 'button.request-data' );
+
+		return new ResubscribeEndpoint(
+			$registrar,
+			$request_data
 		);
 	},
 

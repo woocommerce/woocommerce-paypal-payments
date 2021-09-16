@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Assets;
 
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\Webhooks\Endpoint\ResubscribeEndpoint;
 
 /**
  * Class WebhooksStatusPageAssets
@@ -69,7 +70,14 @@ class WebhooksStatusPageAssets {
 	 * @return array
 	 */
 	public function get_script_data() {
-		return array();
+		return array(
+			'resubscribe' => array(
+				'endpoint'       => home_url( \WC_AJAX::get_endpoint( ResubscribeEndpoint::ENDPOINT ) ),
+				'nonce'          => wp_create_nonce( ResubscribeEndpoint::nonce() ),
+				'button'         => '.ppcp-webhooks-resubscribe',
+				'failureMessage' => __( 'Operation failed. Check WooCommerce logs for more details.', 'woocommerce-paypal-payments' ),
+			),
+		);
 	}
 
 	/**
