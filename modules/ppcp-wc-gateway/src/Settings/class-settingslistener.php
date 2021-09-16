@@ -23,6 +23,8 @@ use WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar;
  */
 class SettingsListener {
 
+	use PageMatcherTrait;
+
 	const NONCE = 'ppcp-settings';
 
 	private const CREDENTIALS_ADDED     = 'credentials_added';
@@ -360,16 +362,7 @@ class SettingsListener {
 			if ( ! in_array( $this->state->current_state(), $config['screens'], true ) ) {
 				continue;
 			}
-			if (
-				'dcc' === $config['gateway']
-				&& CreditCardGateway::ID !== $this->page_id
-			) {
-				continue;
-			}
-			if (
-			'paypal' === $config['gateway']
-				&& PayPalGateway::ID !== $this->page_id
-			) {
+			if ( ! $this->field_matches_page( $config, $this->page_id ) ) {
 				continue;
 			}
 			switch ( $config['type'] ) {

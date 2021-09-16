@@ -19,6 +19,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\Webhooks\Status\WebhooksStatusPage;
 
 /**
  * Class PayPalGateway
@@ -224,7 +225,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			),
 		);
 
-		$should_show_enabled_checkbox = ! $this->is_credit_card_tab() && ( $this->config->has( 'merchant_email' ) && $this->config->get( 'merchant_email' ) );
+		$should_show_enabled_checkbox = $this->is_paypal_tab() && ( $this->config->has( 'merchant_email' ) && $this->config->get( 'merchant_email' ) );
 		if ( ! $should_show_enabled_checkbox ) {
 			unset( $this->form_fields['enabled'] );
 		}
@@ -308,6 +309,9 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		if ( $this->is_credit_card_tab() ) {
 			return __( 'PayPal Card Processing', 'woocommerce-paypal-payments' );
 		}
+		if ( $this->is_webhooks_tab() ) {
+			return __( 'Webhooks Status', 'woocommerce-paypal-payments' );
+		}
 		if ( $this->is_paypal_tab() ) {
 			return __( 'PayPal Checkout', 'woocommerce-paypal-payments' );
 		}
@@ -323,6 +327,12 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		if ( $this->is_credit_card_tab() ) {
 			return __(
 				'Accept debit and credit cards, and local payment methods.',
+				'woocommerce-paypal-payments'
+			);
+		}
+		if ( $this->is_webhooks_tab() ) {
+			return __(
+				'Status of the webhooks subscription.',
 				'woocommerce-paypal-payments'
 			);
 		}
@@ -344,6 +354,16 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		return is_admin()
 			&& CreditCardGateway::ID === $this->page_id;
 
+	}
+
+	/**
+	 * Whether we are on the Webhooks Status tab.
+	 *
+	 * @return bool
+	 */
+	private function is_webhooks_tab() : bool {
+		return is_admin()
+			&& WebhooksStatusPage::ID === $this->page_id;
 	}
 
 	/**
