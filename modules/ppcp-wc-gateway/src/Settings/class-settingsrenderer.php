@@ -402,7 +402,7 @@ $data_rows_html
 			) {
 				continue;
 			}
-			$value        = $this->settings->has( $field ) ? $this->settings->get( $field ) : null;
+			$value        = $this->settings->has( $field ) ? $this->settings->get( $field ) : ( isset( $config['value'] ) ? $config['value']() : null );
 			$key          = 'ppcp[' . $field . ']';
 			$id           = 'ppcp-' . $field;
 			$config['id'] = $id;
