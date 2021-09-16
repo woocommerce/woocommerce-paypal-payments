@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, e-commerce, store, sales, sell, 
 Requires at least: 5.3
 Tested up to: 5.8
 Requires PHP: 7.1
-Stable tag: 1.5.1
+Stable tag: 1.6.0
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -80,6 +80,19 @@ Follow the steps below to connect the plugin to your PayPal account:
 6. Main settings screen.
 
 == Changelog ==
+
+= 1.6.0 =
+* Add - Webhook status. #246
+* Add - Show CC gateway in admin payments list. #236
+* Add - Add 3d secure contingency settings. #230
+* Add - Improve logging. #252
+* Add - Do not send payee email. #231
+* Fix - PayPal Payments generates multiple orders. #244
+* Fix - Saved credit card does not auto fill. #242
+* Fix - Incorrect webhooks registration. #254
+* Fix - Disable funding credit cards affecting hosted fields, unset for GB. #249
+* Fix - REFUND_CAPTURE_CURRENCY_MISMATCH on multicurrency sites. #225
+* Fix - Can't checkout to certain countries with optional postcode. #224
 
 = 1.5.1 =
 * Fix - Set 3DS contingencies to "SCA_WHEN_REQUIRED". #178
