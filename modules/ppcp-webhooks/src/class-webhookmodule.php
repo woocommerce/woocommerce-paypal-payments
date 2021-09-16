@@ -75,6 +75,11 @@ class WebhookModule implements ModuleInterface {
 				$registrar->unregister();
 			}
 		);
+
+		$page_id = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
+		if ( WebhooksStatusPage::ID === $page_id ) {
+			$GLOBALS['hide_save_button'] = true;
+		}
 	}
 
 	/**
