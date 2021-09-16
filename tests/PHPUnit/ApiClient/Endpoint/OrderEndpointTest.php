@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 
 use Hamcrest\Matchers;
+use Requests_Utility_CaseInsensitiveDictionary;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
 use Woocommerce\PayPalCommerce\ApiClient\Entity\Capture;
@@ -22,14 +23,20 @@ use WooCommerce\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
 use WooCommerce\PayPalCommerce\ApiClient\TestCase;
 use Mockery;
-
 use Psr\Log\LoggerInterface;
 use function Brain\Monkey\Functions\expect;
+use function Brain\Monkey\Functions\when;
 
 class OrderEndpointTest extends TestCase
 {
 
-    public function testOrderDefault()
+	public function setUp(): void
+	{
+		parent::setUp();
+		when('wc_print_r')->returnArg();
+	}
+
+	public function testOrderDefault()
     {
 	    expect('wp_json_encode')->andReturnUsing('json_encode');
         $orderId = 'id';
@@ -51,10 +58,14 @@ class OrderEndpointTest extends TestCase
         $intent = 'CAPTURE';
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldNotReceive('log');
+        $logger->shouldReceive('debug');
         $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
         $paypalRequestIdRepository = Mockery::mock(PayPalRequestIdRepository::class);
         $paypalRequestIdRepository
             ->expects('get_for_order_id')->with($orderId)->andReturn('uniqueRequestId');
+		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
+		$headers->shouldReceive('getAll');
+
         $testee = new OrderEndpoint(
             $host,
             $bearer,
@@ -66,7 +77,10 @@ class OrderEndpointTest extends TestCase
             $paypalRequestIdRepository
         );
 
-        $rawResponse = ['body' => '{"is_correct":true}'];
+        $rawResponse = [
+        	'body' => '{"is_correct":true}',
+			'headers' => $headers,
+		];
         expect('wp_remote_get')
             ->andReturnUsing(function ($url, $args) use ($rawResponse, $host, $orderId) {
                 if ($url !== $host . 'v2/checkout/orders/' . $orderId) {
@@ -103,10 +117,14 @@ class OrderEndpointTest extends TestCase
         $intent = 'CAPTURE';
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldReceive('log');
+        $logger->shouldReceive('debug');
         $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
         $paypalRequestIdRepository = Mockery::mock(PayPalRequestIdRepository::class);
         $paypalRequestIdRepository
             ->expects('get_for_order_id')->with($orderId)->andReturn('uniqueRequestId');
+		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
+		$headers->shouldReceive('getAll');
+
         $testee = new OrderEndpoint(
             $host,
             $bearer,
@@ -118,7 +136,10 @@ class OrderEndpointTest extends TestCase
             $paypalRequestIdRepository
         );
 
-        $rawResponse = ['body' => '{"is_correct":true}'];
+        $rawResponse = [
+        	'body' => '{"is_correct":true}',
+			'headers' => $headers,
+		];
         expect('wp_remote_get')->andReturn($rawResponse);
         expect('is_wp_error')->with($rawResponse)->andReturn(true);
 
@@ -140,9 +161,15 @@ class OrderEndpointTest extends TestCase
         $orderFactory = Mockery::mock(OrderFactory::class);
         $patchCollectionFactory = Mockery::mock(PatchCollectionFactory::class);
         $intent = 'CAPTURE';
-        $rawResponse = ['body' => '{"some_error":true}'];
+		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
+		$headers->shouldReceive('getAll');
+        $rawResponse = [
+        	'body' => '{"some_error":true}',
+			'headers' => $headers,
+		];
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldReceive('log');
+        $logger->shouldReceive('debug');
         $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
         $paypalRequestIdRepository = Mockery::mock(PayPalRequestIdRepository::class);
         $paypalRequestIdRepository
@@ -176,8 +203,12 @@ class OrderEndpointTest extends TestCase
         $orderToCapture = Mockery::mock(Order::class);
         $orderToCapture->expects('status')->andReturn($orderToCaptureStatus);
         $orderToCapture->expects('id')->andReturn($orderId);
-
-        $rawResponse = ['body' => '{"is_correct":true}'];
+		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
+		$headers->shouldReceive('getAll');
+        $rawResponse = [
+        	'body' => '{"is_correct":true}',
+			'headers' => $headers,
+		];
         $expectedOrder = Mockery::mock(Order::class);
         $host = 'https://example.com/';
         $token = Mockery::mock(Token::class);
@@ -202,6 +233,7 @@ class OrderEndpointTest extends TestCase
 
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldNotReceive('log');
+        $logger->shouldReceive('debug');
         $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
         $paypalRequestIdRepository = Mockery::mock(PayPalRequestIdRepository::class);
         $paypalRequestIdRepository
@@ -307,6 +339,7 @@ class OrderEndpointTest extends TestCase
 
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldReceive('log');
+        $logger->shouldReceive('debug');
         $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
         $paypalRequestIdRepository = Mockery::mock(PayPalRequestIdRepository::class);
         $paypalRequestIdRepository
@@ -321,8 +354,12 @@ class OrderEndpointTest extends TestCase
             $applicationContextRepository,
             $paypalRequestIdRepository
         );
-
-        $rawResponse = ['body' => '{"is_error":true}'];
+		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
+		$headers->shouldReceive('getAll');
+        $rawResponse = [
+        	'body' => '{"is_error":true}',
+			'headers' => $headers,
+		];
         expect('wp_remote_get')->andReturn($rawResponse);
         expect('is_wp_error')->with($rawResponse)->andReturn(true);
         $this->expectException(RuntimeException::class);
@@ -351,6 +388,7 @@ class OrderEndpointTest extends TestCase
 
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldReceive('log');
+        $logger->shouldReceive('debug');
         $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
         $paypalRequestIdRepository = Mockery::mock(PayPalRequestIdRepository::class);
         $paypalRequestIdRepository
@@ -366,7 +404,12 @@ class OrderEndpointTest extends TestCase
             $paypalRequestIdRepository
         );
 
-        $rawResponse = ['body' => '{"some_error":true}'];
+		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
+		$headers->shouldReceive('getAll');
+        $rawResponse = [
+        	'body' => '{"some_error":true}',
+			'headers' => $headers
+		];
         expect('wp_remote_get')->andReturn($rawResponse);
         expect('is_wp_error')->with($rawResponse)->andReturn(false);
         expect('wp_remote_retrieve_response_code')->with($rawResponse)->andReturn(500);
@@ -396,6 +439,7 @@ class OrderEndpointTest extends TestCase
 
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldNotReceive('log');
+        $logger->shouldReceive('debug');
         $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
         $paypalRequestIdRepository = Mockery::mock(PayPalRequestIdRepository::class);
         $paypalRequestIdRepository
@@ -415,8 +459,12 @@ class OrderEndpointTest extends TestCase
         )->makePartial();
         $orderToExpect = Mockery::mock(Order::class);
         $testee->expects('order')->with($orderId)->andReturn($orderToExpect);
-
-        $rawResponse = ['body' => '{"some_error": "' . ErrorResponse::ORDER_ALREADY_CAPTURED . '"}'];
+		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
+		$headers->shouldReceive('getAll');
+        $rawResponse = [
+        	'body' => '{"some_error": "' . ErrorResponse::ORDER_ALREADY_CAPTURED . '"}',
+			'headers' => $headers,
+		];
         expect('wp_remote_get')->andReturn($rawResponse);
         expect('is_wp_error')->with($rawResponse)->andReturn(false);
         expect('wp_remote_retrieve_response_code')->with($rawResponse)->andReturn(500);
@@ -436,8 +484,12 @@ class OrderEndpointTest extends TestCase
             ->shouldReceive('purchase_units')
             ->andReturn([]);
         $orderToCompare = Mockery::mock(Order::class);
-
-        $rawResponse = ['body' => '{"is_correct":true}'];
+		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
+		$headers->shouldReceive('getAll');
+        $rawResponse = [
+        	'body' => '{"is_correct":true}',
+			'headers' => $headers,
+		];
         $expectedOrder = Mockery::mock(Order::class);
         $host = 'https://example.com/';
         $token = Mockery::mock(Token::class);
@@ -464,6 +516,7 @@ class OrderEndpointTest extends TestCase
 
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldNotReceive('log');
+        $logger->shouldReceive('debug');
         $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
         $paypalRequestIdRepository = Mockery::mock(PayPalRequestIdRepository::class);
         $paypalRequestIdRepository
@@ -533,8 +586,12 @@ class OrderEndpointTest extends TestCase
             ->shouldReceive('purchase_units')
             ->andReturn([]);
         $orderToCompare = Mockery::mock(Order::class);
-
-        $rawResponse = ['body' => '{"has_error":true}'];
+		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
+		$headers->shouldReceive('getAll');
+        $rawResponse = [
+        	'body' => '{"has_error":true}',
+			'headers' => $headers,
+			];
         $expectedOrder = Mockery::mock(Order::class);
         $host = 'https://example.com/';
         $token = Mockery::mock(Token::class);
@@ -561,6 +618,7 @@ class OrderEndpointTest extends TestCase
 
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldReceive('log');
+        $logger->shouldReceive('debug');
         $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
         $paypalRequestIdRepository = Mockery::mock(PayPalRequestIdRepository::class);
         $paypalRequestIdRepository
@@ -624,8 +682,12 @@ class OrderEndpointTest extends TestCase
             ->shouldReceive('purchase_units')
             ->andReturn([]);
         $orderToCompare = Mockery::mock(Order::class);
-
-        $rawResponse = ['body' => '{"is_correct":true}'];
+		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
+		$headers->shouldReceive('getAll');
+        $rawResponse = [
+        	'body' => '{"is_correct":true}',
+			'headers' => $headers,
+		];
         $expectedOrder = Mockery::mock(Order::class);
         $host = 'https://example.com/';
         $token = Mockery::mock(Token::class);
@@ -652,6 +714,7 @@ class OrderEndpointTest extends TestCase
 
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldReceive('log');
+        $logger->shouldReceive('debug');
 
         $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
         $paypalRequestIdRepository = Mockery::mock(PayPalRequestIdRepository::class);
@@ -748,7 +811,12 @@ class OrderEndpointTest extends TestCase
     public function testCreateForPurchaseUnitsDefault()
     {
 	    expect('wp_json_encode')->andReturnUsing('json_encode');
-        $rawResponse = ['body' => '{"success":true}'];
+		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
+		$headers->shouldReceive('getAll');
+        $rawResponse = [
+        	'body' => '{"success":true}',
+			'headers' => $headers,
+			];
         $host = 'https://example.com/';
         $bearer = Mockery::mock(Bearer::class);
         $token = Mockery::mock(Token::class);
@@ -772,6 +840,7 @@ class OrderEndpointTest extends TestCase
 
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldNotReceive('log');
+        $logger->shouldReceive('debug');
         $applicationContext = Mockery::mock(ApplicationContext::class);
         $applicationContext
             ->expects('to_array')
@@ -844,7 +913,12 @@ class OrderEndpointTest extends TestCase
     public function testCreateForPurchaseUnitsWithPayer()
     {
 	    expect('wp_json_encode')->andReturnUsing('json_encode');
-        $rawResponse = ['body' => '{"success":true}'];
+		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
+		$headers->shouldReceive('getAll');
+        $rawResponse = [
+        	'body' => '{"success":true}',
+			'headers' => $headers,
+			];
         $host = 'https://example.com/';
         $token = Mockery::mock(Token::class);
         $token
@@ -868,6 +942,7 @@ class OrderEndpointTest extends TestCase
 
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldNotReceive('log');
+        $logger->shouldReceive('debug');
         $applicationContext = Mockery::mock(ApplicationContext::class);
         $applicationContext
             ->expects('to_array')
@@ -928,7 +1003,12 @@ class OrderEndpointTest extends TestCase
     public function testCreateForPurchaseUnitsIsWpError()
     {
 	    expect('wp_json_encode')->andReturnUsing('json_encode');
-        $rawResponse = ['body' => '{"success":true}'];
+		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
+		$headers->shouldReceive('getAll');
+        $rawResponse = [
+        	'body' => '{"success":true}',
+			'headers' => $headers,
+			];
         $host = 'https://example.com/';
         $token = Mockery::mock(Token::class);
         $token
@@ -943,6 +1023,7 @@ class OrderEndpointTest extends TestCase
 
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldReceive('log');
+        $logger->shouldReceive('debug');
         $applicationContext = Mockery::mock(ApplicationContext::class);
         $applicationContext
             ->expects('to_array')
@@ -1006,7 +1087,12 @@ class OrderEndpointTest extends TestCase
     public function testCreateForPurchaseUnitsIsNot201()
     {
 	    expect('wp_json_encode')->andReturnUsing('json_encode');
-        $rawResponse = ['body' => '{"has_error":true}'];
+		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
+		$headers->shouldReceive('getAll');
+        $rawResponse = [
+        	'body' => '{"has_error":true}',
+			'headers' => $headers,
+			];
         $host = 'https://example.com/';
         $token = Mockery::mock(Token::class);
         $token
@@ -1021,6 +1107,7 @@ class OrderEndpointTest extends TestCase
 
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldReceive('log');
+        $logger->shouldReceive('debug');
         $applicationContext = Mockery::mock(ApplicationContext::class);
         $applicationContext
             ->expects('to_array')

@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 
 use Psr\Log\LoggerInterface;
+use Requests_Utility_CaseInsensitiveDictionary;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Token;
@@ -48,7 +49,12 @@ class PaymentTokenEndpointTest extends TestCase
     {
         $id = 1;
 		$token = Mockery::mock(Token::class);
-        $rawResponse = ['body' => '{"payment_tokens":[{"id": "123abc"}]}'];
+		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
+		$headers->shouldReceive('getAll');
+        $rawResponse = [
+        	'body' => '{"payment_tokens":[{"id": "123abc"}]}',
+			'headers' => $headers,
+			];
 	    $paymentToken = Mockery::mock(PaymentToken::class);
 	    $paymentToken->shouldReceive('id')
 		    ->andReturn('foo');
@@ -65,6 +71,8 @@ class PaymentTokenEndpointTest extends TestCase
         $this->factory->shouldReceive('from_paypal_response')
             ->andReturn($paymentToken);
 
+		$this->logger->shouldReceive('debug');
+
         $result = $this->sut->for_user($id);
         $this->assertInstanceOf(PaymentToken::class, $result[0]);
 
@@ -74,7 +82,9 @@ class PaymentTokenEndpointTest extends TestCase
     {
         $id = 1;
         $token = Mockery::mock(Token::class);
-        $rawResponse = [];
+		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
+		$headers->shouldReceive('getAll');
+        $rawResponse = ['headers' => $headers,];
         $this->bearer->shouldReceive('bearer')
             ->andReturn($token);
         $token->shouldReceive('token')
@@ -84,6 +94,7 @@ class PaymentTokenEndpointTest extends TestCase
         expect('wp_remote_get')->andReturn($rawResponse);
         expect('is_wp_error')->with($rawResponse)->andReturn(true);
         $this->logger->shouldReceive('log');
+        $this->logger->shouldReceive('debug');
 
         $this->expectException(RuntimeException::class);
         $this->sut->for_user($id);
@@ -93,7 +104,12 @@ class PaymentTokenEndpointTest extends TestCase
     {
         $id = 1;
         $token = Mockery::mock(Token::class);
-        $rawResponse = ['body' => '{"some_error":true}'];
+		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
+		$headers->shouldReceive('getAll');
+        $rawResponse = [
+        	'body' => '{"some_error":true}',
+			'headers' => $headers,
+			];
         $this->bearer->shouldReceive('bearer')
             ->andReturn($token);
         $token->shouldReceive('token')
@@ -105,6 +121,7 @@ class PaymentTokenEndpointTest extends TestCase
         expect('is_wp_error')->with($rawResponse)->andReturn(false);
         expect('wp_remote_retrieve_response_code')->with($rawResponse)->andReturn(500);
         $this->logger->shouldReceive('log');
+        $this->logger->shouldReceive('debug');
 
         $this->expectException(PayPalApiException::class);
         $this->sut->for_user($id);
@@ -114,7 +131,12 @@ class PaymentTokenEndpointTest extends TestCase
     {
         $id = 1;
         $token = Mockery::mock(Token::class);
-        $rawResponse = ['body' => '{"payment_tokens":[]}'];
+		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
+		$headers->shouldReceive('getAll');
+        $rawResponse = [
+        	'body' => '{"payment_tokens":[]}',
+			'headers' => $headers,
+		];
         $this->bearer->shouldReceive('bearer')
             ->andReturn($token);
         $token->shouldReceive('token')
@@ -126,6 +148,7 @@ class PaymentTokenEndpointTest extends TestCase
         expect('is_wp_error')->with($rawResponse)->andReturn(false);
         expect('wp_remote_retrieve_response_code')->with($rawResponse)->andReturn(200);
         $this->logger->shouldReceive('log');
+        $this->logger->shouldReceive('debug');
 
         $this->expectException(RuntimeException::class);
         $this->sut->for_user($id);
@@ -133,7 +156,7 @@ class PaymentTokenEndpointTest extends TestCase
 
     public function testDeleteToken()
     {
-        $paymentToken = $paymentToken = Mockery::mock(PaymentToken::class);
+        $paymentToken = Mockery::mock(PaymentToken::class);
 	    $paymentToken->shouldReceive('id')
 		    ->andReturn('foo');
         $token = Mockery::mock(Token::class);
@@ -142,9 +165,14 @@ class PaymentTokenEndpointTest extends TestCase
         $token->shouldReceive('token')
             ->andReturn('bearer');
 
-        expect('wp_remote_get')->andReturn();
+		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
+		$headers->shouldReceive('getAll');
+        expect('wp_remote_get')->andReturn([
+        	'headers' => $headers,
+		]);
         expect('is_wp_error')->andReturn(false);
         expect('wp_remote_retrieve_response_code')->andReturn(204);
+		$this->logger->shouldReceive('debug');
 
         $this->sut->delete_token($paymentToken);
     }
@@ -160,9 +188,14 @@ class PaymentTokenEndpointTest extends TestCase
         $token->shouldReceive('token')
             ->andReturn('bearer');
 
-        expect('wp_remote_get')->andReturn();
+		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
+		$headers->shouldReceive('getAll');
+		expect('wp_remote_get')->andReturn([
+			'headers' => $headers,
+		]);
         expect('is_wp_error')->andReturn(true);
         $this->logger->shouldReceive('log');
+		$this->logger->shouldReceive('debug');
 
         $this->expectException(RuntimeException::class);
         $this->sut->delete_token($paymentToken);
