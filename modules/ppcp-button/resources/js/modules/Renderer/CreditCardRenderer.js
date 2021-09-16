@@ -142,6 +142,36 @@ class CreditCardRenderer {
         )
     }
 
+    disableFields() {
+        this.currentHostedFieldsInstance.setAttribute({
+            field: 'number',
+            attribute: 'disabled'
+        })
+        this.currentHostedFieldsInstance.setAttribute({
+            field: 'cvv',
+            attribute: 'disabled'
+        })
+        this.currentHostedFieldsInstance.setAttribute({
+            field: 'expirationDate',
+            attribute: 'disabled'
+        })
+    }
+
+    enableFields() {
+        this.currentHostedFieldsInstance.removeAttribute({
+            field: 'number',
+            attribute: 'disabled'
+        })
+        this.currentHostedFieldsInstance.removeAttribute({
+            field: 'cvv',
+            attribute: 'disabled'
+        })
+        this.currentHostedFieldsInstance.removeAttribute({
+            field: 'expirationDate',
+            attribute: 'disabled'
+        })
+    }
+
     _submit(contextConfig) {
         this.spinner.block();
         this.errorHandler.clear();

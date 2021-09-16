@@ -115,31 +115,27 @@ class CheckoutBootstap {
     disableCreditCardFields() {
         jQuery('label[for="ppcp-credit-card-gateway-card-number"]').addClass('ppcp-credit-card-gateway-form-field-disabled')
         jQuery('#ppcp-credit-card-gateway-card-number').addClass('ppcp-credit-card-gateway-form-field-disabled')
-        jQuery('#ppcp-credit-card-gateway-card-number').attr("disabled", true)
         jQuery('label[for="ppcp-credit-card-gateway-card-expiry"]').addClass('ppcp-credit-card-gateway-form-field-disabled')
         jQuery('#ppcp-credit-card-gateway-card-expiry').addClass('ppcp-credit-card-gateway-form-field-disabled')
-        jQuery('#ppcp-credit-card-gateway-card-expiry').attr("disabled", true)
         jQuery('label[for="ppcp-credit-card-gateway-card-cvc"]').addClass('ppcp-credit-card-gateway-form-field-disabled')
         jQuery('#ppcp-credit-card-gateway-card-cvc').addClass('ppcp-credit-card-gateway-form-field-disabled')
-        jQuery('#ppcp-credit-card-gateway-card-cvc').attr("disabled", true)
         jQuery('label[for="vault"]').addClass('ppcp-credit-card-gateway-form-field-disabled')
         jQuery('#ppcp-credit-card-vault').addClass('ppcp-credit-card-gateway-form-field-disabled')
         jQuery('#ppcp-credit-card-vault').attr("disabled", true)
+        this.renderer.disableCreditCardFields()
     }
 
     enableCreditCardFields() {
         jQuery('label[for="ppcp-credit-card-gateway-card-number"]').removeClass('ppcp-credit-card-gateway-form-field-disabled')
         jQuery('#ppcp-credit-card-gateway-card-number').removeClass('ppcp-credit-card-gateway-form-field-disabled')
-        jQuery('#ppcp-credit-card-gateway-card-number').attr("disabled", false)
         jQuery('label[for="ppcp-credit-card-gateway-card-expiry"]').removeClass('ppcp-credit-card-gateway-form-field-disabled')
         jQuery('#ppcp-credit-card-gateway-card-expiry').removeClass('ppcp-credit-card-gateway-form-field-disabled')
-        jQuery('#ppcp-credit-card-gateway-card-expiry').attr("disabled", false)
         jQuery('label[for="ppcp-credit-card-gateway-card-cvc"]').removeClass('ppcp-credit-card-gateway-form-field-disabled')
         jQuery('#ppcp-credit-card-gateway-card-cvc').removeClass('ppcp-credit-card-gateway-form-field-disabled')
-        jQuery('#ppcp-credit-card-gateway-card-cvc').attr("disabled", false)
         jQuery('label[for="vault"]').removeClass('ppcp-credit-card-gateway-form-field-disabled')
         jQuery('#ppcp-credit-card-vault').removeClass('ppcp-credit-card-gateway-form-field-disabled')
         jQuery('#ppcp-credit-card-vault').attr("disabled", false)
+        this.renderer.enableCreditCardFields()
     }
 }
 
