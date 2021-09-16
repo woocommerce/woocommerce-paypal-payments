@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Woocommerce\PayPalCommerce\WcGateway\Helper\DccProductStatus;
 use Woocommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 
@@ -73,6 +74,13 @@ class SettingsRenderer {
 	private $dcc_product_status;
 
 	/**
+	 * ID of the current PPCP gateway settings page, or empty if it is not such page.
+	 *
+	 * @var string
+	 */
+	protected $page_id;
+
+	/**
 	 * SettingsRenderer constructor.
 	 *
 	 * @param ContainerInterface $settings The Settings.
@@ -82,6 +90,7 @@ class SettingsRenderer {
 	 * @param MessagesApply      $messages_apply Whether messages can be shown.
 	 * @param DccProductStatus   $dcc_product_status The product status.
 	 * @param SettingsStatus     $settings_status The Settings status helper.
+	 * @param string             $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
 	 */
 	public function __construct(
 		ContainerInterface $settings,
@@ -90,7 +99,8 @@ class SettingsRenderer {
 		DccApplies $dcc_applies,
 		MessagesApply $messages_apply,
 		DccProductStatus $dcc_product_status,
-		SettingsStatus $settings_status
+		SettingsStatus $settings_status,
+		string $page_id
 	) {
 
 		$this->settings           = $settings;
@@ -100,6 +110,7 @@ class SettingsRenderer {
 		$this->messages_apply     = $messages_apply;
 		$this->dcc_product_status = $dcc_product_status;
 		$this->settings_status    = $settings_status;
+		$this->page_id            = $page_id;
 	}
 
 	/**
@@ -166,21 +177,7 @@ class SettingsRenderer {
 	 * @return bool Whether is PayPal checkout screen or not.
 	 */
 	private function is_paypal_checkout_screen(): bool {
-		$current_screen = get_current_screen();
-        //phpcs:disable WordPress.Security.NonceVerification.Recommended
-        //phpcs:disable WordPress.Security.NonceVerification.Missing
-		if ( isset( $current_screen->id ) && 'woocommerce_page_wc-settings' === $current_screen->id
-			&& isset( $_GET['section'] ) && 'ppcp-gateway' === $_GET['section'] ) {
-
-			if ( isset( $_GET['ppcp-tab'] ) && 'ppcp-gateway' !== $_GET['ppcp-tab'] ) {
-				return false;
-			}
-
-			return true;
-		}
-        //phpcs:enable
-
-		return false;
+		return PayPalGateway::ID === $this->page_id;
 	}
 
 	/**
@@ -317,9 +314,7 @@ class SettingsRenderer {
 	 */
 	public function render() {
 
-		//phpcs:disable WordPress.Security.NonceVerification.Recommended
-		//phpcs:disable WordPress.Security.NonceVerification.Missing
-		$is_dcc = isset( $_GET[ SectionsRenderer::KEY ] ) && CreditCardGateway::ID === sanitize_text_field( wp_unslash( $_GET[ SectionsRenderer::KEY ] ) );
+		$is_dcc = CreditCardGateway::ID === $this->page_id;
 		//phpcs:enable WordPress.Security.NonceVerification.Recommended
 		//phpcs:enable WordPress.Security.NonceVerification.Missing
 		$nonce = wp_create_nonce( SettingsListener::NONCE );
@@ -506,8 +501,8 @@ class SettingsRenderer {
 			return false;
 		}
 
-		return $this->is_paypal_checkout_screen() && $this->paypal_vaulting_is_enabled()
-			|| $this->is_paypal_checkout_screen() && $this->settings_status->pay_later_messaging_is_enabled();
+		return $this->is_paypal_checkout_screen()
+			&& ( $this->paypal_vaulting_is_enabled() || $this->settings_status->pay_later_messaging_is_enabled() );
 	}
 }
 

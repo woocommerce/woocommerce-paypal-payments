@@ -22,10 +22,12 @@ return array(
 		$factory      = $container->get( 'api.factory.webhook' );
 		$endpoint     = $container->get( 'api.endpoint.webhook' );
 		$rest_endpoint = $container->get( 'webhook.endpoint.controller' );
+		$logger = $container->get( 'woocommerce.logger.woocommerce' );
 		return new WebhookRegistrar(
 			$factory,
 			$endpoint,
-			$rest_endpoint
+			$rest_endpoint,
+			$logger
 		);
 	},
 	'webhook.endpoint.controller' => function( $container ) : IncomingWebhookEndpoint {

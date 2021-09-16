@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 
 use Psr\Log\LoggerInterface;
+use Requests_Utility_CaseInsensitiveDictionary;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Token;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
@@ -11,6 +12,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\TestCase;
 use Mockery;
 use function Brain\Monkey\Functions\expect;
+use function Brain\Monkey\Functions\when;
 
 class IdentityTokenTest extends TestCase
 {
@@ -40,10 +42,18 @@ class IdentityTokenTest extends TestCase
         $this->bearer
             ->expects('bearer')->andReturn($token);
 
-        $rawResponse = ['body' => '{"client_token":"abc123", "expires_in":3600}'];
         $host = $this->host;
+		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
+		$headers->shouldReceive('getAll');
+		$this->logger->shouldReceive('debug');
+
+		$rawResponse = [
+			'body' => '{"client_token":"abc123", "expires_in":3600}',
+			'headers' => $headers,
+		];
+
         expect('wp_remote_get')
-            ->andReturnUsing(function ($url, $args) use ($rawResponse, $host) {
+            ->andReturnUsing(function ($url, $args) use ($rawResponse, $host, $headers) {
                 if ($url !== $host . 'v1/identity/generate-token') {
                     return false;
                 }
@@ -65,6 +75,7 @@ class IdentityTokenTest extends TestCase
 
         expect('is_wp_error')->with($rawResponse)->andReturn(false);
         expect('wp_remote_retrieve_response_code')->with($rawResponse)->andReturn(200);
+        when('wc_print_r')->returnArg();
 
         $result = $this->sut->generate_for_customer(1);
         $this->assertInstanceOf(Token::class, $result);
@@ -78,9 +89,13 @@ class IdentityTokenTest extends TestCase
         $this->bearer
             ->expects('bearer')->andReturn($token);
 
-        expect('wp_remote_get')->andReturn();
+		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
+		$headers->shouldReceive('getAll');
+        expect('wp_remote_get')->andReturn(['headers' => $headers,]);
         expect('is_wp_error')->andReturn(true);
+		when('wc_print_r')->returnArg();
         $this->logger->shouldReceive('log');
+        $this->logger->shouldReceive('debug');
 
         $this->expectException(RuntimeException::class);
         $this->sut->generate_for_customer(1);
@@ -94,10 +109,17 @@ class IdentityTokenTest extends TestCase
         $this->bearer
             ->expects('bearer')->andReturn($token);
 
-        expect('wp_remote_get')->andReturn(['body' => '',]);
+		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
+		$headers->shouldReceive('getAll');
+        expect('wp_remote_get')->andReturn([
+        	'body' => '',
+			'headers' => $headers,
+			]);
         expect('is_wp_error')->andReturn(false);
         expect('wp_remote_retrieve_response_code')->andReturn(500);
+		when('wc_print_r')->returnArg();
         $this->logger->shouldReceive('log');
+        $this->logger->shouldReceive('debug');
 
         $this->expectException(PayPalApiException::class);
         $this->sut->generate_for_customer(1);
