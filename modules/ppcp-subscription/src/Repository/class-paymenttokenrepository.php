@@ -107,13 +107,8 @@ class PaymentTokenRepository {
 	 * @param PaymentToken[] $tokens The tokens.
 	 * @return bool Whether tokens contains card or not.
 	 */
-	public function tokens_contains_card( $tokens ): bool {
-		foreach ( $tokens as $token ) {
-			if ( isset( $token->source()->card ) ) {
-				return true;
-			}
-		}
-		return false;
+	public function tokens_contains_card( array $tokens ): bool {
+		return $this->token_contains_source( $tokens, 'card' );
 	}
 
 	/**
@@ -122,13 +117,8 @@ class PaymentTokenRepository {
 	 * @param PaymentToken[] $tokens The tokens.
 	 * @return bool Whether tokens contains card or not.
 	 */
-	public function tokens_contains_paypal( $tokens ): bool {
-		foreach ( $tokens as $token ) {
-			if ( isset( $token->source()->paypal ) ) {
-				return true;
-			}
-		}
-		return false;
+	public function tokens_contains_paypal( array $tokens ): bool {
+		return $this->token_contains_source( $tokens, 'paypal' );
 	}
 
 	/**
@@ -144,5 +134,22 @@ class PaymentTokenRepository {
 		$token_array = $token->to_array();
 		update_user_meta( $id, self::USER_META, $token_array );
 		return $token;
+	}
+
+	/**
+	 * Checks if tokens has the given source.
+	 *
+	 * @param array  $tokens Payment tokens.
+	 * @param string $source_type Payment token source type.
+	 * @return bool Whether tokens contains source or not.
+	 */
+	private function token_contains_source( array $tokens, string $source_type ): bool {
+		foreach ( $tokens as $token ) {
+			if ( isset( $token->source()->card ) && 'card' === $source_type || isset( $token->source()->paypal ) && 'paypal' === $source_type ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 }
