@@ -25,6 +25,11 @@ class SettingsListener {
 
 	const NONCE = 'ppcp-settings';
 
+	private const CREDENTIALS_ADDED     = 'credentials_added';
+	private const CREDENTIALS_REMOVED   = 'credentials_removed';
+	private const CREDENTIALS_CHANGED   = 'credentials_changed';
+	private const CREDENTIALS_UNCHANGED = 'credentials_unchanged';
+
 	/**
 	 * The Settings.
 	 *
@@ -228,18 +233,46 @@ class SettingsListener {
 
 		$settings = $this->read_active_credentials_from_settings( $settings );
 
+		$credentials_change_status = null; // Cannot detect on Card Processing page.
+
 		if ( PayPalGateway::ID === $this->page_id ) {
 			$settings['enabled'] = isset( $_POST['woocommerce_ppcp-gateway_enabled'] )
 				&& 1 === absint( $_POST['woocommerce_ppcp-gateway_enabled'] );
-			$this->maybe_register_webhooks( $settings );
+
+			$credentials_change_status = $this->determine_credentials_change_status( $settings );
 		}
 		// phpcs:enable phpcs:disable WordPress.Security.NonceVerification.Missing
 		// phpcs:enable phpcs:disable WordPress.Security.NonceVerification.Missing
+
+		if ( $credentials_change_status ) {
+			if ( self::CREDENTIALS_UNCHANGED !== $credentials_change_status ) {
+				$this->settings->set( 'products_dcc_enabled', null );
+			}
+
+			if ( in_array(
+				$credentials_change_status,
+				array( self::CREDENTIALS_REMOVED, self::CREDENTIALS_CHANGED ),
+				true
+			) ) {
+				$this->webhook_registrar->unregister();
+			}
+		}
 
 		foreach ( $settings as $id => $value ) {
 			$this->settings->set( $id, $value );
 		}
 		$this->settings->persist();
+
+		if ( $credentials_change_status ) {
+			if ( in_array(
+				$credentials_change_status,
+				array( self::CREDENTIALS_ADDED, self::CREDENTIALS_CHANGED ),
+				true
+			) ) {
+				$this->webhook_registrar->register();
+			}
+		}
+
 		if ( $this->cache->has( PayPalBearer::CACHE_KEY ) ) {
 			$this->cache->delete( PayPalBearer::CACHE_KEY );
 		}
@@ -275,30 +308,36 @@ class SettingsListener {
 	}
 
 	/**
-	 * Depending on the settings change, we might need to register or unregister the Webhooks at PayPal.
+	 * Checks whether on the credentials changed.
 	 *
-	 * @param array $settings The settings.
-	 *
-	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException If a setting hasn't been found.
+	 * @param array $new_settings New settings.
+	 * @return string One of the CREDENTIALS_ constants.
 	 */
-	private function maybe_register_webhooks( array $settings ) {
+	private function determine_credentials_change_status( array $new_settings ): string {
+		$current_id     = $this->settings->has( 'client_id' ) ? $this->settings->get( 'client_id' ) : '';
+		$current_secret = $this->settings->has( 'client_secret' ) ? $this->settings->get( 'client_secret' ) : '';
+		$new_id         = $new_settings['client_id'] ?? '';
+		$new_secret     = $new_settings['client_secret'] ?? '';
 
-		if ( ! $this->settings->has( 'client_id' ) && $settings['client_id'] ) {
-			$this->settings->set( 'products_dcc_enabled', null );
-			$this->webhook_registrar->register();
+		$had_credentials       = $current_id && $current_secret;
+		$submitted_credentials = $new_id && $new_secret;
+
+		if ( ! $had_credentials && $submitted_credentials ) {
+			return self::CREDENTIALS_ADDED;
 		}
-		if ( $this->settings->has( 'client_id' ) && $this->settings->get( 'client_id' ) ) {
-			$current_secret = $this->settings->has( 'client_secret' ) ?
-				$this->settings->get( 'client_secret' ) : '';
+		if ( $had_credentials ) {
+			if ( ! $submitted_credentials ) {
+				return self::CREDENTIALS_REMOVED;
+			}
+
 			if (
-				$settings['client_id'] !== $this->settings->get( 'client_id' )
-				|| $settings['client_secret'] !== $current_secret
+				$current_id !== $new_id
+				|| $current_secret !== $new_secret
 			) {
-				$this->settings->set( 'products_dcc_enabled', null );
-				$this->webhook_registrar->unregister();
-				$this->webhook_registrar->register();
+				return self::CREDENTIALS_CHANGED;
 			}
 		}
+		return self::CREDENTIALS_UNCHANGED;
 	}
 
 	/**
