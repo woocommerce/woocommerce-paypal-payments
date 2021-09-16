@@ -119,6 +119,46 @@ class WebhookEndpoint {
 	}
 
 	/**
+	 * Loads the webhooks list for the current auth token.
+	 *
+	 * @return Webhook[]
+	 * @throws RuntimeException If the request fails.
+	 * @throws PayPalApiException If the request fails.
+	 */
+	public function list(): array {
+		$bearer   = $this->bearer->bearer();
+		$url      = trailingslashit( $this->host ) . 'v1/notifications/webhooks';
+		$args     = array(
+			'method'  => 'GET',
+			'headers' => array(
+				'Authorization' => 'Bearer ' . $bearer->token(),
+				'Content-Type'  => 'application/json',
+			),
+		);
+		$response = $this->request( $url, $args );
+
+		if ( is_wp_error( $response ) ) {
+			throw new RuntimeException(
+				__( 'Not able to load webhooks list.', 'woocommerce-paypal-payments' )
+			);
+		}
+
+		$json        = json_decode( $response['body'] );
+		$status_code = (int) wp_remote_retrieve_response_code( $response );
+		if ( 200 !== $status_code ) {
+			throw new PayPalApiException(
+				$json,
+				$status_code
+			);
+		}
+
+		return array_map(
+			array( $this->webhook_factory, 'from_paypal_response' ),
+			$json->webhooks
+		);
+	}
+
+	/**
 	 * Deletes a webhook.
 	 *
 	 * @param Webhook $hook The webhook to delete.
