@@ -312,6 +312,60 @@ class SettingsRenderer {
 	}
 
 	/**
+	 * Renders the table row.
+	 *
+	 * @param array  $data Values of the row cells.
+	 * @param string $tag HTML tag ('td', 'th').
+	 * @return string
+	 */
+	public function render_table_row( array $data, string $tag = 'td' ): string {
+		$cells = array_map(
+			function ( $value ) use ( $tag ): string {
+				return "<$tag>" . (string) $value . "</$tag>";
+			},
+			$data
+		);
+		return '<tr>' . implode( $cells ) . '</tr>';
+	}
+
+	/**
+	 * Renders the table field.
+	 *
+	 * @param string $field The current field HTML.
+	 * @param string $key   The key.
+	 * @param array  $config The configuration of the field.
+	 * @param array  $value The current value.
+	 *
+	 * @return string HTML.
+	 */
+	public function render_table( $field, $key, $config, $value ): string {
+		if ( 'ppcp-table' !== $config['type'] ) {
+			return $field;
+		}
+
+		$data = $value['data'];
+		if ( empty( $data ) ) {
+			$empty_placeholder = $value['empty_placeholder'] ?? ( $config['empty_placeholder'] ?? null );
+			if ( $empty_placeholder ) {
+				return $empty_placeholder;
+			}
+		}
+
+		$header_row_html = $this->render_table_row( $value['headers'], 'th' );
+		$data_rows_html  = implode(
+			array_map(
+				array( $this, 'render_table_row' ),
+				$data
+			)
+		);
+
+		return "<table>
+$header_row_html
+$data_rows_html
+</table>";
+	}
+
+	/**
 	 * Renders the settings.
 	 */
 	public function render() {
