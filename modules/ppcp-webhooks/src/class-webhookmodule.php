@@ -13,6 +13,8 @@ use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Assets\WebhooksStatusPageAssets;
+use WooCommerce\PayPalCommerce\Webhooks\Status\WebhooksStatusPage;
 
 /**
  * Class WebhookModule
@@ -79,6 +81,17 @@ class WebhookModule implements ModuleInterface {
 		$page_id = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
 		if ( WebhooksStatusPage::ID === $page_id ) {
 			$GLOBALS['hide_save_button'] = true;
+
+			$asset_loader = $container->get( 'webhook.status.assets' );
+			assert( $asset_loader instanceof WebhooksStatusPageAssets );
+			add_action(
+				'init',
+				array( $asset_loader, 'register' )
+			);
+			add_action(
+				'admin_enqueue_scripts',
+				array( $asset_loader, 'enqueue' )
+			);
 		}
 	}
 

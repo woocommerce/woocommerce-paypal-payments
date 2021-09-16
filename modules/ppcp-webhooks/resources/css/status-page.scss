@@ -1,0 +1,17 @@
+.ppcp-webhooks-table {
+	.error {
+		color: red;
+		font-weight: bold;
+	}
+
+	table {
+		td {
+			padding: 0 10px 15px 0;
+		}
+
+		td:first-child {
+			vertical-align: top;
+			width: 450px;
+		}
+	}
+}
