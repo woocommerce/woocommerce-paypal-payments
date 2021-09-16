@@ -11,8 +11,10 @@ namespace WooCommerce\PayPalCommerce\Webhooks;
 
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
+use Exception;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Assets\WebhooksStatusPageAssets;
 use WooCommerce\PayPalCommerce\Webhooks\Status\WebhooksStatusPage;
 
@@ -39,6 +41,9 @@ class WebhookModule implements ModuleInterface {
 	 * @param ContainerInterface|null $container The Container.
 	 */
 	public function run( ContainerInterface $container ): void {
+		$logger = $container->get( 'woocommerce.logger.woocommerce' );
+		assert( $logger instanceof LoggerInterface );
+
 		add_action(
 			'rest_api_init',
 			static function () use ( $container ) {
@@ -81,8 +86,7 @@ class WebhookModule implements ModuleInterface {
 		$page_id = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
 		if ( WebhooksStatusPage::ID === $page_id ) {
 			$GLOBALS['hide_save_button'] = true;
-
-			$asset_loader = $container->get( 'webhook.status.assets' );
+			$asset_loader                = $container->get( 'webhook.status.assets' );
 			assert( $asset_loader instanceof WebhooksStatusPageAssets );
 			add_action(
 				'init',
@@ -92,6 +96,25 @@ class WebhookModule implements ModuleInterface {
 				'admin_enqueue_scripts',
 				array( $asset_loader, 'enqueue' )
 			);
+
+			try {
+				$webhooks = $container->get( 'webhook.status.registered-webhooks' );
+
+				if ( empty( $webhooks ) ) {
+					$registrar = $container->get( 'webhook.registrar' );
+					assert( $registrar instanceof WebhookRegistrar );
+
+					// Looks like we cannot call rest_url too early.
+					add_action(
+						'init',
+						function () use ( $registrar ) {
+							$registrar->register();
+						}
+					);
+				}
+			} catch ( Exception $exception ) {
+				$logger->error( 'Failed to load webhooks list: ' . $exception->getMessage() );
+			}
 		}
 	}
 
