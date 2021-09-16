@@ -92,10 +92,10 @@ class WebhookRegistrar {
 				self::KEY,
 				$created->to_array()
 			);
-			$this->logger->info( 'Webhooks registered.' );
+			$this->logger->info( 'Webhooks subscribed.' );
 			return true;
 		} catch ( RuntimeException $error ) {
-			$this->logger->error( 'Failed to register webhooks: ' . $error->getMessage() );
+			$this->logger->error( 'Failed to subscribe webhooks: ' . $error->getMessage() );
 			return false;
 		}
 	}

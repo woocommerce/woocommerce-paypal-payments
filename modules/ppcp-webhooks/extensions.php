@@ -15,8 +15,8 @@ use WooCommerce\PayPalCommerce\Webhooks\Status\WebhooksStatusPage;
 return array(
 	'wcgateway.settings.fields' => static function ( $container, array $fields ): array {
 		$status_page_fields = array(
-			'webhooks-list' => array(
-				'title'        => __( 'Registered webhooks', 'woocommerce-paypal-payments' ),
+			'webhooks_list' => array(
+				'title'        => __( 'Subscribed webhooks', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-table',
 				'screens'      => array(
 					State::STATE_PROGRESSIVE,
