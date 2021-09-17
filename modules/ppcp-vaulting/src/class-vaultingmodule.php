@@ -13,8 +13,6 @@ use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use WooCommerce\PayPalCommerce\Subscription\Repository\PaymentTokenRepository;
 
 /**
  * Class StatusReportModule
@@ -64,7 +62,7 @@ class VaultingModule implements ModuleInterface {
 			function () use ( $container ) {
 
 				/** @var PaymentTokenRepository $payment_token_repository */
-				$payment_token_repository = $container->get( 'subscription.repository.payment-token' );
+				$payment_token_repository = $container->get( 'vaulting.repository.payment-token' );
 
 				$tokens = $payment_token_repository->all_for_user_id( get_current_user_id() );
 				if ( $tokens ) {
