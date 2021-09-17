@@ -9,4 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Vaulting;
 
-return array();
+return array(
+	'vaulting.payment-tokens-renderer' => static function (): PaymentTokensRendered {
+		return new PaymentTokensRendered();
+	},
+);
