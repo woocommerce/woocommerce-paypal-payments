@@ -21,7 +21,7 @@ namespace WooCommerce\PayPalCommerce;
 
 define( 'PAYPAL_API_URL', 'https://api.paypal.com' );
 define( 'PAYPAL_SANDBOX_API_URL', 'https://api.sandbox.paypal.com' );
-define( 'PAYPAL_INTEGRATION_DATE', '2020-10-15' );
+define( 'PAYPAL_INTEGRATION_DATE', '2021-09-17' );
 
 define( 'PPCP_FLAG_SUBSCRIPTION', true );
 
