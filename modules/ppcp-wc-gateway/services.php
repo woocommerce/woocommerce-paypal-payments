@@ -38,6 +38,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
+use WooCommerce\PayPalCommerce\Webhooks\Status\WebhooksStatusPage;
 
 return array(
 	'wcgateway.paypal-gateway'                     => static function ( $container ): PayPalGateway {
@@ -118,7 +119,7 @@ return array(
 		}
 
 		$section = isset( $_GET['section'] ) ? sanitize_text_field( wp_unslash( $_GET['section'] ) ) : '';
-		return in_array( $section, array( PayPalGateway::ID, CreditCardGateway::ID ), true );
+		return in_array( $section, array( PayPalGateway::ID, CreditCardGateway::ID, WebhooksStatusPage::ID ), true );
 	},
 
 	'wcgateway.current-ppcp-settings-page-id'      => static function ( $container ): string {
@@ -700,7 +701,7 @@ return array(
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
-				'gateway'      => 'all',
+				'gateway'      => array( 'paypal', 'dcc' ),
 			),
 			'logging_enabled'                => array(
 				'title'        => __( 'Logging', 'woocommerce-paypal-payments' ),

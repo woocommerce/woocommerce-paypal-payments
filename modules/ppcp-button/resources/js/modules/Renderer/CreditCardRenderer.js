@@ -100,6 +100,7 @@ class CreditCardRenderer {
                 }
             }
         }).then(hostedFields => {
+            document.dispatchEvent(new CustomEvent("hosted_fields_loaded"));
             this.currentHostedFieldsInstance = hostedFields;
 
             hostedFields.on('inputSubmitRequest', () => {
@@ -139,6 +140,36 @@ class CreditCardRenderer {
                 document.querySelector('label[for=ppcp-credit-card-gateway-card-number]').click();
             }
         )
+    }
+
+    disableFields() {
+        this.currentHostedFieldsInstance.setAttribute({
+            field: 'number',
+            attribute: 'disabled'
+        })
+        this.currentHostedFieldsInstance.setAttribute({
+            field: 'cvv',
+            attribute: 'disabled'
+        })
+        this.currentHostedFieldsInstance.setAttribute({
+            field: 'expirationDate',
+            attribute: 'disabled'
+        })
+    }
+
+    enableFields() {
+        this.currentHostedFieldsInstance.removeAttribute({
+            field: 'number',
+            attribute: 'disabled'
+        })
+        this.currentHostedFieldsInstance.removeAttribute({
+            field: 'cvv',
+            attribute: 'disabled'
+        })
+        this.currentHostedFieldsInstance.removeAttribute({
+            field: 'expirationDate',
+            attribute: 'disabled'
+        })
     }
 
     _submit(contextConfig) {

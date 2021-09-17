@@ -79,14 +79,14 @@ class WebhookEndpoint {
 	 *
 	 * @return Webhook
 	 * @throws RuntimeException If the request fails.
+	 * @throws PayPalApiException If the request fails.
 	 */
 	public function create( Webhook $hook ): Webhook {
-		/**
-		 * An hook, which has an ID has already been created.
-		 */
+		// The hook was already created.
 		if ( $hook->id() ) {
 			return $hook;
 		}
+
 		$bearer   = $this->bearer->bearer();
 		$url      = trailingslashit( $this->host ) . 'v1/notifications/webhooks';
 		$args     = array(
@@ -100,40 +100,62 @@ class WebhookEndpoint {
 		$response = $this->request( $url, $args );
 
 		if ( is_wp_error( $response ) ) {
-			$error = new RuntimeException(
+			throw new RuntimeException(
 				__( 'Not able to create a webhook.', 'woocommerce-paypal-payments' )
 			);
-			$this->logger->log(
-				'warning',
-				$error->getMessage(),
-				array(
-					'args'     => $args,
-					'response' => $response,
-				)
-			);
-			throw $error;
 		}
 
 		$json        = json_decode( $response['body'] );
 		$status_code = (int) wp_remote_retrieve_response_code( $response );
 		if ( 201 !== $status_code ) {
-			$error = new PayPalApiException(
+			throw new PayPalApiException(
 				$json,
 				$status_code
 			);
-			$this->logger->log(
-				'warning',
-				$error->getMessage(),
-				array(
-					'args'     => $args,
-					'response' => $response,
-				)
-			);
-			throw $error;
 		}
 
 		$hook = $this->webhook_factory->from_paypal_response( $json );
 		return $hook;
+	}
+
+	/**
+	 * Loads the webhooks list for the current auth token.
+	 *
+	 * @return Webhook[]
+	 * @throws RuntimeException If the request fails.
+	 * @throws PayPalApiException If the request fails.
+	 */
+	public function list(): array {
+		$bearer   = $this->bearer->bearer();
+		$url      = trailingslashit( $this->host ) . 'v1/notifications/webhooks';
+		$args     = array(
+			'method'  => 'GET',
+			'headers' => array(
+				'Authorization' => 'Bearer ' . $bearer->token(),
+				'Content-Type'  => 'application/json',
+			),
+		);
+		$response = $this->request( $url, $args );
+
+		if ( is_wp_error( $response ) ) {
+			throw new RuntimeException(
+				__( 'Not able to load webhooks list.', 'woocommerce-paypal-payments' )
+			);
+		}
+
+		$json        = json_decode( $response['body'] );
+		$status_code = (int) wp_remote_retrieve_response_code( $response );
+		if ( 200 !== $status_code ) {
+			throw new PayPalApiException(
+				$json,
+				$status_code
+			);
+		}
+
+		return array_map(
+			array( $this->webhook_factory, 'from_paypal_response' ),
+			$json->webhooks
+		);
 	}
 
 	/**
@@ -160,18 +182,9 @@ class WebhookEndpoint {
 		$response = $this->request( $url, $args );
 
 		if ( is_wp_error( $response ) ) {
-			$error = new RuntimeException(
+			throw new RuntimeException(
 				__( 'Not able to delete the webhook.', 'woocommerce-paypal-payments' )
 			);
-			$this->logger->log(
-				'warning',
-				$error->getMessage(),
-				array(
-					'args'     => $args,
-					'response' => $response,
-				)
-			);
-			throw $error;
 		}
 		return wp_remote_retrieve_response_code( $response ) === 204;
 	}
