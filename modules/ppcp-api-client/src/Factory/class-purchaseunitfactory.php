@@ -158,6 +158,7 @@ class PurchaseUnitFactory {
 			$shipping = $this->shipping_factory->from_wc_customer( \WC()->customer );
 			if (
 				2 !== strlen( $shipping->address()->country_code() )
+				|| ( ! $shipping->address()->postal_code() )
 			) {
 				$shipping = null;
 			}
