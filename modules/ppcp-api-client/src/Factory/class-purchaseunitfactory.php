@@ -159,6 +159,7 @@ class PurchaseUnitFactory {
 			if (
 				2 !== strlen( $shipping->address()->country_code() )
 				|| ( ! $shipping->address()->postal_code() )
+				|| $this->country_without_postal_code( $shipping->address()->country_code() )
 			) {
 				$shipping = null;
 			}
@@ -262,6 +263,20 @@ class PurchaseUnitFactory {
 			if ( $item->category() !== Item::DIGITAL_GOODS ) {
 				return true;
 			}
+		}
+		return false;
+	}
+
+	/**
+	 * Check if country does not have postal code.
+	 *
+	 * @param string $country_code The country code.
+	 * @return bool Whether country has postal code or not.
+	 */
+	private function country_without_postal_code( string $country_code ): bool {
+		$countries = array( 'AE', 'AF', 'AG', 'AI', 'AL', 'AN', 'AO', 'AW', 'BB', 'BF', 'BH', 'BI', 'BJ', 'BM', 'BO', 'BS', 'BT', 'BW', 'BZ', 'CD', 'CF', 'CG', 'CI', 'CK', 'CL', 'CM', 'CO', 'CR', 'CV', 'DJ', 'DM', 'DO', 'EC', 'EG', 'ER', 'ET', 'FJ', 'FK', 'GA', 'GD', 'GH', 'GI', 'GM', 'GN', 'GQ', 'GT', 'GW', 'GY', 'HK', 'HN', 'HT', 'IE', 'IQ', 'IR', 'JM', 'JO', 'KE', 'KH', 'KI', 'KM', 'KN', 'KP', 'KW', 'KY', 'LA', 'LB', 'LC', 'LK', 'LR', 'LS', 'LY', 'ML', 'MM', 'MO', 'MR', 'MS', 'MT', 'MU', 'MW', 'MZ', 'NA', 'NE', 'NG', 'NI', 'NP', 'NR', 'NU', 'OM', 'PA', 'PE', 'PF', 'PY', 'QA', 'RW', 'SA', 'SB', 'SC', 'SD', 'SL', 'SN', 'SO', 'SR', 'SS', 'ST', 'SV', 'SY', 'TC', 'TD', 'TG', 'TL', 'TO', 'TT', 'TV', 'TZ', 'UG', 'UY', 'VC', 'VE', 'VG', 'VN', 'VU', 'WS', 'XA', 'XB', 'XC', 'XE', 'XL', 'XM', 'XN', 'XS', 'YE', 'ZM', 'ZW' );
+		if ( in_array( $country_code, $countries, true ) ) {
+			return true;
 		}
 		return false;
 	}
