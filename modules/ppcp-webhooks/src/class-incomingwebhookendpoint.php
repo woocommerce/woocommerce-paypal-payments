@@ -10,8 +10,8 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Webhooks;
 
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\WebhookEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Webhook;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\RequestHandler;
 use Psr\Log\LoggerInterface;
 
@@ -31,11 +31,11 @@ class IncomingWebhookEndpoint {
 	private $webhook_endpoint;
 
 	/**
-	 * The Webhook Factory.
+	 * Our registered webhook.
 	 *
-	 * @var WebhookFactory
+	 * @var Webhook|null
 	 */
-	private $webhook_factory;
+	private $webhook;
 
 	/**
 	 * The Request handlers.
@@ -62,21 +62,21 @@ class IncomingWebhookEndpoint {
 	 * IncomingWebhookEndpoint constructor.
 	 *
 	 * @param WebhookEndpoint $webhook_endpoint The webhook endpoint.
-	 * @param WebhookFactory  $webhook_factory The webhook factory.
+	 * @param Webhook|null    $webhook Our registered webhook.
 	 * @param LoggerInterface $logger The logger.
 	 * @param bool            $verify_request Whether requests need to be verified or not.
 	 * @param RequestHandler  ...$handlers The handlers, which process a request in the end.
 	 */
 	public function __construct(
 		WebhookEndpoint $webhook_endpoint,
-		WebhookFactory $webhook_factory,
+		?Webhook $webhook,
 		LoggerInterface $logger,
 		bool $verify_request,
 		RequestHandler ...$handlers
 	) {
 
 		$this->webhook_endpoint = $webhook_endpoint;
-		$this->webhook_factory  = $webhook_factory;
+		$this->webhook          = $webhook;
 		$this->handlers         = $handlers;
 		$this->logger           = $logger;
 		$this->verify_request   = $verify_request;
@@ -116,15 +116,16 @@ class IncomingWebhookEndpoint {
 		if ( ! $this->verify_request ) {
 			return true;
 		}
+
+		if ( ! $this->webhook ) {
+			$this->logger->error( 'Failed to retrieve stored webhook data.' );
+			return false;
+		}
+
 		try {
-			$data    = (array) get_option( WebhookRegistrar::KEY, array() );
-			$webhook = $this->webhook_factory->from_array( $data );
-			$result  = $this->webhook_endpoint->verify_current_request_for_webhook( $webhook );
+			$result = $this->webhook_endpoint->verify_current_request_for_webhook( $this->webhook );
 			if ( ! $result ) {
-				$this->logger->log(
-					'error',
-					__( 'Illegit Webhook request detected.', 'woocommerce-paypal-payments' )
-				);
+				$this->logger->error( 'Webhook verification failed.' );
 			}
 			return $result;
 		} catch ( RuntimeException $exception ) {

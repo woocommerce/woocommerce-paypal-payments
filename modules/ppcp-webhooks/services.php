@@ -10,8 +10,10 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Webhooks;
 
 use Exception;
+use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\WebhookEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Webhook;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
 use WooCommerce\PayPalCommerce\WcGateway\Assets\WebhooksStatusPageAssets;
 use WooCommerce\PayPalCommerce\Webhooks\Endpoint\ResubscribeEndpoint;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\CheckoutOrderApproved;
@@ -37,14 +39,14 @@ return array(
 	},
 	'webhook.endpoint.controller'             => function( $container ) : IncomingWebhookEndpoint {
 		$webhook_endpoint = $container->get( 'api.endpoint.webhook' );
-		$webhook_factory  = $container->get( 'api.factory.webhook' );
+		$webhook  = $container->get( 'webhook.current' );
 		$handler          = $container->get( 'webhook.endpoint.handler' );
 		$logger           = $container->get( 'woocommerce.logger.woocommerce' );
 		$verify_request   = ! defined( 'PAYPAL_WEBHOOK_REQUEST_VERIFICATION' ) || PAYPAL_WEBHOOK_REQUEST_VERIFICATION;
 
 		return new IncomingWebhookEndpoint(
 			$webhook_endpoint,
-			$webhook_factory,
+			$webhook,
 			$logger,
 			$verify_request,
 			... $handler
@@ -61,6 +63,29 @@ return array(
 			new PaymentCaptureReversed( $logger, $prefix ),
 			new PaymentCaptureCompleted( $logger, $prefix ),
 		);
+	},
+
+	'webhook.current'                         => function( $container ) : ?Webhook {
+		$data = (array) get_option( WebhookRegistrar::KEY, array() );
+		if ( empty( $data ) ) {
+			return null;
+		}
+
+		$factory = $container->get( 'api.factory.webhook' );
+		assert( $factory instanceof WebhookFactory );
+
+		try {
+			return $factory->from_array( $data );
+		} catch ( Exception $exception ) {
+			$logger = $container->get( 'woocommerce.logger.woocommerce' );
+			assert( $logger instanceof LoggerInterface );
+			$logger->error( 'Failed to parse the stored webhook data: ' . $exception->getMessage() );
+			return null;
+		}
+	},
+
+	'webhook.is-registered'                   => function( $container ) : bool {
+		return $container->get( 'webhook.current' ) !== null;
 	},
 
 	'webhook.status.registered-webhooks'      => function( $container ) : array {
