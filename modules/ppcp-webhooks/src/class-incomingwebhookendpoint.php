@@ -129,17 +129,7 @@ class IncomingWebhookEndpoint {
 			}
 			return $result;
 		} catch ( RuntimeException $exception ) {
-			$this->logger->log(
-				'error',
-				sprintf(
-					// translators: %s is the error message.
-					__(
-						'Illegit Webhook request detected: %s',
-						'woocommerce-paypal-payments'
-					),
-					$exception->getMessage()
-				)
-			);
+			$this->logger->error( 'Webhook verification failed: ' . $exception->getMessage() );
 			return false;
 		}
 	}
