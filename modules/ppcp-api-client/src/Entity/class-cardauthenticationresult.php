@@ -112,7 +112,7 @@ class CardAuthenticationResult {
 		$data['liability_shift'] = $this->liability_shift();
 		$data['three_d_secure']  = array(
 			'enrollment_status'     => $this->enrollment_status(),
-			'authentication_result' => $this->authentication_result(),
+			'authentication_status' => $this->authentication_result(),
 		);
 		return $data;
 	}

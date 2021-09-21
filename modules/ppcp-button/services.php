@@ -159,7 +159,8 @@ return array(
 		);
 	},
 	'button.helper.three-d-secure'      => static function ( $container ): ThreeDSecure {
-		return new ThreeDSecure();
+		$logger = $container->get( 'woocommerce.logger.woocommerce' );
+		return new ThreeDSecure( $logger );
 	},
 	'button.helper.messages-apply'      => static function ( $container ): MessagesApply {
 		return new MessagesApply();
