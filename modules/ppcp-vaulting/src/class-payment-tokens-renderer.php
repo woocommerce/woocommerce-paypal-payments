@@ -25,7 +25,7 @@ class PaymentTokensRendered {
 						<tr>
 							<td><?= $source->card->brand . ' ...' . $source->card->last_digits;?></td>
 							<td>
-								<a href="">Delete</a>
+								<a class="ppcp-delete-payment-button" id="<?= $token->id();?>" href="">Delete</a>
 							</td>
 						</tr>
 					<?php
@@ -36,7 +36,7 @@ class PaymentTokensRendered {
 						<tr>
 							<td><?= $source->paypal->payer->email_address;?></td>
 							<td>
-								<a href="">Delete</a>
+								<a class="ppcp-delete-payment-button" id="<?= $token->id();?>" href="">Delete</a>
 							</td>
 						</tr>
 					<?php

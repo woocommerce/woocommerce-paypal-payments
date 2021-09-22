@@ -1,5 +1,9 @@
 document.addEventListener(
     'DOMContentLoaded',
     () => {
-        console.log('fooooo')
+        jQuery('.ppcp-delete-payment-button').click(async (event) => {
+            event.preventDefault();
+
+            console.log(event.target.id)
+        });
     });

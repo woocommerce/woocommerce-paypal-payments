@@ -13,6 +13,7 @@ use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\Vaulting\Assets\MyAccountPaymentsAssets;
 
 /**
  * Class StatusReportModule
@@ -71,6 +72,12 @@ class VaultingModule implements ModuleInterface {
 				}
 			}
 		);
+
+		// TODO only load in My account / PayPal payments screen
+		$asset_loader                = $container->get( 'vaulting.assets.myaccount-payments' );
+		add_action( 'wp_enqueue_scripts', function () use ($asset_loader) {
+			$asset_loader->enqueue();
+		} );
 	}
 
 	/**
