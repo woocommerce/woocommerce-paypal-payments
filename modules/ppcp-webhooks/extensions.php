@@ -43,6 +43,27 @@ return array(
 			),
 		);
 
+		$is_registered = $container->get( 'webhook.is-registered' );
+		if ( $is_registered ) {
+			$status_page_fields = array_merge(
+				$status_page_fields,
+				array(
+					'webhooks_simulate' => array(
+						'title'        => __( 'Webhook simulation', 'woocommerce-paypal-payments' ),
+						'type'         => 'ppcp-text',
+						'text'         => '<button type="button" class="button ppcp-webhooks-simulate">' . esc_html__( 'Simulate', 'woocommerce-paypal-payments' ) . '</button>',
+						'screens'      => array(
+							State::STATE_PROGRESSIVE,
+							State::STATE_ONBOARDED,
+						),
+						'requirements' => array(),
+						'gateway'      => WebhooksStatusPage::ID,
+						'description'  => __( 'Click to request a sample webhook payload from PayPal, allowing to check that your server can successfully receive webhooks.', 'woocommerce-paypal-payments' ),
+					),
+				)
+			);
+		}
+
 		return array_merge( $fields, $status_page_fields );
 	},
 );

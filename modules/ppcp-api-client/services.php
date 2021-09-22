@@ -35,6 +35,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\SellerStatusFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookEventFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
@@ -114,6 +115,7 @@ return array(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
 			$container->get( 'api.factory.webhook' ),
+			$container->get( 'api.factory.webhook-event' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
@@ -213,6 +215,9 @@ return array(
 	},
 	'api.factory.webhook'                   => static function ( $container ): WebhookFactory {
 		return new WebhookFactory();
+	},
+	'api.factory.webhook-event'             => static function ( $container ): WebhookEventFactory {
+		return new WebhookEventFactory();
 	},
 	'api.factory.capture'                   => static function ( $container ): CaptureFactory {
 

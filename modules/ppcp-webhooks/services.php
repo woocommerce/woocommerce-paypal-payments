@@ -16,12 +16,15 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Webhook;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
 use WooCommerce\PayPalCommerce\WcGateway\Assets\WebhooksStatusPageAssets;
 use WooCommerce\PayPalCommerce\Webhooks\Endpoint\ResubscribeEndpoint;
+use WooCommerce\PayPalCommerce\Webhooks\Endpoint\SimulateEndpoint;
+use WooCommerce\PayPalCommerce\Webhooks\Endpoint\SimulationStateEndpoint;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\CheckoutOrderApproved;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\CheckoutOrderCompleted;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureCompleted;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureRefunded;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureReversed;
 use Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\Webhooks\Status\WebhookSimulation;
 
 return array(
 
@@ -43,12 +46,16 @@ return array(
 		$handler          = $container->get( 'webhook.endpoint.handler' );
 		$logger           = $container->get( 'woocommerce.logger.woocommerce' );
 		$verify_request   = ! defined( 'PAYPAL_WEBHOOK_REQUEST_VERIFICATION' ) || PAYPAL_WEBHOOK_REQUEST_VERIFICATION;
+		$webhook_event_factory      = $container->get( 'api.factory.webhook-event' );
+		$simulation      = $container->get( 'webhook.status.simulation' );
 
 		return new IncomingWebhookEndpoint(
 			$webhook_endpoint,
 			$webhook,
 			$logger,
 			$verify_request,
+			$webhook_event_factory,
+			$simulation,
 			... $handler
 		);
 	},
@@ -132,6 +139,15 @@ return array(
 		);
 	},
 
+	'webhook.status.simulation'               => function( $container ) : WebhookSimulation {
+		$webhook_endpoint = $container->get( 'api.endpoint.webhook' );
+		$webhook  = $container->get( 'webhook.current' );
+		return new WebhookSimulation(
+			$webhook_endpoint,
+			$webhook
+		);
+	},
+
 	'webhook.status.assets'                   => function( $container ) : WebhooksStatusPageAssets {
 		return new WebhooksStatusPageAssets(
 			$container->get( 'webhook.module-url' )
@@ -145,6 +161,23 @@ return array(
 		return new ResubscribeEndpoint(
 			$registrar,
 			$request_data
+		);
+	},
+
+	'webhook.endpoint.simulate'               => static function ( $container ) : SimulateEndpoint {
+		$simulation = $container->get( 'webhook.status.simulation' );
+		$request_data = $container->get( 'button.request-data' );
+
+		return new SimulateEndpoint(
+			$simulation,
+			$request_data
+		);
+	},
+	'webhook.endpoint.simulation-state'       => static function ( $container ) : SimulationStateEndpoint {
+		$simulation = $container->get( 'webhook.status.simulation' );
+
+		return new SimulationStateEndpoint(
+			$simulation
 		);
 	},
 
