@@ -54,15 +54,12 @@ class VaultingModule implements ModuleInterface {
 			'init',
 			function () {
 				add_rewrite_endpoint( 'ppcp-paypal-payment-tokens', EP_PAGES );
-				// TODO flush rewrite
 			}
 		);
 
 		add_action(
 			'woocommerce_account_ppcp-paypal-payment-tokens_endpoint',
 			function () use ( $container ) {
-
-				/** @var PaymentTokenRepository $payment_token_repository */
 				$payment_token_repository = $container->get( 'vaulting.repository.payment-token' );
 
 				$tokens = $payment_token_repository->all_for_user_id( get_current_user_id() );
@@ -73,15 +70,34 @@ class VaultingModule implements ModuleInterface {
 			}
 		);
 
-		// TODO only load in My account / PayPal payments screen
-		$asset_loader                = $container->get( 'vaulting.assets.myaccount-payments' );
-		add_action( 'wp_enqueue_scripts', function () use ($asset_loader) {
-			$asset_loader->enqueue();
-		} );
+		$asset_loader = $container->get( 'vaulting.assets.myaccount-payments' );
+		add_action(
+			'wp_enqueue_scripts',
+			function () use ( $asset_loader ) {
+				if ( is_account_page() && $this->is_payments_page() ) {
+					$asset_loader->enqueue();
+				}
+			}
+		);
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
 	public function getKey() {  }
+
+	/**
+	 * Check if is payments page.
+	 *
+	 * @return bool Whethen page is payments or not.
+	 */
+	private function is_payments_page(): bool {
+		global $wp;
+		$request = explode( '/', $wp->request );
+		if ( end( $request ) === 'ppcp-paypal-payment-tokens' ) {
+			return true;
+		}
+
+		return false;
+	}
 }

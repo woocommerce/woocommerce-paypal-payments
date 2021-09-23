@@ -10,6 +10,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
 use WooCommerce\PayPalCommerce\TestCase;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
 
