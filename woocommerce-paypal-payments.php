@@ -88,6 +88,7 @@ define( 'PPCP_FLAG_SUBSCRIPTION', true );
 		function () {
 			init();
 			do_action( 'woocommerce_paypal_payments_gateway_activate' );
+			flush_rewrite_rules();
 		}
 	);
 	register_deactivation_hook(
