@@ -144,7 +144,8 @@ return array(
 		$webhook  = $container->get( 'webhook.current' );
 		return new WebhookSimulation(
 			$webhook_endpoint,
-			$webhook
+			$webhook,
+			'PAYMENT.AUTHORIZATION.CREATED'
 		);
 	},
 

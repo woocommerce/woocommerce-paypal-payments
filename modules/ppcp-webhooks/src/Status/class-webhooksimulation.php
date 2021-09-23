@@ -40,17 +40,27 @@ class WebhookSimulation {
 	private $webhook;
 
 	/**
+	 * The event type that will be simulated, such as CHECKOUT.ORDER.APPROVED.
+	 *
+	 * @var string
+	 */
+	private $event_type;
+
+	/**
 	 * WebhookSimulation constructor.
 	 *
 	 * @param WebhookEndpoint $webhook_endpoint The webhooks endpoint.
 	 * @param Webhook|null    $webhook Our registered webhook.
+	 * @param string          $event_type The event type that will be simulated, such as CHECKOUT.ORDER.APPROVED.
 	 */
 	public function __construct(
 		WebhookEndpoint $webhook_endpoint,
-		Webhook $webhook
+		Webhook $webhook,
+		string $event_type
 	) {
 		$this->webhook_endpoint = $webhook_endpoint;
 		$this->webhook          = $webhook;
+		$this->event_type       = $event_type;
 	}
 
 	/**
@@ -63,7 +73,7 @@ class WebhookSimulation {
 			throw new Exception( 'Webhooks not registered' );
 		}
 
-		$event = $this->webhook_endpoint->simulate( $this->webhook, 'PAYMENT.AUTHORIZATION.CREATED' );
+		$event = $this->webhook_endpoint->simulate( $this->webhook, $this->event_type );
 
 		$this->save(
 			array(
