@@ -13,7 +13,7 @@ use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\Vaulting\Assets\MyAccountPaymentsAssets;
+use WooCommerce\PayPalCommerce\Vaulting\Endpoint\DeletePaymentTokenEndpoint;
 
 /**
  * Class StatusReportModule
@@ -61,11 +61,13 @@ class VaultingModule implements ModuleInterface {
 			'woocommerce_account_ppcp-paypal-payment-tokens_endpoint',
 			function () use ( $container ) {
 				$payment_token_repository = $container->get( 'vaulting.repository.payment-token' );
+				$renderer                 = $container->get( 'vaulting.payment-tokens-renderer' );
 
 				$tokens = $payment_token_repository->all_for_user_id( get_current_user_id() );
 				if ( $tokens ) {
-					$renderer = $container->get( 'vaulting.payment-tokens-renderer' );
 					echo wp_kses_post( $renderer->render( $tokens ) );
+				} else {
+					echo wp_kses_post( $renderer->render_no_tokens() );
 				}
 			}
 		);
@@ -76,7 +78,18 @@ class VaultingModule implements ModuleInterface {
 			function () use ( $asset_loader ) {
 				if ( is_account_page() && $this->is_payments_page() ) {
 					$asset_loader->enqueue();
+					$asset_loader->localize();
 				}
+			}
+		);
+
+		add_action(
+			'wc_ajax_' . DeletePaymentTokenEndpoint::ENDPOINT,
+			static function () use ( $container ) {
+				$endpoint = $container->get( 'vaulting.endpoint.delete' );
+				assert( $endpoint instanceof DeletePaymentTokenEndpoint );
+
+				$endpoint->handle_request();
 			}
 		);
 	}

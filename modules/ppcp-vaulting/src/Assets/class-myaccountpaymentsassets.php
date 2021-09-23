@@ -9,6 +9,11 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Vaulting\Assets;
 
+use WooCommerce\PayPalCommerce\Vaulting\Endpoint\DeletePaymentTokenEndpoint;
+
+/**
+ * Class MyAccountPaymentsAssets
+ */
 class MyAccountPaymentsAssets {
 
 	/**
@@ -41,6 +46,22 @@ class MyAccountPaymentsAssets {
 			array( 'jquery' ),
 			'1',
 			true
+		);
+	}
+
+	/**
+	 * Localize script.
+	 */
+	public function localize() {
+		wp_localize_script(
+			'ppcp-vaulting-myaccount-payments',
+			'PayPalCommerceGatewayVaulting',
+			array(
+				'delete' => array(
+					'endpoint' => home_url( \WC_AJAX::get_endpoint( DeletePaymentTokenEndpoint::ENDPOINT ) ),
+					'nonce'    => wp_create_nonce( DeletePaymentTokenEndpoint::nonce() ),
+				),
+			)
 		);
 	}
 }
