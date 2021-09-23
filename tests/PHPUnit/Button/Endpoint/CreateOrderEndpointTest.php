@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
+use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
 use function Brain\Monkey\Functions\expect;
 
 class CreateOrderEndpointTest extends TestCase
@@ -160,7 +161,8 @@ class CreateOrderEndpointTest extends TestCase
             $payer_factory,
             $session_handler,
             $settings,
-            $early_order_handler
+            $early_order_handler,
+			new NullLogger()
         );
         return array($payer_factory, $testee);
     }
