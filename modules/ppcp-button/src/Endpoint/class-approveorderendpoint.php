@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 
+use Exception;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
@@ -195,7 +196,9 @@ class ApproveOrderEndpoint implements EndpointInterface {
 			$this->session_handler->replace_order( $order );
 			wp_send_json_success( $order );
 			return true;
-		} catch ( \RuntimeException $error ) {
+		} catch ( Exception $error ) {
+			$this->logger->error( 'Order approve failed: ' . $error->getMessage() );
+
 			wp_send_json_error(
 				array(
 					'name'    => is_a( $error, PayPalApiException::class ) ? $error->name() : '',
