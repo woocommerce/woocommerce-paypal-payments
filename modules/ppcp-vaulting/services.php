@@ -35,7 +35,8 @@ return array(
 	'vaulting.endpoint.delete'           => function( $container ) : DeletePaymentTokenEndpoint {
 		return new DeletePaymentTokenEndpoint(
 			$container->get( 'vaulting.repository.payment-token' ),
-			$container->get( 'button.request-data' )
+			$container->get( 'button.request-data' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 );

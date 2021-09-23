@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vaulting\Endpoint;
 
 use Exception;
+use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 
@@ -35,14 +36,23 @@ class DeletePaymentTokenEndpoint {
 	protected $request_data;
 
 	/**
+	 * The logger.
+	 *
+	 * @var LoggerInterface
+	 */
+	protected $logger;
+
+	/**
 	 * DeletePaymentTokenEndpoint constructor.
 	 *
 	 * @param PaymentTokenRepository $repository The repository.
 	 * @param RequestData            $request_data The request data.
+	 * @param LoggerInterface        $logger The logger.
 	 */
-	public function __construct( PaymentTokenRepository $repository, RequestData $request_data ) {
+	public function __construct( PaymentTokenRepository $repository, RequestData $request_data, LoggerInterface $logger ) {
 		$this->repository   = $repository;
 		$this->request_data = $request_data;
+		$this->logger       = $logger;
 	}
 
 	/**
@@ -76,6 +86,7 @@ class DeletePaymentTokenEndpoint {
 				}
 			}
 		} catch ( Exception $error ) {
+			$this->logger->error( 'Failed to delete payment: ' . $error->getMessage() );
 			wp_send_json_error( $error->getMessage(), 403 );
 			return false;
 		}

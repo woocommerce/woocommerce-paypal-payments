@@ -106,7 +106,7 @@ class VaultingModule implements ModuleInterface {
 	 */
 	private function is_payments_page(): bool {
 		global $wp;
-		$request = explode( '/', $wp->request );
+		$request = explode( '/', wp_parse_url( $wp->request, PHP_URL_PATH ) );
 		if ( end( $request ) === 'ppcp-paypal-payment-tokens' ) {
 			return true;
 		}
