@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 
+use Exception;
+use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CartRepository;
@@ -58,20 +60,29 @@ class ChangeCartEndpoint implements EndpointInterface {
 	private $product_data_store;
 
 	/**
+	 * The logger.
+	 *
+	 * @var LoggerInterface
+	 */
+	protected $logger;
+
+	/**
 	 * ChangeCartEndpoint constructor.
 	 *
-	 * @param \WC_Cart       $cart The current WC cart object.
-	 * @param \WC_Shipping   $shipping The current WC shipping object.
-	 * @param RequestData    $request_data The request data helper.
-	 * @param CartRepository $repository The repository for the current purchase items.
-	 * @param \WC_Data_Store $product_data_store The data store for products.
+	 * @param \WC_Cart        $cart The current WC cart object.
+	 * @param \WC_Shipping    $shipping The current WC shipping object.
+	 * @param RequestData     $request_data The request data helper.
+	 * @param CartRepository  $repository The repository for the current purchase items.
+	 * @param \WC_Data_Store  $product_data_store The data store for products.
+	 * @param LoggerInterface $logger The logger.
 	 */
 	public function __construct(
 		\WC_Cart $cart,
 		\WC_Shipping $shipping,
 		RequestData $request_data,
 		CartRepository $repository,
-		\WC_Data_Store $product_data_store
+		\WC_Data_Store $product_data_store,
+		LoggerInterface $logger
 	) {
 
 		$this->cart               = $cart;
@@ -79,6 +90,7 @@ class ChangeCartEndpoint implements EndpointInterface {
 		$this->request_data       = $request_data;
 		$this->repository         = $repository;
 		$this->product_data_store = $product_data_store;
+		$this->logger             = $logger;
 	}
 
 	/**
@@ -94,12 +106,13 @@ class ChangeCartEndpoint implements EndpointInterface {
 	 * Handles the request.
 	 *
 	 * @return bool
-	 * @throws \Exception On error.
 	 */
 	public function handle_request(): bool {
 		try {
 			return $this->handle_data();
-		} catch ( RuntimeException $error ) {
+		} catch ( Exception $error ) {
+			$this->logger->error( 'Cart updating failed: ' . $error->getMessage() );
+
 			wp_send_json_error(
 				array(
 					'name'    => is_a( $error, PayPalApiException::class ) ? $error->name() : '',
@@ -116,7 +129,7 @@ class ChangeCartEndpoint implements EndpointInterface {
 	 * Handles the request data.
 	 *
 	 * @return bool
-	 * @throws \Exception On error.
+	 * @throws Exception On error.
 	 */
 	private function handle_data(): bool {
 		$data     = $this->request_data->read_request( $this->nonce() );
@@ -234,7 +247,7 @@ class ChangeCartEndpoint implements EndpointInterface {
 	 * @param int         $quantity The Quantity.
 	 *
 	 * @return bool
-	 * @throws \Exception When product could not be added.
+	 * @throws Exception When product could not be added.
 	 */
 	private function add_product( \WC_Product $product, int $quantity ): bool {
 		return false !== $this->cart->add_to_cart( $product->get_id(), $quantity );
@@ -249,7 +262,7 @@ class ChangeCartEndpoint implements EndpointInterface {
 	 * @param array       $post_variations The variations.
 	 *
 	 * @return bool
-	 * @throws \Exception When product could not be added.
+	 * @throws Exception When product could not be added.
 	 */
 	private function add_variable_product(
 		\WC_Product $product,
