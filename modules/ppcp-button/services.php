@@ -153,9 +153,11 @@ return array(
 	'button.endpoint.data-client-id'    => static function( $container ) : DataClientIdEndpoint {
 		$request_data   = $container->get( 'button.request-data' );
 		$identity_token = $container->get( 'api.endpoint.identity-token' );
+		$logger = $container->get( 'woocommerce.logger.woocommerce' );
 		return new DataClientIdEndpoint(
 			$request_data,
-			$identity_token
+			$identity_token,
+			$logger
 		);
 	},
 	'button.helper.three-d-secure'      => static function ( $container ): ThreeDSecure {
