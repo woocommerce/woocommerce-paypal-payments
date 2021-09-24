@@ -17,6 +17,8 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Assets\WebhooksStatusPageAssets;
 use WooCommerce\PayPalCommerce\Webhooks\Endpoint\ResubscribeEndpoint;
+use WooCommerce\PayPalCommerce\Webhooks\Endpoint\SimulateEndpoint;
+use WooCommerce\PayPalCommerce\Webhooks\Endpoint\SimulationStateEndpoint;
 use WooCommerce\PayPalCommerce\Webhooks\Status\WebhooksStatusPage;
 
 /**
@@ -89,6 +91,25 @@ class WebhookModule implements ModuleInterface {
 			static function () use ( $container ) {
 				$endpoint = $container->get( 'webhook.endpoint.resubscribe' );
 				assert( $endpoint instanceof ResubscribeEndpoint );
+
+				$endpoint->handle_request();
+			}
+		);
+
+		add_action(
+			'wc_ajax_' . SimulateEndpoint::ENDPOINT,
+			static function () use ( $container ) {
+				$endpoint = $container->get( 'webhook.endpoint.simulate' );
+				assert( $endpoint instanceof SimulateEndpoint );
+
+				$endpoint->handle_request();
+			}
+		);
+		add_action(
+			'wc_ajax_' . SimulationStateEndpoint::ENDPOINT,
+			static function () use ( $container ) {
+				$endpoint = $container->get( 'webhook.endpoint.simulation-state' );
+				assert( $endpoint instanceof SimulationStateEndpoint );
 
 				$endpoint->handle_request();
 			}
