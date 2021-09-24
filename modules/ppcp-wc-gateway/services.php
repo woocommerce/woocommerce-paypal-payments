@@ -78,7 +78,7 @@ return array(
 		$refund_processor    = $container->get( 'wcgateway.processor.refunds' );
 		$state               = $container->get( 'onboarding.state' );
 		$transaction_url_provider = $container->get( 'wcgateway.transaction-url-provider' );
-		$payment_token_repository = $container->get( 'subscription.repository.payment-token' );
+		$payment_token_repository = $container->get( 'vaulting.repository.payment-token' );
 		$purchase_unit_factory = $container->get( 'api.factory.purchase-unit' );
 		$payer_factory = $container->get( 'api.factory.payer' );
 		$order_endpoint = $container->get( 'api.endpoint.order' );

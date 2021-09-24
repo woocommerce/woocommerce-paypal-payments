@@ -67,7 +67,7 @@ return array(
 		$subscription_helper = $container->get( 'subscription.helper' );
 		$messages_apply      = $container->get( 'button.helper.messages-apply' );
 		$environment         = $container->get( 'onboarding.environment' );
-		$payment_token_repository = $container->get( 'subscription.repository.payment-token' );
+		$payment_token_repository = $container->get( 'vaulting.repository.payment-token' );
 		$settings_status = $container->get( 'wcgateway.settings.status' );
 		return new SmartButton(
 			$container->get( 'button.url' ),

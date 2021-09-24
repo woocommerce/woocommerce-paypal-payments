@@ -12,6 +12,9 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Assets;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Webhooks\Endpoint\ResubscribeEndpoint;
+use WooCommerce\PayPalCommerce\Webhooks\Endpoint\SimulateEndpoint;
+use WooCommerce\PayPalCommerce\Webhooks\Endpoint\SimulationStateEndpoint;
+use WooCommerce\PayPalCommerce\Webhooks\Status\WebhookSimulation;
 
 /**
  * Class WebhooksStatusPageAssets
@@ -76,6 +79,21 @@ class WebhooksStatusPageAssets {
 				'nonce'          => wp_create_nonce( ResubscribeEndpoint::nonce() ),
 				'button'         => '.ppcp-webhooks-resubscribe',
 				'failureMessage' => __( 'Operation failed. Check WooCommerce logs for more details.', 'woocommerce-paypal-payments' ),
+			),
+			'simulation'  => array(
+				'start' => array(
+					'endpoint'       => home_url( \WC_AJAX::get_endpoint( SimulateEndpoint::ENDPOINT ) ),
+					'nonce'          => wp_create_nonce( SimulateEndpoint::nonce() ),
+					'button'         => '.ppcp-webhooks-simulate',
+					'failureMessage' => __( 'Operation failed. Check WooCommerce logs for more details.', 'woocommerce-paypal-payments' ),
+				),
+				'state' => array(
+					'endpoint'            => home_url( \WC_AJAX::get_endpoint( SimulationStateEndpoint::ENDPOINT ) ),
+					'successState'        => WebhookSimulation::STATE_RECEIVED,
+					'waitingMessage'      => __( 'Waiting for the webhook to arrive...', 'woocommerce-paypal-payments' ),
+					'successMessage'      => __( 'The webhook was received successfully.', 'woocommerce-paypal-payments' ),
+					'tooLongDelayMessage' => __( 'Looks like the webhook cannot be received. Check that your website is accessible from the internet.', 'woocommerce-paypal-payments' ),
+				),
 			),
 		);
 	}

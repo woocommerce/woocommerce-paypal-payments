@@ -2,12 +2,12 @@
 /**
  * The payment token repository returns or deletes payment tokens for users.
  *
- * @package WooCommerce\PayPalCommerce\Subscription\Repository
+ * @package WooCommerce\PayPalCommerce\Vaulting
  */
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\Subscription\Repository;
+namespace WooCommerce\PayPalCommerce\Vaulting;
 
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokenEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
