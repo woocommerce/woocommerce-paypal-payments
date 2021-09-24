@@ -102,7 +102,8 @@ return array(
 		$request_data = $container->get( 'button.request-data' );
 		$repository  = $container->get( 'api.repository.cart' );
 		$data_store   = \WC_Data_Store::load( 'product' );
-		return new ChangeCartEndpoint( $cart, $shipping, $request_data, $repository, $data_store );
+		$logger                        = $container->get( 'woocommerce.logger.woocommerce' );
+		return new ChangeCartEndpoint( $cart, $shipping, $request_data, $repository, $data_store, $logger );
 	},
 	'button.endpoint.create-order'      => static function ( $container ): CreateOrderEndpoint {
 		$request_data          = $container->get( 'button.request-data' );
@@ -113,6 +114,7 @@ return array(
 		$session_handler       = $container->get( 'session.handler' );
 		$settings              = $container->get( 'wcgateway.settings' );
 		$early_order_handler   = $container->get( 'button.helper.early-order-handler' );
+		$logger                        = $container->get( 'woocommerce.logger.woocommerce' );
 		return new CreateOrderEndpoint(
 			$request_data,
 			$cart_repository,
@@ -121,7 +123,8 @@ return array(
 			$payer_factory,
 			$session_handler,
 			$settings,
-			$early_order_handler
+			$early_order_handler,
+			$logger
 		);
 	},
 	'button.helper.early-order-handler' => static function ( $container ) : EarlyOrderHandler {
