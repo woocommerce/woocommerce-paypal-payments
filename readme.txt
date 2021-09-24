@@ -85,7 +85,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Add - Webhook status. #246 #273
 * Add - Show CC gateway in admin payments list. #236
 * Add - Add 3d secure contingency settings. #230
-* Add - Improve logging. #252
+* Add - Improve logging. #252 #275
 * Add - Do not send payee email. #231
 * Add - Allow customers to see and delete their saved payments in My Account. #274
 * Fix - PayPal Payments generates multiple orders. #244
