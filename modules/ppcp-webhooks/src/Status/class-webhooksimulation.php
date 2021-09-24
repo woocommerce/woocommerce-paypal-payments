@@ -55,7 +55,7 @@ class WebhookSimulation {
 	 */
 	public function __construct(
 		WebhookEndpoint $webhook_endpoint,
-		Webhook $webhook,
+		?Webhook $webhook,
 		string $event_type
 	) {
 		$this->webhook_endpoint = $webhook_endpoint;

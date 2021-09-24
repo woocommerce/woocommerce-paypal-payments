@@ -37,8 +37,8 @@ class PaymentSourceFactory {
 						(string) $data->card->authentication_result->liability_shift : '',
 					isset( $data->card->authentication_result->three_d_secure->enrollment_status ) ?
 						(string) $data->card->authentication_result->three_d_secure->enrollment_status : '',
-					isset( $data->card->authentication_result->three_d_secure->authentication_result ) ?
-						(string) $data->card->authentication_result->three_d_secure->authentication_result : ''
+					isset( $data->card->authentication_result->three_d_secure->authentication_status ) ?
+						(string) $data->card->authentication_result->three_d_secure->authentication_status : ''
 				);
 			}
 			$card = new PaymentSourceCard(

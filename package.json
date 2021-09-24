@@ -1,6 +1,6 @@
 {
   "name": "woocommerce-paypal-payments",
-  "version": "1.5.1",
+  "version": "1.6.0",
   "description": "WooCommerce PayPal Payments",
   "repository": "https://github.com/woocommerce/woocommerce-paypal-payments",
   "license": "GPL-2.0",
