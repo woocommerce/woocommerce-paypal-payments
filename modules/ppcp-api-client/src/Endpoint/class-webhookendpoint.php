@@ -204,28 +204,31 @@ class WebhookEndpoint {
 	/**
 	 * Request a simulated webhook to be sent.
 	 *
-	 * @param Webhook $hook The webhook subscription to use.
-	 * @param string  $event_type The event type, such as CHECKOUT.ORDER.APPROVED.
+	 * @param Webhook     $hook The webhook subscription to use.
+	 * @param string      $event_type The event type, such as CHECKOUT.ORDER.APPROVED.
+	 * @param string|null $resource_version The event resource version, such as 2.0.
 	 *
 	 * @return WebhookEvent
 	 * @throws RuntimeException If the request fails.
 	 * @throws PayPalApiException If the request fails.
 	 */
-	public function simulate( Webhook $hook, string $event_type ): WebhookEvent {
-		$bearer   = $this->bearer->bearer();
-		$url      = trailingslashit( $this->host ) . 'v1/notifications/simulate-event';
+	public function simulate( Webhook $hook, string $event_type, ?string $resource_version ): WebhookEvent {
+		$bearer = $this->bearer->bearer();
+		$url    = trailingslashit( $this->host ) . 'v1/notifications/simulate-event';
+		$data   = array(
+			'webhook_id' => $hook->id(),
+			'event_type' => $event_type,
+		);
+		if ( $resource_version ) {
+			$data['resource_version'] = $resource_version;
+		}
 		$args     = array(
 			'method'  => 'POST',
 			'headers' => array(
 				'Authorization' => 'Bearer ' . $bearer->token(),
 				'Content-Type'  => 'application/json',
 			),
-			'body'    => wp_json_encode(
-				array(
-					'webhook_id' => $hook->id(),
-					'event_type' => $event_type,
-				)
-			),
+			'body'    => wp_json_encode( $data ),
 		);
 		$response = $this->request( $url, $args );
 
