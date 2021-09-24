@@ -12,10 +12,10 @@ namespace WooCommerce\PayPalCommerce\Subscription;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 
 return array(
-	'subscription.helper'                   => static function ( $container ): SubscriptionHelper {
+	'subscription.helper'          => static function ( $container ): SubscriptionHelper {
 		return new SubscriptionHelper();
 	},
-	'subscription.renewal-handler'          => static function ( $container ): RenewalHandler {
+	'subscription.renewal-handler' => static function ( $container ): RenewalHandler {
 		$logger                = $container->get( 'woocommerce.logger.woocommerce' );
 		$repository            = $container->get( 'vaulting.repository.payment-token' );
 		$endpoint              = $container->get( 'api.endpoint.order' );

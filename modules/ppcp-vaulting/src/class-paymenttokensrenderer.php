@@ -14,7 +14,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 /**
  * Class PaymentTokensRendered
  */
-class PaymentTokensRendered {
+class PaymentTokensRenderer {
 
 	/**
 	 * Render payment tokens.
