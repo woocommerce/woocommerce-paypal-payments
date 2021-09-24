@@ -1,11 +1,12 @@
 *** Changelog ***
 
 = 1.6.0 - TBD =
-* Add - Webhook status. #246
+* Add - Webhook status. #246 #273
 * Add - Show CC gateway in admin payments list. #236
 * Add - Add 3d secure contingency settings. #230
 * Add - Improve logging. #252
 * Add - Do not send payee email. #231
+* Add - Allow customers to see and delete their saved payments in My Account. #274
 * Fix - PayPal Payments generates multiple orders. #244
 * Fix - Saved credit card does not auto fill. #242
 * Fix - Incorrect webhooks registration. #254
