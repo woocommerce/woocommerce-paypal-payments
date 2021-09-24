@@ -24,8 +24,8 @@ return array(
 			$container->get( 'vaulting.module-url' )
 		);
 	},
-	'vaulting.payment-tokens-renderer'   => static function (): PaymentTokensRendered {
-		return new PaymentTokensRendered();
+	'vaulting.payment-tokens-renderer'   => static function (): PaymentTokensRenderer {
+		return new PaymentTokensRenderer();
 	},
 	'vaulting.repository.payment-token'  => static function ( $container ): PaymentTokenRepository {
 		$factory  = $container->get( 'api.factory.payment-token' );
