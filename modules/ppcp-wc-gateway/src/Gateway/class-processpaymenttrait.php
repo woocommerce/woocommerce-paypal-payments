@@ -85,7 +85,27 @@ trait ProcessPaymentTrait {
 						'redirect' => $this->get_return_url( $wc_order ),
 					);
 				}
+
+				if ( $order->status()->is( OrderStatus::COMPLETED ) && $order->intent() === 'AUTHORIZE' ) {
+					$this->order_endpoint->authorize( $order );
+					$wc_order->update_meta_data( PayPalGateway::CAPTURED_META_KEY, 'false' );
+					$wc_order->update_meta_data( PayPalGateway::ORDER_ID_META_KEY, $order->id() );
+					$wc_order->update_status(
+						'on-hold',
+						__( 'Awaiting payment.', 'woocommerce-paypal-payments' )
+					);
+
+					$this->session_handler->destroy_session_data();
+					return array(
+						'result'   => 'success',
+						'redirect' => $this->get_return_url( $wc_order ),
+					);
+				}
+
+				$this->logger->warning( "Could neither capture nor authorize order {$order->id()} using a saved credit card:" . 'Status: ' . $order->status()->name() . ' Intent: ' . $order->intent() );
+
 			} catch ( RuntimeException $error ) {
+				$this->logger->error( $error->getMessage() );
 				$this->session_handler->destroy_session_data();
 				wc_add_notice( $error->getMessage(), 'error' );
 				return null;

@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
+use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
@@ -45,6 +46,11 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 * @var SubscriptionHelper
 	 */
 	protected $subscription_helper;
+
+	/**
+	 * @var LoggerInterface
+	 */
+	protected $logger;
 
 	/**
 	 * The URL to the module.
@@ -122,7 +128,8 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		PurchaseUnitFactory $purchase_unit_factory,
 		PayerFactory $payer_factory,
 		OrderEndpoint $order_endpoint,
-		SubscriptionHelper $subscription_helper
+		SubscriptionHelper $subscription_helper,
+		LoggerInterface $logger
 	) {
 
 		$this->id                  = self::ID;
@@ -190,6 +197,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		$this->order_endpoint           = $order_endpoint;
 		$this->transaction_url_provider = $transaction_url_provider;
 		$this->subscription_helper      = $subscription_helper;
+		$this->logger = $logger;
 	}
 
 	/**

@@ -390,7 +390,7 @@ class OrderEndpoint {
 		}
 		$json        = json_decode( $response['body'] );
 		$status_code = (int) wp_remote_retrieve_response_code( $response );
-		if ( 201 !== $status_code ) {
+		if ( ! in_array( $status_code, array( 200, 201 ), true ) ) {
 			if ( false !== strpos( $response['body'], ErrorResponse::ORDER_ALREADY_AUTHORIZED ) ) {
 				return $this->order( $order->id() );
 			}

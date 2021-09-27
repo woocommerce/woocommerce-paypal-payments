@@ -83,6 +83,7 @@ return array(
 		$payer_factory = $container->get( 'api.factory.payer' );
 		$order_endpoint = $container->get( 'api.endpoint.order' );
 		$subscription_helper = $container->get( 'subscription.helper' );
+		$logger                        = $container->get( 'woocommerce.logger.woocommerce' );
 		return new CreditCardGateway(
 			$settings_renderer,
 			$order_processor,
@@ -98,7 +99,8 @@ return array(
 			$purchase_unit_factory,
 			$payer_factory,
 			$order_endpoint,
-			$subscription_helper
+			$subscription_helper,
+			$logger
 		);
 	},
 	'wcgateway.disabler'                           => static function ( $container ): DisableGateways {
