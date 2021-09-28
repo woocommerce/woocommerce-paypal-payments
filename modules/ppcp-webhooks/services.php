@@ -145,7 +145,8 @@ return array(
 		return new WebhookSimulation(
 			$webhook_endpoint,
 			$webhook,
-			'PAYMENT.AUTHORIZATION.CREATED'
+			'CHECKOUT.ORDER.APPROVED',
+			'2.0'
 		);
 	},
 
