@@ -48,6 +48,8 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	protected $subscription_helper;
 
 	/**
+	 * The logger.
+	 *
 	 * @var LoggerInterface
 	 */
 	protected $logger;
@@ -110,8 +112,9 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 * @param PaymentTokenRepository      $payment_token_repository The payment token repository.
 	 * @param PurchaseUnitFactory         $purchase_unit_factory The purchase unit factory.
 	 * @param PayerFactory                $payer_factory The payer factory.
-	 * @param  OrderEndpoint               $order_endpoint The order endpoint.
+	 * @param OrderEndpoint               $order_endpoint The order endpoint.
 	 * @param SubscriptionHelper          $subscription_helper The subscription helper.
+	 * @param LoggerInterface             $logger The logger.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
@@ -197,7 +200,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		$this->order_endpoint           = $order_endpoint;
 		$this->transaction_url_provider = $transaction_url_provider;
 		$this->subscription_helper      = $subscription_helper;
-		$this->logger = $logger;
+		$this->logger                   = $logger;
 	}
 
 	/**
