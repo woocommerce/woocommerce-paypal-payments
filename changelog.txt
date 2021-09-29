@@ -1,6 +1,6 @@
 *** Changelog ***
 
-= 1.6.0 - TBD =
+= 1.6.0 - 2021-09-29 =
 * Add - Webhook status. #246 #273
 * Add - Show CC gateway in admin payments list. #236
 * Add - Add 3d secure contingency settings. #230
