@@ -7,11 +7,11 @@
     "@babel/core": "^7.9.0",
     "@babel/preset-env": "^7.9.5",
     "babel-loader": "^8.1.0",
-    "cross-env": "^5.0.1",
-    "file-loader": "^4.2.0",
-    "webpack": "^4.42.1",
-    "webpack-cli": "^3.1.2",
-    "babel-plugin-transform-object-rest-spread": "^6.26.0"
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
+    "cross-env": "^7.0.3",
+    "file-loader": "^6.2.0",
+    "webpack": "^5.55.0",
+    "webpack-cli": "^4.8.0"
   },
   "scripts": {
     "build": "cross-env BABEL_ENV=default NODE_ENV=production webpack",
