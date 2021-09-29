@@ -31,8 +31,9 @@
     "docker:lint": "docker-compose run --rm test vendor/bin/phpcs --parallel=8 -n -s",
     "docker:fix-lint": "docker-compose run --rm test vendor/bin/phpcbf",
 
-    "prebuild": "rm -rf ./vendor",
+    "prebuild": "rm -rf ./vendor && find . -name 'node_modules' -type d -maxdepth 3 -exec rm -rf {} +",
     "build": "composer install --no-dev && npm run build:dev && npm run archive",
+
     "prearchive": "rm -rf $npm_package_name.zip",
     "archive": "zip -r $npm_package_name.zip . -x **.git/\\* **node_modules/\\*",
     "postarchive": "npm run archive:cleanup && rm -rf $npm_package_name && unzip $npm_package_name.zip -d $npm_package_name && rm $npm_package_name.zip && zip -r $npm_package_name.zip $npm_package_name && rm -rf $npm_package_name",
