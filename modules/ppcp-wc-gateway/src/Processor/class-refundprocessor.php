@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Processor;
 
+use Exception;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
@@ -66,30 +67,30 @@ class RefundProcessor {
 	 * @param string     $reason The reason for the refund.
 	 *
 	 * @return bool
+	 *
+	 * @phpcs:ignore Squiz.Commenting.FunctionCommentThrowTag.Missing
 	 */
 	public function process( \WC_Order $wc_order, float $amount = null, string $reason = '' ) : bool {
-		$order_id = $wc_order->get_meta( PayPalGateway::ORDER_ID_META_KEY );
-		if ( ! $order_id ) {
-			return false;
-		}
 		try {
-			$order = $this->order_endpoint->order( $order_id );
-			if ( ! $order ) {
-				return false;
+			$order_id = $wc_order->get_meta( PayPalGateway::ORDER_ID_META_KEY );
+			if ( ! $order_id ) {
+				throw new RuntimeException( 'PayPal order ID not found in meta.' );
 			}
+
+			$order = $this->order_endpoint->order( $order_id );
 
 			$purchase_units = $order->purchase_units();
 			if ( ! $purchase_units ) {
-				return false;
+				throw new RuntimeException( 'No purchase units.' );
 			}
 
 			$payments = $purchase_units[0]->payments();
 			if ( ! $payments ) {
-				return false;
+				throw new RuntimeException( 'No payments.' );
 			}
 			$captures = $payments->captures();
 			if ( ! $captures ) {
-				return false;
+				throw new RuntimeException( 'No capture.' );
 			}
 
 			$capture = $captures[0];
@@ -103,7 +104,7 @@ class RefundProcessor {
 			);
 			$this->payments_endpoint->refund( $refund );
 			return true;
-		} catch ( RuntimeException $error ) {
+		} catch ( Exception $error ) {
 			$this->logger->error( 'Refund failed: ' . $error->getMessage() );
 			return false;
 		}
