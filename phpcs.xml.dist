@@ -35,6 +35,8 @@
 	<file>src</file>
 	<file>modules</file>
 	<file>woocommerce-paypal-payments.php</file>
+	<file>modules.php</file>
+	<file>bootstrap.php</file>
 
 	<exclude-pattern>*/node_modules/*</exclude-pattern>
 	<exclude-pattern>*/vendor/*</exclude-pattern>

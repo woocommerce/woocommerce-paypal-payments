@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 
+use Exception;
+use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\IdentityToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
@@ -36,18 +38,28 @@ class DataClientIdEndpoint implements EndpointInterface {
 	private $identity_token;
 
 	/**
+	 * The logger.
+	 *
+	 * @var LoggerInterface
+	 */
+	protected $logger;
+
+	/**
 	 * DataClientIdEndpoint constructor.
 	 *
-	 * @param RequestData   $request_data The Request Data Helper.
-	 * @param IdentityToken $identity_token The Identity Token.
+	 * @param RequestData     $request_data The Request Data Helper.
+	 * @param IdentityToken   $identity_token The Identity Token.
+	 * @param LoggerInterface $logger The logger.
 	 */
 	public function __construct(
 		RequestData $request_data,
-		IdentityToken $identity_token
+		IdentityToken $identity_token,
+		LoggerInterface $logger
 	) {
 
 		$this->request_data   = $request_data;
 		$this->identity_token = $identity_token;
+		$this->logger         = $logger;
 	}
 
 	/**
@@ -77,7 +89,9 @@ class DataClientIdEndpoint implements EndpointInterface {
 				)
 			);
 			return true;
-		} catch ( RuntimeException $error ) {
+		} catch ( Exception $error ) {
+			$this->logger->error( 'Client ID retrieval failed: ' . $error->getMessage() );
+
 			wp_send_json_error(
 				array(
 					'name'    => is_a( $error, PayPalApiException::class ) ? $error->name() : '',

@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 
+use Exception;
+use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
@@ -103,6 +105,13 @@ class CreateOrderEndpoint implements EndpointInterface {
 	private $purchase_units;
 
 	/**
+	 * The logger.
+	 *
+	 * @var LoggerInterface
+	 */
+	protected $logger;
+
+	/**
 	 * CreateOrderEndpoint constructor.
 	 *
 	 * @param RequestData         $request_data The RequestData object.
@@ -113,6 +122,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 * @param SessionHandler      $session_handler The SessionHandler object.
 	 * @param Settings            $settings The Settings object.
 	 * @param EarlyOrderHandler   $early_order_handler The EarlyOrderHandler object.
+	 * @param LoggerInterface     $logger The logger.
 	 */
 	public function __construct(
 		RequestData $request_data,
@@ -122,7 +132,8 @@ class CreateOrderEndpoint implements EndpointInterface {
 		PayerFactory $payer_factory,
 		SessionHandler $session_handler,
 		Settings $settings,
-		EarlyOrderHandler $early_order_handler
+		EarlyOrderHandler $early_order_handler,
+		LoggerInterface $logger
 	) {
 
 		$this->request_data          = $request_data;
@@ -133,6 +144,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 		$this->session_handler       = $session_handler;
 		$this->settings              = $settings;
 		$this->early_order_handler   = $early_order_handler;
+		$this->logger                = $logger;
 	}
 
 	/**
@@ -190,6 +202,8 @@ class CreateOrderEndpoint implements EndpointInterface {
 			wp_send_json_success( $order->to_array() );
 			return true;
 		} catch ( \RuntimeException $error ) {
+			$this->logger->error( 'Order creation failed: ' . $error->getMessage() );
+
 			wp_send_json_error(
 				array(
 					'name'    => is_a( $error, PayPalApiException::class ) ? $error->name() : '',
@@ -198,7 +212,9 @@ class CreateOrderEndpoint implements EndpointInterface {
 					'details' => is_a( $error, PayPalApiException::class ) ? $error->details() : array(),
 				)
 			);
-		} catch ( \Exception $exception ) {
+		} catch ( Exception $exception ) {
+			$this->logger->error( 'Order creation failed: ' . $exception->getMessage() );
+
 			wc_add_notice( $exception->getMessage(), 'error' );
 		}
 
@@ -212,11 +228,16 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 * @param \WP_Error $errors The errors, which occurred.
 	 *
 	 * @return array
+	 * @throws Exception On Error.
 	 */
 	public function after_checkout_validation( array $data, \WP_Error $errors ): array {
 		if ( ! $errors->errors ) {
-
-			$order = $this->create_paypal_order();
+			try {
+				$order = $this->create_paypal_order();
+			} catch ( Exception $exception ) {
+				$this->logger->error( 'Order creation failed: ' . $exception->getMessage() );
+				throw $exception;
+			}
 
 			/**
 			 * In case we are onboarded and everything is fine with the \WC_Order
@@ -230,6 +251,8 @@ class CreateOrderEndpoint implements EndpointInterface {
 			$this->early_order_handler->register_for_order( $order );
 			return $data;
 		}
+
+		$this->logger->error( 'Checkout validation failed: ' . $errors->get_error_message() );
 
 		wp_send_json_error(
 			array(
@@ -336,7 +359,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 *
 	 * @param string $form_values The values of the form.
 	 *
-	 * @throws \Exception On Error.
+	 * @throws Exception On Error.
 	 */
 	private function process_checkout_form( string $form_values ) {
 		$form_values = explode( '&', $form_values );
@@ -386,7 +409,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 *
 	 * @param string         $form_values The values of the form.
 	 * @param \WC_Order|null $wc_order WC order to get data from.
-	 * @throws \Exception On Error.
+	 * @throws Exception On Error.
 	 */
 	private function process_checkout_form_when_creating_account( string $form_values, \WC_Order $wc_order = null ) {
 		$form_values   = explode( '&', $form_values );
@@ -406,7 +429,12 @@ class CreateOrderEndpoint implements EndpointInterface {
 			'woocommerce_after_checkout_validation',
 			function ( array $data, \WP_Error $errors ) use ( $wc_order ) {
 				if ( ! $errors->errors ) {
-					$order = $this->create_paypal_order( $wc_order );
+					try {
+						$order = $this->create_paypal_order( $wc_order );
+					} catch ( Exception $exception ) {
+						$this->logger->error( 'Order creation failed: ' . $exception->getMessage() );
+						throw $exception;
+					}
 					wp_send_json_success( $order->to_array() );
 					return true;
 				}

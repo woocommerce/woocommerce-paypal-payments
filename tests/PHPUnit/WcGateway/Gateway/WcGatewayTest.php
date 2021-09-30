@@ -68,7 +68,8 @@ class WcGatewayTest extends TestCase
 	        $refundProcessor,
 	        $state,
             $transactionUrlProvider,
-            $subscriptionHelper
+            $subscriptionHelper,
+			PayPalGateway::ID
         );
 
         expect('wc_get_order')
@@ -116,7 +117,8 @@ class WcGatewayTest extends TestCase
 	        $refundProcessor,
 	        $state,
             $transactionUrlProvider,
-            $subscriptionHelper
+            $subscriptionHelper,
+			PayPalGateway::ID
         );
 
         expect('wc_get_order')
@@ -181,7 +183,8 @@ class WcGatewayTest extends TestCase
 	        $refundProcessor,
 	        $state,
             $transactionUrlProvider,
-            $subscriptionHelper
+            $subscriptionHelper,
+			PayPalGateway::ID
         );
 
         expect('wc_get_order')
@@ -254,7 +257,8 @@ class WcGatewayTest extends TestCase
 	        $refundProcessor,
 	        $state,
             $transactionUrlProvider,
-            $subscriptionHelper
+            $subscriptionHelper,
+			PayPalGateway::ID
         );
 
         $this->assertTrue($testee->capture_authorized_payment($wcOrder));
@@ -311,7 +315,8 @@ class WcGatewayTest extends TestCase
 	        $refundProcessor,
 	        $state,
             $transactionUrlProvider,
-            $subscriptionHelper
+            $subscriptionHelper,
+			PayPalGateway::ID
         );
 
         $this->assertTrue($testee->capture_authorized_payment($wcOrder));
@@ -362,12 +367,13 @@ class WcGatewayTest extends TestCase
 	        $refundProcessor,
 	        $state,
             $transactionUrlProvider,
-            $subscriptionHelper
+            $subscriptionHelper,
+			PayPalGateway::ID
         );
 
         $this->assertFalse($testee->capture_authorized_payment($wcOrder));
     }
-    
+
     /**
      * @dataProvider dataForTestNeedsSetup
      */
@@ -390,7 +396,7 @@ class WcGatewayTest extends TestCase
 		    ->andReturn($currentState);
     	$transactionUrlProvider = Mockery::mock(TransactionUrlProvider::class);
     	$subscriptionHelper = Mockery::mock(SubscriptionHelper::class);
-    	
+
     	$testee = new PayPalGateway(
     		$settingsRenderer,
 		    $orderProcessor,
@@ -401,9 +407,10 @@ class WcGatewayTest extends TestCase
 		    $refundProcessor,
 		    $onboardingState,
 		    $transactionUrlProvider,
-		    $subscriptionHelper
+		    $subscriptionHelper,
+			PayPalGateway::ID
 	    );
-    	
+
     	$this->assertSame($needSetup, $testee->needs_setup());
     }
 
@@ -424,7 +431,7 @@ class WcGatewayTest extends TestCase
             ],
         ];
     }
-    
+
     public function dataForTestNeedsSetup(): array
     {
     	return [

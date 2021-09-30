@@ -139,24 +139,7 @@ class PaymentTokenEndpoint {
 		foreach ( $json->payment_tokens as $token_value ) {
 			$tokens[] = $this->factory->from_paypal_response( $token_value );
 		}
-		if ( empty( $tokens ) ) {
-			$error = new RuntimeException(
-				sprintf(
-					// translators: %d is the customer id.
-					__( 'No token stored for customer %d.', 'woocommerce-paypal-payments' ),
-					$id
-				)
-			);
-			$this->logger->log(
-				'warning',
-				$error->getMessage(),
-				array(
-					'args'     => $args,
-					'response' => $response,
-				)
-			);
-			throw $error;
-		}
+
 		return $tokens;
 	}
 

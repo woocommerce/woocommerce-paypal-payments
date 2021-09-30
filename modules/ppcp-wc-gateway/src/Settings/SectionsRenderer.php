@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\Webhooks\Status\WebhooksStatusPage;
 
 /**
  * Class SectionsRenderer
@@ -20,14 +21,28 @@ class SectionsRenderer {
 	const KEY = 'ppcp-tab';
 
 	/**
+	 * ID of the current PPCP gateway settings page, or empty if it is not such page.
+	 *
+	 * @var string
+	 */
+	protected $page_id;
+
+	/**
+	 * SectionsRenderer constructor.
+	 *
+	 * @param string $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
+	 */
+	public function __construct( string $page_id ) {
+		$this->page_id = $page_id;
+	}
+
+	/**
 	 * Whether the sections tab should be rendered.
 	 *
 	 * @return bool
 	 */
 	public function should_render() : bool {
-
-		global $current_section;
-		return PayPalGateway::ID === $current_section;
+		return ! empty( $this->page_id );
 	}
 
 	/**
@@ -38,11 +53,10 @@ class SectionsRenderer {
 			return;
 		}
 
-		//phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$current  = ! isset( $_GET[ self::KEY ] ) ? PayPalGateway::ID : sanitize_text_field( wp_unslash( $_GET[ self::KEY ] ) );
 		$sections = array(
-			PayPalGateway::ID     => __( 'PayPal Checkout', 'woocommerce-paypal-payments' ),
-			CreditCardGateway::ID => __( 'PayPal Card Processing', 'woocommerce-paypal-payments' ),
+			PayPalGateway::ID      => __( 'PayPal Checkout', 'woocommerce-paypal-payments' ),
+			CreditCardGateway::ID  => __( 'PayPal Card Processing', 'woocommerce-paypal-payments' ),
+			WebhooksStatusPage::ID => __( 'Webhooks Status', 'woocommerce-paypal-payments' ),
 		);
 
 		echo '<ul class="subsubsub">';
@@ -51,7 +65,7 @@ class SectionsRenderer {
 
 		foreach ( $sections as $id => $label ) {
 			$url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&' . self::KEY . '=' . $id );
-			echo '<li><a href="' . esc_url( $url ) . '" class="' . ( $current === $id ? 'current' : '' ) . '">' . esc_html( $label ) . '</a> ' . ( end( $array_keys ) === $id ? '' : '|' ) . ' </li>';
+			echo '<li><a href="' . esc_url( $url ) . '" class="' . ( $this->page_id === $id ? 'current' : '' ) . '">' . esc_html( $label ) . '</a> ' . ( end( $array_keys ) === $id ? '' : '|' ) . ' </li>';
 		}
 
 		echo '</ul><br class="clear" />';

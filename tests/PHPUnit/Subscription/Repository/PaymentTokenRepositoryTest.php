@@ -10,6 +10,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
 use WooCommerce\PayPalCommerce\TestCase;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
 
@@ -90,4 +91,72 @@ class PaymentTokenRepositoryTest extends TestCase
 
         $this->sut->delete_token($id, $paymentToken);
     }
+
+    public function testAllForUserId()
+	{
+		$id = 1;
+		$tokens = [];
+
+		$this->endpoint->shouldReceive('for_user')
+			->with($id)
+			->andReturn($tokens);
+		expect('update_user_meta')->with($id, $this->sut::USER_META, $tokens);
+
+		$result = $this->sut->all_for_user_id($id);
+		$this->assertSame($tokens, $result);
+	}
+
+	public function test_AllForUserIdReturnsEmptyArrayIfGettingTokenFails()
+	{
+		$id = 1;
+		$tokens = [];
+
+		$this->endpoint
+			->expects('for_user')
+			->with($id)
+			->andThrow(RuntimeException::class);
+
+		$result = $this->sut->all_for_user_id($id);
+		$this->assertSame($tokens, $result);
+	}
+
+	public function testTokensContainCardReturnsTrue()
+	{
+		$source = new \stdClass();
+		$card = new \stdClass();
+		$source->card = $card;
+		$token = Mockery::mock(PaymentToken::class);
+		$tokens = [$token];
+
+		$token->shouldReceive('source')->andReturn($source);
+
+		$this->assertTrue($this->sut->tokens_contains_card($tokens));
+	}
+
+	public function testTokensContainCardReturnsFalse()
+	{
+		$tokens = [];
+		$this->assertFalse($this->sut->tokens_contains_card($tokens));
+	}
+
+	public function testTokensContainPayPalReturnsTrue()
+	{
+		$source = new \stdClass();
+		$paypal = new \stdClass();
+		$source->paypal = $paypal;
+		$token = Mockery::mock(PaymentToken::class);
+		$tokens = [$token];
+
+		$token->shouldReceive('source')->andReturn($source);
+
+		$this->assertTrue($this->sut->tokens_contains_paypal($tokens));
+	}
+
+	public function testTokensContainPayPalReturnsFalse()
+	{
+		$tokens = [];
+		$this->assertFalse($this->sut->tokens_contains_paypal($tokens));
+	}
+
+
 }

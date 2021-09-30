@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
+use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
 use function Brain\Monkey\Functions\expect;
 
 class CreateOrderEndpointTest extends TestCase
@@ -32,7 +33,7 @@ class CreateOrderEndpointTest extends TestCase
     {
         list($payer_factory, $testee) = $this->mockTestee();
 
-        $method = $this->getProtectedMethodAccessibleReflection(CreateOrderEndpoint::class, 'payer');
+        $method = $this->makePrivateMethod(CreateOrderEndpoint::class, 'payer');
         $dataString = wp_json_encode($expectedResult['payer']);
         $dataObj = json_decode(wp_json_encode($expectedResult['payer']));
 
@@ -160,7 +161,8 @@ class CreateOrderEndpointTest extends TestCase
             $payer_factory,
             $session_handler,
             $settings,
-            $early_order_handler
+            $early_order_handler,
+			new NullLogger()
         );
         return array($payer_factory, $testee);
     }
@@ -173,7 +175,7 @@ class CreateOrderEndpointTest extends TestCase
      * @return \ReflectionMethod
      * @throws \ReflectionException
      */
-    protected function getProtectedMethodAccessibleReflection($class, $method)
+    protected function makePrivateMethod($class, $method)
     {
         $reflector = new ReflectionClass($class);
         $method = $reflector->getMethod($method);
