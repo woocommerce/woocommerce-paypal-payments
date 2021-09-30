@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Subscription;
 
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
+use Psr\Container\ContainerInterface;
 
 return array(
 	'subscription.helper'          => static function ( ContainerInterface $container ): SubscriptionHelper {
