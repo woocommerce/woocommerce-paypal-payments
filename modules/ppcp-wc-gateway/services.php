@@ -215,7 +215,8 @@ return array(
 	'wcgateway.processor.refunds'                  => static function ( $container ): RefundProcessor {
 		$order_endpoint    = $container->get( 'api.endpoint.order' );
 		$payments_endpoint    = $container->get( 'api.endpoint.payments' );
-		return new RefundProcessor( $order_endpoint, $payments_endpoint );
+		$logger                        = $container->get( 'woocommerce.logger.woocommerce' );
+		return new RefundProcessor( $order_endpoint, $payments_endpoint, $logger );
 	},
 	'wcgateway.processor.authorized-payments'      => static function ( $container ): AuthorizedPaymentsProcessor {
 		$order_endpoint    = $container->get( 'api.endpoint.order' );

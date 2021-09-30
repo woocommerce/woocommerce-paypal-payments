@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Processor;
 
+use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Amount;
@@ -37,15 +38,24 @@ class RefundProcessor {
 	private $payments_endpoint;
 
 	/**
+	 * The logger.
+	 *
+	 * @var LoggerInterface
+	 */
+	private $logger;
+
+	/**
 	 * RefundProcessor constructor.
 	 *
 	 * @param OrderEndpoint    $order_endpoint The order endpoint.
 	 * @param PaymentsEndpoint $payments_endpoint The payments endpoint.
+	 * @param LoggerInterface  $logger The logger.
 	 */
-	public function __construct( OrderEndpoint $order_endpoint, PaymentsEndpoint $payments_endpoint ) {
+	public function __construct( OrderEndpoint $order_endpoint, PaymentsEndpoint $payments_endpoint, LoggerInterface $logger ) {
 
 		$this->order_endpoint    = $order_endpoint;
 		$this->payments_endpoint = $payments_endpoint;
+		$this->logger            = $logger;
 	}
 
 	/**
@@ -91,8 +101,10 @@ class RefundProcessor {
 					new Money( $amount, $wc_order->get_currency() )
 				)
 			);
-			return $this->payments_endpoint->refund( $refund );
+			$this->payments_endpoint->refund( $refund );
+			return true;
 		} catch ( RuntimeException $error ) {
+			$this->logger->error( 'Refund failed: ' . $error->getMessage() );
 			return false;
 		}
 	}
