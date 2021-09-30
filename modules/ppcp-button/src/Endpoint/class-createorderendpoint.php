@@ -397,7 +397,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 */
 	private function validate_paynow_form( string $form_values ) {
 		$parsed_values = wp_parse_args( $form_values );
-		if ( ! isset( $parsed_values['terms'] ) ) {
+		if ( isset( $parsed_values['terms-field'] ) && ! isset( $parsed_values['terms'] ) ) {
 			throw new \RuntimeException(
 				__( 'Please read and accept the terms and conditions to proceed with your order.', 'woocommerce-paypal-payments' )
 			);
