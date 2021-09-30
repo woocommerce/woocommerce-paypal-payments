@@ -14,7 +14,7 @@ use Dhii\Modular\Module\ModuleInterface;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
-use WooCommerce\PayPalCommerce\Subscription\Repository\PaymentTokenRepository;
+use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use Interop\Container\ServiceProviderInterface;
@@ -62,7 +62,7 @@ class SubscriptionModule implements ModuleInterface {
 		add_action(
 			'woocommerce_subscription_payment_complete',
 			function ( $subscription ) use ( $c ) {
-				$payment_token_repository = $c->get( 'subscription.repository.payment-token' );
+				$payment_token_repository = $c->get( 'vaulting.repository.payment-token' );
 				$logger                   = $c->get( 'woocommerce.logger.woocommerce' );
 
 				$this->add_payment_token_id( $subscription, $payment_token_repository, $logger );
@@ -72,7 +72,7 @@ class SubscriptionModule implements ModuleInterface {
 		add_filter(
 			'woocommerce_gateway_description',
 			function ( $description, $id ) use ( $c ) {
-				$payment_token_repository = $c->get( 'subscription.repository.payment-token' );
+				$payment_token_repository = $c->get( 'vaulting.repository.payment-token' );
 				$settings                 = $c->get( 'wcgateway.settings' );
 				$subscription_helper      = $c->get( 'subscription.helper' );
 
@@ -85,7 +85,7 @@ class SubscriptionModule implements ModuleInterface {
 		add_filter(
 			'woocommerce_credit_card_form_fields',
 			function ( $default_fields, $id ) use ( $c ) {
-				$payment_token_repository = $c->get( 'subscription.repository.payment-token' );
+				$payment_token_repository = $c->get( 'vaulting.repository.payment-token' );
 				$settings                 = $c->get( 'wcgateway.settings' );
 				$subscription_helper      = $c->get( 'subscription.helper' );
 

@@ -8,6 +8,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CartRepository;
 use WooCommerce\PayPalCommerce\TestCase;
 use Mockery;
+use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
 use function Brain\Monkey\Functions\expect;
 
 class ChangeCartEndpointTest extends TestCase
@@ -68,7 +69,8 @@ class ChangeCartEndpointTest extends TestCase
             $shipping,
             $requestData,
             $cartRepository,
-            $dataStore
+            $dataStore,
+			new NullLogger()
         );
 
         expect('wp_send_json_success')

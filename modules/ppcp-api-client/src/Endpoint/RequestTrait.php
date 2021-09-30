@@ -36,6 +36,48 @@ trait RequestTrait {
 			$args['headers']['PayPal-Partner-Attribution-Id'] = 'Woo_PPCP';
 		}
 
-		return wp_remote_get( $url, $args );
+		$response = wp_remote_get( $url, $args );
+		$this->logger->debug( $this->request_response_string( $url, $args, $response ) );
+		return $response;
+	}
+
+	/**
+	 * Returns request and response information as string.
+	 *
+	 * @param string $url The request URL.
+	 * @param array  $args The request arguments.
+	 * @param array  $response The response.
+	 * @return string
+	 */
+	private function request_response_string( string $url, array $args, array $response ): string {
+		$method = $args['method'] ?? '';
+		$output = $method . ' ' . $url . "\n";
+		if ( isset( $args['body'] ) ) {
+			if ( ! in_array(
+				$url,
+				array(
+					trailingslashit( $this->host ) . 'v1/oauth2/token/',
+					trailingslashit( $this->host ) . 'v1/oauth2/token?grant_type=client_credentials',
+				),
+				true
+			) ) {
+				$output .= 'Request Body: ' . wc_print_r( $args['body'], true ) . "\n";
+			}
+		}
+
+		if ( isset( $response['headers']->getAll()['paypal-debug-id'] ) ) {
+			$output .= 'Response Debug ID: ' . $response['headers']->getAll()['paypal-debug-id'] . "\n";
+		}
+		if ( isset( $response['response'] ) ) {
+			$output .= 'Response: ' . wc_print_r( $response['response'], true ) . "\n";
+
+			if ( isset( $response['body'] )
+				&& isset( $response['response']['code'] )
+				&& ! in_array( $response['response']['code'], array( 200, 201, 202, 204 ), true ) ) {
+				$output .= 'Response Body: ' . wc_print_r( $response['body'], true ) . "\n";
+			}
+		}
+
+		return $output;
 	}
 }

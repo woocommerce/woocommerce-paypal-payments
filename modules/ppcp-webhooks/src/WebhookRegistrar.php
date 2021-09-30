@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Webhooks;
 
+use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\WebhookEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
@@ -44,21 +45,31 @@ class WebhookRegistrar {
 	private $rest_endpoint;
 
 	/**
+	 * The logger.
+	 *
+	 * @var LoggerInterface
+	 */
+	private $logger;
+
+	/**
 	 * WebhookRegistrar constructor.
 	 *
 	 * @param WebhookFactory          $webhook_factory The Webhook factory.
 	 * @param WebhookEndpoint         $endpoint The Webhook endpoint.
 	 * @param IncomingWebhookEndpoint $rest_endpoint The WordPress Rest API endpoint.
+	 * @param LoggerInterface         $logger The logger.
 	 */
 	public function __construct(
 		WebhookFactory $webhook_factory,
 		WebhookEndpoint $endpoint,
-		IncomingWebhookEndpoint $rest_endpoint
+		IncomingWebhookEndpoint $rest_endpoint,
+		LoggerInterface $logger
 	) {
 
 		$this->webhook_factory = $webhook_factory;
 		$this->endpoint        = $endpoint;
 		$this->rest_endpoint   = $rest_endpoint;
+		$this->logger          = $logger;
 	}
 
 	/**
@@ -81,8 +92,10 @@ class WebhookRegistrar {
 				self::KEY,
 				$created->to_array()
 			);
+			$this->logger->info( 'Webhooks subscribed.' );
 			return true;
 		} catch ( RuntimeException $error ) {
+			$this->logger->error( 'Failed to subscribe webhooks: ' . $error->getMessage() );
 			return false;
 		}
 	}
@@ -101,11 +114,13 @@ class WebhookRegistrar {
 			$webhook = $this->webhook_factory->from_array( $data );
 			$success = $this->endpoint->delete( $webhook );
 		} catch ( RuntimeException $error ) {
+			$this->logger->error( 'Failed to delete webhooks: ' . $error->getMessage() );
 			return false;
 		}
 
 		if ( $success ) {
 			delete_option( self::KEY );
+			$this->logger->info( 'Webhooks deleted.' );
 		}
 		return $success;
 	}

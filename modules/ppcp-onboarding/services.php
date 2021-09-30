@@ -170,6 +170,7 @@ return array(
 		$login_seller_sandbox    = $container->get( 'api.endpoint.login-seller-sandbox' );
 		$partner_referrals_data  = $container->get( 'api.repository.partner-referrals-data' );
 		$settings                = $container->get( 'wcgateway.settings' );
+		$logger = $container->get( 'woocommerce.logger.woocommerce' );
 
 		$cache = new Cache( 'ppcp-paypal-bearer' );
 		return new LoginSellerEndpoint(
@@ -178,7 +179,8 @@ return array(
 			$login_seller_sandbox,
 			$partner_referrals_data,
 			$settings,
-			$cache
+			$cache,
+			$logger
 		);
 	},
 	'api.endpoint.partner-referrals-sandbox'    => static function ( ContainerInterface $container ) : PartnerReferrals {

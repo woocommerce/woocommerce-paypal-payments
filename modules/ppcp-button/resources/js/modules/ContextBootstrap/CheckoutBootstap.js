@@ -24,9 +24,11 @@ class CheckoutBootstap {
 
           })
 
-        jQuery('#saved-credit-card').on('change', () => {
-            this.displayPlaceOrderButtonForSavedCreditCards()
-        })
+        jQuery(document).on('hosted_fields_loaded', () => {
+            jQuery('#saved-credit-card').on('change', () => {
+                this.displayPlaceOrderButtonForSavedCreditCards()
+            })
+        });
 
         this.switchBetweenPayPalandOrderButton()
         this.displayPlaceOrderButtonForSavedCreditCards()
@@ -100,12 +102,40 @@ class CheckoutBootstap {
             this.renderer.hideButtons(this.gateway.messages.wrapper)
             this.renderer.hideButtons(this.gateway.hosted_fields.wrapper)
             jQuery('#place_order').show()
+            this.disableCreditCardFields()
         } else {
             jQuery('#place_order').hide()
             this.renderer.hideButtons(this.gateway.button.wrapper)
             this.renderer.hideButtons(this.gateway.messages.wrapper)
             this.renderer.showButtons(this.gateway.hosted_fields.wrapper)
+            this.enableCreditCardFields()
         }
+    }
+
+    disableCreditCardFields() {
+        jQuery('label[for="ppcp-credit-card-gateway-card-number"]').addClass('ppcp-credit-card-gateway-form-field-disabled')
+        jQuery('#ppcp-credit-card-gateway-card-number').addClass('ppcp-credit-card-gateway-form-field-disabled')
+        jQuery('label[for="ppcp-credit-card-gateway-card-expiry"]').addClass('ppcp-credit-card-gateway-form-field-disabled')
+        jQuery('#ppcp-credit-card-gateway-card-expiry').addClass('ppcp-credit-card-gateway-form-field-disabled')
+        jQuery('label[for="ppcp-credit-card-gateway-card-cvc"]').addClass('ppcp-credit-card-gateway-form-field-disabled')
+        jQuery('#ppcp-credit-card-gateway-card-cvc').addClass('ppcp-credit-card-gateway-form-field-disabled')
+        jQuery('label[for="vault"]').addClass('ppcp-credit-card-gateway-form-field-disabled')
+        jQuery('#ppcp-credit-card-vault').addClass('ppcp-credit-card-gateway-form-field-disabled')
+        jQuery('#ppcp-credit-card-vault').attr("disabled", true)
+        this.renderer.disableCreditCardFields()
+    }
+
+    enableCreditCardFields() {
+        jQuery('label[for="ppcp-credit-card-gateway-card-number"]').removeClass('ppcp-credit-card-gateway-form-field-disabled')
+        jQuery('#ppcp-credit-card-gateway-card-number').removeClass('ppcp-credit-card-gateway-form-field-disabled')
+        jQuery('label[for="ppcp-credit-card-gateway-card-expiry"]').removeClass('ppcp-credit-card-gateway-form-field-disabled')
+        jQuery('#ppcp-credit-card-gateway-card-expiry').removeClass('ppcp-credit-card-gateway-form-field-disabled')
+        jQuery('label[for="ppcp-credit-card-gateway-card-cvc"]').removeClass('ppcp-credit-card-gateway-form-field-disabled')
+        jQuery('#ppcp-credit-card-gateway-card-cvc').removeClass('ppcp-credit-card-gateway-form-field-disabled')
+        jQuery('label[for="vault"]').removeClass('ppcp-credit-card-gateway-form-field-disabled')
+        jQuery('#ppcp-credit-card-vault').removeClass('ppcp-credit-card-gateway-form-field-disabled')
+        jQuery('#ppcp-credit-card-vault').attr("disabled", false)
+        this.renderer.enableCreditCardFields()
     }
 }
 

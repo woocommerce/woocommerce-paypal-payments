@@ -3,7 +3,7 @@
  * Plugin Name: WooCommerce PayPal Payments
  * Plugin URI:  https://woocommerce.com/products/woocommerce-paypal-payments/
  * Description: PayPal's latest complete payments processing solution. Accept PayPal, Pay Later, credit/debit cards, alternative digital wallets local payment types and bank accounts. Turn on only PayPal options or process a full suite of payment methods. Enable global transaction with extensive currency and country coverage.
- * Version:     1.5.1
+ * Version:     1.6.0
  * Author:      WooCommerce
  * Author URI:  https://woocommerce.com/
  * License:     GPL-2.0
@@ -19,15 +19,9 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce;
 
-use Dhii\Container\CachingContainer;
-use Dhii\Container\CompositeCachingServiceProvider;
-use Dhii\Container\DelegatingContainer;
-use Dhii\Container\ProxyContainer;
-use Dhii\Modular\Module\ModuleInterface;
-
 define( 'PAYPAL_API_URL', 'https://api.paypal.com' );
 define( 'PAYPAL_SANDBOX_API_URL', 'https://api.sandbox.paypal.com' );
-define( 'PAYPAL_INTEGRATION_DATE', '2020-10-15' );
+define( 'PAYPAL_INTEGRATION_DATE', '2021-09-17' );
 
 define( 'PPCP_FLAG_SUBSCRIPTION', true );
 
@@ -45,6 +39,8 @@ define( 'PPCP_FLAG_SUBSCRIPTION', true );
 	 * Initialize the plugin and its modules.
 	 */
 	function init() {
+		$root_dir = __DIR__;
+
 		if ( ! function_exists( 'is_plugin_active' ) ) {
 			require_once ABSPATH . '/wp-admin/includes/plugin.php';
 		}
@@ -72,30 +68,12 @@ define( 'PPCP_FLAG_SUBSCRIPTION', true );
 
 		static $initialized;
 		if ( ! $initialized ) {
-			$modules = array( new PluginModule() );
-			foreach ( glob( plugin_dir_path( __FILE__ ) . 'modules/*/module.php' ) as $module_file ) {
-				$modules[] = ( require $module_file )();
-			}
-			$providers = array();
+			$bootstrap = require "$root_dir/bootstrap.php";
 
-			// Use this filter to add custom module or remove some of existing ones.
-			// Modules able to access container, add services and modify existing ones.
-			$modules = apply_filters( 'woocommerce_paypal_payments_modules', $modules );
+			$app_container = $bootstrap( $root_dir );
 
-			foreach ( $modules as $module ) {
-				/* @var $module ModuleInterface module */
-				$providers[] = $module->setup();
-			}
-			$proxy     = new ProxyContainer();
-			$provider  = new CompositeCachingServiceProvider( $providers );
-			$container = new CachingContainer( new DelegatingContainer( $provider ) );
-			$proxy->setInnerContainer( $container );
-			foreach ( $modules as $module ) {
-				/* @var $module ModuleInterface module */
-				$module->run( $container );
-			}
 			$initialized = true;
-			do_action( 'woocommerce_paypal_payments_built_container', $proxy );
+			do_action( 'woocommerce_paypal_payments_built_container', $app_container );
 		}
 	}
 
@@ -110,6 +88,7 @@ define( 'PPCP_FLAG_SUBSCRIPTION', true );
 		function () {
 			init();
 			do_action( 'woocommerce_paypal_payments_gateway_activate' );
+			flush_rewrite_rules();
 		}
 	);
 	register_deactivation_hook(

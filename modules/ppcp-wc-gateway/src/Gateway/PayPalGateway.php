@@ -19,6 +19,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\Webhooks\Status\WebhooksStatusPage;
 
 /**
  * Class PayPalGateway
@@ -104,6 +105,13 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	private $onboarded;
 
 	/**
+	 * ID of the current PPCP gateway settings page, or empty if it is not such page.
+	 *
+	 * @var string
+	 */
+	protected $page_id;
+
+	/**
 	 * PayPalGateway constructor.
 	 *
 	 * @param SettingsRenderer            $settings_renderer The Settings Renderer.
@@ -116,6 +124,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @param State                       $state The state.
 	 * @param TransactionUrlProvider      $transaction_url_provider Service providing transaction view URL based on order.
 	 * @param SubscriptionHelper          $subscription_helper The subscription helper.
+	 * @param string                      $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
@@ -127,7 +136,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		RefundProcessor $refund_processor,
 		State $state,
 		TransactionUrlProvider $transaction_url_provider,
-		SubscriptionHelper $subscription_helper
+		SubscriptionHelper $subscription_helper,
+		string $page_id
 	) {
 
 		$this->id                       = self::ID;
@@ -139,6 +149,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->session_handler          = $session_handler;
 		$this->refund_processor         = $refund_processor;
 		$this->transaction_url_provider = $transaction_url_provider;
+		$this->page_id                  = $page_id;
 		$this->onboarded                = $state->current_state() === State::STATE_ONBOARDED;
 
 		if ( $this->onboarded ) {
@@ -214,7 +225,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			),
 		);
 
-		$should_show_enabled_checkbox = ! $this->is_credit_card_tab() && ( $this->config->has( 'merchant_email' ) && $this->config->get( 'merchant_email' ) );
+		$should_show_enabled_checkbox = $this->is_paypal_tab() && ( $this->config->has( 'merchant_email' ) && $this->config->get( 'merchant_email' ) );
 		if ( ! $should_show_enabled_checkbox ) {
 			unset( $this->form_fields['enabled'] );
 		}
@@ -298,6 +309,9 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		if ( $this->is_credit_card_tab() ) {
 			return __( 'PayPal Card Processing', 'woocommerce-paypal-payments' );
 		}
+		if ( $this->is_webhooks_tab() ) {
+			return __( 'Webhooks Status', 'woocommerce-paypal-payments' );
+		}
 		if ( $this->is_paypal_tab() ) {
 			return __( 'PayPal Checkout', 'woocommerce-paypal-payments' );
 		}
@@ -313,6 +327,12 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		if ( $this->is_credit_card_tab() ) {
 			return __(
 				'Accept debit and credit cards, and local payment methods.',
+				'woocommerce-paypal-payments'
+			);
+		}
+		if ( $this->is_webhooks_tab() ) {
+			return __(
+				'Status of the webhooks subscription.',
 				'woocommerce-paypal-payments'
 			);
 		}
@@ -332,9 +352,18 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 */
 	private function is_credit_card_tab() : bool {
 		return is_admin()
-			&& isset( $_GET[ SectionsRenderer::KEY ] )
-			&& CreditCardGateway::ID === sanitize_text_field( wp_unslash( $_GET[ SectionsRenderer::KEY ] ) );
+			&& CreditCardGateway::ID === $this->page_id;
 
+	}
+
+	/**
+	 * Whether we are on the Webhooks Status tab.
+	 *
+	 * @return bool
+	 */
+	private function is_webhooks_tab() : bool {
+		return is_admin()
+			&& WebhooksStatusPage::ID === $this->page_id;
 	}
 
 	/**
@@ -345,8 +374,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	private function is_paypal_tab() : bool {
 		return ! $this->is_credit_card_tab()
 			&& is_admin()
-			&& isset( $_GET['section'] )
-			&& self::ID === sanitize_text_field( wp_unslash( $_GET['section'] ) );
+			&& self::ID === $this->page_id;
 	}
 	// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
@@ -387,14 +415,18 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 *
 	 * @param string $key The option key.
 	 * @param string $value The option value.
-	 * @return bool|void
+	 * @return bool was anything saved?
 	 */
 	public function update_option( $key, $value = '' ) {
-		parent::update_option( $key, $value );
+		$ret = parent::update_option( $key, $value );
 
 		if ( 'enabled' === $key ) {
 			$this->config->set( 'enabled', 'yes' === $value );
 			$this->config->persist();
+
+			return true;
 		}
+
+		return $ret;
 	}
 }

@@ -36,6 +36,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\SellerStatusFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookEventFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
@@ -72,19 +73,19 @@ return array(
 		return 'WC-';
 	},
 	'api.bearer'                            => static function ( ContainerInterface $container ): Bearer {
-
 		$cache              = new Cache( 'ppcp-paypal-bearer' );
 		$key                = $container->get( 'api.key' );
 		$secret             = $container->get( 'api.secret' );
-
 		$host   = $container->get( 'api.host' );
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
+		$settings = $container->get( 'wcgateway.settings' );
 		return new PayPalBearer(
 			$cache,
 			$host,
 			$key,
 			$secret,
-			$logger
+			$logger,
+			$settings
 		);
 	},
 	'api.endpoint.partners'                 => static function ( ContainerInterface $container ) : PartnersEndpoint {
@@ -115,6 +116,7 @@ return array(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
 			$container->get( 'api.factory.webhook' ),
+			$container->get( 'api.factory.webhook-event' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
@@ -215,7 +217,10 @@ return array(
 	'api.factory.webhook'                   => static function ( ContainerInterface $container ): WebhookFactory {
 		return new WebhookFactory();
 	},
-	'api.factory.capture'                   => static function ( ContainerInterface $container ): CaptureFactory {
+	'api.factory.webhook-event'             => static function ( $container ): WebhookEventFactory {
+		return new WebhookEventFactory();
+	},
+	'api.factory.capture'                   => static function ( $container ): CaptureFactory {
 
 		$amount_factory   = $container->get( 'api.factory.amount' );
 		return new CaptureFactory( $amount_factory );

@@ -4,12 +4,14 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Button\Helper;
 
 
+use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\CardAuthenticationResult;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSourceCard;
 use WooCommerce\PayPalCommerce\TestCase;
 use Mockery\Mock;
+use function Brain\Monkey\Functions\when;
 
 class ThreeDSecureTest extends TestCase
 {
@@ -25,13 +27,18 @@ class ThreeDSecureTest extends TestCase
         $result->shouldReceive('liability_shift')->andReturn($liabilityShift);
         $result->shouldReceive('authentication_result')->andReturn($authenticationResult);
         $result->shouldReceive('enrollment_status')->andReturn($enrollment);
+        $result->shouldReceive('to_array')->andReturn(['foo' => 'bar',]);
         $card = \Mockery::mock(PaymentSourceCard::class);
         $card->shouldReceive('authentication_result')->andReturn($result);
         $source = \Mockery::mock(PaymentSource::class);
         $source->shouldReceive('card')->andReturn($card);
         $order = \Mockery::mock(Order::class);
         $order->shouldReceive('payment_source')->andReturn($source);
-        $testee = new ThreeDSecure();
+        $logger = \Mockery::mock(LoggerInterface::class);
+        $logger->shouldReceive('info');
+		when('wc_print_r')->justReturn();
+
+        $testee = new ThreeDSecure($logger);
         $result = $testee->proceed_with_order($order);
         $this->assertEquals($expected, $result);
     }
