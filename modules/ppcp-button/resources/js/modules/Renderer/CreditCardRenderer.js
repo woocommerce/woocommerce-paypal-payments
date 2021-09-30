@@ -100,6 +100,7 @@ class CreditCardRenderer {
                 }
             }
         }).then(hostedFields => {
+            document.dispatchEvent(new CustomEvent("hosted_fields_loaded"));
             this.currentHostedFieldsInstance = hostedFields;
 
             hostedFields.on('inputSubmitRequest', () => {
@@ -141,6 +142,40 @@ class CreditCardRenderer {
         )
     }
 
+    disableFields() {
+        if( this.currentHostedFieldsInstance) {
+            this.currentHostedFieldsInstance.setAttribute({
+                field: 'number',
+                attribute: 'disabled'
+            })
+            this.currentHostedFieldsInstance.setAttribute({
+                field: 'cvv',
+                attribute: 'disabled'
+            })
+            this.currentHostedFieldsInstance.setAttribute({
+                field: 'expirationDate',
+                attribute: 'disabled'
+            })
+        }
+    }
+
+    enableFields() {
+        if( this.currentHostedFieldsInstance) {
+            this.currentHostedFieldsInstance.removeAttribute({
+                field: 'number',
+                attribute: 'disabled'
+            })
+            this.currentHostedFieldsInstance.removeAttribute({
+                field: 'cvv',
+                attribute: 'disabled'
+            })
+            this.currentHostedFieldsInstance.removeAttribute({
+                field: 'expirationDate',
+                attribute: 'disabled'
+            })
+        }
+    }
+
     _submit(contextConfig) {
         this.spinner.block();
         this.errorHandler.clear();
@@ -162,7 +197,6 @@ class CreditCardRenderer {
                 return contextConfig.onApprove(payload);
             }).catch(err => {
                 console.error(err);
-                this.errorHandler.genericError();
                 this.spinner.unblock();
             });
         } else {

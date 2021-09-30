@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Button;
 
+use Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\DisabledSmartButton;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButton;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
@@ -25,7 +26,7 @@ use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 
 return array(
-	'button.client_id'                  => static function ( $container ): string {
+	'button.client_id'                  => static function ( ContainerInterface $container ): string {
 
 		$settings = $container->get( 'wcgateway.settings' );
 		$client_id = $settings->has( 'client_id' ) ? $settings->get( 'client_id' ) : '';
@@ -43,7 +44,7 @@ return array(
 		return $env->current_environment_is( Environment::SANDBOX ) ?
 			CONNECT_WOO_SANDBOX_CLIENT_ID : CONNECT_WOO_CLIENT_ID;
 	},
-	'button.smart-button'               => static function ( $container ): SmartButtonInterface {
+	'button.smart-button'               => static function ( ContainerInterface $container ): SmartButtonInterface {
 
 		$state = $container->get( 'onboarding.state' );
 		/**
@@ -67,7 +68,7 @@ return array(
 		$subscription_helper = $container->get( 'subscription.helper' );
 		$messages_apply      = $container->get( 'button.helper.messages-apply' );
 		$environment         = $container->get( 'onboarding.environment' );
-		$payment_token_repository = $container->get( 'subscription.repository.payment-token' );
+		$payment_token_repository = $container->get( 'vaulting.repository.payment-token' );
 		$settings_status = $container->get( 'wcgateway.settings.status' );
 		return new SmartButton(
 			$container->get( 'button.url' ),
@@ -84,16 +85,16 @@ return array(
 			$settings_status
 		);
 	},
-	'button.url'                        => static function ( $container ): string {
+	'button.url'                        => static function ( ContainerInterface $container ): string {
 		return plugins_url(
 			'/modules/ppcp-button/',
 			dirname( __FILE__, 3 ) . '/woocommerce-paypal-payments.php'
 		);
 	},
-	'button.request-data'               => static function ( $container ): RequestData {
+	'button.request-data'               => static function ( ContainerInterface $container ): RequestData {
 		return new RequestData();
 	},
-	'button.endpoint.change-cart'       => static function ( $container ): ChangeCartEndpoint {
+	'button.endpoint.change-cart'       => static function ( ContainerInterface $container ): ChangeCartEndpoint {
 		if ( ! \WC()->cart ) {
 			throw new RuntimeException( 'cant initialize endpoint at this moment' );
 		}
@@ -102,9 +103,10 @@ return array(
 		$request_data = $container->get( 'button.request-data' );
 		$repository  = $container->get( 'api.repository.cart' );
 		$data_store   = \WC_Data_Store::load( 'product' );
-		return new ChangeCartEndpoint( $cart, $shipping, $request_data, $repository, $data_store );
+		$logger                        = $container->get( 'woocommerce.logger.woocommerce' );
+		return new ChangeCartEndpoint( $cart, $shipping, $request_data, $repository, $data_store, $logger );
 	},
-	'button.endpoint.create-order'      => static function ( $container ): CreateOrderEndpoint {
+	'button.endpoint.create-order'      => static function ( ContainerInterface $container ): CreateOrderEndpoint {
 		$request_data          = $container->get( 'button.request-data' );
 		$cart_repository       = $container->get( 'api.repository.cart' );
 		$purchase_unit_factory = $container->get( 'api.factory.purchase-unit' );
@@ -113,6 +115,7 @@ return array(
 		$session_handler       = $container->get( 'session.handler' );
 		$settings              = $container->get( 'wcgateway.settings' );
 		$early_order_handler   = $container->get( 'button.helper.early-order-handler' );
+		$logger                        = $container->get( 'woocommerce.logger.woocommerce' );
 		return new CreateOrderEndpoint(
 			$request_data,
 			$cart_repository,
@@ -121,10 +124,11 @@ return array(
 			$payer_factory,
 			$session_handler,
 			$settings,
-			$early_order_handler
+			$early_order_handler,
+			$logger
 		);
 	},
-	'button.helper.early-order-handler' => static function ( $container ) : EarlyOrderHandler {
+	'button.helper.early-order-handler' => static function ( ContainerInterface $container ) : EarlyOrderHandler {
 
 		$state          = $container->get( 'onboarding.state' );
 		$order_processor = $container->get( 'wcgateway.order-processor' );
@@ -132,7 +136,7 @@ return array(
 		$prefix         = $container->get( 'api.prefix' );
 		return new EarlyOrderHandler( $state, $order_processor, $session_handler, $prefix );
 	},
-	'button.endpoint.approve-order'     => static function ( $container ): ApproveOrderEndpoint {
+	'button.endpoint.approve-order'     => static function ( ContainerInterface $container ): ApproveOrderEndpoint {
 		$request_data    = $container->get( 'button.request-data' );
 		$order_endpoint  = $container->get( 'api.endpoint.order' );
 		$session_handler = $container->get( 'session.handler' );
@@ -150,18 +154,21 @@ return array(
 			$logger
 		);
 	},
-	'button.endpoint.data-client-id'    => static function( $container ) : DataClientIdEndpoint {
+	'button.endpoint.data-client-id'    => static function( ContainerInterface $container ) : DataClientIdEndpoint {
 		$request_data   = $container->get( 'button.request-data' );
 		$identity_token = $container->get( 'api.endpoint.identity-token' );
+		$logger = $container->get( 'woocommerce.logger.woocommerce' );
 		return new DataClientIdEndpoint(
 			$request_data,
-			$identity_token
+			$identity_token,
+			$logger
 		);
 	},
-	'button.helper.three-d-secure'      => static function ( $container ): ThreeDSecure {
-		return new ThreeDSecure();
+	'button.helper.three-d-secure'      => static function ( ContainerInterface $container ): ThreeDSecure {
+		$logger = $container->get( 'woocommerce.logger.woocommerce' );
+		return new ThreeDSecure( $logger );
 	},
-	'button.helper.messages-apply'      => static function ( $container ): MessagesApply {
+	'button.helper.messages-apply'      => static function ( ContainerInterface $container ): MessagesApply {
 		return new MessagesApply();
 	},
 );

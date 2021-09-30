@@ -1,0 +1,34 @@
+.ppcp-webhooks-table, .ppcp-webhooks-status-text {
+	.error {
+		color: red;
+		font-weight: bold;
+	}
+
+	.success {
+		color: green;
+		font-weight: bold;
+	}
+}
+
+.ppcp-webhooks-table {
+	table {
+		border-collapse: collapse;
+
+		th {
+			border-bottom: 1px solid black;
+		}
+
+		td, th {
+			padding: 10px 15px;
+		}
+
+		td:first-child {
+			vertical-align: top;
+			width: 450px;
+		}
+	}
+}
+
+.ppcp-webhooks-status-text {
+	padding-top: 4px;
+}

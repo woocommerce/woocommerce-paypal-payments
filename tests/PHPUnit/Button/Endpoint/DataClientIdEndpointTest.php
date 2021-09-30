@@ -8,6 +8,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Token;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\TestCase;
 use Mockery;
+use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
 use function Brain\Monkey\Functions\when;
 use function Brain\Monkey\Functions\expect;
 
@@ -22,7 +23,7 @@ class DataClientIdEndpointTest extends TestCase
         parent::setUp();
         $this->requestData = Mockery::mock(RequestData::class);
         $this->identityToken = Mockery::mock(IdentityToken::class);
-        $this->sut = new DataClientIdEndpoint($this->requestData, $this->identityToken);
+        $this->sut = new DataClientIdEndpoint($this->requestData, $this->identityToken, new NullLogger());
     }
 
     public function testHandleRequestSuccess()

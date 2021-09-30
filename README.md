@@ -29,8 +29,8 @@ You can also use the Docker environment which includes WP, WC and all developmen
 0. Install Docker and Docker Compose.
 1. `$ cp .env.example .env` and edit the configuration in the `.env` file if needed.
 2. `$ yarn run docker:build` (or copy the commands from [package.json](/package.json) if you do not have `yarn`).
-3. `$ yarn docker:install`
-4. `$ yarn docker:start`
+3. `$ yarn run docker:install`
+4. `$ yarn run docker:start`
 5. Add `127.0.0.1 wc-pp.myhost` to your `hosts` file and open http://wc-pp.myhost (the default value of `WP_DOMAIN` in `.env`).
 
 Tests and code style:
@@ -44,29 +44,20 @@ After some changes in `.env` (such as PHP, WP versions) you may need to rebuild 
 
 See [package.json](/package.json) for other useful commands.
 
-## Preparation for wordpress.org release
+## Building a release package
 
-If you want to deploy a new version, you need to do some preparation:
+If you want to build a release package
+(that can be used for deploying a new version on wordpress.org or manual installation on a WP website via ZIP uploading),
+follow these steps:
 
-### Clone
-
-Clone the repository and `cd` into it
-
-### Build
-
-The following command should get you a ZIP file ready to be used on a WordPress site.
+1. Clone the repository and `cd` into it.
+2. Make sure you have the version in the plugin root file updated.
+3. Update the PayPal JavaScript SDK integration date by using the current date for the `PAYPAL_INTEGRATION_DATE` constant.
+4. The following command should get you a ZIP file ready to be used on a WordPress site:
 
 ```
-npm run build
+$ yarn run build
 ```
-
-### Update version
-
-Make sure you have the version in the plugin root file updated.
-
-### Fixate integration date
-
-Fix the PayPal JavaScript SDK integration date by using the current date for the `PAYPAL_INTEGRATION_DATE` constant.
 
 ## License
 

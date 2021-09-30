@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Authentication;
 
+use Requests_Utility_CaseInsensitiveDictionary;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\TestCase;
@@ -28,10 +29,12 @@ class PayPalBearerTest extends TestCase
         $key = 'key';
         $secret = 'secret';
         $logger = Mockery::mock(LoggerInterface::class);
-        $logger->shouldNotReceive('log');
+        $logger->shouldReceive('debug');
         $settings = Mockery::mock(Settings::class);
         $settings->shouldReceive('has')->andReturn(true);
         $settings->shouldReceive('get')->andReturn('');
+        $headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
+        $headers->shouldReceive('getAll');
 
         $bearer = new PayPalBearer($cache, $host, $key, $secret, $logger, $settings);
 
@@ -40,7 +43,7 @@ class PayPalBearerTest extends TestCase
             ->andReturn($host . '/');
         expect('wp_remote_get')
             ->andReturnUsing(
-                function ($url, $args) use ($json, $key, $secret, $host) {
+                function ($url, $args) use ($json, $key, $secret, $host, $headers) {
                     if ($url !== $host . '/v1/oauth2/token?grant_type=client_credentials') {
                         return false;
                     }
@@ -53,6 +56,7 @@ class PayPalBearerTest extends TestCase
 
                     return [
                         'body' => $json,
+						'headers' => $headers
                     ];
                 }
             );
@@ -80,10 +84,12 @@ class PayPalBearerTest extends TestCase
         $key = 'key';
         $secret = 'secret';
         $logger = Mockery::mock(LoggerInterface::class);
-        $logger->shouldNotReceive('log');
+        $logger->shouldReceive('debug');
         $settings = Mockery::mock(Settings::class);
         $settings->shouldReceive('has')->andReturn(true);
         $settings->shouldReceive('get')->andReturn('');
+		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
+		$headers->shouldReceive('getAll');
 
         $bearer = new PayPalBearer($cache, $host, $key, $secret, $logger, $settings);
 
@@ -92,7 +98,7 @@ class PayPalBearerTest extends TestCase
             ->andReturn($host . '/');
         expect('wp_remote_get')
             ->andReturnUsing(
-                function ($url, $args) use ($json, $key, $secret, $host) {
+                function ($url, $args) use ($json, $key, $secret, $host, $headers) {
                     if ($url !== $host . '/v1/oauth2/token?grant_type=client_credentials') {
                         return false;
                     }
@@ -105,6 +111,7 @@ class PayPalBearerTest extends TestCase
 
                     return [
                         'body' => $json,
+						'headers' => $headers,
                     ];
                 }
             );
@@ -153,9 +160,12 @@ class PayPalBearerTest extends TestCase
         $secret = 'secret';
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldReceive('log');
+        $logger->shouldReceive('debug');
         $settings = Mockery::mock(Settings::class);
         $settings->shouldReceive('has')->andReturn(true);
         $settings->shouldReceive('get')->andReturn('');
+		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
+		$headers->shouldReceive('getAll');
 
         $bearer = new PayPalBearer($cache, $host, $key, $secret, $logger, $settings);
 
@@ -164,7 +174,7 @@ class PayPalBearerTest extends TestCase
             ->andReturn($host . '/');
         expect('wp_remote_get')
             ->andReturnUsing(
-                function ($url, $args) use ($json, $key, $secret, $host) {
+                function ($url, $args) use ($json, $key, $secret, $host, $headers) {
                     if ($url !== $host . '/v1/oauth2/token?grant_type=client_credentials') {
                         return false;
                     }
@@ -177,6 +187,7 @@ class PayPalBearerTest extends TestCase
 
                     return [
                         'body' => $json,
+						'headers' => $headers,
                     ];
                 }
             );
@@ -199,9 +210,12 @@ class PayPalBearerTest extends TestCase
         $secret = 'secret';
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldReceive('log');
+        $logger->shouldReceive('debug');
         $settings = Mockery::mock(Settings::class);
         $settings->shouldReceive('has')->andReturn(true);
         $settings->shouldReceive('get')->andReturn('');
+		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
+		$headers->shouldReceive('getAll');
 
         $bearer = new PayPalBearer($cache, $host, $key, $secret, $logger, $settings);
 
@@ -210,7 +224,7 @@ class PayPalBearerTest extends TestCase
             ->andReturn($host . '/');
         expect('wp_remote_get')
             ->andReturnUsing(
-                function ($url, $args) use ($json, $key, $secret, $host) {
+                function ($url, $args) use ($json, $key, $secret, $host, $headers) {
                     if ($url !== $host . '/v1/oauth2/token?grant_type=client_credentials') {
                         return false;
                     }
@@ -223,6 +237,7 @@ class PayPalBearerTest extends TestCase
 
                     return [
                         'body' => $json,
+						'headers' => $headers,
                     ];
                 }
             );
