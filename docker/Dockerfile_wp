@@ -12,7 +12,7 @@ RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 RUN echo 'memory_limit = 128M' >> /usr/local/etc/php/conf.d/docker-php-memlimit.ini;
 
 RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" && \
-    php composer-setup.php --install-dir=/usr/bin --filename=composer && \
+    php composer-setup.php --install-dir=/usr/bin --filename=composer --version=1.10.22 && \
     php -r "unlink('composer-setup.php');"
 
 RUN apt-get update
@@ -64,7 +64,7 @@ RUN apt-get install -y \
     wget
 
 RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" && \
-    php composer-setup.php --install-dir=/usr/bin --filename=composer --version=1.10.19 && \
+    php composer-setup.php --install-dir=/usr/bin --filename=composer --version=1.10.22 && \
     php -r "unlink('composer-setup.php');"
 
 RUN mkdir -p ~/.ssh
@@ -74,7 +74,7 @@ RUN docker-php-ext-install intl json && \
     docker-php-ext-enable intl json
 
 # Install Node
-RUN curl -sL https://deb.nodesource.com/setup_15.x | bash -
+RUN curl -sL https://deb.nodesource.com/setup_16.x | bash -
 RUN apt-get install -y nodejs
 
 WORKDIR ${BUILD_ROOT_PATH}

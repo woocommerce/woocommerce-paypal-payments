@@ -1,27 +1,23 @@
-name: PHP Composer
+name: CI
 
-on:
-  push:
-    branches: [ trunk ]
-  pull_request:
-    branches: [ trunk ]
+on: [push]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
         php-versions: ['7.1', '7.2', '7.3', '7.4']
 
+    name: PHP ${{ matrix.php-versions }}
     steps:
     - uses: actions/checkout@v2
 
     - name: Setup PHP
       uses: shivammathur/setup-php@v2
       with:
-        php-version: ${{ matrix.php-versions }}
+          php-version: ${{ matrix.php-versions }}
+          tools: composer:v1
 
     - name: Validate composer.json and composer.lock
       run: composer validate
@@ -31,7 +27,8 @@ jobs:
       with:
         composer-options: "--prefer-dist"
 
-    - name: Run test suite
-      run: ./vendor/bin/phpunit
-    - name: Run Woocommerce coding standards
-      run: ./vendor/bin/phpcs
+    - name: Run PHPUnit
+      run: vendor/bin/phpunit
+
+    - name: Run PHPCS
+      run: ./vendor/bin/phpcs --runtime-set ignore_warnings_on_exit 1 src modules woocommerce-paypal-payments.php --extensions=php

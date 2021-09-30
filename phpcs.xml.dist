@@ -19,12 +19,24 @@
 		<exclude-pattern>tests/</exclude-pattern>
 	</rule>
 
+	<rule ref="WordPress">
+		<exclude name="WordPress.Files.FileName.NotHyphenatedLowercase" />
+		<exclude name="WordPress.Files.FileName.InvalidClassFileName" />
+		<exclude name="WordPress.PHP.DisallowShortTernary" />
+	</rule>
+
+	<rule ref="Squiz.Commenting.FunctionComment">
+		<properties>
+			<property name="skipIfInheritdoc" value="true" />
+		</properties>
+	</rule>
+
 	<arg name="extensions" value="php"/>
-	<file>./src</file>
-	<file>./modules</file>
-	<file>./woocommerce-paypal-payments.php</file>
-	<file>./modules.php</file>
-	<file>./bootstrap.php</file>
+	<file>src</file>
+	<file>modules</file>
+	<file>woocommerce-paypal-payments.php</file>
+	<file>modules.php</file>
+	<file>bootstrap.php</file>
 
 	<exclude-pattern>*/node_modules/*</exclude-pattern>
 	<exclude-pattern>*/vendor/*</exclude-pattern>
