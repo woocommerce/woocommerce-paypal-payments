@@ -67,7 +67,7 @@ return array(
 		$subscription_helper = $container->get( 'subscription.helper' );
 		$messages_apply      = $container->get( 'button.helper.messages-apply' );
 		$environment         = $container->get( 'onboarding.environment' );
-		$payment_token_repository = $container->get( 'subscription.repository.payment-token' );
+		$payment_token_repository = $container->get( 'vaulting.repository.payment-token' );
 		$settings_status = $container->get( 'wcgateway.settings.status' );
 		return new SmartButton(
 			$container->get( 'button.url' ),
@@ -102,7 +102,8 @@ return array(
 		$request_data = $container->get( 'button.request-data' );
 		$repository  = $container->get( 'api.repository.cart' );
 		$data_store   = \WC_Data_Store::load( 'product' );
-		return new ChangeCartEndpoint( $cart, $shipping, $request_data, $repository, $data_store );
+		$logger                        = $container->get( 'woocommerce.logger.woocommerce' );
+		return new ChangeCartEndpoint( $cart, $shipping, $request_data, $repository, $data_store, $logger );
 	},
 	'button.endpoint.create-order'      => static function ( $container ): CreateOrderEndpoint {
 		$request_data          = $container->get( 'button.request-data' );
@@ -113,6 +114,7 @@ return array(
 		$session_handler       = $container->get( 'session.handler' );
 		$settings              = $container->get( 'wcgateway.settings' );
 		$early_order_handler   = $container->get( 'button.helper.early-order-handler' );
+		$logger                        = $container->get( 'woocommerce.logger.woocommerce' );
 		return new CreateOrderEndpoint(
 			$request_data,
 			$cart_repository,
@@ -121,7 +123,8 @@ return array(
 			$payer_factory,
 			$session_handler,
 			$settings,
-			$early_order_handler
+			$early_order_handler,
+			$logger
 		);
 	},
 	'button.helper.early-order-handler' => static function ( $container ) : EarlyOrderHandler {
@@ -153,13 +156,16 @@ return array(
 	'button.endpoint.data-client-id'    => static function( $container ) : DataClientIdEndpoint {
 		$request_data   = $container->get( 'button.request-data' );
 		$identity_token = $container->get( 'api.endpoint.identity-token' );
+		$logger = $container->get( 'woocommerce.logger.woocommerce' );
 		return new DataClientIdEndpoint(
 			$request_data,
-			$identity_token
+			$identity_token,
+			$logger
 		);
 	},
 	'button.helper.three-d-secure'      => static function ( $container ): ThreeDSecure {
-		return new ThreeDSecure();
+		$logger = $container->get( 'woocommerce.logger.woocommerce' );
+		return new ThreeDSecure( $logger );
 	},
 	'button.helper.messages-apply'      => static function ( $container ): MessagesApply {
 		return new MessagesApply();

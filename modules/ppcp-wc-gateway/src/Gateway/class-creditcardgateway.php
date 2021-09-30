@@ -9,13 +9,14 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
+use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
-use WooCommerce\PayPalCommerce\Subscription\Repository\PaymentTokenRepository;
+use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
@@ -45,6 +46,13 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 * @var SubscriptionHelper
 	 */
 	protected $subscription_helper;
+
+	/**
+	 * The logger.
+	 *
+	 * @var LoggerInterface
+	 */
+	protected $logger;
 
 	/**
 	 * The URL to the module.
@@ -104,8 +112,9 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 * @param PaymentTokenRepository      $payment_token_repository The payment token repository.
 	 * @param PurchaseUnitFactory         $purchase_unit_factory The purchase unit factory.
 	 * @param PayerFactory                $payer_factory The payer factory.
-	 * @param  OrderEndpoint               $order_endpoint The order endpoint.
+	 * @param OrderEndpoint               $order_endpoint The order endpoint.
 	 * @param SubscriptionHelper          $subscription_helper The subscription helper.
+	 * @param LoggerInterface             $logger The logger.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
@@ -122,7 +131,8 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		PurchaseUnitFactory $purchase_unit_factory,
 		PayerFactory $payer_factory,
 		OrderEndpoint $order_endpoint,
-		SubscriptionHelper $subscription_helper
+		SubscriptionHelper $subscription_helper,
+		LoggerInterface $logger
 	) {
 
 		$this->id                  = self::ID;
@@ -190,6 +200,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		$this->order_endpoint           = $order_endpoint;
 		$this->transaction_url_provider = $transaction_url_provider;
 		$this->subscription_helper      = $subscription_helper;
+		$this->logger                   = $logger;
 	}
 
 	/**
@@ -197,13 +208,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 */
 	public function init_form_fields() {
 		$this->form_fields = array(
-			'enabled' => array(
-				'title'   => __( 'Enable/Disable', 'woocommerce-paypal-payments' ),
-				'type'    => 'checkbox',
-				'label'   => __( 'Enable Credit Card Payments', 'woocommerce-paypal-payments' ),
-				'default' => 'no',
-			),
-			'ppcp'    => array(
+			'ppcp' => array(
 				'type' => 'ppcp',
 			),
 		);
@@ -216,6 +221,20 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		add_action( 'gettext', array( $this, 'replace_credit_card_cvv_label' ), 10, 3 );
 		parent::form();
 		remove_action( 'gettext', 'replace_credit_card_cvv_label' );
+	}
+
+	/**
+	 * Renders the settings.
+	 *
+	 * @return string
+	 */
+	public function generate_ppcp_html(): string {
+
+		ob_start();
+		$this->settings_renderer->render();
+		$content = ob_get_contents();
+		ob_end_clean();
+		return $content;
 	}
 
 	/**
@@ -314,7 +333,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 * @return bool
 	 */
 	public function is_available() : bool {
-		return $this->config->has( 'dcc_enabled' ) && $this->config->get( 'dcc_enabled' );
+		return $this->is_enabled();
 	}
 
 
@@ -348,5 +367,61 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		$this->view_transaction_url = $this->transaction_url_provider->get_transaction_url_base( $order );
 
 		return parent::get_transaction_url( $order );
+	}
+
+	/**
+	 * Initialize settings for WC.
+	 *
+	 * @return void
+	 */
+	public function init_settings() {
+		parent::init_settings();
+
+		// looks like in some cases WC uses this field instead of get_option.
+		$this->enabled = $this->is_enabled();
+	}
+
+	/**
+	 * Get the option value for WC.
+	 *
+	 * @param string $key The option key.
+	 * @param mixed  $empty_value Value when empty.
+	 * @return mixed
+	 */
+	public function get_option( $key, $empty_value = null ) {
+		if ( 'enabled' === $key ) {
+			return $this->is_enabled();
+		}
+
+		return parent::get_option( $key, $empty_value );
+	}
+
+	/**
+	 * Handle update of WC settings.
+	 *
+	 * @param string $key The option key.
+	 * @param string $value The option value.
+	 * @return bool was anything saved?
+	 */
+	public function update_option( $key, $value = '' ) {
+		$ret = parent::update_option( $key, $value );
+
+		if ( 'enabled' === $key ) {
+			$this->config->set( 'dcc_enabled', 'yes' === $value );
+			$this->config->persist();
+
+			return true;
+		}
+
+		return $ret;
+	}
+
+	/**
+	 * Returns if the gateway is enabled.
+	 *
+	 * @return bool
+	 */
+	private function is_enabled(): bool {
+		return $this->config->has( 'dcc_enabled' ) && $this->config->get( 'dcc_enabled' );
 	}
 }

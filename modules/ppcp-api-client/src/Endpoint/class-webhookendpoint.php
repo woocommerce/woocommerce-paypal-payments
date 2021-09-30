@@ -11,8 +11,10 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Webhook;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\WebhookEvent;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookEventFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
 use Psr\Log\LoggerInterface;
 
@@ -45,6 +47,13 @@ class WebhookEndpoint {
 	private $webhook_factory;
 
 	/**
+	 * The webhook event factory.
+	 *
+	 * @var WebhookEventFactory
+	 */
+	private $webhook_event_factory;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -54,22 +63,25 @@ class WebhookEndpoint {
 	/**
 	 * WebhookEndpoint constructor.
 	 *
-	 * @param string          $host The host.
-	 * @param Bearer          $bearer The bearer.
-	 * @param WebhookFactory  $webhook_factory The webhook factory.
-	 * @param LoggerInterface $logger The logger.
+	 * @param string              $host The host.
+	 * @param Bearer              $bearer The bearer.
+	 * @param WebhookFactory      $webhook_factory The webhook factory.
+	 * @param WebhookEventFactory $webhook_event_factory The webhook event factory.
+	 * @param LoggerInterface     $logger The logger.
 	 */
 	public function __construct(
 		string $host,
 		Bearer $bearer,
 		WebhookFactory $webhook_factory,
+		WebhookEventFactory $webhook_event_factory,
 		LoggerInterface $logger
 	) {
 
-		$this->host            = $host;
-		$this->bearer          = $bearer;
-		$this->webhook_factory = $webhook_factory;
-		$this->logger          = $logger;
+		$this->host                  = $host;
+		$this->bearer                = $bearer;
+		$this->webhook_factory       = $webhook_factory;
+		$this->webhook_event_factory = $webhook_event_factory;
+		$this->logger                = $logger;
 	}
 
 	/**
@@ -79,14 +91,14 @@ class WebhookEndpoint {
 	 *
 	 * @return Webhook
 	 * @throws RuntimeException If the request fails.
+	 * @throws PayPalApiException If the request fails.
 	 */
 	public function create( Webhook $hook ): Webhook {
-		/**
-		 * An hook, which has an ID has already been created.
-		 */
+		// The hook was already created.
 		if ( $hook->id() ) {
 			return $hook;
 		}
+
 		$bearer   = $this->bearer->bearer();
 		$url      = trailingslashit( $this->host ) . 'v1/notifications/webhooks';
 		$args     = array(
@@ -100,40 +112,62 @@ class WebhookEndpoint {
 		$response = $this->request( $url, $args );
 
 		if ( is_wp_error( $response ) ) {
-			$error = new RuntimeException(
+			throw new RuntimeException(
 				__( 'Not able to create a webhook.', 'woocommerce-paypal-payments' )
 			);
-			$this->logger->log(
-				'warning',
-				$error->getMessage(),
-				array(
-					'args'     => $args,
-					'response' => $response,
-				)
-			);
-			throw $error;
 		}
 
 		$json        = json_decode( $response['body'] );
 		$status_code = (int) wp_remote_retrieve_response_code( $response );
 		if ( 201 !== $status_code ) {
-			$error = new PayPalApiException(
+			throw new PayPalApiException(
 				$json,
 				$status_code
 			);
-			$this->logger->log(
-				'warning',
-				$error->getMessage(),
-				array(
-					'args'     => $args,
-					'response' => $response,
-				)
-			);
-			throw $error;
 		}
 
 		$hook = $this->webhook_factory->from_paypal_response( $json );
 		return $hook;
+	}
+
+	/**
+	 * Loads the webhooks list for the current auth token.
+	 *
+	 * @return Webhook[]
+	 * @throws RuntimeException If the request fails.
+	 * @throws PayPalApiException If the request fails.
+	 */
+	public function list(): array {
+		$bearer   = $this->bearer->bearer();
+		$url      = trailingslashit( $this->host ) . 'v1/notifications/webhooks';
+		$args     = array(
+			'method'  => 'GET',
+			'headers' => array(
+				'Authorization' => 'Bearer ' . $bearer->token(),
+				'Content-Type'  => 'application/json',
+			),
+		);
+		$response = $this->request( $url, $args );
+
+		if ( is_wp_error( $response ) ) {
+			throw new RuntimeException(
+				__( 'Not able to load webhooks list.', 'woocommerce-paypal-payments' )
+			);
+		}
+
+		$json        = json_decode( $response['body'] );
+		$status_code = (int) wp_remote_retrieve_response_code( $response );
+		if ( 200 !== $status_code ) {
+			throw new PayPalApiException(
+				$json,
+				$status_code
+			);
+		}
+
+		return array_map(
+			array( $this->webhook_factory, 'from_paypal_response' ),
+			$json->webhooks
+		);
 	}
 
 	/**
@@ -160,20 +194,59 @@ class WebhookEndpoint {
 		$response = $this->request( $url, $args );
 
 		if ( is_wp_error( $response ) ) {
-			$error = new RuntimeException(
+			throw new RuntimeException(
 				__( 'Not able to delete the webhook.', 'woocommerce-paypal-payments' )
 			);
-			$this->logger->log(
-				'warning',
-				$error->getMessage(),
-				array(
-					'args'     => $args,
-					'response' => $response,
-				)
-			);
-			throw $error;
 		}
 		return wp_remote_retrieve_response_code( $response ) === 204;
+	}
+
+	/**
+	 * Request a simulated webhook to be sent.
+	 *
+	 * @param Webhook     $hook The webhook subscription to use.
+	 * @param string      $event_type The event type, such as CHECKOUT.ORDER.APPROVED.
+	 * @param string|null $resource_version The event resource version, such as 2.0.
+	 *
+	 * @return WebhookEvent
+	 * @throws RuntimeException If the request fails.
+	 * @throws PayPalApiException If the request fails.
+	 */
+	public function simulate( Webhook $hook, string $event_type, ?string $resource_version ): WebhookEvent {
+		$bearer = $this->bearer->bearer();
+		$url    = trailingslashit( $this->host ) . 'v1/notifications/simulate-event';
+		$data   = array(
+			'webhook_id' => $hook->id(),
+			'event_type' => $event_type,
+		);
+		if ( $resource_version ) {
+			$data['resource_version'] = $resource_version;
+		}
+		$args     = array(
+			'method'  => 'POST',
+			'headers' => array(
+				'Authorization' => 'Bearer ' . $bearer->token(),
+				'Content-Type'  => 'application/json',
+			),
+			'body'    => wp_json_encode( $data ),
+		);
+		$response = $this->request( $url, $args );
+
+		if ( is_wp_error( $response ) ) {
+			throw new RuntimeException(
+				__( 'Not able to simulate webhook.', 'woocommerce-paypal-payments' )
+			);
+		}
+		$json        = json_decode( $response['body'] );
+		$status_code = (int) wp_remote_retrieve_response_code( $response );
+		if ( 202 !== $status_code ) {
+			throw new PayPalApiException(
+				$json,
+				$status_code
+			);
+		}
+
+		return $this->webhook_event_factory->from_paypal_response( $json );
 	}
 
 	/**

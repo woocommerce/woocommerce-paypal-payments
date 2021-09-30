@@ -1,6 +1,6 @@
 {
   "name": "woocommerce-paypal-payments",
-  "version": "1.5.1",
+  "version": "1.6.0",
   "description": "WooCommerce PayPal Payments",
   "repository": "https://github.com/woocommerce/woocommerce-paypal-payments",
   "license": "GPL-2.0",
@@ -8,10 +8,14 @@
   "scripts": {
     "install:modules:ppcp-button": "cd modules/ppcp-button && yarn install && cd -",
     "install:modules:ppcp-wc-gateway": "cd modules/ppcp-wc-gateway && yarn install && cd -",
-    "install:modules": "yarn run install:modules:ppcp-button && yarn run install:modules:ppcp-wc-gateway",
+    "install:modules:ppcp-webhooks": "cd modules/ppcp-webhooks && yarn install && cd -",
+    "install:modules:ppcp-vaulting": "cd modules/ppcp-vaulting && yarn install && cd -",
+    "install:modules": "yarn run install:modules:ppcp-button && yarn run install:modules:ppcp-wc-gateway && yarn run install:modules:ppcp-webhooks && yarn run install:modules:ppcp-vaulting",
     "build:modules:ppcp-button": "cd modules/ppcp-button && yarn run build && cd -",
     "build:modules:ppcp-wc-gateway": "cd modules/ppcp-wc-gateway && yarn run build && cd -",
-    "build:modules": "yarn run build:modules:ppcp-button && yarn build:modules:ppcp-wc-gateway",
+    "build:modules:ppcp-webhooks": "cd modules/ppcp-webhooks && yarn run build && cd -",
+    "build:modules:ppcp-vaulting": "cd modules/ppcp-vaulting && yarn run build && cd -",
+    "build:modules": "yarn run build:modules:ppcp-button && yarn build:modules:ppcp-wc-gateway && yarn build:modules:ppcp-webhooks && yarn build:modules:ppcp-vaulting",
     "build:dev": "yarn run install:modules && yarn run build:modules",
 
     "docker:build": "docker-compose build",
@@ -27,7 +31,8 @@
     "docker:lint": "docker-compose run --rm test vendor/bin/phpcs --parallel=8 -s",
     "docker:fix-lint": "docker-compose run --rm test vendor/bin/phpcbf",
 
-    "prebuild": "rm -rf ./vendor",
+
+    "prebuild": "rm -rf ./vendor && find . -name 'node_modules' -type d -maxdepth 3 -exec rm -rf {} +",
     "build": "composer install --no-dev && yarn run build:dev && yarn run archive",
     "prearchive": "rm -rf $npm_package_name.zip",
     "archive": "zip -r $npm_package_name.zip . -x **.git/\\* **node_modules/\\*",

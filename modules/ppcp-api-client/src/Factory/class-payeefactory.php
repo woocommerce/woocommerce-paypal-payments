@@ -26,13 +26,8 @@ class PayeeFactory {
 	 * @throws RuntimeException When JSON object is malformed.
 	 */
 	public function from_paypal_response( \stdClass $data ) {
-		if ( ! isset( $data->email_address ) ) {
-			throw new RuntimeException(
-				__( 'No email for payee given.', 'woocommerce-paypal-payments' )
-			);
-		}
-
+		$email       = ( isset( $data->email_address ) ) ? $data->email_address : '';
 		$merchant_id = ( isset( $data->merchant_id ) ) ? $data->merchant_id : '';
-		return new Payee( $data->email_address, $merchant_id );
+		return new Payee( $email, $merchant_id );
 	}
 }

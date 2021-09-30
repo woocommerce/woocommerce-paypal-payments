@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 
+use Requests_Utility_CaseInsensitiveDictionary;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ErrorResponseCollection;
@@ -40,8 +41,14 @@ class PaymentsEndpointTest extends TestCase
 
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldNotReceive('log');
+        $logger->shouldReceive('debug');
 
-        $rawResponse = ['body' => '{"is_correct":true}'];
+		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
+		$headers->shouldReceive('getAll');
+        $rawResponse = [
+        	'body' => '{"is_correct":true}',
+			'headers' => $headers,
+			];
 
         $testee = new PaymentsEndpoint(
             $host,
@@ -88,8 +95,14 @@ class PaymentsEndpointTest extends TestCase
 
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldReceive('log');
+        $logger->shouldReceive('debug');
 
-        $rawResponse = ['body' => '{"is_correct":true}'];
+		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
+		$headers->shouldReceive('getAll');
+        $rawResponse = [
+        	'body' => '{"is_correct":true}',
+			'headers' => $headers,
+			];
 
         $testee = new PaymentsEndpoint(
             $host,
@@ -119,10 +132,16 @@ class PaymentsEndpointTest extends TestCase
 
         $authorizationFactory = Mockery::mock(AuthorizationFactory::class);
 
-        $rawResponse = ['body' => '{"some_error":true}'];
+		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
+		$headers->shouldReceive('getAll');
+        $rawResponse = [
+        	'body' => '{"some_error":true}',
+			'headers' => $headers,
+			];
 
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldReceive('log');
+        $logger->shouldReceive('debug');
 
         $testee = new PaymentsEndpoint(
             $host,
@@ -161,8 +180,14 @@ class PaymentsEndpointTest extends TestCase
 
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldNotReceive('log');
+        $logger->shouldReceive('debug');
 
-        $rawResponse = ['body' => '{"is_correct":true}'];
+		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
+		$headers->shouldReceive('getAll');
+        $rawResponse = [
+        	'body' => '{"is_correct":true}',
+			'headers' => $headers,
+			];
 
         $testee = new PaymentsEndpoint(
             $host,
@@ -212,8 +237,14 @@ class PaymentsEndpointTest extends TestCase
 
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->expects('log');
+        $logger->expects('debug');
 
-        $rawResponse = ['body' => '{"is_correct":true}'];
+		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
+		$headers->shouldReceive('getAll');
+        $rawResponse = [
+        	'body' => '{"is_correct":true}',
+			'headers' => $headers,
+			];
 
         $testee = new PaymentsEndpoint(
             $host,
@@ -243,10 +274,16 @@ class PaymentsEndpointTest extends TestCase
 
         $authorizationFactory = Mockery::mock(AuthorizationFactory::class);
 
-        $rawResponse = ['body' => '{"some_error":true}'];
+		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
+		$headers->shouldReceive('getAll');
+        $rawResponse = [
+        	'body' => '{"some_error":true}',
+			'headers' => $headers,
+			];
 
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->expects('log');
+        $logger->expects('debug');
 
         $testee = new PaymentsEndpoint(
             $host,

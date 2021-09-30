@@ -68,11 +68,11 @@ class Payee {
 	 * @return array
 	 */
 	public function to_array(): array {
-		$data = array(
-			'email_address' => $this->email(),
-		);
+		$data = array();
 		if ( $this->merchant_id ) {
 			$data['merchant_id'] = $this->merchant_id();
+		} else {
+			$data['email_address'] = $this->email();
 		}
 		return $data;
 	}

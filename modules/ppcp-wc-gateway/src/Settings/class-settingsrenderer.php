@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Woocommerce\PayPalCommerce\WcGateway\Helper\DccProductStatus;
 use Woocommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 
@@ -22,6 +23,8 @@ use Woocommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
  * Class SettingsRenderer
  */
 class SettingsRenderer {
+
+	use PageMatcherTrait;
 
 	/**
 	 * The Settings status helper.
@@ -73,6 +76,13 @@ class SettingsRenderer {
 	private $dcc_product_status;
 
 	/**
+	 * ID of the current PPCP gateway settings page, or empty if it is not such page.
+	 *
+	 * @var string
+	 */
+	protected $page_id;
+
+	/**
 	 * SettingsRenderer constructor.
 	 *
 	 * @param ContainerInterface $settings The Settings.
@@ -82,6 +92,7 @@ class SettingsRenderer {
 	 * @param MessagesApply      $messages_apply Whether messages can be shown.
 	 * @param DccProductStatus   $dcc_product_status The product status.
 	 * @param SettingsStatus     $settings_status The Settings status helper.
+	 * @param string             $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
 	 */
 	public function __construct(
 		ContainerInterface $settings,
@@ -90,7 +101,8 @@ class SettingsRenderer {
 		DccApplies $dcc_applies,
 		MessagesApply $messages_apply,
 		DccProductStatus $dcc_product_status,
-		SettingsStatus $settings_status
+		SettingsStatus $settings_status,
+		string $page_id
 	) {
 
 		$this->settings           = $settings;
@@ -100,6 +112,7 @@ class SettingsRenderer {
 		$this->messages_apply     = $messages_apply;
 		$this->dcc_product_status = $dcc_product_status;
 		$this->settings_status    = $settings_status;
+		$this->page_id            = $page_id;
 	}
 
 	/**
@@ -166,21 +179,7 @@ class SettingsRenderer {
 	 * @return bool Whether is PayPal checkout screen or not.
 	 */
 	private function is_paypal_checkout_screen(): bool {
-		$current_screen = get_current_screen();
-        //phpcs:disable WordPress.Security.NonceVerification.Recommended
-        //phpcs:disable WordPress.Security.NonceVerification.Missing
-		if ( isset( $current_screen->id ) && 'woocommerce_page_wc-settings' === $current_screen->id
-			&& isset( $_GET['section'] ) && 'ppcp-gateway' === $_GET['section'] ) {
-
-			if ( isset( $_GET['ppcp-tab'] ) && 'ppcp-gateway' !== $_GET['ppcp-tab'] ) {
-				return false;
-			}
-
-			return true;
-		}
-        //phpcs:enable
-
-		return false;
+		return PayPalGateway::ID === $this->page_id;
 	}
 
 	/**
@@ -313,13 +312,65 @@ class SettingsRenderer {
 	}
 
 	/**
+	 * Renders the table row.
+	 *
+	 * @param array  $data Values of the row cells.
+	 * @param string $tag HTML tag ('td', 'th').
+	 * @return string
+	 */
+	public function render_table_row( array $data, string $tag = 'td' ): string {
+		$cells = array_map(
+			function ( $value ) use ( $tag ): string {
+				return "<$tag>" . (string) $value . "</$tag>";
+			},
+			$data
+		);
+		return '<tr>' . implode( $cells ) . '</tr>';
+	}
+
+	/**
+	 * Renders the table field.
+	 *
+	 * @param string $field The current field HTML.
+	 * @param string $key   The key.
+	 * @param array  $config The configuration of the field.
+	 * @param array  $value The current value.
+	 *
+	 * @return string HTML.
+	 */
+	public function render_table( $field, $key, $config, $value ): string {
+		if ( 'ppcp-table' !== $config['type'] ) {
+			return $field;
+		}
+
+		$data = $value['data'];
+		if ( empty( $data ) ) {
+			$empty_placeholder = $value['empty_placeholder'] ?? ( $config['empty_placeholder'] ?? null );
+			if ( $empty_placeholder ) {
+				return $empty_placeholder;
+			}
+		}
+
+		$header_row_html = $this->render_table_row( $value['headers'], 'th' );
+		$data_rows_html  = implode(
+			array_map(
+				array( $this, 'render_table_row' ),
+				$data
+			)
+		);
+
+		return "<table>
+$header_row_html
+$data_rows_html
+</table>";
+	}
+
+	/**
 	 * Renders the settings.
 	 */
 	public function render() {
 
-		//phpcs:disable WordPress.Security.NonceVerification.Recommended
-		//phpcs:disable WordPress.Security.NonceVerification.Missing
-		$is_dcc = isset( $_GET[ SectionsRenderer::KEY ] ) && CreditCardGateway::ID === sanitize_text_field( wp_unslash( $_GET[ SectionsRenderer::KEY ] ) );
+		$is_dcc = CreditCardGateway::ID === $this->page_id;
 		//phpcs:enable WordPress.Security.NonceVerification.Recommended
 		//phpcs:enable WordPress.Security.NonceVerification.Missing
 		$nonce = wp_create_nonce( SettingsListener::NONCE );
@@ -330,10 +381,7 @@ class SettingsRenderer {
 			if ( ! in_array( $this->state->current_state(), $config['screens'], true ) ) {
 				continue;
 			}
-			if ( $is_dcc && ! in_array( $config['gateway'], array( 'all', 'dcc' ), true ) ) {
-				continue;
-			}
-			if ( ! $is_dcc && ! in_array( $config['gateway'], array( 'all', 'paypal' ), true ) ) {
+			if ( ! $this->field_matches_page( $config, $this->page_id ) ) {
 				continue;
 			}
 			if (
@@ -354,7 +402,7 @@ class SettingsRenderer {
 			) {
 				continue;
 			}
-			$value        = $this->settings->has( $field ) ? $this->settings->get( $field ) : null;
+			$value        = $this->settings->has( $field ) ? $this->settings->get( $field ) : ( isset( $config['value'] ) ? $config['value']() : null );
 			$key          = 'ppcp[' . $field . ']';
 			$id           = 'ppcp-' . $field;
 			$config['id'] = $id;
@@ -399,8 +447,6 @@ class SettingsRenderer {
 			if ( $this->dcc_applies->for_country_currency() ) {
 				if ( State::STATE_ONBOARDED > $this->state->current_state() ) {
 					$this->render_dcc_onboarding_info();
-				} elseif ( State::STATE_ONBOARDED === $this->state->current_state() && $this->dcc_product_status->dcc_is_active() ) {
-					$this->render_3d_secure_info();
 				} elseif ( ! $this->dcc_product_status->dcc_is_active() ) {
 					$this->render_dcc_not_active_yet();
 				}
@@ -447,45 +493,6 @@ class SettingsRenderer {
 				</p>
 			</td>
 		</tr>
-		<?php
-	}
-
-	/**
-	 * Renders the 3d secure info text.
-	 */
-	private function render_3d_secure_info() {
-		?>
-<tr>
-	<th><?php esc_html_e( '3D Secure', 'woocommerce-paypal-payments' ); ?></th>
-	<td>
-		<p>
-			<?php
-			/**
-			 * We still need to provide a docs link.
-			 *
-			 * @todo: Provide link to documentation.
-			 */
-			echo wp_kses_post(
-				sprintf(
-				// translators: %1$s and %2$s is a link tag.
-					__(
-						'3D Secure benefits cardholders and merchants by providing
-                                  an additional layer of verification using Verified by Visa,
-                                  MasterCard SecureCode and American Express SafeKey.
-                                  %1$sLearn more about 3D Secure.%2$s',
-						'woocommerce-paypal-payments'
-					),
-					'<a
-                            rel="noreferrer noopener"
-                            href="https://woocommerce.com/posts/introducing-strong-customer-authentication-sca/"
-                            >',
-					'</a>'
-				)
-			);
-			?>
-		</p>
-	</td>
-</tr>
 		<?php
 	}
 
@@ -547,8 +554,8 @@ class SettingsRenderer {
 			return false;
 		}
 
-		return $this->is_paypal_checkout_screen() && $this->paypal_vaulting_is_enabled()
-			|| $this->is_paypal_checkout_screen() && $this->settings_status->pay_later_messaging_is_enabled();
+		return $this->is_paypal_checkout_screen()
+			&& ( $this->paypal_vaulting_is_enabled() || $this->settings_status->pay_later_messaging_is_enabled() );
 	}
 }
 

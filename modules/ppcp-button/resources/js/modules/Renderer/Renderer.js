@@ -43,6 +43,14 @@ class Renderer {
         domElement.style.display = 'block';
         return true;
     }
+
+    disableCreditCardFields() {
+        this.creditCardRenderer.disableFields();
+    }
+
+    enableCreditCardFields() {
+        this.creditCardRenderer.enableFields();
+    }
 }
 
 export default Renderer;

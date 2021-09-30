@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Onboarding\Endpoint;
 
+use Exception;
+use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\LoginSeller;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
@@ -68,6 +70,13 @@ class LoginSellerEndpoint implements EndpointInterface {
 	private $cache;
 
 	/**
+	 * The logger.
+	 *
+	 * @var LoggerInterface
+	 */
+	protected $logger;
+
+	/**
 	 * LoginSellerEndpoint constructor.
 	 *
 	 * @param RequestData          $request_data The Request Data.
@@ -76,6 +85,7 @@ class LoginSellerEndpoint implements EndpointInterface {
 	 * @param PartnerReferralsData $partner_referrals_data The Partner Referrals Data.
 	 * @param Settings             $settings The Settings.
 	 * @param Cache                $cache The Cache.
+	 * @param LoggerInterface      $logger The logger.
 	 */
 	public function __construct(
 		RequestData $request_data,
@@ -83,7 +93,8 @@ class LoginSellerEndpoint implements EndpointInterface {
 		LoginSeller $login_seller_sandbox,
 		PartnerReferralsData $partner_referrals_data,
 		Settings $settings,
-		Cache $cache
+		Cache $cache,
+		LoggerInterface $logger
 	) {
 
 		$this->request_data            = $request_data;
@@ -92,6 +103,7 @@ class LoginSellerEndpoint implements EndpointInterface {
 		$this->partner_referrals_data  = $partner_referrals_data;
 		$this->settings                = $settings;
 		$this->cache                   = $cache;
+		$this->logger                  = $logger;
 	}
 
 	/**
@@ -136,12 +148,13 @@ class LoginSellerEndpoint implements EndpointInterface {
 				$this->cache->delete( PayPalBearer::CACHE_KEY );
 			}
 			wp_schedule_single_event(
-				time() - 1,
+				time() + 5,
 				WebhookRegistrar::EVENT_HOOK
 			);
 			wp_send_json_success();
 			return true;
-		} catch ( \RuntimeException $error ) {
+		} catch ( Exception $error ) {
+			$this->logger->error( 'Onboarding completion handling error: ' . $error->getMessage() );
 			wp_send_json_error( $error->getMessage() );
 			return false;
 		}
