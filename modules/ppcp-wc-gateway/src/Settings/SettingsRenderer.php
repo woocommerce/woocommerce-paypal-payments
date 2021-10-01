@@ -100,7 +100,7 @@ class SettingsRenderer {
 		array $fields,
 		DccApplies $dcc_applies,
 		MessagesApply $messages_apply,
-		DccProductStatus $dcc_product_status,
+		DCCProductStatus $dcc_product_status,
 		SettingsStatus $settings_status,
 		string $page_id
 	) {
