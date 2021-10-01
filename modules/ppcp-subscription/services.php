@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\Subscription;
 
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 
 return array(
 	'subscription.helper'                   => static function ( ContainerInterface $container ): SubscriptionHelper {
