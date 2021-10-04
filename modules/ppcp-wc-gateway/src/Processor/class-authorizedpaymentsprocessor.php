@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Processor;
 
 use Exception;
+use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
@@ -43,18 +44,28 @@ class AuthorizedPaymentsProcessor {
 	private $payments_endpoint;
 
 	/**
+	 * The logger.
+	 *
+	 * @var LoggerInterface
+	 */
+	private $logger;
+
+	/**
 	 * AuthorizedPaymentsProcessor constructor.
 	 *
 	 * @param OrderEndpoint    $order_endpoint The Order endpoint.
 	 * @param PaymentsEndpoint $payments_endpoint The Payments endpoint.
+	 * @param LoggerInterface  $logger The logger.
 	 */
 	public function __construct(
 		OrderEndpoint $order_endpoint,
-		PaymentsEndpoint $payments_endpoint
+		PaymentsEndpoint $payments_endpoint,
+		LoggerInterface $logger
 	) {
 
 		$this->order_endpoint    = $order_endpoint;
 		$this->payments_endpoint = $payments_endpoint;
+		$this->logger            = $logger;
 	}
 
 	/**
@@ -83,6 +94,7 @@ class AuthorizedPaymentsProcessor {
 		try {
 			$this->capture_authorizations( ...$authorizations );
 		} catch ( Exception $exception ) {
+			$this->logger->error( 'Failed to capture authorization: ' . $exception->getMessage() );
 			return self::FAILED;
 		}
 

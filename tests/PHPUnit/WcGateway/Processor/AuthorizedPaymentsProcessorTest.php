@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Processor;
 
 
+use Psr\Log\NullLogger;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
@@ -29,6 +30,8 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 
 	private $paymentsEndpoint;
 
+	private $testee;
+
 	public function setUp(): void {
 		parent::setUp();
 
@@ -42,25 +45,24 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 			->with($this->paypalOrderId)
 			->andReturnUsing(function () {
 				return $this->paypalOrder;
-			});
+			})
+			->byDefault();
 
 		$this->paymentsEndpoint = Mockery::mock(PaymentsEndpoint::class);
+
+		$this->testee = new AuthorizedPaymentsProcessor($this->orderEndpoint, $this->paymentsEndpoint, new NullLogger());
 	}
 
 	public function testSuccess() {
-        $testee = new AuthorizedPaymentsProcessor($this->orderEndpoint, $this->paymentsEndpoint);
-
 		$this->paymentsEndpoint
 			->expects('capture')
 			->with($this->authorizationId)
 			->andReturn($this->createAuthorization($this->authorizationId, AuthorizationStatus::CAPTURED));
 
-        $this->assertEquals(AuthorizedPaymentsProcessor::SUCCESSFUL, $testee->process($this->wcOrder));
+        $this->assertEquals(AuthorizedPaymentsProcessor::SUCCESSFUL, $this->testee->process($this->wcOrder));
     }
 
 	public function testCapturesAllCaptureable() {
-        $testee = new AuthorizedPaymentsProcessor($this->orderEndpoint, $this->paymentsEndpoint);
-
 		$authorizations = [
 			$this->createAuthorization('id1', AuthorizationStatus::CREATED),
 			$this->createAuthorization('id2', AuthorizationStatus::VOIDED),
@@ -79,50 +81,40 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 				->andReturn($this->createAuthorization($authorization->id(), AuthorizationStatus::CAPTURED));
 		}
 
-		$this->assertEquals(AuthorizedPaymentsProcessor::SUCCESSFUL, $testee->process($this->wcOrder));
+		$this->assertEquals(AuthorizedPaymentsProcessor::SUCCESSFUL, $this->testee->process($this->wcOrder));
     }
 
     public function testInaccessible() {
-        $orderEndpoint = Mockery::mock(OrderEndpoint::class);
-        $orderEndpoint
+        $this->orderEndpoint
             ->expects('order')
             ->with($this->paypalOrderId)
             ->andThrow(RuntimeException::class);
 
-        $testee = new AuthorizedPaymentsProcessor($orderEndpoint, $this->paymentsEndpoint);
-
-		$this->assertEquals(AuthorizedPaymentsProcessor::INACCESSIBLE, $testee->process($this->wcOrder));
+		$this->assertEquals(AuthorizedPaymentsProcessor::INACCESSIBLE, $this->testee->process($this->wcOrder));
     }
 
     public function testNotFound() {
-        $orderEndpoint = Mockery::mock(OrderEndpoint::class);
-        $orderEndpoint
+        $this->orderEndpoint
             ->expects('order')
             ->with($this->paypalOrderId)
             ->andThrow(new RuntimeException('text', 404));
 
-        $testee = new AuthorizedPaymentsProcessor($orderEndpoint, $this->paymentsEndpoint);
-
-		$this->assertEquals(AuthorizedPaymentsProcessor::NOT_FOUND, $testee->process($this->wcOrder));
+		$this->assertEquals(AuthorizedPaymentsProcessor::NOT_FOUND, $this->testee->process($this->wcOrder));
     }
 
     public function testCaptureFails() {
-		$testee = new AuthorizedPaymentsProcessor($this->orderEndpoint, $this->paymentsEndpoint);
-
 		$this->paymentsEndpoint
             ->expects('capture')
             ->with($this->authorizationId)
             ->andThrow(RuntimeException::class);
 
-		$this->assertEquals(AuthorizedPaymentsProcessor::FAILED, $testee->process($this->wcOrder));
+		$this->assertEquals(AuthorizedPaymentsProcessor::FAILED, $this->testee->process($this->wcOrder));
     }
 
     public function testAlreadyCaptured() {
-        $testee = new AuthorizedPaymentsProcessor($this->orderEndpoint, $this->paymentsEndpoint);
-
 		$this->paypalOrder = $this->createPaypalOrder([$this->createAuthorization($this->authorizationId, AuthorizationStatus::CAPTURED)]);
 
-		$this->assertEquals(AuthorizedPaymentsProcessor::ALREADY_CAPTURED, $testee->process($this->wcOrder));
+		$this->assertEquals(AuthorizedPaymentsProcessor::ALREADY_CAPTURED, $this->testee->process($this->wcOrder));
     }
 
 	private function createWcOrder(string $paypalOrderId): WC_Order {
