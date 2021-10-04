@@ -55,8 +55,7 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 			->with($this->authorizationId)
 			->andReturn($this->createAuthorization($this->authorizationId, AuthorizationStatus::CAPTURED));
 
-        $this->assertTrue($testee->process($this->wcOrder));
-        $this->assertEquals(AuthorizedPaymentsProcessor::SUCCESSFUL, $testee->last_status());
+        $this->assertEquals(AuthorizedPaymentsProcessor::SUCCESSFUL, $testee->process($this->wcOrder));
     }
 
 	public function testCapturesAllCaptureable() {
@@ -80,8 +79,7 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 				->andReturn($this->createAuthorization($authorization->id(), AuthorizationStatus::CAPTURED));
 		}
 
-        $this->assertTrue($testee->process($this->wcOrder));
-        $this->assertEquals(AuthorizedPaymentsProcessor::SUCCESSFUL, $testee->last_status());
+		$this->assertEquals(AuthorizedPaymentsProcessor::SUCCESSFUL, $testee->process($this->wcOrder));
     }
 
     public function testInaccessible() {
@@ -93,8 +91,7 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 
         $testee = new AuthorizedPaymentsProcessor($orderEndpoint, $this->paymentsEndpoint);
 
-        $this->assertFalse($testee->process($this->wcOrder));
-        $this->assertEquals(AuthorizedPaymentsProcessor::INACCESSIBLE, $testee->last_status());
+		$this->assertEquals(AuthorizedPaymentsProcessor::INACCESSIBLE, $testee->process($this->wcOrder));
     }
 
     public function testNotFound() {
@@ -106,8 +103,7 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 
         $testee = new AuthorizedPaymentsProcessor($orderEndpoint, $this->paymentsEndpoint);
 
-        $this->assertFalse($testee->process($this->wcOrder));
-        $this->assertEquals(AuthorizedPaymentsProcessor::NOT_FOUND, $testee->last_status());
+		$this->assertEquals(AuthorizedPaymentsProcessor::NOT_FOUND, $testee->process($this->wcOrder));
     }
 
     public function testCaptureFails() {
@@ -118,8 +114,7 @@ class AuthorizedPaymentsProcessorTest extends TestCase
             ->with($this->authorizationId)
             ->andThrow(RuntimeException::class);
 
-        $this->assertFalse($testee->process($this->wcOrder));
-        $this->assertEquals(AuthorizedPaymentsProcessor::FAILED, $testee->last_status());
+		$this->assertEquals(AuthorizedPaymentsProcessor::FAILED, $testee->process($this->wcOrder));
     }
 
     public function testAlreadyCaptured() {
@@ -127,8 +122,7 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 
 		$this->paypalOrder = $this->createPaypalOrder([$this->createAuthorization($this->authorizationId, AuthorizationStatus::CAPTURED)]);
 
-        $this->assertFalse($testee->process($this->wcOrder));
-        $this->assertEquals(AuthorizedPaymentsProcessor::ALREADY_CAPTURED, $testee->last_status());
+		$this->assertEquals(AuthorizedPaymentsProcessor::ALREADY_CAPTURED, $testee->process($this->wcOrder));
     }
 
 	private function createWcOrder(string $paypalOrderId): WC_Order {

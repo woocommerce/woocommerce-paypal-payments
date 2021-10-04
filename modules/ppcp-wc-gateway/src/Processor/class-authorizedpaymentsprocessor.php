@@ -43,13 +43,6 @@ class AuthorizedPaymentsProcessor {
 	private $payments_endpoint;
 
 	/**
-	 * The last status.
-	 *
-	 * @var string
-	 */
-	private $last_status = '';
-
-	/**
 	 * AuthorizedPaymentsProcessor constructor.
 	 *
 	 * @param OrderEndpoint    $order_endpoint The Order endpoint.
@@ -69,46 +62,31 @@ class AuthorizedPaymentsProcessor {
 	 *
 	 * @param \WC_Order $wc_order The WooCommerce order.
 	 *
-	 * @return bool
+	 * @return string One of the AuthorizedPaymentsProcessor status constants.
 	 */
-	public function process( \WC_Order $wc_order ): bool {
+	public function process( \WC_Order $wc_order ): string {
 		try {
 			$order = $this->paypal_order_from_wc_order( $wc_order );
 		} catch ( Exception $exception ) {
 			if ( $exception->getCode() === 404 ) {
-				$this->last_status = self::NOT_FOUND;
-				return false;
+				return self::NOT_FOUND;
 			}
-			$this->last_status = self::INACCESSIBLE;
-			return false;
+			return self::INACCESSIBLE;
 		}
 
 		$authorizations = $this->all_authorizations( $order );
 
 		if ( ! $this->are_authorzations_to_capture( ...$authorizations ) ) {
-			$this->last_status = self::ALREADY_CAPTURED;
-			return false;
+			return self::ALREADY_CAPTURED;
 		}
 
 		try {
 			$this->capture_authorizations( ...$authorizations );
 		} catch ( Exception $exception ) {
-			$this->last_status = self::FAILED;
-			return false;
+			return self::FAILED;
 		}
 
-		$this->last_status = self::SUCCESSFUL;
-		return true;
-	}
-
-	/**
-	 * Returns the last status.
-	 *
-	 * @return string
-	 */
-	public function last_status(): string {
-
-		return $this->last_status;
+		return self::SUCCESSFUL;
 	}
 
 	/**

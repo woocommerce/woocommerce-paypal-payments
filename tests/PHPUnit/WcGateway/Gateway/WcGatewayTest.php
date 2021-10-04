@@ -227,10 +227,7 @@ class WcGatewayTest extends TestCase
         $authorizedPaymentsProcessor
             ->expects('process')
             ->with($wcOrder)
-            ->andReturnTrue();
-        $authorizedPaymentsProcessor
-            ->expects('last_status')
-            ->andReturn(AuthorizedPaymentsProcessor::SUCCESSFUL);
+			->andReturn(AuthorizedPaymentsProcessor::SUCCESSFUL);
         $authorizedOrderActionNotice = Mockery::mock(AuthorizeOrderActionNotice::class);
         $authorizedOrderActionNotice
             ->expects('display_message')
@@ -286,10 +283,7 @@ class WcGatewayTest extends TestCase
         $authorizedPaymentsProcessor
             ->expects('process')
             ->with($wcOrder)
-            ->andReturnFalse();
-        $authorizedPaymentsProcessor
-            ->shouldReceive('last_status')
-            ->andReturn(AuthorizedPaymentsProcessor::ALREADY_CAPTURED);
+			->andReturn(AuthorizedPaymentsProcessor::ALREADY_CAPTURED);
         $authorizedOrderActionNotice = Mockery::mock(AuthorizeOrderActionNotice::class);
         $authorizedOrderActionNotice
             ->expects('display_message')
@@ -338,10 +332,7 @@ class WcGatewayTest extends TestCase
         $authorizedPaymentsProcessor
             ->expects('process')
             ->with($wcOrder)
-            ->andReturnFalse();
-        $authorizedPaymentsProcessor
-            ->shouldReceive('last_status')
-            ->andReturn($lastStatus);
+			->andReturn($lastStatus);
         $authorizedOrderActionNotice = Mockery::mock(AuthorizeOrderActionNotice::class);
         $authorizedOrderActionNotice
             ->expects('display_message')
