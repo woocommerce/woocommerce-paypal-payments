@@ -227,4 +227,39 @@ class PaymentsEndpoint {
 			);
 		}
 	}
+
+	/**
+	 * Voids a transaction.
+	 *
+	 * @param Authorization $authorization The PayPal payment authorization to void.
+	 *
+	 * @return void
+	 * @throws RuntimeException If the request fails.
+	 * @throws PayPalApiException If the request fails.
+	 */
+	public function void( Authorization $authorization ) : void {
+		$bearer = $this->bearer->bearer();
+		$url    = trailingslashit( $this->host ) . 'v2/payments/authorizations/' . $authorization->id() . '/void';
+		$args   = array(
+			'method'  => 'POST',
+			'headers' => array(
+				'Authorization' => 'Bearer ' . $bearer->token(),
+				'Content-Type'  => 'application/json',
+				'Prefer'        => 'return=representation',
+			),
+		);
+
+		$response = $this->request( $url, $args );
+
+		if ( is_wp_error( $response ) ) {
+			throw new RuntimeException( 'Could not void transaction.' );
+		}
+
+		$status_code = (int) wp_remote_retrieve_response_code( $response );
+		// Currently it can return body with 200 status, despite the docs saying that it should be 204 No content.
+		// We don't care much about body, so just checking that it was successful.
+		if ( $status_code < 200 || $status_code > 299 ) {
+			throw new PayPalApiException( null, $status_code );
+		}
+	}
 }

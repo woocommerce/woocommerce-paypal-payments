@@ -14,7 +14,9 @@ use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Amount;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\AuthorizationStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Payments;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Refund;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
@@ -23,6 +25,10 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
  * Class RefundProcessor
  */
 class RefundProcessor {
+
+	private const REFUND_MODE_REFUND  = 'refund';
+	private const REFUND_MODE_VOID    = 'void';
+	private const REFUND_MODE_UNKNOWN = 'unknown';
 
 	/**
 	 * The order endpoint.
@@ -88,25 +94,71 @@ class RefundProcessor {
 			if ( ! $payments ) {
 				throw new RuntimeException( 'No payments.' );
 			}
-			$captures = $payments->captures();
-			if ( ! $captures ) {
-				throw new RuntimeException( 'No capture.' );
-			}
 
-			$capture = $captures[0];
-			$refund  = new Refund(
-				$capture,
-				$capture->invoice_id(),
-				$reason,
-				new Amount(
-					new Money( $amount, $wc_order->get_currency() )
+			$this->logger->debug(
+				sprintf(
+					'Trying to refund/void order %1$s, payments: %2$s.',
+					$order->id(),
+					wp_json_encode( $payments->to_array() )
 				)
 			);
-			$this->payments_endpoint->refund( $refund );
+
+			$mode = $this->determine_refund_mode( $payments );
+
+			switch ( $mode ) {
+				case self::REFUND_MODE_REFUND:
+					$captures = $payments->captures();
+					if ( ! $captures ) {
+						throw new RuntimeException( 'No capture.' );
+					}
+
+					$capture = $captures[0];
+					$refund  = new Refund(
+						$capture,
+						$capture->invoice_id(),
+						$reason,
+						new Amount(
+							new Money( $amount, $wc_order->get_currency() )
+						)
+					);
+					$this->payments_endpoint->refund( $refund );
+					break;
+				case self::REFUND_MODE_VOID:
+					$authorizations = $payments->authorizations();
+					if ( ! $authorizations ) {
+						throw new RuntimeException( 'No authorizations.' );
+					}
+
+					$this->payments_endpoint->void( $authorizations[0] );
+					break;
+				default:
+					throw new RuntimeException( 'Nothing to refund/void.' );
+			}
+
 			return true;
 		} catch ( Exception $error ) {
 			$this->logger->error( 'Refund failed: ' . $error->getMessage() );
 			return false;
 		}
+	}
+
+	/**
+	 * Determines the refunding mode.
+	 *
+	 * @param Payments $payments The order payments state.
+	 *
+	 * @return string One of the REFUND_MODE_ constants.
+	 */
+	private function determine_refund_mode( Payments $payments ): string {
+		$authorizations = $payments->authorizations();
+		if ( $authorizations && $authorizations[0]->status()->is( AuthorizationStatus::CREATED ) ) {
+			return self::REFUND_MODE_VOID;
+		}
+
+		if ( $payments->captures() ) {
+			return self::REFUND_MODE_REFUND;
+		}
+
+		return self::REFUND_MODE_UNKNOWN;
 	}
 }
