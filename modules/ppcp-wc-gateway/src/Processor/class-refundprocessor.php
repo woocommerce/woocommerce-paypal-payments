@@ -14,6 +14,7 @@ use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Amount;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\AuthorizationStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payments;
@@ -124,12 +125,18 @@ class RefundProcessor {
 					$this->payments_endpoint->refund( $refund );
 					break;
 				case self::REFUND_MODE_VOID:
-					$authorizations = $payments->authorizations();
-					if ( ! $authorizations ) {
-						throw new RuntimeException( 'No authorizations.' );
+					$voidable_authorizations = array_filter(
+						$payments->authorizations(),
+						array( $this, 'is_voidable_authorization' )
+					);
+					if ( ! $voidable_authorizations ) {
+						throw new RuntimeException( 'No voidable authorizations.' );
 					}
 
-					$this->payments_endpoint->void( $authorizations[0] );
+					foreach ( $voidable_authorizations as $authorization ) {
+						$this->payments_endpoint->void( $authorization );
+					}
+
 					break;
 				default:
 					throw new RuntimeException( 'Nothing to refund/void.' );
@@ -151,8 +158,12 @@ class RefundProcessor {
 	 */
 	private function determine_refund_mode( Payments $payments ): string {
 		$authorizations = $payments->authorizations();
-		if ( $authorizations && $authorizations[0]->status()->is( AuthorizationStatus::CREATED ) ) {
-			return self::REFUND_MODE_VOID;
+		if ( $authorizations ) {
+			foreach ( $authorizations as $authorization ) {
+				if ( $this->is_voidable_authorization( $authorization ) ) {
+					return self::REFUND_MODE_VOID;
+				}
+			}
 		}
 
 		if ( $payments->captures() ) {
@@ -160,5 +171,15 @@ class RefundProcessor {
 		}
 
 		return self::REFUND_MODE_UNKNOWN;
+	}
+
+	/**
+	 * Checks whether the authorization can be voided.
+	 *
+	 * @param Authorization $authorization The authorization to check.
+	 * @return bool
+	 */
+	private function is_voidable_authorization( Authorization $authorization ): bool {
+		return $authorization->status()->is( AuthorizationStatus::CREATED );
 	}
 }
