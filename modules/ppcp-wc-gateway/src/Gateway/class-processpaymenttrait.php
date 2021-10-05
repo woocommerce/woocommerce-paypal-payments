@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
+use Exception;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
@@ -155,27 +156,44 @@ trait ProcessPaymentTrait {
 			if ( $this->order_processor->process( $wc_order ) ) {
 
 				if($this->subscription_helper->has_subscription( $order_id )) {
+					$this->logger->info("Trying to save payment for subscription parent order #{$order_id}.");
+
 					$tokens   = $this->payment_token_repository->all_for_user_id( $wc_order->get_customer_id() );
 					if($tokens) {
+						$this->logger->info("Payment for subscription parent order #{$order_id} was saved correctly.");
+
 						$this->capture_authorized_payment($wc_order);
 						$this->session_handler->destroy_session_data();
+
 						return array(
 							'result'   => 'success',
 							'redirect' => $this->get_return_url( $wc_order ),
 						);
 					}
 
+					$this->logger->error("Payment for subscription parent order #{$order_id} was not saved.");
+
 					// TODO void authorized payment
 					// wait until https://github.com/woocommerce/woocommerce-paypal-payments/pull/299 is merged.
 
-					$wc_order->update_status(
-						'failed',
-						__('Could not process subscription order because no saved payment.',
-							'woocommerce-paypal-payments')
-					);
+					$error_message = __('Could not process order because it was not possible to save the payment.', 'woocommerce-paypal-payments');
+					$wc_order->update_status('failed',$error_message);
+
+					$subscriptions = wcs_get_subscriptions_for_order($order_id);
+					foreach ($subscriptions as $key => $subscription) {
+						if($subscription->get_parent_id() === $order_id) {
+							try {
+								$subscription->update_status('cancelled');
+								break;
+							} catch(Exception $exception) {
+								$this->logger->error("Could not update cancelled status on subscription #{$subscriptions[0]->get_id()} " . $exception->getMessage());
+							}
+						}
+					}
+
 					$this->session_handler->destroy_session_data();
-					wc_add_notice('Could not process subscription order because no saved payment.',
-						'error');
+					wc_add_notice($error_message, 'error');
+
 					return $failure_data;
 				}
 

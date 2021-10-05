@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
+use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
@@ -99,6 +100,11 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	protected $payment_token_repository;
 
 	/**
+	 * @var LoggerInterface
+	 */
+	protected $logger;
+
+	/**
 	 * The Refund Processor.
 	 *
 	 * @var RefundProcessor
@@ -146,7 +152,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		TransactionUrlProvider $transaction_url_provider,
 		SubscriptionHelper $subscription_helper,
 		string $page_id,
-		PaymentTokenRepository $payment_token_repository
+		PaymentTokenRepository $payment_token_repository,
+		LoggerInterface $logger
 	) {
 
 		$this->id                       = self::ID;
@@ -205,6 +212,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		);
 		$this->subscription_helper = $subscription_helper;
 		$this->payment_token_repository = $payment_token_repository;
+		$this->logger = $logger;
 	}
 
 	/**
