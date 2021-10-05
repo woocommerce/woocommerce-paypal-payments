@@ -23,11 +23,12 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
  */
 class AuthorizedPaymentsProcessor {
 
-	const SUCCESSFUL       = 'SUCCESSFUL';
-	const ALREADY_CAPTURED = 'ALREADY_CAPTURED';
-	const FAILED           = 'FAILED';
-	const INACCESSIBLE     = 'INACCESSIBLE';
-	const NOT_FOUND        = 'NOT_FOUND';
+	const SUCCESSFUL        = 'SUCCESSFUL';
+	const ALREADY_CAPTURED  = 'ALREADY_CAPTURED';
+	const FAILED            = 'FAILED';
+	const INACCESSIBLE      = 'INACCESSIBLE';
+	const NOT_FOUND         = 'NOT_FOUND';
+	const BAD_AUTHORIZATION = 'BAD_AUTHORIZATION';
 
 	/**
 	 * The Order endpoint.
@@ -87,8 +88,12 @@ class AuthorizedPaymentsProcessor {
 
 		$authorizations = $this->all_authorizations( $order );
 
-		if ( ! $this->are_authorzations_to_capture( ...$authorizations ) ) {
-			return self::ALREADY_CAPTURED;
+		if ( ! $this->authorizations_to_capture( ...$authorizations ) ) {
+			if ( $this->captured_authorizations( ...$authorizations ) ) {
+				return self::ALREADY_CAPTURED;
+			}
+
+			return self::BAD_AUTHORIZATION;
 		}
 
 		try {
@@ -132,17 +137,6 @@ class AuthorizedPaymentsProcessor {
 	}
 
 	/**
-	 * Whether Authorizations need to be captured.
-	 *
-	 * @param Authorization ...$authorizations All Authorizations.
-	 *
-	 * @return bool
-	 */
-	private function are_authorzations_to_capture( Authorization ...$authorizations ): bool {
-		return (bool) count( $this->authorizations_to_capture( ...$authorizations ) );
-	}
-
-	/**
 	 * Captures the authorizations.
 	 *
 	 * @param Authorization ...$authorizations All authorizations.
@@ -161,11 +155,38 @@ class AuthorizedPaymentsProcessor {
 	 * @return Authorization[]
 	 */
 	private function authorizations_to_capture( Authorization ...$authorizations ): array {
+		return $this->filter_authorizations(
+			$authorizations,
+			array( AuthorizationStatus::CREATED, AuthorizationStatus::PENDING )
+		);
+	}
+
+	/**
+	 * The authorizations which were captured.
+	 *
+	 * @param Authorization ...$authorizations All Authorizations.
+	 * @return Authorization[]
+	 */
+	private function captured_authorizations( Authorization ...$authorizations ): array {
+		return $this->filter_authorizations(
+			$authorizations,
+			array( AuthorizationStatus::CAPTURED )
+		);
+	}
+
+	/**
+	 * The authorizations which need to be filtered.
+	 *
+	 * @param Authorization[] $authorizations All Authorizations.
+	 * @param string[]        $statuses Allowed statuses, the constants from AuthorizationStatus.
+	 * @return Authorization[]
+	 */
+	private function filter_authorizations( array $authorizations, array $statuses ): array {
 		return array_filter(
 			$authorizations,
-			static function ( Authorization $authorization ): bool {
-				return $authorization->status()->is( AuthorizationStatus::CREATED )
-					|| $authorization->status()->is( AuthorizationStatus::PENDING );
+			static function ( Authorization $authorization ) use ( $statuses ): bool {
+				$status = $authorization->status();
+				return in_array( $status->name(), $statuses, true );
 			}
 		);
 	}

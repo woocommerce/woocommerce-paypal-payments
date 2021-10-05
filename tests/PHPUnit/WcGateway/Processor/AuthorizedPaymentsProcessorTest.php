@@ -117,6 +117,12 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 		$this->assertEquals(AuthorizedPaymentsProcessor::ALREADY_CAPTURED, $this->testee->process($this->wcOrder));
     }
 
+    public function testBadAuthorization() {
+		$this->paypalOrder = $this->createPaypalOrder([$this->createAuthorization($this->authorizationId, AuthorizationStatus::DENIED)]);
+
+		$this->assertEquals(AuthorizedPaymentsProcessor::BAD_AUTHORIZATION, $this->testee->process($this->wcOrder));
+    }
+
 	private function createWcOrder(string $paypalOrderId): WC_Order {
 		$wcOrder = Mockery::mock(WC_Order::class);
 		$wcOrder

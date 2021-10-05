@@ -275,10 +275,11 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	private function render_authorization_message_for_status( string $status ) {
 
 		$message_mapping = array(
-			AuthorizedPaymentsProcessor::SUCCESSFUL       => AuthorizeOrderActionNotice::SUCCESS,
-			AuthorizedPaymentsProcessor::ALREADY_CAPTURED => AuthorizeOrderActionNotice::ALREADY_CAPTURED,
-			AuthorizedPaymentsProcessor::INACCESSIBLE     => AuthorizeOrderActionNotice::NO_INFO,
-			AuthorizedPaymentsProcessor::NOT_FOUND        => AuthorizeOrderActionNotice::NOT_FOUND,
+			AuthorizedPaymentsProcessor::SUCCESSFUL        => AuthorizeOrderActionNotice::SUCCESS,
+			AuthorizedPaymentsProcessor::ALREADY_CAPTURED  => AuthorizeOrderActionNotice::ALREADY_CAPTURED,
+			AuthorizedPaymentsProcessor::INACCESSIBLE      => AuthorizeOrderActionNotice::NO_INFO,
+			AuthorizedPaymentsProcessor::NOT_FOUND         => AuthorizeOrderActionNotice::NOT_FOUND,
+			AuthorizedPaymentsProcessor::BAD_AUTHORIZATION => AuthorizeOrderActionNotice::BAD_AUTHORIZATION,
 		);
 		$display_message = ( isset( $message_mapping[ $status ] ) ) ?
 			$message_mapping[ $status ]
