@@ -24,6 +24,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
 use WooCommerce\PayPalCommerce\ApiClient\TestCase;
 use Mockery;
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
 
@@ -65,6 +66,7 @@ class OrderEndpointTest extends TestCase
             ->expects('get_for_order_id')->with($orderId)->andReturn('uniqueRequestId');
 		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
 		$headers->shouldReceive('getAll');
+		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 
         $testee = new OrderEndpoint(
             $host,
@@ -74,7 +76,8 @@ class OrderEndpointTest extends TestCase
             $intent,
             $logger,
             $applicationContextRepository,
-            $paypalRequestIdRepository
+            $paypalRequestIdRepository,
+			$subscription_helper
         );
 
         $rawResponse = [
@@ -124,6 +127,7 @@ class OrderEndpointTest extends TestCase
             ->expects('get_for_order_id')->with($orderId)->andReturn('uniqueRequestId');
 		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
 		$headers->shouldReceive('getAll');
+		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 
         $testee = new OrderEndpoint(
             $host,
@@ -133,7 +137,8 @@ class OrderEndpointTest extends TestCase
             $intent,
             $logger,
             $applicationContextRepository,
-            $paypalRequestIdRepository
+            $paypalRequestIdRepository,
+			$subscription_helper
         );
 
         $rawResponse = [
@@ -174,6 +179,7 @@ class OrderEndpointTest extends TestCase
         $paypalRequestIdRepository = Mockery::mock(PayPalRequestIdRepository::class);
         $paypalRequestIdRepository
             ->expects('get_for_order_id')->with($orderId)->andReturn('uniqueRequestId');
+		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 
         $testee = new OrderEndpoint(
             $host,
@@ -183,7 +189,8 @@ class OrderEndpointTest extends TestCase
             $intent,
             $logger,
             $applicationContextRepository,
-            $paypalRequestIdRepository
+            $paypalRequestIdRepository,
+			$subscription_helper
         );
 
         expect('wp_remote_get')->andReturn($rawResponse);
@@ -238,6 +245,8 @@ class OrderEndpointTest extends TestCase
         $paypalRequestIdRepository = Mockery::mock(PayPalRequestIdRepository::class);
         $paypalRequestIdRepository
             ->expects('get_for_order')->with($orderToCapture)->andReturn('uniqueRequestId');
+		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
+
         $testee = new OrderEndpoint(
             $host,
             $bearer,
@@ -246,7 +255,8 @@ class OrderEndpointTest extends TestCase
             $intent,
             $logger,
             $applicationContextRepository,
-            $paypalRequestIdRepository
+            $paypalRequestIdRepository,
+			$subscription_helper
         );
 
         expect('wp_remote_get')
@@ -302,6 +312,8 @@ class OrderEndpointTest extends TestCase
         $logger->shouldNotReceive('log');
         $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
         $paypalRequestIdRepository = Mockery::mock(PayPalRequestIdRepository::class);
+		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
+
         $testee = new OrderEndpoint(
             $host,
             $bearer,
@@ -310,7 +322,8 @@ class OrderEndpointTest extends TestCase
             $intent,
             $logger,
             $applicationContextRepository,
-            $paypalRequestIdRepository
+            $paypalRequestIdRepository,
+			$subscription_helper
         );
 
         $result = $testee->capture($orderToCapture);
@@ -344,6 +357,8 @@ class OrderEndpointTest extends TestCase
         $paypalRequestIdRepository = Mockery::mock(PayPalRequestIdRepository::class);
         $paypalRequestIdRepository
             ->expects('get_for_order')->with($orderToCapture)->andReturn('uniqueRequestId');
+		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
+
         $testee = new OrderEndpoint(
             $host,
             $bearer,
@@ -352,7 +367,8 @@ class OrderEndpointTest extends TestCase
             $intent,
             $logger,
             $applicationContextRepository,
-            $paypalRequestIdRepository
+            $paypalRequestIdRepository,
+			$subscription_helper
         );
 		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
 		$headers->shouldReceive('getAll');
@@ -393,6 +409,8 @@ class OrderEndpointTest extends TestCase
         $paypalRequestIdRepository = Mockery::mock(PayPalRequestIdRepository::class);
         $paypalRequestIdRepository
             ->expects('get_for_order')->with($orderToCapture)->andReturn('uniqueRequestId');
+		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
+
         $testee = new OrderEndpoint(
             $host,
             $bearer,
@@ -401,7 +419,8 @@ class OrderEndpointTest extends TestCase
             $intent,
             $logger,
             $applicationContextRepository,
-            $paypalRequestIdRepository
+            $paypalRequestIdRepository,
+			$subscription_helper
         );
 
 		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
@@ -444,6 +463,8 @@ class OrderEndpointTest extends TestCase
         $paypalRequestIdRepository = Mockery::mock(PayPalRequestIdRepository::class);
         $paypalRequestIdRepository
             ->expects('get_for_order')->with($orderToCapture)->andReturn('uniqueRequestId');
+		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
+
         $testee = Mockery::mock(
             OrderEndpoint::class,
             [
@@ -455,6 +476,7 @@ class OrderEndpointTest extends TestCase
                 $logger,
                 $applicationContextRepository,
                 $paypalRequestIdRepository,
+				$subscription_helper,
             ]
         )->makePartial();
         $orderToExpect = Mockery::mock(Order::class);
@@ -521,6 +543,8 @@ class OrderEndpointTest extends TestCase
         $paypalRequestIdRepository = Mockery::mock(PayPalRequestIdRepository::class);
         $paypalRequestIdRepository
             ->expects('get_for_order')->with($orderToUpdate)->andReturn('uniqueRequestId');
+		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
+
         $testee = Mockery::mock(
             OrderEndpoint::class,
             [
@@ -532,6 +556,7 @@ class OrderEndpointTest extends TestCase
                 $logger,
                 $applicationContextRepository,
                 $paypalRequestIdRepository,
+				$subscription_helper,
             ]
         )->makePartial();
         $testee
@@ -623,6 +648,7 @@ class OrderEndpointTest extends TestCase
         $paypalRequestIdRepository = Mockery::mock(PayPalRequestIdRepository::class);
         $paypalRequestIdRepository
             ->expects('get_for_order')->with($orderToUpdate)->andReturn('uniqueRequestId');
+		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 
         $testee = new OrderEndpoint(
             $host,
@@ -632,7 +658,8 @@ class OrderEndpointTest extends TestCase
             $intent,
             $logger,
             $applicationContextRepository,
-            $paypalRequestIdRepository
+            $paypalRequestIdRepository,
+			$subscription_helper
         );
 
         expect('wp_remote_get')
@@ -720,6 +747,8 @@ class OrderEndpointTest extends TestCase
         $paypalRequestIdRepository = Mockery::mock(PayPalRequestIdRepository::class);
         $paypalRequestIdRepository
             ->expects('get_for_order')->with($orderToUpdate)->andReturn('uniqueRequestId');
+		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
+
         $testee = Mockery::mock(
             OrderEndpoint::class,
             [
@@ -730,7 +759,8 @@ class OrderEndpointTest extends TestCase
                 $intent,
                 $logger,
                 $applicationContextRepository,
-                $paypalRequestIdRepository
+                $paypalRequestIdRepository,
+				$subscription_helper
             ]
         )->makePartial();
 
@@ -793,6 +823,8 @@ class OrderEndpointTest extends TestCase
         $logger->shouldNotReceive('log');
         $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
         $paypalRequestIdRepository = Mockery::mock(PayPalRequestIdRepository::class);
+		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
+
         $testee = new OrderEndpoint(
             $host,
             $bearer,
@@ -801,7 +833,8 @@ class OrderEndpointTest extends TestCase
             $intent,
             $logger,
             $applicationContextRepository,
-            $paypalRequestIdRepository
+            $paypalRequestIdRepository,
+			$subscription_helper
         );
 
         $result = $testee->patch_order_with($orderToUpdate, $orderToCompare);
@@ -859,6 +892,8 @@ class OrderEndpointTest extends TestCase
 
                 return strpos($id, 'ppcp') !== false;
             });
+		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
+		$subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(true);
 
         $testee = new OrderEndpoint(
             $host,
@@ -868,7 +903,8 @@ class OrderEndpointTest extends TestCase
             $intent,
             $logger,
             $applicationContextRepository,
-            $paypalRequestIdRepository
+            $paypalRequestIdRepository,
+			$subscription_helper
         );
 
         $purchaseUnit = Mockery::mock(PurchaseUnit::class, ['contains_physical_goods' => false]);
@@ -895,9 +931,6 @@ class OrderEndpointTest extends TestCase
                         return false;
                     }
                     $body = json_decode($args['body'], true);
-                    if ($body['intent'] !== 'CAPTURE') {
-                        return false;
-                    }
                     if ($body['purchase_units'][0][0] !== 'singlePurchaseUnit') {
                         return false;
                     }
@@ -961,6 +994,8 @@ class OrderEndpointTest extends TestCase
 
                 return strpos($id, 'ppcp') !== false;
             });
+		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
+		$subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(true);
 
         $testee = new OrderEndpoint(
             $host,
@@ -970,7 +1005,8 @@ class OrderEndpointTest extends TestCase
             $intent,
             $logger,
             $applicationContextRepository,
-            $paypalRequestIdRepository
+            $paypalRequestIdRepository,
+			$subscription_helper
         );
 
         $purchaseUnit = Mockery::mock(PurchaseUnit::class, ['contains_physical_goods' => true]);
@@ -1034,6 +1070,8 @@ class OrderEndpointTest extends TestCase
             ->with(Matchers::identicalTo(ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING))
             ->andReturn($applicationContext);
         $paypalRequestIdRepository = Mockery::mock(PayPalRequestIdRepository::class);
+		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
+		$subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(true);
 
         $testee = new OrderEndpoint(
             $host,
@@ -1043,7 +1081,8 @@ class OrderEndpointTest extends TestCase
             $intent,
             $logger,
             $applicationContextRepository,
-            $paypalRequestIdRepository
+            $paypalRequestIdRepository,
+			$subscription_helper
         );
 
         $purchaseUnit = Mockery::mock(PurchaseUnit::class, ['contains_physical_goods' => false]);
@@ -1070,9 +1109,6 @@ class OrderEndpointTest extends TestCase
                         return false;
                     }
                     $body = json_decode($args['body'], true);
-                    if ($body['intent'] !== 'CAPTURE') {
-                        return false;
-                    }
                     if ($body['purchase_units'][0][0] !== 'singlePurchaseUnit') {
                         return false;
                     }
@@ -1118,6 +1154,9 @@ class OrderEndpointTest extends TestCase
             ->with(Matchers::identicalTo(ApplicationContext::SHIPPING_PREFERENCE_GET_FROM_FILE))
             ->andReturn($applicationContext);
         $paypalRequestIdRepository = Mockery::mock(PayPalRequestIdRepository::class);
+		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
+		$subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(true);
+
         $testee = new OrderEndpoint(
             $host,
             $bearer,
@@ -1126,7 +1165,8 @@ class OrderEndpointTest extends TestCase
             $intent,
             $logger,
             $applicationContextRepository,
-            $paypalRequestIdRepository
+            $paypalRequestIdRepository,
+			$subscription_helper
         );
 
         $purchaseUnit = Mockery::mock(PurchaseUnit::class, ['contains_physical_goods' => true]);
@@ -1153,9 +1193,6 @@ class OrderEndpointTest extends TestCase
                         return false;
                     }
                     $body = json_decode($args['body'], true);
-                    if ($body['intent'] !== 'CAPTURE') {
-                        return false;
-                    }
                     if ($body['purchase_units'][0][0] !== 'singlePurchaseUnit') {
                         return false;
                     }
