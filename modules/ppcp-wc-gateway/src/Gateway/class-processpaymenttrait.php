@@ -153,6 +153,32 @@ trait ProcessPaymentTrait {
 
 		try {
 			if ( $this->order_processor->process( $wc_order ) ) {
+
+				if($this->subscription_helper->has_subscription( $order_id )) {
+					$tokens   = $this->payment_token_repository->all_for_user_id( $wc_order->get_customer_id() );
+					if($tokens) {
+						$this->capture_authorized_payment($wc_order);
+						$this->session_handler->destroy_session_data();
+						return array(
+							'result'   => 'success',
+							'redirect' => $this->get_return_url( $wc_order ),
+						);
+					}
+
+					// TODO void authorized payment
+					// wait until https://github.com/woocommerce/woocommerce-paypal-payments/pull/299 is merged.
+
+					$wc_order->update_status(
+						'failed',
+						__('Could not process subscription order because no saved payment.',
+							'woocommerce-paypal-payments')
+					);
+					$this->session_handler->destroy_session_data();
+					wc_add_notice('Could not process subscription order because no saved payment.',
+						'error');
+					return $failure_data;
+				}
+
 				$this->session_handler->destroy_session_data();
 				return array(
 					'result'   => 'success',

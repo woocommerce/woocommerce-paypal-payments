@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
@@ -91,6 +92,13 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	protected $subscription_helper;
 
 	/**
+	 * The payment token repository.
+	 *
+	 * @var PaymentTokenRepository
+	 */
+	protected $payment_token_repository;
+
+	/**
 	 * The Refund Processor.
 	 *
 	 * @var RefundProcessor
@@ -137,7 +145,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		State $state,
 		TransactionUrlProvider $transaction_url_provider,
 		SubscriptionHelper $subscription_helper,
-		string $page_id
+		string $page_id,
+		PaymentTokenRepository $payment_token_repository
 	) {
 
 		$this->id                       = self::ID;
@@ -195,6 +204,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			)
 		);
 		$this->subscription_helper = $subscription_helper;
+		$this->payment_token_repository = $payment_token_repository;
 	}
 
 	/**

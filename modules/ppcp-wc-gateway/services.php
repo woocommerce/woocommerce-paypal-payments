@@ -53,6 +53,7 @@ return array(
 		$transaction_url_provider = $container->get( 'wcgateway.transaction-url-provider' );
 		$subscription_helper = $container->get( 'subscription.helper' );
 		$page_id             = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
+		$payment_token_repository = $container->get('vaulting.repository.payment-token');
 		return new PayPalGateway(
 			$settings_renderer,
 			$order_processor,
@@ -64,7 +65,8 @@ return array(
 			$state,
 			$transaction_url_provider,
 			$subscription_helper,
-			$page_id
+			$page_id,
+			$payment_token_repository
 		);
 	},
 	'wcgateway.credit-card-gateway'                => static function ( $container ): CreditCardGateway {
