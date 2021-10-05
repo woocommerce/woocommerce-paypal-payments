@@ -137,6 +137,9 @@ class RefundProcessor {
 						$this->payments_endpoint->void( $authorization );
 					}
 
+					$wc_order->set_status('refunded');
+					$wc_order->save();
+
 					break;
 				default:
 					throw new RuntimeException( 'Nothing to refund/void.' );
