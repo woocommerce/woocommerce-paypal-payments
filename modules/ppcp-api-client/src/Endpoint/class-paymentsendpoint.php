@@ -138,6 +138,7 @@ class PaymentsEndpoint {
 	 *
 	 * @return Authorization
 	 * @throws RuntimeException If the request fails.
+	 * @throws PayPalApiException If the request fails.
 	 */
 	public function capture( string $authorization_id ): Authorization {
 		$bearer = $this->bearer->bearer();
@@ -155,39 +156,18 @@ class PaymentsEndpoint {
 		$json     = json_decode( $response['body'] );
 
 		if ( is_wp_error( $response ) ) {
-			$error = new RuntimeException(
-				__( 'Could not capture authorized payment.', 'woocommerce-paypal-payments' )
-			);
-			$this->logger->log(
-				'warning',
-				$error->getMessage(),
-				array(
-					'args'     => $args,
-					'response' => $response,
-				)
-			);
-			throw $error;
+			throw new RuntimeException( 'Could not capture authorized payment.' );
 		}
 
 		$status_code = (int) wp_remote_retrieve_response_code( $response );
 		if ( 201 !== $status_code ) {
-			$error = new PayPalApiException(
+			throw new PayPalApiException(
 				$json,
 				$status_code
 			);
-			$this->logger->log(
-				'warning',
-				$error->getMessage(),
-				array(
-					'args'     => $args,
-					'response' => $response,
-				)
-			);
-			throw $error;
 		}
 
-		$authorization = $this->authorizations_factory->from_paypal_response( $json );
-		return $authorization;
+		return $this->authorizations_factory->from_paypal_response( $json );
 	}
 
 	/**
