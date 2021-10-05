@@ -188,7 +188,7 @@ class OrderProcessor {
 			$wc_order->payment_complete();
 		}
 
-		if ( $this->capture_authorized_downloads( $order ) && $this->authorized_payments_processor->process( $wc_order ) ) {
+		if ( $this->capture_authorized_downloads( $order ) && AuthorizedPaymentsProcessor::SUCCESSFUL === $this->authorized_payments_processor->process( $wc_order ) ) {
 			$wc_order->add_order_note(
 				__( 'Payment successfully captured.', 'woocommerce-paypal-payments' )
 			);

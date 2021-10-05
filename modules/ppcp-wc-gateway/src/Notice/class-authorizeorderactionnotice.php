@@ -18,11 +18,12 @@ class AuthorizeOrderActionNotice {
 
 	const QUERY_PARAM = 'ppcp-authorized-message';
 
-	const NO_INFO          = 81;
-	const ALREADY_CAPTURED = 82;
-	const FAILED           = 83;
-	const SUCCESS          = 84;
-	const NOT_FOUND        = 85;
+	const NO_INFO           = 81;
+	const ALREADY_CAPTURED  = 82;
+	const FAILED            = 83;
+	const SUCCESS           = 84;
+	const NOT_FOUND         = 85;
+	const BAD_AUTHORIZATION = 86;
 
 	/**
 	 * Returns the current message if there is one.
@@ -45,35 +46,42 @@ class AuthorizeOrderActionNotice {
 	 * @return array
 	 */
 	private function current_message(): array {
-		$messages[ self::NO_INFO ]          = array(
+		$messages[ self::NO_INFO ]           = array(
 			'message' => __(
 				'Could not retrieve information. Try again later.',
 				'woocommerce-paypal-payments'
 			),
 			'type'    => 'error',
 		);
-		$messages[ self::ALREADY_CAPTURED ] = array(
+		$messages[ self::ALREADY_CAPTURED ]  = array(
 			'message' => __(
 				'Payment already captured.',
 				'woocommerce-paypal-payments'
 			),
 			'type'    => 'error',
 		);
-		$messages[ self::FAILED ]           = array(
+		$messages[ self::FAILED ]            = array(
 			'message' => __(
-				'Failed to capture. Try again later.',
+				'Failed to capture. Try again later or checks the logs.',
 				'woocommerce-paypal-payments'
 			),
 			'type'    => 'error',
 		);
-		$messages[ self::NOT_FOUND ]        = array(
+		$messages[ self::BAD_AUTHORIZATION ] = array(
+			'message' => __(
+				'Cannot capture, no valid payment authorization.',
+				'woocommerce-paypal-payments'
+			),
+			'type'    => 'error',
+		);
+		$messages[ self::NOT_FOUND ]         = array(
 			'message' => __(
 				'Could not find payment to process.',
 				'woocommerce-paypal-payments'
 			),
 			'type'    => 'error',
 		);
-		$messages[ self::SUCCESS ]          = array(
+		$messages[ self::SUCCESS ]           = array(
 			'message' => __(
 				'Payment successfully captured.',
 				'woocommerce-paypal-payments'
