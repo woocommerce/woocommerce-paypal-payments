@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\AuthorizationStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
@@ -412,6 +413,12 @@ class OrderEndpoint {
 			throw $error;
 		}
 		$order = $this->order_factory->from_paypal_response( $json );
+
+		$authorization_status = $order->purchase_units()[0]->payments()->authorizations()[0]->status() ?? null;
+		if ( $authorization_status && $authorization_status->is( AuthorizationStatus::DENIED ) ) {
+			throw new RuntimeException( __( 'Payment provider declined the payment, please use a different payment method.', 'woocommerce-paypal-payments' ) );
+		}
+
 		return $order;
 	}
 
