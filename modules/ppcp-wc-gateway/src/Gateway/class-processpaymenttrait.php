@@ -110,6 +110,8 @@ trait ProcessPaymentTrait {
 				}
 
 				$this->logger->warning( "Could neither capture nor authorize order {$order->id()} using a saved credit card:" . 'Status: ' . $order->status()->name() . ' Intent: ' . $order->intent() );
+
+				return null;
 			} catch ( RuntimeException $error ) {
 				$this->handle_failure( $wc_order, $error );
 				return null;
