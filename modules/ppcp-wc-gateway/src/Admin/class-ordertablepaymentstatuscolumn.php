@@ -101,10 +101,13 @@ class OrderTablePaymentStatusColumn {
 	 * @return bool
 	 */
 	public function should_render_for_order( \WC_Order $order ): bool {
-		$intent   = $order->get_meta( PayPalGateway::INTENT_META_KEY );
-		$captured = $order->get_meta( PayPalGateway::CAPTURED_META_KEY );
+		$intent               = $order->get_meta( PayPalGateway::INTENT_META_KEY );
+		$captured             = $order->get_meta( PayPalGateway::CAPTURED_META_KEY );
+		$status               = $order->get_status();
+		$not_allowed_statuses = array( 'refunded' );
 		return ! empty( $intent ) && strtoupper( self::INTENT ) === strtoupper( $intent ) &&
-			! empty( $captured );
+			! empty( $captured ) &&
+			! in_array( $status, $not_allowed_statuses, true );
 	}
 
 	/**
