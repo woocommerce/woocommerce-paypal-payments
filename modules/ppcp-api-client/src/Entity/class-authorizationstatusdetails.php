@@ -60,7 +60,7 @@ class AuthorizationStatusDetails {
 	 *
 	 * @return string
 	 */
-	public function name(): string {
+	public function reason(): string {
 		return $this->reason;
 	}
 }
