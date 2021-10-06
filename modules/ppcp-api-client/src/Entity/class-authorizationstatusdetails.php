@@ -16,17 +16,7 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Entity;
  */
 class AuthorizationStatusDetails {
 
-	const BUYER_COMPLAINT                             = 'BUYER_COMPLAINT';
-	const CHARGEBACK                                  = 'CHARGEBACK';
-	const ECHECK                                      = 'ECHECK';
-	const INTERNATIONAL_WITHDRAWAL                    = 'INTERNATIONAL_WITHDRAWAL';
-	const OTHER                                       = 'OTHER';
-	const PENDING_REVIEW                              = 'PENDING_REVIEW';
-	const RECEIVING_PREFERENCE_MANDATES_MANUAL_ACTION = 'RECEIVING_PREFERENCE_MANDATES_MANUAL_ACTION';
-	const REFUNDED                                    = 'REFUNDED';
-	const TRANSACTION_APPROVED_AWAITING_FUNDING       = 'TRANSACTION_APPROVED_AWAITING_FUNDING';
-	const UNILATERAL                                  = 'REFUNDED';
-	const VERIFICATION_REQUIRED                       = 'VERIFICATION_REQUIRED';
+	const PENDING_REVIEW = 'PENDING_REVIEW';
 
 	/**
 	 * The reason.
