@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
+use Exception;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
@@ -103,11 +104,8 @@ trait ProcessPaymentTrait {
 				}
 
 				$this->logger->warning( "Could neither capture nor authorize order {$order->id()} using a saved credit card:" . 'Status: ' . $order->status()->name() . ' Intent: ' . $order->intent() );
-
 			} catch ( RuntimeException $error ) {
-				$this->logger->error( $error->getMessage() );
-				$this->session_handler->destroy_session_data();
-				wc_add_notice( $error->getMessage(), 'error' );
+				$this->handle_failure( $wc_order, $error );
 				return null;
 			}
 		}
@@ -186,12 +184,7 @@ trait ProcessPaymentTrait {
 
 			$this->session_handler->destroy_session_data();
 		} catch ( RuntimeException $error ) {
-			$wc_order->update_status(
-				'failed',
-				__( 'Could not process order.', 'woocommerce-paypal-payments' )
-			);
-			$this->session_handler->destroy_session_data();
-			wc_add_notice( $error->getMessage(), 'error' );
+			$this->handle_failure( $wc_order, $error );
 			return $failure_data;
 		}
 
@@ -233,5 +226,24 @@ trait ProcessPaymentTrait {
 			return true;
 		}
 		return false;
+	}
+
+	/**
+	 * Handles the payment failure.
+	 *
+	 * @param \WC_Order $wc_order The order.
+	 * @param Exception $error The error causing the failure.
+	 */
+	protected function handle_failure( \WC_Order $wc_order, Exception $error ): void {
+		$this->logger->error( 'Payment failed: ' . $error->getMessage() );
+
+		$wc_order->update_status(
+			'failed',
+			__( 'Could not process order.', 'woocommerce-paypal-payments' )
+		);
+
+		$this->session_handler->destroy_session_data();
+
+		wc_add_notice( $error->getMessage(), 'error' );
 	}
 }
