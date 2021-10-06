@@ -229,7 +229,8 @@ return array(
 		return new RenderAuthorizeAction();
 	},
 	'wcgateway.admin.order-payment-status'         => static function ( $container ): PaymentStatusOrderDetail {
-		return new PaymentStatusOrderDetail();
+		$column = $container->get( 'wcgateway.admin.orders-payment-status-column' );
+		return new PaymentStatusOrderDetail( $column );
 	},
 	'wcgateway.admin.orders-payment-status-column' => static function ( $container ): OrderTablePaymentStatusColumn {
 		$settings = $container->get( 'wcgateway.settings' );

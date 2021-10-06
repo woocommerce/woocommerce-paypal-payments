@@ -81,7 +81,7 @@ class OrderTablePaymentStatusColumn {
 
 		$wc_order = wc_get_order( $wc_order_id );
 
-		if ( ! is_a( $wc_order, \WC_Order::class ) || ! $this->render_for_order( $wc_order ) ) {
+		if ( ! is_a( $wc_order, \WC_Order::class ) || ! $this->should_render_for_order( $wc_order ) ) {
 			return;
 		}
 
@@ -100,8 +100,11 @@ class OrderTablePaymentStatusColumn {
 	 *
 	 * @return bool
 	 */
-	private function render_for_order( \WC_Order $order ): bool {
-		return ! empty( $order->get_meta( PayPalGateway::CAPTURED_META_KEY ) );
+	public function should_render_for_order( \WC_Order $order ): bool {
+		$intent   = $order->get_meta( PayPalGateway::INTENT_META_KEY );
+		$captured = $order->get_meta( PayPalGateway::CAPTURED_META_KEY );
+		return ! empty( $intent ) && strtoupper( self::INTENT ) === strtoupper( $intent ) &&
+			! empty( $captured );
 	}
 
 	/**
@@ -111,7 +114,7 @@ class OrderTablePaymentStatusColumn {
 	 *
 	 * @return bool
 	 */
-	private function is_captured( \WC_Order $wc_order ): bool {
+	public function is_captured( \WC_Order $wc_order ): bool {
 		$captured = $wc_order->get_meta( PayPalGateway::CAPTURED_META_KEY );
 		return wc_string_to_bool( $captured );
 	}
