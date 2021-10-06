@@ -45,12 +45,20 @@ class AuthorizationStatus {
 	private $status;
 
 	/**
+	 * The details.
+	 *
+	 * @var AuthorizationStatusDetails|null
+	 */
+	private $details;
+
+	/**
 	 * AuthorizationStatus constructor.
 	 *
-	 * @param string $status The status.
+	 * @param string                          $status The status.
+	 * @param AuthorizationStatusDetails|null $details The details.
 	 * @throws RuntimeException When the status is not valid.
 	 */
-	public function __construct( string $status ) {
+	public function __construct( string $status, ?AuthorizationStatusDetails $details = null ) {
 		if ( ! in_array( $status, self::VALID_STATUS, true ) ) {
 			throw new RuntimeException(
 				sprintf(
@@ -60,7 +68,8 @@ class AuthorizationStatus {
 				)
 			);
 		}
-		$this->status = $status;
+		$this->status  = $status;
+		$this->details = $details;
 	}
 
 	/**
@@ -90,5 +99,14 @@ class AuthorizationStatus {
 	 */
 	public function name(): string {
 		return $this->status;
+	}
+
+	/**
+	 * Returns the details.
+	 *
+	 * @return AuthorizationStatusDetails|null
+	 */
+	public function details(): ?AuthorizationStatusDetails {
+		return $this->details;
 	}
 }
