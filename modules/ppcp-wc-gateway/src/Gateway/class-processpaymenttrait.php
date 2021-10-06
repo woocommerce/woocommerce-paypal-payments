@@ -82,10 +82,7 @@ trait ProcessPaymentTrait {
 				$this->add_paypal_meta( $wc_order, $order, $this->environment() );
 
 				if ( $order->status()->is( OrderStatus::COMPLETED ) && $order->intent() === 'CAPTURE' ) {
-					$wc_order->update_status(
-						'processing',
-						__( 'Payment received.', 'woocommerce-paypal-payments' )
-					);
+					$wc_order->payment_complete();
 
 					$this->session_handler->destroy_session_data();
 					return array(
