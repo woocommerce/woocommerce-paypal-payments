@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
+use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
@@ -25,12 +26,14 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
  */
 class OrderProcessor {
 
+	use OrderMetaTrait;
+
 	/**
-	 * Whether current payment mode is sandbox.
+	 * The environment.
 	 *
-	 * @var bool
+	 * @var Environment
 	 */
-	protected $sandbox_mode;
+	protected $environment;
 
 	/**
 	 * The payment token repository.
@@ -105,7 +108,7 @@ class OrderProcessor {
 	 * @param AuthorizedPaymentsProcessor $authorized_payments_processor The Authorized Payments Processor.
 	 * @param Settings                    $settings The Settings.
 	 * @param LoggerInterface             $logger A logger service.
-	 * @param bool                        $sandbox_mode Whether sandbox mode enabled.
+	 * @param Environment                 $environment The environment.
 	 */
 	public function __construct(
 		SessionHandler $session_handler,
@@ -115,7 +118,7 @@ class OrderProcessor {
 		AuthorizedPaymentsProcessor $authorized_payments_processor,
 		Settings $settings,
 		LoggerInterface $logger,
-		bool $sandbox_mode
+		Environment $environment
 	) {
 
 		$this->session_handler               = $session_handler;
@@ -124,7 +127,7 @@ class OrderProcessor {
 		$this->threed_secure                 = $three_d_secure;
 		$this->authorized_payments_processor = $authorized_payments_processor;
 		$this->settings                      = $settings;
-		$this->sandbox_mode                  = $sandbox_mode;
+		$this->environment                   = $environment;
 		$this->logger                        = $logger;
 	}
 
@@ -140,12 +143,8 @@ class OrderProcessor {
 		if ( ! $order ) {
 			return false;
 		}
-		$wc_order->update_meta_data( PayPalGateway::ORDER_ID_META_KEY, $order->id() );
-		$wc_order->update_meta_data( PayPalGateway::INTENT_META_KEY, $order->intent() );
-		$wc_order->update_meta_data(
-			PayPalGateway::ORDER_PAYMENT_MODE_META_KEY,
-			$this->sandbox_mode ? 'sandbox' : 'live'
-		);
+
+		$this->add_paypal_meta( $wc_order, $order, $this->environment );
 
 		$error_message = null;
 		if ( ! $this->order_is_approved( $order ) ) {
@@ -164,6 +163,7 @@ class OrderProcessor {
 		}
 
 		$order = $this->patch_order( $wc_order, $order );
+
 		if ( $order->intent() === 'CAPTURE' ) {
 			$order = $this->order_endpoint->capture( $order );
 		}

@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
+use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
@@ -112,6 +113,13 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	protected $page_id;
 
 	/**
+	 * The environment.
+	 *
+	 * @var Environment
+	 */
+	protected $environment;
+
+	/**
 	 * PayPalGateway constructor.
 	 *
 	 * @param SettingsRenderer            $settings_renderer The Settings Renderer.
@@ -125,6 +133,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @param TransactionUrlProvider      $transaction_url_provider Service providing transaction view URL based on order.
 	 * @param SubscriptionHelper          $subscription_helper The subscription helper.
 	 * @param string                      $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
+	 * @param Environment                 $environment The environment.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
@@ -137,7 +146,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		State $state,
 		TransactionUrlProvider $transaction_url_provider,
 		SubscriptionHelper $subscription_helper,
-		string $page_id
+		string $page_id,
+		Environment $environment
 	) {
 
 		$this->id                       = self::ID;
@@ -150,6 +160,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->refund_processor         = $refund_processor;
 		$this->transaction_url_provider = $transaction_url_provider;
 		$this->page_id                  = $page_id;
+		$this->environment              = $environment;
 		$this->onboarded                = $state->current_state() === State::STATE_ONBOARDED;
 
 		if ( $this->onboarded ) {
@@ -429,5 +440,14 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		}
 
 		return $ret;
+	}
+
+	/**
+	 * Returns the environment.
+	 *
+	 * @return Environment
+	 */
+	protected function environment(): Environment {
+		return $this->environment;
 	}
 }

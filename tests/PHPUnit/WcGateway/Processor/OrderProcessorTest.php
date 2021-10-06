@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Processor;
 
 
+use Dhii\Container\Dictionary;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use Woocommerce\PayPalCommerce\ApiClient\Entity\Capture;
@@ -13,6 +14,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Payments;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
+use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
@@ -22,6 +24,13 @@ use function Brain\Monkey\Functions\when;
 
 class OrderProcessorTest extends TestCase
 {
+	private $environment;
+
+	public function setUp(): void {
+		parent::setUp();
+
+		$this->environment = new Environment(new Dictionary([]));
+	}
 
     public function testAuthorize() {
         $transactionId = 'ABC123';
@@ -112,7 +121,7 @@ class OrderProcessorTest extends TestCase
             $authorizedPaymentProcessor,
             $settings,
             $logger,
-            false
+            $this->environment
         );
 
         $cart = Mockery::mock(\WC_Cart::class);
@@ -240,7 +249,7 @@ class OrderProcessorTest extends TestCase
             $authorizedPaymentProcessor,
             $settings,
             $logger,
-            false
+            $this->environment
         );
 
         $cart = Mockery::mock(\WC_Cart::class);
@@ -340,7 +349,7 @@ class OrderProcessorTest extends TestCase
             $authorizedPaymentProcessor,
             $settings,
             $logger,
-            false
+            $this->environment
         );
 
         $wcOrder
@@ -355,7 +364,7 @@ class OrderProcessorTest extends TestCase
                 PayPalGateway::INTENT_META_KEY,
                 $orderIntent
             );
-        
+
         $this->assertFalse($testee->process($wcOrder));
         $this->assertNotEmpty($testee->last_error());
     }

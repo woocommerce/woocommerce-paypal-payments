@@ -13,11 +13,16 @@ use Exception;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\Onboarding\Environment;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
 
 /**
  * Trait ProcessPaymentTrait
  */
 trait ProcessPaymentTrait {
+
+	use OrderMetaTrait;
+
 	/**
 	 * Process a payment for an WooCommerce order.
 	 *
@@ -74,6 +79,8 @@ trait ProcessPaymentTrait {
 					$selected_token
 				);
 
+				$this->add_paypal_meta( $wc_order, $order, $this->environment() );
+
 				if ( $order->status()->is( OrderStatus::COMPLETED ) && $order->intent() === 'CAPTURE' ) {
 					$wc_order->update_status(
 						'processing',
@@ -90,7 +97,6 @@ trait ProcessPaymentTrait {
 				if ( $order->status()->is( OrderStatus::COMPLETED ) && $order->intent() === 'AUTHORIZE' ) {
 					$this->order_endpoint->authorize( $order );
 					$wc_order->update_meta_data( PayPalGateway::CAPTURED_META_KEY, 'false' );
-					$wc_order->update_meta_data( PayPalGateway::ORDER_ID_META_KEY, $order->id() );
 					$wc_order->update_status(
 						'on-hold',
 						__( 'Awaiting payment.', 'woocommerce-paypal-payments' )
@@ -246,4 +252,11 @@ trait ProcessPaymentTrait {
 
 		wc_add_notice( $error->getMessage(), 'error' );
 	}
+
+	/**
+	 * Returns the environment.
+	 *
+	 * @return Environment
+	 */
+	abstract protected function environment(): Environment;
 }

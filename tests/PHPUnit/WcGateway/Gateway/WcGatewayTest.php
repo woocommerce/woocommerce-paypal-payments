@@ -5,6 +5,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
 
 use Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
@@ -21,8 +22,15 @@ use function Brain\Monkey\Functions\when;
 
 class WcGatewayTest extends TestCase
 {
+	private $environment;
 
-    public function testProcessPaymentSuccess() {
+	public function setUp(): void {
+		parent::setUp();
+
+		$this->environment = Mockery::mock(Environment::class);
+	}
+
+	public function testProcessPaymentSuccess() {
 	    expect('is_admin')->andReturn(false);
 
         $orderId = 1;
@@ -69,7 +77,8 @@ class WcGatewayTest extends TestCase
 	        $state,
             $transactionUrlProvider,
             $subscriptionHelper,
-			PayPalGateway::ID
+			PayPalGateway::ID,
+			$this->environment
         );
 
         expect('wc_get_order')
@@ -118,7 +127,8 @@ class WcGatewayTest extends TestCase
 	        $state,
             $transactionUrlProvider,
             $subscriptionHelper,
-			PayPalGateway::ID
+			PayPalGateway::ID,
+			$this->environment
         );
 
         expect('wc_get_order')
@@ -184,7 +194,8 @@ class WcGatewayTest extends TestCase
 	        $state,
             $transactionUrlProvider,
             $subscriptionHelper,
-			PayPalGateway::ID
+			PayPalGateway::ID,
+			$this->environment
         );
 
         expect('wc_get_order')
@@ -255,7 +266,8 @@ class WcGatewayTest extends TestCase
 	        $state,
             $transactionUrlProvider,
             $subscriptionHelper,
-			PayPalGateway::ID
+			PayPalGateway::ID,
+			$this->environment
         );
 
         $this->assertTrue($testee->capture_authorized_payment($wcOrder));
@@ -310,7 +322,8 @@ class WcGatewayTest extends TestCase
 	        $state,
             $transactionUrlProvider,
             $subscriptionHelper,
-			PayPalGateway::ID
+			PayPalGateway::ID,
+			$this->environment
         );
 
         $this->assertTrue($testee->capture_authorized_payment($wcOrder));
@@ -359,7 +372,8 @@ class WcGatewayTest extends TestCase
 	        $state,
             $transactionUrlProvider,
             $subscriptionHelper,
-			PayPalGateway::ID
+			PayPalGateway::ID,
+			$this->environment
         );
 
         $this->assertFalse($testee->capture_authorized_payment($wcOrder));
@@ -399,7 +413,8 @@ class WcGatewayTest extends TestCase
 		    $onboardingState,
 		    $transactionUrlProvider,
 		    $subscriptionHelper,
-			PayPalGateway::ID
+			PayPalGateway::ID,
+			$this->environment
 	    );
 
     	$this->assertSame($needSetup, $testee->needs_setup());
