@@ -10,6 +10,8 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
@@ -100,6 +102,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	protected $payment_token_repository;
 
 	/**
+	 * The logger.
+	 *
 	 * @var LoggerInterface
 	 */
 	protected $logger;
@@ -126,6 +130,20 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	protected $page_id;
 
 	/**
+	 * The payments endpoint
+	 *
+	 * @var PaymentsEndpoint
+	 */
+	protected $payments_endpoint;
+
+	/**
+	 * The order endpoint.
+	 *
+	 * @var OrderEndpoint
+	 */
+	protected $order_endpoint;
+
+	/**
 	 * PayPalGateway constructor.
 	 *
 	 * @param SettingsRenderer            $settings_renderer The Settings Renderer.
@@ -139,6 +157,10 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @param TransactionUrlProvider      $transaction_url_provider Service providing transaction view URL based on order.
 	 * @param SubscriptionHelper          $subscription_helper The subscription helper.
 	 * @param string                      $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
+	 * @param PaymentTokenRepository      $payment_token_repository The payment token repository.
+	 * @param LoggerInterface             $logger  The logger.
+	 * @param PaymentsEndpoint            $payments_endpoint The payments endpoint.
+	 * @param OrderEndpoint               $order_endpoint The order endpoint.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
@@ -153,7 +175,9 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		SubscriptionHelper $subscription_helper,
 		string $page_id,
 		PaymentTokenRepository $payment_token_repository,
-		LoggerInterface $logger
+		LoggerInterface $logger,
+		PaymentsEndpoint $payments_endpoint,
+		OrderEndpoint $order_endpoint
 	) {
 
 		$this->id                       = self::ID;
@@ -210,9 +234,11 @@ class PayPalGateway extends \WC_Payment_Gateway {
 				'process_admin_options',
 			)
 		);
-		$this->subscription_helper = $subscription_helper;
+		$this->subscription_helper      = $subscription_helper;
 		$this->payment_token_repository = $payment_token_repository;
-		$this->logger = $logger;
+		$this->logger                   = $logger;
+		$this->payments_endpoint        = $payments_endpoint;
+		$this->order_endpoint           = $order_endpoint;
 	}
 
 	/**

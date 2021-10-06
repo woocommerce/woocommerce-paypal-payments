@@ -53,8 +53,10 @@ return array(
 		$transaction_url_provider = $container->get( 'wcgateway.transaction-url-provider' );
 		$subscription_helper = $container->get( 'subscription.helper' );
 		$page_id             = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
-		$payment_token_repository = $container->get('vaulting.repository.payment-token');
+		$payment_token_repository = $container->get( 'vaulting.repository.payment-token' );
 		$logger                        = $container->get( 'woocommerce.logger.woocommerce' );
+		$payments_endpoint = $container->get( 'api.endpoint.payments' );
+		$order_endpoint = $container->get( 'api.endpoint.order' );
 		return new PayPalGateway(
 			$settings_renderer,
 			$order_processor,
@@ -68,7 +70,9 @@ return array(
 			$subscription_helper,
 			$page_id,
 			$payment_token_repository,
-			$logger
+			$logger,
+			$payments_endpoint,
+			$order_endpoint
 		);
 	},
 	'wcgateway.credit-card-gateway'                => static function ( $container ): CreditCardGateway {
@@ -88,6 +92,7 @@ return array(
 		$order_endpoint = $container->get( 'api.endpoint.order' );
 		$subscription_helper = $container->get( 'subscription.helper' );
 		$logger                        = $container->get( 'woocommerce.logger.woocommerce' );
+		$payments_endpoint = $container->get( 'api.endpoint.payments' );
 		return new CreditCardGateway(
 			$settings_renderer,
 			$order_processor,
@@ -104,7 +109,8 @@ return array(
 			$payer_factory,
 			$order_endpoint,
 			$subscription_helper,
-			$logger
+			$logger,
+			$payments_endpoint
 		);
 	},
 	'wcgateway.disabler'                           => static function ( $container ): DisableGateways {

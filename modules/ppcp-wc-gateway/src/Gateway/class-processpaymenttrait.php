@@ -10,6 +10,8 @@ declare( strict_types=1 );
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
 use Exception;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\AuthorizationStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
@@ -24,6 +26,8 @@ trait ProcessPaymentTrait {
 	 * @param int $order_id The WooCommerce order id.
 	 *
 	 * @return array
+	 *
+	 * @throws RuntimeException When processing payment fails.
 	 */
 	public function process_payment( $order_id ) {
 
@@ -155,14 +159,14 @@ trait ProcessPaymentTrait {
 		try {
 			if ( $this->order_processor->process( $wc_order ) ) {
 
-				if($this->subscription_helper->has_subscription( $order_id )) {
-					$this->logger->info("Trying to save payment for subscription parent order #{$order_id}.");
+				if ( $this->subscription_helper->has_subscription( $order_id ) ) {
+					$this->logger->info( "Trying to save payment for subscription parent order #{$order_id}." );
 
-					$tokens   = $this->payment_token_repository->all_for_user_id( $wc_order->get_customer_id() );
-					if($tokens) {
-						$this->logger->info("Payment for subscription parent order #{$order_id} was saved correctly.");
+					$tokens = $this->payment_token_repository->all_for_user_id( $wc_order->get_customer_id() );
+					if ( $tokens ) {
+						$this->logger->info( "Payment for subscription parent order #{$order_id} was saved correctly." );
 
-						$this->capture_authorized_payment($wc_order);
+						$this->capture_authorized_payment( $wc_order );
 						$this->session_handler->destroy_session_data();
 
 						return array(
@@ -171,28 +175,61 @@ trait ProcessPaymentTrait {
 						);
 					}
 
-					$this->logger->error("Payment for subscription parent order #{$order_id} was not saved.");
+					$this->logger->error( "Payment for subscription parent order #{$order_id} was not saved." );
 
-					// TODO void authorized payment
-					// wait until https://github.com/woocommerce/woocommerce-paypal-payments/pull/299 is merged.
+					$paypal_order_id = $wc_order->get_meta( PayPalGateway::ORDER_ID_META_KEY );
+					if ( ! $paypal_order_id ) {
+						throw new RuntimeException( 'PayPal order ID not found in meta.' );
+					}
+					$order = $this->order_endpoint->order( $paypal_order_id );
 
-					$error_message = __('Could not process order because it was not possible to save the payment.', 'woocommerce-paypal-payments');
-					$wc_order->update_status('failed',$error_message);
+					$purchase_units = $order->purchase_units();
+					if ( ! $purchase_units ) {
+						throw new RuntimeException( 'No purchase units.' );
+					}
 
-					$subscriptions = wcs_get_subscriptions_for_order($order_id);
-					foreach ($subscriptions as $key => $subscription) {
-						if($subscription->get_parent_id() === $order_id) {
+					$payments = $purchase_units[0]->payments();
+					if ( ! $payments ) {
+						throw new RuntimeException( 'No payments.' );
+					}
+
+					$this->logger->debug(
+						sprintf(
+							'Trying to void order %1$s, payments: %2$s.',
+							$order->id(),
+							wp_json_encode( $payments->to_array() )
+						)
+					);
+
+					$voidable_authorizations = array_filter(
+						$payments->authorizations(),
+						array( $this, 'is_voidable_authorization' )
+					);
+					if ( ! $voidable_authorizations ) {
+						throw new RuntimeException( 'No voidable authorizations.' );
+					}
+
+					foreach ( $voidable_authorizations as $authorization ) {
+						$this->payments_endpoint->void( $authorization );
+					}
+
+					$error_message = __( 'Could not process order because it was not possible to save the payment.', 'woocommerce-paypal-payments' );
+					$wc_order->update_status( 'failed', $error_message );
+
+					$subscriptions = wcs_get_subscriptions_for_order( $order_id );
+					foreach ( $subscriptions as $key => $subscription ) {
+						if ( $subscription->get_parent_id() === $order_id ) {
 							try {
-								$subscription->update_status('cancelled');
+								$subscription->update_status( 'cancelled' );
 								break;
-							} catch(Exception $exception) {
-								$this->logger->error("Could not update cancelled status on subscription #{$subscriptions[0]->get_id()} " . $exception->getMessage());
+							} catch ( Exception $exception ) {
+								$this->logger->error( "Could not update cancelled status on subscription #{$subscription->get_id()} " . $exception->getMessage() );
 							}
 						}
 					}
 
 					$this->session_handler->destroy_session_data();
-					wc_add_notice($error_message, 'error');
+					wc_add_notice( $error_message, 'error' );
 
 					return $failure_data;
 				}
@@ -277,5 +314,15 @@ trait ProcessPaymentTrait {
 			return true;
 		}
 		return false;
+	}
+
+	/**
+	 * Checks whether the authorization can be voided.
+	 *
+	 * @param Authorization $authorization The authorization to check.
+	 * @return bool
+	 */
+	private function is_voidable_authorization( Authorization $authorization ): bool {
+		return $authorization->status()->is( AuthorizationStatus::CREATED );
 	}
 }
