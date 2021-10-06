@@ -17,20 +17,30 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 class PaymentStatusOrderDetail {
 
 	/**
+	 * The capture info column.
+	 *
+	 * @var OrderTablePaymentStatusColumn
+	 */
+	private $column;
+
+	/**
+	 * PaymentStatusOrderDetail constructor.
+	 *
+	 * @param OrderTablePaymentStatusColumn $column The capture info column.
+	 */
+	public function __construct( OrderTablePaymentStatusColumn $column ) {
+		$this->column = $column;
+	}
+
+	/**
 	 * Renders the not captured information.
 	 *
 	 * @param int $wc_order_id The WooCommerce order id.
 	 */
 	public function render( int $wc_order_id ) {
 		$wc_order = new \WC_Order( $wc_order_id );
-		$intent   = $wc_order->get_meta( PayPalGateway::INTENT_META_KEY );
-		$captured = $wc_order->get_meta( PayPalGateway::CAPTURED_META_KEY );
 
-		if ( strcasecmp( $intent, 'AUTHORIZE' ) !== 0 ) {
-			return;
-		}
-
-		if ( ! empty( $captured ) && wc_string_to_bool( $captured ) ) {
+		if ( ! $this->column->should_render_for_order( $wc_order ) || $this->column->is_captured( $wc_order ) ) {
 			return;
 		}
 

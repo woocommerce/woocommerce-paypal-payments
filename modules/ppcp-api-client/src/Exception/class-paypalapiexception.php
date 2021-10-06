@@ -39,9 +39,13 @@ class PayPalApiException extends RuntimeException {
 			$response = new \stdClass();
 		}
 		if ( ! isset( $response->message ) ) {
-			$response->message = __(
-				'Unknown error while connecting to PayPal.',
-				'woocommerce-paypal-payments'
+			$response->message = sprintf(
+				/* translators: %1$d - HTTP status code number (404, 500, ...) */
+				__(
+					'Unknown error while connecting to PayPal. Status code: %1$d.',
+					'woocommerce-paypal-payments'
+				),
+				$this->status_code
 			);
 		}
 		if ( ! isset( $response->name ) ) {
