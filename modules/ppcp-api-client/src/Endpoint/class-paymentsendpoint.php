@@ -138,6 +138,7 @@ class PaymentsEndpoint {
 	 *
 	 * @return Authorization
 	 * @throws RuntimeException If the request fails.
+	 * @throws PayPalApiException If the request fails.
 	 */
 	public function capture( string $authorization_id ): Authorization {
 		$bearer = $this->bearer->bearer();
@@ -155,39 +156,18 @@ class PaymentsEndpoint {
 		$json     = json_decode( $response['body'] );
 
 		if ( is_wp_error( $response ) ) {
-			$error = new RuntimeException(
-				__( 'Could not capture authorized payment.', 'woocommerce-paypal-payments' )
-			);
-			$this->logger->log(
-				'warning',
-				$error->getMessage(),
-				array(
-					'args'     => $args,
-					'response' => $response,
-				)
-			);
-			throw $error;
+			throw new RuntimeException( 'Could not capture authorized payment.' );
 		}
 
 		$status_code = (int) wp_remote_retrieve_response_code( $response );
 		if ( 201 !== $status_code ) {
-			$error = new PayPalApiException(
+			throw new PayPalApiException(
 				$json,
 				$status_code
 			);
-			$this->logger->log(
-				'warning',
-				$error->getMessage(),
-				array(
-					'args'     => $args,
-					'response' => $response,
-				)
-			);
-			throw $error;
 		}
 
-		$authorization = $this->authorizations_factory->from_paypal_response( $json );
-		return $authorization;
+		return $this->authorizations_factory->from_paypal_response( $json );
 	}
 
 	/**
@@ -195,10 +175,11 @@ class PaymentsEndpoint {
 	 *
 	 * @param Refund $refund The refund to be processed.
 	 *
-	 * @return bool
+	 * @return void
 	 * @throws RuntimeException If the request fails.
+	 * @throws PayPalApiException If the request fails.
 	 */
-	public function refund( Refund $refund ) : bool {
+	public function refund( Refund $refund ) : void {
 		$bearer = $this->bearer->bearer();
 		$url    = trailingslashit( $this->host ) . 'v2/payments/captures/' . $refund->for_capture()->id() . '/refund';
 		$args   = array(
@@ -215,37 +196,50 @@ class PaymentsEndpoint {
 		$json     = json_decode( $response['body'] );
 
 		if ( is_wp_error( $response ) ) {
-			$error = new RuntimeException(
-				__( 'Could not refund payment.', 'woocommerce-paypal-payments' )
-			);
-			$this->logger->log(
-				'warning',
-				$error->getMessage(),
-				array(
-					'args'     => $args,
-					'response' => $response,
-				)
-			);
-			throw $error;
+			throw new RuntimeException( 'Could not refund payment.' );
 		}
 
 		$status_code = (int) wp_remote_retrieve_response_code( $response );
 		if ( 201 !== $status_code ) {
-			$error = new PayPalApiException(
+			throw new PayPalApiException(
 				$json,
 				$status_code
 			);
-			$this->logger->log(
-				'warning',
-				$error->getMessage(),
-				array(
-					'args'     => $args,
-					'response' => $response,
-				)
-			);
-			throw $error;
+		}
+	}
+
+	/**
+	 * Voids a transaction.
+	 *
+	 * @param Authorization $authorization The PayPal payment authorization to void.
+	 *
+	 * @return void
+	 * @throws RuntimeException If the request fails.
+	 * @throws PayPalApiException If the request fails.
+	 */
+	public function void( Authorization $authorization ) : void {
+		$bearer = $this->bearer->bearer();
+		$url    = trailingslashit( $this->host ) . 'v2/payments/authorizations/' . $authorization->id() . '/void';
+		$args   = array(
+			'method'  => 'POST',
+			'headers' => array(
+				'Authorization' => 'Bearer ' . $bearer->token(),
+				'Content-Type'  => 'application/json',
+				'Prefer'        => 'return=representation',
+			),
+		);
+
+		$response = $this->request( $url, $args );
+
+		if ( is_wp_error( $response ) ) {
+			throw new RuntimeException( 'Could not void transaction.' );
 		}
 
-		return true;
+		$status_code = (int) wp_remote_retrieve_response_code( $response );
+		// Currently it can return body with 200 status, despite the docs saying that it should be 204 No content.
+		// We don't care much about body, so just checking that it was successful.
+		if ( $status_code < 200 || $status_code > 299 ) {
+			throw new PayPalApiException( null, $status_code );
+		}
 	}
 }

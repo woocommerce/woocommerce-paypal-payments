@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 
+use Psr\Log\NullLogger;
 use Requests_Utility_CaseInsensitiveDictionary;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
@@ -235,10 +236,6 @@ class PaymentsEndpointTest extends TestCase
 
         $authorizationFactory = Mockery::mock(AuthorizationFactory::class);
 
-        $logger = Mockery::mock(LoggerInterface::class);
-        $logger->expects('log');
-        $logger->expects('debug');
-
 		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
 		$headers->shouldReceive('getAll');
         $rawResponse = [
@@ -250,7 +247,7 @@ class PaymentsEndpointTest extends TestCase
             $host,
             $bearer,
             $authorizationFactory,
-            $logger
+            new NullLogger()
         );
 
         expect('wp_remote_get')->andReturn($rawResponse);
@@ -281,15 +278,11 @@ class PaymentsEndpointTest extends TestCase
 			'headers' => $headers,
 			];
 
-        $logger = Mockery::mock(LoggerInterface::class);
-        $logger->expects('log');
-        $logger->expects('debug');
-
         $testee = new PaymentsEndpoint(
             $host,
             $bearer,
             $authorizationFactory,
-            $logger
+            new NullLogger()
         );
 
         expect('wp_remote_get')->andReturn($rawResponse);

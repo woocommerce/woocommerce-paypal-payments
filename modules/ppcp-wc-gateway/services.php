@@ -219,19 +219,22 @@ return array(
 	'wcgateway.processor.refunds'                  => static function ( $container ): RefundProcessor {
 		$order_endpoint    = $container->get( 'api.endpoint.order' );
 		$payments_endpoint    = $container->get( 'api.endpoint.payments' );
-		return new RefundProcessor( $order_endpoint, $payments_endpoint );
+		$logger                        = $container->get( 'woocommerce.logger.woocommerce' );
+		return new RefundProcessor( $order_endpoint, $payments_endpoint, $logger );
 	},
 	'wcgateway.processor.authorized-payments'      => static function ( $container ): AuthorizedPaymentsProcessor {
 		$order_endpoint    = $container->get( 'api.endpoint.order' );
 		$payments_endpoint = $container->get( 'api.endpoint.payments' );
-		return new AuthorizedPaymentsProcessor( $order_endpoint, $payments_endpoint );
+		$logger = $container->get( 'woocommerce.logger.woocommerce' );
+		return new AuthorizedPaymentsProcessor( $order_endpoint, $payments_endpoint, $logger );
 	},
 	'wcgateway.admin.render-authorize-action'      => static function ( $container ): RenderAuthorizeAction {
 
 		return new RenderAuthorizeAction();
 	},
 	'wcgateway.admin.order-payment-status'         => static function ( $container ): PaymentStatusOrderDetail {
-		return new PaymentStatusOrderDetail();
+		$column = $container->get( 'wcgateway.admin.orders-payment-status-column' );
+		return new PaymentStatusOrderDetail( $column );
 	},
 	'wcgateway.admin.orders-payment-status-column' => static function ( $container ): OrderTablePaymentStatusColumn {
 		$settings = $container->get( 'wcgateway.settings' );

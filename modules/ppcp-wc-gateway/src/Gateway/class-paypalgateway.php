@@ -257,10 +257,10 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @return bool
 	 */
 	public function capture_authorized_payment( \WC_Order $wc_order ): bool {
-		$is_processed = $this->authorized_payments->process( $wc_order );
-		$this->render_authorization_message_for_status( $this->authorized_payments->last_status() );
+		$result_status = $this->authorized_payments->process( $wc_order );
+		$this->render_authorization_message_for_status( $result_status );
 
-		if ( $is_processed ) {
+		if ( AuthorizedPaymentsProcessor::SUCCESSFUL === $result_status ) {
 			$wc_order->add_order_note(
 				__( 'Payment successfully captured.', 'woocommerce-paypal-payments' )
 			);
@@ -270,7 +270,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			return true;
 		}
 
-		if ( $this->authorized_payments->last_status() === AuthorizedPaymentsProcessor::ALREADY_CAPTURED ) {
+		if ( AuthorizedPaymentsProcessor::ALREADY_CAPTURED === $result_status ) {
 			if ( $wc_order->get_status() === 'on-hold' ) {
 				$wc_order->add_order_note(
 					__( 'Payment successfully captured.', 'woocommerce-paypal-payments' )
@@ -293,10 +293,11 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	private function render_authorization_message_for_status( string $status ) {
 
 		$message_mapping = array(
-			AuthorizedPaymentsProcessor::SUCCESSFUL       => AuthorizeOrderActionNotice::SUCCESS,
-			AuthorizedPaymentsProcessor::ALREADY_CAPTURED => AuthorizeOrderActionNotice::ALREADY_CAPTURED,
-			AuthorizedPaymentsProcessor::INACCESSIBLE     => AuthorizeOrderActionNotice::NO_INFO,
-			AuthorizedPaymentsProcessor::NOT_FOUND        => AuthorizeOrderActionNotice::NOT_FOUND,
+			AuthorizedPaymentsProcessor::SUCCESSFUL        => AuthorizeOrderActionNotice::SUCCESS,
+			AuthorizedPaymentsProcessor::ALREADY_CAPTURED  => AuthorizeOrderActionNotice::ALREADY_CAPTURED,
+			AuthorizedPaymentsProcessor::INACCESSIBLE      => AuthorizeOrderActionNotice::NO_INFO,
+			AuthorizedPaymentsProcessor::NOT_FOUND         => AuthorizeOrderActionNotice::NOT_FOUND,
+			AuthorizedPaymentsProcessor::BAD_AUTHORIZATION => AuthorizeOrderActionNotice::BAD_AUTHORIZATION,
 		);
 		$display_message = ( isset( $message_mapping[ $status ] ) ) ?
 			$message_mapping[ $status ]
