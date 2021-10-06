@@ -10,6 +10,8 @@ declare( strict_types=1 );
 namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
 use Woocommerce\PayPalCommerce\ApiClient\Entity\Capture;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatusDetails;
 
 /**
  * Class CaptureFactory
@@ -42,11 +44,14 @@ class CaptureFactory {
 	 */
 	public function from_paypal_response( \stdClass $data ) : Capture {
 
-		$reason = isset( $data->status_details->reason ) ? (string) $data->status_details->reason : '';
+		$reason = $data->status_details->reason ?? null;
+
 		return new Capture(
 			(string) $data->id,
-			(string) $data->status,
-			$reason,
+			new CaptureStatus(
+				(string) $data->status,
+				$reason ? new CaptureStatusDetails( $reason ) : null
+			),
 			$this->amount_factory->from_paypal_response( $data->amount ),
 			(bool) $data->final_capture,
 			(string) $data->seller_protection->status,
