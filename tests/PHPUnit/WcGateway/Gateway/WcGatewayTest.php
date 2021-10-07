@@ -8,6 +8,9 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
+use Woocommerce\PayPalCommerce\ApiClient\Entity\Capture;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatus;
+use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
@@ -25,8 +28,15 @@ use function Brain\Monkey\Functions\when;
 
 class WcGatewayTest extends TestCase
 {
+	private $environment;
 
-    public function testProcessPaymentSuccess() {
+	public function setUp(): void {
+		parent::setUp();
+
+		$this->environment = Mockery::mock(Environment::class);
+	}
+
+	public function testProcessPaymentSuccess() {
 	    expect('is_admin')->andReturn(false);
 
         $orderId = 1;
@@ -83,6 +93,7 @@ class WcGatewayTest extends TestCase
             $transactionUrlProvider,
             $subscriptionHelper,
 			PayPalGateway::ID,
+			$this->environment,
 			$paymentTokenRepository,
 			$logger,
 			$paymentsEndpoint,
@@ -141,6 +152,7 @@ class WcGatewayTest extends TestCase
             $transactionUrlProvider,
             $subscriptionHelper,
 			PayPalGateway::ID,
+			$this->environment,
 			$paymentTokenRepository,
 			$logger,
 			$paymentsEndpoint,
@@ -216,10 +228,12 @@ class WcGatewayTest extends TestCase
             $transactionUrlProvider,
             $subscriptionHelper,
 			PayPalGateway::ID,
+			$this->environment,
 			$paymentTokenRepository,
 			$logger,
 			$paymentsEndpoint,
-			$orderEndpoint
+			$orderEndpoint,
+			PayPalGateway::ID
         );
 
         expect('wc_get_order')
@@ -258,11 +272,18 @@ class WcGatewayTest extends TestCase
             ->expects('save');
         $settingsRenderer = Mockery::mock(SettingsRenderer::class);
         $orderProcessor = Mockery::mock(OrderProcessor::class);
+		$capture = Mockery::mock(Capture::class);
+		$capture
+			->shouldReceive('status')
+			->andReturn(new CaptureStatus(CaptureStatus::COMPLETED));
         $authorizedPaymentsProcessor = Mockery::mock(AuthorizedPaymentsProcessor::class);
         $authorizedPaymentsProcessor
             ->expects('process')
             ->with($wcOrder)
 			->andReturn(AuthorizedPaymentsProcessor::SUCCESSFUL);
+        $authorizedPaymentsProcessor
+            ->expects('captures')
+			->andReturn([$capture]);
         $authorizedOrderActionNotice = Mockery::mock(AuthorizeOrderActionNotice::class);
         $authorizedOrderActionNotice
             ->expects('display_message')
@@ -296,6 +317,7 @@ class WcGatewayTest extends TestCase
             $transactionUrlProvider,
             $subscriptionHelper,
 			PayPalGateway::ID,
+			$this->environment,
 			$paymentTokenRepository,
 			$logger,
 			$paymentsEndpoint,
@@ -360,6 +382,7 @@ class WcGatewayTest extends TestCase
             $transactionUrlProvider,
             $subscriptionHelper,
 			PayPalGateway::ID,
+			$this->environment,
 			$paymentTokenRepository,
 			$logger,
 			$paymentsEndpoint,
@@ -386,6 +409,9 @@ class WcGatewayTest extends TestCase
             ->expects('process')
             ->with($wcOrder)
 			->andReturn($lastStatus);
+		$authorizedPaymentsProcessor
+			->expects('captures')
+			->andReturn([]);
         $authorizedOrderActionNotice = Mockery::mock(AuthorizeOrderActionNotice::class);
         $authorizedOrderActionNotice
             ->expects('display_message')
@@ -418,6 +444,7 @@ class WcGatewayTest extends TestCase
             $transactionUrlProvider,
             $subscriptionHelper,
 			PayPalGateway::ID,
+			$this->environment,
 			$paymentTokenRepository,
 			$logger,
 			$paymentsEndpoint,
@@ -467,6 +494,7 @@ class WcGatewayTest extends TestCase
 		    $transactionUrlProvider,
 		    $subscriptionHelper,
 			PayPalGateway::ID,
+			$this->environment,
 			$paymentTokenRepository,
 			$logger,
 			$paymentsEndpoint,

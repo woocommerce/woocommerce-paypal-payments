@@ -57,6 +57,7 @@ return array(
 		$logger                        = $container->get( 'woocommerce.logger.woocommerce' );
 		$payments_endpoint = $container->get( 'api.endpoint.payments' );
 		$order_endpoint = $container->get( 'api.endpoint.order' );
+		$environment         = $container->get( 'onboarding.environment' );
 		return new PayPalGateway(
 			$settings_renderer,
 			$order_processor,
@@ -69,6 +70,7 @@ return array(
 			$transaction_url_provider,
 			$subscription_helper,
 			$page_id,
+			$environment,
 			$payment_token_repository,
 			$logger,
 			$payments_endpoint,
@@ -93,6 +95,8 @@ return array(
 		$subscription_helper = $container->get( 'subscription.helper' );
 		$logger                        = $container->get( 'woocommerce.logger.woocommerce' );
 		$payments_endpoint = $container->get( 'api.endpoint.payments' );
+		$logger = $container->get( 'woocommerce.logger.woocommerce' );
+		$environment = $container->get( 'onboarding.environment' );
 		return new CreditCardGateway(
 			$settings_renderer,
 			$order_processor,
@@ -110,7 +114,9 @@ return array(
 			$order_endpoint,
 			$subscription_helper,
 			$logger,
-			$payments_endpoint
+			$payments_endpoint,
+			$logger,
+			$environment
 		);
 	},
 	'wcgateway.disabler'                           => static function ( $container ): DisableGateways {
@@ -219,7 +225,7 @@ return array(
 			$authorized_payments_processor,
 			$settings,
 			$logger,
-			$environment->current_environment_is( Environment::SANDBOX )
+			$environment
 		);
 	},
 	'wcgateway.processor.refunds'                  => static function ( $container ): RefundProcessor {

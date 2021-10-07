@@ -26,16 +26,9 @@ class Capture {
 	/**
 	 * The status.
 	 *
-	 * @var string
+	 * @var CaptureStatus
 	 */
 	private $status;
-
-	/**
-	 * The status details.
-	 *
-	 * @var string
-	 */
-	private $status_details;
 
 	/**
 	 * The amount.
@@ -75,19 +68,17 @@ class Capture {
 	/**
 	 * Capture constructor.
 	 *
-	 * @param string $id The ID.
-	 * @param string $status The status.
-	 * @param string $status_details The status details.
-	 * @param Amount $amount The amount.
-	 * @param bool   $final_capture The final capture.
-	 * @param string $seller_protection The seller protection.
-	 * @param string $invoice_id The invoice id.
-	 * @param string $custom_id The custom id.
+	 * @param string        $id The ID.
+	 * @param CaptureStatus $status The status.
+	 * @param Amount        $amount The amount.
+	 * @param bool          $final_capture The final capture.
+	 * @param string        $seller_protection The seller protection.
+	 * @param string        $invoice_id The invoice id.
+	 * @param string        $custom_id The custom id.
 	 */
 	public function __construct(
 		string $id,
-		string $status,
-		string $status_details,
+		CaptureStatus $status,
 		Amount $amount,
 		bool $final_capture,
 		string $seller_protection,
@@ -97,7 +88,6 @@ class Capture {
 
 		$this->id                = $id;
 		$this->status            = $status;
-		$this->status_details    = $status_details;
 		$this->amount            = $amount;
 		$this->final_capture     = $final_capture;
 		$this->seller_protection = $seller_protection;
@@ -117,19 +107,10 @@ class Capture {
 	/**
 	 * Returns the status.
 	 *
-	 * @return string
+	 * @return CaptureStatus
 	 */
-	public function status() : string {
+	public function status() : CaptureStatus {
 		return $this->status;
-	}
-
-	/**
-	 * Returns the status details object.
-	 *
-	 * @return \stdClass
-	 */
-	public function status_details() : \stdClass {
-		return (object) array( 'reason' => $this->status_details );
 	}
 
 	/**
@@ -183,15 +164,18 @@ class Capture {
 	 * @return array
 	 */
 	public function to_array() : array {
-		return array(
+		$data = array(
 			'id'                => $this->id(),
-			'status'            => $this->status(),
-			'status_details'    => (array) $this->status_details(),
+			'status'            => $this->status()->name(),
 			'amount'            => $this->amount()->to_array(),
 			'final_capture'     => $this->final_capture(),
 			'seller_protection' => (array) $this->seller_protection(),
 			'invoice_id'        => $this->invoice_id(),
 			'custom_id'         => $this->custom_id(),
 		);
+		if ( $this->status()->details() ) {
+			$data['status_details'] = array( 'reason' => $this->status()->details()->reason() );
+		}
+		return $data;
 	}
 }
