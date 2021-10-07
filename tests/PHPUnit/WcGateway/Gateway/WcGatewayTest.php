@@ -5,6 +5,9 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
 
 use Psr\Container\ContainerInterface;
+use Woocommerce\PayPalCommerce\ApiClient\Entity\Capture;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatus;
+use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
@@ -21,8 +24,15 @@ use function Brain\Monkey\Functions\when;
 
 class WcGatewayTest extends TestCase
 {
+	private $environment;
 
-    public function testProcessPaymentSuccess() {
+	public function setUp(): void {
+		parent::setUp();
+
+		$this->environment = Mockery::mock(Environment::class);
+	}
+
+	public function testProcessPaymentSuccess() {
 	    expect('is_admin')->andReturn(false);
 
         $orderId = 1;
@@ -69,7 +79,8 @@ class WcGatewayTest extends TestCase
 	        $state,
             $transactionUrlProvider,
             $subscriptionHelper,
-			PayPalGateway::ID
+			PayPalGateway::ID,
+			$this->environment
         );
 
         expect('wc_get_order')
@@ -118,7 +129,8 @@ class WcGatewayTest extends TestCase
 	        $state,
             $transactionUrlProvider,
             $subscriptionHelper,
-			PayPalGateway::ID
+			PayPalGateway::ID,
+			$this->environment
         );
 
         expect('wc_get_order')
@@ -184,7 +196,8 @@ class WcGatewayTest extends TestCase
 	        $state,
             $transactionUrlProvider,
             $subscriptionHelper,
-			PayPalGateway::ID
+			PayPalGateway::ID,
+			$this->environment
         );
 
         expect('wc_get_order')
@@ -223,11 +236,18 @@ class WcGatewayTest extends TestCase
             ->expects('save');
         $settingsRenderer = Mockery::mock(SettingsRenderer::class);
         $orderProcessor = Mockery::mock(OrderProcessor::class);
+		$capture = Mockery::mock(Capture::class);
+		$capture
+			->shouldReceive('status')
+			->andReturn(new CaptureStatus(CaptureStatus::COMPLETED));
         $authorizedPaymentsProcessor = Mockery::mock(AuthorizedPaymentsProcessor::class);
         $authorizedPaymentsProcessor
             ->expects('process')
             ->with($wcOrder)
 			->andReturn(AuthorizedPaymentsProcessor::SUCCESSFUL);
+        $authorizedPaymentsProcessor
+            ->expects('captures')
+			->andReturn([$capture]);
         $authorizedOrderActionNotice = Mockery::mock(AuthorizeOrderActionNotice::class);
         $authorizedOrderActionNotice
             ->expects('display_message')
@@ -255,7 +275,8 @@ class WcGatewayTest extends TestCase
 	        $state,
             $transactionUrlProvider,
             $subscriptionHelper,
-			PayPalGateway::ID
+			PayPalGateway::ID,
+			$this->environment
         );
 
         $this->assertTrue($testee->capture_authorized_payment($wcOrder));
@@ -310,7 +331,8 @@ class WcGatewayTest extends TestCase
 	        $state,
             $transactionUrlProvider,
             $subscriptionHelper,
-			PayPalGateway::ID
+			PayPalGateway::ID,
+			$this->environment
         );
 
         $this->assertTrue($testee->capture_authorized_payment($wcOrder));
@@ -333,6 +355,9 @@ class WcGatewayTest extends TestCase
             ->expects('process')
             ->with($wcOrder)
 			->andReturn($lastStatus);
+		$authorizedPaymentsProcessor
+			->expects('captures')
+			->andReturn([]);
         $authorizedOrderActionNotice = Mockery::mock(AuthorizeOrderActionNotice::class);
         $authorizedOrderActionNotice
             ->expects('display_message')
@@ -359,7 +384,8 @@ class WcGatewayTest extends TestCase
 	        $state,
             $transactionUrlProvider,
             $subscriptionHelper,
-			PayPalGateway::ID
+			PayPalGateway::ID,
+			$this->environment
         );
 
         $this->assertFalse($testee->capture_authorized_payment($wcOrder));
@@ -399,7 +425,8 @@ class WcGatewayTest extends TestCase
 		    $onboardingState,
 		    $transactionUrlProvider,
 		    $subscriptionHelper,
-			PayPalGateway::ID
+			PayPalGateway::ID,
+			$this->environment
 	    );
 
     	$this->assertSame($needSetup, $testee->needs_setup());

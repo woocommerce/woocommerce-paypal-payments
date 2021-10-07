@@ -10,6 +10,8 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\AuthorizationStatus;
+use Woocommerce\PayPalCommerce\ApiClient\Entity\Capture;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payments;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
@@ -57,7 +59,7 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 		$this->paymentsEndpoint
 			->expects('capture')
 			->with($this->authorizationId)
-			->andReturn($this->createAuthorization($this->authorizationId, AuthorizationStatus::CAPTURED));
+			->andReturn($this->createCapture(CaptureStatus::COMPLETED));
 
         $this->assertEquals(AuthorizedPaymentsProcessor::SUCCESSFUL, $this->testee->process($this->wcOrder));
     }
@@ -78,7 +80,7 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 			$this->paymentsEndpoint
 				->expects('capture')
 				->with($authorization->id())
-				->andReturn($this->createAuthorization($authorization->id(), AuthorizationStatus::CAPTURED));
+				->andReturn($this->createCapture(CaptureStatus::COMPLETED));
 		}
 
 		$this->assertEquals(AuthorizedPaymentsProcessor::SUCCESSFUL, $this->testee->process($this->wcOrder));
@@ -141,6 +143,14 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 			->shouldReceive('status')
 			->andReturn(new AuthorizationStatus($status));
 		return $authorization;
+	}
+
+	private function createCapture(string $status): Capture {
+		$capture = Mockery::mock(Capture::class);
+		$capture
+			->shouldReceive('status')
+			->andReturn(new CaptureStatus($status));
+		return $capture;
 	}
 
 	private function createPaypalOrder(array $authorizations): Order {

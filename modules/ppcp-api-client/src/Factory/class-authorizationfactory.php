@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\AuthorizationStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\AuthorizationStatusDetails;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
 /**
@@ -39,9 +40,14 @@ class AuthorizationFactory {
 			);
 		}
 
+		$reason = $data->status_details->reason ?? null;
+
 		return new Authorization(
 			$data->id,
-			new AuthorizationStatus( $data->status )
+			new AuthorizationStatus(
+				$data->status,
+				$reason ? new AuthorizationStatusDetails( $reason ) : null
+			)
 		);
 	}
 }

@@ -8,10 +8,12 @@ use Psr\Log\NullLogger;
 use Requests_Utility_CaseInsensitiveDictionary;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
+use Woocommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ErrorResponseCollection;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Token;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\AuthorizationFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\CaptureFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ErrorResponseCollectionFactory;
 use WooCommerce\PayPalCommerce\ApiClient\TestCase;
 use Mockery;
@@ -21,7 +23,22 @@ use function Brain\Monkey\Functions\expect;
 
 class PaymentsEndpointTest extends TestCase
 {
-    public function testAuthorizationDefault()
+	private $authorizationFactory;
+	private $captureFactory;
+
+	private $logger;
+
+	public function setUp(): void
+	{
+		parent::setUp();
+
+		$this->authorizationFactory = Mockery::mock(AuthorizationFactory::class);
+		$this->captureFactory = Mockery::mock(CaptureFactory::class);
+
+		$this->logger = new NullLogger();
+	}
+
+	public function testAuthorizationDefault()
     {
 	    expect('wp_json_encode')->andReturnUsing('json_encode');
         $host = 'https://example.com/';
@@ -35,14 +52,9 @@ class PaymentsEndpointTest extends TestCase
             ->expects('bearer')->andReturn($token);
 
         $authorization = Mockery::mock(Authorization::class);
-        $authorizationFactory = Mockery::mock(AuthorizationFactory::class);
-        $authorizationFactory
+        $this->authorizationFactory
             ->expects('from_paypal_response')
             ->andReturn($authorization);
-
-        $logger = Mockery::mock(LoggerInterface::class);
-        $logger->shouldNotReceive('log');
-        $logger->shouldReceive('debug');
 
 		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
 		$headers->shouldReceive('getAll');
@@ -54,8 +66,9 @@ class PaymentsEndpointTest extends TestCase
         $testee = new PaymentsEndpoint(
             $host,
             $bearer,
-            $authorizationFactory,
-            $logger
+            $this->authorizationFactory,
+			$this->captureFactory,
+            $this->logger
         );
 
         expect('wp_remote_get')->andReturnUsing(
@@ -92,12 +105,6 @@ class PaymentsEndpointTest extends TestCase
         $bearer = Mockery::mock(Bearer::class);
         $bearer->expects('bearer')->andReturn($token);
 
-        $authorizationFactory = Mockery::mock(AuthorizationFactory::class);
-
-        $logger = Mockery::mock(LoggerInterface::class);
-        $logger->shouldReceive('log');
-        $logger->shouldReceive('debug');
-
 		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
 		$headers->shouldReceive('getAll');
         $rawResponse = [
@@ -108,8 +115,9 @@ class PaymentsEndpointTest extends TestCase
         $testee = new PaymentsEndpoint(
             $host,
             $bearer,
-            $authorizationFactory,
-            $logger
+            $this->authorizationFactory,
+			$this->captureFactory,
+            $this->logger
         );
 
         expect('wp_remote_get')->andReturn($rawResponse);
@@ -131,8 +139,6 @@ class PaymentsEndpointTest extends TestCase
         $bearer = Mockery::mock(Bearer::class);
         $bearer->expects('bearer')->andReturn($token);
 
-        $authorizationFactory = Mockery::mock(AuthorizationFactory::class);
-
 		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
 		$headers->shouldReceive('getAll');
         $rawResponse = [
@@ -140,15 +146,12 @@ class PaymentsEndpointTest extends TestCase
 			'headers' => $headers,
 			];
 
-        $logger = Mockery::mock(LoggerInterface::class);
-        $logger->shouldReceive('log');
-        $logger->shouldReceive('debug');
-
         $testee = new PaymentsEndpoint(
             $host,
             $bearer,
-            $authorizationFactory,
-            $logger
+            $this->authorizationFactory,
+			$this->captureFactory,
+            $this->logger
         );
 
         expect('wp_remote_get')->andReturn($rawResponse);
@@ -172,16 +175,10 @@ class PaymentsEndpointTest extends TestCase
         $bearer
             ->expects('bearer')->andReturn($token);
 
-        $authorization = Mockery::mock(Authorization::class);
-        $authorizationFactory = Mockery::mock(AuthorizationFactory::class);
-        $authorizationFactory
+        $capture = Mockery::mock(Capture::class);
+        $this->captureFactory
             ->expects('from_paypal_response')
-            ->andReturn($authorization);
-
-
-        $logger = Mockery::mock(LoggerInterface::class);
-        $logger->shouldNotReceive('log');
-        $logger->shouldReceive('debug');
+            ->andReturn($capture);
 
 		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
 		$headers->shouldReceive('getAll');
@@ -193,8 +190,9 @@ class PaymentsEndpointTest extends TestCase
         $testee = new PaymentsEndpoint(
             $host,
             $bearer,
-            $authorizationFactory,
-            $logger
+			$this->authorizationFactory,
+			$this->captureFactory,
+			$this->logger
         );
 
         expect('wp_remote_get')->andReturnUsing(
@@ -219,7 +217,7 @@ class PaymentsEndpointTest extends TestCase
         expect('wp_remote_retrieve_response_code')->with($rawResponse)->andReturn(201);
 
         $result = $testee->capture($authorizationId);
-        $this->assertEquals($authorization, $result);
+        $this->assertEquals($capture, $result);
     }
 
     public function testCaptureIsWpError()
@@ -234,8 +232,6 @@ class PaymentsEndpointTest extends TestCase
         $bearer = Mockery::mock(Bearer::class);
         $bearer->expects('bearer')->andReturn($token);
 
-        $authorizationFactory = Mockery::mock(AuthorizationFactory::class);
-
 		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
 		$headers->shouldReceive('getAll');
         $rawResponse = [
@@ -246,8 +242,9 @@ class PaymentsEndpointTest extends TestCase
         $testee = new PaymentsEndpoint(
             $host,
             $bearer,
-            $authorizationFactory,
-            new NullLogger()
+			$this->authorizationFactory,
+			$this->captureFactory,
+			$this->logger
         );
 
         expect('wp_remote_get')->andReturn($rawResponse);
@@ -269,8 +266,6 @@ class PaymentsEndpointTest extends TestCase
         $bearer = Mockery::mock(Bearer::class);
         $bearer->expects('bearer')->andReturn($token);
 
-        $authorizationFactory = Mockery::mock(AuthorizationFactory::class);
-
 		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
 		$headers->shouldReceive('getAll');
         $rawResponse = [
@@ -281,8 +276,9 @@ class PaymentsEndpointTest extends TestCase
         $testee = new PaymentsEndpoint(
             $host,
             $bearer,
-            $authorizationFactory,
-            new NullLogger()
+			$this->authorizationFactory,
+			$this->captureFactory,
+			$this->logger
         );
 
         expect('wp_remote_get')->andReturn($rawResponse);

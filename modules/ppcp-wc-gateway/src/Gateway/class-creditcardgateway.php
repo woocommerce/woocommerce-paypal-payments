@@ -13,6 +13,7 @@ use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
+use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
@@ -97,6 +98,13 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	private $order_endpoint;
 
 	/**
+	 * The environment.
+	 *
+	 * @var Environment
+	 */
+	protected $environment;
+
+	/**
 	 * CreditCardGateway constructor.
 	 *
 	 * @param SettingsRenderer            $settings_renderer The Settings Renderer.
@@ -115,6 +123,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 * @param OrderEndpoint               $order_endpoint The order endpoint.
 	 * @param SubscriptionHelper          $subscription_helper The subscription helper.
 	 * @param LoggerInterface             $logger The logger.
+	 * @param Environment                 $environment The environment.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
@@ -132,7 +141,8 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		PayerFactory $payer_factory,
 		OrderEndpoint $order_endpoint,
 		SubscriptionHelper $subscription_helper,
-		LoggerInterface $logger
+		LoggerInterface $logger,
+		Environment $environment
 	) {
 
 		$this->id                  = self::ID;
@@ -143,6 +153,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		$this->config              = $config;
 		$this->session_handler     = $session_handler;
 		$this->refund_processor    = $refund_processor;
+		$this->environment         = $environment;
 
 		if ( $state->current_state() === State::STATE_ONBOARDED ) {
 			$this->supports = array( 'refunds' );
@@ -423,5 +434,14 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 */
 	private function is_enabled(): bool {
 		return $this->config->has( 'dcc_enabled' ) && $this->config->get( 'dcc_enabled' );
+	}
+
+	/**
+	 * Returns the environment.
+	 *
+	 * @return Environment
+	 */
+	protected function environment(): Environment {
+		return $this->environment;
 	}
 }

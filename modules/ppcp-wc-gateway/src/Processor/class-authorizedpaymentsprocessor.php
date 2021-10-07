@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\AuthorizationStatus;
+use Woocommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
@@ -22,6 +23,8 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
  * Class AuthorizedPaymentsProcessor
  */
 class AuthorizedPaymentsProcessor {
+
+	use PaymentsStatusHandlingTrait;
 
 	const SUCCESSFUL        = 'SUCCESSFUL';
 	const ALREADY_CAPTURED  = 'ALREADY_CAPTURED';
@@ -52,6 +55,13 @@ class AuthorizedPaymentsProcessor {
 	private $logger;
 
 	/**
+	 * The capture results.
+	 *
+	 * @var Capture[]
+	 */
+	private $captures;
+
+	/**
 	 * AuthorizedPaymentsProcessor constructor.
 	 *
 	 * @param OrderEndpoint    $order_endpoint The Order endpoint.
@@ -77,6 +87,8 @@ class AuthorizedPaymentsProcessor {
 	 * @return string One of the AuthorizedPaymentsProcessor status constants.
 	 */
 	public function process( \WC_Order $wc_order ): string {
+		$this->captures = array();
+
 		try {
 			$order = $this->paypal_order_from_wc_order( $wc_order );
 		} catch ( Exception $exception ) {
@@ -104,6 +116,15 @@ class AuthorizedPaymentsProcessor {
 		}
 
 		return self::SUCCESSFUL;
+	}
+
+	/**
+	 * Returns the capture results.
+	 *
+	 * @return Capture[]
+	 */
+	public function captures(): array {
+		return $this->captures;
 	}
 
 	/**
@@ -144,7 +165,7 @@ class AuthorizedPaymentsProcessor {
 	private function capture_authorizations( Authorization ...$authorizations ) {
 		$uncaptured_authorizations = $this->authorizations_to_capture( ...$authorizations );
 		foreach ( $uncaptured_authorizations as $authorization ) {
-			$this->payments_endpoint->capture( $authorization->id() );
+			$this->captures[] = $this->payments_endpoint->capture( $authorization->id() );
 		}
 	}
 
