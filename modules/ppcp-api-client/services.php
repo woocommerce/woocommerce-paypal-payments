@@ -142,12 +142,14 @@ return array(
 	},
 	'api.endpoint.payments'                 => static function ( ContainerInterface $container ): PaymentsEndpoint {
 		$authorizations_factory = $container->get( 'api.factory.authorization' );
-		$logger                 = $container->get( 'woocommerce.logger.woocommerce' );
+		$capture_factory = $container->get( 'api.factory.capture' );
+		$logger = $container->get( 'woocommerce.logger.woocommerce' );
 
 		return new PaymentsEndpoint(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
 			$authorizations_factory,
+			$capture_factory,
 			$logger
 		);
 	},

@@ -4,10 +4,14 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Processor;
 
 
+use Psr\Log\NullLogger;
+use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\AuthorizationStatus;
+use Woocommerce\PayPalCommerce\ApiClient\Entity\Capture;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payments;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
@@ -17,186 +21,153 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Mockery;
 class AuthorizedPaymentsProcessorTest extends TestCase
 {
+	private $wcOrder;
+	private $paypalOrderId = 'abc';
 
-    public function testDefault() {
-        $orderId = 'abc';
-        $authorizationId = 'def';
-        $authorizationStatus = Mockery::mock(AuthorizationStatus::class);
-        $authorizationStatus
-            ->shouldReceive('is')
-            ->with(AuthorizationStatus::CREATED)
-            ->andReturn(true);
-        $authorization = Mockery::mock(Authorization::class);
-        $authorization
-            ->shouldReceive('id')
-            ->andReturn($authorizationId);
-        $authorization
-            ->shouldReceive('status')
-            ->andReturn($authorizationStatus);
-        $payments = Mockery::mock(Payments::class);
-        $payments
-            ->expects('authorizations')
-            ->andReturn([$authorization]);
-        $purchaseUnit = Mockery::mock(PurchaseUnit::class);
-        $purchaseUnit
-            ->expects('payments')
-            ->andReturn($payments);
-        $order = Mockery::mock(Order::class);
-        $order
-            ->expects('purchase_units')
-            ->andReturn([$purchaseUnit]);
-        $orderEndpoint = Mockery::mock(OrderEndpoint::class);
-        $orderEndpoint
-            ->expects('order')
-            ->with($orderId)
-            ->andReturn($order);
-        $paymentsEndpoint = Mockery::mock(PaymentsEndpoint::class);
-        $paymentsEndpoint
-            ->expects('capture')
-            ->with($authorizationId)
-            ->andReturn($authorization);
-        $testee = new AuthorizedPaymentsProcessor($orderEndpoint, $paymentsEndpoint);
+	private $authorizationId = 'qwe';
 
-        $wcOrder = Mockery::mock(\WC_Order::class);
-        $wcOrder
-            ->expects('get_meta')
-            ->with(PayPalGateway::ORDER_ID_META_KEY)
-            ->andReturn($orderId);
-        $this->assertTrue($testee->process($wcOrder));
-        $this->assertEquals(AuthorizedPaymentsProcessor::SUCCESSFUL, $testee->last_status());
+	private $paypalOrder;
+
+	private $orderEndpoint;
+
+	private $paymentsEndpoint;
+
+	private $testee;
+
+	public function setUp(): void {
+		parent::setUp();
+
+		$this->wcOrder = $this->createWcOrder($this->paypalOrderId);
+
+		$this->paypalOrder = $this->createPaypalOrder([$this->createAuthorization($this->authorizationId, AuthorizationStatus::CREATED)]);
+
+		$this->orderEndpoint = Mockery::mock(OrderEndpoint::class);
+		$this->orderEndpoint
+			->shouldReceive('order')
+			->with($this->paypalOrderId)
+			->andReturnUsing(function () {
+				return $this->paypalOrder;
+			})
+			->byDefault();
+
+		$this->paymentsEndpoint = Mockery::mock(PaymentsEndpoint::class);
+
+		$this->testee = new AuthorizedPaymentsProcessor($this->orderEndpoint, $this->paymentsEndpoint, new NullLogger());
+	}
+
+	public function testSuccess() {
+		$this->paymentsEndpoint
+			->expects('capture')
+			->with($this->authorizationId)
+			->andReturn($this->createCapture(CaptureStatus::COMPLETED));
+
+        $this->assertEquals(AuthorizedPaymentsProcessor::SUCCESSFUL, $this->testee->process($this->wcOrder));
+    }
+
+	public function testCapturesAllCaptureable() {
+		$authorizations = [
+			$this->createAuthorization('id1', AuthorizationStatus::CREATED),
+			$this->createAuthorization('id2', AuthorizationStatus::VOIDED),
+			$this->createAuthorization('id3', AuthorizationStatus::PENDING),
+			$this->createAuthorization('id4', AuthorizationStatus::CAPTURED),
+			$this->createAuthorization('id5', AuthorizationStatus::DENIED),
+			$this->createAuthorization('id6', AuthorizationStatus::EXPIRED),
+			$this->createAuthorization('id7', AuthorizationStatus::COMPLETED),
+		];
+		$this->paypalOrder = $this->createPaypalOrder($authorizations);
+
+		foreach ([$authorizations[0], $authorizations[2]] as $authorization) {
+			$this->paymentsEndpoint
+				->expects('capture')
+				->with($authorization->id())
+				->andReturn($this->createCapture(CaptureStatus::COMPLETED));
+		}
+
+		$this->assertEquals(AuthorizedPaymentsProcessor::SUCCESSFUL, $this->testee->process($this->wcOrder));
     }
 
     public function testInaccessible() {
-        $orderId = 'abc';
-        $orderEndpoint = Mockery::mock(OrderEndpoint::class);
-        $orderEndpoint
+        $this->orderEndpoint
             ->expects('order')
-            ->with($orderId)
+            ->with($this->paypalOrderId)
             ->andThrow(RuntimeException::class);
-        $paymentsEndpoint = Mockery::mock(PaymentsEndpoint::class);
-        $testee = new AuthorizedPaymentsProcessor($orderEndpoint, $paymentsEndpoint);
 
-        $wcOrder = Mockery::mock(\WC_Order::class);
-        $wcOrder
-            ->expects('get_meta')
-            ->with(PayPalGateway::ORDER_ID_META_KEY)
-            ->andReturn($orderId);
-        $this->assertFalse($testee->process($wcOrder));
-        $this->assertEquals(AuthorizedPaymentsProcessor::INACCESSIBLE, $testee->last_status());
+		$this->assertEquals(AuthorizedPaymentsProcessor::INACCESSIBLE, $this->testee->process($this->wcOrder));
     }
 
     public function testNotFound() {
-        $orderId = 'abc';
-        $orderEndpoint = Mockery::mock(OrderEndpoint::class);
-        $orderEndpoint
+        $this->orderEndpoint
             ->expects('order')
-            ->with($orderId)
-            ->andThrow(new RuntimeException("text", 404));
-        $paymentsEndpoint = Mockery::mock(PaymentsEndpoint::class);
-        $testee = new AuthorizedPaymentsProcessor($orderEndpoint, $paymentsEndpoint);
+            ->with($this->paypalOrderId)
+            ->andThrow(new RuntimeException('text', 404));
 
-        $wcOrder = Mockery::mock(\WC_Order::class);
-        $wcOrder
-            ->expects('get_meta')
-            ->with(PayPalGateway::ORDER_ID_META_KEY)
-            ->andReturn($orderId);
-        $this->assertFalse($testee->process($wcOrder));
-        $this->assertEquals(AuthorizedPaymentsProcessor::NOT_FOUND, $testee->last_status());
+		$this->assertEquals(AuthorizedPaymentsProcessor::NOT_FOUND, $this->testee->process($this->wcOrder));
     }
 
     public function testCaptureFails() {
-        $orderId = 'abc';
-        $authorizationId = 'def';
-        $authorizationStatus = Mockery::mock(AuthorizationStatus::class);
-        $authorizationStatus
-            ->shouldReceive('is')
-            ->with(AuthorizationStatus::CREATED)
-            ->andReturn(true);
-        $authorization = Mockery::mock(Authorization::class);
-        $authorization
-            ->shouldReceive('id')
-            ->andReturn($authorizationId);
-        $authorization
-            ->shouldReceive('status')
-            ->andReturn($authorizationStatus);
-        $payments = Mockery::mock(Payments::class);
-        $payments
-            ->expects('authorizations')
-            ->andReturn([$authorization]);
-        $purchaseUnit = Mockery::mock(PurchaseUnit::class);
-        $purchaseUnit
-            ->expects('payments')
-            ->andReturn($payments);
-        $order = Mockery::mock(Order::class);
-        $order
-            ->expects('purchase_units')
-            ->andReturn([$purchaseUnit]);
-        $orderEndpoint = Mockery::mock(OrderEndpoint::class);
-        $orderEndpoint
-            ->expects('order')
-            ->with($orderId)
-            ->andReturn($order);
-        $paymentsEndpoint = Mockery::mock(PaymentsEndpoint::class);
-        $paymentsEndpoint
+		$this->paymentsEndpoint
             ->expects('capture')
-            ->with($authorizationId)
+            ->with($this->authorizationId)
             ->andThrow(RuntimeException::class);
-        $testee = new AuthorizedPaymentsProcessor($orderEndpoint, $paymentsEndpoint);
 
-        $wcOrder = Mockery::mock(\WC_Order::class);
-        $wcOrder
-            ->expects('get_meta')
-            ->with(PayPalGateway::ORDER_ID_META_KEY)
-            ->andReturn($orderId);
-        $this->assertFalse($testee->process($wcOrder));
-        $this->assertEquals(AuthorizedPaymentsProcessor::FAILED, $testee->last_status());
+		$this->assertEquals(AuthorizedPaymentsProcessor::FAILED, $this->testee->process($this->wcOrder));
     }
 
-    public function testAllAreCaptured() {
-        $orderId = 'abc';
-        $authorizationId = 'def';
-        $authorizationStatus = Mockery::mock(AuthorizationStatus::class);
-        $authorizationStatus
-            ->shouldReceive('is')
-            ->with(AuthorizationStatus::CREATED)
-            ->andReturn(false);
-        $authorizationStatus
-            ->shouldReceive('is')
-            ->with(AuthorizationStatus::PENDING)
-            ->andReturn(false);
-        $authorization = Mockery::mock(Authorization::class);
-        $authorization
-            ->shouldReceive('id')
-            ->andReturn($authorizationId);
-        $authorization
-            ->shouldReceive('status')
-            ->andReturn($authorizationStatus);
-        $payments = Mockery::mock(Payments::class);
-        $payments
-            ->expects('authorizations')
-            ->andReturn([$authorization]);
-        $purchaseUnit = Mockery::mock(PurchaseUnit::class);
-        $purchaseUnit
-            ->expects('payments')
-            ->andReturn($payments);
-        $order = Mockery::mock(Order::class);
-        $order
-            ->expects('purchase_units')
-            ->andReturn([$purchaseUnit]);
-        $orderEndpoint = Mockery::mock(OrderEndpoint::class);
-        $orderEndpoint
-            ->expects('order')
-            ->with($orderId)
-            ->andReturn($order);
-        $paymentsEndpoint = Mockery::mock(PaymentsEndpoint::class);
-        $testee = new AuthorizedPaymentsProcessor($orderEndpoint, $paymentsEndpoint);
+    public function testAlreadyCaptured() {
+		$this->paypalOrder = $this->createPaypalOrder([$this->createAuthorization($this->authorizationId, AuthorizationStatus::CAPTURED)]);
 
-        $wcOrder = Mockery::mock(\WC_Order::class);
-        $wcOrder
-            ->expects('get_meta')
-            ->with(PayPalGateway::ORDER_ID_META_KEY)
-            ->andReturn($orderId);
-        $this->assertFalse($testee->process($wcOrder));
-        $this->assertEquals(AuthorizedPaymentsProcessor::ALREADY_CAPTURED, $testee->last_status());
+		$this->assertEquals(AuthorizedPaymentsProcessor::ALREADY_CAPTURED, $this->testee->process($this->wcOrder));
     }
+
+    public function testBadAuthorization() {
+		$this->paypalOrder = $this->createPaypalOrder([$this->createAuthorization($this->authorizationId, AuthorizationStatus::DENIED)]);
+
+		$this->assertEquals(AuthorizedPaymentsProcessor::BAD_AUTHORIZATION, $this->testee->process($this->wcOrder));
+    }
+
+	private function createWcOrder(string $paypalOrderId): WC_Order {
+		$wcOrder = Mockery::mock(WC_Order::class);
+		$wcOrder
+			->shouldReceive('get_meta')
+			->with(PayPalGateway::ORDER_ID_META_KEY)
+			->andReturn($paypalOrderId);
+		return $wcOrder;
+	}
+
+	private function createAuthorization(string $id, string $status): Authorization {
+		$authorization = Mockery::mock(Authorization::class);
+		$authorization
+			->shouldReceive('id')
+			->andReturn($id);
+		$authorization
+			->shouldReceive('status')
+			->andReturn(new AuthorizationStatus($status));
+		return $authorization;
+	}
+
+	private function createCapture(string $status): Capture {
+		$capture = Mockery::mock(Capture::class);
+		$capture
+			->shouldReceive('status')
+			->andReturn(new CaptureStatus($status));
+		return $capture;
+	}
+
+	private function createPaypalOrder(array $authorizations): Order {
+		$payments = Mockery::mock(Payments::class);
+		$payments
+			->shouldReceive('authorizations')
+			->andReturn($authorizations);
+
+		$purchaseUnit = Mockery::mock(PurchaseUnit::class);
+		$purchaseUnit
+			->shouldReceive('payments')
+			->andReturn($payments);
+
+		$order = Mockery::mock(Order::class);
+		$order
+			->shouldReceive('purchase_units')
+			->andReturn([$purchaseUnit]);
+		return $order;
+	}
 }

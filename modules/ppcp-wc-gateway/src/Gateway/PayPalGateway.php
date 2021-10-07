@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
+use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
@@ -112,6 +113,13 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	protected $page_id;
 
 	/**
+	 * The environment.
+	 *
+	 * @var Environment
+	 */
+	protected $environment;
+
+	/**
 	 * PayPalGateway constructor.
 	 *
 	 * @param SettingsRenderer            $settings_renderer The Settings Renderer.
@@ -125,6 +133,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @param TransactionUrlProvider      $transaction_url_provider Service providing transaction view URL based on order.
 	 * @param SubscriptionHelper          $subscription_helper The subscription helper.
 	 * @param string                      $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
+	 * @param Environment                 $environment The environment.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
@@ -137,7 +146,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		State $state,
 		TransactionUrlProvider $transaction_url_provider,
 		SubscriptionHelper $subscription_helper,
-		string $page_id
+		string $page_id,
+		Environment $environment
 	) {
 
 		$this->id                       = self::ID;
@@ -150,6 +160,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->refund_processor         = $refund_processor;
 		$this->transaction_url_provider = $transaction_url_provider;
 		$this->page_id                  = $page_id;
+		$this->environment              = $environment;
 		$this->onboarded                = $state->current_state() === State::STATE_ONBOARDED;
 
 		if ( $this->onboarded ) {
@@ -239,20 +250,10 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @return bool
 	 */
 	public function capture_authorized_payment( \WC_Order $wc_order ): bool {
-		$is_processed = $this->authorized_payments->process( $wc_order );
-		$this->render_authorization_message_for_status( $this->authorized_payments->last_status() );
+		$result_status = $this->authorized_payments->process( $wc_order );
+		$this->render_authorization_message_for_status( $result_status );
 
-		if ( $is_processed ) {
-			$wc_order->add_order_note(
-				__( 'Payment successfully captured.', 'woocommerce-paypal-payments' )
-			);
-			$wc_order->update_meta_data( self::CAPTURED_META_KEY, 'true' );
-			$wc_order->save();
-			$wc_order->payment_complete();
-			return true;
-		}
-
-		if ( $this->authorized_payments->last_status() === AuthorizedPaymentsProcessor::ALREADY_CAPTURED ) {
+		if ( AuthorizedPaymentsProcessor::ALREADY_CAPTURED === $result_status ) {
 			if ( $wc_order->get_status() === 'on-hold' ) {
 				$wc_order->add_order_note(
 					__( 'Payment successfully captured.', 'woocommerce-paypal-payments' )
@@ -264,6 +265,23 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			$wc_order->payment_complete();
 			return true;
 		}
+
+		$captures = $this->authorized_payments->captures();
+		if ( empty( $captures ) ) {
+			return false;
+		}
+
+		$this->handle_capture_status( end( $captures ), $wc_order );
+
+		if ( AuthorizedPaymentsProcessor::SUCCESSFUL === $result_status ) {
+			$wc_order->add_order_note(
+				__( 'Payment successfully captured.', 'woocommerce-paypal-payments' )
+			);
+			$wc_order->update_meta_data( self::CAPTURED_META_KEY, 'true' );
+			$wc_order->save();
+			return true;
+		}
+
 		return false;
 	}
 
@@ -275,10 +293,11 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	private function render_authorization_message_for_status( string $status ) {
 
 		$message_mapping = array(
-			AuthorizedPaymentsProcessor::SUCCESSFUL       => AuthorizeOrderActionNotice::SUCCESS,
-			AuthorizedPaymentsProcessor::ALREADY_CAPTURED => AuthorizeOrderActionNotice::ALREADY_CAPTURED,
-			AuthorizedPaymentsProcessor::INACCESSIBLE     => AuthorizeOrderActionNotice::NO_INFO,
-			AuthorizedPaymentsProcessor::NOT_FOUND        => AuthorizeOrderActionNotice::NOT_FOUND,
+			AuthorizedPaymentsProcessor::SUCCESSFUL        => AuthorizeOrderActionNotice::SUCCESS,
+			AuthorizedPaymentsProcessor::ALREADY_CAPTURED  => AuthorizeOrderActionNotice::ALREADY_CAPTURED,
+			AuthorizedPaymentsProcessor::INACCESSIBLE      => AuthorizeOrderActionNotice::NO_INFO,
+			AuthorizedPaymentsProcessor::NOT_FOUND         => AuthorizeOrderActionNotice::NOT_FOUND,
+			AuthorizedPaymentsProcessor::BAD_AUTHORIZATION => AuthorizeOrderActionNotice::BAD_AUTHORIZATION,
 		);
 		$display_message = ( isset( $message_mapping[ $status ] ) ) ?
 			$message_mapping[ $status ]
@@ -428,5 +447,14 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		}
 
 		return $ret;
+	}
+
+	/**
+	 * Returns the environment.
+	 *
+	 * @return Environment
+	 */
+	protected function environment(): Environment {
+		return $this->environment;
 	}
 }

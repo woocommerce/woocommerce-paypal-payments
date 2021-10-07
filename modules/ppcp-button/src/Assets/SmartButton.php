@@ -608,7 +608,10 @@ class SmartButton implements SmartButtonInterface {
 	 */
 	private function get_3ds_contingency(): string {
 		if ( $this->settings->has( '3d_secure_contingency' ) ) {
-			return $this->settings->get( '3d_secure_contingency' );
+			$value = $this->settings->get( '3d_secure_contingency' );
+			if ( $value ) {
+				return $value;
+			}
 		}
 
 		return 'SCA_WHEN_REQUIRED';

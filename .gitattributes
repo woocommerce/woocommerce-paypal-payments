@@ -19,4 +19,4 @@ phpunit.xml export-ignore
 psalm.xml export-ignore
 yarn.lock export-ignore
 
-* text eol=lf
+* text=auto
