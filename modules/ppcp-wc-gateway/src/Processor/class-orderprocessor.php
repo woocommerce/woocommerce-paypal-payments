@@ -26,7 +26,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
  */
 class OrderProcessor {
 
-	use OrderMetaTrait;
+	use OrderMetaTrait, PaymentsStatusHandlingTrait;
 
 	/**
 	 * The environment.
@@ -170,6 +170,7 @@ class OrderProcessor {
 
 		if ( $order->intent() === 'AUTHORIZE' ) {
 			$order = $this->order_endpoint->authorize( $order );
+
 			$wc_order->update_meta_data( PayPalGateway::CAPTURED_META_KEY, 'false' );
 		}
 
@@ -179,14 +180,7 @@ class OrderProcessor {
 			$this->set_order_transaction_id( $transaction_id, $wc_order );
 		}
 
-		$wc_order->update_status(
-			'on-hold',
-			__( 'Awaiting payment.', 'woocommerce-paypal-payments' )
-		);
-		if ( $order->status()->is( OrderStatus::COMPLETED ) && $order->intent() === 'CAPTURE' ) {
-
-			$wc_order->payment_complete();
-		}
+		$this->handle_new_order_status( $order, $wc_order );
 
 		if ( $this->capture_authorized_downloads( $order ) && AuthorizedPaymentsProcessor::SUCCESSFUL === $this->authorized_payments_processor->process( $wc_order ) ) {
 			$wc_order->add_order_note(

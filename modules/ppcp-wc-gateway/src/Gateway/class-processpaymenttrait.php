@@ -15,13 +15,14 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\PaymentsStatusHandlingTrait;
 
 /**
  * Trait ProcessPaymentTrait
  */
 trait ProcessPaymentTrait {
 
-	use OrderMetaTrait;
+	use OrderMetaTrait, PaymentsStatusHandlingTrait;
 
 	/**
 	 * Process a payment for an WooCommerce order.
@@ -81,34 +82,33 @@ trait ProcessPaymentTrait {
 
 				$this->add_paypal_meta( $wc_order, $order, $this->environment() );
 
-				if ( $order->status()->is( OrderStatus::COMPLETED ) && $order->intent() === 'CAPTURE' ) {
-					$wc_order->payment_complete();
-
-					$this->session_handler->destroy_session_data();
-					return array(
-						'result'   => 'success',
-						'redirect' => $this->get_return_url( $wc_order ),
-					);
+				if ( ! $order->status()->is( OrderStatus::COMPLETED ) ) {
+					$this->logger->warning( "Unexpected status for order {$order->id()} using a saved credit card: " . $order->status()->name() );
+					return null;
 				}
 
-				if ( $order->status()->is( OrderStatus::COMPLETED ) && $order->intent() === 'AUTHORIZE' ) {
-					$this->order_endpoint->authorize( $order );
+				if ( ! in_array(
+					$order->intent(),
+					array( 'CAPTURE', 'AUTHORIZE' ),
+					true
+				) ) {
+					$this->logger->warning( "Could neither capture nor authorize order {$order->id()} using a saved credit card:" . 'Status: ' . $order->status()->name() . ' Intent: ' . $order->intent() );
+					return null;
+				}
+
+				if ( $order->intent() === 'AUTHORIZE' ) {
+					$order = $this->order_endpoint->authorize( $order );
+
 					$wc_order->update_meta_data( PayPalGateway::CAPTURED_META_KEY, 'false' );
-					$wc_order->update_status(
-						'on-hold',
-						__( 'Awaiting payment.', 'woocommerce-paypal-payments' )
-					);
-
-					$this->session_handler->destroy_session_data();
-					return array(
-						'result'   => 'success',
-						'redirect' => $this->get_return_url( $wc_order ),
-					);
 				}
 
-				$this->logger->warning( "Could neither capture nor authorize order {$order->id()} using a saved credit card:" . 'Status: ' . $order->status()->name() . ' Intent: ' . $order->intent() );
+				$this->handle_new_order_status( $order, $wc_order );
 
-				return null;
+				$this->session_handler->destroy_session_data();
+				return array(
+					'result'   => 'success',
+					'redirect' => $this->get_return_url( $wc_order ),
+				);
 			} catch ( RuntimeException $error ) {
 				$this->handle_failure( $wc_order, $error );
 				return null;
