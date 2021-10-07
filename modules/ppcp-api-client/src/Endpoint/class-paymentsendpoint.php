@@ -11,11 +11,13 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
+use Woocommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Refund;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\AuthorizationFactory;
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\CaptureFactory;
 
 /**
  * Class PaymentsEndpoint
@@ -46,6 +48,13 @@ class PaymentsEndpoint {
 	private $authorizations_factory;
 
 	/**
+	 * The capture factory.
+	 *
+	 * @var CaptureFactory
+	 */
+	private $capture_factory;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -58,18 +67,21 @@ class PaymentsEndpoint {
 	 * @param string               $host The host.
 	 * @param Bearer               $bearer The bearer.
 	 * @param AuthorizationFactory $authorization_factory The authorization factory.
+	 * @param CaptureFactory       $capture_factory The capture factory.
 	 * @param LoggerInterface      $logger The logger.
 	 */
 	public function __construct(
 		string $host,
 		Bearer $bearer,
 		AuthorizationFactory $authorization_factory,
+		CaptureFactory $capture_factory,
 		LoggerInterface $logger
 	) {
 
 		$this->host                   = $host;
 		$this->bearer                 = $bearer;
 		$this->authorizations_factory = $authorization_factory;
+		$this->capture_factory        = $capture_factory;
 		$this->logger                 = $logger;
 	}
 
@@ -136,11 +148,11 @@ class PaymentsEndpoint {
 	 *
 	 * @param string $authorization_id The id.
 	 *
-	 * @return Authorization
+	 * @return Capture
 	 * @throws RuntimeException If the request fails.
 	 * @throws PayPalApiException If the request fails.
 	 */
-	public function capture( string $authorization_id ): Authorization {
+	public function capture( string $authorization_id ): Capture {
 		$bearer = $this->bearer->bearer();
 		$url    = trailingslashit( $this->host ) . 'v2/payments/authorizations/' . $authorization_id . '/capture';
 		$args   = array(
@@ -167,7 +179,7 @@ class PaymentsEndpoint {
 			);
 		}
 
-		return $this->authorizations_factory->from_paypal_response( $json );
+		return $this->capture_factory->from_paypal_response( $json );
 	}
 
 	/**
