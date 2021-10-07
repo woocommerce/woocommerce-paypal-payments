@@ -253,16 +253,6 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$result_status = $this->authorized_payments->process( $wc_order );
 		$this->render_authorization_message_for_status( $result_status );
 
-		if ( AuthorizedPaymentsProcessor::SUCCESSFUL === $result_status ) {
-			$wc_order->add_order_note(
-				__( 'Payment successfully captured.', 'woocommerce-paypal-payments' )
-			);
-			$wc_order->update_meta_data( self::CAPTURED_META_KEY, 'true' );
-			$wc_order->save();
-			$wc_order->payment_complete();
-			return true;
-		}
-
 		if ( AuthorizedPaymentsProcessor::ALREADY_CAPTURED === $result_status ) {
 			if ( $wc_order->get_status() === 'on-hold' ) {
 				$wc_order->add_order_note(
@@ -275,6 +265,23 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			$wc_order->payment_complete();
 			return true;
 		}
+
+		$captures = $this->authorized_payments->captures();
+		if ( empty( $captures ) ) {
+			return false;
+		}
+
+		$this->handle_capture_status( end( $captures ), $wc_order );
+
+		if ( AuthorizedPaymentsProcessor::SUCCESSFUL === $result_status ) {
+			$wc_order->add_order_note(
+				__( 'Payment successfully captured.', 'woocommerce-paypal-payments' )
+			);
+			$wc_order->update_meta_data( self::CAPTURED_META_KEY, 'true' );
+			$wc_order->save();
+			return true;
+		}
+
 		return false;
 	}
 
