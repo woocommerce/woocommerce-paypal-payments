@@ -47,10 +47,25 @@ class AuthorizationStatusDetails {
 
 	/**
 	 * Returns the reason explaining authorization status.
+	 * One of AuthorizationStatusDetails constants.
 	 *
 	 * @return string
 	 */
 	public function reason(): string {
 		return $this->reason;
+	}
+
+	/**
+	 * Returns the human-readable reason text explaining authorization status.
+	 *
+	 * @return string
+	 */
+	public function text(): string {
+		switch ( $this->reason ) {
+			case self::PENDING_REVIEW:
+				return __( 'Authorization is pending manual review.', 'woocommerce-paypal-payments' );
+			default:
+				return $this->reason;
+		}
 	}
 }
