@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
+use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatus;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -271,12 +272,16 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			return false;
 		}
 
-		$this->handle_capture_status( end( $captures ), $wc_order );
+		$capture = end( $captures );
+
+		$this->handle_capture_status( $capture, $wc_order );
 
 		if ( AuthorizedPaymentsProcessor::SUCCESSFUL === $result_status ) {
-			$wc_order->add_order_note(
-				__( 'Payment successfully captured.', 'woocommerce-paypal-payments' )
-			);
+			if ( $capture->status()->is( CaptureStatus::COMPLETED ) ) {
+				$wc_order->add_order_note(
+					__( 'Payment successfully captured.', 'woocommerce-paypal-payments' )
+				);
+			}
 			$wc_order->update_meta_data( self::CAPTURED_META_KEY, 'true' );
 			$wc_order->save();
 			return true;
