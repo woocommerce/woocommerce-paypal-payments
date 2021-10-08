@@ -2,7 +2,7 @@
 /**
  * Manage the Seller status.
  *
- * @package Woocommerce\PayPalCommerce\WcGateway\Helper
+ * @package WooCommerce\PayPalCommerce\WcGateway\Helper
  */
 
 declare( strict_types=1 );

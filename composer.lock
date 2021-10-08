@@ -39,16 +39,16 @@
         },
         {
             "name": "dhii/collections-interface",
-            "version": "v0.3.0-alpha4",
+            "version": "v0.3.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Dhii/collections-interface.git",
-                "reference": "da334f75f6477ef7eecaf28df1d5253fe05684ee"
+                "reference": "74464a969b340d16889eacd9eadc9817f7e7f47a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Dhii/collections-interface/zipball/da334f75f6477ef7eecaf28df1d5253fe05684ee",
-                "reference": "da334f75f6477ef7eecaf28df1d5253fe05684ee",
+                "url": "https://api.github.com/repos/Dhii/collections-interface/zipball/74464a969b340d16889eacd9eadc9817f7e7f47a",
+                "reference": "74464a969b340d16889eacd9eadc9817f7e7f47a",
                 "shasum": ""
             },
             "require": {
@@ -58,7 +58,7 @@
             "require-dev": {
                 "phpunit/phpunit": "^7.0 | ^8.0 | ^9.0",
                 "slevomat/coding-standard": "^6.0",
-                "vimeo/psalm": "^3.11.7 | ^4.0"
+                "vimeo/psalm": "^4.0"
             },
             "type": "library",
             "extra": {
@@ -86,33 +86,34 @@
                 }
             ],
             "description": "A highly ISP-compliant collection of interfaces that represent maps and lists.",
-            "time": "2021-03-09T17:36:34+00:00"
+            "time": "2021-10-06T10:56:09+00:00"
         },
         {
             "name": "dhii/containers",
-            "version": "v0.1.2",
+            "version": "v0.1.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Dhii/containers.git",
-                "reference": "b753f1d8eee7bf58ebbeb815b55a634785bcdb64"
+                "reference": "42ab24683183fa0dc155f26c6a470ef697bbdc9a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Dhii/containers/zipball/b753f1d8eee7bf58ebbeb815b55a634785bcdb64",
-                "reference": "b753f1d8eee7bf58ebbeb815b55a634785bcdb64",
+                "url": "https://api.github.com/repos/Dhii/containers/zipball/42ab24683183fa0dc155f26c6a470ef697bbdc9a",
+                "reference": "42ab24683183fa0dc155f26c6a470ef697bbdc9a",
                 "shasum": ""
             },
             "require": {
                 "container-interop/service-provider": "^0.4",
-                "dhii/collections-interface": "^0.3.0-alpha2",
+                "dhii/collections-interface": "^0.3.0-alpha4",
                 "php": "^7.1 | ^8.0"
             },
             "require-dev": {
                 "gmazzap/andrew": "^1.1",
-                "phpunit/phpunit": "^7.0",
+                "phpunit/phpunit": "^7.0 | ^8.0 | ^9.0",
                 "psr/container": "^1.0",
                 "psr/simple-cache": "^1.0",
-                "slevomat/coding-standard": "~4.0",
+                "slevomat/coding-standard": "^6.0",
+                "vimeo/psalm": "^4.0",
                 "wildwolf/psr-memory-cache": "^1.0"
             },
             "type": "library",
@@ -141,7 +142,7 @@
                 "PSR-11",
                 "container"
             ],
-            "time": "2020-10-22T10:20:26+00:00"
+            "time": "2021-10-06T11:13:51+00:00"
         },
         {
             "name": "dhii/module-interface",

@@ -15,9 +15,9 @@ use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use Psr\Container\ContainerInterface;
-use Woocommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use Woocommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 
 /**
  * Class SettingsRenderer

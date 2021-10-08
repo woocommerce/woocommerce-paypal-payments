@@ -10,10 +10,7 @@
     "autoload": {
         "psr-4": {
             "WooCommerce\\PayPalCommerce\\WcGateway\\": "src"
-        },
-        "classmap": [
-            "src"
-        ]
+        }
     },
     "minimum-stability": "dev",
     "prefer-stable": true

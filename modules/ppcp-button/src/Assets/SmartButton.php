@@ -22,7 +22,7 @@ use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
-use Woocommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**

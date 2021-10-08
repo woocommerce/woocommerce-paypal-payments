@@ -4,12 +4,12 @@
  *
  * @link https://developer.paypal.com/docs/api/orders/v2/#definition-capture
  *
- * @package Woocommerce\PayPalCommerce\ApiClient\Entity
+ * @package WooCommerce\PayPalCommerce\ApiClient\Entity
  */
 
 declare( strict_types=1 );
 
-namespace Woocommerce\PayPalCommerce\ApiClient\Entity;
+namespace WooCommerce\PayPalCommerce\ApiClient\Entity;
 
 /**
  * Class Capture
