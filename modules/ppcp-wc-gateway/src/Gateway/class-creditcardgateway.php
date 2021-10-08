@@ -131,8 +131,8 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 * @param OrderEndpoint               $order_endpoint The order endpoint.
 	 * @param SubscriptionHelper          $subscription_helper The subscription helper.
 	 * @param LoggerInterface             $logger The logger.
-	 * @param PaymentsEndpoint            $payments_endpoint The payments endpoint.
 	 * @param Environment                 $environment The environment.
+	 * @param PaymentsEndpoint            $payments_endpoint The payments endpoint.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
@@ -151,8 +151,8 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		OrderEndpoint $order_endpoint,
 		SubscriptionHelper $subscription_helper,
 		LoggerInterface $logger,
-		PaymentsEndpoint $payments_endpoint,
-		Environment $environment
+		Environment $environment,
+		PaymentsEndpoint $payments_endpoint
 	) {
 
 		$this->id                  = self::ID;

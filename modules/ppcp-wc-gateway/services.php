@@ -93,7 +93,6 @@ return array(
 		$payer_factory = $container->get( 'api.factory.payer' );
 		$order_endpoint = $container->get( 'api.endpoint.order' );
 		$subscription_helper = $container->get( 'subscription.helper' );
-		$logger                        = $container->get( 'woocommerce.logger.woocommerce' );
 		$payments_endpoint = $container->get( 'api.endpoint.payments' );
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
 		$environment = $container->get( 'onboarding.environment' );
@@ -114,9 +113,8 @@ return array(
 			$order_endpoint,
 			$subscription_helper,
 			$logger,
-			$payments_endpoint,
-			$logger,
-			$environment
+			$environment,
+			$payments_endpoint
 		);
 	},
 	'wcgateway.disabler'                           => static function ( $container ): DisableGateways {
