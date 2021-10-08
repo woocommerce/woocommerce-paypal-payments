@@ -1,5 +1,12 @@
 *** Changelog ***
 
+= 1.6.1 - TBD =
+* Fix - Handle authorization capture failures #312
+* Fix - Handle denied payment authorization #302
+* Fix - Handle failed authorizations when capturing order #303
+* Fix - Transactions cannot be voided #293
+* Fix - Fatal error: get_3ds_contingency() #310
+
 = 1.6.0 - 2021-09-29 =
 * Add - Webhook status. #246 #273
 * Add - Show CC gateway in admin payments list. #236
