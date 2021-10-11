@@ -15,6 +15,21 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
  * Class RenderAuthorizeAction
  */
 class RenderAuthorizeAction {
+	/**
+	 * The capture info column.
+	 *
+	 * @var OrderTablePaymentStatusColumn
+	 */
+	private $column;
+
+	/**
+	 * PaymentStatusOrderDetail constructor.
+	 *
+	 * @param OrderTablePaymentStatusColumn $column The capture info column.
+	 */
+	public function __construct( OrderTablePaymentStatusColumn $column ) {
+		$this->column = $column;
+	}
 
 	/**
 	 * Renders the action into the $order_actions array based on the WooCommerce order.
@@ -45,7 +60,10 @@ class RenderAuthorizeAction {
 	 * @return bool
 	 */
 	private function should_render_for_order( \WC_Order $order ) : bool {
-		$data = $order->get_meta( PayPalGateway::CAPTURED_META_KEY );
-		return in_array( $data, array( 'true', 'false' ), true );
+		$status               = $order->get_status();
+		$not_allowed_statuses = array( 'refunded', 'cancelled', 'failed' );
+		return $this->column->should_render_for_order( $order ) &&
+			! $this->column->is_captured( $order ) &&
+			! in_array( $status, $not_allowed_statuses, true );
 	}
 }
