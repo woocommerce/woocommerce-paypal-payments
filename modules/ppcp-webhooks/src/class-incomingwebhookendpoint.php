@@ -230,7 +230,11 @@ class IncomingWebhookEndpoint {
 	 * @return string
 	 */
 	public function url(): string {
-		return rest_url( self::NAMESPACE . '/' . self::ROUTE );
+		$url = rest_url( self::NAMESPACE . '/' . self::ROUTE );
+
+		$url = str_replace( 'http://', 'https://', $url );
+
+		return $url;
 	}
 
 	/**
