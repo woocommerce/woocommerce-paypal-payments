@@ -33,28 +33,17 @@ class RequestData {
 	/**
 	 * Reads the current request.
 	 *
-	 * @param string $nonce The nonce.
+	 * @param string $action The nonce action.
 	 *
 	 * @return array
-	 * @throws RuntimeException When nonce validation fails.
+	 * @throws RuntimeException When read request fails.
 	 */
-	public function read_request( string $nonce ): array {
-		$stream = file_get_contents( 'php://input' );
-		$json   = json_decode( $stream, true );
-		$this->enqueue_nonce_fix();
-		if (
-			! isset( $json['nonce'] )
-			|| ! wp_verify_nonce( $json['nonce'], $nonce )
-		) {
-			remove_filter( 'nonce_user_logged_out', array( $this, 'nonce_fix' ), 100 );
-			throw new RuntimeException(
-				__( 'Could not validate nonce.', 'woocommerce-paypal-payments' )
-			);
-		}
-		$this->dequeue_nonce_fix();
+	public function read_request( string $action ): array {
+		$stream = $this->get_stream();
+		$json   = $this->get_decoded_json( $stream );
+		$this->ensure_nonce( $json['nonce'], $action );
 
-		$sanitized = $this->sanitize( $json );
-		return $sanitized;
+		return $this->sanitize( $json );
 	}
 
 	/**
@@ -95,5 +84,58 @@ class RequestData {
 			$data[ sanitize_text_field( (string) $raw_key ) ] = $this->sanitize( $raw_value );
 		}
 		return $data;
+	}
+
+	/**
+	 * Gets the stream.
+	 *
+	 * @return string The stream.
+	 * @throws RuntimeException When getting stream fails.
+	 */
+	private function get_stream(): string {
+		$stream = file_get_contents( 'php://input' );
+		if ( ! $stream ) {
+			remove_filter( 'nonce_user_logged_out', array( $this, 'nonce_fix' ), 100 );
+			throw new RuntimeException(
+				__( 'Could not get stream.', 'woocommerce-paypal-payments' )
+			);
+		}
+		return $stream;
+	}
+
+	/**
+	 * Decodes json stream.
+	 *
+	 * @param string $stream The stream.
+	 * @return mixed JSON decoded.
+	 * @throws RuntimeException When getting JSON fails.
+	 */
+	private function get_decoded_json( string $stream ) {
+		$json = json_decode( $stream, true );
+		if ( json_last_error() !== JSON_ERROR_NONE || ! isset( $json['nonce'] ) ) {
+			remove_filter( 'nonce_user_logged_out', array( $this, 'nonce_fix' ), 100 );
+			throw new RuntimeException(
+				__( 'Could not decode JSON.', 'woocommerce-paypal-payments' )
+			);
+		}
+		return $json;
+	}
+
+	/**
+	 * Ensure nonce is valid.
+	 *
+	 * @param string $nonce The nonce.
+	 * @param string $action The action.
+	 * @throws RuntimeException When nonce validation fails.
+	 */
+	private function ensure_nonce( string $nonce, string $action ): void {
+		$this->enqueue_nonce_fix();
+		if ( ! wp_verify_nonce( $nonce, $action ) ) {
+			remove_filter( 'nonce_user_logged_out', array( $this, 'nonce_fix' ), 100 );
+			throw new RuntimeException(
+				__( 'Could not validate nonce.', 'woocommerce-paypal-payments' )
+			);
+		}
+		$this->dequeue_nonce_fix();
 	}
 }
