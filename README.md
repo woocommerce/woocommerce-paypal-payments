@@ -44,6 +44,26 @@ After some changes in `.env` (such as PHP, WP versions) you may need to rebuild 
 
 See [package.json](/package.json) for other useful commands.
 
+### Webhooks
+
+For testing webhooks locally, follow these steps to set up ngrok:
+
+0. Install [ngrok](https://ngrok.com/).
+
+1. Run
+```
+ngrok http -host-header=rewrite wc-pp.myhost
+```
+
+2. In your environment variables (accessible to the web server), add `NGROK_HOST` with the host that you got from `ngrok`, like `abcd1234.ngrok.io`.
+
+	- For the Docker environment: set `NGROK_HOST` in the `.env` file and restart the web server. (`yarn run docker:stop && yarn run docker:start`)
+
+3. Complete onboarding or resubscribe webhooks on the Webhooks Status page.
+
+Currently, ngrok is used only for the webhook listening URL.
+The URLs displayed on the WordPress pages, used in redirects, etc. will still remain local.
+
 ## Building a release package
 
 If you want to build a release package
