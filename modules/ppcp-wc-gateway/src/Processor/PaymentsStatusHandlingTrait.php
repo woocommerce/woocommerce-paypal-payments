@@ -55,8 +55,9 @@ trait PaymentsStatusHandlingTrait {
 	): void {
 		$status = $capture->status();
 
-		if ( $status->details() ) {
-			$this->add_status_details_note( $wc_order, $status->name(), $status->details()->text() );
+		$details = $status->details();
+		if ( $details ) {
+			$this->add_status_details_note( $wc_order, $status->name(), $details->text() );
 		}
 
 		switch ( $status->name() ) {
@@ -95,8 +96,9 @@ trait PaymentsStatusHandlingTrait {
 	): void {
 		$status = $authorization->status();
 
-		if ( $status->details() ) {
-			$this->add_status_details_note( $wc_order, $status->name(), $status->details()->text() );
+		$details = $status->details();
+		if ( $details ) {
+			$this->add_status_details_note( $wc_order, $status->name(), $details->text() );
 		}
 
 		switch ( $status->name() ) {
