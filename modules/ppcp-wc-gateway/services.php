@@ -113,13 +113,13 @@ return array(
 		$settings       = $container->get( 'wcgateway.settings' );
 		return new DisableGateways( $session_handler, $settings );
 	},
-	'wcgateway.is-wc-payments-page'                => static function ( $container ): bool {
+	'wcgateway.is-wc-payments-page'                => static function ( ContainerInterface $container ): bool {
 		$page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : '';
 		$tab = isset( $_GET['tab'] ) ? sanitize_text_field( wp_unslash( $_GET['tab'] ) ) : '';
 		return 'wc-settings' === $page && 'checkout' === $tab;
 	},
 
-	'wcgateway.is-ppcp-settings-page'              => static function ( $container ): bool {
+	'wcgateway.is-ppcp-settings-page'              => static function ( ContainerInterface $container ): bool {
 		if ( ! $container->get( 'wcgateway.is-wc-payments-page' ) ) {
 			return false;
 		}
@@ -128,7 +128,7 @@ return array(
 		return in_array( $section, array( PayPalGateway::ID, CreditCardGateway::ID, WebhooksStatusPage::ID ), true );
 	},
 
-	'wcgateway.current-ppcp-settings-page-id'      => static function ( $container ): string {
+	'wcgateway.current-ppcp-settings-page-id'      => static function ( ContainerInterface $container ): string {
 		if ( ! $container->get( 'wcgateway.is-ppcp-settings-page' ) ) {
 			return '';
 		}
@@ -155,7 +155,7 @@ return array(
 		return new DccWithoutPayPalAdminNotice( $state, $settings, $is_payments_page, $is_ppcp_settings_page );
 	},
 	'wcgateway.notice.authorize-order-action'      =>
-		static function ( $container ): AuthorizeOrderActionNotice {
+		static function ( ContainerInterface $container ): AuthorizeOrderActionNotice {
 			return new AuthorizeOrderActionNotice();
 		},
 	'wcgateway.settings.sections-renderer'         => static function ( ContainerInterface $container ): SectionsRenderer {
@@ -1973,10 +1973,10 @@ return array(
 			dirname( __FILE__, 3 ) . '/woocommerce-paypal-payments.php'
 		);
 	},
-	'wcgateway.relative-path'                      => static function( $container ): string {
+	'wcgateway.relative-path'                      => static function( ContainerInterface $container ): string {
 		return 'modules/ppcp-wc-gateway/';
 	},
-	'wcgateway.absolute-path'                      => static function( $container ): string {
+	'wcgateway.absolute-path'                      => static function( ContainerInterface $container ): string {
 		return plugin_dir_path(
 			dirname( __FILE__, 3 ) . '/woocommerce-paypal-payments.php'
 		) .
@@ -1993,15 +1993,15 @@ return array(
 		);
 	},
 
-	'wcgateway.transaction-url-sandbox'            => static function ( $container ): string {
+	'wcgateway.transaction-url-sandbox'            => static function ( ContainerInterface $container ): string {
 		return 'https://www.sandbox.paypal.com/cgi-bin/webscr?cmd=_view-a-trans&id=%s';
 	},
 
-	'wcgateway.transaction-url-live'               => static function ( $container ): string {
+	'wcgateway.transaction-url-live'               => static function ( ContainerInterface $container ): string {
 		return 'https://www.paypal.com/cgi-bin/webscr?cmd=_view-a-trans&id=%s';
 	},
 
-	'wcgateway.transaction-url-provider'           => static function ( $container ): TransactionUrlProvider {
+	'wcgateway.transaction-url-provider'           => static function ( ContainerInterface $container ): TransactionUrlProvider {
 		$sandbox_url_base = $container->get( 'wcgateway.transaction-url-sandbox' );
 		$live_url_base    = $container->get( 'wcgateway.transaction-url-live' );
 
@@ -2015,7 +2015,7 @@ return array(
 		return new DCCProductStatus( $settings, $partner_endpoint );
 	},
 
-	'button.helper.messages-disclaimers'           => static function ( $container ): MessagesDisclaimers {
+	'button.helper.messages-disclaimers'           => static function ( ContainerInterface $container ): MessagesDisclaimers {
 		return new MessagesDisclaimers();
 	},
 );

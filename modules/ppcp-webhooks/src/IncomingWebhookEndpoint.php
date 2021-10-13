@@ -248,7 +248,7 @@ class IncomingWebhookEndpoint {
 	/**
 	 * Returns the event types, which are handled by the endpoint.
 	 *
-	 * @return array
+	 * @return string[]
 	 */
 	public function handled_event_types(): array {
 		$event_types = array();

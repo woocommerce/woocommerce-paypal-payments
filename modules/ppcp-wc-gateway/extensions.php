@@ -20,15 +20,15 @@ use Psr\Log\LoggerInterface;
 
 return array(
 
-	'api.merchant_email'             => static function ( $container ): string {
+	'api.merchant_email'             => static function ( ContainerInterface $container ): string {
 		$settings = $container->get( 'wcgateway.settings' );
 		return $settings->has( 'merchant_email' ) ? (string) $settings->get( 'merchant_email' ) : '';
 	},
-	'api.merchant_id'                => static function ( $container ): string {
+	'api.merchant_id'                => static function ( ContainerInterface $container ): string {
 		$settings = $container->get( 'wcgateway.settings' );
 		return $settings->has( 'merchant_id' ) ? (string) $settings->get( 'merchant_id' ) : '';
 	},
-	'api.partner_merchant_id'        => static function ( $container ): string {
+	'api.partner_merchant_id'        => static function ( ContainerInterface $container ): string {
 		$environment = $container->get( 'onboarding.environment' );
 
 		/**
@@ -39,20 +39,20 @@ return array(
 		return $environment->current_environment_is( Environment::SANDBOX ) ?
 			(string) $container->get( 'api.partner_merchant_id-sandbox' ) : (string) $container->get( 'api.partner_merchant_id-production' );
 	},
-	'api.key'                        => static function ( $container ): string {
+	'api.key'                        => static function ( ContainerInterface $container ): string {
 		$settings = $container->get( 'wcgateway.settings' );
 		$key      = $settings->has( 'client_id' ) ? (string) $settings->get( 'client_id' ) : '';
 		return $key;
 	},
-	'api.secret'                     => static function ( $container ): string {
+	'api.secret'                     => static function ( ContainerInterface $container ): string {
 		$settings = $container->get( 'wcgateway.settings' );
 		return $settings->has( 'client_secret' ) ? (string) $settings->get( 'client_secret' ) : '';
 	},
-	'api.prefix'                     => static function ( $container ): string {
+	'api.prefix'                     => static function ( ContainerInterface $container ): string {
 		$settings = $container->get( 'wcgateway.settings' );
 		return $settings->has( 'prefix' ) ? (string) $settings->get( 'prefix' ) : 'WC-';
 	},
-	'api.endpoint.order'             => static function ( $container ): OrderEndpoint {
+	'api.endpoint.order'             => static function ( ContainerInterface $container ): OrderEndpoint {
 		$order_factory           = $container->get( 'api.factory.order' );
 		$patch_collection_factory = $container->get( 'api.factory.patch-collection-factory' );
 		$logger                 = $container->get( 'woocommerce.logger.woocommerce' );
@@ -85,7 +85,7 @@ return array(
 			$bn_code
 		);
 	},
-	'woocommerce.logger.woocommerce' => function ( $container ): LoggerInterface {
+	'woocommerce.logger.woocommerce' => function ( ContainerInterface $container ): LoggerInterface {
 		$settings = $container->get( 'wcgateway.settings' );
 		if ( ! function_exists( 'wc_get_logger' ) || ! $settings->has( 'logging_enabled' ) || ! $settings->get( 'logging_enabled' ) ) {
 			return new NullLogger();

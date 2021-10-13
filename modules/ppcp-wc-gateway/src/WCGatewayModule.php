@@ -148,9 +148,9 @@ class WCGatewayModule implements ModuleInterface {
 	/**
 	 * Registers the payment gateways.
 	 *
-	 * @param ContainerInterface|null $container The container.
+	 * @param ContainerInterface $container The container.
 	 */
-	private function register_payment_gateways( ContainerInterface $container = null ) {
+	private function register_payment_gateways( ContainerInterface $container ) {
 
 		add_filter(
 			'woocommerce_payment_gateways',

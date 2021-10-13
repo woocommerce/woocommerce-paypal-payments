@@ -47,14 +47,14 @@ class WebhooksStatusPageAssets {
 			'ppcp-webhooks-status-page-style',
 			$this->module_url . '/assets/css/status-page.css',
 			array(),
-			1
+			'1'
 		);
 
 		wp_register_script(
 			'ppcp-webhooks-status-page',
 			$this->module_url . '/assets/js/status-page.js',
 			array(),
-			1,
+			'1',
 			true
 		);
 
