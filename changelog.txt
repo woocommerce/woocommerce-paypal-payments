@@ -1,6 +1,6 @@
 *** Changelog ***
 
-= 1.6.1 - TBD =
+= 1.6.1 - 2021-10-12 =
 * Fix - Handle authorization capture failures #312
 * Fix - Handle denied payment authorization #302
 * Fix - Handle failed authorizations when capturing order #303
