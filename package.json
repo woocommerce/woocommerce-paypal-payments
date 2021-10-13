@@ -28,7 +28,7 @@
     "docker:build-js": "docker-compose run --rm build yarn run build:dev",
     "docker:composer-update": "docker-compose run --rm composer composer update && docker-compose run --rm composer composer update --lock",
     "docker:test": "docker-compose run --rm test vendor/bin/phpunit",
-    "docker:lint": "docker-compose run --rm test vendor/bin/phpcs --parallel=8 -s",
+    "docker:lint": "docker-compose run --rm test sh -c 'vendor/bin/phpcs --parallel=8 -s && vendor/bin/psalm --show-info=false --threads=8 --diff'",
     "docker:fix-lint": "docker-compose run --rm test vendor/bin/phpcbf",
 
 
