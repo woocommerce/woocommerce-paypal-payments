@@ -9,15 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
-use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
-use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
-use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
-use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
-use Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use Woocommerce\PayPalCommerce\WcGateway\Helper\DccProductStatus;
-use Woocommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\Webhooks\Status\WebhooksStatusPage;
 
 /**

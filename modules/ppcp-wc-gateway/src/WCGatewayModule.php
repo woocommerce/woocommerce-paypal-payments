@@ -35,12 +35,10 @@ use Psr\Container\ContainerInterface;
 /**
  * Class WcGatewayModule
  */
-class WcGatewayModule implements ModuleInterface {
+class WCGatewayModule implements ModuleInterface {
 
 	/**
-	 * Setup the module.
-	 *
-	 * @return ServiceProviderInterface
+	 * {@inheritDoc}
 	 */
 	public function setup(): ServiceProviderInterface {
 		return new ServiceProvider(
@@ -50,20 +48,18 @@ class WcGatewayModule implements ModuleInterface {
 	}
 
 	/**
-	 * Runs the module.
-	 *
-	 * @param ContainerInterface|null $container The container.
+	 * {@inheritDoc}
 	 */
-	public function run( ContainerInterface $container ): void {
-		$this->register_payment_gateways( $container );
-		$this->register_order_functionality( $container );
-		$this->register_columns( $container );
-		$this->register_checkout_paypal_address_preset( $container );
+	public function run( ContainerInterface $c ): void {
+		$this->register_payment_gateways( $c );
+		$this->register_order_functionality( $c );
+		$this->register_columns( $c );
+		$this->register_checkout_paypal_address_preset( $c );
 
 		add_action(
 			'woocommerce_sections_checkout',
-			function() use ( $container ) {
-				$section_renderer = $container->get( 'wcgateway.settings.sections-renderer' );
+			function() use ( $c ) {
+				$section_renderer = $c->get( 'wcgateway.settings.sections-renderer' );
 				/**
 				 * The Section Renderer.
 				 *
@@ -73,39 +69,39 @@ class WcGatewayModule implements ModuleInterface {
 			}
 		);
 
-		if ( $container->has( 'wcgateway.url' ) ) {
+		if ( $c->has( 'wcgateway.url' ) ) {
 			$assets = new SettingsPageAssets(
-				$container->get( 'wcgateway.url' ),
-				$container->get( 'wcgateway.absolute-path' ),
-				$container->get( 'api.bearer' )
+				$c->get( 'wcgateway.url' ),
+				$c->get( 'wcgateway.absolute-path' ),
+				$c->get( 'api.bearer' )
 			);
 			$assets->register_assets();
 		}
 
 		add_filter(
 			Repository::NOTICES_FILTER,
-			static function ( $notices ) use ( $container ): array {
-				$notice = $container->get( 'wcgateway.notice.connect' );
+			static function ( $notices ) use ( $c ): array {
+				$notice = $c->get( 'wcgateway.notice.connect' );
 				assert( $notice instanceof ConnectAdminNotice );
 				$connect_message = $notice->connect_message();
 				if ( $connect_message ) {
 					$notices[] = $connect_message;
 				}
 
-				$dcc_without_paypal_notice = $container->get( 'wcgateway.notice.dcc-without-paypal' );
+				$dcc_without_paypal_notice = $c->get( 'wcgateway.notice.dcc-without-paypal' );
 				assert( $dcc_without_paypal_notice instanceof DccWithoutPayPalAdminNotice );
 				$dcc_without_paypal_message = $dcc_without_paypal_notice->message();
 				if ( $dcc_without_paypal_message ) {
 					$notices[] = $dcc_without_paypal_message;
 				}
 
-				$authorize_order_action = $container->get( 'wcgateway.notice.authorize-order-action' );
+				$authorize_order_action = $c->get( 'wcgateway.notice.authorize-order-action' );
 				$authorized_message     = $authorize_order_action->message();
 				if ( $authorized_message ) {
 					$notices[] = $authorized_message;
 				}
 
-				$settings_renderer = $container->get( 'wcgateway.settings.render' );
+				$settings_renderer = $c->get( 'wcgateway.settings.render' );
 				assert( $settings_renderer instanceof SettingsRenderer );
 				$messages = $settings_renderer->messages();
 				$notices  = array_merge( $notices, $messages );
@@ -115,7 +111,7 @@ class WcGatewayModule implements ModuleInterface {
 		);
 		add_action(
 			'woocommerce_paypal_commerce_gateway_deactivate',
-			static function () use ( $container ) {
+			static function () use ( $c ) {
 				delete_option( Settings::KEY );
 				delete_option( PayPalRequestIdRepository::KEY );
 				delete_option( 'woocommerce_' . PayPalGateway::ID . '_settings' );
@@ -125,8 +121,8 @@ class WcGatewayModule implements ModuleInterface {
 
 		add_action(
 			'wc_ajax_' . ReturnUrlEndpoint::ENDPOINT,
-			static function () use ( $container ) {
-				$endpoint = $container->get( 'wcgateway.endpoint.return-url' );
+			static function () use ( $c ) {
+				$endpoint = $c->get( 'wcgateway.endpoint.return-url' );
 				/**
 				 * The Endpoint.
 				 *

@@ -8,13 +8,11 @@ use Psr\Log\NullLogger;
 use Requests_Utility_CaseInsensitiveDictionary;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
-use Woocommerce\PayPalCommerce\ApiClient\Entity\Capture;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\ErrorResponseCollection;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Token;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\AuthorizationFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\CaptureFactory;
-use WooCommerce\PayPalCommerce\ApiClient\Factory\ErrorResponseCollectionFactory;
 use WooCommerce\PayPalCommerce\ApiClient\TestCase;
 use Mockery;
 

@@ -9,7 +9,7 @@ declare( strict_types=1 );
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
-use Woocommerce\PayPalCommerce\ApiClient\Entity\Capture;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatusDetails;
 

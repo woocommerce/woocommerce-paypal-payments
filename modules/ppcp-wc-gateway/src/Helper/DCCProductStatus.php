@@ -2,12 +2,12 @@
 /**
  * Manage the Seller status.
  *
- * @package Woocommerce\PayPalCommerce\WcGateway\Helper
+ * @package WooCommerce\PayPalCommerce\WcGateway\Helper
  */
 
 declare( strict_types=1 );
 
-namespace Woocommerce\PayPalCommerce\WcGateway\Helper;
+namespace WooCommerce\PayPalCommerce\WcGateway\Helper;
 
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatusProduct;
@@ -17,7 +17,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 /**
  * Class DccProductStatus
  */
-class DccProductStatus {
+class DCCProductStatus {
 
 	/**
 	 * Caches the status for the current load.

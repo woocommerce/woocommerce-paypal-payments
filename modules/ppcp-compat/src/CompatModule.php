@@ -35,10 +35,10 @@ class CompatModule implements ModuleInterface {
 	/**
 	 * Run the compatibility module.
 	 *
-	 * @param ContainerInterface|null $container The Container.
+	 * @param ContainerInterface|null $c The Container.
 	 */
-	public function run( ContainerInterface $container ): void {
-		$this->initialize_ppec_compat_layer( $container );
+	public function run( ContainerInterface $c ): void {
+		$this->initialize_ppec_compat_layer( $c );
 	}
 
 	/**

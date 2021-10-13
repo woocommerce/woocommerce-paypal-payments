@@ -2,12 +2,12 @@
 /**
  * Helper to get settings status.
  *
- * @package Woocommerce\PayPalCommerce\WcGateway\Helper
+ * @package WooCommerce\PayPalCommerce\WcGateway\Helper
  */
 
 declare(strict_types=1);
 
-namespace Woocommerce\PayPalCommerce\WcGateway\Helper;
+namespace WooCommerce\PayPalCommerce\WcGateway\Helper;
 
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 

@@ -27,9 +27,7 @@ use WooCommerce\PayPalCommerce\Webhooks\Status\WebhooksStatusPage;
 class WebhookModule implements ModuleInterface {
 
 	/**
-	 * Setup the Webhook module.
-	 *
-	 * @return ServiceProviderInterface
+	 * {@inheritDoc}
 	 */
 	public function setup(): ServiceProviderInterface {
 		return new ServiceProvider(
@@ -39,9 +37,7 @@ class WebhookModule implements ModuleInterface {
 	}
 
 	/**
-	 * Run the Webhook module.
-	 *
-	 * @param ContainerInterface|null $container The Container.
+	 * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $container ): void {
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );

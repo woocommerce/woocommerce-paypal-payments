@@ -28,9 +28,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 class SubscriptionModule implements ModuleInterface {
 
 	/**
-	 * Setup the module.
-	 *
-	 * @return ServiceProviderInterface
+	 * {@inheritDoc}
 	 */
 	public function setup(): ServiceProviderInterface {
 		return new ServiceProvider(
@@ -40,15 +38,13 @@ class SubscriptionModule implements ModuleInterface {
 	}
 
 	/**
-	 * Runs the module.
-	 *
-	 * @param ContainerInterface|null $container The container.
+	 * {@inheritDoc}
 	 */
-	public function run( ContainerInterface $container ): void {
+	public function run( ContainerInterface $c ): void {
 		add_action(
 			'woocommerce_scheduled_subscription_payment_' . PayPalGateway::ID,
-			function ( $amount, $order ) use ( $container ) {
-				$this->renew( $order, $container );
+			function ( $amount, $order ) use ( $c ) {
+				$this->renew( $order, $c );
 			},
 			10,
 			2
@@ -56,8 +52,8 @@ class SubscriptionModule implements ModuleInterface {
 
 		add_action(
 			'woocommerce_scheduled_subscription_payment_' . CreditCardGateway::ID,
-			function ( $amount, $order ) use ( $container ) {
-				$this->renew( $order, $container );
+			function ( $amount, $order ) use ( $c ) {
+				$this->renew( $order, $c );
 			},
 			10,
 			2
@@ -65,9 +61,9 @@ class SubscriptionModule implements ModuleInterface {
 
 		add_action(
 			'woocommerce_subscription_payment_complete',
-			function ( $subscription ) use ( $container ) {
-				$payment_token_repository = $container->get( 'vaulting.repository.payment-token' );
-				$logger                   = $container->get( 'woocommerce.logger.woocommerce' );
+			function ( $subscription ) use ( $c ) {
+				$payment_token_repository = $c->get( 'vaulting.repository.payment-token' );
+				$logger                   = $c->get( 'woocommerce.logger.woocommerce' );
 
 				$this->add_payment_token_id( $subscription, $payment_token_repository, $logger );
 			}
@@ -75,10 +71,10 @@ class SubscriptionModule implements ModuleInterface {
 
 		add_filter(
 			'woocommerce_gateway_description',
-			function ( $description, $id ) use ( $container ) {
-				$payment_token_repository = $container->get( 'vaulting.repository.payment-token' );
-				$settings                 = $container->get( 'wcgateway.settings' );
-				$subscription_helper      = $container->get( 'subscription.helper' );
+			function ( $description, $id ) use ( $c ) {
+				$payment_token_repository = $c->get( 'vaulting.repository.payment-token' );
+				$settings                 = $c->get( 'wcgateway.settings' );
+				$subscription_helper      = $c->get( 'subscription.helper' );
 
 				return $this->display_saved_paypal_payments( $settings, (string) $id, $payment_token_repository, (string) $description, $subscription_helper );
 			},
@@ -88,10 +84,10 @@ class SubscriptionModule implements ModuleInterface {
 
 		add_filter(
 			'woocommerce_credit_card_form_fields',
-			function ( $default_fields, $id ) use ( $container ) {
-				$payment_token_repository = $container->get( 'vaulting.repository.payment-token' );
-				$settings                 = $container->get( 'wcgateway.settings' );
-				$subscription_helper      = $container->get( 'subscription.helper' );
+			function ( $default_fields, $id ) use ( $c ) {
+				$payment_token_repository = $c->get( 'vaulting.repository.payment-token' );
+				$settings                 = $c->get( 'wcgateway.settings' );
+				$subscription_helper      = $c->get( 'subscription.helper' );
 
 				return $this->display_saved_credit_cards( $settings, $id, $payment_token_repository, $default_fields, $subscription_helper );
 			},

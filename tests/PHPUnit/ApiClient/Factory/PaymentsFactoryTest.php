@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
-use Woocommerce\PayPalCommerce\ApiClient\Entity\Capture;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payments;
 use WooCommerce\PayPalCommerce\ApiClient\TestCase;
 use Mockery;
