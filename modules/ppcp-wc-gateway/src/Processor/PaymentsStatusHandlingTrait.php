@@ -56,7 +56,7 @@ trait PaymentsStatusHandlingTrait {
 		$status = $capture->status();
 
 		if ( $status->details() ) {
-			$this->add_status_details_note( $wc_order, $status->name(), $status->details()->reason() );
+			$this->add_status_details_note( $wc_order, $status->name(), $status->details()->text() );
 		}
 
 		switch ( $status->name() ) {
@@ -96,7 +96,7 @@ trait PaymentsStatusHandlingTrait {
 		$status = $authorization->status();
 
 		if ( $status->details() ) {
-			$this->add_status_details_note( $wc_order, $status->name(), $status->details()->reason() );
+			$this->add_status_details_note( $wc_order, $status->name(), $status->details()->text() );
 		}
 
 		switch ( $status->name() ) {
@@ -130,8 +130,8 @@ trait PaymentsStatusHandlingTrait {
 	): void {
 		$wc_order->add_order_note(
 			sprintf(
-				/* translators: %1$s - PENDING, DENIED, ... %2$s - PENDING_REVIEW, ... */
-				__( 'PayPal order payment is set to %1$s status, details: %2$s.', 'woocommerce-paypal-payments' ),
+				/* translators: %1$s - PENDING, DENIED, ... %2$s - text explaining the reason, ... */
+				__( 'PayPal order payment is set to %1$s status, details: %2$s', 'woocommerce-paypal-payments' ),
 				$status,
 				$reason
 			)
