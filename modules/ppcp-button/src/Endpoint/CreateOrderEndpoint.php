@@ -362,17 +362,8 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 * @throws Exception On Error.
 	 */
 	private function process_checkout_form( string $form_values ) {
-		$form_values = explode( '&', $form_values );
+		parse_str( $form_values, $parsed_values );
 
-		$parsed_values = array();
-		foreach ( $form_values as $field ) {
-			$field = explode( '=', $field );
-
-			if ( count( $field ) !== 2 ) {
-				continue;
-			}
-			$parsed_values[ $field[0] ] = $field[1];
-		}
 		$_POST    = $parsed_values;
 		$_REQUEST = $parsed_values;
 
@@ -412,16 +403,8 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 * @throws Exception On Error.
 	 */
 	private function process_checkout_form_when_creating_account( string $form_values, \WC_Order $wc_order = null ) {
-		$form_values   = explode( '&', $form_values );
-		$parsed_values = array();
-		foreach ( $form_values as $field ) {
-			$field = explode( '=', $field );
+		parse_str( $form_values, $parsed_values );
 
-			if ( count( $field ) !== 2 ) {
-				continue;
-			}
-			$parsed_values[ $field[0] ] = $field[1];
-		}
 		$_POST    = $parsed_values;
 		$_REQUEST = $parsed_values;
 
