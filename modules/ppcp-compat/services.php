@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Compat;
 
+use Psr\Container\ContainerInterface;
+
 return array(
 
 	'compat.ppec.mock-gateway'          => static function( $container ) {
@@ -23,7 +25,7 @@ return array(
 		return new PPEC\MockGateway( $title );
 	},
 
-	'compat.ppec.subscriptions-handler' => static function ( $container ) {
+	'compat.ppec.subscriptions-handler' => static function ( ContainerInterface $container ) {
 		$ppcp_renewal_handler = $container->get( 'subscription.renewal-handler' );
 		$gateway              = $container->get( 'compat.ppec.mock-gateway' );
 

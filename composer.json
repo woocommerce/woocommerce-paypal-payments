@@ -17,7 +17,10 @@
     "require-dev": {
         "woocommerce/woocommerce-sniffs": "^0.1.0",
         "phpunit/phpunit": "^7.0 | ^8.0 | ^9.0",
-        "brain/monkey": "^2.4"
+        "brain/monkey": "^2.4",
+        "php-stubs/wordpress-stubs": "^5.0@stable",
+        "php-stubs/woocommerce-stubs": "^5.0@stable",
+        "vimeo/psalm": "^4.0"
     },
     "autoload": {
         "psr-4": {

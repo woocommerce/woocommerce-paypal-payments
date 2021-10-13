@@ -1,0 +1,1012 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<files psalm-version="4.10.0@916b098b008f6de4543892b1e0651c1c3b92cbfa">
+  <file src="modules/ppcp-api-client/services.php">
+    <UndefinedConstant occurrences="2">
+      <code>PAYPAL_API_URL</code>
+      <code>PAYPAL_API_URL</code>
+    </UndefinedConstant>
+  </file>
+  <file src="modules/ppcp-api-client/src/Authentication/PayPalBearer.php">
+    <UndefinedMethod occurrences="1">
+      <code>$response</code>
+    </UndefinedMethod>
+  </file>
+  <file src="modules/ppcp-api-client/src/Endpoint/IdentityToken.php">
+    <InvalidOperand occurrences="1">
+      <code>$customer_id</code>
+    </InvalidOperand>
+    <UndefinedMethod occurrences="1">
+      <code>$response</code>
+    </UndefinedMethod>
+  </file>
+  <file src="modules/ppcp-api-client/src/Endpoint/LoginSeller.php">
+    <UndefinedMethod occurrences="2">
+      <code>$response</code>
+      <code>$response</code>
+    </UndefinedMethod>
+  </file>
+  <file src="modules/ppcp-api-client/src/Endpoint/OrderEndpoint.php">
+    <PossiblyNullReference occurrences="2">
+      <code>authorizations</code>
+      <code>captures</code>
+    </PossiblyNullReference>
+    <RedundantCondition occurrences="2">
+      <code>$order-&gt;purchase_units()[0]-&gt;payments()-&gt;authorizations()[0]-&gt;status()</code>
+      <code>$order-&gt;purchase_units()[0]-&gt;payments()-&gt;captures()[0]-&gt;status()</code>
+    </RedundantCondition>
+    <TypeDoesNotContainNull occurrences="2">
+      <code>null</code>
+      <code>null</code>
+    </TypeDoesNotContainNull>
+    <UndefinedMethod occurrences="5">
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+    </UndefinedMethod>
+  </file>
+  <file src="modules/ppcp-api-client/src/Endpoint/PartnerReferrals.php">
+    <UndefinedMethod occurrences="1">
+      <code>$response</code>
+    </UndefinedMethod>
+  </file>
+  <file src="modules/ppcp-api-client/src/Endpoint/PaymentTokenEndpoint.php">
+    <InvalidOperand occurrences="1">
+      <code>$id</code>
+    </InvalidOperand>
+    <UndefinedMethod occurrences="1">
+      <code>$response</code>
+    </UndefinedMethod>
+  </file>
+  <file src="modules/ppcp-api-client/src/Endpoint/PaymentsEndpoint.php">
+    <UndefinedMethod occurrences="3">
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+    </UndefinedMethod>
+  </file>
+  <file src="modules/ppcp-api-client/src/Endpoint/RequestTrait.php">
+    <PossiblyInvalidArgument occurrences="1">
+      <code>$response</code>
+    </PossiblyInvalidArgument>
+    <PossiblyInvalidOperand occurrences="3">
+      <code>wc_print_r( $args['body'], true )</code>
+      <code>wc_print_r( $response['body'], true )</code>
+      <code>wc_print_r( $response['response'], true )</code>
+    </PossiblyInvalidOperand>
+    <TooManyArguments occurrences="1">
+      <code>apply_filters( 'ppcp_request_args', $args, $url )</code>
+    </TooManyArguments>
+  </file>
+  <file src="modules/ppcp-api-client/src/Endpoint/WebhookEndpoint.php">
+    <PossiblyFalseArgument occurrences="1">
+      <code>file_get_contents( 'php://input' )</code>
+    </PossiblyFalseArgument>
+    <UndefinedMethod occurrences="4">
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+      <code>$response</code>
+    </UndefinedMethod>
+  </file>
+  <file src="modules/ppcp-api-client/src/Entity/Amount.php">
+    <PossiblyNullPropertyAssignmentValue occurrences="1">
+      <code>$breakdown</code>
+    </PossiblyNullPropertyAssignmentValue>
+    <PossiblyNullReference occurrences="2">
+      <code>to_array</code>
+      <code>to_array</code>
+    </PossiblyNullReference>
+  </file>
+  <file src="modules/ppcp-api-client/src/Entity/AmountBreakdown.php">
+    <PossiblyNullPropertyAssignmentValue occurrences="7">
+      <code>$discount</code>
+      <code>$handling</code>
+      <code>$insurance</code>
+      <code>$item_total</code>
+      <code>$shipping</code>
+      <code>$shipping_discount</code>
+      <code>$tax_total</code>
+    </PossiblyNullPropertyAssignmentValue>
+    <RedundantConditionGivenDocblockType occurrences="7">
+      <code>$this-&gt;discount</code>
+      <code>$this-&gt;handling</code>
+      <code>$this-&gt;insurance</code>
+      <code>$this-&gt;item_total</code>
+      <code>$this-&gt;shipping</code>
+      <code>$this-&gt;shipping_discount</code>
+      <code>$this-&gt;tax_total</code>
+    </RedundantConditionGivenDocblockType>
+  </file>
+  <file src="modules/ppcp-api-client/src/Entity/Item.php">
+    <PossiblyNullReference occurrences="1">
+      <code>to_array</code>
+    </PossiblyNullReference>
+  </file>
+  <file src="modules/ppcp-api-client/src/Entity/Order.php">
+    <PossiblyNullReference occurrences="5">
+      <code>format</code>
+      <code>format</code>
+      <code>to_array</code>
+      <code>to_array</code>
+      <code>to_array</code>
+    </PossiblyNullReference>
+    <RedundantConditionGivenDocblockType occurrences="1">
+      <code>return is_a( $unit, PurchaseUnit::class );</code>
+    </RedundantConditionGivenDocblockType>
+  </file>
+  <file src="modules/ppcp-api-client/src/Entity/Payer.php">
+    <PossiblyNullPropertyAssignmentValue occurrences="1">
+      <code>$address</code>
+    </PossiblyNullPropertyAssignmentValue>
+    <PossiblyNullReference occurrences="4">
+      <code>country_code</code>
+      <code>format</code>
+      <code>to_array</code>
+      <code>to_array</code>
+    </PossiblyNullReference>
+  </file>
+  <file src="modules/ppcp-api-client/src/Entity/PaymentSource.php">
+    <PossiblyNullReference occurrences="2">
+      <code>to_array</code>
+      <code>to_array</code>
+    </PossiblyNullReference>
+  </file>
+  <file src="modules/ppcp-api-client/src/Entity/PaymentSourceCard.php">
+    <PossiblyNullReference occurrences="1">
+      <code>to_array</code>
+    </PossiblyNullReference>
+  </file>
+  <file src="modules/ppcp-api-client/src/Entity/PurchaseUnit.php">
+    <InvalidOperand occurrences="9">
+      <code>$amount_total += $breakdown-&gt;handling()-&gt;value()</code>
+      <code>$amount_total += $breakdown-&gt;insurance()-&gt;value()</code>
+      <code>$amount_total += $breakdown-&gt;item_total()-&gt;value()</code>
+      <code>$amount_total += $breakdown-&gt;shipping()-&gt;value()</code>
+      <code>$amount_total += $breakdown-&gt;tax_total()-&gt;value()</code>
+      <code>$amount_total -= $breakdown-&gt;discount()-&gt;value()</code>
+      <code>$amount_total -= $breakdown-&gt;shipping_discount()-&gt;value()</code>
+      <code>$item-&gt;tax()-&gt;value() * $item-&gt;quantity()</code>
+      <code>$item-&gt;unit_amount()-&gt;value() * $item-&gt;quantity()</code>
+    </InvalidOperand>
+    <PossiblyNullReference occurrences="17">
+      <code>item_total</code>
+      <code>item_total</code>
+      <code>tax_total</code>
+      <code>tax_total</code>
+      <code>to_array</code>
+      <code>to_array</code>
+      <code>to_array</code>
+      <code>value</code>
+      <code>value</code>
+      <code>value</code>
+      <code>value</code>
+      <code>value</code>
+      <code>value</code>
+      <code>value</code>
+      <code>value</code>
+      <code>value</code>
+      <code>value</code>
+    </PossiblyNullReference>
+  </file>
+  <file src="modules/ppcp-api-client/src/Entity/Refund.php">
+    <PossiblyNullReference occurrences="1">
+      <code>to_array</code>
+    </PossiblyNullReference>
+  </file>
+  <file src="modules/ppcp-api-client/src/Entity/SellerStatus.php">
+    <RedundantConditionGivenDocblockType occurrences="1">
+      <code>is_a( $product, SellerStatusProduct::class )</code>
+    </RedundantConditionGivenDocblockType>
+  </file>
+  <file src="modules/ppcp-api-client/src/Entity/SellerStatusProduct.php">
+    <RedundantConditionGivenDocblockType occurrences="1">
+      <code>is_string( $capability )</code>
+    </RedundantConditionGivenDocblockType>
+  </file>
+  <file src="modules/ppcp-api-client/src/Entity/Token.php">
+    <FalsableReturnStatement occurrences="1">
+      <code>wp_json_encode( $this-&gt;json )</code>
+    </FalsableReturnStatement>
+    <InvalidFalsableReturnType occurrences="1">
+      <code>string</code>
+    </InvalidFalsableReturnType>
+    <LessSpecificReturnStatement occurrences="1">
+      <code>new Token( $json )</code>
+    </LessSpecificReturnStatement>
+    <MoreSpecificReturnType occurrences="1">
+      <code>static</code>
+    </MoreSpecificReturnType>
+    <PropertyNotSetInConstructor occurrences="1">
+      <code>$created</code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="modules/ppcp-api-client/src/Entity/Webhook.php">
+    <InvalidPropertyAssignmentValue occurrences="1">
+      <code>$event_types</code>
+    </InvalidPropertyAssignmentValue>
+    <InvalidPropertyFetch occurrences="1">
+      <code>$event-&gt;name</code>
+    </InvalidPropertyFetch>
+    <InvalidReturnStatement occurrences="1">
+      <code>$this-&gt;event_types</code>
+    </InvalidReturnStatement>
+    <InvalidReturnType occurrences="1">
+      <code>stdClass[]</code>
+    </InvalidReturnType>
+  </file>
+  <file src="modules/ppcp-api-client/src/Exception/PayPalApiException.php">
+    <PossiblyNullArgument occurrences="1">
+      <code>$this-&gt;status_code</code>
+    </PossiblyNullArgument>
+    <UninitializedProperty occurrences="1">
+      <code>$this-&gt;status_code</code>
+    </UninitializedProperty>
+  </file>
+  <file src="modules/ppcp-api-client/src/Factory/AmountFactory.php">
+    <InvalidOperand occurrences="4">
+      <code>$cart-&gt;get_cart_contents_total() + $cart-&gt;get_discount_total() + $total_fees_amount</code>
+      <code>$item-&gt;quantity() * $item-&gt;tax()-&gt;value()</code>
+      <code>$item-&gt;quantity() * $item-&gt;unit_amount()-&gt;value()</code>
+      <code>$total_fees_amount += (float) $fee-&gt;amount</code>
+    </InvalidOperand>
+    <PossiblyInvalidIterator occurrences="1">
+      <code>WC()-&gt;session-&gt;get( 'ppcp_fees' )</code>
+    </PossiblyInvalidIterator>
+    <PossiblyNullReference occurrences="1">
+      <code>value</code>
+    </PossiblyNullReference>
+    <RedundantCast occurrences="1">
+      <code>(float) $item_total</code>
+    </RedundantCast>
+    <RedundantCastGivenDocblockType occurrences="8">
+      <code>(float) $cart-&gt;get_cart_contents_tax()</code>
+      <code>(float) $cart-&gt;get_discount_tax()</code>
+      <code>(float) $cart-&gt;get_discount_total()</code>
+      <code>(float) $cart-&gt;get_shipping_total()</code>
+      <code>(float) $cart-&gt;get_total( 'numeric' )</code>
+      <code>(float) $order-&gt;get_total()</code>
+      <code>(float) $order-&gt;get_total_discount( false )</code>
+      <code>(float) $order-&gt;get_total_discount( false )</code>
+    </RedundantCastGivenDocblockType>
+  </file>
+  <file src="modules/ppcp-api-client/src/Factory/ItemFactory.php">
+    <ArgumentTypeCoercion occurrences="1"/>
+    <PossiblyInvalidArgument occurrences="1">
+      <code>$fees_from_session</code>
+    </PossiblyInvalidArgument>
+    <RedundantCastGivenDocblockType occurrences="3">
+      <code>(float) $order-&gt;get_item_subtotal( $item, false )</code>
+      <code>(float) $order-&gt;get_item_subtotal( $item, true )</code>
+      <code>(int) $item-&gt;get_quantity()</code>
+    </RedundantCastGivenDocblockType>
+  </file>
+  <file src="modules/ppcp-api-client/src/Factory/PatchCollectionFactory.php">
+    <TypeDoesNotContainType occurrences="1">
+      <code>$needs_update</code>
+    </TypeDoesNotContainType>
+  </file>
+  <file src="modules/ppcp-api-client/src/Factory/PayerFactory.php">
+    <PossiblyNullArgument occurrences="2">
+      <code>$national_number</code>
+      <code>$national_number</code>
+    </PossiblyNullArgument>
+    <TooManyArguments occurrences="1">
+      <code>from_wc_order</code>
+    </TooManyArguments>
+  </file>
+  <file src="modules/ppcp-api-client/src/Factory/PurchaseUnitFactory.php">
+    <RedundantConditionGivenDocblockType occurrences="1">
+      <code>$this-&gt;shipping_needed( ... array_values( $items ) ) &amp;&amp; is_a( $customer, \WC_Customer::class )</code>
+    </RedundantConditionGivenDocblockType>
+    <TooManyArguments occurrences="1"/>
+  </file>
+  <file src="modules/ppcp-api-client/src/Factory/WebhookEventFactory.php">
+    <RedundantCondition occurrences="5">
+      <code>(object) $data-&gt;resource</code>
+      <code>(string) $data-&gt;event_version</code>
+      <code>(string) $data-&gt;resource_type</code>
+      <code>(string) $data-&gt;resource_version</code>
+      <code>(string) $data-&gt;summary</code>
+    </RedundantCondition>
+    <TypeDoesNotContainNull occurrences="5">
+      <code>''</code>
+      <code>''</code>
+      <code>''</code>
+      <code>''</code>
+      <code>new stdClass()</code>
+    </TypeDoesNotContainNull>
+  </file>
+  <file src="modules/ppcp-api-client/src/Helper/Cache.php">
+    <MissingReturnType occurrences="1">
+      <code>delete</code>
+    </MissingReturnType>
+    <RedundantCastGivenDocblockType occurrences="1">
+      <code>(bool) set_transient( $this-&gt;prefix . $key, $value )</code>
+    </RedundantCastGivenDocblockType>
+  </file>
+  <file src="modules/ppcp-api-client/src/Repository/ApplicationContextRepository.php">
+    <PossiblyFalseArgument occurrences="1">
+      <code>strrpos( $locale, '-' )</code>
+    </PossiblyFalseArgument>
+    <RedundantCastGivenDocblockType occurrences="2">
+      <code>(string) home_url( \WC_AJAX::get_endpoint( ReturnUrlEndpoint::ENDPOINT ) )</code>
+      <code>(string) wc_get_checkout_url()</code>
+    </RedundantCastGivenDocblockType>
+  </file>
+  <file src="modules/ppcp-api-client/src/Repository/PayPalRequestIdRepository.php">
+    <UndefinedConstant occurrences="1">
+      <code>DAY_IN_SECONDS</code>
+    </UndefinedConstant>
+  </file>
+  <file src="modules/ppcp-button/services.php">
+    <UndefinedConstant occurrences="2">
+      <code>CONNECT_WOO_CLIENT_ID</code>
+      <code>CONNECT_WOO_SANDBOX_CLIENT_ID</code>
+    </UndefinedConstant>
+  </file>
+  <file src="modules/ppcp-button/src/Assets/SmartButton.php">
+    <InvalidScalarArgument occurrences="1">
+      <code>1</code>
+    </InvalidScalarArgument>
+    <MissingClosureParamType occurrences="2">
+      <code>$default_fields</code>
+      <code>$id</code>
+    </MissingClosureParamType>
+    <MissingClosureReturnType occurrences="1">
+      <code>function ( $default_fields, $id ) {</code>
+    </MissingClosureReturnType>
+    <MissingReturnType occurrences="3">
+      <code>button_renderer</code>
+      <code>dcc_renderer</code>
+      <code>message_renderer</code>
+    </MissingReturnType>
+    <UndefinedConstant occurrences="1">
+      <code>PAYPAL_INTEGRATION_DATE</code>
+    </UndefinedConstant>
+  </file>
+  <file src="modules/ppcp-button/src/ButtonModule.php">
+    <MissingClosureParamType occurrences="1">
+      <code>$value</code>
+    </MissingClosureParamType>
+    <MissingReturnType occurrences="1">
+      <code>register_ajax_endpoints</code>
+    </MissingReturnType>
+  </file>
+  <file src="modules/ppcp-button/src/Endpoint/ApproveOrderEndpoint.php">
+    <PossiblyNullReference occurrences="3">
+      <code>brand</code>
+      <code>card</code>
+      <code>card</code>
+    </PossiblyNullReference>
+    <TypeDoesNotContainType occurrences="1">
+      <code>$order</code>
+    </TypeDoesNotContainType>
+  </file>
+  <file src="modules/ppcp-button/src/Endpoint/CreateOrderEndpoint.php">
+    <MissingReturnType occurrences="4">
+      <code>process_checkout_form</code>
+      <code>process_checkout_form_when_creating_account</code>
+      <code>set_bn_code</code>
+      <code>validate_paynow_form</code>
+    </MissingReturnType>
+    <PossiblyFalseArgument occurrences="1">
+      <code>wp_json_encode( $data['payer'] )</code>
+    </PossiblyFalseArgument>
+    <PossiblyInvalidArgument occurrences="3">
+      <code>$wc_order</code>
+      <code>$wc_order</code>
+      <code>$wc_order</code>
+    </PossiblyInvalidArgument>
+    <PossiblyNullArgument occurrences="2">
+      <code>$number</code>
+      <code>$wc_order</code>
+    </PossiblyNullArgument>
+    <PropertyNotSetInConstructor occurrences="2">
+      <code>$parsed_request_data</code>
+      <code>$purchase_units</code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="modules/ppcp-button/src/Endpoint/RequestData.php">
+    <MissingReturnType occurrences="2">
+      <code>dequeue_nonce_fix</code>
+      <code>enqueue_nonce_fix</code>
+    </MissingReturnType>
+    <PossiblyFalseArgument occurrences="1">
+      <code>$stream</code>
+    </PossiblyFalseArgument>
+    <PossiblyInvalidArgument occurrences="1">
+      <code>$json</code>
+    </PossiblyInvalidArgument>
+    <RedundantCast occurrences="2">
+      <code>(array) $assoc_array</code>
+      <code>(string) $raw_key</code>
+    </RedundantCast>
+  </file>
+  <file src="modules/ppcp-button/src/Helper/EarlyOrderHandler.php">
+    <MissingClosureParamType occurrences="1">
+      <code>$order_id</code>
+    </MissingClosureParamType>
+    <PossiblyInvalidArgument occurrences="2">
+      <code>$wc_order</code>
+      <code>wp_unslash( $_REQUEST['ppcp-resume-order'] )</code>
+    </PossiblyInvalidArgument>
+    <PossiblyInvalidMethodCall occurrences="3">
+      <code>save_meta_data</code>
+      <code>update_meta_data</code>
+      <code>update_meta_data</code>
+    </PossiblyInvalidMethodCall>
+    <RedundantCast occurrences="1">
+      <code>(int) $this-&gt;sanitize_custom_id( $purchase_unit-&gt;custom_id() )</code>
+    </RedundantCast>
+  </file>
+  <file src="modules/ppcp-button/src/Helper/ThreeDSecure.php">
+    <PossiblyInvalidOperand occurrences="1">
+      <code>wc_print_r( $result-&gt;to_array(), true )</code>
+    </PossiblyInvalidOperand>
+    <PossiblyNullReference occurrences="6">
+      <code>authentication_result</code>
+      <code>authentication_result</code>
+      <code>card</code>
+      <code>card</code>
+      <code>card</code>
+      <code>to_array</code>
+    </PossiblyNullReference>
+  </file>
+  <file src="modules/ppcp-compat/services.php">
+    <MissingClosureParamType occurrences="2">
+      <code>$container</code>
+      <code>$container</code>
+    </MissingClosureParamType>
+  </file>
+  <file src="modules/ppcp-compat/src/CompatModule.php">
+    <PossiblyNullReference occurrences="1">
+      <code>get</code>
+    </PossiblyNullReference>
+  </file>
+  <file src="modules/ppcp-compat/src/PPEC/DeactivateNote.php">
+    <UndefinedTrait occurrences="1">
+      <code>NoteTraits</code>
+    </UndefinedTrait>
+  </file>
+  <file src="modules/ppcp-compat/src/PPEC/PPECHelper.php">
+    <UndefinedFunction occurrences="1">
+      <code>wc_gateway_ppec()</code>
+    </UndefinedFunction>
+  </file>
+  <file src="modules/ppcp-compat/src/PPEC/SettingsImporter.php">
+    <UndefinedFunction occurrences="1">
+      <code>wc_gateway_ppec()</code>
+    </UndefinedFunction>
+  </file>
+  <file src="modules/ppcp-compat/src/PPEC/SubscriptionsHandler.php">
+    <PossiblyInvalidMethodCall occurrences="1">
+      <code>get_payment_method</code>
+    </PossiblyInvalidMethodCall>
+    <PossiblyNullPropertyFetch occurrences="2">
+      <code>get_current_screen()-&gt;id</code>
+      <code>get_current_screen()-&gt;id</code>
+    </PossiblyNullPropertyFetch>
+    <PossiblyUndefinedMethod occurrences="1">
+      <code>get_payment_method</code>
+    </PossiblyUndefinedMethod>
+    <UndefinedFunction occurrences="5">
+      <code>wcs_get_subscription( absint( $_GET['subscription_id'] ) )</code>
+      <code>wcs_get_subscription( absint( get_query_var( 'order-pay' ) ) )</code>
+      <code>wcs_get_subscription( absint( get_query_var( 'view-subscription' ) ) )</code>
+      <code>wcs_is_view_subscription_page()</code>
+      <code>wcs_order_contains_renewal( $order )</code>
+    </UndefinedFunction>
+  </file>
+  <file src="modules/ppcp-onboarding/services.php">
+    <MissingClosureParamType occurrences="1">
+      <code>$container</code>
+    </MissingClosureParamType>
+    <UndefinedConstant occurrences="10">
+      <code>CONNECT_WOO_MERCHANT_ID</code>
+      <code>CONNECT_WOO_SANDBOX_MERCHANT_ID</code>
+      <code>CONNECT_WOO_SANDBOX_URL</code>
+      <code>CONNECT_WOO_SANDBOX_URL</code>
+      <code>CONNECT_WOO_URL</code>
+      <code>CONNECT_WOO_URL</code>
+      <code>PAYPAL_API_URL</code>
+      <code>PAYPAL_API_URL</code>
+      <code>PAYPAL_SANDBOX_API_URL</code>
+      <code>PAYPAL_SANDBOX_API_URL</code>
+    </UndefinedConstant>
+  </file>
+  <file src="modules/ppcp-onboarding/src/Assets/OnboardingAssets.php">
+    <InvalidScalarArgument occurrences="3">
+      <code>1</code>
+      <code>1</code>
+      <code>1</code>
+    </InvalidScalarArgument>
+  </file>
+  <file src="modules/ppcp-onboarding/src/OnboardingModule.php">
+    <MissingClosureParamType occurrences="3">
+      <code>$config</code>
+      <code>$field</code>
+      <code>$key</code>
+    </MissingClosureParamType>
+  </file>
+  <file src="modules/ppcp-onboarding/src/OnboardingRESTController.php">
+    <MissingReturnType occurrences="1">
+      <code>register_routes</code>
+    </MissingReturnType>
+    <PossiblyNullPropertyAssignmentValue occurrences="1">
+      <code>null</code>
+    </PossiblyNullPropertyAssignmentValue>
+    <RedundantConditionGivenDocblockType occurrences="2">
+      <code>! empty( $url_args ) &amp;&amp; is_array( $url_args )</code>
+      <code>is_array( $url_args )</code>
+    </RedundantConditionGivenDocblockType>
+    <UndefinedDocblockClass occurrences="5">
+      <code>WP_Error|array</code>
+      <code>WP_REST_Request</code>
+      <code>WP_REST_Request</code>
+      <code>WP_REST_Request</code>
+      <code>WP_REST_Request</code>
+    </UndefinedDocblockClass>
+  </file>
+  <file src="modules/ppcp-onboarding/src/Render/OnboardingRenderer.php">
+    <MissingReturnType occurrences="2">
+      <code>render</code>
+      <code>render_button</code>
+    </MissingReturnType>
+  </file>
+  <file src="modules/ppcp-session/services.php">
+    <TypeDoesNotContainType occurrences="1">
+      <code>is_a( $result, SessionHandler::class )</code>
+    </TypeDoesNotContainType>
+  </file>
+  <file src="modules/ppcp-session/src/Cancellation/CancelController.php">
+    <InvalidOperand occurrences="1">
+      <code>get_current_user_id()</code>
+    </InvalidOperand>
+    <MissingReturnType occurrences="1">
+      <code>run</code>
+    </MissingReturnType>
+    <PossiblyInvalidArgument occurrences="1">
+      <code>wp_unslash( $_GET[ $param_name ] )</code>
+    </PossiblyInvalidArgument>
+  </file>
+  <file src="modules/ppcp-session/src/Cancellation/CancelView.php">
+    <MissingReturnType occurrences="1">
+      <code>render_session_cancellation</code>
+    </MissingReturnType>
+  </file>
+  <file src="modules/ppcp-session/src/SessionHandler.php">
+    <MissingReturnType occurrences="1">
+      <code>store_session</code>
+    </MissingReturnType>
+  </file>
+  <file src="modules/ppcp-status-report/src/StatusReportModule.php">
+    <MissingReturnType occurrences="1">
+      <code>getKey</code>
+    </MissingReturnType>
+  </file>
+  <file src="modules/ppcp-subscription/src/Helper/SubscriptionHelper.php">
+    <UndefinedClass occurrences="1">
+      <code>\WC_Subscriptions_Admin</code>
+    </UndefinedClass>
+  </file>
+  <file src="modules/ppcp-subscription/src/RenewalHandler.php">
+    <FalsableReturnStatement occurrences="1">
+      <code>current( $tokens )</code>
+    </FalsableReturnStatement>
+    <MissingReturnType occurrences="3">
+      <code>capture_order</code>
+      <code>process_order</code>
+      <code>renew</code>
+    </MissingReturnType>
+    <RedundantCastGivenDocblockType occurrences="6">
+      <code>(int) $customer-&gt;get_id()</code>
+      <code>(int) $customer-&gt;get_id()</code>
+      <code>(int) $wc_order-&gt;get_customer_id()</code>
+      <code>(int) $wc_order-&gt;get_id()</code>
+      <code>(int) $wc_order-&gt;get_id()</code>
+      <code>(int) $wc_order-&gt;get_id()</code>
+    </RedundantCastGivenDocblockType>
+    <TooManyArguments occurrences="1">
+      <code>apply_filters( 'woocommerce_paypal_payments_subscriptions_get_token_for_customer', null, $customer, $wc_order )</code>
+    </TooManyArguments>
+  </file>
+  <file src="modules/ppcp-subscription/src/SubscriptionModule.php">
+    <MissingClosureParamType occurrences="9">
+      <code>$amount</code>
+      <code>$amount</code>
+      <code>$default_fields</code>
+      <code>$description</code>
+      <code>$id</code>
+      <code>$id</code>
+      <code>$order</code>
+      <code>$order</code>
+      <code>$subscription</code>
+    </MissingClosureParamType>
+    <MissingReturnType occurrences="1">
+      <code>add_payment_token_id</code>
+    </MissingReturnType>
+    <PossiblyNullReference occurrences="1">
+      <code>get</code>
+    </PossiblyNullReference>
+    <UndefinedClass occurrences="1">
+      <code>\WC_Subscription</code>
+    </UndefinedClass>
+  </file>
+  <file src="modules/ppcp-vaulting/src/Assets/MyAccountPaymentsAssets.php">
+    <MissingReturnType occurrences="1">
+      <code>localize</code>
+    </MissingReturnType>
+  </file>
+  <file src="modules/ppcp-vaulting/src/Endpoint/DeletePaymentTokenEndpoint.php">
+    <MissingReturnType occurrences="1">
+      <code>handle_request</code>
+    </MissingReturnType>
+  </file>
+  <file src="modules/ppcp-vaulting/src/PaymentTokenRepository.php">
+    <PossiblyFalseReference occurrences="1">
+      <code>to_array</code>
+    </PossiblyFalseReference>
+  </file>
+  <file src="modules/ppcp-vaulting/src/PaymentTokensRenderer.php">
+    <RedundantCondition occurrences="1">
+      <code>$token-&gt;source()</code>
+    </RedundantCondition>
+    <TypeDoesNotContainNull occurrences="1">
+      <code>null</code>
+    </TypeDoesNotContainNull>
+  </file>
+  <file src="modules/ppcp-vaulting/src/VaultingModule.php">
+    <MissingClosureParamType occurrences="1">
+      <code>$menu_links</code>
+    </MissingClosureParamType>
+    <MissingReturnType occurrences="1">
+      <code>getKey</code>
+    </MissingReturnType>
+    <UndefinedConstant occurrences="1">
+      <code>EP_PAGES</code>
+    </UndefinedConstant>
+  </file>
+  <file src="modules/ppcp-wc-gateway/services.php">
+    <PossiblyInvalidArgument occurrences="5">
+      <code>wp_unslash( $_GET[ SectionsRenderer::KEY ] )</code>
+      <code>wp_unslash( $_GET['page'] )</code>
+      <code>wp_unslash( $_GET['section'] )</code>
+      <code>wp_unslash( $_GET['section'] )</code>
+      <code>wp_unslash( $_GET['tab'] )</code>
+    </PossiblyInvalidArgument>
+    <PossiblyNullArgument occurrences="1">
+      <code>$letters</code>
+    </PossiblyNullArgument>
+  </file>
+  <file src="modules/ppcp-wc-gateway/src/Admin/OrderTablePaymentStatusColumn.php">
+    <MissingReturnType occurrences="3">
+      <code>render</code>
+      <code>render_completed_status</code>
+      <code>render_incomplete_status</code>
+    </MissingReturnType>
+  </file>
+  <file src="modules/ppcp-wc-gateway/src/Admin/PaymentStatusOrderDetail.php">
+    <MissingReturnType occurrences="1">
+      <code>render</code>
+    </MissingReturnType>
+  </file>
+  <file src="modules/ppcp-wc-gateway/src/Assets/SettingsPageAssets.php">
+    <MissingReturnType occurrences="2">
+      <code>register_admin_assets</code>
+      <code>register_assets</code>
+    </MissingReturnType>
+    <PossiblyNullPropertyFetch occurrences="1">
+      <code>$screen-&gt;id</code>
+    </PossiblyNullPropertyFetch>
+  </file>
+  <file src="modules/ppcp-wc-gateway/src/Checkout/CheckoutPayPalAddressPreset.php">
+    <PossiblyNullReference occurrences="4">
+      <code>phone</code>
+      <code>phone</code>
+      <code>phone</code>
+      <code>purchase_units</code>
+    </PossiblyNullReference>
+    <RedundantCondition occurrences="5">
+      <code>null</code>
+      <code>null</code>
+      <code>null</code>
+      <code>null</code>
+      <code>null</code>
+    </RedundantCondition>
+  </file>
+  <file src="modules/ppcp-wc-gateway/src/Checkout/DisableGateways.php">
+    <PossiblyNullReference occurrences="1">
+      <code>card</code>
+    </PossiblyNullReference>
+  </file>
+  <file src="modules/ppcp-wc-gateway/src/Endpoint/ReturnUrlEndpoint.php">
+    <MissingClosureParamType occurrences="1">
+      <code>$allowed_hosts</code>
+    </MissingClosureParamType>
+    <MissingReturnType occurrences="1">
+      <code>handle_request</code>
+    </MissingReturnType>
+    <PossiblyInvalidArgument occurrences="1">
+      <code>wp_unslash( $_GET['token'] )</code>
+    </PossiblyInvalidArgument>
+    <TypeDoesNotContainType occurrences="1">
+      <code>$order</code>
+    </TypeDoesNotContainType>
+  </file>
+  <file src="modules/ppcp-wc-gateway/src/Helper/DCCProductStatus.php">
+    <InvalidPropertyAssignmentValue occurrences="2">
+      <code>true</code>
+      <code>true</code>
+    </InvalidPropertyAssignmentValue>
+    <PossiblyFalsePropertyAssignmentValue occurrences="2">
+      <code>false</code>
+      <code>false</code>
+    </PossiblyFalsePropertyAssignmentValue>
+  </file>
+  <file src="modules/ppcp-wc-gateway/src/Notice/AuthorizeOrderActionNotice.php">
+    <MissingClosureParamType occurrences="1">
+      <code>$location</code>
+    </MissingClosureParamType>
+    <MissingReturnType occurrences="1">
+      <code>display_message</code>
+    </MissingReturnType>
+    <PossiblyUndefinedVariable occurrences="1">
+      <code>$messages</code>
+    </PossiblyUndefinedVariable>
+  </file>
+  <file src="modules/ppcp-wc-gateway/src/Processor/AuthorizedPaymentsProcessor.php">
+    <MissingReturnType occurrences="1">
+      <code>capture_authorizations</code>
+    </MissingReturnType>
+    <PossiblyNullReference occurrences="1">
+      <code>authorizations</code>
+    </PossiblyNullReference>
+    <PropertyNotSetInConstructor occurrences="1">
+      <code>$captures</code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="modules/ppcp-wc-gateway/src/Processor/OrderProcessor.php">
+    <MissingReturnType occurrences="1">
+      <code>set_order_transaction_id</code>
+    </MissingReturnType>
+    <PossiblyNullReference occurrences="1">
+      <code>card</code>
+    </PossiblyNullReference>
+    <PropertyNotSetInConstructor occurrences="1">
+      <code>$payment_token_repository</code>
+    </PropertyNotSetInConstructor>
+  </file>
+  <file src="modules/ppcp-wc-gateway/src/Processor/PaymentsStatusHandlingTrait.php">
+    <PossiblyNullReference occurrences="2">
+      <code>authorizations</code>
+      <code>captures</code>
+    </PossiblyNullReference>
+  </file>
+  <file src="modules/ppcp-wc-gateway/src/Processor/RefundProcessor.php">
+    <PossiblyFalseArgument occurrences="1">
+      <code>wp_json_encode( $payments-&gt;to_array() )</code>
+    </PossiblyFalseArgument>
+    <PossiblyNullArgument occurrences="1">
+      <code>$amount</code>
+    </PossiblyNullArgument>
+  </file>
+  <file src="modules/ppcp-wc-gateway/src/Settings/SectionsRenderer.php">
+    <MissingReturnType occurrences="1">
+      <code>render</code>
+    </MissingReturnType>
+  </file>
+  <file src="modules/ppcp-wc-gateway/src/Settings/Settings.php">
+    <MissingReturnType occurrences="2">
+      <code>persist</code>
+      <code>set</code>
+    </MissingReturnType>
+  </file>
+  <file src="modules/ppcp-wc-gateway/src/Settings/SettingsListener.php">
+    <MissingReturnType occurrences="3">
+      <code>listen</code>
+      <code>listen_for_merchant_id</code>
+      <code>listen_for_vaulting_enabled</code>
+    </MissingReturnType>
+    <PossiblyInvalidArgument occurrences="3">
+      <code>wp_unslash( $_GET['merchantId'] )</code>
+      <code>wp_unslash( $_GET['merchantIdInPayPal'] )</code>
+      <code>wp_unslash( $_POST['ppcp-nonce'] )</code>
+    </PossiblyInvalidArgument>
+  </file>
+  <file src="modules/ppcp-wc-gateway/src/Settings/SettingsRenderer.php">
+    <InvalidArgument occurrences="1">
+      <code>$value</code>
+    </InvalidArgument>
+    <InvalidOperand occurrences="3">
+      <code>$field</code>
+      <code>$field</code>
+      <code>$field</code>
+    </InvalidOperand>
+    <MissingReturnType occurrences="5">
+      <code>render</code>
+      <code>render_dcc_does_not_apply_info</code>
+      <code>render_dcc_not_active_yet</code>
+      <code>render_dcc_onboarding_info</code>
+      <code>render_text</code>
+    </MissingReturnType>
+    <RedundantCast occurrences="1">
+      <code>(int) $colspan</code>
+    </RedundantCast>
+  </file>
+  <file src="modules/ppcp-wc-gateway/src/WCGatewayModule.php">
+    <MissingClosureParamType occurrences="15">
+      <code>$args</code>
+      <code>$args</code>
+      <code>$column</code>
+      <code>$columns</code>
+      <code>$field</code>
+      <code>$key</code>
+      <code>$methods</code>
+      <code>$methods</code>
+      <code>$notices</code>
+      <code>$order</code>
+      <code>$order_actions</code>
+      <code>$recipient</code>
+      <code>$value</code>
+      <code>$wc_order_id</code>
+      <code>$wc_order_id</code>
+    </MissingClosureParamType>
+    <MissingReturnType occurrences="4">
+      <code>register_checkout_paypal_address_preset</code>
+      <code>register_columns</code>
+      <code>register_order_functionality</code>
+      <code>register_payment_gateways</code>
+    </MissingReturnType>
+  </file>
+  <file src="modules/ppcp-webhooks/extensions.php">
+    <MissingClosureParamType occurrences="1">
+      <code>$container</code>
+    </MissingClosureParamType>
+  </file>
+  <file src="modules/ppcp-webhooks/src/Endpoint/ResubscribeEndpoint.php">
+    <MissingReturnType occurrences="1">
+      <code>handle_request</code>
+    </MissingReturnType>
+  </file>
+  <file src="modules/ppcp-webhooks/src/Endpoint/SimulateEndpoint.php">
+    <MissingReturnType occurrences="1">
+      <code>handle_request</code>
+    </MissingReturnType>
+  </file>
+  <file src="modules/ppcp-webhooks/src/Endpoint/SimulationStateEndpoint.php">
+    <MissingReturnType occurrences="1">
+      <code>handle_request</code>
+    </MissingReturnType>
+  </file>
+  <file src="modules/ppcp-webhooks/src/Handler/CheckoutOrderApproved.php">
+    <InvalidReturnStatement occurrences="5">
+      <code>rest_ensure_response( $response )</code>
+      <code>rest_ensure_response( $response )</code>
+      <code>rest_ensure_response( $response )</code>
+      <code>rest_ensure_response( $response )</code>
+      <code>rest_ensure_response( $response )</code>
+    </InvalidReturnStatement>
+    <InvalidReturnType occurrences="1">
+      <code>\WP_REST_Response</code>
+    </InvalidReturnType>
+    <PossibleRawObjectIteration occurrences="1">
+      <code>$wc_orders</code>
+    </PossibleRawObjectIteration>
+    <PossiblyNullArgument occurrences="5">
+      <code>$request['resource']['id']</code>
+      <code>isset( $request['id'] ) ? $request['id'] : ''</code>
+      <code>isset( $request['id'] ) ? $request['id'] : ''</code>
+      <code>isset( $request['id'] ) ? $request['id'] : ''</code>
+      <code>isset( $request['resource']['id'] ) ? $request['resource']['id'] : ''</code>
+    </PossiblyNullArgument>
+    <PossiblyNullArrayAccess occurrences="3">
+      <code>$request['resource']['id']</code>
+      <code>$request['resource']['id']</code>
+      <code>$request['resource']['purchase_units']</code>
+    </PossiblyNullArrayAccess>
+  </file>
+  <file src="modules/ppcp-webhooks/src/Handler/CheckoutOrderCompleted.php">
+    <InvalidReturnStatement occurrences="3">
+      <code>rest_ensure_response( $response )</code>
+      <code>rest_ensure_response( $response )</code>
+      <code>rest_ensure_response( $response )</code>
+    </InvalidReturnStatement>
+    <InvalidReturnType occurrences="1">
+      <code>\WP_REST_Response</code>
+    </InvalidReturnType>
+    <PossibleRawObjectIteration occurrences="1">
+      <code>$wc_orders</code>
+    </PossibleRawObjectIteration>
+    <PossiblyNullArgument occurrences="2">
+      <code>isset( $request['id'] ) ? $request['id'] : ''</code>
+      <code>isset( $request['resource']['id'] ) ? $request['resource']['id'] : ''</code>
+    </PossiblyNullArgument>
+    <PossiblyNullArrayAccess occurrences="2">
+      <code>$request['resource']['id']</code>
+      <code>$request['resource']['purchase_units']</code>
+    </PossiblyNullArrayAccess>
+  </file>
+  <file src="modules/ppcp-webhooks/src/Handler/PaymentCaptureCompleted.php">
+    <InvalidReturnStatement occurrences="4">
+      <code>rest_ensure_response( $response )</code>
+      <code>rest_ensure_response( $response )</code>
+      <code>rest_ensure_response( $response )</code>
+      <code>rest_ensure_response( $response )</code>
+    </InvalidReturnStatement>
+    <InvalidReturnType occurrences="1">
+      <code>\WP_REST_Response</code>
+    </InvalidReturnType>
+    <PossiblyNullArgument occurrences="3">
+      <code>$request['resource']['custom_id']</code>
+      <code>isset( $request['id'] ) ? $request['id'] : ''</code>
+      <code>isset( $request['id'] ) ? $request['id'] : ''</code>
+    </PossiblyNullArgument>
+    <PossiblyNullArrayAccess occurrences="1">
+      <code>$request['resource']['custom_id']</code>
+    </PossiblyNullArrayAccess>
+  </file>
+  <file src="modules/ppcp-webhooks/src/Handler/PaymentCaptureRefunded.php">
+    <InvalidReturnStatement occurrences="4">
+      <code>rest_ensure_response( $response )</code>
+      <code>rest_ensure_response( $response )</code>
+      <code>rest_ensure_response( $response )</code>
+      <code>rest_ensure_response( $response )</code>
+    </InvalidReturnStatement>
+    <InvalidReturnType occurrences="1">
+      <code>\WP_REST_Response</code>
+    </InvalidReturnType>
+    <PossiblyNullArgument occurrences="3">
+      <code>$request['resource']['custom_id']</code>
+      <code>isset( $request['id'] ) ? $request['id'] : ''</code>
+      <code>isset( $request['resource']['id'] ) ? $request['resource']['id'] : ''</code>
+    </PossiblyNullArgument>
+    <PossiblyNullArrayAccess occurrences="3">
+      <code>$request['resource']['amount']</code>
+      <code>$request['resource']['custom_id']</code>
+      <code>$request['resource']['id']</code>
+    </PossiblyNullArrayAccess>
+    <PossiblyUndefinedMethod occurrences="2">
+      <code>get_amount</code>
+      <code>get_error_message</code>
+    </PossiblyUndefinedMethod>
+  </file>
+  <file src="modules/ppcp-webhooks/src/Handler/PaymentCaptureReversed.php">
+    <InvalidReturnStatement occurrences="3">
+      <code>rest_ensure_response( $response )</code>
+      <code>rest_ensure_response( $response )</code>
+      <code>rest_ensure_response( $response )</code>
+    </InvalidReturnStatement>
+    <InvalidReturnType occurrences="1">
+      <code>\WP_REST_Response</code>
+    </InvalidReturnType>
+    <PossiblyNullArgument occurrences="3">
+      <code>$request['resource']['custom_id']</code>
+      <code>isset( $request['id'] ) ? $request['id'] : ''</code>
+      <code>isset( $request['resource']['id'] ) ? $request['resource']['id'] : ''</code>
+    </PossiblyNullArgument>
+    <PossiblyNullArrayAccess occurrences="2">
+      <code>$request['resource']['custom_id']</code>
+      <code>$request['resource']['id']</code>
+    </PossiblyNullArrayAccess>
+    <RedundantCastGivenDocblockType occurrences="1">
+      <code>(bool) $wc_order-&gt;update_status( 'cancelled' )</code>
+    </RedundantCastGivenDocblockType>
+  </file>
+  <file src="modules/ppcp-webhooks/src/IncomingWebhookEndpoint.php">
+    <InvalidReturnStatement occurrences="2">
+      <code>rest_ensure_response( $response )</code>
+    </InvalidReturnStatement>
+    <InvalidReturnType occurrences="1">
+      <code>\WP_REST_Response</code>
+    </InvalidReturnType>
+    <PossiblyFalseArgument occurrences="1">
+      <code>( $handler-&gt;event_types() ) ? current( $handler-&gt;event_types() ) : ''</code>
+    </PossiblyFalseArgument>
+    <PossiblyNullArgument occurrences="1">
+      <code>$request['event_type']</code>
+    </PossiblyNullArgument>
+    <RedundantCastGivenDocblockType occurrences="1"/>
+  </file>
+</files>
