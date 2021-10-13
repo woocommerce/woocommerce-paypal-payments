@@ -1,6 +1,6 @@
 {
   "name": "woocommerce-paypal-payments",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "WooCommerce PayPal Payments",
   "repository": "https://github.com/woocommerce/woocommerce-paypal-payments",
   "license": "GPL-2.0",
@@ -26,7 +26,7 @@
     "docker:shell": "docker-compose run --rm wp_dev bash",
     "docker:install": "docker-compose run --rm composer composer install && yarn run docker:build-js",
     "docker:build-js": "docker-compose run --rm build yarn run build:dev",
-    "docker:composer-update": "docker-compose run --rm composer composer update",
+    "docker:composer-update": "docker-compose run --rm composer composer update && docker-compose run --rm composer composer update --lock",
     "docker:test": "docker-compose run --rm test vendor/bin/phpunit",
     "docker:lint": "docker-compose run --rm test vendor/bin/phpcs --parallel=8 -s",
     "docker:fix-lint": "docker-compose run --rm test vendor/bin/phpcbf",

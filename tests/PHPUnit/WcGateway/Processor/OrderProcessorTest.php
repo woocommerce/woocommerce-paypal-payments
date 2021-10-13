@@ -4,15 +4,20 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Processor;
 
 
+use Dhii\Container\Dictionary;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
-use Woocommerce\PayPalCommerce\ApiClient\Entity\Capture;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\AuthorizationStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payments;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
+use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
@@ -22,35 +27,44 @@ use function Brain\Monkey\Functions\when;
 
 class OrderProcessorTest extends TestCase
 {
+	private $environment;
+
+	public function setUp(): void {
+		parent::setUp();
+
+		$this->environment = new Environment(new Dictionary([]));
+	}
 
     public function testAuthorize() {
         $transactionId = 'ABC123';
 
-        $capture = Mockery::mock(Capture::class);
-        $capture->expects('id')
+        $authorization = Mockery::mock(Authorization::class);
+        $authorization->shouldReceive('id')
             ->andReturn($transactionId);
+		$authorization->shouldReceive('status')
+			->andReturn(new AuthorizationStatus(AuthorizationStatus::CREATED));
 
         $payments = Mockery::mock(Payments::class);
-        $payments->expects('captures')
-            ->andReturn([$capture]);
+        $payments->shouldReceive('authorizations')
+            ->andReturn([$authorization]);
+        $payments->shouldReceive('captures')
+            ->andReturn([]);
 
         $purchaseUnit = Mockery::mock(PurchaseUnit::class);
-        $purchaseUnit->expects('payments')
+        $purchaseUnit->shouldReceive('payments')
             ->andReturn($payments);
 
         $wcOrder = Mockery::mock(\WC_Order::class);
         $wcOrder->expects('update_meta_data')
             ->with(PayPalGateway::ORDER_PAYMENT_MODE_META_KEY, 'live');
-        $wcOrder->expects('set_transaction_id')
-            ->with($transactionId);
 
         $orderStatus = Mockery::mock(OrderStatus::class);
         $orderStatus
-            ->expects('is')
+            ->shouldReceive('is')
             ->with(OrderStatus::APPROVED)
             ->andReturn(true);
         $orderStatus
-            ->expects('is')
+            ->shouldReceive('is')
             ->with(OrderStatus::COMPLETED)
             ->andReturn(true);
 
@@ -67,7 +81,7 @@ class OrderProcessorTest extends TestCase
         $currentOrder
             ->shouldReceive('status')
             ->andReturn($orderStatus);
-        $currentOrder->expects('purchase_units')
+        $currentOrder->shouldReceive('purchase_units')
             ->andReturn([$purchaseUnit]);
 
         $sessionHandler = Mockery::mock(SessionHandler::class);
@@ -112,7 +126,7 @@ class OrderProcessorTest extends TestCase
             $authorizedPaymentProcessor,
             $settings,
             $logger,
-            false
+            $this->environment
         );
 
         $cart = Mockery::mock(\WC_Cart::class);
@@ -156,23 +170,25 @@ class OrderProcessorTest extends TestCase
         $capture = Mockery::mock(Capture::class);
         $capture->expects('id')
             ->andReturn($transactionId);
+        $capture->expects('status')
+            ->andReturn(new CaptureStatus(CaptureStatus::COMPLETED));
 
         $payments = Mockery::mock(Payments::class);
-        $payments->expects('captures')
+        $payments->shouldReceive('captures')
             ->andReturn([$capture]);
 
         $purchaseUnit = Mockery::mock(PurchaseUnit::class);
-        $purchaseUnit->expects('payments')
+        $purchaseUnit->shouldReceive('payments')
             ->andReturn($payments);
 
         $wcOrder = Mockery::mock(\WC_Order::class);
         $orderStatus = Mockery::mock(OrderStatus::class);
         $orderStatus
-            ->expects('is')
+            ->shouldReceive('is')
             ->with(OrderStatus::APPROVED)
             ->andReturn(true);
         $orderStatus
-            ->expects('is')
+            ->shouldReceive('is')
             ->with(OrderStatus::COMPLETED)
             ->andReturn(true);
         $orderId = 'abc';
@@ -188,7 +204,7 @@ class OrderProcessorTest extends TestCase
             ->shouldReceive('status')
             ->andReturn($orderStatus);
         $currentOrder
-            ->expects('purchase_units')
+            ->shouldReceive('purchase_units')
             ->andReturn([$purchaseUnit]);
         $sessionHandler = Mockery::mock(SessionHandler::class);
         $sessionHandler
@@ -240,7 +256,7 @@ class OrderProcessorTest extends TestCase
             $authorizedPaymentProcessor,
             $settings,
             $logger,
-            false
+            $this->environment
         );
 
         $cart = Mockery::mock(\WC_Cart::class);
@@ -264,9 +280,6 @@ class OrderProcessorTest extends TestCase
                 PayPalGateway::INTENT_META_KEY,
                 $orderIntent
             );
-        $wcOrder
-            ->expects('update_status')
-            ->with('on-hold', 'Awaiting payment.');
         $wcOrder->expects('update_meta_data')
             ->with(PayPalGateway::ORDER_PAYMENT_MODE_META_KEY, 'live');
         $wcOrder->expects('set_transaction_id')
@@ -340,7 +353,7 @@ class OrderProcessorTest extends TestCase
             $authorizedPaymentProcessor,
             $settings,
             $logger,
-            false
+            $this->environment
         );
 
         $wcOrder
@@ -355,7 +368,7 @@ class OrderProcessorTest extends TestCase
                 PayPalGateway::INTENT_META_KEY,
                 $orderIntent
             );
-        
+
         $this->assertFalse($testee->process($wcOrder));
         $this->assertNotEmpty($testee->last_error());
     }

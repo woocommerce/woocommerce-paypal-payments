@@ -12,5 +12,5 @@ namespace WooCommerce\PayPalCommerce\WcGateway;
 use Dhii\Modular\Module\ModuleInterface;
 
 return static function (): ModuleInterface {
-	return new WcGatewayModule();
+	return new WCGatewayModule();
 };

@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, e-commerce, store, sales, sell, 
 Requires at least: 5.3
 Tested up to: 5.8
 Requires PHP: 7.1
-Stable tag: 1.6.0
+Stable tag: 1.6.1
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -80,6 +80,13 @@ Follow the steps below to connect the plugin to your PayPal account:
 6. Main settings screen.
 
 == Changelog ==
+
+= 1.6.1 =
+* Fix - Handle authorization capture failures #312
+* Fix - Handle denied payment authorization #302
+* Fix - Handle failed authorizations when capturing order #303
+* Fix - Transactions cannot be voided #293
+* Fix - Fatal error: get_3ds_contingency() #310
 
 = 1.6.0 =
 * Add - Webhook status. #246 #273

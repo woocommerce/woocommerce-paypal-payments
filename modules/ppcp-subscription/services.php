@@ -10,12 +10,14 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Subscription;
 
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
+use Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 
 return array(
-	'subscription.helper'          => static function ( $container ): SubscriptionHelper {
+	'subscription.helper'                   => static function ( ContainerInterface $container ): SubscriptionHelper {
 		return new SubscriptionHelper();
 	},
-	'subscription.renewal-handler' => static function ( $container ): RenewalHandler {
+	'subscription.renewal-handler'          => static function ( ContainerInterface $container ): RenewalHandler {
 		$logger                = $container->get( 'woocommerce.logger.woocommerce' );
 		$repository            = $container->get( 'vaulting.repository.payment-token' );
 		$endpoint              = $container->get( 'api.endpoint.order' );
@@ -28,5 +30,10 @@ return array(
 			$purchase_unit_factory,
 			$payer_factory
 		);
+	},
+	'subscription.repository.payment-token' => static function ( ContainerInterface $container ): PaymentTokenRepository {
+		$factory  = $container->get( 'api.factory.payment-token' );
+		$endpoint = $container->get( 'api.endpoint.payment-token' );
+		return new PaymentTokenRepository( $factory, $endpoint );
 	},
 );

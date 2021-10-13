@@ -7,7 +7,8 @@ use Hamcrest\Matchers;
 use Requests_Utility_CaseInsensitiveDictionary;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
-use Woocommerce\PayPalCommerce\ApiClient\Entity\Capture;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PatchCollection;
@@ -278,7 +279,7 @@ class OrderEndpointTest extends TestCase
 	    $expectedOrder->shouldReceive('purchase_units')->once()->andReturn(['0'=>$purchaseUnit]);
 	    $purchaseUnit->shouldReceive('payments')->once()->andReturn($payment);
 	    $payment->shouldReceive('captures')->once()->andReturn(['0'=>$capture]);
-	    $capture->shouldReceive('status')->once()->andReturn('');
+	    $capture->shouldReceive('status')->once()->andReturn(new CaptureStatus(CaptureStatus::COMPLETED));
 
         $result = $testee->capture($orderToCapture);
         $this->assertEquals($expectedOrder, $result);
