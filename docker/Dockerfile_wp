@@ -56,12 +56,16 @@ RUN apt-get install -y \
     curl \
     git \
     yarn \
+    ca-certificates \
     # These are for extensions
     zlib1g-dev \
     libicu-dev \
     g++ \
     # For installing things from URL
     wget
+
+# https://github.com/nodesource/distributions/issues/1266
+RUN update-ca-certificates
 
 RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" && \
     php composer-setup.php --install-dir=/usr/bin --filename=composer --version=1.10.22 && \
