@@ -21,6 +21,7 @@ PayPal's latest complete payments processing solution. Accept PayPal, Pay Later,
 1. `$ composer install`
 2. `$ ./vendor/bin/phpunit`
 3. `$ ./vendor/bin/phpcs`
+4. `$ ./vendor/bin/psalm`
 
 ### Docker
 
