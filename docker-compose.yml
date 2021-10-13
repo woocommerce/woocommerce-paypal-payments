@@ -32,6 +32,7 @@ services:
       WP_DOMAIN: ${WP_DOMAIN}
       WP_TITLE: ${WP_TITLE}
       WC_VERSION: $WC_VERSION
+      NGROK_HOST: ${NGROK_HOST}
 
     volumes:
       - wordpress:${DOCROOT_PATH}
