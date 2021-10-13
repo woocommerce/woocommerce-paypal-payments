@@ -24,7 +24,7 @@ class MyAccountPaymentsAssets {
 	private $module_url;
 
 	/**
-	 * WebhooksStatusPageAssets constructor.
+	 * MyAccountPaymentsAssets constructor.
 	 *
 	 * @param string $module_url The URL to the module.
 	 */
