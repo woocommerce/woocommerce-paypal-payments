@@ -176,7 +176,7 @@ class OrderProcessor {
 
 		$transaction_id = $this->get_paypal_order_transaction_id( $order );
 
-		if ( '' !== $transaction_id ) {
+		if ( $transaction_id ) {
 			$this->set_order_transaction_id( $transaction_id, $wc_order );
 		}
 
@@ -216,32 +216,34 @@ class OrderProcessor {
 	}
 
 	/**
-	 * Retrieve transaction id from PayPal order.
+	 * Retrieves transaction id from PayPal order.
 	 *
-	 * @param Order $order Order to get transaction id from.
+	 * @param Order $order The order to get transaction id from.
 	 *
-	 * @return string
+	 * @return string|null
 	 */
-	private function get_paypal_order_transaction_id( Order $order ): string {
-		$purchase_units = $order->purchase_units();
-
-		if ( ! isset( $purchase_units[0] ) ) {
-			return '';
+	private function get_paypal_order_transaction_id( Order $order ): ?string {
+		$purchase_unit = $order->purchase_units()[0] ?? null;
+		if ( ! $purchase_unit ) {
+			return null;
 		}
 
-		$payments = $purchase_units[0]->payments();
-
+		$payments = $purchase_unit->payments();
 		if ( null === $payments ) {
-			return '';
+			return null;
 		}
 
-		$captures = $payments->captures();
-
-		if ( isset( $captures[0] ) ) {
-			return $captures[0]->id();
+		$capture = $payments->captures()[0] ?? null;
+		if ( $capture ) {
+			return $capture->id();
 		}
 
-		return '';
+		$authorization = $payments->authorizations()[0] ?? null;
+		if ( $authorization ) {
+			return $authorization->id();
+		}
+
+		return null;
 	}
 
 	/**
