@@ -177,7 +177,7 @@ class OrderProcessor {
 		$transaction_id = $this->get_paypal_order_transaction_id( $order );
 
 		if ( $transaction_id ) {
-			$this->set_order_transaction_id( $transaction_id, $wc_order );
+			$this->update_transaction_id( $transaction_id, $wc_order );
 		}
 
 		$this->handle_new_order_status( $order, $wc_order );

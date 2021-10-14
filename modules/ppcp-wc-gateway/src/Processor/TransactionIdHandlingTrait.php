@@ -28,13 +28,14 @@ trait TransactionIdHandlingTrait {
 	 *
 	 * @return bool
 	 */
-	protected function set_order_transaction_id(
+	protected function update_transaction_id(
 		string $transaction_id,
 		WC_Order $wc_order,
 		LoggerInterface $logger = null
 	): bool {
 		try {
 			$wc_order->set_transaction_id( $transaction_id );
+			$wc_order->save();
 			return true;
 		} catch ( Exception $exception ) {
 			if ( $logger ) {
