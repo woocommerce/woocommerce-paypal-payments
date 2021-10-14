@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
+use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatus;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
@@ -121,6 +122,13 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	protected $environment;
 
 	/**
+	 * The logger.
+	 *
+	 * @var LoggerInterface
+	 */
+	private $logger;
+
+	/**
 	 * PayPalGateway constructor.
 	 *
 	 * @param SettingsRenderer            $settings_renderer The Settings Renderer.
@@ -135,6 +143,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @param SubscriptionHelper          $subscription_helper The subscription helper.
 	 * @param string                      $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
 	 * @param Environment                 $environment The environment.
+	 * @param LoggerInterface             $logger The logger.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
@@ -148,7 +157,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		TransactionUrlProvider $transaction_url_provider,
 		SubscriptionHelper $subscription_helper,
 		string $page_id,
-		Environment $environment
+		Environment $environment,
+		LoggerInterface $logger
 	) {
 
 		$this->id                       = self::ID;
@@ -162,6 +172,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->transaction_url_provider = $transaction_url_provider;
 		$this->page_id                  = $page_id;
 		$this->environment              = $environment;
+		$this->logger                   = $logger;
 		$this->onboarded                = $state->current_state() === State::STATE_ONBOARDED;
 
 		if ( $this->onboarded ) {
@@ -273,6 +284,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		}
 
 		$capture = end( $captures );
+
+		$this->update_transaction_id( $capture->id(), $wc_order, $this->logger );
 
 		$this->handle_capture_status( $capture, $wc_order );
 

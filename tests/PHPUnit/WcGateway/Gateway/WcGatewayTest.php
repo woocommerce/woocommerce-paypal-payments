@@ -5,6 +5,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
 
 use Psr\Container\ContainerInterface;
+use Psr\Log\NullLogger;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatus;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
@@ -80,7 +81,8 @@ class WcGatewayTest extends TestCase
             $transactionUrlProvider,
             $subscriptionHelper,
 			PayPalGateway::ID,
-			$this->environment
+			$this->environment,
+			new NullLogger()
         );
 
         expect('wc_get_order')
@@ -130,7 +132,8 @@ class WcGatewayTest extends TestCase
             $transactionUrlProvider,
             $subscriptionHelper,
 			PayPalGateway::ID,
-			$this->environment
+			$this->environment,
+			new NullLogger()
         );
 
         expect('wc_get_order')
@@ -197,7 +200,8 @@ class WcGatewayTest extends TestCase
             $transactionUrlProvider,
             $subscriptionHelper,
 			PayPalGateway::ID,
-			$this->environment
+			$this->environment,
+			new NullLogger()
         );
 
         expect('wc_get_order')
@@ -224,6 +228,8 @@ class WcGatewayTest extends TestCase
     public function testCaptureAuthorizedPayment() {
 	    expect('is_admin')->andReturn(false);
 
+		$transactionId = 'abcd1234';
+
         $wcOrder = Mockery::mock(\WC_Order::class);
         $wcOrder
             ->expects('add_order_note');
@@ -233,13 +239,20 @@ class WcGatewayTest extends TestCase
         $wcOrder
 	        ->expects('payment_complete');
         $wcOrder
-            ->expects('save');
+            ->expects('set_transaction_id')
+			->with($transactionId);
+        $wcOrder
+            ->shouldReceive('save')
+			->atLeast()->once();
         $settingsRenderer = Mockery::mock(SettingsRenderer::class);
         $orderProcessor = Mockery::mock(OrderProcessor::class);
 		$capture = Mockery::mock(Capture::class);
 		$capture
 			->shouldReceive('status')
 			->andReturn(new CaptureStatus(CaptureStatus::COMPLETED));
+		$capture
+			->shouldReceive('id')
+			->andReturn($transactionId);
         $authorizedPaymentsProcessor = Mockery::mock(AuthorizedPaymentsProcessor::class);
         $authorizedPaymentsProcessor
             ->expects('process')
@@ -276,7 +289,8 @@ class WcGatewayTest extends TestCase
             $transactionUrlProvider,
             $subscriptionHelper,
 			PayPalGateway::ID,
-			$this->environment
+			$this->environment,
+			new NullLogger()
         );
 
         $this->assertTrue($testee->capture_authorized_payment($wcOrder));
@@ -332,7 +346,8 @@ class WcGatewayTest extends TestCase
             $transactionUrlProvider,
             $subscriptionHelper,
 			PayPalGateway::ID,
-			$this->environment
+			$this->environment,
+			new NullLogger()
         );
 
         $this->assertTrue($testee->capture_authorized_payment($wcOrder));
@@ -385,7 +400,8 @@ class WcGatewayTest extends TestCase
             $transactionUrlProvider,
             $subscriptionHelper,
 			PayPalGateway::ID,
-			$this->environment
+			$this->environment,
+			new NullLogger()
         );
 
         $this->assertFalse($testee->capture_authorized_payment($wcOrder));
@@ -426,7 +442,8 @@ class WcGatewayTest extends TestCase
 		    $transactionUrlProvider,
 		    $subscriptionHelper,
 			PayPalGateway::ID,
-			$this->environment
+			$this->environment,
+			new NullLogger()
 	    );
 
     	$this->assertSame($needSetup, $testee->needs_setup());

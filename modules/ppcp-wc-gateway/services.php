@@ -55,6 +55,7 @@ return array(
 		$subscription_helper = $container->get( 'subscription.helper' );
 		$page_id             = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
 		$environment         = $container->get( 'onboarding.environment' );
+		$logger              = $container->get( 'woocommerce.logger.woocommerce' );
 		return new PayPalGateway(
 			$settings_renderer,
 			$order_processor,
@@ -67,7 +68,8 @@ return array(
 			$transaction_url_provider,
 			$subscription_helper,
 			$page_id,
-			$environment
+			$environment,
+			$logger
 		);
 	},
 	'wcgateway.credit-card-gateway'                => static function ( ContainerInterface $container ): CreditCardGateway {
