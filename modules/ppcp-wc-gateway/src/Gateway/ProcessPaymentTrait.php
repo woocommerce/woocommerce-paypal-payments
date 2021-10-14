@@ -10,10 +10,13 @@ declare( strict_types=1 );
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
 use Exception;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\AuthorizationStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\PaymentsStatusHandlingTrait;
 
@@ -101,7 +104,7 @@ trait ProcessPaymentTrait {
 				if ( $order->intent() === 'AUTHORIZE' ) {
 					$order = $this->order_endpoint->authorize( $order );
 
-					$wc_order->update_meta_data( PayPalGateway::CAPTURED_META_KEY, 'false' );
+					$wc_order->update_meta_data( AuthorizedPaymentsProcessor::CAPTURED_META_KEY, 'false' );
 				}
 
 				$this->handle_new_order_status( $order, $wc_order );
@@ -166,7 +169,7 @@ trait ProcessPaymentTrait {
 					if ( $tokens ) {
 						$this->logger->info( "Payment for subscription parent order #{$order_id} was saved correctly." );
 
-						$this->capture_authorized_payment( $wc_order );
+						$this->authorized_payments_processor->capture_authorized_payment( $wc_order );
 						$this->session_handler->destroy_session_data();
 
 						return array(
@@ -212,6 +215,13 @@ trait ProcessPaymentTrait {
 					foreach ( $voidable_authorizations as $authorization ) {
 						$this->payments_endpoint->void( $authorization );
 					}
+
+					$this->logger->debug(
+						sprintf(
+							'Order %1$s voided successfully.',
+							$order->id()
+						)
+					);
 
 					$error_message = __( 'Could not process order because it was not possible to save the payment.', 'woocommerce-paypal-payments' );
 					$wc_order->update_status( 'failed', $error_message );

@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
 
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 
 /**
  * Class PaymentCaptureCompleted
@@ -118,7 +119,7 @@ class PaymentCaptureCompleted implements RequestHandler {
 		);
 
 		$wc_order->payment_complete();
-		$wc_order->update_meta_data( PayPalGateway::CAPTURED_META_KEY, 'true' );
+		$wc_order->update_meta_data( AuthorizedPaymentsProcessor::CAPTURED_META_KEY, 'true' );
 		$wc_order->save();
 		$this->logger->log(
 			'info',

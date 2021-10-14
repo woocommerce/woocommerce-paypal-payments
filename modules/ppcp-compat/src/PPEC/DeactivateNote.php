@@ -18,7 +18,7 @@ use Automattic\WooCommerce\Admin\Notes\NoteTraits;
  */
 class DeactivateNote {
 
-	use NoteTraits;
+	//use NoteTraits;
 
 	/**
 	 * Name of the note for use in the database.

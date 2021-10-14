@@ -18,6 +18,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 
 /**
  * Class RenewalHandler
@@ -240,7 +241,7 @@ class RenewalHandler {
 
 		if ( $order->intent() === 'AUTHORIZE' ) {
 			$this->order_endpoint->authorize( $order );
-			$wc_order->update_meta_data( PayPalGateway::CAPTURED_META_KEY, 'false' );
+			$wc_order->update_meta_data( AuthorizedPaymentsProcessor::CAPTURED_META_KEY, 'false' );
 		}
 	}
 }

@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace WooCommerce\PayPalCommerce\WcGateway\Admin;
 
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 
 /**
  * Class RenderAuthorizeAction
@@ -45,7 +46,7 @@ class RenderAuthorizeAction {
 	 * @return bool
 	 */
 	private function should_render_for_order( \WC_Order $order ) : bool {
-		$data = $order->get_meta( PayPalGateway::CAPTURED_META_KEY );
+		$data = $order->get_meta( AuthorizedPaymentsProcessor::CAPTURED_META_KEY );
 		return in_array( $data, array( 'true', 'false' ), true );
 	}
 }

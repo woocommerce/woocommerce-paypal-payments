@@ -19,19 +19,17 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Mockery;
+use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
+
 class AuthorizedPaymentsProcessorTest extends TestCase
 {
 	private $wcOrder;
 	private $paypalOrderId = 'abc';
-
 	private $authorizationId = 'qwe';
-
 	private $paypalOrder;
-
 	private $orderEndpoint;
-
 	private $paymentsEndpoint;
-
+	private $notice;
 	private $testee;
 
 	public function setUp(): void {
@@ -52,7 +50,15 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 
 		$this->paymentsEndpoint = Mockery::mock(PaymentsEndpoint::class);
 
-		$this->testee = new AuthorizedPaymentsProcessor($this->orderEndpoint, $this->paymentsEndpoint, new NullLogger());
+		$this->notice = Mockery::mock(AuthorizeOrderActionNotice::class);
+		$this->notice->shouldReceive('display_message');
+
+		$this->testee = new AuthorizedPaymentsProcessor(
+			$this->orderEndpoint,
+			$this->paymentsEndpoint,
+			new NullLogger(),
+			$this->notice
+		);
 	}
 
 	public function testSuccess() {
@@ -124,6 +130,41 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 
 		$this->assertEquals(AuthorizedPaymentsProcessor::BAD_AUTHORIZATION, $this->testee->process($this->wcOrder));
     }
+
+    public function testCaptureAuthorizedPayment()
+	{
+		$this->orderEndpoint->shouldReceive('order')->andReturn($this->paypalOrder);
+
+		$this->paymentsEndpoint
+			->expects('capture')
+			->with($this->authorizationId)
+			->andReturn($this->createCapture(CaptureStatus::COMPLETED));
+
+		$this->wcOrder->shouldReceive('payment_complete')->andReturn(true);
+		$this->wcOrder->expects('add_order_note');
+		$this->wcOrder->expects('update_meta_data');
+		$this->wcOrder->expects('save');
+
+		$this->assertTrue(
+			$this->testee->capture_authorized_payment($this->wcOrder)
+		);
+	}
+
+	public function testCaptureAuthorizedPaymentAlreadyCaptured()
+	{
+		$paypalOrder = $this->createPaypalOrder([$this->createAuthorization($this->authorizationId, AuthorizationStatus::CAPTURED)]);
+		$this->orderEndpoint->shouldReceive('order')->andReturn($paypalOrder);
+
+		$this->wcOrder->shouldReceive('get_status')->andReturn('on-hold');
+		$this->wcOrder->expects('add_order_note');
+		$this->wcOrder->expects('update_meta_data');
+		$this->wcOrder->expects('save');
+		$this->wcOrder->expects('payment_complete');
+
+		$this->assertTrue(
+			$this->testee->capture_authorized_payment($this->wcOrder)
+		);
+	}
 
 	private function createWcOrder(string $paypalOrderId): WC_Order {
 		$wcOrder = Mockery::mock(WC_Order::class);

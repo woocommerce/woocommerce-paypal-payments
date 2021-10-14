@@ -46,7 +46,6 @@ return array(
 		$order_processor     = $container->get( 'wcgateway.order-processor' );
 		$settings_renderer   = $container->get( 'wcgateway.settings.render' );
 		$authorized_payments = $container->get( 'wcgateway.processor.authorized-payments' );
-		$notice              = $container->get( 'wcgateway.notice.authorize-order-action' );
 		$settings            = $container->get( 'wcgateway.settings' );
 		$session_handler     = $container->get( 'session.handler' );
 		$refund_processor    = $container->get( 'wcgateway.processor.refunds' );
@@ -63,7 +62,6 @@ return array(
 			$settings_renderer,
 			$order_processor,
 			$authorized_payments,
-			$notice,
 			$settings,
 			$session_handler,
 			$refund_processor,
@@ -82,7 +80,6 @@ return array(
 		$order_processor     = $container->get( 'wcgateway.order-processor' );
 		$settings_renderer   = $container->get( 'wcgateway.settings.render' );
 		$authorized_payments = $container->get( 'wcgateway.processor.authorized-payments' );
-		$notice              = $container->get( 'wcgateway.notice.authorize-order-action' );
 		$settings            = $container->get( 'wcgateway.settings' );
 		$module_url          = $container->get( 'wcgateway.url' );
 		$session_handler     = $container->get( 'session.handler' );
@@ -101,7 +98,6 @@ return array(
 			$settings_renderer,
 			$order_processor,
 			$authorized_payments,
-			$notice,
 			$settings,
 			$module_url,
 			$session_handler,
@@ -236,7 +232,8 @@ return array(
 		$order_endpoint    = $container->get( 'api.endpoint.order' );
 		$payments_endpoint = $container->get( 'api.endpoint.payments' );
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
-		return new AuthorizedPaymentsProcessor( $order_endpoint, $payments_endpoint, $logger );
+		$notice              = $container->get( 'wcgateway.notice.authorize-order-action' );
+		return new AuthorizedPaymentsProcessor( $order_endpoint, $payments_endpoint, $logger, $notice );
 	},
 	'wcgateway.admin.render-authorize-action'      => static function ( ContainerInterface $container ): RenderAuthorizeAction {
 

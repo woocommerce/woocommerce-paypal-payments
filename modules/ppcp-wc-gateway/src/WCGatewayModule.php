@@ -25,6 +25,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\DccWithoutPayPalAdminNotice;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
@@ -259,13 +260,14 @@ class WCGatewayModule implements ModuleInterface {
 		add_action(
 			'woocommerce_order_action_ppcp_authorize_order',
 			static function ( \WC_Order $wc_order ) use ( $container ) {
+
 				/**
-				 * The PayPal Gateway.
+				 * The authorized payments processor.
 				 *
-				 * @var PayPalGateway $gateway
+				 * @var AuthorizedPaymentsProcessor $authorized_payments_processor
 				 */
-				$gateway = $container->get( 'wcgateway.paypal-gateway' );
-				$gateway->capture_authorized_payment( $wc_order );
+				$authorized_payments_processor = $container->get( 'wcgateway.processor.authorized-payments' );
+				$authorized_payments_processor->capture_authorized_payment( $wc_order );
 			}
 		);
 	}
