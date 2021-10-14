@@ -193,7 +193,7 @@ class AuthorizedPaymentsProcessor {
 	 *
 	 * @param string $status The status.
 	 */
-	private function render_authorization_message_for_status( string $status ) {
+	private function render_authorization_message_for_status( string $status ): void {
 
 		$message_mapping = array(
 			self::SUCCESSFUL        => AuthorizeOrderActionNotice::SUCCESS,
