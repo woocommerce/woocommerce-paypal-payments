@@ -78,7 +78,7 @@ class WebhookSimulation {
 	 *
 	 * @throws Exception If failed to start simulation.
 	 */
-	public function start() {
+	public function start(): void {
 		if ( ! $this->webhook ) {
 			throw new Exception( 'Webhooks not registered' );
 		}

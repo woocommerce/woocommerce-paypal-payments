@@ -230,13 +230,25 @@ class IncomingWebhookEndpoint {
 	 * @return string
 	 */
 	public function url(): string {
-		return rest_url( self::NAMESPACE . '/' . self::ROUTE );
+		$url = rest_url( self::NAMESPACE . '/' . self::ROUTE );
+
+		$url = str_replace( 'http://', 'https://', $url );
+
+		$ngrok_host = getenv( 'NGROK_HOST' );
+		if ( $ngrok_host ) {
+			$host = wp_parse_url( $url, PHP_URL_HOST );
+			if ( $host ) {
+				$url = str_replace( $host, $ngrok_host, $url );
+			}
+		}
+
+		return $url;
 	}
 
 	/**
 	 * Returns the event types, which are handled by the endpoint.
 	 *
-	 * @return array
+	 * @return string[]
 	 */
 	public function handled_event_types(): array {
 		$event_types = array();

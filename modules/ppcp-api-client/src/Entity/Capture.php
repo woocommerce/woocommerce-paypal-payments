@@ -164,7 +164,7 @@ class Capture {
 	 * @return array
 	 */
 	public function to_array() : array {
-		$data = array(
+		$data    = array(
 			'id'                => $this->id(),
 			'status'            => $this->status()->name(),
 			'amount'            => $this->amount()->to_array(),
@@ -173,8 +173,9 @@ class Capture {
 			'invoice_id'        => $this->invoice_id(),
 			'custom_id'         => $this->custom_id(),
 		);
-		if ( $this->status()->details() ) {
-			$data['status_details'] = array( 'reason' => $this->status()->details()->reason() );
+		$details = $this->status()->details();
+		if ( $details ) {
+			$data['status_details'] = array( 'reason' => $details->reason() );
 		}
 		return $data;
 	}

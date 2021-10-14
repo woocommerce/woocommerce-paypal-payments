@@ -221,10 +221,10 @@ return array(
 	'api.factory.webhook'                   => static function ( ContainerInterface $container ): WebhookFactory {
 		return new WebhookFactory();
 	},
-	'api.factory.webhook-event'             => static function ( $container ): WebhookEventFactory {
+	'api.factory.webhook-event'             => static function ( ContainerInterface $container ): WebhookEventFactory {
 		return new WebhookEventFactory();
 	},
-	'api.factory.capture'                   => static function ( $container ): CaptureFactory {
+	'api.factory.capture'                   => static function ( ContainerInterface $container ): CaptureFactory {
 
 		$amount_factory   = $container->get( 'api.factory.amount' );
 		return new CaptureFactory( $amount_factory );
