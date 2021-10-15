@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
+use WP_REST_Response;
 
 /**
  * Class PaymentCaptureCompleted
@@ -78,9 +79,9 @@ class PaymentCaptureCompleted implements RequestHandler {
 	 *
 	 * @param \WP_REST_Request $request The request.
 	 *
-	 * @return \WP_REST_Response
+	 * @return WP_REST_Response
 	 */
-	public function handle_request( \WP_REST_Request $request ): \WP_REST_Response {
+	public function handle_request( \WP_REST_Request $request ): WP_REST_Response {
 		$response = array( 'success' => false );
 
 		$webhook_id = (string) ( $request['id'] ?? '' );
@@ -90,7 +91,7 @@ class PaymentCaptureCompleted implements RequestHandler {
 			$message = 'Resource data not found in webhook request.';
 			$this->logger->warning( $message, array( 'request' => $request ) );
 			$response['message'] = $message;
-			return rest_ensure_response( $response );
+			return new WP_REST_Response( $response );
 		}
 
 		$wc_order_id = isset( $resource['custom_id'] ) ?
@@ -99,7 +100,7 @@ class PaymentCaptureCompleted implements RequestHandler {
 			$message = sprintf( 'No order for webhook event %s was found.', $webhook_id );
 			$this->logger->warning( $message, array( 'request' => $request ) );
 			$response['message'] = $message;
-			return rest_ensure_response( $response );
+			return new WP_REST_Response( $response );
 		}
 
 		$wc_order = wc_get_order( $wc_order_id );
@@ -107,12 +108,12 @@ class PaymentCaptureCompleted implements RequestHandler {
 			$message = sprintf( 'No order for webhook event %s was found.', $webhook_id );
 			$this->logger->warning( $message, array( 'request' => $request ) );
 			$response['message'] = $message;
-			return rest_ensure_response( $response );
+			return new WP_REST_Response( $response );
 		}
 
 		if ( $wc_order->get_status() !== 'on-hold' ) {
 			$response['success'] = true;
-			return rest_ensure_response( $response );
+			return new WP_REST_Response( $response );
 		}
 		$wc_order->add_order_note(
 			__( 'Payment successfully captured.', 'woocommerce-paypal-payments' )
@@ -155,6 +156,6 @@ class PaymentCaptureCompleted implements RequestHandler {
 		}
 
 		$response['success'] = true;
-		return rest_ensure_response( $response );
+		return new WP_REST_Response( $response );
 	}
 }
