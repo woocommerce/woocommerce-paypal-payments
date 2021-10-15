@@ -68,7 +68,7 @@ return array(
 			new CheckoutOrderCompleted( $logger, $prefix ),
 			new PaymentCaptureRefunded( $logger, $prefix ),
 			new PaymentCaptureReversed( $logger, $prefix ),
-			new PaymentCaptureCompleted( $logger, $prefix ),
+			new PaymentCaptureCompleted( $logger, $prefix, $order_endpoint ),
 		);
 	},
 

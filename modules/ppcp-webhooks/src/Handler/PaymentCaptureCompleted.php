@@ -9,15 +9,18 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
 
+use Exception;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 
 /**
  * Class PaymentCaptureCompleted
  */
 class PaymentCaptureCompleted implements RequestHandler {
 
-	use PrefixTrait;
+	use PrefixTrait, TransactionIdHandlingTrait;
 
 	/**
 	 * The logger.
@@ -27,14 +30,27 @@ class PaymentCaptureCompleted implements RequestHandler {
 	private $logger;
 
 	/**
+	 * The order endpoint.
+	 *
+	 * @var OrderEndpoint
+	 */
+	private $order_endpoint;
+
+	/**
 	 * PaymentCaptureCompleted constructor.
 	 *
 	 * @param LoggerInterface $logger The logger.
 	 * @param string          $prefix The prefix.
+	 * @param OrderEndpoint   $order_endpoint The order endpoint.
 	 */
-	public function __construct( LoggerInterface $logger, string $prefix ) {
-		$this->logger = $logger;
-		$this->prefix = $prefix;
+	public function __construct(
+		LoggerInterface $logger,
+		string $prefix,
+		OrderEndpoint $order_endpoint
+	) {
+		$this->logger         = $logger;
+		$this->prefix         = $prefix;
+		$this->order_endpoint = $order_endpoint;
 	}
 
 	/**
@@ -65,10 +81,10 @@ class PaymentCaptureCompleted implements RequestHandler {
 	 * @return \WP_REST_Response
 	 */
 	public function handle_request( \WP_REST_Request $request ): \WP_REST_Response {
-		$response = array( 'success' => false );
-		$order_id = isset( $request['resource']['custom_id'] ) ?
+		$response    = array( 'success' => false );
+		$wc_order_id = isset( $request['resource']['custom_id'] ) ?
 			$this->sanitize_custom_id( $request['resource']['custom_id'] ) : 0;
-		if ( ! $order_id ) {
+		if ( ! $wc_order_id ) {
 			$message = sprintf(
 				// translators: %s is the PayPal webhook Id.
 				__(
@@ -87,7 +103,7 @@ class PaymentCaptureCompleted implements RequestHandler {
 			$response['message'] = $message;
 			return rest_ensure_response( $response );
 		}
-		$wc_order = wc_get_order( $order_id );
+		$wc_order = wc_get_order( $wc_order_id );
 
 		if ( ! is_a( $wc_order, \WC_Order::class ) ) {
 			$message = sprintf(
@@ -135,6 +151,24 @@ class PaymentCaptureCompleted implements RequestHandler {
 				'order'   => $wc_order,
 			)
 		);
+
+		$order_id = $request['resource']['supplementary_data']['related_ids']['order_id'] ?? null;
+
+		if ( $order_id ) {
+			try {
+				$this->logger->emergency( (string) $order_id );
+
+				$order = $this->order_endpoint->order( $order_id );
+
+				$transaction_id = $this->get_paypal_order_transaction_id( $order );
+				if ( $transaction_id ) {
+					$this->update_transaction_id( $transaction_id, $wc_order, $this->logger );
+				}
+			} catch ( Exception $exception ) {
+				$this->logger->warning( 'Failed to get transaction ID: ' . $exception->getMessage() );
+			}
+		}
+
 		$response['success'] = true;
 		return rest_ensure_response( $response );
 	}
