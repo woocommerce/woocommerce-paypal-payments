@@ -193,7 +193,7 @@ class OrderEndpoint {
 				: ApplicationContext::SHIPPING_PREFERENCE_GET_FROM_FILE
 			: ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING;
 
-		if ( $this->items_without_shipping( $items ) ) {
+		if ( $this->has_items_without_shipping( $items ) ) {
 			$shipping_preferences = ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING;
 		}
 
@@ -578,12 +578,12 @@ class OrderEndpoint {
 	}
 
 	/**
-	 * Checks if items contains shipping.
+	 * Checks if there is at least one item without shipping.
 	 *
 	 * @param array $items The items.
 	 * @return bool Whether items contains shipping or not.
 	 */
-	private function items_without_shipping( array $items ): bool {
+	private function has_items_without_shipping( array $items ): bool {
 		foreach ( $items as $item ) {
 			if ( ! $item->shipping() ) {
 				return true;
