@@ -876,6 +876,7 @@ class OrderEndpointTest extends TestCase
         $purchaseUnit
             ->expects('to_array')
             ->andReturn(['singlePurchaseUnit']);
+        $purchaseUnit->expects('shipping')->andReturn(true);
 
         expect('wp_remote_get')
             ->andReturnUsing(
@@ -978,6 +979,7 @@ class OrderEndpointTest extends TestCase
         $purchaseUnit
             ->expects('to_array')
             ->andReturn(['singlePurchaseUnit']);
+		$purchaseUnit->expects('shipping')->andReturn(true);
 
         expect('wp_remote_get')
             ->andReturnUsing(
@@ -1051,6 +1053,7 @@ class OrderEndpointTest extends TestCase
         $purchaseUnit
             ->expects('to_array')
             ->andReturn(['singlePurchaseUnit']);
+		$purchaseUnit->expects('shipping')->andReturn(true);
 
         expect('wp_remote_get')
             ->andReturnUsing(
@@ -1134,6 +1137,7 @@ class OrderEndpointTest extends TestCase
         $purchaseUnit
             ->expects('to_array')
             ->andReturn(['singlePurchaseUnit']);
+		$purchaseUnit->expects('shipping')->andReturn(true);
 
         expect('wp_remote_get')
             ->andReturnUsing(
