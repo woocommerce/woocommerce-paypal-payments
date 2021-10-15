@@ -81,46 +81,31 @@ class PaymentCaptureCompleted implements RequestHandler {
 	 * @return \WP_REST_Response
 	 */
 	public function handle_request( \WP_REST_Request $request ): \WP_REST_Response {
-		$response    = array( 'success' => false );
-		$wc_order_id = isset( $request['resource']['custom_id'] ) ?
-			$this->sanitize_custom_id( $request['resource']['custom_id'] ) : 0;
-		if ( ! $wc_order_id ) {
-			$message = sprintf(
-				// translators: %s is the PayPal webhook Id.
-				__(
-					'No order for webhook event %s was found.',
-					'woocommerce-paypal-payments'
-				),
-				isset( $request['id'] ) ? $request['id'] : ''
-			);
-			$this->logger->log(
-				'warning',
-				$message,
-				array(
-					'request' => $request,
-				)
-			);
+		$response = array( 'success' => false );
+
+		$webhook_id = (string) ( $request['id'] ?? '' );
+
+		$resource = $request['resource'];
+		if ( ! is_array( $resource ) ) {
+			$message = 'Resource data not found in webhook request.';
+			$this->logger->warning( $message, array( 'request' => $request ) );
 			$response['message'] = $message;
 			return rest_ensure_response( $response );
 		}
-		$wc_order = wc_get_order( $wc_order_id );
 
+		$wc_order_id = isset( $resource['custom_id'] ) ?
+			$this->sanitize_custom_id( (string) $resource['custom_id'] ) : 0;
+		if ( ! $wc_order_id ) {
+			$message = sprintf( 'No order for webhook event %s was found.', $webhook_id );
+			$this->logger->warning( $message, array( 'request' => $request ) );
+			$response['message'] = $message;
+			return rest_ensure_response( $response );
+		}
+
+		$wc_order = wc_get_order( $wc_order_id );
 		if ( ! is_a( $wc_order, \WC_Order::class ) ) {
-			$message = sprintf(
-			// translators: %s is the PayPal webhook Id.
-				__(
-					'No order for webhook event %s was found.',
-					'woocommerce-paypal-payments'
-				),
-				isset( $request['id'] ) ? $request['id'] : ''
-			);
-			$this->logger->log(
-				'warning',
-				$message,
-				array(
-					'request' => $request,
-				)
-			);
+			$message = sprintf( 'No order for webhook event %s was found.', $webhook_id );
+			$this->logger->warning( $message, array( 'request' => $request ) );
 			$response['message'] = $message;
 			return rest_ensure_response( $response );
 		}
@@ -152,7 +137,7 @@ class PaymentCaptureCompleted implements RequestHandler {
 			)
 		);
 
-		$order_id = $request['resource']['supplementary_data']['related_ids']['order_id'] ?? null;
+		$order_id = $resource['supplementary_data']['related_ids']['order_id'] ?? null;
 
 		if ( $order_id ) {
 			try {
