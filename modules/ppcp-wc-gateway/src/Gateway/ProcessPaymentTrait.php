@@ -206,7 +206,9 @@ trait ProcessPaymentTrait {
 
 					$voidable_authorizations = array_filter(
 						$payments->authorizations(),
-						array( $this, 'is_voidable_authorization' )
+						function ( Authorization $authorization ): bool {
+							return $authorization->is_voidable();
+						}
 					);
 					if ( ! $voidable_authorizations ) {
 						throw new RuntimeException( 'No voidable authorizations.' );
@@ -346,15 +348,4 @@ trait ProcessPaymentTrait {
 	 * @return Environment
 	 */
 	abstract protected function environment(): Environment;
-
-	/**
-	 * Checks whether the authorization can be voided.
-	 *
-	 * @param Authorization $authorization The authorization to check.
-	 * @return bool
-	 */
-	private function is_voidable_authorization( Authorization $authorization ): bool {
-		return $authorization->status()->is( AuthorizationStatus::CREATED ) ||
-			$authorization->status()->is( AuthorizationStatus::PENDING );
-	}
 }

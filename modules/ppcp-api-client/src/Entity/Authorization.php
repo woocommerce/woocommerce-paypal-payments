@@ -62,6 +62,16 @@ class Authorization {
 	}
 
 	/**
+	 * Checks whether the authorization can be voided.
+	 *
+	 * @return bool
+	 */
+	public function is_voidable(): bool {
+		return $this->authorization_status->is( AuthorizationStatus::CREATED ) ||
+			$this->authorization_status->is( AuthorizationStatus::PENDING );
+	}
+
+	/**
 	 * Returns the object as array.
 	 *
 	 * @return array
