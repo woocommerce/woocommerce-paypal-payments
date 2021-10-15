@@ -354,6 +354,7 @@ trait ProcessPaymentTrait {
 	 * @return bool
 	 */
 	private function is_voidable_authorization( Authorization $authorization ): bool {
-		return $authorization->status()->is( AuthorizationStatus::CREATED );
+		return $authorization->status()->is( AuthorizationStatus::CREATED ) ||
+			$authorization->status()->is( AuthorizationStatus::PENDING );
 	}
 }
