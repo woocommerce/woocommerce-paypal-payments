@@ -103,7 +103,7 @@ class SubscriptionModule implements ModuleInterface {
 					$new_columns[ $key ] = $value;
 
 					if ( 'subscription_relationship' === $key ) {
-						$new_columns['paypal_payments'] = __( 'PayPal payments', 'woocommerce-paypal-payments' );
+						$new_columns['paypal_payments'] = '<span class="tips" data-tip="'. esc_attr__( 'Whether a saved PayPal payment exist for customer or not.', 'woocommerce-paypal-payments' ) .'">'. esc_attr__( 'PayPal payments', 'woocommerce-paypal-payments' ) .'</span>';
 					}
 				}
 
@@ -125,7 +125,7 @@ class SubscriptionModule implements ModuleInterface {
 						}
 					}
 
-					esc_html_e( 'No', 'woocommerce-paypal-payments' );
+					echo '<span class="tips" data-tip="No payments available for customer because either removed it from My Account or was not possible to save it on PayPal. Please choose another payment method.">'. esc_attr__( 'No', 'woocommerce-paypal-payments' ) .'</span>';
 				}
 			}
 		);
