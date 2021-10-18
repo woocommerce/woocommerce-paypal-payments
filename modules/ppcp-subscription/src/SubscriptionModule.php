@@ -94,6 +94,41 @@ class SubscriptionModule implements ModuleInterface {
 			20,
 			2
 		);
+
+		add_filter(
+			'manage_edit-shop_order_columns',
+			function( $columns ) {
+				$new_columns = array();
+				foreach ( $columns as $key => $value ) {
+					$new_columns[ $key ] = $value;
+
+					if ( 'subscription_relationship' === $key ) {
+						$new_columns['paypal_payments'] = __( 'PayPal payments', 'woocommerce-paypal-payments' );
+					}
+				}
+
+				return $new_columns;
+			}
+		);
+
+		add_action(
+			'manage_shop_order_posts_custom_column',
+			function ( $column ) {
+				if ( 'paypal_payments' === $column ) {
+					global $post;
+					$order = wc_get_order( $post->ID );
+					if ( $order ) {
+						$tokens = get_user_meta( $order->get_customer_id(), PaymentTokenRepository::USER_META, true );
+						if ( $tokens ) {
+							esc_html_e( 'Yes', 'woocommerce-paypal-payments' );
+							return;
+						}
+					}
+
+					esc_html_e( 'No', 'woocommerce-paypal-payments' );
+				}
+			}
+		);
 	}
 
 	/**
