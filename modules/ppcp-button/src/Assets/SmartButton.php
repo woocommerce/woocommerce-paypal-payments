@@ -741,7 +741,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException If a setting was not found.
 	 */
 	private function url(): string {
-		$intent = ( $this->settings->has( 'intent' ) ) ? $this->settings->get( 'intent' ) : 'CAPTURE';
+		$intent = ( $this->settings->has( 'intent' ) ) ? $this->settings->get( 'intent' ) : 'capture';
 
 		$params = array(
 			'client-id'        => $this->client_id,
