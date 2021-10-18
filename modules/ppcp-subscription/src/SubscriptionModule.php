@@ -94,47 +94,6 @@ class SubscriptionModule implements ModuleInterface {
 			20,
 			2
 		);
-
-		add_filter(
-			'manage_edit-shop_order_columns',
-			function( array $columns ) {
-				$new_columns = array();
-				foreach ( $columns as $key => $value ) {
-					$new_columns[ $key ] = $value;
-
-					if ( 'subscription_relationship' === $key ) {
-						$new_columns['paypal_payments'] = '<span class="tips" data-tip="' . esc_attr__( 'Whether a saved PayPal payment exist for customer or not.', 'woocommerce-paypal-payments' ) . '">' . esc_attr__( 'PayPal payments', 'woocommerce-paypal-payments' ) . '</span>';
-					}
-				}
-
-				return $new_columns;
-			}
-		);
-
-		add_action(
-			'manage_shop_order_posts_custom_column',
-			function ( string $column ) {
-				if ( 'paypal_payments' === $column ) {
-					/**
-					 * Allow using global post.
-					 *
-					 * @psalm-suppress InvalidGlobal
-					 */
-					global $post;
-
-					$order = wc_get_order( $post->ID );
-					if ( is_a( $order, \WC_Order::class ) ) {
-						$tokens = get_user_meta( $order->get_customer_id(), PaymentTokenRepository::USER_META, true );
-						if ( $tokens ) {
-							esc_html_e( 'Yes', 'woocommerce-paypal-payments' );
-							return;
-						}
-					}
-
-					echo '<span class="tips" data-tip="No payments available for customer because either removed it from My Account or was not possible to save it on PayPal. Please choose another payment method.">' . esc_attr__( 'No', 'woocommerce-paypal-payments' ) . '</span>';
-				}
-			}
-		);
 	}
 
 	/**
