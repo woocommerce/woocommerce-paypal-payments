@@ -231,8 +231,8 @@ return array(
 		return new AuthorizedPaymentsProcessor( $order_endpoint, $payments_endpoint, $logger );
 	},
 	'wcgateway.admin.render-authorize-action'      => static function ( ContainerInterface $container ): RenderAuthorizeAction {
-
-		return new RenderAuthorizeAction();
+		$column = $container->get( 'wcgateway.admin.orders-payment-status-column' );
+		return new RenderAuthorizeAction( $column );
 	},
 	'wcgateway.admin.order-payment-status'         => static function ( ContainerInterface $container ): PaymentStatusOrderDetail {
 		$column = $container->get( 'wcgateway.admin.orders-payment-status-column' );
