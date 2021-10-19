@@ -16,13 +16,14 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\PaymentsStatusHandlingTrait;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 
 /**
  * Trait ProcessPaymentTrait
  */
 trait ProcessPaymentTrait {
 
-	use OrderMetaTrait, PaymentsStatusHandlingTrait;
+	use OrderMetaTrait, PaymentsStatusHandlingTrait, TransactionIdHandlingTrait;
 
 	/**
 	 * Process a payment for an WooCommerce order.
@@ -100,6 +101,11 @@ trait ProcessPaymentTrait {
 					$order = $this->order_endpoint->authorize( $order );
 
 					$wc_order->update_meta_data( PayPalGateway::CAPTURED_META_KEY, 'false' );
+				}
+
+				$transaction_id = $this->get_paypal_order_transaction_id( $order );
+				if ( $transaction_id ) {
+					$this->update_transaction_id( $transaction_id, $wc_order );
 				}
 
 				$this->handle_new_order_status( $order, $wc_order );
