@@ -143,9 +143,7 @@ class PaymentCaptureCompleted implements RequestHandler {
 
 		if ( $order_id ) {
 			try {
-				$this->logger->emergency( (string) $order_id );
-
-				$order = $this->order_endpoint->order( $order_id );
+				$order = $this->order_endpoint->order( (string) $order_id );
 
 				$transaction_id = $this->get_paypal_order_transaction_id( $order );
 				if ( $transaction_id ) {
