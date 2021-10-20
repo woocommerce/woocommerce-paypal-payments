@@ -173,7 +173,10 @@ trait ProcessPaymentTrait {
 					if ( $tokens ) {
 						$this->logger->info( "Payment for subscription parent order #{$order_id} was saved correctly." );
 
-						$this->authorized_payments_processor->capture_authorized_payment( $wc_order );
+						if ( $this->config->has( 'intent' ) && strtoupper( (string) $this->config->get( 'intent' ) ) === 'CAPTURE' ) {
+							$this->authorized_payments_processor->capture_authorized_payment( $wc_order );
+						}
+
 						$this->session_handler->destroy_session_data();
 
 						return array(
