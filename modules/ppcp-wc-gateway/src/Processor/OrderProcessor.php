@@ -26,7 +26,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
  */
 class OrderProcessor {
 
-	use OrderMetaTrait, PaymentsStatusHandlingTrait;
+	use OrderMetaTrait, PaymentsStatusHandlingTrait, TransactionIdHandlingTrait;
 
 	/**
 	 * The environment.
@@ -176,8 +176,8 @@ class OrderProcessor {
 
 		$transaction_id = $this->get_paypal_order_transaction_id( $order );
 
-		if ( '' !== $transaction_id ) {
-			$this->set_order_transaction_id( $transaction_id, $wc_order );
+		if ( $transaction_id ) {
+			$this->update_transaction_id( $transaction_id, $wc_order );
 		}
 
 		$this->handle_new_order_status( $order, $wc_order );
@@ -193,55 +193,6 @@ class OrderProcessor {
 		$this->session_handler->destroy_session_data();
 		$this->last_error = '';
 		return true;
-	}
-
-	/**
-	 * Set transaction id to WC order meta data.
-	 *
-	 * @param string    $transaction_id Transaction id to set.
-	 * @param \WC_Order $wc_order Order to set transaction ID to.
-	 */
-	public function set_order_transaction_id( string $transaction_id, \WC_Order $wc_order ) {
-		try {
-			$wc_order->set_transaction_id( $transaction_id );
-		} catch ( \WC_Data_Exception $exception ) {
-			$this->logger->log(
-				'warning',
-				sprintf(
-					'Failed to set transaction ID. Exception caught when tried: %1$s',
-					$exception->getMessage()
-				)
-			);
-		}
-	}
-
-	/**
-	 * Retrieve transaction id from PayPal order.
-	 *
-	 * @param Order $order Order to get transaction id from.
-	 *
-	 * @return string
-	 */
-	private function get_paypal_order_transaction_id( Order $order ): string {
-		$purchase_units = $order->purchase_units();
-
-		if ( ! isset( $purchase_units[0] ) ) {
-			return '';
-		}
-
-		$payments = $purchase_units[0]->payments();
-
-		if ( null === $payments ) {
-			return '';
-		}
-
-		$captures = $payments->captures();
-
-		if ( isset( $captures[0] ) ) {
-			return $captures[0]->id();
-		}
-
-		return '';
 	}
 
 	/**

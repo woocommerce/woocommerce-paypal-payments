@@ -58,6 +58,7 @@ return array(
 		$payments_endpoint = $container->get( 'api.endpoint.payments' );
 		$order_endpoint = $container->get( 'api.endpoint.order' );
 		$environment         = $container->get( 'onboarding.environment' );
+		$logger              = $container->get( 'woocommerce.logger.woocommerce' );
 		return new PayPalGateway(
 			$settings_renderer,
 			$order_processor,
@@ -236,8 +237,8 @@ return array(
 		return new AuthorizedPaymentsProcessor( $order_endpoint, $payments_endpoint, $logger, $notice );
 	},
 	'wcgateway.admin.render-authorize-action'      => static function ( ContainerInterface $container ): RenderAuthorizeAction {
-
-		return new RenderAuthorizeAction();
+		$column = $container->get( 'wcgateway.admin.orders-payment-status-column' );
+		return new RenderAuthorizeAction( $column );
 	},
 	'wcgateway.admin.order-payment-status'         => static function ( ContainerInterface $container ): PaymentStatusOrderDetail {
 		$column = $container->get( 'wcgateway.admin.orders-payment-status-column' );

@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatus;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -107,13 +108,6 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	protected $payment_token_repository;
 
 	/**
-	 * The logger.
-	 *
-	 * @var LoggerInterface
-	 */
-	protected $logger;
-
-	/**
 	 * The payments endpoint
 	 *
 	 * @var PaymentsEndpoint
@@ -149,6 +143,13 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	protected $environment;
 
 	/**
+	 * The logger.
+	 *
+	 * @var LoggerInterface
+	 */
+	private $logger;
+
+	/**
 	 * PayPalGateway constructor.
 	 *
 	 * @param SettingsRenderer            $settings_renderer The Settings Renderer.
@@ -166,6 +167,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @param LoggerInterface             $logger  The logger.
 	 * @param PaymentsEndpoint            $payments_endpoint The payments endpoint.
 	 * @param OrderEndpoint               $order_endpoint The order endpoint.
+	 * @param LoggerInterface             $logger The logger.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
@@ -196,6 +198,18 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->page_id                       = $page_id;
 		$this->environment                   = $environment;
 		$this->onboarded                     = $state->current_state() === State::STATE_ONBOARDED;
+		$this->id                       = self::ID;
+		$this->order_processor          = $order_processor;
+		$this->authorized_payments      = $authorized_payments_processor;
+		$this->settings_renderer        = $settings_renderer;
+		$this->config                   = $config;
+		$this->session_handler          = $session_handler;
+		$this->refund_processor         = $refund_processor;
+		$this->transaction_url_provider = $transaction_url_provider;
+		$this->page_id                  = $page_id;
+		$this->environment              = $environment;
+		$this->logger                   = $logger;
+		$this->onboarded                = $state->current_state() === State::STATE_ONBOARDED;
 
 		if ( $this->onboarded ) {
 			$this->supports = array( 'refunds' );
