@@ -73,6 +73,7 @@ return array(
 		$intent                       = $settings->has( 'intent' ) && strtoupper( (string) $settings->get( 'intent' ) ) === 'AUTHORIZE' ? 'AUTHORIZE' : 'CAPTURE';
 		$application_context_repository = $container->get( 'api.repository.application-context' );
 		$pay_pal_request_id_repository              = $container->get( 'api.repository.paypal-request-id' );
+		$subscription_helper = $container->get( 'subscription.helper' );
 		return new OrderEndpoint(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
@@ -82,6 +83,7 @@ return array(
 			$logger,
 			$application_context_repository,
 			$pay_pal_request_id_repository,
+			$subscription_helper,
 			$bn_code
 		);
 	},

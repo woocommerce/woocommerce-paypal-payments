@@ -27,6 +27,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\ErrorResponse;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 
 /**
  * Class OrderEndpoint
@@ -34,6 +35,13 @@ use Psr\Log\LoggerInterface;
 class OrderEndpoint {
 
 	use RequestTrait;
+
+	/**
+	 * The subscription helper
+	 *
+	 * @var SubscriptionHelper
+	 */
+	protected $subscription_helper;
 
 	/**
 	 * The host.
@@ -109,6 +117,7 @@ class OrderEndpoint {
 	 * @param LoggerInterface              $logger The logger.
 	 * @param ApplicationContextRepository $application_context_repository The application context repository.
 	 * @param PayPalRequestIdRepository    $paypal_request_id_repository The paypal request id repository.
+	 * @param SubscriptionHelper           $subscription_helper The subscription helper.
 	 * @param string                       $bn_code The BN Code.
 	 */
 	public function __construct(
@@ -120,6 +129,7 @@ class OrderEndpoint {
 		LoggerInterface $logger,
 		ApplicationContextRepository $application_context_repository,
 		PayPalRequestIdRepository $paypal_request_id_repository,
+		SubscriptionHelper $subscription_helper,
 		string $bn_code = ''
 	) {
 
@@ -132,6 +142,7 @@ class OrderEndpoint {
 		$this->application_context_repository = $application_context_repository;
 		$this->bn_code                        = $bn_code;
 		$this->paypal_request_id_repository   = $paypal_request_id_repository;
+		$this->subscription_helper            = $subscription_helper;
 	}
 
 	/**
@@ -199,7 +210,7 @@ class OrderEndpoint {
 
 		$bearer = $this->bearer->bearer();
 		$data   = array(
-			'intent'              => $this->intent,
+			'intent'              => ( $this->subscription_helper->cart_contains_subscription() || $this->subscription_helper->current_product_is_subscription() ) ? 'AUTHORIZE' : $this->intent,
 			'purchase_units'      => array_map(
 				static function ( PurchaseUnit $item ): array {
 					return $item->to_array();

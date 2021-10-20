@@ -127,7 +127,9 @@ class RefundProcessor {
 				case self::REFUND_MODE_VOID:
 					$voidable_authorizations = array_filter(
 						$payments->authorizations(),
-						array( $this, 'is_voidable_authorization' )
+						function ( Authorization $authorization ): bool {
+							return $authorization->is_voidable();
+						}
 					);
 					if ( ! $voidable_authorizations ) {
 						throw new RuntimeException( 'No voidable authorizations.' );
@@ -163,7 +165,7 @@ class RefundProcessor {
 		$authorizations = $payments->authorizations();
 		if ( $authorizations ) {
 			foreach ( $authorizations as $authorization ) {
-				if ( $this->is_voidable_authorization( $authorization ) ) {
+				if ( $authorization->is_voidable() ) {
 					return self::REFUND_MODE_VOID;
 				}
 			}
@@ -174,16 +176,5 @@ class RefundProcessor {
 		}
 
 		return self::REFUND_MODE_UNKNOWN;
-	}
-
-	/**
-	 * Checks whether the authorization can be voided.
-	 *
-	 * @param Authorization $authorization The authorization to check.
-	 * @return bool
-	 */
-	private function is_voidable_authorization( Authorization $authorization ): bool {
-		return $authorization->status()->is( AuthorizationStatus::CREATED ) ||
-			$authorization->status()->is( AuthorizationStatus::PENDING );
 	}
 }

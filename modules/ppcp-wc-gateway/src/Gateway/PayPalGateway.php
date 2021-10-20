@@ -10,16 +10,17 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatus;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
-use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
+use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Webhooks\Status\WebhooksStatusPage;
@@ -32,7 +33,6 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	use ProcessPaymentTrait;
 
 	const ID                          = 'ppcp-gateway';
-	const CAPTURED_META_KEY           = '_ppcp_paypal_captured';
 	const INTENT_META_KEY             = '_ppcp_paypal_intent';
 	const ORDER_ID_META_KEY           = '_ppcp_paypal_order_id';
 	const ORDER_PAYMENT_MODE_META_KEY = '_ppcp_paypal_payment_mode';
@@ -45,25 +45,18 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	protected $settings_renderer;
 
 	/**
-	 * The processor for authorized payments.
-	 *
-	 * @var AuthorizedPaymentsProcessor
-	 */
-	protected $authorized_payments;
-
-	/**
-	 * The Authorized Order Action Notice.
-	 *
-	 * @var AuthorizeOrderActionNotice
-	 */
-	protected $notice;
-
-	/**
 	 * The processor for orders.
 	 *
 	 * @var OrderProcessor
 	 */
 	protected $order_processor;
+
+	/**
+	 * The processor for authorized payments.
+	 *
+	 * @var AuthorizedPaymentsProcessor
+	 */
+	protected $authorized_payments_processor;
 
 	/**
 	 * The settings.
@@ -80,6 +73,20 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	protected $session_handler;
 
 	/**
+	 * The Refund Processor.
+	 *
+	 * @var RefundProcessor
+	 */
+	private $refund_processor;
+
+	/**
+	 * The state.
+	 *
+	 * @var State
+	 */
+	protected $state;
+
+	/**
 	 * Service able to provide transaction url for an order.
 	 *
 	 * @var TransactionUrlProvider
@@ -94,11 +101,25 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	protected $subscription_helper;
 
 	/**
-	 * The Refund Processor.
+	 * The payment token repository.
 	 *
-	 * @var RefundProcessor
+	 * @var PaymentTokenRepository
 	 */
-	private $refund_processor;
+	protected $payment_token_repository;
+
+	/**
+	 * The payments endpoint
+	 *
+	 * @var PaymentsEndpoint
+	 */
+	protected $payments_endpoint;
+
+	/**
+	 * The order endpoint.
+	 *
+	 * @var OrderEndpoint
+	 */
+	protected $order_endpoint;
 
 	/**
 	 * Whether the plugin is in onboarded state.
@@ -134,7 +155,6 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @param SettingsRenderer            $settings_renderer The Settings Renderer.
 	 * @param OrderProcessor              $order_processor The Order Processor.
 	 * @param AuthorizedPaymentsProcessor $authorized_payments_processor The Authorized Payments Processor.
-	 * @param AuthorizeOrderActionNotice  $notice The Order Action Notice object.
 	 * @param ContainerInterface          $config The settings.
 	 * @param SessionHandler              $session_handler The Session Handler.
 	 * @param RefundProcessor             $refund_processor The Refund Processor.
@@ -143,13 +163,15 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @param SubscriptionHelper          $subscription_helper The subscription helper.
 	 * @param string                      $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
 	 * @param Environment                 $environment The environment.
-	 * @param LoggerInterface             $logger The logger.
+	 * @param PaymentTokenRepository      $payment_token_repository The payment token repository.
+	 * @param LoggerInterface             $logger  The logger.
+	 * @param PaymentsEndpoint            $payments_endpoint The payments endpoint.
+	 * @param OrderEndpoint               $order_endpoint The order endpoint.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
 		OrderProcessor $order_processor,
 		AuthorizedPaymentsProcessor $authorized_payments_processor,
-		AuthorizeOrderActionNotice $notice,
 		ContainerInterface $config,
 		SessionHandler $session_handler,
 		RefundProcessor $refund_processor,
@@ -158,22 +180,34 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		SubscriptionHelper $subscription_helper,
 		string $page_id,
 		Environment $environment,
-		LoggerInterface $logger
+		PaymentTokenRepository $payment_token_repository,
+		LoggerInterface $logger,
+		PaymentsEndpoint $payments_endpoint,
+		OrderEndpoint $order_endpoint
 	) {
 
-		$this->id                       = self::ID;
-		$this->order_processor          = $order_processor;
-		$this->authorized_payments      = $authorized_payments_processor;
-		$this->notice                   = $notice;
-		$this->settings_renderer        = $settings_renderer;
-		$this->config                   = $config;
-		$this->session_handler          = $session_handler;
-		$this->refund_processor         = $refund_processor;
-		$this->transaction_url_provider = $transaction_url_provider;
-		$this->page_id                  = $page_id;
-		$this->environment              = $environment;
-		$this->logger                   = $logger;
-		$this->onboarded                = $state->current_state() === State::STATE_ONBOARDED;
+		$this->id                            = self::ID;
+		$this->order_processor               = $order_processor;
+		$this->authorized_payments_processor = $authorized_payments_processor;
+		$this->settings_renderer             = $settings_renderer;
+		$this->config                        = $config;
+		$this->session_handler               = $session_handler;
+		$this->refund_processor              = $refund_processor;
+		$this->transaction_url_provider      = $transaction_url_provider;
+		$this->page_id                       = $page_id;
+		$this->environment                   = $environment;
+		$this->onboarded                     = $state->current_state() === State::STATE_ONBOARDED;
+		$this->id                            = self::ID;
+		$this->order_processor               = $order_processor;
+		$this->authorized_payments           = $authorized_payments_processor;
+		$this->settings_renderer             = $settings_renderer;
+		$this->config                        = $config;
+		$this->session_handler               = $session_handler;
+		$this->refund_processor              = $refund_processor;
+		$this->transaction_url_provider      = $transaction_url_provider;
+		$this->page_id                       = $page_id;
+		$this->environment                   = $environment;
+		$this->logger                        = $logger;
 
 		if ( $this->onboarded ) {
 			$this->supports = array( 'refunds' );
@@ -217,7 +251,12 @@ class PayPalGateway extends \WC_Payment_Gateway {
 				'process_admin_options',
 			)
 		);
-		$this->subscription_helper = $subscription_helper;
+		$this->subscription_helper      = $subscription_helper;
+		$this->payment_token_repository = $payment_token_repository;
+		$this->logger                   = $logger;
+		$this->payments_endpoint        = $payments_endpoint;
+		$this->order_endpoint           = $order_endpoint;
+		$this->state                    = $state;
 	}
 
 	/**
@@ -252,75 +291,6 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		if ( ! $should_show_enabled_checkbox ) {
 			unset( $this->form_fields['enabled'] );
 		}
-	}
-
-	/**
-	 * Captures an authorized payment for an WooCommerce order.
-	 *
-	 * @param \WC_Order $wc_order The WooCommerce order.
-	 *
-	 * @return bool
-	 */
-	public function capture_authorized_payment( \WC_Order $wc_order ): bool {
-		$result_status = $this->authorized_payments->process( $wc_order );
-		$this->render_authorization_message_for_status( $result_status );
-
-		if ( AuthorizedPaymentsProcessor::ALREADY_CAPTURED === $result_status ) {
-			if ( $wc_order->get_status() === 'on-hold' ) {
-				$wc_order->add_order_note(
-					__( 'Payment successfully captured.', 'woocommerce-paypal-payments' )
-				);
-			}
-
-			$wc_order->update_meta_data( self::CAPTURED_META_KEY, 'true' );
-			$wc_order->save();
-			$wc_order->payment_complete();
-			return true;
-		}
-
-		$captures = $this->authorized_payments->captures();
-		if ( empty( $captures ) ) {
-			return false;
-		}
-
-		$capture = end( $captures );
-
-		$this->update_transaction_id( $capture->id(), $wc_order, $this->logger );
-
-		$this->handle_capture_status( $capture, $wc_order );
-
-		if ( AuthorizedPaymentsProcessor::SUCCESSFUL === $result_status ) {
-			if ( $capture->status()->is( CaptureStatus::COMPLETED ) ) {
-				$wc_order->add_order_note(
-					__( 'Payment successfully captured.', 'woocommerce-paypal-payments' )
-				);
-			}
-			$wc_order->update_meta_data( self::CAPTURED_META_KEY, 'true' );
-			$wc_order->save();
-			return true;
-		}
-
-		return false;
-	}
-
-	/**
-	 * Displays the notice for a status.
-	 *
-	 * @param string $status The status.
-	 */
-	private function render_authorization_message_for_status( string $status ) {
-
-		$message_mapping = array(
-			AuthorizedPaymentsProcessor::SUCCESSFUL        => AuthorizeOrderActionNotice::SUCCESS,
-			AuthorizedPaymentsProcessor::ALREADY_CAPTURED  => AuthorizeOrderActionNotice::ALREADY_CAPTURED,
-			AuthorizedPaymentsProcessor::INACCESSIBLE      => AuthorizeOrderActionNotice::NO_INFO,
-			AuthorizedPaymentsProcessor::NOT_FOUND         => AuthorizeOrderActionNotice::NOT_FOUND,
-			AuthorizedPaymentsProcessor::BAD_AUTHORIZATION => AuthorizeOrderActionNotice::BAD_AUTHORIZATION,
-		);
-		$display_message = ( isset( $message_mapping[ $status ] ) ) ?
-			$message_mapping[ $status ]
-			: AuthorizeOrderActionNotice::FAILED;
-		$this->notice->display_message( $display_message );
 	}
 
 	/**

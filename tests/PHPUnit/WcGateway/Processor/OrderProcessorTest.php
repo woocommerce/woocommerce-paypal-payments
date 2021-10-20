@@ -147,7 +147,7 @@ class OrderProcessorTest extends TestCase
         $wcOrder
             ->expects('update_meta_data')
             ->with(
-                PayPalGateway::CAPTURED_META_KEY,
+                AuthorizedPaymentsProcessor::CAPTURED_META_KEY,
                 'false'
             );
         $wcOrder

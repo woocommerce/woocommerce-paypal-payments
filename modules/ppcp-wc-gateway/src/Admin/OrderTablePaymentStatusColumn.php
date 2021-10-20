@@ -11,6 +11,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Admin;
 
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
@@ -102,7 +103,7 @@ class OrderTablePaymentStatusColumn {
 	 */
 	public function should_render_for_order( \WC_Order $order ): bool {
 		$intent               = $order->get_meta( PayPalGateway::INTENT_META_KEY );
-		$captured             = $order->get_meta( PayPalGateway::CAPTURED_META_KEY );
+		$captured             = $order->get_meta( AuthorizedPaymentsProcessor::CAPTURED_META_KEY );
 		$status               = $order->get_status();
 		$not_allowed_statuses = array( 'refunded' );
 		return ! empty( $intent ) && strtoupper( self::INTENT ) === strtoupper( $intent ) &&
@@ -118,7 +119,7 @@ class OrderTablePaymentStatusColumn {
 	 * @return bool
 	 */
 	public function is_captured( \WC_Order $wc_order ): bool {
-		$captured = $wc_order->get_meta( PayPalGateway::CAPTURED_META_KEY );
+		$captured = $wc_order->get_meta( AuthorizedPaymentsProcessor::CAPTURED_META_KEY );
 		return wc_string_to_bool( $captured );
 	}
 

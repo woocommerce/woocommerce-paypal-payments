@@ -13,6 +13,7 @@ use Exception;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 use WP_REST_Response;
 
@@ -120,7 +121,7 @@ class PaymentCaptureCompleted implements RequestHandler {
 		);
 
 		$wc_order->payment_complete();
-		$wc_order->update_meta_data( PayPalGateway::CAPTURED_META_KEY, 'true' );
+		$wc_order->update_meta_data( AuthorizedPaymentsProcessor::CAPTURED_META_KEY, 'true' );
 		$wc_order->save();
 		$this->logger->log(
 			'info',

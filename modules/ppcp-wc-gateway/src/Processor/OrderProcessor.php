@@ -171,7 +171,7 @@ class OrderProcessor {
 		if ( $order->intent() === 'AUTHORIZE' ) {
 			$order = $this->order_endpoint->authorize( $order );
 
-			$wc_order->update_meta_data( PayPalGateway::CAPTURED_META_KEY, 'false' );
+			$wc_order->update_meta_data( AuthorizedPaymentsProcessor::CAPTURED_META_KEY, 'false' );
 		}
 
 		$transaction_id = $this->get_paypal_order_transaction_id( $order );
@@ -186,7 +186,7 @@ class OrderProcessor {
 			$wc_order->add_order_note(
 				__( 'Payment successfully captured.', 'woocommerce-paypal-payments' )
 			);
-			$wc_order->update_meta_data( PayPalGateway::CAPTURED_META_KEY, 'true' );
+			$wc_order->update_meta_data( AuthorizedPaymentsProcessor::CAPTURED_META_KEY, 'true' );
 			$wc_order->update_status( 'processing' );
 		}
 		WC()->cart->empty_cart();

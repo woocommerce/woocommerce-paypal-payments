@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace WooCommerce\PayPalCommerce\WcGateway\Admin;
 
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 
 /**
  * Class RenderAuthorizeAction

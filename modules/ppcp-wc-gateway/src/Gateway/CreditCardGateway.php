@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
@@ -18,7 +19,6 @@ use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
-use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
@@ -35,25 +35,32 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	const ID = 'ppcp-credit-card-gateway';
 
 	/**
-	 * Service to get transaction url for an order.
+	 * The Settings Renderer.
 	 *
-	 * @var TransactionUrlProvider
+	 * @var SettingsRenderer
 	 */
-	protected $transaction_url_provider;
+	protected $settings_renderer;
 
 	/**
-	 * The subscription helper.
+	 * The processor for orders.
 	 *
-	 * @var SubscriptionHelper
+	 * @var OrderProcessor
 	 */
-	protected $subscription_helper;
+	protected $order_processor;
 
 	/**
-	 * The logger.
+	 * The processor for authorized payments.
 	 *
-	 * @var LoggerInterface
+	 * @var AuthorizedPaymentsProcessor
 	 */
-	protected $logger;
+	protected $authorized_payments_processor;
+
+	/**
+	 * The settings.
+	 *
+	 * @var ContainerInterface
+	 */
+	protected $config;
 
 	/**
 	 * The URL to the module.
@@ -63,11 +70,32 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	private $module_url;
 
 	/**
+	 * The Session Handler.
+	 *
+	 * @var SessionHandler
+	 */
+	protected $session_handler;
+
+	/**
 	 * The refund processor.
 	 *
 	 * @var RefundProcessor
 	 */
 	private $refund_processor;
+
+	/**
+	 * The state.
+	 *
+	 * @var State
+	 */
+	protected $state;
+
+	/**
+	 * Service to get transaction url for an order.
+	 *
+	 * @var TransactionUrlProvider
+	 */
+	protected $transaction_url_provider;
 
 	/**
 	 * The payment token repository.
@@ -98,6 +126,20 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	private $order_endpoint;
 
 	/**
+	 * The subscription helper.
+	 *
+	 * @var SubscriptionHelper
+	 */
+	protected $subscription_helper;
+
+	/**
+	 * The logger.
+	 *
+	 * @var LoggerInterface
+	 */
+	protected $logger;
+
+	/**
 	 * The environment.
 	 *
 	 * @var Environment
@@ -105,12 +147,18 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	protected $environment;
 
 	/**
+	 * The payments endpoint
+	 *
+	 * @var PaymentsEndpoint
+	 */
+	protected $payments_endpoint;
+
+	/**
 	 * CreditCardGateway constructor.
 	 *
 	 * @param SettingsRenderer            $settings_renderer The Settings Renderer.
 	 * @param OrderProcessor              $order_processor The Order processor.
 	 * @param AuthorizedPaymentsProcessor $authorized_payments_processor The Authorized Payments processor.
-	 * @param AuthorizeOrderActionNotice  $notice The Notices.
 	 * @param ContainerInterface          $config The settings.
 	 * @param string                      $module_url The URL to the module.
 	 * @param SessionHandler              $session_handler The Session Handler.
@@ -124,12 +172,12 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 * @param SubscriptionHelper          $subscription_helper The subscription helper.
 	 * @param LoggerInterface             $logger The logger.
 	 * @param Environment                 $environment The environment.
+	 * @param PaymentsEndpoint            $payments_endpoint The payments endpoint.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
 		OrderProcessor $order_processor,
 		AuthorizedPaymentsProcessor $authorized_payments_processor,
-		AuthorizeOrderActionNotice $notice,
 		ContainerInterface $config,
 		string $module_url,
 		SessionHandler $session_handler,
@@ -142,18 +190,18 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		OrderEndpoint $order_endpoint,
 		SubscriptionHelper $subscription_helper,
 		LoggerInterface $logger,
-		Environment $environment
+		Environment $environment,
+		PaymentsEndpoint $payments_endpoint
 	) {
 
-		$this->id                  = self::ID;
-		$this->order_processor     = $order_processor;
-		$this->authorized_payments = $authorized_payments_processor;
-		$this->notice              = $notice;
-		$this->settings_renderer   = $settings_renderer;
-		$this->config              = $config;
-		$this->session_handler     = $session_handler;
-		$this->refund_processor    = $refund_processor;
-		$this->environment         = $environment;
+		$this->id                            = self::ID;
+		$this->order_processor               = $order_processor;
+		$this->authorized_payments_processor = $authorized_payments_processor;
+		$this->settings_renderer             = $settings_renderer;
+		$this->config                        = $config;
+		$this->session_handler               = $session_handler;
+		$this->refund_processor              = $refund_processor;
+		$this->environment                   = $environment;
 
 		if ( $state->current_state() === State::STATE_ONBOARDED ) {
 			$this->supports = array( 'refunds' );
@@ -212,6 +260,8 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		$this->transaction_url_provider = $transaction_url_provider;
 		$this->subscription_helper      = $subscription_helper;
 		$this->logger                   = $logger;
+		$this->payments_endpoint        = $payments_endpoint;
+		$this->state                    = $state;
 	}
 
 	/**
