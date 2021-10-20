@@ -167,7 +167,6 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @param LoggerInterface             $logger  The logger.
 	 * @param PaymentsEndpoint            $payments_endpoint The payments endpoint.
 	 * @param OrderEndpoint               $order_endpoint The order endpoint.
-	 * @param LoggerInterface             $logger The logger.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
@@ -198,17 +197,17 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->page_id                       = $page_id;
 		$this->environment                   = $environment;
 		$this->onboarded                     = $state->current_state() === State::STATE_ONBOARDED;
-		$this->id                       = self::ID;
-		$this->order_processor          = $order_processor;
-		$this->authorized_payments      = $authorized_payments_processor;
-		$this->settings_renderer        = $settings_renderer;
-		$this->config                   = $config;
-		$this->session_handler          = $session_handler;
-		$this->refund_processor         = $refund_processor;
-		$this->transaction_url_provider = $transaction_url_provider;
-		$this->page_id                  = $page_id;
-		$this->environment              = $environment;
-		$this->logger                   = $logger;
+		$this->id                            = self::ID;
+		$this->order_processor               = $order_processor;
+		$this->authorized_payments           = $authorized_payments_processor;
+		$this->settings_renderer             = $settings_renderer;
+		$this->config                        = $config;
+		$this->session_handler               = $session_handler;
+		$this->refund_processor              = $refund_processor;
+		$this->transaction_url_provider      = $transaction_url_provider;
+		$this->page_id                       = $page_id;
+		$this->environment                   = $environment;
+		$this->logger                        = $logger;
 
 		if ( $this->onboarded ) {
 			$this->supports = array( 'refunds' );

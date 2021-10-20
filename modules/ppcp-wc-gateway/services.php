@@ -54,7 +54,6 @@ return array(
 		$subscription_helper = $container->get( 'subscription.helper' );
 		$page_id             = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
 		$payment_token_repository = $container->get( 'vaulting.repository.payment-token' );
-		$logger                        = $container->get( 'woocommerce.logger.woocommerce' );
 		$payments_endpoint = $container->get( 'api.endpoint.payments' );
 		$order_endpoint = $container->get( 'api.endpoint.order' );
 		$environment         = $container->get( 'onboarding.environment' );
