@@ -105,6 +105,13 @@ class CreateOrderEndpoint implements EndpointInterface {
 	private $purchase_units;
 
 	/**
+	 * Whether a new user must be registered during checkout.
+	 *
+	 * @var bool
+	 */
+	private $registration_needed;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -122,6 +129,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 * @param SessionHandler      $session_handler The SessionHandler object.
 	 * @param Settings            $settings The Settings object.
 	 * @param EarlyOrderHandler   $early_order_handler The EarlyOrderHandler object.
+	 * @param bool                $registration_needed  Whether a new user must be registered during checkout.
 	 * @param LoggerInterface     $logger The logger.
 	 */
 	public function __construct(
@@ -133,6 +141,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 		SessionHandler $session_handler,
 		Settings $settings,
 		EarlyOrderHandler $early_order_handler,
+		bool $registration_needed,
 		LoggerInterface $logger
 	) {
 
@@ -144,6 +153,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 		$this->session_handler       = $session_handler;
 		$this->settings              = $settings;
 		$this->early_order_handler   = $early_order_handler;
+		$this->registration_needed   = $registration_needed;
 		$this->logger                = $logger;
 	}
 
@@ -186,7 +196,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 			$this->set_bn_code( $data );
 
 			if ( 'checkout' === $data['context'] ) {
-				if ( isset( $data['createaccount'] ) && '1' === $data['createaccount'] ) {
+				if ( $this->registration_needed || ( isset( $data['createaccount'] ) && '1' === $data['createaccount'] ) ) {
 					$this->process_checkout_form_when_creating_account( $data['form'], $wc_order );
 				}
 
