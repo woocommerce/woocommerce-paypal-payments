@@ -209,7 +209,6 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->page_id                  = $page_id;
 		$this->environment              = $environment;
 		$this->logger                   = $logger;
-		$this->onboarded                = $state->current_state() === State::STATE_ONBOARDED;
 
 		if ( $this->onboarded ) {
 			$this->supports = array( 'refunds' );
