@@ -423,7 +423,7 @@ class SmartButton implements SmartButtonInterface {
 		if (
 			! is_checkout() && is_a( $product, \WC_Product::class )
 			&& (
-				$product->is_type( array( 'external', 'grouped' ) )
+				apply_filters( 'woocommerce_paypal_payments_single_product_disable_render', $product->is_type( array( 'external', 'grouped' ) ), $product )
 				|| ! $product->is_in_stock()
 			)
 		) {
