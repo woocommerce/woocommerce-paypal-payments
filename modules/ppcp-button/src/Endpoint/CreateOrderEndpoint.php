@@ -23,6 +23,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CartRepository;
 use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
@@ -30,7 +31,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
  * Class CreateOrderEndpoint
  */
 class CreateOrderEndpoint implements EndpointInterface {
-
 
 	const ENDPOINT = 'ppc-create-order';
 
@@ -119,6 +119,11 @@ class CreateOrderEndpoint implements EndpointInterface {
 	protected $logger;
 
 	/**
+	 * @var SubscriptionHelper
+	 */
+	protected $subscription_helper;
+
+	/**
 	 * CreateOrderEndpoint constructor.
 	 *
 	 * @param RequestData         $request_data The RequestData object.
@@ -142,7 +147,8 @@ class CreateOrderEndpoint implements EndpointInterface {
 		Settings $settings,
 		EarlyOrderHandler $early_order_handler,
 		bool $registration_needed,
-		LoggerInterface $logger
+		LoggerInterface $logger,
+		SubscriptionHelper $subscription_helper
 	) {
 
 		$this->request_data          = $request_data;
@@ -155,6 +161,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 		$this->early_order_handler   = $early_order_handler;
 		$this->registration_needed   = $registration_needed;
 		$this->logger                = $logger;
+		$this->subscription_helper = $subscription_helper;
 	}
 
 	/**
@@ -196,7 +203,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 			$this->set_bn_code( $data );
 
 			if ( 'checkout' === $data['context'] ) {
-				if ( $this->registration_needed || ( isset( $data['createaccount'] ) && '1' === $data['createaccount'] ) ) {
+				if ( $this->registration_needed || $this->subscription_helper->cart_contains_subscription() || ( isset( $data['createaccount'] ) && '1' === $data['createaccount'] ) ) {
 					$this->process_checkout_form_when_creating_account( $data['form'], $wc_order );
 				}
 
