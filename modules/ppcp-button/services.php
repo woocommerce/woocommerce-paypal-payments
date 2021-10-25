@@ -117,7 +117,6 @@ return array(
 		$early_order_handler   = $container->get( 'button.helper.early-order-handler' );
 		$registration_needed    = $container->get( 'button.current-user-must-register' );
 		$logger                = $container->get( 'woocommerce.logger.woocommerce' );
-		$subscription_helper = $container->get( 'subscription.helper' );
 		return new CreateOrderEndpoint(
 			$request_data,
 			$cart_repository,
@@ -128,8 +127,7 @@ return array(
 			$settings,
 			$early_order_handler,
 			$registration_needed,
-			$logger,
-			$subscription_helper
+			$logger
 		);
 	},
 	'button.helper.early-order-handler' => static function ( ContainerInterface $container ) : EarlyOrderHandler {

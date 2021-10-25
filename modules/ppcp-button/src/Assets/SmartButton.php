@@ -167,6 +167,10 @@ class SmartButton implements SmartButtonInterface {
 	 */
 	public function render_wrapper(): bool {
 
+		if ( ! $this->can_save_vault_token() && $this->has_subscriptions() ) {
+			return false;
+		}
+
 		if ( $this->settings->has( 'enabled' ) && $this->settings->get( 'enabled' ) ) {
 			$this->render_button_wrapper_registrar();
 			$this->render_message_wrapper_registrar();
@@ -373,6 +377,9 @@ class SmartButton implements SmartButtonInterface {
 		if ( ! is_checkout() && ! $buttons_enabled ) {
 			return false;
 		}
+		if ( ! $this->can_save_vault_token() && $this->has_subscriptions() ) {
+			return false;
+		}
 
 		$load_script = false;
 		if ( is_checkout() && $this->settings->has( 'dcc_enabled' ) && $this->settings->get( 'dcc_enabled' ) ) {
@@ -576,7 +583,7 @@ class SmartButton implements SmartButtonInterface {
 			return false;
 		}
 
-		return true;
+		return is_user_logged_in();
 	}
 
 	/**
