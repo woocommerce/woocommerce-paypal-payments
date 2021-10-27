@@ -186,37 +186,28 @@ class CreateOrderEndpoint implements EndpointInterface {
 			$this->set_bn_code( $data );
 
 			if ( 'checkout' === $data['context'] ) {
-				if ( isset( $data['createaccount'] ) && '1' === $data['createaccount'] ) {
-					try {
-						$order = $this->create_paypal_order( $wc_order );
-					} catch ( Exception $exception ) {
-						$this->logger->error( 'Order creation failed: ' . $exception->getMessage() );
-						throw $exception;
-					}
-					wp_send_json_success( $order->to_array() );
-				}
-
 				try {
-					$order = $this->create_paypal_order();
+					$order = $this->create_paypal_order( $wc_order );
 				} catch ( Exception $exception ) {
 					$this->logger->error( 'Order creation failed: ' . $exception->getMessage() );
 					throw $exception;
 				}
 
-				if ( ! $this->early_order_handler->should_create_early_order() ) {
+				if ( ! $this->early_order_handler->should_create_early_order() || isset( $data['createaccount'] ) && '1' === $data['createaccount'] ) {
 					wp_send_json_success( $order->to_array() );
 				}
+
 				$this->early_order_handler->register_for_order( $order );
 			}
+
 			if ( 'pay-now' === $data['context'] && get_option( 'woocommerce_terms_page_id', '' ) !== '' ) {
 				$this->validate_paynow_form( $data['form'] );
 			}
 
-			// if we are here so the context is not 'checkout' as it exits before. Therefore, a PayPal order is not created yet.
-			// It would be a good idea to refactor the checkout process in the future.
 			$order = $this->create_paypal_order( $wc_order );
 			wp_send_json_success( $order->to_array() );
 			return true;
+
 		} catch ( \RuntimeException $error ) {
 			$this->logger->error( 'Order creation failed: ' . $error->getMessage() );
 
