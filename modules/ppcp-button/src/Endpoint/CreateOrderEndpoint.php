@@ -160,6 +160,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 * Handles the request.
 	 *
 	 * @return bool
+	 * @throws Exception On Error.
 	 */
 	public function handle_request(): bool {
 		try {
