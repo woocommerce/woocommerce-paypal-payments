@@ -303,10 +303,13 @@ class PurchaseUnit {
 	 * @return bool
 	 */
 	private function ditch_items_when_mismatch( Amount $amount, Item ...$items ): bool {
-		$fee_items_total = ( $amount->breakdown() && $amount->breakdown()->item_total() ) ?
-			$amount->breakdown()->item_total()->value() : null;
-		$fee_tax_total   = ( $amount->breakdown() && $amount->breakdown()->tax_total() ) ?
-			$amount->breakdown()->tax_total()->value() : null;
+		$breakdown = $amount->breakdown();
+		if ( ! $breakdown ) {
+			return false;
+		}
+
+		$fee_items_total = $breakdown->item_total() ? $breakdown->item_total()->value() : null;
+		$fee_tax_total   = $breakdown->tax_total() ? $breakdown->tax_total()->value() : null;
 
 		foreach ( $items as $item ) {
 			if ( null !== $fee_items_total ) {
@@ -324,10 +327,6 @@ class PurchaseUnit {
 			return true;
 		}
 
-		$breakdown = $this->amount()->breakdown();
-		if ( ! $breakdown ) {
-			return false;
-		}
 		$amount_total = 0;
 		if ( $breakdown->shipping() ) {
 			$amount_total += $breakdown->shipping()->value();
@@ -351,7 +350,7 @@ class PurchaseUnit {
 			$amount_total += $breakdown->insurance()->value();
 		}
 
-		$amount_value   = $this->amount()->value();
+		$amount_value   = $amount->value();
 		$needs_to_ditch = (string) $amount_total !== (string) $amount_value;
 		return $needs_to_ditch;
 	}
