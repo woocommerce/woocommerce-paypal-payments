@@ -308,15 +308,20 @@ class PurchaseUnit {
 			return false;
 		}
 
-		$fee_items_total = $breakdown->item_total() ? $breakdown->item_total()->value() : null;
-		$fee_tax_total   = $breakdown->tax_total() ? $breakdown->tax_total()->value() : null;
+		$item_total = $breakdown->item_total();
+		$tax_total  = $breakdown->tax_total();
+
+		$fee_items_total = $item_total ? $item_total->value() : null;
+		$fee_tax_total   = $tax_total ? $tax_total->value() : null;
 
 		foreach ( $items as $item ) {
 			if ( null !== $fee_items_total ) {
-				$fee_items_total -= $item->unit_amount()->value() * $item->quantity();
+				$fee_items_total -= $item->unit_amount()->value() * (float) $item->quantity();
 			}
-			if ( null !== $fee_tax_total ) {
-				$fee_tax_total -= $item->tax()->value() * $item->quantity();
+
+			$tax = $item->tax();
+			if ( $tax && null !== $fee_tax_total ) {
+				$fee_tax_total -= $tax->value() * (float) $item->quantity();
 			}
 		}
 
@@ -327,27 +332,33 @@ class PurchaseUnit {
 			return true;
 		}
 
-		$amount_total = 0;
-		if ( $breakdown->shipping() ) {
-			$amount_total += $breakdown->shipping()->value();
+		$shipping          = $breakdown->shipping();
+		$discount          = $breakdown->discount();
+		$shipping_discount = $breakdown->shipping_discount();
+		$handling          = $breakdown->handling();
+		$insurance         = $breakdown->insurance();
+
+		$amount_total = 0.0;
+		if ( $shipping ) {
+			$amount_total += $shipping->value();
 		}
-		if ( $breakdown->item_total() ) {
-			$amount_total += $breakdown->item_total()->value();
+		if ( $item_total ) {
+			$amount_total += $item_total->value();
 		}
-		if ( $breakdown->discount() ) {
-			$amount_total -= $breakdown->discount()->value();
+		if ( $discount ) {
+			$amount_total -= $discount->value();
 		}
-		if ( $breakdown->tax_total() ) {
-			$amount_total += $breakdown->tax_total()->value();
+		if ( $tax_total ) {
+			$amount_total += $tax_total->value();
 		}
-		if ( $breakdown->shipping_discount() ) {
-			$amount_total -= $breakdown->shipping_discount()->value();
+		if ( $shipping_discount ) {
+			$amount_total -= $shipping_discount->value();
 		}
-		if ( $breakdown->handling() ) {
-			$amount_total += $breakdown->handling()->value();
+		if ( $handling ) {
+			$amount_total += $handling->value();
 		}
-		if ( $breakdown->insurance() ) {
-			$amount_total += $breakdown->insurance()->value();
+		if ( $insurance ) {
+			$amount_total += $insurance->value();
 		}
 
 		$amount_value   = $amount->value();
