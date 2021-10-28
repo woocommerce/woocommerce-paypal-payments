@@ -309,27 +309,41 @@ class PurchaseUnit {
 		}
 
 		$item_total = $breakdown->item_total();
-		$tax_total  = $breakdown->tax_total();
+		if ( $item_total ) {
+			$remaining_item_total = array_reduce(
+				$items,
+				function ( float $total, Item $item ): float {
+					return $total - $item->unit_amount()->value() * (float) $item->quantity();
+				},
+				$item_total->value()
+			);
 
-		$fee_items_total = $item_total ? $item_total->value() : null;
-		$fee_tax_total   = $tax_total ? $tax_total->value() : null;
+			$remaining_item_total = round( $remaining_item_total, 2 );
 
-		foreach ( $items as $item ) {
-			if ( null !== $fee_items_total ) {
-				$fee_items_total -= $item->unit_amount()->value() * (float) $item->quantity();
-			}
-
-			$tax = $item->tax();
-			if ( $tax && null !== $fee_tax_total ) {
-				$fee_tax_total -= $tax->value() * (float) $item->quantity();
+			if ( 0.0 !== $remaining_item_total ) {
+				return true;
 			}
 		}
 
-		$fee_items_total = round( (float) $fee_items_total, 2 );
-		$fee_tax_total   = round( (float) $fee_tax_total, 2 );
+		$tax_total = $breakdown->tax_total();
+		if ( $tax_total ) {
+			$remaining_tax_total = array_reduce(
+				$items,
+				function ( float $total, Item $item ): float {
+					$tax = $item->tax();
+					if ( $tax ) {
+						$total -= $tax->value() * (float) $item->quantity();
+					}
+					return $total;
+				},
+				$tax_total->value()
+			);
 
-		if ( 0.0 !== $fee_items_total || 0.0 !== $fee_tax_total ) {
-			return true;
+			$remaining_tax_total = round( $remaining_tax_total, 2 );
+
+			if ( 0.0 !== $remaining_tax_total ) {
+				return true;
+			}
 		}
 
 		$shipping          = $breakdown->shipping();
