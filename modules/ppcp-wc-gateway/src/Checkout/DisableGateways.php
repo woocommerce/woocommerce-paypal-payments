@@ -111,13 +111,6 @@ class DisableGateways {
 		}
 
 		if ( $this->subscription_helper->cart_contains_subscription() && ! is_user_logged_in() ) {
-			add_filter(
-				'woocommerce_no_available_payment_methods_message',
-				function( $message ) {
-					return $message . '<br><br>' . esc_html__( 'PayPal payments needs you logged in to save the payment.', 'woocommerce-paypal-payments' );
-				}
-			);
-
 			return true;
 		}
 
