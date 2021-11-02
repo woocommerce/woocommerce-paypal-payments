@@ -115,7 +115,8 @@ return array(
 		$session_handler       = $container->get( 'session.handler' );
 		$settings              = $container->get( 'wcgateway.settings' );
 		$early_order_handler   = $container->get( 'button.helper.early-order-handler' );
-		$logger                        = $container->get( 'woocommerce.logger.woocommerce' );
+		$registration_needed    = $container->get( 'button.current-user-must-register' );
+		$logger                = $container->get( 'woocommerce.logger.woocommerce' );
 		return new CreateOrderEndpoint(
 			$request_data,
 			$cart_repository,
@@ -125,6 +126,7 @@ return array(
 			$session_handler,
 			$settings,
 			$early_order_handler,
+			$registration_needed,
 			$logger
 		);
 	},
@@ -170,5 +172,16 @@ return array(
 	},
 	'button.helper.messages-apply'      => static function ( ContainerInterface $container ): MessagesApply {
 		return new MessagesApply();
+	},
+
+	'button.is-logged-in'               => static function ( ContainerInterface $container ): bool {
+		return is_user_logged_in();
+	},
+	'button.registration-required'      => static function ( ContainerInterface $container ): bool {
+		return WC()->checkout()->is_registration_required();
+	},
+	'button.current-user-must-register' => static function ( ContainerInterface $container ): bool {
+		return ! $container->get( 'button.is-logged-in' ) &&
+			$container->get( 'button.registration-required' );
 	},
 );

@@ -162,6 +162,7 @@ class CreateOrderEndpointTest extends TestCase
             $session_handler,
             $settings,
             $early_order_handler,
+			false,
 			new NullLogger()
         );
         return array($payer_factory, $testee);
