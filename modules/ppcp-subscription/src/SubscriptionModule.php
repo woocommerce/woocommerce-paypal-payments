@@ -112,7 +112,7 @@ class SubscriptionModule implements ModuleInterface {
 	 * @return void
 	 */
 	protected function renew( $order, $container ) {
-		if ( ! is_a( $order, \WC_Order::class ) ) {
+		if ( ! ( $order instanceof \WC_Order ) ) {
 			return;
 		}
 
