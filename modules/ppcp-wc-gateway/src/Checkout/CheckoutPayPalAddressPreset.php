@@ -114,7 +114,6 @@ class CheckoutPayPalAddressPreset {
 			array_key_exists( $field_id, $payer_phone_map )
 			&& $payer
 			&& $payer->phone()
-			&& $payer->phone()->phone()
 		) {
 			return $payer->phone()->phone()->{$payer_phone_map[ $field_id ]}() ? $payer->phone()->phone()->{$payer_phone_map[ $field_id ]}() : null;
 		}
