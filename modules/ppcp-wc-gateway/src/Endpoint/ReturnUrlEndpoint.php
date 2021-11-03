@@ -61,9 +61,6 @@ class ReturnUrlEndpoint {
 		$token = sanitize_text_field( wp_unslash( $_GET['token'] ) );
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 		$order = $this->order_endpoint->order( $token );
-		if ( ! $order ) {
-			exit();
-		}
 
 		$wc_order_id = $this->sanitize_custom_id( $order->purchase_units()[0]->custom_id() );
 		if ( ! $wc_order_id ) {
