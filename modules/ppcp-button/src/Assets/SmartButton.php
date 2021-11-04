@@ -728,7 +728,7 @@ class SmartButton implements SmartButtonInterface {
 	private function payerData() {
 
 		$customer = WC()->customer;
-		if ( ! is_user_logged_in() || ! is_a( $customer, \WC_Customer::class ) ) {
+		if ( ! is_user_logged_in() || ! ( $customer instanceof \WC_Customer ) ) {
 			return null;
 		}
 		return $this->payer_factory->from_customer( $customer )->to_array();
@@ -757,7 +757,7 @@ class SmartButton implements SmartButtonInterface {
 		if (
 			$this->environment->current_environment_is( Environment::SANDBOX )
 			&& defined( 'WP_DEBUG' ) && \WP_DEBUG && is_user_logged_in()
-			&& WC()->customer && WC()->customer->get_billing_country()
+			&& WC()->customer instanceof \WC_Customer && WC()->customer->get_billing_country()
 			&& 2 === strlen( WC()->customer->get_billing_country() )
 		) {
 			$params['buyer-country'] = WC()->customer->get_billing_country();
