@@ -296,7 +296,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 * @throws RuntimeException If create order request fails.
 	 */
 	private function create_paypal_order( \WC_Order $wc_order = null ): Order {
-		$needs_shipping          = WC()->cart && WC()->cart->needs_shipping();
+		$needs_shipping          = WC()->cart instanceof \WC_Cart && WC()->cart->needs_shipping();
 		$shipping_address_is_fix = $needs_shipping && 'checkout' === $this->parsed_request_data['context'];
 
 		return $this->api_endpoint->create(

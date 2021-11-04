@@ -52,14 +52,12 @@ class PatchCollectionFactory {
 				array_filter(
 					$from,
 					static function ( PurchaseUnit $unit ) use ( $purchase_unit_to ): bool {
-                        //phpcs:disable WordPress.PHP.StrictComparisons.LooseComparison
 						// Loose comparison needed to compare two objects.
+						// phpcs:ignore WordPress.PHP.StrictComparisons.LooseComparison
 						return $unit == $purchase_unit_to;
-                        //phpcs:enable WordPress.PHP.StrictComparisons.LooseComparison
 					}
 				)
 			);
-			$needs_update = true;
 			if ( ! $needs_update ) {
 				continue;
 			}

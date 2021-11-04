@@ -159,35 +159,10 @@
     </PossiblyNullReference>
   </file>
   <file src="modules/ppcp-api-client/src/Entity/PurchaseUnit.php">
-    <InvalidOperand occurrences="9">
-      <code>$amount_total += $breakdown-&gt;handling()-&gt;value()</code>
-      <code>$amount_total += $breakdown-&gt;insurance()-&gt;value()</code>
-      <code>$amount_total += $breakdown-&gt;item_total()-&gt;value()</code>
-      <code>$amount_total += $breakdown-&gt;shipping()-&gt;value()</code>
-      <code>$amount_total += $breakdown-&gt;tax_total()-&gt;value()</code>
-      <code>$amount_total -= $breakdown-&gt;discount()-&gt;value()</code>
-      <code>$amount_total -= $breakdown-&gt;shipping_discount()-&gt;value()</code>
-      <code>$item-&gt;tax()-&gt;value() * $item-&gt;quantity()</code>
-      <code>$item-&gt;unit_amount()-&gt;value() * $item-&gt;quantity()</code>
-    </InvalidOperand>
-    <PossiblyNullReference occurrences="17">
-      <code>item_total</code>
-      <code>item_total</code>
-      <code>tax_total</code>
-      <code>tax_total</code>
+    <PossiblyNullReference occurrences="3">
       <code>to_array</code>
       <code>to_array</code>
       <code>to_array</code>
-      <code>value</code>
-      <code>value</code>
-      <code>value</code>
-      <code>value</code>
-      <code>value</code>
-      <code>value</code>
-      <code>value</code>
-      <code>value</code>
-      <code>value</code>
-      <code>value</code>
     </PossiblyNullReference>
   </file>
   <file src="modules/ppcp-api-client/src/Entity/Refund.php">
@@ -768,9 +743,6 @@
     </PropertyNotSetInConstructor>
   </file>
   <file src="modules/ppcp-wc-gateway/src/Processor/OrderProcessor.php">
-    <MissingReturnType occurrences="1">
-      <code>set_order_transaction_id</code>
-    </MissingReturnType>
     <PossiblyNullReference occurrences="1">
       <code>card</code>
     </PossiblyNullReference>
@@ -926,25 +898,6 @@
     <PossiblyNullArrayAccess occurrences="2">
       <code>$request['resource']['id']</code>
       <code>$request['resource']['purchase_units']</code>
-    </PossiblyNullArrayAccess>
-  </file>
-  <file src="modules/ppcp-webhooks/src/Handler/PaymentCaptureCompleted.php">
-    <InvalidReturnStatement occurrences="4">
-      <code>rest_ensure_response( $response )</code>
-      <code>rest_ensure_response( $response )</code>
-      <code>rest_ensure_response( $response )</code>
-      <code>rest_ensure_response( $response )</code>
-    </InvalidReturnStatement>
-    <InvalidReturnType occurrences="1">
-      <code>\WP_REST_Response</code>
-    </InvalidReturnType>
-    <PossiblyNullArgument occurrences="3">
-      <code>$request['resource']['custom_id']</code>
-      <code>isset( $request['id'] ) ? $request['id'] : ''</code>
-      <code>isset( $request['id'] ) ? $request['id'] : ''</code>
-    </PossiblyNullArgument>
-    <PossiblyNullArrayAccess occurrences="1">
-      <code>$request['resource']['custom_id']</code>
     </PossiblyNullArrayAccess>
   </file>
   <file src="modules/ppcp-webhooks/src/Handler/PaymentCaptureRefunded.php">

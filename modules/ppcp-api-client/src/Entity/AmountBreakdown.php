@@ -17,49 +17,49 @@ class AmountBreakdown {
 	/**
 	 * The item total.
 	 *
-	 * @var Money
+	 * @var Money|null
 	 */
 	private $item_total;
 
 	/**
 	 * The shipping.
 	 *
-	 * @var Money
+	 * @var Money|null
 	 */
 	private $shipping;
 
 	/**
 	 * The tax total.
 	 *
-	 * @var Money
+	 * @var Money|null
 	 */
 	private $tax_total;
 
 	/**
 	 * The handling.
 	 *
-	 * @var Money
+	 * @var Money|null
 	 */
 	private $handling;
 
 	/**
 	 * The insurance.
 	 *
-	 * @var Money
+	 * @var Money|null
 	 */
 	private $insurance;
 
 	/**
 	 * The shipping discount.
 	 *
-	 * @var Money
+	 * @var Money|null
 	 */
 	private $shipping_discount;
 
 	/**
 	 * The discount.
 	 *
-	 * @var Money
+	 * @var Money|null
 	 */
 	private $discount;
 
@@ -75,13 +75,13 @@ class AmountBreakdown {
 	 * @param Money|null $discount The discount.
 	 */
 	public function __construct(
-		Money $item_total = null,
-		Money $shipping = null,
-		Money $tax_total = null,
-		Money $handling = null,
-		Money $insurance = null,
-		Money $shipping_discount = null,
-		Money $discount = null
+		?Money $item_total = null,
+		?Money $shipping = null,
+		?Money $tax_total = null,
+		?Money $handling = null,
+		?Money $insurance = null,
+		?Money $shipping_discount = null,
+		?Money $discount = null
 	) {
 
 		$this->item_total        = $item_total;
