@@ -121,7 +121,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 	 * Handles the request.
 	 *
 	 * @return bool
-	 * @throws RuntimeException When no order was found.
+	 * @throws RuntimeException When order not found or handling failed.
 	 */
 	public function handle_request(): bool {
 		try {
@@ -133,15 +133,6 @@ class ApproveOrderEndpoint implements EndpointInterface {
 			}
 
 			$order = $this->api_endpoint->order( $data['order_id'] );
-			if ( ! $order ) {
-				throw new RuntimeException(
-					sprintf(
-						// translators: %s is the id of the order.
-						__( 'Order %s not found.', 'woocommerce-paypal-payments' ),
-						$data['order_id']
-					)
-				);
-			}
 
 			if ( $order->payment_source() && $order->payment_source()->card() ) {
 				if ( $this->settings->has( 'disable_cards' ) ) {
