@@ -303,55 +303,79 @@ class PurchaseUnit {
 	 * @return bool
 	 */
 	private function ditch_items_when_mismatch( Amount $amount, Item ...$items ): bool {
-		$fee_items_total = ( $amount->breakdown() && $amount->breakdown()->item_total() ) ?
-			$amount->breakdown()->item_total()->value() : null;
-		$fee_tax_total   = ( $amount->breakdown() && $amount->breakdown()->tax_total() ) ?
-			$amount->breakdown()->tax_total()->value() : null;
-
-		foreach ( $items as $item ) {
-			if ( null !== $fee_items_total ) {
-				$fee_items_total -= $item->unit_amount()->value() * $item->quantity();
-			}
-			if ( null !== $fee_tax_total ) {
-				$fee_tax_total -= $item->tax()->value() * $item->quantity();
-			}
-		}
-
-		$fee_items_total = round( (float) $fee_items_total, 2 );
-		$fee_tax_total   = round( (float) $fee_tax_total, 2 );
-
-		if ( 0.0 !== $fee_items_total || 0.0 !== $fee_tax_total ) {
-			return true;
-		}
-
-		$breakdown = $this->amount()->breakdown();
+		$breakdown = $amount->breakdown();
 		if ( ! $breakdown ) {
 			return false;
 		}
-		$amount_total = 0;
-		if ( $breakdown->shipping() ) {
-			$amount_total += $breakdown->shipping()->value();
-		}
-		if ( $breakdown->item_total() ) {
-			$amount_total += $breakdown->item_total()->value();
-		}
-		if ( $breakdown->discount() ) {
-			$amount_total -= $breakdown->discount()->value();
-		}
-		if ( $breakdown->tax_total() ) {
-			$amount_total += $breakdown->tax_total()->value();
-		}
-		if ( $breakdown->shipping_discount() ) {
-			$amount_total -= $breakdown->shipping_discount()->value();
-		}
-		if ( $breakdown->handling() ) {
-			$amount_total += $breakdown->handling()->value();
-		}
-		if ( $breakdown->insurance() ) {
-			$amount_total += $breakdown->insurance()->value();
+
+		$item_total = $breakdown->item_total();
+		if ( $item_total ) {
+			$remaining_item_total = array_reduce(
+				$items,
+				function ( float $total, Item $item ): float {
+					return $total - $item->unit_amount()->value() * (float) $item->quantity();
+				},
+				$item_total->value()
+			);
+
+			$remaining_item_total = round( $remaining_item_total, 2 );
+
+			if ( 0.0 !== $remaining_item_total ) {
+				return true;
+			}
 		}
 
-		$amount_value   = $this->amount()->value();
+		$tax_total = $breakdown->tax_total();
+		if ( $tax_total ) {
+			$remaining_tax_total = array_reduce(
+				$items,
+				function ( float $total, Item $item ): float {
+					$tax = $item->tax();
+					if ( $tax ) {
+						$total -= $tax->value() * (float) $item->quantity();
+					}
+					return $total;
+				},
+				$tax_total->value()
+			);
+
+			$remaining_tax_total = round( $remaining_tax_total, 2 );
+
+			if ( 0.0 !== $remaining_tax_total ) {
+				return true;
+			}
+		}
+
+		$shipping          = $breakdown->shipping();
+		$discount          = $breakdown->discount();
+		$shipping_discount = $breakdown->shipping_discount();
+		$handling          = $breakdown->handling();
+		$insurance         = $breakdown->insurance();
+
+		$amount_total = 0.0;
+		if ( $shipping ) {
+			$amount_total += $shipping->value();
+		}
+		if ( $item_total ) {
+			$amount_total += $item_total->value();
+		}
+		if ( $discount ) {
+			$amount_total -= $discount->value();
+		}
+		if ( $tax_total ) {
+			$amount_total += $tax_total->value();
+		}
+		if ( $shipping_discount ) {
+			$amount_total -= $shipping_discount->value();
+		}
+		if ( $handling ) {
+			$amount_total += $handling->value();
+		}
+		if ( $insurance ) {
+			$amount_total += $insurance->value();
+		}
+
+		$amount_value   = $amount->value();
 		$needs_to_ditch = (string) $amount_total !== (string) $amount_value;
 		return $needs_to_ditch;
 	}
