@@ -31,7 +31,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
  */
 class CreateOrderEndpoint implements EndpointInterface {
 
-
 	const ENDPOINT = 'ppc-create-order';
 
 	/**
