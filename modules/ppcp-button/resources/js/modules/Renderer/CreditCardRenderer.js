@@ -184,7 +184,7 @@ class CreditCardRenderer {
             const save_card = this.defaultConfig.save_card ? true : false;
             let vault = document.getElementById('ppcp-credit-card-vault') ?
                 document.getElementById('ppcp-credit-card-vault').checked : save_card;
-            if(this.defaultConfig.enforce_vault) {
+            if (this.defaultConfig.enforce_vault) {
                 vault = true;
             }
             const contingency = this.defaultConfig.hosted_fields.contingency;
