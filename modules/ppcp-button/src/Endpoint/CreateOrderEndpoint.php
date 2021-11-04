@@ -170,6 +170,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 * Handles the request.
 	 *
 	 * @return bool
+	 * @throws Exception On Error.
 	 */
 	public function handle_request(): bool {
 		try {
@@ -196,21 +197,31 @@ class CreateOrderEndpoint implements EndpointInterface {
 			$this->set_bn_code( $data );
 
 			if ( 'checkout' === $data['context'] ) {
-				if ( $this->registration_needed || ( isset( $data['createaccount'] ) && '1' === $data['createaccount'] ) ) {
-					$this->process_checkout_form_when_creating_account( $data['form'], $wc_order );
+				try {
+					$order = $this->create_paypal_order( $wc_order );
+				} catch ( Exception $exception ) {
+					$this->logger->error( 'Order creation failed: ' . $exception->getMessage() );
+					throw $exception;
 				}
 
-				$this->process_checkout_form( $data['form'] );
+				if (
+					! $this->early_order_handler->should_create_early_order()
+					|| $this->registration_needed
+					|| isset( $data['createaccount'] ) && '1' === $data['createaccount'] ) {
+					wp_send_json_success( $order->to_array() );
+				}
+
+				$this->early_order_handler->register_for_order( $order );
 			}
+
 			if ( 'pay-now' === $data['context'] && get_option( 'woocommerce_terms_page_id', '' ) !== '' ) {
 				$this->validate_paynow_form( $data['form'] );
 			}
 
-			// if we are here so the context is not 'checkout' as it exits before. Therefore, a PayPal order is not created yet.
-			// It would be a good idea to refactor the checkout process in the future.
 			$order = $this->create_paypal_order( $wc_order );
 			wp_send_json_success( $order->to_array() );
 			return true;
+
 		} catch ( \RuntimeException $error ) {
 			$this->logger->error( 'Order creation failed: ' . $error->getMessage() );
 
@@ -330,7 +341,6 @@ class CreateOrderEndpoint implements EndpointInterface {
 		return $payer;
 	}
 
-
 	/**
 	 * Sets the BN Code for the following request.
 	 *
@@ -365,32 +375,6 @@ class CreateOrderEndpoint implements EndpointInterface {
 	}
 
 	/**
-	 * Prepare the Request parameter and process the checkout form and validate it.
-	 *
-	 * @param string $form_values The values of the form.
-	 *
-	 * @throws Exception On Error.
-	 */
-	private function process_checkout_form( string $form_values ) {
-		parse_str( $form_values, $parsed_values );
-
-		$_POST    = $parsed_values;
-		$_REQUEST = $parsed_values;
-
-		add_filter(
-			'woocommerce_after_checkout_validation',
-			array(
-				$this,
-				'after_checkout_validation',
-			),
-			10,
-			2
-		);
-		$checkout = \WC()->checkout();
-		$checkout->process_checkout();
-	}
-
-	/**
 	 * Checks whether the terms input field is checked.
 	 *
 	 * @param string $form_values The form values.
@@ -403,40 +387,5 @@ class CreateOrderEndpoint implements EndpointInterface {
 				__( 'Please read and accept the terms and conditions to proceed with your order.', 'woocommerce-paypal-payments' )
 			);
 		}
-	}
-
-	/**
-	 * Processes checkout and creates the PayPal order after success form validation.
-	 *
-	 * @param string         $form_values The values of the form.
-	 * @param \WC_Order|null $wc_order WC order to get data from.
-	 * @throws Exception On Error.
-	 */
-	private function process_checkout_form_when_creating_account( string $form_values, \WC_Order $wc_order = null ) {
-		parse_str( $form_values, $parsed_values );
-
-		$_POST    = $parsed_values;
-		$_REQUEST = $parsed_values;
-
-		add_action(
-			'woocommerce_after_checkout_validation',
-			function ( array $data, \WP_Error $errors ) use ( $wc_order ) {
-				if ( ! $errors->errors ) {
-					try {
-						$order = $this->create_paypal_order( $wc_order );
-					} catch ( Exception $exception ) {
-						$this->logger->error( 'Order creation failed: ' . $exception->getMessage() );
-						throw $exception;
-					}
-					wp_send_json_success( $order->to_array() );
-					return true;
-				}
-			},
-			10,
-			2
-		);
-
-		$checkout = \WC()->checkout();
-		$checkout->process_checkout();
 	}
 }
