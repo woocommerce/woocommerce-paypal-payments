@@ -54,6 +54,10 @@ class VaultingModule implements ModuleInterface {
 			'init',
 			function () {
 				add_rewrite_endpoint( 'ppcp-paypal-payment-tokens', EP_PAGES );
+				if ( ! get_option( 'woocommerce-ppcp-payment-tokens-flushed', false ) ) {
+					flush_rewrite_rules();
+					add_option( 'woocommerce-ppcp-payment-tokens-flushed', true );
+				}
 			}
 		);
 
