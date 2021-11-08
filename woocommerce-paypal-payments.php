@@ -87,9 +87,9 @@ define( 'PPCP_FLAG_SUBSCRIPTION', true );
 			}
 			$plugin_data    = get_plugin_data( __DIR__ . '/woocommerce-paypal-payments.php' );
 			$plugin_version = $plugin_data['Version'] ?? null;
-			if ( get_option( 'woocommerce-ppcp-upgrading-version' ) !== $plugin_version ) {
+			if ( get_option( 'woocommerce-ppcp-version' ) !== $plugin_version ) {
 				do_action( 'woocommerce_paypal_payments_gateway_migrate' );
-				update_option( 'woocommerce-ppcp-upgrading-version', $plugin_version );
+				update_option( 'woocommerce-ppcp-version', $plugin_version );
 			}
 		}
 	);
