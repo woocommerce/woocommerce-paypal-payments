@@ -420,11 +420,10 @@ class SmartButton implements SmartButtonInterface {
 	 */
 	public function button_renderer() {
 		$product = wc_get_product();
+
 		if (
 			! is_checkout() && is_a( $product, \WC_Product::class )
-			&& (
-				$product->is_type( array( 'external', 'grouped' ) )
-				|| ! $product->is_in_stock()
+			&& ( ! apply_filters( 'woocommerce_paypal_payments_product_supports_prb', ! $product->is_type( array( 'external', 'grouped' ) ) && $product->is_in_stock(), $product )
 			)
 		) {
 			return;
@@ -437,6 +436,15 @@ class SmartButton implements SmartButtonInterface {
 	 * Renders the HTML for the credit messaging.
 	 */
 	public function message_renderer() {
+		$product = wc_get_product();
+
+		if (
+			! is_checkout() && is_a( $product, \WC_Product::class )
+			&& ( ! apply_filters( 'woocommerce_paypal_payments_product_supports_prb', ! $product->is_type( array( 'external', 'grouped' ) ) && $product->is_in_stock(), $product )
+			)
+		) {
+			return;
+		}
 
 		echo '<div id="ppcp-messages" data-partner-attribution-id="Woo_PPCP"></div>';
 	}
