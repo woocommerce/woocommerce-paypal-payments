@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 
+use WP_Error;
+
 /**
  * Trait RequestTrait
  */
@@ -20,7 +22,7 @@ trait RequestTrait {
 	 * @param string $url The URL to request.
 	 * @param array  $args The arguments by which to request.
 	 *
-	 * @return array|\WP_Error
+	 * @return array|WP_Error
 	 */
 	private function request( string $url, array $args ) {
 
@@ -44,12 +46,12 @@ trait RequestTrait {
 	/**
 	 * Returns request and response information as string.
 	 *
-	 * @param string $url The request URL.
-	 * @param array  $args The request arguments.
-	 * @param array  $response The response.
+	 * @param string         $url The request URL.
+	 * @param array          $args The request arguments.
+	 * @param array|WP_Error $response The response.
 	 * @return string
 	 */
-	private function request_response_string( string $url, array $args, array $response ): string {
+	private function request_response_string( string $url, array $args, $response ): string {
 		$method = $args['method'] ?? '';
 		$output = $method . ' ' . $url . "\n";
 		if ( isset( $args['body'] ) ) {
@@ -63,6 +65,11 @@ trait RequestTrait {
 			) ) {
 				$output .= 'Request Body: ' . wc_print_r( $args['body'], true ) . "\n";
 			}
+		}
+
+		if ( $response instanceof WP_Error ) {
+			$output .= 'Request failed. WP error message: ' . implode( "\n", $response->get_error_messages() ) . "\n";
+			return $output;
 		}
 
 		if ( isset( $response['headers']->getAll()['paypal-debug-id'] ) ) {
