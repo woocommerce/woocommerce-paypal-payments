@@ -81,6 +81,16 @@ define( 'PPCP_FLAG_SUBSCRIPTION', true );
 		'plugins_loaded',
 		function () {
 			init();
+
+			if ( ! function_exists( 'get_plugin_data' ) ) {
+				require_once ABSPATH . 'wp-admin/includes/plugin.php';
+			}
+			$plugin_data    = get_plugin_data( __DIR__ . '/woocommerce-paypal-payments.php' );
+			$plugin_version = $plugin_data['Version'] ?? null;
+			if ( get_option( 'woocommerce-ppcp-version' ) !== $plugin_version ) {
+				do_action( 'woocommerce_paypal_payments_gateway_migrate' );
+				update_option( 'woocommerce-ppcp-version', $plugin_version );
+			}
 		}
 	);
 	register_activation_hook(
@@ -88,7 +98,6 @@ define( 'PPCP_FLAG_SUBSCRIPTION', true );
 		function () {
 			init();
 			do_action( 'woocommerce_paypal_payments_gateway_activate' );
-			flush_rewrite_rules();
 		}
 	);
 	register_deactivation_hook(
