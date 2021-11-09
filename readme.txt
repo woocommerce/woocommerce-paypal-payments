@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, e-commerce, store, sales, sell, 
 Requires at least: 5.3
 Tested up to: 5.8
 Requires PHP: 7.1
-Stable tag: 1.6.1
+Stable tag: 1.6.2
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -80,6 +80,20 @@ Follow the steps below to connect the plugin to your PayPal account:
 6. Main settings screen.
 
 == Changelog ==
+
+= 1.6.2 =
+* Fix - Order of WooCommerce checkout actions causing incompatibility with AvaTax address validation #335
+* Fix - Can't checkout to certain countries with optional postcode #330
+* FIx - Prevent subscription from being purchased when saving payment fails #308
+* FIx - Guest users must checkout twice for subscriptions, no smart buttons loaded #342
+* FIx - Failed PayPal API request causing strange error #347
+* FIx - PayPal payments page empty after switching packages #350
+* FIx - Could Not Validate Nonce Error #239
+* FIx - Refund via PayPal dashboard does not set the WooCommerce order to "Refunded" #241
+* FIx - Uncaught TypeError: round() #344
+* FIx - Broken multi-level (nested) associative array values after getting submitted from checkout page #307
+* FIx - Transaction id missing in some cases #328
+* FIx - Payment not possible in pay for order form because of terms checkbox missing #294
 
 = 1.6.1 =
 * Fix - Handle authorization capture failures #312
