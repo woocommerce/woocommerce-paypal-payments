@@ -97,7 +97,7 @@ class CheckoutBootstap {
             return;
         }
 
-        if (jQuery('#saved-credit-card').length && jQuery('#saved-credit-card').val() !== '') {
+        if (this.isSavedCardSelected()) {
             this.renderer.hideButtons(this.gateway.button.wrapper)
             this.renderer.hideButtons(this.gateway.messages.wrapper)
             this.renderer.hideButtons(this.gateway.hosted_fields.wrapper)
@@ -140,6 +140,11 @@ class CheckoutBootstap {
 
     currentPaymentMethod() {
         return jQuery('input[name="payment_method"]:checked').val();
+    }
+
+    isSavedCardSelected() {
+        const savedCardList = jQuery('#saved-credit-card');
+        return savedCardList.length && savedCardList.val() !== '';
     }
 }
 
