@@ -67,8 +67,7 @@ class CheckoutBootstap {
     switchBetweenPayPalandOrderButton() {
         jQuery('#saved-credit-card').val(jQuery('#saved-credit-card option:first').val());
 
-        const currentPaymentMethod = jQuery(
-            'input[name="payment_method"]:checked').val();
+        const currentPaymentMethod = this.currentPaymentMethod();
 
         if (currentPaymentMethod !== 'ppcp-gateway' && currentPaymentMethod !== 'ppcp-credit-card-gateway') {
             this.renderer.hideButtons(this.gateway.button.wrapper);
@@ -93,8 +92,7 @@ class CheckoutBootstap {
     }
 
     displayPlaceOrderButtonForSavedCreditCards() {
-        const currentPaymentMethod = jQuery(
-          'input[name="payment_method"]:checked').val();
+        const currentPaymentMethod = this.currentPaymentMethod();
         if (currentPaymentMethod !== 'ppcp-credit-card-gateway') {
             return;
         }
@@ -138,6 +136,10 @@ class CheckoutBootstap {
         jQuery('#ppcp-credit-card-vault').removeClass('ppcp-credit-card-gateway-form-field-disabled')
         jQuery('#ppcp-credit-card-vault').attr("disabled", false)
         this.renderer.enableCreditCardFields()
+    }
+
+    currentPaymentMethod() {
+        return jQuery('input[name="payment_method"]:checked').val();
     }
 }
 
