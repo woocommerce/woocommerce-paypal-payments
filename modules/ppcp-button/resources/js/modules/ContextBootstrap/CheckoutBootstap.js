@@ -7,6 +7,8 @@ class CheckoutBootstap {
         this.renderer = renderer;
         this.messages = messages;
         this.spinner = spinner;
+
+        this.standardOrderButtonSelector = '#place_order';
     }
 
     init() {
@@ -72,10 +74,10 @@ class CheckoutBootstap {
             this.renderer.hideButtons(this.gateway.button.wrapper);
             this.renderer.hideButtons(this.gateway.messages.wrapper);
             this.renderer.hideButtons(this.gateway.hosted_fields.wrapper);
-            jQuery('#place_order').show();
+            jQuery(this.standardOrderButtonSelector).show();
         }
         else {
-            jQuery('#place_order').hide();
+            jQuery(this.standardOrderButtonSelector).hide();
             if (currentPaymentMethod === 'ppcp-gateway') {
                 this.renderer.showButtons(this.gateway.button.wrapper);
                 this.renderer.showButtons(this.gateway.messages.wrapper);
@@ -101,10 +103,10 @@ class CheckoutBootstap {
             this.renderer.hideButtons(this.gateway.button.wrapper)
             this.renderer.hideButtons(this.gateway.messages.wrapper)
             this.renderer.hideButtons(this.gateway.hosted_fields.wrapper)
-            jQuery('#place_order').show()
+            jQuery(this.standardOrderButtonSelector).show()
             this.disableCreditCardFields()
         } else {
-            jQuery('#place_order').hide()
+            jQuery(this.standardOrderButtonSelector).hide()
             this.renderer.hideButtons(this.gateway.button.wrapper)
             this.renderer.hideButtons(this.gateway.messages.wrapper)
             this.renderer.showButtons(this.gateway.hosted_fields.wrapper)
