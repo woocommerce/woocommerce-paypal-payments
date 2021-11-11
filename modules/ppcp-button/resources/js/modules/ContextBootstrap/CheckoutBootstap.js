@@ -24,21 +24,17 @@ class CheckoutBootstap {
             this.render()
         });
 
-        jQuery(document.body).
-          on('updated_checkout payment_method_selected', () => {
-              this.switchBetweenPayPalandOrderButton()
-              this.displayPlaceOrderButtonForSavedCreditCards()
-
-          })
+        jQuery(document.body).on('updated_checkout payment_method_selected', () => {
+            this.updateUi();
+        });
 
         jQuery(document).on('hosted_fields_loaded', () => {
             jQuery('#saved-credit-card').on('change', () => {
-                this.displayPlaceOrderButtonForSavedCreditCards()
+                this.updateUi();
             })
         });
 
-        this.switchBetweenPayPalandOrderButton()
-        this.displayPlaceOrderButtonForSavedCreditCards()
+        this.updateUi();
     }
 
     shouldRender() {
@@ -69,49 +65,28 @@ class CheckoutBootstap {
         );
     }
 
-    switchBetweenPayPalandOrderButton() {
+    updateUi() {
         const currentPaymentMethod = this.currentPaymentMethod();
+        const isPaypal = currentPaymentMethod === 'ppcp-gateway';
+        const isCard = currentPaymentMethod === 'ppcp-credit-card-gateway';
+        const isSavedCard = isCard && this.isSavedCardSelected();
+        const isNotOurGateway = !isPaypal && !isCard;
 
-        if (currentPaymentMethod !== 'ppcp-gateway' && currentPaymentMethod !== 'ppcp-credit-card-gateway') {
-            this.renderer.hideButtons(this.gateway.button.wrapper);
-            this.renderer.hideButtons(this.gateway.messages.wrapper);
-            this.renderer.hideButtons(this.gateway.hosted_fields.wrapper);
-            jQuery(this.standardOrderButtonSelector).show();
+        jQuery(this.standardOrderButtonSelector).toggle(isNotOurGateway || isSavedCard);
+        jQuery(this.gateway.button.wrapper).toggle(isPaypal);
+        jQuery(this.gateway.messages.wrapper).toggle(isPaypal);
+        jQuery(this.gateway.hosted_fields.wrapper).toggle(isCard && !isSavedCard);
+
+        if (isPaypal) {
+            this.messages.render();
         }
-        else {
-            jQuery(this.standardOrderButtonSelector).hide();
-            if (currentPaymentMethod === 'ppcp-gateway') {
-                this.renderer.showButtons(this.gateway.button.wrapper);
-                this.renderer.showButtons(this.gateway.messages.wrapper);
-                this.messages.render()
-                this.renderer.hideButtons(this.gateway.hosted_fields.wrapper)
+
+        if (isCard) {
+            if (isSavedCard) {
+                this.disableCreditCardFields();
+            } else {
+                this.enableCreditCardFields();
             }
-            if (currentPaymentMethod === 'ppcp-credit-card-gateway') {
-                this.renderer.hideButtons(this.gateway.button.wrapper)
-                this.renderer.hideButtons(this.gateway.messages.wrapper)
-                this.renderer.showButtons(this.gateway.hosted_fields.wrapper)
-            }
-        }
-    }
-
-    displayPlaceOrderButtonForSavedCreditCards() {
-        const currentPaymentMethod = this.currentPaymentMethod();
-        if (currentPaymentMethod !== 'ppcp-credit-card-gateway') {
-            return;
-        }
-
-        if (this.isSavedCardSelected()) {
-            this.renderer.hideButtons(this.gateway.button.wrapper)
-            this.renderer.hideButtons(this.gateway.messages.wrapper)
-            this.renderer.hideButtons(this.gateway.hosted_fields.wrapper)
-            jQuery(this.standardOrderButtonSelector).show()
-            this.disableCreditCardFields()
-        } else {
-            jQuery(this.standardOrderButtonSelector).hide()
-            this.renderer.hideButtons(this.gateway.button.wrapper)
-            this.renderer.hideButtons(this.gateway.messages.wrapper)
-            this.renderer.showButtons(this.gateway.hosted_fields.wrapper)
-            this.enableCreditCardFields()
         }
     }
 
