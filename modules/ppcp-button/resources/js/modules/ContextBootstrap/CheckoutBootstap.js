@@ -10,6 +10,10 @@ class CheckoutBootstap {
         this.spinner = spinner;
 
         this.standardOrderButtonSelector = '#place_order';
+
+        this.buttonChangeObserver = new MutationObserver((el) => {
+            this.updateUi();
+        });
     }
 
     init() {
@@ -63,6 +67,11 @@ class CheckoutBootstap {
             this.gateway.button.wrapper,
             this.gateway.hosted_fields.wrapper,
             actionHandler.configuration(),
+        );
+
+        this.buttonChangeObserver.observe(
+            document.querySelector(this.standardOrderButtonSelector),
+            {attributes: true}
         );
     }
 
