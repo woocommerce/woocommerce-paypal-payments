@@ -68,7 +68,7 @@ class OnboardingAssets {
 			'ppcp-onboarding',
 			$url,
 			array(),
-			1
+			true
 		);
 		$url = $this->module_url . '/assets/js/settings.js';
 		wp_register_script(

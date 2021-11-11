@@ -35,5 +35,5 @@ const TaskListFill = () => {
 
 registerPlugin( 'ppcp-task-list-fill', {
 	render: TaskListFill,
-	scope: 'woocommerce-admin'
+	scope: 'woocommerce-tasks',
 } );
