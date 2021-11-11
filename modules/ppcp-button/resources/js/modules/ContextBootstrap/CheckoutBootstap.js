@@ -1,5 +1,6 @@
 import ErrorHandler from '../ErrorHandler';
 import CheckoutActionHandler from '../ActionHandler/CheckoutActionHandler';
+import { setVisible } from '../Helper/Hiding';
 
 class CheckoutBootstap {
     constructor(gateway, renderer, messages, spinner) {
@@ -72,10 +73,10 @@ class CheckoutBootstap {
         const isSavedCard = isCard && this.isSavedCardSelected();
         const isNotOurGateway = !isPaypal && !isCard;
 
-        jQuery(this.standardOrderButtonSelector).toggle(isNotOurGateway || isSavedCard);
-        jQuery(this.gateway.button.wrapper).toggle(isPaypal);
-        jQuery(this.gateway.messages.wrapper).toggle(isPaypal);
-        jQuery(this.gateway.hosted_fields.wrapper).toggle(isCard && !isSavedCard);
+        setVisible(this.standardOrderButtonSelector, isNotOurGateway || isSavedCard, true);
+        setVisible(this.gateway.button.wrapper, isPaypal);
+        setVisible(this.gateway.messages.wrapper, isPaypal);
+        setVisible(this.gateway.hosted_fields.wrapper, isCard && !isSavedCard);
 
         if (isPaypal) {
             this.messages.render();
