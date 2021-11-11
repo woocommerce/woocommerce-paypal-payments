@@ -12,8 +12,13 @@ class CheckoutBootstap {
     }
 
     init() {
-
         this.render();
+
+        // Unselect saved card.
+        // WC saves form values, so with our current UI it would be a bit weird
+        // if the user paid with saved, then after some time tries to pay again,
+        // but wants to enter a new card, and to do that they have to choose “Select payment” in the list.
+        jQuery('#saved-credit-card').val(jQuery('#saved-credit-card option:first').val());
 
         jQuery(document.body).on('updated_checkout', () => {
             this.render()
@@ -65,8 +70,6 @@ class CheckoutBootstap {
     }
 
     switchBetweenPayPalandOrderButton() {
-        jQuery('#saved-credit-card').val(jQuery('#saved-credit-card option:first').val());
-
         const currentPaymentMethod = this.currentPaymentMethod();
 
         if (currentPaymentMethod !== 'ppcp-gateway' && currentPaymentMethod !== 'ppcp-credit-card-gateway') {
