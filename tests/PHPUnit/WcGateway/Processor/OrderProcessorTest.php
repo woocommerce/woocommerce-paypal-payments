@@ -33,6 +33,8 @@ class OrderProcessorTest extends TestCase
 		parent::setUp();
 
 		$this->environment = new Environment(new Dictionary([]));
+
+		when('wc_print_r')->justEcho();
 	}
 
     public function testAuthorize() {
@@ -43,6 +45,9 @@ class OrderProcessorTest extends TestCase
             ->andReturn($transactionId);
 		$authorization->shouldReceive('status')
 			->andReturn(new AuthorizationStatus(AuthorizationStatus::CREATED));
+		$authorization
+			->shouldReceive('to_array')
+			->andReturn([]);
 
         $payments = Mockery::mock(Payments::class);
         $payments->shouldReceive('authorizations')
@@ -117,6 +122,7 @@ class OrderProcessorTest extends TestCase
             ->andReturnFalse();
 
         $logger = Mockery::mock(LoggerInterface::class);
+        $logger->shouldReceive('debug');
 
         $testee = new OrderProcessor(
             $sessionHandler,
@@ -173,6 +179,9 @@ class OrderProcessorTest extends TestCase
             ->andReturn($transactionId);
         $capture->expects('status')
             ->andReturn(new CaptureStatus(CaptureStatus::COMPLETED));
+		$capture
+			->shouldReceive('to_array')
+			->andReturn([]);
 
         $payments = Mockery::mock(Payments::class);
         $payments->shouldReceive('captures')
@@ -287,6 +296,9 @@ class OrderProcessorTest extends TestCase
             ->with($transactionId);
         $wcOrder
 	        ->expects('payment_complete');
+
+		$logger->shouldReceive('debug');
+
         $this->assertTrue($testee->process($wcOrder));
     }
 

@@ -20,6 +20,7 @@ use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Mockery;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
+use function Brain\Monkey\Functions\when;
 
 class AuthorizedPaymentsProcessorTest extends TestCase
 {
@@ -59,6 +60,8 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 			new NullLogger(),
 			$this->notice
 		);
+
+		when('wc_print_r')->justEcho();
 	}
 
 	public function testSuccess() {
@@ -183,6 +186,9 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 		$authorization
 			->shouldReceive('status')
 			->andReturn(new AuthorizationStatus($status));
+		$authorization
+			->shouldReceive('to_array')
+			->andReturn([]);
 		return $authorization;
 	}
 
@@ -191,6 +197,10 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 		$capture
 			->shouldReceive('status')
 			->andReturn(new CaptureStatus($status));
+		$capture
+			->shouldReceive('to_array')
+			->andReturn([]);
+
 		return $capture;
 	}
 
