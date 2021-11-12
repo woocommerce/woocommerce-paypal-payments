@@ -34,6 +34,8 @@ trait PaymentsStatusHandlingTrait {
 		Order $order,
 		WC_Order $wc_order
 	): void {
+		$this->logger->debug( 'Trying to update WC order status with ' . $order->intent() . ' intent' );
+
 		if ( $order->intent() === 'CAPTURE' ) {
 			$this->handle_capture_status( $order->purchase_units()[0]->payments()->captures()[0], $wc_order );
 		} elseif ( $order->intent() === 'AUTHORIZE' ) {
@@ -53,6 +55,8 @@ trait PaymentsStatusHandlingTrait {
 		Capture $capture,
 		WC_Order $wc_order
 	): void {
+		$this->logger->debug( 'Capture: ' . wc_print_r( $capture->to_array(), true ) );
+
 		$status = $capture->status();
 
 		$details = $status->details();
@@ -94,6 +98,8 @@ trait PaymentsStatusHandlingTrait {
 		Authorization $authorization,
 		WC_Order $wc_order
 	): void {
+		$this->logger->debug( 'Authorization: ' . wc_print_r( $authorization->to_array(), true ) );
+
 		$status = $authorization->status();
 
 		$details = $status->details();
