@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="4.10.0@916b098b008f6de4543892b1e0651c1c3b92cbfa">
+<files psalm-version="4.11.2@6fba5eb554f9507b72932f9c75533d8af593688d">
   <file src="modules/ppcp-api-client/services.php">
     <UndefinedConstant occurrences="2">
       <code>PAYPAL_API_URL</code>
@@ -67,9 +67,6 @@
     </UndefinedMethod>
   </file>
   <file src="modules/ppcp-api-client/src/Endpoint/RequestTrait.php">
-    <PossiblyInvalidArgument occurrences="1">
-      <code>$response</code>
-    </PossiblyInvalidArgument>
     <PossiblyInvalidOperand occurrences="3">
       <code>wc_print_r( $args['body'], true )</code>
       <code>wc_print_r( $response['body'], true )</code>
@@ -98,26 +95,6 @@
       <code>to_array</code>
       <code>to_array</code>
     </PossiblyNullReference>
-  </file>
-  <file src="modules/ppcp-api-client/src/Entity/AmountBreakdown.php">
-    <PossiblyNullPropertyAssignmentValue occurrences="7">
-      <code>$discount</code>
-      <code>$handling</code>
-      <code>$insurance</code>
-      <code>$item_total</code>
-      <code>$shipping</code>
-      <code>$shipping_discount</code>
-      <code>$tax_total</code>
-    </PossiblyNullPropertyAssignmentValue>
-    <RedundantConditionGivenDocblockType occurrences="7">
-      <code>$this-&gt;discount</code>
-      <code>$this-&gt;handling</code>
-      <code>$this-&gt;insurance</code>
-      <code>$this-&gt;item_total</code>
-      <code>$this-&gt;shipping</code>
-      <code>$this-&gt;shipping_discount</code>
-      <code>$this-&gt;tax_total</code>
-    </RedundantConditionGivenDocblockType>
   </file>
   <file src="modules/ppcp-api-client/src/Entity/Item.php">
     <PossiblyNullReference occurrences="1">
@@ -257,11 +234,6 @@
       <code>(int) $item-&gt;get_quantity()</code>
     </RedundantCastGivenDocblockType>
   </file>
-  <file src="modules/ppcp-api-client/src/Factory/PatchCollectionFactory.php">
-    <TypeDoesNotContainType occurrences="1">
-      <code>$needs_update</code>
-    </TypeDoesNotContainType>
-  </file>
   <file src="modules/ppcp-api-client/src/Factory/PayerFactory.php">
     <PossiblyNullArgument occurrences="2">
       <code>$national_number</code>
@@ -355,14 +327,9 @@
       <code>card</code>
       <code>card</code>
     </PossiblyNullReference>
-    <TypeDoesNotContainType occurrences="1">
-      <code>$order</code>
-    </TypeDoesNotContainType>
   </file>
   <file src="modules/ppcp-button/src/Endpoint/CreateOrderEndpoint.php">
-    <MissingReturnType occurrences="4">
-      <code>process_checkout_form</code>
-      <code>process_checkout_form_when_creating_account</code>
+    <MissingReturnType occurrences="2">
       <code>set_bn_code</code>
       <code>validate_paynow_form</code>
     </MissingReturnType>
@@ -444,11 +411,6 @@
     <UndefinedTrait occurrences="1">
       <code>NoteTraits</code>
     </UndefinedTrait>
-  </file>
-  <file src="modules/ppcp-compat/src/PPEC/PPECHelper.php">
-    <UndefinedFunction occurrences="1">
-      <code>wc_gateway_ppec()</code>
-    </UndefinedFunction>
   </file>
   <file src="modules/ppcp-compat/src/PPEC/SettingsImporter.php">
     <UndefinedFunction occurrences="1">
@@ -639,9 +601,6 @@
     <MissingReturnType occurrences="1">
       <code>getKey</code>
     </MissingReturnType>
-    <UndefinedConstant occurrences="1">
-      <code>EP_PAGES</code>
-    </UndefinedConstant>
   </file>
   <file src="modules/ppcp-wc-gateway/services.php">
     <PossiblyInvalidArgument occurrences="5">
@@ -677,7 +636,7 @@
     </PossiblyNullPropertyFetch>
   </file>
   <file src="modules/ppcp-wc-gateway/src/Checkout/CheckoutPayPalAddressPreset.php">
-    <PossiblyNullReference occurrences="4">
+    <PossiblyNullReference occurrences="3">
       <code>phone</code>
       <code>phone</code>
       <code>phone</code>
@@ -706,9 +665,6 @@
     <PossiblyInvalidArgument occurrences="1">
       <code>wp_unslash( $_GET['token'] )</code>
     </PossiblyInvalidArgument>
-    <TypeDoesNotContainType occurrences="1">
-      <code>$order</code>
-    </TypeDoesNotContainType>
   </file>
   <file src="modules/ppcp-wc-gateway/src/Helper/DCCProductStatus.php">
     <InvalidPropertyAssignmentValue occurrences="2">
