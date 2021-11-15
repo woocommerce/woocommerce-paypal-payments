@@ -94,9 +94,11 @@ class IdentityToken {
 				'Content-Type'  => 'application/json',
 			),
 		);
-		if ( $customer_id
+		if (
+			$customer_id
 			&& ( $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ) )
-			&& defined( 'PPCP_FLAG_SUBSCRIPTION' ) && PPCP_FLAG_SUBSCRIPTION ) {
+			&& defined( 'PPCP_FLAG_SUBSCRIPTION' ) && PPCP_FLAG_SUBSCRIPTION
+		) {
 			$args['body'] = wp_json_encode( array( 'customer_id' => $this->prefix . $customer_id ) );
 		}
 
