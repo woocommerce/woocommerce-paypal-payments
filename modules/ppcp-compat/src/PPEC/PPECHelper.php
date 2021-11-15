@@ -44,7 +44,12 @@ class PPECHelper {
 	 * @return bool
 	 */
 	public static function is_gateway_available() {
-		return self::is_plugin_active() && is_callable( 'wc_gateway_ppec' ) && wc_gateway_ppec()->settings->get_active_api_credentials();
+		if ( ! self::is_plugin_active() || ! is_callable( 'wc_gateway_ppec' ) ) {
+			return false;
+		}
+
+		$ppec = wc_gateway_ppec();
+		return is_object( $ppec ) && $ppec->settings && $ppec->settings->get_active_api_credentials();
 	}
 
 	/**
