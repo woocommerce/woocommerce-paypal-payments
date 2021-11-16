@@ -77,7 +77,7 @@ class PurchaseUnitFactoryTest extends TestCase
         $this->assertEquals($payee, $unit->payee());
         $this->assertEquals('', $unit->description());
         $this->assertEquals('default', $unit->reference_id());
-        $this->assertEquals('WC-' . $this->wcOrderId, $unit->custom_id());
+        $this->assertEquals($this->wcOrderId, $unit->custom_id());
         $this->assertEquals('', $unit->soft_descriptor());
         $this->assertEquals('WC-' . $this->wcOrderNumber, $unit->invoice_id());
         $this->assertEquals([$item], $unit->items());

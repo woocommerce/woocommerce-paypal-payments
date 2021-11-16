@@ -119,7 +119,7 @@ class PurchaseUnitFactory {
 		$reference_id    = 'default';
 		$description     = '';
 		$payee           = $this->payee_repository->payee();
-		$custom_id       = $this->prefix . (string) $order->get_id();
+		$custom_id       = (string) $order->get_id();
 		$invoice_id      = $this->prefix . $order->get_order_number();
 		$soft_descriptor = '';
 		$purchase_unit   = new PurchaseUnit(
