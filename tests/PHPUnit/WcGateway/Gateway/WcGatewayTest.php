@@ -202,8 +202,8 @@ class WcGatewayTest extends TestCase
 	    $state
 		    ->shouldReceive('current_state')->andReturn(State::STATE_ONBOARDED);
         $subscriptionHelper = Mockery::mock(SubscriptionHelper::class);
-        $subscriptionHelper->shouldReceive('has_subscription')->with($orderId)->andReturn(true);
-        $subscriptionHelper->shouldReceive('is_subscription_change_payment')->andReturn(true);
+        $subscriptionHelper->shouldReceive('has_subscription')->with($orderId)->andReturn(false);
+        $subscriptionHelper->shouldReceive('is_subscription_change_payment')->andReturn(false);
         $wcOrder->shouldReceive('update_status')->andReturn(true);
 
 		$paymentTokenRepository = Mockery::mock(PaymentTokenRepository::class);
