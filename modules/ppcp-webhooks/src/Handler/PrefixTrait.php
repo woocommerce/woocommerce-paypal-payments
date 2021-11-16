@@ -31,7 +31,10 @@ trait PrefixTrait {
 	 */
 	private function sanitize_custom_id( string $custom_id ): int {
 
-		$id = str_replace( $this->prefix, '', $custom_id );
+		$id = $custom_id;
+		if ( strlen( $this->prefix ) > 0 && 0 === strpos( $id, $this->prefix ) ) {
+			$id = substr( $id, strlen( $this->prefix ) );
+		}
 		return (int) $id;
 	}
 }
