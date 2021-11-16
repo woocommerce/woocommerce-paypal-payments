@@ -62,7 +62,24 @@ trait ProcessPaymentTrait {
 			$saved_credit_card = filter_input( INPUT_POST, 'saved_credit_card', FILTER_SANITIZE_STRING );
 			$pay_for_order     = filter_input( INPUT_GET, 'pay_for_order', FILTER_SANITIZE_STRING );
 			if ( $saved_credit_card && ! isset( $pay_for_order ) ) {
-				return $this->process_order_for_saved_credit_card( $wc_order, $saved_credit_card );
+
+				$user_id  = $wc_order->get_customer_id();
+				$payment_token = $this->payment_token_repository->get_token_for_customer($user_id, $saved_credit_card);
+				if ( ! $payment_token ) {
+					return null;
+				}
+
+				$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
+				$customer = new WC_Customer( $user_id );
+				$payer         = $this->payer_factory->from_customer( $customer );
+
+				return $this->order_processor->process_order_with_payment_token(
+					$payment_token,
+					$wc_order,
+					$purchase_unit,
+					$payer,
+					$this->get_return_url( $wc_order )
+				);
 			}
 		} catch ( Exception $exception ) {
 			return $failure_data;
@@ -199,6 +216,7 @@ trait ProcessPaymentTrait {
 	 * @return array|null
 	 * @throws Exception When there is a problem processing the order.
 	 */
+	/*
 	protected function process_order_for_saved_credit_card( $wc_order, $saved_credit_card ) {
 		$user_id  = (int) $wc_order->get_customer_id();
 		$customer = new WC_Customer( $user_id );
@@ -272,6 +290,7 @@ trait ProcessPaymentTrait {
 		}
 
 	}
+	*/
 
 	/**
 	 * Change subscription payment.

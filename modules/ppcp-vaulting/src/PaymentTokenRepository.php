@@ -122,6 +122,28 @@ class PaymentTokenRepository {
 	}
 
 	/**
+	 * Get given token for the given customer.
+	 *
+	 * @param int $user_id
+	 * @param string $token_id
+	 * @return PaymentToken|null
+	 */
+	public function get_token_for_customer($user_id, $token_id)
+	{
+		$tokens = $this->all_for_user_id($user_id);
+
+		$selected_token = null;
+		foreach ($tokens as $token) {
+			if ($token->id() === $token_id) {
+				$selected_token = $token;
+				break;
+			}
+		}
+
+		return $selected_token;
+	}
+
+	/**
 	 * Fetch PaymentToken from PayPal for a user.
 	 *
 	 * @param int $id The user id.

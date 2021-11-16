@@ -9,10 +9,14 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Processor;
 
+use Exception;
 use Psr\Log\LoggerInterface;
+use WC_Customer;
+use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
@@ -193,6 +197,89 @@ class OrderProcessor {
 		$this->session_handler->destroy_session_data();
 		$this->last_error = '';
 		return true;
+	}
+
+	/**
+	 * Process order using saved payment.
+	 *
+	 * @param WC_Order $wc_order
+	 * @param string $saved_credit_card
+	 * @param $purchase_unit
+	 * @param $payer
+	 * @param $customer
+	 * @return array|null
+	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException
+	 */
+	public function process_order_with_payment_token(
+		$selected_token,
+		$wc_order,
+		$purchase_unit,
+		$payer,
+		$redirect
+	) {
+
+		try {
+			$order = $this->order_endpoint->create(
+				array( $purchase_unit ),
+				$payer,
+				$selected_token
+			);
+
+			$this->add_paypal_meta( $wc_order, $order, $this->environment );
+
+			if ( ! $order->status()->is( OrderStatus::COMPLETED ) ) {
+				$this->logger->warning( "Unexpected status for order {$order->id()} using a saved credit card: " . $order->status()->name() );
+				return null;
+			}
+
+			if ( ! in_array(
+				$order->intent(),
+				array( 'CAPTURE', 'AUTHORIZE' ),
+				true
+			) ) {
+				$this->logger->warning( "Could neither capture nor authorize order {$order->id()} using a saved credit card:" . 'Status: ' . $order->status()->name() . ' Intent: ' . $order->intent() );
+				return null;
+			}
+
+			if ( $order->intent() === 'AUTHORIZE' ) {
+				$order = $this->order_endpoint->authorize( $order );
+
+				$wc_order->update_meta_data(
+					AuthorizedPaymentsProcessor::CAPTURED_META_KEY,
+					'false'
+				);
+			}
+
+			$transaction_id = $this->get_paypal_order_transaction_id( $order );
+			if ( $transaction_id ) {
+				$this->update_transaction_id( $transaction_id, $wc_order );
+			}
+
+			$this->handle_new_order_status( $order, $wc_order );
+
+			if ( $this->settings->has( 'intent' ) && strtoupper( (string) $this->settings->get( 'intent' ) ) === 'CAPTURE' ) {
+				$this->authorized_payments_processor->capture_authorized_payment( $wc_order );
+			}
+
+			$this->session_handler->destroy_session_data();
+			return array(
+				'result'   => 'success',
+				'redirect' => $redirect,
+			);
+		} catch ( RuntimeException $error ) {
+			$this->logger->error( 'Payment failed: ' . $error->getMessage() );
+
+			$wc_order->update_status(
+				'failed',
+				__( 'Could not process order.', 'woocommerce-paypal-payments' )
+			);
+
+			$this->session_handler->destroy_session_data();
+
+			wc_add_notice( $error->getMessage(), 'error' );
+
+			return null;
+		}
 	}
 
 	/**
