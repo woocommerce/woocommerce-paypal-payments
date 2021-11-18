@@ -88,8 +88,6 @@ class OrderProcessorTest extends TestCase
         $sessionHandler
             ->expects('order')
             ->andReturn($currentOrder);
-        $sessionHandler
-            ->expects('destroy_session_data');
 
         $orderEndpoint = Mockery::mock(OrderEndpoint::class);
         $orderEndpoint
@@ -128,15 +126,6 @@ class OrderProcessorTest extends TestCase
             $logger,
             $this->environment
         );
-
-        $cart = Mockery::mock(\WC_Cart::class);
-        $cart
-            ->expects('empty_cart');
-        $woocommerce = Mockery::mock(\WooCommerce::class);
-        when('WC')
-			->justReturn($woocommerce);
-
-        $woocommerce->cart = $cart;
 
         $wcOrder
             ->expects('update_meta_data')
@@ -211,8 +200,6 @@ class OrderProcessorTest extends TestCase
         $sessionHandler
             ->expects('order')
             ->andReturn($currentOrder);
-        $sessionHandler
-            ->expects('destroy_session_data');
         $orderEndpoint = Mockery::mock(OrderEndpoint::class);
         $orderEndpoint
             ->expects('patch_order_with')
@@ -234,20 +221,7 @@ class OrderProcessorTest extends TestCase
             ->shouldReceive('has')
             ->andReturnFalse();
 
-        $cart = Mockery::mock(\WC_Cart::class);
-        $cart
-			->shouldReceive('empty_cart');
-
-        $woocommerce = Mockery::Mock(\Woocommerce::class);
-		$woocommerce
-			->shouldReceive('__get')
-			->with('cart')
-			->set('cart', $cart);
-        when('WC')
-			->justReturn($woocommerce);
-
 		$logger = Mockery::mock(LoggerInterface::class);
-
 
 		$testee = new OrderProcessor(
             $sessionHandler,
@@ -259,15 +233,6 @@ class OrderProcessorTest extends TestCase
             $logger,
             $this->environment
         );
-
-        $cart = Mockery::mock(\WC_Cart::class);
-        $cart
-            ->expects('empty_cart');
-        $woocommerce = Mockery::mock(\WooCommerce::class);
-        $woocommerce->cart = $cart;
-
-        when('WC')
-			->justReturn($woocommerce);
 
         $wcOrder
             ->expects('update_meta_data')

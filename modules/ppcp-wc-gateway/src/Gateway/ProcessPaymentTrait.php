@@ -253,13 +253,19 @@ trait ProcessPaymentTrait {
 						}
 					}
 
+					// Adds retry counter meta to avoid duplicate invoice id error on consequent tries.
+					$wc_order->update_meta_data( 'ppcp-retry', (int) $wc_order->get_meta( 'ppcp-retry' ) + 1 );
+					$wc_order->save_meta_data();
+
 					$this->session_handler->destroy_session_data();
 					wc_add_notice( $error_message, 'error' );
 
 					return $failure_data;
 				}
 
+				WC()->cart->empty_cart();
 				$this->session_handler->destroy_session_data();
+
 				return array(
 					'result'   => 'success',
 					'redirect' => $this->get_return_url( $wc_order ),
