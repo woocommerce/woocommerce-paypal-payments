@@ -107,12 +107,6 @@ class WcGatewayTest extends TestCase
 		->justReturn('test');
 
 		$woocommerce = Mockery::mock(\WooCommerce::class);
-		$session = Mockery::mock(\WC_Session::class);
-		when('WC')->justReturn($woocommerce);
-		$woocommerce->session = $session;
-		$session->shouldReceive('get')->andReturn([]);
-
-		$woocommerce = Mockery::mock(\WooCommerce::class);
 		$cart = Mockery::mock(\WC_Cart::class);
 		when('WC')->justReturn($woocommerce);
 		$woocommerce->cart = $cart;
