@@ -44,6 +44,8 @@ class StatusReportModule implements ModuleInterface {
 		add_action(
 			'woocommerce_system_status_report',
 			function () use ( $c ) {
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof ContainerInterface );
 
 				/* @var State $state The state. */
 				$state = $c->get( 'onboarding.state' );
@@ -92,6 +94,13 @@ class StatusReportModule implements ModuleInterface {
 						'description' => esc_html__( 'Whether vaulting is enabled on PayPal account or not.', 'woocommerce-paypal-payments' ),
 						'value'       => $this->bool_to_text(
 							$this->vault_enabled( $bearer )
+						),
+					),
+					array(
+						'label'       => esc_html__( 'Logging enabled', 'woocommerce-paypal-payments' ),
+						'description' => esc_html__( 'Whether logging of plugin events and errors is enabled.', 'woocommerce-paypal-payments' ),
+						'value'       => $this->bool_to_text(
+							$settings->has( 'logging_enabled' ) && $settings->get( 'logging_enabled' )
 						),
 					),
 				);
