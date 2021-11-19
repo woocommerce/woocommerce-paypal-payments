@@ -199,14 +199,18 @@ class SmartButton implements SmartButtonInterface {
 				11
 			);
 
+			$subscription_helper = $this->subscription_helper;
 			add_filter(
 				'woocommerce_credit_card_form_fields',
-				function ( $default_fields, $id ) {
+				function ( $default_fields, $id ) use ( $subscription_helper ) {
 					if ( is_user_logged_in() && $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ) && CreditCardGateway::ID === $id ) {
-						$default_fields['card-vault'] = sprintf(
-							'<p class="form-row form-row-wide"><label for="vault"><input class="ppcp-credit-card-vault" type="checkbox" id="ppcp-credit-card-vault" name="vault">%s</label></p>',
-							esc_html__( 'Save your Credit Card', 'woocommerce-paypal-payments' )
-						);
+
+						if ( ! $subscription_helper->cart_contains_subscription() ) {
+							$default_fields['card-vault'] = sprintf(
+								'<p class="form-row form-row-wide"><label for="vault"><input class="ppcp-credit-card-vault" type="checkbox" id="ppcp-credit-card-vault" name="vault">%s</label></p>',
+								esc_html__( 'Save your Credit Card', 'woocommerce-paypal-payments' )
+							);
+						}
 
 						$tokens = $this->payment_token_repository->all_for_user_id( get_current_user_id() );
 						if ( $tokens && $this->payment_token_repository->tokens_contains_card( $tokens ) ) {
