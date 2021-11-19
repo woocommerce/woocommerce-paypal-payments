@@ -64,7 +64,9 @@ class StatusReportModule implements ModuleInterface {
 					array(
 						'label'       => esc_html__( 'Onboarded', 'woocommerce-paypal-payments' ),
 						'description' => esc_html__( 'Whether PayPal account is correctly configured or not.', 'woocommerce-paypal-payments' ),
-						'value'       => $this->onboarded( $bearer, $state ),
+						'value'       => $this->bool_to_text(
+							$this->onboarded( $bearer, $state )
+						),
 					),
 					array(
 						'label'       => esc_html__( 'Shop country code', 'woocommerce-paypal-payments' ),
@@ -74,21 +76,23 @@ class StatusReportModule implements ModuleInterface {
 					array(
 						'label'       => esc_html__( 'PayPal card processing available in country', 'woocommerce-paypal-payments' ),
 						'description' => esc_html__( 'Whether PayPal card processing is available in country or not.', 'woocommerce-paypal-payments' ),
-						'value'       => $dcc_applies->for_country_currency()
-							? esc_html__( 'Yes', 'woocommerce-paypal-payments' )
-							: esc_html__( 'No', 'woocommerce-paypal-payments' ),
+						'value'       => $this->bool_to_text(
+							$dcc_applies->for_country_currency()
+						),
 					),
 					array(
 						'label'       => esc_html__( 'Pay Later messaging available in country', 'woocommerce-paypal-payments' ),
 						'description' => esc_html__( 'Whether Pay Later is available in country or not.', 'woocommerce-paypal-payments' ),
-						'value'       => $messages_apply->for_country()
-							? esc_html__( 'Yes', 'woocommerce-paypal-payments' )
-							: esc_html__( 'No', 'woocommerce-paypal-payments' ),
+						'value'       => $this->bool_to_text(
+							$messages_apply->for_country()
+						),
 					),
 					array(
 						'label'       => esc_html__( 'Vault enabled', 'woocommerce-paypal-payments' ),
 						'description' => esc_html__( 'Whether vaulting is enabled on PayPal account or not.', 'woocommerce-paypal-payments' ),
-						'value'       => $this->vault_enabled( $bearer ),
+						'value'       => $this->bool_to_text(
+							$this->vault_enabled( $bearer )
+						),
 					),
 				);
 
@@ -112,37 +116,43 @@ class StatusReportModule implements ModuleInterface {
 	 *
 	 * @param Bearer $bearer The bearer.
 	 * @param State  $state The state.
-	 * @return string
+	 * @return bool
 	 */
-	private function onboarded( $bearer, $state ): string {
+	private function onboarded( Bearer $bearer, State $state ): bool {
 		try {
 			$token = $bearer->bearer();
 		} catch ( RuntimeException $exception ) {
-			return esc_html__( 'No', 'woocommerce-paypal-payments' );
+			return false;
 		}
 
 		$current_state = $state->current_state();
-		if ( $token->is_valid() && $current_state === $state::STATE_ONBOARDED ) {
-			return esc_html__( 'Yes', 'woocommerce-paypal-payments' );
-		}
-
-		return esc_html__( 'No', 'woocommerce-paypal-payments' );
+		return $token->is_valid() && $current_state === $state::STATE_ONBOARDED;
 	}
 
 	/**
 	 * It returns whether vaulting is enabled or not.
 	 *
 	 * @param Bearer $bearer The bearer.
-	 * @return string
+	 * @return bool
 	 */
-	private function vault_enabled( $bearer ) {
+	private function vault_enabled( Bearer $bearer ): bool {
 		try {
 			$token = $bearer->bearer();
-			return $token->vaulting_available()
-				? esc_html__( 'Yes', 'woocommerce-paypal-payments' )
-				: esc_html__( 'No', 'woocommerce-paypal-payments' );
+			return $token->vaulting_available();
 		} catch ( RuntimeException $exception ) {
-			return esc_html__( 'No', 'woocommerce-paypal-payments' );
+			return false;
 		}
+	}
+
+	/**
+	 * Converts the bool value to "Yes" or "No".
+	 *
+	 * @param bool $value The value.
+	 * @return string
+	 */
+	private function bool_to_text( bool $value ): string {
+		return $value
+			? esc_html__( 'Yes', 'woocommerce-paypal-payments' )
+			: esc_html__( 'No', 'woocommerce-paypal-payments' );
 	}
 }
