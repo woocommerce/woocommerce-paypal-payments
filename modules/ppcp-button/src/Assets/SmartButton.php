@@ -202,7 +202,7 @@ class SmartButton implements SmartButtonInterface {
 			$subscription_helper = $this->subscription_helper;
 			add_filter(
 				'woocommerce_credit_card_form_fields',
-				function ( $default_fields, $id ) use ( $subscription_helper ) {
+				function ( array $default_fields, $id ) use ( $subscription_helper ) : array {
 					if ( is_user_logged_in() && $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ) && CreditCardGateway::ID === $id ) {
 
 						if ( ! $subscription_helper->cart_contains_subscription() ) {
