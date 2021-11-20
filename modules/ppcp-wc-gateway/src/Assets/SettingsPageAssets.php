@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Assets;
 
-use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
 /**
@@ -32,33 +31,23 @@ class SettingsPageAssets {
 	private $module_path;
 
 	/**
-	 * The bearer.
-	 *
-	 * @var Bearer
-	 */
-	private $bearer;
-
-	/**
 	 * Assets constructor.
 	 *
 	 * @param string $module_url The url of this module.
 	 * @param string $module_path The filesystem path to this module.
-	 * @param Bearer $bearer The bearer.
 	 */
-	public function __construct( string $module_url, string $module_path, Bearer $bearer ) {
+	public function __construct( string $module_url, string $module_path ) {
 		$this->module_url  = $module_url;
 		$this->module_path = $module_path;
-		$this->bearer      = $bearer;
 	}
 
 	/**
 	 * Register assets provided by this module.
 	 */
 	public function register_assets() {
-		$bearer = $this->bearer;
 		add_action(
 			'admin_enqueue_scripts',
-			function() use ( $bearer ) {
+			function() {
 				if ( ! is_admin() || is_ajax() ) {
 					return;
 				}
@@ -67,7 +56,7 @@ class SettingsPageAssets {
 					return;
 				}
 
-				$this->register_admin_assets( $bearer );
+				$this->register_admin_assets();
 			}
 		);
 
@@ -98,10 +87,8 @@ class SettingsPageAssets {
 
 	/**
 	 * Register assets for admin pages.
-	 *
-	 * @param Bearer $bearer The bearer.
 	 */
-	private function register_admin_assets( Bearer $bearer ) {
+	private function register_admin_assets() {
 		$gateway_settings_script_path = trailingslashit( $this->module_path ) . 'assets/js/gateway-settings.js';
 
 		wp_enqueue_script(
@@ -111,18 +98,5 @@ class SettingsPageAssets {
 			file_exists( $gateway_settings_script_path ) ? (string) filemtime( $gateway_settings_script_path ) : null,
 			true
 		);
-
-		try {
-			$token = $bearer->bearer();
-			wp_localize_script(
-				'ppcp-gateway-settings',
-				'PayPalCommerceGatewaySettings',
-				array(
-					'vaulting_features_available' => $token->vaulting_available(),
-				)
-			);
-		} catch ( RuntimeException $exception ) {
-			return;
-		}
 	}
 }

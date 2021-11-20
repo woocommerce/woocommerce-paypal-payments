@@ -73,8 +73,7 @@ class WCGatewayModule implements ModuleInterface {
 		if ( $c->has( 'wcgateway.url' ) ) {
 			$assets = new SettingsPageAssets(
 				$c->get( 'wcgateway.url' ),
-				$c->get( 'wcgateway.absolute-path' ),
-				$c->get( 'api.bearer' )
+				$c->get( 'wcgateway.absolute-path' )
 			);
 			$assets->register_assets();
 		}
