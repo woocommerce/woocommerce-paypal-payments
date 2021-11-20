@@ -9,6 +9,10 @@
             "#ppcp-vault_enabled"
         )
 
+        const disabledCheckboxes = document.querySelectorAll(
+            '.ppc-disabled-checkbox'
+        )
+
         function atLeastOneChecked(checkboxesNodeList) {
             return Array.prototype.slice.call(checkboxesNodeList).filter(node => !node.disabled && node.checked).length > 0
         }
@@ -22,12 +26,8 @@
         }
 
         function updateCheckboxes() {
-            atLeastOneChecked(payLaterMessagingCheckboxes) ? disableAll(vaultingCheckboxes) : enableAll(vaultingCheckboxes)
+            disableAll( disabledCheckboxes );
             atLeastOneChecked(vaultingCheckboxes) ? disableAll(payLaterMessagingCheckboxes) : enableAll(payLaterMessagingCheckboxes)
-
-            if(typeof PayPalCommerceGatewaySettings === 'undefined' || PayPalCommerceGatewaySettings.vaulting_features_available !== '1' ) {
-                disableAll(vaultingCheckboxes)
-            }
         }
 
         updateCheckboxes()

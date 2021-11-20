@@ -719,6 +719,7 @@ return array(
 				),
 				'requirements' => array(),
 				'gateway'      => array( 'paypal', 'dcc' ),
+				'input_class'  => $container->get( 'wcgateway.helper.vaulting-scope' ) ? array() : array( 'ppc-disabled-checkbox' ),
 			),
 			'logging_enabled'                => array(
 				'title'        => __( 'Logging', 'woocommerce-paypal-payments' ),
@@ -2025,5 +2026,14 @@ return array(
 
 	'button.helper.messages-disclaimers'           => static function ( ContainerInterface $container ): MessagesDisclaimers {
 		return new MessagesDisclaimers();
+	},
+
+	'wcgateway.helper.vaulting-scope'              => static function ( ContainerInterface $container ): bool {
+		try {
+			$token = $container->get( 'api.bearer' )->bearer();
+			return $token->vaulting_available();
+		} catch ( RuntimeException $exception ) {
+			return false;
+		}
 	},
 );
