@@ -2044,6 +2044,10 @@ return array(
 			);
 		}
 
+		$vaulting_label .= '<p class="description">';
+		$vaulting_label .= __( 'This will disable all Pay Later messaging on your site.', 'woocommerce-paypal-payments' );
+		$vaulting_label .= '</p>';
+
 		return $vaulting_label;
 	},
 );
