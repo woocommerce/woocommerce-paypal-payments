@@ -703,15 +703,7 @@ return array(
 				'title'        => __( 'Vaulting', 'woocommerce-paypal-payments' ),
 				'type'         => 'checkbox',
 				'desc_tip'     => true,
-				'label'        => sprintf(
-					// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
-					__( 'Enable saved cards and subscription features on your store. To use vaulting features, you must %1$senable vaulting on your account%2$s.', 'woocommerce-paypal-payments' ),
-					'<a
-						href="https://docs.woocommerce.com/document/woocommerce-paypal-payments/#enable-vaulting-on-your-live-account"
-						target="_blank"
-					>',
-					'</a>'
-				),
+				'label'        => $container->get( 'button.helper.vaulting-label' ),
 				'description'  => __( 'Allow registered buyers to save PayPal and Credit Card accounts. Allow Subscription renewals.', 'woocommerce-paypal-payments' ),
 				'default'      => false,
 				'screens'      => array(
@@ -2035,5 +2027,23 @@ return array(
 		} catch ( RuntimeException $exception ) {
 			return false;
 		}
+	},
+
+	'button.helper.vaulting-label'                 => static function ( ContainerInterface $container ): string {
+		$vaulting_label = __( 'Enable saved cards and subscription features on your store.', 'woocommerce-paypal-payments' );
+
+		if ( ! $container->get( 'wcgateway.helper.vaulting-scope' ) ) {
+			$vaulting_label .= sprintf(
+				// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+				__( ' To use vaulting features, you must %1$senable vaulting on your account%2$s.', 'woocommerce-paypal-payments' ),
+				'<a
+					href="https://docs.woocommerce.com/document/woocommerce-paypal-payments/#enable-vaulting-on-your-live-account"
+					target="_blank"
+				>',
+				'</a>'
+			);
+		}
+
+		return $vaulting_label;
 	},
 );
