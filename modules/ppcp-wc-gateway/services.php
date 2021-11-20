@@ -894,7 +894,7 @@ return array(
 			'message_enabled'                => array(
 				'title'        => __( 'Enable message on Checkout', 'woocommerce-paypal-payments' ),
 				'type'         => 'checkbox',
-				'label'        => __( 'Enable on Checkout', 'woocommerce-paypal-payments' ),
+				'label'        => sprintf( $container->get( 'button.helper.pay-later-label' ), __( 'Enable on Checkout', 'woocommerce-paypal-payments' ) ),
 				'default'      => true,
 				'screens'      => array(
 					State::STATE_PROGRESSIVE,
@@ -1197,7 +1197,7 @@ return array(
 			'message_product_enabled'        => array(
 				'title'        => __( 'Enable message on Single Product', 'woocommerce-paypal-payments' ),
 				'type'         => 'checkbox',
-				'label'        => __( 'Enable on Single Product', 'woocommerce-paypal-payments' ),
+				'label'        => sprintf( $container->get( 'button.helper.pay-later-label' ), __( 'Enable on Single Product', 'woocommerce-paypal-payments' ) ),
 				'default'      => true,
 				'screens'      => array(
 					State::STATE_PROGRESSIVE,
@@ -1500,7 +1500,7 @@ return array(
 			'message_cart_enabled'           => array(
 				'title'        => __( 'Enable message on Cart', 'woocommerce-paypal-payments' ),
 				'type'         => 'checkbox',
-				'label'        => __( 'Enable on Cart', 'woocommerce-paypal-payments' ),
+				'label'        => sprintf( $container->get( 'button.helper.pay-later-label' ), __( 'Enable on Cart', 'woocommerce-paypal-payments' ) ),
 				'default'      => true,
 				'screens'      => array(
 					State::STATE_PROGRESSIVE,
@@ -1948,17 +1948,6 @@ return array(
 		$fields['disable_cards']['options'] = $card_options;
 		$fields['card_icons']['options'] = $card_options;
 
-		/**
-		 * Display vault message on Pay Later label if vault is enabled.
-		 */
-		$settings = $container->get( 'wcgateway.settings' );
-		if ( $settings->has( 'vault_enabled' ) && $settings->get( 'vault_enabled' ) ) {
-			$message = __( "You have PayPal vaulting enabled, that's why Pay Later Messaging options are unavailable now. You cannot use both features at the same time.", 'woocommerce-paypal-payments' );
-			$fields['message_enabled']['label'] = $message;
-			$fields['message_product_enabled']['label'] = $message;
-			$fields['message_cart_enabled']['label'] = $message;
-		}
-
 		return $fields;
 	},
 
@@ -2049,5 +2038,14 @@ return array(
 		$vaulting_label .= '</p>';
 
 		return $vaulting_label;
+	},
+
+	'button.helper.pay-later-label'                 => static function ( ContainerInterface $container ): string {
+		$pay_later_label  = '<span class="ppcp-pay-later-enabled-label">%s</span>';
+		$pay_later_label .= '<span class="ppcp-pay-later-disabled-label">';
+		$pay_later_label .= __( "You have PayPal vaulting enabled, that's why Pay Later Messaging options are unavailable now. You cannot use both features at the same time.", 'woocommerce-paypal-payments' );
+		$pay_later_label .= '</span>';
+
+		return $pay_later_label;
 	},
 );

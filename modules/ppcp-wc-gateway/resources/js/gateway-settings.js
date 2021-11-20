@@ -9,6 +9,14 @@
             "#ppcp-vault_enabled"
         )
 
+        const payLaterEnabledLabels = document.querySelectorAll(
+            ".ppcp-pay-later-enabled-label"
+        )
+
+        const payLaterDisabledLabels = document.querySelectorAll(
+            ".ppcp-pay-later-disabled-label"
+        )
+
         const disabledCheckboxes = document.querySelectorAll(
             '.ppc-disabled-checkbox'
         )
@@ -25,14 +33,33 @@
             nodeList.forEach(node => node.removeAttribute('disabled'))
         }
 
-        function updateCheckboxes() {
-            disableAll( disabledCheckboxes );
-            atLeastOneChecked(vaultingCheckboxes) ? disableAll(payLaterMessagingCheckboxes) : enableAll(payLaterMessagingCheckboxes)
+        function hideAll(nodeList) {
+            nodeList.forEach(node => node.style.display = 'none')
         }
 
-        updateCheckboxes()
+        function displayAll(nodeList) {
+            nodeList.forEach(node => node.style.display = '')
+        }
 
-        payLaterMessagingCheckboxes.forEach(node => node.addEventListener('change', updateCheckboxes))
-        vaultingCheckboxes.forEach(node => node.addEventListener('change', updateCheckboxes));
+        function disablePayLater() {
+            disableAll(payLaterMessagingCheckboxes)
+            hideAll(payLaterEnabledLabels)
+            displayAll(payLaterDisabledLabels)
+        }
+
+        function enablePayLater() {
+            enableAll(payLaterMessagingCheckboxes)
+            displayAll(payLaterEnabledLabels)
+            hideAll(payLaterDisabledLabels)
+        }
+
+        function togglePayLater() {
+            atLeastOneChecked(vaultingCheckboxes) ? disablePayLater() : enablePayLater()
+        }
+
+        togglePayLater()
+        disableAll( disabledCheckboxes )
+
+        vaultingCheckboxes.forEach(node => node.addEventListener('change', togglePayLater));
     }
 );
