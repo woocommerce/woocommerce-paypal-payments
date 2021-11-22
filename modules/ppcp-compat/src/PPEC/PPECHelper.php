@@ -30,6 +30,15 @@ class PPECHelper {
 
 
 	/**
+	 * Checks if the PayPal Express Checkout plugin was configured previously.
+	 *
+	 * @return bool
+	 */
+	public static function is_plugin_configured() {
+		return is_array( get_option( self::PPEC_SETTINGS_OPTION_NAME ) );
+	}
+
+	/**
 	 * Checks if the PayPal Express Checkout plugin is active.
 	 *
 	 * @return bool

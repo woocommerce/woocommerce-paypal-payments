@@ -19,6 +19,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencySupport;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
+use WooCommerce\PayPalCommerce\Compat\PPEC\PPECHelper;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 
 /**
@@ -66,6 +67,8 @@ class StatusReportModule implements ModuleInterface {
 				/* @var Renderer $renderer The renderer. */
 				$renderer = $c->get( 'status-report.renderer' );
 
+				$had_ppec_plugin = PPECHelper::is_plugin_configured();
+
 				$items = array(
 					array(
 						'label'       => esc_html__( 'Onboarded', 'woocommerce-paypal-payments' ),
@@ -112,6 +115,13 @@ class StatusReportModule implements ModuleInterface {
 						'description' => esc_html__( 'Whether logging of plugin events and errors is enabled.', 'woocommerce-paypal-payments' ),
 						'value'       => $this->bool_to_text(
 							$settings->has( 'logging_enabled' ) && $settings->get( 'logging_enabled' )
+						),
+					),
+					array(
+						'label'       => esc_html__( 'Used PayPal Checkout plugin', 'woocommerce-paypal-payments' ),
+						'description' => esc_html__( 'Whether the PayPal Checkout Gateway plugin was configured previously or not', 'woocommerce-paypal-payments' ),
+						'value'       => $this->bool_to_text(
+							$had_ppec_plugin
 						),
 					),
 				);
