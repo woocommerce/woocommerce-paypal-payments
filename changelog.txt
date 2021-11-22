@@ -1,6 +1,6 @@
 *** Changelog ***
 
-= 1.6.2 - TBD =
+= 1.6.2 - 2021-11-22 =
 * Fix - Order of WooCommerce checkout actions causing incompatibility with AvaTax address validation #335
 * Fix - Can't checkout to certain countries with optional postcode #330
 * Fix - Prevent subscription from being purchased when saving payment fails #308
