@@ -41,7 +41,15 @@
             nodeList.forEach(node => node.style.display = '')
         }
 
+        function uncheckAll(nodeList){
+            nodeList.forEach(node => {
+                node.checked = false
+                node.dispatchEvent(new Event('change'))
+            })
+        }
+
         function disablePayLater() {
+            uncheckAll(payLaterMessagingCheckboxes)
             disableAll(payLaterMessagingCheckboxes)
             hideAll(payLaterEnabledLabels)
             displayAll(payLaterDisabledLabels)
