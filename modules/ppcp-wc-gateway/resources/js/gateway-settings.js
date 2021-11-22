@@ -65,8 +65,8 @@
             atLeastOneChecked(vaultingCheckboxes) ? disablePayLater() : enablePayLater()
         }
 
-        togglePayLater()
         disableAll( disabledCheckboxes )
+        togglePayLater()
 
         vaultingCheckboxes.forEach(node => node.addEventListener('change', togglePayLater));
     }
