@@ -2040,7 +2040,7 @@ return array(
 		return $vaulting_label;
 	},
 
-	'button.helper.pay-later-label'                 => static function ( ContainerInterface $container ): string {
+	'button.helper.pay-later-label'                => static function ( ContainerInterface $container ): string {
 		$pay_later_label  = '<span class="ppcp-pay-later-enabled-label">%s</span>';
 		$pay_later_label .= '<span class="ppcp-pay-later-disabled-label">';
 		$pay_later_label .= __( "You have PayPal vaulting enabled, that's why Pay Later Messaging options are unavailable now. You cannot use both features at the same time.", 'woocommerce-paypal-payments' );
