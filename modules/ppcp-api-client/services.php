@@ -39,6 +39,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookEventFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencySupport;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CartRepository;
@@ -300,5 +301,8 @@ return array(
 	},
 	'api.helpers.dccapplies'                => static function ( ContainerInterface $container ) : DccApplies {
 		return new DccApplies();
+	},
+	'api.helpers.currency-support'          => static function ( ContainerInterface $container ) : CurrencySupport {
+		return new CurrencySupport();
 	},
 );

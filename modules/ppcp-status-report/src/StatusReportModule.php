@@ -16,6 +16,7 @@ use Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencySupport;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Onboarding\State;
@@ -53,6 +54,9 @@ class StatusReportModule implements ModuleInterface {
 				/* @var Bearer $bearer The bearer. */
 				$bearer = $c->get( 'api.bearer' );
 
+				$currency_support = $c->get( 'api.helpers.currency-support' );
+				assert( $currency_support instanceof CurrencySupport );
+
 				/* @var DccApplies $dcc_applies The ddc applies. */
 				$dcc_applies = $c->get( 'api.helpers.dccapplies' );
 
@@ -74,6 +78,13 @@ class StatusReportModule implements ModuleInterface {
 						'label'       => esc_html__( 'Shop country code', 'woocommerce-paypal-payments' ),
 						'description' => esc_html__( 'Country / State value on Settings / General / Store Address.', 'woocommerce-paypal-payments' ),
 						'value'       => wc_get_base_location()['country'],
+					),
+					array(
+						'label'       => esc_html__( 'WooCommerce currency supported', 'woocommerce-paypal-payments' ),
+						'description' => esc_html__( 'Whether PayPal supports the default store currency or not.', 'woocommerce-paypal-payments' ),
+						'value'       => $this->bool_to_text(
+							$currency_support->supports_wc_currency()
+						),
 					),
 					array(
 						'label'       => esc_html__( 'PayPal card processing available in country', 'woocommerce-paypal-payments' ),
