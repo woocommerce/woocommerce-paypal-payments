@@ -43,6 +43,9 @@ class AmountFactoryTest extends TestCase
         $cart
             ->shouldReceive('get_discount_tax')
             ->andReturn(7);
+        $cart
+            ->shouldReceive('get_subtotal_tax')
+            ->andReturn(8);
 
         expect('get_woocommerce_currency')->andReturn($expectedCurrency);
 
@@ -61,7 +64,7 @@ class AmountFactoryTest extends TestCase
         $this->assertEquals($expectedCurrency, $result->breakdown()->shipping()->currency_code());
         $this->assertEquals((float) 5, $result->breakdown()->item_total()->value());
         $this->assertEquals($expectedCurrency, $result->breakdown()->item_total()->currency_code());
-        $this->assertEquals((float) 13, $result->breakdown()->tax_total()->value());
+        $this->assertEquals((float) 8, $result->breakdown()->tax_total()->value());
         $this->assertEquals($expectedCurrency, $result->breakdown()->tax_total()->currency_code());
     }
 
@@ -95,6 +98,9 @@ class AmountFactoryTest extends TestCase
         $cart
             ->shouldReceive('get_discount_tax')
             ->andReturn(0);
+		$cart
+			->shouldReceive('get_subtotal_tax')
+			->andReturn(11);
 
         expect('get_woocommerce_currency')->andReturn($expectedCurrency);
 

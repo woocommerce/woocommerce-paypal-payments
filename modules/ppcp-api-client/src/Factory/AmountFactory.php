@@ -64,7 +64,7 @@ class AmountFactory {
 		);
 
 		$taxes = new Money(
-			(float) $cart->get_cart_contents_tax() + (float) $cart->get_discount_tax(),
+			$cart->get_subtotal_tax(),
 			$currency
 		);
 

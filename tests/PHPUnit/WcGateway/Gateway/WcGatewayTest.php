@@ -42,7 +42,7 @@ class WcGatewayTest extends TestCase
         $orderId = 1;
         $wcOrder = Mockery::mock(\WC_Order::class);
 		$wcOrder->shouldReceive('get_customer_id')->andReturn(1);
-
+		$wcOrder->shouldReceive('get_meta')->andReturn('');
         $settingsRenderer = Mockery::mock(SettingsRenderer::class);
         $orderProcessor = Mockery::mock(OrderProcessor::class);
         $orderProcessor
@@ -105,6 +105,12 @@ class WcGatewayTest extends TestCase
 
         when('wc_get_checkout_url')
 		->justReturn('test');
+
+		$woocommerce = Mockery::mock(\WooCommerce::class);
+		$cart = Mockery::mock(\WC_Cart::class);
+		when('WC')->justReturn($woocommerce);
+		$woocommerce->cart = $cart;
+		$cart->shouldReceive('empty_cart');
 
         $result = $testee->process_payment($orderId);
 

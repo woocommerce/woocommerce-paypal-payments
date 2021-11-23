@@ -11,6 +11,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\TestCase;
 use Mockery;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
 
@@ -20,6 +21,7 @@ class IdentityTokenTest extends TestCase
     private $bearer;
     private $logger;
     private $prefix;
+    private $settings;
     private $sut;
 
     public function setUp(): void
@@ -30,7 +32,9 @@ class IdentityTokenTest extends TestCase
         $this->bearer = Mockery::mock(Bearer::class);
         $this->logger = Mockery::mock(LoggerInterface::class);
         $this->prefix = 'prefix';
-        $this->sut = new IdentityToken($this->host, $this->bearer, $this->logger, $this->prefix);
+        $this->settings = Mockery::mock(Settings::class);
+
+        $this->sut = new IdentityToken($this->host, $this->bearer, $this->logger, $this->prefix, $this->settings);
     }
 
     public function testGenerateForCustomerReturnsToken()
@@ -46,6 +50,8 @@ class IdentityTokenTest extends TestCase
 		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
 		$headers->shouldReceive('getAll');
 		$this->logger->shouldReceive('debug');
+		$this->settings->shouldReceive('has')->andReturn(true);
+		$this->settings->shouldReceive('get')->andReturn(true);
 
 		$rawResponse = [
 			'body' => '{"client_token":"abc123", "expires_in":3600}',
@@ -96,6 +102,8 @@ class IdentityTokenTest extends TestCase
 		when('wc_print_r')->returnArg();
         $this->logger->shouldReceive('log');
         $this->logger->shouldReceive('debug');
+		$this->settings->shouldReceive('has')->andReturn(true);
+		$this->settings->shouldReceive('get')->andReturn(true);
 
         $this->expectException(RuntimeException::class);
         $this->sut->generate_for_customer(1);
@@ -120,6 +128,8 @@ class IdentityTokenTest extends TestCase
 		when('wc_print_r')->returnArg();
         $this->logger->shouldReceive('log');
         $this->logger->shouldReceive('debug');
+		$this->settings->shouldReceive('has')->andReturn(true);
+		$this->settings->shouldReceive('get')->andReturn(true);
 
         $this->expectException(PayPalApiException::class);
         $this->sut->generate_for_customer(1);
