@@ -38,6 +38,11 @@ class VaultingModule implements ModuleInterface {
 	 */
 	public function run( ContainerInterface $container ): void {
 
+		$settings = $container->get( 'wcgateway.settings' );
+		if ( ! $settings->has( 'vault_enabled' ) || ! $settings->get( 'vault_enabled' ) ) {
+			return;
+		}
+
 		add_filter(
 			'woocommerce_account_menu_items',
 			function( $menu_links ) {
