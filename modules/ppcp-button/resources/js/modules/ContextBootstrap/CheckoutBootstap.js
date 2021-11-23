@@ -1,5 +1,6 @@
 import ErrorHandler from '../ErrorHandler';
 import CheckoutActionHandler from '../ActionHandler/CheckoutActionHandler';
+import { setVisible } from '../Helper/Hiding';
 
 class CheckoutBootstap {
     constructor(gateway, renderer, messages, spinner) {
@@ -7,31 +8,38 @@ class CheckoutBootstap {
         this.renderer = renderer;
         this.messages = messages;
         this.spinner = spinner;
+
+        this.standardOrderButtonSelector = '#place_order';
+
+        this.buttonChangeObserver = new MutationObserver((el) => {
+            this.updateUi();
+        });
     }
 
     init() {
-
         this.render();
+
+        // Unselect saved card.
+        // WC saves form values, so with our current UI it would be a bit weird
+        // if the user paid with saved, then after some time tries to pay again,
+        // but wants to enter a new card, and to do that they have to choose “Select payment” in the list.
+        jQuery('#saved-credit-card').val(jQuery('#saved-credit-card option:first').val());
 
         jQuery(document.body).on('updated_checkout', () => {
             this.render()
         });
 
-        jQuery(document.body).
-          on('updated_checkout payment_method_selected', () => {
-              this.switchBetweenPayPalandOrderButton()
-              this.displayPlaceOrderButtonForSavedCreditCards()
-
-          })
+        jQuery(document.body).on('updated_checkout payment_method_selected', () => {
+            this.updateUi();
+        });
 
         jQuery(document).on('hosted_fields_loaded', () => {
             jQuery('#saved-credit-card').on('change', () => {
-                this.displayPlaceOrderButtonForSavedCreditCards()
+                this.updateUi();
             })
         });
 
-        this.switchBetweenPayPalandOrderButton()
-        this.displayPlaceOrderButtonForSavedCreditCards()
+        this.updateUi();
     }
 
     shouldRender() {
@@ -60,55 +68,35 @@ class CheckoutBootstap {
             this.gateway.hosted_fields.wrapper,
             actionHandler.configuration(),
         );
+
+        this.buttonChangeObserver.observe(
+            document.querySelector(this.standardOrderButtonSelector),
+            {attributes: true}
+        );
     }
 
-    switchBetweenPayPalandOrderButton() {
-        jQuery('#saved-credit-card').val(jQuery('#saved-credit-card option:first').val());
+    updateUi() {
+        const currentPaymentMethod = this.currentPaymentMethod();
+        const isPaypal = currentPaymentMethod === 'ppcp-gateway';
+        const isCard = currentPaymentMethod === 'ppcp-credit-card-gateway';
+        const isSavedCard = isCard && this.isSavedCardSelected();
+        const isNotOurGateway = !isPaypal && !isCard;
 
-        const currentPaymentMethod = jQuery(
-            'input[name="payment_method"]:checked').val();
+        setVisible(this.standardOrderButtonSelector, isNotOurGateway || isSavedCard, true);
+        setVisible(this.gateway.button.wrapper, isPaypal);
+        setVisible(this.gateway.messages.wrapper, isPaypal);
+        setVisible(this.gateway.hosted_fields.wrapper, isCard && !isSavedCard);
 
-        if (currentPaymentMethod !== 'ppcp-gateway' && currentPaymentMethod !== 'ppcp-credit-card-gateway') {
-            this.renderer.hideButtons(this.gateway.button.wrapper);
-            this.renderer.hideButtons(this.gateway.messages.wrapper);
-            this.renderer.hideButtons(this.gateway.hosted_fields.wrapper);
-            jQuery('#place_order').show();
+        if (isPaypal) {
+            this.messages.render();
         }
-        else {
-            jQuery('#place_order').hide();
-            if (currentPaymentMethod === 'ppcp-gateway') {
-                this.renderer.showButtons(this.gateway.button.wrapper);
-                this.renderer.showButtons(this.gateway.messages.wrapper);
-                this.messages.render()
-                this.renderer.hideButtons(this.gateway.hosted_fields.wrapper)
+
+        if (isCard) {
+            if (isSavedCard) {
+                this.disableCreditCardFields();
+            } else {
+                this.enableCreditCardFields();
             }
-            if (currentPaymentMethod === 'ppcp-credit-card-gateway') {
-                this.renderer.hideButtons(this.gateway.button.wrapper)
-                this.renderer.hideButtons(this.gateway.messages.wrapper)
-                this.renderer.showButtons(this.gateway.hosted_fields.wrapper)
-            }
-        }
-    }
-
-    displayPlaceOrderButtonForSavedCreditCards() {
-        const currentPaymentMethod = jQuery(
-          'input[name="payment_method"]:checked').val();
-        if (currentPaymentMethod !== 'ppcp-credit-card-gateway') {
-            return;
-        }
-
-        if (jQuery('#saved-credit-card').length && jQuery('#saved-credit-card').val() !== '') {
-            this.renderer.hideButtons(this.gateway.button.wrapper)
-            this.renderer.hideButtons(this.gateway.messages.wrapper)
-            this.renderer.hideButtons(this.gateway.hosted_fields.wrapper)
-            jQuery('#place_order').show()
-            this.disableCreditCardFields()
-        } else {
-            jQuery('#place_order').hide()
-            this.renderer.hideButtons(this.gateway.button.wrapper)
-            this.renderer.hideButtons(this.gateway.messages.wrapper)
-            this.renderer.showButtons(this.gateway.hosted_fields.wrapper)
-            this.enableCreditCardFields()
         }
     }
 
@@ -136,6 +124,15 @@ class CheckoutBootstap {
         jQuery('#ppcp-credit-card-vault').removeClass('ppcp-credit-card-gateway-form-field-disabled')
         jQuery('#ppcp-credit-card-vault').attr("disabled", false)
         this.renderer.enableCreditCardFields()
+    }
+
+    currentPaymentMethod() {
+        return jQuery('input[name="payment_method"]:checked').val();
+    }
+
+    isSavedCardSelected() {
+        const savedCardList = jQuery('#saved-credit-card');
+        return savedCardList.length && savedCardList.val() !== '';
     }
 }
 

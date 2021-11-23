@@ -26,6 +26,7 @@ class PurchaseUnitFactoryTest extends TestCase
         $wcOrder = Mockery::mock(\WC_Order::class);
         $wcOrder->expects('get_order_number')->andReturn($this->wcOrderNumber);
         $wcOrder->expects('get_id')->andReturn($this->wcOrderId);
+        $wcOrder->expects('get_meta')->andReturn('');
         $amount = Mockery::mock(Amount::class);
         $amountFactory = Mockery::mock(AmountFactory::class);
         $amountFactory
@@ -90,6 +91,7 @@ class PurchaseUnitFactoryTest extends TestCase
         $wcOrder = Mockery::mock(\WC_Order::class);
         $wcOrder->expects('get_order_number')->andReturn($this->wcOrderNumber);
         $wcOrder->expects('get_id')->andReturn($this->wcOrderId);
+		$wcOrder->expects('get_meta')->andReturn('');
         $amount = Mockery::mock(Amount::class);
         $amountFactory = Mockery::mock(AmountFactory::class);
         $amountFactory
@@ -145,6 +147,7 @@ class PurchaseUnitFactoryTest extends TestCase
         $wcOrder = Mockery::mock(\WC_Order::class);
         $wcOrder->expects('get_order_number')->andReturn($this->wcOrderNumber);
         $wcOrder->expects('get_id')->andReturn($this->wcOrderId);
+		$wcOrder->expects('get_meta')->andReturn('');
         $amount = Mockery::mock(Amount::class);
         $amountFactory = Mockery::mock(AmountFactory::class);
         $amountFactory

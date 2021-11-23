@@ -58,8 +58,8 @@ trait ProcessPaymentTrait {
 		 * If customer has chosen a saved credit card payment.
 		 */
 		$saved_credit_card = filter_input( INPUT_POST, 'saved_credit_card', FILTER_SANITIZE_STRING );
-		$pay_for_order     = filter_input( INPUT_GET, 'pay_for_order', FILTER_SANITIZE_STRING );
-		if ( $saved_credit_card && ! isset( $pay_for_order ) ) {
+		$change_payment    = filter_input( INPUT_GET, 'woocommerce_change_payment', FILTER_SANITIZE_STRING );
+		if ( $saved_credit_card && ! isset( $change_payment ) ) {
 
 			$user_id  = (int) $wc_order->get_customer_id();
 			$customer = new \WC_Customer( $user_id );
@@ -253,13 +253,19 @@ trait ProcessPaymentTrait {
 						}
 					}
 
+					// Adds retry counter meta to avoid duplicate invoice id error on consequent tries.
+					$wc_order->update_meta_data( 'ppcp-retry', (int) $wc_order->get_meta( 'ppcp-retry' ) + 1 );
+					$wc_order->save_meta_data();
+
 					$this->session_handler->destroy_session_data();
 					wc_add_notice( $error_message, 'error' );
 
 					return $failure_data;
 				}
 
+				WC()->cart->empty_cart();
 				$this->session_handler->destroy_session_data();
+
 				return array(
 					'result'   => 'success',
 					'redirect' => $this->get_return_url( $wc_order ),

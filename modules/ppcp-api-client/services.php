@@ -130,14 +130,15 @@ return array(
 		);
 	},
 	'api.endpoint.identity-token'           => static function ( ContainerInterface $container ) : IdentityToken {
-
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
 		$prefix = $container->get( 'api.prefix' );
+		$settings = $container->get( 'wcgateway.settings' );
 		return new IdentityToken(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
 			$logger,
-			$prefix
+			$prefix,
+			$settings
 		);
 	},
 	'api.endpoint.payments'                 => static function ( ContainerInterface $container ): PaymentsEndpoint {
