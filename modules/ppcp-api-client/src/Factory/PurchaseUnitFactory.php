@@ -119,10 +119,9 @@ class PurchaseUnitFactory {
 		$reference_id    = 'default';
 		$description     = '';
 		$payee           = $this->payee_repository->payee();
-		$wc_order_id     = $order->get_order_number();
-		$custom_id       = $this->prefix . $wc_order_id;
+		$custom_id       = (string) $order->get_id();
+		$invoice_id      = $this->prefix . $order->get_order_number();
 		$retry           = $order->get_meta( 'ppcp-retry' ) ? '-' . $order->get_meta( 'ppcp-retry' ) : '';
-		$invoice_id      = $this->prefix . $wc_order_id . $retry;
 		$soft_descriptor = '';
 
 		$purchase_unit = new PurchaseUnit(

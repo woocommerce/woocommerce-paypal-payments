@@ -18,13 +18,14 @@ use function Brain\Monkey\Functions\expect;
 
 class PurchaseUnitFactoryTest extends TestCase
 {
+	private $wcOrderId = 1;
+	private $wcOrderNumber = '100000';
 
     public function testWcOrderDefault()
     {
-        $wcOrderId = 1;
         $wcOrder = Mockery::mock(\WC_Order::class);
-        $wcOrder
-            ->expects('get_order_number')->andReturn($wcOrderId);
+        $wcOrder->expects('get_order_number')->andReturn($this->wcOrderNumber);
+        $wcOrder->expects('get_id')->andReturn($this->wcOrderId);
         $wcOrder->expects('get_meta')->andReturn('');
         $amount = Mockery::mock(Amount::class);
         $amountFactory = Mockery::mock(AmountFactory::class);
@@ -77,9 +78,9 @@ class PurchaseUnitFactoryTest extends TestCase
         $this->assertEquals($payee, $unit->payee());
         $this->assertEquals('', $unit->description());
         $this->assertEquals('default', $unit->reference_id());
-        $this->assertEquals('WC-' . $wcOrderId, $unit->custom_id());
+        $this->assertEquals($this->wcOrderId, $unit->custom_id());
         $this->assertEquals('', $unit->soft_descriptor());
-        $this->assertEquals('WC-' . $wcOrderId, $unit->invoice_id());
+        $this->assertEquals('WC-' . $this->wcOrderNumber, $unit->invoice_id());
         $this->assertEquals([$item], $unit->items());
         $this->assertEquals($amount, $unit->amount());
         $this->assertEquals($shipping, $unit->shipping());
@@ -88,8 +89,8 @@ class PurchaseUnitFactoryTest extends TestCase
     public function testWcOrderShippingGetsDroppedWhenNoPostalCode()
     {
         $wcOrder = Mockery::mock(\WC_Order::class);
-        $wcOrder
-            ->expects('get_order_number')->andReturn(1);
+        $wcOrder->expects('get_order_number')->andReturn($this->wcOrderNumber);
+        $wcOrder->expects('get_id')->andReturn($this->wcOrderId);
 		$wcOrder->expects('get_meta')->andReturn('');
         $amount = Mockery::mock(Amount::class);
         $amountFactory = Mockery::mock(AmountFactory::class);
@@ -144,8 +145,8 @@ class PurchaseUnitFactoryTest extends TestCase
     public function testWcOrderShippingGetsDroppedWhenNoCountryCode()
     {
         $wcOrder = Mockery::mock(\WC_Order::class);
-        $wcOrder
-            ->expects('get_order_number')->andReturn(1);
+        $wcOrder->expects('get_order_number')->andReturn($this->wcOrderNumber);
+        $wcOrder->expects('get_id')->andReturn($this->wcOrderId);
 		$wcOrder->expects('get_meta')->andReturn('');
         $amount = Mockery::mock(Amount::class);
         $amountFactory = Mockery::mock(AmountFactory::class);
