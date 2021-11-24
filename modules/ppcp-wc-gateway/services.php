@@ -712,7 +712,7 @@ return array(
 				),
 				'requirements' => array(),
 				'gateway'      => array( 'paypal', 'dcc' ),
-				'input_class'  => $container->get( 'wcgateway.helper.vaulting-scope' ) ? array() : array( 'ppc-disabled-checkbox' ),
+				'input_class'  => $container->get( 'wcgateway.helper.vaulting-scope' ) ? array() : array( 'ppcp-disabled-checkbox' ),
 			),
 			'logging_enabled'                => array(
 				'title'        => __( 'Logging', 'woocommerce-paypal-payments' ),

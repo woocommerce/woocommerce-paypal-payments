@@ -18,7 +18,7 @@
         )
 
         const disabledCheckboxes = document.querySelectorAll(
-            '.ppc-disabled-checkbox'
+            '.ppcp-disabled-checkbox'
         )
 
         function atLeastOneChecked(checkboxesNodeList) {
