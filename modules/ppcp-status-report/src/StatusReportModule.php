@@ -21,6 +21,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Compat\PPEC\PPECHelper;
 use WooCommerce\PayPalCommerce\Onboarding\State;
+use WooCommerce\PayPalCommerce\Webhooks\WebhookInfoStorage;
 
 /**
  * Class StatusReportModule
@@ -64,6 +65,9 @@ class StatusReportModule implements ModuleInterface {
 				/* @var MessagesApply $messages_apply The messages apply. */
 				$messages_apply = $c->get( 'button.helper.messages-apply' );
 
+				$last_webhook_storage = $c->get( 'webhook.last-webhook-storage' );
+				assert( $last_webhook_storage instanceof WebhookInfoStorage );
+
 				/* @var Renderer $renderer The renderer. */
 				$renderer = $c->get( 'status-report.renderer' );
 
@@ -102,6 +106,11 @@ class StatusReportModule implements ModuleInterface {
 						'value'       => $this->bool_to_text(
 							$messages_apply->for_country()
 						),
+					),
+					array(
+						'label'       => esc_html__( 'Webhook status', 'woocommerce-paypal-payments' ),
+						'description' => esc_html__( 'Whether we received webhooks successfully.', 'woocommerce-paypal-payments' ),
+						'value'       => $last_webhook_storage->is_empty() ? 'Unknown' : 'OK',
 					),
 					array(
 						'label'       => esc_html__( 'Vault enabled', 'woocommerce-paypal-payments' ),
