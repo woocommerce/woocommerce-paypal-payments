@@ -15,6 +15,7 @@ use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingAgreementsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencySupport;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
@@ -67,6 +68,9 @@ class StatusReportModule implements ModuleInterface {
 
 				$last_webhook_storage = $c->get( 'webhook.last-webhook-storage' );
 				assert( $last_webhook_storage instanceof WebhookInfoStorage );
+
+				$billing_agreements_endpoint = $c->get( 'api.endpoint.billing-agreements' );
+				assert( $billing_agreements_endpoint instanceof BillingAgreementsEndpoint );
 
 				/* @var Renderer $renderer The renderer. */
 				$renderer = $c->get( 'status-report.renderer' );
@@ -135,6 +139,14 @@ class StatusReportModule implements ModuleInterface {
 						),
 					),
 					array(
+						'label'          => esc_html__( 'Reference Transactions', 'woocommerce-paypal-payments' ),
+						'exported_label' => 'Reference Transactions',
+						'description'    => esc_html__( 'Whether Reference Transactions are enabled for the connected account', 'woocommerce-paypal-payments' ),
+						'value'          => $this->bool_to_text(
+							$this->reference_transaction_enabled( $billing_agreements_endpoint )
+						),
+					),
+					array(
 						'label'          => esc_html__( 'Used PayPal Checkout plugin', 'woocommerce-paypal-payments' ),
 						'exported_label' => 'Used PayPal Checkout plugin',
 						'description'    => esc_html__( 'Whether the PayPal Checkout Gateway plugin was configured previously or not', 'woocommerce-paypal-payments' ),
@@ -187,6 +199,19 @@ class StatusReportModule implements ModuleInterface {
 		try {
 			$token = $bearer->bearer();
 			return $token->vaulting_available();
+		} catch ( RuntimeException $exception ) {
+			return false;
+		}
+	}
+
+	/**
+	 * Checks if reference transactions are enabled in account.
+	 *
+	 * @param BillingAgreementsEndpoint $billing_agreements_endpoint The endpoint.
+	 */
+	private function reference_transaction_enabled( BillingAgreementsEndpoint $billing_agreements_endpoint ): bool {
+		try {
+			return $billing_agreements_endpoint->reference_transaction_enabled();
 		} catch ( RuntimeException $exception ) {
 			return false;
 		}

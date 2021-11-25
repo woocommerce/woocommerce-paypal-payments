@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\ApiClient;
 use Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingAgreementsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\IdentityToken;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\LoginSeller;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
@@ -189,6 +190,13 @@ return array(
 			$application_context_repository,
 			$paypal_request_id,
 			$subscription_helper
+		);
+	},
+	'api.endpoint.billing-agreements'       => static function ( ContainerInterface $container ): BillingAgreementsEndpoint {
+		return new BillingAgreementsEndpoint(
+			$container->get( 'api.host' ),
+			$container->get( 'api.bearer' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 	'api.repository.paypal-request-id'      => static function( ContainerInterface $container ) : PayPalRequestIdRepository {
