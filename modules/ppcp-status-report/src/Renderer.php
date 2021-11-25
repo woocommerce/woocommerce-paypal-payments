@@ -41,7 +41,7 @@ class Renderer {
 						<?php echo esc_attr( $item['label'] ); ?>
 					</td>
 					<td class="help"><?php echo wc_help_tip( $item['description'] ); ?></td>
-					<td><?php echo esc_attr( $item['value'] ); ?></td>
+					<td><?php echo wp_kses_post( $item['value'] ); ?></td>
 				</tr>
 				<?php
 			}
