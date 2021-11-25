@@ -77,9 +77,7 @@ class ErrorHandler {
             return;
         }
 
-        while( this.messagesList.firstChild ){
-            this.messagesList.removeChild( this.messagesList.firstChild );
-        }
+        this.messagesList.innerHTML = '';
     }
 }
 
