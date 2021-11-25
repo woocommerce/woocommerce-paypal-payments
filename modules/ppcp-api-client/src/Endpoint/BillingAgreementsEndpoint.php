@@ -11,12 +11,8 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 
 use stdClass;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\Webhook;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\WebhookEvent;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookEventFactory;
-use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
 use Psr\Log\LoggerInterface;
 
 /**
