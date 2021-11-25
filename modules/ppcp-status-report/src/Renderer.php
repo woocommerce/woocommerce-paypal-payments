@@ -37,7 +37,9 @@ class Renderer {
 			foreach ( $items as $item ) {
 				?>
 				<tr>
-					<td data-export-label="<?php echo esc_attr( $item['label'] ); ?>"><?php echo esc_attr( $item['label'] ); ?></td>
+					<td data-export-label="<?php echo esc_attr( $item['exported_label'] ?? $item['label'] ); ?>">
+						<?php echo esc_attr( $item['label'] ); ?>
+					</td>
 					<td class="help"><?php echo wc_help_tip( $item['description'] ); ?></td>
 					<td><?php echo esc_attr( $item['value'] ); ?></td>
 				</tr>

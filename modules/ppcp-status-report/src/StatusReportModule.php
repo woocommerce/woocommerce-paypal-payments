@@ -75,61 +75,70 @@ class StatusReportModule implements ModuleInterface {
 
 				$items = array(
 					array(
-						'label'       => esc_html__( 'Onboarded', 'woocommerce-paypal-payments' ),
-						'description' => esc_html__( 'Whether PayPal account is correctly configured or not.', 'woocommerce-paypal-payments' ),
-						'value'       => $this->bool_to_text(
+						'label'          => esc_html__( 'Onboarded', 'woocommerce-paypal-payments' ),
+						'exported_label' => 'Onboarded',
+						'description'    => esc_html__( 'Whether PayPal account is correctly configured or not.', 'woocommerce-paypal-payments' ),
+						'value'          => $this->bool_to_text(
 							$this->onboarded( $bearer, $state )
 						),
 					),
 					array(
-						'label'       => esc_html__( 'Shop country code', 'woocommerce-paypal-payments' ),
-						'description' => esc_html__( 'Country / State value on Settings / General / Store Address.', 'woocommerce-paypal-payments' ),
-						'value'       => wc_get_base_location()['country'],
+						'label'          => esc_html__( 'Shop country code', 'woocommerce-paypal-payments' ),
+						'exported_label' => 'Shop country code',
+						'description'    => esc_html__( 'Country / State value on Settings / General / Store Address.', 'woocommerce-paypal-payments' ),
+						'value'          => wc_get_base_location()['country'],
 					),
 					array(
-						'label'       => esc_html__( 'WooCommerce currency supported', 'woocommerce-paypal-payments' ),
-						'description' => esc_html__( 'Whether PayPal supports the default store currency or not.', 'woocommerce-paypal-payments' ),
-						'value'       => $this->bool_to_text(
+						'label'          => esc_html__( 'WooCommerce currency supported', 'woocommerce-paypal-payments' ),
+						'exported_label' => 'WooCommerce currency supported',
+						'description'    => esc_html__( 'Whether PayPal supports the default store currency or not.', 'woocommerce-paypal-payments' ),
+						'value'          => $this->bool_to_text(
 							$currency_support->supports_wc_currency()
 						),
 					),
 					array(
-						'label'       => esc_html__( 'PayPal card processing available in country', 'woocommerce-paypal-payments' ),
-						'description' => esc_html__( 'Whether PayPal card processing is available in country or not.', 'woocommerce-paypal-payments' ),
-						'value'       => $this->bool_to_text(
+						'label'          => esc_html__( 'PayPal card processing available in country', 'woocommerce-paypal-payments' ),
+						'exported_label' => 'PayPal card processing available in country',
+						'description'    => esc_html__( 'Whether PayPal card processing is available in country or not.', 'woocommerce-paypal-payments' ),
+						'value'          => $this->bool_to_text(
 							$dcc_applies->for_country_currency()
 						),
 					),
 					array(
-						'label'       => esc_html__( 'Pay Later messaging available in country', 'woocommerce-paypal-payments' ),
-						'description' => esc_html__( 'Whether Pay Later is available in country or not.', 'woocommerce-paypal-payments' ),
-						'value'       => $this->bool_to_text(
+						'label'          => esc_html__( 'Pay Later messaging available in country', 'woocommerce-paypal-payments' ),
+						'exported_label' => 'Pay Later messaging available in country',
+						'description'    => esc_html__( 'Whether Pay Later is available in country or not.', 'woocommerce-paypal-payments' ),
+						'value'          => $this->bool_to_text(
 							$messages_apply->for_country()
 						),
 					),
 					array(
-						'label'       => esc_html__( 'Webhook status', 'woocommerce-paypal-payments' ),
-						'description' => esc_html__( 'Whether we received webhooks successfully.', 'woocommerce-paypal-payments' ),
-						'value'       => $last_webhook_storage->is_empty() ? 'Unknown' : 'OK',
+						'label'          => esc_html__( 'Webhook status', 'woocommerce-paypal-payments' ),
+						'exported_label' => 'Webhook status',
+						'description'    => esc_html__( 'Whether we received webhooks successfully.', 'woocommerce-paypal-payments' ),
+						'value'          => $last_webhook_storage->is_empty() ? 'Unknown' : 'OK',
 					),
 					array(
-						'label'       => esc_html__( 'Vault enabled', 'woocommerce-paypal-payments' ),
-						'description' => esc_html__( 'Whether vaulting is enabled on PayPal account or not.', 'woocommerce-paypal-payments' ),
-						'value'       => $this->bool_to_text(
+						'label'          => esc_html__( 'Vault enabled', 'woocommerce-paypal-payments' ),
+						'exported_label' => 'Vault enabled',
+						'description'    => esc_html__( 'Whether vaulting is enabled on PayPal account or not.', 'woocommerce-paypal-payments' ),
+						'value'          => $this->bool_to_text(
 							$this->vault_enabled( $bearer )
 						),
 					),
 					array(
-						'label'       => esc_html__( 'Logging enabled', 'woocommerce-paypal-payments' ),
-						'description' => esc_html__( 'Whether logging of plugin events and errors is enabled.', 'woocommerce-paypal-payments' ),
-						'value'       => $this->bool_to_text(
+						'label'          => esc_html__( 'Logging enabled', 'woocommerce-paypal-payments' ),
+						'exported_label' => 'Logging enabled',
+						'description'    => esc_html__( 'Whether logging of plugin events and errors is enabled.', 'woocommerce-paypal-payments' ),
+						'value'          => $this->bool_to_text(
 							$settings->has( 'logging_enabled' ) && $settings->get( 'logging_enabled' )
 						),
 					),
 					array(
-						'label'       => esc_html__( 'Used PayPal Checkout plugin', 'woocommerce-paypal-payments' ),
-						'description' => esc_html__( 'Whether the PayPal Checkout Gateway plugin was configured previously or not', 'woocommerce-paypal-payments' ),
-						'value'       => $this->bool_to_text(
+						'label'          => esc_html__( 'Used PayPal Checkout plugin', 'woocommerce-paypal-payments' ),
+						'exported_label' => 'Used PayPal Checkout plugin',
+						'description'    => esc_html__( 'Whether the PayPal Checkout Gateway plugin was configured previously or not', 'woocommerce-paypal-payments' ),
+						'value'          => $this->bool_to_text(
 							$had_ppec_plugin
 						),
 					),
