@@ -199,8 +199,12 @@ class CreditCardRenderer {
                 hostedFieldsData.cardholderName = this.defaultConfig.payer.given_name + ' ' + this.defaultConfig.payer.surname;
             }
             if (!hostedFieldsData.cardholderName) {
-                const firstName = document.getElementById('billing_first_name') ? document.getElementById('billing_first_name').value : '';
-                const last = document.getElementById('billing_last_name') ? document.getElementById('billing_last_name').value : '';
+                const firstName = document.getElementById('billing_first_name') ? document.getElementById('billing_first_name').value
+                    : document.getElementById('shipping_first_name') ? document.getElementById('shipping_first_name').value
+                    : '';
+                const lastName = document.getElementById('billing_last_name') ? document.getElementById('billing_last_name').value
+                    : document.getElementById('shipping_last_name') ? document.getElementById('shipping_last_name').value
+                    : '';
 
                 if (!firstName || !lastName) {
                     this.spinner.unblock();
