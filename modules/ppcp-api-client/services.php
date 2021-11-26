@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\ApiClient;
 use Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingAgreementsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\IdentityToken;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\LoginSeller;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
@@ -39,6 +40,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookEventFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencySupport;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CartRepository;
@@ -190,6 +192,13 @@ return array(
 			$subscription_helper
 		);
 	},
+	'api.endpoint.billing-agreements'       => static function ( ContainerInterface $container ): BillingAgreementsEndpoint {
+		return new BillingAgreementsEndpoint(
+			$container->get( 'api.host' ),
+			$container->get( 'api.bearer' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
 	'api.repository.paypal-request-id'      => static function( ContainerInterface $container ) : PayPalRequestIdRepository {
 		return new PayPalRequestIdRepository();
 	},
@@ -301,5 +310,8 @@ return array(
 	},
 	'api.helpers.dccapplies'                => static function ( ContainerInterface $container ) : DccApplies {
 		return new DccApplies();
+	},
+	'api.helpers.currency-support'          => static function ( ContainerInterface $container ) : CurrencySupport {
+		return new CurrencySupport();
 	},
 );

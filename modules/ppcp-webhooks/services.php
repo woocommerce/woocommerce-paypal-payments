@@ -32,11 +32,13 @@ return array(
 		$factory      = $container->get( 'api.factory.webhook' );
 		$endpoint     = $container->get( 'api.endpoint.webhook' );
 		$rest_endpoint = $container->get( 'webhook.endpoint.controller' );
+		$last_webhook_storage = $container->get( 'webhook.last-webhook-storage' );
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
 		return new WebhookRegistrar(
 			$factory,
 			$endpoint,
 			$rest_endpoint,
+			$last_webhook_storage,
 			$logger
 		);
 	},
@@ -48,6 +50,7 @@ return array(
 		$verify_request   = ! defined( 'PAYPAL_WEBHOOK_REQUEST_VERIFICATION' ) || PAYPAL_WEBHOOK_REQUEST_VERIFICATION;
 		$webhook_event_factory      = $container->get( 'api.factory.webhook-event' );
 		$simulation      = $container->get( 'webhook.status.simulation' );
+		$last_webhook_storage = $container->get( 'webhook.last-webhook-storage' );
 
 		return new IncomingWebhookEndpoint(
 			$webhook_endpoint,
@@ -56,6 +59,7 @@ return array(
 			$verify_request,
 			$webhook_event_factory,
 			$simulation,
+			$last_webhook_storage,
 			... $handler
 		);
 	},
@@ -181,6 +185,13 @@ return array(
 		return new SimulationStateEndpoint(
 			$simulation
 		);
+	},
+
+	'webhook.last-webhook-storage'            => static function ( ContainerInterface $container ): WebhookInfoStorage {
+		return new WebhookInfoStorage( $container->get( 'webhook.last-webhook-storage.key' ) );
+	},
+	'webhook.last-webhook-storage.key'        => static function ( ContainerInterface $container ): string {
+		return 'ppcp-last-webhook';
 	},
 
 	'webhook.module-url'                      => static function ( ContainerInterface $container ): string {
