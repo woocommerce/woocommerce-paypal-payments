@@ -895,7 +895,7 @@ return array(
 			'message_enabled'                => array(
 				'title'        => __( 'Enable message on Checkout', 'woocommerce-paypal-payments' ),
 				'type'         => 'checkbox',
-				'label'        => sprintf( $container->get( 'button.helper.pay-later-label' ), __( 'Enable on Checkout', 'woocommerce-paypal-payments' ) ),
+				'label'        => sprintf( $container->get( 'wcgateway.settings.fields.pay-later-label' ), __( 'Enable on Checkout', 'woocommerce-paypal-payments' ) ),
 				'default'      => true,
 				'screens'      => array(
 					State::STATE_PROGRESSIVE,
@@ -1198,7 +1198,7 @@ return array(
 			'message_product_enabled'        => array(
 				'title'        => __( 'Enable message on Single Product', 'woocommerce-paypal-payments' ),
 				'type'         => 'checkbox',
-				'label'        => sprintf( $container->get( 'button.helper.pay-later-label' ), __( 'Enable on Single Product', 'woocommerce-paypal-payments' ) ),
+				'label'        => sprintf( $container->get( 'wcgateway.settings.fields.pay-later-label' ), __( 'Enable on Single Product', 'woocommerce-paypal-payments' ) ),
 				'default'      => true,
 				'screens'      => array(
 					State::STATE_PROGRESSIVE,
@@ -1501,7 +1501,7 @@ return array(
 			'message_cart_enabled'           => array(
 				'title'        => __( 'Enable message on Cart', 'woocommerce-paypal-payments' ),
 				'type'         => 'checkbox',
-				'label'        => sprintf( $container->get( 'button.helper.pay-later-label' ), __( 'Enable on Cart', 'woocommerce-paypal-payments' ) ),
+				'label'        => sprintf( $container->get( 'wcgateway.settings.fields.pay-later-label' ), __( 'Enable on Cart', 'woocommerce-paypal-payments' ) ),
 				'default'      => true,
 				'screens'      => array(
 					State::STATE_PROGRESSIVE,
@@ -2041,7 +2041,7 @@ return array(
 		return $vaulting_label;
 	},
 
-	'button.helper.pay-later-label'                => static function ( ContainerInterface $container ): string {
+	'wcgateway.settings.fields.pay-later-label'    => static function ( ContainerInterface $container ): string {
 		$pay_later_label  = '<span class="ppcp-pay-later-enabled-label">%s</span>';
 		$pay_later_label .= '<span class="ppcp-pay-later-disabled-label">';
 		$pay_later_label .= __( "You have PayPal vaulting enabled, that's why Pay Later Messaging options are unavailable now. You cannot use both features at the same time.", 'woocommerce-paypal-payments' );
