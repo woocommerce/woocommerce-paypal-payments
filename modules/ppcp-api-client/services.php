@@ -335,6 +335,13 @@ return array(
 		$location = wc_get_base_location();
 		return $location['country'];
 	},
+	'api.shop.is-psd2-country'                  => static function ( ContainerInterface $container ) : bool {
+		return in_array(
+			$container->get( 'api.shop.country' ),
+			$container->get( 'api.psd2-countries' ),
+			true
+		);
+	},
 
 	/**
 	 * Currencies supported by PayPal.
@@ -536,6 +543,39 @@ return array(
 				'amex'       => array( 'CAD' ),
 				'jcb'        => array( 'CAD' ),
 			),
+		);
+	},
+
+	'api.psd2-countries'                        => static function ( ContainerInterface $container ) : array {
+		return array(
+			'AT',
+			'BE',
+			'BG',
+			'CY',
+			'CZ',
+			'DK',
+			'EE',
+			'FI',
+			'FR',
+			'DE',
+			'GB',
+			'GR',
+			'HU',
+			'IE',
+			'IT',
+			'LV',
+			'LT',
+			'LU',
+			'MT',
+			'NL',
+			'NO',
+			'PL',
+			'PT',
+			'RO',
+			'SK',
+			'SI',
+			'ES',
+			'SE',
 		);
 	},
 );
