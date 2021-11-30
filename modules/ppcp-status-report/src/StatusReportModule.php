@@ -14,10 +14,8 @@ use Dhii\Modular\Module\ModuleInterface;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
-use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingAgreementsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencySupport;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Compat\PPEC\PPECHelper;
@@ -57,9 +55,6 @@ class StatusReportModule implements ModuleInterface {
 				/* @var Bearer $bearer The bearer. */
 				$bearer = $c->get( 'api.bearer' );
 
-				$currency_support = $c->get( 'api.helpers.currency-support' );
-				assert( $currency_support instanceof CurrencySupport );
-
 				/* @var DccApplies $dcc_applies The ddc applies. */
 				$dcc_applies = $c->get( 'api.helpers.dccapplies' );
 
@@ -97,7 +92,7 @@ class StatusReportModule implements ModuleInterface {
 						'exported_label' => 'WooCommerce currency supported',
 						'description'    => esc_html__( 'Whether PayPal supports the default store currency or not.', 'woocommerce-paypal-payments' ),
 						'value'          => $this->bool_to_html(
-							$currency_support->supports_currency()
+							$c->get( 'api.shop.is-currency-supported' )
 						),
 					),
 					array(

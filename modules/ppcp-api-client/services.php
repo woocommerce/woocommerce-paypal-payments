@@ -40,7 +40,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookEventFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
-use WooCommerce\PayPalCommerce\ApiClient\Helper\CurrencySupport;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CartRepository;
@@ -321,12 +320,6 @@ return array(
 			$container->get( 'api.shop.country' )
 		);
 	},
-	'api.helpers.currency-support'              => static function ( ContainerInterface $container ) : CurrencySupport {
-		return new CurrencySupport(
-			$container->get( 'api.supported-currencies' ),
-			$container->get( 'api.shop.currency' )
-		);
-	},
 
 	'api.shop.currency'                         => static function ( ContainerInterface $container ) : string {
 		return get_woocommerce_currency();
@@ -339,6 +332,13 @@ return array(
 		return in_array(
 			$container->get( 'api.shop.country' ),
 			$container->get( 'api.psd2-countries' ),
+			true
+		);
+	},
+	'api.shop.is-currency-supported'            => static function ( ContainerInterface $container ) : bool {
+		return in_array(
+			$container->get( 'api.shop.currency' ),
+			$container->get( 'api.supported-currencies' ),
 			true
 		);
 	},
