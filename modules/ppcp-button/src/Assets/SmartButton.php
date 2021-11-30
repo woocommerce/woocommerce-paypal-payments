@@ -695,7 +695,7 @@ class SmartButton implements SmartButtonInterface {
 						'Unfortunately, we do not support your credit card.',
 						'woocommerce-paypal-payments'
 					),
-					'cardholder_name_required' => __( 'Cardholder\'s first and last name required, please fill checkout form required fields.', 'woocommerce-paypal-payments' ),
+					'cardholder_name_required' => __( 'Cardholder\'s first and last name are required, please fill the checkout form required fields.', 'woocommerce-paypal-payments' ),
 				),
 				'valid_cards'       => $this->dcc_applies->valid_cards(),
 				'contingency'       => $this->get_3ds_contingency(),
