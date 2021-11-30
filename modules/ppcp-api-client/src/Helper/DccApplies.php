@@ -19,169 +19,15 @@ class DccApplies {
 	 *
 	 * @var array
 	 */
-	private $allowed_country_currency_matrix = array(
-		'AU' => array(
-			'AUD',
-			'CAD',
-			'CHF',
-			'CZK',
-			'DKK',
-			'EUR',
-			'GBP',
-			'HKD',
-			'HUF',
-			'JPY',
-			'NOK',
-			'NZD',
-			'PLN',
-			'SEK',
-			'SGD',
-			'USD',
-		),
-		'ES' => array(
-			'AUD',
-			'CAD',
-			'CHF',
-			'CZK',
-			'DKK',
-			'EUR',
-			'GBP',
-			'HKD',
-			'HUF',
-			'JPY',
-			'NOK',
-			'NZD',
-			'PLN',
-			'SEK',
-			'SGD',
-			'USD',
-		),
-		'FR' => array(
-			'AUD',
-			'CAD',
-			'CHF',
-			'CZK',
-			'DKK',
-			'EUR',
-			'GBP',
-			'HKD',
-			'HUF',
-			'JPY',
-			'NOK',
-			'NZD',
-			'PLN',
-			'SEK',
-			'SGD',
-			'USD',
-		),
-		'GB' => array(
-			'AUD',
-			'CAD',
-			'CHF',
-			'CZK',
-			'DKK',
-			'EUR',
-			'GBP',
-			'HKD',
-			'HUF',
-			'JPY',
-			'NOK',
-			'NZD',
-			'PLN',
-			'SEK',
-			'SGD',
-			'USD',
-		),
-		'IT' => array(
-			'AUD',
-			'CAD',
-			'CHF',
-			'CZK',
-			'DKK',
-			'EUR',
-			'GBP',
-			'HKD',
-			'HUF',
-			'JPY',
-			'NOK',
-			'NZD',
-			'PLN',
-			'SEK',
-			'SGD',
-			'USD',
-		),
-		'US' => array(
-			'AUD',
-			'CAD',
-			'EUR',
-			'GBP',
-			'JPY',
-			'USD',
-		),
-		'CA' => array(
-			'AUD',
-			'CAD',
-			'CHF',
-			'CZK',
-			'DKK',
-			'EUR',
-			'GBP',
-			'HKD',
-			'HUF',
-			'JPY',
-			'NOK',
-			'NZD',
-			'PLN',
-			'SEK',
-			'SGD',
-			'USD',
-		),
-	);
+	private $allowed_country_currency_matrix;
 
 	/**
 	 * Which countries support which credit cards. Empty credit card arrays mean no restriction on
-	 * currency. Otherwise only the currencies in the array are supported.
+	 * currency.
 	 *
 	 * @var array
 	 */
-	private $country_card_matrix = array(
-		'AU' => array(
-			'mastercard' => array(),
-			'visa'       => array(),
-		),
-		'ES' => array(
-			'mastercard' => array(),
-			'visa'       => array(),
-			'amex'       => array( 'EUR' ),
-		),
-		'FR' => array(
-			'mastercard' => array(),
-			'visa'       => array(),
-			'amex'       => array( 'EUR' ),
-		),
-		'GB' => array(
-			'mastercard' => array(),
-			'visa'       => array(),
-			'amex'       => array( 'GBP', 'USD' ),
-		),
-		'IT' => array(
-			'mastercard' => array(),
-			'visa'       => array(),
-			'amex'       => array( 'EUR' ),
-		),
-		'US' => array(
-			'mastercard' => array(),
-			'visa'       => array(),
-			'amex'       => array( 'USD' ),
-			'discover'   => array( 'USD' ),
-		),
-		'CA' => array(
-			'mastercard' => array(),
-			'visa'       => array(),
-			'amex'       => array( 'CAD' ),
-			'jcb'        => array( 'CAD' ),
-		),
-	);
+	private $country_card_matrix;
 
 	/**
 	 * 3-letter currency code of the shop.
@@ -200,12 +46,22 @@ class DccApplies {
 	/**
 	 * DccApplies constructor.
 	 *
+	 * @param array  $allowed_country_currency_matrix The matrix which countries and currency combinations can be used for DCC.
+	 * @param array  $country_card_matrix Which countries support which credit cards. Empty credit card arrays mean no restriction on
+	 *  currency.
 	 * @param string $currency 3-letter currency code of the shop.
 	 * @param string $country 2-letter country code of the shop.
 	 */
-	public function __construct( string $currency, string $country ) {
-		$this->currency = $currency;
-		$this->country  = $country;
+	public function __construct(
+		array $allowed_country_currency_matrix,
+		array $country_card_matrix,
+		string $currency,
+		string $country
+	) {
+		$this->allowed_country_currency_matrix = $allowed_country_currency_matrix;
+		$this->country_card_matrix             = $country_card_matrix;
+		$this->currency                        = $currency;
+		$this->country                         = $country;
 	}
 
 	/**

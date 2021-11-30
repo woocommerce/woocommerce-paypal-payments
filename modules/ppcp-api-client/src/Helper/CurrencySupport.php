@@ -17,37 +17,9 @@ class CurrencySupport {
 	/**
 	 * Currencies supported by PayPal.
 	 *
-	 * From https://developer.paypal.com/docs/reports/reference/paypal-supported-currencies/
-	 *
 	 * @var string[]
 	 */
-	private $supported_currencies = array(
-		'AUD',
-		'BRL',
-		'CAD',
-		'CNY',
-		'CZK',
-		'DKK',
-		'EUR',
-		'HKD',
-		'HUF',
-		'ILS',
-		'JPY',
-		'MYR',
-		'MXN',
-		'TWD',
-		'NZD',
-		'NOK',
-		'PHP',
-		'PLN',
-		'GBP',
-		'RUB',
-		'SGD',
-		'SEK',
-		'CHF',
-		'THB',
-		'USD',
-	);
+	private $supported_currencies;
 
 	/**
 	 * 3-letter currency code of the shop.
@@ -59,10 +31,12 @@ class CurrencySupport {
 	/**
 	 * CurrencySupport constructor.
 	 *
-	 * @param string $currency 3-letter currency code of the shop.
+	 * @param string[] $supported_currencies Currencies supported by PayPal.
+	 * @param string   $currency 3-letter currency code of the shop.
 	 */
-	public function __construct( string $currency ) {
-		$this->currency = $currency;
+	public function __construct( array $supported_currencies, string $currency ) {
+		$this->supported_currencies = $supported_currencies;
+		$this->currency             = $currency;
 	}
 
 	/**
