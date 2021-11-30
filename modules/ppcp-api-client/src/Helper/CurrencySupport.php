@@ -50,21 +50,27 @@ class CurrencySupport {
 	);
 
 	/**
-	 * Returns whether the given currency is supported.
+	 * 3-letter currency code of the shop.
 	 *
-	 * @param string $currency 3-letter currency code.
-	 * @return bool
+	 * @var string
 	 */
-	public function supports_currency( string $currency ): bool {
-		return in_array( $currency, $this->supported_currencies, true );
+	private $currency;
+
+	/**
+	 * CurrencySupport constructor.
+	 *
+	 * @param string $currency 3-letter currency code of the shop.
+	 */
+	public function __construct( string $currency ) {
+		$this->currency = $currency;
 	}
 
 	/**
-	 * Returns whether the current WC currency is supported.
+	 * Returns whether the currency is supported.
 	 *
 	 * @return bool
 	 */
-	public function supports_wc_currency(): bool {
-		return $this->supports_currency( get_woocommerce_currency() );
+	public function supports_currency(): bool {
+		return in_array( $this->currency, $this->supported_currencies, true );
 	}
 }

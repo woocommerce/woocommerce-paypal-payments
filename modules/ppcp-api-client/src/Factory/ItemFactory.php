@@ -17,7 +17,21 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
  * Class ItemFactory
  */
 class ItemFactory {
+	/**
+	 * 3-letter currency code of the shop.
+	 *
+	 * @var string
+	 */
+	private $currency;
 
+	/**
+	 * ItemFactory constructor.
+	 *
+	 * @param string $currency 3-letter currency code of the shop.
+	 */
+	public function __construct( string $currency ) {
+		$this->currency = $currency;
+	}
 
 	/**
 	 * Creates items based off a WooCommerce cart.
@@ -27,9 +41,8 @@ class ItemFactory {
 	 * @return Item[]
 	 */
 	public function from_wc_cart( \WC_Cart $cart ): array {
-		$currency = get_woocommerce_currency();
-		$items    = array_map(
-			static function ( array $item ) use ( $currency ): Item {
+		$items = array_map(
+			function ( array $item ): Item {
 				$product = $item['data'];
 
 				/**
@@ -43,10 +56,10 @@ class ItemFactory {
 				$price_without_tax         = (float) wc_get_price_excluding_tax( $product );
 				$price_without_tax_rounded = round( $price_without_tax, 2 );
 				$tax                       = round( $price - $price_without_tax_rounded, 2 );
-				$tax                       = new Money( $tax, $currency );
+				$tax                       = new Money( $tax, $this->currency );
 				return new Item(
 					mb_substr( $product->get_name(), 0, 127 ),
-					new Money( $price_without_tax_rounded, $currency ),
+					new Money( $price_without_tax_rounded, $this->currency ),
 					$quantity,
 					mb_substr( wp_strip_all_tags( $product->get_description() ), 0, 127 ),
 					$tax,
@@ -61,13 +74,13 @@ class ItemFactory {
 		$fees_from_session = WC()->session->get( 'ppcp_fees' );
 		if ( $fees_from_session ) {
 			$fees = array_map(
-				static function ( \stdClass $fee ) use ( $currency ): Item {
+				function ( \stdClass $fee ): Item {
 					return new Item(
 						$fee->name,
-						new Money( (float) $fee->amount, $currency ),
+						new Money( (float) $fee->amount, $this->currency ),
 						1,
 						'',
-						new Money( (float) $fee->tax, $currency )
+						new Money( (float) $fee->tax, $this->currency )
 					);
 				},
 				$fees_from_session

@@ -266,7 +266,9 @@ return array(
 		return new PayeeFactory();
 	},
 	'api.factory.item'                      => static function ( ContainerInterface $container ): ItemFactory {
-		return new ItemFactory();
+		return new ItemFactory(
+			$container->get( 'api.shop.currency' )
+		);
 	},
 	'api.factory.shipping'                  => static function ( ContainerInterface $container ): ShippingFactory {
 		$address_factory = $container->get( 'api.factory.address' );
@@ -274,7 +276,10 @@ return array(
 	},
 	'api.factory.amount'                    => static function ( ContainerInterface $container ): AmountFactory {
 		$item_factory = $container->get( 'api.factory.item' );
-		return new AmountFactory( $item_factory );
+		return new AmountFactory(
+			$item_factory,
+			$container->get( 'api.shop.currency' )
+		);
 	},
 	'api.factory.payer'                     => static function ( ContainerInterface $container ): PayerFactory {
 		$address_factory = $container->get( 'api.factory.address' );
@@ -309,9 +314,22 @@ return array(
 		return new AuthorizationFactory();
 	},
 	'api.helpers.dccapplies'                => static function ( ContainerInterface $container ) : DccApplies {
-		return new DccApplies();
+		return new DccApplies(
+			$container->get( 'api.shop.currency' ),
+			$container->get( 'api.shop.country' )
+		);
 	},
 	'api.helpers.currency-support'          => static function ( ContainerInterface $container ) : CurrencySupport {
-		return new CurrencySupport();
+		return new CurrencySupport(
+			$container->get( 'api.shop.currency' )
+		);
+	},
+
+	'api.shop.currency'                     => static function ( ContainerInterface $container ) : string {
+		return get_woocommerce_currency();
+	},
+	'api.shop.country'                      => static function ( ContainerInterface $container ) : string {
+		$location = wc_get_base_location();
+		return $location['country'];
 	},
 );

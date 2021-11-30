@@ -90,14 +90,14 @@ class StatusReportModule implements ModuleInterface {
 						'label'          => esc_html__( 'Shop country code', 'woocommerce-paypal-payments' ),
 						'exported_label' => 'Shop country code',
 						'description'    => esc_html__( 'Country / State value on Settings / General / Store Address.', 'woocommerce-paypal-payments' ),
-						'value'          => wc_get_base_location()['country'],
+						'value'          => $c->get( 'api.shop.country' ),
 					),
 					array(
 						'label'          => esc_html__( 'WooCommerce currency supported', 'woocommerce-paypal-payments' ),
 						'exported_label' => 'WooCommerce currency supported',
 						'description'    => esc_html__( 'Whether PayPal supports the default store currency or not.', 'woocommerce-paypal-payments' ),
 						'value'          => $this->bool_to_html(
-							$currency_support->supports_wc_currency()
+							$currency_support->supports_currency()
 						),
 					),
 					array(

@@ -2026,6 +2026,8 @@ return array(
 	},
 
 	'button.helper.messages-disclaimers'           => static function ( ContainerInterface $container ): MessagesDisclaimers {
-		return new MessagesDisclaimers();
+		return new MessagesDisclaimers(
+			$container->get( 'api.shop.country' )
+		);
 	},
 );
