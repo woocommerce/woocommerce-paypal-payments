@@ -1907,7 +1907,7 @@ return array(
 				),
 				'class'        => array(),
 				'input_class'  => array( 'wc-enhanced-select' ),
-				'default'      => 'SCA_WHEN_REQUIRED',
+				'default'      => $container->get( 'api.shop.is-psd2-country' ) ? '3D_SECURE' : 'NO_3D_SECURE',
 				'desc_tip'     => true,
 				'options'      => array(
 					'NO_3D_SECURE'      => __( 'No 3D Secure (transaction will be denied if 3D Secure is required)', 'woocommerce-paypal-payments' ),
@@ -2026,6 +2026,8 @@ return array(
 	},
 
 	'button.helper.messages-disclaimers'           => static function ( ContainerInterface $container ): MessagesDisclaimers {
-		return new MessagesDisclaimers();
+		return new MessagesDisclaimers(
+			$container->get( 'api.shop.country' )
+		);
 	},
 );

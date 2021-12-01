@@ -40,14 +40,27 @@ class MessagesDisclaimers {
 	);
 
 	/**
+	 * 2-letter country code of the shop.
+	 *
+	 * @var string
+	 */
+	private $country;
+
+	/**
+	 * MessagesDisclaimers constructor.
+	 *
+	 * @param string $country 2-letter country code of the shop.
+	 */
+	public function __construct( string $country ) {
+		$this->country = $country;
+	}
+
+	/**
 	 * Returns a disclaimer link based on country.
 	 *
 	 * @return string
 	 */
 	public function link_for_country(): string {
-		$region  = wc_get_base_location();
-		$country = $region['country'];
-
-		return $this->disclaimers[ $country ]['link'] ?? '';
+		return $this->disclaimers[ $this->country ]['link'] ?? '';
 	}
 }

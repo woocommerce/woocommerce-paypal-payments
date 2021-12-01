@@ -115,6 +115,13 @@ class SmartButton implements SmartButtonInterface {
 	private $payment_token_repository;
 
 	/**
+	 * 3-letter currency code of the shop.
+	 *
+	 * @var string
+	 */
+	private $currency;
+
+	/**
 	 * SmartButton constructor.
 	 *
 	 * @param string                 $module_url The URL to the module.
@@ -129,6 +136,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @param Environment            $environment The environment object.
 	 * @param PaymentTokenRepository $payment_token_repository The payment token repository.
 	 * @param SettingsStatus         $settings_status The Settings status helper.
+	 * @param string                 $currency 3-letter currency code of the shop.
 	 */
 	public function __construct(
 		string $module_url,
@@ -142,7 +150,8 @@ class SmartButton implements SmartButtonInterface {
 		MessagesApply $messages_apply,
 		Environment $environment,
 		PaymentTokenRepository $payment_token_repository,
-		SettingsStatus $settings_status
+		SettingsStatus $settings_status,
+		string $currency
 	) {
 
 		$this->module_url               = $module_url;
@@ -157,6 +166,7 @@ class SmartButton implements SmartButtonInterface {
 		$this->environment              = $environment;
 		$this->payment_token_repository = $payment_token_repository;
 		$this->settings_status          = $settings_status;
+		$this->currency                 = $currency;
 	}
 
 	/**
@@ -750,7 +760,7 @@ class SmartButton implements SmartButtonInterface {
 
 		$params = array(
 			'client-id'        => $this->client_id,
-			'currency'         => get_woocommerce_currency(),
+			'currency'         => $this->currency,
 			'integration-date' => PAYPAL_INTEGRATION_DATE,
 			'components'       => implode( ',', $this->components() ),
 			'vault'            => $this->can_save_vault_token() ? 'true' : 'false',

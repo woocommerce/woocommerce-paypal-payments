@@ -29,13 +29,27 @@ class MessagesApply {
 	);
 
 	/**
+	 * 2-letter country code of the shop.
+	 *
+	 * @var string
+	 */
+	private $country;
+
+	/**
+	 * MessagesApply constructor.
+	 *
+	 * @param string $country 2-letter country code of the shop.
+	 */
+	public function __construct( string $country ) {
+		$this->country = $country;
+	}
+
+	/**
 	 * Determines whether a credit messaging is enabled for the shops location country.
 	 *
 	 * @return bool
 	 */
 	public function for_country(): bool {
-		$region  = wc_get_base_location();
-		$country = $region['country'];
-		return in_array( $country, $this->countries, true );
+		return in_array( $this->country, $this->countries, true );
 	}
 }

@@ -29,12 +29,21 @@ class AmountFactory {
 	private $item_factory;
 
 	/**
+	 * 3-letter currency code of the shop.
+	 *
+	 * @var string
+	 */
+	private $currency;
+
+	/**
 	 * AmountFactory constructor.
 	 *
 	 * @param ItemFactory $item_factory The Item factory.
+	 * @param string      $currency 3-letter currency code of the shop.
 	 */
-	public function __construct( ItemFactory $item_factory ) {
+	public function __construct( ItemFactory $item_factory, string $currency ) {
 		$this->item_factory = $item_factory;
+		$this->currency     = $currency;
 	}
 
 	/**
@@ -45,8 +54,7 @@ class AmountFactory {
 	 * @return Amount
 	 */
 	public function from_wc_cart( \WC_Cart $cart ): Amount {
-		$currency = get_woocommerce_currency();
-		$total    = new Money( (float) $cart->get_total( 'numeric' ), $currency );
+		$total = new Money( (float) $cart->get_total( 'numeric' ), $this->currency );
 
 		$total_fees_amount = 0;
 		$fees              = WC()->session->get( 'ppcp_fees' );
@@ -57,22 +65,22 @@ class AmountFactory {
 		}
 
 		$item_total = $cart->get_cart_contents_total() + $cart->get_discount_total() + $total_fees_amount;
-		$item_total = new Money( (float) $item_total, $currency );
+		$item_total = new Money( (float) $item_total, $this->currency );
 		$shipping   = new Money(
 			(float) $cart->get_shipping_total() + $cart->get_shipping_tax(),
-			$currency
+			$this->currency
 		);
 
 		$taxes = new Money(
 			$cart->get_subtotal_tax(),
-			$currency
+			$this->currency
 		);
 
 		$discount = null;
 		if ( $cart->get_discount_total() ) {
 			$discount = new Money(
 				(float) $cart->get_discount_total() + $cart->get_discount_tax(),
-				$currency
+				$this->currency
 			);
 		}
 

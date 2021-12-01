@@ -13,13 +13,13 @@ use function Brain\Monkey\Functions\when;
 
 class AmountFactoryTest extends TestCase
 {
+	private $currency = 'EUR';
 
     public function testFromWcCartDefault()
     {
         $itemFactory = Mockery::mock(ItemFactory::class);
-        $testee = new AmountFactory($itemFactory);
+        $testee = new AmountFactory($itemFactory, $this->currency);
 
-        $expectedCurrency = 'EUR';
         $cart = Mockery::mock(\WC_Cart::class);
         $cart
             ->shouldReceive('get_total')
@@ -47,8 +47,6 @@ class AmountFactoryTest extends TestCase
             ->shouldReceive('get_subtotal_tax')
             ->andReturn(8);
 
-        expect('get_woocommerce_currency')->andReturn($expectedCurrency);
-
         $woocommerce = Mockery::mock(\WooCommerce::class);
         $session = Mockery::mock(\WC_Session::class);
         when('WC')->justReturn($woocommerce);
@@ -56,22 +54,22 @@ class AmountFactoryTest extends TestCase
         $session->shouldReceive('get')->andReturn([]);
 
         $result = $testee->from_wc_cart($cart);
-        $this->assertEquals($expectedCurrency, $result->currency_code());
+        $this->assertEquals($this->currency, $result->currency_code());
         $this->assertEquals((float) 1, $result->value());
         $this->assertEquals((float) 10, $result->breakdown()->discount()->value());
-        $this->assertEquals($expectedCurrency, $result->breakdown()->discount()->currency_code());
+        $this->assertEquals($this->currency, $result->breakdown()->discount()->currency_code());
         $this->assertEquals((float) 9, $result->breakdown()->shipping()->value());
-        $this->assertEquals($expectedCurrency, $result->breakdown()->shipping()->currency_code());
+        $this->assertEquals($this->currency, $result->breakdown()->shipping()->currency_code());
         $this->assertEquals((float) 5, $result->breakdown()->item_total()->value());
-        $this->assertEquals($expectedCurrency, $result->breakdown()->item_total()->currency_code());
+        $this->assertEquals($this->currency, $result->breakdown()->item_total()->currency_code());
         $this->assertEquals((float) 8, $result->breakdown()->tax_total()->value());
-        $this->assertEquals($expectedCurrency, $result->breakdown()->tax_total()->currency_code());
+        $this->assertEquals($this->currency, $result->breakdown()->tax_total()->currency_code());
     }
 
     public function testFromWcCartNoDiscount()
     {
         $itemFactory = Mockery::mock(ItemFactory::class);
-        $testee = new AmountFactory($itemFactory);
+        $testee = new AmountFactory($itemFactory, $this->currency);
 
         $expectedCurrency = 'EUR';
         $expectedTotal = 1;
@@ -101,8 +99,6 @@ class AmountFactoryTest extends TestCase
 		$cart
 			->shouldReceive('get_subtotal_tax')
 			->andReturn(11);
-
-        expect('get_woocommerce_currency')->andReturn($expectedCurrency);
 
         $woocommerce = Mockery::mock(\WooCommerce::class);
         $session = Mockery::mock(\WC_Session::class);
@@ -139,15 +135,14 @@ class AmountFactoryTest extends TestCase
             ->expects('from_wc_order')
             ->with($order)
             ->andReturn([$item]);
-        $testee = new AmountFactory($itemFactory);
+        $testee = new AmountFactory($itemFactory, $this->currency);
 
-        $expectedCurrency = 'EUR';
         $order
             ->shouldReceive('get_total')
             ->andReturn(100);
         $order
             ->shouldReceive('get_currency')
-            ->andReturn($expectedCurrency);
+            ->andReturn($this->currency);
         $order
             ->shouldReceive('get_shipping_total')
             ->andReturn(1);
@@ -165,11 +160,11 @@ class AmountFactoryTest extends TestCase
         $this->assertEquals((float) 1.5, $result->breakdown()->shipping()->value());
         $this->assertEquals((float) 100, $result->value());
         $this->assertEquals((float) 2, $result->breakdown()->tax_total()->value());
-        $this->assertEquals($expectedCurrency, $result->breakdown()->discount()->currency_code());
-        $this->assertEquals($expectedCurrency, $result->breakdown()->item_total()->currency_code());
-        $this->assertEquals($expectedCurrency, $result->breakdown()->shipping()->currency_code());
-        $this->assertEquals($expectedCurrency, $result->breakdown()->tax_total()->currency_code());
-        $this->assertEquals($expectedCurrency, $result->currency_code());
+        $this->assertEquals($this->currency, $result->breakdown()->discount()->currency_code());
+        $this->assertEquals($this->currency, $result->breakdown()->item_total()->currency_code());
+        $this->assertEquals($this->currency, $result->breakdown()->shipping()->currency_code());
+        $this->assertEquals($this->currency, $result->breakdown()->tax_total()->currency_code());
+        $this->assertEquals($this->currency, $result->currency_code());
     }
 
     public function testFromWcOrderDiscountIsNull()
@@ -198,15 +193,14 @@ class AmountFactoryTest extends TestCase
             ->expects('from_wc_order')
             ->with($order)
             ->andReturn([$item]);
-        $testee = new AmountFactory($itemFactory);
+        $testee = new AmountFactory($itemFactory, $this->currency);
 
-        $expectedCurrency = 'EUR';
         $order
             ->shouldReceive('get_total')
             ->andReturn(100);
         $order
             ->shouldReceive('get_currency')
-            ->andReturn($expectedCurrency);
+            ->andReturn($this->currency);
         $order
             ->shouldReceive('get_shipping_total')
             ->andReturn(1);
@@ -229,7 +223,7 @@ class AmountFactoryTest extends TestCase
     public function testFromPayPalResponse($response, $expectsException)
     {
         $itemFactory = Mockery::mock(ItemFactory::class);
-        $testee = new AmountFactory($itemFactory);
+        $testee = new AmountFactory($itemFactory, $this->currency);
         if ($expectsException) {
             $this->expectException(RuntimeException::class);
         }

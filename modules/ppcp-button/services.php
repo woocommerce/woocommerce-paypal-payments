@@ -70,6 +70,7 @@ return array(
 		$environment         = $container->get( 'onboarding.environment' );
 		$payment_token_repository = $container->get( 'vaulting.repository.payment-token' );
 		$settings_status = $container->get( 'wcgateway.settings.status' );
+		$currency = $container->get( 'api.shop.currency' );
 		return new SmartButton(
 			$container->get( 'button.url' ),
 			$container->get( 'session.handler' ),
@@ -82,7 +83,8 @@ return array(
 			$messages_apply,
 			$environment,
 			$payment_token_repository,
-			$settings_status
+			$settings_status,
+			$currency
 		);
 	},
 	'button.url'                        => static function ( ContainerInterface $container ): string {
@@ -171,7 +173,9 @@ return array(
 		return new ThreeDSecure( $logger );
 	},
 	'button.helper.messages-apply'      => static function ( ContainerInterface $container ): MessagesApply {
-		return new MessagesApply();
+		return new MessagesApply(
+			$container->get( 'api.shop.country' )
+		);
 	},
 
 	'button.is-logged-in'               => static function ( ContainerInterface $container ): bool {
