@@ -1,5 +1,16 @@
 *** Changelog ***
 
+= 1.6.3 - TBD =
+* Fix - Payments fail when using custom order numbers #354
+* Fix - Do not display saved payments on PayPal buttons if vault option is disabled #358
+* Fix - Double "Place Order" button #362
+* Fix - Coupon causes TAX_TOTAL_MISMATCH #372
+* Fix - Funding sources Mercado Pago and BLIK can't be disabled #383
+* Fix - Customer details not available in order and name gets replaced by xxx@dcc2.paypal.com #378
+* Fix - 3D Secure failing for certain credit card types with PayPal Card Processing #379
+* Fix - Error messages are not cleared even when checkout is re-attempted (DCC) #366
+* Add - New additions for system report status #377
+
 = 1.6.2 - 2021-11-22 =
 * Fix - Order of WooCommerce checkout actions causing incompatibility with AvaTax address validation #335
 * Fix - Can't checkout to certain countries with optional postcode #330

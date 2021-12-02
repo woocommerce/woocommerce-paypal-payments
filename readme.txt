@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, e-commerce, store, sales, sell, 
 Requires at least: 5.3
 Tested up to: 5.8
 Requires PHP: 7.1
-Stable tag: 1.6.2
+Stable tag: 1.6.3
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -80,6 +80,17 @@ Follow the steps below to connect the plugin to your PayPal account:
 6. Main settings screen.
 
 == Changelog ==
+
+= 1.6.3 =
+* Fix - Payments fail when using custom order numbers #354
+* Fix - Do not display saved payments on PayPal buttons if vault option is disabled #358
+* Fix - Double "Place Order" button #362
+* Fix - Coupon causes TAX_TOTAL_MISMATCH #372
+* Fix - Funding sources Mercado Pago and BLIK can't be disabled #383
+* Fix - Customer details not available in order and name gets replaced by xxx@dcc2.paypal.com #378
+* Fix - 3D Secure failing for certain credit card types with PayPal Card Processing #379
+* Fix - Error messages are not cleared even when checkout is re-attempted (DCC) #366
+* Add - New additions for system report status #377
 
 = 1.6.2 =
 * Fix - Order of WooCommerce checkout actions causing incompatibility with AvaTax address validation #335
