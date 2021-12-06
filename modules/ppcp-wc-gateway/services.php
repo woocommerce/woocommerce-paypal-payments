@@ -741,6 +741,7 @@ return array(
 				'type'         => 'text',
 				'desc_tip'     => true,
 				'description'  => __( 'If you use your PayPal account with more than one installation, please use a distinct prefix to separate those installations. Please do not use numbers in your prefix.', 'woocommerce-paypal-payments' ),
+				'maxlength'    => 15,
 				'default'      => ( static function (): string {
 					$site_url = get_site_url( get_current_blog_id() );
 					$hash = md5( $site_url );
