@@ -88,3 +88,7 @@
 .woocommerce_page_wc-settings h3.ppcp-subheading {
 	font-size: 1.1em;
 }
+
+.input-text[pattern]:invalid {
+	border: red solid 2px;
+}
