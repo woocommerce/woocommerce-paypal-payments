@@ -196,7 +196,7 @@ class CreditCardRenderer {
             }
 
             if (this.defaultConfig.payer) {
-                hostedFieldsData.cardholderName = this.defaultConfig.payer.given_name + ' ' + this.defaultConfig.payer.surname;
+                hostedFieldsData.cardholderName = this.defaultConfig.payer.name.given_name + ' ' + this.defaultConfig.payer.name.surname;
             }
             if (!hostedFieldsData.cardholderName) {
                 const firstName = document.getElementById('billing_first_name') ? document.getElementById('billing_first_name').value : '';
