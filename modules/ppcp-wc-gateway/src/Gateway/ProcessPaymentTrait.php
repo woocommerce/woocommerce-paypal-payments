@@ -58,7 +58,7 @@ trait ProcessPaymentTrait {
 		 * If customer has chosen a saved credit card payment.
 		 */
 		$saved_credit_card = filter_input( INPUT_POST, 'saved_credit_card', FILTER_SANITIZE_STRING );
-		$change_payment    = filter_input( INPUT_GET, 'woocommerce_change_payment', FILTER_SANITIZE_STRING );
+		$change_payment    = filter_input( INPUT_POST, 'woocommerce_change_payment', FILTER_SANITIZE_STRING );
 		if ( $saved_credit_card && ! isset( $change_payment ) ) {
 
 			$user_id  = (int) $wc_order->get_customer_id();
