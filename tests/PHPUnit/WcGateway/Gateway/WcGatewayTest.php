@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
+use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
@@ -33,6 +34,7 @@ class WcGatewayTest extends TestCase
 	private $fundingSource = null;
 
 	private $settingsRenderer;
+	private $funding_source_renderer;
 	private $orderProcessor;
 	private $authorizedOrdersProcessor;
 	private $settings;
@@ -67,6 +69,7 @@ class WcGatewayTest extends TestCase
 		$this->logger = Mockery::mock(LoggerInterface::class);
 		$this->paymentsEndpoint = Mockery::mock(PaymentsEndpoint::class);
 		$this->orderEndpoint = Mockery::mock(OrderEndpoint::class);
+		$this->funding_source_renderer = new FundingSourceRenderer($this->settings);
 
 		$this->onboardingState->shouldReceive('current_state')->andReturn(State::STATE_ONBOARDED);
 
@@ -85,6 +88,7 @@ class WcGatewayTest extends TestCase
 	{
 		return new PayPalGateway(
 			$this->settingsRenderer,
+			$this->funding_source_renderer,
 			$this->orderProcessor,
 			$this->authorizedOrdersProcessor,
 			$this->settings,
