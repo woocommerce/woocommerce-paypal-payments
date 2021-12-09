@@ -350,8 +350,15 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			);
 		}
 
+		if ( is_admin() ) {
+			return __(
+				'Accept PayPal, Pay Later and alternative payment types.',
+				'woocommerce-paypal-payments'
+			);
+		}
+
 		return __(
-			'Accept PayPal, Pay Later and alternative payment types.',
+			'Pay via PayPal.',
 			'woocommerce-paypal-payments'
 		);
 	}
