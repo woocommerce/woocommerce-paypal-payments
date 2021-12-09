@@ -241,6 +241,12 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->description        = $this->config->has( 'description' ) ?
 			$this->config->get( 'description' ) : $this->method_description;
 
+		$funding_source = $this->session_handler->funding_source();
+		if ( 'venmo' === $funding_source ) {
+			$this->title       = 'Venmo';
+			$this->description = __( 'Pay via Venmo.', 'woocommerce-paypal-payments' );
+		}
+
 		$this->init_form_fields();
 		$this->init_settings();
 
