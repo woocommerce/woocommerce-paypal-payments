@@ -67,7 +67,7 @@ class CancelController {
 		add_action(
 			'woocommerce_review_order_after_submit',
 			function () use ( $url ) {
-				$this->view->render_session_cancellation( $url );
+				$this->view->render_session_cancellation( $url, $this->session_handler->funding_source() );
 			}
 		);
 	}
