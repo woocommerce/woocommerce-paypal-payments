@@ -265,7 +265,6 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @return bool
 	 */
 	public function needs_setup(): bool {
-
 		return ! $this->onboarded;
 	}
 
@@ -445,4 +444,39 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	protected function environment(): Environment {
 		return $this->environment;
 	}
+
+	/**
+	 * Get required setting keys for setup.
+	 *
+	 * @return array Array of setting keys used for setup.
+	 */
+	public function get_required_settings_keys() {
+		return array(
+			'merchant_email',
+			'merchant_id',
+			'client_id',
+			'client_secret',
+		);
+	}
+
+	/**
+	 * Get the oAuth connection URL.
+	 *
+	 * @param string $return_url The URL to return to after the oAuth connection has been established.
+	 * @return string Connection URL.
+	 */
+	public function get_oauth_connection_url( $return_url = '' ) {
+		// @todo This will need to load a new script or two that handles the onboarding script and window data.
+		return null;
+	}
+
+	/**
+	 * Get a list of scripts to enqueue after plugin install.
+	 *
+	 * @return array
+	 */
+	public function get_post_install_script_handles() {
+		return array( 'ppcp-task-list-fill' );
+	}
+
 }

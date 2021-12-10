@@ -68,7 +68,7 @@ class OnboardingAssets {
 			'ppcp-onboarding',
 			$url,
 			array(),
-			1
+			true
 		);
 		$url = $this->module_url . '/assets/js/settings.js';
 		wp_register_script(
@@ -91,6 +91,15 @@ class OnboardingAssets {
 			'ppcp-onboarding',
 			'PayPalCommerceGatewayOnboarding',
 			$this->get_script_data()
+		);
+
+		$url = $this->module_url . '/assets/js/task-list-fill.js';
+		wp_register_script(
+			'ppcp-task-list-fill',
+			$url,
+			array(),
+			1,
+			true
 		);
 
 		return true;

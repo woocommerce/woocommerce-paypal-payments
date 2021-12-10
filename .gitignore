@@ -5,6 +5,7 @@ node_modules
 .phpunit.result.cache
 yarn-error.log
 modules/ppcp-button/assets/*
+modules/ppcp-onboarding/assets/*
 modules/ppcp-wc-gateway/assets/*
 *.zip
 .env
