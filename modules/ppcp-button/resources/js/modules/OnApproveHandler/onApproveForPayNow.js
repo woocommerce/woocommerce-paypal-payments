@@ -1,6 +1,8 @@
 const onApprove = (context, errorHandler, spinner) => {
     return (data, actions) => {
         spinner.block();
+        errorHandler.clear();
+
         return fetch(context.config.ajax.approve_order.endpoint, {
             method: 'POST',
             body: JSON.stringify({
