@@ -737,22 +737,26 @@ return array(
 				'gateway'      => 'paypal',
 			),
 			'prefix'                         => array(
-				'title'        => __( 'Invoice prefix', 'woocommerce-paypal-payments' ),
-				'type'         => 'text',
-				'desc_tip'     => true,
-				'description'  => __( 'If you use your PayPal account with more than one installation, please use a distinct prefix to separate those installations. Please do not use numbers in your prefix.', 'woocommerce-paypal-payments' ),
-				'default'      => ( static function (): string {
+				'title'             => __( 'Invoice prefix', 'woocommerce-paypal-payments' ),
+				'type'              => 'text',
+				'desc_tip'          => true,
+				'description'       => __( 'If you use your PayPal account with more than one installation, please use a distinct prefix to separate those installations. Please use only English letters and "-", "_" characters.', 'woocommerce-paypal-payments' ),
+				'maxlength'         => 15,
+				'custom_attributes' => array(
+					'pattern' => '[a-zA-Z_-]+',
+				),
+				'default'           => ( static function (): string {
 					$site_url = get_site_url( get_current_blog_id() );
 					$hash = md5( $site_url );
 					$letters = preg_replace( '~\d~', '', $hash );
 					return substr( $letters, 0, 6 ) . '-';
 				} )(),
-				'screens'      => array(
+				'screens'           => array(
 					State::STATE_PROGRESSIVE,
 					State::STATE_ONBOARDED,
 				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
+				'requirements'      => array(),
+				'gateway'           => 'paypal',
 			),
 
 			// General button styles.
