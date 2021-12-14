@@ -136,7 +136,7 @@ class CheckoutOrderApproved implements RequestHandler {
 			}
 
 			if ( $order->intent() === 'CAPTURE' ) {
-					$this->order_endpoint->capture( $order );
+				$order = $this->order_endpoint->capture( $order );
 			}
 		} catch ( RuntimeException $error ) {
 			$message = sprintf(
@@ -187,23 +187,18 @@ class CheckoutOrderApproved implements RequestHandler {
 			return rest_ensure_response( $response );
 		}
 
-		$new_status     = $order->intent() === 'CAPTURE' ? 'processing' : 'on-hold';
-		$status_message = $order->intent() === 'CAPTURE' ?
-			__( 'Payment received.', 'woocommerce-paypal-payments' )
-			: __( 'Payment can be captured.', 'woocommerce-paypal-payments' );
 		foreach ( $wc_orders as $wc_order ) {
 			if ( ! in_array( $wc_order->get_status(), array( 'pending', 'on-hold' ), true ) ) {
 				continue;
 			}
-			/**
-			 * The WooCommerce order.
-			 *
-			 * @var \WC_Order $wc_order
-			 */
-			$wc_order->update_status(
-				$new_status,
-				$status_message
-			);
+			if ( $order->intent() === 'CAPTURE' ) {
+				$wc_order->payment_complete();
+			} else {
+				$wc_order->update_status(
+					'on-hold',
+					__( 'Payment can be captured.', 'woocommerce-paypal-payments' )
+				);
+			}
 			$this->logger->log(
 				'info',
 				sprintf(

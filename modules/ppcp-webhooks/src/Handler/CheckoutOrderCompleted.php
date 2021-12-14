@@ -134,15 +134,7 @@ class CheckoutOrderCompleted implements RequestHandler {
 			if ( ! in_array( $wc_order->get_status(), array( 'pending', 'on-hold' ), true ) ) {
 				continue;
 			}
-			/**
-			 * The WooCommerce order.
-			 *
-			 * @var \WC_Order $wc_order
-			 */
-			$wc_order->update_status(
-				'processing',
-				__( 'Payment received.', 'woocommerce-paypal-payments' )
-			);
+			$wc_order->payment_complete();
 			$this->logger->log(
 				'info',
 				sprintf(
