@@ -173,10 +173,12 @@ trait ProcessPaymentTrait {
 			if ( $this->order_processor->process( $wc_order ) ) {
 
 				if ( $this->subscription_helper->has_subscription( $order_id ) ) {
-					$this->logger->info( "Trying to save payment for subscription parent order #{$order_id}." );
+					$this->logger->info( "Checking if payment for subscription parent order #{$order_id} is saved." );
 
 					$tokens = $this->payment_token_repository->all_for_user_id( $wc_order->get_customer_id() );
-					if ( $tokens ) {
+					$current_payment_source = $this->session_handler->order()->payment_source();
+					if ( $tokens && $this->payment_token_repository->tokens_contains_payment_source($tokens, $current_payment_source) ) {
+
 						$this->logger->info( "Payment for subscription parent order #{$order_id} was saved correctly." );
 
 						if ( $this->config->has( 'intent' ) && strtoupper( (string) $this->config->get( 'intent' ) ) === 'CAPTURE' ) {

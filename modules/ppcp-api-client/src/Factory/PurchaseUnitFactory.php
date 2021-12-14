@@ -132,7 +132,7 @@ class PurchaseUnitFactory {
 			$description,
 			$payee,
 			$custom_id,
-			$invoice_id,
+			$invoice_id . $retry,
 			$soft_descriptor
 		);
 		return apply_filters(
