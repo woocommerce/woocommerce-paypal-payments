@@ -17,13 +17,16 @@ class PaymentTokenRepositoryTest extends TestCase
 	{
 		$paymentSource = Mockery::mock(PaymentSource::class);
 		$paymentSource->shouldReceive('card->last_digits')->andReturn('1234');
+		$paymentSource->shouldReceive('card->brand')->andReturn('VISA');
 
 		$token = Mockery::mock(PaymentToken::class);
 		$source = (object)[
 			'card' => (object)[
 				'last_digits' => '1234',
+				'brand' => 'VISA',
 			],
 		];
+
 		$token->shouldReceive('source')->andReturn($source);
 		$tokens = [$token];
 
