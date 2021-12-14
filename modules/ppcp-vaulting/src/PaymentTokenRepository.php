@@ -136,10 +136,19 @@ class PaymentTokenRepository {
 		}
 
 		if ( $this->tokens_contains_card( $tokens ) ) {
+
+			$card = $payment_source->card();
+			if ( null === $card ) {
+				return false;
+			}
+
+			$last_digits = $card->last_digits();
+			$brand       = $card->brand();
+
 			foreach ( $tokens as $token ) {
 				if (
-					$payment_source->card()->last_digits() === $token->source()->card->last_digits
-					&& $payment_source->card()->brand() === $token->source()->card->brand
+					$last_digits && $last_digits === $token->source()->card->last_digits
+					&& $brand && $brand === $token->source()->card->brand
 				) {
 					return true;
 				}
