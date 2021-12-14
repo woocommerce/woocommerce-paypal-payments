@@ -373,7 +373,7 @@ class SettingsListener {
 				case 'number':
 				case 'ppcp-text-input':
 				case 'ppcp-password':
-					$settings[ $key ] = isset( $raw_data[ $key ] ) ? sanitize_text_field( $raw_data[ $key ] ) : '';
+					$settings[ $key ] = isset( $raw_data[ $key ] ) ? wp_kses_post( $raw_data[ $key ] ) : '';
 					break;
 				case 'password':
 					if ( empty( $raw_data[ $key ] ) ) {
