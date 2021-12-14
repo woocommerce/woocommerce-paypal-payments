@@ -24,6 +24,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Admin\RenderAuthorizeAction;
 use WooCommerce\PayPalCommerce\WcGateway\Checkout\CheckoutPayPalAddressPreset;
 use WooCommerce\PayPalCommerce\WcGateway\Checkout\DisableGateways;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
+use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
@@ -45,6 +46,7 @@ return array(
 	'wcgateway.paypal-gateway'                     => static function ( ContainerInterface $container ): PayPalGateway {
 		$order_processor     = $container->get( 'wcgateway.order-processor' );
 		$settings_renderer   = $container->get( 'wcgateway.settings.render' );
+		$funding_source_renderer   = $container->get( 'wcgateway.funding-source.renderer' );
 		$authorized_payments = $container->get( 'wcgateway.processor.authorized-payments' );
 		$settings            = $container->get( 'wcgateway.settings' );
 		$session_handler     = $container->get( 'session.handler' );
@@ -60,6 +62,7 @@ return array(
 		$logger              = $container->get( 'woocommerce.logger.woocommerce' );
 		return new PayPalGateway(
 			$settings_renderer,
+			$funding_source_renderer,
 			$order_processor,
 			$authorized_payments,
 			$settings,
@@ -2032,6 +2035,12 @@ return array(
 	'button.helper.messages-disclaimers'           => static function ( ContainerInterface $container ): MessagesDisclaimers {
 		return new MessagesDisclaimers(
 			$container->get( 'api.shop.country' )
+		);
+	},
+
+	'wcgateway.funding-source.renderer'            => function ( ContainerInterface $container ) : FundingSourceRenderer {
+		return new FundingSourceRenderer(
+			$container->get( 'wcgateway.settings' )
 		);
 	},
 );

@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
+use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
@@ -28,75 +29,107 @@ use function Brain\Monkey\Functions\when;
 
 class WcGatewayTest extends TestCase
 {
+	private $isAdmin = false;
+	private $sessionHandler;
+	private $fundingSource = null;
+
+	private $settingsRenderer;
+	private $funding_source_renderer;
+	private $orderProcessor;
+	private $authorizedOrdersProcessor;
+	private $settings;
+	private $refundProcessor;
+	private $onboardingState;
+	private $transactionUrlProvider;
+	private $subscriptionHelper;
 	private $environment;
+	private $paymentTokenRepository;
+	private $logger;
+	private $paymentsEndpoint;
+	private $orderEndpoint;
 
 	public function setUp(): void {
 		parent::setUp();
 
+		expect('is_admin')->andReturnUsing(function () {
+			return $this->isAdmin;
+		});
+
+		$this->settingsRenderer = Mockery::mock(SettingsRenderer::class);
+		$this->orderProcessor = Mockery::mock(OrderProcessor::class);
+		$this->authorizedOrdersProcessor = Mockery::mock(AuthorizedPaymentsProcessor::class);
+		$this->settings = Mockery::mock(Settings::class);
+		$this->sessionHandler = Mockery::mock(SessionHandler::class);
+		$this->refundProcessor = Mockery::mock(RefundProcessor::class);
+		$this->onboardingState = Mockery::mock(State::class);
+		$this->transactionUrlProvider = Mockery::mock(TransactionUrlProvider::class);
+		$this->subscriptionHelper = Mockery::mock(SubscriptionHelper::class);
 		$this->environment = Mockery::mock(Environment::class);
+		$this->paymentTokenRepository = Mockery::mock(PaymentTokenRepository::class);
+		$this->logger = Mockery::mock(LoggerInterface::class);
+		$this->paymentsEndpoint = Mockery::mock(PaymentsEndpoint::class);
+		$this->orderEndpoint = Mockery::mock(OrderEndpoint::class);
+		$this->funding_source_renderer = new FundingSourceRenderer($this->settings);
+
+		$this->onboardingState->shouldReceive('current_state')->andReturn(State::STATE_ONBOARDED);
+
+		$this->sessionHandler
+			->shouldReceive('funding_source')
+			->andReturnUsing(function () {
+				return $this->fundingSource;
+			});
+
+		$this->settings->shouldReceive('has')->andReturnFalse();
+
+		$this->logger->shouldReceive('info');
+	}
+
+	private function createGateway()
+	{
+		return new PayPalGateway(
+			$this->settingsRenderer,
+			$this->funding_source_renderer,
+			$this->orderProcessor,
+			$this->authorizedOrdersProcessor,
+			$this->settings,
+			$this->sessionHandler,
+			$this->refundProcessor,
+			$this->onboardingState,
+			$this->transactionUrlProvider,
+			$this->subscriptionHelper,
+			PayPalGateway::ID,
+			$this->environment,
+			$this->paymentTokenRepository,
+			$this->logger,
+			$this->paymentsEndpoint,
+			$this->orderEndpoint
+		);
 	}
 
 	public function testProcessPaymentSuccess() {
-	    expect('is_admin')->andReturn(false);
-
         $orderId = 1;
         $wcOrder = Mockery::mock(\WC_Order::class);
 		$wcOrder->shouldReceive('get_customer_id')->andReturn(1);
 		$wcOrder->shouldReceive('get_meta')->andReturn('');
-        $settingsRenderer = Mockery::mock(SettingsRenderer::class);
-        $orderProcessor = Mockery::mock(OrderProcessor::class);
-        $orderProcessor
+		$this->orderProcessor
             ->expects('process')
             ->andReturnUsing(
                 function(\WC_Order $order) use ($wcOrder) : bool {
                     return $order === $wcOrder;
                 }
             );
-        $authorizedPaymentsProcessor = Mockery::mock(AuthorizedPaymentsProcessor::class);
-        $settings = Mockery::mock(Settings::class);
-        $sessionHandler = Mockery::mock(SessionHandler::class);
-        $sessionHandler
+		$this->sessionHandler
 	        ->shouldReceive('destroy_session_data');
-        $settings
-            ->shouldReceive('has')->andReturnFalse();
-        $refundProcessor = Mockery::mock(RefundProcessor::class);
-        $transactionUrlProvider = Mockery::mock(TransactionUrlProvider::class);
-        $state = Mockery::mock(State::class);
-        $state
-	        ->shouldReceive('current_state')->andReturn(State::STATE_ONBOARDED);
-        $subscriptionHelper = Mockery::mock(SubscriptionHelper::class);
-        $subscriptionHelper
+		$this->subscriptionHelper
             ->shouldReceive('has_subscription')
             ->with($orderId)
             ->andReturn(true)
 			->andReturn(false);
-        $subscriptionHelper
+		$this->subscriptionHelper
             ->shouldReceive('is_subscription_change_payment')
             ->andReturn(true);
 
-        $paymentTokenRepository = Mockery::mock(PaymentTokenRepository::class);
-        $logger = Mockery::mock(LoggerInterface::class);
-        $logger->shouldReceive('info');
-        $paymentsEndpoint = Mockery::mock(PaymentsEndpoint::class);
-        $orderEndpoint = Mockery::mock(OrderEndpoint::class);
-
-        $testee = new PayPalGateway(
-            $settingsRenderer,
-            $orderProcessor,
-            $authorizedPaymentsProcessor,
-            $settings,
-            $sessionHandler,
-	        $refundProcessor,
-	        $state,
-            $transactionUrlProvider,
-            $subscriptionHelper,
-			PayPalGateway::ID,
-			$this->environment,
-			$paymentTokenRepository,
-			$logger,
-			$paymentsEndpoint,
-			$orderEndpoint
-		);
+        $testee = $this->createGateway();
 
         expect('wc_get_order')
             ->with($orderId)
@@ -121,45 +154,9 @@ class WcGatewayTest extends TestCase
     }
 
     public function testProcessPaymentOrderNotFound() {
-	    expect('is_admin')->andReturn(false);
-
         $orderId = 1;
-        $settingsRenderer = Mockery::mock(SettingsRenderer::class);
-        $orderProcessor = Mockery::mock(OrderProcessor::class);
-        $authorizedPaymentsProcessor = Mockery::mock(AuthorizedPaymentsProcessor::class);
-        $settings = Mockery::mock(Settings::class);
-        $settings
-            ->shouldReceive('has')->andReturnFalse();
-        $sessionHandler = Mockery::mock(SessionHandler::class);
-	    $refundProcessor = Mockery::mock(RefundProcessor::class);
-	    $state = Mockery::mock(State::class);
-        $transactionUrlProvider = Mockery::mock(TransactionUrlProvider::class);
-	    $state
-		    ->shouldReceive('current_state')->andReturn(State::STATE_ONBOARDED);
-        $subscriptionHelper = Mockery::mock(SubscriptionHelper::class);
 
-		$paymentTokenRepository = Mockery::mock(PaymentTokenRepository::class);
-		$logger = Mockery::mock(LoggerInterface::class);
-		$paymentsEndpoint = Mockery::mock(PaymentsEndpoint::class);
-		$orderEndpoint = Mockery::mock(OrderEndpoint::class);
-
-	    $testee = new PayPalGateway(
-            $settingsRenderer,
-            $orderProcessor,
-            $authorizedPaymentsProcessor,
-            $settings,
-            $sessionHandler,
-	        $refundProcessor,
-	        $state,
-            $transactionUrlProvider,
-            $subscriptionHelper,
-			PayPalGateway::ID,
-			$this->environment,
-			$paymentTokenRepository,
-			$logger,
-			$paymentsEndpoint,
-			$orderEndpoint
-        );
+	    $testee = $this->createGateway();
 
         expect('wc_get_order')
             ->with($orderId)
@@ -184,56 +181,20 @@ class WcGatewayTest extends TestCase
 
 
     public function testProcessPaymentFails() {
-    	expect('is_admin')->andReturn(false);
-
         $orderId = 1;
         $wcOrder = Mockery::mock(\WC_Order::class);
         $lastError = 'some-error';
-        $settingsRenderer = Mockery::mock(SettingsRenderer::class);
-        $orderProcessor = Mockery::mock(OrderProcessor::class);
-        $orderProcessor
+		$this->orderProcessor
             ->expects('process')
             ->andReturnFalse();
-        $orderProcessor
+		$this->orderProcessor
             ->expects('last_error')
             ->andReturn($lastError);
-        $authorizedPaymentsProcessor = Mockery::mock(AuthorizedPaymentsProcessor::class);
-        $settings = Mockery::mock(Settings::class);
-        $settings
-            ->shouldReceive('has')->andReturnFalse();
-        $sessionHandler = Mockery::mock(SessionHandler::class);
-	    $refundProcessor = Mockery::mock(RefundProcessor::class);
-	    $state = Mockery::mock(State::class);
-        $transactionUrlProvider = Mockery::mock(TransactionUrlProvider::class);
-	    $state
-		    ->shouldReceive('current_state')->andReturn(State::STATE_ONBOARDED);
-        $subscriptionHelper = Mockery::mock(SubscriptionHelper::class);
-        $subscriptionHelper->shouldReceive('has_subscription')->with($orderId)->andReturn(true);
-        $subscriptionHelper->shouldReceive('is_subscription_change_payment')->andReturn(true);
+		$this->subscriptionHelper->shouldReceive('has_subscription')->with($orderId)->andReturn(true);
+		$this->subscriptionHelper->shouldReceive('is_subscription_change_payment')->andReturn(true);
         $wcOrder->shouldReceive('update_status')->andReturn(true);
 
-		$paymentTokenRepository = Mockery::mock(PaymentTokenRepository::class);
-		$logger = Mockery::mock(LoggerInterface::class);
-		$paymentsEndpoint = Mockery::mock(PaymentsEndpoint::class);
-		$orderEndpoint = Mockery::mock(OrderEndpoint::class);
-
-        $testee = new PayPalGateway(
-            $settingsRenderer,
-            $orderProcessor,
-            $authorizedPaymentsProcessor,
-            $settings,
-            $sessionHandler,
-	        $refundProcessor,
-	        $state,
-            $transactionUrlProvider,
-            $subscriptionHelper,
-			PayPalGateway::ID,
-			$this->environment,
-			$paymentTokenRepository,
-			$logger,
-			$paymentsEndpoint,
-			$orderEndpoint
-        );
+        $testee = $this->createGateway();
 
         expect('wc_get_order')
             ->with($orderId)
@@ -261,47 +222,29 @@ class WcGatewayTest extends TestCase
      */
     public function testNeedsSetup($currentState, $needSetup)
     {
-    	expect('is_admin')->andReturn(true);
-    	$settingsRenderer = Mockery::mock(SettingsRenderer::class);
-    	$orderProcessor = Mockery::mock(OrderProcessor::class);
-    	$authorizedOrdersProcessor = Mockery::mock(AuthorizedPaymentsProcessor::class);
-    	$config = Mockery::mock(ContainerInterface::class);
-    	$config
-		    ->shouldReceive('has')
-		    ->andReturn(false);
-    	$sessionHandler = Mockery::mock(SessionHandler::class);
-    	$refundProcessor = Mockery::mock(RefundProcessor::class);
-    	$onboardingState = Mockery::mock(State::class);
-    	$onboardingState
+		$this->isAdmin = true;
+
+		$this->onboardingState = Mockery::mock(State::class);
+		$this->onboardingState
 		    ->expects('current_state')
 		    ->andReturn($currentState);
-    	$transactionUrlProvider = Mockery::mock(TransactionUrlProvider::class);
-    	$subscriptionHelper = Mockery::mock(SubscriptionHelper::class);
 
-		$paymentTokenRepository = Mockery::mock(PaymentTokenRepository::class);
-		$logger = Mockery::mock(LoggerInterface::class);
-		$paymentsEndpoint = Mockery::mock(PaymentsEndpoint::class);
-		$orderEndpoint = Mockery::mock(OrderEndpoint::class);
-
-    	$testee = new PayPalGateway(
-    		$settingsRenderer,
-		    $orderProcessor,
-		    $authorizedOrdersProcessor,
-		    $config,
-		    $sessionHandler,
-		    $refundProcessor,
-		    $onboardingState,
-		    $transactionUrlProvider,
-		    $subscriptionHelper,
-			PayPalGateway::ID,
-			$this->environment,
-			$paymentTokenRepository,
-			$logger,
-			$paymentsEndpoint,
-			$orderEndpoint
-	    );
+    	$testee = $this->createGateway();
 
     	$this->assertSame($needSetup, $testee->needs_setup());
+    }
+
+    /**
+     * @dataProvider dataForFundingSource
+     */
+    public function testFundingSource($fundingSource, $title, $description)
+    {
+		$this->fundingSource = $fundingSource;
+
+    	$testee = $this->createGateway();
+
+		self::assertEquals($title, $testee->title);
+		self::assertEquals($description, $testee->description);
     }
 
     public function dataForTestCaptureAuthorizedPaymentNoActionableFailures() : array
@@ -328,6 +271,15 @@ class WcGatewayTest extends TestCase
     		[State::STATE_START, true],
 		    [State::STATE_PROGRESSIVE, true],
 		    [State::STATE_ONBOARDED, false]
+	    ];
+    }
+
+    public function dataForFundingSource(): array
+    {
+    	return [
+    		[null, 'PayPal', 'Pay via PayPal.'],
+    		['venmo', 'Venmo', 'Pay via Venmo.'],
+    		['qwerty', 'PayPal', 'Pay via PayPal.'],
 	    ];
     }
 }

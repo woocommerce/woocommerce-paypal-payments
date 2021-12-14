@@ -28,7 +28,10 @@ return array(
 		return $session_handler;
 	},
 	'session.cancellation.view'       => function ( ContainerInterface $container ) : CancelView {
-		return new CancelView();
+		return new CancelView(
+			$container->get( 'wcgateway.settings' ),
+			$container->get( 'wcgateway.funding-source.renderer' )
+		);
 	},
 	'session.cancellation.controller' => function ( ContainerInterface $container ) : CancelController {
 		return new CancelController(

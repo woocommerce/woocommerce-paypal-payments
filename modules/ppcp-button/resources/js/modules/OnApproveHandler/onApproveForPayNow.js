@@ -7,7 +7,8 @@ const onApprove = (context, errorHandler, spinner) => {
             method: 'POST',
             body: JSON.stringify({
                 nonce: context.config.ajax.approve_order.nonce,
-                order_id:data.orderID
+                order_id:data.orderID,
+                funding_source: window.ppcpFundingSource,
             })
         }).then((res)=>{
             return res.json();

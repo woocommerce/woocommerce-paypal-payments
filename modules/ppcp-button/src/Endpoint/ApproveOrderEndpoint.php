@@ -184,6 +184,9 @@ class ApproveOrderEndpoint implements EndpointInterface {
 				throw new RuntimeException( $message );
 			}
 
+			$funding_source = $data['funding_source'] ?? null;
+			$this->session_handler->replace_funding_source( $funding_source );
+
 			$this->session_handler->replace_order( $order );
 			wp_send_json_success( $order );
 			return true;
