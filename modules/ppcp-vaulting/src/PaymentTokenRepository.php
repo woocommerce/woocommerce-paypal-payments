@@ -129,7 +129,11 @@ class PaymentTokenRepository {
 	 * @param PaymentSource|null $payment_source The payment source.
 	 * @return bool Whether tokens contains payment source or not.
 	 */
-	public function tokens_contains_payment_source( array $tokens, PaymentSource $payment_source ): bool {
+	public function tokens_contains_payment_source( array $tokens, ?PaymentSource $payment_source ): bool {
+
+		if ( null === $payment_source ) {
+			return false;
+		}
 
 		if ( $this->tokens_contains_card( $tokens ) ) {
 			foreach ( $tokens as $token ) {
