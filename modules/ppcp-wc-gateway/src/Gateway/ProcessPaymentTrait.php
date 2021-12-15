@@ -54,12 +54,14 @@ trait ProcessPaymentTrait {
 			return $failure_data;
 		}
 
+		$payment_method = filter_input( INPUT_POST, 'payment_method', FILTER_SANITIZE_STRING );
+
 		/**
 		 * If customer has chosen a saved credit card payment.
 		 */
 		$saved_credit_card = filter_input( INPUT_POST, 'saved_credit_card', FILTER_SANITIZE_STRING );
 		$change_payment    = filter_input( INPUT_POST, 'woocommerce_change_payment', FILTER_SANITIZE_STRING );
-		if ( $saved_credit_card && ! isset( $change_payment ) ) {
+		if ( CreditCardGateway::ID === $payment_method && $saved_credit_card && ! isset( $change_payment ) ) {
 
 			$user_id  = (int) $wc_order->get_customer_id();
 			$customer = new \WC_Customer( $user_id );
