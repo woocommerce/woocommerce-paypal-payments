@@ -372,14 +372,11 @@ class SettingsListener {
 				case 'text':
 				case 'number':
 				case 'ppcp-text-input':
-				case 'ppcp-password':
-					$settings[ $key ] = isset( $raw_data[ $key ] ) ? sanitize_text_field( $raw_data[ $key ] ) : '';
+					$settings[ $key ] = isset( $raw_data[ $key ] ) ? wp_kses_post( $raw_data[ $key ] ) : '';
 					break;
+				case 'ppcp-password':
 				case 'password':
-					if ( empty( $raw_data[ $key ] ) ) {
-						break;
-					}
-					$settings[ $key ] = sanitize_text_field( $raw_data[ $key ] );
+					$settings[ $key ] = $raw_data[ $key ] ?? '';
 					break;
 				case 'ppcp-multiselect':
 					$values         = isset( $raw_data[ $key ] ) ? (array) $raw_data[ $key ] : array();
