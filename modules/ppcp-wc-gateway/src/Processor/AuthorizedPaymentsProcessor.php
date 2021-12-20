@@ -217,8 +217,9 @@ class AuthorizedPaymentsProcessor {
 
 		if ($this->config->has('intent') && strtoupper((string)$this->config->get('intent')) === 'CAPTURE') {
 			foreach ($wc_orders as $wc_order) {
-				if( $this->subscription_helper->has_subscription( $wc_order->get_id() ) ) {
+				if( $this->subscription_helper->has_subscription( $wc_order->get_id() ) && $wc_order->get_meta( '_ppcp_captured_vault_webhook' ) === false ) {
 					$this->capture_authorized_payment($wc_order);
+					$wc_order->update_meta_data('_ppcp_captured_vault_webhook', true);
 				}
 			}
 		}

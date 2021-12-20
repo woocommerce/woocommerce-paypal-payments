@@ -171,6 +171,11 @@ trait ProcessPaymentTrait {
 
 		try {
 			if ( $this->order_processor->process( $wc_order ) ) {
+
+				if($this->subscription_helper->has_subscription( $wc_order->get_id() )) {
+					$wc_order->update_meta_data('_ppcp_captured_vault_webhook', false);
+				}
+
 				WC()->cart->empty_cart();
 				$this->session_handler->destroy_session_data();
 

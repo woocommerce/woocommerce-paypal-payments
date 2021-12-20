@@ -53,7 +53,7 @@ class VaultPaymentTokenCreated implements RequestHandler
 		$response   = array( 'success' => false );
 		$webhook_id = (string) ( $request['id'] ?? '' );
 
-		$customer_id = $resource['customer_id'] ?? '';
+		$customer_id = $request['customer_id'] ?? '';
 		if(!$customer_id) {
 			$message = sprintf( 'No customer id for webhook event %s was found.', $webhook_id );
 			$this->logger->warning( $message, array( 'request' => $request ) );
