@@ -14,7 +14,10 @@ const bootstrap = () => {
     const errorHandler = new ErrorHandler(PayPalCommerceGateway.labels.error.generic);
     const spinner = new Spinner();
     const creditCardRenderer = new CreditCardRenderer(PayPalCommerceGateway, errorHandler, spinner);
-    const renderer = new Renderer(creditCardRenderer, PayPalCommerceGateway);
+    const onSmartButtonClick = data => {
+        window.ppcpFundingSource = data.fundingSource;
+    };
+    const renderer = new Renderer(creditCardRenderer, PayPalCommerceGateway, onSmartButtonClick);
     const messageRenderer = new MessageRenderer(PayPalCommerceGateway.messages);
     const context = PayPalCommerceGateway.context;
     if (context === 'mini-cart' || context === 'product') {

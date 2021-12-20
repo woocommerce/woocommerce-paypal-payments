@@ -4,7 +4,8 @@ const onApprove = (context, errorHandler) => {
             method: 'POST',
             body: JSON.stringify({
                 nonce: context.config.ajax.approve_order.nonce,
-                order_id:data.orderID
+                order_id:data.orderID,
+                funding_source: window.ppcpFundingSource,
             })
         }).then((res)=>{
             return res.json();
@@ -13,7 +14,7 @@ const onApprove = (context, errorHandler) => {
                 errorHandler.genericError();
                 return actions.restart().catch(err => {
                     errorHandler.genericError();
-                });;
+                });
             }
             location.href = context.config.redirect;
         });

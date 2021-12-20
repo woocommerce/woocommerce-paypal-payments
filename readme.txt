@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, e-commerce, store, sales, sell, 
 Requires at least: 5.3
 Tested up to: 5.8
 Requires PHP: 7.1
-Stable tag: 1.6.3
+Stable tag: 1.6.4
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -80,6 +80,15 @@ Follow the steps below to connect the plugin to your PayPal account:
 6. Main settings screen.
 
 == Changelog ==
+
+= 1.6.4 =
+* Fix - Non admin user cannot save changes to the plugin settings #278
+* Fix - Empty space in invoice prefix causes smart buttons to not load #390
+* Fix - woocommerce_payment_complete action not triggered for payments completed via webhook #399
+* Fix - Paying with Venmo - Change funding source on checkout page and receipt to Venmo  #394
+* Fix - Internal server error on checkout when selected saved card but then switched to paypal #403 
+* Enhancement - Allow formatted text for the Description field #407
+* Enhancement - Remove filter to prevent On-Hold emails #411
 
 = 1.6.3 =
 * Fix - Payments fail when using custom order numbers #354
