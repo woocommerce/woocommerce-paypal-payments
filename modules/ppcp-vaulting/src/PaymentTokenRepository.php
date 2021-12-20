@@ -10,7 +10,6 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vaulting;
 
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokenEndpoint;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
@@ -120,42 +119,6 @@ class PaymentTokenRepository {
 	 */
 	public function tokens_contains_paypal( array $tokens ): bool {
 		return $this->token_contains_source( $tokens, 'paypal' );
-	}
-
-	/**
-	 * Check if tokens has the given payment source.
-	 *
-	 * @param PaymentToken[]     $tokens The tokens.
-	 * @param PaymentSource|null $payment_source The payment source.
-	 * @return bool Whether tokens contains payment source or not.
-	 */
-	public function tokens_contains_payment_source( array $tokens, ?PaymentSource $payment_source ): bool {
-
-		if ( null === $payment_source ) {
-			return false;
-		}
-
-		if ( $this->tokens_contains_card( $tokens ) ) {
-
-			$card = $payment_source->card();
-			if ( null === $card ) {
-				return false;
-			}
-
-			$last_digits = $card->last_digits();
-			$brand       = $card->brand();
-
-			foreach ( $tokens as $token ) {
-				if (
-					$last_digits && $last_digits === $token->source()->card->last_digits
-					&& $brand && $brand === $token->source()->card->brand
-				) {
-					return true;
-				}
-			}
-		}
-
-		return false;
 	}
 
 	/**
