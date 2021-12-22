@@ -53,7 +53,7 @@ class VaultPaymentTokenCreated implements RequestHandler
 		$response   = array( 'success' => false );
 		$webhook_id = (string) ( $request['id'] ?? '' );
 
-		$customer_id = $request['customer_id'] ?? '';
+		$customer_id = $request['resource']['customer_id'] ?? '';
 		if(!$customer_id) {
 			$message = sprintf( 'No customer id for webhook event %s was found.', $webhook_id );
 			$this->logger->warning( $message, array( 'request' => $request ) );
@@ -62,7 +62,8 @@ class VaultPaymentTokenCreated implements RequestHandler
 		}
 
 		$customer_id_parts = explode('-', $customer_id);
-		$this->authorized_payments_processor->capture_authorized_payments_for_customer((int) end($customer_id_parts));
+		$wc_customer_id = (int) end($customer_id_parts);
+		$this->authorized_payments_processor->capture_authorized_payments_for_customer($wc_customer_id);
 
 		$response['success'] = true;
 		return rest_ensure_response($response);

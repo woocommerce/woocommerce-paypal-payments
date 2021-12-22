@@ -215,6 +215,7 @@ return array(
 		$settings                      = $container->get( 'wcgateway.settings' );
 		$environment                   = $container->get( 'onboarding.environment' );
 		$logger                        = $container->get( 'woocommerce.logger.woocommerce' );
+		$subscription_helper = $container->get( 'subscription.helper' );
 		return new OrderProcessor(
 			$session_handler,
 			$order_endpoint,
@@ -223,7 +224,8 @@ return array(
 			$authorized_payments_processor,
 			$settings,
 			$logger,
-			$environment
+			$environment,
+			$subscription_helper
 		);
 	},
 	'wcgateway.processor.refunds'                  => static function ( ContainerInterface $container ): RefundProcessor {
