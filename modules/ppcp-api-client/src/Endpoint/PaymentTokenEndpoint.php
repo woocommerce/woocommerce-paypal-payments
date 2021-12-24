@@ -93,6 +93,11 @@ class PaymentTokenEndpoint {
 		$bearer = $this->bearer->bearer();
 
 		$customer_id = $this->prefix . $id;
+		$guest_customer_id_meta = get_user_meta( $id, 'ppcp_guest_customer_id', true );
+		if($guest_customer_id_meta) {
+			$customer_id = $this->prefix . $guest_customer_id_meta;
+		}
+
 		$url         = trailingslashit( $this->host ) . 'v2/vault/payment-tokens/?customer_id=' . $customer_id;
 		$args        = array(
 			'method'  => 'GET',

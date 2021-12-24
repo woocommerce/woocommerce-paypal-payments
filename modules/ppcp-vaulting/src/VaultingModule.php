@@ -98,6 +98,10 @@ class VaultingModule implements ModuleInterface {
 			}
 		);
 
+		add_action('woocommerce_created_customer', function($customer_id) {
+			update_user_meta($customer_id, 'ppcp_guest_customer_id', WC()->session->get('ppcp_guest_customer_id'));
+		});
+
 		$asset_loader = $container->get( 'vaulting.assets.myaccount-payments' );
 		add_action(
 			'wp_enqueue_scripts',

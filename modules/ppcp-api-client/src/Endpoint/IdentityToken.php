@@ -95,11 +95,15 @@ class IdentityToken {
 			),
 		);
 		if (
-			$customer_id
-			&& ( $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ) )
+			( $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ) )
 			&& defined( 'PPCP_FLAG_SUBSCRIPTION' ) && PPCP_FLAG_SUBSCRIPTION
 		) {
-			$args['body'] = wp_json_encode( array( 'customer_id' => $this->prefix . $customer_id ) );
+			if($customer_id === 0) {
+				$customer_id = uniqid();
+				WC()->session->set('ppcp_guest_customer_id', $customer_id);
+			}
+
+			$args['body'] = wp_json_encode( array( 'customer_id' => $this->prefix . $customer_id) );
 		}
 
 		$response = $this->request( $url, $args );
