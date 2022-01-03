@@ -44,8 +44,8 @@ class DisableGateways {
 		ContainerInterface $settings
 	) {
 
-		$this->session_handler     = $session_handler;
-		$this->settings            = $settings;
+		$this->session_handler = $session_handler;
+		$this->settings        = $settings;
 	}
 
 	/**

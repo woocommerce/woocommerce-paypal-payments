@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\ApiClient\TestCase;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use function Brain\Monkey\Functions\expect;
+use function Brain\Monkey\Functions\when;
 
 class PaymentTokenEndpointTest extends TestCase
 {
@@ -73,6 +74,8 @@ class PaymentTokenEndpointTest extends TestCase
 
 		$this->logger->shouldReceive('debug');
 
+		when('get_user_meta')->justReturn('');
+
         $result = $this->sut->for_user($id);
         $this->assertInstanceOf(PaymentToken::class, $result[0]);
 
@@ -95,6 +98,8 @@ class PaymentTokenEndpointTest extends TestCase
         expect('is_wp_error')->with($rawResponse)->andReturn(true);
         $this->logger->shouldReceive('log');
         $this->logger->shouldReceive('debug');
+
+		when('get_user_meta')->justReturn('');
 
         $this->expectException(RuntimeException::class);
         $this->sut->for_user($id);
@@ -122,6 +127,8 @@ class PaymentTokenEndpointTest extends TestCase
         expect('wp_remote_retrieve_response_code')->with($rawResponse)->andReturn(500);
         $this->logger->shouldReceive('log');
         $this->logger->shouldReceive('debug');
+
+		when('get_user_meta')->justReturn('');
 
         $this->expectException(PayPalApiException::class);
         $this->sut->for_user($id);
@@ -185,6 +192,10 @@ class PaymentTokenEndpointTest extends TestCase
         $prefix = $this->prefix;
         expect('wp_remote_get')->andReturnUsing(
             function ($url, $args) use ($rawResponse, $host, $prefix, $id) {
+            	// echo $url; // https://example.com/v2/vault/payment-tokens/?customer_id=prefixabc123
+				// https://example.com/v2/vault/payment-tokens/?customer_id=prefix1
+				// https://example.com/v2/vault/payment-tokens/?customer_id=prefixabc123
+				echo $host . 'v2/vault/payment-tokens/?customer_id=' . $prefix . $id;
                 if ($url !== $host . 'v2/vault/payment-tokens/?customer_id=' . $prefix . $id) {
                     return false;
                 }

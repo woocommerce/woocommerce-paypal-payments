@@ -98,12 +98,12 @@ class IdentityToken {
 			( $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ) )
 			&& defined( 'PPCP_FLAG_SUBSCRIPTION' ) && PPCP_FLAG_SUBSCRIPTION
 		) {
-			if($customer_id === 0) {
+			if ( 0 === $customer_id ) {
 				$customer_id = uniqid();
-				WC()->session->set('ppcp_guest_customer_id', $customer_id);
+				WC()->session->set( 'ppcp_guest_customer_id', $customer_id );
 			}
 
-			$args['body'] = wp_json_encode( array( 'customer_id' => $this->prefix . $customer_id) );
+			$args['body'] = wp_json_encode( array( 'customer_id' => $this->prefix . $customer_id ) );
 		}
 
 		$response = $this->request( $url, $args );
