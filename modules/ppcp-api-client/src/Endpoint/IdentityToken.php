@@ -103,6 +103,11 @@ class IdentityToken {
 				WC()->session->set( 'ppcp_guest_customer_id', $customer_id );
 			}
 
+			$guest_customer_id = get_user_meta( $customer_id, 'ppcp_guest_customer_id', true );
+			if ( $guest_customer_id ) {
+				$customer_id = $guest_customer_id;
+			}
+
 			$args['body'] = wp_json_encode( array( 'customer_id' => $this->prefix . (string) $customer_id ) );
 		}
 
