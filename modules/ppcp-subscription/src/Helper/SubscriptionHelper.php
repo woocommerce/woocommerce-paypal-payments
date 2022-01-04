@@ -56,6 +56,33 @@ class SubscriptionHelper {
 	}
 
 	/**
+	 * Whether pay for order contains subscriptions.
+	 *
+	 * @return bool
+	 */
+	public function order_pay_contains_subscription(): bool {
+		if ( ! $this->plugin_is_active() || ! is_wc_endpoint_url( 'order-pay' ) ) {
+			return false;
+		}
+
+		global $wp;
+		$order_id = (int) $wp->query_vars['order-pay'] ?? 0;
+		if ( 0 === $order_id ) {
+			return false;
+		}
+
+		$order = wc_get_order( $order_id );
+		foreach ( $order->get_items() as $item ) {
+			$product = wc_get_product( $item->get_product_id() );
+			if ( $product->get_type() === 'subscription' ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * Whether only automatic payment gateways are accepted.
 	 *
 	 * @return bool
