@@ -37,6 +37,9 @@ class RenewalHandlerTest extends TestCase
         $this->purchaseUnitFactory = Mockery::mock(PurchaseUnitFactory::class);
         $this->payerFactory = Mockery::mock(PayerFactory::class);
 
+		$this->logger->shouldReceive('error');
+		$this->logger->shouldReceive('info');
+
         $this->sut = new RenewalHandler(
             $this->logger,
             $this->repository,
@@ -59,7 +62,6 @@ class RenewalHandlerTest extends TestCase
         $payer = Mockery::mock(Payer::class);
         $order = Mockery::mock(Order::class);
 
-        $this->logger->shouldReceive('log');
         $wcOrder
             ->shouldReceive('get_id')
             ->andReturn(1);

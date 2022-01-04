@@ -90,52 +90,23 @@ class RenewalHandler {
 	 * @param \WC_Order $wc_order The WooCommerce order.
 	 */
 	public function renew( \WC_Order $wc_order ) {
-
-		$this->logger->log(
-			'info',
-			sprintf(
-				// translators: %d is the id of the order.
-				__( 'Start moneytransfer for order %d', 'woocommerce-paypal-payments' ),
-				(int) $wc_order->get_id()
-			),
-			array(
-				'order' => $wc_order,
-			)
-		);
-
 		try {
 			$this->process_order( $wc_order );
 		} catch ( \Exception $error ) {
-			$this->logger->log(
-				'error',
+			$this->logger->error(
 				sprintf(
-					// translators: %1$d is the order number, %2$s the error message.
-					__(
-						'An error occured while trying to renew the subscription for order %1$d: %2$s',
-						'woocommerce-paypal-payments'
-					),
-					(int) $wc_order->get_id(),
+					'An error occurred while trying to renew the subscription for order %1$d: %2$s',
+					$wc_order->get_id(),
 					$error->getMessage()
-				),
-				array(
-					'order' => $wc_order,
 				)
 			);
 
 			return;
 		}
-		$this->logger->log(
-			'info',
+		$this->logger->info(
 			sprintf(
-				// translators: %d is the order number.
-				__(
-					'Moneytransfer for order %d is completed.',
-					'woocommerce-paypal-payments'
-				),
-				(int) $wc_order->get_id()
-			),
-			array(
-				'order' => $wc_order,
+				'Renewal for order %d is completed.',
+				$wc_order->get_id()
 			)
 		);
 	}
@@ -164,7 +135,10 @@ class RenewalHandler {
 			$token
 		);
 
-		$this->capture_order( $order, $wc_order );
+		if ( $order->intent() === 'AUTHORIZE' ) {
+			$this->order_endpoint->authorize( $order );
+			$wc_order->update_meta_data( AuthorizedPaymentsProcessor::CAPTURED_META_KEY, 'false' );
+		}
 	}
 
 	/**
@@ -185,12 +159,8 @@ class RenewalHandler {
 		if ( ! $tokens ) {
 
 			$error_message = sprintf(
-			// translators: %d is the customer id.
-				__(
-					'Payment failed. No payment tokens found for customer %d.',
-					'woocommerce-paypal-payments'
-				),
-				(int) $customer->get_id()
+				'Payment failed. No payment tokens found for customer %d.',
+				$customer->get_id()
 			);
 
 			$wc_order->update_status(
@@ -198,14 +168,7 @@ class RenewalHandler {
 				$error_message
 			);
 
-			$this->logger->log(
-				'error',
-				$error_message,
-				array(
-					'customer' => $customer,
-					'order'    => $wc_order,
-				)
-			);
+			$this->logger->error( $error_message );
 		}
 
 		$subscription = function_exists( 'wcs_get_subscription' ) ? wcs_get_subscription( $wc_order->get_meta( '_subscription_renewal' ) ) : null;
@@ -222,26 +185,5 @@ class RenewalHandler {
 		}
 
 		return current( $tokens );
-	}
-
-	/**
-	 * If the PayPal order is captured/authorized the WooCommerce order gets updated accordingly.
-	 *
-	 * @param Order     $order The PayPal order.
-	 * @param \WC_Order $wc_order The related WooCommerce order.
-	 */
-	private function capture_order( Order $order, \WC_Order $wc_order ) {
-
-		if ( $order->intent() === 'CAPTURE' && $order->status()->is( OrderStatus::COMPLETED ) ) {
-			$wc_order->update_status(
-				'processing',
-				__( 'Payment received.', 'woocommerce-paypal-payments' )
-			);
-		}
-
-		if ( $order->intent() === 'AUTHORIZE' ) {
-			$this->order_endpoint->authorize( $order );
-			$wc_order->update_meta_data( AuthorizedPaymentsProcessor::CAPTURED_META_KEY, 'false' );
-		}
 	}
 }
