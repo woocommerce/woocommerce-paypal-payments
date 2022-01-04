@@ -66,16 +66,20 @@ class SubscriptionHelper {
 		}
 
 		global $wp;
-		$order_id = (int) $wp->query_vars['order-pay'] ?? 0;
+		$order_id = (int) $wp->query_vars['order-pay'];
 		if ( 0 === $order_id ) {
 			return false;
 		}
 
 		$order = wc_get_order( $order_id );
-		foreach ( $order->get_items() as $item ) {
-			$product = wc_get_product( $item->get_product_id() );
-			if ( $product->get_type() === 'subscription' ) {
-				return true;
+		if ( is_a( $order, \WC_Order::class ) ) {
+			foreach ( $order->get_items() as $item ) {
+				if ( is_a( $item, \WC_Order_Item_Product::class ) ) {
+					$product = wc_get_product( $item->get_product_id() );
+					if ( is_a( $product, \WC_Product_Subscription::class ) ) {
+						return true;
+					}
+				}
 			}
 		}
 
