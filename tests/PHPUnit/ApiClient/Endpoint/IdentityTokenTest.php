@@ -82,6 +82,7 @@ class IdentityTokenTest extends TestCase
         expect('is_wp_error')->with($rawResponse)->andReturn(false);
         expect('wp_remote_retrieve_response_code')->with($rawResponse)->andReturn(200);
         when('wc_print_r')->returnArg();
+		when('get_user_meta')->justReturn('');
 
         $result = $this->sut->generate_for_customer(1);
         $this->assertInstanceOf(Token::class, $result);
@@ -104,6 +105,7 @@ class IdentityTokenTest extends TestCase
         $this->logger->shouldReceive('debug');
 		$this->settings->shouldReceive('has')->andReturn(true);
 		$this->settings->shouldReceive('get')->andReturn(true);
+		when('get_user_meta')->justReturn('');
 
         $this->expectException(RuntimeException::class);
         $this->sut->generate_for_customer(1);
@@ -126,6 +128,7 @@ class IdentityTokenTest extends TestCase
         expect('is_wp_error')->andReturn(false);
         expect('wp_remote_retrieve_response_code')->andReturn(500);
 		when('wc_print_r')->returnArg();
+		when('get_user_meta')->justReturn('');
         $this->logger->shouldReceive('log');
         $this->logger->shouldReceive('debug');
 		$this->settings->shouldReceive('has')->andReturn(true);
