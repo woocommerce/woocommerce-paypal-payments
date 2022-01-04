@@ -76,6 +76,9 @@ class SubscriptionHelper {
 			foreach ( $order->get_items() as $item ) {
 				if ( is_a( $item, \WC_Order_Item_Product::class ) ) {
 					$product = wc_get_product( $item->get_product_id() );
+					/**
+					 * @psalm-suppress UndefinedClass
+					 */
 					if ( is_a( $product, \WC_Product_Subscription::class ) ) {
 						return true;
 					}
