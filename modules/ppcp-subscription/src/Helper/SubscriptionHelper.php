@@ -77,6 +77,8 @@ class SubscriptionHelper {
 				if ( is_a( $item, \WC_Order_Item_Product::class ) ) {
 					$product = wc_get_product( $item->get_product_id() );
 					/**
+					 * Class already exist in subscriptions plugin.
+					 *
 					 * @psalm-suppress UndefinedClass
 					 */
 					if ( is_a( $product, \WC_Product_Subscription::class ) ) {
