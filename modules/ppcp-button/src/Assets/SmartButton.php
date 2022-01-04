@@ -613,6 +613,10 @@ class SmartButton implements SmartButtonInterface {
 		if ( is_product() ) {
 			return $this->subscription_helper->current_product_is_subscription();
 		}
+		if ( is_wc_endpoint_url( 'order-pay' ) ) {
+			return $this->subscription_helper->order_pay_contains_subscription();
+		}
+
 		return $this->subscription_helper->cart_contains_subscription();
 	}
 
