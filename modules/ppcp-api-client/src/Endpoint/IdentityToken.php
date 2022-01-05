@@ -105,9 +105,16 @@ class IdentityToken {
 			( $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ) )
 			&& defined( 'PPCP_FLAG_SUBSCRIPTION' ) && PPCP_FLAG_SUBSCRIPTION
 		) {
+			$customer_id = $this->customer_repository->customer_id_for_user(($user_id));
+
+			if ( 0 === $user_id ) {
+				$customer_id = uniqid();
+				WC()->session->set( 'ppcp_guest_customer_id', $customer_id );
+			}
+
 			$args['body'] = wp_json_encode(
 				array(
-					'customer_id' => $this->customer_repository->customer_id_for_user( ( $user_id ) ),
+					'customer_id' => $customer_id,
 				)
 			);
 		}
