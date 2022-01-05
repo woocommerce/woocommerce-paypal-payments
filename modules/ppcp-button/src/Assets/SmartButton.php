@@ -177,6 +177,10 @@ class SmartButton implements SmartButtonInterface {
 	 */
 	public function render_wrapper(): bool {
 
+		if ( ! $this->can_save_vault_token() && $this->has_subscriptions() ) {
+			return false;
+		}
+
 		if ( $this->settings->has( 'enabled' ) && $this->settings->get( 'enabled' ) ) {
 			$this->render_button_wrapper_registrar();
 			$this->render_message_wrapper_registrar();
