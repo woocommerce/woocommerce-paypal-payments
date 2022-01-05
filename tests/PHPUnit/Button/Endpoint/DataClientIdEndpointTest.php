@@ -34,7 +34,7 @@ class DataClientIdEndpointTest extends TestCase
         $this->requestData->shouldReceive('read_request')
             ->with($this->sut::nonce());
         when('get_current_user_id')->justReturn($userId);
-        $this->identityToken->shouldReceive('generate_for_customer')
+        $this->identityToken->shouldReceive('generate_for_user')
             ->with($userId)
             ->andReturn($token);
 
