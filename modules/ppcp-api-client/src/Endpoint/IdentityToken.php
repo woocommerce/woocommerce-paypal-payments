@@ -90,7 +90,7 @@ class IdentityToken {
 	 * @return Token
 	 * @throws RuntimeException If the request fails.
 	 */
-	public function generate_for_customer( int $user_id ): Token {
+	public function generate_for_user( int $user_id ): Token {
 
 		$bearer = $this->bearer->bearer();
 		$url    = trailingslashit( $this->host ) . 'v1/identity/generate-token';
@@ -105,7 +105,7 @@ class IdentityToken {
 			( $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ) )
 			&& defined( 'PPCP_FLAG_SUBSCRIPTION' ) && PPCP_FLAG_SUBSCRIPTION
 		) {
-			$customer_id = $this->customer_repository->customer_id_for_user(($user_id));
+			$customer_id = $this->customer_repository->customer_id_for_user( ( $user_id ) );
 
 			if ( 0 === $user_id ) {
 				$customer_id = uniqid();

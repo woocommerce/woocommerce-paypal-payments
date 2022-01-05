@@ -92,7 +92,7 @@ class IdentityTokenTest extends TestCase
         when('wc_print_r')->returnArg();
 		when('get_user_meta')->justReturn('');
 
-        $result = $this->sut->generate_for_customer(1);
+        $result = $this->sut->generate_for_user(1);
         $this->assertInstanceOf(Token::class, $result);
     }
 
@@ -116,7 +116,7 @@ class IdentityTokenTest extends TestCase
 		$this->customer_repository->shouldReceive('customer_id_for_user');
 
         $this->expectException(RuntimeException::class);
-        $this->sut->generate_for_customer(1);
+        $this->sut->generate_for_user(1);
     }
 
     public function testGenerateForCustomerFailsBecauseResponseCodeIsNot200()
@@ -143,6 +143,6 @@ class IdentityTokenTest extends TestCase
 		$this->customer_repository->shouldReceive('customer_id_for_user');
 
         $this->expectException(PayPalApiException::class);
-        $this->sut->generate_for_customer(1);
+        $this->sut->generate_for_user(1);
     }
 }
