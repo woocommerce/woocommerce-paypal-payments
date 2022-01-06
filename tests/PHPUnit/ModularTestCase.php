@@ -25,7 +25,6 @@ class ModularTestCase extends TestCase
         when('get_site_url')->justReturn('example.com');
         when('get_bloginfo')->justReturn('My Shop');
         when('wc_get_base_location')->justReturn(['country' => 'US']);
-        when('get_woocommerce_currency')->justReturn('USD');
         when('WC')->justReturn((object) [
         	'session' => null,
 		]);
