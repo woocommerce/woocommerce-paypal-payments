@@ -538,6 +538,14 @@ $data_rows_html
 						'woocommerce-paypal-payments'
 					);
 					?>
+					<a href="https://developer.paypal.com/docs/checkout/advanced/currency-availability-advanced-cards/">
+						<?php
+						esc_html_e(
+							'Advanced credit and debit country and currency availability.',
+							'woocommerce-paypal-payments'
+						);
+						?>
+					</a>
 				</p>
 			</td>
 		</tr>
