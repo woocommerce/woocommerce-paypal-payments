@@ -510,6 +510,7 @@ return array(
 			'AU' => array(
 				'mastercard' => array(),
 				'visa'       => array(),
+				'amex'       => array( 'AUD' ),
 			),
 			'ES' => array(
 				'mastercard' => array(),
