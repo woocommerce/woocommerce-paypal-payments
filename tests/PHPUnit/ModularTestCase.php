@@ -19,6 +19,7 @@ class ModularTestCase extends TestCase
         parent::setUp();
 
         when('get_option')->justReturn(null);
+        when('admin_url')->returnArg();
         when('plugins_url')->returnArg();
         when('plugin_dir_path')->alias(function ($file) { return trailingslashit(dirname($file)); });
         when('get_current_blog_id')->justReturn(42);
