@@ -108,7 +108,6 @@ class IdentityToken {
 			$customer_id = $this->customer_repository->customer_id_for_user( ( $user_id ) );
 
 			if ( 0 === $user_id ) {
-				$customer_id = uniqid();
 				WC()->session->set( 'ppcp_guest_customer_id', $customer_id );
 			}
 

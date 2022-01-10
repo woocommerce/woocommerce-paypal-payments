@@ -37,9 +37,13 @@ class CustomerRepository {
 	 * @return string
 	 */
 	public function customer_id_for_user( int $user_id ): string {
+		if ( 0 === $user_id ) {
+			return $this->prefix . uniqid();
+		}
+
 		$guest_customer_id = get_user_meta( $user_id, 'ppcp_guest_customer_id', true );
 		if ( $guest_customer_id ) {
-			return $this->prefix . $guest_customer_id;
+			return $guest_customer_id;
 		}
 
 		return $this->prefix . (string) $user_id;
