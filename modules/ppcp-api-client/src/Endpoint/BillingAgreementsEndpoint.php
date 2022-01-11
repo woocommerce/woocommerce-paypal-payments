@@ -120,11 +120,17 @@ class BillingAgreementsEndpoint {
 	 */
 	public function reference_transaction_enabled(): bool {
 		try {
-			$this->create_token(
-				'Checking if reference transactions are enabled',
-				'https://example.com/return',
-				'https://example.com/cancel'
-			);
+			$this->is_request_logging_enabled = false;
+
+			try {
+				$this->create_token(
+					'Checking if reference transactions are enabled',
+					'https://example.com/return',
+					'https://example.com/cancel'
+				);
+			} finally {
+				$this->is_request_logging_enabled = true;
+			}
 
 			return true;
 		} catch ( PayPalApiException $exception ) {
