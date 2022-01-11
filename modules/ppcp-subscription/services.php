@@ -23,12 +23,14 @@ return array(
 		$endpoint              = $container->get( 'api.endpoint.order' );
 		$purchase_unit_factory = $container->get( 'api.factory.purchase-unit' );
 		$payer_factory         = $container->get( 'api.factory.payer' );
+		$environment           = $container->get( 'onboarding.environment' );
 		return new RenewalHandler(
 			$logger,
 			$repository,
 			$endpoint,
 			$purchase_unit_factory,
-			$payer_factory
+			$payer_factory,
+			$environment
 		);
 	},
 	'subscription.repository.payment-token' => static function ( ContainerInterface $container ): PaymentTokenRepository {

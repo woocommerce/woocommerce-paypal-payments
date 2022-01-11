@@ -322,7 +322,13 @@ return array(
 	},
 
 	'api.shop.currency'                         => static function ( ContainerInterface $container ) : string {
-		return get_woocommerce_currency();
+		// We use option instead of get_woocommerce_currency
+		// because it will not be overridden by currency switching plugins.
+		$currency = get_option( 'woocommerce_currency' );
+		if ( ! $currency ) {
+			return 'NO_CURRENCY'; // Unlikely to happen.
+		}
+		return $currency;
 	},
 	'api.shop.country'                          => static function ( ContainerInterface $container ) : string {
 		$location = wc_get_base_location();
@@ -510,6 +516,7 @@ return array(
 			'AU' => array(
 				'mastercard' => array(),
 				'visa'       => array(),
+				'amex'       => array( 'AUD' ),
 			),
 			'ES' => array(
 				'mastercard' => array(),

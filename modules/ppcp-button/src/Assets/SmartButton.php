@@ -215,11 +215,12 @@ class SmartButton implements SmartButtonInterface {
 				function ( array $default_fields, $id ) use ( $subscription_helper ) : array {
 					if ( is_user_logged_in() && $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ) && CreditCardGateway::ID === $id ) {
 
-						if ( ! $subscription_helper->cart_contains_subscription() ) {
-							$default_fields['card-vault'] = sprintf(
-								'<p class="form-row form-row-wide"><label for="ppcp-credit-card-vault"><input class="ppcp-credit-card-vault" type="checkbox" id="ppcp-credit-card-vault" name="vault"> %s</label></p>',
-								esc_html__( 'Save your Credit Card', 'woocommerce-paypal-payments' )
-							);
+						$default_fields['card-vault'] = sprintf(
+							'<p class="form-row form-row-wide"><label for="ppcp-credit-card-vault"><input class="ppcp-credit-card-vault" type="checkbox" id="ppcp-credit-card-vault" name="vault">%s</label></p>',
+							esc_html__( 'Save your Credit Card', 'woocommerce-paypal-payments' )
+						);
+						if ( $subscription_helper->cart_contains_subscription() || $subscription_helper->order_pay_contains_subscription() ) {
+							$default_fields['card-vault'] = '';
 						}
 
 						$tokens = $this->payment_token_repository->all_for_user_id( get_current_user_id() );
@@ -570,7 +571,8 @@ class SmartButton implements SmartButtonInterface {
 			return;
 		}
 
-		$label = 'checkout' === $this->context() ? __( 'Place order', 'woocommerce-paypal-payments' ) : __( 'Pay for order', 'woocommerce-paypal-payments' );
+		// phpcs:ignore WordPress.WP.I18n.TextDomainMismatch
+		$label = 'checkout' === $this->context() ? apply_filters( 'woocommerce_order_button_text', __( 'Place order', 'woocommerce' ) ) : __( 'Pay for order', 'woocommerce' );
 
 		printf(
 			'<div id="%1$s" style="display:none;">
@@ -612,6 +614,10 @@ class SmartButton implements SmartButtonInterface {
 		if ( is_product() ) {
 			return $this->subscription_helper->current_product_is_subscription();
 		}
+		if ( is_wc_endpoint_url( 'order-pay' ) ) {
+			return $this->subscription_helper->order_pay_contains_subscription();
+		}
+
 		return $this->subscription_helper->cart_contains_subscription();
 	}
 
