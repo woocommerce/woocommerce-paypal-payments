@@ -107,10 +107,6 @@ class IdentityToken {
 		) {
 			$customer_id = $this->customer_repository->customer_id_for_user( ( $user_id ) );
 
-			if ( 0 === $user_id ) {
-				WC()->session->set( 'ppcp_guest_customer_id', $customer_id );
-			}
-
 			$args['body'] = wp_json_encode(
 				array(
 					'customer_id' => $customer_id,
