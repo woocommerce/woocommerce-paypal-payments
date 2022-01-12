@@ -102,27 +102,6 @@ function ppcp_onboarding_productionCallback(...args) {
 }
 
 /**
- * Since the PayPal modal will redirect the user a dirty form
- * provokes an alert if the user wants to leave the page. Since the user
- * needs to toggle the sandbox switch, we disable this dirty state with the
- * following workaround for checkboxes.
- *
- * @param event
- */
-const checkBoxOnClick = (event) => {
-	const value = event.target.checked;
-	if (event.target.getAttribute('id') === 'ppcp-sandbox_on') {
-		toggleSandboxProduction(! value);
-	}
-	event.preventDefault();
-	event.stopPropagation();
-	setTimeout( () => {
-		event.target.checked = value;
-		},1
-	);
-};
-
-/**
  * Toggles the credential input fields.
  *
  * @param forProduction
@@ -273,12 +252,6 @@ const disconnect = (event) => {
 			}
 		);
 	}
-
-	// document.querySelectorAll('#mainform input[type="checkbox"]').forEach(
-	// 	(checkbox) => {
-	// 		checkbox.addEventListener('click', checkBoxOnClick);
-	// 	}
-	// );
 
 	document.querySelectorAll('#field-sandbox_toggle_manual_input button, #field-production_toggle_manual_input button').forEach(
 		(button) => {
