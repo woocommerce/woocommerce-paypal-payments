@@ -79,7 +79,8 @@ class OnboardingRenderer {
 			$this->render_button(
 				$this->get_signup_link( $is_production ),
 				$is_production ? 'connect-to-production' : 'connect-to-sandbox',
-				$is_production ? __( 'Connect to PayPal', 'woocommerce-paypal-payments' ) : __( 'Connect to PayPal Sandbox', 'woocommerce-paypal-payments' ),
+				$is_production ? __( 'Connect PayPal', 'woocommerce-paypal-payments' ) : __( 'Test Payments', 'woocommerce-paypal-payments' ),
+				$is_production ? 'primary' : 'secondary',
 				$is_production ? 'production' : 'sandbox'
 			);
 		} catch ( RuntimeException $exception ) {
@@ -96,13 +97,14 @@ class OnboardingRenderer {
 	 * @param string $url The url of the button.
 	 * @param string $id The ID of the button.
 	 * @param string $label The button text.
+	 * @param string $class The CSS class for button ('primary', 'secondary').
 	 * @param string $env The environment ('production' or 'sandbox').
 	 */
-	private function render_button( string $url, string $id, string $label, string $env ) {
+	private function render_button( string $url, string $id, string $label, string $class, string $env ) {
 		?>
 					<a
 							target="_blank"
-							class="button-primary"
+							class="button-<?php echo esc_attr( $class ); ?>"
 							id="<?php echo esc_attr( $id ); ?>"
 							data-paypal-onboard-complete="ppcp_onboarding_<?php echo esc_attr( $env ); ?>Callback"
 							data-paypal-onboard-button="true"
