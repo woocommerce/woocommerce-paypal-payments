@@ -1988,7 +1988,7 @@ return array(
 	'wcgateway.url'                                => static function ( ContainerInterface $container ): string {
 		return plugins_url(
 			$container->get( 'wcgateway.relative-path' ),
-			dirname( __FILE__, 3 ) . '/woocommerce-paypal-payments.php'
+			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
 		);
 	},
 	'wcgateway.relative-path'                      => static function( ContainerInterface $container ): string {
@@ -1996,7 +1996,7 @@ return array(
 	},
 	'wcgateway.absolute-path'                      => static function( ContainerInterface $container ): string {
 		return plugin_dir_path(
-			dirname( __FILE__, 3 ) . '/woocommerce-paypal-payments.php'
+			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
 		) .
 			$container->get( 'wcgateway.relative-path' );
 	},

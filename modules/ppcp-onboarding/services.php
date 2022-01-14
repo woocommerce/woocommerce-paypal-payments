@@ -139,7 +139,7 @@ return array(
 	'onboarding.url'                            => static function ( ContainerInterface $container ): string {
 		return plugins_url(
 			'/modules/ppcp-onboarding/',
-			dirname( __FILE__, 3 ) . '/woocommerce-paypal-payments.php'
+			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
 		);
 	},
 
