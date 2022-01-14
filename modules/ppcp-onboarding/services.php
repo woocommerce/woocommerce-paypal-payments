@@ -18,6 +18,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnerReferrals;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Onboarding\Assets\OnboardingAssets;
 use WooCommerce\PayPalCommerce\Onboarding\Endpoint\LoginSellerEndpoint;
+use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\OnboardingRESTController;
 
@@ -211,6 +212,9 @@ return array(
 			$partner_referrals_sandbox,
 			$partner_referrals_data
 		);
+	},
+	'onboarding.render-options'                 => static function ( ContainerInterface $container ) : OnboardingOptionsRenderer {
+		return new OnboardingOptionsRenderer();
 	},
 	'onboarding.rest'                           => static function( $container ) : OnboardingRESTController {
 		return new OnboardingRESTController( $container );

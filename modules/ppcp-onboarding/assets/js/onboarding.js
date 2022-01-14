@@ -15,7 +15,7 @@ const ppcp_onboarding = {
 			return;
 		}
 
-		// Add event listeners to buttons.
+		// Add event listeners to buttons preventing link clicking if PayPal init failed.
 		buttons.forEach(
 			(element) => {
 				if (element.hasAttribute('data-ppcp-button-initialized')) {
@@ -137,8 +137,6 @@ const credentialToggle = (forProduction) => {
 const toggleSandboxProduction = (showProduction) => {
 	const productionDisplaySelectors = [
 		'#field-credentials_production_heading',
-		'#field-production_toggle_manual_input',
-		'#field-ppcp_onboarding_production',
 	];
 	const productionClassSelectors = [
 
@@ -150,8 +148,6 @@ const toggleSandboxProduction = (showProduction) => {
 	];
 	const sandboxDisplaySelectors = [
 		'#field-credentials_sandbox_heading',
-		'#field-sandbox_toggle_manual_input',
-		'#field-ppcp_onboarding_sandbox',
 	];
 	const sandboxClassSelectors = [
 		'#field-ppcp_disconnect_sandbox',
@@ -197,6 +193,34 @@ const toggleSandboxProduction = (showProduction) => {
 	)
 };
 
+const updateOptionsState = () => {
+    const cardsChk = document.querySelector('#ppcp-onboarding-accept-cards');
+
+    document.querySelectorAll('#ppcp-onboarding-dcc-options input').forEach(input => {
+        input.disabled = !cardsChk.checked;
+    });
+
+    const basicRb = document.querySelector('#ppcp-onboarding-dcc-basic');
+
+    const isExpress = !cardsChk.checked || basicRb.checked;
+
+    const expressButtonSelectors = [
+        '#field-ppcp_onboarding_production_express',
+        '#field-ppcp_onboarding_sandbox_express',
+    ];
+    const ppcpButtonSelectors = [
+        '#field-ppcp_onboarding_production_ppcp',
+        '#field-ppcp_onboarding_sandbox_ppcp',
+    ];
+
+    document.querySelectorAll(expressButtonSelectors.join()).forEach(
+        element => element.style.display = isExpress ? '' : 'none'
+    );
+    document.querySelectorAll(ppcpButtonSelectors.join()).forEach(
+        element => element.style.display = !isExpress ? '' : 'none'
+    );
+};
+
 const disconnect = (event) => {
 	event.preventDefault();
 	const fields = event.target.classList.contains('production') ? [
@@ -234,7 +258,6 @@ const disconnect = (event) => {
 		}
 	);
 
-	// Prevent a possibly dirty form arising from this particular checkbox.
 	if (sandboxSwitchElement) {
 		sandboxSwitchElement.addEventListener(
 			'click',
@@ -243,6 +266,7 @@ const disconnect = (event) => {
 
 				toggleSandboxProduction( ! value );
 
+                // Prevent a possibly dirty form arising from this particular checkbox.
 				event.preventDefault();
 				event.stopPropagation();
 				setTimeout( () => {
@@ -253,18 +277,28 @@ const disconnect = (event) => {
 		);
 	}
 
-	document.querySelectorAll('#field-sandbox_toggle_manual_input button, #field-production_toggle_manual_input button').forEach(
-		(button) => {
-			button.addEventListener(
-				'click',
-				(event) => {
-					event.preventDefault();
-					const isProduction = event.target.classList.contains('production-toggle');
-					credentialToggle(isProduction);
-				}
-			)
-		}
-	);
+    document.querySelectorAll('.ppcp-onboarding-options input').forEach(
+        (element) => {
+            element.addEventListener('click', updateOptionsState);
+        }
+    );
+
+    updateOptionsState();
+
+    document.querySelectorAll('#field-toggle_manual_input button').forEach(
+        (button) => {
+            button.addEventListener(
+                'click',
+                (event) => {
+                    event.preventDefault();
+
+                    const isProduction = ! sandboxSwitchElement.checked;
+                    toggleSandboxProduction(isProduction);
+                    credentialToggle(isProduction);
+                }
+            )
+        }
+    );
 
 	// Onboarding buttons.
 	ppcp_onboarding.init();

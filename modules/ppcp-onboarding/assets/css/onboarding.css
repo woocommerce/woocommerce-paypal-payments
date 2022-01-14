@@ -35,8 +35,7 @@
 	display: unset;
 }
 
-#field-production_toggle_manual_input button,
-#field-sandbox_toggle_manual_input button {
+#field-toggle_manual_input button {
 	color: #0073aa;
 	transition-property: border, background, color;
 	transition-duration: .05s;
@@ -49,8 +48,7 @@
 	padding: 0;
 }
 
-#field-sandbox_toggle_manual_input.onboarded,
-#field-production_toggle_manual_input.onboarded {
+#field-toggle_manual_input.onboarded {
 	display: none;
 }
 
@@ -91,4 +89,16 @@
 
 .input-text[pattern]:invalid {
 	border: red solid 2px;
+}
+
+ul.ppcp-onboarding-options, ul.ppcp-onboarding-options-sublist {
+	list-style: none;
+}
+
+ul.ppcp-onboarding-options-sublist {
+	margin-left: 15px;
+}
+
+.ppcp-muted-text {
+	opacity: 0.6;
 }

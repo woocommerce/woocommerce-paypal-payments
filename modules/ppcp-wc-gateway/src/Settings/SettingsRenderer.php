@@ -475,7 +475,14 @@ $data_rows_html
 	 * @param array $config The configuration array.
 	 */
 	private function render_text( array $config ) {
-		echo wp_kses_post( $config['text'] );
+		$raw = $config['raw'] ?? false;
+		if ( $raw ) {
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			echo $config['text'];
+		} else {
+			echo wp_kses_post( $config['text'] );
+		}
+
 		if ( isset( $config['hidden'] ) ) {
 			$value = $this->settings->has( $config['hidden'] ) ?
 				(string) $this->settings->get( $config['hidden'] )
