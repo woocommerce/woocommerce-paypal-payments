@@ -12,7 +12,6 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use WooCommerce\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -37,13 +36,6 @@ class PartnerReferrals {
 	private $bearer;
 
 	/**
-	 * The PartnerReferralsData.
-	 *
-	 * @var PartnerReferralsData
-	 */
-	private $data;
-
-	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -53,32 +45,29 @@ class PartnerReferrals {
 	/**
 	 * PartnerReferrals constructor.
 	 *
-	 * @param string               $host The host.
-	 * @param Bearer               $bearer The bearer.
-	 * @param PartnerReferralsData $data The partner referrals data.
-	 * @param LoggerInterface      $logger The logger.
+	 * @param string          $host The host.
+	 * @param Bearer          $bearer The bearer.
+	 * @param LoggerInterface $logger The logger.
 	 */
 	public function __construct(
 		string $host,
 		Bearer $bearer,
-		PartnerReferralsData $data,
 		LoggerInterface $logger
 	) {
 
 		$this->host   = $host;
 		$this->bearer = $bearer;
-		$this->data   = $data;
 		$this->logger = $logger;
 	}
 
 	/**
 	 * Fetch the signup link.
 	 *
+	 * @param array $data The partner referrals data.
 	 * @return string
 	 * @throws RuntimeException If the request fails.
 	 */
-	public function signup_link(): string {
-		$data     = $this->data->data();
+	public function signup_link( array $data ): string {
 		$bearer   = $this->bearer->bearer();
 		$args     = array(
 			'method'  => 'POST',

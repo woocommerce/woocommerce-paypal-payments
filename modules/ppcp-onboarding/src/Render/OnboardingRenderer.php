@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\Onboarding\Render;
 
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnerReferrals;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
@@ -40,30 +41,49 @@ class OnboardingRenderer {
 	private $sandbox_partner_referrals;
 
 	/**
+	 * The default partner referrals data.
+	 *
+	 * @var PartnerReferralsData
+	 */
+	private $partner_referrals_data;
+
+	/**
 	 * OnboardingRenderer constructor.
 	 *
-	 * @param Settings         $settings The settings.
-	 * @param PartnerReferrals $production_partner_referrals The PartnerReferrals for production.
-	 * @param PartnerReferrals $sandbox_partner_referrals The PartnerReferrals for sandbox.
+	 * @param Settings             $settings The settings.
+	 * @param PartnerReferrals     $production_partner_referrals The PartnerReferrals for production.
+	 * @param PartnerReferrals     $sandbox_partner_referrals The PartnerReferrals for sandbox.
+	 * @param PartnerReferralsData $partner_referrals_data The default partner referrals data.
 	 */
-	public function __construct( Settings $settings, PartnerReferrals $production_partner_referrals, PartnerReferrals $sandbox_partner_referrals ) {
+	public function __construct(
+		Settings $settings,
+		PartnerReferrals $production_partner_referrals,
+		PartnerReferrals $sandbox_partner_referrals,
+		PartnerReferralsData $partner_referrals_data
+	) {
 		$this->settings                     = $settings;
 		$this->production_partner_referrals = $production_partner_referrals;
 		$this->sandbox_partner_referrals    = $sandbox_partner_referrals;
+		$this->partner_referrals_data       = $partner_referrals_data;
 	}
 
 	/**
 	 * Returns the action URL for the onboarding button/link.
 	 *
-	 * @param boolean $is_production Whether the production or sandbox button should be rendered.
+	 * @param boolean  $is_production Whether the production or sandbox button should be rendered.
+	 * @param string[] $products The list of products ('PPCP', 'EXPRESS_CHECKOUT').
 	 * @return string URL.
 	 */
-	public function get_signup_link( bool $is_production ) {
+	public function get_signup_link( bool $is_production, array $products ) {
 		$args = array(
 			'displayMode' => 'minibrowser',
 		);
 
-		$url = $is_production ? $this->production_partner_referrals->signup_link() : $this->sandbox_partner_referrals->signup_link();
+		$data = $this->partner_referrals_data
+			->with_products( $products )
+			->data();
+
+		$url = $is_production ? $this->production_partner_referrals->signup_link( $data ) : $this->sandbox_partner_referrals->signup_link( $data );
 		$url = add_query_arg( $args, $url );
 
 		return $url;
@@ -72,12 +92,13 @@ class OnboardingRenderer {
 	/**
 	 * Renders the "Connect to PayPal" button.
 	 *
-	 * @param bool $is_production Whether the production or sandbox button should be rendered.
+	 * @param bool     $is_production Whether the production or sandbox button should be rendered.
+	 * @param string[] $products The list of products ('PPCP', 'EXPRESS_CHECKOUT').
 	 */
-	public function render( bool $is_production ) {
+	public function render( bool $is_production, array $products ) {
 		try {
 			$this->render_button(
-				$this->get_signup_link( $is_production ),
+				$this->get_signup_link( $is_production, $products ),
 				$is_production ? 'connect-to-production' : 'connect-to-sandbox',
 				$is_production ? __( 'Connect PayPal', 'woocommerce-paypal-payments' ) : __( 'Test Payments', 'woocommerce-paypal-payments' ),
 				$is_production ? 'primary' : 'secondary',

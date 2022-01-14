@@ -188,7 +188,6 @@ return array(
 		return new PartnerReferrals(
 			CONNECT_WOO_SANDBOX_URL,
 			new ConnectBearer(),
-			$container->get( 'api.repository.partner-referrals-data' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
@@ -197,7 +196,6 @@ return array(
 		return new PartnerReferrals(
 			CONNECT_WOO_URL,
 			new ConnectBearer(),
-			$container->get( 'api.repository.partner-referrals-data' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
@@ -205,11 +203,13 @@ return array(
 
 		$partner_referrals         = $container->get( 'api.endpoint.partner-referrals-production' );
 		$partner_referrals_sandbox = $container->get( 'api.endpoint.partner-referrals-sandbox' );
+		$partner_referrals_data    = $container->get( 'api.repository.partner-referrals-data' );
 		$settings                  = $container->get( 'wcgateway.settings' );
 		return new OnboardingRenderer(
 			$settings,
 			$partner_referrals,
-			$partner_referrals_sandbox
+			$partner_referrals_sandbox,
+			$partner_referrals_data
 		);
 	},
 	'onboarding.rest'                           => static function( $container ) : OnboardingRESTController {

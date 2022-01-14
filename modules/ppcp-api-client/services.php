@@ -126,7 +126,6 @@ return array(
 		return new PartnerReferrals(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
-			$container->get( 'api.repository.partner-referrals-data' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
@@ -208,9 +207,8 @@ return array(
 	},
 	'api.repository.partner-referrals-data'     => static function ( ContainerInterface $container ) : PartnerReferralsData {
 
-		$merchant_email = $container->get( 'api.merchant_email' );
 		$dcc_applies    = $container->get( 'api.helpers.dccapplies' );
-		return new PartnerReferralsData( $merchant_email, $dcc_applies );
+		return new PartnerReferralsData( $dcc_applies );
 	},
 	'api.repository.cart'                       => static function ( ContainerInterface $container ): CartRepository {
 		$factory = $container->get( 'api.factory.purchase-unit' );

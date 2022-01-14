@@ -65,16 +65,15 @@ class OnboardingModule implements ModuleInterface {
 				if ( 'ppcp_onboarding' !== $config['type'] ) {
 					return $field;
 				}
-				$renderer      = $c->get( 'onboarding.render' );
-				$is_production = 'production' === $config['env'];
 
-				/**
-				 * The OnboardingRenderer.
-				 *
-				 * @var OnboardingRenderer $renderer
-				 */
+				$renderer = $c->get( 'onboarding.render' );
+				assert( $renderer instanceof OnboardingRenderer );
+
+				$is_production = 'production' === $config['env'];
+				$products      = $config['products'];
+
 				ob_start();
-				$renderer->render( $is_production );
+				$renderer->render( $is_production, $products );
 				$content = ob_get_contents();
 				ob_end_clean();
 				return $content;
