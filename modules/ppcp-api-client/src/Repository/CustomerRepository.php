@@ -38,8 +38,9 @@ class CustomerRepository {
 	 */
 	public function customer_id_for_user( int $user_id ): string {
 		if ( 0 === $user_id ) {
-			if ( WC()->session->get( 'ppcp_guest_customer_id' ) ) {
-				return WC()->session->get( 'ppcp_guest_customer_id' );
+			$guest_customer_id = WC()->session->get( 'ppcp_guest_customer_id' );
+			if ( is_string( $guest_customer_id ) && $guest_customer_id ) {
+				return $guest_customer_id;
 			}
 
 			$unique_id = $this->prefix . uniqid();
