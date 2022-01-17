@@ -641,10 +641,11 @@ class SmartButton implements SmartButtonInterface {
 		$localize = array(
 			'script_attributes'              => $this->attributes(),
 			'data_client_id'                 => array(
-				'set_attribute' => $this->can_save_vault_token(),
-				'endpoint'      => home_url( \WC_AJAX::get_endpoint( DataClientIdEndpoint::ENDPOINT ) ),
-				'nonce'         => wp_create_nonce( DataClientIdEndpoint::nonce() ),
-				'user'          => get_current_user_id(),
+				'set_attribute'     => $this->can_save_vault_token(),
+				'endpoint'          => home_url( \WC_AJAX::get_endpoint( DataClientIdEndpoint::ENDPOINT ) ),
+				'nonce'             => wp_create_nonce( DataClientIdEndpoint::nonce() ),
+				'user'              => get_current_user_id(),
+				'has_subscriptions' => $this->has_subscriptions(),
 			),
 			'redirect'                       => wc_get_checkout_url(),
 			'context'                        => $this->context(),
