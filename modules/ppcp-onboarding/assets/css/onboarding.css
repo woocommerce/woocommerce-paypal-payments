@@ -102,3 +102,28 @@ ul.ppcp-onboarding-options-sublist {
 .ppcp-muted-text {
 	opacity: 0.6;
 }
+
+.ppcp-onboarding-header {
+	display: flex;
+	width: 1000px;
+}
+
+.ppcp-onboarding-header-left, .ppcp-onboarding-header-right {
+	flex: 50%;
+}
+
+.ppcp-onboarding-header h2 {
+	margin-top: 0;
+}
+
+.ppcp-onboarding-header-cards img, .ppcp-onboarding-header-paypal-logos img {
+	margin: 5px;
+}
+
+.ppcp-onboarding-header-cards img {
+	height: 40px;
+}
+
+.ppcp-onboarding-header-paypal-logos img {
+	height: 45px;
+}

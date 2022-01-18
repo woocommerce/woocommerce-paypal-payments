@@ -266,7 +266,41 @@ return array(
 		$onboarding_options_renderer = $container->get( 'onboarding.render-options' );
 		assert( $onboarding_options_renderer instanceof OnboardingOptionsRenderer );
 
+		$module_url = $container->get( 'wcgateway.url' );
+
 		$fields              = array(
+			'ppcp_onboarading_header'            => array(
+				'type'         => 'ppcp-text',
+				'text'         => '
+<div class="ppcp-onboarding-header">
+	<div class="ppcp-onboarding-header-left">
+		<img alt="paypal" src="' . esc_url( $module_url ) . 'assets/images/paypal.png"/>
+		<h2>The all-in-one checkout solution</h2>
+	</div>
+	<div class="ppcp-onboarding-header-right">
+		<div class="ppcp-onboarding-header-paypal-logos">
+			<img alt="venmo" src="' . esc_url( $module_url ) . 'assets/images/paypal-button.png"/>
+			<img alt="venmo" src="' . esc_url( $module_url ) . 'assets/images/venmo-button.png"/>
+			<img alt="venmo" src="' . esc_url( $module_url ) . 'assets/images/paylater-button.png"/>
+		</div>
+		<div class="ppcp-onboarding-header-cards">
+			<img alt="visa" src="' . esc_url( $module_url ) . 'assets/images/visa.svg"/>
+			<img alt="mastercard" src="' . esc_url( $module_url ) . 'assets/images/mastercard.svg"/>
+			<img alt="amex" src="' . esc_url( $module_url ) . 'assets/images/amex.svg"/>
+			<img alt="discover" src="' . esc_url( $module_url ) . 'assets/images/discover.svg"/>
+			<img alt="ideal" src="' . esc_url( $module_url ) . 'assets/images/ideal.svg"/>
+			<img alt="sofort" src="' . esc_url( $module_url ) . 'assets/images/sofort.svg"/>
+		</div>
+	</div>
+</div>',
+				'screens'      => array(
+					State::STATE_START,
+					State::STATE_PROGRESSIVE,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
+
 			'credentials_production_heading'     => array(
 				'heading'      => __( 'API Credentials', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-heading',
@@ -1968,6 +2002,7 @@ return array(
 		}
 
 		if ( State::STATE_ONBOARDED === $state->production_state() || State::STATE_ONBOARDED === $state->sandbox_state() ) {
+			unset( $fields['ppcp_onboarading_header'] );
 			unset( $fields['ppcp_onboarading_options'] );
 			unset( $fields['ppcp_onboarding_sandbox_ppcp'] );
 			unset( $fields['ppcp_onboarding_sandbox_express'] );
