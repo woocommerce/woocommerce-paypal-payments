@@ -243,6 +243,19 @@ const disconnect = (event) => {
 	document.querySelector('.woocommerce-save-button').click();
 };
 
+// Prevent the message about unsaved checkbox/radiobutton when reloading the page.
+// (WC listens for changes on all inputs and sets dirty flag until form submission)
+const preventDirtyCheckboxPropagation = event => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const value = event.target.checked;
+    setTimeout( () => {
+            event.target.checked = value;
+        }, 1
+    );
+};
+
 (() => {
 	const sandboxSwitchElement = document.querySelector('#ppcp-sandbox_on');
 	if (sandboxSwitchElement) {
@@ -266,20 +279,18 @@ const disconnect = (event) => {
 
 				toggleSandboxProduction( ! value );
 
-                // Prevent a possibly dirty form arising from this particular checkbox.
-				event.preventDefault();
-				event.stopPropagation();
-				setTimeout( () => {
-					event.target.checked = value;
-					}, 1
-				);
+                preventDirtyCheckboxPropagation(event);
 			}
 		);
 	}
 
     document.querySelectorAll('.ppcp-onboarding-options input').forEach(
         (element) => {
-            element.addEventListener('click', updateOptionsState);
+            element.addEventListener('click', event => {
+                updateOptionsState();
+
+                preventDirtyCheckboxPropagation(event);
+            });
         }
     );
 
