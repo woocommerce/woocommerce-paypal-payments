@@ -320,7 +320,7 @@ return array(
 				),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
-				'description'  => __( 'Your account setting is set to sandbox, no real charging takes place. To accept live payments, switch your environment to live and connect your PayPal account.', 'woocommerce-paypal-payments' ),
+				'description'  => __( 'Your account is connected to sandbox, no real charging takes place. To accept live payments, disconnect and connect your live PayPal account.', 'woocommerce-paypal-payments' ),
 			),
 
 			'ppcp_onboarading_options'           => array(
@@ -343,7 +343,6 @@ return array(
 				'screens'      => array(
 					State::STATE_START,
 					State::STATE_PROGRESSIVE,
-					State::STATE_ONBOARDED,
 				),
 				'env'          => 'production',
 				'products'     => array( 'PPCP' ),
@@ -355,7 +354,6 @@ return array(
 				'screens'      => array(
 					State::STATE_START,
 					State::STATE_PROGRESSIVE,
-					State::STATE_ONBOARDED,
 				),
 				'env'          => 'production',
 				'products'     => array( 'EXPRESS_CHECKOUT' ),
@@ -367,7 +365,6 @@ return array(
 				'screens'      => array(
 					State::STATE_START,
 					State::STATE_PROGRESSIVE,
-					State::STATE_ONBOARDED,
 				),
 				'env'          => 'sandbox',
 				'products'     => array( 'PPCP' ),
@@ -380,7 +377,6 @@ return array(
 				'screens'      => array(
 					State::STATE_START,
 					State::STATE_PROGRESSIVE,
-					State::STATE_ONBOARDED,
 				),
 				'env'          => 'sandbox',
 				'products'     => array( 'EXPRESS_CHECKOUT' ),
@@ -392,11 +388,8 @@ return array(
 			'ppcp_disconnect_production'         => array(
 				'title'        => __( 'Disconnect from PayPal', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-text',
-				'classes'      => array( State::STATE_ONBOARDED === $state->production_state() ? 'onboarded' : '' ),
 				'text'         => '<button type="button" class="button ppcp-disconnect production">' . esc_html__( 'Disconnect', 'woocommerce-paypal-payments' ) . '</button>',
 				'screens'      => array(
-					State::STATE_START,
-					State::STATE_PROGRESSIVE,
 					State::STATE_ONBOARDED,
 				),
 				'env'          => 'production',
@@ -407,11 +400,8 @@ return array(
 			'ppcp_disconnect_sandbox'            => array(
 				'title'        => __( 'Disconnect from PayPal Sandbox', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-text',
-				'classes'      => array( State::STATE_ONBOARDED === $state->sandbox_state() ? 'onboarded' : '' ),
 				'text'         => '<button type="button" class="button ppcp-disconnect sandbox">' . esc_html__( 'Disconnect', 'woocommerce-paypal-payments' ) . '</button>',
 				'screens'      => array(
-					State::STATE_START,
-					State::STATE_PROGRESSIVE,
 					State::STATE_ONBOARDED,
 				),
 				'env'          => 'production',
@@ -421,18 +411,17 @@ return array(
 			),
 			'toggle_manual_input'                => array(
 				'type'         => 'ppcp-text',
-				'classes'      => array( State::STATE_ONBOARDED === $state->production_state() ? 'onboarded' : '' ),
 				'text'         => '<button type="button" id="ppcp[toggle_manual_input]">' . __( 'Toggle to manual credential input', 'woocommerce-paypal-payments' ) . '</button>',
 				'screens'      => array(
 					State::STATE_START,
 					State::STATE_PROGRESSIVE,
-					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
 			'sandbox_on'                         => array(
 				'title'        => __( 'Sandbox', 'woocommerce-paypal-payments' ),
+				'classes'      => array( State::STATE_ONBOARDED === $state->production_state() || State::STATE_ONBOARDED === $state->sandbox_state() ? 'onboarded' : '' ),
 				'type'         => 'checkbox',
 				'label'        => __( 'To test your WooCommerce installation, you can use the sandbox mode.', 'woocommerce-paypal-payments' ),
 				'default'      => 0,
@@ -2001,21 +1990,12 @@ return array(
 			unset( $fields['vault_enabled'] );
 		}
 
-		if ( State::STATE_ONBOARDED === $state->production_state() || State::STATE_ONBOARDED === $state->sandbox_state() ) {
-			unset( $fields['ppcp_onboarading_header'] );
-			unset( $fields['ppcp_onboarading_options'] );
-			unset( $fields['ppcp_onboarding_sandbox_ppcp'] );
-			unset( $fields['ppcp_onboarding_sandbox_express'] );
-			unset( $fields['ppcp_onboarding_production_ppcp'] );
-			unset( $fields['ppcp_onboarding_production_express'] );
-		}
 		if ( State::STATE_ONBOARDED === $state->production_state() ) {
 			unset( $fields['ppcp_disconnect_sandbox'] );
+			unset( $fields['credentials_sandbox_heading'] );
 		} elseif ( State::STATE_ONBOARDED === $state->sandbox_state() ) {
 			unset( $fields['ppcp_disconnect_production'] );
-		} else {
-			unset( $fields['ppcp_disconnect_sandbox'] );
-			unset( $fields['ppcp_disconnect_production'] );
+			unset( $fields['credentials_production_heading'] );
 		}
 
 		/**

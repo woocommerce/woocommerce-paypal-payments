@@ -101,100 +101,11 @@ function ppcp_onboarding_productionCallback(...args) {
 	return ppcp_onboarding.loginSeller('production', ...args);
 }
 
-/**
- * Toggles the credential input fields.
- *
- * @param forProduction
- */
-const credentialToggle = (forProduction) => {
-
-	const sandboxClassSelectors = [
-		'#field-ppcp_disconnect_sandbox',
-		'#field-merchant_email_sandbox',
-		'#field-merchant_id_sandbox',
-		'#field-client_id_sandbox',
-		'#field-client_secret_sandbox',
-	];
-	const productionClassSelectors = [
-		'#field-ppcp_disconnect_production',
-		'#field-merchant_email_production',
-		'#field-merchant_id_production',
-		'#field-client_id_production',
-		'#field-client_secret_production',
-	];
-
-	const selectors = forProduction ? productionClassSelectors : sandboxClassSelectors;
-	document.querySelectorAll(selectors.join()).forEach(
-		(element) => {element.classList.toggle('show')}
-	)
-};
-
-/**
- * Toggles the visibility of the sandbox/production input fields.
- *
- * @param showProduction
- */
-const toggleSandboxProduction = (showProduction) => {
-	const productionDisplaySelectors = [
-		'#field-credentials_production_heading',
-	];
-	const productionClassSelectors = [
-
-		'#field-ppcp_disconnect_production',
-		'#field-merchant_email_production',
-		'#field-merchant_id_production',
-		'#field-client_id_production',
-		'#field-client_secret_production',
-	];
-	const sandboxDisplaySelectors = [
-		'#field-credentials_sandbox_heading',
-	];
-	const sandboxClassSelectors = [
-		'#field-ppcp_disconnect_sandbox',
-		'#field-merchant_email_sandbox',
-		'#field-merchant_id_sandbox',
-		'#field-client_id_sandbox',
-		'#field-client_secret_sandbox',
-	];
-
-	if (showProduction) {
-		document.querySelectorAll(productionDisplaySelectors.join()).forEach(
-			(element) => {element.style.display = ''}
-		);
-		document.querySelectorAll(sandboxDisplaySelectors.join()).forEach(
-			(element) => {element.style.display = 'none'}
-		);
-		document.querySelectorAll(productionClassSelectors.join()).forEach(
-			(element) => {element.classList.remove('hide')}
-		);
-		document.querySelectorAll(sandboxClassSelectors.join()).forEach(
-			(element) => {
-				element.classList.remove('show');
-				element.classList.add('hide');
-			}
-		);
-		return;
-	}
-	document.querySelectorAll(productionDisplaySelectors.join()).forEach(
-		(element) => {element.style.display = 'none'}
-	);
-	document.querySelectorAll(sandboxDisplaySelectors.join()).forEach(
-		(element) => {element.style.display = ''}
-	);
-
-	document.querySelectorAll(sandboxClassSelectors.join()).forEach(
-		(element) => {element.classList.remove('hide')}
-	);
-	document.querySelectorAll(productionClassSelectors.join()).forEach(
-		(element) => {
-			element.classList.remove('show');
-			element.classList.add('hide');
-		}
-	)
-};
-
 const updateOptionsState = () => {
     const cardsChk = document.querySelector('#ppcp-onboarding-accept-cards');
+    if (!cardsChk) {
+        return;
+    }
 
     document.querySelectorAll('#ppcp-onboarding-dcc-options input').forEach(input => {
         input.disabled = !cardsChk.checked;
@@ -218,6 +129,41 @@ const updateOptionsState = () => {
     );
     document.querySelectorAll(ppcpButtonSelectors.join()).forEach(
         element => element.style.display = !isExpress ? '' : 'none'
+    );
+};
+
+const updateManualInputControls = (shown, isSandbox) => {
+    const productionElementsSelectors = [
+        '#field-merchant_email_production',
+        '#field-merchant_id_production',
+        '#field-client_id_production',
+        '#field-client_secret_production',
+    ];
+    const sandboxElementsSelectors = [
+        '#field-merchant_email_sandbox',
+        '#field-merchant_id_sandbox',
+        '#field-client_id_sandbox',
+        '#field-client_secret_sandbox',
+    ];
+    const otherElementsSelectors = [
+        '#field-sandbox_on',
+        '.woocommerce-save-button',
+    ];
+
+    document.querySelectorAll(productionElementsSelectors.join()).forEach(
+        element => {
+            element.classList.remove('hide', 'show');
+            element.classList.add((shown && !isSandbox) ? 'show' : 'hide');
+        }
+    );
+    document.querySelectorAll(sandboxElementsSelectors.join()).forEach(
+        element => {
+            element.classList.remove('hide', 'show');
+            element.classList.add((shown && isSandbox) ? 'show' : 'hide');
+        }
+    );
+    document.querySelectorAll(otherElementsSelectors.join()).forEach(
+        element => element.style.display = shown ? '' : 'none'
     );
 };
 
@@ -257,11 +203,6 @@ const preventDirtyCheckboxPropagation = event => {
 };
 
 (() => {
-	const sandboxSwitchElement = document.querySelector('#ppcp-sandbox_on');
-	if (sandboxSwitchElement) {
-		toggleSandboxProduction(! sandboxSwitchElement.checked);
-	}
-
 	document.querySelectorAll('.ppcp-disconnect').forEach(
 		(button) => {
 			button.addEventListener(
@@ -270,19 +211,6 @@ const preventDirtyCheckboxPropagation = event => {
 			);
 		}
 	);
-
-	if (sandboxSwitchElement) {
-		sandboxSwitchElement.addEventListener(
-			'click',
-			(event) => {
-				const value = event.target.checked;
-
-				toggleSandboxProduction( ! value );
-
-                preventDirtyCheckboxPropagation(event);
-			}
-		);
-	}
 
     document.querySelectorAll('.ppcp-onboarding-options input').forEach(
         (element) => {
@@ -296,20 +224,32 @@ const preventDirtyCheckboxPropagation = event => {
 
     updateOptionsState();
 
-    document.querySelectorAll('#field-toggle_manual_input button').forEach(
-        (button) => {
-            button.addEventListener(
-                'click',
-                (event) => {
-                    event.preventDefault();
+    const sandboxSwitchElement = document.querySelector('#ppcp-sandbox_on');
 
-                    const isProduction = ! sandboxSwitchElement.checked;
-                    toggleSandboxProduction(isProduction);
-                    credentialToggle(isProduction);
-                }
-            )
+    const manualInputToggleButton = document.querySelector('#field-toggle_manual_input button');
+    let isManualInputShown = manualInputToggleButton === null; // toggle is removed after onboarding and the fields are always shown
+
+    manualInputToggleButton?.addEventListener(
+            'click',
+            (event) => {
+                event.preventDefault();
+
+                isManualInputShown = !isManualInputShown;
+
+                updateManualInputControls(isManualInputShown, sandboxSwitchElement.checked);
+            }
+        );
+
+    sandboxSwitchElement.addEventListener(
+        'click',
+        (event) => {
+            updateManualInputControls(isManualInputShown, sandboxSwitchElement.checked);
+
+            preventDirtyCheckboxPropagation(event);
         }
     );
+
+    updateManualInputControls(isManualInputShown, sandboxSwitchElement.checked);
 
 	// Onboarding buttons.
 	ppcp_onboarding.init();
