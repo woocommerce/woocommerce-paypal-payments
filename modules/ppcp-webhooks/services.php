@@ -197,7 +197,7 @@ return array(
 	'webhook.module-url'                      => static function ( ContainerInterface $container ): string {
 		return plugins_url(
 			'/modules/ppcp-webhooks/',
-			dirname( __FILE__, 3 ) . '/woocommerce-paypal-payments.php'
+			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
 		);
 	},
 );

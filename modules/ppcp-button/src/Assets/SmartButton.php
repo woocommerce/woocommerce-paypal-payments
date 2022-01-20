@@ -407,7 +407,7 @@ class SmartButton implements SmartButtonInterface {
 		if ( in_array( $this->context(), array( 'pay-now', 'checkout' ), true ) && $this->can_render_dcc() ) {
 			wp_enqueue_style(
 				'ppcp-hosted-fields',
-				$this->module_url . '/assets/css/hosted-fields.css',
+				untrailingslashit( $this->module_url ) . '/assets/css/hosted-fields.css',
 				array(),
 				1
 			);
@@ -415,7 +415,7 @@ class SmartButton implements SmartButtonInterface {
 		if ( $load_script ) {
 			wp_enqueue_script(
 				'ppcp-smart-button',
-				$this->module_url . '/assets/js/button.js',
+				untrailingslashit( $this->module_url ) . '/assets/js/button.js',
 				array( 'jquery' ),
 				'1.3.2',
 				true

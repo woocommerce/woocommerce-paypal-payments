@@ -63,14 +63,14 @@ class OnboardingAssets {
 	 */
 	public function register(): bool {
 
-		$url = $this->module_url . '/assets/css/onboarding.css';
+		$url = untrailingslashit( $this->module_url ) . '/assets/css/onboarding.css';
 		wp_register_style(
 			'ppcp-onboarding',
 			$url,
 			array(),
 			1
 		);
-		$url = $this->module_url . '/assets/js/settings.js';
+		$url = untrailingslashit( $this->module_url ) . '/assets/js/settings.js';
 		wp_register_script(
 			'ppcp-settings',
 			$url,
@@ -79,7 +79,7 @@ class OnboardingAssets {
 			true
 		);
 
-		$url = $this->module_url . '/assets/js/onboarding.js';
+		$url = untrailingslashit( $this->module_url ) . '/assets/js/onboarding.js';
 		wp_register_script(
 			'ppcp-onboarding',
 			$url,

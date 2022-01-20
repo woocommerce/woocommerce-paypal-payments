@@ -42,7 +42,7 @@ class MyAccountPaymentsAssets {
 	public function enqueue(): void {
 		wp_enqueue_script(
 			'ppcp-vaulting-myaccount-payments',
-			$this->module_url . '/assets/js/myaccount-payments.js',
+			untrailingslashit( $this->module_url ) . '/assets/js/myaccount-payments.js',
 			array( 'jquery' ),
 			'1',
 			true
