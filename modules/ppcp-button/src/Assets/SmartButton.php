@@ -392,9 +392,6 @@ class SmartButton implements SmartButtonInterface {
 		if ( ! is_checkout() && ! $buttons_enabled ) {
 			return false;
 		}
-		if ( ! $this->can_save_vault_token() && $this->has_subscriptions() ) {
-			return false;
-		}
 
 		$load_script = false;
 		if ( is_checkout() && $this->settings->has( 'dcc_enabled' ) && $this->settings->get( 'dcc_enabled' ) ) {
@@ -599,7 +596,7 @@ class SmartButton implements SmartButtonInterface {
 			return false;
 		}
 
-		return is_user_logged_in();
+		return true;
 	}
 
 	/**
@@ -650,10 +647,11 @@ class SmartButton implements SmartButtonInterface {
 		$localize = array(
 			'script_attributes'              => $this->attributes(),
 			'data_client_id'                 => array(
-				'set_attribute' => ( is_checkout() && $this->dcc_is_enabled() ) || $this->can_save_vault_token(),
-				'endpoint'      => home_url( \WC_AJAX::get_endpoint( DataClientIdEndpoint::ENDPOINT ) ),
-				'nonce'         => wp_create_nonce( DataClientIdEndpoint::nonce() ),
-				'user'          => get_current_user_id(),
+				'set_attribute'     => $this->can_save_vault_token(),
+				'endpoint'          => home_url( \WC_AJAX::get_endpoint( DataClientIdEndpoint::ENDPOINT ) ),
+				'nonce'             => wp_create_nonce( DataClientIdEndpoint::nonce() ),
+				'user'              => get_current_user_id(),
+				'has_subscriptions' => $this->has_subscriptions(),
 			),
 			'redirect'                       => wc_get_checkout_url(),
 			'context'                        => $this->context(),

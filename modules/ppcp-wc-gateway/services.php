@@ -120,8 +120,7 @@ return array(
 	'wcgateway.disabler'                           => static function ( ContainerInterface $container ): DisableGateways {
 		$session_handler = $container->get( 'session.handler' );
 		$settings       = $container->get( 'wcgateway.settings' );
-		$subscription_helper = $container->get( 'subscription.helper' );
-		return new DisableGateways( $session_handler, $settings, $subscription_helper );
+		return new DisableGateways( $session_handler, $settings );
 	},
 	'wcgateway.is-wc-payments-page'                => static function ( ContainerInterface $container ): bool {
 		$page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : '';

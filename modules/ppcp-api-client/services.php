@@ -43,6 +43,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CartRepository;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\CustomerRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayeeRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
@@ -108,7 +109,7 @@ return array(
 			$container->get( 'api.bearer' ),
 			$container->get( 'api.factory.payment-token' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'api.prefix' )
+			$container->get( 'api.repository.customer' )
 		);
 	},
 	'api.endpoint.webhook'                      => static function ( ContainerInterface $container ) : WebhookEndpoint {
@@ -132,14 +133,14 @@ return array(
 	},
 	'api.endpoint.identity-token'               => static function ( ContainerInterface $container ) : IdentityToken {
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
-		$prefix = $container->get( 'api.prefix' );
 		$settings = $container->get( 'wcgateway.settings' );
+		$customer_repository = $container->get( 'api.repository.customer' );
 		return new IdentityToken(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
 			$logger,
-			$prefix,
-			$settings
+			$settings,
+			$customer_repository
 		);
 	},
 	'api.endpoint.payments'                     => static function ( ContainerInterface $container ): PaymentsEndpoint {
@@ -220,6 +221,10 @@ return array(
 		$merchant_email = $container->get( 'api.merchant_email' );
 		$merchant_id    = $container->get( 'api.merchant_id' );
 		return new PayeeRepository( $merchant_email, $merchant_id );
+	},
+	'api.repository.customer'                   => static function( ContainerInterface $container ): CustomerRepository {
+		$prefix           = $container->get( 'api.prefix' );
+		return new CustomerRepository( $prefix );
 	},
 	'api.factory.application-context'           => static function ( ContainerInterface $container ) : ApplicationContextFactory {
 		return new ApplicationContextFactory();
