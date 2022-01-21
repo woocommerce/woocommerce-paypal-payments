@@ -59,7 +59,7 @@ class SettingsPageAssets {
 		add_action(
 			'admin_enqueue_scripts',
 			function() use ( $bearer ) {
-				if ( ! is_admin() || is_ajax() ) {
+				if ( ! is_admin() || wp_doing_ajax() ) {
 					return;
 				}
 

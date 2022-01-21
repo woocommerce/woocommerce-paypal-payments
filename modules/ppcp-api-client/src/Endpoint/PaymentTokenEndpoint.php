@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\CustomerRepository;
 
 /**
  * Class PaymentTokenEndpoint
@@ -50,12 +51,13 @@ class PaymentTokenEndpoint {
 	 * @var LoggerInterface
 	 */
 	private $logger;
+
 	/**
-	 * The prefix.
+	 * The customer repository.
 	 *
-	 * @var string
+	 * @var CustomerRepository
 	 */
-	private $prefix;
+	protected $customer_repository;
 
 	/**
 	 * PaymentTokenEndpoint constructor.
@@ -64,21 +66,21 @@ class PaymentTokenEndpoint {
 	 * @param Bearer              $bearer The bearer.
 	 * @param PaymentTokenFactory $factory The payment token factory.
 	 * @param LoggerInterface     $logger The logger.
-	 * @param string              $prefix The prefix.
+	 * @param CustomerRepository  $customer_repository The customer repository.
 	 */
 	public function __construct(
 		string $host,
 		Bearer $bearer,
 		PaymentTokenFactory $factory,
 		LoggerInterface $logger,
-		string $prefix
+		CustomerRepository $customer_repository
 	) {
 
-		$this->host    = $host;
-		$this->bearer  = $bearer;
-		$this->factory = $factory;
-		$this->logger  = $logger;
-		$this->prefix  = $prefix;
+		$this->host                = $host;
+		$this->bearer              = $bearer;
+		$this->factory             = $factory;
+		$this->logger              = $logger;
+		$this->customer_repository = $customer_repository;
 	}
 
 	/**
@@ -91,10 +93,8 @@ class PaymentTokenEndpoint {
 	 */
 	public function for_user( int $id ): array {
 		$bearer = $this->bearer->bearer();
-
-		$customer_id = $this->prefix . $id;
-		$url         = trailingslashit( $this->host ) . 'v2/vault/payment-tokens/?customer_id=' . $customer_id;
-		$args        = array(
+		$url    = trailingslashit( $this->host ) . 'v2/vault/payment-tokens/?customer_id=' . $this->customer_repository->customer_id_for_user( $id );
+		$args   = array(
 			'method'  => 'GET',
 			'headers' => array(
 				'Authorization' => 'Bearer ' . $bearer->token(),

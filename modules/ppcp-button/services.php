@@ -90,7 +90,7 @@ return array(
 	'button.url'                        => static function ( ContainerInterface $container ): string {
 		return plugins_url(
 			'/modules/ppcp-button/',
-			dirname( __FILE__, 3 ) . '/woocommerce-paypal-payments.php'
+			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
 		);
 	},
 	'button.request-data'               => static function ( ContainerInterface $container ): RequestData {
