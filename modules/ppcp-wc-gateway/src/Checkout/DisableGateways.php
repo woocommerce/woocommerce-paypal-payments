@@ -10,7 +10,6 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Checkout;
 
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Psr\Container\ContainerInterface;
@@ -35,28 +34,18 @@ class DisableGateways {
 	private $settings;
 
 	/**
-	 * The subscription helper
-	 *
-	 * @var SubscriptionHelper
-	 */
-	private $subscription_helper;
-
-	/**
 	 * DisableGateways constructor.
 	 *
 	 * @param SessionHandler     $session_handler The Session Handler.
 	 * @param ContainerInterface $settings The Settings.
-	 * @param SubscriptionHelper $subscription_helper The subscription  helper.
 	 */
 	public function __construct(
 		SessionHandler $session_handler,
-		ContainerInterface $settings,
-		SubscriptionHelper $subscription_helper
+		ContainerInterface $settings
 	) {
 
-		$this->session_handler     = $session_handler;
-		$this->settings            = $settings;
-		$this->subscription_helper = $subscription_helper;
+		$this->session_handler = $session_handler;
+		$this->settings        = $settings;
 	}
 
 	/**
@@ -107,10 +96,6 @@ class DisableGateways {
 			return true;
 		}
 		if ( ! $this->settings->has( 'merchant_email' ) || ! is_email( $this->settings->get( 'merchant_email' ) ) ) {
-			return true;
-		}
-
-		if ( $this->subscription_helper->cart_contains_subscription() && ! is_user_logged_in() ) {
 			return true;
 		}
 

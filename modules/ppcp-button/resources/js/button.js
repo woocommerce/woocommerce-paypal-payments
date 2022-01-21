@@ -82,8 +82,16 @@ document.addEventListener(
             console.error('PayPal button could not be configured.');
             return;
         }
-        const script = document.createElement('script');
 
+        if (
+            PayPalCommerceGateway.context !== 'checkout'
+            && PayPalCommerceGateway.data_client_id.user === 0
+            && PayPalCommerceGateway.data_client_id.has_subscriptions
+        ) {
+            return;
+        }
+
+        const script = document.createElement('script');
         script.addEventListener('load', (event) => {
             bootstrap();
         });

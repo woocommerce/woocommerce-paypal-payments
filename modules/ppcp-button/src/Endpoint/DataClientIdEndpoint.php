@@ -80,7 +80,7 @@ class DataClientIdEndpoint implements EndpointInterface {
 		try {
 			$this->request_data->read_request( $this->nonce() );
 			$user_id = get_current_user_id();
-			$token   = $this->identity_token->generate_for_customer( $user_id );
+			$token   = $this->identity_token->generate_for_user( $user_id );
 			wp_send_json(
 				array(
 					'token'      => $token->token(),

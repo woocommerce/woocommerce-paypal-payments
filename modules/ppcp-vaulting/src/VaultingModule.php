@@ -98,6 +98,17 @@ class VaultingModule implements ModuleInterface {
 			}
 		);
 
+		$subscription_helper = $container->get( 'subscription.helper' );
+		add_action(
+			'woocommerce_created_customer',
+			function( int $customer_id ) use ( $subscription_helper ) {
+				$guest_customer_id = WC()->session->get( 'ppcp_guest_customer_id' );
+				if ( $guest_customer_id && $subscription_helper->cart_contains_subscription() ) {
+					update_user_meta( $customer_id, 'ppcp_guest_customer_id', $guest_customer_id );
+				}
+			}
+		);
+
 		$asset_loader = $container->get( 'vaulting.assets.myaccount-payments' );
 		add_action(
 			'wp_enqueue_scripts',

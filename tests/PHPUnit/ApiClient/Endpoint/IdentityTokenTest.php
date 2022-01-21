@@ -9,6 +9,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Token;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\CustomerRepository;
 use WooCommerce\PayPalCommerce\ApiClient\TestCase;
 use Mockery;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
@@ -20,8 +21,8 @@ class IdentityTokenTest extends TestCase
     private $host;
     private $bearer;
     private $logger;
-    private $prefix;
     private $settings;
+    private $customer_repository;
     private $sut;
 
     public function setUp(): void
@@ -31,10 +32,16 @@ class IdentityTokenTest extends TestCase
         $this->host = 'https://example.com/';
         $this->bearer = Mockery::mock(Bearer::class);
         $this->logger = Mockery::mock(LoggerInterface::class);
-        $this->prefix = 'prefix';
         $this->settings = Mockery::mock(Settings::class);
+        $this->customer_repository = Mockery::mock(CustomerRepository::class);
 
-        $this->sut = new IdentityToken($this->host, $this->bearer, $this->logger, $this->prefix, $this->settings);
+        $this->sut = new IdentityToken(
+        	$this->host,
+			$this->bearer,
+			$this->logger,
+			$this->settings,
+			$this->customer_repository
+		);
     }
 
     public function testGenerateForCustomerReturnsToken()
@@ -52,6 +59,7 @@ class IdentityTokenTest extends TestCase
 		$this->logger->shouldReceive('debug');
 		$this->settings->shouldReceive('has')->andReturn(true);
 		$this->settings->shouldReceive('get')->andReturn(true);
+		$this->customer_repository->shouldReceive('customer_id_for_user')->andReturn('prefix1');
 
 		$rawResponse = [
 			'body' => '{"client_token":"abc123", "expires_in":3600}',
@@ -82,8 +90,9 @@ class IdentityTokenTest extends TestCase
         expect('is_wp_error')->with($rawResponse)->andReturn(false);
         expect('wp_remote_retrieve_response_code')->with($rawResponse)->andReturn(200);
         when('wc_print_r')->returnArg();
+		when('get_user_meta')->justReturn('');
 
-        $result = $this->sut->generate_for_customer(1);
+        $result = $this->sut->generate_for_user(1);
         $this->assertInstanceOf(Token::class, $result);
     }
 
@@ -104,9 +113,10 @@ class IdentityTokenTest extends TestCase
         $this->logger->shouldReceive('debug');
 		$this->settings->shouldReceive('has')->andReturn(true);
 		$this->settings->shouldReceive('get')->andReturn(true);
+		$this->customer_repository->shouldReceive('customer_id_for_user');
 
         $this->expectException(RuntimeException::class);
-        $this->sut->generate_for_customer(1);
+        $this->sut->generate_for_user(1);
     }
 
     public function testGenerateForCustomerFailsBecauseResponseCodeIsNot200()
@@ -130,8 +140,9 @@ class IdentityTokenTest extends TestCase
         $this->logger->shouldReceive('debug');
 		$this->settings->shouldReceive('has')->andReturn(true);
 		$this->settings->shouldReceive('get')->andReturn(true);
+		$this->customer_repository->shouldReceive('customer_id_for_user');
 
         $this->expectException(PayPalApiException::class);
-        $this->sut->generate_for_customer(1);
+        $this->sut->generate_for_user(1);
     }
 }
