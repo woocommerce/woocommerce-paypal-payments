@@ -274,22 +274,22 @@ return array(
 				'text'         => '
 <div class="ppcp-onboarding-header">
 	<div class="ppcp-onboarding-header-left">
-		<img alt="paypal" src="' . esc_url( $module_url ) . 'assets/images/paypal.png"/>
+		<img alt="PayPal" src="' . esc_url( $module_url ) . 'assets/images/paypal.png"/>
 		<h2>The all-in-one checkout solution</h2>
 	</div>
 	<div class="ppcp-onboarding-header-right">
 		<div class="ppcp-onboarding-header-paypal-logos">
-			<img alt="venmo" src="' . esc_url( $module_url ) . 'assets/images/paypal-button.png"/>
-			<img alt="venmo" src="' . esc_url( $module_url ) . 'assets/images/venmo-button.png"/>
-			<img alt="venmo" src="' . esc_url( $module_url ) . 'assets/images/paylater-button.png"/>
+			<img alt="PayPal" src="' . esc_url( $module_url ) . 'assets/images/paypal-button.png"/>
+			<img alt="Venmo" src="' . esc_url( $module_url ) . 'assets/images/venmo-button.png"/>
+			<img alt="Pay Later" src="' . esc_url( $module_url ) . 'assets/images/paylater-button.png"/>
 		</div>
 		<div class="ppcp-onboarding-header-cards">
-			<img alt="visa" src="' . esc_url( $module_url ) . 'assets/images/visa.svg"/>
-			<img alt="mastercard" src="' . esc_url( $module_url ) . 'assets/images/mastercard.svg"/>
-			<img alt="amex" src="' . esc_url( $module_url ) . 'assets/images/amex.svg"/>
-			<img alt="discover" src="' . esc_url( $module_url ) . 'assets/images/discover.svg"/>
-			<img alt="ideal" src="' . esc_url( $module_url ) . 'assets/images/ideal.svg"/>
-			<img alt="sofort" src="' . esc_url( $module_url ) . 'assets/images/sofort.svg"/>
+			<img alt="Visa" src="' . esc_url( $module_url ) . 'assets/images/visa.svg"/>
+			<img alt="Mastercard" src="' . esc_url( $module_url ) . 'assets/images/mastercard.svg"/>
+			<img alt="American Express" src="' . esc_url( $module_url ) . 'assets/images/amex.svg"/>
+			<img alt="Discover" src="' . esc_url( $module_url ) . 'assets/images/discover.svg"/>
+			<img alt="iDEAL" src="' . esc_url( $module_url ) . 'assets/images/ideal.svg"/>
+			<img alt="Sofort" src="' . esc_url( $module_url ) . 'assets/images/sofort.svg"/>
 		</div>
 	</div>
 </div>',
