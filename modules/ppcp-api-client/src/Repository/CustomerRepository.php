@@ -13,6 +13,7 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Repository;
  * Class CustomerRepository
  */
 class CustomerRepository {
+	const CLIENT_ID_MAX_LENGTH = 22;
 
 	/**
 	 * The prefix.
@@ -37,13 +38,14 @@ class CustomerRepository {
 	 * @return string
 	 */
 	public function customer_id_for_user( int $user_id ): string {
+		$unique_id = $this->generate_unique_id();
 		if ( 0 === $user_id ) {
 			$guest_customer_id = WC()->session->get( 'ppcp_guest_customer_id' );
 			if ( is_string( $guest_customer_id ) && $guest_customer_id ) {
 				return $guest_customer_id;
 			}
 
-			$unique_id = $this->prefix . uniqid();
+			$unique_id = $this->generate_unique_id();
 			WC()->session->set( 'ppcp_guest_customer_id', $unique_id );
 
 			return $unique_id;
@@ -55,5 +57,18 @@ class CustomerRepository {
 		}
 
 		return $this->prefix . (string) $user_id;
+	}
+
+	/**
+	 * Generates a unique id based on the length of the prefix.
+	 *
+	 * @return string
+	 */
+	protected function generate_unique_id(): string {
+		$offset = self::CLIENT_ID_MAX_LENGTH - strlen( $this->prefix );
+
+		return strlen( uniqid() ) > $offset
+			? $this->prefix . substr( uniqid(), $offset )
+			: $this->prefix . uniqid();
 	}
 }
