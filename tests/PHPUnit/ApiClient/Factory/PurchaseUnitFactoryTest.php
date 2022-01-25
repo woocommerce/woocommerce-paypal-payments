@@ -48,7 +48,6 @@ class PurchaseUnitFactoryTest extends TestCase
         $address = Mockery::mock(Address::class);
         $address
             ->shouldReceive('country_code')
-            ->twice()
             ->andReturn('DE');
         $address
             ->shouldReceive('postal_code')
