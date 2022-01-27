@@ -277,7 +277,7 @@ trait ProcessPaymentTrait {
 			if ( $error->has_detail( 'INSTRUMENT_DECLINED' ) ) {
 				$wc_order->update_status(
 					'failed',
-					__( 'Instrument declined.', 'woocommerce-paypal-payments' )
+					__( 'Instrument declined. ' . $error->details()[0]->description ?? '', 'woocommerce-paypal-payments' )
 				);
 
 				$this->session_handler->increment_insufficient_funding_tries();
@@ -308,9 +308,10 @@ trait ProcessPaymentTrait {
 			$this->order_processor->last_error(),
 			'error'
 		);
+
 		$wc_order->update_status(
 			'failed',
-			__( 'Could not process order.', 'woocommerce-paypal-payments' )
+			__( 'Could not process order. ' . $this->order_processor->last_error() , 'woocommerce-paypal-payments' )
 		);
 
 		return $failure_data;
@@ -355,7 +356,7 @@ trait ProcessPaymentTrait {
 
 		$wc_order->update_status(
 			'failed',
-			__( 'Could not process order.', 'woocommerce-paypal-payments' )
+			__( 'Could not process order. ' . $error->getMessage(), 'woocommerce-paypal-payments' )
 		);
 
 		$this->session_handler->destroy_session_data();
