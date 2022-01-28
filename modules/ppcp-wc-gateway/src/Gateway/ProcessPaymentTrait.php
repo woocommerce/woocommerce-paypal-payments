@@ -298,6 +298,12 @@ trait ProcessPaymentTrait {
 				);
 			}
 
+			$error_message = $error->getMessage();
+			if($error->issues()) {
+				$error_message = $error->issues()[0]->issue . ' ' . $error->issues()[0]->description;
+			}
+			wc_add_notice($error_message, 'error');
+
 			$this->session_handler->destroy_session_data();
 		} catch ( RuntimeException $error ) {
 			$this->handle_failure( $wc_order, $error );
