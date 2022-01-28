@@ -750,7 +750,45 @@ class SmartButton implements SmartButtonInterface {
 		if ( ! is_user_logged_in() || ! ( $customer instanceof \WC_Customer ) ) {
 			return null;
 		}
-		return $this->payer_factory->from_customer( $customer )->to_array();
+		
+		$payer_data = $this->payer_factory->from_customer( $customer )->to_array();
+		
+		if (array_key_exists('address', $payer_data) === false)
+		{
+			$payer_data['address'] = [];
+		}
+		
+		if (array_key_exists('country_code', $payer_data['address']) === false)
+		{
+			$payer_data['address']['country_code'] = '';
+		}
+		
+		if (array_key_exists('address_line_1', $payer_data['address']) === false)
+		{
+			$payer_data['address']['address_line_1'] = '';
+		}
+		
+		if (array_key_exists('address_line_2', $payer_data['address']) === false)
+		{
+			$payer_data['address']['address_line_2'] = '';
+		}
+		
+		if (array_key_exists('admin_area_1', $payer_data['address']) === false)
+		{
+			$payer_data['address']['admin_area_1'] = '';
+		}
+		
+		if (array_key_exists('admin_area_2', $payer_data['address']) === false)
+		{
+			$payer_data['address']['admin_area_2'] = '';
+		}
+		
+		if (array_key_exists('postal_code', $payer_data['address']) === false)
+		{
+			$payer_data['address']['postal_code'] = '';
+		}
+		
+		return $payer_data;
 	}
 
 	/**
