@@ -49,7 +49,7 @@ class CheckoutActionHandler {
                         );
                     } else {
                         if (data.data.details.length > 0) {
-                            errorHandler.message(data.data.details[0].issue + ' ' + data.data.details[0].description, true);
+                            errorHandler.message(data.data.details.map(d => `${d.issue} ${d.description}`).join('<br/>'), true);
                         } else {
                             errorHandler.message(data.data.message, true);
                         }
