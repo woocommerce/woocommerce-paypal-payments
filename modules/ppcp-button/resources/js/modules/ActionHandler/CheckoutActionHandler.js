@@ -48,7 +48,11 @@ class CheckoutActionHandler {
                                 .querySelector('ul')
                         );
                     } else {
-                        errorHandler.message(data.data.message, true);
+                        if (data.data.details.length > 0) {
+                            errorHandler.message(data.data.details[0].issue + ' ' + data.data.details[0].description, true);
+                        } else {
+                            errorHandler.message(data.data.message, true);
+                        }
                     }
 
                     return;
