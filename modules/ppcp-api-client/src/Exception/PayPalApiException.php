@@ -111,6 +111,11 @@ class PayPalApiException extends RuntimeException {
 		return false;
 	}
 
+	/**
+	 * Returns response issues.
+	 *
+	 * @return array
+	 */
 	public function issues(): array {
 		return $this->response->issues ?? array();
 	}
