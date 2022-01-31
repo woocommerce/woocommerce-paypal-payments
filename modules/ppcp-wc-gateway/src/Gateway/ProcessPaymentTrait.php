@@ -300,7 +300,14 @@ trait ProcessPaymentTrait {
 
 			$error_message = $error->getMessage();
 			if ( $error->issues() ) {
-				$error_message = $error->issues()[0]->issue . ' ' . $error->issues()[0]->description;
+				$error_message = implode(
+					array_map(
+						function( $issue ) {
+							return $issue->issue . ' ' . $issue->description . '<br/>';
+						},
+						$error->issues()
+					)
+				);
 			}
 			wc_add_notice( $error_message, 'error' );
 
