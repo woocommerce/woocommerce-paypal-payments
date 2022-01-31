@@ -1,6 +1,6 @@
 *** Changelog ***
 
-= 1.6.5 - TBD =
+= 1.6.5 - 2022-01-22 =
 * Fix - Allow guest users to purchase subscription products #422
 * Fix - Transaction ID missing for renewal order #424
 * Fix - Save your credit card checkbox should be removed in pay for order for subscriptions #420
