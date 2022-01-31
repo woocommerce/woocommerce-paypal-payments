@@ -71,6 +71,6 @@ class ConnectAdminNotice {
 	 * @return bool
 	 */
 	protected function should_display(): bool {
-		return $this->state->current_state() < State::STATE_PROGRESSIVE;
+		return $this->state->current_state() !== State::STATE_ONBOARDED;
 	}
 }

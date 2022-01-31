@@ -279,9 +279,6 @@ class OnboardingRESTController {
 			case State::STATE_START:
 				$name = 'start';
 				break;
-			case State::STATE_PROGRESSIVE:
-				$name = 'progressive';
-				break;
 			case State::STATE_ONBOARDED:
 				$name = 'onboarded';
 				break;

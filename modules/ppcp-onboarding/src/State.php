@@ -16,9 +16,8 @@ use Psr\Container\ContainerInterface;
  */
 class State {
 
-	const STATE_START       = 0;
-	const STATE_PROGRESSIVE = 4;
-	const STATE_ONBOARDED   = 8;
+	const STATE_START     = 0;
+	const STATE_ONBOARDED = 8;
 
 	/**
 	 * The Environment.
@@ -59,9 +58,6 @@ class State {
 		return $this->state_by_keys(
 			array(
 				'merchant_email',
-			),
-			array(
-				'merchant_email',
 				'merchant_id',
 				'client_id',
 				'client_secret',
@@ -77,9 +73,6 @@ class State {
 	public function sandbox_state() : int {
 
 		return $this->state_by_keys(
-			array(
-				'merchant_email_sandbox',
-			),
 			array(
 				'merchant_email_sandbox',
 				'merchant_id_sandbox',
@@ -99,9 +92,6 @@ class State {
 		return $this->state_by_keys(
 			array(
 				'merchant_email_production',
-			),
-			array(
-				'merchant_email_production',
 				'merchant_id_production',
 				'client_id_production',
 				'client_secret_production',
@@ -112,34 +102,17 @@ class State {
 	/**
 	 * Returns the state based on progressive and onboarded values being looked up in the settings.
 	 *
-	 * @param array $progressive_keys The keys which need to be present to be at least in progressive state.
 	 * @param array $onboarded_keys The keys which need to be present to be in onboarded state.
 	 *
 	 * @return int
 	 */
-	private function state_by_keys( array $progressive_keys, array $onboarded_keys ) : int {
-		$state          = self::STATE_START;
-		$is_progressive = true;
-		foreach ( $progressive_keys as $key ) {
-			if ( ! $this->settings->has( $key ) || ! $this->settings->get( $key ) ) {
-				$is_progressive = false;
-			}
-		}
-		if ( $is_progressive ) {
-			$state = self::STATE_PROGRESSIVE;
-		}
-
-		$is_onboarded = true;
+	private function state_by_keys( array $onboarded_keys ) : int {
 		foreach ( $onboarded_keys as $key ) {
 			if ( ! $this->settings->has( $key ) || ! $this->settings->get( $key ) ) {
-				$is_onboarded = false;
+				return self::STATE_START;
 			}
 		}
 
-		if ( $is_onboarded ) {
-			$state = self::STATE_ONBOARDED;
-		}
-
-		return $state;
+		return self::STATE_ONBOARDED;
 	}
 }
