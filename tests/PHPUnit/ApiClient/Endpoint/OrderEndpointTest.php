@@ -6,6 +6,7 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 use Hamcrest\Matchers;
 use Requests_Utility_CaseInsensitiveDictionary;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Address;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatus;
@@ -15,6 +16,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\PatchCollection;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payments;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Shipping;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Token;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
@@ -31,11 +33,14 @@ use function Brain\Monkey\Functions\when;
 
 class OrderEndpointTest extends TestCase
 {
+	private $shipping;
 
 	public function setUp(): void
 	{
 		parent::setUp();
 		when('wc_print_r')->returnArg();
+
+		$this->shipping = new Shipping('shipping', new Address('US', 'street', '', 'CA', '', '12345'));
 	}
 
 	public function testOrderDefault()
@@ -912,7 +917,7 @@ class OrderEndpointTest extends TestCase
         $purchaseUnit
             ->expects('to_array')
             ->andReturn(['singlePurchaseUnit']);
-        $purchaseUnit->expects('shipping')->andReturn(true);
+        $purchaseUnit->shouldReceive('shipping')->andReturn($this->shipping);
 
         expect('wp_remote_get')
             ->andReturnUsing(
@@ -1015,7 +1020,7 @@ class OrderEndpointTest extends TestCase
         $purchaseUnit
             ->expects('to_array')
             ->andReturn(['singlePurchaseUnit']);
-		$purchaseUnit->expects('shipping')->andReturn(true);
+		$purchaseUnit->shouldReceive('shipping')->andReturn($this->shipping);
 
         expect('wp_remote_get')
             ->andReturnUsing(
@@ -1092,7 +1097,7 @@ class OrderEndpointTest extends TestCase
         $purchaseUnit
             ->expects('to_array')
             ->andReturn(['singlePurchaseUnit']);
-		$purchaseUnit->expects('shipping')->andReturn(true);
+		$purchaseUnit->shouldReceive('shipping')->andReturn($this->shipping);
 
         expect('wp_remote_get')
             ->andReturnUsing(
@@ -1177,7 +1182,7 @@ class OrderEndpointTest extends TestCase
         $purchaseUnit
             ->expects('to_array')
             ->andReturn(['singlePurchaseUnit']);
-		$purchaseUnit->expects('shipping')->andReturn(true);
+		$purchaseUnit->shouldReceive('shipping')->andReturn($this->shipping);
 
         expect('wp_remote_get')
             ->andReturnUsing(
