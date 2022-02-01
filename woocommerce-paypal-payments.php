@@ -41,10 +41,7 @@ define( 'PPCP_FLAG_SUBSCRIPTION', true );
 	function init() {
 		$root_dir = __DIR__;
 
-		if ( ! function_exists( 'is_plugin_active' ) ) {
-			require_once ABSPATH . '/wp-admin/includes/plugin.php';
-		}
-		if ( ! is_plugin_active( 'woocommerce/woocommerce.php' ) ) {
+		if ( ! class_exists( 'woocommerce' ) ) {
 			add_action(
 				'admin_notices',
 				function() {
