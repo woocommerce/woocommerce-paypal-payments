@@ -109,10 +109,7 @@ define( 'PPCP_FLAG_SUBSCRIPTION', true );
 	add_filter(
 		'plugin_action_links_' . plugin_basename( __FILE__ ),
 		function( $links ) {
-			if ( ! function_exists( 'is_plugin_active' ) ) {
-				require_once ABSPATH . '/wp-admin/includes/plugin.php';
-			}
-			if ( ! is_plugin_active( 'woocommerce/woocommerce.php' ) ) {
+			if ( ! class_exists( 'woocommerce' ) ) {
 				return $links;
 			}
 
