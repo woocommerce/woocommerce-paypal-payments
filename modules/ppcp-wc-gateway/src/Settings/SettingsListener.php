@@ -211,9 +211,10 @@ class SettingsListener {
 	/**
 	 * Ensure 3DS contingency use `SCA_ALWAYS` instead of `3D_SECURE`.
 	 *
+	 * @return void
 	 * @throws NotFoundException When a setting was not found.
 	 */
-	public function listen_for_3d_secure_contingency() {
+	public function listen_for_3d_secure_contingency(): void {
 		if ( ! $this->is_valid_site_request() || $this->settings->get( '3d_secure_contingency' ) !== '3D_SECURE' ) {
 			return;
 		}
