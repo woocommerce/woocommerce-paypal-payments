@@ -183,6 +183,7 @@ class WCGatewayModule implements ModuleInterface {
 				 */
 				$listener->listen_for_merchant_id();
 				$listener->listen_for_vaulting_enabled();
+				$listener->listen_for_3d_secure_contingency();
 			}
 		);
 

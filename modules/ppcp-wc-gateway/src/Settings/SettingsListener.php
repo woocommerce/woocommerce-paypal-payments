@@ -14,9 +14,9 @@ use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Onboarding\State;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar;
+use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 
 /**
  * Class SettingsListener
@@ -201,6 +201,24 @@ class SettingsListener {
 		$this->settings->set( 'message_enabled', false );
 		$this->settings->set( 'message_product_enabled', false );
 		$this->settings->set( 'message_cart_enabled', false );
+		$this->settings->persist();
+
+		$redirect_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' );
+		wp_safe_redirect( $redirect_url, 302 );
+		exit;
+	}
+
+	/**
+	 * Ensure 3DS contingency use `SCA_ALWAYS` instead of `3D_SECURE`.
+	 *
+	 * @throws NotFoundException When a setting was not found.
+	 */
+	public function listen_for_3d_secure_contingency() {
+		if ( ! $this->is_valid_site_request() || $this->settings->get( '3d_secure_contingency' ) !== '3D_SECURE' ) {
+			return;
+		}
+
+		$this->settings->set( '3d_secure_contingency', 'SCA_ALWAYS' );
 		$this->settings->persist();
 
 		$redirect_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' );
