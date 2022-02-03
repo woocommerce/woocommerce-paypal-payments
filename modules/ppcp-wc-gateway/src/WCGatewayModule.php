@@ -132,6 +132,17 @@ class WCGatewayModule implements ModuleInterface {
 				$endpoint->handle_request();
 			}
 		);
+
+		add_action(
+			'woocommerce_paypal_payments_gateway_migrate',
+			static function () use ( $c ) {
+				$settings = $c->get( 'wcgateway.settings' );
+				if ( $settings->get( '3d_secure_contingency' ) === '3D_SECURE' ) {
+					$settings->set( '3d_secure_contingency', 'SCA_ALWAYS' );
+					$settings->persist();
+				}
+			}
+		);
 	}
 
 	/**
@@ -183,7 +194,6 @@ class WCGatewayModule implements ModuleInterface {
 				 */
 				$listener->listen_for_merchant_id();
 				$listener->listen_for_vaulting_enabled();
-				$listener->listen_for_3d_secure_contingency();
 			}
 		);
 

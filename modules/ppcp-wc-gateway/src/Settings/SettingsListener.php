@@ -209,25 +209,6 @@ class SettingsListener {
 	}
 
 	/**
-	 * Ensure 3DS contingency use `SCA_ALWAYS` instead of `3D_SECURE`.
-	 *
-	 * @return void
-	 * @throws NotFoundException When a setting was not found.
-	 */
-	public function listen_for_3d_secure_contingency(): void {
-		if ( ! $this->is_valid_site_request() || $this->settings->get( '3d_secure_contingency' ) !== '3D_SECURE' ) {
-			return;
-		}
-
-		$this->settings->set( '3d_secure_contingency', 'SCA_ALWAYS' );
-		$this->settings->persist();
-
-		$redirect_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' );
-		wp_safe_redirect( $redirect_url, 302 );
-		exit;
-	}
-
-	/**
 	 * Listens to the request.
 	 *
 	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting was not found.
