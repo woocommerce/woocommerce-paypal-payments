@@ -255,6 +255,8 @@ return array(
 	'wcgateway.settings.fields'                    => static function ( ContainerInterface $container ): array {
 
 		$state = $container->get( 'onboarding.state' );
+		assert( $state instanceof State );
+
 		$messages_disclaimers = $container->get( 'button.helper.messages-disclaimers' );
 
 		$dcc_applies = $container->get( 'api.helpers.dccapplies' );
@@ -338,7 +340,8 @@ return array(
 				'screens'      => array(
 					State::STATE_START,
 				),
-				'env'          => 'production',
+				'state_from'   => Environment::PRODUCTION,
+				'env'          => Environment::PRODUCTION,
 				'products'     => array( 'PPCP' ),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
@@ -348,7 +351,8 @@ return array(
 				'screens'      => array(
 					State::STATE_START,
 				),
-				'env'          => 'production',
+				'state_from'   => Environment::PRODUCTION,
+				'env'          => Environment::PRODUCTION,
 				'products'     => array( 'EXPRESS_CHECKOUT' ),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
@@ -358,7 +362,8 @@ return array(
 				'screens'      => array(
 					State::STATE_START,
 				),
-				'env'          => 'sandbox',
+				'state_from'   => Environment::SANDBOX,
+				'env'          => Environment::SANDBOX,
 				'products'     => array( 'PPCP' ),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
@@ -369,7 +374,8 @@ return array(
 				'screens'      => array(
 					State::STATE_START,
 				),
-				'env'          => 'sandbox',
+				'state_from'   => Environment::SANDBOX,
+				'env'          => Environment::SANDBOX,
 				'products'     => array( 'EXPRESS_CHECKOUT' ),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
@@ -383,7 +389,8 @@ return array(
 				'screens'      => array(
 					State::STATE_ONBOARDED,
 				),
-				'env'          => 'production',
+				'state_from'   => Environment::PRODUCTION,
+				'env'          => Environment::PRODUCTION,
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 				'description'  => __( 'Click to reset current credentials and use another account.', 'woocommerce-paypal-payments' ),
@@ -395,7 +402,8 @@ return array(
 				'screens'      => array(
 					State::STATE_ONBOARDED,
 				),
-				'env'          => 'production',
+				'state_from'   => Environment::SANDBOX,
+				'env'          => Environment::SANDBOX,
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 				'description'  => __( 'Click to reset current credentials and use another account.', 'woocommerce-paypal-payments' ),
@@ -1907,14 +1915,6 @@ return array(
 		);
 		if ( ! defined( 'PPCP_FLAG_SUBSCRIPTION' ) || ! PPCP_FLAG_SUBSCRIPTION ) {
 			unset( $fields['vault_enabled'] );
-		}
-
-		if ( State::STATE_ONBOARDED === $state->production_state() ) {
-			unset( $fields['ppcp_disconnect_sandbox'] );
-			unset( $fields['credentials_sandbox_heading'] );
-		} elseif ( State::STATE_ONBOARDED === $state->sandbox_state() ) {
-			unset( $fields['ppcp_disconnect_production'] );
-			unset( $fields['credentials_production_heading'] );
 		}
 
 		/**

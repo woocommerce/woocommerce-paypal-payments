@@ -49,6 +49,22 @@ class State {
 	}
 
 	/**
+	 * Returns the state of the specified environment (or the active environment if null).
+	 *
+	 * @param string|null $environment 'sandbox', 'production'.
+	 * @return int
+	 */
+	public function environment_state( ?string $environment = null ): int {
+		switch ( $environment ) {
+			case Environment::PRODUCTION:
+				return $this->production_state();
+			case Environment::SANDBOX:
+				return $this->sandbox_state();
+		}
+		return $this->current_state();
+	}
+
+	/**
 	 * Returns the current active onboarding state.
 	 *
 	 * @return int
