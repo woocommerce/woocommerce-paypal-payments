@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Address;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PayerName;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PayerTaxInfo;
@@ -145,6 +146,25 @@ class PayerFactory {
 			$birth_date,
 			$phone,
 			$tax_info
+		);
+	}
+
+	public function from_checkout_form(array $data) {
+
+		$first_name = $data['billing_first_name'] ?? '';
+		$last_name = $data['billing_last_name'] ?? '';
+		$billing_email = $data['billing_email'] ?? '';
+		$billing_country = $data['billing_country'] ?? '';
+		$billing_address_1 = $data['billing_address_1'] ?? '';
+
+		return new Payer(
+			new PayerName($first_name, $last_name),
+			$billing_email,
+			'',
+			new Address(
+				$billing_country,
+				$billing_address_1
+			)
 		);
 	}
 }
