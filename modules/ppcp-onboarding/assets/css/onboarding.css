@@ -2,25 +2,19 @@
 	display: none;
 }
 
-#field-merchant_email_production,
-#field-merchant_id_production,
-#field-client_id_production,
-#field-client_secret_production,
-#field-merchant_email_sandbox,
-#field-merchant_id_sandbox,
-#field-client_id_sandbox,
-#field-client_secret_sandbox{
+.ppcp-onboarded .ppcp-onboarding-element:not(.ppcp-always-shown-element) {
 	display: none;
 }
 
-#field-merchant_email_production.show,
-#field-merchant_id_production.show,
-#field-client_id_production.show,
-#field-client_secret_production.show,
-#field-merchant_email_sandbox.show,
-#field-merchant_id_sandbox.show,
-#field-client_id_sandbox.show,
-#field-client_secret_sandbox.show {
+.ppcp-onboarding .ppcp-settings-field:not(.ppcp-onboarding-element):not(.ppcp-always-shown-element) {
+	display: none;
+}
+
+.ppcp-settings-field.hide {
+	display: none;
+}
+
+.ppcp-settings-field.show {
 	display: table-row;
 }
 
@@ -35,32 +29,6 @@
 	cursor: pointer;
 	margin: 0;
 	padding: 0;
-}
-
-#field-sandbox_on.onboarded {
-	display: none;
-}
-
-#field-merchant_email_sandbox.onboarded,
-#field-merchant_id_sandbox.onboarded,
-#field-client_id_sandbox.onboarded,
-#field-client_secret_sandbox.onboarded,
-#field-merchant_email_production.onboarded,
-#field-merchant_id_production.onboarded,
-#field-client_id_production.onboarded,
-#field-client_secret_production.onboarded {
-	display:table-row;
-}
-
-#field-merchant_email_sandbox.onboarded.hide,
-#field-merchant_id_sandbox.onboarded.hide,
-#field-client_id_sandbox.onboarded.hide,
-#field-client_secret_sandbox.onboarded.hide,
-#field-merchant_email_production.onboarded.hide,
-#field-merchant_id_production.onboarded.hide,
-#field-client_id_production.onboarded.hide,
-#field-client_secret_production.onboarded.hide {
-	display:none;
 }
 
 /* Probably not the best location for this but will do until there's a general purpose settings CSS file. */

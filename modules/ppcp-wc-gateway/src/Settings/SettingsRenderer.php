@@ -419,6 +419,7 @@ $data_rows_html
 			$config['id'] = $id;
 			$colspan      = ( 'ppcp-heading' !== $config['type'] && isset( $config['title'] ) ) ? 1 : 2;
 			$classes      = isset( $config['classes'] ) ? $config['classes'] : array();
+			$classes[]    = 'ppcp-settings-field';
 			$classes[]    = sprintf( 'ppcp-settings-field-%s', str_replace( 'ppcp-', '', $config['type'] ) );
 			if ( 1 !== $colspan ) {
 				$classes[] = 'ppcp-settings-no-title-col';

@@ -116,6 +116,23 @@ class State {
 	}
 
 	/**
+	 * Translates an onboarding state to a string.
+	 *
+	 * @param int $state An onboarding state to translate.
+	 * @return string A string representing the state: "start" or "onboarded".
+	 */
+	public static function get_state_name( int $state ) : string {
+		switch ( $state ) {
+			case self::STATE_START:
+				return 'start';
+			case self::STATE_ONBOARDED:
+				return 'onboarded';
+			default:
+				return 'unknown';
+		}
+	}
+
+	/**
 	 * Returns the state based on progressive and onboarded values being looked up in the settings.
 	 *
 	 * @param array $onboarded_keys The keys which need to be present to be in onboarded state.

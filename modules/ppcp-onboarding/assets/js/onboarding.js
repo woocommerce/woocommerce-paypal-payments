@@ -4,6 +4,9 @@ const ppcp_onboarding = {
 	PAYPAL_JS_ID: 'ppcp-onboarding-paypal-js',
 	_timeout: false,
 
+    STATE_START: 'start',
+    STATE_ONBOARDED: 'onboarded',
+
 	init: function() {
 		document.addEventListener('DOMContentLoaded', this.reload);
 	},
@@ -132,7 +135,7 @@ const updateOptionsState = () => {
     );
 };
 
-const updateManualInputControls = (shown, isSandbox) => {
+const updateManualInputControls = (shown, isSandbox, isAnyEnvOnboarded) => {
     const productionElementsSelectors = [
         '#field-merchant_email_production',
         '#field-merchant_id_production',
@@ -146,9 +149,11 @@ const updateManualInputControls = (shown, isSandbox) => {
         '#field-client_secret_sandbox',
     ];
     const otherElementsSelectors = [
-        '#field-sandbox_on',
         '.woocommerce-save-button',
     ];
+    if (!isAnyEnvOnboarded) {
+        otherElementsSelectors.push('#field-sandbox_on');
+    }
 
     document.querySelectorAll(productionElementsSelectors.join()).forEach(
         element => {
@@ -164,6 +169,24 @@ const updateManualInputControls = (shown, isSandbox) => {
     );
     document.querySelectorAll(otherElementsSelectors.join()).forEach(
         element => element.style.display = shown ? '' : 'none'
+    );
+};
+
+const updateEnvironmentControls = (isSandbox) => {
+    const productionElementsSelectors = [
+        '#field-ppcp_disconnect_production',
+        '#field-credentials_production_heading',
+    ];
+    const sandboxElementsSelectors = [
+        '#field-ppcp_disconnect_sandbox',
+        '#field-credentials_sandbox_heading',
+    ];
+
+    document.querySelectorAll(productionElementsSelectors.join()).forEach(
+        element => element.style.display = !isSandbox ? '' : 'none'
+    );
+    document.querySelectorAll(sandboxElementsSelectors.join()).forEach(
+        element => element.style.display = isSandbox ? '' : 'none'
     );
 };
 
@@ -203,6 +226,9 @@ const preventDirtyCheckboxPropagation = event => {
 };
 
 (() => {
+    const isAnyEnvOnboarded = PayPalCommerceGatewayOnboarding.sandbox_state === ppcp_onboarding.STATE_ONBOARDED ||
+        PayPalCommerceGatewayOnboarding.production_state === ppcp_onboarding.STATE_ONBOARDED;
+
 	document.querySelectorAll('.ppcp-disconnect').forEach(
 		(button) => {
 			button.addEventListener(
@@ -224,32 +250,55 @@ const preventDirtyCheckboxPropagation = event => {
 
     updateOptionsState();
 
+    const settingsContainer = document.querySelector('#mainform .form-table');
+
+    const markCurrentOnboardingState = (isOnboarded) => {
+        settingsContainer.classList.remove('ppcp-onboarded', 'ppcp-onboarding');
+        settingsContainer.classList.add(isOnboarded ? 'ppcp-onboarded' : 'ppcp-onboarding');
+    }
+
+    markCurrentOnboardingState(PayPalCommerceGatewayOnboarding.current_state === ppcp_onboarding.STATE_ONBOARDED);
+
     const sandboxSwitchElement = document.querySelector('#ppcp-sandbox_on');
 
     const manualInputToggleButton = document.querySelector('#field-toggle_manual_input button');
-    let isManualInputShown = manualInputToggleButton === null; // toggle is removed after onboarding and the fields are always shown
+    let isManualInputShown = isAnyEnvOnboarded;
 
-    manualInputToggleButton?.addEventListener(
+    manualInputToggleButton.addEventListener(
             'click',
             (event) => {
                 event.preventDefault();
 
                 isManualInputShown = !isManualInputShown;
 
-                updateManualInputControls(isManualInputShown, sandboxSwitchElement.checked);
+                updateManualInputControls(isManualInputShown, sandboxSwitchElement.checked, isAnyEnvOnboarded);
             }
         );
 
     sandboxSwitchElement.addEventListener(
         'click',
         (event) => {
-            updateManualInputControls(isManualInputShown, sandboxSwitchElement.checked);
+            const isSandbox = sandboxSwitchElement.checked;
+
+            if (isAnyEnvOnboarded) {
+                const onboardingState = isSandbox ? PayPalCommerceGatewayOnboarding.sandbox_state : PayPalCommerceGatewayOnboarding.production_state;
+                const isOnboarded = onboardingState === ppcp_onboarding.STATE_ONBOARDED;
+
+                markCurrentOnboardingState(isOnboarded);
+                isManualInputShown = isOnboarded;
+            }
+
+            updateManualInputControls(isManualInputShown, isSandbox, isAnyEnvOnboarded);
+
+            updateEnvironmentControls(isSandbox);
 
             preventDirtyCheckboxPropagation(event);
         }
     );
 
-    updateManualInputControls(isManualInputShown, sandboxSwitchElement.checked);
+    updateManualInputControls(isManualInputShown, sandboxSwitchElement.checked, isAnyEnvOnboarded);
+
+    updateEnvironmentControls(sandboxSwitchElement.checked);
 
 	// Onboarding buttons.
 	ppcp_onboarding.init();
