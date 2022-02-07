@@ -156,7 +156,7 @@ class PaymentCaptureRefunded implements RequestHandler {
 				sprintf(
 				/* translators: %s is the PayPal transaction ID */
 					__( 'PayPal transaction ID: %s', 'woocommerce-paypal-payments' ),
-					$request['resource']['id']
+					$request['resource']['id'] ?? ''
 				)
 			);
 		}
