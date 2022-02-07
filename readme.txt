@@ -2,7 +2,7 @@
 Contributors: woocommerce, automattic
 Tags: woocommerce, paypal, payments, ecommerce, e-commerce, store, sales, sell, shop, shopping, cart, checkout
 Requires at least: 5.3
-Tested up to: 5.8
+Tested up to: 5.9
 Requires PHP: 7.1
 Stable tag: 1.6.5
 License: GPLv2
@@ -82,7 +82,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 == Changelog ==
 
 = 1.6.5 =
-* Fix - Allow guest users to purchase subscription products #422
+* Fix - Allow guest users to purchase subscription products from checkout page #422
 * Fix - Transaction ID missing for renewal order #424
 * Fix - Save your credit card checkbox should be removed in pay for order for subscriptions #420
 * Fix - Null currency error when the Aelia currency switcher plugin is active #426
