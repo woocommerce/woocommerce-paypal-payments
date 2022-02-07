@@ -150,6 +150,17 @@ class PaymentCaptureRefunded implements RequestHandler {
 				'order'   => $wc_order,
 			)
 		);
+
+		if ( isset( $request['resource']['id'] ) ) {
+			$wc_order->add_order_note(
+				sprintf(
+				/* translators: %s is the PayPal transaction ID */
+					__( 'PayPal transaction ID: %s', 'woocommerce-paypal-payments' ),
+					$request['resource']['id']
+				)
+			);
+		}
+
 		$response['success'] = true;
 		return rest_ensure_response( $response );
 	}
