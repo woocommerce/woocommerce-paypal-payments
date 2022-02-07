@@ -1,7 +1,7 @@
 *** Changelog ***
 
 = 1.6.5 - 2022-01-31 =
-* Fix - Allow guest users to purchase subscription products #422
+* Fix - Allow guest users to purchase subscription products from checkout page #422
 * Fix - Transaction ID missing for renewal order #424
 * Fix - Save your credit card checkbox should be removed in pay for order for subscriptions #420
 * Fix - Null currency error when the Aelia currency switcher plugin is active #426
