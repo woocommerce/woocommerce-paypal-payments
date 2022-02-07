@@ -35,10 +35,6 @@
             ],
             "description": "Promoting container interoperability through standard service providers",
             "homepage": "https://github.com/container-interop/service-provider",
-            "support": {
-                "issues": "https://github.com/container-interop/service-provider/issues",
-                "source": "https://github.com/container-interop/service-provider/tree/master"
-            },
             "time": "2017-09-20T14:13:36+00:00"
         },
         {
@@ -194,10 +190,6 @@
                 }
             ],
             "description": "Interfaces for modules",
-            "support": {
-                "issues": "https://github.com/Dhii/module-interface/issues",
-                "source": "https://github.com/Dhii/module-interface/tree/v0.3.0-alpha2"
-            },
             "time": "2021-08-23T08:23:01+00:00"
         },
         {
@@ -289,9 +281,6 @@
                 "psr",
                 "psr-3"
             ],
-            "support": {
-                "source": "https://github.com/php-fig/log/tree/1.1.4"
-            },
             "time": "2021-05-03T11:20:27+00:00"
         },
         {
@@ -332,10 +321,6 @@
                 }
             ],
             "description": "A polyfill for getallheaders.",
-            "support": {
-                "issues": "https://github.com/ralouphie/getallheaders/issues",
-                "source": "https://github.com/ralouphie/getallheaders/tree/develop"
-            },
             "time": "2019-03-08T08:55:37+00:00"
         },
         {
