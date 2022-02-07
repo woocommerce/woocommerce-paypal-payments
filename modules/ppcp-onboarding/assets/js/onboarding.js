@@ -272,7 +272,7 @@ const preventDirtyCheckboxPropagation = event => {
     markCurrentOnboardingState(PayPalCommerceGatewayOnboarding.current_state === ppcp_onboarding.STATE_ONBOARDED);
 
     const manualInputToggleButton = document.querySelector('#field-toggle_manual_input button');
-    let isManualInputShown = isAnyEnvOnboarded;
+    let isManualInputShown = PayPalCommerceGatewayOnboarding.current_state === ppcp_onboarding.STATE_ONBOARDED;
 
     manualInputToggleButton.addEventListener(
             'click',
