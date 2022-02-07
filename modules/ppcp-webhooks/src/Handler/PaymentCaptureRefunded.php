@@ -10,13 +10,14 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
 
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 
 /**
  * Class PaymentCaptureRefunded
  */
 class PaymentCaptureRefunded implements RequestHandler {
 
-	use PrefixTrait;
+	use PrefixTrait, TransactionIdHandlingTrait;
 
 	/**
 	 * The logger.
@@ -152,13 +153,7 @@ class PaymentCaptureRefunded implements RequestHandler {
 		);
 
 		if ( is_array( $request['resource'] ) && isset( $request['resource']['id'] ) ) {
-			$wc_order->add_order_note(
-				sprintf(
-				/* translators: %s is the PayPal transaction ID */
-					__( 'PayPal transaction ID: %s', 'woocommerce-paypal-payments' ),
-					$request['resource']['id']
-				)
-			);
+			$this->update_transaction_id( $request['resource']['id'], $wc_order, $this->logger );
 		}
 
 		$response['success'] = true;
