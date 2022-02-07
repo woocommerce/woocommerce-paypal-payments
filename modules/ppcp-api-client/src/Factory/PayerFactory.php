@@ -172,12 +172,15 @@ class PayerFactory {
 			// make sure the phone number contains only numbers and is max 14. chars long.
 			$national_number = $form_fields['billing_phone'];
 			$national_number = preg_replace( '/[^0-9]/', '', $national_number );
-			$national_number = substr( $national_number, 0, 14 );
 
-			$phone = new PhoneWithType(
-				'HOME',
-				new Phone( $national_number )
-			);
+			if ( null !== $national_number ) {
+				$national_number = substr( $national_number, 0, 14 );
+
+				$phone = new PhoneWithType(
+					'HOME',
+					new Phone( $national_number )
+				);
+			}
 		}
 
 		return new Payer(
