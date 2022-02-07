@@ -340,9 +340,12 @@ class CreateOrderEndpoint implements EndpointInterface {
 			$payer = $this->payer_factory->from_paypal_response( json_decode( wp_json_encode( $data['payer'] ) ) );
 		}
 
-		if(!$payer && isset($data['form'])) {
-			parse_str($data['form'], $output);
-			return $this->payer_factory->from_checkout_form($output);
+		if ( ! $payer && isset( $data['form'] ) ) {
+			parse_str( $data['form'], $form_fields );
+
+			if ( isset( $form_fields['billing_email'] ) && '' !== $form_fields['billing_email'] ) {
+				return $this->payer_factory->from_checkout_form( $form_fields );
+			}
 		}
 
 		return $payer;
