@@ -52,6 +52,13 @@ class Capture {
 	private $seller_protection;
 
 	/**
+	 * The detailed breakdown of the capture activity.
+	 *
+	 * @var \stdClass
+	 */
+	private $seller_receivable_breakdown;
+
+	/**
 	 * The invoice id.
 	 *
 	 * @var string
@@ -73,6 +80,7 @@ class Capture {
 	 * @param Amount        $amount The amount.
 	 * @param bool          $final_capture The final capture.
 	 * @param string        $seller_protection The seller protection.
+	 * @param \stdClass     $seller_receivable_breakdown The detailed breakdown of the capture activity.
 	 * @param string        $invoice_id The invoice id.
 	 * @param string        $custom_id The custom id.
 	 */
@@ -82,17 +90,19 @@ class Capture {
 		Amount $amount,
 		bool $final_capture,
 		string $seller_protection,
+		\stdClass $seller_receivable_breakdown,
 		string $invoice_id,
 		string $custom_id
 	) {
 
-		$this->id                = $id;
-		$this->status            = $status;
-		$this->amount            = $amount;
-		$this->final_capture     = $final_capture;
-		$this->seller_protection = $seller_protection;
-		$this->invoice_id        = $invoice_id;
-		$this->custom_id         = $custom_id;
+		$this->id                          = $id;
+		$this->status                      = $status;
+		$this->amount                      = $amount;
+		$this->final_capture               = $final_capture;
+		$this->seller_protection           = $seller_protection;
+		$this->seller_receivable_breakdown = $seller_receivable_breakdown;
+		$this->invoice_id                  = $invoice_id;
+		$this->custom_id                   = $custom_id;
 	}
 
 	/**
@@ -141,6 +151,15 @@ class Capture {
 	}
 
 	/**
+	 * Returns the seller receivable breakdown object.
+	 *
+	 * @return \stdClass
+	 */
+	public function seller_receivable_breakdown() : \stdClass {
+		return $this->seller_receivable_breakdown;
+	}
+
+	/**
 	 * Returns the invoice id.
 	 *
 	 * @return string
@@ -165,13 +184,14 @@ class Capture {
 	 */
 	public function to_array() : array {
 		$data    = array(
-			'id'                => $this->id(),
-			'status'            => $this->status()->name(),
-			'amount'            => $this->amount()->to_array(),
-			'final_capture'     => $this->final_capture(),
-			'seller_protection' => (array) $this->seller_protection(),
-			'invoice_id'        => $this->invoice_id(),
-			'custom_id'         => $this->custom_id(),
+			'id'                          => $this->id(),
+			'status'                      => $this->status()->name(),
+			'amount'                      => $this->amount()->to_array(),
+			'final_capture'               => $this->final_capture(),
+			'seller_protection'           => (array) $this->seller_protection(),
+			'seller_receivable_breakdown' => $this->seller_receivable_breakdown(),
+			'invoice_id'                  => $this->invoice_id(),
+			'custom_id'                   => $this->custom_id(),
 		);
 		$details = $this->status()->details();
 		if ( $details ) {

@@ -167,6 +167,8 @@ class OrderProcessor {
 
 		if ( $order->intent() === 'CAPTURE' ) {
 			$order = $this->order_endpoint->capture( $order );
+
+			$wc_order->update_meta_data( PayPalGateway::FEE_META_KEY, $order->purchase_units()[0]->payments()->captures()[0]->seller_receivable_breakdown()->paypal_fee->value() );
 		}
 
 		if ( $order->intent() === 'AUTHORIZE' ) {

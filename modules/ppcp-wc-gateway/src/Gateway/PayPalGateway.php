@@ -37,6 +37,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	const INTENT_META_KEY             = '_ppcp_paypal_intent';
 	const ORDER_ID_META_KEY           = '_ppcp_paypal_order_id';
 	const ORDER_PAYMENT_MODE_META_KEY = '_ppcp_paypal_payment_mode';
+	const FEE_META_KEY                = '_ppcp_paypal_fee';
 
 	/**
 	 * The Settings Renderer.
