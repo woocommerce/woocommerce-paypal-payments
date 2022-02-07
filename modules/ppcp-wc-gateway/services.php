@@ -678,7 +678,7 @@ return array(
                 'default'      => array(),
                 'desc_tip'     => false,
                 'description'  => sprintf(
-                // translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+                    // translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
                     __( 'By default, all possible funding sources will be shown. This setting can disable funding sources such as Credit Cards, Pay Later, Venmo, or other %1$sAlternative Payment Methods.%2$s', 'woocommerce-paypal-payments' ),
                     '<a
 						href="https://developer.paypal.com/docs/checkout/apm/"
