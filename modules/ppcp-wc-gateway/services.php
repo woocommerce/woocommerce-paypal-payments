@@ -255,6 +255,8 @@ return array(
 	'wcgateway.settings.fields'                    => static function ( ContainerInterface $container ): array {
 
 		$state = $container->get( 'onboarding.state' );
+		assert( $state instanceof State );
+
 		$messages_disclaimers = $container->get( 'button.helper.messages-disclaimers' );
 
 		$dcc_applies = $container->get( 'api.helpers.dccapplies' );
@@ -270,6 +272,7 @@ return array(
 		$fields              = array(
 			'ppcp_onboarading_header'            => array(
 				'type'         => 'ppcp-text',
+				'classes'      => array( 'ppcp-onboarding-element' ),
 				'text'         => '
 <div class="ppcp-onboarding-header">
 	<div class="ppcp-onboarding-header-left">
@@ -294,7 +297,7 @@ return array(
 </div>',
 				'screens'      => array(
 					State::STATE_START,
-					State::STATE_PROGRESSIVE,
+					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
@@ -304,9 +307,9 @@ return array(
 				'heading'      => __( 'API Credentials', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-heading',
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
 					State::STATE_ONBOARDED,
 				),
+				'state_from'   => Environment::PRODUCTION,
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
@@ -314,9 +317,9 @@ return array(
 				'heading'      => __( 'Sandbox API Credentials', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-heading',
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
 					State::STATE_ONBOARDED,
 				),
+				'state_from'   => Environment::SANDBOX,
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 				'description'  => __( 'Your account is connected to sandbox, no real charging takes place. To accept live payments, disconnect and connect your live PayPal account.', 'woocommerce-paypal-payments' ),
@@ -324,11 +327,12 @@ return array(
 
 			'ppcp_onboarading_options'           => array(
 				'type'         => 'ppcp-text',
+				'classes'      => array( 'ppcp-onboarding-element' ),
 				'text'         => $onboarding_options_renderer->render( $is_shop_supports_dcc ),
 				'raw'          => true,
 				'screens'      => array(
 					State::STATE_START,
-					State::STATE_PROGRESSIVE,
+					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
@@ -339,33 +343,36 @@ return array(
 			// is to have the buttons before loading the script.
 			'ppcp_onboarding_production_ppcp'    => array(
 				'type'         => 'ppcp_onboarding',
+				'classes'      => array( 'ppcp-onboarding-element' ),
 				'screens'      => array(
 					State::STATE_START,
-					State::STATE_PROGRESSIVE,
 				),
-				'env'          => 'production',
+				'state_from'   => Environment::PRODUCTION,
+				'env'          => Environment::PRODUCTION,
 				'products'     => array( 'PPCP' ),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
 			'ppcp_onboarding_production_express' => array(
 				'type'         => 'ppcp_onboarding',
+				'classes'      => array( 'ppcp-onboarding-element' ),
 				'screens'      => array(
 					State::STATE_START,
-					State::STATE_PROGRESSIVE,
 				),
-				'env'          => 'production',
+				'state_from'   => Environment::PRODUCTION,
+				'env'          => Environment::PRODUCTION,
 				'products'     => array( 'EXPRESS_CHECKOUT' ),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
 			'ppcp_onboarding_sandbox_ppcp'       => array(
 				'type'         => 'ppcp_onboarding',
+				'classes'      => array( 'ppcp-onboarding-element' ),
 				'screens'      => array(
 					State::STATE_START,
-					State::STATE_PROGRESSIVE,
 				),
-				'env'          => 'sandbox',
+				'state_from'   => Environment::SANDBOX,
+				'env'          => Environment::SANDBOX,
 				'products'     => array( 'PPCP' ),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
@@ -373,11 +380,12 @@ return array(
 			),
 			'ppcp_onboarding_sandbox_express'    => array(
 				'type'         => 'ppcp_onboarding',
+				'classes'      => array( 'ppcp-onboarding-element' ),
 				'screens'      => array(
 					State::STATE_START,
-					State::STATE_PROGRESSIVE,
 				),
-				'env'          => 'sandbox',
+				'state_from'   => Environment::SANDBOX,
+				'env'          => Environment::SANDBOX,
 				'products'     => array( 'EXPRESS_CHECKOUT' ),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
@@ -391,7 +399,8 @@ return array(
 				'screens'      => array(
 					State::STATE_ONBOARDED,
 				),
-				'env'          => 'production',
+				'state_from'   => Environment::PRODUCTION,
+				'env'          => Environment::PRODUCTION,
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 				'description'  => __( 'Click to reset current credentials and use another account.', 'woocommerce-paypal-payments' ),
@@ -403,7 +412,8 @@ return array(
 				'screens'      => array(
 					State::STATE_ONBOARDED,
 				),
-				'env'          => 'production',
+				'state_from'   => Environment::SANDBOX,
+				'env'          => Environment::SANDBOX,
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 				'description'  => __( 'Click to reset current credentials and use another account.', 'woocommerce-paypal-payments' ),
@@ -411,22 +421,33 @@ return array(
 			'toggle_manual_input'                => array(
 				'type'         => 'ppcp-text',
 				'text'         => '<button type="button" id="ppcp[toggle_manual_input]">' . __( 'Toggle to manual credential input', 'woocommerce-paypal-payments' ) . '</button>',
+				'classes'      => array( 'ppcp-onboarding-element' ),
 				'screens'      => array(
 					State::STATE_START,
-					State::STATE_PROGRESSIVE,
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
+			'error_label'                        => array(
+				'type'         => 'ppcp-text',
+				'text'         => '<label class="error" id="ppcp-form-errors-label"></label>',
+				'classes'      => array( 'hide', 'ppcp-always-shown-element' ),
+				'screens'      => array(
+					State::STATE_START,
+					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
 			'sandbox_on'                         => array(
 				'title'        => __( 'Sandbox', 'woocommerce-paypal-payments' ),
-				'classes'      => array( State::STATE_ONBOARDED === $state->production_state() || State::STATE_ONBOARDED === $state->sandbox_state() ? 'onboarded' : '' ),
+				'classes'      => array( 'ppcp-onboarding-element', 'ppcp-always-shown-element' ),
 				'type'         => 'checkbox',
 				'label'        => __( 'To test your WooCommerce installation, you can use the sandbox mode.', 'woocommerce-paypal-payments' ),
 				'default'      => 0,
 				'screens'      => array(
 					State::STATE_START,
-					State::STATE_PROGRESSIVE,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -434,7 +455,7 @@ return array(
 			),
 			'merchant_email_production'          => array(
 				'title'        => __( 'Live Email address', 'woocommerce-paypal-payments' ),
-				'classes'      => array( State::STATE_ONBOARDED === $state->production_state() ? 'onboarded' : '' ),
+				'classes'      => array( State::STATE_ONBOARDED === $state->production_state() ? 'onboarded' : '', 'ppcp-always-shown-element' ),
 				'type'         => 'text',
 				'required'     => true,
 				'desc_tip'     => true,
@@ -442,7 +463,6 @@ return array(
 				'default'      => '',
 				'screens'      => array(
 					State::STATE_START,
-					State::STATE_PROGRESSIVE,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -450,14 +470,13 @@ return array(
 			),
 			'merchant_id_production'             => array(
 				'title'        => __( 'Live Merchant Id', 'woocommerce-paypal-payments' ),
-				'classes'      => array( State::STATE_ONBOARDED === $state->production_state() ? 'onboarded' : '' ),
+				'classes'      => array( State::STATE_ONBOARDED === $state->production_state() ? 'onboarded' : '', 'ppcp-always-shown-element' ),
 				'type'         => 'ppcp-text-input',
 				'desc_tip'     => true,
 				'description'  => __( 'The merchant id of your account ', 'woocommerce-paypal-payments' ),
 				'default'      => false,
 				'screens'      => array(
 					State::STATE_START,
-					State::STATE_PROGRESSIVE,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -465,14 +484,13 @@ return array(
 			),
 			'client_id_production'               => array(
 				'title'        => __( 'Live Client Id', 'woocommerce-paypal-payments' ),
-				'classes'      => array( State::STATE_ONBOARDED === $state->production_state() ? 'onboarded' : '' ),
+				'classes'      => array( State::STATE_ONBOARDED === $state->production_state() ? 'onboarded' : '', 'ppcp-always-shown-element' ),
 				'type'         => 'ppcp-text-input',
 				'desc_tip'     => true,
 				'description'  => __( 'The client id of your api ', 'woocommerce-paypal-payments' ),
 				'default'      => false,
 				'screens'      => array(
 					State::STATE_START,
-					State::STATE_PROGRESSIVE,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -480,14 +498,13 @@ return array(
 			),
 			'client_secret_production'           => array(
 				'title'        => __( 'Live Secret Key', 'woocommerce-paypal-payments' ),
-				'classes'      => array( State::STATE_ONBOARDED === $state->production_state() ? 'onboarded' : '' ),
+				'classes'      => array( State::STATE_ONBOARDED === $state->production_state() ? 'onboarded' : '', 'ppcp-always-shown-element' ),
 				'type'         => 'ppcp-password',
 				'desc_tip'     => true,
 				'description'  => __( 'The secret key of your api', 'woocommerce-paypal-payments' ),
 				'default'      => false,
 				'screens'      => array(
 					State::STATE_START,
-					State::STATE_PROGRESSIVE,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -496,7 +513,7 @@ return array(
 
 			'merchant_email_sandbox'             => array(
 				'title'        => __( 'Sandbox Email address', 'woocommerce-paypal-payments' ),
-				'classes'      => array( State::STATE_ONBOARDED === $state->sandbox_state() ? 'onboarded' : '' ),
+				'classes'      => array( State::STATE_ONBOARDED === $state->sandbox_state() ? 'onboarded' : '', 'ppcp-always-shown-element' ),
 				'type'         => 'text',
 				'required'     => true,
 				'desc_tip'     => true,
@@ -504,7 +521,6 @@ return array(
 				'default'      => '',
 				'screens'      => array(
 					State::STATE_START,
-					State::STATE_PROGRESSIVE,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -512,14 +528,13 @@ return array(
 			),
 			'merchant_id_sandbox'                => array(
 				'title'        => __( 'Sandbox Merchant Id', 'woocommerce-paypal-payments' ),
-				'classes'      => array( State::STATE_ONBOARDED === $state->sandbox_state() ? 'onboarded' : '' ),
+				'classes'      => array( State::STATE_ONBOARDED === $state->sandbox_state() ? 'onboarded' : '', 'ppcp-always-shown-element' ),
 				'type'         => 'ppcp-text-input',
 				'desc_tip'     => true,
 				'description'  => __( 'The merchant id of your account ', 'woocommerce-paypal-payments' ),
 				'default'      => false,
 				'screens'      => array(
 					State::STATE_START,
-					State::STATE_PROGRESSIVE,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -527,14 +542,13 @@ return array(
 			),
 			'client_id_sandbox'                  => array(
 				'title'        => __( 'Sandbox Client Id', 'woocommerce-paypal-payments' ),
-				'classes'      => array( State::STATE_ONBOARDED === $state->sandbox_state() ? 'onboarded' : '' ),
+				'classes'      => array( State::STATE_ONBOARDED === $state->sandbox_state() ? 'onboarded' : '', 'ppcp-always-shown-element' ),
 				'type'         => 'ppcp-text-input',
 				'desc_tip'     => true,
 				'description'  => __( 'The client id of your api ', 'woocommerce-paypal-payments' ),
 				'default'      => false,
 				'screens'      => array(
 					State::STATE_START,
-					State::STATE_PROGRESSIVE,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -542,14 +556,13 @@ return array(
 			),
 			'client_secret_sandbox'              => array(
 				'title'        => __( 'Sandbox Secret Key', 'woocommerce-paypal-payments' ),
-				'classes'      => array( State::STATE_ONBOARDED === $state->sandbox_state() ? 'onboarded' : '' ),
+				'classes'      => array( State::STATE_ONBOARDED === $state->sandbox_state() ? 'onboarded' : '', 'ppcp-always-shown-element' ),
 				'type'         => 'ppcp-password',
 				'desc_tip'     => true,
 				'description'  => __( 'The secret key of your api', 'woocommerce-paypal-payments' ),
 				'default'      => false,
 				'screens'      => array(
 					State::STATE_START,
-					State::STATE_PROGRESSIVE,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -560,7 +573,7 @@ return array(
 				'heading'      => __( 'PayPal Checkout Settings', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-heading',
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -576,7 +589,7 @@ return array(
 				'default'      => __( 'PayPal', 'woocommerce-paypal-payments' ),
 				'desc_tip'     => true,
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -627,7 +640,7 @@ return array(
 					'woocommerce-paypal-payments'
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -649,6 +662,7 @@ return array(
 					'authorize' => __( 'Authorize', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -665,6 +679,7 @@ return array(
 				),
 				'label'        => __( 'Capture Virtual-Only Orders', 'woocommerce-paypal-payments' ),
 				'screens'      => array(
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -681,7 +696,7 @@ return array(
 				),
 				'label'        => __( 'Require Instant Payment', 'woocommerce-paypal-payments' ),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -697,7 +712,7 @@ return array(
 					'woocommerce-paypal-payments'
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -719,7 +734,7 @@ return array(
 					ApplicationContext::LANDING_PAGE_BILLING => __( 'Billing (Non-PayPal account)', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -752,7 +767,7 @@ return array(
 					'venmo'       => _x( 'Venmo', 'Name of payment method', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -788,7 +803,7 @@ return array(
 				'description'  => __( 'Enable logging of unexpected behavior. This can also log private data and should only be enabled in a development or stage environment.', 'woocommerce-paypal-payments' ),
 				'default'      => false,
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -810,7 +825,7 @@ return array(
 					return substr( $letters, 0, 6 ) . '-';
 				} )(),
 				'screens'           => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements'      => array(),
@@ -822,7 +837,7 @@ return array(
 				'heading'      => __( 'Checkout', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-heading',
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -835,7 +850,7 @@ return array(
 				'label'        => __( 'Enable on Checkout', 'woocommerce-paypal-payments' ),
 				'default'      => true,
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -857,7 +872,7 @@ return array(
 					'horizontal' => __( 'Horizontal', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -874,7 +889,7 @@ return array(
 					'woocommerce-paypal-payments'
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -898,7 +913,7 @@ return array(
 					'pay'      => __( 'Pay with PayPal', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -922,7 +937,7 @@ return array(
 					'black'  => __( 'Black', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -944,7 +959,7 @@ return array(
 					'rect' => __( 'Rectangle', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -954,7 +969,7 @@ return array(
 				'heading'      => __( 'Pay Later on Checkout', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-heading',
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array( 'messages' ),
@@ -968,7 +983,7 @@ return array(
 				'label'        => __( 'Enable on Checkout', 'woocommerce-paypal-payments' ),
 				'default'      => true,
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array( 'messages' ),
@@ -990,7 +1005,7 @@ return array(
 					'flex' => __( 'Flex', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array( 'messages' ),
@@ -1014,7 +1029,7 @@ return array(
 					'none'        => __( 'None', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array( 'messages' ),
@@ -1037,7 +1052,7 @@ return array(
 					'top'   => __( 'Top', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array( 'messages' ),
@@ -1061,7 +1076,7 @@ return array(
 					'grayscale'  => __( 'Grayscale', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array( 'messages' ),
@@ -1088,7 +1103,7 @@ return array(
 					'grayscale'       => __( 'Grayscale', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array( 'messages' ),
@@ -1112,7 +1127,7 @@ return array(
 					'20x1' => __( '20x1', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array( 'messages' ),
@@ -1124,7 +1139,7 @@ return array(
 				'heading'      => __( 'Single Product Page', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-heading',
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -1137,7 +1152,7 @@ return array(
 				'label'        => __( 'Enable on Single Product', 'woocommerce-paypal-payments' ),
 				'default'      => true,
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -1159,7 +1174,7 @@ return array(
 					'horizontal' => __( 'Horizontal', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -1176,7 +1191,7 @@ return array(
 					'woocommerce-paypal-payments'
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -1200,7 +1215,7 @@ return array(
 					'pay'      => __( 'Pay with PayPal', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -1224,7 +1239,7 @@ return array(
 					'black'  => __( 'Black', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -1246,7 +1261,7 @@ return array(
 					'rect' => __( 'Rectangle', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -1257,7 +1272,7 @@ return array(
 				'heading'      => __( 'Pay Later on Single Product Page', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-heading',
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array( 'messages' ),
@@ -1271,7 +1286,7 @@ return array(
 				'label'        => __( 'Enable on Single Product', 'woocommerce-paypal-payments' ),
 				'default'      => true,
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array( 'messages' ),
@@ -1293,7 +1308,7 @@ return array(
 					'flex' => __( 'Flex', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array( 'messages' ),
@@ -1317,7 +1332,7 @@ return array(
 					'none'        => __( 'None', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array( 'messages' ),
@@ -1340,7 +1355,7 @@ return array(
 					'top'   => __( 'Top', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array( 'messages' ),
@@ -1364,7 +1379,7 @@ return array(
 					'grayscale'  => __( 'Grayscale', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array( 'messages' ),
@@ -1391,7 +1406,7 @@ return array(
 					'grayscale'       => __( 'Grayscale', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array( 'messages' ),
@@ -1415,7 +1430,7 @@ return array(
 					'20x1' => __( '20x1', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array( 'messages' ),
@@ -1427,7 +1442,7 @@ return array(
 				'heading'      => __( 'Cart', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-heading',
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -1440,7 +1455,7 @@ return array(
 				'label'        => __( 'Enable on Cart', 'woocommerce-paypal-payments' ),
 				'default'      => true,
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -1462,7 +1477,7 @@ return array(
 					'horizontal' => __( 'Horizontal', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -1479,7 +1494,7 @@ return array(
 					'woocommerce-paypal-payments'
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -1503,7 +1518,7 @@ return array(
 					'pay'      => __( 'Pay with PayPal', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -1527,7 +1542,7 @@ return array(
 					'black'  => __( 'Black', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -1549,7 +1564,7 @@ return array(
 					'rect' => __( 'Rectangle', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -1560,7 +1575,7 @@ return array(
 				'heading'      => __( 'Pay Later on Cart', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-heading',
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array( 'messages' ),
@@ -1574,7 +1589,7 @@ return array(
 				'label'        => __( 'Enable on Cart', 'woocommerce-paypal-payments' ),
 				'default'      => true,
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array( 'messages' ),
@@ -1596,7 +1611,7 @@ return array(
 					'flex' => __( 'Flex', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array( 'messages' ),
@@ -1620,7 +1635,7 @@ return array(
 					'none'        => __( 'None', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array( 'messages' ),
@@ -1643,7 +1658,7 @@ return array(
 					'top'   => __( 'Top', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array( 'messages' ),
@@ -1667,7 +1682,7 @@ return array(
 					'grayscale'  => __( 'Grayscale', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array( 'messages' ),
@@ -1694,7 +1709,7 @@ return array(
 					'grayscale'       => __( 'Grayscale', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array( 'messages' ),
@@ -1718,7 +1733,7 @@ return array(
 					'20x1' => __( '20x1', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array( 'messages' ),
@@ -1730,7 +1745,7 @@ return array(
 				'heading'      => __( 'Mini Cart', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-heading',
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -1743,7 +1758,7 @@ return array(
 				'label'        => __( 'Enable on Mini Cart', 'woocommerce-paypal-payments' ),
 				'default'      => true,
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -1765,7 +1780,7 @@ return array(
 					'horizontal' => __( 'Horizontal', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -1782,7 +1797,7 @@ return array(
 					'woocommerce-paypal-payments'
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -1806,7 +1821,7 @@ return array(
 					'pay'      => __( 'Pay with PayPal', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -1830,7 +1845,7 @@ return array(
 					'black'  => __( 'Black', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -1852,7 +1867,7 @@ return array(
 					'rect' => __( 'Rectangle', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -1865,7 +1880,7 @@ return array(
 				'desc_tip'     => true,
 				'description'  => __( 'Add a value from 25 to 55.', 'woocommerce-paypal-payments' ),
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
+					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -1987,14 +2002,6 @@ return array(
 		);
 		if ( ! defined( 'PPCP_FLAG_SUBSCRIPTION' ) || ! PPCP_FLAG_SUBSCRIPTION ) {
 			unset( $fields['vault_enabled'] );
-		}
-
-		if ( State::STATE_ONBOARDED === $state->production_state() ) {
-			unset( $fields['ppcp_disconnect_sandbox'] );
-			unset( $fields['credentials_sandbox_heading'] );
-		} elseif ( State::STATE_ONBOARDED === $state->sandbox_state() ) {
-			unset( $fields['ppcp_disconnect_production'] );
-			unset( $fields['credentials_production_heading'] );
 		}
 
 		/**

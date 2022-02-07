@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
+use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use Psr\Container\ContainerInterface;
@@ -388,7 +389,7 @@ $data_rows_html
 		<?php
 
 		foreach ( $this->fields as $field => $config ) :
-			if ( ! in_array( $this->state->current_state(), $config['screens'], true ) ) {
+			if ( ! in_array( $this->state->environment_state( $config['state_from'] ?? null ), $config['screens'], true ) ) {
 				continue;
 			}
 			if ( ! $this->field_matches_page( $config, $this->page_id ) ) {
@@ -418,6 +419,7 @@ $data_rows_html
 			$config['id'] = $id;
 			$colspan      = ( 'ppcp-heading' !== $config['type'] && isset( $config['title'] ) ) ? 1 : 2;
 			$classes      = isset( $config['classes'] ) ? $config['classes'] : array();
+			$classes[]    = 'ppcp-settings-field';
 			$classes[]    = sprintf( 'ppcp-settings-field-%s', str_replace( 'ppcp-', '', $config['type'] ) );
 			if ( 1 !== $colspan ) {
 				$classes[] = 'ppcp-settings-no-title-col';

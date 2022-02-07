@@ -269,7 +269,6 @@ class WcGatewayTest extends TestCase
     {
     	return [
     		[State::STATE_START, true],
-		    [State::STATE_PROGRESSIVE, true],
 		    [State::STATE_ONBOARDED, false]
 	    ];
     }

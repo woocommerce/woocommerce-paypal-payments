@@ -102,7 +102,7 @@ class OnboardingRenderer {
 			$this->render_button(
 				$this->get_signup_link( $is_production, $products ),
 				$id,
-				$is_production ? __( 'Connect PayPal', 'woocommerce-paypal-payments' ) : __( 'Test Payments', 'woocommerce-paypal-payments' ),
+				$is_production ? __( 'Connect with PayPal', 'woocommerce-paypal-payments' ) : __( 'Test payments with PayPal sandbox', 'woocommerce-paypal-payments' ),
 				$is_production ? 'primary' : 'secondary',
 				$is_production ? 'production' : 'sandbox'
 			);

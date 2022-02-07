@@ -103,9 +103,15 @@ class OnboardingAssets {
 	 */
 	public function get_script_data() {
 		return array(
-			'endpoint'      => home_url( \WC_AJAX::get_endpoint( LoginSellerEndpoint::ENDPOINT ) ),
-			'nonce'         => wp_create_nonce( $this->login_seller_endpoint::nonce() ),
-			'paypal_js_url' => 'https://www.paypal.com/webapps/merchantboarding/js/lib/lightbox/partner.js',
+			'endpoint'         => home_url( \WC_AJAX::get_endpoint( LoginSellerEndpoint::ENDPOINT ) ),
+			'nonce'            => wp_create_nonce( $this->login_seller_endpoint::nonce() ),
+			'paypal_js_url'    => 'https://www.paypal.com/webapps/merchantboarding/js/lib/lightbox/partner.js',
+			'sandbox_state'    => State::get_state_name( $this->state->sandbox_state() ),
+			'production_state' => State::get_state_name( $this->state->production_state() ),
+			'current_state'    => State::get_state_name( $this->state->current_state() ),
+			'error_messages'   => array(
+				'no_credentials' => __( 'Enter the credentials.', 'woocommerce-paypal-payments' ),
+			),
 		);
 	}
 
