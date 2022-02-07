@@ -141,6 +141,7 @@ class OrderProcessor {
 	public function process( \WC_Order $wc_order ): bool {
 		$order = $this->session_handler->order();
 		if ( ! $order ) {
+			$this->last_error = __( 'No PayPal order found in the current WooCommerce session.', 'woocommerce-paypal-payments' );
 			return false;
 		}
 

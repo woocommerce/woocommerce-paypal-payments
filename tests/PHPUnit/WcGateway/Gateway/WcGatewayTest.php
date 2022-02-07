@@ -189,6 +189,7 @@ class WcGatewayTest extends TestCase
             ->andReturnFalse();
 		$this->orderProcessor
             ->expects('last_error')
+			->twice()
             ->andReturn($lastError);
 		$this->subscriptionHelper->shouldReceive('has_subscription')->with($orderId)->andReturn(true);
 		$this->subscriptionHelper->shouldReceive('is_subscription_change_payment')->andReturn(true);

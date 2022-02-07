@@ -277,7 +277,7 @@ trait ProcessPaymentTrait {
 			if ( $error->has_detail( 'INSTRUMENT_DECLINED' ) ) {
 				$wc_order->update_status(
 					'failed',
-					__( 'Instrument declined.', 'woocommerce-paypal-payments' )
+					__( 'Instrument declined. ', 'woocommerce-paypal-payments' ) . $error->details()[0]->description ?? ''
 				);
 
 				$this->session_handler->increment_insufficient_funding_tries();
@@ -298,6 +298,19 @@ trait ProcessPaymentTrait {
 				);
 			}
 
+			$error_message = $error->getMessage();
+			if ( $error->issues() ) {
+				$error_message = implode(
+					array_map(
+						function( $issue ) {
+							return $issue->issue . ' ' . $issue->description . '<br/>';
+						},
+						$error->issues()
+					)
+				);
+			}
+			wc_add_notice( $error_message, 'error' );
+
 			$this->session_handler->destroy_session_data();
 		} catch ( RuntimeException $error ) {
 			$this->handle_failure( $wc_order, $error );
@@ -308,9 +321,10 @@ trait ProcessPaymentTrait {
 			$this->order_processor->last_error(),
 			'error'
 		);
+
 		$wc_order->update_status(
 			'failed',
-			__( 'Could not process order.', 'woocommerce-paypal-payments' )
+			__( 'Could not process order. ', 'woocommerce-paypal-payments' ) . $this->order_processor->last_error()
 		);
 
 		return $failure_data;
@@ -355,7 +369,7 @@ trait ProcessPaymentTrait {
 
 		$wc_order->update_status(
 			'failed',
-			__( 'Could not process order.', 'woocommerce-paypal-payments' )
+			__( 'Could not process order. ', 'woocommerce-paypal-payments' ) . $error->getMessage()
 		);
 
 		$this->session_handler->destroy_session_data();
