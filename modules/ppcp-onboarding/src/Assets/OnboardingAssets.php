@@ -109,6 +109,9 @@ class OnboardingAssets {
 			'sandbox_state'    => State::get_state_name( $this->state->sandbox_state() ),
 			'production_state' => State::get_state_name( $this->state->production_state() ),
 			'current_state'    => State::get_state_name( $this->state->current_state() ),
+			'error_messages'   => array(
+				'no_credentials' => __( 'Enter the credentials.', 'woocommerce-paypal-payments' ),
+			),
 		);
 	}
 

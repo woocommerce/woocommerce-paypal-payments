@@ -104,6 +104,19 @@ function ppcp_onboarding_productionCallback(...args) {
 	return ppcp_onboarding.loginSeller('production', ...args);
 }
 
+const productionCredentialElementsSelectors = [
+    '#field-merchant_email_production',
+    '#field-merchant_id_production',
+    '#field-client_id_production',
+    '#field-client_secret_production',
+];
+const sandboxCredentialElementsSelectors = [
+    '#field-merchant_email_sandbox',
+    '#field-merchant_id_sandbox',
+    '#field-client_id_sandbox',
+    '#field-client_secret_sandbox',
+];
+
 const updateOptionsState = () => {
     const cardsChk = document.querySelector('#ppcp-onboarding-accept-cards');
     if (!cardsChk) {
@@ -136,18 +149,8 @@ const updateOptionsState = () => {
 };
 
 const updateManualInputControls = (shown, isSandbox, isAnyEnvOnboarded) => {
-    const productionElementsSelectors = [
-        '#field-merchant_email_production',
-        '#field-merchant_id_production',
-        '#field-client_id_production',
-        '#field-client_secret_production',
-    ];
-    const sandboxElementsSelectors = [
-        '#field-merchant_email_sandbox',
-        '#field-merchant_id_sandbox',
-        '#field-client_id_sandbox',
-        '#field-client_secret_sandbox',
-    ];
+    const productionElementsSelectors = productionCredentialElementsSelectors;
+    const sandboxElementsSelectors = sandboxCredentialElementsSelectors;
     const otherElementsSelectors = [
         '.woocommerce-save-button',
     ];
@@ -190,25 +193,20 @@ const updateEnvironmentControls = (isSandbox) => {
     );
 };
 
+let isDisconnecting = false;
+
 const disconnect = (event) => {
 	event.preventDefault();
-	const fields = event.target.classList.contains('production') ? [
-		'#field-merchant_email_production input',
-		'#field-merchant_id_production input',
-		'#field-client_id_production input',
-		'#field-client_secret_production input',
-	] : [
-		'#field-merchant_email_sandbox input',
-		'#field-merchant_id_sandbox input',
-		'#field-client_id_sandbox input',
-		'#field-client_secret_sandbox input',
-	];
+	const fields = event.target.classList.contains('production') ? productionCredentialElementsSelectors : sandboxCredentialElementsSelectors;
 
-	document.querySelectorAll(fields.join()).forEach(
+	document.querySelectorAll(fields.map(f => f + ' input').join()).forEach(
 		(element) => {
 			element.value = '';
 		}
 	);
+
+    isDisconnecting = true;
+
 	document.querySelector('.woocommerce-save-button').click();
 };
 
@@ -226,6 +224,20 @@ const preventDirtyCheckboxPropagation = event => {
 };
 
 (() => {
+    const sandboxSwitchElement = document.querySelector('#ppcp-sandbox_on');
+
+    const validate = () => {
+        const selectors = sandboxSwitchElement.checked ? sandboxCredentialElementsSelectors : productionCredentialElementsSelectors;
+        const values = selectors.map(s => document.querySelector(s + ' input')).map(el => el.value);
+
+        const errors = [];
+        if (values.some(v => !v)) {
+            errors.push(PayPalCommerceGatewayOnboarding.error_messages.no_credentials);
+        }
+
+        return errors;
+    };
+
     const isAnyEnvOnboarded = PayPalCommerceGatewayOnboarding.sandbox_state === ppcp_onboarding.STATE_ONBOARDED ||
         PayPalCommerceGatewayOnboarding.production_state === ppcp_onboarding.STATE_ONBOARDED;
 
@@ -258,8 +270,6 @@ const preventDirtyCheckboxPropagation = event => {
     }
 
     markCurrentOnboardingState(PayPalCommerceGatewayOnboarding.current_state === ppcp_onboarding.STATE_ONBOARDED);
-
-    const sandboxSwitchElement = document.querySelector('#ppcp-sandbox_on');
 
     const manualInputToggleButton = document.querySelector('#field-toggle_manual_input button');
     let isManualInputShown = isAnyEnvOnboarded;
@@ -299,6 +309,25 @@ const preventDirtyCheckboxPropagation = event => {
     updateManualInputControls(isManualInputShown, sandboxSwitchElement.checked, isAnyEnvOnboarded);
 
     updateEnvironmentControls(sandboxSwitchElement.checked);
+
+    document.querySelector('#mainform').addEventListener('submit', e => {
+        if (isDisconnecting) {
+            return;
+        }
+
+        const errors = validate();
+        if (errors.length) {
+            e.preventDefault();
+
+            const errorLabel = document.querySelector('#ppcp-form-errors-label');
+            errorLabel.parentElement.parentElement.classList.remove('hide');
+
+            errorLabel.innerHTML = errors.join('<br/>');
+
+            errorLabel.scrollIntoView();
+            window.scrollBy(0, -120); // WP + WC floating header
+        }
+    });
 
 	// Onboarding buttons.
 	ppcp_onboarding.init();

@@ -18,6 +18,11 @@
 	display: table-row;
 }
 
+label.error {
+	color: red;
+	font-weight: bold;
+}
+
 #field-toggle_manual_input button {
 	color: #0073aa;
 	transition-property: border, background, color;

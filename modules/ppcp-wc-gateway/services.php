@@ -429,6 +429,17 @@ return array(
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
+			'error_label'                        => array(
+				'type'         => 'ppcp-text',
+				'text'         => '<label class="error" id="ppcp-form-errors-label"></label>',
+				'classes'      => array( 'hide', 'ppcp-always-shown-element' ),
+				'screens'      => array(
+					State::STATE_START,
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
 			'sandbox_on'                         => array(
 				'title'        => __( 'Sandbox', 'woocommerce-paypal-payments' ),
 				'classes'      => array( 'ppcp-onboarding-element', 'ppcp-always-shown-element' ),
