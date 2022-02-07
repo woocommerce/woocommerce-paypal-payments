@@ -671,16 +671,21 @@ return array(
 				'gateway'      => 'paypal',
 			),
 			'disable_funding'                => array(
-				'title'        => __( 'Disable funding sources', 'woocommerce-paypal-payments' ),
-				'type'         => 'ppcp-multiselect',
-				'class'        => array(),
-				'input_class'  => array( 'wc-enhanced-select' ),
-				'default'      => array(),
-				'desc_tip'     => true,
-				'description'  => __(
-					'By default all possible funding sources will be shown. You can disable some sources, if you wish.',
-					'woocommerce-paypal-payments'
-				),
+                'title'        => __( 'Hide Funding Source(s)', 'woocommerce-paypal-payments' ),
+                'type'         => 'ppcp-multiselect',
+                'class'        => array(),
+                'input_class'  => array( 'wc-enhanced-select' ),
+                'default'      => array(),
+                'desc_tip'     => false,
+                'description'  => sprintf(
+                // translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+                    __( 'By default, all possible funding sources will be shown. This setting can disable funding sources such as Credit Cards, Pay Later, Venmo, or other %1$sAlternative Payment Methods.%2$s', 'woocommerce-paypal-payments' ),
+                    '<a
+						href="https://developer.paypal.com/docs/checkout/apm/"
+						target="_blank"
+					>',
+                    '</a>'
+                ),
 				'options'      => array(
 					'card'        => _x( 'Credit or debit cards', 'Name of payment method', 'woocommerce-paypal-payments' ),
 					'credit'      => _x( 'Pay Later', 'Name of payment method', 'woocommerce-paypal-payments' ),
