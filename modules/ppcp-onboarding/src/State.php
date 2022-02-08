@@ -20,13 +20,6 @@ class State {
 	const STATE_ONBOARDED = 8;
 
 	/**
-	 * The Environment.
-	 *
-	 * @var Environment
-	 */
-	private $environment;
-
-	/**
 	 * The Settings.
 	 *
 	 * @var ContainerInterface
@@ -36,16 +29,13 @@ class State {
 	/**
 	 * State constructor.
 	 *
-	 * @param Environment        $environment The Environment.
 	 * @param ContainerInterface $settings The Settings.
 	 */
 	public function __construct(
-		Environment $environment,
 		ContainerInterface $settings
 	) {
 
-		$this->environment = $environment;
-		$this->settings    = $settings;
+		$this->settings = $settings;
 	}
 
 	/**
