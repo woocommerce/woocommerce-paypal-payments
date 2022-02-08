@@ -12,8 +12,10 @@ namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 use Exception;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Address;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PayerName;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentMethod;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
@@ -337,6 +339,15 @@ class CreateOrderEndpoint implements EndpointInterface {
 
 			$payer = $this->payer_factory->from_paypal_response( json_decode( wp_json_encode( $data['payer'] ) ) );
 		}
+
+		if ( ! $payer && isset( $data['form'] ) ) {
+			parse_str( $data['form'], $form_fields );
+
+			if ( isset( $form_fields['billing_email'] ) && '' !== $form_fields['billing_email'] ) {
+				return $this->payer_factory->from_checkout_form( $form_fields );
+			}
+		}
+
 		return $payer;
 	}
 
