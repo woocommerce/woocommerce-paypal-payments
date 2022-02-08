@@ -132,6 +132,7 @@ return array(
 		return new OnboardingAssets(
 			$container->get( 'onboarding.url' ),
 			$state,
+			$container->get( 'onboarding.environment' ),
 			$login_seller_endpoint
 		);
 	},
