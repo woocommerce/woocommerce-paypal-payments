@@ -12,9 +12,9 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CustomerRepository;
-use WooCommerce\PayPalCommerce\ApiClient\TestCase;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use WooCommerce\PayPalCommerce\TestCase;
 use function Brain\Monkey\Functions\expect;
 
 class PaymentTokenEndpointTest extends TestCase

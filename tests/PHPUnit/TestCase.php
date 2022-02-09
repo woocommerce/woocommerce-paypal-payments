@@ -25,6 +25,9 @@ class TestCase extends \PHPUnit\Framework\TestCase
 		when('sanitize_text_field')->returnArg();
 		when('wp_kses_post')->returnArg();
 		when('wp_unslash')->returnArg();
+		when('wc_print_r')->alias(function ($value, bool $return = false) {
+			return print_r($value, $return);
+		});
 
 		setUp();
 	}

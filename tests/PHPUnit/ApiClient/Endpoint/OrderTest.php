@@ -9,8 +9,8 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
-use WooCommerce\PayPalCommerce\ApiClient\TestCase;
 use Mockery;
+use WooCommerce\PayPalCommerce\TestCase;
 
 class OrderTest extends TestCase
 {

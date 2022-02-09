@@ -6,9 +6,9 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Authentication;
 use Requests_Utility_CaseInsensitiveDictionary;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
-use WooCommerce\PayPalCommerce\ApiClient\TestCase;
 use Psr\Log\LoggerInterface;
 use Mockery;
+use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use function Brain\Monkey\Functions\expect;
 
