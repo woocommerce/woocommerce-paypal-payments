@@ -327,12 +327,16 @@ return array(
 	},
 
 	'api.shop.currency'                         => static function ( ContainerInterface $container ) : string {
-		// We use option instead of get_woocommerce_currency
-		// because it will not be overridden by currency switching plugins.
+		$currency = get_woocommerce_currency();
+		if ( $currency ) {
+			return $currency;
+		}
+
 		$currency = get_option( 'woocommerce_currency' );
 		if ( ! $currency ) {
 			return 'NO_CURRENCY'; // Unlikely to happen.
 		}
+
 		return $currency;
 	},
 	'api.shop.country'                          => static function ( ContainerInterface $container ) : string {
