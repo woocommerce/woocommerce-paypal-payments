@@ -158,7 +158,9 @@ class PaymentsEndpoint {
 		$bearer = $this->bearer->bearer();
 		$url    = trailingslashit( $this->host ) . 'v2/payments/authorizations/' . $authorization_id . '/capture';
 
-		$data = array();
+		$data = array(
+			'final_capture' => true,
+		);
 		if ( $amount ) {
 			$data['amount'] = $amount->to_array();
 		}
