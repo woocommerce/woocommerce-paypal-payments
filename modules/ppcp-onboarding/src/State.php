@@ -16,16 +16,8 @@ use Psr\Container\ContainerInterface;
  */
 class State {
 
-	const STATE_START       = 0;
-	const STATE_PROGRESSIVE = 4;
-	const STATE_ONBOARDED   = 8;
-
-	/**
-	 * The Environment.
-	 *
-	 * @var Environment
-	 */
-	private $environment;
+	const STATE_START     = 0;
+	const STATE_ONBOARDED = 8;
 
 	/**
 	 * The Settings.
@@ -37,16 +29,29 @@ class State {
 	/**
 	 * State constructor.
 	 *
-	 * @param Environment        $environment The Environment.
 	 * @param ContainerInterface $settings The Settings.
 	 */
 	public function __construct(
-		Environment $environment,
 		ContainerInterface $settings
 	) {
 
-		$this->environment = $environment;
-		$this->settings    = $settings;
+		$this->settings = $settings;
+	}
+
+	/**
+	 * Returns the state of the specified environment (or the active environment if null).
+	 *
+	 * @param string|null $environment 'sandbox', 'production'.
+	 * @return int
+	 */
+	public function environment_state( ?string $environment = null ): int {
+		switch ( $environment ) {
+			case Environment::PRODUCTION:
+				return $this->production_state();
+			case Environment::SANDBOX:
+				return $this->sandbox_state();
+		}
+		return $this->current_state();
 	}
 
 	/**
@@ -57,9 +62,6 @@ class State {
 	public function current_state(): int {
 
 		return $this->state_by_keys(
-			array(
-				'merchant_email',
-			),
 			array(
 				'merchant_email',
 				'merchant_id',
@@ -79,9 +81,6 @@ class State {
 		return $this->state_by_keys(
 			array(
 				'merchant_email_sandbox',
-			),
-			array(
-				'merchant_email_sandbox',
 				'merchant_id_sandbox',
 				'client_id_sandbox',
 				'client_secret_sandbox',
@@ -99,9 +98,6 @@ class State {
 		return $this->state_by_keys(
 			array(
 				'merchant_email_production',
-			),
-			array(
-				'merchant_email_production',
 				'merchant_id_production',
 				'client_id_production',
 				'client_secret_production',
@@ -110,36 +106,36 @@ class State {
 	}
 
 	/**
-	 * Returns the state based on progressive and onboarded values being looked up in the settings.
+	 * Translates an onboarding state to a string.
 	 *
-	 * @param array $progressive_keys The keys which need to be present to be at least in progressive state.
+	 * @param int $state An onboarding state to translate.
+	 * @return string A string representing the state: "start" or "onboarded".
+	 */
+	public static function get_state_name( int $state ) : string {
+		switch ( $state ) {
+			case self::STATE_START:
+				return 'start';
+			case self::STATE_ONBOARDED:
+				return 'onboarded';
+			default:
+				return 'unknown';
+		}
+	}
+
+	/**
+	 * Returns the state based on onboarding settings values.
+	 *
 	 * @param array $onboarded_keys The keys which need to be present to be in onboarded state.
 	 *
 	 * @return int
 	 */
-	private function state_by_keys( array $progressive_keys, array $onboarded_keys ) : int {
-		$state          = self::STATE_START;
-		$is_progressive = true;
-		foreach ( $progressive_keys as $key ) {
-			if ( ! $this->settings->has( $key ) || ! $this->settings->get( $key ) ) {
-				$is_progressive = false;
-			}
-		}
-		if ( $is_progressive ) {
-			$state = self::STATE_PROGRESSIVE;
-		}
-
-		$is_onboarded = true;
+	private function state_by_keys( array $onboarded_keys ) : int {
 		foreach ( $onboarded_keys as $key ) {
 			if ( ! $this->settings->has( $key ) || ! $this->settings->get( $key ) ) {
-				$is_onboarded = false;
+				return self::STATE_START;
 			}
 		}
 
-		if ( $is_onboarded ) {
-			$state = self::STATE_ONBOARDED;
-		}
-
-		return $state;
+		return self::STATE_ONBOARDED;
 	}
 }
