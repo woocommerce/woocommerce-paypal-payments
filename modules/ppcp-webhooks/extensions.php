@@ -19,7 +19,6 @@ return array(
 				'title'        => __( 'Subscribed webhooks', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-table',
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -34,7 +33,6 @@ return array(
 				'type'         => 'ppcp-text',
 				'text'         => '<button type="button" class="button ppcp-webhooks-resubscribe">' . esc_html__( 'Resubscribe', 'woocommerce-paypal-payments' ) . '</button>',
 				'screens'      => array(
-					State::STATE_PROGRESSIVE,
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -53,7 +51,6 @@ return array(
 						'type'         => 'ppcp-text',
 						'text'         => '<button type="button" class="button ppcp-webhooks-simulate">' . esc_html__( 'Simulate', 'woocommerce-paypal-payments' ) . '</button>',
 						'screens'      => array(
-							State::STATE_PROGRESSIVE,
 							State::STATE_ONBOARDED,
 						),
 						'requirements' => array(),
