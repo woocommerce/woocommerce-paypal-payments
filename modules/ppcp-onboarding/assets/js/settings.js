@@ -23,7 +23,7 @@ document.addEventListener(
                     }
 
                     group.forEach( (elementToShow) => {
-                        document.querySelector(elementToShow).style.display = 'table-row';
+                        document.querySelector(elementToShow).style.display = '';
                     })
 
                     if('ppcp-message_enabled' === event.target.getAttribute('id')){
@@ -56,7 +56,7 @@ document.addEventListener(
                     return;
                 }
                 if (value === elementToToggle.value && domElement.style.display !== 'none') {
-                    domElement.style.display = 'table-row';
+                    domElement.style.display = '';
                     return;
                 }
                 domElement.style.display = 'none';
@@ -69,7 +69,7 @@ document.addEventListener(
                     const value = event.target.value;
                     group.forEach( (elementToToggle) => {
                         if (value === elementToToggle.value) {
-                            document.querySelector(elementToToggle.selector).style.display = 'table-row';
+                            document.querySelector(elementToToggle.selector).style.display = '';
                             return;
                         }
                         document.querySelector(elementToToggle.selector).style.display = 'none';

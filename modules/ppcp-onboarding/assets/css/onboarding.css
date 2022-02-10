@@ -2,41 +2,28 @@
 	display: none;
 }
 
-#field-merchant_email_production,
-#field-ppcp_disconnect_sandbox,
-#field-ppcp_disconnect_production,
-#field-merchant_id_production,
-#field-client_id_production,
-#field-client_secret_production,
-#field-merchant_email_sandbox,
-#field-merchant_id_sandbox,
-#field-client_id_sandbox,
-#field-client_secret_sandbox{
+.ppcp-onboarded .ppcp-onboarding-element:not(.ppcp-always-shown-element) {
 	display: none;
 }
-#field-merchant_email_production.show,
-#field-ppcp_disconnect_sandbox.show,
-#field-ppcp_disconnect_production.show,
-#field-merchant_id_production.show,
-#field-client_id_production.show,
-#field-client_secret_production.show,
-#field-merchant_email_sandbox.show,
-#field-merchant_id_sandbox.show,
-#field-client_id_sandbox.show,
-#field-client_secret_sandbox.show {
+
+.ppcp-onboarding .ppcp-settings-field:not(.ppcp-onboarding-element):not(.ppcp-always-shown-element) {
+	display: none;
+}
+
+.ppcp-settings-field.hide {
+	display: none;
+}
+
+.ppcp-settings-field.show {
 	display: table-row;
 }
 
-#field-toggle_manual_input span.hide,
-#field-toggle_manual_input.show span.show{
-	display: none;
-}
-#field-toggle_manual_input.show span.hide {
-	display: unset;
+label.error {
+	color: red;
+	font-weight: bold;
 }
 
-#field-production_toggle_manual_input button,
-#field-sandbox_toggle_manual_input button {
+#field-toggle_manual_input button {
 	color: #0073aa;
 	transition-property: border, background, color;
 	transition-duration: .05s;
@@ -49,39 +36,8 @@
 	padding: 0;
 }
 
-#field-sandbox_toggle_manual_input.onboarded,
-#field-production_toggle_manual_input.onboarded {
-	display: none;
-}
-
-
-#field-ppcp_disconnect_sandbox.onboarded,
-#field-ppcp_disconnect_production.onboarded,
-#field-merchant_email_sandbox.onboarded,
-#field-merchant_id_sandbox.onboarded,
-#field-client_id_sandbox.onboarded,
-#field-client_secret_sandbox.onboarded,
-#field-merchant_email_production.onboarded,
-#field-merchant_id_production.onboarded,
-#field-client_id_production.onboarded,
-#field-client_secret_production.onboarded {
-	display:table-row;
-}
-#field-ppcp_disconnect_sandbox.onboarded.hide,
-#field-ppcp_disconnect_production.onboarded.hide,
-#field-merchant_email_sandbox.onboarded.hide,
-#field-merchant_id_sandbox.onboarded.hide,
-#field-client_id_sandbox.onboarded.hide,
-#field-client_secret_sandbox.onboarded.hide,
-#field-merchant_email_production.onboarded.hide,
-#field-merchant_id_production.onboarded.hide,
-#field-client_id_production.onboarded.hide,
-#field-client_secret_production.onboarded.hide {
-	display:none;
-}
-
 /* Probably not the best location for this but will do until there's a general purpose settings CSS file. */
-.ppcp-settings-field-heading td, .ppcp-settings-field-heading th {
+.ppcp-settings-field-heading td, .ppcp-settings-field-heading th, .ppcp-settings-no-title-col td {
 	padding-left: 0;
 }
 
@@ -91,4 +47,41 @@
 
 .input-text[pattern]:invalid {
 	border: red solid 2px;
+}
+
+ul.ppcp-onboarding-options, ul.ppcp-onboarding-options-sublist {
+	list-style: none;
+}
+
+ul.ppcp-onboarding-options-sublist {
+	margin-left: 15px;
+}
+
+.ppcp-muted-text {
+	opacity: 0.6;
+}
+
+.ppcp-onboarding-header {
+	display: flex;
+	width: 1000px;
+}
+
+.ppcp-onboarding-header-left, .ppcp-onboarding-header-right {
+	flex: 50%;
+}
+
+.ppcp-onboarding-header h2 {
+	margin-top: 0;
+}
+
+.ppcp-onboarding-header-cards img, .ppcp-onboarding-header-paypal-logos img {
+	margin: 5px;
+}
+
+.ppcp-onboarding-header-cards img {
+	height: 40px;
+}
+
+.ppcp-onboarding-header-paypal-logos img {
+	height: 45px;
 }
