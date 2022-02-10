@@ -1,5 +1,17 @@
 *** Changelog ***
 
+= 1.7.0 - TBD =
+* Fix - Address information from PayPal shortcut flow not loaded #451
+* Enhancement - Improve onboarding flow, allow no card processing #443
+* Enhancement - Add Germany to supported ACDC countries #459
+* Enhancement - Add filters to allow ACDC for countries #437
+* Enhancement - Update 3D Secure #464
+* Enhancement - Extend event, error logging & order notes #456
+* Enhancement - Display API response errors in checkout page with user-friendly error message #457
+* Enhancement - Pass address details to credit card fields #479
+* Enhancement - Improve onboarding notice #465
+* Enhancement - Add transaction ID to WC order and order note when refund is received #473
+
 = 1.6.5 - 2022-01-31 =
 * Fix - Allow guest users to purchase subscription products from checkout page #422
 * Fix - Transaction ID missing for renewal order #424
