@@ -741,7 +741,7 @@ return array(
 				'gateway'      => 'paypal',
 			),
 			'disable_funding'                    => array(
-				'title'        => __( 'Disable funding sources', 'woocommerce-paypal-payments' ),
+				'title'        => __( 'Hide Funding Source(s)', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-multiselect',
 				'class'        => array(),
 				'input_class'  => array( 'wc-enhanced-select' ),

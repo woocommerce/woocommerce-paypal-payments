@@ -21,6 +21,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Assets\SettingsPageAssets;
 use WooCommerce\PayPalCommerce\WcGateway\Checkout\CheckoutPayPalAddressPreset;
 use WooCommerce\PayPalCommerce\WcGateway\Checkout\DisableGateways;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
+use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
@@ -130,6 +131,23 @@ class WCGatewayModule implements ModuleInterface {
 				 * @var ReturnUrlEndpoint $endpoint
 				 */
 				$endpoint->handle_request();
+			}
+		);
+
+		add_action(
+			'woocommerce_paypal_payments_gateway_migrate',
+			static function () use ( $c ) {
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+
+				try {
+					if ( $settings->get( '3d_secure_contingency' ) === '3D_SECURE' ) {
+						$settings->set( '3d_secure_contingency', 'SCA_ALWAYS' );
+						$settings->persist();
+					}
+				} catch ( NotFoundException $exception ) {
+					return;
+				}
 			}
 		);
 	}
