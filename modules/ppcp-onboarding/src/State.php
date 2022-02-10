@@ -20,13 +20,6 @@ class State {
 	const STATE_ONBOARDED = 8;
 
 	/**
-	 * The Environment.
-	 *
-	 * @var Environment
-	 */
-	private $environment;
-
-	/**
 	 * The Settings.
 	 *
 	 * @var ContainerInterface
@@ -36,16 +29,13 @@ class State {
 	/**
 	 * State constructor.
 	 *
-	 * @param Environment        $environment The Environment.
 	 * @param ContainerInterface $settings The Settings.
 	 */
 	public function __construct(
-		Environment $environment,
 		ContainerInterface $settings
 	) {
 
-		$this->environment = $environment;
-		$this->settings    = $settings;
+		$this->settings = $settings;
 	}
 
 	/**
@@ -133,7 +123,7 @@ class State {
 	}
 
 	/**
-	 * Returns the state based on progressive and onboarded values being looked up in the settings.
+	 * Returns the state based on onboarding settings values.
 	 *
 	 * @param array $onboarded_keys The keys which need to be present to be in onboarded state.
 	 *

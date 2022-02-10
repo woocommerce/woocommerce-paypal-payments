@@ -118,9 +118,8 @@ return array(
 		);
 	},
 	'onboarding.state'                          => function( ContainerInterface $container ) : State {
-		$environment = $container->get( 'onboarding.environment' );
 		$settings    = $container->get( 'wcgateway.settings' );
-		return new State( $environment, $settings );
+		return new State( $settings );
 	},
 	'onboarding.environment'                    => function( ContainerInterface $container ) : Environment {
 		$settings = $container->get( 'wcgateway.settings' );
@@ -133,6 +132,7 @@ return array(
 		return new OnboardingAssets(
 			$container->get( 'onboarding.url' ),
 			$state,
+			$container->get( 'onboarding.environment' ),
 			$login_seller_endpoint
 		);
 	},

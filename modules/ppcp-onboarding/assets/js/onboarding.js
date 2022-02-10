@@ -257,6 +257,11 @@ function ppcp_onboarding_productionCallback(...args) {
         }
     );
 
+    const isSandboxInBackend = PayPalCommerceGatewayOnboarding.current_env === 'sandbox';
+    if (sandboxSwitchElement.checked !== isSandboxInBackend) {
+        sandboxSwitchElement.checked = isSandboxInBackend;
+    }
+
     updateOptionsState();
 
     const settingsContainer = document.querySelector('#mainform .form-table');

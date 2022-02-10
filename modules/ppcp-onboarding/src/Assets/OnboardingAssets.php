@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Onboarding\Assets;
 
 use WooCommerce\PayPalCommerce\Onboarding\Endpoint\LoginSellerEndpoint;
+use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 
 /**
@@ -32,6 +33,13 @@ class OnboardingAssets {
 	private $state;
 
 	/**
+	 * The Environment.
+	 *
+	 * @var Environment
+	 */
+	private $environment;
+
+	/**
 	 * The LoginSeller Endpoint.
 	 *
 	 * @var LoginSellerEndpoint
@@ -43,16 +51,19 @@ class OnboardingAssets {
 	 *
 	 * @param string              $module_url                         The URL to the module.
 	 * @param State               $state                               The State object.
+	 * @param Environment         $environment  The Environment.
 	 * @param LoginSellerEndpoint $login_seller_endpoint The LoginSeller endpoint.
 	 */
 	public function __construct(
 		string $module_url,
 		State $state,
+		Environment $environment,
 		LoginSellerEndpoint $login_seller_endpoint
 	) {
 
 		$this->module_url            = untrailingslashit( $module_url );
 		$this->state                 = $state;
+		$this->environment           = $environment;
 		$this->login_seller_endpoint = $login_seller_endpoint;
 	}
 
@@ -109,6 +120,7 @@ class OnboardingAssets {
 			'sandbox_state'    => State::get_state_name( $this->state->sandbox_state() ),
 			'production_state' => State::get_state_name( $this->state->production_state() ),
 			'current_state'    => State::get_state_name( $this->state->current_state() ),
+			'current_env'      => $this->environment->current_environment(),
 			'error_messages'   => array(
 				'no_credentials' => __( 'Enter the credentials.', 'woocommerce-paypal-payments' ),
 			),
