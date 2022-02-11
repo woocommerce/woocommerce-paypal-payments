@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, e-commerce, store, sales, sell, 
 Requires at least: 5.3
 Tested up to: 5.9
 Requires PHP: 7.1
-Stable tag: 1.6.5
+Stable tag: 1.7.0
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -80,6 +80,19 @@ Follow the steps below to connect the plugin to your PayPal account:
 6. Main settings screen.
 
 == Changelog ==
+
+= 1.7.0 =
+* Fix - Multi-currency broke #481
+* Fix - Address information from PayPal shortcut flow not loaded #451
+* Enhancement - Improve onboarding flow, allow no card processing #443
+* Enhancement - Add Germany to supported ACDC countries #459
+* Enhancement - Add filters to allow ACDC for countries #437
+* Enhancement - Update 3D Secure #464
+* Enhancement - Extend event, error logging & order notes #456
+* Enhancement - Display API response errors in checkout page with user-friendly error message #457
+* Enhancement - Pass address details to credit card fields #479
+* Enhancement - Improve onboarding notice #465
+* Enhancement - Add transaction ID to WC order and order note when refund is received #473
 
 = 1.6.5 =
 * Fix - Allow guest users to purchase subscription products from checkout page #422

@@ -127,7 +127,6 @@ return array(
 		return new PartnerReferrals(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
-			$container->get( 'api.repository.partner-referrals-data' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
@@ -209,9 +208,8 @@ return array(
 	},
 	'api.repository.partner-referrals-data'     => static function ( ContainerInterface $container ) : PartnerReferralsData {
 
-		$merchant_email = $container->get( 'api.merchant_email' );
 		$dcc_applies    = $container->get( 'api.helpers.dccapplies' );
-		return new PartnerReferralsData( $merchant_email, $dcc_applies );
+		return new PartnerReferralsData( $dcc_applies );
 	},
 	'api.repository.cart'                       => static function ( ContainerInterface $container ): CartRepository {
 		$factory = $container->get( 'api.factory.purchase-unit' );
@@ -327,12 +325,16 @@ return array(
 	},
 
 	'api.shop.currency'                         => static function ( ContainerInterface $container ) : string {
-		// We use option instead of get_woocommerce_currency
-		// because it will not be overridden by currency switching plugins.
+		$currency = get_woocommerce_currency();
+		if ( $currency ) {
+			return $currency;
+		}
+
 		$currency = get_option( 'woocommerce_currency' );
 		if ( ! $currency ) {
 			return 'NO_CURRENCY'; // Unlikely to happen.
 		}
+
 		return $currency;
 	},
 	'api.shop.country'                          => static function ( ContainerInterface $container ) : string {
@@ -393,141 +395,144 @@ return array(
 	 * The matrix which countries and currency combinations can be used for DCC.
 	 */
 	'api.dcc-supported-country-currency-matrix' => static function ( ContainerInterface $container ) : array {
-		return array(
-			'AU' => array(
-				'AUD',
-				'CAD',
-				'CHF',
-				'CZK',
-				'DKK',
-				'EUR',
-				'GBP',
-				'HKD',
-				'HUF',
-				'JPY',
-				'NOK',
-				'NZD',
-				'PLN',
-				'SEK',
-				'SGD',
-				'USD',
-			),
-			'DE' => array(
-				'AUD',
-				'CAD',
-				'CHF',
-				'CZK',
-				'DKK',
-				'EUR',
-				'GBP',
-				'HKD',
-				'HUF',
-				'JPY',
-				'NOK',
-				'NZD',
-				'PLN',
-				'SEK',
-				'SGD',
-				'USD',
-			),
-			'ES' => array(
-				'AUD',
-				'CAD',
-				'CHF',
-				'CZK',
-				'DKK',
-				'EUR',
-				'GBP',
-				'HKD',
-				'HUF',
-				'JPY',
-				'NOK',
-				'NZD',
-				'PLN',
-				'SEK',
-				'SGD',
-				'USD',
-			),
-			'FR' => array(
-				'AUD',
-				'CAD',
-				'CHF',
-				'CZK',
-				'DKK',
-				'EUR',
-				'GBP',
-				'HKD',
-				'HUF',
-				'JPY',
-				'NOK',
-				'NZD',
-				'PLN',
-				'SEK',
-				'SGD',
-				'USD',
-			),
-			'GB' => array(
-				'AUD',
-				'CAD',
-				'CHF',
-				'CZK',
-				'DKK',
-				'EUR',
-				'GBP',
-				'HKD',
-				'HUF',
-				'JPY',
-				'NOK',
-				'NZD',
-				'PLN',
-				'SEK',
-				'SGD',
-				'USD',
-			),
-			'IT' => array(
-				'AUD',
-				'CAD',
-				'CHF',
-				'CZK',
-				'DKK',
-				'EUR',
-				'GBP',
-				'HKD',
-				'HUF',
-				'JPY',
-				'NOK',
-				'NZD',
-				'PLN',
-				'SEK',
-				'SGD',
-				'USD',
-			),
-			'US' => array(
-				'AUD',
-				'CAD',
-				'EUR',
-				'GBP',
-				'JPY',
-				'USD',
-			),
-			'CA' => array(
-				'AUD',
-				'CAD',
-				'CHF',
-				'CZK',
-				'DKK',
-				'EUR',
-				'GBP',
-				'HKD',
-				'HUF',
-				'JPY',
-				'NOK',
-				'NZD',
-				'PLN',
-				'SEK',
-				'SGD',
-				'USD',
-			),
+		return apply_filters(
+			'woocommerce_paypal_payments_supported_country_currency_matrix',
+			array(
+				'AU' => array(
+					'AUD',
+					'CAD',
+					'CHF',
+					'CZK',
+					'DKK',
+					'EUR',
+					'GBP',
+					'HKD',
+					'HUF',
+					'JPY',
+					'NOK',
+					'NZD',
+					'PLN',
+					'SEK',
+					'SGD',
+					'USD',
+				),
+				'DE' => array(
+					'AUD',
+					'CAD',
+					'CHF',
+					'CZK',
+					'DKK',
+					'EUR',
+					'GBP',
+					'HKD',
+					'HUF',
+					'JPY',
+					'NOK',
+					'NZD',
+					'PLN',
+					'SEK',
+					'SGD',
+					'USD',
+				),
+				'ES' => array(
+					'AUD',
+					'CAD',
+					'CHF',
+					'CZK',
+					'DKK',
+					'EUR',
+					'GBP',
+					'HKD',
+					'HUF',
+					'JPY',
+					'NOK',
+					'NZD',
+					'PLN',
+					'SEK',
+					'SGD',
+					'USD',
+				),
+				'FR' => array(
+					'AUD',
+					'CAD',
+					'CHF',
+					'CZK',
+					'DKK',
+					'EUR',
+					'GBP',
+					'HKD',
+					'HUF',
+					'JPY',
+					'NOK',
+					'NZD',
+					'PLN',
+					'SEK',
+					'SGD',
+					'USD',
+				),
+				'GB' => array(
+					'AUD',
+					'CAD',
+					'CHF',
+					'CZK',
+					'DKK',
+					'EUR',
+					'GBP',
+					'HKD',
+					'HUF',
+					'JPY',
+					'NOK',
+					'NZD',
+					'PLN',
+					'SEK',
+					'SGD',
+					'USD',
+				),
+				'IT' => array(
+					'AUD',
+					'CAD',
+					'CHF',
+					'CZK',
+					'DKK',
+					'EUR',
+					'GBP',
+					'HKD',
+					'HUF',
+					'JPY',
+					'NOK',
+					'NZD',
+					'PLN',
+					'SEK',
+					'SGD',
+					'USD',
+				),
+				'US' => array(
+					'AUD',
+					'CAD',
+					'EUR',
+					'GBP',
+					'JPY',
+					'USD',
+				),
+				'CA' => array(
+					'AUD',
+					'CAD',
+					'CHF',
+					'CZK',
+					'DKK',
+					'EUR',
+					'GBP',
+					'HKD',
+					'HUF',
+					'JPY',
+					'NOK',
+					'NZD',
+					'PLN',
+					'SEK',
+					'SGD',
+					'USD',
+				),
+			)
 		);
 	},
 
@@ -535,49 +540,52 @@ return array(
 	 * Which countries support which credit cards. Empty credit card arrays mean no restriction on currency.
 	 */
 	'api.dcc-supported-country-card-matrix'     => static function ( ContainerInterface $container ) : array {
-		return array(
-			'AU' => array(
-				'mastercard' => array(),
-				'visa'       => array(),
-				'amex'       => array( 'AUD' ),
-			),
-			'DE' => array(
-				'mastercard' => array(),
-				'visa'       => array(),
-				'amex'       => array( 'EUR' ),
-			),
-			'ES' => array(
-				'mastercard' => array(),
-				'visa'       => array(),
-				'amex'       => array( 'EUR' ),
-			),
-			'FR' => array(
-				'mastercard' => array(),
-				'visa'       => array(),
-				'amex'       => array( 'EUR' ),
-			),
-			'GB' => array(
-				'mastercard' => array(),
-				'visa'       => array(),
-				'amex'       => array( 'GBP', 'USD' ),
-			),
-			'IT' => array(
-				'mastercard' => array(),
-				'visa'       => array(),
-				'amex'       => array( 'EUR' ),
-			),
-			'US' => array(
-				'mastercard' => array(),
-				'visa'       => array(),
-				'amex'       => array( 'USD' ),
-				'discover'   => array( 'USD' ),
-			),
-			'CA' => array(
-				'mastercard' => array(),
-				'visa'       => array(),
-				'amex'       => array( 'CAD' ),
-				'jcb'        => array( 'CAD' ),
-			),
+		return apply_filters(
+			'woocommerce_paypal_payments_supported_country_card_matrix',
+			array(
+				'AU' => array(
+					'mastercard' => array(),
+					'visa'       => array(),
+					'amex'       => array( 'AUD' ),
+				),
+				'DE' => array(
+					'mastercard' => array(),
+					'visa'       => array(),
+					'amex'       => array( 'EUR' ),
+				),
+				'ES' => array(
+					'mastercard' => array(),
+					'visa'       => array(),
+					'amex'       => array( 'EUR' ),
+				),
+				'FR' => array(
+					'mastercard' => array(),
+					'visa'       => array(),
+					'amex'       => array( 'EUR' ),
+				),
+				'GB' => array(
+					'mastercard' => array(),
+					'visa'       => array(),
+					'amex'       => array( 'GBP', 'USD' ),
+				),
+				'IT' => array(
+					'mastercard' => array(),
+					'visa'       => array(),
+					'amex'       => array( 'EUR' ),
+				),
+				'US' => array(
+					'mastercard' => array(),
+					'visa'       => array(),
+					'amex'       => array( 'USD' ),
+					'discover'   => array( 'USD' ),
+				),
+				'CA' => array(
+					'mastercard' => array(),
+					'visa'       => array(),
+					'amex'       => array( 'CAD' ),
+					'jcb'        => array( 'CAD' ),
+				),
+			)
 		);
 	},
 

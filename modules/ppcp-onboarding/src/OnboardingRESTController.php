@@ -10,7 +10,6 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Onboarding;
 
 use Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 /**
@@ -138,13 +137,13 @@ class OnboardingRESTController {
 		return array(
 			'environment' => $environment->current_environment(),
 			'onboarded'   => ( $state->current_state() >= State::STATE_ONBOARDED ),
-			'state'       => $this->get_onboarding_state_name( $state->current_state() ),
+			'state'       => State::get_state_name( $state->current_state() ),
 			'sandbox'     => array(
-				'state'     => $this->get_onboarding_state_name( $state->sandbox_state() ),
+				'state'     => State::get_state_name( $state->sandbox_state() ),
 				'onboarded' => ( $state->sandbox_state() >= State::STATE_ONBOARDED ),
 			),
 			'production'  => array(
-				'state'     => $this->get_onboarding_state_name( $state->production_state() ),
+				'state'     => State::get_state_name( $state->production_state() ),
 				'onboarded' => ( $state->production_state() >= State::STATE_ONBOARDED ),
 			),
 		);
@@ -263,34 +262,6 @@ class OnboardingRESTController {
 	 */
 	public function add_args_to_return_url( $url ) {
 		return add_query_arg( $this->return_url_args, $url );
-	}
-
-	/**
-	 * Translates an onboarding state to a string.
-	 *
-	 * @param int $state An onboarding state to translate as returned by {@link State} methods.
-	 * @return string A string representing the state: "start", "progressive" or "onboarded".
-	 * @see State::current_state(), State::sandbox_state(), State::production_state().
-	 */
-	public function get_onboarding_state_name( $state ) {
-		$name = 'unknown';
-
-		switch ( absint( $state ) ) {
-			case State::STATE_START:
-				$name = 'start';
-				break;
-			case State::STATE_PROGRESSIVE:
-				$name = 'progressive';
-				break;
-			case State::STATE_ONBOARDED:
-				$name = 'onboarded';
-				break;
-			default:
-				break;
-
-		}
-
-		return $name;
 	}
 
 	/**
