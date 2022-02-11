@@ -326,11 +326,7 @@ return array(
 
 	'api.shop.currency'                         => static function ( ContainerInterface $container ) : string {
 		$currency = get_woocommerce_currency();
-		if ( $currency ) {
-			return $currency;
-		}
 
-		$currency = get_option( 'woocommerce_currency' );
 		if ( ! $currency ) {
 			return 'NO_CURRENCY'; // Unlikely to happen.
 		}
