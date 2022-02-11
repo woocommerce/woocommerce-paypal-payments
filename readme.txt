@@ -82,6 +82,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 == Changelog ==
 
 = 1.7.0 =
+* Fix - Multi-currency broke #481
 * Fix - Address information from PayPal shortcut flow not loaded #451
 * Enhancement - Improve onboarding flow, allow no card processing #443
 * Enhancement - Add Germany to supported ACDC countries #459
