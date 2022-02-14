@@ -22,20 +22,20 @@ class ExchangeRateFactory {
 	 *
 	 * @param stdClass $data The JSON object.
 	 *
-	 * @return ExchangeRate
+	 * @return ExchangeRate|null
 	 * @throws RuntimeException When JSON object is malformed.
 	 */
-	public function from_paypal_response( stdClass $data ): ExchangeRate {
-		if ( ! isset( $data->source_currency ) ) {
-			throw new RuntimeException( 'Exchange rate source currency not found' );
-		}
-		if ( ! isset( $data->target_currency ) ) {
-			throw new RuntimeException( 'Exchange rate target currency not found' );
-		}
-		if ( ! isset( $data->value ) ) {
-			throw new RuntimeException( 'Exchange rate value not found' );
+	public function from_paypal_response( stdClass $data ): ?ExchangeRate {
+		// Looks like all fields in this object are optional, according to the docs,
+		// and sometimes we get an empty object.
+		$source_currency = $data->source_currency ?? '';
+		$target_currency = $data->target_currency ?? '';
+		$value           = $data->value ?? '';
+		if ( ! $source_currency && ! $target_currency && ! $value ) {
+			// Do not return empty object.
+			return null;
 		}
 
-		return new ExchangeRate( $data->source_currency, $data->target_currency, $data->value );
+		return new ExchangeRate( $source_currency, $target_currency, $value );
 	}
 }
