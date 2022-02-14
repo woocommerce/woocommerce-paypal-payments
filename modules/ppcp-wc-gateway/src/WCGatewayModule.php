@@ -11,7 +11,9 @@ namespace WooCommerce\PayPalCommerce\WcGateway;
 
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
+use WC_Order;
 use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
@@ -69,6 +71,19 @@ class WCGatewayModule implements ModuleInterface {
 				 */
 				$section_renderer->render();
 			}
+		);
+
+		add_action(
+			'woocommerce_paypal_payments_order_captured',
+			function ( WC_Order $wc_order, Capture $capture ) {
+				$breakdown = $capture->seller_receivable_breakdown();
+				if ( $breakdown ) {
+					$wc_order->update_meta_data( PayPalGateway::FEES_META_KEY, $breakdown->to_array() );
+					$wc_order->save_meta_data();
+				}
+			},
+			10,
+			2
 		);
 
 		if ( $c->has( 'wcgateway.url' ) ) {
@@ -249,7 +264,7 @@ class WCGatewayModule implements ModuleInterface {
 			static function ( $order_actions ) use ( $container ): array {
 				global $theorder;
 
-				if ( ! is_a( $theorder, \WC_Order::class ) ) {
+				if ( ! is_a( $theorder, WC_Order::class ) ) {
 					return $order_actions;
 				}
 
@@ -265,7 +280,7 @@ class WCGatewayModule implements ModuleInterface {
 
 		add_action(
 			'woocommerce_order_action_ppcp_authorize_order',
-			static function ( \WC_Order $wc_order ) use ( $container ) {
+			static function ( WC_Order $wc_order ) use ( $container ) {
 
 				/**
 				 * The authorized payments processor.
