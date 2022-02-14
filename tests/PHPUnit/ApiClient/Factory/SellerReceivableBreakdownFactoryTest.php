@@ -5,7 +5,7 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
 use WooCommerce\PayPalCommerce\ApiClient\TestCase;
 
-class SellerReceivableBreakdownFactoryFactoryTest extends TestCase
+class SellerReceivableBreakdownFactoryTest extends TestCase
 {
 	private $testee;
 
