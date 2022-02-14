@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
+use WooCommerce\PayPalCommerce\WcGateway\Admin\FeesRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\RenderAuthorizeAction;
@@ -84,6 +85,22 @@ class WCGatewayModule implements ModuleInterface {
 			},
 			10,
 			2
+		);
+
+		$fees_renderer = $c->get( 'wcgateway.admin.fees-renderer' );
+		assert( $fees_renderer instanceof FeesRenderer );
+
+		add_action(
+			'woocommerce_admin_order_totals_after_total',
+			function ( int $order_id ) use ( $fees_renderer ) {
+				$wc_order = wc_get_order( $order_id );
+				if ( ! $wc_order instanceof WC_Order ) {
+					return;
+				}
+
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				echo $fees_renderer->render( $wc_order );
+			}
 		);
 
 		if ( $c->has( 'wcgateway.url' ) ) {
