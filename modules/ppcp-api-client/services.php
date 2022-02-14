@@ -243,7 +243,10 @@ return array(
 	'api.factory.capture'                       => static function ( ContainerInterface $container ): CaptureFactory {
 
 		$amount_factory   = $container->get( 'api.factory.amount' );
-		return new CaptureFactory( $amount_factory );
+		return new CaptureFactory(
+			$amount_factory,
+			$container->get( 'api.factory.seller-receivable-breakdown' )
+		);
 	},
 	'api.factory.purchase-unit'                 => static function ( ContainerInterface $container ): PurchaseUnitFactory {
 
