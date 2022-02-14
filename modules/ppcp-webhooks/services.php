@@ -74,7 +74,7 @@ return array(
 			new PaymentCaptureRefunded( $logger, $prefix ),
 			new PaymentCaptureReversed( $logger, $prefix ),
 			new PaymentCaptureCompleted( $logger, $prefix, $order_endpoint ),
-			new VaultPaymentTokenDeleted(),
+			new VaultPaymentTokenDeleted($logger),
 		);
 	},
 
