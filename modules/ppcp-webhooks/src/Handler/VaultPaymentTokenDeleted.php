@@ -11,47 +11,59 @@ namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
 
 use Psr\Log\LoggerInterface;
 
+/**
+ * Class VaultPaymentTokenDeleted
+ */
 class VaultPaymentTokenDeleted implements RequestHandler {
 
 	/**
+	 * The logger.
+	 *
 	 * @var LoggerInterface
 	 */
 	protected $logger;
 
-	public function __construct(LoggerInterface $logger)
-	{
+	/**
+	 * VaultPaymentTokenDeleted constructor.
+	 *
+	 * @param LoggerInterface $logger The logger.
+	 */
+	public function __construct( LoggerInterface $logger ) {
 		$this->logger = $logger;
 	}
 
 	/**
+	 * The event types a handler handles.
+	 *
 	 * @return array
 	 */
-	public function event_types(): array
-	{
+	public function event_types(): array {
 		return array(
 			'VAULT.PAYMENT-TOKEN.DELETED',
 		);
 	}
 
 	/**
-	 * @param \WP_REST_Request $request
+	 * Whether a handler is responsible for a given request or not.
+	 *
+	 * @param \WP_REST_Request $request The request.
 	 * @return bool
 	 */
-	public function responsible_for_request(\WP_REST_Request $request): bool
-	{
+	public function responsible_for_request( \WP_REST_Request $request ): bool {
 		return in_array( $request['event_type'], $this->event_types(), true );
 	}
 
 	/**
-	 * @param \WP_REST_Request $request
+	 * Responsible for handling the request.
+	 *
+	 * @param \WP_REST_Request $request The request.
 	 * @return \WP_REST_Response
 	 */
-	public function handle_request(\WP_REST_Request $request): \WP_REST_Response
-	{
-		$response   = array( 'success' => false );
+	public function handle_request( \WP_REST_Request $request ): \WP_REST_Response {
+		$response = array( 'success' => false );
 
 		$payment_id = $request['resource']['id'] ?? null;
-		if(!$payment_id) {
+		if ( ! $payment_id ) {
 			$message = sprintf(
 			// translators: %s is the PayPal webhook Id.
 				__(
@@ -72,15 +84,20 @@ class VaultPaymentTokenDeleted implements RequestHandler {
 			return rest_ensure_response( $response );
 		}
 
-		$orders = wc_get_orders(array(
-			'limit'        => -1,
-			'meta_key'     => 'payment_token_id',
-			'meta_value' => $payment_id,
-		));
-		if ( ! $orders ) {
+		$subscriptions = get_posts(
+			array(
+				'numberposts' => -1,
+				'post_type'   => 'shop_subscription',
+				'post_status' => 'wc-active',
+				'meta_key'    => 'payment_token_id',
+				'meta_value'  => $payment_id,
+			)
+		);
+
+		if ( ! $subscriptions ) {
 			$message = sprintf(
-			// translators: %s is the PayPal payment Id.
-				__( 'Orders for PayPal payment id %s not found.', 'woocommerce-paypal-payments' ),
+			// translators: %s is the PayPal payment ID.
+				__( 'Subscriptions for PayPal payment ID %s not found.', 'woocommerce-paypal-payments' ),
 				isset( $request['resource']['id'] ) ? $request['resource']['id'] : ''
 			);
 			$this->logger->log(
@@ -95,11 +112,17 @@ class VaultPaymentTokenDeleted implements RequestHandler {
 			return rest_ensure_response( $response );
 		}
 
-		foreach ($orders as $order) {
-			$order->update_status(
-				'canceled',
-				__( "Automatic payment with billing ID:{$payment_id} was canceled on PayPal.", 'woocommerce-paypal-payments' )
-			);
+		foreach ( $subscriptions as $subs ) {
+			$subscription = wcs_get_subscription( $subs->ID );
+			if ( $subscription ) {
+				$message = sprintf(
+				// translators: %s is the PayPal billing ID.
+					__( 'Automatic payment with billing ID %s was canceled on PayPal.', 'woocommerce-paypal-payments' ),
+					$payment_id
+				);
+
+				$subscription->update_status( 'canceled', $message );
+			}
 		}
 
 		$response['success'] = true;
