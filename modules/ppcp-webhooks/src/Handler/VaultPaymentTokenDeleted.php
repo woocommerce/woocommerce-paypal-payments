@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
 
+use Exception;
 use Psr\Log\LoggerInterface;
 use WP_Error;
 use WP_REST_Request;
@@ -132,11 +133,11 @@ class VaultPaymentTokenDeleted implements RequestHandler {
 			if ( $subscription ) {
 				$message = sprintf(
 				// translators: %s is the PayPal billing ID.
-					__( 'Automatic payment with billing ID %s was canceled on PayPal.', 'woocommerce-paypal-payments' ),
+					__( 'Automatic payment with billing ID %s was canceled on PayPal by the customer.', 'woocommerce-paypal-payments' ),
 					$payment_id
 				);
 
-				$subscription->update_status( 'canceled', $message );
+				$subscription->update_status( 'pending-cancel', $message );
 			}
 		}
 
