@@ -10,6 +10,9 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
 
 use Psr\Log\LoggerInterface;
+use WP_Error;
+use WP_REST_Request;
+use WP_REST_Response;
 
 /**
  * Class VaultPaymentTokenDeleted
@@ -35,7 +38,7 @@ class VaultPaymentTokenDeleted implements RequestHandler {
 	/**
 	 * The event types a handler handles.
 	 *
-	 * @return array
+	 * @return string[]
 	 */
 	public function event_types(): array {
 		return array(
@@ -46,23 +49,26 @@ class VaultPaymentTokenDeleted implements RequestHandler {
 	/**
 	 * Whether a handler is responsible for a given request or not.
 	 *
-	 * @param \WP_REST_Request $request The request.
+	 * @param WP_REST_Request $request The request.
 	 * @return bool
 	 */
-	public function responsible_for_request( \WP_REST_Request $request ): bool {
+	public function responsible_for_request( WP_REST_Request $request ): bool {
 		return in_array( $request['event_type'], $this->event_types(), true );
 	}
 
 	/**
 	 * Responsible for handling the request.
 	 *
-	 * @param \WP_REST_Request $request The request.
-	 * @return \WP_REST_Response
+	 * @param WP_REST_Request $request The request.
+	 * @return WP_Error|WP_REST_Response
 	 */
-	public function handle_request( \WP_REST_Request $request ): \WP_REST_Response {
+	public function handle_request( WP_REST_Request $request ): WP_REST_Response {
 		$response = array( 'success' => false );
 
-		$payment_id = $request['resource']['id'] ?? null;
+		$payment_id = null !== $request['resource'] && isset( $request['resource']['id'] )
+			? $request['resource']['id']
+			: null;
+
 		if ( ! $payment_id ) {
 			$message = sprintf(
 			// translators: %s is the PayPal webhook Id.
@@ -70,7 +76,7 @@ class VaultPaymentTokenDeleted implements RequestHandler {
 					'No payment id for webhook event %s was found.',
 					'woocommerce-paypal-payments'
 				),
-				isset( $request['id'] ) ? $request['id'] : ''
+				null !== $request['id'] ? $request['id'] : ''
 			);
 
 			$this->logger->log(
@@ -98,7 +104,7 @@ class VaultPaymentTokenDeleted implements RequestHandler {
 			$message = sprintf(
 			// translators: %s is the PayPal payment ID.
 				__( 'Subscriptions for PayPal payment ID %s not found.', 'woocommerce-paypal-payments' ),
-				isset( $request['resource']['id'] ) ? $request['resource']['id'] : ''
+				null !== $request['resource'] && isset( $request['resource']['id'] ) ? $request['resource']['id'] : ''
 			);
 			$this->logger->log(
 				'warning',
@@ -113,6 +119,15 @@ class VaultPaymentTokenDeleted implements RequestHandler {
 		}
 
 		foreach ( $subscriptions as $subs ) {
+			if ( ! is_object( $subs ) ) {
+				continue;
+			}
+
+			/**
+			 * Function exist in Subscriptions plugin.
+			 *
+			 * @psalm-suppress UndefinedFunction
+			 */
 			$subscription = wcs_get_subscription( $subs->ID );
 			if ( $subscription ) {
 				$message = sprintf(
