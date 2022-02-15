@@ -1984,7 +1984,7 @@ return array(
 				),
 				'class'        => array(),
 				'input_class'  => array( 'wc-enhanced-select' ),
-				'default'      => $container->get( 'api.shop.is-psd2-country' ) ? '3D_SECURE' : 'NO_3D_SECURE',
+				'default'      => $container->get( 'api.shop.is-psd2-country' ) ? 'SCA_WHEN_REQUIRED' : 'NO_3D_SECURE',
 				'desc_tip'     => true,
 				'options'      => array(
 					'NO_3D_SECURE'      => __( 'No 3D Secure (transaction will be denied if 3D Secure is required)', 'woocommerce-paypal-payments' ),
