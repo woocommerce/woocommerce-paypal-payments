@@ -331,6 +331,7 @@ class SmartButton implements SmartButtonInterface {
 		if (
 			is_cart()
 			&& ! $not_enabled_on_cart
+			&& ! $this->is_cart_price_total_zero()
 		) {
 			add_action(
 				$this->proceed_to_checkout_button_renderer_hook(),
@@ -347,6 +348,7 @@ class SmartButton implements SmartButtonInterface {
 		if (
 			( is_product() || wc_post_content_has_shortcode( 'product_page' ) )
 			&& ! $not_enabled_on_product_page
+			&& ! $this->is_product_price_total_zero()
 		) {
 			add_action(
 				$this->single_product_renderer_hook(),
@@ -362,6 +364,7 @@ class SmartButton implements SmartButtonInterface {
 			! $this->settings->get( 'button_mini_cart_enabled' );
 		if (
 			! $not_enabled_on_minicart
+			&& ! $this->is_cart_price_total_zero()
 		) {
 			add_action(
 				$this->mini_cart_button_renderer_hook(),
@@ -439,6 +442,7 @@ class SmartButton implements SmartButtonInterface {
 				|| ! $product->is_in_stock()
 			)
 		) {
+
 			return;
 		}
 
@@ -568,7 +572,7 @@ class SmartButton implements SmartButtonInterface {
 			return;
 		}
 
-		// phpcs:ignore WordPress.WP.I18n.TextDomainMismatch
+        // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch
 		$label = 'checkout' === $this->context() ? apply_filters( 'woocommerce_order_button_text', __( 'Place order', 'woocommerce' ) ) : __( 'Pay for order', 'woocommerce' );
 
 		printf(
@@ -1069,5 +1073,31 @@ class SmartButton implements SmartButtonInterface {
 	 */
 	private function single_product_renderer_hook(): string {
 		return (string) apply_filters( 'woocommerce_paypal_payments_single_product_renderer_hook', 'woocommerce_single_product_summary' );
+	}
+
+	/**
+	 * Check if cart product price total is 0.
+	 *
+	 * @return bool true if is 0, otherwise false.
+	 */
+	protected function is_cart_price_total_zero(): bool {
+		$cart_total = WC()->cart->get_cart_contents_total();
+		return ! ( $cart_total > 0 );
+	}
+
+	/**
+	 * Check if current product price total is 0.
+	 *
+	 * @return bool true if is 0, otherwise false.
+	 */
+	protected function is_product_price_total_zero(): bool {
+		if ( ! is_product() ) {
+			return false;
+		}
+
+		$product       = wc_get_product();
+		$product_price = $product ? $product->get_price() : 0;
+
+		return ! ( (float) $product_price > 0 );
 	}
 }
