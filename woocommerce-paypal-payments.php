@@ -41,10 +41,7 @@ define( 'PPCP_FLAG_SUBSCRIPTION', true );
 	function init() {
 		$root_dir = __DIR__;
 
-		if ( ! function_exists( 'is_plugin_active' ) ) {
-			require_once ABSPATH . '/wp-admin/includes/plugin.php';
-		}
-		if ( ! is_plugin_active( 'woocommerce/woocommerce.php' ) ) {
+		if ( ! is_woocommerce_activated() ) {
 			add_action(
 				'admin_notices',
 				function() {
@@ -112,10 +109,7 @@ define( 'PPCP_FLAG_SUBSCRIPTION', true );
 	add_filter(
 		'plugin_action_links_' . plugin_basename( __FILE__ ),
 		function( $links ) {
-			if ( ! function_exists( 'is_plugin_active' ) ) {
-				require_once ABSPATH . '/wp-admin/includes/plugin.php';
-			}
-			if ( ! is_plugin_active( 'woocommerce/woocommerce.php' ) ) {
+			if ( ! is_woocommerce_activated() ) {
 				return $links;
 			}
 
@@ -131,5 +125,14 @@ define( 'PPCP_FLAG_SUBSCRIPTION', true );
 			return $links;
 		}
 	);
+
+	/**
+	 * Check if WooCommerce is active.
+	 *
+	 * @return bool true if WooCommerce is active, otherwise false.
+	 */
+	function is_woocommerce_activated(): bool {
+		return class_exists( 'woocommerce' );
+	}
 
 } )();
