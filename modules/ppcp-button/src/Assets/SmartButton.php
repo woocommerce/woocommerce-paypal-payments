@@ -1012,38 +1012,50 @@ class SmartButton implements SmartButtonInterface {
 	}
 
 	/**
-	 * Return action name PayPal buttons will be rendered at on checkout page.
+	 * Returns the action name that PayPal button will use for rendering on the checkout page.
 	 *
 	 * @return string Action name.
 	 */
 	private function checkout_button_renderer_hook(): string {
+		/**
+		 * The filter returning the action name that PayPal button will use for rendering on the checkout page.
+		 */
 		return (string) apply_filters( 'woocommerce_paypal_payments_checkout_button_renderer_hook', 'woocommerce_review_order_after_payment' );
 	}
 
 	/**
-	 * Return action name PayPal DCC button will be rendered at on checkout page.
+	 * Returns the action name that PayPal DCC button will use for rendering on the checkout page.
 	 *
 	 * @return string
 	 */
 	private function checkout_dcc_button_renderer_hook(): string {
+		/**
+		 * The filter returning the action name that PayPal DCC button will use for rendering on the checkout page.
+		 */
 		return (string) apply_filters( 'woocommerce_paypal_payments_checkout_dcc_renderer_hook', 'woocommerce_review_order_after_submit' );
 	}
 
 	/**
-	 * Return action name PayPal button and Pay Later message will be rendered at on pay-order page.
+	 * Returns the action name that PayPal button and Pay Later message will use for rendering on the pay-order page.
 	 *
 	 * @return string
 	 */
 	private function pay_order_renderer_hook(): string {
+		/**
+		 * The filter returning the action name that PayPal button and Pay Later message will use for rendering on the pay-order page.
+		 */
 		return (string) apply_filters( 'woocommerce_paypal_payments_pay_order_dcc_renderer_hook', 'woocommerce_pay_order_after_submit' );
 	}
 
 	/**
-	 * Return action name PayPal button will be rendered next to Proceed to checkout button (normally displayed in cart).
+	 * Returns action name that PayPal button will use for rendering next to Proceed to checkout button (normally displayed in cart).
 	 *
 	 * @return string
 	 */
 	private function proceed_to_checkout_button_renderer_hook(): string {
+		/**
+		 * The filter returning the action name that PayPal button will use for rendering next to Proceed to checkout button (normally displayed in cart).
+		 */
 		return (string) apply_filters(
 			'woocommerce_paypal_payments_proceed_to_checkout_button_renderer_hook',
 			'woocommerce_proceed_to_checkout'
@@ -1051,11 +1063,14 @@ class SmartButton implements SmartButtonInterface {
 	}
 
 	/**
-	 * Return action name PayPal button will be rendered in the WC mini cart.
+	 * Returns the action name that PayPal button will use for rendering in the WC mini cart.
 	 *
 	 * @return string
 	 */
 	private function mini_cart_button_renderer_hook(): string {
+		/**
+		 * The filter returning the action name that PayPal button will use for rendering in the WC mini cart.
+		 */
 		return (string) apply_filters(
 			'woocommerce_paypal_payments_mini_cart_button_renderer_hook',
 			'woocommerce_widget_shopping_cart_after_buttons'
@@ -1063,11 +1078,14 @@ class SmartButton implements SmartButtonInterface {
 	}
 
 	/**
-	 * Return action name PayPal button and Pay Later message will be rendered at on the single product page.
+	 * Returns the action name that PayPal button and Pay Later message will use for rendering on the single product page.
 	 *
 	 * @return string
 	 */
 	private function single_product_renderer_hook(): string {
+		/**
+		 * The filter returning the action name that PayPal button and Pay Later message will use for rendering on the single product page.
+		 */
 		return (string) apply_filters( 'woocommerce_paypal_payments_single_product_renderer_hook', 'woocommerce_single_product_summary' );
 	}
 }

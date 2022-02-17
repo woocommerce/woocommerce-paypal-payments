@@ -73,6 +73,9 @@ define( 'PPCP_FLAG_SUBSCRIPTION', true );
 			$app_container = $bootstrap( $root_dir );
 
 			$initialized = true;
+			/**
+			 * The hook fired after the plugin bootstrap with the app services container as parameter.
+			 */
 			do_action( 'woocommerce_paypal_payments_built_container', $app_container );
 		}
 	}
@@ -88,6 +91,9 @@ define( 'PPCP_FLAG_SUBSCRIPTION', true );
 			$plugin_data    = get_plugin_data( __DIR__ . '/woocommerce-paypal-payments.php' );
 			$plugin_version = $plugin_data['Version'] ?? null;
 			if ( get_option( 'woocommerce-ppcp-version' ) !== $plugin_version ) {
+				/**
+				 * The hook fired when the plugin is installed or updated.
+				 */
 				do_action( 'woocommerce_paypal_payments_gateway_migrate' );
 				update_option( 'woocommerce-ppcp-version', $plugin_version );
 			}
@@ -97,6 +103,9 @@ define( 'PPCP_FLAG_SUBSCRIPTION', true );
 		__FILE__,
 		function () {
 			init();
+			/**
+			 * The hook fired in register_activation_hook.
+			 */
 			do_action( 'woocommerce_paypal_payments_gateway_activate' );
 		}
 	);
@@ -104,6 +113,9 @@ define( 'PPCP_FLAG_SUBSCRIPTION', true );
 		__FILE__,
 		function () {
 			init();
+			/**
+			 * The hook fired in register_deactivation_hook.
+			 */
 			do_action( 'woocommerce_paypal_payments_gateway_deactivate' );
 		}
 	);
