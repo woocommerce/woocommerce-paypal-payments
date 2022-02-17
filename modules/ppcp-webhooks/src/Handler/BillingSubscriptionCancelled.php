@@ -1,6 +1,6 @@
 <?php
 /**
- * Handles the Webhook VAULT.PAYMENT-TOKEN.DELETED
+ * Handles the Webhooks BILLING.SUBSCRIPTION.CANCELLED and BILLING.SUBSCRIPTION.SUSPENDED
  *
  * @package WooCommerce\PayPalCommerce\Webhooks\Handler
  */
@@ -15,9 +15,10 @@ use WP_REST_Request;
 use WP_REST_Response;
 
 /**
- * Class VaultPaymentTokenDeleted
+ * Class BillingSubscriptionCancelled
  */
-class VaultPaymentTokenDeleted implements RequestHandler {
+class BillingSubscriptionCancelled implements RequestHandler {
+
 
 	/**
 	 * The logger.
@@ -27,7 +28,7 @@ class VaultPaymentTokenDeleted implements RequestHandler {
 	protected $logger;
 
 	/**
-	 * VaultPaymentTokenDeleted constructor.
+	 * BillingSubscriptionCancelled constructor.
 	 *
 	 * @param LoggerInterface $logger The logger.
 	 */
@@ -42,7 +43,8 @@ class VaultPaymentTokenDeleted implements RequestHandler {
 	 */
 	public function event_types(): array {
 		return array(
-			'VAULT.PAYMENT-TOKEN.DELETED',
+			'BILLING.SUBSCRIPTION.CANCELLED',
+			'BILLING.SUBSCRIPTION.SUSPENDED',
 		);
 	}
 
@@ -63,17 +65,16 @@ class VaultPaymentTokenDeleted implements RequestHandler {
 	 * @return WP_Error|WP_REST_Response
 	 */
 	public function handle_request( WP_REST_Request $request ): WP_REST_Response {
-		$response = array( 'success' => false );
 
-		$payment_id = null !== $request['resource'] && isset( $request['resource']['id'] )
+		$billing_agreement_id = null !== $request['resource'] && isset( $request['resource']['id'] )
 			? $request['resource']['id']
 			: null;
 
-		if ( ! $payment_id ) {
+		if ( ! $billing_agreement_id ) {
 			$message = sprintf(
 			// translators: %s is the PayPal webhook Id.
 				__(
-					'No payment id for webhook event %s was found.',
+					'No billing agreement id for webhook event %s was found.',
 					'woocommerce-paypal-payments'
 				),
 				null !== $request['id'] ? $request['id'] : ''
@@ -95,15 +96,15 @@ class VaultPaymentTokenDeleted implements RequestHandler {
 				'numberposts' => -1,
 				'post_type'   => 'shop_subscription',
 				'post_status' => 'wc-active',
-				'meta_key'    => 'payment_token_id',
-				'meta_value'  => $payment_id,
+				'meta_key'    => '_ppec_billing_agreement_id',
+				'meta_value'  => $billing_agreement_id,
 			)
 		);
 
 		if ( ! $subscriptions ) {
 			$message = sprintf(
 			// translators: %s is the PayPal payment ID.
-				__( 'Subscriptions for PayPal payment ID %s not found.', 'woocommerce-paypal-payments' ),
+				__( 'Subscriptions for billing agreement ID %s not found.', 'woocommerce-paypal-payments' ),
 				null !== $request['resource'] && isset( $request['resource']['id'] ) ? $request['resource']['id'] : ''
 			);
 			$this->logger->log(
@@ -133,7 +134,7 @@ class VaultPaymentTokenDeleted implements RequestHandler {
 				$message = sprintf(
 				// translators: %s is the PayPal billing ID.
 					__( 'Automatic payment with billing ID %s was canceled on PayPal by the customer.', 'woocommerce-paypal-payments' ),
-					$payment_id
+					$billing_agreement_id
 				);
 
 				$subscription->update_status( 'pending-cancel', $message );
@@ -144,4 +145,3 @@ class VaultPaymentTokenDeleted implements RequestHandler {
 		return rest_ensure_response( $response );
 	}
 }
-
