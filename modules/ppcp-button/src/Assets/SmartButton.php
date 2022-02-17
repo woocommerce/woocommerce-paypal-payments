@@ -45,6 +45,13 @@ class SmartButton implements SmartButtonInterface {
 	private $module_url;
 
 	/**
+	 * The assets version.
+	 *
+	 * @var string
+	 */
+	private $version;
+
+	/**
 	 * The Session Handler.
 	 *
 	 * @var SessionHandler
@@ -125,6 +132,7 @@ class SmartButton implements SmartButtonInterface {
 	 * SmartButton constructor.
 	 *
 	 * @param string                 $module_url The URL to the module.
+	 * @param string                 $version                            The assets version.
 	 * @param SessionHandler         $session_handler The Session Handler.
 	 * @param Settings               $settings The Settings.
 	 * @param PayerFactory           $payer_factory The Payer factory.
@@ -140,6 +148,7 @@ class SmartButton implements SmartButtonInterface {
 	 */
 	public function __construct(
 		string $module_url,
+		string $version,
 		SessionHandler $session_handler,
 		Settings $settings,
 		PayerFactory $payer_factory,
@@ -155,6 +164,7 @@ class SmartButton implements SmartButtonInterface {
 	) {
 
 		$this->module_url               = $module_url;
+		$this->version                  = $version;
 		$this->session_handler          = $session_handler;
 		$this->settings                 = $settings;
 		$this->payer_factory            = $payer_factory;
@@ -406,7 +416,7 @@ class SmartButton implements SmartButtonInterface {
 				'ppcp-hosted-fields',
 				untrailingslashit( $this->module_url ) . '/assets/css/hosted-fields.css',
 				array(),
-				1
+				$this->version
 			);
 		}
 		if ( $load_script ) {
@@ -414,7 +424,7 @@ class SmartButton implements SmartButtonInterface {
 				'ppcp-smart-button',
 				untrailingslashit( $this->module_url ) . '/assets/js/button.js',
 				array( 'jquery' ),
-				'1.3.2',
+				$this->version,
 				true
 			);
 
