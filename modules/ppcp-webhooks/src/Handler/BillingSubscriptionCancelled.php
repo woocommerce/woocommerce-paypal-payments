@@ -65,6 +65,7 @@ class BillingSubscriptionCancelled implements RequestHandler {
 	 * @return WP_Error|WP_REST_Response
 	 */
 	public function handle_request( WP_REST_Request $request ): WP_REST_Response {
+		$response = array( 'success' => false );
 
 		$billing_agreement_id = null !== $request['resource'] && isset( $request['resource']['id'] )
 			? $request['resource']['id']
@@ -87,6 +88,7 @@ class BillingSubscriptionCancelled implements RequestHandler {
 					'request' => $request,
 				)
 			);
+
 			$response['message'] = $message;
 			return rest_ensure_response( $response );
 		}
