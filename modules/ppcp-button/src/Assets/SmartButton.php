@@ -1081,8 +1081,8 @@ class SmartButton implements SmartButtonInterface {
 	 * @return bool true if is 0, otherwise false.
 	 */
 	protected function is_cart_price_total_zero(): bool {
-		$cart_total = WC()->cart->get_cart_contents_total();
-		return ! ( $cart_total > 0 );
+        // phpcs:ignore WordPress.PHP.StrictComparisons.LooseComparison
+		return WC()->cart->get_cart_contents_total() == 0;
 	}
 
 	/**
@@ -1095,9 +1095,9 @@ class SmartButton implements SmartButtonInterface {
 			return false;
 		}
 
-		$product       = wc_get_product();
-		$product_price = $product ? $product->get_price() : 0;
+		$product = wc_get_product();
 
-		return ! ( (float) $product_price > 0 );
+        // phpcs:ignore WordPress.PHP.StrictComparisons.LooseComparison
+		return $product && $product->get_price() == 0;
 	}
 }
