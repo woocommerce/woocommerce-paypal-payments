@@ -322,7 +322,7 @@ return array(
 				'state_from'   => Environment::SANDBOX,
 				'requirements' => array(),
 				'gateway'      => 'paypal',
-				'description'  => __( 'Your account is connected to sandbox, no real charging takes place. To accept live payments, disconnect and connect your live PayPal account.', 'woocommerce-paypal-payments' ),
+				'description'  => __( 'Your account is connected to sandbox, no real charging takes place. To accept live payments, turn off sandbox mode and connect your live PayPal account.', 'woocommerce-paypal-payments' ),
 			),
 
 			'ppcp_onboarading_options'           => array(
