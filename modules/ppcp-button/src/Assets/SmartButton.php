@@ -326,23 +326,6 @@ class SmartButton implements SmartButtonInterface {
 	 */
 	private function render_button_wrapper_registrar(): bool {
 
-		$not_enabled_on_cart = $this->settings->has( 'button_cart_enabled' ) &&
-			! $this->settings->get( 'button_cart_enabled' );
-		if (
-			is_cart()
-			&& ! $not_enabled_on_cart
-			&& ! $this->is_cart_price_total_zero()
-		) {
-			add_action(
-				$this->proceed_to_checkout_button_renderer_hook(),
-				array(
-					$this,
-					'button_renderer',
-				),
-				20
-			);
-		}
-
 		$not_enabled_on_product_page = $this->settings->has( 'button_single_product_enabled' ) &&
 			! $this->settings->get( 'button_single_product_enabled' );
 		if (
@@ -360,11 +343,30 @@ class SmartButton implements SmartButtonInterface {
 			);
 		}
 
+		if ( $this->is_cart_price_total_zero() ) {
+			return false;
+		}
+
+		$not_enabled_on_cart = $this->settings->has( 'button_cart_enabled' ) &&
+			! $this->settings->get( 'button_cart_enabled' );
+		if (
+			is_cart()
+			&& ! $not_enabled_on_cart
+		) {
+			add_action(
+				$this->proceed_to_checkout_button_renderer_hook(),
+				array(
+					$this,
+					'button_renderer',
+				),
+				20
+			);
+		}
+
 		$not_enabled_on_minicart = $this->settings->has( 'button_mini_cart_enabled' ) &&
 			! $this->settings->get( 'button_mini_cart_enabled' );
 		if (
 			! $not_enabled_on_minicart
-			&& ! $this->is_cart_price_total_zero()
 		) {
 			add_action(
 				$this->mini_cart_button_renderer_hook(),
