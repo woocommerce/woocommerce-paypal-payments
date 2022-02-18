@@ -57,7 +57,7 @@ class OnboardingOptionsRenderer {
 		$items[] = '
 <li>
 	<label><input type="radio" id="ppcp-onboarding-dcc-basic" name="ppcp_onboarding_dcc" value="basic" ' . ( ! $is_shop_supports_dcc ? 'checked' : '' ) . '> ' .
-		__( 'Basic credit and debit card processing', 'woocommerce-paypal-payments' ) . '
+		__( 'Standard credit and debit card processing', 'woocommerce-paypal-payments' ) . '
 	</label>
 </li>';
 
