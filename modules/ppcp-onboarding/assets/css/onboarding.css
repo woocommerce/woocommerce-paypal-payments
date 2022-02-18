@@ -63,7 +63,7 @@ ul.ppcp-onboarding-options-sublist {
 
 .ppcp-onboarding-header {
 	display: flex;
-	width: 1000px;
+	width: 1100px;
 }
 
 .ppcp-onboarding-header-left, .ppcp-onboarding-header-right {
@@ -74,14 +74,18 @@ ul.ppcp-onboarding-options-sublist {
 	margin-top: 0;
 }
 
+.ppcp-onboarding-header-left img {
+	height: 60px;
+}
+
 .ppcp-onboarding-header-cards img, .ppcp-onboarding-header-paypal-logos img {
 	margin: 5px;
 }
 
 .ppcp-onboarding-header-cards img {
-	height: 40px;
+	height: 37px;
 }
 
 .ppcp-onboarding-header-paypal-logos img {
-	height: 45px;
+	height: 32px;
 }
