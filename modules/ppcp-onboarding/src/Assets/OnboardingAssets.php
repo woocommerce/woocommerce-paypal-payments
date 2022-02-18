@@ -122,7 +122,7 @@ class OnboardingAssets {
 			'current_state'    => State::get_state_name( $this->state->current_state() ),
 			'current_env'      => $this->environment->current_environment(),
 			'error_messages'   => array(
-				'no_credentials' => __( 'Enter the credentials.', 'woocommerce-paypal-payments' ),
+				'no_credentials' => __( 'API credentials must be entered to save the settings.', 'woocommerce-paypal-payments' ),
 			),
 		);
 	}
