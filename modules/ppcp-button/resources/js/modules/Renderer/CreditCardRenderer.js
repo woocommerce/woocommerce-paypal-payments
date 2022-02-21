@@ -137,6 +137,7 @@ class CreditCardRenderer {
         document.querySelector('#payment_method_ppcp-credit-card-gateway').addEventListener(
             'click',
             () => {
+                this.formSubmissionSubscribed = false;
                 document.querySelector('label[for=ppcp-credit-card-gateway-card-number]').click();
             }
         )
