@@ -122,22 +122,23 @@ class CreditCardRenderer {
 
             });
 
-            if (!this.formSubmissionSubscribed) {
-                document.querySelector(wrapper + ' button').addEventListener(
-                    'click',
-                    event => {
-                        event.preventDefault();
-                        this._submit(contextConfig);
-                    }
-                );
-                this.formSubmissionSubscribed = true;
-            }
+           const checkoutForm = document.forms.checkout;
+           if(checkoutForm.getAttribute('data-ppcp-subscribed') !== true) {
+               document.querySelector(wrapper + ' button').addEventListener(
+                   'click',
+                   event => {
+                       event.preventDefault();
+                       this._submit(contextConfig);
+                   }
+               );
+
+               checkoutForm.setAttribute('data-ppcp-subscribed', true);
+           }
         });
 
         document.querySelector('#payment_method_ppcp-credit-card-gateway').addEventListener(
             'click',
             () => {
-                this.formSubmissionSubscribed = false;
                 document.querySelector('label[for=ppcp-credit-card-gateway-card-number]').click();
             }
         )
