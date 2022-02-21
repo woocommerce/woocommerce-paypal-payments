@@ -9,7 +9,6 @@ class CreditCardRenderer {
         this.cardValid = false;
         this.formValid = false;
         this.currentHostedFieldsInstance = null;
-        this.formSubmissionSubscribed = false;
     }
 
     render(wrapper, contextConfig) {
@@ -122,18 +121,17 @@ class CreditCardRenderer {
 
             });
 
-           const checkoutForm = document.forms.checkout;
-           if(checkoutForm.getAttribute('data-ppcp-subscribed') !== true) {
-               document.querySelector(wrapper + ' button').addEventListener(
-                   'click',
-                   event => {
-                       event.preventDefault();
-                       this._submit(contextConfig);
-                   }
-               );
+            if (document.querySelector(wrapper).getAttribute('data-ppcp-subscribed') !== true) {
+                document.querySelector(wrapper + ' button').addEventListener(
+                    'click',
+                    event => {
+                        event.preventDefault();
+                        this._submit(contextConfig);
+                    }
+                );
 
-               checkoutForm.setAttribute('data-ppcp-subscribed', true);
-           }
+                document.querySelector(wrapper).setAttribute('data-ppcp-subscribed', true);
+            }
         });
 
         document.querySelector('#payment_method_ppcp-credit-card-gateway').addEventListener(
@@ -145,7 +143,7 @@ class CreditCardRenderer {
     }
 
     disableFields() {
-        if( this.currentHostedFieldsInstance) {
+        if (this.currentHostedFieldsInstance) {
             this.currentHostedFieldsInstance.setAttribute({
                 field: 'number',
                 attribute: 'disabled'
@@ -162,7 +160,7 @@ class CreditCardRenderer {
     }
 
     enableFields() {
-        if( this.currentHostedFieldsInstance) {
+        if (this.currentHostedFieldsInstance) {
             this.currentHostedFieldsInstance.removeAttribute({
                 field: 'number',
                 attribute: 'disabled'
