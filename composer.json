@@ -14,7 +14,8 @@
         "ralouphie/getallheaders": "^3.0",
         "wikimedia/composer-merge-plugin": "^1.4",
         "wp-oop/wordpress-interface": "^0.1.0-alpha1",
-        "dhii/versions": "^0.1.0-alpha1"
+        "dhii/versions": "^0.1.0-alpha1",
+        "symfony/polyfill-php80": "^1.19"
     },
     "require-dev": {
         "woocommerce/woocommerce-sniffs": "^0.1.0",
