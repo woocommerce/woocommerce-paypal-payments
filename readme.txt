@@ -93,6 +93,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Enhancement - Pass address details to credit card fields #479
 * Enhancement - Improve onboarding notice #465
 * Enhancement - Add transaction ID to WC order and order note when refund is received #473
+* Enhancement - Asset caching may cause bugs on upgrades #501
 
 = 1.6.5 =
 * Fix - Allow guest users to purchase subscription products from checkout page #422

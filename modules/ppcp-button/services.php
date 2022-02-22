@@ -73,6 +73,7 @@ return array(
 		$currency = $container->get( 'api.shop.currency' );
 		return new SmartButton(
 			$container->get( 'button.url' ),
+			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'session.handler' ),
 			$settings,
 			$payer_factory,

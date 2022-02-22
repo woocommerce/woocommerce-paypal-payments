@@ -134,6 +134,9 @@ class PurchaseUnitFactory {
 			$invoice_id,
 			$soft_descriptor
 		);
+		/**
+		 * Returns PurchaseUnit for the WC order.
+		 */
 		return apply_filters(
 			'woocommerce_paypal_payments_purchase_unit_from_wc_order',
 			$purchase_unit,

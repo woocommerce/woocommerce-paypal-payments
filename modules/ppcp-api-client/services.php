@@ -395,6 +395,9 @@ return array(
 	 * The matrix which countries and currency combinations can be used for DCC.
 	 */
 	'api.dcc-supported-country-currency-matrix' => static function ( ContainerInterface $container ) : array {
+		/**
+		 * Returns which countries and currency combinations can be used for DCC.
+		 */
 		return apply_filters(
 			'woocommerce_paypal_payments_supported_country_currency_matrix',
 			array(
@@ -540,6 +543,9 @@ return array(
 	 * Which countries support which credit cards. Empty credit card arrays mean no restriction on currency.
 	 */
 	'api.dcc-supported-country-card-matrix'     => static function ( ContainerInterface $container ) : array {
+		/**
+		 * Returns which countries support which credit cards. Empty credit card arrays mean no restriction on currency.
+		 */
 		return apply_filters(
 			'woocommerce_paypal_payments_supported_country_card_matrix',
 			array(

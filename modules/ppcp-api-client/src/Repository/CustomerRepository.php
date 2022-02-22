@@ -45,6 +45,8 @@ class CustomerRepository {
 			}
 
 			$unique_id = substr( $this->prefix . strrev( uniqid() ), 0, self::CLIENT_ID_MAX_LENGTH );
+			assert( is_string( $unique_id ) );
+
 			WC()->session->set( 'ppcp_guest_customer_id', $unique_id );
 
 			return $unique_id;

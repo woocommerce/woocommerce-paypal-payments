@@ -12,6 +12,7 @@
 * Enhancement - Pass address details to credit card fields #479
 * Enhancement - Improve onboarding notice #465
 * Enhancement - Add transaction ID to WC order and order note when refund is received #473
+* Enhancement - Asset caching may cause bugs on upgrades #501
 
 = 1.6.5 - 2022-01-31 =
 * Fix - Allow guest users to purchase subscription products from checkout page #422
