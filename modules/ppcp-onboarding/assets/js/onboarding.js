@@ -144,6 +144,15 @@ function ppcp_onboarding_productionCallback(...args) {
         document.querySelectorAll(ppcpButtonSelectors.join()).forEach(
             element => element.style.display = !isExpress ? '' : 'none'
         );
+
+        const screemImg = document.querySelector('#ppcp-onboarding-cards-screen-img');
+        if (screemImg) {
+            const currentRb = Array.from(document.querySelectorAll('#ppcp-onboarding-dcc-options input[type="radio"]'))
+                .filter(rb => rb.checked)[0] ?? null;
+
+            const imgUrl = currentRb.getAttribute('data-screen-url');
+            screemImg.src = imgUrl;
+        }
     };
 
     const updateManualInputControls = (shown, isSandbox, isAnyEnvOnboarded) => {
