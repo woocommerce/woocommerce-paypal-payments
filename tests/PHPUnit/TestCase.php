@@ -25,6 +25,8 @@ class TestCase extends \PHPUnit\Framework\TestCase
 		when('sanitize_text_field')->returnArg();
 		when('wp_kses_post')->returnArg();
 		when('wp_unslash')->returnArg();
+		when('get_plugin_data')->justReturn(['Version' => '1.0']);
+		when('plugin_basename')->justReturn('woocommerce-paypal-payments/woocommerce-paypal-payments.php');
 
 		setUp();
 	}

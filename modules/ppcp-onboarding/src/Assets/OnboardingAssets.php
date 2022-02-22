@@ -27,6 +27,13 @@ class OnboardingAssets {
 	private $module_url;
 
 	/**
+	 * The assets version.
+	 *
+	 * @var string
+	 */
+	private $version;
+
+	/**
 	 * The State.
 	 *
 	 * @var State
@@ -58,6 +65,7 @@ class OnboardingAssets {
 	 * OnboardingAssets constructor.
 	 *
 	 * @param string              $module_url                         The URL to the module.
+	 * @param string              $version                            The assets version.
 	 * @param State               $state                               The State object.
 	 * @param Environment         $environment  The Environment.
 	 * @param LoginSellerEndpoint $login_seller_endpoint The LoginSeller endpoint.
@@ -65,6 +73,7 @@ class OnboardingAssets {
 	 */
 	public function __construct(
 		string $module_url,
+		string $version,
 		State $state,
 		Environment $environment,
 		LoginSellerEndpoint $login_seller_endpoint,
@@ -72,6 +81,7 @@ class OnboardingAssets {
 	) {
 
 		$this->module_url            = untrailingslashit( $module_url );
+		$this->version               = $version;
 		$this->state                 = $state;
 		$this->environment           = $environment;
 		$this->login_seller_endpoint = $login_seller_endpoint;
@@ -90,14 +100,14 @@ class OnboardingAssets {
 			'ppcp-onboarding',
 			$url,
 			array(),
-			1
+			$this->version
 		);
 		$url = untrailingslashit( $this->module_url ) . '/assets/js/settings.js';
 		wp_register_script(
 			'ppcp-settings',
 			$url,
 			array(),
-			1,
+			$this->version,
 			true
 		);
 
@@ -106,7 +116,7 @@ class OnboardingAssets {
 			'ppcp-onboarding',
 			$url,
 			array( 'jquery' ),
-			1,
+			$this->version,
 			true
 		);
 		wp_localize_script(

@@ -25,6 +25,9 @@ class Repository implements RepositoryInterface {
 	 */
 	public function current_message(): array {
 		return array_filter(
+			/**
+			 * Returns the list of admin messages.
+			 */
 			(array) apply_filters(
 				self::NOTICES_FILTER,
 				array()
