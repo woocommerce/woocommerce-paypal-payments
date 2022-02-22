@@ -85,7 +85,8 @@ const ppcp_onboarding = {
 						authCode: authCode,
 						sharedId: sharedId,
 						nonce: PayPalCommerceGatewayOnboarding.nonce,
-						env: env
+						env: env,
+                        acceptCards: document.querySelector('#ppcp-onboarding-accept-cards').checked,
 					}
 				)
 			}
