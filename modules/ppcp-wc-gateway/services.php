@@ -905,6 +905,9 @@ return array(
 				'type'         => 'select',
 				'class'        => array(),
 				'input_class'  => array( 'wc-enhanced-select' ),
+				/**
+				 * Returns default label ID of the PayPal button.
+				 */
 				'default'      => apply_filters( 'woocommerce_paypal_payments_button_label_default', 'paypal' ),
 				'desc_tip'     => true,
 				'description'  => __(
@@ -1207,6 +1210,9 @@ return array(
 				'type'         => 'select',
 				'class'        => array(),
 				'input_class'  => array( 'wc-enhanced-select' ),
+				/**
+				 * Returns default label ID of the PayPal button on product pages.
+				 */
 				'default'      => apply_filters( 'woocommerce_paypal_payments_button_product_label_default', 'paypal' ),
 				'desc_tip'     => true,
 				'description'  => __(
@@ -1510,6 +1516,9 @@ return array(
 				'type'         => 'select',
 				'class'        => array(),
 				'input_class'  => array( 'wc-enhanced-select' ),
+				/**
+				 * Returns default label ID of the PayPal button in cart.
+				 */
 				'default'      => apply_filters( 'woocommerce_paypal_payments_button_cart_label_default', 'paypal' ),
 				'desc_tip'     => true,
 				'description'  => __(
@@ -1813,6 +1822,9 @@ return array(
 				'type'         => 'select',
 				'class'        => array(),
 				'input_class'  => array( 'wc-enhanced-select' ),
+				/**
+				 * Returns default label ID of the PayPal button in mini cart.
+				 */
 				'default'      => apply_filters( 'woocommerce_paypal_payments_button_mini_cart_label_default', 'paypal' ),
 				'desc_tip'     => true,
 				'description'  => __(

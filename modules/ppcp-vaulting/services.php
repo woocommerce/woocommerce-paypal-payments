@@ -22,7 +22,8 @@ return array(
 	},
 	'vaulting.assets.myaccount-payments' => function( ContainerInterface $container ) : MyAccountPaymentsAssets {
 		return new MyAccountPaymentsAssets(
-			$container->get( 'vaulting.module-url' )
+			$container->get( 'vaulting.module-url' ),
+			$container->get( 'ppcp.asset-version' )
 		);
 	},
 	'vaulting.payment-tokens-renderer'   => static function (): PaymentTokensRenderer {

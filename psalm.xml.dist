@@ -9,7 +9,6 @@
         usePhpDocMethodsWithoutMagicCall="false"
         strictBinaryOperands="true"
         rememberPropertyAssignmentsAfterCall="true"
-        allowPhpStormGenerics="true"
         allowStringToStandInForClass="false"
         memoizeMethodCallResults="false"
         hoistConstants="false"

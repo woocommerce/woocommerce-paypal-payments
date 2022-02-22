@@ -55,10 +55,12 @@ class PayerFactory {
 			$national_number = preg_replace( '/[^0-9]/', '', $national_number );
 			$national_number = substr( $national_number, 0, 14 );
 
-			$phone = new PhoneWithType(
-				'HOME',
-				new Phone( $national_number )
-			);
+			if ( $national_number ) {
+				$phone = new PhoneWithType(
+					'HOME',
+					new Phone( $national_number )
+				);
+			}
 		}
 		return new Payer(
 			new PayerName(
@@ -91,10 +93,12 @@ class PayerFactory {
 			$national_number = preg_replace( '/[^0-9]/', '', $national_number );
 			$national_number = substr( $national_number, 0, 14 );
 
-			$phone = new PhoneWithType(
-				'HOME',
-				new Phone( $national_number )
-			);
+			if ( $national_number ) {
+				$phone = new PhoneWithType(
+					'HOME',
+					new Phone( $national_number )
+				);
+			}
 		}
 		return new Payer(
 			new PayerName(
@@ -176,10 +180,12 @@ class PayerFactory {
 			if ( null !== $national_number ) {
 				$national_number = substr( $national_number, 0, 14 );
 
-				$phone = new PhoneWithType(
-					'HOME',
-					new Phone( $national_number )
-				);
+				if ( $national_number ) {
+					$phone = new PhoneWithType(
+						'HOME',
+						new Phone( $national_number )
+					);
+				}
 			}
 		}
 
