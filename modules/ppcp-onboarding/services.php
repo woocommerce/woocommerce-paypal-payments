@@ -133,7 +133,8 @@ return array(
 			$container->get( 'onboarding.url' ),
 			$state,
 			$container->get( 'onboarding.environment' ),
-			$login_seller_endpoint
+			$login_seller_endpoint,
+			$container->get( 'wcgateway.current-ppcp-settings-page-id' )
 		);
 	},
 
