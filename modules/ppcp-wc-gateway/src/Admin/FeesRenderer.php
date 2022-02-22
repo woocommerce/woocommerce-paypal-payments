@@ -37,7 +37,8 @@ class FeesRenderer {
 				__( 'PayPal Fee:', 'woocommerce-paypal-payments' ),
 				__( 'The fee PayPal collects for the transaction.', 'woocommerce-paypal-payments' ),
 				$fee['value'],
-				$fee['currency_code']
+				$fee['currency_code'],
+				true
 			);
 		}
 
@@ -61,9 +62,10 @@ class FeesRenderer {
 	 * @param string       $tooltip The title tooltip.
 	 * @param string|float $value The money value.
 	 * @param string       $currency The currency code.
+	 * @param bool         $negative Whether to add the minus sign.
 	 * @return string
 	 */
-	private function render_money_row( string $title, string $tooltip, $value, string $currency ): string {
+	private function render_money_row( string $title, string $tooltip, $value, string $currency, bool $negative = false ): string {
 		/**
 		 * Bad type hint in WC phpdoc.
 		 *
@@ -75,7 +77,9 @@ class FeesRenderer {
 				</td>
 				<td width="1%"></td>
 				<td class="total">
-					-&nbsp;' . wc_price( $value, array( 'currency' => $currency ) ) . '
+					' .
+			( $negative ? ' - ' : '' ) .
+			wc_price( $value, array( 'currency' => $currency ) ) . '
 				</td>
 			</tr>';
 	}
