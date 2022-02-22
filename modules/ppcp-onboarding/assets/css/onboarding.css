@@ -59,6 +59,7 @@ ul.ppcp-onboarding-options-sublist {
 
 .ppcp-muted-text {
 	opacity: 0.6;
+	font-size: 85%;
 }
 
 #field-ppcp_onboarading_header > td, #field-ppcp_onboarading_options > td {
@@ -105,6 +106,10 @@ ul.ppcp-onboarding-options-sublist {
 
 .ppcp-onboarding-cards-options table td {
 	padding-top: 2px;
+}
+
+.ppcp-onboarding-cards-options table td:first-child {
+	vertical-align: top;
 }
 
 .ppcp-onboarding-cards-options table tr:not(:last-child) td {
