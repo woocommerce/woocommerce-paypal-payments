@@ -216,7 +216,9 @@ return array(
 		);
 	},
 	'onboarding.render-options'                 => static function ( ContainerInterface $container ) : OnboardingOptionsRenderer {
-		return new OnboardingOptionsRenderer();
+		return new OnboardingOptionsRenderer(
+			$container->get( 'onboarding.url' )
+		);
 	},
 	'onboarding.rest'                           => static function( $container ) : OnboardingRESTController {
 		return new OnboardingRESTController( $container );
