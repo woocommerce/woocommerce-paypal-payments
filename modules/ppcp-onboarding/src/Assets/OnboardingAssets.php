@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\Onboarding\Assets;
 use WooCommerce\PayPalCommerce\Onboarding\Endpoint\LoginSellerEndpoint;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 /**
  * Class OnboardingAssets
@@ -47,24 +48,34 @@ class OnboardingAssets {
 	private $login_seller_endpoint;
 
 	/**
+	 * ID of the current PPCP gateway settings page, or empty if it is not such page.
+	 *
+	 * @var string
+	 */
+	protected $page_id;
+
+	/**
 	 * OnboardingAssets constructor.
 	 *
 	 * @param string              $module_url                         The URL to the module.
 	 * @param State               $state                               The State object.
 	 * @param Environment         $environment  The Environment.
 	 * @param LoginSellerEndpoint $login_seller_endpoint The LoginSeller endpoint.
+	 * @param string              $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
 	 */
 	public function __construct(
 		string $module_url,
 		State $state,
 		Environment $environment,
-		LoginSellerEndpoint $login_seller_endpoint
+		LoginSellerEndpoint $login_seller_endpoint,
+		string $page_id
 	) {
 
 		$this->module_url            = untrailingslashit( $module_url );
 		$this->state                 = $state;
 		$this->environment           = $environment;
 		$this->login_seller_endpoint = $login_seller_endpoint;
+		$this->page_id               = $page_id;
 	}
 
 	/**
@@ -149,7 +160,6 @@ class OnboardingAssets {
 	 * @return bool
 	 */
 	private function should_render_onboarding_script(): bool {
-		global $current_section;
-		return 'ppcp-gateway' === $current_section;
+		return PayPalGateway::ID === $this->page_id;
 	}
 }
