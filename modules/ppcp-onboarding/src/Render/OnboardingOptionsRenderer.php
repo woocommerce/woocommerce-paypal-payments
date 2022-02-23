@@ -67,24 +67,26 @@ class OnboardingOptionsRenderer {
 				),
 				$this->render_table_row(
 					__( 'Credit & Debit Card pricing', 'woocommerce-paypal-payments' ),
-					__( '2.59% + $0.49', 'woocommerce-paypal-payments' )
+					__( '2.59% + $0.49', 'woocommerce-paypal-payments' ),
+					'',
+					__( 'for US domestic transactions', 'woocommerce-paypal-payments' )
 				),
 				$this->render_table_row(
 					__( 'Seller Protection', 'woocommerce-paypal-payments' ),
 					__( 'Yes', 'woocommerce-paypal-payments' ),
 					__( 'No matter what you sell, Seller Protection can help you avoid chargebacks, reversals, and fees on eligible PayPal payment transactions — even when a customer has filed a dispute.', 'woocommerce-paypal-payments' ),
-					__( 'On eligible PayPal transactions', 'woocommerce-paypal-payments' )
+					__( 'for eligible PayPal transactions', 'woocommerce-paypal-payments' )
 				),
 				$this->render_table_row(
-					__( 'Advanced Fraud Protection', 'woocommerce-paypal-payments' ),
+					__( 'Fraud Protection', 'woocommerce-paypal-payments' ),
 					__( 'Yes', 'woocommerce-paypal-payments' ),
 					__( 'Included with Advanced Checkout at no extra cost, Fraud Protection gives you the insight and control you need to better balance chargebacks and declines.', 'woocommerce-paypal-payments' )
 				),
 				$this->render_table_row(
 					__( 'Chargeback Protection', 'woocommerce-paypal-payments' ),
-					__( 'Yes', 'woocommerce-paypal-payments' ),
+					__( 'Optional', 'woocommerce-paypal-payments' ),
 					__( 'If you choose this optional, fee-based alternative to Fraud Protection, PayPal will manage chargebacks for eligible credit and debit card transactions — so you won’t have to worry about unexpected costs.', 'woocommerce-paypal-payments' ),
-					__( 'Extra 0.4% per transaction', 'woocommerce-paypal-payments' )
+					__( 'extra 0.4% per transaction', 'woocommerce-paypal-payments' )
 				),
 				$this->render_table_row(
 					__( 'Additional Vetting and Underwriting Required', 'woocommerce-paypal-payments' ),
@@ -118,13 +120,15 @@ class OnboardingOptionsRenderer {
 			),
 			$this->render_table_row(
 				__( 'Credit & Debit Card pricing', 'woocommerce-paypal-payments' ),
-				__( '3.49% + $0.49', 'woocommerce-paypal-payments' )
+				__( '3.49% + $0.49', 'woocommerce-paypal-payments' ),
+				'',
+				__( 'for US domestic transactions', 'woocommerce-paypal-payments' )
 			),
 			$this->render_table_row(
 				__( 'Seller Protection', 'woocommerce-paypal-payments' ),
 				__( 'Yes', 'woocommerce-paypal-payments' ),
 				__( 'No matter what you sell, Seller Protection can help you avoid chargebacks, reversals, and fees on eligible PayPal payment transactions — even when a customer has filed a dispute.', 'woocommerce-paypal-payments' ),
-				__( 'On eligible PayPal transactions', 'woocommerce-paypal-payments' )
+				__( 'for eligible PayPal transactions', 'woocommerce-paypal-payments' )
 			),
 			$this->render_table_row(
 				__( 'Seller Account Type', 'woocommerce-paypal-payments' ),
