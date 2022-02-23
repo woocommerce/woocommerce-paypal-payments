@@ -109,12 +109,16 @@ ul.ppcp-onboarding-options-sublist {
 }
 
 .ppcp-onboarding-cards-options table th {
-	vertical-align: top;
 	width: 350px;
+	vertical-align: middle !important;
 }
 
 .ppcp-onboarding-cards-options table tr:not(:last-child) th, .ppcp-onboarding-cards-options table tr:not(:last-child) td {
 	padding-bottom: 0;
+}
+
+.ppcp-onboarding-cards-options table tr:not(:last-child) {
+	height: 40px;
 }
 
 .ppcp-onboarding-cards-screen {
