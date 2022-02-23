@@ -113,11 +113,15 @@ ul.ppcp-onboarding-options-sublist {
 	vertical-align: middle !important;
 }
 
-.ppcp-onboarding-cards-options table tr:not(:last-child) th, .ppcp-onboarding-cards-options table tr:not(:last-child) td {
+.ppcp-onboarding-cards-options table tr th, .ppcp-onboarding-cards-options table tr td {
 	padding-bottom: 0;
 }
 
-.ppcp-onboarding-cards-options table tr:not(:last-child) {
+.ppcp-onboarding-cards-options table {
+	padding-bottom: 15px;
+}
+
+.ppcp-onboarding-cards-options table tr {
 	height: 40px;
 }
 
