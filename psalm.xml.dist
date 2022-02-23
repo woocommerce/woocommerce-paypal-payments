@@ -149,5 +149,6 @@
         <MixedReturnTypeCoercion errorLevel="info"/>
 		<MixedStringOffsetAssignment errorLevel="info"/>
 		<ParamNameMismatch errorLevel="info"/>
+		<RedundantCastGivenDocblockType errorLevel="info"/>
     </issueHandlers>
 </psalm>

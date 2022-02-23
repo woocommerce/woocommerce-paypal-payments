@@ -36,7 +36,6 @@ class ThreeDSecureTest extends TestCase
         $order->shouldReceive('payment_source')->andReturn($source);
         $logger = \Mockery::mock(LoggerInterface::class);
         $logger->shouldReceive('info');
-		when('wc_print_r')->justReturn();
 
         $testee = new ThreeDSecure($logger);
         $result = $testee->proceed_with_order($order);

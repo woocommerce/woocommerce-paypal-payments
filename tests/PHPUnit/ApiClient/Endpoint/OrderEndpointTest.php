@@ -24,10 +24,10 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PatchCollectionFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ErrorResponse;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
-use WooCommerce\PayPalCommerce\ApiClient\TestCase;
 use Mockery;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\TestCase;
 use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
 
@@ -38,7 +38,6 @@ class OrderEndpointTest extends TestCase
 	public function setUp(): void
 	{
 		parent::setUp();
-		when('wc_print_r')->returnArg();
 
 		$this->shipping = new Shipping('shipping', new Address('US', 'street', '', 'CA', '', '12345'));
 	}

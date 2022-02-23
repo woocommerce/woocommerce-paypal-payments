@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Entity;
 
-use WooCommerce\PayPalCommerce\ApiClient\TestCase;
+use WooCommerce\PayPalCommerce\TestCase;
 use Mockery;
 
 class AmountBreakdownTest extends TestCase

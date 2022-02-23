@@ -10,8 +10,8 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Token;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CustomerRepository;
-use WooCommerce\PayPalCommerce\ApiClient\TestCase;
 use Mockery;
+use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
@@ -89,7 +89,6 @@ class IdentityTokenTest extends TestCase
 
         expect('is_wp_error')->with($rawResponse)->andReturn(false);
         expect('wp_remote_retrieve_response_code')->with($rawResponse)->andReturn(200);
-        when('wc_print_r')->returnArg();
 		when('get_user_meta')->justReturn('');
 
         $result = $this->sut->generate_for_user(1);
@@ -108,7 +107,6 @@ class IdentityTokenTest extends TestCase
 		$headers->shouldReceive('getAll');
         expect('wp_remote_get')->andReturn(['headers' => $headers,]);
         expect('is_wp_error')->andReturn(true);
-		when('wc_print_r')->returnArg();
         $this->logger->shouldReceive('log');
         $this->logger->shouldReceive('debug');
 		$this->settings->shouldReceive('has')->andReturn(true);
@@ -135,7 +133,6 @@ class IdentityTokenTest extends TestCase
 			]);
         expect('is_wp_error')->andReturn(false);
         expect('wp_remote_retrieve_response_code')->andReturn(500);
-		when('wc_print_r')->returnArg();
         $this->logger->shouldReceive('log');
         $this->logger->shouldReceive('debug');
 		$this->settings->shouldReceive('has')->andReturn(true);
