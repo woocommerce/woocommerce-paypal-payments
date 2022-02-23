@@ -93,18 +93,18 @@ class OnboardingOptionsRenderer {
 				),
 				$this->render_table_row(
 					__( 'Seller Account Type', 'woocommerce-paypal-payments' ),
-					__( 'Business', 'woocommerce-paypal-payments' )
+					__( 'Business', 'woocommerce-paypal-payments' ),
+					__( 'For Standard payments, Casual sellers may connect their Personal PayPal account in eligible countries to sell on WooCommerce. For Advanced payments, a Business PayPal account is required.', 'woocommerce-paypal-payments' )
 				),
 			);
 			$items[]        = '
 <li>
-	<label' .
-				' title="' . __( 'PayPal acts as the payment processor for card transactions. You can add optional features like Chargeback Protection for more security.', 'woocommerce-paypal-payments' ) . '"'
-				. '>
+	<label>
 		<input type="radio" id="ppcp-onboarding-dcc-acdc" name="ppcp_onboarding_dcc" value="acdc" checked ' .
 				'data-screen-url="' . $this->get_screen_url( 'acdc' ) . '"> ' .
 			__( 'Advanced Card Processing', 'woocommerce-paypal-payments' ) . '
 	</label>
+	' . $this->render_tooltip( __( 'PayPal acts as the payment processor for card transactions. You can add optional features like Chargeback Protection for more security.', 'woocommerce-paypal-payments' ) ) . '
 	<table>
 		' . implode( '', $dcc_table_rows ) . '
 	</table>
@@ -128,21 +128,20 @@ class OnboardingOptionsRenderer {
 			),
 			$this->render_table_row(
 				__( 'Seller Account Type', 'woocommerce-paypal-payments' ),
-				__( 'Business or Personal', 'woocommerce-paypal-payments' ),
+				__( 'Business or Casual', 'woocommerce-paypal-payments' ),
 				__( 'For Standard payments, Casual sellers may connect their Personal PayPal account in eligible countries to sell on WooCommerce. For Advanced payments, a Business PayPal account is required.', 'woocommerce-paypal-payments' )
 			),
 		);
 		$items[]          = '
 <li ' . ( ! $is_shop_supports_dcc ? 'style="display: none;"' : '' ) . '>
-	<label ' .
-			' title="' . __( 'Card transactions are managed by PayPal, which simplifies compliance requirements for you.', 'woocommerce-paypal-payments' ) . '"'
-			. '>
+	<label>
 		<input type="radio" id="ppcp-onboarding-dcc-basic" name="ppcp_onboarding_dcc" value="basic" ' .
 			( ! $is_shop_supports_dcc ? 'checked' : '' ) .
 			' data-screen-url="' . $this->get_screen_url( 'basic' ) . '"' .
 			'> ' .
 		__( 'Standard Card Processing', 'woocommerce-paypal-payments' ) . '
 	</label>
+	' . $this->render_tooltip( __( 'Card transactions are managed by PayPal, which simplifies compliance requirements for you.', 'woocommerce-paypal-payments' ) ) . '
 	<table>
 		' . implode( $basic_table_rows ) . '
 	</table>
@@ -175,16 +174,27 @@ class OnboardingOptionsRenderer {
 			$value_html .= '<br/><span class="ppcp-muted-text">' . $note . '</span>';
 		}
 
-		$row_attributes_html = '';
+		$tooltip_html = '';
 		if ( $tooltip ) {
-			$row_attributes_html .= 'title="' . $tooltip . '"';
+			$tooltip_html = $this->render_tooltip( $tooltip, array( 'ppcp-table-row-tooltip' ) );
 		}
 
 		return "
-<tr $row_attributes_html>
-	<td>$header</td>
+<tr>
+	<td>$tooltip_html $header</td>
 	<td>$value_html</td>
 </tr>";
+	}
+
+	/**
+	 * Returns HTML of a tooltip (question mark icon).
+	 *
+	 * @param string   $tooltip The text shown on hover.
+	 * @param string[] $classes Additional CSS classes.
+	 * @return string
+	 */
+	private function render_tooltip( string $tooltip, array $classes = array() ): string {
+		return '<span class="woocommerce-help-tip ' . implode( ' ', $classes ) . '" data-tip="' . esc_attr( $tooltip ) . '"></span> ';
 	}
 
 	/**

@@ -128,3 +128,7 @@ ul.ppcp-onboarding-options-sublist {
 .ppcp-onboarding-cards-screen img {
 	width: 100%;
 }
+
+.woocommerce-help-tip.ppcp-table-row-tooltip {
+	margin-left: -20px !important;
+}
