@@ -217,7 +217,8 @@ return array(
 	},
 	'onboarding.render-options'                 => static function ( ContainerInterface $container ) : OnboardingOptionsRenderer {
 		return new OnboardingOptionsRenderer(
-			$container->get( 'onboarding.url' )
+			$container->get( 'onboarding.url' ),
+			$container->get( 'api.shop.country' )
 		);
 	},
 	'onboarding.rest'                           => static function( $container ) : OnboardingRESTController {
