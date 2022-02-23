@@ -28,6 +28,8 @@ class TestCase extends \PHPUnit\Framework\TestCase
 		when('wc_print_r')->alias(function ($value, bool $return = false) {
 			return print_r($value, $return);
 		});
+		when('get_plugin_data')->justReturn(['Version' => '1.0']);
+		when('plugin_basename')->justReturn('woocommerce-paypal-payments/woocommerce-paypal-payments.php');
 
 		setUp();
 	}

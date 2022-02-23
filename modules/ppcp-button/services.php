@@ -52,7 +52,7 @@ return array(
 		 *
 		 * @var State $state
 		 */
-		if ( $state->current_state() <= State::STATE_PROGRESSIVE ) {
+		if ( $state->current_state() !== State::STATE_ONBOARDED ) {
 			return new DisabledSmartButton();
 		}
 		$settings           = $container->get( 'wcgateway.settings' );
@@ -73,6 +73,7 @@ return array(
 		$currency = $container->get( 'api.shop.currency' );
 		return new SmartButton(
 			$container->get( 'button.url' ),
+			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'session.handler' ),
 			$settings,
 			$payer_factory,
