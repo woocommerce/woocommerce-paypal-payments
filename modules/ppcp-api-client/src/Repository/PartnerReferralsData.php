@@ -75,10 +75,16 @@ class PartnerReferralsData {
 		return array(
 			'partner_config_override' => array(
 				'partner_logo_url'       => 'https://connect.woocommerce.com/images/woocommerce_logo.png',
+				/**
+				 * Returns the URL which will be opened at the end of onboarding.
+				 */
 				'return_url'             => apply_filters(
 					'woocommerce_paypal_payments_partner_config_override_return_url',
 					admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' )
 				),
+				/**
+				 * Returns the description of the URL which will be opened at the end of onboarding.
+				 */
 				'return_url_description' => apply_filters(
 					'woocommerce_paypal_payments_partner_config_override_return_url_description',
 					__( 'Return to your shop.', 'woocommerce-paypal-payments' )

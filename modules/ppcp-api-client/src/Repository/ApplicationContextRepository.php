@@ -74,7 +74,10 @@ class ApplicationContextRepository {
 
 		$parts = explode( '-', $locale );
 		if ( count( $parts ) === 3 ) {
-			return substr( $locale, 0, strrpos( $locale, '-' ) );
+			$ret = substr( $locale, 0, strrpos( $locale, '-' ) );
+			if ( false !== $ret ) {
+				return $ret;
+			}
 		}
 
 		return 'en';

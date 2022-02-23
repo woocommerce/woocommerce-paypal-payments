@@ -174,6 +174,9 @@ class RenewalHandler {
 	 * @return PaymentToken|null
 	 */
 	private function get_token_for_customer( \WC_Customer $customer, \WC_Order $wc_order ) {
+		/**
+		 * Returns a payment token for a customer, or null.
+		 */
 		$token = apply_filters( 'woocommerce_paypal_payments_subscriptions_get_token_for_customer', null, $customer, $wc_order );
 		if ( null !== $token ) {
 			return $token;

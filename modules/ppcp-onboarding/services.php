@@ -131,9 +131,11 @@ return array(
 		$login_seller_endpoint = $container->get( 'onboarding.endpoint.login-seller' );
 		return new OnboardingAssets(
 			$container->get( 'onboarding.url' ),
+			$container->get( 'ppcp.asset-version' ),
 			$state,
 			$container->get( 'onboarding.environment' ),
-			$login_seller_endpoint
+			$login_seller_endpoint,
+			$container->get( 'wcgateway.current-ppcp-settings-page-id' )
 		);
 	},
 
@@ -214,7 +216,9 @@ return array(
 		);
 	},
 	'onboarding.render-options'                 => static function ( ContainerInterface $container ) : OnboardingOptionsRenderer {
-		return new OnboardingOptionsRenderer();
+		return new OnboardingOptionsRenderer(
+			$container->get( 'onboarding.url' )
+		);
 	},
 	'onboarding.rest'                           => static function( $container ) : OnboardingRESTController {
 		return new OnboardingRESTController( $container );

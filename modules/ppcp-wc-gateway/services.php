@@ -281,16 +281,16 @@ return array(
 	</div>
 	<div class="ppcp-onboarding-header-right">
 		<div class="ppcp-onboarding-header-paypal-logos">
-			<img alt="PayPal" src="' . esc_url( $module_url ) . 'assets/images/paypal-button.png"/>
-			<img alt="Venmo" src="' . esc_url( $module_url ) . 'assets/images/venmo-button.png"/>
-			<img alt="Pay Later" src="' . esc_url( $module_url ) . 'assets/images/paylater-button.png"/>
+			<img alt="PayPal" src="' . esc_url( $module_url ) . 'assets/images/paypal-button.svg"/>
+			<img alt="Venmo" src="' . esc_url( $module_url ) . 'assets/images/venmo.svg"/>
+			<img alt="Pay Later" src="' . esc_url( $module_url ) . 'assets/images/paylater.svg"/>
 		</div>
 		<div class="ppcp-onboarding-header-cards">
-			<img alt="Visa" src="' . esc_url( $module_url ) . 'assets/images/visa.svg"/>
-			<img alt="Mastercard" src="' . esc_url( $module_url ) . 'assets/images/mastercard.svg"/>
+			<img alt="Visa" src="' . esc_url( $module_url ) . 'assets/images/visa-dark.svg"/>
+			<img alt="Mastercard" src="' . esc_url( $module_url ) . 'assets/images/mastercard-dark.svg"/>
 			<img alt="American Express" src="' . esc_url( $module_url ) . 'assets/images/amex.svg"/>
 			<img alt="Discover" src="' . esc_url( $module_url ) . 'assets/images/discover.svg"/>
-			<img alt="iDEAL" src="' . esc_url( $module_url ) . 'assets/images/ideal.svg"/>
+			<img alt="iDEAL" src="' . esc_url( $module_url ) . 'assets/images/ideal-dark.svg"/>
 			<img alt="Sofort" src="' . esc_url( $module_url ) . 'assets/images/sofort.svg"/>
 		</div>
 	</div>
@@ -322,7 +322,7 @@ return array(
 				'state_from'   => Environment::SANDBOX,
 				'requirements' => array(),
 				'gateway'      => 'paypal',
-				'description'  => __( 'Your account is connected to sandbox, no real charging takes place. To accept live payments, disconnect and connect your live PayPal account.', 'woocommerce-paypal-payments' ),
+				'description'  => __( 'Your account is connected to sandbox, no real charging takes place. To accept live payments, turn off sandbox mode and connect your live PayPal account.', 'woocommerce-paypal-payments' ),
 			),
 
 			'ppcp_onboarading_options'           => array(
@@ -905,6 +905,9 @@ return array(
 				'type'         => 'select',
 				'class'        => array(),
 				'input_class'  => array( 'wc-enhanced-select' ),
+				/**
+				 * Returns default label ID of the PayPal button.
+				 */
 				'default'      => apply_filters( 'woocommerce_paypal_payments_button_label_default', 'paypal' ),
 				'desc_tip'     => true,
 				'description'  => __(
@@ -1207,6 +1210,9 @@ return array(
 				'type'         => 'select',
 				'class'        => array(),
 				'input_class'  => array( 'wc-enhanced-select' ),
+				/**
+				 * Returns default label ID of the PayPal button on product pages.
+				 */
 				'default'      => apply_filters( 'woocommerce_paypal_payments_button_product_label_default', 'paypal' ),
 				'desc_tip'     => true,
 				'description'  => __(
@@ -1510,6 +1516,9 @@ return array(
 				'type'         => 'select',
 				'class'        => array(),
 				'input_class'  => array( 'wc-enhanced-select' ),
+				/**
+				 * Returns default label ID of the PayPal button in cart.
+				 */
 				'default'      => apply_filters( 'woocommerce_paypal_payments_button_cart_label_default', 'paypal' ),
 				'desc_tip'     => true,
 				'description'  => __(
@@ -1813,6 +1822,9 @@ return array(
 				'type'         => 'select',
 				'class'        => array(),
 				'input_class'  => array( 'wc-enhanced-select' ),
+				/**
+				 * Returns default label ID of the PayPal button in mini cart.
+				 */
 				'default'      => apply_filters( 'woocommerce_paypal_payments_button_mini_cart_label_default', 'paypal' ),
 				'desc_tip'     => true,
 				'description'  => __(
