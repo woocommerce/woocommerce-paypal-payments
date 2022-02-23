@@ -26,7 +26,9 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\AmountFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ApplicationContextFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\AuthorizationFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\CaptureFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ExchangeRateFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ItemFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\MoneyFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PatchCollectionFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayeeFactory;
@@ -34,7 +36,9 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentsFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentSourceFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PlatformFeeFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\SellerReceivableBreakdownFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\SellerStatusFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookEventFactory;
@@ -239,7 +243,10 @@ return array(
 	'api.factory.capture'                       => static function ( ContainerInterface $container ): CaptureFactory {
 
 		$amount_factory   = $container->get( 'api.factory.amount' );
-		return new CaptureFactory( $amount_factory );
+		return new CaptureFactory(
+			$amount_factory,
+			$container->get( 'api.factory.seller-receivable-breakdown' )
+		);
 	},
 	'api.factory.purchase-unit'                 => static function ( ContainerInterface $container ): PurchaseUnitFactory {
 
@@ -280,8 +287,12 @@ return array(
 		$item_factory = $container->get( 'api.factory.item' );
 		return new AmountFactory(
 			$item_factory,
+			$container->get( 'api.factory.money' ),
 			$container->get( 'api.shop.currency' )
 		);
+	},
+	'api.factory.money'                         => static function ( ContainerInterface $container ): MoneyFactory {
+		return new MoneyFactory();
 	},
 	'api.factory.payer'                         => static function ( ContainerInterface $container ): PayerFactory {
 		$address_factory = $container->get( 'api.factory.address' );
@@ -314,6 +325,22 @@ return array(
 	},
 	'api.factory.authorization'                 => static function ( ContainerInterface $container ): AuthorizationFactory {
 		return new AuthorizationFactory();
+	},
+	'api.factory.exchange-rate'                 => static function ( ContainerInterface $container ): ExchangeRateFactory {
+		return new ExchangeRateFactory();
+	},
+	'api.factory.platform-fee'                  => static function ( ContainerInterface $container ): PlatformFeeFactory {
+		return new PlatformFeeFactory(
+			$container->get( 'api.factory.money' ),
+			$container->get( 'api.factory.payee' )
+		);
+	},
+	'api.factory.seller-receivable-breakdown'   => static function ( ContainerInterface $container ): SellerReceivableBreakdownFactory {
+		return new SellerReceivableBreakdownFactory(
+			$container->get( 'api.factory.money' ),
+			$container->get( 'api.factory.exchange-rate' ),
+			$container->get( 'api.factory.platform-fee' )
+		);
 	},
 	'api.helpers.dccapplies'                    => static function ( ContainerInterface $container ) : DccApplies {
 		return new DccApplies(

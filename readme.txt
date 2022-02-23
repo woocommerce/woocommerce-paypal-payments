@@ -97,6 +97,8 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Enhancement - Add transaction ID to WC order and order note when refund is received #473
 * Enhancement - Asset caching may cause bugs on upgrades #501
 * Enhancement - Allow partial capture #483
+* Enhancement - PayPal Payments doesn't set transaction fee metadata #467
+* Enhancement - Show PayPal fee information in order #489
 
 = 1.6.5 =
 * Fix - Allow guest users to purchase subscription products from checkout page #422

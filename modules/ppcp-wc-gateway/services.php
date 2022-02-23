@@ -19,6 +19,7 @@ use WooCommerce\PayPalCommerce\Button\Helper\MessagesDisclaimers;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\State;
+use WooCommerce\PayPalCommerce\WcGateway\Admin\FeesRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\RenderAuthorizeAction;
@@ -250,6 +251,9 @@ return array(
 	'wcgateway.admin.orders-payment-status-column' => static function ( ContainerInterface $container ): OrderTablePaymentStatusColumn {
 		$settings = $container->get( 'wcgateway.settings' );
 		return new OrderTablePaymentStatusColumn( $settings );
+	},
+	'wcgateway.admin.fees-renderer'                => static function ( ContainerInterface $container ): FeesRenderer {
+		return new FeesRenderer();
 	},
 
 	'wcgateway.settings.fields'                    => static function ( ContainerInterface $container ): array {
