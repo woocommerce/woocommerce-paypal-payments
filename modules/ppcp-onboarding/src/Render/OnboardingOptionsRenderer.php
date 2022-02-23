@@ -181,7 +181,7 @@ class OnboardingOptionsRenderer {
 
 		return "
 <tr>
-	<td>$tooltip_html $header</td>
+	<th>$tooltip_html $header</th>
 	<td>$value_html</td>
 </tr>";
 	}

@@ -104,20 +104,17 @@ ul.ppcp-onboarding-options-sublist {
 	margin-right: 15px;
 }
 
-.ppcp-onboarding-cards-options table td {
+.ppcp-onboarding-cards-options table th, .ppcp-onboarding-cards-options table td {
 	padding-top: 2px;
 }
 
-.ppcp-onboarding-cards-options table td:first-child {
+.ppcp-onboarding-cards-options table th {
 	vertical-align: top;
-}
-
-.ppcp-onboarding-cards-options table tr:not(:last-child) td {
-	padding-bottom: 0;
-}
-
-.ppcp-onboarding-cards-options table tr td:first-child {
 	width: 350px;
+}
+
+.ppcp-onboarding-cards-options table tr:not(:last-child) th, .ppcp-onboarding-cards-options table tr:not(:last-child) td {
+	padding-bottom: 0;
 }
 
 .ppcp-onboarding-cards-screen {
