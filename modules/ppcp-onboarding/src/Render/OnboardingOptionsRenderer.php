@@ -21,12 +21,21 @@ class OnboardingOptionsRenderer {
 	private $module_url;
 
 	/**
+	 * 2-letter country code of the shop.
+	 *
+	 * @var string
+	 */
+	private $country;
+
+	/**
 	 * OnboardingOptionsRenderer constructor.
 	 *
 	 * @param string $module_url The module url (for assets).
+	 * @param string $country 2-letter country code of the shop.
 	 */
-	public function __construct( string $module_url ) {
+	public function __construct( string $module_url, string $country ) {
 		$this->module_url = $module_url;
+		$this->country    = $country;
 	}
 
 	/**
@@ -59,13 +68,15 @@ class OnboardingOptionsRenderer {
 	private function render_dcc( bool $is_shop_supports_dcc ): string {
 		$items = array();
 
+		$is_us_shop = 'US' === $this->country;
+
 		if ( $is_shop_supports_dcc ) {
 			$dcc_table_rows = array(
 				$this->render_table_row(
 					__( 'Credit & Debit Card form fields', 'woocommerce-paypal-payments' ),
 					__( 'Customizable user experience', 'woocommerce-paypal-payments' )
 				),
-				$this->render_table_row(
+				! $is_us_shop ? '' : $this->render_table_row(
 					__( 'Credit & Debit Card pricing', 'woocommerce-paypal-payments' ),
 					__( '2.59% + $0.49', 'woocommerce-paypal-payments' ),
 					'',
@@ -82,7 +93,7 @@ class OnboardingOptionsRenderer {
 					__( 'Yes', 'woocommerce-paypal-payments' ),
 					__( 'Included with Advanced Checkout at no extra cost, Fraud Protection gives you the insight and control you need to better balance chargebacks and declines.', 'woocommerce-paypal-payments' )
 				),
-				$this->render_table_row(
+				! $is_us_shop ? '' : $this->render_table_row(
 					__( 'Chargeback Protection', 'woocommerce-paypal-payments' ),
 					__( 'Optional', 'woocommerce-paypal-payments' ),
 					__( 'If you choose this optional, fee-based alternative to Fraud Protection, PayPal will manage chargebacks for eligible credit and debit card transactions — so you won’t have to worry about unexpected costs.', 'woocommerce-paypal-payments' ),
@@ -118,7 +129,7 @@ class OnboardingOptionsRenderer {
 				__( 'Credit & Debit Card form fields', 'woocommerce-paypal-payments' ),
 				__( 'Prebuilt user experience', 'woocommerce-paypal-payments' )
 			),
-			$this->render_table_row(
+			! $is_us_shop ? '' : $this->render_table_row(
 				__( 'Credit & Debit Card pricing', 'woocommerce-paypal-payments' ),
 				__( '3.49% + $0.49', 'woocommerce-paypal-payments' ),
 				'',
