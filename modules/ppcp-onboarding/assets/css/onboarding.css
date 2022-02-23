@@ -133,3 +133,34 @@ ul.ppcp-onboarding-options-sublist {
 .woocommerce-help-tip.ppcp-table-row-tooltip {
 	margin-left: -20px !important;
 }
+
+@media (max-width: 1200px) {
+	.ppcp-onboarding-header, .ppcp-onboarding-cards-options {
+		width: unset;
+		display: block;
+	}
+
+	.ppcp-onboarding-header-right {
+		text-align: left;
+	}
+
+	.ppcp-onboarding-cards-screen {
+		display: none;
+	}
+
+	.ppcp-onboarding-header-left img {
+		height: 30px;
+	}
+
+	.ppcp-onboarding-header-cards img, .ppcp-onboarding-header-paypal-logos img {
+		margin: 2px;
+	}
+
+	.ppcp-onboarding-header-cards img {
+		height: 27px;
+	}
+
+	.ppcp-onboarding-header-paypal-logos img {
+		height: 23px;
+	}
+}
