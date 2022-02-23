@@ -86,7 +86,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Fix - Multi-currency broke #481
 * Fix - Address information from PayPal shortcut flow not loaded #451
 * Fix - WooCommerce as mu-plugin is not detected as active #461
-* Enhancement - Improve onboarding flow, allow no card processing #443
+* Enhancement - Improve onboarding flow, allow no card processing #443 #508 #510
 * Enhancement - Add Germany to supported ACDC countries #459
 * Enhancement - Add filters to allow ACDC for countries #437
 * Enhancement - Update 3D Secure #464
