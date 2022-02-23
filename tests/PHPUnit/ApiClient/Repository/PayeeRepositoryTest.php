@@ -3,9 +3,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Repository;
 
-use WooCommerce\PayPalCommerce\ApiClient\Config\Config;
-use WooCommerce\PayPalCommerce\ApiClient\TestCase;
-use Mockery;
+use WooCommerce\PayPalCommerce\TestCase;
 
 class PayeeRepositoryTest extends TestCase
 {

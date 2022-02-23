@@ -82,8 +82,10 @@ Follow the steps below to connect the plugin to your PayPal account:
 == Changelog ==
 
 = 1.7.0 =
+* Fix - DCC orders randomly failing #503
 * Fix - Multi-currency broke #481
 * Fix - Address information from PayPal shortcut flow not loaded #451
+* Fix - WooCommerce as mu-plugin is not detected as active #461
 * Enhancement - Improve onboarding flow, allow no card processing #443
 * Enhancement - Add Germany to supported ACDC countries #459
 * Enhancement - Add filters to allow ACDC for countries #437
@@ -93,6 +95,8 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Enhancement - Pass address details to credit card fields #479
 * Enhancement - Improve onboarding notice #465
 * Enhancement - Add transaction ID to WC order and order note when refund is received #473
+* Enhancement - Asset caching may cause bugs on upgrades #501
+* Enhancement - Allow partial capture #483
 
 = 1.6.5 =
 * Fix - Allow guest users to purchase subscription products from checkout page #422

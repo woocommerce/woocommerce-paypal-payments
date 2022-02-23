@@ -23,7 +23,10 @@ class PluginModule implements ModuleInterface {
 	 * {@inheritDoc}
 	 */
 	public function setup(): ServiceProviderInterface {
-		return new ServiceProvider( array(), array() );
+		return new ServiceProvider(
+			require __DIR__ . '/services.php',
+			require __DIR__ . '/extensions.php'
+		);
 	}
 
 	/**

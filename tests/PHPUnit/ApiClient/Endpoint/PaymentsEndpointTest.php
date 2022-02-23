@@ -13,10 +13,9 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Token;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\AuthorizationFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\CaptureFactory;
-use WooCommerce\PayPalCommerce\ApiClient\TestCase;
 use Mockery;
 
-use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\TestCase;
 use function Brain\Monkey\Functions\expect;
 
 class PaymentsEndpointTest extends TestCase
