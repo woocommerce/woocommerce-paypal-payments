@@ -452,6 +452,12 @@ class SmartButton implements SmartButtonInterface {
 			return;
 		}
 
+		$available_gateways = WC()->payment_gateways->get_available_payment_gateways();
+
+		if ( ! isset( $available_gateways['ppcp-gateway'] ) ) {
+			return;
+		}
+
 		echo '<div id="ppc-button"></div>';
 	}
 
