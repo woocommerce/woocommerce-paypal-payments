@@ -686,7 +686,7 @@ class SmartButton implements SmartButtonInterface {
 				),
 			),
 			'enforce_vault'                  => $this->has_subscriptions(),
-			'can_save_vault_token'                      => $this->can_save_vault_token(),
+			'can_save_vault_token'           => $this->can_save_vault_token(),
 			'bn_codes'                       => $this->bn_codes(),
 			'payer'                          => $this->payerData(),
 			'button'                         => array(
