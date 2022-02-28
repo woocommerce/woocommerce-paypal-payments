@@ -94,6 +94,18 @@ class SubscriptionModule implements ModuleInterface {
 			20,
 			2
 		);
+
+		add_action('woocommerce_paypal_payments_check_saved_payment', function ($order_id, $customer_id) use ($c) {
+			$payment_token_repository = $c->get( 'vaulting.repository.payment-token' );
+			$settings                 = $c->get( 'wcgateway.settings' );
+
+			$tokens = $payment_token_repository->all_for_user_id( $customer_id );
+			if($tokens) {
+				if ( $settings->has( 'intent' ) && strtoupper( (string) $settings->get( 'intent' ) ) === 'CAPTURE' ) {
+					//$this->authorized_payments_processor->capture_authorized_payment( $wc_order );
+				}
+			}
+		}, 10, 2);
 	}
 
 	/**
