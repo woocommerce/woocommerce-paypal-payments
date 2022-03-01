@@ -216,8 +216,11 @@ class CreditCardRenderer {
                 this.spinner.unblock();
                 return contextConfig.onApprove(payload);
             }).catch(err => {
-                console.error(err);
                 this.spinner.unblock();
+                this.errorHandler.clear();
+                if (err.details.length > 0) {
+                    this.errorHandler.message(err.details.map(d => `${d.issue} ${d.description}`).join('<br/>'), true);
+                }
             });
         } else {
             this.spinner.unblock();
