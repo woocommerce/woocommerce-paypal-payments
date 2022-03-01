@@ -12,45 +12,73 @@ namespace WooCommerce\PayPalCommerce\Vaulting;
 use Exception;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 
+/**
+ * Class PaymentTokenChecker
+ */
 class PaymentTokenChecker {
 
 	/**
+	 * The payment token repository.
+	 *
 	 * @var PaymentTokenRepository
 	 */
 	protected $payment_token_repository;
 
 	/**
+	 * The settings.
+	 *
 	 * @var Settings
 	 */
 	protected $settings;
 
 	/**
+	 * The authorized payments processor.
+	 *
 	 * @var AuthorizedPaymentsProcessor
 	 */
 	protected $authorized_payments_processor;
 
 	/**
+	 * The order endpoint.
+	 *
 	 * @var OrderEndpoint
 	 */
 	protected $order_endpoint;
 
 	/**
+	 * The payments endpoint.
+	 *
 	 * @var PaymentsEndpoint
 	 */
 	protected $payments_endpoint;
 
 	/**
+	 * The logger.
+	 *
 	 * @var LoggerInterface
 	 */
 	protected $logger;
 
+	/**
+	 * PaymentTokenChecker constructor.
+	 *
+	 * @param PaymentTokenRepository      $payment_token_repository The payment token repository.
+	 * @param Settings                    $settings The settings.
+	 * @param AuthorizedPaymentsProcessor $authorized_payments_processor The authorized payments processor.
+	 * @param OrderEndpoint               $order_endpoint The order endpoint.
+	 * @param PaymentsEndpoint            $payments_endpoint The payments endpoint.
+	 * @param LoggerInterface             $logger The logger.
+	 */
 	public function __construct(
 		PaymentTokenRepository $payment_token_repository,
 		Settings $settings,
@@ -58,58 +86,70 @@ class PaymentTokenChecker {
 		OrderEndpoint $order_endpoint,
 		PaymentsEndpoint $payments_endpoint,
 		LoggerInterface $logger
-	)
-	{
-		$this->payment_token_repository = $payment_token_repository;
-		$this->settings = $settings;
+	) {
+		$this->payment_token_repository      = $payment_token_repository;
+		$this->settings                      = $settings;
 		$this->authorized_payments_processor = $authorized_payments_processor;
-		$this->order_endpoint = $order_endpoint;
-		$this->logger = $logger;
-		$this->payments_endpoint = $payments_endpoint;
+		$this->order_endpoint                = $order_endpoint;
+		$this->payments_endpoint             = $payments_endpoint;
+		$this->logger                        = $logger;
 	}
 
-	public function checkAndUpdate($order_id, $customer_id) {
+	/**
+	 * Check if payment token exist and updates order accordingly.
+	 *
+	 * @param int $order_id The order ID.
+	 * @param int $customer_id The customer ID.
+	 * @return void
+	 */
+	public function check_and_update( int $order_id, int $customer_id ):void {
 		$tokens = $this->payment_token_repository->all_for_user_id( $customer_id );
 		if ( $tokens ) {
-			$this->capture_authorized_payment(
-				$order_id,
-				$customer_id
-			);
+			try {
+				$this->capture_authorized_payment( $order_id );
+			} catch ( NotFoundException $exception ) {
+				$this->logger->warning( "It was not possible to capture the payment for order: #{$order_id}" );
+			}
+
+			return;
 		}
 
 		$this->logger->error( "Payment for subscription parent order #{$order_id} was not saved on PayPal." );
 
 		$wc_order = wc_get_order( $order_id );
-		$order    = $this->getOrder( $wc_order );
+		$order    = $this->get_order( $wc_order );
 
 		try {
-			$this->void_authorizations( $order);
+			$this->void_authorizations( $order );
 		} catch ( RuntimeException $exception ) {
-			$this->logger->warning($exception->getMessage());
+			$this->logger->warning( $exception->getMessage() );
 		}
 
-		$this->updateFailedStatus( $wc_order, $order_id );
+		$this->update_failed_status( $wc_order );
 	}
 
 	/**
-	 * @param $order_id
-	 * @param $customer_id
-	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException
+	 * Captures authorized payments for the given order id.
+	 *
+	 * @param int $order_id The WC order ID.
+	 * @return void
+	 * @throws NotFoundException When there is a problem capturing the payment.
 	 */
-	private function capture_authorized_payment($order_id, $customer_id): void {
+	private function capture_authorized_payment( int $order_id ): void {
 		if ( $this->settings->has( 'intent' ) && strtoupper( (string) $this->settings->get( 'intent' ) ) === 'CAPTURE' ) {
 			$wc_order = wc_get_order( $order_id );
 			$this->authorized_payments_processor->capture_authorized_payment( $wc_order );
-			$this->logger->info( "Order: #{$order_id} for user: {$customer_id} captured successfully." );
 		}
 	}
 
 	/**
-	 * @param $order
-	 * @param $payments_endpoint
-	 * @throws RuntimeException
+	 * Voids authorizations for the given PayPal order.
+	 *
+	 * @param Order $order The PayPal order.
+	 * @return void
+	 * @throws RuntimeException When there is a problem voiding authorizations.
 	 */
-	protected function void_authorizations( $order ): void {
+	private function void_authorizations( Order $order ): void {
 		$purchase_units = $order->purchase_units();
 		if ( ! $purchase_units ) {
 			throw new RuntimeException( 'No purchase units.' );
@@ -136,10 +176,13 @@ class PaymentTokenChecker {
 	}
 
 	/**
-	 * @param $wc_order
-	 * @return mixed
+	 * Gets a PayPal order from the given WooCommerce order.
+	 *
+	 * @param WC_Order $wc_order The WooCommerce order.
+	 * @return Order The PayPal order.
+	 * @throws RuntimeException When there is a problem getting the PayPal order.
 	 */
-	protected function getOrder( $wc_order ) {
+	private function get_order( WC_Order $wc_order ): Order {
 		$paypal_order_id = $wc_order->get_meta( PayPalGateway::ORDER_ID_META_KEY );
 		if ( ! $paypal_order_id ) {
 			throw new RuntimeException( 'PayPal order ID not found in meta.' );
@@ -149,16 +192,17 @@ class PaymentTokenChecker {
 	}
 
 	/**
-	 * @param $wc_order
-	 * @param $order_id
+	 * Updates WC order and subscription status to failed and canceled respectively.
+	 *
+	 * @param WC_Order $wc_order The WC order.
 	 */
-	protected function updateFailedStatus( $wc_order, $order_id ): void {
+	private function update_failed_status( WC_Order $wc_order ): void {
 		$error_message = __( 'Could not process order because it was not possible to save the payment on PayPal.', 'woocommerce-paypal-payments' );
 		$wc_order->update_status( 'failed', $error_message );
 
-		$subscriptions = wcs_get_subscriptions_for_order( $order_id );
+		$subscriptions = wcs_get_subscriptions_for_order( $wc_order->get_id() );
 		foreach ( $subscriptions as $key => $subscription ) {
-			if ( $subscription->get_parent_id() === $order_id ) {
+			if ( $subscription->get_parent_id() === $wc_order->get_id() ) {
 				try {
 					$subscription->update_status( 'cancelled' );
 					break;

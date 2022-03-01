@@ -11,13 +11,9 @@ namespace WooCommerce\PayPalCommerce\Vaulting;
 
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
-use Exception;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
-use RuntimeException;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
 use WooCommerce\PayPalCommerce\Vaulting\Endpoint\DeletePaymentTokenEndpoint;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 /**
  * Class StatusReportModule
@@ -137,8 +133,8 @@ class VaultingModule implements ModuleInterface {
 		add_action(
 			'woocommerce_paypal_payments_check_saved_payment',
 			function ( $order_id, $customer_id ) use ( $container ) {
-				$payment_token_checker = $container->get('vaulting.payment-token-checker');
-				$payment_token_checker->checkAndUpdate($order_id, $customer_id);
+				$payment_token_checker = $container->get( 'vaulting.payment-token-checker' );
+				$payment_token_checker->check_and_update( $order_id, $customer_id );
 			},
 			10,
 			2

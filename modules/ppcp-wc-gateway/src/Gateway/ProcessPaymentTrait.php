@@ -175,12 +175,12 @@ trait ProcessPaymentTrait {
 			if ( $this->order_processor->process( $wc_order ) ) {
 				if ( $this->subscription_helper->has_subscription( $order_id ) ) {
 					as_schedule_single_action(
-						time() + (1 * MINUTE_IN_SECONDS),
+						time() + ( 1 * MINUTE_IN_SECONDS ),
 						'woocommerce_paypal_payments_check_saved_payment',
 						array(
-							'order_id' => $order_id,
+							'order_id'    => $order_id,
 							'customer_id' => $wc_order->get_customer_id(),
-							)
+						)
 					);
 				}
 
