@@ -181,7 +181,7 @@ class CreditCardRenderer {
         this.errorHandler.clear();
 
         if (this.formValid && this.cardValid) {
-            const save_card = this.defaultConfig.save_card ? true : false;
+            const save_card = this.defaultConfig.can_save_vault_token ? true : false;
             let vault = document.getElementById('ppcp-credit-card-vault') ?
                 document.getElementById('ppcp-credit-card-vault').checked : save_card;
             if (this.defaultConfig.enforce_vault) {
