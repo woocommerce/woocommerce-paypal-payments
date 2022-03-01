@@ -1,6 +1,6 @@
 *** Changelog ***
 
-= 1.7.0 - TBD =
+= 1.7.0 - 2022-02-28 =
 * Fix - DCC orders randomly failing #503
 * Fix - Multi-currency broke #481
 * Fix - Address information from PayPal shortcut flow not loaded #451
