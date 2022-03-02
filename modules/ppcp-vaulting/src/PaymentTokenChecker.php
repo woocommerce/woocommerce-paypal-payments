@@ -103,6 +103,11 @@ class PaymentTokenChecker {
 	 * @return void
 	 */
 	public function check_and_update( int $order_id, int $customer_id ):void {
+		$wc_order = wc_get_order( $order_id );
+		if ( $wc_order->get_status() === 'processing' ) {
+			return;
+		}
+
 		$tokens = $this->payment_token_repository->all_for_user_id( $customer_id );
 		if ( $tokens ) {
 			try {
@@ -116,7 +121,6 @@ class PaymentTokenChecker {
 
 		$this->logger->error( "Payment for subscription parent order #{$order_id} was not saved on PayPal." );
 
-		$wc_order = wc_get_order( $order_id );
 		$order    = $this->get_order( $wc_order );
 
 		try {
