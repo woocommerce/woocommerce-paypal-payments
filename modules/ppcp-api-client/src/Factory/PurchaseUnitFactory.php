@@ -131,7 +131,7 @@ class PurchaseUnitFactory {
 			$description,
 			$payee,
 			$custom_id,
-			$invoice_id . $retry,
+			$invoice_id,
 			$soft_descriptor
 		);
 		/**
