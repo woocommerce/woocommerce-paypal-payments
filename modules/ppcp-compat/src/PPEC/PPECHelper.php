@@ -89,6 +89,9 @@ class PPECHelper {
 	 * @return bool
 	 */
 	public static function use_ppec_compat_layer_for_subscriptions() {
+		/**
+		 * The filter returning whether the compatibility layer for PPEC Subscriptions should be initialized.
+		 */
 		return ( ! self::is_gateway_available() ) && self::site_has_ppec_subscriptions() && apply_filters( 'woocommerce_paypal_payments_process_legacy_subscriptions', true );
 	}
 

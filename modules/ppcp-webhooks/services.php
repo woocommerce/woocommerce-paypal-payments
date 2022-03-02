@@ -161,7 +161,8 @@ return array(
 
 	'webhook.status.assets'                   => function( ContainerInterface $container ) : WebhooksStatusPageAssets {
 		return new WebhooksStatusPageAssets(
-			$container->get( 'webhook.module-url' )
+			$container->get( 'webhook.module-url' ),
+			$container->get( 'ppcp.asset-version' )
 		);
 	},
 
@@ -202,7 +203,7 @@ return array(
 	'webhook.module-url'                      => static function ( ContainerInterface $container ): string {
 		return plugins_url(
 			'/modules/ppcp-webhooks/',
-			dirname( __FILE__, 3 ) . '/woocommerce-paypal-payments.php'
+			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
 		);
 	},
 );

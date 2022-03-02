@@ -24,14 +24,24 @@ class MyAccountPaymentsAssets {
 	private $module_url;
 
 	/**
+	 * The assets version.
+	 *
+	 * @var string
+	 */
+	private $version;
+
+	/**
 	 * MyAccountPaymentsAssets constructor.
 	 *
 	 * @param string $module_url The URL to the module.
+	 * @param string $version                            The assets version.
 	 */
 	public function __construct(
-		string $module_url
+		string $module_url,
+		string $version
 	) {
 		$this->module_url = untrailingslashit( $module_url );
+		$this->version    = $version;
 	}
 
 	/**
@@ -42,9 +52,9 @@ class MyAccountPaymentsAssets {
 	public function enqueue(): void {
 		wp_enqueue_script(
 			'ppcp-vaulting-myaccount-payments',
-			$this->module_url . '/assets/js/myaccount-payments.js',
+			untrailingslashit( $this->module_url ) . '/assets/js/myaccount-payments.js',
 			array( 'jquery' ),
-			'1',
+			$this->version,
 			true
 		);
 	}

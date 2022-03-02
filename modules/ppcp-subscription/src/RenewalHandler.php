@@ -10,20 +10,25 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Subscription;
 
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
+use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\PaymentsStatusHandlingTrait;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 
 /**
  * Class RenewalHandler
  */
 class RenewalHandler {
+
+	use OrderMetaTrait;
+	use TransactionIdHandlingTrait;
+	use PaymentsStatusHandlingTrait;
 
 	/**
 	 * The logger.
@@ -61,6 +66,13 @@ class RenewalHandler {
 	private $payer_factory;
 
 	/**
+	 * The environment.
+	 *
+	 * @var Environment
+	 */
+	protected $environment;
+
+	/**
 	 * RenewalHandler constructor.
 	 *
 	 * @param LoggerInterface        $logger The logger.
@@ -68,13 +80,15 @@ class RenewalHandler {
 	 * @param OrderEndpoint          $order_endpoint The order endpoint.
 	 * @param PurchaseUnitFactory    $purchase_unit_factory The purchase unit factory.
 	 * @param PayerFactory           $payer_factory The payer factory.
+	 * @param Environment            $environment The environment.
 	 */
 	public function __construct(
 		LoggerInterface $logger,
 		PaymentTokenRepository $repository,
 		OrderEndpoint $order_endpoint,
 		PurchaseUnitFactory $purchase_unit_factory,
-		PayerFactory $payer_factory
+		PayerFactory $payer_factory,
+		Environment $environment
 	) {
 
 		$this->logger                = $logger;
@@ -82,6 +96,7 @@ class RenewalHandler {
 		$this->order_endpoint        = $order_endpoint;
 		$this->purchase_unit_factory = $purchase_unit_factory;
 		$this->payer_factory         = $payer_factory;
+		$this->environment           = $environment;
 	}
 
 	/**
@@ -90,52 +105,23 @@ class RenewalHandler {
 	 * @param \WC_Order $wc_order The WooCommerce order.
 	 */
 	public function renew( \WC_Order $wc_order ) {
-
-		$this->logger->log(
-			'info',
-			sprintf(
-				// translators: %d is the id of the order.
-				__( 'Start moneytransfer for order %d', 'woocommerce-paypal-payments' ),
-				(int) $wc_order->get_id()
-			),
-			array(
-				'order' => $wc_order,
-			)
-		);
-
 		try {
 			$this->process_order( $wc_order );
 		} catch ( \Exception $error ) {
-			$this->logger->log(
-				'error',
+			$this->logger->error(
 				sprintf(
-					// translators: %1$d is the order number, %2$s the error message.
-					__(
-						'An error occured while trying to renew the subscription for order %1$d: %2$s',
-						'woocommerce-paypal-payments'
-					),
-					(int) $wc_order->get_id(),
+					'An error occurred while trying to renew the subscription for order %1$d: %2$s',
+					$wc_order->get_id(),
 					$error->getMessage()
-				),
-				array(
-					'order' => $wc_order,
 				)
 			);
 
 			return;
 		}
-		$this->logger->log(
-			'info',
+		$this->logger->info(
 			sprintf(
-				// translators: %d is the order number.
-				__(
-					'Moneytransfer for order %d is completed.',
-					'woocommerce-paypal-payments'
-				),
-				(int) $wc_order->get_id()
-			),
-			array(
-				'order' => $wc_order,
+				'Renewal for order %d is completed.',
+				$wc_order->get_id()
 			)
 		);
 	}
@@ -164,7 +150,19 @@ class RenewalHandler {
 			$token
 		);
 
-		$this->capture_order( $order, $wc_order );
+		$this->add_paypal_meta( $wc_order, $order, $this->environment );
+
+		if ( $order->intent() === 'AUTHORIZE' ) {
+			$order = $this->order_endpoint->authorize( $order );
+			$wc_order->update_meta_data( AuthorizedPaymentsProcessor::CAPTURED_META_KEY, 'false' );
+		}
+
+		$transaction_id = $this->get_paypal_order_transaction_id( $order );
+		if ( $transaction_id ) {
+			$this->update_transaction_id( $transaction_id, $wc_order );
+		}
+
+		$this->handle_new_order_status( $order, $wc_order );
 	}
 
 	/**
@@ -176,6 +174,9 @@ class RenewalHandler {
 	 * @return PaymentToken|null
 	 */
 	private function get_token_for_customer( \WC_Customer $customer, \WC_Order $wc_order ) {
+		/**
+		 * Returns a payment token for a customer, or null.
+		 */
 		$token = apply_filters( 'woocommerce_paypal_payments_subscriptions_get_token_for_customer', null, $customer, $wc_order );
 		if ( null !== $token ) {
 			return $token;
@@ -185,12 +186,8 @@ class RenewalHandler {
 		if ( ! $tokens ) {
 
 			$error_message = sprintf(
-			// translators: %d is the customer id.
-				__(
-					'Payment failed. No payment tokens found for customer %d.',
-					'woocommerce-paypal-payments'
-				),
-				(int) $customer->get_id()
+				'Payment failed. No payment tokens found for customer %d.',
+				$customer->get_id()
 			);
 
 			$wc_order->update_status(
@@ -198,14 +195,7 @@ class RenewalHandler {
 				$error_message
 			);
 
-			$this->logger->log(
-				'error',
-				$error_message,
-				array(
-					'customer' => $customer,
-					'order'    => $wc_order,
-				)
-			);
+			$this->logger->error( $error_message );
 		}
 
 		$subscription = function_exists( 'wcs_get_subscription' ) ? wcs_get_subscription( $wc_order->get_meta( '_subscription_renewal' ) ) : null;
@@ -222,26 +212,5 @@ class RenewalHandler {
 		}
 
 		return current( $tokens );
-	}
-
-	/**
-	 * If the PayPal order is captured/authorized the WooCommerce order gets updated accordingly.
-	 *
-	 * @param Order     $order The PayPal order.
-	 * @param \WC_Order $wc_order The related WooCommerce order.
-	 */
-	private function capture_order( Order $order, \WC_Order $wc_order ) {
-
-		if ( $order->intent() === 'CAPTURE' && $order->status()->is( OrderStatus::COMPLETED ) ) {
-			$wc_order->update_status(
-				'processing',
-				__( 'Payment received.', 'woocommerce-paypal-payments' )
-			);
-		}
-
-		if ( $order->intent() === 'AUTHORIZE' ) {
-			$this->order_endpoint->authorize( $order );
-			$wc_order->update_meta_data( AuthorizedPaymentsProcessor::CAPTURED_META_KEY, 'false' );
-		}
 	}
 }

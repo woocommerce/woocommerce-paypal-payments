@@ -1,8 +1,10 @@
-// Onboarding.
 const ppcp_onboarding = {
 	BUTTON_SELECTOR: '[data-paypal-onboard-button]',
 	PAYPAL_JS_ID: 'ppcp-onboarding-paypal-js',
 	_timeout: false,
+
+    STATE_START: 'start',
+    STATE_ONBOARDED: 'onboarded',
 
 	init: function() {
 		document.addEventListener('DOMContentLoaded', this.reload);
@@ -15,7 +17,7 @@ const ppcp_onboarding = {
 			return;
 		}
 
-		// Add event listeners to buttons.
+		// Add event listeners to buttons preventing link clicking if PayPal init failed.
 		buttons.forEach(
 			(element) => {
 				if (element.hasAttribute('data-ppcp-button-initialized')) {
@@ -83,14 +85,13 @@ const ppcp_onboarding = {
 						authCode: authCode,
 						sharedId: sharedId,
 						nonce: PayPalCommerceGatewayOnboarding.nonce,
-						env: env
+						env: env,
+                        acceptCards: document.querySelector('#ppcp-onboarding-accept-cards').checked,
 					}
 				)
 			}
 		);
 	},
-
-
 };
 
 function ppcp_onboarding_sandboxCallback(...args) {
@@ -101,150 +102,151 @@ function ppcp_onboarding_productionCallback(...args) {
 	return ppcp_onboarding.loginSeller('production', ...args);
 }
 
-/**
- * Since the PayPal modal will redirect the user a dirty form
- * provokes an alert if the user wants to leave the page. Since the user
- * needs to toggle the sandbox switch, we disable this dirty state with the
- * following workaround for checkboxes.
- *
- * @param event
- */
-const checkBoxOnClick = (event) => {
-	const value = event.target.checked;
-	if (event.target.getAttribute('id') === 'ppcp-sandbox_on') {
-		toggleSandboxProduction(! value);
-	}
-	event.preventDefault();
-	event.stopPropagation();
-	setTimeout( () => {
-		event.target.checked = value;
-		},1
-	);
-};
-
-/**
- * Toggles the credential input fields.
- *
- * @param forProduction
- */
-const credentialToggle = (forProduction) => {
-
-	const sandboxClassSelectors = [
-		'#field-ppcp_disconnect_sandbox',
-		'#field-merchant_email_sandbox',
-		'#field-merchant_id_sandbox',
-		'#field-client_id_sandbox',
-		'#field-client_secret_sandbox',
-	];
-	const productionClassSelectors = [
-		'#field-ppcp_disconnect_production',
-		'#field-merchant_email_production',
-		'#field-merchant_id_production',
-		'#field-client_id_production',
-		'#field-client_secret_production',
-	];
-
-	const selectors = forProduction ? productionClassSelectors : sandboxClassSelectors;
-	document.querySelectorAll(selectors.join()).forEach(
-		(element) => {element.classList.toggle('show')}
-	)
-};
-
-/**
- * Toggles the visibility of the sandbox/production input fields.
- *
- * @param showProduction
- */
-const toggleSandboxProduction = (showProduction) => {
-	const productionDisplaySelectors = [
-		'#field-credentials_production_heading',
-		'#field-production_toggle_manual_input',
-		'#field-ppcp_onboarding_production',
-	];
-	const productionClassSelectors = [
-
-		'#field-ppcp_disconnect_production',
-		'#field-merchant_email_production',
-		'#field-merchant_id_production',
-		'#field-client_id_production',
-		'#field-client_secret_production',
-	];
-	const sandboxDisplaySelectors = [
-		'#field-credentials_sandbox_heading',
-		'#field-sandbox_toggle_manual_input',
-		'#field-ppcp_onboarding_sandbox',
-	];
-	const sandboxClassSelectors = [
-		'#field-ppcp_disconnect_sandbox',
-		'#field-merchant_email_sandbox',
-		'#field-merchant_id_sandbox',
-		'#field-client_id_sandbox',
-		'#field-client_secret_sandbox',
-	];
-
-	if (showProduction) {
-		document.querySelectorAll(productionDisplaySelectors.join()).forEach(
-			(element) => {element.style.display = ''}
-		);
-		document.querySelectorAll(sandboxDisplaySelectors.join()).forEach(
-			(element) => {element.style.display = 'none'}
-		);
-		document.querySelectorAll(productionClassSelectors.join()).forEach(
-			(element) => {element.classList.remove('hide')}
-		);
-		document.querySelectorAll(sandboxClassSelectors.join()).forEach(
-			(element) => {
-				element.classList.remove('show');
-				element.classList.add('hide');
-			}
-		);
-		return;
-	}
-	document.querySelectorAll(productionDisplaySelectors.join()).forEach(
-		(element) => {element.style.display = 'none'}
-	);
-	document.querySelectorAll(sandboxDisplaySelectors.join()).forEach(
-		(element) => {element.style.display = ''}
-	);
-
-	document.querySelectorAll(sandboxClassSelectors.join()).forEach(
-		(element) => {element.classList.remove('hide')}
-	);
-	document.querySelectorAll(productionClassSelectors.join()).forEach(
-		(element) => {
-			element.classList.remove('show');
-			element.classList.add('hide');
-		}
-	)
-};
-
-const disconnect = (event) => {
-	event.preventDefault();
-	const fields = event.target.classList.contains('production') ? [
-		'#field-merchant_email_production input',
-		'#field-merchant_id_production input',
-		'#field-client_id_production input',
-		'#field-client_secret_production input',
-	] : [
-		'#field-merchant_email_sandbox input',
-		'#field-merchant_id_sandbox input',
-		'#field-client_id_sandbox input',
-		'#field-client_secret_sandbox input',
-	];
-
-	document.querySelectorAll(fields.join()).forEach(
-		(element) => {
-			element.value = '';
-		}
-	);
-	document.querySelector('.woocommerce-save-button').click();
-};
-
 (() => {
-	const sandboxSwitchElement = document.querySelector('#ppcp-sandbox_on');
-	if (sandboxSwitchElement) {
-		toggleSandboxProduction(! sandboxSwitchElement.checked);
-	}
+    const productionCredentialElementsSelectors = [
+        '#field-merchant_email_production',
+        '#field-merchant_id_production',
+        '#field-client_id_production',
+        '#field-client_secret_production',
+    ];
+    const sandboxCredentialElementsSelectors = [
+        '#field-merchant_email_sandbox',
+        '#field-merchant_id_sandbox',
+        '#field-client_id_sandbox',
+        '#field-client_secret_sandbox',
+    ];
+
+    const updateOptionsState = () => {
+        const cardsChk = document.querySelector('#ppcp-onboarding-accept-cards');
+        if (!cardsChk) {
+            return;
+        }
+
+        document.querySelectorAll('#ppcp-onboarding-dcc-options input').forEach(input => {
+            input.disabled = !cardsChk.checked;
+        });
+
+        const basicRb = document.querySelector('#ppcp-onboarding-dcc-basic');
+
+        const isExpress = !cardsChk.checked || basicRb.checked;
+
+        const expressButtonSelectors = [
+            '#field-ppcp_onboarding_production_express',
+            '#field-ppcp_onboarding_sandbox_express',
+        ];
+        const ppcpButtonSelectors = [
+            '#field-ppcp_onboarding_production_ppcp',
+            '#field-ppcp_onboarding_sandbox_ppcp',
+        ];
+
+        document.querySelectorAll(expressButtonSelectors.join()).forEach(
+            element => element.style.display = isExpress ? '' : 'none'
+        );
+        document.querySelectorAll(ppcpButtonSelectors.join()).forEach(
+            element => element.style.display = !isExpress ? '' : 'none'
+        );
+
+        const screemImg = document.querySelector('#ppcp-onboarding-cards-screen-img');
+        if (screemImg) {
+            const currentRb = Array.from(document.querySelectorAll('#ppcp-onboarding-dcc-options input[type="radio"]'))
+                .filter(rb => rb.checked)[0] ?? null;
+
+            const imgUrl = currentRb.getAttribute('data-screen-url');
+            screemImg.src = imgUrl;
+        }
+    };
+
+    const updateManualInputControls = (shown, isSandbox, isAnyEnvOnboarded) => {
+        const productionElementsSelectors = productionCredentialElementsSelectors;
+        const sandboxElementsSelectors = sandboxCredentialElementsSelectors;
+        const otherElementsSelectors = [
+            '.woocommerce-save-button',
+        ];
+        if (!isAnyEnvOnboarded) {
+            otherElementsSelectors.push('#field-sandbox_on');
+        }
+
+        document.querySelectorAll(productionElementsSelectors.join()).forEach(
+            element => {
+                element.classList.remove('hide', 'show');
+                element.classList.add((shown && !isSandbox) ? 'show' : 'hide');
+            }
+        );
+        document.querySelectorAll(sandboxElementsSelectors.join()).forEach(
+            element => {
+                element.classList.remove('hide', 'show');
+                element.classList.add((shown && isSandbox) ? 'show' : 'hide');
+            }
+        );
+        document.querySelectorAll(otherElementsSelectors.join()).forEach(
+            element => element.style.display = shown ? '' : 'none'
+        );
+    };
+
+    const updateEnvironmentControls = (isSandbox) => {
+        const productionElementsSelectors = [
+            '#field-ppcp_disconnect_production',
+            '#field-credentials_production_heading',
+        ];
+        const sandboxElementsSelectors = [
+            '#field-ppcp_disconnect_sandbox',
+            '#field-credentials_sandbox_heading',
+        ];
+
+        document.querySelectorAll(productionElementsSelectors.join()).forEach(
+            element => element.style.display = !isSandbox ? '' : 'none'
+        );
+        document.querySelectorAll(sandboxElementsSelectors.join()).forEach(
+            element => element.style.display = isSandbox ? '' : 'none'
+        );
+    };
+
+    let isDisconnecting = false;
+
+    const disconnect = (event) => {
+        event.preventDefault();
+        const fields = event.target.classList.contains('production') ? productionCredentialElementsSelectors : sandboxCredentialElementsSelectors;
+
+        document.querySelectorAll(fields.map(f => f + ' input').join()).forEach(
+            (element) => {
+                element.value = '';
+            }
+        );
+
+        isDisconnecting = true;
+
+        document.querySelector('.woocommerce-save-button').click();
+    };
+
+    // Prevent the message about unsaved checkbox/radiobutton when reloading the page.
+    // (WC listens for changes on all inputs and sets dirty flag until form submission)
+    const preventDirtyCheckboxPropagation = event => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const value = event.target.checked;
+        setTimeout( () => {
+                event.target.checked = value;
+            }, 1
+        );
+    };
+
+    const sandboxSwitchElement = document.querySelector('#ppcp-sandbox_on');
+
+    const validate = () => {
+        const selectors = sandboxSwitchElement.checked ? sandboxCredentialElementsSelectors : productionCredentialElementsSelectors;
+        const values = selectors.map(s => document.querySelector(s + ' input')).map(el => el.value);
+
+        const errors = [];
+        if (values.some(v => !v)) {
+            errors.push(PayPalCommerceGatewayOnboarding.error_messages.no_credentials);
+        }
+
+        return errors;
+    };
+
+    const isAnyEnvOnboarded = PayPalCommerceGatewayOnboarding.sandbox_state === ppcp_onboarding.STATE_ONBOARDED ||
+        PayPalCommerceGatewayOnboarding.production_state === ppcp_onboarding.STATE_ONBOARDED;
 
 	document.querySelectorAll('.ppcp-disconnect').forEach(
 		(button) => {
@@ -255,43 +257,89 @@ const disconnect = (event) => {
 		}
 	);
 
-	// Prevent a possibly dirty form arising from this particular checkbox.
-	if (sandboxSwitchElement) {
-		sandboxSwitchElement.addEventListener(
-			'click',
-			(event) => {
-				const value = event.target.checked;
+    document.querySelectorAll('.ppcp-onboarding-options input').forEach(
+        (element) => {
+            element.addEventListener('click', event => {
+                updateOptionsState();
 
-				toggleSandboxProduction( ! value );
+                preventDirtyCheckboxPropagation(event);
+            });
+        }
+    );
 
-				event.preventDefault();
-				event.stopPropagation();
-				setTimeout( () => {
-					event.target.checked = value;
-					}, 1
-				);
-			}
-		);
-	}
+    const isSandboxInBackend = PayPalCommerceGatewayOnboarding.current_env === 'sandbox';
+    if (sandboxSwitchElement.checked !== isSandboxInBackend) {
+        sandboxSwitchElement.checked = isSandboxInBackend;
+    }
 
-	// document.querySelectorAll('#mainform input[type="checkbox"]').forEach(
-	// 	(checkbox) => {
-	// 		checkbox.addEventListener('click', checkBoxOnClick);
-	// 	}
-	// );
+    updateOptionsState();
 
-	document.querySelectorAll('#field-sandbox_toggle_manual_input button, #field-production_toggle_manual_input button').forEach(
-		(button) => {
-			button.addEventListener(
-				'click',
-				(event) => {
-					event.preventDefault();
-					const isProduction = event.target.classList.contains('production-toggle');
-					credentialToggle(isProduction);
-				}
-			)
-		}
-	);
+    const settingsContainer = document.querySelector('#mainform .form-table');
+
+    const markCurrentOnboardingState = (isOnboarded) => {
+        settingsContainer.classList.remove('ppcp-onboarded', 'ppcp-onboarding');
+        settingsContainer.classList.add(isOnboarded ? 'ppcp-onboarded' : 'ppcp-onboarding');
+    }
+
+    markCurrentOnboardingState(PayPalCommerceGatewayOnboarding.current_state === ppcp_onboarding.STATE_ONBOARDED);
+
+    const manualInputToggleButton = document.querySelector('#field-toggle_manual_input button');
+    let isManualInputShown = PayPalCommerceGatewayOnboarding.current_state === ppcp_onboarding.STATE_ONBOARDED;
+
+    manualInputToggleButton.addEventListener(
+            'click',
+            (event) => {
+                event.preventDefault();
+
+                isManualInputShown = !isManualInputShown;
+
+                updateManualInputControls(isManualInputShown, sandboxSwitchElement.checked, isAnyEnvOnboarded);
+            }
+        );
+
+    sandboxSwitchElement.addEventListener(
+        'click',
+        (event) => {
+            const isSandbox = sandboxSwitchElement.checked;
+
+            if (isAnyEnvOnboarded) {
+                const onboardingState = isSandbox ? PayPalCommerceGatewayOnboarding.sandbox_state : PayPalCommerceGatewayOnboarding.production_state;
+                const isOnboarded = onboardingState === ppcp_onboarding.STATE_ONBOARDED;
+
+                markCurrentOnboardingState(isOnboarded);
+                isManualInputShown = isOnboarded;
+            }
+
+            updateManualInputControls(isManualInputShown, isSandbox, isAnyEnvOnboarded);
+
+            updateEnvironmentControls(isSandbox);
+
+            preventDirtyCheckboxPropagation(event);
+        }
+    );
+
+    updateManualInputControls(isManualInputShown, sandboxSwitchElement.checked, isAnyEnvOnboarded);
+
+    updateEnvironmentControls(sandboxSwitchElement.checked);
+
+    document.querySelector('#mainform').addEventListener('submit', e => {
+        if (isDisconnecting) {
+            return;
+        }
+
+        const errors = validate();
+        if (errors.length) {
+            e.preventDefault();
+
+            const errorLabel = document.querySelector('#ppcp-form-errors-label');
+            errorLabel.parentElement.parentElement.classList.remove('hide');
+
+            errorLabel.innerHTML = errors.join('<br/>');
+
+            errorLabel.scrollIntoView();
+            window.scrollBy(0, -120); // WP + WC floating header
+        }
+    });
 
 	// Onboarding buttons.
 	ppcp_onboarding.init();

@@ -25,11 +25,11 @@ class SettingsPageAssets {
 	private $module_url;
 
 	/**
-	 * The filesystem path to the module dir.
+	 * The assets version.
 	 *
 	 * @var string
 	 */
-	private $module_path;
+	private $version;
 
 	/**
 	 * The bearer.
@@ -42,13 +42,13 @@ class SettingsPageAssets {
 	 * Assets constructor.
 	 *
 	 * @param string $module_url The url of this module.
-	 * @param string $module_path The filesystem path to this module.
+	 * @param string $version                            The assets version.
 	 * @param Bearer $bearer The bearer.
 	 */
-	public function __construct( string $module_url, string $module_path, Bearer $bearer ) {
-		$this->module_url  = $module_url;
-		$this->module_path = $module_path;
-		$this->bearer      = $bearer;
+	public function __construct( string $module_url, string $version, Bearer $bearer ) {
+		$this->module_url = $module_url;
+		$this->version    = $version;
+		$this->bearer     = $bearer;
 	}
 
 	/**
@@ -59,7 +59,7 @@ class SettingsPageAssets {
 		add_action(
 			'admin_enqueue_scripts',
 			function() use ( $bearer ) {
-				if ( ! is_admin() || is_ajax() ) {
+				if ( ! is_admin() || wp_doing_ajax() ) {
 					return;
 				}
 
@@ -102,13 +102,11 @@ class SettingsPageAssets {
 	 * @param Bearer $bearer The bearer.
 	 */
 	private function register_admin_assets( Bearer $bearer ) {
-		$gateway_settings_script_path = trailingslashit( $this->module_path ) . 'assets/js/gateway-settings.js';
-
 		wp_enqueue_script(
 			'ppcp-gateway-settings',
 			trailingslashit( $this->module_url ) . 'assets/js/gateway-settings.js',
 			array(),
-			file_exists( $gateway_settings_script_path ) ? (string) filemtime( $gateway_settings_script_path ) : null,
+			$this->version,
 			true
 		);
 

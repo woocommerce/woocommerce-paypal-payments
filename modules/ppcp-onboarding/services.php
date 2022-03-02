@@ -18,6 +18,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnerReferrals;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Onboarding\Assets\OnboardingAssets;
 use WooCommerce\PayPalCommerce\Onboarding\Endpoint\LoginSellerEndpoint;
+use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\OnboardingRESTController;
 
@@ -117,9 +118,8 @@ return array(
 		);
 	},
 	'onboarding.state'                          => function( ContainerInterface $container ) : State {
-		$environment = $container->get( 'onboarding.environment' );
 		$settings    = $container->get( 'wcgateway.settings' );
-		return new State( $environment, $settings );
+		return new State( $settings );
 	},
 	'onboarding.environment'                    => function( ContainerInterface $container ) : Environment {
 		$settings = $container->get( 'wcgateway.settings' );
@@ -131,15 +131,18 @@ return array(
 		$login_seller_endpoint = $container->get( 'onboarding.endpoint.login-seller' );
 		return new OnboardingAssets(
 			$container->get( 'onboarding.url' ),
+			$container->get( 'ppcp.asset-version' ),
 			$state,
-			$login_seller_endpoint
+			$container->get( 'onboarding.environment' ),
+			$login_seller_endpoint,
+			$container->get( 'wcgateway.current-ppcp-settings-page-id' )
 		);
 	},
 
 	'onboarding.url'                            => static function ( ContainerInterface $container ): string {
 		return plugins_url(
 			'/modules/ppcp-onboarding/',
-			dirname( __FILE__, 3 ) . '/woocommerce-paypal-payments.php'
+			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
 		);
 	},
 
@@ -188,7 +191,6 @@ return array(
 		return new PartnerReferrals(
 			CONNECT_WOO_SANDBOX_URL,
 			new ConnectBearer(),
-			$container->get( 'api.repository.partner-referrals-data' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
@@ -197,7 +199,6 @@ return array(
 		return new PartnerReferrals(
 			CONNECT_WOO_URL,
 			new ConnectBearer(),
-			$container->get( 'api.repository.partner-referrals-data' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
@@ -205,11 +206,19 @@ return array(
 
 		$partner_referrals         = $container->get( 'api.endpoint.partner-referrals-production' );
 		$partner_referrals_sandbox = $container->get( 'api.endpoint.partner-referrals-sandbox' );
+		$partner_referrals_data    = $container->get( 'api.repository.partner-referrals-data' );
 		$settings                  = $container->get( 'wcgateway.settings' );
 		return new OnboardingRenderer(
 			$settings,
 			$partner_referrals,
-			$partner_referrals_sandbox
+			$partner_referrals_sandbox,
+			$partner_referrals_data
+		);
+	},
+	'onboarding.render-options'                 => static function ( ContainerInterface $container ) : OnboardingOptionsRenderer {
+		return new OnboardingOptionsRenderer(
+			$container->get( 'onboarding.url' ),
+			$container->get( 'api.shop.country' )
 		);
 	},
 	'onboarding.rest'                           => static function( $container ) : OnboardingRESTController {

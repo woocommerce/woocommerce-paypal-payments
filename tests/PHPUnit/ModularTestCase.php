@@ -19,13 +19,14 @@ class ModularTestCase extends TestCase
         parent::setUp();
 
         when('get_option')->justReturn(null);
+        when('admin_url')->returnArg();
         when('plugins_url')->returnArg();
         when('plugin_dir_path')->alias(function ($file) { return trailingslashit(dirname($file)); });
         when('get_current_blog_id')->justReturn(42);
         when('get_site_url')->justReturn('example.com');
         when('get_bloginfo')->justReturn('My Shop');
+		when('get_woocommerce_currency')->justReturn('USD');
         when('wc_get_base_location')->justReturn(['country' => 'US']);
-        when('get_woocommerce_currency')->justReturn('USD');
         when('WC')->justReturn((object) [
         	'session' => null,
 		]);

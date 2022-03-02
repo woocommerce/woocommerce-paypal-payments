@@ -11,9 +11,12 @@ namespace WooCommerce\PayPalCommerce\WcGateway;
 
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
+use WC_Order;
 use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
+use WooCommerce\PayPalCommerce\WcGateway\Admin\FeesRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\RenderAuthorizeAction;
@@ -21,6 +24,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Assets\SettingsPageAssets;
 use WooCommerce\PayPalCommerce\WcGateway\Checkout\CheckoutPayPalAddressPreset;
 use WooCommerce\PayPalCommerce\WcGateway\Checkout\DisableGateways;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
+use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
@@ -70,10 +74,39 @@ class WCGatewayModule implements ModuleInterface {
 			}
 		);
 
+		add_action(
+			'woocommerce_paypal_payments_order_captured',
+			function ( WC_Order $wc_order, Capture $capture ) {
+				$breakdown = $capture->seller_receivable_breakdown();
+				if ( $breakdown ) {
+					$wc_order->update_meta_data( PayPalGateway::FEES_META_KEY, $breakdown->to_array() );
+					$wc_order->save_meta_data();
+				}
+			},
+			10,
+			2
+		);
+
+		$fees_renderer = $c->get( 'wcgateway.admin.fees-renderer' );
+		assert( $fees_renderer instanceof FeesRenderer );
+
+		add_action(
+			'woocommerce_admin_order_totals_after_total',
+			function ( int $order_id ) use ( $fees_renderer ) {
+				$wc_order = wc_get_order( $order_id );
+				if ( ! $wc_order instanceof WC_Order ) {
+					return;
+				}
+
+				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				echo $fees_renderer->render( $wc_order );
+			}
+		);
+
 		if ( $c->has( 'wcgateway.url' ) ) {
 			$assets = new SettingsPageAssets(
 				$c->get( 'wcgateway.url' ),
-				$c->get( 'wcgateway.absolute-path' ),
+				$c->get( 'ppcp.asset-version' ),
 				$c->get( 'api.bearer' )
 			);
 			$assets->register_assets();
@@ -130,6 +163,23 @@ class WCGatewayModule implements ModuleInterface {
 				 * @var ReturnUrlEndpoint $endpoint
 				 */
 				$endpoint->handle_request();
+			}
+		);
+
+		add_action(
+			'woocommerce_paypal_payments_gateway_migrate',
+			static function () use ( $c ) {
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+
+				try {
+					if ( $settings->get( '3d_secure_contingency' ) === '3D_SECURE' ) {
+						$settings->set( '3d_secure_contingency', 'SCA_ALWAYS' );
+						$settings->persist();
+					}
+				} catch ( NotFoundException $exception ) {
+					return;
+				}
 			}
 		);
 	}
@@ -231,7 +281,7 @@ class WCGatewayModule implements ModuleInterface {
 			static function ( $order_actions ) use ( $container ): array {
 				global $theorder;
 
-				if ( ! is_a( $theorder, \WC_Order::class ) ) {
+				if ( ! is_a( $theorder, WC_Order::class ) ) {
 					return $order_actions;
 				}
 
@@ -247,7 +297,7 @@ class WCGatewayModule implements ModuleInterface {
 
 		add_action(
 			'woocommerce_order_action_ppcp_authorize_order',
-			static function ( \WC_Order $wc_order ) use ( $container ) {
+			static function ( WC_Order $wc_order ) use ( $container ) {
 
 				/**
 				 * The authorized payments processor.

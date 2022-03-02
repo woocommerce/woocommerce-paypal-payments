@@ -2,9 +2,9 @@
 Contributors: woocommerce, automattic
 Tags: woocommerce, paypal, payments, ecommerce, e-commerce, store, sales, sell, shop, shopping, cart, checkout
 Requires at least: 5.3
-Tested up to: 5.8
+Tested up to: 5.9
 Requires PHP: 7.1
-Stable tag: 1.6.4
+Stable tag: 1.7.0
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -80,6 +80,40 @@ Follow the steps below to connect the plugin to your PayPal account:
 6. Main settings screen.
 
 == Changelog ==
+
+= 1.7.0 =
+* Fix - DCC orders randomly failing #503
+* Fix - Multi-currency broke #481
+* Fix - Address information from PayPal shortcut flow not loaded #451
+* Fix - WooCommerce as mu-plugin is not detected as active #461
+* Fix - Check if PayPal Payments is an available gateway before displaying it on Product/Cart pages #447
+* Enhancement - Improve onboarding flow, allow no card processing #443 #508 #510
+* Enhancement - Add Germany to supported ACDC countries #459
+* Enhancement - Add filters to allow ACDC for countries #437
+* Enhancement - Update 3D Secure #464
+* Enhancement - Extend event, error logging & order notes #456
+* Enhancement - Display API response errors in checkout page with user-friendly error message #457
+* Enhancement - Pass address details to credit card fields #479
+* Enhancement - Improve onboarding notice #465
+* Enhancement - Add transaction ID to WC order and order note when refund is received #473
+* Enhancement - Asset caching may cause bugs on upgrades #501
+* Enhancement - Allow partial capture #483
+* Enhancement - PayPal Payments doesn't set transaction fee metadata #467
+* Enhancement - Show PayPal fee information in order #489
+
+= 1.6.5 =
+* Fix - Allow guest users to purchase subscription products from checkout page #422
+* Fix - Transaction ID missing for renewal order #424
+* Fix - Save your credit card checkbox should be removed in pay for order for subscriptions #420
+* Fix - Null currency error when the Aelia currency switcher plugin is active #426
+* Fix - Hide Reference Transactions check from logs #428
+* Fix - Doubled plugin module URL path causing failure #438
+* Fix - is_ajax deprecated #441
+* Fix - Place order button from PayPal Card Processing does not get translated #290
+* Fix - AMEX missing from supported cards for DCC Australia #432
+* Fix - "Save your Credit Card" text not clickable to change checkbox state #430
+* Fix - Improve DCC error notice when not available #435
+* Enhancement - Add View Logs link #416
 
 = 1.6.4 =
 * Fix - Non admin user cannot save changes to the plugin settings #278

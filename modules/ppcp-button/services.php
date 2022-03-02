@@ -52,7 +52,7 @@ return array(
 		 *
 		 * @var State $state
 		 */
-		if ( $state->current_state() <= State::STATE_PROGRESSIVE ) {
+		if ( $state->current_state() !== State::STATE_ONBOARDED ) {
 			return new DisabledSmartButton();
 		}
 		$settings           = $container->get( 'wcgateway.settings' );
@@ -73,6 +73,7 @@ return array(
 		$currency = $container->get( 'api.shop.currency' );
 		return new SmartButton(
 			$container->get( 'button.url' ),
+			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'session.handler' ),
 			$settings,
 			$payer_factory,
@@ -90,7 +91,7 @@ return array(
 	'button.url'                        => static function ( ContainerInterface $container ): string {
 		return plugins_url(
 			'/modules/ppcp-button/',
-			dirname( __FILE__, 3 ) . '/woocommerce-paypal-payments.php'
+			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
 		);
 	},
 	'button.request-data'               => static function ( ContainerInterface $container ): RequestData {

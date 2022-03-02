@@ -63,6 +63,10 @@ trait PaymentsStatusHandlingTrait {
 		switch ( $status->name() ) {
 			case CaptureStatus::COMPLETED:
 				$wc_order->payment_complete();
+				/**
+				 * Fired when PayPal order is captured.
+				 */
+				do_action( 'woocommerce_paypal_payments_order_captured', $wc_order, $capture );
 				break;
 			// It is checked in the capture endpoint already, but there are other ways to capture,
 			// such as when paid via saved card.

@@ -189,6 +189,7 @@ class WcGatewayTest extends TestCase
             ->andReturnFalse();
 		$this->orderProcessor
             ->expects('last_error')
+			->twice()
             ->andReturn($lastError);
 		$this->subscriptionHelper->shouldReceive('has_subscription')->with($orderId)->andReturn(true);
 		$this->subscriptionHelper->shouldReceive('is_subscription_change_payment')->andReturn(true);
@@ -269,7 +270,6 @@ class WcGatewayTest extends TestCase
     {
     	return [
     		[State::STATE_START, true],
-		    [State::STATE_PROGRESSIVE, true],
 		    [State::STATE_ONBOARDED, false]
 	    ];
     }

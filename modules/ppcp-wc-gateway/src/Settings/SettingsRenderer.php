@@ -377,8 +377,18 @@ $data_rows_html
 		?>
 		<input type="hidden" name="ppcp-nonce" value="<?php echo esc_attr( $nonce ); ?>">
 		<?php
+
+		// Create a hidden first row with 2 cells to avoid issues with table-layout: fixed
+		// when the first visible row needs to have one cell.
+		?>
+		<tr style="height: 1px; padding-top: 0; padding-bottom: 0;">
+			<th style="padding-top: 0; padding-bottom: 0;"></th>
+			<td style="padding-top: 0; padding-bottom: 0;"></td>
+		</tr>
+		<?php
+
 		foreach ( $this->fields as $field => $config ) :
-			if ( ! in_array( $this->state->current_state(), $config['screens'], true ) ) {
+			if ( ! in_array( $this->state->environment_state( $config['state_from'] ?? null ), $config['screens'], true ) ) {
 				continue;
 			}
 			if ( ! $this->field_matches_page( $config, $this->page_id ) ) {
@@ -406,14 +416,18 @@ $data_rows_html
 			$key          = 'ppcp[' . $field . ']';
 			$id           = 'ppcp-' . $field;
 			$config['id'] = $id;
-			$colspan      = 'ppcp-heading' !== $config['type'] ? 1 : 2;
+			$colspan      = ( 'ppcp-heading' !== $config['type'] && isset( $config['title'] ) ) ? 1 : 2;
 			$classes      = isset( $config['classes'] ) ? $config['classes'] : array();
+			$classes[]    = 'ppcp-settings-field';
 			$classes[]    = sprintf( 'ppcp-settings-field-%s', str_replace( 'ppcp-', '', $config['type'] ) );
-			$description  = isset( $config['description'] ) ? $config['description'] : '';
+			if ( 1 !== $colspan ) {
+				$classes[] = 'ppcp-settings-no-title-col';
+			}
+			$description = isset( $config['description'] ) ? $config['description'] : '';
 			unset( $config['description'] );
 			?>
 		<tr valign="top" id="<?php echo esc_attr( 'field-' . $field ); ?>" class="<?php echo esc_attr( implode( ' ', $classes ) ); ?>">
-			<?php if ( 'ppcp-heading' !== $config['type'] ) : ?>
+			<?php if ( 'ppcp-heading' !== $config['type'] && isset( $config['title'] ) ) : ?>
 			<th scope="row">
 				<label
 					for="<?php echo esc_attr( $id ); ?>"
@@ -462,7 +476,14 @@ $data_rows_html
 	 * @param array $config The configuration array.
 	 */
 	private function render_text( array $config ) {
-		echo wp_kses_post( $config['text'] );
+		$raw = $config['raw'] ?? false;
+		if ( $raw ) {
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			echo $config['text'];
+		} else {
+			echo wp_kses_post( $config['text'] );
+		}
+
 		if ( isset( $config['hidden'] ) ) {
 			$value = $this->settings->has( $config['hidden'] ) ?
 				(string) $this->settings->get( $config['hidden'] )
@@ -538,6 +559,14 @@ $data_rows_html
 						'woocommerce-paypal-payments'
 					);
 					?>
+					<a href="https://developer.paypal.com/docs/checkout/advanced/currency-availability-advanced-cards/">
+						<?php
+						esc_html_e(
+							'Advanced credit and debit country and currency availability.',
+							'woocommerce-paypal-payments'
+						);
+						?>
+					</a>
 				</p>
 			</td>
 		</tr>

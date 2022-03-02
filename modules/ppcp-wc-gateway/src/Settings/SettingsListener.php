@@ -14,9 +14,9 @@ use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Onboarding\State;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar;
+use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 
 /**
  * Class SettingsListener
@@ -146,8 +146,14 @@ class SettingsListener {
 		}
 		$this->settings->persist();
 
+		/**
+		 * The hook fired before performing the redirect at the end of onboarding after saving the merchant ID/email.
+		 */
 		do_action( 'woocommerce_paypal_payments_onboarding_before_redirect' );
 
+		/**
+		 * The URL opened at the end of onboarding after saving the merchant ID/email.
+		 */
 		$redirect_url = apply_filters( 'woocommerce_paypal_payments_onboarding_redirect_url', admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ) );
 		if ( ! $this->settings->has( 'client_id' ) || ! $this->settings->get( 'client_id' ) ) {
 			$redirect_url = add_query_arg( 'ppcp-onboarding-error', '1', $redirect_url );

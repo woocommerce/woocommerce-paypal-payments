@@ -29,6 +29,13 @@ class AmountFactory {
 	private $item_factory;
 
 	/**
+	 * The Money factory.
+	 *
+	 * @var MoneyFactory
+	 */
+	private $money_factory;
+
+	/**
 	 * 3-letter currency code of the shop.
 	 *
 	 * @var string
@@ -38,12 +45,14 @@ class AmountFactory {
 	/**
 	 * AmountFactory constructor.
 	 *
-	 * @param ItemFactory $item_factory The Item factory.
-	 * @param string      $currency 3-letter currency code of the shop.
+	 * @param ItemFactory  $item_factory The Item factory.
+	 * @param MoneyFactory $money_factory The Money factory.
+	 * @param string       $currency 3-letter currency code of the shop.
 	 */
-	public function __construct( ItemFactory $item_factory, string $currency ) {
-		$this->item_factory = $item_factory;
-		$this->currency     = $currency;
+	public function __construct( ItemFactory $item_factory, MoneyFactory $money_factory, string $currency ) {
+		$this->item_factory  = $item_factory;
+		$this->money_factory = $money_factory;
+		$this->currency      = $currency;
 	}
 
 	/**
@@ -169,16 +178,7 @@ class AmountFactory {
 	 * @throws RuntimeException When JSON object is malformed.
 	 */
 	public function from_paypal_response( \stdClass $data ): Amount {
-		if ( ! isset( $data->value ) || ! is_numeric( $data->value ) ) {
-			throw new RuntimeException( __( 'No value given', 'woocommerce-paypal-payments' ) );
-		}
-		if ( ! isset( $data->currency_code ) ) {
-			throw new RuntimeException(
-				__( 'No currency given', 'woocommerce-paypal-payments' )
-			);
-		}
-
-		$money     = new Money( (float) $data->value, $data->currency_code );
+		$money     = $this->money_factory->from_paypal_response( $data );
 		$breakdown = ( isset( $data->breakdown ) ) ? $this->break_down( $data->breakdown ) : null;
 		return new Amount( $money, $breakdown );
 	}

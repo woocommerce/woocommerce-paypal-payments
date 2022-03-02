@@ -128,6 +128,7 @@ class LoginSellerEndpoint implements EndpointInterface {
 			$this->settings->set( 'sandbox_on', $is_sandbox );
 			$this->settings->set( 'products_dcc_enabled', null );
 			$this->settings->persist();
+
 			$endpoint    = $is_sandbox ? $this->login_seller_sandbox : $this->login_seller_production;
 			$credentials = $endpoint->credentials_for(
 				$data['sharedId'],
@@ -143,10 +144,30 @@ class LoginSellerEndpoint implements EndpointInterface {
 			}
 			$this->settings->set( 'client_secret', $credentials->client_secret );
 			$this->settings->set( 'client_id', $credentials->client_id );
+
+			$accept_cards    = (bool) ( $data['acceptCards'] ?? true );
+			$funding_sources = array();
+			if ( $this->settings->has( 'disable_funding' ) ) {
+				$funding_sources = $this->settings->get( 'disable_funding' );
+				if ( ! is_array( $funding_sources ) ) {
+					$funding_sources = array();
+				}
+			}
+			if ( $accept_cards ) {
+				$funding_sources = array_diff( $funding_sources, array( 'card' ) );
+			} else {
+				if ( ! in_array( 'card', $funding_sources, true ) ) {
+					$funding_sources[] = 'card';
+				}
+			}
+			$this->settings->set( 'disable_funding', $funding_sources );
+
 			$this->settings->persist();
+
 			if ( $this->cache->has( PayPalBearer::CACHE_KEY ) ) {
 				$this->cache->delete( PayPalBearer::CACHE_KEY );
 			}
+
 			wp_schedule_single_event(
 				time() + 5,
 				WebhookRegistrar::EVENT_HOOK

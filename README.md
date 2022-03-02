@@ -38,6 +38,11 @@ follow these steps:
 ```
 $ yarn run build
 ```
+or if using the Docker setup:
+
+```
+$ yarn run docker:build-package
+```
 
 ## Setup
 

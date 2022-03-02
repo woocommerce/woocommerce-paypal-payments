@@ -17,12 +17,13 @@ return array(
 	'vaulting.module-url'                => static function ( ContainerInterface $container ): string {
 		return plugins_url(
 			'/modules/ppcp-vaulting/',
-			dirname( __FILE__, 3 ) . '/woocommerce-paypal-payments.php'
+			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
 		);
 	},
 	'vaulting.assets.myaccount-payments' => function( ContainerInterface $container ) : MyAccountPaymentsAssets {
 		return new MyAccountPaymentsAssets(
-			$container->get( 'vaulting.module-url' )
+			$container->get( 'vaulting.module-url' ),
+			$container->get( 'ppcp.asset-version' )
 		);
 	},
 	'vaulting.payment-tokens-renderer'   => static function (): PaymentTokensRenderer {

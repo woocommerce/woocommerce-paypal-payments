@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="4.11.2@6fba5eb554f9507b72932f9c75533d8af593688d">
+<files psalm-version="4.20.0@f82a70e7edfc6cf2705e9374c8a0b6a974a779ed">
   <file src="modules/ppcp-api-client/services.php">
     <UndefinedConstant occurrences="2">
       <code>PAYPAL_API_URL</code>
@@ -12,9 +12,6 @@
     </UndefinedMethod>
   </file>
   <file src="modules/ppcp-api-client/src/Endpoint/IdentityToken.php">
-    <InvalidOperand occurrences="1">
-      <code>$customer_id</code>
-    </InvalidOperand>
     <UndefinedMethod occurrences="1">
       <code>$response</code>
     </UndefinedMethod>
@@ -52,9 +49,6 @@
     </UndefinedMethod>
   </file>
   <file src="modules/ppcp-api-client/src/Endpoint/PaymentTokenEndpoint.php">
-    <InvalidOperand occurrences="1">
-      <code>$id</code>
-    </InvalidOperand>
     <UndefinedMethod occurrences="1">
       <code>$response</code>
     </UndefinedMethod>
@@ -212,9 +206,7 @@
     <RedundantCast occurrences="1">
       <code>(float) $item_total</code>
     </RedundantCast>
-    <RedundantCastGivenDocblockType occurrences="8">
-      <code>(float) $cart-&gt;get_cart_contents_tax()</code>
-      <code>(float) $cart-&gt;get_discount_tax()</code>
+    <RedundantCastGivenDocblockType occurrences="6">
       <code>(float) $cart-&gt;get_discount_total()</code>
       <code>(float) $cart-&gt;get_shipping_total()</code>
       <code>(float) $cart-&gt;get_total( 'numeric' )</code>
@@ -288,6 +280,9 @@
     </UndefinedConstant>
   </file>
   <file src="modules/ppcp-button/services.php">
+    <PossiblyFalseArgument occurrences="1">
+      <code>realpath( __FILE__ )</code>
+    </PossiblyFalseArgument>
     <UndefinedConstant occurrences="2">
       <code>CONNECT_WOO_CLIENT_ID</code>
       <code>CONNECT_WOO_SANDBOX_CLIENT_ID</code>
@@ -297,13 +292,9 @@
     <InvalidScalarArgument occurrences="1">
       <code>1</code>
     </InvalidScalarArgument>
-    <MissingClosureParamType occurrences="2">
-      <code>$default_fields</code>
+    <MissingClosureParamType occurrences="1">
       <code>$id</code>
     </MissingClosureParamType>
-    <MissingClosureReturnType occurrences="1">
-      <code>function ( $default_fields, $id ) {</code>
-    </MissingClosureReturnType>
     <MissingReturnType occurrences="3">
       <code>button_renderer</code>
       <code>dcc_renderer</code>
@@ -440,6 +431,9 @@
     <MissingClosureParamType occurrences="1">
       <code>$container</code>
     </MissingClosureParamType>
+    <PossiblyFalseArgument occurrences="1">
+      <code>realpath( __FILE__ )</code>
+    </PossiblyFalseArgument>
     <UndefinedConstant occurrences="10">
       <code>CONNECT_WOO_MERCHANT_ID</code>
       <code>CONNECT_WOO_SANDBOX_MERCHANT_ID</code>
@@ -532,18 +526,13 @@
     <FalsableReturnStatement occurrences="1">
       <code>current( $tokens )</code>
     </FalsableReturnStatement>
-    <MissingReturnType occurrences="3">
-      <code>capture_order</code>
+    <MissingReturnType occurrences="2">
       <code>process_order</code>
       <code>renew</code>
     </MissingReturnType>
-    <RedundantCastGivenDocblockType occurrences="6">
-      <code>(int) $customer-&gt;get_id()</code>
+    <RedundantCastGivenDocblockType occurrences="2">
       <code>(int) $customer-&gt;get_id()</code>
       <code>(int) $wc_order-&gt;get_customer_id()</code>
-      <code>(int) $wc_order-&gt;get_id()</code>
-      <code>(int) $wc_order-&gt;get_id()</code>
-      <code>(int) $wc_order-&gt;get_id()</code>
     </RedundantCastGivenDocblockType>
     <TooManyArguments occurrences="1">
       <code>apply_filters( 'woocommerce_paypal_payments_subscriptions_get_token_for_customer', null, $customer, $wc_order )</code>
@@ -570,6 +559,11 @@
     <UndefinedClass occurrences="1">
       <code>\WC_Subscription</code>
     </UndefinedClass>
+  </file>
+  <file src="modules/ppcp-vaulting/services.php">
+    <PossiblyFalseArgument occurrences="1">
+      <code>realpath( __FILE__ )</code>
+    </PossiblyFalseArgument>
   </file>
   <file src="modules/ppcp-vaulting/src/Assets/MyAccountPaymentsAssets.php">
     <MissingReturnType occurrences="1">
@@ -603,6 +597,13 @@
     </MissingReturnType>
   </file>
   <file src="modules/ppcp-wc-gateway/services.php">
+    <PossiblyFalseArgument occurrences="2">
+      <code>realpath( __FILE__ )</code>
+      <code>realpath( __FILE__ )</code>
+    </PossiblyFalseArgument>
+    <PossiblyFalseOperand occurrences="1">
+      <code>substr( $letters, 0, 6 )</code>
+    </PossiblyFalseOperand>
     <PossiblyInvalidArgument occurrences="5">
       <code>wp_unslash( $_GET[ SectionsRenderer::KEY ] )</code>
       <code>wp_unslash( $_GET['page'] )</code>
@@ -637,7 +638,6 @@
   </file>
   <file src="modules/ppcp-wc-gateway/src/Checkout/CheckoutPayPalAddressPreset.php">
     <PossiblyNullReference occurrences="3">
-      <code>phone</code>
       <code>phone</code>
       <code>phone</code>
       <code>purchase_units</code>
@@ -764,7 +764,7 @@
     </RedundantCast>
   </file>
   <file src="modules/ppcp-wc-gateway/src/WCGatewayModule.php">
-    <MissingClosureParamType occurrences="15">
+    <MissingClosureParamType occurrences="13">
       <code>$args</code>
       <code>$args</code>
       <code>$column</code>
@@ -774,9 +774,7 @@
       <code>$methods</code>
       <code>$methods</code>
       <code>$notices</code>
-      <code>$order</code>
       <code>$order_actions</code>
-      <code>$recipient</code>
       <code>$value</code>
       <code>$wc_order_id</code>
       <code>$wc_order_id</code>
@@ -792,6 +790,11 @@
     <MissingClosureParamType occurrences="1">
       <code>$container</code>
     </MissingClosureParamType>
+  </file>
+  <file src="modules/ppcp-webhooks/services.php">
+    <PossiblyFalseArgument occurrences="1">
+      <code>realpath( __FILE__ )</code>
+    </PossiblyFalseArgument>
   </file>
   <file src="modules/ppcp-webhooks/src/Endpoint/ResubscribeEndpoint.php">
     <MissingReturnType occurrences="1">
@@ -917,5 +920,10 @@
       <code>$request['event_type']</code>
     </PossiblyNullArgument>
     <RedundantCastGivenDocblockType occurrences="1"/>
+  </file>
+  <file src="src/services.php">
+    <PossiblyFalseArgument occurrences="1">
+      <code>realpath( __FILE__ )</code>
+    </PossiblyFalseArgument>
   </file>
 </files>

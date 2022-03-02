@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Token;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\CustomerRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
@@ -45,13 +46,6 @@ class IdentityToken {
 	private $logger;
 
 	/**
-	 * The prefix.
-	 *
-	 * @var string
-	 */
-	private $prefix;
-
-	/**
 	 * The settings
 	 *
 	 * @var Settings
@@ -59,31 +53,44 @@ class IdentityToken {
 	private $settings;
 
 	/**
+	 * The customer repository.
+	 *
+	 * @var CustomerRepository
+	 */
+	protected $customer_repository;
+
+	/**
 	 * IdentityToken constructor.
 	 *
-	 * @param string          $host The host.
-	 * @param Bearer          $bearer The bearer.
-	 * @param LoggerInterface $logger The logger.
-	 * @param string          $prefix The prefix.
-	 * @param Settings        $settings The settings.
+	 * @param string             $host The host.
+	 * @param Bearer             $bearer The bearer.
+	 * @param LoggerInterface    $logger The logger.
+	 * @param Settings           $settings The settings.
+	 * @param CustomerRepository $customer_repository The customer repository.
 	 */
-	public function __construct( string $host, Bearer $bearer, LoggerInterface $logger, string $prefix, Settings $settings ) {
-		$this->host     = $host;
-		$this->bearer   = $bearer;
-		$this->logger   = $logger;
-		$this->prefix   = $prefix;
-		$this->settings = $settings;
+	public function __construct(
+		string $host,
+		Bearer $bearer,
+		LoggerInterface $logger,
+		Settings $settings,
+		CustomerRepository $customer_repository
+	) {
+		$this->host                = $host;
+		$this->bearer              = $bearer;
+		$this->logger              = $logger;
+		$this->settings            = $settings;
+		$this->customer_repository = $customer_repository;
 	}
 
 	/**
-	 * Generates a token for a specific customer.
+	 * Generates a token for a specific user.
 	 *
-	 * @param int $customer_id The id of the customer.
+	 * @param int $user_id The id of the user.
 	 *
 	 * @return Token
 	 * @throws RuntimeException If the request fails.
 	 */
-	public function generate_for_customer( int $customer_id ): Token {
+	public function generate_for_user( int $user_id ): Token {
 
 		$bearer = $this->bearer->bearer();
 		$url    = trailingslashit( $this->host ) . 'v1/identity/generate-token';
@@ -95,11 +102,16 @@ class IdentityToken {
 			),
 		);
 		if (
-			$customer_id
-			&& ( $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ) )
+			( $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ) )
 			&& defined( 'PPCP_FLAG_SUBSCRIPTION' ) && PPCP_FLAG_SUBSCRIPTION
 		) {
-			$args['body'] = wp_json_encode( array( 'customer_id' => $this->prefix . $customer_id ) );
+			$customer_id = $this->customer_repository->customer_id_for_user( ( $user_id ) );
+
+			$args['body'] = wp_json_encode(
+				array(
+					'customer_id' => $customer_id,
+				)
+			);
 		}
 
 		$response = $this->request( $url, $args );

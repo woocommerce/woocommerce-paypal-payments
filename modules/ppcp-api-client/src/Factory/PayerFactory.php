@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Address;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PayerName;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PayerTaxInfo;
@@ -54,10 +55,12 @@ class PayerFactory {
 			$national_number = preg_replace( '/[^0-9]/', '', $national_number );
 			$national_number = substr( $national_number, 0, 14 );
 
-			$phone = new PhoneWithType(
-				'HOME',
-				new Phone( $national_number )
-			);
+			if ( $national_number ) {
+				$phone = new PhoneWithType(
+					'HOME',
+					new Phone( $national_number )
+				);
+			}
 		}
 		return new Payer(
 			new PayerName(
@@ -90,10 +93,12 @@ class PayerFactory {
 			$national_number = preg_replace( '/[^0-9]/', '', $national_number );
 			$national_number = substr( $national_number, 0, 14 );
 
-			$phone = new PhoneWithType(
-				'HOME',
-				new Phone( $national_number )
-			);
+			if ( $national_number ) {
+				$phone = new PhoneWithType(
+					'HOME',
+					new Phone( $national_number )
+				);
+			}
 		}
 		return new Payer(
 			new PayerName(
@@ -145,6 +150,59 @@ class PayerFactory {
 			$birth_date,
 			$phone,
 			$tax_info
+		);
+	}
+
+	/**
+	 * Returns a Payer object based off the given checkout form fields.
+	 *
+	 * @param array $form_fields The checkout form fields.
+	 * @return Payer
+	 */
+	public function from_checkout_form( array $form_fields ): Payer {
+
+		$first_name        = $form_fields['billing_first_name'] ?? '';
+		$last_name         = $form_fields['billing_last_name'] ?? '';
+		$billing_email     = $form_fields['billing_email'] ?? '';
+		$billing_country   = $form_fields['billing_country'] ?? '';
+		$billing_address_1 = $form_fields['billing_address_1'] ?? '';
+		$billing_address_2 = $form_fields['billing_address_2'] ?? '';
+		$admin_area_1      = $form_fields['billing_state'] ?? '';
+		$admin_area_2      = $form_fields['billing_city'] ?? '';
+		$billing_postcode  = $form_fields['billing_postcode'] ?? '';
+
+		$phone = null;
+		if ( isset( $form_fields['billing_phone'] ) && '' !== $form_fields['billing_phone'] ) {
+			// make sure the phone number contains only numbers and is max 14. chars long.
+			$national_number = $form_fields['billing_phone'];
+			$national_number = preg_replace( '/[^0-9]/', '', $national_number );
+
+			if ( null !== $national_number ) {
+				$national_number = substr( $national_number, 0, 14 );
+
+				if ( $national_number ) {
+					$phone = new PhoneWithType(
+						'HOME',
+						new Phone( $national_number )
+					);
+				}
+			}
+		}
+
+		return new Payer(
+			new PayerName( $first_name, $last_name ),
+			$billing_email,
+			'',
+			new Address(
+				$billing_country,
+				$billing_address_1,
+				$billing_address_2,
+				$admin_area_1,
+				$admin_area_2,
+				$billing_postcode
+			),
+			null,
+			$phone
 		);
 	}
 }

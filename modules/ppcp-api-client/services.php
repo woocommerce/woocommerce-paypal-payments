@@ -26,7 +26,9 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\AmountFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ApplicationContextFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\AuthorizationFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\CaptureFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ExchangeRateFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ItemFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\MoneyFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PatchCollectionFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayeeFactory;
@@ -34,7 +36,9 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentsFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentSourceFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PlatformFeeFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\SellerReceivableBreakdownFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\SellerStatusFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookEventFactory;
@@ -43,6 +47,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CartRepository;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\CustomerRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayeeRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
@@ -108,7 +113,7 @@ return array(
 			$container->get( 'api.bearer' ),
 			$container->get( 'api.factory.payment-token' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'api.prefix' )
+			$container->get( 'api.repository.customer' )
 		);
 	},
 	'api.endpoint.webhook'                      => static function ( ContainerInterface $container ) : WebhookEndpoint {
@@ -126,20 +131,19 @@ return array(
 		return new PartnerReferrals(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
-			$container->get( 'api.repository.partner-referrals-data' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 	'api.endpoint.identity-token'               => static function ( ContainerInterface $container ) : IdentityToken {
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
-		$prefix = $container->get( 'api.prefix' );
 		$settings = $container->get( 'wcgateway.settings' );
+		$customer_repository = $container->get( 'api.repository.customer' );
 		return new IdentityToken(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
 			$logger,
-			$prefix,
-			$settings
+			$settings,
+			$customer_repository
 		);
 	},
 	'api.endpoint.payments'                     => static function ( ContainerInterface $container ): PaymentsEndpoint {
@@ -208,9 +212,8 @@ return array(
 	},
 	'api.repository.partner-referrals-data'     => static function ( ContainerInterface $container ) : PartnerReferralsData {
 
-		$merchant_email = $container->get( 'api.merchant_email' );
 		$dcc_applies    = $container->get( 'api.helpers.dccapplies' );
-		return new PartnerReferralsData( $merchant_email, $dcc_applies );
+		return new PartnerReferralsData( $dcc_applies );
 	},
 	'api.repository.cart'                       => static function ( ContainerInterface $container ): CartRepository {
 		$factory = $container->get( 'api.factory.purchase-unit' );
@@ -220,6 +223,10 @@ return array(
 		$merchant_email = $container->get( 'api.merchant_email' );
 		$merchant_id    = $container->get( 'api.merchant_id' );
 		return new PayeeRepository( $merchant_email, $merchant_id );
+	},
+	'api.repository.customer'                   => static function( ContainerInterface $container ): CustomerRepository {
+		$prefix           = $container->get( 'api.prefix' );
+		return new CustomerRepository( $prefix );
 	},
 	'api.factory.application-context'           => static function ( ContainerInterface $container ) : ApplicationContextFactory {
 		return new ApplicationContextFactory();
@@ -236,7 +243,10 @@ return array(
 	'api.factory.capture'                       => static function ( ContainerInterface $container ): CaptureFactory {
 
 		$amount_factory   = $container->get( 'api.factory.amount' );
-		return new CaptureFactory( $amount_factory );
+		return new CaptureFactory(
+			$amount_factory,
+			$container->get( 'api.factory.seller-receivable-breakdown' )
+		);
 	},
 	'api.factory.purchase-unit'                 => static function ( ContainerInterface $container ): PurchaseUnitFactory {
 
@@ -277,8 +287,12 @@ return array(
 		$item_factory = $container->get( 'api.factory.item' );
 		return new AmountFactory(
 			$item_factory,
+			$container->get( 'api.factory.money' ),
 			$container->get( 'api.shop.currency' )
 		);
+	},
+	'api.factory.money'                         => static function ( ContainerInterface $container ): MoneyFactory {
+		return new MoneyFactory();
 	},
 	'api.factory.payer'                         => static function ( ContainerInterface $container ): PayerFactory {
 		$address_factory = $container->get( 'api.factory.address' );
@@ -312,6 +326,22 @@ return array(
 	'api.factory.authorization'                 => static function ( ContainerInterface $container ): AuthorizationFactory {
 		return new AuthorizationFactory();
 	},
+	'api.factory.exchange-rate'                 => static function ( ContainerInterface $container ): ExchangeRateFactory {
+		return new ExchangeRateFactory();
+	},
+	'api.factory.platform-fee'                  => static function ( ContainerInterface $container ): PlatformFeeFactory {
+		return new PlatformFeeFactory(
+			$container->get( 'api.factory.money' ),
+			$container->get( 'api.factory.payee' )
+		);
+	},
+	'api.factory.seller-receivable-breakdown'   => static function ( ContainerInterface $container ): SellerReceivableBreakdownFactory {
+		return new SellerReceivableBreakdownFactory(
+			$container->get( 'api.factory.money' ),
+			$container->get( 'api.factory.exchange-rate' ),
+			$container->get( 'api.factory.platform-fee' )
+		);
+	},
 	'api.helpers.dccapplies'                    => static function ( ContainerInterface $container ) : DccApplies {
 		return new DccApplies(
 			$container->get( 'api.dcc-supported-country-currency-matrix' ),
@@ -322,7 +352,17 @@ return array(
 	},
 
 	'api.shop.currency'                         => static function ( ContainerInterface $container ) : string {
-		return get_woocommerce_currency();
+		$currency = get_woocommerce_currency();
+		if ( $currency ) {
+			return $currency;
+		}
+
+		$currency = get_option( 'woocommerce_currency' );
+		if ( ! $currency ) {
+			return 'NO_CURRENCY'; // Unlikely to happen.
+		}
+
+		return $currency;
 	},
 	'api.shop.country'                          => static function ( ContainerInterface $container ) : string {
 		$location = wc_get_base_location();
@@ -382,123 +422,147 @@ return array(
 	 * The matrix which countries and currency combinations can be used for DCC.
 	 */
 	'api.dcc-supported-country-currency-matrix' => static function ( ContainerInterface $container ) : array {
-		return array(
-			'AU' => array(
-				'AUD',
-				'CAD',
-				'CHF',
-				'CZK',
-				'DKK',
-				'EUR',
-				'GBP',
-				'HKD',
-				'HUF',
-				'JPY',
-				'NOK',
-				'NZD',
-				'PLN',
-				'SEK',
-				'SGD',
-				'USD',
-			),
-			'ES' => array(
-				'AUD',
-				'CAD',
-				'CHF',
-				'CZK',
-				'DKK',
-				'EUR',
-				'GBP',
-				'HKD',
-				'HUF',
-				'JPY',
-				'NOK',
-				'NZD',
-				'PLN',
-				'SEK',
-				'SGD',
-				'USD',
-			),
-			'FR' => array(
-				'AUD',
-				'CAD',
-				'CHF',
-				'CZK',
-				'DKK',
-				'EUR',
-				'GBP',
-				'HKD',
-				'HUF',
-				'JPY',
-				'NOK',
-				'NZD',
-				'PLN',
-				'SEK',
-				'SGD',
-				'USD',
-			),
-			'GB' => array(
-				'AUD',
-				'CAD',
-				'CHF',
-				'CZK',
-				'DKK',
-				'EUR',
-				'GBP',
-				'HKD',
-				'HUF',
-				'JPY',
-				'NOK',
-				'NZD',
-				'PLN',
-				'SEK',
-				'SGD',
-				'USD',
-			),
-			'IT' => array(
-				'AUD',
-				'CAD',
-				'CHF',
-				'CZK',
-				'DKK',
-				'EUR',
-				'GBP',
-				'HKD',
-				'HUF',
-				'JPY',
-				'NOK',
-				'NZD',
-				'PLN',
-				'SEK',
-				'SGD',
-				'USD',
-			),
-			'US' => array(
-				'AUD',
-				'CAD',
-				'EUR',
-				'GBP',
-				'JPY',
-				'USD',
-			),
-			'CA' => array(
-				'AUD',
-				'CAD',
-				'CHF',
-				'CZK',
-				'DKK',
-				'EUR',
-				'GBP',
-				'HKD',
-				'HUF',
-				'JPY',
-				'NOK',
-				'NZD',
-				'PLN',
-				'SEK',
-				'SGD',
-				'USD',
-			),
+		/**
+		 * Returns which countries and currency combinations can be used for DCC.
+		 */
+		return apply_filters(
+			'woocommerce_paypal_payments_supported_country_currency_matrix',
+			array(
+				'AU' => array(
+					'AUD',
+					'CAD',
+					'CHF',
+					'CZK',
+					'DKK',
+					'EUR',
+					'GBP',
+					'HKD',
+					'HUF',
+					'JPY',
+					'NOK',
+					'NZD',
+					'PLN',
+					'SEK',
+					'SGD',
+					'USD',
+				),
+				'DE' => array(
+					'AUD',
+					'CAD',
+					'CHF',
+					'CZK',
+					'DKK',
+					'EUR',
+					'GBP',
+					'HKD',
+					'HUF',
+					'JPY',
+					'NOK',
+					'NZD',
+					'PLN',
+					'SEK',
+					'SGD',
+					'USD',
+				),
+				'ES' => array(
+					'AUD',
+					'CAD',
+					'CHF',
+					'CZK',
+					'DKK',
+					'EUR',
+					'GBP',
+					'HKD',
+					'HUF',
+					'JPY',
+					'NOK',
+					'NZD',
+					'PLN',
+					'SEK',
+					'SGD',
+					'USD',
+				),
+				'FR' => array(
+					'AUD',
+					'CAD',
+					'CHF',
+					'CZK',
+					'DKK',
+					'EUR',
+					'GBP',
+					'HKD',
+					'HUF',
+					'JPY',
+					'NOK',
+					'NZD',
+					'PLN',
+					'SEK',
+					'SGD',
+					'USD',
+				),
+				'GB' => array(
+					'AUD',
+					'CAD',
+					'CHF',
+					'CZK',
+					'DKK',
+					'EUR',
+					'GBP',
+					'HKD',
+					'HUF',
+					'JPY',
+					'NOK',
+					'NZD',
+					'PLN',
+					'SEK',
+					'SGD',
+					'USD',
+				),
+				'IT' => array(
+					'AUD',
+					'CAD',
+					'CHF',
+					'CZK',
+					'DKK',
+					'EUR',
+					'GBP',
+					'HKD',
+					'HUF',
+					'JPY',
+					'NOK',
+					'NZD',
+					'PLN',
+					'SEK',
+					'SGD',
+					'USD',
+				),
+				'US' => array(
+					'AUD',
+					'CAD',
+					'EUR',
+					'GBP',
+					'JPY',
+					'USD',
+				),
+				'CA' => array(
+					'AUD',
+					'CAD',
+					'CHF',
+					'CZK',
+					'DKK',
+					'EUR',
+					'GBP',
+					'HKD',
+					'HUF',
+					'JPY',
+					'NOK',
+					'NZD',
+					'PLN',
+					'SEK',
+					'SGD',
+					'USD',
+				),
+			)
 		);
 	},
 
@@ -506,43 +570,55 @@ return array(
 	 * Which countries support which credit cards. Empty credit card arrays mean no restriction on currency.
 	 */
 	'api.dcc-supported-country-card-matrix'     => static function ( ContainerInterface $container ) : array {
-		return array(
-			'AU' => array(
-				'mastercard' => array(),
-				'visa'       => array(),
-			),
-			'ES' => array(
-				'mastercard' => array(),
-				'visa'       => array(),
-				'amex'       => array( 'EUR' ),
-			),
-			'FR' => array(
-				'mastercard' => array(),
-				'visa'       => array(),
-				'amex'       => array( 'EUR' ),
-			),
-			'GB' => array(
-				'mastercard' => array(),
-				'visa'       => array(),
-				'amex'       => array( 'GBP', 'USD' ),
-			),
-			'IT' => array(
-				'mastercard' => array(),
-				'visa'       => array(),
-				'amex'       => array( 'EUR' ),
-			),
-			'US' => array(
-				'mastercard' => array(),
-				'visa'       => array(),
-				'amex'       => array( 'USD' ),
-				'discover'   => array( 'USD' ),
-			),
-			'CA' => array(
-				'mastercard' => array(),
-				'visa'       => array(),
-				'amex'       => array( 'CAD' ),
-				'jcb'        => array( 'CAD' ),
-			),
+		/**
+		 * Returns which countries support which credit cards. Empty credit card arrays mean no restriction on currency.
+		 */
+		return apply_filters(
+			'woocommerce_paypal_payments_supported_country_card_matrix',
+			array(
+				'AU' => array(
+					'mastercard' => array(),
+					'visa'       => array(),
+					'amex'       => array( 'AUD' ),
+				),
+				'DE' => array(
+					'mastercard' => array(),
+					'visa'       => array(),
+					'amex'       => array( 'EUR' ),
+				),
+				'ES' => array(
+					'mastercard' => array(),
+					'visa'       => array(),
+					'amex'       => array( 'EUR' ),
+				),
+				'FR' => array(
+					'mastercard' => array(),
+					'visa'       => array(),
+					'amex'       => array( 'EUR' ),
+				),
+				'GB' => array(
+					'mastercard' => array(),
+					'visa'       => array(),
+					'amex'       => array( 'GBP', 'USD' ),
+				),
+				'IT' => array(
+					'mastercard' => array(),
+					'visa'       => array(),
+					'amex'       => array( 'EUR' ),
+				),
+				'US' => array(
+					'mastercard' => array(),
+					'visa'       => array(),
+					'amex'       => array( 'USD' ),
+					'discover'   => array( 'USD' ),
+				),
+				'CA' => array(
+					'mastercard' => array(),
+					'visa'       => array(),
+					'amex'       => array( 'CAD' ),
+					'jcb'        => array( 'CAD' ),
+				),
+			)
 		);
 	},
 

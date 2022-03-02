@@ -52,6 +52,13 @@ class Capture {
 	private $seller_protection;
 
 	/**
+	 * The detailed breakdown of the capture activity (fees, ...).
+	 *
+	 * @var SellerReceivableBreakdown|null
+	 */
+	private $seller_receivable_breakdown;
+
+	/**
 	 * The invoice id.
 	 *
 	 * @var string
@@ -68,13 +75,14 @@ class Capture {
 	/**
 	 * Capture constructor.
 	 *
-	 * @param string        $id The ID.
-	 * @param CaptureStatus $status The status.
-	 * @param Amount        $amount The amount.
-	 * @param bool          $final_capture The final capture.
-	 * @param string        $seller_protection The seller protection.
-	 * @param string        $invoice_id The invoice id.
-	 * @param string        $custom_id The custom id.
+	 * @param string                         $id The ID.
+	 * @param CaptureStatus                  $status The status.
+	 * @param Amount                         $amount The amount.
+	 * @param bool                           $final_capture The final capture.
+	 * @param string                         $seller_protection The seller protection.
+	 * @param string                         $invoice_id The invoice id.
+	 * @param string                         $custom_id The custom id.
+	 * @param SellerReceivableBreakdown|null $seller_receivable_breakdown The detailed breakdown of the capture activity (fees, ...).
 	 */
 	public function __construct(
 		string $id,
@@ -83,16 +91,18 @@ class Capture {
 		bool $final_capture,
 		string $seller_protection,
 		string $invoice_id,
-		string $custom_id
+		string $custom_id,
+		?SellerReceivableBreakdown $seller_receivable_breakdown
 	) {
 
-		$this->id                = $id;
-		$this->status            = $status;
-		$this->amount            = $amount;
-		$this->final_capture     = $final_capture;
-		$this->seller_protection = $seller_protection;
-		$this->invoice_id        = $invoice_id;
-		$this->custom_id         = $custom_id;
+		$this->id                          = $id;
+		$this->status                      = $status;
+		$this->amount                      = $amount;
+		$this->final_capture               = $final_capture;
+		$this->seller_protection           = $seller_protection;
+		$this->invoice_id                  = $invoice_id;
+		$this->custom_id                   = $custom_id;
+		$this->seller_receivable_breakdown = $seller_receivable_breakdown;
 	}
 
 	/**
@@ -159,6 +169,15 @@ class Capture {
 	}
 
 	/**
+	 * Returns the detailed breakdown of the capture activity (fees, ...).
+	 *
+	 * @return SellerReceivableBreakdown|null
+	 */
+	public function seller_receivable_breakdown() : ?SellerReceivableBreakdown {
+		return $this->seller_receivable_breakdown;
+	}
+
+	/**
 	 * Returns the entity as array.
 	 *
 	 * @return array
@@ -176,6 +195,9 @@ class Capture {
 		$details = $this->status()->details();
 		if ( $details ) {
 			$data['status_details'] = array( 'reason' => $details->reason() );
+		}
+		if ( $this->seller_receivable_breakdown ) {
+			$data['seller_receivable_breakdown'] = $this->seller_receivable_breakdown->to_array();
 		}
 		return $data;
 	}

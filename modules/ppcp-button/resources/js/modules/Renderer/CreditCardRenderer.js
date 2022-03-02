@@ -9,7 +9,6 @@ class CreditCardRenderer {
         this.cardValid = false;
         this.formValid = false;
         this.currentHostedFieldsInstance = null;
-        this.formSubmissionSubscribed = false;
     }
 
     render(wrapper, contextConfig) {
@@ -122,7 +121,7 @@ class CreditCardRenderer {
 
             });
 
-            if (!this.formSubmissionSubscribed) {
+            if (document.querySelector(wrapper).getAttribute('data-ppcp-subscribed') !== true) {
                 document.querySelector(wrapper + ' button').addEventListener(
                     'click',
                     event => {
@@ -130,7 +129,8 @@ class CreditCardRenderer {
                         this._submit(contextConfig);
                     }
                 );
-                this.formSubmissionSubscribed = true;
+
+                document.querySelector(wrapper).setAttribute('data-ppcp-subscribed', true);
             }
         });
 
@@ -143,7 +143,7 @@ class CreditCardRenderer {
     }
 
     disableFields() {
-        if( this.currentHostedFieldsInstance) {
+        if (this.currentHostedFieldsInstance) {
             this.currentHostedFieldsInstance.setAttribute({
                 field: 'number',
                 attribute: 'disabled'
@@ -160,7 +160,7 @@ class CreditCardRenderer {
     }
 
     enableFields() {
-        if( this.currentHostedFieldsInstance) {
+        if (this.currentHostedFieldsInstance) {
             this.currentHostedFieldsInstance.removeAttribute({
                 field: 'number',
                 attribute: 'disabled'
@@ -181,7 +181,7 @@ class CreditCardRenderer {
         this.errorHandler.clear();
 
         if (this.formValid && this.cardValid) {
-            const save_card = this.defaultConfig.save_card ? true : false;
+            const save_card = this.defaultConfig.can_save_vault_token ? true : false;
             let vault = document.getElementById('ppcp-credit-card-vault') ?
                 document.getElementById('ppcp-credit-card-vault').checked : save_card;
             if (this.defaultConfig.enforce_vault) {
@@ -216,8 +216,11 @@ class CreditCardRenderer {
                 this.spinner.unblock();
                 return contextConfig.onApprove(payload);
             }).catch(err => {
-                console.error(err);
                 this.spinner.unblock();
+                this.errorHandler.clear();
+                if (err.details.length > 0) {
+                    this.errorHandler.message(err.details.map(d => `${d.issue} ${d.description}`).join('<br/>'), true);
+                }
             });
         } else {
             this.spinner.unblock();

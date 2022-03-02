@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Refund;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
@@ -146,22 +147,32 @@ class PaymentsEndpoint {
 	/**
 	 * Capture an authorization by a given ID.
 	 *
-	 * @param string $authorization_id The id.
+	 * @param string     $authorization_id The id.
+	 * @param Money|null $amount The amount to capture. If not specified, the whole authorized amount is captured.
 	 *
 	 * @return Capture
 	 * @throws RuntimeException If the request fails.
 	 * @throws PayPalApiException If the request fails.
 	 */
-	public function capture( string $authorization_id ): Capture {
+	public function capture( string $authorization_id, ?Money $amount = null ): Capture {
 		$bearer = $this->bearer->bearer();
 		$url    = trailingslashit( $this->host ) . 'v2/payments/authorizations/' . $authorization_id . '/capture';
-		$args   = array(
+
+		$data = array(
+			'final_capture' => true,
+		);
+		if ( $amount ) {
+			$data['amount'] = $amount->to_array();
+		}
+
+		$args = array(
 			'method'  => 'POST',
 			'headers' => array(
 				'Authorization' => 'Bearer ' . $bearer->token(),
 				'Content-Type'  => 'application/json',
 				'Prefer'        => 'return=representation',
 			),
+			'body'    => wp_json_encode( $data, JSON_FORCE_OBJECT ),
 		);
 
 		$response = $this->request( $url, $args );

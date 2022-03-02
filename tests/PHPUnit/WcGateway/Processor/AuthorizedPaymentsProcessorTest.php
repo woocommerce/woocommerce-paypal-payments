@@ -12,6 +12,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\AuthorizationStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payments;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
@@ -26,6 +27,8 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 	private $wcOrder;
 	private $paypalOrderId = 'abc';
 	private $authorizationId = 'qwe';
+	private $amount = 42.0;
+	private $currency = 'EUR';
 	private $paypalOrder;
 	private $orderEndpoint;
 	private $paymentsEndpoint;
@@ -64,13 +67,13 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 	public function testSuccess() {
 		$this->paymentsEndpoint
 			->expects('capture')
-			->with($this->authorizationId)
+			->with($this->authorizationId, equalTo(new Money($this->amount, $this->currency)))
 			->andReturn($this->createCapture(CaptureStatus::COMPLETED));
 
         $this->assertEquals(AuthorizedPaymentsProcessor::SUCCESSFUL, $this->testee->process($this->wcOrder));
     }
 
-	public function testCapturesAllCaptureable() {
+	public function testCapturesLastCaptureable() {
 		$authorizations = [
 			$this->createAuthorization('id1', AuthorizationStatus::CREATED),
 			$this->createAuthorization('id2', AuthorizationStatus::VOIDED),
@@ -82,12 +85,10 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 		];
 		$this->paypalOrder = $this->createPaypalOrder($authorizations);
 
-		foreach ([$authorizations[0], $authorizations[2]] as $authorization) {
-			$this->paymentsEndpoint
-				->expects('capture')
-				->with($authorization->id())
-				->andReturn($this->createCapture(CaptureStatus::COMPLETED));
-		}
+		$this->paymentsEndpoint
+			->expects('capture')
+			->with($authorizations[2]->id(), equalTo(new Money($this->amount, $this->currency)))
+			->andReturn($this->createCapture(CaptureStatus::COMPLETED));
 
 		$this->assertEquals(AuthorizedPaymentsProcessor::SUCCESSFUL, $this->testee->process($this->wcOrder));
     }
@@ -113,7 +114,7 @@ class AuthorizedPaymentsProcessorTest extends TestCase
     public function testCaptureFails() {
 		$this->paymentsEndpoint
             ->expects('capture')
-            ->with($this->authorizationId)
+            ->with($this->authorizationId, equalTo(new Money($this->amount, $this->currency)))
             ->andThrow(RuntimeException::class);
 
 		$this->assertEquals(AuthorizedPaymentsProcessor::FAILED, $this->testee->process($this->wcOrder));
@@ -137,7 +138,7 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 
 		$this->paymentsEndpoint
 			->expects('capture')
-			->with($this->authorizationId)
+			->with($this->authorizationId, equalTo(new Money($this->amount, $this->currency)))
 			->andReturn($this->createCapture(CaptureStatus::COMPLETED));
 
 		$this->wcOrder->shouldReceive('payment_complete')->andReturn(true);
@@ -172,6 +173,12 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 			->shouldReceive('get_meta')
 			->with(PayPalGateway::ORDER_ID_META_KEY)
 			->andReturn($paypalOrderId);
+		$wcOrder
+			->shouldReceive('get_total')
+			->andReturn($this->amount);
+		$wcOrder
+			->shouldReceive('get_currency')
+			->andReturn($this->currency);
 		return $wcOrder;
 	}
 

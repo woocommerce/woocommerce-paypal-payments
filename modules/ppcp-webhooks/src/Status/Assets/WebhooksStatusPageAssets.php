@@ -27,14 +27,24 @@ class WebhooksStatusPageAssets {
 	private $module_url;
 
 	/**
+	 * The assets version.
+	 *
+	 * @var string
+	 */
+	private $version;
+
+	/**
 	 * WebhooksStatusPageAssets constructor.
 	 *
 	 * @param string $module_url                         The URL to the module.
+	 * @param string $version                            The assets version.
 	 */
 	public function __construct(
-		string $module_url
+		string $module_url,
+		string $version
 	) {
 		$this->module_url = untrailingslashit( $module_url );
+		$this->version    = $version;
 	}
 
 	/**
@@ -45,16 +55,16 @@ class WebhooksStatusPageAssets {
 	public function register(): void {
 		wp_register_style(
 			'ppcp-webhooks-status-page-style',
-			$this->module_url . '/assets/css/status-page.css',
+			untrailingslashit( $this->module_url ) . '/assets/css/status-page.css',
 			array(),
-			'1'
+			$this->version
 		);
 
 		wp_register_script(
 			'ppcp-webhooks-status-page',
-			$this->module_url . '/assets/js/status-page.js',
+			untrailingslashit( $this->module_url ) . '/assets/js/status-page.js',
 			array(),
-			'1',
+			$this->version,
 			true
 		);
 
