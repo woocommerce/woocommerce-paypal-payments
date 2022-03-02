@@ -17,6 +17,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
@@ -99,6 +100,11 @@ class OrderProcessor {
 	private $logger;
 
 	/**
+	 * @var SubscriptionHelper
+	 */
+	private $subscription_helper;
+
+	/**
 	 * OrderProcessor constructor.
 	 *
 	 * @param SessionHandler              $session_handler The Session Handler.
@@ -118,7 +124,8 @@ class OrderProcessor {
 		AuthorizedPaymentsProcessor $authorized_payments_processor,
 		Settings $settings,
 		LoggerInterface $logger,
-		Environment $environment
+		Environment $environment,
+		SubscriptionHelper $subscription_helper
 	) {
 
 		$this->session_handler               = $session_handler;
@@ -129,6 +136,7 @@ class OrderProcessor {
 		$this->settings                      = $settings;
 		$this->environment                   = $environment;
 		$this->logger                        = $logger;
+		$this->subscription_helper = $subscription_helper;
 	}
 
 	/**
@@ -173,6 +181,10 @@ class OrderProcessor {
 			$order = $this->order_endpoint->authorize( $order );
 
 			$wc_order->update_meta_data( AuthorizedPaymentsProcessor::CAPTURED_META_KEY, 'false' );
+
+			if($this->subscription_helper->has_subscription( $wc_order->get_id() )) {
+				$wc_order->update_meta_data('_ppcp_captured_vault_webhook', 'false');
+			}
 		}
 
 		$transaction_id = $this->get_paypal_order_transaction_id( $order );

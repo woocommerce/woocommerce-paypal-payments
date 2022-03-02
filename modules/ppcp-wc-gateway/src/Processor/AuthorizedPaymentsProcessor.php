@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Processor;
 
 use Exception;
+use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
@@ -20,6 +21,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 
@@ -75,24 +77,41 @@ class AuthorizedPaymentsProcessor {
 	private $notice;
 
 	/**
+	 * The settings.
+	 *
+	 * @var ContainerInterface
+	 */
+	private $config;
+
+	/**
+	 * @var SubscriptionHelper
+	 */
+	private $subscription_helper;
+
+	/**
 	 * AuthorizedPaymentsProcessor constructor.
 	 *
 	 * @param OrderEndpoint              $order_endpoint The Order endpoint.
 	 * @param PaymentsEndpoint           $payments_endpoint The Payments endpoint.
 	 * @param LoggerInterface            $logger The logger.
 	 * @param AuthorizeOrderActionNotice $notice The notice.
+	 * @param ContainerInterface          $config The settings.
 	 */
 	public function __construct(
 		OrderEndpoint $order_endpoint,
 		PaymentsEndpoint $payments_endpoint,
 		LoggerInterface $logger,
-		AuthorizeOrderActionNotice $notice
+		AuthorizeOrderActionNotice $notice,
+		ContainerInterface $config,
+		SubscriptionHelper $subscription_helper
 	) {
 
 		$this->order_endpoint    = $order_endpoint;
 		$this->payments_endpoint = $payments_endpoint;
 		$this->logger            = $logger;
 		$this->notice            = $notice;
+		$this->config = $config;
+		$this->subscription_helper = $subscription_helper;
 	}
 
 	/**
@@ -188,6 +207,27 @@ class AuthorizedPaymentsProcessor {
 		}
 
 		return false;
+	}
+
+	public function capture_authorized_payments_for_customer(int $customer_id) {
+
+		$wc_orders = wc_get_orders(array(
+			'customer_id' => $customer_id,
+			'status' => array('wc-on-hold'),
+			'limit' => -1,
+ 		));
+
+		if ($this->config->has('intent') && strtoupper((string)$this->config->get('intent')) === 'CAPTURE') {
+			foreach ($wc_orders as $wc_order) {
+				if(
+					$this->subscription_helper->has_subscription( $wc_order->get_id() )
+					&& $wc_order->get_meta('_ppcp_captured_vault_webhook') === 'false'
+				) {
+					$this->capture_authorized_payment($wc_order);
+					$wc_order->update_meta_data('_ppcp_captured_vault_webhook', 'true');
+				}
+			}
+		}
 	}
 
 	/**

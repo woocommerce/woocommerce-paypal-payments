@@ -22,9 +22,12 @@ class MiniCartBootstap {
     }
 
     shouldRender() {
-        return document.querySelector(this.gateway.button.mini_cart_wrapper) !==
-            null || document.querySelector(this.gateway.hosted_fields.mini_cart_wrapper) !==
-        null;
+        if (!this.gateway.can_save_vault_token) {
+            return;
+        }
+
+        return document.querySelector(this.gateway.button.mini_cart_wrapper) !== null
+            || document.querySelector(this.gateway.hosted_fields.mini_cart_wrapper) !== null;
     }
 
     render() {

@@ -10,8 +10,6 @@ declare( strict_types=1 );
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
 use Exception;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\AuthorizationStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
