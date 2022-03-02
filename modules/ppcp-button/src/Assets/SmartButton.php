@@ -331,7 +331,6 @@ class SmartButton implements SmartButtonInterface {
 		if (
 			( is_product() || wc_post_content_has_shortcode( 'product_page' ) )
 			&& ! $not_enabled_on_product_page
-			&& ! $this->is_product_price_total_zero()
 		) {
 			add_action(
 				$this->single_product_renderer_hook(),
@@ -1085,21 +1084,5 @@ class SmartButton implements SmartButtonInterface {
 	protected function is_cart_price_total_zero(): bool {
         // phpcs:ignore WordPress.PHP.StrictComparisons.LooseComparison
 		return WC()->cart->get_cart_contents_total() == 0;
-	}
-
-	/**
-	 * Check if current product price total is 0.
-	 *
-	 * @return bool true if is 0, otherwise false.
-	 */
-	protected function is_product_price_total_zero(): bool {
-		if ( ! is_product() ) {
-			return false;
-		}
-
-		$product = wc_get_product();
-
-        // phpcs:ignore WordPress.PHP.StrictComparisons.LooseComparison
-		return $product && $product->get_price() == 0;
 	}
 }
