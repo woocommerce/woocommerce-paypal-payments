@@ -121,9 +121,8 @@ class PaymentTokenChecker {
 
 		$this->logger->error( "Payment for subscription parent order #{$order_id} was not saved on PayPal." );
 
-		$order    = $this->get_order( $wc_order );
-
 		try {
+			$order    = $this->get_order( $wc_order );
 			$this->void_authorizations( $order );
 		} catch ( RuntimeException $exception ) {
 			$this->logger->warning( $exception->getMessage() );
