@@ -100,6 +100,8 @@ class OrderProcessor {
 	private $logger;
 
 	/**
+	 * The subscription helper.
+	 *
 	 * @var SubscriptionHelper
 	 */
 	private $subscription_helper;
@@ -115,6 +117,7 @@ class OrderProcessor {
 	 * @param Settings                    $settings The Settings.
 	 * @param LoggerInterface             $logger A logger service.
 	 * @param Environment                 $environment The environment.
+	 * @param SubscriptionHelper          $subscription_helper The subscription helper.
 	 */
 	public function __construct(
 		SessionHandler $session_handler,
@@ -136,7 +139,7 @@ class OrderProcessor {
 		$this->settings                      = $settings;
 		$this->environment                   = $environment;
 		$this->logger                        = $logger;
-		$this->subscription_helper = $subscription_helper;
+		$this->subscription_helper           = $subscription_helper;
 	}
 
 	/**
@@ -182,8 +185,8 @@ class OrderProcessor {
 
 			$wc_order->update_meta_data( AuthorizedPaymentsProcessor::CAPTURED_META_KEY, 'false' );
 
-			if($this->subscription_helper->has_subscription( $wc_order->get_id() )) {
-				$wc_order->update_meta_data('_ppcp_captured_vault_webhook', 'false');
+			if ( $this->subscription_helper->has_subscription( $wc_order->get_id() ) ) {
+				$wc_order->update_meta_data( '_ppcp_captured_vault_webhook', 'false' );
 			}
 		}
 

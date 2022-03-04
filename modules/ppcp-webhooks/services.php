@@ -69,15 +69,15 @@ return array(
 		$logger         = $container->get( 'woocommerce.logger.woocommerce' );
 		$prefix         = $container->get( 'api.prefix' );
 		$order_endpoint = $container->get( 'api.endpoint.order' );
-		$authorized_payments_processor = $container->get('wcgateway.processor.authorized-payments');
+		$authorized_payments_processor = $container->get( 'wcgateway.processor.authorized-payments' );
 		return array(
 			new CheckoutOrderApproved( $logger, $prefix, $order_endpoint ),
 			new CheckoutOrderCompleted( $logger, $prefix ),
 			new PaymentCaptureRefunded( $logger, $prefix ),
 			new PaymentCaptureReversed( $logger, $prefix ),
 			new PaymentCaptureCompleted( $logger, $prefix, $order_endpoint ),
-			new VaultPaymentTokenCreated($logger, $prefix, $authorized_payments_processor),
-			new VaultCreditCardCreated($logger, $prefix),
+			new VaultPaymentTokenCreated( $logger, $prefix, $authorized_payments_processor ),
+			new VaultCreditCardCreated( $logger, $prefix ),
 		);
 	},
 
