@@ -1,6 +1,6 @@
 <?php
 /**
- * Handles the Webhook VAULT.PAYMENT-TOKEN.CREATED
+ * Handles the Webhook VAULT.CREDIT-CARD.CREATED
  *
  * @package WooCommerce\PayPalCommerce\Webhooks\Handler
  */
@@ -10,46 +10,78 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
 
 use Psr\Log\LoggerInterface;
+use WP_REST_Request;
+use WP_REST_Response;
 
-class VaultCreditCardCreated implements RequestHandler
-{
+/**
+ * Class VaultCreditCardCreated
+ */
+class VaultCreditCardCreated implements RequestHandler {
+
 	/**
+	 * The logger.
+	 *
 	 * @var LoggerInterface
 	 */
 	protected $logger;
 
 	/**
+	 * The prefix.
+	 *
 	 * @var string
 	 */
 	protected $prefix;
 
-	public function __construct(LoggerInterface $logger, string $prefix)
-	{
+	/**
+	 * VaultCreditCardCreated constructor.
+	 *
+	 * @param LoggerInterface $logger The logger.
+	 * @param string          $prefix The prefix.
+	 */
+	public function __construct( LoggerInterface $logger, string $prefix ) {
 		$this->logger = $logger;
 		$this->prefix = $prefix;
 	}
 
-	public function event_types(): array
-	{
+	/**
+	 * The event types a handler handles.
+	 *
+	 * @return string[]
+	 */
+	public function event_types(): array {
 		return array(
 			'VAULT.CREDIT-CARD.CREATED',
 		);
 	}
 
-	public function responsible_for_request(\WP_REST_Request $request): bool
-	{
+	/**
+	 * Whether a handler is responsible for a given request or not.
+	 *
+	 * @param WP_REST_Request $request The request.
+	 *
+	 * @return bool
+	 */
+	public function responsible_for_request( WP_REST_Request $request ): bool {
 		return in_array( $request['event_type'], $this->event_types(), true );
 	}
 
-	public function handle_request(\WP_REST_Request $request): \WP_REST_Response
-	{
+	/**
+	 * Responsible for handling the request.
+	 *
+	 * @param WP_REST_Request $request The request.
+	 *
+	 * @return WP_REST_Response
+	 */
+	public function handle_request( WP_REST_Request $request ): WP_REST_Response {
+		// TODO currently this webhook is not triggered from PayPal, implement it once is available.
+
 		$message = 'VAULT.CREDIT-CARD.CREATED received.';
-		$this->logger->log('info', $message);
+		$this->logger->log( 'info', $message );
 		$response = array(
 			'success' => true,
 			'message' => $message,
 		);
 
-		return rest_ensure_response($response);
+		return new WP_REST_Response( $response );
 	}
 }

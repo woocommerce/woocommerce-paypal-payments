@@ -104,6 +104,10 @@ class PaymentTokenChecker {
 	 */
 	public function check_and_update( int $order_id, int $customer_id ):void {
 		$wc_order = wc_get_order( $order_id );
+		if ( ! is_a( $wc_order, WC_Order::class ) ) {
+			return;
+		}
+
 		if ( $wc_order->get_status() === 'processing' ) {
 			return;
 		}
@@ -111,7 +115,7 @@ class PaymentTokenChecker {
 		$tokens = $this->payment_token_repository->all_for_user_id( $customer_id );
 		if ( $tokens ) {
 			try {
-				$this->capture_authorized_payment( $order_id );
+				$this->capture_authorized_payment( $wc_order );
 			} catch ( NotFoundException $exception ) {
 				$this->logger->warning( "It was not possible to capture the payment for order: #{$order_id}" );
 			}
@@ -122,7 +126,7 @@ class PaymentTokenChecker {
 		$this->logger->error( "Payment for subscription parent order #{$order_id} was not saved on PayPal." );
 
 		try {
-			$order    = $this->get_order( $wc_order );
+			$order = $this->get_order( $wc_order );
 			$this->void_authorizations( $order );
 		} catch ( RuntimeException $exception ) {
 			$this->logger->warning( $exception->getMessage() );
@@ -132,15 +136,13 @@ class PaymentTokenChecker {
 	}
 
 	/**
-	 * Captures authorized payments for the given order id.
+	 * Captures authorized payments for the given WC order.
 	 *
-	 * @param int $order_id The WC order ID.
-	 * @return void
+	 * @param WC_Order $wc_order The WC order.
 	 * @throws NotFoundException When there is a problem capturing the payment.
 	 */
-	private function capture_authorized_payment( int $order_id ): void {
+	private function capture_authorized_payment( WC_Order $wc_order ): void {
 		if ( $this->settings->has( 'intent' ) && strtoupper( (string) $this->settings->get( 'intent' ) ) === 'CAPTURE' ) {
-			$wc_order = wc_get_order( $order_id );
 			$this->authorized_payments_processor->capture_authorized_payment( $wc_order );
 		}
 	}
@@ -203,6 +205,11 @@ class PaymentTokenChecker {
 		$error_message = __( 'Could not process order because it was not possible to save the payment on PayPal.', 'woocommerce-paypal-payments' );
 		$wc_order->update_status( 'failed', $error_message );
 
+		/**
+		 * Function already exist in Subscription plugin
+		 *
+		 * @psalm-suppress UndefinedFunction
+		 */
 		$subscriptions = wcs_get_subscriptions_for_order( $wc_order->get_id() );
 		foreach ( $subscriptions as $key => $subscription ) {
 			if ( $subscription->get_parent_id() === $wc_order->get_id() ) {

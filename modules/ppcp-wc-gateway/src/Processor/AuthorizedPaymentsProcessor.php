@@ -84,6 +84,8 @@ class AuthorizedPaymentsProcessor {
 	private $config;
 
 	/**
+	 * The subscription helper.
+	 *
 	 * @var SubscriptionHelper
 	 */
 	private $subscription_helper;
@@ -95,7 +97,8 @@ class AuthorizedPaymentsProcessor {
 	 * @param PaymentsEndpoint           $payments_endpoint The Payments endpoint.
 	 * @param LoggerInterface            $logger The logger.
 	 * @param AuthorizeOrderActionNotice $notice The notice.
-	 * @param ContainerInterface          $config The settings.
+	 * @param ContainerInterface         $config The settings.
+	 * @param SubscriptionHelper         $subscription_helper The subscription helper.
 	 */
 	public function __construct(
 		OrderEndpoint $order_endpoint,
@@ -106,11 +109,11 @@ class AuthorizedPaymentsProcessor {
 		SubscriptionHelper $subscription_helper
 	) {
 
-		$this->order_endpoint    = $order_endpoint;
-		$this->payments_endpoint = $payments_endpoint;
-		$this->logger            = $logger;
-		$this->notice            = $notice;
-		$this->config = $config;
+		$this->order_endpoint      = $order_endpoint;
+		$this->payments_endpoint   = $payments_endpoint;
+		$this->logger              = $logger;
+		$this->notice              = $notice;
+		$this->config              = $config;
 		$this->subscription_helper = $subscription_helper;
 	}
 
@@ -209,22 +212,29 @@ class AuthorizedPaymentsProcessor {
 		return false;
 	}
 
-	public function capture_authorized_payments_for_customer(int $customer_id) {
+	/**
+	 * Captures the authorized payments for the given customer.
+	 *
+	 * @param int $customer_id The customer id.
+	 */
+	public function capture_authorized_payments_for_customer( int $customer_id ): void {
 
-		$wc_orders = wc_get_orders(array(
-			'customer_id' => $customer_id,
-			'status' => array('wc-on-hold'),
-			'limit' => -1,
- 		));
+		$wc_orders = wc_get_orders(
+			array(
+				'customer_id' => $customer_id,
+				'status'      => array( 'wc-on-hold' ),
+				'limit'       => -1,
+			)
+		);
 
-		if ($this->config->has('intent') && strtoupper((string)$this->config->get('intent')) === 'CAPTURE') {
-			foreach ($wc_orders as $wc_order) {
-				if(
+		if ( $this->config->has( 'intent' ) && strtoupper( (string) $this->config->get( 'intent' ) ) === 'CAPTURE' ) {
+			foreach ( $wc_orders as $wc_order ) {
+				if (
 					$this->subscription_helper->has_subscription( $wc_order->get_id() )
-					&& $wc_order->get_meta('_ppcp_captured_vault_webhook') === 'false'
+					&& $wc_order->get_meta( '_ppcp_captured_vault_webhook' ) === 'false'
 				) {
-					$this->capture_authorized_payment($wc_order);
-					$wc_order->update_meta_data('_ppcp_captured_vault_webhook', 'true');
+					$this->capture_authorized_payment( $wc_order );
+					$wc_order->update_meta_data( '_ppcp_captured_vault_webhook', 'true' );
 				}
 			}
 		}
