@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Processor;
 
 
+use Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
@@ -17,6 +18,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payments;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Mockery;
@@ -33,6 +35,8 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 	private $orderEndpoint;
 	private $paymentsEndpoint;
 	private $notice;
+	private $config;
+	private $subscription_helper;
 	private $testee;
 
 	public function setUp(): void {
@@ -56,11 +60,16 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 		$this->notice = Mockery::mock(AuthorizeOrderActionNotice::class);
 		$this->notice->shouldReceive('display_message');
 
+		$this->config = Mockery::mock(ContainerInterface::class);
+		$this->subscription_helper = Mockery::mock(SubscriptionHelper::class);
+
 		$this->testee = new AuthorizedPaymentsProcessor(
 			$this->orderEndpoint,
 			$this->paymentsEndpoint,
 			new NullLogger(),
-			$this->notice
+			$this->notice,
+			$this->config,
+			$this->subscription_helper
 		);
 	}
 
