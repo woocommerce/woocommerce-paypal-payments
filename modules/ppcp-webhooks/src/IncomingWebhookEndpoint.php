@@ -18,6 +18,9 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookEventFactory;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\RequestHandler;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\Webhooks\Status\WebhookSimulation;
+use WP_Error;
+use WP_REST_Request;
+use WP_REST_Response;
 
 /**
  * Class IncomingWebhookEndpoint
@@ -144,11 +147,11 @@ class IncomingWebhookEndpoint {
 	/**
 	 * Verifies the current request.
 	 *
-	 * @param \WP_REST_Request $request The request.
+	 * @param WP_REST_Request $request The request.
 	 *
 	 * @return bool
 	 */
-	public function verify_request( \WP_REST_Request $request ): bool {
+	public function verify_request( WP_REST_Request $request ): bool {
 		if ( ! $this->verify_request ) {
 			return true;
 		}
@@ -179,11 +182,11 @@ class IncomingWebhookEndpoint {
 	/**
 	 * Handles the request.
 	 *
-	 * @param \WP_REST_Request $request The request.
+	 * @param WP_REST_Request $request The request.
 	 *
-	 * @return \WP_REST_Response
+	 * @return WP_Error|WP_REST_Response
 	 */
-	public function handle_request( \WP_REST_Request $request ): \WP_REST_Response {
+	public function handle_request( WP_REST_Request $request ): WP_REST_Response {
 		$event = $this->event_from_request( $request );
 
 		$this->last_webhook_storage->save( $event );
@@ -273,12 +276,12 @@ class IncomingWebhookEndpoint {
 	/**
 	 * Creates WebhookEvent from request data.
 	 *
-	 * @param \WP_REST_Request $request The request with event data.
+	 * @param WP_REST_Request $request The request with event data.
 	 *
 	 * @return WebhookEvent
 	 * @throws RuntimeException When failed to create.
 	 */
-	private function event_from_request( \WP_REST_Request $request ): WebhookEvent {
+	private function event_from_request( WP_REST_Request $request ): WebhookEvent {
 		return $this->webhook_event_factory->from_array( $request->get_params() );
 	}
 }
