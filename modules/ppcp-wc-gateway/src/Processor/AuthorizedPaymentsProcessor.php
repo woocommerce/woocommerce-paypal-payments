@@ -227,7 +227,11 @@ class AuthorizedPaymentsProcessor {
 			)
 		);
 
-		if ( $this->config->has( 'intent' ) && strtoupper( (string) $this->config->get( 'intent' ) ) === 'CAPTURE' ) {
+		if (
+			$this->config->has( 'intent' )
+			&& strtoupper( (string) $this->config->get( 'intent' ) ) === 'CAPTURE'
+			&& is_array( $wc_orders )
+		) {
 			foreach ( $wc_orders as $wc_order ) {
 				if (
 					$this->subscription_helper->has_subscription( $wc_order->get_id() )
