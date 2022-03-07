@@ -205,6 +205,9 @@ class WCGatewayModule implements ModuleInterface {
 				if ( $dcc_applies->for_country_currency() ) {
 					$methods[] = $container->get( 'wcgateway.credit-card-gateway' );
 				}
+
+				$methods[] = $container->get('wcgateway.pay-upon-invoice-gateway');
+
 				return (array) $methods;
 			}
 		);
@@ -268,6 +271,25 @@ class WCGatewayModule implements ModuleInterface {
 				return $disabler->handler( (array) $methods );
 			}
 		);
+
+		add_action('wp_footer', function () { ?>
+<script type="application/json" fncls="fnparams-dede7cc5-15fd-4c75-a9f4-36c430ee3a99">
+	{
+		"f":"change_this_to_32char_guid",
+		"s":"flowid_provided_to_you"
+	}
+</script>
+		<?php });
+
+		add_action('wp_enqueue_scripts', function () use($container) {
+			$gateway_module_url = $container->get('wcgateway.url');
+			wp_enqueue_script(
+				'ppcp-fraudnet',
+				trailingslashit($gateway_module_url) . 'assets/js/fraudnet.js',
+				array(),
+				1
+			);
+		});
 	}
 
 	/**

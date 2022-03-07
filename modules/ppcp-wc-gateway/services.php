@@ -29,6 +29,8 @@ use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\OrderEndpoint;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
@@ -2116,6 +2118,21 @@ return array(
 	'wcgateway.funding-source.renderer'            => function ( ContainerInterface $container ) : FundingSourceRenderer {
 		return new FundingSourceRenderer(
 			$container->get( 'wcgateway.settings' )
+		);
+	},
+	'wcgateway.pay-upon-invoice-order-endpoint' => static function (ContainerInterface $container): OrderEndpoint {
+		return new OrderEndpoint(
+			$container->get( 'api.host' ),
+			$container->get( 'api.bearer' ),
+			$container->get( 'api.factory.order' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
+	'wcgateway.pay-upon-invoice-gateway' => static function (ContainerInterface $container): PayUponInvoiceGateway {
+		return new PayUponInvoiceGateway(
+			$container->get( 'wcgateway.pay-upon-invoice-order-endpoint' ),
+			$container->get( 'api.factory.purchase-unit' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 );

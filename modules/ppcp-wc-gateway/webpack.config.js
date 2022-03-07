@@ -7,6 +7,7 @@ module.exports = {
     target: 'web',
     entry: {
         'gateway-settings': path.resolve('./resources/js/gateway-settings.js'),
+        'fraudnet': path.resolve('./resources/js/fraudnet.js'),
     },
     output: {
         path: path.resolve(__dirname, 'assets/'),
