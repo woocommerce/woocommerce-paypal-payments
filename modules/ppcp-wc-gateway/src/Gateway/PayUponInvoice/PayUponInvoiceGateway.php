@@ -79,7 +79,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 
 	public function process_payment($order_id)
 	{
-		$wc_order = new WC_Order( $order_id );
+		$wc_order = wc_get_order( $order_id );
 		$wc_order->update_status('on-hold', __('Awaiting Pay Upon Invoice payment', 'woocommerce-paypal-payments'));
 
 		$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
@@ -88,9 +88,19 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 			$this->order_endpoint->create(array( $purchase_unit ));
 		} catch (RuntimeException $exception) {
 			$error = $exception->getMessage();
-			$this->logger->error($error);
 
-			// TODO display error in the screen
+			$this->logger->error($error);
+			wc_add_notice( $error, 'error' );
+
+			$wc_order->update_status(
+				'failed',
+				$error
+			);
+
+			return array(
+				'result'   => 'failure',
+				'redirect' => wc_get_checkout_url(),
+			);
 		}
 	}
 }

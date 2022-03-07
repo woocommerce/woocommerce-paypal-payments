@@ -37,11 +37,11 @@ class OrderEndpoint {
 	 */
 	protected $logger;
 
-	public function __construct( string $host, Bearer $bearer, OrderFactory $order_factory, LoggerInterface $logger) {
-		$this->host   = $host;
-		$this->bearer = $bearer;
+	public function __construct( string $host, Bearer $bearer, OrderFactory $order_factory, LoggerInterface $logger ) {
+		$this->host          = $host;
+		$this->bearer        = $bearer;
 		$this->order_factory = $order_factory;
-		$this->logger = $logger;
+		$this->logger        = $logger;
 	}
 
 	/**
@@ -52,36 +52,36 @@ class OrderEndpoint {
 	 */
 	public function create( array $items ): Order {
 		$data = array(
-			'intent' => 'CAPTURE',
+			'intent'                 => 'CAPTURE',
 			'processing_instruction' => 'ORDER_COMPLETE_ON_PAYMENT_APPROVAL',
-			'purchase_units'      => array_map(
+			'purchase_units'         => array_map(
 				static function ( PurchaseUnit $item ): array {
 					return $item->to_array();
 				},
 				$items
 			),
-			'payment_source' => array (
+			'payment_source'         => array(
 				'pay_upon_invoice' => array(
-					'name' => array(
+					'name'               => array(
 						'given_name' => 'John',
-						'surname' => 'Doe',
+						'surname'    => 'Doe',
 					),
-					'email' => 'buyer@example.com',
-					'birth_date' => '1990-01-01',
-					'phone' => array(
+					'email'              => 'buyer@example.com',
+					'birth_date'         => '1990-01-01',
+					'phone'              => array(
 						'national_number' => '6912345678',
-						'country_code' => '49',
+						'country_code'    => '49',
 					),
-					'billing_address' => array(
+					'billing_address'    => array(
 						'address_line_1' => 'Schönhauser Allee 84',
-						'admin_area_2' => 'Berlin',
-						'postal_code' => '10439',
-						'country_code' => 'DE',
+						'admin_area_2'   => 'Berlin',
+						'postal_code'    => '10439',
+						'country_code'   => 'DE',
 					),
 					'experience_context' => array(
-						'locale' => 'en-DE',
-						'brand_name' => 'EXAMPLE INC',
-						'logo_url' => 'https://example.com/logoUrl.svg',
+						'locale'                        => 'en-DE',
+						'brand_name'                    => 'EXAMPLE INC',
+						'logo_url'                      => 'https://example.com/logoUrl.svg',
 						'customer_service_instructions' => array(
 							'Customer service phone is +49 6912345678.',
 						),
@@ -91,28 +91,28 @@ class OrderEndpoint {
 		);
 
 		$bearer = $this->bearer->bearer();
-		$url = trailingslashit( $this->host ) . 'v2/checkout/orders';
-		$args = array(
+		$url    = trailingslashit( $this->host ) . 'v2/checkout/orders';
+		$args   = array(
 			'method'  => 'POST',
 			'headers' => array(
-				'Authorization' => 'Bearer ' . $bearer->token(),
-				'Content-Type'  => 'application/json',
-				'Prefer'        => 'return=representation',
+				'Authorization'             => 'Bearer ' . $bearer->token(),
+				'Content-Type'              => 'application/json',
+				'Prefer'                    => 'return=representation',
 				'PayPal-Client-Metadata-Id' => 'd4e0d7b9-4f75-43f9-9437-d8a57c901585',
-				'PayPal-Request-Id' => uniqid( 'ppcp-', true ),
+				'PayPal-Request-Id'         => uniqid( 'ppcp-', true ),
 			),
 			'body'    => wp_json_encode( $data ),
 		);
 
 		$response = $this->request( $url, $args );
 		if ( is_wp_error( $response ) ) {
-			throw new RuntimeException($response->get_error_message());
+			throw new RuntimeException( $response->get_error_message() );
 		}
 
 		$json        = json_decode( $response['body'] );
 		$status_code = (int) wp_remote_retrieve_response_code( $response );
 		if ( 201 !== $status_code ) {
-			throw new PayPalApiException($json, $status_code);
+			throw new PayPalApiException( $json, $status_code );
 		}
 
 		return $this->order_factory->from_paypal_response( $json );
