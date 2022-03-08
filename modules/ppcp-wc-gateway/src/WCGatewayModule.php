@@ -275,7 +275,7 @@ class WCGatewayModule implements ModuleInterface {
 		add_action('wp_footer', function () { ?>
 <script type="application/json" fncls="fnparams-dede7cc5-15fd-4c75-a9f4-36c430ee3a99">
 	{
-		"f":"change_this_to_32char_guid",
+		"f":"d4e0d7b9-4f75-43f9-9437-d8a57c901585",
 		"s":"flowid_provided_to_you"
 	}
 </script>
