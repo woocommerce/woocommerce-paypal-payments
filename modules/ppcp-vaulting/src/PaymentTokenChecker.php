@@ -116,8 +116,8 @@ class PaymentTokenChecker {
 		if ( $tokens ) {
 			try {
 				$this->capture_authorized_payment( $wc_order );
-			} catch ( NotFoundException $exception ) {
-				$this->logger->warning( "It was not possible to capture the payment for order: #{$order_id}" );
+			} catch ( Exception $exception ) {
+				$this->logger->error( $exception->getMessage() );
 			}
 
 			return;
@@ -139,11 +139,13 @@ class PaymentTokenChecker {
 	 * Captures authorized payments for the given WC order.
 	 *
 	 * @param WC_Order $wc_order The WC order.
-	 * @throws NotFoundException When there is a problem capturing the payment.
+	 * @throws Exception When there is a problem capturing the payment.
 	 */
 	private function capture_authorized_payment( WC_Order $wc_order ): void {
 		if ( $this->settings->has( 'intent' ) && strtoupper( (string) $this->settings->get( 'intent' ) ) === 'CAPTURE' ) {
-			$this->authorized_payments_processor->capture_authorized_payment( $wc_order );
+			if ( ! $this->authorized_payments_processor->capture_authorized_payment( $wc_order ) ) {
+				throw new Exception( "Could not capture payment for order: #{$wc_order->get_id()}" );
+			}
 		}
 	}
 
