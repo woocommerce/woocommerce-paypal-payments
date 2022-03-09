@@ -29,7 +29,10 @@ use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\FraudNet;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\FraudNetSessionId;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\OrderEndpoint;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoice;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
@@ -2125,6 +2128,7 @@ return array(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
 			$container->get( 'api.factory.order' ),
+			$container->get('wcgateway.pay-upon-invoice-fraudnet'),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
@@ -2135,4 +2139,20 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
+	'wcgateway.pay-upon-invoice-fraudnet-session-id' => static function (ContainerInterface $container): FraudNetSessionId {
+		return new FraudNetSessionId();
+	},
+	'wcgateway.pay-upon-invoice-fraudnet' => static function (ContainerInterface $container): FraudNet {
+		$session_id = $container->get('wcgateway.pay-upon-invoice-fraudnet-session-id');
+		return new FraudNet(
+			(string)$session_id(),
+			'bar'
+		);
+	},
+	'wcgateway.pay-upon-invoice' => static function (ContainerInterface $container): PayUponInvoice {
+		return new PayUponInvoice(
+			$container->get('wcgateway.url'),
+			$container->get('wcgateway.pay-upon-invoice-fraudnet')
+		);
+	}
 );

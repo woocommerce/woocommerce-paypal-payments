@@ -36,12 +36,23 @@ class OrderEndpoint {
 	 * @var LoggerInterface
 	 */
 	protected $logger;
+	/**
+	 * @var FraudNet
+	 */
+	protected $fraudNet;
 
-	public function __construct( string $host, Bearer $bearer, OrderFactory $order_factory, LoggerInterface $logger ) {
+	public function __construct(
+		string $host,
+		Bearer $bearer,
+		OrderFactory $order_factory,
+		FraudNet $fraudNet,
+		LoggerInterface $logger
+	) {
 		$this->host          = $host;
 		$this->bearer        = $bearer;
 		$this->order_factory = $order_factory;
 		$this->logger        = $logger;
+		$this->fraudNet = $fraudNet;
 	}
 
 	/**
@@ -98,7 +109,7 @@ class OrderEndpoint {
 				'Authorization'             => 'Bearer ' . $bearer->token(),
 				'Content-Type'              => 'application/json',
 				'Prefer'                    => 'return=representation',
-				'PayPal-Client-Metadata-Id' => 'd4e0d7b9-4f75-43f9-9437-d8a57c901585',
+				'PayPal-Client-Metadata-Id' => $this->fraudNet->sessionId(),
 				'PayPal-Request-Id'         => uniqid( 'ppcp-', true ),
 			),
 			'body'    => wp_json_encode( $data ),

@@ -185,46 +185,9 @@ class WCGatewayModule implements ModuleInterface {
 
 		add_action(
 			'init',
-			function() use ( $c ) {
-				if ( 'DE' === $c->get( 'api.shop.country' ) ) { // TODO && is_checkout() does not work, we are on admin-ajax.php
-
-					add_action(
-						'wp_footer',
-						function () {
-							?>
-						<script type="application/json" fncls="fnparams-dede7cc5-15fd-4c75-a9f4-36c430ee3a99">
-							{
-								"f":"d4e0d7b9-4f75-43f9-9437-d8a57c901585",
-								"s":"flowid_provided_to_you"
-							}
-						</script>
-							<?php
-
-						}
-					);
-
-					add_action(
-						'wp_enqueue_scripts',
-						function () use ( $c ) {
-							$gateway_module_url = $c->get( 'wcgateway.url' );
-							wp_enqueue_script(
-								'ppcp-pay-upon-invoice',
-								trailingslashit( $gateway_module_url ) . 'assets/js/pay-upon-invoice.js',
-								array(),
-								1
-							);
-						}
-					);
-
-					add_action(
-						'woocommerce_review_order_after_submit',
-						function () {
-							$gateway_settings = get_option( 'woocommerce_ppcp-pay-upon-invoice-gateway_settings' );
-							?>
-						<p id="ppcp-pui-legal-text" style="display:none;"><?php echo wp_kses_post( $gateway_settings['legal_text'] ?? '' ); ?></p>
-							<?php
-						}
-					);
+			function () use ($c) {
+				if ( 'DE' === $c->get( 'api.shop.country' ) ) {
+					($c->get('wcgateway.pay-upon-invoice'))->init();
 				}
 			}
 		);
