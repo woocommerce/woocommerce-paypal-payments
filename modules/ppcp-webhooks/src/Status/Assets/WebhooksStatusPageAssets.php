@@ -83,20 +83,20 @@ class WebhooksStatusPageAssets {
 	public function get_script_data() {
 		return array(
 			'resubscribe' => array(
-				'endpoint'       => home_url( \WC_AJAX::get_endpoint( ResubscribeEndpoint::ENDPOINT ) ),
+				'endpoint'       => \WC_AJAX::get_endpoint( ResubscribeEndpoint::ENDPOINT ),
 				'nonce'          => wp_create_nonce( ResubscribeEndpoint::nonce() ),
 				'button'         => '.ppcp-webhooks-resubscribe',
 				'failureMessage' => __( 'Operation failed. Check WooCommerce logs for more details.', 'woocommerce-paypal-payments' ),
 			),
 			'simulation'  => array(
 				'start' => array(
-					'endpoint'       => home_url( \WC_AJAX::get_endpoint( SimulateEndpoint::ENDPOINT ) ),
+					'endpoint'       => \WC_AJAX::get_endpoint( SimulateEndpoint::ENDPOINT ),
 					'nonce'          => wp_create_nonce( SimulateEndpoint::nonce() ),
 					'button'         => '.ppcp-webhooks-simulate',
 					'failureMessage' => __( 'Operation failed. Check WooCommerce logs for more details.', 'woocommerce-paypal-payments' ),
 				),
 				'state' => array(
-					'endpoint'            => home_url( \WC_AJAX::get_endpoint( SimulationStateEndpoint::ENDPOINT ) ),
+					'endpoint'            => \WC_AJAX::get_endpoint( SimulationStateEndpoint::ENDPOINT ),
 					'successState'        => WebhookSimulation::STATE_RECEIVED,
 					'waitingMessage'      => __( 'Waiting for the webhook to arrive...', 'woocommerce-paypal-payments' ),
 					'successMessage'      => __( 'The webhook was received successfully.', 'woocommerce-paypal-payments' ),
