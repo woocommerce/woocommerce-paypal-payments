@@ -33,13 +33,14 @@ class OrderEndpoint {
 	protected $order_factory;
 
 	/**
-	 * @var LoggerInterface
-	 */
-	protected $logger;
-	/**
 	 * @var FraudNet
 	 */
 	protected $fraudNet;
+
+	/**
+	 * @var LoggerInterface
+	 */
+	protected $logger;
 
 	public function __construct(
 		string $host,
@@ -52,7 +53,7 @@ class OrderEndpoint {
 		$this->bearer        = $bearer;
 		$this->order_factory = $order_factory;
 		$this->logger        = $logger;
-		$this->fraudNet = $fraudNet;
+		$this->fraudNet      = $fraudNet;
 	}
 
 	/**
@@ -61,7 +62,7 @@ class OrderEndpoint {
 	 * @param PurchaseUnit[] $items The purchase unit items for the order.
 	 * @return Order
 	 */
-	public function create( array $items ): Order {
+	public function create( array $items, PaymentSource $payment_source ): Order {
 		$data = array(
 			'intent'                 => 'CAPTURE',
 			'processing_instruction' => 'ORDER_COMPLETE_ON_PAYMENT_APPROVAL',
@@ -72,32 +73,7 @@ class OrderEndpoint {
 				$items
 			),
 			'payment_source'         => array(
-				'pay_upon_invoice' => array(
-					'name'               => array(
-						'given_name' => 'John',
-						'surname'    => 'Doe',
-					),
-					'email'              => 'buyer@example.com',
-					'birth_date'         => '1990-01-01',
-					'phone'              => array(
-						'national_number' => '6912345678',
-						'country_code'    => '49',
-					),
-					'billing_address'    => array(
-						'address_line_1' => 'Schönhauser Allee 84',
-						'admin_area_2'   => 'Berlin',
-						'postal_code'    => '10439',
-						'country_code'   => 'DE',
-					),
-					'experience_context' => array(
-						'locale'                        => 'en-DE',
-						'brand_name'                    => 'EXAMPLE INC',
-						'logo_url'                      => 'https://example.com/logoUrl.svg',
-						'customer_service_instructions' => array(
-							'Customer service phone is +49 6912345678.',
-						),
-					),
-				),
+				'pay_upon_invoice' => $payment_source->to_array(),
 			),
 		);
 

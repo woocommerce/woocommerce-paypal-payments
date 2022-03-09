@@ -185,9 +185,9 @@ class WCGatewayModule implements ModuleInterface {
 
 		add_action(
 			'init',
-			function () use ($c) {
+			function () use ( $c ) {
 				if ( 'DE' === $c->get( 'api.shop.country' ) ) {
-					($c->get('wcgateway.pay-upon-invoice'))->init();
+					( $c->get( 'wcgateway.pay-upon-invoice' ) )->init();
 				}
 			}
 		);
