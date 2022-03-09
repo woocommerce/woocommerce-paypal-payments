@@ -73,6 +73,11 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 				'label' => __( 'Pay upon Invoice', 'woocommerce-paypal-payments' ),
 				'default' => 'yes'
 			),
+			'legal_text' => array(
+				'title' => __( 'Legal text', 'woocommerce-paypal-payments' ),
+				'type' => 'textarea',
+				'default' => 'By clicking on the button, you agree to the <a href="https://www.ratepay.com/legal-payment-terms">terms of payment</a> and <a href="https://www.ratepay.com/legal-payment-dataprivacy">performance of a risk check</a> from the payment partner, Ratepay. You also agree to PayPal’s <a href="https://www.paypal.com/de/webapps/mpp/ua/privacy-full?locale.x=eng_DE&_ga=1.267010504.718583817.1563460395">privacy statement</a>. If your request to purchase upon invoice is accepted, the purchase price claim will be assigned to Ratepay, and you may only pay Ratepay, not the merchant.',
+			),
 		);
 	}
 
