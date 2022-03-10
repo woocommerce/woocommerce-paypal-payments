@@ -5,6 +5,10 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice;
 class FraudNetSessionId {
 
 	public function __invoke() {
+		if(WC()->session === null) {
+			return '';
+		}
+
 		if ( WC()->session->get( 'ppcp_fraudnet_session_id' ) ) {
 			return WC()->session->get( 'ppcp_fraudnet_session_id' );
 		}

@@ -36,6 +36,18 @@ class PayUponInvoice {
 			'wp_enqueue_scripts',
 			array( $this, 'register_assets' )
 		);
+
+		add_filter( 'woocommerce_billing_fields', function($billing_fields) {
+			$billing_fields['billing_birth_date'] = array(
+				'type'        => 'date',
+				'label'       => __('Birth date', 'woocommerce-paypal-payments'),
+				'class'       => array('form-row-wide'),
+				'required'    => true,
+				'clear'       => true,
+			);
+
+			return $billing_fields;
+		});
 	}
 
 	public function add_parameter_block() { ?>
