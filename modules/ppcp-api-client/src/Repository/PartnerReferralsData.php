@@ -91,7 +91,7 @@ class PartnerReferralsData {
 				),
 				'show_add_credit_card'   => true,
 			),
-			'products'                => $this->products,
+			//'products'                => $this->products,
 			'legal_consents'          => array(
 				array(
 					'type'    => 'SHARE_DATA_CONSENT',
@@ -119,6 +119,27 @@ class PartnerReferralsData {
 					),
 				),
 			),
+			"products" => [
+				"PAYMENT_METHODS"
+			],
+			"capabilities" => [
+				"PAY_UPON_INVOICE"
+			],
+			"business_entity" => array(
+				"business_type" => array(
+					"type" => "INDIVIDUAL"
+				),
+				"addresses" => array(
+					array(
+						"address_line_1" => "Parkstr. 26",
+						"admin_area_1" => "Berlin",
+						"postal_code" => "90409",
+						"country_code" => "DE",
+						"type" => "WORK",
+					),
+				),
+			),
+			"tracking_id" => "testenterprices123122",
 		);
 	}
 }

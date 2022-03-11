@@ -77,6 +77,15 @@ class OrderEndpoint {
 			),
 		);
 
+		$data['purchase_units'][0]['items'][0]['tax_rate'] = '19.00';
+		$data['purchase_units'][0]['shipping']['name']['full_name'] = 'John Doe';
+		$data['purchase_units'][0]['shipping']['address'] = array(
+			'address_line_1' => 'Taunusanlage 12',
+			'admin_area_2' => 'FRANKFURT AM MAIN',
+			'postal_code' => '60325',
+			'country_code' => 'DE',
+		);
+
 		$bearer = $this->bearer->bearer();
 		$url    = trailingslashit( $this->host ) . 'v2/checkout/orders';
 		$args   = array(
@@ -98,7 +107,7 @@ class OrderEndpoint {
 
 		$json        = json_decode( $response['body'] );
 		$status_code = (int) wp_remote_retrieve_response_code( $response );
-		if ( 201 !== $status_code ) {
+		if ( ! in_array($status_code, [200,201] ) ) {
 			throw new PayPalApiException( $json, $status_code );
 		}
 

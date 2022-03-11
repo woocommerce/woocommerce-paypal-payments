@@ -96,6 +96,13 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 
 		try {
 			$this->order_endpoint->create( array( $purchase_unit ), $payment_source );
+
+			WC()->cart->empty_cart();
+
+			return array(
+				'result'   => 'success',
+				'redirect' => $this->get_return_url( $wc_order ),
+			);
 		} catch ( RuntimeException $exception ) {
 			$error = $exception->getMessage();
 
