@@ -72,74 +72,56 @@ class PartnerReferralsData {
 	 * @return array
 	 */
 	public function data(): array {
-		return array(
-			'partner_config_override' => array(
-				'partner_logo_url'       => 'https://connect.woocommerce.com/images/woocommerce_logo.png',
-				/**
-				 * Returns the URL which will be opened at the end of onboarding.
-				 */
-				'return_url'             => apply_filters(
-					'woocommerce_paypal_payments_partner_config_override_return_url',
-					admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' )
+		return apply_filters(
+			'ppcp_partner_referrals_data',
+			array(
+				'partner_config_override' => array(
+					'partner_logo_url'       => 'https://connect.woocommerce.com/images/woocommerce_logo.png',
+					/**
+					 * Returns the URL which will be opened at the end of onboarding.
+					 */
+					'return_url'             => apply_filters(
+						'woocommerce_paypal_payments_partner_config_override_return_url',
+						admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' )
+					),
+					/**
+					 * Returns the description of the URL which will be opened at the end of onboarding.
+					 */
+					'return_url_description' => apply_filters(
+						'woocommerce_paypal_payments_partner_config_override_return_url_description',
+						__( 'Return to your shop.', 'woocommerce-paypal-payments' )
+					),
+					'show_add_credit_card'   => true,
 				),
-				/**
-				 * Returns the description of the URL which will be opened at the end of onboarding.
-				 */
-				'return_url_description' => apply_filters(
-					'woocommerce_paypal_payments_partner_config_override_return_url_description',
-					__( 'Return to your shop.', 'woocommerce-paypal-payments' )
+				'products'                => $this->products,
+				'legal_consents'          => array(
+					array(
+						'type'    => 'SHARE_DATA_CONSENT',
+						'granted' => true,
+					),
 				),
-				'show_add_credit_card'   => true,
-			),
-			//'products'                => $this->products,
-			'legal_consents'          => array(
-				array(
-					'type'    => 'SHARE_DATA_CONSENT',
-					'granted' => true,
-				),
-			),
-			'operations'              => array(
-				array(
-					'operation'                  => 'API_INTEGRATION',
-					'api_integration_preference' => array(
-						'rest_api_integration' => array(
-							'integration_method'  => 'PAYPAL',
-							'integration_type'    => 'FIRST_PARTY',
-							'first_party_details' => array(
-								'features'     => array(
-									'PAYMENT',
-									'FUTURE_PAYMENT',
-									'REFUND',
-									'ADVANCED_TRANSACTIONS_SEARCH',
-									'VAULT',
+				'operations'              => array(
+					array(
+						'operation'                  => 'API_INTEGRATION',
+						'api_integration_preference' => array(
+							'rest_api_integration' => array(
+								'integration_method'  => 'PAYPAL',
+								'integration_type'    => 'FIRST_PARTY',
+								'first_party_details' => array(
+									'features'     => array(
+										'PAYMENT',
+										'FUTURE_PAYMENT',
+										'REFUND',
+										'ADVANCED_TRANSACTIONS_SEARCH',
+										'VAULT',
+									),
+									'seller_nonce' => $this->nonce(),
 								),
-								'seller_nonce' => $this->nonce(),
 							),
 						),
 					),
 				),
-			),
-			"products" => [
-				"PAYMENT_METHODS"
-			],
-			"capabilities" => [
-				"PAY_UPON_INVOICE"
-			],
-			"business_entity" => array(
-				"business_type" => array(
-					"type" => "INDIVIDUAL"
-				),
-				"addresses" => array(
-					array(
-						"address_line_1" => "Parkstr. 26",
-						"admin_area_1" => "Berlin",
-						"postal_code" => "90409",
-						"country_code" => "DE",
-						"type" => "WORK",
-					),
-				),
-			),
-			"tracking_id" => "testenterprices123122",
+			)
 		);
 	}
 }

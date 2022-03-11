@@ -22,6 +22,13 @@ class PayUponInvoice {
 	}
 
 	public function init() {
+		add_filter('ppcp_partner_referrals_data', function ($data) {
+			$data['products'][] = 'PAYMENT_METHODS';
+			$data['capabilities'][] = 'PAY_UPON_INVOICE';
+
+			return $data;
+		});
+
 		add_action(
 			'wp_footer',
 			array( $this, 'add_parameter_block' )
