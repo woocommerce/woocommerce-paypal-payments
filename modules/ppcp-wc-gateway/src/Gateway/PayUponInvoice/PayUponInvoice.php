@@ -58,7 +58,7 @@ class PayUponInvoice {
 	}
 
 	public function add_parameter_block() { ?>
-		<script type="application/json" fncls="fnparams-dede7cc5-15fd-4c75-a9f4-36c430ee3a99">{"f":"<?php echo $this->fraud_net->sessionId(); ?>","s":"<?php echo $this->fraud_net->sourceWebsiteId(); ?>"}</script>
+		<script type="application/json" fncls="fnparams-dede7cc5-15fd-4c75-a9f4-36c430ee3a99">{"f":"<?php echo esc_attr($this->fraud_net->sessionId()); ?>","s":"<?php echo esc_attr($this->fraud_net->sourceWebsiteId()); ?>"}</script>
 		<script type="text/javascript" src="https://c.paypal.com/da/r/fb.js"></script>
 		<?php
 	}
@@ -67,7 +67,7 @@ class PayUponInvoice {
 		$gateway_settings = get_option( 'woocommerce_ppcp-pay-upon-invoice-gateway_settings' );
 		?>
 		<p id="ppcp-pui-legal-text"
-		   style="display:none;"><?php echo wp_kses_post( $gateway_settings['legal_text'] ?? '' ); ?></p>
+		   style="display:none;"><?php echo wp_kses_post( $gateway_settings['button_legal_text_en'] ?? '' ); ?></p>
 		<?php
 	}
 
