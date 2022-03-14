@@ -111,6 +111,18 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 		} catch ( RuntimeException $exception ) {
 			$error = $exception->getMessage();
 
+			if(is_array($exception->details())) {
+				$details = '';
+				foreach ($exception->details() as $detail) {
+					$issue = $detail->issue ?? '';
+					$field = $detail->field ?? '';
+					$description = $detail->description ?? '';
+					$details .= $issue . ' ' . $field . ' ' . $description . '<br>';
+				}
+
+				$error = $details;
+			}
+
 			$this->logger->error( $error );
 			wc_add_notice( $error, 'error' );
 
