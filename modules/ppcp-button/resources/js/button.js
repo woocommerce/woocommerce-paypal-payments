@@ -9,6 +9,12 @@ import CreditCardRenderer from "./modules/Renderer/CreditCardRenderer";
 import dataClientIdAttributeHandler from "./modules/DataClientIdAttributeHandler";
 import MessageRenderer from "./modules/Renderer/MessageRenderer";
 import Spinner from "./modules/Helper/Spinner";
+import {
+    getCurrentPaymentMethod,
+    ORDER_BUTTON_SELECTOR,
+    PaymentMethods
+} from "./modules/Helper/CheckoutMethodState";
+import {setVisible} from "./modules/Helper/Hiding";
 
 const bootstrap = () => {
     const errorHandler = new ErrorHandler(PayPalCommerceGateway.labels.error.generic);
@@ -91,8 +97,30 @@ document.addEventListener(
             return;
         }
 
+        // Sometimes PayPal script takes long time to load,
+        // so we additionally hide the standard order button here to avoid failed orders.
+        // Normally it is hidden later after the script load.
+        const hideOrderButtonIfPpcpGateway = () => {
+            const currentPaymentMethod = getCurrentPaymentMethod();
+            setVisible(ORDER_BUTTON_SELECTOR, currentPaymentMethod !== PaymentMethods.PAYPAL, true);
+        }
+
+        let bootstrapped = false;
+
+        hideOrderButtonIfPpcpGateway();
+
+        jQuery(document.body).on('updated_checkout payment_method_selected', () => {
+            if (bootstrapped) {
+                return;
+            }
+
+            hideOrderButtonIfPpcpGateway();
+        });
+
         const script = document.createElement('script');
         script.addEventListener('load', (event) => {
+            bootstrapped = true;
+
             bootstrap();
         });
         script.setAttribute('src', PayPalCommerceGateway.button.url);
