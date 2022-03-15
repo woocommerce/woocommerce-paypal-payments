@@ -664,7 +664,7 @@ class SmartButton implements SmartButtonInterface {
 			'script_attributes'              => $this->attributes(),
 			'data_client_id'                 => array(
 				'set_attribute'     => ( is_checkout() && $this->dcc_is_enabled() ) || $this->can_save_vault_token(),
-				'endpoint'          => home_url( \WC_AJAX::get_endpoint( DataClientIdEndpoint::ENDPOINT ) ),
+				'endpoint'          => \WC_AJAX::get_endpoint( DataClientIdEndpoint::ENDPOINT ),
 				'nonce'             => wp_create_nonce( DataClientIdEndpoint::nonce() ),
 				'user'              => get_current_user_id(),
 				'has_subscriptions' => $this->has_subscriptions(),
@@ -673,15 +673,15 @@ class SmartButton implements SmartButtonInterface {
 			'context'                        => $this->context(),
 			'ajax'                           => array(
 				'change_cart'   => array(
-					'endpoint' => home_url( \WC_AJAX::get_endpoint( ChangeCartEndpoint::ENDPOINT ) ),
+					'endpoint' => \WC_AJAX::get_endpoint( ChangeCartEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( ChangeCartEndpoint::nonce() ),
 				),
 				'create_order'  => array(
-					'endpoint' => home_url( \WC_AJAX::get_endpoint( CreateOrderEndpoint::ENDPOINT ) ),
+					'endpoint' => \WC_AJAX::get_endpoint( CreateOrderEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( CreateOrderEndpoint::nonce() ),
 				),
 				'approve_order' => array(
-					'endpoint' => home_url( \WC_AJAX::get_endpoint( ApproveOrderEndpoint::ENDPOINT ) ),
+					'endpoint' => \WC_AJAX::get_endpoint( ApproveOrderEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( ApproveOrderEndpoint::nonce() ),
 				),
 			),
