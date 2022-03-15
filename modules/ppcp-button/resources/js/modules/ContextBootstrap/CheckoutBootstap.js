@@ -1,6 +1,11 @@
 import ErrorHandler from '../ErrorHandler';
 import CheckoutActionHandler from '../ActionHandler/CheckoutActionHandler';
 import { setVisible } from '../Helper/Hiding';
+import {
+    getCurrentPaymentMethod,
+    isSavedCardSelected, ORDER_BUTTON_SELECTOR,
+    PaymentMethods
+} from "../Helper/CheckoutMethodState";
 
 class CheckoutBootstap {
     constructor(gateway, renderer, messages, spinner) {
@@ -9,7 +14,7 @@ class CheckoutBootstap {
         this.messages = messages;
         this.spinner = spinner;
 
-        this.standardOrderButtonSelector = '#place_order';
+        this.standardOrderButtonSelector = ORDER_BUTTON_SELECTOR;
 
         this.buttonChangeObserver = new MutationObserver((el) => {
             this.updateUi();
@@ -76,10 +81,10 @@ class CheckoutBootstap {
     }
 
     updateUi() {
-        const currentPaymentMethod = this.currentPaymentMethod();
-        const isPaypal = currentPaymentMethod === 'ppcp-gateway';
-        const isCard = currentPaymentMethod === 'ppcp-credit-card-gateway';
-        const isSavedCard = isCard && this.isSavedCardSelected();
+        const currentPaymentMethod = getCurrentPaymentMethod();
+        const isPaypal = currentPaymentMethod === PaymentMethods.PAYPAL;
+        const isCard = currentPaymentMethod === PaymentMethods.CARDS;
+        const isSavedCard = isCard && isSavedCardSelected();
         const isNotOurGateway = !isPaypal && !isCard;
 
         setVisible(this.standardOrderButtonSelector, isNotOurGateway || isSavedCard, true);
@@ -124,15 +129,6 @@ class CheckoutBootstap {
         jQuery('#ppcp-credit-card-vault').removeClass('ppcp-credit-card-gateway-form-field-disabled')
         jQuery('#ppcp-credit-card-vault').attr("disabled", false)
         this.renderer.enableCreditCardFields()
-    }
-
-    currentPaymentMethod() {
-        return jQuery('input[name="payment_method"]:checked').val();
-    }
-
-    isSavedCardSelected() {
-        const savedCardList = jQuery('#saved-credit-card');
-        return savedCardList.length && savedCardList.val() !== '';
     }
 }
 
