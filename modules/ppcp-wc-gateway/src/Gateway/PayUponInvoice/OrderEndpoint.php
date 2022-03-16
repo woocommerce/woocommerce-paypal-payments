@@ -77,7 +77,6 @@ class OrderEndpoint {
 			),
 		);
 
-		$data['purchase_units'][0]['items'][0]['tax_rate'] = '19.00';
 		$data['purchase_units'][0]['shipping']['name']['full_name'] = 'John Doe';
 		$data['purchase_units'][0]['shipping']['address'] = array(
 			'address_line_1' => 'Taunusanlage 12',

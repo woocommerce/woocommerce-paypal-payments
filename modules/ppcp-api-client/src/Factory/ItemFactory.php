@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
+use WC_Tax;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
@@ -57,6 +58,7 @@ class ItemFactory {
 				$price_without_tax_rounded = round( $price_without_tax, 2 );
 				$tax                       = round( $price - $price_without_tax_rounded, 2 );
 				$tax                       = new Money( $tax, $this->currency );
+				$tax_rates = WC_Tax::get_rates($product->get_tax_class());
 				return new Item(
 					mb_substr( $product->get_name(), 0, 127 ),
 					new Money( $price_without_tax_rounded, $this->currency ),
@@ -64,7 +66,8 @@ class ItemFactory {
 					mb_substr( wp_strip_all_tags( $product->get_description() ), 0, 127 ),
 					$tax,
 					$product->get_sku(),
-					( $product->is_virtual() ) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS
+					( $product->is_virtual() ) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS,
+					reset($tax_rates)['rate'] ?? 0
 				);
 			},
 			$cart->get_cart_contents()
@@ -138,6 +141,7 @@ class ItemFactory {
 		$price_without_tax_rounded = round( $price_without_tax, 2 );
 		$tax                       = round( $price - $price_without_tax_rounded, 2 );
 		$tax                       = new Money( $tax, $currency );
+		$tax_rates = WC_Tax::get_rates($product->get_tax_class());
 		return new Item(
 			mb_substr( $product->get_name(), 0, 127 ),
 			new Money( $price_without_tax_rounded, $currency ),
@@ -145,7 +149,8 @@ class ItemFactory {
 			mb_substr( wp_strip_all_tags( $product->get_description() ), 0, 127 ),
 			$tax,
 			$product->get_sku(),
-			( $product->is_virtual() ) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS
+			( $product->is_virtual() ) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS,
+			reset($tax_rates)['rate'] ?? 0
 		);
 	}
 

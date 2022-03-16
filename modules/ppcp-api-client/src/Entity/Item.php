@@ -14,7 +14,6 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Entity;
  */
 class Item {
 
-
 	const PHYSICAL_GOODS = 'PHYSICAL_GOODS';
 	const DIGITAL_GOODS  = 'DIGITAL_GOODS';
 
@@ -68,6 +67,13 @@ class Item {
 	private $category;
 
 	/**
+	 * The tax rate.
+	 *
+	 * @var float|int
+	 */
+	protected $tax_rate;
+
+	/**
 	 * Item constructor.
 	 *
 	 * @param string     $name The name.
@@ -85,7 +91,8 @@ class Item {
 		string $description = '',
 		Money $tax = null,
 		string $sku = '',
-		string $category = 'PHYSICAL_GOODS'
+		string $category = 'PHYSICAL_GOODS',
+		float $tax_rate = 0
 	) {
 
 		$this->name        = $name;
@@ -94,8 +101,9 @@ class Item {
 		$this->description = $description;
 		$this->tax         = $tax;
 		$this->sku         = $sku;
-		$this->category    = ( self::DIGITAL_GOODS === $category ) ?
-			self::DIGITAL_GOODS : self::PHYSICAL_GOODS;
+		$this->category    = ( self::DIGITAL_GOODS === $category ) ? self::DIGITAL_GOODS : self::PHYSICAL_GOODS;
+		$this->category = $category;
+		$this->tax_rate = $tax_rate;
 	}
 
 	/**
@@ -162,6 +170,16 @@ class Item {
 	}
 
 	/**
+	 * Returns the tax rate.
+	 *
+	 * @return float
+	 */
+	public function tax_rate():float
+	{
+		return round((float) $this->tax_rate, 2);
+	}
+
+	/**
 	 * Returns the object as array.
 	 *
 	 * @return array
@@ -178,6 +196,10 @@ class Item {
 
 		if ( $this->tax() ) {
 			$item['tax'] = $this->tax()->to_array();
+		}
+
+		if ($this->tax_rate()) {
+			$item['tax_rate'] = (string) $this->tax_rate();
 		}
 
 		return $item;
