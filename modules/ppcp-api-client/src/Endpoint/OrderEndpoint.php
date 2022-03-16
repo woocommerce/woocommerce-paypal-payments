@@ -235,6 +235,11 @@ class OrderEndpoint {
 		if ( $payment_method ) {
 			$data['payment_method'] = $payment_method->to_array();
 		}
+
+		/**
+		 * The filter can be used to modify the request data.
+		 */
+		$data = apply_filters( 'ppcp_create_order_request_body_data', $data );
 		$url  = trailingslashit( $this->host ) . 'v2/checkout/orders';
 		$args = array(
 			'method'  => 'POST',
