@@ -178,6 +178,7 @@ trait ProcessPaymentTrait {
 						array(
 							'order_id'    => $order_id,
 							'customer_id' => $wc_order->get_customer_id(),
+							'intent'      => $this->config->has( 'intent' ) ? $this->config->get( 'intent' ) : '',
 						)
 					);
 				}

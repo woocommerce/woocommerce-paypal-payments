@@ -20,7 +20,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 
 /**
  * Class PaymentTokenChecker
@@ -98,17 +97,18 @@ class PaymentTokenChecker {
 	/**
 	 * Check if payment token exist and updates order accordingly.
 	 *
-	 * @param int $order_id The order ID.
-	 * @param int $customer_id The customer ID.
+	 * @param int    $order_id The order ID.
+	 * @param int    $customer_id The customer ID.
+	 * @param string $intent The intent from settings when order was created.
 	 * @return void
 	 */
-	public function check_and_update( int $order_id, int $customer_id ):void {
+	public function check_and_update( int $order_id, int $customer_id, string $intent ):void {
 		$wc_order = wc_get_order( $order_id );
 		if ( ! is_a( $wc_order, WC_Order::class ) ) {
 			return;
 		}
 
-		if ( $wc_order->get_status() === 'processing' ) {
+		if ( $wc_order->get_status() === 'processing' || 'capture' !== $intent ) {
 			return;
 		}
 

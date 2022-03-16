@@ -132,12 +132,12 @@ class VaultingModule implements ModuleInterface {
 
 		add_action(
 			'woocommerce_paypal_payments_check_saved_payment',
-			function ( int $order_id, int $customer_id ) use ( $container ) {
+			function ( int $order_id, int $customer_id, string $intent ) use ( $container ) {
 				$payment_token_checker = $container->get( 'vaulting.payment-token-checker' );
-				$payment_token_checker->check_and_update( $order_id, $customer_id );
+				$payment_token_checker->check_and_update( $order_id, $customer_id, $intent );
 			},
 			10,
-			2
+			3
 		);
 	}
 
