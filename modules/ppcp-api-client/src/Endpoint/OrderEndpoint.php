@@ -237,7 +237,7 @@ class OrderEndpoint {
 		}
 
 		/**
-		 * The filter can be used to modify the request data.
+		 * The filter can be used to modify the order creation request body data.
 		 */
 		$data = apply_filters( 'ppcp_create_order_request_body_data', $data );
 		$url  = trailingslashit( $this->host ) . 'v2/checkout/orders';
