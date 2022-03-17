@@ -19,6 +19,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
@@ -57,6 +58,7 @@ class OrderProcessorTest extends TestCase
         $wcOrder = Mockery::mock(\WC_Order::class);
         $wcOrder->expects('update_meta_data')
             ->with(PayPalGateway::ORDER_PAYMENT_MODE_META_KEY, 'live');
+        $wcOrder->shouldReceive('get_id')->andReturn(1);
 
         $orderStatus = Mockery::mock(OrderStatus::class);
         $orderStatus
@@ -116,6 +118,9 @@ class OrderProcessorTest extends TestCase
 
         $logger = Mockery::mock(LoggerInterface::class);
 
+        $subscription_helper = Mockery::mock(SubscriptionHelper::class);
+        $subscription_helper->shouldReceive('has_subscription');
+
         $testee = new OrderProcessor(
             $sessionHandler,
             $orderEndpoint,
@@ -124,7 +129,8 @@ class OrderProcessorTest extends TestCase
             $authorizedPaymentProcessor,
             $settings,
             $logger,
-            $this->environment
+            $this->environment,
+			$subscription_helper
         );
 
         $wcOrder
@@ -222,6 +228,7 @@ class OrderProcessorTest extends TestCase
             ->andReturnFalse();
 
 		$logger = Mockery::mock(LoggerInterface::class);
+		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 
 		$testee = new OrderProcessor(
             $sessionHandler,
@@ -231,7 +238,8 @@ class OrderProcessorTest extends TestCase
             $authorizedPaymentProcessor,
             $settings,
             $logger,
-            $this->environment
+            $this->environment,
+			$subscription_helper
         );
 
         $wcOrder
@@ -310,6 +318,7 @@ class OrderProcessorTest extends TestCase
         $settings = Mockery::mock(Settings::class);
 
 		$logger = Mockery::mock(LoggerInterface::class);
+		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 
 		$testee = new OrderProcessor(
             $sessionHandler,
@@ -319,7 +328,8 @@ class OrderProcessorTest extends TestCase
             $authorizedPaymentProcessor,
             $settings,
             $logger,
-            $this->environment
+            $this->environment,
+			$subscription_helper
         );
 
         $wcOrder
