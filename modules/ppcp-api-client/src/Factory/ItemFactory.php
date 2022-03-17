@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
+use WC_Product;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
@@ -124,8 +125,13 @@ class ItemFactory {
 	 * @return Item
 	 */
 	private function from_wc_order_line_item( \WC_Order_Item_Product $item, \WC_Order $order ): Item {
-		$currency                  = $order->get_currency();
+		/**
+		 * The WooCommerce product.
+		 *
+		 * @var WC_Product $product
+		 */
 		$product                   = $item->get_product();
+		$currency                  = $order->get_currency();
 		$shipping_tax              = round( (float) $order->get_shipping_tax(), 2 );
 		$quantity                  = (int) $item->get_quantity();
 		$price                     = (float) $order->get_item_subtotal( $item, true );
