@@ -458,7 +458,9 @@ class SmartButton implements SmartButtonInterface {
 			return;
 		}
 
-		echo '<div id="ppc-button"></div>';
+		// The wrapper is needed for the loading spinner,
+		// otherwise jQuery block() prevents buttons rendering.
+		echo '<div class="ppc-button-wrapper"><div id="ppc-button"></div></div>';
 	}
 
 	/**

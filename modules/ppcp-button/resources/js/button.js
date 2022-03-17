@@ -16,7 +16,7 @@ import {
 } from "./modules/Helper/CheckoutMethodState";
 import {hide, setVisible} from "./modules/Helper/Hiding";
 
-const buttonsSpinner = new Spinner('.place-order');
+const buttonsSpinner = new Spinner('.ppc-button-wrapper');
 
 const bootstrap = () => {
     const errorHandler = new ErrorHandler(PayPalCommerceGateway.labels.error.generic);
