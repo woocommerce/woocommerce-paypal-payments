@@ -106,9 +106,9 @@ document.addEventListener(
         // so we additionally hide the standard order button here to avoid failed orders.
         // Normally it is hidden later after the script load.
         const hideOrderButtonIfPpcpGateway = () => {
-            // only in checkout, otherwise it may break things (e.g. payment via product page),
+            // only in checkout and pay now page, otherwise it may break things (e.g. payment via product page),
             // and also the loading spinner may look weird on other pages
-            if (PayPalCommerceGateway.context !== 'checkout') {
+            if (!['checkout', 'pay-now'].includes(PayPalCommerceGateway.context)) {
                 return;
             }
 
