@@ -106,18 +106,22 @@ document.addEventListener(
         // so we additionally hide the standard order button here to avoid failed orders.
         // Normally it is hidden later after the script load.
         const hideOrderButtonIfPpcpGateway = () => {
+            // only in checkout, otherwise it may break things (e.g. payment via product page),
+            // and also the loading spinner may look weird on other pages
+            if (PayPalCommerceGateway.context !== 'checkout') {
+                return;
+            }
+
             const currentPaymentMethod = getCurrentPaymentMethod();
             const isPaypal = currentPaymentMethod === PaymentMethods.PAYPAL;
 
             setVisible(ORDER_BUTTON_SELECTOR, !isPaypal, true);
 
-            if (PayPalCommerceGateway.context === 'checkout') {
-                if (isPaypal) {
-                    // stopped after the first rendering of the buttons, in onInit
-                    buttonsSpinner.block();
-                } else {
-                    buttonsSpinner.unblock();
-                }
+            if (isPaypal) {
+                // stopped after the first rendering of the buttons, in onInit
+                buttonsSpinner.block();
+            } else {
+                buttonsSpinner.unblock();
             }
         }
 
