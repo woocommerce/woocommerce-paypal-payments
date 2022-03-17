@@ -41,8 +41,9 @@ class ItemFactory {
 	 * @return Item[]
 	 */
 	public function from_wc_cart( \WC_Cart $cart ): array {
-		$items = array_map(
-			function ( array $item ): Item {
+		$shipping_tax = round( $cart->get_shipping_tax(), 2 ) ?? 0;
+		$items        = array_map(
+			function ( array $item ) use ( $shipping_tax ): Item {
 				$product = $item['data'];
 
 				/**
@@ -56,7 +57,7 @@ class ItemFactory {
 				$price_without_tax         = (float) wc_get_price_excluding_tax( $product );
 				$price_without_tax_rounded = round( $price_without_tax, 2 );
 				$tax                       = round( $price - $price_without_tax_rounded, 2 );
-				$tax                       = new Money( $tax, $this->currency );
+				$tax                       = new Money( $tax + $shipping_tax, $this->currency );
 				return new Item(
 					mb_substr( $product->get_name(), 0, 127 ),
 					new Money( $price_without_tax_rounded, $this->currency ),
@@ -137,7 +138,7 @@ class ItemFactory {
 		$price_without_tax         = (float) $order->get_item_subtotal( $item, false );
 		$price_without_tax_rounded = round( $price_without_tax, 2 );
 		$tax                       = round( $price - $price_without_tax_rounded, 2 );
-		$tax                       = new Money( $tax, $currency );
+		$tax                       = new Money( $tax + (float) $order->get_shipping_tax(), $currency );
 		return new Item(
 			mb_substr( $product->get_name(), 0, 127 ),
 			new Money( $price_without_tax_rounded, $currency ),
