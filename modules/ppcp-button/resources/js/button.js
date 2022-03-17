@@ -14,7 +14,9 @@ import {
     ORDER_BUTTON_SELECTOR,
     PaymentMethods
 } from "./modules/Helper/CheckoutMethodState";
-import {setVisible} from "./modules/Helper/Hiding";
+import {hide, setVisible} from "./modules/Helper/Hiding";
+
+const buttonsSpinner = new Spinner('.place-order');
 
 const bootstrap = () => {
     const errorHandler = new ErrorHandler(PayPalCommerceGateway.labels.error.generic);
@@ -23,7 +25,10 @@ const bootstrap = () => {
     const onSmartButtonClick = data => {
         window.ppcpFundingSource = data.fundingSource;
     };
-    const renderer = new Renderer(creditCardRenderer, PayPalCommerceGateway, onSmartButtonClick);
+    const onSmartButtonsInit = () => {
+        buttonsSpinner.unblock();
+    };
+    const renderer = new Renderer(creditCardRenderer, PayPalCommerceGateway, onSmartButtonClick, onSmartButtonsInit);
     const messageRenderer = new MessageRenderer(PayPalCommerceGateway.messages);
     const context = PayPalCommerceGateway.context;
     if (context === 'mini-cart' || context === 'product') {
@@ -102,7 +107,18 @@ document.addEventListener(
         // Normally it is hidden later after the script load.
         const hideOrderButtonIfPpcpGateway = () => {
             const currentPaymentMethod = getCurrentPaymentMethod();
-            setVisible(ORDER_BUTTON_SELECTOR, currentPaymentMethod !== PaymentMethods.PAYPAL, true);
+            const isPaypal = currentPaymentMethod === PaymentMethods.PAYPAL;
+
+            setVisible(ORDER_BUTTON_SELECTOR, !isPaypal, true);
+
+            if (PayPalCommerceGateway.context === 'checkout') {
+                if (isPaypal) {
+                    // stopped after the first rendering of the buttons, in onInit
+                    buttonsSpinner.block();
+                } else {
+                    buttonsSpinner.unblock();
+                }
+            }
         }
 
         let bootstrapped = false;
