@@ -124,8 +124,9 @@ class ItemFactory {
 	 * @return Item
 	 */
 	private function from_wc_order_line_item( \WC_Order_Item_Product $item, \WC_Order $order ): Item {
-		$currency = $order->get_currency();
-		$product  = $item->get_product();
+		$currency     = $order->get_currency();
+		$product      = $item->get_product();
+		$shipping_tax = round( (float) $order->get_shipping_tax(), 2 );
 
 		/**
 		 * The WooCommerce product.
@@ -138,7 +139,7 @@ class ItemFactory {
 		$price_without_tax         = (float) $order->get_item_subtotal( $item, false );
 		$price_without_tax_rounded = round( $price_without_tax, 2 );
 		$tax                       = round( $price - $price_without_tax_rounded, 2 );
-		$tax                       = new Money( $tax + (float) $order->get_shipping_tax(), $currency );
+		$tax                       = new Money( $tax + $shipping_tax, $currency );
 		return new Item(
 			mb_substr( $product->get_name(), 0, 127 ),
 			new Money( $price_without_tax_rounded, $currency ),
