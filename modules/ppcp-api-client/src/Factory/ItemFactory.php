@@ -41,7 +41,7 @@ class ItemFactory {
 	 * @return Item[]
 	 */
 	public function from_wc_cart( \WC_Cart $cart ): array {
-		$shipping_tax = round( $cart->get_shipping_tax(), 2 ) ?? 0;
+		$shipping_tax = round( $cart->get_shipping_tax(), 2 );
 		$items        = array_map(
 			function ( array $item ) use ( $shipping_tax ): Item {
 				$product = $item['data'];
