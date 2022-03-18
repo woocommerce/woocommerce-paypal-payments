@@ -15,6 +15,7 @@ import {
     PaymentMethods
 } from "./modules/Helper/CheckoutMethodState";
 import {hide, setVisible} from "./modules/Helper/Hiding";
+import {isChangePaymentPage} from "./modules/Helper/Subscriptions";
 
 const buttonsSpinner = new Spinner('.ppc-button-wrapper');
 
@@ -108,7 +109,10 @@ document.addEventListener(
         const hideOrderButtonIfPpcpGateway = () => {
             // only in checkout and pay now page, otherwise it may break things (e.g. payment via product page),
             // and also the loading spinner may look weird on other pages
-            if (!['checkout', 'pay-now'].includes(PayPalCommerceGateway.context)) {
+            if (
+                !['checkout', 'pay-now'].includes(PayPalCommerceGateway.context)
+                || isChangePaymentPage()
+            ) {
                 return;
             }
 
