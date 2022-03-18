@@ -13,8 +13,12 @@ use Psr\Log\LoggerInterface;
 use RuntimeException;
 use WC_Payment_Gateway;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
+use WooCommerce\PayPalCommerce\Onboarding\Environment;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
 
 class PayUponInvoiceGateway extends WC_Payment_Gateway {
+
+	use OrderMetaTrait;
 
 	const ID = 'ppcp-pay-upon-invoice-gateway';
 
@@ -34,6 +38,11 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	protected $payment_source_factory;
 
 	/**
+	 * @var Environment
+	 */
+	protected $environment;
+
+	/**
 	 * @var LoggerInterface
 	 */
 	protected $logger;
@@ -42,6 +51,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 		OrderEndpoint $order_endpoint,
 		PurchaseUnitFactory $purchase_unit_factory,
 		PaymentSourceFactory $payment_source_factory,
+		Environment $environment,
 		LoggerInterface $logger
 	) {
 		 $this->id = self::ID;
@@ -66,6 +76,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 		$this->purchase_unit_factory  = $purchase_unit_factory;
 		$this->payment_source_factory = $payment_source_factory;
 		$this->logger                 = $logger;
+		$this->environment = $environment;
 	}
 
 	/**
@@ -94,13 +105,14 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 
 	public function process_payment( $order_id ) {
 		$wc_order = wc_get_order( $order_id );
-		$wc_order->update_status( 'on-hold', __( 'Awaiting Pay Upon Invoice payment', 'woocommerce-paypal-payments' ) );
+		$wc_order->update_status( 'on-hold', __( 'Awaiting Pay Upon Invoice payment.', 'woocommerce-paypal-payments' ) );
 
 		$purchase_unit  = $this->purchase_unit_factory->from_wc_order( $wc_order );
 		$payment_source = $this->payment_source_factory->from_wc_order( $wc_order );
 
 		try {
-			$this->order_endpoint->create( array( $purchase_unit ), $payment_source );
+			$order = $this->order_endpoint->create( array( $purchase_unit ), $payment_source );
+			$this->add_paypal_meta( $wc_order, $order, $this->environment );
 
 			WC()->cart->empty_cart();
 

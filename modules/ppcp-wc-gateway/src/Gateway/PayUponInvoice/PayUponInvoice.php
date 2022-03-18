@@ -55,6 +55,14 @@ class PayUponInvoice {
 
 			return $billing_fields;
 		});
+
+		add_filter( 'woocommerce_email_recipient_customer_on_hold_order', function( $recipient, $order, $email) {
+			if($order->get_payment_method() === PayUponInvoiceGateway::ID) {
+				return '';
+			}
+
+			return $recipient;
+		}, 10, 3 );
 	}
 
 	public function add_parameter_block() { ?>
