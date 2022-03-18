@@ -77,14 +77,6 @@ class OrderEndpoint {
 			),
 		);
 
-		$data['purchase_units'][0]['shipping']['name']['full_name'] = 'John Doe';
-		$data['purchase_units'][0]['shipping']['address'] = array(
-			'address_line_1' => 'Taunusanlage 12',
-			'admin_area_2' => 'FRANKFURT AM MAIN',
-			'postal_code' => '60325',
-			'country_code' => 'DE',
-		);
-
 		$bearer = $this->bearer->bearer();
 		$url    = trailingslashit( $this->host ) . 'v2/checkout/orders';
 		$args   = array(
