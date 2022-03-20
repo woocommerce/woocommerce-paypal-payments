@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice;
 
+use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+
 class PayUponInvoice {
 
 	/**
@@ -16,9 +19,26 @@ class PayUponInvoice {
 	 */
 	protected $fraud_net;
 
-	public function __construct( string $module_url, FraudNet $fraud_net ) {
+	/**
+	 * @var OrderEndpoint
+	 */
+	protected $order_endpoint;
+
+	/**
+	 * @var LoggerInterface
+	 */
+	protected $logger;
+
+	public function __construct(
+		string $module_url,
+		FraudNet $fraud_net,
+		OrderEndpoint $order_endpoint,
+		LoggerInterface $logger
+	) {
 		$this->module_url = $module_url;
 		$this->fraud_net  = $fraud_net;
+		$this->order_endpoint = $order_endpoint;
+		$this->logger = $logger;
 	}
 
 	public function init() {
@@ -63,6 +83,10 @@ class PayUponInvoice {
 
 			return $recipient;
 		}, 10, 3 );
+
+		add_action('ppcp_payment_capture_completed_webhook_handler', function (string $order_id) {
+			$this->order_endpoint->order_payment_instructions($order_id);
+		});
 	}
 
 	public function add_parameter_block() { ?>

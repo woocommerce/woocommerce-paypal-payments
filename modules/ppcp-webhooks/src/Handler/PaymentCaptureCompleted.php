@@ -149,6 +149,9 @@ class PaymentCaptureCompleted implements RequestHandler {
 				if ( $transaction_id ) {
 					$this->update_transaction_id( $transaction_id, $wc_order, $this->logger );
 				}
+
+				do_action('ppcp_payment_capture_completed_webhook_handler', (string) $order_id);
+
 			} catch ( Exception $exception ) {
 				$this->logger->warning( 'Failed to get transaction ID: ' . $exception->getMessage() );
 			}

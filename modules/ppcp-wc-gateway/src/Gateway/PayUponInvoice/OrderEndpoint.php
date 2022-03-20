@@ -104,4 +104,32 @@ class OrderEndpoint {
 
 		return $this->order_factory->from_paypal_response( $json );
 	}
+
+	public function order_payment_instructions(string $id) {
+		$bearer = $this->bearer->bearer();
+		$url    = trailingslashit( $this->host ) . 'v2/checkout/orders/' . $id;
+		$args   = array(
+			'headers' => array(
+				'Authorization'     => 'Bearer ' . $bearer->token(),
+				'Content-Type'      => 'application/json',
+				'PayPal-Request-Id' =>  uniqid( 'ppcp-', true ),
+			),
+		);
+
+		$response = $this->request( $url, $args );
+
+		if ( is_wp_error( $response ) ) {
+			throw new RuntimeException( $response->get_error_message() );
+		}
+
+		$json        = json_decode( $response['body'] );
+		$status_code = (int) wp_remote_retrieve_response_code( $response );
+		if ( 200 !== $status_code ) {
+			throw new PayPalApiException( $json, $status_code );
+		}
+
+		$this->logger->info('Payment instructions');
+		$this->logger->info($json->payment_source->pay_upon_invoice->payment_reference);
+		$this->logger->info(wc_print_r($json->payment_source->pay_upon_invoice->deposit_bank_details, true));
+	}
 }

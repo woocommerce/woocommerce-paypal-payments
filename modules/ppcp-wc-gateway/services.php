@@ -2163,7 +2163,9 @@ return array(
 	'wcgateway.pay-upon-invoice'                        => static function ( ContainerInterface $container ): PayUponInvoice {
 		return new PayUponInvoice(
 			$container->get( 'wcgateway.url' ),
-			$container->get( 'wcgateway.pay-upon-invoice-fraudnet' )
+			$container->get( 'wcgateway.pay-upon-invoice-fraudnet' ),
+			$container->get( 'wcgateway.pay-upon-invoice-order-endpoint' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 );
