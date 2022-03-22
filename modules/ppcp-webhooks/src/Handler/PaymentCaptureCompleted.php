@@ -112,6 +112,10 @@ class PaymentCaptureCompleted implements RequestHandler {
 			return new WP_REST_Response( $response );
 		}
 
+		$order_id = $resource['supplementary_data']['related_ids']['order_id'] ?? null;
+
+		do_action('ppcp_payment_capture_completed_webhook_handler', $wc_order, $order_id);
+
 		if ( $wc_order->get_status() !== 'on-hold' ) {
 			$response['success'] = true;
 			return new WP_REST_Response( $response );
@@ -139,8 +143,6 @@ class PaymentCaptureCompleted implements RequestHandler {
 			)
 		);
 
-		$order_id = $resource['supplementary_data']['related_ids']['order_id'] ?? null;
-
 		if ( $order_id ) {
 			try {
 				$order = $this->order_endpoint->order( (string) $order_id );
@@ -149,8 +151,6 @@ class PaymentCaptureCompleted implements RequestHandler {
 				if ( $transaction_id ) {
 					$this->update_transaction_id( $transaction_id, $wc_order, $this->logger );
 				}
-
-				do_action('ppcp_payment_capture_completed_webhook_handler', (string) $order_id);
 
 			} catch ( Exception $exception ) {
 				$this->logger->warning( 'Failed to get transaction ID: ' . $exception->getMessage() );

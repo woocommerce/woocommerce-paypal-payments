@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice;
 
 use Psr\Log\LoggerInterface;
+use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 
 class PayUponInvoice {
 
@@ -84,9 +87,15 @@ class PayUponInvoice {
 			return $recipient;
 		}, 10, 3 );
 
-		add_action('ppcp_payment_capture_completed_webhook_handler', function (string $order_id) {
-			$this->order_endpoint->order_payment_instructions($order_id);
-		});
+		add_action('ppcp_payment_capture_completed_webhook_handler', function (WC_Order $wc_order, string $order_id) {
+			try {
+				$payment_instructions = $this->order_endpoint->order_payment_instructions($order_id);
+				$wc_order->update_meta_data( 'ppcp_ratepay_payment_instructions_payment_reference', $payment_instructions );
+				$this->logger->info("Ratepay payment instructions added to order #{$wc_order->get_id()}.");
+			} catch (RuntimeException $exception) {
+				$this->logger->error($exception->getMessage());
+			}
+		}, 10, 2);
 	}
 
 	public function add_parameter_block() { ?>
