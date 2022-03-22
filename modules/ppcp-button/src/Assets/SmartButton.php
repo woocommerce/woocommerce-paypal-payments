@@ -336,22 +336,6 @@ class SmartButton implements SmartButtonInterface {
 	 */
 	private function render_button_wrapper_registrar(): bool {
 
-		$not_enabled_on_cart = $this->settings->has( 'button_cart_enabled' ) &&
-			! $this->settings->get( 'button_cart_enabled' );
-		if (
-			is_cart()
-			&& ! $not_enabled_on_cart
-		) {
-			add_action(
-				$this->proceed_to_checkout_button_renderer_hook(),
-				array(
-					$this,
-					'button_renderer',
-				),
-				20
-			);
-		}
-
 		$not_enabled_on_product_page = $this->settings->has( 'button_single_product_enabled' ) &&
 			! $this->settings->get( 'button_single_product_enabled' );
 		if (
@@ -365,6 +349,26 @@ class SmartButton implements SmartButtonInterface {
 					'button_renderer',
 				),
 				31
+			);
+		}
+
+		if ( $this->is_cart_price_total_zero() ) {
+			return false;
+		}
+
+		$not_enabled_on_cart = $this->settings->has( 'button_cart_enabled' ) &&
+			! $this->settings->get( 'button_cart_enabled' );
+		if (
+			is_cart()
+			&& ! $not_enabled_on_cart
+		) {
+			add_action(
+				$this->proceed_to_checkout_button_renderer_hook(),
+				array(
+					$this,
+					'button_renderer',
+				),
+				20
 			);
 		}
 
@@ -449,6 +453,7 @@ class SmartButton implements SmartButtonInterface {
 				|| ! $product->is_in_stock()
 			)
 		) {
+
 			return;
 		}
 
@@ -586,7 +591,7 @@ class SmartButton implements SmartButtonInterface {
 			return;
 		}
 
-		// phpcs:ignore WordPress.WP.I18n.TextDomainMismatch
+        // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch
 		$label = 'checkout' === $this->context() ? apply_filters( 'woocommerce_order_button_text', __( 'Place order', 'woocommerce' ) ) : __( 'Pay for order', 'woocommerce' );
 
 		printf(
@@ -1105,5 +1110,15 @@ class SmartButton implements SmartButtonInterface {
 		 * The filter returning the action name that PayPal button and Pay Later message will use for rendering on the single product page.
 		 */
 		return (string) apply_filters( 'woocommerce_paypal_payments_single_product_renderer_hook', 'woocommerce_single_product_summary' );
+	}
+
+	/**
+	 * Check if cart product price total is 0.
+	 *
+	 * @return bool true if is 0, otherwise false.
+	 */
+	protected function is_cart_price_total_zero(): bool {
+        // phpcs:ignore WordPress.PHP.StrictComparisons.LooseComparison
+		return WC()->cart->get_cart_contents_total() == 0;
 	}
 }
