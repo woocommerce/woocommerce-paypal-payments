@@ -1,4 +1,5 @@
 import CheckoutBootstap from './CheckoutBootstap'
+import {isChangePaymentPage} from "../Helper/Subscriptions";
 
 class PayNowBootstrap extends CheckoutBootstap {
     constructor(gateway, renderer, messages, spinner) {
@@ -6,8 +7,7 @@ class PayNowBootstrap extends CheckoutBootstap {
     }
 
     updateUi() {
-        const urlParams = new URLSearchParams(window.location.search)
-        if (urlParams.has('change_payment_method')) {
+        if (isChangePaymentPage()) {
             return
         }
 
