@@ -41,6 +41,7 @@ class ItemFactoryTest extends TestCase
         $cart
             ->expects('get_cart_contents')
             ->andReturn($items);
+        $cart->expects('get_shipping_tax')->andReturn(1);
 
         expect('wc_get_price_including_tax')
             ->with($product)
@@ -72,7 +73,7 @@ class ItemFactoryTest extends TestCase
         $this->assertEquals('name', $item->name());
         $this->assertEquals('sku', $item->sku());
         $this->assertEquals(1, $item->unit_amount()->value());
-        $this->assertEquals(2, $item->tax()->value());
+        $this->assertEquals(3, $item->tax()->value());
     }
 
     public function testFromCartDigitalGood()
@@ -102,6 +103,7 @@ class ItemFactoryTest extends TestCase
         $cart
             ->expects('get_cart_contents')
             ->andReturn($items);
+        $cart->expects('get_shipping_tax')->andReturn(1);
 
         expect('wc_get_price_including_tax')
             ->with($product)
@@ -172,6 +174,7 @@ class ItemFactoryTest extends TestCase
         $order
             ->expects('get_fees')
             ->andReturn([]);
+        $order->expects('get_shipping_tax')->andReturn(1);
 
         $result = $testee->from_wc_order($order);
         $this->assertCount(1, $result);
@@ -185,7 +188,7 @@ class ItemFactoryTest extends TestCase
         $this->assertEquals(1, $item->quantity());
         $this->assertEquals(Item::PHYSICAL_GOODS, $item->category());
         $this->assertEquals(1, $item->unit_amount()->value());
-        $this->assertEquals(2, $item->tax()->value());
+        $this->assertEquals(3, $item->tax()->value());
     }
 
     public function testFromWcOrderDigitalGood()
@@ -235,6 +238,7 @@ class ItemFactoryTest extends TestCase
         $order
             ->expects('get_fees')
             ->andReturn([]);
+		$order->expects('get_shipping_tax')->andReturn(1);
 
         $result = $testee->from_wc_order($order);
         $item = current($result);
@@ -293,6 +297,7 @@ class ItemFactoryTest extends TestCase
         $order
             ->expects('get_fees')
             ->andReturn([]);
+		$order->expects('get_shipping_tax')->andReturn(1);
 
         $result = $testee->from_wc_order($order);
         $item = current($result);
