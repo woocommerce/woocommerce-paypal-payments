@@ -86,12 +86,10 @@ class SubscriptionHelper {
 		if ( ! $this->plugin_is_active() ) {
 			return false;
 		}
-		$accept_manual_renewals = ( 'no' !== get_option(
-            //phpcs:disable Inpsyde.CodeQuality.VariablesName.SnakeCaseVar
+		$accept_manual_renewals = 'no' !== get_option(
 			\WC_Subscriptions_Admin::$option_prefix . '_accept_manual_renewals',
-            //phpcs:enable Inpsyde.CodeQuality.VariablesName.SnakeCaseVar
 			'no'
-		) ) ? true : false;
+		);
 		return ! $accept_manual_renewals;
 	}
 
