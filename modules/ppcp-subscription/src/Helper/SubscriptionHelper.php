@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Subscription\Helper;
 
+use WC_Subscriptions_Product;
+
 /**
  * Class SubscriptionHelper
  */
@@ -26,7 +28,7 @@ class SubscriptionHelper {
 			return false;
 		}
 		$product = wc_get_product();
-		return is_a( $product, \WC_Product::class ) && $product->is_type( 'subscription' );
+		return $product && WC_Subscriptions_Product::is_subscription( $product );
 	}
 
 	/**
@@ -71,24 +73,7 @@ class SubscriptionHelper {
 			return false;
 		}
 
-		$order = wc_get_order( $order_id );
-		if ( is_a( $order, \WC_Order::class ) ) {
-			foreach ( $order->get_items() as $item ) {
-				if ( is_a( $item, \WC_Order_Item_Product::class ) ) {
-					$product = wc_get_product( $item->get_product_id() );
-					/**
-					 * Class already exist in subscriptions plugin.
-					 *
-					 * @psalm-suppress UndefinedClass
-					 */
-					if ( is_a( $product, \WC_Product_Subscription::class ) ) {
-						return true;
-					}
-				}
-			}
-		}
-
-		return false;
+		return $this->has_subscription( $order_id );
 	}
 
 	/**
