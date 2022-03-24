@@ -57,9 +57,9 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 		 $this->id = self::ID;
 
 		$this->method_title       = __( 'Pay Upon Invoice', 'woocommerce-paypal-payments' );
-		$this->method_description = __( 'Once you place an order, pay within 30 days. Our payment partner Ratepay will send you payment instructions.', 'woocommerce-paypal-payments' );
+		$this->method_description = __( 'Pay upon Invoice is an invoice payment method in Germany. It is a local buy now, pay later payment method that allows the buyer to place an order, receive the goods, try them, verify they are in good order, and then pay the invoice within 30 days.', 'woocommerce-paypal-payments' );;
 		$this->title              = $this->method_title;
-		$this->description        = $this->method_description;
+		$this->description        = __( 'Once you place an order, pay within 30 days. Our payment partner Ratepay will send you payment instructions.', 'woocommerce-paypal-payments' );;
 
 		$this->init_form_fields();
 		$this->init_settings();
@@ -89,16 +89,6 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 				'type'    => 'checkbox',
 				'label'   => __( 'Pay upon Invoice', 'woocommerce-paypal-payments' ),
 				'default' => 'no',
-			),
-			'button_legal_text_en' => array(
-				'title'   => __( 'Button legal text (English)', 'woocommerce-paypal-payments' ),
-				'type'    => 'textarea',
-				'default' => 'By clicking on the button, you agree to the <a href="https://www.ratepay.com/legal-payment-terms">terms of payment</a> and <a href="https://www.ratepay.com/legal-payment-dataprivacy">performance of a risk check</a> from the payment partner, Ratepay. You also agree to PayPal’s <a href="https://www.paypal.com/de/webapps/mpp/ua/privacy-full?locale.x=eng_DE&_ga=1.267010504.718583817.1563460395">privacy statement</a>. If your request to purchase upon invoice is accepted, the purchase price claim will be assigned to Ratepay, and you may only pay Ratepay, not the merchant.',
-			),
-			'button_legal_text_de' => array(
-				'title'   => __( 'Button legal text (German)', 'woocommerce-paypal-payments' ),
-				'type'    => 'textarea',
-				'default' => 'Mit Klicken auf den Button akzeptieren Sie die <a href="https://www.ratepay.com/legal-payment-terms">Ratepay Zahlungsbedingungen</a> und erklären sich mit der Durchführung einer <a href="https://www.ratepay.com/legal-payment-dataprivacy">Risikoprüfung durch Ratepay</a>, unseren Partner, einverstanden. Sie akzeptieren auch PayPals <a href="https://www.paypal.com/de/webapps/mpp/ua/privacy-full?locale.x=de_DE&_ga=1.232450521.718583817.1563460395">Datenschutzerklärung</a>. Falls Ihre Transaktion per Kauf auf Rechnung erfolgreich abgewickelt werden kann, wird der Kaufpreis an Ratepay abgetreten und Sie dürfen nur an Ratepay überweisen, nicht an den Händler.',
 			),
 		);
 	}

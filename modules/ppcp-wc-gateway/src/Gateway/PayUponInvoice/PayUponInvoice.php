@@ -58,11 +58,6 @@ class PayUponInvoice {
 		);
 
 		add_action(
-			'woocommerce_review_order_after_submit',
-			array( $this, 'add_legal_text' )
-		);
-
-		add_action(
 			'wp_enqueue_scripts',
 			array( $this, 'register_assets' )
 		);
@@ -96,19 +91,18 @@ class PayUponInvoice {
 				$this->logger->error($exception->getMessage());
 			}
 		}, 10, 2);
+
+		add_filter( 'woocommerce_gateway_description', function($description, $id) {
+			if(PayUponInvoiceGateway::ID === $id) {
+				$description .= __( '<span style="float:left;margin-top:20px;margin-bottom:20px;">By clicking on the button, you agree to the <a href="https://www.ratepay.com/legal-payment-terms">terms of payment</a> and <a href="https://www.ratepay.com/legal-payment-dataprivacy">performance of a risk check</a> from the payment partner, Ratepay. You also agree to PayPal’s <a href="https://www.paypal.com/de/webapps/mpp/ua/privacy-full?locale.x=eng_DE&_ga=1.267010504.718583817.1563460395">privacy statement</a>. If your request to purchase upon invoice is accepted, the purchase price claim will be assigned to Ratepay, and you may only pay Ratepay, not the merchant.</span>', 'woocommerce-paypal-payments');
+			}
+			return $description;
+		}, 10, 2);
 	}
 
 	public function add_parameter_block() { ?>
 		<script type="application/json" fncls="fnparams-dede7cc5-15fd-4c75-a9f4-36c430ee3a99">{"f":"<?php echo esc_attr($this->fraud_net->sessionId()); ?>","s":"<?php echo esc_attr($this->fraud_net->sourceWebsiteId()); ?>"}</script>
 		<script type="text/javascript" src="https://c.paypal.com/da/r/fb.js"></script>
-		<?php
-	}
-
-	public function add_legal_text() {
-		$gateway_settings = get_option( 'woocommerce_ppcp-pay-upon-invoice-gateway_settings' );
-		?>
-		<p id="ppcp-pui-legal-text"
-		   style="display:none;"><?php echo wp_kses_post( $gateway_settings['button_legal_text_en'] ?? '' ); ?></p>
 		<?php
 	}
 
