@@ -62,7 +62,7 @@ class OrderEndpoint {
 	 * @param PurchaseUnit[] $items The purchase unit items for the order.
 	 * @return Order
 	 */
-	public function create( array $items, PaymentSource $payment_source ): Order {
+	public function create( array $items, PaymentSource $payment_source, $fraudnet_session_id = '' ): Order {
 		$data = array(
 			'intent'                 => 'CAPTURE',
 			'processing_instruction' => 'ORDER_COMPLETE_ON_PAYMENT_APPROVAL',
@@ -85,7 +85,7 @@ class OrderEndpoint {
 				'Authorization'             => 'Bearer ' . $bearer->token(),
 				'Content-Type'              => 'application/json',
 				'Prefer'                    => 'return=representation',
-				'PayPal-Client-Metadata-Id' => $this->fraudNet->sessionId(),
+				'PayPal-Client-Metadata-Id' => $fraudnet_session_id ?: $this->fraudNet->sessionId(),
 				'PayPal-Request-Id'         => uniqid( 'ppcp-', true ),
 			),
 			'body'    => wp_json_encode( $data ),
