@@ -223,6 +223,7 @@ return array(
 		$settings                      = $container->get( 'wcgateway.settings' );
 		$environment                   = $container->get( 'onboarding.environment' );
 		$logger                        = $container->get( 'woocommerce.logger.woocommerce' );
+		$subscription_helper = $container->get( 'subscription.helper' );
 		return new OrderProcessor(
 			$session_handler,
 			$order_endpoint,
@@ -231,7 +232,8 @@ return array(
 			$authorized_payments_processor,
 			$settings,
 			$logger,
-			$environment
+			$environment,
+			$subscription_helper
 		);
 	},
 	'wcgateway.processor.refunds'                       => static function ( ContainerInterface $container ): RefundProcessor {
@@ -245,7 +247,16 @@ return array(
 		$payments_endpoint = $container->get( 'api.endpoint.payments' );
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
 		$notice              = $container->get( 'wcgateway.notice.authorize-order-action' );
-		return new AuthorizedPaymentsProcessor( $order_endpoint, $payments_endpoint, $logger, $notice );
+		$settings            = $container->get( 'wcgateway.settings' );
+		$subscription_helper = $container->get( 'subscription.helper' );
+		return new AuthorizedPaymentsProcessor(
+			$order_endpoint,
+			$payments_endpoint,
+			$logger,
+			$notice,
+			$settings,
+			$subscription_helper
+		);
 	},
 	'wcgateway.admin.render-authorize-action'           => static function ( ContainerInterface $container ): RenderAuthorizeAction {
 		$column = $container->get( 'wcgateway.admin.orders-payment-status-column' );

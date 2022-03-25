@@ -23,19 +23,25 @@ class MessagesDisclaimers {
 	 */
 	private $disclaimers = array(
 		'US' => array(
-			'link' => 'https://developer.paypal.com/docs/commerce-platforms/admin-panel/woocommerce/us/',
+			'link' => 'https://developer.paypal.com/docs/checkout/pay-later/us/commerce-platforms/woocommerce/',
 		),
 		'GB' => array(
-			'link' => 'https://developer.paypal.com/docs/commerce-platforms/admin-panel/woocommerce/uk/',
+			'link' => 'https://developer.paypal.com/docs/checkout/pay-later/gb/commerce-platforms/woocommerce/',
 		),
 		'DE' => array(
-			'link' => 'https://developer.paypal.com/docs/commerce-platforms/admin-panel/woocommerce/de/',
+			'link' => 'https://developer.paypal.com/docs/checkout/pay-later/de/commerce-platforms/woocommerce/',
 		),
 		'AU' => array(
-			'link' => 'https://developer.paypal.com/docs/commerce-platforms/admin-panel/woocommerce/au/',
+			'link' => 'https://developer.paypal.com/docs/checkout/pay-later/au/commerce-platforms/woocommerce/',
 		),
 		'FR' => array(
-			'link' => 'https://developer.paypal.com/docs/commerce-platforms/admin-panel/woocommerce/fr/',
+			'link' => 'https://developer.paypal.com/docs/checkout/pay-later/fr/commerce-platforms/woocommerce/',
+		),
+		'IT' => array(
+			'link' => 'https://developer.paypal.com/docs/checkout/pay-later/it/commerce-platforms/woocommerce/',
+		),
+		'ES' => array(
+			'link' => 'https://developer.paypal.com/docs/checkout/pay-later/es/commerce-platforms/woocommerce/',
 		),
 	);
 

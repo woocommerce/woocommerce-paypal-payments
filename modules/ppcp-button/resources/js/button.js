@@ -9,6 +9,15 @@ import CreditCardRenderer from "./modules/Renderer/CreditCardRenderer";
 import dataClientIdAttributeHandler from "./modules/DataClientIdAttributeHandler";
 import MessageRenderer from "./modules/Renderer/MessageRenderer";
 import Spinner from "./modules/Helper/Spinner";
+import {
+    getCurrentPaymentMethod,
+    ORDER_BUTTON_SELECTOR,
+    PaymentMethods
+} from "./modules/Helper/CheckoutMethodState";
+import {hide, setVisible} from "./modules/Helper/Hiding";
+import {isChangePaymentPage} from "./modules/Helper/Subscriptions";
+
+const buttonsSpinner = new Spinner('.ppc-button-wrapper');
 
 const bootstrap = () => {
     const errorHandler = new ErrorHandler(PayPalCommerceGateway.labels.error.generic);
@@ -17,7 +26,10 @@ const bootstrap = () => {
     const onSmartButtonClick = data => {
         window.ppcpFundingSource = data.fundingSource;
     };
-    const renderer = new Renderer(creditCardRenderer, PayPalCommerceGateway, onSmartButtonClick);
+    const onSmartButtonsInit = () => {
+        buttonsSpinner.unblock();
+    };
+    const renderer = new Renderer(creditCardRenderer, PayPalCommerceGateway, onSmartButtonClick, onSmartButtonsInit);
     const messageRenderer = new MessageRenderer(PayPalCommerceGateway.messages);
     const context = PayPalCommerceGateway.context;
     if (context === 'mini-cart' || context === 'product') {
@@ -91,8 +103,48 @@ document.addEventListener(
             return;
         }
 
+        // Sometimes PayPal script takes long time to load,
+        // so we additionally hide the standard order button here to avoid failed orders.
+        // Normally it is hidden later after the script load.
+        const hideOrderButtonIfPpcpGateway = () => {
+            // only in checkout and pay now page, otherwise it may break things (e.g. payment via product page),
+            // and also the loading spinner may look weird on other pages
+            if (
+                !['checkout', 'pay-now'].includes(PayPalCommerceGateway.context)
+                || isChangePaymentPage()
+            ) {
+                return;
+            }
+
+            const currentPaymentMethod = getCurrentPaymentMethod();
+            const isPaypal = currentPaymentMethod === PaymentMethods.PAYPAL;
+
+            setVisible(ORDER_BUTTON_SELECTOR, !isPaypal, true);
+
+            if (isPaypal) {
+                // stopped after the first rendering of the buttons, in onInit
+                buttonsSpinner.block();
+            } else {
+                buttonsSpinner.unblock();
+            }
+        }
+
+        let bootstrapped = false;
+
+        hideOrderButtonIfPpcpGateway();
+
+        jQuery(document.body).on('updated_checkout payment_method_selected', () => {
+            if (bootstrapped) {
+                return;
+            }
+
+            hideOrderButtonIfPpcpGateway();
+        });
+
         const script = document.createElement('script');
         script.addEventListener('load', (event) => {
+            bootstrapped = true;
+
             bootstrap();
         });
         script.setAttribute('src', PayPalCommerceGateway.button.url);

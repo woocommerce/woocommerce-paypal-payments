@@ -68,7 +68,7 @@ class MyAccountPaymentsAssets {
 			'PayPalCommerceGatewayVaulting',
 			array(
 				'delete' => array(
-					'endpoint' => home_url( \WC_AJAX::get_endpoint( DeletePaymentTokenEndpoint::ENDPOINT ) ),
+					'endpoint' => \WC_AJAX::get_endpoint( DeletePaymentTokenEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( DeletePaymentTokenEndpoint::nonce() ),
 				),
 			)

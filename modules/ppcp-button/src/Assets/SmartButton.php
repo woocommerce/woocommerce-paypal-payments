@@ -336,22 +336,6 @@ class SmartButton implements SmartButtonInterface {
 	 */
 	private function render_button_wrapper_registrar(): bool {
 
-		$not_enabled_on_cart = $this->settings->has( 'button_cart_enabled' ) &&
-			! $this->settings->get( 'button_cart_enabled' );
-		if (
-			is_cart()
-			&& ! $not_enabled_on_cart
-		) {
-			add_action(
-				$this->proceed_to_checkout_button_renderer_hook(),
-				array(
-					$this,
-					'button_renderer',
-				),
-				20
-			);
-		}
-
 		$not_enabled_on_product_page = $this->settings->has( 'button_single_product_enabled' ) &&
 			! $this->settings->get( 'button_single_product_enabled' );
 		if (
@@ -365,6 +349,26 @@ class SmartButton implements SmartButtonInterface {
 					'button_renderer',
 				),
 				31
+			);
+		}
+
+		if ( $this->is_cart_price_total_zero() ) {
+			return false;
+		}
+
+		$not_enabled_on_cart = $this->settings->has( 'button_cart_enabled' ) &&
+			! $this->settings->get( 'button_cart_enabled' );
+		if (
+			is_cart()
+			&& ! $not_enabled_on_cart
+		) {
+			add_action(
+				$this->proceed_to_checkout_button_renderer_hook(),
+				array(
+					$this,
+					'button_renderer',
+				),
+				20
 			);
 		}
 
@@ -449,6 +453,7 @@ class SmartButton implements SmartButtonInterface {
 				|| ! $product->is_in_stock()
 			)
 		) {
+
 			return;
 		}
 
@@ -458,7 +463,9 @@ class SmartButton implements SmartButtonInterface {
 			return;
 		}
 
-		echo '<div id="ppc-button"></div>';
+		// The wrapper is needed for the loading spinner,
+		// otherwise jQuery block() prevents buttons rendering.
+		echo '<div class="ppc-button-wrapper"><div id="ppc-button"></div></div>';
 	}
 
 	/**
@@ -584,12 +591,12 @@ class SmartButton implements SmartButtonInterface {
 			return;
 		}
 
-		// phpcs:ignore WordPress.WP.I18n.TextDomainMismatch
+        // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch
 		$label = 'checkout' === $this->context() ? apply_filters( 'woocommerce_order_button_text', __( 'Place order', 'woocommerce' ) ) : __( 'Pay for order', 'woocommerce' );
 
 		printf(
 			'<div id="%1$s" style="display:none;">
-                        <button class="button alt ppcp-dcc-order-button">%2$s</button>
+                        <button type="submit" class="button alt ppcp-dcc-order-button">%2$s</button>
                     </div><div id="payments-sdk__contingency-lightbox"></div><style id="ppcp-hide-dcc">.payment_method_ppcp-credit-card-gateway {display:none;}</style>',
 			esc_attr( $id ),
 			esc_html( $label )
@@ -664,7 +671,7 @@ class SmartButton implements SmartButtonInterface {
 			'script_attributes'              => $this->attributes(),
 			'data_client_id'                 => array(
 				'set_attribute'     => ( is_checkout() && $this->dcc_is_enabled() ) || $this->can_save_vault_token(),
-				'endpoint'          => home_url( \WC_AJAX::get_endpoint( DataClientIdEndpoint::ENDPOINT ) ),
+				'endpoint'          => \WC_AJAX::get_endpoint( DataClientIdEndpoint::ENDPOINT ),
 				'nonce'             => wp_create_nonce( DataClientIdEndpoint::nonce() ),
 				'user'              => get_current_user_id(),
 				'has_subscriptions' => $this->has_subscriptions(),
@@ -673,15 +680,15 @@ class SmartButton implements SmartButtonInterface {
 			'context'                        => $this->context(),
 			'ajax'                           => array(
 				'change_cart'   => array(
-					'endpoint' => home_url( \WC_AJAX::get_endpoint( ChangeCartEndpoint::ENDPOINT ) ),
+					'endpoint' => \WC_AJAX::get_endpoint( ChangeCartEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( ChangeCartEndpoint::nonce() ),
 				),
 				'create_order'  => array(
-					'endpoint' => home_url( \WC_AJAX::get_endpoint( CreateOrderEndpoint::ENDPOINT ) ),
+					'endpoint' => \WC_AJAX::get_endpoint( CreateOrderEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( CreateOrderEndpoint::nonce() ),
 				),
 				'approve_order' => array(
-					'endpoint' => home_url( \WC_AJAX::get_endpoint( ApproveOrderEndpoint::ENDPOINT ) ),
+					'endpoint' => \WC_AJAX::get_endpoint( ApproveOrderEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( ApproveOrderEndpoint::nonce() ),
 				),
 			),
@@ -1103,5 +1110,15 @@ class SmartButton implements SmartButtonInterface {
 		 * The filter returning the action name that PayPal button and Pay Later message will use for rendering on the single product page.
 		 */
 		return (string) apply_filters( 'woocommerce_paypal_payments_single_product_renderer_hook', 'woocommerce_single_product_summary' );
+	}
+
+	/**
+	 * Check if cart product price total is 0.
+	 *
+	 * @return bool true if is 0, otherwise false.
+	 */
+	protected function is_cart_price_total_zero(): bool {
+        // phpcs:ignore WordPress.PHP.StrictComparisons.LooseComparison
+		return WC()->cart->get_cart_contents_total() == 0;
 	}
 }
