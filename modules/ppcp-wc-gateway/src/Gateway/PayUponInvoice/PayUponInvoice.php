@@ -98,6 +98,14 @@ class PayUponInvoice {
 			}
 			return $description;
 		}, 10, 2);
+
+		add_action('woocommerce_checkout_order_processed', function($order_id, $posted_data, $order) {
+			if($order->get_billing_country() !== 'DE') {
+				wp_send_json_error(array(
+					'result'   => 'failure',
+				));
+			}
+		}, 10, 3);
 	}
 
 	public function add_parameter_block() { ?>
