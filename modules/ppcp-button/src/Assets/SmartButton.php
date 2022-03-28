@@ -352,6 +352,8 @@ class SmartButton implements SmartButtonInterface {
 			);
 		}
 
+		add_action( $this->pay_order_renderer_hook(), array( $this, 'button_renderer' ), 10 );
+
 		if ( $this->is_cart_price_total_zero() ) {
 			return false;
 		}
@@ -390,7 +392,6 @@ class SmartButton implements SmartButtonInterface {
 		}
 
 		add_action( $this->checkout_button_renderer_hook(), array( $this, 'button_renderer' ), 10 );
-		add_action( $this->pay_order_renderer_hook(), array( $this, 'button_renderer' ), 10 );
 
 		return true;
 	}
