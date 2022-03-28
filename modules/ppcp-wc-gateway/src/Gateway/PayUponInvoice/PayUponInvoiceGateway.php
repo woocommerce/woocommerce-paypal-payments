@@ -91,16 +91,22 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 				'type'    => 'checkbox',
 				'label'   => __( 'Pay upon Invoice', 'woocommerce-paypal-payments' ),
 				'default' => 'no',
+				'desc_tip'     => true,
+				'description'  => __('Enable/Disable Pay Upon Invoice payment gateway.', 'woocommerce-paypal-payments'),
 			),
 			'title' => array(
 				'title' => __( 'Title', 'woocommerce-paypal-payments' ),
 				'type' => 'text',
 				'default' => $this->title,
+				'desc_tip'     => true,
+				'description'  => __('This controls the title which the user sees during checkout.', 'woocommerce-paypal-payments'),
 			),
 			'description' => array(
 				'title' => __( 'Description', 'woocommerce-paypal-payments' ),
 				'type' => 'text',
 				'default' => $this->description,
+				'desc_tip'     => true,
+				'description'  => __('This controls the descriptiong which the user sees during checkout.', 'woocommerce-paypal-payments'),
 			),
 		);
 	}
