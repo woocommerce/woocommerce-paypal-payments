@@ -48,8 +48,8 @@ class SingleProductBootstap {
         else if (document.querySelector('form.cart .woocommerce-Price-amount')) {
             priceText = document.querySelector('form.cart .woocommerce-Price-amount').innerText;
         }
-        else if (document.querySelector('.woocommerce-Price-amount')) {
-            priceText = document.querySelector('.woocommerce-Price-amount').innerText;
+        else if (document.querySelector('.product .woocommerce-Price-amount')) {
+            priceText = document.querySelector('.product .woocommerce-Price-amount').innerText;
         }
         const amount = parseFloat(priceText.replace(/([^\d,\.\s]*)/g, ''));
         return amount === 0;
