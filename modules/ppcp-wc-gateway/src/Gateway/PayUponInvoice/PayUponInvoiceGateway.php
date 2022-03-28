@@ -57,9 +57,11 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 		 $this->id = self::ID;
 
 		$this->method_title       = __( 'Pay Upon Invoice', 'woocommerce-paypal-payments' );
-		$this->method_description = __( 'Pay upon Invoice is an invoice payment method in Germany. It is a local buy now, pay later payment method that allows the buyer to place an order, receive the goods, try them, verify they are in good order, and then pay the invoice within 30 days.', 'woocommerce-paypal-payments' );;
-		$this->title              = $this->method_title;
-		$this->description        = __( 'Once you place an order, pay within 30 days. Our payment partner Ratepay will send you payment instructions.', 'woocommerce-paypal-payments' );;
+		$this->method_description = __( 'Pay upon Invoice is an invoice payment method in Germany. It is a local buy now, pay later payment method that allows the buyer to place an order, receive the goods, try them, verify they are in good order, and then pay the invoice within 30 days.', 'woocommerce-paypal-payments' );
+
+		$gateway_settings = get_option( 'woocommerce_ppcp-pay-upon-invoice-gateway_settings' );
+		$this->title = $gateway_settings['title'] ?? $this->method_title;
+		$this->description = $gateway_settings['description'] ?? __( 'Once you place an order, pay within 30 days. Our payment partner Ratepay will send you payment instructions.', 'woocommerce-paypal-payments' );
 
 		$this->init_form_fields();
 		$this->init_settings();
@@ -89,6 +91,16 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 				'type'    => 'checkbox',
 				'label'   => __( 'Pay upon Invoice', 'woocommerce-paypal-payments' ),
 				'default' => 'no',
+			),
+			'title' => array(
+				'title' => __( 'Title', 'woocommerce-paypal-payments' ),
+				'type' => 'text',
+				'default' => $this->title,
+			),
+			'description' => array(
+				'title' => __( 'Description', 'woocommerce-paypal-payments' ),
+				'type' => 'text',
+				'default' => $this->description,
 			),
 		);
 	}
