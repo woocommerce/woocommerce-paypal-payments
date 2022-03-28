@@ -67,21 +67,6 @@ class PayUponInvoice {
 		);
 
 		add_filter(
-			'woocommerce_billing_fields',
-			function( $billing_fields ) {
-				$billing_fields['billing_birth_date'] = array(
-					'type'     => 'date',
-					'label'    => __( 'Birth date', 'woocommerce-paypal-payments' ),
-					'class'    => array( 'form-row-wide' ),
-					'required' => true,
-					'clear'    => true,
-				);
-
-				return $billing_fields;
-			}
-		);
-
-		add_filter(
 			'woocommerce_email_recipient_customer_on_hold_order',
 			function( $recipient, $order, $email ) {
 				if ( $order->get_payment_method() === PayUponInvoiceGateway::ID ) {
@@ -113,8 +98,27 @@ class PayUponInvoice {
 			'woocommerce_gateway_description',
 			function( $description, $id ) {
 				if ( PayUponInvoiceGateway::ID === $id ) {
-					$description .= __( '<span style="float:left;margin-top:20px;margin-bottom:20px;">By clicking on the button, you agree to the <a href="https://www.ratepay.com/legal-payment-terms">terms of payment</a> and <a href="https://www.ratepay.com/legal-payment-dataprivacy">performance of a risk check</a> from the payment partner, Ratepay. You also agree to PayPal’s <a href="https://www.paypal.com/de/webapps/mpp/ua/privacy-full?locale.x=eng_DE&_ga=1.267010504.718583817.1563460395">privacy statement</a>. If your request to purchase upon invoice is accepted, the purchase price claim will be assigned to Ratepay, and you may only pay Ratepay, not the merchant.</span>', 'woocommerce-paypal-payments' );
+					ob_start();
+					echo '<div style="padding: 20px 0;">';
+
+					woocommerce_form_field(
+						'billing_birth_date',
+						array(
+							'type' => 'date',
+							'label' => __('Birth date', 'woocommerce-paypal-payments'),
+							'class' => array('form-row-wide'),
+							'required' => true,
+							'clear' => true,
+						)
+					);
+
+					echo '</div><div>';
+					_e( 'By clicking on the button, you agree to the <a href="https://www.ratepay.com/legal-payment-terms">terms of payment</a> and <a href="https://www.ratepay.com/legal-payment-dataprivacy">performance of a risk check</a> from the payment partner, Ratepay. You also agree to PayPal’s <a href="https://www.paypal.com/de/webapps/mpp/ua/privacy-full?locale.x=eng_DE&_ga=1.267010504.718583817.1563460395">privacy statement</a>. If your request to purchase upon invoice is accepted, the purchase price claim will be assigned to Ratepay, and you may only pay Ratepay, not the merchant.', 'woocommerce-paypal-payments' );
+					echo '</div>';
+
+					$description .= ob_get_clean();
 				}
+
 				return $description;
 			},
 			10,
