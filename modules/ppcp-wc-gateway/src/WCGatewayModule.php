@@ -173,7 +173,7 @@ class WCGatewayModule implements ModuleInterface {
 				assert( $settings instanceof Settings );
 
 				try {
-					if ( $settings->get( '3d_secure_contingency' ) === '3D_SECURE' ) {
+					if ( $settings->has( '3d_secure_contingency' ) && $settings->get( '3d_secure_contingency' ) === '3D_SECURE' ) {
 						$settings->set( '3d_secure_contingency', 'SCA_ALWAYS' );
 						$settings->persist();
 					}
@@ -186,7 +186,10 @@ class WCGatewayModule implements ModuleInterface {
 		add_action(
 			'init',
 			function () use ( $c ) {
-				if ( 'DE' === $c->get( 'api.shop.country' ) ) {
+				$gateway_settings = get_option( 'woocommerce_ppcp-pay-upon-invoice-gateway_settings' );
+				$gateway_enabled = $gateway_settings['enabled'] ?? '';
+
+				if ( 'yes' === $gateway_enabled && 'DE' === $c->get( 'api.shop.country' ) ) {
 					( $c->get( 'wcgateway.pay-upon-invoice' ) )->init();
 				}
 			}
