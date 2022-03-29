@@ -9,6 +9,7 @@ class PaymentSourceFactory {
 	public function from_wc_order( WC_Order $order ) {
 		$address = $order->get_address();
 		$birth_date = filter_input( INPUT_POST, 'billing_birth_date', FILTER_SANITIZE_STRING );
+		$phone_country_code = filter_input( INPUT_POST, 'phone_country_code', FILTER_SANITIZE_STRING );
 
 		return new PaymentSource(
 			$address['first_name'] ?? '',
@@ -16,7 +17,7 @@ class PaymentSourceFactory {
 			$address['email'] ?? '',
 			$birth_date ?? '',
 			$address['phone'] ?? '',
-			'49',
+			$phone_country_code ?? '',
 			$address['address_1'] ?? '',
 			$address['city'] ?? '',
 			$address['postcode'] ?? '',
