@@ -104,21 +104,11 @@ class PayUponInvoice {
 					woocommerce_form_field(
 						'billing_birth_date',
 						array(
-							'type' => 'date',
-							'label' => __('Birth date', 'woocommerce-paypal-payments'),
-							'class' => array('form-row-wide'),
+							'type'     => 'date',
+							'label'    => __( 'Birth date', 'woocommerce-paypal-payments' ),
+							'class'    => array( 'form-row-wide' ),
 							'required' => true,
-							'clear' => true,
-						)
-					);
-					woocommerce_form_field(
-						'phone_country_code',
-						array(
-							'type' => 'number',
-							'label' => __('Phone country code (ex. 49)', 'woocommerce-paypal-payments'),
-							'class' => array('form-row-wide'),
-							'required' => true,
-							'clear' => true,
+							'clear'    => true,
 						)
 					);
 
@@ -136,18 +126,14 @@ class PayUponInvoice {
 		);
 
 		add_action(
-			'woocommerce_checkout_order_processed',
-			function( $order_id, $posted_data, $order ) {
-				if ( $order->get_billing_country() !== 'DE' ) {
-					wp_send_json_error(
-						array(
-							'result' => 'failure',
-						)
-					);
+			'woocommerce_after_checkout_validation',
+			function( $fields, $errors ) {
+				if ( $fields['billing_country'] !== 'DE' ) {
+					$errors->add( 'validation', __( 'Billing country not available.', 'woocommerce-paypal-payments' ) );
 				}
 			},
 			10,
-			3
+			2
 		);
 	}
 
