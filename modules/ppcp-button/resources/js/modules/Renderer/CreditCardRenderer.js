@@ -1,4 +1,5 @@
 import dccInputFactory from "../Helper/DccInputFactory";
+import {show} from "../Helper/Hiding";
 
 class CreditCardRenderer {
 
@@ -31,6 +32,8 @@ class CreditCardRenderer {
             wrapperElement.parentNode.removeChild(wrapperElement);
             return;
         }
+
+        const buttonSelector = wrapper + ' button';
 
         if (this.currentHostedFieldsInstance) {
             this.currentHostedFieldsInstance.teardown()
@@ -121,8 +124,10 @@ class CreditCardRenderer {
 
             });
 
+            show(buttonSelector);
+
             if (document.querySelector(wrapper).getAttribute('data-ppcp-subscribed') !== true) {
-                document.querySelector(wrapper + ' button').addEventListener(
+                document.querySelector(buttonSelector).addEventListener(
                     'click',
                     event => {
                         event.preventDefault();
