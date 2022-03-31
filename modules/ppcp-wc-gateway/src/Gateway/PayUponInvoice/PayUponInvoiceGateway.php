@@ -106,7 +106,19 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 				'type' => 'text',
 				'default' => $this->description,
 				'desc_tip'     => true,
-				'description'  => __('This controls the descriptiong which the user sees during checkout.', 'woocommerce-paypal-payments'),
+				'description'  => __('This controls the description which the user sees during checkout.', 'woocommerce-paypal-payments'),
+			),
+			'experience_context'           => array(
+				'title'       => __( 'Experience Context', 'woocommerce' ),
+				'type'        => 'title',
+				'description' => __("Specify brand name, logo and customer service instructions to be presented on Ratepay's payment instruction email sent to the buyer.", 'woocommerce-paypal-payments'),
+			),
+			'brand_name' => array(
+				'title' => __( 'Brand name', 'woocommerce-paypal-payments' ),
+				'type' => 'text',
+				'default' => '',
+				'desc_tip'     => true,
+				'description'  => __('Merchant name displayed in the email.', 'woocommerce-paypal-payments'),
 			),
 		);
 	}

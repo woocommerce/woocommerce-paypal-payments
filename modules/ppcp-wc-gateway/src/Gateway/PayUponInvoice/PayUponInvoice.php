@@ -94,6 +94,46 @@ class PayUponInvoice {
 			2
 		);
 
+		add_action( 'woocommerce_email_before_order_table', function(WC_Order $order, $sent_to_admin) {
+			if(! $sent_to_admin && PayUponInvoiceGateway::ID === $order->get_payment_method() && $order->has_status( 'processing' )) {
+				$this->logger->info( "Adding Ratepay payment instructions to email for order #{$order->get_id()}." );
+
+				$instructions = $order->get_meta('ppcp_ratepay_payment_instructions_payment_reference');
+
+				$gateway_settings = get_option( 'woocommerce_ppcp-pay-upon-invoice-gateway_settings' );
+				$merchant_name = $gateway_settings['brand_name'] ?? '';
+
+				$order_date = $order->get_date_created();
+				$order_purchase_date = $order_date->date('d-m-Y');
+				$order_time = $order_date->date('H:i:s');
+				$order_date = $order_date->date('d-m-Y H:i:s');
+				$order_date_30d = date( 'd-m-Y', strtotime( $order_date . ' +30 days' ));
+
+				$payment_reference = $instructions[0] ?? '';
+				$bic = $instructions[1]->bic ?? '';
+				$bank_name = $instructions[1]->bank_name ?? '';
+				$iban = $instructions[1]->iban ?? '';
+				$account_holder_name = $instructions[1]->account_holder_name ?? '';
+
+				echo "<p>Für Ihre Bestellung #{$order->get_id()} ({$order_purchase_date} $order_time) bei {$merchant_name} haben Sie die Zahlung mittels “Rechnungskauf mit Ratepay“ gewählt.";
+				echo "<br>Bitte benutzen Sie die folgenden Informationen für Ihre Überweisung:</br>";
+				echo "<p>Bitte überweisen Sie den Betrag in Höhe von {$order->get_total()} bis zum {$order_date_30d} auf das unten angegebene Konto. Wichtig: Bitte geben Sie unbedingt als Verwendungszweck {$payment_reference} an, sonst kann die Zahlung nicht zugeordnet werden.</p>";
+				echo "<ul>";
+				echo "<li>Empfänger: {$account_holder_name}</li>";
+				echo "<li>IBAN: {$iban}</li>";
+				echo "<li>BIC: {$bic}</li>";
+				echo "<li>Name der Bank: {$bank_name}</li>";
+				echo "<li>Verwendungszweck: {$payment_reference}</li>";
+				echo "</ul>";
+
+				echo "<p>{$merchant_name} hat die Forderung gegen Sie an die PayPal (Europe) S.à r.l. et Cie, S.C.A. abgetreten, die wiederum die Forderung an Ratepay GmbH abgetreten hat. Zahlungen mit schuldbefreiender Wirkung können nur an die Ratepay GmbH geleistet werden.</p>";
+
+				echo "<p>Mit freundlichen Grüßen";
+				echo "<br>";
+				echo "{$merchant_name}</p>";
+			}
+		}, 10, 3 );
+
 		add_filter(
 			'woocommerce_gateway_description',
 			function( $description, $id ) {
@@ -138,7 +178,7 @@ class PayUponInvoice {
 	}
 
 	public function add_parameter_block() { ?>
-		<script type="application/json" fncls="fnparams-dede7cc5-15fd-4c75-a9f4-36c430ee3a99">{"f":"<?php echo esc_attr( $this->fraud_net->sessionId() ); ?>","s":"<?php echo esc_attr( $this->fraud_net->sourceWebsiteId() ); ?>"}</script>
+		<script type="application/json" fncls="fnparams-dede7cc5-15fd-4c75-a9f4-36c430ee3a99">{"sandbox":true,"f":"<?php echo esc_attr( $this->fraud_net->sessionId() ); ?>","s":"<?php echo esc_attr( $this->fraud_net->sourceWebsiteId() ); ?>"}</script>
 		<script type="text/javascript" src="https://c.paypal.com/da/r/fb.js"></script>
 		<?php
 	}
