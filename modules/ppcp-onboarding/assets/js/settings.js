@@ -171,6 +171,16 @@ document.addEventListener(
                 return;
             }
             const allOptions = Array.from(document.querySelectorAll('select[name="ppcp[disable_cards][]"] option'));
+            const iconVersions = {
+                'visa': {
+                    'light': {'label': 'Visa (light)'},
+                    'dark' : {'label': 'Visa (dark)', 'value': 'visa-dark'}
+                },
+                'mastercard': {
+                    'light': {'label': 'Mastercard (light)'},
+                    'dark' : {'label': 'Mastercard (dark)', 'value': 'mastercard-dark'}
+                }
+            }
             const replace = () => {
                 const validOptions = allOptions.filter(
                     (option) => {
@@ -181,13 +191,35 @@ document.addEventListener(
                 const selectedValidOptions = validOptions.map(
                     (option) => {
                         option = option.cloneNode(true);
-                        option.selected = target.querySelector('option[value="' + option.value + '"]') && target.querySelector('option[value="' + option.value + '"]').selected;
+                        let value = option.value;
+                        option.selected = target.querySelector('option[value="' + value + '"]') && target.querySelector('option[value="' + value + '"]').selected;
+                        if(value === 'visa' || value === 'mastercard') {
+                            let darkOption = option.cloneNode(true);
+                            let currentVersion = iconVersions[value];
+                            let darkValue = iconVersions[value].dark.value;
+
+                            option.text = currentVersion.light.label;
+                            darkOption.text = currentVersion.dark.label;
+                            darkOption.value = darkValue;
+                            darkOption.selected = target.querySelector('option[value="' + darkValue + '"]') && target.querySelector('option[value="' + darkValue + '"]').selected;
+
+                            return [option, darkOption];
+                        }
                         return option;
                     }
                 );
+
                 target.innerHTML = '';
                 selectedValidOptions.forEach(
                     (option) => {
+                        if(Array.isArray(option)){
+                            option.forEach(
+                                (option) => {
+                                    target.append(option);
+                                }
+                            )
+                        }
+
                         target.append(option);
                     }
                 );
