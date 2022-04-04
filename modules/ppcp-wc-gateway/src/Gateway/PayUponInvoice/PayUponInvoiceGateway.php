@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use WC_Payment_Gateway;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
@@ -145,7 +146,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 		} catch ( RuntimeException $exception ) {
 			$error = $exception->getMessage();
 
-			if(is_array($exception->details())) {
+			if(is_a($exception, PayPalApiException::class) && is_array($exception->details())) {
 				$details = '';
 				foreach ($exception->details() as $detail) {
 					$issue = $detail->issue ?? '';

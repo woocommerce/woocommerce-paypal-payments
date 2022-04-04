@@ -99,6 +99,14 @@ class OrderEndpoint {
 		$json        = json_decode( $response['body'] );
 		$status_code = (int) wp_remote_retrieve_response_code( $response );
 		if ( ! in_array($status_code, [200,201] ) ) {
+			$issue = $json->details[0]->issue ?? null;
+			if($issue === 'PAYMENT_SOURCE_INFO_CANNOT_BE_VERIFIED') {
+				throw new RuntimeException('The combination of your name and address could not be validated. Please correct your data and try again. You can find further information in the <a href="https://www.ratepay.com/en/ratepay-data-privacy-statement/" target="_blank">Ratepay Data Privacy Statement</a> or you can contact Ratepay using this <a href="https://www.ratepay.com/en/contact/" target="_blank">contact form</a>.');
+			}
+			if($issue === 'PAYMENT_SOURCE_DECLINED_BY_PROCESSOR') {
+				throw new RuntimeException('It is not possible to use the selected payment method. This decision is based on automated data processing. You can find further information in the <a href="https://www.ratepay.com/en/ratepay-data-privacy-statement/" target="_blank">Ratepay Data Privacy Statement</a> or you can contact Ratepay using this <a href="https://www.ratepay.com/en/contact/" target="_blank">contact form</a>.');
+			}
+
 			throw new PayPalApiException( $json, $status_code );
 		}
 
