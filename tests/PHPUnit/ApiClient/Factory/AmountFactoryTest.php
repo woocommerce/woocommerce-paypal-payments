@@ -68,11 +68,11 @@ class AmountFactoryTest extends TestCase
         $this->assertEquals((float) 1, $result->value());
         $this->assertEquals((float) 10, $result->breakdown()->discount()->value());
         $this->assertEquals($this->currency, $result->breakdown()->discount()->currency_code());
-        $this->assertEquals((float) 4, $result->breakdown()->shipping()->value());
+        $this->assertEquals((float) 9, $result->breakdown()->shipping()->value());
         $this->assertEquals($this->currency, $result->breakdown()->shipping()->currency_code());
         $this->assertEquals((float) 5, $result->breakdown()->item_total()->value());
         $this->assertEquals($this->currency, $result->breakdown()->item_total()->currency_code());
-        $this->assertEquals((float) 13, $result->breakdown()->tax_total()->value());
+        $this->assertEquals((float) 8, $result->breakdown()->tax_total()->value());
         $this->assertEquals($this->currency, $result->breakdown()->tax_total()->currency_code());
     }
 
@@ -161,7 +161,7 @@ class AmountFactoryTest extends TestCase
         $result = $this->testee->from_wc_order($order);
         $this->assertEquals((float) 3, $result->breakdown()->discount()->value());
         $this->assertEquals((float) 6, $result->breakdown()->item_total()->value());
-        $this->assertEquals((float) 1, $result->breakdown()->shipping()->value());
+        $this->assertEquals((float) 1.5, $result->breakdown()->shipping()->value());
         $this->assertEquals((float) 100, $result->value());
         $this->assertEquals((float) 2, $result->breakdown()->tax_total()->value());
         $this->assertEquals($this->currency, $result->breakdown()->discount()->currency_code());

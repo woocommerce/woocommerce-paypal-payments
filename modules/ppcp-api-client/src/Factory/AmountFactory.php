@@ -76,12 +76,12 @@ class AmountFactory {
 		$item_total = $cart->get_cart_contents_total() + $cart->get_discount_total() + $total_fees_amount;
 		$item_total = new Money( (float) $item_total, $this->currency );
 		$shipping   = new Money(
-			(float) $cart->get_shipping_total(),
+			(float) $cart->get_shipping_total() + $cart->get_shipping_tax(),
 			$this->currency
 		);
 
 		$taxes = new Money(
-			$cart->get_subtotal_tax() + $cart->get_shipping_tax(),
+			$cart->get_subtotal_tax(),
 			$this->currency
 		);
 
@@ -131,7 +131,7 @@ class AmountFactory {
 			$currency
 		);
 		$shipping   = new Money(
-			(float) $order->get_shipping_total(),
+			(float) $order->get_shipping_total() + (float) $order->get_shipping_tax(),
 			$currency
 		);
 		$taxes      = new Money(
