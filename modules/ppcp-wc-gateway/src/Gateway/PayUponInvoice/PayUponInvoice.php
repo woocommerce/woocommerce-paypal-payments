@@ -66,19 +66,6 @@ class PayUponInvoice {
 			array( $this, 'register_assets' )
 		);
 
-		add_filter(
-			'woocommerce_email_recipient_customer_on_hold_order',
-			function( $recipient, $order, $email ) {
-				if ( $order->get_payment_method() === PayUponInvoiceGateway::ID ) {
-					return '';
-				}
-
-				return $recipient;
-			},
-			10,
-			3
-		);
-
 		add_action(
 			'ppcp_payment_capture_completed_webhook_handler',
 			function ( WC_Order $wc_order, string $order_id ) {
@@ -117,7 +104,7 @@ class PayUponInvoice {
 
 				echo "<p>Für Ihre Bestellung #{$order->get_id()} ({$order_purchase_date} $order_time) bei {$merchant_name} haben Sie die Zahlung mittels “Rechnungskauf mit Ratepay“ gewählt.";
 				echo "<br>Bitte benutzen Sie die folgenden Informationen für Ihre Überweisung:</br>";
-				echo "<p>Bitte überweisen Sie den Betrag in Höhe von {$order->get_total()} bis zum {$order_date_30d} auf das unten angegebene Konto. Wichtig: Bitte geben Sie unbedingt als Verwendungszweck {$payment_reference} an, sonst kann die Zahlung nicht zugeordnet werden.</p>";
+				echo "<p>Bitte überweisen Sie den Betrag in Höhe von {$order->get_currency()}{$order->get_total()} bis zum {$order_date_30d} auf das unten angegebene Konto. Wichtig: Bitte geben Sie unbedingt als Verwendungszweck {$payment_reference} an, sonst kann die Zahlung nicht zugeordnet werden.</p>";
 				echo "<ul>";
 				echo "<li>Empfänger: {$account_holder_name}</li>";
 				echo "<li>IBAN: {$iban}</li>";
@@ -125,6 +112,7 @@ class PayUponInvoice {
 				echo "<li>Name der Bank: {$bank_name}</li>";
 				echo "<li>Verwendungszweck: {$payment_reference}</li>";
 				echo "</ul>";
+
 
 				echo "<p>{$merchant_name} hat die Forderung gegen Sie an die PayPal (Europe) S.à r.l. et Cie, S.C.A. abgetreten, die wiederum die Forderung an Ratepay GmbH abgetreten hat. Zahlungen mit schuldbefreiender Wirkung können nur an die Ratepay GmbH geleistet werden.</p>";
 
