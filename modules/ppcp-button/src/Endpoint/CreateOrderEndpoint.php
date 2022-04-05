@@ -13,6 +13,9 @@ use Exception;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Address;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Amount;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\AmountBreakdown;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PayerName;
@@ -25,13 +28,17 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CartRepository;
 use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\Subscription\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class CreateOrderEndpoint
  */
 class CreateOrderEndpoint implements EndpointInterface {
+
+	use FreeTrialHandlerTrait;
 
 	const ENDPOINT = 'ppc-create-order';
 
@@ -177,6 +184,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 		try {
 			$data                      = $this->request_data->read_request( $this->nonce() );
 			$this->parsed_request_data = $data;
+			$payment_method            = $data['payment_method'] ?? '';
 			$wc_order                  = null;
 			if ( 'pay-now' === $data['context'] ) {
 				$wc_order = wc_get_order( (int) $data['order_id'] );
@@ -193,6 +201,16 @@ class CreateOrderEndpoint implements EndpointInterface {
 				$this->purchase_units = array( $this->purchase_unit_factory->from_wc_order( $wc_order ) );
 			} else {
 				$this->purchase_units = $this->cart_repository->all();
+
+				// The cart does not have any info about payment method, so we must handle free trial here.
+				if ( CreditCardGateway::ID === $payment_method && $this->is_free_trial_cart() ) {
+					$this->purchase_units[0]->set_amount(
+						new Amount(
+							new Money( 1.0, $this->purchase_units[0]->amount()->currency_code() ),
+							$this->purchase_units[0]->amount()->breakdown()
+						)
+					);
+				}
 			}
 
 			$this->set_bn_code( $data );

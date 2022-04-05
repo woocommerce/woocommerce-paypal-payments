@@ -48,6 +48,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CartRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CustomerRepository;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\OrderRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayeeRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
@@ -227,6 +228,11 @@ return array(
 	'api.repository.customer'                   => static function( ContainerInterface $container ): CustomerRepository {
 		$prefix           = $container->get( 'api.prefix' );
 		return new CustomerRepository( $prefix );
+	},
+	'api.repository.order'                      => static function( ContainerInterface $container ): OrderRepository {
+		return new OrderRepository(
+			$container->get( 'api.endpoint.order' )
+		);
 	},
 	'api.factory.application-context'           => static function ( ContainerInterface $container ) : ApplicationContextFactory {
 		return new ApplicationContextFactory();

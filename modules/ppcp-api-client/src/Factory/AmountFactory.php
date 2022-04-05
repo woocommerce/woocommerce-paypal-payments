@@ -14,12 +14,15 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\AmountBreakdown;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\Subscription\FreeTrialHandlerTrait;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 
 /**
  * Class AmountFactory
  */
 class AmountFactory {
 
+	use FreeTrialHandlerTrait;
 
 	/**
 	 * The item factory.
@@ -117,9 +120,15 @@ class AmountFactory {
 	 * @return Amount
 	 */
 	public function from_wc_order( \WC_Order $order ): Amount {
-		$currency   = $order->get_currency();
-		$items      = $this->item_factory->from_wc_order( $order );
-		$total      = new Money( (float) $order->get_total(), $currency );
+		$currency = $order->get_currency();
+		$items    = $this->item_factory->from_wc_order( $order );
+
+		$total_value = (float) $order->get_total();
+		if ( CreditCardGateway::ID === $order->get_payment_method() && $this->is_free_trial_order( $order ) ) {
+			$total_value = 1.0;
+		}
+		$total = new Money( $total_value, $currency );
+
 		$item_total = new Money(
 			(float) array_reduce(
 				$items,

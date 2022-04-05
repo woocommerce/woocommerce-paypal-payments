@@ -21,6 +21,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
@@ -241,6 +242,39 @@ class AuthorizedPaymentsProcessor {
 					$wc_order->update_meta_data( '_ppcp_captured_vault_webhook', 'true' );
 				}
 			}
+		}
+	}
+
+	/**
+	 * Voids authorizations for the given PayPal order.
+	 *
+	 * @param Order $order The PayPal order.
+	 * @return void
+	 * @throws RuntimeException When there is a problem voiding authorizations.
+	 */
+	public function void_authorizations( Order $order ): void {
+		$purchase_units = $order->purchase_units();
+		if ( ! $purchase_units ) {
+			throw new RuntimeException( 'No purchase units.' );
+		}
+
+		$payments = $purchase_units[0]->payments();
+		if ( ! $payments ) {
+			throw new RuntimeException( 'No payments.' );
+		}
+
+		$voidable_authorizations = array_filter(
+			$payments->authorizations(),
+			function ( Authorization $authorization ): bool {
+				return $authorization->is_voidable();
+			}
+		);
+		if ( ! $voidable_authorizations ) {
+			throw new RuntimeException( 'No voidable authorizations.' );
+		}
+
+		foreach ( $voidable_authorizations as $authorization ) {
+			$this->payments_endpoint->void( $authorization );
 		}
 	}
 

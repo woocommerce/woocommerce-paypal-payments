@@ -11,6 +11,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Subscription\Helper;
 
+use WC_Product;
+use WC_Subscription;
 use WC_Subscriptions_Product;
 
 /**
@@ -46,7 +48,7 @@ class SubscriptionHelper {
 		}
 
 		foreach ( $cart->get_cart() as $item ) {
-			if ( ! isset( $item['data'] ) || ! is_a( $item['data'], \WC_Product::class ) ) {
+			if ( ! isset( $item['data'] ) || ! is_a( $item['data'], WC_Product::class ) ) {
 				continue;
 			}
 			if ( $item['data']->is_type( 'subscription' ) || $item['data']->is_type( 'subscription_variation' ) ) {

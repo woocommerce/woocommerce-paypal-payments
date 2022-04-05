@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
+use WooCommerce\PayPalCommerce\Subscription\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\PaymentsStatusHandlingTrait;
@@ -24,7 +25,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
  */
 trait ProcessPaymentTrait {
 
-	use OrderMetaTrait, PaymentsStatusHandlingTrait, TransactionIdHandlingTrait;
+	use OrderMetaTrait, PaymentsStatusHandlingTrait, TransactionIdHandlingTrait, FreeTrialHandlerTrait;
 
 	/**
 	 * Process a payment for an WooCommerce order.
@@ -115,7 +116,10 @@ trait ProcessPaymentTrait {
 
 				$this->handle_new_order_status( $order, $wc_order );
 
-				if ( $this->config->has( 'intent' ) && strtoupper( (string) $this->config->get( 'intent' ) ) === 'CAPTURE' ) {
+				if ( $this->is_free_trial_order( $wc_order ) ) {
+					$this->authorized_payments_processor->void_authorizations( $order );
+					$wc_order->payment_complete();
+				} elseif ( $this->config->has( 'intent' ) && strtoupper( (string) $this->config->get( 'intent' ) ) === 'CAPTURE' ) {
 					$this->authorized_payments_processor->capture_authorized_payment( $wc_order );
 				}
 

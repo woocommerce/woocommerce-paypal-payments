@@ -8,6 +8,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\TestCase;
 use Mockery;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
 
@@ -142,6 +143,10 @@ class AmountFactoryTest extends TestCase
             ->andReturn([$item]);
 
         $order
+            ->shouldReceive('get_payment_method')
+            ->andReturn(PayPalGateway::ID);
+
+        $order
             ->shouldReceive('get_total')
             ->andReturn(100);
         $order
@@ -196,6 +201,10 @@ class AmountFactoryTest extends TestCase
             ->expects('from_wc_order')
             ->with($order)
             ->andReturn([$item]);
+
+		$order
+			->shouldReceive('get_payment_method')
+			->andReturn(PayPalGateway::ID);
 
         $order
             ->shouldReceive('get_total')
