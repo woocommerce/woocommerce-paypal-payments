@@ -219,7 +219,7 @@ class CreditCardRenderer {
                 this.spinner.unblock();
                 this.errorHandler.clear();
 
-                if (err.hasOwnProperty('details')) {
+                if (err.details) {
                     this.errorHandler.message(err.details.map(d => `${d.issue} ${d.description}`).join('<br/>'), true);
                 }
             });
