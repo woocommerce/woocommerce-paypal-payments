@@ -354,6 +354,27 @@ class SmartButton implements SmartButtonInterface {
 
 		add_action( $this->pay_order_renderer_hook(), array( $this, 'button_renderer' ), 10 );
 
+		$not_enabled_on_minicart = $this->settings->has( 'button_mini_cart_enabled' ) &&
+			! $this->settings->get( 'button_mini_cart_enabled' );
+		if (
+		! $not_enabled_on_minicart
+		) {
+			add_action(
+				$this->mini_cart_button_renderer_hook(),
+				static function () {
+                    // phpcs:ignore WordPress.PHP.StrictComparisons.LooseComparison
+					if ( WC()->cart->get_cart_contents_total() == 0 ) {
+						return;
+					}
+					echo '<p
+                                id="ppc-button-minicart"
+                                class="woocommerce-mini-cart__buttons buttons"
+                          ></p>';
+				},
+				30
+			);
+		}
+
 		if ( $this->is_cart_price_total_zero() ) {
 			return false;
 		}
@@ -371,23 +392,6 @@ class SmartButton implements SmartButtonInterface {
 					'button_renderer',
 				),
 				20
-			);
-		}
-
-		$not_enabled_on_minicart = $this->settings->has( 'button_mini_cart_enabled' ) &&
-			! $this->settings->get( 'button_mini_cart_enabled' );
-		if (
-			! $not_enabled_on_minicart
-		) {
-			add_action(
-				$this->mini_cart_button_renderer_hook(),
-				static function () {
-					echo '<p
-                                id="ppc-button-minicart"
-                                class="woocommerce-mini-cart__buttons buttons"
-                          ></p>';
-				},
-				30
 			);
 		}
 
