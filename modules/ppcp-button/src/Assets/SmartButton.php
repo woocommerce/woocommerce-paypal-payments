@@ -361,11 +361,11 @@ class SmartButton implements SmartButtonInterface {
 		) {
 			add_action(
 				$this->mini_cart_button_renderer_hook(),
-				static function () {
-                    // phpcs:ignore WordPress.PHP.StrictComparisons.LooseComparison
-					if ( WC()->cart->get_cart_contents_total() == 0 ) {
+				function () {
+					if ( $this->is_cart_price_total_zero() ) {
 						return;
 					}
+
 					echo '<p
                                 id="ppc-button-minicart"
                                 class="woocommerce-mini-cart__buttons buttons"
