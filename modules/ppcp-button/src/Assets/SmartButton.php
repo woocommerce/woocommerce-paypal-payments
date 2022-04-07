@@ -352,6 +352,29 @@ class SmartButton implements SmartButtonInterface {
 			);
 		}
 
+		add_action( $this->pay_order_renderer_hook(), array( $this, 'button_renderer' ), 10 );
+
+		$not_enabled_on_minicart = $this->settings->has( 'button_mini_cart_enabled' ) &&
+			! $this->settings->get( 'button_mini_cart_enabled' );
+		if (
+		! $not_enabled_on_minicart
+		) {
+			add_action(
+				$this->mini_cart_button_renderer_hook(),
+				function () {
+					if ( $this->is_cart_price_total_zero() ) {
+						return;
+					}
+
+					echo '<p
+                                id="ppc-button-minicart"
+                                class="woocommerce-mini-cart__buttons buttons"
+                          ></p>';
+				},
+				30
+			);
+		}
+
 		if ( $this->is_cart_price_total_zero() ) {
 			return false;
 		}
@@ -372,25 +395,7 @@ class SmartButton implements SmartButtonInterface {
 			);
 		}
 
-		$not_enabled_on_minicart = $this->settings->has( 'button_mini_cart_enabled' ) &&
-			! $this->settings->get( 'button_mini_cart_enabled' );
-		if (
-			! $not_enabled_on_minicart
-		) {
-			add_action(
-				$this->mini_cart_button_renderer_hook(),
-				static function () {
-					echo '<p
-                                id="ppc-button-minicart"
-                                class="woocommerce-mini-cart__buttons buttons"
-                          ></p>';
-				},
-				30
-			);
-		}
-
 		add_action( $this->checkout_button_renderer_hook(), array( $this, 'button_renderer' ), 10 );
-		add_action( $this->pay_order_renderer_hook(), array( $this, 'button_renderer' ), 10 );
 
 		return true;
 	}

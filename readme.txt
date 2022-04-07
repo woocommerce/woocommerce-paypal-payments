@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, e-commerce, store, sales, sell, 
 Requires at least: 5.3
 Tested up to: 5.9
 Requires PHP: 7.1
-Stable tag: 1.7.0
+Stable tag: 1.7.1
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -80,6 +80,19 @@ Follow the steps below to connect the plugin to your PayPal account:
 6. Main settings screen.
 
 == Changelog ==
+
+= 1.7.1 =
+* Fix - Hide smart buttons for free products and zero-sum carts #499
+* Fix - Unprocessable Entity when paying with AMEX card #516
+* Fix - Multisite path doubled in ajax URLs #528
+* Fix - "Place order" button looking unstyled in the Twenty Twenty-Two theme #478
+* Fix - PayPal options available on minicart when adding subscription to the cart from shop page without vaulting enabled #518
+* Fix - Buttons not visible on products page #551
+* Fix - Buttons not visible in mini-cart #553
+* Fix - PayPal button missing on pay for order page #555
+* Enhancement - PayPal buttons loading time #533
+* Enhancement - Improve payment token checking for subscriptions #525
+* Enhancement - Add Spain and Italy to messaging #497
 
 = 1.7.0 =
 * Fix - DCC orders randomly failing #503

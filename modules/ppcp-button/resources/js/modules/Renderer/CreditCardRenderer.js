@@ -218,7 +218,8 @@ class CreditCardRenderer {
             }).catch(err => {
                 this.spinner.unblock();
                 this.errorHandler.clear();
-                if (err.details.length > 0) {
+
+                if (err.details) {
                     this.errorHandler.message(err.details.map(d => `${d.issue} ${d.description}`).join('<br/>'), true);
                 }
             });
