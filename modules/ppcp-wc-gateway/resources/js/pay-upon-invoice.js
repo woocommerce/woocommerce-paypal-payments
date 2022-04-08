@@ -14,8 +14,18 @@ window.addEventListener('load', function() {
         console.log(fncls_params.f)
     }, 3000);
 
-    const buttonLabel = document.querySelector('#place_order').textContent;
-    const buttonLegalTextLabel = document.querySelector('#ppcp-legal-text-button-label');
-    buttonLegalTextLabel.textContent = '"' + buttonLabel + '"';
+    const replaceButtonLabel = () => {
+        const buttonLabel = document.querySelector('#place_order').textContent;
+        const buttonLegalTextLabel = document.querySelector('#ppcp-legal-text-button-label');
+        if(buttonLabel && buttonLegalTextLabel) {
+            buttonLegalTextLabel.textContent = '"' + buttonLabel + '"';
+        }
+    }
+
+    jQuery(document.body).on('payment_method_selected', () => {
+        replaceButtonLabel();
+    });
+
+    replaceButtonLabel();
 })
 
