@@ -12,6 +12,10 @@ window.addEventListener('load', function() {
         form.appendChild(fraudnetSessionId);
 
         console.log(fncls_params.f)
-    }, 3000)
+    }, 3000);
+
+    const buttonLabel = document.querySelector('#place_order').textContent;
+    const buttonLegalTextLabel = document.querySelector('#ppcp-legal-text-button-label');
+    buttonLegalTextLabel.textContent = '"' + buttonLabel + '"';
 })
 
