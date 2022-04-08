@@ -142,7 +142,6 @@ class ItemFactory {
 		$tax                       = round( $price - $price_without_tax_rounded, 2 );
 		$tax                       = new Money( $tax, $currency );
 		$tax_rates = WC_Tax::get_rates($product->get_tax_class());
-		$tax                       = new Money( $tax + $shipping_tax, $currency );
 
 		return new Item(
 			mb_substr( $product->get_name(), 0, 127 ),
