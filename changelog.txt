@@ -1,6 +1,6 @@
 *** Changelog ***
 
-= 1.7.1 - TBD =
+= 1.7.1 - 2022-04-06 =
 * Fix - Hide smart buttons for free products and zero-sum carts #499
 * Fix - Unprocessable Entity when paying with AMEX card #516
 * Fix - Multisite path doubled in ajax URLs #528
