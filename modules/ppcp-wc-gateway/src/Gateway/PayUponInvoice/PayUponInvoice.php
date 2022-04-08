@@ -172,7 +172,7 @@ class PayUponInvoice {
 			'woocommerce_available_payment_gateways',
 			function( $methods ) {
 				$billing_country = filter_input( INPUT_POST, 'country', FILTER_SANITIZE_STRING ) ?? null;
-				if ( ! is_admin() && $billing_country !== 'DE' ) {
+				if ( $billing_country && $billing_country !== 'DE' ) {
 					unset( $methods[ PayUponInvoiceGateway::ID ] );
 				}
 
