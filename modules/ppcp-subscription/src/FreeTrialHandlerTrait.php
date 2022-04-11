@@ -21,7 +21,7 @@ trait FreeTrialHandlerTrait {
 	use SubscriptionsHandlerTrait;
 
 	/**
-	 * S.
+	 * Checks if the cart contains only free trial.
 	 *
 	 * @return bool
 	 */
@@ -49,7 +49,7 @@ trait FreeTrialHandlerTrait {
 	}
 
 	/**
-	 * S.
+	 * Checks if the given order contains only free trial.
 	 *
 	 * @param WC_Order $wc_order The WooCommerce order.
 	 * @return bool
