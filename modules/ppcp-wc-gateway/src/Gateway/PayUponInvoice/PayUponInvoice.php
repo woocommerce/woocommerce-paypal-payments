@@ -9,6 +9,7 @@ use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 class PayUponInvoice {
 
@@ -32,26 +33,38 @@ class PayUponInvoice {
 	 */
 	protected $logger;
 
+	/**
+	 * @var Settings
+	 */
+	protected $settings;
+
 	public function __construct(
 		string $module_url,
 		FraudNet $fraud_net,
 		OrderEndpoint $order_endpoint,
-		LoggerInterface $logger
+		LoggerInterface $logger,
+		Settings $settings
 	) {
 		$this->module_url     = $module_url;
 		$this->fraud_net      = $fraud_net;
 		$this->order_endpoint = $order_endpoint;
 		$this->logger         = $logger;
+		$this->settings = $settings;
 	}
 
 	public function init() {
 		add_filter(
 			'ppcp_partner_referrals_data',
 			function ( $data ) {
-				if ( in_array( 'PPCP', $data['products'] ) ) {
+				if($this->settings->has('ppcp-onboarding-pui') && $this->settings->get('ppcp-onboarding-pui') !== '1') {
+					return $data;
+				}
+
+				if(in_array( 'PPCP', $data['products'] )) {
 					$data['products'][]     = 'PAYMENT_METHODS';
 					$data['capabilities'][] = 'PAY_UPON_INVOICE';
 				}
+
 				return $data;
 			}
 		);

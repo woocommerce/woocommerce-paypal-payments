@@ -2176,7 +2176,8 @@ return array(
 			$container->get( 'wcgateway.url' ),
 			$container->get( 'wcgateway.pay-upon-invoice-fraudnet' ),
 			$container->get( 'wcgateway.pay-upon-invoice-order-endpoint' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
+			$container->get( 'woocommerce.logger.woocommerce' ),
+			$container->get( 'wcgateway.settings' )
 		);
 	},
 );

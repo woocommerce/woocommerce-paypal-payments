@@ -18,6 +18,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnerReferrals;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Onboarding\Assets\OnboardingAssets;
 use WooCommerce\PayPalCommerce\Onboarding\Endpoint\LoginSellerEndpoint;
+use WooCommerce\PayPalCommerce\Onboarding\Endpoint\PayUponInvoiceEndpoint;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\OnboardingRESTController;
@@ -186,6 +187,12 @@ return array(
 			$logger
 		);
 	},
+	'onboarding.endpoint.pui' => static function(ContainerInterface $container) : PayUponInvoiceEndpoint {
+		return new PayUponInvoiceEndpoint(
+			$container->get( 'wcgateway.settings' ),
+			$container->get( 'button.request-data' )
+		);
+	},
 	'api.endpoint.partner-referrals-sandbox'    => static function ( ContainerInterface $container ) : PartnerReferrals {
 
 		return new PartnerReferrals(
@@ -218,7 +225,8 @@ return array(
 	'onboarding.render-options'                 => static function ( ContainerInterface $container ) : OnboardingOptionsRenderer {
 		return new OnboardingOptionsRenderer(
 			$container->get( 'onboarding.url' ),
-			$container->get( 'api.shop.country' )
+			$container->get( 'api.shop.country' ),
+			$container->get( 'wcgateway.settings' )
 		);
 	},
 	'onboarding.rest'                           => static function( $container ) : OnboardingRESTController {

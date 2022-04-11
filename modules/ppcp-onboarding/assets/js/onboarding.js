@@ -70,6 +70,25 @@ const ppcp_onboarding = {
 			},
 			1000
 		);
+
+		const onboard_pui = document.querySelector('#ppcp-onboarding-pui');
+		onboard_pui.addEventListener('click', (event) => {
+		    event.preventDefault();
+
+            fetch(PayPalCommerceGatewayOnboarding.pui_endpoint, {
+                method: 'POST',
+                body: JSON.stringify({
+                    nonce: PayPalCommerceGatewayOnboarding.pui_nonce,
+                    checked: onboard_pui.checked
+                })
+            }).then((res)=>{
+                return res.json();
+            }).then((data)=>{
+                console.log(data)
+            });
+
+            location.reload();
+        })
 	},
 
 	loginSeller: function(env, authCode, sharedId) {
