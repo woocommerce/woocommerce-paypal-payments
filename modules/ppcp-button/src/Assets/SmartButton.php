@@ -432,7 +432,7 @@ class SmartButton implements SmartButtonInterface {
 			add_action(
 				$this->mini_cart_button_renderer_hook(),
 				function () {
-					if ( $this->is_cart_price_total_zero() && ! $this->is_free_trial_cart() ) {
+					if ( $this->is_cart_price_total_zero() || $this->is_free_trial_cart() ) {
 						return;
 					}
 
