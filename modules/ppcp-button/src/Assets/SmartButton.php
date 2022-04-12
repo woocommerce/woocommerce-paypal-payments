@@ -136,6 +136,13 @@ class SmartButton implements SmartButtonInterface {
 	private $currency;
 
 	/**
+	 * All existing funding sources.
+	 *
+	 * @var array
+	 */
+	private $all_funding_sources;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -166,6 +173,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @param PaymentTokenRepository $payment_token_repository The payment token repository.
 	 * @param SettingsStatus         $settings_status The Settings status helper.
 	 * @param string                 $currency 3-letter currency code of the shop.
+	 * @param array                  $all_funding_sources All existing funding sources.
 	 * @param LoggerInterface        $logger The logger.
 	 */
 	public function __construct(
@@ -183,6 +191,7 @@ class SmartButton implements SmartButtonInterface {
 		PaymentTokenRepository $payment_token_repository,
 		SettingsStatus $settings_status,
 		string $currency,
+		array $all_funding_sources,
 		LoggerInterface $logger
 	) {
 
@@ -200,6 +209,7 @@ class SmartButton implements SmartButtonInterface {
 		$this->payment_token_repository = $payment_token_repository;
 		$this->settings_status          = $settings_status;
 		$this->currency                 = $currency;
+		$this->all_funding_sources      = $all_funding_sources;
 		$this->logger                   = $logger;
 	}
 
@@ -893,6 +903,10 @@ class SmartButton implements SmartButtonInterface {
 			}
 		}
 
+		if ( $this->is_free_trial_cart() ) {
+			$disable_funding = array_keys( $this->all_funding_sources );
+		}
+
 		if ( count( $disable_funding ) > 0 ) {
 			$params['disable-funding'] = implode( ',', array_unique( $disable_funding ) );
 		}
@@ -901,6 +915,11 @@ class SmartButton implements SmartButtonInterface {
 		if ( $this->settings_status->pay_later_messaging_is_enabled() || ! in_array( 'credit', $disable_funding, true ) ) {
 			$enable_funding[] = 'paylater';
 		}
+
+		if ( $this->is_free_trial_cart() ) {
+			$enable_funding = array();
+		}
+
 		if ( count( $enable_funding ) > 0 ) {
 			$params['enable-funding'] = implode( ',', array_unique( $enable_funding ) );
 		}
@@ -959,7 +978,10 @@ class SmartButton implements SmartButtonInterface {
 		if ( $this->load_button_component() ) {
 			$components[] = 'buttons';
 		}
-		if ( $this->messages_apply->for_country() ) {
+		if (
+			$this->messages_apply->for_country()
+			&& ! $this->is_free_trial_cart()
+		) {
 			$components[] = 'messages';
 		}
 		if ( $this->dcc_is_enabled() ) {

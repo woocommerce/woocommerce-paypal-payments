@@ -87,6 +87,7 @@ return array(
 			$payment_token_repository,
 			$settings_status,
 			$currency,
+			$container->get( 'wcgateway.all-funding-sources' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
