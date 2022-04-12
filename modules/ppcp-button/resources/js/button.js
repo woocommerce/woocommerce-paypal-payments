@@ -122,7 +122,7 @@ document.addEventListener(
             if (
                 !['checkout', 'pay-now'].includes(PayPalCommerceGateway.context)
                 || isChangePaymentPage()
-                || (PayPalCommerceGateway.is_free_trial_cart && vaulted_paypal_email !== '')
+                || (PayPalCommerceGateway.is_free_trial_cart && PayPalCommerceGateway.vaulted_paypal_email !== '')
             ) {
                 return;
             }

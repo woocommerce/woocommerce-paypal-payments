@@ -397,6 +397,9 @@ class SmartButton implements SmartButtonInterface {
 		if (
 			( is_product() || wc_post_content_has_shortcode( 'product_page' ) )
 			&& ! $not_enabled_on_product_page
+			// TODO: it seems like there is no easy way to properly handle vaulted PayPal free trial,
+			// so disable the buttons for now everywhere except checkout for free trial.
+			&& ! $this->is_free_trial_product()
 		) {
 			add_action(
 				$this->single_product_renderer_hook(),
@@ -414,11 +417,12 @@ class SmartButton implements SmartButtonInterface {
 			! $this->settings->get( 'button_mini_cart_enabled' );
 		if (
 		! $not_enabled_on_minicart
+			&& ! $this->is_free_trial_cart()
 		) {
 			add_action(
 				$this->mini_cart_button_renderer_hook(),
 				function () {
-					if ( $this->is_cart_price_total_zero() ) {
+					if ( $this->is_cart_price_total_zero() && ! $this->is_free_trial_cart() ) {
 						return;
 					}
 
@@ -431,7 +435,7 @@ class SmartButton implements SmartButtonInterface {
 			);
 		}
 
-		if ( $this->is_cart_price_total_zero() ) {
+		if ( $this->is_cart_price_total_zero() && ! $this->is_free_trial_cart() ) {
 			return false;
 		}
 
@@ -440,6 +444,7 @@ class SmartButton implements SmartButtonInterface {
 		if (
 			is_cart()
 			&& ! $not_enabled_on_cart
+			&& ! $this->is_free_trial_cart()
 		) {
 			add_action(
 				$this->proceed_to_checkout_button_renderer_hook(),
