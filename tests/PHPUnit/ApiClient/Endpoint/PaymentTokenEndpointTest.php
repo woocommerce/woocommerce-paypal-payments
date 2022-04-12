@@ -10,10 +10,12 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Token;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenActionLinksFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CustomerRepository;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
 use WooCommerce\PayPalCommerce\TestCase;
 use function Brain\Monkey\Functions\expect;
 
@@ -24,8 +26,9 @@ class PaymentTokenEndpointTest extends TestCase
     private $host;
     private $bearer;
     private $factory;
-    private $logger;
+	private $payment_token_action_links_factory;
     private $customer_repository;
+	private $request_id_repository;
     private $sut;
 
     public function setUp(): void
@@ -35,14 +38,18 @@ class PaymentTokenEndpointTest extends TestCase
         $this->host = 'https://example.com/';
         $this->bearer = Mockery::mock(Bearer::class);
         $this->factory = Mockery::mock(PaymentTokenFactory::class);
+        $this->payment_token_action_links_factory = Mockery::mock(PaymentTokenActionLinksFactory::class);
         $this->logger = Mockery::mock(LoggerInterface::class);
         $this->customer_repository = Mockery::mock(CustomerRepository::class);
+        $this->request_id_repository = Mockery::mock(PayPalRequestIdRepository::class);
         $this->sut = new PaymentTokenEndpoint(
             $this->host,
             $this->bearer,
             $this->factory,
+			$this->payment_token_action_links_factory,
             $this->logger,
-			$this->customer_repository
+			$this->customer_repository,
+			$this->request_id_repository
         );
     }
 

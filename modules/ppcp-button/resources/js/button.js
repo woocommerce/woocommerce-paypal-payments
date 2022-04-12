@@ -16,6 +16,7 @@ import {
 } from "./modules/Helper/CheckoutMethodState";
 import {hide, setVisible} from "./modules/Helper/Hiding";
 import {isChangePaymentPage} from "./modules/Helper/Subscriptions";
+import FreeTrialHandler from "./modules/ActionHandler/FreeTrialHandler";
 
 const buttonsSpinner = new Spinner('.ppc-button-wrapper');
 
@@ -23,8 +24,17 @@ const bootstrap = () => {
     const errorHandler = new ErrorHandler(PayPalCommerceGateway.labels.error.generic);
     const spinner = new Spinner();
     const creditCardRenderer = new CreditCardRenderer(PayPalCommerceGateway, errorHandler, spinner);
-    const onSmartButtonClick = data => {
+
+    const freeTrialHandler = new FreeTrialHandler(PayPalCommerceGateway, spinner, errorHandler);
+
+    const onSmartButtonClick = (data, actions) => {
         window.ppcpFundingSource = data.fundingSource;
+
+        const isFreeTrial = PayPalCommerceGateway.is_free_trial_cart;
+        if (isFreeTrial) {
+            freeTrialHandler.handle();
+            return actions.reject();
+        }
     };
     const onSmartButtonsInit = () => {
         buttonsSpinner.unblock();
@@ -112,6 +122,7 @@ document.addEventListener(
             if (
                 !['checkout', 'pay-now'].includes(PayPalCommerceGateway.context)
                 || isChangePaymentPage()
+                || (PayPalCommerceGateway.is_free_trial_cart && vaulted_paypal_email !== '')
             ) {
                 return;
             }

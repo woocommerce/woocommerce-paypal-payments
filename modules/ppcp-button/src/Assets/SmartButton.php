@@ -9,6 +9,9 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Button\Assets;
 
+use Exception;
+use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
@@ -16,9 +19,11 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\Button\Endpoint\StartPayPalVaultingEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\Subscription\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
@@ -29,6 +34,8 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
  * Class SmartButton
  */
 class SmartButton implements SmartButtonInterface {
+
+	use FreeTrialHandlerTrait;
 
 	/**
 	 * The Settings status helper.
@@ -129,6 +136,20 @@ class SmartButton implements SmartButtonInterface {
 	private $currency;
 
 	/**
+	 * The logger.
+	 *
+	 * @var LoggerInterface
+	 */
+	private $logger;
+
+	/**
+	 * Cached payment tokens.
+	 *
+	 * @var PaymentToken[]|null
+	 */
+	private $payment_tokens = null;
+
+	/**
 	 * SmartButton constructor.
 	 *
 	 * @param string                 $module_url The URL to the module.
@@ -145,6 +166,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @param PaymentTokenRepository $payment_token_repository The payment token repository.
 	 * @param SettingsStatus         $settings_status The Settings status helper.
 	 * @param string                 $currency 3-letter currency code of the shop.
+	 * @param LoggerInterface        $logger The logger.
 	 */
 	public function __construct(
 		string $module_url,
@@ -160,7 +182,8 @@ class SmartButton implements SmartButtonInterface {
 		Environment $environment,
 		PaymentTokenRepository $payment_token_repository,
 		SettingsStatus $settings_status,
-		string $currency
+		string $currency,
+		LoggerInterface $logger
 	) {
 
 		$this->module_url               = $module_url;
@@ -177,6 +200,7 @@ class SmartButton implements SmartButtonInterface {
 		$this->payment_token_repository = $payment_token_repository;
 		$this->settings_status          = $settings_status;
 		$this->currency                 = $currency;
+		$this->logger                   = $logger;
 	}
 
 	/**
@@ -262,6 +286,38 @@ class SmartButton implements SmartButtonInterface {
 				2
 			);
 		}
+
+		if ( $this->is_free_trial_cart() ) {
+			add_action(
+				'woocommerce_review_order_after_submit',
+				function () {
+					$vaulted_email = $this->get_vaulted_paypal_email();
+					if ( ! $vaulted_email ) {
+						return;
+					}
+
+					?>
+					<div class="ppcp-vaulted-paypal-details">
+						<?php
+						echo wp_kses_post(
+							sprintf(
+							// translators: %1$s - email, %2$s, %3$s - HTML tags for a link.
+								esc_html__(
+									'Using %2$s%1$s%3$s PayPal.',
+									'woocommerce-paypal-payments'
+								),
+								$vaulted_email,
+								'<b>',
+								'</b>'
+							)
+						);
+						?>
+					</div>
+					<?php
+				}
+			);
+		}
+
 		return true;
 	}
 
@@ -671,6 +727,8 @@ class SmartButton implements SmartButtonInterface {
 	private function localize_script(): array {
 		global $wp;
 
+		$is_free_trial_cart = $this->is_free_trial_cart();
+
 		$this->request_data->enqueue_nonce_fix();
 		$localize = array(
 			'script_attributes'              => $this->attributes(),
@@ -696,9 +754,15 @@ class SmartButton implements SmartButtonInterface {
 					'endpoint' => \WC_AJAX::get_endpoint( ApproveOrderEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( ApproveOrderEndpoint::nonce() ),
 				),
+				'vault_paypal'  => array(
+					'endpoint' => \WC_AJAX::get_endpoint( StartPayPalVaultingEndpoint::ENDPOINT ),
+					'nonce'    => wp_create_nonce( StartPayPalVaultingEndpoint::nonce() ),
+				),
 			),
 			'enforce_vault'                  => $this->has_subscriptions(),
 			'can_save_vault_token'           => $this->can_save_vault_token(),
+			'is_free_trial_cart'             => $is_free_trial_cart,
+			'vaulted_paypal_email'           => ( is_checkout() && $is_free_trial_cart ) ? $this->get_vaulted_paypal_email() : '',
 			'bn_codes'                       => $this->bn_codes(),
 			'payer'                          => $this->payerData(),
 			'button'                         => array(
@@ -1125,5 +1189,38 @@ class SmartButton implements SmartButtonInterface {
 	protected function is_cart_price_total_zero(): bool {
         // phpcs:ignore WordPress.PHP.StrictComparisons.LooseComparison
 		return WC()->cart->get_cart_contents_total() == 0;
+	}
+
+	/**
+	 * Retrieves all payment tokens for the user, via API or cached if already queried.
+	 *
+	 * @return PaymentToken[]
+	 */
+	private function get_payment_tokens(): array {
+		if ( null === $this->payment_tokens ) {
+			$this->payment_tokens = $this->payment_token_repository->all_for_user_id( get_current_user_id() );
+		}
+
+		return $this->payment_tokens;
+	}
+
+	/**
+	 * Returns the vaulted PayPal email or empty string.
+	 *
+	 * @return string
+	 */
+	private function get_vaulted_paypal_email(): string {
+		try {
+			$tokens = $this->get_payment_tokens();
+
+			foreach ( $tokens as $token ) {
+				if ( isset( $token->source()->paypal ) ) {
+					return $token->source()->paypal->payer->email_address;
+				}
+			}
+		} catch ( Exception $exception ) {
+			$this->logger->error( 'Failed to get PayPal vaulted email. ' . $exception->getMessage() );
+		}
+		return '';
 	}
 }

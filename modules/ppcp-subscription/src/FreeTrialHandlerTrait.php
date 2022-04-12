@@ -49,6 +49,23 @@ trait FreeTrialHandlerTrait {
 	}
 
 	/**
+	 * Checks if the current product contains free trial.
+	 *
+	 * @return bool
+	 */
+	protected function is_free_trial_product(): bool {
+		if ( ! $this->is_wcs_plugin_active() ) {
+			return false;
+		}
+
+		$product = wc_get_product();
+
+		return $product
+			&& WC_Subscriptions_Product::is_subscription( $product )
+			&& WC_Subscriptions_Product::get_trial_length( $product ) > 0;
+	}
+
+	/**
 	 * Checks if the given order contains only free trial.
 	 *
 	 * @param WC_Order $wc_order The WooCommerce order.

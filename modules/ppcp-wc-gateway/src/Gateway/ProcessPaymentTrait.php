@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
 use Exception;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
@@ -132,6 +133,28 @@ trait ProcessPaymentTrait {
 				$this->handle_failure( $wc_order, $error );
 				return null;
 			}
+		}
+
+		if ( PayPalGateway::ID === $payment_method && $this->is_free_trial_order( $wc_order ) ) {
+			$user_id = (int) $wc_order->get_customer_id();
+			$tokens  = $this->payment_token_repository->all_for_user_id( $user_id );
+			if ( ! array_filter(
+				$tokens,
+				function ( PaymentToken $token ): bool {
+					return isset( $token->source()->paypal );
+				}
+			) ) {
+				$this->handle_failure( $wc_order, new Exception( 'No saved PayPal account.' ) );
+				return null;
+			}
+
+			$wc_order->payment_complete();
+
+			$this->session_handler->destroy_session_data();
+			return array(
+				'result'   => 'success',
+				'redirect' => $this->get_return_url( $wc_order ),
+			);
 		}
 
 		/**
