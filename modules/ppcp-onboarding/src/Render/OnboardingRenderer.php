@@ -107,9 +107,11 @@ class OnboardingRenderer {
 				$is_production ? 'production' : 'sandbox'
 			);
 		} catch ( RuntimeException $exception ) {
-			esc_html_e(
-				'We could not properly connect to PayPal. Please reload the page to continue',
-				'woocommerce-paypal-payments'
+			echo esc_html(
+				__(
+					'We could not properly connect to PayPal. Try reloading the page.',
+					'woocommerce-paypal-payments'
+				) . " {$exception->getMessage()} {$exception->getFile()}:{$exception->getLine()}"
 			);
 		}
 	}
