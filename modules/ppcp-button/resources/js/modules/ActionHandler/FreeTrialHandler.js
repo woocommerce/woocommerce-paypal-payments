@@ -23,16 +23,20 @@ class FreeTrialHandler {
                 return_url: location.href
             }),
         }).then(res => {
-            this.spinner.unblock()
             return res.json();
         }).then(data => {
             if (!data.success) {
+                this.spinner.unblock();
                 console.error(data);
                 this.errorHandler.message(data.data.message);
                 throw Error(data.data.message);
             }
 
             location.href = data.data.approve_link;
+        }).catch(error => {
+            this.spinner.unblock();
+            console.error(error);
+            this.errorHandler.genericError();
         });
     }
 }
