@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\Webhooks\Status\WebhooksStatusPage;
 
 /**
@@ -56,6 +57,7 @@ class SectionsRenderer {
 		$sections = array(
 			PayPalGateway::ID      => __( 'PayPal Checkout', 'woocommerce-paypal-payments' ),
 			CreditCardGateway::ID  => __( 'PayPal Card Processing', 'woocommerce-paypal-payments' ),
+			PayUponInvoiceGateway::ID => __( 'Pay Upon Invoice', 'woocommerce-paypal-payments' ),
 			WebhooksStatusPage::ID => __( 'Webhooks Status', 'woocommerce-paypal-payments' ),
 		);
 

@@ -19,6 +19,7 @@ use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
@@ -340,6 +341,10 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		if ( $this->is_paypal_tab() ) {
 			return __( 'PayPal Checkout', 'woocommerce-paypal-payments' );
 		}
+		if($this->is_pui_tab()) {
+			return __( 'Pay Upon Invoice', 'woocommerce-paypal-payments' );
+		}
+
 		return __( 'PayPal', 'woocommerce-paypal-payments' );
 	}
 
@@ -386,6 +391,10 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		return is_admin()
 			&& CreditCardGateway::ID === $this->page_id;
 
+	}
+
+	private function is_pui_tab():bool {
+		return is_admin() && PayUponInvoiceGateway::ID === $this->page_id;
 	}
 
 	/**
