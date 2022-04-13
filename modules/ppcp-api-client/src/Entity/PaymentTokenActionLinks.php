@@ -9,8 +9,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Entity;
 
-use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
-
 /**
  * Class PaymentTokenActionLinks
  */

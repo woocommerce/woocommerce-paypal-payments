@@ -12,7 +12,6 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Subscription\Helper;
 
 use WC_Product;
-use WC_Subscription;
 use WC_Subscriptions_Product;
 
 /**
