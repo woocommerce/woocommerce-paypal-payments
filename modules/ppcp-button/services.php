@@ -18,6 +18,7 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\Button\Endpoint\StartPayPalVaultingEndpoint;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
@@ -85,7 +86,9 @@ return array(
 			$environment,
 			$payment_token_repository,
 			$settings_status,
-			$currency
+			$currency,
+			$container->get( 'wcgateway.all-funding-sources' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 	'button.url'                        => static function ( ContainerInterface $container ): string {
@@ -167,6 +170,13 @@ return array(
 			$request_data,
 			$identity_token,
 			$logger
+		);
+	},
+	'button.endpoint.vault-paypal'      => static function( ContainerInterface $container ) : StartPayPalVaultingEndpoint {
+		return new StartPayPalVaultingEndpoint(
+			$container->get( 'button.request-data' ),
+			$container->get( 'api.endpoint.payment-token' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 	'button.helper.three-d-secure'      => static function ( ContainerInterface $container ): ThreeDSecure {

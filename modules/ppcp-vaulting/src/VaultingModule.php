@@ -43,6 +43,11 @@ class VaultingModule implements ModuleInterface {
 			return;
 		}
 
+		$listener = $container->get( 'vaulting.customer-approval-listener' );
+		assert( $listener instanceof CustomerApprovalListener );
+
+		$listener->listen();
+
 		add_filter(
 			'woocommerce_account_menu_items',
 			function( $menu_links ) {
