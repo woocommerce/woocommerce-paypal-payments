@@ -32,11 +32,12 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 	private $amount = 42.0;
 	private $currency = 'EUR';
 	private $paypalOrder;
+	private $authorization;
 	private $orderEndpoint;
 	private $paymentsEndpoint;
 	private $notice;
 	private $config;
-	private $subscription_helper;
+	private $subscription_helperauthorization;
 	private $testee;
 
 	public function setUp(): void {
@@ -44,7 +45,8 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 
 		$this->wcOrder = $this->createWcOrder($this->paypalOrderId);
 
-		$this->paypalOrder = $this->createPaypalOrder([$this->createAuthorization($this->authorizationId, AuthorizationStatus::CREATED)]);
+		$this->authorization = $this->createAuthorization($this->authorizationId, AuthorizationStatus::CREATED);
+		$this->paypalOrder = $this->createPaypalOrder([$this->authorization]);
 
 		$this->orderEndpoint = Mockery::mock(OrderEndpoint::class);
 		$this->orderEndpoint
@@ -176,6 +178,57 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 		);
 	}
 
+	public function testVoid()
+	{
+		$authorizations = [
+			$this->createAuthorization('id1', AuthorizationStatus::CREATED),
+			$this->createAuthorization('id2', AuthorizationStatus::VOIDED),
+			$this->createAuthorization('id3', AuthorizationStatus::PENDING),
+			$this->createAuthorization('id4', AuthorizationStatus::CAPTURED),
+			$this->createAuthorization('id5', AuthorizationStatus::DENIED),
+			$this->createAuthorization('id6', AuthorizationStatus::EXPIRED),
+			$this->createAuthorization('id7', AuthorizationStatus::COMPLETED),
+		];
+		$this->paypalOrder = $this->createPaypalOrder($authorizations);
+
+		$this->paymentsEndpoint
+			->expects('void')
+			->with($authorizations[0]);
+		$this->paymentsEndpoint
+			->expects('void')
+			->with($authorizations[2]);
+
+		$this->testee->void_authorizations($this->paypalOrder);
+
+		self::assertTrue(true); // fix no assertions warning
+	}
+
+	public function testVoidWhenNoVoidable()
+	{
+		$exception = new RuntimeException('void error');
+		$this->paymentsEndpoint
+			->expects('void')
+			->with($this->authorization)
+			->andThrow($exception);
+
+		$this->expectExceptionObject($exception);
+
+		$this->testee->void_authorizations($this->paypalOrder);
+	}
+
+	public function testVoidWhenNoError()
+	{
+		$authorizations = [
+			$this->createAuthorization('id1', AuthorizationStatus::VOIDED),
+			$this->createAuthorization('id2', AuthorizationStatus::EXPIRED),
+		];
+		$this->paypalOrder = $this->createPaypalOrder($authorizations);
+
+		$this->expectException(RuntimeException::class);
+
+		$this->testee->void_authorizations($this->paypalOrder);
+	}
+
 	private function createWcOrder(string $paypalOrderId): WC_Order {
 		$wcOrder = Mockery::mock(WC_Order::class);
 		$wcOrder
@@ -192,14 +245,7 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 	}
 
 	private function createAuthorization(string $id, string $status): Authorization {
-		$authorization = Mockery::mock(Authorization::class);
-		$authorization
-			->shouldReceive('id')
-			->andReturn($id);
-		$authorization
-			->shouldReceive('status')
-			->andReturn(new AuthorizationStatus($status));
-		return $authorization;
+		return new Authorization($id, new AuthorizationStatus($status));
 	}
 
 	private function createCapture(string $status): Capture {

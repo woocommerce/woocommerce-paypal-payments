@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Onboarding;
 
 use Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 /**
@@ -206,7 +207,7 @@ class OnboardingRESTController {
 		}
 
 		foreach ( WC()->payment_gateways->payment_gateways() as $gateway ) {
-			if ( PayPalGateway::ID === $gateway->id ) {
+			if ( PayPalGateway::ID === $gateway->id || CreditCardGateway::ID === $gateway->id ) {
 				$gateway->update_option( 'enabled', 'yes' );
 				break;
 			}

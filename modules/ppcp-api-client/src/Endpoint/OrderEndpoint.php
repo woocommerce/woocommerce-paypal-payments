@@ -226,7 +226,7 @@ class OrderEndpoint {
 			'application_context' => $this->application_context_repository
 				->current_context( $shipping_preference )->to_array(),
 		);
-		if ( $payer ) {
+		if ( $payer && ! empty( $payer->email_address() ) && ! empty( $payer->name() ) ) {
 			$data['payer'] = $payer->to_array();
 		}
 		if ( $payment_token ) {
@@ -235,6 +235,11 @@ class OrderEndpoint {
 		if ( $payment_method ) {
 			$data['payment_method'] = $payment_method->to_array();
 		}
+
+		/**
+		 * The filter can be used to modify the order creation request body data.
+		 */
+		$data = apply_filters( 'ppcp_create_order_request_body_data', $data );
 		$url  = trailingslashit( $this->host ) . 'v2/checkout/orders';
 		$args = array(
 			'method'  => 'POST',

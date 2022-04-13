@@ -16,15 +16,26 @@ import {
 } from "./modules/Helper/CheckoutMethodState";
 import {hide, setVisible} from "./modules/Helper/Hiding";
 import {isChangePaymentPage} from "./modules/Helper/Subscriptions";
+import FreeTrialHandler from "./modules/ActionHandler/FreeTrialHandler";
 
 const buttonsSpinner = new Spinner('.ppc-button-wrapper');
+const cardsSpinner = new Spinner('#ppcp-hosted-fields');
 
 const bootstrap = () => {
     const errorHandler = new ErrorHandler(PayPalCommerceGateway.labels.error.generic);
     const spinner = new Spinner();
     const creditCardRenderer = new CreditCardRenderer(PayPalCommerceGateway, errorHandler, spinner);
-    const onSmartButtonClick = data => {
+
+    const freeTrialHandler = new FreeTrialHandler(PayPalCommerceGateway, spinner, errorHandler);
+
+    const onSmartButtonClick = (data, actions) => {
         window.ppcpFundingSource = data.fundingSource;
+
+        const isFreeTrial = PayPalCommerceGateway.is_free_trial_cart;
+        if (isFreeTrial) {
+            freeTrialHandler.handle();
+            return actions.reject();
+        }
     };
     const onSmartButtonsInit = () => {
         buttonsSpinner.unblock();
@@ -112,14 +123,16 @@ document.addEventListener(
             if (
                 !['checkout', 'pay-now'].includes(PayPalCommerceGateway.context)
                 || isChangePaymentPage()
+                || (PayPalCommerceGateway.is_free_trial_cart && PayPalCommerceGateway.vaulted_paypal_email !== '')
             ) {
                 return;
             }
 
             const currentPaymentMethod = getCurrentPaymentMethod();
             const isPaypal = currentPaymentMethod === PaymentMethods.PAYPAL;
+            const isCards = currentPaymentMethod === PaymentMethods.CARDS;
 
-            setVisible(ORDER_BUTTON_SELECTOR, !isPaypal, true);
+            setVisible(ORDER_BUTTON_SELECTOR, !isPaypal && !isCards, true);
 
             if (isPaypal) {
                 // stopped after the first rendering of the buttons, in onInit
@@ -127,7 +140,17 @@ document.addEventListener(
             } else {
                 buttonsSpinner.unblock();
             }
+
+            if (isCards) {
+                cardsSpinner.block();
+            } else {
+                cardsSpinner.unblock();
+            }
         }
+
+        jQuery(document).on('hosted_fields_loaded', () => {
+            cardsSpinner.unblock();
+        });
 
         let bootstrapped = false;
 

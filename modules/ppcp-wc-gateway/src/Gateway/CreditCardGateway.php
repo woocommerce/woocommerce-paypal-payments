@@ -331,8 +331,9 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		$title_options = $this->card_labels();
 		$images        = array_map(
 			function ( string $type ) use ( $title_options ): string {
+				$striped_dark = str_replace( '-dark', '', $type );
 				return '<img
-                 title="' . esc_attr( $title_options[ $type ] ) . '"
+                 title="' . esc_attr( $title_options[ $striped_dark ] ) . '"
                  src="' . esc_url( $this->module_url ) . 'assets/images/' . esc_attr( $type ) . '.svg"
                  class="ppcp-card-icon"
                 > ';
@@ -439,7 +440,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		parent::init_settings();
 
 		// looks like in some cases WC uses this field instead of get_option.
-		$this->enabled = $this->is_enabled();
+		$this->enabled = $this->is_enabled() ? 'yes' : '';
 	}
 
 	/**
@@ -468,7 +469,9 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		$ret = parent::update_option( $key, $value );
 
 		if ( 'enabled' === $key ) {
+
 			$this->config->set( 'dcc_enabled', 'yes' === $value );
+			$this->config->set( 'enabled', 'yes' === $value );
 			$this->config->persist();
 
 			return true;

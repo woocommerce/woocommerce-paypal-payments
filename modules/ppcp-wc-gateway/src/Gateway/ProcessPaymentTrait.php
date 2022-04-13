@@ -11,9 +11,11 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
 use Exception;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
+use WooCommerce\PayPalCommerce\Subscription\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\PaymentsStatusHandlingTrait;
@@ -24,7 +26,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
  */
 trait ProcessPaymentTrait {
 
-	use OrderMetaTrait, PaymentsStatusHandlingTrait, TransactionIdHandlingTrait;
+	use OrderMetaTrait, PaymentsStatusHandlingTrait, TransactionIdHandlingTrait, FreeTrialHandlerTrait;
 
 	/**
 	 * Process a payment for an WooCommerce order.
@@ -115,7 +117,10 @@ trait ProcessPaymentTrait {
 
 				$this->handle_new_order_status( $order, $wc_order );
 
-				if ( $this->config->has( 'intent' ) && strtoupper( (string) $this->config->get( 'intent' ) ) === 'CAPTURE' ) {
+				if ( $this->is_free_trial_order( $wc_order ) ) {
+					$this->authorized_payments_processor->void_authorizations( $order );
+					$wc_order->payment_complete();
+				} elseif ( $this->config->has( 'intent' ) && strtoupper( (string) $this->config->get( 'intent' ) ) === 'CAPTURE' ) {
 					$this->authorized_payments_processor->capture_authorized_payment( $wc_order );
 				}
 
@@ -128,6 +133,28 @@ trait ProcessPaymentTrait {
 				$this->handle_failure( $wc_order, $error );
 				return null;
 			}
+		}
+
+		if ( PayPalGateway::ID === $payment_method && $this->is_free_trial_order( $wc_order ) ) {
+			$user_id = (int) $wc_order->get_customer_id();
+			$tokens  = $this->payment_token_repository->all_for_user_id( $user_id );
+			if ( ! array_filter(
+				$tokens,
+				function ( PaymentToken $token ): bool {
+					return isset( $token->source()->paypal );
+				}
+			) ) {
+				$this->handle_failure( $wc_order, new Exception( 'No saved PayPal account.' ) );
+				return null;
+			}
+
+			$wc_order->payment_complete();
+
+			$this->session_handler->destroy_session_data();
+			return array(
+				'result'   => 'success',
+				'redirect' => $this->get_return_url( $wc_order ),
+			);
 		}
 
 		/**

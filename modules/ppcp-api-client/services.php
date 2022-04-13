@@ -35,6 +35,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PayeeFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentsFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentSourceFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenActionLinksFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PlatformFeeFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
@@ -48,6 +49,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CartRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CustomerRepository;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\OrderRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayeeRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
@@ -112,8 +114,10 @@ return array(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
 			$container->get( 'api.factory.payment-token' ),
+			$container->get( 'api.factory.payment-token-action-links' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'api.repository.customer' )
+			$container->get( 'api.repository.customer' ),
+			$container->get( 'api.repository.paypal-request-id' )
 		);
 	},
 	'api.endpoint.webhook'                      => static function ( ContainerInterface $container ) : WebhookEndpoint {
@@ -228,11 +232,19 @@ return array(
 		$prefix           = $container->get( 'api.prefix' );
 		return new CustomerRepository( $prefix );
 	},
+	'api.repository.order'                      => static function( ContainerInterface $container ): OrderRepository {
+		return new OrderRepository(
+			$container->get( 'api.endpoint.order' )
+		);
+	},
 	'api.factory.application-context'           => static function ( ContainerInterface $container ) : ApplicationContextFactory {
 		return new ApplicationContextFactory();
 	},
 	'api.factory.payment-token'                 => static function ( ContainerInterface $container ) : PaymentTokenFactory {
 		return new PaymentTokenFactory();
+	},
+	'api.factory.payment-token-action-links'    => static function ( ContainerInterface $container ) : PaymentTokenActionLinksFactory {
+		return new PaymentTokenActionLinksFactory();
 	},
 	'api.factory.webhook'                       => static function ( ContainerInterface $container ): WebhookFactory {
 		return new WebhookFactory();
