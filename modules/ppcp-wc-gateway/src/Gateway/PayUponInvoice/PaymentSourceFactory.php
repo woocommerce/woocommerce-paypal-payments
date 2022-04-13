@@ -11,6 +11,11 @@ class PaymentSourceFactory {
 		$birth_date = filter_input( INPUT_POST, 'billing_birth_date', FILTER_SANITIZE_STRING );
 		$phone_country_code = WC()->countries->get_country_calling_code( $address['country'] ?? '' );
 
+		$gateway_settings = get_option( 'woocommerce_ppcp-pay-upon-invoice-gateway_settings' );
+		$merchant_name    = $gateway_settings['brand_name'] ?? '';
+		$logo_url    = $gateway_settings['logo_url'] ?? '';
+		$customer_service_instructions    = $gateway_settings['customer_service_instructions'] ?? '';
+
 		return new PaymentSource(
 			$address['first_name'] ?? '',
 			$address['last_name'] ?? '',
@@ -23,9 +28,9 @@ class PaymentSourceFactory {
 			$address['postcode'] ?? '',
 			$address['country'] ?? '',
 			'en-DE',
-			'EXAMPLE INC',
-			'https://example.com/logoUrl.svg',
-			array('Customer service phone is +49 6912345678.')
+			$merchant_name,
+			$logo_url,
+			array($customer_service_instructions)
 		);
 	}
 }
