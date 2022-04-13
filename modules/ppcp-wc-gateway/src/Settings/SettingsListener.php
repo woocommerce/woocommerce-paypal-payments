@@ -209,7 +209,7 @@ class SettingsListener {
 		$this->settings->set( 'message_cart_enabled', false );
 		$this->settings->persist();
 
-		$redirect_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' );
+		$redirect_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-credit-card-gateway' );
 		wp_safe_redirect( $redirect_url, 302 );
 		exit;
 	}
