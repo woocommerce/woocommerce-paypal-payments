@@ -30,6 +30,15 @@ class PPECHelper {
 
 
 	/**
+	 * Checks if the PayPal Express Checkout plugin was configured previously.
+	 *
+	 * @return bool
+	 */
+	public static function is_plugin_configured() {
+		return is_array( get_option( self::PPEC_SETTINGS_OPTION_NAME ) );
+	}
+
+	/**
 	 * Checks if the PayPal Express Checkout plugin is active.
 	 *
 	 * @return bool
@@ -80,6 +89,9 @@ class PPECHelper {
 	 * @return bool
 	 */
 	public static function use_ppec_compat_layer_for_subscriptions() {
+		/**
+		 * The filter returning whether the compatibility layer for PPEC Subscriptions should be initialized.
+		 */
 		return ( ! self::is_gateway_available() ) && self::site_has_ppec_subscriptions() && apply_filters( 'woocommerce_paypal_payments_process_legacy_subscriptions', true );
 	}
 

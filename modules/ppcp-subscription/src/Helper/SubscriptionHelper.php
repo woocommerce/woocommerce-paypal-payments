@@ -11,6 +11,9 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Subscription\Helper;
 
+use WC_Product;
+use WC_Subscriptions_Product;
+
 /**
  * Class SubscriptionHelper
  */
@@ -26,7 +29,7 @@ class SubscriptionHelper {
 			return false;
 		}
 		$product = wc_get_product();
-		return is_a( $product, \WC_Product::class ) && $product->is_type( 'subscription' );
+		return $product && WC_Subscriptions_Product::is_subscription( $product );
 	}
 
 	/**
@@ -44,15 +47,34 @@ class SubscriptionHelper {
 		}
 
 		foreach ( $cart->get_cart() as $item ) {
-			if ( ! isset( $item['data'] ) || ! is_a( $item['data'], \WC_Product::class ) ) {
+			if ( ! isset( $item['data'] ) || ! is_a( $item['data'], WC_Product::class ) ) {
 				continue;
 			}
-			if ( $item['data']->is_type( 'subscription' ) ) {
+			if ( $item['data']->is_type( 'subscription' ) || $item['data']->is_type( 'subscription_variation' ) ) {
 				return true;
 			}
 		}
 
 		return false;
+	}
+
+	/**
+	 * Whether pay for order contains subscriptions.
+	 *
+	 * @return bool
+	 */
+	public function order_pay_contains_subscription(): bool {
+		if ( ! $this->plugin_is_active() || ! is_wc_endpoint_url( 'order-pay' ) ) {
+			return false;
+		}
+
+		global $wp;
+		$order_id = (int) $wp->query_vars['order-pay'];
+		if ( 0 === $order_id ) {
+			return false;
+		}
+
+		return $this->has_subscription( $order_id );
 	}
 
 	/**
@@ -65,12 +87,10 @@ class SubscriptionHelper {
 		if ( ! $this->plugin_is_active() ) {
 			return false;
 		}
-		$accept_manual_renewals = ( 'no' !== get_option(
-            //phpcs:disable Inpsyde.CodeQuality.VariablesName.SnakeCaseVar
+		$accept_manual_renewals = 'no' !== get_option(
 			\WC_Subscriptions_Admin::$option_prefix . '_accept_manual_renewals',
-            //phpcs:enable Inpsyde.CodeQuality.VariablesName.SnakeCaseVar
 			'no'
-		) ) ? true : false;
+		);
 		return ! $accept_manual_renewals;
 	}
 

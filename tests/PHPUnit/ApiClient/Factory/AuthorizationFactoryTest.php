@@ -7,7 +7,7 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\AuthorizationStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use WooCommerce\PayPalCommerce\ApiClient\TestCase;
+use WooCommerce\PayPalCommerce\TestCase;
 
 class AuthorizationFactoryTest extends TestCase
 {

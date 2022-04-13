@@ -41,6 +41,13 @@ class SessionHandler {
 	private $insufficient_funding_tries = 0;
 
 	/**
+	 * The funding source of the current checkout (venmo, ...) or null.
+	 *
+	 * @var string|null
+	 */
+	private $funding_source = null;
+
+	/**
 	 * Returns the order.
 	 *
 	 * @return Order|null
@@ -85,6 +92,28 @@ class SessionHandler {
 	}
 
 	/**
+	 * Returns the funding source of the current checkout (venmo, ...) or null.
+	 *
+	 * @return string|null
+	 */
+	public function funding_source(): ?string {
+		return $this->funding_source;
+	}
+
+	/**
+	 * Replaces the funding source of the current checkout.
+	 *
+	 * @param string|null $funding_source The funding source.
+	 *
+	 * @return SessionHandler
+	 */
+	public function replace_funding_source( ?string $funding_source ): SessionHandler {
+		$this->funding_source = $funding_source;
+		$this->store_session();
+		return $this;
+	}
+
+	/**
 	 * Returns how many times the customer tried to use the PayPal Gateway in this session.
 	 *
 	 * @return int
@@ -113,6 +142,7 @@ class SessionHandler {
 		$this->order                      = null;
 		$this->bn_code                    = '';
 		$this->insufficient_funding_tries = 0;
+		$this->funding_source             = null;
 		$this->store_session();
 		return $this;
 	}

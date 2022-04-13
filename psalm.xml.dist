@@ -4,12 +4,11 @@
         xmlns="https://getpsalm.org/schema/config"
         xsi:schemaLocation="https://getpsalm.org/schema/config vendor/vimeo/psalm/config.xsd"
         xmlns:xi="http://www.w3.org/2001/XInclude"
-        totallyTyped="false"
+        reportMixedIssues="false"
         useDocblockTypes="true"
         usePhpDocMethodsWithoutMagicCall="false"
         strictBinaryOperands="true"
         rememberPropertyAssignmentsAfterCall="true"
-        allowPhpStormGenerics="true"
         allowStringToStandInForClass="false"
         memoizeMethodCallResults="false"
         hoistConstants="false"
@@ -30,6 +29,7 @@
 
     <stubs>
     	<file name=".psalm/stubs.php"/>
+    	<file name=".psalm/wcs.php"/>
 		<file name="vendor/php-stubs/wordpress-stubs/wordpress-stubs.php"/>
 		<file name="vendor/php-stubs/woocommerce-stubs/woocommerce-stubs.php"/>
     </stubs>
@@ -150,5 +150,6 @@
         <MixedReturnTypeCoercion errorLevel="info"/>
 		<MixedStringOffsetAssignment errorLevel="info"/>
 		<ParamNameMismatch errorLevel="info"/>
+		<RedundantCastGivenDocblockType errorLevel="info"/>
     </issueHandlers>
 </psalm>

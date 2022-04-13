@@ -198,14 +198,20 @@ class OrderEndpoint {
 				return $is_purchase_unit;
 			}
 		);
-		$shipping_preferences    = $contains_physical_goods
-			? $shipping_address_is_fixed ?
-				ApplicationContext::SHIPPING_PREFERENCE_SET_PROVIDED_ADDRESS
-				: ApplicationContext::SHIPPING_PREFERENCE_GET_FROM_FILE
-			: ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING;
 
-		if ( $this->has_items_without_shipping( $items ) ) {
-			$shipping_preferences = ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING;
+		$shipping_preference = ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING;
+		if ( $contains_physical_goods ) {
+			if ( $shipping_address_is_fixed ) {
+				// Checkout + no address given? Probably something weird happened, like no form validation?
+				// Also note that $items currently always seems to be an array with one item.
+				if ( $this->has_items_without_shipping( $items ) ) {
+					$shipping_preference = ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING;
+				} else {
+					$shipping_preference = ApplicationContext::SHIPPING_PREFERENCE_SET_PROVIDED_ADDRESS;
+				}
+			} else {
+				$shipping_preference = ApplicationContext::SHIPPING_PREFERENCE_GET_FROM_FILE;
+			}
 		}
 
 		$bearer = $this->bearer->bearer();
@@ -218,9 +224,9 @@ class OrderEndpoint {
 				$items
 			),
 			'application_context' => $this->application_context_repository
-				->current_context( $shipping_preferences )->to_array(),
+				->current_context( $shipping_preference )->to_array(),
 		);
-		if ( $payer ) {
+		if ( $payer && ! empty( $payer->email_address() ) && ! empty( $payer->name() ) ) {
 			$data['payer'] = $payer->to_array();
 		}
 		if ( $payment_token ) {
@@ -229,6 +235,11 @@ class OrderEndpoint {
 		if ( $payment_method ) {
 			$data['payment_method'] = $payment_method->to_array();
 		}
+
+		/**
+		 * The filter can be used to modify the order creation request body data.
+		 */
+		$data = apply_filters( 'ppcp_create_order_request_body_data', $data );
 		$url  = trailingslashit( $this->host ) . 'v2/checkout/orders';
 		$args = array(
 			'method'  => 'POST',
@@ -591,7 +602,7 @@ class OrderEndpoint {
 	/**
 	 * Checks if there is at least one item without shipping.
 	 *
-	 * @param array $items The items.
+	 * @param PurchaseUnit[] $items The items.
 	 * @return bool Whether items contains shipping or not.
 	 */
 	private function has_items_without_shipping( array $items ): bool {

@@ -112,18 +112,18 @@ class PurchaseUnitFactory {
 		if (
 			! $this->shipping_needed( ... array_values( $items ) ) ||
 			empty( $shipping->address()->country_code() ) ||
-			( $shipping->address()->country_code() && ! $shipping->address()->postal_code() )
+			( ! $shipping->address()->postal_code() && ! $this->country_without_postal_code( $shipping->address()->country_code() ) )
 		) {
 			$shipping = null;
 		}
 		$reference_id    = 'default';
 		$description     = '';
 		$payee           = $this->payee_repository->payee();
-		$wc_order_id     = $order->get_order_number();
-		$custom_id       = $this->prefix . $wc_order_id;
-		$invoice_id      = $this->prefix . $wc_order_id;
+		$custom_id       = (string) $order->get_id();
+		$invoice_id      = $this->prefix . $order->get_order_number();
 		$soft_descriptor = '';
-		$purchase_unit   = new PurchaseUnit(
+
+		$purchase_unit = new PurchaseUnit(
 			$amount,
 			$items,
 			$shipping,
@@ -134,6 +134,9 @@ class PurchaseUnitFactory {
 			$invoice_id,
 			$soft_descriptor
 		);
+		/**
+		 * Returns PurchaseUnit for the WC order.
+		 */
 		return apply_filters(
 			'woocommerce_paypal_payments_purchase_unit_from_wc_order',
 			$purchase_unit,
@@ -157,9 +160,8 @@ class PurchaseUnitFactory {
 		if ( $this->shipping_needed( ... array_values( $items ) ) && is_a( $customer, \WC_Customer::class ) ) {
 			$shipping = $this->shipping_factory->from_wc_customer( \WC()->customer );
 			if (
-				2 !== strlen( $shipping->address()->country_code() )
-				|| ( ! $shipping->address()->postal_code() )
-				|| $this->country_without_postal_code( $shipping->address()->country_code() )
+				2 !== strlen( $shipping->address()->country_code() ) ||
+				( ! $shipping->address()->postal_code() && ! $this->country_without_postal_code( $shipping->address()->country_code() ) )
 			) {
 				$shipping = null;
 			}
@@ -275,9 +277,6 @@ class PurchaseUnitFactory {
 	 */
 	private function country_without_postal_code( string $country_code ): bool {
 		$countries = array( 'AE', 'AF', 'AG', 'AI', 'AL', 'AN', 'AO', 'AW', 'BB', 'BF', 'BH', 'BI', 'BJ', 'BM', 'BO', 'BS', 'BT', 'BW', 'BZ', 'CD', 'CF', 'CG', 'CI', 'CK', 'CL', 'CM', 'CO', 'CR', 'CV', 'DJ', 'DM', 'DO', 'EC', 'EG', 'ER', 'ET', 'FJ', 'FK', 'GA', 'GD', 'GH', 'GI', 'GM', 'GN', 'GQ', 'GT', 'GW', 'GY', 'HK', 'HN', 'HT', 'IE', 'IQ', 'IR', 'JM', 'JO', 'KE', 'KH', 'KI', 'KM', 'KN', 'KP', 'KW', 'KY', 'LA', 'LB', 'LC', 'LK', 'LR', 'LS', 'LY', 'ML', 'MM', 'MO', 'MR', 'MS', 'MT', 'MU', 'MW', 'MZ', 'NA', 'NE', 'NG', 'NI', 'NP', 'NR', 'NU', 'OM', 'PA', 'PE', 'PF', 'PY', 'QA', 'RW', 'SA', 'SB', 'SC', 'SD', 'SL', 'SN', 'SO', 'SR', 'SS', 'ST', 'SV', 'SY', 'TC', 'TD', 'TG', 'TL', 'TO', 'TT', 'TV', 'TZ', 'UG', 'UY', 'VC', 'VE', 'VG', 'VN', 'VU', 'WS', 'XA', 'XB', 'XC', 'XE', 'XL', 'XM', 'XN', 'XS', 'YE', 'ZM', 'ZW' );
-		if ( in_array( $country_code, $countries, true ) ) {
-			return true;
-		}
-		return false;
+		return in_array( $country_code, $countries, true );
 	}
 }

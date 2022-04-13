@@ -45,6 +45,13 @@ class WebhookRegistrar {
 	private $rest_endpoint;
 
 	/**
+	 * The last webhook info storage.
+	 *
+	 * @var WebhookInfoStorage
+	 */
+	private $last_webhook_storage;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -57,19 +64,22 @@ class WebhookRegistrar {
 	 * @param WebhookFactory          $webhook_factory The Webhook factory.
 	 * @param WebhookEndpoint         $endpoint The Webhook endpoint.
 	 * @param IncomingWebhookEndpoint $rest_endpoint The WordPress Rest API endpoint.
+	 * @param WebhookInfoStorage      $last_webhook_storage The last webhook info storage.
 	 * @param LoggerInterface         $logger The logger.
 	 */
 	public function __construct(
 		WebhookFactory $webhook_factory,
 		WebhookEndpoint $endpoint,
 		IncomingWebhookEndpoint $rest_endpoint,
+		WebhookInfoStorage $last_webhook_storage,
 		LoggerInterface $logger
 	) {
 
-		$this->webhook_factory = $webhook_factory;
-		$this->endpoint        = $endpoint;
-		$this->rest_endpoint   = $rest_endpoint;
-		$this->logger          = $logger;
+		$this->webhook_factory      = $webhook_factory;
+		$this->endpoint             = $endpoint;
+		$this->rest_endpoint        = $rest_endpoint;
+		$this->last_webhook_storage = $last_webhook_storage;
+		$this->logger               = $logger;
 	}
 
 	/**
@@ -92,6 +102,7 @@ class WebhookRegistrar {
 				self::KEY,
 				$created->to_array()
 			);
+			$this->last_webhook_storage->clear();
 			$this->logger->info( 'Webhooks subscribed.' );
 			return true;
 		} catch ( RuntimeException $error ) {
@@ -120,6 +131,7 @@ class WebhookRegistrar {
 
 		if ( $success ) {
 			delete_option( self::KEY );
+			$this->last_webhook_storage->clear();
 			$this->logger->info( 'Webhooks deleted.' );
 		}
 		return $success;

@@ -22,9 +22,8 @@ class MiniCartBootstap {
     }
 
     shouldRender() {
-        return document.querySelector(this.gateway.button.mini_cart_wrapper) !==
-            null || document.querySelector(this.gateway.hosted_fields.mini_cart_wrapper) !==
-        null;
+        return document.querySelector(this.gateway.button.mini_cart_wrapper) !== null
+            || document.querySelector(this.gateway.hosted_fields.mini_cart_wrapper) !== null;
     }
 
     render() {

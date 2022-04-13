@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\StartPayPalVaultingEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
@@ -104,6 +105,15 @@ class ButtonModule implements ModuleInterface {
 				 *
 				 * @var DataClientIdEndpoint $endpoint
 				 */
+				$endpoint->handle_request();
+			}
+		);
+		add_action(
+			'wc_ajax_' . StartPayPalVaultingEndpoint::ENDPOINT,
+			static function () use ( $container ) {
+				$endpoint = $container->get( 'button.endpoint.vault-paypal' );
+				assert( $endpoint instanceof StartPayPalVaultingEndpoint );
+
 				$endpoint->handle_request();
 			}
 		);

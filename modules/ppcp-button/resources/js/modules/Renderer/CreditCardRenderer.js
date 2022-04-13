@@ -1,4 +1,5 @@
 import dccInputFactory from "../Helper/DccInputFactory";
+import {show} from "../Helper/Hiding";
 
 class CreditCardRenderer {
 
@@ -9,7 +10,6 @@ class CreditCardRenderer {
         this.cardValid = false;
         this.formValid = false;
         this.currentHostedFieldsInstance = null;
-        this.formSubmissionSubscribed = false;
     }
 
     render(wrapper, contextConfig) {
@@ -32,6 +32,8 @@ class CreditCardRenderer {
             wrapperElement.parentNode.removeChild(wrapperElement);
             return;
         }
+
+        const buttonSelector = wrapper + ' button';
 
         if (this.currentHostedFieldsInstance) {
             this.currentHostedFieldsInstance.teardown()
@@ -122,15 +124,18 @@ class CreditCardRenderer {
 
             });
 
-            if (!this.formSubmissionSubscribed) {
-                document.querySelector(wrapper + ' button').addEventListener(
+            show(buttonSelector);
+
+            if (document.querySelector(wrapper).getAttribute('data-ppcp-subscribed') !== true) {
+                document.querySelector(buttonSelector).addEventListener(
                     'click',
                     event => {
                         event.preventDefault();
                         this._submit(contextConfig);
                     }
                 );
-                this.formSubmissionSubscribed = true;
+
+                document.querySelector(wrapper).setAttribute('data-ppcp-subscribed', true);
             }
         });
 
@@ -143,7 +148,7 @@ class CreditCardRenderer {
     }
 
     disableFields() {
-        if( this.currentHostedFieldsInstance) {
+        if (this.currentHostedFieldsInstance) {
             this.currentHostedFieldsInstance.setAttribute({
                 field: 'number',
                 attribute: 'disabled'
@@ -160,7 +165,7 @@ class CreditCardRenderer {
     }
 
     enableFields() {
-        if( this.currentHostedFieldsInstance) {
+        if (this.currentHostedFieldsInstance) {
             this.currentHostedFieldsInstance.removeAttribute({
                 field: 'number',
                 attribute: 'disabled'
@@ -181,7 +186,7 @@ class CreditCardRenderer {
         this.errorHandler.clear();
 
         if (this.formValid && this.cardValid) {
-            const save_card = this.defaultConfig.save_card ? true : false;
+            const save_card = this.defaultConfig.can_save_vault_token ? true : false;
             let vault = document.getElementById('ppcp-credit-card-vault') ?
                 document.getElementById('ppcp-credit-card-vault').checked : save_card;
             if (this.defaultConfig.enforce_vault) {
@@ -194,13 +199,34 @@ class CreditCardRenderer {
             if (contingency !== 'NO_3D_SECURE') {
                 hostedFieldsData.contingencies = [contingency];
             }
+
+            if (this.defaultConfig.payer) {
+                hostedFieldsData.cardholderName = this.defaultConfig.payer.name.given_name + ' ' + this.defaultConfig.payer.name.surname;
+            }
+            if (!hostedFieldsData.cardholderName) {
+                const firstName = document.getElementById('billing_first_name') ? document.getElementById('billing_first_name').value : '';
+                const lastName = document.getElementById('billing_last_name') ? document.getElementById('billing_last_name').value : '';
+
+                if (!firstName || !lastName) {
+                    this.spinner.unblock();
+                    this.errorHandler.message(this.defaultConfig.hosted_fields.labels.cardholder_name_required);
+                    return;
+                }
+
+                hostedFieldsData.cardholderName = firstName + ' ' + lastName;
+            }
+
             this.currentHostedFieldsInstance.submit(hostedFieldsData).then((payload) => {
                 payload.orderID = payload.orderId;
                 this.spinner.unblock();
                 return contextConfig.onApprove(payload);
             }).catch(err => {
-                console.error(err);
                 this.spinner.unblock();
+                this.errorHandler.clear();
+
+                if (err.details) {
+                    this.errorHandler.message(err.details.map(d => `${d.issue} ${d.description}`).join('<br/>'), true);
+                }
             });
         } else {
             this.spinner.unblock();

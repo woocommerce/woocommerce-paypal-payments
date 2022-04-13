@@ -9,21 +9,51 @@ class SingleProductBootstap {
         this.messages = messages;
     }
 
-    init() {
+
+    handleChange() {
         if (!this.shouldRender()) {
-           this.renderer.hideButtons(this.gateway.hosted_fields.wrapper);
+            this.renderer.hideButtons(this.gateway.hosted_fields.wrapper);
+            this.renderer.hideButtons(this.gateway.button.wrapper);
             return;
         }
 
         this.render();
     }
 
-    shouldRender() {
-        if (document.querySelector('form.cart') === null) {
-            return false;
+    init() {
+
+        document.querySelector('form.cart').addEventListener('change', this.handleChange.bind(this))
+
+        if (!this.shouldRender()) {
+            this.renderer.hideButtons(this.gateway.hosted_fields.wrapper);
+            return;
         }
 
-        return true;
+        this.render();
+
+    }
+
+    shouldRender() {
+
+        return document.querySelector('form.cart') !== null && !this.priceAmountIsZero();
+
+    }
+
+    priceAmountIsZero() {
+
+        let priceText = "0";
+        if (document.querySelector('form.cart ins .woocommerce-Price-amount')) {
+            priceText = document.querySelector('form.cart ins .woocommerce-Price-amount').innerText;
+        }
+        else if (document.querySelector('form.cart .woocommerce-Price-amount')) {
+            priceText = document.querySelector('form.cart .woocommerce-Price-amount').innerText;
+        }
+        else if (document.querySelector('.product .woocommerce-Price-amount')) {
+            priceText = document.querySelector('.product .woocommerce-Price-amount').innerText;
+        }
+        const amount = parseFloat(priceText.replace(/([^\d,\.\s]*)/g, ''));
+        return amount === 0;
+
     }
 
     render() {

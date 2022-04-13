@@ -1,7 +1,7 @@
 class Spinner {
 
-    constructor() {
-        this.target = 'form.woocommerce-checkout';
+    constructor(target = 'form.woocommerce-checkout') {
+        this.target = target;
     }
 
     setTarget(target) {

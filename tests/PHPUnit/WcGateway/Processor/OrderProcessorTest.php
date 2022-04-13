@@ -19,6 +19,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
@@ -57,6 +58,7 @@ class OrderProcessorTest extends TestCase
         $wcOrder = Mockery::mock(\WC_Order::class);
         $wcOrder->expects('update_meta_data')
             ->with(PayPalGateway::ORDER_PAYMENT_MODE_META_KEY, 'live');
+        $wcOrder->shouldReceive('get_id')->andReturn(1);
 
         $orderStatus = Mockery::mock(OrderStatus::class);
         $orderStatus
@@ -88,8 +90,6 @@ class OrderProcessorTest extends TestCase
         $sessionHandler
             ->expects('order')
             ->andReturn($currentOrder);
-        $sessionHandler
-            ->expects('destroy_session_data');
 
         $orderEndpoint = Mockery::mock(OrderEndpoint::class);
         $orderEndpoint
@@ -118,6 +118,9 @@ class OrderProcessorTest extends TestCase
 
         $logger = Mockery::mock(LoggerInterface::class);
 
+        $subscription_helper = Mockery::mock(SubscriptionHelper::class);
+        $subscription_helper->shouldReceive('has_subscription');
+
         $testee = new OrderProcessor(
             $sessionHandler,
             $orderEndpoint,
@@ -126,17 +129,9 @@ class OrderProcessorTest extends TestCase
             $authorizedPaymentProcessor,
             $settings,
             $logger,
-            $this->environment
+            $this->environment,
+			$subscription_helper
         );
-
-        $cart = Mockery::mock(\WC_Cart::class);
-        $cart
-            ->expects('empty_cart');
-        $woocommerce = Mockery::mock(\WooCommerce::class);
-        when('WC')
-			->justReturn($woocommerce);
-
-        $woocommerce->cart = $cart;
 
         $wcOrder
             ->expects('update_meta_data')
@@ -211,8 +206,6 @@ class OrderProcessorTest extends TestCase
         $sessionHandler
             ->expects('order')
             ->andReturn($currentOrder);
-        $sessionHandler
-            ->expects('destroy_session_data');
         $orderEndpoint = Mockery::mock(OrderEndpoint::class);
         $orderEndpoint
             ->expects('patch_order_with')
@@ -234,20 +227,8 @@ class OrderProcessorTest extends TestCase
             ->shouldReceive('has')
             ->andReturnFalse();
 
-        $cart = Mockery::mock(\WC_Cart::class);
-        $cart
-			->shouldReceive('empty_cart');
-
-        $woocommerce = Mockery::Mock(\Woocommerce::class);
-		$woocommerce
-			->shouldReceive('__get')
-			->with('cart')
-			->set('cart', $cart);
-        when('WC')
-			->justReturn($woocommerce);
-
 		$logger = Mockery::mock(LoggerInterface::class);
-
+		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 
 		$testee = new OrderProcessor(
             $sessionHandler,
@@ -257,17 +238,9 @@ class OrderProcessorTest extends TestCase
             $authorizedPaymentProcessor,
             $settings,
             $logger,
-            $this->environment
+            $this->environment,
+			$subscription_helper
         );
-
-        $cart = Mockery::mock(\WC_Cart::class);
-        $cart
-            ->expects('empty_cart');
-        $woocommerce = Mockery::mock(\WooCommerce::class);
-        $woocommerce->cart = $cart;
-
-        when('WC')
-			->justReturn($woocommerce);
 
         $wcOrder
             ->expects('update_meta_data')
@@ -345,6 +318,7 @@ class OrderProcessorTest extends TestCase
         $settings = Mockery::mock(Settings::class);
 
 		$logger = Mockery::mock(LoggerInterface::class);
+		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 
 		$testee = new OrderProcessor(
             $sessionHandler,
@@ -354,7 +328,8 @@ class OrderProcessorTest extends TestCase
             $authorizedPaymentProcessor,
             $settings,
             $logger,
-            $this->environment
+            $this->environment,
+			$subscription_helper
         );
 
         $wcOrder

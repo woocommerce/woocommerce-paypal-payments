@@ -38,6 +38,16 @@ class VaultingModule implements ModuleInterface {
 	 */
 	public function run( ContainerInterface $container ): void {
 
+		$settings = $container->get( 'wcgateway.settings' );
+		if ( ! $settings->has( 'vault_enabled' ) || ! $settings->get( 'vault_enabled' ) ) {
+			return;
+		}
+
+		$listener = $container->get( 'vaulting.customer-approval-listener' );
+		assert( $listener instanceof CustomerApprovalListener );
+
+		$listener->listen();
+
 		add_filter(
 			'woocommerce_account_menu_items',
 			function( $menu_links ) {
@@ -93,6 +103,17 @@ class VaultingModule implements ModuleInterface {
 			}
 		);
 
+		$subscription_helper = $container->get( 'subscription.helper' );
+		add_action(
+			'woocommerce_created_customer',
+			function( int $customer_id ) use ( $subscription_helper ) {
+				$guest_customer_id = WC()->session->get( 'ppcp_guest_customer_id' );
+				if ( $guest_customer_id && $subscription_helper->cart_contains_subscription() ) {
+					update_user_meta( $customer_id, 'ppcp_guest_customer_id', $guest_customer_id );
+				}
+			}
+		);
+
 		$asset_loader = $container->get( 'vaulting.assets.myaccount-payments' );
 		add_action(
 			'wp_enqueue_scripts',
@@ -112,6 +133,16 @@ class VaultingModule implements ModuleInterface {
 
 				$endpoint->handle_request();
 			}
+		);
+
+		add_action(
+			'woocommerce_paypal_payments_check_saved_payment',
+			function ( int $order_id, int $customer_id, string $intent ) use ( $container ) {
+				$payment_token_checker = $container->get( 'vaulting.payment-token-checker' );
+				$payment_token_checker->check_and_update( $order_id, $customer_id, $intent );
+			},
+			10,
+			3
 		);
 	}
 

@@ -18,7 +18,7 @@ class SettingsPagesAssetsTest extends TestCase
 
 		when('is_admin')
 			->justReturn(true);
-		when('is_ajax')
+		when('wp_doing_ajax')
 			->justReturn(false);
 
 		$testee->register_assets();

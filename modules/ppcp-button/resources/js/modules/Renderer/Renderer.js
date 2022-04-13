@@ -1,7 +1,9 @@
 class Renderer {
-    constructor(creditCardRenderer, defaultConfig) {
+    constructor(creditCardRenderer, defaultConfig, onSmartButtonClick, onSmartButtonsInit) {
         this.defaultConfig = defaultConfig;
         this.creditCardRenderer = creditCardRenderer;
+        this.onSmartButtonClick = onSmartButtonClick;
+        this.onSmartButtonsInit = onSmartButtonsInit;
     }
 
     render(wrapper, hostedFieldsWrapper, contextConfig) {
@@ -19,6 +21,8 @@ class Renderer {
         paypal.Buttons({
             style,
             ...contextConfig,
+            onClick: this.onSmartButtonClick,
+            onInit: this.onSmartButtonsInit,
         }).render(wrapper);
     }
 

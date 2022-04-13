@@ -15,14 +15,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
  * Class PartnerReferralsData
  */
 class PartnerReferralsData {
-
-	/**
-	 * The merchant email.
-	 *
-	 * @var string
-	 */
-	private $merchant_email;
-
 	/**
 	 * The DCC Applies Helper object.
 	 *
@@ -31,18 +23,38 @@ class PartnerReferralsData {
 	private $dcc_applies;
 
 	/**
+	 * The list of products ('PPCP', 'EXPRESS_CHECKOUT').
+	 *
+	 * @var string[]
+	 */
+	private $products;
+
+	/**
 	 * PartnerReferralsData constructor.
 	 *
-	 * @param string     $merchant_email  The email of the merchant.
 	 * @param DccApplies $dcc_applies The DCC Applies helper.
 	 */
 	public function __construct(
-		string $merchant_email,
 		DccApplies $dcc_applies
 	) {
+		$this->dcc_applies = $dcc_applies;
+		$this->products    = array(
+			$this->dcc_applies->for_country_currency() ? 'PPCP' : 'EXPRESS_CHECKOUT',
+		);
+	}
 
-		$this->merchant_email = $merchant_email;
-		$this->dcc_applies    = $dcc_applies;
+	/**
+	 * Returns a new copy of this object with the given value set.
+	 *
+	 * @param string[] $products The list of products ('PPCP', 'EXPRESS_CHECKOUT').
+	 * @return static
+	 */
+	public function with_products( array $products ): self {
+		$obj = clone $this;
+
+		$obj->products = $products;
+
+		return $obj;
 	}
 
 	/**
@@ -60,33 +72,26 @@ class PartnerReferralsData {
 	 * @return array
 	 */
 	public function data(): array {
-		$data = $this->default_data();
-		return $data;
-	}
-
-	/**
-	 * Returns the default data.
-	 *
-	 * @return array
-	 */
-	private function default_data(): array {
-
 		return array(
 			'partner_config_override' => array(
 				'partner_logo_url'       => 'https://connect.woocommerce.com/images/woocommerce_logo.png',
+				/**
+				 * Returns the URL which will be opened at the end of onboarding.
+				 */
 				'return_url'             => apply_filters(
 					'woocommerce_paypal_payments_partner_config_override_return_url',
 					admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' )
 				),
+				/**
+				 * Returns the description of the URL which will be opened at the end of onboarding.
+				 */
 				'return_url_description' => apply_filters(
 					'woocommerce_paypal_payments_partner_config_override_return_url_description',
 					__( 'Return to your shop.', 'woocommerce-paypal-payments' )
 				),
 				'show_add_credit_card'   => true,
 			),
-			'products'                => array(
-				$this->dcc_applies->for_country_currency() ? 'PPCP' : 'EXPRESS_CHECKOUT',
-			),
+			'products'                => $this->products,
 			'legal_consents'          => array(
 				array(
 					'type'    => 'SHARE_DATA_CONSENT',

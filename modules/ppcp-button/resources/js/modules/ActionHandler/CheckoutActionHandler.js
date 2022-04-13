@@ -1,5 +1,6 @@
 import onApprove from '../OnApproveHandler/onApproveForPayNow.js';
 import {payerData} from "../Helper/PayerData";
+import {getCurrentPaymentMethod} from "../Helper/CheckoutMethodState";
 
 class CheckoutActionHandler {
 
@@ -31,6 +32,7 @@ class CheckoutActionHandler {
                     bn_code:bnCode,
                     context:this.config.context,
                     order_id:this.config.order_id,
+                    payment_method: getCurrentPaymentMethod(),
                     form:formValues,
                     createaccount: createaccount
                 })
@@ -48,7 +50,12 @@ class CheckoutActionHandler {
                                 .querySelector('ul')
                         );
                     } else {
-                        errorHandler.message(data.data.message, true);
+                        errorHandler.clear();
+                        if (data.data.details.length > 0) {
+                            errorHandler.message(data.data.details.map(d => `${d.issue} ${d.description}`).join('<br/>'), true);
+                        } else {
+                            errorHandler.message(data.data.message, true);
+                        }
                     }
 
                     return;

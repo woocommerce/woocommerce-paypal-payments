@@ -73,11 +73,11 @@ class ErrorHandler {
 
     clear()
     {
-        if (! this.wrapper.classList.contains('woocommerce-error')) {
+        if (this.messagesList === null) {
             return;
         }
-        this.wrapper.classList.remove('woocommerce-error');
-        this.wrapper.innerText = '';
+
+        this.messagesList.innerHTML = '';
     }
 }
 

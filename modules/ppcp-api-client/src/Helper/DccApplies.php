@@ -19,169 +19,50 @@ class DccApplies {
 	 *
 	 * @var array
 	 */
-	private $allowed_country_currency_matrix = array(
-		'AU' => array(
-			'AUD',
-			'CAD',
-			'CHF',
-			'CZK',
-			'DKK',
-			'EUR',
-			'GBP',
-			'HKD',
-			'HUF',
-			'JPY',
-			'NOK',
-			'NZD',
-			'PLN',
-			'SEK',
-			'SGD',
-			'USD',
-		),
-		'ES' => array(
-			'AUD',
-			'CAD',
-			'CHF',
-			'CZK',
-			'DKK',
-			'EUR',
-			'GBP',
-			'HKD',
-			'HUF',
-			'JPY',
-			'NOK',
-			'NZD',
-			'PLN',
-			'SEK',
-			'SGD',
-			'USD',
-		),
-		'FR' => array(
-			'AUD',
-			'CAD',
-			'CHF',
-			'CZK',
-			'DKK',
-			'EUR',
-			'GBP',
-			'HKD',
-			'HUF',
-			'JPY',
-			'NOK',
-			'NZD',
-			'PLN',
-			'SEK',
-			'SGD',
-			'USD',
-		),
-		'GB' => array(
-			'AUD',
-			'CAD',
-			'CHF',
-			'CZK',
-			'DKK',
-			'EUR',
-			'GBP',
-			'HKD',
-			'HUF',
-			'JPY',
-			'NOK',
-			'NZD',
-			'PLN',
-			'SEK',
-			'SGD',
-			'USD',
-		),
-		'IT' => array(
-			'AUD',
-			'CAD',
-			'CHF',
-			'CZK',
-			'DKK',
-			'EUR',
-			'GBP',
-			'HKD',
-			'HUF',
-			'JPY',
-			'NOK',
-			'NZD',
-			'PLN',
-			'SEK',
-			'SGD',
-			'USD',
-		),
-		'US' => array(
-			'AUD',
-			'CAD',
-			'EUR',
-			'GBP',
-			'JPY',
-			'USD',
-		),
-		'CA' => array(
-			'AUD',
-			'CAD',
-			'CHF',
-			'CZK',
-			'DKK',
-			'EUR',
-			'GBP',
-			'HKD',
-			'HUF',
-			'JPY',
-			'NOK',
-			'NZD',
-			'PLN',
-			'SEK',
-			'SGD',
-			'USD',
-		),
-	);
+	private $allowed_country_currency_matrix;
 
 	/**
 	 * Which countries support which credit cards. Empty credit card arrays mean no restriction on
-	 * currency. Otherwise only the currencies in the array are supported.
+	 * currency.
 	 *
 	 * @var array
 	 */
-	private $country_card_matrix = array(
-		'AU' => array(
-			'mastercard' => array(),
-			'visa'       => array(),
-		),
-		'ES' => array(
-			'mastercard' => array(),
-			'visa'       => array(),
-			'amex'       => array( 'EUR' ),
-		),
-		'FR' => array(
-			'mastercard' => array(),
-			'visa'       => array(),
-			'amex'       => array( 'EUR' ),
-		),
-		'GB' => array(
-			'mastercard' => array(),
-			'visa'       => array(),
-			'amex'       => array( 'GBP', 'USD' ),
-		),
-		'IT' => array(
-			'mastercard' => array(),
-			'visa'       => array(),
-			'amex'       => array( 'EUR' ),
-		),
-		'US' => array(
-			'mastercard' => array(),
-			'visa'       => array(),
-			'amex'       => array( 'USD' ),
-			'discover'   => array( 'USD' ),
-		),
-		'CA' => array(
-			'mastercard' => array(),
-			'visa'       => array(),
-			'amex'       => array( 'CAD' ),
-			'jcb'        => array( 'CAD' ),
-		),
-	);
+	private $country_card_matrix;
+
+	/**
+	 * 3-letter currency code of the shop.
+	 *
+	 * @var string
+	 */
+	private $currency;
+
+	/**
+	 * 2-letter country code of the shop.
+	 *
+	 * @var string
+	 */
+	private $country;
+
+	/**
+	 * DccApplies constructor.
+	 *
+	 * @param array  $allowed_country_currency_matrix The matrix which countries and currency combinations can be used for DCC.
+	 * @param array  $country_card_matrix Which countries support which credit cards. Empty credit card arrays mean no restriction on
+	 *  currency.
+	 * @param string $currency 3-letter currency code of the shop.
+	 * @param string $country 2-letter country code of the shop.
+	 */
+	public function __construct(
+		array $allowed_country_currency_matrix,
+		array $country_card_matrix,
+		string $currency,
+		string $country
+	) {
+		$this->allowed_country_currency_matrix = $allowed_country_currency_matrix;
+		$this->country_card_matrix             = $country_card_matrix;
+		$this->currency                        = $currency;
+		$this->country                         = $country;
+	}
 
 	/**
 	 * Returns whether DCC can be used in the current country and the current currency used.
@@ -189,12 +70,10 @@ class DccApplies {
 	 * @return bool
 	 */
 	public function for_country_currency(): bool {
-		$country  = $this->country();
-		$currency = get_woocommerce_currency();
-		if ( ! in_array( $country, array_keys( $this->allowed_country_currency_matrix ), true ) ) {
+		if ( ! in_array( $this->country, array_keys( $this->allowed_country_currency_matrix ), true ) ) {
 			return false;
 		}
-		$applies = in_array( $currency, $this->allowed_country_currency_matrix[ $country ], true );
+		$applies = in_array( $this->currency, $this->allowed_country_currency_matrix[ $this->country ], true );
 		return $applies;
 	}
 
@@ -204,13 +83,12 @@ class DccApplies {
 	 * @return array
 	 */
 	public function valid_cards() : array {
-		$country = $this->country();
-		$cards   = array();
-		if ( ! isset( $this->country_card_matrix[ $country ] ) ) {
+		$cards = array();
+		if ( ! isset( $this->country_card_matrix[ $this->country ] ) ) {
 			return $cards;
 		}
 
-		$supported_currencies = $this->country_card_matrix[ $country ];
+		$supported_currencies = $this->country_card_matrix[ $this->country ];
 		foreach ( $supported_currencies as $card => $currencies ) {
 			if ( $this->can_process_card( $card ) ) {
 				$cards[] = $card;
@@ -233,11 +111,10 @@ class DccApplies {
 	 * @return bool
 	 */
 	public function can_process_card( string $card ) : bool {
-		$country = $this->country();
-		if ( ! isset( $this->country_card_matrix[ $country ] ) ) {
+		if ( ! isset( $this->country_card_matrix[ $this->country ] ) ) {
 			return false;
 		}
-		if ( ! isset( $this->country_card_matrix[ $country ][ $card ] ) ) {
+		if ( ! isset( $this->country_card_matrix[ $this->country ][ $card ] ) ) {
 			return false;
 		}
 
@@ -245,19 +122,7 @@ class DccApplies {
 		 * If the supported currencies array is empty, there are no
 		 * restrictions, which currencies are supported by a card.
 		 */
-		$supported_currencies = $this->country_card_matrix[ $country ][ $card ];
-		$currency             = get_woocommerce_currency();
-		return empty( $supported_currencies ) || in_array( $currency, $supported_currencies, true );
-	}
-
-	/**
-	 * Returns the country code of the shop.
-	 *
-	 * @return string
-	 */
-	private function country() : string {
-		$region  = wc_get_base_location();
-		$country = $region['country'];
-		return $country;
+		$supported_currencies = $this->country_card_matrix[ $this->country ][ $card ];
+		return empty( $supported_currencies ) || in_array( $this->currency, $supported_currencies, true );
 	}
 }

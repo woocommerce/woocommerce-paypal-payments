@@ -10,12 +10,12 @@ declare( strict_types=1 );
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
 use Exception;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\AuthorizationStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
+use WooCommerce\PayPalCommerce\Subscription\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\PaymentsStatusHandlingTrait;
@@ -26,7 +26,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
  */
 trait ProcessPaymentTrait {
 
-	use OrderMetaTrait, PaymentsStatusHandlingTrait, TransactionIdHandlingTrait;
+	use OrderMetaTrait, PaymentsStatusHandlingTrait, TransactionIdHandlingTrait, FreeTrialHandlerTrait;
 
 	/**
 	 * Process a payment for an WooCommerce order.
@@ -54,12 +54,14 @@ trait ProcessPaymentTrait {
 			return $failure_data;
 		}
 
+		$payment_method = filter_input( INPUT_POST, 'payment_method', FILTER_SANITIZE_STRING );
+
 		/**
 		 * If customer has chosen a saved credit card payment.
 		 */
 		$saved_credit_card = filter_input( INPUT_POST, 'saved_credit_card', FILTER_SANITIZE_STRING );
-		$pay_for_order     = filter_input( INPUT_GET, 'pay_for_order', FILTER_SANITIZE_STRING );
-		if ( $saved_credit_card && ! isset( $pay_for_order ) ) {
+		$change_payment    = filter_input( INPUT_POST, 'woocommerce_change_payment', FILTER_SANITIZE_STRING );
+		if ( CreditCardGateway::ID === $payment_method && $saved_credit_card && ! isset( $change_payment ) ) {
 
 			$user_id  = (int) $wc_order->get_customer_id();
 			$customer = new \WC_Customer( $user_id );
@@ -115,7 +117,10 @@ trait ProcessPaymentTrait {
 
 				$this->handle_new_order_status( $order, $wc_order );
 
-				if ( $this->config->has( 'intent' ) && strtoupper( (string) $this->config->get( 'intent' ) ) === 'CAPTURE' ) {
+				if ( $this->is_free_trial_order( $wc_order ) ) {
+					$this->authorized_payments_processor->void_authorizations( $order );
+					$wc_order->payment_complete();
+				} elseif ( $this->config->has( 'intent' ) && strtoupper( (string) $this->config->get( 'intent' ) ) === 'CAPTURE' ) {
 					$this->authorized_payments_processor->capture_authorized_payment( $wc_order );
 				}
 
@@ -128,6 +133,28 @@ trait ProcessPaymentTrait {
 				$this->handle_failure( $wc_order, $error );
 				return null;
 			}
+		}
+
+		if ( PayPalGateway::ID === $payment_method && $this->is_free_trial_order( $wc_order ) ) {
+			$user_id = (int) $wc_order->get_customer_id();
+			$tokens  = $this->payment_token_repository->all_for_user_id( $user_id );
+			if ( ! array_filter(
+				$tokens,
+				function ( PaymentToken $token ): bool {
+					return isset( $token->source()->paypal );
+				}
+			) ) {
+				$this->handle_failure( $wc_order, new Exception( 'No saved PayPal account.' ) );
+				return null;
+			}
+
+			$wc_order->payment_complete();
+
+			$this->session_handler->destroy_session_data();
+			return array(
+				'result'   => 'success',
+				'redirect' => $this->get_return_url( $wc_order ),
+			);
 		}
 
 		/**
@@ -171,95 +198,21 @@ trait ProcessPaymentTrait {
 
 		try {
 			if ( $this->order_processor->process( $wc_order ) ) {
-
 				if ( $this->subscription_helper->has_subscription( $order_id ) ) {
-					$this->logger->info( "Trying to save payment for subscription parent order #{$order_id}." );
-
-					$tokens = $this->payment_token_repository->all_for_user_id( $wc_order->get_customer_id() );
-					if ( $tokens ) {
-						$this->logger->info( "Payment for subscription parent order #{$order_id} was saved correctly." );
-
-						if ( $this->config->has( 'intent' ) && strtoupper( (string) $this->config->get( 'intent' ) ) === 'CAPTURE' ) {
-							$this->authorized_payments_processor->capture_authorized_payment( $wc_order );
-						}
-
-						$this->session_handler->destroy_session_data();
-
-						return array(
-							'result'   => 'success',
-							'redirect' => $this->get_return_url( $wc_order ),
-						);
-					}
-
-					$this->logger->error( "Payment for subscription parent order #{$order_id} was not saved." );
-
-					$paypal_order_id = $wc_order->get_meta( PayPalGateway::ORDER_ID_META_KEY );
-					if ( ! $paypal_order_id ) {
-						throw new RuntimeException( 'PayPal order ID not found in meta.' );
-					}
-					$order = $this->order_endpoint->order( $paypal_order_id );
-
-					$purchase_units = $order->purchase_units();
-					if ( ! $purchase_units ) {
-						throw new RuntimeException( 'No purchase units.' );
-					}
-
-					$payments = $purchase_units[0]->payments();
-					if ( ! $payments ) {
-						throw new RuntimeException( 'No payments.' );
-					}
-
-					$this->logger->debug(
-						sprintf(
-							'Trying to void order %1$s, payments: %2$s.',
-							$order->id(),
-							wp_json_encode( $payments->to_array() )
+					as_schedule_single_action(
+						time() + ( 1 * MINUTE_IN_SECONDS ),
+						'woocommerce_paypal_payments_check_saved_payment',
+						array(
+							'order_id'    => $order_id,
+							'customer_id' => $wc_order->get_customer_id(),
+							'intent'      => $this->config->has( 'intent' ) ? $this->config->get( 'intent' ) : '',
 						)
 					);
-
-					$voidable_authorizations = array_filter(
-						$payments->authorizations(),
-						function ( Authorization $authorization ): bool {
-							return $authorization->is_voidable();
-						}
-					);
-					if ( ! $voidable_authorizations ) {
-						throw new RuntimeException( 'No voidable authorizations.' );
-					}
-
-					foreach ( $voidable_authorizations as $authorization ) {
-						$this->payments_endpoint->void( $authorization );
-					}
-
-					$this->logger->debug(
-						sprintf(
-							'Order %1$s voided successfully.',
-							$order->id()
-						)
-					);
-
-					$error_message = __( 'Could not process order because it was not possible to save the payment.', 'woocommerce-paypal-payments' );
-					$wc_order->update_status( 'failed', $error_message );
-
-					$subscriptions = wcs_get_subscriptions_for_order( $order_id );
-					foreach ( $subscriptions as $key => $subscription ) {
-						if ( $subscription->get_parent_id() === $order_id ) {
-							try {
-								$subscription->update_status( 'cancelled' );
-								break;
-							} catch ( Exception $exception ) {
-								$this->logger->error( "Could not update cancelled status on subscription #{$subscription->get_id()} " . $exception->getMessage() );
-							}
-						}
-					}
-
-					$this->session_handler->destroy_session_data();
-					wc_add_notice( $error_message, 'error' );
-
-					return $failure_data;
 				}
 
+				WC()->cart->empty_cart();
 				$this->session_handler->destroy_session_data();
+
 				return array(
 					'result'   => 'success',
 					'redirect' => $this->get_return_url( $wc_order ),
@@ -269,7 +222,7 @@ trait ProcessPaymentTrait {
 			if ( $error->has_detail( 'INSTRUMENT_DECLINED' ) ) {
 				$wc_order->update_status(
 					'failed',
-					__( 'Instrument declined.', 'woocommerce-paypal-payments' )
+					__( 'Instrument declined. ', 'woocommerce-paypal-payments' ) . $error->details()[0]->description ?? ''
 				);
 
 				$this->session_handler->increment_insufficient_funding_tries();
@@ -290,6 +243,19 @@ trait ProcessPaymentTrait {
 				);
 			}
 
+			$error_message = $error->getMessage();
+			if ( $error->issues() ) {
+				$error_message = implode(
+					array_map(
+						function( $issue ) {
+							return $issue->issue . ' ' . $issue->description . '<br/>';
+						},
+						$error->issues()
+					)
+				);
+			}
+			wc_add_notice( $error_message, 'error' );
+
 			$this->session_handler->destroy_session_data();
 		} catch ( RuntimeException $error ) {
 			$this->handle_failure( $wc_order, $error );
@@ -300,9 +266,10 @@ trait ProcessPaymentTrait {
 			$this->order_processor->last_error(),
 			'error'
 		);
+
 		$wc_order->update_status(
 			'failed',
-			__( 'Could not process order.', 'woocommerce-paypal-payments' )
+			__( 'Could not process order. ', 'woocommerce-paypal-payments' ) . $this->order_processor->last_error()
 		);
 
 		return $failure_data;
@@ -347,7 +314,7 @@ trait ProcessPaymentTrait {
 
 		$wc_order->update_status(
 			'failed',
-			__( 'Could not process order.', 'woocommerce-paypal-payments' )
+			__( 'Could not process order. ', 'woocommerce-paypal-payments' ) . $error->getMessage()
 		);
 
 		$this->session_handler->destroy_session_data();

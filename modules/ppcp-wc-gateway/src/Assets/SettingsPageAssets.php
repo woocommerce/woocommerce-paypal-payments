@@ -24,21 +24,21 @@ class SettingsPageAssets {
 	private $module_url;
 
 	/**
-	 * The filesystem path to the module dir.
+	 * The assets version.
 	 *
 	 * @var string
 	 */
-	private $module_path;
+	private $version;
 
 	/**
 	 * Assets constructor.
 	 *
 	 * @param string $module_url The url of this module.
-	 * @param string $module_path The filesystem path to this module.
+	 * @param string $version                            The assets version.
 	 */
-	public function __construct( string $module_url, string $module_path ) {
-		$this->module_url  = $module_url;
-		$this->module_path = $module_path;
+	public function __construct( string $module_url, string $version ) {
+		$this->module_url = $module_url;
+		$this->version    = $version;
 	}
 
 	/**
@@ -48,7 +48,7 @@ class SettingsPageAssets {
 		add_action(
 			'admin_enqueue_scripts',
 			function() {
-				if ( ! is_admin() || is_ajax() ) {
+				if ( ! is_admin() || wp_doing_ajax() ) {
 					return;
 				}
 
@@ -89,13 +89,11 @@ class SettingsPageAssets {
 	 * Register assets for admin pages.
 	 */
 	private function register_admin_assets() {
-		$gateway_settings_script_path = trailingslashit( $this->module_path ) . 'assets/js/gateway-settings.js';
-
 		wp_enqueue_script(
 			'ppcp-gateway-settings',
 			trailingslashit( $this->module_url ) . 'assets/js/gateway-settings.js',
 			array(),
-			file_exists( $gateway_settings_script_path ) ? (string) filemtime( $gateway_settings_script_path ) : null,
+			$this->version,
 			true
 		);
 	}

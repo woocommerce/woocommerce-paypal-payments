@@ -18,6 +18,7 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\Button\Endpoint\StartPayPalVaultingEndpoint;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
@@ -52,7 +53,7 @@ return array(
 		 *
 		 * @var State $state
 		 */
-		if ( $state->current_state() <= State::STATE_PROGRESSIVE ) {
+		if ( $state->current_state() !== State::STATE_ONBOARDED ) {
 			return new DisabledSmartButton();
 		}
 		$settings           = $container->get( 'wcgateway.settings' );
@@ -70,8 +71,10 @@ return array(
 		$environment         = $container->get( 'onboarding.environment' );
 		$payment_token_repository = $container->get( 'vaulting.repository.payment-token' );
 		$settings_status = $container->get( 'wcgateway.settings.status' );
+		$currency = $container->get( 'api.shop.currency' );
 		return new SmartButton(
 			$container->get( 'button.url' ),
+			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'session.handler' ),
 			$settings,
 			$payer_factory,
@@ -82,13 +85,16 @@ return array(
 			$messages_apply,
 			$environment,
 			$payment_token_repository,
-			$settings_status
+			$settings_status,
+			$currency,
+			$container->get( 'wcgateway.all-funding-sources' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 	'button.url'                        => static function ( ContainerInterface $container ): string {
 		return plugins_url(
 			'/modules/ppcp-button/',
-			dirname( __FILE__, 3 ) . '/woocommerce-paypal-payments.php'
+			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
 		);
 	},
 	'button.request-data'               => static function ( ContainerInterface $container ): RequestData {
@@ -166,12 +172,21 @@ return array(
 			$logger
 		);
 	},
+	'button.endpoint.vault-paypal'      => static function( ContainerInterface $container ) : StartPayPalVaultingEndpoint {
+		return new StartPayPalVaultingEndpoint(
+			$container->get( 'button.request-data' ),
+			$container->get( 'api.endpoint.payment-token' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
 	'button.helper.three-d-secure'      => static function ( ContainerInterface $container ): ThreeDSecure {
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
 		return new ThreeDSecure( $logger );
 	},
 	'button.helper.messages-apply'      => static function ( ContainerInterface $container ): MessagesApply {
-		return new MessagesApply();
+		return new MessagesApply(
+			$container->get( 'api.shop.country' )
+		);
 	},
 
 	'button.is-logged-in'               => static function ( ContainerInterface $container ): bool {

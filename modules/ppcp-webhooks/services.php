@@ -23,6 +23,8 @@ use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureCompleted;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureRefunded;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureReversed;
 use Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\Webhooks\Handler\VaultCreditCardCreated;
+use WooCommerce\PayPalCommerce\Webhooks\Handler\VaultPaymentTokenCreated;
 use WooCommerce\PayPalCommerce\Webhooks\Status\Assets\WebhooksStatusPageAssets;
 use WooCommerce\PayPalCommerce\Webhooks\Status\WebhookSimulation;
 
@@ -32,11 +34,13 @@ return array(
 		$factory      = $container->get( 'api.factory.webhook' );
 		$endpoint     = $container->get( 'api.endpoint.webhook' );
 		$rest_endpoint = $container->get( 'webhook.endpoint.controller' );
+		$last_webhook_storage = $container->get( 'webhook.last-webhook-storage' );
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
 		return new WebhookRegistrar(
 			$factory,
 			$endpoint,
 			$rest_endpoint,
+			$last_webhook_storage,
 			$logger
 		);
 	},
@@ -48,6 +52,7 @@ return array(
 		$verify_request   = ! defined( 'PAYPAL_WEBHOOK_REQUEST_VERIFICATION' ) || PAYPAL_WEBHOOK_REQUEST_VERIFICATION;
 		$webhook_event_factory      = $container->get( 'api.factory.webhook-event' );
 		$simulation      = $container->get( 'webhook.status.simulation' );
+		$last_webhook_storage = $container->get( 'webhook.last-webhook-storage' );
 
 		return new IncomingWebhookEndpoint(
 			$webhook_endpoint,
@@ -56,6 +61,7 @@ return array(
 			$verify_request,
 			$webhook_event_factory,
 			$simulation,
+			$last_webhook_storage,
 			... $handler
 		);
 	},
@@ -63,12 +69,15 @@ return array(
 		$logger         = $container->get( 'woocommerce.logger.woocommerce' );
 		$prefix         = $container->get( 'api.prefix' );
 		$order_endpoint = $container->get( 'api.endpoint.order' );
+		$authorized_payments_processor = $container->get( 'wcgateway.processor.authorized-payments' );
 		return array(
 			new CheckoutOrderApproved( $logger, $prefix, $order_endpoint ),
 			new CheckoutOrderCompleted( $logger, $prefix ),
 			new PaymentCaptureRefunded( $logger, $prefix ),
 			new PaymentCaptureReversed( $logger, $prefix ),
 			new PaymentCaptureCompleted( $logger, $prefix, $order_endpoint ),
+			new VaultPaymentTokenCreated( $logger, $prefix, $authorized_payments_processor ),
+			new VaultCreditCardCreated( $logger, $prefix ),
 		);
 	},
 
@@ -152,7 +161,8 @@ return array(
 
 	'webhook.status.assets'                   => function( ContainerInterface $container ) : WebhooksStatusPageAssets {
 		return new WebhooksStatusPageAssets(
-			$container->get( 'webhook.module-url' )
+			$container->get( 'webhook.module-url' ),
+			$container->get( 'ppcp.asset-version' )
 		);
 	},
 
@@ -183,10 +193,17 @@ return array(
 		);
 	},
 
+	'webhook.last-webhook-storage'            => static function ( ContainerInterface $container ): WebhookInfoStorage {
+		return new WebhookInfoStorage( $container->get( 'webhook.last-webhook-storage.key' ) );
+	},
+	'webhook.last-webhook-storage.key'        => static function ( ContainerInterface $container ): string {
+		return 'ppcp-last-webhook';
+	},
+
 	'webhook.module-url'                      => static function ( ContainerInterface $container ): string {
 		return plugins_url(
 			'/modules/ppcp-webhooks/',
-			dirname( __FILE__, 3 ) . '/woocommerce-paypal-payments.php'
+			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
 		);
 	},
 );

@@ -57,7 +57,7 @@ class ConnectAdminNotice {
 		$message = sprintf(
 			/* translators: %1$s the gateway name. */
 			__(
-				'PayPal Checkout is almost ready. To get started, <a href="%1$s">connect your account</a>.',
+				'PayPal Payments is almost ready. To get started, <a href="%1$s">connect your account</a>.',
 				'woocommerce-paypal-payments'
 			),
 			admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' )
@@ -71,6 +71,6 @@ class ConnectAdminNotice {
 	 * @return bool
 	 */
 	protected function should_display(): bool {
-		return $this->state->current_state() < State::STATE_PROGRESSIVE;
+		return $this->state->current_state() !== State::STATE_ONBOARDED;
 	}
 }

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<files psalm-version="4.11.2@6fba5eb554f9507b72932f9c75533d8af593688d">
+<files psalm-version="4.22.0@fc2c6ab4d5fa5d644d8617089f012f3bb84b8703">
   <file src="modules/ppcp-api-client/services.php">
     <UndefinedConstant occurrences="2">
       <code>PAYPAL_API_URL</code>
@@ -12,9 +12,6 @@
     </UndefinedMethod>
   </file>
   <file src="modules/ppcp-api-client/src/Endpoint/IdentityToken.php">
-    <InvalidOperand occurrences="1">
-      <code>$customer_id</code>
-    </InvalidOperand>
     <UndefinedMethod occurrences="1">
       <code>$response</code>
     </UndefinedMethod>
@@ -52,9 +49,6 @@
     </UndefinedMethod>
   </file>
   <file src="modules/ppcp-api-client/src/Endpoint/PaymentTokenEndpoint.php">
-    <InvalidOperand occurrences="1">
-      <code>$id</code>
-    </InvalidOperand>
     <UndefinedMethod occurrences="1">
       <code>$response</code>
     </UndefinedMethod>
@@ -212,27 +206,12 @@
     <RedundantCast occurrences="1">
       <code>(float) $item_total</code>
     </RedundantCast>
-    <RedundantCastGivenDocblockType occurrences="8">
-      <code>(float) $cart-&gt;get_cart_contents_tax()</code>
-      <code>(float) $cart-&gt;get_discount_tax()</code>
-      <code>(float) $cart-&gt;get_discount_total()</code>
-      <code>(float) $cart-&gt;get_shipping_total()</code>
-      <code>(float) $cart-&gt;get_total( 'numeric' )</code>
-      <code>(float) $order-&gt;get_total()</code>
-      <code>(float) $order-&gt;get_total_discount( false )</code>
-      <code>(float) $order-&gt;get_total_discount( false )</code>
-    </RedundantCastGivenDocblockType>
   </file>
   <file src="modules/ppcp-api-client/src/Factory/ItemFactory.php">
     <ArgumentTypeCoercion occurrences="1"/>
     <PossiblyInvalidArgument occurrences="1">
       <code>$fees_from_session</code>
     </PossiblyInvalidArgument>
-    <RedundantCastGivenDocblockType occurrences="3">
-      <code>(float) $order-&gt;get_item_subtotal( $item, false )</code>
-      <code>(float) $order-&gt;get_item_subtotal( $item, true )</code>
-      <code>(int) $item-&gt;get_quantity()</code>
-    </RedundantCastGivenDocblockType>
   </file>
   <file src="modules/ppcp-api-client/src/Factory/PayerFactory.php">
     <PossiblyNullArgument occurrences="2">
@@ -269,18 +248,11 @@
     <MissingReturnType occurrences="1">
       <code>delete</code>
     </MissingReturnType>
-    <RedundantCastGivenDocblockType occurrences="1">
-      <code>(bool) set_transient( $this-&gt;prefix . $key, $value )</code>
-    </RedundantCastGivenDocblockType>
   </file>
   <file src="modules/ppcp-api-client/src/Repository/ApplicationContextRepository.php">
     <PossiblyFalseArgument occurrences="1">
       <code>strrpos( $locale, '-' )</code>
     </PossiblyFalseArgument>
-    <RedundantCastGivenDocblockType occurrences="2">
-      <code>(string) home_url( \WC_AJAX::get_endpoint( ReturnUrlEndpoint::ENDPOINT ) )</code>
-      <code>(string) wc_get_checkout_url()</code>
-    </RedundantCastGivenDocblockType>
   </file>
   <file src="modules/ppcp-api-client/src/Repository/PayPalRequestIdRepository.php">
     <UndefinedConstant occurrences="1">
@@ -288,22 +260,18 @@
     </UndefinedConstant>
   </file>
   <file src="modules/ppcp-button/services.php">
+    <PossiblyFalseArgument occurrences="1">
+      <code>realpath( __FILE__ )</code>
+    </PossiblyFalseArgument>
     <UndefinedConstant occurrences="2">
       <code>CONNECT_WOO_CLIENT_ID</code>
       <code>CONNECT_WOO_SANDBOX_CLIENT_ID</code>
     </UndefinedConstant>
   </file>
   <file src="modules/ppcp-button/src/Assets/SmartButton.php">
-    <InvalidScalarArgument occurrences="1">
-      <code>1</code>
-    </InvalidScalarArgument>
-    <MissingClosureParamType occurrences="2">
-      <code>$default_fields</code>
+    <MissingClosureParamType occurrences="1">
       <code>$id</code>
     </MissingClosureParamType>
-    <MissingClosureReturnType occurrences="1">
-      <code>function ( $default_fields, $id ) {</code>
-    </MissingClosureReturnType>
     <MissingReturnType occurrences="3">
       <code>button_renderer</code>
       <code>dcc_renderer</code>
@@ -428,18 +396,14 @@
     <PossiblyUndefinedMethod occurrences="1">
       <code>get_payment_method</code>
     </PossiblyUndefinedMethod>
-    <UndefinedFunction occurrences="5">
-      <code>wcs_get_subscription( absint( $_GET['subscription_id'] ) )</code>
-      <code>wcs_get_subscription( absint( get_query_var( 'order-pay' ) ) )</code>
-      <code>wcs_get_subscription( absint( get_query_var( 'view-subscription' ) ) )</code>
-      <code>wcs_is_view_subscription_page()</code>
-      <code>wcs_order_contains_renewal( $order )</code>
-    </UndefinedFunction>
   </file>
   <file src="modules/ppcp-onboarding/services.php">
     <MissingClosureParamType occurrences="1">
       <code>$container</code>
     </MissingClosureParamType>
+    <PossiblyFalseArgument occurrences="1">
+      <code>realpath( __FILE__ )</code>
+    </PossiblyFalseArgument>
     <UndefinedConstant occurrences="10">
       <code>CONNECT_WOO_MERCHANT_ID</code>
       <code>CONNECT_WOO_SANDBOX_MERCHANT_ID</code>
@@ -452,13 +416,6 @@
       <code>PAYPAL_SANDBOX_API_URL</code>
       <code>PAYPAL_SANDBOX_API_URL</code>
     </UndefinedConstant>
-  </file>
-  <file src="modules/ppcp-onboarding/src/Assets/OnboardingAssets.php">
-    <InvalidScalarArgument occurrences="3">
-      <code>1</code>
-      <code>1</code>
-      <code>1</code>
-    </InvalidScalarArgument>
   </file>
   <file src="modules/ppcp-onboarding/src/OnboardingModule.php">
     <MissingClosureParamType occurrences="3">
@@ -523,28 +480,14 @@
       <code>getKey</code>
     </MissingReturnType>
   </file>
-  <file src="modules/ppcp-subscription/src/Helper/SubscriptionHelper.php">
-    <UndefinedClass occurrences="1">
-      <code>\WC_Subscriptions_Admin</code>
-    </UndefinedClass>
-  </file>
   <file src="modules/ppcp-subscription/src/RenewalHandler.php">
     <FalsableReturnStatement occurrences="1">
       <code>current( $tokens )</code>
     </FalsableReturnStatement>
-    <MissingReturnType occurrences="3">
-      <code>capture_order</code>
+    <MissingReturnType occurrences="2">
       <code>process_order</code>
       <code>renew</code>
     </MissingReturnType>
-    <RedundantCastGivenDocblockType occurrences="6">
-      <code>(int) $customer-&gt;get_id()</code>
-      <code>(int) $customer-&gt;get_id()</code>
-      <code>(int) $wc_order-&gt;get_customer_id()</code>
-      <code>(int) $wc_order-&gt;get_id()</code>
-      <code>(int) $wc_order-&gt;get_id()</code>
-      <code>(int) $wc_order-&gt;get_id()</code>
-    </RedundantCastGivenDocblockType>
     <TooManyArguments occurrences="1">
       <code>apply_filters( 'woocommerce_paypal_payments_subscriptions_get_token_for_customer', null, $customer, $wc_order )</code>
     </TooManyArguments>
@@ -567,9 +510,11 @@
     <PossiblyNullReference occurrences="1">
       <code>get</code>
     </PossiblyNullReference>
-    <UndefinedClass occurrences="1">
-      <code>\WC_Subscription</code>
-    </UndefinedClass>
+  </file>
+  <file src="modules/ppcp-vaulting/services.php">
+    <PossiblyFalseArgument occurrences="1">
+      <code>realpath( __FILE__ )</code>
+    </PossiblyFalseArgument>
   </file>
   <file src="modules/ppcp-vaulting/src/Assets/MyAccountPaymentsAssets.php">
     <MissingReturnType occurrences="1">
@@ -603,6 +548,13 @@
     </MissingReturnType>
   </file>
   <file src="modules/ppcp-wc-gateway/services.php">
+    <PossiblyFalseArgument occurrences="2">
+      <code>realpath( __FILE__ )</code>
+      <code>realpath( __FILE__ )</code>
+    </PossiblyFalseArgument>
+    <PossiblyFalseOperand occurrences="1">
+      <code>substr( $letters, 0, 6 )</code>
+    </PossiblyFalseOperand>
     <PossiblyInvalidArgument occurrences="5">
       <code>wp_unslash( $_GET[ SectionsRenderer::KEY ] )</code>
       <code>wp_unslash( $_GET['page'] )</code>
@@ -637,7 +589,6 @@
   </file>
   <file src="modules/ppcp-wc-gateway/src/Checkout/CheckoutPayPalAddressPreset.php">
     <PossiblyNullReference occurrences="3">
-      <code>phone</code>
       <code>phone</code>
       <code>phone</code>
       <code>purchase_units</code>
@@ -688,9 +639,6 @@
     </PossiblyUndefinedVariable>
   </file>
   <file src="modules/ppcp-wc-gateway/src/Processor/AuthorizedPaymentsProcessor.php">
-    <MissingReturnType occurrences="1">
-      <code>capture_authorizations</code>
-    </MissingReturnType>
     <PossiblyNullReference occurrences="1">
       <code>authorizations</code>
     </PossiblyNullReference>
@@ -764,7 +712,7 @@
     </RedundantCast>
   </file>
   <file src="modules/ppcp-wc-gateway/src/WCGatewayModule.php">
-    <MissingClosureParamType occurrences="15">
+    <MissingClosureParamType occurrences="13">
       <code>$args</code>
       <code>$args</code>
       <code>$column</code>
@@ -774,9 +722,7 @@
       <code>$methods</code>
       <code>$methods</code>
       <code>$notices</code>
-      <code>$order</code>
       <code>$order_actions</code>
-      <code>$recipient</code>
       <code>$value</code>
       <code>$wc_order_id</code>
       <code>$wc_order_id</code>
@@ -792,6 +738,11 @@
     <MissingClosureParamType occurrences="1">
       <code>$container</code>
     </MissingClosureParamType>
+  </file>
+  <file src="modules/ppcp-webhooks/services.php">
+    <PossiblyFalseArgument occurrences="1">
+      <code>realpath( __FILE__ )</code>
+    </PossiblyFalseArgument>
   </file>
   <file src="modules/ppcp-webhooks/src/Endpoint/ResubscribeEndpoint.php">
     <MissingReturnType occurrences="1">
@@ -899,9 +850,6 @@
       <code>$request['resource']['custom_id']</code>
       <code>$request['resource']['id']</code>
     </PossiblyNullArrayAccess>
-    <RedundantCastGivenDocblockType occurrences="1">
-      <code>(bool) $wc_order-&gt;update_status( 'cancelled' )</code>
-    </RedundantCastGivenDocblockType>
   </file>
   <file src="modules/ppcp-webhooks/src/IncomingWebhookEndpoint.php">
     <InvalidReturnStatement occurrences="2">
@@ -916,6 +864,10 @@
     <PossiblyNullArgument occurrences="1">
       <code>$request['event_type']</code>
     </PossiblyNullArgument>
-    <RedundantCastGivenDocblockType occurrences="1"/>
+  </file>
+  <file src="src/services.php">
+    <PossiblyFalseArgument occurrences="1">
+      <code>realpath( __FILE__ )</code>
+    </PossiblyFalseArgument>
   </file>
 </files>

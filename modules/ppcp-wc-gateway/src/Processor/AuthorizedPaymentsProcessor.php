@@ -10,14 +10,19 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Processor;
 
 use Exception;
+use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\AuthorizationStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 
@@ -73,34 +78,54 @@ class AuthorizedPaymentsProcessor {
 	private $notice;
 
 	/**
+	 * The settings.
+	 *
+	 * @var ContainerInterface
+	 */
+	private $config;
+
+	/**
+	 * The subscription helper.
+	 *
+	 * @var SubscriptionHelper
+	 */
+	private $subscription_helper;
+
+	/**
 	 * AuthorizedPaymentsProcessor constructor.
 	 *
 	 * @param OrderEndpoint              $order_endpoint The Order endpoint.
 	 * @param PaymentsEndpoint           $payments_endpoint The Payments endpoint.
 	 * @param LoggerInterface            $logger The logger.
 	 * @param AuthorizeOrderActionNotice $notice The notice.
+	 * @param ContainerInterface         $config The settings.
+	 * @param SubscriptionHelper         $subscription_helper The subscription helper.
 	 */
 	public function __construct(
 		OrderEndpoint $order_endpoint,
 		PaymentsEndpoint $payments_endpoint,
 		LoggerInterface $logger,
-		AuthorizeOrderActionNotice $notice
+		AuthorizeOrderActionNotice $notice,
+		ContainerInterface $config,
+		SubscriptionHelper $subscription_helper
 	) {
 
-		$this->order_endpoint    = $order_endpoint;
-		$this->payments_endpoint = $payments_endpoint;
-		$this->logger            = $logger;
-		$this->notice            = $notice;
+		$this->order_endpoint      = $order_endpoint;
+		$this->payments_endpoint   = $payments_endpoint;
+		$this->logger              = $logger;
+		$this->notice              = $notice;
+		$this->config              = $config;
+		$this->subscription_helper = $subscription_helper;
 	}
 
 	/**
 	 * Process a WooCommerce order.
 	 *
-	 * @param \WC_Order $wc_order The WooCommerce order.
+	 * @param WC_Order $wc_order The WooCommerce order.
 	 *
 	 * @return string One of the AuthorizedPaymentsProcessor status constants.
 	 */
-	public function process( \WC_Order $wc_order ): string {
+	public function process( WC_Order $wc_order ): string {
 		$this->captures = array();
 
 		try {
@@ -123,7 +148,7 @@ class AuthorizedPaymentsProcessor {
 		}
 
 		try {
-			$this->capture_authorizations( ...$authorizations );
+			$this->captures[] = $this->capture_authorization( $wc_order, ...$authorizations );
 		} catch ( Exception $exception ) {
 			$this->logger->error( 'Failed to capture authorization: ' . $exception->getMessage() );
 			return self::FAILED;
@@ -144,11 +169,11 @@ class AuthorizedPaymentsProcessor {
 	/**
 	 * Captures an authorized payment for an WooCommerce order.
 	 *
-	 * @param \WC_Order $wc_order The WooCommerce order.
+	 * @param WC_Order $wc_order The WooCommerce order.
 	 *
 	 * @return bool
 	 */
-	public function capture_authorized_payment( \WC_Order $wc_order ): bool {
+	public function capture_authorized_payment( WC_Order $wc_order ): bool {
 		$result_status = $this->process( $wc_order );
 		$this->render_authorization_message_for_status( $result_status );
 
@@ -189,6 +214,71 @@ class AuthorizedPaymentsProcessor {
 	}
 
 	/**
+	 * Captures the authorized payments for the given customer.
+	 *
+	 * @param int $customer_id The customer id.
+	 */
+	public function capture_authorized_payments_for_customer( int $customer_id ): void {
+
+		$wc_orders = wc_get_orders(
+			array(
+				'customer_id' => $customer_id,
+				'status'      => array( 'wc-on-hold' ),
+				'limit'       => -1,
+			)
+		);
+
+		if (
+			$this->config->has( 'intent' )
+			&& strtoupper( (string) $this->config->get( 'intent' ) ) === 'CAPTURE'
+			&& is_array( $wc_orders )
+		) {
+			foreach ( $wc_orders as $wc_order ) {
+				if (
+					$this->subscription_helper->has_subscription( $wc_order->get_id() )
+					&& $wc_order->get_meta( '_ppcp_captured_vault_webhook' ) === 'false'
+				) {
+					$this->capture_authorized_payment( $wc_order );
+					$wc_order->update_meta_data( '_ppcp_captured_vault_webhook', 'true' );
+				}
+			}
+		}
+	}
+
+	/**
+	 * Voids authorizations for the given PayPal order.
+	 *
+	 * @param Order $order The PayPal order.
+	 * @return void
+	 * @throws RuntimeException When there is a problem voiding authorizations.
+	 */
+	public function void_authorizations( Order $order ): void {
+		$purchase_units = $order->purchase_units();
+		if ( ! $purchase_units ) {
+			throw new RuntimeException( 'No purchase units.' );
+		}
+
+		$payments = $purchase_units[0]->payments();
+		if ( ! $payments ) {
+			throw new RuntimeException( 'No payments.' );
+		}
+
+		$voidable_authorizations = array_filter(
+			$payments->authorizations(),
+			function ( Authorization $authorization ): bool {
+				return $authorization->is_voidable();
+			}
+		);
+		if ( ! $voidable_authorizations ) {
+			throw new RuntimeException( 'No voidable authorizations.' );
+		}
+
+		foreach ( $voidable_authorizations as $authorization ) {
+			$this->payments_endpoint->void( $authorization );
+		}
+	}
+
+	/**
 	 * Displays the notice for a status.
 	 *
 	 * @param string $status The status.
@@ -211,11 +301,11 @@ class AuthorizedPaymentsProcessor {
 	/**
 	 * Returns the PayPal order from a given WooCommerce order.
 	 *
-	 * @param \WC_Order $wc_order The WooCommerce order.
+	 * @param WC_Order $wc_order The WooCommerce order.
 	 *
 	 * @return Order
 	 */
-	private function paypal_order_from_wc_order( \WC_Order $wc_order ): Order {
+	private function paypal_order_from_wc_order( WC_Order $wc_order ): Order {
 		$order_id = $wc_order->get_meta( PayPalGateway::ORDER_ID_META_KEY );
 		return $this->order_endpoint->order( $order_id );
 	}
@@ -239,15 +329,21 @@ class AuthorizedPaymentsProcessor {
 	}
 
 	/**
-	 * Captures the authorizations.
+	 * Captures the authorization.
 	 *
+	 * @param WC_Order      $order The order.
 	 * @param Authorization ...$authorizations All authorizations.
+	 * @throws Exception If capture failed.
 	 */
-	private function capture_authorizations( Authorization ...$authorizations ) {
+	private function capture_authorization( WC_Order $order, Authorization ...$authorizations ): Capture {
 		$uncaptured_authorizations = $this->authorizations_to_capture( ...$authorizations );
-		foreach ( $uncaptured_authorizations as $authorization ) {
-			$this->captures[] = $this->payments_endpoint->capture( $authorization->id() );
+		if ( ! $uncaptured_authorizations ) {
+			throw new Exception( 'No authorizations to capture.' );
 		}
+
+		$authorization = end( $uncaptured_authorizations );
+
+		return $this->payments_endpoint->capture( $authorization->id(), new Money( (float) $order->get_total(), $order->get_currency() ) );
 	}
 
 	/**

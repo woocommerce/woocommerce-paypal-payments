@@ -3,8 +3,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Repository;
 
-use WooCommerce\PayPalCommerce\ApiClient\TestCase;
-use WooCommerce\PayPalCommerce\Button\Assets\SmartButton;
+use WooCommerce\PayPalCommerce\TestCase;
 use function Brain\Monkey\Functions\when;
 
 class ApplicationContextRepositoryTest extends TestCase

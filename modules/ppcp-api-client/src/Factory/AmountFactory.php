@@ -14,12 +14,15 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\AmountBreakdown;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\Subscription\FreeTrialHandlerTrait;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 
 /**
  * Class AmountFactory
  */
 class AmountFactory {
 
+	use FreeTrialHandlerTrait;
 
 	/**
 	 * The item factory.
@@ -29,12 +32,30 @@ class AmountFactory {
 	private $item_factory;
 
 	/**
+	 * The Money factory.
+	 *
+	 * @var MoneyFactory
+	 */
+	private $money_factory;
+
+	/**
+	 * 3-letter currency code of the shop.
+	 *
+	 * @var string
+	 */
+	private $currency;
+
+	/**
 	 * AmountFactory constructor.
 	 *
-	 * @param ItemFactory $item_factory The Item factory.
+	 * @param ItemFactory  $item_factory The Item factory.
+	 * @param MoneyFactory $money_factory The Money factory.
+	 * @param string       $currency 3-letter currency code of the shop.
 	 */
-	public function __construct( ItemFactory $item_factory ) {
-		$this->item_factory = $item_factory;
+	public function __construct( ItemFactory $item_factory, MoneyFactory $money_factory, string $currency ) {
+		$this->item_factory  = $item_factory;
+		$this->money_factory = $money_factory;
+		$this->currency      = $currency;
 	}
 
 	/**
@@ -45,8 +66,7 @@ class AmountFactory {
 	 * @return Amount
 	 */
 	public function from_wc_cart( \WC_Cart $cart ): Amount {
-		$currency = get_woocommerce_currency();
-		$total    = new Money( (float) $cart->get_total( 'numeric' ), $currency );
+		$total = new Money( (float) $cart->get_total( 'numeric' ), $this->currency );
 
 		$total_fees_amount = 0;
 		$fees              = WC()->session->get( 'ppcp_fees' );
@@ -57,22 +77,22 @@ class AmountFactory {
 		}
 
 		$item_total = $cart->get_cart_contents_total() + $cart->get_discount_total() + $total_fees_amount;
-		$item_total = new Money( (float) $item_total, $currency );
+		$item_total = new Money( (float) $item_total, $this->currency );
 		$shipping   = new Money(
 			(float) $cart->get_shipping_total() + $cart->get_shipping_tax(),
-			$currency
+			$this->currency
 		);
 
 		$taxes = new Money(
-			(float) $cart->get_cart_contents_tax() + (float) $cart->get_discount_tax(),
-			$currency
+			$cart->get_subtotal_tax(),
+			$this->currency
 		);
 
 		$discount = null;
 		if ( $cart->get_discount_total() ) {
 			$discount = new Money(
 				(float) $cart->get_discount_total() + $cart->get_discount_tax(),
-				$currency
+				$this->currency
 			);
 		}
 
@@ -100,9 +120,15 @@ class AmountFactory {
 	 * @return Amount
 	 */
 	public function from_wc_order( \WC_Order $order ): Amount {
-		$currency   = $order->get_currency();
-		$items      = $this->item_factory->from_wc_order( $order );
-		$total      = new Money( (float) $order->get_total(), $currency );
+		$currency = $order->get_currency();
+		$items    = $this->item_factory->from_wc_order( $order );
+
+		$total_value = (float) $order->get_total();
+		if ( CreditCardGateway::ID === $order->get_payment_method() && $this->is_free_trial_order( $order ) ) {
+			$total_value = 1.0;
+		}
+		$total = new Money( $total_value, $currency );
+
 		$item_total = new Money(
 			(float) array_reduce(
 				$items,
@@ -161,16 +187,7 @@ class AmountFactory {
 	 * @throws RuntimeException When JSON object is malformed.
 	 */
 	public function from_paypal_response( \stdClass $data ): Amount {
-		if ( ! isset( $data->value ) || ! is_numeric( $data->value ) ) {
-			throw new RuntimeException( __( 'No value given', 'woocommerce-paypal-payments' ) );
-		}
-		if ( ! isset( $data->currency_code ) ) {
-			throw new RuntimeException(
-				__( 'No currency given', 'woocommerce-paypal-payments' )
-			);
-		}
-
-		$money     = new Money( (float) $data->value, $data->currency_code );
+		$money     = $this->money_factory->from_paypal_response( $data );
 		$breakdown = ( isset( $data->breakdown ) ) ? $this->break_down( $data->breakdown ) : null;
 		return new Amount( $money, $breakdown );
 	}

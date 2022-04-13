@@ -6,6 +6,7 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 use Hamcrest\Matchers;
 use Requests_Utility_CaseInsensitiveDictionary;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Address;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatus;
@@ -13,8 +14,10 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PatchCollection;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PayerName;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payments;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Shipping;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Token;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
@@ -22,20 +25,22 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PatchCollectionFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ErrorResponse;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
-use WooCommerce\PayPalCommerce\ApiClient\TestCase;
 use Mockery;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\TestCase;
 use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
 
 class OrderEndpointTest extends TestCase
 {
+	private $shipping;
 
 	public function setUp(): void
 	{
 		parent::setUp();
-		when('wc_print_r')->returnArg();
+
+		$this->shipping = new Shipping('shipping', new Address('US', 'street', '', 'CA', '', '12345'));
 	}
 
 	public function testOrderDefault()
@@ -912,7 +917,7 @@ class OrderEndpointTest extends TestCase
         $purchaseUnit
             ->expects('to_array')
             ->andReturn(['singlePurchaseUnit']);
-        $purchaseUnit->expects('shipping')->andReturn(true);
+        $purchaseUnit->shouldReceive('shipping')->andReturn($this->shipping);
 
         expect('wp_remote_get')
             ->andReturnUsing(
@@ -941,7 +946,13 @@ class OrderEndpointTest extends TestCase
             );
         expect('is_wp_error')->with($rawResponse)->andReturn(false);
         expect('wp_remote_retrieve_response_code')->with($rawResponse)->andReturn(201);
-        $result = $testee->create([$purchaseUnit]);
+
+        $payer = Mockery::mock(Payer::class);
+        $payer
+            ->expects('email_address')
+            ->andReturn('');
+
+        $result = $testee->create([$purchaseUnit], $payer);
         $this->assertEquals($expectedOrder, $result);
     }
 
@@ -1015,7 +1026,7 @@ class OrderEndpointTest extends TestCase
         $purchaseUnit
             ->expects('to_array')
             ->andReturn(['singlePurchaseUnit']);
-		$purchaseUnit->expects('shipping')->andReturn(true);
+		$purchaseUnit->shouldReceive('shipping')->andReturn($this->shipping);
 
         expect('wp_remote_get')
             ->andReturnUsing(
@@ -1034,6 +1045,9 @@ class OrderEndpointTest extends TestCase
         expect('wp_remote_retrieve_response_code')->with($rawResponse)->andReturn(201);
 
         $payer = Mockery::mock(Payer::class);
+        $payer->expects('email_address')->andReturn('email@email.com');
+        $payerName = Mockery::mock(PayerName::class);
+        $payer->expects('name')->andReturn($payerName);
         $payer->expects('to_array')->andReturn(['payer']);
         $result = $testee->create([$purchaseUnit], $payer);
         $this->assertEquals($expectedOrder, $result);
@@ -1092,7 +1106,7 @@ class OrderEndpointTest extends TestCase
         $purchaseUnit
             ->expects('to_array')
             ->andReturn(['singlePurchaseUnit']);
-		$purchaseUnit->expects('shipping')->andReturn(true);
+		$purchaseUnit->shouldReceive('shipping')->andReturn($this->shipping);
 
         expect('wp_remote_get')
             ->andReturnUsing(
@@ -1121,7 +1135,13 @@ class OrderEndpointTest extends TestCase
             );
         expect('is_wp_error')->with($rawResponse)->andReturn(true);
         $this->expectException(RuntimeException::class);
-        $testee->create([$purchaseUnit]);
+
+        $payer = Mockery::mock(Payer::class);
+        $payer->expects('email_address')->andReturn('email@email.com');
+        $payerName = Mockery::mock(PayerName::class);
+        $payer->expects('name')->andReturn($payerName);
+        $payer->expects('to_array')->andReturn(['payer']);
+        $testee->create([$purchaseUnit], $payer);
     }
 
     public function testCreateForPurchaseUnitsIsNot201()
@@ -1177,7 +1197,7 @@ class OrderEndpointTest extends TestCase
         $purchaseUnit
             ->expects('to_array')
             ->andReturn(['singlePurchaseUnit']);
-		$purchaseUnit->expects('shipping')->andReturn(true);
+		$purchaseUnit->shouldReceive('shipping')->andReturn($this->shipping);
 
         expect('wp_remote_get')
             ->andReturnUsing(
@@ -1207,6 +1227,11 @@ class OrderEndpointTest extends TestCase
         expect('is_wp_error')->with($rawResponse)->andReturn(false);
         expect('wp_remote_retrieve_response_code')->with($rawResponse)->andReturn(500);
         $this->expectException(RuntimeException::class);
-        $testee->create([$purchaseUnit]);
+        $payer = Mockery::mock(Payer::class);
+        $payer->expects('email_address')->andReturn('email@email.com');
+        $payerName = Mockery::mock(PayerName::class);
+        $payer->expects('name')->andReturn($payerName);
+        $payer->expects('to_array')->andReturn(['payer']);
+        $testee->create([$purchaseUnit], $payer);
     }
 }

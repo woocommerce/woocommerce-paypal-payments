@@ -5,17 +5,18 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use WooCommerce\PayPalCommerce\ApiClient\TestCase;
+use WooCommerce\PayPalCommerce\TestCase;
 use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
 use Mockery;
 
 class ItemFactoryTest extends TestCase
 {
+	private $currency = 'EUR';
 
     public function testFromCartDefault()
     {
-        $testee = new ItemFactory();
+        $testee = new ItemFactory($this->currency);
 
         $product = Mockery::mock(\WC_Product_Simple::class);
         $product
@@ -41,8 +42,6 @@ class ItemFactoryTest extends TestCase
             ->expects('get_cart_contents')
             ->andReturn($items);
 
-        expect('get_woocommerce_currency')
-            ->andReturn('EUR');
         expect('wc_get_price_including_tax')
             ->with($product)
             ->andReturn(2.995);
@@ -78,7 +77,7 @@ class ItemFactoryTest extends TestCase
 
     public function testFromCartDigitalGood()
     {
-        $testee = new ItemFactory();
+        $testee = new ItemFactory($this->currency);
 
         $product = Mockery::mock(\WC_Product_Simple::class);
         $product
@@ -104,8 +103,6 @@ class ItemFactoryTest extends TestCase
             ->expects('get_cart_contents')
             ->andReturn($items);
 
-        expect('get_woocommerce_currency')
-            ->andReturn('EUR');
         expect('wc_get_price_including_tax')
             ->with($product)
             ->andReturn(2.995);
@@ -130,7 +127,7 @@ class ItemFactoryTest extends TestCase
 
     public function testFromWcOrderDefault()
     {
-        $testee = new ItemFactory();
+        $testee = new ItemFactory($this->currency);
 
         $product = Mockery::mock(\WC_Product::class);
         $product
@@ -160,7 +157,7 @@ class ItemFactoryTest extends TestCase
         $order = Mockery::mock(\WC_Order::class);
         $order
             ->expects('get_currency')
-            ->andReturn('EUR');
+            ->andReturn($this->currency);
         $order
             ->expects('get_items')
             ->andReturn([$item]);
@@ -193,7 +190,7 @@ class ItemFactoryTest extends TestCase
 
     public function testFromWcOrderDigitalGood()
     {
-        $testee = new ItemFactory();
+        $testee = new ItemFactory($this->currency);
 
         $product = Mockery::mock(\WC_Product::class);
         $product
@@ -223,7 +220,7 @@ class ItemFactoryTest extends TestCase
         $order = Mockery::mock(\WC_Order::class);
         $order
             ->expects('get_currency')
-            ->andReturn('EUR');
+            ->andReturn($this->currency);
         $order
             ->expects('get_items')
             ->andReturn([$item]);
@@ -251,7 +248,7 @@ class ItemFactoryTest extends TestCase
     {
         $name = 'öawjetöagrjjaglörjötairgjaflkögjöalfdgjöalfdjblköajtlkfjdbljslkgjfklösdgjalkerjtlrajglkfdajblköajflköbjsdgjadfgjaöfgjaölkgjkladjgfköajgjaflgöjafdlgjafdögjdsflkgjö4jwegjfsdbvxj öskögjtaeröjtrgt';
         $description = 'öawjetöagrjjaglörjötairgjaflkögjöalfdgjöalfdjblköajtlkfjdbljslkgjfklösdgjalkerjtlrajglkfdajblköajflköbjsdgjadfgjaöfgjaölkgjkladjgfköajgjaflgöjafdlgjafdögjdsflkgjö4jwegjfsdbvxj öskögjtaeröjtrgt';
-        $testee = new ItemFactory();
+        $testee = new ItemFactory($this->currency);
 
         $product = Mockery::mock(\WC_Product::class);
         $product
@@ -308,7 +305,7 @@ class ItemFactoryTest extends TestCase
 
     public function testFromPayPalResponse()
     {
-        $testee = new ItemFactory();
+        $testee = new ItemFactory($this->currency);
 
         $response = (object) [
             'name' => 'name',
@@ -335,7 +332,7 @@ class ItemFactoryTest extends TestCase
 
     public function testFromPayPalResponseDigitalGood()
     {
-        $testee = new ItemFactory();
+        $testee = new ItemFactory($this->currency);
 
         $response = (object) [
             'name' => 'name',
@@ -343,7 +340,7 @@ class ItemFactoryTest extends TestCase
             'quantity' => 1,
             'unit_amount' => (object) [
                 'value' => 1,
-                'currency_code' => 'EUR',
+                'currency_code' => $this->currency,
             ],
             'category' => Item::DIGITAL_GOODS,
         ];
@@ -356,7 +353,7 @@ class ItemFactoryTest extends TestCase
 
     public function testFromPayPalResponseHasTax()
     {
-        $testee = new ItemFactory();
+        $testee = new ItemFactory($this->currency);
 
         $response = (object) [
             'name' => 'name',
@@ -377,7 +374,7 @@ class ItemFactoryTest extends TestCase
 
     public function testFromPayPalResponseThrowsWithoutName()
     {
-        $testee = new ItemFactory();
+        $testee = new ItemFactory($this->currency);
 
         $response = (object) [
             'description' => 'description',
@@ -397,7 +394,7 @@ class ItemFactoryTest extends TestCase
 
     public function testFromPayPalResponseThrowsWithoutQuantity()
     {
-        $testee = new ItemFactory();
+        $testee = new ItemFactory($this->currency);
 
         $response = (object) [
             'name' => 'name',
@@ -417,7 +414,7 @@ class ItemFactoryTest extends TestCase
 
     public function testFromPayPalResponseThrowsWithStringInQuantity()
     {
-        $testee = new ItemFactory();
+        $testee = new ItemFactory($this->currency);
 
         $response = (object) [
             'name' => 'name',
@@ -438,7 +435,7 @@ class ItemFactoryTest extends TestCase
 
     public function testFromPayPalResponseThrowsWithWrongUnitAmount()
     {
-        $testee = new ItemFactory();
+        $testee = new ItemFactory($this->currency);
 
         $response = (object) [
             'name' => 'name',

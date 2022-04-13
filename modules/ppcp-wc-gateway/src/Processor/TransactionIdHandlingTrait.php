@@ -36,6 +36,15 @@ trait TransactionIdHandlingTrait {
 		try {
 			$wc_order->set_transaction_id( $transaction_id );
 			$wc_order->save();
+
+			$wc_order->add_order_note(
+				sprintf(
+					/* translators: %s is the PayPal transaction ID */
+					__( 'PayPal transaction ID: %s', 'woocommerce-paypal-payments' ),
+					$transaction_id
+				)
+			);
+
 			return true;
 		} catch ( Exception $exception ) {
 			if ( $logger ) {

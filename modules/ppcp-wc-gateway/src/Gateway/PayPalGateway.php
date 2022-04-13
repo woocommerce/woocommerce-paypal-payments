@@ -18,6 +18,7 @@ use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
+use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
@@ -36,6 +37,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	const INTENT_META_KEY             = '_ppcp_paypal_intent';
 	const ORDER_ID_META_KEY           = '_ppcp_paypal_order_id';
 	const ORDER_PAYMENT_MODE_META_KEY = '_ppcp_paypal_payment_mode';
+	const FEES_META_KEY               = '_ppcp_paypal_fees';
 
 	/**
 	 * The Settings Renderer.
@@ -43,6 +45,13 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @var SettingsRenderer
 	 */
 	protected $settings_renderer;
+
+	/**
+	 * The funding source renderer.
+	 *
+	 * @var FundingSourceRenderer
+	 */
+	protected $funding_source_renderer;
 
 	/**
 	 * The processor for orders.
@@ -153,6 +162,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * PayPalGateway constructor.
 	 *
 	 * @param SettingsRenderer            $settings_renderer The Settings Renderer.
+	 * @param FundingSourceRenderer       $funding_source_renderer The funding source renderer.
 	 * @param OrderProcessor              $order_processor The Order Processor.
 	 * @param AuthorizedPaymentsProcessor $authorized_payments_processor The Authorized Payments Processor.
 	 * @param ContainerInterface          $config The settings.
@@ -170,6 +180,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
+		FundingSourceRenderer $funding_source_renderer,
 		OrderProcessor $order_processor,
 		AuthorizedPaymentsProcessor $authorized_payments_processor,
 		ContainerInterface $config,
@@ -190,6 +201,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->order_processor               = $order_processor;
 		$this->authorized_payments_processor = $authorized_payments_processor;
 		$this->settings_renderer             = $settings_renderer;
+		$this->funding_source_renderer       = $funding_source_renderer;
 		$this->config                        = $config;
 		$this->session_handler               = $session_handler;
 		$this->refund_processor              = $refund_processor;
@@ -240,6 +252,12 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			$this->config->get( 'title' ) : $this->method_title;
 		$this->description        = $this->config->has( 'description' ) ?
 			$this->config->get( 'description' ) : $this->method_description;
+
+		$funding_source = $this->session_handler->funding_source();
+		if ( $funding_source ) {
+			$this->title       = $this->funding_source_renderer->render_name( $funding_source );
+			$this->description = $this->funding_source_renderer->render_description( $funding_source );
+		}
 
 		$this->init_form_fields();
 		$this->init_settings();
@@ -344,8 +362,15 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			);
 		}
 
+		if ( is_admin() ) {
+			return __(
+				'Accept PayPal, Pay Later and alternative payment types.',
+				'woocommerce-paypal-payments'
+			);
+		}
+
 		return __(
-			'Accept PayPal, Pay Later and alternative payment types.',
+			'Pay via PayPal.',
 			'woocommerce-paypal-payments'
 		);
 	}

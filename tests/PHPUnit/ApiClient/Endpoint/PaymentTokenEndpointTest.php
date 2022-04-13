@@ -10,10 +10,13 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Token;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenActionLinksFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
-use WooCommerce\PayPalCommerce\ApiClient\TestCase;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\CustomerRepository;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
+use WooCommerce\PayPalCommerce\TestCase;
 use function Brain\Monkey\Functions\expect;
 
 class PaymentTokenEndpointTest extends TestCase
@@ -23,8 +26,9 @@ class PaymentTokenEndpointTest extends TestCase
     private $host;
     private $bearer;
     private $factory;
-    private $logger;
-    private $prefix;
+	private $payment_token_action_links_factory;
+    private $customer_repository;
+	private $request_id_repository;
     private $sut;
 
     public function setUp(): void
@@ -34,14 +38,18 @@ class PaymentTokenEndpointTest extends TestCase
         $this->host = 'https://example.com/';
         $this->bearer = Mockery::mock(Bearer::class);
         $this->factory = Mockery::mock(PaymentTokenFactory::class);
+        $this->payment_token_action_links_factory = Mockery::mock(PaymentTokenActionLinksFactory::class);
         $this->logger = Mockery::mock(LoggerInterface::class);
-        $this->prefix = 'prefix';
+        $this->customer_repository = Mockery::mock(CustomerRepository::class);
+        $this->request_id_repository = Mockery::mock(PayPalRequestIdRepository::class);
         $this->sut = new PaymentTokenEndpoint(
             $this->host,
             $this->bearer,
             $this->factory,
+			$this->payment_token_action_links_factory,
             $this->logger,
-            $this->prefix
+			$this->customer_repository,
+			$this->request_id_repository
         );
     }
 
@@ -64,7 +72,7 @@ class PaymentTokenEndpointTest extends TestCase
         $token->shouldReceive('token')
             ->andReturn('bearer');
 
-        $this->ensureRequestForUser($rawResponse, $id);
+        $this->ensureRequestForUser($rawResponse, '123abc');
         expect('is_wp_error')->with($rawResponse)->andReturn(false);
         expect('wp_remote_retrieve_response_code')->with($rawResponse)->andReturn(200);
 
@@ -72,6 +80,8 @@ class PaymentTokenEndpointTest extends TestCase
             ->andReturn($paymentToken);
 
 		$this->logger->shouldReceive('debug');
+
+		$this->customer_repository->shouldReceive('customer_id_for_user')->andReturn('123abc');
 
         $result = $this->sut->for_user($id);
         $this->assertInstanceOf(PaymentToken::class, $result[0]);
@@ -89,12 +99,14 @@ class PaymentTokenEndpointTest extends TestCase
             ->andReturn($token);
         $token->shouldReceive('token')
             ->andReturn('bearer');
-        $this->ensureRequestForUser($rawResponse, $id);
+        $this->ensureRequestForUser($rawResponse, '123abc');
 
         expect('wp_remote_get')->andReturn($rawResponse);
         expect('is_wp_error')->with($rawResponse)->andReturn(true);
         $this->logger->shouldReceive('log');
         $this->logger->shouldReceive('debug');
+
+		$this->customer_repository->shouldReceive('customer_id_for_user')->andReturn('123abc');
 
         $this->expectException(RuntimeException::class);
         $this->sut->for_user($id);
@@ -114,7 +126,7 @@ class PaymentTokenEndpointTest extends TestCase
             ->andReturn($token);
         $token->shouldReceive('token')
             ->andReturn('bearer');
-        $this->ensureRequestForUser($rawResponse, $id);
+        $this->ensureRequestForUser($rawResponse, '123abc');
 
 
         expect('wp_remote_get')->andReturn($rawResponse);
@@ -122,6 +134,8 @@ class PaymentTokenEndpointTest extends TestCase
         expect('wp_remote_retrieve_response_code')->with($rawResponse)->andReturn(500);
         $this->logger->shouldReceive('log');
         $this->logger->shouldReceive('debug');
+
+		$this->customer_repository->shouldReceive('customer_id_for_user')->andReturn('123abc');
 
         $this->expectException(PayPalApiException::class);
         $this->sut->for_user($id);
@@ -179,13 +193,12 @@ class PaymentTokenEndpointTest extends TestCase
      * @param int $id
      * @throws \Brain\Monkey\Expectation\Exception\ExpectationArgsRequired
      */
-    private function ensureRequestForUser(array $rawResponse, int $id): void
+    private function ensureRequestForUser(array $rawResponse, string $id): void
     {
         $host = $this->host;
-        $prefix = $this->prefix;
         expect('wp_remote_get')->andReturnUsing(
-            function ($url, $args) use ($rawResponse, $host, $prefix, $id) {
-                if ($url !== $host . 'v2/vault/payment-tokens/?customer_id=' . $prefix . $id) {
+            function ($url, $args) use ($rawResponse, $host, $id) {
+                if ($url !== $host . 'v2/vault/payment-tokens/?customer_id=' . $id) {
                     return false;
                 }
                 if ($args['headers']['Authorization'] !== 'Bearer bearer') {

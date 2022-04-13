@@ -17,6 +17,13 @@ use WP_Error;
 trait RequestTrait {
 
 	/**
+	 * Whether to log the detailed request/response info.
+	 *
+	 * @var bool
+	 */
+	protected $is_request_logging_enabled = true;
+
+	/**
 	 * Performs a request
 	 *
 	 * @param string $url The URL to request.
@@ -39,7 +46,9 @@ trait RequestTrait {
 		}
 
 		$response = wp_remote_get( $url, $args );
-		$this->logger->debug( $this->request_response_string( $url, $args, $response ) );
+		if ( $this->is_request_logging_enabled ) {
+			$this->logger->debug( $this->request_response_string( $url, $args, $response ) );
+		}
 		return $response;
 	}
 

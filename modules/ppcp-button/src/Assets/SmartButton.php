@@ -9,6 +9,9 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Button\Assets;
 
+use Exception;
+use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
@@ -16,9 +19,11 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\Button\Endpoint\StartPayPalVaultingEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\Subscription\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
@@ -29,6 +34,8 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
  * Class SmartButton
  */
 class SmartButton implements SmartButtonInterface {
+
+	use FreeTrialHandlerTrait;
 
 	/**
 	 * The Settings status helper.
@@ -43,6 +50,13 @@ class SmartButton implements SmartButtonInterface {
 	 * @var string
 	 */
 	private $module_url;
+
+	/**
+	 * The assets version.
+	 *
+	 * @var string
+	 */
+	private $version;
 
 	/**
 	 * The Session Handler.
@@ -115,9 +129,38 @@ class SmartButton implements SmartButtonInterface {
 	private $payment_token_repository;
 
 	/**
+	 * 3-letter currency code of the shop.
+	 *
+	 * @var string
+	 */
+	private $currency;
+
+	/**
+	 * All existing funding sources.
+	 *
+	 * @var array
+	 */
+	private $all_funding_sources;
+
+	/**
+	 * The logger.
+	 *
+	 * @var LoggerInterface
+	 */
+	private $logger;
+
+	/**
+	 * Cached payment tokens.
+	 *
+	 * @var PaymentToken[]|null
+	 */
+	private $payment_tokens = null;
+
+	/**
 	 * SmartButton constructor.
 	 *
 	 * @param string                 $module_url The URL to the module.
+	 * @param string                 $version                            The assets version.
 	 * @param SessionHandler         $session_handler The Session Handler.
 	 * @param Settings               $settings The Settings.
 	 * @param PayerFactory           $payer_factory The Payer factory.
@@ -129,9 +172,13 @@ class SmartButton implements SmartButtonInterface {
 	 * @param Environment            $environment The environment object.
 	 * @param PaymentTokenRepository $payment_token_repository The payment token repository.
 	 * @param SettingsStatus         $settings_status The Settings status helper.
+	 * @param string                 $currency 3-letter currency code of the shop.
+	 * @param array                  $all_funding_sources All existing funding sources.
+	 * @param LoggerInterface        $logger The logger.
 	 */
 	public function __construct(
 		string $module_url,
+		string $version,
 		SessionHandler $session_handler,
 		Settings $settings,
 		PayerFactory $payer_factory,
@@ -142,10 +189,14 @@ class SmartButton implements SmartButtonInterface {
 		MessagesApply $messages_apply,
 		Environment $environment,
 		PaymentTokenRepository $payment_token_repository,
-		SettingsStatus $settings_status
+		SettingsStatus $settings_status,
+		string $currency,
+		array $all_funding_sources,
+		LoggerInterface $logger
 	) {
 
 		$this->module_url               = $module_url;
+		$this->version                  = $version;
 		$this->session_handler          = $session_handler;
 		$this->settings                 = $settings;
 		$this->payer_factory            = $payer_factory;
@@ -157,6 +208,9 @@ class SmartButton implements SmartButtonInterface {
 		$this->environment              = $environment;
 		$this->payment_token_repository = $payment_token_repository;
 		$this->settings_status          = $settings_status;
+		$this->currency                 = $currency;
+		$this->all_funding_sources      = $all_funding_sources;
+		$this->logger                   = $logger;
 	}
 
 	/**
@@ -199,14 +253,19 @@ class SmartButton implements SmartButtonInterface {
 				11
 			);
 
+			$subscription_helper = $this->subscription_helper;
 			add_filter(
 				'woocommerce_credit_card_form_fields',
-				function ( $default_fields, $id ) {
+				function ( array $default_fields, $id ) use ( $subscription_helper ) : array {
 					if ( is_user_logged_in() && $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ) && CreditCardGateway::ID === $id ) {
+
 						$default_fields['card-vault'] = sprintf(
-							'<p class="form-row form-row-wide"><label for="vault"><input class="ppcp-credit-card-vault" type="checkbox" id="ppcp-credit-card-vault" name="vault">%s</label></p>',
+							'<p class="form-row form-row-wide"><label for="ppcp-credit-card-vault"><input class="ppcp-credit-card-vault" type="checkbox" id="ppcp-credit-card-vault" name="vault">%s</label></p>',
 							esc_html__( 'Save your Credit Card', 'woocommerce-paypal-payments' )
 						);
+						if ( $subscription_helper->cart_contains_subscription() || $subscription_helper->order_pay_contains_subscription() ) {
+							$default_fields['card-vault'] = '';
+						}
 
 						$tokens = $this->payment_token_repository->all_for_user_id( get_current_user_id() );
 						if ( $tokens && $this->payment_token_repository->tokens_contains_card( $tokens ) ) {
@@ -237,6 +296,38 @@ class SmartButton implements SmartButtonInterface {
 				2
 			);
 		}
+
+		if ( $this->is_free_trial_cart() ) {
+			add_action(
+				'woocommerce_review_order_after_submit',
+				function () {
+					$vaulted_email = $this->get_vaulted_paypal_email();
+					if ( ! $vaulted_email ) {
+						return;
+					}
+
+					?>
+					<div class="ppcp-vaulted-paypal-details">
+						<?php
+						echo wp_kses_post(
+							sprintf(
+							// translators: %1$s - email, %2$s, %3$s - HTML tags for a link.
+								esc_html__(
+									'Using %2$s%1$s%3$s PayPal.',
+									'woocommerce-paypal-payments'
+								),
+								$vaulted_email,
+								'<b>',
+								'</b>'
+							)
+						);
+						?>
+					</div>
+					<?php
+				}
+			);
+		}
+
 		return true;
 	}
 
@@ -311,27 +402,14 @@ class SmartButton implements SmartButtonInterface {
 	 */
 	private function render_button_wrapper_registrar(): bool {
 
-		$not_enabled_on_cart = $this->settings->has( 'button_cart_enabled' ) &&
-			! $this->settings->get( 'button_cart_enabled' );
-		if (
-			is_cart()
-			&& ! $not_enabled_on_cart
-		) {
-			add_action(
-				$this->proceed_to_checkout_button_renderer_hook(),
-				array(
-					$this,
-					'button_renderer',
-				),
-				20
-			);
-		}
-
 		$not_enabled_on_product_page = $this->settings->has( 'button_single_product_enabled' ) &&
 			! $this->settings->get( 'button_single_product_enabled' );
 		if (
 			( is_product() || wc_post_content_has_shortcode( 'product_page' ) )
 			&& ! $not_enabled_on_product_page
+			// TODO: it seems like there is no easy way to properly handle vaulted PayPal free trial,
+			// so disable the buttons for now everywhere except checkout for free trial.
+			&& ! $this->is_free_trial_product()
 		) {
 			add_action(
 				$this->single_product_renderer_hook(),
@@ -343,14 +421,21 @@ class SmartButton implements SmartButtonInterface {
 			);
 		}
 
+		add_action( $this->pay_order_renderer_hook(), array( $this, 'button_renderer' ), 10 );
+
 		$not_enabled_on_minicart = $this->settings->has( 'button_mini_cart_enabled' ) &&
 			! $this->settings->get( 'button_mini_cart_enabled' );
 		if (
-			! $not_enabled_on_minicart
+		! $not_enabled_on_minicart
+			&& ! $this->is_free_trial_cart()
 		) {
 			add_action(
 				$this->mini_cart_button_renderer_hook(),
-				static function () {
+				function () {
+					if ( $this->is_cart_price_total_zero() || $this->is_free_trial_cart() ) {
+						return;
+					}
+
 					echo '<p
                                 id="ppc-button-minicart"
                                 class="woocommerce-mini-cart__buttons buttons"
@@ -360,8 +445,28 @@ class SmartButton implements SmartButtonInterface {
 			);
 		}
 
+		if ( $this->is_cart_price_total_zero() && ! $this->is_free_trial_cart() ) {
+			return false;
+		}
+
+		$not_enabled_on_cart = $this->settings->has( 'button_cart_enabled' ) &&
+			! $this->settings->get( 'button_cart_enabled' );
+		if (
+			is_cart()
+			&& ! $not_enabled_on_cart
+			&& ! $this->is_free_trial_cart()
+		) {
+			add_action(
+				$this->proceed_to_checkout_button_renderer_hook(),
+				array(
+					$this,
+					'button_renderer',
+				),
+				20
+			);
+		}
+
 		add_action( $this->checkout_button_renderer_hook(), array( $this, 'button_renderer' ), 10 );
-		add_action( $this->pay_order_renderer_hook(), array( $this, 'button_renderer' ), 10 );
 
 		return true;
 	}
@@ -377,9 +482,6 @@ class SmartButton implements SmartButtonInterface {
 		if ( ! is_checkout() && ! $buttons_enabled ) {
 			return false;
 		}
-		if ( ! $this->can_save_vault_token() && $this->has_subscriptions() ) {
-			return false;
-		}
 
 		$load_script = false;
 		if ( is_checkout() && $this->settings->has( 'dcc_enabled' ) && $this->settings->get( 'dcc_enabled' ) ) {
@@ -392,17 +494,17 @@ class SmartButton implements SmartButtonInterface {
 		if ( in_array( $this->context(), array( 'pay-now', 'checkout' ), true ) && $this->can_render_dcc() ) {
 			wp_enqueue_style(
 				'ppcp-hosted-fields',
-				$this->module_url . '/assets/css/hosted-fields.css',
+				untrailingslashit( $this->module_url ) . '/assets/css/hosted-fields.css',
 				array(),
-				1
+				$this->version
 			);
 		}
 		if ( $load_script ) {
 			wp_enqueue_script(
 				'ppcp-smart-button',
-				$this->module_url . '/assets/js/button.js',
+				untrailingslashit( $this->module_url ) . '/assets/js/button.js',
 				array( 'jquery' ),
-				'1.3.2',
+				$this->version,
 				true
 			);
 
@@ -427,10 +529,19 @@ class SmartButton implements SmartButtonInterface {
 				|| ! $product->is_in_stock()
 			)
 		) {
+
 			return;
 		}
 
-		echo '<div id="ppc-button"></div>';
+		$available_gateways = WC()->payment_gateways->get_available_payment_gateways();
+
+		if ( ! isset( $available_gateways['ppcp-gateway'] ) ) {
+			return;
+		}
+
+		// The wrapper is needed for the loading spinner,
+		// otherwise jQuery block() prevents buttons rendering.
+		echo '<div class="ppc-button-wrapper"><div id="ppc-button"></div></div>';
 	}
 
 	/**
@@ -556,12 +667,15 @@ class SmartButton implements SmartButtonInterface {
 			return;
 		}
 
-		$label = 'checkout' === $this->context() ? __( 'Place order', 'woocommerce-paypal-payments' ) : __( 'Pay for order', 'woocommerce-paypal-payments' );
+        // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch
+		$label = 'checkout' === $this->context() ? apply_filters( 'woocommerce_order_button_text', __( 'Place order', 'woocommerce' ) ) : __( 'Pay for order', 'woocommerce' );
 
 		printf(
 			'<div id="%1$s" style="display:none;">
-                        <button class="button alt">%2$s</button>
-                    </div><div id="payments-sdk__contingency-lightbox"></div><style id="ppcp-hide-dcc">.payment_method_ppcp-credit-card-gateway {display:none;}</style>',
+						<button type="submit" class="button alt ppcp-dcc-order-button" style="display: none;">%2$s</button>
+					</div>
+                    <div id="payments-sdk__contingency-lightbox"></div>
+                    <style id="ppcp-hide-dcc">.payment_method_ppcp-credit-card-gateway {display:none;}</style>',
 			esc_attr( $id ),
 			esc_html( $label )
 		);
@@ -583,7 +697,7 @@ class SmartButton implements SmartButtonInterface {
 			return false;
 		}
 
-		return is_user_logged_in();
+		return true;
 	}
 
 	/**
@@ -598,6 +712,10 @@ class SmartButton implements SmartButtonInterface {
 		if ( is_product() ) {
 			return $this->subscription_helper->current_product_is_subscription();
 		}
+		if ( is_wc_endpoint_url( 'order-pay' ) ) {
+			return $this->subscription_helper->order_pay_contains_subscription();
+		}
+
 		return $this->subscription_helper->cart_contains_subscription();
 	}
 
@@ -626,33 +744,42 @@ class SmartButton implements SmartButtonInterface {
 	private function localize_script(): array {
 		global $wp;
 
+		$is_free_trial_cart = $this->is_free_trial_cart();
+
 		$this->request_data->enqueue_nonce_fix();
 		$localize = array(
 			'script_attributes'              => $this->attributes(),
 			'data_client_id'                 => array(
-				'set_attribute' => ( is_checkout() && $this->dcc_is_enabled() ) || $this->can_save_vault_token(),
-				'endpoint'      => home_url( \WC_AJAX::get_endpoint( DataClientIdEndpoint::ENDPOINT ) ),
-				'nonce'         => wp_create_nonce( DataClientIdEndpoint::nonce() ),
-				'user'          => get_current_user_id(),
+				'set_attribute'     => ( is_checkout() && $this->dcc_is_enabled() ) || $this->can_save_vault_token(),
+				'endpoint'          => \WC_AJAX::get_endpoint( DataClientIdEndpoint::ENDPOINT ),
+				'nonce'             => wp_create_nonce( DataClientIdEndpoint::nonce() ),
+				'user'              => get_current_user_id(),
+				'has_subscriptions' => $this->has_subscriptions(),
 			),
 			'redirect'                       => wc_get_checkout_url(),
 			'context'                        => $this->context(),
 			'ajax'                           => array(
 				'change_cart'   => array(
-					'endpoint' => home_url( \WC_AJAX::get_endpoint( ChangeCartEndpoint::ENDPOINT ) ),
+					'endpoint' => \WC_AJAX::get_endpoint( ChangeCartEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( ChangeCartEndpoint::nonce() ),
 				),
 				'create_order'  => array(
-					'endpoint' => home_url( \WC_AJAX::get_endpoint( CreateOrderEndpoint::ENDPOINT ) ),
+					'endpoint' => \WC_AJAX::get_endpoint( CreateOrderEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( CreateOrderEndpoint::nonce() ),
 				),
 				'approve_order' => array(
-					'endpoint' => home_url( \WC_AJAX::get_endpoint( ApproveOrderEndpoint::ENDPOINT ) ),
+					'endpoint' => \WC_AJAX::get_endpoint( ApproveOrderEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( ApproveOrderEndpoint::nonce() ),
+				),
+				'vault_paypal'  => array(
+					'endpoint' => \WC_AJAX::get_endpoint( StartPayPalVaultingEndpoint::ENDPOINT ),
+					'nonce'    => wp_create_nonce( StartPayPalVaultingEndpoint::nonce() ),
 				),
 			),
 			'enforce_vault'                  => $this->has_subscriptions(),
-			'save_card'                      => $this->can_save_vault_token(),
+			'can_save_vault_token'           => $this->can_save_vault_token(),
+			'is_free_trial_cart'             => $is_free_trial_cart,
+			'vaulted_paypal_email'           => ( is_checkout() && $is_free_trial_cart ) ? $this->get_vaulted_paypal_email() : '',
 			'bn_codes'                       => $this->bn_codes(),
 			'payer'                          => $this->payerData(),
 			'button'                         => array(
@@ -680,17 +807,18 @@ class SmartButton implements SmartButtonInterface {
 				'wrapper'           => '#ppcp-hosted-fields',
 				'mini_cart_wrapper' => '#ppcp-hosted-fields-mini-cart',
 				'labels'            => array(
-					'credit_card_number' => '',
-					'cvv'                => '',
-					'mm_yy'              => __( 'MM/YY', 'woocommerce-paypal-payments' ),
-					'fields_not_valid'   => __(
+					'credit_card_number'       => '',
+					'cvv'                      => '',
+					'mm_yy'                    => __( 'MM/YY', 'woocommerce-paypal-payments' ),
+					'fields_not_valid'         => __(
 						'Unfortunately, your credit card details are not valid.',
 						'woocommerce-paypal-payments'
 					),
-					'card_not_supported' => __(
+					'card_not_supported'       => __(
 						'Unfortunately, we do not support your credit card.',
 						'woocommerce-paypal-payments'
 					),
+					'cardholder_name_required' => __( 'Cardholder\'s first and last name are required, please fill the checkout form required fields.', 'woocommerce-paypal-payments' ),
 				),
 				'valid_cards'       => $this->dcc_applies->valid_cards(),
 				'contingency'       => $this->get_3ds_contingency(),
@@ -745,7 +873,7 @@ class SmartButton implements SmartButtonInterface {
 
 		$params = array(
 			'client-id'        => $this->client_id,
-			'currency'         => get_woocommerce_currency(),
+			'currency'         => $this->currency,
 			'integration-date' => PAYPAL_INTEGRATION_DATE,
 			'components'       => implode( ',', $this->components() ),
 			'vault'            => $this->can_save_vault_token() ? 'true' : 'false',
@@ -777,6 +905,10 @@ class SmartButton implements SmartButtonInterface {
 			}
 		}
 
+		if ( $this->is_free_trial_cart() ) {
+			$disable_funding = array_keys( $this->all_funding_sources );
+		}
+
 		if ( count( $disable_funding ) > 0 ) {
 			$params['disable-funding'] = implode( ',', array_unique( $disable_funding ) );
 		}
@@ -785,6 +917,11 @@ class SmartButton implements SmartButtonInterface {
 		if ( $this->settings_status->pay_later_messaging_is_enabled() || ! in_array( 'credit', $disable_funding, true ) ) {
 			$enable_funding[] = 'paylater';
 		}
+
+		if ( $this->is_free_trial_cart() ) {
+			$enable_funding = array();
+		}
+
 		if ( count( $enable_funding ) > 0 ) {
 			$params['enable-funding'] = implode( ',', array_unique( $enable_funding ) );
 		}
@@ -843,7 +980,10 @@ class SmartButton implements SmartButtonInterface {
 		if ( $this->load_button_component() ) {
 			$components[] = 'buttons';
 		}
-		if ( $this->messages_apply->for_country() ) {
+		if (
+			$this->messages_apply->for_country()
+			&& ! $this->is_free_trial_cart()
+		) {
 			$components[] = 'messages';
 		}
 		if ( $this->dcc_is_enabled() ) {
@@ -993,38 +1133,50 @@ class SmartButton implements SmartButtonInterface {
 	}
 
 	/**
-	 * Return action name PayPal buttons will be rendered at on checkout page.
+	 * Returns the action name that PayPal button will use for rendering on the checkout page.
 	 *
 	 * @return string Action name.
 	 */
 	private function checkout_button_renderer_hook(): string {
+		/**
+		 * The filter returning the action name that PayPal button will use for rendering on the checkout page.
+		 */
 		return (string) apply_filters( 'woocommerce_paypal_payments_checkout_button_renderer_hook', 'woocommerce_review_order_after_payment' );
 	}
 
 	/**
-	 * Return action name PayPal DCC button will be rendered at on checkout page.
+	 * Returns the action name that PayPal DCC button will use for rendering on the checkout page.
 	 *
 	 * @return string
 	 */
 	private function checkout_dcc_button_renderer_hook(): string {
+		/**
+		 * The filter returning the action name that PayPal DCC button will use for rendering on the checkout page.
+		 */
 		return (string) apply_filters( 'woocommerce_paypal_payments_checkout_dcc_renderer_hook', 'woocommerce_review_order_after_submit' );
 	}
 
 	/**
-	 * Return action name PayPal button and Pay Later message will be rendered at on pay-order page.
+	 * Returns the action name that PayPal button and Pay Later message will use for rendering on the pay-order page.
 	 *
 	 * @return string
 	 */
 	private function pay_order_renderer_hook(): string {
+		/**
+		 * The filter returning the action name that PayPal button and Pay Later message will use for rendering on the pay-order page.
+		 */
 		return (string) apply_filters( 'woocommerce_paypal_payments_pay_order_dcc_renderer_hook', 'woocommerce_pay_order_after_submit' );
 	}
 
 	/**
-	 * Return action name PayPal button will be rendered next to Proceed to checkout button (normally displayed in cart).
+	 * Returns action name that PayPal button will use for rendering next to Proceed to checkout button (normally displayed in cart).
 	 *
 	 * @return string
 	 */
 	private function proceed_to_checkout_button_renderer_hook(): string {
+		/**
+		 * The filter returning the action name that PayPal button will use for rendering next to Proceed to checkout button (normally displayed in cart).
+		 */
 		return (string) apply_filters(
 			'woocommerce_paypal_payments_proceed_to_checkout_button_renderer_hook',
 			'woocommerce_proceed_to_checkout'
@@ -1032,11 +1184,14 @@ class SmartButton implements SmartButtonInterface {
 	}
 
 	/**
-	 * Return action name PayPal button will be rendered in the WC mini cart.
+	 * Returns the action name that PayPal button will use for rendering in the WC mini cart.
 	 *
 	 * @return string
 	 */
 	private function mini_cart_button_renderer_hook(): string {
+		/**
+		 * The filter returning the action name that PayPal button will use for rendering in the WC mini cart.
+		 */
 		return (string) apply_filters(
 			'woocommerce_paypal_payments_mini_cart_button_renderer_hook',
 			'woocommerce_widget_shopping_cart_after_buttons'
@@ -1044,11 +1199,57 @@ class SmartButton implements SmartButtonInterface {
 	}
 
 	/**
-	 * Return action name PayPal button and Pay Later message will be rendered at on the single product page.
+	 * Returns the action name that PayPal button and Pay Later message will use for rendering on the single product page.
 	 *
 	 * @return string
 	 */
 	private function single_product_renderer_hook(): string {
+		/**
+		 * The filter returning the action name that PayPal button and Pay Later message will use for rendering on the single product page.
+		 */
 		return (string) apply_filters( 'woocommerce_paypal_payments_single_product_renderer_hook', 'woocommerce_single_product_summary' );
+	}
+
+	/**
+	 * Check if cart product price total is 0.
+	 *
+	 * @return bool true if is 0, otherwise false.
+	 */
+	protected function is_cart_price_total_zero(): bool {
+        // phpcs:ignore WordPress.PHP.StrictComparisons.LooseComparison
+		return WC()->cart->get_cart_contents_total() == 0;
+	}
+
+	/**
+	 * Retrieves all payment tokens for the user, via API or cached if already queried.
+	 *
+	 * @return PaymentToken[]
+	 */
+	private function get_payment_tokens(): array {
+		if ( null === $this->payment_tokens ) {
+			$this->payment_tokens = $this->payment_token_repository->all_for_user_id( get_current_user_id() );
+		}
+
+		return $this->payment_tokens;
+	}
+
+	/**
+	 * Returns the vaulted PayPal email or empty string.
+	 *
+	 * @return string
+	 */
+	private function get_vaulted_paypal_email(): string {
+		try {
+			$tokens = $this->get_payment_tokens();
+
+			foreach ( $tokens as $token ) {
+				if ( isset( $token->source()->paypal ) ) {
+					return $token->source()->paypal->payer->email_address;
+				}
+			}
+		} catch ( Exception $exception ) {
+			$this->logger->error( 'Failed to get PayPal vaulted email. ' . $exception->getMessage() );
+		}
+		return '';
 	}
 }

@@ -2,9 +2,9 @@
 Contributors: woocommerce, automattic
 Tags: woocommerce, paypal, payments, ecommerce, e-commerce, store, sales, sell, shop, shopping, cart, checkout
 Requires at least: 5.3
-Tested up to: 5.8
+Tested up to: 5.9
 Requires PHP: 7.1
-Stable tag: 1.6.2
+Stable tag: 1.8.0
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -81,19 +81,101 @@ Follow the steps below to connect the plugin to your PayPal account:
 
 == Changelog ==
 
+= 1.8.0
+* Add - Allow free trial subscriptions #580
+* Fix - The Card Processing does not appear as an available payment method when manually creating an order #562
+* Fix - Express buttons & Pay Later visible on variable Subscription products /w disabled vaulting #281 
+* Fix - Pay for order (guest) failing when no email address available #535 
+* Fix - Emoji in product description causing INVALID_STRING_LENGTH error #491
+* Enhancement - Redirect after updating settings for DCC sends you to PPCP settings screen #392
+* Enhancement - Change cart total amount that is sent to PayPal gateway #486
+* Enhancement - Include dark Visa and Mastercard gateway icon list for PayPal Card Processing #566
+* Enhancement - Onboarding errors improvements #558
+* Enhancement - "Place order" button visible during gateway load time when DCC gateway is selected as the default #560
+
+= 1.7.1 =
+* Fix - Hide smart buttons for free products and zero-sum carts #499
+* Fix - Unprocessable Entity when paying with AMEX card #516
+* Fix - Multisite path doubled in ajax URLs #528
+* Fix - "Place order" button looking unstyled in the Twenty Twenty-Two theme #478
+* Fix - PayPal options available on minicart when adding subscription to the cart from shop page without vaulting enabled #518
+* Fix - Buttons not visible on products page #551
+* Fix - Buttons not visible in mini-cart #553
+* Fix - PayPal button missing on pay for order page #555
+* Enhancement - PayPal buttons loading time #533
+* Enhancement - Improve payment token checking for subscriptions #525
+* Enhancement - Add Spain and Italy to messaging #497
+
+= 1.7.0 =
+* Fix - DCC orders randomly failing #503
+* Fix - Multi-currency broke #481
+* Fix - Address information from PayPal shortcut flow not loaded #451
+* Fix - WooCommerce as mu-plugin is not detected as active #461
+* Fix - Check if PayPal Payments is an available gateway before displaying it on Product/Cart pages #447
+* Enhancement - Improve onboarding flow, allow no card processing #443 #508 #510
+* Enhancement - Add Germany to supported ACDC countries #459
+* Enhancement - Add filters to allow ACDC for countries #437
+* Enhancement - Update 3D Secure #464
+* Enhancement - Extend event, error logging & order notes #456
+* Enhancement - Display API response errors in checkout page with user-friendly error message #457
+* Enhancement - Pass address details to credit card fields #479
+* Enhancement - Improve onboarding notice #465
+* Enhancement - Add transaction ID to WC order and order note when refund is received #473
+* Enhancement - Asset caching may cause bugs on upgrades #501
+* Enhancement - Allow partial capture #483
+* Enhancement - PayPal Payments doesn't set transaction fee metadata #467
+* Enhancement - Show PayPal fee information in order #489
+
+= 1.6.5 =
+* Fix - Allow guest users to purchase subscription products from checkout page #422
+* Fix - Transaction ID missing for renewal order #424
+* Fix - Save your credit card checkbox should be removed in pay for order for subscriptions #420
+* Fix - Null currency error when the Aelia currency switcher plugin is active #426
+* Fix - Hide Reference Transactions check from logs #428
+* Fix - Doubled plugin module URL path causing failure #438
+* Fix - is_ajax deprecated #441
+* Fix - Place order button from PayPal Card Processing does not get translated #290
+* Fix - AMEX missing from supported cards for DCC Australia #432
+* Fix - "Save your Credit Card" text not clickable to change checkbox state #430
+* Fix - Improve DCC error notice when not available #435
+* Enhancement - Add View Logs link #416
+
+= 1.6.4 =
+* Fix - Non admin user cannot save changes to the plugin settings #278
+* Fix - Empty space in invoice prefix causes smart buttons to not load #390
+* Fix - woocommerce_payment_complete action not triggered for payments completed via webhook #399
+* Fix - Paying with Venmo - Change funding source on checkout page and receipt to Venmo  #394
+* Fix - Internal server error on checkout when selected saved card but then switched to paypal #403 
+* Enhancement - Allow formatted text for the Description field #407
+* Enhancement - Remove filter to prevent On-Hold emails #411
+
+= 1.6.3 =
+* Fix - Payments fail when using custom order numbers #354
+* Fix - Do not display saved payments on PayPal buttons if vault option is disabled #358
+* Fix - Double "Place Order" button #362
+* Fix - Coupon causes TAX_TOTAL_MISMATCH #372
+* Fix - Funding sources Mercado Pago and BLIK can't be disabled #383
+* Fix - Customer details not available in order and name gets replaced by xxx@dcc2.paypal.com #378
+* Fix - 3D Secure failing for certain credit card types with PayPal Card Processing #379
+* Fix - Error messages are not cleared even when checkout is re-attempted (DCC) #366
+* Add - New additions for system report status #377
+
 = 1.6.2 =
 * Fix - Order of WooCommerce checkout actions causing incompatibility with AvaTax address validation #335
 * Fix - Can't checkout to certain countries with optional postcode #330
-* FIx - Prevent subscription from being purchased when saving payment fails #308
-* FIx - Guest users must checkout twice for subscriptions, no smart buttons loaded #342
-* FIx - Failed PayPal API request causing strange error #347
-* FIx - PayPal payments page empty after switching packages #350
-* FIx - Could Not Validate Nonce Error #239
-* FIx - Refund via PayPal dashboard does not set the WooCommerce order to "Refunded" #241
-* FIx - Uncaught TypeError: round() #344
-* FIx - Broken multi-level (nested) associative array values after getting submitted from checkout page #307
-* FIx - Transaction id missing in some cases #328
-* FIx - Payment not possible in pay for order form because of terms checkbox missing #294
+* Fix - Prevent subscription from being purchased when saving payment fails #308
+* Fix - Guest users must checkout twice for subscriptions, no smart buttons loaded #342
+* Fix - Failed PayPal API request causing strange error #347
+* Fix - PayPal payments page empty after switching packages #350
+* Fix - Could Not Validate Nonce Error #239
+* Fix - Refund via PayPal dashboard does not set the WooCommerce order to "Refunded" #241
+* Fix - Uncaught TypeError: round() #344
+* Fix - Broken multi-level (nested) associative array values after getting submitted from checkout page #307
+* Fix - Transaction id missing in some cases #328
+* Fix - Payment not possible in pay for order form because of terms checkbox missing #294
+* Fix - "Save your Credit Card" shouldn't be optional when paying for a subscription #368
+* Fix - When paying for a subscription and vaulting fails, cart is cleared #367
+* Fix - Fatal error when activating PayPal Checkout plugin #363
 
 = 1.6.1 =
 * Fix - Handle authorization capture failures #312

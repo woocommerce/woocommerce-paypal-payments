@@ -1,11 +1,14 @@
 const onApprove = (context, errorHandler, spinner) => {
     return (data, actions) => {
         spinner.block();
+        errorHandler.clear();
+
         return fetch(context.config.ajax.approve_order.endpoint, {
             method: 'POST',
             body: JSON.stringify({
                 nonce: context.config.ajax.approve_order.nonce,
-                order_id:data.orderID
+                order_id:data.orderID,
+                funding_source: window.ppcpFundingSource,
             })
         }).then((res)=>{
             return res.json();

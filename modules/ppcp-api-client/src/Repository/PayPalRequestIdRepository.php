@@ -26,8 +26,7 @@ class PayPalRequestIdRepository {
 	 * @return string
 	 */
 	public function get_for_order_id( string $order_id ): string {
-		$all = $this->all();
-		return isset( $all[ $order_id ] ) ? (string) $all[ $order_id ]['id'] : '';
+		return $this->get( $order_id );
 	}
 
 	/**
@@ -50,14 +49,37 @@ class PayPalRequestIdRepository {
 	 * @return bool
 	 */
 	public function set_for_order( Order $order, string $request_id ): bool {
-		$all                 = $this->all();
-		$all[ $order->id() ] = array(
-			'id'         => $request_id,
-			'expiration' => time() + 10 * DAY_IN_SECONDS,
-		);
-		$all                 = $this->cleanup( $all );
-		update_option( self::KEY, $all );
+		$this->set( $order->id(), $request_id );
 		return true;
+	}
+
+	/**
+	 * Sets a request ID for the given key.
+	 *
+	 * @param string $key The key in the request ID storage.
+	 * @param string $request_id The ID.
+	 */
+	public function set( string $key, string $request_id ): void {
+		$all            = $this->all();
+		$day_in_seconds = 86400;
+		$all[ $key ]    = array(
+			'id'         => $request_id,
+			'expiration' => time() + 10 * $day_in_seconds,
+		);
+		$all            = $this->cleanup( $all );
+		update_option( self::KEY, $all );
+	}
+
+	/**
+	 * Returns a request ID.
+	 *
+	 * @param string $key The key in the request ID storage.
+	 *
+	 * @return string
+	 */
+	public function get( string $key ): string {
+		$all = $this->all();
+		return isset( $all[ $key ] ) ? (string) $all[ $key ]['id'] : '';
 	}
 
 	/**
