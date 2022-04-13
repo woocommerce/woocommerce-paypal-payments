@@ -1945,13 +1945,15 @@ return array(
 					'woocommerce-paypal-payments'
 				),
 				'options'      => array(
-					'visa'       => _x( 'Visa', 'Name of credit card', 'woocommerce-paypal-payments' ),
-					'mastercard' => _x( 'Mastercard', 'Name of credit card', 'woocommerce-paypal-payments' ),
-					'amex'       => _x( 'American Express', 'Name of credit card', 'woocommerce-paypal-payments' ),
-					'discover'   => _x( 'Discover', 'Name of credit card', 'woocommerce-paypal-payments' ),
-					'jcb'        => _x( 'JCB', 'Name of credit card', 'woocommerce-paypal-payments' ),
-					'elo'        => _x( 'Elo', 'Name of credit card', 'woocommerce-paypal-payments' ),
-					'hiper'      => _x( 'Hiper', 'Name of credit card', 'woocommerce-paypal-payments' ),
+					'visa'            => _x( 'Visa (light)', 'Name of credit card', 'woocommerce-paypal-payments' ),
+					'visa-dark'       => _x( 'Visa (dark)', 'Name of credit card', 'woocommerce-paypal-payments' ),
+					'mastercard'      => _x( 'Mastercard (light)', 'Name of credit card', 'woocommerce-paypal-payments' ),
+					'mastercard-dark' => _x( 'Mastercard (dark)', 'Name of credit card', 'woocommerce-paypal-payments' ),
+					'amex'            => _x( 'American Express', 'Name of credit card', 'woocommerce-paypal-payments' ),
+					'discover'        => _x( 'Discover', 'Name of credit card', 'woocommerce-paypal-payments' ),
+					'jcb'             => _x( 'JCB', 'Name of credit card', 'woocommerce-paypal-payments' ),
+					'elo'             => _x( 'Elo', 'Name of credit card', 'woocommerce-paypal-payments' ),
+					'hiper'           => _x( 'Hiper', 'Name of credit card', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(
 					State::STATE_ONBOARDED,
@@ -2027,14 +2029,23 @@ return array(
 		 * Here, we filter them out.
 		 */
 		$card_options = $fields['disable_cards']['options'];
+		$card_icons = $fields['card_icons']['options'];
+		$dark_versions = array();
 		foreach ( $card_options as $card => $label ) {
 			if ( $dcc_applies->can_process_card( $card ) ) {
+				if ( 'visa' === $card || 'mastercard' === $card ) {
+					$dark_versions = array(
+						'visa-dark'       => $card_icons['visa-dark'],
+						'mastercard-dark' => $card_icons['mastercard-dark'],
+					);
+				}
 				continue;
 			}
 			unset( $card_options[ $card ] );
 		}
+
 		$fields['disable_cards']['options'] = $card_options;
-		$fields['card_icons']['options'] = $card_options;
+		$fields['card_icons']['options'] = array_merge( $dark_versions, $card_options );
 
 		/**
 		 * Display vault message on Pay Later label if vault is enabled.

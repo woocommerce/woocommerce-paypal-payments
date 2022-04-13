@@ -331,8 +331,9 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		$title_options = $this->card_labels();
 		$images        = array_map(
 			function ( string $type ) use ( $title_options ): string {
+				$striped_dark = str_replace( '-dark', '', $type );
 				return '<img
-                 title="' . esc_attr( $title_options[ $type ] ) . '"
+                 title="' . esc_attr( $title_options[ $striped_dark ] ) . '"
                  src="' . esc_url( $this->module_url ) . 'assets/images/' . esc_attr( $type ) . '.svg"
                  class="ppcp-card-icon"
                 > ';
