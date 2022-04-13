@@ -57,10 +57,22 @@ class CustomerApprovalListener {
 			return;
 		}
 
+		$url = (string) filter_input( INPUT_SERVER, 'REQUEST_URI', FILTER_SANITIZE_URL );
+
 		try {
-			$this->payment_token_endpoint->create_from_approval_token( $token, get_current_user_id() );
-		} catch ( Exception $exception ) {
-			$this->logger->error( 'Failed to create payment token. ' . $exception->getMessage() );
+			$query = wp_parse_url( $url, PHP_URL_QUERY );
+			if ( $query && str_contains( $query, 'ppcp_vault=cancel' ) ) {
+				return;
+			}
+
+			try {
+				$this->payment_token_endpoint->create_from_approval_token( $token, get_current_user_id() );
+			} catch ( Exception $exception ) {
+				$this->logger->error( 'Failed to create payment token. ' . $exception->getMessage() );
+			}
+		} finally {
+			wp_safe_redirect( remove_query_arg( array( 'ppcp_vault', 'approval_token_id', 'approval_session_id' ), $url ) );
+			exit();
 		}
 	}
 }

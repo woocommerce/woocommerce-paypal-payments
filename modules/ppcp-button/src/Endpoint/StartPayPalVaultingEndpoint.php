@@ -81,11 +81,12 @@ class StartPayPalVaultingEndpoint implements EndpointInterface {
 			$user_id = get_current_user_id();
 
 			$return_url = $data['return_url'];
+			$cancel_url = add_query_arg( array( 'ppcp_vault' => 'cancel' ), $return_url );
 
 			$links = $this->payment_token_endpoint->start_paypal_token_creation(
 				$user_id,
 				$return_url,
-				$return_url
+				$cancel_url
 			);
 
 			wp_send_json_success(
