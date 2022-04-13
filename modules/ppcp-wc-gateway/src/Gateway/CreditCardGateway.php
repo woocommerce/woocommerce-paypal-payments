@@ -439,7 +439,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		parent::init_settings();
 
 		// looks like in some cases WC uses this field instead of get_option.
-		$this->enabled = $this->is_enabled();
+		$this->enabled = $this->is_enabled() ? 'yes' : '';
 	}
 
 	/**
@@ -468,7 +468,9 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		$ret = parent::update_option( $key, $value );
 
 		if ( 'enabled' === $key ) {
+
 			$this->config->set( 'dcc_enabled', 'yes' === $value );
+			$this->config->set( 'enabled', 'yes' === $value );
 			$this->config->persist();
 
 			return true;
