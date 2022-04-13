@@ -19,6 +19,7 @@ import {isChangePaymentPage} from "./modules/Helper/Subscriptions";
 import FreeTrialHandler from "./modules/ActionHandler/FreeTrialHandler";
 
 const buttonsSpinner = new Spinner('.ppc-button-wrapper');
+const cardsSpinner = new Spinner('#ppcp-hosted-fields');
 
 const bootstrap = () => {
     const errorHandler = new ErrorHandler(PayPalCommerceGateway.labels.error.generic);
@@ -129,8 +130,9 @@ document.addEventListener(
 
             const currentPaymentMethod = getCurrentPaymentMethod();
             const isPaypal = currentPaymentMethod === PaymentMethods.PAYPAL;
+            const isCards = currentPaymentMethod === PaymentMethods.CARDS;
 
-            setVisible(ORDER_BUTTON_SELECTOR, !isPaypal, true);
+            setVisible(ORDER_BUTTON_SELECTOR, !isPaypal && !isCards, true);
 
             if (isPaypal) {
                 // stopped after the first rendering of the buttons, in onInit
@@ -138,7 +140,17 @@ document.addEventListener(
             } else {
                 buttonsSpinner.unblock();
             }
+
+            if (isCards) {
+                cardsSpinner.block();
+            } else {
+                cardsSpinner.unblock();
+            }
         }
+
+        jQuery(document).on('hosted_fields_loaded', () => {
+            cardsSpinner.unblock();
+        });
 
         let bootstrapped = false;
 

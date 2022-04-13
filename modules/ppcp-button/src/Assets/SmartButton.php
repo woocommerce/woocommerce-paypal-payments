@@ -672,8 +672,10 @@ class SmartButton implements SmartButtonInterface {
 
 		printf(
 			'<div id="%1$s" style="display:none;">
-                        <button type="submit" class="button alt ppcp-dcc-order-button">%2$s</button>
-                    </div><div id="payments-sdk__contingency-lightbox"></div><style id="ppcp-hide-dcc">.payment_method_ppcp-credit-card-gateway {display:none;}</style>',
+						<button type="submit" class="button alt ppcp-dcc-order-button" style="display: none;">%2$s</button>
+					</div>
+                    <div id="payments-sdk__contingency-lightbox"></div>
+                    <style id="ppcp-hide-dcc">.payment_method_ppcp-credit-card-gateway {display:none;}</style>',
 			esc_attr( $id ),
 			esc_html( $label )
 		);
