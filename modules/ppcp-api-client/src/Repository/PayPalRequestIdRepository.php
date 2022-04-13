@@ -60,12 +60,13 @@ class PayPalRequestIdRepository {
 	 * @param string $request_id The ID.
 	 */
 	public function set( string $key, string $request_id ): void {
-		$all         = $this->all();
-		$all[ $key ] = array(
+		$all            = $this->all();
+		$day_in_seconds = 86400;
+		$all[ $key ]    = array(
 			'id'         => $request_id,
-			'expiration' => time() + 10 * DAY_IN_SECONDS,
+			'expiration' => time() + 10 * $day_in_seconds,
 		);
-		$all         = $this->cleanup( $all );
+		$all            = $this->cleanup( $all );
 		update_option( self::KEY, $all );
 	}
 
