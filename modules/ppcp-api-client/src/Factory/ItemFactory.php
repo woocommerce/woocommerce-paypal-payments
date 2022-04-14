@@ -58,7 +58,7 @@ class ItemFactory {
 				$price_without_tax         = (float) wc_get_price_excluding_tax( $product );
 				$price_without_tax_rounded = round( $price_without_tax, 2 );
 				$tax                       = round( $price - $price_without_tax_rounded, 2 );
-				$tax_rates = WC_Tax::get_rates($product->get_tax_class());
+				$tax_rates                 = WC_Tax::get_rates( $product->get_tax_class() );
 				$tax                       = new Money( $tax + $shipping_tax, $this->currency );
 				$tax                       = new Money( $tax, $this->currency );
 				return new Item(
@@ -69,7 +69,7 @@ class ItemFactory {
 					$tax,
 					$product->get_sku(),
 					( $product->is_virtual() ) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS,
-					reset($tax_rates)['rate'] ?? 0
+					reset( $tax_rates )['rate'] ?? 0
 				);
 			},
 			$cart->get_cart_contents()
@@ -141,7 +141,7 @@ class ItemFactory {
 		$price_without_tax_rounded = round( $price_without_tax, 2 );
 		$tax                       = round( $price - $price_without_tax_rounded, 2 );
 		$tax                       = new Money( $tax, $currency );
-		$tax_rates = WC_Tax::get_rates($product->get_tax_class());
+		$tax_rates                 = WC_Tax::get_rates( $product->get_tax_class() );
 
 		return new Item(
 			mb_substr( $product->get_name(), 0, 127 ),
@@ -151,7 +151,7 @@ class ItemFactory {
 			$tax,
 			$product->get_sku(),
 			( $product->is_virtual() ) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS,
-			reset($tax_rates)['rate'] ?? 0
+			reset( $tax_rates )['rate'] ?? 0
 		);
 	}
 

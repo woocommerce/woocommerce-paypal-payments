@@ -189,7 +189,7 @@ class CheckoutOrderApproved implements RequestHandler {
 		}
 
 		foreach ( $wc_orders as $wc_order ) {
-			if(PayUponInvoiceGateway::ID === $wc_order->get_payment_method()) {
+			if ( PayUponInvoiceGateway::ID === $wc_order->get_payment_method() ) {
 				continue;
 			}
 

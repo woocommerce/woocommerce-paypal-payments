@@ -114,7 +114,10 @@ class PaymentCaptureCompleted implements RequestHandler {
 
 		$order_id = $resource['supplementary_data']['related_ids']['order_id'] ?? null;
 
-		do_action('ppcp_payment_capture_completed_webhook_handler', $wc_order, $order_id);
+		/**
+		 * Allow access to the webhook logic before updating the WC order.
+		 */
+		do_action( 'ppcp_payment_capture_completed_webhook_handler', $wc_order, $order_id );
 
 		if ( $wc_order->get_status() !== 'on-hold' ) {
 			$response['success'] = true;
@@ -151,7 +154,6 @@ class PaymentCaptureCompleted implements RequestHandler {
 				if ( $transaction_id ) {
 					$this->update_transaction_id( $transaction_id, $wc_order, $this->logger );
 				}
-
 			} catch ( Exception $exception ) {
 				$this->logger->warning( 'Failed to get transaction ID: ' . $exception->getMessage() );
 			}

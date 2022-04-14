@@ -72,6 +72,9 @@ class PartnerReferralsData {
 	 * @return array
 	 */
 	public function data(): array {
+		/**
+		 * Returns the partners referrals data.
+		 */
 		return apply_filters(
 			'ppcp_partner_referrals_data',
 			array(

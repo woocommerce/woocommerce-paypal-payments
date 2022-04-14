@@ -83,6 +83,7 @@ class Item {
 	 * @param Money|null $tax The tax.
 	 * @param string     $sku The SKU.
 	 * @param string     $category The category.
+	 * @param float      $tax_rate The tax rate.
 	 */
 	public function __construct(
 		string $name,
@@ -102,8 +103,8 @@ class Item {
 		$this->tax         = $tax;
 		$this->sku         = $sku;
 		$this->category    = ( self::DIGITAL_GOODS === $category ) ? self::DIGITAL_GOODS : self::PHYSICAL_GOODS;
-		$this->category = $category;
-		$this->tax_rate = $tax_rate;
+		$this->category    = $category;
+		$this->tax_rate    = $tax_rate;
 	}
 
 	/**
@@ -174,9 +175,8 @@ class Item {
 	 *
 	 * @return float
 	 */
-	public function tax_rate():float
-	{
-		return round((float) $this->tax_rate, 2);
+	public function tax_rate():float {
+		return round( (float) $this->tax_rate, 2 );
 	}
 
 	/**
@@ -198,7 +198,7 @@ class Item {
 			$item['tax'] = $this->tax()->to_array();
 		}
 
-		if ($this->tax_rate()) {
+		if ( $this->tax_rate() ) {
 			$item['tax_rate'] = (string) $this->tax_rate();
 		}
 

@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Onboarding\Render;
 
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 
 /**
  * Class OnboardingRenderer
@@ -30,6 +31,8 @@ class OnboardingOptionsRenderer {
 	private $country;
 
 	/**
+	 * The settings.
+	 *
 	 * @var Settings
 	 */
 	protected $settings;
@@ -37,13 +40,14 @@ class OnboardingOptionsRenderer {
 	/**
 	 * OnboardingOptionsRenderer constructor.
 	 *
-	 * @param string $module_url The module url (for assets).
-	 * @param string $country 2-letter country code of the shop.
+	 * @param string   $module_url The module url (for assets).
+	 * @param string   $country 2-letter country code of the shop.
+	 * @param Settings $settings The settings.
 	 */
-	public function __construct( string $module_url, string $country, Settings $settings) {
+	public function __construct( string $module_url, string $country, Settings $settings ) {
 		$this->module_url = $module_url;
 		$this->country    = $country;
-		$this->settings = $settings;
+		$this->settings   = $settings;
 	}
 
 	/**
@@ -66,16 +70,22 @@ class OnboardingOptionsRenderer {
 	</li>
 	<li>' . $this->render_dcc( $is_shop_supports_dcc ) . '</li>' .
 			$this->render_pui_option()
-. '</ul>';
+		. '</ul>';
 	}
 
+	/**
+	 * Renders pui option.
+	 *
+	 * @return string
+	 * @throws NotFoundException When setting is not found.
+	 */
 	private function render_pui_option(): string {
-		if($this->country === 'DE') {
+		if ( 'DE' === $this->country ) {
 			$checked = 'checked';
-			if($this->settings->has('ppcp-onboarding-pui') && $this->settings->get('ppcp-onboarding-pui') !== '1') {
+			if ( $this->settings->has( 'ppcp-onboarding-pui' ) && $this->settings->get( 'ppcp-onboarding-pui' ) !== '1' ) {
 				$checked = '';
 			}
-			return '<label><input type="checkbox" id="ppcp-onboarding-pui" '.$checked.'> ' .
+			return '<label><input type="checkbox" id="ppcp-onboarding-pui" ' . $checked . '> ' .
 				__( 'Onboard with Pay Upon Invoice', 'woocommerce-paypal-payments' ) . '
 		</label>';
 		}

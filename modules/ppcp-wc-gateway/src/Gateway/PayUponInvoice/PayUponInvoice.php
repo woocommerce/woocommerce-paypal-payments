@@ -1,4 +1,9 @@
 <?php
+/**
+ * PUI integration.
+ *
+ * @package WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice
+ */
 
 declare(strict_types=1);
 
@@ -6,44 +11,68 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice;
 
 use Psr\Log\LoggerInterface;
 use WC_Order;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
-use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 
+/**
+ * Class PayUponInvoice.
+ */
 class PayUponInvoice {
 
 	/**
+	 * The module URL.
+	 *
 	 * @var string
 	 */
 	protected $module_url;
 
 	/**
+	 * The FraudNet entity.
+	 *
 	 * @var FraudNet
 	 */
 	protected $fraud_net;
 
 	/**
+	 * The order endpoint.
+	 *
 	 * @var OrderEndpoint
 	 */
 	protected $order_endpoint;
 
 	/**
+	 * The logger.
+	 *
 	 * @var LoggerInterface
 	 */
 	protected $logger;
 
 	/**
+	 * The settings.
+	 *
 	 * @var Settings
 	 */
 	protected $settings;
 
 	/**
+	 * The environment.
+	 *
 	 * @var Environment
 	 */
 	protected $environment;
 
+	/**
+	 * PayUponInvoice constructor.
+	 *
+	 * @param string          $module_url The module URL.
+	 * @param FraudNet        $fraud_net The FraudNet entity.
+	 * @param OrderEndpoint   $order_endpoint The order endpoint.
+	 * @param LoggerInterface $logger The logger.
+	 * @param Settings        $settings The settings.
+	 * @param Environment     $environment The environment.
+	 */
 	public function __construct(
 		string $module_url,
 		FraudNet $fraud_net,
@@ -56,19 +85,24 @@ class PayUponInvoice {
 		$this->fraud_net      = $fraud_net;
 		$this->order_endpoint = $order_endpoint;
 		$this->logger         = $logger;
-		$this->settings = $settings;
-		$this->environment = $environment;
+		$this->settings       = $settings;
+		$this->environment    = $environment;
 	}
 
+	/**
+	 * Initializes PUI integration.
+	 *
+	 * @throws NotFoundException When setting is not found.
+	 */
 	public function init() {
 		add_filter(
 			'ppcp_partner_referrals_data',
 			function ( $data ) {
-				if($this->settings->has('ppcp-onboarding-pui') && $this->settings->get('ppcp-onboarding-pui') !== '1') {
+				if ( $this->settings->has( 'ppcp-onboarding-pui' ) && $this->settings->get( 'ppcp-onboarding-pui' ) !== '1' ) {
 					return $data;
 				}
 
-				if(in_array( 'PPCP', $data['products'] )) {
+				if ( in_array( 'PPCP', $data['products'], true ) ) {
 					$data['products'][]     = 'PAYMENT_METHODS';
 					$data['capabilities'][] = 'PAY_UPON_INVOICE';
 				}
@@ -117,7 +151,7 @@ class PayUponInvoice {
 					$order_purchase_date = $order_date->date( 'd-m-Y' );
 					$order_time          = $order_date->date( 'H:i:s' );
 					$order_date          = $order_date->date( 'd-m-Y H:i:s' );
-					$order_date_30d      = date( 'd-m-Y', strtotime( $order_date . ' +30 days' ) );
+					$order_date_30d      = gmdate( 'd-m-Y', strtotime( $order_date . ' +30 days' ) );
 
 					$payment_reference   = $instructions[0] ?? '';
 					$bic                 = $instructions[1]->bic ?? '';
@@ -166,11 +200,11 @@ class PayUponInvoice {
 					);
 
 					echo '</div><div>';
-					$site_country_code = explode('-', get_bloginfo("language"))[0] ?? '';
-					if($site_country_code === 'de') {
-						_e( 'Mit Klicken auf '.apply_filters( 'woocommerce_order_button_text', __( 'Place order', 'woocommerce' ) ).' akzeptieren Sie die <a href="https://www.ratepay.com/legal-payment-terms" target="_blank">Ratepay Zahlungsbedingungen</a> und erklären sich mit der Durchführung einer <a href="https://www.ratepay.com/legal-payment-dataprivacy" target="_blank">Risikoprüfung durch Ratepay</a>, unseren Partner, einverstanden. Sie akzeptieren auch PayPals <a href="https://www.paypal.com/de/webapps/mpp/ua/privacy-full?locale.x=de_DE&_ga=1.228729434.718583817.1563460395" target="_blank">Datenschutzerklärung</a>. Falls Ihre Transaktion per Kauf auf Rechnung erfolgreich abgewickelt werden kann, wird der Kaufpreis an Ratepay abgetreten und Sie dürfen nur an Ratepay überweisen, nicht an den Händler.', 'woocommerce-paypal-payments' );
+					$site_country_code = explode( '-', get_bloginfo( 'language' ) )[0] ?? '';
+					if ( $site_country_code === 'de' ) {
+						_e( 'Mit Klicken auf ' . apply_filters( 'woocommerce_order_button_text', __( 'Place order', 'woocommerce' ) ) . ' akzeptieren Sie die <a href="https://www.ratepay.com/legal-payment-terms" target="_blank">Ratepay Zahlungsbedingungen</a> und erklären sich mit der Durchführung einer <a href="https://www.ratepay.com/legal-payment-dataprivacy" target="_blank">Risikoprüfung durch Ratepay</a>, unseren Partner, einverstanden. Sie akzeptieren auch PayPals <a href="https://www.paypal.com/de/webapps/mpp/ua/privacy-full?locale.x=de_DE&_ga=1.228729434.718583817.1563460395" target="_blank">Datenschutzerklärung</a>. Falls Ihre Transaktion per Kauf auf Rechnung erfolgreich abgewickelt werden kann, wird der Kaufpreis an Ratepay abgetreten und Sie dürfen nur an Ratepay überweisen, nicht an den Händler.', 'woocommerce-paypal-payments' );
 					} else {
-						_e( 'By clicking on '.apply_filters( 'woocommerce_order_button_text', __( 'Place order', 'woocommerce' ) ).', you agree to the <a href="https://www.ratepay.com/legal-payment-terms" target="_blank">terms of payment</a> and <a href="https://www.ratepay.com/legal-payment-dataprivacy">performance of a risk check</a> from the payment partner, Ratepay. You also agree to PayPal’s <a href="https://www.paypal.com/de/webapps/mpp/ua/privacy-full?locale.x=eng_DE&_ga=1.267010504.718583817.1563460395">privacy statement</a>. If your request to purchase upon invoice is accepted, the purchase price claim will be assigned to Ratepay, and you may only pay Ratepay, not the merchant.', 'woocommerce-paypal-payments' );
+						_e( 'By clicking on ' . apply_filters( 'woocommerce_order_button_text', __( 'Place order', 'woocommerce' ) ) . ', you agree to the <a href="https://www.ratepay.com/legal-payment-terms" target="_blank">terms of payment</a> and <a href="https://www.ratepay.com/legal-payment-dataprivacy">performance of a risk check</a> from the payment partner, Ratepay. You also agree to PayPal’s <a href="https://www.paypal.com/de/webapps/mpp/ua/privacy-full?locale.x=eng_DE&_ga=1.267010504.718583817.1563460395">privacy statement</a>. If your request to purchase upon invoice is accepted, the purchase price claim will be assigned to Ratepay, and you may only pay Ratepay, not the merchant.', 'woocommerce-paypal-payments' );
 					}
 					echo '</div>';
 
@@ -207,14 +241,20 @@ class PayUponInvoice {
 		);
 	}
 
+	/**
+	 * Set configuration JSON for FraudNet integration.
+	 */
 	public function add_parameter_block() {
-		$sandbox = $this->environment->current_environment_is(Environment::SANDBOX) ? '"sandbox":true,': '';
+		$sandbox = $this->environment->current_environment_is( Environment::SANDBOX ) ? '"sandbox":true,' : '';
 		?>
-		<script type="application/json" fncls="fnparams-dede7cc5-15fd-4c75-a9f4-36c430ee3a99">{<?php echo $sandbox;?>"f":"<?php echo esc_attr( $this->fraud_net->sessionId() ); ?>","s":"<?php echo esc_attr( $this->fraud_net->sourceWebsiteId() ); ?>"}</script>
+		<script type="application/json" fncls="fnparams-dede7cc5-15fd-4c75-a9f4-36c430ee3a99">{<?php echo $sandbox; ?>"f":"<?php echo esc_attr( $this->fraud_net->session_id() ); ?>","s":"<?php echo esc_attr( $this->fraud_net->source_website_id() ); ?>"}</script>
 		<script type="text/javascript" src="https://c.paypal.com/da/r/fb.js"></script>
 		<?php
 	}
 
+	/**
+	 * Registers PUI assets.
+	 */
 	public function register_assets() {
 		wp_enqueue_script(
 			'ppcp-pay-upon-invoice',

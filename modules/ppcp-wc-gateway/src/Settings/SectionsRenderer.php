@@ -55,10 +55,10 @@ class SectionsRenderer {
 		}
 
 		$sections = array(
-			PayPalGateway::ID      => __( 'PayPal Checkout', 'woocommerce-paypal-payments' ),
-			CreditCardGateway::ID  => __( 'PayPal Card Processing', 'woocommerce-paypal-payments' ),
+			PayPalGateway::ID         => __( 'PayPal Checkout', 'woocommerce-paypal-payments' ),
+			CreditCardGateway::ID     => __( 'PayPal Card Processing', 'woocommerce-paypal-payments' ),
 			PayUponInvoiceGateway::ID => __( 'Pay Upon Invoice', 'woocommerce-paypal-payments' ),
-			WebhooksStatusPage::ID => __( 'Webhooks Status', 'woocommerce-paypal-payments' ),
+			WebhooksStatusPage::ID    => __( 'Webhooks Status', 'woocommerce-paypal-payments' ),
 		);
 
 		echo '<ul class="subsubsub">';
@@ -67,8 +67,8 @@ class SectionsRenderer {
 
 		foreach ( $sections as $id => $label ) {
 			$url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&' . self::KEY . '=' . $id );
-			if($id === PayUponInvoiceGateway::ID) {
-				$url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-pay-upon-invoice-gateway');
+			if ( PayUponInvoiceGateway::ID === $id ) {
+				$url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-pay-upon-invoice-gateway' );
 			}
 			echo '<li><a href="' . esc_url( $url ) . '" class="' . ( $this->page_id === $id ? 'current' : '' ) . '">' . esc_html( $label ) . '</a> ' . ( end( $array_keys ) === $id ? '' : '|' ) . ' </li>';
 		}

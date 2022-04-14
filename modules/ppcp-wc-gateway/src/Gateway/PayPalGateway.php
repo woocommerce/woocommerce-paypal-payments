@@ -341,7 +341,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		if ( $this->is_paypal_tab() ) {
 			return __( 'PayPal Checkout', 'woocommerce-paypal-payments' );
 		}
-		if($this->is_pui_tab()) {
+		if ( $this->is_pui_tab() ) {
 			return __( 'Pay Upon Invoice', 'woocommerce-paypal-payments' );
 		}
 
@@ -393,6 +393,11 @@ class PayPalGateway extends \WC_Payment_Gateway {
 
 	}
 
+	/**
+	 * Whether we are on the PUI tab.
+	 *
+	 * @return bool
+	 */
 	private function is_pui_tab():bool {
 		return is_admin() && PayUponInvoiceGateway::ID === $this->page_id;
 	}

@@ -97,7 +97,7 @@ class OnboardingModule implements ModuleInterface {
 		);
 
 		add_action(
-			'wc_ajax_' . 'ppc-pui',
+			'wc_ajax_ppc-pui',
 			static function () use ( $c ) {
 				$endpoint = $c->get( 'onboarding.endpoint.pui' );
 				$endpoint->handle_request();

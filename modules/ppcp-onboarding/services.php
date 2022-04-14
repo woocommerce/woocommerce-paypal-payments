@@ -187,10 +187,11 @@ return array(
 			$logger
 		);
 	},
-	'onboarding.endpoint.pui' => static function(ContainerInterface $container) : PayUponInvoiceEndpoint {
+	'onboarding.endpoint.pui'                   => static function( ContainerInterface $container ) : PayUponInvoiceEndpoint {
 		return new PayUponInvoiceEndpoint(
 			$container->get( 'wcgateway.settings' ),
-			$container->get( 'button.request-data' )
+			$container->get( 'button.request-data' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 	'api.endpoint.partner-referrals-sandbox'    => static function ( ContainerInterface $container ) : PartnerReferrals {

@@ -1,11 +1,29 @@
 <?php
+/**
+ * Fraudnet session id.
+ *
+ * @package WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice
+ */
+
+declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice;
 
+use Exception;
+
+/**
+ * Class FraudNetSessionId.
+ */
 class FraudNetSessionId {
 
+	/**
+	 * Generates a session ID or use the existing one from WC session.
+	 *
+	 * @return array|string
+	 * @throws Exception When there is a problem with the session ID.
+	 */
 	public function __invoke() {
-		if(WC()->session === null) {
+		if ( WC()->session === null ) {
 			return '';
 		}
 

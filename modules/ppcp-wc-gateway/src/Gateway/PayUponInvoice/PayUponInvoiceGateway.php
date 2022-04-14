@@ -17,6 +17,9 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
 
+/**
+ * Class PayUponInvoiceGateway.
+ */
 class PayUponInvoiceGateway extends WC_Payment_Gateway {
 
 	use OrderMetaTrait;
@@ -24,30 +27,49 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	const ID = 'ppcp-pay-upon-invoice-gateway';
 
 	/**
+	 * The order endpoint.
+	 *
 	 * @var OrderEndpoint
 	 */
 	protected $order_endpoint;
 
 	/**
+	 * The purchase unit factory.
+	 *
 	 * @var PurchaseUnitFactory
 	 */
 	protected $purchase_unit_factory;
 
 	/**
+	 * The payment source factory.
+	 *
 	 * @var PaymentSourceFactory
 	 */
 	protected $payment_source_factory;
 
 	/**
+	 * The environment.
+	 *
 	 * @var Environment
 	 */
 	protected $environment;
 
 	/**
+	 * The logger interface.
+	 *
 	 * @var LoggerInterface
 	 */
 	protected $logger;
 
+	/**
+	 * PayUponInvoiceGateway constructor.
+	 *
+	 * @param OrderEndpoint        $order_endpoint The order endpoint.
+	 * @param PurchaseUnitFactory  $purchase_unit_factory The purchase unit factory.
+	 * @param PaymentSourceFactory $payment_source_factory The payment source factory.
+	 * @param Environment          $environment The environment.
+	 * @param LoggerInterface      $logger The logger.
+	 */
 	public function __construct(
 		OrderEndpoint $order_endpoint,
 		PurchaseUnitFactory $purchase_unit_factory,
@@ -55,7 +77,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 		Environment $environment,
 		LoggerInterface $logger
 	) {
-		 $this->id = self::ID;
+		$this->id = self::ID;
 
 		$this->method_title       = __( 'Pay Upon Invoice', 'woocommerce-paypal-payments' );
 		$this->method_description = __( 'Pay upon Invoice is an invoice payment method in Germany. It is a local buy now, pay later payment method that allows the buyer to place an order, receive the goods, try them, verify they are in good order, and then pay the invoice within 30 days.', 'woocommerce-paypal-payments' );
@@ -110,7 +132,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 				'description' => __( 'This controls the description which the user sees during checkout.', 'woocommerce-paypal-payments' ),
 			),
 			'experience_context'            => array(
-				'title'       => __( 'Experience Context', 'woocommerce' ),
+				'title'       => __( 'Experience Context', 'woocommerce-paypal-payments' ),
 				'type'        => 'title',
 				'description' => __( "Specify brand name, logo and customer service instructions to be presented on Ratepay's payment instructions.", 'woocommerce-paypal-payments' ),
 			),
@@ -138,6 +160,12 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 		);
 	}
 
+	/**
+	 * Processes the order.
+	 *
+	 * @param int $order_id The WC order ID.
+	 * @return array
+	 */
 	public function process_payment( $order_id ) {
 		$wc_order = wc_get_order( $order_id );
 		$wc_order->update_status( 'on-hold', __( 'Awaiting Pay Upon Invoice payment.', 'woocommerce-paypal-payments' ) );
