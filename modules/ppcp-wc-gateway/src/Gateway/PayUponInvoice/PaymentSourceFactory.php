@@ -21,7 +21,7 @@ class PaymentSourceFactory {
 			$address['last_name'] ?? '',
 			$address['email'] ?? '',
 			$birth_date ?? '',
-			$address['phone'] ?? '',
+			preg_replace('/[^0-9]/', '', $address['phone']),
 			substr($phone_country_code, strlen('+')) ?? '',
 			$address['address_1'] ?? '',
 			$address['city'] ?? '',
