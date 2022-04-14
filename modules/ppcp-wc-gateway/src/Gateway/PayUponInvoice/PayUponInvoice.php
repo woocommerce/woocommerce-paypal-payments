@@ -9,6 +9,7 @@ use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 class PayUponInvoice {
@@ -38,18 +39,25 @@ class PayUponInvoice {
 	 */
 	protected $settings;
 
+	/**
+	 * @var Environment
+	 */
+	protected $environment;
+
 	public function __construct(
 		string $module_url,
 		FraudNet $fraud_net,
 		OrderEndpoint $order_endpoint,
 		LoggerInterface $logger,
-		Settings $settings
+		Settings $settings,
+		Environment $environment
 	) {
 		$this->module_url     = $module_url;
 		$this->fraud_net      = $fraud_net;
 		$this->order_endpoint = $order_endpoint;
 		$this->logger         = $logger;
 		$this->settings = $settings;
+		$this->environment = $environment;
 	}
 
 	public function init() {
@@ -199,8 +207,10 @@ class PayUponInvoice {
 		);
 	}
 
-	public function add_parameter_block() { ?>
-		<script type="application/json" fncls="fnparams-dede7cc5-15fd-4c75-a9f4-36c430ee3a99">{"sandbox":true,"f":"<?php echo esc_attr( $this->fraud_net->sessionId() ); ?>","s":"<?php echo esc_attr( $this->fraud_net->sourceWebsiteId() ); ?>"}</script>
+	public function add_parameter_block() {
+		$sandbox = $this->environment->current_environment_is(Environment::SANDBOX) ? '"sandbox":true,': '';
+		?>
+		<script type="application/json" fncls="fnparams-dede7cc5-15fd-4c75-a9f4-36c430ee3a99">{<?php echo $sandbox;?>"f":"<?php echo esc_attr( $this->fraud_net->sessionId() ); ?>","s":"<?php echo esc_attr( $this->fraud_net->sourceWebsiteId() ); ?>"}</script>
 		<script type="text/javascript" src="https://c.paypal.com/da/r/fb.js"></script>
 		<?php
 	}
