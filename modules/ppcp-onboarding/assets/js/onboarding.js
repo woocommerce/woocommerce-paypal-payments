@@ -73,7 +73,10 @@ const ppcp_onboarding = {
 
 		const onboard_pui = document.querySelector('#ppcp-onboarding-pui');
 		onboard_pui.addEventListener('click', (event) => {
-		    event.preventDefault();
+            event.preventDefault();
+            buttons.forEach((element) => {
+                element.removeAttribute('href');
+            });
 
             fetch(PayPalCommerceGatewayOnboarding.pui_endpoint, {
                 method: 'POST',
@@ -84,10 +87,8 @@ const ppcp_onboarding = {
             }).then((res)=>{
                 return res.json();
             }).then((data)=>{
-                console.log(data)
+                location.reload();
             });
-
-            location.reload();
         })
 	},
 
