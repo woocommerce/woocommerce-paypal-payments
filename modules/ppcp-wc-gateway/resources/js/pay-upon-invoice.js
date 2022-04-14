@@ -27,24 +27,5 @@ window.addEventListener('load', function() {
     });
 
     getSessionIdFromJson();
-
-    const replaceButtonLabel = () => {
-        const form = document.querySelector('form.checkout');
-        if(!form) {
-            return;
-        }
-
-        const buttonLabel = document.querySelector('#place_order')?.textContent;
-        const buttonLegalTextLabel = document.querySelector('#ppcp-legal-text-button-label');
-        if (buttonLabel && buttonLegalTextLabel) {
-            buttonLegalTextLabel.textContent = '"' + buttonLabel + '"';
-        }
-    }
-
-    jQuery(document.body).on('payment_method_selected', () => {
-        replaceButtonLabel();
-    });
-
-    replaceButtonLabel();
 })
 
