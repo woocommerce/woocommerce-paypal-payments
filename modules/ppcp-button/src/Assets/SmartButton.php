@@ -1214,6 +1214,7 @@ class SmartButton implements SmartButtonInterface {
 	 * Check if cart product price total is 0.
 	 *
 	 * @return bool true if is 0, otherwise false.
+	 * @psalm-suppress RedundantConditionGivenDocblockType
 	 */
 	protected function is_cart_price_total_zero(): bool {
         // phpcs:ignore WordPress.PHP.StrictComparisons.LooseComparison
