@@ -1217,7 +1217,7 @@ class SmartButton implements SmartButtonInterface {
 	 */
 	protected function is_cart_price_total_zero(): bool {
         // phpcs:ignore WordPress.PHP.StrictComparisons.LooseComparison
-		return WC()->cart->get_cart_contents_total() == 0;
+		return WC()->cart && WC()->cart->get_cart_contents_total() == 0;
 	}
 
 	/**
