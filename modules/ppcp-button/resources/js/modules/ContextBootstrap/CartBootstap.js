@@ -15,6 +15,8 @@ class CartBootstrap {
         this.render();
 
         jQuery(document.body).on('updated_cart_totals updated_checkout', () => {
+
+            console.log(document.querySelector(this.gateway.button.wrapper), document.querySelector(this.gateway.hosted_fields.wrapper));
             this.render();
         });
     }

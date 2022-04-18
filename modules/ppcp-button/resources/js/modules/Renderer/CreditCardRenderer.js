@@ -13,7 +13,6 @@ class CreditCardRenderer {
     }
 
     render(wrapper, contextConfig) {
-
         if (
             (
                 this.defaultConfig.context !== 'checkout'
@@ -42,6 +41,9 @@ class CreditCardRenderer {
         }
 
         const gateWayBox = document.querySelector('.payment_box.payment_method_ppcp-credit-card-gateway');
+        if(! gateWayBox) {
+            return
+        }
         const oldDisplayStyle = gateWayBox.style.display;
         gateWayBox.style.display = 'block';
 
