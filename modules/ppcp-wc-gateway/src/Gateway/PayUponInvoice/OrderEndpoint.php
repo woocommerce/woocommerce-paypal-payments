@@ -124,7 +124,7 @@ class OrderEndpoint {
 		);
 
 		$response = $this->request( $url, $args );
-		if ( $response instanceof WP_Error  ) {
+		if ( $response instanceof WP_Error ) {
 			throw new RuntimeException( $response->get_error_message() );
 		}
 
