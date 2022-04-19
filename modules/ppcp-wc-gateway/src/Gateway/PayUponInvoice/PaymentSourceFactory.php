@@ -23,9 +23,16 @@ class PaymentSourceFactory {
 	 * @return PaymentSource
 	 */
 	public function from_wc_order( WC_Order $order ) {
-		$address            = $order->get_address();
-		$birth_date         = filter_input( INPUT_POST, 'billing_birth_date', FILTER_SANITIZE_STRING );
-		$phone_country_code = WC()->countries->get_country_calling_code( $address['country'] ?? '' );
+		$address    = $order->get_address();
+		$birth_date = filter_input( INPUT_POST, 'billing_birth_date', FILTER_SANITIZE_STRING ) ?? '';
+
+		$phone_country_code = WC()->countries->get_country_calling_code( $address['country'] );
+		$phone_country_code = is_array( $phone_country_code ) && ! empty( $phone_country_code ) ? $phone_country_code[0] : $phone_country_code;
+		if ( is_string( $phone_country_code ) && '' !== $phone_country_code ) {
+			$phone_country_code = substr( $phone_country_code, strlen( '+' ) ) ?: '';
+		} else {
+			$phone_country_code = '';
+		}
 
 		$gateway_settings              = get_option( 'woocommerce_ppcp-pay-upon-invoice-gateway_settings' );
 		$merchant_name                 = $gateway_settings['brand_name'] ?? '';
@@ -36,9 +43,9 @@ class PaymentSourceFactory {
 			$address['first_name'] ?? '',
 			$address['last_name'] ?? '',
 			$address['email'] ?? '',
-			$birth_date ?? '',
-			preg_replace( '/[^0-9]/', '', $address['phone'] ),
-			substr( $phone_country_code, strlen( '+' ) ) ?? '',
+			(string) $birth_date,
+			preg_replace( '/[^0-9]/', '', $address['phone'] ) ?? '',
+			$phone_country_code,
 			$address['address_1'] ?? '',
 			$address['city'] ?? '',
 			$address['postcode'] ?? '',
