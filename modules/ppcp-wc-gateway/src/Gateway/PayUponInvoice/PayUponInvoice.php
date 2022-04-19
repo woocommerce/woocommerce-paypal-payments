@@ -171,22 +171,23 @@ class PayUponInvoice {
 					$iban                = $instructions[1]->iban ?? '';
 					$account_holder_name = $instructions[1]->account_holder_name ?? '';
 
-					echo "<p>Für Ihre Bestellung #{$order->get_id()} ({$order_purchase_date} $order_time) bei {$merchant_name} haben Sie die Zahlung mittels “Rechnungskauf mit Ratepay“ gewählt.";
+					echo wp_kses_post( "<p>Für Ihre Bestellung #{$order->get_id()} ({$order_purchase_date} $order_time) bei {$merchant_name} haben Sie die Zahlung mittels “Rechnungskauf mit Ratepay“ gewählt." );
 					echo '<br>Bitte benutzen Sie die folgenden Informationen für Ihre Überweisung:</br>';
-					echo "<p>Bitte überweisen Sie den Betrag in Höhe von {$order->get_currency()}{$order->get_total()} bis zum {$order_date_30d} auf das unten angegebene Konto. Wichtig: Bitte geben Sie unbedingt als Verwendungszweck {$payment_reference} an, sonst kann die Zahlung nicht zugeordnet werden.</p>";
+					echo wp_kses_post( "<p>Bitte überweisen Sie den Betrag in Höhe von {$order->get_currency()}{$order->get_total()} bis zum {$order_date_30d} auf das unten angegebene Konto. Wichtig: Bitte geben Sie unbedingt als Verwendungszweck {$payment_reference} an, sonst kann die Zahlung nicht zugeordnet werden.</p>" );
+
 					echo '<ul>';
-					echo "<li>Empfänger: {$account_holder_name}</li>";
-					echo "<li>IBAN: {$iban}</li>";
-					echo "<li>BIC: {$bic}</li>";
-					echo "<li>Name der Bank: {$bank_name}</li>";
-					echo "<li>Verwendungszweck: {$payment_reference}</li>";
+					echo wp_kses_post( "<li>Empfänger: {$account_holder_name}</li>" );
+					echo wp_kses_post( "<li>IBAN: {$iban}</li>" );
+					echo wp_kses_post( "<li>BIC: {$bic}</li>" );
+					echo wp_kses_post( "<li>Name der Bank: {$bank_name}</li>" );
+					echo wp_kses_post( "<li>Verwendungszweck: {$payment_reference}</li>" );
 					echo '</ul>';
 
-					echo "<p>{$merchant_name} hat die Forderung gegen Sie an die PayPal (Europe) S.à r.l. et Cie, S.C.A. abgetreten, die wiederum die Forderung an Ratepay GmbH abgetreten hat. Zahlungen mit schuldbefreiender Wirkung können nur an die Ratepay GmbH geleistet werden.</p>";
+					echo wp_kses_post( "<p>{$merchant_name} hat die Forderung gegen Sie an die PayPal (Europe) S.à r.l. et Cie, S.C.A. abgetreten, die wiederum die Forderung an Ratepay GmbH abgetreten hat. Zahlungen mit schuldbefreiender Wirkung können nur an die Ratepay GmbH geleistet werden.</p>" );
 
 					echo '<p>Mit freundlichen Grüßen';
 					echo '<br>';
-					echo "{$merchant_name}</p>";
+					echo wp_kses_post( "{$merchant_name}</p>" );
 				}
 			},
 			10,
@@ -213,10 +214,12 @@ class PayUponInvoice {
 
 					echo '</div><div>';
 					$site_country_code = explode( '-', get_bloginfo( 'language' ) )[0] ?? '';
-					if ( $site_country_code === 'de' ) {
-						_e( 'Mit Klicken auf ' . apply_filters( 'woocommerce_order_button_text', __( 'Place order', 'woocommerce' ) ) . ' akzeptieren Sie die <a href="https://www.ratepay.com/legal-payment-terms" target="_blank">Ratepay Zahlungsbedingungen</a> und erklären sich mit der Durchführung einer <a href="https://www.ratepay.com/legal-payment-dataprivacy" target="_blank">Risikoprüfung durch Ratepay</a>, unseren Partner, einverstanden. Sie akzeptieren auch PayPals <a href="https://www.paypal.com/de/webapps/mpp/ua/privacy-full?locale.x=de_DE&_ga=1.228729434.718583817.1563460395" target="_blank">Datenschutzerklärung</a>. Falls Ihre Transaktion per Kauf auf Rechnung erfolgreich abgewickelt werden kann, wird der Kaufpreis an Ratepay abgetreten und Sie dürfen nur an Ratepay überweisen, nicht an den Händler.', 'woocommerce-paypal-payments' );
+					if ( 'de' === $site_country_code ) {
+						// phpcs:ignore WordPress.WP.I18n.TextDomainMismatch
+						echo wp_kses_post( 'Mit Klicken auf ' . apply_filters( 'woocommerce_order_button_text', __( 'Place order', 'woocommerce' ) ) . ' akzeptieren Sie die <a href="https://www.ratepay.com/legal-payment-terms" target="_blank">Ratepay Zahlungsbedingungen</a> und erklären sich mit der Durchführung einer <a href="https://www.ratepay.com/legal-payment-dataprivacy" target="_blank">Risikoprüfung durch Ratepay</a>, unseren Partner, einverstanden. Sie akzeptieren auch PayPals <a href="https://www.paypal.com/de/webapps/mpp/ua/privacy-full?locale.x=de_DE&_ga=1.228729434.718583817.1563460395" target="_blank">Datenschutzerklärung</a>. Falls Ihre Transaktion per Kauf auf Rechnung erfolgreich abgewickelt werden kann, wird der Kaufpreis an Ratepay abgetreten und Sie dürfen nur an Ratepay überweisen, nicht an den Händler.', 'woocommerce-paypal-payments' );
 					} else {
-						_e( 'By clicking on ' . apply_filters( 'woocommerce_order_button_text', __( 'Place order', 'woocommerce' ) ) . ', you agree to the <a href="https://www.ratepay.com/legal-payment-terms" target="_blank">terms of payment</a> and <a href="https://www.ratepay.com/legal-payment-dataprivacy">performance of a risk check</a> from the payment partner, Ratepay. You also agree to PayPal’s <a href="https://www.paypal.com/de/webapps/mpp/ua/privacy-full?locale.x=eng_DE&_ga=1.267010504.718583817.1563460395">privacy statement</a>. If your request to purchase upon invoice is accepted, the purchase price claim will be assigned to Ratepay, and you may only pay Ratepay, not the merchant.', 'woocommerce-paypal-payments' );
+						// phpcs:ignore WordPress.WP.I18n.TextDomainMismatch
+						echo wp_kses_post( 'By clicking on ' . apply_filters( 'woocommerce_order_button_text', __( 'Place order', 'woocommerce' ) ) . ', you agree to the <a href="https://www.ratepay.com/legal-payment-terms" target="_blank">terms of payment</a> and <a href="https://www.ratepay.com/legal-payment-dataprivacy">performance of a risk check</a> from the payment partner, Ratepay. You also agree to PayPal’s <a href="https://www.paypal.com/de/webapps/mpp/ua/privacy-full?locale.x=eng_DE&_ga=1.267010504.718583817.1563460395">privacy statement</a>. If your request to purchase upon invoice is accepted, the purchase price claim will be assigned to Ratepay, and you may only pay Ratepay, not the merchant.', 'woocommerce-paypal-payments' );
 					}
 					echo '</div>';
 
@@ -232,7 +235,7 @@ class PayUponInvoice {
 		add_action(
 			'woocommerce_after_checkout_validation',
 			function( array $fields, WP_Error $errors ) {
-				if ( $fields['billing_country'] !== 'DE' ) {
+				if ( 'DE' !== $fields['billing_country'] ) {
 					$errors->add( 'validation', __( 'Billing country not available.', 'woocommerce-paypal-payments' ) );
 				}
 			},
@@ -244,7 +247,7 @@ class PayUponInvoice {
 			'woocommerce_available_payment_gateways',
 			function( array $methods ): array {
 				$billing_country = filter_input( INPUT_POST, 'country', FILTER_SANITIZE_STRING ) ?? null;
-				if ( $billing_country && $billing_country !== 'DE' ) {
+				if ( $billing_country && 'DE' !== $billing_country ) {
 					unset( $methods[ PayUponInvoiceGateway::ID ] );
 				}
 
@@ -259,7 +262,8 @@ class PayUponInvoice {
 	public function add_parameter_block(): void {
 		$sandbox = $this->environment->current_environment_is( Environment::SANDBOX ) ? '"sandbox":true,' : '';
 		?>
-		<script type="application/json" fncls="fnparams-dede7cc5-15fd-4c75-a9f4-36c430ee3a99">{<?php echo $sandbox; ?>"f":"<?php echo esc_attr( $this->fraud_net->session_id() ); ?>","s":"<?php echo esc_attr( $this->fraud_net->source_website_id() ); ?>"}</script>
+		<script type="application/json" fncls="fnparams-dede7cc5-15fd-4c75-a9f4-36c430ee3a99">{<?php echo esc_attr( $sandbox ); ?>"f":"<?php echo esc_attr( $this->fraud_net->session_id() ); ?>","s":"<?php echo esc_attr( $this->fraud_net->source_website_id() ); ?>"}</script>
+		<?php // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript?>
 		<script type="text/javascript" src="https://c.paypal.com/da/r/fb.js"></script>
 		<?php
 	}
