@@ -65,7 +65,7 @@ class PayUponInvoiceEndpoint implements EndpointInterface {
 	}
 
 	/**
-	 *  * Handles the request.
+	 * Handles the request.
 	 *
 	 * @return bool
 	 * @throws NotFoundException When order not found or handling failed.

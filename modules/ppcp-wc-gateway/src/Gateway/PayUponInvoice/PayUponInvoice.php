@@ -266,9 +266,8 @@ class PayUponInvoice {
 	 * Set configuration JSON for FraudNet integration.
 	 */
 	public function add_parameter_block(): void {
-		$sandbox = $this->environment->current_environment_is( Environment::SANDBOX ) ? '"sandbox":true,' : '';
 		?>
-		<script type="application/json" fncls="fnparams-dede7cc5-15fd-4c75-a9f4-36c430ee3a99">{<?php echo esc_attr( $sandbox ); ?>"f":"<?php echo esc_attr( $this->fraud_net->session_id() ); ?>","s":"<?php echo esc_attr( $this->fraud_net->source_website_id() ); ?>"}</script>
+		<script type="application/json" fncls="fnparams-dede7cc5-15fd-4c75-a9f4-36c430ee3a99"><?php echo wc_esc_json( $this->fraudnet_configuration(), true ); ?></script>
 		<?php // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript?>
 		<script type="text/javascript" src="https://c.paypal.com/da/r/fb.js"></script>
 		<?php
@@ -284,5 +283,29 @@ class PayUponInvoice {
 			array(),
 			'1'
 		);
+	}
+
+	/**
+	 * Returns a configuration JSON string.
+	 *
+	 * @return string
+	 */
+	private function fraudnet_configuration(): string {
+		$config = array(
+			'sandbox' => true,
+			'f'       => $this->fraud_net->session_id(),
+			's'       => $this->fraud_net->source_website_id(),
+		);
+
+		if ( ! $this->environment->current_environment_is( Environment::SANDBOX ) ) {
+			unset( $config['sandbox'] );
+		}
+
+		$encoded = wp_json_encode( $config );
+		if ( false === $encoded ) {
+			return '';
+		}
+
+		return $encoded;
 	}
 }
