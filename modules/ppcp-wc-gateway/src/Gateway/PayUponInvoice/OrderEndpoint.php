@@ -17,6 +17,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
+use WP_Error;
 
 /**
  * Class OrderEndpoint.
@@ -123,7 +124,7 @@ class OrderEndpoint {
 		);
 
 		$response = $this->request( $url, $args );
-		if ( is_wp_error( $response ) ) {
+		if ( $response instanceof WP_Error  ) {
 			throw new RuntimeException( $response->get_error_message() );
 		}
 
@@ -174,7 +175,7 @@ class OrderEndpoint {
 		);
 
 		$response = $this->request( $url, $args );
-		if ( is_wp_error( $response ) ) {
+		if ( $response instanceof WP_Error ) {
 			throw new RuntimeException( $response->get_error_message() );
 		}
 

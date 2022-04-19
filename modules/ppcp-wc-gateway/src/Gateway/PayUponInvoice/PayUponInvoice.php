@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
+use WP_Error;
 
 /**
  * Class PayUponInvoice.
@@ -94,10 +95,10 @@ class PayUponInvoice {
 	 *
 	 * @throws NotFoundException When setting is not found.
 	 */
-	public function init() {
+	public function init(): void {
 		add_filter(
 			'ppcp_partner_referrals_data',
-			function ( $data ) {
+			function ( array $data ): array {
 				if ( $this->settings->has( 'ppcp-onboarding-pui' ) && $this->settings->get( 'ppcp-onboarding-pui' ) !== '1' ) {
 					return $data;
 				}
@@ -138,7 +139,7 @@ class PayUponInvoice {
 
 		add_action(
 			'woocommerce_email_before_order_table',
-			function( WC_Order $order, $sent_to_admin ) {
+			function( WC_Order $order, bool $sent_to_admin ) {
 				if ( ! $sent_to_admin && PayUponInvoiceGateway::ID === $order->get_payment_method() && $order->has_status( 'processing' ) ) {
 					$this->logger->info( "Adding Ratepay payment instructions to email for order #{$order->get_id()}." );
 
@@ -147,11 +148,22 @@ class PayUponInvoice {
 					$gateway_settings = get_option( 'woocommerce_ppcp-pay-upon-invoice-gateway_settings' );
 					$merchant_name    = $gateway_settings['brand_name'] ?? '';
 
-					$order_date          = $order->get_date_created();
+					$order_date = $order->get_date_created();
+					if ( null === $order_date ) {
+						$this->logger->error( 'Could not get WC order date for Ratepay payment instructions.' );
+						return;
+					}
+
 					$order_purchase_date = $order_date->date( 'd-m-Y' );
 					$order_time          = $order_date->date( 'H:i:s' );
 					$order_date          = $order_date->date( 'd-m-Y H:i:s' );
-					$order_date_30d      = gmdate( 'd-m-Y', strtotime( $order_date . ' +30 days' ) );
+
+					$thirty_days_date = strtotime( $order_date . ' +30 days' );
+					if ( false === $thirty_days_date ) {
+						$this->logger->error( 'Could not create +30 days date from WC order date.' );
+						return;
+					}
+					$order_date_30d = gmdate( 'd-m-Y', $thirty_days_date );
 
 					$payment_reference   = $instructions[0] ?? '';
 					$bic                 = $instructions[1]->bic ?? '';
@@ -183,7 +195,7 @@ class PayUponInvoice {
 
 		add_filter(
 			'woocommerce_gateway_description',
-			function( $description, $id ) {
+			function( string $description, string $id ): string {
 				if ( PayUponInvoiceGateway::ID === $id ) {
 					ob_start();
 					echo '<div style="padding: 20px 0;">';
@@ -208,7 +220,7 @@ class PayUponInvoice {
 					}
 					echo '</div>';
 
-					$description .= ob_get_clean();
+					$description .= ob_get_clean() ?: '';
 				}
 
 				return $description;
@@ -219,7 +231,7 @@ class PayUponInvoice {
 
 		add_action(
 			'woocommerce_after_checkout_validation',
-			function( $fields, $errors ) {
+			function( array $fields, WP_Error $errors ) {
 				if ( $fields['billing_country'] !== 'DE' ) {
 					$errors->add( 'validation', __( 'Billing country not available.', 'woocommerce-paypal-payments' ) );
 				}
@@ -230,7 +242,7 @@ class PayUponInvoice {
 
 		add_filter(
 			'woocommerce_available_payment_gateways',
-			function( $methods ) {
+			function( array $methods ): array {
 				$billing_country = filter_input( INPUT_POST, 'country', FILTER_SANITIZE_STRING ) ?? null;
 				if ( $billing_country && $billing_country !== 'DE' ) {
 					unset( $methods[ PayUponInvoiceGateway::ID ] );
@@ -244,7 +256,7 @@ class PayUponInvoice {
 	/**
 	 * Set configuration JSON for FraudNet integration.
 	 */
-	public function add_parameter_block() {
+	public function add_parameter_block(): void {
 		$sandbox = $this->environment->current_environment_is( Environment::SANDBOX ) ? '"sandbox":true,' : '';
 		?>
 		<script type="application/json" fncls="fnparams-dede7cc5-15fd-4c75-a9f4-36c430ee3a99">{<?php echo $sandbox; ?>"f":"<?php echo esc_attr( $this->fraud_net->session_id() ); ?>","s":"<?php echo esc_attr( $this->fraud_net->source_website_id() ); ?>"}</script>
@@ -255,12 +267,12 @@ class PayUponInvoice {
 	/**
 	 * Registers PUI assets.
 	 */
-	public function register_assets() {
+	public function register_assets(): void {
 		wp_enqueue_script(
 			'ppcp-pay-upon-invoice',
 			trailingslashit( $this->module_url ) . 'assets/js/pay-upon-invoice.js',
 			array(),
-			1
+			'1'
 		);
 	}
 }
