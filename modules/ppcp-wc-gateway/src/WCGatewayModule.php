@@ -81,6 +81,10 @@ class WCGatewayModule implements ModuleInterface {
 				if ( $breakdown ) {
 					$wc_order->update_meta_data( PayPalGateway::FEES_META_KEY, $breakdown->to_array() );
 					$wc_order->save_meta_data();
+					$paypal_fee = $breakdown->paypal_fee();
+					if ( $paypal_fee ) {
+						update_post_meta( $wc_order->get_id(), 'PayPal Transaction Key', $paypal_fee->value() );
+					}
 				}
 			},
 			10,
