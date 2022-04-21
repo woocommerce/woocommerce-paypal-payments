@@ -43,7 +43,7 @@ class PaymentSourceFactory {
 			$address['first_name'] ?? '',
 			$address['last_name'] ?? '',
 			$address['email'] ?? '',
-			(string) $birth_date,
+			$birth_date,
 			preg_replace( '/[^0-9]/', '', $address['phone'] ) ?? '',
 			$phone_country_code,
 			$address['address_1'] ?? '',
