@@ -87,7 +87,6 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Fix - Express buttons & Pay Later visible on variable Subscription products /w disabled vaulting #281 
 * Fix - Pay for order (guest) failing when no email address available #535 
 * Fix - Emoji in product description causing INVALID_STRING_LENGTH error #491
-* Enhancement - Redirect after updating settings for DCC sends you to PPCP settings screen #392
 * Enhancement - Change cart total amount that is sent to PayPal gateway #486
 * Enhancement - Include dark Visa and Mastercard gateway icon list for PayPal Card Processing #566
 * Enhancement - Onboarding errors improvements #558
