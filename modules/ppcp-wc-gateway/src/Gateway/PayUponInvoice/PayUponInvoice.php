@@ -65,6 +65,13 @@ class PayUponInvoice {
 	protected $environment;
 
 	/**
+	 * The asset version.
+	 *
+	 * @var string
+	 */
+	protected $asset_version;
+
+	/**
 	 * PayUponInvoice constructor.
 	 *
 	 * @param string          $module_url The module URL.
@@ -73,6 +80,7 @@ class PayUponInvoice {
 	 * @param LoggerInterface $logger The logger.
 	 * @param Settings        $settings The settings.
 	 * @param Environment     $environment The environment.
+	 * @param string          $asset_version The asset version.
 	 */
 	public function __construct(
 		string $module_url,
@@ -80,7 +88,8 @@ class PayUponInvoice {
 		OrderEndpoint $order_endpoint,
 		LoggerInterface $logger,
 		Settings $settings,
-		Environment $environment
+		Environment $environment,
+		string $asset_version
 	) {
 		$this->module_url     = $module_url;
 		$this->fraud_net      = $fraud_net;
@@ -88,6 +97,7 @@ class PayUponInvoice {
 		$this->logger         = $logger;
 		$this->settings       = $settings;
 		$this->environment    = $environment;
+		$this->asset_version  = $asset_version;
 	}
 
 	/**
@@ -281,7 +291,7 @@ class PayUponInvoice {
 			'ppcp-pay-upon-invoice',
 			trailingslashit( $this->module_url ) . 'assets/js/pay-upon-invoice.js',
 			array(),
-			'1'
+			$this->asset_version
 		);
 	}
 

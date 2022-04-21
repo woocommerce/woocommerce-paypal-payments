@@ -85,9 +85,9 @@ class OnboardingOptionsRenderer {
 			if ( $this->settings->has( 'ppcp-onboarding-pui' ) && $this->settings->get( 'ppcp-onboarding-pui' ) !== '1' ) {
 				$checked = '';
 			}
-			return '<label><input type="checkbox" id="ppcp-onboarding-pui" ' . $checked . '> ' .
+			return '<li><label><input type="checkbox" id="ppcp-onboarding-pui" ' . $checked . '> ' .
 				__( 'Onboard with Pay Upon Invoice', 'woocommerce-paypal-payments' ) . '
-		</label>';
+		</label></li>';
 		}
 
 		return '';

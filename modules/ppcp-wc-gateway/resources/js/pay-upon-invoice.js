@@ -7,6 +7,9 @@ window.addEventListener('load', function() {
         }
 
         const fncls = document.querySelector("[fncls='fnparams-dede7cc5-15fd-4c75-a9f4-36c430ee3a99']");
+        if(!fncls) {
+            return;
+        }
         const fncls_params = JSON.parse(fncls.textContent);
 
         if(document.querySelector("[name='fraudnet-session-id']") !== null) {

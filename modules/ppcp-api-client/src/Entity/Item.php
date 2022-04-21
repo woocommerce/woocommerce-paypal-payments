@@ -69,7 +69,7 @@ class Item {
 	/**
 	 * The tax rate.
 	 *
-	 * @var float|int
+	 * @var float
 	 */
 	protected $tax_rate;
 

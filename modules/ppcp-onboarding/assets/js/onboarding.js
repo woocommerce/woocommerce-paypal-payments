@@ -72,7 +72,7 @@ const ppcp_onboarding = {
 		);
 
 		const onboard_pui = document.querySelector('#ppcp-onboarding-pui');
-		onboard_pui.addEventListener('click', (event) => {
+		onboard_pui?.addEventListener('click', (event) => {
             event.preventDefault();
             buttons.forEach((element) => {
                 element.removeAttribute('href');

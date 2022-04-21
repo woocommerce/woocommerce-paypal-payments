@@ -170,8 +170,10 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 		$wc_order = wc_get_order( $order_id );
 		$wc_order->update_status( 'on-hold', __( 'Awaiting Pay Upon Invoice payment.', 'woocommerce-paypal-payments' ) );
 
-		$purchase_unit  = $this->purchase_unit_factory->from_wc_order( $wc_order );
-		$payment_source = $this->payment_source_factory->from_wc_order( $wc_order );
+		$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
+
+		$birth_date     = filter_input( INPUT_POST, 'billing_birth_date', FILTER_SANITIZE_STRING ) ?? '';
+		$payment_source = $this->payment_source_factory->from_wc_order( $wc_order, $birth_date );
 
 		try {
 			$fraudnet_session_id = filter_input( INPUT_POST, 'fraudnet-session-id', FILTER_SANITIZE_STRING ) ?? '';

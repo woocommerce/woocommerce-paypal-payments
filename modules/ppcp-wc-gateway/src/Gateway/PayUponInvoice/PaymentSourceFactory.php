@@ -20,11 +20,11 @@ class PaymentSourceFactory {
 	 * Create a PUI payment source from a WC order.
 	 *
 	 * @param WC_Order $order The WC order.
+	 * @param string   $birth_date The birth date.
 	 * @return PaymentSource
 	 */
-	public function from_wc_order( WC_Order $order ) {
-		$address    = $order->get_address();
-		$birth_date = filter_input( INPUT_POST, 'billing_birth_date', FILTER_SANITIZE_STRING ) ?? '';
+	public function from_wc_order( WC_Order $order, string $birth_date ) {
+		$address = $order->get_address();
 
 		$phone_country_code = WC()->countries->get_country_calling_code( $address['country'] );
 		$phone_country_code = is_array( $phone_country_code ) && ! empty( $phone_country_code ) ? $phone_country_code[0] : $phone_country_code;

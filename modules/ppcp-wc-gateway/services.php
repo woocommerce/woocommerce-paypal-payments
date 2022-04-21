@@ -2193,7 +2193,8 @@ return array(
 			$container->get( 'wcgateway.pay-upon-invoice-order-endpoint' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'wcgateway.settings' ),
-			$container->get( 'onboarding.environment' )
+			$container->get( 'onboarding.environment' ),
+			$container->get( 'ppcp.asset-version' )
 		);
 	},
 	'wcgateway.logging.is-enabled'                      => function ( ContainerInterface $container ) : bool {
