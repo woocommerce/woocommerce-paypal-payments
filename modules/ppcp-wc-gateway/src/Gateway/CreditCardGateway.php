@@ -471,7 +471,6 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		if ( 'enabled' === $key ) {
 
 			$this->config->set( 'dcc_enabled', 'yes' === $value );
-			$this->config->set( 'enabled', 'yes' === $value );
 			$this->config->persist();
 
 			return true;
