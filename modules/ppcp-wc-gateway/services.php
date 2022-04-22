@@ -32,7 +32,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\FraudNet;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\FraudNetSessionId;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\FraudNetSourceWebsiteId;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\OrderEndpoint;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PaymentSourceFactory;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoice;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
@@ -2151,8 +2151,8 @@ return array(
 			$container->get( 'wcgateway.settings' )
 		);
 	},
-	'wcgateway.pay-upon-invoice-order-endpoint'         => static function ( ContainerInterface $container ): OrderEndpoint {
-		return new OrderEndpoint(
+	'wcgateway.pay-upon-invoice-order-endpoint'         => static function ( ContainerInterface $container ): PayUponInvoiceOrderEndpoint {
+		return new PayUponInvoiceOrderEndpoint(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
 			$container->get( 'api.factory.order' ),

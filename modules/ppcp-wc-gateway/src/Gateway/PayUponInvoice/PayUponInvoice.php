@@ -39,7 +39,7 @@ class PayUponInvoice {
 	/**
 	 * The order endpoint.
 	 *
-	 * @var OrderEndpoint
+	 * @var PayUponInvoiceOrderEndpoint
 	 */
 	protected $order_endpoint;
 
@@ -76,7 +76,7 @@ class PayUponInvoice {
 	 *
 	 * @param string          $module_url The module URL.
 	 * @param FraudNet        $fraud_net The FraudNet entity.
-	 * @param OrderEndpoint   $order_endpoint The order endpoint.
+	 * @param PayUponInvoiceOrderEndpoint   $order_endpoint The order endpoint.
 	 * @param LoggerInterface $logger The logger.
 	 * @param Settings        $settings The settings.
 	 * @param Environment     $environment The environment.
@@ -85,7 +85,7 @@ class PayUponInvoice {
 	public function __construct(
 		string $module_url,
 		FraudNet $fraud_net,
-		OrderEndpoint $order_endpoint,
+		PayUponInvoiceOrderEndpoint $order_endpoint,
 		LoggerInterface $logger,
 		Settings $settings,
 		Environment $environment,

@@ -29,7 +29,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	/**
 	 * The order endpoint.
 	 *
-	 * @var OrderEndpoint
+	 * @var PayUponInvoiceOrderEndpoint
 	 */
 	protected $order_endpoint;
 
@@ -64,14 +64,14 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	/**
 	 * PayUponInvoiceGateway constructor.
 	 *
-	 * @param OrderEndpoint        $order_endpoint The order endpoint.
+	 * @param PayUponInvoiceOrderEndpoint        $order_endpoint The order endpoint.
 	 * @param PurchaseUnitFactory  $purchase_unit_factory The purchase unit factory.
 	 * @param PaymentSourceFactory $payment_source_factory The payment source factory.
 	 * @param Environment          $environment The environment.
 	 * @param LoggerInterface      $logger The logger.
 	 */
 	public function __construct(
-		OrderEndpoint $order_endpoint,
+		PayUponInvoiceOrderEndpoint $order_endpoint,
 		PurchaseUnitFactory $purchase_unit_factory,
 		PaymentSourceFactory $payment_source_factory,
 		Environment $environment,

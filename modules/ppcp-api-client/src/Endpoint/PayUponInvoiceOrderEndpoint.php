@@ -22,7 +22,7 @@ use WP_Error;
 /**
  * Class OrderEndpoint.
  */
-class OrderEndpoint {
+class PayUponInvoiceOrderEndpoint {
 
 	use RequestTrait;
 
