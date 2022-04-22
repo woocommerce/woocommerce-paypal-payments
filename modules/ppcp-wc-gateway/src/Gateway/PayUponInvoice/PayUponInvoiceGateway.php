@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use WC_Payment_Gateway;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
@@ -64,11 +65,11 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	/**
 	 * PayUponInvoiceGateway constructor.
 	 *
-	 * @param PayUponInvoiceOrderEndpoint        $order_endpoint The order endpoint.
-	 * @param PurchaseUnitFactory  $purchase_unit_factory The purchase unit factory.
-	 * @param PaymentSourceFactory $payment_source_factory The payment source factory.
-	 * @param Environment          $environment The environment.
-	 * @param LoggerInterface      $logger The logger.
+	 * @param PayUponInvoiceOrderEndpoint $order_endpoint The order endpoint.
+	 * @param PurchaseUnitFactory         $purchase_unit_factory The purchase unit factory.
+	 * @param PaymentSourceFactory        $payment_source_factory The payment source factory.
+	 * @param Environment                 $environment The environment.
+	 * @param LoggerInterface             $logger The logger.
 	 */
 	public function __construct(
 		PayUponInvoiceOrderEndpoint $order_endpoint,

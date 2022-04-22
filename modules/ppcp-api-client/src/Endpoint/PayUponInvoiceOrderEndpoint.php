@@ -7,7 +7,7 @@
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice;
+namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -17,6 +17,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\FraudNet;
 use WP_Error;
 
 /**

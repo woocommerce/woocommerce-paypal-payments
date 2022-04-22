@@ -12,7 +12,6 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatus;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -160,6 +159,13 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	private $logger;
 
 	/**
+	 * The api shop country.
+	 *
+	 * @var string
+	 */
+	protected $api_shop_country;
+
+	/**
 	 * PayPalGateway constructor.
 	 *
 	 * @param SettingsRenderer            $settings_renderer The Settings Renderer.
@@ -178,6 +184,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @param LoggerInterface             $logger  The logger.
 	 * @param PaymentsEndpoint            $payments_endpoint The payments endpoint.
 	 * @param OrderEndpoint               $order_endpoint The order endpoint.
+	 * @param string                      $api_shop_country The api shop country.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
@@ -195,7 +202,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		PaymentTokenRepository $payment_token_repository,
 		LoggerInterface $logger,
 		PaymentsEndpoint $payments_endpoint,
-		OrderEndpoint $order_endpoint
+		OrderEndpoint $order_endpoint,
+		string $api_shop_country
 	) {
 
 		$this->id                            = self::ID;
@@ -276,6 +284,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->payments_endpoint        = $payments_endpoint;
 		$this->order_endpoint           = $order_endpoint;
 		$this->state                    = $state;
+		$this->api_shop_country         = $api_shop_country;
 	}
 
 	/**
@@ -399,6 +408,10 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @return bool
 	 */
 	private function is_pui_tab():bool {
+		if ( 'DE' !== $this->api_shop_country ) {
+			return false;
+		}
+
 		return is_admin() && PayUponInvoiceGateway::ID === $this->page_id;
 	}
 

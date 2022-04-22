@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice;
 
 use Psr\Log\LoggerInterface;
 use WC_Order;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
@@ -74,13 +75,13 @@ class PayUponInvoice {
 	/**
 	 * PayUponInvoice constructor.
 	 *
-	 * @param string          $module_url The module URL.
-	 * @param FraudNet        $fraud_net The FraudNet entity.
-	 * @param PayUponInvoiceOrderEndpoint   $order_endpoint The order endpoint.
-	 * @param LoggerInterface $logger The logger.
-	 * @param Settings        $settings The settings.
-	 * @param Environment     $environment The environment.
-	 * @param string          $asset_version The asset version.
+	 * @param string                      $module_url The module URL.
+	 * @param FraudNet                    $fraud_net The FraudNet entity.
+	 * @param PayUponInvoiceOrderEndpoint $order_endpoint The order endpoint.
+	 * @param LoggerInterface             $logger The logger.
+	 * @param Settings                    $settings The settings.
+	 * @param Environment                 $environment The environment.
+	 * @param string                      $asset_version The asset version.
 	 */
 	public function __construct(
 		string $module_url,

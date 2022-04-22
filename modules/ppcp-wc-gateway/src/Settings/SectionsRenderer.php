@@ -29,12 +29,21 @@ class SectionsRenderer {
 	protected $page_id;
 
 	/**
+	 * The api shop country.
+	 *
+	 * @var string
+	 */
+	protected $api_shop_country;
+
+	/**
 	 * SectionsRenderer constructor.
 	 *
 	 * @param string $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
+	 * @param string $api_shop_country The api shop country.
 	 */
-	public function __construct( string $page_id ) {
-		$this->page_id = $page_id;
+	public function __construct( string $page_id, string $api_shop_country ) {
+		$this->page_id          = $page_id;
+		$this->api_shop_country = $api_shop_country;
 	}
 
 	/**
@@ -60,6 +69,10 @@ class SectionsRenderer {
 			PayUponInvoiceGateway::ID => __( 'Pay Upon Invoice', 'woocommerce-paypal-payments' ),
 			WebhooksStatusPage::ID    => __( 'Webhooks Status', 'woocommerce-paypal-payments' ),
 		);
+
+		if ( 'DE' !== $this->api_shop_country ) {
+			unset( $sections[ PayUponInvoiceGateway::ID ] );
+		}
 
 		echo '<ul class="subsubsub">';
 

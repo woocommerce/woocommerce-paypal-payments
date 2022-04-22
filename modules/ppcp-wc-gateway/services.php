@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway;
 
 use Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
@@ -32,7 +33,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\FraudNet;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\FraudNetSessionId;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\FraudNetSourceWebsiteId;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PaymentSourceFactory;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoice;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
@@ -69,6 +69,7 @@ return array(
 		$order_endpoint = $container->get( 'api.endpoint.order' );
 		$environment         = $container->get( 'onboarding.environment' );
 		$logger              = $container->get( 'woocommerce.logger.woocommerce' );
+		$api_shop_country = $container->get( 'api.shop.country' );
 		return new PayPalGateway(
 			$settings_renderer,
 			$funding_source_renderer,
@@ -85,7 +86,8 @@ return array(
 			$payment_token_repository,
 			$logger,
 			$payments_endpoint,
-			$order_endpoint
+			$order_endpoint,
+			$api_shop_country
 		);
 	},
 	'wcgateway.credit-card-gateway'                     => static function ( ContainerInterface $container ): CreditCardGateway {
@@ -177,7 +179,10 @@ return array(
 			return new AuthorizeOrderActionNotice();
 		},
 	'wcgateway.settings.sections-renderer'              => static function ( ContainerInterface $container ): SectionsRenderer {
-		return new SectionsRenderer( $container->get( 'wcgateway.current-ppcp-settings-page-id' ) );
+		return new SectionsRenderer(
+			$container->get( 'wcgateway.current-ppcp-settings-page-id' ),
+			$container->get( 'api.shop.country' )
+		);
 	},
 	'wcgateway.settings.status'                         => static function ( ContainerInterface $container ): SettingsStatus {
 		$settings      = $container->get( 'wcgateway.settings' );
