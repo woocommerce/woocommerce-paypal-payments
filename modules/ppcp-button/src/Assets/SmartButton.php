@@ -898,7 +898,10 @@ class SmartButton implements SmartButtonInterface {
 		if ( ! is_checkout() ) {
 			$disable_funding[] = 'card';
 		}
-		if ( is_checkout() && $this->settings->has( 'dcc_enabled' ) && $this->settings->get( 'dcc_enabled' ) ) {
+
+		$is_dcc_enabled = $this->settings->has( 'dcc_enabled' ) && $this->settings->get( 'dcc_enabled' );
+
+		if ( is_checkout() && $is_dcc_enabled ) {
 			$key = array_search( 'card', $disable_funding, true );
 			if ( false !== $key ) {
 				unset( $disable_funding[ $key ] );
@@ -906,7 +909,11 @@ class SmartButton implements SmartButtonInterface {
 		}
 
 		if ( $this->is_free_trial_cart() ) {
-			$disable_funding = array_keys( $this->all_funding_sources );
+			$all_sources = $this->all_funding_sources;
+			if ( $is_dcc_enabled ) {
+				$all_sources = array_keys( array_diff_key( $all_sources, array( 'card' => '' ) ) );
+			}
+			$disable_funding = $all_sources;
 		}
 
 		if ( count( $disable_funding ) > 0 ) {
