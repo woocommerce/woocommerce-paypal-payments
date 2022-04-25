@@ -1,34 +1,43 @@
 window.addEventListener('load', function() {
 
-    const getSessionIdFromJson = () => {
-        const form = document.querySelector('form.checkout');
-        if(!form) {
-            return;
+    function _loadBeaconJS(options) {
+        var script = document.createElement('script');
+        script.src = options.fnUrl;
+        document.body.appendChild(script);
+    }
+
+    function _injectConfig() {
+        var script = document.querySelector("[fncls='fnparams-dede7cc5-15fd-4c75-a9f4-36c430ee3a99']");
+        if (script) {
+            if (script.parentNode) {
+                script.parentNode.removeChild(script);
+            }
         }
 
-        const fncls = document.querySelector("[fncls='fnparams-dede7cc5-15fd-4c75-a9f4-36c430ee3a99']");
-        if(!fncls) {
-            return;
-        }
-        const fncls_params = JSON.parse(fncls.textContent);
+        script = document.createElement('script');
+        script.id = 'fconfig';
+        script.type = 'application/json';
+        script.setAttribute('fncls', 'fnparams-dede7cc5-15fd-4c75-a9f4-36c430ee3a99');
 
-        if(document.querySelector("[name='fraudnet-session-id']") !== null) {
-            document.querySelector("[name='fraudnet-session-id']").remove();
-        }
+        var configuration = {
+            'f': FraudNetConfig.f,
+            's': FraudNetConfig.s
+        };
 
-        const fraudnetSessionId = document.createElement('input');
-        fraudnetSessionId.setAttribute('type', 'hidden');
-        fraudnetSessionId.setAttribute('name', 'fraudnet-session-id');
-        fraudnetSessionId.setAttribute('value', fncls_params.f);
+        script.text = JSON.stringify(configuration);
+        document.body.appendChild(script);
 
-        form.appendChild(fraudnetSessionId);
-        console.log(fncls_params)
+        _loadBeaconJS({fnUrl: "https://c.paypal.com/da/r/fb.js"})
     }
 
     document.addEventListener('hosted_fields_loaded', (event) => {
-        getSessionIdFromJson();
+        if (PAYPAL.asyncData && typeof PAYPAL.asyncData.initAndCollect === 'function') {
+            PAYPAL.asyncData.initAndCollect()
+        }
+
+        _injectConfig();
     });
 
-    getSessionIdFromJson();
+    _injectConfig();
 })
 

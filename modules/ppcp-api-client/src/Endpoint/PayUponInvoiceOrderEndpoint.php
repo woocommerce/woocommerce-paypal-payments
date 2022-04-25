@@ -91,12 +91,11 @@ class PayUponInvoiceOrderEndpoint {
 	 *
 	 * @param PurchaseUnit[] $items The purchase unit items for the order.
 	 * @param PaymentSource  $payment_source The payment source.
-	 * @param string         $fraudnet_session_id The FrauNet session ID.
 	 * @return Order
 	 * @throws RuntimeException When there is a problem with the payment source.
 	 * @throws PayPalApiException When there is a problem creating the order.
 	 */
-	public function create( array $items, PaymentSource $payment_source, $fraudnet_session_id = '' ): Order {
+	public function create( array $items, PaymentSource $payment_source ): Order {
 		$data = array(
 			'intent'                 => 'CAPTURE',
 			'processing_instruction' => 'ORDER_COMPLETE_ON_PAYMENT_APPROVAL',
@@ -119,7 +118,7 @@ class PayUponInvoiceOrderEndpoint {
 				'Authorization'             => 'Bearer ' . $bearer->token(),
 				'Content-Type'              => 'application/json',
 				'Prefer'                    => 'return=representation',
-				'PayPal-Client-Metadata-Id' => $fraudnet_session_id ?: $this->fraudnet->session_id(),
+				'PayPal-Client-Metadata-Id' => $this->fraudnet->session_id(),
 				'PayPal-Request-Id'         => uniqid( 'ppcp-', true ),
 			),
 			'body'    => wp_json_encode( $data ),

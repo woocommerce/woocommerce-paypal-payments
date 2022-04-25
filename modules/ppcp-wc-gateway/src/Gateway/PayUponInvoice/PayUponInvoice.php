@@ -124,11 +124,6 @@ class PayUponInvoice {
 		);
 
 		add_action(
-			'wp_footer',
-			array( $this, 'add_parameter_block' )
-		);
-
-		add_action(
 			'wp_enqueue_scripts',
 			array( $this, 'register_assets' )
 		);
@@ -274,17 +269,6 @@ class PayUponInvoice {
 	}
 
 	/**
-	 * Set configuration JSON for FraudNet integration.
-	 */
-	public function add_parameter_block(): void {
-		?>
-		<script type="application/json" fncls="fnparams-dede7cc5-15fd-4c75-a9f4-36c430ee3a99"><?php echo wc_esc_json( $this->fraudnet_configuration(), true ); ?></script>
-		<?php // phpcs:ignore WordPress.WP.EnqueuedResources.NonEnqueuedScript?>
-		<script type="text/javascript" src="https://c.paypal.com/da/r/fb.js"></script>
-		<?php
-	}
-
-	/**
 	 * Registers PUI assets.
 	 */
 	public function register_assets(): void {
@@ -294,29 +278,16 @@ class PayUponInvoice {
 			array(),
 			$this->asset_version
 		);
-	}
 
-	/**
-	 * Returns a configuration JSON string.
-	 *
-	 * @return string
-	 */
-	private function fraudnet_configuration(): string {
-		$config = array(
-			'sandbox' => true,
-			'f'       => $this->fraud_net->session_id(),
-			's'       => $this->fraud_net->source_website_id(),
+		wp_localize_script(
+			'ppcp-pay-upon-invoice',
+			'FraudNetConfig',
+			array(
+				'f' => $this->fraud_net->session_id(),
+				's' => $this->fraud_net->source_website_id(),
+			)
 		);
-
-		if ( ! $this->environment->current_environment_is( Environment::SANDBOX ) ) {
-			unset( $config['sandbox'] );
-		}
-
-		$encoded = wp_json_encode( $config );
-		if ( false === $encoded ) {
-			return '';
-		}
-
-		return $encoded;
 	}
+
+
 }

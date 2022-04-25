@@ -177,9 +177,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 		$payment_source = $this->payment_source_factory->from_wc_order( $wc_order, $birth_date );
 
 		try {
-			$fraudnet_session_id = filter_input( INPUT_POST, 'fraudnet-session-id', FILTER_SANITIZE_STRING ) ?? '';
-
-			$order = $this->order_endpoint->create( array( $purchase_unit ), $payment_source, $fraudnet_session_id );
+			$order = $this->order_endpoint->create( array( $purchase_unit ), $payment_source );
 			$this->add_paypal_meta( $wc_order, $order, $this->environment );
 
 			WC()->cart->empty_cart();
