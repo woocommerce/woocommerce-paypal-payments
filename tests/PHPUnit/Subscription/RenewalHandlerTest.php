@@ -98,6 +98,9 @@ class RenewalHandlerTest extends TestCase
 		$order
 			->shouldReceive('purchase_units')
 			->andReturn([$purchaseUnit]);
+		$order
+			->shouldReceive('payment_source')
+			->andReturn(null);
 
 		$wcOrder
 			->shouldReceive('get_id')

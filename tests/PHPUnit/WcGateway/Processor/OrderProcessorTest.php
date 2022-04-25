@@ -85,6 +85,9 @@ class OrderProcessorTest extends TestCase
             ->andReturn($orderStatus);
         $currentOrder->shouldReceive('purchase_units')
             ->andReturn([$purchaseUnit]);
+		$currentOrder
+			->shouldReceive('payment_source')
+			->andReturn(null);
 
         $sessionHandler = Mockery::mock(SessionHandler::class);
         $sessionHandler
@@ -202,6 +205,9 @@ class OrderProcessorTest extends TestCase
         $currentOrder
             ->shouldReceive('purchase_units')
             ->andReturn([$purchaseUnit]);
+		$currentOrder
+			->shouldReceive('payment_source')
+			->andReturn(null);
         $sessionHandler = Mockery::mock(SessionHandler::class);
         $sessionHandler
             ->expects('order')

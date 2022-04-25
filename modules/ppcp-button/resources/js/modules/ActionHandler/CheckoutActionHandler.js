@@ -33,6 +33,7 @@ class CheckoutActionHandler {
                     context:this.config.context,
                     order_id:this.config.order_id,
                     payment_method: getCurrentPaymentMethod(),
+                    funding_source: window.ppcpFundingSource,
                     form:formValues,
                     createaccount: createaccount
                 })
