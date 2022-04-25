@@ -23,6 +23,9 @@ window.addEventListener('load', function() {
             'f': FraudNetConfig.f,
             's': FraudNetConfig.s
         };
+        if(FraudNetConfig.sandbox === '1') {
+            configuration.sandbox = true;
+        }
 
         script.text = JSON.stringify(configuration);
         document.body.appendChild(script);
