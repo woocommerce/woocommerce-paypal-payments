@@ -82,6 +82,44 @@ class WCGatewayModule implements ModuleInterface {
 					$wc_order->update_meta_data( PayPalGateway::FEES_META_KEY, $breakdown->to_array() );
 					$wc_order->save_meta_data();
 				}
+
+				$fraud = $capture->fraud_processor_response();
+				if ( $fraud ) {
+					$fraud_responses               = $fraud->to_array();
+					$avs_response_order_note_title = __( 'Address Verification Result', 'woocommerce-paypal-payments' );
+					/* translators: %1$s is AVS order note title, %2$s is AVS order note result markup */
+					$avs_response_order_note_format        = __( '%1$s %2$s', 'woocommerce-paypal-payments' );
+					$avs_response_order_note_result_format = '<ul class="ppcp_avs_result">
+                                                                <li>%1$s</li>
+                                                                <ul class="ppcp_avs_result_inner">
+                                                                    <li>%2$s</li>
+                                                                    <li>%3$s</li>
+                                                                </ul>
+                                                            </ul>';
+					$avs_response_order_note_result        = sprintf(
+						$avs_response_order_note_result_format,
+						/* translators: %s is fraud AVS code */
+						sprintf( __( 'AVS: %s', 'woocommerce-paypal-payments' ), esc_html( $fraud_responses['avs_code'] ) ),
+						/* translators: %s is fraud AVS address match */
+						sprintf( __( 'Address Match: %s', 'woocommerce-paypal-payments' ), esc_html( $fraud_responses['address_match'] ) ),
+						/* translators: %s is fraud AVS postal match */
+						sprintf( __( 'Postal Match: %s', 'woocommerce-paypal-payments' ), esc_html( $fraud_responses['postal_match'] ) )
+					);
+					$avs_response_order_note = sprintf(
+						$avs_response_order_note_format,
+						esc_html( $avs_response_order_note_title ),
+						wp_kses_post( $avs_response_order_note_result )
+					);
+					$wc_order->add_order_note( $avs_response_order_note );
+
+					$cvv_response_order_note_format = '<ul class="ppcp_cvv_result"><li>%1$s</li></ul>';
+					$cvv_response_order_note        = sprintf(
+						$cvv_response_order_note_format,
+						/* translators: %s is fraud CVV match */
+						sprintf( __( 'CVV2 Match: %s', 'woocommerce-paypal-payments' ), esc_html( $fraud_responses['cvv_match'] ) )
+					);
+					$wc_order->add_order_note( $cvv_response_order_note );
+				}
 			},
 			10,
 			2
