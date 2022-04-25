@@ -33,18 +33,28 @@ class CaptureFactory {
 	private $seller_receivable_breakdown_factory;
 
 	/**
+	 * The FraudProcessorResponseFactory factory.
+	 *
+	 * @var FraudProcessorResponseFactory
+	 */
+	protected $fraud_processor_response_factory;
+
+	/**
 	 * CaptureFactory constructor.
 	 *
 	 * @param AmountFactory                    $amount_factory The amount factory.
 	 * @param SellerReceivableBreakdownFactory $seller_receivable_breakdown_factory The SellerReceivableBreakdown factory.
+	 * @param FraudProcessorResponseFactory    $fraud_processor_response_factory The FraudProcessorResponseFactory factory.
 	 */
 	public function __construct(
 		AmountFactory $amount_factory,
-		SellerReceivableBreakdownFactory $seller_receivable_breakdown_factory
+		SellerReceivableBreakdownFactory $seller_receivable_breakdown_factory,
+		FraudProcessorResponseFactory $fraud_processor_response_factory
 	) {
 
 		$this->amount_factory                      = $amount_factory;
 		$this->seller_receivable_breakdown_factory = $seller_receivable_breakdown_factory;
+		$this->fraud_processor_response_factory    = $fraud_processor_response_factory;
 	}
 
 	/**
@@ -55,10 +65,13 @@ class CaptureFactory {
 	 * @return Capture
 	 */
 	public function from_paypal_response( \stdClass $data ) : Capture {
-
 		$reason                      = $data->status_details->reason ?? null;
 		$seller_receivable_breakdown = isset( $data->seller_receivable_breakdown ) ?
 			$this->seller_receivable_breakdown_factory->from_paypal_response( $data->seller_receivable_breakdown )
+			: null;
+
+		$fraud_processor_response = isset( $data->processor_response ) ?
+			$this->fraud_processor_response_factory->from_paypal_response( $data->processor_response )
 			: null;
 
 		return new Capture(
@@ -72,7 +85,8 @@ class CaptureFactory {
 			(string) $data->seller_protection->status,
 			(string) $data->invoice_id,
 			(string) $data->custom_id,
-			$seller_receivable_breakdown
+			$seller_receivable_breakdown,
+			$fraud_processor_response
 		);
 	}
 }
