@@ -50,8 +50,7 @@ class PayUponInvoiceGatewayTest extends TestCase
 
 		$this->order_endpoint->shouldReceive('create')->with(
 			[$purchase_unit],
-			$payment_source,
-			''
+			$payment_source
 		)->andReturn($order);
 
 		$result = $this->testee->process_payment(1);
