@@ -205,13 +205,16 @@ class PayUponInvoice {
 			function( string $description, string $id ): string {
 				if ( PayUponInvoiceGateway::ID === $id ) {
 					ob_start();
+
+					$site_country_code = explode( '-', get_bloginfo( 'language' ) )[0] ?? '';
+
 					echo '<div style="padding: 20px 0;">';
 
 					woocommerce_form_field(
 						'billing_birth_date',
 						array(
 							'type'     => 'date',
-							'label'    => __( 'Birth date', 'woocommerce-paypal-payments' ),
+							'label'    => $site_country_code === 'de' ? 'Geburtsdatum' : 'Birth date',
 							'class'    => array( 'form-row-wide' ),
 							'required' => true,
 							'clear'    => true,
@@ -219,7 +222,6 @@ class PayUponInvoice {
 					);
 
 					echo '</div><div>';
-					$site_country_code = explode( '-', get_bloginfo( 'language' ) )[0] ?? '';
 
 					// phpcs:ignore WordPress.WP.I18n.TextDomainMismatch
 					$button_text = apply_filters( 'woocommerce_order_button_text', __( 'Place order', 'woocommerce' ) );
