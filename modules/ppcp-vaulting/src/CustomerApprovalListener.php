@@ -59,20 +59,43 @@ class CustomerApprovalListener {
 
 		$url = (string) filter_input( INPUT_SERVER, 'REQUEST_URI', FILTER_SANITIZE_URL );
 
-		try {
-			$query = wp_parse_url( $url, PHP_URL_QUERY );
-			if ( $query && str_contains( $query, 'ppcp_vault=cancel' ) ) {
-				return;
-			}
-
-			try {
-				$this->payment_token_endpoint->create_from_approval_token( $token, get_current_user_id() );
-			} catch ( Exception $exception ) {
-				$this->logger->error( 'Failed to create payment token. ' . $exception->getMessage() );
-			}
-		} finally {
-			wp_safe_redirect( remove_query_arg( array( 'ppcp_vault', 'approval_token_id', 'approval_session_id' ), $url ) );
-			exit();
+		$query = wp_parse_url( $url, PHP_URL_QUERY );
+		if ( $query && str_contains( $query, 'ppcp_vault=cancel' ) ) {
+			$this->redirect( $url );
+			return;
 		}
+
+		try {
+			$this->payment_token_endpoint->create_from_approval_token( $token, get_current_user_id() );
+
+			$this->redirect( $url );
+		} catch ( Exception $exception ) {
+			$this->logger->error( 'Failed to create payment token. ' . $exception->getMessage() );
+			$this->add_wc_error_notice( $exception->getMessage() );
+		}
+	}
+
+	/**
+	 * Makes the message to be added on the WC init event.
+	 *
+	 * @param string $message The message text.
+	 */
+	private function add_wc_error_notice( string $message ): void {
+		add_action(
+			'woocommerce_init',
+			function () use ( $message ): void {
+				wc_add_notice( $message, 'error' );
+			}
+		);
+	}
+
+	/**
+	 * Redirects removing the vaulting arguments.
+	 *
+	 * @param string $current_url The current request URL.
+	 */
+	private function redirect( string $current_url ): void {
+		wp_safe_redirect( remove_query_arg( array( 'ppcp_vault', 'approval_token_id', 'approval_session_id' ), $current_url ) );
+		exit();
 	}
 }
