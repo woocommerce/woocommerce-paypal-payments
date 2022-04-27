@@ -55,6 +55,7 @@ trait ProcessPaymentTrait {
 		}
 
 		$payment_method = filter_input( INPUT_POST, 'payment_method', FILTER_SANITIZE_STRING );
+		$funding_source = filter_input( INPUT_POST, 'ppcp-funding-source', FILTER_SANITIZE_STRING );
 
 		/**
 		 * If customer has chosen a saved credit card payment.
@@ -135,7 +136,7 @@ trait ProcessPaymentTrait {
 			}
 		}
 
-		if ( PayPalGateway::ID === $payment_method && $this->is_free_trial_order( $wc_order ) ) {
+		if ( PayPalGateway::ID === $payment_method && 'card' !== $funding_source && $this->is_free_trial_order( $wc_order ) ) {
 			$user_id = (int) $wc_order->get_customer_id();
 			$tokens  = $this->payment_token_repository->all_for_user_id( $user_id );
 			if ( ! array_filter(

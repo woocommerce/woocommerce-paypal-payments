@@ -86,6 +86,7 @@ class SingleProductActionHandler {
                         payer,
                         bn_code:bnCode,
                         payment_method: PaymentMethods.PAYPAL,
+                        funding_source: window.ppcpFundingSource,
                         context:this.config.context
                     })
                 }).then(function (res) {
