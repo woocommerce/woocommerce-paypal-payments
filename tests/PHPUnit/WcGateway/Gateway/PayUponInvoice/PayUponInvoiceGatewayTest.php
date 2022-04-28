@@ -103,6 +103,7 @@ class PayUponInvoiceGatewayTest extends TestCase
 		$order = Mockery::mock(Order::class);
 		$order->shouldReceive('id')->andReturn('1');
 		$order->shouldReceive('intent')->andReturn('CAPTURE');
+		$order->shouldReceive('payment_source')->andReturn('');
 
 		$purchase_unit = Mockery::mock(PurchaseUnit::class);
 		$payment_source = Mockery::mock(PaymentSource::class);

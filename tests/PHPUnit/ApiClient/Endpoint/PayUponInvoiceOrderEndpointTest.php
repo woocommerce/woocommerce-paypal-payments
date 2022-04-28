@@ -116,7 +116,9 @@ class PayUponInvoiceOrderEndpointTest extends TestCase
 		$this->fraudnet->shouldReceive('session_id')->andReturn('');
 
 		$purchaseUnit = Mockery::mock(PurchaseUnit::class);
-		$purchaseUnit->shouldReceive('to_array')->andReturn([]);
+		$purchaseUnit->shouldReceive('to_array')->andReturn([
+			'items' => [],
+		]);
 		$items = [$purchaseUnit];
 
 		$paymentSource = Mockery::mock(PaymentSource::class);
@@ -134,7 +136,9 @@ class PayUponInvoiceOrderEndpointTest extends TestCase
 	{
 		$this->fraudnet->shouldReceive('session_id')->andReturn('');
 		$purchaseUnit = Mockery::mock(PurchaseUnit::class);
-		$purchaseUnit->shouldReceive('to_array')->andReturn([]);
+		$purchaseUnit->shouldReceive('to_array')->andReturn([
+			'items' => [],
+		]);
 		$items = [$purchaseUnit];
 		$paymentSource = Mockery::mock(PaymentSource::class);
 		$paymentSource->shouldReceive('to_array')->andReturn([]);

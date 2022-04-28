@@ -214,7 +214,7 @@ class PayUponInvoice {
 						'billing_birth_date',
 						array(
 							'type'     => 'date',
-							'label'    => $site_country_code === 'de' ? 'Geburtsdatum' : 'Birth date',
+							'label'    => 'de' === $site_country_code ? 'Geburtsdatum' : 'Birth date',
 							'class'    => array( 'form-row-wide' ),
 							'required' => true,
 							'clear'    => true,

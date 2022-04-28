@@ -96,6 +96,9 @@ class PayUponInvoiceOrderEndpoint {
 	 * @throws PayPalApiException When there is a problem creating the order.
 	 */
 	public function create( array $items, PaymentSource $payment_source ): Order {
+
+		$a = 1;
+
 		$data = array(
 			'intent'                 => 'CAPTURE',
 			'processing_instruction' => 'ORDER_COMPLETE_ON_PAYMENT_APPROVAL',
@@ -109,6 +112,11 @@ class PayUponInvoiceOrderEndpoint {
 				'pay_upon_invoice' => $payment_source->to_array(),
 			),
 		);
+
+		$a = 1;
+
+		$data = $this->ensure_tax_rate( $data );
+		$data = $this->ensure_shipping( $data, $payment_source->to_array() );
 
 		$bearer = $this->bearer->bearer();
 		$url    = trailingslashit( $this->host ) . 'v2/checkout/orders';
@@ -190,5 +198,45 @@ class PayUponInvoiceOrderEndpoint {
 			$json->payment_source->pay_upon_invoice->payment_reference,
 			$json->payment_source->pay_upon_invoice->deposit_bank_details,
 		);
+	}
+
+	/**
+	 * Ensures items contains tax rate.
+	 *
+	 * @param array $data The data.
+	 * @return array
+	 */
+	private function ensure_tax_rate( array $data ): array {
+		$items_count = count( $data['purchase_units'][0]['items'] );
+
+		for ( $i = 0; $i < $items_count; $i++ ) {
+			if ( ! isset( $data['purchase_units'][0]['items'][ $i ]['tax_rate'] ) ) {
+				$data['purchase_units'][0]['items'][ $i ]['tax_rate'] = '0.00';
+			}
+		}
+
+		return $data;
+	}
+
+	/**
+	 * Ensures purchase units contains shipping by using payment source data.
+	 *
+	 * @param array $data The data.
+	 * @param array $payment_source The payment source.
+	 * @return array
+	 */
+	private function ensure_shipping( array $data, array $payment_source ): array {
+		if ( isset( $data['purchase_units'][0]['shipping'] ) ) {
+			return $data;
+		}
+
+		$given_name = $payment_source['name']['given_name'] ?? '';
+		$surname    = $payment_source['name']['surname'] ?? '';
+		$address    = $payment_source['billing_address'] ?? array();
+
+		$data['purchase_units'][0]['shipping']['name']['full_name'] = $given_name . ' ' . $surname;
+		$data['purchase_units'][0]['shipping']['address']           = $address;
+
+		return $data;
 	}
 }
