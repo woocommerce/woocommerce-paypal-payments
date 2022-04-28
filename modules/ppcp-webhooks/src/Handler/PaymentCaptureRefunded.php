@@ -12,6 +12,8 @@ namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundMetaTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
+use WP_REST_Request;
+use WP_REST_Response;
 
 /**
  * Class PaymentCaptureRefunded
@@ -50,24 +52,24 @@ class PaymentCaptureRefunded implements RequestHandler {
 	/**
 	 * Whether a handler is responsible for a given request or not.
 	 *
-	 * @param \WP_REST_Request $request The request.
+	 * @param WP_REST_Request $request The request.
 	 *
 	 * @return bool
 	 */
-	public function responsible_for_request( \WP_REST_Request $request ): bool {
+	public function responsible_for_request( WP_REST_Request $request ): bool {
 		return in_array( $request['event_type'], $this->event_types(), true );
 	}
 
 	/**
 	 * Responsible for handling the request.
 	 *
-	 * @param \WP_REST_Request $request The request.
+	 * @param WP_REST_Request $request The request.
 	 *
-	 * @return \WP_REST_Response
+	 * @return WP_REST_Response
 	 */
-	public function handle_request( \WP_REST_Request $request ): \WP_REST_Response {
-		$response = array( 'success' => false );
-		$order_id = isset( $request['resource']['custom_id'] ) ?
+	public function handle_request( WP_REST_Request $request ): WP_REST_Response {
+		$response  = array( 'success' => false );
+		$order_id  = isset( $request['resource']['custom_id'] ) ?
 			$this->sanitize_custom_id( $request['resource']['custom_id'] ) : 0;
 		$refund_id = (string) ( $request['resource']['id'] ?? '' );
 		if ( ! $order_id ) {
@@ -87,7 +89,7 @@ class PaymentCaptureRefunded implements RequestHandler {
 				)
 			);
 			$response['message'] = $message;
-			return rest_ensure_response( $response );
+			return new WP_REST_Response( $response );
 		}
 
 		$wc_order = wc_get_order( $order_id );
@@ -105,7 +107,7 @@ class PaymentCaptureRefunded implements RequestHandler {
 				)
 			);
 			$response['message'] = $message;
-			return rest_ensure_response( $response );
+			return new WP_REST_Response( $response );
 		}
 
 		$already_added_refunds = $this->get_refunds_meta( $wc_order );
@@ -140,7 +142,7 @@ class PaymentCaptureRefunded implements RequestHandler {
 			);
 
 			$response['message'] = $refund->get_error_message();
-			return rest_ensure_response( $response );
+			return new WP_REST_Response( $response );
 		}
 
 		$this->logger->log(
@@ -166,6 +168,6 @@ class PaymentCaptureRefunded implements RequestHandler {
 		}
 
 		$response['success'] = true;
-		return rest_ensure_response( $response );
+		return new WP_REST_Response( $response );
 	}
 }
