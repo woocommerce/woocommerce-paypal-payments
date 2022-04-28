@@ -20,6 +20,7 @@ class CartActionHandler {
                     nonce: this.config.ajax.create_order.nonce,
                     purchase_units: [],
                     payment_method: PaymentMethods.PAYPAL,
+                    funding_source: window.ppcpFundingSource,
                     bn_code:bnCode,
                     payer,
                     context:this.config.context

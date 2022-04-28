@@ -162,6 +162,9 @@ class AmountFactoryTest extends TestCase
             ->shouldReceive('get_total_discount')
             ->with(false)
             ->andReturn(3);
+        $order
+            ->shouldReceive('get_meta')
+            ->andReturn(null);
 
         $result = $this->testee->from_wc_order($order);
         $this->assertEquals((float) 3, $result->breakdown()->discount()->value());
@@ -222,6 +225,9 @@ class AmountFactoryTest extends TestCase
             ->shouldReceive('get_total_discount')
             ->with(false)
             ->andReturn(0);
+		$order
+			->shouldReceive('get_meta')
+			->andReturn(null);
 
         $result = $this->testee->from_wc_order($order);
         $this->assertNull($result->breakdown()->discount());

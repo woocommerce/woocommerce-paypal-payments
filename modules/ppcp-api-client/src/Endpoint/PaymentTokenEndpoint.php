@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentTokenActionLinks;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\AlreadyVaultedException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenActionLinksFactory;
@@ -290,6 +291,7 @@ class PaymentTokenEndpoint {
 	 * @return string
 	 * @throws RuntimeException If the request fails.
 	 * @throws PayPalApiException If the request fails.
+	 * @throws AlreadyVaultedException When new token was not created (for example, already vaulted with this merchant).
 	 */
 	public function create_from_approval_token( string $approval_token, int $user_id ): string {
 		$bearer = $this->bearer->bearer();
@@ -313,7 +315,10 @@ class PaymentTokenEndpoint {
 
 		$json        = json_decode( $response['body'] );
 		$status_code = (int) wp_remote_retrieve_response_code( $response );
-		if ( ! in_array( $status_code, array( 200, 201 ), true ) ) {
+		if ( 200 === $status_code ) {
+			throw new AlreadyVaultedException( 'Already vaulted.' );
+		}
+		if ( 201 !== $status_code ) {
 			throw new PayPalApiException(
 				$json,
 				$status_code

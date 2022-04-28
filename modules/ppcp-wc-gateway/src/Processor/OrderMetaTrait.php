@@ -37,5 +37,29 @@ trait OrderMetaTrait {
 			PayPalGateway::ORDER_PAYMENT_MODE_META_KEY,
 			$environment->current_environment_is( Environment::SANDBOX ) ? 'sandbox' : 'live'
 		);
+		$payment_source = $this->get_payment_source( $order );
+		if ( $payment_source ) {
+			$wc_order->update_meta_data( PayPalGateway::ORDER_PAYMENT_SOURCE, $payment_source );
+		}
+	}
+
+	/**
+	 * Returns the payment source type or null,
+	 *
+	 * @param Order $order The PayPal order.
+	 * @return string|null
+	 */
+	private function get_payment_source( Order $order ): ?string {
+		$source = $order->payment_source();
+		if ( $source ) {
+			if ( $source->card() ) {
+				return 'card';
+			}
+			if ( $source->wallet() ) {
+				return 'wallet';
+			}
+		}
+
+		return null;
 	}
 }

@@ -28,6 +28,7 @@ use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Subscription\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
@@ -182,6 +183,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 			$data                      = $this->request_data->read_request( $this->nonce() );
 			$this->parsed_request_data = $data;
 			$payment_method            = $data['payment_method'] ?? '';
+			$funding_source            = $data['funding_source'] ?? '';
 			$wc_order                  = null;
 			if ( 'pay-now' === $data['context'] ) {
 				$wc_order = wc_get_order( (int) $data['order_id'] );
@@ -200,7 +202,12 @@ class CreateOrderEndpoint implements EndpointInterface {
 				$this->purchase_units = $this->cart_repository->all();
 
 				// The cart does not have any info about payment method, so we must handle free trial here.
-				if ( CreditCardGateway::ID === $payment_method && $this->is_free_trial_cart() ) {
+				if ( (
+					CreditCardGateway::ID === $payment_method
+						|| ( PayPalGateway::ID === $payment_method && 'card' === $funding_source )
+					)
+					&& $this->is_free_trial_cart()
+				) {
 					$this->purchase_units[0]->set_amount(
 						new Amount(
 							new Money( 1.0, $this->purchase_units[0]->amount()->currency_code() ),

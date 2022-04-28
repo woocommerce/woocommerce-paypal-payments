@@ -31,8 +31,17 @@ const bootstrap = () => {
     const onSmartButtonClick = (data, actions) => {
         window.ppcpFundingSource = data.fundingSource;
 
+        const form = document.querySelector('form.woocommerce-checkout');
+        if (form) {
+            jQuery('#ppcp-funding-source-form-input').remove();
+            form.insertAdjacentHTML(
+                'beforeend',
+                `<input type="hidden" name="ppcp-funding-source" value="${data.fundingSource}" id="ppcp-funding-source-form-input">`
+            )
+        }
+
         const isFreeTrial = PayPalCommerceGateway.is_free_trial_cart;
-        if (isFreeTrial) {
+        if (isFreeTrial && data.fundingSource !== 'card') {
             freeTrialHandler.handle();
             return actions.reject();
         }
