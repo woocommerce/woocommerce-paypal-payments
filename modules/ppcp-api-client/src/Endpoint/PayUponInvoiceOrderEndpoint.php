@@ -234,8 +234,8 @@ class PayUponInvoiceOrderEndpoint {
 		$surname    = $payment_source['name']['surname'] ?? '';
 		$address    = $payment_source['billing_address'] ?? array();
 
-		$data['purchase_units'][0]['shipping']['name']['full_name'] = $given_name . ' ' . $surname;
-		$data['purchase_units'][0]['shipping']['address']           = $address;
+		$data['purchase_units'][0]['shipping']['name']    = array( 'full_name' => $given_name . ' ' . $surname );
+		$data['purchase_units'][0]['shipping']['address'] = $address;
 
 		return $data;
 	}
