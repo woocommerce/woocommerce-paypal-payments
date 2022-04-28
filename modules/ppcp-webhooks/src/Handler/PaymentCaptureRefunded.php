@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
 
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundMetaTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 
 /**
@@ -17,7 +18,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
  */
 class PaymentCaptureRefunded implements RequestHandler {
 
-	use PrefixTrait, TransactionIdHandlingTrait;
+	use PrefixTrait, TransactionIdHandlingTrait, RefundMetaTrait;
 
 	/**
 	 * The logger.
@@ -68,6 +69,7 @@ class PaymentCaptureRefunded implements RequestHandler {
 		$response = array( 'success' => false );
 		$order_id = isset( $request['resource']['custom_id'] ) ?
 			$this->sanitize_custom_id( $request['resource']['custom_id'] ) : 0;
+		$refund_id = (string) ( $request['resource']['id'] ?? '' );
 		if ( ! $order_id ) {
 			$message = sprintf(
 				// translators: %s is the PayPal webhook Id.
@@ -93,7 +95,7 @@ class PaymentCaptureRefunded implements RequestHandler {
 			$message = sprintf(
 			// translators: %s is the PayPal refund Id.
 				__( 'Order for PayPal refund %s not found.', 'woocommerce-paypal-payments' ),
-				isset( $request['resource']['id'] ) ? $request['resource']['id'] : ''
+				$refund_id
 			);
 			$this->logger->log(
 				'warning',
@@ -104,6 +106,12 @@ class PaymentCaptureRefunded implements RequestHandler {
 			);
 			$response['message'] = $message;
 			return rest_ensure_response( $response );
+		}
+
+		$already_added_refunds = $this->get_refunds_meta( $wc_order );
+		if ( in_array( $refund_id, $already_added_refunds, true ) ) {
+			$this->logger->info( "Refund {$refund_id} is already handled." );
+			return new WP_REST_Response( $response );
 		}
 
 		/**
@@ -152,8 +160,9 @@ class PaymentCaptureRefunded implements RequestHandler {
 			)
 		);
 
-		if ( is_array( $request['resource'] ) && isset( $request['resource']['id'] ) ) {
-			$this->update_transaction_id( $request['resource']['id'], $wc_order, $this->logger );
+		if ( $refund_id ) {
+			$this->update_transaction_id( $refund_id, $wc_order, $this->logger );
+			$this->add_refund_to_meta( $wc_order, $refund_id );
 		}
 
 		$response['success'] = true;
