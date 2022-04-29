@@ -99,20 +99,26 @@ class ItemFactory {
 	 */
 	public function from_wc_order( \WC_Order $order ): array {
 		$items = array_map(
-			function ( \WC_Order_Item_Product $item ) use ( $order ): Item {
+			function ( \WC_Order_Item_Product $item ) use ( $order ): ?Item {
+				if ( ! $item->get_product() ) {
+					return null;
+				}
 				return $this->from_wc_order_line_item( $item, $order );
 			},
 			$order->get_items( 'line_item' )
 		);
 
 		$fees = array_map(
-			function ( \WC_Order_Item_Fee $item ) use ( $order ): Item {
+			function ( \WC_Order_Item_Fee $item ) use ( $order ): ?Item {
+				if ( ! $item ) {
+					return null;
+				}
 				return $this->from_wc_order_fee( $item, $order );
 			},
 			$order->get_fees()
 		);
 
-		return array_merge( $items, $fees );
+		return array_merge( array_filter( $items ), array_filter( $fees ) );
 	}
 
 	/**

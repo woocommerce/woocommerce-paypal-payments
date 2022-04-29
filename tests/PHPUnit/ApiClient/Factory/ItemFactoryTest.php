@@ -149,6 +149,7 @@ class ItemFactoryTest extends TestCase
         $item = Mockery::mock(\WC_Order_Item_Product::class);
         $item
             ->expects('get_product')
+            ->twice()
             ->andReturn($product);
         $item
             ->expects('get_quantity')
@@ -212,6 +213,7 @@ class ItemFactoryTest extends TestCase
         $item = Mockery::mock(\WC_Order_Item_Product::class);
         $item
             ->expects('get_product')
+            ->twice()
             ->andReturn($product);
         $item
             ->expects('get_quantity')
@@ -270,6 +272,7 @@ class ItemFactoryTest extends TestCase
         $item = Mockery::mock(\WC_Order_Item_Product::class);
         $item
             ->expects('get_product')
+            ->twice()
             ->andReturn($product);
         $item
             ->expects('get_quantity')
