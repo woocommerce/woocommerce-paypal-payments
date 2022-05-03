@@ -97,8 +97,6 @@ class PayUponInvoiceOrderEndpoint {
 	 */
 	public function create( array $items, PaymentSource $payment_source ): Order {
 
-		$a = 1;
-
 		$data = array(
 			'intent'                 => 'CAPTURE',
 			'processing_instruction' => 'ORDER_COMPLETE_ON_PAYMENT_APPROVAL',
@@ -112,8 +110,6 @@ class PayUponInvoiceOrderEndpoint {
 				'pay_upon_invoice' => $payment_source->to_array(),
 			),
 		);
-
-		$a = 1;
 
 		$data = $this->ensure_tax_rate( $data );
 		$data = $this->ensure_shipping( $data, $payment_source->to_array() );
