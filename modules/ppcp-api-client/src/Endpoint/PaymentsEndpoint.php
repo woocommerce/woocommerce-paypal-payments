@@ -216,7 +216,6 @@ class PaymentsEndpoint {
 		);
 
 		$response = $this->request( $url, $args );
-		$json     = json_decode( $response['body'] );
 
 		if ( is_wp_error( $response ) ) {
 			throw new RuntimeException( 'Could not refund payment.' );
