@@ -11,7 +11,6 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice;
 
 use Psr\Log\LoggerInterface;
 use WC_Order;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
@@ -77,13 +76,6 @@ class PayUponInvoice {
 	protected $asset_version;
 
 	/**
-	 * The order endpoint.
-	 *
-	 * @var OrderEndpoint
-	 */
-	protected $order_endpoint;
-
-	/**
 	 * PayUponInvoice constructor.
 	 *
 	 * @param string                      $module_url The module URL.
@@ -93,7 +85,6 @@ class PayUponInvoice {
 	 * @param Settings                    $settings The settings.
 	 * @param Environment                 $environment The environment.
 	 * @param string                      $asset_version The asset version.
-	 * @param OrderEndpoint               $order_endpoint The order endpoint.
 	 */
 	public function __construct(
 		string $module_url,
@@ -102,8 +93,7 @@ class PayUponInvoice {
 		LoggerInterface $logger,
 		Settings $settings,
 		Environment $environment,
-		string $asset_version,
-		OrderEndpoint $order_endpoint
+		string $asset_version
 	) {
 		$this->module_url         = $module_url;
 		$this->fraud_net          = $fraud_net;
@@ -112,7 +102,6 @@ class PayUponInvoice {
 		$this->settings           = $settings;
 		$this->environment        = $environment;
 		$this->asset_version      = $asset_version;
-		$this->order_endpoint     = $order_endpoint;
 	}
 
 	/**
@@ -146,12 +135,6 @@ class PayUponInvoice {
 			'ppcp_payment_capture_completed_webhook_handler',
 			function ( WC_Order $wc_order, string $order_id ) {
 				try {
-					$order          = $this->order_endpoint->order( $order_id );
-					$transaction_id = $this->get_paypal_order_transaction_id( $order );
-					if ( $transaction_id ) {
-						$this->update_transaction_id( $transaction_id, $wc_order );
-					}
-
 					$payment_instructions = $this->pui_order_endpoint->order_payment_instructions( $order_id );
 					$wc_order->update_meta_data(
 						'ppcp_ratepay_payment_instructions_payment_reference',

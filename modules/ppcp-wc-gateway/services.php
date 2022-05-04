@@ -2174,6 +2174,7 @@ return array(
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'wcgateway.pay-upon-invoice-payment-source-factory' ),
 			$container->get( 'onboarding.environment' ),
+			$container->get( 'wcgateway.transaction-url-provider' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
