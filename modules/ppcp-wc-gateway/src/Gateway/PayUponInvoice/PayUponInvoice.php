@@ -297,6 +297,14 @@ class PayUponInvoice {
 			if ( $cart_total < 5 || $cart_total > 2500 ) {
 				return false;
 			}
+
+			$items = $cart->get_cart_contents();
+			foreach ( $items as $item ) {
+				$product = wc_get_product( $item['product_id'] );
+				if ( $product && ( $product->is_downloadable() || $product->is_virtual() ) ) {
+					return false;
+				}
+			}
 		}
 
 		return true;
