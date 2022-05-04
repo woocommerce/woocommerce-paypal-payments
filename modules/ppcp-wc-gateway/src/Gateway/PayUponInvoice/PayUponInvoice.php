@@ -267,14 +267,39 @@ class PayUponInvoice {
 		add_filter(
 			'woocommerce_available_payment_gateways',
 			function( array $methods ): array {
-				$billing_country = filter_input( INPUT_POST, 'country', FILTER_SANITIZE_STRING ) ?? null;
-				if ( $billing_country && 'DE' !== $billing_country ) {
+				if ( ! $this->is_checkout_ready_for_pui() ) {
 					unset( $methods[ PayUponInvoiceGateway::ID ] );
 				}
 
 				return $methods;
 			}
 		);
+	}
+
+	/**
+	 * Checks whether checkout is ready for PUI.
+	 *
+	 * @return bool
+	 */
+	private function is_checkout_ready_for_pui(): bool {
+		$billing_country = filter_input( INPUT_POST, 'country', FILTER_SANITIZE_STRING ) ?? null;
+		if ( $billing_country && 'DE' !== $billing_country ) {
+			return false;
+		}
+
+		if ( 'EUR' !== get_woocommerce_currency() ) {
+			return false;
+		}
+
+		$cart = WC()->cart ?? null;
+		if ( $cart ) {
+			$cart_total = (float) $cart->get_total( 'numeric' );
+			if ( $cart_total < 5 || $cart_total > 2500 ) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	/**
