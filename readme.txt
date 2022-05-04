@@ -81,7 +81,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 
 == Changelog ==
 
-= 1.8.0
+= 1.8.0 =
 * Add - Allow free trial subscriptions #580
 * Fix - The Card Processing does not appear as an available payment method when manually creating an order #562
 * Fix - Express buttons & Pay Later visible on variable Subscription products /w disabled vaulting #281 
