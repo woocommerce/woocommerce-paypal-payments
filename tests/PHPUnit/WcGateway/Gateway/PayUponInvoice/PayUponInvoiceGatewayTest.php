@@ -53,6 +53,9 @@ class PayUponInvoiceGatewayTest extends TestCase
 			$payment_source
 		)->andReturn($order);
 
+		define( 'MINUTE_IN_SECONDS', 60 );
+		when('as_schedule_single_action')->justReturn();
+
 		$result = $this->testee->process_payment(1);
 		$this->assertEquals('success', $result['result']);
 	}
