@@ -159,6 +159,7 @@ class OrderProcessorTest extends TestCase
             ->with('on-hold', 'Awaiting payment.');
 		$wcOrder->expects('set_transaction_id')
 			->with($transactionId);
+		$wcOrder->shouldReceive('save');
 
         $this->assertTrue($testee->process($wcOrder));
     }
@@ -266,6 +267,8 @@ class OrderProcessorTest extends TestCase
             ->with($transactionId);
         $wcOrder
 	        ->expects('payment_complete');
+		$wcOrder->shouldReceive('save');
+
         $this->assertTrue($testee->process($wcOrder));
     }
 
@@ -350,6 +353,7 @@ class OrderProcessorTest extends TestCase
                 PayPalGateway::INTENT_META_KEY,
                 $orderIntent
             );
+		$wcOrder->shouldReceive('save');
 
         $this->assertFalse($testee->process($wcOrder));
         $this->assertNotEmpty($testee->last_error());

@@ -138,6 +138,7 @@ class RenewalHandlerTest extends TestCase
 			->andReturn($order);
 
 		$wcOrder->shouldReceive('update_status');
+		$wcOrder->shouldReceive('save');
 
 		$this->sut->renew($wcOrder);
 	}

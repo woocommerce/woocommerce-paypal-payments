@@ -105,6 +105,7 @@ class PayUponInvoiceGatewayTest extends TestCase
 		$wcOrder = Mockery::mock(WC_Order::class);
 		$wcOrder->shouldReceive('update_meta_data');
 		$wcOrder->shouldReceive('update_status');
+		$wcOrder->shouldReceive('save');
 		when('wc_get_order')->justReturn($wcOrder);
 
 		$order = Mockery::mock(Order::class);
