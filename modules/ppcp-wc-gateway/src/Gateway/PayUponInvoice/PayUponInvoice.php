@@ -286,7 +286,7 @@ class PayUponInvoice {
 
 		$cart = WC()->cart ?? null;
 		if ( $cart ) {
-			$cart_total = (int) WC()->cart->get_totals()['total'];
+			$cart_total = (float) $cart->get_total( 'numeric' );
 			if ( $cart_total < 5 || $cart_total > 2500 ) {
 				return false;
 			}
