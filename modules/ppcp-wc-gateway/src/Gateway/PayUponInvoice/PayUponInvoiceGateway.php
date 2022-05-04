@@ -180,6 +180,14 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 			$order = $this->order_endpoint->create( array( $purchase_unit ), $payment_source );
 			$this->add_paypal_meta( $wc_order, $order, $this->environment );
 
+			as_schedule_single_action(
+				time() + ( 5 * MINUTE_IN_SECONDS ),
+				'woocommerce_paypal_payments_check_pui_payment_captured',
+				array(
+					'order_id' => $order_id,
+				)
+			);
+
 			WC()->cart->empty_cart();
 
 			return array(

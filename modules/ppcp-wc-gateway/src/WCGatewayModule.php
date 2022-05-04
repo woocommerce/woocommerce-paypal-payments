@@ -194,6 +194,22 @@ class WCGatewayModule implements ModuleInterface {
 				}
 			}
 		);
+
+		add_action(
+			'woocommerce_paypal_payments_check_pui_payment_captured',
+			function ( int $order_id ) {
+				$wc_order = wc_get_order( $order_id );
+				if ( ! is_a( $wc_order, WC_Order::class ) || $wc_order->get_status() !== 'on-hold' ) {
+					return;
+				}
+
+				$message = __(
+					'Could not process order because PAYMENT.CAPTURE.COMPLETED webhook not received.',
+					'woocommerce-paypal-payments'
+				);
+				$wc_order->update_status( 'failed', $message );
+			}
+		);
 	}
 
 	/**
