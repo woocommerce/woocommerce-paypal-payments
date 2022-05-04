@@ -12,6 +12,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\TestCase;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use function Brain\Monkey\Functions\when;
 
 class PayUponInvoiceGatewayTest extends TestCase
@@ -20,6 +21,7 @@ class PayUponInvoiceGatewayTest extends TestCase
 	private $purchase_unit_factory;
 	private $payment_source_factory;
 	private $environment;
+	private $transaction_url_provider;
 	private $logger;
 	private $testee;
 
@@ -32,6 +34,7 @@ class PayUponInvoiceGatewayTest extends TestCase
 		$this->payment_source_factory = Mockery::mock(PaymentSourceFactory::class);
 		$this->environment = Mockery::mock(Environment::class);
 		$this->logger = Mockery::mock(LoggerInterface::class);
+		$this->transaction_url_provider = Mockery::mock(TransactionUrlProvider::class);
 
 		$this->setInitStubs();
 
@@ -40,6 +43,7 @@ class PayUponInvoiceGatewayTest extends TestCase
 			$this->purchase_unit_factory,
 			$this->payment_source_factory,
 			$this->environment,
+			$this->transaction_url_provider,
 			$this->logger
 		);
 	}
