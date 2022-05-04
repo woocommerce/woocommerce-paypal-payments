@@ -11,9 +11,11 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice;
 
 use Psr\Log\LoggerInterface;
 use WC_Order;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WP_Error;
@@ -22,6 +24,8 @@ use WP_Error;
  * Class PayUponInvoice.
  */
 class PayUponInvoice {
+
+	use TransactionIdHandlingTrait;
 
 	/**
 	 * The module URL.
@@ -38,11 +42,11 @@ class PayUponInvoice {
 	protected $fraud_net;
 
 	/**
-	 * The order endpoint.
+	 * The pui order endpoint.
 	 *
 	 * @var PayUponInvoiceOrderEndpoint
 	 */
-	protected $order_endpoint;
+	protected $pui_order_endpoint;
 
 	/**
 	 * The logger.
@@ -73,32 +77,42 @@ class PayUponInvoice {
 	protected $asset_version;
 
 	/**
+	 * The order endpoint.
+	 *
+	 * @var OrderEndpoint
+	 */
+	protected $order_endpoint;
+
+	/**
 	 * PayUponInvoice constructor.
 	 *
 	 * @param string                      $module_url The module URL.
 	 * @param FraudNet                    $fraud_net The FraudNet entity.
-	 * @param PayUponInvoiceOrderEndpoint $order_endpoint The order endpoint.
+	 * @param PayUponInvoiceOrderEndpoint $pui_order_endpoint The PUI order endpoint.
 	 * @param LoggerInterface             $logger The logger.
 	 * @param Settings                    $settings The settings.
 	 * @param Environment                 $environment The environment.
 	 * @param string                      $asset_version The asset version.
+	 * @param OrderEndpoint               $order_endpoint The order endpoint.
 	 */
 	public function __construct(
 		string $module_url,
 		FraudNet $fraud_net,
-		PayUponInvoiceOrderEndpoint $order_endpoint,
+		PayUponInvoiceOrderEndpoint $pui_order_endpoint,
 		LoggerInterface $logger,
 		Settings $settings,
 		Environment $environment,
-		string $asset_version
+		string $asset_version,
+		OrderEndpoint $order_endpoint
 	) {
-		$this->module_url     = $module_url;
-		$this->fraud_net      = $fraud_net;
-		$this->order_endpoint = $order_endpoint;
-		$this->logger         = $logger;
-		$this->settings       = $settings;
-		$this->environment    = $environment;
-		$this->asset_version  = $asset_version;
+		$this->module_url         = $module_url;
+		$this->fraud_net          = $fraud_net;
+		$this->pui_order_endpoint = $pui_order_endpoint;
+		$this->logger             = $logger;
+		$this->settings           = $settings;
+		$this->environment        = $environment;
+		$this->asset_version      = $asset_version;
+		$this->order_endpoint     = $order_endpoint;
 	}
 
 	/**
@@ -132,9 +146,19 @@ class PayUponInvoice {
 			'ppcp_payment_capture_completed_webhook_handler',
 			function ( WC_Order $wc_order, string $order_id ) {
 				try {
-					$payment_instructions = $this->order_endpoint->order_payment_instructions( $order_id );
-					$wc_order->update_meta_data( 'ppcp_ratepay_payment_instructions_payment_reference', $payment_instructions );
+					$order          = $this->order_endpoint->order( $order_id );
+					$transaction_id = $this->get_paypal_order_transaction_id( $order );
+					if ( $transaction_id ) {
+						$this->update_transaction_id( $transaction_id, $wc_order );
+					}
+
+					$payment_instructions = $this->pui_order_endpoint->order_payment_instructions( $order_id );
+					$wc_order->update_meta_data(
+						'ppcp_ratepay_payment_instructions_payment_reference',
+						$payment_instructions
+					);
 					$this->logger->info( "Ratepay payment instructions added to order #{$wc_order->get_id()}." );
+
 				} catch ( RuntimeException $exception ) {
 					$this->logger->error( $exception->getMessage() );
 				}

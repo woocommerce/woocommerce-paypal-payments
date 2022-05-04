@@ -11,11 +11,13 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice;
 
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use WC_Order;
 use WC_Payment_Gateway;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
 
 /**
@@ -56,6 +58,13 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	protected $environment;
 
 	/**
+	 * The transaction url provider.
+	 *
+	 * @var TransactionUrlProvider
+	 */
+	protected $transaction_url_provider;
+
+	/**
 	 * The logger interface.
 	 *
 	 * @var LoggerInterface
@@ -76,6 +85,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 		PurchaseUnitFactory $purchase_unit_factory,
 		PaymentSourceFactory $payment_source_factory,
 		Environment $environment,
+		TransactionUrlProvider $transaction_url_provider,
 		LoggerInterface $logger
 	) {
 		$this->id = self::ID;
@@ -98,11 +108,12 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 			)
 		);
 
-		$this->order_endpoint         = $order_endpoint;
-		$this->purchase_unit_factory  = $purchase_unit_factory;
-		$this->payment_source_factory = $payment_source_factory;
-		$this->logger                 = $logger;
-		$this->environment            = $environment;
+		$this->order_endpoint           = $order_endpoint;
+		$this->purchase_unit_factory    = $purchase_unit_factory;
+		$this->payment_source_factory   = $payment_source_factory;
+		$this->logger                   = $logger;
+		$this->environment              = $environment;
+		$this->transaction_url_provider = $transaction_url_provider;
 	}
 
 	/**
@@ -222,5 +233,18 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 				'redirect' => wc_get_checkout_url(),
 			);
 		}
+	}
+
+	/**
+	 * Return transaction url for this gateway and given order.
+	 *
+	 * @param WC_Order $order WC order to get transaction url by.
+	 *
+	 * @return string
+	 */
+	public function get_transaction_url( $order ): string {
+		$this->view_transaction_url = $this->transaction_url_provider->get_transaction_url_base( $order );
+
+		return parent::get_transaction_url( $order );
 	}
 }
