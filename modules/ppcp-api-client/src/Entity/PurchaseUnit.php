@@ -176,6 +176,15 @@ class PurchaseUnit {
 	}
 
 	/**
+	 * Sets shipping info.
+	 *
+	 * @param Shipping|null $shipping The value to set.
+	 */
+	public function set_shipping( ?Shipping $shipping ): void {
+		$this->shipping = $shipping;
+	}
+
+	/**
 	 * Returns the reference id.
 	 *
 	 * @return string
