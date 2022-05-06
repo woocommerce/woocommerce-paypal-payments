@@ -538,7 +538,7 @@ class SmartButton implements SmartButtonInterface {
 	/**
 	 * Renders the HTML for the credit messaging.
 	 */
-	public function message_renderer() {
+	public function message_renderer():void {
 
 		echo '<div id="ppcp-messages" data-partner-attribution-id="Woo_PPCP"></div>';
 	}
