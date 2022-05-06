@@ -1,6 +1,7 @@
 /.github/ export-ignore
 /.psalm/ export-ignore
 /docker/ export-ignore
+/.ddev/ export-ignore
 /tests/ export-ignore
 /.idea/ export-ignore
 .env export-ignore
