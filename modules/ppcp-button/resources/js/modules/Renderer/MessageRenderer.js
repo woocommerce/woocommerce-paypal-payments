@@ -14,6 +14,14 @@ class MessageRenderer {
             placement: this.config.placement,
             style: this.config.style
         }).render(this.config.wrapper);
+
+        jQuery(document.body).on('updated_cart_totals', () => {
+            paypal.Messages({
+                amount: this.config.amount,
+                placement: this.config.placement,
+                style: this.config.style
+            }).render(this.config.wrapper);
+        });
     }
 
     renderWithAmount(amount) {

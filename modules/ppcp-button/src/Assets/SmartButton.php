@@ -341,19 +341,17 @@ class SmartButton implements SmartButtonInterface {
 
 		$not_enabled_on_cart = $this->settings->has( 'message_cart_enabled' ) &&
 			! $this->settings->get( 'message_cart_enabled' );
-		if (
-			is_cart()
-			&& ! $not_enabled_on_cart
-		) {
-			add_action(
-				$this->proceed_to_checkout_button_renderer_hook(),
-				array(
-					$this,
-					'message_renderer',
-				),
-				19
-			);
-		}
+
+		add_action(
+			$this->proceed_to_checkout_button_renderer_hook(),
+			function() use ( $not_enabled_on_cart ) {
+				if ( ! is_cart() || $not_enabled_on_cart ) {
+					return;
+				}
+				$this->message_renderer();
+			},
+			19
+		);
 
 		$not_enabled_on_product_page = $this->settings->has( 'message_product_enabled' ) &&
 			! $this->settings->get( 'message_product_enabled' );
