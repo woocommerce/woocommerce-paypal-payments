@@ -37,7 +37,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PaymentSourceFac
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoice;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
@@ -2138,11 +2138,11 @@ return array(
 		return new TransactionUrlProvider( $sandbox_url_base, $live_url_base );
 	},
 
-	'wcgateway.helper.dcc-product-status'               => static function ( ContainerInterface $container ) : DCCProductStatus {
+	'wcgateway.helper.dcc-product-status'               => static function ( ContainerInterface $container ) : PayUponInvoiceProductStatus {
 
 		$settings         = $container->get( 'wcgateway.settings' );
 		$partner_endpoint = $container->get( 'api.endpoint.partners' );
-		return new DCCProductStatus( $settings, $partner_endpoint );
+		return new PayUponInvoiceProductStatus( $settings, $partner_endpoint );
 	},
 
 	'button.helper.messages-disclaimers'                => static function ( ContainerInterface $container ): MessagesDisclaimers {
@@ -2192,6 +2192,12 @@ return array(
 			(string) $source_website_id()
 		);
 	},
+	'wcgateway.pay-upon-invoice-product-status' => static function(ContainerInterface $container): PayUponInvoiceProductStatus {
+		return new PayUponInvoiceProductStatus(
+			$container->get( 'wcgateway.settings' ),
+			$container->get( 'api.endpoint.partners' )
+		);
+	},
 	'wcgateway.pay-upon-invoice'                        => static function ( ContainerInterface $container ): PayUponInvoice {
 		return new PayUponInvoice(
 			$container->get( 'wcgateway.url' ),
@@ -2200,7 +2206,11 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'onboarding.environment' ),
-			$container->get( 'ppcp.asset-version' )
+			$container->get( 'ppcp.asset-version' ),
+			$container->get( 'onboarding.state' ),
+			$container->get('wcgateway.is-ppcp-settings-page'),
+			$container->get( 'wcgateway.current-ppcp-settings-page-id' ),
+			$container->get('wcgateway.pay-upon-invoice-product-status')
 		);
 	},
 	'wcgateway.logging.is-enabled'                      => function ( ContainerInterface $container ) : bool {
