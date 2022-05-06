@@ -2,4 +2,9 @@
 
 pushd "${DDEV_DOCROOT}"
 
-wp plugin activate "${PLUGIN_NAME:-$DDEV_PROJECT}"
+flags=""
+if [ "${WP_MULTISITE}" = "true" ]; then
+  flags+=" --network"
+fi
+
+wp plugin activate "${PLUGIN_NAME:-$DDEV_PROJECT}" $flags
