@@ -14,7 +14,7 @@ shopt -s histappend
 
 export PS1="\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$\[$(tput sgr0)\] "
 
-export PHP_IDE_CONFIG='serverName=etrapi.localhost'
+export PHP_IDE_CONFIG='serverName=woocommerce-paypal-payments.ddev.site'
 #export XDEBUG_CONFIG="mode=debug client_host=127.0.0.1 client_port=9003 start_with_request=yes"
 
 alias ls='ls --group-directories-first'
