@@ -423,7 +423,7 @@ class SmartButton implements SmartButtonInterface {
 
 		if (
 			! is_checkout() && is_a( $product, \WC_Product::class )
-			&& ( ! apply_filters( 'woocommerce_paypal_payments_product_supports_prb', ! $product->is_type( array( 'external', 'grouped' ) ) && $product->is_in_stock(), $product )
+			&& ( ! apply_filters( 'woocommerce_paypal_payments_product_supports_payment_request_button', ! $product->is_type( array( 'external', 'grouped' ) ) && $product->is_in_stock(), $product )
 			)
 		) {
 			return;
@@ -440,7 +440,7 @@ class SmartButton implements SmartButtonInterface {
 
 		if (
 			! is_checkout() && is_a( $product, \WC_Product::class )
-			&& ( ! apply_filters( 'woocommerce_paypal_payments_product_supports_prb', ! $product->is_type( array( 'external', 'grouped' ) ) && $product->is_in_stock(), $product )
+			&& ( ! apply_filters( 'woocommerce_paypal_payments_product_supports_payment_request_button', ! $product->is_type( array( 'external', 'grouped' ) ) && $product->is_in_stock(), $product )
 			)
 		) {
 			return;
