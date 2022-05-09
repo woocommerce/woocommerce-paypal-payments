@@ -13,6 +13,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatusProduct;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 
 /**
  * Class DccProductStatus
@@ -22,7 +23,7 @@ class PayUponInvoiceProductStatus {
 	/**
 	 * Caches the status for the current load.
 	 *
-	 * @var string|null
+	 * @var bool|null
 	 */
 	private $current_status_cache;
 	/**
@@ -57,7 +58,7 @@ class PayUponInvoiceProductStatus {
 	 * Whether the active/subscribed products support PUI.
 	 *
 	 * @return bool
-	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException Should a setting not be found.
+	 * @throws NotFoundException Should a setting not be found.
 	 */
 	public function pui_is_active() : bool {
 		if ( is_bool( $this->current_status_cache ) ) {
@@ -76,7 +77,7 @@ class PayUponInvoiceProductStatus {
 		}
 
 		foreach ( $seller_status->products() as $product ) {
-			if($product->name() !== 'PAYMENT_METHODS') {
+			if ( $product->name() !== 'PAYMENT_METHODS' ) {
 				continue;
 			}
 

@@ -116,8 +116,8 @@ class PayUponInvoice {
 	 * @param Environment                 $environment The environment.
 	 * @param string                      $asset_version The asset version.
 	 * @param State                       $state The onboarding state.
-	 * @param bool $is_ppcp_settings_page The is ppcp settings page.
-	 * @param string $current_ppcp_settings_page_id Current PayPal settings page id.
+	 * @param bool                        $is_ppcp_settings_page The is ppcp settings page.
+	 * @param string                      $current_ppcp_settings_page_id Current PayPal settings page id.
 	 * @param PayUponInvoiceProductStatus $pui_product_status PUI seller product status.
 	 */
 	public function __construct(
@@ -143,7 +143,7 @@ class PayUponInvoice {
 		$this->state                         = $state;
 		$this->is_ppcp_settings_page         = $is_ppcp_settings_page;
 		$this->current_ppcp_settings_page_id = $current_ppcp_settings_page_id;
-		$this->pui_product_status = $pui_product_status;
+		$this->pui_product_status            = $pui_product_status;
 	}
 
 	/**
@@ -322,16 +322,16 @@ class PayUponInvoice {
 			'woocommerce_settings_checkout',
 			function () {
 				if (
-					$this->current_ppcp_settings_page_id === PayUponInvoiceGateway::ID
+					PayUponInvoiceGateway::ID === $this->current_ppcp_settings_page_id
 					&& ! $this->pui_product_status->pui_is_active()
 				) {
 					$gateway_settings = get_option( 'woocommerce_ppcp-pay-upon-invoice-gateway_settings' );
-					$gateway_enabled = $gateway_settings['enabled'] ?? '';
-					if($gateway_enabled === 'yes') {
+					$gateway_enabled  = $gateway_settings['enabled'] ?? '';
+					if ( 'yes' === $gateway_enabled ) {
 						$gateway_settings['enabled'] = 'no';
-						update_option('woocommerce_ppcp-pay-upon-invoice-gateway_settings', $gateway_settings);
+						update_option( 'woocommerce_ppcp-pay-upon-invoice-gateway_settings', $gateway_settings );
 						$redirect_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-pay-upon-invoice-gateway' );
-						wp_safe_redirect( $redirect_url);
+						wp_safe_redirect( $redirect_url );
 						exit;
 					}
 
@@ -347,6 +347,10 @@ class PayUponInvoice {
 	 * @return bool
 	 */
 	private function is_checkout_ready_for_pui(): bool {
+		if ( ! $this->pui_product_status->pui_is_active() ) {
+			return false;
+		}
+
 		$billing_country = filter_input( INPUT_POST, 'country', FILTER_SANITIZE_STRING ) ?? null;
 		if ( $billing_country && 'DE' !== $billing_country ) {
 			return false;
