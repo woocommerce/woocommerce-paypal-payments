@@ -15,7 +15,7 @@ use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 
@@ -71,7 +71,7 @@ class SettingsRenderer {
 	/**
 	 * The DCC Product Status.
 	 *
-	 * @var PayUponInvoiceProductStatus
+	 * @var DCCProductStatus
 	 */
 	private $dcc_product_status;
 
@@ -90,7 +90,7 @@ class SettingsRenderer {
 	 * @param array              $fields The setting fields.
 	 * @param DccApplies         $dcc_applies Whether DCC gateway can be shown.
 	 * @param MessagesApply      $messages_apply Whether messages can be shown.
-	 * @param PayUponInvoiceProductStatus   $dcc_product_status The product status.
+	 * @param DCCProductStatus   $dcc_product_status The product status.
 	 * @param SettingsStatus     $settings_status The Settings status helper.
 	 * @param string             $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
 	 */
@@ -100,7 +100,7 @@ class SettingsRenderer {
 		array $fields,
 		DccApplies $dcc_applies,
 		MessagesApply $messages_apply,
-		PayUponInvoiceProductStatus $dcc_product_status,
+		DCCProductStatus $dcc_product_status,
 		SettingsStatus $settings_status,
 		string $page_id
 	) {
