@@ -2193,7 +2193,7 @@ return array(
 			(string) $source_website_id()
 		);
 	},
-	'wcgateway.pay-upon-invoice-product-status' => static function(ContainerInterface $container): PayUponInvoiceProductStatus {
+	'wcgateway.pay-upon-invoice-product-status'         => static function( ContainerInterface $container ): PayUponInvoiceProductStatus {
 		return new PayUponInvoiceProductStatus(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'api.endpoint.partners' )
@@ -2209,9 +2209,9 @@ return array(
 			$container->get( 'onboarding.environment' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'onboarding.state' ),
-			$container->get('wcgateway.is-ppcp-settings-page'),
+			$container->get( 'wcgateway.is-ppcp-settings-page' ),
 			$container->get( 'wcgateway.current-ppcp-settings-page-id' ),
-			$container->get('wcgateway.pay-upon-invoice-product-status')
+			$container->get( 'wcgateway.pay-upon-invoice-product-status' )
 		);
 	},
 	'wcgateway.logging.is-enabled'                      => function ( ContainerInterface $container ) : bool {
