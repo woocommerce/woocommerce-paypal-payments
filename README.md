@@ -38,37 +38,40 @@ follow these steps:
 ```
 $ yarn run build
 ```
-or if using the Docker setup:
+or if using the DDEV setup:
 
 ```
-$ yarn run docker:build-package
+$ yarn run ddev:build-package
 ```
 
 ## Setup
 
-You can install WooCommerce PayPal Payments locally using the dev environment of your preference, or you can use the Docker environment which includes WP, WC and all developments tools.
+You can install WooCommerce PayPal Payments locally using the dev environment of your preference, or you can use the DDEV setup provided in this repository which includes WP, WC and all developments tools.
 
-To set up the Docker environment, follow these steps:
+To set up the DDEV environment, follow these steps:
 
-0. Install Docker and Docker Compose.
-1. `$ cp .env.example .env` and edit the configuration in the `.env` file if needed.
-2. `$ yarn run docker:build` (or copy the commands from [package.json](/package.json) if you do not have `yarn`).
-3. `$ yarn run docker:install`
-4. `$ yarn run docker:start`
-5. Add `127.0.0.1 wc-pp.myhost` to your `hosts` file and open http://wc-pp.myhost (the default value of `WP_DOMAIN` in `.env`).
+0. Install Docker and [DDEV](https://ddev.readthedocs.io/en/stable/).
+1. Edit the configuration in the [`.ddev/config.yml`](.ddev/config.yaml) file if needed.
+2. `$ ddev start`
+3. `$ ddev orchestrate` to install WP/WC.
+4. Open https://wc-pp.ddev.site
 
-### Running tests in the Docker environment
+Use `$ ddev orchestrate -f` for reinstalattion (will destroy all site data).
+You may also need `$ ddev restart` to apply the config changes.
+
+### Running tests and other tasks in the DDEV environment
 
 Tests and code style:
-- `$ yarn run docker:test`
-- `$ yarn run docker:lint`
-
-After some changes in `.env` (such as PHP, WP versions) you may need to rebuild the Docker image:
-
-1. `$ yarn run docker:destroy` (all data will be lost)
-2. `$ yarn run docker:build`
+- `$ yarn ddev:test`
+- `$ yarn ddev:lint`
+- `$ yarn ddev:fix-lint` - PHPCBF to fix basic code style issued
 
 See [package.json](/package.json) for other useful commands.
+
+For debugging, see [the DDEV docs](https://ddev.readthedocs.io/en/stable/users/step-debugging/).
+Enable xdebug via `$ ddev xdebug`, and press `Start Listening for PHP Debug Connections` in PHPStorm.
+After creating the server in the PHPStorm dialog, you need to set the local project path for the server plugin path.
+It should look [like this](https://i.imgur.com/ofsF1Mc.png).
 
 ## Test account setup
 
@@ -82,19 +85,20 @@ For testing webhooks locally, follow these steps to set up ngrok:
 
 0. Install [ngrok](https://ngrok.com/).
 
-1. Run
-```
-ngrok http -host-header=rewrite wc-pp.myhost
-```
+1.
+  - If using DDEV, run our wrapper Bash script which will start `ddev share` and replace the URLs in the WP database:
+    ```
+    $ .ddev/bin/share
+    ```
 
-2. In your environment variables (accessible to the web server), add `NGROK_HOST` with the host that you got from `ngrok`, like `abcd1234.ngrok.io`.
-
-	- For the Docker environment: set `NGROK_HOST` in the `.env` file and restart the web server. (`yarn run docker:stop && yarn run docker:start`)
-
-3. Complete onboarding or resubscribe webhooks on the Webhooks Status page.
-
-Currently, ngrok is used only for the webhook listening URL.
+  - For other environments, run
+    ```
+    $ ngrok http -host-header=rewrite wc-pp.myhost
+    ```
+    and in your environment variables (accessible to the web server) add `NGROK_HOST` with the host that you got from `ngrok`, like `abcd1234.ngrok.io`. ngrok will be used only for the webhook listening URL.
 The URLs displayed on the WordPress pages, used in redirects, etc. will still remain local.
+
+2. Complete onboarding or resubscribe webhooks on the Webhooks Status page.
 
 ## License
 
