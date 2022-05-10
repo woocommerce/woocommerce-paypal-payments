@@ -335,7 +335,10 @@ class PayUponInvoice {
 						exit;
 					}
 
-					echo '<div class="notice notice-error"><p>Could not enable gateway because Pay upon invoice is not active on PayPal.</p></div>';
+					printf(
+						'<div class="notice notice-error"><p>%1$s</p></div>',
+						esc_html__( 'Could not enable gateway because Pay upon invoice is not active on PayPal.', 'woocommerce-paypal-payments' )
+					);
 				}
 			}
 		);
