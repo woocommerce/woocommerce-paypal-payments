@@ -6,6 +6,7 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Address;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Amount;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payee;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payments;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
@@ -21,7 +22,19 @@ class PurchaseUnitFactoryTest extends TestCase
 	private $wcOrderId = 1;
 	private $wcOrderNumber = '100000';
 
-    public function testWcOrderDefault()
+	private $item;
+
+	public function setUp(): void
+	{
+		parent::setUp();
+
+		$this->item = Mockery::mock(Item::class, [
+			'category' => Item::PHYSICAL_GOODS,
+			'unit_amount' => new Money(42.5, 'USD'),
+		]);
+	}
+
+	public function testWcOrderDefault()
     {
         $wcOrder = Mockery::mock(\WC_Order::class);
         $wcOrder->expects('get_order_number')->andReturn($this->wcOrderNumber);
@@ -37,13 +50,11 @@ class PurchaseUnitFactoryTest extends TestCase
         $payee = Mockery::mock(Payee::class);
         $payeeRepository
             ->shouldReceive('payee')->andReturn($payee);
-	    $item = Mockery::mock(Item::class);
-	    $item->shouldReceive('category')->andReturn(Item::PHYSICAL_GOODS);
         $itemFactory = Mockery::mock(ItemFactory::class);
         $itemFactory
             ->shouldReceive('from_wc_order')
             ->with($wcOrder)
-            ->andReturn([$item]);
+            ->andReturn([$this->item]);
 
         $address = Mockery::mock(Address::class);
         $address
@@ -79,9 +90,65 @@ class PurchaseUnitFactoryTest extends TestCase
         $this->assertEquals($this->wcOrderId, $unit->custom_id());
         $this->assertEquals('', $unit->soft_descriptor());
         $this->assertEquals('WC-' . $this->wcOrderNumber, $unit->invoice_id());
-        $this->assertEquals([$item], $unit->items());
+        $this->assertEquals([$this->item], $unit->items());
         $this->assertEquals($amount, $unit->amount());
         $this->assertEquals($shipping, $unit->shipping());
+    }
+
+	public function testWcOrderWithNegativeFees()
+    {
+        $wcOrder = Mockery::mock(\WC_Order::class);
+        $wcOrder->expects('get_order_number')->andReturn($this->wcOrderNumber);
+        $wcOrder->expects('get_id')->andReturn($this->wcOrderId);
+        $amount = Mockery::mock(Amount::class);
+        $amountFactory = Mockery::mock(AmountFactory::class);
+        $amountFactory
+            ->shouldReceive('from_wc_order')
+            ->with($wcOrder)
+            ->andReturn($amount);
+        $payeeFactory = Mockery::mock(PayeeFactory::class);
+        $payeeRepository = Mockery::mock(PayeeRepository::class);
+        $payee = Mockery::mock(Payee::class);
+        $payeeRepository
+            ->shouldReceive('payee')->andReturn($payee);
+
+		$fee = Mockery::mock(Item::class, [
+			'category' => Item::DIGITAL_GOODS,
+			'unit_amount' => new Money(10.0, 'USD'),
+		]);
+		$discount = Mockery::mock(Item::class, [
+			'unit_amount' => new Money(-5, 'USD'),
+		]);
+
+        $itemFactory = Mockery::mock(ItemFactory::class);
+        $itemFactory
+            ->shouldReceive('from_wc_order')
+            ->with($wcOrder)
+            ->andReturn([$this->item, $fee, $discount]);
+
+        $address = Mockery::mock(Address::class);
+        $address->shouldReceive('country_code')->andReturn('DE');
+        $address->shouldReceive('postal_code')->andReturn('12345');
+        $shipping = Mockery::mock(Shipping::class);
+        $shipping->shouldReceive('address')->andReturn($address);
+        $shippingFactory = Mockery::mock(ShippingFactory::class);
+        $shippingFactory
+            ->shouldReceive('from_wc_order')
+            ->with($wcOrder)
+            ->andReturn($shipping);
+        $paymentsFacory = Mockery::mock(PaymentsFactory::class);
+        $testee = new PurchaseUnitFactory(
+            $amountFactory,
+            $payeeRepository,
+            $payeeFactory,
+            $itemFactory,
+            $shippingFactory,
+            $paymentsFacory
+        );
+
+        $unit = $testee->from_wc_order($wcOrder);
+        $this->assertTrue(is_a($unit, PurchaseUnit::class));
+        $this->assertEquals([$this->item, $fee], $unit->items());
     }
 
     public function testWcOrderShippingGetsDroppedWhenNoPostalCode()
@@ -100,12 +167,11 @@ class PurchaseUnitFactoryTest extends TestCase
         $payee = Mockery::mock(Payee::class);
         $payeeRepository
             ->expects('payee')->andReturn($payee);
-	    $item = Mockery::mock(Item::class, ['category' => Item::PHYSICAL_GOODS]);
         $itemFactory = Mockery::mock(ItemFactory::class);
         $itemFactory
             ->expects('from_wc_order')
             ->with($wcOrder)
-            ->andReturn([$item]);
+            ->andReturn([$this->item]);
 
         $address = Mockery::mock(Address::class);
         $address
@@ -155,12 +221,11 @@ class PurchaseUnitFactoryTest extends TestCase
         $payee = Mockery::mock(Payee::class);
         $payeeRepository
             ->expects('payee')->andReturn($payee);
-	    $item = Mockery::mock(Item::class, ['category' => Item::PHYSICAL_GOODS]);
         $itemFactory = Mockery::mock(ItemFactory::class);
         $itemFactory
             ->expects('from_wc_order')
             ->with($wcOrder)
-            ->andReturn([$item]);
+            ->andReturn([$this->item]);
 
         $address = Mockery::mock(Address::class);
         $address
@@ -208,13 +273,11 @@ class PurchaseUnitFactoryTest extends TestCase
         $payeeRepository
             ->expects('payee')->andReturn($payee);
 
-        $item = Mockery::mock(Item::class);
-        $item->shouldReceive('category')->andReturn(Item::PHYSICAL_GOODS);
         $itemFactory = Mockery::mock(ItemFactory::class);
         $itemFactory
             ->expects('from_wc_cart')
             ->with($wcCart)
-            ->andReturn([$item]);
+            ->andReturn([$this->item]);
 
         $address = Mockery::mock(Address::class);
         $address
@@ -251,7 +314,7 @@ class PurchaseUnitFactoryTest extends TestCase
         $this->assertEquals('', $unit->custom_id());
         $this->assertEquals('', $unit->soft_descriptor());
         $this->assertEquals('', $unit->invoice_id());
-        $this->assertEquals([$item], $unit->items());
+        $this->assertEquals([$this->item], $unit->items());
         $this->assertEquals($amount, $unit->amount());
         $this->assertEquals($shipping, $unit->shipping());
     }
@@ -273,13 +336,12 @@ class PurchaseUnitFactoryTest extends TestCase
         $payee = Mockery::mock(Payee::class);
         $payeeRepository
             ->expects('payee')->andReturn($payee);
-        $item = Mockery::mock(Item::class);
-        $item->shouldReceive('category')->andReturn(Item::PHYSICAL_GOODS);
+
         $itemFactory = Mockery::mock(ItemFactory::class);
         $itemFactory
             ->expects('from_wc_cart')
             ->with($wcCart)
-            ->andReturn([$item]);
+            ->andReturn([$this->item]);
         $shippingFactory = Mockery::mock(ShippingFactory::class);
         $paymentsFacory = Mockery::mock(PaymentsFactory::class);
         $testee = new PurchaseUnitFactory(
@@ -312,12 +374,11 @@ class PurchaseUnitFactoryTest extends TestCase
         $payee = Mockery::mock(Payee::class);
         $payeeRepository
             ->expects('payee')->andReturn($payee);
-	    $item = Mockery::mock(Item::class, ['category' => Item::PHYSICAL_GOODS]);
         $itemFactory = Mockery::mock(ItemFactory::class);
         $itemFactory
             ->expects('from_wc_cart')
             ->with($wcCart)
-            ->andReturn([$item]);
+            ->andReturn([$this->item]);
 
         $address = Mockery::mock(Address::class);
         $address
@@ -359,8 +420,7 @@ class PurchaseUnitFactoryTest extends TestCase
         $payeeFactory->expects('from_paypal_response')->with($rawPayee)->andReturn($payee);
         $payeeRepository = Mockery::mock(PayeeRepository::class);
         $itemFactory = Mockery::mock(ItemFactory::class);
-        $item = Mockery::mock(Item::class, ['category' => Item::PHYSICAL_GOODS]);
-        $itemFactory->expects('from_paypal_response')->with($rawItem)->andReturn($item);
+        $itemFactory->expects('from_paypal_response')->with($rawItem)->andReturn($this->item);
         $shippingFactory = Mockery::mock(ShippingFactory::class);
         $shipping = Mockery::mock(Shipping::class);
         $shippingFactory->expects('from_paypal_response')->with($rawShipping)->andReturn($shipping);
@@ -394,7 +454,7 @@ class PurchaseUnitFactoryTest extends TestCase
         $this->assertEquals('customId', $unit->custom_id());
         $this->assertEquals('softDescriptor', $unit->soft_descriptor());
         $this->assertEquals('invoiceId', $unit->invoice_id());
-        $this->assertEquals([$item], $unit->items());
+        $this->assertEquals([$this->item], $unit->items());
         $this->assertEquals($amount, $unit->amount());
         $this->assertEquals($shipping, $unit->shipping());
     }
@@ -411,8 +471,7 @@ class PurchaseUnitFactoryTest extends TestCase
         $payeeFactory = Mockery::mock(PayeeFactory::class);
         $payeeRepository = Mockery::mock(PayeeRepository::class);
         $itemFactory = Mockery::mock(ItemFactory::class);
-        $item = Mockery::mock(Item::class, ['category' => Item::PHYSICAL_GOODS]);
-        $itemFactory->expects('from_paypal_response')->with($rawItem)->andReturn($item);
+        $itemFactory->expects('from_paypal_response')->with($rawItem)->andReturn($this->item);
         $shippingFactory = Mockery::mock(ShippingFactory::class);
         $shipping = Mockery::mock(Shipping::class);
         $shippingFactory->expects('from_paypal_response')->with($rawShipping)->andReturn($shipping);
@@ -454,8 +513,7 @@ class PurchaseUnitFactoryTest extends TestCase
         $payeeFactory->expects('from_paypal_response')->with($rawPayee)->andReturn($payee);
         $payeeRepository = Mockery::mock(PayeeRepository::class);
         $itemFactory = Mockery::mock(ItemFactory::class);
-        $item = Mockery::mock(Item::class, ['category' => Item::PHYSICAL_GOODS]);
-        $itemFactory->expects('from_paypal_response')->with($rawItem)->andReturn($item);
+        $itemFactory->expects('from_paypal_response')->with($rawItem)->andReturn($this->item);
         $shippingFactory = Mockery::mock(ShippingFactory::class);
         $paymentsFacory = Mockery::mock(PaymentsFactory::class);
         $testee = new PurchaseUnitFactory(
