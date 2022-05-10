@@ -85,7 +85,7 @@ class PayUponInvoice {
 	protected $state;
 
 	/**
-	 * The is ppcp settings page.
+	 * Whether the current page is the PPCP settings page.
 	 *
 	 * @var bool
 	 */

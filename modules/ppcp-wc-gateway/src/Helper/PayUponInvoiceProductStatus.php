@@ -16,7 +16,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 
 /**
- * Class DccProductStatus
+ * Class PayUponInvoiceProductStatus
  */
 class PayUponInvoiceProductStatus {
 
@@ -41,7 +41,7 @@ class PayUponInvoiceProductStatus {
 	private $partners_endpoint;
 
 	/**
-	 * DccProductStatus constructor.
+	 * PayUponInvoiceProductStatus constructor.
 	 *
 	 * @param Settings         $settings The Settings.
 	 * @param PartnersEndpoint $partners_endpoint The Partner Endpoint.
@@ -58,7 +58,6 @@ class PayUponInvoiceProductStatus {
 	 * Whether the active/subscribed products support PUI.
 	 *
 	 * @return bool
-	 * @throws NotFoundException Should a setting not be found.
 	 */
 	public function pui_is_active() : bool {
 		if ( is_bool( $this->current_status_cache ) ) {
