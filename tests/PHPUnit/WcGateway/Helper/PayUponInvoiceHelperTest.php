@@ -23,7 +23,7 @@ class PayUponInvoiceHelperTest extends TestCase
 			['', false],
 			[(new DateTime())->format($format), false],
 			[(new DateTime('-17 years'))->format($format), false],
-			['31-02-1942', false],
+			['1942-02-31', false],
 			['01-01-1942', false],
 			['1942-01-01', true],
 		];

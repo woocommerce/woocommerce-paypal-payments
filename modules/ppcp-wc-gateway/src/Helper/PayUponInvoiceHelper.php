@@ -33,7 +33,8 @@ class PayUponInvoiceHelper {
 			return false;
 		}
 
-		if ( time() < strtotime( '+18 years', strtotime( $date ) ) ) {
+		$date_time = strtotime( $date );
+		if ( $date_time && time() < strtotime( '+18 years', $date_time ) ) {
 			return false;
 		}
 
