@@ -78,6 +78,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	 * @param PurchaseUnitFactory         $purchase_unit_factory The purchase unit factory.
 	 * @param PaymentSourceFactory        $payment_source_factory The payment source factory.
 	 * @param Environment                 $environment The environment.
+	 * @param TransactionUrlProvider      $transaction_url_provider The transaction URL provider.
 	 * @param LoggerInterface             $logger The logger.
 	 */
 	public function __construct(

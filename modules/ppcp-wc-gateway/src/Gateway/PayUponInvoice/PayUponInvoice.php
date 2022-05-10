@@ -9,12 +9,12 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice;
 
-use DateTime;
 use Psr\Log\LoggerInterface;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
@@ -77,6 +77,13 @@ class PayUponInvoice {
 	protected $asset_version;
 
 	/**
+	 * The PUI helper.
+	 *
+	 * @var PayUponInvoiceHelper
+	 */
+	protected $pui_helper;
+
+	/**
 	 * PayUponInvoice constructor.
 	 *
 	 * @param string                      $module_url The module URL.
@@ -86,6 +93,7 @@ class PayUponInvoice {
 	 * @param Settings                    $settings The settings.
 	 * @param Environment                 $environment The environment.
 	 * @param string                      $asset_version The asset version.
+	 * @param PayUponInvoiceHelper        $pui_helper The PUI helper.
 	 */
 	public function __construct(
 		string $module_url,
@@ -94,7 +102,8 @@ class PayUponInvoice {
 		LoggerInterface $logger,
 		Settings $settings,
 		Environment $environment,
-		string $asset_version
+		string $asset_version,
+		PayUponInvoiceHelper $pui_helper
 	) {
 		$this->module_url         = $module_url;
 		$this->fraud_net          = $fraud_net;
@@ -103,6 +112,7 @@ class PayUponInvoice {
 		$this->settings           = $settings;
 		$this->environment        = $environment;
 		$this->asset_version      = $asset_version;
+		$this->pui_helper         = $pui_helper;
 	}
 
 	/**
@@ -262,7 +272,7 @@ class PayUponInvoice {
 				}
 
 				$birth_date = filter_input( INPUT_POST, 'billing_birth_date', FILTER_SANITIZE_STRING );
-				if(! $this->validate_birth_date($birth_date)) {
+				if ( ! $this->pui_helper->validate_birth_date( $birth_date ) ) {
 					$errors->add( 'validation', __( 'Invalid birth date.', 'woocommerce-paypal-payments' ) );
 				}
 			},
@@ -334,35 +344,6 @@ class PayUponInvoice {
 				}
 			}
 		}
-
-		return true;
-	}
-
-	/**
-	 * Ensures date is valid, at least 18 years back and in the last 100 years timeframe.
-	 *
-	 * @param string $date
-	 * @param string $format
-	 * @return bool
-	 */
-	private function validate_birth_date(string $date, string $format = 'Y-m-d'): bool
-	{
-		$d = DateTime::createFromFormat($format, $date);
-		if($d === false) {
-			return false;
-		}
-
-		if($date !== $d->format($format)) {
-			return false;
-		}
-
-		if (time() < strtotime('+18 years', strtotime($date))) {
-			return false;
-		}
-
-//		if (time() > strtotime('-100 years', strtotime($date))) {
-//			return false;
-//		}
 
 		return true;
 	}
