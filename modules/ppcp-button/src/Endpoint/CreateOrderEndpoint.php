@@ -242,6 +242,13 @@ class CreateOrderEndpoint implements EndpointInterface {
 			}
 
 			$order = $this->create_paypal_order( $wc_order );
+
+			if ( 'pay-now' === $data['context'] && is_a( $wc_order, \WC_Order::class ) ) {
+				$wc_order->update_meta_data( PayPalGateway::ORDER_ID_META_KEY, $order->id() );
+				$wc_order->update_meta_data( PayPalGateway::INTENT_META_KEY, $order->intent() );
+				$wc_order->save_meta_data();
+			}
+
 			wp_send_json_success( $order->to_array() );
 			return true;
 

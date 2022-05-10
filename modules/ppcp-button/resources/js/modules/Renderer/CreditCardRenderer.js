@@ -207,12 +207,6 @@ class CreditCardRenderer {
                 const firstName = document.getElementById('billing_first_name') ? document.getElementById('billing_first_name').value : '';
                 const lastName = document.getElementById('billing_last_name') ? document.getElementById('billing_last_name').value : '';
 
-                if (!firstName || !lastName) {
-                    this.spinner.unblock();
-                    this.errorHandler.message(this.defaultConfig.hosted_fields.labels.cardholder_name_required);
-                    return;
-                }
-
                 hostedFieldsData.cardholderName = firstName + ' ' + lastName;
             }
 
