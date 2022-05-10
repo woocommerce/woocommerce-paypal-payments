@@ -14,6 +14,8 @@ use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
+use WooCommerce\PayPalCommerce\Onboarding\State;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
@@ -76,6 +78,34 @@ class PayUponInvoice {
 	protected $asset_version;
 
 	/**
+	 * The onboarding state.
+	 *
+	 * @var State
+	 */
+	protected $state;
+
+	/**
+	 * Whether the current page is the PPCP settings page.
+	 *
+	 * @var bool
+	 */
+	protected $is_ppcp_settings_page;
+
+	/**
+	 * Current PayPal settings page id.
+	 *
+	 * @var string
+	 */
+	protected $current_ppcp_settings_page_id;
+
+	/**
+	 * PUI seller product status.
+	 *
+	 * @var PayUponInvoiceProductStatus
+	 */
+	protected $pui_product_status;
+
+	/**
 	 * PayUponInvoice constructor.
 	 *
 	 * @param string                      $module_url The module URL.
@@ -85,6 +115,10 @@ class PayUponInvoice {
 	 * @param Settings                    $settings The settings.
 	 * @param Environment                 $environment The environment.
 	 * @param string                      $asset_version The asset version.
+	 * @param State                       $state The onboarding state.
+	 * @param bool                        $is_ppcp_settings_page The is ppcp settings page.
+	 * @param string                      $current_ppcp_settings_page_id Current PayPal settings page id.
+	 * @param PayUponInvoiceProductStatus $pui_product_status PUI seller product status.
 	 */
 	public function __construct(
 		string $module_url,
@@ -93,15 +127,23 @@ class PayUponInvoice {
 		LoggerInterface $logger,
 		Settings $settings,
 		Environment $environment,
-		string $asset_version
+		string $asset_version,
+		State $state,
+		bool $is_ppcp_settings_page,
+		string $current_ppcp_settings_page_id,
+		PayUponInvoiceProductStatus $pui_product_status
 	) {
-		$this->module_url         = $module_url;
-		$this->fraud_net          = $fraud_net;
-		$this->pui_order_endpoint = $pui_order_endpoint;
-		$this->logger             = $logger;
-		$this->settings           = $settings;
-		$this->environment        = $environment;
-		$this->asset_version      = $asset_version;
+		$this->module_url                    = $module_url;
+		$this->fraud_net                     = $fraud_net;
+		$this->pui_order_endpoint            = $pui_order_endpoint;
+		$this->logger                        = $logger;
+		$this->settings                      = $settings;
+		$this->environment                   = $environment;
+		$this->asset_version                 = $asset_version;
+		$this->state                         = $state;
+		$this->is_ppcp_settings_page         = $is_ppcp_settings_page;
+		$this->current_ppcp_settings_page_id = $current_ppcp_settings_page_id;
+		$this->pui_product_status            = $pui_product_status;
 	}
 
 	/**
@@ -140,6 +182,7 @@ class PayUponInvoice {
 						'ppcp_ratepay_payment_instructions_payment_reference',
 						$payment_instructions
 					);
+					$wc_order->save_meta_data();
 					$this->logger->info( "Ratepay payment instructions added to order #{$wc_order->get_id()}." );
 
 				} catch ( RuntimeException $exception ) {
@@ -274,6 +317,31 @@ class PayUponInvoice {
 				return $methods;
 			}
 		);
+
+		add_action(
+			'woocommerce_settings_checkout',
+			function () {
+				if (
+					PayUponInvoiceGateway::ID === $this->current_ppcp_settings_page_id
+					&& ! $this->pui_product_status->pui_is_active()
+				) {
+					$gateway_settings = get_option( 'woocommerce_ppcp-pay-upon-invoice-gateway_settings' );
+					$gateway_enabled  = $gateway_settings['enabled'] ?? '';
+					if ( 'yes' === $gateway_enabled ) {
+						$gateway_settings['enabled'] = 'no';
+						update_option( 'woocommerce_ppcp-pay-upon-invoice-gateway_settings', $gateway_settings );
+						$redirect_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-pay-upon-invoice-gateway' );
+						wp_safe_redirect( $redirect_url );
+						exit;
+					}
+
+					printf(
+						'<div class="notice notice-error"><p>%1$s</p></div>',
+						esc_html__( 'Could not enable gateway because Pay upon invoice is not active on PayPal.', 'woocommerce-paypal-payments' )
+					);
+				}
+			}
+		);
 	}
 
 	/**
@@ -282,6 +350,10 @@ class PayUponInvoice {
 	 * @return bool
 	 */
 	private function is_checkout_ready_for_pui(): bool {
+		if ( ! $this->pui_product_status->pui_is_active() ) {
+			return false;
+		}
+
 		$billing_country = filter_input( INPUT_POST, 'country', FILTER_SANITIZE_STRING ) ?? null;
 		if ( $billing_country && 'DE' !== $billing_country ) {
 			return false;
@@ -331,6 +403,4 @@ class PayUponInvoice {
 			)
 		);
 	}
-
-
 }
