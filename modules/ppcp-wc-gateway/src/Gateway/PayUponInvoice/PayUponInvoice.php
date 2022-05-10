@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice;
 
+use DateTime;
 use Psr\Log\LoggerInterface;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
@@ -259,6 +260,11 @@ class PayUponInvoice {
 				if ( 'DE' !== $fields['billing_country'] ) {
 					$errors->add( 'validation', __( 'Billing country not available.', 'woocommerce-paypal-payments' ) );
 				}
+
+				$birth_date = filter_input( INPUT_POST, 'billing_birth_date', FILTER_SANITIZE_STRING );
+				if(! $this->validate_birth_date($birth_date)) {
+					$errors->add( 'validation', __( 'Invalid birth date.', 'woocommerce-paypal-payments' ) );
+				}
 			},
 			10,
 			2
@@ -273,6 +279,28 @@ class PayUponInvoice {
 
 				return $methods;
 			}
+		);
+	}
+
+	/**
+	 * Registers PUI assets.
+	 */
+	public function register_assets(): void {
+		wp_enqueue_script(
+			'ppcp-pay-upon-invoice',
+			trailingslashit( $this->module_url ) . 'assets/js/pay-upon-invoice.js',
+			array(),
+			$this->asset_version
+		);
+
+		wp_localize_script(
+			'ppcp-pay-upon-invoice',
+			'FraudNetConfig',
+			array(
+				'f'       => $this->fraud_net->session_id(),
+				's'       => $this->fraud_net->source_website_id(),
+				'sandbox' => $this->environment->current_environment_is( Environment::SANDBOX ),
+			)
 		);
 	}
 
@@ -311,26 +339,31 @@ class PayUponInvoice {
 	}
 
 	/**
-	 * Registers PUI assets.
+	 * Ensures date is valid, at least 18 years back and in the last 100 years timeframe.
+	 *
+	 * @param string $date
+	 * @param string $format
+	 * @return bool
 	 */
-	public function register_assets(): void {
-		wp_enqueue_script(
-			'ppcp-pay-upon-invoice',
-			trailingslashit( $this->module_url ) . 'assets/js/pay-upon-invoice.js',
-			array(),
-			$this->asset_version
-		);
+	private function validate_birth_date(string $date, string $format = 'Y-m-d'): bool
+	{
+		$d = DateTime::createFromFormat($format, $date);
+		if($d === false) {
+			return false;
+		}
 
-		wp_localize_script(
-			'ppcp-pay-upon-invoice',
-			'FraudNetConfig',
-			array(
-				'f'       => $this->fraud_net->session_id(),
-				's'       => $this->fraud_net->source_website_id(),
-				'sandbox' => $this->environment->current_environment_is( Environment::SANDBOX ),
-			)
-		);
+		if($date !== $d->format($format)) {
+			return false;
+		}
+
+		if (time() < strtotime('+18 years', strtotime($date))) {
+			return false;
+		}
+
+//		if (time() > strtotime('-100 years', strtotime($date))) {
+//			return false;
+//		}
+
+		return true;
 	}
-
-
 }
