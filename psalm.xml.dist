@@ -151,5 +151,11 @@
 		<MixedStringOffsetAssignment errorLevel="info"/>
 		<ParamNameMismatch errorLevel="info"/>
 		<RedundantCastGivenDocblockType errorLevel="info"/>
+
+		<TooManyArguments>
+			<errorLevel type="suppress">
+				<referencedFunction name="apply_filters" />
+			</errorLevel>
+		</TooManyArguments>
     </issueHandlers>
 </psalm>
