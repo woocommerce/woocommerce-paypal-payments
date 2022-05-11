@@ -16,6 +16,7 @@ use WC_Product_Variation;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceHelper;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
@@ -80,6 +81,13 @@ class PayUponInvoice {
 	protected $asset_version;
 
 	/**
+	 * The PUI helper.
+	 *
+	 * @var PayUponInvoiceHelper
+	 */
+	protected $pui_helper;
+
+	/**
 	 * The onboarding state.
 	 *
 	 * @var State
@@ -117,6 +125,7 @@ class PayUponInvoice {
 	 * @param Settings                    $settings The settings.
 	 * @param Environment                 $environment The environment.
 	 * @param string                      $asset_version The asset version.
+	 * @param PayUponInvoiceHelper        $pui_helper The PUI helper.
 	 * @param State                       $state The onboarding state.
 	 * @param bool                        $is_ppcp_settings_page The is ppcp settings page.
 	 * @param string                      $current_ppcp_settings_page_id Current PayPal settings page id.
@@ -133,7 +142,8 @@ class PayUponInvoice {
 		State $state,
 		bool $is_ppcp_settings_page,
 		string $current_ppcp_settings_page_id,
-		PayUponInvoiceProductStatus $pui_product_status
+		PayUponInvoiceProductStatus $pui_product_status,
+		PayUponInvoiceHelper $pui_helper
 	) {
 		$this->module_url                    = $module_url;
 		$this->fraud_net                     = $fraud_net;
@@ -146,6 +156,7 @@ class PayUponInvoice {
 		$this->is_ppcp_settings_page         = $is_ppcp_settings_page;
 		$this->current_ppcp_settings_page_id = $current_ppcp_settings_page_id;
 		$this->pui_product_status            = $pui_product_status;
+		$this->pui_helper         = $pui_helper;
 	}
 
 	/**
@@ -304,6 +315,11 @@ class PayUponInvoice {
 				if ( 'DE' !== $fields['billing_country'] ) {
 					$errors->add( 'validation', __( 'Billing country not available.', 'woocommerce-paypal-payments' ) );
 				}
+
+				$birth_date = filter_input( INPUT_POST, 'billing_birth_date', FILTER_SANITIZE_STRING );
+				if ( $birth_date && ! $this->pui_helper->validate_birth_date( $birth_date ) ) {
+					$errors->add( 'validation', __( 'Invalid birth date.', 'woocommerce-paypal-payments' ) );
+				}
 			},
 			10,
 			2
@@ -343,6 +359,28 @@ class PayUponInvoice {
 					);
 				}
 			}
+		);
+	}
+
+	/**
+	 * Registers PUI assets.
+	 */
+	public function register_assets(): void {
+		wp_enqueue_script(
+			'ppcp-pay-upon-invoice',
+			trailingslashit( $this->module_url ) . 'assets/js/pay-upon-invoice.js',
+			array(),
+			$this->asset_version
+		);
+
+		wp_localize_script(
+			'ppcp-pay-upon-invoice',
+			'FraudNetConfig',
+			array(
+				'f'       => $this->fraud_net->session_id(),
+				's'       => $this->fraud_net->source_website_id(),
+				'sandbox' => $this->environment->current_environment_is( Environment::SANDBOX ),
+			)
 		);
 	}
 
@@ -392,27 +430,5 @@ class PayUponInvoice {
 		}
 
 		return true;
-	}
-
-	/**
-	 * Registers PUI assets.
-	 */
-	public function register_assets(): void {
-		wp_enqueue_script(
-			'ppcp-pay-upon-invoice',
-			trailingslashit( $this->module_url ) . 'assets/js/pay-upon-invoice.js',
-			array(),
-			$this->asset_version
-		);
-
-		wp_localize_script(
-			'ppcp-pay-upon-invoice',
-			'FraudNetConfig',
-			array(
-				'f'       => $this->fraud_net->session_id(),
-				's'       => $this->fraud_net->source_website_id(),
-				'sandbox' => $this->environment->current_environment_is( Environment::SANDBOX ),
-			)
-		);
 	}
 }

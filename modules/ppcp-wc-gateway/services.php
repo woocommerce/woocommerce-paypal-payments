@@ -38,6 +38,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoice;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
@@ -2193,6 +2194,9 @@ return array(
 			(string) $source_website_id()
 		);
 	},
+	'wcgateway.pay-upon-invoice-helper'                 => static function( ContainerInterface $container ): PayUponInvoiceHelper {
+		return new PayUponInvoiceHelper();
+	},
 	'wcgateway.pay-upon-invoice-product-status'         => static function( ContainerInterface $container ): PayUponInvoiceProductStatus {
 		return new PayUponInvoiceProductStatus(
 			$container->get( 'wcgateway.settings' ),
@@ -2211,7 +2215,8 @@ return array(
 			$container->get( 'onboarding.state' ),
 			$container->get( 'wcgateway.is-ppcp-settings-page' ),
 			$container->get( 'wcgateway.current-ppcp-settings-page-id' ),
-			$container->get( 'wcgateway.pay-upon-invoice-product-status' )
+			$container->get( 'wcgateway.pay-upon-invoice-product-status' ),
+			$container->get( 'wcgateway.pay-upon-invoice-helper' )
 		);
 	},
 	'wcgateway.logging.is-enabled'                      => function ( ContainerInterface $container ) : bool {
