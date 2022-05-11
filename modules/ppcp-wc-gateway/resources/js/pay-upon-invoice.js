@@ -30,6 +30,15 @@ window.addEventListener('load', function() {
         script.text = JSON.stringify(configuration);
         document.body.appendChild(script);
 
+        const payForOrderForm = document.forms.order_review;
+        if(payForOrderForm) {
+            const puiPayForOrderSessionId = document.createElement('input');
+            puiPayForOrderSessionId.setAttribute('type', 'hidden');
+            puiPayForOrderSessionId.setAttribute('name', 'pui_pay_for_order_session_id');
+            puiPayForOrderSessionId.setAttribute('value', FraudNetConfig.f);
+            payForOrderForm.appendChild(puiPayForOrderSessionId);
+        }
+
         _loadBeaconJS({fnUrl: "https://c.paypal.com/da/r/fb.js"})
     }
 

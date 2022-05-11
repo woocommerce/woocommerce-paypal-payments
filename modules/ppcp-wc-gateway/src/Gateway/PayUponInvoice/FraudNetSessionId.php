@@ -31,6 +31,13 @@ class FraudNetSessionId {
 			return WC()->session->get( 'ppcp_fraudnet_session_id' );
 		}
 
+		if ( isset( $_GET['pay_for_order'] ) && 'true' === $_GET['pay_for_order'] ) {
+			$pui_pay_for_order_session_id = filter_input( INPUT_POST, 'pui_pay_for_order_session_id', FILTER_SANITIZE_STRING );
+			if ( $pui_pay_for_order_session_id && '' !== $pui_pay_for_order_session_id ) {
+				return $pui_pay_for_order_session_id;
+			}
+		}
+
 		$session_id = bin2hex( random_bytes( 16 ) );
 		WC()->session->set( 'ppcp_fraudnet_session_id', $session_id );
 
