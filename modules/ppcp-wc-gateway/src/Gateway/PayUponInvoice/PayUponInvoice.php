@@ -11,6 +11,8 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice;
 
 use Psr\Log\LoggerInterface;
 use WC_Order;
+use WC_Product_Variable;
+use WC_Product_Variation;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
@@ -375,6 +377,16 @@ class PayUponInvoice {
 				$product = wc_get_product( $item['product_id'] );
 				if ( $product && ( $product->is_downloadable() || $product->is_virtual() ) ) {
 					return false;
+				}
+
+				if ( is_a( $product, WC_Product_Variable::class ) ) {
+					foreach ( $product->get_available_variations( 'object' ) as $variation ) {
+						if ( is_a( $variation, WC_Product_Variation::class ) ) {
+							if ( true === $variation->is_downloadable() || true === $variation->is_virtual() ) {
+								return false;
+							}
+						}
+					}
 				}
 			}
 		}
