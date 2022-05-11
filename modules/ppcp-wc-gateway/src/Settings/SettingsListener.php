@@ -255,6 +255,7 @@ class SettingsListener {
 		if ( $credentials_change_status ) {
 			if ( self::CREDENTIALS_UNCHANGED !== $credentials_change_status ) {
 				$this->settings->set( 'products_dcc_enabled', null );
+				$this->settings->set( 'products_pui_enabled', null );
 			}
 
 			if ( in_array(

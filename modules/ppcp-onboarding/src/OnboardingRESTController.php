@@ -236,6 +236,7 @@ class OnboardingRESTController {
 		}
 
 		$settings->set( 'products_dcc_enabled', null );
+		$settings->set( 'products_pui_enabled', null );
 
 		if ( ! $settings->persist() ) {
 			return new \WP_Error(

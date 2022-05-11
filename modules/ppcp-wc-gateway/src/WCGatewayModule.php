@@ -186,10 +186,7 @@ class WCGatewayModule implements ModuleInterface {
 		add_action(
 			'init',
 			function () use ( $c ) {
-				$gateway_settings = get_option( 'woocommerce_ppcp-pay-upon-invoice-gateway_settings' );
-				$gateway_enabled  = $gateway_settings['enabled'] ?? '';
-
-				if ( 'yes' === $gateway_enabled && 'DE' === $c->get( 'api.shop.country' ) ) {
+				if ( 'DE' === $c->get( 'api.shop.country' ) && 'EUR' === get_woocommerce_currency() ) {
 					( $c->get( 'wcgateway.pay-upon-invoice' ) )->init();
 				}
 			}
