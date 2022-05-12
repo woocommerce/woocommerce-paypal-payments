@@ -441,18 +441,9 @@ class SettingsListener {
 	 */
 	private function is_valid_site_request() : bool {
 
-		/**
-		 * No nonce needed at this point.
-		 *
-		 * phpcs:disable WordPress.Security.NonceVerification.Missing
-		 * phpcs:disable WordPress.Security.NonceVerification.Recommended
-		 */
 		if ( empty( $this->page_id ) ) {
 			return false;
 		}
-
-		// phpcs:enable WordPress.Security.NonceVerification.Missing
-		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
 			return false;
