@@ -11,6 +11,9 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice;
 
 use Psr\Log\LoggerInterface;
 use WC_Order;
+use WC_Order_Item;
+use WC_Order_Item_Product;
+use WC_Product;
 use WC_Product_Variable;
 use WC_Product_Variation;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
@@ -125,11 +128,11 @@ class PayUponInvoice {
 	 * @param Settings                    $settings The settings.
 	 * @param Environment                 $environment The environment.
 	 * @param string                      $asset_version The asset version.
-	 * @param PayUponInvoiceHelper        $pui_helper The PUI helper.
 	 * @param State                       $state The onboarding state.
-	 * @param bool                        $is_ppcp_settings_page The is ppcp settings page.
+	 * @param bool                        $is_ppcp_settings_page Whether page is PayPal settings poge.
 	 * @param string                      $current_ppcp_settings_page_id Current PayPal settings page id.
-	 * @param PayUponInvoiceProductStatus $pui_product_status PUI seller product status.
+	 * @param PayUponInvoiceProductStatus $pui_product_status The PUI product status.
+	 * @param PayUponInvoiceHelper        $pui_helper The PUI helper.
 	 */
 	public function __construct(
 		string $module_url,
@@ -156,7 +159,7 @@ class PayUponInvoice {
 		$this->is_ppcp_settings_page         = $is_ppcp_settings_page;
 		$this->current_ppcp_settings_page_id = $current_ppcp_settings_page_id;
 		$this->pui_product_status            = $pui_product_status;
-		$this->pui_helper         = $pui_helper;
+		$this->pui_helper                    = $pui_helper;
 	}
 
 	/**
@@ -450,17 +453,55 @@ class PayUponInvoice {
 			$items = $cart->get_cart_contents();
 			foreach ( $items as $item ) {
 				$product = wc_get_product( $item['product_id'] );
-				if ( $product && ( $product->is_downloadable() || $product->is_virtual() ) ) {
+				if ( is_a( $product, WC_Product::class ) && ! $this->product_ready_for_pui( $product ) ) {
 					return false;
 				}
+			}
+		}
 
-				if ( is_a( $product, WC_Product_Variable::class ) ) {
-					foreach ( $product->get_available_variations( 'object' ) as $variation ) {
-						if ( is_a( $variation, WC_Product_Variation::class ) ) {
-							if ( true === $variation->is_downloadable() || true === $variation->is_virtual() ) {
+		if ( is_wc_endpoint_url( 'order-pay' ) ) {
+			/**
+			 * Needed for WordPress `query_vars`.
+			 *
+			 * @psalm-suppress InvalidGlobal
+			 */
+			global $wp;
+
+			if ( isset( $wp->query_vars['order-pay'] ) && absint( $wp->query_vars['order-pay'] ) > 0 ) {
+				$order_id = absint( $wp->query_vars['order-pay'] );
+				$order    = wc_get_order( $order_id );
+				if ( is_a( $order, WC_Order::class ) ) {
+					foreach ( $order->get_items() as $item_id => $item ) {
+						if ( is_a( $item, WC_Order_Item_Product::class ) ) {
+							$product = wc_get_product( $item->get_product_id() );
+							if ( is_a( $product, WC_Product::class ) && ! $this->product_ready_for_pui( $product ) ) {
 								return false;
 							}
 						}
+					}
+				}
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Ensures product is ready for PUI.
+	 *
+	 * @param WC_Product $product WC product.
+	 * @return bool
+	 */
+	private function product_ready_for_pui( WC_Product $product ):bool {
+		if ( $product->is_downloadable() || $product->is_virtual() ) {
+			return false;
+		}
+
+		if ( is_a( $product, WC_Product_Variable::class ) ) {
+			foreach ( $product->get_available_variations( 'object' ) as $variation ) {
+				if ( is_a( $variation, WC_Product_Variation::class ) ) {
+					if ( true === $variation->is_downloadable() || true === $variation->is_virtual() ) {
+						return false;
 					}
 				}
 			}
