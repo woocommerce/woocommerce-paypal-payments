@@ -176,9 +176,11 @@ class PayUponInvoice {
 				}
 
 				if ( in_array( 'PPCP', $data['products'], true ) ) {
-					$data['products'][]     = 'PAYMENT_METHODS';
-					$data['capabilities'][] = 'PAY_UPON_INVOICE';
+					$data['products'][] = 'PAYMENT_METHODS';
+				} elseif ( in_array( 'EXPRESS_CHECKOUT', $data['products'], true ) ) {
+					$data['products'][0] = 'PAYMENT_METHODS';
 				}
+				$data['capabilities'][] = 'PAY_UPON_INVOICE';
 
 				return $data;
 			}
