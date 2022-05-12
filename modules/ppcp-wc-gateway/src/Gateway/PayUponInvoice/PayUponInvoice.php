@@ -360,6 +360,43 @@ class PayUponInvoice {
 				}
 			}
 		);
+
+		add_action(
+			'woocommerce_update_options_checkout_ppcp-pay-upon-invoice-gateway',
+			function () {
+				$customer_service_instructions = filter_input( INPUT_POST, 'woocommerce_ppcp-pay-upon-invoice-gateway_customer_service_instructions', FILTER_SANITIZE_STRING );
+				if ( '' === $customer_service_instructions ) {
+					$gateway_settings = get_option( 'woocommerce_ppcp-pay-upon-invoice-gateway_settings' );
+					$gateway_enabled  = $gateway_settings['enabled'] ?? '';
+					if ( 'yes' === $gateway_enabled ) {
+						$gateway_settings['enabled'] = 'no';
+						update_option( 'woocommerce_ppcp-pay-upon-invoice-gateway_settings', $gateway_settings );
+
+						$redirect_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-pay-upon-invoice-gateway' );
+						wp_safe_redirect( $redirect_url );
+						exit;
+					}
+				}
+			}
+		);
+
+		add_action(
+			'woocommerce_settings_checkout',
+			function() {
+				if (
+				PayUponInvoiceGateway::ID === $this->current_ppcp_settings_page_id
+				&& $this->pui_product_status->pui_is_active()
+				) {
+					$pui_gateway = WC()->payment_gateways->payment_gateways()[ PayUponInvoiceGateway::ID ];
+					if ( $pui_gateway->get_option( 'customer_service_instructions' ) === '' ) {
+						printf(
+							'<div class="notice notice-error"><p>%1$s</p></div>',
+							esc_html__( 'Could not enable gateway because "Customer service instructions" field is empty.', 'woocommerce-paypal-payments' )
+						);
+					}
+				}
+			}
+		);
 	}
 
 	/**
