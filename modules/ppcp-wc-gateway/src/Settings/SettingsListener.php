@@ -208,10 +208,6 @@ class SettingsListener {
 		$this->settings->set( 'message_product_enabled', false );
 		$this->settings->set( 'message_cart_enabled', false );
 		$this->settings->persist();
-
-		$redirect_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' );
-		wp_safe_redirect( $redirect_url, 302 );
-		exit;
 	}
 
 	/**
