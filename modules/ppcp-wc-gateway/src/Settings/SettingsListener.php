@@ -167,7 +167,7 @@ class SettingsListener {
 	 * Prevent enabling both Pay Later messaging and PayPal vaulting
 	 */
 	public function listen_for_vaulting_enabled() {
-		if ( ! $this->is_valid_site_request() ) {
+		if ( ! $this->is_valid_site_request() || State::STATE_ONBOARDED !== $this->state->current_state() ) {
 			return;
 		}
 
