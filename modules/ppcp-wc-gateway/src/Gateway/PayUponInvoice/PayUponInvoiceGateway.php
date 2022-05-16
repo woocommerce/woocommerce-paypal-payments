@@ -12,12 +12,15 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use WC_Order;
+use WC_Order_Item_Product;
 use WC_Payment_Gateway;
+use WC_Product;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
 
 /**
@@ -72,6 +75,13 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	protected $logger;
 
 	/**
+	 * The PUI helper.
+	 *
+	 * @var PayUponInvoiceHelper
+	 */
+	protected $pui_helper;
+
+	/**
 	 * PayUponInvoiceGateway constructor.
 	 *
 	 * @param PayUponInvoiceOrderEndpoint $order_endpoint The order endpoint.
@@ -80,6 +90,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	 * @param Environment                 $environment The environment.
 	 * @param TransactionUrlProvider      $transaction_url_provider The transaction URL provider.
 	 * @param LoggerInterface             $logger The logger.
+	 * @param PayUponInvoiceHelper        $pui_helper The PUI helper.
 	 */
 	public function __construct(
 		PayUponInvoiceOrderEndpoint $order_endpoint,
@@ -87,7 +98,8 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 		PaymentSourceFactory $payment_source_factory,
 		Environment $environment,
 		TransactionUrlProvider $transaction_url_provider,
-		LoggerInterface $logger
+		LoggerInterface $logger,
+		PayUponInvoiceHelper $pui_helper
 	) {
 		$this->id = self::ID;
 
@@ -115,6 +127,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 		$this->logger                   = $logger;
 		$this->environment              = $environment;
 		$this->transaction_url_provider = $transaction_url_provider;
+		$this->pui_helper               = $pui_helper;
 	}
 
 	/**
@@ -180,12 +193,21 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	 * @return array
 	 */
 	public function process_payment( $order_id ) {
-		$wc_order = wc_get_order( $order_id );
+		$wc_order   = wc_get_order( $order_id );
+		$birth_date = filter_input( INPUT_POST, 'billing_birth_date', FILTER_SANITIZE_STRING ) ?? '';
+
+		$pay_for_order = filter_input( INPUT_GET, 'pay_for_order', FILTER_SANITIZE_STRING );
+		if ( 'true' === $pay_for_order ) {
+			if ( ! $this->pui_helper->validate_birth_date( $birth_date ) ) {
+				wc_add_notice( 'Invalid birth date.', 'error' );
+				return array(
+					'result' => 'failure',
+				);
+			}
+		}
+
 		$wc_order->update_status( 'on-hold', __( 'Awaiting Pay Upon Invoice payment.', 'woocommerce-paypal-payments' ) );
-
-		$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
-
-		$birth_date     = filter_input( INPUT_POST, 'billing_birth_date', FILTER_SANITIZE_STRING ) ?? '';
+		$purchase_unit  = $this->purchase_unit_factory->from_wc_order( $wc_order );
 		$payment_source = $this->payment_source_factory->from_wc_order( $wc_order, $birth_date );
 
 		try {

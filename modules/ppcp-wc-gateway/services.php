@@ -2177,7 +2177,8 @@ return array(
 			$container->get( 'wcgateway.pay-upon-invoice-payment-source-factory' ),
 			$container->get( 'onboarding.environment' ),
 			$container->get( 'wcgateway.transaction-url-provider' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
+			$container->get( 'woocommerce.logger.woocommerce' ),
+			$container->get( 'wcgateway.pay-upon-invoice-helper' )
 		);
 	},
 	'wcgateway.pay-upon-invoice-fraudnet-session-id'    => static function ( ContainerInterface $container ): FraudNetSessionId {
