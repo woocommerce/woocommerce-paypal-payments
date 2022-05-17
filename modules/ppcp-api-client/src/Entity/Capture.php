@@ -59,6 +59,13 @@ class Capture {
 	private $seller_receivable_breakdown;
 
 	/**
+	 * The fraud processor response (AVS, CVV ...).
+	 *
+	 * @var FraudProcessorResponse|null
+	 */
+	protected $fraud_processor_response;
+
+	/**
 	 * The invoice id.
 	 *
 	 * @var string
@@ -83,6 +90,7 @@ class Capture {
 	 * @param string                         $invoice_id The invoice id.
 	 * @param string                         $custom_id The custom id.
 	 * @param SellerReceivableBreakdown|null $seller_receivable_breakdown The detailed breakdown of the capture activity (fees, ...).
+	 * @param FraudProcessorResponse|null    $fraud_processor_response The fraud processor response (AVS, CVV ...).
 	 */
 	public function __construct(
 		string $id,
@@ -92,7 +100,8 @@ class Capture {
 		string $seller_protection,
 		string $invoice_id,
 		string $custom_id,
-		?SellerReceivableBreakdown $seller_receivable_breakdown
+		?SellerReceivableBreakdown $seller_receivable_breakdown,
+		?FraudProcessorResponse $fraud_processor_response
 	) {
 
 		$this->id                          = $id;
@@ -103,6 +112,7 @@ class Capture {
 		$this->invoice_id                  = $invoice_id;
 		$this->custom_id                   = $custom_id;
 		$this->seller_receivable_breakdown = $seller_receivable_breakdown;
+		$this->fraud_processor_response    = $fraud_processor_response;
 	}
 
 	/**
@@ -178,6 +188,15 @@ class Capture {
 	}
 
 	/**
+	 * Returns the fraud processor response (AVS, CVV ...).
+	 *
+	 * @return FraudProcessorResponse|null
+	 */
+	public function fraud_processor_response() : ?FraudProcessorResponse {
+		return $this->fraud_processor_response;
+	}
+
+	/**
 	 * Returns the entity as array.
 	 *
 	 * @return array
@@ -198,6 +217,9 @@ class Capture {
 		}
 		if ( $this->seller_receivable_breakdown ) {
 			$data['seller_receivable_breakdown'] = $this->seller_receivable_breakdown->to_array();
+		}
+		if ( $this->fraud_processor_response ) {
+			$data['fraud_processor_response'] = $this->fraud_processor_response->to_array();
 		}
 		return $data;
 	}

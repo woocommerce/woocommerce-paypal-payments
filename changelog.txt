@@ -1,6 +1,6 @@
 *** Changelog ***
 
-= 1.8.0 - TBD =
+= 1.8.0 - 2022-05-03 =
 * Add - Allow free trial subscriptions #580
 * Fix - The Card Processing does not appear as an available payment method when manually creating an order #562
 * Fix - Express buttons & Pay Later visible on variable Subscription products /w disabled vaulting #281 

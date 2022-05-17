@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\Button\Assets;
 
 use Exception;
 use Psr\Log\LoggerInterface;
+use WC_Product;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
@@ -448,28 +449,21 @@ class SmartButton implements SmartButtonInterface {
 			);
 		}
 
-		if ( $this->is_cart_price_total_zero() && ! $this->is_free_trial_cart() ) {
-			return false;
-		}
+		add_action( $this->checkout_button_renderer_hook(), array( $this, 'button_renderer' ), 10 );
 
 		$not_enabled_on_cart = $this->settings->has( 'button_cart_enabled' ) &&
 			! $this->settings->get( 'button_cart_enabled' );
-		if (
-			is_cart()
-			&& ! $not_enabled_on_cart
-			&& ! $this->is_free_trial_cart()
-		) {
-			add_action(
-				$this->proceed_to_checkout_button_renderer_hook(),
-				array(
-					$this,
-					'button_renderer',
-				),
-				20
-			);
-		}
+		add_action(
+			$this->proceed_to_checkout_button_renderer_hook(),
+			function() use ( $not_enabled_on_cart ) {
+				if ( ! is_cart() || $not_enabled_on_cart || $this->is_free_trial_cart() || $this->is_cart_price_total_zero() ) {
+					return;
+				}
 
-		add_action( $this->checkout_button_renderer_hook(), array( $this, 'button_renderer' ), 10 );
+				$this->button_renderer();
+			},
+			20
+		);
 
 		return true;
 	}
@@ -530,12 +524,10 @@ class SmartButton implements SmartButtonInterface {
 		}
 
 		$product = wc_get_product();
+
 		if (
-			! is_checkout() && is_a( $product, \WC_Product::class )
-			&& (
-				$product->is_type( array( 'external', 'grouped' ) )
-				|| ! $product->is_in_stock()
-			)
+			! is_checkout() && is_a( $product, WC_Product::class )
+			&& ! $this->product_supports_payment( $product )
 		) {
 
 			return;
@@ -560,6 +552,18 @@ class SmartButton implements SmartButtonInterface {
 			return false;
 		}
 
+		$product = wc_get_product();
+
+		if (
+			! is_checkout() && is_a( $product, WC_Product::class )
+			/**
+			 * The filter returning true if PayPal buttons can be rendered, or false otherwise.
+			 */
+			&& ! $this->product_supports_payment( $product )
+		) {
+			return;
+		}
+
 		echo '<div id="ppcp-messages" data-partner-attribution-id="Woo_PPCP"></div>';
 	}
 
@@ -579,7 +583,7 @@ class SmartButton implements SmartButtonInterface {
 		}
 		$placement     = 'product';
 		$product       = wc_get_product();
-		$amount        = ( is_a( $product, \WC_Product::class ) ) ? wc_get_price_including_tax( $product ) : 0;
+		$amount        = ( is_a( $product, WC_Product::class ) ) ? wc_get_price_including_tax( $product ) : 0;
 		$layout        = $this->settings->has( 'message_product_layout' ) ?
 			$this->settings->get( 'message_product_layout' ) : 'text';
 		$logo_type     = $this->settings->has( 'message_product_logo' ) ?
@@ -1232,10 +1236,29 @@ class SmartButton implements SmartButtonInterface {
 	 * Check if cart product price total is 0.
 	 *
 	 * @return bool true if is 0, otherwise false.
+	 * @psalm-suppress RedundantConditionGivenDocblockType
 	 */
 	protected function is_cart_price_total_zero(): bool {
         // phpcs:ignore WordPress.PHP.StrictComparisons.LooseComparison
-		return WC()->cart->get_cart_contents_total() == 0;
+		return WC()->cart && WC()->cart->get_total( 'numeric' ) == 0;
+	}
+
+	/**
+	 * Checks if PayPal buttons/messages can be rendered for the given product.
+	 *
+	 * @param WC_Product $product The product.
+	 *
+	 * @return bool
+	 */
+	protected function product_supports_payment( WC_Product $product ): bool {
+		/**
+		 * The filter returning true if PayPal buttons/messages can be rendered for this product, or false otherwise.
+		 */
+		return apply_filters(
+			'woocommerce_paypal_payments_product_supports_payment_request_button',
+			! $product->is_type( array( 'external', 'grouped' ) ) && $product->is_in_stock(),
+			$product
+		);
 	}
 
 	/**
