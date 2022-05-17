@@ -119,7 +119,7 @@ class PaymentTokenChecker {
 			try {
 				if ( $this->is_free_trial_order( $wc_order ) ) {
 					if ( CreditCardGateway::ID === $wc_order->get_payment_method()
-						|| ( PayPalGateway::ID === $wc_order->get_payment_method() && 'card' === $wc_order->get_meta( PayPalGateway::ORDER_PAYMENT_SOURCE ) )
+						|| ( PayPalGateway::ID === $wc_order->get_payment_method() && 'card' === $wc_order->get_meta( PayPalGateway::ORDER_PAYMENT_SOURCE_META_KEY ) )
 					) {
 						$order = $this->order_repository->for_wc_order( $wc_order );
 						$this->authorized_payments_processor->void_authorizations( $order );

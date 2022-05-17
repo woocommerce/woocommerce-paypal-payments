@@ -127,7 +127,7 @@ class AmountFactory {
 		$total_value = (float) $order->get_total();
 		if ( (
 			CreditCardGateway::ID === $order->get_payment_method()
-				|| ( PayPalGateway::ID === $order->get_payment_method() && 'card' === $order->get_meta( PayPalGateway::ORDER_PAYMENT_SOURCE ) )
+				|| ( PayPalGateway::ID === $order->get_payment_method() && 'card' === $order->get_meta( PayPalGateway::ORDER_PAYMENT_SOURCE_META_KEY ) )
 			)
 			&& $this->is_free_trial_order( $order )
 		) {
