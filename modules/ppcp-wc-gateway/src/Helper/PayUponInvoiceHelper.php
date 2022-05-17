@@ -113,6 +113,11 @@ class PayUponInvoiceHelper {
 				$order_id = absint( $wp->query_vars['order-pay'] );
 				$order    = wc_get_order( $order_id );
 				if ( is_a( $order, WC_Order::class ) ) {
+					$order_total = (float) $order->get_total();
+					if ( $order_total < 5 || $order_total > 2500 ) {
+						return false;
+					}
+
 					foreach ( $order->get_items() as $item_id => $item ) {
 						if ( is_a( $item, WC_Order_Item_Product::class ) ) {
 							$product = wc_get_product( $item->get_product_id() );
