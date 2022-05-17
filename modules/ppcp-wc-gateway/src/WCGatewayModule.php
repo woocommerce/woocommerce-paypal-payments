@@ -148,8 +148,7 @@ class WCGatewayModule implements ModuleInterface {
 		if ( $c->has( 'wcgateway.url' ) ) {
 			$assets = new SettingsPageAssets(
 				$c->get( 'wcgateway.url' ),
-				$c->get( 'ppcp.asset-version' ),
-				$c->get( 'api.bearer' )
+				$c->get( 'ppcp.asset-version' )
 			);
 			$assets->register_assets();
 		}
