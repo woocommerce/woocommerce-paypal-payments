@@ -13,6 +13,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway;
 
 use Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesDisclaimers;
@@ -783,15 +784,7 @@ return array(
 				'title'        => __( 'Vaulting', 'woocommerce-paypal-payments' ),
 				'type'         => 'checkbox',
 				'desc_tip'     => true,
-				'label'        => sprintf(
-					// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
-					__( 'Enable saved cards and subscription features on your store. To use vaulting features, you must %1$senable vaulting on your account%2$s.', 'woocommerce-paypal-payments' ),
-					'<a
-						href="https://docs.woocommerce.com/document/woocommerce-paypal-payments/#enable-vaulting-on-your-live-account"
-						target="_blank"
-					>',
-					'</a>'
-				),
+				'label'        => $container->get( 'button.helper.vaulting-label' ),
 				'description'  => __( 'Allow registered buyers to save PayPal and Credit Card accounts. Allow Subscription renewals.', 'woocommerce-paypal-payments' ),
 				'default'      => false,
 				'screens'      => array(
@@ -799,6 +792,7 @@ return array(
 				),
 				'requirements' => array(),
 				'gateway'      => array( 'paypal', 'dcc' ),
+				'input_class'  => $container->get( 'wcgateway.helper.vaulting-scope' ) ? array() : array( 'ppcp-disabled-checkbox' ),
 			),
 			'logging_enabled'                    => array(
 				'title'        => __( 'Logging', 'woocommerce-paypal-payments' ),
@@ -989,7 +983,7 @@ return array(
 			'message_enabled'                    => array(
 				'title'        => __( 'Enable message on Checkout', 'woocommerce-paypal-payments' ),
 				'type'         => 'checkbox',
-				'label'        => __( 'Enable on Checkout', 'woocommerce-paypal-payments' ),
+				'label'        => sprintf( $container->get( 'wcgateway.settings.fields.pay-later-label' ), __( 'Enable on Checkout', 'woocommerce-paypal-payments' ) ),
 				'default'      => true,
 				'screens'      => array(
 					State::STATE_START,
@@ -1295,7 +1289,7 @@ return array(
 			'message_product_enabled'            => array(
 				'title'        => __( 'Enable message on Single Product', 'woocommerce-paypal-payments' ),
 				'type'         => 'checkbox',
-				'label'        => __( 'Enable on Single Product', 'woocommerce-paypal-payments' ),
+				'label'        => sprintf( $container->get( 'wcgateway.settings.fields.pay-later-label' ), __( 'Enable on Single Product', 'woocommerce-paypal-payments' ) ),
 				'default'      => true,
 				'screens'      => array(
 					State::STATE_START,
@@ -1601,7 +1595,7 @@ return array(
 			'message_cart_enabled'               => array(
 				'title'        => __( 'Enable message on Cart', 'woocommerce-paypal-payments' ),
 				'type'         => 'checkbox',
-				'label'        => __( 'Enable on Cart', 'woocommerce-paypal-payments' ),
+				'label'        => sprintf( $container->get( 'wcgateway.settings.fields.pay-later-label' ), __( 'Enable on Cart', 'woocommerce-paypal-payments' ) ),
 				'default'      => true,
 				'screens'      => array(
 					State::STATE_START,
@@ -2047,17 +2041,6 @@ return array(
 		$fields['disable_cards']['options'] = $card_options;
 		$fields['card_icons']['options'] = array_merge( $dark_versions, $card_options );
 
-		/**
-		 * Display vault message on Pay Later label if vault is enabled.
-		 */
-		$settings = $container->get( 'wcgateway.settings' );
-		if ( $settings->has( 'vault_enabled' ) && $settings->get( 'vault_enabled' ) ) {
-			$message = __( "You have PayPal vaulting enabled, that's why Pay Later Messaging options are unavailable now. You cannot use both features at the same time.", 'woocommerce-paypal-payments' );
-			$fields['message_enabled']['label'] = $message;
-			$fields['message_product_enabled']['label'] = $message;
-			$fields['message_cart_enabled']['label'] = $message;
-		}
-
 		return $fields;
 	},
 
@@ -2155,5 +2138,45 @@ return array(
 			'woocommerce_paypal_payments_is_logging_enabled',
 			$settings->has( 'logging_enabled' ) && $settings->get( 'logging_enabled' )
 		);
+	},
+
+	'wcgateway.helper.vaulting-scope'              => static function ( ContainerInterface $container ): bool {
+		try {
+			$token = $container->get( 'api.bearer' )->bearer();
+			return $token->vaulting_available();
+		} catch ( RuntimeException $exception ) {
+			return false;
+		}
+	},
+
+	'button.helper.vaulting-label'                 => static function ( ContainerInterface $container ): string {
+		$vaulting_label = __( 'Enable saved cards and subscription features on your store.', 'woocommerce-paypal-payments' );
+
+		if ( ! $container->get( 'wcgateway.helper.vaulting-scope' ) ) {
+			$vaulting_label .= sprintf(
+				// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+				__( ' To use vaulting features, you must %1$senable vaulting on your account%2$s.', 'woocommerce-paypal-payments' ),
+				'<a
+					href="https://docs.woocommerce.com/document/woocommerce-paypal-payments/#enable-vaulting-on-your-live-account"
+					target="_blank"
+				>',
+				'</a>'
+			);
+		}
+
+		$vaulting_label .= '<p class="description">';
+		$vaulting_label .= __( 'This will disable all Pay Later messaging on your site.', 'woocommerce-paypal-payments' );
+		$vaulting_label .= '</p>';
+
+		return $vaulting_label;
+	},
+
+	'wcgateway.settings.fields.pay-later-label'    => static function ( ContainerInterface $container ): string {
+		$pay_later_label  = '<span class="ppcp-pay-later-enabled-label">%s</span>';
+		$pay_later_label .= '<span class="ppcp-pay-later-disabled-label">';
+		$pay_later_label .= __( "You have PayPal vaulting enabled, that's why Pay Later Messaging options are unavailable now. You cannot use both features at the same time.", 'woocommerce-paypal-payments' );
+		$pay_later_label .= '</span>';
+
+		return $pay_later_label;
 	},
 );
