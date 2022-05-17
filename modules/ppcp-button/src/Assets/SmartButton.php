@@ -221,14 +221,13 @@ class SmartButton implements SmartButtonInterface {
 	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting was not found.
 	 */
 	public function render_wrapper(): bool {
-
-		if ( ! $this->can_save_vault_token() && $this->has_subscriptions() ) {
-			return false;
-		}
-
 		if ( $this->settings->has( 'enabled' ) && $this->settings->get( 'enabled' ) ) {
 			$this->render_button_wrapper_registrar();
 			$this->render_message_wrapper_registrar();
+		}
+
+		if ( ! $this->can_save_vault_token() && $this->has_subscriptions() ) {
+			return false;
 		}
 
 		if (
@@ -433,6 +432,10 @@ class SmartButton implements SmartButtonInterface {
 			add_action(
 				$this->mini_cart_button_renderer_hook(),
 				function () {
+					if ( ! $this->can_save_vault_token() && $this->has_subscriptions() ) {
+						return;
+					}
+
 					if ( $this->is_cart_price_total_zero() || $this->is_free_trial_cart() ) {
 						return;
 					}
@@ -515,6 +518,11 @@ class SmartButton implements SmartButtonInterface {
 	 * Renders the HTML for the buttons.
 	 */
 	public function button_renderer() {
+
+		if ( ! $this->can_save_vault_token() && $this->has_subscriptions() ) {
+			return;
+		}
+
 		$product = wc_get_product();
 
 		if (
@@ -540,6 +548,10 @@ class SmartButton implements SmartButtonInterface {
 	 * Renders the HTML for the credit messaging.
 	 */
 	public function message_renderer() {
+		if ( ! $this->can_save_vault_token() && $this->has_subscriptions() ) {
+			return false;
+		}
+
 		$product = wc_get_product();
 
 		if (
