@@ -333,7 +333,7 @@ class ItemFactoryTest extends TestCase
          * @var Item $item
          */
         $this->assertEquals(mb_substr($name, 0, 127), $item->name());
-        $this->assertEquals(mb_substr($description, 0, 127), $item->description());
+        $this->assertEquals(substr($description, 0, 127), $item->description());
     }
 
     public function testFromPayPalResponse()

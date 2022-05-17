@@ -89,6 +89,11 @@ class OrderProcessorTest extends TestCase
 			->shouldReceive('payment_source')
 			->andReturn(null);
 
+        $wcOrder
+            ->shouldReceive('get_meta')
+            ->with(PayPalGateway::ORDER_ID_META_KEY)
+            ->andReturn(1);
+
         $sessionHandler = Mockery::mock(SessionHandler::class);
         $sessionHandler
             ->expects('order')
@@ -209,6 +214,12 @@ class OrderProcessorTest extends TestCase
 		$currentOrder
 			->shouldReceive('payment_source')
 			->andReturn(null);
+
+        $wcOrder
+            ->shouldReceive('get_meta')
+            ->with(PayPalGateway::ORDER_ID_META_KEY)
+            ->andReturn(1);
+
         $sessionHandler = Mockery::mock(SessionHandler::class);
         $sessionHandler
             ->expects('order')
@@ -316,6 +327,12 @@ class OrderProcessorTest extends TestCase
         $currentOrder
             ->shouldReceive('purchase_units')
             ->andReturn([$purchaseUnit]);
+
+        $wcOrder
+            ->shouldReceive('get_meta')
+            ->with(PayPalGateway::ORDER_ID_META_KEY)
+            ->andReturn(1);
+
         $sessionHandler = Mockery::mock(SessionHandler::class);
         $sessionHandler
             ->expects('order')

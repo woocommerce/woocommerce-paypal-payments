@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 
 use Exception;
 use Psr\Log\LoggerInterface;
+use stdClass;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Amount;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
@@ -242,6 +243,13 @@ class CreateOrderEndpoint implements EndpointInterface {
 			}
 
 			$order = $this->create_paypal_order( $wc_order );
+
+			if ( 'pay-now' === $data['context'] && is_a( $wc_order, \WC_Order::class ) ) {
+				$wc_order->update_meta_data( PayPalGateway::ORDER_ID_META_KEY, $order->id() );
+				$wc_order->update_meta_data( PayPalGateway::INTENT_META_KEY, $order->intent() );
+				$wc_order->save_meta_data();
+			}
+
 			wp_send_json_success( $order->to_array() );
 			return true;
 
@@ -317,19 +325,51 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 * @return Order Created PayPal order.
 	 *
 	 * @throws RuntimeException If create order request fails.
+	 * @throws PayPalApiException If create order request fails.
+	 * phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber
 	 */
 	private function create_paypal_order( \WC_Order $wc_order = null ): Order {
 		$needs_shipping          = WC()->cart instanceof \WC_Cart && WC()->cart->needs_shipping();
 		$shipping_address_is_fix = $needs_shipping && 'checkout' === $this->parsed_request_data['context'];
 
-		return $this->api_endpoint->create(
-			$this->purchase_units,
-			$this->payer( $this->parsed_request_data, $wc_order ),
-			null,
-			$this->payment_method(),
-			'',
-			$shipping_address_is_fix
-		);
+		try {
+			return $this->api_endpoint->create(
+				$this->purchase_units,
+				$this->payer( $this->parsed_request_data, $wc_order ),
+				null,
+				$this->payment_method(),
+				'',
+				$shipping_address_is_fix
+			);
+		} catch ( PayPalApiException $exception ) {
+			// Looks like currently there is no proper way to validate the shipping address for PayPal,
+			// so we cannot make some invalid addresses null in PurchaseUnitFactory,
+			// which causes failure e.g. for guests using the button on products pages when the country does not have postal codes.
+			if ( 422 === $exception->status_code()
+				&& array_filter(
+					$exception->details(),
+					function ( stdClass $detail ): bool {
+						return isset( $detail->field ) && str_contains( (string) $detail->field, 'shipping/address' );
+					}
+				) ) {
+				$this->logger->info( 'Invalid shipping address for order creation, retrying without it.' );
+
+				foreach ( $this->purchase_units as $purchase_unit ) {
+					$purchase_unit->set_shipping( null );
+				}
+
+				return $this->api_endpoint->create(
+					$this->purchase_units,
+					$this->payer( $this->parsed_request_data, $wc_order ),
+					null,
+					$this->payment_method(),
+					'',
+					$shipping_address_is_fix
+				);
+			}
+
+			throw $exception;
+		}
 	}
 
 	/**
