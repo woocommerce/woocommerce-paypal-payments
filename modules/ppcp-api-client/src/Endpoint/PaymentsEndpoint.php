@@ -198,11 +198,11 @@ class PaymentsEndpoint {
 	 *
 	 * @param Refund $refund The refund to be processed.
 	 *
-	 * @return void
+	 * @return string Refund ID.
 	 * @throws RuntimeException If the request fails.
 	 * @throws PayPalApiException If the request fails.
 	 */
-	public function refund( Refund $refund ) : void {
+	public function refund( Refund $refund ) : string {
 		$bearer = $this->bearer->bearer();
 		$url    = trailingslashit( $this->host ) . 'v2/payments/captures/' . $refund->for_capture()->id() . '/refund';
 		$args   = array(
@@ -216,19 +216,21 @@ class PaymentsEndpoint {
 		);
 
 		$response = $this->request( $url, $args );
-		$json     = json_decode( $response['body'] );
 
 		if ( is_wp_error( $response ) ) {
 			throw new RuntimeException( 'Could not refund payment.' );
 		}
 
 		$status_code = (int) wp_remote_retrieve_response_code( $response );
-		if ( 201 !== $status_code ) {
+		$json        = json_decode( $response['body'] );
+		if ( 201 !== $status_code || ! is_object( $json ) ) {
 			throw new PayPalApiException(
 				$json,
 				$status_code
 			);
 		}
+
+		return $json->id;
 	}
 
 	/**

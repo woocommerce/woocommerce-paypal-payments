@@ -33,12 +33,13 @@ class PayPalGateway extends \WC_Payment_Gateway {
 
 	use ProcessPaymentTrait;
 
-	const ID                          = 'ppcp-gateway';
-	const INTENT_META_KEY             = '_ppcp_paypal_intent';
-	const ORDER_ID_META_KEY           = '_ppcp_paypal_order_id';
-	const ORDER_PAYMENT_MODE_META_KEY = '_ppcp_paypal_payment_mode';
-	const ORDER_PAYMENT_SOURCE        = '_ppcp_paypal_payment_source';
-	const FEES_META_KEY               = '_ppcp_paypal_fees';
+	const ID                            = 'ppcp-gateway';
+	const INTENT_META_KEY               = '_ppcp_paypal_intent';
+	const ORDER_ID_META_KEY             = '_ppcp_paypal_order_id';
+	const ORDER_PAYMENT_MODE_META_KEY   = '_ppcp_paypal_payment_mode';
+	const ORDER_PAYMENT_SOURCE_META_KEY = '_ppcp_paypal_payment_source';
+	const FEES_META_KEY                 = '_ppcp_paypal_fees';
+	const REFUNDS_META_KEY              = '_ppcp_refunds';
 
 	/**
 	 * The Settings Renderer.
