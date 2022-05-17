@@ -27,6 +27,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\ApplicationContextFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\AuthorizationFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\CaptureFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ExchangeRateFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\FraudProcessorResponseFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ItemFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\MoneyFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
@@ -257,7 +258,8 @@ return array(
 		$amount_factory   = $container->get( 'api.factory.amount' );
 		return new CaptureFactory(
 			$amount_factory,
-			$container->get( 'api.factory.seller-receivable-breakdown' )
+			$container->get( 'api.factory.seller-receivable-breakdown' ),
+			$container->get( 'api.factory.fraud-processor-response' )
 		);
 	},
 	'api.factory.purchase-unit'                 => static function ( ContainerInterface $container ): PurchaseUnitFactory {
@@ -353,6 +355,9 @@ return array(
 			$container->get( 'api.factory.exchange-rate' ),
 			$container->get( 'api.factory.platform-fee' )
 		);
+	},
+	'api.factory.fraud-processor-response'      => static function ( ContainerInterface $container ): FraudProcessorResponseFactory {
+		return new FraudProcessorResponseFactory();
 	},
 	'api.helpers.dccapplies'                    => static function ( ContainerInterface $container ) : DccApplies {
 		return new DccApplies(

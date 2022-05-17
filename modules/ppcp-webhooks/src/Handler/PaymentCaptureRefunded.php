@@ -10,14 +10,17 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
 
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundMetaTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
+use WP_REST_Request;
+use WP_REST_Response;
 
 /**
  * Class PaymentCaptureRefunded
  */
 class PaymentCaptureRefunded implements RequestHandler {
 
-	use PrefixTrait, TransactionIdHandlingTrait;
+	use PrefixTrait, TransactionIdHandlingTrait, RefundMetaTrait;
 
 	/**
 	 * The logger.
@@ -49,25 +52,26 @@ class PaymentCaptureRefunded implements RequestHandler {
 	/**
 	 * Whether a handler is responsible for a given request or not.
 	 *
-	 * @param \WP_REST_Request $request The request.
+	 * @param WP_REST_Request $request The request.
 	 *
 	 * @return bool
 	 */
-	public function responsible_for_request( \WP_REST_Request $request ): bool {
+	public function responsible_for_request( WP_REST_Request $request ): bool {
 		return in_array( $request['event_type'], $this->event_types(), true );
 	}
 
 	/**
 	 * Responsible for handling the request.
 	 *
-	 * @param \WP_REST_Request $request The request.
+	 * @param WP_REST_Request $request The request.
 	 *
-	 * @return \WP_REST_Response
+	 * @return WP_REST_Response
 	 */
-	public function handle_request( \WP_REST_Request $request ): \WP_REST_Response {
-		$response = array( 'success' => false );
-		$order_id = isset( $request['resource']['custom_id'] ) ?
+	public function handle_request( WP_REST_Request $request ): WP_REST_Response {
+		$response  = array( 'success' => false );
+		$order_id  = isset( $request['resource']['custom_id'] ) ?
 			$this->sanitize_custom_id( $request['resource']['custom_id'] ) : 0;
+		$refund_id = (string) ( $request['resource']['id'] ?? '' );
 		if ( ! $order_id ) {
 			$message = sprintf(
 				// translators: %s is the PayPal webhook Id.
@@ -85,7 +89,7 @@ class PaymentCaptureRefunded implements RequestHandler {
 				)
 			);
 			$response['message'] = $message;
-			return rest_ensure_response( $response );
+			return new WP_REST_Response( $response );
 		}
 
 		$wc_order = wc_get_order( $order_id );
@@ -93,7 +97,7 @@ class PaymentCaptureRefunded implements RequestHandler {
 			$message = sprintf(
 			// translators: %s is the PayPal refund Id.
 				__( 'Order for PayPal refund %s not found.', 'woocommerce-paypal-payments' ),
-				isset( $request['resource']['id'] ) ? $request['resource']['id'] : ''
+				$refund_id
 			);
 			$this->logger->log(
 				'warning',
@@ -103,7 +107,13 @@ class PaymentCaptureRefunded implements RequestHandler {
 				)
 			);
 			$response['message'] = $message;
-			return rest_ensure_response( $response );
+			return new WP_REST_Response( $response );
+		}
+
+		$already_added_refunds = $this->get_refunds_meta( $wc_order );
+		if ( in_array( $refund_id, $already_added_refunds, true ) ) {
+			$this->logger->info( "Refund {$refund_id} is already handled." );
+			return new WP_REST_Response( $response );
 		}
 
 		/**
@@ -132,7 +142,7 @@ class PaymentCaptureRefunded implements RequestHandler {
 			);
 
 			$response['message'] = $refund->get_error_message();
-			return rest_ensure_response( $response );
+			return new WP_REST_Response( $response );
 		}
 
 		$this->logger->log(
@@ -152,11 +162,12 @@ class PaymentCaptureRefunded implements RequestHandler {
 			)
 		);
 
-		if ( is_array( $request['resource'] ) && isset( $request['resource']['id'] ) ) {
-			$this->update_transaction_id( $request['resource']['id'], $wc_order, $this->logger );
+		if ( $refund_id ) {
+			$this->update_transaction_id( $refund_id, $wc_order, $this->logger );
+			$this->add_refund_to_meta( $wc_order, $refund_id );
 		}
 
 		$response['success'] = true;
-		return rest_ensure_response( $response );
+		return new WP_REST_Response( $response );
 	}
 }

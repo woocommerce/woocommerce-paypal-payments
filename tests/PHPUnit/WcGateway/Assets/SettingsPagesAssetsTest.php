@@ -13,9 +13,8 @@ class SettingsPagesAssetsTest extends TestCase
 	{
 		$moduleUrl = 'http://example.com/wp-content/plugins/woocommerce-paypal-payments/modules/ppcp-wc-gateway';
 		$modulePath = '/var/www/html/wp-content/plugins/woocommerce-paypal-payments/modules/ppcp-wc-gateway';
-        $bearer = Mockery::mock(Bearer::class);
 
-		$testee = new SettingsPageAssets($moduleUrl, $modulePath, $bearer);
+		$testee = new SettingsPageAssets($moduleUrl, $modulePath);
 
 		when('is_admin')
 			->justReturn(true);

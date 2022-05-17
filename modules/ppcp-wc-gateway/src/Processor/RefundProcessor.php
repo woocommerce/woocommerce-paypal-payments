@@ -26,6 +26,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
  * Class RefundProcessor
  */
 class RefundProcessor {
+	use RefundMetaTrait;
 
 	private const REFUND_MODE_REFUND  = 'refund';
 	private const REFUND_MODE_VOID    = 'void';
@@ -113,8 +114,8 @@ class RefundProcessor {
 						throw new RuntimeException( 'No capture.' );
 					}
 
-					$capture = $captures[0];
-					$refund  = new Refund(
+					$capture   = $captures[0];
+					$refund    = new Refund(
 						$capture,
 						$capture->invoice_id(),
 						$reason,
@@ -122,7 +123,10 @@ class RefundProcessor {
 							new Money( $amount, $wc_order->get_currency() )
 						)
 					);
-					$this->payments_endpoint->refund( $refund );
+					$refund_id = $this->payments_endpoint->refund( $refund );
+
+					$this->add_refund_to_meta( $wc_order, $refund_id );
+
 					break;
 				case self::REFUND_MODE_VOID:
 					$voidable_authorizations = array_filter(
