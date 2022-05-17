@@ -446,28 +446,21 @@ class SmartButton implements SmartButtonInterface {
 			);
 		}
 
-		if ( $this->is_cart_price_total_zero() && ! $this->is_free_trial_cart() ) {
-			return false;
-		}
+		add_action( $this->checkout_button_renderer_hook(), array( $this, 'button_renderer' ), 10 );
 
 		$not_enabled_on_cart = $this->settings->has( 'button_cart_enabled' ) &&
 			! $this->settings->get( 'button_cart_enabled' );
-		if (
-			is_cart()
-			&& ! $not_enabled_on_cart
-			&& ! $this->is_free_trial_cart()
-		) {
-			add_action(
-				$this->proceed_to_checkout_button_renderer_hook(),
-				array(
-					$this,
-					'button_renderer',
-				),
-				20
-			);
-		}
+		add_action(
+			$this->proceed_to_checkout_button_renderer_hook(),
+			function() use ( $not_enabled_on_cart ) {
+				if ( ! is_cart() || $not_enabled_on_cart || $this->is_free_trial_cart() || $this->is_cart_price_total_zero() ) {
+					return;
+				}
 
-		add_action( $this->checkout_button_renderer_hook(), array( $this, 'button_renderer' ), 10 );
+				$this->button_renderer();
+			},
+			20
+		);
 
 		return true;
 	}
@@ -1231,10 +1224,11 @@ class SmartButton implements SmartButtonInterface {
 	 * Check if cart product price total is 0.
 	 *
 	 * @return bool true if is 0, otherwise false.
+	 * @psalm-suppress RedundantConditionGivenDocblockType
 	 */
 	protected function is_cart_price_total_zero(): bool {
         // phpcs:ignore WordPress.PHP.StrictComparisons.LooseComparison
-		return WC()->cart->get_cart_contents_total() == 0;
+		return WC()->cart && WC()->cart->get_total( 'numeric' ) == 0;
 	}
 
 	/**
