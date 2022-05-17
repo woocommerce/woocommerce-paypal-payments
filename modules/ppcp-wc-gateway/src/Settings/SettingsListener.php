@@ -167,7 +167,7 @@ class SettingsListener {
 	 * Prevent enabling both Pay Later messaging and PayPal vaulting
 	 */
 	public function listen_for_vaulting_enabled() {
-		if ( ! $this->is_valid_site_request() ) {
+		if ( ! $this->is_valid_site_request() || State::STATE_ONBOARDED !== $this->state->current_state() ) {
 			return;
 		}
 
@@ -208,10 +208,6 @@ class SettingsListener {
 		$this->settings->set( 'message_product_enabled', false );
 		$this->settings->set( 'message_cart_enabled', false );
 		$this->settings->persist();
-
-		$redirect_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' );
-		wp_safe_redirect( $redirect_url, 302 );
-		exit;
 	}
 
 	/**
@@ -441,18 +437,9 @@ class SettingsListener {
 	 */
 	private function is_valid_site_request() : bool {
 
-		/**
-		 * No nonce needed at this point.
-		 *
-		 * phpcs:disable WordPress.Security.NonceVerification.Missing
-		 * phpcs:disable WordPress.Security.NonceVerification.Recommended
-		 */
 		if ( empty( $this->page_id ) ) {
 			return false;
 		}
-
-		// phpcs:enable WordPress.Security.NonceVerification.Missing
-		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		if ( ! current_user_can( 'manage_woocommerce' ) ) {
 			return false;
