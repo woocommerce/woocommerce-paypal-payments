@@ -76,6 +76,11 @@ class PayUponInvoiceHelper {
 	 * @return bool
 	 */
 	public function is_checkout_ready_for_pui(): bool {
+		$gateway_settings = get_option( 'woocommerce_ppcp-pay-upon-invoice-gateway_settings' );
+		if ( $gateway_settings && '' === $gateway_settings['customer_service_instructions'] ) {
+			return false;
+		}
+
 		$billing_country = filter_input( INPUT_POST, 'country', FILTER_SANITIZE_STRING ) ?? null;
 		if ( $billing_country && 'DE' !== $billing_country ) {
 			return false;
