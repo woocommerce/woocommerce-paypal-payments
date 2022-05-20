@@ -317,6 +317,11 @@ class PayUponInvoice {
 		add_action(
 			'woocommerce_after_checkout_validation',
 			function( array $fields, WP_Error $errors ) {
+				$payment_method = filter_input( INPUT_POST, 'payment_method', FILTER_SANITIZE_STRING );
+				if ( PayUponInvoiceGateway::ID !== $payment_method ) {
+					return;
+				}
+
 				if ( 'DE' !== $fields['billing_country'] ) {
 					$errors->add( 'validation', __( 'Billing country not available.', 'woocommerce-paypal-payments' ) );
 				}
