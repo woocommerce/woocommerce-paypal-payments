@@ -175,6 +175,21 @@ class PayUponInvoice {
 					return $data;
 				}
 
+				$data['business_entity'] = array(
+					'business_type' => array(
+						'type' => 'PRIVATE_CORPORATION',
+					),
+					'addresses'     => array(
+						array(
+							'address_line_1' => WC()->countries->get_base_address(),
+							'admin_area_1'   => WC()->countries->get_base_city(),
+							'postal_code'    => WC()->countries->get_base_postcode(),
+							'country_code'   => WC()->countries->get_base_country(),
+							'type'           => 'WORK',
+						),
+					),
+				);
+
 				if ( in_array( 'PPCP', $data['products'], true ) ) {
 					$data['products'][] = 'PAYMENT_METHODS';
 				} elseif ( in_array( 'EXPRESS_CHECKOUT', $data['products'], true ) ) {
