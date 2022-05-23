@@ -58,7 +58,8 @@ class CustomerApprovalListener {
 			return;
 		}
 
-		$url = (string) filter_input( INPUT_SERVER, 'REQUEST_URI', FILTER_SANITIZE_URL );
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+		$url = (string) filter_var( $_SERVER['REQUEST_URI'] ?? '', FILTER_SANITIZE_URL );
 
 		$query = wp_parse_url( $url, PHP_URL_QUERY );
 		if ( $query && str_contains( $query, 'ppcp_vault=cancel' ) ) {
