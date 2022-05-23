@@ -338,6 +338,10 @@ class PayUponInvoice {
 		add_filter(
 			'woocommerce_available_payment_gateways',
 			function ( array $methods ): array {
+				if ( State::STATE_ONBOARDED !== $this->state->current_state() ) {
+					return $methods;
+				}
+
 				if (
 					! $this->pui_product_status->pui_is_active()
 					|| ! $this->pui_helper->is_checkout_ready_for_pui()
