@@ -219,7 +219,8 @@ return array(
 		$cache = new Cache( 'ppcp-paypal-bearer' );
 		$bearer = $container->get( 'api.bearer' );
 		$page_id = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
-		return new SettingsListener( $settings, $fields, $webhook_registrar, $cache, $state, $bearer, $page_id );
+		$signup_link_cache = new Cache( 'ppcp-paypal-signup-link' );
+		return new SettingsListener( $settings, $fields, $webhook_registrar, $cache, $state, $bearer, $page_id, $signup_link_cache );
 	},
 	'wcgateway.order-processor'                         => static function ( ContainerInterface $container ): OrderProcessor {
 
@@ -2215,7 +2216,7 @@ return array(
 		);
 	},
 
-	'wcgateway.helper.vaulting-scope'              => static function ( ContainerInterface $container ): bool {
+	'wcgateway.helper.vaulting-scope'                   => static function ( ContainerInterface $container ): bool {
 		try {
 			$token = $container->get( 'api.bearer' )->bearer();
 			return $token->vaulting_available();
@@ -2224,7 +2225,7 @@ return array(
 		}
 	},
 
-	'button.helper.vaulting-label'                 => static function ( ContainerInterface $container ): string {
+	'button.helper.vaulting-label'                      => static function ( ContainerInterface $container ): string {
 		$vaulting_label = __( 'Enable saved cards and subscription features on your store.', 'woocommerce-paypal-payments' );
 
 		if ( ! $container->get( 'wcgateway.helper.vaulting-scope' ) ) {
@@ -2246,7 +2247,7 @@ return array(
 		return $vaulting_label;
 	},
 
-	'wcgateway.settings.fields.pay-later-label'    => static function ( ContainerInterface $container ): string {
+	'wcgateway.settings.fields.pay-later-label'         => static function ( ContainerInterface $container ): string {
 		$pay_later_label  = '<span class="ppcp-pay-later-enabled-label">%s</span>';
 		$pay_later_label .= '<span class="ppcp-pay-later-disabled-label">';
 		$pay_later_label .= __( "You have PayPal vaulting enabled, that's why Pay Later Messaging options are unavailable now. You cannot use both features at the same time.", 'woocommerce-paypal-payments' );
