@@ -210,18 +210,21 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
+	'onboarding.signup-link-cache'              => static function( ContainerInterface $container ): Cache {
+		return new Cache( 'ppcp-paypal-signup-link' );
+	},
 	'onboarding.render'                         => static function ( ContainerInterface $container ) : OnboardingRenderer {
 		$partner_referrals         = $container->get( 'api.endpoint.partner-referrals-production' );
 		$partner_referrals_sandbox = $container->get( 'api.endpoint.partner-referrals-sandbox' );
 		$partner_referrals_data    = $container->get( 'api.repository.partner-referrals-data' );
 		$settings                  = $container->get( 'wcgateway.settings' );
-		$cache  = new Cache( 'ppcp-paypal-signup-link' );
+		$signup_link_cache  = $container->get( 'onboarding.signup-link-cache' );
 		return new OnboardingRenderer(
 			$settings,
 			$partner_referrals,
 			$partner_referrals_sandbox,
 			$partner_referrals_data,
-			$cache
+			$signup_link_cache
 		);
 	},
 	'onboarding.render-options'                 => static function ( ContainerInterface $container ) : OnboardingOptionsRenderer {
