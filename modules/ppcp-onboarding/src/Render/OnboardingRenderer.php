@@ -103,7 +103,7 @@ class OnboardingRenderer {
 		$url = $is_production ? $this->production_partner_referrals->signup_link( $data ) : $this->sandbox_partner_referrals->signup_link( $data );
 		$url = add_query_arg( $args, $url );
 
-		$this->cache->set( $environment . '-' . $product, $url );
+		$this->cache->set( $environment . '-' . $product, $url, 3 * MONTH_IN_SECONDS );
 
 		return $url;
 	}
