@@ -87,7 +87,14 @@ const ppcp_onboarding = {
             }).then((res)=>{
                 return res.json();
             }).then((data)=>{
-                location.reload();
+                buttons.forEach((element) => {
+                    for (let [key, value] of Object.entries(data.data.signup_links)) {
+                        key = 'connect-to' + key.replace(/-/g, '');
+                        if(key === element.id) {
+                            element.setAttribute('href', value);
+                        }
+                    }
+                });
             });
         })
 	},

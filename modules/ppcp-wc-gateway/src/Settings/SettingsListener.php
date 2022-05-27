@@ -89,6 +89,13 @@ class SettingsListener {
 	protected $signup_link_cache;
 
 	/**
+	 * Signup link ids
+	 *
+	 * @var array
+	 */
+	protected $signup_link_ids;
+
+	/**
 	 * SettingsListener constructor.
 	 *
 	 * @param Settings         $settings The settings.
@@ -99,6 +106,7 @@ class SettingsListener {
 	 * @param Bearer           $bearer The bearer.
 	 * @param string           $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
 	 * @param Cache            $signup_link_cache The signup link cache.
+	 * @param array            $signup_link_ids Signup link ids.
 	 */
 	public function __construct(
 		Settings $settings,
@@ -108,7 +116,8 @@ class SettingsListener {
 		State $state,
 		Bearer $bearer,
 		string $page_id,
-		Cache $signup_link_cache
+		Cache $signup_link_cache,
+		array $signup_link_ids
 	) {
 
 		$this->settings          = $settings;
@@ -119,6 +128,7 @@ class SettingsListener {
 		$this->bearer            = $bearer;
 		$this->page_id           = $page_id;
 		$this->signup_link_cache = $signup_link_cache;
+		$this->signup_link_ids   = $signup_link_ids;
 	}
 
 	/**
@@ -271,13 +281,7 @@ class SettingsListener {
 			) ) {
 				$this->webhook_registrar->unregister();
 
-				$keys = array(
-					'production-ppcp',
-					'production-express-checkout',
-					'sandbox-ppcp',
-					'sandbox-express-checkout',
-				);
-				foreach ( $keys as $key ) {
+				foreach ( $this->signup_link_ids as $key ) {
 					if ( $this->signup_link_cache->has( $key ) ) {
 						$this->signup_link_cache->delete( $key );
 					}

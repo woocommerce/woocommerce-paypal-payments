@@ -220,7 +220,18 @@ return array(
 		$bearer = $container->get( 'api.bearer' );
 		$page_id = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
 		$signup_link_cache = $container->get( 'onboarding.signup-link-cache' );
-		return new SettingsListener( $settings, $fields, $webhook_registrar, $cache, $state, $bearer, $page_id, $signup_link_cache );
+		$signup_link_ids = $container->get( 'onboarding.signup-link-ids' );
+		return new SettingsListener(
+			$settings,
+			$fields,
+			$webhook_registrar,
+			$cache,
+			$state,
+			$bearer,
+			$page_id,
+			$signup_link_cache,
+			$signup_link_ids
+		);
 	},
 	'wcgateway.order-processor'                         => static function ( ContainerInterface $container ): OrderProcessor {
 
