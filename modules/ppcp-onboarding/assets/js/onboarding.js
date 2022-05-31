@@ -88,7 +88,7 @@ const ppcp_onboarding = {
                 return res.json();
             }).then((data)=>{
                 if (!data.success) {
-                    console.error(data);
+                    alert('Could not update signup buttons: ' + data);
                     return;
                 }
 
