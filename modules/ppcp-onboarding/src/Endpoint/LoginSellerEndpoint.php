@@ -145,6 +145,7 @@ class LoginSellerEndpoint implements EndpointInterface {
 			}
 			$this->settings->set( 'client_secret', $credentials->client_secret );
 			$this->settings->set( 'client_id', $credentials->client_id );
+			$this->settings->persist();
 
 			$accept_cards    = (bool) ( $data['acceptCards'] ?? true );
 			$funding_sources = array();
