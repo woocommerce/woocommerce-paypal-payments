@@ -87,6 +87,11 @@ const ppcp_onboarding = {
             }).then((res)=>{
                 return res.json();
             }).then((data)=>{
+                if (!data.success) {
+                    console.error(data);
+                    return;
+                }
+
                 buttons.forEach((element) => {
                     for (let [key, value] of Object.entries(data.data.signup_links)) {
                         key = 'connect-to' + key.replace(/-/g, '');
