@@ -1,6 +1,6 @@
 *** Changelog ***
 
-= 1.8.1 - TBD =
+= 1.8.1 - 2022-05-31 =
 * Fix - Manual orders return an error for guest users when paying with PayPal Card Processing #530
 * Fix - "No PayPal order found in the current WooCommerce session" error for guests on Pay for Order page #605
 * Fix - Error on order discount by third-party plugins #548
