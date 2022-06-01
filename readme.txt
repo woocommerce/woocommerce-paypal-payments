@@ -2,7 +2,7 @@
 Contributors: woocommerce, automattic
 Tags: woocommerce, paypal, payments, ecommerce, e-commerce, store, sales, sell, shop, shopping, cart, checkout
 Requires at least: 5.3
-Tested up to: 5.9
+Tested up to: 6.0
 Requires PHP: 7.1
 Stable tag: 1.9.0-test3
 License: GPLv2
@@ -100,8 +100,8 @@ Follow the steps below to connect the plugin to your PayPal account:
 = 1.8.0 =
 * Add - Allow free trial subscriptions #580
 * Fix - The Card Processing does not appear as an available payment method when manually creating an order #562
-* Fix - Express buttons & Pay Later visible on variable Subscription products /w disabled vaulting #281 
-* Fix - Pay for order (guest) failing when no email address available #535 
+* Fix - Express buttons & Pay Later visible on variable Subscription products /w disabled vaulting #281
+* Fix - Pay for order (guest) failing when no email address available #535
 * Fix - Emoji in product description causing INVALID_STRING_LENGTH error #491
 * Enhancement - Change cart total amount that is sent to PayPal gateway #486
 * Enhancement - Include dark Visa and Mastercard gateway icon list for PayPal Card Processing #566
@@ -160,7 +160,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Fix - Empty space in invoice prefix causes smart buttons to not load #390
 * Fix - woocommerce_payment_complete action not triggered for payments completed via webhook #399
 * Fix - Paying with Venmo - Change funding source on checkout page and receipt to Venmo  #394
-* Fix - Internal server error on checkout when selected saved card but then switched to paypal #403 
+* Fix - Internal server error on checkout when selected saved card but then switched to paypal #403
 * Enhancement - Allow formatted text for the Description field #407
 * Enhancement - Remove filter to prevent On-Hold emails #411
 
