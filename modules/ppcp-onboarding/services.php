@@ -191,6 +191,9 @@ return array(
 		return new PayUponInvoiceEndpoint(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'button.request-data' ),
+			$container->get( 'onboarding.signup-link-cache' ),
+			$container->get( 'onboarding.render' ),
+			$container->get( 'onboarding.signup-link-ids' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
@@ -212,6 +215,14 @@ return array(
 	},
 	'onboarding.signup-link-cache'              => static function( ContainerInterface $container ): Cache {
 		return new Cache( 'ppcp-paypal-signup-link' );
+	},
+	'onboarding.signup-link-ids'                => static function ( ContainerInterface $container ): array {
+		return array(
+			'production-ppcp',
+			'production-express_checkout',
+			'sandbox-ppcp',
+			'sandbox-express_checkout',
+		);
 	},
 	'onboarding.render'                         => static function ( ContainerInterface $container ) : OnboardingRenderer {
 		$partner_referrals         = $container->get( 'api.endpoint.partner-referrals-production' );

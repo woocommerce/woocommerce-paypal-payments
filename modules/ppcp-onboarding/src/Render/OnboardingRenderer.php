@@ -95,7 +95,7 @@ class OnboardingRenderer {
 			->data();
 
 		$environment = $is_production ? 'production' : 'sandbox';
-		$product     = isset( $data['products']['PPCP'] ) ? 'ppcp' : 'express-checkout';
+		$product     = 'PPCP' === $data['products'][0] ? 'ppcp' : 'express_checkout';
 		if ( $this->cache->has( $environment . '-' . $product ) ) {
 			return $this->cache->get( $environment . '-' . $product );
 		}
