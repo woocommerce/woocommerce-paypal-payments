@@ -69,13 +69,8 @@ class AddressFactory {
 	 * @throws RuntimeException When JSON object is malformed.
 	 */
 	public function from_paypal_response( \stdClass $data ): Address {
-		if ( ! isset( $data->country_code ) ) {
-			throw new RuntimeException(
-				__( 'No country given for address.', 'woocommerce-paypal-payments' )
-			);
-		}
 		return new Address(
-			$data->country_code,
+			( isset( $data->country_code ) ) ? $data->country_code : '',
 			( isset( $data->address_line_1 ) ) ? $data->address_line_1 : '',
 			( isset( $data->address_line_2 ) ) ? $data->address_line_2 : '',
 			( isset( $data->admin_area_1 ) ) ? $data->admin_area_1 : '',
