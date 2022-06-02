@@ -218,7 +218,7 @@ return array(
 		$environment                   = $container->get( 'onboarding.environment' );
 		$logger                        = $container->get( 'woocommerce.logger.woocommerce' );
 		$subscription_helper = $container->get( 'subscription.helper' );
-		$order_helper = $container->get('api.order-helper');
+		$order_helper = $container->get( 'api.order-helper' );
 		return new OrderProcessor(
 			$session_handler,
 			$order_endpoint,
