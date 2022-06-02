@@ -17,7 +17,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 class OrderHelper {
 
 	/**
-	 * Checks if order contains virtual products.
+	 * Checks if order contains physical goods.
 	 *
 	 * @param Order $order PayPal order.
 	 * @return bool
