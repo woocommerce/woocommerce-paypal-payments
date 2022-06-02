@@ -47,6 +47,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookEventFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderHelper;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CartRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CustomerRepository;
@@ -670,5 +671,8 @@ return array(
 			'ES',
 			'SE',
 		);
+	},
+	'api.order-helper'                          => static function( ContainerInterface $container ): OrderHelper {
+		return new OrderHelper();
 	},
 );
