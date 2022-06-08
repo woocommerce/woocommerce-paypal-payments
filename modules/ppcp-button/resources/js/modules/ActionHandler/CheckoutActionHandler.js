@@ -61,7 +61,7 @@ class CheckoutActionHandler {
                         }
                     }
 
-                    return;
+                    throw new Error(data.data.message);
                 }
                 const input = document.createElement('input');
                 input.setAttribute('type', 'hidden');
