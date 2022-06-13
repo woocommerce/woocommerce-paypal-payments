@@ -144,7 +144,7 @@ class RefundProcessor {
 					}
 
 					$wc_order->set_status(
-						apply_filter(
+						apply_filters(
 							'woocommerce_order_fully_refunded_status',
 							'refunded',
 							$wc_order->get_id(),
