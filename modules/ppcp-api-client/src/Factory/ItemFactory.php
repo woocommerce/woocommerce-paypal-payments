@@ -124,11 +124,6 @@ class ItemFactory {
 	 * @return Item
 	 */
 	private function from_wc_order_line_item( \WC_Order_Item_Product $item, \WC_Order $order ): Item {
-		/**
-		 * The WooCommerce product.
-		 *
-		 * @var WC_Product $product
-		 */
 		$product                   = $item->get_product();
 		$currency                  = $order->get_currency();
 		$quantity                  = (int) $item->get_quantity();
@@ -139,13 +134,13 @@ class ItemFactory {
 		$tax                       = new Money( $tax, $currency );
 
 		return new Item(
-			mb_substr( $product->get_name(), 0, 127 ),
+			mb_substr( $item->get_name(), 0, 127 ),
 			new Money( $price_without_tax_rounded, $currency ),
 			$quantity,
-			substr( wp_strip_all_tags( $product->get_description() ), 0, 127 ) ?: '',
+			substr( wp_strip_all_tags( $product instanceof WC_Product ? $product->get_description() : '' ), 0, 127 ) ?: '',
 			$tax,
-			$product->get_sku(),
-			( $product->is_virtual() ) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS
+			$product instanceof WC_Product ? $product->get_sku() : '',
+			( $product instanceof WC_Product && $product->is_virtual() ) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS
 		);
 	}
 

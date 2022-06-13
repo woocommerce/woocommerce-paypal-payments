@@ -131,9 +131,6 @@ class ItemFactoryTest extends TestCase
 
         $product = Mockery::mock(\WC_Product::class);
         $product
-            ->expects('get_name')
-            ->andReturn('name');
-        $product
             ->expects('get_description')
             ->andReturn('description');
         $product
@@ -150,6 +147,9 @@ class ItemFactoryTest extends TestCase
         $item
             ->expects('get_product')
             ->andReturn($product);
+		$item
+			->expects('get_name')
+			->andReturn('name');
         $item
             ->expects('get_quantity')
             ->andReturn(1);
@@ -194,9 +194,6 @@ class ItemFactoryTest extends TestCase
 
         $product = Mockery::mock(\WC_Product::class);
         $product
-            ->expects('get_name')
-            ->andReturn('name');
-        $product
             ->expects('get_description')
             ->andReturn('description');
         $product
@@ -213,6 +210,9 @@ class ItemFactoryTest extends TestCase
         $item
             ->expects('get_product')
             ->andReturn($product);
+		$item
+			->expects('get_name')
+			->andReturn('name');
         $item
             ->expects('get_quantity')
             ->andReturn(1);
@@ -252,9 +252,6 @@ class ItemFactoryTest extends TestCase
 
         $product = Mockery::mock(\WC_Product::class);
         $product
-            ->expects('get_name')
-            ->andReturn($name);
-        $product
             ->expects('get_description')
             ->andReturn($description);
         $product
@@ -271,6 +268,9 @@ class ItemFactoryTest extends TestCase
         $item
             ->expects('get_product')
             ->andReturn($product);
+		$item
+			->expects('get_name')
+			->andReturn($name);
         $item
             ->expects('get_quantity')
             ->andReturn(1);
