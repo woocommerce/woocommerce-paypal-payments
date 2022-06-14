@@ -1,5 +1,5 @@
 === WooCommerce PayPal Payments ===
-Contributors: woocommerce, automattic
+Contributors: woocommerce, automattic, inpsyde
 Tags: woocommerce, paypal, payments, ecommerce, e-commerce, store, sales, sell, shop, shopping, cart, checkout
 Requires at least: 5.3
 Tested up to: 6.0
