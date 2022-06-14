@@ -53,5 +53,14 @@ class MessageRenderer {
         }
         return true;
     }
+
+    hideMessages() {
+        const domElement = document.querySelector(this.config.wrapper);
+        if (! domElement ) {
+            return false;
+        }
+        domElement.style.display = 'none';
+        return true;
+    }
 }
 export default MessageRenderer;

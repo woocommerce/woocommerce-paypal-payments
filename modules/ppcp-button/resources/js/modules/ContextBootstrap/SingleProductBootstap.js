@@ -14,6 +14,7 @@ class SingleProductBootstap {
         if (!this.shouldRender()) {
             this.renderer.hideButtons(this.gateway.hosted_fields.wrapper);
             this.renderer.hideButtons(this.gateway.button.wrapper);
+            this.messages.hideMessages();
             return;
         }
 
@@ -26,6 +27,7 @@ class SingleProductBootstap {
 
         if (!this.shouldRender()) {
             this.renderer.hideButtons(this.gateway.hosted_fields.wrapper);
+            this.messages.hideMessages();
             return;
         }
 
@@ -51,6 +53,8 @@ class SingleProductBootstap {
         else if (document.querySelector('.product .woocommerce-Price-amount')) {
             priceText = document.querySelector('.product .woocommerce-Price-amount').innerText;
         }
+
+        priceText = priceText.replace(/,/g, '.');
         const amount = parseFloat(priceText.replace(/([^\d,\.\s]*)/g, ''));
         return amount === 0;
 

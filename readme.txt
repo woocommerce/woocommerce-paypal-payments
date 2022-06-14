@@ -1,5 +1,5 @@
 === WooCommerce PayPal Payments ===
-Contributors: woocommerce, automattic
+Contributors: woocommerce, automattic, inpsyde
 Tags: woocommerce, paypal, payments, ecommerce, e-commerce, store, sales, sell, shop, shopping, cart, checkout
 Requires at least: 5.3
 Tested up to: 6.0
@@ -80,6 +80,17 @@ Follow the steps below to connect the plugin to your PayPal account:
 6. Main settings screen.
 
 == Changelog ==
+
+= 1.8.2 =
+* Fix - Order not approved: payment via vaulted PayPal account fails #677
+* Fix - Something went wrong error in Virtual products when using vaulted payment #673 
+* Fix - PayPal smart buttons are not displayed for product variations when parent product is set to out of stock #669
+* Fix - Pay Later messaging displayed for out of stock variable products or with no variation selected #667 
+* Fix - "Capture Virtual-Only Orders" intent sets virtual+downloadable product orders to "Processing" instead of "Completed" #665 
+* Fix - Free trial period causing incorrerct disable-funding parameters with DCC disabled #661 
+* Fix - Smart button not visible on single product page when product price is below 1 and decimal is "," #654 
+* Fix - Checkout using an email address containing a + symbol results in a "[INVALID_REQUEST]" error #523
+* Enhancement - Improve checkout validation & order creation #513
 
 = 1.8.1 =
 * Fix - Manual orders return an error for guest users when paying with PayPal Card Processing #530
