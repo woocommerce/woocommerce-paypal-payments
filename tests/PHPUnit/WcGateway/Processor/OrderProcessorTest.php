@@ -306,6 +306,10 @@ class OrderProcessorTest extends TestCase
             ->expects('is')
             ->with(OrderStatus::APPROVED)
             ->andReturn(false);
+		$orderStatus
+			->expects('is')
+			->with(OrderStatus::CREATED)
+			->andReturn(false);
         $orderId = 'abc';
         $orderIntent = 'CAPTURE';
         $currentOrder = Mockery::mock(Order::class);
