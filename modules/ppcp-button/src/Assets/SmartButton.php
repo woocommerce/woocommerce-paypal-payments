@@ -843,6 +843,10 @@ class SmartButton implements SmartButtonInterface {
 						'Something went wrong. Please try again or choose another payment source.',
 						'woocommerce-paypal-payments'
 					),
+					'js_validation' => __(
+						'Required form fields are not filled or invalid.',
+						'woocommerce-paypal-payments'
+					),
 				),
 			),
 			'order_id'                       => 'pay-now' === $this->context() ? absint( $wp->query_vars['order-pay'] ) : 0,
