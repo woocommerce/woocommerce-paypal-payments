@@ -171,9 +171,9 @@ class OrderProcessor {
 		$this->add_paypal_meta( $wc_order, $order, $this->environment );
 
 		$error_message = null;
-		if ( $this->order_helper->contains_physical_goods( $order ) && ! $this->order_is_approved( $order ) ) {
+		if ( $this->order_helper->contains_physical_goods( $order ) && ! $this->order_is_ready_for_process( $order ) ) {
 			$error_message = __(
-				'The payment has not been approved yet.',
+				'The payment is not ready for processing yet.',
 				'woocommerce-paypal-payments'
 			);
 		}
@@ -280,15 +280,15 @@ class OrderProcessor {
 	}
 
 	/**
-	 * Whether a given order is approved.
+	 * Whether a given order is ready for processing.
 	 *
 	 * @param Order $order The order.
 	 *
 	 * @return bool
 	 */
-	private function order_is_approved( Order $order ): bool {
+	private function order_is_ready_for_process( Order $order ): bool {
 
-		if ( $order->status()->is( OrderStatus::APPROVED ) ) {
+		if ( $order->status()->is( OrderStatus::APPROVED ) || $order->status()->is( OrderStatus::CREATED ) ) {
 			return true;
 		}
 
@@ -296,7 +296,7 @@ class OrderProcessor {
 			return false;
 		}
 
-		$is_approved = in_array(
+		return in_array(
 			$this->threed_secure->proceed_with_order( $order ),
 			array(
 				ThreeDSecure::NO_DECISION,
@@ -304,6 +304,5 @@ class OrderProcessor {
 			),
 			true
 		);
-		return $is_approved;
 	}
 }

@@ -183,10 +183,10 @@ class ApproveOrderEndpoint implements EndpointInterface {
 				wp_send_json_success( $order );
 			}
 
-			if ( $this->order_helper->contains_physical_goods( $order ) && ! $order->status()->is( OrderStatus::APPROVED ) ) {
+			if ( $this->order_helper->contains_physical_goods( $order ) && ! $order->status()->is( OrderStatus::APPROVED ) && ! $order->status()->is( OrderStatus::CREATED ) {
 				$message = sprintf(
 				// translators: %s is the id of the order.
-					__( 'Order %s is not approved yet.', 'woocommerce-paypal-payments' ),
+					__( 'Order %s is not ready for processing yet.', 'woocommerce-paypal-payments' ),
 					$data['order_id']
 				);
 
