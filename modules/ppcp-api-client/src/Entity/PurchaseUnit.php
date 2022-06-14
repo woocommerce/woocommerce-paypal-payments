@@ -393,8 +393,9 @@ class PurchaseUnit {
 			$amount_total += $insurance->value();
 		}
 
-		$amount_value   = $amount->value();
-		$needs_to_ditch = (string) $amount_total !== (string) $amount_value;
+		$amount_str       = (string) $amount->to_array()['value'];
+		$amount_total_str = (string) ( new Money( $amount_total, $amount->currency_code() ) )->to_array()['value'];
+		$needs_to_ditch   = $amount_str !== $amount_total_str;
 		return $needs_to_ditch;
 	}
 }
