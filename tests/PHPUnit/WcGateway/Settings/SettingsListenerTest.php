@@ -32,12 +32,12 @@ class SettingsListenerTest extends ModularTestCase
 		$webhook_registrar = Mockery::mock(WebhookRegistrar::class);
 		$webhook_registrar->shouldReceive('unregister')->andReturnTrue();
 		$webhook_registrar->shouldReceive('register')->andReturnTrue();
-
 		$cache = Mockery::mock(Cache::class);
-
 		$state = Mockery::mock(State::class);
 		$state->shouldReceive('current_state')->andReturn(State::STATE_ONBOARDED);
 		$bearer = Mockery::mock(Bearer::class);
+		$signup_link_cache = Mockery::mock(Cache::class);
+		$signup_link_ids = array();
 
 		$testee = new SettingsListener(
 			$settings,
@@ -46,7 +46,9 @@ class SettingsListenerTest extends ModularTestCase
 			$cache,
 			$state,
 			$bearer,
-			PayPalGateway::ID
+			PayPalGateway::ID,
+			$signup_link_cache,
+			$signup_link_ids
 		);
 
 		$_GET['section'] = PayPalGateway::ID;
@@ -73,6 +75,8 @@ class SettingsListenerTest extends ModularTestCase
 			->andReturn('client_secret');
 		$settings->shouldReceive('persist');
 		$cache->shouldReceive('has')
+			->andReturn(false);
+		$signup_link_cache->shouldReceive('has')
 			->andReturn(false);
 
 		$testee->listen();

@@ -191,6 +191,9 @@ return array(
 		return new PayUponInvoiceEndpoint(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'button.request-data' ),
+			$container->get( 'onboarding.signup-link-cache' ),
+			$container->get( 'onboarding.render' ),
+			$container->get( 'onboarding.signup-link-ids' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
@@ -210,17 +213,29 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
+	'onboarding.signup-link-cache'              => static function( ContainerInterface $container ): Cache {
+		return new Cache( 'ppcp-paypal-signup-link' );
+	},
+	'onboarding.signup-link-ids'                => static function ( ContainerInterface $container ): array {
+		return array(
+			'production-ppcp',
+			'production-express_checkout',
+			'sandbox-ppcp',
+			'sandbox-express_checkout',
+		);
+	},
 	'onboarding.render'                         => static function ( ContainerInterface $container ) : OnboardingRenderer {
-
 		$partner_referrals         = $container->get( 'api.endpoint.partner-referrals-production' );
 		$partner_referrals_sandbox = $container->get( 'api.endpoint.partner-referrals-sandbox' );
 		$partner_referrals_data    = $container->get( 'api.repository.partner-referrals-data' );
 		$settings                  = $container->get( 'wcgateway.settings' );
+		$signup_link_cache  = $container->get( 'onboarding.signup-link-cache' );
 		return new OnboardingRenderer(
 			$settings,
 			$partner_referrals,
 			$partner_referrals_sandbox,
-			$partner_referrals_data
+			$partner_referrals_data,
+			$signup_link_cache
 		);
 	},
 	'onboarding.render-options'                 => static function ( ContainerInterface $container ) : OnboardingOptionsRenderer {
