@@ -215,7 +215,7 @@ class OrderProcessor {
 				__( 'Payment successfully captured.', 'woocommerce-paypal-payments' )
 			);
 			$wc_order->update_meta_data( AuthorizedPaymentsProcessor::CAPTURED_META_KEY, 'true' );
-			$wc_order->update_status( 'processing' );
+			$wc_order->update_status( 'completed' );
 		}
 		$this->last_error = '';
 		return true;
