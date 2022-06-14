@@ -131,6 +131,7 @@ class AuthorizedPaymentsProcessor {
 		try {
 			$order = $this->paypal_order_from_wc_order( $wc_order );
 		} catch ( Exception $exception ) {
+			$this->logger->error( 'Could not get PayPal order from WC order: ' . $exception->getMessage() );
 			if ( $exception->getCode() === 404 ) {
 				return self::NOT_FOUND;
 			}
