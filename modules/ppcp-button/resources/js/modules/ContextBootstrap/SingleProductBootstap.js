@@ -14,6 +14,7 @@ class SingleProductBootstap {
         if (!this.shouldRender()) {
             this.renderer.hideButtons(this.gateway.hosted_fields.wrapper);
             this.renderer.hideButtons(this.gateway.button.wrapper);
+            this.messages.hideMessages();
             return;
         }
 
@@ -26,6 +27,7 @@ class SingleProductBootstap {
 
         if (!this.shouldRender()) {
             this.renderer.hideButtons(this.gateway.hosted_fields.wrapper);
+            this.messages.hideMessages();
             return;
         }
 
