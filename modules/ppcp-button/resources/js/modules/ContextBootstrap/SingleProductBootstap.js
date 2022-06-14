@@ -53,6 +53,8 @@ class SingleProductBootstap {
         else if (document.querySelector('.product .woocommerce-Price-amount')) {
             priceText = document.querySelector('.product .woocommerce-Price-amount').innerText;
         }
+
+        priceText = priceText.replace(/,/g, '.');
         const amount = parseFloat(priceText.replace(/([^\d,\.\s]*)/g, ''));
         return amount === 0;
 
