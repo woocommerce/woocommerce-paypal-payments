@@ -56,14 +56,12 @@ class ItemFactory {
 				$price                     = (float) wc_get_price_including_tax( $product );
 				$price_without_tax         = (float) wc_get_price_excluding_tax( $product );
 				$price_without_tax_rounded = round( $price_without_tax, 2 );
-				$tax                       = round( $price - $price_without_tax_rounded, 2 );
-				$tax                       = new Money( $tax, $this->currency );
 				return new Item(
 					mb_substr( $product->get_name(), 0, 127 ),
 					new Money( $price_without_tax_rounded, $this->currency ),
 					$quantity,
 					substr( wp_strip_all_tags( $product->get_description() ), 0, 127 ) ?: '',
-					$tax,
+					null,
 					$product->get_sku(),
 					( $product->is_virtual() ) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS
 				);
@@ -81,7 +79,7 @@ class ItemFactory {
 						new Money( (float) $fee->amount, $this->currency ),
 						1,
 						'',
-						new Money( (float) $fee->tax, $this->currency )
+						null
 					);
 				},
 				$fees_from_session
@@ -130,15 +128,13 @@ class ItemFactory {
 		$price                     = (float) $order->get_item_subtotal( $item, true );
 		$price_without_tax         = (float) $order->get_item_subtotal( $item, false );
 		$price_without_tax_rounded = round( $price_without_tax, 2 );
-		$tax                       = round( $price - $price_without_tax_rounded, 2 );
-		$tax                       = new Money( $tax, $currency );
 
 		return new Item(
 			mb_substr( $item->get_name(), 0, 127 ),
 			new Money( $price_without_tax_rounded, $currency ),
 			$quantity,
 			substr( wp_strip_all_tags( $product instanceof WC_Product ? $product->get_description() : '' ), 0, 127 ) ?: '',
-			$tax,
+			null,
 			$product instanceof WC_Product ? $product->get_sku() : '',
 			( $product instanceof WC_Product && $product->is_virtual() ) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS
 		);
@@ -158,7 +154,7 @@ class ItemFactory {
 			new Money( (float) $item->get_amount(), $order->get_currency() ),
 			$item->get_quantity(),
 			'',
-			new Money( (float) $item->get_total_tax(), $order->get_currency() )
+			null
 		);
 	}
 

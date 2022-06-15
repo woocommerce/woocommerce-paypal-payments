@@ -72,7 +72,6 @@ class ItemFactoryTest extends TestCase
         $this->assertEquals('name', $item->name());
         $this->assertEquals('sku', $item->sku());
         $this->assertEquals(1, $item->unit_amount()->value());
-        $this->assertEquals(2, $item->tax()->value());
     }
 
     public function testFromCartDigitalGood()
@@ -185,7 +184,6 @@ class ItemFactoryTest extends TestCase
         $this->assertEquals(1, $item->quantity());
         $this->assertEquals(Item::PHYSICAL_GOODS, $item->category());
         $this->assertEquals(1, $item->unit_amount()->value());
-        $this->assertEquals(2, $item->tax()->value());
     }
 
     public function testFromWcOrderDigitalGood()

@@ -343,8 +343,14 @@ class PurchaseUnit {
 			}
 		}
 
-		$tax_total = $breakdown->tax_total();
-		if ( $tax_total ) {
+		$tax_total      = $breakdown->tax_total();
+		$items_with_tax = array_filter(
+			$this->items,
+			function ( Item $item ): bool {
+				return null !== $item->tax();
+			}
+		);
+		if ( $tax_total && ! empty( $items_with_tax ) ) {
 			$remaining_tax_total = array_reduce(
 				$items,
 				function ( float $total, Item $item ): float {
