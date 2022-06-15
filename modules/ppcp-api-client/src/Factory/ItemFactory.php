@@ -53,12 +53,10 @@ class ItemFactory {
 				 */
 				$quantity = (int) $item['quantity'];
 
-				$price                     = (float) wc_get_price_including_tax( $product );
-				$price_without_tax         = (float) wc_get_price_excluding_tax( $product );
-				$price_without_tax_rounded = round( $price_without_tax, 2 );
+				$price = (float) $item['line_subtotal'] / (float) $item['quantity'];
 				return new Item(
 					mb_substr( $product->get_name(), 0, 127 ),
-					new Money( $price_without_tax_rounded, $this->currency ),
+					new Money( $price, $this->currency ),
 					$quantity,
 					substr( wp_strip_all_tags( $product->get_description() ), 0, 127 ) ?: '',
 					null,
@@ -125,7 +123,6 @@ class ItemFactory {
 		$product                   = $item->get_product();
 		$currency                  = $order->get_currency();
 		$quantity                  = (int) $item->get_quantity();
-		$price                     = (float) $order->get_item_subtotal( $item, true );
 		$price_without_tax         = (float) $order->get_item_subtotal( $item, false );
 		$price_without_tax_rounded = round( $price_without_tax, 2 );
 

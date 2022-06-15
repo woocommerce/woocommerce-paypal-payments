@@ -69,16 +69,8 @@ class AmountFactory {
 	public function from_wc_cart( \WC_Cart $cart ): Amount {
 		$total = new Money( (float) $cart->get_total( 'numeric' ), $this->currency );
 
-		$total_fees_amount = 0;
-		$fees              = WC()->session->get( 'ppcp_fees' );
-		if ( $fees ) {
-			foreach ( WC()->session->get( 'ppcp_fees' ) as $fee ) {
-				$total_fees_amount += (float) $fee->amount;
-			}
-		}
-
-		$item_total = $cart->get_cart_contents_total() + $cart->get_discount_total() + $total_fees_amount;
-		$item_total = new Money( (float) $item_total, $this->currency );
+		$item_total = (float) $cart->get_subtotal() + (float) $cart->get_fee_total();
+		$item_total = new Money( $item_total, $this->currency );
 		$shipping   = new Money(
 			(float) $cart->get_shipping_total(),
 			$this->currency
@@ -138,13 +130,6 @@ class AmountFactory {
 			);
 		}
 
-		$items = array_filter(
-			$items,
-			function ( Item $item ): bool {
-				return $item->unit_amount()->value() > 0;
-			}
-		);
-
 		$total_value = (float) $order->get_total();
 		if ( (
 			CreditCardGateway::ID === $order->get_payment_method()
@@ -157,13 +142,7 @@ class AmountFactory {
 		$total = new Money( $total_value, $currency );
 
 		$item_total = new Money(
-			(float) array_reduce(
-				$items,
-				static function ( float $total, Item $item ): float {
-					return $total + $item->quantity() * $item->unit_amount()->value();
-				},
-				0
-			),
+			(float) $order->get_subtotal(),
 			$currency
 		);
 		$shipping   = new Money(
