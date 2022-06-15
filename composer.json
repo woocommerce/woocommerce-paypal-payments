@@ -23,7 +23,8 @@
         "brain/monkey": "^2.4",
         "php-stubs/wordpress-stubs": "^5.0@stable",
         "php-stubs/woocommerce-stubs": "^5.0@stable",
-        "vimeo/psalm": "^4.0"
+        "vimeo/psalm": "^4.0",
+        "vlucas/phpdotenv": "^5"
     },
     "autoload": {
         "psr-4": {
@@ -32,7 +33,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "WooCommerce\\PayPalCommerce\\": "tests/PHPUnit/"
+            "WooCommerce\\PayPalCommerce\\": "tests/PHPUnit/",
+            "WooCommerce\\PayPalCommerce\\Tests\\E2e\\": "tests/e2e/PHPUnit/"
         }
     },
     "minimum-stability": "dev",
