@@ -80,19 +80,19 @@ class AmountFactory {
 		$item_total = $cart->get_cart_contents_total() + $cart->get_discount_total() + $total_fees_amount;
 		$item_total = new Money( (float) $item_total, $this->currency );
 		$shipping   = new Money(
-			(float) $cart->get_shipping_total() + $cart->get_shipping_tax(),
+			(float) $cart->get_shipping_total(),
 			$this->currency
 		);
 
 		$taxes = new Money(
-			$cart->get_subtotal_tax(),
+			(float) $cart->get_total_tax(),
 			$this->currency
 		);
 
 		$discount = null;
 		if ( $cart->get_discount_total() ) {
 			$discount = new Money(
-				(float) $cart->get_discount_total() + $cart->get_discount_tax(),
+				(float) $cart->get_discount_total(),
 				$this->currency
 			);
 		}
@@ -126,7 +126,7 @@ class AmountFactory {
 
 		$discount_value = array_sum(
 			array(
-				(float) $order->get_total_discount( false ), // Only coupons.
+				(float) $order->get_total_discount(), // Only coupons.
 				$this->discounts_from_items( $items ),
 			)
 		);
@@ -167,17 +167,11 @@ class AmountFactory {
 			$currency
 		);
 		$shipping   = new Money(
-			(float) $order->get_shipping_total() + (float) $order->get_shipping_tax(),
+			(float) $order->get_shipping_total(),
 			$currency
 		);
 		$taxes      = new Money(
-			(float) array_reduce(
-				$items,
-				static function ( float $total, Item $item ): float {
-					return $total + $item->quantity() * $item->tax()->value();
-				},
-				0
-			),
+			(float) $order->get_total_tax(),
 			$currency
 		);
 
