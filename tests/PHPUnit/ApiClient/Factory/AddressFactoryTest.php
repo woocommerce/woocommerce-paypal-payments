@@ -127,21 +127,6 @@ class AddressFactoryTest extends TestCase
         $this->assertEquals($expectedPostalCode, $result->postal_code());
     }
 
-    public function testFromPayPalRequestThrowsError()
-    {
-        $testee = new AddressFactory();
-
-        $data = (object) [
-            'address_line_1' => 'shipping_address_1',
-            'address_line_2' => 'shipping_address_2',
-            'admin_area_1' => 'shipping_admin_area_1',
-            'admin_area_2' => 'shipping_admin_area_2',
-            'postal_code' => 'shipping_postcode',
-        ];
-        $this->expectException(RuntimeException::class);
-        $testee->from_paypal_response($data);
-    }
-
     public function dataFromPayPalRequest() : array
     {
         return [

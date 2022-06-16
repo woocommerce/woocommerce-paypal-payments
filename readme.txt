@@ -83,6 +83,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 
 = 1.8.2 =
 * Fix - Order not approved: payment via vaulted PayPal account fails #677
+* Fix - Cant' refund : "ERROR Refund failed: No country given for address." #639
 * Fix - Something went wrong error in Virtual products when using vaulted payment #673 
 * Fix - PayPal smart buttons are not displayed for product variations when parent product is set to out of stock #669
 * Fix - Pay Later messaging displayed for out of stock variable products or with no variation selected #667 
