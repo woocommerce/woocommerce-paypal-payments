@@ -345,6 +345,11 @@ class PayUponInvoice {
 				if ( $birth_date && ! $this->pui_helper->validate_birth_date( $birth_date ) ) {
 					$errors->add( 'validation', __( 'Invalid birth date.', 'woocommerce-paypal-payments' ) );
 				}
+
+				$national_number = filter_input( INPUT_POST, 'billing_phone', FILTER_SANITIZE_STRING );
+				if ( ! preg_match( '/^[0-9]{1,14}?$/', $national_number ) ) {
+					$errors->add( 'validation', __( 'Phone number size must be between 1 and 14', 'woocommerce-paypal-payments' ) );
+				}
 			},
 			10,
 			2
