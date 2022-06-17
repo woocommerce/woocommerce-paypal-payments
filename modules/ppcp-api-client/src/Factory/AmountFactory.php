@@ -142,7 +142,7 @@ class AmountFactory {
 		$total = new Money( $total_value, $currency );
 
 		$item_total = new Money(
-			(float) $order->get_subtotal(),
+			(float) $order->get_subtotal() + (float) $order->get_total_fees(),
 			$currency
 		);
 		$shipping   = new Money(

@@ -133,10 +133,13 @@ class AmountFactoryTest extends TestCase
 
         $order
             ->shouldReceive('get_total')
-            ->andReturn(100);
+            ->andReturn(10);
         $order
             ->shouldReceive('get_subtotal')
             ->andReturn(6);
+        $order
+            ->shouldReceive('get_total_fees')
+            ->andReturn(4);
         $order
             ->shouldReceive('get_currency')
             ->andReturn($this->currency);
@@ -155,9 +158,9 @@ class AmountFactoryTest extends TestCase
 
         $result = $this->testee->from_wc_order($order);
         $this->assertEquals((float) 3, $result->breakdown()->discount()->value());
-        $this->assertEquals((float) 6, $result->breakdown()->item_total()->value());
+        $this->assertEquals((float) 10, $result->breakdown()->item_total()->value());
         $this->assertEquals((float) 1, $result->breakdown()->shipping()->value());
-        $this->assertEquals((float) 100, $result->value());
+        $this->assertEquals((float) 10, $result->value());
         $this->assertEquals((float) 2, $result->breakdown()->tax_total()->value());
         $this->assertEquals($this->currency, $result->breakdown()->discount()->currency_code());
         $this->assertEquals($this->currency, $result->breakdown()->item_total()->currency_code());
@@ -195,6 +198,9 @@ class AmountFactoryTest extends TestCase
         $order
             ->shouldReceive('get_subtotal')
             ->andReturn(6);
+		$order
+			->shouldReceive('get_total_fees')
+			->andReturn(0);
         $order
             ->shouldReceive('get_currency')
             ->andReturn($this->currency);

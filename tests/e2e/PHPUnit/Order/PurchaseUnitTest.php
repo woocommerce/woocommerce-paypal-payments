@@ -6,6 +6,7 @@ namespace WooCommerce\PayPalCommerce\Tests\E2e\Order;
 use Exception;
 use WC_Coupon;
 use WC_Order;
+use WC_Order_Item_Fee;
 use WC_Order_Item_Product;
 use WC_Order_Item_Shipping;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
@@ -77,6 +78,17 @@ class PurchaseUnitTest extends TestCase
 			$shipping = new WC_Order_Item_Shipping();
 			$shipping->set_total((string) $data['shipping']['total']);
 			$wcOrder->add_item($shipping);
+		}
+
+		foreach ($data['fees'] ?? [] as $ind => $feeData) {
+			$fee = new WC_Order_Item_Fee();
+			$fee->set_name("Test fee $ind");
+			$fee->set_amount((string) $feeData['amount']);
+			$fee->set_total((string) $feeData['amount']);
+			$fee->set_tax_class('');
+			$fee->set_tax_status('taxable');
+
+			$wcOrder->add_item($fee);
 		}
 
 		$wcOrder->calculate_totals();
@@ -210,6 +222,26 @@ class PurchaseUnitTest extends TestCase
 					'tax_total' => 2.76,
 					'shipping' => 4.99,
 					'discount' => 8.95,
+				],
+			]),
+		];
+		yield [
+			[
+				'items' => [
+					['price' => 5.99, 'quantity' => 1],
+				],
+				'billing' => ['city' => 'city1'],
+				'fees' => [
+					['amount' => 2.89],
+					['amount' => 7.13],
+				]
+			],
+			self::adaptAmountFormat([
+				'value' => 17.39,
+				'breakdown' => [
+					'item_total' => 16.01,
+					'tax_total' => 1.38,
+					'shipping' => 0.0,
 				],
 			]),
 		];
