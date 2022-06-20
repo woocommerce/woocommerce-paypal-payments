@@ -2218,15 +2218,7 @@ return array(
 		);
 	},
 	'wcgateway.logging.is-enabled'                      => function ( ContainerInterface $container ) : bool {
-		$settings = $container->get( 'wcgateway.settings' );
-
-		/**
-		 * Whether the logging of the plugin errors/events is enabled.
-		 */
-		return apply_filters(
-			'woocommerce_paypal_payments_is_logging_enabled',
-			$settings->has( 'logging_enabled' ) && $settings->get( 'logging_enabled' )
-		);
+		return true;
 	},
 
 	'wcgateway.helper.vaulting-scope'                   => static function ( ContainerInterface $container ): bool {
