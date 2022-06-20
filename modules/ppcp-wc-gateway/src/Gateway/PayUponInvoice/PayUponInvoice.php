@@ -345,6 +345,11 @@ class PayUponInvoice {
 				if ( $birth_date && ! $this->pui_helper->validate_birth_date( $birth_date ) ) {
 					$errors->add( 'validation', __( 'Invalid birth date.', 'woocommerce-paypal-payments' ) );
 				}
+
+				$national_number = filter_input( INPUT_POST, 'billing_phone', FILTER_SANITIZE_STRING );
+				if ( ! preg_match( '/^[0-9]{1,14}?$/', $national_number ) ) {
+					$errors->add( 'validation', __( 'Phone number size must be between 1 and 14', 'woocommerce-paypal-payments' ) );
+				}
 			},
 			10,
 			2
@@ -419,12 +424,30 @@ class PayUponInvoice {
 				PayUponInvoiceGateway::ID === $this->current_ppcp_settings_page_id
 				&& $this->pui_product_status->pui_is_active()
 				) {
-					$pui_gateway = WC()->payment_gateways->payment_gateways()[ PayUponInvoiceGateway::ID ];
+					$error_messages = array();
+					$pui_gateway    = WC()->payment_gateways->payment_gateways()[ PayUponInvoiceGateway::ID ];
+					if ( $pui_gateway->get_option( 'logo_url' ) === '' ) {
+						$error_messages[] = esc_html__( 'Could not enable gateway because "Logo URL" field is empty.', 'woocommerce-paypal-payments' );
+					}
 					if ( $pui_gateway->get_option( 'customer_service_instructions' ) === '' ) {
-						printf(
-							'<div class="notice notice-error"><p>%1$s</p></div>',
-							esc_html__( 'Could not enable gateway because "Customer service instructions" field is empty.', 'woocommerce-paypal-payments' )
-						);
+						$error_messages[] = esc_html__( 'Could not enable gateway because "Customer service instructions" field is empty.', 'woocommerce-paypal-payments' );
+					}
+					if ( count( $error_messages ) > 0 ) { ?>
+						<div class="notice notice-error">
+							<?php
+							array_map(
+								static function( $message ) {
+									/**
+									 * Already escaped when adding into `$error_messages`.
+									 * phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+									 */
+									echo '<p>' . $message . '</p>';
+								},
+								$error_messages
+							)
+							?>
+						</div>
+						<?php
 					}
 				}
 			}
