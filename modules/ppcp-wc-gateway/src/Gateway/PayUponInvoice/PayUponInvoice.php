@@ -347,7 +347,7 @@ class PayUponInvoice {
 				}
 
 				$national_number = filter_input( INPUT_POST, 'billing_phone', FILTER_SANITIZE_STRING );
-				if ( ! preg_match( '/^[0-9]{1,14}?$/', $national_number ) ) {
+				if ( $national_number && ! preg_match( '/^[0-9]{1,14}?$/', $national_number ) ) {
 					$errors->add( 'validation', __( 'Phone number size must be between 1 and 14', 'woocommerce-paypal-payments' ) );
 				}
 			},
