@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderHelper;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -25,7 +26,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
  * Class ApproveOrderEndpoint
  */
 class ApproveOrderEndpoint implements EndpointInterface {
-
 
 	const ENDPOINT = 'ppc-approve-order';
 
@@ -72,6 +72,13 @@ class ApproveOrderEndpoint implements EndpointInterface {
 	private $dcc_applies;
 
 	/**
+	 * The order helper.
+	 *
+	 * @var OrderHelper
+	 */
+	protected $order_helper;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -87,6 +94,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 	 * @param ThreeDSecure    $three_d_secure The 3d secure helper object.
 	 * @param Settings        $settings The settings.
 	 * @param DccApplies      $dcc_applies The DCC applies object.
+	 * @param OrderHelper     $order_helper The order helper.
 	 * @param LoggerInterface $logger The logger.
 	 */
 	public function __construct(
@@ -96,6 +104,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 		ThreeDSecure $three_d_secure,
 		Settings $settings,
 		DccApplies $dcc_applies,
+		OrderHelper $order_helper,
 		LoggerInterface $logger
 	) {
 
@@ -105,6 +114,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 		$this->threed_secure   = $three_d_secure;
 		$this->settings        = $settings;
 		$this->dcc_applies     = $dcc_applies;
+		$this->order_helper    = $order_helper;
 		$this->logger          = $logger;
 	}
 
@@ -173,10 +183,10 @@ class ApproveOrderEndpoint implements EndpointInterface {
 				wp_send_json_success( $order );
 			}
 
-			if ( ! $order->status()->is( OrderStatus::APPROVED ) ) {
+			if ( $this->order_helper->contains_physical_goods( $order ) && ! $order->status()->is( OrderStatus::APPROVED ) && ! $order->status()->is( OrderStatus::CREATED ) ) {
 				$message = sprintf(
 				// translators: %s is the id of the order.
-					__( 'Order %s is not approved yet.', 'woocommerce-paypal-payments' ),
+					__( 'Order %s is not ready for processing yet.', 'woocommerce-paypal-payments' ),
 					$data['order_id']
 				);
 

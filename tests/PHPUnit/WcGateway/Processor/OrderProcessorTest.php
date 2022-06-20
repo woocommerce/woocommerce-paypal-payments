@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payments;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderHelper;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -129,6 +130,8 @@ class OrderProcessorTest extends TestCase
         $subscription_helper = Mockery::mock(SubscriptionHelper::class);
         $subscription_helper->shouldReceive('has_subscription');
 
+        $order_helper = Mockery::mock(OrderHelper::class);
+
         $testee = new OrderProcessor(
             $sessionHandler,
             $orderEndpoint,
@@ -138,7 +141,8 @@ class OrderProcessorTest extends TestCase
             $settings,
             $logger,
             $this->environment,
-			$subscription_helper
+			$subscription_helper,
+			$order_helper
         );
 
         $wcOrder
@@ -164,6 +168,8 @@ class OrderProcessorTest extends TestCase
             ->with('on-hold', 'Awaiting payment.');
 		$wcOrder->expects('set_transaction_id')
 			->with($transactionId);
+
+		$order_helper->shouldReceive('contains_physical_goods')->andReturn(true);
 
         $this->assertTrue($testee->process($wcOrder));
     }
@@ -247,6 +253,8 @@ class OrderProcessorTest extends TestCase
 		$logger = Mockery::mock(LoggerInterface::class);
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 
+		$order_helper = Mockery::mock(OrderHelper::class);
+
 		$testee = new OrderProcessor(
             $sessionHandler,
             $orderEndpoint,
@@ -256,7 +264,8 @@ class OrderProcessorTest extends TestCase
             $settings,
             $logger,
             $this->environment,
-			$subscription_helper
+			$subscription_helper,
+			$order_helper
         );
 
         $wcOrder
@@ -277,6 +286,9 @@ class OrderProcessorTest extends TestCase
             ->with($transactionId);
         $wcOrder
 	        ->expects('payment_complete');
+
+		$order_helper->shouldReceive('contains_physical_goods')->andReturn(true);
+
         $this->assertTrue($testee->process($wcOrder));
     }
 
@@ -306,6 +318,10 @@ class OrderProcessorTest extends TestCase
             ->expects('is')
             ->with(OrderStatus::APPROVED)
             ->andReturn(false);
+		$orderStatus
+			->expects('is')
+			->with(OrderStatus::CREATED)
+			->andReturn(false);
         $orderId = 'abc';
         $orderIntent = 'CAPTURE';
         $currentOrder = Mockery::mock(Order::class);
@@ -343,6 +359,8 @@ class OrderProcessorTest extends TestCase
 		$logger = Mockery::mock(LoggerInterface::class);
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 
+		$order_helper = Mockery::mock(OrderHelper::class);
+
 		$testee = new OrderProcessor(
             $sessionHandler,
             $orderEndpoint,
@@ -352,7 +370,8 @@ class OrderProcessorTest extends TestCase
             $settings,
             $logger,
             $this->environment,
-			$subscription_helper
+			$subscription_helper,
+			$order_helper
         );
 
         $wcOrder
@@ -367,6 +386,8 @@ class OrderProcessorTest extends TestCase
                 PayPalGateway::INTENT_META_KEY,
                 $orderIntent
             );
+
+		$order_helper->shouldReceive('contains_physical_goods')->andReturn(true);
 
         $this->assertFalse($testee->process($wcOrder));
         $this->assertNotEmpty($testee->last_error());

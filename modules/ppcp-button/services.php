@@ -151,6 +151,7 @@ return array(
 		$three_d_secure  = $container->get( 'button.helper.three-d-secure' );
 		$settings        = $container->get( 'wcgateway.settings' );
 		$dcc_applies     = $container->get( 'api.helpers.dccapplies' );
+		$order_helper = $container->get( 'api.order-helper' );
 		$logger                        = $container->get( 'woocommerce.logger.woocommerce' );
 		return new ApproveOrderEndpoint(
 			$request_data,
@@ -159,6 +160,7 @@ return array(
 			$three_d_secure,
 			$settings,
 			$dcc_applies,
+			$order_helper,
 			$logger
 		);
 	},

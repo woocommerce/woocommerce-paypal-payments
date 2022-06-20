@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\Button\Assets;
 use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Product;
+use WC_Product_Variation;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
@@ -847,6 +848,10 @@ class SmartButton implements SmartButtonInterface {
 						'Something went wrong. Please try again or choose another payment source.',
 						'woocommerce-paypal-payments'
 					),
+					'js_validation' => __(
+						'Required form fields are not filled or invalid.',
+						'woocommerce-paypal-payments'
+					),
 				),
 			),
 			'order_id'                       => 'pay-now' === $this->context() ? absint( $wp->query_vars['order-pay'] ) : 0,
@@ -926,9 +931,9 @@ class SmartButton implements SmartButtonInterface {
 		}
 
 		if ( $this->is_free_trial_cart() ) {
-			$all_sources = $this->all_funding_sources;
+			$all_sources = array_keys( $this->all_funding_sources );
 			if ( $is_dcc_enabled ) {
-				$all_sources = array_keys( array_diff_key( $all_sources, array( 'card' => '' ) ) );
+				$all_sources = array_diff( $all_sources, array( 'card' ) );
 			}
 			$disable_funding = $all_sources;
 		}
@@ -1256,9 +1261,25 @@ class SmartButton implements SmartButtonInterface {
 		/**
 		 * The filter returning true if PayPal buttons/messages can be rendered for this product, or false otherwise.
 		 */
+
+		$in_stock = $product->is_in_stock();
+
+		if ( $product->is_type( 'variable' ) ) {
+			/**
+			 * The method is defined in WC_Product_Variable class.
+			 *
+			 * @psalm-suppress UndefinedMethod
+			 */
+			$variations = $product->get_available_variations( 'objects' );
+			$in_stock   = $this->has_in_stock_variation( $variations );
+		}
+
+		/**
+		 * Allows to filter if PayPal buttons/messages can be rendered for the given product.
+		 */
 		return apply_filters(
 			'woocommerce_paypal_payments_product_supports_payment_request_button',
-			! $product->is_type( array( 'external', 'grouped' ) ) && $product->is_in_stock(),
+			! $product->is_type( array( 'external', 'grouped' ) ) && $in_stock,
 			$product
 		);
 	}
@@ -1294,5 +1315,21 @@ class SmartButton implements SmartButtonInterface {
 			$this->logger->error( 'Failed to get PayPal vaulted email. ' . $exception->getMessage() );
 		}
 		return '';
+	}
+
+	/**
+	 * Checks if variations contain any in stock variation.
+	 *
+	 * @param WC_Product_Variation[] $variations The list of variations.
+	 * @return bool True if any in stock variation, false otherwise.
+	 */
+	protected function has_in_stock_variation( array $variations ): bool {
+		foreach ( $variations as $variation ) {
+			if ( $variation->is_in_stock() ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 }

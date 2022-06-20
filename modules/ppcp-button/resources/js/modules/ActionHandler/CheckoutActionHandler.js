@@ -20,7 +20,9 @@ class CheckoutActionHandler {
             const errorHandler = this.errorHandler;
 
             const formSelector = this.config.context === 'checkout' ? 'form.checkout' : 'form#order_review';
-            const formValues = jQuery(formSelector).serialize();
+            const formData = new FormData(document.querySelector(formSelector));
+            // will not handle fields with multiple values (checkboxes, <select multiple>), but we do not care about this here
+            const formJsonObj = Object.fromEntries(formData);
 
             const createaccount = jQuery('#createaccount').is(":checked") ? true : false;
 
@@ -34,7 +36,7 @@ class CheckoutActionHandler {
                     order_id:this.config.order_id,
                     payment_method: getCurrentPaymentMethod(),
                     funding_source: window.ppcpFundingSource,
-                    form:formValues,
+                    form: formJsonObj,
                     createaccount: createaccount
                 })
             }).then(function (res) {
@@ -59,7 +61,7 @@ class CheckoutActionHandler {
                         }
                     }
 
-                    return;
+                    throw new Error(data.data.message);
                 }
                 const input = document.createElement('input');
                 input.setAttribute('type', 'hidden');

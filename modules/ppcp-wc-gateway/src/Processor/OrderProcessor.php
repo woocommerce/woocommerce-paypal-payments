@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderHelper;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -107,6 +108,13 @@ class OrderProcessor {
 	private $subscription_helper;
 
 	/**
+	 * The order helper.
+	 *
+	 * @var OrderHelper
+	 */
+	private $order_helper;
+
+	/**
 	 * OrderProcessor constructor.
 	 *
 	 * @param SessionHandler              $session_handler The Session Handler.
@@ -118,6 +126,7 @@ class OrderProcessor {
 	 * @param LoggerInterface             $logger A logger service.
 	 * @param Environment                 $environment The environment.
 	 * @param SubscriptionHelper          $subscription_helper The subscription helper.
+	 * @param OrderHelper                 $order_helper The order helper.
 	 */
 	public function __construct(
 		SessionHandler $session_handler,
@@ -128,7 +137,8 @@ class OrderProcessor {
 		Settings $settings,
 		LoggerInterface $logger,
 		Environment $environment,
-		SubscriptionHelper $subscription_helper
+		SubscriptionHelper $subscription_helper,
+		OrderHelper $order_helper
 	) {
 
 		$this->session_handler               = $session_handler;
@@ -140,6 +150,7 @@ class OrderProcessor {
 		$this->environment                   = $environment;
 		$this->logger                        = $logger;
 		$this->subscription_helper           = $subscription_helper;
+		$this->order_helper                  = $order_helper;
 	}
 
 	/**
@@ -160,9 +171,9 @@ class OrderProcessor {
 		$this->add_paypal_meta( $wc_order, $order, $this->environment );
 
 		$error_message = null;
-		if ( ! $this->order_is_approved( $order ) ) {
+		if ( $this->order_helper->contains_physical_goods( $order ) && ! $this->order_is_ready_for_process( $order ) ) {
 			$error_message = __(
-				'The payment has not been approved yet.',
+				'The payment is not ready for processing yet.',
 				'woocommerce-paypal-payments'
 			);
 		}
@@ -204,7 +215,7 @@ class OrderProcessor {
 				__( 'Payment successfully captured.', 'woocommerce-paypal-payments' )
 			);
 			$wc_order->update_meta_data( AuthorizedPaymentsProcessor::CAPTURED_META_KEY, 'true' );
-			$wc_order->update_status( 'processing' );
+			$wc_order->update_status( 'completed' );
 		}
 		$this->last_error = '';
 		return true;
@@ -269,15 +280,15 @@ class OrderProcessor {
 	}
 
 	/**
-	 * Whether a given order is approved.
+	 * Whether a given order is ready for processing.
 	 *
 	 * @param Order $order The order.
 	 *
 	 * @return bool
 	 */
-	private function order_is_approved( Order $order ): bool {
+	private function order_is_ready_for_process( Order $order ): bool {
 
-		if ( $order->status()->is( OrderStatus::APPROVED ) ) {
+		if ( $order->status()->is( OrderStatus::APPROVED ) || $order->status()->is( OrderStatus::CREATED ) ) {
 			return true;
 		}
 
@@ -285,7 +296,7 @@ class OrderProcessor {
 			return false;
 		}
 
-		$is_approved = in_array(
+		return in_array(
 			$this->threed_secure->proceed_with_order( $order ),
 			array(
 				ThreeDSecure::NO_DECISION,
@@ -293,6 +304,5 @@ class OrderProcessor {
 			),
 			true
 		);
-		return $is_approved;
 	}
 }
