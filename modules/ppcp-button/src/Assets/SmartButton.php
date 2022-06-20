@@ -840,7 +840,7 @@ class SmartButton implements SmartButtonInterface {
 			'messages'                       => $this->message_values(),
 			'labels'                         => array(
 				'error' => array(
-					'generic' => __(
+					'generic'       => __(
 						'Something went wrong. Please try again or choose another payment source.',
 						'woocommerce-paypal-payments'
 					),
@@ -1037,6 +1037,7 @@ class SmartButton implements SmartButtonInterface {
 			$this->context() === 'product'
 			&& $this->settings->has( 'button_product_enabled' )
 			&& $this->settings->get( 'button_product_enabled' )
+			|| $this->settings->has( 'message_product_enabled' )
 		) {
 			$load_buttons = true;
 		}
@@ -1050,6 +1051,7 @@ class SmartButton implements SmartButtonInterface {
 			$this->context() === 'cart'
 			&& $this->settings->has( 'button_cart_enabled' )
 			&& $this->settings->get( 'button_cart_enabled' )
+			|| $this->settings->has( 'message_product_enabled' )
 		) {
 			$load_buttons = true;
 		}
