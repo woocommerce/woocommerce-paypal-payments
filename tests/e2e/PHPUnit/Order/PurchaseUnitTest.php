@@ -4,11 +4,16 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Tests\E2e\Order;
 
 use Exception;
+use WC_Cart;
 use WC_Coupon;
+use WC_Customer;
 use WC_Order;
 use WC_Order_Item_Fee;
 use WC_Order_Item_Product;
 use WC_Order_Item_Shipping;
+use WC_Product;
+use WC_Product_Simple;
+use WC_Session;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Tests\E2e\TestCase;
 
@@ -16,7 +21,31 @@ class PurchaseUnitTest extends TestCase
 {
 	protected $postIds = [];
 
+	protected $container;
+
+	protected $cart;
+	protected $customer;
+	protected $session;
+
+	/**
+	 * @var PurchaseUnitFactory
+	 */
+	private $puFactory;
+
 	const CURRENCY = 'EUR';
+
+	public function setUp()
+	{
+		parent::setUp();
+
+		$this->container = $this->getContainer();
+		$this->cart = $this->cart();
+		$this->customer = $this->customer();
+		$this->session = $this->session();
+
+		$this->puFactory = $this->container->get( 'api.factory.purchase-unit' );
+		assert($this->puFactory instanceof PurchaseUnitFactory);
+	}
 
 	public function tearDown(): void
 	{
@@ -24,22 +53,34 @@ class PurchaseUnitTest extends TestCase
 			wp_delete_post($id);
 		}
 
+		$this->cart->empty_cart();
+
 		parent::tearDown();
 	}
 
 	/**
-	 * @dataProvider successData
+	 * @dataProvider orderData
 	 */
     public function testOrder(array $orderData, array $expectedAmount)
     {
 		$wcOrder = $this->createWcOrder($orderData);
 
-		$this->container = $this->getContainer();
+		$pu = $this->puFactory->from_wc_order($wcOrder);
+		$puData = $pu->to_array();
 
-		$factory = $this->container->get( 'api.factory.purchase-unit' );
-		assert($factory instanceof PurchaseUnitFactory);
+		self::assertTrue(isset($puData['amount']['breakdown']));
 
-		$pu = $factory->from_wc_order($wcOrder);
+		self::assertEquals($expectedAmount, $puData['amount']);
+    }
+
+	/**
+	 * @dataProvider cartData
+	 */
+    public function testCart(array $cartData, array $expectedAmount)
+    {
+		$this->fillWcCart($this->cart, $this->customer, $this->session, $cartData);
+
+		$pu = $this->puFactory->from_wc_cart($this->cart);
 		$puData = $pu->to_array();
 
 		self::assertTrue(isset($puData['amount']['breakdown']));
@@ -57,6 +98,10 @@ class PurchaseUnitTest extends TestCase
 			$item->set_name($itemData['name'] ?? 'Test product');
 			$item->set_quantity($itemData['quantity'] ?? 1);
 			$item->set_total((string) ($itemData['price'] * $itemData['quantity'] ?? 1));
+			if (isset($itemData['product'])) {
+				$product = $this->createWcProduct($itemData['product']);
+				$item->set_product($product);
+			}
 			$wcOrder->add_item($item);
 		}
 
@@ -97,14 +142,7 @@ class PurchaseUnitTest extends TestCase
 		$this->postIds[] = $wcOrder->get_id();
 
 		foreach ($data['coupons'] ?? [] as $couponData) {
-			$coupon = new WC_Coupon();
-			$coupon->set_amount($couponData['amount']);
-			$coupon->set_discount_type($couponData['type']);
-			$coupon->set_code(uniqid());
-			$coupon->set_virtual(true);
-			$coupon->save();
-
-			$this->postIds[] = $coupon->get_id();
+			$coupon = $this->createWcCoupon($couponData);
 
 			$ret = $wcOrder->apply_coupon($coupon);
 			if (is_wp_error($ret)) {
@@ -118,7 +156,58 @@ class PurchaseUnitTest extends TestCase
 		return $wcOrder;
 	}
 
-	public function successData() {
+	protected function fillWcCart(WC_Cart $cart, WC_Customer $customer, WC_Session $session, array $data): void {
+		$cart->empty_cart();
+
+		foreach ($data['products'] as $productData) {
+			$product = $this->createWcProduct($productData);
+
+			$cart->add_to_cart($product->get_id(), $productData['quantity'] ?? 1);
+		}
+
+		foreach ($data['coupons'] ?? [] as $couponData) {
+			$coupon = $this->createWcCoupon($couponData);
+
+			$cart->apply_coupon($coupon->get_code());
+		}
+
+		$customer->set_billing_country($data['billing']['country'] ?? 'AQ');
+		if (isset($data['billing']['city'])) {
+			$customer->set_billing_city($data['billing']['city']);
+		}
+
+		$cart->calculate_totals();
+	}
+
+	protected function createWcCoupon(array $data): WC_Coupon {
+		$coupon = new WC_Coupon();
+		$coupon->set_amount($data['amount']);
+		$coupon->set_discount_type($data['type']);
+		$coupon->set_code(uniqid());
+		$coupon->set_virtual(true);
+		$coupon->save();
+
+		$this->postIds[] = $coupon->get_id();
+
+		return $coupon;
+	}
+
+	protected function createWcProduct(array $data): WC_Product {
+		$product = new WC_Product_Simple();
+		$product->set_name('Test product ' . rand());
+		$product->set_status( 'publish');
+		$product->set_regular_price((string) $data['price']);
+		$product->set_tax_status('taxable');
+		$product->set_tax_class('');
+
+		$product->save();
+
+		$this->postIds[] = $product->get_id();
+
+		return $product;
+	}
+
+	public function orderData() {
 		yield [
 			[
 				'items' => [
@@ -206,22 +295,22 @@ class PurchaseUnitTest extends TestCase
 		yield [
 			[
 				'items' => [
-					['price' => 11.99, 'quantity' => 3],
+					['price' => 11.99, 'quantity' => 3, 'product' => ['price' => 11.99]],
 				],
 				'shipping' => ['total' => 4.99],
 				'billing' => ['city' => 'city1'],
 				'coupons' => [
 					['amount' => 2.39, 'type' => 'fixed_cart'],
-					['amount' => 7.33, 'type' => 'fixed_cart'],
-				]
+					['amount' => 7.33, 'type' => 'percent'],
+				],
 			],
 			self::adaptAmountFormat([
-				'value' => 34.77,
+				'value' => 39.25,
 				'breakdown' => [
 					'item_total' => 35.97,
-					'tax_total' => 2.76,
+					'tax_total' => 3.12,
 					'shipping' => 4.99,
-					'discount' => 8.95,
+					'discount' => 4.83,
 				],
 			]),
 		];
@@ -244,6 +333,62 @@ class PurchaseUnitTest extends TestCase
 					'shipping' => 0.0,
 				],
 			]),
+		];
+	}
+
+	public function cartData() {
+		yield [
+			[
+				'products' => [
+					['price' => 11.99, 'quantity' => 3],
+				],
+				'billing' => ['city' => 'city1'],
+			],
+			self::adaptAmountFormat([
+				'value' => 39.07,
+				'breakdown' => [
+					'item_total' => 35.97,
+					'tax_total' => 3.10,
+					'shipping' => 0.00,
+				],
+			], get_woocommerce_currency()),
+		];
+		yield [
+			[
+				'products' => [
+					['price' => 11.25, 'quantity' => 3],
+				],
+				'billing' => ['city' => 'city2'],
+			],
+			self::adaptAmountFormat([
+				'value' => 53.99,
+				'breakdown' => [
+					'item_total' => 33.75,
+					'tax_total' => 20.24,
+					'shipping' => 0.0,
+				],
+			], get_woocommerce_currency()),
+		];
+		yield [
+			[
+				'products' => [
+					['price' => 11.99, 'quantity' => 3],
+				],
+				'billing' => ['city' => 'city1'],
+				'coupons' => [
+					['amount' => 2.39, 'type' => 'fixed_cart'],
+					['amount' => 7.33, 'type' => 'percent'],
+				],
+			],
+			self::adaptAmountFormat([
+				'value' => 33.83,
+				'breakdown' => [
+					'item_total' => 35.97,
+					'tax_total' => 2.69,
+					'shipping' => 0.00,
+					'discount' => 4.83,
+				],
+			], get_woocommerce_currency()),
 		];
 	}
 
