@@ -37,7 +37,7 @@ const bootstrap = () => {
         requiredFields.each((i, input) => {
             jQuery(input).trigger('validate');
         });
-        if (jQuery('form.woocommerce-checkout .woocommerce-invalid').length) {
+        if (jQuery('form.woocommerce-checkout .woocommerce-invalid:visible').length) {
             errorHandler.clear();
             errorHandler.message(PayPalCommerceGateway.labels.error.js_validation);
 
