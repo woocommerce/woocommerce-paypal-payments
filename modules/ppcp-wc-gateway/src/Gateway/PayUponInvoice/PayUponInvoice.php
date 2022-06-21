@@ -437,10 +437,7 @@ class PayUponInvoice {
 							<?php
 							array_map(
 								static function( $message ) {
-									/**
-									 * Already escaped when adding into `$error_messages`.
-									 * phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-									 */
+									// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 									echo '<p>' . $message . '</p>';
 								},
 								$error_messages
