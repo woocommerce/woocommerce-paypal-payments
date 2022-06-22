@@ -235,8 +235,13 @@ class WCGatewayModule implements ModuleInterface {
 
 		add_action(
 			'woocommerce_paypal_payments_check_pui_payment_captured',
-			function ( int $order_id ) {
-				$wc_order = wc_get_order( $order_id );
+			function ( int $wc_order_id, string $order_id ) use ( $c ) {
+				$order_endpoint = $c->get( 'api.endpoint.order' );
+				$logger         = $c->get( 'woocommerce.logger.woocommerce' );
+				$order          = $order_endpoint->order( $order_id );
+				$logger->info( 'Checking payment captured webhook, order status: ' . $order->status() );
+
+				$wc_order = wc_get_order( $wc_order_id );
 				if ( ! is_a( $wc_order, WC_Order::class ) || $wc_order->get_status() !== 'on-hold' ) {
 					return;
 				}

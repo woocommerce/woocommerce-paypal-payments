@@ -218,7 +218,8 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 				time() + ( 5 * MINUTE_IN_SECONDS ),
 				'woocommerce_paypal_payments_check_pui_payment_captured',
 				array(
-					'order_id' => $order_id,
+					'wc_order_id' => $order_id,
+					'order_id'    => $order->id(),
 				)
 			);
 
