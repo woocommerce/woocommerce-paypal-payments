@@ -239,7 +239,8 @@ class WCGatewayModule implements ModuleInterface {
 				$order_endpoint = $c->get( 'api.endpoint.order' );
 				$logger         = $c->get( 'woocommerce.logger.woocommerce' );
 				$order          = $order_endpoint->order( $order_id );
-				$logger->info( 'Checking payment captured webhook, order status: ' . wc_print_r($order->status(), true) );
+				$order_status = $order->status();
+				$logger->info( 'Checking payment captured webhook, order status: ' .  $order_status->name());
 
 				$wc_order = wc_get_order( $wc_order_id );
 				if ( ! is_a( $wc_order, WC_Order::class ) || $wc_order->get_status() !== 'on-hold' ) {
