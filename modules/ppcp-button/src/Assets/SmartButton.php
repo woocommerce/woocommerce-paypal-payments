@@ -234,7 +234,6 @@ class SmartButton implements SmartButtonInterface {
 		if (
 			$this->settings->has( 'dcc_enabled' )
 			&& $this->settings->get( 'dcc_enabled' )
-			&& ! $this->session_handler->order()
 		) {
 			add_action(
 				$this->checkout_dcc_button_renderer_hook(),
@@ -1073,13 +1072,30 @@ class SmartButton implements SmartButtonInterface {
 		if ( is_cart() ) {
 			$context = 'cart';
 		}
-		if ( is_checkout() && ! $this->session_handler->order() ) {
+		if ( is_checkout() && ! $this->is_paypal_continuation() ) {
 			$context = 'checkout';
 		}
 		if ( is_checkout_pay_page() ) {
 			$context = 'pay-now';
 		}
 		return $context;
+	}
+
+	/**
+	 * Checks if PayPal payment was already initiated (on the product or cart pages).
+	 *
+	 * @return bool
+	 */
+	private function is_paypal_continuation(): bool {
+		$order = $this->session_handler->order();
+		if ( ! $order ) {
+			return false;
+		}
+		$source = $order->payment_source();
+		if ( $source && $source->card() ) {
+			return false; // Ignore for DCC.
+		}
+		return true;
 	}
 
 	/**
