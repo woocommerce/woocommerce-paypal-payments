@@ -251,7 +251,7 @@ class WCGatewayModule implements ModuleInterface {
 					'woocommerce-paypal-payments'
 				);
 				$wc_order->update_status( 'failed', $message );
-			}
+			}, 10, 2
 		);
 	}
 
