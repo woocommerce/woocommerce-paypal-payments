@@ -106,7 +106,7 @@ class IdentityToken {
 			&& defined( 'PPCP_FLAG_SUBSCRIPTION' ) && PPCP_FLAG_SUBSCRIPTION
 		) {
 			$customer_id = $this->customer_repository->customer_id_for_user( ( $user_id ) );
-
+			update_user_meta( $user_id, 'ppcp_customer_id', $customer_id );
 			$args['body'] = wp_json_encode(
 				array(
 					'customer_id' => $customer_id,
