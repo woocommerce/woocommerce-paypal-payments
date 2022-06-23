@@ -455,19 +455,17 @@ class PayUponInvoice {
 
 		add_action(
 			'add_meta_boxes',
-			function( $post_type ) {
+			function( string $post_type ) {
 				if ( $post_type === 'shop_order' ) {
 					$post_id = filter_input( INPUT_GET, 'post', FILTER_SANITIZE_STRING );
 					$order   = wc_get_order( $post_id );
-					if ( $order->get_payment_method() === 'ppcp-pay-upon-invoice-gateway' ) {
+					if ( is_a( $order, WC_Order::class ) && $order->get_payment_method() === 'ppcp-pay-upon-invoice-gateway' ) {
 						$instructions = $order->get_meta( 'ppcp_ratepay_payment_instructions_payment_reference' );
 						if ( $instructions ) {
-							$this->logger->info("Displaying payment instructions for WC order #{$order->get_id()}");
-							$this->logger->info(wc_print_r($instructions, true));
 							add_meta_box(
 								'ppcp_pui_ratepay_payment_instructions',
 								__( 'RatePay payment instructions', 'woocommerce-paypal-payments' ),
-								function() {
+								function() use ( $instructions ) {
 									$payment_reference   = $instructions[0] ?? '';
 									$bic                 = $instructions[1]->bic ?? '';
 									$bank_name           = $instructions[1]->bank_name ?? '';
