@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, e-commerce, store, sales, sell, 
 Requires at least: 5.3
 Tested up to: 6.0
 Requires PHP: 7.1
-Stable tag: 1.9.0-test4
+Stable tag: 1.9.0-test5
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
