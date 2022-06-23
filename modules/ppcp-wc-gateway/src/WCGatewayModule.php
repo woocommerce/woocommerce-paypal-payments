@@ -256,7 +256,6 @@ class WCGatewayModule implements ModuleInterface {
 					$logger->error( $message );
 					$wc_order->update_status( 'failed', $message );
 				}
-
 			},
 			10,
 			2
