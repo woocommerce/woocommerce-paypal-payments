@@ -342,7 +342,7 @@ class PayUponInvoice {
 				}
 
 				$birth_date = filter_input( INPUT_POST, 'billing_birth_date', FILTER_SANITIZE_STRING );
-				if ( $birth_date && ! $this->pui_helper->validate_birth_date( $birth_date ) ) {
+				if ( ( $birth_date && ! $this->pui_helper->validate_birth_date( $birth_date ) ) || $birth_date === '' ) {
 					$errors->add( 'validation', __( 'Invalid birth date.', 'woocommerce-paypal-payments' ) );
 				}
 
