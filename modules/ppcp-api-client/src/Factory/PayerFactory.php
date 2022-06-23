@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\PayerName;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PayerTaxInfo;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Phone;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PhoneWithType;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
 /**
  * Class PayerFactory
@@ -158,6 +159,7 @@ class PayerFactory {
 	 *
 	 * @param array $form_fields The checkout form fields.
 	 * @return Payer
+	 * @throws RuntimeException When invalid data.
 	 */
 	public function from_checkout_form( array $form_fields ): Payer {
 
@@ -187,6 +189,14 @@ class PayerFactory {
 					);
 				}
 			}
+		}
+
+		if ( ! is_email( $billing_email ) ) {
+			/*
+			phpcs:disable WordPress.WP.I18n.TextDomainMismatch
+			translators: %s: email address
+			*/
+			throw new RuntimeException( sprintf( __( '%s is not a valid email address.', 'woocommerce' ), esc_html( $billing_email ) ) );
 		}
 
 		return new Payer(

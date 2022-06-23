@@ -844,6 +844,10 @@ class SmartButton implements SmartButtonInterface {
 						'Something went wrong. Please try again or choose another payment source.',
 						'woocommerce-paypal-payments'
 					),
+					'js_validation' => __(
+						'Required form fields are not filled or invalid.',
+						'woocommerce-paypal-payments'
+					),
 				),
 			),
 			'order_id'                       => 'pay-now' === $this->context() ? absint( $wp->query_vars['order-pay'] ) : 0,
@@ -923,9 +927,9 @@ class SmartButton implements SmartButtonInterface {
 		}
 
 		if ( $this->is_free_trial_cart() ) {
-			$all_sources = $this->all_funding_sources;
+			$all_sources = array_keys( $this->all_funding_sources );
 			if ( $is_dcc_enabled ) {
-				$all_sources = array_keys( array_diff_key( $all_sources, array( 'card' => '' ) ) );
+				$all_sources = array_diff( $all_sources, array( 'card' ) );
 			}
 			$disable_funding = $all_sources;
 		}

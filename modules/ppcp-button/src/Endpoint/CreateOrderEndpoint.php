@@ -403,9 +403,9 @@ class CreateOrderEndpoint implements EndpointInterface {
 		}
 
 		if ( ! $payer && isset( $data['form'] ) ) {
-			parse_str( $data['form'], $form_fields );
+			$form_fields = $data['form'];
 
-			if ( isset( $form_fields['billing_email'] ) && '' !== $form_fields['billing_email'] ) {
+			if ( is_array( $form_fields ) && isset( $form_fields['billing_email'] ) && '' !== $form_fields['billing_email'] ) {
 				return $this->payer_factory->from_checkout_form( $form_fields );
 			}
 		}
