@@ -452,6 +452,43 @@ class PayUponInvoice {
 				}
 			}
 		);
+
+		add_action(
+			'add_meta_boxes',
+			function( $post_type ) {
+				if ( $post_type === 'shop_order' ) {
+					$post_id = filter_input( INPUT_GET, 'post', FILTER_SANITIZE_STRING );
+					$order   = wc_get_order( $post_id );
+					if ( $order->get_payment_method() === 'ppcp-pay-upon-invoice-gateway' ) {
+						$instructions = $order->get_meta( 'ppcp_ratepay_payment_instructions_payment_reference' );
+						if ( $instructions ) {
+							add_meta_box(
+								'ppcp_pui_ratepay_payment_instructions',
+								__( 'RatePay payment instructions', 'woocommerce-paypal-payments' ),
+								function() {
+									$payment_reference   = $instructions[0] ?? '';
+									$bic                 = $instructions[1]->bic ?? '';
+									$bank_name           = $instructions[1]->bank_name ?? '';
+									$iban                = $instructions[1]->iban ?? '';
+									$account_holder_name = $instructions[1]->account_holder_name ?? '';
+
+									echo '<ul>';
+									echo wp_kses_post( "<li>Empfänger: {$account_holder_name}</li>" );
+									echo wp_kses_post( "<li>IBAN: {$iban}</li>" );
+									echo wp_kses_post( "<li>BIC: {$bic}</li>" );
+									echo wp_kses_post( "<li>Name der Bank: {$bank_name}</li>" );
+									echo wp_kses_post( "<li>Verwendungszweck: {$payment_reference}</li>" );
+									echo '</ul>';
+								},
+								$post_type,
+								'side',
+								'high'
+							);
+						}
+					}
+				}
+			}
+		);
 	}
 
 	/**
