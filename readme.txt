@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, e-commerce, store, sales, sell, 
 Requires at least: 5.3
 Tested up to: 6.0
 Requires PHP: 7.1
-Stable tag: 1.9.0-test5
+Stable tag: 1.9.0
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -81,7 +81,8 @@ Follow the steps below to connect the plugin to your PayPal account:
 
 == Changelog ==
 
-= 1.8.2 =
+= 1.9.0 =
+* Add - New Feature - Pay Upon Invoice (Germany only) #608
 * Fix - Order not approved: payment via vaulted PayPal account fails #677
 * Fix - Cant' refund : "ERROR Refund failed: No country given for address." #639
 * Fix - Something went wrong error in Virtual products when using vaulted payment #673 
