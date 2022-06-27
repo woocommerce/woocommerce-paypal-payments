@@ -5,6 +5,8 @@
 /.idea/ export-ignore
 .env export-ignore
 .env.example export-ignore
+.env.e2e export-ignore
+.env.e2e.example export-ignore
 .travis.yml export-ignore
 auth.json export-ignore
 composer.json export-ignore

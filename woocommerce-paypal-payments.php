@@ -9,7 +9,7 @@
  * License:     GPL-2.0
  * Requires PHP: 7.1
  * WC requires at least: 3.9
- * WC tested up to: 6.5
+ * WC tested up to: 6.6
  * Text Domain: woocommerce-paypal-payments
  *
  * @package WooCommerce\PayPalCommerce
@@ -33,7 +33,10 @@ define( 'PPCP_FLAG_SUBSCRIPTION', true );
 ! defined( 'CONNECT_WOO_SANDBOX_URL' ) && define( 'CONNECT_WOO_SANDBOX_URL', 'https://connect.woocommerce.com/ppcsandbox' );
 
 ( function () {
-	include __DIR__ . '/vendor/autoload.php';
+	$autoload_filepath = __DIR__ . '/vendor/autoload.php';
+	if ( file_exists( $autoload_filepath ) && ! class_exists( '\WooCommerce\PayPalCommerce\PluginModule' ) ) {
+		require $autoload_filepath;
+	}
 
 	/**
 	 * Initialize the plugin and its modules.

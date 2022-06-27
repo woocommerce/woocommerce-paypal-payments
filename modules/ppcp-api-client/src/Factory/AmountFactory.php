@@ -69,30 +69,22 @@ class AmountFactory {
 	public function from_wc_cart( \WC_Cart $cart ): Amount {
 		$total = new Money( (float) $cart->get_total( 'numeric' ), $this->currency );
 
-		$total_fees_amount = 0;
-		$fees              = WC()->session->get( 'ppcp_fees' );
-		if ( $fees ) {
-			foreach ( WC()->session->get( 'ppcp_fees' ) as $fee ) {
-				$total_fees_amount += (float) $fee->amount;
-			}
-		}
-
-		$item_total = $cart->get_cart_contents_total() + $cart->get_discount_total() + $total_fees_amount;
-		$item_total = new Money( (float) $item_total, $this->currency );
+		$item_total = (float) $cart->get_subtotal() + (float) $cart->get_fee_total();
+		$item_total = new Money( $item_total, $this->currency );
 		$shipping   = new Money(
-			(float) $cart->get_shipping_total() + $cart->get_shipping_tax(),
+			(float) $cart->get_shipping_total(),
 			$this->currency
 		);
 
 		$taxes = new Money(
-			$cart->get_subtotal_tax(),
+			(float) $cart->get_total_tax(),
 			$this->currency
 		);
 
 		$discount = null;
 		if ( $cart->get_discount_total() ) {
 			$discount = new Money(
-				(float) $cart->get_discount_total() + $cart->get_discount_tax(),
+				(float) $cart->get_discount_total(),
 				$this->currency
 			);
 		}
@@ -126,7 +118,7 @@ class AmountFactory {
 
 		$discount_value = array_sum(
 			array(
-				(float) $order->get_total_discount( false ), // Only coupons.
+				(float) $order->get_total_discount(), // Only coupons.
 				$this->discounts_from_items( $items ),
 			)
 		);
@@ -137,13 +129,6 @@ class AmountFactory {
 				$currency
 			);
 		}
-
-		$items = array_filter(
-			$items,
-			function ( Item $item ): bool {
-				return $item->unit_amount()->value() > 0;
-			}
-		);
 
 		$total_value = (float) $order->get_total();
 		if ( (
@@ -157,27 +142,15 @@ class AmountFactory {
 		$total = new Money( $total_value, $currency );
 
 		$item_total = new Money(
-			(float) array_reduce(
-				$items,
-				static function ( float $total, Item $item ): float {
-					return $total + $item->quantity() * $item->unit_amount()->value();
-				},
-				0
-			),
+			(float) $order->get_subtotal() + (float) $order->get_total_fees(),
 			$currency
 		);
 		$shipping   = new Money(
-			(float) $order->get_shipping_total() + (float) $order->get_shipping_tax(),
+			(float) $order->get_shipping_total(),
 			$currency
 		);
 		$taxes      = new Money(
-			(float) array_reduce(
-				$items,
-				static function ( float $total, Item $item ): float {
-					return $total + $item->quantity() * $item->tax()->value();
-				},
-				0
-			),
+			(float) $order->get_total_tax(),
 			$currency
 		);
 

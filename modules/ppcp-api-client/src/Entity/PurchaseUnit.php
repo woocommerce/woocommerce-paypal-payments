@@ -343,8 +343,14 @@ class PurchaseUnit {
 			}
 		}
 
-		$tax_total = $breakdown->tax_total();
-		if ( $tax_total ) {
+		$tax_total      = $breakdown->tax_total();
+		$items_with_tax = array_filter(
+			$this->items,
+			function ( Item $item ): bool {
+				return null !== $item->tax();
+			}
+		);
+		if ( $tax_total && ! empty( $items_with_tax ) ) {
 			$remaining_tax_total = array_reduce(
 				$items,
 				function ( float $total, Item $item ): float {
@@ -393,8 +399,9 @@ class PurchaseUnit {
 			$amount_total += $insurance->value();
 		}
 
-		$amount_value   = $amount->value();
-		$needs_to_ditch = (string) $amount_total !== (string) $amount_value;
+		$amount_str       = (string) $amount->to_array()['value'];
+		$amount_total_str = (string) ( new Money( $amount_total, $amount->currency_code() ) )->to_array()['value'];
+		$needs_to_ditch   = $amount_str !== $amount_total_str;
 		return $needs_to_ditch;
 	}
 }

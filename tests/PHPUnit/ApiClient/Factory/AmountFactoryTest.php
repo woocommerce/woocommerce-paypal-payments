@@ -35,28 +35,22 @@ class AmountFactoryTest extends TestCase
         $cart
             ->shouldReceive('get_total')
             ->withAnyArgs()
-            ->andReturn(1);
+            ->andReturn(13);
         $cart
-            ->shouldReceive('get_cart_contents_total')
-            ->andReturn(2);
-        $cart
-            ->shouldReceive('get_discount_total')
-            ->andReturn(3);
-        $cart
-            ->shouldReceive('get_shipping_total')
-            ->andReturn(4);
-        $cart
-            ->shouldReceive('get_shipping_tax')
+            ->shouldReceive('get_subtotal')
             ->andReturn(5);
         $cart
-            ->shouldReceive('get_cart_contents_tax')
-            ->andReturn(6);
+            ->shouldReceive('get_fee_total')
+            ->andReturn(3);
         $cart
-            ->shouldReceive('get_discount_tax')
-            ->andReturn(7);
+            ->shouldReceive('get_discount_total')
+            ->andReturn(1);
         $cart
-            ->shouldReceive('get_subtotal_tax')
-            ->andReturn(8);
+            ->shouldReceive('get_shipping_total')
+            ->andReturn(2);
+        $cart
+            ->shouldReceive('get_total_tax')
+            ->andReturn(4);
 
         $woocommerce = Mockery::mock(\WooCommerce::class);
         $session = Mockery::mock(\WC_Session::class);
@@ -66,46 +60,39 @@ class AmountFactoryTest extends TestCase
 
         $result = $this->testee->from_wc_cart($cart);
         $this->assertEquals($this->currency, $result->currency_code());
-        $this->assertEquals((float) 1, $result->value());
-        $this->assertEquals((float) 10, $result->breakdown()->discount()->value());
+        $this->assertEquals((float) 13, $result->value());
+        $this->assertEquals((float) 1, $result->breakdown()->discount()->value());
         $this->assertEquals($this->currency, $result->breakdown()->discount()->currency_code());
-        $this->assertEquals((float) 9, $result->breakdown()->shipping()->value());
+        $this->assertEquals((float) 2, $result->breakdown()->shipping()->value());
         $this->assertEquals($this->currency, $result->breakdown()->shipping()->currency_code());
-        $this->assertEquals((float) 5, $result->breakdown()->item_total()->value());
+        $this->assertEquals((float) 8, $result->breakdown()->item_total()->value());
         $this->assertEquals($this->currency, $result->breakdown()->item_total()->currency_code());
-        $this->assertEquals((float) 8, $result->breakdown()->tax_total()->value());
+        $this->assertEquals((float) 4, $result->breakdown()->tax_total()->value());
         $this->assertEquals($this->currency, $result->breakdown()->tax_total()->currency_code());
     }
 
     public function testFromWcCartNoDiscount()
     {
-        $expectedTotal = 1;
         $cart = Mockery::mock(\WC_Cart::class);
         $cart
             ->shouldReceive('get_total')
             ->withAnyArgs()
-            ->andReturn($expectedTotal);
-        $cart
-            ->shouldReceive('get_cart_contents_total')
-            ->andReturn(2);
+            ->andReturn(11);
+		$cart
+			->shouldReceive('get_subtotal')
+			->andReturn(5);
+		$cart
+			->shouldReceive('get_fee_total')
+			->andReturn(0);
         $cart
             ->shouldReceive('get_discount_total')
             ->andReturn(0);
         $cart
             ->shouldReceive('get_shipping_total')
-            ->andReturn(4);
-        $cart
-            ->shouldReceive('get_shipping_tax')
-            ->andReturn(5);
-        $cart
-            ->shouldReceive('get_cart_contents_tax')
-            ->andReturn(6);
-        $cart
-            ->shouldReceive('get_discount_tax')
-            ->andReturn(0);
+            ->andReturn(2);
 		$cart
-			->shouldReceive('get_subtotal_tax')
-			->andReturn(11);
+			->shouldReceive('get_total_tax')
+			->andReturn(4);
 
         $woocommerce = Mockery::mock(\WooCommerce::class);
         $session = Mockery::mock(\WC_Session::class);
@@ -114,6 +101,10 @@ class AmountFactoryTest extends TestCase
         $session->shouldReceive('get')->andReturn([]);
         $result = $this->testee->from_wc_cart($cart);
         $this->assertNull($result->breakdown()->discount());
+		$this->assertEquals((float) 11, $result->value());
+		$this->assertEquals((float) 2, $result->breakdown()->shipping()->value());
+		$this->assertEquals((float) 5, $result->breakdown()->item_total()->value());
+		$this->assertEquals((float) 4, $result->breakdown()->tax_total()->value());
     }
 
     public function testFromWcOrderDefault()
@@ -123,10 +114,7 @@ class AmountFactoryTest extends TestCase
         $unitAmount
             ->shouldReceive('value')
             ->andReturn(3);
-        $tax = Mockery::mock(Money::class);
-        $tax
-            ->shouldReceive('value')
-            ->andReturn(1);
+
         $item = Mockery::mock(Item::class);
         $item
             ->shouldReceive('quantity')
@@ -134,9 +122,6 @@ class AmountFactoryTest extends TestCase
         $item
             ->shouldReceive('unit_amount')
             ->andReturn($unitAmount);
-        $item
-            ->shouldReceive('tax')
-            ->andReturn($tax);
         $this->itemFactory
             ->expects('from_wc_order')
             ->with($order)
@@ -148,7 +133,13 @@ class AmountFactoryTest extends TestCase
 
         $order
             ->shouldReceive('get_total')
-            ->andReturn(100);
+            ->andReturn(10);
+        $order
+            ->shouldReceive('get_subtotal')
+            ->andReturn(6);
+        $order
+            ->shouldReceive('get_total_fees')
+            ->andReturn(4);
         $order
             ->shouldReceive('get_currency')
             ->andReturn($this->currency);
@@ -156,11 +147,10 @@ class AmountFactoryTest extends TestCase
             ->shouldReceive('get_shipping_total')
             ->andReturn(1);
         $order
-            ->shouldReceive('get_shipping_tax')
-            ->andReturn(.5);
+            ->shouldReceive('get_total_tax')
+            ->andReturn(2);
         $order
             ->shouldReceive('get_total_discount')
-            ->with(false)
             ->andReturn(3);
         $order
             ->shouldReceive('get_meta')
@@ -168,9 +158,9 @@ class AmountFactoryTest extends TestCase
 
         $result = $this->testee->from_wc_order($order);
         $this->assertEquals((float) 3, $result->breakdown()->discount()->value());
-        $this->assertEquals((float) 6, $result->breakdown()->item_total()->value());
-        $this->assertEquals((float) 1.5, $result->breakdown()->shipping()->value());
-        $this->assertEquals((float) 100, $result->value());
+        $this->assertEquals((float) 10, $result->breakdown()->item_total()->value());
+        $this->assertEquals((float) 1, $result->breakdown()->shipping()->value());
+        $this->assertEquals((float) 10, $result->value());
         $this->assertEquals((float) 2, $result->breakdown()->tax_total()->value());
         $this->assertEquals($this->currency, $result->breakdown()->discount()->currency_code());
         $this->assertEquals($this->currency, $result->breakdown()->item_total()->currency_code());
@@ -186,10 +176,6 @@ class AmountFactoryTest extends TestCase
         $unitAmount
             ->shouldReceive('value')
             ->andReturn(3);
-        $tax = Mockery::mock(Money::class);
-        $tax
-            ->shouldReceive('value')
-            ->andReturn(1);
         $item = Mockery::mock(Item::class);
         $item
             ->shouldReceive('quantity')
@@ -197,9 +183,6 @@ class AmountFactoryTest extends TestCase
         $item
             ->shouldReceive('unit_amount')
             ->andReturn($unitAmount);
-        $item
-            ->shouldReceive('tax')
-            ->andReturn($tax);
         $this->itemFactory
             ->expects('from_wc_order')
             ->with($order)
@@ -213,17 +196,22 @@ class AmountFactoryTest extends TestCase
             ->shouldReceive('get_total')
             ->andReturn(100);
         $order
+            ->shouldReceive('get_subtotal')
+            ->andReturn(6);
+		$order
+			->shouldReceive('get_total_fees')
+			->andReturn(0);
+        $order
             ->shouldReceive('get_currency')
             ->andReturn($this->currency);
         $order
             ->shouldReceive('get_shipping_total')
             ->andReturn(1);
-        $order
-            ->shouldReceive('get_shipping_tax')
-            ->andReturn(.5);
+		$order
+			->shouldReceive('get_total_tax')
+			->andReturn(2);
         $order
             ->shouldReceive('get_total_discount')
-            ->with(false)
             ->andReturn(0);
 		$order
 			->shouldReceive('get_meta')

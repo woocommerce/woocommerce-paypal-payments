@@ -1,0 +1,39 @@
+name: e2e tests
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php-versions: ['7.1', '7.4']
+
+    name: PHP ${{ matrix.php-versions }}
+    steps:
+    - uses: satackey/action-docker-layer-caching@v0.0.11
+      continue-on-error: true
+
+    - uses: jonaseberle/github-action-setup-ddev@v1
+      with:
+        autostart: false
+
+    - uses: actions/checkout@v1
+
+    - name: Configure DDEV
+      run: ddev config --php-version ${{ matrix.php-versions }}
+
+    - name: Start DDEV
+      run: ddev start
+
+    - name: Orchestrate DDEV
+      run: ddev orchestrate -f
+
+    - name: Create config
+      run: cp -n .env.e2e.example .env.e2e
+
+    - name: Setup tests
+      run: ddev php tests/e2e/PHPUnit/setup.php
+
+    - name: Run PHPUnit
+      run: ddev exec phpunit -c tests/e2e/phpunit.xml.dist
