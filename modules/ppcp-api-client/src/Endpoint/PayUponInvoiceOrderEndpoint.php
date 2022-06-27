@@ -111,6 +111,7 @@ class PayUponInvoiceOrderEndpoint {
 			),
 		);
 
+		$data = $this->ensure_tax( $data );
 		$data = $this->ensure_tax_rate( $data );
 		$data = $this->ensure_shipping( $data, $payment_source->to_array() );
 
@@ -194,6 +195,27 @@ class PayUponInvoiceOrderEndpoint {
 			$json->payment_source->pay_upon_invoice->payment_reference,
 			$json->payment_source->pay_upon_invoice->deposit_bank_details,
 		);
+	}
+
+	/**
+	 * Ensures items contains tax.
+	 *
+	 * @param array $data The data.
+	 * @return array
+	 */
+	private function ensure_tax( array $data ): array {
+		$items_count = count( $data['purchase_units'][0]['items'] );
+
+		for ( $i = 0; $i < $items_count; $i++ ) {
+			if ( ! isset( $data['purchase_units'][0]['items'][ $i ]['tax'] ) ) {
+				$data['purchase_units'][0]['items'][ $i ]['tax'] = array(
+					'currency_code' => 'EUR',
+					'value'         => '0.00',
+				);
+			}
+		}
+
+		return $data;
 	}
 
 	/**
