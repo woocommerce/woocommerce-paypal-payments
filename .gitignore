@@ -9,4 +9,5 @@ modules/ppcp-wc-gateway/assets/js
 modules/ppcp-wc-gateway/assets/css
 *.zip
 .env
+.env.e2e
 auth.json

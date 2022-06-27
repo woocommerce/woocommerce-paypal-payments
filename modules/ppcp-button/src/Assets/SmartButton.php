@@ -681,8 +681,12 @@ class SmartButton implements SmartButtonInterface {
 			return;
 		}
 
-        // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch
+		/**
+		 * The WC filter returning the WC order button text.
+		 * phpcs:disable WordPress.WP.I18n.TextDomainMismatch
+		 */
 		$label = 'checkout' === $this->context() ? apply_filters( 'woocommerce_order_button_text', __( 'Place order', 'woocommerce' ) ) : __( 'Pay for order', 'woocommerce' );
+		// phpcs:enable WordPress.WP.I18n.TextDomainMismatch
 
 		printf(
 			'<div id="%1$s" style="display:none;">

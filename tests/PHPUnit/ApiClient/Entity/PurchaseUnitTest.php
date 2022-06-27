@@ -443,8 +443,9 @@ class PurchaseUnitTest extends TestCase
                 }
             }
             $amount = Mockery::mock(Amount::class);
-            $amount->shouldReceive('to_array')->andReturn(['value' => [], 'breakdown' => []]);
+            $amount->shouldReceive('to_array')->andReturn(['value' => number_format( $test['amount'], 2, '.', '' ), 'breakdown' => []]);
             $amount->shouldReceive('value')->andReturn($test['amount']);
+            $amount->shouldReceive('currency_code')->andReturn('EUR');
             $amount->shouldReceive('breakdown')->andReturn($breakdown);
 
             $values[$testKey] = [

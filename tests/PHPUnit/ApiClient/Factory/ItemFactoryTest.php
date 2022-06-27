@@ -34,7 +34,8 @@ class ItemFactoryTest extends TestCase
         $items = [
             [
                 'data' => $product,
-                'quantity' => 1,
+                'quantity' => 2,
+				'line_subtotal' => 84,
             ],
         ];
         $cart = Mockery::mock(\WC_Cart::class);
@@ -42,12 +43,6 @@ class ItemFactoryTest extends TestCase
             ->expects('get_cart_contents')
             ->andReturn($items);
 
-        expect('wc_get_price_including_tax')
-            ->with($product)
-            ->andReturn(2.995);
-        expect('wc_get_price_excluding_tax')
-            ->with($product)
-            ->andReturn(1);
 	    expect('wp_strip_all_tags')
 		    ->with('description')
 		    ->andReturn('description');
@@ -68,11 +63,10 @@ class ItemFactoryTest extends TestCase
          */
         $this->assertEquals(Item::PHYSICAL_GOODS, $item->category());
         $this->assertEquals('description', $item->description());
-        $this->assertEquals(1, $item->quantity());
+        $this->assertEquals(2, $item->quantity());
         $this->assertEquals('name', $item->name());
         $this->assertEquals('sku', $item->sku());
-        $this->assertEquals(1, $item->unit_amount()->value());
-        $this->assertEquals(2, $item->tax()->value());
+        $this->assertEquals(42, $item->unit_amount()->value());
     }
 
     public function testFromCartDigitalGood()
@@ -96,6 +90,7 @@ class ItemFactoryTest extends TestCase
             [
                 'data' => $product,
                 'quantity' => 1,
+				'line_subtotal' => 42,
             ],
         ];
         $cart = Mockery::mock(\WC_Cart::class);
@@ -103,12 +98,6 @@ class ItemFactoryTest extends TestCase
             ->expects('get_cart_contents')
             ->andReturn($items);
 
-        expect('wc_get_price_including_tax')
-            ->with($product)
-            ->andReturn(2.995);
-        expect('wc_get_price_excluding_tax')
-            ->with($product)
-            ->andReturn(1);
 	    expect('wp_strip_all_tags')
 		    ->with('description')
 		    ->andReturn('description');
@@ -131,9 +120,6 @@ class ItemFactoryTest extends TestCase
 
         $product = Mockery::mock(\WC_Product::class);
         $product
-            ->expects('get_name')
-            ->andReturn('name');
-        $product
             ->expects('get_description')
             ->andReturn('description');
         $product
@@ -150,6 +136,9 @@ class ItemFactoryTest extends TestCase
         $item
             ->expects('get_product')
             ->andReturn($product);
+		$item
+			->expects('get_name')
+			->andReturn('name');
         $item
             ->expects('get_quantity')
             ->andReturn(1);
@@ -161,10 +150,6 @@ class ItemFactoryTest extends TestCase
         $order
             ->expects('get_items')
             ->andReturn([$item]);
-        $order
-            ->expects('get_item_subtotal')
-            ->with($item, true)
-            ->andReturn(3);
         $order
             ->expects('get_item_subtotal')
             ->with($item, false)
@@ -185,7 +170,6 @@ class ItemFactoryTest extends TestCase
         $this->assertEquals(1, $item->quantity());
         $this->assertEquals(Item::PHYSICAL_GOODS, $item->category());
         $this->assertEquals(1, $item->unit_amount()->value());
-        $this->assertEquals(2, $item->tax()->value());
     }
 
     public function testFromWcOrderDigitalGood()
@@ -193,9 +177,6 @@ class ItemFactoryTest extends TestCase
         $testee = new ItemFactory($this->currency);
 
         $product = Mockery::mock(\WC_Product::class);
-        $product
-            ->expects('get_name')
-            ->andReturn('name');
         $product
             ->expects('get_description')
             ->andReturn('description');
@@ -213,6 +194,9 @@ class ItemFactoryTest extends TestCase
         $item
             ->expects('get_product')
             ->andReturn($product);
+		$item
+			->expects('get_name')
+			->andReturn('name');
         $item
             ->expects('get_quantity')
             ->andReturn(1);
@@ -224,10 +208,6 @@ class ItemFactoryTest extends TestCase
         $order
             ->expects('get_items')
             ->andReturn([$item]);
-        $order
-            ->expects('get_item_subtotal')
-            ->with($item, true)
-            ->andReturn(3);
         $order
             ->expects('get_item_subtotal')
             ->with($item, false)
@@ -252,9 +232,6 @@ class ItemFactoryTest extends TestCase
 
         $product = Mockery::mock(\WC_Product::class);
         $product
-            ->expects('get_name')
-            ->andReturn($name);
-        $product
             ->expects('get_description')
             ->andReturn($description);
         $product
@@ -271,6 +248,9 @@ class ItemFactoryTest extends TestCase
         $item
             ->expects('get_product')
             ->andReturn($product);
+		$item
+			->expects('get_name')
+			->andReturn($name);
         $item
             ->expects('get_quantity')
             ->andReturn(1);
@@ -282,10 +262,6 @@ class ItemFactoryTest extends TestCase
         $order
             ->expects('get_items')
             ->andReturn([$item]);
-        $order
-            ->expects('get_item_subtotal')
-            ->with($item, true)
-            ->andReturn(3);
         $order
             ->expects('get_item_subtotal')
             ->with($item, false)
