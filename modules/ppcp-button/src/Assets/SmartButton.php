@@ -411,15 +411,22 @@ class SmartButton implements SmartButtonInterface {
 		) {
 			add_action(
 				$this->single_product_renderer_hook(),
-				array(
-					$this,
-					'button_renderer',
-				),
+				function () {
+					$product = wc_get_product();
+
+					if (
+						is_a( $product, WC_Product::class )
+						&& ! $this->product_supports_payment( $product )
+					) {
+
+						return;
+					}
+
+					$this->button_renderer();
+				},
 				31
 			);
 		}
-
-		add_action( $this->pay_order_renderer_hook(), array( $this, 'button_renderer' ), 10 );
 
 		$not_enabled_on_minicart = $this->settings->has( 'button_mini_cart_enabled' ) &&
 			! $this->settings->get( 'button_mini_cart_enabled' );
@@ -447,21 +454,26 @@ class SmartButton implements SmartButtonInterface {
 			);
 		}
 
-		add_action( $this->checkout_button_renderer_hook(), array( $this, 'button_renderer' ), 10 );
+		$available_gateways = WC()->payment_gateways->get_available_payment_gateways();
 
-		$not_enabled_on_cart = $this->settings->has( 'button_cart_enabled' ) &&
-			! $this->settings->get( 'button_cart_enabled' );
-		add_action(
-			$this->proceed_to_checkout_button_renderer_hook(),
-			function() use ( $not_enabled_on_cart ) {
-				if ( ! is_cart() || $not_enabled_on_cart || $this->is_free_trial_cart() || $this->is_cart_price_total_zero() ) {
-					return;
-				}
+		if ( isset( $available_gateways['ppcp-gateway'] ) ) {
+			add_action( $this->pay_order_renderer_hook(), array( $this, 'button_renderer' ), 10 );
+			add_action( $this->checkout_button_renderer_hook(), array( $this, 'button_renderer' ), 10 );
 
-				$this->button_renderer();
-			},
-			20
-		);
+			$not_enabled_on_cart = $this->settings->has( 'button_cart_enabled' ) &&
+				! $this->settings->get( 'button_cart_enabled' );
+			add_action(
+				$this->proceed_to_checkout_button_renderer_hook(),
+				function() use ( $not_enabled_on_cart ) {
+					if ( ! is_cart() || $not_enabled_on_cart || $this->is_free_trial_cart() || $this->is_cart_price_total_zero() ) {
+						return;
+					}
+
+					$this->button_renderer();
+				},
+				20
+			);
+		}
 
 		return true;
 	}
@@ -518,22 +530,6 @@ class SmartButton implements SmartButtonInterface {
 	public function button_renderer() {
 
 		if ( ! $this->can_save_vault_token() && $this->has_subscriptions() ) {
-			return;
-		}
-
-		$product = wc_get_product();
-
-		if (
-			! is_checkout() && is_a( $product, WC_Product::class )
-			&& ! $this->product_supports_payment( $product )
-		) {
-
-			return;
-		}
-
-		$available_gateways = WC()->payment_gateways->get_available_payment_gateways();
-
-		if ( ! isset( $available_gateways['ppcp-gateway'] ) ) {
 			return;
 		}
 
@@ -843,7 +839,7 @@ class SmartButton implements SmartButtonInterface {
 			'messages'                       => $this->message_values(),
 			'labels'                         => array(
 				'error' => array(
-					'generic' => __(
+					'generic'       => __(
 						'Something went wrong. Please try again or choose another payment source.',
 						'woocommerce-paypal-payments'
 					),
