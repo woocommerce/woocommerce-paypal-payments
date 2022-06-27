@@ -1,6 +1,7 @@
 *** Changelog ***
 
-= 1.8.2 - TBD =
+= 1.9.0 - TBD =
+* Add - New Feature - Pay Upon Invoice (Germany only) #608
 * Fix - Order not approved: payment via vaulted PayPal account fails #677
 * Fix - Cant' refund : "ERROR Refund failed: No country given for address." #639
 * Fix - Something went wrong error in Virtual products when using vaulted payment #673 
