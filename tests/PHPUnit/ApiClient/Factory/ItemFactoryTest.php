@@ -31,9 +31,6 @@ class ItemFactoryTest extends TestCase
         $product
             ->expects('is_virtual')
             ->andReturn(false);
-        $product
-			->expects('get_tax_class')
-			->andReturn('');
         $items = [
             [
                 'data' => $product,
@@ -55,9 +52,6 @@ class ItemFactoryTest extends TestCase
         when('WC')->justReturn($woocommerce);
         $woocommerce->session = $session;
         $session->shouldReceive('get')->andReturn([]);
-
-        $tax = Mockery::mock('alias:WC_Tax');
-        $tax->expects('get_rates')->andReturn([]);
 
         $result = $testee->from_wc_cart($cart);
 
@@ -92,9 +86,6 @@ class ItemFactoryTest extends TestCase
         $product
             ->expects('is_virtual')
             ->andReturn(true);
-		$product
-			->expects('get_tax_class')
-			->andReturn('');
 
         $items = [
             [
@@ -118,8 +109,6 @@ class ItemFactoryTest extends TestCase
         $woocommerce->session = $session;
         $session->shouldReceive('get')->andReturn([]);
 
-		$tax = Mockery::mock('alias:WC_Tax');
-		$tax->expects('get_rates')->andReturn([]);
 
         $result = $testee->from_wc_cart($cart);
 
@@ -138,9 +127,6 @@ class ItemFactoryTest extends TestCase
         $product
             ->expects('get_sku')
             ->andReturn('sku');
-		$product
-			->expects('get_tax_class')
-			->andReturn('foo');
         $product
             ->expects('is_virtual')
             ->andReturn(false);
@@ -174,8 +160,6 @@ class ItemFactoryTest extends TestCase
             ->expects('get_fees')
             ->andReturn([]);
 
-		$tax = Mockery::mock('alias:WC_Tax');
-		$tax->expects('get_rates')->andReturn([]);
 
         $result = $testee->from_wc_order($order);
         $this->assertCount(1, $result);
@@ -205,9 +189,6 @@ class ItemFactoryTest extends TestCase
         $product
             ->expects('is_virtual')
             ->andReturn(true);
-		$product
-			->expects('get_tax_class')
-			->andReturn('foo');
 
 	    expect('wp_strip_all_tags')
 		    ->with('description')
@@ -239,9 +220,6 @@ class ItemFactoryTest extends TestCase
             ->expects('get_fees')
             ->andReturn([]);
 
-		$tax = Mockery::mock('alias:WC_Tax');
-		$tax->expects('get_rates')->andReturn([]);
-
         $result = $testee->from_wc_order($order);
         $item = current($result);
         /**
@@ -266,9 +244,6 @@ class ItemFactoryTest extends TestCase
         $product
             ->expects('is_virtual')
             ->andReturn(true);
-		$product
-			->expects('get_tax_class')
-			->andReturn('foo');
 
 	    expect('wp_strip_all_tags')
 		    ->with($description)
@@ -299,9 +274,6 @@ class ItemFactoryTest extends TestCase
         $order
             ->expects('get_fees')
             ->andReturn([]);
-
-		$tax = Mockery::mock('alias:WC_Tax');
-		$tax->expects('get_rates')->andReturn([]);
 
         $result = $testee->from_wc_order($order);
         $item = current($result);
