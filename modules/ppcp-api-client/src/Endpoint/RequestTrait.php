@@ -90,6 +90,7 @@ trait RequestTrait {
 			if (
 				isset( $response['body'] )
 				&& isset( $response['response']['code'] )
+				&& ! in_array( $response['response']['code'], array( 200, 201, 202, 204 ), true )
 			) {
 				$output .= 'Response Body: ' . wc_print_r( $response['body'], true ) . "\n";
 			}
