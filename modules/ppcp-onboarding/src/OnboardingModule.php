@@ -96,6 +96,14 @@ class OnboardingModule implements ModuleInterface {
 			}
 		);
 
+		add_action(
+			'wc_ajax_ppc-pui',
+			static function () use ( $c ) {
+				$endpoint = $c->get( 'onboarding.endpoint.pui' );
+				$endpoint->handle_request();
+			}
+		);
+
 		// Initialize REST routes at the appropriate time.
 		$rest_controller = $c->get( 'onboarding.rest' );
 		add_action( 'rest_api_init', array( $rest_controller, 'register_routes' ) );

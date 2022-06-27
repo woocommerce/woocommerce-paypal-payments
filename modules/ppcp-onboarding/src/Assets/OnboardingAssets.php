@@ -145,6 +145,8 @@ class OnboardingAssets {
 			'error_messages'   => array(
 				'no_credentials' => __( 'API credentials must be entered to save the settings.', 'woocommerce-paypal-payments' ),
 			),
+			'pui_endpoint'     => \WC_AJAX::get_endpoint( 'ppc-pui' ),
+			'pui_nonce'        => wp_create_nonce( 'ppc-pui' ),
 		);
 	}
 

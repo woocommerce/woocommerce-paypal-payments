@@ -70,6 +70,38 @@ const ppcp_onboarding = {
 			},
 			1000
 		);
+
+		const onboard_pui = document.querySelector('#ppcp-onboarding-pui');
+		onboard_pui?.addEventListener('click', (event) => {
+            event.preventDefault();
+            buttons.forEach((element) => {
+                element.removeAttribute('href');
+            });
+
+            fetch(PayPalCommerceGatewayOnboarding.pui_endpoint, {
+                method: 'POST',
+                body: JSON.stringify({
+                    nonce: PayPalCommerceGatewayOnboarding.pui_nonce,
+                    checked: onboard_pui.checked
+                })
+            }).then((res)=>{
+                return res.json();
+            }).then((data)=>{
+                if (!data.success) {
+                    alert('Could not update signup buttons: ' + JSON.stringify(data));
+                    return;
+                }
+
+                buttons.forEach((element) => {
+                    for (let [key, value] of Object.entries(data.data.signup_links)) {
+                        key = 'connect-to' + key.replace(/-/g, '');
+                        if(key === element.id) {
+                            element.setAttribute('href', value);
+                        }
+                    }
+                });
+            });
+        })
 	},
 
 	loginSeller: function(env, authCode, sharedId) {

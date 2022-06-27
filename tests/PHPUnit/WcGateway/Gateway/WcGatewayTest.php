@@ -47,6 +47,7 @@ class WcGatewayTest extends TestCase
 	private $logger;
 	private $paymentsEndpoint;
 	private $orderEndpoint;
+	private $apiShopCountry;
 
 	public function setUp(): void {
 		parent::setUp();
@@ -70,6 +71,7 @@ class WcGatewayTest extends TestCase
 		$this->paymentsEndpoint = Mockery::mock(PaymentsEndpoint::class);
 		$this->orderEndpoint = Mockery::mock(OrderEndpoint::class);
 		$this->funding_source_renderer = new FundingSourceRenderer($this->settings);
+		$this->apiShopCountry = 'DE';
 
 		$this->onboardingState->shouldReceive('current_state')->andReturn(State::STATE_ONBOARDED);
 
@@ -102,7 +104,8 @@ class WcGatewayTest extends TestCase
 			$this->paymentTokenRepository,
 			$this->logger,
 			$this->paymentsEndpoint,
-			$this->orderEndpoint
+			$this->orderEndpoint,
+			$this->apiShopCountry
 		);
 	}
 
@@ -134,7 +137,6 @@ class WcGatewayTest extends TestCase
         expect('wc_get_order')
             ->with($orderId)
             ->andReturn($wcOrder);
-
 
         when('wc_get_checkout_url')
 		->justReturn('test');
