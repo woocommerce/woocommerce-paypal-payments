@@ -91,6 +91,10 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Fix - Free trial period causing incorrerct disable-funding parameters with DCC disabled #661 
 * Fix - Smart button not visible on single product page when product price is below 1 and decimal is "," #654 
 * Fix - Checkout using an email address containing a + symbol results in a "[INVALID_REQUEST]" error #523
+* Fix - Order details are sometimes empty in PayPal dashboard #689
+* Fix - Incorrect TAX details on PayPal order overview #541
+* Fix - Fatal error: Uncaught Error: Call to a member function get_name() on bool #622
+* Fix - DCC causes checkout continuation state after checkout validation error #695
 * Enhancement - Improve checkout validation & order creation #513
 
 = 1.8.1 =
