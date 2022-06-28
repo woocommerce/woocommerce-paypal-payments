@@ -31,17 +31,19 @@ const bootstrap = () => {
     const onSmartButtonClick = (data, actions) => {
         window.ppcpFundingSource = data.fundingSource;
 
-        // TODO: quick fix to get the error about empty form before attempting PayPal order
-        // it should solve #513 for most of the users, but proper solution should be implemented later.
-        const requiredFields = jQuery('form.woocommerce-checkout .validate-required:visible :input');
-        requiredFields.each((i, input) => {
-            jQuery(input).trigger('validate');
-        });
-        if (jQuery('form.woocommerce-checkout .woocommerce-invalid:visible').length) {
-            errorHandler.clear();
-            errorHandler.message(PayPalCommerceGateway.labels.error.js_validation);
+        if (PayPalCommerceGateway.basic_checkout_validation_enabled) {
+            // TODO: quick fix to get the error about empty form before attempting PayPal order
+            // it should solve #513 for most of the users, but proper solution should be implemented later.
+            const requiredFields = jQuery('form.woocommerce-checkout .validate-required:visible :input');
+            requiredFields.each((i, input) => {
+                jQuery(input).trigger('validate');
+            });
+            if (jQuery('form.woocommerce-checkout .woocommerce-invalid:visible').length) {
+                errorHandler.clear();
+                errorHandler.message(PayPalCommerceGateway.labels.error.js_validation);
 
-            return actions.reject();
+                return actions.reject();
+            }
         }
 
         const form = document.querySelector('form.woocommerce-checkout');
