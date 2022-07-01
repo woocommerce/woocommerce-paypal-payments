@@ -284,7 +284,7 @@ class WCGatewayModule implements ModuleInterface {
 					$methods[] = $container->get( 'wcgateway.credit-card-gateway' );
 				}
 
-				if ( 'DE' === $container->get( 'api.shop.country' ) ) {
+				if ( 'DE' === $container->get( 'api.shop.country' ) && 'EUR' === get_woocommerce_currency() ) {
 					$methods[] = $container->get( 'wcgateway.pay-upon-invoice-gateway' );
 				}
 
