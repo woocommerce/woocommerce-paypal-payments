@@ -886,7 +886,9 @@ class SmartButton implements SmartButtonInterface {
 	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException If a setting was not found.
 	 */
 	private function url(): string {
-		$intent = ( $this->settings->has( 'intent' ) ) ? $this->settings->get( 'intent' ) : 'capture';
+		$intent               = ( $this->settings->has( 'intent' ) ) ? $this->settings->get( 'intent' ) : 'capture';
+		$product_intent       = $this->subscription_helper->current_product_is_subscription() ? 'authorize' : $intent;
+		$other_context_intent = $this->subscription_helper->cart_contains_subscription() ? 'authorize' : $intent;
 
 		$params = array(
 			'client-id'        => $this->client_id,
@@ -895,9 +897,7 @@ class SmartButton implements SmartButtonInterface {
 			'components'       => implode( ',', $this->components() ),
 			'vault'            => $this->can_save_vault_token() ? 'true' : 'false',
 			'commit'           => is_checkout() ? 'true' : 'false',
-			'intent'           => ( $this->subscription_helper->cart_contains_subscription() || $this->subscription_helper->current_product_is_subscription() )
-				? 'authorize'
-				: $intent,
+			'intent'           => $this->context() === 'product' ? $product_intent : $other_context_intent,
 		);
 		if (
 			$this->environment->current_environment_is( Environment::SANDBOX )
