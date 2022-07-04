@@ -235,7 +235,7 @@ class PayUponInvoice {
 					$wc_order->save_meta_data();
 					$this->logger->info( "Ratepay payment instructions added to order #{$wc_order->get_id()}." );
 
-					$capture   = $this->capture_factory->from_paypal_response( $order );
+					$capture   = $this->capture_factory->from_paypal_response( $order->purchase_units[0]->payments->captures[0] );
 					$breakdown = $capture->seller_receivable_breakdown();
 					if ( $breakdown ) {
 						$wc_order->update_meta_data( PayPalGateway::FEES_META_KEY, $breakdown->to_array() );
