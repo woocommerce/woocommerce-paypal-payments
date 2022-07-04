@@ -2214,7 +2214,8 @@ return array(
 			$container->get( 'wcgateway.is-ppcp-settings-page' ),
 			$container->get( 'wcgateway.current-ppcp-settings-page-id' ),
 			$container->get( 'wcgateway.pay-upon-invoice-product-status' ),
-			$container->get( 'wcgateway.pay-upon-invoice-helper' )
+			$container->get( 'wcgateway.pay-upon-invoice-helper' ),
+			$container->get( 'api.factory.capture' )
 		);
 	},
 	'wcgateway.logging.is-enabled'                      => function ( ContainerInterface $container ) : bool {
