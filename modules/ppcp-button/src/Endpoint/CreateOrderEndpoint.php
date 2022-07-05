@@ -334,7 +334,8 @@ class CreateOrderEndpoint implements EndpointInterface {
 		$shipping_preference = $this->shipping_preference_factory->from_state(
 			$this->purchase_unit,
 			$this->parsed_request_data['context'],
-			WC()->cart
+			WC()->cart,
+			$this->parsed_request_data['funding_source'] ?? ''
 		);
 
 		try {
