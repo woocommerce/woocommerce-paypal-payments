@@ -103,7 +103,7 @@ class CheckoutHelper {
 	}
 
 	/**
-	 * Ensures product is ready for PUI.
+	 * Ensures product is neither downloadable nor virtual.
 	 *
 	 * @param WC_Product $product WC product.
 	 * @return bool

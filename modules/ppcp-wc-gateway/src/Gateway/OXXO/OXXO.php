@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO;
 
+use WC_Order;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CheckoutHelper;
 
 /**
@@ -48,6 +49,17 @@ class OXXO {
 
 				return $methods;
 			}
+		);
+
+		add_filter(
+			'woocommerce_thankyou_order_received_text',
+			function( string $message, WC_Order $order ) {
+				$payer_action = $order->get_meta( 'ppcp_oxxo_payer_action' ) ?? '';
+
+				return $message . ' ' . $payer_action;
+			},
+			10,
+			2
 		);
 	}
 

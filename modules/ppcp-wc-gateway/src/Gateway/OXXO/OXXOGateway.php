@@ -9,7 +9,12 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO;
 
+use Psr\Log\LoggerInterface;
 use WC_Payment_Gateway;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 
 /**
  * Class PayUponInvoiceGateway.
@@ -18,9 +23,38 @@ class OXXOGateway extends WC_Payment_Gateway {
 	const ID = 'ppcp-oxxo-gateway';
 
 	/**
-	 * OXXOGateway constructor.
+	 * The order endpoint.
+	 *
+	 * @var OrderEndpoint
 	 */
-	public function __construct() {
+	protected $order_endpoint;
+
+	/**
+	 * The purchase unit factory.
+	 *
+	 * @var PurchaseUnitFactory
+	 */
+	protected $purchase_unit_factory;
+
+	/**
+	 * The logger.
+	 *
+	 * @var LoggerInterface
+	 */
+	protected $logger;
+
+	/**
+	 * OXXOGateway constructor.
+	 *
+	 * @param OrderEndpoint       $order_endpoint The order endpoint.
+	 * @param PurchaseUnitFactory $purchase_unit_factory The purchase unit factory.
+	 * @param LoggerInterface     $logger The logger.
+	 */
+	public function __construct(
+		OrderEndpoint $order_endpoint,
+		PurchaseUnitFactory $purchase_unit_factory,
+		LoggerInterface $logger
+	) {
 		 $this->id = self::ID;
 
 		$this->method_title       = __( 'OXXO', 'woocommerce-paypal-payments' );
@@ -40,6 +74,10 @@ class OXXOGateway extends WC_Payment_Gateway {
 				'process_admin_options',
 			)
 		);
+
+		$this->order_endpoint        = $order_endpoint;
+		$this->purchase_unit_factory = $purchase_unit_factory;
+		$this->logger                = $logger;
 	}
 
 	/**
@@ -69,6 +107,65 @@ class OXXOGateway extends WC_Payment_Gateway {
 				'desc_tip'    => true,
 				'description' => __( 'This controls the description which the user sees during checkout.', 'woocommerce-paypal-payments' ),
 			),
+		);
+	}
+
+	/**
+	 * Processes the order.
+	 *
+	 * @param int $order_id The WC order ID.
+	 * @return array
+	 */
+	public function process_payment( $order_id ) {
+		$wc_order = wc_get_order( $order_id );
+		$wc_order->update_status( 'on-hold', __( 'Awaiting OXXO payment.', 'woocommerce-paypal-payments' ) );
+
+		$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
+
+		try {
+			$order          = $this->order_endpoint->create( array( $purchase_unit ) );
+			$payment_method = $this->order_endpoint->confirm_payment_source( $order->id() );
+
+			foreach ( $payment_method->links as $link ) {
+				if ( $link->rel === 'payer-action' ) {
+					$wc_order->add_meta_data( 'ppcp_oxxo_payer_action', $link->href );
+					$wc_order->save_meta_data();
+				}
+			}
+		} catch ( RuntimeException $exception ) {
+			$error = $exception->getMessage();
+
+			if ( is_a( $exception, PayPalApiException::class ) && is_array( $exception->details() ) ) {
+				$details = '';
+				foreach ( $exception->details() as $detail ) {
+					$issue       = $detail->issue ?? '';
+					$field       = $detail->field ?? '';
+					$description = $detail->description ?? '';
+					$details    .= $issue . ' ' . $field . ' ' . $description . '<br>';
+				}
+
+				$error = $details;
+			}
+
+			$this->logger->error( $error );
+			wc_add_notice( $error, 'error' );
+
+			$wc_order->update_status(
+				'failed',
+				$error
+			);
+
+			return array(
+				'result'   => 'failure',
+				'redirect' => wc_get_checkout_url(),
+			);
+		}
+
+		WC()->cart->empty_cart();
+
+		return array(
+			'result'   => 'success',
+			'redirect' => $this->get_return_url( $wc_order ),
 		);
 	}
 }

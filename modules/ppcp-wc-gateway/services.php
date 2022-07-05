@@ -2233,7 +2233,11 @@ return array(
 		);
 	},
 	'wcgateway.oxxo-gateway'                            => static function( ContainerInterface $container ): OXXOGateway {
-		return new OXXOGateway();
+		return new OXXOGateway(
+			$container->get( 'api.endpoint.order' ),
+			$container->get( 'api.factory.purchase-unit' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
 	},
 	'wcgateway.logging.is-enabled'                      => function ( ContainerInterface $container ) : bool {
 		$settings = $container->get( 'wcgateway.settings' );

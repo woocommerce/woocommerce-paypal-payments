@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 
+use stdClass;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\AuthorizationStatus;
@@ -28,6 +29,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
+use WP_Error;
 
 /**
  * Class OrderEndpoint
@@ -597,6 +599,57 @@ class OrderEndpoint {
 
 		$new_order = $this->order( $order_to_update->id() );
 		return $new_order;
+	}
+
+	/**
+	 * Confirms payment source.
+	 *
+	 * @param string $id The PayPal order ID.
+	 * @return stdClass
+	 * @throws PayPalApiException If the request fails.
+	 * @throws RuntimeException If something unexpected happens.
+	 */
+	public function confirm_payment_source( string $id ): stdClass {
+		$bearer = $this->bearer->bearer();
+		$url    = trailingslashit( $this->host ) . 'v2/checkout/orders/' . $id . '/confirm-payment-source';
+
+		$data = array(
+			'payment_source'         => array(
+				'oxxo' => array(
+					'name'         => 'jhon Doe',
+					'email'        => 'jhon@example.com',
+					'country_code' => 'MX',
+					'expiry_date'  => '2022-07-06',
+				),
+			),
+			'processing_instruction' => 'ORDER_COMPLETE_ON_PAYMENT_APPROVAL',
+			'application_context'    => array(
+				'locale' => 'es-MX',
+			),
+		);
+
+		$args = array(
+			'method'  => 'POST',
+			'headers' => array(
+				'Authorization' => 'Bearer ' . $bearer->token(),
+				'Content-Type'  => 'application/json',
+				'Prefer'        => 'return=representation',
+			),
+			'body'    => wp_json_encode( $data ),
+		);
+
+		$response = $this->request( $url, $args );
+		if ( $response instanceof WP_Error ) {
+			throw new RuntimeException( $response->get_error_message() );
+		}
+
+		$json        = json_decode( $response['body'] );
+		$status_code = (int) wp_remote_retrieve_response_code( $response );
+		if ( 200 !== $status_code ) {
+			throw new PayPalApiException( $json, $status_code );
+		}
+
+		return $json;
 	}
 
 	/**
