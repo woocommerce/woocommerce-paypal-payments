@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -119,6 +120,13 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	protected $payment_token_repository;
 
 	/**
+	 * The shipping_preference factory.
+	 *
+	 * @var ShippingPreferenceFactory
+	 */
+	private $shipping_preference_factory;
+
+	/**
 	 * The payments endpoint
 	 *
 	 * @var PaymentsEndpoint
@@ -183,6 +191,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @param string                      $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
 	 * @param Environment                 $environment The environment.
 	 * @param PaymentTokenRepository      $payment_token_repository The payment token repository.
+	 * @param ShippingPreferenceFactory   $shipping_preference_factory The shipping_preference factory.
 	 * @param LoggerInterface             $logger  The logger.
 	 * @param PaymentsEndpoint            $payments_endpoint The payments endpoint.
 	 * @param OrderEndpoint               $order_endpoint The order endpoint.
@@ -202,6 +211,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		string $page_id,
 		Environment $environment,
 		PaymentTokenRepository $payment_token_repository,
+		ShippingPreferenceFactory $shipping_preference_factory,
 		LoggerInterface $logger,
 		PaymentsEndpoint $payments_endpoint,
 		OrderEndpoint $order_endpoint,
@@ -223,6 +233,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->id                            = self::ID;
 		$this->order_processor               = $order_processor;
 		$this->authorized_payments           = $authorized_payments_processor;
+		$this->shipping_preference_factory   = $shipping_preference_factory;
 		$this->settings_renderer             = $settings_renderer;
 		$this->config                        = $config;
 		$this->session_handler               = $session_handler;

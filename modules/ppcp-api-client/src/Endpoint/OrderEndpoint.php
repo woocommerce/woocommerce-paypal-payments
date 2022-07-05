@@ -163,57 +163,23 @@ class OrderEndpoint {
 	 * Creates an order.
 	 *
 	 * @param PurchaseUnit[]     $items The purchase unit items for the order.
+	 * @param string             $shipping_preference One of ApplicationContext::SHIPPING_PREFERENCE_ values.
 	 * @param Payer|null         $payer The payer off the order.
 	 * @param PaymentToken|null  $payment_token The payment token.
 	 * @param PaymentMethod|null $payment_method The payment method.
 	 * @param string             $paypal_request_id The paypal request id.
-	 * @param bool               $shipping_address_is_fixed Whether the shipping address is changeable or not.
 	 *
 	 * @return Order
 	 * @throws RuntimeException If the request fails.
 	 */
 	public function create(
 		array $items,
+		string $shipping_preference,
 		Payer $payer = null,
 		PaymentToken $payment_token = null,
 		PaymentMethod $payment_method = null,
-		string $paypal_request_id = '',
-		bool $shipping_address_is_fixed = false
+		string $paypal_request_id = ''
 	): Order {
-
-		$contains_physical_goods = false;
-		$items                   = array_filter(
-			$items,
-			static function ( $item ) use ( &$contains_physical_goods ): bool {
-				$is_purchase_unit = is_a( $item, PurchaseUnit::class );
-				/**
-				 * A purchase unit.
-				 *
-				 * @var PurchaseUnit $item
-				 */
-				if ( $is_purchase_unit && $item->contains_physical_goods() ) {
-					$contains_physical_goods = true;
-				}
-
-				return $is_purchase_unit;
-			}
-		);
-
-		$shipping_preference = ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING;
-		if ( $contains_physical_goods ) {
-			if ( $shipping_address_is_fixed ) {
-				// Checkout + no address given? Probably something weird happened, like no form validation?
-				// Also note that $items currently always seems to be an array with one item.
-				if ( $this->has_items_without_shipping( $items ) ) {
-					$shipping_preference = ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING;
-				} else {
-					$shipping_preference = ApplicationContext::SHIPPING_PREFERENCE_SET_PROVIDED_ADDRESS;
-				}
-			} else {
-				$shipping_preference = ApplicationContext::SHIPPING_PREFERENCE_GET_FROM_FILE;
-			}
-		}
-
 		$bearer = $this->bearer->bearer();
 		$data   = array(
 			'intent'              => ( $this->subscription_helper->cart_contains_subscription() || $this->subscription_helper->current_product_is_subscription() ) ? 'AUTHORIZE' : $this->intent,
@@ -597,21 +563,5 @@ class OrderEndpoint {
 
 		$new_order = $this->order( $order_to_update->id() );
 		return $new_order;
-	}
-
-	/**
-	 * Checks if there is at least one item without shipping.
-	 *
-	 * @param PurchaseUnit[] $items The items.
-	 * @return bool Whether items contains shipping or not.
-	 */
-	private function has_items_without_shipping( array $items ): bool {
-		foreach ( $items as $item ) {
-			if ( ! $item->shipping() ) {
-				return true;
-			}
-		}
-
-		return false;
 	}
 }
