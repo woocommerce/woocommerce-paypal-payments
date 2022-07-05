@@ -231,6 +231,8 @@ class WCGatewayModule implements ModuleInterface {
 				if ( 'DE' === $c->get( 'api.shop.country' ) && 'EUR' === get_woocommerce_currency() ) {
 					( $c->get( 'wcgateway.pay-upon-invoice' ) )->init();
 				}
+
+				( $c->get( 'wcgateway.oxxo' ) )->init();
 			}
 		);
 
@@ -287,6 +289,8 @@ class WCGatewayModule implements ModuleInterface {
 				if ( 'DE' === $container->get( 'api.shop.country' ) ) {
 					$methods[] = $container->get( 'wcgateway.pay-upon-invoice-gateway' );
 				}
+
+				$methods[] = $container->get( 'wcgateway.oxxo-gateway' );
 
 				return (array) $methods;
 			}

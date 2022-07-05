@@ -1,0 +1,75 @@
+<?php
+/**
+ * OXXO integration.
+ *
+ * @package WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO
+ */
+
+declare(strict_types=1);
+
+namespace WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO;
+
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CheckoutHelper;
+
+/**
+ * Class OXXO.
+ */
+class OXXO {
+
+	/**
+	 * The checkout helper.
+	 *
+	 * @var CheckoutHelper
+	 */
+	protected $checkout_helper;
+
+	/**
+	 * OXXO constructor.
+	 *
+	 * @param CheckoutHelper $checkout_helper The checkout helper.
+	 */
+	public function __construct( CheckoutHelper $checkout_helper ) {
+
+		$this->checkout_helper = $checkout_helper;
+	}
+
+	/**
+	 * Initializes OXXO integration.
+	 */
+	public function init() {
+
+		add_filter(
+			'woocommerce_available_payment_gateways',
+			function ( array $methods ): array {
+
+				if ( ! $this->checkout_allowed_for_oxxo() ) {
+					unset( $methods[ OXXOGateway::ID ] );
+				}
+
+				return $methods;
+			}
+		);
+	}
+
+	/**
+	 * Checks if checkout is allowed for OXXO.
+	 *
+	 * @return bool
+	 */
+	private function checkout_allowed_for_oxxo(): bool {
+		if ( 'MXN' !== get_woocommerce_currency() ) {
+			return false;
+		}
+
+		$billing_country = filter_input( INPUT_POST, 'country', FILTER_SANITIZE_STRING ) ?? null;
+		if ( $billing_country && 'MX' !== $billing_country ) {
+			return false;
+		}
+
+		if ( ! $this->checkout_helper->is_checkout_amount_allowed( 0, 10000 ) ) {
+			return false;
+		}
+
+		return true;
+	}
+}

@@ -20,6 +20,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CheckoutHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
 
@@ -82,6 +83,13 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	protected $pui_helper;
 
 	/**
+	 * The checkout helper.
+	 *
+	 * @var CheckoutHelper
+	 */
+	protected $checkout_helper;
+
+	/**
 	 * PayUponInvoiceGateway constructor.
 	 *
 	 * @param PayUponInvoiceOrderEndpoint $order_endpoint The order endpoint.
@@ -91,6 +99,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	 * @param TransactionUrlProvider      $transaction_url_provider The transaction URL provider.
 	 * @param LoggerInterface             $logger The logger.
 	 * @param PayUponInvoiceHelper        $pui_helper The PUI helper.
+	 * @param CheckoutHelper              $checkout_helper The checkout helper.
 	 */
 	public function __construct(
 		PayUponInvoiceOrderEndpoint $order_endpoint,
@@ -99,7 +108,8 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 		Environment $environment,
 		TransactionUrlProvider $transaction_url_provider,
 		LoggerInterface $logger,
-		PayUponInvoiceHelper $pui_helper
+		PayUponInvoiceHelper $pui_helper,
+		CheckoutHelper $checkout_helper
 	) {
 		$this->id = self::ID;
 
@@ -128,6 +138,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 		$this->environment              = $environment;
 		$this->transaction_url_provider = $transaction_url_provider;
 		$this->pui_helper               = $pui_helper;
+		$this->checkout_helper          = $checkout_helper;
 	}
 
 	/**
@@ -198,7 +209,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 
 		$pay_for_order = filter_input( INPUT_GET, 'pay_for_order', FILTER_SANITIZE_STRING );
 		if ( 'true' === $pay_for_order ) {
-			if ( ! $this->pui_helper->validate_birth_date( $birth_date ) ) {
+			if ( ! $this->checkout_helper->validate_birth_date( $birth_date ) ) {
 				wc_add_notice( 'Invalid birth date.', 'error' );
 				return array(
 					'result' => 'failure',
