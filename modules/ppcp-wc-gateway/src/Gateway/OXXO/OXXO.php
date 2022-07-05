@@ -36,7 +36,7 @@ class OXXO {
 	/**
 	 * Initializes OXXO integration.
 	 */
-	public function init() {
+	public function init(): void {
 
 		add_filter(
 			'woocommerce_available_payment_gateways',
