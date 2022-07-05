@@ -124,7 +124,14 @@ class OXXOGateway extends WC_Payment_Gateway {
 
 		try {
 			$order          = $this->order_endpoint->create( array( $purchase_unit ) );
-			$payment_method = $this->order_endpoint->confirm_payment_source( $order->id() );
+			$payment_source = array(
+				'oxxo' => array(
+					'name'         => $wc_order->get_billing_first_name() . ' ' . $wc_order->get_billing_last_name(),
+					'email'        => $wc_order->get_billing_email(),
+					'country_code' => $wc_order->get_billing_country(),
+				),
+			);
+			$payment_method = $this->order_endpoint->confirm_payment_source( $order->id(), $payment_source );
 
 			foreach ( $payment_method->links as $link ) {
 				if ( $link->rel === 'payer-action' ) {

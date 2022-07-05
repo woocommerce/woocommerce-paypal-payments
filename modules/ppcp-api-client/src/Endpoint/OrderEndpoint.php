@@ -605,23 +605,17 @@ class OrderEndpoint {
 	 * Confirms payment source.
 	 *
 	 * @param string $id The PayPal order ID.
+	 * @param array  $payment_source The payment source.
 	 * @return stdClass
 	 * @throws PayPalApiException If the request fails.
 	 * @throws RuntimeException If something unexpected happens.
 	 */
-	public function confirm_payment_source( string $id ): stdClass {
+	public function confirm_payment_source( string $id, array $payment_source ): stdClass {
 		$bearer = $this->bearer->bearer();
 		$url    = trailingslashit( $this->host ) . 'v2/checkout/orders/' . $id . '/confirm-payment-source';
 
 		$data = array(
-			'payment_source'         => array(
-				'oxxo' => array(
-					'name'         => 'jhon Doe',
-					'email'        => 'jhon@example.com',
-					'country_code' => 'MX',
-					'expiry_date'  => '2022-07-06',
-				),
-			),
+			'payment_source'         => $payment_source,
 			'processing_instruction' => 'ORDER_COMPLETE_ON_PAYMENT_APPROVAL',
 			'application_context'    => array(
 				'locale' => 'es-MX',
