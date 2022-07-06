@@ -119,7 +119,6 @@ class OXXOGateway extends WC_Payment_Gateway {
 	public function process_payment( $order_id ) {
 		$wc_order = wc_get_order( $order_id );
 		$wc_order->update_status( 'on-hold', __( 'Awaiting OXXO payment.', 'woocommerce-paypal-payments' ) );
-
 		$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
 
 		try {
@@ -132,7 +131,6 @@ class OXXOGateway extends WC_Payment_Gateway {
 				),
 			);
 			$payment_method = $this->order_endpoint->confirm_payment_source( $order->id(), $payment_source );
-
 			foreach ( $payment_method->links as $link ) {
 				if ( $link->rel === 'payer-action' ) {
 					$wc_order->add_meta_data( 'ppcp_oxxo_payer_action', $link->href );

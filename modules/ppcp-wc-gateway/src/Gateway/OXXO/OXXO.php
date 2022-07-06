@@ -56,7 +56,12 @@ class OXXO {
 			function( string $message, WC_Order $order ) {
 				$payer_action = $order->get_meta( 'ppcp_oxxo_payer_action' ) ?? '';
 
-				return $message . ' ' . $payer_action;
+				$button = '';
+				if ( $payer_action ) {
+					$button = '<p><a class="button" href="' . $payer_action . '" target="_blank">See OXXO Voucher/Ticket</a></p>';
+				}
+
+				return $message . ' ' . $button;
 			},
 			10,
 			2

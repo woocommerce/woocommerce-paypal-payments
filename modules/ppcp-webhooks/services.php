@@ -20,6 +20,7 @@ use WooCommerce\PayPalCommerce\Webhooks\Endpoint\SimulationStateEndpoint;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\CheckoutOrderApproved;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\CheckoutOrderCompleted;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureCompleted;
+use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCapturePending;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureRefunded;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureReversed;
 use Psr\Container\ContainerInterface;
@@ -78,6 +79,7 @@ return array(
 			new PaymentCaptureCompleted( $logger, $prefix, $order_endpoint ),
 			new VaultPaymentTokenCreated( $logger, $prefix, $authorized_payments_processor ),
 			new VaultCreditCardCreated( $logger, $prefix ),
+			new PaymentCapturePending( $logger ),
 		);
 	},
 
