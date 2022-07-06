@@ -63,6 +63,7 @@ class PaymentCapturePending implements RequestHandler {
 	 * @return WP_REST_Response
 	 */
 	public function handle_request( \WP_REST_Request $request ): WP_REST_Response {
+		$response = array( 'success' => false );
 		$resource = $request['resource'];
 		if ( ! is_array( $resource ) ) {
 			$message = 'Resource data not found in webhook request.';
@@ -71,7 +72,7 @@ class PaymentCapturePending implements RequestHandler {
 			return new WP_REST_Response( $response );
 		}
 
-		$this->logger->info( wc_print_r( $resource, true ) );
+		$this->logger->info( (string) wc_print_r( $resource, true ) );
 
 		$response['success'] = true;
 		return new WP_REST_Response( $response );
