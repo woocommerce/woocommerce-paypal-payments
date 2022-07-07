@@ -334,6 +334,25 @@ class PurchaseUnitTest extends TestCase
 				],
 			]),
 		];
+
+		yield 'no decimals currency' => [
+			[
+				'currency' => 'JPY',
+				'items' => [
+					['price' => 18.0, 'quantity' => 2],
+				],
+				'shipping' => ['total' => 5.0],
+				'billing' => ['city' => 'city2'],
+			],
+			self::adaptAmountFormat([
+				'value' => 66,
+				'breakdown' => [
+					'item_total' => 36,
+					'tax_total' => 25, // 24.60
+					'shipping' => 5,
+				],
+			], 'JPY'),
+		];
 	}
 
 	public function cartData() {
