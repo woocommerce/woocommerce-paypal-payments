@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Entity;
 
+use WooCommerce\PayPalCommerce\ApiClient\Helper\MoneyFormatter;
+
 /**
  * Class Money
  */
@@ -29,11 +31,11 @@ class Money {
 	private $value;
 
 	/**
-	 * Currencies that does not support decimals.
+	 * The MoneyFormatter.
 	 *
-	 * @var array
+	 * @var MoneyFormatter
 	 */
-	private $currencies_without_decimals = array( 'HUF', 'JPY', 'TWD' );
+	private $money_formatter;
 
 	/**
 	 * Money constructor.
@@ -44,6 +46,8 @@ class Money {
 	public function __construct( float $value, string $currency_code ) {
 		$this->value         = $value;
 		$this->currency_code = $currency_code;
+
+		$this->money_formatter = new MoneyFormatter();
 	}
 
 	/**
@@ -53,6 +57,15 @@ class Money {
 	 */
 	public function value(): float {
 		return $this->value;
+	}
+
+	/**
+	 * The value formatted as string for API requests.
+	 *
+	 * @return string
+	 */
+	public function value_str(): string {
+		return $this->money_formatter->format( $this->value, $this->currency_code );
 	}
 
 	/**
@@ -72,9 +85,7 @@ class Money {
 	public function to_array(): array {
 		return array(
 			'currency_code' => $this->currency_code(),
-			'value'         => in_array( $this->currency_code(), $this->currencies_without_decimals, true )
-				? round( $this->value(), 0 )
-				: number_format( $this->value(), 2, '.', '' ),
+			'value'         => $this->value_str(),
 		);
 	}
 }
