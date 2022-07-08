@@ -31,6 +31,7 @@ return array(
 			$repository,
 			$endpoint,
 			$purchase_unit_factory,
+			$container->get( 'api.factory.shipping-preference' ),
 			$payer_factory,
 			$environment,
 			$settings,

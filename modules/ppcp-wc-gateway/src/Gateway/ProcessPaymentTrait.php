@@ -82,9 +82,16 @@ trait ProcessPaymentTrait {
 
 			$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
 			$payer         = $this->payer_factory->from_customer( $customer );
+
+			$shipping_preference = $this->shipping_preference_factory->from_state(
+				$purchase_unit,
+				''
+			);
+
 			try {
 				$order = $this->order_endpoint->create(
 					array( $purchase_unit ),
+					$shipping_preference,
 					$payer,
 					$selected_token
 				);

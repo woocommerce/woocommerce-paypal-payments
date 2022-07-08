@@ -66,7 +66,7 @@ class SectionsRenderer {
 		$sections = array(
 			PayPalGateway::ID         => __( 'PayPal Checkout', 'woocommerce-paypal-payments' ),
 			CreditCardGateway::ID     => __( 'PayPal Card Processing', 'woocommerce-paypal-payments' ),
-			PayUponInvoiceGateway::ID => __( 'Pay Upon Invoice', 'woocommerce-paypal-payments' ),
+			PayUponInvoiceGateway::ID => __( 'Pay upon Invoice', 'woocommerce-paypal-payments' ),
 			WebhooksStatusPage::ID    => __( 'Webhooks Status', 'woocommerce-paypal-payments' ),
 		);
 

@@ -87,6 +87,7 @@ return array(
 			$page_id,
 			$environment,
 			$payment_token_repository,
+			$container->get( 'api.factory.shipping-preference' ),
 			$logger,
 			$payments_endpoint,
 			$order_endpoint,
@@ -123,6 +124,7 @@ return array(
 			$transaction_url_provider,
 			$payment_token_repository,
 			$purchase_unit_factory,
+			$container->get( 'api.factory.shipping-preference' ),
 			$payer_factory,
 			$order_endpoint,
 			$subscription_helper,
@@ -2214,7 +2216,8 @@ return array(
 			$container->get( 'wcgateway.is-ppcp-settings-page' ),
 			$container->get( 'wcgateway.current-ppcp-settings-page-id' ),
 			$container->get( 'wcgateway.pay-upon-invoice-product-status' ),
-			$container->get( 'wcgateway.pay-upon-invoice-helper' )
+			$container->get( 'wcgateway.pay-upon-invoice-helper' ),
+			$container->get( 'api.factory.capture' )
 		);
 	},
 	'wcgateway.logging.is-enabled'                      => function ( ContainerInterface $container ) : bool {

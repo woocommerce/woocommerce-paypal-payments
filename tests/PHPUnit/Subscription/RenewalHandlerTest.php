@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\TestCase;
 use Mockery;
@@ -33,6 +34,7 @@ class RenewalHandlerTest extends TestCase
 	private $repository;
 	private $orderEndpoint;
 	private $purchaseUnitFactory;
+	private $shippingPreferenceFactory;
 	private $payerFactory;
 	private $environment;
 	private $sut;
@@ -45,6 +47,7 @@ class RenewalHandlerTest extends TestCase
 		$this->repository = Mockery::mock(PaymentTokenRepository::class);
 		$this->orderEndpoint = Mockery::mock(OrderEndpoint::class);
 		$this->purchaseUnitFactory = Mockery::mock(PurchaseUnitFactory::class);
+		$this->shippingPreferenceFactory = Mockery::mock(ShippingPreferenceFactory::class);
 		$this->payerFactory = Mockery::mock(PayerFactory::class);
 		$this->environment = new Environment(new Dictionary([]));
         $authorizedPaymentProcessor = Mockery::mock(AuthorizedPaymentsProcessor::class);
@@ -63,6 +66,7 @@ class RenewalHandlerTest extends TestCase
 			$this->repository,
 			$this->orderEndpoint,
 			$this->purchaseUnitFactory,
+			$this->shippingPreferenceFactory,
 			$this->payerFactory,
 			$this->environment,
             $settings,
@@ -142,8 +146,12 @@ class RenewalHandlerTest extends TestCase
 		$this->payerFactory->shouldReceive('from_customer')
 			->andReturn($payer);
 
+		$this->shippingPreferenceFactory->shouldReceive('from_state')
+			->with($purchaseUnit, 'renewal')
+			->andReturn('no_shipping');
+
 		$this->orderEndpoint->shouldReceive('create')
-			->with([$purchaseUnit], $payer, $token)
+			->with([$purchaseUnit], 'no_shipping', $payer, $token)
 			->andReturn($order);
 
 		$wcOrder->shouldReceive('update_status');

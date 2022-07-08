@@ -13,7 +13,7 @@ use Exception;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
-use WooCommerce\PayPalCommerce\ApiClient\Repository\CartRepository;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 
 /**
@@ -46,11 +46,11 @@ class ChangeCartEndpoint implements EndpointInterface {
 	private $request_data;
 
 	/**
-	 * Contains purchase units based off the current WC cart.
+	 * The PurchaseUnit factory.
 	 *
-	 * @var CartRepository
+	 * @var PurchaseUnitFactory
 	 */
-	private $repository;
+	private $purchase_unit_factory;
 
 	/**
 	 * The product data store.
@@ -69,28 +69,28 @@ class ChangeCartEndpoint implements EndpointInterface {
 	/**
 	 * ChangeCartEndpoint constructor.
 	 *
-	 * @param \WC_Cart        $cart The current WC cart object.
-	 * @param \WC_Shipping    $shipping The current WC shipping object.
-	 * @param RequestData     $request_data The request data helper.
-	 * @param CartRepository  $repository The repository for the current purchase items.
-	 * @param \WC_Data_Store  $product_data_store The data store for products.
-	 * @param LoggerInterface $logger The logger.
+	 * @param \WC_Cart            $cart The current WC cart object.
+	 * @param \WC_Shipping        $shipping The current WC shipping object.
+	 * @param RequestData         $request_data The request data helper.
+	 * @param PurchaseUnitFactory $purchase_unit_factory The PurchaseUnit factory.
+	 * @param \WC_Data_Store      $product_data_store The data store for products.
+	 * @param LoggerInterface     $logger The logger.
 	 */
 	public function __construct(
 		\WC_Cart $cart,
 		\WC_Shipping $shipping,
 		RequestData $request_data,
-		CartRepository $repository,
+		PurchaseUnitFactory $purchase_unit_factory,
 		\WC_Data_Store $product_data_store,
 		LoggerInterface $logger
 	) {
 
-		$this->cart               = $cart;
-		$this->shipping           = $shipping;
-		$this->request_data       = $request_data;
-		$this->repository         = $repository;
-		$this->product_data_store = $product_data_store;
-		$this->logger             = $logger;
+		$this->cart                  = $cart;
+		$this->shipping              = $shipping;
+		$this->request_data          = $request_data;
+		$this->purchase_unit_factory = $purchase_unit_factory;
+		$this->product_data_store    = $product_data_store;
+		$this->logger                = $logger;
 	}
 
 	/**
@@ -292,11 +292,7 @@ class ChangeCartEndpoint implements EndpointInterface {
 	 * @return array
 	 */
 	private function generate_purchase_units(): array {
-		return array_map(
-			static function ( PurchaseUnit $line_item ): array {
-				return $line_item->to_array();
-			},
-			$this->repository->all()
-		);
+		$pu = $this->purchase_unit_factory->from_wc_cart();
+		return array( $pu->to_array() );
 	}
 }

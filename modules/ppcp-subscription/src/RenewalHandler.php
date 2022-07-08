@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use Psr\Log\LoggerInterface;
@@ -62,6 +63,13 @@ class RenewalHandler {
 	private $purchase_unit_factory;
 
 	/**
+	 * The shipping_preference factory.
+	 *
+	 * @var ShippingPreferenceFactory
+	 */
+	private $shipping_preference_factory;
+
+	/**
 	 * The payer factory.
 	 *
 	 * @var PayerFactory
@@ -92,12 +100,13 @@ class RenewalHandler {
 	/**
 	 * RenewalHandler constructor.
 	 *
-	 * @param LoggerInterface             $logger The logger.
-	 * @param PaymentTokenRepository      $repository The payment token repository.
-	 * @param OrderEndpoint               $order_endpoint The order endpoint.
-	 * @param PurchaseUnitFactory         $purchase_unit_factory The purchase unit factory.
-	 * @param PayerFactory                $payer_factory The payer factory.
-	 * @param Environment                 $environment The environment.
+	 * @param LoggerInterface           $logger The logger.
+	 * @param PaymentTokenRepository    $repository The payment token repository.
+	 * @param OrderEndpoint             $order_endpoint The order endpoint.
+	 * @param PurchaseUnitFactory       $purchase_unit_factory The purchase unit factory.
+	 * @param ShippingPreferenceFactory $shipping_preference_factory The shipping_preference factory.
+	 * @param PayerFactory              $payer_factory The payer factory.
+	 * @param Environment               $environment The environment.
 	 * @param Settings                    $settings The Settings.
 	 * @param AuthorizedPaymentsProcessor $authorized_payments_processor The Authorized Payments Processor.
 	 */
@@ -106,6 +115,7 @@ class RenewalHandler {
 		PaymentTokenRepository $repository,
 		OrderEndpoint $order_endpoint,
 		PurchaseUnitFactory $purchase_unit_factory,
+		ShippingPreferenceFactory $shipping_preference_factory,
 		PayerFactory $payer_factory,
 		Environment $environment,
 		Settings $settings,
@@ -116,6 +126,7 @@ class RenewalHandler {
 		$this->repository                    = $repository;
 		$this->order_endpoint                = $order_endpoint;
 		$this->purchase_unit_factory         = $purchase_unit_factory;
+        $this->shipping_preference_factory   = $shipping_preference_factory;
 		$this->payer_factory                 = $payer_factory;
 		$this->environment                   = $environment;
 		$this->settings                      = $settings;
@@ -164,11 +175,16 @@ class RenewalHandler {
 		if ( ! $token ) {
 			return;
 		}
-		$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
-		$payer         = $this->payer_factory->from_customer( $customer );
+		$purchase_unit       = $this->purchase_unit_factory->from_wc_order( $wc_order );
+		$payer               = $this->payer_factory->from_customer( $customer );
+		$shipping_preference = $this->shipping_preference_factory->from_state(
+			$purchase_unit,
+			'renewal'
+		);
 
 		$order = $this->order_endpoint->create(
 			array( $purchase_unit ),
+			$shipping_preference,
 			$payer,
 			$token
 		);
