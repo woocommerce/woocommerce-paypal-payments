@@ -88,7 +88,9 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Fix - Pay Later messaging displayed for out of stock variable products or with no variation selected #667
 * Fix - Placeholders and card type detection not working for PayPal Card Processing (260) #685
 * Fix - PUI gateway is displayed with unsupported store currency #711 
-* Enhancement - Missing PayPal fee in WC order details for PUI purchase #714 
+* Enhancement - Missing PayPal fee in WC order details for PUI purchase #714
+* Enhancement - Skip loading of PUI js file on all pages where PUI gateway is not displayed #723
+* Enhancement - PUI feature capitalization not consistent #724 
 
 = 1.9.0 =
 * Add - New Feature - Pay Upon Invoice (Germany only) #608
