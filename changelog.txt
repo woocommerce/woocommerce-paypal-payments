@@ -1,5 +1,14 @@
 *** Changelog ***
 
+= 1.9.1 - TBD =
+* Fix - ITEM_TOTAL_MISMATCH error when checking out with multiple products #721
+* Fix - Unable to purchase a product with Credit card button in pay for order page #718
+* Fix - Pay Later messaging only displayed when smart button is active on the same page #283
+* Fix - Pay Later messaging displayed for out of stock variable products or with no variation selected #667
+* Fix - Placeholders and card type detection not working for PayPal Card Processing (260) #685
+* Fix - PUI gateway is displayed with unsupported store currency #711 
+* Enhancement - Missing PayPal fee in WC order details for PUI purchase #714 
+
 = 1.9.0 - 2022-07-04 =
 * Add - New Feature - Pay Upon Invoice (Germany only) #608
 * Fix - Order not approved: payment via vaulted PayPal account fails #677
