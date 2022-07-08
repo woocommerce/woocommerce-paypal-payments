@@ -100,13 +100,13 @@ class RenewalHandler {
 	/**
 	 * RenewalHandler constructor.
 	 *
-	 * @param LoggerInterface           $logger The logger.
-	 * @param PaymentTokenRepository    $repository The payment token repository.
-	 * @param OrderEndpoint             $order_endpoint The order endpoint.
-	 * @param PurchaseUnitFactory       $purchase_unit_factory The purchase unit factory.
-	 * @param ShippingPreferenceFactory $shipping_preference_factory The shipping_preference factory.
-	 * @param PayerFactory              $payer_factory The payer factory.
-	 * @param Environment               $environment The environment.
+	 * @param LoggerInterface             $logger The logger.
+	 * @param PaymentTokenRepository      $repository The payment token repository.
+	 * @param OrderEndpoint               $order_endpoint The order endpoint.
+	 * @param PurchaseUnitFactory         $purchase_unit_factory The purchase unit factory.
+	 * @param ShippingPreferenceFactory   $shipping_preference_factory The shipping_preference factory.
+	 * @param PayerFactory                $payer_factory The payer factory.
+	 * @param Environment                 $environment The environment.
 	 * @param Settings                    $settings The Settings.
 	 * @param AuthorizedPaymentsProcessor $authorized_payments_processor The Authorized Payments Processor.
 	 */
@@ -126,7 +126,7 @@ class RenewalHandler {
 		$this->repository                    = $repository;
 		$this->order_endpoint                = $order_endpoint;
 		$this->purchase_unit_factory         = $purchase_unit_factory;
-        $this->shipping_preference_factory   = $shipping_preference_factory;
+		$this->shipping_preference_factory   = $shipping_preference_factory;
 		$this->payer_factory                 = $payer_factory;
 		$this->environment                   = $environment;
 		$this->settings                      = $settings;
