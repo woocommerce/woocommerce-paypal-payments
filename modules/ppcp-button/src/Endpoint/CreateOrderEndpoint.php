@@ -449,12 +449,11 @@ class CreateOrderEndpoint implements EndpointInterface {
 	/**
 	 * Checks whether the terms input field is checked.
 	 *
-	 * @param string $form_values The form values.
+	 * @param array $form_fields The form fields.
 	 * @throws \RuntimeException When field is not checked.
 	 */
-	private function validate_paynow_form( string $form_values ) {
-		$parsed_values = wp_parse_args( $form_values );
-		if ( isset( $parsed_values['terms-field'] ) && ! isset( $parsed_values['terms'] ) ) {
+	private function validate_paynow_form( array $form_fields ) {
+		if ( isset( $form_fields['terms-field'] ) && ! isset( $form_fields['terms'] ) ) {
 			throw new \RuntimeException(
 				__( 'Please read and accept the terms and conditions to proceed with your order.', 'woocommerce-paypal-payments' )
 			);
