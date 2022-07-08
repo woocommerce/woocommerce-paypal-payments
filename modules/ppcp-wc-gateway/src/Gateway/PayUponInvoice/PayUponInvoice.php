@@ -11,11 +11,6 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice;
 
 use Psr\Log\LoggerInterface;
 use WC_Order;
-use WC_Order_Item;
-use WC_Order_Item_Product;
-use WC_Product;
-use WC_Product_Variable;
-use WC_Product_Variation;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\CaptureFactory;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
@@ -518,21 +513,23 @@ class PayUponInvoice {
 	 * Registers PUI assets.
 	 */
 	public function register_assets(): void {
-		wp_enqueue_script(
-			'ppcp-pay-upon-invoice',
-			trailingslashit( $this->module_url ) . 'assets/js/pay-upon-invoice.js',
-			array(),
-			$this->asset_version
-		);
+		if ( is_checkout() || is_checkout_pay_page() ) {
+			wp_enqueue_script(
+				'ppcp-pay-upon-invoice',
+				trailingslashit( $this->module_url ) . 'assets/js/pay-upon-invoice.js',
+				array(),
+				$this->asset_version
+			);
 
-		wp_localize_script(
-			'ppcp-pay-upon-invoice',
-			'FraudNetConfig',
-			array(
-				'f'       => $this->fraud_net->session_id(),
-				's'       => $this->fraud_net->source_website_id(),
-				'sandbox' => $this->environment->current_environment_is( Environment::SANDBOX ),
-			)
-		);
+			wp_localize_script(
+				'ppcp-pay-upon-invoice',
+				'FraudNetConfig',
+				array(
+					'f'       => $this->fraud_net->session_id(),
+					's'       => $this->fraud_net->source_website_id(),
+					'sandbox' => $this->environment->current_environment_is( Environment::SANDBOX ),
+				)
+			);
+		}
 	}
 }
