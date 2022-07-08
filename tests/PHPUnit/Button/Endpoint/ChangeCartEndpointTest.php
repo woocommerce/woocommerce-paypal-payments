@@ -5,7 +5,7 @@ namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 
 
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
-use WooCommerce\PayPalCommerce\ApiClient\Repository\CartRepository;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\TestCase;
 use Mockery;
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
@@ -17,7 +17,7 @@ class ChangeCartEndpointTest extends TestCase
     /**
      * @dataProvider dataForTestProducts
      */
-    public function testProducts($data, $products, $lineItems, $responseExpectation) {
+    public function testProducts($data, $products, $responseExpectation) {
 
         $dataStore = Mockery::mock(\WC_Data_Store::class);
         $cart = Mockery::mock(\WC_Cart::class);
@@ -59,16 +59,21 @@ class ChangeCartEndpointTest extends TestCase
             ->expects('read_request')
             ->with(ChangeCartEndpoint::nonce())
             ->andReturn($data);
-        $cartRepository = Mockery::mock(CartRepository::class);
-        $cartRepository
-            ->expects('all')
-            ->andReturn($lineItems);
+
+		$pu = Mockery::mock(PurchaseUnit::class);
+		$pu
+			->shouldReceive('to_array')
+			->andReturn($responseExpectation[0]);
+		$purchase_unit_factory = Mockery::mock(PurchaseUnitFactory::class);
+		$purchase_unit_factory
+            ->expects('from_wc_cart')
+            ->andReturn($pu);
 
         $testee = new ChangeCartEndpoint(
             $cart,
             $shipping,
             $requestData,
-            $cartRepository,
+            $purchase_unit_factory,
             $dataStore,
 			new NullLogger()
         );
@@ -97,15 +102,6 @@ class ChangeCartEndpointTest extends TestCase
             ->with('variable')
             ->andReturn(true);
 
-        $defaultLineItem = Mockery::mock(PurchaseUnit::class);
-        $defaultLineItem
-            ->shouldReceive('to_array')
-            ->andReturn([1]);
-        $variationLineItem = Mockery::mock(PurchaseUnit::class);
-        $variationLineItem
-            ->shouldReceive('to_array')
-            ->andReturn([2]);
-
         $testData = [
             'default' => [
                 [
@@ -119,9 +115,6 @@ class ChangeCartEndpointTest extends TestCase
                 ],
                 [
                     $defaultProduct,
-                ],
-                [
-                    $defaultLineItem,
                 ],
                 [
                     [1],
@@ -162,11 +155,7 @@ class ChangeCartEndpointTest extends TestCase
                 $variationProduct,
             ],
             [
-                $defaultLineItem,
-                $variationLineItem,
-            ],
-            [
-                [1],[2]
+                [1, 2]
             ]
         ]
         ];
