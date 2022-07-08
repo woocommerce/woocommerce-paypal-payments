@@ -364,7 +364,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			return __( 'PayPal Checkout', 'woocommerce-paypal-payments' );
 		}
 		if ( $this->is_pui_tab() ) {
-			return __( 'Pay Upon Invoice', 'woocommerce-paypal-payments' );
+			return __( 'Pay upon Invoice', 'woocommerce-paypal-payments' );
 		}
 
 		return __( 'PayPal', 'woocommerce-paypal-payments' );
