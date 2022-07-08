@@ -418,7 +418,7 @@ class PayUponInvoice {
 
 					printf(
 						'<div class="notice notice-error"><p>%1$s</p></div>',
-						esc_html__( 'Could not enable gateway because the connected PayPal account is not activated for Pay upon Invoice. Reconnect your account while Onboard with Pay Upon Invoice is selected to try again.', 'woocommerce-paypal-payments' )
+						esc_html__( 'Could not enable gateway because the connected PayPal account is not activated for Pay upon Invoice. Reconnect your account while Onboard with Pay upon Invoice is selected to try again.', 'woocommerce-paypal-payments' )
 					);
 				}
 			}
