@@ -31,6 +31,7 @@ class FraudNetSessionId {
 			return WC()->session->get( 'ppcp_fraudnet_session_id' );
 		}
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( isset( $_GET['pay_for_order'] ) && 'true' === $_GET['pay_for_order'] ) {
 			$pui_pay_for_order_session_id = filter_input( INPUT_POST, 'pui_pay_for_order_session_id', FILTER_SANITIZE_STRING );
 			if ( $pui_pay_for_order_session_id && '' !== $pui_pay_for_order_session_id ) {
