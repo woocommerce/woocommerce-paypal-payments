@@ -28,6 +28,8 @@ class PaymentTokenChecker {
 
 	use FreeTrialHandlerTrait;
 
+	const VAULTING_FAILED_META_KEY = '_ppcp_vaulting_failed';
+
 	/**
 	 * The payment token repository.
 	 *
@@ -115,7 +117,11 @@ class PaymentTokenChecker {
 		}
 
 		$tokens = $this->payment_token_repository->all_for_user_id( $customer_id );
-		if ( $tokens ) {
+
+		$subscription_behavior_when_vault_fails_setting_name = 'subscription_behavior_when_vault_fails';
+		$subscription_behavior_when_vault_fails              = $this->settings->get( $subscription_behavior_when_vault_fails_setting_name );
+
+		if ( $tokens || $subscription_behavior_when_vault_fails === 'capture_auth' ) {
 			try {
 				if ( $this->is_free_trial_order( $wc_order ) ) {
 					if ( CreditCardGateway::ID === $wc_order->get_payment_method()
@@ -129,7 +135,26 @@ class PaymentTokenChecker {
 					return;
 				}
 
+				if ( ! $tokens ) {
+					update_post_meta( $wc_order->get_id(), self::VAULTING_FAILED_META_KEY, $subscription_behavior_when_vault_fails );
+				}
 				$this->capture_authorized_payment( $wc_order );
+
+				if ( ! $tokens && $subscription_behavior_when_vault_fails === 'capture_auth' ) {
+					$subscriptions = function_exists( 'wcs_get_subscriptions_for_order' ) ? wcs_get_subscriptions_for_order( $wc_order ) : array();
+					foreach ( $subscriptions as $subscription ) {
+						try {
+							$subscription->set_requires_manual_renewal( true );
+							$subscription->save();
+
+							$message = __( 'Subscription set to Manual Renewal because the payment method could not be saved at PayPal', 'woocommerce-paypal-payments' );
+							$wc_order->add_order_note( $message );
+
+						} catch ( Exception $exception ) {
+							$this->logger->error( "Could not update payment method on subscription #{$subscription->get_id()} " . $exception->getMessage() );
+						}
+					}
+				}
 			} catch ( Exception $exception ) {
 				$this->logger->error( $exception->getMessage() );
 			}
@@ -141,12 +166,14 @@ class PaymentTokenChecker {
 
 		try {
 			$order = $this->order_repository->for_wc_order( $wc_order );
+			update_post_meta( $wc_order->get_id(), self::VAULTING_FAILED_META_KEY, $subscription_behavior_when_vault_fails );
 			$this->authorized_payments_processor->void_authorizations( $order );
 		} catch ( RuntimeException $exception ) {
 			$this->logger->warning( $exception->getMessage() );
 		}
 
 		$this->update_failed_status( $wc_order );
+
 	}
 
 	/**
@@ -169,7 +196,7 @@ class PaymentTokenChecker {
 	 * @param WC_Order $wc_order The WC order.
 	 */
 	private function update_failed_status( WC_Order $wc_order ): void {
-		$error_message = __( 'Could not process order because it was not possible to save the payment on PayPal.', 'woocommerce-paypal-payments' );
+		$error_message = __( 'Subscription payment failed because the payment method could not be saved at PayPal. Contact PayPal MTS for guidance.', 'woocommerce-paypal-payments' );
 		$wc_order->update_status( 'failed', $error_message );
 
 		/**
