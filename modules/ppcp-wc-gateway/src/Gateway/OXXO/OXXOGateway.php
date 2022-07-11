@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 
 /**
  * Class PayUponInvoiceGateway.
@@ -37,6 +38,13 @@ class OXXOGateway extends WC_Payment_Gateway {
 	protected $purchase_unit_factory;
 
 	/**
+	 * The shipping preference factory.
+	 *
+	 * @var ShippingPreferenceFactory
+	 */
+	protected $shipping_preference_factory;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -46,13 +54,15 @@ class OXXOGateway extends WC_Payment_Gateway {
 	/**
 	 * OXXOGateway constructor.
 	 *
-	 * @param OrderEndpoint       $order_endpoint The order endpoint.
-	 * @param PurchaseUnitFactory $purchase_unit_factory The purchase unit factory.
-	 * @param LoggerInterface     $logger The logger.
+	 * @param OrderEndpoint             $order_endpoint The order endpoint.
+	 * @param PurchaseUnitFactory       $purchase_unit_factory The purchase unit factory.
+	 * @param ShippingPreferenceFactory $shipping_preference_factory The shipping preference factory.
+	 * @param LoggerInterface           $logger The logger.
 	 */
 	public function __construct(
 		OrderEndpoint $order_endpoint,
 		PurchaseUnitFactory $purchase_unit_factory,
+		ShippingPreferenceFactory $shipping_preference_factory,
 		LoggerInterface $logger
 	) {
 		 $this->id = self::ID;
@@ -75,9 +85,10 @@ class OXXOGateway extends WC_Payment_Gateway {
 			)
 		);
 
-		$this->order_endpoint        = $order_endpoint;
-		$this->purchase_unit_factory = $purchase_unit_factory;
-		$this->logger                = $logger;
+		$this->order_endpoint              = $order_endpoint;
+		$this->purchase_unit_factory       = $purchase_unit_factory;
+		$this->shipping_preference_factory = $shipping_preference_factory;
+		$this->logger                      = $logger;
 	}
 
 	/**
@@ -122,7 +133,12 @@ class OXXOGateway extends WC_Payment_Gateway {
 		$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
 
 		try {
-			$order          = $this->order_endpoint->create( array( $purchase_unit ) );
+			$shipping_preference = $this->shipping_preference_factory->from_state(
+				$purchase_unit,
+				'checkout'
+			);
+
+			$order          = $this->order_endpoint->create( array( $purchase_unit ), $shipping_preference );
 			$payment_source = array(
 				'oxxo' => array(
 					'name'         => $wc_order->get_billing_first_name() . ' ' . $wc_order->get_billing_last_name(),

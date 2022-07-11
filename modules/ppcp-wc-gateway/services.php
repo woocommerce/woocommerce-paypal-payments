@@ -2238,6 +2238,7 @@ return array(
 		return new OXXOGateway(
 			$container->get( 'api.endpoint.order' ),
 			$container->get( 'api.factory.purchase-unit' ),
+			$container->get( 'api.factory.shipping-preference' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},

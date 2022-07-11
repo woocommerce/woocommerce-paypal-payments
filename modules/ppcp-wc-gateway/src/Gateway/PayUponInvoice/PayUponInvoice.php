@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\CaptureFactory;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CheckoutHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceHelper;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
@@ -116,11 +117,9 @@ class PayUponInvoice {
 	protected $pui_product_status;
 
 	/**
-	 * The capture factory.
-	 *
-	 * @var CaptureFactory
+	 * @var CheckoutHelper
 	 */
-	protected $capture_factory;
+	protected $checkout_helper;
 
 	/**
 	 * PayUponInvoice constructor.
@@ -137,7 +136,7 @@ class PayUponInvoice {
 	 * @param string                      $current_ppcp_settings_page_id Current PayPal settings page id.
 	 * @param PayUponInvoiceProductStatus $pui_product_status The PUI product status.
 	 * @param PayUponInvoiceHelper        $pui_helper The PUI helper.
-	 * @param CaptureFactory              $capture_factory The capture factory.
+	 * @param CheckoutHelper $checkout_helper The checkout helper.
 	 */
 	public function __construct(
 		string $module_url,
@@ -152,7 +151,7 @@ class PayUponInvoice {
 		string $current_ppcp_settings_page_id,
 		PayUponInvoiceProductStatus $pui_product_status,
 		PayUponInvoiceHelper $pui_helper,
-		CaptureFactory $capture_factory
+		CheckoutHelper $checkout_helper
 	) {
 		$this->module_url                    = $module_url;
 		$this->fraud_net                     = $fraud_net;
@@ -166,7 +165,7 @@ class PayUponInvoice {
 		$this->current_ppcp_settings_page_id = $current_ppcp_settings_page_id;
 		$this->pui_product_status            = $pui_product_status;
 		$this->pui_helper                    = $pui_helper;
-		$this->capture_factory               = $capture_factory;
+		$this->checkout_helper = $checkout_helper;
 	}
 
 	/**
