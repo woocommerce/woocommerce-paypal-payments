@@ -518,7 +518,8 @@ class PayUponInvoice {
 				'ppcp-pay-upon-invoice',
 				trailingslashit( $this->module_url ) . 'assets/js/pay-upon-invoice.js',
 				array(),
-				$this->asset_version
+				$this->asset_version,
+				true
 			);
 
 			wp_localize_script(

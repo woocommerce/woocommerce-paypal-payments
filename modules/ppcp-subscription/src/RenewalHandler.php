@@ -144,7 +144,7 @@ class RenewalHandler {
 	 *
 	 * @throws \Exception If customer cannot be read/found.
 	 */
-	private function process_order( \WC_Order $wc_order ) {
+	private function process_order( \WC_Order $wc_order ): void {
 
 		$user_id  = (int) $wc_order->get_customer_id();
 		$customer = new \WC_Customer( $user_id );
