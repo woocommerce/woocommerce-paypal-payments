@@ -111,7 +111,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	) {
 		$this->id = self::ID;
 
-		$this->method_title       = __( 'Pay Upon Invoice', 'woocommerce-paypal-payments' );
+		$this->method_title       = __( 'Pay upon Invoice', 'woocommerce-paypal-payments' );
 		$this->method_description = __( 'Pay upon Invoice is an invoice payment method in Germany. It is a local buy now, pay later payment method that allows the buyer to place an order, receive the goods, try them, verify they are in good order, and then pay the invoice within 30 days.', 'woocommerce-paypal-payments' );
 
 		$gateway_settings  = get_option( 'woocommerce_ppcp-pay-upon-invoice-gateway_settings' );
@@ -150,7 +150,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 				'label'       => __( 'Pay upon Invoice', 'woocommerce-paypal-payments' ),
 				'default'     => 'no',
 				'desc_tip'    => true,
-				'description' => __( 'Enable/Disable Pay Upon Invoice payment gateway.', 'woocommerce-paypal-payments' ),
+				'description' => __( 'Enable/Disable Pay upon Invoice payment gateway.', 'woocommerce-paypal-payments' ),
 			),
 			'title'                         => array(
 				'title'       => __( 'Title', 'woocommerce-paypal-payments' ),
@@ -215,7 +215,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 			}
 		}
 
-		$wc_order->update_status( 'on-hold', __( 'Awaiting Pay Upon Invoice payment.', 'woocommerce-paypal-payments' ) );
+		$wc_order->update_status( 'on-hold', __( 'Awaiting Pay upon Invoice payment.', 'woocommerce-paypal-payments' ) );
 		$purchase_unit  = $this->purchase_unit_factory->from_wc_order( $wc_order );
 		$payment_source = $this->payment_source_factory->from_wc_order( $wc_order, $birth_date );
 

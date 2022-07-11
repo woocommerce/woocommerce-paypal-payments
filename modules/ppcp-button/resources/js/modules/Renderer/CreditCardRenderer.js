@@ -1,5 +1,6 @@
 import dccInputFactory from "../Helper/DccInputFactory";
 import {show} from "../Helper/Hiding";
+import Product from "../Entity/Product";
 
 class CreditCardRenderer {
 
@@ -117,11 +118,23 @@ class CreditCardRenderer {
                 }
                 const validCards = this.defaultConfig.hosted_fields.valid_cards;
                 this.cardValid = validCards.indexOf(event.cards[0].type) !== -1;
+
+                const className = this._cardNumberFiledCLassNameByCardType(event.cards[0].type);
+                this._recreateElementClassAttribute(cardNumber, cardNumberField.className);
+                if (event.fields.number.isValid) {
+                    cardNumber.classList.add(className);
+                }
             })
             hostedFields.on('validityChange', (event) => {
                 const formValid = Object.keys(event.fields).every(function (key) {
                     return event.fields[key].isValid;
                 });
+
+                const className = this._cardNumberFiledCLassNameByCardType(event.cards[0].type);
+                event.fields.number.isValid
+                    ? cardNumber.classList.add(className)
+                    : this._recreateElementClassAttribute(cardNumber, cardNumberField.className);
+
                this.formValid = formValid;
 
             });
@@ -229,6 +242,15 @@ class CreditCardRenderer {
             const message = ! this.cardValid ? this.defaultConfig.hosted_fields.labels.card_not_supported : this.defaultConfig.hosted_fields.labels.fields_not_valid;
             this.errorHandler.message(message);
         }
+    }
+
+    _cardNumberFiledCLassNameByCardType(cardType) {
+        return cardType === 'american-express' ? 'amex' : cardType.replace('-', '');
+    }
+
+    _recreateElementClassAttribute(element, newClassName) {
+        element.removeAttribute('class')
+        element.setAttribute('class', newClassName);
     }
 }
 export default CreditCardRenderer;

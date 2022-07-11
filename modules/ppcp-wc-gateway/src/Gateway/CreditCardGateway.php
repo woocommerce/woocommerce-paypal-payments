@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -112,6 +113,13 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	private $purchase_unit_factory;
 
 	/**
+	 * The shipping_preference factory.
+	 *
+	 * @var ShippingPreferenceFactory
+	 */
+	private $shipping_preference_factory;
+
+	/**
 	 * The payer factory.
 	 *
 	 * @var PayerFactory
@@ -167,6 +175,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 * @param TransactionUrlProvider      $transaction_url_provider Service able to provide view transaction url base.
 	 * @param PaymentTokenRepository      $payment_token_repository The payment token repository.
 	 * @param PurchaseUnitFactory         $purchase_unit_factory The purchase unit factory.
+	 * @param ShippingPreferenceFactory   $shipping_preference_factory The shipping_preference factory.
 	 * @param PayerFactory                $payer_factory The payer factory.
 	 * @param OrderEndpoint               $order_endpoint The order endpoint.
 	 * @param SubscriptionHelper          $subscription_helper The subscription helper.
@@ -186,6 +195,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		TransactionUrlProvider $transaction_url_provider,
 		PaymentTokenRepository $payment_token_repository,
 		PurchaseUnitFactory $purchase_unit_factory,
+		ShippingPreferenceFactory $shipping_preference_factory,
 		PayerFactory $payer_factory,
 		OrderEndpoint $order_endpoint,
 		SubscriptionHelper $subscription_helper,
@@ -252,16 +262,17 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 			)
 		);
 
-		$this->module_url               = $module_url;
-		$this->payment_token_repository = $payment_token_repository;
-		$this->purchase_unit_factory    = $purchase_unit_factory;
-		$this->payer_factory            = $payer_factory;
-		$this->order_endpoint           = $order_endpoint;
-		$this->transaction_url_provider = $transaction_url_provider;
-		$this->subscription_helper      = $subscription_helper;
-		$this->logger                   = $logger;
-		$this->payments_endpoint        = $payments_endpoint;
-		$this->state                    = $state;
+		$this->module_url                  = $module_url;
+		$this->payment_token_repository    = $payment_token_repository;
+		$this->purchase_unit_factory       = $purchase_unit_factory;
+		$this->shipping_preference_factory = $shipping_preference_factory;
+		$this->payer_factory               = $payer_factory;
+		$this->order_endpoint              = $order_endpoint;
+		$this->transaction_url_provider    = $transaction_url_provider;
+		$this->subscription_helper         = $subscription_helper;
+		$this->logger                      = $logger;
+		$this->payments_endpoint           = $payments_endpoint;
+		$this->state                       = $state;
 	}
 
 	/**

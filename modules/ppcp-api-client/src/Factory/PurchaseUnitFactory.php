@@ -152,11 +152,15 @@ class PurchaseUnitFactory {
 	/**
 	 * Creates a PurchaseUnit based off a WooCommerce cart.
 	 *
-	 * @param \WC_Cart $cart The cart.
+	 * @param \WC_Cart|null $cart The cart.
 	 *
 	 * @return PurchaseUnit
 	 */
-	public function from_wc_cart( \WC_Cart $cart ): PurchaseUnit {
+	public function from_wc_cart( ?\WC_Cart $cart = null ): PurchaseUnit {
+		if ( ! $cart ) {
+			$cart = WC()->cart ?? new \WC_Cart();
+		}
+
 		$amount = $this->amount_factory->from_wc_cart( $cart );
 		$items  = array_filter(
 			$this->item_factory->from_wc_cart( $cart ),

@@ -43,13 +43,13 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\SellerReceivableBreakdownFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\SellerStatusFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookEventFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderHelper;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
-use WooCommerce\PayPalCommerce\ApiClient\Repository\CartRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CustomerRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\OrderRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
@@ -221,10 +221,6 @@ return array(
 		$dcc_applies    = $container->get( 'api.helpers.dccapplies' );
 		return new PartnerReferralsData( $dcc_applies );
 	},
-	'api.repository.cart'                       => static function ( ContainerInterface $container ): CartRepository {
-		$factory = $container->get( 'api.factory.purchase-unit' );
-		return new CartRepository( $factory );
-	},
 	'api.repository.payee'                      => static function ( ContainerInterface $container ): PayeeRepository {
 		$merchant_email = $container->get( 'api.merchant_email' );
 		$merchant_id    = $container->get( 'api.merchant_id' );
@@ -297,6 +293,9 @@ return array(
 	'api.factory.shipping'                      => static function ( ContainerInterface $container ): ShippingFactory {
 		$address_factory = $container->get( 'api.factory.address' );
 		return new ShippingFactory( $address_factory );
+	},
+	'api.factory.shipping-preference'           => static function ( ContainerInterface $container ): ShippingPreferenceFactory {
+		return new ShippingPreferenceFactory();
 	},
 	'api.factory.amount'                        => static function ( ContainerInterface $container ): AmountFactory {
 		$item_factory = $container->get( 'api.factory.item' );
