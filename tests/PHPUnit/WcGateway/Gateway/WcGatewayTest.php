@@ -87,6 +87,7 @@ class WcGatewayTest extends TestCase
 		$this->settings->shouldReceive('has')->andReturnFalse();
 
 		$this->logger->shouldReceive('info');
+		$this->logger->shouldReceive('error');
 	}
 
 	private function createGateway()
@@ -173,8 +174,10 @@ class WcGatewayTest extends TestCase
         when('wc_get_checkout_url')
 			->justReturn($redirectUrl);
 
-        expect('wc_add_notice')
-			->with('Couldn\'t find order to process','error');
+		$this->sessionHandler
+			->shouldReceive('destroy_session_data');
+
+        expect('wc_add_notice');
 
         $this->assertEquals(
         	[
@@ -195,7 +198,6 @@ class WcGatewayTest extends TestCase
             ->andReturnFalse();
 		$this->orderProcessor
             ->expects('last_error')
-			->twice()
             ->andReturn($lastError);
 		$this->subscriptionHelper->shouldReceive('has_subscription')->with($orderId)->andReturn(true);
 		$this->subscriptionHelper->shouldReceive('is_subscription_change_payment')->andReturn(true);
@@ -206,6 +208,8 @@ class WcGatewayTest extends TestCase
         expect('wc_get_order')
             ->with($orderId)
             ->andReturn($wcOrder);
+		$this->sessionHandler
+			->shouldReceive('destroy_session_data');
         expect('wc_add_notice')
             ->with($lastError, 'error');
 

@@ -10,12 +10,15 @@ declare( strict_types=1 );
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
 use Exception;
+use Throwable;
+use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Subscription\FreeTrialHandlerTrait;
+use WooCommerce\PayPalCommerce\WcGateway\Exception\GatewayGenericException;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\PaymentsStatusHandlingTrait;
@@ -38,20 +41,12 @@ trait ProcessPaymentTrait {
 	 * @throws RuntimeException When processing payment fails.
 	 */
 	public function process_payment( $order_id ) {
-
-		$failure_data = array(
-			'result'   => 'failure',
-			'redirect' => wc_get_checkout_url(),
-		);
-
 		$wc_order = wc_get_order( $order_id );
-		if ( ! is_a( $wc_order, \WC_Order::class ) ) {
-			wc_add_notice(
-				__( 'Couldn\'t find order to process', 'woocommerce-paypal-payments' ),
-				'error'
+		if ( ! is_a( $wc_order, WC_Order::class ) ) {
+			return $this->handle_payment_failure(
+				null,
+				new GatewayGenericException( new Exception( 'WC order was not found.' ) )
 			);
-
-			return $failure_data;
 		}
 
 		$payment_method = filter_input( INPUT_POST, 'payment_method', FILTER_SANITIZE_STRING );
@@ -77,7 +72,10 @@ trait ProcessPaymentTrait {
 			}
 
 			if ( ! $selected_token ) {
-				return null;
+				return $this->handle_payment_failure(
+					$wc_order,
+					new GatewayGenericException( new Exception( 'Saved card token not found.' ) )
+				);
 			}
 
 			$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
@@ -99,8 +97,10 @@ trait ProcessPaymentTrait {
 				$this->add_paypal_meta( $wc_order, $order, $this->environment() );
 
 				if ( ! $order->status()->is( OrderStatus::COMPLETED ) ) {
-					$this->logger->warning( "Unexpected status for order {$order->id()} using a saved credit card: " . $order->status()->name() );
-					return null;
+					return $this->handle_payment_failure(
+						$wc_order,
+						new GatewayGenericException( new Exception( "Unexpected status for order {$order->id()} using a saved card: {$order->status()->name()}." ) )
+					);
 				}
 
 				if ( ! in_array(
@@ -108,8 +108,10 @@ trait ProcessPaymentTrait {
 					array( 'CAPTURE', 'AUTHORIZE' ),
 					true
 				) ) {
-					$this->logger->warning( "Could neither capture nor authorize order {$order->id()} using a saved credit card:" . 'Status: ' . $order->status()->name() . ' Intent: ' . $order->intent() );
-					return null;
+					return $this->handle_payment_failure(
+						$wc_order,
+						new GatewayGenericException( new Exception( "Could neither capture nor authorize order {$order->id()} using a saved card. Status: {$order->status()->name()}. Intent: {$order->intent()}." ) )
+					);
 				}
 
 				if ( $order->intent() === 'AUTHORIZE' ) {
@@ -132,14 +134,9 @@ trait ProcessPaymentTrait {
 					$this->authorized_payments_processor->capture_authorized_payment( $wc_order );
 				}
 
-				$this->session_handler->destroy_session_data();
-				return array(
-					'result'   => 'success',
-					'redirect' => $this->get_return_url( $wc_order ),
-				);
+				return $this->handle_payment_success( $wc_order );
 			} catch ( RuntimeException $error ) {
-				$this->handle_failure( $wc_order, $error );
-				return null;
+				return $this->handle_payment_failure( $wc_order, $error );
 			}
 		}
 
@@ -152,17 +149,12 @@ trait ProcessPaymentTrait {
 					return isset( $token->source()->paypal );
 				}
 			) ) {
-				$this->handle_failure( $wc_order, new Exception( 'No saved PayPal account.' ) );
-				return null;
+				return $this->handle_payment_failure( $wc_order, new Exception( 'No saved PayPal account.' ) );
 			}
 
 			$wc_order->payment_complete();
 
-			$this->session_handler->destroy_session_data();
-			return array(
-				'result'   => 'success',
-				'redirect' => $this->get_return_url( $wc_order ),
-			);
+			return $this->handle_payment_success( $wc_order );
 		}
 
 		/**
@@ -172,35 +164,23 @@ trait ProcessPaymentTrait {
 			if ( 'ppcp-credit-card-gateway' === $this->id && $saved_credit_card ) {
 				update_post_meta( $order_id, 'payment_token_id', $saved_credit_card );
 
-				$this->session_handler->destroy_session_data();
-				return array(
-					'result'   => 'success',
-					'redirect' => $this->get_return_url( $wc_order ),
-				);
+				return $this->handle_payment_success( $wc_order );
 			}
 
 			$saved_paypal_payment = filter_input( INPUT_POST, 'saved_paypal_payment', FILTER_SANITIZE_STRING );
 			if ( 'ppcp-gateway' === $this->id && $saved_paypal_payment ) {
 				update_post_meta( $order_id, 'payment_token_id', $saved_paypal_payment );
 
-				$this->session_handler->destroy_session_data();
-				return array(
-					'result'   => 'success',
-					'redirect' => $this->get_return_url( $wc_order ),
-				);
+				return $this->handle_payment_success( $wc_order );
 			}
 		}
 
 		/**
-		 * If the WC_Order is payed through the approved webhook.
+		 * If the WC_Order is paid through the approved webhook.
 		 */
 		//phpcs:disable WordPress.Security.NonceVerification.Recommended
 		if ( isset( $_REQUEST['ppcp-resume-order'] ) && $wc_order->has_status( 'processing' ) ) {
-			$this->session_handler->destroy_session_data();
-			return array(
-				'result'   => 'success',
-				'redirect' => $this->get_return_url( $wc_order ),
-			);
+			return $this->handle_payment_success( $wc_order );
 		}
 		//phpcs:enable WordPress.Security.NonceVerification.Recommended
 
@@ -218,13 +198,8 @@ trait ProcessPaymentTrait {
 					);
 				}
 
-				WC()->cart->empty_cart();
-				$this->session_handler->destroy_session_data();
-
-				return array(
-					'result'   => 'success',
-					'redirect' => $this->get_return_url( $wc_order ),
-				);
+				WC()->cart->empty_cart(); // Probably redundant.
+				return $this->handle_payment_success( $wc_order );
 			}
 		} catch ( PayPalApiException $error ) {
 			if ( $error->has_detail( 'INSTRUMENT_DECLINED' ) ) {
@@ -234,17 +209,20 @@ trait ProcessPaymentTrait {
 				);
 
 				$this->session_handler->increment_insufficient_funding_tries();
+				if ( $this->session_handler->insufficient_funding_tries() >= 3 ) {
+					return $this->handle_payment_failure(
+						null,
+						new Exception(
+							__( 'Please use a different payment method.', 'woocommerce-paypal-payments' ),
+							$error->getCode(),
+							$error
+						)
+					);
+				}
+
 				$host = $this->config->has( 'sandbox_on' ) && $this->config->get( 'sandbox_on' ) ?
 					'https://www.sandbox.paypal.com/' : 'https://www.paypal.com/';
 				$url  = $host . 'checkoutnow?token=' . $this->session_handler->order()->id();
-				if ( $this->session_handler->insufficient_funding_tries() >= 3 ) {
-					$this->session_handler->destroy_session_data();
-					wc_add_notice(
-						__( 'Please use a different payment method.', 'woocommerce-paypal-payments' ),
-						'error'
-					);
-					return $failure_data;
-				}
 				return array(
 					'result'   => 'success',
 					'redirect' => $url,
@@ -262,25 +240,25 @@ trait ProcessPaymentTrait {
 					)
 				);
 			}
-			wc_add_notice( $error_message, 'error' );
 
-			$this->session_handler->destroy_session_data();
+			return $this->handle_payment_failure(
+				$wc_order,
+				new Exception(
+					$error_message,
+					$error->getCode(),
+					$error
+				)
+			);
 		} catch ( RuntimeException $error ) {
-			$this->handle_failure( $wc_order, $error );
-			return $failure_data;
+			return $this->handle_payment_failure( $wc_order, $error );
 		}
 
-		wc_add_notice(
-			$this->order_processor->last_error(),
-			'error'
+		return $this->handle_payment_failure(
+			$wc_order,
+			new Exception(
+				$this->order_processor->last_error()
+			)
 		);
-
-		$wc_order->update_status(
-			'failed',
-			__( 'Could not process order. ', 'woocommerce-paypal-payments' ) . $this->order_processor->last_error()
-		);
-
-		return $failure_data;
 	}
 
 	/**
@@ -314,20 +292,66 @@ trait ProcessPaymentTrait {
 	/**
 	 * Handles the payment failure.
 	 *
-	 * @param \WC_Order $wc_order The order.
-	 * @param Exception $error The error causing the failure.
+	 * @param WC_Order|null $wc_order The order.
+	 * @param Exception     $error The error causing the failure.
+	 * @return array The data that can be returned by the gateway process_payment method.
 	 */
-	protected function handle_failure( \WC_Order $wc_order, Exception $error ): void {
-		$this->logger->error( 'Payment failed: ' . $error->getMessage() );
+	protected function handle_payment_failure( ?WC_Order $wc_order, Exception $error ): array {
+		$this->logger->error( 'Payment failed: ' . $this->format_exception( $error ) );
 
-		$wc_order->update_status(
-			'failed',
-			__( 'Could not process order. ', 'woocommerce-paypal-payments' ) . $error->getMessage()
-		);
+		if ( $wc_order ) {
+			$wc_order->update_status(
+				'failed',
+				$this->format_exception( $error )
+			);
+		}
 
 		$this->session_handler->destroy_session_data();
 
 		wc_add_notice( $error->getMessage(), 'error' );
+
+		return array(
+			'result'   => 'failure',
+			'redirect' => wc_get_checkout_url(),
+		);
+	}
+
+	/**
+	 * Handles the payment completion.
+	 *
+	 * @param WC_Order|null $wc_order The order.
+	 * @param string|null   $url The redirect URL.
+	 * @return array The data that can be returned by the gateway process_payment method.
+	 */
+	protected function handle_payment_success( ?WC_Order $wc_order, string $url = null ): array {
+		if ( ! $url ) {
+			$url = $this->get_return_url( $wc_order );
+		}
+
+		$this->session_handler->destroy_session_data();
+
+		return array(
+			'result'   => 'success',
+			'redirect' => $url,
+		);
+	}
+
+	/**
+	 * Outputs the exception, including the inner exception.
+	 *
+	 * @param Throwable $exception The exception to format.
+	 * @return string
+	 */
+	protected function format_exception( Throwable $exception ): string {
+		$output = $exception->getMessage() . ' ' . $exception->getFile() . ':' . $exception->getLine();
+		$prev   = $exception->getPrevious();
+		if ( ! $prev ) {
+			return $output;
+		}
+		if ( $exception instanceof GatewayGenericException ) {
+			$output = '';
+		}
+		return $output . ' ' . $this->format_exception( $prev );
 	}
 
 	/**
