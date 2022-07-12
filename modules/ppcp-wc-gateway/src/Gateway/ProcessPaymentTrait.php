@@ -229,22 +229,11 @@ trait ProcessPaymentTrait {
 				);
 			}
 
-			$error_message = $error->getMessage();
-			if ( $error->issues() ) {
-				$error_message = implode(
-					array_map(
-						function( $issue ) {
-							return $issue->issue . ' ' . $issue->description . '<br/>';
-						},
-						$error->issues()
-					)
-				);
-			}
-
 			return $this->handle_payment_failure(
 				$wc_order,
 				new Exception(
-					$error_message,
+					__( 'Failed to process the payment. Please try again or contact the shop admin.', 'woocommerce-paypal-payments' )
+					. ' ' . $error->getMessage(),
 					$error->getCode(),
 					$error
 				)
