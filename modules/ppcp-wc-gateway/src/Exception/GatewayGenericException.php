@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Exception;
 
 use Exception;
 use Throwable;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\Messages;
 
 /**
  * Class GatewayGenericException
@@ -23,7 +24,7 @@ class GatewayGenericException extends Exception {
 	 */
 	public function __construct( ?Throwable $inner = null ) {
 		parent::__construct(
-			__( 'Failed to process the payment. Please try again or contact the shop admin.', 'woocommerce-paypal-payments' ),
+			Messages::generic_payment_error_message(),
 			$inner ? (int) $inner->getCode() : 0,
 			$inner
 		);

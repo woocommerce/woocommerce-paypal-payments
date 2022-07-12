@@ -232,8 +232,7 @@ trait ProcessPaymentTrait {
 			return $this->handle_payment_failure(
 				$wc_order,
 				new Exception(
-					__( 'Failed to process the payment. Please try again or contact the shop admin.', 'woocommerce-paypal-payments' )
-					. ' ' . $error->getMessage(),
+					Messages::generic_payment_error_message() . ' ' . $error->getMessage(),
 					$error->getCode(),
 					$error
 				)
