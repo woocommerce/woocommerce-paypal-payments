@@ -65,7 +65,7 @@ class OXXOGateway extends WC_Payment_Gateway {
 		ShippingPreferenceFactory $shipping_preference_factory,
 		LoggerInterface $logger
 	) {
-		 $this->id = self::ID;
+		$this->id = self::ID;
 
 		$this->method_title       = __( 'OXXO', 'woocommerce-paypal-payments' );
 		$this->method_description = __( 'OXXO is a Mexican chain of convenience stores.', 'woocommerce-paypal-payments' );

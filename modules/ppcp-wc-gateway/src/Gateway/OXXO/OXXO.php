@@ -42,8 +42,8 @@ class OXXO {
 	 * OXXO constructor.
 	 *
 	 * @param CheckoutHelper $checkout_helper The checkout helper.
-	 * @param string $module_url The module URL.
-	 * @param string $asset_version The asset version.
+	 * @param string         $module_url The module URL.
+	 * @param string         $asset_version The asset version.
 	 */
 	public function __construct(
 		CheckoutHelper $checkout_helper,
@@ -52,8 +52,8 @@ class OXXO {
 	) {
 
 		$this->checkout_helper = $checkout_helper;
-		$this->module_url = $module_url;
-		$this->asset_version = $asset_version;
+		$this->module_url      = $module_url;
+		$this->asset_version   = $asset_version;
 	}
 
 	/**
@@ -117,13 +117,16 @@ class OXXO {
 		return true;
 	}
 
+	/**
+	 * Register OXXO assets.
+	 */
 	public function register_assets(): void {
 		$gateway_settings = get_option( 'woocommerce_ppcp-oxxo-gateway_settings' );
 		$gateway_enabled  = $gateway_settings['enabled'] ?? '';
-		if ( $gateway_enabled === 'yes' && is_checkout() && !empty( is_wc_endpoint_url('order-received') ) ) {
+		if ( $gateway_enabled === 'yes' && is_checkout() && ! empty( is_wc_endpoint_url( 'order-received' ) ) ) {
 			wp_enqueue_script(
 				'ppcp-pay-upon-invoice',
-				trailingslashit($this->module_url) . 'assets/js/oxxo.js',
+				trailingslashit( $this->module_url ) . 'assets/js/oxxo.js',
 				array(),
 				$this->asset_version,
 				true
