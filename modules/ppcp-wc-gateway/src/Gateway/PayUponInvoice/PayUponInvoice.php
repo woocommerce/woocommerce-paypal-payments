@@ -117,9 +117,18 @@ class PayUponInvoice {
 	protected $pui_product_status;
 
 	/**
+	 * The checkout helper.
+	 *
 	 * @var CheckoutHelper
 	 */
 	protected $checkout_helper;
+
+	/**
+	 * The capture factory.
+	 *
+	 * @var CaptureFactory
+	 */
+	protected $capture_factory;
 
 	/**
 	 * PayUponInvoice constructor.
@@ -136,7 +145,8 @@ class PayUponInvoice {
 	 * @param string                      $current_ppcp_settings_page_id Current PayPal settings page id.
 	 * @param PayUponInvoiceProductStatus $pui_product_status The PUI product status.
 	 * @param PayUponInvoiceHelper        $pui_helper The PUI helper.
-	 * @param CheckoutHelper $checkout_helper The checkout helper.
+	 * @param CheckoutHelper              $checkout_helper The checkout helper.
+	 * @param CaptureFactory              $capture_factory The capture factory.
 	 */
 	public function __construct(
 		string $module_url,
@@ -151,7 +161,8 @@ class PayUponInvoice {
 		string $current_ppcp_settings_page_id,
 		PayUponInvoiceProductStatus $pui_product_status,
 		PayUponInvoiceHelper $pui_helper,
-		CheckoutHelper $checkout_helper
+		CheckoutHelper $checkout_helper,
+		CaptureFactory $capture_factory
 	) {
 		$this->module_url                    = $module_url;
 		$this->fraud_net                     = $fraud_net;
@@ -165,7 +176,8 @@ class PayUponInvoice {
 		$this->current_ppcp_settings_page_id = $current_ppcp_settings_page_id;
 		$this->pui_product_status            = $pui_product_status;
 		$this->pui_helper                    = $pui_helper;
-		$this->checkout_helper = $checkout_helper;
+		$this->checkout_helper               = $checkout_helper;
+		$this->capture_factory               = $capture_factory;
 	}
 
 	/**

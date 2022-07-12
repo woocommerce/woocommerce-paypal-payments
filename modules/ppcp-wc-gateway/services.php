@@ -2226,12 +2226,15 @@ return array(
 			$container->get( 'wcgateway.current-ppcp-settings-page-id' ),
 			$container->get( 'wcgateway.pay-upon-invoice-product-status' ),
 			$container->get( 'wcgateway.pay-upon-invoice-helper' ),
-			$container->get( 'wcgateway.checkout-helper' )
+			$container->get( 'wcgateway.checkout-helper' ),
+			$container->get( 'api.factory.capture' )
 		);
 	},
 	'wcgateway.oxxo'                                    => static function( ContainerInterface $container ): OXXO {
 		return new OXXO(
-			$container->get( 'wcgateway.checkout-helper' )
+			$container->get( 'wcgateway.checkout-helper' ),
+			$container->get( 'wcgateway.url' ),
+			$container->get( 'ppcp.asset-version' )
 		);
 	},
 	'wcgateway.oxxo-gateway'                            => static function( ContainerInterface $container ): OXXOGateway {

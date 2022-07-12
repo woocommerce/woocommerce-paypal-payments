@@ -25,13 +25,35 @@ class OXXO {
 	protected $checkout_helper;
 
 	/**
+	 * The module URL.
+	 *
+	 * @var string
+	 */
+	protected $module_url;
+
+	/**
+	 * The asset version.
+	 *
+	 * @var string
+	 */
+	protected $asset_version;
+
+	/**
 	 * OXXO constructor.
 	 *
 	 * @param CheckoutHelper $checkout_helper The checkout helper.
+	 * @param string $module_url The module URL.
+	 * @param string $asset_version The asset version.
 	 */
-	public function __construct( CheckoutHelper $checkout_helper ) {
+	public function __construct(
+		CheckoutHelper $checkout_helper,
+		string $module_url,
+		string $asset_version
+	) {
 
 		$this->checkout_helper = $checkout_helper;
+		$this->module_url = $module_url;
+		$this->asset_version = $asset_version;
 	}
 
 	/**
@@ -58,13 +80,18 @@ class OXXO {
 
 				$button = '';
 				if ( $payer_action ) {
-					$button = '<p><a class="button" href="' . $payer_action . '" target="_blank">See OXXO Voucher/Ticket</a></p>';
+					$button = '<p><a id="ppcp-oxxo-payer-action" class="button" href="' . $payer_action . '" target="_blank">See OXXO Voucher/Ticket</a></p>';
 				}
 
 				return $message . ' ' . $button;
 			},
 			10,
 			2
+		);
+
+		add_action(
+			'wp_enqueue_scripts',
+			array( $this, 'register_assets' )
 		);
 	}
 
@@ -88,5 +115,19 @@ class OXXO {
 		}
 
 		return true;
+	}
+
+	public function register_assets(): void {
+		$gateway_settings = get_option( 'woocommerce_ppcp-oxxo-gateway_settings' );
+		$gateway_enabled  = $gateway_settings['enabled'] ?? '';
+		if ( $gateway_enabled === 'yes' && is_checkout() && !empty( is_wc_endpoint_url('order-received') ) ) {
+			wp_enqueue_script(
+				'ppcp-pay-upon-invoice',
+				trailingslashit($this->module_url) . 'assets/js/oxxo.js',
+				array(),
+				$this->asset_version,
+				true
+			);
+		}
 	}
 }
