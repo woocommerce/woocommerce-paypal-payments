@@ -539,15 +539,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 			}
 
 			if ( $this->subscription_helper->has_subscription( $order_id ) ) {
-				as_schedule_single_action(
-					time() + ( 1 * MINUTE_IN_SECONDS ),
-					'woocommerce_paypal_payments_check_saved_payment',
-					array(
-						'order_id'    => $order_id,
-						'customer_id' => $wc_order->get_customer_id(),
-						'intent'      => $this->config->has( 'intent' ) ? $this->config->get( 'intent' ) : '',
-					)
-				);
+				$this->schedule_saved_payment_check( $order_id, $wc_order->get_customer_id() );
 			}
 
 			return $this->handle_payment_success( $wc_order );

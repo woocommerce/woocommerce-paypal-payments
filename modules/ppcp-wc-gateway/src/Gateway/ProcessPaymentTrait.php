@@ -47,6 +47,24 @@ trait ProcessPaymentTrait {
 	}
 
 	/**
+	 * Scheduled the vaulted payment check.
+	 *
+	 * @param int $wc_order_id The WC order ID.
+	 * @param int $customer_id The customer ID.
+	 */
+	protected function schedule_saved_payment_check( int $wc_order_id, int $customer_id ): void {
+		as_schedule_single_action(
+			time() + ( 1 * MINUTE_IN_SECONDS ),
+			'woocommerce_paypal_payments_check_saved_payment',
+			array(
+				'order_id'    => $wc_order_id,
+				'customer_id' => $customer_id,
+				'intent'      => $this->config->has( 'intent' ) ? $this->config->get( 'intent' ) : '',
+			)
+		);
+	}
+
+	/**
 	 * Handles the payment failure.
 	 *
 	 * @param WC_Order|null $wc_order The order.
