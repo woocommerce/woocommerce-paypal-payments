@@ -9,20 +9,30 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
+use Exception;
 use Psr\Log\LoggerInterface;
+use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\Subscription\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
+use WooCommerce\PayPalCommerce\WcGateway\Exception\GatewayGenericException;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\PaymentsStatusHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use Psr\Container\ContainerInterface;
 
@@ -31,7 +41,7 @@ use Psr\Container\ContainerInterface;
  */
 class CreditCardGateway extends \WC_Payment_Gateway_CC {
 
-	use ProcessPaymentTrait;
+	use ProcessPaymentTrait, OrderMetaTrait, TransactionIdHandlingTrait, PaymentsStatusHandlingTrait, FreeTrialHandlerTrait;
 
 	const ID = 'ppcp-credit-card-gateway';
 
@@ -203,15 +213,25 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		Environment $environment,
 		PaymentsEndpoint $payments_endpoint
 	) {
-
 		$this->id                            = self::ID;
+		$this->settings_renderer             = $settings_renderer;
 		$this->order_processor               = $order_processor;
 		$this->authorized_payments_processor = $authorized_payments_processor;
-		$this->settings_renderer             = $settings_renderer;
 		$this->config                        = $config;
+		$this->module_url                    = $module_url;
 		$this->session_handler               = $session_handler;
 		$this->refund_processor              = $refund_processor;
+		$this->state                         = $state;
+		$this->transaction_url_provider      = $transaction_url_provider;
+		$this->payment_token_repository      = $payment_token_repository;
+		$this->purchase_unit_factory         = $purchase_unit_factory;
+		$this->shipping_preference_factory   = $shipping_preference_factory;
+		$this->payer_factory                 = $payer_factory;
+		$this->order_endpoint                = $order_endpoint;
+		$this->subscription_helper           = $subscription_helper;
+		$this->logger                        = $logger;
 		$this->environment                   = $environment;
+		$this->payments_endpoint             = $payments_endpoint;
 
 		if ( $state->current_state() === State::STATE_ONBOARDED ) {
 			$this->supports = array( 'refunds' );
@@ -261,18 +281,6 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 				'process_admin_options',
 			)
 		);
-
-		$this->module_url                  = $module_url;
-		$this->payment_token_repository    = $payment_token_repository;
-		$this->purchase_unit_factory       = $purchase_unit_factory;
-		$this->shipping_preference_factory = $shipping_preference_factory;
-		$this->payer_factory               = $payer_factory;
-		$this->order_endpoint              = $order_endpoint;
-		$this->transaction_url_provider    = $transaction_url_provider;
-		$this->subscription_helper         = $subscription_helper;
-		$this->logger                      = $logger;
-		$this->payments_endpoint           = $payments_endpoint;
-		$this->state                       = $state;
 	}
 
 	/**
@@ -301,7 +309,6 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	 * @return string
 	 */
 	public function generate_ppcp_html(): string {
-
 		ob_start();
 		$this->settings_renderer->render();
 		$content = ob_get_contents();
@@ -409,6 +416,166 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		return $this->is_enabled();
 	}
 
+	/**
+	 * Process payment for a WooCommerce order.
+	 *
+	 * @param int $order_id The WooCommerce order id.
+	 *
+	 * @return array
+	 */
+	public function process_payment( $order_id ) {
+		$wc_order = wc_get_order( $order_id );
+		if ( ! is_a( $wc_order, WC_Order::class ) ) {
+			return $this->handle_payment_failure(
+				null,
+				new GatewayGenericException( new Exception( 'WC order was not found.' ) )
+			);
+		}
+
+		/**
+		 * If customer has chosen a saved credit card payment.
+		 */
+		$saved_credit_card = filter_input( INPUT_POST, 'saved_credit_card', FILTER_SANITIZE_STRING );
+		$change_payment    = filter_input( INPUT_POST, 'woocommerce_change_payment', FILTER_SANITIZE_STRING );
+		if ( $saved_credit_card && ! isset( $change_payment ) ) {
+
+			$user_id  = (int) $wc_order->get_customer_id();
+			$customer = new \WC_Customer( $user_id );
+			$tokens   = $this->payment_token_repository->all_for_user_id( (int) $customer->get_id() );
+
+			$selected_token = null;
+			foreach ( $tokens as $token ) {
+				if ( $token->id() === $saved_credit_card ) {
+					$selected_token = $token;
+					break;
+				}
+			}
+
+			if ( ! $selected_token ) {
+				return $this->handle_payment_failure(
+					$wc_order,
+					new GatewayGenericException( new Exception( 'Saved card token not found.' ) )
+				);
+			}
+
+			$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
+			$payer         = $this->payer_factory->from_customer( $customer );
+
+			$shipping_preference = $this->shipping_preference_factory->from_state(
+				$purchase_unit,
+				''
+			);
+
+			try {
+				$order = $this->order_endpoint->create(
+					array( $purchase_unit ),
+					$shipping_preference,
+					$payer,
+					$selected_token
+				);
+
+				$this->add_paypal_meta( $wc_order, $order, $this->environment() );
+
+				if ( ! $order->status()->is( OrderStatus::COMPLETED ) ) {
+					return $this->handle_payment_failure(
+						$wc_order,
+						new GatewayGenericException( new Exception( "Unexpected status for order {$order->id()} using a saved card: {$order->status()->name()}." ) )
+					);
+				}
+
+				if ( ! in_array(
+					$order->intent(),
+					array( 'CAPTURE', 'AUTHORIZE' ),
+					true
+				) ) {
+					return $this->handle_payment_failure(
+						$wc_order,
+						new GatewayGenericException( new Exception( "Could neither capture nor authorize order {$order->id()} using a saved card. Status: {$order->status()->name()}. Intent: {$order->intent()}." ) )
+					);
+				}
+
+				if ( $order->intent() === 'AUTHORIZE' ) {
+					$order = $this->order_endpoint->authorize( $order );
+
+					$wc_order->update_meta_data( AuthorizedPaymentsProcessor::CAPTURED_META_KEY, 'false' );
+				}
+
+				$transaction_id = $this->get_paypal_order_transaction_id( $order );
+				if ( $transaction_id ) {
+					$this->update_transaction_id( $transaction_id, $wc_order );
+				}
+
+				$this->handle_new_order_status( $order, $wc_order );
+
+				if ( $this->is_free_trial_order( $wc_order ) ) {
+					$this->authorized_payments_processor->void_authorizations( $order );
+					$wc_order->payment_complete();
+				} elseif ( $this->config->has( 'intent' ) && strtoupper( (string) $this->config->get( 'intent' ) ) === 'CAPTURE' ) {
+					$this->authorized_payments_processor->capture_authorized_payment( $wc_order );
+				}
+
+				return $this->handle_payment_success( $wc_order );
+			} catch ( RuntimeException $error ) {
+				return $this->handle_payment_failure( $wc_order, $error );
+			}
+		}
+
+		/**
+		 * If customer has chosen change Subscription payment.
+		 */
+		if ( $this->subscription_helper->has_subscription( $order_id ) && $this->subscription_helper->is_subscription_change_payment() ) {
+			if ( $saved_credit_card ) {
+				update_post_meta( $order_id, 'payment_token_id', $saved_credit_card );
+
+				return $this->handle_payment_success( $wc_order );
+			}
+		}
+
+		/**
+		 * If the WC_Order is paid through the approved webhook.
+		 */
+		//phpcs:disable WordPress.Security.NonceVerification.Recommended
+		if ( isset( $_REQUEST['ppcp-resume-order'] ) && $wc_order->has_status( 'processing' ) ) {
+			return $this->handle_payment_success( $wc_order );
+		}
+		//phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+		try {
+			if ( ! $this->order_processor->process( $wc_order ) ) {
+				return $this->handle_payment_failure(
+					$wc_order,
+					new Exception(
+						$this->order_processor->last_error()
+					)
+				);
+			}
+
+			if ( $this->subscription_helper->has_subscription( $order_id ) ) {
+				as_schedule_single_action(
+					time() + ( 1 * MINUTE_IN_SECONDS ),
+					'woocommerce_paypal_payments_check_saved_payment',
+					array(
+						'order_id'    => $order_id,
+						'customer_id' => $wc_order->get_customer_id(),
+						'intent'      => $this->config->has( 'intent' ) ? $this->config->get( 'intent' ) : '',
+					)
+				);
+			}
+
+			return $this->handle_payment_success( $wc_order );
+		} catch ( PayPalApiException $error ) {
+			return $this->handle_payment_failure(
+				$wc_order,
+				new Exception(
+					Messages::generic_payment_error_message() . ' ' . $error->getMessage(),
+					$error->getCode(),
+					$error
+				)
+			);
+		} catch ( RuntimeException $error ) {
+			return $this->handle_payment_failure( $wc_order, $error );
+		}
+	}
 
 	/**
 	 * Process refund.

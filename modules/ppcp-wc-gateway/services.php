@@ -59,7 +59,6 @@ return array(
 		$order_processor     = $container->get( 'wcgateway.order-processor' );
 		$settings_renderer   = $container->get( 'wcgateway.settings.render' );
 		$funding_source_renderer   = $container->get( 'wcgateway.funding-source.renderer' );
-		$authorized_payments = $container->get( 'wcgateway.processor.authorized-payments' );
 		$settings            = $container->get( 'wcgateway.settings' );
 		$session_handler     = $container->get( 'session.handler' );
 		$refund_processor    = $container->get( 'wcgateway.processor.refunds' );
@@ -68,8 +67,6 @@ return array(
 		$subscription_helper = $container->get( 'subscription.helper' );
 		$page_id             = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
 		$payment_token_repository = $container->get( 'vaulting.repository.payment-token' );
-		$payments_endpoint = $container->get( 'api.endpoint.payments' );
-		$order_endpoint = $container->get( 'api.endpoint.order' );
 		$environment         = $container->get( 'onboarding.environment' );
 		$logger              = $container->get( 'woocommerce.logger.woocommerce' );
 		$api_shop_country = $container->get( 'api.shop.country' );
@@ -77,7 +74,6 @@ return array(
 			$settings_renderer,
 			$funding_source_renderer,
 			$order_processor,
-			$authorized_payments,
 			$settings,
 			$session_handler,
 			$refund_processor,
@@ -87,10 +83,7 @@ return array(
 			$page_id,
 			$environment,
 			$payment_token_repository,
-			$container->get( 'api.factory.shipping-preference' ),
 			$logger,
-			$payments_endpoint,
-			$order_endpoint,
 			$api_shop_country
 		);
 	},

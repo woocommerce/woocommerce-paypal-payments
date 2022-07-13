@@ -3,14 +3,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
-use Psr\Log\NullLogger;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatus;
-use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -37,7 +30,6 @@ class WcGatewayTest extends TestCase
 	private $settingsRenderer;
 	private $funding_source_renderer;
 	private $orderProcessor;
-	private $authorizedOrdersProcessor;
 	private $settings;
 	private $refundProcessor;
 	private $onboardingState;
@@ -45,10 +37,7 @@ class WcGatewayTest extends TestCase
 	private $subscriptionHelper;
 	private $environment;
 	private $paymentTokenRepository;
-	private $shipping_preference_factory;
 	private $logger;
-	private $paymentsEndpoint;
-	private $orderEndpoint;
 	private $apiShopCountry;
 
 	public function setUp(): void {
@@ -60,7 +49,6 @@ class WcGatewayTest extends TestCase
 
 		$this->settingsRenderer = Mockery::mock(SettingsRenderer::class);
 		$this->orderProcessor = Mockery::mock(OrderProcessor::class);
-		$this->authorizedOrdersProcessor = Mockery::mock(AuthorizedPaymentsProcessor::class);
 		$this->settings = Mockery::mock(Settings::class);
 		$this->sessionHandler = Mockery::mock(SessionHandler::class);
 		$this->refundProcessor = Mockery::mock(RefundProcessor::class);
@@ -69,10 +57,7 @@ class WcGatewayTest extends TestCase
 		$this->subscriptionHelper = Mockery::mock(SubscriptionHelper::class);
 		$this->environment = Mockery::mock(Environment::class);
 		$this->paymentTokenRepository = Mockery::mock(PaymentTokenRepository::class);
-		$this->shipping_preference_factory = Mockery::mock(ShippingPreferenceFactory::class);
 		$this->logger = Mockery::mock(LoggerInterface::class);
-		$this->paymentsEndpoint = Mockery::mock(PaymentsEndpoint::class);
-		$this->orderEndpoint = Mockery::mock(OrderEndpoint::class);
 		$this->funding_source_renderer = new FundingSourceRenderer($this->settings);
 		$this->apiShopCountry = 'DE';
 
@@ -96,7 +81,6 @@ class WcGatewayTest extends TestCase
 			$this->settingsRenderer,
 			$this->funding_source_renderer,
 			$this->orderProcessor,
-			$this->authorizedOrdersProcessor,
 			$this->settings,
 			$this->sessionHandler,
 			$this->refundProcessor,
@@ -106,10 +90,7 @@ class WcGatewayTest extends TestCase
 			PayPalGateway::ID,
 			$this->environment,
 			$this->paymentTokenRepository,
-			$this->shipping_preference_factory,
 			$this->logger,
-			$this->paymentsEndpoint,
-			$this->orderEndpoint,
 			$this->apiShopCountry
 		);
 	}
