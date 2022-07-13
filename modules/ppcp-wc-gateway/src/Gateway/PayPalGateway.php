@@ -35,7 +35,7 @@ use WooCommerce\PayPalCommerce\Webhooks\Status\WebhooksStatusPage;
  */
 class PayPalGateway extends \WC_Payment_Gateway {
 
-	use ProcessPaymentTrait, FreeTrialHandlerTrait;
+	use ProcessPaymentTrait, FreeTrialHandlerTrait, GatewaySettingsRendererTrait;
 
 	const ID                            = 'ppcp-gateway';
 	const INTENT_META_KEY               = '_ppcp_paypal_intent';
@@ -282,19 +282,6 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		if ( ! $should_show_enabled_checkbox ) {
 			unset( $this->form_fields['enabled'] );
 		}
-	}
-
-	/**
-	 * Renders the settings.
-	 *
-	 * @return string
-	 */
-	public function generate_ppcp_html(): string {
-		ob_start();
-		$this->settings_renderer->render();
-		$content = ob_get_contents();
-		ob_end_clean();
-		return $content;
 	}
 
 	/**
@@ -572,11 +559,11 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	}
 
 	/**
-	 * Returns the environment.
+	 * Returns the settings renderer.
 	 *
-	 * @return Environment
+	 * @return SettingsRenderer
 	 */
-	protected function environment(): Environment {
-		return $this->environment;
+	protected function settings_renderer(): SettingsRenderer {
+		return $this->settings_renderer;
 	}
 }

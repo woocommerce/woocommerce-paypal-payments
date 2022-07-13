@@ -41,7 +41,8 @@ use Psr\Container\ContainerInterface;
  */
 class CreditCardGateway extends \WC_Payment_Gateway_CC {
 
-	use ProcessPaymentTrait, OrderMetaTrait, TransactionIdHandlingTrait, PaymentsStatusHandlingTrait, FreeTrialHandlerTrait;
+	use ProcessPaymentTrait, OrderMetaTrait, TransactionIdHandlingTrait, PaymentsStatusHandlingTrait, FreeTrialHandlerTrait,
+		GatewaySettingsRendererTrait;
 
 	const ID = 'ppcp-credit-card-gateway';
 
@@ -301,19 +302,6 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		add_action( 'gettext', array( $this, 'replace_credit_card_cvv_label' ), 10, 3 );
 		parent::form();
 		remove_action( 'gettext', 'replace_credit_card_cvv_label' );
-	}
-
-	/**
-	 * Renders the settings.
-	 *
-	 * @return string
-	 */
-	public function generate_ppcp_html(): string {
-		ob_start();
-		$this->settings_renderer->render();
-		$content = ob_get_contents();
-		ob_end_clean();
-		return $content;
 	}
 
 	/**
@@ -667,11 +655,11 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	}
 
 	/**
-	 * Returns the environment.
+	 * Returns the settings renderer.
 	 *
-	 * @return Environment
+	 * @return SettingsRenderer
 	 */
-	protected function environment(): Environment {
-		return $this->environment;
+	protected function settings_renderer(): SettingsRenderer {
+		return $this->settings_renderer;
 	}
 }
