@@ -130,56 +130,11 @@ class OXXOGateway extends WC_Payment_Gateway {
 	public function process_payment( $order_id ) {
 		$wc_order = wc_get_order( $order_id );
 		$wc_order->update_status( 'on-hold', __( 'Awaiting OXXO payment.', 'woocommerce-paypal-payments' ) );
-		$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
 
-		try {
-			$shipping_preference = $this->shipping_preference_factory->from_state(
-				$purchase_unit,
-				'checkout'
-			);
-
-			$order          = $this->order_endpoint->create( array( $purchase_unit ), $shipping_preference );
-			$payment_source = array(
-				'oxxo' => array(
-					'name'         => $wc_order->get_billing_first_name() . ' ' . $wc_order->get_billing_last_name(),
-					'email'        => $wc_order->get_billing_email(),
-					'country_code' => $wc_order->get_billing_country(),
-				),
-			);
-			$payment_method = $this->order_endpoint->confirm_payment_source( $order->id(), $payment_source );
-			foreach ( $payment_method->links as $link ) {
-				if ( $link->rel === 'payer-action' ) {
-					$wc_order->add_meta_data( 'ppcp_oxxo_payer_action', $link->href );
-					$wc_order->save_meta_data();
-				}
-			}
-		} catch ( RuntimeException $exception ) {
-			$error = $exception->getMessage();
-
-			if ( is_a( $exception, PayPalApiException::class ) && is_array( $exception->details() ) ) {
-				$details = '';
-				foreach ( $exception->details() as $detail ) {
-					$issue       = $detail->issue ?? '';
-					$field       = $detail->field ?? '';
-					$description = $detail->description ?? '';
-					$details    .= $issue . ' ' . $field . ' ' . $description . '<br>';
-				}
-
-				$error = $details;
-			}
-
-			$this->logger->error( $error );
-			wc_add_notice( $error, 'error' );
-
-			$wc_order->update_status(
-				'failed',
-				$error
-			);
-
-			return array(
-				'result'   => 'failure',
-				'redirect' => wc_get_checkout_url(),
-			);
+		$payer_action = WC()->session->get( 'ppcp_payer_action' );
+		if($payer_action) {
+			$wc_order->add_meta_data( 'ppcp_oxxo_payer_action', $payer_action );
+			$wc_order->save_meta_data();
 		}
 
 		WC()->cart->empty_cart();
