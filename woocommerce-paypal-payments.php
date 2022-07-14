@@ -19,6 +19,8 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce;
 
+use Psr\Log\LoggerInterface;
+
 define( 'PAYPAL_API_URL', 'https://api.paypal.com' );
 define( 'PAYPAL_SANDBOX_API_URL', 'https://api.sandbox.paypal.com' );
 define( 'PAYPAL_INTEGRATION_DATE', '2022-04-13' );
@@ -77,6 +79,21 @@ define( 'PPCP_FLAG_SUBSCRIPTION', true );
 			 * The hook fired after the plugin bootstrap with the app services container as parameter.
 			 */
 			do_action( 'woocommerce_paypal_payments_built_container', $app_container );
+
+			/**
+			 * The logger.
+			 *
+			 * @var LoggerInterface $logger
+			 */
+			$logger = $app_container->get( 'woocommerce.logger.woocommerce' );
+			add_action(
+				'ppcp_wp_hook_proxy_log',
+				static function( string $type, string $message ) use ( $logger ) {
+					$logger->$type( $message );
+				},
+				10,
+				2
+			);
 		}
 	}
 
