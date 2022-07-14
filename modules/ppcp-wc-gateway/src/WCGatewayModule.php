@@ -11,6 +11,9 @@ namespace WooCommerce\PayPalCommerce\WcGateway;
 
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
+use Exception;
+use Throwable;
+use TypeError;
 use WC_Order;
 use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
@@ -37,11 +40,14 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
+use WooCommerce\WooCommerce\Logging\Logger\WPHookProxyTrait;
 
 /**
  * Class WcGatewayModule
  */
 class WCGatewayModule implements ModuleInterface {
+
+	use WPHookProxyTrait;
 
 	/**
 	 * {@inheritDoc}
@@ -266,6 +272,7 @@ class WCGatewayModule implements ModuleInterface {
 	 * Registers the payment gateways.
 	 *
 	 * @param ContainerInterface $container The container.
+	 * @throws Exception|TypeError In case WP_DEBUG is active and there is a conflict with other plugin hook.
 	 */
 	private function register_payment_gateways( ContainerInterface $container ) {
 
@@ -321,20 +328,27 @@ class WCGatewayModule implements ModuleInterface {
 
 		add_filter(
 			'woocommerce_form_field',
-			static function ( $field, $key, $args, $value ) use ( $container ) {
-				$renderer = $container->get( 'wcgateway.settings.render' );
+			$this->wp_hook_proxy(
 				/**
-				 * The Settings Renderer object.
+				 * Bad type hint in WC phpdoc.
 				 *
-				 * @var SettingsRenderer $renderer
+				 * @psalm-suppress MissingClosureParamType
 				 */
-				$field = $renderer->render_multiselect( $field, $key, $args, $value );
-				$field = $renderer->render_password( $field, $key, $args, $value );
-				$field = $renderer->render_text_input( $field, $key, $args, $value );
-				$field = $renderer->render_heading( $field, $key, $args, $value );
-				$field = $renderer->render_table( $field, $key, $args, $value );
-				return $field;
-			},
+				static function ( $field, $key, $args, $value ) use ( $container ) {
+					$renderer = $container->get( 'wcgateway.settings.render' );
+					/**
+					 * The Settings Renderer object.
+					 *
+					 * @var SettingsRenderer $renderer
+					 */
+					$field = $renderer->render_multiselect( $field, $key, $args, $value );
+					$field = $renderer->render_password( $field, $key, $args, $value );
+					$field = $renderer->render_text_input( $field, $key, $args, $value );
+					$field = $renderer->render_heading( $field, $key, $args, $value );
+					$field = $renderer->render_table( $field, $key, $args, $value );
+					return $field;
+				}
+			),
 			10,
 			4
 		);
