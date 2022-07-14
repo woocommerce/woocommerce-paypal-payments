@@ -73,22 +73,6 @@ class OXXO {
 			}
 		);
 
-		add_filter(
-			'woocommerce_thankyou_order_received_text',
-			function( string $message, WC_Order $order ) {
-				$payer_action = $order->get_meta( 'ppcp_oxxo_payer_action' ) ?? '';
-
-				$button = '';
-				if ( $payer_action ) {
-					$button = '<p><a id="ppcp-oxxo-payer-action" class="button" href="' . $payer_action . '" target="_blank">See OXXO Voucher/Ticket</a></p>';
-				}
-
-				return $message . ' ' . $button;
-			},
-			10,
-			2
-		);
-
 		add_action(
 			'wp_enqueue_scripts',
 			array( $this, 'register_assets' )
