@@ -1,6 +1,6 @@
 import ErrorHandler from '../../../ppcp-button/resources/js/modules/ErrorHandler';
 
-window.addEventListener('load', function() {
+window.addEventListener('load', function () {
 
     const oxxoButton = document.getElementById('ppcp-oxxo');
     oxxoButton?.addEventListener('click', (event) => {

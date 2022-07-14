@@ -97,8 +97,7 @@ class OXXO {
 		add_action(
 			'woocommerce_review_order_after_payment',
 			function () {
-
-				echo '<button class="button" id="ppcp-oxxo">Pago en OXXO</button>';
+				echo '<button style="display:none" class="button" id="ppcp-oxxo">Pago en OXXO</button>';
 			}
 		);
 	}
