@@ -30,10 +30,14 @@ window.addEventListener('load', function () {
                 return;
             }
 
+            const width = screen.width/2;
+            const height = screen.height/2;
+            const left = (screen.width/2)-(width/2);
+            const top = (screen.height/2)-(height/2);
             window.open(
                 data.data.payer_action,
                 '_blank',
-                'popup'
+                'popup, width='+width+', height='+height+', top='+top+', left='+left
             );
 
             document.querySelector('#place_order').click()
