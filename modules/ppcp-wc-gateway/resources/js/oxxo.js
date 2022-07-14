@@ -1,8 +1,21 @@
+import ErrorHandler from '../../../ppcp-button/resources/js/modules/ErrorHandler';
+
 window.addEventListener('load', function() {
 
     const oxxoButton = document.getElementById('ppcp-oxxo');
     oxxoButton?.addEventListener('click', (event) => {
         event.preventDefault();
+
+        const requiredFields = jQuery('form.woocommerce-checkout .validate-required:visible :input');
+        requiredFields.each((i, input) => {
+            jQuery(input).trigger('validate');
+        });
+        if (jQuery('form.woocommerce-checkout .validate-required.woocommerce-invalid:visible').length) {
+            const errorHandler = new ErrorHandler(OXXOConfig.error.generic);
+            errorHandler.clear();
+            errorHandler.message(OXXOConfig.error.js_validation);
+            return;
+        }
 
         fetch(OXXOConfig.oxxo_endpoint, {
             method: 'POST',
@@ -13,7 +26,7 @@ window.addEventListener('load', function() {
             return res.json();
         }).then((data)=>{
             if (!data.success) {
-                alert('Could not update signup buttons: ' + JSON.stringify(data));
+                alert('Could not get payer action from PayPal: ' + JSON.stringify(data));
                 return;
             }
 
@@ -26,21 +39,4 @@ window.addEventListener('load', function() {
             document.querySelector('#place_order').click()
         });
     });
-
-    /*
-    const oxxoButton = document.getElementById('ppcp-oxxo-payer-action');
-    if(oxxoButton) {
-        oxxoButton.addEventListener('click', (event) => {
-            event.preventDefault();
-            window.open(
-                oxxoButton.href,
-                '_blank',
-                'popup'
-            );
-        });
-
-        window.open(oxxoButton.href);
-    }
-
-     */
 });

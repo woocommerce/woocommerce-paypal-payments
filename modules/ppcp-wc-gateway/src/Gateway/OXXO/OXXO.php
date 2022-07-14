@@ -94,10 +94,13 @@ class OXXO {
 			array( $this, 'register_assets' )
 		);
 
-		add_action('woocommerce_review_order_after_payment', function () {
+		add_action(
+			'woocommerce_review_order_after_payment',
+			function () {
 
-			echo '<button class="button" id="ppcp-oxxo">Pago en OXXO</button>';
-		});
+				echo '<button class="button" id="ppcp-oxxo">Pago en OXXO</button>';
+			}
+		);
 	}
 
 	/**
@@ -128,7 +131,7 @@ class OXXO {
 	public function register_assets(): void {
 		$gateway_settings = get_option( 'woocommerce_ppcp-oxxo-gateway_settings' );
 		$gateway_enabled  = $gateway_settings['enabled'] ?? '';
-		if ( $gateway_enabled === 'yes' && is_checkout() ) { // && ! empty( is_wc_endpoint_url( 'order-received' ) )
+		if ( $gateway_enabled === 'yes' && is_checkout() ) {
 			wp_enqueue_script(
 				'ppcp-oxxo',
 				trailingslashit( $this->module_url ) . 'assets/js/oxxo.js',
@@ -142,8 +145,18 @@ class OXXO {
 			'ppcp-oxxo',
 			'OXXOConfig',
 			array(
-				'oxxo_endpoint'     => \WC_AJAX::get_endpoint( 'ppc-oxxo' ),
-				'oxxo_nonce'        => wp_create_nonce( 'ppc-oxxo' ),
+				'oxxo_endpoint' => \WC_AJAX::get_endpoint( 'ppc-oxxo' ),
+				'oxxo_nonce'    => wp_create_nonce( 'ppc-oxxo' ),
+				'error'         => array(
+					'generic'       => __(
+						'Something went wrong. Please try again or choose another payment source.',
+						'woocommerce-paypal-payments'
+					),
+					'js_validation' => __(
+						'Required form fields are not filled or invalid.',
+						'woocommerce-paypal-payments'
+					),
+				),
 			)
 		);
 	}
