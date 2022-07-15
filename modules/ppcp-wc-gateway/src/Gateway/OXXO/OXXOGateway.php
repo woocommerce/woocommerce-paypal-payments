@@ -129,7 +129,6 @@ class OXXOGateway extends WC_Payment_Gateway {
 	 */
 	public function process_payment( $order_id ) {
 		$wc_order = wc_get_order( $order_id );
-		$wc_order->update_status( 'on-hold', __( 'Awaiting OXXO payment.', 'woocommerce-paypal-payments' ) );
 		$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
 		$payer_action  = '';
 

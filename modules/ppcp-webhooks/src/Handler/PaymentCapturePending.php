@@ -17,6 +17,8 @@ use WP_REST_Response;
  */
 class PaymentCapturePending implements RequestHandler {
 
+	use PrefixTrait;
+
 	/**
 	 * The logger.
 	 *
@@ -73,6 +75,53 @@ class PaymentCapturePending implements RequestHandler {
 		}
 
 		$this->logger->info( (string) wc_print_r( $resource, true ) );
+
+		$order_id = isset( $request['resource']['custom_id'] )
+			? $this->sanitize_custom_id( $request['resource']['custom_id'] )
+			: 0;
+
+		if ( ! $order_id ) {
+			$message = sprintf(
+			// translators: %s is the PayPal webhook Id.
+				__(
+					'No order for webhook event %s was found.',
+					'woocommerce-paypal-payments'
+				),
+				isset( $request['id'] ) ? $request['id'] : ''
+			);
+			$this->logger->log(
+				'warning',
+				$message,
+				array(
+					'request' => $request,
+				)
+			);
+			$response['message'] = $message;
+			return rest_ensure_response( $response );
+		}
+
+		$wc_order = wc_get_order( $order_id );
+		if ( ! is_a( $wc_order, \WC_Order::class ) ) {
+			$message = sprintf(
+			// translators: %s is the PayPal refund Id.
+				__( 'Order for PayPal refund %s not found.', 'woocommerce-paypal-payments' ),
+				isset( $request['resource']['id'] ) ? $request['resource']['id'] : ''
+			);
+			$this->logger->log(
+				'warning',
+				$message,
+				array(
+					'request' => $request,
+				)
+			);
+			$response['message'] = $message;
+			return rest_ensure_response( $response );
+		}
+
+		if ( $wc_order->get_status() === 'pending' ) {
+			$wc_order->update_status('on-hold', __('Payment initiation was successful, and is waiting for the buyer to complete the payment.', 'woocommerce-paypal-payments'));
+
+		}
 
 		$response['success'] = true;
 		return new WP_REST_Response( $response );
