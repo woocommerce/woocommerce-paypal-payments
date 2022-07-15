@@ -18,7 +18,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 
 /**
- * Class PayUponInvoiceGateway.
+ * Class OXXOGateway.
  */
 class OXXOGateway extends WC_Payment_Gateway {
 	const ID = 'ppcp-oxxo-gateway';

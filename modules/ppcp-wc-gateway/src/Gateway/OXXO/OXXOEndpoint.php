@@ -18,8 +18,8 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
 
-class OXXOEndpoint implements EndpointInterface
-{
+class OXXOEndpoint implements EndpointInterface {
+
 
 	/**
 	 * The request data
@@ -59,22 +59,19 @@ class OXXOEndpoint implements EndpointInterface
 		PurchaseUnitFactory $purchase_unit_factory,
 		ShippingPreferenceFactory $shipping_preference_factory,
 		LoggerInterface $logger
-	)
-	{
-		$this->request_data = $request_data;
-		$this->purchase_unit_factory = $purchase_unit_factory;
+	) {
+		 $this->request_data               = $request_data;
+		$this->purchase_unit_factory       = $purchase_unit_factory;
 		$this->shipping_preference_factory = $shipping_preference_factory;
-		$this->order_endpoint = $order_endpoint;
-		$this->logger = $logger;
+		$this->order_endpoint              = $order_endpoint;
+		$this->logger                      = $logger;
 	}
 
-	public static function nonce(): string
-	{
+	public static function nonce(): string {
 		return 'ppc-oxxo';
 	}
 
-	public function handle_request(): bool
-	{
+	public function handle_request(): bool {
 		$data = $this->request_data->read_request( $this->nonce() );
 
 		$purchase_unit = $this->purchase_unit_factory->from_wc_cart();
@@ -86,7 +83,7 @@ class OXXOEndpoint implements EndpointInterface
 				'checkout'
 			);
 
-			$order = $this->order_endpoint->create(array($purchase_unit), $shipping_preference);
+			$order = $this->order_endpoint->create( array( $purchase_unit ), $shipping_preference );
 
 			$payment_source = array(
 				'oxxo' => array(
@@ -103,7 +100,6 @@ class OXXOEndpoint implements EndpointInterface
 					$payer_action = $link->href;
 				}
 			}
-
 		} catch ( RuntimeException $exception ) {
 			$error = $exception->getMessage();
 
@@ -119,7 +115,6 @@ class OXXOEndpoint implements EndpointInterface
 				$error = $details;
 			}
 
-
 			$this->logger->error( $error );
 			wc_add_notice( $error, 'error' );
 		}
@@ -127,7 +122,7 @@ class OXXOEndpoint implements EndpointInterface
 		WC()->session->set( 'ppcp_payer_action', $payer_action );
 
 		wp_send_json_success(
-			array('payer_action' => $payer_action,)
+			array( 'payer_action' => $payer_action )
 		);
 
 		return true;
