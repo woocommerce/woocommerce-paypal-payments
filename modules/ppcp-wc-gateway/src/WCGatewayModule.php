@@ -262,6 +262,14 @@ class WCGatewayModule implements ModuleInterface {
 			10,
 			2
 		);
+
+		add_action(
+			'wc_ajax_ppc-oxxo',
+			static function () use ( $c ) {
+				$endpoint = $c->get( 'wcgateway.endpoint.oxxo' );
+				$endpoint->handle_request();
+			}
+		);
 	}
 
 	/**

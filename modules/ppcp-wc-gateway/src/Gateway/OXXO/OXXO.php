@@ -77,6 +77,13 @@ class OXXO {
 			'wp_enqueue_scripts',
 			array( $this, 'register_assets' )
 		);
+
+		add_action(
+			'woocommerce_review_order_after_payment',
+			function () {
+				echo '<button style="display:none" class="button" id="ppcp-oxxo">Pago en OXXO</button>';
+			}
+		);
 	}
 
 	/**
@@ -109,12 +116,31 @@ class OXXO {
 		$gateway_enabled  = $gateway_settings['enabled'] ?? '';
 		if ( $gateway_enabled === 'yes' && is_checkout() ) {
 			wp_enqueue_script(
-				'ppcp-pay-upon-invoice',
+				'ppcp-oxxo',
 				trailingslashit( $this->module_url ) . 'assets/js/oxxo.js',
 				array(),
 				$this->asset_version,
 				true
 			);
 		}
+
+		wp_localize_script(
+			'ppcp-oxxo',
+			'OXXOConfig',
+			array(
+				'oxxo_endpoint' => \WC_AJAX::get_endpoint( 'ppc-oxxo' ),
+				'oxxo_nonce'    => wp_create_nonce( 'ppc-oxxo' ),
+				'error'         => array(
+					'generic'       => __(
+						'Something went wrong. Please try again or choose another payment source.',
+						'woocommerce-paypal-payments'
+					),
+					'js_validation' => __(
+						'Required form fields are not filled or invalid.',
+						'woocommerce-paypal-payments'
+					),
+				),
+			)
+		);
 	}
 }

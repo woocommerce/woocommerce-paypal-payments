@@ -84,8 +84,9 @@ class CheckoutBootstap {
         const currentPaymentMethod = getCurrentPaymentMethod();
         const isPaypal = currentPaymentMethod === PaymentMethods.PAYPAL;
         const isCard = currentPaymentMethod === PaymentMethods.CARDS;
+        const isOXXO = currentPaymentMethod === PaymentMethods.OXXO;
         const isSavedCard = isCard && isSavedCardSelected();
-        const isNotOurGateway = !isPaypal && !isCard;
+        const isNotOurGateway = !isPaypal && !isCard && !isOXXO;
         const isFreeTrial = PayPalCommerceGateway.is_free_trial_cart;
         const hasVaultedPaypal = PayPalCommerceGateway.vaulted_paypal_email !== '';
 
@@ -94,6 +95,7 @@ class CheckoutBootstap {
         setVisible(this.gateway.button.wrapper, isPaypal && !(isFreeTrial && hasVaultedPaypal));
         setVisible(this.gateway.messages.wrapper, isPaypal && !isFreeTrial);
         setVisible(this.gateway.hosted_fields.wrapper, isCard && !isSavedCard);
+        setVisible('#ppcp-oxxo', isOXXO && !isSavedCard && !isPaypal);
 
         if (isPaypal && !isFreeTrial) {
             this.messages.render();
