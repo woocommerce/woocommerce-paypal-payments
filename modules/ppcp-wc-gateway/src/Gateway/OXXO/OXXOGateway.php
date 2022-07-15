@@ -131,6 +131,7 @@ class OXXOGateway extends WC_Payment_Gateway {
 		$wc_order = wc_get_order( $order_id );
 		$wc_order->update_status( 'on-hold', __( 'Awaiting OXXO payment.', 'woocommerce-paypal-payments' ) );
 		$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
+		$payer_action  = '';
 
 		try {
 			$shipping_preference = $this->shipping_preference_factory->from_state(
@@ -149,7 +150,8 @@ class OXXOGateway extends WC_Payment_Gateway {
 			$payment_method = $this->order_endpoint->confirm_payment_source( $order->id(), $payment_source );
 			foreach ( $payment_method->links as $link ) {
 				if ( $link->rel === 'payer-action' ) {
-					$wc_order->add_meta_data( 'ppcp_oxxo_payer_action', $link->href );
+					$payer_action = $link->href;
+					$wc_order->add_meta_data( 'ppcp_oxxo_payer_action', $payer_action );
 					$wc_order->save_meta_data();
 				}
 			}
@@ -184,9 +186,15 @@ class OXXOGateway extends WC_Payment_Gateway {
 
 		WC()->cart->empty_cart();
 
-		return array(
+		$result = array(
 			'result'   => 'success',
 			'redirect' => $this->get_return_url( $wc_order ),
 		);
+
+		if ( $payer_action ) {
+			$result['payer_action'] = $payer_action;
+		}
+
+		return $result;
 	}
 }

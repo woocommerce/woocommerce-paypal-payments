@@ -73,22 +73,6 @@ class OXXO {
 			}
 		);
 
-		add_filter(
-			'woocommerce_thankyou_order_received_text',
-			function( string $message, WC_Order $order ) {
-				$payer_action = $order->get_meta( 'ppcp_oxxo_payer_action' ) ?? '';
-
-				$button = '';
-				if ( $payer_action ) {
-					$button = '<p><a id="ppcp-oxxo-payer-action" class="button" href="' . $payer_action . '" target="_blank">See OXXO Voucher/Ticket</a></p>';
-				}
-
-				return $message . ' ' . $button;
-			},
-			10,
-			2
-		);
-
 		add_action(
 			'wp_enqueue_scripts',
 			array( $this, 'register_assets' )
@@ -123,7 +107,7 @@ class OXXO {
 	public function register_assets(): void {
 		$gateway_settings = get_option( 'woocommerce_ppcp-oxxo-gateway_settings' );
 		$gateway_enabled  = $gateway_settings['enabled'] ?? '';
-		if ( $gateway_enabled === 'yes' && is_checkout() && ! empty( is_wc_endpoint_url( 'order-received' ) ) ) {
+		if ( $gateway_enabled === 'yes' && is_checkout() ) {
 			wp_enqueue_script(
 				'ppcp-pay-upon-invoice',
 				trailingslashit( $this->module_url ) . 'assets/js/oxxo.js',
