@@ -2246,7 +2246,7 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'wcgateway.endpoint.oxxo' => static function (ContainerInterface $container): OXXOEndpoint {
+	'wcgateway.endpoint.oxxo'                           => static function ( ContainerInterface $container ): OXXOEndpoint {
 		return new OXXOEndpoint(
 			$container->get( 'button.request-data' ),
 			$container->get( 'api.endpoint.order' ),

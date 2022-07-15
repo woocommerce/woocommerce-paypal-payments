@@ -1,6 +1,6 @@
 <?php
 /**
- * Handles the onboard with Pay upon Invoice setting.
+ * Handles OXXO payer action.
  *
  * @package WooCommerce\PayPalCommerce\Onboarding\Endpoint
  */
@@ -18,6 +18,9 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
 
+/**
+ * OXXOEndpoint constructor.
+ */
 class OXXOEndpoint implements EndpointInterface {
 
 
@@ -29,21 +32,29 @@ class OXXOEndpoint implements EndpointInterface {
 	protected $request_data;
 
 	/**
+	 * The purchase unit factory.
+	 *
 	 * @var PurchaseUnitFactory
 	 */
 	protected $purchase_unit_factory;
 
 	/**
+	 * The shipping preference factory.
+	 *
 	 * @var ShippingPreferenceFactory
 	 */
 	protected $shipping_preference_factory;
 
 	/**
+	 * The order endpoint.
+	 *
 	 * @var OrderEndpoint
 	 */
 	protected $order_endpoint;
 
 	/**
+	 * The logger.
+	 *
 	 * @var LoggerInterface
 	 */
 	protected $logger;
@@ -51,7 +62,11 @@ class OXXOEndpoint implements EndpointInterface {
 	/**
 	 * OXXOEndpoint constructor
 	 *
-	 * @param RequestData $request_data The request data.
+	 * @param RequestData               $request_data The request data.
+	 * @param OrderEndpoint             $order_endpoint The order endpoint.
+	 * @param PurchaseUnitFactory       $purchase_unit_factory The purchase unit factory.
+	 * @param ShippingPreferenceFactory $shipping_preference_factory The shipping preference factory.
+	 * @param LoggerInterface           $logger The logger.
 	 */
 	public function __construct(
 		RequestData $request_data,
@@ -60,23 +75,31 @@ class OXXOEndpoint implements EndpointInterface {
 		ShippingPreferenceFactory $shipping_preference_factory,
 		LoggerInterface $logger
 	) {
-		 $this->request_data               = $request_data;
+		$this->request_data                = $request_data;
 		$this->purchase_unit_factory       = $purchase_unit_factory;
 		$this->shipping_preference_factory = $shipping_preference_factory;
 		$this->order_endpoint              = $order_endpoint;
 		$this->logger                      = $logger;
 	}
 
+	/**
+	 * The nonce
+	 *
+	 * @return string
+	 */
 	public static function nonce(): string {
 		return 'ppc-oxxo';
 	}
 
+	/**
+	 * Handles the request.
+	 *
+	 * @return bool
+	 */
 	public function handle_request(): bool {
-		$data = $this->request_data->read_request( $this->nonce() );
-
 		$purchase_unit = $this->purchase_unit_factory->from_wc_cart();
+		$payer_action  = '';
 
-		$payer_action = '';
 		try {
 			$shipping_preference = $this->shipping_preference_factory->from_state(
 				$purchase_unit,
