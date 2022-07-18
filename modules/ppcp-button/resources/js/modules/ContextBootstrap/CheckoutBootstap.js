@@ -69,9 +69,7 @@ class CheckoutBootstap {
         );
 
         this.renderer.render(
-            this.gateway.button.wrapper,
-            this.gateway.hosted_fields.wrapper,
-            actionHandler.configuration(),
+            actionHandler.configuration()
         );
 
         this.buttonChangeObserver.observe(

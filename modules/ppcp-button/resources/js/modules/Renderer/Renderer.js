@@ -1,23 +1,25 @@
+import merge from "deepmerge";
+
 class Renderer {
-    constructor(creditCardRenderer, defaultConfig, onSmartButtonClick, onSmartButtonsInit) {
-        this.defaultConfig = defaultConfig;
+    constructor(creditCardRenderer, defaultSettings, onSmartButtonClick, onSmartButtonsInit) {
+        this.defaultSettings = defaultSettings;
         this.creditCardRenderer = creditCardRenderer;
         this.onSmartButtonClick = onSmartButtonClick;
         this.onSmartButtonsInit = onSmartButtonsInit;
     }
 
-    render(wrapper, hostedFieldsWrapper, contextConfig) {
+    render(contextConfig, settingsOverride = {}) {
+        const settings = merge(this.defaultSettings, settingsOverride);
 
-        this.renderButtons(wrapper, contextConfig);
-        this.creditCardRenderer.render(hostedFieldsWrapper, contextConfig);
+        this.renderButtons(settings.button.wrapper, settings.button.style, contextConfig);
+        this.creditCardRenderer.render(settings.hosted_fields.wrapper, contextConfig);
     }
 
-    renderButtons(wrapper, contextConfig) {
+    renderButtons(wrapper, style, contextConfig) {
         if (! document.querySelector(wrapper) || this.isAlreadyRendered(wrapper) || 'undefined' === typeof paypal.Buttons ) {
             return;
         }
 
-        const style = wrapper === this.defaultConfig.button.wrapper ? this.defaultConfig.button.style : this.defaultConfig.button.mini_cart_style;
         paypal.Buttons({
             style,
             ...contextConfig,

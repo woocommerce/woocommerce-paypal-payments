@@ -831,9 +831,8 @@ class SmartButton implements SmartButtonInterface {
 				),
 			),
 			'hosted_fields'                     => array(
-				'wrapper'           => '#ppcp-hosted-fields',
-				'mini_cart_wrapper' => '#ppcp-hosted-fields-mini-cart',
-				'labels'            => array(
+				'wrapper'     => '#ppcp-hosted-fields',
+				'labels'      => array(
 					'credit_card_number'       => '',
 					'cvv'                      => '',
 					'mm_yy'                    => __( 'MM/YY', 'woocommerce-paypal-payments' ),
@@ -847,8 +846,8 @@ class SmartButton implements SmartButtonInterface {
 					),
 					'cardholder_name_required' => __( 'Cardholder\'s first and last name are required, please fill the checkout form required fields.', 'woocommerce-paypal-payments' ),
 				),
-				'valid_cards'       => $this->dcc_applies->valid_cards(),
-				'contingency'       => $this->get_3ds_contingency(),
+				'valid_cards' => $this->dcc_applies->valid_cards(),
+				'contingency' => $this->get_3ds_contingency(),
 			),
 			'messages'                          => $this->message_values(),
 			'labels'                            => array(
