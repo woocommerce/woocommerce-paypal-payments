@@ -74,8 +74,6 @@ class PaymentCapturePending implements RequestHandler {
 			return new WP_REST_Response( $response );
 		}
 
-		$this->logger->info( (string) wc_print_r( $resource, true ) );
-
 		$order_id = isset( $request['resource']['custom_id'] )
 			? $this->sanitize_custom_id( $request['resource']['custom_id'] )
 			: 0;
