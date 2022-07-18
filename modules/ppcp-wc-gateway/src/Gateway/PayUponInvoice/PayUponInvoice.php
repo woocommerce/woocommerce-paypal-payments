@@ -309,7 +309,7 @@ class PayUponInvoice {
 				}
 			},
 			10,
-			3
+			2
 		);
 
 		add_filter(
