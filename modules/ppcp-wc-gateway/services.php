@@ -854,6 +854,20 @@ return array(
 				'requirements'      => array(),
 				'gateway'           => 'paypal',
 			),
+			'use_form_billing_data_for_cards'    => array(
+				'title'        => __( 'Send billing data for cards', 'woocommerce-paypal-payments' ),
+				'type'         => 'checkbox',
+				'desc_tip'     => true,
+				'label'        => __( 'Send Checkout billing form data to PayPal smart card fields', 'woocommerce-paypal-payments' ),
+				'description'  => __( 'This increases convenience for the users, but can cause issues if card details do not match the billing data.', 'woocommerce-paypal-payments' ),
+				'default'      => false,
+				'screens'      => array(
+					State::STATE_START,
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
 
 			// General button styles.
 			'button_style_heading'               => array(

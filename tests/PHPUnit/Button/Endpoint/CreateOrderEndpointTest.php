@@ -152,6 +152,7 @@ class CreateOrderEndpointTest extends TestCase
         $session_handler = Mockery::mock(SessionHandler::class);
         $settings = Mockery::mock(Settings::class);
         $early_order_handler = Mockery::mock(EarlyOrderHandler::class);
+		$settings->shouldReceive('has')->andReturnFalse();
 
         $testee = new CreateOrderEndpoint(
             $request_data,

@@ -867,6 +867,7 @@ class SmartButton implements SmartButtonInterface {
 			'single_product_buttons_enabled'    => $this->settings->has( 'button_product_enabled' ) && $this->settings->get( 'button_product_enabled' ),
 			'mini_cart_buttons_enabled'         => $this->settings->has( 'button_mini-cart_enabled' ) && $this->settings->get( 'button_mini-cart_enabled' ),
 			'basic_checkout_validation_enabled' => $this->basic_checkout_validation_enabled,
+			'use_form_billing_data_for_cards'   => $this->settings->has( 'use_form_billing_data_for_cards' ) && $this->settings->get( 'use_form_billing_data_for_cards' ),
 		);
 
 		if ( $this->style_for_context( 'layout', 'mini-cart' ) !== 'horizontal' ) {
