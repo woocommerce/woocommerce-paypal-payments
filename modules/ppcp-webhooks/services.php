@@ -81,7 +81,6 @@ return array(
 			new VaultPaymentTokenCreated( $logger, $prefix, $authorized_payments_processor ),
 			new VaultCreditCardCreated( $logger, $prefix ),
 			new PaymentCapturePending( $logger ),
-			new PaymentCaptureDenied($logger),
 		);
 	},
 
