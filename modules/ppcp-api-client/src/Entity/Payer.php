@@ -18,7 +18,7 @@ class Payer {
 	/**
 	 * The name.
 	 *
-	 * @var PayerName
+	 * @var PayerName|null
 	 */
 	private $name;
 
@@ -46,7 +46,7 @@ class Payer {
 	/**
 	 * The address.
 	 *
-	 * @var Address
+	 * @var Address|null
 	 */
 	private $address;
 
@@ -67,7 +67,7 @@ class Payer {
 	/**
 	 * Payer constructor.
 	 *
-	 * @param PayerName          $name The name.
+	 * @param PayerName|null     $name The name.
 	 * @param string             $email_address The email.
 	 * @param string             $payer_id The payer id.
 	 * @param Address|null       $address The address.
@@ -76,7 +76,7 @@ class Payer {
 	 * @param PayerTaxInfo|null  $tax_info The tax info.
 	 */
 	public function __construct(
-		PayerName $name,
+		?PayerName $name,
 		string $email_address,
 		string $payer_id,
 		Address $address = null,
@@ -97,10 +97,19 @@ class Payer {
 	/**
 	 * Returns the name.
 	 *
-	 * @return PayerName
+	 * @return PayerName|null
 	 */
-	public function name(): PayerName {
+	public function name(): ?PayerName {
 		return $this->name;
+	}
+
+	/**
+	 * Sets the name.
+	 *
+	 * @param PayerName|null $name The value.
+	 */
+	public function set_name( ?PayerName $name ): void {
+		$this->name = $name;
 	}
 
 	/**
@@ -140,6 +149,15 @@ class Payer {
 	}
 
 	/**
+	 * Sets the address.
+	 *
+	 * @param Address|null $address The value.
+	 */
+	public function set_address( ?Address $address ): void {
+		$this->address = $address;
+	}
+
+	/**
 	 * Returns the phone.
 	 *
 	 * @return PhoneWithType|null
@@ -164,27 +182,26 @@ class Payer {
 	 */
 	public function to_array() {
 		$payer = array(
-			'name'          => $this->name()->to_array(),
 			'email_address' => $this->email_address(),
 		);
-		if ( $this->address() ) {
-			$payer['address'] = $this->address->to_array();
-			if ( 2 !== strlen( $this->address()->country_code() ) ) {
-				unset( $payer['address'] );
-			}
+		if ( $this->name ) {
+			$payer['name'] = $this->name->to_array();
 		}
-		if ( $this->payer_id() ) {
-			$payer['payer_id'] = $this->payer_id();
+		if ( $this->address && 2 === strlen( $this->address->country_code() ) ) {
+			$payer['address'] = $this->address->to_array();
+		}
+		if ( $this->payer_id ) {
+			$payer['payer_id'] = $this->payer_id;
 		}
 
-		if ( $this->phone() ) {
-			$payer['phone'] = $this->phone()->to_array();
+		if ( $this->phone ) {
+			$payer['phone'] = $this->phone->to_array();
 		}
-		if ( $this->tax_info() ) {
-			$payer['tax_info'] = $this->tax_info()->to_array();
+		if ( $this->tax_info ) {
+			$payer['tax_info'] = $this->tax_info->to_array();
 		}
-		if ( $this->birthdate() ) {
-			$payer['birth_date'] = $this->birthdate()->format( 'Y-m-d' );
+		if ( $this->birthdate ) {
+			$payer['birth_date'] = $this->birthdate->format( 'Y-m-d' );
 		}
 		return $payer;
 	}

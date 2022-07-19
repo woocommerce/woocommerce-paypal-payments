@@ -14,6 +14,7 @@ use Psr\Log\LoggerInterface;
 use stdClass;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Amount;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
@@ -332,18 +333,35 @@ class CreateOrderEndpoint implements EndpointInterface {
 	private function create_paypal_order( \WC_Order $wc_order = null ): Order {
 		assert( $this->purchase_unit instanceof PurchaseUnit );
 
+		$funding_source = $this->parsed_request_data['funding_source'] ?? '';
+		$payer          = $this->payer( $this->parsed_request_data, $wc_order );
+
 		$shipping_preference = $this->shipping_preference_factory->from_state(
 			$this->purchase_unit,
 			$this->parsed_request_data['context'],
 			WC()->cart,
-			$this->parsed_request_data['funding_source'] ?? ''
+			$funding_source
 		);
+
+		if ( 'card' === $funding_source ) {
+			if ( ApplicationContext::SHIPPING_PREFERENCE_SET_PROVIDED_ADDRESS === $shipping_preference ) {
+				if ( $payer ) {
+					$payer->set_address( null );
+
+				}
+			}
+			if ( ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING === $shipping_preference ) {
+				if ( $payer ) {
+					$payer->set_name( null );
+				}
+			}
+		}
 
 		try {
 			return $this->api_endpoint->create(
 				array( $this->purchase_unit ),
 				$shipping_preference,
-				$this->payer( $this->parsed_request_data, $wc_order ),
+				$payer,
 				null,
 				$this->payment_method()
 			);
@@ -365,7 +383,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 				return $this->api_endpoint->create(
 					array( $this->purchase_unit ),
 					$shipping_preference,
-					$this->payer( $this->parsed_request_data, $wc_order ),
+					$payer,
 					null,
 					$this->payment_method()
 				);
