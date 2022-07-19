@@ -13,35 +13,43 @@ class Renderer {
     render(contextConfig, settingsOverride = {}) {
         const settings = merge(this.defaultSettings, settingsOverride);
 
-        const separateGatewayFundingSources = Object.keys(settings.separate_buttons);
+        const enabledSeparateGateways = Object.fromEntries(Object.entries(
+            settings.separate_buttons).filter(([s, data]) => document.querySelector(data.wrapper)
+        ));
+        const hasEnabledSeparateGateways = Object.keys(enabledSeparateGateways).length !== 0;
 
-        for (const fundingSource of paypal.getFundingSources()
-            .filter(s =>
-                !separateGatewayFundingSources.includes(s) ||
-                !document.querySelector(settings.separate_buttons[s].wrapper) // disabled gateway
-        )) {
-            let style = settings.button.style;
-            if (fundingSource !== 'paypal') {
-                style = {
-                    shape: style.shape,
-                };
-            }
-
+        if (!hasEnabledSeparateGateways) {
             this.renderButtons(
                 settings.button.wrapper,
-                style,
-                contextConfig,
-                fundingSource
+                settings.button.style,
+                contextConfig
             );
+        } else {
+            // render each button separately
+            for (const fundingSource of paypal.getFundingSources().filter(s => !(s in enabledSeparateGateways))) {
+                let style = settings.button.style;
+                if (fundingSource !== 'paypal') {
+                    style = {
+                        shape: style.shape,
+                    };
+                }
+
+                this.renderButtons(
+                    settings.button.wrapper,
+                    style,
+                    contextConfig,
+                    fundingSource
+                );
+            }
         }
 
         this.creditCardRenderer.render(settings.hosted_fields.wrapper, contextConfig);
 
-        for (const [fundingSource, data] of Object.entries(settings.separate_buttons)) {
+        for (const [fundingSource, data] of Object.entries(enabledSeparateGateways)) {
             this.renderButtons(
                 data.wrapper,
                 data.style,
-               contextConfig,
+                contextConfig,
                 fundingSource
             );
         }
