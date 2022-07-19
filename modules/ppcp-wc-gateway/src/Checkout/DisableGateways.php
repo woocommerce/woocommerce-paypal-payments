@@ -79,12 +79,6 @@ class DisableGateways {
 			return $methods;
 		}
 
-		if ( $this->is_credit_card() ) {
-			return array(
-				CreditCardGateway::ID => $methods[ CreditCardGateway::ID ],
-				PayPalGateway::ID     => $methods[ PayPalGateway::ID ],
-			);
-		}
 		return array( PayPalGateway::ID => $methods[ PayPalGateway::ID ] );
 	}
 
@@ -112,23 +106,20 @@ class DisableGateways {
 	 * @return bool
 	 */
 	private function needs_to_disable_gateways(): bool {
-		return $this->session_handler->order() !== null &&
-			'card' !== $this->session_handler->funding_source();
-	}
-
-	/**
-	 * Whether the current PayPal session is done via DCC payment.
-	 *
-	 * @return bool
-	 */
-	private function is_credit_card(): bool {
 		$order = $this->session_handler->order();
 		if ( ! $order ) {
 			return false;
 		}
-		if ( ! $order->payment_source() || ! $order->payment_source()->card() ) {
-			return false;
+
+		$source = $order->payment_source();
+		if ( $source && $source->card() ) {
+			return false; // DCC.
 		}
+
+		if ( 'card' === $this->session_handler->funding_source() ) {
+			return false; // Card buttons.
+		}
+
 		return true;
 	}
 }
