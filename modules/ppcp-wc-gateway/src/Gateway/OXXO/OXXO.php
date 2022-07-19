@@ -94,21 +94,33 @@ class OXXO {
 			2
 		);
 
-		add_action('woocommerce_email_before_order_table',
-			function (WC_Order $order, bool $sent_to_admin) {
-				if(
+		add_action(
+			'woocommerce_email_before_order_table',
+			function ( WC_Order $order, bool $sent_to_admin ) {
+				if (
 					! $sent_to_admin
 					&& $order->get_payment_method() === OXXOGateway::ID
 					&& $order->has_status( 'on-hold' )
 				) {
 					$payer_action = $order->get_meta( 'ppcp_oxxo_payer_action' ) ?? '';
-					if($payer_action) {
-						echo '<p><a class="button" href="'. esc_url($payer_action) .'">OXXO voucher</a></p>';
+					if ( $payer_action ) {
+						echo '<p><a class="button" href="' . esc_url( $payer_action ) . '">OXXO voucher</a></p>';
 					}
 				}
 			},
 			10,
 			2
+		);
+
+		add_filter(
+			'woocommerce_available_payment_gateways',
+			function( $available_gateways ) {
+				if ( array_key_exists( OXXOGateway::ID, $available_gateways ) ) {
+					$available_gateways[ OXXOGateway::ID ]->order_button_text = __( 'Pay with OXXO', 'woocommerce-paypal-payments' );
+				}
+
+				return $available_gateways;
+			}
 		);
 	}
 
