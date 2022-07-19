@@ -13,6 +13,16 @@ class Renderer {
 
         this.renderButtons(settings.button.wrapper, settings.button.style, contextConfig);
         this.creditCardRenderer.render(settings.hosted_fields.wrapper, contextConfig);
+        for (const [fundingSource, data] of Object.entries(settings.separate_buttons)) {
+            this.renderButtons(
+                data.wrapper,
+                data.style,
+                {
+                    ...contextConfig,
+                    fundingSource: fundingSource,
+                }
+            );
+        }
     }
 
     renderButtons(wrapper, style, contextConfig) {
@@ -20,12 +30,17 @@ class Renderer {
             return;
         }
 
-        paypal.Buttons({
+        const btn = paypal.Buttons({
             style,
             ...contextConfig,
             onClick: this.onSmartButtonClick,
             onInit: this.onSmartButtonsInit,
-        }).render(wrapper);
+        });
+        if (!btn.isEligible()) {
+            return;
+        }
+
+        btn.render(wrapper);
     }
 
     isAlreadyRendered(wrapper) {

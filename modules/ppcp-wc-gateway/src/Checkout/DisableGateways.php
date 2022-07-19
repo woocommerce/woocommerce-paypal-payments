@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Checkout;
 
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use Psr\Container\ContainerInterface;
@@ -59,9 +60,10 @@ class DisableGateways {
 		if ( ! isset( $methods[ PayPalGateway::ID ] ) && ! isset( $methods[ CreditCardGateway::ID ] ) ) {
 			return $methods;
 		}
-		if ( $this->disable_both_gateways() ) {
+		if ( $this->disable_all_gateways() ) {
 			unset( $methods[ PayPalGateway::ID ] );
 			unset( $methods[ CreditCardGateway::ID ] );
+			unset( $methods[ CardButtonGateway::ID ] );
 			return $methods;
 		}
 
@@ -87,11 +89,11 @@ class DisableGateways {
 	}
 
 	/**
-	 * Whether both gateways should be disabled or not.
+	 * Whether all gateways should be disabled or not.
 	 *
 	 * @return bool
 	 */
-	private function disable_both_gateways() : bool {
+	private function disable_all_gateways() : bool {
 		if ( ! $this->settings->has( 'enabled' ) || ! $this->settings->get( 'enabled' ) ) {
 			return true;
 		}
@@ -110,7 +112,8 @@ class DisableGateways {
 	 * @return bool
 	 */
 	private function needs_to_disable_gateways(): bool {
-		return $this->session_handler->order() !== null;
+		return $this->session_handler->order() !== null &&
+			'card' !== $this->session_handler->funding_source();
 	}
 
 	/**

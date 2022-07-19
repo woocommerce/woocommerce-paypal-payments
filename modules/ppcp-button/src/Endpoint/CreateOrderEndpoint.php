@@ -28,6 +28,7 @@ use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Subscription\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
@@ -204,7 +205,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 
 				// The cart does not have any info about payment method, so we must handle free trial here.
 				if ( (
-					CreditCardGateway::ID === $payment_method
+					in_array( $payment_method, array( CreditCardGateway::ID, CardButtonGateway::ID ), true )
 						|| ( PayPalGateway::ID === $payment_method && 'card' === $funding_source )
 					)
 					&& $this->is_free_trial_cart()

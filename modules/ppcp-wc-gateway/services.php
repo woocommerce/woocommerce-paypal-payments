@@ -29,6 +29,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Checkout\CheckoutPayPalAddressPreset;
 use WooCommerce\PayPalCommerce\WcGateway\Checkout\DisableGateways;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\FraudNet;
@@ -126,6 +127,20 @@ return array(
 			$payments_endpoint
 		);
 	},
+	'wcgateway.card-button-gateway'                     => static function ( ContainerInterface $container ): CardButtonGateway {
+		return new CardButtonGateway(
+			$container->get( 'wcgateway.order-processor' ),
+			$container->get( 'wcgateway.settings' ),
+			$container->get( 'session.handler' ),
+			$container->get( 'wcgateway.processor.refunds' ),
+			$container->get( 'onboarding.state' ),
+			$container->get( 'wcgateway.transaction-url-provider' ),
+			$container->get( 'subscription.helper' ),
+			$container->get( 'onboarding.environment' ),
+			$container->get( 'vaulting.repository.payment-token' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
 	'wcgateway.disabler'                                => static function ( ContainerInterface $container ): DisableGateways {
 		$session_handler = $container->get( 'session.handler' );
 		$settings       = $container->get( 'wcgateway.settings' );
@@ -143,7 +158,7 @@ return array(
 		}
 
 		$section = isset( $_GET['section'] ) ? sanitize_text_field( wp_unslash( $_GET['section'] ) ) : '';
-		return in_array( $section, array( PayPalGateway::ID, CreditCardGateway::ID, WebhooksStatusPage::ID, PayUponInvoiceGateway::ID ), true );
+		return in_array( $section, array( PayPalGateway::ID, CreditCardGateway::ID, WebhooksStatusPage::ID, PayUponInvoiceGateway::ID, CardButtonGateway::ID ), true );
 	},
 
 	'wcgateway.current-ppcp-settings-page-id'           => static function ( ContainerInterface $container ): string {
