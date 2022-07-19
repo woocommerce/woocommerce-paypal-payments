@@ -6,28 +6,54 @@ class Renderer {
         this.creditCardRenderer = creditCardRenderer;
         this.onSmartButtonClick = onSmartButtonClick;
         this.onSmartButtonsInit = onSmartButtonsInit;
+
+        this.renderedSources = new Set();
     }
 
     render(contextConfig, settingsOverride = {}) {
         const settings = merge(this.defaultSettings, settingsOverride);
 
-        this.renderButtons(settings.button.wrapper, settings.button.style, contextConfig);
+        const separateGatewayFundingSources = Object.keys(settings.separate_buttons);
+
+        for (const fundingSource of paypal.getFundingSources()
+            .filter(s =>
+                !separateGatewayFundingSources.includes(s) ||
+                !document.querySelector(settings.separate_buttons[s].wrapper) // disabled gateway
+        )) {
+            let style = settings.button.style;
+            if (fundingSource !== 'paypal') {
+                style = {
+                    shape: style.shape,
+                };
+            }
+
+            this.renderButtons(
+                settings.button.wrapper,
+                style,
+                contextConfig,
+                fundingSource
+            );
+        }
+
         this.creditCardRenderer.render(settings.hosted_fields.wrapper, contextConfig);
+
         for (const [fundingSource, data] of Object.entries(settings.separate_buttons)) {
             this.renderButtons(
                 data.wrapper,
                 data.style,
-                {
-                    ...contextConfig,
-                    fundingSource: fundingSource,
-                }
+               contextConfig,
+                fundingSource
             );
         }
     }
 
-    renderButtons(wrapper, style, contextConfig) {
-        if (! document.querySelector(wrapper) || this.isAlreadyRendered(wrapper) || 'undefined' === typeof paypal.Buttons ) {
+    renderButtons(wrapper, style, contextConfig, fundingSource = null) {
+        if (! document.querySelector(wrapper) || this.isAlreadyRendered(wrapper, fundingSource) || 'undefined' === typeof paypal.Buttons ) {
             return;
+        }
+
+        if (fundingSource) {
+            contextConfig.fundingSource = fundingSource;
         }
 
         const btn = paypal.Buttons({
@@ -41,10 +67,12 @@ class Renderer {
         }
 
         btn.render(wrapper);
+
+        this.renderedSources.add(wrapper + fundingSource ?? '');
     }
 
-    isAlreadyRendered(wrapper) {
-        return document.querySelector(wrapper).hasChildNodes();
+    isAlreadyRendered(wrapper, fundingSource) {
+        return this.renderedSources.has(wrapper + fundingSource ?? '');
     }
 
     hideButtons(element) {
