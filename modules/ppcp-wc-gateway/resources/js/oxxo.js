@@ -5,8 +5,8 @@ document.addEventListener(
             if(data.payer_action && data.payer_action !== '') {
                     const width = screen.width / 2;
                     const height = screen.height / 2;
-                    const left = (screen.width / 2) - (width / 2);
-                    const top = (screen.height / 2) - (height / 2);
+                    const left = width - (width / 2);
+                    const top = height - (height / 2);
                     window.open(
                         data.payer_action,
                         '_blank',

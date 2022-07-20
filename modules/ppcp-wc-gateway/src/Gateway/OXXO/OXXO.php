@@ -113,14 +113,16 @@ class OXXO {
 		);
 
 		add_filter(
-			'woocommerce_available_payment_gateways',
-			function( $available_gateways ) {
-				if ( array_key_exists( OXXOGateway::ID, $available_gateways ) ) {
-					$available_gateways[ OXXOGateway::ID ]->order_button_text = __( 'Pay with OXXO', 'woocommerce-paypal-payments' );
+			'ppcp_payment_capture_reversed_webhook_update_status_note',
+			function( $note, $wc_order, $event_type ) {
+				if ( $wc_order->get_payment_method() === OXXOGateway::ID && $event_type === 'PAYMENT.CAPTURE.DENIED' ) {
+					$note = __( 'OXXO voucher has expired or the buyer didn\'t complete the payment successfully.', 'woocommerce-paypal-payments' );
 				}
 
-				return $available_gateways;
-			}
+				return $note;
+			},
+			10,
+			2
 		);
 	}
 
