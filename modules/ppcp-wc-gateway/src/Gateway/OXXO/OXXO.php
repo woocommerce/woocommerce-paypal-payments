@@ -114,7 +114,7 @@ class OXXO {
 
 		add_filter(
 			'ppcp_payment_capture_reversed_webhook_update_status_note',
-			function( $note, $wc_order, $event_type ) {
+			function( string $note, WC_Order $wc_order, string $event_type ): string {
 				if ( $wc_order->get_payment_method() === OXXOGateway::ID && $event_type === 'PAYMENT.CAPTURE.DENIED' ) {
 					$note = __( 'OXXO voucher has expired or the buyer didn\'t complete the payment successfully.', 'woocommerce-paypal-payments' );
 				}
@@ -122,7 +122,7 @@ class OXXO {
 				return $note;
 			},
 			10,
-			2
+			3
 		);
 	}
 

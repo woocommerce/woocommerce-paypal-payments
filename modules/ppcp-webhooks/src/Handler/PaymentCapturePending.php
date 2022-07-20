@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
 
 use Psr\Log\LoggerInterface;
+use WP_REST_Request;
 use WP_REST_Response;
 
 /**
@@ -60,12 +61,35 @@ class PaymentCapturePending implements RequestHandler {
 	/**
 	 * Responsible for handling the request.
 	 *
-	 * @param \WP_REST_Request $request The request.
+	 * @param WP_REST_Request $request The request.
 	 *
 	 * @return WP_REST_Response
 	 */
-	public function handle_request( \WP_REST_Request $request ): WP_REST_Response {
+	public function handle_request( WP_REST_Request $request ): WP_REST_Response {
 		$response = array( 'success' => false );
+		$order_id = $request['resource'] !== null && isset( $request['resource']['custom_id'] )
+			? $this->sanitize_custom_id( $request['resource']['custom_id'] )
+			: 0;
+		if ( ! $order_id ) {
+			$message = sprintf(
+			// translators: %s is the PayPal webhook Id.
+				__(
+					'No order for webhook event %s was found.',
+					'woocommerce-paypal-payments'
+				),
+				$request['id'] !== null && isset( $request['id'] ) ? $request['id'] : ''
+			);
+			$this->logger->log(
+				'warning',
+				$message,
+				array(
+					'request' => $request,
+				)
+			);
+			$response['message'] = $message;
+			return new WP_REST_Response( $response );
+		}
+
 		$resource = $request['resource'];
 		if ( ! is_array( $resource ) ) {
 			$message = 'Resource data not found in webhook request.';
@@ -74,36 +98,12 @@ class PaymentCapturePending implements RequestHandler {
 			return new WP_REST_Response( $response );
 		}
 
-		$order_id = isset( $request['resource']['custom_id'] )
-			? $this->sanitize_custom_id( $request['resource']['custom_id'] )
-			: 0;
-
-		if ( ! $order_id ) {
-			$message = sprintf(
-			// translators: %s is the PayPal webhook Id.
-				__(
-					'No order for webhook event %s was found.',
-					'woocommerce-paypal-payments'
-				),
-				isset( $request['id'] ) ? $request['id'] : ''
-			);
-			$this->logger->log(
-				'warning',
-				$message,
-				array(
-					'request' => $request,
-				)
-			);
-			$response['message'] = $message;
-			return rest_ensure_response( $response );
-		}
-
 		$wc_order = wc_get_order( $order_id );
 		if ( ! is_a( $wc_order, \WC_Order::class ) ) {
 			$message = sprintf(
 			// translators: %s is the PayPal refund Id.
 				__( 'Order for PayPal refund %s not found.', 'woocommerce-paypal-payments' ),
-				isset( $request['resource']['id'] ) ? $request['resource']['id'] : ''
+				$request['resource'] !== null && isset( $request['resource']['id'] ) ? $request['resource']['id'] : ''
 			);
 			$this->logger->log(
 				'warning',
@@ -113,11 +113,11 @@ class PaymentCapturePending implements RequestHandler {
 				)
 			);
 			$response['message'] = $message;
-			return rest_ensure_response( $response );
+			return new WP_REST_Response( $response );
 		}
 
 		if ( $wc_order->get_status() === 'pending' ) {
-			$wc_order->update_status('on-hold', __('Payment initiation was successful, and is waiting for the buyer to complete the payment.', 'woocommerce-paypal-payments'));
+			$wc_order->update_status( 'on-hold', __( 'Payment initiation was successful, and is waiting for the buyer to complete the payment.', 'woocommerce-paypal-payments' ) );
 
 		}
 

@@ -69,7 +69,7 @@ class ReturnUrlEndpoint {
 		}
 
 		$wc_order = wc_get_order( $wc_order_id );
-		if ( ! $wc_order ) {
+		if ( ! is_a( $wc_order, \WC_Order::class ) ) {
 			exit();
 		}
 
