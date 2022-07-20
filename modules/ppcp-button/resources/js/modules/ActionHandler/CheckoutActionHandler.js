@@ -13,7 +13,7 @@ class CheckoutActionHandler {
     configuration() {
         const spinner = this.spinner;
         const createOrder = (data, actions) => {
-            let payer = payerData();
+            const payer = payerData();
             const bnCode = typeof this.config.bn_codes[this.config.context] !== 'undefined' ?
                 this.config.bn_codes[this.config.context] : '';
 
@@ -28,10 +28,6 @@ class CheckoutActionHandler {
 
             const paymentMethod = getCurrentPaymentMethod();
             const fundingSource = window.ppcpFundingSource;
-
-            if (fundingSource === 'card' && !PayPalCommerceGateway.use_form_billing_data_for_cards) {
-                payer = null;
-            }
 
             return fetch(this.config.ajax.create_order.endpoint, {
                 method: 'POST',

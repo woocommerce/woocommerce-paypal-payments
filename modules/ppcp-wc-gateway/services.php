@@ -869,13 +869,19 @@ return array(
 				'requirements'      => array(),
 				'gateway'           => 'paypal',
 			),
-			'use_form_billing_data_for_cards'    => array(
-				'title'        => __( 'Send billing data for cards', 'woocommerce-paypal-payments' ),
-				'type'         => 'checkbox',
+			'card_billing_data_mode'             => array(
+				'title'        => __( 'Card billing data handling', 'woocommerce-paypal-payments' ),
+				'type'         => 'select',
+				'class'        => array(),
+				'input_class'  => array( 'wc-enhanced-select' ),
 				'desc_tip'     => true,
-				'label'        => __( 'Send Checkout billing form data to PayPal smart card fields', 'woocommerce-paypal-payments' ),
-				'description'  => __( 'This increases convenience for the users, but can cause issues if card details do not match the billing data.', 'woocommerce-paypal-payments' ),
-				'default'      => false,
+				'description'  => __( 'Using the WC form data increases convenience for the customers, but can cause issues if card details do not match the billing data in the checkout form.', 'woocommerce-paypal-payments' ),
+				'default'      => $container->get( 'wcgateway.settings.card_billing_data_mode.default' ),
+				'options'      => array(
+					CardBillingMode::USE_WC        => __( 'Use WC checkout form data (do not show any address fields)', 'woocommerce-paypal-payments' ),
+					CardBillingMode::MINIMAL_INPUT => __( 'Request only name and postal code', 'woocommerce-paypal-payments' ),
+					CardBillingMode::NO_WC         => __( 'Do not use WC checkout form data (request all address fields)', 'woocommerce-paypal-payments' ),
+				),
 				'screens'      => array(
 					State::STATE_START,
 					State::STATE_ONBOARDED,
@@ -2292,5 +2298,66 @@ return array(
 		$pay_later_label .= '</span>';
 
 		return $pay_later_label;
+	},
+
+	'wcgateway.settings.card_billing_data_mode.default' => static function ( ContainerInterface $container ): string {
+		return in_array(
+			$container->get( 'api.shop.country' ),
+			array(
+				'AI',
+				'AG',
+				'AR',
+				'AW',
+				'BS',
+				'BB',
+				'BZ',
+				'BM',
+				'BO',
+				'BR',
+				'VG',
+				'KY',
+				'CL',
+				'CO',
+				'CR',
+				'DM',
+				'DO',
+				'EC',
+				'SV',
+				'FK',
+				'GF',
+				'GD',
+				'GP',
+				'GT',
+				'GY',
+				'HN',
+				'JM',
+				'MQ',
+				'MX',
+				'MS',
+				'AN',
+				'NI',
+				'PA',
+				'PY',
+				'PE',
+				'KN',
+				'LC',
+				'PM',
+				'VC',
+				'SR',
+				'TT',
+				'TC',
+				'UY',
+				'VE',
+			),
+			true
+		) ? CardBillingMode::MINIMAL_INPUT : CardBillingMode::USE_WC;
+	},
+	'wcgateway.settings.card_billing_data_mode'         => static function ( ContainerInterface $container ): string {
+		$settings = $container->get( 'wcgateway.settings' );
+		assert( $settings instanceof ContainerInterface );
+
+		return $settings->has( 'card_billing_data_mode' ) ?
+			(string) $settings->get( 'card_billing_data_mode' ) :
+			$container->get( 'wcgateway.settings.card_billing_data_mode.default' );
 	},
 );

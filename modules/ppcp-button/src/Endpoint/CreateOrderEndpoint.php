@@ -28,6 +28,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Subscription\FreeTrialHandlerTrait;
+use WooCommerce\PayPalCommerce\WcGateway\CardBillingMode;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
@@ -121,6 +122,13 @@ class CreateOrderEndpoint implements EndpointInterface {
 	private $registration_needed;
 
 	/**
+	 * The value of card_billing_data_mode from the settings.
+	 *
+	 * @var string
+	 */
+	protected $card_billing_data_mode;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -139,6 +147,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 * @param Settings                  $settings The Settings object.
 	 * @param EarlyOrderHandler         $early_order_handler The EarlyOrderHandler object.
 	 * @param bool                      $registration_needed  Whether a new user must be registered during checkout.
+	 * @param string                    $card_billing_data_mode The value of card_billing_data_mode from the settings.
 	 * @param LoggerInterface           $logger The logger.
 	 */
 	public function __construct(
@@ -151,6 +160,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 		Settings $settings,
 		EarlyOrderHandler $early_order_handler,
 		bool $registration_needed,
+		string $card_billing_data_mode,
 		LoggerInterface $logger
 	) {
 
@@ -163,6 +173,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 		$this->settings                    = $settings;
 		$this->early_order_handler         = $early_order_handler;
 		$this->registration_needed         = $registration_needed;
+		$this->card_billing_data_mode      = $card_billing_data_mode;
 		$this->logger                      = $logger;
 	}
 
@@ -344,16 +355,21 @@ class CreateOrderEndpoint implements EndpointInterface {
 		);
 
 		if ( 'card' === $funding_source ) {
-			if ( ApplicationContext::SHIPPING_PREFERENCE_SET_PROVIDED_ADDRESS === $shipping_preference ) {
-				if ( $payer ) {
-					$payer->set_address( null );
-
+			if ( CardBillingMode::MINIMAL_INPUT === $this->card_billing_data_mode ) {
+				if ( ApplicationContext::SHIPPING_PREFERENCE_SET_PROVIDED_ADDRESS === $shipping_preference ) {
+					if ( $payer ) {
+						$payer->set_address( null );
+					}
+				}
+				if ( ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING === $shipping_preference ) {
+					if ( $payer ) {
+						$payer->set_name( null );
+					}
 				}
 			}
-			if ( ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING === $shipping_preference ) {
-				if ( $payer ) {
-					$payer->set_name( null );
-				}
+
+			if ( CardBillingMode::NO_WC === $this->card_billing_data_mode ) {
+				$payer = null;
 			}
 		}
 
@@ -423,10 +439,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 			$payer = $this->payer_factory->from_paypal_response( json_decode( wp_json_encode( $data['payer'] ) ) );
 		}
 
-		$use_form_billing_data_for_cards = $this->settings->has( 'use_form_billing_data_for_cards' ) &&
-			(bool) $this->settings->get( 'use_form_billing_data_for_cards' );
-
-		if ( ! $payer && isset( $data['form'] ) && $use_form_billing_data_for_cards ) {
+		if ( ! $payer && isset( $data['form'] ) ) {
 			$form_fields = $data['form'];
 
 			if ( is_array( $form_fields ) && isset( $form_fields['billing_email'] ) && '' !== $form_fields['billing_email'] ) {
