@@ -462,7 +462,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 					$selected_token
 				);
 
-				$this->add_paypal_meta( $wc_order, $order, $this->environment() );
+				$this->add_paypal_meta( $wc_order, $order, $this->environment );
 
 				if ( ! $order->status()->is( OrderStatus::COMPLETED ) ) {
 					return $this->handle_payment_failure(
