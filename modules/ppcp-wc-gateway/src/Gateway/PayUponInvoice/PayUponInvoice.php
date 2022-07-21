@@ -488,7 +488,7 @@ class PayUponInvoice {
 				if ( $post_type === 'shop_order' ) {
 					$post_id = filter_input( INPUT_GET, 'post', FILTER_SANITIZE_STRING );
 					$order   = wc_get_order( $post_id );
-					if ( is_a( $order, WC_Order::class ) && $order->get_payment_method() === 'ppcp-pay-upon-invoice-gateway' ) {
+					if ( is_a( $order, WC_Order::class ) && $order->get_payment_method() === PayUponInvoiceGateway::ID ) {
 						$instructions = $order->get_meta( 'ppcp_ratepay_payment_instructions_payment_reference' );
 						if ( $instructions ) {
 							add_meta_box(

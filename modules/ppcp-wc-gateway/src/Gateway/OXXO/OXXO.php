@@ -124,6 +124,43 @@ class OXXO {
 			10,
 			3
 		);
+
+		add_action(
+			'add_meta_boxes',
+			function( string $post_type ) {
+				if ( $post_type === 'shop_order' ) {
+					$post_id = filter_input( INPUT_GET, 'post', FILTER_SANITIZE_STRING );
+					$order   = wc_get_order( $post_id );
+					if ( is_a( $order, WC_Order::class ) && $order->get_payment_method() === OXXOGateway::ID ) {
+						$payer_action = $order->get_meta( 'ppcp_oxxo_payer_action' );
+						if ( $payer_action ) {
+							add_meta_box(
+								'ppcp_oxxo_payer_action',
+								__( 'OXXO Voucher/Ticket', 'woocommerce-paypal-payments' ),
+								function() use ( $payer_action ) {
+									echo '<p><a class="button" href="' . esc_url( $payer_action ) . '" target="_blank">See OXXO voucher</a></p>';
+								},
+								$post_type,
+								'side',
+								'high'
+							);
+						}
+					}
+				}
+			}
+		);
+
+		add_action(
+			'woocommerce_order_details_before_order_table_items',
+			function( $order ) {
+				if ( $order->get_payment_method() === OXXOGateway::ID ) {
+					$payer_action = $order->get_meta( 'ppcp_oxxo_payer_action' );
+					if ( $payer_action ) {
+						echo '<p><a class="button" href="' . esc_url( $payer_action ) . '" target="_blank">See OXXO voucher</a></p>';
+					}
+				}
+			}
+		);
 	}
 
 	/**
