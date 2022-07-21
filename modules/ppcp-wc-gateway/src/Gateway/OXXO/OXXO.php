@@ -85,7 +85,7 @@ class OXXO {
 
 				$button = '';
 				if ( $payer_action ) {
-					$button = '<p><a id="ppcp-oxxo-payer-action" class="button" href="' . $payer_action . '" target="_blank">See OXXO Voucher/Ticket</a></p>';
+					$button = '<p><a id="ppcp-oxxo-payer-action" class="button" href="' . $payer_action . '" target="_blank">' . esc_html__( 'See OXXO voucher', 'woocommerce-paypal-payments' ) . '</a></p>';
 				}
 
 				return $message . ' ' . $button;
