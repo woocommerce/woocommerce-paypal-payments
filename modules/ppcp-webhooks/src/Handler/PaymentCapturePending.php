@@ -101,17 +101,12 @@ class PaymentCapturePending implements RequestHandler {
 		$wc_order = wc_get_order( $order_id );
 		if ( ! is_a( $wc_order, \WC_Order::class ) ) {
 			$message = sprintf(
-				'Order for PayPal refund %s not found.',
+				'WC order for PayPal ID %s not found.',
 				$request['resource'] !== null && isset( $request['resource']['id'] ) ? $request['resource']['id'] : ''
 			);
 
-			$this->logger->log(
-				'warning',
-				$message,
-				array(
-					'request' => $request,
-				)
-			);
+			$this->logger->warning( $message );
+
 			$response['message'] = $message;
 			return new WP_REST_Response( $response );
 		}
