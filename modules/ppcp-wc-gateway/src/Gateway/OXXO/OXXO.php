@@ -104,7 +104,7 @@ class OXXO {
 				) {
 					$payer_action = $order->get_meta( 'ppcp_oxxo_payer_action' ) ?? '';
 					if ( $payer_action ) {
-						echo '<p><a class="button" href="' . esc_url( $payer_action ) . '">OXXO voucher</a></p>';
+						echo '<p><a class="button" href="' . esc_url( $payer_action ) . '" target="_blank">' . esc_html__( 'See OXXO voucher', 'woocommerce-paypal-payments' ) . '</a></p>';
 					}
 				}
 			},
@@ -138,7 +138,7 @@ class OXXO {
 								'ppcp_oxxo_payer_action',
 								__( 'OXXO Voucher/Ticket', 'woocommerce-paypal-payments' ),
 								function() use ( $payer_action ) {
-									echo '<p><a class="button" href="' . esc_url( $payer_action ) . '" target="_blank">See OXXO voucher</a></p>';
+									echo '<p><a class="button" href="' . esc_url( $payer_action ) . '" target="_blank">' . esc_html__( 'See OXXO voucher', 'woocommerce-paypal-payments' ) . '</a></p>';
 								},
 								$post_type,
 								'side',
@@ -156,7 +156,7 @@ class OXXO {
 				if ( $order->get_payment_method() === OXXOGateway::ID ) {
 					$payer_action = $order->get_meta( 'ppcp_oxxo_payer_action' );
 					if ( $payer_action ) {
-						echo '<p><a class="button" href="' . esc_url( $payer_action ) . '" target="_blank">See OXXO voucher</a></p>';
+						echo '<p><a class="button" href="' . esc_url( $payer_action ) . '" target="_blank">' . esc_html__( 'See OXXO voucher', 'woocommerce-paypal-payments' ) . '</a></p>';
 					}
 				}
 			}

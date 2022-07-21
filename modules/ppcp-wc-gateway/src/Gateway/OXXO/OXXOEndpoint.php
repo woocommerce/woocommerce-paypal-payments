@@ -140,6 +140,9 @@ class OXXOEndpoint implements EndpointInterface {
 
 			$this->logger->error( $error );
 			wc_add_notice( $error, 'error' );
+
+			wp_send_json_error( 'Could not get OXXO payer action.' );
+			return false;
 		}
 
 		WC()->session->set( 'ppcp_payer_action', $payer_action );
