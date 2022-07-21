@@ -128,7 +128,7 @@ class OXXOGateway extends WC_Payment_Gateway {
 	 * @return array
 	 */
 	public function process_payment( $order_id ) {
-		$wc_order = wc_get_order( $order_id );
+		$wc_order      = wc_get_order( $order_id );
 		$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
 		$payer_action  = '';
 
