@@ -152,7 +152,7 @@ class OXXO {
 
 		add_action(
 			'woocommerce_order_details_before_order_table_items',
-			function( $order ) {
+			function( WC_Order $order ) {
 				if ( $order->get_payment_method() === OXXOGateway::ID ) {
 					$payer_action = $order->get_meta( 'ppcp_oxxo_payer_action' );
 					if ( $payer_action ) {
