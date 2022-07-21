@@ -852,13 +852,19 @@ class SmartButton implements SmartButtonInterface {
 			),
 			'messages'                          => $this->message_values(),
 			'labels'                            => array(
-				'error' => array(
+				'error'    => array(
 					'generic'       => __(
 						'Something went wrong. Please try again or choose another payment source.',
 						'woocommerce-paypal-payments'
 					),
 					'js_validation' => __(
 						'Required form fields are not filled or invalid.',
+						'woocommerce-paypal-payments'
+					),
+				),
+				'elements' => array( // Map <form element name> => text, used for error messages.
+					'terms' => __(
+						'Terms and conditions',
 						'woocommerce-paypal-payments'
 					),
 				),

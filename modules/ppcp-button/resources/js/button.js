@@ -38,9 +38,22 @@ const bootstrap = () => {
             requiredFields.each((i, input) => {
                 jQuery(input).trigger('validate');
             });
-            if (jQuery('form.woocommerce-checkout .validate-required.woocommerce-invalid:visible').length) {
+            const invalidFields = Array.from(jQuery('form.woocommerce-checkout .validate-required.woocommerce-invalid:visible'));
+            if (invalidFields.length) {
+                const namesMap = PayPalCommerceGateway.labels.elements;
+                const labels = invalidFields.map(el => {
+                    const name = el.querySelector('[name]')?.getAttribute('name');
+                    if (name && name in namesMap) {
+                        return namesMap[name];
+                    }
+                    return el.querySelector('label').textContent
+                        .replaceAll('*', '')
+                        .trim();
+                }).filter(s => s.length > 2);
+
                 errorHandler.clear();
                 errorHandler.message(PayPalCommerceGateway.labels.error.js_validation);
+                labels.forEach(s => errorHandler.message(s)); // each message() call adds <li>
 
                 return actions.reject();
             }
