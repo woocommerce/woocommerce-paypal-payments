@@ -322,6 +322,26 @@ class PayUponInvoice {
 						)
 					);
 
+					$checkout_fields = WC()->checkout()->get_checkout_fields();
+					if ( ! array_key_exists( 'billing_phone', $checkout_fields['billing'] ) ) {
+						woocommerce_form_field(
+							'billing_phone',
+							array(
+								/**
+								 * Use translation from WooCommerce here.
+								 * phpcs:disable WordPress.WP.I18n.TextDomainMismatch
+								 */
+								'label'        => __( 'Phone', 'woocommerce' ),
+								// phpcs:enable WordPress.WP.I18n.TextDomainMismatch
+								'type'         => 'tel',
+								'class'        => array( 'form-row-wide' ),
+								'validate'     => array( 'phone' ),
+								'autocomplete' => 'tel',
+								'required'     => true,
+							)
+						);
+					}
+
 					echo '</div><div>';
 
 					// phpcs:ignore WordPress.WP.I18n.TextDomainMismatch
