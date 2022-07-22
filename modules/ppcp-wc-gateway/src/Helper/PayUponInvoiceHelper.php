@@ -145,7 +145,7 @@ class PayUponInvoiceHelper {
 	 */
 	private function is_valid_currency(): bool {
 		global $wp;
-		$order_id = (int) $wp->query_vars['order-pay'];
+		$order_id = isset( $wp->query_vars['order-pay'] ) ? (int) $wp->query_vars['order-pay'] : 0;
 		if ( 0 === $order_id ) {
 			return 'EUR' === get_woocommerce_currency();
 		}
