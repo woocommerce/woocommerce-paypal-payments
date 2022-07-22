@@ -852,22 +852,31 @@ class SmartButton implements SmartButtonInterface {
 			),
 			'messages'                          => $this->message_values(),
 			'labels'                            => array(
-				'error'    => array(
-					'generic'       => __(
+				'error'          => array(
+					'generic'  => __(
 						'Something went wrong. Please try again or choose another payment source.',
 						'woocommerce-paypal-payments'
 					),
-					'js_validation' => __(
-						'Required form fields are not filled or invalid.',
-						'woocommerce-paypal-payments'
+					'required' => array(
+						'generic'  => __(
+							'Required form fields are not filled.',
+							'woocommerce-paypal-payments'
+						),
+						// phpcs:ignore WordPress.WP.I18n
+						'field'    => __( '%s is a required field.', 'woocommerce' ),
+						'elements' => array(  // Map <form element name> => text for error messages.
+							'terms' => __(
+								'Please read and accept the terms and conditions to proceed with your order.',
+								// phpcs:ignore WordPress.WP.I18n.TextDomainMismatch
+								'woocommerce'
+							),
+						),
 					),
 				),
-				'elements' => array( // Map <form element name> => text, used for error messages.
-					'terms' => __(
-						'Terms and conditions',
-						'woocommerce-paypal-payments'
-					),
-				),
+				// phpcs:ignore WordPress.WP.I18n
+				'billing_field'  => _x( 'Billing %s', 'checkout-validation', 'woocommerce' ),
+				// phpcs:ignore WordPress.WP.I18n
+				'shipping_field' => _x( 'Shipping %s', 'checkout-validation', 'woocommerce' ),
 			),
 			'order_id'                          => 'pay-now' === $this->context() ? absint( $wp->query_vars['order-pay'] ) : 0,
 			'single_product_buttons_enabled'    => $this->settings->has( 'button_product_enabled' ) && $this->settings->get( 'button_product_enabled' ),

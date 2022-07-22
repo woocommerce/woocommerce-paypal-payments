@@ -40,20 +40,34 @@ const bootstrap = () => {
             });
             const invalidFields = Array.from(jQuery('form.woocommerce-checkout .validate-required.woocommerce-invalid:visible'));
             if (invalidFields.length) {
-                const namesMap = PayPalCommerceGateway.labels.elements;
-                const labels = invalidFields.map(el => {
+                const billingFieldsContainer = document.querySelector('.woocommerce-billing-fields');
+                const shippingFieldsContainer = document.querySelector('.woocommerce-shipping-fields');
+
+                const nameMessageMap = PayPalCommerceGateway.labels.error.required.elements;
+                const messages = invalidFields.map(el => {
                     const name = el.querySelector('[name]')?.getAttribute('name');
-                    if (name && name in namesMap) {
-                        return namesMap[name];
+                    if (name && name in nameMessageMap) {
+                        return nameMessageMap[name];
                     }
-                    return el.querySelector('label').textContent
+                    let label = el.querySelector('label').textContent
                         .replaceAll('*', '')
                         .trim();
+                    if (billingFieldsContainer?.contains(el)) {
+                        label = PayPalCommerceGateway.labels.billing_field.replace('%s', label);
+                    }
+                    if (shippingFieldsContainer?.contains(el)) {
+                        label = PayPalCommerceGateway.labels.shipping_field.replace('%s', label);
+                    }
+                    return PayPalCommerceGateway.labels.error.required.field
+                        .replace('%s', `<strong>${label}</strong>`)
                 }).filter(s => s.length > 2);
 
                 errorHandler.clear();
-                errorHandler.message(PayPalCommerceGateway.labels.error.js_validation);
-                labels.forEach(s => errorHandler.message(s)); // each message() call adds <li>
+                if (messages.length) {
+                    messages.forEach(s => errorHandler.message(s));
+                } else {
+                    errorHandler.message(PayPalCommerceGateway.labels.error.required.generic);
+                }
 
                 return actions.reject();
             }
@@ -96,7 +110,7 @@ const bootstrap = () => {
             PayPalCommerceGateway,
             renderer,
             messageRenderer,
-        );
+        );w
 
         singleProductBootstrap.init();
     }
