@@ -513,7 +513,9 @@ class PayUponInvoice {
 	 * Registers PUI assets.
 	 */
 	public function register_assets(): void {
-		if ( is_checkout() || is_checkout_pay_page() ) {
+		$gateway_settings = get_option( 'woocommerce_ppcp-pay-upon-invoice-gateway_settings' );
+		$gateway_enabled  = $gateway_settings['enabled'] ?? '';
+		if ( $gateway_enabled === 'yes' && ( is_checkout() || is_checkout_pay_page() ) ) {
 			wp_enqueue_script(
 				'ppcp-pay-upon-invoice',
 				trailingslashit( $this->module_url ) . 'assets/js/pay-upon-invoice.js',
