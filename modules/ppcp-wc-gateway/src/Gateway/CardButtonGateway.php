@@ -24,15 +24,23 @@ use WooCommerce\PayPalCommerce\WcGateway\Exception\GatewayGenericException;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 use Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 
 /**
  * Class CardButtonGateway
  */
 class CardButtonGateway extends \WC_Payment_Gateway {
 
-	use ProcessPaymentTrait, FreeTrialHandlerTrait;
+	use ProcessPaymentTrait, FreeTrialHandlerTrait, GatewaySettingsRendererTrait;
 
 	const ID = 'ppcp-card-button-gateway';
+
+	/**
+	 * The Settings Renderer.
+	 *
+	 * @var SettingsRenderer
+	 */
+	protected $settings_renderer;
 
 	/**
 	 * The processor for orders.
@@ -114,6 +122,7 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 	/**
 	 * CardButtonGateway constructor.
 	 *
+	 * @param SettingsRenderer       $settings_renderer The Settings Renderer.
 	 * @param OrderProcessor         $order_processor The Order Processor.
 	 * @param ContainerInterface     $config The settings.
 	 * @param SessionHandler         $session_handler The Session Handler.
@@ -126,6 +135,7 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 	 * @param LoggerInterface        $logger  The logger.
 	 */
 	public function __construct(
+		SettingsRenderer $settings_renderer,
 		OrderProcessor $order_processor,
 		ContainerInterface $config,
 		SessionHandler $session_handler,
@@ -138,6 +148,7 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 		LoggerInterface $logger
 	) {
 		$this->id                       = self::ID;
+		$this->settings_renderer        = $settings_renderer;
 		$this->order_processor          = $order_processor;
 		$this->config                   = $config;
 		$this->session_handler          = $session_handler;
@@ -227,6 +238,9 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 				'default'     => $this->description,
 				'desc_tip'    => true,
 				'description' => __( 'This controls the description which the user sees during checkout.', 'woocommerce-paypal-payments' ),
+			),
+			'ppcp'        => array(
+				'type' => 'ppcp',
 			),
 		);
 	}
@@ -327,5 +341,14 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 		$this->view_transaction_url = $this->transaction_url_provider->get_transaction_url_base( $order );
 
 		return parent::get_transaction_url( $order );
+	}
+
+	/**
+	 * Returns the settings renderer.
+	 *
+	 * @return SettingsRenderer
+	 */
+	protected function settings_renderer(): SettingsRenderer {
+		return $this->settings_renderer;
 	}
 }

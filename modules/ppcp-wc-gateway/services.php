@@ -129,6 +129,7 @@ return array(
 	},
 	'wcgateway.card-button-gateway'                     => static function ( ContainerInterface $container ): CardButtonGateway {
 		return new CardButtonGateway(
+			$container->get( 'wcgateway.settings.render' ),
 			$container->get( 'wcgateway.order-processor' ),
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'session.handler' ),
@@ -887,7 +888,7 @@ return array(
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
-				'gateway'      => 'paypal',
+				'gateway'      => array( 'paypal', CardButtonGateway::ID ),
 			),
 
 			// General button styles.
