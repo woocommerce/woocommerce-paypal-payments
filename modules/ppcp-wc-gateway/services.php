@@ -45,7 +45,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
-use WooCommerce\PayPalCommerce\WcGateway\Notice\DccWithoutPayPalAdminNotice;
+use WooCommerce\PayPalCommerce\WcGateway\Notice\GatewayWithoutPayPalAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
@@ -182,12 +182,23 @@ return array(
 		$settings = $container->get( 'wcgateway.settings' );
 		return new ConnectAdminNotice( $state, $settings );
 	},
-	'wcgateway.notice.dcc-without-paypal'                  => static function ( ContainerInterface $container ): DccWithoutPayPalAdminNotice {
-		$state    = $container->get( 'onboarding.state' );
-		$settings = $container->get( 'wcgateway.settings' );
-		$is_payments_page = $container->get( 'wcgateway.is-wc-payments-page' );
-		$is_ppcp_settings_page = $container->get( 'wcgateway.is-ppcp-settings-page' );
-		return new DccWithoutPayPalAdminNotice( $state, $settings, $is_payments_page, $is_ppcp_settings_page );
+	'wcgateway.notice.dcc-without-paypal'                  => static function ( ContainerInterface $container ): GatewayWithoutPayPalAdminNotice {
+		return new GatewayWithoutPayPalAdminNotice(
+			CreditCardGateway::ID,
+			$container->get( 'onboarding.state' ),
+			$container->get( 'wcgateway.settings' ),
+			$container->get( 'wcgateway.is-wc-payments-page' ),
+			$container->get( 'wcgateway.is-ppcp-settings-page' )
+		);
+	},
+	'wcgateway.notice.card-button-without-paypal'          => static function ( ContainerInterface $container ): GatewayWithoutPayPalAdminNotice {
+		return new GatewayWithoutPayPalAdminNotice(
+			CardButtonGateway::ID,
+			$container->get( 'onboarding.state' ),
+			$container->get( 'wcgateway.settings' ),
+			$container->get( 'wcgateway.is-wc-payments-page' ),
+			$container->get( 'wcgateway.is-ppcp-settings-page' )
+		);
 	},
 	'wcgateway.notice.authorize-order-action'              =>
 		static function ( ContainerInterface $container ): AuthorizeOrderActionNotice {
