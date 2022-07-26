@@ -26,6 +26,7 @@ class PayUponInvoiceHelperTest extends TestCase
 			['1942-02-31', false],
 			['01-01-1942', false],
 			['1942-01-01', true],
+			['0001-01-01', false],
 		];
 	}
 

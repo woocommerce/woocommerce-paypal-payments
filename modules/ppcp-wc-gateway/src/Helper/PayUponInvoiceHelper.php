@@ -22,7 +22,7 @@ use WC_Product_Variation;
 class PayUponInvoiceHelper {
 
 	/**
-	 * Ensures date is valid and at least 18 years back.
+	 * Ensures date is valid, at least 18 years back and not older than 100 years.
 	 *
 	 * @param string $date The date.
 	 * @param string $format The date format.
@@ -40,6 +40,10 @@ class PayUponInvoiceHelper {
 
 		$date_time = strtotime( $date );
 		if ( $date_time && time() < strtotime( '+18 years', $date_time ) ) {
+			return false;
+		}
+
+		if ( $date_time < strtotime( '-100 years', time() ) ) {
 			return false;
 		}
 
