@@ -400,6 +400,60 @@ return array(
 		);
 	},
 
+
+	'api.shop.is-latin-america'                 => static function ( ContainerInterface $container ): bool {
+		return in_array(
+			$container->get( 'api.shop.country' ),
+			array(
+				'AI',
+				'AG',
+				'AR',
+				'AW',
+				'BS',
+				'BB',
+				'BZ',
+				'BM',
+				'BO',
+				'BR',
+				'VG',
+				'KY',
+				'CL',
+				'CO',
+				'CR',
+				'DM',
+				'DO',
+				'EC',
+				'SV',
+				'FK',
+				'GF',
+				'GD',
+				'GP',
+				'GT',
+				'GY',
+				'HN',
+				'JM',
+				'MQ',
+				'MX',
+				'MS',
+				'AN',
+				'NI',
+				'PA',
+				'PY',
+				'PE',
+				'KN',
+				'LC',
+				'PM',
+				'VC',
+				'SR',
+				'TT',
+				'TC',
+				'UY',
+				'VE',
+			),
+			true
+		);
+	},
+
 	/**
 	 * Currencies supported by PayPal.
 	 *

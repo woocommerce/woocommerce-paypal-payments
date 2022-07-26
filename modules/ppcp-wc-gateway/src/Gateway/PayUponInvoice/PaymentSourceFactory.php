@@ -50,7 +50,7 @@ class PaymentSourceFactory {
 			$address['city'] ?? '',
 			$address['postcode'] ?? '',
 			$address['country'] ?? '',
-			'en-DE',
+			'de-DE',
 			$merchant_name,
 			$logo_url,
 			array( $customer_service_instructions )

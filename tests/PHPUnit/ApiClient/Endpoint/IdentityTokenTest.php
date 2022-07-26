@@ -46,6 +46,7 @@ class IdentityTokenTest extends TestCase
 
     public function testGenerateForCustomerReturnsToken()
     {
+        $id = 1;
         define( 'PPCP_FLAG_SUBSCRIPTION', true );
         $token = Mockery::mock(Token::class);
         $token
@@ -60,6 +61,7 @@ class IdentityTokenTest extends TestCase
 		$this->settings->shouldReceive('has')->andReturn(true);
 		$this->settings->shouldReceive('get')->andReturn(true);
 		$this->customer_repository->shouldReceive('customer_id_for_user')->andReturn('prefix1');
+        expect('update_user_meta')->with($id, 'ppcp_customer_id', 'prefix1');
 
 		$rawResponse = [
 			'body' => '{"client_token":"abc123", "expires_in":3600}',
@@ -97,6 +99,7 @@ class IdentityTokenTest extends TestCase
 
     public function testGenerateForCustomerFailsBecauseWpError()
     {
+        $id = 1;
         $token = Mockery::mock(Token::class);
         $token
             ->expects('token')->andReturn('bearer');
@@ -111,7 +114,8 @@ class IdentityTokenTest extends TestCase
         $this->logger->shouldReceive('debug');
 		$this->settings->shouldReceive('has')->andReturn(true);
 		$this->settings->shouldReceive('get')->andReturn(true);
-		$this->customer_repository->shouldReceive('customer_id_for_user');
+        $this->customer_repository->shouldReceive('customer_id_for_user')->andReturn('prefix1');
+        expect('update_user_meta')->with($id, 'ppcp_customer_id', 'prefix1');
 
         $this->expectException(RuntimeException::class);
         $this->sut->generate_for_user(1);
@@ -119,6 +123,7 @@ class IdentityTokenTest extends TestCase
 
     public function testGenerateForCustomerFailsBecauseResponseCodeIsNot200()
     {
+        $id = 1;
         $token = Mockery::mock(Token::class);
         $token
             ->expects('token')->andReturn('bearer');
@@ -137,7 +142,8 @@ class IdentityTokenTest extends TestCase
         $this->logger->shouldReceive('debug');
 		$this->settings->shouldReceive('has')->andReturn(true);
 		$this->settings->shouldReceive('get')->andReturn(true);
-		$this->customer_repository->shouldReceive('customer_id_for_user');
+        $this->customer_repository->shouldReceive('customer_id_for_user')->andReturn('prefix1');
+        expect('update_user_meta')->with($id, 'ppcp_customer_id', 'prefix1');
 
         $this->expectException(PayPalApiException::class);
         $this->sut->generate_for_user(1);
