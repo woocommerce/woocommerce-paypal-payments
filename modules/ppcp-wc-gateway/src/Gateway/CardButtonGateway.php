@@ -106,6 +106,13 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 	private $onboarded;
 
 	/**
+	 * Whether the gateway should be enabled by default.
+	 *
+	 * @var bool
+	 */
+	private $default_enabled;
+
+	/**
 	 * The environment.
 	 *
 	 * @var Environment
@@ -130,6 +137,7 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 	 * @param State                  $state The state.
 	 * @param TransactionUrlProvider $transaction_url_provider Service providing transaction view URL based on order.
 	 * @param SubscriptionHelper     $subscription_helper The subscription helper.
+	 * @param bool                   $default_enabled Whether the gateway should be enabled by default.
 	 * @param Environment            $environment The environment.
 	 * @param PaymentTokenRepository $payment_token_repository The payment token repository.
 	 * @param LoggerInterface        $logger  The logger.
@@ -143,6 +151,7 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 		State $state,
 		TransactionUrlProvider $transaction_url_provider,
 		SubscriptionHelper $subscription_helper,
+		bool $default_enabled,
 		Environment $environment,
 		PaymentTokenRepository $payment_token_repository,
 		LoggerInterface $logger
@@ -156,6 +165,7 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 		$this->state                    = $state;
 		$this->transaction_url_provider = $transaction_url_provider;
 		$this->subscription_helper      = $subscription_helper;
+		$this->default_enabled          = $default_enabled;
 		$this->environment              = $environment;
 		$this->onboarded                = $state->current_state() === State::STATE_ONBOARDED;
 		$this->payment_token_repository = $payment_token_repository;
@@ -221,7 +231,7 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 				'title'       => __( 'Enable/Disable', 'woocommerce-paypal-payments' ),
 				'type'        => 'checkbox',
 				'label'       => __( 'Enable PayPal Card Button', 'woocommerce-paypal-payments' ),
-				'default'     => 'no',
+				'default'     => $this->default_enabled ? 'yes' : 'no',
 				'desc_tip'    => true,
 				'description' => __( 'Enable/Disable the separate payment gateway with the card button.', 'woocommerce-paypal-payments' ),
 			),
