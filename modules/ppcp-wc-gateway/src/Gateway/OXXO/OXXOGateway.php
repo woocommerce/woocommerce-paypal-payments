@@ -70,8 +70,8 @@ class OXXOGateway extends WC_Payment_Gateway {
 		$this->method_title       = __( 'OXXO', 'woocommerce-paypal-payments' );
 		$this->method_description = __( 'OXXO is a Mexican chain of convenience stores.', 'woocommerce-paypal-payments' );
 
-		$this->title       = $this->get_option( 'title' ) ?? $this->method_title;
-		$this->description = $this->get_option( 'description' ) ?? __( 'OXXO allows you to pay bills and online purchases in-store with cash.', 'woocommerce-paypal-payments' );
+		$this->title       = $this->get_option( 'title', $this->method_title );
+		$this->description = $this->get_option( 'description', __( 'OXXO allows you to pay bills and online purchases in-store with cash.', 'woocommerce-paypal-payments' ) );
 
 		$this->init_form_fields();
 		$this->init_settings();
