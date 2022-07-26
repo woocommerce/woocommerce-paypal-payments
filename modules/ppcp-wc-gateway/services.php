@@ -31,6 +31,9 @@ use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXO;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXOEndpoint;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXOGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\FraudNet;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\FraudNetSessionId;
@@ -39,6 +42,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PaymentSourceFac
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoice;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CheckoutHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
@@ -160,7 +164,7 @@ return array(
 		}
 
 		$section = isset( $_GET['section'] ) ? sanitize_text_field( wp_unslash( $_GET['section'] ) ) : '';
-		return in_array( $section, array( PayPalGateway::ID, CreditCardGateway::ID, WebhooksStatusPage::ID, PayUponInvoiceGateway::ID, CardButtonGateway::ID ), true );
+		return in_array( $section, array( PayPalGateway::ID, CreditCardGateway::ID, WebhooksStatusPage::ID, PayUponInvoiceGateway::ID, CardButtonGateway::ID, OXXOGateway::ID ), true );
 	},
 
 	'wcgateway.current-ppcp-settings-page-id'              => static function ( ContainerInterface $container ): string {
@@ -2212,6 +2216,9 @@ return array(
 			$container->get( 'wcgateway.settings' )
 		);
 	},
+	'wcgateway.checkout-helper'                            => static function ( ContainerInterface $container ): CheckoutHelper {
+		return new CheckoutHelper();
+	},
 	'wcgateway.pay-upon-invoice-order-endpoint'            => static function ( ContainerInterface $container ): PayUponInvoiceOrderEndpoint {
 		return new PayUponInvoiceOrderEndpoint(
 			$container->get( 'api.host' ),
@@ -2232,7 +2239,8 @@ return array(
 			$container->get( 'onboarding.environment' ),
 			$container->get( 'wcgateway.transaction-url-provider' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'wcgateway.pay-upon-invoice-helper' )
+			$container->get( 'wcgateway.pay-upon-invoice-helper' ),
+			$container->get( 'wcgateway.checkout-helper' )
 		);
 	},
 	'wcgateway.pay-upon-invoice-fraudnet-session-id'       => static function ( ContainerInterface $container ): FraudNetSessionId {
@@ -2250,7 +2258,9 @@ return array(
 		);
 	},
 	'wcgateway.pay-upon-invoice-helper'                    => static function( ContainerInterface $container ): PayUponInvoiceHelper {
-		return new PayUponInvoiceHelper();
+		return new PayUponInvoiceHelper(
+			$container->get( 'wcgateway.checkout-helper' )
+		);
 	},
 	'wcgateway.pay-upon-invoice-product-status'            => static function( ContainerInterface $container ): PayUponInvoiceProductStatus {
 		return new PayUponInvoiceProductStatus(
@@ -2272,7 +2282,32 @@ return array(
 			$container->get( 'wcgateway.current-ppcp-settings-page-id' ),
 			$container->get( 'wcgateway.pay-upon-invoice-product-status' ),
 			$container->get( 'wcgateway.pay-upon-invoice-helper' ),
+			$container->get( 'wcgateway.checkout-helper' ),
 			$container->get( 'api.factory.capture' )
+		);
+	},
+	'wcgateway.oxxo'                                       => static function( ContainerInterface $container ): OXXO {
+		return new OXXO(
+			$container->get( 'wcgateway.checkout-helper' ),
+			$container->get( 'wcgateway.url' ),
+			$container->get( 'ppcp.asset-version' )
+		);
+	},
+	'wcgateway.oxxo-gateway'                               => static function( ContainerInterface $container ): OXXOGateway {
+		return new OXXOGateway(
+			$container->get( 'api.endpoint.order' ),
+			$container->get( 'api.factory.purchase-unit' ),
+			$container->get( 'api.factory.shipping-preference' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
+	'wcgateway.endpoint.oxxo'                              => static function ( ContainerInterface $container ): OXXOEndpoint {
+		return new OXXOEndpoint(
+			$container->get( 'button.request-data' ),
+			$container->get( 'api.endpoint.order' ),
+			$container->get( 'api.factory.purchase-unit' ),
+			$container->get( 'api.factory.shipping-preference' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 	'wcgateway.logging.is-enabled'                         => function ( ContainerInterface $container ) : bool {
