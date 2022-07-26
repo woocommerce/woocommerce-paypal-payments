@@ -220,7 +220,7 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 			'enabled'     => array(
 				'title'       => __( 'Enable/Disable', 'woocommerce-paypal-payments' ),
 				'type'        => 'checkbox',
-				'label'       => __( 'PayPal Card Button', 'woocommerce-paypal-payments' ),
+				'label'       => __( 'Enable PayPal Card Button', 'woocommerce-paypal-payments' ),
 				'default'     => 'no',
 				'desc_tip'    => true,
 				'description' => __( 'Enable/Disable the separate payment gateway with the card button.', 'woocommerce-paypal-payments' ),
