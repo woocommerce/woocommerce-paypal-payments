@@ -194,7 +194,7 @@ class OrderEndpoint {
 			'application_context' => $this->application_context_repository
 				->current_context( $shipping_preference )->to_array(),
 		);
-		if ( $payer && ! empty( $payer->email_address() ) && ! empty( $payer->name() ) ) {
+		if ( $payer && ! empty( $payer->email_address() ) ) {
 			$data['payer'] = $payer->to_array();
 		}
 		if ( $payment_token ) {

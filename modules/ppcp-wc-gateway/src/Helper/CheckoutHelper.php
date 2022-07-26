@@ -98,6 +98,9 @@ class CheckoutHelper {
 		if ( $date_time && time() < strtotime( '+18 years', $date_time ) ) {
 			return false;
 		}
+		if ( $date_time < strtotime( '-100 years', time() ) ) {
+			return false;
+		}
 
 		return true;
 	}

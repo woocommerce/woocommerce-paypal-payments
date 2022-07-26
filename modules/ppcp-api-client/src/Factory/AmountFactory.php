@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Subscription\FreeTrialHandlerTrait;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
@@ -132,7 +133,7 @@ class AmountFactory {
 
 		$total_value = (float) $order->get_total();
 		if ( (
-			CreditCardGateway::ID === $order->get_payment_method()
+				in_array( $order->get_payment_method(), array( CreditCardGateway::ID, CardButtonGateway::ID ), true )
 				|| ( PayPalGateway::ID === $order->get_payment_method() && 'card' === $order->get_meta( PayPalGateway::ORDER_PAYMENT_SOURCE_META_KEY ) )
 			)
 			&& $this->is_free_trial_order( $order )

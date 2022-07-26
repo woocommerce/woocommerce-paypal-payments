@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "license": "GPL-3.0-or-later",
   "main": "resources/js/button.js",
+  "dependencies": {
+    "deepmerge": "^4.2.2"
+  },
   "devDependencies": {
     "@babel/core": "^7.9.0",
     "@babel/preset-env": "^7.9.5",

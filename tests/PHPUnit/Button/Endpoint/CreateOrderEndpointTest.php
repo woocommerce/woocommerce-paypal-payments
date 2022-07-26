@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\TestCase;
+use WooCommerce\PayPalCommerce\WcGateway\CardBillingMode;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
@@ -152,6 +153,7 @@ class CreateOrderEndpointTest extends TestCase
         $session_handler = Mockery::mock(SessionHandler::class);
         $settings = Mockery::mock(Settings::class);
         $early_order_handler = Mockery::mock(EarlyOrderHandler::class);
+		$settings->shouldReceive('has')->andReturnFalse();
 
         $testee = new CreateOrderEndpoint(
             $request_data,
@@ -163,6 +165,7 @@ class CreateOrderEndpointTest extends TestCase
             $settings,
             $early_order_handler,
 			false,
+			CardBillingMode::MINIMAL_INPUT,
 			new NullLogger()
         );
         return array($payer_factory, $testee);

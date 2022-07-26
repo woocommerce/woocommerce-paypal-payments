@@ -52,7 +52,7 @@ class ReturnUrlEndpoint {
 	/**
 	 * Handles the incoming request.
 	 */
-	public function handle_request() {
+	public function handle_request(): void {
 
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 		if ( ! isset( $_GET['token'] ) ) {

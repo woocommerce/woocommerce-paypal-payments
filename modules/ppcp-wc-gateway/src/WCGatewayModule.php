@@ -29,7 +29,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
-use WooCommerce\PayPalCommerce\WcGateway\Notice\DccWithoutPayPalAdminNotice;
+use WooCommerce\PayPalCommerce\WcGateway\Notice\GatewayWithoutPayPalAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
@@ -164,11 +164,15 @@ class WCGatewayModule implements ModuleInterface {
 					$notices[] = $connect_message;
 				}
 
-				$dcc_without_paypal_notice = $c->get( 'wcgateway.notice.dcc-without-paypal' );
-				assert( $dcc_without_paypal_notice instanceof DccWithoutPayPalAdminNotice );
-				$dcc_without_paypal_message = $dcc_without_paypal_notice->message();
-				if ( $dcc_without_paypal_message ) {
-					$notices[] = $dcc_without_paypal_message;
+				foreach ( array(
+					$c->get( 'wcgateway.notice.dcc-without-paypal' ),
+					$c->get( 'wcgateway.notice.card-button-without-paypal' ),
+				) as $gateway_without_paypal_notice ) {
+					assert( $gateway_without_paypal_notice instanceof GatewayWithoutPayPalAdminNotice );
+					$message = $gateway_without_paypal_notice->message();
+					if ( $message ) {
+						$notices[] = $message;
+					}
 				}
 
 				$authorize_order_action = $c->get( 'wcgateway.notice.authorize-order-action' );
@@ -292,6 +296,10 @@ class WCGatewayModule implements ModuleInterface {
 				 */
 				if ( $dcc_applies->for_country_currency() ) {
 					$methods[] = $container->get( 'wcgateway.credit-card-gateway' );
+				}
+
+				if ( $container->get( 'wcgateway.settings.allow_card_button_gateway' ) ) {
+					$methods[] = $container->get( 'wcgateway.card-button-gateway' );
 				}
 
 				if ( 'DE' === $container->get( 'api.shop.country' ) && 'EUR' === $container->get( 'api.shop.currency' ) ) {
