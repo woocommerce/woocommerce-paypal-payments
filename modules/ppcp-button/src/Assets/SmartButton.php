@@ -434,7 +434,7 @@ class SmartButton implements SmartButtonInterface {
 						return;
 					}
 
-                    $this->button_renderer( PayPalGateway::ID );
+					$this->button_renderer( PayPalGateway::ID );
 				},
 				31
 			);
@@ -469,20 +469,20 @@ class SmartButton implements SmartButtonInterface {
 		$available_gateways = WC()->payment_gateways->get_available_payment_gateways();
 
 		if ( isset( $available_gateways['ppcp-gateway'] ) ) {
-            add_action(
-                $this->pay_order_renderer_hook(),
-                function (): void {
-                    $this->button_renderer(PayPalGateway::ID);
-                    $this->button_renderer(CardButtonGateway::ID);
-                }
-            );
-            add_action(
-                $this->checkout_button_renderer_hook(),
-                function (): void {
-                    $this->button_renderer(PayPalGateway::ID);
-                    $this->button_renderer(CardButtonGateway::ID);
-                }
-            );
+			add_action(
+				$this->pay_order_renderer_hook(),
+				function (): void {
+					$this->button_renderer( PayPalGateway::ID );
+					$this->button_renderer( CardButtonGateway::ID );
+				}
+			);
+			add_action(
+				$this->checkout_button_renderer_hook(),
+				function (): void {
+					$this->button_renderer( PayPalGateway::ID );
+					$this->button_renderer( CardButtonGateway::ID );
+				}
+			);
 
 			$not_enabled_on_cart = $this->settings->has( 'button_cart_enabled' ) &&
 				! $this->settings->get( 'button_cart_enabled' );
@@ -493,11 +493,11 @@ class SmartButton implements SmartButtonInterface {
 						return;
 					}
 
-                    $this->button_renderer(PayPalGateway::ID);
-                },
-                20
-            );
-        }
+					$this->button_renderer( PayPalGateway::ID );
+				},
+				20
+			);
+		}
 
 		return true;
 	}
