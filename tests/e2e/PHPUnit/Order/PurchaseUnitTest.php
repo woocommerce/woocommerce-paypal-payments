@@ -68,8 +68,6 @@ class PurchaseUnitTest extends TestCase
 		$pu = $this->puFactory->from_wc_order($wcOrder);
 		$puData = $pu->to_array();
 
-		self::assertTrue(isset($puData['amount']['breakdown']));
-
 		self::assertEquals($expectedAmount, $puData['amount']);
     }
 
@@ -82,8 +80,6 @@ class PurchaseUnitTest extends TestCase
 
 		$pu = $this->puFactory->from_wc_cart($this->cart);
 		$puData = $pu->to_array();
-
-		self::assertTrue(isset($puData['amount']['breakdown']));
 
 		self::assertEquals($expectedAmount, $puData['amount']);
     }
@@ -334,6 +330,37 @@ class PurchaseUnitTest extends TestCase
 				],
 			]),
 		];
+
+		yield 'no decimals currency' => [
+			[
+				'currency' => 'JPY',
+				'items' => [
+					['price' => 18.0, 'quantity' => 2],
+				],
+				'shipping' => ['total' => 5.0],
+				'billing' => ['city' => 'city2'],
+			],
+			self::adaptAmountFormat([
+				'value' => 66,
+				'breakdown' => [
+					'item_total' => 36,
+					'tax_total' => 25, // 24.60
+					'shipping' => 5,
+				],
+			], 'JPY'),
+		];
+
+		yield [
+			[
+				'items' => [
+					['price' => 5.345, 'quantity' => 2],
+				],
+				'billing' => ['city' => 'city0'],
+			],
+			self::adaptAmountFormat([
+				'value' => 10.69,
+			]),
+		];
 	}
 
 	public function cartData() {
@@ -388,6 +415,18 @@ class PurchaseUnitTest extends TestCase
 					'shipping' => 0.00,
 					'discount' => 4.83,
 				],
+			], get_woocommerce_currency()),
+		];
+
+		yield [
+			[
+				'products' => [
+					['price' => 5.345, 'quantity' => 2],
+				],
+				'billing' => ['city' => 'city0'],
+			],
+			self::adaptAmountFormat([
+				'value' => 10.69,
 			], get_woocommerce_currency()),
 		];
 	}

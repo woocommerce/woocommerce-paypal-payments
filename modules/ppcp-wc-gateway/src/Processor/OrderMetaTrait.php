@@ -41,6 +41,8 @@ trait OrderMetaTrait {
 		if ( $payment_source ) {
 			$wc_order->update_meta_data( PayPalGateway::ORDER_PAYMENT_SOURCE_META_KEY, $payment_source );
 		}
+
+		$wc_order->save();
 	}
 
 	/**

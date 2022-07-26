@@ -12,13 +12,14 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
@@ -119,6 +120,13 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	protected $payment_token_repository;
 
 	/**
+	 * The shipping_preference factory.
+	 *
+	 * @var ShippingPreferenceFactory
+	 */
+	private $shipping_preference_factory;
+
+	/**
 	 * The payments endpoint
 	 *
 	 * @var PaymentsEndpoint
@@ -161,6 +169,13 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	private $logger;
 
 	/**
+	 * The api shop country.
+	 *
+	 * @var string
+	 */
+	protected $api_shop_country;
+
+	/**
 	 * PayPalGateway constructor.
 	 *
 	 * @param SettingsRenderer            $settings_renderer The Settings Renderer.
@@ -176,9 +191,11 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @param string                      $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
 	 * @param Environment                 $environment The environment.
 	 * @param PaymentTokenRepository      $payment_token_repository The payment token repository.
+	 * @param ShippingPreferenceFactory   $shipping_preference_factory The shipping_preference factory.
 	 * @param LoggerInterface             $logger  The logger.
 	 * @param PaymentsEndpoint            $payments_endpoint The payments endpoint.
 	 * @param OrderEndpoint               $order_endpoint The order endpoint.
+	 * @param string                      $api_shop_country The api shop country.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
@@ -194,9 +211,11 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		string $page_id,
 		Environment $environment,
 		PaymentTokenRepository $payment_token_repository,
+		ShippingPreferenceFactory $shipping_preference_factory,
 		LoggerInterface $logger,
 		PaymentsEndpoint $payments_endpoint,
-		OrderEndpoint $order_endpoint
+		OrderEndpoint $order_endpoint,
+		string $api_shop_country
 	) {
 
 		$this->id                            = self::ID;
@@ -214,6 +233,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->id                            = self::ID;
 		$this->order_processor               = $order_processor;
 		$this->authorized_payments           = $authorized_payments_processor;
+		$this->shipping_preference_factory   = $shipping_preference_factory;
 		$this->settings_renderer             = $settings_renderer;
 		$this->config                        = $config;
 		$this->session_handler               = $session_handler;
@@ -277,6 +297,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->payments_endpoint        = $payments_endpoint;
 		$this->order_endpoint           = $order_endpoint;
 		$this->state                    = $state;
+		$this->api_shop_country         = $api_shop_country;
 	}
 
 	/**
@@ -342,6 +363,10 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		if ( $this->is_paypal_tab() ) {
 			return __( 'PayPal Checkout', 'woocommerce-paypal-payments' );
 		}
+		if ( $this->is_pui_tab() ) {
+			return __( 'Pay upon Invoice', 'woocommerce-paypal-payments' );
+		}
+
 		return __( 'PayPal', 'woocommerce-paypal-payments' );
 	}
 
@@ -388,6 +413,19 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		return is_admin()
 			&& CreditCardGateway::ID === $this->page_id;
 
+	}
+
+	/**
+	 * Whether we are on the PUI tab.
+	 *
+	 * @return bool
+	 */
+	private function is_pui_tab():bool {
+		if ( 'DE' !== $this->api_shop_country ) {
+			return false;
+		}
+
+		return is_admin() && PayUponInvoiceGateway::ID === $this->page_id;
 	}
 
 	/**

@@ -145,6 +145,13 @@ class SmartButton implements SmartButtonInterface {
 	private $all_funding_sources;
 
 	/**
+	 * Whether the basic JS validation of the form iss enabled.
+	 *
+	 * @var bool
+	 */
+	private $basic_checkout_validation_enabled;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -176,6 +183,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @param SettingsStatus         $settings_status The Settings status helper.
 	 * @param string                 $currency 3-letter currency code of the shop.
 	 * @param array                  $all_funding_sources All existing funding sources.
+	 * @param bool                   $basic_checkout_validation_enabled Whether the basic JS validation of the form iss enabled.
 	 * @param LoggerInterface        $logger The logger.
 	 */
 	public function __construct(
@@ -194,25 +202,27 @@ class SmartButton implements SmartButtonInterface {
 		SettingsStatus $settings_status,
 		string $currency,
 		array $all_funding_sources,
+		bool $basic_checkout_validation_enabled,
 		LoggerInterface $logger
 	) {
 
-		$this->module_url               = $module_url;
-		$this->version                  = $version;
-		$this->session_handler          = $session_handler;
-		$this->settings                 = $settings;
-		$this->payer_factory            = $payer_factory;
-		$this->client_id                = $client_id;
-		$this->request_data             = $request_data;
-		$this->dcc_applies              = $dcc_applies;
-		$this->subscription_helper      = $subscription_helper;
-		$this->messages_apply           = $messages_apply;
-		$this->environment              = $environment;
-		$this->payment_token_repository = $payment_token_repository;
-		$this->settings_status          = $settings_status;
-		$this->currency                 = $currency;
-		$this->all_funding_sources      = $all_funding_sources;
-		$this->logger                   = $logger;
+		$this->module_url                        = $module_url;
+		$this->version                           = $version;
+		$this->session_handler                   = $session_handler;
+		$this->settings                          = $settings;
+		$this->payer_factory                     = $payer_factory;
+		$this->client_id                         = $client_id;
+		$this->request_data                      = $request_data;
+		$this->dcc_applies                       = $dcc_applies;
+		$this->subscription_helper               = $subscription_helper;
+		$this->messages_apply                    = $messages_apply;
+		$this->environment                       = $environment;
+		$this->payment_token_repository          = $payment_token_repository;
+		$this->settings_status                   = $settings_status;
+		$this->currency                          = $currency;
+		$this->all_funding_sources               = $all_funding_sources;
+		$this->basic_checkout_validation_enabled = $basic_checkout_validation_enabled;
+		$this->logger                            = $logger;
 	}
 
 	/**
@@ -761,17 +771,17 @@ class SmartButton implements SmartButtonInterface {
 
 		$this->request_data->enqueue_nonce_fix();
 		$localize = array(
-			'script_attributes'              => $this->attributes(),
-			'data_client_id'                 => array(
+			'script_attributes'                 => $this->attributes(),
+			'data_client_id'                    => array(
 				'set_attribute'     => ( is_checkout() && $this->dcc_is_enabled() ) || $this->can_save_vault_token(),
 				'endpoint'          => \WC_AJAX::get_endpoint( DataClientIdEndpoint::ENDPOINT ),
 				'nonce'             => wp_create_nonce( DataClientIdEndpoint::nonce() ),
 				'user'              => get_current_user_id(),
 				'has_subscriptions' => $this->has_subscriptions(),
 			),
-			'redirect'                       => wc_get_checkout_url(),
-			'context'                        => $this->context(),
-			'ajax'                           => array(
+			'redirect'                          => wc_get_checkout_url(),
+			'context'                           => $this->context(),
+			'ajax'                              => array(
 				'change_cart'   => array(
 					'endpoint' => \WC_AJAX::get_endpoint( ChangeCartEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( ChangeCartEndpoint::nonce() ),
@@ -789,13 +799,13 @@ class SmartButton implements SmartButtonInterface {
 					'nonce'    => wp_create_nonce( StartPayPalVaultingEndpoint::nonce() ),
 				),
 			),
-			'enforce_vault'                  => $this->has_subscriptions(),
-			'can_save_vault_token'           => $this->can_save_vault_token(),
-			'is_free_trial_cart'             => $is_free_trial_cart,
-			'vaulted_paypal_email'           => ( is_checkout() && $is_free_trial_cart ) ? $this->get_vaulted_paypal_email() : '',
-			'bn_codes'                       => $this->bn_codes(),
-			'payer'                          => $this->payerData(),
-			'button'                         => array(
+			'enforce_vault'                     => $this->has_subscriptions(),
+			'can_save_vault_token'              => $this->can_save_vault_token(),
+			'is_free_trial_cart'                => $is_free_trial_cart,
+			'vaulted_paypal_email'              => ( is_checkout() && $is_free_trial_cart ) ? $this->get_vaulted_paypal_email() : '',
+			'bn_codes'                          => $this->bn_codes(),
+			'payer'                             => $this->payerData(),
+			'button'                            => array(
 				'wrapper'           => '#ppc-button',
 				'mini_cart_wrapper' => '#ppc-button-minicart',
 				'cancel_wrapper'    => '#ppcp-cancel',
@@ -816,7 +826,7 @@ class SmartButton implements SmartButtonInterface {
 					'tagline' => $this->style_for_context( 'tagline', $this->context() ),
 				),
 			),
-			'hosted_fields'                  => array(
+			'hosted_fields'                     => array(
 				'wrapper'           => '#ppcp-hosted-fields',
 				'mini_cart_wrapper' => '#ppcp-hosted-fields-mini-cart',
 				'labels'            => array(
@@ -836,8 +846,8 @@ class SmartButton implements SmartButtonInterface {
 				'valid_cards'       => $this->dcc_applies->valid_cards(),
 				'contingency'       => $this->get_3ds_contingency(),
 			),
-			'messages'                       => $this->message_values(),
-			'labels'                         => array(
+			'messages'                          => $this->message_values(),
+			'labels'                            => array(
 				'error' => array(
 					'generic'       => __(
 						'Something went wrong. Please try again or choose another payment source.',
@@ -849,9 +859,10 @@ class SmartButton implements SmartButtonInterface {
 					),
 				),
 			),
-			'order_id'                       => 'pay-now' === $this->context() ? absint( $wp->query_vars['order-pay'] ) : 0,
-			'single_product_buttons_enabled' => $this->settings->has( 'button_product_enabled' ) && $this->settings->get( 'button_product_enabled' ),
-			'mini_cart_buttons_enabled'      => $this->settings->has( 'button_mini-cart_enabled' ) && $this->settings->get( 'button_mini-cart_enabled' ),
+			'order_id'                          => 'pay-now' === $this->context() ? absint( $wp->query_vars['order-pay'] ) : 0,
+			'single_product_buttons_enabled'    => $this->settings->has( 'button_product_enabled' ) && $this->settings->get( 'button_product_enabled' ),
+			'mini_cart_buttons_enabled'         => $this->settings->has( 'button_mini-cart_enabled' ) && $this->settings->get( 'button_mini-cart_enabled' ),
+			'basic_checkout_validation_enabled' => $this->basic_checkout_validation_enabled,
 		);
 
 		if ( $this->style_for_context( 'layout', 'mini-cart' ) !== 'horizontal' ) {
@@ -1036,6 +1047,7 @@ class SmartButton implements SmartButtonInterface {
 			$this->context() === 'product'
 			&& $this->settings->has( 'button_product_enabled' )
 			&& $this->settings->get( 'button_product_enabled' )
+			|| $this->settings->has( 'message_product_enabled' )
 		) {
 			$load_buttons = true;
 		}
@@ -1049,6 +1061,7 @@ class SmartButton implements SmartButtonInterface {
 			$this->context() === 'cart'
 			&& $this->settings->has( 'button_cart_enabled' )
 			&& $this->settings->get( 'button_cart_enabled' )
+			|| $this->settings->has( 'message_product_enabled' )
 		) {
 			$load_buttons = true;
 		}

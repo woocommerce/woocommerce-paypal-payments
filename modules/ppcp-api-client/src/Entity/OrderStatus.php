@@ -15,21 +15,21 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
  * Class OrderStatus
  */
 class OrderStatus {
-
-
-	const INTERNAL    = 'INTERNAL';
-	const CREATED     = 'CREATED';
-	const SAVED       = 'SAVED';
-	const APPROVED    = 'APPROVED';
-	const VOIDED      = 'VOIDED';
-	const COMPLETED   = 'COMPLETED';
-	const VALID_STATI = array(
+	const INTERNAL         = 'INTERNAL';
+	const CREATED          = 'CREATED';
+	const SAVED            = 'SAVED';
+	const APPROVED         = 'APPROVED';
+	const VOIDED           = 'VOIDED';
+	const COMPLETED        = 'COMPLETED';
+	const PENDING_APPROVAL = 'PENDING_APPROVAL';
+	const VALID_STATUS     = array(
 		self::INTERNAL,
 		self::CREATED,
 		self::SAVED,
 		self::APPROVED,
 		self::VOIDED,
 		self::COMPLETED,
+		self::PENDING_APPROVAL,
 	);
 
 	/**
@@ -46,7 +46,7 @@ class OrderStatus {
 	 * @throws RuntimeException When the status is not valid.
 	 */
 	public function __construct( string $status ) {
-		if ( ! in_array( $status, self::VALID_STATI, true ) ) {
+		if ( ! in_array( $status, self::VALID_STATUS, true ) ) {
 			throw new RuntimeException(
 				sprintf(
 					// translators: %s is the current status.

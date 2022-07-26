@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
 
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
 
 /**
  * Class CheckoutOrderCompleted
@@ -131,6 +132,10 @@ class CheckoutOrderCompleted implements RequestHandler {
 		}
 
 		foreach ( $wc_orders as $wc_order ) {
+			if ( PayUponInvoiceGateway::ID === $wc_order->get_payment_method() ) {
+				continue;
+			}
+
 			if ( ! in_array( $wc_order->get_status(), array( 'pending', 'on-hold' ), true ) ) {
 				continue;
 			}

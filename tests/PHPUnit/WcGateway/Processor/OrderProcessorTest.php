@@ -168,6 +168,7 @@ class OrderProcessorTest extends TestCase
             ->with('on-hold', 'Awaiting payment.');
 		$wcOrder->expects('set_transaction_id')
 			->with($transactionId);
+		$wcOrder->shouldReceive('save');
 
 		$order_helper->shouldReceive('contains_physical_goods')->andReturn(true);
 
@@ -286,6 +287,7 @@ class OrderProcessorTest extends TestCase
             ->with($transactionId);
         $wcOrder
 	        ->expects('payment_complete');
+		$wcOrder->shouldReceive('save');
 
 		$order_helper->shouldReceive('contains_physical_goods')->andReturn(true);
 
@@ -386,6 +388,7 @@ class OrderProcessorTest extends TestCase
                 PayPalGateway::INTENT_META_KEY,
                 $orderIntent
             );
+		$wcOrder->shouldReceive('save');
 
 		$order_helper->shouldReceive('contains_physical_goods')->andReturn(true);
 

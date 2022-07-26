@@ -86,6 +86,7 @@ class ItemFactoryTest extends TestCase
         $product
             ->expects('is_virtual')
             ->andReturn(true);
+
         $items = [
             [
                 'data' => $product,
@@ -107,6 +108,7 @@ class ItemFactoryTest extends TestCase
         when('WC')->justReturn($woocommerce);
         $woocommerce->session = $session;
         $session->shouldReceive('get')->andReturn([]);
+
 
         $result = $testee->from_wc_cart($cart);
 
@@ -158,6 +160,7 @@ class ItemFactoryTest extends TestCase
             ->expects('get_fees')
             ->andReturn([]);
 
+
         $result = $testee->from_wc_order($order);
         $this->assertCount(1, $result);
         $item = current($result);
@@ -186,6 +189,7 @@ class ItemFactoryTest extends TestCase
         $product
             ->expects('is_virtual')
             ->andReturn(true);
+
 	    expect('wp_strip_all_tags')
 		    ->with('description')
 		    ->andReturn('description');
@@ -240,6 +244,7 @@ class ItemFactoryTest extends TestCase
         $product
             ->expects('is_virtual')
             ->andReturn(true);
+
 	    expect('wp_strip_all_tags')
 		    ->with($description)
 		    ->andReturn(mb_substr( $description, 0, 127 ));

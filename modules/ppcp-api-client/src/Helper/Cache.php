@@ -67,10 +67,11 @@ class Cache {
 	 *
 	 * @param string $key The key under which the value should be cached.
 	 * @param mixed  $value The value to cache.
+	 * @param int    $expiration Time until expiration in seconds.
 	 *
 	 * @return bool
 	 */
-	public function set( string $key, $value ): bool {
-		return (bool) set_transient( $this->prefix . $key, $value );
+	public function set( string $key, $value, int $expiration = 0 ): bool {
+		return (bool) set_transient( $this->prefix . $key, $value, $expiration );
 	}
 }

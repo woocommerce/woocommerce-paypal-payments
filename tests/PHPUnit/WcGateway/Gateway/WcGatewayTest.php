@@ -10,6 +10,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
 use Psr\Log\NullLogger;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -44,9 +45,11 @@ class WcGatewayTest extends TestCase
 	private $subscriptionHelper;
 	private $environment;
 	private $paymentTokenRepository;
+	private $shipping_preference_factory;
 	private $logger;
 	private $paymentsEndpoint;
 	private $orderEndpoint;
+	private $apiShopCountry;
 
 	public function setUp(): void {
 		parent::setUp();
@@ -66,10 +69,12 @@ class WcGatewayTest extends TestCase
 		$this->subscriptionHelper = Mockery::mock(SubscriptionHelper::class);
 		$this->environment = Mockery::mock(Environment::class);
 		$this->paymentTokenRepository = Mockery::mock(PaymentTokenRepository::class);
+		$this->shipping_preference_factory = Mockery::mock(ShippingPreferenceFactory::class);
 		$this->logger = Mockery::mock(LoggerInterface::class);
 		$this->paymentsEndpoint = Mockery::mock(PaymentsEndpoint::class);
 		$this->orderEndpoint = Mockery::mock(OrderEndpoint::class);
 		$this->funding_source_renderer = new FundingSourceRenderer($this->settings);
+		$this->apiShopCountry = 'DE';
 
 		$this->onboardingState->shouldReceive('current_state')->andReturn(State::STATE_ONBOARDED);
 
@@ -100,9 +105,11 @@ class WcGatewayTest extends TestCase
 			PayPalGateway::ID,
 			$this->environment,
 			$this->paymentTokenRepository,
+			$this->shipping_preference_factory,
 			$this->logger,
 			$this->paymentsEndpoint,
-			$this->orderEndpoint
+			$this->orderEndpoint,
+			$this->apiShopCountry
 		);
 	}
 
@@ -134,7 +141,6 @@ class WcGatewayTest extends TestCase
         expect('wc_get_order')
             ->with($orderId)
             ->andReturn($wcOrder);
-
 
         when('wc_get_checkout_url')
 		->justReturn('test');

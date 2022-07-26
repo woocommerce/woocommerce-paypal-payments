@@ -14,6 +14,7 @@ use Dhii\Modular\Module\ModuleInterface;
 use WC_Order;
 use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\FeesRenderer;
@@ -214,7 +215,7 @@ class WCGatewayModule implements ModuleInterface {
 				assert( $settings instanceof Settings );
 
 				try {
-					if ( $settings->get( '3d_secure_contingency' ) === '3D_SECURE' ) {
+					if ( $settings->has( '3d_secure_contingency' ) && $settings->get( '3d_secure_contingency' ) === '3D_SECURE' ) {
 						$settings->set( '3d_secure_contingency', 'SCA_ALWAYS' );
 						$settings->persist();
 					}
@@ -222,6 +223,42 @@ class WCGatewayModule implements ModuleInterface {
 					return;
 				}
 			}
+		);
+
+		add_action(
+			'init',
+			function () use ( $c ) {
+				if ( 'DE' === $c->get( 'api.shop.country' ) && 'EUR' === $c->get( 'api.shop.currency' ) ) {
+					( $c->get( 'wcgateway.pay-upon-invoice' ) )->init();
+				}
+			}
+		);
+
+		add_action(
+			'woocommerce_paypal_payments_check_pui_payment_captured',
+			function ( int $wc_order_id, string $order_id ) use ( $c ) {
+				$order_endpoint = $c->get( 'api.endpoint.order' );
+				$logger         = $c->get( 'woocommerce.logger.woocommerce' );
+				$order          = $order_endpoint->order( $order_id );
+				$order_status   = $order->status();
+				$logger->info( "Checking payment captured webhook for WC order #{$wc_order_id}, PayPal order status: " . $order_status->name() );
+
+				$wc_order = wc_get_order( $wc_order_id );
+				if ( ! is_a( $wc_order, WC_Order::class ) || $wc_order->get_status() !== 'on-hold' ) {
+					return;
+				}
+
+				if ( $order_status->name() !== OrderStatus::COMPLETED ) {
+					$message = __(
+						'Could not process WC order because PAYMENT.CAPTURE.COMPLETED webhook not received.',
+						'woocommerce-paypal-payments'
+					);
+					$logger->error( $message );
+					$wc_order->update_status( 'failed', $message );
+				}
+			},
+			10,
+			2
 		);
 	}
 
@@ -246,6 +283,11 @@ class WCGatewayModule implements ModuleInterface {
 				if ( $dcc_applies->for_country_currency() ) {
 					$methods[] = $container->get( 'wcgateway.credit-card-gateway' );
 				}
+
+				if ( 'DE' === $container->get( 'api.shop.country' ) && 'EUR' === $container->get( 'api.shop.currency' ) ) {
+					$methods[] = $container->get( 'wcgateway.pay-upon-invoice-gateway' );
+				}
+
 				return (array) $methods;
 			}
 		);

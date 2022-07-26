@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\Webhooks\Status\WebhooksStatusPage;
 
 /**
@@ -28,12 +29,21 @@ class SectionsRenderer {
 	protected $page_id;
 
 	/**
+	 * The api shop country.
+	 *
+	 * @var string
+	 */
+	protected $api_shop_country;
+
+	/**
 	 * SectionsRenderer constructor.
 	 *
 	 * @param string $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
+	 * @param string $api_shop_country The api shop country.
 	 */
-	public function __construct( string $page_id ) {
-		$this->page_id = $page_id;
+	public function __construct( string $page_id, string $api_shop_country ) {
+		$this->page_id          = $page_id;
+		$this->api_shop_country = $api_shop_country;
 	}
 
 	/**
@@ -54,10 +64,15 @@ class SectionsRenderer {
 		}
 
 		$sections = array(
-			PayPalGateway::ID      => __( 'PayPal Checkout', 'woocommerce-paypal-payments' ),
-			CreditCardGateway::ID  => __( 'PayPal Card Processing', 'woocommerce-paypal-payments' ),
-			WebhooksStatusPage::ID => __( 'Webhooks Status', 'woocommerce-paypal-payments' ),
+			PayPalGateway::ID         => __( 'PayPal Checkout', 'woocommerce-paypal-payments' ),
+			CreditCardGateway::ID     => __( 'PayPal Card Processing', 'woocommerce-paypal-payments' ),
+			PayUponInvoiceGateway::ID => __( 'Pay upon Invoice', 'woocommerce-paypal-payments' ),
+			WebhooksStatusPage::ID    => __( 'Webhooks Status', 'woocommerce-paypal-payments' ),
 		);
+
+		if ( 'DE' !== $this->api_shop_country ) {
+			unset( $sections[ PayUponInvoiceGateway::ID ] );
+		}
 
 		echo '<ul class="subsubsub">';
 
@@ -65,6 +80,9 @@ class SectionsRenderer {
 
 		foreach ( $sections as $id => $label ) {
 			$url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&' . self::KEY . '=' . $id );
+			if ( PayUponInvoiceGateway::ID === $id ) {
+				$url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-pay-upon-invoice-gateway' );
+			}
 			echo '<li><a href="' . esc_url( $url ) . '" class="' . ( $this->page_id === $id ? 'current' : '' ) . '">' . esc_html( $label ) . '</a> ' . ( end( $array_keys ) === $id ? '' : '|' ) . ' </li>';
 		}
 
