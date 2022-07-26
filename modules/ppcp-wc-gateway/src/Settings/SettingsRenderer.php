@@ -172,7 +172,7 @@ class SettingsRenderer {
 	 *
 	 * @return string
 	 */
-	public function render_multiselect( $field, $key, $config, $value ): string {
+	public function render_multiselect( $field, $key, $config, $value ): ?string {
 
 		if ( 'ppcp-multiselect' !== $config['type'] ) {
 			return $field;
@@ -211,7 +211,7 @@ class SettingsRenderer {
 	 *
 	 * @return string
 	 */
-	public function render_password( $field, $key, $config, $value ): string {
+	public function render_password( $field, $key, $config, $value ): ?string {
 
 		if ( 'ppcp-password' !== $config['type'] ) {
 			return $field;
@@ -244,7 +244,7 @@ class SettingsRenderer {
 	 *
 	 * @return string
 	 */
-	public function render_text_input( $field, $key, $config, $value ): string {
+	public function render_text_input( $field, $key, $config, $value ): ?string {
 
 		if ( 'ppcp-text-input' !== $config['type'] ) {
 			return $field;
@@ -276,7 +276,7 @@ class SettingsRenderer {
 	 *
 	 * @return string
 	 */
-	public function render_heading( $field, $key, $config, $value ): string {
+	public function render_heading( $field, $key, $config, $value ): ?string {
 
 		if ( 'ppcp-heading' !== $config['type'] ) {
 			return $field;
@@ -298,7 +298,7 @@ class SettingsRenderer {
 	 * @param string $tag HTML tag ('td', 'th').
 	 * @return string
 	 */
-	public function render_table_row( array $data, string $tag = 'td' ): string {
+	public function render_table_row( array $data, string $tag = 'td' ): ?string {
 		$cells = array_map(
 			function ( $value ) use ( $tag ): string {
 				return "<$tag>" . (string) $value . "</$tag>";
@@ -318,7 +318,7 @@ class SettingsRenderer {
 	 *
 	 * @return string HTML.
 	 */
-	public function render_table( $field, $key, $config, $value ): string {
+	public function render_table( $field, $key, $config, $value ): ?string {
 		if ( 'ppcp-table' !== $config['type'] ) {
 			return $field;
 		}
