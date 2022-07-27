@@ -2298,6 +2298,7 @@ return array(
 			$container->get( 'api.endpoint.order' ),
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'api.factory.shipping-preference' ),
+			$container->get( 'wcgateway.url' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
