@@ -984,7 +984,7 @@ class SmartButton implements SmartButtonInterface {
 
 		if ( $this->is_free_trial_cart() ) {
 			$all_sources = array_keys( $this->all_funding_sources );
-			if ( $is_dcc_enabled ) {
+			if ( $is_dcc_enabled || $is_separate_card_enabled ) {
 				$all_sources = array_diff( $all_sources, array( 'card' ) );
 			}
 			$disable_funding = $all_sources;
