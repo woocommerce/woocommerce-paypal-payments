@@ -1092,9 +1092,9 @@ class SmartButton implements SmartButtonInterface {
 		}
 		if (
 			$this->context() === 'product'
-			&& $this->settings->has( 'button_product_enabled' )
+			&& ( $this->settings->has( 'button_product_enabled' )
 			&& $this->settings->get( 'button_product_enabled' )
-			|| $this->settings->has( 'message_product_enabled' )
+			|| $this->settings->has( 'message_product_enabled' ) )
 		) {
 			$load_buttons = true;
 		}
@@ -1106,9 +1106,9 @@ class SmartButton implements SmartButtonInterface {
 		}
 		if (
 			$this->context() === 'cart'
-			&& $this->settings->has( 'button_cart_enabled' )
+			&& ( $this->settings->has( 'button_cart_enabled' )
 			&& $this->settings->get( 'button_cart_enabled' )
-			|| $this->settings->has( 'message_product_enabled' )
+			|| $this->settings->has( 'message_product_enabled' ) )
 		) {
 			$load_buttons = true;
 		}
