@@ -44,6 +44,7 @@ private $testee;
 			$this->orderEndpoint,
 			$this->purchaseUnitFactory,
 			$this->shippingPreferenceFactory,
+			'oxxo.svg',
 			$this->logger
 		);
 	}

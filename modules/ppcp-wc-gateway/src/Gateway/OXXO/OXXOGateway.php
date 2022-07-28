@@ -45,6 +45,13 @@ class OXXOGateway extends WC_Payment_Gateway {
 	protected $shipping_preference_factory;
 
 	/**
+	 * The URL to the module.
+	 *
+	 * @var string
+	 */
+	private $module_url;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -57,12 +64,14 @@ class OXXOGateway extends WC_Payment_Gateway {
 	 * @param OrderEndpoint             $order_endpoint The order endpoint.
 	 * @param PurchaseUnitFactory       $purchase_unit_factory The purchase unit factory.
 	 * @param ShippingPreferenceFactory $shipping_preference_factory The shipping preference factory.
+	 * @param string                    $module_url The URL to the module.
 	 * @param LoggerInterface           $logger The logger.
 	 */
 	public function __construct(
 		OrderEndpoint $order_endpoint,
 		PurchaseUnitFactory $purchase_unit_factory,
 		ShippingPreferenceFactory $shipping_preference_factory,
+		string $module_url,
 		LoggerInterface $logger
 	) {
 		$this->id = self::ID;
@@ -87,7 +96,10 @@ class OXXOGateway extends WC_Payment_Gateway {
 		$this->order_endpoint              = $order_endpoint;
 		$this->purchase_unit_factory       = $purchase_unit_factory;
 		$this->shipping_preference_factory = $shipping_preference_factory;
+		$this->module_url                  = $module_url;
 		$this->logger                      = $logger;
+
+		$this->icon = esc_url( $this->module_url ) . 'assets/images/oxxo.svg';
 	}
 
 	/**
