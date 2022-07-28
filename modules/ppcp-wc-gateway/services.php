@@ -211,8 +211,31 @@ return array(
 	'wcgateway.settings.sections-renderer'                 => static function ( ContainerInterface $container ): SectionsRenderer {
 		return new SectionsRenderer(
 			$container->get( 'wcgateway.current-ppcp-settings-page-id' ),
-			$container->get( 'api.shop.country' )
+			$container->get( 'wcgateway.settings.sections' )
 		);
+	},
+	'wcgateway.settings.sections'                          => static function ( ContainerInterface $container ): array {
+		$sections = array(
+			PayPalGateway::ID         => __( 'PayPal Checkout', 'woocommerce-paypal-payments' ),
+			CreditCardGateway::ID     => __( 'PayPal Card Processing', 'woocommerce-paypal-payments' ),
+			CardButtonGateway::ID     => __( 'PayPal Card Button', 'woocommerce-paypal-payments' ),
+			OXXOGateway::ID           => __( 'OXXO', 'woocommerce-paypal-payments' ),
+			PayUponInvoiceGateway::ID => __( 'Pay upon Invoice', 'woocommerce-paypal-payments' ),
+			WebhooksStatusPage::ID    => __( 'Webhooks Status', 'woocommerce-paypal-payments' ),
+		);
+
+		// Remove for all not registered in WC gateways that cannot render anything in this case.
+		$gateways = WC()->payment_gateways->payment_gateways();
+		foreach ( array_diff(
+			array_keys( $sections ),
+			array( PayPalGateway::ID, CreditCardGateway::ID, WebhooksStatusPage::ID )
+		) as $id ) {
+			if ( ! isset( $gateways[ $id ] ) ) {
+				unset( $sections[ $id ] );
+			}
+		}
+
+		return $sections;
 	},
 	'wcgateway.settings.status'                            => static function ( ContainerInterface $container ): SettingsStatus {
 		$settings      = $container->get( 'wcgateway.settings' );
