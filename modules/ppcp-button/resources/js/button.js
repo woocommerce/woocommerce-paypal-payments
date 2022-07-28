@@ -112,7 +112,7 @@ const bootstrap = () => {
             PayPalCommerceGateway,
             renderer,
             messageRenderer,
-        );w
+        );
 
         singleProductBootstrap.init();
     }
