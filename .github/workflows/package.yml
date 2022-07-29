@@ -1,0 +1,41 @@
+name: Build package
+
+on:
+  workflow_dispatch:
+    inputs:
+      packageVersion:
+        description: 'Package Version'
+        required: false
+        type: string
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+
+    name: Build package
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: 7.1
+        tools: composer:v1
+
+    - name: Set plugin version header
+      env:
+        PACKAGE_VERSION: ${{ github.event.inputs.packageVersion }}
+      run: 'sed -Ei "s/Version: .*/Version:     ${PACKAGE_VERSION}/g" woocommerce-paypal-payments.php'
+      if: github.event.inputs.packageVersion
+
+    - name: Build
+      run: yarn build
+
+    - name: Unzip # GH currently always zips, so if we upload a zip we get a zip inside a zip
+      run: unzip woocommerce-paypal-payments.zip -d dist
+
+    - name: Upload
+      uses: actions/upload-artifact@v3
+      with:
+        name: woocommerce-paypal-payments
+        path: dist/
