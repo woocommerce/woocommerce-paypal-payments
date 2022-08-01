@@ -458,10 +458,22 @@ class PayPalGateway extends \WC_Payment_Gateway {
 
 			return $this->handle_payment_success( $wc_order );
 		} catch ( PayPalApiException $error ) {
-			if ( $error->has_detail( 'INSTRUMENT_DECLINED' ) ) {
+			$retry_keys_messages = array(
+				'INSTRUMENT_DECLINED'   => __( 'Instrument declined.', 'woocommerce-paypal-payments' ),
+				'PAYER_ACTION_REQUIRED' => __( 'Payer action required, possibly overcharge.', 'woocommerce-paypal-payments' ),
+			);
+			$retry_errors        = array_filter(
+				array_keys( $retry_keys_messages ),
+				function ( string $key ) use ( $error ): bool {
+					return $error->has_detail( $key );
+				}
+			);
+			if ( $retry_errors ) {
+				$retry_error_key = $retry_errors[0];
+
 				$wc_order->update_status(
 					'failed',
-					__( 'Instrument declined. ', 'woocommerce-paypal-payments' ) . $error->details()[0]->description ?? ''
+					$retry_keys_messages[ $retry_error_key ] . ' ' . $error->details()[0]->description ?? ''
 				);
 
 				$this->session_handler->increment_insufficient_funding_tries();
