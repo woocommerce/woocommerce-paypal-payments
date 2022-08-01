@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, e-commerce, store, sales, sell, 
 Requires at least: 5.3
 Tested up to: 6.0
 Requires PHP: 7.1
-Stable tag: 1.9.0
+Stable tag: 1.9.1
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -80,6 +80,18 @@ Follow the steps below to connect the plugin to your PayPal account:
 6. Main settings screen.
 
 == Changelog ==
+
+= 1.9.1 =
+* Fix - ITEM_TOTAL_MISMATCH error when checking out with multiple products #721
+* Fix - Unable to purchase a product with Credit card button in pay for order page #718
+* Fix - Pay Later messaging only displayed when smart button is active on the same page #283
+* Fix - Pay Later messaging displayed for out of stock variable products or with no variation selected #667
+* Fix - Placeholders and card type detection not working for PayPal Card Processing (260) #685
+* Fix - PUI gateway is displayed with unsupported store currency #711
+* Fix - Wrong PUI locale sent causing error PAYMENT_SOURCE_CANNOT_BE_USED #741 
+* Enhancement - Missing PayPal fee in WC order details for PUI purchase #714
+* Enhancement - Skip loading of PUI js file on all pages where PUI gateway is not displayed #723
+* Enhancement - PUI feature capitalization not consistent #724 
 
 = 1.9.0 =
 * Add - New Feature - Pay Upon Invoice (Germany only) #608

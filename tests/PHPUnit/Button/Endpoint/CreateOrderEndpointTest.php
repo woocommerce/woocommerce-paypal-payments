@@ -10,10 +10,11 @@ use ReflectionClass;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
-use WooCommerce\PayPalCommerce\ApiClient\Repository\CartRepository;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\TestCase;
+use WooCommerce\PayPalCommerce\WcGateway\CardBillingMode;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
@@ -145,24 +146,26 @@ class CreateOrderEndpointTest extends TestCase
     protected function mockTestee()
     {
         $request_data = Mockery::mock(RequestData::class);
-        $cart_repository = Mockery::mock(CartRepository::class);
+		$shippingPreferenceFactory = Mockery::mock(ShippingPreferenceFactory::class);
         $purchase_unit_factory = Mockery::mock(PurchaseUnitFactory::class);
         $order_endpoint = Mockery::mock(OrderEndpoint::class);
         $payer_factory = Mockery::mock(PayerFactory::class);
         $session_handler = Mockery::mock(SessionHandler::class);
         $settings = Mockery::mock(Settings::class);
         $early_order_handler = Mockery::mock(EarlyOrderHandler::class);
+		$settings->shouldReceive('has')->andReturnFalse();
 
         $testee = new CreateOrderEndpoint(
             $request_data,
-            $cart_repository,
             $purchase_unit_factory,
+			$shippingPreferenceFactory,
             $order_endpoint,
             $payer_factory,
             $session_handler,
             $settings,
             $early_order_handler,
 			false,
+			CardBillingMode::MINIMAL_INPUT,
 			new NullLogger()
         );
         return array($payer_factory, $testee);

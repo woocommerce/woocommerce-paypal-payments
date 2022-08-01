@@ -24,13 +24,18 @@ return array(
 		$purchase_unit_factory = $container->get( 'api.factory.purchase-unit' );
 		$payer_factory         = $container->get( 'api.factory.payer' );
 		$environment           = $container->get( 'onboarding.environment' );
+		$settings                      = $container->get( 'wcgateway.settings' );
+		$authorized_payments_processor = $container->get( 'wcgateway.processor.authorized-payments' );
 		return new RenewalHandler(
 			$logger,
 			$repository,
 			$endpoint,
 			$purchase_unit_factory,
+			$container->get( 'api.factory.shipping-preference' ),
 			$payer_factory,
-			$environment
+			$environment,
+			$settings,
+			$authorized_payments_processor
 		);
 	},
 	'subscription.repository.payment-token' => static function ( ContainerInterface $container ): PaymentTokenRepository {

@@ -46,7 +46,7 @@ class PaymentCaptureRefunded implements RequestHandler {
 	 * @return string[]
 	 */
 	public function event_types(): array {
-		return array( 'PAYMENT.CAPTURE.REFUNDED' );
+		return array( 'PAYMENT.CAPTURE.REFUNDED', 'PAYMENT.AUTHORIZATION.VOIDED' );
 	}
 
 	/**

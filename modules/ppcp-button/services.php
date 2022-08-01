@@ -108,14 +108,13 @@ return array(
 		$cart        = WC()->cart;
 		$shipping    = WC()->shipping();
 		$request_data = $container->get( 'button.request-data' );
-		$repository  = $container->get( 'api.repository.cart' );
+		$purchase_unit_factory = $container->get( 'api.factory.purchase-unit' );
 		$data_store   = \WC_Data_Store::load( 'product' );
 		$logger                        = $container->get( 'woocommerce.logger.woocommerce' );
-		return new ChangeCartEndpoint( $cart, $shipping, $request_data, $repository, $data_store, $logger );
+		return new ChangeCartEndpoint( $cart, $shipping, $request_data, $purchase_unit_factory, $data_store, $logger );
 	},
 	'button.endpoint.create-order'             => static function ( ContainerInterface $container ): CreateOrderEndpoint {
 		$request_data          = $container->get( 'button.request-data' );
-		$cart_repository       = $container->get( 'api.repository.cart' );
 		$purchase_unit_factory = $container->get( 'api.factory.purchase-unit' );
 		$order_endpoint        = $container->get( 'api.endpoint.order' );
 		$payer_factory         = $container->get( 'api.factory.payer' );
@@ -126,14 +125,15 @@ return array(
 		$logger                = $container->get( 'woocommerce.logger.woocommerce' );
 		return new CreateOrderEndpoint(
 			$request_data,
-			$cart_repository,
 			$purchase_unit_factory,
+			$container->get( 'api.factory.shipping-preference' ),
 			$order_endpoint,
 			$payer_factory,
 			$session_handler,
 			$settings,
 			$early_order_handler,
 			$registration_needed,
+			$container->get( 'wcgateway.settings.card_billing_data_mode' ),
 			$logger
 		);
 	},

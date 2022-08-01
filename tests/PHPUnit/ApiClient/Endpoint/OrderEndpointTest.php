@@ -952,7 +952,7 @@ class OrderEndpointTest extends TestCase
             ->expects('email_address')
             ->andReturn('');
 
-        $result = $testee->create([$purchaseUnit], $payer);
+        $result = $testee->create([$purchaseUnit], ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING, $payer);
         $this->assertEquals($expectedOrder, $result);
     }
 
@@ -1046,10 +1046,8 @@ class OrderEndpointTest extends TestCase
 
         $payer = Mockery::mock(Payer::class);
         $payer->expects('email_address')->andReturn('email@email.com');
-        $payerName = Mockery::mock(PayerName::class);
-        $payer->expects('name')->andReturn($payerName);
         $payer->expects('to_array')->andReturn(['payer']);
-        $result = $testee->create([$purchaseUnit], $payer);
+        $result = $testee->create([$purchaseUnit], ApplicationContext::SHIPPING_PREFERENCE_GET_FROM_FILE, $payer);
         $this->assertEquals($expectedOrder, $result);
     }
 
@@ -1138,10 +1136,8 @@ class OrderEndpointTest extends TestCase
 
         $payer = Mockery::mock(Payer::class);
         $payer->expects('email_address')->andReturn('email@email.com');
-        $payerName = Mockery::mock(PayerName::class);
-        $payer->expects('name')->andReturn($payerName);
         $payer->expects('to_array')->andReturn(['payer']);
-        $testee->create([$purchaseUnit], $payer);
+        $testee->create([$purchaseUnit], ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING, $payer);
     }
 
     public function testCreateForPurchaseUnitsIsNot201()
@@ -1229,9 +1225,7 @@ class OrderEndpointTest extends TestCase
         $this->expectException(RuntimeException::class);
         $payer = Mockery::mock(Payer::class);
         $payer->expects('email_address')->andReturn('email@email.com');
-        $payerName = Mockery::mock(PayerName::class);
-        $payer->expects('name')->andReturn($payerName);
         $payer->expects('to_array')->andReturn(['payer']);
-        $testee->create([$purchaseUnit], $payer);
+        $testee->create([$purchaseUnit], ApplicationContext::SHIPPING_PREFERENCE_GET_FROM_FILE, $payer);
     }
 }

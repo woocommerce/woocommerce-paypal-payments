@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use stdClass;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\RequestTrait;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
@@ -162,14 +163,14 @@ class PayUponInvoiceOrderEndpoint {
 	}
 
 	/**
-	 * Get Ratepay payment instructions from PayPal order.
+	 * Get PayPal order as object.
 	 *
 	 * @param string $id The PayPal order ID.
-	 * @return array
+	 * @return stdClass
 	 * @throws RuntimeException When there is a problem getting the order.
 	 * @throws PayPalApiException When there is a problem getting the order.
 	 */
-	public function order_payment_instructions( string $id ): array {
+	public function order( string $id ): stdClass {
 		$bearer = $this->bearer->bearer();
 		$url    = trailingslashit( $this->host ) . 'v2/checkout/orders/' . $id;
 		$args   = array(
@@ -191,10 +192,7 @@ class PayUponInvoiceOrderEndpoint {
 			throw new PayPalApiException( $json, $status_code );
 		}
 
-		return array(
-			$json->payment_source->pay_upon_invoice->payment_reference,
-			$json->payment_source->pay_upon_invoice->deposit_bank_details,
-		);
+		return $json;
 	}
 
 	/**

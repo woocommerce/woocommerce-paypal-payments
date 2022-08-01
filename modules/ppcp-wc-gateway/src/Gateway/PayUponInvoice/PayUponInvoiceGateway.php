@@ -12,14 +12,13 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use WC_Order;
-use WC_Order_Item_Product;
 use WC_Payment_Gateway;
-use WC_Product;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CheckoutHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
 
@@ -82,6 +81,13 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	protected $pui_helper;
 
 	/**
+	 * The checkout helper.
+	 *
+	 * @var CheckoutHelper
+	 */
+	protected $checkout_helper;
+
+	/**
 	 * PayUponInvoiceGateway constructor.
 	 *
 	 * @param PayUponInvoiceOrderEndpoint $order_endpoint The order endpoint.
@@ -91,6 +97,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	 * @param TransactionUrlProvider      $transaction_url_provider The transaction URL provider.
 	 * @param LoggerInterface             $logger The logger.
 	 * @param PayUponInvoiceHelper        $pui_helper The PUI helper.
+	 * @param CheckoutHelper              $checkout_helper The checkout helper.
 	 */
 	public function __construct(
 		PayUponInvoiceOrderEndpoint $order_endpoint,
@@ -99,11 +106,12 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 		Environment $environment,
 		TransactionUrlProvider $transaction_url_provider,
 		LoggerInterface $logger,
-		PayUponInvoiceHelper $pui_helper
+		PayUponInvoiceHelper $pui_helper,
+		CheckoutHelper $checkout_helper
 	) {
 		$this->id = self::ID;
 
-		$this->method_title       = __( 'Pay Upon Invoice', 'woocommerce-paypal-payments' );
+		$this->method_title       = __( 'Pay upon Invoice', 'woocommerce-paypal-payments' );
 		$this->method_description = __( 'Pay upon Invoice is an invoice payment method in Germany. It is a local buy now, pay later payment method that allows the buyer to place an order, receive the goods, try them, verify they are in good order, and then pay the invoice within 30 days.', 'woocommerce-paypal-payments' );
 
 		$gateway_settings  = get_option( 'woocommerce_ppcp-pay-upon-invoice-gateway_settings' );
@@ -128,6 +136,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 		$this->environment              = $environment;
 		$this->transaction_url_provider = $transaction_url_provider;
 		$this->pui_helper               = $pui_helper;
+		$this->checkout_helper          = $checkout_helper;
 	}
 
 	/**
@@ -141,7 +150,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 				'label'       => __( 'Pay upon Invoice', 'woocommerce-paypal-payments' ),
 				'default'     => 'no',
 				'desc_tip'    => true,
-				'description' => __( 'Enable/Disable Pay Upon Invoice payment gateway.', 'woocommerce-paypal-payments' ),
+				'description' => __( 'Enable/Disable Pay upon Invoice payment gateway.', 'woocommerce-paypal-payments' ),
 			),
 			'title'                         => array(
 				'title'       => __( 'Title', 'woocommerce-paypal-payments' ),
@@ -198,7 +207,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 
 		$pay_for_order = filter_input( INPUT_GET, 'pay_for_order', FILTER_SANITIZE_STRING );
 		if ( 'true' === $pay_for_order ) {
-			if ( ! $this->pui_helper->validate_birth_date( $birth_date ) ) {
+			if ( ! $this->checkout_helper->validate_birth_date( $birth_date ) ) {
 				wc_add_notice( 'Invalid birth date.', 'error' );
 				return array(
 					'result' => 'failure',
@@ -206,7 +215,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 			}
 		}
 
-		$wc_order->update_status( 'on-hold', __( 'Awaiting Pay Upon Invoice payment.', 'woocommerce-paypal-payments' ) );
+		$wc_order->update_status( 'on-hold', __( 'Awaiting Pay upon Invoice payment.', 'woocommerce-paypal-payments' ) );
 		$purchase_unit  = $this->purchase_unit_factory->from_wc_order( $wc_order );
 		$payment_source = $this->payment_source_factory->from_wc_order( $wc_order, $birth_date );
 
