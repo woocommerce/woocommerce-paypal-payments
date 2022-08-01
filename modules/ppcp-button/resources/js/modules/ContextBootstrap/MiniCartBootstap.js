@@ -32,9 +32,13 @@ class MiniCartBootstap {
         }
 
         this.renderer.render(
-            this.gateway.button.mini_cart_wrapper,
-            this.gateway.hosted_fields.mini_cart_wrapper,
-            this.actionHandler.configuration()
+            this.actionHandler.configuration(),
+            {
+                button: {
+                    wrapper: this.gateway.button.mini_cart_wrapper,
+                    style: this.gateway.button.mini_cart_style,
+                },
+            }
         );
     }
 }

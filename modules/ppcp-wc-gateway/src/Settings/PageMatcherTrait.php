@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\Webhooks\Status\WebhooksStatusPage;
@@ -34,6 +35,7 @@ trait PageMatcherTrait {
 		$gateway_page_id_map = array(
 			PayPalGateway::ID      => 'paypal',
 			CreditCardGateway::ID  => 'dcc', // TODO: consider using just the gateway ID for PayPal and DCC too.
+			CardButtonGateway::ID  => CardButtonGateway::ID,
 			WebhooksStatusPage::ID => WebhooksStatusPage::ID,
 		);
 		return array_key_exists( $current_page_id, $gateway_page_id_map )

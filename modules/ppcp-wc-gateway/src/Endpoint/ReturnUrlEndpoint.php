@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Endpoint;
 
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXOGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PrefixTrait;
 
@@ -51,7 +52,7 @@ class ReturnUrlEndpoint {
 	/**
 	 * Handles the incoming request.
 	 */
-	public function handle_request() {
+	public function handle_request(): void {
 
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 		if ( ! isset( $_GET['token'] ) ) {
@@ -68,7 +69,12 @@ class ReturnUrlEndpoint {
 		}
 
 		$wc_order = wc_get_order( $wc_order_id );
-		if ( ! $wc_order ) {
+		if ( ! is_a( $wc_order, \WC_Order::class ) ) {
+			exit();
+		}
+
+		if ( $wc_order->get_payment_method() === OXXOGateway::ID ) {
+			wp_safe_redirect( wc_get_checkout_url() );
 			exit();
 		}
 
