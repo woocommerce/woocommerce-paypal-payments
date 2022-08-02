@@ -24,8 +24,8 @@ define( 'PAYPAL_SANDBOX_API_URL', 'https://api.sandbox.paypal.com' );
 define( 'PAYPAL_INTEGRATION_DATE', '2022-04-13' );
 
 define( 'PPCP_FLAG_SUBSCRIPTION', true );
-define( 'PPCP_FLAG_OXXO', apply_filters( 'woocommerce_paypal_payments_enable_oxxo', false ) );
-define( 'PPCP_FLAG_SEPARATE_APM_BUTTONS', apply_filters( 'woocommerce_paypal_payments_enable_separate_apm_buttons', false ) );
+define( 'PPCP_FLAG_OXXO', apply_filters( 'woocommerce_paypal_payments_enable_oxxo_feature', false ) );
+define( 'PPCP_FLAG_SEPARATE_APM_BUTTONS', apply_filters( 'woocommerce_paypal_payments_enable_separate_apm_buttons_feature', false ) );
 
 ! defined( 'CONNECT_WOO_CLIENT_ID' ) && define( 'CONNECT_WOO_CLIENT_ID', 'AcCAsWta_JTL__OfpjspNyH7c1GGHH332fLwonA5CwX4Y10mhybRZmHLA0GdRbwKwjQIhpDQy0pluX_P' );
 ! defined( 'CONNECT_WOO_SANDBOX_CLIENT_ID' ) && define( 'CONNECT_WOO_SANDBOX_CLIENT_ID', 'AYmOHbt1VHg-OZ_oihPdzKEVbU3qg0qXonBcAztuzniQRaKE0w1Hr762cSFwd4n8wxOl-TCWohEa0XM_' );
