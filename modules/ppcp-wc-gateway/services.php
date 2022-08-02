@@ -2153,6 +2153,10 @@ return array(
 		$fields['disable_cards']['options'] = $card_options;
 		$fields['card_icons']['options'] = array_merge( $dark_versions, $card_options );
 
+		if ( defined( 'PPCP_FLAG_SEPARATE_APM_BUTTONS' ) && PPCP_FLAG_SEPARATE_APM_BUTTONS === false ) {
+			unset( $fields['allow_card_button_gateway'] );
+		}
+
 		return $fields;
 	},
 
@@ -2402,6 +2406,10 @@ return array(
 		return $container->get( 'api.shop.is-latin-america' );
 	},
 	'wcgateway.settings.allow_card_button_gateway'         => static function ( ContainerInterface $container ): bool {
+		if ( defined( 'PPCP_FLAG_SEPARATE_APM_BUTTONS' ) && PPCP_FLAG_SEPARATE_APM_BUTTONS === false ) {
+			return false;
+		}
+
 		$settings = $container->get( 'wcgateway.settings' );
 		assert( $settings instanceof ContainerInterface );
 
