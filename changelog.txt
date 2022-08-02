@@ -1,16 +1,17 @@
 *** Changelog ***
 
 = 1.9.2 - TBD =
-* Fix - PayPal scripts loading on on pages without active smart buttons or Pay Later messaging #750
-* Fix - Capture Virtual-Only Orders setting does not auto-capture subscription renewal payments #626
-* Fix - Voiding authorization at PayPal does not update the status/order notes #712
-* Fix - The smart buttons are not loaded on single product page while subscription product exists in the Cart #703
-* Fix - DCC causes other gateways to disappear after checkout validation error #757
-* Enhancement - PAYER_ACTION_REQUIRED error #759
-* Enhancement - Store the customer id for vaulted payment method in usermeta #698
-* Enhancement - No minimum and maximum birth date range for PUI #743
-* Enhancement - Checkout Field Validation Message #739
-* Enhancement - Empty settings when Card Button, PUI gateways not available #753
+* Fix - Do not allow birth date older than 100 years for PUI. #743
+* Fix - Store the customer id for vaulted payment method in usermeta to not lose vaulted methods after the invoice prefix change. #698
+* Fix - Do not allow birth date older than 100 years for PUI. #743
+* Fix - Capture Virtual-Only Orders setting did not auto-capture subscription renewal payments. #626
+* Fix - Voiding authorization at PayPal did not update the status/order notes. #712
+* Fix - PayPal scripts were loading on pages without smart buttons or Pay Later messaging. #750
+* Fix - Do not show links for unavailable gateways settings pages. #753
+* Fix - The smart buttons were not loaded on single product page if a subscription product exists in the cart. #703
+* Fix - DCC was causing other gateways to disappear after checkout validation error #757
+* Enhancement - Improve Checkout Field Validation Message. #739
+* Enhancement - Handle PAYER_ACTION_REQUIRED error. #759
 
 = 1.9.1 - 2022-07-25 =
 * Fix - ITEM_TOTAL_MISMATCH error when checking out with multiple products #721
