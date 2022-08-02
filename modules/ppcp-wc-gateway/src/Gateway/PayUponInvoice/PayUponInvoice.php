@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\CaptureFactory;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CheckoutHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceHelper;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
@@ -116,6 +117,13 @@ class PayUponInvoice {
 	protected $pui_product_status;
 
 	/**
+	 * The checkout helper.
+	 *
+	 * @var CheckoutHelper
+	 */
+	protected $checkout_helper;
+
+	/**
 	 * The capture factory.
 	 *
 	 * @var CaptureFactory
@@ -137,6 +145,7 @@ class PayUponInvoice {
 	 * @param string                      $current_ppcp_settings_page_id Current PayPal settings page id.
 	 * @param PayUponInvoiceProductStatus $pui_product_status The PUI product status.
 	 * @param PayUponInvoiceHelper        $pui_helper The PUI helper.
+	 * @param CheckoutHelper              $checkout_helper The checkout helper.
 	 * @param CaptureFactory              $capture_factory The capture factory.
 	 */
 	public function __construct(
@@ -152,6 +161,7 @@ class PayUponInvoice {
 		string $current_ppcp_settings_page_id,
 		PayUponInvoiceProductStatus $pui_product_status,
 		PayUponInvoiceHelper $pui_helper,
+		CheckoutHelper $checkout_helper,
 		CaptureFactory $capture_factory
 	) {
 		$this->module_url                    = $module_url;
@@ -166,6 +176,7 @@ class PayUponInvoice {
 		$this->current_ppcp_settings_page_id = $current_ppcp_settings_page_id;
 		$this->pui_product_status            = $pui_product_status;
 		$this->pui_helper                    = $pui_helper;
+		$this->checkout_helper               = $checkout_helper;
 		$this->capture_factory               = $capture_factory;
 	}
 
@@ -298,7 +309,7 @@ class PayUponInvoice {
 				}
 			},
 			10,
-			3
+			2
 		);
 
 		add_filter(
@@ -380,7 +391,7 @@ class PayUponInvoice {
 				}
 
 				$birth_date = filter_input( INPUT_POST, 'billing_birth_date', FILTER_SANITIZE_STRING );
-				if ( ( $birth_date && ! $this->pui_helper->validate_birth_date( $birth_date ) ) || $birth_date === '' ) {
+				if ( ( $birth_date && ! $this->checkout_helper->validate_birth_date( $birth_date ) ) || $birth_date === '' ) {
 					$errors->add( 'validation', __( 'Invalid birth date.', 'woocommerce-paypal-payments' ) );
 				}
 
@@ -497,7 +508,7 @@ class PayUponInvoice {
 				if ( $post_type === 'shop_order' ) {
 					$post_id = filter_input( INPUT_GET, 'post', FILTER_SANITIZE_STRING );
 					$order   = wc_get_order( $post_id );
-					if ( is_a( $order, WC_Order::class ) && $order->get_payment_method() === 'ppcp-pay-upon-invoice-gateway' ) {
+					if ( is_a( $order, WC_Order::class ) && $order->get_payment_method() === PayUponInvoiceGateway::ID ) {
 						$instructions = $order->get_meta( 'ppcp_ratepay_payment_instructions_payment_reference' );
 						if ( $instructions ) {
 							add_meta_box(

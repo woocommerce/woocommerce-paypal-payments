@@ -29,7 +29,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
-use WooCommerce\PayPalCommerce\WcGateway\Notice\DccWithoutPayPalAdminNotice;
+use WooCommerce\PayPalCommerce\WcGateway\Notice\GatewayWithoutPayPalAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
@@ -164,11 +164,15 @@ class WCGatewayModule implements ModuleInterface {
 					$notices[] = $connect_message;
 				}
 
-				$dcc_without_paypal_notice = $c->get( 'wcgateway.notice.dcc-without-paypal' );
-				assert( $dcc_without_paypal_notice instanceof DccWithoutPayPalAdminNotice );
-				$dcc_without_paypal_message = $dcc_without_paypal_notice->message();
-				if ( $dcc_without_paypal_message ) {
-					$notices[] = $dcc_without_paypal_message;
+				foreach ( array(
+					$c->get( 'wcgateway.notice.dcc-without-paypal' ),
+					$c->get( 'wcgateway.notice.card-button-without-paypal' ),
+				) as $gateway_without_paypal_notice ) {
+					assert( $gateway_without_paypal_notice instanceof GatewayWithoutPayPalAdminNotice );
+					$message = $gateway_without_paypal_notice->message();
+					if ( $message ) {
+						$notices[] = $message;
+					}
 				}
 
 				$authorize_order_action = $c->get( 'wcgateway.notice.authorize-order-action' );
@@ -231,6 +235,10 @@ class WCGatewayModule implements ModuleInterface {
 				if ( 'DE' === $c->get( 'api.shop.country' ) && 'EUR' === $c->get( 'api.shop.currency' ) ) {
 					( $c->get( 'wcgateway.pay-upon-invoice' ) )->init();
 				}
+
+				if ( defined( 'PPCP_FLAG_OXXO' ) && PPCP_FLAG_OXXO === true ) {
+					( $c->get( 'wcgateway.oxxo' ) )->init();
+				}
 			}
 		);
 
@@ -260,6 +268,18 @@ class WCGatewayModule implements ModuleInterface {
 			10,
 			2
 		);
+
+		add_action(
+			'wc_ajax_ppc-oxxo',
+			static function () use ( $c ) {
+				if ( defined( 'PPCP_FLAG_OXXO' ) && PPCP_FLAG_OXXO === false ) {
+					return;
+				}
+
+				$endpoint = $c->get( 'wcgateway.endpoint.oxxo' );
+				$endpoint->handle_request();
+			}
+		);
 	}
 
 	/**
@@ -284,8 +304,16 @@ class WCGatewayModule implements ModuleInterface {
 					$methods[] = $container->get( 'wcgateway.credit-card-gateway' );
 				}
 
+				if ( $container->get( 'wcgateway.settings.allow_card_button_gateway' ) ) {
+					$methods[] = $container->get( 'wcgateway.card-button-gateway' );
+				}
+
 				if ( 'DE' === $container->get( 'api.shop.country' ) && 'EUR' === $container->get( 'api.shop.currency' ) ) {
 					$methods[] = $container->get( 'wcgateway.pay-upon-invoice-gateway' );
+				}
+
+				if ( defined( 'PPCP_FLAG_OXXO' ) && PPCP_FLAG_OXXO === true ) {
+					$methods[] = $container->get( 'wcgateway.oxxo-gateway' );
 				}
 
 				return (array) $methods;

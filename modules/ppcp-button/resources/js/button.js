@@ -18,7 +18,9 @@ import {hide, setVisible} from "./modules/Helper/Hiding";
 import {isChangePaymentPage} from "./modules/Helper/Subscriptions";
 import FreeTrialHandler from "./modules/ActionHandler/FreeTrialHandler";
 
-const buttonsSpinner = new Spinner('.ppc-button-wrapper');
+// TODO: could be a good idea to have a separate spinner for each gateway,
+// but I think we care mainly about the script loading, so one spinner should be enough.
+const buttonsSpinner = new Spinner(document.querySelector('.ppc-button-wrapper'));
 const cardsSpinner = new Spinner('#ppcp-hosted-fields');
 
 const bootstrap = () => {
@@ -38,9 +40,36 @@ const bootstrap = () => {
             requiredFields.each((i, input) => {
                 jQuery(input).trigger('validate');
             });
-            if (jQuery('form.woocommerce-checkout .validate-required.woocommerce-invalid:visible').length) {
+            const invalidFields = Array.from(jQuery('form.woocommerce-checkout .validate-required.woocommerce-invalid:visible'));
+            if (invalidFields.length) {
+                const billingFieldsContainer = document.querySelector('.woocommerce-billing-fields');
+                const shippingFieldsContainer = document.querySelector('.woocommerce-shipping-fields');
+
+                const nameMessageMap = PayPalCommerceGateway.labels.error.required.elements;
+                const messages = invalidFields.map(el => {
+                    const name = el.querySelector('[name]')?.getAttribute('name');
+                    if (name && name in nameMessageMap) {
+                        return nameMessageMap[name];
+                    }
+                    let label = el.querySelector('label').textContent
+                        .replaceAll('*', '')
+                        .trim();
+                    if (billingFieldsContainer?.contains(el)) {
+                        label = PayPalCommerceGateway.labels.billing_field.replace('%s', label);
+                    }
+                    if (shippingFieldsContainer?.contains(el)) {
+                        label = PayPalCommerceGateway.labels.shipping_field.replace('%s', label);
+                    }
+                    return PayPalCommerceGateway.labels.error.required.field
+                        .replace('%s', `<strong>${label}</strong>`)
+                }).filter(s => s.length > 2);
+
                 errorHandler.clear();
-                errorHandler.message(PayPalCommerceGateway.labels.error.js_validation);
+                if (messages.length) {
+                    messages.forEach(s => errorHandler.message(s));
+                } else {
+                    errorHandler.message(PayPalCommerceGateway.labels.error.required.generic);
+                }
 
                 return actions.reject();
             }
@@ -138,6 +167,11 @@ document.addEventListener(
             return;
         }
 
+        const paypalButtonGatewayIds = [
+            PaymentMethods.PAYPAL,
+            ...Object.entries(PayPalCommerceGateway.separate_buttons).map(([k, data]) => data.id),
+        ]
+
         // Sometimes PayPal script takes long time to load,
         // so we additionally hide the standard order button here to avoid failed orders.
         // Normally it is hidden later after the script load.
@@ -153,12 +187,12 @@ document.addEventListener(
             }
 
             const currentPaymentMethod = getCurrentPaymentMethod();
-            const isPaypal = currentPaymentMethod === PaymentMethods.PAYPAL;
+            const isPaypalButton = paypalButtonGatewayIds.includes(currentPaymentMethod);
             const isCards = currentPaymentMethod === PaymentMethods.CARDS;
 
-            setVisible(ORDER_BUTTON_SELECTOR, !isPaypal && !isCards, true);
+            setVisible(ORDER_BUTTON_SELECTOR, !isPaypalButton && !isCards, true);
 
-            if (isPaypal) {
+            if (isPaypalButton) {
                 // stopped after the first rendering of the buttons, in onInit
                 buttonsSpinner.block();
             } else {

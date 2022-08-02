@@ -1,6 +1,8 @@
 export const PaymentMethods = {
     PAYPAL: 'ppcp-gateway',
     CARDS: 'ppcp-credit-card-gateway',
+    OXXO: 'ppcp-oxxo-gateway',
+    CARD_BUTTON: 'ppcp-card-button-gateway',
 };
 
 export const ORDER_BUTTON_SELECTOR = '#place_order';

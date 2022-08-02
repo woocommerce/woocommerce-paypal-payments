@@ -16,6 +16,7 @@ use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\OrderRepository;
 use WooCommerce\PayPalCommerce\Subscription\FreeTrialHandlerTrait;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
@@ -118,7 +119,7 @@ class PaymentTokenChecker {
 		if ( $tokens ) {
 			try {
 				if ( $this->is_free_trial_order( $wc_order ) ) {
-					if ( CreditCardGateway::ID === $wc_order->get_payment_method()
+					if ( in_array( $wc_order->get_payment_method(), array( CreditCardGateway::ID, CardButtonGateway::ID ), true )
 						|| ( PayPalGateway::ID === $wc_order->get_payment_method() && 'card' === $wc_order->get_meta( PayPalGateway::ORDER_PAYMENT_SOURCE_META_KEY ) )
 					) {
 						$order = $this->order_repository->for_wc_order( $wc_order );
