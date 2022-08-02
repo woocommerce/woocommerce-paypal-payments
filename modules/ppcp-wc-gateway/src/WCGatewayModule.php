@@ -232,6 +232,10 @@ class WCGatewayModule implements ModuleInterface {
 		add_action(
 			'init',
 			function () use ( $c ) {
+				if ( defined( 'PPCP_FLAG_OXXO' ) && PPCP_FLAG_OXXO === false ) {
+					return;
+				}
+
 				if ( 'DE' === $c->get( 'api.shop.country' ) && 'EUR' === $c->get( 'api.shop.currency' ) ) {
 					( $c->get( 'wcgateway.pay-upon-invoice' ) )->init();
 				}
@@ -270,6 +274,10 @@ class WCGatewayModule implements ModuleInterface {
 		add_action(
 			'wc_ajax_ppc-oxxo',
 			static function () use ( $c ) {
+				if ( defined( 'PPCP_FLAG_OXXO' ) && PPCP_FLAG_OXXO === false ) {
+					return;
+				}
+
 				$endpoint = $c->get( 'wcgateway.endpoint.oxxo' );
 				$endpoint->handle_request();
 			}
@@ -306,7 +314,9 @@ class WCGatewayModule implements ModuleInterface {
 					$methods[] = $container->get( 'wcgateway.pay-upon-invoice-gateway' );
 				}
 
-				$methods[] = $container->get( 'wcgateway.oxxo-gateway' );
+				if ( defined( 'PPCP_FLAG_OXXO' ) && PPCP_FLAG_OXXO === true ) {
+					$methods[] = $container->get( 'wcgateway.oxxo-gateway' );
+				}
 
 				return (array) $methods;
 			}
