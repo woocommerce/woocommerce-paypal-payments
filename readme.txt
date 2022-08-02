@@ -84,7 +84,6 @@ Follow the steps below to connect the plugin to your PayPal account:
 = 1.9.2 =
 * Fix - Do not allow birth date older than 100 years for PUI. #743
 * Fix - Store the customer id for vaulted payment method in usermeta to not lose vaulted methods after the invoice prefix change. #698
-* Fix - Do not allow birth date older than 100 years for PUI. #743
 * Fix - Capture Virtual-Only Orders setting did not auto-capture subscription renewal payments. #626
 * Fix - Voiding authorization at PayPal did not update the status/order notes. #712
 * Fix - PayPal scripts were loading on pages without smart buttons or Pay Later messaging. #750
