@@ -3,14 +3,13 @@
 = 1.9.2 - TBD =
 * Fix - Do not allow birth date older than 100 years for PUI. #743
 * Fix - Store the customer id for vaulted payment method in usermeta to not lose vaulted methods after the invoice prefix change. #698
-* Fix - Do not allow birth date older than 100 years for PUI. #743
 * Fix - Capture Virtual-Only Orders setting did not auto-capture subscription renewal payments. #626
 * Fix - Voiding authorization at PayPal did not update the status/order notes. #712
 * Fix - PayPal scripts were loading on pages without smart buttons or Pay Later messaging. #750
 * Fix - Do not show links for unavailable gateways settings pages. #753
 * Fix - The smart buttons were not loaded on single product page if a subscription product exists in the cart. #703
 * Fix - DCC was causing other gateways to disappear after checkout validation error #757
-* Enhancement - Improve Checkout Field Validation Message. #739
+* Enhancement - Improve Checkout field validation message. #739
 * Enhancement - Handle PAYER_ACTION_REQUIRED error. #759
 
 = 1.9.1 - 2022-07-25 =
