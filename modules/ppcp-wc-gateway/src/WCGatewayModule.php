@@ -232,15 +232,13 @@ class WCGatewayModule implements ModuleInterface {
 		add_action(
 			'init',
 			function () use ( $c ) {
-				if ( defined( 'PPCP_FLAG_OXXO' ) && PPCP_FLAG_OXXO === false ) {
-					return;
-				}
-
 				if ( 'DE' === $c->get( 'api.shop.country' ) && 'EUR' === $c->get( 'api.shop.currency' ) ) {
 					( $c->get( 'wcgateway.pay-upon-invoice' ) )->init();
 				}
 
-				( $c->get( 'wcgateway.oxxo' ) )->init();
+				if ( defined( 'PPCP_FLAG_OXXO' ) && PPCP_FLAG_OXXO === true ) {
+					( $c->get( 'wcgateway.oxxo' ) )->init();
+				}
 			}
 		);
 
