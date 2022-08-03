@@ -338,12 +338,8 @@ class PayUponInvoice {
 						woocommerce_form_field(
 							'billing_phone',
 							array(
-								/**
-								 * Use translation from WooCommerce here.
-								 * phpcs:disable WordPress.WP.I18n.TextDomainMismatch
-								 */
+								// phpcs:ignore WordPress.WP.I18n.TextDomainMismatch
 								'label'        => __( 'Phone', 'woocommerce' ),
-								// phpcs:enable WordPress.WP.I18n.TextDomainMismatch
 								'type'         => 'tel',
 								'class'        => array( 'form-row-wide' ),
 								'validate'     => array( 'phone' ),
