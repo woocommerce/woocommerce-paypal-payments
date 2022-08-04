@@ -107,7 +107,7 @@ class DisableGateways {
 	 */
 	private function needs_to_disable_gateways(): bool {
 		$wc_ajax = filter_input( INPUT_GET, 'wc-ajax', FILTER_SANITIZE_STRING ) ?? '';
-		if ( $wc_ajax === 'update_order_review' ) {
+		if ( $wc_ajax === 'update_order_review' && $this->session_handler->funding_source() !== 'paypal' ) {
 			return false;
 		}
 
