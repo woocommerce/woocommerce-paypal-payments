@@ -106,11 +106,6 @@ class DisableGateways {
 	 * @return bool
 	 */
 	private function needs_to_disable_gateways(): bool {
-		$wc_ajax = filter_input( INPUT_GET, 'wc-ajax', FILTER_SANITIZE_STRING ) ?? '';
-		if ( $wc_ajax === 'update_order_review' ) {
-			return false;
-		}
-
 		$order = $this->session_handler->order();
 		if ( ! $order ) {
 			return false;
