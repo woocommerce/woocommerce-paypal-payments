@@ -333,8 +333,9 @@ class PayUponInvoice {
 						)
 					);
 
-					$checkout_fields = WC()->checkout()->get_checkout_fields();
-					if ( ! array_key_exists( 'billing_phone', $checkout_fields['billing'] ) ) {
+					$checkout_fields         = WC()->checkout()->get_checkout_fields();
+					$checkout_phone_required = $checkout_fields['billing']['billing_phone']['required'];
+					if ( ! array_key_exists( 'billing_phone', $checkout_fields['billing'] ) || $checkout_phone_required === false ) {
 						woocommerce_form_field(
 							'billing_phone',
 							array(
@@ -392,6 +393,9 @@ class PayUponInvoice {
 				}
 
 				$national_number = filter_input( INPUT_POST, 'billing_phone', FILTER_SANITIZE_STRING );
+				if ( ! $national_number ) {
+					$errors->add( 'validation', __( 'Phone field cannot be empty.', 'woocommerce-paypal-payments' ) );
+				}
 				if ( $national_number ) {
 					$numeric_phone_number = preg_replace( '/[^0-9]/', '', $national_number );
 					if ( $numeric_phone_number && ! preg_match( '/^[0-9]{1,14}?$/', $numeric_phone_number ) ) {
