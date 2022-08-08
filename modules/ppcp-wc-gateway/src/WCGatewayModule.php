@@ -66,12 +66,10 @@ class WCGatewayModule implements ModuleInterface {
 			'woocommerce_sections_checkout',
 			function() use ( $c ) {
 				$section_renderer = $c->get( 'wcgateway.settings.sections-renderer' );
-				/**
-				 * The Section Renderer.
-				 *
-				 * @var SectionsRenderer $section_renderer
-				 */
-				$section_renderer->render();
+				assert( $section_renderer instanceof SectionsRenderer );
+
+				// phpcs:ignore WordPress.Security.EscapeOutput
+				echo $section_renderer->render();
 			}
 		);
 
