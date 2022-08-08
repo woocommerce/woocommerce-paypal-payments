@@ -22,7 +22,8 @@ class Renderer {
             this.renderButtons(
                 settings.button.wrapper,
                 settings.button.style,
-                contextConfig
+                contextConfig,
+                hasEnabledSeparateGateways
             );
         } else {
             // render each button separately
@@ -38,6 +39,7 @@ class Renderer {
                     settings.button.wrapper,
                     style,
                     contextConfig,
+                    hasEnabledSeparateGateways,
                     fundingSource
                 );
             }
@@ -50,13 +52,14 @@ class Renderer {
                 data.wrapper,
                 data.style,
                 contextConfig,
+                hasEnabledSeparateGateways,
                 fundingSource
             );
         }
     }
 
-    renderButtons(wrapper, style, contextConfig, fundingSource = null) {
-        if (! document.querySelector(wrapper) || this.isAlreadyRendered(wrapper, fundingSource) || 'undefined' === typeof paypal.Buttons ) {
+    renderButtons(wrapper, style, contextConfig, hasEnabledSeparateGateways, fundingSource = null) {
+        if (! document.querySelector(wrapper) || this.isAlreadyRendered(wrapper, fundingSource, hasEnabledSeparateGateways) || 'undefined' === typeof paypal.Buttons ) {
             return;
         }
 
@@ -79,7 +82,14 @@ class Renderer {
         this.renderedSources.add(wrapper + fundingSource ?? '');
     }
 
-    isAlreadyRendered(wrapper, fundingSource) {
+    isAlreadyRendered(wrapper, fundingSource, hasEnabledSeparateGateways) {
+        // Simply check that has child nodes when we do not need to render buttons separately,
+        // this will reduce the risk of breaking with different themes/plugins
+        // and on the cart page (where we also do not need to render separately), which may fully reload this part of the page.
+        // Ideally we should also find a way to detect such full reloads and remove the corresponding keys from the set.
+        if (!hasEnabledSeparateGateways) {
+            return document.querySelector(wrapper).hasChildNodes();
+        }
         return this.renderedSources.has(wrapper + fundingSource ?? '');
     }
 
