@@ -559,6 +559,12 @@ class SmartButton implements SmartButtonInterface {
 			return;
 		}
 
+		$available_gateways = WC()->payment_gateways->get_available_payment_gateways();
+
+		if ( ! isset( $available_gateways[ $gateway_id ] ) ) {
+			return;
+		}
+
 		// The wrapper is needed for the loading spinner,
 		// otherwise jQuery block() prevents buttons rendering.
 		echo '<div class="ppc-button-wrapper"><div id="ppc-button-' . esc_attr( $gateway_id ) . '"></div></div>';
