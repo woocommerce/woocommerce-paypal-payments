@@ -90,8 +90,6 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Fix - Do not show links for unavailable gateways settings pages. #753
 * Fix - The smart buttons were not loaded on single product page if a subscription product exists in the cart. #703
 * Fix - DCC was causing other gateways to disappear after checkout validation error #757
-* Fix - Fallback to child nodes check in isAlreadyRendered when possible #768
-* Fix - Revert removal of gateway status check #770
 * Enhancement - Improve Checkout Field Validation Message. #739
 * Enhancement - Handle PAYER_ACTION_REQUIRED error. #759
 
