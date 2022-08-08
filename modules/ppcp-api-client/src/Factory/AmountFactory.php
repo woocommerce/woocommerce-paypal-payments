@@ -18,6 +18,7 @@ use WooCommerce\PayPalCommerce\Subscription\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
 
 /**
  * Class AmountFactory
@@ -146,10 +147,18 @@ class AmountFactory {
 			(float) $order->get_subtotal() + (float) $order->get_total_fees(),
 			$currency
 		);
+
 		$shipping   = new Money(
 			(float) $order->get_shipping_total(),
 			$currency
 		);
+		if($order->get_payment_method() === PayUponInvoiceGateway::ID) {
+			$shipping = new Money(
+				(float) bcdiv((string)$shipping->value(), '1', 2),
+				$currency
+			);
+		}
+
 		$taxes      = new Money(
 			(float) $order->get_total_tax(),
 			$currency
