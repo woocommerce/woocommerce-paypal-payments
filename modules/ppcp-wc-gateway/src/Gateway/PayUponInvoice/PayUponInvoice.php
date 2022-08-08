@@ -334,7 +334,7 @@ class PayUponInvoice {
 					);
 
 					$checkout_fields         = WC()->checkout()->get_checkout_fields();
-					$checkout_phone_required = $checkout_fields['billing']['billing_phone']['required'];
+					$checkout_phone_required = $checkout_fields['billing']['billing_phone']['required'] ?? false;
 					if ( ! array_key_exists( 'billing_phone', $checkout_fields['billing'] ) || $checkout_phone_required === false ) {
 						woocommerce_form_field(
 							'billing_phone',
