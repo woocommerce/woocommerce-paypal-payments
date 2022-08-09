@@ -912,10 +912,10 @@ class SmartButton implements SmartButtonInterface {
 		);
 
 		if ( $this->style_for_context( 'layout', 'mini-cart' ) !== 'horizontal' ) {
-			unset( $localize['button']['mini_cart_style']['tagline'] );
+			$localize['button']['mini_cart_style']['tagline'] = false;
 		}
 		if ( $this->style_for_context( 'layout', $this->context() ) !== 'horizontal' ) {
-			unset( $localize['button']['style']['tagline'] );
+			$localize['button']['style']['tagline'] = false;
 		}
 
 		$this->request_data->dequeue_nonce_fix();
