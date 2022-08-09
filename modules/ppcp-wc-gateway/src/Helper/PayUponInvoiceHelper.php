@@ -9,6 +9,8 @@ declare( strict_types=1 );
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Helper;
 
+use WC_Order;
+
 /**
  * Class PayUponInvoiceHelper
  */
