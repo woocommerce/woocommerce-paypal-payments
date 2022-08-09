@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, e-commerce, store, sales, sell, 
 Requires at least: 5.3
 Tested up to: 6.0
 Requires PHP: 7.1
-Stable tag: 1.9.1
+Stable tag: 1.9.2
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -80,6 +80,19 @@ Follow the steps below to connect the plugin to your PayPal account:
 6. Main settings screen.
 
 == Changelog ==
+
+= 1.9.2 =
+* Fix - Do not allow birth date older than 100 years for PUI. #743
+* Fix - Store the customer id for vaulted payment method in usermeta to not lose vaulted methods after the invoice prefix change. #698
+* Fix - Capture Virtual-Only Orders setting did not auto-capture subscription renewal payments. #626
+* Fix - Voiding authorization at PayPal did not update the status/order notes. #712
+* Fix - PayPal scripts were loading on pages without smart buttons or Pay Later messaging. #750
+* Fix - Do not show links for unavailable gateways settings pages. #753
+* Fix - The smart buttons were not loaded on single product page if a subscription product exists in the cart. #703
+* Fix - DCC was causing other gateways to disappear after checkout validation error. #757
+* Fix - Buttons not loading on single product page with default settings when product is in cart. #777
+* Enhancement - Improve Checkout Field Validation Message. #739
+* Enhancement - Handle PAYER_ACTION_REQUIRED error. #759
 
 = 1.9.1 =
 * Fix - ITEM_TOTAL_MISMATCH error when checking out with multiple products #721

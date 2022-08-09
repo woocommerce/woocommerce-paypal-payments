@@ -57,6 +57,6 @@ class CustomerRepository {
 			return $guest_customer_id;
 		}
 
-		return $this->prefix . (string) $user_id;
+		return get_user_meta( $user_id, 'ppcp_customer_id', true ) ?: $this->prefix . (string) $user_id;
 	}
 }

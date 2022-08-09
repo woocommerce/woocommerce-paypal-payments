@@ -113,11 +113,16 @@ class PaymentCaptureReversed implements RequestHandler {
 		}
 
 		/**
+		 * Allows adding an update status note.
+		 */
+		$note = apply_filters( 'ppcp_payment_capture_reversed_webhook_update_status_note', '', $wc_order, $request['event_type'] );
+
+		/**
 		 * The WooCommerce order.
 		 *
 		 * @var \WC_Order $wc_order
 		 */
-		$response['success'] = (bool) $wc_order->update_status( 'cancelled' );
+		$response['success'] = (bool) $wc_order->update_status( 'cancelled', $note );
 
 		$message = $response['success'] ? sprintf(
 			// translators: %1$s is the order id.

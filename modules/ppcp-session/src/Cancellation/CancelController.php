@@ -70,6 +70,10 @@ class CancelController {
 			return; // Ignore for DCC.
 		}
 
+		if ( 'card' === $this->session_handler->funding_source() ) {
+			return; // Ignore for card buttons.
+		}
+
 		$url = add_query_arg( array( $param_name => wp_create_nonce( $nonce ) ), wc_get_checkout_url() );
 		add_action(
 			'woocommerce_review_order_after_submit',

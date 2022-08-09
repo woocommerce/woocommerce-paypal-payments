@@ -4,7 +4,7 @@ declare(strict_types=1);
 class WC_Payment_Gateway
 {
 
-    protected function get_option(string $key) : string {
+    public function get_option(string $key, $empty_value = null) {
         return $key;
     }
 
