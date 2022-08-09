@@ -77,7 +77,7 @@ trait ProcessPaymentTrait {
 		if ( $wc_order ) {
 			$wc_order->update_status(
 				'failed',
-				$this->format_exception( $error )
+				$error->getMessage()
 			);
 		}
 
