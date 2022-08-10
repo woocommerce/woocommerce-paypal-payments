@@ -9,6 +9,8 @@ declare( strict_types=1 );
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Helper;
 
+use WC_Order;
+
 /**
  * Class PayUponInvoiceHelper
  */
@@ -46,7 +48,7 @@ class PayUponInvoiceHelper {
 			return false;
 		}
 
-		if ( 'EUR' !== get_woocommerce_currency() ) {
+		if ( ! $this->is_valid_currency() ) {
 			return false;
 		}
 
@@ -55,5 +57,25 @@ class PayUponInvoiceHelper {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Checks if currency is allowed for PUI.
+	 *
+	 * @return bool
+	 */
+	private function is_valid_currency(): bool {
+		global $wp;
+		$order_id = isset( $wp->query_vars['order-pay'] ) ? (int) $wp->query_vars['order-pay'] : 0;
+		if ( 0 === $order_id ) {
+			return 'EUR' === get_woocommerce_currency();
+		}
+
+		$order = wc_get_order( $order_id );
+		if ( is_a( $order, WC_Order::class ) ) {
+			return 'EUR' === $order->get_currency();
+		}
+
+		return false;
 	}
 }
