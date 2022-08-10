@@ -118,7 +118,7 @@ trait ProcessPaymentTrait {
 	 * @return string
 	 */
 	protected function format_exception( Throwable $exception ): string {
-		$output = $exception->getMessage() . ' ' . $exception->getFile() . ':' . $exception->getLine();
+		$output = $exception->getMessage() . ' ' . basename( $exception->getFile() ) . ':' . $exception->getLine();
 		$prev   = $exception->getPrevious();
 		if ( ! $prev ) {
 			return $output;
