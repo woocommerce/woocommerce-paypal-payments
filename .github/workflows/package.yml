@@ -4,13 +4,21 @@ on:
   workflow_dispatch:
     inputs:
       packageVersion:
-        description: 'Package Version'
+        description: 'Package version'
+        required: false
+        type: string
+      filePrefix:
+        description: 'File prefix'
         required: false
         type: string
 
 jobs:
   package:
     runs-on: ubuntu-latest
+
+    env:
+      PACKAGE_VERSION: ${{ github.event.inputs.packageVersion }}
+      FILENAME: woocommerce-paypal-payments
 
     name: Build package
     steps:
@@ -22,11 +30,13 @@ jobs:
         php-version: 7.1
         tools: composer:v1
 
+    - name: Fix plugin version input # Add the version number if only suffix entered
+      run: echo "PACKAGE_VERSION=$(sed -nE '/Version:/s/.* ([0-9.]+).*/\1/p' woocommerce-paypal-payments.php)-$PACKAGE_VERSION" >> $GITHUB_ENV
+      if: env.PACKAGE_VERSION && !contains(env.PACKAGE_VERSION, '.')
+
     - name: Set plugin version header
-      env:
-        PACKAGE_VERSION: ${{ github.event.inputs.packageVersion }}
       run: 'sed -Ei "s/Version: .*/Version:     ${PACKAGE_VERSION}/g" woocommerce-paypal-payments.php'
-      if: github.event.inputs.packageVersion
+      if: env.PACKAGE_VERSION
 
     - name: Build
       run: yarn build
@@ -34,8 +44,14 @@ jobs:
     - name: Unzip # GH currently always zips, so if we upload a zip we get a zip inside a zip
       run: unzip woocommerce-paypal-payments.zip -d dist
 
+    - name: Set file name
+      env:
+        FILE_PREFIX: ${{ github.event.inputs.filePrefix }}
+      run: echo "FILENAME=$FILE_PREFIX-$FILENAME" >> $GITHUB_ENV
+      if: github.event.inputs.filePrefix
+
     - name: Upload
       uses: actions/upload-artifact@v3
       with:
-        name: woocommerce-paypal-payments
+        name: ${{ env.FILENAME }}
         path: dist/
