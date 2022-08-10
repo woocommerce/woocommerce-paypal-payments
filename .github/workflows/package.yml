@@ -4,13 +4,20 @@ on:
   workflow_dispatch:
     inputs:
       packageVersion:
-        description: 'Package Version'
+        description: 'Package version'
+        required: false
+        type: string
+      filePrefix:
+        description: 'File prefix'
         required: false
         type: string
 
 jobs:
   package:
     runs-on: ubuntu-latest
+
+    env:
+      FILENAME: woocommerce-paypal-payments
 
     name: Build package
     steps:
@@ -33,6 +40,12 @@ jobs:
 
     - name: Unzip # GH currently always zips, so if we upload a zip we get a zip inside a zip
       run: unzip woocommerce-paypal-payments.zip -d dist
+
+    - name: Set file name
+      env:
+        FILE_PREFIX: ${{ github.event.inputs.filePrefix }}
+      run: echo "FILENAME=$FILE_PREFIX-$FILENAME" >> $GITHUB_ENV
+      if: github.event.inputs.filePrefix
 
     - name: Upload
       uses: actions/upload-artifact@v3
