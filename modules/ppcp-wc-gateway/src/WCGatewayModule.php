@@ -70,7 +70,7 @@ class WCGatewayModule implements ModuleInterface {
 
 				// phpcs:ignore WordPress.Security.EscapeOutput
 				echo $section_renderer->render();
-			}
+			}, 20
 		);
 
 		add_action(
