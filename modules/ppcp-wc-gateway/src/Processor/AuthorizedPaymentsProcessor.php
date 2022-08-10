@@ -31,7 +31,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
  */
 class AuthorizedPaymentsProcessor {
 
-	use PaymentsStatusHandlingTrait;
+	use PaymentsStatusHandlingTrait, TransactionIdHandlingTrait;
 
 	const SUCCESSFUL        = 'SUCCESSFUL';
 	const ALREADY_CAPTURED  = 'ALREADY_CAPTURED';
@@ -199,6 +199,9 @@ class AuthorizedPaymentsProcessor {
 		$capture = end( $captures );
 
 		$this->handle_capture_status( $capture, $wc_order );
+
+		$transaction_id = $capture->id();
+		$this->update_transaction_id( $transaction_id, $wc_order );
 
 		if ( self::SUCCESSFUL === $result_status ) {
 			if ( $capture->status()->is( CaptureStatus::COMPLETED ) ) {
