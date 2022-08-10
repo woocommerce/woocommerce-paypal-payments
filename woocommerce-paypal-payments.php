@@ -122,10 +122,26 @@ define( 'PPCP_FLAG_SEPARATE_APM_BUTTONS', apply_filters( 'woocommerce_paypal_pay
 		}
 	);
 
-	// Add "Settings" link to Plugins screen.
+	// Add "Settings", "Docs", "Support" links to Plugins screen.
 	add_filter(
 		'plugin_action_links_' . plugin_basename( __FILE__ ),
 		function( $links ) {
+			$links = array_merge(
+				array(
+					sprintf(
+						'<a href="%1$s">%2$s</a>',
+						'https://woocommerce.com/document/woocommerce-paypal-payments/',
+						__( 'Docs', 'woocommerce-paypal-payments' )
+					),
+					sprintf(
+						'<a href="%1$s">%2$s</a>',
+						'https://woocommerce.com/my-account/create-a-ticket/',
+						__( 'Support', 'woocommerce-paypal-payments' )
+					),
+				),
+				$links
+			);
+
 			if ( ! is_woocommerce_activated() ) {
 				return $links;
 			}
