@@ -66,13 +66,12 @@ class WCGatewayModule implements ModuleInterface {
 			'woocommerce_sections_checkout',
 			function() use ( $c ) {
 				$section_renderer = $c->get( 'wcgateway.settings.sections-renderer' );
-				/**
-				 * The Section Renderer.
-				 *
-				 * @var SectionsRenderer $section_renderer
-				 */
-				$section_renderer->render();
-			}
+				assert( $section_renderer instanceof SectionsRenderer );
+
+				// phpcs:ignore WordPress.Security.EscapeOutput
+				echo $section_renderer->render();
+			},
+			20
 		);
 
 		add_action(
@@ -292,7 +291,12 @@ class WCGatewayModule implements ModuleInterface {
 		add_filter(
 			'woocommerce_payment_gateways',
 			static function ( $methods ) use ( $container ): array {
-				$methods[]   = $container->get( 'wcgateway.paypal-gateway' );
+				$paypal_gateway = $container->get( 'wcgateway.paypal-gateway' );
+				assert( $paypal_gateway instanceof \WC_Payment_Gateway );
+
+				$paypal_gateway_enabled = wc_string_to_bool( $paypal_gateway->get_option( 'enabled' ) );
+
+				$methods[]   = $paypal_gateway;
 				$dcc_applies = $container->get( 'api.helpers.dccapplies' );
 
 				/**
@@ -304,7 +308,7 @@ class WCGatewayModule implements ModuleInterface {
 					$methods[] = $container->get( 'wcgateway.credit-card-gateway' );
 				}
 
-				if ( $container->get( 'wcgateway.settings.allow_card_button_gateway' ) ) {
+				if ( $paypal_gateway_enabled && $container->get( 'wcgateway.settings.allow_card_button_gateway' ) ) {
 					$methods[] = $container->get( 'wcgateway.card-button-gateway' );
 				}
 

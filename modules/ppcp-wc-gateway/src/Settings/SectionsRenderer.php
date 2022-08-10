@@ -56,14 +56,12 @@ class SectionsRenderer {
 	/**
 	 * Renders the Sections tab.
 	 */
-	public function render(): void {
+	public function render(): string {
 		if ( ! $this->should_render() ) {
-			return;
+			return '';
 		}
 
-		echo '<ul class="subsubsub">';
-
-		$array_keys = array_keys( $this->sections );
+		$html = '<nav class="nav-tab-wrapper woo-nav-tab-wrapper">';
 
 		foreach ( $this->sections as $id => $label ) {
 			$url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=' . $id );
@@ -73,9 +71,11 @@ class SectionsRenderer {
 				// Other gateways render fields differently, and their pages are not expected to work when gateway is not available.
 				$url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&' . self::KEY . '=' . $id );
 			}
-			echo '<li><a href="' . esc_url( $url ) . '" class="' . ( $this->page_id === $id ? 'current' : '' ) . '">' . esc_html( $label ) . '</a> ' . ( end( $array_keys ) === $id ? '' : '|' ) . ' </li>';
+			$html .= '<a href="' . esc_url( $url ) . '" class="nav-tab ' . ( $this->page_id === $id ? 'nav-tab-active' : '' ) . '">' . esc_html( $label ) . '</a> ';
 		}
 
-		echo '</ul><br class="clear" />';
+		$html .= '</nav>';
+
+		return $html;
 	}
 }

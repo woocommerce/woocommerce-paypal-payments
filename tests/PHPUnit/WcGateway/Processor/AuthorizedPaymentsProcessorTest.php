@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Processor;
 
 
+use Mockery\MockInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
 use WC_Order;
@@ -26,7 +27,11 @@ use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 
 class AuthorizedPaymentsProcessorTest extends TestCase
 {
+	/**
+	 * @var WC_Order&MockInterface
+	 */
 	private $wcOrder;
+
 	private $paypalOrderId = 'abc';
 	private $authorizationId = 'qwe';
 	private $amount = 42.0;
@@ -37,7 +42,7 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 	private $paymentsEndpoint;
 	private $notice;
 	private $config;
-	private $subscription_helperauthorization;
+	private $captureId = '123qwe';
 	private $testee;
 
 	public function setUp(): void {
@@ -79,7 +84,7 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 		$this->paymentsEndpoint
 			->expects('capture')
 			->with($this->authorizationId, equalTo(new Money($this->amount, $this->currency)))
-			->andReturn($this->createCapture(CaptureStatus::COMPLETED));
+			->andReturn($this->createCapture($this->captureId, CaptureStatus::COMPLETED));
 
         $this->assertEquals(AuthorizedPaymentsProcessor::SUCCESSFUL, $this->testee->process($this->wcOrder));
     }
@@ -99,7 +104,7 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 		$this->paymentsEndpoint
 			->expects('capture')
 			->with($authorizations[2]->id(), equalTo(new Money($this->amount, $this->currency)))
-			->andReturn($this->createCapture(CaptureStatus::COMPLETED));
+			->andReturn($this->createCapture($this->captureId, CaptureStatus::COMPLETED));
 
 		$this->assertEquals(AuthorizedPaymentsProcessor::SUCCESSFUL, $this->testee->process($this->wcOrder));
     }
@@ -150,12 +155,13 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 		$this->paymentsEndpoint
 			->expects('capture')
 			->with($this->authorizationId, equalTo(new Money($this->amount, $this->currency)))
-			->andReturn($this->createCapture(CaptureStatus::COMPLETED));
+			->andReturn($this->createCapture($this->captureId, CaptureStatus::COMPLETED));
 
 		$this->wcOrder->shouldReceive('payment_complete')->andReturn(true);
-		$this->wcOrder->expects('add_order_note');
+		$this->wcOrder->expects('add_order_note')->twice();
 		$this->wcOrder->expects('update_meta_data');
-		$this->wcOrder->expects('save');
+		$this->wcOrder->expects('set_transaction_id')->with($this->captureId);
+		$this->wcOrder->shouldReceive('save')->atLeast()->times(1);
 
 		$this->assertTrue(
 			$this->testee->capture_authorized_payment($this->wcOrder)
@@ -248,8 +254,11 @@ class AuthorizedPaymentsProcessorTest extends TestCase
 		return new Authorization($id, new AuthorizationStatus($status));
 	}
 
-	private function createCapture(string $status): Capture {
+	private function createCapture(string $id, string $status): Capture {
 		$capture = Mockery::mock(Capture::class);
+		$capture
+			->shouldReceive('id')
+			->andReturn($id);
 		$capture
 			->shouldReceive('status')
 			->andReturn(new CaptureStatus($status));

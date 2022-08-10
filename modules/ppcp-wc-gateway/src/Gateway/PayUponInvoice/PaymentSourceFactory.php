@@ -24,8 +24,8 @@ class PaymentSourceFactory {
 	 * @return PaymentSource
 	 */
 	public function from_wc_order( WC_Order $order, string $birth_date ) {
-		$address = $order->get_address();
-
+		$address            = $order->get_address();
+		$phone              = filter_input( INPUT_POST, 'billing_phone', FILTER_SANITIZE_STRING ) ?? $address['phone'] ?: '';
 		$phone_country_code = WC()->countries->get_country_calling_code( $address['country'] );
 		$phone_country_code = is_array( $phone_country_code ) && ! empty( $phone_country_code ) ? $phone_country_code[0] : $phone_country_code;
 		if ( is_string( $phone_country_code ) && '' !== $phone_country_code ) {
@@ -44,7 +44,7 @@ class PaymentSourceFactory {
 			$address['last_name'] ?? '',
 			$address['email'] ?? '',
 			$birth_date,
-			preg_replace( '/[^0-9]/', '', $address['phone'] ) ?? '',
+			preg_replace( '/[^0-9]/', '', $phone ) ?? '',
 			$phone_country_code,
 			$address['address_1'] ?? '',
 			$address['city'] ?? '',

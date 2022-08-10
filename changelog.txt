@@ -1,6 +1,6 @@
 *** Changelog ***
 
-= 1.9.2 - TBD =
+= 1.9.2 - 2022-08-09 =
 * Fix - Do not allow birth date older than 100 years for PUI. #743
 * Fix - Store the customer id for vaulted payment method in usermeta to not lose vaulted methods after the invoice prefix change. #698
 * Fix - Capture Virtual-Only Orders setting did not auto-capture subscription renewal payments. #626
