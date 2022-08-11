@@ -32,7 +32,10 @@ class OrderTrackingEndpoint {
 	use RequestTrait, TransactionIdHandlingTrait;
 
 	const ENDPOINT = 'ppc-tracking-info';
+
 	/**
+	 * The RequestData.
+	 *
 	 * @var RequestData
 	 */
 	protected $request_data;
@@ -85,7 +88,7 @@ class OrderTrackingEndpoint {
 	 * @param string          $host The host.
 	 * @param Bearer          $bearer The bearer.
 	 * @param LoggerInterface $logger The logger.
-	 * @param RequestData     $request_data
+	 * @param RequestData     $request_data The Request data.
 	 */
 	public function __construct(
 		string $host,
@@ -189,11 +192,15 @@ class OrderTrackingEndpoint {
 	 * Gets the tracking information of a given order.
 	 *
 	 * @param int $wc_order_id The order ID.
-	 * @return array The tracking information.
-	 * @psalm-return TrackingInfo
+	 * @return array|null The tracking information.
+	 * @psalm-return TrackingInfo|null
 	 */
-	public function get_tracking_information( int $wc_order_id ) : array {
-		$wc_order        = wc_get_order( $wc_order_id );
+	public function get_tracking_information( int $wc_order_id ) : ?array {
+		$wc_order = wc_get_order( $wc_order_id );
+		if ( ! is_a( $wc_order, WC_Order::class ) ) {
+			throw new RuntimeException( 'wrong order ID' );
+		}
+
 		$transaction_id  = $wc_order->get_transaction_id();
 		$tracking_number = get_post_meta( $wc_order_id, '_ppcp_paypal_tracking_number', true );
 		$url             = trailingslashit( $this->host ) . 'v1/shipping/trackers/' . $this->find_tracker_id( $transaction_id, $tracking_number );
@@ -224,7 +231,7 @@ class OrderTrackingEndpoint {
 		$status_code = (int) wp_remote_retrieve_response_code( $response );
 
 		if ( 200 !== $status_code ) {
-			return array();
+			return null;
 		}
 
 		return array(

@@ -112,7 +112,7 @@ class OrderTrackingModule implements ModuleInterface {
 			static function( int $order_id ) use ( $endpoint, $logger ) {
 				$tracking_information = $endpoint->get_tracking_information( $order_id );
 
-				if ( ! empty( $tracking_information ) ) {
+				if ( $tracking_information ) {
 					return;
 				}
 
