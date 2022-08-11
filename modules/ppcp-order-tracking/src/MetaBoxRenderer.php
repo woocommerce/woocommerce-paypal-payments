@@ -10,90 +10,114 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\OrderTracking;
 
 use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
+use WP_Post;
 
 /**
  * Class MetaBoxRenderer
+ *
+ * @psalm-type CarrierType = string
+ * @psalm-type CarrierItemCode = string
+ * @psalm-type CarrierItemName = string
+ * @psalm-type Carrier = array{name: string, items: array<CarrierItemCode, CarrierItemName>}
+ * @psalm-type Carriers = array<CarrierType, Carrier>
  */
 class MetaBoxRenderer {
 
-    public const NAME_PREFIX = 'ppcp-tracking';
+	public const NAME_PREFIX = 'ppcp-tracking';
 
-    /**
-     * @var OrderTrackingEndpoint
-     */
-    protected $orderTrackingEndpoint;
+	/**
+	 * The OrderTrackingEndpoint.
+	 *
+	 * @var OrderTrackingEndpoint
+	 */
+	protected $order_tracking_endpoint;
 
-    /**
-     * @var string[]
-     */
-    protected $allowedStatuses;
+	/**
+	 * Allowed shipping statuses.
+	 *
+	 * @var string[]
+	 */
+	protected $allowed_statuses;
 
-    /**
-     * @var array
-     */
-    protected $carriers;
+	/**
+	 * Available shipping carriers.
+	 *
+	 * @var array
+	 * @psalm-var Carriers
+	 */
+	protected $carriers;
 
-    public function __construct(
-        OrderTrackingEndpoint $orderTrackingEndpoint,
-        array $allowedStatuses,
-        array $carriers
-    ) {
+	/**
+	 * MetaBoxRenderer constructor.
+	 *
+	 * @param OrderTrackingEndpoint $order_tracking_endpoint The OrderTrackingEndpoint.
+	 * @param string[]              $allowed_statuses Allowed shipping statuses.
+	 * @param array                 $carriers Available shipping carriers.
+	 * @psalm-param Carriers        $carriers
+	 */
+	public function __construct(
+		OrderTrackingEndpoint $order_tracking_endpoint,
+		array $allowed_statuses,
+		array $carriers
+	) {
 
-        $this->orderTrackingEndpoint = $orderTrackingEndpoint;
-        $this->allowedStatuses = $allowedStatuses;
-        $this->carriers = $carriers;
-    }
+		$this->order_tracking_endpoint = $order_tracking_endpoint;
+		$this->allowed_statuses        = $allowed_statuses;
+		$this->carriers                = $carriers;
+	}
 
-    /**
-     * Renders the order tracking MetaBox.
-     *
-     */
-    public function render( \WP_Post $post) {
-        $wc_order = wc_get_order( $post->ID );
-        $tracking_info = $this->orderTrackingEndpoint->get_tracking_information($post->ID);
+	/**
+	 * Renders the order tracking MetaBox.
+	 *
+	 * @param WP_Post $post The post object.
+	 */
+	public function render( WP_Post $post ) {
+		$wc_order      = wc_get_order( $post->ID );
+		$tracking_info = $this->order_tracking_endpoint->get_tracking_information( $post->ID );
 
-        $tracking_is_not_added = empty($tracking_info);
+		$tracking_is_not_added = empty( $tracking_info );
 
-        $transaction_id = $tracking_info['transaction_id'] ?? $wc_order->get_transaction_id() ?? '';
-        $tracking_number = $tracking_info['tracking_number'] ?? '';
-        $statusValue = $tracking_info['status'] ?? 'SHIPPED';
-        $carrierValue = $tracking_info['carrier'] ?? '';
+		$transaction_id  = $tracking_info['transaction_id'] ?? $wc_order->get_transaction_id() ?? '';
+		$tracking_number = $tracking_info['tracking_number'] ?? '';
+		$status_value    = $tracking_info['status'] ?? 'SHIPPED';
+		$carrier_value   = $tracking_info['carrier'] ?? '';
 
-        $action = $tracking_is_not_added ? 'create' : 'update';
-        ?>
-        <p>
-            <label for="<?= esc_attr(self::NAME_PREFIX);?>-transaction_id"><?= __('Transaction ID','woocommerce-paypal-payments');?></label>
-            <input type="text" disabled class="<?= esc_attr(self::NAME_PREFIX);?>-transaction_id" id="<?= esc_attr(self::NAME_PREFIX);?>-transaction_id" name="<?= esc_attr(self::NAME_PREFIX);?>[transaction_id]" value="<?= esc_html($transaction_id);?>"/></p>
-        <p>
-            <label for="<?= esc_attr(self::NAME_PREFIX);?>-tracking_number"><?= __('Tracking Number','woocommerce-paypal-payments');?></label>
-            <input type="text" class="<?= esc_attr(self::NAME_PREFIX);?>-tracking_number" id="<?= esc_attr(self::NAME_PREFIX);?>-tracking_number" name="<?= esc_attr(self::NAME_PREFIX);?>[tracking_number]" value="<?= esc_html($tracking_number);?>"/></p>
-        <p>
-            <label for="<?= esc_attr(self::NAME_PREFIX);?>-status"><?= __('Status','woocommerce-paypal-payments');?></label>
-            <select class="<?= esc_attr(self::NAME_PREFIX);?>-status" id="<?= esc_attr(self::NAME_PREFIX);?>-status" name="<?= esc_attr(self::NAME_PREFIX);?>[status]">
-                <?php foreach($this->allowedStatuses as $status):?>
-                    <option value="<?= esc_attr($status);?>" <?php selected( $statusValue, $status ); ?>><?= esc_html($status);?></option>
-                <?php endforeach;?>
-            </select>
-        </p>
-        <p>
-            <label for="ppcp-tracking-carrier"><?= __('Carrier','woocommerce-paypal-payments');?></label>
-            <select class="ppcp-tracking-carrier" id="ppcp-tracking-carrier" name="ppcp-tracking[carrier]">
-                <?php foreach($this->carriers as $carrier):
-                    $country = $carrier['name'] ?? '';
-                    $carriers = $carrier['items'] ?? '';
-                    ?>
-                    <option value=""><?= __('Select Carrier','woocommerce-paypal-payments');?></option>
-                    <optgroup label="<?= esc_attr($country);?>">
-                        <?php foreach($carriers as $carrier_code => $carrier_name):?>
-                            <option value="<?= esc_attr($carrier_code);?>" <?php selected( $carrierValue, $carrier_code ); ?>><?= esc_html($carrier_name);?></option>
-                        <?php endforeach;?>
-                    </optgroup>
-                <?php endforeach;?>
-            </select>
-        </p>
-        <input type="hidden" class="ppcp-order_id" name="<?= esc_attr(self::NAME_PREFIX);?>[order_id]" value="<?= esc_html($post->ID);?>"/>
-        <p>
-            <button type="button" class="button submit_tracking_info" data-action="<?= esc_attr($action);?>"><?= esc_html(ucfirst($action));?></button></p>
-        <?php
-    }
+		$action = $tracking_is_not_added ? 'create' : 'update';
+		?>
+		<p>
+			<label for="<?php echo esc_attr( self::NAME_PREFIX ); ?>-transaction_id"><?php echo esc_html__( 'Transaction ID', 'woocommerce-paypal-payments' ); ?></label>
+			<input type="text" disabled class="<?php echo esc_attr( self::NAME_PREFIX ); ?>-transaction_id" id="<?php echo esc_attr( self::NAME_PREFIX ); ?>-transaction_id" name="<?php echo esc_attr( self::NAME_PREFIX ); ?>[transaction_id]" value="<?php echo esc_html( $transaction_id ); ?>"/></p>
+		<p>
+			<label for="<?php echo esc_attr( self::NAME_PREFIX ); ?>-tracking_number"><?php echo esc_html__( 'Tracking Number', 'woocommerce-paypal-payments' ); ?></label>
+			<input type="text" class="<?php echo esc_attr( self::NAME_PREFIX ); ?>-tracking_number" id="<?php echo esc_attr( self::NAME_PREFIX ); ?>-tracking_number" name="<?php echo esc_attr( self::NAME_PREFIX ); ?>[tracking_number]" value="<?php echo esc_html( $tracking_number ); ?>"/></p>
+		<p>
+			<label for="<?php echo esc_attr( self::NAME_PREFIX ); ?>-status"><?php echo esc_html__( 'Status', 'woocommerce-paypal-payments' ); ?></label>
+			<select class="<?php echo esc_attr( self::NAME_PREFIX ); ?>-status" id="<?php echo esc_attr( self::NAME_PREFIX ); ?>-status" name="<?php echo esc_attr( self::NAME_PREFIX ); ?>[status]">
+				<?php foreach ( $this->allowed_statuses as $status ) : ?>
+					<option value="<?php echo esc_attr( $status ); ?>" <?php selected( $status_value, $status ); ?>><?php echo esc_html( $status ); ?></option>
+				<?php endforeach; ?>
+			</select>
+		</p>
+		<p>
+			<label for="ppcp-tracking-carrier"><?php echo esc_html__( 'Carrier', 'woocommerce-paypal-payments' ); ?></label>
+			<select class="ppcp-tracking-carrier" id="ppcp-tracking-carrier" name="ppcp-tracking[carrier]">
+				<?php
+				foreach ( $this->carriers as $carrier ) :
+					$country  = $carrier['name'] ?? '';
+					$carriers = $carrier['items'] ?? '';
+					?>
+					<option value=""><?php echo esc_html__( 'Select Carrier', 'woocommerce-paypal-payments' ); ?></option>
+					<optgroup label="<?php echo esc_attr( $country ); ?>">
+						<?php foreach ( $carriers as $carrier_code => $carrier_name ) : ?>
+							<option value="<?php echo esc_attr( $carrier_code ); ?>" <?php selected( $carrier_value, $carrier_code ); ?>><?php echo esc_html( $carrier_name ); ?></option>
+						<?php endforeach; ?>
+					</optgroup>
+				<?php endforeach; ?>
+			</select>
+		</p>
+		<input type="hidden" class="ppcp-order_id" name="<?php echo esc_attr( self::NAME_PREFIX ); ?>[order_id]" value="<?php echo esc_html( $post->ID ); ?>"/>
+		<p>
+			<button type="button" class="button submit_tracking_info" data-action="<?php echo esc_attr( $action ); ?>"><?php echo esc_html( ucfirst( $action ) ); ?></button></p>
+		<?php
+	}
 }
