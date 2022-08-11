@@ -31,13 +31,13 @@ class OrderTrackingEndpoint {
 
 	use RequestTrait, TransactionIdHandlingTrait;
 
-    const ENDPOINT = 'ppc-tracking-info';
-    /**
-     * @var RequestData
-     */
-    protected $request_data;
+	const ENDPOINT = 'ppc-tracking-info';
+	/**
+	 * @var RequestData
+	 */
+	protected $request_data;
 
-    /**
+	/**
 	 * The Host URL.
 	 *
 	 * @var string
@@ -79,266 +79,269 @@ class OrderTrackingEndpoint {
 	 */
 	private $merchant_id;
 
-    /**
-     * PartnersEndpoint constructor.
-     *
-     * @param string $host The host.
-     * @param Bearer $bearer The bearer.
-     * @param LoggerInterface $logger The logger.
-     * @param RequestData $request_data
-     */
+	/**
+	 * PartnersEndpoint constructor.
+	 *
+	 * @param string          $host The host.
+	 * @param Bearer          $bearer The bearer.
+	 * @param LoggerInterface $logger The logger.
+	 * @param RequestData     $request_data
+	 */
 	public function __construct(
 		string $host,
 		Bearer $bearer,
 		LoggerInterface $logger,
-        RequestData $request_data
+		RequestData $request_data
 	) {
-		$this->host                  = $host;
-		$this->bearer                = $bearer;
-		$this->logger                = $logger;
-        $this->request_data = $request_data;
-    }
+		$this->host         = $host;
+		$this->bearer       = $bearer;
+		$this->logger       = $logger;
+		$this->request_data = $request_data;
+	}
 
-    /**
-     * Handles the request.
-     */
-    public function handle_request() {
-        try {
-            $data = $this->request_data->read_request( $this->nonce() );
-            $action = $data['action'];
-            $request_body = $this->extract_tracking_information($data);
-            $order_id = (int)$data['order_id'];
-            $action === 'create' ? $this->add_tracking_information($request_body, $order_id) : $this->update_tracking_information($data, $order_id);
+	/**
+	 * Handles the request.
+	 */
+	public function handle_request() {
+		try {
+			$data         = $this->request_data->read_request( $this->nonce() );
+			$action       = $data['action'];
+			$request_body = $this->extract_tracking_information( $data );
+			$order_id     = (int) $data['order_id'];
+			$action === 'create' ? $this->add_tracking_information( $request_body, $order_id ) : $this->update_tracking_information( $data, $order_id );
 
-            $action_message = $action === 'create' ? 'created' : 'updated';
-            $message = __("successfully {$action_message}",'woocommerce-paypal-payments');
-            wp_send_json_success(array('message' => $message));
-            return true;
-        } catch ( Exception $error ) {
-            wp_send_json_error( $error->getMessage(), 500 );
-            return false;
-        }
-    }
+			$action_message = $action === 'create' ? 'created' : 'updated';
+			$message        = sprintf(
+			// translators: %1$s is the action message (created or updated).
+				_x( 'successfully %1$s', 'tracking inof success message', 'woocommerce-paypal-payments' ),
+				esc_html( $action_message )
+			);
 
-    /**
-     * Creates the tracking information of a given order with the given data.
-     *
-     * @param array $data The tracking information to add.
-     * @psalm-param TrackingInfo $data
-     * @param int $order_id The order ID.
-     * @throws RuntimeException If problem creating.
-     */
-	public function add_tracking_information(array $data, int $order_id) : void {
-		$url      = trailingslashit( $this->host ) . 'v1/shipping/trackers-batch';
+			wp_send_json_success( array( 'message' => $message ) );
+		} catch ( Exception $error ) {
+			wp_send_json_error( $error->getMessage(), 500 );
+		}
+	}
 
-        $body   = array(
-            'trackers' => array($data)
-        );
+	/**
+	 * Creates the tracking information of a given order with the given data.
+	 *
+	 * @param array $data The tracking information to add.
+	 * @psalm-param TrackingInfo $data
+	 * @param int   $order_id The order ID.
+	 * @throws RuntimeException If problem creating.
+	 */
+	public function add_tracking_information( array $data, int $order_id ) : void {
+		$url = trailingslashit( $this->host ) . 'v1/shipping/trackers-batch';
 
-		$args     = array(
+		$body = array(
+			'trackers' => array( $data ),
+		);
+
+		$args = array(
 			'method'  => 'POST',
 			'headers' => $this->request_headers(),
-            'body'    => wp_json_encode( $body ),
+			'body'    => wp_json_encode( $body ),
 		);
 
 		$response = $this->request( $url, $args );
 
-        if ( is_wp_error( $response ) ) {
-            $error = new RuntimeException(
-                'Could not create order tracking information.'
-            );
-            $this->logger->log(
-                'warning',
-                $error->getMessage(),
-                array(
-                    'args'     => $args,
-                    'response' => $response,
-                )
-            );
-            throw $error;
-        }
+		if ( is_wp_error( $response ) ) {
+			$error = new RuntimeException(
+				'Could not create order tracking information.'
+			);
+			$this->logger->log(
+				'warning',
+				$error->getMessage(),
+				array(
+					'args'     => $args,
+					'response' => $response,
+				)
+			);
+			throw $error;
+		}
 
-        $json        = json_decode( $response['body'] );
-        $status_code = (int) wp_remote_retrieve_response_code( $response );
-        if ( 200 !== $status_code ) {
-            $error = new PayPalApiException(
-                $json,
-                $status_code
-            );
-            $this->logger->log(
-                'warning',
-                sprintf(
-                    'Failed to create order tracking information. PayPal API response: %1$s',
-                    $error->getMessage()
-                ),
-                array(
-                    'args'     => $args,
-                    'response' => $response,
-                )
-            );
-            throw $error;
-        }
+		$json        = json_decode( $response['body'] );
+		$status_code = (int) wp_remote_retrieve_response_code( $response );
+		if ( 200 !== $status_code ) {
+			$error = new PayPalApiException(
+				$json,
+				$status_code
+			);
+			$this->logger->log(
+				'warning',
+				sprintf(
+					'Failed to create order tracking information. PayPal API response: %1$s',
+					$error->getMessage()
+				),
+				array(
+					'args'     => $args,
+					'response' => $response,
+				)
+			);
+			throw $error;
+		}
 
-        update_post_meta($order_id, '_ppcp_paypal_tracking_number', $data['tracking_number']);
+		update_post_meta( $order_id, '_ppcp_paypal_tracking_number', $data['tracking_number'] );
 	}
 
-    /**
-     * Gets the tracking information of a given order.
-     *
-     * @param int $wc_order_id The order ID.
-     * @return array The tracking information.
-     * @psalm-return TrackingInfo
-     */
-    public function get_tracking_information(int $wc_order_id) : array {
-        $wc_order = wc_get_order( $wc_order_id );
-        $transaction_id = $wc_order->get_transaction_id();
-        $tracking_number = get_post_meta($wc_order_id, '_ppcp_paypal_tracking_number', true);
-        $url      = trailingslashit( $this->host ) . 'v1/shipping/trackers/'. $this->find_tracker_id($transaction_id, $tracking_number);
+	/**
+	 * Gets the tracking information of a given order.
+	 *
+	 * @param int $wc_order_id The order ID.
+	 * @return array The tracking information.
+	 * @psalm-return TrackingInfo
+	 */
+	public function get_tracking_information( int $wc_order_id ) : array {
+		$wc_order        = wc_get_order( $wc_order_id );
+		$transaction_id  = $wc_order->get_transaction_id();
+		$tracking_number = get_post_meta( $wc_order_id, '_ppcp_paypal_tracking_number', true );
+		$url             = trailingslashit( $this->host ) . 'v1/shipping/trackers/' . $this->find_tracker_id( $transaction_id, $tracking_number );
 
-        $args     = array(
-            'method'  => 'GET',
-            'headers' => $this->request_headers(),
-        );
+		$args = array(
+			'method'  => 'GET',
+			'headers' => $this->request_headers(),
+		);
 
-        $response = $this->request( $url, $args );
+		$response = $this->request( $url, $args );
 
-        if ( is_wp_error( $response ) ) {
-            $error = new RuntimeException(
-                'Could not fetch the tracking information.'
-            );
-            $this->logger->log(
-                'warning',
-                $error->getMessage(),
-                array(
-                    'args'     => $args,
-                    'response' => $response,
-                )
-            );
-            throw $error;
-        }
+		if ( is_wp_error( $response ) ) {
+			$error = new RuntimeException(
+				'Could not fetch the tracking information.'
+			);
+			$this->logger->log(
+				'warning',
+				$error->getMessage(),
+				array(
+					'args'     => $args,
+					'response' => $response,
+				)
+			);
+			throw $error;
+		}
 
-        $data        = json_decode( $response['body'] );
-        $status_code = (int) wp_remote_retrieve_response_code( $response );
+		$data        = json_decode( $response['body'] );
+		$status_code = (int) wp_remote_retrieve_response_code( $response );
 
-        if ( 200 !== $status_code ) {
-            return [];
-        }
+		if ( 200 !== $status_code ) {
+			return array();
+		}
 
-        return array(
-            'transaction_id' => $data->transaction_id ??  '',
-            'status' => $data->status ?? '',
-            'tracking_number' => $data->tracking_number ?? '',
-            'carrier' => $data->carrier ?? '',
-        );
-    }
+		return array(
+			'transaction_id'  => $data->transaction_id ?? '',
+			'status'          => $data->status ?? '',
+			'tracking_number' => $data->tracking_number ?? '',
+			'carrier'         => $data->carrier ?? '',
+		);
+	}
 
-    /**
-     * Updates the tracking information of a given order with the given data.
-     *
-     * @param array $data The tracking information to update.
-     * @psalm-param TrackingInfo $data
-     * @param int $order_id The order ID.
-     * @throws RuntimeException If problem updating.
-     */
-    public function update_tracking_information(array $data, int $order_id) : void {
-        $tracking_info = $this->get_tracking_information($order_id);
-        $transaction_id = $tracking_info['transaction_id'] ?? '';
-        $tracking_number = $tracking_info['tracking_number'] ?? '';
-        $url      = trailingslashit( $this->host ) . 'v1/shipping/trackers/'. $this->find_tracker_id($transaction_id, $tracking_number);
+	/**
+	 * Updates the tracking information of a given order with the given data.
+	 *
+	 * @param array $data The tracking information to update.
+	 * @psalm-param TrackingInfo $data
+	 * @param int   $order_id The order ID.
+	 * @throws RuntimeException If problem updating.
+	 */
+	public function update_tracking_information( array $data, int $order_id ) : void {
+		$tracking_info   = $this->get_tracking_information( $order_id );
+		$transaction_id  = $tracking_info['transaction_id'] ?? '';
+		$tracking_number = $tracking_info['tracking_number'] ?? '';
+		$url             = trailingslashit( $this->host ) . 'v1/shipping/trackers/' . $this->find_tracker_id( $transaction_id, $tracking_number );
 
-        $args     = array(
-            'method'  => 'PUT',
-            'headers' => $this->request_headers(),
-            'body'    => wp_json_encode( $data ),
-        );
+		$args = array(
+			'method'  => 'PUT',
+			'headers' => $this->request_headers(),
+			'body'    => wp_json_encode( $data ),
+		);
 
-        $response = $this->request( $url, $args );
+		$response = $this->request( $url, $args );
 
-        if ( is_wp_error( $response ) ) {
-            $error = new RuntimeException(
-                'Could not update order tracking information.'
-            );
-            $this->logger->log(
-                'warning',
-                $error->getMessage(),
-                array(
-                    'args'     => $args,
-                    'response' => $response,
-                )
-            );
-            throw $error;
-        }
+		if ( is_wp_error( $response ) ) {
+			$error = new RuntimeException(
+				'Could not update order tracking information.'
+			);
+			$this->logger->log(
+				'warning',
+				$error->getMessage(),
+				array(
+					'args'     => $args,
+					'response' => $response,
+				)
+			);
+			throw $error;
+		}
 
-        $json        = json_decode( $response['body'] );
-        $status_code = (int) wp_remote_retrieve_response_code( $response );
-        if ( 204 !== $status_code ) {
-            $error = new PayPalApiException(
-                $json,
-                $status_code
-            );
-            $this->logger->log(
-                'warning',
-                sprintf(
-                    'Failed to update the order tracking information. PayPal API response: %1$s',
-                    $error->getMessage()
-                ),
-                array(
-                    'args'     => $args,
-                    'response' => $response,
-                )
-            );
-            throw $error;
-        }
+		$json        = json_decode( $response['body'] );
+		$status_code = (int) wp_remote_retrieve_response_code( $response );
+		if ( 204 !== $status_code ) {
+			$error = new PayPalApiException(
+				$json,
+				$status_code
+			);
+			$this->logger->log(
+				'warning',
+				sprintf(
+					'Failed to update the order tracking information. PayPal API response: %1$s',
+					$error->getMessage()
+				),
+				array(
+					'args'     => $args,
+					'response' => $response,
+				)
+			);
+			throw $error;
+		}
 
-        update_post_meta($order_id, '_ppcp_paypal_tracking_number', $data['tracking_number']);
-    }
+		update_post_meta( $order_id, '_ppcp_paypal_tracking_number', $data['tracking_number'] );
+	}
 
-    /**
-     * The nonce.
-     *
-     * @return string
-     */
-    public static function nonce(): string {
-        return self::ENDPOINT;
-    }
+	/**
+	 * The nonce.
+	 *
+	 * @return string
+	 */
+	public static function nonce(): string {
+		return self::ENDPOINT;
+	}
 
-    /**
-     * Extracts the needed tracking information from given request data.
-     *
-     * @param array $data The request data map.
-     * @psalm-param RequestValues $data
-     * @return array A map of tracking information keys to values.
-     * @psalm-return TrackingInfo
-     */
-    protected function extract_tracking_information(array $data): array {
-        return array(
-            'transaction_id'              => $data['transaction_id'] ?? '',
-            'tracking_number'      => $data['tracking_number'] ?? '',
-            'status' => $data['status'] ?? '',
-            'carrier' => $data['carrier'] ?? '',
-        );
-    }
+	/**
+	 * Extracts the needed tracking information from given request data.
+	 *
+	 * @param array $data The request data map.
+	 * @psalm-param RequestValues $data
+	 * @return array A map of tracking information keys to values.
+	 * @psalm-return TrackingInfo
+	 */
+	protected function extract_tracking_information( array $data ): array {
+		return array(
+			'transaction_id'  => $data['transaction_id'] ?? '',
+			'tracking_number' => $data['tracking_number'] ?? '',
+			'status'          => $data['status'] ?? '',
+			'carrier'         => $data['carrier'] ?? '',
+		);
+	}
 
-    /**
-     * Creates the request headers.
-     *
-     * @return array The request headers.
-     */
-    protected function request_headers(): array {
-        return array(
-            'Authorization' => 'Bearer ' . $this->bearer->bearer()->token(),
-            'Content-Type'  => 'application/json',
-        );
-    }
+	/**
+	 * Creates the request headers.
+	 *
+	 * @return array The request headers.
+	 */
+	protected function request_headers(): array {
+		return array(
+			'Authorization' => 'Bearer ' . $this->bearer->bearer()->token(),
+			'Content-Type'  => 'application/json',
+		);
+	}
 
-    /**
-     * Finds the tracker ID from given transaction ID and tracking number.
-     *
-     * @param string $transaction_id The transaction ID.
-     * @param string $tracking_number The tracking number.
-     * @return string The tracker ID.
-     */
-    protected function find_tracker_id(string $transaction_id, string $tracking_number): string {
-        return !empty($tracking_number) ? "{$transaction_id}-{$tracking_number}" : "{$transaction_id}-NOTRACKER";
-    }
+	/**
+	 * Finds the tracker ID from given transaction ID and tracking number.
+	 *
+	 * @param string $transaction_id The transaction ID.
+	 * @param string $tracking_number The tracking number.
+	 * @return string The tracker ID.
+	 */
+	protected function find_tracker_id( string $transaction_id, string $tracking_number ): string {
+		return ! empty( $tracking_number ) ? "{$transaction_id}-{$tracking_number}" : "{$transaction_id}-NOTRACKER";
+	}
 }
