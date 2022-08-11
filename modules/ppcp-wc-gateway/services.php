@@ -861,6 +861,19 @@ return array(
 				'requirements'      => array(),
 				'gateway'           => 'paypal',
 			),
+            'tracking_enabled'                      => array(
+                'title'        => __( 'Tracking', 'woocommerce-paypal-payments' ),
+                'type'         => 'checkbox',
+                'desc_tip'     => true,
+                'label'        => __( 'Enable tracking', 'woocommerce-paypal-payments' ),
+                'description'  => __( 'Enable tracking', 'woocommerce-paypal-payments' ),
+                'default'      => false,
+                'screens'      => array(
+                    State::STATE_ONBOARDED,
+                ),
+                'requirements' => array(),
+                'gateway'      => array( 'paypal' ),
+            ),
 
 			// General button styles.
 			'button_style_heading'               => array(
