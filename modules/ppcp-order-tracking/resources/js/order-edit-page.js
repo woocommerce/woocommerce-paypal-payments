@@ -25,7 +25,6 @@ document.addEventListener(
                     action: jQuery('.submit_tracking_info').data('action'),
                 })
             }).then(function (res) {
-                console.log(res);
                 return res.json();
             }).then(function (data) {
                 if (!data.success) {
