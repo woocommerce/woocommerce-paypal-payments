@@ -22,6 +22,32 @@ use WC_Product_Variation;
 class PayUponInvoiceHelper {
 
 	/**
+	 * The selected shop country.
+	 *
+	 * @var string
+	 */
+	protected $shop_country;
+
+	/**
+	 * The PUI seller product status.
+	 *
+	 * @var PayUponInvoiceProductStatus
+	 */
+	protected $pui_product_status;
+
+	/**
+	 * PayUponInvoiceHelper constructor.
+	 *
+	 * @param string                      $shop_country The selected shop country.
+	 * @param PayUponInvoiceProductStatus $pui_product_status The PUI seller product status.
+	 */
+	public function __construct( string $shop_country, PayUponInvoiceProductStatus $pui_product_status ) {
+
+		$this->shop_country       = $shop_country;
+		$this->pui_product_status = $pui_product_status;
+	}
+
+	/**
 	 * Ensures date is valid and at least 18 years back.
 	 *
 	 * @param string $date The date.
@@ -136,5 +162,18 @@ class PayUponInvoiceHelper {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Checks whether PUI is ready in admin screen.
+	 *
+	 * @return bool
+	 */
+	public function is_pui_ready_in_admin(): bool {
+		if ( $this->pui_product_status->pui_is_active() && $this->shop_country === 'DE' ) {
+			return true;
+		}
+
+		return false;
 	}
 }
