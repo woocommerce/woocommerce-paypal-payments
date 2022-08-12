@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
 use Exception;
 use Psr\Log\LoggerInterface;
+use WC_Customer;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
@@ -360,9 +361,12 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		$saved_credit_card = filter_input( INPUT_POST, 'saved_credit_card', FILTER_SANITIZE_STRING );
 		if($saved_credit_card) {
 			try {
+				$customer = new WC_Customer( $wc_order->get_customer_id() );
+
 				$wc_order = $this->vaulted_credit_card_handler->handle_payment(
 					$saved_credit_card,
-					$wc_order
+					$wc_order,
+					$customer
 				);
 
 				return $this->handle_payment_success( $wc_order );
