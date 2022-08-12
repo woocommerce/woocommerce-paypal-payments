@@ -104,7 +104,7 @@ return array(
 		$subscription_helper = $container->get( 'subscription.helper' );
 		$payments_endpoint = $container->get( 'api.endpoint.payments' );
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
-		$vaulted_credit_card_handler = $container->get('vaulting.credit-card-handler');
+		$vaulted_credit_card_handler = $container->get( 'vaulting.credit-card-handler' );
 		return new CreditCardGateway(
 			$settings_renderer,
 			$order_processor,

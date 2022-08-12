@@ -26,8 +26,11 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\PaymentsStatusHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 
-class VaultedCreditCardHandler
-{
+/**
+ * Class VaultedCreditCardHandler
+ */
+class VaultedCreditCardHandler {
+
 	use OrderMetaTrait, TransactionIdHandlingTrait, PaymentsStatusHandlingTrait, FreeTrialHandlerTrait;
 
 	/**
@@ -93,6 +96,19 @@ class VaultedCreditCardHandler
 	 */
 	protected $config;
 
+	/**
+	 * VaultedCreditCardHandler constructor
+	 *
+	 * @param SubscriptionHelper          $subscription_helper The subscription helper.
+	 * @param PaymentTokenRepository      $payment_token_repository The payment token repository.
+	 * @param PurchaseUnitFactory         $purchase_unit_factory The purchase unit factory.
+	 * @param PayerFactory                $payer_factory The payer factory.
+	 * @param ShippingPreferenceFactory   $shipping_preference_factory The shipping_preference factory.
+	 * @param OrderEndpoint               $order_endpoint The order endpoint.
+	 * @param Environment                 $environment The environment.
+	 * @param AuthorizedPaymentsProcessor $authorized_payments_processor The processor for authorized payments.
+	 * @param ContainerInterface          $config The settings.
+	 */
 	public function __construct(
 		SubscriptionHelper $subscription_helper,
 		PaymentTokenRepository $payment_token_repository,
@@ -103,26 +119,33 @@ class VaultedCreditCardHandler
 		Environment $environment,
 		AuthorizedPaymentsProcessor $authorized_payments_processor,
 		ContainerInterface $config
-	)
-	{
-		$this->subscription_helper = $subscription_helper;
-		$this->payment_token_repository = $payment_token_repository;
-		$this->purchase_unit_factory = $purchase_unit_factory;
-		$this->payer_factory = $payer_factory;
-		$this->shipping_preference_factory = $shipping_preference_factory;
-		$this->order_endpoint = $order_endpoint;
-		$this->environment = $environment;
+	) {
+		$this->subscription_helper           = $subscription_helper;
+		$this->payment_token_repository      = $payment_token_repository;
+		$this->purchase_unit_factory         = $purchase_unit_factory;
+		$this->payer_factory                 = $payer_factory;
+		$this->shipping_preference_factory   = $shipping_preference_factory;
+		$this->order_endpoint                = $order_endpoint;
+		$this->environment                   = $environment;
 		$this->authorized_payments_processor = $authorized_payments_processor;
-		$this->config = $config;
+		$this->config                        = $config;
 	}
 
+	/**
+	 * Handles the saved credit card payment.
+	 *
+	 * @param string   $saved_credit_card The saved credit card.
+	 * @param WC_Order $wc_order The WC order.
+	 * @return WC_Order
+	 * @throws RuntimeException When something went wrong with the payment process.
+	 */
 	public function handle_payment(
 		string $saved_credit_card,
 		WC_Order $wc_order
 	): WC_Order {
 
-		$change_payment    = filter_input( INPUT_POST, 'woocommerce_change_payment', FILTER_SANITIZE_STRING );
-		if($change_payment) {
+		$change_payment = filter_input( INPUT_POST, 'woocommerce_change_payment', FILTER_SANITIZE_STRING );
+		if ( $change_payment ) {
 			if ( $this->subscription_helper->has_subscription( $wc_order->get_id() ) && $this->subscription_helper->is_subscription_change_payment() ) {
 				if ( $saved_credit_card ) {
 					update_post_meta( $wc_order->get_id(), 'payment_token_id', $saved_credit_card );
@@ -132,7 +155,7 @@ class VaultedCreditCardHandler
 			}
 		}
 
-		$tokens   = $this->payment_token_repository->all_for_user_id( $wc_order->get_customer_id() );
+		$tokens         = $this->payment_token_repository->all_for_user_id( $wc_order->get_customer_id() );
 		$selected_token = null;
 		foreach ( $tokens as $token ) {
 			if ( $token->id() === $saved_credit_card ) {
@@ -141,11 +164,11 @@ class VaultedCreditCardHandler
 			}
 		}
 		if ( ! $selected_token ) {
-			throw new RuntimeException('Saved card token not found.');
+			throw new RuntimeException( 'Saved card token not found.' );
 		}
 
-		$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
-		$payer         = $this->payer_factory->from_wc_order( $wc_order);
+		$purchase_unit       = $this->purchase_unit_factory->from_wc_order( $wc_order );
+		$payer               = $this->payer_factory->from_wc_order( $wc_order );
 		$shipping_preference = $this->shipping_preference_factory->from_state(
 			$purchase_unit,
 			''
@@ -162,7 +185,7 @@ class VaultedCreditCardHandler
 			$this->add_paypal_meta( $wc_order, $order, $this->environment );
 
 			if ( ! $order->status()->is( OrderStatus::COMPLETED ) ) {
-				throw new RuntimeException("Unexpected status for order {$order->id()} using a saved card: {$order->status()->name()}.");
+				throw new RuntimeException( "Unexpected status for order {$order->id()} using a saved card: {$order->status()->name()}." );
 			}
 
 			if ( ! in_array(
@@ -170,7 +193,7 @@ class VaultedCreditCardHandler
 				array( 'CAPTURE', 'AUTHORIZE' ),
 				true
 			) ) {
-				throw new RuntimeException("Could neither capture nor authorize order {$order->id()} using a saved card. Status: {$order->status()->name()}. Intent: {$order->intent()}.");
+				throw new RuntimeException( "Could neither capture nor authorize order {$order->id()} using a saved card. Status: {$order->status()->name()}. Intent: {$order->intent()}." );
 			}
 
 			if ( $order->intent() === 'AUTHORIZE' ) {
@@ -194,7 +217,7 @@ class VaultedCreditCardHandler
 
 			return $wc_order;
 		} catch ( RuntimeException $error ) {
-			throw new RuntimeException($error->getMessage());
+			throw new RuntimeException( $error->getMessage() );
 		}
 	}
 }

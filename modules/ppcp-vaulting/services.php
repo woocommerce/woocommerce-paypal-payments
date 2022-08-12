@@ -57,10 +57,10 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'vaulting.credit-card-handler' => function(ContainerInterface $container): VaultedCreditCardHandler {
+	'vaulting.credit-card-handler'        => function( ContainerInterface $container ): VaultedCreditCardHandler {
 		return new VaultedCreditCardHandler(
-			$container->get('subscription.helper'),
-			$container->get('vaulting.repository.payment-token'),
+			$container->get( 'subscription.helper' ),
+			$container->get( 'vaulting.repository.payment-token' ),
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'api.factory.payer' ),
 			$container->get( 'api.factory.shipping-preference' ),

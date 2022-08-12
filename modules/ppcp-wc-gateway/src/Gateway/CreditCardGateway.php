@@ -58,6 +58,8 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	protected $config;
 
 	/**
+	 * The vaulted credit card handler.
+	 *
 	 * @var VaultedCreditCardHandler
 	 */
 	protected $vaulted_credit_card_handler;
@@ -128,17 +130,17 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	/**
 	 * CreditCardGateway constructor.
 	 *
-	 * @param SettingsRenderer            $settings_renderer The Settings Renderer.
-	 * @param OrderProcessor              $order_processor The Order processor.
-	 * @param ContainerInterface          $config The settings.
-	 * @param string                      $module_url The URL to the module.
-	 * @param SessionHandler              $session_handler The Session Handler.
-	 * @param RefundProcessor             $refund_processor The refund processor.
-	 * @param State                       $state The state.
-	 * @param TransactionUrlProvider      $transaction_url_provider Service able to provide view transaction url base.
-	 * @param SubscriptionHelper          $subscription_helper The subscription helper.
-	 * @param LoggerInterface             $logger The logger.
-	 * @param PaymentsEndpoint            $payments_endpoint The payments endpoint.
+	 * @param SettingsRenderer         $settings_renderer The Settings Renderer.
+	 * @param OrderProcessor           $order_processor The Order processor.
+	 * @param ContainerInterface       $config The settings.
+	 * @param string                   $module_url The URL to the module.
+	 * @param SessionHandler           $session_handler The Session Handler.
+	 * @param RefundProcessor          $refund_processor The refund processor.
+	 * @param State                    $state The state.
+	 * @param TransactionUrlProvider   $transaction_url_provider Service able to provide view transaction url base.
+	 * @param SubscriptionHelper       $subscription_helper The subscription helper.
+	 * @param LoggerInterface          $logger The logger.
+	 * @param PaymentsEndpoint         $payments_endpoint The payments endpoint.
 	 * @param VaultedCreditCardHandler $vaulted_credit_card_handler The vaulted credit card handler.
 	 */
 	public function __construct(
@@ -155,18 +157,18 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		PaymentsEndpoint $payments_endpoint,
 		VaultedCreditCardHandler $vaulted_credit_card_handler
 	) {
-		$this->id                            = self::ID;
-		$this->settings_renderer             = $settings_renderer;
-		$this->order_processor               = $order_processor;
-		$this->config                        = $config;
-		$this->module_url                    = $module_url;
-		$this->session_handler               = $session_handler;
-		$this->refund_processor              = $refund_processor;
-		$this->state                         = $state;
-		$this->transaction_url_provider      = $transaction_url_provider;
-		$this->subscription_helper           = $subscription_helper;
-		$this->logger                        = $logger;
-		$this->payments_endpoint             = $payments_endpoint;
+		$this->id                          = self::ID;
+		$this->settings_renderer           = $settings_renderer;
+		$this->order_processor             = $order_processor;
+		$this->config                      = $config;
+		$this->module_url                  = $module_url;
+		$this->session_handler             = $session_handler;
+		$this->refund_processor            = $refund_processor;
+		$this->state                       = $state;
+		$this->transaction_url_provider    = $transaction_url_provider;
+		$this->subscription_helper         = $subscription_helper;
+		$this->logger                      = $logger;
+		$this->payments_endpoint           = $payments_endpoint;
 		$this->vaulted_credit_card_handler = $vaulted_credit_card_handler;
 
 		if ( $state->current_state() === State::STATE_ONBOARDED ) {
@@ -359,7 +361,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		 * If customer has chosen a saved credit card payment.
 		 */
 		$saved_credit_card = filter_input( INPUT_POST, 'saved_credit_card', FILTER_SANITIZE_STRING );
-		if($saved_credit_card) {
+		if ( $saved_credit_card ) {
 			try {
 				$wc_order = $this->vaulted_credit_card_handler->handle_payment(
 					$saved_credit_card,
@@ -368,7 +370,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 
 				return $this->handle_payment_success( $wc_order );
 
-			} catch(RuntimeException $error) {
+			} catch ( RuntimeException $error ) {
 				return $this->handle_payment_failure( $wc_order, $error );
 			}
 		}
