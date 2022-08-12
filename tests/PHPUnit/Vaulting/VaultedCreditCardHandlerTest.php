@@ -105,7 +105,7 @@ class VaultedCreditCardHandlerTest extends TestCase
 		$customer = Mockery::mock(WC_Customer::class);
 
 		$payer = Mockery::mock(Payer::class);
-		$this->payerFactory->shouldReceive('from_customer')
+		$this->payerFactory->shouldReceive('from_wc_order')
 			->andReturn($payer);
 		$this->shippingPreferenceFactory->shouldReceive('from_state')
 			->andReturn('some_preference');

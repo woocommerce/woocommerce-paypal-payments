@@ -361,12 +361,9 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		$saved_credit_card = filter_input( INPUT_POST, 'saved_credit_card', FILTER_SANITIZE_STRING );
 		if($saved_credit_card) {
 			try {
-				$customer = new WC_Customer( $wc_order->get_customer_id() );
-
 				$wc_order = $this->vaulted_credit_card_handler->handle_payment(
 					$saved_credit_card,
-					$wc_order,
-					$customer
+					$wc_order
 				);
 
 				return $this->handle_payment_success( $wc_order );

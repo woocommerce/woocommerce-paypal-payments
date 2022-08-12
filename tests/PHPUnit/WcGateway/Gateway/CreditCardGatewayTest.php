@@ -90,6 +90,7 @@ class CreditCardGatewayTest extends TestCase
 	public function testProcessPaymentVaultedCard()
 	{
 		$wc_order = Mockery::mock(WC_Order::class);
+		$wc_order->shouldReceive('get_customer_id')->andReturn(1);
 		when('wc_get_order')->justReturn($wc_order);
 
 		$savedCreditCard = 'abc123';

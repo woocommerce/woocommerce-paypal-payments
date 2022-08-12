@@ -118,8 +118,7 @@ class VaultedCreditCardHandler
 
 	public function handle_payment(
 		string $saved_credit_card,
-		WC_Order $wc_order,
-		WC_Customer $customer
+		WC_Order $wc_order
 	): WC_Order {
 
 		$change_payment    = filter_input( INPUT_POST, 'woocommerce_change_payment', FILTER_SANITIZE_STRING );
@@ -146,8 +145,7 @@ class VaultedCreditCardHandler
 		}
 
 		$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
-		$payer         = $this->payer_factory->from_customer( $customer );
-
+		$payer         = $this->payer_factory->from_wc_order( $wc_order);
 		$shipping_preference = $this->shipping_preference_factory->from_state(
 			$purchase_unit,
 			''
