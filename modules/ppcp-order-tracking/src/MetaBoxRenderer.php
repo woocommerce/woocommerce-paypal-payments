@@ -101,12 +101,12 @@ class MetaBoxRenderer {
 		<p>
 			<label for="ppcp-tracking-carrier"><?php echo esc_html__( 'Carrier', 'woocommerce-paypal-payments' ); ?></label>
 			<select class="ppcp-tracking-carrier" id="ppcp-tracking-carrier" name="ppcp-tracking[carrier]">
+				<option value=""><?php echo esc_html__( 'Select Carrier', 'woocommerce-paypal-payments' ); ?></option>
 				<?php
 				foreach ( $this->carriers as $carrier ) :
 					$country  = $carrier['name'] ?? '';
 					$carriers = $carrier['items'] ?? '';
 					?>
-					<option value=""><?php echo esc_html__( 'Select Carrier', 'woocommerce-paypal-payments' ); ?></option>
 					<optgroup label="<?php echo esc_attr( $country ); ?>">
 						<?php foreach ( $carriers as $carrier_code => $carrier_name ) : ?>
 							<option value="<?php echo esc_attr( $carrier_code ); ?>" <?php selected( $carrier_value, $carrier_code ); ?>><?php echo esc_html( $carrier_name ); ?></option>
