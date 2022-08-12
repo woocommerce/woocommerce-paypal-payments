@@ -49,11 +49,9 @@ return array(
 		return require __DIR__ . '/carriers.php';
 	},
 	'order-tracking.available-carriers'        => static function ( ContainerInterface $container ): array {
-		$wc_default_country = get_option( 'woocommerce_default_country' );
-		$has_state = strpos( $wc_default_country, ':' );
-		$selected_address = $has_state ? substr( $wc_default_country, 0, $has_state ) : $wc_default_country;
+		$api_shop_country = $container->get( 'api.shop.country' );
 		$allowed_carriers = $container->get( 'order-tracking.allowed-carriers' );
-		$selected_country_carriers = $allowed_carriers[ $selected_address ] ?? array();
+		$selected_country_carriers = $allowed_carriers[ $api_shop_country ] ?? array();
 
 		return array(
 			$selected_country_carriers,
