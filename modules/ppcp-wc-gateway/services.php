@@ -315,6 +315,13 @@ return array(
 
 		$module_url = $container->get( 'wcgateway.url' );
 
+        /**
+         * The PUI helper.
+         *
+         * @var PayUponInvoiceHelper $pui_helper
+         */
+        $pui_helper = $container->get( 'wcgateway.pay-upon-invoice-helper' );
+
 		$fields              = array(
 			'ppcp_onboarading_header'            => array(
 				'type'         => 'ppcp-text',
@@ -873,6 +880,7 @@ return array(
                 ),
                 'requirements' => array(),
                 'gateway'      => array( 'paypal' ),
+                'input_class'  => $pui_helper->is_pui_ready_in_admin() ? array( 'ppcp-disabled-checkbox' ) : array(),
             ),
 
 			// General button styles.
@@ -2208,7 +2216,10 @@ return array(
 		);
 	},
 	'wcgateway.pay-upon-invoice-helper'                 => static function( ContainerInterface $container ): PayUponInvoiceHelper {
-		return new PayUponInvoiceHelper();
+		return new PayUponInvoiceHelper(
+            $container->get( 'api.shop.country' ),
+            $container->get( 'wcgateway.pay-upon-invoice-product-status' )
+        );
 	},
 	'wcgateway.pay-upon-invoice-product-status'         => static function( ContainerInterface $container ): PayUponInvoiceProductStatus {
 		return new PayUponInvoiceProductStatus(

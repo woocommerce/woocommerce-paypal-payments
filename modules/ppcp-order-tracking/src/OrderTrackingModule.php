@@ -18,7 +18,9 @@ use Psr\Log\LoggerInterface;
 use WC_Order;
 use WooCommerce\PayPalCommerce\OrderTracking\Assets\OrderEditPageAssets;
 use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceHelper;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class OrderTrackingModule
@@ -39,9 +41,27 @@ class OrderTrackingModule implements ModuleInterface {
 	 * {@inheritDoc}
 	 *
 	 * @param ContainerInterface $c A services container instance.
+	 * @throws NotFoundException
 	 */
 	public function run( ContainerInterface $c ): void {
-		$settings         = $c->get( 'wcgateway.settings' );
+		/**
+		 * The Settings.
+		 *
+		 * @var Settings $settings
+		 */
+		$settings = $c->get( 'wcgateway.settings' );
+
+		/**
+		 * The PUI helper.
+		 *
+		 * @var PayUponInvoiceHelper $pui_helper
+		 */
+		$pui_helper = $c->get( 'wcgateway.pay-upon-invoice-helper' );
+		if ( $pui_helper->is_pui_ready_in_admin() ) {
+			$settings->set( 'tracking_enabled', true );
+			$settings->persist();
+		}
+
 		$tracking_enabled = $settings->has( 'tracking_enabled' ) && $settings->get( 'tracking_enabled' );
 
 		if ( ! $tracking_enabled ) {
@@ -136,9 +156,4 @@ class OrderTrackingModule implements ModuleInterface {
 			}
 		);
 	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function getKey() {  }
 }
