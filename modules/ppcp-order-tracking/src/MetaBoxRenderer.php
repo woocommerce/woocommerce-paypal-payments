@@ -82,6 +82,9 @@ class MetaBoxRenderer {
 		$status_value    = $tracking_info['status'] ?? 'SHIPPED';
 		$carrier_value   = $tracking_info['carrier'] ?? '';
 
+		$carriers = (array) apply_filters( 'ppcp_tracking_carriers', $this->carriers );
+		$statuses = (array) apply_filters( 'ppcp_tracking_statuses', $this->allowed_statuses );
+
 		$action = $tracking_is_not_added ? 'create' : 'update';
 		?>
 		<p>
@@ -93,7 +96,7 @@ class MetaBoxRenderer {
 		<p>
 			<label for="<?php echo esc_attr( self::NAME_PREFIX ); ?>-status"><?php echo esc_html__( 'Status', 'woocommerce-paypal-payments' ); ?></label>
 			<select class="<?php echo esc_attr( self::NAME_PREFIX ); ?>-status" id="<?php echo esc_attr( self::NAME_PREFIX ); ?>-status" name="<?php echo esc_attr( self::NAME_PREFIX ); ?>[status]">
-				<?php foreach ( $this->allowed_statuses as $status ) : ?>
+				<?php foreach ( $statuses as $status ) : ?>
 					<option value="<?php echo esc_attr( $status ); ?>" <?php selected( $status_value, $status ); ?>><?php echo esc_html( $status ); ?></option>
 				<?php endforeach; ?>
 			</select>
@@ -103,7 +106,7 @@ class MetaBoxRenderer {
 			<select class="ppcp-tracking-carrier" id="ppcp-tracking-carrier" name="ppcp-tracking[carrier]">
 				<option value=""><?php echo esc_html__( 'Select Carrier', 'woocommerce-paypal-payments' ); ?></option>
 				<?php
-				foreach ( $this->carriers as $carrier ) :
+				foreach ( $carriers as $carrier ) :
 					$country  = $carrier['name'] ?? '';
 					$carriers = $carrier['items'] ?? '';
 					?>

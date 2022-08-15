@@ -54,9 +54,9 @@ return array(
 		$selected_country_carriers = $allowed_carriers[ $api_shop_country ] ?? array();
 
 		return array(
-			$selected_country_carriers,
-			$allowed_carriers['global'],
-			array(
+			$api_shop_country => $selected_country_carriers ?? array(),
+			'global'          => $allowed_carriers['global'] ?? array(),
+			'other'           => array(
 				'name'  => 'Other',
 				'items' => array(
 					'OTHER' => _x( 'Other', 'Name of carrier', 'woocommerce-paypal-payments' ),
