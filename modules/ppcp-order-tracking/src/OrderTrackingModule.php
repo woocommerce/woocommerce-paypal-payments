@@ -21,6 +21,7 @@ use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
 
 /**
  * Class OrderTrackingModule
@@ -61,6 +62,14 @@ class OrderTrackingModule implements ModuleInterface {
 			$settings->set( 'tracking_enabled', true );
 			$settings->persist();
 		}
+
+		/**
+		 * The settings listener.
+		 *
+		 * @var SettingsListener $listener
+		 */
+		$listener = $c->get( 'wcgateway.settings.listener' );
+		$listener->listen_for_tracking_enabled();
 
 		$tracking_enabled = $settings->has( 'tracking_enabled' ) && $settings->get( 'tracking_enabled' );
 
