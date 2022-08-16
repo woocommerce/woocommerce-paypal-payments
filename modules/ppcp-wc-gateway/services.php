@@ -53,6 +53,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Notice\GatewayWithoutPayPalAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\HeaderRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
@@ -212,6 +213,12 @@ return array(
 		return new SectionsRenderer(
 			$container->get( 'wcgateway.current-ppcp-settings-page-id' ),
 			$container->get( 'wcgateway.settings.sections' )
+		);
+	},
+	'wcgateway.settings.header-renderer'                   => static function ( ContainerInterface $container ): HeaderRenderer {
+		return new HeaderRenderer(
+			$container->get( 'wcgateway.current-ppcp-settings-page-id' ),
+			$container->get( 'wcgateway.url' )
 		);
 	},
 	'wcgateway.settings.sections'                          => static function ( ContainerInterface $container ): array {

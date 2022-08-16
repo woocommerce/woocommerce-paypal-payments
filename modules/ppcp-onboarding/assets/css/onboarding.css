@@ -168,3 +168,26 @@ ul.ppcp-onboarding-options-sublist {
 		height: 23px;
 	}
 }
+
+.ppcp-settings-page-header {
+	display: flex;
+	align-items: center;
+	max-width: 1200px;
+	margin-top: 10px;
+}
+
+.ppcp-settings-page-header img {
+	height: 40px;
+}
+
+.ppcp-settings-page-header h4 {
+	margin: 0 15px 0 5px;
+}
+
+.ppcp-settings-page-header .button, .ppcp-settings-page-header a {
+	margin: 0 5px;
+}
+
+.ppcp-right-align {
+	margin-left: auto;
+}
