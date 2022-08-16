@@ -1,6 +1,6 @@
 <?php
 /**
- * Handles the onboard with Pay Upon Invoice setting.
+ * Handles the onboard with Pay upon Invoice setting.
  *
  * @package WooCommerce\PayPalCommerce\Onboarding\Endpoint
  */

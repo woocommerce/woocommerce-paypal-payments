@@ -13,6 +13,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CheckoutHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceHelper;
 use function Brain\Monkey\Functions\when;
 
@@ -26,6 +27,7 @@ class PayUponInvoiceGatewayTest extends TestCase
 	private $logger;
 	private $testee;
 	private $pui_helper;
+	private $checkout_helper;
 
 	public function setUp(): void
 	{
@@ -38,6 +40,7 @@ class PayUponInvoiceGatewayTest extends TestCase
 		$this->logger = Mockery::mock(LoggerInterface::class);
 		$this->transaction_url_provider = Mockery::mock(TransactionUrlProvider::class);
 		$this->pui_helper = Mockery::mock(PayUponInvoiceHelper::class);
+		$this->checkout_helper = Mockery::mock(CheckoutHelper::class);
 
 		$this->setInitStubs();
 
@@ -48,7 +51,8 @@ class PayUponInvoiceGatewayTest extends TestCase
 			$this->environment,
 			$this->transaction_url_provider,
 			$this->logger,
-			$this->pui_helper
+			$this->pui_helper,
+			$this->checkout_helper
 		);
 	}
 

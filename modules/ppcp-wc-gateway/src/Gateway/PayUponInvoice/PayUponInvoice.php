@@ -11,14 +11,12 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice;
 
 use Psr\Log\LoggerInterface;
 use WC_Order;
-use WC_Order_Item;
-use WC_Order_Item_Product;
-use WC_Product;
-use WC_Product_Variable;
-use WC_Product_Variation;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\CaptureFactory;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\CheckoutHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceHelper;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
@@ -119,6 +117,20 @@ class PayUponInvoice {
 	protected $pui_product_status;
 
 	/**
+	 * The checkout helper.
+	 *
+	 * @var CheckoutHelper
+	 */
+	protected $checkout_helper;
+
+	/**
+	 * The capture factory.
+	 *
+	 * @var CaptureFactory
+	 */
+	protected $capture_factory;
+
+	/**
 	 * PayUponInvoice constructor.
 	 *
 	 * @param string                      $module_url The module URL.
@@ -133,6 +145,8 @@ class PayUponInvoice {
 	 * @param string                      $current_ppcp_settings_page_id Current PayPal settings page id.
 	 * @param PayUponInvoiceProductStatus $pui_product_status The PUI product status.
 	 * @param PayUponInvoiceHelper        $pui_helper The PUI helper.
+	 * @param CheckoutHelper              $checkout_helper The checkout helper.
+	 * @param CaptureFactory              $capture_factory The capture factory.
 	 */
 	public function __construct(
 		string $module_url,
@@ -146,7 +160,9 @@ class PayUponInvoice {
 		bool $is_ppcp_settings_page,
 		string $current_ppcp_settings_page_id,
 		PayUponInvoiceProductStatus $pui_product_status,
-		PayUponInvoiceHelper $pui_helper
+		PayUponInvoiceHelper $pui_helper,
+		CheckoutHelper $checkout_helper,
+		CaptureFactory $capture_factory
 	) {
 		$this->module_url                    = $module_url;
 		$this->fraud_net                     = $fraud_net;
@@ -160,6 +176,8 @@ class PayUponInvoice {
 		$this->current_ppcp_settings_page_id = $current_ppcp_settings_page_id;
 		$this->pui_product_status            = $pui_product_status;
 		$this->pui_helper                    = $pui_helper;
+		$this->checkout_helper               = $checkout_helper;
+		$this->capture_factory               = $capture_factory;
 	}
 
 	/**
@@ -210,7 +228,12 @@ class PayUponInvoice {
 			'ppcp_payment_capture_completed_webhook_handler',
 			function ( WC_Order $wc_order, string $order_id ) {
 				try {
-					$payment_instructions = $this->pui_order_endpoint->order_payment_instructions( $order_id );
+					$order = $this->pui_order_endpoint->order( $order_id );
+
+					$payment_instructions = array(
+						$order->payment_source->pay_upon_invoice->payment_reference,
+						$order->payment_source->pay_upon_invoice->deposit_bank_details,
+					);
 					$wc_order->update_meta_data(
 						'ppcp_ratepay_payment_instructions_payment_reference',
 						$payment_instructions
@@ -218,6 +241,12 @@ class PayUponInvoice {
 					$wc_order->save_meta_data();
 					$this->logger->info( "Ratepay payment instructions added to order #{$wc_order->get_id()}." );
 
+					$capture   = $this->capture_factory->from_paypal_response( $order->purchase_units[0]->payments->captures[0] );
+					$breakdown = $capture->seller_receivable_breakdown();
+					if ( $breakdown ) {
+						$wc_order->update_meta_data( PayPalGateway::FEES_META_KEY, $breakdown->to_array() );
+						$wc_order->save_meta_data();
+					}
 				} catch ( RuntimeException $exception ) {
 					$this->logger->error( $exception->getMessage() );
 				}
@@ -280,7 +309,7 @@ class PayUponInvoice {
 				}
 			},
 			10,
-			3
+			2
 		);
 
 		add_filter(
@@ -303,6 +332,23 @@ class PayUponInvoice {
 							'clear'    => true,
 						)
 					);
+
+					$checkout_fields         = WC()->checkout()->get_checkout_fields();
+					$checkout_phone_required = $checkout_fields['billing']['billing_phone']['required'] ?? false;
+					if ( ! array_key_exists( 'billing_phone', $checkout_fields['billing'] ) || $checkout_phone_required === false ) {
+						woocommerce_form_field(
+							'billing_phone',
+							array(
+								// phpcs:ignore WordPress.WP.I18n.TextDomainMismatch
+								'label'        => __( 'Phone', 'woocommerce' ),
+								'type'         => 'tel',
+								'class'        => array( 'form-row-wide' ),
+								'validate'     => array( 'phone' ),
+								'autocomplete' => 'tel',
+								'required'     => true,
+							)
+						);
+					}
 
 					echo '</div><div>';
 
@@ -342,11 +388,14 @@ class PayUponInvoice {
 				}
 
 				$birth_date = filter_input( INPUT_POST, 'billing_birth_date', FILTER_SANITIZE_STRING );
-				if ( ( $birth_date && ! $this->pui_helper->validate_birth_date( $birth_date ) ) || $birth_date === '' ) {
+				if ( ( $birth_date && ! $this->checkout_helper->validate_birth_date( $birth_date ) ) || $birth_date === '' ) {
 					$errors->add( 'validation', __( 'Invalid birth date.', 'woocommerce-paypal-payments' ) );
 				}
 
 				$national_number = filter_input( INPUT_POST, 'billing_phone', FILTER_SANITIZE_STRING );
+				if ( ! $national_number ) {
+					$errors->add( 'validation', __( 'Phone field cannot be empty.', 'woocommerce-paypal-payments' ) );
+				}
 				if ( $national_number ) {
 					$numeric_phone_number = preg_replace( '/[^0-9]/', '', $national_number );
 					if ( $numeric_phone_number && ! preg_match( '/^[0-9]{1,14}?$/', $numeric_phone_number ) ) {
@@ -395,7 +444,7 @@ class PayUponInvoice {
 
 					printf(
 						'<div class="notice notice-error"><p>%1$s</p></div>',
-						esc_html__( 'Could not enable gateway because the connected PayPal account is not activated for Pay upon Invoice. Reconnect your account while Onboard with Pay Upon Invoice is selected to try again.', 'woocommerce-paypal-payments' )
+						esc_html__( 'Could not enable gateway because the connected PayPal account is not activated for Pay upon Invoice. Reconnect your account while Onboard with Pay upon Invoice is selected to try again.', 'woocommerce-paypal-payments' )
 					);
 				}
 			}
@@ -459,7 +508,7 @@ class PayUponInvoice {
 				if ( $post_type === 'shop_order' ) {
 					$post_id = filter_input( INPUT_GET, 'post', FILTER_SANITIZE_STRING );
 					$order   = wc_get_order( $post_id );
-					if ( is_a( $order, WC_Order::class ) && $order->get_payment_method() === 'ppcp-pay-upon-invoice-gateway' ) {
+					if ( is_a( $order, WC_Order::class ) && $order->get_payment_method() === PayUponInvoiceGateway::ID ) {
 						$instructions = $order->get_meta( 'ppcp_ratepay_payment_instructions_payment_reference' );
 						if ( $instructions ) {
 							add_meta_box(
@@ -495,21 +544,26 @@ class PayUponInvoice {
 	 * Registers PUI assets.
 	 */
 	public function register_assets(): void {
-		wp_enqueue_script(
-			'ppcp-pay-upon-invoice',
-			trailingslashit( $this->module_url ) . 'assets/js/pay-upon-invoice.js',
-			array(),
-			$this->asset_version
-		);
+		$gateway_settings = get_option( 'woocommerce_ppcp-pay-upon-invoice-gateway_settings' );
+		$gateway_enabled  = $gateway_settings['enabled'] ?? '';
+		if ( $gateway_enabled === 'yes' && ( is_checkout() || is_checkout_pay_page() ) ) {
+			wp_enqueue_script(
+				'ppcp-pay-upon-invoice',
+				trailingslashit( $this->module_url ) . 'assets/js/pay-upon-invoice.js',
+				array(),
+				$this->asset_version,
+				true
+			);
 
-		wp_localize_script(
-			'ppcp-pay-upon-invoice',
-			'FraudNetConfig',
-			array(
-				'f'       => $this->fraud_net->session_id(),
-				's'       => $this->fraud_net->source_website_id(),
-				'sandbox' => $this->environment->current_environment_is( Environment::SANDBOX ),
-			)
-		);
+			wp_localize_script(
+				'ppcp-pay-upon-invoice',
+				'FraudNetConfig',
+				array(
+					'f'       => $this->fraud_net->session_id(),
+					's'       => $this->fraud_net->source_website_id(),
+					'sandbox' => $this->environment->current_environment_is( Environment::SANDBOX ),
+				)
+			);
+		}
 	}
 }

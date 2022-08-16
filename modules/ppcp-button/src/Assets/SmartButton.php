@@ -28,7 +28,9 @@ use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Subscription\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
@@ -421,15 +423,22 @@ class SmartButton implements SmartButtonInterface {
 		) {
 			add_action(
 				$this->single_product_renderer_hook(),
-				array(
-					$this,
-					'button_renderer',
-				),
+				function () {
+					$product = wc_get_product();
+
+					if (
+						is_a( $product, WC_Product::class )
+						&& ! $this->product_supports_payment( $product )
+					) {
+
+						return;
+					}
+
+					$this->button_renderer( PayPalGateway::ID );
+				},
 				31
 			);
 		}
-
-		add_action( $this->pay_order_renderer_hook(), array( $this, 'button_renderer' ), 10 );
 
 		$not_enabled_on_minicart = $this->settings->has( 'button_mini_cart_enabled' ) &&
 			! $this->settings->get( 'button_mini_cart_enabled' );
@@ -457,21 +466,38 @@ class SmartButton implements SmartButtonInterface {
 			);
 		}
 
-		add_action( $this->checkout_button_renderer_hook(), array( $this, 'button_renderer' ), 10 );
+		$available_gateways = WC()->payment_gateways->get_available_payment_gateways();
 
-		$not_enabled_on_cart = $this->settings->has( 'button_cart_enabled' ) &&
-			! $this->settings->get( 'button_cart_enabled' );
-		add_action(
-			$this->proceed_to_checkout_button_renderer_hook(),
-			function() use ( $not_enabled_on_cart ) {
-				if ( ! is_cart() || $not_enabled_on_cart || $this->is_free_trial_cart() || $this->is_cart_price_total_zero() ) {
-					return;
+		if ( isset( $available_gateways['ppcp-gateway'] ) ) {
+			add_action(
+				$this->pay_order_renderer_hook(),
+				function (): void {
+					$this->button_renderer( PayPalGateway::ID );
+					$this->button_renderer( CardButtonGateway::ID );
 				}
+			);
+			add_action(
+				$this->checkout_button_renderer_hook(),
+				function (): void {
+					$this->button_renderer( PayPalGateway::ID );
+					$this->button_renderer( CardButtonGateway::ID );
+				}
+			);
 
-				$this->button_renderer();
-			},
-			20
-		);
+			$not_enabled_on_cart = $this->settings->has( 'button_cart_enabled' ) &&
+				! $this->settings->get( 'button_cart_enabled' );
+			add_action(
+				$this->proceed_to_checkout_button_renderer_hook(),
+				function() use ( $not_enabled_on_cart ) {
+					if ( ! is_cart() || $not_enabled_on_cart || $this->is_free_trial_cart() || $this->is_cart_price_total_zero() ) {
+						return;
+					}
+
+					$this->button_renderer( PayPalGateway::ID );
+				},
+				20
+			);
+		}
 
 		return true;
 	}
@@ -524,32 +550,24 @@ class SmartButton implements SmartButtonInterface {
 
 	/**
 	 * Renders the HTML for the buttons.
+	 *
+	 * @param string $gateway_id The gateway ID, like 'ppcp-gateway'.
 	 */
-	public function button_renderer() {
+	public function button_renderer( string $gateway_id ) {
 
 		if ( ! $this->can_save_vault_token() && $this->has_subscriptions() ) {
 			return;
 		}
 
-		$product = wc_get_product();
-
-		if (
-			! is_checkout() && is_a( $product, WC_Product::class )
-			&& ! $this->product_supports_payment( $product )
-		) {
-
-			return;
-		}
-
 		$available_gateways = WC()->payment_gateways->get_available_payment_gateways();
 
-		if ( ! isset( $available_gateways['ppcp-gateway'] ) ) {
+		if ( ! isset( $available_gateways[ $gateway_id ] ) ) {
 			return;
 		}
 
 		// The wrapper is needed for the loading spinner,
 		// otherwise jQuery block() prevents buttons rendering.
-		echo '<div class="ppc-button-wrapper"><div id="ppc-button"></div></div>';
+		echo '<div class="ppc-button-wrapper"><div id="ppc-button-' . esc_attr( $gateway_id ) . '"></div></div>';
 	}
 
 	/**
@@ -810,7 +828,7 @@ class SmartButton implements SmartButtonInterface {
 			'bn_codes'                          => $this->bn_codes(),
 			'payer'                             => $this->payerData(),
 			'button'                            => array(
-				'wrapper'           => '#ppc-button',
+				'wrapper'           => '#ppc-button-' . PayPalGateway::ID,
 				'mini_cart_wrapper' => '#ppc-button-minicart',
 				'cancel_wrapper'    => '#ppcp-cancel',
 				'url'               => $this->url(),
@@ -830,10 +848,19 @@ class SmartButton implements SmartButtonInterface {
 					'tagline' => $this->style_for_context( 'tagline', $this->context() ),
 				),
 			),
+			'separate_buttons'                  => array(
+				'card' => array(
+					'id'      => CardButtonGateway::ID,
+					'wrapper' => '#ppc-button-' . CardButtonGateway::ID,
+					'style'   => array(
+						'shape' => $this->style_for_context( 'shape', $this->context() ),
+						// TODO: color black, white from the gateway settings.
+					),
+				),
+			),
 			'hosted_fields'                     => array(
-				'wrapper'           => '#ppcp-hosted-fields',
-				'mini_cart_wrapper' => '#ppcp-hosted-fields-mini-cart',
-				'labels'            => array(
+				'wrapper'     => '#ppcp-hosted-fields',
+				'labels'      => array(
 					'credit_card_number'       => '',
 					'cvv'                      => '',
 					'mm_yy'                    => __( 'MM/YY', 'woocommerce-paypal-payments' ),
@@ -847,21 +874,36 @@ class SmartButton implements SmartButtonInterface {
 					),
 					'cardholder_name_required' => __( 'Cardholder\'s first and last name are required, please fill the checkout form required fields.', 'woocommerce-paypal-payments' ),
 				),
-				'valid_cards'       => $this->dcc_applies->valid_cards(),
-				'contingency'       => $this->get_3ds_contingency(),
+				'valid_cards' => $this->dcc_applies->valid_cards(),
+				'contingency' => $this->get_3ds_contingency(),
 			),
 			'messages'                          => $this->message_values(),
 			'labels'                            => array(
-				'error' => array(
-					'generic'       => __(
+				'error'          => array(
+					'generic'  => __(
 						'Something went wrong. Please try again or choose another payment source.',
 						'woocommerce-paypal-payments'
 					),
-					'js_validation' => __(
-						'Required form fields are not filled or invalid.',
-						'woocommerce-paypal-payments'
+					'required' => array(
+						'generic'  => __(
+							'Required form fields are not filled.',
+							'woocommerce-paypal-payments'
+						),
+						// phpcs:ignore WordPress.WP.I18n
+						'field'    => __( '%s is a required field.', 'woocommerce' ),
+						'elements' => array(  // Map <form element name> => text for error messages.
+							'terms' => __(
+								'Please read and accept the terms and conditions to proceed with your order.',
+								// phpcs:ignore WordPress.WP.I18n.TextDomainMismatch
+								'woocommerce'
+							),
+						),
 					),
 				),
+				// phpcs:ignore WordPress.WP.I18n
+				'billing_field'  => _x( 'Billing %s', 'checkout-validation', 'woocommerce' ),
+				// phpcs:ignore WordPress.WP.I18n
+				'shipping_field' => _x( 'Shipping %s', 'checkout-validation', 'woocommerce' ),
 			),
 			'order_id'                          => 'pay-now' === $this->context() ? absint( $wp->query_vars['order-pay'] ) : 0,
 			'single_product_buttons_enabled'    => $this->settings->has( 'button_product_enabled' ) && $this->settings->get( 'button_product_enabled' ),
@@ -870,10 +912,10 @@ class SmartButton implements SmartButtonInterface {
 		);
 
 		if ( $this->style_for_context( 'layout', 'mini-cart' ) !== 'horizontal' ) {
-			unset( $localize['button']['mini_cart_style']['tagline'] );
+			$localize['button']['mini_cart_style']['tagline'] = false;
 		}
 		if ( $this->style_for_context( 'layout', $this->context() ) !== 'horizontal' ) {
-			unset( $localize['button']['style']['tagline'] );
+			$localize['button']['style']['tagline'] = false;
 		}
 
 		$this->request_data->dequeue_nonce_fix();
@@ -901,7 +943,9 @@ class SmartButton implements SmartButtonInterface {
 	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException If a setting was not found.
 	 */
 	private function url(): string {
-		$intent = ( $this->settings->has( 'intent' ) ) ? $this->settings->get( 'intent' ) : 'capture';
+		$intent               = ( $this->settings->has( 'intent' ) ) ? $this->settings->get( 'intent' ) : 'capture';
+		$product_intent       = $this->subscription_helper->current_product_is_subscription() ? 'authorize' : $intent;
+		$other_context_intent = $this->subscription_helper->cart_contains_subscription() ? 'authorize' : $intent;
 
 		$params = array(
 			'client-id'        => $this->client_id,
@@ -910,9 +954,7 @@ class SmartButton implements SmartButtonInterface {
 			'components'       => implode( ',', $this->components() ),
 			'vault'            => $this->can_save_vault_token() ? 'true' : 'false',
 			'commit'           => is_checkout() ? 'true' : 'false',
-			'intent'           => ( $this->subscription_helper->cart_contains_subscription() || $this->subscription_helper->current_product_is_subscription() )
-				? 'authorize'
-				: $intent,
+			'intent'           => $this->context() === 'product' ? $product_intent : $other_context_intent,
 		);
 		if (
 			$this->environment->current_environment_is( Environment::SANDBOX )
@@ -933,7 +975,10 @@ class SmartButton implements SmartButtonInterface {
 
 		$is_dcc_enabled = $this->settings->has( 'dcc_enabled' ) && $this->settings->get( 'dcc_enabled' );
 
-		if ( is_checkout() && $is_dcc_enabled ) {
+		$available_gateways       = WC()->payment_gateways->get_available_payment_gateways();
+		$is_separate_card_enabled = isset( $available_gateways[ CardButtonGateway::ID ] );
+
+		if ( is_checkout() && ( $is_dcc_enabled || $is_separate_card_enabled ) ) {
 			$key = array_search( 'card', $disable_funding, true );
 			if ( false !== $key ) {
 				unset( $disable_funding[ $key ] );
@@ -942,7 +987,7 @@ class SmartButton implements SmartButtonInterface {
 
 		if ( $this->is_free_trial_cart() ) {
 			$all_sources = array_keys( $this->all_funding_sources );
-			if ( $is_dcc_enabled ) {
+			if ( $is_dcc_enabled || $is_separate_card_enabled ) {
 				$all_sources = array_diff( $all_sources, array( 'card' ) );
 			}
 			$disable_funding = $all_sources;
@@ -1018,6 +1063,7 @@ class SmartButton implements SmartButtonInterface {
 
 		if ( $this->load_button_component() ) {
 			$components[] = 'buttons';
+			$components[] = 'funding-eligibility';
 		}
 		if (
 			$this->messages_apply->for_country()
@@ -1049,8 +1095,10 @@ class SmartButton implements SmartButtonInterface {
 		}
 		if (
 			$this->context() === 'product'
-			&& $this->settings->has( 'button_product_enabled' )
-			&& $this->settings->get( 'button_product_enabled' )
+			&& (
+				( $this->settings->has( 'button_product_enabled' ) && $this->settings->get( 'button_product_enabled' ) ) ||
+				( $this->settings->has( 'message_product_enabled' ) && $this->settings->get( 'message_product_enabled' ) )
+			)
 		) {
 			$load_buttons = true;
 		}
@@ -1060,13 +1108,17 @@ class SmartButton implements SmartButtonInterface {
 		) {
 			$load_buttons = true;
 		}
+
 		if (
 			$this->context() === 'cart'
-			&& $this->settings->has( 'button_cart_enabled' )
-			&& $this->settings->get( 'button_cart_enabled' )
+			&& (
+				( $this->settings->has( 'button_cart_enabled' ) && $this->settings->get( 'button_cart_enabled' ) ) ||
+				( $this->settings->has( 'message_cart_enabled' ) && $this->settings->get( 'message_cart_enabled' ) )
+			)
 		) {
 			$load_buttons = true;
 		}
+
 		if ( $this->context() === 'pay-now' ) {
 			$load_buttons = true;
 		}
@@ -1109,6 +1161,9 @@ class SmartButton implements SmartButtonInterface {
 		$source = $order->payment_source();
 		if ( $source && $source->card() ) {
 			return false; // Ignore for DCC.
+		}
+		if ( 'card' === $this->session_handler->funding_source() ) {
+			return false; // Ignore for card buttons.
 		}
 		return true;
 	}

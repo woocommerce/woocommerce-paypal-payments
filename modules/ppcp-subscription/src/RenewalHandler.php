@@ -10,16 +10,20 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Subscription;
 
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\PaymentsStatusHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class RenewalHandler
@@ -59,6 +63,13 @@ class RenewalHandler {
 	private $purchase_unit_factory;
 
 	/**
+	 * The shipping_preference factory.
+	 *
+	 * @var ShippingPreferenceFactory
+	 */
+	private $shipping_preference_factory;
+
+	/**
 	 * The payer factory.
 	 *
 	 * @var PayerFactory
@@ -73,30 +84,53 @@ class RenewalHandler {
 	protected $environment;
 
 	/**
+	 * The settings
+	 *
+	 * @var Settings
+	 */
+	protected $settings;
+
+	/**
+	 * The processor for authorized payments.
+	 *
+	 * @var AuthorizedPaymentsProcessor
+	 */
+	protected $authorized_payments_processor;
+
+	/**
 	 * RenewalHandler constructor.
 	 *
-	 * @param LoggerInterface        $logger The logger.
-	 * @param PaymentTokenRepository $repository The payment token repository.
-	 * @param OrderEndpoint          $order_endpoint The order endpoint.
-	 * @param PurchaseUnitFactory    $purchase_unit_factory The purchase unit factory.
-	 * @param PayerFactory           $payer_factory The payer factory.
-	 * @param Environment            $environment The environment.
+	 * @param LoggerInterface             $logger The logger.
+	 * @param PaymentTokenRepository      $repository The payment token repository.
+	 * @param OrderEndpoint               $order_endpoint The order endpoint.
+	 * @param PurchaseUnitFactory         $purchase_unit_factory The purchase unit factory.
+	 * @param ShippingPreferenceFactory   $shipping_preference_factory The shipping_preference factory.
+	 * @param PayerFactory                $payer_factory The payer factory.
+	 * @param Environment                 $environment The environment.
+	 * @param Settings                    $settings The Settings.
+	 * @param AuthorizedPaymentsProcessor $authorized_payments_processor The Authorized Payments Processor.
 	 */
 	public function __construct(
 		LoggerInterface $logger,
 		PaymentTokenRepository $repository,
 		OrderEndpoint $order_endpoint,
 		PurchaseUnitFactory $purchase_unit_factory,
+		ShippingPreferenceFactory $shipping_preference_factory,
 		PayerFactory $payer_factory,
-		Environment $environment
+		Environment $environment,
+		Settings $settings,
+		AuthorizedPaymentsProcessor $authorized_payments_processor
 	) {
 
-		$this->logger                = $logger;
-		$this->repository            = $repository;
-		$this->order_endpoint        = $order_endpoint;
-		$this->purchase_unit_factory = $purchase_unit_factory;
-		$this->payer_factory         = $payer_factory;
-		$this->environment           = $environment;
+		$this->logger                        = $logger;
+		$this->repository                    = $repository;
+		$this->order_endpoint                = $order_endpoint;
+		$this->purchase_unit_factory         = $purchase_unit_factory;
+		$this->shipping_preference_factory   = $shipping_preference_factory;
+		$this->payer_factory                 = $payer_factory;
+		$this->environment                   = $environment;
+		$this->settings                      = $settings;
+		$this->authorized_payments_processor = $authorized_payments_processor;
 	}
 
 	/**
@@ -133,7 +167,7 @@ class RenewalHandler {
 	 *
 	 * @throws \Exception If customer cannot be read/found.
 	 */
-	private function process_order( \WC_Order $wc_order ) {
+	private function process_order( \WC_Order $wc_order ): void {
 
 		$user_id  = (int) $wc_order->get_customer_id();
 		$customer = new \WC_Customer( $user_id );
@@ -141,11 +175,16 @@ class RenewalHandler {
 		if ( ! $token ) {
 			return;
 		}
-		$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
-		$payer         = $this->payer_factory->from_customer( $customer );
+		$purchase_unit       = $this->purchase_unit_factory->from_wc_order( $wc_order );
+		$payer               = $this->payer_factory->from_customer( $customer );
+		$shipping_preference = $this->shipping_preference_factory->from_state(
+			$purchase_unit,
+			'renewal'
+		);
 
 		$order = $this->order_endpoint->create(
 			array( $purchase_unit ),
+			$shipping_preference,
 			$payer,
 			$token
 		);
@@ -163,6 +202,14 @@ class RenewalHandler {
 		}
 
 		$this->handle_new_order_status( $order, $wc_order );
+
+		if ( $this->capture_authorized_downloads( $order ) && AuthorizedPaymentsProcessor::SUCCESSFUL === $this->authorized_payments_processor->process( $wc_order ) ) {
+			$wc_order->add_order_note(
+				__( 'Payment successfully captured.', 'woocommerce-paypal-payments' )
+			);
+			$wc_order->update_meta_data( AuthorizedPaymentsProcessor::CAPTURED_META_KEY, 'true' );
+			$wc_order->update_status( 'completed' );
+		}
 	}
 
 	/**
@@ -212,5 +259,40 @@ class RenewalHandler {
 		}
 
 		return current( $tokens );
+	}
+
+	/**
+	 * Returns if an order should be captured immediately.
+	 *
+	 * @param Order $order The PayPal order.
+	 *
+	 * @return bool
+	 * @throws NotFoundException When a setting was not found.
+	 */
+	protected function capture_authorized_downloads( Order $order ): bool {
+		if (
+			! $this->settings->has( 'capture_for_virtual_only' )
+			|| ! $this->settings->get( 'capture_for_virtual_only' )
+		) {
+			return false;
+		}
+
+		if ( $order->intent() === 'CAPTURE' ) {
+			return false;
+		}
+
+		/**
+		 * We fetch the order again as the authorize endpoint (from which the Order derives)
+		 * drops the item's category, making it impossible to check, if purchase units contain
+		 * physical goods.
+		 */
+		$order = $this->order_endpoint->order( $order->id() );
+
+		foreach ( $order->purchase_units() as $unit ) {
+			if ( $unit->contains_physical_goods() ) {
+				return false;
+			}
+		}
+		return true;
 	}
 }

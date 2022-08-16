@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXOGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
 
 /**
@@ -189,7 +190,7 @@ class CheckoutOrderApproved implements RequestHandler {
 		}
 
 		foreach ( $wc_orders as $wc_order ) {
-			if ( PayUponInvoiceGateway::ID === $wc_order->get_payment_method() ) {
+			if ( PayUponInvoiceGateway::ID === $wc_order->get_payment_method() || OXXOGateway::ID === $wc_order->get_payment_method() ) {
 				continue;
 			}
 

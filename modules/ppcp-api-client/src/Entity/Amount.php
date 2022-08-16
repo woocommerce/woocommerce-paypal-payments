@@ -65,6 +65,15 @@ class Amount {
 	}
 
 	/**
+	 * The value formatted as string for API requests.
+	 *
+	 * @return string
+	 */
+	public function value_str(): string {
+		return $this->money->value_str();
+	}
+
+	/**
 	 * Returns the breakdown.
 	 *
 	 * @return AmountBreakdown|null
@@ -79,12 +88,7 @@ class Amount {
 	 * @return array
 	 */
 	public function to_array(): array {
-		$amount = array(
-			'currency_code' => $this->currency_code(),
-			'value'         => in_array( $this->currency_code(), $this->currencies_without_decimals, true )
-				? round( $this->value(), 0 )
-				: number_format( $this->value(), 2, '.', '' ),
-		);
+		$amount = $this->money->to_array();
 		if ( $this->breakdown() && count( $this->breakdown()->to_array() ) ) {
 			$amount['breakdown'] = $this->breakdown()->to_array();
 		}

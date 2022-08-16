@@ -41,7 +41,7 @@ class SingleProductBootstap {
 
     }
 
-    priceAmountIsZero() {
+    priceAmount() {
 
         let priceText = "0";
         if (document.querySelector('form.cart ins .woocommerce-Price-amount')) {
@@ -55,9 +55,12 @@ class SingleProductBootstap {
         }
 
         priceText = priceText.replace(/,/g, '.');
-        const amount = parseFloat(priceText.replace(/([^\d,\.\s]*)/g, ''));
-        return amount === 0;
 
+        return  parseFloat(priceText.replace(/([^\d,\.\s]*)/g, ''));
+    }
+
+    priceAmountIsZero() {
+        return this.priceAmount() === 0;
     }
 
     render() {
@@ -70,28 +73,19 @@ class SingleProductBootstap {
             () => {
                 this.renderer.showButtons(this.gateway.button.wrapper);
                 this.renderer.showButtons(this.gateway.hosted_fields.wrapper);
-                let priceText = "0";
-                if (document.querySelector('form.cart ins .woocommerce-Price-amount')) {
-                    priceText = document.querySelector('form.cart ins .woocommerce-Price-amount').innerText;
-                }
-                else if (document.querySelector('form.cart .woocommerce-Price-amount')) {
-                    priceText = document.querySelector('form.cart .woocommerce-Price-amount').innerText;
-                }
-                const amount = parseInt(priceText.replace(/([^\d,\.\s]*)/g, ''));
-                this.messages.renderWithAmount(amount)
+                this.messages.renderWithAmount(this.priceAmount())
             },
             () => {
                 this.renderer.hideButtons(this.gateway.button.wrapper);
                 this.renderer.hideButtons(this.gateway.hosted_fields.wrapper);
+                this.messages.hideMessages();
             },
             document.querySelector('form.cart'),
             new ErrorHandler(this.gateway.labels.error.generic),
         );
 
         this.renderer.render(
-            this.gateway.button.wrapper,
-            this.gateway.hosted_fields.wrapper,
-            actionHandler.configuration(),
+            actionHandler.configuration()
         );
     }
 }

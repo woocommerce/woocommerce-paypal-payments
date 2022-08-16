@@ -22,9 +22,7 @@ class AmountTest extends TestCase
 
     public function testBreakdownIsNull()
     {
-        $money = Mockery::mock(Money::class);
-        $money->shouldReceive('currency_code')->andReturn('currencyCode');
-        $money->shouldReceive('value')->andReturn(1.10);
+        $money = new Money(1.10, 'currencyCode');
         $testee = new Amount($money);
 
         $this->assertNull($testee->breakdown());
@@ -38,9 +36,7 @@ class AmountTest extends TestCase
 
     public function testBreakdown()
     {
-        $money = Mockery::mock(Money::class);
-        $money->shouldReceive('currency_code')->andReturn('currencyCode');
-        $money->shouldReceive('value')->andReturn(1.10);
+		$money = new Money(1.10, 'currencyCode');
         $breakdown = Mockery::mock(AmountBreakdown::class);
         $breakdown->shouldReceive('to_array')->andReturn([1]);
         $testee = new Amount($money, $breakdown);
