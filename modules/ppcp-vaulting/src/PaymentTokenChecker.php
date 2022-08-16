@@ -148,7 +148,7 @@ class PaymentTokenChecker {
 							$subscription->set_requires_manual_renewal( true );
 							$subscription->save();
 
-							$message = __( 'Subscription set to Manual Renewal because the payment method could not be saved at PayPal', 'woocommerce-paypal-payments' );
+							$message = __( 'Subscription set to Manual Renewal because payment method was not saved at PayPal.', 'woocommerce-paypal-payments' );
 							$wc_order->add_order_note( $message );
 
 						} catch ( Exception $exception ) {
@@ -197,7 +197,7 @@ class PaymentTokenChecker {
 	 * @param WC_Order $wc_order The WC order.
 	 */
 	private function update_failed_status( WC_Order $wc_order ): void {
-		$error_message = __( 'Subscription payment failed because the payment method could not be saved at PayPal. Contact PayPal MTS for guidance.', 'woocommerce-paypal-payments' );
+		$error_message = __( 'Subscription payment failed. Payment method was not saved at PayPal.', 'woocommerce-paypal-payments' );
 		$wc_order->update_status( 'failed', $error_message );
 
 		/**

@@ -197,7 +197,7 @@ class VaultingModule implements ModuleInterface {
 					}
 
 					if ( $subscription_behavior_when_vault_fails === 'capture_auth' ) {
-						echo wp_kses_post( '<p>' . __( 'Subscription set to Manual Renewal because the payment method could not be saved. To enable automatic renewal payments, please try a different payment method.', 'woocommerce-paypal-payments' ) . '</p>' );
+						echo wp_kses_post( '<p>' . __( 'The subscription has been activated but the payment method could not be saved. Please try again with a different payment method to allow automatic renewal payments.', 'woocommerce-paypal-payments' ) . '</p>' );
 					}
 				}
 			}
