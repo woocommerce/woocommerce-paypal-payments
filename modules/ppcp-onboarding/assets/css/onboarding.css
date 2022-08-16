@@ -192,6 +192,10 @@ ul.ppcp-onboarding-options-sublist {
 	margin-left: auto;
 }
 
+.ppcp-settings-page-header a {
+	text-decoration: none;
+}
+
 @media (max-width: 1200px) {
 	.ppcp-settings-page-header {
 		display: block;
