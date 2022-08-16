@@ -473,4 +473,36 @@ class SettingsListener {
 		}
 		return true;
 	}
+
+	/**
+	 * Prevent enabling tracking if it is not enabled for merchant account.
+	 */
+	public function listen_for_tracking_enabled(): void {
+		if ( State::STATE_ONBOARDED !== $this->state->current_state() ) {
+			return;
+		}
+
+		try {
+			$token = $this->bearer->bearer();
+			if ( ! $token->is_tracking_available() ) {
+				$this->settings->set( 'tracking_enabled', false );
+				$this->settings->persist();
+				return;
+			}
+		} catch ( RuntimeException $exception ) {
+			$this->settings->set( 'tracking_enabled', false );
+			$this->settings->persist();
+
+			add_action(
+				'admin_notices',
+				function () use ( $exception ) {
+					printf(
+						'<div class="notice notice-error"><p>%1$s</p><p>%2$s</p></div>',
+						esc_html__( 'Authentication with PayPal failed: ', 'woocommerce-paypal-payments' ) . esc_attr( $exception->getMessage() ),
+						wp_kses_post( __( 'Please verify your API Credentials and try again to connect your PayPal business account. Visit the <a href="https://docs.woocommerce.com/document/woocommerce-paypal-payments/" target="_blank">plugin documentation</a> for more information about the setup.', 'woocommerce-paypal-payments' ) )
+					);
+				}
+			);
+		}
+	}
 }
