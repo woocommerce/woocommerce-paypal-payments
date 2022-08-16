@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway;
 
 use Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
@@ -314,13 +315,6 @@ return array(
 		assert( $onboarding_options_renderer instanceof OnboardingOptionsRenderer );
 
 		$module_url = $container->get( 'wcgateway.url' );
-
-        /**
-         * The PUI helper.
-         *
-         * @var PayUponInvoiceHelper $pui_helper
-         */
-        $pui_helper = $container->get( 'wcgateway.pay-upon-invoice-helper' );
 
 		$fields              = array(
 			'ppcp_onboarading_header'            => array(
@@ -880,7 +874,7 @@ return array(
                 ),
                 'requirements' => array(),
                 'gateway'      => array( 'paypal' ),
-                'input_class'  => $pui_helper->is_pui_ready_in_admin() ? array( 'ppcp-disabled-checkbox' ) : array(),
+                'input_class'  => $container->get( 'wcgateway.settings.should-disable-tracking-checkbox' ) ? array( 'ppcp-disabled-checkbox' ) : array(),
             ),
 
 			// General button styles.
@@ -2295,4 +2289,33 @@ return array(
 
 		return $pay_later_label;
 	},
+    'order-tracking.is-tracking-available'     => static function ( ContainerInterface $container ): bool {
+        try {
+            /* @var Bearer $bearer The bearer. */
+            $bearer = $container->get( 'api.bearer' );
+            $token = $bearer->bearer();
+            return $token->is_tracking_available();
+        } catch ( RuntimeException $exception ) {
+            return false;
+        }
+    },
+    'wcgateway.settings.should-disable-tracking-checkbox'         => static function ( ContainerInterface $container ): bool {
+        /**
+         * The PUI helper.
+         *
+         * @var PayUponInvoiceHelper $pui_helper
+         */
+        $pui_helper = $container->get( 'wcgateway.pay-upon-invoice-helper' );
+        $is_tracking_available = $container->get( 'order-tracking.is-tracking-available' );
+
+        if (! $is_tracking_available) {
+            return true;
+        }
+
+        if ($pui_helper->is_pui_ready_in_admin()) {
+            return true;
+        }
+
+        return false;
+    },
 );
