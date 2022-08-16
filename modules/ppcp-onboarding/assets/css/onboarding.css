@@ -213,4 +213,8 @@ ul.ppcp-onboarding-options-sublist {
 	.ppcp-settings-page-header .ppcp-inline-only {
 		display: none;
 	}
+
+	.ppcp-settings-page-header h4 {
+		margin-left: 0;
+	}
 }
