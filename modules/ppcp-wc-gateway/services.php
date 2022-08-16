@@ -862,23 +862,23 @@ return array(
 				'input_class'  => $container->get( 'wcgateway.helper.vaulting-scope' ) ? array() : array( 'ppcp-disabled-checkbox' ),
 			),
 			'subscription_behavior_when_vault_fails' => array(
-				'title'        => __( 'Subscription capture behavior if Vault fails', 'woocommerce-paypal-payments' ),
-				'type'         => 'select',
-				'class'        => array(),
-				'input_class'  => array( 'wc-enhanced-select' ),
-				'default'      => 'void_auth',
-				'desc_tip'     => true,
-				'label'        => __( 'Determines the capture behavior for subscriptions if saving the payment method failed. This setting only applies when the intent capture is configured.', 'woocommerce-paypal-payments' ),
-				'description'  => __( 'By default, subscription payments are captured only when saving the payment method was successful. Without a saved payment method, automatic renewal payments are not possible.', 'woocommerce-paypal-payments' ),
-				'options'      => array(
+				'title'                => __( 'Subscription capture behavior if Vault fails', 'woocommerce-paypal-payments' ),
+				'type'                 => 'select',
+				'class'                => array(),
+				'input_class'          => array( 'wc-enhanced-select' ),
+				'default'              => 'void_auth',
+				'desc_tip'             => true,
+				'description'          => __( 'By default, subscription payments are captured only when saving the payment method was successful. Without a saved payment method, automatic renewal payments are not possible.', 'woocommerce-paypal-payments' ),
+				'description_with_tip' => __( 'Determines the capture behavior for subscriptions if saving the payment method failed. This setting only applies when the intent capture is configured.', 'woocommerce-paypal-payments' ),
+				'options'              => array(
 					'void_auth'    => __( 'Void authorization & fail the order/subscription', 'woocommerce-paypal-payments' ),
 					'capture_auth' => __( 'Capture authorized payment & set subscription to Manual Renewal', 'woocommerce-paypal-payments' ),
 				),
-				'screens'      => array(
+				'screens'              => array(
 					State::STATE_ONBOARDED,
 				),
-				'requirements' => array(),
-				'gateway'      => array( 'paypal', 'dcc' ),
+				'requirements'         => array(),
+				'gateway'              => array( 'paypal', 'dcc' ),
 			),
 			'logging_enabled'                        => array(
 				'title'        => __( 'Logging', 'woocommerce-paypal-payments' ),
@@ -917,7 +917,7 @@ return array(
 				'requirements'      => array(),
 				'gateway'           => 'paypal',
 			),
-			'card_billing_data_mode'             => array(
+			'card_billing_data_mode'                 => array(
 				'title'        => __( 'Card billing data handling', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
 				'class'        => array(),
@@ -937,7 +937,7 @@ return array(
 				'requirements' => array(),
 				'gateway'      => array( 'paypal', CardButtonGateway::ID ),
 			),
-			'allow_card_button_gateway'          => array(
+			'allow_card_button_gateway'              => array(
 				'title'        => __( 'Separate Card Button from PayPal gateway', 'woocommerce-paypal-payments' ),
 				'type'         => 'checkbox',
 				'desc_tip'     => true,

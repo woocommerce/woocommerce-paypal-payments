@@ -433,6 +433,10 @@ $data_rows_html
 				<?php if ( $description ) : ?>
 				<p class="<?php echo 'ppcp-heading' === $config['type'] ? '' : 'description'; ?>"><?php echo wp_kses_post( $description ); ?></p>
 				<?php endif; ?>
+
+				<?php if ( isset( $config['description_with_tip'] ) && $config['description_with_tip'] ) : ?>
+					<p class="<?php echo 'description'; ?>"><?php echo wp_kses_post( $config['description_with_tip'] ); ?></p>
+				<?php endif; ?>
 			</td>
 		</tr>
 			<?php
