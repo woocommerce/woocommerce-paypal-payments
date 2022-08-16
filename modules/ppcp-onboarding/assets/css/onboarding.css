@@ -191,3 +191,22 @@ ul.ppcp-onboarding-options-sublist {
 .ppcp-right-align {
 	margin-left: auto;
 }
+
+@media (max-width: 1200px) {
+	.ppcp-settings-page-header {
+		display: block;
+	}
+
+	.ppcp-settings-page-header .ppcp-right-align {
+		display: block;
+		margin-left: 0;
+	}
+
+	.ppcp-settings-page-header .button, .ppcp-settings-page-header a {
+		margin: 5px 10px 5px 0;
+	}
+
+	.ppcp-settings-page-header .ppcp-inline-only {
+		display: none;
+	}
+}

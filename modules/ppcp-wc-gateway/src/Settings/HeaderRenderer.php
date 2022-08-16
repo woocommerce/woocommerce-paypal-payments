@@ -61,7 +61,7 @@ class HeaderRenderer {
 		return '
 			<div class="ppcp-settings-page-header">
 				<img alt="PayPal" src="' . esc_url( $this->module_url ) . 'assets/images/paypal.png"/>
-				<h4> - The all-in-one checkout solution for WooCommerce</h4>
+				<h4> <span class="ppcp-inline-only">-</span> ' . __( 'The all-in-one checkout solution for WooCommerce', 'woocommerce-paypal-payments' ) . '</h4>
 				<a class="button" href="https://woocommerce.com/document/woocommerce-paypal-payments/">'
 					. __( 'Documentation', 'woocommerce-paypal-payments' ) .
 				'</a>
