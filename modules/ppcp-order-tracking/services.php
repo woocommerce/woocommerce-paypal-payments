@@ -30,6 +30,11 @@ return array(
 		);
 	},
 	'order-tracking.module.url'                => static function ( ContainerInterface $container ): string {
+		/**
+		 * The path cannot be false.
+		 *
+		 * @psalm-suppress PossiblyFalseArgument
+		 */
 		return plugins_url(
 			'/modules/ppcp-order-tracking/',
 			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'

@@ -235,7 +235,7 @@ class SettingsListener {
 	 *
 	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting was not found.
 	 */
-	public function listen() {
+	public function listen(): void {
 
 		if ( ! $this->is_valid_update_request() ) {
 			return;

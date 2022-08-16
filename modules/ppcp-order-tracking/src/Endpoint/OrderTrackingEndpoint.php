@@ -14,14 +14,14 @@ use Psr\Log\LoggerInterface;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\RequestTrait;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use WooCommerce\PayPalCommerce\ApiClient\Factory\SellerStatusFactory;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 
 /**
+ * The OrderTrackingEndpoint.
+ *
  * @psalm-type SupportedStatuses = 'SHIPPED'|'ON_HOLD'|'DELIVERED'|'CANCELLED'
  * @psalm-type TrackingInfo = array{transaction_id: string, status: SupportedStatuses, tracking_number?: string, carrier?: string}
  * @psalm-type RequestValues = array{transaction_id: string, status: SupportedStatuses, order_id: int, action: 'create'|'update', tracking_number?: string, carrier?: string}
@@ -62,27 +62,6 @@ class OrderTrackingEndpoint {
 	private $logger;
 
 	/**
-	 * The seller status factory.
-	 *
-	 * @var SellerStatusFactory
-	 */
-	private $seller_status_factory;
-
-	/**
-	 * The partner ID.
-	 *
-	 * @var string
-	 */
-	private $partner_id;
-
-	/**
-	 * The merchant ID.
-	 *
-	 * @var string
-	 */
-	private $merchant_id;
-
-	/**
 	 * PartnersEndpoint constructor.
 	 *
 	 * @param string          $host The host.
@@ -105,7 +84,7 @@ class OrderTrackingEndpoint {
 	/**
 	 * Handles the request.
 	 */
-	public function handle_request() {
+	public function handle_request(): void {
 		try {
 			$data         = $this->request_data->read_request( $this->nonce() );
 			$action       = $data['action'];
@@ -164,6 +143,11 @@ class OrderTrackingEndpoint {
 			throw $error;
 		}
 
+		/**
+		 * Need to ignore Method WP_Error::offsetGet does not exist
+		 *
+		 * @psalm-suppress UndefinedMethod
+		 */
 		$json        = json_decode( $response['body'] );
 		$status_code = (int) wp_remote_retrieve_response_code( $response );
 		if ( 200 !== $status_code ) {
@@ -185,7 +169,7 @@ class OrderTrackingEndpoint {
 			throw $error;
 		}
 
-		update_post_meta( $order_id, '_ppcp_paypal_tracking_number', $data['tracking_number'] );
+		update_post_meta( $order_id, '_ppcp_paypal_tracking_number', $data['tracking_number'] ?? '' );
 	}
 
 	/**
@@ -194,6 +178,7 @@ class OrderTrackingEndpoint {
 	 * @param int $wc_order_id The order ID.
 	 * @return array|null The tracking information.
 	 * @psalm-return TrackingInfo|null
+	 * @throws RuntimeException If problem getting.
 	 */
 	public function get_tracking_information( int $wc_order_id ) : ?array {
 		$wc_order = wc_get_order( $wc_order_id );
@@ -227,6 +212,11 @@ class OrderTrackingEndpoint {
 			throw $error;
 		}
 
+		/**
+		 * Need to ignore Method WP_Error::offsetGet does not exist
+		 *
+		 * @psalm-suppress UndefinedMethod
+		 */
 		$data        = json_decode( $response['body'] );
 		$status_code = (int) wp_remote_retrieve_response_code( $response );
 
@@ -234,12 +224,7 @@ class OrderTrackingEndpoint {
 			return null;
 		}
 
-		return array(
-			'transaction_id'  => $data->transaction_id ?? '',
-			'status'          => $data->status ?? '',
-			'tracking_number' => $data->tracking_number ?? '',
-			'carrier'         => $data->carrier ?? '',
-		);
+		return $this->extract_tracking_information( (array) $data );
 	}
 
 	/**
@@ -279,6 +264,11 @@ class OrderTrackingEndpoint {
 			throw $error;
 		}
 
+		/**
+		 * Need to ignore Method WP_Error::offsetGet does not exist
+		 *
+		 * @psalm-suppress UndefinedMethod
+		 */
 		$json        = json_decode( $response['body'] );
 		$status_code = (int) wp_remote_retrieve_response_code( $response );
 		if ( 204 !== $status_code ) {
@@ -300,7 +290,7 @@ class OrderTrackingEndpoint {
 			throw $error;
 		}
 
-		update_post_meta( $order_id, '_ppcp_paypal_tracking_number', $data['tracking_number'] );
+		update_post_meta( $order_id, '_ppcp_paypal_tracking_number', $data['tracking_number'] ?? '' );
 	}
 
 	/**
@@ -313,20 +303,33 @@ class OrderTrackingEndpoint {
 	}
 
 	/**
-	 * Extracts the needed tracking information from given request data.
+	 * Extracts the needed tracking information from given data.
 	 *
 	 * @param array $data The request data map.
 	 * @psalm-param RequestValues $data
 	 * @return array A map of tracking information keys to values.
 	 * @psalm-return TrackingInfo
+	 * @throws RuntimeException If problem extracting.
 	 */
 	protected function extract_tracking_information( array $data ): array {
-		return array(
-			'transaction_id'  => $data['transaction_id'] ?? '',
-			'tracking_number' => $data['tracking_number'] ?? '',
-			'status'          => $data['status'] ?? '',
-			'carrier'         => $data['carrier'] ?? '',
+		if ( empty( $data['transaction_id'] ) || empty( $data['status'] ) ) {
+			$this->logger->log( 'warning', 'Missing transaction_id or status.' );
+			throw new RuntimeException( 'Missing transaction_id or status.' );
+		}
+
+		$tracking_info = array(
+			'transaction_id' => $data['transaction_id'],
+			'status'         => $data['status'],
 		);
+
+		if ( ! empty( $data['status'] ) ) {
+			$tracking_info['status'] = $data['status'];
+		}
+
+		if ( ! empty( $data['carrier'] ) ) {
+			$tracking_info['carrier'] = $data['carrier'];
+		}
+		return $tracking_info;
 	}
 
 	/**

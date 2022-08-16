@@ -145,9 +145,13 @@ class OrderTrackingModule implements ModuleInterface {
 					return;
 				}
 
-				$wc_order       = wc_get_order( $order_id );
+				$wc_order = wc_get_order( $order_id );
+				if ( ! is_a( $wc_order, WC_Order::class ) ) {
+					return;
+				}
+
 				$transaction_id = $wc_order->get_transaction_id();
-				if ( ! is_a( $wc_order, WC_Order::class ) || empty( $transaction_id ) ) {
+				if ( empty( $transaction_id ) ) {
 					return;
 				}
 

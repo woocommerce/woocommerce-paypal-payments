@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\OrderTracking;
 
+use WC_Order;
 use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
 use WP_Post;
 
@@ -71,13 +72,17 @@ class MetaBoxRenderer {
 	 *
 	 * @param WP_Post $post The post object.
 	 */
-	public function render( WP_Post $post ) {
-		$wc_order      = wc_get_order( $post->ID );
+	public function render( WP_Post $post ): void {
+		$wc_order = wc_get_order( $post->ID );
+		if ( ! is_a( $wc_order, WC_Order::class ) ) {
+			return;
+		}
+
 		$tracking_info = $this->order_tracking_endpoint->get_tracking_information( $post->ID );
 
 		$tracking_is_not_added = empty( $tracking_info );
 
-		$transaction_id  = $tracking_info['transaction_id'] ?? $wc_order->get_transaction_id() ?? '';
+		$transaction_id  = $tracking_info['transaction_id'] ?? $wc_order->get_transaction_id() ?: '';
 		$tracking_number = $tracking_info['tracking_number'] ?? '';
 		$status_value    = $tracking_info['status'] ?? 'SHIPPED';
 		$carrier_value   = $tracking_info['carrier'] ?? '';
@@ -107,18 +112,18 @@ class MetaBoxRenderer {
 				<option value=""><?php echo esc_html__( 'Select Carrier', 'woocommerce-paypal-payments' ); ?></option>
 				<?php
 				foreach ( $carriers as $carrier ) :
-					$country  = $carrier['name'] ?? '';
-					$carriers = $carrier['items'] ?? '';
+					$country       = $carrier['name'] ?? '';
+					$carrier_items = $carrier['items'] ?? array();
 					?>
 					<optgroup label="<?php echo esc_attr( $country ); ?>">
-						<?php foreach ( $carriers as $carrier_code => $carrier_name ) : ?>
+						<?php foreach ( $carrier_items as $carrier_code => $carrier_name ) : ?>
 							<option value="<?php echo esc_attr( $carrier_code ); ?>" <?php selected( $carrier_value, $carrier_code ); ?>><?php echo esc_html( $carrier_name ); ?></option>
 						<?php endforeach; ?>
 					</optgroup>
 				<?php endforeach; ?>
 			</select>
 		</p>
-		<input type="hidden" class="ppcp-order_id" name="<?php echo esc_attr( self::NAME_PREFIX ); ?>[order_id]" value="<?php echo esc_html( $post->ID ); ?>"/>
+		<input type="hidden" class="ppcp-order_id" name="<?php echo esc_attr( self::NAME_PREFIX ); ?>[order_id]" value="<?php echo intval( $post->ID ); ?>"/>
 		<p>
 			<button type="button" class="button submit_tracking_info" data-action="<?php echo esc_attr( $action ); ?>"><?php echo esc_html( ucfirst( $action ) ); ?></button></p>
 		<?php
