@@ -122,26 +122,10 @@ define( 'PPCP_FLAG_SEPARATE_APM_BUTTONS', apply_filters( 'woocommerce_paypal_pay
 		}
 	);
 
-	// Add "Settings", "Docs", "Support" links to Plugins screen.
+	// Add "Settings" link to Plugins screen.
 	add_filter(
 		'plugin_action_links_' . plugin_basename( __FILE__ ),
 		function( $links ) {
-			$links = array_merge(
-				array(
-					sprintf(
-						'<a href="%1$s">%2$s</a>',
-						'https://woocommerce.com/document/woocommerce-paypal-payments/',
-						__( 'Docs', 'woocommerce-paypal-payments' )
-					),
-					sprintf(
-						'<a href="%1$s">%2$s</a>',
-						'https://woocommerce.com/my-account/create-a-ticket/',
-						__( 'Support', 'woocommerce-paypal-payments' )
-					),
-				),
-				$links
-			);
-
 			if ( ! is_woocommerce_activated() ) {
 				return $links;
 			}
@@ -157,6 +141,44 @@ define( 'PPCP_FLAG_SEPARATE_APM_BUTTONS', apply_filters( 'woocommerce_paypal_pay
 
 			return $links;
 		}
+	);
+
+	// Add links below the description on the Plugins page.
+	add_filter(
+		'plugin_row_meta',
+		function( $links, $file ) {
+			if ( plugin_basename( __FILE__ ) !== $file ) {
+				return $links;
+			}
+
+			return array_merge(
+				$links,
+				array(
+					sprintf(
+						'<a href="%1$s">%2$s</a>',
+						'https://woocommerce.com/document/woocommerce-paypal-payments/',
+						__( 'Documentation', 'woocommerce-paypal-payments' )
+					),
+					sprintf(
+						'<a href="%1$s">%2$s</a>',
+						'https://woocommerce.com/my-account/create-a-ticket/',
+						__( 'Get help', 'woocommerce-paypal-payments' )
+					),
+					sprintf(
+						'<a href="%1$s">%2$s</a>',
+						'https://woocommerce.com/feature-requests/woocommerce-paypal-payments/',
+						__( 'Request a feature', 'woocommerce-paypal-payments' )
+					),
+					sprintf(
+						'<a href="%1$s">%2$s</a>',
+						'https://github.com/woocommerce/woocommerce-paypal-payments/issues/new?assignees=&labels=type%3A+bug&template=bug_report.md',
+						__( 'Submit a bug', 'woocommerce-paypal-payments' )
+					),
+				)
+			);
+		},
+		10,
+		2
 	);
 
 	/**
