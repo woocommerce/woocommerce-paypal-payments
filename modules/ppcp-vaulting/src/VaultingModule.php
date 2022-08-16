@@ -193,11 +193,11 @@ class VaultingModule implements ModuleInterface {
 					$logger->info( "Adding vaulting failure info to email for order #{$order->get_id()}." );
 
 					if ( $subscription_behavior_when_vault_fails === 'void_auth' ) {
-						echo wp_kses_post( '<p>The subscription payment failed because the payment method could not be saved. Please try again with a different payment method.</p>' );
+						echo wp_kses_post( '<p>' . __( 'The subscription payment failed because the payment method could not be saved. Please try again with a different payment method.', 'woocommerce-paypal-payments' ) . '</p>' );
 					}
 
 					if ( $subscription_behavior_when_vault_fails === 'capture_auth' ) {
-						echo wp_kses_post( '<p>Subscription set to Manual Renewal because the payment method could not be saved. To enable automatic renewal payments, please try a different payment method.</p>' );
+						echo wp_kses_post( '<p>' . __( 'Subscription set to Manual Renewal because the payment method could not be saved. To enable automatic renewal payments, please try a different payment method.', 'woocommerce-paypal-payments' ) . '</p>' );
 					}
 				}
 			}
