@@ -95,40 +95,29 @@ return array(
 	'wcgateway.credit-card-gateway'                        => static function ( ContainerInterface $container ): CreditCardGateway {
 		$order_processor     = $container->get( 'wcgateway.order-processor' );
 		$settings_renderer   = $container->get( 'wcgateway.settings.render' );
-		$authorized_payments = $container->get( 'wcgateway.processor.authorized-payments' );
 		$settings            = $container->get( 'wcgateway.settings' );
 		$module_url          = $container->get( 'wcgateway.url' );
 		$session_handler     = $container->get( 'session.handler' );
 		$refund_processor    = $container->get( 'wcgateway.processor.refunds' );
 		$state               = $container->get( 'onboarding.state' );
 		$transaction_url_provider = $container->get( 'wcgateway.transaction-url-provider' );
-		$payment_token_repository = $container->get( 'vaulting.repository.payment-token' );
-		$purchase_unit_factory = $container->get( 'api.factory.purchase-unit' );
-		$payer_factory = $container->get( 'api.factory.payer' );
-		$order_endpoint = $container->get( 'api.endpoint.order' );
 		$subscription_helper = $container->get( 'subscription.helper' );
 		$payments_endpoint = $container->get( 'api.endpoint.payments' );
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
-		$environment = $container->get( 'onboarding.environment' );
+		$vaulted_credit_card_handler = $container->get( 'vaulting.credit-card-handler' );
 		return new CreditCardGateway(
 			$settings_renderer,
 			$order_processor,
-			$authorized_payments,
 			$settings,
 			$module_url,
 			$session_handler,
 			$refund_processor,
 			$state,
 			$transaction_url_provider,
-			$payment_token_repository,
-			$purchase_unit_factory,
-			$container->get( 'api.factory.shipping-preference' ),
-			$payer_factory,
-			$order_endpoint,
 			$subscription_helper,
 			$logger,
-			$environment,
-			$payments_endpoint
+			$payments_endpoint,
+			$vaulted_credit_card_handler
 		);
 	},
 	'wcgateway.card-button-gateway'                        => static function ( ContainerInterface $container ): CardButtonGateway {

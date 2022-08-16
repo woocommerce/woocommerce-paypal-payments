@@ -57,4 +57,17 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
+	'vaulting.credit-card-handler'        => function( ContainerInterface $container ): VaultedCreditCardHandler {
+		return new VaultedCreditCardHandler(
+			$container->get( 'subscription.helper' ),
+			$container->get( 'vaulting.repository.payment-token' ),
+			$container->get( 'api.factory.purchase-unit' ),
+			$container->get( 'api.factory.payer' ),
+			$container->get( 'api.factory.shipping-preference' ),
+			$container->get( 'api.endpoint.order' ),
+			$container->get( 'onboarding.environment' ),
+			$container->get( 'wcgateway.processor.authorized-payments' ),
+			$container->get( 'wcgateway.settings' )
+		);
+	},
 );

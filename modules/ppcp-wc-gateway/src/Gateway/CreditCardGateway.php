@@ -11,28 +11,19 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
 use Exception;
 use Psr\Log\LoggerInterface;
+use WC_Customer;
 use WC_Order;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
-use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
-use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
-use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\Subscription\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
+use WooCommerce\PayPalCommerce\Vaulting\VaultedCreditCardHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\GatewayGenericException;
-use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
-use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
-use WooCommerce\PayPalCommerce\WcGateway\Processor\PaymentsStatusHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
-use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use Psr\Container\ContainerInterface;
 
@@ -41,8 +32,7 @@ use Psr\Container\ContainerInterface;
  */
 class CreditCardGateway extends \WC_Payment_Gateway_CC {
 
-	use ProcessPaymentTrait, OrderMetaTrait, TransactionIdHandlingTrait, PaymentsStatusHandlingTrait, FreeTrialHandlerTrait,
-		GatewaySettingsRendererTrait;
+	use ProcessPaymentTrait, GatewaySettingsRendererTrait;
 
 	const ID = 'ppcp-credit-card-gateway';
 
@@ -61,18 +51,18 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	protected $order_processor;
 
 	/**
-	 * The processor for authorized payments.
-	 *
-	 * @var AuthorizedPaymentsProcessor
-	 */
-	protected $authorized_payments_processor;
-
-	/**
 	 * The settings.
 	 *
 	 * @var ContainerInterface
 	 */
 	protected $config;
+
+	/**
+	 * The vaulted credit card handler.
+	 *
+	 * @var VaultedCreditCardHandler
+	 */
+	protected $vaulted_credit_card_handler;
 
 	/**
 	 * The URL to the module.
@@ -117,34 +107,6 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	private $payment_token_repository;
 
 	/**
-	 * The purchase unit factory.
-	 *
-	 * @var PurchaseUnitFactory
-	 */
-	private $purchase_unit_factory;
-
-	/**
-	 * The shipping_preference factory.
-	 *
-	 * @var ShippingPreferenceFactory
-	 */
-	private $shipping_preference_factory;
-
-	/**
-	 * The payer factory.
-	 *
-	 * @var PayerFactory
-	 */
-	private $payer_factory;
-
-	/**
-	 * The order endpoint.
-	 *
-	 * @var OrderEndpoint
-	 */
-	private $order_endpoint;
-
-	/**
 	 * The subscription helper.
 	 *
 	 * @var SubscriptionHelper
@@ -159,13 +121,6 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	protected $logger;
 
 	/**
-	 * The environment.
-	 *
-	 * @var Environment
-	 */
-	protected $environment;
-
-	/**
 	 * The payments endpoint
 	 *
 	 * @var PaymentsEndpoint
@@ -175,64 +130,46 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 	/**
 	 * CreditCardGateway constructor.
 	 *
-	 * @param SettingsRenderer            $settings_renderer The Settings Renderer.
-	 * @param OrderProcessor              $order_processor The Order processor.
-	 * @param AuthorizedPaymentsProcessor $authorized_payments_processor The Authorized Payments processor.
-	 * @param ContainerInterface          $config The settings.
-	 * @param string                      $module_url The URL to the module.
-	 * @param SessionHandler              $session_handler The Session Handler.
-	 * @param RefundProcessor             $refund_processor The refund processor.
-	 * @param State                       $state The state.
-	 * @param TransactionUrlProvider      $transaction_url_provider Service able to provide view transaction url base.
-	 * @param PaymentTokenRepository      $payment_token_repository The payment token repository.
-	 * @param PurchaseUnitFactory         $purchase_unit_factory The purchase unit factory.
-	 * @param ShippingPreferenceFactory   $shipping_preference_factory The shipping_preference factory.
-	 * @param PayerFactory                $payer_factory The payer factory.
-	 * @param OrderEndpoint               $order_endpoint The order endpoint.
-	 * @param SubscriptionHelper          $subscription_helper The subscription helper.
-	 * @param LoggerInterface             $logger The logger.
-	 * @param Environment                 $environment The environment.
-	 * @param PaymentsEndpoint            $payments_endpoint The payments endpoint.
+	 * @param SettingsRenderer         $settings_renderer The Settings Renderer.
+	 * @param OrderProcessor           $order_processor The Order processor.
+	 * @param ContainerInterface       $config The settings.
+	 * @param string                   $module_url The URL to the module.
+	 * @param SessionHandler           $session_handler The Session Handler.
+	 * @param RefundProcessor          $refund_processor The refund processor.
+	 * @param State                    $state The state.
+	 * @param TransactionUrlProvider   $transaction_url_provider Service able to provide view transaction url base.
+	 * @param SubscriptionHelper       $subscription_helper The subscription helper.
+	 * @param LoggerInterface          $logger The logger.
+	 * @param PaymentsEndpoint         $payments_endpoint The payments endpoint.
+	 * @param VaultedCreditCardHandler $vaulted_credit_card_handler The vaulted credit card handler.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
 		OrderProcessor $order_processor,
-		AuthorizedPaymentsProcessor $authorized_payments_processor,
 		ContainerInterface $config,
 		string $module_url,
 		SessionHandler $session_handler,
 		RefundProcessor $refund_processor,
 		State $state,
 		TransactionUrlProvider $transaction_url_provider,
-		PaymentTokenRepository $payment_token_repository,
-		PurchaseUnitFactory $purchase_unit_factory,
-		ShippingPreferenceFactory $shipping_preference_factory,
-		PayerFactory $payer_factory,
-		OrderEndpoint $order_endpoint,
 		SubscriptionHelper $subscription_helper,
 		LoggerInterface $logger,
-		Environment $environment,
-		PaymentsEndpoint $payments_endpoint
+		PaymentsEndpoint $payments_endpoint,
+		VaultedCreditCardHandler $vaulted_credit_card_handler
 	) {
-		$this->id                            = self::ID;
-		$this->settings_renderer             = $settings_renderer;
-		$this->order_processor               = $order_processor;
-		$this->authorized_payments_processor = $authorized_payments_processor;
-		$this->config                        = $config;
-		$this->module_url                    = $module_url;
-		$this->session_handler               = $session_handler;
-		$this->refund_processor              = $refund_processor;
-		$this->state                         = $state;
-		$this->transaction_url_provider      = $transaction_url_provider;
-		$this->payment_token_repository      = $payment_token_repository;
-		$this->purchase_unit_factory         = $purchase_unit_factory;
-		$this->shipping_preference_factory   = $shipping_preference_factory;
-		$this->payer_factory                 = $payer_factory;
-		$this->order_endpoint                = $order_endpoint;
-		$this->subscription_helper           = $subscription_helper;
-		$this->logger                        = $logger;
-		$this->environment                   = $environment;
-		$this->payments_endpoint             = $payments_endpoint;
+		$this->id                          = self::ID;
+		$this->settings_renderer           = $settings_renderer;
+		$this->order_processor             = $order_processor;
+		$this->config                      = $config;
+		$this->module_url                  = $module_url;
+		$this->session_handler             = $session_handler;
+		$this->refund_processor            = $refund_processor;
+		$this->state                       = $state;
+		$this->transaction_url_provider    = $transaction_url_provider;
+		$this->subscription_helper         = $subscription_helper;
+		$this->logger                      = $logger;
+		$this->payments_endpoint           = $payments_endpoint;
+		$this->vaulted_credit_card_handler = $vaulted_credit_card_handler;
 
 		if ( $state->current_state() === State::STATE_ONBOARDED ) {
 			$this->supports = array( 'refunds' );
@@ -424,98 +361,17 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		 * If customer has chosen a saved credit card payment.
 		 */
 		$saved_credit_card = filter_input( INPUT_POST, 'saved_credit_card', FILTER_SANITIZE_STRING );
-		$change_payment    = filter_input( INPUT_POST, 'woocommerce_change_payment', FILTER_SANITIZE_STRING );
-		if ( $saved_credit_card && ! isset( $change_payment ) ) {
-
-			$user_id  = (int) $wc_order->get_customer_id();
-			$customer = new \WC_Customer( $user_id );
-			$tokens   = $this->payment_token_repository->all_for_user_id( (int) $customer->get_id() );
-
-			$selected_token = null;
-			foreach ( $tokens as $token ) {
-				if ( $token->id() === $saved_credit_card ) {
-					$selected_token = $token;
-					break;
-				}
-			}
-
-			if ( ! $selected_token ) {
-				return $this->handle_payment_failure(
-					$wc_order,
-					new GatewayGenericException( new Exception( 'Saved card token not found.' ) )
-				);
-			}
-
-			$purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
-			$payer         = $this->payer_factory->from_customer( $customer );
-
-			$shipping_preference = $this->shipping_preference_factory->from_state(
-				$purchase_unit,
-				''
-			);
-
+		if ( $saved_credit_card ) {
 			try {
-				$order = $this->order_endpoint->create(
-					array( $purchase_unit ),
-					$shipping_preference,
-					$payer,
-					$selected_token
+				$wc_order = $this->vaulted_credit_card_handler->handle_payment(
+					$saved_credit_card,
+					$wc_order
 				);
-
-				$this->add_paypal_meta( $wc_order, $order, $this->environment );
-
-				if ( ! $order->status()->is( OrderStatus::COMPLETED ) ) {
-					return $this->handle_payment_failure(
-						$wc_order,
-						new GatewayGenericException( new Exception( "Unexpected status for order {$order->id()} using a saved card: {$order->status()->name()}." ) )
-					);
-				}
-
-				if ( ! in_array(
-					$order->intent(),
-					array( 'CAPTURE', 'AUTHORIZE' ),
-					true
-				) ) {
-					return $this->handle_payment_failure(
-						$wc_order,
-						new GatewayGenericException( new Exception( "Could neither capture nor authorize order {$order->id()} using a saved card. Status: {$order->status()->name()}. Intent: {$order->intent()}." ) )
-					);
-				}
-
-				if ( $order->intent() === 'AUTHORIZE' ) {
-					$order = $this->order_endpoint->authorize( $order );
-
-					$wc_order->update_meta_data( AuthorizedPaymentsProcessor::CAPTURED_META_KEY, 'false' );
-				}
-
-				$transaction_id = $this->get_paypal_order_transaction_id( $order );
-				if ( $transaction_id ) {
-					$this->update_transaction_id( $transaction_id, $wc_order );
-				}
-
-				$this->handle_new_order_status( $order, $wc_order );
-
-				if ( $this->is_free_trial_order( $wc_order ) ) {
-					$this->authorized_payments_processor->void_authorizations( $order );
-					$wc_order->payment_complete();
-				} elseif ( $this->config->has( 'intent' ) && strtoupper( (string) $this->config->get( 'intent' ) ) === 'CAPTURE' ) {
-					$this->authorized_payments_processor->capture_authorized_payment( $wc_order );
-				}
 
 				return $this->handle_payment_success( $wc_order );
+
 			} catch ( RuntimeException $error ) {
 				return $this->handle_payment_failure( $wc_order, $error );
-			}
-		}
-
-		/**
-		 * If customer has chosen change Subscription payment.
-		 */
-		if ( $this->subscription_helper->has_subscription( $order_id ) && $this->subscription_helper->is_subscription_change_payment() ) {
-			if ( $saved_credit_card ) {
-				update_post_meta( $order_id, 'payment_token_id', $saved_credit_card );
-
-				return $this->handle_payment_success( $wc_order );
 			}
 		}
 
