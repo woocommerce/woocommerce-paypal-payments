@@ -12,8 +12,8 @@ class WC_Payment_Gateway
 
     }
 
-    protected function get_return_url($wcOrder) {
-        return $wcOrder;
+    protected function get_return_url($order = null) {
+        return '';
     }
 
     public function process_admin_options() {
