@@ -120,14 +120,14 @@ class OrderTrackingEndpoint {
 			'trackers' => array( $data ),
 		);
 
-		$args = array(
+		$args     = array(
 			'method'  => 'POST',
 			'headers' => $this->request_headers(),
 			'body'    => wp_json_encode( $body ),
 		);
-        $response = $this->request( $url, $args );
+		$response = $this->request( $url, $args );
 
-        if ( is_wp_error( $response ) ) {
+		if ( is_wp_error( $response ) ) {
 			$error = new RuntimeException(
 				'Could not create order tracking information.'
 			);
