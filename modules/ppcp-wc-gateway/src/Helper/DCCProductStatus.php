@@ -9,9 +9,9 @@ declare( strict_types=1 );
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Helper;
 
+use Throwable;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatusProduct;
-use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
@@ -22,7 +22,7 @@ class DCCProductStatus {
 	/**
 	 * Caches the status for the current load.
 	 *
-	 * @var string|null
+	 * @var bool|null
 	 */
 	private $current_status_cache;
 	/**
@@ -57,7 +57,6 @@ class DCCProductStatus {
 	 * Whether the active/subscribed products support DCC.
 	 *
 	 * @return bool
-	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException Should a setting not be found.
 	 */
 	public function dcc_is_active() : bool {
 		if ( is_bool( $this->current_status_cache ) ) {
@@ -70,7 +69,7 @@ class DCCProductStatus {
 
 		try {
 			$seller_status = $this->partners_endpoint->seller_status();
-		} catch ( RuntimeException $error ) {
+		} catch ( Throwable $error ) {
 			$this->current_status_cache = false;
 			return false;
 		}
