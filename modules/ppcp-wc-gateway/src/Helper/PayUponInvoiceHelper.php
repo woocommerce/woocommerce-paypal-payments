@@ -104,7 +104,7 @@ class PayUponInvoiceHelper {
 	 * @return bool
 	 */
 	public function is_pui_ready_in_admin(): bool {
-		if ( $this->pui_product_status->pui_is_active() && $this->shop_country === 'DE' ) {
+		if ( $this->shop_country === 'DE' && $this->pui_product_status->pui_is_active() ) {
 			return true;
 		}
 
