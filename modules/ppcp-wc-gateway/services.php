@@ -2425,8 +2425,9 @@ return array(
 	},
 	'order-tracking.is-tracking-available'                 => static function ( ContainerInterface $container ): bool {
 		try {
-			/* @var Bearer $bearer The bearer. */
 			$bearer = $container->get( 'api.bearer' );
+			assert( $bearer instanceof Bearer );
+
 			$token = $bearer->bearer();
 			return $token->is_tracking_available();
 		} catch ( RuntimeException $exception ) {
@@ -2434,12 +2435,9 @@ return array(
 		}
 	},
 	'wcgateway.settings.should-disable-tracking-checkbox'  => static function ( ContainerInterface $container ): bool {
-		/**
-		 * The PUI helper.
-		 *
-		 * @var PayUponInvoiceHelper $pui_helper
-		 */
 		$pui_helper = $container->get( 'wcgateway.pay-upon-invoice-helper' );
+		assert( $pui_helper instanceof PayUponInvoiceHelper );
+
 		$is_tracking_available = $container->get( 'order-tracking.is-tracking-available' );
 
 		if ( ! $is_tracking_available ) {

@@ -45,19 +45,12 @@ class OrderTrackingModule implements ModuleInterface {
 	 * @throws NotFoundException
 	 */
 	public function run( ContainerInterface $c ): void {
-		/**
-		 * The Settings.
-		 *
-		 * @var Settings $settings
-		 */
 		$settings = $c->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings );
 
-		/**
-		 * The PUI helper.
-		 *
-		 * @var PayUponInvoiceHelper $pui_helper
-		 */
 		$pui_helper = $c->get( 'wcgateway.pay-upon-invoice-helper' );
+		assert( $pui_helper instanceof PayUponInvoiceHelper );
+
 		if ( $pui_helper->is_pui_ready_in_admin() ) {
 			$settings->set( 'tracking_enabled', true );
 			$settings->persist();
@@ -73,19 +66,11 @@ class OrderTrackingModule implements ModuleInterface {
 		assert( $asset_loader instanceof OrderEditPageAssets );
 		$is_paypal_order_edit_page = $c->get( 'order-tracking.is-paypal-order-edit-page' );
 
-		/**
-		 * The tracking Endpoint.
-		 *
-		 * @var OrderTrackingEndpoint $endpoint
-		 */
 		$endpoint = $c->get( 'order-tracking.endpoint.controller' );
+		assert( $endpoint instanceof OrderTrackingEndpoint );
 
-		/**
-		 * The logger.
-		 *
-		 * @var LoggerInterface
-		 */
 		$logger = $c->get( 'woocommerce.logger.woocommerce' );
+		assert( $logger instanceof LoggerInterface );
 
 		add_action(
 			'init',
