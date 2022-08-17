@@ -1,13 +1,27 @@
 *** Changelog ***
 
-= 1.9.1 - TBD =
+= 1.9.2 - 2022-08-09 =
+* Fix - Do not allow birth date older than 100 years for PUI. #743
+* Fix - Store the customer id for vaulted payment method in usermeta to not lose vaulted methods after the invoice prefix change. #698
+* Fix - Capture Virtual-Only Orders setting did not auto-capture subscription renewal payments. #626
+* Fix - Voiding authorization at PayPal did not update the status/order notes. #712
+* Fix - PayPal scripts were loading on pages without smart buttons or Pay Later messaging. #750
+* Fix - Do not show links for unavailable gateways settings pages. #753
+* Fix - The smart buttons were not loaded on single product page if a subscription product exists in the cart. #703
+* Fix - DCC was causing other gateways to disappear after checkout validation error. #757
+* Fix - Buttons not loading on single product page with default settings when product is in cart. #777
+* Enhancement - Improve Checkout Field Validation Message. #739
+* Enhancement - Handle PAYER_ACTION_REQUIRED error. #759
+
+= 1.9.1 - 2022-07-25 =
 * Fix - ITEM_TOTAL_MISMATCH error when checking out with multiple products #721
 * Fix - Unable to purchase a product with Credit card button in pay for order page #718
 * Fix - Pay Later messaging only displayed when smart button is active on the same page #283
 * Fix - Pay Later messaging displayed for out of stock variable products or with no variation selected #667
 * Fix - Placeholders and card type detection not working for PayPal Card Processing (260) #685
-* Fix - PUI gateway is displayed with unsupported store currency #711 
-* Enhancement - Missing PayPal fee in WC order details for PUI purchase #714 
+* Fix - PUI gateway is displayed with unsupported store currency #711
+* Fix - Wrong PUI locale sent causing error PAYMENT_SOURCE_CANNOT_BE_USED #741
+* Enhancement - Missing PayPal fee in WC order details for PUI purchase #714
 * Enhancement - Skip loading of PUI js file on all pages where PUI gateway is not displayed #723
 * Enhancement - PUI feature capitalization not consistent #724
 

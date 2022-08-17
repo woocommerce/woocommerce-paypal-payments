@@ -133,6 +133,7 @@ return array(
 			$settings,
 			$early_order_handler,
 			$registration_needed,
+			$container->get( 'wcgateway.settings.card_billing_data_mode' ),
 			$logger
 		);
 	},

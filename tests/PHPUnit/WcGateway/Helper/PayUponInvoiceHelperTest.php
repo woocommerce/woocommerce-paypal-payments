@@ -14,8 +14,7 @@ class PayUponInvoiceHelperTest extends TestCase
 	 */
 	public function testValidateBirthDate($input, $output)
 	{
-        $pui_product_status = Mockery::mock(PayUponInvoiceProductStatus::class);
-		$this->assertSame((new PayUponInvoiceHelper('DE', $pui_product_status))->validate_birth_date($input), $output);
+		$this->assertSame((new CheckoutHelper())->validate_birth_date($input), $output);
 	}
 
 	public function datesProvider(): array{
@@ -28,6 +27,7 @@ class PayUponInvoiceHelperTest extends TestCase
 			['1942-02-31', false],
 			['01-01-1942', false],
 			['1942-01-01', true],
+			['0001-01-01', false],
 		];
 	}
 
