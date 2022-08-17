@@ -17,6 +17,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
+use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\FeesRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
@@ -296,15 +297,30 @@ class WCGatewayModule implements ModuleInterface {
 
 				$paypal_gateway_enabled = wc_string_to_bool( $paypal_gateway->get_option( 'enabled' ) );
 
-				$methods[]   = $paypal_gateway;
-				$dcc_applies = $container->get( 'api.helpers.dccapplies' );
+				$methods[] = $paypal_gateway;
 
-				/**
-				 * The DCC Applies object.
-				 *
-				 * @var DccApplies $dcc_applies
-				 */
-				if ( $dcc_applies->for_country_currency() ) {
+				$onboarding_state = $container->get( 'onboarding.state' );
+				assert( $onboarding_state instanceof State );
+
+				$settings = $container->get( 'wcgateway.settings' );
+				assert( $settings instanceof ContainerInterface );
+
+				$is_our_page = $container->get( 'wcgateway.is-ppcp-settings-page' );
+
+				if ( $onboarding_state->current_state() !== State::STATE_ONBOARDED ) {
+					return $methods;
+				}
+
+				$dcc_applies = $container->get( 'api.helpers.dccapplies' );
+				assert( $dcc_applies instanceof DccApplies );
+
+				if ( $dcc_applies->for_country_currency() &&
+					// Show only if allowed in PayPal account, except when on our settings pages.
+					// Checking only the cached value instead of the full DCCProductStatus check
+					// to avoid the API requests all the time.
+					// So if waiting for account approval, then it will update only when visiting our pages.
+					( $is_our_page || ( $settings->has( 'products_dcc_enabled' ) && $settings->get( 'products_dcc_enabled' ) ) )
+				) {
 					$methods[] = $container->get( 'wcgateway.credit-card-gateway' );
 				}
 
@@ -312,7 +328,11 @@ class WCGatewayModule implements ModuleInterface {
 					$methods[] = $container->get( 'wcgateway.card-button-gateway' );
 				}
 
-				if ( 'DE' === $container->get( 'api.shop.country' ) ) {
+				$shop_country = $container->get( 'api.shop.country' );
+
+				if ( 'DE' === $shop_country &&
+					( $is_our_page || ( $settings->has( 'products_pui_enabled' ) && $settings->get( 'products_pui_enabled' ) ) )
+				) {
 					$methods[] = $container->get( 'wcgateway.pay-upon-invoice-gateway' );
 				}
 
