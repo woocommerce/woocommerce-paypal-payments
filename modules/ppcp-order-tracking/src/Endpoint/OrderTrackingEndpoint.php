@@ -95,7 +95,7 @@ class OrderTrackingEndpoint {
 			$action_message = $action === 'create' ? 'created' : 'updated';
 			$message        = sprintf(
 			// translators: %1$s is the action message (created or updated).
-				_x( 'successfully %1$s', 'tracking inof success message', 'woocommerce-paypal-payments' ),
+				_x( 'successfully %1$s', 'tracking info success message', 'woocommerce-paypal-payments' ),
 				esc_html( $action_message )
 			);
 
@@ -125,10 +125,9 @@ class OrderTrackingEndpoint {
 			'headers' => $this->request_headers(),
 			'body'    => wp_json_encode( $body ),
 		);
+        $response = $this->request( $url, $args );
 
-		$response = $this->request( $url, $args );
-
-		if ( is_wp_error( $response ) ) {
+        if ( is_wp_error( $response ) ) {
 			$error = new RuntimeException(
 				'Could not create order tracking information.'
 			);
@@ -322,8 +321,8 @@ class OrderTrackingEndpoint {
 			'status'         => $data['status'],
 		);
 
-		if ( ! empty( $data['status'] ) ) {
-			$tracking_info['status'] = $data['status'];
+		if ( ! empty( $data['tracking_number'] ) ) {
+			$tracking_info['tracking_number'] = $data['tracking_number'];
 		}
 
 		if ( ! empty( $data['carrier'] ) ) {

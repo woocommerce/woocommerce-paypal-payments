@@ -63,14 +63,6 @@ class OrderTrackingModule implements ModuleInterface {
 			$settings->persist();
 		}
 
-		/**
-		 * The settings listener.
-		 *
-		 * @var SettingsListener $listener
-		 */
-		$listener = $c->get( 'wcgateway.settings.listener' );
-		$listener->listen_for_tracking_enabled();
-
 		$tracking_enabled = $settings->has( 'tracking_enabled' ) && $settings->get( 'tracking_enabled' );
 
 		if ( ! $tracking_enabled ) {
