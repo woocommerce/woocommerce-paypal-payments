@@ -29,6 +29,8 @@ use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\GatewayWithoutPayPalAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
@@ -305,7 +307,8 @@ class WCGatewayModule implements ModuleInterface {
 				$settings = $container->get( 'wcgateway.settings' );
 				assert( $settings instanceof ContainerInterface );
 
-				$is_our_page = $container->get( 'wcgateway.is-ppcp-settings-page' );
+				$is_our_page           = $container->get( 'wcgateway.is-ppcp-settings-page' );
+				$is_gateways_list_page = $container->get( 'wcgateway.is-wc-gateways-list-page' );
 
 				if ( $onboarding_state->current_state() !== State::STATE_ONBOARDED ) {
 					return $methods;
@@ -314,12 +317,17 @@ class WCGatewayModule implements ModuleInterface {
 				$dcc_applies = $container->get( 'api.helpers.dccapplies' );
 				assert( $dcc_applies instanceof DccApplies );
 
+				$dcc_product_status = $container->get( 'wcgateway.helper.dcc-product-status' );
+				assert( $dcc_product_status instanceof DCCProductStatus );
+
 				if ( $dcc_applies->for_country_currency() &&
 					// Show only if allowed in PayPal account, except when on our settings pages.
-					// Checking only the cached value instead of the full DCCProductStatus check
-					// to avoid the API requests all the time.
-					// So if waiting for account approval, then it will update only when visiting our pages.
-					( $is_our_page || ( $settings->has( 'products_dcc_enabled' ) && $settings->get( 'products_dcc_enabled' ) ) )
+					// Performing the full DCCProductStatus check only when on the gateway list page
+					// to avoid sending the API requests all the time.
+					( $is_our_page ||
+						( $is_gateways_list_page && $dcc_product_status->dcc_is_active() ) ||
+						( $settings->has( 'products_dcc_enabled' ) && $settings->get( 'products_dcc_enabled' ) )
+					)
 				) {
 					$methods[] = $container->get( 'wcgateway.credit-card-gateway' );
 				}
@@ -328,10 +336,16 @@ class WCGatewayModule implements ModuleInterface {
 					$methods[] = $container->get( 'wcgateway.card-button-gateway' );
 				}
 
+				$pui_product_status = $container->get( 'wcgateway.pay-upon-invoice-product-status' );
+				assert( $pui_product_status instanceof PayUponInvoiceProductStatus );
+
 				$shop_country = $container->get( 'api.shop.country' );
 
 				if ( 'DE' === $shop_country &&
-					( $is_our_page || ( $settings->has( 'products_pui_enabled' ) && $settings->get( 'products_pui_enabled' ) ) )
+					( $is_our_page ||
+						( $is_gateways_list_page && $pui_product_status->pui_is_active() ) ||
+						( $settings->has( 'products_pui_enabled' ) && $settings->get( 'products_pui_enabled' ) )
+					)
 				) {
 					$methods[] = $container->get( 'wcgateway.pay-upon-invoice-gateway' );
 				}

@@ -141,10 +141,14 @@ return array(
 		$settings       = $container->get( 'wcgateway.settings' );
 		return new DisableGateways( $session_handler, $settings );
 	},
+
 	'wcgateway.is-wc-payments-page'                        => static function ( ContainerInterface $container ): bool {
 		$page = isset( $_GET['page'] ) ? sanitize_text_field( wp_unslash( $_GET['page'] ) ) : '';
 		$tab = isset( $_GET['tab'] ) ? sanitize_text_field( wp_unslash( $_GET['tab'] ) ) : '';
 		return 'wc-settings' === $page && 'checkout' === $tab;
+	},
+	'wcgateway.is-wc-gateways-list-page'                   => static function ( ContainerInterface $container ): bool {
+		return $container->get( 'wcgateway.is-wc-payments-page' ) && ! isset( $_GET['section'] );
 	},
 
 	'wcgateway.is-ppcp-settings-page'                      => static function ( ContainerInterface $container ): bool {
