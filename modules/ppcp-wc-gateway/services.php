@@ -200,7 +200,8 @@ return array(
 	'wcgateway.settings.sections-renderer'                 => static function ( ContainerInterface $container ): SectionsRenderer {
 		return new SectionsRenderer(
 			$container->get( 'wcgateway.current-ppcp-settings-page-id' ),
-			$container->get( 'wcgateway.settings.sections' )
+			$container->get( 'wcgateway.settings.sections' ),
+			$container->get( 'onboarding.state' )
 		);
 	},
 	'wcgateway.settings.sections'                          => static function ( ContainerInterface $container ): array {
