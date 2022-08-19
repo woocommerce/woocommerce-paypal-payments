@@ -2303,8 +2303,7 @@ return array(
 	'wcgateway.pay-upon-invoice-helper'                    => static function( ContainerInterface $container ): PayUponInvoiceHelper {
 		return new PayUponInvoiceHelper(
 			$container->get( 'wcgateway.checkout-helper' ),
-			$container->get( 'api.shop.country' ),
-			$container->get( 'wcgateway.pay-upon-invoice-product-status' )
+			$container->get( 'wcgateway.settings' )
 		);
 	},
 	'wcgateway.pay-upon-invoice-product-status'            => static function( ContainerInterface $container ): PayUponInvoiceProductStatus {

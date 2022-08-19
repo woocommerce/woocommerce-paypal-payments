@@ -26,13 +26,6 @@ class PayUponInvoiceHelper {
 	protected $checkout_helper;
 
 	/**
-	 * The selected shop country.
-	 *
-	 * @var string
-	 */
-	protected $shop_country;
-
-	/**
 	 * The settings.
 	 *
 	 * @var Settings
@@ -43,13 +36,11 @@ class PayUponInvoiceHelper {
 	 * PayUponInvoiceHelper constructor.
 	 *
 	 * @param CheckoutHelper $checkout_helper The checkout helper.
-	 * @param string         $shop_country The selected shop country.
 	 * @param Settings       $settings The Settings.
 	 */
-	public function __construct( CheckoutHelper $checkout_helper, string $shop_country, Settings $settings ) {
+	public function __construct( CheckoutHelper $checkout_helper, Settings $settings ) {
 
 		$this->checkout_helper = $checkout_helper;
-		$this->shop_country    = $shop_country;
 		$this->settings        = $settings;
 	}
 
