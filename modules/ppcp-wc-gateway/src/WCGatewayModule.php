@@ -17,6 +17,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
+use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\FeesRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
@@ -28,6 +29,8 @@ use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\GatewayWithoutPayPalAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
@@ -300,15 +303,36 @@ class WCGatewayModule implements ModuleInterface {
 
 				$paypal_gateway_enabled = wc_string_to_bool( $paypal_gateway->get_option( 'enabled' ) );
 
-				$methods[]   = $paypal_gateway;
-				$dcc_applies = $container->get( 'api.helpers.dccapplies' );
+				$methods[] = $paypal_gateway;
 
-				/**
-				 * The DCC Applies object.
-				 *
-				 * @var DccApplies $dcc_applies
-				 */
-				if ( $dcc_applies->for_country_currency() ) {
+				$onboarding_state = $container->get( 'onboarding.state' );
+				assert( $onboarding_state instanceof State );
+
+				$settings = $container->get( 'wcgateway.settings' );
+				assert( $settings instanceof ContainerInterface );
+
+				$is_our_page           = $container->get( 'wcgateway.is-ppcp-settings-page' );
+				$is_gateways_list_page = $container->get( 'wcgateway.is-wc-gateways-list-page' );
+
+				if ( $onboarding_state->current_state() !== State::STATE_ONBOARDED ) {
+					return $methods;
+				}
+
+				$dcc_applies = $container->get( 'api.helpers.dccapplies' );
+				assert( $dcc_applies instanceof DccApplies );
+
+				$dcc_product_status = $container->get( 'wcgateway.helper.dcc-product-status' );
+				assert( $dcc_product_status instanceof DCCProductStatus );
+
+				if ( $dcc_applies->for_country_currency() &&
+					// Show only if allowed in PayPal account, except when on our settings pages.
+					// Performing the full DCCProductStatus check only when on the gateway list page
+					// to avoid sending the API requests all the time.
+					( $is_our_page ||
+						( $is_gateways_list_page && $dcc_product_status->dcc_is_active() ) ||
+						( $settings->has( 'products_dcc_enabled' ) && $settings->get( 'products_dcc_enabled' ) )
+					)
+				) {
 					$methods[] = $container->get( 'wcgateway.credit-card-gateway' );
 				}
 
@@ -316,11 +340,21 @@ class WCGatewayModule implements ModuleInterface {
 					$methods[] = $container->get( 'wcgateway.card-button-gateway' );
 				}
 
-				if ( 'DE' === $container->get( 'api.shop.country' ) ) {
+				$pui_product_status = $container->get( 'wcgateway.pay-upon-invoice-product-status' );
+				assert( $pui_product_status instanceof PayUponInvoiceProductStatus );
+
+				$shop_country = $container->get( 'api.shop.country' );
+
+				if ( 'DE' === $shop_country &&
+					( $is_our_page ||
+						( $is_gateways_list_page && $pui_product_status->pui_is_active() ) ||
+						( $settings->has( 'products_pui_enabled' ) && $settings->get( 'products_pui_enabled' ) )
+					)
+				) {
 					$methods[] = $container->get( 'wcgateway.pay-upon-invoice-gateway' );
 				}
 
-				if ( defined( 'PPCP_FLAG_OXXO' ) && PPCP_FLAG_OXXO === true ) {
+				if ( defined( 'PPCP_FLAG_OXXO' ) && PPCP_FLAG_OXXO === true && 'MX' === $shop_country ) {
 					$methods[] = $container->get( 'wcgateway.oxxo-gateway' );
 				}
 
