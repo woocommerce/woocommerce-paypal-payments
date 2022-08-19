@@ -56,7 +56,7 @@ class CompatModule implements ModuleInterface {
 	 * @param ContainerInterface|null $container The Container.
 	 * @return void
 	 */
-	private function initialize_ppec_compat_layer( $container ): void {
+	private function initialize_ppec_compat_layer( ?ContainerInterface $container ): void {
 		// Process PPEC subscription renewals through PayPal Payments.
 		$handler = $container->get( 'compat.ppec.subscriptions-handler' );
 		$handler->maybe_hook();
