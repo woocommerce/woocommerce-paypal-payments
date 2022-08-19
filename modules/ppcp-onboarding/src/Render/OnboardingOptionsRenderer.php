@@ -103,6 +103,44 @@ class OnboardingOptionsRenderer {
 
 		$is_us_shop = 'US' === $this->country;
 
+		$basic_table_rows = array(
+			$this->render_table_row(
+				__( 'Credit & Debit Card form fields', 'woocommerce-paypal-payments' ),
+				__( 'Prebuilt user experience', 'woocommerce-paypal-payments' )
+			),
+			! $is_us_shop ? '' : $this->render_table_row(
+				__( 'Credit & Debit Card pricing', 'woocommerce-paypal-payments' ),
+				__( '3.49% + $0.49', 'woocommerce-paypal-payments' ),
+				'',
+				__( 'for US domestic transactions', 'woocommerce-paypal-payments' )
+			),
+			$this->render_table_row(
+				__( 'Seller Protection', 'woocommerce-paypal-payments' ),
+				__( 'Yes', 'woocommerce-paypal-payments' ),
+				__( 'No matter what you sell, Seller Protection can help you avoid chargebacks, reversals, and fees on eligible PayPal payment transactions — even when a customer has filed a dispute.', 'woocommerce-paypal-payments' ),
+				__( 'for eligible PayPal transactions', 'woocommerce-paypal-payments' )
+			),
+			$this->render_table_row(
+				__( 'Seller Account Type', 'woocommerce-paypal-payments' ),
+				__( 'Business or Casual', 'woocommerce-paypal-payments' ),
+				__( 'For Standard payments, Casual sellers may connect their Personal PayPal account in eligible countries to sell on WooCommerce. For Advanced payments, a Business PayPal account is required.', 'woocommerce-paypal-payments' )
+			),
+		);
+		$items[]          = '
+<li ' . ( ! $is_shop_supports_dcc ? 'style="display: none;"' : '' ) . '>
+	<label>
+		<input type="radio" id="ppcp-onboarding-dcc-basic" name="ppcp_onboarding_dcc" value="basic" ' .
+			( ! $is_shop_supports_dcc ? 'checked' : '' ) .
+			' data-screen-url="' . $this->get_screen_url( 'basic' ) . '"' .
+			'> ' .
+		__( 'Standard Card Processing', 'woocommerce-paypal-payments' ) . '
+	</label>
+	' . $this->render_tooltip( __( 'Card transactions are managed by PayPal, which simplifies compliance requirements for you.', 'woocommerce-paypal-payments' ) ) . '
+	<table>
+		' . implode( $basic_table_rows ) . '
+	</table>
+</li>';
+
 		if ( $is_shop_supports_dcc ) {
 			$dcc_table_rows = array(
 				$this->render_table_row(
@@ -148,7 +186,7 @@ class OnboardingOptionsRenderer {
 	<label>
 		<input type="radio" id="ppcp-onboarding-dcc-acdc" name="ppcp_onboarding_dcc" value="acdc" checked ' .
 				'data-screen-url="' . $this->get_screen_url( 'acdc' ) . '"> ' .
-			__( 'Advanced Card Processing', 'woocommerce-paypal-payments' ) . '
+				__( 'Advanced Card Processing', 'woocommerce-paypal-payments' ) . '
 	</label>
 	' . $this->render_tooltip( __( 'PayPal acts as the payment processor for card transactions. You can add optional features like Chargeback Protection for more security.', 'woocommerce-paypal-payments' ) ) . '
 	<table>
@@ -156,44 +194,6 @@ class OnboardingOptionsRenderer {
 	</table>
 </li>';
 		}
-
-		$basic_table_rows = array(
-			$this->render_table_row(
-				__( 'Credit & Debit Card form fields', 'woocommerce-paypal-payments' ),
-				__( 'Prebuilt user experience', 'woocommerce-paypal-payments' )
-			),
-			! $is_us_shop ? '' : $this->render_table_row(
-				__( 'Credit & Debit Card pricing', 'woocommerce-paypal-payments' ),
-				__( '3.49% + $0.49', 'woocommerce-paypal-payments' ),
-				'',
-				__( 'for US domestic transactions', 'woocommerce-paypal-payments' )
-			),
-			$this->render_table_row(
-				__( 'Seller Protection', 'woocommerce-paypal-payments' ),
-				__( 'Yes', 'woocommerce-paypal-payments' ),
-				__( 'No matter what you sell, Seller Protection can help you avoid chargebacks, reversals, and fees on eligible PayPal payment transactions — even when a customer has filed a dispute.', 'woocommerce-paypal-payments' ),
-				__( 'for eligible PayPal transactions', 'woocommerce-paypal-payments' )
-			),
-			$this->render_table_row(
-				__( 'Seller Account Type', 'woocommerce-paypal-payments' ),
-				__( 'Business or Casual', 'woocommerce-paypal-payments' ),
-				__( 'For Standard payments, Casual sellers may connect their Personal PayPal account in eligible countries to sell on WooCommerce. For Advanced payments, a Business PayPal account is required.', 'woocommerce-paypal-payments' )
-			),
-		);
-		$items[]          = '
-<li ' . ( ! $is_shop_supports_dcc ? 'style="display: none;"' : '' ) . '>
-	<label>
-		<input type="radio" id="ppcp-onboarding-dcc-basic" name="ppcp_onboarding_dcc" value="basic" ' .
-			( ! $is_shop_supports_dcc ? 'checked' : '' ) .
-			' data-screen-url="' . $this->get_screen_url( 'basic' ) . '"' .
-			'> ' .
-		__( 'Standard Card Processing', 'woocommerce-paypal-payments' ) . '
-	</label>
-	' . $this->render_tooltip( __( 'Card transactions are managed by PayPal, which simplifies compliance requirements for you.', 'woocommerce-paypal-payments' ) ) . '
-	<table>
-		' . implode( $basic_table_rows ) . '
-	</table>
-</li>';
 
 		return '
 <div class="ppcp-onboarding-cards-options">
