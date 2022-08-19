@@ -10,6 +10,8 @@ declare( strict_types=1 );
 namespace WooCommerce\PayPalCommerce\WcGateway\Helper;
 
 use WC_Order;
+use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class PayUponInvoiceHelper
@@ -24,31 +26,22 @@ class PayUponInvoiceHelper {
 	protected $checkout_helper;
 
 	/**
-	 * The selected shop country.
+	 * The settings.
 	 *
-	 * @var string
+	 * @var Settings
 	 */
-	protected $shop_country;
-
-	/**
-	 * The PUI seller product status.
-	 *
-	 * @var PayUponInvoiceProductStatus
-	 */
-	protected $pui_product_status;
+	protected $settings;
 
 	/**
 	 * PayUponInvoiceHelper constructor.
 	 *
-	 * @param CheckoutHelper              $checkout_helper The checkout helper.
-	 * @param string                      $shop_country The selected shop country.
-	 * @param PayUponInvoiceProductStatus $pui_product_status The PUI seller product status.
+	 * @param CheckoutHelper $checkout_helper The checkout helper.
+	 * @param Settings       $settings The Settings.
 	 */
-	public function __construct( CheckoutHelper $checkout_helper, string $shop_country, PayUponInvoiceProductStatus $pui_product_status ) {
+	public function __construct( CheckoutHelper $checkout_helper, Settings $settings ) {
 
-		$this->checkout_helper    = $checkout_helper;
-		$this->shop_country       = $shop_country;
-		$this->pui_product_status = $pui_product_status;
+		$this->checkout_helper = $checkout_helper;
+		$this->settings        = $settings;
 	}
 
 	/**
@@ -99,15 +92,12 @@ class PayUponInvoiceHelper {
 	}
 
 	/**
-	 * Checks whether PUI is ready in admin screen.
+	 * Checks whether PUI is enabled.
 	 *
-	 * @return bool
+	 * @return bool True if PUI is active, otherwise false.
+	 * @throws NotFoundException If problem when checking the settings.
 	 */
-	public function is_pui_ready_in_admin(): bool {
-		if ( $this->shop_country === 'DE' && $this->pui_product_status->pui_is_active() ) {
-			return true;
-		}
-
-		return false;
+	public function is_pui_enabled(): bool {
+		return $this->settings->has( 'products_pui_enabled' ) && $this->settings->get( 'products_pui_enabled' );
 	}
 }

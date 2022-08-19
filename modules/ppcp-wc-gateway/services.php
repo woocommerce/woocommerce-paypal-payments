@@ -949,8 +949,8 @@ return array(
 				'title'        => __( 'Tracking', 'woocommerce-paypal-payments' ),
 				'type'         => 'checkbox',
 				'desc_tip'     => true,
-				'label'        => __( 'Enable tracking', 'woocommerce-paypal-payments' ),
-				'description'  => __( 'Enable tracking', 'woocommerce-paypal-payments' ),
+				'label'        => $container->get( 'wcgateway.settings.tracking-label' ),
+				'description'  => __( 'Allows to send shipment tracking numbers to PayPal for PayPal transactions.', 'woocommerce-paypal-payments' ),
 				'default'      => false,
 				'screens'      => array(
 					State::STATE_ONBOARDED,
@@ -2303,8 +2303,7 @@ return array(
 	'wcgateway.pay-upon-invoice-helper'                    => static function( ContainerInterface $container ): PayUponInvoiceHelper {
 		return new PayUponInvoiceHelper(
 			$container->get( 'wcgateway.checkout-helper' ),
-			$container->get( 'api.shop.country' ),
-			$container->get( 'wcgateway.pay-upon-invoice-product-status' )
+			$container->get( 'wcgateway.settings' )
 		);
 	},
 	'wcgateway.pay-upon-invoice-product-status'            => static function( ContainerInterface $container ): PayUponInvoiceProductStatus {
@@ -2456,10 +2455,33 @@ return array(
 			return true;
 		}
 
-		if ( $pui_helper->is_pui_ready_in_admin() ) {
+		if ( $pui_helper->is_pui_enabled() ) {
 			return true;
 		}
 
 		return false;
+	},
+	'wcgateway.settings.tracking-label'                    => static function ( ContainerInterface $container ): string {
+		$tracking_label = __( 'Enable tracking information feature on your store.', 'woocommerce-paypal-payments' );
+		$is_tracking_available = $container->get( 'order-tracking.is-tracking-available' );
+
+		if ( $is_tracking_available ) {
+			return $tracking_label;
+		}
+
+		$tracking_label .= sprintf(
+		// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+			__(
+				' To use tracking features, you must %1$senable tracking on your account%2$s.',
+				'woocommerce-paypal-payments'
+			),
+			'<a
+					href="https://docs.woocommerce.com/document/woocommerce-paypal-payments/#enable-tracking-on-your-live-account"
+					target="_blank"
+				>',
+			'</a>'
+		);
+
+		return $tracking_label;
 	},
 );
