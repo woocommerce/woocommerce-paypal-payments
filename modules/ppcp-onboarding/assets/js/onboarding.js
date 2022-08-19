@@ -158,6 +158,8 @@ function ppcp_onboarding_productionCallback(...args) {
             input.disabled = !cardsChk.checked;
         });
 
+        document.querySelector('.ppcp-onboarding-cards-options').style.display = !cardsChk.checked ? 'none' : '';
+
         const basicRb = document.querySelector('#ppcp-onboarding-dcc-basic');
 
         const isExpress = !cardsChk.checked || basicRb.checked;

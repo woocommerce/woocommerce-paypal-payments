@@ -127,9 +127,9 @@ class OnboardingOptionsRenderer {
 			),
 		);
 		$items[]          = '
-<li ' . ( ! $is_shop_supports_dcc ? 'style="display: none;"' : '' ) . '>
+<li>
 	<label>
-		<input type="radio" id="ppcp-onboarding-dcc-basic" name="ppcp_onboarding_dcc" value="basic" ' .
+		<input type="radio" id="ppcp-onboarding-dcc-basic" name="ppcp_onboarding_dcc" value="basic" checked ' .
 			( ! $is_shop_supports_dcc ? 'checked' : '' ) .
 			' data-screen-url="' . $this->get_screen_url( 'basic' ) . '"' .
 			'> ' .
@@ -184,7 +184,7 @@ class OnboardingOptionsRenderer {
 			$items[]        = '
 <li>
 	<label>
-		<input type="radio" id="ppcp-onboarding-dcc-acdc" name="ppcp_onboarding_dcc" value="acdc" checked ' .
+		<input type="radio" id="ppcp-onboarding-dcc-acdc" name="ppcp_onboarding_dcc" value="acdc" ' .
 				'data-screen-url="' . $this->get_screen_url( 'acdc' ) . '"> ' .
 				__( 'Advanced Card Processing', 'woocommerce-paypal-payments' ) . '
 	</label>
@@ -201,9 +201,7 @@ class OnboardingOptionsRenderer {
 			implode( '', $items ) .
 			'
 	</ul>
-	<div class="ppcp-onboarding-cards-screen">' .
-			( $is_shop_supports_dcc ? '<img id="ppcp-onboarding-cards-screen-img" />' : '' ) . '
-	</div>
+	<div class="ppcp-onboarding-cards-screen"><img id="ppcp-onboarding-cards-screen-img" /></div>
 </div>';
 	}
 
