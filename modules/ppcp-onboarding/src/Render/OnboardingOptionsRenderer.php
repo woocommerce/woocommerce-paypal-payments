@@ -56,6 +56,7 @@ class OnboardingOptionsRenderer {
 	 * @param bool $is_shop_supports_dcc Whether the shop can use DCC (country, currency).
 	 */
 	public function render( bool $is_shop_supports_dcc ): string {
+		$checked = $is_shop_supports_dcc ? '' : 'checked';
 		return '
 <ul class="ppcp-onboarding-options">
 	<li>
@@ -64,7 +65,7 @@ class OnboardingOptionsRenderer {
 		</label>
 	</li>
 	<li>
-		<label><input type="checkbox" id="ppcp-onboarding-accept-cards" checked> ' .
+		<label><input type="checkbox" id="ppcp-onboarding-accept-cards" '. $checked .'> ' .
 			__( 'Securely accept all major credit & debit cards on the strength of the PayPal network', 'woocommerce-paypal-payments' ) . '
 		</label>
 	</li>
