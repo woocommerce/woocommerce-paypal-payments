@@ -140,4 +140,24 @@ class Token {
 		}
 		return true;
 	}
+
+	/**
+	 * Checks if tracking is available in access token scope.
+	 *
+	 * @return bool Whether tracking features are enabled or not.
+	 */
+	public function is_tracking_available(): bool {
+		if ( ! isset( $this->json->scope ) ) {
+			return false;
+		}
+
+		if ( strpos(
+			$this->json->scope,
+			'https://uri.paypal.com/services/shipping/trackers/readwrite'
+		) !== false ) {
+			return true;
+		}
+
+		return false;
+	}
 }

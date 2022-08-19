@@ -1,0 +1,20 @@
+#ppcp_order-tracking {
+	.tracking-info-message {
+		padding-left: 20px;
+	}
+
+	.error {
+		color: red;
+		font-weight: bold;
+	}
+
+	.success {
+		color: green;
+		font-weight: bold;
+	}
+
+	input,select {
+		width: 100%;
+	}
+}
+

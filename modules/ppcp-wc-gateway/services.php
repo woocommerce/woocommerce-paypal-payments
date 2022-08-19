@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway;
 
 use Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
@@ -943,6 +944,20 @@ return array(
 				),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
+			),
+			'tracking_enabled'                   => array(
+				'title'        => __( 'Tracking', 'woocommerce-paypal-payments' ),
+				'type'         => 'checkbox',
+				'desc_tip'     => true,
+				'label'        => __( 'Enable tracking', 'woocommerce-paypal-payments' ),
+				'description'  => __( 'Enable tracking', 'woocommerce-paypal-payments' ),
+				'default'      => false,
+				'screens'      => array(
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => array( 'paypal' ),
+				'input_class'  => $container->get( 'wcgateway.settings.should-disable-tracking-checkbox' ) ? array( 'ppcp-disabled-checkbox' ) : array(),
 			),
 
 			// General button styles.
@@ -2287,7 +2302,9 @@ return array(
 	},
 	'wcgateway.pay-upon-invoice-helper'                    => static function( ContainerInterface $container ): PayUponInvoiceHelper {
 		return new PayUponInvoiceHelper(
-			$container->get( 'wcgateway.checkout-helper' )
+			$container->get( 'wcgateway.checkout-helper' ),
+			$container->get( 'api.shop.country' ),
+			$container->get( 'wcgateway.pay-upon-invoice-product-status' )
 		);
 	},
 	'wcgateway.pay-upon-invoice-product-status'            => static function( ContainerInterface $container ): PayUponInvoiceProductStatus {
@@ -2417,5 +2434,32 @@ return array(
 		return $settings->has( 'allow_card_button_gateway' ) ?
 			(bool) $settings->get( 'allow_card_button_gateway' ) :
 			$container->get( 'wcgateway.settings.allow_card_button_gateway.default' );
+	},
+	'order-tracking.is-tracking-available'                 => static function ( ContainerInterface $container ): bool {
+		try {
+			$bearer = $container->get( 'api.bearer' );
+			assert( $bearer instanceof Bearer );
+
+			$token = $bearer->bearer();
+			return $token->is_tracking_available();
+		} catch ( RuntimeException $exception ) {
+			return false;
+		}
+	},
+	'wcgateway.settings.should-disable-tracking-checkbox'  => static function ( ContainerInterface $container ): bool {
+		$pui_helper = $container->get( 'wcgateway.pay-upon-invoice-helper' );
+		assert( $pui_helper instanceof PayUponInvoiceHelper );
+
+		$is_tracking_available = $container->get( 'order-tracking.is-tracking-available' );
+
+		if ( ! $is_tracking_available ) {
+			return true;
+		}
+
+		if ( $pui_helper->is_pui_ready_in_admin() ) {
+			return true;
+		}
+
+		return false;
 	},
 );

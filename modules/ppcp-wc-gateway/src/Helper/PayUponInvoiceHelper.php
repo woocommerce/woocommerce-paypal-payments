@@ -24,12 +24,31 @@ class PayUponInvoiceHelper {
 	protected $checkout_helper;
 
 	/**
+	 * The selected shop country.
+	 *
+	 * @var string
+	 */
+	protected $shop_country;
+
+	/**
+	 * The PUI seller product status.
+	 *
+	 * @var PayUponInvoiceProductStatus
+	 */
+	protected $pui_product_status;
+
+	/**
 	 * PayUponInvoiceHelper constructor.
 	 *
-	 * @param CheckoutHelper $checkout_helper The checkout helper.
+	 * @param CheckoutHelper              $checkout_helper The checkout helper.
+	 * @param string                      $shop_country The selected shop country.
+	 * @param PayUponInvoiceProductStatus $pui_product_status The PUI seller product status.
 	 */
-	public function __construct( CheckoutHelper $checkout_helper ) {
-		$this->checkout_helper = $checkout_helper;
+	public function __construct( CheckoutHelper $checkout_helper, string $shop_country, PayUponInvoiceProductStatus $pui_product_status ) {
+
+		$this->checkout_helper    = $checkout_helper;
+		$this->shop_country       = $shop_country;
+		$this->pui_product_status = $pui_product_status;
 	}
 
 	/**
@@ -74,6 +93,19 @@ class PayUponInvoiceHelper {
 		$order = wc_get_order( $order_id );
 		if ( is_a( $order, WC_Order::class ) ) {
 			return 'EUR' === $order->get_currency();
+		}
+
+		return false;
+	}
+
+	/**
+	 * Checks whether PUI is ready in admin screen.
+	 *
+	 * @return bool
+	 */
+	public function is_pui_ready_in_admin(): bool {
+		if ( $this->shop_country === 'DE' && $this->pui_product_status->pui_is_active() ) {
+			return true;
 		}
 
 		return false;

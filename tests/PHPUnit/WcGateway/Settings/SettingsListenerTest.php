@@ -2,6 +2,7 @@
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
+use Requests_Utility_CaseInsensitiveDictionary;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ModularTestCase;
@@ -9,17 +10,14 @@ use WooCommerce\PayPalCommerce\Onboarding\State;
 use Mockery;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar;
+use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
 
 class SettingsListenerTest extends ModularTestCase
 {
-	private $appContainer;
-
 	public function setUp(): void
 	{
 		parent::setUp();
-
-		$this->appContainer = $this->bootstrapModule();
 	}
 
 	public function testListen()
@@ -27,7 +25,7 @@ class SettingsListenerTest extends ModularTestCase
 		$settings = Mockery::mock(Settings::class);
 		$settings->shouldReceive('set');
 
-		$setting_fields = $this->appContainer->get('wcgateway.settings.fields');
+		$setting_fields = [];
 
 		$webhook_registrar = Mockery::mock(WebhookRegistrar::class);
 		$webhook_registrar->shouldReceive('unregister')->andReturnTrue();
