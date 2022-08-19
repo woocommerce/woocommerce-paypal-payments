@@ -39,6 +39,7 @@ class CompatModule implements ModuleInterface {
 	 */
 	public function run( ContainerInterface $c ): void {
 		$this->initialize_ppec_compat_layer( $c );
+		$this->fix_site_ground_optimizer_compatibility( $c );
 	}
 
 	/**
@@ -76,4 +77,20 @@ class CompatModule implements ModuleInterface {
 
 	}
 
+	/**
+	 * Fixes the compatibility issue for <a href="https://wordpress.org/plugins/sg-cachepress/">SiteGround Optimizer plugin</a>.
+	 *
+	 * @link https://wordpress.org/plugins/sg-cachepress/
+	 *
+	 * @param ContainerInterface $c The Container.
+	 */
+	protected function fix_site_ground_optimizer_compatibility( ContainerInterface $c ): void {
+		$ppcp_script_names = $c->get( 'compat.plugin-script-names' );
+		add_filter(
+			'sgo_js_minify_exclude',
+			function ( array $scripts ) use ( $ppcp_script_names ) {
+				return array_merge( $scripts, $ppcp_script_names );
+			}
+		);
+	}
 }

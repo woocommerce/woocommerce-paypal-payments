@@ -38,4 +38,16 @@ return array(
 		return new PPEC\SettingsImporter( $settings );
 	},
 
+	'compat.plugin-script-names'        => static function( $container ) : array {
+		return array(
+			'ppcp-smart-button',
+			'ppcp-oxxo',
+			'ppcp-pay-upon-invoice',
+			'ppcp-vaulting-myaccount-payments',
+			'ppcp-gateway-settings',
+			'ppcp-webhooks-status-page',
+			'ppcp-tracking',
+		);
+	},
+
 );
