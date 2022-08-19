@@ -107,10 +107,6 @@ class PayUponInvoiceHelper {
 	 * @throws NotFoundException If problem when checking the settings.
 	 */
 	public function is_pui_enabled(): bool {
-		if ( $this->settings->has( 'products_pui_enabled' ) && $this->settings->get( 'products_pui_enabled' ) ) {
-			return true;
-		}
-
-		return false;
+		return $this->settings->has( 'products_pui_enabled' ) && $this->settings->get( 'products_pui_enabled' );
 	}
 }
