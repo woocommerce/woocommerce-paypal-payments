@@ -33,9 +33,7 @@ class CompatModule implements ModuleInterface {
 	}
 
 	/**
-	 * Run the compatibility module.
-	 *
-	 * @param ContainerInterface|null $c The Container.
+	 * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $c ): void {
 		$this->initialize_ppec_compat_layer( $c );
@@ -53,10 +51,10 @@ class CompatModule implements ModuleInterface {
 	/**
 	 * Sets up the PayPal Express Checkout compatibility layer.
 	 *
-	 * @param ContainerInterface|null $container The Container.
+	 * @param ContainerInterface $container The Container.
 	 * @return void
 	 */
-	private function initialize_ppec_compat_layer( ?ContainerInterface $container ): void {
+	private function initialize_ppec_compat_layer( ContainerInterface $container ): void {
 		// Process PPEC subscription renewals through PayPal Payments.
 		$handler = $container->get( 'compat.ppec.subscriptions-handler' );
 		$handler->maybe_hook();
