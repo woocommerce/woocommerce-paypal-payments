@@ -65,9 +65,7 @@ class OnboardingOptionsRenderer {
 		</label>
 	</li>
 	<li>
-		<label><input type="checkbox" id="ppcp-onboarding-accept-cards" '. $checked .'> ' .
-			__( 'Securely accept all major credit & debit cards on the strength of the PayPal network', 'woocommerce-paypal-payments' ) . '
-		</label>
+		<label><input type="checkbox" id="ppcp-onboarding-accept-cards" ' . $checked . '> ' . __( 'Securely accept all major credit & debit cards on the strength of the PayPal network', 'woocommerce-paypal-payments' ) . '</label>
 	</li>
 	<li>' . $this->render_dcc( $is_shop_supports_dcc ) . '</li>' .
 			$this->render_pui_option()
