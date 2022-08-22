@@ -32,10 +32,22 @@ return array(
 		return new PPEC\SubscriptionsHandler( $ppcp_renewal_handler, $gateway );
 	},
 
-	'compat.ppec.settings_importer'     => static function( $container ) : PPEC\SettingsImporter {
+	'compat.ppec.settings_importer'     => static function( ContainerInterface $container ) : PPEC\SettingsImporter {
 		$settings = $container->get( 'wcgateway.settings' );
 
 		return new PPEC\SettingsImporter( $settings );
+	},
+
+	'compat.plugin-script-names'        => static function( ContainerInterface $container ) : array {
+		return array(
+			'ppcp-smart-button',
+			'ppcp-oxxo',
+			'ppcp-pay-upon-invoice',
+			'ppcp-vaulting-myaccount-payments',
+			'ppcp-gateway-settings',
+			'ppcp-webhooks-status-page',
+			'ppcp-tracking',
+		);
 	},
 
 );
