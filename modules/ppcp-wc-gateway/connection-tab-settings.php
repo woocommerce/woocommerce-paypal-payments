@@ -422,8 +422,9 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'default'           => ( static function (): string {
 				$site_url = get_site_url( get_current_blog_id() );
 				$hash = md5( $site_url );
-				$letters = preg_replace( '~\d~', '', $hash );
-				return $letters ? substr( $letters, 0, 6 ) . '-' : '';
+				$letters = preg_replace( '~\d~', '', $hash ) ?? '';
+				$prefix = substr( $letters, 0, 6 );
+				return $prefix ? $prefix . '-' : '';
 			} )(),
 			'screens'           => array(
 				State::STATE_START,
