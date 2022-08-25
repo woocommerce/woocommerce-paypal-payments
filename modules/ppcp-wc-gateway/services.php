@@ -2170,9 +2170,10 @@ return array(
 			: $enable_dcc_url;
 
 		return sprintf(
-			'<p>%1$s %2$s</p><p><a target="_blank" href="%3$s" class="button">%4$s</a></p>',
+			'<p>%1$s %2$s</p><p><a target="%3$s" href="%4$s" class="button">%5$s</a></p>',
 			$dcc_enabled ? $enabled_status_text : $disabled_status_text,
 			$dcc_enabled ? '<span class="dashicons dashicons-yes"></span>' : '<span class="dashicons dashicons-no"></span>',
+			$dcc_enabled ? '_self' : '_blank',
 			esc_url( $dcc_button_url ),
 			esc_html( $dcc_button_text )
 		);
@@ -2204,9 +2205,10 @@ return array(
 			: esc_html__( 'Enable Pay Upon Invoice', 'woocommerce-paypal-payments' );
 
 		return sprintf(
-			'<p>%1$s %2$s</p><p><a target="_blank" href="%3$s" class="button">%4$s</a></p>',
+			'<p>%1$s %2$s</p><p><a target="%3$s" href="%4$s" class="button">%5$s</a></p>',
 			$pui_enabled ? $enabled_status_text : $disabled_status_text,
 			$pui_enabled ? '<span class="dashicons dashicons-yes"></span>' : '<span class="dashicons dashicons-no"></span>',
+			$pui_enabled ? '_self' : '_blank',
 			esc_url( $pui_button_url ),
 			esc_html( $pui_button_text )
 		);

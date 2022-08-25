@@ -157,7 +157,11 @@ return function ( ContainerInterface $container, array $fields ): array {
 		'ppcp_disconnect_production'                    => array(
 			'title'        => __( 'Disconnect from PayPal', 'woocommerce-paypal-payments' ),
 			'type'         => 'ppcp-text',
-			'text'         => '<button type="button" class="button ppcp-disconnect production">' . esc_html__( 'Disconnect', 'woocommerce-paypal-payments' ) . '</button>',
+			'text'         => sprintf(
+				'<p>%1$s <span class="dashicons dashicons-yes"></span></p><p><button type="button" class="button ppcp-disconnect production">%2$s</button></p>',
+				esc_html__( 'Status: Connected', 'woocommerce-paypal-payments' ),
+				esc_html__( 'Disconnect Account', 'woocommerce-paypal-payments' )
+			),
 			'screens'      => array(
 				State::STATE_ONBOARDED,
 			),
@@ -341,7 +345,6 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'screens'      => array(
 				State::STATE_ONBOARDED,
 			),
-			'state_from'   => Environment::SANDBOX,
 			'requirements' => array(),
 			'gateway'      => 'connection',
 			'description'  => __( 'See which features are available.', 'woocommerce-paypal-payments' ),
@@ -387,7 +390,6 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'screens'      => array(
 				State::STATE_ONBOARDED,
 			),
-			'state_from'   => Environment::SANDBOX,
 			'requirements' => array(),
 			'gateway'      => 'connection',
 			'description'  => __( 'See which features are available.', 'woocommerce-paypal-payments' ),
