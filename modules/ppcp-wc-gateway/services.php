@@ -19,6 +19,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesDisclaimers;
+use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\FeesRenderer;
@@ -2131,5 +2132,83 @@ return array(
 		);
 
 		return $tracking_label;
+	},
+    'wcgateway.enable-dcc-url-sandbox'                    => static function ( ContainerInterface $container ): string {
+        return 'https://www.sandbox.paypal.com/bizsignup/entry/product/ppcp';
+    },
+    'wcgateway.enable-dcc-url-live'                    => static function ( ContainerInterface $container ): string {
+        return 'https://www.paypal.com/bizsignup/entry/product/ppcp';
+    },
+    'wcgateway.enable-pui-url-sandbox'                    => static function ( ContainerInterface $container ): string {
+        return 'https://www.sandbox.paypal.com/bizsignup/entry?country.x=DE&product=payment_methods&capabilities=PAY_UPON_INVOICE';
+    },
+    'wcgateway.enable-pui-url-live'                    => static function ( ContainerInterface $container ): string {
+        return 'https://www.paypal.com/bizsignup/entry?country.x=DE&product=payment_methods&capabilities=PAY_UPON_INVOICE';
+    },
+	'wcgateway.settings.connection.dcc-status-text'        => static function ( ContainerInterface $container ): string {
+		$dcc_applies = $container->get( 'api.helpers.dccapplies' );
+		assert( $dcc_applies instanceof DccApplies );
+
+		$environment = $container->get( 'onboarding.environment' );
+		assert( $environment instanceof Environment );
+
+		$dcc_enabled = $dcc_applies->for_country_currency() || $dcc_applies->for_wc_payments();
+
+		$enabled_status_text  = esc_html__( 'Status: Enabled', 'woocommerce-paypal-payments' );
+		$disabled_status_text = esc_html__( 'Status: Not yet enabled', 'woocommerce-paypal-payments' );
+
+		$dcc_button_text = $dcc_enabled
+			? esc_html__( 'Settings', 'woocommerce-paypal-payments' )
+			: esc_html__( 'Enable Advanced Card Payments', 'woocommerce-paypal-payments' );
+
+		$enable_dcc_url = $environment->current_environment_is( Environment::PRODUCTION )
+			? $container->get('wcgateway.enable-dcc-url-live')
+			: $container->get('wcgateway.enable-dcc-url-sandbox');
+
+		$dcc_button_url = $dcc_enabled
+			? admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-credit-card-gateway' )
+			: $enable_dcc_url;
+
+		return sprintf(
+			'<p>%1$s %2$s</p><p><a target="_blank" href="%3$s" class="button">%4$s</a></p>',
+			$dcc_enabled ? $enabled_status_text : $disabled_status_text,
+			$dcc_enabled ? '<span class="dashicons dashicons-yes"></span>' : '<span class="dashicons dashicons-no"></span>',
+			esc_url( $dcc_button_url ),
+			esc_html( $dcc_button_text )
+		);
+	},
+	'wcgateway.settings.connection.pui-status-text'        => static function ( ContainerInterface $container ): string {
+		$pui_product_status = $container->get( 'wcgateway.pay-upon-invoice-product-status' );
+		assert( $pui_product_status instanceof PayUponInvoiceProductStatus );
+
+		$environment = $container->get( 'onboarding.environment' );
+		assert( $environment instanceof Environment );
+
+		$shop_country = $container->get( 'api.shop.country' );
+
+		$pui_enabled = 'DE' === $shop_country && $pui_product_status->pui_is_active();
+
+		$enabled_status_text  = esc_html__( 'Status: Enabled', 'woocommerce-paypal-payments' );
+		$disabled_status_text = esc_html__( 'Status: Not yet enabled', 'woocommerce-paypal-payments' );
+
+		$enable_pui_url = $environment->current_environment_is( Environment::PRODUCTION )
+			? $container->get('wcgateway.enable-pui-url-live')
+			: $container->get('wcgateway.enable-pui-url-sandbox');
+
+		$pui_button_url = $pui_enabled
+			? admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-pay-upon-invoice-gateway' )
+			: $enable_pui_url;
+
+		$pui_button_text = $pui_enabled
+			? esc_html__( 'Settings', 'woocommerce-paypal-payments' )
+			: esc_html__( 'Enable Pay Upon Invoice', 'woocommerce-paypal-payments' );
+
+		return sprintf(
+			'<p>%1$s %2$s</p><p><a target="_blank" href="%3$s" class="button">%4$s</a></p>',
+			$pui_enabled ? $enabled_status_text : $disabled_status_text,
+			$pui_enabled ? '<span class="dashicons dashicons-yes"></span>' : '<span class="dashicons dashicons-no"></span>',
+			esc_url( $pui_button_url ),
+			esc_html( $pui_button_text )
+		);
 	},
 );
