@@ -2133,18 +2133,18 @@ return array(
 
 		return $tracking_label;
 	},
-    'wcgateway.enable-dcc-url-sandbox'                    => static function ( ContainerInterface $container ): string {
-        return 'https://www.sandbox.paypal.com/bizsignup/entry/product/ppcp';
-    },
-    'wcgateway.enable-dcc-url-live'                    => static function ( ContainerInterface $container ): string {
-        return 'https://www.paypal.com/bizsignup/entry/product/ppcp';
-    },
-    'wcgateway.enable-pui-url-sandbox'                    => static function ( ContainerInterface $container ): string {
-        return 'https://www.sandbox.paypal.com/bizsignup/entry?country.x=DE&product=payment_methods&capabilities=PAY_UPON_INVOICE';
-    },
-    'wcgateway.enable-pui-url-live'                    => static function ( ContainerInterface $container ): string {
-        return 'https://www.paypal.com/bizsignup/entry?country.x=DE&product=payment_methods&capabilities=PAY_UPON_INVOICE';
-    },
+	'wcgateway.enable-dcc-url-sandbox'                     => static function ( ContainerInterface $container ): string {
+		return 'https://www.sandbox.paypal.com/bizsignup/entry/product/ppcp';
+	},
+	'wcgateway.enable-dcc-url-live'                        => static function ( ContainerInterface $container ): string {
+		return 'https://www.paypal.com/bizsignup/entry/product/ppcp';
+	},
+	'wcgateway.enable-pui-url-sandbox'                     => static function ( ContainerInterface $container ): string {
+		return 'https://www.sandbox.paypal.com/bizsignup/entry?country.x=DE&product=payment_methods&capabilities=PAY_UPON_INVOICE';
+	},
+	'wcgateway.enable-pui-url-live'                        => static function ( ContainerInterface $container ): string {
+		return 'https://www.paypal.com/bizsignup/entry?country.x=DE&product=payment_methods&capabilities=PAY_UPON_INVOICE';
+	},
 	'wcgateway.settings.connection.dcc-status-text'        => static function ( ContainerInterface $container ): string {
 		$dcc_applies = $container->get( 'api.helpers.dccapplies' );
 		assert( $dcc_applies instanceof DccApplies );
@@ -2162,8 +2162,8 @@ return array(
 			: esc_html__( 'Enable Advanced Card Payments', 'woocommerce-paypal-payments' );
 
 		$enable_dcc_url = $environment->current_environment_is( Environment::PRODUCTION )
-			? $container->get('wcgateway.enable-dcc-url-live')
-			: $container->get('wcgateway.enable-dcc-url-sandbox');
+			? $container->get( 'wcgateway.enable-dcc-url-live' )
+			: $container->get( 'wcgateway.enable-dcc-url-sandbox' );
 
 		$dcc_button_url = $dcc_enabled
 			? admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-credit-card-gateway' )
@@ -2192,8 +2192,8 @@ return array(
 		$disabled_status_text = esc_html__( 'Status: Not yet enabled', 'woocommerce-paypal-payments' );
 
 		$enable_pui_url = $environment->current_environment_is( Environment::PRODUCTION )
-			? $container->get('wcgateway.enable-pui-url-live')
-			: $container->get('wcgateway.enable-pui-url-sandbox');
+			? $container->get( 'wcgateway.enable-pui-url-live' )
+			: $container->get( 'wcgateway.enable-pui-url-sandbox' );
 
 		$pui_button_url = $pui_enabled
 			? admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-pay-upon-invoice-gateway' )
