@@ -65,7 +65,7 @@ class HeaderRenderer {
 				<a class="button" href="https://woocommerce.com/document/woocommerce-paypal-payments/">'
 					. __( 'Documentation', 'woocommerce-paypal-payments' ) .
 				'</a>
-				<a class="button" href="https://woocommerce.com/my-account/create-a-ticket/">'
+				<a class="button" target="_blank" href="https://woocommerce.com/document/woocommerce-paypal-payments/#get-help">'
 					. __( 'Get Help', 'woocommerce-paypal-payments' ) .
 				'</a>
 				<span class="ppcp-right-align">
