@@ -155,7 +155,7 @@ define( 'PPCP_FLAG_SEPARATE_APM_BUTTONS', apply_filters( 'woocommerce_paypal_pay
 				$links,
 				array(
 					sprintf(
-						'<a href="%1$s">%2$s</a>',
+						'<a target="_blank" href="%1$s">%2$s</a>',
 						'https://woocommerce.com/document/woocommerce-paypal-payments/',
 						__( 'Documentation', 'woocommerce-paypal-payments' )
 					),
@@ -165,12 +165,12 @@ define( 'PPCP_FLAG_SEPARATE_APM_BUTTONS', apply_filters( 'woocommerce_paypal_pay
 						__( 'Get help', 'woocommerce-paypal-payments' )
 					),
 					sprintf(
-						'<a href="%1$s">%2$s</a>',
+						'<a target="_blank" href="%1$s">%2$s</a>',
 						'https://woocommerce.com/feature-requests/woocommerce-paypal-payments/',
 						__( 'Request a feature', 'woocommerce-paypal-payments' )
 					),
 					sprintf(
-						'<a href="%1$s">%2$s</a>',
+						'<a target="_blank" href="%1$s">%2$s</a>',
 						'https://github.com/woocommerce/woocommerce-paypal-payments/issues/new?assignees=&labels=type%3A+bug&template=bug_report.md',
 						__( 'Submit a bug', 'woocommerce-paypal-payments' )
 					),
