@@ -286,6 +286,7 @@ class PayUponInvoiceOrderEndpoint {
 		if($shipping_taxes > 0) {
 			$name = $data['purchase_units'][0]['items'][0]['name'];
 			$category = $data['purchase_units'][0]['items'][0]['category'];
+			$tax_rate = $data['purchase_units'][0]['items'][0]['tax_rate'];
 
 			unset($data['purchase_units'][0]['items']);
 			$data['purchase_units'][0]['items'][0] = array(
@@ -300,7 +301,7 @@ class PayUponInvoiceOrderEndpoint {
 					'currency_code' => 'EUR',
 					'value' => number_format($tax_total + $shipping_taxes, 2, '.', ''),
 				),
-				'tax_rate' => '19',
+				'tax_rate' => $tax_rate,
 			);
 
 			$data['purchase_units'][0]['amount']['value'] = number_format($total + $shipping + $shipping_taxes, 2, '.', '');
