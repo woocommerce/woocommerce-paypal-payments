@@ -160,8 +160,8 @@ define( 'PPCP_FLAG_SEPARATE_APM_BUTTONS', apply_filters( 'woocommerce_paypal_pay
 						__( 'Documentation', 'woocommerce-paypal-payments' )
 					),
 					sprintf(
-						'<a href="%1$s">%2$s</a>',
-						'https://woocommerce.com/my-account/create-a-ticket/',
+						'<a target="_blank" href="%1$s">%2$s</a>',
+						'https://woocommerce.com/document/woocommerce-paypal-payments/#get-help',
 						__( 'Get help', 'woocommerce-paypal-payments' )
 					),
 					sprintf(
