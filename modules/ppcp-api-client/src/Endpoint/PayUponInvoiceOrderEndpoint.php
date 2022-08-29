@@ -201,45 +201,6 @@ class PayUponInvoiceOrderEndpoint {
 	}
 
 	/**
-	 * Ensures items contains tax.
-	 *
-	 * @param array $data The data.
-	 * @return array
-	 */
-	private function ensure_tax( array $data ): array {
-		$items_count = count( $data['purchase_units'][0]['items'] );
-
-		for ( $i = 0; $i < $items_count; $i++ ) {
-			if ( ! isset( $data['purchase_units'][0]['items'][ $i ]['tax'] ) ) {
-				$data['purchase_units'][0]['items'][ $i ]['tax'] = array(
-					'currency_code' => 'EUR',
-					'value'         => '0.00',
-				);
-			}
-		}
-
-		return $data;
-	}
-
-	/**
-	 * Ensures items contains tax rate.
-	 *
-	 * @param array $data The data.
-	 * @return array
-	 */
-	private function ensure_tax_rate( array $data ): array {
-		$items_count = count( $data['purchase_units'][0]['items'] );
-
-		for ( $i = 0; $i < $items_count; $i++ ) {
-			if ( ! isset( $data['purchase_units'][0]['items'][ $i ]['tax_rate'] ) ) {
-				$data['purchase_units'][0]['items'][ $i ]['tax_rate'] = '0.00';
-			}
-		}
-
-		return $data;
-	}
-
-	/**
 	 * Ensures purchase units contains shipping by using payment source data.
 	 *
 	 * @param array $data The data.
@@ -267,7 +228,7 @@ class PayUponInvoiceOrderEndpoint {
 	 * @param array $items
 	 * @return array
 	 */
-	private function ensure_taxes(WC_Order $wc_order, array $data, array $items): array
+	private function ensure_taxes(WC_Order $wc_order, array $data): array
 	{
 		$items = array_map(
 			function (WC_Order_Item_Product $item) use ($wc_order): Item {
@@ -318,10 +279,34 @@ class PayUponInvoiceOrderEndpoint {
 			$tax_total += $tax * $qt;
 		}
 
-		$data['purchase_units'][0]['amount']['value'] = number_format($total + $shipping, 2, '.',
-			'');
-		$data['purchase_units'][0]['amount']['breakdown']['tax_total']['value'] = number_format($tax_total,
-			2, '.', '');
+		$data['purchase_units'][0]['amount']['value'] = number_format($total + $shipping, 2, '.', '');
+		$data['purchase_units'][0]['amount']['breakdown']['tax_total']['value'] = number_format($tax_total, 2, '.', '');
+
+		$shipping_taxes = (float) $wc_order->get_shipping_tax();
+		if($shipping_taxes > 0) {
+			$name = $data['purchase_units'][0]['items'][0]['name'];
+			$category = $data['purchase_units'][0]['items'][0]['category'];
+
+			unset($data['purchase_units'][0]['items']);
+			$data['purchase_units'][0]['items'][0] = array(
+				'name' => $name,
+				'unit_amount' => array(
+					'currency_code' => 'EUR',
+					'value' => $data['purchase_units'][0]['amount']['breakdown']['item_total']['value'],
+				),
+				'category' => $category,
+				'quantity' => 1,
+				'tax' => array(
+					'currency_code' => 'EUR',
+					'value' => number_format($tax_total + $shipping_taxes, 2, '.', ''),
+				),
+				'tax_rate' => '19',
+			);
+
+			$data['purchase_units'][0]['amount']['value'] = number_format($total + $shipping + $shipping_taxes, 2, '.', '');
+			$data['purchase_units'][0]['amount']['breakdown']['tax_total']['value'] = number_format($tax_total + $shipping_taxes, 2, '.', '');
+		}
+
 		return $data;
 	}
 }
