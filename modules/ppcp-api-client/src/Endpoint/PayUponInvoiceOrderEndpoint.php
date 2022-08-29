@@ -12,8 +12,14 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use stdClass;
+use WC_Order;
+use WC_Order_Item_Product;
+use WC_Product;
+use WC_Tax;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\RequestTrait;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
@@ -96,7 +102,7 @@ class PayUponInvoiceOrderEndpoint {
 	 * @throws RuntimeException When there is a problem with the payment source.
 	 * @throws PayPalApiException When there is a problem creating the order.
 	 */
-	public function create( array $items, PaymentSource $payment_source ): Order {
+	public function create( array $items, PaymentSource $payment_source, WC_Order $wc_order): Order {
 
 		$data = array(
 			'intent'                 => 'CAPTURE',
@@ -112,8 +118,7 @@ class PayUponInvoiceOrderEndpoint {
 			),
 		);
 
-		$data = $this->ensure_tax( $data );
-		$data = $this->ensure_tax_rate( $data );
+		$data = $this->ensure_taxes($wc_order, $data, $items);
 		$data = $this->ensure_shipping( $data, $payment_source->to_array() );
 
 		$bearer = $this->bearer->bearer();
@@ -253,6 +258,70 @@ class PayUponInvoiceOrderEndpoint {
 		$data['purchase_units'][0]['shipping']['name']    = array( 'full_name' => $given_name . ' ' . $surname );
 		$data['purchase_units'][0]['shipping']['address'] = $address;
 
+		return $data;
+	}
+
+	/**
+	 * @param WC_Order $wc_order
+	 * @param array $data
+	 * @param array $items
+	 * @return array
+	 */
+	private function ensure_taxes(WC_Order $wc_order, array $data, array $items): array
+	{
+		$items = array_map(
+			function (WC_Order_Item_Product $item) use ($wc_order): Item {
+				$product = $item->get_product();
+				$currency = $wc_order->get_currency();
+				$quantity = (int)$item->get_quantity();
+				$unit_amount = $wc_order->get_item_subtotal($item, false, false);
+
+				$tax_rates = WC_Tax::get_rates($product->get_tax_class());
+				$tax_rate = reset($tax_rates)['rate'] ?? 0;
+
+				$tax = $unit_amount * ($tax_rate / 100);
+				$tax = new Money($tax, $currency);
+
+				return new Item(
+					mb_substr($item->get_name(), 0, 127),
+					new Money($wc_order->get_item_subtotal($item, false, false), $currency),
+					$quantity,
+					substr(wp_strip_all_tags($product instanceof WC_Product ? $product->get_description() : ''),
+						0, 127) ?: '',
+					$tax,
+					$product instanceof WC_Product ? $product->get_sku() : '',
+					($product instanceof WC_Product && $product->is_virtual()) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS,
+					reset($tax_rates)['rate'] ?? 0
+				);
+			},
+			$wc_order->get_items(),
+			array_keys($wc_order->get_items())
+		);
+
+		$items_count = count($data['purchase_units'][0]['items']);
+		for ($i = 0; $i < $items_count; $i++) {
+			if (!isset($data['purchase_units'][0]['items'][$i]['tax'])) {
+				$data['purchase_units'][0]['items'][$i] = $items[$i]->to_array();
+			}
+		}
+
+		$shipping = (float)$wc_order->calculate_shipping();
+		$total = 0;
+		$tax_total = 0;
+
+		foreach ($items as $item) {
+			$unit_amount = (float)$item->unit_amount()->value();
+			$tax = (float)$item->tax()->value();
+			$qt = $item->quantity();
+
+			$total += (($unit_amount + $tax) * $qt);
+			$tax_total += $tax * $qt;
+		}
+
+		$data['purchase_units'][0]['amount']['value'] = number_format($total + $shipping, 2, '.',
+			'');
+		$data['purchase_units'][0]['amount']['breakdown']['tax_total']['value'] = number_format($tax_total,
+			2, '.', '');
 		return $data;
 	}
 }
