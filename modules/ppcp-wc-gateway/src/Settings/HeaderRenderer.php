@@ -62,17 +62,17 @@ class HeaderRenderer {
 			<div class="ppcp-settings-page-header">
 				<img alt="PayPal" src="' . esc_url( $this->module_url ) . 'assets/images/paypal.png"/>
 				<h4> <span class="ppcp-inline-only">-</span> ' . __( 'The all-in-one checkout solution for WooCommerce', 'woocommerce-paypal-payments' ) . '</h4>
-				<a class="button" href="https://woocommerce.com/document/woocommerce-paypal-payments/">'
+				<a class="button" target="_blank" href="https://woocommerce.com/document/woocommerce-paypal-payments/">'
 					. __( 'Documentation', 'woocommerce-paypal-payments' ) .
 				'</a>
-				<a class="button" href="https://woocommerce.com/my-account/create-a-ticket/">'
+				<a class="button" target="_blank" href="https://woocommerce.com/document/woocommerce-paypal-payments/#get-help">'
 					. __( 'Get Help', 'woocommerce-paypal-payments' ) .
 				'</a>
 				<span class="ppcp-right-align">
-					<a href="https://woocommerce.com/feature-requests/woocommerce-paypal-payments/">'
+					<a target="_blank" href="https://woocommerce.com/feature-requests/woocommerce-paypal-payments/">'
 						. __( 'Request a feature', 'woocommerce-paypal-payments' ) .
 					'</a>
-					<a href="https://github.com/woocommerce/woocommerce-paypal-payments/issues/new?assignees=&labels=type%3A+bug&template=bug_report.md">'
+					<a target="_blank" href="https://github.com/woocommerce/woocommerce-paypal-payments/issues/new?assignees=&labels=type%3A+bug&template=bug_report.md">'
 						. __( 'Submit a bug', 'woocommerce-paypal-payments' ) .
 					'</a>
 				</span>
