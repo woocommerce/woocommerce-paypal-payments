@@ -104,14 +104,14 @@ class PayUponInvoiceOrderEndpoint {
 	 * @throws RuntimeException When there is a problem with the payment source.
 	 * @throws PayPalApiException When there is a problem creating the order.
 	 */
-	public function create( array $items, PaymentSource $payment_source, WC_Order $wc_order): Order {
+	public function create( array $items, PaymentSource $payment_source, WC_Order $wc_order ): Order {
 
 		$data = array(
 			'intent'                 => 'CAPTURE',
 			'processing_instruction' => 'ORDER_COMPLETE_ON_PAYMENT_APPROVAL',
 			'purchase_units'         => array_map(
 				static function ( PurchaseUnit $item ): array {
-					return $item->to_array();
+					return $item->to_array( false );
 				},
 				$items
 			),
@@ -120,7 +120,7 @@ class PayUponInvoiceOrderEndpoint {
 			),
 		);
 
-		$data = $this->ensure_taxes($wc_order, $data);
+		$data = $this->ensure_taxes( $wc_order, $data );
 		$data = $this->ensure_shipping( $data, $payment_source->to_array() );
 
 		$bearer = $this->bearer->bearer();
@@ -226,47 +226,49 @@ class PayUponInvoiceOrderEndpoint {
 
 	/**
 	 * @param WC_Order $wc_order
-	 * @param array $data
-	 * @param array $items
+	 * @param array    $data
+	 * @param array    $items
 	 * @return array
 	 */
-	private function ensure_taxes(WC_Order $wc_order, array $data): array
-	{
+	private function ensure_taxes( WC_Order $wc_order, array $data ): array {
 		$items = array_map(
-			function (WC_Order_Item_Product $item) use ($wc_order): Item {
-				$product = $item->get_product();
-				$currency = $wc_order->get_currency();
-				$quantity = $item->get_quantity();
-				$unit_amount = $wc_order->get_item_subtotal($item, false, false);
-				$tax_rates = WC_Tax::get_rates($product->get_tax_class());
-				$tax_rate = reset($tax_rates)['rate'] ?? 0;
-				$tax = $unit_amount * ($tax_rate / 100);
-				$tax = new Money($tax, $currency);
+			function ( WC_Order_Item_Product $item ) use ( $wc_order ): Item {
+				$product     = $item->get_product();
+				$currency    = $wc_order->get_currency();
+				$quantity    = $item->get_quantity();
+				$unit_amount = $wc_order->get_item_subtotal( $item, false, false );
+				$tax_rates   = WC_Tax::get_rates( $product->get_tax_class() );
+				$tax_rate    = reset( $tax_rates )['rate'] ?? 0;
+				$tax         = $unit_amount * ( $tax_rate / 100 );
+				$tax         = new Money( $tax, $currency );
 
 				return new Item(
-					mb_substr($item->get_name(), 0, 127),
-					new Money($wc_order->get_item_subtotal($item, false, false), $currency),
+					mb_substr( $item->get_name(), 0, 127 ),
+					new Money( $wc_order->get_item_subtotal( $item, false, false ), $currency ),
 					$quantity,
-					substr(wp_strip_all_tags($product instanceof WC_Product ? $product->get_description() : ''),
-						0, 127) ?: '',
+					substr(
+						wp_strip_all_tags( $product instanceof WC_Product ? $product->get_description() : '' ),
+						0,
+						127
+					) ?: '',
 					$tax,
 					$product instanceof WC_Product ? $product->get_sku() : '',
-					($product instanceof WC_Product && $product->is_virtual()) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS,
+					( $product instanceof WC_Product && $product->is_virtual() ) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS,
 					$tax_rate
 				);
 			},
 			$wc_order->get_items(),
-			array_keys($wc_order->get_items())
+			array_keys( $wc_order->get_items() )
 		);
 
 		$fees = array_map(
 			function ( WC_Order_Item_Fee $item ) use ( $wc_order ): Item {
-				$currency = $wc_order->get_currency();
+				$currency    = $wc_order->get_currency();
 				$unit_amount = $item->get_amount();
-				$total_tax =  $item->get_total_tax();
-				$tax_rate = ($total_tax / $unit_amount) * 100;
-				$tax = $unit_amount * ($tax_rate / 100);
-				$tax = new Money($tax, $currency);
+				$total_tax   = $item->get_total_tax();
+				$tax_rate    = ( $total_tax / $unit_amount ) * 100;
+				$tax         = $unit_amount * ( $tax_rate / 100 );
+				$tax         = new Money( $tax, $currency );
 
 				return new Item(
 					$item->get_name(),
@@ -284,63 +286,63 @@ class PayUponInvoiceOrderEndpoint {
 
 		$items = array_merge( $items, $fees );
 
-		$items_count = count($data['purchase_units'][0]['items']);
-		for ($i = 0; $i < $items_count; $i++) {
-			if (!isset($data['purchase_units'][0]['items'][$i]['tax'])) {
-				$data['purchase_units'][0]['items'][$i] = $items[$i]->to_array();
+		$items_count = count( $data['purchase_units'][0]['items'] );
+		for ( $i = 0; $i < $items_count; $i++ ) {
+			if ( ! isset( $data['purchase_units'][0]['items'][ $i ]['tax'] ) ) {
+				$data['purchase_units'][0]['items'][ $i ] = $items[ $i ]->to_array();
 			}
 		}
 
-		$shipping = (float)$wc_order->calculate_shipping();
-		$total = 0;
+		$shipping  = (float) $wc_order->calculate_shipping();
+		$total     = 0;
 		$tax_total = 0;
-		foreach ($items as $item) {
-			$unit_amount = (float)$item->unit_amount()->value();
-			$tax = (float)$item->tax()->value();
-			$qt = $item->quantity();
+		foreach ( $items as $item ) {
+			$unit_amount = (float) $item->unit_amount()->value();
+			$tax         = (float) $item->tax()->value();
+			$qt          = $item->quantity();
 
-			$total += (($unit_amount + $tax) * $qt);
+			$total     += ( ( $unit_amount + $tax ) * $qt );
 			$tax_total += $tax * $qt;
 		}
 
-		$data['purchase_units'][0]['amount']['value'] = number_format($total + $shipping, 2, '.', '');
-		$data['purchase_units'][0]['amount']['breakdown']['tax_total']['value'] = number_format($tax_total, 2, '.', '');
+		$data['purchase_units'][0]['amount']['value']                           = number_format( $total + $shipping, 2, '.', '' );
+		$data['purchase_units'][0]['amount']['breakdown']['tax_total']['value'] = number_format( $tax_total, 2, '.', '' );
 
 		$shipping_taxes = (float) $wc_order->get_shipping_tax();
 
 		$fees_taxes = 0;
-		foreach($wc_order->get_fees() as $fee) {
+		foreach ( $wc_order->get_fees() as $fee ) {
 			$unit_amount = $fee->get_amount();
-			$total_tax =  $fee->get_total_tax();
-			$tax_rate = ($total_tax / $unit_amount) * 100;
-			$tax = $unit_amount * ($tax_rate / 100);
+			$total_tax   = $fee->get_total_tax();
+			$tax_rate    = ( $total_tax / $unit_amount ) * 100;
+			$tax         = $unit_amount * ( $tax_rate / 100 );
 
 			$fees_taxes += $tax;
 		}
 
-		if($shipping_taxes > 0 || $fees_taxes > 0) {
-			$name = $data['purchase_units'][0]['items'][0]['name'];
+		if ( $shipping_taxes > 0 || $fees_taxes > 0 ) {
+			$name     = $data['purchase_units'][0]['items'][0]['name'];
 			$category = $data['purchase_units'][0]['items'][0]['category'];
 			$tax_rate = $data['purchase_units'][0]['items'][0]['tax_rate'];
 
-			unset($data['purchase_units'][0]['items']);
+			unset( $data['purchase_units'][0]['items'] );
 			$data['purchase_units'][0]['items'][0] = array(
-				'name' => $name,
+				'name'        => $name,
 				'unit_amount' => array(
 					'currency_code' => 'EUR',
-					'value' => $data['purchase_units'][0]['amount']['breakdown']['item_total']['value'],
+					'value'         => $data['purchase_units'][0]['amount']['breakdown']['item_total']['value'],
 				),
-				'category' => $category,
-				'quantity' => 1,
-				'tax' => array(
+				'category'    => $category,
+				'quantity'    => 1,
+				'tax'         => array(
 					'currency_code' => 'EUR',
-					'value' => number_format($tax_total + $shipping_taxes, 2, '.', ''),
+					'value'         => number_format( $tax_total + $shipping_taxes, 2, '.', '' ),
 				),
-				'tax_rate' => $tax_rate,
+				'tax_rate'    => $tax_rate,
 			);
 
-			$data['purchase_units'][0]['amount']['value'] = number_format($total + $shipping + $shipping_taxes, 2, '.', '');
-			$data['purchase_units'][0]['amount']['breakdown']['tax_total']['value'] = number_format($tax_total + $shipping_taxes, 2, '.', '');
+			$data['purchase_units'][0]['amount']['value']                           = number_format( $total + $shipping + $shipping_taxes, 2, '.', '' );
+			$data['purchase_units'][0]['amount']['breakdown']['tax_total']['value'] = number_format( $tax_total + $shipping_taxes, 2, '.', '' );
 		}
 
 		return $data;
