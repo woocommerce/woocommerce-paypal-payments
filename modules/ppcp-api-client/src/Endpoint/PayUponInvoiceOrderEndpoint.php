@@ -12,7 +12,9 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use stdClass;
+use WC_Customer;
 use WC_Order;
+use WC_Order_Item_Fee;
 use WC_Order_Item_Product;
 use WC_Product;
 use WC_Tax;
@@ -118,7 +120,7 @@ class PayUponInvoiceOrderEndpoint {
 			),
 		);
 
-		$data = $this->ensure_taxes($wc_order, $data, $items);
+		$data = $this->ensure_taxes($wc_order, $data);
 		$data = $this->ensure_shipping( $data, $payment_source->to_array() );
 
 		$bearer = $this->bearer->bearer();
@@ -234,12 +236,10 @@ class PayUponInvoiceOrderEndpoint {
 			function (WC_Order_Item_Product $item) use ($wc_order): Item {
 				$product = $item->get_product();
 				$currency = $wc_order->get_currency();
-				$quantity = (int)$item->get_quantity();
+				$quantity = $item->get_quantity();
 				$unit_amount = $wc_order->get_item_subtotal($item, false, false);
-
 				$tax_rates = WC_Tax::get_rates($product->get_tax_class());
 				$tax_rate = reset($tax_rates)['rate'] ?? 0;
-
 				$tax = $unit_amount * ($tax_rate / 100);
 				$tax = new Money($tax, $currency);
 
@@ -252,12 +252,37 @@ class PayUponInvoiceOrderEndpoint {
 					$tax,
 					$product instanceof WC_Product ? $product->get_sku() : '',
 					($product instanceof WC_Product && $product->is_virtual()) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS,
-					reset($tax_rates)['rate'] ?? 0
+					$tax_rate
 				);
 			},
 			$wc_order->get_items(),
 			array_keys($wc_order->get_items())
 		);
+
+		$fees = array_map(
+			function ( WC_Order_Item_Fee $item ) use ( $wc_order ): Item {
+				$currency = $wc_order->get_currency();
+				$unit_amount = $item->get_amount();
+				$total_tax =  $item->get_total_tax();
+				$tax_rate = ($total_tax / $unit_amount) * 100;
+				$tax = $unit_amount * ($tax_rate / 100);
+				$tax = new Money($tax, $currency);
+
+				return new Item(
+					$item->get_name(),
+					new Money( (float) $item->get_amount(), $wc_order->get_currency() ),
+					$item->get_quantity(),
+					'',
+					$tax,
+					'',
+					'PHYSICAL_GOODS',
+					$tax_rate
+				);
+			},
+			$wc_order->get_fees()
+		);
+
+		$items = array_merge( $items, $fees );
 
 		$items_count = count($data['purchase_units'][0]['items']);
 		for ($i = 0; $i < $items_count; $i++) {
@@ -269,7 +294,6 @@ class PayUponInvoiceOrderEndpoint {
 		$shipping = (float)$wc_order->calculate_shipping();
 		$total = 0;
 		$tax_total = 0;
-
 		foreach ($items as $item) {
 			$unit_amount = (float)$item->unit_amount()->value();
 			$tax = (float)$item->tax()->value();
@@ -283,7 +307,18 @@ class PayUponInvoiceOrderEndpoint {
 		$data['purchase_units'][0]['amount']['breakdown']['tax_total']['value'] = number_format($tax_total, 2, '.', '');
 
 		$shipping_taxes = (float) $wc_order->get_shipping_tax();
-		if($shipping_taxes > 0) {
+
+		$fees_taxes = 0;
+		foreach($wc_order->get_fees() as $fee) {
+			$unit_amount = $fee->get_amount();
+			$total_tax =  $fee->get_total_tax();
+			$tax_rate = ($total_tax / $unit_amount) * 100;
+			$tax = $unit_amount * ($tax_rate / 100);
+
+			$fees_taxes += $tax;
+		}
+
+		if($shipping_taxes > 0 || $fees_taxes > 0) {
 			$name = $data['purchase_units'][0]['items'][0]['name'];
 			$category = $data['purchase_units'][0]['items'][0]['category'];
 			$tax_rate = $data['purchase_units'][0]['items'][0]['tax_rate'];
