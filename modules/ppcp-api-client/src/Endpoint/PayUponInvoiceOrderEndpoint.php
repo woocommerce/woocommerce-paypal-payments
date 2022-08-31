@@ -236,7 +236,7 @@ class PayUponInvoiceOrderEndpoint {
 				$product     = $item->get_product();
 				$currency    = $wc_order->get_currency();
 				$quantity    = $item->get_quantity();
-				$unit_amount = $wc_order->get_item_subtotal( $item, false, false );
+				$unit_amount = $wc_order->get_item_subtotal( $item, false );
 				$tax_rates   = WC_Tax::get_rates( $product->get_tax_class() );
 				$tax_rate    = reset( $tax_rates )['rate'] ?? 0;
 				$tax         = $unit_amount * ( $tax_rate / 100 );
@@ -244,7 +244,7 @@ class PayUponInvoiceOrderEndpoint {
 
 				return new Item(
 					mb_substr( $item->get_name(), 0, 127 ),
-					new Money( $wc_order->get_item_subtotal( $item, false, false ), $currency ),
+					new Money( (float) $wc_order->get_item_subtotal( $item, false ), $currency ),
 					$quantity,
 					substr(
 						wp_strip_all_tags( $product instanceof WC_Product ? $product->get_description() : '' ),
@@ -301,7 +301,7 @@ class PayUponInvoiceOrderEndpoint {
 			$tax         = (float) $item->tax()->value();
 			$qt          = $item->quantity();
 
-			$total     += ( ( $unit_amount + $tax ) * $qt );
+			$total     += ( ( round($unit_amount,2) + round($tax,2) ) * $qt );
 			$tax_total += $tax * $qt;
 		}
 
@@ -359,19 +359,13 @@ class PayUponInvoiceOrderEndpoint {
 		foreach ($data['purchase_units'][0]['items'] as $item) {
 			$items_total += floatval($item['unit_amount']['value']) * $item['quantity'];
 		}
-		$diff = round($items_total - $item_total, 2);
-		if($diff === -0.01 || $diff === 0.01) {
-			$data['purchase_units'][0]['amount']['breakdown']['item_total']['value'] = number_format( $items_total, 2, '.', '' );
-		}
+		$data['purchase_units'][0]['amount']['breakdown']['item_total']['value'] = number_format( $items_total, 2, '.', '' );
 
 		$items_tax_total = 0;
 		foreach ($data['purchase_units'][0]['items'] as $item) {
 			$items_tax_total += floatval($item['tax']['value']) * $item['quantity'];
 		}
-		$diff = round($tax_total - $items_tax_total, 2);
-		if($diff === -0.01 || $diff === 0.01) {
-			$data['purchase_units'][0]['amount']['breakdown']['tax_total']['value'] = number_format( $items_tax_total, 2, '.', '' );
-		}
+		$data['purchase_units'][0]['amount']['breakdown']['tax_total']['value'] = number_format( $items_tax_total, 2, '.', '' );
 
 		return $data;
 	}
