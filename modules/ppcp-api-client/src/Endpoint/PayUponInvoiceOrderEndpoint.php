@@ -355,6 +355,24 @@ class PayUponInvoiceOrderEndpoint {
 			$data['purchase_units'][0]['amount']['value'] = number_format( $total_breakdown, 2, '.', '' );
 		}
 
+		$items_total = 0;
+		foreach ($data['purchase_units'][0]['items'] as $item) {
+			$items_total += floatval($item['unit_amount']['value']) * $item['quantity'];
+		}
+		$diff = round($items_total - $item_total, 2);
+		if($diff === -0.01 || $diff === 0.01) {
+			$data['purchase_units'][0]['amount']['breakdown']['item_total']['value'] = number_format( $items_total, 2, '.', '' );
+		}
+
+		$items_tax_total = 0;
+		foreach ($data['purchase_units'][0]['items'] as $item) {
+			$items_tax_total += floatval($item['tax']['value']) * $item['quantity'];
+		}
+		$diff = round($tax_total - $items_tax_total, 2);
+		if($diff === -0.01 || $diff === 0.01) {
+			$data['purchase_units'][0]['amount']['breakdown']['tax_total']['value'] = number_format( $items_tax_total, 2, '.', '' );
+		}
+
 		return $data;
 	}
 }
