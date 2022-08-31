@@ -350,7 +350,7 @@ class PayUponInvoiceOrderEndpoint {
 		$shipping = floatval($data['purchase_units'][0]['amount']['breakdown']['shipping']['value']);
 		$tax_total = floatval($data['purchase_units'][0]['amount']['breakdown']['tax_total']['value']);
 		$total_breakdown = $item_total + $shipping + $tax_total;
-		$diff = round($total_amount - $total_breakdown);
+		$diff = round($total_amount - $total_breakdown, 2);
 		if($diff === -0.01 || $diff === 0.01) {
 			$data['purchase_units'][0]['amount']['value'] = number_format( $total_breakdown, 2, '.', '' );
 		}
