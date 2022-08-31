@@ -100,6 +100,7 @@ class PayUponInvoiceOrderEndpoint {
 	 *
 	 * @param PurchaseUnit[] $items The purchase unit items for the order.
 	 * @param PaymentSource  $payment_source The payment source.
+	 * @param WC_Order       $wc_order The WC order.
 	 * @return Order
 	 * @throws RuntimeException When there is a problem with the payment source.
 	 * @throws PayPalApiException When there is a problem creating the order.
@@ -225,44 +226,46 @@ class PayUponInvoiceOrderEndpoint {
 	}
 
 	/**
-	 * @param WC_Order $wc_order
-	 * @param array    $data
+	 * Ensure items contains taxes.
+	 *
+	 * @param WC_Order $wc_order The WC order.
+	 * @param array    $data The data.
 	 * @return array
 	 */
 	private function ensure_taxes( WC_Order $wc_order, array $data ): array {
-		$tax_total = $data['purchase_units'][0]['amount']['breakdown']['tax_total']['value'];
-		$item_total = $data['purchase_units'][0]['amount']['breakdown']['item_total']['value'];
-		$shipping = $data['purchase_units'][0]['amount']['breakdown']['shipping']['value'];
+		$tax_total       = $data['purchase_units'][0]['amount']['breakdown']['tax_total']['value'];
+		$item_total      = $data['purchase_units'][0]['amount']['breakdown']['item_total']['value'];
+		$shipping        = $data['purchase_units'][0]['amount']['breakdown']['shipping']['value'];
 		$order_tax_total = $wc_order->get_total_tax();
-		$tax_rate = round(($order_tax_total / $item_total) * 100, 1);
+		$tax_rate        = round( ( $order_tax_total / $item_total ) * 100, 1 );
 
-		$item_name = $data['purchase_units'][0]['items'][0]['name'];
-		$item_currency = $data['purchase_units'][0]['items'][0]['unit_amount']['currency_code'];
+		$item_name        = $data['purchase_units'][0]['items'][0]['name'];
+		$item_currency    = $data['purchase_units'][0]['items'][0]['unit_amount']['currency_code'];
 		$item_description = $data['purchase_units'][0]['items'][0]['description'];
-		$item_sku = $data['purchase_units'][0]['items'][0]['sku'];
+		$item_sku         = $data['purchase_units'][0]['items'][0]['sku'];
 
-		unset($data['purchase_units'][0]['items']);
+		unset( $data['purchase_units'][0]['items'] );
 		$data['purchase_units'][0]['items'][0] = array(
-			'name' => $item_name,
+			'name'        => $item_name,
 			'unit_amount' => array(
 				'currency_code' => $item_currency,
-				'value' => $item_total,
+				'value'         => $item_total,
 			),
-			'quantity' => 1,
+			'quantity'    => 1,
 			'description' => $item_description,
-			'sku' => $item_sku,
-			'category' => 'PHYSICAL_GOODS',
-			'tax' => array(
+			'sku'         => $item_sku,
+			'category'    => 'PHYSICAL_GOODS',
+			'tax'         => array(
 				'currency_code' => 'EUR',
-				'value' => $tax_total,
+				'value'         => $tax_total,
 			),
-			'tax_rate' => number_format( $tax_rate, 2, '.', '' ),
+			'tax_rate'    => number_format( $tax_rate, 2, '.', '' ),
 		);
 
-		$total_amount = $data['purchase_units'][0]['amount']['value'];
+		$total_amount    = $data['purchase_units'][0]['amount']['value'];
 		$breakdown_total = $item_total + $tax_total + $shipping;
-		$diff = round($total_amount - $breakdown_total, 2);
-		if($diff === -0.01 || $diff === 0.01) {
+		$diff            = round( $total_amount - $breakdown_total, 2 );
+		if ( $diff === -0.01 || $diff === 0.01 ) {
 			$data['purchase_units'][0]['amount']['value'] = number_format( $breakdown_total, 2, '.', '' );
 		}
 
