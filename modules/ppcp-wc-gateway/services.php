@@ -59,7 +59,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
-use WooCommerce\PayPalCommerce\Webhooks\Status\WebhooksStatusPage;
 
 return array(
 	'wcgateway.paypal-gateway'                             => static function ( ContainerInterface $container ): PayPalGateway {
@@ -159,7 +158,7 @@ return array(
 		}
 
 		$section = isset( $_GET['section'] ) ? sanitize_text_field( wp_unslash( $_GET['section'] ) ) : '';
-		return in_array( $section, array( Settings::CONNECTION_TAB_ID, PayPalGateway::ID, CreditCardGateway::ID, WebhooksStatusPage::ID, PayUponInvoiceGateway::ID, CardButtonGateway::ID, OXXOGateway::ID ), true );
+		return in_array( $section, array( Settings::CONNECTION_TAB_ID, PayPalGateway::ID, CreditCardGateway::ID, PayUponInvoiceGateway::ID, CardButtonGateway::ID, OXXOGateway::ID ), true );
 	},
 
 	'wcgateway.current-ppcp-settings-page-id'              => static function ( ContainerInterface $container ): string {
@@ -224,14 +223,13 @@ return array(
 			CardButtonGateway::ID       => __( 'PayPal Card Button', 'woocommerce-paypal-payments' ),
 			OXXOGateway::ID             => __( 'OXXO', 'woocommerce-paypal-payments' ),
 			PayUponInvoiceGateway::ID   => __( 'Pay upon Invoice', 'woocommerce-paypal-payments' ),
-			WebhooksStatusPage::ID      => __( 'Webhooks Status', 'woocommerce-paypal-payments' ),
 		);
 
 		// Remove for all not registered in WC gateways that cannot render anything in this case.
 		$gateways = WC()->payment_gateways->payment_gateways();
 		foreach ( array_diff(
 			array_keys( $sections ),
-			array( Settings::CONNECTION_TAB_ID, PayPalGateway::ID, CreditCardGateway::ID, WebhooksStatusPage::ID )
+			array( Settings::CONNECTION_TAB_ID, PayPalGateway::ID, CreditCardGateway::ID )
 		) as $id ) {
 			if ( ! isset( $gateways[ $id ] ) ) {
 				unset( $sections[ $id ] );

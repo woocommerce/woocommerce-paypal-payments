@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\State;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 return function ( ContainerInterface $container, array $fields ): array {
 
@@ -63,7 +64,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				State::STATE_ONBOARDED,
 			),
 			'requirements' => array(),
-			'gateway'      => 'connection',
+			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
 		'credentials_production_heading'                => array(
 			'heading'      => __( 'API Credentials', 'woocommerce-paypal-payments' ),
@@ -73,7 +74,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			),
 			'state_from'   => Environment::PRODUCTION,
 			'requirements' => array(),
-			'gateway'      => 'connection',
+			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
 		'credentials_sandbox_heading'                   => array(
 			'heading'      => __( 'Sandbox API Credentials', 'woocommerce-paypal-payments' ),
@@ -83,7 +84,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			),
 			'state_from'   => Environment::SANDBOX,
 			'requirements' => array(),
-			'gateway'      => 'connection',
+			'gateway'      => Settings::CONNECTION_TAB_ID,
 			'description'  => __( 'Your account is connected to sandbox, no real charging takes place. To accept live payments, turn off sandbox mode and connect your live PayPal account.', 'woocommerce-paypal-payments' ),
 		),
 
@@ -97,7 +98,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				State::STATE_ONBOARDED,
 			),
 			'requirements' => array(),
-			'gateway'      => 'connection',
+			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
 
 		// We need to have a button for each option (ppcp, express)
@@ -113,7 +114,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'env'          => Environment::PRODUCTION,
 			'products'     => array( 'PPCP' ),
 			'requirements' => array(),
-			'gateway'      => 'connection',
+			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
 		'ppcp_onboarding_production_express'            => array(
 			'type'         => 'ppcp_onboarding',
@@ -125,7 +126,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'env'          => Environment::PRODUCTION,
 			'products'     => array( 'EXPRESS_CHECKOUT' ),
 			'requirements' => array(),
-			'gateway'      => 'connection',
+			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
 		'ppcp_onboarding_sandbox_ppcp'                  => array(
 			'type'         => 'ppcp_onboarding',
@@ -137,7 +138,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'env'          => Environment::SANDBOX,
 			'products'     => array( 'PPCP' ),
 			'requirements' => array(),
-			'gateway'      => 'connection',
+			'gateway'      => Settings::CONNECTION_TAB_ID,
 			'description'  => __( 'Prior to accepting live payments, you can test payments on your WooCommerce platform in a safe PayPal sandbox environment.', 'woocommerce-paypal-payments' ),
 		),
 		'ppcp_onboarding_sandbox_express'               => array(
@@ -150,7 +151,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'env'          => Environment::SANDBOX,
 			'products'     => array( 'EXPRESS_CHECKOUT' ),
 			'requirements' => array(),
-			'gateway'      => 'connection',
+			'gateway'      => Settings::CONNECTION_TAB_ID,
 			'description'  => __( 'Prior to accepting live payments, you can test payments on your WooCommerce platform in a safe PayPal sandbox environment.', 'woocommerce-paypal-payments' ),
 		),
 
@@ -168,7 +169,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'state_from'   => Environment::PRODUCTION,
 			'env'          => Environment::PRODUCTION,
 			'requirements' => array(),
-			'gateway'      => 'connection',
+			'gateway'      => Settings::CONNECTION_TAB_ID,
 			'description'  => __( 'Click to reset current credentials and use another account.', 'woocommerce-paypal-payments' ),
 		),
 		'ppcp_disconnect_sandbox'                       => array(
@@ -185,7 +186,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'state_from'   => Environment::SANDBOX,
 			'env'          => Environment::SANDBOX,
 			'requirements' => array(),
-			'gateway'      => 'connection',
+			'gateway'      => Settings::CONNECTION_TAB_ID,
 			'description'  => __( 'Click to reset current credentials and use another account.', 'woocommerce-paypal-payments' ),
 		),
 		'toggle_manual_input'                           => array(
@@ -197,7 +198,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				State::STATE_ONBOARDED,
 			),
 			'requirements' => array(),
-			'gateway'      => 'connection',
+			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
 		'error_label'                                   => array(
 			'type'         => 'ppcp-text',
@@ -208,7 +209,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				State::STATE_ONBOARDED,
 			),
 			'requirements' => array(),
-			'gateway'      => 'connection',
+			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
 		'sandbox_on'                                    => array(
 			'title'        => __( 'Sandbox', 'woocommerce-paypal-payments' ),
@@ -221,7 +222,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				State::STATE_ONBOARDED,
 			),
 			'requirements' => array(),
-			'gateway'      => 'connection',
+			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
 		'merchant_email_production'                     => array(
 			'title'        => __( 'Live Email address', 'woocommerce-paypal-payments' ),
@@ -236,7 +237,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				State::STATE_ONBOARDED,
 			),
 			'requirements' => array(),
-			'gateway'      => 'connection',
+			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
 		'merchant_id_production'                        => array(
 			'title'        => __( 'Live Merchant Id', 'woocommerce-paypal-payments' ),
@@ -250,7 +251,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				State::STATE_ONBOARDED,
 			),
 			'requirements' => array(),
-			'gateway'      => 'connection',
+			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
 		'client_id_production'                          => array(
 			'title'        => __( 'Live Client Id', 'woocommerce-paypal-payments' ),
@@ -264,7 +265,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				State::STATE_ONBOARDED,
 			),
 			'requirements' => array(),
-			'gateway'      => 'connection',
+			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
 		'client_secret_production'                      => array(
 			'title'        => __( 'Live Secret Key', 'woocommerce-paypal-payments' ),
@@ -278,7 +279,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				State::STATE_ONBOARDED,
 			),
 			'requirements' => array(),
-			'gateway'      => 'connection',
+			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
 
 		'merchant_email_sandbox'                        => array(
@@ -294,7 +295,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				State::STATE_ONBOARDED,
 			),
 			'requirements' => array(),
-			'gateway'      => 'connection',
+			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
 		'merchant_id_sandbox'                           => array(
 			'title'        => __( 'Sandbox Merchant Id', 'woocommerce-paypal-payments' ),
@@ -308,7 +309,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				State::STATE_ONBOARDED,
 			),
 			'requirements' => array(),
-			'gateway'      => 'connection',
+			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
 		'client_id_sandbox'                             => array(
 			'title'        => __( 'Sandbox Client Id', 'woocommerce-paypal-payments' ),
@@ -322,7 +323,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				State::STATE_ONBOARDED,
 			),
 			'requirements' => array(),
-			'gateway'      => 'connection',
+			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
 		'client_secret_sandbox'                         => array(
 			'title'        => __( 'Sandbox Secret Key', 'woocommerce-paypal-payments' ),
@@ -336,7 +337,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				State::STATE_ONBOARDED,
 			),
 			'requirements' => array(),
-			'gateway'      => 'connection',
+			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
 
 		'credentials_feature_onboarding_heading'        => array(
@@ -346,7 +347,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				State::STATE_ONBOARDED,
 			),
 			'requirements' => array(),
-			'gateway'      => 'connection',
+			'gateway'      => Settings::CONNECTION_TAB_ID,
 			'description'  => __( 'See which features are available.', 'woocommerce-paypal-payments' ),
 		),
 		'ppcp_dcc_status'                               => array(
@@ -357,7 +358,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				State::STATE_ONBOARDED,
 			),
 			'requirements' => array(),
-			'gateway'      => 'connection',
+			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
 		'ppcp_pui_status'                               => array(
 			'title'        => __( 'Pay Upon Invoice', 'woocommerce-paypal-payments' ),
@@ -367,7 +368,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				State::STATE_ONBOARDED,
 			),
 			'requirements' => array( 'pui_ready' ),
-			'gateway'      => 'connection',
+			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
 		'tracking_enabled'                              => array(
 			'title'        => __( 'Tracking', 'woocommerce-paypal-payments' ),
@@ -380,7 +381,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				State::STATE_ONBOARDED,
 			),
 			'requirements' => array(),
-			'gateway'      => 'connection',
+			'gateway'      => Settings::CONNECTION_TAB_ID,
 			'input_class'  => $container->get( 'wcgateway.settings.should-disable-tracking-checkbox' ) ? array( 'ppcp-disabled-checkbox' ) : array(),
 		),
 
@@ -391,7 +392,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				State::STATE_ONBOARDED,
 			),
 			'requirements' => array(),
-			'gateway'      => 'connection',
+			'gateway'      => Settings::CONNECTION_TAB_ID,
 			'description'  => __( 'See which features are available.', 'woocommerce-paypal-payments' ),
 		),
 		'prefix'                                        => array(
@@ -415,7 +416,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				State::STATE_ONBOARDED,
 			),
 			'requirements'      => array(),
-			'gateway'           => 'connection',
+			'gateway'           => Settings::CONNECTION_TAB_ID,
 		),
 		'logging_enabled'                               => array(
 			'title'        => __( 'Logging', 'woocommerce-paypal-payments' ),
@@ -430,7 +431,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				State::STATE_ONBOARDED,
 			),
 			'requirements' => array(),
-			'gateway'      => 'connection',
+			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
 	);
 
