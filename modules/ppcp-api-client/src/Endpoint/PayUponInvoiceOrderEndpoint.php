@@ -236,16 +236,21 @@ class PayUponInvoiceOrderEndpoint {
 		$order_tax_total = $wc_order->get_total_tax();
 		$tax_rate = round(($order_tax_total / $item_total) * 100, 1);
 
+		$item_name = $data['purchase_units'][0]['items'][0]['name'];
+		$item_currency = $data['purchase_units'][0]['items'][0]['unit_amount']['currency_code'];
+		$item_description = $data['purchase_units'][0]['items'][0]['description'];
+		$item_sku = $data['purchase_units'][0]['items'][0]['sku'];
+
 		unset($data['purchase_units'][0]['items']);
 		$data['purchase_units'][0]['items'][0] = array(
-			'name' => 'Beanie with Logo',
+			'name' => $item_name,
 			'unit_amount' => array(
-				'currency_code' => 'EUR',
+				'currency_code' => $item_currency,
 				'value' => $item_total,
 			),
 			'quantity' => 1,
-			'description' => 'Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vestibulum tortor quam, feugiat v',
-			'sku' => 'Woo-beanie-logo',
+			'description' => $item_description,
+			'sku' => $item_sku,
 			'category' => 'PHYSICAL_GOODS',
 			'tax' => array(
 				'currency_code' => 'EUR',
