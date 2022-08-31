@@ -26,6 +26,7 @@ use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Webhooks\Status\WebhooksStatusPage;
@@ -290,6 +291,9 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @return string
 	 */
 	private function define_method_title(): string {
+		if ( $this->is_connection_tab() ) {
+			return __( 'Account Setup', 'woocommerce-paypal-payments' );
+		}
 		if ( $this->is_credit_card_tab() ) {
 			return __( 'PayPal Card Processing', 'woocommerce-paypal-payments' );
 		}
@@ -312,6 +316,10 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @return string
 	 */
 	private function define_method_description(): string {
+		if ( $this->is_connection_tab() ) {
+			return '';
+		}
+
 		if ( $this->is_credit_card_tab() ) {
 			return __(
 				'Accept debit and credit cards, and local payment methods.',
@@ -372,6 +380,16 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	private function is_webhooks_tab() : bool {
 		return is_admin()
 			&& WebhooksStatusPage::ID === $this->page_id;
+	}
+
+	/**
+	 * Whether we are on the connection tab.
+	 *
+	 * @return bool true if is connection tab, otherwise false
+	 */
+	protected function is_connection_tab() : bool {
+		return is_admin()
+			&& Settings::CONNECTION_TAB_ID === $this->page_id;
 	}
 
 	/**

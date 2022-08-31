@@ -17,7 +17,8 @@ use Psr\Container\ContainerInterface;
  */
 class Settings implements ContainerInterface {
 
-	const KEY = 'woocommerce-ppcp-settings';
+	const KEY               = 'woocommerce-ppcp-settings';
+	const CONNECTION_TAB_ID = 'ppcp-connection';
 
 	/**
 	 * The settings.
