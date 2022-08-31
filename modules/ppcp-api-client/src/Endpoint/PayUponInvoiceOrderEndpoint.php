@@ -227,145 +227,39 @@ class PayUponInvoiceOrderEndpoint {
 	/**
 	 * @param WC_Order $wc_order
 	 * @param array    $data
-	 * @param array    $items
 	 * @return array
 	 */
 	private function ensure_taxes( WC_Order $wc_order, array $data ): array {
-		$items = array_map(
-			function ( WC_Order_Item_Product $item ) use ( $wc_order ): Item {
-				$product     = $item->get_product();
-				$currency    = $wc_order->get_currency();
-				$quantity    = $item->get_quantity();
-				$unit_amount = $wc_order->get_item_subtotal( $item, false );
-				$tax_rates   = WC_Tax::get_rates( $product->get_tax_class() );
-				$tax_rate    = reset( $tax_rates )['rate'] ?? 0;
-				$tax         = $unit_amount * ( $tax_rate / 100 );
-				$tax         = new Money( $tax, $currency );
+		$tax_total = $data['purchase_units'][0]['amount']['breakdown']['tax_total']['value'];
+		$item_total = $data['purchase_units'][0]['amount']['breakdown']['item_total']['value'];
+		$shipping = $data['purchase_units'][0]['amount']['breakdown']['shipping']['value'];
+		$order_tax_total = $wc_order->get_total_tax();
+		$tax_rate = round(($order_tax_total / $item_total) * 100, 1);
 
-				return new Item(
-					mb_substr( $item->get_name(), 0, 127 ),
-					new Money( (float) $wc_order->get_item_subtotal( $item, false ), $currency ),
-					$quantity,
-					substr(
-						wp_strip_all_tags( $product instanceof WC_Product ? $product->get_description() : '' ),
-						0,
-						127
-					) ?: '',
-					$tax,
-					$product instanceof WC_Product ? $product->get_sku() : '',
-					( $product instanceof WC_Product && $product->is_virtual() ) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS,
-					$tax_rate
-				);
-			},
-			$wc_order->get_items(),
-			array_keys( $wc_order->get_items() )
+		unset($data['purchase_units'][0]['items']);
+		$data['purchase_units'][0]['items'][0] = array(
+			'name' => 'Beanie with Logo',
+			'unit_amount' => array(
+				'currency_code' => 'EUR',
+				'value' => $item_total,
+			),
+			'quantity' => 1,
+			'description' => 'Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Vestibulum tortor quam, feugiat v',
+			'sku' => 'Woo-beanie-logo',
+			'category' => 'PHYSICAL_GOODS',
+			'tax' => array(
+				'currency_code' => 'EUR',
+				'value' => $tax_total,
+			),
+			'tax_rate' => number_format( $tax_rate, 2, '.', '' ),
 		);
 
-		$fees = array_map(
-			function ( WC_Order_Item_Fee $item ) use ( $wc_order ): Item {
-				$currency    = $wc_order->get_currency();
-				$unit_amount = $item->get_amount();
-				$total_tax   = $item->get_total_tax();
-				$tax_rate    = ( $total_tax / $unit_amount ) * 100;
-				$tax         = $unit_amount * ( $tax_rate / 100 );
-				$tax         = new Money( $tax, $currency );
-
-				return new Item(
-					$item->get_name(),
-					new Money( (float) $item->get_amount(), $wc_order->get_currency() ),
-					$item->get_quantity(),
-					'',
-					$tax,
-					'',
-					'PHYSICAL_GOODS',
-					$tax_rate
-				);
-			},
-			$wc_order->get_fees()
-		);
-
-		$items = array_merge( $items, $fees );
-
-		$items_count = count( $data['purchase_units'][0]['items'] );
-		for ( $i = 0; $i < $items_count; $i++ ) {
-			if ( ! isset( $data['purchase_units'][0]['items'][ $i ]['tax'] ) ) {
-				$data['purchase_units'][0]['items'][ $i ] = $items[ $i ]->to_array();
-			}
-		}
-
-		$shipping  = (float) $wc_order->calculate_shipping();
-		$total     = 0;
-		$tax_total = 0;
-		foreach ( $items as $item ) {
-			$unit_amount = (float) $item->unit_amount()->value();
-			$tax         = (float) $item->tax()->value();
-			$qt          = $item->quantity();
-
-			$total     += ( ( round($unit_amount,2) + round($tax,2) ) * $qt );
-			$tax_total += $tax * $qt;
-		}
-
-		$data['purchase_units'][0]['amount']['value']                           = number_format( $total + $shipping, 2, '.', '' );
-		$data['purchase_units'][0]['amount']['breakdown']['tax_total']['value'] = number_format( $tax_total, 2, '.', '' );
-
-		$shipping_taxes = (float) $wc_order->get_shipping_tax();
-
-		$fees_taxes = 0;
-		foreach ( $wc_order->get_fees() as $fee ) {
-			$unit_amount = $fee->get_amount();
-			$total_tax   = $fee->get_total_tax();
-			$tax_rate    = ( $total_tax / $unit_amount ) * 100;
-			$tax         = $unit_amount * ( $tax_rate / 100 );
-
-			$fees_taxes += $tax;
-		}
-
-		if ( $shipping_taxes > 0 || $fees_taxes > 0 ) {
-			$name     = $data['purchase_units'][0]['items'][0]['name'];
-			$category = $data['purchase_units'][0]['items'][0]['category'];
-			$tax_rate = $data['purchase_units'][0]['items'][0]['tax_rate'];
-
-			unset( $data['purchase_units'][0]['items'] );
-			$data['purchase_units'][0]['items'][0] = array(
-				'name'        => $name,
-				'unit_amount' => array(
-					'currency_code' => 'EUR',
-					'value'         => $data['purchase_units'][0]['amount']['breakdown']['item_total']['value'],
-				),
-				'category'    => $category,
-				'quantity'    => 1,
-				'tax'         => array(
-					'currency_code' => 'EUR',
-					'value'         => number_format( $tax_total + $shipping_taxes, 2, '.', '' ),
-				),
-				'tax_rate'    => $tax_rate,
-			);
-
-			$data['purchase_units'][0]['amount']['value']                           = number_format( $total + $shipping + $shipping_taxes, 2, '.', '' );
-			$data['purchase_units'][0]['amount']['breakdown']['tax_total']['value'] = number_format( $tax_total + $shipping_taxes, 2, '.', '' );
-		}
-
-		$total_amount = floatval($data['purchase_units'][0]['amount']['value']);
-		$item_total = floatval($data['purchase_units'][0]['amount']['breakdown']['item_total']['value']);
-		$shipping = floatval($data['purchase_units'][0]['amount']['breakdown']['shipping']['value']);
-		$tax_total = floatval($data['purchase_units'][0]['amount']['breakdown']['tax_total']['value']);
-		$total_breakdown = $item_total + $shipping + $tax_total;
-		$diff = round($total_amount - $total_breakdown, 2);
+		$total_amount = $data['purchase_units'][0]['amount']['value'];
+		$breakdown_total = $item_total + $tax_total + $shipping;
+		$diff = round($total_amount - $breakdown_total, 2);
 		if($diff === -0.01 || $diff === 0.01) {
-			$data['purchase_units'][0]['amount']['value'] = number_format( $total_breakdown, 2, '.', '' );
+			$data['purchase_units'][0]['amount']['value'] = number_format( $breakdown_total, 2, '.', '' );
 		}
-
-		$items_total = 0;
-		foreach ($data['purchase_units'][0]['items'] as $item) {
-			$items_total += floatval($item['unit_amount']['value']) * $item['quantity'];
-		}
-		$data['purchase_units'][0]['amount']['breakdown']['item_total']['value'] = number_format( $items_total, 2, '.', '' );
-
-		$items_tax_total = 0;
-		foreach ($data['purchase_units'][0]['items'] as $item) {
-			$items_tax_total += floatval($item['tax']['value']) * $item['quantity'];
-		}
-		$data['purchase_units'][0]['amount']['breakdown']['tax_total']['value'] = number_format( $items_tax_total, 2, '.', '' );
 
 		return $data;
 	}
