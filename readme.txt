@@ -81,7 +81,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 
 == Changelog ==
 
-= 1.9.3 - 2022-xx-xx =
+= 1.9.3 =
 * Add - Tracking API #792
 * Fix - Improve compatibility with Siteground Optimizer plugin #797
 * Fix - Transaction ID in order not updated when manually capturing authorized payment from WC #766
@@ -116,21 +116,21 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Fix - Pay Later messaging displayed for out of stock variable products or with no variation selected #667
 * Fix - Placeholders and card type detection not working for PayPal Card Processing (260) #685
 * Fix - PUI gateway is displayed with unsupported store currency #711
-* Fix - Wrong PUI locale sent causing error PAYMENT_SOURCE_CANNOT_BE_USED #741
+* Fix - Wrong PUI locale sent causing error PAYMENT_SOURCE_CANNOT_BE_USED #741 
 * Enhancement - Missing PayPal fee in WC order details for PUI purchase #714
 * Enhancement - Skip loading of PUI js file on all pages where PUI gateway is not displayed #723
-* Enhancement - PUI feature capitalization not consistent #724
+* Enhancement - PUI feature capitalization not consistent #724 
 
 = 1.9.0 =
 * Add - New Feature - Pay Upon Invoice (Germany only) #608
 * Fix - Order not approved: payment via vaulted PayPal account fails #677
 * Fix - Cant' refund : "ERROR Refund failed: No country given for address." #639
-* Fix - Something went wrong error in Virtual products when using vaulted payment #673
+* Fix - Something went wrong error in Virtual products when using vaulted payment #673 
 * Fix - PayPal smart buttons are not displayed for product variations when parent product is set to out of stock #669
-* Fix - Pay Later messaging displayed for out of stock variable products or with no variation selected #667
-* Fix - "Capture Virtual-Only Orders" intent sets virtual+downloadable product orders to "Processing" instead of "Completed" #665
-* Fix - Free trial period causing incorrerct disable-funding parameters with DCC disabled #661
-* Fix - Smart button not visible on single product page when product price is below 1 and decimal is "," #654
+* Fix - Pay Later messaging displayed for out of stock variable products or with no variation selected #667 
+* Fix - "Capture Virtual-Only Orders" intent sets virtual+downloadable product orders to "Processing" instead of "Completed" #665 
+* Fix - Free trial period causing incorrerct disable-funding parameters with DCC disabled #661 
+* Fix - Smart button not visible on single product page when product price is below 1 and decimal is "," #654 
 * Fix - Checkout using an email address containing a + symbol results in a "[INVALID_REQUEST]" error #523
 * Fix - Order details are sometimes empty in PayPal dashboard #689
 * Fix - Incorrect TAX details on PayPal order overview #541
