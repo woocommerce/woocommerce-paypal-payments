@@ -78,7 +78,7 @@ class MetaBoxRenderer {
 			return;
 		}
 
-		$tracking_info = $this->order_tracking_endpoint->get_tracking_information( $post->ID );
+		$tracking_info = $this->order_tracking_endpoint->get_tracking_information( $wc_order->get_id() );
 
 		$tracking_is_not_added = empty( $tracking_info );
 
