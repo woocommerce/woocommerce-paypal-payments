@@ -1,6 +1,6 @@
 *** Changelog ***
 
-= 1.9.3 - TBD =
+= 1.9.3 - 2022-xx-xx =
 * Add - Tracking API #792
 * Fix - Improve compatibility with Siteground Optimizer plugin #797
 * Fix - Transaction ID in order not updated when manually capturing authorized payment from WC #766
