@@ -357,7 +357,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'screens'      => array(
 				State::STATE_ONBOARDED,
 			),
-			'requirements' => array(),
+			'requirements' => array( 'dcc' ),
 			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
 		'ppcp_pui_status'                               => array(

@@ -2144,13 +2144,13 @@ return array(
 		return 'https://www.paypal.com/bizsignup/entry?country.x=DE&product=payment_methods&capabilities=PAY_UPON_INVOICE';
 	},
 	'wcgateway.settings.connection.dcc-status-text'        => static function ( ContainerInterface $container ): string {
-		$dcc_applies = $container->get( 'api.helpers.dccapplies' );
-		assert( $dcc_applies instanceof DccApplies );
+        $dcc_product_status = $container->get( 'wcgateway.helper.dcc-product-status' );
+        assert( $dcc_product_status instanceof DCCProductStatus );
 
 		$environment = $container->get( 'onboarding.environment' );
 		assert( $environment instanceof Environment );
 
-		$dcc_enabled = $dcc_applies->for_country_currency() || $dcc_applies->for_wc_payments();
+		$dcc_enabled = $dcc_product_status->dcc_is_active();
 
 		$enabled_status_text  = esc_html__( 'Status: Enabled', 'woocommerce-paypal-payments' );
 		$disabled_status_text = esc_html__( 'Status: Not yet enabled', 'woocommerce-paypal-payments' );
@@ -2183,9 +2183,7 @@ return array(
 		$environment = $container->get( 'onboarding.environment' );
 		assert( $environment instanceof Environment );
 
-		$shop_country = $container->get( 'api.shop.country' );
-
-		$pui_enabled = 'DE' === $shop_country && $pui_product_status->pui_is_active();
+		$pui_enabled = $pui_product_status->pui_is_active();
 
 		$enabled_status_text  = esc_html__( 'Status: Enabled', 'woocommerce-paypal-payments' );
 		$disabled_status_text = esc_html__( 'Status: Not yet enabled', 'woocommerce-paypal-payments' );
