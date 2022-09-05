@@ -62,6 +62,7 @@ class DCCProductStatus {
 		if ( is_bool( $this->current_status_cache ) ) {
 			return $this->current_status_cache;
 		}
+		//var_dump($this->settings->has( 'products_dcc_enabled' ) && $this->settings->get( 'products_dcc_enabled' ));die;
 		if ( $this->settings->has( 'products_dcc_enabled' ) && $this->settings->get( 'products_dcc_enabled' ) ) {
 			$this->current_status_cache = true;
 			return true;
