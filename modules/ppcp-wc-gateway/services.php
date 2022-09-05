@@ -2146,8 +2146,8 @@ return array(
 		return 'https://www.paypal.com/bizsignup/entry?country.x=DE&product=payment_methods&capabilities=PAY_UPON_INVOICE';
 	},
 	'wcgateway.settings.connection.dcc-status-text'        => static function ( ContainerInterface $container ): string {
-        $dcc_product_status = $container->get( 'wcgateway.helper.dcc-product-status' );
-        assert( $dcc_product_status instanceof DCCProductStatus );
+		$dcc_product_status = $container->get( 'wcgateway.helper.dcc-product-status' );
+		assert( $dcc_product_status instanceof DCCProductStatus );
 
 		$environment = $container->get( 'onboarding.environment' );
 		assert( $environment instanceof Environment );
