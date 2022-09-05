@@ -2369,6 +2369,7 @@ return array(
 
 	'button.helper.vaulting-label'                         => static function ( ContainerInterface $container ): string {
 		$vaulting_label = sprintf(
+			// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
 			__( 'Enable saved cards, PayPal accounts, and subscription features on your store. Payment methods are saved in the secure %1$sPayPal Vault%2$s.', 'woocommerce-paypal-payments' ),
 			'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#vaulting-saving-a-payment-method" target="_blank">',
 			'</a>'
