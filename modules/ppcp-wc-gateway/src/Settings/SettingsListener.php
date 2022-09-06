@@ -174,7 +174,7 @@ class SettingsListener {
 		/**
 		 * The URL opened at the end of onboarding after saving the merchant ID/email.
 		 */
-		$redirect_url = apply_filters( 'woocommerce_paypal_payments_onboarding_redirect_url', admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ) );
+		$redirect_url = apply_filters( 'woocommerce_paypal_payments_onboarding_redirect_url', admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-connection' ) );
 		if ( ! $this->settings->has( 'client_id' ) || ! $this->settings->get( 'client_id' ) ) {
 			$redirect_url = add_query_arg( 'ppcp-onboarding-error', '1', $redirect_url );
 		}
@@ -259,7 +259,7 @@ class SettingsListener {
 
 		$credentials_change_status = null; // Cannot detect on Card Processing page.
 
-		if ( PayPalGateway::ID === $this->page_id ) {
+		if ( PayPalGateway::ID === $this->page_id || Settings::CONNECTION_TAB_ID === $this->page_id ) {
 			$settings['enabled'] = isset( $_POST['woocommerce_ppcp-gateway_enabled'] )
 				&& 1 === absint( $_POST['woocommerce_ppcp-gateway_enabled'] );
 
@@ -267,7 +267,6 @@ class SettingsListener {
 		}
 		// phpcs:enable phpcs:disable WordPress.Security.NonceVerification.Missing
 		// phpcs:enable phpcs:disable WordPress.Security.NonceVerification.Missing
-
 		if ( $credentials_change_status ) {
 			if ( self::CREDENTIALS_UNCHANGED !== $credentials_change_status ) {
 				$this->settings->set( 'products_dcc_enabled', null );

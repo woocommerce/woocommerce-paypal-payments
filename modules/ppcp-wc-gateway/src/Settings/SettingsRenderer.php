@@ -391,12 +391,6 @@ $data_rows_html
 				continue;
 			}
 			if (
-				in_array( 'dcc', $config['requirements'], true )
-				&& ! $this->dcc_product_status->dcc_is_active()
-			) {
-				continue;
-			}
-			if (
 				in_array( 'messages', $config['requirements'], true )
 				&& ! $this->messages_apply->for_country()
 			) {
