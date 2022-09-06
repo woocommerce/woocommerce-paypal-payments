@@ -247,11 +247,7 @@ function ppcp_onboarding_productionCallback(...args) {
             }
         );
 
-        if (sandboxSwitchElement.checked) {
-            sandboxSwitchElement.checked = false;
-        } else {
-            sandboxSwitchElement.checked = true;
-        }
+        sandboxSwitchElement.checked = ! sandboxSwitchElement.checked;
 
         isDisconnecting = true;
 
