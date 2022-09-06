@@ -33,10 +33,11 @@ trait PageMatcherTrait {
 		}
 
 		$gateway_page_id_map = array(
-			PayPalGateway::ID      => 'paypal',
-			CreditCardGateway::ID  => 'dcc', // TODO: consider using just the gateway ID for PayPal and DCC too.
-			CardButtonGateway::ID  => CardButtonGateway::ID,
-			WebhooksStatusPage::ID => WebhooksStatusPage::ID,
+			Settings::CONNECTION_TAB_ID => 'connection',
+			PayPalGateway::ID           => 'paypal',
+			CreditCardGateway::ID       => 'dcc', // TODO: consider using just the gateway ID for PayPal and DCC too.
+			CardButtonGateway::ID       => CardButtonGateway::ID,
+			WebhooksStatusPage::ID      => WebhooksStatusPage::ID,
 		);
 		return array_key_exists( $current_page_id, $gateway_page_id_map )
 			&& in_array( $gateway_page_id_map[ $current_page_id ], $allowed_gateways, true );
