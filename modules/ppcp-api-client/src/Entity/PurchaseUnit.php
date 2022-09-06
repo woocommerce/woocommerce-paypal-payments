@@ -268,9 +268,11 @@ class PurchaseUnit {
 	/**
 	 * Returns the object as array.
 	 *
+	 * @param bool $ditch_items_when_mismatch Whether ditch items when mismatch or not.
+	 *
 	 * @return array
 	 */
-	public function to_array(): array {
+	public function to_array( bool $ditch_items_when_mismatch = true ): array {
 		$purchase_unit = array(
 			'reference_id' => $this->reference_id(),
 			'amount'       => $this->amount()->to_array(),
@@ -282,7 +284,7 @@ class PurchaseUnit {
 				$this->items()
 			),
 		);
-		if ( $this->ditch_items_when_mismatch( $this->amount(), ...$this->items() ) ) {
+		if ( $ditch_items_when_mismatch && $this->ditch_items_when_mismatch( $this->amount(), ...$this->items() ) ) {
 			unset( $purchase_unit['items'] );
 			unset( $purchase_unit['amount']['breakdown'] );
 		}

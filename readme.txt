@@ -87,6 +87,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Fix - Transaction ID in order not updated when manually capturing authorized payment from WC #766
 * Fix - Failed form validation on Checkout page causing page to be sticky #781
 * Fix - Do not include full path in exception #779
+* Fix - PUI conflict with Germanized plugin and taxes #808
 * Enhancement - Enable ACDC by default only in locations where WooCommerce Payments is not available #799
 * Enhancement - Add links to docs & support in plugin #782
 * Enhancement - Put gateway sub-options into tabs #772

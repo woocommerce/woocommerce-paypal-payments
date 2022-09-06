@@ -247,6 +247,8 @@ function ppcp_onboarding_productionCallback(...args) {
             }
         );
 
+        sandboxSwitchElement.checked = ! sandboxSwitchElement.checked;
+
         isDisconnecting = true;
 
         document.querySelector('.woocommerce-save-button').click();

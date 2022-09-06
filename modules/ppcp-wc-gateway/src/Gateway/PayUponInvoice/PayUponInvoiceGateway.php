@@ -226,7 +226,7 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 		$payment_source = $this->payment_source_factory->from_wc_order( $wc_order, $birth_date );
 
 		try {
-			$order = $this->order_endpoint->create( array( $purchase_unit ), $payment_source );
+			$order = $this->order_endpoint->create( array( $purchase_unit ), $payment_source, $wc_order );
 			$this->add_paypal_meta( $wc_order, $order, $this->environment );
 
 			as_schedule_single_action(
