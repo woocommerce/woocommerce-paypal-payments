@@ -39,7 +39,7 @@ const dataClientIdAttributeHandler = (script, config) => {
         }
         storeToken(data);
         script.setAttribute('data-client-token', data.token);
-        document.body.append(script);
+        document.body.appendChild(script);
     });
 }
 

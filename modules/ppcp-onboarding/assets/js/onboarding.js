@@ -54,7 +54,7 @@ const ppcp_onboarding = {
 		const paypalScriptTag = document.createElement('script');
 		paypalScriptTag.id = ppcp_onboarding.PAYPAL_JS_ID;
 		paypalScriptTag.src = PayPalCommerceGatewayOnboarding.paypal_js_url;
-		document.body.append(paypalScriptTag);
+		document.body.appendChild(paypalScriptTag);
 
 		if (ppcp_onboarding._timeout) {
 			clearTimeout(ppcp_onboarding._timeout);
