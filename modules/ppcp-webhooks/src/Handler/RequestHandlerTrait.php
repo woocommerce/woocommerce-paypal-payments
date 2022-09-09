@@ -61,7 +61,7 @@ trait RequestHandlerTrait {
 	}
 
 	/**
-	 * Get custom ids from request.
+	 * Return and log response for no custom ids found in request.
 	 *
 	 * @param WP_REST_Request $request The request.
 	 * @param array           $response The response.
@@ -78,7 +78,7 @@ trait RequestHandlerTrait {
 	}
 
 	/**
-	 * Returns and logs no WC orders found response.
+	 * Return and log response for no WC orders found in response.
 	 *
 	 * @param WP_REST_Request $request The request.
 	 * @param array           $response The response.
@@ -95,7 +95,7 @@ trait RequestHandlerTrait {
 	}
 
 	/**
-	 * Returns and logs the given message.
+	 * Return and log response with the given message.
 	 *
 	 * @param string $message The message.
 	 * @param array  $response The response.
