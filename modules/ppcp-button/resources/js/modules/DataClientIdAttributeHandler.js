@@ -27,6 +27,7 @@ const storeToken = (token) => {
 const dataClientIdAttributeHandler = (script, config) => {
     fetch(config.endpoint, {
         method: 'POST',
+        credentials: 'same-origin',
         body: JSON.stringify({
             nonce: config.nonce
         })
