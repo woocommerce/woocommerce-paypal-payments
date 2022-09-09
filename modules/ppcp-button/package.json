@@ -3,7 +3,15 @@
   "version": "1.0.0",
   "license": "GPL-3.0-or-later",
   "main": "resources/js/button.js",
+  "browserslist": [
+    "> 0.5%",
+    "Safari >= 8",
+    "Chrome >= 41",
+    "Firefox >= 43",
+    "Edge >= 14"
+  ],
   "dependencies": {
+    "core-js": "^3.25.0",
     "deepmerge": "^4.2.2"
   },
   "devDependencies": {
