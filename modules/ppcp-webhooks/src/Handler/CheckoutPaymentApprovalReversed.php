@@ -78,17 +78,22 @@ class CheckoutPaymentApprovalReversed implements RequestHandler {
 			return $this->no_wc_orders_from_custom_ids( $request, $response );
 		}
 
-		foreach ( $wc_orders as $wc_order ) {
-			if ( in_array( $wc_order->get_status(), array( 'pending', 'on-hold' ), true ) ) {
-				$error_message = sprintf(
+		if ( is_array( $wc_orders ) ) {
+			foreach ( $wc_orders as $wc_order ) {
+				if ( in_array( $wc_order->get_status(), array( 'pending', 'on-hold' ), true ) ) {
+					$error_message = sprintf(
 					// translators: %1$s is the order id.
-					__( 'Failed to capture order %1$s through PayPal.', 'woocommerce-paypal-payments' ),
-					(string) $wc_order->get_id()
-				);
+						__(
+							'Failed to capture order %1$s through PayPal.',
+							'woocommerce-paypal-payments'
+						),
+						(string) $wc_order->get_id()
+					);
 
-				$this->logger->warning( 'CHECKOUT.PAYMENT-APPROVAL.REVERSED received. ' . $error_message );
+					$this->logger->warning( 'CHECKOUT.PAYMENT-APPROVAL.REVERSED received. ' . $error_message );
 
-				$wc_order->update_status( 'failed', $error_message );
+					$wc_order->update_status( 'failed', $error_message );
+				}
 			}
 		}
 

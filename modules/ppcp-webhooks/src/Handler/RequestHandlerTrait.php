@@ -29,7 +29,7 @@ trait RequestHandlerTrait {
 					return isset( $purchase_unit['custom_id'] ) ?
 						(string) $purchase_unit['custom_id'] : '';
 				},
-				isset( $request['resource']['purchase_units'] ) ?
+				isset( $request['resource'] ) && isset( $request['resource']['purchase_units'] ) ?
 					(array) $request['resource']['purchase_units'] : array()
 			),
 			static function ( string $order_id ): bool {
