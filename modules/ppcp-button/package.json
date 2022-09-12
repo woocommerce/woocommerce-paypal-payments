@@ -12,6 +12,7 @@
     ],
     "dependencies": {
         "core-js": "^3.25.0",
+        "formdata-polyfill": "^4.0.10",
         "deepmerge": "^4.2.2"
     },
     "devDependencies": {
