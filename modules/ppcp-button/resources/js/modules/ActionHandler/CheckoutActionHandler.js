@@ -71,7 +71,7 @@ class CheckoutActionHandler {
                 input.setAttribute('type', 'hidden');
                 input.setAttribute('name', 'ppcp-resume-order');
                 input.setAttribute('value', data.data.purchase_units[0].custom_id);
-                document.querySelector(formSelector).append(input);
+                document.querySelector(formSelector).appendChild(input);
                 return data.data.id;
             });
         }
