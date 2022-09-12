@@ -76,7 +76,7 @@ return array(
 		return array(
 			new CheckoutOrderApproved( $logger, $prefix, $order_endpoint ),
 			new CheckoutOrderCompleted( $logger, $prefix ),
-			new CheckoutPaymentApprovalReversed($logger),
+			new CheckoutPaymentApprovalReversed( $logger ),
 			new PaymentCaptureRefunded( $logger, $prefix ),
 			new PaymentCaptureReversed( $logger, $prefix ),
 			new PaymentCaptureCompleted( $logger, $prefix, $order_endpoint ),
