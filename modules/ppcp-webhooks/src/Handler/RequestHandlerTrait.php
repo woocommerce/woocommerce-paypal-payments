@@ -29,7 +29,7 @@ trait RequestHandlerTrait {
 					return isset( $purchase_unit['custom_id'] ) ?
 						(string) $purchase_unit['custom_id'] : '';
 				},
-				isset( $request['resource'] ) && isset( $request['resource']['purchase_units'] ) ?
+				$request['resource'] !== null && isset( $request['resource']['purchase_units'] ) ?
 					(array) $request['resource']['purchase_units'] : array()
 			),
 			static function ( string $order_id ): bool {
@@ -71,7 +71,7 @@ trait RequestHandlerTrait {
 		$message = sprintf(
 		// translators: %s is the PayPal webhook Id.
 			__( 'No order for webhook event %s was found.', 'woocommerce-paypal-payments' ),
-			isset( $request['id'] ) ? $request['id'] : ''
+			$request['id'] !== null && isset( $request['id'] ) ? $request['id'] : ''
 		);
 
 		return $this->log_and_return_response( $message, $response );
@@ -88,7 +88,7 @@ trait RequestHandlerTrait {
 		$message = sprintf(
 		// translators: %s is the PayPal order Id.
 			__( 'WC order for PayPal order %s not found.', 'woocommerce-paypal-payments' ),
-			isset( $request['resource']['id'] ) ? $request['resource']['id'] : ''
+			$request['resource'] !== null && isset( $request['resource']['id'] ) ? $request['resource']['id'] : ''
 		);
 
 		return $this->log_and_return_response( $message, $response );

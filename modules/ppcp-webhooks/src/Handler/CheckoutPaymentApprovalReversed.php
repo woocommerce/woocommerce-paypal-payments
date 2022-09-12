@@ -18,7 +18,7 @@ use WP_REST_Response;
  */
 class CheckoutPaymentApprovalReversed implements RequestHandler {
 
-	use RequestHandlerTrait;
+	use RequestHandlerTrait, PrefixTrait;
 
 	/**
 	 * The logger.
