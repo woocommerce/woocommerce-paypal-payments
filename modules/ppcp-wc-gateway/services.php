@@ -287,7 +287,7 @@ return array(
 			$signup_link_cache,
 			$signup_link_ids,
 			$pui_status_cache,
-            $dcc_status_cache
+			$dcc_status_cache
 		);
 	},
 	'wcgateway.order-processor'                            => static function ( ContainerInterface $container ): OrderProcessor {
@@ -2237,7 +2237,7 @@ return array(
 	'pui.status-cache'                                     => static function( ContainerInterface $container ): Cache {
 		return new Cache( 'ppcp-paypal-pui-status-cache' );
 	},
-    'dcc.status-cache'                                     => static function( ContainerInterface $container ): Cache {
-        return new Cache( 'ppcp-paypal-dcc-status-cache' );
-    },
+	'dcc.status-cache'                                     => static function( ContainerInterface $container ): Cache {
+		return new Cache( 'ppcp-paypal-dcc-status-cache' );
+	},
 );
