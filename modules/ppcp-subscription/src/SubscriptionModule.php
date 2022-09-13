@@ -13,6 +13,7 @@ use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
 use Psr\Log\LoggerInterface;
 use WC_Order;
+use WC_Subscription;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
@@ -98,26 +99,29 @@ class SubscriptionModule implements ModuleInterface {
 
 		add_filter(
 			'ppcp_create_order_request_body_data',
-			function( $data ) use ( $c ) {
+			function( array $data ) use ( $c ) {
 				$wc_order_action = filter_input( INPUT_POST, 'wc_order_action', FILTER_SANITIZE_STRING ) ?? '';
 				if ( $wc_order_action === 'wcs_process_renewal' ) {
 					if ( isset( $data['payment_source']['token'] ) && $data['payment_source']['token']['type'] === 'PAYMENT_METHOD_TOKEN' ) {
 						if ( isset( $data['payment_source']['token']['source']->card ) ) {
-							$renewal_order_id                 = absint( $data['purchase_units'][0]['custom_id'] );
-							$subscriptions                    = wcs_get_subscriptions_for_renewal_order( $renewal_order_id );
-							$subscriptions_values             = array_values( $subscriptions );
-							$latest_subscription              = array_shift( $subscriptions_values );
-							$latest_order_id_with_transaction = array_slice( $latest_subscription->get_related_orders( 'ids', 'renewal' ), 1, 1, false );
+							$renewal_order_id     = absint( $data['purchase_units'][0]['custom_id'] );
+							$subscriptions        = wcs_get_subscriptions_for_renewal_order( $renewal_order_id );
+							$subscriptions_values = array_values( $subscriptions );
+							$latest_subscription  = array_shift( $subscriptions_values );
+							if ( is_a( $latest_subscription, WC_Subscription::class ) ) {
+								$related_renewal_orders           = $latest_subscription->get_related_orders( 'ids', 'renewal' );
+								$latest_order_id_with_transaction = array_slice( $related_renewal_orders, 1, 1, false );
 
-							$wc_order = wc_get_order( $latest_order_id_with_transaction[0] );
-							if ( is_a( $wc_order, WC_Order::class ) ) {
-								$transaction_id                                       = $wc_order->get_transaction_id();
-								$data['application_context']['stored_payment_source'] = array(
-									'payment_initiator' => 'MERCHANT',
-									'payment_type'      => 'RECURRING',
-									'usage'             => 'SUBSEQUENT',
-									'previous_transaction_reference' => $transaction_id,
-								);
+								$wc_order = wc_get_order( $latest_order_id_with_transaction[0] );
+								if ( is_a( $wc_order, WC_Order::class ) ) {
+									$transaction_id                                       = $wc_order->get_transaction_id();
+									$data['application_context']['stored_payment_source'] = array(
+										'payment_initiator' => 'MERCHANT',
+										'payment_type' => 'RECURRING',
+										'usage'        => 'SUBSEQUENT',
+										'previous_transaction_reference' => $transaction_id,
+									);
+								}
 							}
 						}
 					}
