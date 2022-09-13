@@ -275,6 +275,7 @@ return array(
 		$signup_link_cache = $container->get( 'onboarding.signup-link-cache' );
 		$signup_link_ids = $container->get( 'onboarding.signup-link-ids' );
 		$pui_status_cache = $container->get( 'pui.status-cache' );
+		$dcc_status_cache = $container->get( 'dcc.status-cache' );
 		return new SettingsListener(
 			$settings,
 			$fields,
@@ -285,7 +286,8 @@ return array(
 			$page_id,
 			$signup_link_cache,
 			$signup_link_ids,
-			$pui_status_cache
+			$pui_status_cache,
+            $dcc_status_cache
 		);
 	},
 	'wcgateway.order-processor'                            => static function ( ContainerInterface $container ): OrderProcessor {
@@ -1914,7 +1916,7 @@ return array(
 
 		$settings         = $container->get( 'wcgateway.settings' );
 		$partner_endpoint = $container->get( 'api.endpoint.partners' );
-		return new DCCProductStatus( $settings, $partner_endpoint );
+		return new DCCProductStatus( $settings, $partner_endpoint, $container->get( 'dcc.status-cache' ) );
 	},
 
 	'button.helper.messages-disclaimers'                   => static function ( ContainerInterface $container ): MessagesDisclaimers {
@@ -2235,4 +2237,7 @@ return array(
 	'pui.status-cache'                                     => static function( ContainerInterface $container ): Cache {
 		return new Cache( 'ppcp-paypal-pui-status-cache' );
 	},
+    'dcc.status-cache'                                     => static function( ContainerInterface $container ): Cache {
+        return new Cache( 'ppcp-paypal-dcc-status-cache' );
+    },
 );
