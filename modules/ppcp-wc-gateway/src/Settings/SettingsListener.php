@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 
@@ -96,6 +97,13 @@ class SettingsListener {
 	protected $signup_link_ids;
 
 	/**
+	 * The PUI status cache.
+	 *
+	 * @var Cache
+	 */
+	protected $pui_status_cache;
+
+	/**
 	 * SettingsListener constructor.
 	 *
 	 * @param Settings         $settings The settings.
@@ -107,6 +115,7 @@ class SettingsListener {
 	 * @param string           $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
 	 * @param Cache            $signup_link_cache The signup link cache.
 	 * @param array            $signup_link_ids Signup link ids.
+	 * @param Cache            $pui_status_cache The PUI status cache.
 	 */
 	public function __construct(
 		Settings $settings,
@@ -117,7 +126,8 @@ class SettingsListener {
 		Bearer $bearer,
 		string $page_id,
 		Cache $signup_link_cache,
-		array $signup_link_ids
+		array $signup_link_ids,
+		Cache $pui_status_cache
 	) {
 
 		$this->settings          = $settings;
@@ -129,6 +139,7 @@ class SettingsListener {
 		$this->page_id           = $page_id;
 		$this->signup_link_cache = $signup_link_cache;
 		$this->signup_link_ids   = $signup_link_ids;
+		$this->pui_status_cache  = $pui_status_cache;
 	}
 
 	/**
@@ -305,6 +316,10 @@ class SettingsListener {
 
 		if ( $this->cache->has( PayPalBearer::CACHE_KEY ) ) {
 			$this->cache->delete( PayPalBearer::CACHE_KEY );
+		}
+
+		if ( $this->pui_status_cache->has( PayUponInvoiceProductStatus::PUI_STATUS_CACHE_KEY ) ) {
+			$this->pui_status_cache->delete( PayUponInvoiceProductStatus::PUI_STATUS_CACHE_KEY );
 		}
 
 		if ( isset( $_GET['ppcp-onboarding-error'] ) ) {
