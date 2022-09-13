@@ -36,6 +36,7 @@ class SettingsListenerTest extends ModularTestCase
 		$bearer = Mockery::mock(Bearer::class);
 		$signup_link_cache = Mockery::mock(Cache::class);
 		$signup_link_ids = array();
+        $pui_status_cache = Mockery::mock(Cache::class);
 
 		$testee = new SettingsListener(
 			$settings,
@@ -46,7 +47,8 @@ class SettingsListenerTest extends ModularTestCase
 			$bearer,
 			PayPalGateway::ID,
 			$signup_link_cache,
-			$signup_link_ids
+			$signup_link_ids,
+            $pui_status_cache
 		);
 
 		$_GET['section'] = PayPalGateway::ID;
@@ -76,6 +78,8 @@ class SettingsListenerTest extends ModularTestCase
 			->andReturn(false);
 		$signup_link_cache->shouldReceive('has')
 			->andReturn(false);
+        $pui_status_cache->shouldReceive('has')
+            ->andReturn(false);
 
 		$testee->listen();
 	}
