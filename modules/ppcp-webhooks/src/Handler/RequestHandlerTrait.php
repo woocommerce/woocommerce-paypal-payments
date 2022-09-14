@@ -42,9 +42,9 @@ trait RequestHandlerTrait {
 	 * Get WC orders from the given custom ids.
 	 *
 	 * @param array $custom_ids The custom ids.
-	 * @return stdClass|WC_Order[]
+	 * @return WC_Order[]
 	 */
-	protected function get_wc_orders_from_custom_ids( array $custom_ids ) {
+	protected function get_wc_orders_from_custom_ids( array $custom_ids ): array {
 		$order_ids = array_map(
 			array(
 				$this,
@@ -57,7 +57,8 @@ trait RequestHandlerTrait {
 			'limit'    => -1,
 		);
 
-		return wc_get_orders( $args );
+		$orders = wc_get_orders( $args );
+		return is_array( $orders ) ? $orders : array();
 	}
 
 	/**
