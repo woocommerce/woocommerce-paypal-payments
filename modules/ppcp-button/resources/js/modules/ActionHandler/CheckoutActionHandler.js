@@ -1,3 +1,4 @@
+import 'formdata-polyfill';
 import onApprove from '../OnApproveHandler/onApproveForPayNow.js';
 import {payerData} from "../Helper/PayerData";
 import {getCurrentPaymentMethod} from "../Helper/CheckoutMethodState";
@@ -22,7 +23,7 @@ class CheckoutActionHandler {
             const formSelector = this.config.context === 'checkout' ? 'form.checkout' : 'form#order_review';
             const formData = new FormData(document.querySelector(formSelector));
             // will not handle fields with multiple values (checkboxes, <select multiple>), but we do not care about this here
-            const formJsonObj = Object.fromEntries(formData);
+            const formJsonObj = Object.fromEntries(formData.entries());
 
             const createaccount = jQuery('#createaccount').is(":checked") ? true : false;
 
@@ -31,6 +32,7 @@ class CheckoutActionHandler {
 
             return fetch(this.config.ajax.create_order.endpoint, {
                 method: 'POST',
+                credentials: 'same-origin',
                 body: JSON.stringify({
                     nonce: this.config.ajax.create_order.nonce,
                     payer,
@@ -70,7 +72,7 @@ class CheckoutActionHandler {
                 input.setAttribute('type', 'hidden');
                 input.setAttribute('name', 'ppcp-resume-order');
                 input.setAttribute('value', data.data.purchase_units[0].custom_id);
-                document.querySelector(formSelector).append(input);
+                document.querySelector(formSelector).appendChild(input);
                 return data.data.id;
             });
         }

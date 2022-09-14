@@ -10,6 +10,7 @@ document.addEventListener(
                 PayPalCommerceGatewayVaulting.delete.endpoint,
                 {
                     method: 'POST',
+                    credentials: 'same-origin',
                     headers: {
                         'content-type': 'application/json'
                     },
