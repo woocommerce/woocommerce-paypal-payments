@@ -9,6 +9,7 @@ declare( strict_types=1 );
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
+use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\Webhooks\Status\WebhooksStatusPage;
 
@@ -34,14 +35,23 @@ class SectionsRenderer {
 	protected $sections;
 
 	/**
+	 * The onboarding state.
+	 *
+	 * @var State
+	 */
+	private $state;
+
+	/**
 	 * SectionsRenderer constructor.
 	 *
 	 * @param string                $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
 	 * @param array<string, string> $sections Key - page/gateway ID, value - displayed text.
+	 * @param State                 $state The onboarding state.
 	 */
-	public function __construct( string $page_id, array $sections ) {
+	public function __construct( string $page_id, array $sections, State $state ) {
 		$this->page_id  = $page_id;
 		$this->sections = $sections;
+		$this->state    = $state;
 	}
 
 	/**
@@ -50,7 +60,9 @@ class SectionsRenderer {
 	 * @return bool
 	 */
 	public function should_render() : bool {
-		return ! empty( $this->page_id );
+		return ! empty( $this->page_id ) &&
+			( $this->state->production_state() === State::STATE_ONBOARDED ||
+			$this->state->sandbox_state() === State::STATE_ONBOARDED );
 	}
 
 	/**
@@ -65,7 +77,7 @@ class SectionsRenderer {
 
 		foreach ( $this->sections as $id => $label ) {
 			$url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=' . $id );
-			if ( in_array( $id, array( CreditCardGateway::ID, WebhooksStatusPage::ID ), true ) ) {
+			if ( in_array( $id, array( Settings::CONNECTION_TAB_ID, CreditCardGateway::ID, WebhooksStatusPage::ID ), true ) ) {
 				// We need section=ppcp-gateway for the webhooks page because it is not a gateway,
 				// and for DCC because otherwise it will not render the page if gateway is not available (country/currency).
 				// Other gateways render fields differently, and their pages are not expected to work when gateway is not available.

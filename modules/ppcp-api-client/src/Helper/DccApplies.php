@@ -78,6 +78,18 @@ class DccApplies {
 	}
 
 	/**
+	 * Returns whether WooCommerce Payments plugin is available for the store country.
+	 *
+	 * @return bool
+	 */
+	public function for_wc_payments(): bool {
+		$countries = array_keys( $this->allowed_country_currency_matrix );
+		array_push( $countries, 'AT', 'BE', 'HK', 'IE', 'NL', 'PL', 'PT', 'SG', 'CH' );
+
+		return in_array( $this->country, $countries, true );
+	}
+
+	/**
 	 * Returns credit cards, which can be used.
 	 *
 	 * @return array

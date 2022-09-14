@@ -10,6 +10,8 @@ declare( strict_types=1 );
 namespace WooCommerce\PayPalCommerce\WcGateway\Helper;
 
 use WC_Order;
+use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class PayUponInvoiceHelper
@@ -24,12 +26,22 @@ class PayUponInvoiceHelper {
 	protected $checkout_helper;
 
 	/**
+	 * The settings.
+	 *
+	 * @var Settings
+	 */
+	protected $settings;
+
+	/**
 	 * PayUponInvoiceHelper constructor.
 	 *
 	 * @param CheckoutHelper $checkout_helper The checkout helper.
+	 * @param Settings       $settings The Settings.
 	 */
-	public function __construct( CheckoutHelper $checkout_helper ) {
+	public function __construct( CheckoutHelper $checkout_helper, Settings $settings ) {
+
 		$this->checkout_helper = $checkout_helper;
+		$this->settings        = $settings;
 	}
 
 	/**
@@ -77,5 +89,15 @@ class PayUponInvoiceHelper {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Checks whether PUI is enabled.
+	 *
+	 * @return bool True if PUI is active, otherwise false.
+	 * @throws NotFoundException If problem when checking the settings.
+	 */
+	public function is_pui_enabled(): bool {
+		return $this->settings->has( 'products_pui_enabled' ) && $this->settings->get( 'products_pui_enabled' );
 	}
 }

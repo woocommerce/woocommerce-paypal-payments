@@ -1,5 +1,20 @@
 *** Changelog ***
 
+= 1.9.3 - 2022-08-31 =
+* Add - Tracking API #792
+* Fix - Improve compatibility with Siteground Optimizer plugin #797
+* Fix - Transaction ID in order not updated when manually capturing authorized payment from WC #766
+* Fix - Failed form validation on Checkout page causing page to be sticky #781
+* Fix - Do not include full path in exception #779
+* Fix - PUI conflict with Germanized plugin and taxes #808
+* Enhancement - Enable ACDC by default only in locations where WooCommerce Payments is not available #799
+* Enhancement - Add links to docs & support in plugin #782
+* Enhancement - Put gateway sub-options into tabs #772
+* Enhancement - Show tabs only after onboarding #789
+* Enhancement - Add header on settings page #790
+* Enhancement - PUI add option for a phone number field next to the Birth Date field #742
+* Enhancement - PUI gateway availability on pay for order page with unsupported currency #744
+
 = 1.9.2 - 2022-08-09 =
 * Fix - Do not allow birth date older than 100 years for PUI. #743
 * Fix - Store the customer id for vaulted payment method in usermeta to not lose vaulted methods after the invoice prefix change. #698

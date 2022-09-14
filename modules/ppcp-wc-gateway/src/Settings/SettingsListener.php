@@ -174,7 +174,7 @@ class SettingsListener {
 		/**
 		 * The URL opened at the end of onboarding after saving the merchant ID/email.
 		 */
-		$redirect_url = apply_filters( 'woocommerce_paypal_payments_onboarding_redirect_url', admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ) );
+		$redirect_url = apply_filters( 'woocommerce_paypal_payments_onboarding_redirect_url', admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-connection' ) );
 		if ( ! $this->settings->has( 'client_id' ) || ! $this->settings->get( 'client_id' ) ) {
 			$redirect_url = add_query_arg( 'ppcp-onboarding-error', '1', $redirect_url );
 		}
@@ -235,7 +235,7 @@ class SettingsListener {
 	 *
 	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting was not found.
 	 */
-	public function listen() {
+	public function listen(): void {
 
 		if ( ! $this->is_valid_update_request() ) {
 			return;
@@ -259,7 +259,7 @@ class SettingsListener {
 
 		$credentials_change_status = null; // Cannot detect on Card Processing page.
 
-		if ( PayPalGateway::ID === $this->page_id ) {
+		if ( PayPalGateway::ID === $this->page_id || Settings::CONNECTION_TAB_ID === $this->page_id ) {
 			$settings['enabled'] = isset( $_POST['woocommerce_ppcp-gateway_enabled'] )
 				&& 1 === absint( $_POST['woocommerce_ppcp-gateway_enabled'] );
 
@@ -267,7 +267,6 @@ class SettingsListener {
 		}
 		// phpcs:enable phpcs:disable WordPress.Security.NonceVerification.Missing
 		// phpcs:enable phpcs:disable WordPress.Security.NonceVerification.Missing
-
 		if ( $credentials_change_status ) {
 			if ( self::CREDENTIALS_UNCHANGED !== $credentials_change_status ) {
 				$this->settings->set( 'products_dcc_enabled', null );
@@ -472,5 +471,37 @@ class SettingsListener {
 			return false;
 		}
 		return true;
+	}
+
+	/**
+	 * Prevent enabling tracking if it is not enabled for merchant account.
+	 */
+	public function listen_for_tracking_enabled(): void {
+		if ( State::STATE_ONBOARDED !== $this->state->current_state() ) {
+			return;
+		}
+
+		try {
+			$token = $this->bearer->bearer();
+			if ( ! $token->is_tracking_available() ) {
+				$this->settings->set( 'tracking_enabled', false );
+				$this->settings->persist();
+				return;
+			}
+		} catch ( RuntimeException $exception ) {
+			$this->settings->set( 'tracking_enabled', false );
+			$this->settings->persist();
+
+			add_action(
+				'admin_notices',
+				function () use ( $exception ) {
+					printf(
+						'<div class="notice notice-error"><p>%1$s</p><p>%2$s</p></div>',
+						esc_html__( 'Authentication with PayPal failed: ', 'woocommerce-paypal-payments' ) . esc_attr( $exception->getMessage() ),
+						wp_kses_post( __( 'Please verify your API Credentials and try again to connect your PayPal business account. Visit the <a href="https://docs.woocommerce.com/document/woocommerce-paypal-payments/" target="_blank">plugin documentation</a> for more information about the setup.', 'woocommerce-paypal-payments' ) )
+					);
+				}
+			);
+		}
 	}
 }

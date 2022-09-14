@@ -88,9 +88,12 @@ class DisableGateways {
 	 * @return bool
 	 */
 	private function disable_all_gateways() : bool {
-		if ( ! $this->settings->has( 'enabled' ) || ! $this->settings->get( 'enabled' ) ) {
-			return true;
+		foreach ( WC()->payment_gateways->payment_gateways() as $gateway ) {
+			if ( PayPalGateway::ID === $gateway->id && $gateway->enabled !== 'yes' ) {
+				return true;
+			}
 		}
+
 		if ( ! $this->settings->has( 'merchant_email' ) || ! is_email( $this->settings->get( 'merchant_email' ) ) ) {
 			return true;
 		}

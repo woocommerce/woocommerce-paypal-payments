@@ -34,6 +34,13 @@ class SettingsRenderer {
 	protected $settings_status;
 
 	/**
+	 * The api shop country.
+	 *
+	 * @var string
+	 */
+	protected $api_shop_country;
+
+	/**
 	 * The settings.
 	 *
 	 * @var ContainerInterface
@@ -93,6 +100,7 @@ class SettingsRenderer {
 	 * @param DCCProductStatus   $dcc_product_status The product status.
 	 * @param SettingsStatus     $settings_status The Settings status helper.
 	 * @param string             $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
+	 * @param string             $api_shop_country The api shop country.
 	 */
 	public function __construct(
 		ContainerInterface $settings,
@@ -102,7 +110,8 @@ class SettingsRenderer {
 		MessagesApply $messages_apply,
 		DCCProductStatus $dcc_product_status,
 		SettingsStatus $settings_status,
-		string $page_id
+		string $page_id,
+		string $api_shop_country
 	) {
 
 		$this->settings           = $settings;
@@ -113,6 +122,7 @@ class SettingsRenderer {
 		$this->dcc_product_status = $dcc_product_status;
 		$this->settings_status    = $settings_status;
 		$this->page_id            = $page_id;
+		$this->api_shop_country   = $api_shop_country;
 	}
 
 	/**
@@ -348,7 +358,7 @@ $data_rows_html
 	/**
 	 * Renders the settings.
 	 */
-	public function render() {
+	public function render(): void {
 
 		$is_dcc = CreditCardGateway::ID === $this->page_id;
 		//phpcs:enable WordPress.Security.NonceVerification.Recommended
@@ -381,14 +391,14 @@ $data_rows_html
 				continue;
 			}
 			if (
-				in_array( 'dcc', $config['requirements'], true )
-				&& ! $this->dcc_product_status->dcc_is_active()
+				in_array( 'messages', $config['requirements'], true )
+				&& ! $this->messages_apply->for_country()
 			) {
 				continue;
 			}
 			if (
-				in_array( 'messages', $config['requirements'], true )
-				&& ! $this->messages_apply->for_country()
+				in_array( 'pui_ready', $config['requirements'], true )
+				&& $this->api_shop_country !== 'DE'
 			) {
 				continue;
 			}

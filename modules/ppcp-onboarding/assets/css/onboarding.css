@@ -55,6 +55,7 @@ ul.ppcp-onboarding-options, ul.ppcp-onboarding-options-sublist {
 
 ul.ppcp-onboarding-options-sublist {
 	margin-left: 15px;
+	margin-top: 15px;
 }
 
 .ppcp-muted-text {
@@ -166,5 +167,55 @@ ul.ppcp-onboarding-options-sublist {
 
 	.ppcp-onboarding-header-paypal-logos img {
 		height: 23px;
+	}
+}
+
+.ppcp-settings-page-header {
+	display: flex;
+	align-items: center;
+	max-width: 1200px;
+	margin-top: 10px;
+}
+
+.ppcp-settings-page-header img {
+	height: 30px;
+}
+
+.ppcp-settings-page-header h4 {
+	margin: 0 15px 0 5px;
+}
+
+.ppcp-settings-page-header .button, .ppcp-settings-page-header a {
+	margin: 0 5px;
+}
+
+.ppcp-right-align {
+	margin-left: auto;
+}
+
+.ppcp-settings-page-header a {
+	text-decoration: none;
+}
+
+@media (max-width: 1200px) {
+	.ppcp-settings-page-header {
+		display: block;
+	}
+
+	.ppcp-settings-page-header .ppcp-right-align {
+		display: block;
+		margin-left: 0;
+	}
+
+	.ppcp-settings-page-header .button, .ppcp-settings-page-header a {
+		margin: 5px 10px 5px 0;
+	}
+
+	.ppcp-settings-page-header .ppcp-inline-only {
+		display: none;
+	}
+
+	.ppcp-settings-page-header h4 {
+		margin-left: 0;
 	}
 }

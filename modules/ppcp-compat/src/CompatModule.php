@@ -33,12 +33,11 @@ class CompatModule implements ModuleInterface {
 	}
 
 	/**
-	 * Run the compatibility module.
-	 *
-	 * @param ContainerInterface|null $c The Container.
+	 * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $c ): void {
 		$this->initialize_ppec_compat_layer( $c );
+		$this->fix_site_ground_optimizer_compatibility( $c );
 	}
 
 	/**
@@ -52,10 +51,10 @@ class CompatModule implements ModuleInterface {
 	/**
 	 * Sets up the PayPal Express Checkout compatibility layer.
 	 *
-	 * @param ContainerInterface|null $container The Container.
+	 * @param ContainerInterface $container The Container.
 	 * @return void
 	 */
-	private function initialize_ppec_compat_layer( $container ): void {
+	private function initialize_ppec_compat_layer( ContainerInterface $container ): void {
 		// Process PPEC subscription renewals through PayPal Payments.
 		$handler = $container->get( 'compat.ppec.subscriptions-handler' );
 		$handler->maybe_hook();
@@ -76,4 +75,20 @@ class CompatModule implements ModuleInterface {
 
 	}
 
+	/**
+	 * Fixes the compatibility issue for <a href="https://wordpress.org/plugins/sg-cachepress/">SiteGround Optimizer plugin</a>.
+	 *
+	 * @link https://wordpress.org/plugins/sg-cachepress/
+	 *
+	 * @param ContainerInterface $c The Container.
+	 */
+	protected function fix_site_ground_optimizer_compatibility( ContainerInterface $c ): void {
+		$ppcp_script_names = $c->get( 'compat.plugin-script-names' );
+		add_filter(
+			'sgo_js_minify_exclude',
+			function ( array $scripts ) use ( $ppcp_script_names ) {
+				return array_merge( $scripts, $ppcp_script_names );
+			}
+		);
+	}
 }

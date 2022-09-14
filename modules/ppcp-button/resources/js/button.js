@@ -66,7 +66,7 @@ const bootstrap = () => {
 
                 errorHandler.clear();
                 if (messages.length) {
-                    messages.forEach(s => errorHandler.message(s));
+                    errorHandler.messages(messages);
                 } else {
                     errorHandler.message(PayPalCommerceGateway.labels.error.required.generic);
                 }

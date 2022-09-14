@@ -233,14 +233,18 @@ class CreateOrderEndpoint implements EndpointInterface {
 
 			$this->set_bn_code( $data );
 
-			if ( 'checkout' === $data['context'] ) {
-				try {
-					$order = $this->create_paypal_order( $wc_order );
-				} catch ( Exception $exception ) {
-					$this->logger->error( 'Order creation failed: ' . $exception->getMessage() );
-					throw $exception;
-				}
+			if ( 'pay-now' === $data['context'] && get_option( 'woocommerce_terms_page_id', '' ) !== '' ) {
+				$this->validate_paynow_form( $data['form'] );
+			}
 
+			try {
+				$order = $this->create_paypal_order( $wc_order );
+			} catch ( Exception $exception ) {
+				$this->logger->error( 'Order creation failed: ' . $exception->getMessage() );
+				throw $exception;
+			}
+
+			if ( 'checkout' === $data['context'] ) {
 				if (
 					! $this->early_order_handler->should_create_early_order()
 					|| $this->registration_needed
@@ -250,12 +254,6 @@ class CreateOrderEndpoint implements EndpointInterface {
 
 				$this->early_order_handler->register_for_order( $order );
 			}
-
-			if ( 'pay-now' === $data['context'] && get_option( 'woocommerce_terms_page_id', '' ) !== '' ) {
-				$this->validate_paynow_form( $data['form'] );
-			}
-
-			$order = $this->create_paypal_order( $wc_order );
 
 			if ( 'pay-now' === $data['context'] && is_a( $wc_order, \WC_Order::class ) ) {
 				$wc_order->update_meta_data( PayPalGateway::ORDER_ID_META_KEY, $order->id() );

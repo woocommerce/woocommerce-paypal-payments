@@ -9,11 +9,10 @@ declare( strict_types=1 );
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Helper;
 
+use Throwable;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatusProduct;
-use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 
 /**
  * Class PayUponInvoiceProductStatus
@@ -70,7 +69,7 @@ class PayUponInvoiceProductStatus {
 
 		try {
 			$seller_status = $this->partners_endpoint->seller_status();
-		} catch ( RuntimeException $error ) {
+		} catch ( Throwable $error ) {
 			$this->current_status_cache = false;
 			return false;
 		}

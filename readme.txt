@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, e-commerce, store, sales, sell, 
 Requires at least: 5.3
 Tested up to: 6.0
 Requires PHP: 7.1
-Stable tag: 1.9.2
+Stable tag: 1.9.3
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -80,6 +80,21 @@ Follow the steps below to connect the plugin to your PayPal account:
 6. Main settings screen.
 
 == Changelog ==
+
+= 1.9.3 =
+* Add - Tracking API #792
+* Fix - Improve compatibility with Siteground Optimizer plugin #797
+* Fix - Transaction ID in order not updated when manually capturing authorized payment from WC #766
+* Fix - Failed form validation on Checkout page causing page to be sticky #781
+* Fix - Do not include full path in exception #779
+* Fix - PUI conflict with Germanized plugin and taxes #808
+* Enhancement - Enable ACDC by default only in locations where WooCommerce Payments is not available #799
+* Enhancement - Add links to docs & support in plugin #782
+* Enhancement - Put gateway sub-options into tabs #772
+* Enhancement - Show tabs only after onboarding #789
+* Enhancement - Add header on settings page #790
+* Enhancement - PUI add option for a phone number field next to the Birth Date field #742
+* Enhancement - PUI gateway availability on pay for order page with unsupported currency #744
 
 = 1.9.2 =
 * Fix - Do not allow birth date older than 100 years for PUI. #743
