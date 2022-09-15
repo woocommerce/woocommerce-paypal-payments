@@ -72,10 +72,13 @@ const ppcp_onboarding = {
 		);
 
 		const onboard_pui = document.querySelector('#ppcp-onboarding-pui');
+		const spinner = '<span class="spinner is-active" style="float: none;"></span>';
 		onboard_pui?.addEventListener('click', (event) => {
             event.preventDefault();
             buttons.forEach((element) => {
                 element.removeAttribute('href');
+                element.setAttribute('disabled', 'disabled');
+                jQuery(spinner).insertAfter(element);
             });
 
             fetch(PayPalCommerceGatewayOnboarding.pui_endpoint, {
@@ -98,6 +101,8 @@ const ppcp_onboarding = {
                         key = 'connect-to' + key.replace(/-/g, '');
                         if(key === element.id) {
                             element.setAttribute('href', value);
+                            element.removeAttribute('disabled')
+                            document.querySelector('.spinner').remove()
                         }
                     }
                 });
