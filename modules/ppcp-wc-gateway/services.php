@@ -574,6 +574,25 @@ return array(
 				'gateway'      => array( 'paypal', 'dcc' ),
 				'input_class'  => $container->get( 'wcgateway.helper.vaulting-scope' ) ? array() : array( 'ppcp-disabled-checkbox' ),
 			),
+			'subscription_behavior_when_vault_fails' => array(
+				'title'                => __( 'Subscription capture behavior if Vault fails', 'woocommerce-paypal-payments' ),
+				'type'                 => 'select',
+				'class'                => array(),
+				'input_class'          => array( 'wc-enhanced-select' ),
+				'default'              => 'void_auth',
+				'desc_tip'             => true,
+				'description'          => __( 'By default, subscription payments are captured only when saving the payment method was successful. Without a saved payment method, automatic renewal payments are not possible.', 'woocommerce-paypal-payments' ),
+				'description_with_tip' => __( 'Determines whether authorized payments for subscription orders are captured or voided if there is no saved payment method. This only applies when the intent Capture is used for the subscription order.', 'woocommerce-paypal-payments' ),
+				'options'              => array(
+					'void_auth'    => __( 'Void authorization & fail the order/subscription', 'woocommerce-paypal-payments' ),
+					'capture_auth' => __( 'Capture authorized payment & set subscription to Manual Renewal', 'woocommerce-paypal-payments' ),
+				),
+				'screens'              => array(
+					State::STATE_ONBOARDED,
+				),
+				'requirements'         => array(),
+				'gateway'              => array( 'paypal', 'dcc' ),
+			),
 			'card_billing_data_mode'     => array(
 				'title'        => __( 'Card billing data handling', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
@@ -2026,7 +2045,12 @@ return array(
 	},
 
 	'button.helper.vaulting-label'                         => static function ( ContainerInterface $container ): string {
-		$vaulting_label = __( 'Enable saved cards and subscription features on your store.', 'woocommerce-paypal-payments' );
+		$vaulting_label = sprintf(
+		// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+			__( 'Enable saved cards, PayPal accounts, and subscription features on your store. Payment methods are saved in the secure %1$sPayPal Vault%2$s.', 'woocommerce-paypal-payments' ),
+			'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#vaulting-saving-a-payment-method" target="_blank">',
+			'</a>'
+		);
 
 		if ( ! $container->get( 'wcgateway.helper.vaulting-scope' ) ) {
 			$vaulting_label .= sprintf(
@@ -2041,7 +2065,20 @@ return array(
 		}
 
 		$vaulting_label .= '<p class="description">';
-		$vaulting_label .= __( 'This will disable all Pay Later messaging on your site.', 'woocommerce-paypal-payments' );
+		$vaulting_label .= sprintf(
+		// translators: %1$s, %2$s, %3$s and %4$s are the opening and closing of HTML <a> tag.
+			__( 'This will disable all %1$sPay Later%2$s features and %3$sAlternative Payment Methods%4$s on your site.', 'woocommerce-paypal-payments' ),
+			'<a
+					href="https://woocommerce.com/document/woocommerce-paypal-payments/#pay-later"
+					target="_blank"
+				>',
+			'</a>',
+			'<a
+					href="https://woocommerce.com/document/woocommerce-paypal-payments/#alternative-payment-methods"
+					target="_blank"
+				>',
+			'</a>'
+		);
 		$vaulting_label .= '</p>';
 
 		return $vaulting_label;
