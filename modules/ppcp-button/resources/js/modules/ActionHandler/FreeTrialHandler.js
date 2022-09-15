@@ -18,6 +18,7 @@ class FreeTrialHandler {
 
         fetch(this.config.ajax.vault_paypal.endpoint, {
             method: 'POST',
+            credentials: 'same-origin',
             body: JSON.stringify({
                 nonce: this.config.ajax.vault_paypal.nonce,
                 return_url: location.href

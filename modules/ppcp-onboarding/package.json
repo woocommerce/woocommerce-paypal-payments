@@ -1,8 +1,8 @@
 {
-    "name": "ppcp-wc-gateway",
+    "name": "ppcp-onboarding",
     "version": "1.0.0",
     "license": "GPL-3.0-or-later",
-    "main": "resources/js/gateway-settings.js",
+    "main": "resources/js/order-edit-page.js",
     "browserslist": [
         "> 0.5%",
         "Safari >= 8",

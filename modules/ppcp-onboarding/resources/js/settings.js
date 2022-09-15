@@ -215,12 +215,12 @@ document.addEventListener(
                         if(Array.isArray(option)){
                             option.forEach(
                                 (option) => {
-                                    target.append(option);
+                                    target.appendChild(option);
                                 }
                             )
                         }
 
-                        target.append(option);
+                        target.appendChild(option);
                     }
                 );
             };
