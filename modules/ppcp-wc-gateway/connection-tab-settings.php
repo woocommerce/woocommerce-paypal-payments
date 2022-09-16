@@ -20,6 +20,12 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 return function ( ContainerInterface $container, array $fields ): array {
 
+	$current_page_id = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
+
+	if ( $current_page_id !== Settings::CONNECTION_TAB_ID ) {
+		return $fields;
+	}
+
 	$state = $container->get( 'onboarding.state' );
 	assert( $state instanceof State );
 
