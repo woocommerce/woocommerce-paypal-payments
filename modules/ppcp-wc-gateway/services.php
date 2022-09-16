@@ -59,7 +59,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
-use WooCommerce\PayPalCommerce\Webhooks\Status\WebhooksStatusPage;
 
 return array(
 	'wcgateway.paypal-gateway'                             => static function ( ContainerInterface $container ): PayPalGateway {
@@ -159,7 +158,7 @@ return array(
 		}
 
 		$section = isset( $_GET['section'] ) ? sanitize_text_field( wp_unslash( $_GET['section'] ) ) : '';
-		return in_array( $section, array( Settings::CONNECTION_TAB_ID, PayPalGateway::ID, CreditCardGateway::ID, WebhooksStatusPage::ID, PayUponInvoiceGateway::ID, CardButtonGateway::ID, OXXOGateway::ID ), true );
+		return in_array( $section, array( Settings::CONNECTION_TAB_ID, PayPalGateway::ID, CreditCardGateway::ID, PayUponInvoiceGateway::ID, CardButtonGateway::ID, OXXOGateway::ID ), true );
 	},
 
 	'wcgateway.current-ppcp-settings-page-id'              => static function ( ContainerInterface $container ): string {
@@ -224,14 +223,13 @@ return array(
 			CardButtonGateway::ID       => __( 'PayPal Card Button', 'woocommerce-paypal-payments' ),
 			OXXOGateway::ID             => __( 'OXXO', 'woocommerce-paypal-payments' ),
 			PayUponInvoiceGateway::ID   => __( 'Pay upon Invoice', 'woocommerce-paypal-payments' ),
-			WebhooksStatusPage::ID      => __( 'Webhooks Status', 'woocommerce-paypal-payments' ),
 		);
 
 		// Remove for all not registered in WC gateways that cannot render anything in this case.
 		$gateways = WC()->payment_gateways->payment_gateways();
 		foreach ( array_diff(
 			array_keys( $sections ),
-			array( Settings::CONNECTION_TAB_ID, PayPalGateway::ID, CreditCardGateway::ID, WebhooksStatusPage::ID )
+			array( Settings::CONNECTION_TAB_ID, PayPalGateway::ID, CreditCardGateway::ID )
 		) as $id ) {
 			if ( ! isset( $gateways[ $id ] ) ) {
 				unset( $sections[ $id ] );
@@ -276,6 +274,8 @@ return array(
 		$page_id = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
 		$signup_link_cache = $container->get( 'onboarding.signup-link-cache' );
 		$signup_link_ids = $container->get( 'onboarding.signup-link-ids' );
+		$pui_status_cache = $container->get( 'pui.status-cache' );
+		$dcc_status_cache = $container->get( 'dcc.status-cache' );
 		return new SettingsListener(
 			$settings,
 			$fields,
@@ -285,7 +285,9 @@ return array(
 			$bearer,
 			$page_id,
 			$signup_link_cache,
-			$signup_link_ids
+			$signup_link_ids,
+			$pui_status_cache,
+			$dcc_status_cache
 		);
 	},
 	'wcgateway.order-processor'                            => static function ( ContainerInterface $container ): OrderProcessor {
@@ -351,7 +353,27 @@ return array(
 		return new FeesRenderer();
 	},
 
+	'wcgateway.settings.should-render-settings'            => static function ( ContainerInterface $container ): bool {
+
+		$sections = array(
+			Settings::CONNECTION_TAB_ID => __( 'Connection', 'woocommerce-paypal-payments' ),
+			PayPalGateway::ID           => __( 'PayPal Checkout', 'woocommerce-paypal-payments' ),
+			CreditCardGateway::ID       => __( 'PayPal Card Processing', 'woocommerce-paypal-payments' ),
+			CardButtonGateway::ID       => __( 'PayPal Card Button', 'woocommerce-paypal-payments' ),
+		);
+
+		$current_page_id = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
+
+		return array_key_exists( $current_page_id, $sections );
+	},
+
 	'wcgateway.settings.fields'                            => static function ( ContainerInterface $container ): array {
+
+		$should_render_settings = $container->get( 'wcgateway.settings.should-render-settings' );
+
+		if ( ! $should_render_settings ) {
+			return array();
+		}
 
 		$state = $container->get( 'onboarding.state' );
 		assert( $state instanceof State );
@@ -1913,7 +1935,7 @@ return array(
 
 		$settings         = $container->get( 'wcgateway.settings' );
 		$partner_endpoint = $container->get( 'api.endpoint.partners' );
-		return new DCCProductStatus( $settings, $partner_endpoint );
+		return new DCCProductStatus( $settings, $partner_endpoint, $container->get( 'dcc.status-cache' ) );
 	},
 
 	'button.helper.messages-disclaimers'                   => static function ( ContainerInterface $container ): MessagesDisclaimers {
@@ -1977,7 +1999,8 @@ return array(
 	'wcgateway.pay-upon-invoice-product-status'            => static function( ContainerInterface $container ): PayUponInvoiceProductStatus {
 		return new PayUponInvoiceProductStatus(
 			$container->get( 'wcgateway.settings' ),
-			$container->get( 'api.endpoint.partners' )
+			$container->get( 'api.endpoint.partners' ),
+			$container->get( 'pui.status-cache' )
 		);
 	},
 	'wcgateway.pay-upon-invoice'                           => static function ( ContainerInterface $container ): PayUponInvoice {
@@ -2247,5 +2270,11 @@ return array(
 			esc_url( $pui_button_url ),
 			esc_html( $pui_button_text )
 		);
+	},
+	'pui.status-cache'                                     => static function( ContainerInterface $container ): Cache {
+		return new Cache( 'ppcp-paypal-pui-status-cache' );
+	},
+	'dcc.status-cache'                                     => static function( ContainerInterface $container ): Cache {
+		return new Cache( 'ppcp-paypal-dcc-status-cache' );
 	},
 );
