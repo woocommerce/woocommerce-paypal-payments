@@ -169,6 +169,13 @@ return array(
 		$section = isset( $_GET['section'] ) ? sanitize_text_field( wp_unslash( $_GET['section'] ) ) : '';
 		$ppcp_tab = isset( $_GET[ SectionsRenderer::KEY ] ) ? sanitize_text_field( wp_unslash( $_GET[ SectionsRenderer::KEY ] ) ) : '';
 
+		$state = $container->get( 'onboarding.state' );
+		assert( $state instanceof State );
+
+		if ( ! $ppcp_tab && PayPalGateway::ID === $section && $state->current_state() !== State::STATE_ONBOARDED ) {
+			return Settings::CONNECTION_TAB_ID;
+		}
+
 		return $ppcp_tab ? $ppcp_tab : $section;
 	},
 
