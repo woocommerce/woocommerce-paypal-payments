@@ -151,7 +151,7 @@ class PaymentTokenChecker {
 			case 'void_auth':
 				$order = $this->order_repository->for_wc_order( $wc_order );
 				$this->authorized_payments_processor->void_authorizations( $order );
-				$this->logger->error( "Payment for subscription parent order #{$order_id} was not saved on PayPal." );
+				$this->logger->warning( "Payment for subscription parent order #{$order_id} was not saved at PayPal." );
 				$this->update_failed_status( $wc_order );
 				break;
 			case 'capture_auth':
@@ -172,7 +172,7 @@ class PaymentTokenChecker {
 						$wc_order->add_order_note( $message );
 
 					} catch ( Exception $exception ) {
-						$this->logger->error( "Could not update payment method on subscription #{$subscription->get_id()} " . $exception->getMessage() );
+						$this->logger->warning( "Could not update payment method on subscription #{$subscription->get_id()} " . $exception->getMessage() );
 					}
 				}
 				break;
