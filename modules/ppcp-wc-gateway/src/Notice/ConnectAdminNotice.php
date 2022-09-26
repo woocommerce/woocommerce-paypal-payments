@@ -60,7 +60,7 @@ class ConnectAdminNotice {
 				'PayPal Payments is almost ready. To get started, <a href="%1$s">connect your account</a>.',
 				'woocommerce-paypal-payments'
 			),
-			admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' )
+			admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=' . Settings::CONNECTION_TAB_ID )
 		);
 		return new Message( $message, 'warning' );
 	}
