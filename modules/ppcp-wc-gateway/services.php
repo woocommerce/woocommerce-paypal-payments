@@ -243,6 +243,12 @@ return array(
 			}
 		}
 
+		$dcc_product_status = $container->get( 'wcgateway.helper.dcc-product-status' );
+		assert( $dcc_product_status instanceof DCCProductStatus );
+		if ( ! $dcc_product_status->dcc_is_active() ) {
+			unset( $sections['ppcp-credit-card-gateway'] );
+		}
+
 		return $sections;
 	},
 	'wcgateway.settings.status'                            => static function ( ContainerInterface $container ): SettingsStatus {
