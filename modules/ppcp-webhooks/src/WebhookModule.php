@@ -143,6 +143,21 @@ class WebhookModule implements ModuleInterface {
 				$logger->error( 'Failed to load webhooks list: ' . $exception->getMessage() );
 			}
 		}
+
+		add_action(
+			'woocommerce_paypal_payments_gateway_migrate',
+			static function () use ( $container ) {
+				$registrar = $container->get( 'webhook.registrar' );
+				assert( $registrar instanceof WebhookRegistrar );
+				add_action(
+					'init',
+					function () use ( $registrar ) {
+						$registrar->unregister();
+						$registrar->register();
+					}
+				);
+			}
+		);
 	}
 
 	/**
