@@ -1929,7 +1929,12 @@ return array(
 
 		$settings         = $container->get( 'wcgateway.settings' );
 		$partner_endpoint = $container->get( 'api.endpoint.partners' );
-		return new DCCProductStatus( $settings, $partner_endpoint, $container->get( 'dcc.status-cache' ) );
+		return new DCCProductStatus(
+			$settings,
+			$partner_endpoint,
+			$container->get( 'dcc.status-cache' ),
+			$container->get( 'api.helpers.dccapplies' )
+		);
 	},
 
 	'button.helper.messages-disclaimers'                   => static function ( ContainerInterface $container ): MessagesDisclaimers {
