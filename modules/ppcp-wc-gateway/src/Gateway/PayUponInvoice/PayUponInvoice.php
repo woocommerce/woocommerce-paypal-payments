@@ -258,7 +258,13 @@ class PayUponInvoice {
 		add_action(
 			'woocommerce_email_before_order_table',
 			function( WC_Order $order, bool $sent_to_admin ) {
-				if ( ! $sent_to_admin && PayUponInvoiceGateway::ID === $order->get_payment_method() && $order->has_status( 'processing' ) ) {
+				$action = filter_input( INPUT_POST, 'action', FILTER_SANITIZE_STRING ) ?? '';
+				if (
+					! $sent_to_admin
+					&& PayUponInvoiceGateway::ID === $order->get_payment_method()
+					&& $order->has_status( 'processing' )
+					&& ( $action && $action !== 'woocommerce_refund_line_items' )
+				) {
 					$this->logger->info( "Adding Ratepay payment instructions to email for order #{$order->get_id()}." );
 
 					$instructions = $order->get_meta( 'ppcp_ratepay_payment_instructions_payment_reference' );
