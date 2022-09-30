@@ -245,7 +245,9 @@ return array(
 
 		$dcc_product_status = $container->get( 'wcgateway.helper.dcc-product-status' );
 		assert( $dcc_product_status instanceof DCCProductStatus );
-		if ( ! $dcc_product_status->dcc_is_active() ) {
+		$dcc_applies = $container->get( 'api.helpers.dccapplies' );
+		assert( $dcc_applies instanceof DccApplies );
+		if ( ! $dcc_product_status->dcc_is_active() || ! $dcc_applies->for_country_currency() ) {
 			unset( $sections['ppcp-credit-card-gateway'] );
 		}
 
