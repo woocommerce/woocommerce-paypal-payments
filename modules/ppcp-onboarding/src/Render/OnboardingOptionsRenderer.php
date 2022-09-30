@@ -80,10 +80,16 @@ class OnboardingOptionsRenderer {
 	 */
 	private function render_pui_option(): string {
 		if ( 'DE' === $this->country ) {
-			$checked = 'checked';
-			if ( $this->settings->has( 'ppcp-onboarding-pui' ) && $this->settings->get( 'ppcp-onboarding-pui' ) !== '1' ) {
+			$checked = '';
+			try {
+				$onboard_with_pui = $this->settings->get( 'ppcp-onboarding-pui' );
+				if ( $onboard_with_pui === '1' ) {
+					$checked = 'checked';
+				}
+			} catch ( NotFoundException $exception ) {
 				$checked = '';
 			}
+
 			return '<li><label><input type="checkbox" id="ppcp-onboarding-pui" ' . $checked . '> ' .
 				__( 'Onboard with Pay upon Invoice', 'woocommerce-paypal-payments' ) . '
 		</label></li>';
