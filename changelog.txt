@@ -1,5 +1,16 @@
 *** Changelog ***
 
+= 1.9.4 - TBD =
+* Add - Create new connection tab #801
+* Add - Functionality to choose subscription failure behavior #728
+* Fix - Virtual-only orders always move order status to completed #868
+* Fix - PayPal order created twice when context is checkout #832
+* Enhancement - Handle unsupported browsers better #843
+* Enhancement - Combine the Webhooks Status page into a new Connection tab (891) #827
+* Enhancement - Hide PayPal Card Processing tab is not available in country or for merchant #870
+* Enhancement - Resubscribe webhooks on plugin upgrades #838
+* Enhancement - PUI-relevant webhook not subscribed to #842
+
 = 1.9.3 - 2022-08-31 =
 * Add - Tracking API #792
 * Fix - Improve compatibility with Siteground Optimizer plugin #797
