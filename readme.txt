@@ -88,7 +88,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Fix - PayPal order created twice when context is checkout #832
 * Enhancement - Handle unsupported browsers better #843
 * Enhancement - Combine the Webhooks Status page into a new Connection tab (891) #827
-* Enhancement - Hide PayPal Card Processing tab is not available in country or for merchant #870
+* Enhancement - Hide PayPal Card Processing tab if not available in country or for merchant #870
 * Enhancement - Resubscribe webhooks on plugin upgrades #838
 * Enhancement - PUI-relevant webhook not subscribed to #842
 
