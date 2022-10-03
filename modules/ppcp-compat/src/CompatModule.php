@@ -15,7 +15,7 @@ use Exception;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
-use Vendidero\Germanized\Shipments\Shipment;
+use Shipment;
 use WC_Order;
 use WooCommerce\PayPalCommerce\Compat\Assets\CompatAssets;
 use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
@@ -132,7 +132,7 @@ class CompatModule implements ModuleInterface {
 		add_action(
 			'woocommerce_gzd_shipment_after_save',
 			static function( Shipment $shipment ) use ( $endpoint, $logger, $status_map ) {
-				$gzd_shipment_status = $shipment->get_status() ?? '';
+				$gzd_shipment_status = $shipment->get_status();
 				if ( ! array_key_exists( $gzd_shipment_status, $status_map ) ) {
 					return;
 				}
@@ -149,7 +149,7 @@ class CompatModule implements ModuleInterface {
 
 				$tracking_data = array(
 					'transaction_id' => $transaction_id,
-					'status'         => $status_map[ $gzd_shipment_status ],
+					'status'         => (string) $status_map[ $gzd_shipment_status ],
 				);
 
 				$provider = $shipment->get_shipping_provider();

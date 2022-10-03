@@ -57,7 +57,7 @@ return array(
 	},
 
 	'compat.gzd.tracking_statuses_map'              => function ( ContainerInterface $container ): array {
-		$gzd_statuses = wc_gzd_get_shipment_statuses() ?? array();
+		$gzd_statuses = wc_gzd_get_shipment_statuses();
 		$status_map = array();
 
 		foreach ( $gzd_statuses as $gzd_status ) {
