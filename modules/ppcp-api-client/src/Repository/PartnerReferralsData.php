@@ -79,7 +79,6 @@ class PartnerReferralsData {
 			'ppcp_partner_referrals_data',
 			array(
 				'partner_config_override' => array(
-					'partner_logo_url'       => 'https://connect.woocommerce.com/images/woocommerce_logo.png',
 					/**
 					 * Returns the URL which will be opened at the end of onboarding.
 					 */
