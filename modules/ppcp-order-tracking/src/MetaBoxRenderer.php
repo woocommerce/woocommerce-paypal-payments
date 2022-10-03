@@ -87,9 +87,9 @@ class MetaBoxRenderer {
 		$status_value    = $tracking_info['status'] ?? 'SHIPPED';
 		$carrier_value   = $tracking_info['carrier'] ?? '';
 
-		$carriers = (array) apply_filters( 'woocommerce_paypal_payments_tracking_carriers', $this->carriers, $wc_order->get_id() );
-		$statuses = (array) apply_filters( 'woocommerce_paypal_payments_tracking_statuses', $this->allowed_statuses, $wc_order->get_id() );
-        $tracking_number = (string) apply_filters( 'woocommerce_paypal_payments_tracking_number', $tracking_number, $wc_order->get_id() );
+		$carriers        = (array) apply_filters( 'woocommerce_paypal_payments_tracking_carriers', $this->carriers, $wc_order->get_id() );
+		$statuses        = (array) apply_filters( 'woocommerce_paypal_payments_tracking_statuses', $this->allowed_statuses, $wc_order->get_id() );
+		$tracking_number = (string) apply_filters( 'woocommerce_paypal_payments_tracking_number', $tracking_number, $wc_order->get_id() );
 
 		$action = $tracking_is_not_added ? 'create' : 'update';
 		?>
