@@ -11,9 +11,15 @@ namespace WooCommerce\PayPalCommerce\Compat;
 
 use Dhii\Container\ServiceProvider;
 use Dhii\Modular\Module\ModuleInterface;
+use Exception;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\Compat\PPEC\PPECHelper;
+use Psr\Log\LoggerInterface;
+use Vendidero\Germanized\Shipments\Shipment;
+use WC_Order;
+use WooCommerce\PayPalCommerce\Compat\Assets\CompatAssets;
+use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
+use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 
 /**
  * Class CompatModule
@@ -34,10 +40,19 @@ class CompatModule implements ModuleInterface {
 
 	/**
 	 * {@inheritDoc}
+	 *
+	 * @throws NotFoundException
 	 */
 	public function run( ContainerInterface $c ): void {
 		$this->initialize_ppec_compat_layer( $c );
 		$this->fix_site_ground_optimizer_compatibility( $c );
+		$this->initialize_gzd_compat_layer( $c );
+
+		$asset_loader = $c->get( 'compat.assets' );
+		assert( $asset_loader instanceof CompatAssets );
+
+		add_action( 'init', array( $asset_loader, 'register' ) );
+		add_action( 'admin_enqueue_scripts', array( $asset_loader, 'enqueue' ) );
 	}
 
 	/**
@@ -88,6 +103,71 @@ class CompatModule implements ModuleInterface {
 			'sgo_js_minify_exclude',
 			function ( array $scripts ) use ( $ppcp_script_names ) {
 				return array_merge( $scripts, $ppcp_script_names );
+			}
+		);
+	}
+
+	/**
+	 * Sets up the <a href="https://wordpress.org/plugins/woocommerce-germanized/">Germanized for WooCommerce</a>
+	 * plugin compatibility layer.
+	 *
+	 * @link https://wordpress.org/plugins/woocommerce-germanized/
+	 *
+	 * @param ContainerInterface $c The Container.
+	 * @return void
+	 */
+	protected function initialize_gzd_compat_layer( ContainerInterface $c ): void {
+		if ( $c->get( 'compat.should-initialize-gzd-compat-layer' ) ) {
+			return;
+		}
+
+		$endpoint = $c->get( 'order-tracking.endpoint.controller' );
+		assert( $endpoint instanceof OrderTrackingEndpoint );
+
+		$logger = $c->get( 'woocommerce.logger.woocommerce' );
+		assert( $logger instanceof LoggerInterface );
+
+		$status_map = $c->get( 'compat.gzd.tracking_statuses_map' );
+
+		add_action(
+			'woocommerce_gzd_shipment_after_save',
+			static function( Shipment $shipment ) use ( $endpoint, $logger, $status_map ) {
+				$gzd_shipment_status = $shipment->get_status() ?? '';
+				if ( ! array_key_exists( $gzd_shipment_status, $status_map ) ) {
+					return;
+				}
+
+				$wc_order = $shipment->get_order();
+				if ( ! is_a( $wc_order, WC_Order::class ) ) {
+					return;
+				}
+
+				$transaction_id = $wc_order->get_transaction_id();
+				if ( empty( $transaction_id ) ) {
+					return;
+				}
+
+				$tracking_data = array(
+					'transaction_id' => $transaction_id,
+					'status'         => $status_map[ $gzd_shipment_status ],
+				);
+
+				$provider = $shipment->get_shipping_provider();
+				if ( ! empty( $provider ) && $provider !== 'none' ) {
+					$tracking_data['carrier'] = 'DHL_DEUTSCHE_POST';
+				}
+
+				if ( $shipment->has_tracking() ) {
+					$tracking_data['tracking_number'] = $shipment->get_tracking_id();
+				}
+
+				try {
+					$tracking_information = $endpoint->get_tracking_information( $wc_order->get_id() );
+					! $tracking_information ? $endpoint->add_tracking_information( $tracking_data, $wc_order->get_id() ) : $endpoint->update_tracking_information( $tracking_data, $wc_order->get_id() );
+				} catch ( Exception $exception ) {
+					$logger->error( "Couldn't sync tracking information: " . $exception->getMessage() );
+					throw $exception;
+				}
 			}
 		);
 	}
