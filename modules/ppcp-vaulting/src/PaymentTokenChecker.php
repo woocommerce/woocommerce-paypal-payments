@@ -143,6 +143,7 @@ class PaymentTokenChecker {
 
 		try {
 			$subscription_behavior_when_fails = $this->settings->get( 'subscription_behavior_when_vault_fails' );
+			$wc_order->add_meta_data( self::VAULTING_FAILED_META_KEY, $subscription_behavior_when_fails );
 		} catch ( NotFoundException $exception ) {
 			return;
 		}

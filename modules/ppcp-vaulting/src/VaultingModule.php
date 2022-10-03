@@ -178,25 +178,15 @@ class VaultingModule implements ModuleInterface {
 				 */
 				$logger = $container->get( 'woocommerce.logger.woocommerce' );
 
-				/**
-				 * The Gateway settings.
-				 *
-				 * @var Settings $settings
-				 */
-				$settings = $container->get( 'wcgateway.settings' );
-
-				$vault_failed = get_post_meta( $order->get_id(), PaymentTokenChecker::VAULTING_FAILED_META_KEY );
+				$vault_failed = $order->get_meta( PaymentTokenChecker::VAULTING_FAILED_META_KEY );
 				if ( $subscription_helper->has_subscription( $order->get_id() ) && ! empty( $vault_failed ) ) {
-					$subscription_behavior_when_vault_fails_setting_name = 'subscription_behavior_when_vault_fails';
-					$subscription_behavior_when_vault_fails              = $settings->get( $subscription_behavior_when_vault_fails_setting_name );
-
 					$logger->info( "Adding vaulting failure info to email for order #{$order->get_id()}." );
 
-					if ( $subscription_behavior_when_vault_fails === 'void_auth' ) {
+					if ( $vault_failed === 'void_auth' ) {
 						echo wp_kses_post( '<p>' . __( 'The subscription payment failed because the payment method could not be saved. Please try again with a different payment method.', 'woocommerce-paypal-payments' ) . '</p>' );
 					}
 
-					if ( $subscription_behavior_when_vault_fails === 'capture_auth' ) {
+					if ( $vault_failed === 'capture_auth' ) {
 						echo wp_kses_post( '<p>' . __( 'The subscription has been activated, but the payment method could not be saved. Please contact the merchant to save a payment method for automatic subscription renewal payments.', 'woocommerce-paypal-payments' ) . '</p>' );
 					}
 				}
@@ -220,21 +210,11 @@ class VaultingModule implements ModuleInterface {
 				 */
 				$logger = $container->get( 'woocommerce.logger.woocommerce' );
 
-				/**
-				 * The Gateway settings.
-				 *
-				 * @var Settings $settings
-				 */
-				$settings = $container->get( 'wcgateway.settings' );
-
-				$vault_failed = get_post_meta( $order->get_id(), PaymentTokenChecker::VAULTING_FAILED_META_KEY );
+				$vault_failed = $order->get_meta( PaymentTokenChecker::VAULTING_FAILED_META_KEY );
 				if ( $subscription_helper->has_subscription( $order->get_id() ) && ! empty( $vault_failed ) ) {
-					$subscription_behavior_when_vault_fails_setting_name = 'subscription_behavior_when_vault_fails';
-					$subscription_behavior_when_vault_fails              = $settings->get( $subscription_behavior_when_vault_fails_setting_name );
-
 					$logger->info( "Changing subscription auto-renewal status for order #{$order->get_id()}." );
 
-					if ( $subscription_behavior_when_vault_fails === 'capture_auth' ) {
+					if ( $vault_failed === 'capture_auth' ) {
 						$subscriptions = function_exists( 'wcs_get_subscriptions_for_order' ) ? wcs_get_subscriptions_for_order( $order->get_id() ) : array();
 						foreach ( $subscriptions as $subscription ) {
 							$subscription->set_requires_manual_renewal( true );
