@@ -32,6 +32,9 @@ document.addEventListener(
                 return res.json();
             }).then(function (data) {
                 if (!data.success) {
+                    jQuery( "<span class='error tracking-info-message'>" + data.data.message + "</span>" ).insertAfter(submitButton);
+                    setTimeout(()=> jQuery('.tracking-info-message').remove(),3000);
+                    submitButton.removeAttribute('disabled');
                     console.error(data);
                     throw Error(data.data.message);
                 }

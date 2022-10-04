@@ -101,7 +101,7 @@ class OrderTrackingEndpoint {
 
 			wp_send_json_success( array( 'message' => $message ) );
 		} catch ( Exception $error ) {
-			wp_send_json_error( $error->getMessage(), 500 );
+			wp_send_json_error( array( 'message' => $error->getMessage() ), 500 );
 		}
 	}
 
