@@ -91,6 +91,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Enhancement - Hide PayPal Card Processing tab if not available in country or for merchant #870
 * Enhancement - Resubscribe webhooks on plugin upgrades #838
 * Enhancement - PUI-relevant webhook not subscribed to #842
+* Enhancement - Remove WC logo during onboarding #881
 
 = 1.9.3 =
 * Add - Tracking API #792
