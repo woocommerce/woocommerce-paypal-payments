@@ -1,52 +1,62 @@
 <?php
 
-abstract class Shipment extends WC_Data {
+namespace Vendidero\Germanized\Shipments {
 
-	/**
-	 * Return the shipment statuses without gzd- internal prefix.
-	 *
-	 * @param  string $context View or edit context.
-	 * @return string
-	 */
-	public function get_status( $context = 'view' ) {
-	}
+	use WC_Data;
+	use WC_Order;
 
-	/**
-	 * Tries to fetch the order for the current shipment.
-	 *
-	 * @return bool|WC_Order|null
-	 */
-	abstract public function get_order();
+	abstract class Shipment extends WC_Data {
 
-	/**
-	 * Returns the shipment shipping provider.
-	 *
-	 * @param  string $context What the value is for. Valid values are 'view' and 'edit'.
-	 * @return string
-	 */
-	public function get_shipping_provider( $context = 'view' ) {
-	}
 
-	/**
-	 * @return bool
-	 */
-	public function has_tracking() {
-	}
+		/**
+		 * Return the shipment statuses without gzd- internal prefix.
+		 *
+		 * @param string $context View or edit context.
+		 * @return string
+		 */
+		public function get_status( $context = 'view' ) {
+		}
 
-	/**
-	 * Returns the shipment tracking id.
-	 *
-	 * @param  string $context What the value is for. Valid values are 'view' and 'edit'.
-	 * @return string
-	 */
-	public function get_tracking_id( $context = 'view' ) {
+		/**
+		 * Tries to fetch the order for the current shipment.
+		 *
+		 * @return bool|WC_Order|null
+		 */
+		abstract public function get_order();
+
+		/**
+		 * Returns the shipment shipping provider.
+		 *
+		 * @param string $context What the value is for. Valid values are 'view' and 'edit'.
+		 * @return string
+		 */
+		public function get_shipping_provider( $context = 'view' ) {
+		}
+
+		/**
+		 * @return bool
+		 */
+		public function has_tracking() {
+		}
+
+		/**
+		 * Returns the shipment tracking id.
+		 *
+		 * @param string $context What the value is for. Valid values are 'view' and 'edit'.
+		 * @return string
+		 */
+		public function get_tracking_id( $context = 'view' ) {
+		}
 	}
 }
 
-/**
- * Get all shipment statuses.
- *
- * @return array
- */
-function wc_gzd_get_shipment_statuses() {
+namespace {
+	/**
+	 * Get all shipment statuses.
+	 *
+	 * @return array
+	 */
+	function wc_gzd_get_shipment_statuses() {
+	}
 }
+
