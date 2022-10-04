@@ -117,7 +117,7 @@ class CompatModule implements ModuleInterface {
 	 * @return void
 	 */
 	protected function initialize_gzd_compat_layer( ContainerInterface $c ): void {
-		if ( $c->get( 'compat.should-initialize-gzd-compat-layer' ) ) {
+		if ( ! $c->get( 'compat.should-initialize-gzd-compat-layer' ) ) {
 			return;
 		}
 

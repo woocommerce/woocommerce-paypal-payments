@@ -95,7 +95,7 @@ return array(
 		return new CompatAssets(
 			$container->get( 'compat.module.url' ),
 			$container->get( 'ppcp.asset-version' ),
-			$container->get( 'compat.should-initialize-gzd-compat-layer' )
+			$container->get( 'order-tracking.is-paypal-order-edit-page' ) && $container->get( 'compat.should-initialize-gzd-compat-layer' )
 		);
 	},
 
@@ -106,9 +106,8 @@ return array(
 		$tracking_enabled     = $settings->has( 'tracking_enabled' ) && $settings->get( 'tracking_enabled' );
 		$is_gzd_active        = $container->get( 'compat.gzd.is_supported_plugin_version_active' );
 		$should_sync_shipment = apply_filters( 'woocommerce_paypal_payments_sync_gzd_tracking', true );
-		$is_paypal_order_edit_page = $container->get( 'order-tracking.is-paypal-order-edit-page' );
 
-		return $tracking_enabled && $is_gzd_active && $should_sync_shipment && $is_paypal_order_edit_page;
+		return $tracking_enabled && $is_gzd_active && $should_sync_shipment;
 	},
 
 );
