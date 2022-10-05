@@ -150,7 +150,7 @@ class RenewalHandler {
 
 			$wc_order->update_status(
 				'failed',
-				$error
+					$error
 			);
 
 			$error_message = sprintf(

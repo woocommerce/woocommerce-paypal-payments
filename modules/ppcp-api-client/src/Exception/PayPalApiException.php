@@ -9,8 +9,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Exception;
 
-use stdClass;
-
 /**
  * Class PayPalApiException
  */
