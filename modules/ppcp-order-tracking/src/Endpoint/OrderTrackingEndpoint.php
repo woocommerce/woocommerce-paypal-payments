@@ -117,14 +117,17 @@ class OrderTrackingEndpoint {
 		$url = trailingslashit( $this->host ) . 'v1/shipping/trackers-batch';
 
 		$body = array(
-			'trackers' => array( $data ),
+			'trackers' => array( (array) apply_filters( 'woocommerce_paypal_payments_tracking_data_before_sending', $data, $order_id ) ),
 		);
 
-		$args     = array(
+		$args = array(
 			'method'  => 'POST',
 			'headers' => $this->request_headers(),
 			'body'    => wp_json_encode( $body ),
 		);
+
+		do_action( 'woocommerce_paypal_payments_before_tracking_is_added', $order_id, $data );
+
 		$response = $this->request( $url, $args );
 
 		if ( is_wp_error( $response ) ) {
@@ -169,6 +172,8 @@ class OrderTrackingEndpoint {
 		}
 
 		update_post_meta( $order_id, '_ppcp_paypal_tracking_number', $data['tracking_number'] ?? '' );
+
+		do_action( 'woocommerce_paypal_payments_after_tracking_is_added', $order_id, $response );
 	}
 
 	/**
@@ -243,8 +248,10 @@ class OrderTrackingEndpoint {
 		$args = array(
 			'method'  => 'PUT',
 			'headers' => $this->request_headers(),
-			'body'    => wp_json_encode( $data ),
+			'body'    => wp_json_encode( (array) apply_filters( 'woocommerce_paypal_payments_tracking_data_before_update', $data, $order_id ) ),
 		);
+
+		do_action( 'woocommerce_paypal_payments_before_tracking_is_updated', $order_id, $data );
 
 		$response = $this->request( $url, $args );
 
@@ -290,6 +297,8 @@ class OrderTrackingEndpoint {
 		}
 
 		update_post_meta( $order_id, '_ppcp_paypal_tracking_number', $data['tracking_number'] ?? '' );
+
+		do_action( 'woocommerce_paypal_payments_after_tracking_is_updated', $order_id, $response );
 	}
 
 	/**
