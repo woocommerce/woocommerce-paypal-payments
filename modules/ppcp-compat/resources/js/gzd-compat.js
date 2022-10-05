@@ -6,23 +6,16 @@ document.addEventListener(
         const gzdSaveButton = document.getElementById('order-shipments-save');
         const loadLocation = location.href + " " + orderTrackingContainerSelector + ">*";
 
-        const disableTrackingFields = function () {
-            var childNodes = document.getElementById(orderTrackingContainerId).getElementsByTagName('*');
-            for (var node of childNodes) {
-                node.disabled = true;
-            }
-        }
-
-        const enableTrackingFields = function () {
-            var childNodes = document.getElementById(orderTrackingContainerId).getElementsByTagName('*');
-            for (var node of childNodes) {
-                node.disabled = false;
+        const setEnabled = function (enabled) {
+            let childNodes = document.getElementById(orderTrackingContainerId).getElementsByTagName('*');
+            for (let node of childNodes) {
+                node.disabled = !enabled;
             }
         }
 
         const waitForTrackingUpdate = function () {
             if (jQuery('#order-shipments-save').css('display') !== 'none') {
-                disableTrackingFields();
+                setEnabled(false);
                 setTimeout(waitForTrackingUpdate, 100)
             } else {
                 jQuery(orderTrackingContainerSelector).load(loadLocation,"");
@@ -32,7 +25,7 @@ document.addEventListener(
         if (typeof(gzdSaveButton) != 'undefined' && gzdSaveButton != null) {
             gzdSaveButton.addEventListener('click', function (event) {
                 waitForTrackingUpdate();
-                enableTrackingFields();
+                setEnabled(true);
             })
         }
     },
