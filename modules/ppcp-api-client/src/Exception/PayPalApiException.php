@@ -127,7 +127,7 @@ class PayPalApiException extends RuntimeException {
 	 * @return string
 	 */
 	public function get_details( string $error ): string {
-		if ( ! is_array( $this->details() ) || empty( $this->details() ) ) {
+		if ( empty( $this->details() ) ) {
 			return $error;
 		}
 
