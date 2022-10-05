@@ -142,27 +142,21 @@ class RenewalHandler {
 	public function renew( \WC_Order $wc_order ) {
 		try {
 			$this->process_order( $wc_order );
-		} catch ( \Exception $error ) {
-			$error_details = $error->getMessage();
-			if ( is_a( $error, PayPalApiException::class ) ) {
-				$details = '';
-				foreach ( $error->details() as $detail ) {
-					$details .= $detail->issue . ' ' . $detail->description;
-				}
-				if ( $details ) {
-					$error_details = $details;
-				}
+		} catch ( \Exception $exception ) {
+			$error = $exception->getMessage();
+			if ( is_a( $exception, PayPalApiException::class ) ) {
+				$error = $exception->get_details( $error );
 			}
+
+			$wc_order->update_status(
+				'failed',
+				$error
+			);
 
 			$error_message = sprintf(
 				'An error occurred while trying to renew the subscription for order %1$d: %2$s',
 				$wc_order->get_id(),
-				$error_details
-			);
-
-			$wc_order->update_status(
-				'failed',
-				$error_details
+				$error
 			);
 			$this->logger->error( $error_message );
 
