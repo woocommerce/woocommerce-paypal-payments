@@ -50,13 +50,3 @@ namespace Vendidero\Germanized\Shipments {
 	}
 }
 
-namespace {
-	/**
-	 * Get all shipment statuses.
-	 *
-	 * @return array
-	 */
-	function wc_gzd_get_shipment_statuses() {
-	}
-}
-

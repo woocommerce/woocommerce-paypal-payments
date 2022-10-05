@@ -57,26 +57,12 @@ return array(
 	},
 
 	'compat.gzd.tracking_statuses_map'              => function ( ContainerInterface $container ): array {
-		$gzd_statuses = wc_gzd_get_shipment_statuses();
-		$status_map = array();
-
-		foreach ( $gzd_statuses as $gzd_status ) {
-			$gzd_status = strtolower( $gzd_status );
-			switch ( $gzd_status ) {
-				case 'draft':
-					$status_map[ $gzd_status ] = 'ON_HOLD';
-					break;
-				case 'processing':
-				case 'shipped':
-					$status_map[ $gzd_status ] = 'SHIPPED';
-					break;
-				case 'delivered':
-					$status_map[ $gzd_status ] = 'DELIVERED';
-					break;
-			}
-		}
-
-		return $status_map;
+		return array(
+			'draft'      => 'ON_HOLD',
+			'processing' => 'SHIPPED',
+			'shipped'    => 'SHIPPED',
+			'delivered'  => 'DELIVERED',
+		);
 	},
 
 	'compat.module.url'                             => static function ( ContainerInterface $container ): string {
