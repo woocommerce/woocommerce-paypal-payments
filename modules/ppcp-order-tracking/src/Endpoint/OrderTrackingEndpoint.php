@@ -90,7 +90,7 @@ class OrderTrackingEndpoint {
 			$action       = $data['action'];
 			$request_body = $this->extract_tracking_information( $data );
 			$order_id     = (int) $data['order_id'];
-			$action === 'create' ? $this->add_tracking_information( $request_body, $order_id ) : $this->update_tracking_information( $data, $order_id );
+			$action === 'create' ? $this->add_tracking_information( $request_body, $order_id ) : $this->update_tracking_information( $request_body, $order_id );
 
 			$action_message = $action === 'create' ? 'created' : 'updated';
 			$message        = sprintf(
