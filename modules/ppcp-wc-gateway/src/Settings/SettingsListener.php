@@ -281,12 +281,15 @@ class SettingsListener {
 
 		$credentials_change_status = null; // Cannot detect on Card Processing page.
 
-		if ( PayPalGateway::ID === $this->page_id || Settings::CONNECTION_TAB_ID === $this->page_id ) {
-			$settings['enabled'] = isset( $_POST['woocommerce_ppcp-gateway_enabled'] )
-				&& 1 === absint( $_POST['woocommerce_ppcp-gateway_enabled'] );
-
+		if ( Settings::CONNECTION_TAB_ID === $this->page_id ) {
 			$credentials_change_status = $this->determine_credentials_change_status( $settings );
 		}
+
+		if ( PayPalGateway::ID === $this->page_id ) {
+			$settings['enabled'] = isset( $_POST['woocommerce_ppcp-gateway_enabled'] )
+				&& 1 === absint( $_POST['woocommerce_ppcp-gateway_enabled'] );
+		}
+
 		// phpcs:enable phpcs:disable WordPress.Security.NonceVerification.Missing
 		// phpcs:enable phpcs:disable WordPress.Security.NonceVerification.Missing
 		if ( $credentials_change_status ) {

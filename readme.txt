@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, e-commerce, store, sales, sell, 
 Requires at least: 5.3
 Tested up to: 6.0
 Requires PHP: 7.1
-Stable tag: 1.9.3
+Stable tag: 1.9.4
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -80,6 +80,18 @@ Follow the steps below to connect the plugin to your PayPal account:
 6. Main settings screen.
 
 == Changelog ==
+
+= 1.9.4 =
+* Add - Create new connection tab #801
+* Add - Functionality to choose subscription failure behavior #728
+* Fix - Virtual-only orders always move order status to completed #868
+* Fix - PayPal order created twice when context is checkout #832
+* Enhancement - Handle unsupported browsers better #843
+* Enhancement - Combine the Webhooks Status page into a new Connection tab (891) #827
+* Enhancement - Hide PayPal Card Processing tab if not available in country or for merchant #870
+* Enhancement - Resubscribe webhooks on plugin upgrades #838
+* Enhancement - PUI-relevant webhook not subscribed to #842
+* Enhancement - Remove WC logo during onboarding #881
 
 = 1.9.3 =
 * Add - Tracking API #792

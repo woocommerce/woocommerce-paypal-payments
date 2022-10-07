@@ -203,12 +203,8 @@ class RenewalHandler {
 
 		$this->handle_new_order_status( $order, $wc_order );
 
-		if ( $this->capture_authorized_downloads( $order ) && AuthorizedPaymentsProcessor::SUCCESSFUL === $this->authorized_payments_processor->process( $wc_order ) ) {
-			$wc_order->add_order_note(
-				__( 'Payment successfully captured.', 'woocommerce-paypal-payments' )
-			);
-			$wc_order->update_meta_data( AuthorizedPaymentsProcessor::CAPTURED_META_KEY, 'true' );
-			$wc_order->update_status( 'completed' );
+		if ( $this->capture_authorized_downloads( $order ) ) {
+			$this->authorized_payments_processor->capture_authorized_payment( $wc_order );
 		}
 	}
 

@@ -13,6 +13,7 @@ use Throwable;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatusProduct;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
@@ -50,20 +51,30 @@ class DCCProductStatus {
 	private $partners_endpoint;
 
 	/**
+	 * The dcc applies helper.
+	 *
+	 * @var DccApplies
+	 */
+	protected $dcc_applies;
+
+	/**
 	 * DccProductStatus constructor.
 	 *
 	 * @param Settings         $settings The Settings.
 	 * @param PartnersEndpoint $partners_endpoint The Partner Endpoint.
 	 * @param Cache            $cache The cache.
+	 * @param DccApplies       $dcc_applies The dcc applies helper.
 	 */
 	public function __construct(
 		Settings $settings,
 		PartnersEndpoint $partners_endpoint,
-		Cache $cache
+		Cache $cache,
+		DccApplies $dcc_applies
 	) {
 		$this->settings          = $settings;
 		$this->partners_endpoint = $partners_endpoint;
 		$this->cache             = $cache;
+		$this->dcc_applies       = $dcc_applies;
 	}
 
 	/**
@@ -113,7 +124,12 @@ class DCCProductStatus {
 				return true;
 			}
 		}
-		$this->cache->set( self::DCC_STATUS_CACHE_KEY, false, 3 * MONTH_IN_SECONDS );
+
+		$expiration = 3 * MONTH_IN_SECONDS;
+		if ( $this->dcc_applies->for_country_currency() ) {
+			$expiration = 3 * HOUR_IN_SECONDS;
+		}
+		$this->cache->set( self::DCC_STATUS_CACHE_KEY, false, $expiration );
 
 		$this->current_status_cache = false;
 		return false;
