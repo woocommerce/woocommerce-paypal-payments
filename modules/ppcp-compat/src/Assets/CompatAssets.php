@@ -53,9 +53,9 @@ class CompatAssets {
 	 * @return void
 	 */
 	public function register(): void {
-        $gzd_sync_enabled = apply_filters( 'woocommerce_paypal_payments_sync_gzd_tracking', true );
-        if ( $this->should_enqueue_gzd_scripts && $gzd_sync_enabled ) {
-            wp_register_script(
+		$gzd_sync_enabled = apply_filters( 'woocommerce_paypal_payments_sync_gzd_tracking', true );
+		if ( $this->should_enqueue_gzd_scripts && $gzd_sync_enabled ) {
+			wp_register_script(
 				'ppcp-gzd-compat',
 				untrailingslashit( $this->module_url ) . '/assets/js/gzd-compat.js',
 				array( 'jquery' ),
@@ -71,7 +71,7 @@ class CompatAssets {
 	 * @return void
 	 */
 	public function enqueue(): void {
-        $gzd_sync_enabled = apply_filters( 'woocommerce_paypal_payments_sync_gzd_tracking', true );
+		$gzd_sync_enabled = apply_filters( 'woocommerce_paypal_payments_sync_gzd_tracking', true );
 		if ( $this->should_enqueue_gzd_scripts && $gzd_sync_enabled ) {
 			wp_enqueue_script( 'ppcp-gzd-compat' );
 		}
