@@ -132,13 +132,14 @@ const ppcp_onboarding = {
 	},
 };
 
-function ppcp_onboarding_sandboxCallback(...args) {
-	return ppcp_onboarding.loginSeller('sandbox', ...args);
-}
 
-function ppcp_onboarding_productionCallback(...args) {
-	return ppcp_onboarding.loginSeller('production', ...args);
-}
+window.ppcp_onboarding_sandboxCallback = function(...args) {
+    return ppcp_onboarding.loginSeller('sandbox', ...args);
+};
+
+window.ppcp_onboarding_productionCallback = function(...args) {
+    return ppcp_onboarding.loginSeller('production', ...args);
+};
 
 (() => {
     const productionCredentialElementsSelectors = [

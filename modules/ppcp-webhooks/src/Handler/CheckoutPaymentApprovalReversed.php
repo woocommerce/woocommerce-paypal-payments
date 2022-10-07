@@ -1,6 +1,6 @@
 <?php
 /**
- * Handles the Webhook CHECKOUT.ORDER.COMPLETED
+ * Handles CHECKOUT.PAYMENT-APPROVAL.REVERSED Webhook.
  *
  * @package WooCommerce\PayPalCommerce\Webhooks\Handler
  */
@@ -10,33 +10,30 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
 
 use Psr\Log\LoggerInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
 use WP_REST_Request;
 use WP_REST_Response;
 
 /**
- * Class CheckoutOrderCompleted
+ * Class CheckoutPaymentApprovalReversed
  */
-class CheckoutOrderCompleted implements RequestHandler {
+class CheckoutPaymentApprovalReversed implements RequestHandler {
 
-	use PrefixTrait, RequestHandlerTrait;
+	use RequestHandlerTrait, PrefixTrait;
 
 	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
 	 */
-	private $logger;
+	protected $logger;
 
 	/**
-	 * CheckoutOrderCompleted constructor.
+	 * CheckoutPaymentApprovalReversed constructor.
 	 *
 	 * @param LoggerInterface $logger The logger.
-	 * @param string          $prefix The prefix.
 	 */
-	public function __construct( LoggerInterface $logger, string $prefix ) {
+	public function __construct( LoggerInterface $logger ) {
 		$this->logger = $logger;
-		$this->prefix = $prefix;
 	}
 
 	/**
@@ -46,7 +43,7 @@ class CheckoutOrderCompleted implements RequestHandler {
 	 */
 	public function event_types(): array {
 		return array(
-			'CHECKOUT.ORDER.COMPLETED',
+			'CHECKOUT.PAYMENT-APPROVAL.REVERSED',
 		);
 	}
 
@@ -82,25 +79,20 @@ class CheckoutOrderCompleted implements RequestHandler {
 		}
 
 		foreach ( $wc_orders as $wc_order ) {
-			if ( PayUponInvoiceGateway::ID === $wc_order->get_payment_method() ) {
-				continue;
-			}
-			if ( ! in_array( $wc_order->get_status(), array( 'pending', 'on-hold' ), true ) ) {
-				continue;
-			}
-
-			$wc_order->payment_complete();
-
-			$this->logger->info(
-				sprintf(
-					// translators: %s is the order ID.
+			if ( in_array( $wc_order->get_status(), array( 'pending', 'on-hold' ), true ) ) {
+				$error_message = sprintf(
+				// translators: %1$s is the order id.
 					__(
-						'Order %s has been updated through PayPal',
+						'Failed to capture order %1$s through PayPal.',
 						'woocommerce-paypal-payments'
 					),
 					(string) $wc_order->get_id()
-				)
-			);
+				);
+
+				$this->logger->warning( 'CHECKOUT.PAYMENT-APPROVAL.REVERSED received. ' . $error_message );
+
+				$wc_order->update_status( 'failed', $error_message );
+			}
 		}
 
 		$response['success'] = true;

@@ -15,6 +15,8 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 
@@ -96,6 +98,20 @@ class SettingsListener {
 	protected $signup_link_ids;
 
 	/**
+	 * The PUI status cache.
+	 *
+	 * @var Cache
+	 */
+	protected $pui_status_cache;
+
+	/**
+	 * The DCC status cache.
+	 *
+	 * @var Cache
+	 */
+	protected $dcc_status_cache;
+
+	/**
 	 * SettingsListener constructor.
 	 *
 	 * @param Settings         $settings The settings.
@@ -107,6 +123,8 @@ class SettingsListener {
 	 * @param string           $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
 	 * @param Cache            $signup_link_cache The signup link cache.
 	 * @param array            $signup_link_ids Signup link ids.
+	 * @param Cache            $pui_status_cache The PUI status cache.
+	 * @param Cache            $dcc_status_cache The DCC status cache.
 	 */
 	public function __construct(
 		Settings $settings,
@@ -117,7 +135,9 @@ class SettingsListener {
 		Bearer $bearer,
 		string $page_id,
 		Cache $signup_link_cache,
-		array $signup_link_ids
+		array $signup_link_ids,
+		Cache $pui_status_cache,
+		Cache $dcc_status_cache
 	) {
 
 		$this->settings          = $settings;
@@ -129,6 +149,8 @@ class SettingsListener {
 		$this->page_id           = $page_id;
 		$this->signup_link_cache = $signup_link_cache;
 		$this->signup_link_ids   = $signup_link_ids;
+		$this->pui_status_cache  = $pui_status_cache;
+		$this->dcc_status_cache  = $dcc_status_cache;
 	}
 
 	/**
@@ -174,7 +196,7 @@ class SettingsListener {
 		/**
 		 * The URL opened at the end of onboarding after saving the merchant ID/email.
 		 */
-		$redirect_url = apply_filters( 'woocommerce_paypal_payments_onboarding_redirect_url', admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-connection' ) );
+		$redirect_url = apply_filters( 'woocommerce_paypal_payments_onboarding_redirect_url', admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=' . Settings::CONNECTION_TAB_ID ) );
 		if ( ! $this->settings->has( 'client_id' ) || ! $this->settings->get( 'client_id' ) ) {
 			$redirect_url = add_query_arg( 'ppcp-onboarding-error', '1', $redirect_url );
 		}
@@ -305,6 +327,14 @@ class SettingsListener {
 
 		if ( $this->cache->has( PayPalBearer::CACHE_KEY ) ) {
 			$this->cache->delete( PayPalBearer::CACHE_KEY );
+		}
+
+		if ( $this->pui_status_cache->has( PayUponInvoiceProductStatus::PUI_STATUS_CACHE_KEY ) ) {
+			$this->pui_status_cache->delete( PayUponInvoiceProductStatus::PUI_STATUS_CACHE_KEY );
+		}
+
+		if ( $this->dcc_status_cache->has( DCCProductStatus::DCC_STATUS_CACHE_KEY ) ) {
+			$this->dcc_status_cache->delete( DCCProductStatus::DCC_STATUS_CACHE_KEY );
 		}
 
 		if ( isset( $_GET['ppcp-onboarding-error'] ) ) {

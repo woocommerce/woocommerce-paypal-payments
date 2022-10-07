@@ -19,6 +19,8 @@ declare( strict_types = 1 );
 
 namespace WooCommerce\PayPalCommerce;
 
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+
 define( 'PAYPAL_API_URL', 'https://api.paypal.com' );
 define( 'PAYPAL_SANDBOX_API_URL', 'https://api.sandbox.paypal.com' );
 define( 'PAYPAL_INTEGRATION_DATE', '2022-04-13' );
@@ -134,7 +136,7 @@ define( 'PPCP_FLAG_SEPARATE_APM_BUTTONS', apply_filters( 'woocommerce_paypal_pay
 				$links,
 				sprintf(
 					'<a href="%1$s">%2$s</a>',
-					admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
+					admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=' . Settings::CONNECTION_TAB_ID ),
 					__( 'Settings', 'woocommerce-paypal-payments' )
 				)
 			);
