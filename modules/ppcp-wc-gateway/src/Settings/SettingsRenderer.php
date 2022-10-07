@@ -164,9 +164,9 @@ class SettingsRenderer {
 	}
 
 	/**
-	 * Check if current screen is PayPal checkout settings screen.
+	 * Check if current screen is Standard Payments settings screen.
 	 *
-	 * @return bool Whether is PayPal checkout screen or not.
+	 * @return bool Whether is Standard Payments screen or not.
 	 */
 	private function is_paypal_checkout_screen(): bool {
 		return PayPalGateway::ID === $this->page_id;
@@ -522,7 +522,7 @@ $data_rows_html
 	<p>
 		<?php
 			esc_html_e(
-				'You need to complete your onboarding, before you can use the PayPal Card Processing option.',
+				'You need to complete your onboarding, before you can use the Advanced Card Processing option.',
 				'woocommerce-paypal-payments'
 			);
 		?>
