@@ -228,6 +228,10 @@ class PayUponInvoice {
 			'ppcp_payment_capture_completed_webhook_handler',
 			function ( WC_Order $wc_order, string $order_id ) {
 				try {
+					if ( $wc_order->get_payment_method() !== PayUponInvoiceGateway::ID ) {
+						return;
+					}
+
 					$order = $this->pui_order_endpoint->order( $order_id );
 
 					$payment_instructions = array(
