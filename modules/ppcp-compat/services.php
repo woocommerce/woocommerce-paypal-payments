@@ -91,9 +91,8 @@ return array(
 
 		$tracking_enabled     = $settings->has( 'tracking_enabled' ) && $settings->get( 'tracking_enabled' );
 		$is_gzd_active        = $container->get( 'compat.gzd.is_supported_plugin_version_active' );
-		$should_sync_shipment = apply_filters( 'woocommerce_paypal_payments_sync_gzd_tracking', true );
 
-		return $tracking_enabled && $is_gzd_active && $should_sync_shipment;
+		return $tracking_enabled && $is_gzd_active;
 	},
 
 );

@@ -132,6 +132,10 @@ class CompatModule implements ModuleInterface {
 		add_action(
 			'woocommerce_gzd_shipment_after_save',
 			static function( Shipment $shipment ) use ( $endpoint, $logger, $status_map ) {
+                if ( ! apply_filters( 'woocommerce_paypal_payments_sync_gzd_tracking', true ) ) {
+                    return;
+                }
+
 				$gzd_shipment_status = $shipment->get_status();
 				if ( ! array_key_exists( $gzd_shipment_status, $status_map ) ) {
 					return;
