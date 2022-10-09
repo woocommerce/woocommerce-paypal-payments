@@ -207,7 +207,7 @@ document.addEventListener(
                         }
                         return option;
                     }
-                );
+                ).flat();
 
                 target.innerHTML = '';
                 selectedValidOptions.forEach(
