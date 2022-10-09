@@ -163,14 +163,12 @@ document.addEventListener(
             );
         }
 
-        const disableOptions = (sourceSelector, targetSelector) => {
-
-            const source = jQuery(sourceSelector);
-            const target = document.querySelector(targetSelector);
-            if (! target) {
+        const removeDisabledCardIcons = (disabledCardsSelectSelector, iconsSelectSelector) => {
+            const iconsSelect = document.querySelector(iconsSelectSelector);
+            if (! iconsSelect) {
                 return;
             }
-            const allOptions = Array.from(document.querySelectorAll('select[name="ppcp[disable_cards][]"] option'));
+            const allOptions = Array.from(document.querySelectorAll(disabledCardsSelectSelector + ' option'));
             const iconVersions = {
                 'visa': {
                     'light': {'label': 'Visa (light)'},
@@ -182,17 +180,12 @@ document.addEventListener(
                 }
             }
             const replace = () => {
-                const validOptions = allOptions.filter(
-                    (option) => {
-
-                        return ! option.selected
-                    }
-                );
+                const validOptions = allOptions.filter(option => ! option.selected);
                 const selectedValidOptions = validOptions.map(
                     (option) => {
                         option = option.cloneNode(true);
                         let value = option.value;
-                        option.selected = target.querySelector('option[value="' + value + '"]') && target.querySelector('option[value="' + value + '"]').selected;
+                        option.selected = iconsSelect.querySelector('option[value="' + value + '"]') && iconsSelect.querySelector('option[value="' + value + '"]').selected;
                         if(value === 'visa' || value === 'mastercard') {
                             let darkOption = option.cloneNode(true);
                             let currentVersion = iconVersions[value];
@@ -201,7 +194,7 @@ document.addEventListener(
                             option.text = currentVersion.light.label;
                             darkOption.text = currentVersion.dark.label;
                             darkOption.value = darkValue;
-                            darkOption.selected = target.querySelector('option[value="' + darkValue + '"]') && target.querySelector('option[value="' + darkValue + '"]').selected;
+                            darkOption.selected = iconsSelect.querySelector('option[value="' + darkValue + '"]') && iconsSelect.querySelector('option[value="' + darkValue + '"]').selected;
 
                             return [option, darkOption];
                         }
@@ -209,28 +202,29 @@ document.addEventListener(
                     }
                 ).flat();
 
-                target.innerHTML = '';
+                iconsSelect.innerHTML = '';
                 selectedValidOptions.forEach(
                     (option) => {
                         if(Array.isArray(option)){
                             option.forEach(
                                 (option) => {
-                                    target.appendChild(option);
+                                    iconsSelect.appendChild(option);
                                 }
                             )
                         }
 
-                        target.appendChild(option);
+                        iconsSelect.appendChild(option);
                     }
                 );
             };
 
-            source.on('change',replace);
+            const disabledCardsSelect = jQuery(disabledCardsSelectSelector);
+            disabledCardsSelect.on('change', replace);
             replace();
         };
 
         (() => {
-            disableOptions('select[name="ppcp[disable_cards][]"]', 'select[name="ppcp[card_icons][]"]');
+            removeDisabledCardIcons('select[name="ppcp[disable_cards][]"]', 'select[name="ppcp[card_icons][]"]');
             groupToggle(
                 '#ppcp-button_enabled',
                 [
