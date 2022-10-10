@@ -51,7 +51,7 @@ class OrderTrackingModule implements ModuleInterface {
 		$pui_helper = $c->get( 'wcgateway.pay-upon-invoice-helper' );
 		assert( $pui_helper instanceof PayUponInvoiceHelper );
 
-		if ( $pui_helper->is_pui_enabled() ) {
+		if ( $pui_helper->is_pui_gateway_enabled() ) {
 			$settings->set( 'tracking_enabled', true );
 			$settings->persist();
 		}

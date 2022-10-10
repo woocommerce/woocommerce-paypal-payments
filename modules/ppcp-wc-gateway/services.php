@@ -2014,7 +2014,7 @@ return array(
 	'wcgateway.pay-upon-invoice-helper'                    => static function( ContainerInterface $container ): PayUponInvoiceHelper {
 		return new PayUponInvoiceHelper(
 			$container->get( 'wcgateway.checkout-helper' ),
-			$container->get( 'wcgateway.settings' )
+			$container->get( 'api.shop.country' )
 		);
 	},
 	'wcgateway.pay-upon-invoice-product-status'            => static function( ContainerInterface $container ): PayUponInvoiceProductStatus {
@@ -2175,6 +2175,7 @@ return array(
 			return false;
 		}
 	},
+
 	'wcgateway.settings.should-disable-tracking-checkbox'  => static function ( ContainerInterface $container ): bool {
 		$pui_helper = $container->get( 'wcgateway.pay-upon-invoice-helper' );
 		assert( $pui_helper instanceof PayUponInvoiceHelper );
@@ -2185,7 +2186,7 @@ return array(
 			return true;
 		}
 
-		if ( $pui_helper->is_pui_enabled() ) {
+		if ( $pui_helper->is_pui_gateway_enabled() ) {
 			return true;
 		}
 
