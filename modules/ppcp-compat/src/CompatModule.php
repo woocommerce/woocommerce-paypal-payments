@@ -164,17 +164,17 @@ class CompatModule implements ModuleInterface {
 				try {
 					$tracking_information = $endpoint->get_tracking_information( $wc_order->get_id() );
 
-                    $tracking_data['tracking_number'] = $tracking_information['tracking_number'] ?? '';
+					$tracking_data['tracking_number'] = $tracking_information['tracking_number'] ?? '';
 
-                    if ( $shipment->has_tracking() ) {
-                        $tracking_data['tracking_number'] = $shipment->get_tracking_id();
-                    }
+					if ( $shipment->has_tracking() ) {
+						$tracking_data['tracking_number'] = $shipment->get_tracking_id();
+					}
 
 					! $tracking_information ? $endpoint->add_tracking_information( $tracking_data, $wc_order->get_id() ) : $endpoint->update_tracking_information( $tracking_data, $wc_order->get_id() );
 				} catch ( Exception $exception ) {
 					$logger->error( "Couldn't sync tracking information: " . $exception->getMessage() );
-                    $shipment->add_note("Couldn't sync tracking information: " . $exception->getMessage());
-                    throw $exception;
+					$shipment->add_note( "Couldn't sync tracking information: " . $exception->getMessage() );
+					throw $exception;
 				}
 			}
 		);
