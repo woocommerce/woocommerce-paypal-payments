@@ -1,6 +1,6 @@
 *** Changelog ***
 
-= 1.9.4 - TBD =
+= 1.9.4 - 2022-10-11 =
 * Add - Create new connection tab #801
 * Add - Functionality to choose subscription failure behavior #728
 * Fix - Virtual-only orders always move order status to completed #868
