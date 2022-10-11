@@ -185,8 +185,12 @@ class OrderTrackingEndpoint {
 			throw new RuntimeException( 'wrong order ID' );
 		}
 
+		if ( ! $wc_order->meta_exists( '_ppcp_paypal_tracking_number' ) ) {
+			return null;
+		}
+
 		$transaction_id  = $wc_order->get_transaction_id();
-		$tracking_number = get_post_meta( $wc_order_id, '_ppcp_paypal_tracking_number', true );
+		$tracking_number = $wc_order->get_meta( '_ppcp_paypal_tracking_number', true );
 		$url             = trailingslashit( $this->host ) . 'v1/shipping/trackers/' . $this->find_tracker_id( $transaction_id, $tracking_number );
 
 		$args = array(
