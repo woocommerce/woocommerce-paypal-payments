@@ -20,6 +20,7 @@ document.addEventListener(
             submitButton.setAttribute('disabled', 'disabled');
             fetch(config.ajax.tracking_info.endpoint, {
                 method: 'POST',
+                credentials: 'same-origin',
                 body: JSON.stringify({
                     nonce: config.ajax.tracking_info.nonce,
                     transaction_id: transactionId ? transactionId.value : null,

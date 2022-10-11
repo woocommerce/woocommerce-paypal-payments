@@ -15,11 +15,11 @@ use Exception;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\Webhooks\Endpoint\ResubscribeEndpoint;
 use WooCommerce\PayPalCommerce\Webhooks\Endpoint\SimulateEndpoint;
 use WooCommerce\PayPalCommerce\Webhooks\Endpoint\SimulationStateEndpoint;
 use WooCommerce\PayPalCommerce\Webhooks\Status\Assets\WebhooksStatusPageAssets;
-use WooCommerce\PayPalCommerce\Webhooks\Status\WebhooksStatusPage;
 
 /**
  * Class WebhookModule
@@ -112,9 +112,8 @@ class WebhookModule implements ModuleInterface {
 		);
 
 		$page_id = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
-		if ( WebhooksStatusPage::ID === $page_id ) {
-			$GLOBALS['hide_save_button'] = true;
-			$asset_loader                = $container->get( 'webhook.status.assets' );
+		if ( Settings::CONNECTION_TAB_ID === $page_id ) {
+			$asset_loader = $container->get( 'webhook.status.assets' );
 			assert( $asset_loader instanceof WebhooksStatusPageAssets );
 			add_action(
 				'init',
@@ -144,6 +143,21 @@ class WebhookModule implements ModuleInterface {
 				$logger->error( 'Failed to load webhooks list: ' . $exception->getMessage() );
 			}
 		}
+
+		add_action(
+			'woocommerce_paypal_payments_gateway_migrate',
+			static function () use ( $container ) {
+				$registrar = $container->get( 'webhook.registrar' );
+				assert( $registrar instanceof WebhookRegistrar );
+				add_action(
+					'init',
+					function () use ( $registrar ) {
+						$registrar->unregister();
+						$registrar->register();
+					}
+				);
+			}
+		);
 	}
 
 	/**

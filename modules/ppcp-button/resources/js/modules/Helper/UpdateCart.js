@@ -20,6 +20,7 @@ class UpdateCart {
                 this.endpoint,
                 {
                     method: 'POST',
+                    credentials: 'same-origin',
                     body: JSON.stringify({
                         nonce: this.nonce,
                         products,
