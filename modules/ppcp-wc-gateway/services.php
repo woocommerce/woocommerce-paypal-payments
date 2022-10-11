@@ -2039,7 +2039,8 @@ return array(
 			$container->get( 'wcgateway.pay-upon-invoice-product-status' ),
 			$container->get( 'wcgateway.pay-upon-invoice-helper' ),
 			$container->get( 'wcgateway.checkout-helper' ),
-			$container->get( 'api.factory.capture' )
+			$container->get( 'api.factory.capture' ),
+			$container->get( 'session.handler' )
 		);
 	},
 	'wcgateway.oxxo'                                       => static function( ContainerInterface $container ): OXXO {

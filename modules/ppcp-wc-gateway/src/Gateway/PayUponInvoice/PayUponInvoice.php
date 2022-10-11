@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\CaptureFactory;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
+use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CheckoutHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceHelper;
@@ -131,6 +132,13 @@ class PayUponInvoice {
 	protected $capture_factory;
 
 	/**
+	 * The session handler
+	 *
+	 * @var SessionHandler
+	 */
+	protected $session_handler;
+
+	/**
 	 * PayUponInvoice constructor.
 	 *
 	 * @param string                      $module_url The module URL.
@@ -147,6 +155,7 @@ class PayUponInvoice {
 	 * @param PayUponInvoiceHelper        $pui_helper The PUI helper.
 	 * @param CheckoutHelper              $checkout_helper The checkout helper.
 	 * @param CaptureFactory              $capture_factory The capture factory.
+	 * @param SessionHandler              $session_handler The session handler.
 	 */
 	public function __construct(
 		string $module_url,
@@ -162,7 +171,8 @@ class PayUponInvoice {
 		PayUponInvoiceProductStatus $pui_product_status,
 		PayUponInvoiceHelper $pui_helper,
 		CheckoutHelper $checkout_helper,
-		CaptureFactory $capture_factory
+		CaptureFactory $capture_factory,
+		SessionHandler $session_handler
 	) {
 		$this->module_url                    = $module_url;
 		$this->fraud_net                     = $fraud_net;
@@ -178,6 +188,7 @@ class PayUponInvoice {
 		$this->pui_helper                    = $pui_helper;
 		$this->checkout_helper               = $checkout_helper;
 		$this->capture_factory               = $capture_factory;
+		$this->session_handler               = $session_handler;
 	}
 
 	/**
@@ -546,7 +557,7 @@ class PayUponInvoice {
 	public function register_assets(): void {
 		$gateway_settings = get_option( 'woocommerce_ppcp-pay-upon-invoice-gateway_settings' );
 		$gateway_enabled  = $gateway_settings['enabled'] ?? '';
-		if ( $gateway_enabled === 'yes' && ( is_checkout() || is_checkout_pay_page() ) ) {
+		if ( $gateway_enabled === 'yes' && ! $this->session_handler->order() && ( is_checkout() || is_checkout_pay_page() ) ) {
 			wp_enqueue_script(
 				'ppcp-pay-upon-invoice',
 				trailingslashit( $this->module_url ) . 'assets/js/pay-upon-invoice.js',
