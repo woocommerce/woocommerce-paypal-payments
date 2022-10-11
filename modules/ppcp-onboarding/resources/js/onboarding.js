@@ -75,6 +75,7 @@ const ppcp_onboarding = {
 		const spinner = '<span class="spinner is-active" style="float: none;"></span>';
 		onboard_pui?.addEventListener('click', (event) => {
             event.preventDefault();
+            onboard_pui.setAttribute('disabled', 'disabled');
             buttons.forEach((element) => {
                 element.removeAttribute('href');
                 element.setAttribute('disabled', 'disabled');
@@ -106,6 +107,7 @@ const ppcp_onboarding = {
                         }
                     }
                 });
+                onboard_pui.removeAttribute('disabled');
             });
         })
 	},
