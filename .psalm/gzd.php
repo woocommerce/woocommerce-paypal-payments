@@ -47,6 +47,9 @@ namespace Vendidero\Germanized\Shipments {
 		 */
 		public function get_tracking_id( $context = 'view' ) {
 		}
+
+        public function add_note( $note, $added_by_user = false ) {
+        }
 	}
 }
 
