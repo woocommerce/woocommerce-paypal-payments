@@ -163,7 +163,7 @@ class BillingAgreementsEndpoint {
 
 		$json        = json_decode( $response['body'] );
 		$status_code = (int) wp_remote_retrieve_response_code( $response );
-		if ( 201 !== $status_code ) {
+		if ( 200 !== $status_code ) {
 			throw new PayPalApiException(
 				$json,
 				$status_code
