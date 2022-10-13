@@ -135,8 +135,9 @@ return array(
 			$registration_needed,
 			$container->get( 'wcgateway.settings.card_billing_data_mode' ),
 			$logger,
-			$container->get('subscription.helper'),
-			$container->get( 'vaulting.repository.payment-token' )
+			$container->get( 'subscription.helper' ),
+			$container->get( 'vaulting.repository.payment-token' ),
+			$container->get( 'api.endpoint.billing-agreements' )
 		);
 	},
 	'button.helper.early-order-handler'        => static function ( ContainerInterface $container ) : EarlyOrderHandler {

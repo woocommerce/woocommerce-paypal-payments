@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 use Exception;
 use Psr\Log\LoggerInterface;
 use stdClass;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingAgreementsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Amount;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
@@ -153,6 +154,13 @@ class CreateOrderEndpoint implements EndpointInterface {
 	protected $payment_token_repository;
 
 	/**
+	 * The billing agreements endpoint.
+	 *
+	 * @var BillingAgreementsEndpoint
+	 */
+	protected $billing_agreements_endpoint;
+
+	/**
 	 * CreateOrderEndpoint constructor.
 	 *
 	 * @param RequestData               $request_data The RequestData object.
@@ -168,6 +176,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 * @param LoggerInterface           $logger The logger.
 	 * @param SubscriptionHelper        $subscription_helper The subscription helper.
 	 * @param PaymentTokenRepository    $payment_token_repository The payment token repository.
+	 * @param BillingAgreementsEndpoint $billing_agreements_endpoint The billing agreements endpoint.
 	 */
 	public function __construct(
 		RequestData $request_data,
@@ -182,7 +191,8 @@ class CreateOrderEndpoint implements EndpointInterface {
 		string $card_billing_data_mode,
 		LoggerInterface $logger,
 		SubscriptionHelper $subscription_helper,
-		PaymentTokenRepository $payment_token_repository
+		PaymentTokenRepository $payment_token_repository,
+		BillingAgreementsEndpoint $billing_agreements_endpoint
 	) {
 
 		$this->request_data                = $request_data;
@@ -198,6 +208,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 		$this->logger                      = $logger;
 		$this->subscription_helper         = $subscription_helper;
 		$this->payment_token_repository    = $payment_token_repository;
+		$this->billing_agreements_endpoint = $billing_agreements_endpoint;
 	}
 
 	/**
@@ -398,8 +409,8 @@ class CreateOrderEndpoint implements EndpointInterface {
 		$current_user_id = get_current_user_id();
 		if (
 			$current_user_id !== 0
-			&& ($this->subscription_helper->cart_contains_subscription() || $this->subscription_helper->current_product_is_subscription())
-			&& empty ($this->payment_token_repository->all_for_user_id($current_user_id))
+			&& ( $this->subscription_helper->cart_contains_subscription() || $this->subscription_helper->current_product_is_subscription() )
+			&& empty( $this->payment_token_repository->all_for_user_id( $current_user_id ) )
 		) {
 			$args   = array(
 				'customer_id' => $current_user_id,
@@ -409,8 +420,15 @@ class CreateOrderEndpoint implements EndpointInterface {
 			foreach ( $orders as $order ) {
 				$billing_agreement_id = $order->get_meta( '_ppec_billing_agreement_id', true );
 				if ( $billing_agreement_id ) {
-					$payment_token = new PaymentToken( $billing_agreement_id, 'BILLING_AGREEMENT', new \stdClass() );
-					break;
+					try {
+						$this->billing_agreements_endpoint->agreement_details( $billing_agreement_id );
+						$payment_token = new PaymentToken( $billing_agreement_id, 'BILLING_AGREEMENT', new \stdClass() );
+						break;
+					} catch ( PayPalApiException $exception ) {
+						if ( $exception->status_code() === 404 ) {
+							continue;
+						}
+					}
 				}
 			}
 		}

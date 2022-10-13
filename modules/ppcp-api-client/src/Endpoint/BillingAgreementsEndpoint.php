@@ -137,4 +137,39 @@ class BillingAgreementsEndpoint {
 			return false;
 		}
 	}
+
+	/**
+	 * Get billing agreement details
+	 *
+	 * @param string $id Billing agreement id.
+	 *
+	 * @throws RuntimeException When there is an issue getting the agreement.
+	 * @throws PayPalApiException When no agreement found.
+	 */
+	public function agreement_details( string $id ): stdClass {
+		$bearer = $this->bearer->bearer();
+		$url    = trailingslashit( $this->host ) . 'v1/billing-agreements/' . $id;
+		$args   = array(
+			'headers' => array(
+				'Authorization' => 'Bearer ' . $bearer->token(),
+				'Content-Type'  => 'application/json',
+			),
+		);
+
+		$response = $this->request( $url, $args );
+		if ( is_wp_error( $response ) ) {
+			throw new RuntimeException( "Not able to get billing agreement {$id}. " . $response->get_error_message() );
+		}
+
+		$json        = json_decode( $response['body'] );
+		$status_code = (int) wp_remote_retrieve_response_code( $response );
+		if ( 201 !== $status_code ) {
+			throw new PayPalApiException(
+				$json,
+				$status_code
+			);
+		}
+
+		return $json;
+	}
 }
