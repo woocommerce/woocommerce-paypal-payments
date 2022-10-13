@@ -19,6 +19,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentMethod;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
@@ -28,6 +29,8 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Subscription\FreeTrialHandlerTrait;
+use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\CardBillingMode;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
@@ -136,6 +139,20 @@ class CreateOrderEndpoint implements EndpointInterface {
 	protected $logger;
 
 	/**
+	 * The subscription helper.
+	 *
+	 * @var SubscriptionHelper
+	 */
+	protected $subscription_helper;
+
+	/**
+	 * The payment token repository.
+	 *
+	 * @var PaymentTokenRepository
+	 */
+	protected $payment_token_repository;
+
+	/**
 	 * CreateOrderEndpoint constructor.
 	 *
 	 * @param RequestData               $request_data The RequestData object.
@@ -149,6 +166,8 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 * @param bool                      $registration_needed  Whether a new user must be registered during checkout.
 	 * @param string                    $card_billing_data_mode The value of card_billing_data_mode from the settings.
 	 * @param LoggerInterface           $logger The logger.
+	 * @param SubscriptionHelper        $subscription_helper The subscription helper.
+	 * @param PaymentTokenRepository    $payment_token_repository The payment token repository.
 	 */
 	public function __construct(
 		RequestData $request_data,
@@ -161,7 +180,9 @@ class CreateOrderEndpoint implements EndpointInterface {
 		EarlyOrderHandler $early_order_handler,
 		bool $registration_needed,
 		string $card_billing_data_mode,
-		LoggerInterface $logger
+		LoggerInterface $logger,
+		SubscriptionHelper $subscription_helper,
+		PaymentTokenRepository $payment_token_repository
 	) {
 
 		$this->request_data                = $request_data;
@@ -175,6 +196,8 @@ class CreateOrderEndpoint implements EndpointInterface {
 		$this->registration_needed         = $registration_needed;
 		$this->card_billing_data_mode      = $card_billing_data_mode;
 		$this->logger                      = $logger;
+		$this->subscription_helper         = $subscription_helper;
+		$this->payment_token_repository    = $payment_token_repository;
 	}
 
 	/**
@@ -371,12 +394,33 @@ class CreateOrderEndpoint implements EndpointInterface {
 			}
 		}
 
+		$payment_token   = null;
+		$current_user_id = get_current_user_id();
+		if (
+			$current_user_id !== 0
+			&& ($this->subscription_helper->cart_contains_subscription() || $this->subscription_helper->current_product_is_subscription())
+			&& empty ($this->payment_token_repository->all_for_user_id($current_user_id))
+		) {
+			$args   = array(
+				'customer_id' => $current_user_id,
+				'limit'       => -1,
+			);
+			$orders = wc_get_orders( $args );
+			foreach ( $orders as $order ) {
+				$billing_agreement_id = $order->get_meta( '_ppec_billing_agreement_id', true );
+				if ( $billing_agreement_id ) {
+					$payment_token = new PaymentToken( $billing_agreement_id, 'BILLING_AGREEMENT', new \stdClass() );
+					break;
+				}
+			}
+		}
+
 		try {
 			return $this->api_endpoint->create(
 				array( $this->purchase_unit ),
 				$shipping_preference,
 				$payer,
-				null,
+				$payment_token,
 				$this->payment_method()
 			);
 		} catch ( PayPalApiException $exception ) {
