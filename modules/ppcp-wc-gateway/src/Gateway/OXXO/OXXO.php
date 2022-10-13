@@ -80,7 +80,16 @@ class OXXO {
 
 		add_filter(
 			'woocommerce_thankyou_order_received_text',
-			function( string $message, WC_Order $order ) {
+			/**
+			 * Order can be null.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function( string $message, $order ) {
+				if ( ! $order instanceof WC_Order ) {
+					return $message;
+				}
+
 				$payer_action = $order->get_meta( 'ppcp_oxxo_payer_action' ) ?? '';
 
 				$button = '';
