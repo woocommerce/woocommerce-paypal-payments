@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice;
 
 use Psr\Log\LoggerInterface;
+use WC_Email;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\CaptureFactory;
@@ -266,8 +267,13 @@ class PayUponInvoice {
 
 		add_action(
 			'woocommerce_email_before_order_table',
-			function( WC_Order $order, bool $sent_to_admin ) {
-				if ( ! $sent_to_admin && PayUponInvoiceGateway::ID === $order->get_payment_method() && $order->has_status( 'processing' ) ) {
+			function( WC_Order $order, bool $sent_to_admin, bool $plain_text, WC_Email $email ) {
+				if (
+					! $sent_to_admin
+					&& PayUponInvoiceGateway::ID === $order->get_payment_method()
+					&& $order->has_status( 'processing' )
+					&& $email->id === 'customer_processing_order'
+				) {
 					$this->logger->info( "Adding Ratepay payment instructions to email for order #{$order->get_id()}." );
 
 					$instructions = $order->get_meta( 'ppcp_ratepay_payment_instructions_payment_reference' );
@@ -318,7 +324,7 @@ class PayUponInvoice {
 				}
 			},
 			10,
-			2
+			4
 		);
 
 		add_filter(
