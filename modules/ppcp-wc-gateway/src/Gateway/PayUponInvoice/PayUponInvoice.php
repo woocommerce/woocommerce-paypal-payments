@@ -189,7 +189,12 @@ class PayUponInvoice {
 		add_filter(
 			'ppcp_partner_referrals_data',
 			function ( array $data ): array {
-				if ( $this->settings->has( 'ppcp-onboarding-pui' ) && $this->settings->get( 'ppcp-onboarding-pui' ) !== '1' ) {
+				try {
+					$onboard_with_pui = $this->settings->get( 'ppcp-onboarding-pui' );
+					if ( $onboard_with_pui !== '1' ) {
+						return $data;
+					}
+				} catch ( NotFoundException $exception ) {
 					return $data;
 				}
 
