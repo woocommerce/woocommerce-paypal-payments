@@ -408,7 +408,8 @@ class CreateOrderEndpoint implements EndpointInterface {
 		$payment_token   = null;
 		$current_user_id = get_current_user_id();
 		if (
-			$current_user_id !== 0
+			( $this->settings->has( 'subscription_save_payment_type' ) && $this->settings->get( 'subscription_save_payment_type' ) !== 'vault_payment' )
+			&& $current_user_id !== 0
 			&& ( $this->subscription_helper->cart_contains_subscription() || $this->subscription_helper->current_product_is_subscription() )
 			&& empty( $this->payment_token_repository->all_for_user_id( $current_user_id ) )
 		) {
@@ -422,7 +423,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 				if ( $billing_agreement_id ) {
 					try {
 						$this->billing_agreements_endpoint->agreement_details( $billing_agreement_id );
-						$payment_token = new PaymentToken( $billing_agreement_id, 'BILLING_AGREEMENT', new \stdClass() );
+						$payment_token = new PaymentToken( $billing_agreement_id, 'BILLING_AGREEMENT', new stdClass() );
 						break;
 					} catch ( PayPalApiException $exception ) {
 						if ( $exception->status_code() === 404 ) {

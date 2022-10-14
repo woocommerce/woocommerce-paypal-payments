@@ -611,6 +611,26 @@ return array(
 				'gateway'      => array( 'paypal', 'dcc' ),
 				'input_class'  => $container->get( 'wcgateway.helper.vaulting-scope' ) ? array() : array( 'ppcp-disabled-checkbox' ),
 			),
+			'subscription_save_payment_type'         => array(
+				'title'                => __( 'New subscriptions save payment type', 'woocommerce-paypal-payments' ),
+				'type'                 => 'select',
+				'class'                => array(),
+				'input_class'          => array( 'wc-enhanced-select' ),
+				'default'              => 'vault_payment',
+				'desc_tip'             => true,
+				'description'          => __( 'Allow merchants decide which type of save payment to use.', 'woocommerce-paypal-payments' ),
+				'description_with_tip' => __( 'Determines how payments are going to be saved for new subscriptions.', 'woocommerce-paypal-payments' ),
+				'options'              => array(
+					'vault_payment'            => __( 'Vault payment', 'woocommerce-paypal-payments' ),
+					'use_billing_agreement'    => __( 'Use existing Billing Agreement', 'woocommerce-paypal-payments' ),
+					'cancel_billing_agreement' => __( 'Cancel existing Billing Agreement and vault payment', 'woocommerce-paypal-payments' ),
+				),
+				'screens'              => array(
+					State::STATE_ONBOARDED,
+				),
+				'requirements'         => array(),
+				'gateway'              => array( 'paypal', 'dcc' ),
+			),
 			'subscription_behavior_when_vault_fails' => array(
 				'title'                => __( 'Subscription capture behavior if Vault fails', 'woocommerce-paypal-payments' ),
 				'type'                 => 'select',
