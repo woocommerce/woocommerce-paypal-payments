@@ -612,13 +612,13 @@ return array(
 				'input_class'  => $container->get( 'wcgateway.helper.vaulting-scope' ) ? array() : array( 'ppcp-disabled-checkbox' ),
 			),
 			'subscription_save_payment_type'         => array(
-				'title'                => __( 'New subscriptions save payment type', 'woocommerce-paypal-payments' ),
+				'title'                => __( 'Subscription save payment type', 'woocommerce-paypal-payments' ),
 				'type'                 => 'select',
 				'class'                => array(),
 				'input_class'          => array( 'wc-enhanced-select' ),
 				'default'              => 'vault_payment',
 				'desc_tip'             => true,
-				'description'          => __( 'Allow merchants decide which type of save payment to use.', 'woocommerce-paypal-payments' ),
+				'description'          => __( 'Type of save payment flow.', 'woocommerce-paypal-payments' ),
 				'description_with_tip' => __( 'Determines how payments are going to be saved for new subscriptions.', 'woocommerce-paypal-payments' ),
 				'options'              => array(
 					'vault_payment'            => __( 'Vault payment', 'woocommerce-paypal-payments' ),

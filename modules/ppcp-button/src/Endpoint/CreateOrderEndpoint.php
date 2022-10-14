@@ -423,6 +423,16 @@ class CreateOrderEndpoint implements EndpointInterface {
 				if ( $billing_agreement_id ) {
 					try {
 						$this->billing_agreements_endpoint->agreement_details( $billing_agreement_id );
+
+						if ( $this->settings->get( 'subscription_save_payment_type' ) === 'cancel_billing_agreement' ) {
+							try {
+								$this->billing_agreements_endpoint->cancel_agreement( $billing_agreement_id );
+								break;
+							} catch ( PayPalApiException $exception ) {
+								$this->logger->error( $exception->getMessage() );
+							}
+						}
+
 						$payment_token = new PaymentToken( $billing_agreement_id, 'BILLING_AGREEMENT', new stdClass() );
 						break;
 					} catch ( PayPalApiException $exception ) {

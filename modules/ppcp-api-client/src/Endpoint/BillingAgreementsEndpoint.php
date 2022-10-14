@@ -172,4 +172,39 @@ class BillingAgreementsEndpoint {
 
 		return $json;
 	}
+
+	/**
+	 * Cancel billing agreement.
+	 *
+	 * @param string $id The billing agreement id.
+	 *
+	 * @throws RuntimeException If issue while trying to delete billing agreement.
+	 * @throws PayPalApiException If issue deleting billing agreement.
+	 */
+	public function cancel_agreement( string $id ) {
+		$bearer = $this->bearer->bearer();
+		$url    = trailingslashit( $this->host ) . '/v1/payments/billing-agreements/' . $id . '/cancel';
+		$args   = array(
+			'headers' => array(
+				'Authorization' => 'Bearer ' . $bearer->token(),
+				'Content-Type'  => 'application/json',
+			),
+		);
+
+		$response = $this->request( $url, $args );
+		if ( is_wp_error( $response ) ) {
+			throw new RuntimeException( "Not able to cancel billing agreement {$id}. " . $response->get_error_message() );
+		}
+
+		$json        = json_decode( $response['body'] );
+		$status_code = (int) wp_remote_retrieve_response_code( $response );
+		if ( 204 !== $status_code ) {
+			throw new PayPalApiException(
+				$json,
+				$status_code
+			);
+		}
+
+		return $json;
+	}
 }
