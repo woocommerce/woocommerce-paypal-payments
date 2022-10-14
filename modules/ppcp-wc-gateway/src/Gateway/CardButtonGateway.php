@@ -1,6 +1,6 @@
 <?php
 /**
- * The PayPal Card Button Gateway
+ * The Standard Card Button Gateway
  *
  * @package WooCommerce\PayPalCommerce\WcGateway\Gateway
  */
@@ -196,7 +196,7 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 			);
 		}
 
-		$this->method_title       = __( 'PayPal Card Button', 'woocommerce-paypal-payments' );
+		$this->method_title       = __( 'Advanced Card Processing', 'woocommerce-paypal-payments' );
 		$this->method_description = __( 'The separate payment gateway with the card button. If disabled, the button is included in the PayPal gateway.', 'woocommerce-paypal-payments' );
 		$this->title              = $this->get_option( 'title', __( 'Debit & Credit Cards', 'woocommerce-paypal-payments' ) );
 		$this->description        = $this->get_option( 'description', '' );
@@ -230,7 +230,7 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 			'enabled'     => array(
 				'title'       => __( 'Enable/Disable', 'woocommerce-paypal-payments' ),
 				'type'        => 'checkbox',
-				'label'       => __( 'Enable PayPal Card Button', 'woocommerce-paypal-payments' ),
+				'label'       => __( 'Enable Advanced Card Processing', 'woocommerce-paypal-payments' ),
 				'default'     => $this->default_enabled ? 'yes' : 'no',
 				'desc_tip'    => true,
 				'description' => __( 'Enable/Disable the separate payment gateway with the card button.', 'woocommerce-paypal-payments' ),

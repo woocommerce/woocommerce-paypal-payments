@@ -197,7 +197,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		}
 
 		$this->method_title       = __(
-			'PayPal Card Processing',
+			'Advanced Card Processing',
 			'woocommerce-paypal-payments'
 		);
 		$this->method_description = __(

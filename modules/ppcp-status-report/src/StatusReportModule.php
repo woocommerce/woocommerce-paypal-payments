@@ -98,9 +98,9 @@ class StatusReportModule implements ModuleInterface {
 						),
 					),
 					array(
-						'label'          => esc_html__( 'PayPal card processing available in country', 'woocommerce-paypal-payments' ),
-						'exported_label' => 'PayPal card processing available in country',
-						'description'    => esc_html__( 'Whether PayPal card processing is available in country or not.', 'woocommerce-paypal-payments' ),
+						'label'          => esc_html__( 'Advanced Card Processing available in country', 'woocommerce-paypal-payments' ),
+						'exported_label' => 'Advanced Card Processing available in country',
+						'description'    => esc_html__( 'Whether Advanced Card Processing is available in country or not.', 'woocommerce-paypal-payments' ),
 						'value'          => $this->bool_to_html(
 							$dcc_applies->for_country_currency()
 						),

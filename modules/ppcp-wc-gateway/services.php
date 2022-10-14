@@ -225,9 +225,9 @@ return array(
 	'wcgateway.settings.sections'                          => static function ( ContainerInterface $container ): array {
 		$sections = array(
 			Settings::CONNECTION_TAB_ID => __( 'Connection', 'woocommerce-paypal-payments' ),
-			PayPalGateway::ID           => __( 'PayPal Checkout', 'woocommerce-paypal-payments' ),
-			CreditCardGateway::ID       => __( 'PayPal Card Processing', 'woocommerce-paypal-payments' ),
-			CardButtonGateway::ID       => __( 'PayPal Card Button', 'woocommerce-paypal-payments' ),
+			PayPalGateway::ID           => __( 'Standard Payments', 'woocommerce-paypal-payments' ),
+			CreditCardGateway::ID       => __( 'Advanced Card Processing', 'woocommerce-paypal-payments' ),
+			CardButtonGateway::ID       => __( 'Standard Card Button', 'woocommerce-paypal-payments' ),
 			OXXOGateway::ID             => __( 'OXXO', 'woocommerce-paypal-payments' ),
 			PayUponInvoiceGateway::ID   => __( 'Pay upon Invoice', 'woocommerce-paypal-payments' ),
 		);
@@ -372,9 +372,9 @@ return array(
 
 		$sections = array(
 			Settings::CONNECTION_TAB_ID => __( 'Connection', 'woocommerce-paypal-payments' ),
-			PayPalGateway::ID           => __( 'PayPal Checkout', 'woocommerce-paypal-payments' ),
-			CreditCardGateway::ID       => __( 'PayPal Card Processing', 'woocommerce-paypal-payments' ),
-			CardButtonGateway::ID       => __( 'PayPal Card Button', 'woocommerce-paypal-payments' ),
+			PayPalGateway::ID           => __( 'Standard Payments', 'woocommerce-paypal-payments' ),
+			CreditCardGateway::ID       => __( 'Advanced Card Processing', 'woocommerce-paypal-payments' ),
+			CardButtonGateway::ID       => __( 'Standard Card Button', 'woocommerce-paypal-payments' ),
 		);
 
 		$current_page_id = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
@@ -403,7 +403,7 @@ return array(
 
 		$fields              = array(
 			'checkout_settings_heading'              => array(
-				'heading'      => __( 'PayPal Checkout Settings', 'woocommerce-paypal-payments' ),
+				'heading'      => __( 'Standard Payments Settings', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-heading',
 				'screens'      => array(
 					State::STATE_START,
@@ -432,7 +432,7 @@ return array(
 				'title'        => __( 'Enable/Disable', 'woocommerce-paypal-payments' ),
 				'desc_tip'     => true,
 				'description'  => __( 'Once enabled, the Credit Card option will show up in the checkout.', 'woocommerce-paypal-payments' ),
-				'label'        => __( 'Enable PayPal Card Processing', 'woocommerce-paypal-payments' ),
+				'label'        => __( 'Enable Advanced Card Processing', 'woocommerce-paypal-payments' ),
 				'type'         => 'checkbox',
 				'default'      => false,
 				'gateway'      => 'dcc',
@@ -656,7 +656,7 @@ return array(
 				'type'         => 'checkbox',
 				'desc_tip'     => true,
 				'label'        => __( 'Enable a separate payment gateway for the branded PayPal Debit or Credit Card button.', 'woocommerce-paypal-payments' ),
-				'description'  => __( 'By default, the Debit or Credit Card button is displayed in the PayPal Checkout payment gateway. This setting creates a second gateway for the Card button.', 'woocommerce-paypal-payments' ),
+				'description'  => __( 'By default, the Debit or Credit Card button is displayed in the Standard Payments payment gateway. This setting creates a second gateway for the Card button.', 'woocommerce-paypal-payments' ),
 				'default'      => $container->get( 'wcgateway.settings.allow_card_button_gateway.default' ),
 				'screens'      => array(
 					State::STATE_START,
@@ -676,7 +676,7 @@ return array(
 				),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
-				'description'  => __( 'Customize the appearance of PayPal Checkout on the checkout page.', 'woocommerce-paypal-payments' ),
+				'description'  => __( 'Customize the appearance of Standard Payments on the checkout page.', 'woocommerce-paypal-payments' ),
 			),
 			'button_enabled'                         => array(
 				'title'        => __( 'Enable buttons on Checkout', 'woocommerce-paypal-payments' ),
@@ -745,7 +745,7 @@ return array(
 				),
 				'options'      => array(
 					'paypal'   => __( 'PayPal', 'woocommerce-paypal-payments' ),
-					'checkout' => __( 'PayPal Checkout', 'woocommerce-paypal-payments' ),
+					'checkout' => __( 'Standard Payments', 'woocommerce-paypal-payments' ),
 					'buynow'   => __( 'PayPal Buy Now', 'woocommerce-paypal-payments' ),
 					'pay'      => __( 'Pay with PayPal', 'woocommerce-paypal-payments' ),
 				),
@@ -981,7 +981,7 @@ return array(
 				),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
-				'description'  => __( 'Customize the appearance of PayPal Checkout on the single product page.', 'woocommerce-paypal-payments' ),
+				'description'  => __( 'Customize the appearance of Standard Payments on the single product page.', 'woocommerce-paypal-payments' ),
 			),
 			'button_product_enabled'                 => array(
 				'title'        => __( 'Enable buttons on Single Product', 'woocommerce-paypal-payments' ),
@@ -1050,7 +1050,7 @@ return array(
 				),
 				'options'      => array(
 					'paypal'   => __( 'PayPal', 'woocommerce-paypal-payments' ),
-					'checkout' => __( 'PayPal Checkout', 'woocommerce-paypal-payments' ),
+					'checkout' => __( 'Standard Payments', 'woocommerce-paypal-payments' ),
 					'buynow'   => __( 'PayPal Buy Now', 'woocommerce-paypal-payments' ),
 					'pay'      => __( 'Pay with PayPal', 'woocommerce-paypal-payments' ),
 				),
@@ -1287,7 +1287,7 @@ return array(
 				),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
-				'description'  => __( 'Customize the appearance of PayPal Checkout on the cart page.', 'woocommerce-paypal-payments' ),
+				'description'  => __( 'Customize the appearance of Standard Payments on the cart page.', 'woocommerce-paypal-payments' ),
 			),
 			'button_cart_enabled'                    => array(
 				'title'        => __( 'Buttons on Cart', 'woocommerce-paypal-payments' ),
@@ -1356,7 +1356,7 @@ return array(
 				),
 				'options'      => array(
 					'paypal'   => __( 'PayPal', 'woocommerce-paypal-payments' ),
-					'checkout' => __( 'PayPal Checkout', 'woocommerce-paypal-payments' ),
+					'checkout' => __( 'Standard Payments', 'woocommerce-paypal-payments' ),
 					'buynow'   => __( 'PayPal Buy Now', 'woocommerce-paypal-payments' ),
 					'pay'      => __( 'Pay with PayPal', 'woocommerce-paypal-payments' ),
 				),
@@ -1593,7 +1593,7 @@ return array(
 				),
 				'requirements' => array(),
 				'gateway'      => 'paypal',
-				'description'  => __( 'Customize the appearance of PayPal Checkout on the Mini Cart.', 'woocommerce-paypal-payments' ),
+				'description'  => __( 'Customize the appearance of Standard Payments on the Mini Cart.', 'woocommerce-paypal-payments' ),
 			),
 			'button_mini-cart_enabled'               => array(
 				'title'        => __( 'Buttons on Mini Cart', 'woocommerce-paypal-payments' ),
@@ -1662,7 +1662,7 @@ return array(
 				),
 				'options'      => array(
 					'paypal'   => __( 'PayPal', 'woocommerce-paypal-payments' ),
-					'checkout' => __( 'PayPal Checkout', 'woocommerce-paypal-payments' ),
+					'checkout' => __( 'Standard Payments', 'woocommerce-paypal-payments' ),
 					'buynow'   => __( 'PayPal Buy Now', 'woocommerce-paypal-payments' ),
 					'pay'      => __( 'Pay with PayPal', 'woocommerce-paypal-payments' ),
 				),

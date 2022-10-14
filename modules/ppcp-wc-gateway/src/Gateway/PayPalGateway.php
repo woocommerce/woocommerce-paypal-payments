@@ -269,7 +269,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 				'title'       => __( 'Enable/Disable', 'woocommerce-paypal-payments' ),
 				'type'        => 'checkbox',
 				'desc_tip'    => true,
-				'description' => __( 'In order to use PayPal or PayPal Card Processing, you need to enable the Gateway.', 'woocommerce-paypal-payments' ),
+				'description' => __( 'In order to use PayPal or Advanced Card Processing, you need to enable the Gateway.', 'woocommerce-paypal-payments' ),
 				'label'       => __( 'Enable the PayPal Gateway', 'woocommerce-paypal-payments' ),
 				'default'     => 'no',
 			),
@@ -294,10 +294,10 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			return __( 'Account Setup', 'woocommerce-paypal-payments' );
 		}
 		if ( $this->is_credit_card_tab() ) {
-			return __( 'PayPal Card Processing', 'woocommerce-paypal-payments' );
+			return __( 'Advanced Card Processing', 'woocommerce-paypal-payments' );
 		}
 		if ( $this->is_paypal_tab() ) {
-			return __( 'PayPal Checkout', 'woocommerce-paypal-payments' );
+			return __( 'Standard Payments', 'woocommerce-paypal-payments' );
 		}
 		if ( $this->is_pui_tab() ) {
 			return __( 'Pay upon Invoice', 'woocommerce-paypal-payments' );
