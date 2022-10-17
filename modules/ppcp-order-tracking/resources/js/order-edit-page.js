@@ -1,5 +1,3 @@
-import {PaymentMethods} from "../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState";
-
 document.addEventListener(
     'DOMContentLoaded',
     () => {
@@ -9,14 +7,14 @@ document.addEventListener(
             return;
         }
 
-        const transactionId = document.querySelector('.ppcp-tracking-transaction_id');
-        const trackingNumber = document.querySelector('.ppcp-tracking-tracking_number');
-        const status = document.querySelector('.ppcp-tracking-status');
-        const carrier = document.querySelector('.ppcp-tracking-carrier');
-        const orderId = document.querySelector('.ppcp-order_id');
-        const submitButton = document.querySelector('.submit_tracking_info');
+        jQuery(document).on('click', '.submit_tracking_info', function () {
+            const transactionId = document.querySelector('.ppcp-tracking-transaction_id');
+            const trackingNumber = document.querySelector('.ppcp-tracking-tracking_number');
+            const status = document.querySelector('.ppcp-tracking-status');
+            const carrier = document.querySelector('.ppcp-tracking-carrier');
+            const orderId = document.querySelector('.ppcp-order_id');
+            const submitButton = document.querySelector('.submit_tracking_info');
 
-        submitButton.addEventListener('click', function (event) {
             submitButton.setAttribute('disabled', 'disabled');
             fetch(config.ajax.tracking_info.endpoint, {
                 method: 'POST',
@@ -34,6 +32,9 @@ document.addEventListener(
                 return res.json();
             }).then(function (data) {
                 if (!data.success) {
+                    jQuery( "<span class='error tracking-info-message'>" + data.data.message + "</span>" ).insertAfter(submitButton);
+                    setTimeout(()=> jQuery('.tracking-info-message').remove(),3000);
+                    submitButton.removeAttribute('disabled');
                     console.error(data);
                     throw Error(data.data.message);
                 }

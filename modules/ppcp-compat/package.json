@@ -1,0 +1,32 @@
+{
+    "name": "ppcp-compat",
+    "version": "1.0.0",
+    "license": "GPL-3.0-or-later",
+    "main": "resources/js/compat.js",
+    "browserslist": [
+        "> 0.5%",
+        "Safari >= 8",
+        "Chrome >= 41",
+        "Firefox >= 43",
+        "Edge >= 14"
+    ],
+    "dependencies": {
+        "core-js": "^3.25.0"
+    },
+    "devDependencies": {
+        "@babel/core": "^7.19",
+        "@babel/preset-env": "^7.19",
+        "babel-loader": "^8.2",
+        "cross-env": "^7.0.3",
+        "file-loader": "^6.2.0",
+        "sass": "^1.42.1",
+        "sass-loader": "^12.1.0",
+        "webpack": "^5.74",
+        "webpack-cli": "^4.10"
+    },
+    "scripts": {
+        "build": "cross-env BABEL_ENV=default NODE_ENV=production webpack",
+        "watch": "cross-env BABEL_ENV=default NODE_ENV=production webpack --watch",
+        "dev": "cross-env BABEL_ENV=default webpack --watch"
+    }
+}
