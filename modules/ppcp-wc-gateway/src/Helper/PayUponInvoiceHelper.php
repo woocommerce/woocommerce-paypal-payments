@@ -54,7 +54,7 @@ class PayUponInvoiceHelper {
 			return false;
 		}
 
-		$billing_country = filter_input( INPUT_POST, 'country', FILTER_SANITIZE_STRING ) ?? null;
+		$billing_country = wc_clean( wp_unslash( $_POST['country'] ?? '' ) );
 		if ( $billing_country && 'DE' !== $billing_country ) {
 			return false;
 		}

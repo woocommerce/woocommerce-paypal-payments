@@ -100,7 +100,7 @@ class SubscriptionModule implements ModuleInterface {
 		add_filter(
 			'ppcp_create_order_request_body_data',
 			function( array $data ) use ( $c ) {
-				$wc_order_action = filter_input( INPUT_POST, 'wc_order_action', FILTER_SANITIZE_STRING ) ?? '';
+				$wc_order_action = wc_clean( wp_unslash( $_POST['wc_order_action'] ?? '' ) );
 				if (
 					$wc_order_action === 'wcs_process_renewal'
 					&& isset( $data['payment_source']['token'] ) && $data['payment_source']['token']['type'] === 'PAYMENT_METHOD_TOKEN'

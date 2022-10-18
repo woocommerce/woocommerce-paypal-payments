@@ -275,7 +275,7 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 		 * If customer has chosen change Subscription payment.
 		 */
 		if ( $this->subscription_helper->has_subscription( $order_id ) && $this->subscription_helper->is_subscription_change_payment() ) {
-			$saved_paypal_payment = filter_input( INPUT_POST, 'saved_paypal_payment', FILTER_SANITIZE_STRING );
+			$saved_paypal_payment = wc_clean( wp_unslash( $_POST['saved_paypal_payment'] ?? '' ) );
 			if ( $saved_paypal_payment ) {
 				update_post_meta( $order_id, 'payment_token_id', $saved_paypal_payment );
 

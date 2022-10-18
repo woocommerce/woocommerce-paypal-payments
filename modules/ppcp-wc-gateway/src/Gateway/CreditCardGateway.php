@@ -360,7 +360,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		/**
 		 * If customer has chosen a saved credit card payment.
 		 */
-		$saved_credit_card = filter_input( INPUT_POST, 'saved_credit_card', FILTER_SANITIZE_STRING );
+		$saved_credit_card = wc_clean( wp_unslash( $_POST['saved_credit_card'] ?? '' ) );
 		if ( $saved_credit_card ) {
 			try {
 				$wc_order = $this->vaulted_credit_card_handler->handle_payment(
