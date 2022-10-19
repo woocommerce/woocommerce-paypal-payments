@@ -216,7 +216,7 @@ class SubscriptionModule implements ModuleInterface {
 			&& PayPalGateway::ID === $id
 			&& $subscription_helper->is_subscription_change_payment()
 		) {
-				$tokens = $payment_token_repository->all_for_user_id( get_current_user_id() );
+			$tokens = $payment_token_repository->all_for_user_id( get_current_user_id() );
 			if ( ! $tokens || ! $payment_token_repository->tokens_contains_paypal( $tokens ) ) {
 				return esc_html__(
 					'No PayPal payments saved, in order to use a saved payment you first need to create it through a purchase.',
@@ -224,10 +224,10 @@ class SubscriptionModule implements ModuleInterface {
 				);
 			}
 
-				$output = sprintf(
-					'<p class="form-row form-row-wide"><label>%1$s</label><select id="saved-paypal-payment" name="saved_paypal_payment">',
-					esc_html__( 'Select a saved PayPal payment', 'woocommerce-paypal-payments' )
-				);
+			$output = sprintf(
+				'<p class="form-row form-row-wide"><label>%1$s</label><select id="saved-paypal-payment" name="saved_paypal_payment">',
+				esc_html__( 'Select a saved PayPal payment', 'woocommerce-paypal-payments' )
+			);
 			foreach ( $tokens as $token ) {
 				if ( isset( $token->source()->paypal ) ) {
 					$output .= sprintf(

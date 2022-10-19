@@ -54,7 +54,7 @@ class CustomerApprovalListener {
 	 */
 	public function listen(): void {
 		$token = wc_clean( wp_unslash( $_GET['approval_token_id'] ?? '' ) );
-		if ( ! is_string( $token ) ) {
+		if ( ! $token ) {
 			return;
 		}
 
