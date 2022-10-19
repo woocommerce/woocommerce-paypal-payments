@@ -401,6 +401,14 @@ return array(
 		$onboarding_options_renderer = $container->get( 'onboarding.render-options' );
 		assert( $onboarding_options_renderer instanceof OnboardingOptionsRenderer );
 
+		$render_preview_element = function ( string $id ): string {
+			return '
+<div class="ppcp-button-preview">
+	<h4>' . __( 'Preview', 'woocommerce-paypal-payments' ) . '</h4>
+	<div id="' . $id . '" class="ppcp-button-preview-inner"></div>
+</div>';
+		};
+
 		$fields              = array(
 			'checkout_settings_heading'              => array(
 				'heading'      => __( 'Standard Payments Settings', 'woocommerce-paypal-payments' ),
@@ -802,6 +810,15 @@ return array(
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
+			'button_preview'                         => array(
+				'type'         => 'ppcp-text',
+				'text'         => $render_preview_element( 'ppcpCheckoutButtonPreview' ),
+				'screens'      => array(
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
 			'message_heading'                        => array(
 				'heading'      => __( 'Pay Later on Checkout', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-heading',
@@ -1102,6 +1119,15 @@ return array(
 				),
 				'screens'      => array(
 					State::STATE_START,
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
+			'button_product_preview'                 => array(
+				'type'         => 'ppcp-text',
+				'text'         => $render_preview_element( 'ppcpProductButtonPreview' ),
+				'screens'      => array(
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -1408,6 +1434,15 @@ return array(
 				),
 				'screens'      => array(
 					State::STATE_START,
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
+			'button_cart_preview'                    => array(
+				'type'         => 'ppcp-text',
+				'text'         => $render_preview_element( 'ppcpCartButtonPreview' ),
+				'screens'      => array(
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
@@ -1727,6 +1762,15 @@ return array(
 				'description'  => __( 'Add a value from 25 to 55.', 'woocommerce-paypal-payments' ),
 				'screens'      => array(
 					State::STATE_START,
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
+			'button_mini-cart_preview'               => array(
+				'type'         => 'ppcp-text',
+				'text'         => $render_preview_element( 'ppcpMiniCartButtonPreview' ),
+				'screens'      => array(
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
