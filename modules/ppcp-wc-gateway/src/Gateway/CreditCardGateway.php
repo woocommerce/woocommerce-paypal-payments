@@ -360,7 +360,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		/**
 		 * If customer has chosen a saved credit card payment.
 		 */
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$saved_credit_card = wc_clean( wp_unslash( $_POST['saved_credit_card'] ?? '' ) );
 		if ( $saved_credit_card ) {
 			try {

@@ -100,7 +100,7 @@ class SubscriptionModule implements ModuleInterface {
 		add_filter(
 			'ppcp_create_order_request_body_data',
 			function( array $data ) use ( $c ) {
-				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing)
 				$wc_order_action = wc_clean( wp_unslash( $_POST['wc_order_action'] ?? '' ) );
 				if (
 					$wc_order_action === 'wcs_process_renewal'

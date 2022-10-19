@@ -409,7 +409,7 @@ class PayUponInvoice {
 		add_action(
 			'woocommerce_after_checkout_validation',
 			function( array $fields, WP_Error $errors ) {
-				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing
 				$payment_method = wc_clean( wp_unslash( $_POST['payment_method'] ?? '' ) );
 				if ( PayUponInvoiceGateway::ID !== $payment_method ) {
 					return;
@@ -419,7 +419,7 @@ class PayUponInvoice {
 					$errors->add( 'validation', __( 'Billing country not available.', 'woocommerce-paypal-payments' ) );
 				}
 
-				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing
 				$birth_date = wc_clean( wp_unslash( $_POST['billing_birth_date'] ?? '' ) );
 				if ( ( $birth_date && ! $this->checkout_helper->validate_birth_date( $birth_date ) ) || $birth_date === '' ) {
 					$errors->add( 'validation', __( 'Invalid birth date.', 'woocommerce-paypal-payments' ) );
@@ -530,7 +530,7 @@ class PayUponInvoice {
 			'add_meta_boxes',
 			function( string $post_type ) {
 				if ( $post_type === 'shop_order' ) {
-					// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+					// phpcs:ignore WordPress.Security.NonceVerification.Missing
 					$post_id = wc_clean( wp_unslash( $_GET['post'] ?? 0 ) );
 					$order   = wc_get_order( $post_id );
 					if ( is_a( $order, WC_Order::class ) && $order->get_payment_method() === PayUponInvoiceGateway::ID ) {

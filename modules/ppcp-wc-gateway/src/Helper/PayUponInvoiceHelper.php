@@ -54,7 +54,7 @@ class PayUponInvoiceHelper {
 			return false;
 		}
 
-		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$billing_country = wc_clean( wp_unslash( $_POST['country'] ?? '' ) );
 		if ( $billing_country && 'DE' !== $billing_country ) {
 			return false;
