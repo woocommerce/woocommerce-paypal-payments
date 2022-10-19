@@ -400,8 +400,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			);
 		}
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$funding_source = wc_clean( wp_unslash( $_POST['ppcp-funding-source'] ?? '' ) );
-
 		if ( 'card' !== $funding_source && $this->is_free_trial_order( $wc_order ) ) {
 			$user_id = (int) $wc_order->get_customer_id();
 			$tokens  = $this->payment_token_repository->all_for_user_id( $user_id );
@@ -423,6 +423,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		 * If customer has chosen change Subscription payment.
 		 */
 		if ( $this->subscription_helper->has_subscription( $order_id ) && $this->subscription_helper->is_subscription_change_payment() ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$saved_paypal_payment = wc_clean( wp_unslash( $_POST['saved_paypal_payment'] ?? '' ) );
 			if ( $saved_paypal_payment ) {
 				update_post_meta( $order_id, 'payment_token_id', $saved_paypal_payment );

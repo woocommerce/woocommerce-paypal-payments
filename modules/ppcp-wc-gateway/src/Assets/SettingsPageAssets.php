@@ -87,8 +87,10 @@ class SettingsPageAssets {
 			return false;
 		}
 
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 		$tab     = wc_clean( wp_unslash( $_GET['tab'] ?? '' ) );
 		$section = wc_clean( wp_unslash( $_GET['section'] ?? '' ) );
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		return 'checkout' === $tab && 'ppcp-gateway' === $section;
 	}

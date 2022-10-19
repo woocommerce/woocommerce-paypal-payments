@@ -138,6 +138,7 @@ class OXXO {
 			'add_meta_boxes',
 			function( string $post_type ) {
 				if ( $post_type === 'shop_order' ) {
+					// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 					$post_id = wc_clean( wp_unslash( $_GET['post'] ?? '' ) );
 					$order   = wc_get_order( $post_id );
 					if ( is_a( $order, WC_Order::class ) && $order->get_payment_method() === OXXOGateway::ID ) {
@@ -182,6 +183,7 @@ class OXXO {
 			return false;
 		}
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$billing_country = wc_clean( wp_unslash( $_POST['country'] ?? '' ) );
 		if ( $billing_country && 'MX' !== $billing_country ) {
 			return false;

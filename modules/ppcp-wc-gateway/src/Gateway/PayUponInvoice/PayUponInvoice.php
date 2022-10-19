@@ -409,6 +409,7 @@ class PayUponInvoice {
 		add_action(
 			'woocommerce_after_checkout_validation',
 			function( array $fields, WP_Error $errors ) {
+				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				$payment_method = wc_clean( wp_unslash( $_POST['payment_method'] ?? '' ) );
 				if ( PayUponInvoiceGateway::ID !== $payment_method ) {
 					return;
@@ -418,6 +419,7 @@ class PayUponInvoice {
 					$errors->add( 'validation', __( 'Billing country not available.', 'woocommerce-paypal-payments' ) );
 				}
 
+				// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				$birth_date = wc_clean( wp_unslash( $_POST['billing_birth_date'] ?? '' ) );
 				if ( ( $birth_date && ! $this->checkout_helper->validate_birth_date( $birth_date ) ) || $birth_date === '' ) {
 					$errors->add( 'validation', __( 'Invalid birth date.', 'woocommerce-paypal-payments' ) );
@@ -484,18 +486,9 @@ class PayUponInvoice {
 		add_action(
 			'woocommerce_update_options_checkout_ppcp-pay-upon-invoice-gateway',
 			function () {
-				$customer_service_instructions = wc_clean( wp_unslash( $_POST['woocommerce_ppcp-pay-upon-invoice-gateway_customer_service_instructions'] ?? '' ) );
-				if ( '' === $customer_service_instructions ) {
-					$gateway_settings = get_option( 'woocommerce_ppcp-pay-upon-invoice-gateway_settings' );
-					$gateway_enabled  = $gateway_settings['enabled'] ?? '';
-					if ( 'yes' === $gateway_enabled ) {
-						$gateway_settings['enabled'] = 'no';
-						update_option( 'woocommerce_ppcp-pay-upon-invoice-gateway_settings', $gateway_settings );
-
-						$redirect_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-pay-upon-invoice-gateway' );
-						wp_safe_redirect( $redirect_url );
-						exit;
-					}
+				$gateway = WC()->payment_gateways()->payment_gateways()[ PayUponInvoiceGateway::ID ];
+				if ( $gateway && $gateway->get_option( 'customer_service_instructions' ) === '' ) {
+					$gateway->update_option( 'enabled', 'no' );
 				}
 			}
 		);
@@ -537,6 +530,7 @@ class PayUponInvoice {
 			'add_meta_boxes',
 			function( string $post_type ) {
 				if ( $post_type === 'shop_order' ) {
+					// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 					$post_id = wc_clean( wp_unslash( $_GET['post'] ?? 0 ) );
 					$order   = wc_get_order( $post_id );
 					if ( is_a( $order, WC_Order::class ) && $order->get_payment_method() === PayUponInvoiceGateway::ID ) {
