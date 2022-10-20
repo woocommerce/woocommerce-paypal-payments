@@ -522,13 +522,22 @@ class SmartButton implements SmartButtonInterface {
 			$load_script = true;
 		}
 
-		if ( in_array( $this->context(), array( 'pay-now', 'checkout' ), true ) && $this->can_render_dcc() ) {
+		if ( in_array( $this->context(), array( 'pay-now', 'checkout' ), true ) ) {
 			wp_enqueue_style(
-				'ppcp-hosted-fields',
-				untrailingslashit( $this->module_url ) . '/assets/css/hosted-fields.css',
+				'gateway',
+				untrailingslashit( $this->module_url ) . '/assets/css/gateway.css',
 				array(),
 				$this->version
 			);
+
+			if ( $this->can_render_dcc() ) {
+				wp_enqueue_style(
+					'ppcp-hosted-fields',
+					untrailingslashit( $this->module_url ) . '/assets/css/hosted-fields.css',
+					array(),
+					$this->version
+				);
+			}
 		}
 		if ( $load_script ) {
 			wp_enqueue_script(
