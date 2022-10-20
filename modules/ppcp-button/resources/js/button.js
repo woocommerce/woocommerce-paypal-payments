@@ -14,7 +14,7 @@ import {
     ORDER_BUTTON_SELECTOR,
     PaymentMethods
 } from "./modules/Helper/CheckoutMethodState";
-import {hide, setVisible} from "./modules/Helper/Hiding";
+import {hide, setVisible, setVisibleByClass} from "./modules/Helper/Hiding";
 import {isChangePaymentPage} from "./modules/Helper/Subscriptions";
 import FreeTrialHandler from "./modules/ActionHandler/FreeTrialHandler";
 
@@ -190,7 +190,7 @@ document.addEventListener(
             const isPaypalButton = paypalButtonGatewayIds.includes(currentPaymentMethod);
             const isCards = currentPaymentMethod === PaymentMethods.CARDS;
 
-            setVisible(ORDER_BUTTON_SELECTOR, !isPaypalButton && !isCards, true);
+            setVisibleByClass(ORDER_BUTTON_SELECTOR, !isPaypalButton && !isCards, 'ppcp-hidden');
 
             if (isPaypalButton) {
                 // stopped after the first rendering of the buttons, in onInit
