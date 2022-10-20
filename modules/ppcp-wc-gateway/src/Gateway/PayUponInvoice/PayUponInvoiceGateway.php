@@ -204,7 +204,8 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	public function process_payment( $order_id ) {
 		$wc_order = wc_get_order( $order_id );
 		// phpcs:disable WordPress.Security.NonceVerification.Missing
-		$birth_date    = wc_clean( wp_unslash( $_POST['billing_birth_date'] ?? '' ) );
+		$birth_date = wc_clean( wp_unslash( $_POST['billing_birth_date'] ?? '' ) );
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
 		$pay_for_order = wc_clean( wp_unslash( $_GET['pay_for_order'] ?? '' ) );
 		if ( 'true' === $pay_for_order ) {
 			if ( ! $this->checkout_helper->validate_birth_date( $birth_date ) ) {

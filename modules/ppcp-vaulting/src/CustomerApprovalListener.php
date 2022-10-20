@@ -53,6 +53,7 @@ class CustomerApprovalListener {
 	 * @return void
 	 */
 	public function listen(): void {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		$token = wc_clean( wp_unslash( $_GET['approval_token_id'] ?? '' ) );
 		if ( ! $token ) {
 			return;

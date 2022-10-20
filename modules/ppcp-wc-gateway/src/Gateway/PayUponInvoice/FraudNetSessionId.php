@@ -33,6 +33,7 @@ class FraudNetSessionId {
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( isset( $_GET['pay_for_order'] ) && 'true' === $_GET['pay_for_order'] ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing
 			$pui_pay_for_order_session_id = wc_clean( wp_unslash( $_POST['pui_pay_for_order_session_id'] ?? '' ) );
 			if ( $pui_pay_for_order_session_id && '' !== $pui_pay_for_order_session_id ) {
 				return $pui_pay_for_order_session_id;

@@ -425,6 +425,7 @@ class PayUponInvoice {
 					$errors->add( 'validation', __( 'Invalid birth date.', 'woocommerce-paypal-payments' ) );
 				}
 
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing
 				$national_number = wc_clean( wp_unslash( $_POST['billing_phone'] ?? 0 ) );
 				if ( ! $national_number ) {
 					$errors->add( 'validation', __( 'Phone field cannot be empty.', 'woocommerce-paypal-payments' ) );
@@ -530,7 +531,7 @@ class PayUponInvoice {
 			'add_meta_boxes',
 			function( string $post_type ) {
 				if ( $post_type === 'shop_order' ) {
-					// phpcs:ignore WordPress.Security.NonceVerification.Missing
+					// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 					$post_id = wc_clean( wp_unslash( $_GET['post'] ?? 0 ) );
 					$order   = wc_get_order( $post_id );
 					if ( is_a( $order, WC_Order::class ) && $order->get_payment_method() === PayUponInvoiceGateway::ID ) {

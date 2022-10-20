@@ -144,6 +144,7 @@ class VaultedCreditCardHandler {
 		WC_Order $wc_order
 	): WC_Order {
 		if (
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing
 			isset( $_POST['woocommerce_change_payment'] )
 			&& $this->subscription_helper->has_subscription( $wc_order->get_id() )
 			&& $this->subscription_helper->is_subscription_change_payment()
