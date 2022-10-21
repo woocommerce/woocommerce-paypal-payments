@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, e-commerce, store, sales, sell, 
 Requires at least: 5.3
 Tested up to: 6.0
 Requires PHP: 7.1
-Stable tag: 1.9.4
+Stable tag: 1.9.5
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -80,6 +80,21 @@ Follow the steps below to connect the plugin to your PayPal account:
 6. Main settings screen.
 
 == Changelog ==
+
+= 1.9.5
+* Fix - Invalid tracking number in logs when adding tracking #903
+* Fix - Tracking on Connection tab always enabled #900
+* Fix - PUI payment instructions printed in the refund email #873
+* Fix - Fix `thankyou_order_received` filter usage #899
+* Enhancement - Add SCA payment indicator for credit card renewals #847
+* Enhancement - Rename plugin settings tabs #893
+* Enhancement - Hide order button via class #921
+* Enhancement - Tracking integration compatibility with Germanized plugin #883
+* Enhancement - Onboarding buttons must be clicked multiple times after using PUI checkbox #851
+* Enhancement - Ratepay payment instructions added to non Pay upon Invoice orders #892
+* Enhancement - During PayPal express checkout PUI js file is loaded #905
+* Enhancement - PayPal Transaction Key meta field not populated for PUI payments #897
+* Enhancement - Onboard with PUI Checkbox automatically set when shop is set to Germany #876
 
 = 1.9.4 =
 * Add - Create new connection tab #801
