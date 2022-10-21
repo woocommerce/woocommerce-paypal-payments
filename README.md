@@ -13,7 +13,7 @@ PayPal's latest complete payments processing solution. Accept PayPal, Pay Later,
 ### Install dependencies & build
 
 - `$ composer install`
-- `$ yarn run build:dev`
+- `$ yarn install`
 
 Optionally, change the `PAYPAL_INTEGRATION_DATE` constant to `gmdate( 'Y-m-d' )` to run the latest PayPal JavaScript SDK
 

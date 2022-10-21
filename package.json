@@ -6,30 +6,38 @@
   "license": "GPL-2.0",
   "author": "WooCommerce",
   "scripts": {
-    "install:modules:ppcp-button": "cd modules/ppcp-button && yarn install && cd -",
-    "install:modules:ppcp-wc-gateway": "cd modules/ppcp-wc-gateway && yarn install && cd -",
-    "install:modules:ppcp-webhooks": "cd modules/ppcp-webhooks && yarn install && cd -",
-    "install:modules:ppcp-vaulting": "cd modules/ppcp-vaulting && yarn install && cd -",
-    "install:modules:ppcp-order-tracking": "cd modules/ppcp-order-tracking && yarn install && cd -",
-    "install:modules:ppcp-compat": "cd modules/ppcp-compat && yarn install && cd -",
-    "install:modules:ppcp-onboarding": "cd modules/ppcp-onboarding && yarn install && cd -",
-    "install:modules": "yarn run install:modules:ppcp-button && yarn run install:modules:ppcp-wc-gateway && yarn run install:modules:ppcp-webhooks && yarn run install:modules:ppcp-vaulting && yarn run install:modules:ppcp-order-tracking && yarn run install:modules:ppcp-compat && yarn run install:modules:ppcp-onboarding",
-    "build:modules:ppcp-button": "cd modules/ppcp-button && yarn run build && cd -",
-    "build:modules:ppcp-wc-gateway": "cd modules/ppcp-wc-gateway && yarn run build && cd -",
-    "build:modules:ppcp-webhooks": "cd modules/ppcp-webhooks && yarn run build && cd -",
-    "build:modules:ppcp-vaulting": "cd modules/ppcp-vaulting && yarn run build && cd -",
-    "build:modules:ppcp-order-tracking": "cd modules/ppcp-order-tracking && yarn run build && cd -",
-    "build:modules:ppcp-compat": "cd modules/ppcp-compat && yarn run build && cd -",
-    "build:modules:ppcp-onboarding": "cd modules/ppcp-onboarding && yarn run build && cd -",
-    "build:modules": "yarn run build:modules:ppcp-button && yarn build:modules:ppcp-wc-gateway && yarn build:modules:ppcp-webhooks && yarn build:modules:ppcp-vaulting && yarn build:modules:ppcp-order-tracking && yarn build:modules:ppcp-compat && yarn build:modules:ppcp-onboarding",
-    "build:dev": "yarn run install:modules && yarn run build:modules",
+    "postinstall": "run-s install:modules:* && run-s build:modules",
+
+    "install:modules:ppcp-button": "cd modules/ppcp-button && yarn install",
+    "install:modules:ppcp-wc-gateway": "cd modules/ppcp-wc-gateway && yarn install",
+    "install:modules:ppcp-webhooks": "cd modules/ppcp-webhooks && yarn install",
+    "install:modules:ppcp-vaulting": "cd modules/ppcp-vaulting && yarn install",
+    "install:modules:ppcp-order-tracking": "cd modules/ppcp-order-tracking && yarn install",
+    "install:modules:ppcp-onboarding": "cd modules/ppcp-onboarding && yarn install",
+
+    "build:modules:ppcp-button": "cd modules/ppcp-button && yarn run build",
+    "build:modules:ppcp-wc-gateway": "cd modules/ppcp-wc-gateway && yarn run build",
+    "build:modules:ppcp-webhooks": "cd modules/ppcp-webhooks && yarn run build",
+    "build:modules:ppcp-vaulting": "cd modules/ppcp-vaulting && yarn run build",
+    "build:modules:ppcp-order-tracking": "cd modules/ppcp-order-tracking && yarn run build",
+    "build:modules:ppcp-onboarding": "cd modules/ppcp-onboarding && yarn run build",
+    "build:modules": "run-p build:modules:*",
+
+    "watch:modules:ppcp-button": "cd modules/ppcp-button && yarn run watch",
+    "watch:modules:ppcp-wc-gateway": "cd modules/ppcp-wc-gateway && yarn run watch",
+    "watch:modules:ppcp-webhooks": "cd modules/ppcp-webhooks && yarn run watch",
+    "watch:modules:ppcp-vaulting": "cd modules/ppcp-vaulting && yarn run watch",
+    "watch:modules:ppcp-order-tracking": "cd modules/ppcp-order-tracking && yarn run watch",
+    "watch:modules:ppcp-onboarding": "cd modules/ppcp-onboarding && yarn run watch",
+    "watch:modules": "run-p watch:modules:*",
 
     "ddev:setup": "ddev start && ddev orchestrate",
     "ddev:start": "ddev start",
     "ddev:stop": "ddev stop",
     "ddev:reset": "ddev orchestrate -f",
-    "ddev:install": "ddev composer install && yarn run ddev:build-js",
-    "ddev:build-js": "ddev yarn build:dev",
+    "ddev:install": "ddev composer install && yarn install",
+    "ddev:build-js": "ddev yarn build:modules",
+    "ddev:watch-js": "ddev yarn watch:modules",
     "ddev:composer-update": "ddev composer update && ddev composer update --lock",
     "ddev:unit-tests": "ddev exec phpunit",
     "ddev:e2e-tests": "cp -n .env.e2e.example .env.e2e && ddev php tests/e2e/PHPUnit/setup.php && ddev exec phpunit -c tests/e2e/phpunit.xml.dist",
@@ -43,7 +51,7 @@
     "ddev:build-package": "ddev yarn build",
 
     "prebuild": "rm -rf ./vendor && find . -name 'node_modules' -type d -maxdepth 3 -exec rm -rf {} +",
-    "build": "composer install --no-dev && yarn run build:dev && yarn run archive",
+    "build": "composer install --no-dev && yarn install && yarn run archive",
     "prearchive": "rm -rf $npm_package_name.zip",
     "archive": "zip -r $npm_package_name.zip . -x **.git/\\* **node_modules/\\*",
     "postarchive": "yarn run archive:cleanup && rm -rf $npm_package_name && unzip $npm_package_name.zip -d $npm_package_name && rm $npm_package_name.zip && zip -r $npm_package_name.zip $npm_package_name && rm -rf $npm_package_name",
@@ -53,7 +61,7 @@
     "wp_org_slug": "woocommerce-paypal-payments"
   },
   "dependencies": {
+    "npm-run-all": "^4.1.5"
   },
-  "devDependencies": {
-  }
+  "devDependencies": {}
 }
