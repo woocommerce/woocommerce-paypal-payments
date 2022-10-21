@@ -3,4 +3,4 @@
 popd
 
 composer install
-yarn run build:dev
+yarn install
