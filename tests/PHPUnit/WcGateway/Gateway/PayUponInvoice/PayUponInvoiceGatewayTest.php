@@ -43,6 +43,7 @@ class PayUponInvoiceGatewayTest extends TestCase
 		$this->checkout_helper = Mockery::mock(CheckoutHelper::class);
 
 		$this->setInitStubs();
+		when('wc_clean')->returnArg();
 
 		$this->testee = new PayUponInvoiceGateway(
 			$this->order_endpoint,
