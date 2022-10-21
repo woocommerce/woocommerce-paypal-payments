@@ -1,3 +1,7 @@
+/**
+ * @param selectorOrElement
+ * @returns {Element}
+ */
 const getElement = (selectorOrElement) => {
     if (typeof selectorOrElement === 'string') {
         return document.querySelector(selectorOrElement);
@@ -32,6 +36,19 @@ export const setVisible = (selectorOrElement, show, important = false) => {
         if (!isVisible(element)) {
             element.style.setProperty('display', 'block');
         }
+    }
+};
+
+export const setVisibleByClass = (selectorOrElement, show, hiddenClass) => {
+    const element = getElement(selectorOrElement);
+    if (!element) {
+        return;
+    }
+
+    if (show) {
+        element.classList.remove(hiddenClass);
+    } else {
+        element.classList.add(hiddenClass);
     }
 };
 
