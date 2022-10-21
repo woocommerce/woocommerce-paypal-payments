@@ -745,7 +745,7 @@ return array(
 				),
 				'options'      => array(
 					'paypal'   => __( 'PayPal', 'woocommerce-paypal-payments' ),
-					'checkout' => __( 'Standard Payments', 'woocommerce-paypal-payments' ),
+					'checkout' => __( 'Checkout', 'woocommerce-paypal-payments' ),
 					'buynow'   => __( 'PayPal Buy Now', 'woocommerce-paypal-payments' ),
 					'pay'      => __( 'Pay with PayPal', 'woocommerce-paypal-payments' ),
 				),
@@ -1050,7 +1050,7 @@ return array(
 				),
 				'options'      => array(
 					'paypal'   => __( 'PayPal', 'woocommerce-paypal-payments' ),
-					'checkout' => __( 'Standard Payments', 'woocommerce-paypal-payments' ),
+					'checkout' => __( 'Checkout', 'woocommerce-paypal-payments' ),
 					'buynow'   => __( 'PayPal Buy Now', 'woocommerce-paypal-payments' ),
 					'pay'      => __( 'Pay with PayPal', 'woocommerce-paypal-payments' ),
 				),
@@ -1356,7 +1356,7 @@ return array(
 				),
 				'options'      => array(
 					'paypal'   => __( 'PayPal', 'woocommerce-paypal-payments' ),
-					'checkout' => __( 'Standard Payments', 'woocommerce-paypal-payments' ),
+					'checkout' => __( 'Checkout', 'woocommerce-paypal-payments' ),
 					'buynow'   => __( 'PayPal Buy Now', 'woocommerce-paypal-payments' ),
 					'pay'      => __( 'Pay with PayPal', 'woocommerce-paypal-payments' ),
 				),
@@ -1662,7 +1662,7 @@ return array(
 				),
 				'options'      => array(
 					'paypal'   => __( 'PayPal', 'woocommerce-paypal-payments' ),
-					'checkout' => __( 'Standard Payments', 'woocommerce-paypal-payments' ),
+					'checkout' => __( 'Checkout', 'woocommerce-paypal-payments' ),
 					'buynow'   => __( 'PayPal Buy Now', 'woocommerce-paypal-payments' ),
 					'pay'      => __( 'Pay with PayPal', 'woocommerce-paypal-payments' ),
 				),
