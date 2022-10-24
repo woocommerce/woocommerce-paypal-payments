@@ -183,6 +183,15 @@ define( 'PPCP_FLAG_SEPARATE_APM_BUTTONS', apply_filters( 'woocommerce_paypal_pay
 		2
 	);
 
+	add_action(
+		'before_woocommerce_init',
+		function() {
+			if ( class_exists( '\Automattic\WooCommerce\Utilities\FeaturesUtil' ) ) {
+				\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
+			}
+		}
+	);
+
 	/**
 	 * Check if WooCommerce is active.
 	 *
