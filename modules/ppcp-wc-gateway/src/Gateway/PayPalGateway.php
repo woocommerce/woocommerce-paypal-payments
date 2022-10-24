@@ -425,7 +425,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		if ( $this->subscription_helper->has_subscription( $order_id ) && $this->subscription_helper->is_subscription_change_payment() ) {
 			$saved_paypal_payment = filter_input( INPUT_POST, 'saved_paypal_payment', FILTER_SANITIZE_STRING );
 			if ( $saved_paypal_payment ) {
-				update_post_meta( $order_id, 'payment_token_id', $saved_paypal_payment );
+				$wc_order->update_meta_data( 'payment_token_id', $saved_paypal_payment );
+				$wc_order->save();
 
 				return $this->handle_payment_success( $wc_order );
 			}

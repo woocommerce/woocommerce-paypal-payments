@@ -175,9 +175,9 @@ class SubscriptionModule implements ModuleInterface {
 		try {
 			$tokens = $payment_token_repository->all_for_user_id( $subscription->get_customer_id() );
 			if ( $tokens ) {
-				$subscription_id = $subscription->get_id();
 				$latest_token_id = end( $tokens )->id() ? end( $tokens )->id() : '';
-				update_post_meta( $subscription_id, 'payment_token_id', $latest_token_id, true );
+				$subscription->update_meta_data( 'payment_token_id', $latest_token_id );
+				$subscription->save();
 			}
 		} catch ( RuntimeException $error ) {
 			$message = sprintf(
