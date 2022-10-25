@@ -52,7 +52,7 @@ class PaymentTokenRepositoryTest extends TestCase
     {
         $id = 1;
         $source = new \stdClass();
-        $paymentToken = new PaymentToken('foo', 'PAYMENT_METHOD_TOKEN', $source);
+        $paymentToken = new PaymentToken('foo', $source, 'PAYMENT_METHOD_TOKEN');
 
         when('get_user_meta')->justReturn([]);
         $this->endpoint->shouldReceive('for_user')
