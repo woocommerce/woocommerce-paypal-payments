@@ -43,9 +43,9 @@ class PaymentToken {
 	/**
 	 * PaymentToken constructor.
 	 *
-	 * @param string    $id The Id.
-	 * @param string    $type The type.
-	 * @param \stdClass $source The source.
+	 * @param string   $id The Id.
+	 * @param stdClass $source The source.
+	 * @param string   $type The type.
 	 * @throws RuntimeException When the type is not valid.
 	 */
 	public function __construct( string $id, stdClass $source, string $type = self::TYPE_PAYMENT_METHOD_TOKEN ) {
