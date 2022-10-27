@@ -100,7 +100,8 @@ const bootstrap = () => {
         if (PayPalCommerceGateway.mini_cart_buttons_enabled === '1') {
             const miniCartBootstrap = new MiniCartBootstap(
                 PayPalCommerceGateway,
-                renderer
+                renderer,
+                errorHandler,
             );
 
             miniCartBootstrap.init();
@@ -112,6 +113,7 @@ const bootstrap = () => {
             PayPalCommerceGateway,
             renderer,
             messageRenderer,
+            errorHandler,
         );
 
         singleProductBootstrap.init();
@@ -121,6 +123,7 @@ const bootstrap = () => {
         const cartBootstrap = new CartBootstrap(
             PayPalCommerceGateway,
             renderer,
+            errorHandler,
         );
 
         cartBootstrap.init();
@@ -131,7 +134,8 @@ const bootstrap = () => {
             PayPalCommerceGateway,
             renderer,
             messageRenderer,
-            spinner
+            spinner,
+            errorHandler,
         );
 
         checkoutBootstap.init();
@@ -142,7 +146,8 @@ const bootstrap = () => {
             PayPalCommerceGateway,
             renderer,
             messageRenderer,
-            spinner
+            spinner,
+            errorHandler,
         );
         payNowBootstrap.init();
     }
