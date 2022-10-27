@@ -27,7 +27,7 @@ use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 
 return array(
-	'button.client_id'                         => static function ( ContainerInterface $container ): string {
+	'button.client_id'                            => static function ( ContainerInterface $container ): string {
 
 		$settings = $container->get( 'wcgateway.settings' );
 		$client_id = $settings->has( 'client_id' ) ? $settings->get( 'client_id' ) : '';
@@ -45,7 +45,7 @@ return array(
 		return $env->current_environment_is( Environment::SANDBOX ) ?
 			CONNECT_WOO_SANDBOX_CLIENT_ID : CONNECT_WOO_CLIENT_ID;
 	},
-	'button.smart-button'                      => static function ( ContainerInterface $container ): SmartButtonInterface {
+	'button.smart-button'                         => static function ( ContainerInterface $container ): SmartButtonInterface {
 
 		$state = $container->get( 'onboarding.state' );
 		/**
@@ -92,16 +92,16 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'button.url'                               => static function ( ContainerInterface $container ): string {
+	'button.url'                                  => static function ( ContainerInterface $container ): string {
 		return plugins_url(
 			'/modules/ppcp-button/',
 			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
 		);
 	},
-	'button.request-data'                      => static function ( ContainerInterface $container ): RequestData {
+	'button.request-data'                         => static function ( ContainerInterface $container ): RequestData {
 		return new RequestData();
 	},
-	'button.endpoint.change-cart'              => static function ( ContainerInterface $container ): ChangeCartEndpoint {
+	'button.endpoint.change-cart'                 => static function ( ContainerInterface $container ): ChangeCartEndpoint {
 		if ( ! \WC()->cart ) {
 			throw new RuntimeException( 'cant initialize endpoint at this moment' );
 		}
@@ -113,7 +113,7 @@ return array(
 		$logger                        = $container->get( 'woocommerce.logger.woocommerce' );
 		return new ChangeCartEndpoint( $cart, $shipping, $request_data, $purchase_unit_factory, $data_store, $logger );
 	},
-	'button.endpoint.create-order'             => static function ( ContainerInterface $container ): CreateOrderEndpoint {
+	'button.endpoint.create-order'                => static function ( ContainerInterface $container ): CreateOrderEndpoint {
 		$request_data          = $container->get( 'button.request-data' );
 		$purchase_unit_factory = $container->get( 'api.factory.purchase-unit' );
 		$order_endpoint        = $container->get( 'api.endpoint.order' );
@@ -134,10 +134,11 @@ return array(
 			$early_order_handler,
 			$registration_needed,
 			$container->get( 'wcgateway.settings.card_billing_data_mode' ),
+			$container->get( 'button.early-wc-checkout-validation-enabled' ),
 			$logger
 		);
 	},
-	'button.helper.early-order-handler'        => static function ( ContainerInterface $container ) : EarlyOrderHandler {
+	'button.helper.early-order-handler'           => static function ( ContainerInterface $container ) : EarlyOrderHandler {
 
 		$state          = $container->get( 'onboarding.state' );
 		$order_processor = $container->get( 'wcgateway.order-processor' );
@@ -145,7 +146,7 @@ return array(
 		$prefix         = $container->get( 'api.prefix' );
 		return new EarlyOrderHandler( $state, $order_processor, $session_handler, $prefix );
 	},
-	'button.endpoint.approve-order'            => static function ( ContainerInterface $container ): ApproveOrderEndpoint {
+	'button.endpoint.approve-order'               => static function ( ContainerInterface $container ): ApproveOrderEndpoint {
 		$request_data    = $container->get( 'button.request-data' );
 		$order_endpoint  = $container->get( 'api.endpoint.order' );
 		$session_handler = $container->get( 'session.handler' );
@@ -165,7 +166,7 @@ return array(
 			$logger
 		);
 	},
-	'button.endpoint.data-client-id'           => static function( ContainerInterface $container ) : DataClientIdEndpoint {
+	'button.endpoint.data-client-id'              => static function( ContainerInterface $container ) : DataClientIdEndpoint {
 		$request_data   = $container->get( 'button.request-data' );
 		$identity_token = $container->get( 'api.endpoint.identity-token' );
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
@@ -175,39 +176,47 @@ return array(
 			$logger
 		);
 	},
-	'button.endpoint.vault-paypal'             => static function( ContainerInterface $container ) : StartPayPalVaultingEndpoint {
+	'button.endpoint.vault-paypal'                => static function( ContainerInterface $container ) : StartPayPalVaultingEndpoint {
 		return new StartPayPalVaultingEndpoint(
 			$container->get( 'button.request-data' ),
 			$container->get( 'api.endpoint.payment-token' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'button.helper.three-d-secure'             => static function ( ContainerInterface $container ): ThreeDSecure {
+	'button.helper.three-d-secure'                => static function ( ContainerInterface $container ): ThreeDSecure {
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
 		return new ThreeDSecure( $logger );
 	},
-	'button.helper.messages-apply'             => static function ( ContainerInterface $container ): MessagesApply {
+	'button.helper.messages-apply'                => static function ( ContainerInterface $container ): MessagesApply {
 		return new MessagesApply(
 			$container->get( 'api.shop.country' )
 		);
 	},
 
-	'button.is-logged-in'                      => static function ( ContainerInterface $container ): bool {
+	'button.is-logged-in'                         => static function ( ContainerInterface $container ): bool {
 		return is_user_logged_in();
 	},
-	'button.registration-required'             => static function ( ContainerInterface $container ): bool {
+	'button.registration-required'                => static function ( ContainerInterface $container ): bool {
 		return WC()->checkout()->is_registration_required();
 	},
-	'button.current-user-must-register'        => static function ( ContainerInterface $container ): bool {
+	'button.current-user-must-register'           => static function ( ContainerInterface $container ): bool {
 		return ! $container->get( 'button.is-logged-in' ) &&
 			$container->get( 'button.registration-required' );
 	},
 
-	'button.basic-checkout-validation-enabled' => static function ( ContainerInterface $container ): bool {
+	'button.basic-checkout-validation-enabled'    => static function ( ContainerInterface $container ): bool {
 		/**
 		 * The filter allowing to disable the basic client-side validation of the checkout form
 		 * when the PayPal button is clicked.
 		 */
-		return (bool) apply_filters( 'woocommerce_paypal_payments_basic_checkout_validation_enabled', true );
+		return (bool) apply_filters( 'woocommerce_paypal_payments_basic_checkout_validation_enabled', false );
+	},
+	'button.early-wc-checkout-validation-enabled' => static function ( ContainerInterface $container ): bool {
+		/**
+		 * The filter allowing to disable the WC validation of the checkout form
+		 * when the PayPal button is clicked.
+		 * The validation is triggered in a non-standard way and may cause issues on some sites.
+		 */
+		return (bool) apply_filters( 'woocommerce_paypal_payments_early_wc_checkout_validation_enabled', true );
 	},
 );
