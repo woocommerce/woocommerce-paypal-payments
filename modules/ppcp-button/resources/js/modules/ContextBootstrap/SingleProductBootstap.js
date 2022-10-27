@@ -1,4 +1,3 @@
-import ErrorHandler from '../ErrorHandler';
 import UpdateCart from "../Helper/UpdateCart";
 import SingleProductActionHandler from "../ActionHandler/SingleProductActionHandler";
 

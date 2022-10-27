@@ -1,4 +1,3 @@
-import ErrorHandler from '../ErrorHandler';
 import CheckoutActionHandler from '../ActionHandler/CheckoutActionHandler';
 import {setVisible, setVisibleByClass} from '../Helper/Hiding';
 import {

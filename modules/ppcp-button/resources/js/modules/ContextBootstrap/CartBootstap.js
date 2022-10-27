@@ -1,5 +1,4 @@
 import CartActionHandler from '../ActionHandler/CartActionHandler';
-import ErrorHandler from '../ErrorHandler';
 
 class CartBootstrap {
     constructor(gateway, renderer, errorHandler) {

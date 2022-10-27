@@ -1,4 +1,3 @@
-import ErrorHandler from '../ErrorHandler';
 import CartActionHandler from '../ActionHandler/CartActionHandler';
 
 class MiniCartBootstap {
