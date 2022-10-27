@@ -66,7 +66,7 @@ class CheckoutActionHandler {
                         }
                     }
 
-                    throw new Error(data.data.message);
+                    throw {type: 'create-order-error', data: data.data};
                 }
                 const input = document.createElement('input');
                 input.setAttribute('type', 'hidden');
@@ -82,9 +82,15 @@ class CheckoutActionHandler {
             onCancel: () => {
                 spinner.unblock();
             },
-            onError: () => {
-                this.errorHandler.genericError();
+            onError: (err) => {
+                console.error(err);
                 spinner.unblock();
+
+                if (err && err.type === 'create-order-error') {
+                    return;
+                }
+
+                this.errorHandler.genericError();
             }
         }
     }
