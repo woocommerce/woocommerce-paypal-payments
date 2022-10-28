@@ -95,6 +95,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Enhancement - During PayPal express checkout PUI js file is loaded #905
 * Enhancement - PayPal Transaction Key meta field not populated for PUI payments #897
 * Enhancement - Onboard with PUI Checkbox automatically set when shop is set to Germany #876
+* Enhancement - Update all plugin strings #946
 
 = 1.9.4 =
 * Add - Create new connection tab #801
