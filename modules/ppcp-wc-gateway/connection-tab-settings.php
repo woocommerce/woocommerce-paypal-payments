@@ -347,14 +347,19 @@ return function ( ContainerInterface $container, array $fields ): array {
 		),
 
 		'credentials_feature_onboarding_heading'        => array(
-			'heading'      => __( 'Feature Onboarding', 'woocommerce-paypal-payments' ),
+			'heading'      => __( 'Advanced feature availability & sign-up', 'woocommerce-paypal-payments' ),
 			'type'         => 'ppcp-heading',
 			'screens'      => array(
 				State::STATE_ONBOARDED,
 			),
 			'requirements' => array(),
 			'gateway'      => Settings::CONNECTION_TAB_ID,
-			'description'  => __( 'See which features are available.', 'woocommerce-paypal-payments' ),
+			'description'  => sprintf(
+				// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+				__( 'Displays whether available advanced features are enabled for the connected PayPal account. More information about advanced features is available in the %1$sFeature sign-up documentation%2$s.', 'woocommerce-paypal-payments' ),
+				'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#feature-signup" target="_blank">',
+				'</a>'
+			),
 		),
 		'ppcp_dcc_status'                               => array(
 			'title'        => __( 'Advanced Credit and Debit Card Payments', 'woocommerce-paypal-payments' ),
@@ -367,7 +372,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
 		'ppcp_pui_status'                               => array(
-			'title'        => __( 'Pay Upon Invoice', 'woocommerce-paypal-payments' ),
+			'title'        => __( 'Pay upon Invoice', 'woocommerce-paypal-payments' ),
 			'type'         => 'ppcp-text',
 			'text'         => $container->get( 'wcgateway.settings.connection.pui-status-text' ),
 			'screens'      => array(
@@ -377,7 +382,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
 		'tracking_enabled'                              => array(
-			'title'        => __( 'Tracking', 'woocommerce-paypal-payments' ),
+			'title'        => __( 'Shipment Tracking', 'woocommerce-paypal-payments' ),
 			'type'         => 'checkbox',
 			'desc_tip'     => true,
 			'label'        => $container->get( 'wcgateway.settings.tracking-label' ),
@@ -392,14 +397,19 @@ return function ( ContainerInterface $container, array $fields ): array {
 		),
 
 		'credentials_integration_configuration_heading' => array(
-			'heading'      => __( 'Integration configuration', 'woocommerce-paypal-payments' ),
+			'heading'      => __( 'General integration configuration', 'woocommerce-paypal-payments' ),
 			'type'         => 'ppcp-heading',
 			'screens'      => array(
 				State::STATE_ONBOARDED,
 			),
 			'requirements' => array(),
 			'gateway'      => Settings::CONNECTION_TAB_ID,
-			'description'  => __( 'See which features are available.', 'woocommerce-paypal-payments' ),
+			'description'  => sprintf(
+			// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+				__( 'Configure integration specific settings such as a unique invoice prefix, or logging for potential %1$stroubleshooting%2$s.', 'woocommerce-paypal-payments' ),
+				'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#troubleshooting" target="_blank">',
+				'</a>'
+			),
 		),
 		'prefix'                                        => array(
 			'title'             => __( 'Invoice prefix', 'woocommerce-paypal-payments' ),
