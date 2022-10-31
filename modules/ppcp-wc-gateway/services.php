@@ -22,6 +22,7 @@ use WooCommerce\PayPalCommerce\Button\Helper\MessagesDisclaimers;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\State;
+use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\FeesRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
@@ -401,6 +402,9 @@ return array(
 		$onboarding_options_renderer = $container->get( 'onboarding.render-options' );
 		assert( $onboarding_options_renderer instanceof OnboardingOptionsRenderer );
 
+		$subscription_helper = $container->get( 'subscription.helper' );
+		assert( $subscription_helper instanceof SubscriptionHelper );
+
 		$fields              = array(
 			'checkout_settings_heading'              => array(
 				'heading'      => __( 'Standard Payments Settings', 'woocommerce-paypal-payments' ),
@@ -614,7 +618,7 @@ return array(
 			'subscription_behavior_when_vault_fails' => array(
 				'title'                => __( 'Subscription capture behavior if Vault fails', 'woocommerce-paypal-payments' ),
 				'type'                 => 'select',
-				'class'                => array(),
+				'classes'              => $subscription_helper->plugin_is_active() ? array() : array( 'hide' ),
 				'input_class'          => array( 'wc-enhanced-select' ),
 				'default'              => 'void_auth',
 				'desc_tip'             => true,
