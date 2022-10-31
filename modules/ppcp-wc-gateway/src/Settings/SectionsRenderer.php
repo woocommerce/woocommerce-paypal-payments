@@ -76,7 +76,7 @@ class SectionsRenderer {
 
 		foreach ( $this->sections as $id => $label ) {
 			$url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=' . $id );
-			if ( in_array( $id, array( Settings::CONNECTION_TAB_ID, CreditCardGateway::ID ), true ) ) {
+			if ( in_array( $id, array( Settings::CONNECTION_TAB_ID, CreditCardGateway::ID, Settings::PAY_LATER_TAB_ID ), true ) ) {
 				// We need section=ppcp-gateway for the webhooks page because it is not a gateway,
 				// and for DCC because otherwise it will not render the page if gateway is not available (country/currency).
 				// Other gateways render fields differently, and their pages are not expected to work when gateway is not available.

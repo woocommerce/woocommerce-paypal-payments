@@ -296,6 +296,9 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		if ( $this->is_credit_card_tab() ) {
 			return __( 'Advanced Card Processing', 'woocommerce-paypal-payments' );
 		}
+		if ( $this->is_pay_later_tab() ) {
+			return __( 'Pay Later Button', 'woocommerce-paypal-payments' );
+		}
 		if ( $this->is_paypal_tab() ) {
 			return __( 'Standard Payments', 'woocommerce-paypal-payments' );
 		}
@@ -319,6 +322,13 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		if ( $this->is_credit_card_tab() ) {
 			return __(
 				'Accept debit and credit cards, and local payment methods.',
+				'woocommerce-paypal-payments'
+			);
+		}
+
+		if ( $this->is_pay_later_tab() ) {
+			return __(
+				'Example description.',
 				'woocommerce-paypal-payments'
 			);
 		}
@@ -370,6 +380,16 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	protected function is_connection_tab() : bool {
 		return is_admin()
 			&& Settings::CONNECTION_TAB_ID === $this->page_id;
+	}
+
+	/**
+	 * Whether we are on the pay-later tab.
+	 *
+	 * @return bool true if is pay-later tab, otherwise false
+	 */
+	protected function is_pay_later_tab() : bool {
+		return is_admin()
+			&& Settings::PAY_LATER_TAB_ID === $this->page_id;
 	}
 
 	/**
