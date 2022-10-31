@@ -38,16 +38,50 @@ class SettingsPageAssets {
 	protected $subscription_helper;
 
 	/**
+	 * The PayPal SDK client ID.
+	 *
+	 * @var string
+	 */
+	private $client_id;
+
+	/**
+	 * 3-letter currency code of the shop.
+	 *
+	 * @var string
+	 */
+	private $currency;
+
+	/**
+	 * 2-letter country code of the shop.
+	 *
+	 * @var string
+	 */
+	private $country;
+
+	/**
 	 * Assets constructor.
 	 *
 	 * @param string             $module_url The url of this module.
 	 * @param string             $version                            The assets version.
 	 * @param SubscriptionHelper $subscription_helper The subscription helper.
+	 * @param string             $client_id The PayPal SDK client ID.
+	 * @param string             $currency 3-letter currency code of the shop.
+	 * @param string             $country 2-letter country code of the shop.
 	 */
-	public function __construct( string $module_url, string $version, SubscriptionHelper $subscription_helper ) {
+	public function __construct(
+		string $module_url,
+		string $version,
+		SubscriptionHelper $subscription_helper,
+		string $client_id,
+		string $currency,
+		string $country
+	) {
 		$this->module_url          = $module_url;
 		$this->version             = $version;
 		$this->subscription_helper = $subscription_helper;
+		$this->client_id           = $client_id;
+		$this->currency            = $currency;
+		$this->country             = $country;
 	}
 
 	/**
@@ -98,6 +132,13 @@ class SettingsPageAssets {
 	 * Register assets for admin pages.
 	 */
 	private function register_admin_assets() {
+		wp_enqueue_style(
+			'ppcp-gateway-settings',
+			trailingslashit( $this->module_url ) . 'assets/css/gateway-settings.css',
+			array(),
+			$this->version
+		);
+
 		wp_enqueue_script(
 			'ppcp-gateway-settings',
 			trailingslashit( $this->module_url ) . 'assets/js/gateway-settings.js',
@@ -106,12 +147,20 @@ class SettingsPageAssets {
 			true
 		);
 
-		// Intent is configured with Authorize and Capture Virtual-Only Orders is not set.
+		/**
+		 * Psalm cannot find it for some reason.
+		 *
+		 * @psalm-suppress UndefinedConstant
+		 */
 		wp_localize_script(
 			'ppcp-gateway-settings',
 			'PayPalCommerceGatewaySettings',
 			array(
 				'is_subscriptions_plugin_active' => $this->subscription_helper->plugin_is_active(),
+				'client_id'                      => $this->client_id,
+				'currency'                       => $this->currency,
+				'country'                        => $this->country,
+				'integration_date'               => PAYPAL_INTEGRATION_DATE,
 			)
 		);
 	}

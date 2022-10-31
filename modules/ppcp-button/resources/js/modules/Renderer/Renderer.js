@@ -45,7 +45,9 @@ class Renderer {
             }
         }
 
-        this.creditCardRenderer.render(settings.hosted_fields.wrapper, contextConfig);
+        if (this.creditCardRenderer) {
+            this.creditCardRenderer.render(settings.hosted_fields.wrapper, contextConfig);
+        }
 
         for (const [fundingSource, data] of Object.entries(enabledSeparateGateways)) {
             this.renderButtons(
