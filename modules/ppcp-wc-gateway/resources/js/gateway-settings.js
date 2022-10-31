@@ -74,6 +74,9 @@ import Renderer from '../../../ppcp-button/resources/js/modules/Renderer/Rendere
         function createButtonPreview(settingsCallback) {
             const render = (settings) => {
                 const wrapper = document.querySelector(settings.button.wrapper);
+                if (!wrapper) {
+                    return;
+                }
                 wrapper.innerHTML = '';
 
                 const renderer = new Renderer(null, settings, (data, actions) => actions.reject(), null);
@@ -117,7 +120,7 @@ import Renderer from '../../../ppcp-button/resources/js/modules/Renderer/Rendere
                 'enable-funding': ['venmo'],
                 'buyer-country': PayPalCommerceGatewaySettings.country,
             };
-            if (disabledSources.length) {
+            if (disabledSources?.length) {
                 settings['disable-funding'] = disabledSources;
             }
             return settings;
