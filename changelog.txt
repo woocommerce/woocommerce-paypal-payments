@@ -1,6 +1,6 @@
 *** Changelog ***
 
-= 1.9.5 - TBD =
+= 1.9.5 - 2022-11-01 =
 * Fix - Invalid tracking number in logs when adding tracking #903
 * Fix - Tracking on Connection tab always enabled #900
 * Fix - PUI payment instructions printed in the refund email #873
