@@ -254,6 +254,7 @@ document.addEventListener(
                 '#field-pay_later_' + location + '_message_color',
                 '#field-pay_later_' + location + '_message_flex_color',
                 '#field-pay_later_' + location + '_message_flex_ratio',
+                '#field-pay_later_' + location + '_message_preview',
             ]
 
             if (location !== 'general') {
@@ -272,6 +273,10 @@ document.addEventListener(
         const toggleMessagingEnabled = () => {
             const payLaterMessagingEnabled = document.querySelector(payLaterMessagingEnabledSelector);
             const stylingPerMessagingElement = document.querySelector('#ppcp-pay_later_enable_styling_per_messaging_location');
+
+            if (! payLaterMessagingEnabled) {
+                return;
+            }
 
             groupToggle(
                 payLaterMessagingEnabledSelector,

@@ -1,6 +1,7 @@
 import { loadScript } from "@paypal/paypal-js";
 import {debounce} from "./helper/debounce";
 import Renderer from '../../../ppcp-button/resources/js/modules/Renderer/Renderer'
+import MessageRenderer from "../../../ppcp-button/resources/js/modules/Renderer/MessageRenderer";
 
 ;document.addEventListener(
     'DOMContentLoaded',
@@ -13,14 +14,82 @@ import Renderer from '../../../ppcp-button/resources/js/modules/Renderer/Rendere
             nodeList.forEach(node => node.setAttribute('disabled', 'true'))
         }
 
-        disableAll( disabledCheckboxes )
+        const form = jQuery('#mainform');
 
-        if(PayPalCommerceGatewaySettings.is_subscriptions_plugin_active !== '1') {
-            const subscriptionBehaviorWhenVaultFails = document.getElementById('field-subscription_behavior_when_vault_fails');
-            if (subscriptionBehaviorWhenVaultFails) {
-                subscriptionBehaviorWhenVaultFails.style.display = 'none'
-            }
+        function createButtonPreview(settingsCallback) {
+            const render = (settings) => {
+                const wrapper = document.querySelector(settings.button.wrapper);
+                if (!wrapper) {
+                    return;
+                }
+                wrapper.innerHTML = '';
+
+                const renderer = new Renderer(null, settings, (data, actions) => actions.reject(), null);
+
+                try {
+                    renderer.render({});
+                } catch (err) {
+                    console.error(err);
+                }
+            };
+
+            renderPreview(settingsCallback, render);
         }
+
+        const payLaterButtonInput = document.querySelector('#ppcp-pay_later_button_enabled');
+
+        if (payLaterButtonInput) {
+            const payLaterButtonPreview = document.querySelector('.ppcp-button-preview.pay-later');
+
+            if (!payLaterButtonInput.checked) {
+                payLaterButtonPreview.classList.add('disabled')
+            }
+
+            if(payLaterButtonInput.classList.contains('ppcp-disabled-checkbox')) {
+                payLaterButtonPreview.style.display = 'none';
+            }
+
+            payLaterButtonInput.addEventListener('click', () => {
+                payLaterButtonPreview.classList.remove('disabled')
+
+                if (!payLaterButtonInput.checked) {
+                    payLaterButtonPreview.classList.add('disabled')
+                }
+            });
+        }
+
+        function getPaypalScriptSettings() {
+            const disabledSources = jQuery('[name="ppcp[disable_funding][]"]').val();
+            const isPayLaterButtonEnabled = payLaterButtonInput ? payLaterButtonInput.checked : PayPalCommerceGatewaySettings.is_pay_later_button_enabled
+            const settings = {
+                'client-id': PayPalCommerceGatewaySettings.client_id,
+                'currency': PayPalCommerceGatewaySettings.currency,
+                'integration-date': PayPalCommerceGatewaySettings.integration_date,
+                'components': ['buttons', 'funding-eligibility', 'messages'],
+                'enable-funding': ['venmo'],
+                'buyer-country': PayPalCommerceGatewaySettings.country,
+            };
+            if (disabledSources?.length) {
+                settings['disable-funding'] = disabledSources;
+            }
+
+            if (!isPayLaterButtonEnabled) {
+                settings['disable-funding'] = 'credit';
+            }
+            return settings;
+        }
+
+        function loadPaypalScript(settings, onLoaded = () => {}) {
+            loadScript(JSON.parse(JSON.stringify(settings))) // clone the object to prevent modification
+                .then(paypal => {
+                    document.dispatchEvent(new CustomEvent('ppcp_paypal_script_loaded'));
+
+                    onLoaded(paypal);
+                })
+                .catch((error) => console.error('failed to load the PayPal JS SDK script', error));
+        }
+
+        disableAll( disabledCheckboxes )
 
         let oldScriptSettings = getPaypalScriptSettings();
 
@@ -56,6 +125,91 @@ import Renderer from '../../../ppcp-button/resources/js/modules/Renderer/Rendere
             };
         }
 
+        function createMessagesPreview(settingsCallback) {
+            const render = (settings) => {
+                const wrapper = document.querySelector(settings.wrapper);
+                if (!wrapper) {
+                    return;
+                }
+                wrapper.innerHTML = '';
+
+                const messageRenderer = new MessageRenderer(settings);
+
+                try {
+                    messageRenderer.renderWithAmount(settings.amount);
+                } catch (err) {
+                    console.error(err);
+                }
+            };
+
+            renderPreview(settingsCallback, render);
+        }
+
+        function getMessageSettings(wrapperSelector, fields) {
+            const layout = jQuery(fields['layout']).val();
+            const style = {
+                'layout': layout,
+                'logo': {
+                    'type': jQuery(fields['logo_type']).val(),
+                    'position': jQuery(fields['logo_position']).val()
+                },
+                'text': {
+                    'color': jQuery(fields['text_color']).val()
+                },
+                'color': jQuery(fields['flex_color']).val(),
+                'ratio': jQuery(fields['flex_ratio']).val(),
+            };
+
+            return {
+                'wrapper': wrapperSelector,
+                'style': style,
+                'amount': 30,
+                'placement': 'product',
+            };
+        }
+
+        function renderPreview(settingsCallback, render) {
+            let oldSettings = settingsCallback();
+
+            form.on('change', ':input', debounce(() => {
+                const newSettings = settingsCallback();
+                if (JSON.stringify(oldSettings) === JSON.stringify(newSettings)) {
+                    return;
+                }
+
+                render(newSettings);
+
+                oldSettings = newSettings;
+            }, 300));
+
+            jQuery(document).on('ppcp_paypal_script_loaded', () => {
+                oldSettings = settingsCallback();
+
+                render(oldSettings);
+            });
+
+            render(oldSettings);
+        }
+
+        function getButtonDefaultSettings(wrapperSelector) {
+            const style = {
+                'color': 'gold',
+                'shape': 'pill',
+                'label': 'paypal',
+                'tagline': false,
+                'layout': 'vertical',
+            };
+            return {
+                'button': {
+                    'wrapper': wrapperSelector,
+                    'style': style,
+                },
+                'separate_buttons': {},
+            };
+        }
+
+        const payLaterMessagingLocations = ['product', 'cart', 'checkout', 'general']
+
         loadPaypalScript(oldScriptSettings, () => {
             createButtonPreview(() => getButtonSettings('#ppcpCheckoutButtonPreview', {
                 'color': '#ppcp-button_color',
@@ -86,6 +240,21 @@ import Renderer from '../../../ppcp-button/resources/js/modules/Renderer/Rendere
                 'layout': '#ppcp-button_mini-cart_layout',
                 'height': '#ppcp-button_mini-cart_height',
             }));
+
+            payLaterMessagingLocations.forEach( (location) => {
+                const inputNamePrefix = '#ppcp-pay_later_' + location + '_message';
+                const wrapperName = location.charAt(0).toUpperCase() + location.slice(1);
+                createMessagesPreview(() => getMessageSettings('#ppcp' + wrapperName + 'MessagePreview', {
+                    'layout': inputNamePrefix + '_layout',
+                    'logo_type': inputNamePrefix + '_logo',
+                    'logo_position': inputNamePrefix + '_position',
+                    'text_color': inputNamePrefix + '_color',
+                    'flex_color': inputNamePrefix + '_flex_color',
+                    'flex_ratio': inputNamePrefix + '_flex_ratio',
+                }));
+            });
+
+            createButtonPreview(() => getButtonDefaultSettings('#ppcpPayLaterButtonPreview'));
         });
     }
 );
