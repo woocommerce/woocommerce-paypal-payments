@@ -1,4 +1,4 @@
-.ppcp-button-preview {
+.ppcp-button-preview, .ppcp-message-preview {
 	width: 350px;
 	padding: 15px;
 	border: 1px solid lightgray;
@@ -13,5 +13,23 @@
 		position: absolute;
 		left: 800px;
 		margin-top: -400px;
+	}
+}
+
+.ppcp-message-preview {
+	@media (min-width: 1200px) {
+		margin-top: -300px;
+	}
+}
+
+.ppcp-button-preview.pay-later {
+	@media (min-width: 1200px) {
+		margin-top: -250px;
+	}
+}
+
+.ppcp-button-preview.pay-later.disabled {
+	@media (min-width: 1200px) {
+		margin-top: -152px;
 	}
 }
