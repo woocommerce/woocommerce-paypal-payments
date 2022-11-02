@@ -578,7 +578,7 @@ $data_rows_html
 		}
 
 		return $this->is_paypal_checkout_screen()
-			&& ( $this->paypal_vaulting_is_enabled() || $this->settings_status->pay_later_messaging_is_enabled() );
+			&& ( $this->paypal_vaulting_is_enabled() || $this->settings_status->is_pay_later_messaging_enabled() );
 	}
 }
 

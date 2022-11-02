@@ -59,6 +59,13 @@ class SettingsPageAssets {
 	private $country;
 
 	/**
+	 * Whether Pay Later button is enabled either for checkout, cart or product page.
+	 *
+	 * @var bool
+	 */
+	protected $is_pay_later_button_enabled;
+
+	/**
 	 * Assets constructor.
 	 *
 	 * @param string             $module_url The url of this module.
@@ -67,6 +74,7 @@ class SettingsPageAssets {
 	 * @param string             $client_id The PayPal SDK client ID.
 	 * @param string             $currency 3-letter currency code of the shop.
 	 * @param string             $country 2-letter country code of the shop.
+	 * @param bool               $is_pay_later_button_enabled Whether Pay Later button is enabled either for checkout, cart or product page.
 	 */
 	public function __construct(
 		string $module_url,
@@ -74,14 +82,16 @@ class SettingsPageAssets {
 		SubscriptionHelper $subscription_helper,
 		string $client_id,
 		string $currency,
-		string $country
+		string $country,
+		bool $is_pay_later_button_enabled
 	) {
-		$this->module_url          = $module_url;
-		$this->version             = $version;
-		$this->subscription_helper = $subscription_helper;
-		$this->client_id           = $client_id;
-		$this->currency            = $currency;
-		$this->country             = $country;
+		$this->module_url                  = $module_url;
+		$this->version                     = $version;
+		$this->subscription_helper         = $subscription_helper;
+		$this->client_id                   = $client_id;
+		$this->currency                    = $currency;
+		$this->country                     = $country;
+		$this->is_pay_later_button_enabled = $is_pay_later_button_enabled;
 	}
 
 	/**
@@ -161,6 +171,7 @@ class SettingsPageAssets {
 				'currency'                       => $this->currency,
 				'country'                        => $this->country,
 				'integration_date'               => PAYPAL_INTEGRATION_DATE,
+				'is_pay_later_button_enabled'    => $this->is_pay_later_button_enabled,
 			)
 		);
 	}

@@ -39,7 +39,7 @@ class SettingsStatus {
 	 * @return bool true if is enabled, otherwise false.
 	 * @throws NotFoundException When a setting was not found.
 	 */
-	public function pay_later_messaging_is_enabled(): bool {
+	public function is_pay_later_messaging_enabled(): bool {
 		$messaging_enabled  = $this->settings->has( 'pay_later_messaging_enabled' ) && $this->settings->get( 'pay_later_messaging_enabled' );
 		$selected_locations = $this->settings->has( 'pay_later_messaging_locations' ) ? $this->settings->get( 'pay_later_messaging_locations' ) : array();
 
@@ -53,8 +53,8 @@ class SettingsStatus {
 	 * @return bool true if is enabled, otherwise false.
 	 * @throws NotFoundException When a setting was not found.
 	 */
-	public function pay_later_messaging_is_enabled_for_location( string $location ): bool {
-		if ( ! $this->pay_later_messaging_is_enabled() ) {
+	public function is_pay_later_messaging_enabled_for_location( string $location ): bool {
+		if ( ! $this->is_pay_later_messaging_enabled() ) {
 			return false;
 		}
 
@@ -73,11 +73,11 @@ class SettingsStatus {
 	 * @return bool true if is enabled, otherwise false.
 	 * @throws NotFoundException When a setting was not found.
 	 */
-	public function pay_later_button_is_enabled(): bool {
-		$messaging_enabled  = $this->settings->has( 'pay_later_button_enabled' ) && $this->settings->get( 'pay_later_button_enabled' );
+	public function is_pay_later_button_enabled(): bool {
+		$pay_later_button_enabled  = $this->settings->has( 'pay_later_button_enabled' ) && $this->settings->get( 'pay_later_button_enabled' );
 		$selected_locations = $this->settings->has( 'pay_later_button_locations' ) ? $this->settings->get( 'pay_later_button_locations' ) : array();
 
-		return $messaging_enabled && ! empty( $selected_locations );
+		return $pay_later_button_enabled && ! empty( $selected_locations );
 	}
 
 	/**
@@ -87,8 +87,8 @@ class SettingsStatus {
 	 * @return bool true if is enabled, otherwise false.
 	 * @throws NotFoundException When a setting was not found.
 	 */
-	public function pay_later_button_is_enabled_for_location( string $location ): bool {
-		if ( ! $this->pay_later_button_is_enabled() ) {
+	public function is_pay_later_button_enabled_for_location( string $location ): bool {
+		if ( ! $this->is_pay_later_button_enabled() ) {
 			return false;
 		}
 
@@ -108,8 +108,8 @@ class SettingsStatus {
 	 * @return bool true if is enabled, otherwise false.
 	 * @throws NotFoundException When a setting was not found.
 	 */
-	public function pay_later_button_is_enabled_for_context( string $context ): bool {
-		if ( ! $this->pay_later_button_is_enabled() ) {
+	public function is_pay_later_button_enabled_for_context( string $context ): bool {
+		if ( ! $this->is_pay_later_button_enabled() ) {
 			return false;
 		}
 
@@ -119,9 +119,9 @@ class SettingsStatus {
 			return false;
 		}
 
-		$enabled_for_current_location = $this->pay_later_button_is_enabled_for_location( $context );
-		$enabled_for_product          = $this->pay_later_button_is_enabled_for_location( 'product' );
-		$enabled_for_mini_cart        = $this->pay_later_button_is_enabled_for_location( 'mini-cart' );
+		$enabled_for_current_location = $this->is_pay_later_button_enabled_for_location( $context );
+		$enabled_for_product          = $this->is_pay_later_button_enabled_for_location( 'product' );
+		$enabled_for_mini_cart        = $this->is_pay_later_button_enabled_for_location( 'mini-cart' );
 
 		return $context === 'product' ? $enabled_for_product || $enabled_for_mini_cart : $enabled_for_current_location;
 	}
