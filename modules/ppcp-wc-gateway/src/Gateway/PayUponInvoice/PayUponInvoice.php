@@ -251,16 +251,24 @@ class PayUponInvoice {
 
 					$order = $this->pui_order_endpoint->order( $order_id );
 
-					$payment_instructions = array(
-						$order->payment_source->pay_upon_invoice->payment_reference,
-						$order->payment_source->pay_upon_invoice->deposit_bank_details,
-					);
-					$wc_order->update_meta_data(
-						'ppcp_ratepay_payment_instructions_payment_reference',
-						$payment_instructions
-					);
-					$wc_order->save_meta_data();
-					$this->logger->info( "Ratepay payment instructions added to order #{$wc_order->get_id()}." );
+					if (
+						property_exists( $order, 'payment_source' )
+						&& property_exists( $order->payment_source, 'pay_upon_invoice' )
+						&& property_exists( $order->payment_source->pay_upon_invoice, 'payment_reference' )
+						&& property_exists( $order->payment_source->pay_upon_invoice, 'deposit_bank_details' )
+					) {
+
+						$payment_instructions = array(
+							$order->payment_source->pay_upon_invoice->payment_reference,
+							$order->payment_source->pay_upon_invoice->deposit_bank_details,
+						);
+						$wc_order->update_meta_data(
+							'ppcp_ratepay_payment_instructions_payment_reference',
+							$payment_instructions
+						);
+						$wc_order->save_meta_data();
+						$this->logger->info( "Ratepay payment instructions added to order #{$wc_order->get_id()}." );
+					}
 
 					$capture   = $this->capture_factory->from_paypal_response( $order->purchase_units[0]->payments->captures[0] );
 					$breakdown = $capture->seller_receivable_breakdown();

@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Compat\PPEC;
 
+use stdClass;
 use WooCommerce\PayPalCommerce\Subscription\RenewalHandler;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 
@@ -125,7 +126,7 @@ class SubscriptionsHandler {
 			$billing_agreement_id = $order->get_meta( '_ppec_billing_agreement_id', true );
 
 			if ( $billing_agreement_id ) {
-				$token = new PaymentToken( $billing_agreement_id, 'BILLING_AGREEMENT', new \stdClass() );
+				$token = new PaymentToken( $billing_agreement_id, new stdClass(), 'BILLING_AGREEMENT' );
 			}
 		}
 
