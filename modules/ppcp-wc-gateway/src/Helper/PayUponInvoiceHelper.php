@@ -60,6 +60,12 @@ class PayUponInvoiceHelper {
 			return false;
 		}
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$shipping_country = wc_clean( wp_unslash( $_POST['s_country'] ?? '' ) );
+		if ( $shipping_country && 'DE' !== $shipping_country ) {
+			return false;
+		}
+
 		if ( ! $this->is_valid_currency() ) {
 			return false;
 		}
