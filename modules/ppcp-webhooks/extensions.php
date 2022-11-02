@@ -23,7 +23,12 @@ return array(
 				),
 				'requirements' => array(),
 				'gateway'      => Settings::CONNECTION_TAB_ID,
-				'description'  => __( 'Status of the webhooks subscription.', 'woocommerce-paypal-payments' ),
+				'description'  => sprintf(
+				// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+					__( 'Status of the webhooks subscription. More information about the webhooks is available in the %1$sWebhook Status documentation%2$s.', 'woocommerce-paypal-payments' ),
+					'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#webhook-status" target="_blank">',
+					'</a>'
+				),
 			),
 			'webhooks_list'          => array(
 				'title'        => __( 'Subscribed webhooks', 'woocommerce-paypal-payments' ),

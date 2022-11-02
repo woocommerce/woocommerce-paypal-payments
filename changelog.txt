@@ -1,5 +1,21 @@
 *** Changelog ***
 
+= 1.9.5 - 2022-11-01 =
+* Fix - Invalid tracking number in logs when adding tracking #903
+* Fix - Tracking on Connection tab always enabled #900
+* Fix - PUI payment instructions printed in the refund email #873
+* Fix - Fix `thankyou_order_received` filter usage #899
+* Enhancement - Add SCA payment indicator for credit card renewals #847
+* Enhancement - Rename plugin settings tabs #893
+* Enhancement - Hide order button via class #921
+* Enhancement - Tracking integration compatibility with Germanized plugin #883
+* Enhancement - Onboarding buttons must be clicked multiple times after using PUI checkbox #851
+* Enhancement - Ratepay payment instructions added to non Pay upon Invoice orders #892
+* Enhancement - During PayPal express checkout PUI js file is loaded #905
+* Enhancement - PayPal Transaction Key meta field not populated for PUI payments #897
+* Enhancement - Onboard with PUI Checkbox automatically set when shop is set to Germany #876
+* Enhancement - Update all plugin strings #946
+
 = 1.9.4 - 2022-10-11 =
 * Add - Create new connection tab #801
 * Add - Functionality to choose subscription failure behavior #728

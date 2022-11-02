@@ -141,10 +141,6 @@ import Renderer from '../../../ppcp-button/resources/js/modules/Renderer/Rendere
 
         vaultingCheckboxes.forEach(node => node.addEventListener('change', togglePayLater));
 
-        if(PayPalCommerceGatewaySettings.is_subscriptions_plugin_active !== '1') {
-            document.getElementById('field-subscription_behavior_when_vault_fails').style.display = 'none';
-        }
-
         let oldScriptSettings = getPaypalScriptSettings();
 
         form.on('change', ':input', debounce(() => {
