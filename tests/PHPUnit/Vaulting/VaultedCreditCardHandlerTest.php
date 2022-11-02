@@ -73,9 +73,12 @@ class VaultedCreditCardHandlerTest extends TestCase
 		when('filter_input')->justReturn(1);
 		$wcOrder = Mockery::mock(\WC_Order::class);
 		$wcOrder->shouldReceive('get_id')->andReturn(1);
+		$wcOrder->shouldReceive('update_meta_data')
+			->with('payment_token_id', 'abc123')
+			->andReturn(1);
+		$wcOrder->shouldReceive('save')->andReturn(1);
 		$this->subscriptionHelper->shouldReceive('has_subscription')->andReturn(true);
 		$this->subscriptionHelper->shouldReceive('is_subscription_change_payment')->andReturn(true);
-		expect('update_post_meta')->with(1, 'payment_token_id', 'abc123');
 
 		$customer = Mockery::mock(WC_Customer::class);
 

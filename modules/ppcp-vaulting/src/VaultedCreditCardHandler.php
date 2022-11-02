@@ -151,7 +151,9 @@ class VaultedCreditCardHandler {
 			&& $this->subscription_helper->is_subscription_change_payment()
 			&& $saved_credit_card
 		) {
-			update_post_meta( $wc_order->get_id(), 'payment_token_id', $saved_credit_card );
+			$wc_order->update_meta_data( 'payment_token_id', $saved_credit_card );
+			$wc_order->save();
+
 			return $wc_order;
 		}
 
