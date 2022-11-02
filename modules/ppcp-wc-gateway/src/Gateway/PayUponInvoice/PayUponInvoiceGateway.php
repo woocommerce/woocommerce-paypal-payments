@@ -17,10 +17,12 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
+use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CheckoutHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 
 /**
  * Class PayUponInvoiceGateway.
@@ -88,6 +90,20 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	protected $checkout_helper;
 
 	/**
+	 * The onboarding state.
+	 *
+	 * @var State
+	 */
+	protected $state;
+
+	/**
+	 * The refund processor.
+	 *
+	 * @var RefundProcessor
+	 */
+	protected $refund_processor;
+
+	/**
 	 * PayUponInvoiceGateway constructor.
 	 *
 	 * @param PayUponInvoiceOrderEndpoint $order_endpoint The order endpoint.
@@ -98,6 +114,8 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 	 * @param LoggerInterface             $logger The logger.
 	 * @param PayUponInvoiceHelper        $pui_helper The PUI helper.
 	 * @param CheckoutHelper              $checkout_helper The checkout helper.
+	 * @param State                       $state The onboarding state.
+	 * @param RefundProcessor             $refund_processor The refund processor.
 	 */
 	public function __construct(
 		PayUponInvoiceOrderEndpoint $order_endpoint,
@@ -107,7 +125,9 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 		TransactionUrlProvider $transaction_url_provider,
 		LoggerInterface $logger,
 		PayUponInvoiceHelper $pui_helper,
-		CheckoutHelper $checkout_helper
+		CheckoutHelper $checkout_helper,
+		State $state,
+		RefundProcessor $refund_processor
 	) {
 		$this->id = self::ID;
 
@@ -137,6 +157,12 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 		$this->transaction_url_provider = $transaction_url_provider;
 		$this->pui_helper               = $pui_helper;
 		$this->checkout_helper          = $checkout_helper;
+
+		$this->state = $state;
+		if ( $state->current_state() === State::STATE_ONBOARDED ) {
+			$this->supports = array( 'refunds' );
+		}
+		$this->refund_processor = $refund_processor;
 	}
 
 	/**
@@ -274,6 +300,22 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 				'redirect' => wc_get_checkout_url(),
 			);
 		}
+	}
+
+	/**
+	 * Process refund.
+	 *
+	 * @param  int    $order_id Order ID.
+	 * @param  float  $amount Refund amount.
+	 * @param  string $reason Refund reason.
+	 * @return boolean True or false based on success, or a WP_Error object.
+	 */
+	public function process_refund( $order_id, $amount = null, $reason = '' ) {
+		$order = wc_get_order( $order_id );
+		if ( ! is_a( $order, \WC_Order::class ) ) {
+			return false;
+		}
+		return $this->refund_processor->process( $order, (float) $amount, (string) $reason );
 	}
 
 	/**
