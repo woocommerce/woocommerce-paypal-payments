@@ -70,7 +70,7 @@ class VaultedCreditCardHandlerTest extends TestCase
 
 	public function testHandlePaymentChangingPayment()
 	{
-		when('filter_input')->justReturn(1);
+		$_POST['woocommerce_change_payment'] = 1;
 		$wcOrder = Mockery::mock(\WC_Order::class);
 		$wcOrder->shouldReceive('get_id')->andReturn(1);
 		$wcOrder->shouldReceive('update_meta_data')
@@ -88,6 +88,8 @@ class VaultedCreditCardHandlerTest extends TestCase
 
 	public function testHandlePayment()
 	{
+		$_POST['woocommerce_change_payment'] = null;
+
 		$wcOrder = Mockery::mock(\WC_Order::class);
 		$wcOrder->shouldReceive('get_id')->andReturn(1);
 		$wcOrder->shouldReceive('get_customer_id')->andReturn(1);

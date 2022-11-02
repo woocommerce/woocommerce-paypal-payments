@@ -100,7 +100,8 @@ class SubscriptionModule implements ModuleInterface {
 		add_filter(
 			'ppcp_create_order_request_body_data',
 			function( array $data ) use ( $c ) {
-				$wc_order_action = filter_input( INPUT_POST, 'wc_order_action', FILTER_SANITIZE_STRING ) ?? '';
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing
+				$wc_order_action = wc_clean( wp_unslash( $_POST['wc_order_action'] ?? '' ) );
 				if (
 					$wc_order_action === 'wcs_process_renewal'
 					&& isset( $data['payment_source']['token'] ) && $data['payment_source']['token']['type'] === 'PAYMENT_METHOD_TOKEN'
@@ -216,7 +217,7 @@ class SubscriptionModule implements ModuleInterface {
 			&& PayPalGateway::ID === $id
 			&& $subscription_helper->is_subscription_change_payment()
 		) {
-				$tokens = $payment_token_repository->all_for_user_id( get_current_user_id() );
+			$tokens = $payment_token_repository->all_for_user_id( get_current_user_id() );
 			if ( ! $tokens || ! $payment_token_repository->tokens_contains_paypal( $tokens ) ) {
 				return esc_html__(
 					'No PayPal payments saved, in order to use a saved payment you first need to create it through a purchase.',
@@ -224,10 +225,10 @@ class SubscriptionModule implements ModuleInterface {
 				);
 			}
 
-				$output = sprintf(
-					'<p class="form-row form-row-wide"><label>%1$s</label><select id="saved-paypal-payment" name="saved_paypal_payment">',
-					esc_html__( 'Select a saved PayPal payment', 'woocommerce-paypal-payments' )
-				);
+			$output = sprintf(
+				'<p class="form-row form-row-wide"><label>%1$s</label><select id="saved-paypal-payment" name="saved_paypal_payment">',
+				esc_html__( 'Select a saved PayPal payment', 'woocommerce-paypal-payments' )
+			);
 			foreach ( $tokens as $token ) {
 				if ( isset( $token->source()->paypal ) ) {
 					$output .= sprintf(
