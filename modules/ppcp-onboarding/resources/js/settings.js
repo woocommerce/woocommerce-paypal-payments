@@ -233,6 +233,7 @@ document.addEventListener(
                     '#field-button_label',
                     '#field-button_color',
                     '#field-button_shape',
+                    '#field-button_preview',
                 ]
             );
 
@@ -256,6 +257,7 @@ document.addEventListener(
                     '#field-button_product_label',
                     '#field-button_product_color',
                     '#field-button_product_shape',
+                    '#field-button_product_preview',
                 ]
             );
 
@@ -280,6 +282,7 @@ document.addEventListener(
                     '#field-button_mini-cart_color',
                     '#field-button_mini-cart_shape',
                     '#field-button_mini-cart_height',
+                    '#field-button_mini-cart_preview',
                 ]
             );
 
@@ -291,6 +294,7 @@ document.addEventListener(
                     '#field-button_cart_label',
                     '#field-button_cart_color',
                     '#field-button_cart_shape',
+                    '#field-button_cart_preview',
                 ]
             );
             groupToggle(
