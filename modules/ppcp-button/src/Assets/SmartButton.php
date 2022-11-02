@@ -351,7 +351,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @throws NotFoundException When a setting was not found.
 	 */
 	private function render_message_wrapper_registrar(): bool {
-		if ( ! $this->settings_status->pay_later_messaging_is_enabled() ) {
+		if ( ! $this->settings_status->is_pay_later_messaging_enabled() ) {
 			return false;
 		}
 
@@ -603,7 +603,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @throws NotFoundException When a setting was not found.
 	 */
 	private function message_values(): array {
-		if ( ! $this->settings_status->pay_later_messaging_is_enabled() ) {
+		if ( ! $this->settings_status->is_pay_later_messaging_enabled() ) {
 			return array();
 		}
 
@@ -954,7 +954,7 @@ class SmartButton implements SmartButtonInterface {
 			$disable_funding = $all_sources;
 		}
 
-		if ( ! $this->settings_status->pay_later_button_is_enabled_for_context( $this->context() ) ) {
+		if ( ! $this->settings_status->is_pay_later_button_enabled_for_context( $this->context() ) ) {
 			$disable_funding[] = 'credit';
 		}
 
@@ -963,7 +963,7 @@ class SmartButton implements SmartButtonInterface {
 		}
 
 		$enable_funding = array( 'venmo' );
-		if ( $this->settings_status->pay_later_messaging_is_enabled() || ! in_array( 'credit', $disable_funding, true ) ) {
+		if ( $this->settings_status->is_pay_later_messaging_enabled() || ! in_array( 'credit', $disable_funding, true ) ) {
 			$enable_funding[] = 'paylater';
 		}
 
@@ -1061,7 +1061,7 @@ class SmartButton implements SmartButtonInterface {
 			$this->context() === 'product'
 			&& (
 				( $this->settings->has( 'button_product_enabled' ) && $this->settings->get( 'button_product_enabled' ) ) ||
-				( $this->settings_status->pay_later_messaging_is_enabled_for_location( 'product' ) )
+				( $this->settings_status->is_pay_later_messaging_enabled_for_location( 'product' ) )
 			)
 		) {
 			$load_buttons = true;
@@ -1077,7 +1077,7 @@ class SmartButton implements SmartButtonInterface {
 			$this->context() === 'cart'
 			&& (
 				( $this->settings->has( 'button_cart_enabled' ) && $this->settings->get( 'button_cart_enabled' ) ) ||
-				( $this->settings_status->pay_later_messaging_is_enabled_for_location( 'cart' ) )
+				( $this->settings_status->is_pay_later_messaging_enabled_for_location( 'cart' ) )
 			)
 		) {
 			$load_buttons = true;
