@@ -232,7 +232,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'gateway'      => Settings::PAY_LATER_TAB_ID,
 		),
 
-		// Single product
+		// Single product.
 		'pay_later_product_messaging_heading'             => array(
 			'heading'      => __( 'Pay Later Messaging on Single Product', 'woocommerce-paypal-payments' ),
 			'type'         => 'ppcp-heading',
@@ -356,7 +356,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'gateway'      => Settings::PAY_LATER_TAB_ID,
 		),
 
-		// Cart
+		// Cart.
 		'pay_later_cart_messaging_heading'                => array(
 			'heading'      => __( 'Pay Later Messaging on Cart', 'woocommerce-paypal-payments' ),
 			'type'         => 'ppcp-heading',
@@ -480,7 +480,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'gateway'      => Settings::PAY_LATER_TAB_ID,
 		),
 
-		// Checkout
+		// Checkout.
 		'pay_later_checkout_messaging_heading'            => array(
 			'heading'      => __( 'Pay Later Messaging on Checkout', 'woocommerce-paypal-payments' ),
 			'type'         => 'ppcp-heading',

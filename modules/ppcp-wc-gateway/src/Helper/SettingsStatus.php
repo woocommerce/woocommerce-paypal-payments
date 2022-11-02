@@ -74,8 +74,8 @@ class SettingsStatus {
 	 * @throws NotFoundException When a setting was not found.
 	 */
 	public function is_pay_later_button_enabled(): bool {
-		$pay_later_button_enabled  = $this->settings->has( 'pay_later_button_enabled' ) && $this->settings->get( 'pay_later_button_enabled' );
-		$selected_locations = $this->settings->has( 'pay_later_button_locations' ) ? $this->settings->get( 'pay_later_button_locations' ) : array();
+		$pay_later_button_enabled = $this->settings->has( 'pay_later_button_enabled' ) && $this->settings->get( 'pay_later_button_enabled' );
+		$selected_locations       = $this->settings->has( 'pay_later_button_locations' ) ? $this->settings->get( 'pay_later_button_locations' ) : array();
 
 		return $pay_later_button_enabled && ! empty( $selected_locations );
 	}

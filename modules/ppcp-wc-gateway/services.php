@@ -988,15 +988,15 @@ return array(
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
-            'button_product_preview'                 => array(
-                'type'         => 'ppcp-text',
-                'text'         => $render_preview_element( 'ppcpProductButtonPreview' ),
-                'screens'      => array(
-                    State::STATE_ONBOARDED,
-                ),
-                'requirements' => array(),
-                'gateway'      => 'paypal',
-            ),
+			'button_product_preview'                 => array(
+				'type'         => 'ppcp-text',
+				'text'         => $render_preview_element( 'ppcpProductButtonPreview' ),
+				'screens'      => array(
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
 
 			// Cart settings.
 			'button_cart_heading'                    => array(
@@ -1139,15 +1139,15 @@ return array(
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
-            'button_cart_preview'                    => array(
-                'type'         => 'ppcp-text',
-                'text'         => $render_preview_element( 'ppcpCartButtonPreview' ),
-                'screens'      => array(
-                    State::STATE_ONBOARDED,
-                ),
-                'requirements' => array(),
-                'gateway'      => 'paypal',
-            ),
+			'button_cart_preview'                    => array(
+				'type'         => 'ppcp-text',
+				'text'         => $render_preview_element( 'ppcpCartButtonPreview' ),
+				'screens'      => array(
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
 
 			// Mini cart settings.
 			'button_mini-cart_heading'               => array(
