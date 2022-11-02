@@ -503,13 +503,18 @@ class PayUponInvoice {
 				) {
 					$error_messages = array();
 					$pui_gateway    = WC()->payment_gateways->payment_gateways()[ PayUponInvoiceGateway::ID ];
+					if ( $pui_gateway->get_option( 'brand_name' ) === '' ) {
+						$error_messages[] = esc_html__( 'Could not enable gateway because "Brand name" field is empty.', 'woocommerce-paypal-payments' );
+					}
 					if ( $pui_gateway->get_option( 'logo_url' ) === '' ) {
 						$error_messages[] = esc_html__( 'Could not enable gateway because "Logo URL" field is empty.', 'woocommerce-paypal-payments' );
 					}
 					if ( $pui_gateway->get_option( 'customer_service_instructions' ) === '' ) {
 						$error_messages[] = esc_html__( 'Could not enable gateway because "Customer service instructions" field is empty.', 'woocommerce-paypal-payments' );
 					}
-					if ( count( $error_messages ) > 0 ) { ?>
+					if ( count( $error_messages ) > 0 ) {
+						$pui_gateway->update_option( 'enabled', 'no' );
+						?>
 						<div class="notice notice-error">
 							<?php
 							array_map(
