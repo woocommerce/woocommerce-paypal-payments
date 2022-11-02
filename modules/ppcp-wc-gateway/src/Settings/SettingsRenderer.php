@@ -514,7 +514,7 @@ $data_rows_html
 	/**
 	 * Renders the DCC onboarding info.
 	 */
-	private function render_dcc_onboarding_info() {
+	private function render_dcc_onboarding_info(): void {
 		?>
 <tr>
 	<th><?php esc_html_e( 'Onboarding', 'woocommerce-paypal-payments' ); ?></th>

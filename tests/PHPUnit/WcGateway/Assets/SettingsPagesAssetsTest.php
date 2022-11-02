@@ -16,7 +16,7 @@ class SettingsPagesAssetsTest extends TestCase
 		$modulePath = '/var/www/html/wp-content/plugins/woocommerce-paypal-payments/modules/ppcp-wc-gateway';
 		$subscriptionsHelper = Mockery::mock(SubscriptionHelper::class);
 
-		$testee = new SettingsPageAssets($moduleUrl, $modulePath, $subscriptionsHelper, '123', 'EUR', 'DE');
+		$testee = new SettingsPageAssets($moduleUrl, $modulePath, $subscriptionsHelper, '123', 'EUR', 'DE', true);
 
 		when('is_admin')
 			->justReturn(true);

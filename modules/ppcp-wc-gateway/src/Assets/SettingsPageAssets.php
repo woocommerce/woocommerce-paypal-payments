@@ -141,7 +141,7 @@ class SettingsPageAssets {
 	/**
 	 * Register assets for admin pages.
 	 */
-	private function register_admin_assets() {
+	private function register_admin_assets(): void {
 		wp_enqueue_style(
 			'ppcp-gateway-settings',
 			trailingslashit( $this->module_url ) . 'assets/css/gateway-settings.css',
