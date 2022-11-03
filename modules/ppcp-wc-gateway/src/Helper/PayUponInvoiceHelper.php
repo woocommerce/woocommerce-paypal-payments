@@ -60,15 +60,11 @@ class PayUponInvoiceHelper {
 			return false;
 		}
 
-		if ( ! $this->is_valid_product() ) {
-			return false;
-		}
-
-		if ( ! $this->is_valid_currency() ) {
-			return false;
-		}
-
-		if ( ! $this->checkout_helper->is_checkout_amount_allowed( 5, 2500 ) ) {
+		if (
+			! $this->is_valid_product()
+			|| ! $this->is_valid_currency()
+			|| ! $this->checkout_helper->is_checkout_amount_allowed( 5, 2500 )
+		) {
 			return false;
 		}
 
