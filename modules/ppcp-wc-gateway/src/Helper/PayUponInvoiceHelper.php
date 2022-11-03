@@ -92,14 +92,20 @@ class PayUponInvoiceHelper {
 			$items = $cart->get_cart_contents();
 			foreach ( $items as $item ) {
 				$product = wc_get_product( $item['product_id'] );
-				if ( ! $this->checkout_helper->is_physical_product( $product ) ) {
+				if ( $product && ! $this->checkout_helper->is_physical_product( $product ) ) {
 					return false;
 				}
 			}
 		}
 
 		if ( is_wc_endpoint_url( 'order-pay' ) ) {
+			/**
+			 * Needed for WordPress `query_vars`.
+			 *
+			 * @psalm-suppress InvalidGlobal
+			 */
 			global $wp;
+
 			if ( isset( $wp->query_vars['order-pay'] ) && absint( $wp->query_vars['order-pay'] ) > 0 ) {
 				$order_id = absint( $wp->query_vars['order-pay'] );
 				$order    = wc_get_order( $order_id );
@@ -107,7 +113,7 @@ class PayUponInvoiceHelper {
 					foreach ( $order->get_items() as $item_id => $item ) {
 						if ( is_a( $item, WC_Order_Item_Product::class ) ) {
 							$product = wc_get_product( $item->get_product_id() );
-							if ( ! $this->checkout_helper->is_physical_product( $product ) ) {
+							if ( $product && ! $this->checkout_helper->is_physical_product( $product ) ) {
 								return false;
 							}
 						}
