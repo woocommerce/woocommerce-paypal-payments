@@ -24,8 +24,12 @@ class PaymentSourceFactory {
 	 * @return PaymentSource
 	 */
 	public function from_wc_order( WC_Order $order, string $birth_date ) {
-		$address            = $order->get_address();
-		$phone              = filter_input( INPUT_POST, 'billing_phone', FILTER_SANITIZE_STRING ) ?? $address['phone'] ?: '';
+		$address = $order->get_address();
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$phone = wc_clean( wp_unslash( $_POST['billing_phone'] ?? '' ) );
+		if ( ! $phone ) {
+			$phone = $address['phone'] ?? '';
+		}
 		$phone_country_code = WC()->countries->get_country_calling_code( $address['country'] );
 		$phone_country_code = is_array( $phone_country_code ) && ! empty( $phone_country_code ) ? $phone_country_code[0] : $phone_country_code;
 		if ( is_string( $phone_country_code ) && '' !== $phone_country_code ) {

@@ -143,15 +143,16 @@ class VaultedCreditCardHandler {
 		string $saved_credit_card,
 		WC_Order $wc_order
 	): WC_Order {
-
-		$change_payment = filter_input( INPUT_POST, 'woocommerce_change_payment', FILTER_SANITIZE_STRING );
 		if (
-			$change_payment
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing
+			isset( $_POST['woocommerce_change_payment'] )
 			&& $this->subscription_helper->has_subscription( $wc_order->get_id() )
 			&& $this->subscription_helper->is_subscription_change_payment()
 			&& $saved_credit_card
 		) {
-			update_post_meta( $wc_order->get_id(), 'payment_token_id', $saved_credit_card );
+			$wc_order->update_meta_data( 'payment_token_id', $saved_credit_card );
+			$wc_order->save();
+
 			return $wc_order;
 		}
 

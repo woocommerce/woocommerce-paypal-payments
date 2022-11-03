@@ -55,6 +55,8 @@ class CreditCardGatewayTest extends TestCase
 		$this->config->shouldReceive('has')->andReturn(true);
 		$this->config->shouldReceive('get')->andReturn('');
 
+		when('wc_clean')->returnArg();
+
 		$this->testee = new CreditCardGateway(
 			$this->settingsRenderer,
 			$this->orderProcessor,
@@ -94,7 +96,7 @@ class CreditCardGatewayTest extends TestCase
 		when('wc_get_order')->justReturn($wc_order);
 
 		$savedCreditCard = 'abc123';
-		when('filter_input')->justReturn($savedCreditCard);
+		$_POST['saved_credit_card'] = $savedCreditCard;
 
 		$this->vaultedCreditCardHandler
 			->shouldReceive('handle_payment')

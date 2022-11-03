@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Assets;
 
+use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
+
 /**
  * Class SettingsPageAssets
  */
@@ -29,14 +31,57 @@ class SettingsPageAssets {
 	private $version;
 
 	/**
+	 * The subscription helper.
+	 *
+	 * @var SubscriptionHelper
+	 */
+	protected $subscription_helper;
+
+	/**
+	 * The PayPal SDK client ID.
+	 *
+	 * @var string
+	 */
+	private $client_id;
+
+	/**
+	 * 3-letter currency code of the shop.
+	 *
+	 * @var string
+	 */
+	private $currency;
+
+	/**
+	 * 2-letter country code of the shop.
+	 *
+	 * @var string
+	 */
+	private $country;
+
+	/**
 	 * Assets constructor.
 	 *
-	 * @param string $module_url The url of this module.
-	 * @param string $version                            The assets version.
+	 * @param string             $module_url The url of this module.
+	 * @param string             $version                            The assets version.
+	 * @param SubscriptionHelper $subscription_helper The subscription helper.
+	 * @param string             $client_id The PayPal SDK client ID.
+	 * @param string             $currency 3-letter currency code of the shop.
+	 * @param string             $country 2-letter country code of the shop.
 	 */
-	public function __construct( string $module_url, string $version ) {
-		$this->module_url = $module_url;
-		$this->version    = $version;
+	public function __construct(
+		string $module_url,
+		string $version,
+		SubscriptionHelper $subscription_helper,
+		string $client_id,
+		string $currency,
+		string $country
+	) {
+		$this->module_url          = $module_url;
+		$this->version             = $version;
+		$this->subscription_helper = $subscription_helper;
+		$this->client_id           = $client_id;
+		$this->currency            = $currency;
+		$this->country             = $country;
 	}
 
 	/**
@@ -72,13 +117,14 @@ class SettingsPageAssets {
 		}
 
 		$screen = get_current_screen();
-
-		$tab     = filter_input( INPUT_GET, 'tab', FILTER_SANITIZE_STRING );
-		$section = filter_input( INPUT_GET, 'section', FILTER_SANITIZE_STRING );
-
-		if ( ! 'woocommerce_page_wc-settings' === $screen->id ) {
+		if ( $screen->id !== 'woocommerce_page_wc-settings' ) {
 			return false;
 		}
+
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		$tab     = wc_clean( wp_unslash( $_GET['tab'] ?? '' ) );
+		$section = wc_clean( wp_unslash( $_GET['section'] ?? '' ) );
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		return 'checkout' === $tab && 'ppcp-gateway' === $section;
 	}
@@ -87,6 +133,13 @@ class SettingsPageAssets {
 	 * Register assets for admin pages.
 	 */
 	private function register_admin_assets() {
+		wp_enqueue_style(
+			'ppcp-gateway-settings',
+			trailingslashit( $this->module_url ) . 'assets/css/gateway-settings.css',
+			array(),
+			$this->version
+		);
+
 		wp_enqueue_script(
 			'ppcp-gateway-settings',
 			trailingslashit( $this->module_url ) . 'assets/js/gateway-settings.js',
@@ -95,11 +148,21 @@ class SettingsPageAssets {
 			true
 		);
 
-		// Intent is configured with Authorize and Capture Virtual-Only Orders is not set.
+		/**
+		 * Psalm cannot find it for some reason.
+		 *
+		 * @psalm-suppress UndefinedConstant
+		 */
 		wp_localize_script(
 			'ppcp-gateway-settings',
 			'PayPalCommerceGatewaySettings',
-			array()
+			array(
+				'is_subscriptions_plugin_active' => $this->subscription_helper->plugin_is_active(),
+				'client_id'                      => $this->client_id,
+				'currency'                       => $this->currency,
+				'country'                        => $this->country,
+				'integration_date'               => PAYPAL_INTEGRATION_DATE,
+			)
 		);
 	}
 }

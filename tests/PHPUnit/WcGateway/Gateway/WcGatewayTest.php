@@ -46,6 +46,7 @@ class WcGatewayTest extends TestCase
 		expect('is_admin')->andReturnUsing(function () {
 			return $this->isAdmin;
 		});
+		when('wc_clean')->returnArg();
 
 		$this->settingsRenderer = Mockery::mock(SettingsRenderer::class);
 		$this->orderProcessor = Mockery::mock(OrderProcessor::class);

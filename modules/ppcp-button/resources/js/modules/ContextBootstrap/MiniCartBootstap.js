@@ -1,10 +1,10 @@
-import ErrorHandler from '../ErrorHandler';
 import CartActionHandler from '../ActionHandler/CartActionHandler';
 
 class MiniCartBootstap {
-    constructor(gateway, renderer) {
+    constructor(gateway, renderer, errorHandler) {
         this.gateway = gateway;
         this.renderer = renderer;
+        this.errorHandler = errorHandler;
         this.actionHandler = null;
     }
 
@@ -12,7 +12,7 @@ class MiniCartBootstap {
 
         this.actionHandler = new CartActionHandler(
             PayPalCommerceGateway,
-            new ErrorHandler(this.gateway.labels.error.generic),
+            this.errorHandler,
         );
         this.render();
 

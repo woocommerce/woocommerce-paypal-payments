@@ -120,8 +120,11 @@ class SubscriptionHelper {
 	 * @return bool Whether page is change subscription or not.
 	 */
 	public function is_subscription_change_payment(): bool {
-		$pay_for_order         = filter_input( INPUT_GET, 'pay_for_order', FILTER_SANITIZE_STRING );
-		$change_payment_method = filter_input( INPUT_GET, 'change_payment_method', FILTER_SANITIZE_STRING );
-		return ( isset( $pay_for_order ) && isset( $change_payment_method ) );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		if ( ! isset( $_GET['pay_for_order'] ) || ! isset( $_GET['change_payment_method'] ) ) {
+			return false;
+		}
+
+		return true;
 	}
 }

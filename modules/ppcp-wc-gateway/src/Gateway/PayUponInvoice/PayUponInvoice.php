@@ -251,16 +251,24 @@ class PayUponInvoice {
 
 					$order = $this->pui_order_endpoint->order( $order_id );
 
-					$payment_instructions = array(
-						$order->payment_source->pay_upon_invoice->payment_reference,
-						$order->payment_source->pay_upon_invoice->deposit_bank_details,
-					);
-					$wc_order->update_meta_data(
-						'ppcp_ratepay_payment_instructions_payment_reference',
-						$payment_instructions
-					);
-					$wc_order->save_meta_data();
-					$this->logger->info( "Ratepay payment instructions added to order #{$wc_order->get_id()}." );
+					if (
+						property_exists( $order, 'payment_source' )
+						&& property_exists( $order->payment_source, 'pay_upon_invoice' )
+						&& property_exists( $order->payment_source->pay_upon_invoice, 'payment_reference' )
+						&& property_exists( $order->payment_source->pay_upon_invoice, 'deposit_bank_details' )
+					) {
+
+						$payment_instructions = array(
+							$order->payment_source->pay_upon_invoice->payment_reference,
+							$order->payment_source->pay_upon_invoice->deposit_bank_details,
+						);
+						$wc_order->update_meta_data(
+							'ppcp_ratepay_payment_instructions_payment_reference',
+							$payment_instructions
+						);
+						$wc_order->save_meta_data();
+						$this->logger->info( "Ratepay payment instructions added to order #{$wc_order->get_id()}." );
+					}
 
 					$capture   = $this->capture_factory->from_paypal_response( $order->purchase_units[0]->payments->captures[0] );
 					$breakdown = $capture->seller_receivable_breakdown();
@@ -409,7 +417,8 @@ class PayUponInvoice {
 		add_action(
 			'woocommerce_after_checkout_validation',
 			function( array $fields, WP_Error $errors ) {
-				$payment_method = filter_input( INPUT_POST, 'payment_method', FILTER_SANITIZE_STRING );
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing
+				$payment_method = wc_clean( wp_unslash( $_POST['payment_method'] ?? '' ) );
 				if ( PayUponInvoiceGateway::ID !== $payment_method ) {
 					return;
 				}
@@ -418,12 +427,14 @@ class PayUponInvoice {
 					$errors->add( 'validation', __( 'Billing country not available.', 'woocommerce-paypal-payments' ) );
 				}
 
-				$birth_date = filter_input( INPUT_POST, 'billing_birth_date', FILTER_SANITIZE_STRING );
-				if ( ( $birth_date && ! $this->checkout_helper->validate_birth_date( $birth_date ) ) || $birth_date === '' ) {
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing
+				$birth_date = wc_clean( wp_unslash( $_POST['billing_birth_date'] ?? '' ) );
+				if ( ( $birth_date && is_string( $birth_date ) && ! $this->checkout_helper->validate_birth_date( $birth_date ) ) || $birth_date === '' ) {
 					$errors->add( 'validation', __( 'Invalid birth date.', 'woocommerce-paypal-payments' ) );
 				}
 
-				$national_number = filter_input( INPUT_POST, 'billing_phone', FILTER_SANITIZE_STRING );
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing
+				$national_number = wc_clean( wp_unslash( $_POST['billing_phone'] ?? '' ) );
 				if ( ! $national_number ) {
 					$errors->add( 'validation', __( 'Phone field cannot be empty.', 'woocommerce-paypal-payments' ) );
 				}
@@ -484,18 +495,9 @@ class PayUponInvoice {
 		add_action(
 			'woocommerce_update_options_checkout_ppcp-pay-upon-invoice-gateway',
 			function () {
-				$customer_service_instructions = filter_input( INPUT_POST, 'woocommerce_ppcp-pay-upon-invoice-gateway_customer_service_instructions', FILTER_SANITIZE_STRING );
-				if ( '' === $customer_service_instructions ) {
-					$gateway_settings = get_option( 'woocommerce_ppcp-pay-upon-invoice-gateway_settings' );
-					$gateway_enabled  = $gateway_settings['enabled'] ?? '';
-					if ( 'yes' === $gateway_enabled ) {
-						$gateway_settings['enabled'] = 'no';
-						update_option( 'woocommerce_ppcp-pay-upon-invoice-gateway_settings', $gateway_settings );
-
-						$redirect_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-pay-upon-invoice-gateway' );
-						wp_safe_redirect( $redirect_url );
-						exit;
-					}
+				$gateway = WC()->payment_gateways()->payment_gateways()[ PayUponInvoiceGateway::ID ];
+				if ( $gateway && $gateway->get_option( 'customer_service_instructions' ) === '' ) {
+					$gateway->update_option( 'enabled', 'no' );
 				}
 			}
 		);
@@ -509,13 +511,18 @@ class PayUponInvoice {
 				) {
 					$error_messages = array();
 					$pui_gateway    = WC()->payment_gateways->payment_gateways()[ PayUponInvoiceGateway::ID ];
+					if ( $pui_gateway->get_option( 'brand_name' ) === '' ) {
+						$error_messages[] = esc_html__( 'Could not enable gateway because "Brand name" field is empty.', 'woocommerce-paypal-payments' );
+					}
 					if ( $pui_gateway->get_option( 'logo_url' ) === '' ) {
 						$error_messages[] = esc_html__( 'Could not enable gateway because "Logo URL" field is empty.', 'woocommerce-paypal-payments' );
 					}
 					if ( $pui_gateway->get_option( 'customer_service_instructions' ) === '' ) {
 						$error_messages[] = esc_html__( 'Could not enable gateway because "Customer service instructions" field is empty.', 'woocommerce-paypal-payments' );
 					}
-					if ( count( $error_messages ) > 0 ) { ?>
+					if ( count( $error_messages ) > 0 ) {
+						$pui_gateway->update_option( 'enabled', 'no' );
+						?>
 						<div class="notice notice-error">
 							<?php
 							array_map(
@@ -537,7 +544,8 @@ class PayUponInvoice {
 			'add_meta_boxes',
 			function( string $post_type ) {
 				if ( $post_type === 'shop_order' ) {
-					$post_id = filter_input( INPUT_GET, 'post', FILTER_SANITIZE_STRING );
+					// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+					$post_id = wc_clean( wp_unslash( $_GET['post'] ?? '' ) );
 					$order   = wc_get_order( $post_id );
 					if ( is_a( $order, WC_Order::class ) && $order->get_payment_method() === PayUponInvoiceGateway::ID ) {
 						$instructions = $order->get_meta( 'ppcp_ratepay_payment_instructions_payment_reference' );

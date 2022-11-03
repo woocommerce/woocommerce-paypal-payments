@@ -171,7 +171,11 @@ class OrderTrackingEndpoint {
 			throw $error;
 		}
 
-		update_post_meta( $order_id, '_ppcp_paypal_tracking_number', $data['tracking_number'] ?? '' );
+		$wc_order = wc_get_order( $order_id );
+		if ( is_a( $wc_order, WC_Order::class ) ) {
+			$wc_order->update_meta_data( '_ppcp_paypal_tracking_number', $data['tracking_number'] ?? '' );
+			$wc_order->save();
+		}
 
 		do_action( 'woocommerce_paypal_payments_after_tracking_is_added', $order_id, $response );
 	}
@@ -300,7 +304,11 @@ class OrderTrackingEndpoint {
 			throw $error;
 		}
 
-		update_post_meta( $order_id, '_ppcp_paypal_tracking_number', $data['tracking_number'] ?? '' );
+		$wc_order = wc_get_order( $order_id );
+		if ( is_a( $wc_order, WC_Order::class ) ) {
+			$wc_order->update_meta_data( '_ppcp_paypal_tracking_number', $data['tracking_number'] ?? '' );
+			$wc_order->save();
+		}
 
 		do_action( 'woocommerce_paypal_payments_after_tracking_is_updated', $order_id, $response );
 	}

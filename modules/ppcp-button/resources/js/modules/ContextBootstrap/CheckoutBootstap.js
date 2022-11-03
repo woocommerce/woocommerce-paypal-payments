@@ -1,4 +1,3 @@
-import ErrorHandler from '../ErrorHandler';
 import CheckoutActionHandler from '../ActionHandler/CheckoutActionHandler';
 import {setVisible, setVisibleByClass} from '../Helper/Hiding';
 import {
@@ -8,11 +7,12 @@ import {
 } from "../Helper/CheckoutMethodState";
 
 class CheckoutBootstap {
-    constructor(gateway, renderer, messages, spinner) {
+    constructor(gateway, renderer, messages, spinner, errorHandler) {
         this.gateway = gateway;
         this.renderer = renderer;
         this.messages = messages;
         this.spinner = spinner;
+        this.errorHandler = errorHandler;
 
         this.standardOrderButtonSelector = ORDER_BUTTON_SELECTOR;
     }
@@ -60,7 +60,7 @@ class CheckoutBootstap {
         }
         const actionHandler = new CheckoutActionHandler(
             PayPalCommerceGateway,
-            new ErrorHandler(this.gateway.labels.error.generic),
+            this.errorHandler,
             this.spinner
         );
 

@@ -1,12 +1,12 @@
-import ErrorHandler from '../ErrorHandler';
 import UpdateCart from "../Helper/UpdateCart";
 import SingleProductActionHandler from "../ActionHandler/SingleProductActionHandler";
 
 class SingleProductBootstap {
-    constructor(gateway, renderer, messages) {
+    constructor(gateway, renderer, messages, errorHandler) {
         this.gateway = gateway;
         this.renderer = renderer;
         this.messages = messages;
+        this.errorHandler = errorHandler;
     }
 
 
@@ -81,7 +81,7 @@ class SingleProductBootstap {
                 this.messages.hideMessages();
             },
             document.querySelector('form.cart'),
-            new ErrorHandler(this.gateway.labels.error.generic),
+            this.errorHandler,
         );
 
         this.renderer.render(
