@@ -232,7 +232,6 @@ class SmartButton implements SmartButtonInterface {
 	 * Registers the necessary action hooks to render the HTML depending on the settings.
 	 *
 	 * @return bool
-	 * @throws NotFoundException When a setting was not found.
 	 */
 	public function render_wrapper(): bool {
 		if ( $this->settings->has( 'enabled' ) && $this->settings->get( 'enabled' ) ) {
