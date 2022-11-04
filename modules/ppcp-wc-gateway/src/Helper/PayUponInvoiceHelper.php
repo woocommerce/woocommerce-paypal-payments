@@ -78,6 +78,39 @@ class PayUponInvoiceHelper {
 	}
 
 	/**
+	 * Checks whether pay for order is ready for PUI.
+	 *
+	 * @return bool
+	 */
+	public function is_pay_for_order_ready_for_pui(): bool {
+		/**
+		 * Needed for WordPress `query_vars`.
+		 *
+		 * @psalm-suppress InvalidGlobal
+		 */
+		global $wp;
+
+		$order_id = isset( $wp->query_vars['order-pay'] ) ? (int) $wp->query_vars['order-pay'] : 0;
+		if ( $order_id === 0 ) {
+			return false;
+		}
+
+		$order = wc_get_order( $order_id );
+		if ( ! is_a( $order, WC_Order::class ) ) {
+			return false;
+		}
+
+		$address = $order->get_address();
+		foreach ( $address as $key => $value ) {
+			if ( $value === '' ) {
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
 	 * Checks if currency is allowed for PUI.
 	 *
 	 * @return bool

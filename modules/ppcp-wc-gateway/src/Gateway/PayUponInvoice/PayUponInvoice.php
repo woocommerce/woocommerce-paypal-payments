@@ -459,6 +459,7 @@ class PayUponInvoice {
 				if (
 					! $this->pui_product_status->pui_is_active()
 					|| ! $this->pui_helper->is_checkout_ready_for_pui()
+					|| ! $this->pui_helper->is_pay_for_order_ready_for_pui()
 				) {
 					unset( $methods[ PayUponInvoiceGateway::ID ] );
 				}
