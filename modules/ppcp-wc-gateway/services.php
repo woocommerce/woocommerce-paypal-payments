@@ -426,7 +426,7 @@ return array(
 
 		$render_preview_element = function ( string $id ): string {
 			return '
-<div class="ppcp-button-preview">
+<div class="ppcp-preview ppcp-button-preview">
 	<h4>' . __( 'Preview', 'woocommerce-paypal-payments' ) . '</h4>
 	<div id="' . $id . '" class="ppcp-button-preview-inner"></div>
 </div>';

@@ -34,7 +34,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 
 	$render_preview_element = function ( string $id, string $type ): string {
 		return '
-<div class="ppcp-' . $type . '-preview pay-later">
+<div class="ppcp-preview ppcp-' . $type . '-preview pay-later">
 	<h4>' . __( 'Preview', 'woocommerce-paypal-payments' ) . '</h4>
 	<div id="' . $id . '" class="ppcp-' . $type . '-preview-inner"></div>
 </div>';

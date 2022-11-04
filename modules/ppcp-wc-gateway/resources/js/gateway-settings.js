@@ -6,15 +6,39 @@ import MessageRenderer from "../../../ppcp-button/resources/js/modules/Renderer/
 ;document.addEventListener(
     'DOMContentLoaded',
     () => {
-        const disabledCheckboxes = document.querySelectorAll(
-            '.ppcp-disabled-checkbox'
-        )
-
         function disableAll(nodeList){
             nodeList.forEach(node => node.setAttribute('disabled', 'true'))
         }
 
+        const disabledCheckboxes = document.querySelectorAll(
+            '.ppcp-disabled-checkbox'
+        )
+
+        disableAll( disabledCheckboxes )
+
         const form = jQuery('#mainform');
+
+        const payLaterButtonInput = document.querySelector('#ppcp-pay_later_button_enabled');
+
+        if (payLaterButtonInput) {
+            const payLaterButtonPreview = document.querySelector('.ppcp-button-preview.pay-later');
+
+            if (!payLaterButtonInput.checked) {
+                payLaterButtonPreview.classList.add('disabled')
+            }
+
+            if (payLaterButtonInput.classList.contains('ppcp-disabled-checkbox')) {
+                payLaterButtonPreview.style.display = 'none';
+            }
+
+            payLaterButtonInput.addEventListener('click', () => {
+                payLaterButtonPreview.classList.remove('disabled')
+
+                if (!payLaterButtonInput.checked) {
+                    payLaterButtonPreview.classList.add('disabled')
+                }
+            });
+        }
 
         function createButtonPreview(settingsCallback) {
             const render = (settings) => {
@@ -34,28 +58,6 @@ import MessageRenderer from "../../../ppcp-button/resources/js/modules/Renderer/
             };
 
             renderPreview(settingsCallback, render);
-        }
-
-        const payLaterButtonInput = document.querySelector('#ppcp-pay_later_button_enabled');
-
-        if (payLaterButtonInput) {
-            const payLaterButtonPreview = document.querySelector('.ppcp-button-preview.pay-later');
-
-            if (!payLaterButtonInput.checked) {
-                payLaterButtonPreview.classList.add('disabled')
-            }
-
-            if(payLaterButtonInput.classList.contains('ppcp-disabled-checkbox')) {
-                payLaterButtonPreview.style.display = 'none';
-            }
-
-            payLaterButtonInput.addEventListener('click', () => {
-                payLaterButtonPreview.classList.remove('disabled')
-
-                if (!payLaterButtonInput.checked) {
-                    payLaterButtonPreview.classList.add('disabled')
-                }
-            });
         }
 
         function getPaypalScriptSettings() {
@@ -88,21 +90,6 @@ import MessageRenderer from "../../../ppcp-button/resources/js/modules/Renderer/
                 })
                 .catch((error) => console.error('failed to load the PayPal JS SDK script', error));
         }
-
-        disableAll( disabledCheckboxes )
-
-        let oldScriptSettings = getPaypalScriptSettings();
-
-        form.on('change', ':input', debounce(() => {
-            const newSettings = getPaypalScriptSettings();
-            if (JSON.stringify(oldScriptSettings) === JSON.stringify(newSettings)) {
-                return;
-            }
-
-            loadPaypalScript(newSettings);
-
-            oldScriptSettings = newSettings;
-        }, 1000));
 
         function getButtonSettings(wrapperSelector, fields) {
             const layout = jQuery(fields['layout']).val();
@@ -208,53 +195,69 @@ import MessageRenderer from "../../../ppcp-button/resources/js/modules/Renderer/
             };
         }
 
-        const payLaterMessagingLocations = ['product', 'cart', 'checkout', 'general']
+        const payLaterMessagingLocations = ['product', 'cart', 'checkout', 'general'];
 
-        loadPaypalScript(oldScriptSettings, () => {
-            createButtonPreview(() => getButtonSettings('#ppcpCheckoutButtonPreview', {
-                'color': '#ppcp-button_color',
-                'shape': '#ppcp-button_shape',
-                'label': '#ppcp-button_label',
-                'tagline': '#ppcp-button_tagline',
-                'layout': '#ppcp-button_layout',
-            }));
-            createButtonPreview(() => getButtonSettings('#ppcpProductButtonPreview', {
-                'color': '#ppcp-button_product_color',
-                'shape': '#ppcp-button_product_shape',
-                'label': '#ppcp-button_product_label',
-                'tagline': '#ppcp-button_product_tagline',
-                'layout': '#ppcp-button_product_layout',
-            }));
-            createButtonPreview(() => getButtonSettings('#ppcpCartButtonPreview', {
-                'color': '#ppcp-button_cart_color',
-                'shape': '#ppcp-button_cart_shape',
-                'label': '#ppcp-button_cart_label',
-                'tagline': '#ppcp-button_cart_tagline',
-                'layout': '#ppcp-button_cart_layout',
-            }));
-            createButtonPreview(() => getButtonSettings('#ppcpMiniCartButtonPreview', {
-                'color': '#ppcp-button_mini-cart_color',
-                'shape': '#ppcp-button_mini-cart_shape',
-                'label': '#ppcp-button_mini-cart_label',
-                'tagline': '#ppcp-button_mini-cart_tagline',
-                'layout': '#ppcp-button_mini-cart_layout',
-                'height': '#ppcp-button_mini-cart_height',
-            }));
+        const previewElements = document.querySelectorAll('.ppcp-preview');
+        if (previewElements.length) {
+            let oldScriptSettings = getPaypalScriptSettings();
 
-            payLaterMessagingLocations.forEach( (location) => {
-                const inputNamePrefix = '#ppcp-pay_later_' + location + '_message';
-                const wrapperName = location.charAt(0).toUpperCase() + location.slice(1);
-                createMessagesPreview(() => getMessageSettings('#ppcp' + wrapperName + 'MessagePreview', {
-                    'layout': inputNamePrefix + '_layout',
-                    'logo_type': inputNamePrefix + '_logo',
-                    'logo_position': inputNamePrefix + '_position',
-                    'text_color': inputNamePrefix + '_color',
-                    'flex_color': inputNamePrefix + '_flex_color',
-                    'flex_ratio': inputNamePrefix + '_flex_ratio',
+            form.on('change', ':input', debounce(() => {
+                const newSettings = getPaypalScriptSettings();
+                if (JSON.stringify(oldScriptSettings) === JSON.stringify(newSettings)) {
+                    return;
+                }
+
+                loadPaypalScript(newSettings);
+
+                oldScriptSettings = newSettings;
+            }, 1000));
+
+            loadPaypalScript(oldScriptSettings, () => {
+                createButtonPreview(() => getButtonSettings('#ppcpCheckoutButtonPreview', {
+                    'color': '#ppcp-button_color',
+                    'shape': '#ppcp-button_shape',
+                    'label': '#ppcp-button_label',
+                    'tagline': '#ppcp-button_tagline',
+                    'layout': '#ppcp-button_layout',
                 }));
-            });
+                createButtonPreview(() => getButtonSettings('#ppcpProductButtonPreview', {
+                    'color': '#ppcp-button_product_color',
+                    'shape': '#ppcp-button_product_shape',
+                    'label': '#ppcp-button_product_label',
+                    'tagline': '#ppcp-button_product_tagline',
+                    'layout': '#ppcp-button_product_layout',
+                }));
+                createButtonPreview(() => getButtonSettings('#ppcpCartButtonPreview', {
+                    'color': '#ppcp-button_cart_color',
+                    'shape': '#ppcp-button_cart_shape',
+                    'label': '#ppcp-button_cart_label',
+                    'tagline': '#ppcp-button_cart_tagline',
+                    'layout': '#ppcp-button_cart_layout',
+                }));
+                createButtonPreview(() => getButtonSettings('#ppcpMiniCartButtonPreview', {
+                    'color': '#ppcp-button_mini-cart_color',
+                    'shape': '#ppcp-button_mini-cart_shape',
+                    'label': '#ppcp-button_mini-cart_label',
+                    'tagline': '#ppcp-button_mini-cart_tagline',
+                    'layout': '#ppcp-button_mini-cart_layout',
+                    'height': '#ppcp-button_mini-cart_height',
+                }));
 
-            createButtonPreview(() => getButtonDefaultSettings('#ppcpPayLaterButtonPreview'));
-        });
+                payLaterMessagingLocations.forEach((location) => {
+                    const inputNamePrefix = '#ppcp-pay_later_' + location + '_message';
+                    const wrapperName = location.charAt(0).toUpperCase() + location.slice(1);
+                    createMessagesPreview(() => getMessageSettings('#ppcp' + wrapperName + 'MessagePreview', {
+                        'layout': inputNamePrefix + '_layout',
+                        'logo_type': inputNamePrefix + '_logo',
+                        'logo_position': inputNamePrefix + '_position',
+                        'text_color': inputNamePrefix + '_color',
+                        'flex_color': inputNamePrefix + '_flex_color',
+                        'flex_ratio': inputNamePrefix + '_flex_ratio',
+                    }));
+                });
+
+                createButtonPreview(() => getButtonDefaultSettings('#ppcpPayLaterButtonPreview'));
+            });
+        }
     }
 );
