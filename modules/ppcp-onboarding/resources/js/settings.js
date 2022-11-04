@@ -183,7 +183,7 @@ document.addEventListener(
                 }
 
                 let checkedLocations = document.querySelectorAll(messagingLocationsSelector + ' :checked');
-                let selectedLocations = [...checkedLocations].map(option => option.value);
+                const selectedLocations = [...checkedLocations].map(option => option.value);
 
                 const messagingInputSelectors = payLaterMessagingInputSelectorsByLocations(selectedLocations);
 
