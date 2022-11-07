@@ -145,7 +145,7 @@ class PayUponInvoiceHelper {
 		 */
 		global $wp;
 
-		$order_id = isset( $wp->query_vars['order-pay'] ) ? (int) $wp->query_vars['order-pay'] : 0;
+		$order_id = (int) ( $wp->query_vars['order-pay'] ?? 0 );
 		if ( $order_id === 0 ) {
 			return false;
 		}
