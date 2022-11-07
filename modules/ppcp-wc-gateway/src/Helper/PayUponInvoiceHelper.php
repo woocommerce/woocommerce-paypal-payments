@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace WooCommerce\PayPalCommerce\WcGateway\Helper;
 
 use WC_Order;
+use WC_Order_Item_Product;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
@@ -66,12 +67,66 @@ class PayUponInvoiceHelper {
 			return false;
 		}
 
-		if ( ! $this->is_valid_currency() ) {
+		if (
+			! $this->is_valid_product()
+			|| ! $this->is_valid_currency()
+			|| ! $this->checkout_helper->is_checkout_amount_allowed( 5, 2500 )
+		) {
 			return false;
 		}
 
-		if ( ! $this->checkout_helper->is_checkout_amount_allowed( 5, 2500 ) ) {
-			return false;
+		return true;
+	}
+
+	/**
+	 * Checks whether PUI gateway is enabled.
+	 *
+	 * @return bool True if PUI gateway is enabled, otherwise false.
+	 */
+	public function is_pui_gateway_enabled(): bool {
+		$gateway_settings = get_option( 'woocommerce_ppcp-pay-upon-invoice-gateway_settings' );
+		return isset( $gateway_settings['enabled'] ) && $gateway_settings['enabled'] === 'yes' && 'DE' === $this->api_shop_country;
+	}
+
+	/**
+	 * Checks if product is valid for PUI.
+	 *
+	 * @return bool
+	 */
+	private function is_valid_product(): bool {
+		$cart = WC()->cart ?? null;
+		if ( $cart && ! is_checkout_pay_page() ) {
+			$items = $cart->get_cart_contents();
+			foreach ( $items as $item ) {
+				$product = wc_get_product( $item['product_id'] );
+				if ( $product && ! $this->checkout_helper->is_physical_product( $product ) ) {
+					return false;
+				}
+			}
+		}
+
+		if ( is_wc_endpoint_url( 'order-pay' ) ) {
+			/**
+			 * Needed for WordPress `query_vars`.
+			 *
+			 * @psalm-suppress InvalidGlobal
+			 */
+			global $wp;
+
+			if ( isset( $wp->query_vars['order-pay'] ) && absint( $wp->query_vars['order-pay'] ) > 0 ) {
+				$order_id = absint( $wp->query_vars['order-pay'] );
+				$order    = wc_get_order( $order_id );
+				if ( is_a( $order, WC_Order::class ) ) {
+					foreach ( $order->get_items() as $item_id => $item ) {
+						if ( is_a( $item, WC_Order_Item_Product::class ) ) {
+							$product = wc_get_product( $item->get_product_id() );
+							if ( $product && ! $this->checkout_helper->is_physical_product( $product ) ) {
+								return false;
+							}
+						}
+					}
+				}
+			}
 		}
 
 		return true;
@@ -95,15 +150,5 @@ class PayUponInvoiceHelper {
 		}
 
 		return false;
-	}
-
-	/**
-	 * Checks whether PUI gateway is enabled.
-	 *
-	 * @return bool True if PUI gateway is enabled, otherwise false.
-	 */
-	public function is_pui_gateway_enabled(): bool {
-		$gateway_settings = get_option( 'woocommerce_ppcp-pay-upon-invoice-gateway_settings' );
-		return isset( $gateway_settings['enabled'] ) && $gateway_settings['enabled'] === 'yes' && 'DE' === $this->api_shop_country;
 	}
 }
