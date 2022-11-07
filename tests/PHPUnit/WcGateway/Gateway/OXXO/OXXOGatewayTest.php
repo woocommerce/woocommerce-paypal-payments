@@ -13,6 +13,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\TestCase;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use function Brain\Monkey\Functions\when;
 
 class OXXOGatewayTest extends TestCase
@@ -22,6 +23,7 @@ private $purchaseUnitFactory;
 private $shippingPreferenceFactory;
 private $logger;
 private $wcOrder;
+private $transactionUrlProvider;
 private $testee;
 
 	public function setUp(): void
@@ -31,6 +33,7 @@ private $testee;
 		$this->orderEndpoint = Mockery::mock(OrderEndpoint::class);
 		$this->purchaseUnitFactory = Mockery::mock(PurchaseUnitFactory::class);
 		$this->shippingPreferenceFactory = Mockery::mock(ShippingPreferenceFactory::class);
+		$this->transactionUrlProvider = Mockery::mock(TransactionUrlProvider::class);
 		$this->logger = Mockery::mock(LoggerInterface::class);
 
 		$this->wcOrder = Mockery::mock(WC_Order::class);
@@ -45,6 +48,7 @@ private $testee;
 			$this->purchaseUnitFactory,
 			$this->shippingPreferenceFactory,
 			'oxxo.svg',
+			$this->transactionUrlProvider,
 			$this->logger
 		);
 	}
