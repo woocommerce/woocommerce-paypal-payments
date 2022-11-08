@@ -41,6 +41,20 @@ return function ( ContainerInterface $container, array $fields ): array {
 	};
 
 	$pay_later_fields = array(
+		'pay_later_button_heading'                        => array(
+			'heading'      => __( 'Pay Later Button', 'woocommerce-paypal-payments' ),
+			'type'         => 'ppcp-heading',
+			'screens'      => array( State::STATE_ONBOARDED ),
+			'requirements' => array( 'messages' ),
+			'gateway'      => Settings::PAY_LATER_TAB_ID,
+			'description'  => sprintf(
+			// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+				__( 'When enabled, a %1$sPay Later button%2$s is displayed for eligible customers.%3$sPayPal buttons must be enabled to display the Pay Later button.', 'woocommerce-paypal-payments' ),
+				'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#pay-later-buttons" target="_blank">',
+				'</a>',
+				'</ br>'
+			),
+		),
 		'pay_later_button_enabled'                        => array(
 			'title'        => __( 'Enable/Disable', 'woocommerce-paypal-payments' ),
 			'type'         => 'checkbox',
@@ -58,7 +72,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'input_class'  => array( 'wc-enhanced-select' ),
 			'default'      => array(),
 			'desc_tip'     => false,
-			'description'  => __( 'Example description 1', 'woocommerce-paypal-payments' ),
+			'description'  => __( 'Select where the Pay Later button should be displayed.', 'woocommerce-paypal-payments' ),
 			'options'      => $container->get( 'wcgateway.settings.pay-later.button-locations' ),
 			'screens'      => array( State::STATE_ONBOARDED ),
 			'requirements' => array( 'messages' ),
@@ -79,7 +93,13 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'screens'      => array( State::STATE_ONBOARDED ),
 			'requirements' => array( 'messages' ),
 			'gateway'      => Settings::PAY_LATER_TAB_ID,
-			'description'  => __( 'Example description. 2', 'woocommerce-paypal-payments' ),
+			'description'  => sprintf(
+			// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+				__( 'When enabled, PayPal displays %1$sPay Later messaging%2$s for eligible customers.', 'woocommerce-paypal-payments' ),
+				'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#pay-later-messaging" target="_blank">',
+				'</a>',
+				'</ br>'
+			),
 		),
 		'pay_later_messaging_enabled'                     => array(
 			'title'        => __( 'Enable/Disable', 'woocommerce-paypal-payments' ),
@@ -98,7 +118,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'input_class'  => array( 'wc-enhanced-select' ),
 			'default'      => array(),
 			'desc_tip'     => false,
-			'description'  => __( 'Example description 3', 'woocommerce-paypal-payments' ),
+			'description'  => __( 'Select where the Pay Later messaging should be displayed.', 'woocommerce-paypal-payments' ),
 			'options'      => $container->get( 'wcgateway.settings.pay-later.messaging-locations' ),
 			'screens'      => array( State::STATE_ONBOARDED ),
 			'requirements' => array( 'messages' ),
@@ -107,7 +127,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 		'pay_later_enable_styling_per_messaging_location' => array(
 			'title'        => __( 'Enable Styling Per Messaging Location', 'woocommerce-paypal-payments' ),
 			'type'         => 'checkbox',
-			'label'        => __( 'Enable', 'woocommerce-paypal-payments' ),
+			'label'        => __( 'Enable individualized styling for Pay Later messaging offers', 'woocommerce-paypal-payments' ),
 			'default'      => false,
 			'screens'      => array( State::STATE_ONBOARDED ),
 			'requirements' => array( 'messages' ),
