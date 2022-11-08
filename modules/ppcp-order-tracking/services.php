@@ -48,7 +48,12 @@ return array(
 		);
 	},
 	'order-tracking.allowed-shipping-statuses' => static function ( ContainerInterface $container ): array {
-		return array( 'SHIPPED', 'ON_HOLD', 'DELIVERED', 'CANCELLED' );
+		return array(
+			'SHIPPED'   => 'SHIPPED',
+			'ON_HOLD'   => 'ON_HOLD',
+			'DELIVERED' => 'DELIVERED',
+			'CANCELLED' => 'CANCELLED',
+		);
 	},
 	'order-tracking.allowed-carriers'          => static function ( ContainerInterface $container ): array {
 		return require __DIR__ . '/carriers.php';
