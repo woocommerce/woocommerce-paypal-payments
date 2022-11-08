@@ -155,9 +155,20 @@ class PayUponInvoiceHelper {
 			return false;
 		}
 
-		$address = $order->get_address();
+		$address         = $order->get_address();
+		$required_fields = array(
+			'first_name',
+			'last_name',
+			'email',
+			'phone',
+			'address_1',
+			'city',
+			'postcode',
+			'country',
+		);
+
 		foreach ( $address as $key => $value ) {
-			if ( $value === '' ) {
+			if ( in_array( $key, $required_fields, true ) && $value === '' ) {
 				return false;
 			}
 		}
