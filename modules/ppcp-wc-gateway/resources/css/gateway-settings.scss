@@ -10,9 +10,12 @@
 	}
 
 	@media (min-width: 1200px) {
-		position: absolute;
-		left: 800px;
+		float: right;
 		margin-top: -400px;
+	}
+
+	@media (min-width: 1400px) {
+		margin-right: 13%;
 	}
 }
 
