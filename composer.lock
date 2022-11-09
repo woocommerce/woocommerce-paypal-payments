@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2b16b39502bcfa86aaf9a9a53d78b187",
+    "content-hash": "7cab7228653731c826171dbf4956da77",
     "packages": [
         {
             "name": "container-interop/service-provider",
@@ -36,113 +36,6 @@
             "description": "Promoting container interoperability through standard service providers",
             "homepage": "https://github.com/container-interop/service-provider",
             "time": "2017-09-20T14:13:36+00:00"
-        },
-        {
-            "name": "dhii/collections-interface",
-            "version": "v0.3.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/Dhii/collections-interface.git",
-                "reference": "74464a969b340d16889eacd9eadc9817f7e7f47a"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/Dhii/collections-interface/zipball/74464a969b340d16889eacd9eadc9817f7e7f47a",
-                "reference": "74464a969b340d16889eacd9eadc9817f7e7f47a",
-                "shasum": ""
-            },
-            "require": {
-                "php": "^7.1 | ^8.0",
-                "psr/container": "^1.0"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "^7.0 | ^8.0 | ^9.0",
-                "slevomat/coding-standard": "^6.0",
-                "vimeo/psalm": "^4.0"
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-develop": "0.3.x-dev"
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Dhii\\Collection\\": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Dhii Team",
-                    "email": "development@dhii.co"
-                },
-                {
-                    "name": "Anton Ukhanev",
-                    "email": "xedin.unknown@gmail.com"
-                }
-            ],
-            "description": "A highly ISP-compliant collection of interfaces that represent maps and lists.",
-            "time": "2021-10-06T10:56:09+00:00"
-        },
-        {
-            "name": "dhii/containers",
-            "version": "v0.1.4",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/Dhii/containers.git",
-                "reference": "42ab24683183fa0dc155f26c6a470ef697bbdc9a"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/Dhii/containers/zipball/42ab24683183fa0dc155f26c6a470ef697bbdc9a",
-                "reference": "42ab24683183fa0dc155f26c6a470ef697bbdc9a",
-                "shasum": ""
-            },
-            "require": {
-                "container-interop/service-provider": "^0.4",
-                "dhii/collections-interface": "^0.3.0-alpha4",
-                "php": "^7.1 | ^8.0"
-            },
-            "require-dev": {
-                "gmazzap/andrew": "^1.1",
-                "phpunit/phpunit": "^7.0 | ^8.0 | ^9.0",
-                "psr/container": "^1.0",
-                "psr/simple-cache": "^1.0",
-                "slevomat/coding-standard": "^6.0",
-                "vimeo/psalm": "^4.0",
-                "wildwolf/psr-memory-cache": "^1.0"
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-develop": "0.1.x-dev"
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Dhii\\Container\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Dhii Team",
-                    "email": "development@dhii.co"
-                }
-            ],
-            "description": "A selection of PSR-11 containers for utility, simplicity, and ease.",
-            "keywords": [
-                "PSR-11",
-                "container"
-            ],
-            "time": "2021-10-06T11:13:51+00:00"
         },
         {
             "name": "dhii/human-readable-interface",
@@ -1301,6 +1194,113 @@
                 "tests"
             ],
             "time": "2022-02-04T12:51:07+00:00"
+        },
+        {
+            "name": "dhii/collections-interface",
+            "version": "v0.3.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Dhii/collections-interface.git",
+                "reference": "74464a969b340d16889eacd9eadc9817f7e7f47a"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Dhii/collections-interface/zipball/74464a969b340d16889eacd9eadc9817f7e7f47a",
+                "reference": "74464a969b340d16889eacd9eadc9817f7e7f47a",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^7.1 | ^8.0",
+                "psr/container": "^1.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^7.0 | ^8.0 | ^9.0",
+                "slevomat/coding-standard": "^6.0",
+                "vimeo/psalm": "^4.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-develop": "0.3.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Dhii\\Collection\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Dhii Team",
+                    "email": "development@dhii.co"
+                },
+                {
+                    "name": "Anton Ukhanev",
+                    "email": "xedin.unknown@gmail.com"
+                }
+            ],
+            "description": "A highly ISP-compliant collection of interfaces that represent maps and lists.",
+            "time": "2021-10-06T10:56:09+00:00"
+        },
+        {
+            "name": "dhii/containers",
+            "version": "v0.1.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Dhii/containers.git",
+                "reference": "42ab24683183fa0dc155f26c6a470ef697bbdc9a"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Dhii/containers/zipball/42ab24683183fa0dc155f26c6a470ef697bbdc9a",
+                "reference": "42ab24683183fa0dc155f26c6a470ef697bbdc9a",
+                "shasum": ""
+            },
+            "require": {
+                "container-interop/service-provider": "^0.4",
+                "dhii/collections-interface": "^0.3.0-alpha4",
+                "php": "^7.1 | ^8.0"
+            },
+            "require-dev": {
+                "gmazzap/andrew": "^1.1",
+                "phpunit/phpunit": "^7.0 | ^8.0 | ^9.0",
+                "psr/container": "^1.0",
+                "psr/simple-cache": "^1.0",
+                "slevomat/coding-standard": "^6.0",
+                "vimeo/psalm": "^4.0",
+                "wildwolf/psr-memory-cache": "^1.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-develop": "0.1.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Dhii\\Container\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Dhii Team",
+                    "email": "development@dhii.co"
+                }
+            ],
+            "description": "A selection of PSR-11 containers for utility, simplicity, and ease.",
+            "keywords": [
+                "PSR-11",
+                "container"
+            ],
+            "time": "2021-10-06T11:13:51+00:00"
         },
         {
             "name": "dnoegel/php-xdg-base-dir",
