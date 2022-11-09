@@ -167,8 +167,9 @@ class PayUponInvoiceHelper {
 			'country',
 		);
 
-		foreach ( $address as $key => $value ) {
-			if ( in_array( $key, $required_fields, true ) && $value === '' ) {
+		foreach ( $required_fields as $key ) {
+			$value = $address[ $key ] ?? '';
+			if ( $value === '' ) {
 				return false;
 			}
 		}
