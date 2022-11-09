@@ -12,7 +12,7 @@
         "dhii/containers": "^0.1.0-alpha1",
         "psr/log": "^1.1",
         "ralouphie/getallheaders": "^3.0",
-        "wikimedia/composer-merge-plugin": "^1.4",
+        "wikimedia/composer-merge-plugin": "^2.0",
         "wp-oop/wordpress-interface": "^0.1.0-alpha1",
         "dhii/versions": "^0.1.0-alpha1",
         "symfony/polyfill-php80": "^1.19"
