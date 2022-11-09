@@ -33,12 +33,12 @@ class WebhookEventFactory {
 	/**
 	 * Returns a Webhook based of a PayPal JSON response.
 	 *
-	 * @param stdClass $data The JSON object.
+	 * @param object $data The JSON object.
 	 *
 	 * @return WebhookEvent
 	 * @throws RuntimeException When JSON object is malformed.
 	 */
-	public function from_paypal_response( stdClass $data ): WebhookEvent {
+	public function from_paypal_response( $data ): WebhookEvent {
 		if ( ! isset( $data->id ) ) {
 			throw new RuntimeException(
 				__( 'ID for webhook event not found.', 'woocommerce-paypal-payments' )
