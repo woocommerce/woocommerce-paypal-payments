@@ -162,7 +162,7 @@ class WCGatewayModule implements ModuleInterface {
 				$c->get( 'wcgateway.url' ),
 				$c->get( 'ppcp.asset-version' ),
 				$c->get( 'subscription.helper' ),
-				$c->get( 'button.client_id' ),
+				$c->get( 'button.client_id_for_admin' ),
 				$c->get( 'api.shop.currency' ),
 				$c->get( 'api.shop.country' ),
 				$settings_status->is_pay_later_button_enabled()
