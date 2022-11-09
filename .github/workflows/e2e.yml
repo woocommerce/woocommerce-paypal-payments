@@ -7,9 +7,13 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        php-versions: ['7.2', '8.1']
+        php-versions: ['7.2', '7.4', '8.1']
+        wc-versions: ['5.9.5', '7.1.0']
+        exclude:
+          - php-versions: 7.2
+            wc-versions: 7.1.0
 
-    name: PHP ${{ matrix.php-versions }}
+    name: PHP ${{ matrix.php-versions }} WC ${{ matrix.wc-versions }}
     steps:
     - uses: satackey/action-docker-layer-caching@v0.0.11
       continue-on-error: true
@@ -21,7 +25,7 @@ jobs:
     - uses: actions/checkout@v1
 
     - name: Configure DDEV
-      run: ddev config --php-version ${{ matrix.php-versions }}
+      run: ddev config --php-version ${{ matrix.php-versions }} --web-environment-add="WC_VERSION=${{ matrix.wc-versions }}"
 
     - name: Start DDEV
       run: ddev start
