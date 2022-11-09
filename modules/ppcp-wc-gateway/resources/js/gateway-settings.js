@@ -68,7 +68,7 @@ import MessageRenderer from "../../../ppcp-button/resources/js/modules/Renderer/
                 'currency': PayPalCommerceGatewaySettings.currency,
                 'integration-date': PayPalCommerceGatewaySettings.integration_date,
                 'components': ['buttons', 'funding-eligibility', 'messages'],
-                'enable-funding': ['venmo'],
+                'enable-funding': ['venmo', 'paylater'],
                 'buyer-country': PayPalCommerceGatewaySettings.country,
             };
             if (disabledSources?.length) {
