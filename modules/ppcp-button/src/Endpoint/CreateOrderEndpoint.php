@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 use Exception;
 use Psr\Log\LoggerInterface;
 use stdClass;
+use Throwable;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Amount;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
@@ -25,6 +26,8 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
+use WooCommerce\PayPalCommerce\Button\Exception\ValidationException;
+use WooCommerce\PayPalCommerce\Button\Validation\CheckoutFormValidator;
 use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Subscription\FreeTrialHandlerTrait;
@@ -129,6 +132,13 @@ class CreateOrderEndpoint implements EndpointInterface {
 	protected $card_billing_data_mode;
 
 	/**
+	 * Whether to execute WC validation of the checkout form.
+	 *
+	 * @var bool
+	 */
+	protected $early_validation_enabled;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -148,6 +158,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 * @param EarlyOrderHandler         $early_order_handler The EarlyOrderHandler object.
 	 * @param bool                      $registration_needed  Whether a new user must be registered during checkout.
 	 * @param string                    $card_billing_data_mode The value of card_billing_data_mode from the settings.
+	 * @param bool                      $early_validation_enabled Whether to execute WC validation of the checkout form.
 	 * @param LoggerInterface           $logger The logger.
 	 */
 	public function __construct(
@@ -161,6 +172,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 		EarlyOrderHandler $early_order_handler,
 		bool $registration_needed,
 		string $card_billing_data_mode,
+		bool $early_validation_enabled,
 		LoggerInterface $logger
 	) {
 
@@ -174,6 +186,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 		$this->early_order_handler         = $early_order_handler;
 		$this->registration_needed         = $registration_needed;
 		$this->card_billing_data_mode      = $card_billing_data_mode;
+		$this->early_validation_enabled    = $early_validation_enabled;
 		$this->logger                      = $logger;
 	}
 
@@ -233,8 +246,14 @@ class CreateOrderEndpoint implements EndpointInterface {
 
 			$this->set_bn_code( $data );
 
-			if ( 'pay-now' === $data['context'] && get_option( 'woocommerce_terms_page_id', '' ) !== '' ) {
-				$this->validate_paynow_form( $data['form'] );
+			$form_fields = $data['form'] ?? null;
+
+			if ( $this->early_validation_enabled && is_array( $form_fields ) ) {
+				$this->validate_form( $form_fields );
+			}
+
+			if ( 'pay-now' === $data['context'] && is_array( $form_fields ) && get_option( 'woocommerce_terms_page_id', '' ) !== '' ) {
+				$this->validate_paynow_form( $form_fields );
 			}
 
 			try {
@@ -264,6 +283,13 @@ class CreateOrderEndpoint implements EndpointInterface {
 			wp_send_json_success( $order->to_array() );
 			return true;
 
+		} catch ( ValidationException $error ) {
+			wp_send_json_error(
+				array(
+					'message' => $error->getMessage(),
+					'errors'  => $error->errors(),
+				)
+			);
 		} catch ( \RuntimeException $error ) {
 			$this->logger->error( 'Order creation failed: ' . $error->getMessage() );
 
@@ -482,15 +508,32 @@ class CreateOrderEndpoint implements EndpointInterface {
 	}
 
 	/**
+	 * Checks whether the form fields are valid.
+	 *
+	 * @param array $form_fields The form fields.
+	 * @throws ValidationException When fields are not valid.
+	 */
+	private function validate_form( array $form_fields ): void {
+		try {
+			$v = new CheckoutFormValidator();
+			$v->validate( $form_fields );
+		} catch ( ValidationException $exception ) {
+			throw $exception;
+		} catch ( Throwable $exception ) {
+			$this->logger->error( "Form validation execution failed. {$exception->getMessage()} {$exception->getFile()}:{$exception->getLine()}" );
+		}
+	}
+
+	/**
 	 * Checks whether the terms input field is checked.
 	 *
 	 * @param array $form_fields The form fields.
-	 * @throws \RuntimeException When field is not checked.
+	 * @throws ValidationException When field is not checked.
 	 */
-	private function validate_paynow_form( array $form_fields ) {
+	private function validate_paynow_form( array $form_fields ): void {
 		if ( isset( $form_fields['terms-field'] ) && ! isset( $form_fields['terms'] ) ) {
-			throw new \RuntimeException(
-				__( 'Please read and accept the terms and conditions to proceed with your order.', 'woocommerce-paypal-payments' )
+			throw new ValidationException(
+				array( __( 'Please read and accept the terms and conditions to proceed with your order.', 'woocommerce-paypal-payments' ) )
 			);
 		}
 	}

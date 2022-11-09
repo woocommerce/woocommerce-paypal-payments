@@ -149,6 +149,7 @@ return array(
 			$early_order_handler,
 			$registration_needed,
 			$container->get( 'wcgateway.settings.card_billing_data_mode' ),
+			$container->get( 'button.early-wc-checkout-validation-enabled' ),
 			$logger
 		);
 	},
@@ -223,6 +224,14 @@ return array(
 		 * The filter allowing to disable the basic client-side validation of the checkout form
 		 * when the PayPal button is clicked.
 		 */
-		return (bool) apply_filters( 'woocommerce_paypal_payments_basic_checkout_validation_enabled', true );
+		return (bool) apply_filters( 'woocommerce_paypal_payments_basic_checkout_validation_enabled', false );
+	},
+	'button.early-wc-checkout-validation-enabled' => static function ( ContainerInterface $container ): bool {
+		/**
+		 * The filter allowing to disable the WC validation of the checkout form
+		 * when the PayPal button is clicked.
+		 * The validation is triggered in a non-standard way and may cause issues on some sites.
+		 */
+		return (bool) apply_filters( 'woocommerce_paypal_payments_early_wc_checkout_validation_enabled', true );
 	},
 );

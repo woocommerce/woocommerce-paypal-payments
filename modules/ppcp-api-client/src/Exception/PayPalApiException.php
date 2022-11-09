@@ -119,4 +119,26 @@ class PayPalApiException extends RuntimeException {
 	public function status_code(): int {
 		return $this->status_code;
 	}
+
+	/**
+	 * Return exception details if exists.
+	 *
+	 * @param string $error The error to return in case no details found.
+	 * @return string
+	 */
+	public function get_details( string $error ): string {
+		if ( empty( $this->details() ) ) {
+			return $error;
+		}
+
+		$details = '';
+		foreach ( $this->details() as $detail ) {
+			$issue       = $detail->issue ?? '';
+			$field       = $detail->field ?? '';
+			$description = $detail->description ?? '';
+			$details    .= $issue . ' ' . $field . ' ' . $description . '<br>';
+		}
+
+		return $details;
+	}
 }

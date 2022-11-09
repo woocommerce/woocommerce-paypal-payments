@@ -127,13 +127,14 @@ class SettingsPageAssets {
 		}
 
 		$screen = get_current_screen();
-
-		$tab     = filter_input( INPUT_GET, 'tab', FILTER_SANITIZE_STRING );
-		$section = filter_input( INPUT_GET, 'section', FILTER_SANITIZE_STRING );
-
-		if ( ! 'woocommerce_page_wc-settings' === $screen->id ) {
+		if ( $screen->id !== 'woocommerce_page_wc-settings' ) {
 			return false;
 		}
+
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended
+		$tab     = wc_clean( wp_unslash( $_GET['tab'] ?? '' ) );
+		$section = wc_clean( wp_unslash( $_GET['section'] ?? '' ) );
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		return 'checkout' === $tab && 'ppcp-gateway' === $section;
 	}

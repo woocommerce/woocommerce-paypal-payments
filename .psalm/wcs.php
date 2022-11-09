@@ -905,6 +905,513 @@ class WC_Subscriptions_Admin
 }
 
 /**
+ * Allow for payment dates to be synchronised to a specific day of the week, month or year.
+ */
+class WC_Subscriptions_Synchroniser {
+
+	public static $setting_id;
+	public static $setting_id_proration;
+	public static $setting_id_days_no_fee;
+
+	public static $post_meta_key       = '_subscription_payment_sync_date';
+	public static $post_meta_key_day   = '_subscription_payment_sync_date_day';
+	public static $post_meta_key_month = '_subscription_payment_sync_date_month';
+
+	public static $sync_field_label;
+	public static $sync_description;
+	public static $sync_description_year;
+
+	public static $billing_period_ranges;
+
+	/**
+	 * Bootstraps the class and hooks required actions & filters.
+	 */
+	public static function init()
+	{
+	}
+
+	/**
+	 * Set default value of 'no' for our options.
+	 *
+	 * This only sets the default
+	 *
+	 * @param mixed  $default        The default value for the option.
+	 * @param string $option         The option name.
+	 * @param bool   $passed_default Whether get_option() was passed a default value.
+	 *
+	 * @return mixed The default option value.
+	 */
+	public static function option_default( $default, $option, $passed_default = null )
+	{
+	}
+
+	/**
+	 * Sanitize our options when they are saved in the admin area.
+	 *
+	 * @param mixed $value  The value being saved.
+	 * @param array $option The option data array.
+	 *
+	 * @return mixed The sanitized option value.
+	 */
+	public static function sanitize_option( $value, $option )
+	{
+	}
+
+	/**
+	 * Check if payment syncing is enabled on the store.
+	 *
+	 * @since 1.5
+	 */
+	public static function is_syncing_enabled()
+	{
+	}
+
+	/**
+	 * Check if payments can be prorated on the store.
+	 *
+	 * @since 1.5
+	 */
+	public static function is_sync_proration_enabled()
+	{
+	}
+
+	/**
+	 * Add sync settings to the Subscription's settings page.
+	 *
+	 * @since 1.5
+	 */
+	public static function add_settings( $settings )
+	{
+	}
+
+	/**
+	 * Add the sync setting fields to the Edit Product screen
+	 *
+	 * @since 1.5
+	 */
+	public static function subscription_product_fields()
+	{
+	}
+
+	/**
+	 * Add the sync setting fields to the variation section of the Edit Product screen
+	 *
+	 * @since 1.5
+	 */
+	public static function variable_subscription_product_fields( $loop, $variation_data, $variation )
+	{
+	}
+
+	/**
+	 * Save sync options when a subscription product is saved
+	 *
+	 * @since 1.5
+	 */
+	public static function save_subscription_meta( $post_id )
+	{
+	}
+
+	/**
+	 * Save sync options when a variable subscription product is saved
+	 *
+	 * @since 1.5
+	 */
+	public static function process_product_meta_variable_subscription( $post_id )
+	{
+	}
+
+	/**
+	 * Save sync options when a variable subscription product is saved
+	 *
+	 * @since 1.5
+	 */
+	public static function save_product_variation( $variation_id, $index )
+	{
+	}
+
+	/**
+	 * Add translated syncing options for our client side script
+	 *
+	 * @since 1.5
+	 */
+	public static function admin_script_parameters( $script_parameters )
+	{
+	}
+
+	/**
+	 * Determine whether a product, specified with $product, needs to have its first payment processed on a
+	 * specific day (instead of at the time of sign-up).
+	 *
+	 * @return (bool) True is the product's first payment will be synced to a certain day.
+	 * @since 1.5
+	 */
+	public static function is_product_synced( $product )
+	{
+	}
+
+	/**
+	 * Determine whether a product, specified with $product, should have its first payment processed on a
+	 * at the time of sign-up but prorated to the sync day.
+	 *
+	 * @since 1.5.10
+	 *
+	 * @param WC_Product $product
+	 *
+	 * @return bool
+	 */
+	public static function is_product_prorated( $product )
+	{
+	}
+
+	/**
+	 * Determine whether the payment for a subscription should be the full price upfront.
+	 *
+	 * This method is particularly concerned with synchronized subscriptions. It will only return
+	 * true when the following conditions are met:
+	 *
+	 * - There is no free trial
+	 * - The subscription is synchronized
+	 * - The store owner has determined that new subscribers need to pay for their subscription upfront.
+	 *
+	 * Additionally, if the store owner sets a number of days prior to the synchronization day that do not
+	 * require an upfront payment, this method will check to see whether the current date falls within that
+	 * period for the given product.
+	 *
+	 * @param WC_Product $product The product to check.
+	 * @param string     $from_date Optional. A MySQL formatted date/time string from which to calculate from. The default is an empty string which is today's date/time.
+	 *
+	 * @return bool Whether an upfront payment is required for the product.
+	 */
+	public static function is_payment_upfront( $product, $from_date = '' )
+	{
+	}
+
+	/**
+	 * Get the day of the week, month or year on which a subscription's payments should be
+	 * synchronised to.
+	 *
+	 * @return int The day the products payments should be processed, or 0 if the payments should not be sync'd to a specific day.
+	 * @since 1.5
+	 */
+	public static function get_products_payment_day( $product )
+	{
+	}
+
+	/**
+	 * Calculate the first payment date for a synced subscription.
+	 *
+	 * The date is calculated in UTC timezone.
+	 *
+	 * @param WC_Product $product A subscription product.
+	 * @param string $type (optional) The format to return the first payment date in, either 'mysql' or 'timestamp'. Default 'mysql'.
+	 * @param string $from_date (optional) The date to calculate the first payment from in GMT/UTC timzeone. If not set, it will use the current date. This should not include any trial period on the product.
+	 * @since 1.5
+	 */
+	public static function calculate_first_payment_date( $product, $type = 'mysql', $from_date = '' )
+	{
+	}
+
+	/**
+	 * Return an i18n'ified associative array of sync options for 'year' as billing period
+	 *
+	 * @since 3.0.0
+	 */
+	public static function get_year_sync_options()
+	{
+	}
+
+	/**
+	 * Return an i18n'ified associative array of all possible subscription periods.
+	 *
+	 * @since 1.5
+	 */
+	public static function get_billing_period_ranges( $billing_period = '' )
+	{
+	}
+
+	/**
+	 * Add the first payment date to a products summary section
+	 *
+	 * @since 1.5
+	 */
+	public static function products_first_payment_date( $echo = false )
+	{
+	}
+
+	/**
+	 * Return a string explaining when the first payment will be completed for the subscription.
+	 *
+	 * @since 1.5
+	 */
+	public static function get_products_first_payment_date( $product )
+	{
+	}
+
+	/**
+	 * If a product is synchronised to a date in the future, make sure that is set as the product's first payment date
+	 *
+	 * @since 2.0
+	 */
+	public static function products_first_renewal_payment_time( $first_renewal_timestamp, $product_id, $from_date, $timezone )
+	{
+	}
+
+	/**
+	 * Make sure a synchronised subscription's price includes a free trial, unless it's first payment is today.
+	 *
+	 * @since 1.5
+	 */
+	public static function maybe_set_free_trial( $total = '' )
+	{
+	}
+
+	/**
+	 * Make sure a synchronised subscription's price includes a free trial, unless it's first payment is today.
+	 *
+	 * @since 1.5
+	 */
+	public static function maybe_unset_free_trial( $total = '' )
+	{
+	}
+
+	/**
+	 * Check if the cart includes a subscription that needs to be synced.
+	 *
+	 * @return bool Returns true if any item in the cart is a subscription sync request, otherwise, false.
+	 * @since 1.5
+	 */
+	public static function cart_contains_synced_subscription( $cart = null )
+	{
+	}
+
+	/**
+	 * Maybe set the time of a product's trial expiration to be the same as the synced first payment date for products where the first
+	 * renewal payment date falls on the same day as the trial expiration date, but the trial expiration time is later in the day.
+	 *
+	 * When making sure the first payment is after the trial expiration in @see self::calculate_first_payment_date() we only check
+	 * whether the first payment day comes after the trial expiration day, because we don't want to pushing the first payment date
+	 * a month or year in the future because of a few hours difference between it and the trial expiration. However, this means we
+	 * could still end up with a trial end time after the first payment time, even though they are both on the same day because the
+	 * trial end time is normally calculated from the start time, which can be any time of day, but the first renewal time is always
+	 * set to be 3am in the site's timezone. For example, the first payment date might be calculate to be 3:00 on the 21st April 2017,
+	 * while the trial end date is on the same day at 3:01 (or any time after that on the same day). So we need to check both the time and day. We also don't want to make the first payment date/time skip a year because of a few hours difference. That means we need to either modify the trial end time to be 3:00am or make the first payment time occur at the same time as the trial end time. The former is pretty hard to change, but the later will sync'd payments will be at a different times if there is a free trial ending on the same day, which could be confusing. o_0
+	 *
+	 * Fixes #1328
+	 *
+	 * @param mixed $trial_expiration_date MySQL formatted date on which the subscription's trial will end, or 0 if it has no trial
+	 * @param mixed $product_id The product object or post ID of the subscription product
+	 * @return mixed MySQL formatted date on which the subscription's trial is set to end, or 0 if it has no trial
+	 * @since 2.0.13
+	 */
+	public static function recalculate_product_trial_expiration_date( $trial_expiration_date, $product_id )
+	{
+	}
+
+	/**
+	 * Make sure the expiration date is calculated from the synced start date for products where the start date
+	 * will be synced.
+	 *
+	 * @param string $expiration_date MySQL formatted date on which the subscription is set to expire
+	 * @param mixed $product_id The product/post ID of the subscription
+	 * @param mixed $from_date A MySQL formatted date/time string from which to calculate the expiration date, or empty (default), which will use today's date/time.
+	 * @since 1.5
+	 */
+	public static function recalculate_product_expiration_date( $expiration_date, $product_id, $from_date )
+	{
+	}
+
+	/**
+	 * Check if a given timestamp (in the UTC timezone) is equivalent to today in the site's time.
+	 *
+	 * @param int $timestamp A time in UTC timezone to compare to today.
+	 */
+	public static function is_today( $timestamp )
+	{
+	}
+
+	/**
+	 * Filters WC_Subscriptions_Order::get_sign_up_fee() to make sure the sign-up fee for a subscription product
+	 * that is synchronised is returned correctly.
+	 *
+	 * @param float The initial sign-up fee charged when the subscription product in the order was first purchased, if any.
+	 * @param mixed $order A WC_Order object or the ID of the order which the subscription was purchased in.
+	 * @param int $product_id The post ID of the subscription WC_Product object purchased in the order. Defaults to the ID of the first product purchased in the order.
+	 * @return float The initial sign-up fee charged when the subscription product in the order was first purchased, if any.
+	 * @since 2.0
+	 */
+	public static function get_synced_sign_up_fee( $sign_up_fee, $subscription, $product_id )
+	{
+	}
+
+	/**
+	 * Removes the "set_subscription_prices_for_calculation" filter from the WC Product's woocommerce_get_price hook once
+	 *
+	 * @since 1.5.10
+	 *
+	 * @param int        $price   The current price.
+	 * @param WC_Product $product The product object.
+	 *
+	 * @return int
+	 */
+	public static function set_prorated_price_for_calculation( $price, $product )
+	{
+	}
+
+	/**
+	 * Retrieve the full translated weekday word.
+	 *
+	 * Week starts on translated Monday and can be fetched
+	 * by using 1 (one). So the week starts with 1 (one)
+	 * and ends on Sunday with is fetched by using 7 (seven).
+	 *
+	 * @since 1.5.8
+	 * @access public
+	 *
+	 * @param int $weekday_number 1 for Monday through 7 Sunday
+	 * @return string Full translated weekday
+	 */
+	public static function get_weekday( $weekday_number )
+	{
+	}
+
+	/**
+	 * Override quantities used to lower stock levels by when using synced subscriptions. If it's a synced product
+	 * that does not have proration enabled and the payment date is not today, do not lower stock levels.
+	 *
+	 * @param integer $qty the original quantity that would be taken out of the stock level
+	 * @param array $order order data
+	 * @param array $item item data for each item in the order
+	 *
+	 * @return int
+	 */
+	public static function maybe_do_not_reduce_stock( $qty, $order, $order_item )
+	{
+	}
+
+	/**
+	 * Add subscription meta for subscription that contains a synced product.
+	 *
+	 * @param WC_Order Parent order for the subscription
+	 * @param WC_Subscription new subscription
+	 * @since 2.0
+	 */
+	public static function maybe_add_subscription_meta( $post_id )
+	{
+	}
+
+	/**
+	 * When adding an item to an order/subscription via the Add/Edit Subscription administration interface, check if we should be setting
+	 * the sync meta on the subscription.
+	 *
+	 * @param int The order item ID of an item that was just added to the order
+	 * @param array The order item details
+	 * @since 2.0
+	 */
+	public static function ajax_maybe_add_meta_for_item( $item_id, $item )
+	{
+	}
+
+	/**
+	 * When adding a product to an order/subscription via the WC_Subscription::add_product() method, check if we should be setting
+	 * the sync meta on the subscription.
+	 *
+	 * @param int The post ID of a WC_Order or child object
+	 * @param int The order item ID of an item that was just added to the order
+	 * @param object The WC_Product for which an item was just added
+	 * @since 2.0
+	 */
+	public static function maybe_add_meta_for_new_product( $subscription_id, $item_id, $product )
+	{
+	}
+
+	/**
+	 * Check if a given subscription is synced to a certain day.
+	 *
+	 * @param int|WC_Subscription Accepts either a subscription object of post id
+	 * @return bool
+	 * @since 2.0
+	 */
+	public static function subscription_contains_synced_product( $subscription_id )
+	{
+	}
+
+	/**
+	 * If the cart item is synced, add a '_synced' string to the recurring cart key.
+	 *
+	 * @since 2.0
+	 */
+	public static function add_to_recurring_cart_key( $cart_key, $cart_item )
+	{
+	}
+
+	/**
+	 * When adding a product line item to an order/subscription via the WC_Abstract_Order::add_product() method, check if we should be setting
+	 * the sync meta on the subscription.
+	 *
+	 * Attached to WC 3.0+ hooks and uses WC 3.0 methods.
+	 *
+	 * @param int The new line item id
+	 * @param WC_Order_Item
+	 * @param int The post ID of a WC_Subscription
+	 * @since 2.2.3
+	 */
+	public static function maybe_add_meta_for_new_line_item( $item_id, $item, $subscription_id )
+	{
+	}
+
+	/**
+	 * Store a synced product's signup fee on the line item on the subscription and order.
+	 *
+	 * When calculating prorated sign up fees during switches it's necessary to get the sign-up fee paid.
+	 * For synced product purchases we cannot rely on the order line item price as that might include a prorated recurring price or no recurring price all.
+	 *
+	 * Attached to WC 3.0+ hooks and uses WC 3.0 methods.
+	 *
+	 * @param WC_Order_Item_Product $item The order item object.
+	 * @param string $cart_item_key The hash used to identify the item in the cart
+	 * @param array $cart_item The cart item's data.
+	 * @since 2.3.0
+	 */
+	public static function maybe_add_line_item_meta( $item, $cart_item_key, $cart_item )
+	{
+	}
+
+	/**
+	 * Store a synced product's signup fee on the line item on the subscription and order.
+	 *
+	 * This function is a pre WooCommerce 3.0 version of @see WC_Subscriptions_Synchroniser::maybe_add_line_item_meta()
+	 *
+	 * @param int $item_id The order item ID.
+	 * @param array $cart_item The cart item's data.
+	 * @since 2.3.0
+	 */
+	public static function maybe_add_order_item_meta( $item_id, $cart_item )
+	{
+	}
+
+	/**
+	 * Hides synced subscription meta on the edit order and subscription screen on non-debug sites.
+	 *
+	 * @since 2.6.2
+	 * @param array $hidden_meta_keys the list of meta keys hidden on the edit order and subscription screen.
+	 * @return array $hidden_meta_keys
+	 */
+	public static function hide_order_itemmeta( $hidden_meta_keys )
+	{
+	}
+
+	/**
+	 * Gets the number of sign-up grace period days.
+	 *
+	 * @since 3.0.6
+	 * @return int The number of days in the grace period. 0 will be returned if the stroe isn't charging the full recurring price on sign-up -- a prerequiste for setting a grace period.
+	 */
+	private static function get_number_of_grace_period_days()
+	{
+	}
+}
+
+/**
  * Check if a given object is a WC_Subscription (or child class of WC_Subscription), or if a given ID
  * belongs to a post with the subscription post type ('shop_subscription')
  *

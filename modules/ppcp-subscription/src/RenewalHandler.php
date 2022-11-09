@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\Subscription;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
@@ -141,17 +142,27 @@ class RenewalHandler {
 	public function renew( \WC_Order $wc_order ) {
 		try {
 			$this->process_order( $wc_order );
-		} catch ( \Exception $error ) {
-			$this->logger->error(
-				sprintf(
-					'An error occurred while trying to renew the subscription for order %1$d: %2$s',
-					$wc_order->get_id(),
-					$error->getMessage()
-				)
+		} catch ( \Exception $exception ) {
+			$error = $exception->getMessage();
+			if ( is_a( $exception, PayPalApiException::class ) ) {
+				$error = $exception->get_details( $error );
+			}
+
+			$wc_order->update_status(
+				'failed',
+				$error
 			);
+
+			$error_message = sprintf(
+				'An error occurred while trying to renew the subscription for order %1$d: %2$s',
+				$wc_order->get_id(),
+				$error
+			);
+			$this->logger->error( $error_message );
 
 			return;
 		}
+
 		$this->logger->info(
 			sprintf(
 				'Renewal for order %d is completed.',

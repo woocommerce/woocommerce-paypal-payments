@@ -53,8 +53,9 @@ class CustomerApprovalListener {
 	 * @return void
 	 */
 	public function listen(): void {
-		$token = filter_input( INPUT_GET, 'approval_token_id', FILTER_SANITIZE_STRING );
-		if ( ! is_string( $token ) ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$token = wc_clean( wp_unslash( $_GET['approval_token_id'] ?? '' ) );
+		if ( ! $token || is_array( $token ) ) {
 			return;
 		}
 
@@ -94,7 +95,9 @@ class CustomerApprovalListener {
 		add_action(
 			'woocommerce_init',
 			function () use ( $message ): void {
-				wc_add_notice( $message, 'error' );
+				if ( function_exists( 'wc_add_notice' ) ) {
+					wc_add_notice( $message, 'error' );
+				}
 			}
 		);
 	}

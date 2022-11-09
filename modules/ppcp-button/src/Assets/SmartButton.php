@@ -373,6 +373,7 @@ class SmartButton implements SmartButtonInterface {
 		if (
 			( is_product() || wc_post_content_has_shortcode( 'product_page' ) )
 			&& ! $not_enabled_on_product_page
+			&& ! is_checkout()
 		) {
 			add_action(
 				$this->single_product_renderer_hook(),
@@ -413,6 +414,7 @@ class SmartButton implements SmartButtonInterface {
 			// TODO: it seems like there is no easy way to properly handle vaulted PayPal free trial,
 			// so disable the buttons for now everywhere except checkout for free trial.
 			&& ! $this->is_free_trial_product()
+			&& ! is_checkout()
 		) {
 			add_action(
 				$this->single_product_renderer_hook(),

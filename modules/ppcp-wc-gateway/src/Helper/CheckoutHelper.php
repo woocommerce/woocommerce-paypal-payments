@@ -35,14 +35,6 @@ class CheckoutHelper {
 			if ( $cart_total < $minimum || $cart_total > $maximum ) {
 				return false;
 			}
-
-			$items = $cart->get_cart_contents();
-			foreach ( $items as $item ) {
-				$product = wc_get_product( $item['product_id'] );
-				if ( is_a( $product, WC_Product::class ) && ! $this->is_physical_product( $product ) ) {
-					return false;
-				}
-			}
 		}
 
 		if ( is_wc_endpoint_url( 'order-pay' ) ) {
@@ -60,15 +52,6 @@ class CheckoutHelper {
 					$order_total = (float) $order->get_total();
 					if ( $order_total < $minimum || $order_total > $maximum ) {
 						return false;
-					}
-
-					foreach ( $order->get_items() as $item_id => $item ) {
-						if ( is_a( $item, WC_Order_Item_Product::class ) ) {
-							$product = wc_get_product( $item->get_product_id() );
-							if ( is_a( $product, WC_Product::class ) && ! $this->is_physical_product( $product ) ) {
-								return false;
-							}
-						}
 					}
 				}
 			}
