@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Exception;
 
-use Psr\Container\NotFoundExceptionInterface;
+use WooCommerce\PayPalCommerce\Vendor\Psr\Container\NotFoundExceptionInterface;
 use Exception;
 
 /**

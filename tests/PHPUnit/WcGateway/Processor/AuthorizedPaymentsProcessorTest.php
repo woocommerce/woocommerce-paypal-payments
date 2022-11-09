@@ -5,7 +5,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Processor;
 
 
 use Mockery\MockInterface;
-use Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;

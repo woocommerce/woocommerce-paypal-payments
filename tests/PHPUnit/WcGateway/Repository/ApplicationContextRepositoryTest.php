@@ -9,7 +9,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
 use WooCommerce\PayPalCommerce\TestCase;
 use Mockery\MockInterface;
-use Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use function Brain\Monkey\Functions\expect;
 
 class ApplicationContextRepositoryTest extends TestCase
