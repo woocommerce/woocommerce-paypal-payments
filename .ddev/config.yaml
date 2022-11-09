@@ -1,7 +1,7 @@
 name: woocommerce-paypal-payments
 type: php
 docroot: .ddev/wordpress
-php_version: "7.1"
+php_version: "7.2"
 webserver_type: apache-fpm
 router_http_port: "80"
 router_https_port: "443"
