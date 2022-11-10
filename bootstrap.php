@@ -13,6 +13,7 @@ use Dhii\Container\ProxyContainer;
 use Dhii\Modular\Module\ModuleInterface;
 use Interop\Container\ServiceProviderInterface;
 use Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\LoggingDelegatingContainer;
 
 return function (
 	string $root_dir,
@@ -33,12 +34,15 @@ return function (
 		$modules
 	);
 
+	// phpcs:ignore
+	$is_container_logging_enabled = str_contains(  $_SERVER['REQUEST_URI'] ?? '', 'ppcp-log-container=1' );
+
 	$provider        = new CompositeCachingServiceProvider( $providers );
 	$proxy_container = new ProxyContainer();
 	// TODO: caching does not work currently,
 	// may want to consider fixing it later (pass proxy as parent to DelegatingContainer)
 	// for now not fixed since we were using this behavior for long time and fixing it now may break things.
-	$container     = new DelegatingContainer( $provider );
+	$container     = $is_container_logging_enabled ? new LoggingDelegatingContainer( $provider ) : new DelegatingContainer( $provider );
 	$app_container = new CachingContainer(
 		new CompositeContainer(
 			array_merge(
