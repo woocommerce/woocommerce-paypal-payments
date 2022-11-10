@@ -62,7 +62,7 @@ import MessageRenderer from "../../../ppcp-button/resources/js/modules/Renderer/
 
         function getPaypalScriptSettings() {
             const disableFundingInput = jQuery('[name="ppcp[disable_funding][]"]');
-            const disabledSources = disableFundingInput.length > 0 ? disableFundingInput.val() : PayPalCommerceGatewaySettings.disabled_sources;
+            let disabledSources = disableFundingInput.length > 0 ? disableFundingInput.val() : PayPalCommerceGatewaySettings.disabled_sources;
             const isPayLaterButtonEnabled = payLaterButtonInput ? payLaterButtonInput.checked : PayPalCommerceGatewaySettings.is_pay_later_button_enabled
             const settings = {
                 'client-id': PayPalCommerceGatewaySettings.client_id,
@@ -72,13 +72,15 @@ import MessageRenderer from "../../../ppcp-button/resources/js/modules/Renderer/
                 'enable-funding': ['venmo', 'paylater'],
                 'buyer-country': PayPalCommerceGatewaySettings.country,
             };
+
+            if (!isPayLaterButtonEnabled) {
+                disabledSources = disabledSources.concat('credit')
+            }
+
             if (disabledSources?.length) {
                 settings['disable-funding'] = disabledSources;
             }
 
-            if (!isPayLaterButtonEnabled) {
-                settings['disable-funding'] = 'credit';
-            }
             return settings;
         }
 
