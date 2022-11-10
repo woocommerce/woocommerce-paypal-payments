@@ -1465,7 +1465,6 @@ return array(
 	'wcgateway.all-funding-sources'                        => static function( ContainerInterface $container ): array {
 		return array(
 			'card'        => _x( 'Credit or debit cards', 'Name of payment method', 'woocommerce-paypal-payments' ),
-			'credit'      => _x( 'Pay Later', 'Name of payment method', 'woocommerce-paypal-payments' ),
 			'sepa'        => _x( 'SEPA-Lastschrift', 'Name of payment method', 'woocommerce-paypal-payments' ),
 			'bancontact'  => _x( 'Bancontact', 'Name of payment method', 'woocommerce-paypal-payments' ),
 			'blik'        => _x( 'BLIK', 'Name of payment method', 'woocommerce-paypal-payments' ),
