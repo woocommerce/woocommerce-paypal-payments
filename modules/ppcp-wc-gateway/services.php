@@ -1800,17 +1800,21 @@ return array(
 				'gateway'      => 'paypal',
 			),
 			'button_mini-cart_height'                => array(
-				'title'        => __( 'Button Height', 'woocommerce-paypal-payments' ),
-				'type'         => 'number',
-				'default'      => '35',
-				'desc_tip'     => true,
-				'description'  => __( 'Add a value from 25 to 55.', 'woocommerce-paypal-payments' ),
-				'screens'      => array(
+				'title'             => __( 'Button Height', 'woocommerce-paypal-payments' ),
+				'type'              => 'number',
+				'default'           => '35',
+				'custom_attributes' => array(
+					'min' => 25,
+					'max' => 55,
+				),
+				'desc_tip'          => true,
+				'description'       => __( 'Add a value from 25 to 55.', 'woocommerce-paypal-payments' ),
+				'screens'           => array(
 					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
+				'requirements'      => array(),
+				'gateway'           => 'paypal',
 			),
 			'button_mini-cart_preview'               => array(
 				'type'         => 'ppcp-text',
