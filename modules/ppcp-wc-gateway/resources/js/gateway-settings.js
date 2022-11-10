@@ -61,7 +61,8 @@ import MessageRenderer from "../../../ppcp-button/resources/js/modules/Renderer/
         }
 
         function getPaypalScriptSettings() {
-            const disabledSources = jQuery('[name="ppcp[disable_funding][]"]').val();
+            const disableFundingInput = jQuery('[name="ppcp[disable_funding][]"]');
+            const disabledSources = disableFundingInput.length > 0 ? disableFundingInput.val() : PayPalCommerceGatewaySettings.disabled_sources;
             const isPayLaterButtonEnabled = payLaterButtonInput ? payLaterButtonInput.checked : PayPalCommerceGatewaySettings.is_pay_later_button_enabled
             const settings = {
                 'client-id': PayPalCommerceGatewaySettings.client_id,

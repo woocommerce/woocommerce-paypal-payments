@@ -66,6 +66,13 @@ class SettingsPageAssets {
 	protected $is_pay_later_button_enabled;
 
 	/**
+	 * The list of disabled funding sources.
+	 *
+	 * @var array
+	 */
+	protected $disabled_sources;
+
+	/**
 	 * Assets constructor.
 	 *
 	 * @param string             $module_url The url of this module.
@@ -75,6 +82,7 @@ class SettingsPageAssets {
 	 * @param string             $currency 3-letter currency code of the shop.
 	 * @param string             $country 2-letter country code of the shop.
 	 * @param bool               $is_pay_later_button_enabled Whether Pay Later button is enabled either for checkout, cart or product page.
+	 * @param array              $disabled_sources The list of disabled funding sources.
 	 */
 	public function __construct(
 		string $module_url,
@@ -83,7 +91,8 @@ class SettingsPageAssets {
 		string $client_id,
 		string $currency,
 		string $country,
-		bool $is_pay_later_button_enabled
+		bool $is_pay_later_button_enabled,
+		array $disabled_sources
 	) {
 		$this->module_url                  = $module_url;
 		$this->version                     = $version;
@@ -92,6 +101,7 @@ class SettingsPageAssets {
 		$this->currency                    = $currency;
 		$this->country                     = $country;
 		$this->is_pay_later_button_enabled = $is_pay_later_button_enabled;
+		$this->disabled_sources            = $disabled_sources;
 	}
 
 	/**
@@ -173,6 +183,7 @@ class SettingsPageAssets {
 				'country'                        => $this->country,
 				'integration_date'               => PAYPAL_INTEGRATION_DATE,
 				'is_pay_later_button_enabled'    => $this->is_pay_later_button_enabled,
+				'disabled_sources'               => $this->disabled_sources,
 			)
 		);
 	}
