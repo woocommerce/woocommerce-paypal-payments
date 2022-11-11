@@ -105,9 +105,9 @@ class PayPalRequestIdRepository {
 	 * @return array
 	 */
 	private function cleanup( array $all ): array {
-		$day_in_seconds = 86400;
+
 		foreach ( $all as $order_id => $value ) {
-			if ( ( time() + $day_in_seconds ) < $value['expiration'] ) {
+			if ( time() < $value['expiration'] ) {
 				continue;
 			}
 			unset( $all[ $order_id ] );
