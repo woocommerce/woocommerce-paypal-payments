@@ -17,6 +17,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 class PayPalRequestIdRepository {
 
 	const KEY = 'ppcp-request-ids';
+	const EXPIRATION = 864000; // 10 days.
 
 	/**
 	 * Returns a request ID based on the order ID.
@@ -49,8 +50,7 @@ class PayPalRequestIdRepository {
 	 * @return bool
 	 */
 	public function set_for_order( Order $order, string $request_id ): bool {
-		$this->set( $order->id(), $request_id );
-		return true;
+		return $this->set( $order->id(), $request_id );
 	}
 
 	/**
@@ -59,15 +59,8 @@ class PayPalRequestIdRepository {
 	 * @param string $key The key in the request ID storage.
 	 * @param string $request_id The ID.
 	 */
-	public function set( string $key, string $request_id ): void {
-		$all            = $this->all();
-		$day_in_seconds = 86400;
-		$all[ $key ]    = array(
-			'id'         => $request_id,
-			'expiration' => time() + 10 * $day_in_seconds,
-		);
-		$all            = $this->cleanup( $all );
-		update_option( self::KEY, $all );
+	public function set( string $key, string $request_id ): bool {
+		return set_transient( self::KEY . '_' . $key, $request_id, self::EXPIRATION );
 	}
 
 	/**
@@ -78,31 +71,43 @@ class PayPalRequestIdRepository {
 	 * @return string
 	 */
 	public function get( string $key ): string {
+		$data_from_transient = get_transient( self::KEY . '_' . $key );
+		if ( $data_from_transient ) {
+			return $data_from_transient;
+		}
+		// No data in transient. The older system used to store data in one site option, so this key may be there:
 		$all = $this->all();
+		if ( count( $all ) < 1 ) {
+			return '';
+		}
+		// We will clean up the legacy option for the time being.
+		update_option( self::KEY, $this->cleanup( $all ) );
 		return isset( $all[ $key ] ) ? (string) $all[ $key ]['id'] : '';
 	}
 
 	/**
 	 * Return all IDs.
 	 *
+	 * @todo Remove this in next release sine we are now using transients.
 	 * @return array
 	 */
 	private function all(): array {
 
-		return (array) get_option( 'ppcp-request-ids', array() );
+		return (array) get_option( self::KEY, array() );
 	}
 
 	/**
 	 * Clean up outdated request IDs.
 	 *
 	 * @param array $all All request IDs.
+	 * @todo Remove this in next release sine we are now using transients.
 	 *
 	 * @return array
 	 */
 	private function cleanup( array $all ): array {
-
+		$day_in_seconds = 86400;
 		foreach ( $all as $order_id => $value ) {
-			if ( time() < $value['expiration'] ) {
+			if ( ( time() + $day_in_seconds ) < $value['expiration'] ) {
 				continue;
 			}
 			unset( $all[ $order_id ] );

@@ -64,5 +64,11 @@
                 "vendor/bin/phpcbf"
             ]
         }
+    },
+    "config": {
+        "allow-plugins": {
+            "wikimedia/composer-merge-plugin": true,
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
     }
 }
