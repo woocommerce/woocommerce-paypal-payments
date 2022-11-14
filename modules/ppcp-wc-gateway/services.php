@@ -252,6 +252,13 @@ return array(
 			unset( $sections['ppcp-credit-card-gateway'] );
 		}
 
+		$pui_product_status = $container->get( 'wcgateway.pay-upon-invoice-product-status' );
+		assert( $pui_product_status instanceof PayUponInvoiceProductStatus );
+
+		if ( ! $pui_product_status->pui_is_active() ) {
+			unset( $sections[ PayUponInvoiceGateway::ID ] );
+		}
+
 		return $sections;
 	},
 	'wcgateway.settings.status'                            => static function ( ContainerInterface $container ): SettingsStatus {
