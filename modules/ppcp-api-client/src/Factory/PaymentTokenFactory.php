@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
-use stdClass;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
@@ -21,12 +20,12 @@ class PaymentTokenFactory {
 	/**
 	 * Returns a PaymentToken based off a PayPal Response object.
 	 *
-	 * @param \stdClass $data The JSON object.
+	 * @param object $data The JSON object.
 	 *
 	 * @return PaymentToken
 	 * @throws RuntimeException When JSON object is malformed.
 	 */
-	public function from_paypal_response( stdClass $data ): PaymentToken {
+	public function from_paypal_response( $data ): PaymentToken {
 		if ( ! isset( $data->id ) ) {
 			throw new RuntimeException(
 				__( 'No id for payment token given', 'woocommerce-paypal-payments' )
