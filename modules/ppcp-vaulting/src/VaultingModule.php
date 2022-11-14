@@ -58,7 +58,7 @@ class VaultingModule implements ModuleInterface {
 			'woocommerce_account_menu_items',
 			function( $menu_links ) {
 				$menu_links = array_slice( $menu_links, 0, 5, true )
-				+ array( 'ppcp-paypal-payment-tokens' => 'PayPal payments' )
+				+ array( 'ppcp-paypal-payment-tokens' => __( 'PayPal payments', 'woocommerce-paypal-payments' ) )
 				+ array_slice( $menu_links, 5, null, true );
 
 				return $menu_links;
