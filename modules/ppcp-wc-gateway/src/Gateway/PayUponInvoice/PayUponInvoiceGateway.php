@@ -249,13 +249,13 @@ class PayUponInvoiceGateway extends WC_Payment_Gateway {
 			$wc_order->save();
 		}
 
-		$wc_order->update_status( 'on-hold', __( 'Awaiting Pay upon Invoice payment.', 'woocommerce-paypal-payments' ) );
 		$purchase_unit  = $this->purchase_unit_factory->from_wc_order( $wc_order );
 		$payment_source = $this->payment_source_factory->from_wc_order( $wc_order, $birth_date );
 
 		try {
 			$order = $this->order_endpoint->create( array( $purchase_unit ), $payment_source, $wc_order );
 			$this->add_paypal_meta( $wc_order, $order, $this->environment );
+			$wc_order->update_status( 'on-hold', __( 'Awaiting Pay upon Invoice payment.', 'woocommerce-paypal-payments' ) );
 
 			as_schedule_single_action(
 				time() + ( 5 * MINUTE_IN_SECONDS ),
