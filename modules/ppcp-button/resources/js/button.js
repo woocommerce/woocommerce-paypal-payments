@@ -30,6 +30,16 @@ const bootstrap = () => {
 
     const freeTrialHandler = new FreeTrialHandler(PayPalCommerceGateway, spinner, errorHandler);
 
+    jQuery('form.woocommerce-checkout input').on('keydown', e => {
+        if (e.key === 'Enter' && [
+            PaymentMethods.PAYPAL,
+            PaymentMethods.CARDS,
+            PaymentMethods.CARD_BUTTON,
+        ].includes(getCurrentPaymentMethod())) {
+            e.preventDefault();
+        }
+    });
+
     const onSmartButtonClick = (data, actions) => {
         window.ppcpFundingSource = data.fundingSource;
 
