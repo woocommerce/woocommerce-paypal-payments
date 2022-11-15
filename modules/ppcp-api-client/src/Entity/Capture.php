@@ -154,9 +154,9 @@ class Capture {
 	/**
 	 * Returns the seller protection object.
 	 *
-	 * @return \stdClass
+	 * @return object
 	 */
-	public function seller_protection() : \stdClass {
+	public function seller_protection() {
 		return (object) array( 'status' => $this->seller_protection );
 	}
 

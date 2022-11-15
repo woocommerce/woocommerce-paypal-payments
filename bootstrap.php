@@ -5,14 +5,14 @@
  * @package WooCommerce\PayPalCommerce
  */
 
-use Dhii\Container\CachingContainer;
-use Dhii\Container\CompositeCachingServiceProvider;
-use Dhii\Container\CompositeContainer;
-use Dhii\Container\DelegatingContainer;
-use Dhii\Container\ProxyContainer;
-use Dhii\Modular\Module\ModuleInterface;
-use Interop\Container\ServiceProviderInterface;
-use Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\CachingContainer;
+use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\CompositeCachingServiceProvider;
+use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\CompositeContainer;
+use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\DelegatingContainer;
+use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ProxyContainer;
+use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
+use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
+use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return function (
 	string $root_dir,

@@ -9,8 +9,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Entity;
 
-use stdClass;
-
 /**
  * Class Webhook
  */
@@ -33,16 +31,16 @@ class Webhook {
 	/**
 	 * The event types.
 	 *
-	 * @var string[]
+	 * @var object[]
 	 */
 	private $event_types;
 
 	/**
 	 * Webhook constructor.
 	 *
-	 * @param string     $url The URL of the webhook.
-	 * @param stdClass[] $event_types The associated event types.
-	 * @param string     $id The id of the webhook.
+	 * @param string   $url The URL of the webhook.
+	 * @param object[] $event_types The associated event types.
+	 * @param string   $id The id of the webhook.
 	 */
 	public function __construct( string $url, array $event_types, string $id = '' ) {
 		$this->url         = $url;
@@ -73,7 +71,7 @@ class Webhook {
 	/**
 	 * Returns the event types.
 	 *
-	 * @return stdClass[]
+	 * @return object[]
 	 */
 	public function event_types(): array {
 

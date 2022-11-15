@@ -11,7 +11,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway;
 
-use Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
@@ -271,6 +271,13 @@ return array(
 
 		if ( ! $messages_apply->for_country() ) {
 			unset( $sections[ Settings::PAY_LATER_TAB_ID ] );
+		}
+
+		$pui_product_status = $container->get( 'wcgateway.pay-upon-invoice-product-status' );
+		assert( $pui_product_status instanceof PayUponInvoiceProductStatus );
+
+		if ( ! $pui_product_status->pui_is_active() ) {
+			unset( $sections[ PayUponInvoiceGateway::ID ] );
 		}
 
 		return $sections;
@@ -1295,17 +1302,21 @@ return array(
 				'gateway'      => 'paypal',
 			),
 			'button_mini-cart_height'                => array(
-				'title'        => __( 'Button Height', 'woocommerce-paypal-payments' ),
-				'type'         => 'number',
-				'default'      => '35',
-				'desc_tip'     => true,
-				'description'  => __( 'Add a value from 25 to 55.', 'woocommerce-paypal-payments' ),
-				'screens'      => array(
+				'title'             => __( 'Button Height', 'woocommerce-paypal-payments' ),
+				'type'              => 'number',
+				'default'           => '35',
+				'custom_attributes' => array(
+					'min' => 25,
+					'max' => 55,
+				),
+				'desc_tip'          => true,
+				'description'       => __( 'Add a value from 25 to 55.', 'woocommerce-paypal-payments' ),
+				'screens'           => array(
 					State::STATE_START,
 					State::STATE_ONBOARDED,
 				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
+				'requirements'      => array(),
+				'gateway'           => 'paypal',
 			),
 			'button_mini-cart_preview'               => array(
 				'type'         => 'ppcp-text',

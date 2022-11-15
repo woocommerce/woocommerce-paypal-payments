@@ -9,8 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway;
 
-use Dhii\Container\ServiceProvider;
-use Dhii\Modular\Module\ModuleInterface;
+use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
+use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WC_Order;
 use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
@@ -40,8 +40,8 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
-use Interop\Container\ServiceProviderInterface;
-use Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
+use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 /**
  * Class WcGatewayModule

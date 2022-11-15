@@ -152,6 +152,7 @@
 		<MixedStringOffsetAssignment errorLevel="info"/>
 		<ParamNameMismatch errorLevel="info"/>
 		<RedundantCastGivenDocblockType errorLevel="info"/>
+		<RiskyCast errorLevel="info"/>
 
 		<TooManyArguments>
 			<errorLevel type="suppress">

@@ -10,7 +10,6 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\ApiClient\Entity;
 
 use DateTime;
-use stdClass;
 
 /**
  * Class WebhookEvent
@@ -69,7 +68,7 @@ class WebhookEvent {
 	/**
 	 * The resource that triggered the webhook event notification.
 	 *
-	 * @var stdClass
+	 * @var object
 	 */
 	private $resource;
 
@@ -83,9 +82,9 @@ class WebhookEvent {
 	 * @param string        $event_type The event that triggered the webhook event notification, such as 'CHECKOUT.ORDER.APPROVED'.
 	 * @param string        $summary A summary description for the event notification.
 	 * @param string        $resource_version The resource version in the webhook notification, such as '1.0'.
-	 * @param stdClass      $resource The resource that triggered the webhook event notification.
+	 * @param object        $resource The resource that triggered the webhook event notification.
 	 */
-	public function __construct( string $id, ?DateTime $create_time, string $resource_type, string $event_version, string $event_type, string $summary, string $resource_version, stdClass $resource ) {
+	public function __construct( string $id, ?DateTime $create_time, string $resource_type, string $event_version, string $event_type, string $summary, string $resource_version, $resource ) {
 		$this->id               = $id;
 		$this->create_time      = $create_time;
 		$this->resource_type    = $resource_type;
@@ -162,9 +161,9 @@ class WebhookEvent {
 	/**
 	 * The resource that triggered the webhook event notification.
 	 *
-	 * @return stdClass
+	 * @return object
 	 */
-	public function resource(): stdClass {
+	public function resource() {
 		return $this->resource;
 	}
 }

@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Processor;
 
 
-use Dhii\Container\Dictionary;
+use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\Dictionary;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;

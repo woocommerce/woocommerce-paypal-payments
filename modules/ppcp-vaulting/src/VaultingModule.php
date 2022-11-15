@@ -9,10 +9,10 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Vaulting;
 
-use Dhii\Container\ServiceProvider;
-use Dhii\Modular\Module\ModuleInterface;
-use Interop\Container\ServiceProviderInterface;
-use Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
+use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
+use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
+use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use WC_Order;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
@@ -58,7 +58,7 @@ class VaultingModule implements ModuleInterface {
 			'woocommerce_account_menu_items',
 			function( $menu_links ) {
 				$menu_links = array_slice( $menu_links, 0, 5, true )
-				+ array( 'ppcp-paypal-payment-tokens' => 'PayPal payments' )
+				+ array( 'ppcp-paypal-payment-tokens' => __( 'PayPal payments', 'woocommerce-paypal-payments' ) )
 				+ array_slice( $menu_links, 5, null, true );
 
 				return $menu_links;

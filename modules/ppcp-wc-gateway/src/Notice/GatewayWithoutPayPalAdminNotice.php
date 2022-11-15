@@ -12,7 +12,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Notice;
 use WC_Payment_Gateway;
 use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
 use WooCommerce\PayPalCommerce\Onboarding\State;
-use Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 /**
  * Creates the admin message about the gateway being enabled without the PayPal gateway.
