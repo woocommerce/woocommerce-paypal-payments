@@ -246,10 +246,17 @@ class SettingsListener {
 			return;
 		}
 
-		$this->settings->set( 'message_enabled', false );
-		$this->settings->set( 'message_product_enabled', false );
-		$this->settings->set( 'message_cart_enabled', false );
-		$this->settings->persist();
+		$pay_later_messaging_enabled = $this->settings->has( 'pay_later_messaging_enabled' ) && $this->settings->get( 'pay_later_messaging_enabled' );
+		if ( $pay_later_messaging_enabled ) {
+			$this->settings->set( 'pay_later_messaging_enabled', false );
+			$this->settings->persist();
+		}
+
+		$pay_later_button_enabled = $this->settings->has( 'pay_later_button_enabled' ) && $this->settings->get( 'pay_later_button_enabled' );
+		if ( $pay_later_button_enabled ) {
+			$this->settings->set( 'pay_later_button_enabled', false );
+			$this->settings->persist();
+		}
 	}
 
 	/**

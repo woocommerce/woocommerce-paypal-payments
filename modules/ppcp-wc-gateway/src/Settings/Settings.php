@@ -19,6 +19,7 @@ class Settings implements ContainerInterface {
 
 	const KEY               = 'woocommerce-ppcp-settings';
 	const CONNECTION_TAB_ID = 'ppcp-connection';
+	const PAY_LATER_TAB_ID  = 'ppcp-pay-later';
 
 	/**
 	 * The settings.

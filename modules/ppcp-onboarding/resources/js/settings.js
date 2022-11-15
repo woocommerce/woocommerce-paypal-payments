@@ -1,11 +1,18 @@
 document.addEventListener(
     'DOMContentLoaded',
     () => {
+        const payLaterMessagingSelectableLocations = ['product', 'cart', 'checkout'];
+        const payLaterMessagingAllLocations = payLaterMessagingSelectableLocations.concat('general');
+        const payLaterMessagingLocationsSelector = '#field-pay_later_messaging_locations';
+        const payLaterMessagingLocationsSelect = payLaterMessagingLocationsSelector + ' select';
+        const payLaterMessagingEnabledSelector = '#ppcp-pay_later_messaging_enabled';
+
         const groupToggle = (selector, group) => {
             const toggleElement = document.querySelector(selector);
             if (! toggleElement) {
                 return;
             }
+
             if (! toggleElement.checked) {
                 group.forEach( (elementToHide) => {
                     document.querySelector(elementToHide).style.display = 'none';
@@ -14,11 +21,11 @@ document.addEventListener(
             toggleElement.addEventListener(
                 'change',
                 (event) => {
-
                     if (! event.target.checked) {
                         group.forEach( (elementToHide) => {
                             document.querySelector(elementToHide).style.display = 'none';
                         });
+
                         return;
                     }
 
@@ -26,20 +33,7 @@ document.addEventListener(
                         document.querySelector(elementToShow).style.display = '';
                     })
 
-                    if('ppcp-message_enabled' === event.target.getAttribute('id')){
-                        updateCheckoutMessageFields();
-                        return;
-                    }
-
-                    if('ppcp-message_product_enabled' === event.target.getAttribute('id')){
-                        updateProductMessageFields();
-                        return;
-                    }
-
-                    if('ppcp-message_cart_enabled' === event.target.getAttribute('id')){
-                        updateCartMessageFields();
-                    }
-
+                    togglePayLaterMessageFields();
                 }
             );
         };
@@ -78,89 +72,34 @@ document.addEventListener(
             );
         };
 
-        const updateCheckoutMessageFields = () => {
-            groupToggleSelect(
-                '#ppcp-message_layout',
-                [
-                    {
-                        value:'text',
-                        selector:'#field-message_logo'
-                    },
-                    {
-                        value:'text',
-                        selector:'#field-message_position'
-                    },
-                    {
-                        value:'text',
-                        selector:'#field-message_color'
-                    },
-                    {
-                        value:'flex',
-                        selector:'#field-message_flex_ratio'
-                    },
-                    {
-                        value:'flex',
-                        selector:'#field-message_flex_color'
-                    }
-                ]
-            );
-        }
-
-        const updateProductMessageFields = () => {
-            groupToggleSelect(
-                '#ppcp-message_product_layout',
-                [
-                    {
-                        value:'text',
-                        selector:'#field-message_product_logo'
-                    },
-                    {
-                        value:'text',
-                        selector:'#field-message_product_position'
-                    },
-                    {
-                        value:'text',
-                        selector:'#field-message_product_color'
-                    },
-                    {
-                        value:'flex',
-                        selector:'#field-message_product_flex_ratio'
-                    },
-                    {
-                        value:'flex',
-                        selector:'#field-message_product_flex_color'
-                    }
-                ]
-            );
-        }
-
-        const updateCartMessageFields = () =>
-        {
-            groupToggleSelect(
-                '#ppcp-message_cart_layout',
-                [
-                    {
-                        value:'text',
-                        selector:'#field-message_cart_logo'
-                    },
-                    {
-                        value:'text',
-                        selector:'#field-message_cart_position'
-                    },
-                    {
-                        value:'text',
-                        selector:'#field-message_cart_color'
-                    },
-                    {
-                        value:'flex',
-                        selector:'#field-message_cart_flex_ratio'
-                    },
-                    {
-                        value:'flex',
-                        selector:'#field-message_cart_flex_color'
-                    }
-                ]
-            );
+        const togglePayLaterMessageFields = () => {
+            payLaterMessagingAllLocations.forEach( (location) => {
+                groupToggleSelect(
+                    '#ppcp-pay_later_' + location + '_message_layout',
+                    [
+                        {
+                            value:'text',
+                            selector:'#field-pay_later_' + location + '_message_logo'
+                        },
+                        {
+                            value:'text',
+                            selector:'#field-pay_later_' + location + '_message_position'
+                        },
+                        {
+                            value:'text',
+                            selector:'#field-pay_later_' + location + '_message_color'
+                        },
+                        {
+                            value:'flex',
+                            selector:'#field-pay_later_' + location + '_message_flex_ratio'
+                        },
+                        {
+                            value:'flex',
+                            selector:'#field-pay_later_' + location + '_message_flex_color'
+                        }
+                    ]
+                );
+            })
         }
 
         const removeDisabledCardIcons = (disabledCardsSelectSelector, iconsSelectSelector) => {
@@ -223,6 +162,138 @@ document.addEventListener(
             replace();
         };
 
+        const togglePayLaterMessagingInputsBySelectedLocations = (
+            stylingPerMessagingSelector,
+            messagingLocationsSelector,
+            groupToShowOnChecked,
+            groupToHideOnChecked
+        ) => {
+
+            const payLaterMessagingEnabled = document.querySelector(payLaterMessagingEnabledSelector);
+            const stylingPerMessagingElement = document.querySelector(stylingPerMessagingSelector);
+            const messagingLocationsElement = document.querySelector(messagingLocationsSelector);
+
+            if (! stylingPerMessagingElement) {
+                return;
+            }
+
+            const toggleElementsBySelectedLocations = () => {
+                if (! stylingPerMessagingElement.checked || ! payLaterMessagingEnabled.checked) {
+                    return;
+                }
+
+                let checkedLocations = document.querySelectorAll(messagingLocationsSelector + ' :checked');
+                const selectedLocations = [...checkedLocations].map(option => option.value);
+
+                const messagingInputSelectors = payLaterMessagingInputSelectorsByLocations(selectedLocations);
+
+                groupToShowOnChecked.forEach( (element) => {
+                    if ( messagingInputSelectors.includes(element) ) {
+                        document.querySelector(element).style.display = '';
+                        return;
+                    }
+                    document.querySelector(element).style.display = 'none';
+                })
+
+                togglePayLaterMessageFields();
+            }
+
+            const hideElements = (selectroGroup) => {
+                selectroGroup.forEach( (elementToHide) => {
+                    document.querySelector(elementToHide).style.display = 'none';
+                })
+            }
+
+            const showElements = (selectroGroup) => {
+                selectroGroup.forEach( (elementToShow) => {
+                    document.querySelector(elementToShow).style.display = '';
+                })
+            }
+
+            groupToggle(stylingPerMessagingSelector, groupToShowOnChecked);
+            toggleElementsBySelectedLocations();
+
+            if (stylingPerMessagingElement.checked) {
+                hideElements(groupToHideOnChecked);
+            }
+
+            stylingPerMessagingElement.addEventListener(
+                'change',
+                (event) => {
+                    toggleElementsBySelectedLocations();
+
+                    if (event.target.checked) {
+                        hideElements(groupToHideOnChecked);
+                        return;
+                    }
+
+                    showElements(groupToHideOnChecked);
+                    togglePayLaterMessageFields();
+                }
+            );
+
+            // We need to use jQuery here as the select might be a select2 element, which doesn't use native events.
+            jQuery(messagingLocationsElement).on('change', toggleElementsBySelectedLocations);
+        }
+
+        const payLaterMessagingInputSelectorsByLocations = (locations) => {
+            let inputSelectros = [];
+
+            locations.forEach( (location) => {
+                inputSelectros = inputSelectros.concat(payLaterMessagingInputSelectorByLocation(location))
+            })
+
+            return inputSelectros
+        }
+
+        const payLaterMessagingInputSelectorByLocation = (location) => {
+            const inputSelectors = [
+                '#field-pay_later_' + location + '_message_layout',
+                '#field-pay_later_' + location + '_message_logo',
+                '#field-pay_later_' + location + '_message_position',
+                '#field-pay_later_' + location + '_message_color',
+                '#field-pay_later_' + location + '_message_flex_color',
+                '#field-pay_later_' + location + '_message_flex_ratio',
+                '#field-pay_later_' + location + '_message_preview',
+            ]
+
+            if (location !== 'general') {
+                inputSelectors.push('#field-pay_later_' + location + '_messaging_heading');
+            }
+
+            return inputSelectors
+        }
+
+        const allPayLaterMessaginginputSelectors = () => {
+            let stylingInputSelectors = payLaterMessagingInputSelectorsByLocations(payLaterMessagingAllLocations);
+
+            return stylingInputSelectors.concat(payLaterMessagingLocationsSelector, '#field-pay_later_enable_styling_per_messaging_location');
+        }
+
+        const toggleMessagingEnabled = () => {
+            const payLaterMessagingEnabled = document.querySelector(payLaterMessagingEnabledSelector);
+            const stylingPerMessagingElement = document.querySelector('#ppcp-pay_later_enable_styling_per_messaging_location');
+
+            if (! payLaterMessagingEnabled) {
+                return;
+            }
+
+            groupToggle(
+                payLaterMessagingEnabledSelector,
+                allPayLaterMessaginginputSelectors()
+            );
+
+            payLaterMessagingEnabled.addEventListener(
+                'change',
+                (event) => {
+                    if (! event.target.checked) {
+                        return;
+                    }
+                    stylingPerMessagingElement.dispatchEvent(new Event('change'))
+                }
+            );
+        }
+
         (() => {
             removeDisabledCardIcons('select[name="ppcp[disable_cards][]"]', 'select[name="ppcp[card_icons][]"]');
             groupToggle(
@@ -238,15 +309,17 @@ document.addEventListener(
             );
 
             groupToggle(
-                '#ppcp-message_enabled',
-                [
-                    '#field-message_layout',
-                    '#field-message_logo',
-                    '#field-message_position',
-                    '#field-message_color',
-                    '#field-message_flex_color',
-                    '#field-message_flex_ratio',
-                ]
+                '#ppcp-pay_later_button_enabled',
+                ['#field-pay_later_button_locations']
+            );
+
+            toggleMessagingEnabled();
+
+            togglePayLaterMessagingInputsBySelectedLocations(
+                '#ppcp-pay_later_enable_styling_per_messaging_location',
+                payLaterMessagingLocationsSelect,
+                payLaterMessagingInputSelectorsByLocations(payLaterMessagingSelectableLocations),
+                payLaterMessagingInputSelectorsByLocations(['general']),
             );
 
             groupToggle(
@@ -258,18 +331,6 @@ document.addEventListener(
                     '#field-button_product_color',
                     '#field-button_product_shape',
                     '#field-button_product_preview',
-                ]
-            );
-
-            groupToggle(
-                '#ppcp-message_product_enabled',
-                [
-                    '#field-message_product_layout',
-                    '#field-message_product_logo',
-                    '#field-message_product_position',
-                    '#field-message_product_color',
-                    '#field-message_product_flex_color',
-                    '#field-message_product_flex_ratio',
                 ]
             );
 
@@ -297,17 +358,6 @@ document.addEventListener(
                     '#field-button_cart_preview',
                 ]
             );
-            groupToggle(
-                '#ppcp-message_cart_enabled',
-                [
-                    '#field-message_cart_layout',
-                    '#field-message_cart_logo',
-                    '#field-message_cart_position',
-                    '#field-message_cart_color',
-                    '#field-message_cart_flex_color',
-                    '#field-message_cart_flex_ratio',
-                ]
-            );
 
             groupToggle(
                 '#ppcp-vault_enabled',
@@ -327,9 +377,7 @@ document.addEventListener(
                 ]
             );
 
-            updateCheckoutMessageFields();
-            updateProductMessageFields();
-            updateCartMessageFields();
+            togglePayLaterMessageFields();
         })();
     }
 )

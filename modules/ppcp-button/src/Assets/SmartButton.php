@@ -28,6 +28,7 @@ use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Subscription\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
+use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
@@ -231,7 +232,6 @@ class SmartButton implements SmartButtonInterface {
 	 * Registers the necessary action hooks to render the HTML depending on the settings.
 	 *
 	 * @return bool
-	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting was not found.
 	 */
 	public function render_wrapper(): bool {
 		if ( $this->settings->has( 'enabled' ) && $this->settings->get( 'enabled' ) ) {
@@ -347,12 +347,16 @@ class SmartButton implements SmartButtonInterface {
 	 * Registers the hooks to render the credit messaging HTML depending on the settings.
 	 *
 	 * @return bool
-	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting was not found.
+	 * @throws NotFoundException When a setting was not found.
 	 */
 	private function render_message_wrapper_registrar(): bool {
+		if ( ! $this->settings_status->is_pay_later_messaging_enabled() ) {
+			return false;
+		}
 
-		$not_enabled_on_cart = $this->settings->has( 'message_cart_enabled' ) &&
-			! $this->settings->get( 'message_cart_enabled' );
+		$selected_locations = $this->settings->has( 'pay_later_messaging_locations' ) ? $this->settings->get( 'pay_later_messaging_locations' ) : array();
+
+		$not_enabled_on_cart = ! in_array( 'cart', $selected_locations, true );
 
 		add_action(
 			$this->proceed_to_checkout_button_renderer_hook(),
@@ -365,8 +369,7 @@ class SmartButton implements SmartButtonInterface {
 			19
 		);
 
-		$not_enabled_on_product_page = $this->settings->has( 'message_product_enabled' ) &&
-			! $this->settings->get( 'message_product_enabled' );
+		$not_enabled_on_product_page = ! in_array( 'product', $selected_locations, true );
 		if (
 			( is_product() || wc_post_content_has_shortcode( 'product_page' ) )
 			&& ! $not_enabled_on_product_page
@@ -374,31 +377,21 @@ class SmartButton implements SmartButtonInterface {
 		) {
 			add_action(
 				$this->single_product_renderer_hook(),
-				array(
-					$this,
-					'message_renderer',
-				),
+				array( $this, 'message_renderer' ),
 				30
 			);
 		}
 
-		$not_enabled_on_checkout = $this->settings->has( 'message_enabled' ) &&
-			! $this->settings->get( 'message_enabled' );
+		$not_enabled_on_checkout = ! in_array( 'checkout', $selected_locations, true );
 		if ( ! $not_enabled_on_checkout ) {
 			add_action(
 				$this->checkout_dcc_button_renderer_hook(),
-				array(
-					$this,
-					'message_renderer',
-				),
+				array( $this, 'message_renderer' ),
 				11
 			);
 			add_action(
 				$this->pay_order_renderer_hook(),
-				array(
-					$this,
-					'message_renderer',
-				),
+				array( $this, 'message_renderer' ),
 				11
 			);
 		}
@@ -409,7 +402,7 @@ class SmartButton implements SmartButtonInterface {
 	 * Registers the hooks where to render the button HTML according to the settings.
 	 *
 	 * @return bool
-	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting was not found.
+	 * @throws NotFoundException When a setting was not found.
 	 */
 	private function render_button_wrapper_registrar(): bool {
 
@@ -508,7 +501,7 @@ class SmartButton implements SmartButtonInterface {
 	 * Enqueues the script.
 	 *
 	 * @return bool
-	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting was not found.
+	 * @throws NotFoundException When a setting was not found.
 	 */
 	public function enqueue(): bool {
 		$buttons_enabled = $this->settings->has( 'enabled' ) && $this->settings->get( 'enabled' );
@@ -608,75 +601,34 @@ class SmartButton implements SmartButtonInterface {
 	 * The values for the credit messaging.
 	 *
 	 * @return array
-	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting was not found.
+	 * @throws NotFoundException When a setting was not found.
 	 */
 	private function message_values(): array {
-
-		if (
-			$this->settings->has( 'disable_funding' )
-			&& in_array( 'credit', (array) $this->settings->get( 'disable_funding' ), true )
-		) {
-			return array();
-		}
-		$placement     = 'product';
-		$product       = wc_get_product();
-		$amount        = ( is_a( $product, WC_Product::class ) ) ? wc_get_price_including_tax( $product ) : 0;
-		$layout        = $this->settings->has( 'message_product_layout' ) ?
-			$this->settings->get( 'message_product_layout' ) : 'text';
-		$logo_type     = $this->settings->has( 'message_product_logo' ) ?
-			$this->settings->get( 'message_product_logo' ) : 'primary';
-		$logo_position = $this->settings->has( 'message_product_position' ) ?
-			$this->settings->get( 'message_product_position' ) : 'left';
-		$text_color    = $this->settings->has( 'message_product_color' ) ?
-			$this->settings->get( 'message_product_color' ) : 'black';
-		$style_color   = $this->settings->has( 'message_product_flex_color' ) ?
-			$this->settings->get( 'message_product_flex_color' ) : 'blue';
-		$ratio         = $this->settings->has( 'message_product_flex_ratio' ) ?
-			$this->settings->get( 'message_product_flex_ratio' ) : '1x1';
-		$should_show   = $this->settings->has( 'message_product_enabled' )
-			&& $this->settings->get( 'message_product_enabled' );
-		if ( is_checkout() ) {
-			$placement     = 'payment';
-			$amount        = WC()->cart->get_total( 'raw' );
-			$layout        = $this->settings->has( 'message_layout' ) ?
-				$this->settings->get( 'message_layout' ) : 'text';
-			$logo_type     = $this->settings->has( 'message_logo' ) ?
-				$this->settings->get( 'message_logo' ) : 'primary';
-			$logo_position = $this->settings->has( 'message_position' ) ?
-				$this->settings->get( 'message_position' ) : 'left';
-			$text_color    = $this->settings->has( 'message_color' ) ?
-				$this->settings->get( 'message_color' ) : 'black';
-			$style_color   = $this->settings->has( 'message_flex_color' ) ?
-				$this->settings->get( 'message_flex_color' ) : 'blue';
-			$ratio         = $this->settings->has( 'message_flex_ratio' ) ?
-				$this->settings->get( 'message_flex_ratio' ) : '1x1';
-			$should_show   = $this->settings->has( 'message_enabled' )
-				&& $this->settings->get( 'message_enabled' );
-		}
-		if ( is_cart() ) {
-			$placement     = 'cart';
-			$amount        = WC()->cart->get_total( 'raw' );
-			$layout        = $this->settings->has( 'message_cart_layout' ) ?
-				$this->settings->get( 'message_cart_layout' ) : 'text';
-			$logo_type     = $this->settings->has( 'message_cart_logo' ) ?
-				$this->settings->get( 'message_cart_logo' ) : 'primary';
-			$logo_position = $this->settings->has( 'message_cart_position' ) ?
-				$this->settings->get( 'message_cart_position' ) : 'left';
-			$text_color    = $this->settings->has( 'message_cart_color' ) ?
-				$this->settings->get( 'message_cart_color' ) : 'black';
-			$style_color   = $this->settings->has( 'message_cart_flex_color' ) ?
-				$this->settings->get( 'message_cart_flex_color' ) : 'blue';
-			$ratio         = $this->settings->has( 'message_cart_flex_ratio' ) ?
-				$this->settings->get( 'message_cart_flex_ratio' ) : '1x1';
-			$should_show   = $this->settings->has( 'message_cart_enabled' )
-				&& $this->settings->get( 'message_cart_enabled' );
-		}
-
-		if ( ! $should_show ) {
+		if ( ! $this->settings_status->is_pay_later_messaging_enabled() ) {
 			return array();
 		}
 
-		$values = array(
+		$placement = is_checkout() ? 'payment' : ( is_cart() ? 'cart' : 'product' );
+		$product   = wc_get_product();
+		$amount    = ( is_a( $product, WC_Product::class ) ) ? wc_get_price_including_tax( $product ) : 0;
+
+		if ( is_checkout() || is_cart() ) {
+			$amount = WC()->cart->get_total( 'raw' );
+		}
+
+		$styling_per_location = $this->settings->has( 'pay_later_enable_styling_per_messaging_location' ) && $this->settings->get( 'pay_later_enable_styling_per_messaging_location' );
+		$per_location         = is_checkout() ? 'checkout' : ( is_cart() ? 'cart' : 'product' );
+		$location             = $styling_per_location ? $per_location : 'general';
+		$setting_name_prefix  = "pay_later_{$location}_message";
+
+		$layout        = $this->settings->has( "{$setting_name_prefix}_layout" ) ? $this->settings->get( "{$setting_name_prefix}_layout" ) : 'text';
+		$logo_type     = $this->settings->has( "{$setting_name_prefix}_logo" ) ? $this->settings->get( "{$setting_name_prefix}_logo" ) : 'primary';
+		$logo_position = $this->settings->has( "{$setting_name_prefix}_position" ) ? $this->settings->get( "{$setting_name_prefix}_position" ) : 'left';
+		$text_color    = $this->settings->has( "{$setting_name_prefix}_color" ) ? $this->settings->get( "{$setting_name_prefix}_color" ) : 'black';
+		$style_color   = $this->settings->has( "{$setting_name_prefix}_flex_color" ) ? $this->settings->get( "{$setting_name_prefix}_flex_color" ) : 'blue';
+		$ratio         = $this->settings->has( "{$setting_name_prefix}_flex_ratio" ) ? $this->settings->get( "{$setting_name_prefix}_flex_ratio" ) : '1x1';
+
+		return array(
 			'wrapper'   => '#ppcp-messages',
 			'amount'    => $amount,
 			'placement' => $placement,
@@ -694,14 +646,13 @@ class SmartButton implements SmartButtonInterface {
 			),
 		);
 
-		return $values;
 	}
 
 	/**
 	 * Whether DCC fields can be rendered.
 	 *
 	 * @return bool
-	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting was not found.
+	 * @throws NotFoundException When a setting was not found.
 	 */
 	private function can_render_dcc() : bool {
 
@@ -741,7 +692,7 @@ class SmartButton implements SmartButtonInterface {
 	 * Whether we can store vault tokens or not.
 	 *
 	 * @return bool
-	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException If a setting hasn't been found.
+	 * @throws NotFoundException If a setting hasn't been found.
 	 */
 	public function can_save_vault_token(): bool {
 
@@ -795,7 +746,7 @@ class SmartButton implements SmartButtonInterface {
 	 * The localized data for the smart button.
 	 *
 	 * @return array
-	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException If a setting hasn't been found.
+	 * @throws NotFoundException If a setting hasn't been found.
 	 */
 	private function localize_script(): array {
 		global $wp;
@@ -951,7 +902,7 @@ class SmartButton implements SmartButtonInterface {
 	 * The JavaScript SDK url to load.
 	 *
 	 * @return string
-	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException If a setting was not found.
+	 * @throws NotFoundException If a setting was not found.
 	 */
 	private function url(): string {
 		$intent               = ( $this->settings->has( 'intent' ) ) ? $this->settings->get( 'intent' ) : 'capture';
@@ -1004,12 +955,16 @@ class SmartButton implements SmartButtonInterface {
 			$disable_funding = $all_sources;
 		}
 
+		if ( ! $this->settings_status->is_pay_later_button_enabled_for_context( $this->context() ) ) {
+			$disable_funding[] = 'credit';
+		}
+
 		if ( count( $disable_funding ) > 0 ) {
 			$params['disable-funding'] = implode( ',', array_unique( $disable_funding ) );
 		}
 
 		$enable_funding = array( 'venmo' );
-		if ( $this->settings_status->pay_later_messaging_is_enabled() || ! in_array( 'credit', $disable_funding, true ) ) {
+		if ( $this->settings_status->is_pay_later_messaging_enabled_for_location( $this->context() ) || ! in_array( 'credit', $disable_funding, true ) ) {
 			$enable_funding[] = 'paylater';
 		}
 
@@ -1067,7 +1022,7 @@ class SmartButton implements SmartButtonInterface {
 	 * The JS SKD components we need to load.
 	 *
 	 * @return array
-	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException If a setting was not found.
+	 * @throws NotFoundException If a setting was not found.
 	 */
 	private function components(): array {
 		$components = array();
@@ -1092,10 +1047,9 @@ class SmartButton implements SmartButtonInterface {
 	 * Determines whether the button component should be loaded.
 	 *
 	 * @return bool
-	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException If a setting has not been found.
+	 * @throws NotFoundException If a setting has not been found.
 	 */
 	private function load_button_component() : bool {
-
 		$load_buttons = false;
 		if (
 			$this->context() === 'checkout'
@@ -1108,7 +1062,7 @@ class SmartButton implements SmartButtonInterface {
 			$this->context() === 'product'
 			&& (
 				( $this->settings->has( 'button_product_enabled' ) && $this->settings->get( 'button_product_enabled' ) ) ||
-				( $this->settings->has( 'message_product_enabled' ) && $this->settings->get( 'message_product_enabled' ) )
+				( $this->settings_status->is_pay_later_messaging_enabled_for_location( 'product' ) )
 			)
 		) {
 			$load_buttons = true;
@@ -1124,7 +1078,7 @@ class SmartButton implements SmartButtonInterface {
 			$this->context() === 'cart'
 			&& (
 				( $this->settings->has( 'button_cart_enabled' ) && $this->settings->get( 'button_cart_enabled' ) ) ||
-				( $this->settings->has( 'message_cart_enabled' ) && $this->settings->get( 'message_cart_enabled' ) )
+				( $this->settings_status->is_pay_later_messaging_enabled_for_location( 'cart' ) )
 			)
 		) {
 			$load_buttons = true;
@@ -1183,7 +1137,7 @@ class SmartButton implements SmartButtonInterface {
 	 * Whether DCC is enabled or not.
 	 *
 	 * @return bool
-	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException If a setting has not been found.
+	 * @throws NotFoundException If a setting has not been found.
 	 */
 	private function dcc_is_enabled(): bool {
 		if ( ! is_checkout() ) {
@@ -1212,7 +1166,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @param string $context The context.
 	 *
 	 * @return string
-	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting hasn't been found.
+	 * @throws NotFoundException When a setting hasn't been found.
 	 */
 	private function style_for_context( string $style, string $context ): string {
 		$defaults = array(

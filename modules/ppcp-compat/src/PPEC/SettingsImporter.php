@@ -142,7 +142,7 @@ class SettingsImporter {
 					$value = array_values(
 						array_intersect(
 							array_map( 'strtolower', is_array( $option_value ) ? $option_value : array() ),
-							array( 'card', 'credit', 'sepa', 'bancontact', 'blik', 'eps', 'giropay', 'ideal', 'mercadopago', 'mybank', 'p24', 'sofort', 'venmo' )
+							array( 'card', 'sepa', 'bancontact', 'blik', 'eps', 'giropay', 'ideal', 'mercadopago', 'mybank', 'p24', 'sofort', 'venmo' )
 						)
 					);
 

@@ -20,6 +20,7 @@ use WC_Order;
 use WooCommerce\PayPalCommerce\Compat\Assets\CompatAssets;
 use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class CompatModule
@@ -53,6 +54,8 @@ class CompatModule implements ModuleInterface {
 
 		add_action( 'init', array( $asset_loader, 'register' ) );
 		add_action( 'admin_enqueue_scripts', array( $asset_loader, 'enqueue' ) );
+
+		$this->migrate_pay_later_settings( $c );
 	}
 
 	/**
@@ -178,5 +181,113 @@ class CompatModule implements ModuleInterface {
 				}
 			}
 		);
+	}
+
+	/**
+	 * Migrates the old Pay Later button and messaging settings for new Pay Later Tab.
+	 *
+	 * The migration will be done on plugin upgrade if it hasn't already done.
+	 *
+	 * @param ContainerInterface $c The Container.
+	 * @throws NotFoundException When setting was not found.
+	 */
+	protected function migrate_pay_later_settings( ContainerInterface $c ): void {
+		$is_pay_later_settings_migrated_option_name = 'woocommerce_ppcp-is_pay_later_settings_migrated';
+		$is_pay_later_settings_migrated             = get_option( $is_pay_later_settings_migrated_option_name );
+
+		if ( $is_pay_later_settings_migrated ) {
+			return;
+		}
+
+		add_action(
+			'woocommerce_paypal_payments_gateway_migrate',
+			function () use ( $c, $is_pay_later_settings_migrated_option_name ) {
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+
+				$disable_funding = $settings->has( 'disable_funding' ) ? $settings->get( 'disable_funding' ) : array();
+
+				$available_messaging_locations = array_keys( $c->get( 'wcgateway.settings.pay-later.messaging-locations' ) );
+				$available_button_locations    = array_merge( $available_messaging_locations, array( 'mini-cart' ) );
+
+				if ( in_array( 'credit', $disable_funding, true ) ) {
+					$settings->set( 'pay_later_button_enabled', false );
+				} else {
+					$settings->set( 'pay_later_button_enabled', true );
+					$selected_button_locations = $this->pay_later_selected_locations( $settings, $available_button_locations, 'button' );
+					if ( ! empty( $selected_button_locations ) ) {
+						$settings->set( 'pay_later_button_locations', $selected_button_locations );
+					}
+				}
+
+				$selected_messaging_locations = $this->pay_later_selected_locations( $settings, $available_messaging_locations, 'message' );
+
+				if ( ! empty( $selected_messaging_locations ) ) {
+					$settings->set( 'pay_later_messaging_enabled', true );
+					$settings->set( 'pay_later_messaging_locations', $selected_messaging_locations );
+					$settings->set( 'pay_later_enable_styling_per_messaging_location', true );
+
+					foreach ( $selected_messaging_locations as $location ) {
+						$this->migrate_message_styling_settings_by_location( $settings, $location );
+					}
+				} else {
+					$settings->set( 'pay_later_messaging_enabled', false );
+				}
+
+				$settings->persist();
+
+				update_option( $is_pay_later_settings_migrated_option_name, true );
+			}
+		);
+	}
+
+	/**
+	 * Migrates the messages styling setting by given location.
+	 *
+	 * @param Settings $settings The settings.
+	 * @param string   $location The location.
+	 * @throws NotFoundException When setting was not found.
+	 */
+	protected function migrate_message_styling_settings_by_location( Settings $settings, string $location ): void {
+
+		$old_location = $location === 'checkout' ? '' : "_{$location}";
+
+		$layout        = $settings->has( "message{$old_location}_layout" ) ? $settings->get( "message{$old_location}_layout" ) : 'text';
+		$logo_type     = $settings->has( "message{$old_location}_logo" ) ? $settings->get( "message{$old_location}_logo" ) : 'primary';
+		$logo_position = $settings->has( "message{$old_location}_position" ) ? $settings->get( "message{$old_location}_position" ) : 'left';
+		$text_color    = $settings->has( "message{$old_location}_color" ) ? $settings->get( "message{$old_location}_color" ) : 'black';
+		$style_color   = $settings->has( "message{$old_location}_flex_color" ) ? $settings->get( "message{$old_location}_flex_color" ) : 'blue';
+		$ratio         = $settings->has( "message{$old_location}_flex_ratio" ) ? $settings->get( "message{$old_location}_flex_ratio" ) : '1x1';
+
+		$settings->set( "pay_later_{$location}_message_layout", $layout );
+		$settings->set( "pay_later_{$location}_message_logo", $logo_type );
+		$settings->set( "pay_later_{$location}_message_position", $logo_position );
+		$settings->set( "pay_later_{$location}_message_color", $text_color );
+		$settings->set( "pay_later_{$location}_message_flex_color", $style_color );
+		$settings->set( "pay_later_{$location}_message_flex_ratio", $ratio );
+	}
+
+	/**
+	 * Finds from old settings the locations, which should be selected for new Pay Later tab settings.
+	 *
+	 * @param Settings $settings The settings.
+	 * @param string[] $all_locations The list of all available locations.
+	 * @param string   $setting The setting: 'button' or 'message'.
+	 * @return string[] The list of locations, which should be selected.
+	 * @throws NotFoundException When setting was not found.
+	 */
+	protected function pay_later_selected_locations( Settings $settings, array $all_locations, string $setting ): array {
+		$pay_later_locations = array();
+
+		foreach ( $all_locations as $location ) {
+			$location_setting_name_part = $location === 'checkout' ? '' : "_{$location}";
+			$setting_name               = "{$setting}{$location_setting_name_part}_enabled";
+
+			if ( $settings->has( $setting_name ) && $settings->get( $setting_name ) ) {
+				$pay_later_locations[] = $location;
+			}
+		}
+
+		return $pay_later_locations;
 	}
 }

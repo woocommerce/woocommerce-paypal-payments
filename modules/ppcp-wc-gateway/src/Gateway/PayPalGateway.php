@@ -296,6 +296,9 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		if ( $this->is_credit_card_tab() ) {
 			return __( 'Advanced Card Processing', 'woocommerce-paypal-payments' );
 		}
+		if ( $this->is_pay_later_tab() ) {
+			return __( 'PayPal Pay Later', 'woocommerce-paypal-payments' );
+		}
 		if ( $this->is_paypal_tab() ) {
 			return __( 'Standard Payments', 'woocommerce-paypal-payments' );
 		}
@@ -320,6 +323,16 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			return __(
 				'Accept debit and credit cards, and local payment methods.',
 				'woocommerce-paypal-payments'
+			);
+		}
+
+		if ( $this->is_pay_later_tab() ) {
+			return sprintf(
+			// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+				__( 'Let customers pay over time while you get paid up front — at no additional cost. %1$sVisit the documentation%2$s to learn more about Pay Later offers from PayPal.', 'woocommerce-paypal-payments' ),
+				'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#pay-later" target="_blank">',
+				'</a>',
+				'</ br>'
 			);
 		}
 
@@ -370,6 +383,16 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	protected function is_connection_tab() : bool {
 		return is_admin()
 			&& Settings::CONNECTION_TAB_ID === $this->page_id;
+	}
+
+	/**
+	 * Whether we are on the pay-later tab.
+	 *
+	 * @return bool true if is pay-later tab, otherwise false
+	 */
+	protected function is_pay_later_tab() : bool {
+		return is_admin()
+			&& Settings::PAY_LATER_TAB_ID === $this->page_id;
 	}
 
 	/**

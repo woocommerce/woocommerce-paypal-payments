@@ -34,6 +34,7 @@ trait PageMatcherTrait {
 		$gateway_page_id_map = array(
 			Settings::CONNECTION_TAB_ID => Settings::CONNECTION_TAB_ID,
 			PayPalGateway::ID           => 'paypal',
+			Settings::PAY_LATER_TAB_ID  => Settings::PAY_LATER_TAB_ID,
 			CreditCardGateway::ID       => 'dcc', // TODO: consider using just the gateway ID for PayPal and DCC too.
 			CardButtonGateway::ID       => CardButtonGateway::ID,
 		);

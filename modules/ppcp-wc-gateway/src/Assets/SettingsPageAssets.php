@@ -59,6 +59,20 @@ class SettingsPageAssets {
 	private $country;
 
 	/**
+	 * Whether Pay Later button is enabled either for checkout, cart or product page.
+	 *
+	 * @var bool
+	 */
+	protected $is_pay_later_button_enabled;
+
+	/**
+	 * The list of disabled funding sources.
+	 *
+	 * @var array
+	 */
+	protected $disabled_sources;
+
+	/**
 	 * Assets constructor.
 	 *
 	 * @param string             $module_url The url of this module.
@@ -67,6 +81,8 @@ class SettingsPageAssets {
 	 * @param string             $client_id The PayPal SDK client ID.
 	 * @param string             $currency 3-letter currency code of the shop.
 	 * @param string             $country 2-letter country code of the shop.
+	 * @param bool               $is_pay_later_button_enabled Whether Pay Later button is enabled either for checkout, cart or product page.
+	 * @param array              $disabled_sources The list of disabled funding sources.
 	 */
 	public function __construct(
 		string $module_url,
@@ -74,14 +90,18 @@ class SettingsPageAssets {
 		SubscriptionHelper $subscription_helper,
 		string $client_id,
 		string $currency,
-		string $country
+		string $country,
+		bool $is_pay_later_button_enabled,
+		array $disabled_sources
 	) {
-		$this->module_url          = $module_url;
-		$this->version             = $version;
-		$this->subscription_helper = $subscription_helper;
-		$this->client_id           = $client_id;
-		$this->currency            = $currency;
-		$this->country             = $country;
+		$this->module_url                  = $module_url;
+		$this->version                     = $version;
+		$this->subscription_helper         = $subscription_helper;
+		$this->client_id                   = $client_id;
+		$this->currency                    = $currency;
+		$this->country                     = $country;
+		$this->is_pay_later_button_enabled = $is_pay_later_button_enabled;
+		$this->disabled_sources            = $disabled_sources;
 	}
 
 	/**
@@ -132,7 +152,7 @@ class SettingsPageAssets {
 	/**
 	 * Register assets for admin pages.
 	 */
-	private function register_admin_assets() {
+	private function register_admin_assets(): void {
 		wp_enqueue_style(
 			'ppcp-gateway-settings',
 			trailingslashit( $this->module_url ) . 'assets/css/gateway-settings.css',
@@ -162,6 +182,8 @@ class SettingsPageAssets {
 				'currency'                       => $this->currency,
 				'country'                        => $this->country,
 				'integration_date'               => PAYPAL_INTEGRATION_DATE,
+				'is_pay_later_button_enabled'    => $this->is_pay_later_button_enabled,
+				'disabled_sources'               => $this->disabled_sources,
 			)
 		);
 	}

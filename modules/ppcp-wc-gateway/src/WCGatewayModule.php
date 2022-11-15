@@ -31,6 +31,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\GatewayWithoutPayPalAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
@@ -154,13 +155,21 @@ class WCGatewayModule implements ModuleInterface {
 		);
 
 		if ( $c->has( 'wcgateway.url' ) ) {
+			$settings_status = $c->get( 'wcgateway.settings.status' );
+			assert( $settings_status instanceof SettingsStatus );
+
+			$settings = $c->get( 'wcgateway.settings' );
+			assert( $settings instanceof Settings );
+
 			$assets = new SettingsPageAssets(
 				$c->get( 'wcgateway.url' ),
 				$c->get( 'ppcp.asset-version' ),
 				$c->get( 'subscription.helper' ),
-				$c->get( 'button.client_id' ),
+				$c->get( 'button.client_id_for_admin' ),
 				$c->get( 'api.shop.currency' ),
-				$c->get( 'api.shop.country' )
+				$c->get( 'api.shop.country' ),
+				$settings_status->is_pay_later_button_enabled(),
+				$settings->has( 'disable_funding' ) ? $settings->get( 'disable_funding' ) : array()
 			);
 			$assets->register_assets();
 		}

@@ -45,6 +45,21 @@ return array(
 		return $env->current_environment_is( Environment::SANDBOX ) ?
 			CONNECT_WOO_SANDBOX_CLIENT_ID : CONNECT_WOO_CLIENT_ID;
 	},
+	'button.client_id_for_admin'                  => static function ( ContainerInterface $container ): string {
+		$dummy_ids = array(
+			'AU' => 'AQ5yx7aGjD0fWKDMQrngSznDlfSfWvio9j1fCeuLC5foFoimaM_d1AbeRmEvc9jVuJU7BbopMSd4aNPG',
+			'DE' => 'AYZigu5BLwbJ_QKNasp_1k0kJUon7NRyazh8Lo-bthJuKetzXRBEzUlbeUIvUfsBxrcN-K0UEk-V6Lq9',
+			'ES' => 'Aa3A3B4MvF2_Xwoj7kG_4qI_hh2pRmuvjRefIgp8B0HSIIGnqsx2Wd8IGOvhyX1G2WLOMl0xGJsiHpXl',
+			'FR' => 'AYIb1W_LbKGlgpOwk64dGk8PPQnIx0H4wdmQfdNt8M6cCaAsSgQ6O-TwTDF6y9Jpp_5BxtHoYYMQDCb5',
+			'GB' => 'AZvAtq7qHoM0yefv-ptnmAvN3gDm9oNj2A7oDqhw_d-pEdWW5q68b7_xd-U2-dQs_kipnmLhV3-7vWkU',
+			'IT' => 'AZm7Rq3sLabDbtq2vRCRVtMRJ09SLi6HeoRy4JuUdFQ6j0D_x-wEZtRzjBhY4NzAcFC_T7GTBdvSYEwK',
+			'US' => 'Ad5dKzVsWZvPD3YgjhZ24LKNKmJqg2Xo3uKx7yuazPiARFc9xJWg1mM-vy-eJhb1V7xn5mPnp_QjAMaM',
+		);
+
+		$shop_country = $container->get( 'api.shop.country' );
+
+		return $dummy_ids[ $shop_country ] ?? $container->get( 'button.client_id' );
+	},
 	'button.smart-button'                         => static function ( ContainerInterface $container ): SmartButtonInterface {
 
 		$state = $container->get( 'onboarding.state' );
