@@ -90,6 +90,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Fix - Pay Upon Invoice - Stock correction on failed orders #964
 * Fix - Check that WC session exists before using it #846
 * Fix - Compatibility with One Page Checkout Extension #356
+* Fix - Tracking status filter sending wrong parameter #970
 * Enhancement - Compatibility with WC High-Performance Order Storage #933
 * Enhancement - PHP 8.1 warning: Constant FILTER_SANITIZE_STRING is deprecated #867
 * Enhancement - Execute server-side WC validation when clicking button #942
