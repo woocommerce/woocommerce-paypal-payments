@@ -2,6 +2,7 @@ import { loadScript } from "@paypal/paypal-js";
 import {debounce} from "./helper/debounce";
 import Renderer from '../../../ppcp-button/resources/js/modules/Renderer/Renderer'
 import MessageRenderer from "../../../ppcp-button/resources/js/modules/Renderer/MessageRenderer";
+import {setVisibleByClass} from "../../../ppcp-button/resources/js/modules/Helper/Hiding"
 
 ;document.addEventListener(
     'DOMContentLoaded',
@@ -37,6 +38,13 @@ import MessageRenderer from "../../../ppcp-button/resources/js/modules/Renderer/
                 if (!payLaterButtonInput.checked) {
                     payLaterButtonPreview.classList.add('disabled')
                 }
+            });
+        }
+
+        const separateCardButtonCheckbox = document.querySelector('#ppcp-allow_card_button_gateway');
+        if (separateCardButtonCheckbox) {
+            separateCardButtonCheckbox.addEventListener('change', () => {
+                setVisibleByClass('#field-button_layout', !separateCardButtonCheckbox.checked, 'hide');
             });
         }
 
@@ -95,7 +103,8 @@ import MessageRenderer from "../../../ppcp-button/resources/js/modules/Renderer/
         }
 
         function getButtonSettings(wrapperSelector, fields) {
-            const layout = jQuery(fields['layout']).val();
+            const layoutElement = jQuery(fields['layout']);
+            const layout = (layoutElement.length && layoutElement.is(':visible')) ? layoutElement.val() : 'vertical';
             const style = {
                 'color': jQuery(fields['color']).val(),
                 'shape': jQuery(fields['shape']).val(),
