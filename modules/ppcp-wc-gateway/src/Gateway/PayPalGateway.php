@@ -329,7 +329,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		if ( $this->is_pay_later_tab() ) {
 			return sprintf(
 			// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
-				__( 'Let customers pay over time while you get paid up front — at no additional cost. %1$sVisit the documentation%2$s to learn more about Pay Later offers from PayPal.', 'woocommerce-paypal-payments' ),
+				__( 'Let customers pay over time while you get paid up front — at no additional cost. PayPal’s pay later options are boosting merchant conversion rates and increasing cart sizes by 39%.', 'woocommerce-paypal-payments' ),
 				'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#pay-later" target="_blank">',
 				'</a>',
 				'</ br>'

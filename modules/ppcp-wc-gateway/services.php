@@ -761,7 +761,7 @@ return array(
 			'button_tagline'                         => array(
 				'title'        => __( 'Tagline', 'woocommerce-paypal-payments' ),
 				'type'         => 'checkbox',
-				'default'      => true,
+				'default'      => false,
 				'label'        => __( 'Enable tagline', 'woocommerce-paypal-payments' ),
 				'desc_tip'     => true,
 				'description'  => __(
@@ -913,7 +913,7 @@ return array(
 				'title'        => __( 'Tagline', 'woocommerce-paypal-payments' ),
 				'type'         => 'checkbox',
 				'label'        => __( 'Enable tagline', 'woocommerce-paypal-payments' ),
-				'default'      => true,
+				'default'      => false,
 				'desc_tip'     => true,
 				'description'  => __(
 					'Add the tagline. This line will only show up, if you select a horizontal layout.',
@@ -1064,7 +1064,7 @@ return array(
 				'title'        => __( 'Tagline', 'woocommerce-paypal-payments' ),
 				'type'         => 'checkbox',
 				'label'        => __( 'Enable tagline', 'woocommerce-paypal-payments' ),
-				'default'      => true,
+				'default'      => false,
 				'desc_tip'     => true,
 				'description'  => __(
 					'Add the tagline. This line will only show up, if you select a horizontal layout.',
@@ -1181,7 +1181,7 @@ return array(
 				'title'        => __( 'Enable buttons on Mini Cart', 'woocommerce-paypal-payments' ),
 				'type'         => 'checkbox',
 				'label'        => __( 'Enable on Mini Cart', 'woocommerce-paypal-payments' ),
-				'default'      => true,
+				'default'      => false,
 				'screens'      => array(
 					State::STATE_START,
 					State::STATE_ONBOARDED,
