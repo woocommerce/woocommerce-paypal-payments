@@ -2,9 +2,9 @@
 Contributors: woocommerce, automattic, inpsyde
 Tags: woocommerce, paypal, payments, ecommerce, e-commerce, store, sales, sell, shop, shopping, cart, checkout
 Requires at least: 5.3
-Tested up to: 6.0
-Requires PHP: 7.1
-Stable tag: 1.9.5
+Tested up to: 6.1
+Requires PHP: 7.2
+Stable tag: 2.0.0
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -80,6 +80,27 @@ Follow the steps below to connect the plugin to your PayPal account:
 6. Main settings screen.
 
 == Changelog ==
+
+= 2.0.0 =
+* Add - Option to separate JSSDK APM payment buttons into individual WooCommerce gateways #671 
+* Add - OXXO APM (Alternative Payment Method) #684 
+* Add - Pay Later tab #961
+* Add - Button preview in settings #929
+* Fix - Prevent Enter key submit for our non-standard button gateways #981 
+* Fix - Pay Upon Invoice - Stock correction on failed orders #964
+* Fix - Check that WC session exists before using it #846
+* Fix - Compatibility with One Page Checkout Extension #356
+* Fix - Tracking status filter sending wrong parameter #970
+* Enhancement - Compatibility with WC High-Performance Order Storage #933
+* Enhancement - PHP 8.1 warning: Constant FILTER_SANITIZE_STRING is deprecated #867
+* Enhancement - Execute server-side WC validation when clicking button #942
+* Enhancement - Update order with order note if payment failed after billing agreement canceled at PayPal #886
+* Enhancement - Missing PUI refund functionality from WC order #937 
+* Enhancement - Hide Pay upon Invoice tab if not available for merchant #978
+* Enhancement - Handle synced sub without upfront payment like free trial #936
+* Enhancement - Isolate container and modularity deps #972
+* Enhancement - PUI gateway displayed on pay for order page when mandatory billing fields are left empty or country is unsupported #966
+* Enhancement - When Brand Name field is left empty, PUI purchase fails #916
 
 = 1.9.5
 * Fix - Invalid tracking number in logs when adding tracking #903
