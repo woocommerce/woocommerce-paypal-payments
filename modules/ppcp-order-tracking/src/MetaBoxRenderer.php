@@ -100,8 +100,8 @@ class MetaBoxRenderer {
 		<p>
 			<label for="<?php echo esc_attr( self::NAME_PREFIX ); ?>-status"><?php echo esc_html__( 'Status', 'woocommerce-paypal-payments' ); ?></label>
 			<select class="<?php echo esc_attr( self::NAME_PREFIX ); ?>-status" id="<?php echo esc_attr( self::NAME_PREFIX ); ?>-status" name="<?php echo esc_attr( self::NAME_PREFIX ); ?>[status]">
-				<?php foreach ( $statuses as $status ) : ?>
-					<option value="<?php echo esc_attr( $status ); ?>" <?php selected( $status_value, $status ); ?>><?php echo esc_html( $status ); ?></option>
+				<?php foreach ( $statuses as $key => $status ) : ?>
+					<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $status_value, $key ); ?>><?php echo esc_html( $status ); ?></option>
 				<?php endforeach; ?>
 			</select>
 		</p>
