@@ -34,7 +34,7 @@ class PurchaseUnitTest extends TestCase
 
 	const CURRENCY = 'EUR';
 
-	public function setUp()
+	public function setUp(): void
 	{
 		parent::setUp();
 

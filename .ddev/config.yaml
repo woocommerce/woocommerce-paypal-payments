@@ -1,7 +1,7 @@
 name: woocommerce-paypal-payments
 type: php
 docroot: .ddev/wordpress
-php_version: "7.1"
+php_version: "7.2"
 webserver_type: apache-fpm
 router_http_port: "80"
 router_https_port: "443"
@@ -13,7 +13,7 @@ mysql_version: ""
 nfs_mount_enabled: false
 mutagen_enabled: false
 use_dns_when_possible: true
-composer_version: "1"
+composer_version: "2"
 hooks:
   pre-start:
     - exec-host: "mkdir -p .ddev/wordpress/wp-content/plugins/${DDEV_PROJECT}"
