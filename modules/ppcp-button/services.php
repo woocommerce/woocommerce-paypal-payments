@@ -53,7 +53,7 @@ return array(
 			'FR' => 'AYIb1W_LbKGlgpOwk64dGk8PPQnIx0H4wdmQfdNt8M6cCaAsSgQ6O-TwTDF6y9Jpp_5BxtHoYYMQDCb5',
 			'GB' => 'AZvAtq7qHoM0yefv-ptnmAvN3gDm9oNj2A7oDqhw_d-pEdWW5q68b7_xd-U2-dQs_kipnmLhV3-7vWkU',
 			'IT' => 'AZm7Rq3sLabDbtq2vRCRVtMRJ09SLi6HeoRy4JuUdFQ6j0D_x-wEZtRzjBhY4NzAcFC_T7GTBdvSYEwK',
-			'US' => 'ARV9AE9ANTRtiPI-OrRwZREpCx9Aln9lEjnOqxA7c8IWv2eEBAMRzCk7ioxqFn11y6HsX8UndAPQ0Usb',
+			'US' => 'Ad5dKzVsWZvPD3YgjhZ24LKNKmJqg2Xo3uKx7yuazPiARFc9xJWg1mM-vy-eJhb1V7xn5mPnp_QjAMaM',
 		);
 
 		$shop_country = $container->get( 'api.shop.country' );
