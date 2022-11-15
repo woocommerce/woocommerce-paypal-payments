@@ -10,7 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Exception;
 
 use Exception;
-use Psr\Container\NotFoundExceptionInterface;
+use WooCommerce\PayPalCommerce\Vendor\Psr\Container\NotFoundExceptionInterface;
 
 /**
  * Class NotFoundException

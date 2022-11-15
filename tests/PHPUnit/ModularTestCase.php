@@ -3,11 +3,11 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce;
 
-use Dhii\Container\CompositeCachingServiceProvider;
-use Dhii\Container\DelegatingContainer;
-use Dhii\Container\ServiceProvider;
+use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\CompositeCachingServiceProvider;
+use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\DelegatingContainer;
+use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
-use Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use function Brain\Monkey\Functions\when;
 
 class ModularTestCase extends TestCase

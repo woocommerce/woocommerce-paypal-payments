@@ -6,10 +6,6 @@
     "require": {
         "php": "^7.2 | ^8.0",
         "ext-json": "*",
-        "dhii/module-interface": "^0.2 || ^0.3",
-        "psr/container": "^1.0",
-        "container-interop/service-provider": "^0.4.0",
-        "dhii/containers": "^0.1.0-alpha1",
         "psr/log": "^1.1",
         "ralouphie/getallheaders": "^3.0",
         "wikimedia/composer-merge-plugin": "^2.0",
@@ -18,6 +14,10 @@
         "symfony/polyfill-php80": "^1.19"
     },
     "require-dev": {
+        "psr/container": "^1.0",
+        "dhii/module-interface": "^0.2 || ^0.3",
+        "container-interop/service-provider": "^0.4.0",
+        "dhii/containers": "^0.1.0-alpha1",
         "woocommerce/woocommerce-sniffs": "^0.1.0",
         "phpunit/phpunit": "^7.0 | ^8.0 | ^9.0",
         "brain/monkey": "^2.4",
@@ -28,7 +28,8 @@
     },
     "autoload": {
         "psr-4": {
-            "WooCommerce\\PayPalCommerce\\": "src"
+            "WooCommerce\\PayPalCommerce\\": "src",
+            "WooCommerce\\PayPalCommerce\\Vendor\\": "lib/packages/"
         }
     },
     "autoload-dev": {
@@ -63,6 +64,18 @@
             "pre-commit": [
                 "vendor/bin/phpcbf"
             ]
+        },
+        "mozart": {
+            "dep_namespace": "WooCommerce\\PayPalCommerce\\Vendor\\",
+            "dep_directory": "/lib/packages/",
+            "classmap_directory": "/lib/classes/",
+            "classmap_prefix": "PCPP_",
+            "packages": [
+                "psr/container",
+                "dhii/containers",
+                "dhii/module-interface"
+            ],
+            "delete_vendor_directories": true
         }
     },
     "config": {

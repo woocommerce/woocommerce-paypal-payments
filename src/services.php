@@ -10,7 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce;
 
 use Dhii\Versions\StringVersionFactory;
-use Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WpOop\WordPress\Plugin\PluginInterface;
 
 return array(
