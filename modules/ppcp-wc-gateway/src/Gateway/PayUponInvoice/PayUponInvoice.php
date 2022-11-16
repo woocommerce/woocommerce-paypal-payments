@@ -305,6 +305,8 @@ class PayUponInvoice {
 					$gateway_settings = get_option( 'woocommerce_ppcp-pay-upon-invoice-gateway_settings' );
 					$merchant_name    = $gateway_settings['brand_name'] ?? '';
 
+					$order_total = wc_price( $order->get_total(), array( 'currency' => $order->get_currency() ) );
+
 					$order_date = $order->get_date_created();
 					if ( null === $order_date ) {
 						$this->logger->error( 'Could not get WC order date for Ratepay payment instructions.' );
@@ -330,7 +332,7 @@ class PayUponInvoice {
 
 					echo wp_kses_post( "<p>Für Ihre Bestellung #{$order->get_id()} ({$order_purchase_date} $order_time) bei {$merchant_name} haben Sie die Zahlung mittels “Rechnungskauf mit Ratepay“ gewählt." );
 					echo '<br>Bitte benutzen Sie die folgenden Informationen für Ihre Überweisung:</br>';
-					echo wp_kses_post( "<p>Bitte überweisen Sie den Betrag in Höhe von {$order->get_currency()}{$order->get_total()} bis zum {$order_date_30d} auf das unten angegebene Konto. Wichtig: Bitte geben Sie unbedingt als Verwendungszweck {$payment_reference} an, sonst kann die Zahlung nicht zugeordnet werden.</p>" );
+					echo wp_kses_post( "<p>Bitte überweisen Sie den Betrag in Höhe von {$order_total} bis zum {$order_date_30d} auf das unten angegebene Konto. Wichtig: Bitte geben Sie unbedingt als Verwendungszweck {$payment_reference} an, sonst kann die Zahlung nicht zugeordnet werden.</p>" );
 
 					echo '<ul>';
 					echo wp_kses_post( "<li>Empfänger: {$account_holder_name}</li>" );
