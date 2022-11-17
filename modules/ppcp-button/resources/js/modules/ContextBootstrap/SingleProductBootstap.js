@@ -7,6 +7,7 @@ class SingleProductBootstap {
         this.renderer = renderer;
         this.messages = messages;
         this.errorHandler = errorHandler;
+        this.mutationObserver = new MutationObserver(this.handleChange.bind(this));
     }
 
 
@@ -23,7 +24,13 @@ class SingleProductBootstap {
 
     init() {
 
-        document.querySelector('form.cart').addEventListener('change', this.handleChange.bind(this))
+        const form = document.querySelector('form.cart');
+        if (!form) {
+            return;
+        }
+
+        form.addEventListener('change', this.handleChange.bind(this));
+        this.mutationObserver.observe(form, {childList: true, subtree: true});
 
         if (!this.shouldRender()) {
             this.renderer.hideButtons(this.gateway.hosted_fields.wrapper);
