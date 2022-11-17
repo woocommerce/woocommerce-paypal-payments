@@ -88,17 +88,19 @@ class Settings implements ContainerInterface {
 		$this->settings = get_option( self::KEY, array() );
 
 		$defaults = array(
-			'title'                         => __( 'PayPal', 'woocommerce-paypal-payments' ),
-			'description'                   => __(
+			'title'                       => __( 'PayPal', 'woocommerce-paypal-payments' ),
+			'description'                 => __(
 				'Pay via PayPal.',
 				'woocommerce-paypal-payments'
 			),
-			'button_single_product_enabled' => true,
-			'button_mini-cart_enabled'      => true,
-			'button_cart_enabled'           => true,
-			'brand_name'                    => get_bloginfo( 'name' ),
-			'dcc_gateway_title'             => __( 'Credit Cards', 'woocommerce-paypal-payments' ),
-			'dcc_gateway_description'       => __(
+			'button_product_enabled'      => true,
+			'button_mini-cart_enabled'    => false,
+			'button_cart_enabled'         => true,
+			'pay_later_messaging_enabled' => true,
+			'button_enabled'              => true,
+			'brand_name'                  => get_bloginfo( 'name' ),
+			'dcc_gateway_title'           => __( 'Credit Cards', 'woocommerce-paypal-payments' ),
+			'dcc_gateway_description'     => __(
 				'Pay with your credit card.',
 				'woocommerce-paypal-payments'
 			),
