@@ -42,21 +42,24 @@ class SingleProductBootstap {
     }
 
     priceAmount() {
+        const priceText = [
+            () => document.querySelector('form.cart ins .woocommerce-Price-amount')?.innerText,
+            () => document.querySelector('form.cart .woocommerce-Price-amount')?.innerText,
+            () => {
+                const priceEl = document.querySelector('.product .woocommerce-Price-amount');
+                // variable products show price like 10.00 - 20.00 here
+                if (priceEl && priceEl.parentElement.querySelectorAll('.woocommerce-Price-amount').length === 1) {
+                    return priceEl.innerText;
+                }
+                return null;
+            },
+        ].map(f => f()).find(val => val);
 
-        let priceText = "0";
-        if (document.querySelector('form.cart ins .woocommerce-Price-amount')) {
-            priceText = document.querySelector('form.cart ins .woocommerce-Price-amount').innerText;
-        }
-        else if (document.querySelector('form.cart .woocommerce-Price-amount')) {
-            priceText = document.querySelector('form.cart .woocommerce-Price-amount').innerText;
-        }
-        else if (document.querySelector('.product .woocommerce-Price-amount')) {
-            priceText = document.querySelector('.product .woocommerce-Price-amount').innerText;
+        if (!priceText) {
+            return 0;
         }
 
-        priceText = priceText.replace(/,/g, '.');
-
-        return  parseFloat(priceText.replace(/([^\d,\.\s]*)/g, ''));
+        return parseFloat(priceText.replace(/,/g, '.').replace(/([^\d,\.\s]*)/g, ''));
     }
 
     priceAmountIsZero() {
