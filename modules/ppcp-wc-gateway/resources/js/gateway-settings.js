@@ -198,8 +198,6 @@ import MessageRenderer from "../../../ppcp-button/resources/js/modules/Renderer/
             };
         }
 
-        const payLaterMessagingLocations = ['product', 'cart', 'checkout', 'general'];
-
         const previewElements = document.querySelectorAll('.ppcp-preview');
         if (previewElements.length) {
             let oldScriptSettings = getPaypalScriptSettings();
@@ -216,35 +214,26 @@ import MessageRenderer from "../../../ppcp-button/resources/js/modules/Renderer/
             }, 1000));
 
             loadPaypalScript(oldScriptSettings, () => {
-                createButtonPreview(() => getButtonSettings('#ppcpCheckoutButtonPreview', {
-                    'color': '#ppcp-button_color',
-                    'shape': '#ppcp-button_shape',
-                    'label': '#ppcp-button_label',
-                    'tagline': '#ppcp-button_tagline',
-                    'layout': '#ppcp-button_layout',
-                }));
-                createButtonPreview(() => getButtonSettings('#ppcpProductButtonPreview', {
-                    'color': '#ppcp-button_product_color',
-                    'shape': '#ppcp-button_product_shape',
-                    'label': '#ppcp-button_product_label',
-                    'tagline': '#ppcp-button_product_tagline',
-                    'layout': '#ppcp-button_product_layout',
-                }));
-                createButtonPreview(() => getButtonSettings('#ppcpCartButtonPreview', {
-                    'color': '#ppcp-button_cart_color',
-                    'shape': '#ppcp-button_cart_shape',
-                    'label': '#ppcp-button_cart_label',
-                    'tagline': '#ppcp-button_cart_tagline',
-                    'layout': '#ppcp-button_cart_layout',
-                }));
-                createButtonPreview(() => getButtonSettings('#ppcpMiniCartButtonPreview', {
-                    'color': '#ppcp-button_mini-cart_color',
-                    'shape': '#ppcp-button_mini-cart_shape',
-                    'label': '#ppcp-button_mini-cart_label',
-                    'tagline': '#ppcp-button_mini-cart_tagline',
-                    'layout': '#ppcp-button_mini-cart_layout',
-                    'height': '#ppcp-button_mini-cart_height',
-                }));
+                const payLaterMessagingLocations = ['product', 'cart', 'checkout', 'general'];
+                const paypalButtonLocations = ['product', 'cart', 'checkout', 'mini-cart'];
+
+                paypalButtonLocations.forEach((location) => {
+                    const inputNamePrefix = location === 'checkout' ? '#ppcp-button' : '#ppcp-button_' + location;
+                    const wrapperName = location.charAt(0).toUpperCase() + location.slice(1);
+                    const fields = {
+                        'color': inputNamePrefix + '_color',
+                        'shape': inputNamePrefix + '_shape',
+                        'label': inputNamePrefix + '_label',
+                        'tagline': inputNamePrefix + '_tagline',
+                        'layout': inputNamePrefix + '_layout',
+                    }
+
+                    if (location === 'mini-cart') {
+                        fields['height'] = inputNamePrefix + '_height';
+                    }
+
+                    createButtonPreview(() => getButtonSettings('#ppcp' + wrapperName + 'ButtonPreview', fields));
+                });
 
                 payLaterMessagingLocations.forEach((location) => {
                     const inputNamePrefix = '#ppcp-pay_later_' + location + '_message';
