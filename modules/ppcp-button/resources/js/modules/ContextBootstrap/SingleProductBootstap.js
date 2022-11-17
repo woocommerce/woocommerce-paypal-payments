@@ -60,7 +60,8 @@ class SingleProductBootstap {
     }
 
     priceAmountIsZero() {
-        return this.priceAmount() === 0;
+        const price = this.priceAmount();
+        return !price || price === 0;
     }
 
     render() {
