@@ -64,6 +64,7 @@ import MessageRenderer from "../../../ppcp-button/resources/js/modules/Renderer/
             const disableFundingInput = jQuery('[name="ppcp[disable_funding][]"]');
             let disabledSources = disableFundingInput.length > 0 ? disableFundingInput.val() : PayPalCommerceGatewaySettings.disabled_sources;
             const isPayLaterButtonEnabled = payLaterButtonInput ? payLaterButtonInput.checked : PayPalCommerceGatewaySettings.is_pay_later_button_enabled
+            const payLaterButtonPreview = jQuery('#ppcpPayLaterButtonPreview');
             const settings = {
                 'client-id': PayPalCommerceGatewaySettings.client_id,
                 'currency': PayPalCommerceGatewaySettings.currency,
@@ -75,6 +76,10 @@ import MessageRenderer from "../../../ppcp-button/resources/js/modules/Renderer/
 
             if (!isPayLaterButtonEnabled) {
                 disabledSources = disabledSources.concat('credit')
+            }
+
+            if(payLaterButtonPreview?.length) {
+                disabledSources = Object.keys(PayPalCommerceGatewaySettings.all_funding_sources);
             }
 
             if (disabledSources?.length) {
