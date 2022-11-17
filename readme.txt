@@ -101,6 +101,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Enhancement - Isolate container and modularity deps #972
 * Enhancement - PUI gateway displayed on pay for order page when mandatory billing fields are left empty or country is unsupported #966
 * Enhancement - When Brand Name field is left empty, PUI purchase fails #916
+* Enhancement - Improve styling when using separate buttons #996
 
 = 1.9.5
 * Fix - Invalid tracking number in logs when adding tracking #903

@@ -442,6 +442,8 @@ return array(
 		$subscription_helper = $container->get( 'subscription.helper' );
 		assert( $subscription_helper instanceof SubscriptionHelper );
 
+		$has_enabled_separate_button_gateways = $container->get( 'wcgateway.settings.has_enabled_separate_button_gateways' );
+
 		$fields              = array(
 			'checkout_settings_heading'              => array(
 				'heading'      => __( 'Standard Payments Settings', 'woocommerce-paypal-payments' ),
@@ -739,7 +741,7 @@ return array(
 			'button_layout'                          => array(
 				'title'        => __( 'Button Layout', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
-				'class'        => array(),
+				'classes'      => $has_enabled_separate_button_gateways ? array( 'hide' ) : array(),
 				'input_class'  => array( 'wc-enhanced-select' ),
 				'default'      => 'vertical',
 				'desc_tip'     => true,
@@ -1745,6 +1747,10 @@ return array(
 			(bool) $settings->get( 'allow_card_button_gateway' ) :
 			$container->get( 'wcgateway.settings.allow_card_button_gateway.default' );
 	},
+	'wcgateway.settings.has_enabled_separate_button_gateways' => static function ( ContainerInterface $container ): bool {
+		return (bool) $container->get( 'wcgateway.settings.allow_card_button_gateway' );
+	},
+
 	'order-tracking.is-tracking-available'                 => static function ( ContainerInterface $container ): bool {
 		try {
 			$bearer = $container->get( 'api.bearer' );

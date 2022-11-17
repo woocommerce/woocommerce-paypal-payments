@@ -2,6 +2,7 @@ import { loadScript } from "@paypal/paypal-js";
 import {debounce} from "./helper/debounce";
 import Renderer from '../../../ppcp-button/resources/js/modules/Renderer/Renderer'
 import MessageRenderer from "../../../ppcp-button/resources/js/modules/Renderer/MessageRenderer";
+import {setVisibleByClass, isVisible} from "../../../ppcp-button/resources/js/modules/Helper/Hiding"
 
 ;document.addEventListener(
     'DOMContentLoaded',
@@ -39,6 +40,37 @@ import MessageRenderer from "../../../ppcp-button/resources/js/modules/Renderer/
                 }
             });
         }
+
+        const separateCardButtonCheckbox = document.querySelector('#ppcp-allow_card_button_gateway');
+        if (separateCardButtonCheckbox) {
+            separateCardButtonCheckbox.addEventListener('change', () => {
+                setVisibleByClass('#field-button_layout', !separateCardButtonCheckbox.checked, 'hide');
+            });
+        }
+
+        [
+            {layoutSelector: '#ppcp-button_layout', taglineSelector: '#field-button_tagline', canHaveSeparateButtons: true},
+            {layoutSelector: '#ppcp-button_product_layout', taglineSelector: '#field-button_product_tagline'},
+            {layoutSelector: '#ppcp-button_cart_layout', taglineSelector: '#field-button_cart_tagline'},
+            {layoutSelector: '#ppcp-button_mini-cart_layout', taglineSelector: '#field-button_mini-cart_tagline'},
+        ].forEach(location => {
+            const layoutSelect = document.querySelector(location.layoutSelector);
+            const taglineField = document.querySelector(location.taglineSelector);
+            if (layoutSelect && taglineField) {
+                const setTaglineFieldVisibility = () => {
+                    const supportsTagline = jQuery(layoutSelect).val() === 'horizontal'
+                        && (!location.canHaveSeparateButtons || (separateCardButtonCheckbox && !separateCardButtonCheckbox.checked))
+                        && isVisible(layoutSelect.parentElement);
+                    setVisibleByClass(taglineField, supportsTagline, 'hide');
+                };
+                setTaglineFieldVisibility();
+                // looks like only jQuery event fires for WC selects
+                jQuery(layoutSelect).change(setTaglineFieldVisibility);
+                if (location.canHaveSeparateButtons && separateCardButtonCheckbox) {
+                    separateCardButtonCheckbox.addEventListener('change', setTaglineFieldVisibility);
+                }
+            }
+        });
 
         function createButtonPreview(settingsCallback) {
             const render = (settings) => {
@@ -95,7 +127,8 @@ import MessageRenderer from "../../../ppcp-button/resources/js/modules/Renderer/
         }
 
         function getButtonSettings(wrapperSelector, fields) {
-            const layout = jQuery(fields['layout']).val();
+            const layoutElement = jQuery(fields['layout']);
+            const layout = (layoutElement.length && layoutElement.is(':visible')) ? layoutElement.val() : 'vertical';
             const style = {
                 'color': jQuery(fields['color']).val(),
                 'shape': jQuery(fields['shape']).val(),

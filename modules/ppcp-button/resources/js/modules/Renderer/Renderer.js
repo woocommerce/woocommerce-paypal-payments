@@ -32,7 +32,11 @@ class Renderer {
                 if (fundingSource !== 'paypal') {
                     style = {
                         shape: style.shape,
+                        color: style.color,
                     };
+                    if (fundingSource !== 'paylater') {
+                        delete style.color;
+                    }
                 }
 
                 this.renderButtons(
