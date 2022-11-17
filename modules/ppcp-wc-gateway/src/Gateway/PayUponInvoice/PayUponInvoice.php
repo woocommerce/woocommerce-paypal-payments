@@ -291,6 +291,11 @@ class PayUponInvoice {
 
 		add_action(
 			'woocommerce_email_before_order_table',
+			/**
+			 * WC_Email type removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
 			function( WC_Order $order, bool $sent_to_admin, bool $plain_text, $email ) {
 				if (
 					! $sent_to_admin
