@@ -24,7 +24,9 @@ class SettingsPagesAssetsTest extends TestCase
             'EUR',
             'DE',
             true,
-            array());
+            array(),
+            array()
+        );
 
 		when('is_admin')
 			->justReturn(true);
