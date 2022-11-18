@@ -200,7 +200,7 @@ class CompatModule implements ModuleInterface {
 		}
 
 		add_action(
-			'woocommerce_paypal_payments_gateway_migrate',
+			'woocommerce_paypal_payments_gateway_migrate_on_update',
 			function () use ( $c, $is_pay_later_settings_migrated_option_name ) {
 				$settings = $c->get( 'wcgateway.settings' );
 				assert( $settings instanceof Settings );
