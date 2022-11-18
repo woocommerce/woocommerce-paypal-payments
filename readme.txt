@@ -107,7 +107,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Enhancement - When Brand Name field is left empty, PUI purchase fails #916
 * Enhancement - Improve styling when using separate buttons #996
 
-= 1.9.5
+= 1.9.5 =
 * Fix - Invalid tracking number in logs when adding tracking #903
 * Fix - Tracking on Connection tab always enabled #900
 * Fix - PUI payment instructions printed in the refund email #873
