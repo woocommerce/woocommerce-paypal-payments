@@ -99,6 +99,10 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Enhancement - Hide Pay upon Invoice tab if not available for merchant #978
 * Enhancement - Handle synced sub without upfront payment like free trial #936
 * Enhancement - Isolate container and modularity deps #972
+  **NOTE**: if you were extending/modifying the plugin using the modularity system, 
+  you will need to add the `WooCommerce\PayPalCommerce\Vendor\`  prefix for the container/modularity namespaces in your code,
+  that is `Psr\Container\ContainerInterface` becomes `WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface`,
+  and `Dhii\Modular\Module\ModuleInterface` becomes `WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface`.
 * Enhancement - PUI gateway displayed on pay for order page when mandatory billing fields are left empty or country is unsupported #966
 * Enhancement - When Brand Name field is left empty, PUI purchase fails #916
 * Enhancement - Improve styling when using separate buttons #996
