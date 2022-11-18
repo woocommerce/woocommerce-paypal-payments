@@ -194,7 +194,8 @@ return array(
 	},
 
 	'wcgateway.settings'                                   => static function ( ContainerInterface $container ): Settings {
-		return new Settings();
+		$messaging_locations = $container->get( 'wcgateway.settings.pay-later.messaging-locations' );
+		return new Settings( array_keys( $messaging_locations ) );
 	},
 	'wcgateway.notice.connect'                             => static function ( ContainerInterface $container ): ConnectAdminNotice {
 		$state    = $container->get( 'onboarding.state' );

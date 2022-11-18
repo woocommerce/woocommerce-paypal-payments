@@ -29,6 +29,22 @@ class Settings implements ContainerInterface {
 	private $settings = array();
 
 	/**
+	 * The list of pay later selected default locations.
+	 *
+	 * @var string[]
+	 */
+	protected $pay_later_default_locations;
+
+	/**
+	 * Settings constructor.
+	 *
+	 * @param string[] $pay_later_default_locations The list of pay later selected default locations.
+	 */
+	public function __construct( array $pay_later_default_locations ) {
+		$this->pay_later_default_locations = $pay_later_default_locations;
+	}
+
+	/**
 	 * Returns the value for an id.
 	 *
 	 * @param string $id The value identificator.
@@ -88,19 +104,22 @@ class Settings implements ContainerInterface {
 		$this->settings = get_option( self::KEY, array() );
 
 		$defaults = array(
-			'title'                       => __( 'PayPal', 'woocommerce-paypal-payments' ),
-			'description'                 => __(
+			'title'                         => __( 'PayPal', 'woocommerce-paypal-payments' ),
+			'description'                   => __(
 				'Pay via PayPal.',
 				'woocommerce-paypal-payments'
 			),
-			'button_product_enabled'      => true,
-			'button_mini-cart_enabled'    => false,
-			'button_cart_enabled'         => true,
-			'pay_later_messaging_enabled' => true,
-			'button_enabled'              => true,
-			'brand_name'                  => get_bloginfo( 'name' ),
-			'dcc_gateway_title'           => __( 'Credit Cards', 'woocommerce-paypal-payments' ),
-			'dcc_gateway_description'     => __(
+			'button_product_enabled'        => true,
+			'button_mini-cart_enabled'      => false,
+			'button_cart_enabled'           => true,
+			'pay_later_messaging_enabled'   => true,
+			'button_enabled'                => true,
+			'pay_later_button_enabled'      => true,
+			'pay_later_button_locations'    => $this->pay_later_default_locations,
+			'pay_later_messaging_locations' => $this->pay_later_default_locations,
+			'brand_name'                    => get_bloginfo( 'name' ),
+			'dcc_gateway_title'             => __( 'Credit Cards', 'woocommerce-paypal-payments' ),
+			'dcc_gateway_description'       => __(
 				'Pay with your credit card.',
 				'woocommerce-paypal-payments'
 			),
