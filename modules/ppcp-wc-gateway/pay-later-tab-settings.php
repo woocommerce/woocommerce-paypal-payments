@@ -34,6 +34,9 @@ return function ( ContainerInterface $container, array $fields ): array {
 
 	$default_locations = array_keys( $container->get( 'wcgateway.settings.pay-later.messaging-locations' ) );
 
+	$selected_country             = $container->get( 'api.shop.country' );
+	$default_messaging_flex_color = $selected_country === 'US' ? 'white-no-border' : 'white';
+
 	$render_preview_element = function ( string $id, string $type ): string {
 		return '
 <div class="ppcp-preview ppcp-' . $type . '-preview pay-later">
@@ -209,7 +212,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'type'         => 'select',
 			'class'        => array(),
 			'input_class'  => array( 'wc-enhanced-select' ),
-			'default'      => 'white-no-border',
+			'default'      => $default_messaging_flex_color,
 			'desc_tip'     => true,
 			'description'  => __( 'The color of the text. Only applicable, when the layout style Banner is used.', 'woocommerce-paypal-payments' ),
 			'options'      => array(
@@ -333,7 +336,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'type'         => 'select',
 			'class'        => array(),
 			'input_class'  => array( 'wc-enhanced-select' ),
-			'default'      => 'white-no-border',
+			'default'      => $default_messaging_flex_color,
 			'desc_tip'     => true,
 			'description'  => __( 'The color of the text. Only applicable, when the layout style Banner is used.', 'woocommerce-paypal-payments' ),
 			'options'      => array(
@@ -457,7 +460,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'type'         => 'select',
 			'class'        => array(),
 			'input_class'  => array( 'wc-enhanced-select' ),
-			'default'      => 'white-no-border',
+			'default'      => $default_messaging_flex_color,
 			'desc_tip'     => true,
 			'description'  => __( 'The color of the text. Only applicable, when the layout style Banner is used.', 'woocommerce-paypal-payments' ),
 			'options'      => array(
@@ -581,7 +584,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'type'         => 'select',
 			'class'        => array(),
 			'input_class'  => array( 'wc-enhanced-select' ),
-			'default'      => 'white-no-border',
+			'default'      => $default_messaging_flex_color,
 			'desc_tip'     => true,
 			'description'  => __( 'The color of the text. Only applicable, when the layout style Banner is used.', 'woocommerce-paypal-payments' ),
 			'options'      => array(
