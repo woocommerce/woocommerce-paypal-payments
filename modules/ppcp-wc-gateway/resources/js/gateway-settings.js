@@ -233,7 +233,7 @@ import MessageRenderer from "../../../ppcp-button/resources/js/modules/Renderer/
 
                 paypalButtonLocations.forEach((location) => {
                     const inputNamePrefix = location === 'checkout' ? '#ppcp-button' : '#ppcp-button_' + location;
-                    const wrapperName = location.charAt(0).toUpperCase() + location.slice(1);
+                    let wrapperName = location.charAt(0).toUpperCase() + location.slice(1);
                     const fields = {
                         'color': inputNamePrefix + '_color',
                         'shape': inputNamePrefix + '_shape',
@@ -244,6 +244,7 @@ import MessageRenderer from "../../../ppcp-button/resources/js/modules/Renderer/
 
                     if (location === 'mini-cart') {
                         fields['height'] = inputNamePrefix + '_height';
+                        wrapperName = 'MiniCart';
                     }
 
                     createButtonPreview(() => getButtonSettings('#ppcp' + wrapperName + 'ButtonPreview', fields));
