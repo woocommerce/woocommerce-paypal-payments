@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vendor\Dhii\Container;
 
 use ArrayIterator;
+use Traversable;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Collection\WritableContainerInterface;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Collection\WritableMapInterface;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\Exception\NotFoundException;
@@ -61,7 +62,7 @@ class Dictionary implements
     /**
      * {@inheritDoc}
      */
-    public function getIterator()
+    public function getIterator(): Traversable
     {
         return new ArrayIterator($this->data);
     }
