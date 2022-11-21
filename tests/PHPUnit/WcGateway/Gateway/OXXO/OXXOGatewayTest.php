@@ -12,6 +12,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
+use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use function Brain\Monkey\Functions\when;
@@ -21,6 +22,7 @@ class OXXOGatewayTest extends TestCase
 private $orderEndpoint;
 private $purchaseUnitFactory;
 private $shippingPreferenceFactory;
+private $environment;
 private $logger;
 private $wcOrder;
 private $transactionUrlProvider;
@@ -34,6 +36,7 @@ private $testee;
 		$this->purchaseUnitFactory = Mockery::mock(PurchaseUnitFactory::class);
 		$this->shippingPreferenceFactory = Mockery::mock(ShippingPreferenceFactory::class);
 		$this->transactionUrlProvider = Mockery::mock(TransactionUrlProvider::class);
+		$this->environment = Mockery::mock(Environment::class);
 		$this->logger = Mockery::mock(LoggerInterface::class);
 
 		$this->wcOrder = Mockery::mock(WC_Order::class);
@@ -49,6 +52,7 @@ private $testee;
 			$this->shippingPreferenceFactory,
 			'oxxo.svg',
 			$this->transactionUrlProvider,
+			$this->environment,
 			$this->logger
 		);
 	}
@@ -83,6 +87,8 @@ private $testee;
 
 		$order = Mockery::mock(Order::class);
 		$order->shouldReceive('id')->andReturn('1');
+		$order->shouldReceive('intent');
+		$order->shouldReceive('payment_source');
 
 		$this->orderEndpoint
 			->shouldReceive('create')
@@ -94,6 +100,10 @@ private $testee;
 			->with('ppcp_oxxo_payer_action', $linkHref)
 			->andReturn(true);
 		$this->wcOrder->shouldReceive('save_meta_data');
+		$this->wcOrder->shouldReceive('update_meta_data');
+		$this->wcOrder->shouldReceive('save');
+
+		$this->environment->shouldReceive('current_environment_is');
 
 		$woocommerce = Mockery::mock(\WooCommerce::class);
 		$cart = Mockery::mock(\WC_Cart::class);

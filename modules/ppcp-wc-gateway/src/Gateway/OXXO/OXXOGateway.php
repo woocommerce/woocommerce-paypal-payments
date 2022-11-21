@@ -17,12 +17,17 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
+use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
 
 /**
  * Class OXXOGateway.
  */
 class OXXOGateway extends WC_Payment_Gateway {
+
+	use OrderMetaTrait;
+
 	const ID = 'ppcp-oxxo-gateway';
 
 	/**
@@ -61,6 +66,13 @@ class OXXOGateway extends WC_Payment_Gateway {
 	protected $transaction_url_provider;
 
 	/**
+	 * The environment.
+	 *
+	 * @var Environment
+	 */
+	protected $environment;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -75,6 +87,7 @@ class OXXOGateway extends WC_Payment_Gateway {
 	 * @param ShippingPreferenceFactory $shipping_preference_factory The shipping preference factory.
 	 * @param string                    $module_url The URL to the module.
 	 * @param TransactionUrlProvider    $transaction_url_provider The transaction url provider.
+	 * @param Environment               $environment The environment.
 	 * @param LoggerInterface           $logger The logger.
 	 */
 	public function __construct(
@@ -83,6 +96,7 @@ class OXXOGateway extends WC_Payment_Gateway {
 		ShippingPreferenceFactory $shipping_preference_factory,
 		string $module_url,
 		TransactionUrlProvider $transaction_url_provider,
+		Environment $environment,
 		LoggerInterface $logger
 	) {
 		$this->id = self::ID;
@@ -112,6 +126,7 @@ class OXXOGateway extends WC_Payment_Gateway {
 
 		$this->icon                     = esc_url( $this->module_url ) . 'assets/images/oxxo.svg';
 		$this->transaction_url_provider = $transaction_url_provider;
+		$this->environment              = $environment;
 	}
 
 	/**
@@ -161,7 +176,9 @@ class OXXOGateway extends WC_Payment_Gateway {
 				'checkout'
 			);
 
-			$order          = $this->order_endpoint->create( array( $purchase_unit ), $shipping_preference );
+			$order = $this->order_endpoint->create( array( $purchase_unit ), $shipping_preference );
+			$this->add_paypal_meta( $wc_order, $order, $this->environment );
+
 			$payment_source = array(
 				'oxxo' => array(
 					'name'         => $wc_order->get_billing_first_name() . ' ' . $wc_order->get_billing_last_name(),

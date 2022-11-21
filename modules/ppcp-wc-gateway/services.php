@@ -1652,6 +1652,7 @@ return array(
 			$container->get( 'api.factory.shipping-preference' ),
 			$container->get( 'wcgateway.url' ),
 			$container->get( 'wcgateway.transaction-url-provider' ),
+			$container->get( 'onboarding.environment' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
