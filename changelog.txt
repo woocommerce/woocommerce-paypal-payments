@@ -1,11 +1,11 @@
 *** Changelog ***
 
-= 2.0.0 - TBD =
-* Add - Option to separate JSSDK APM payment buttons into individual WooCommerce gateways #671 
-* Add - OXXO APM (Alternative Payment Method) #684 
+= 2.0.0 - 2022-11-21 =
+* Add - Option to separate JSSDK APM payment buttons into individual WooCommerce gateways #671
+* Add - OXXO APM (Alternative Payment Method) #684
 * Add - Pay Later tab #961
 * Add - Button preview in settings #929
-* Fix - Prevent Enter key submit for our non-standard button gateways #981 
+* Fix - Prevent Enter key submit for our non-standard button gateways #981
 * Fix - Pay Upon Invoice - Stock correction on failed orders #964
 * Fix - Check that WC session exists before using it #846
 * Fix - Compatibility with One Page Checkout Extension #356
@@ -14,11 +14,11 @@
 * Enhancement - PHP 8.1 warning: Constant FILTER_SANITIZE_STRING is deprecated #867
 * Enhancement - Execute server-side WC validation when clicking button #942
 * Enhancement - Update order with order note if payment failed after billing agreement canceled at PayPal #886
-* Enhancement - Missing PUI refund functionality from WC order #937 
+* Enhancement - Missing PUI refund functionality from WC order #937
 * Enhancement - Hide Pay upon Invoice tab if not available for merchant #978
 * Enhancement - Handle synced sub without upfront payment like free trial #936
 * Enhancement - Isolate container and modularity deps #972
-  **NOTE**: if you were extending/modifying the plugin using the modularity system, 
+  **NOTE**: if you were extending/modifying the plugin using the modularity system,
   you will need to add the `WooCommerce\PayPalCommerce\Vendor\`  prefix for the container/modularity namespaces in your code,
   that is `Psr\Container\ContainerInterface` becomes `WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface`,
   and `Dhii\Modular\Module\ModuleInterface` becomes `WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface`.
