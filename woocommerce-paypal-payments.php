@@ -90,13 +90,21 @@ define( 'PPCP_FLAG_SUBSCRIPTION', true );
 			if ( ! function_exists( 'get_plugin_data' ) ) {
 				require_once ABSPATH . 'wp-admin/includes/plugin.php';
 			}
-			$plugin_data    = get_plugin_data( __DIR__ . '/woocommerce-paypal-payments.php' );
-			$plugin_version = $plugin_data['Version'] ?? null;
-			if ( get_option( 'woocommerce-ppcp-version' ) !== $plugin_version ) {
+			$plugin_data              = get_plugin_data( __DIR__ . '/woocommerce-paypal-payments.php' );
+			$plugin_version           = $plugin_data['Version'] ?? null;
+			$installed_plugin_version = get_option( 'woocommerce-ppcp-version' );
+			if ( $installed_plugin_version !== $plugin_version ) {
 				/**
 				 * The hook fired when the plugin is installed or updated.
 				 */
 				do_action( 'woocommerce_paypal_payments_gateway_migrate' );
+
+				if ( $installed_plugin_version ) {
+					/**
+					 * The hook fired when the plugin is updated.
+					 */
+					do_action( 'woocommerce_paypal_payments_gateway_migrate_on_update' );
+				}
 				update_option( 'woocommerce-ppcp-version', $plugin_version );
 			}
 		}
