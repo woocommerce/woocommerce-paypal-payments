@@ -291,12 +291,17 @@ class PayUponInvoice {
 
 		add_action(
 			'woocommerce_email_before_order_table',
-			function( WC_Order $order, bool $sent_to_admin, bool $plain_text, WC_Email $email ) {
+			/**
+			 * WC_Email type removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function( WC_Order $order, bool $sent_to_admin, bool $plain_text, $email ) {
 				if (
 					! $sent_to_admin
 					&& PayUponInvoiceGateway::ID === $order->get_payment_method()
 					&& $order->has_status( 'processing' )
-					&& $email->id === 'customer_processing_order'
+					&& is_a( $email, WC_Email::class ) && $email->id === 'customer_processing_order'
 				) {
 					$this->logger->info( "Adding Ratepay payment instructions to email for order #{$order->get_id()}." );
 
