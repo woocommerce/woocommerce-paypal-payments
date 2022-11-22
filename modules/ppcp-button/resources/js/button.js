@@ -42,14 +42,17 @@ const bootstrap = () => {
 
     const onSmartButtonClick = (data, actions) => {
         window.ppcpFundingSource = data.fundingSource;
+        const requiredFields = jQuery('form.woocommerce-checkout .validate-required:visible :input');
+        requiredFields.each((i, input) => {
+            jQuery(input).trigger('validate');
+        });
 
         if (PayPalCommerceGateway.basic_checkout_validation_enabled) {
-            // TODO: quick fix to get the error about empty form before attempting PayPal order
-            // it should solve #513 for most of the users, but proper solution should be implemented later.
-            const requiredFields = jQuery('form.woocommerce-checkout .validate-required:visible :input');
-            requiredFields.each((i, input) => {
-                jQuery(input).trigger('validate');
-            });
+            // A quick fix to get the errors about empty form fields before attempting PayPal order,
+            // it should solve #513 for most of the users, but it is not a proper solution.
+            // Currently it is disabled by default because a better solution is now implemented
+            // (see woocommerce_paypal_payments_basic_checkout_validation_enabled,
+            // woocommerce_paypal_payments_early_wc_checkout_validation_enabled filters).
             const invalidFields = Array.from(jQuery('form.woocommerce-checkout .validate-required.woocommerce-invalid:visible'));
             if (invalidFields.length) {
                 const billingFieldsContainer = document.querySelector('.woocommerce-billing-fields');
