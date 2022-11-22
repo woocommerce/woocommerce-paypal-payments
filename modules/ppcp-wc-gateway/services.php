@@ -1446,9 +1446,6 @@ return array(
 				'gateway'      => 'dcc',
 			),
 		);
-		if ( ! defined( 'PPCP_FLAG_SUBSCRIPTION' ) || ! PPCP_FLAG_SUBSCRIPTION ) {
-			unset( $fields['vault_enabled'] );
-		}
 
 		/**
 		 * Depending on your store location, some credit cards can't be used.

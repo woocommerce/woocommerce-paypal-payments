@@ -174,12 +174,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		if ( $state->current_state() === State::STATE_ONBOARDED ) {
 			$this->supports = array( 'refunds' );
 		}
-		if (
-			defined( 'PPCP_FLAG_SUBSCRIPTION' )
-			&& PPCP_FLAG_SUBSCRIPTION
-			&& $this->gateways_enabled()
-			&& $this->vault_setting_enabled()
-		) {
+		if ($this->gateways_enabled() && $this->vault_setting_enabled()) {
 			$this->supports = array(
 				'refunds',
 				'products',
