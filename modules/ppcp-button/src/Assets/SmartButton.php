@@ -239,10 +239,6 @@ class SmartButton implements SmartButtonInterface {
 			$this->render_message_wrapper_registrar();
 		}
 
-		if ( ! $this->can_save_vault_token() && $this->has_subscriptions() ) {
-			return false;
-		}
-
 		if (
 			$this->settings->has( 'dcc_enabled' )
 			&& $this->settings->get( 'dcc_enabled' )
@@ -444,10 +440,6 @@ class SmartButton implements SmartButtonInterface {
 			add_action(
 				$this->mini_cart_button_renderer_hook(),
 				function () {
-					if ( ! $this->can_save_vault_token() && $this->has_subscriptions() ) {
-						return;
-					}
-
 					if ( $this->is_cart_price_total_zero() || $this->is_free_trial_cart() ) {
 						return;
 					}
@@ -559,10 +551,6 @@ class SmartButton implements SmartButtonInterface {
 	 */
 	public function button_renderer( string $gateway_id ) {
 
-		if ( ! $this->can_save_vault_token() && $this->has_subscriptions() ) {
-			return;
-		}
-
 		$available_gateways = WC()->payment_gateways->get_available_payment_gateways();
 
 		if ( ! isset( $available_gateways[ $gateway_id ] ) ) {
@@ -578,9 +566,6 @@ class SmartButton implements SmartButtonInterface {
 	 * Renders the HTML for the credit messaging.
 	 */
 	public function message_renderer() {
-		if ( ! $this->can_save_vault_token() && $this->has_subscriptions() ) {
-			return false;
-		}
 
 		$product = wc_get_product();
 
