@@ -38,9 +38,9 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXO;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXOEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXOGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\FraudNet;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\FraudNetSessionId;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\FraudNetSourceWebsiteId;
+use WooCommerce\PayPalCommerce\WcGateway\FraudNet\FraudNet;
+use WooCommerce\PayPalCommerce\WcGateway\FraudNet\FraudNetSessionId;
+use WooCommerce\PayPalCommerce\WcGateway\FraudNet\FraudNetSourceWebsiteId;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PaymentSourceFactory;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoice;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
@@ -1621,21 +1621,15 @@ return array(
 	},
 	'wcgateway.pay-upon-invoice'                           => static function ( ContainerInterface $container ): PayUponInvoice {
 		return new PayUponInvoice(
-			$container->get( 'wcgateway.url' ),
-			$container->get( 'wcgateway.pay-upon-invoice-fraudnet' ),
 			$container->get( 'wcgateway.pay-upon-invoice-order-endpoint' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'wcgateway.settings' ),
-			$container->get( 'onboarding.environment' ),
-			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'onboarding.state' ),
-			$container->get( 'wcgateway.is-ppcp-settings-page' ),
 			$container->get( 'wcgateway.current-ppcp-settings-page-id' ),
 			$container->get( 'wcgateway.pay-upon-invoice-product-status' ),
 			$container->get( 'wcgateway.pay-upon-invoice-helper' ),
 			$container->get( 'wcgateway.checkout-helper' ),
-			$container->get( 'api.factory.capture' ),
-			$container->get( 'session.handler' )
+			$container->get( 'api.factory.capture' )
 		);
 	},
 	'wcgateway.oxxo'                                       => static function( ContainerInterface $container ): OXXO {
