@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Vaulting;
 
+use WC_Payment_Tokens;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
@@ -19,6 +20,7 @@ use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vaulting\Endpoint\DeletePaymentTokenEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use function Sodium\add;
 
 /**
  * Class StatusReportModule
@@ -43,6 +45,28 @@ class VaultingModule implements ModuleInterface {
 	 * @throws NotFoundException When service could not be found.
 	 */
 	public function run( ContainerInterface $container ): void {
+
+		add_action('admin_notices', function () {
+			echo '<div class="notice notice-warning"><p>';
+
+			$tokens = WC_Payment_Tokens::get_customer_tokens(1);
+			$a = 1;
+
+			echo '</p></div>';
+		});
+
+		add_filter('woocommerce_payment_token_class', function ($type) {
+			if($type === 'WC_Payment_Token_PayPal') {
+				return PaymentTokenPayPal::class;
+			}
+
+			return $type;
+		});
+
+//		add_filter('woocommerce_payment_methods_types', function($types) {
+//			$types['paypal'] = 'PayPal';
+//			return $types;
+//		});
 
 		$settings = $container->get( 'wcgateway.settings' );
 		if ( ! $settings->has( 'vault_enabled' ) || ! $settings->get( 'vault_enabled' ) ) {

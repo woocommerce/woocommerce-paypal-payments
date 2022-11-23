@@ -70,4 +70,7 @@ return array(
 			$container->get( 'wcgateway.settings' )
 		);
 	},
+	'vaulting.payment-token-paypal' => function(ContainerInterface $container): PaymentTokenPayPal {
+		return new PaymentTokenPayPal();
+	}
 );
