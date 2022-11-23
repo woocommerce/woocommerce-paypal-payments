@@ -27,9 +27,10 @@ class CheckoutFormValidator extends WC_Checkout {
 	public function validate( array $data ) {
 		$errors = new WP_Error();
 
-		if ( isset( $data['terms-field'] ) ) {
-			// WC checks this field via $_POST https://github.com/woocommerce/woocommerce/issues/35328 .
-			$_POST['terms-field'] = $data['terms-field'];
+		// Some plugins check their fields using $_POST,
+		// also WC terms checkbox https://github.com/woocommerce/woocommerce/issues/35328 .
+		foreach ( $data as $key => $value ) {
+			$_POST[ $key ] = $value;
 		}
 
 		// It throws some notices when checking fields etc., also from other plugins via hooks.
