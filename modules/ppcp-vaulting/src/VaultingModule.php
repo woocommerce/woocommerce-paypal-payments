@@ -45,29 +45,6 @@ class VaultingModule implements ModuleInterface {
 	 * @throws NotFoundException When service could not be found.
 	 */
 	public function run( ContainerInterface $container ): void {
-
-		add_action('admin_notices', function () {
-			echo '<div class="notice notice-warning"><p>';
-
-			$tokens = WC_Payment_Tokens::get_customer_tokens(1);
-			$a = 1;
-
-			echo '</p></div>';
-		});
-
-		add_filter('woocommerce_payment_token_class', function ($type) {
-			if($type === 'WC_Payment_Token_PayPal') {
-				return PaymentTokenPayPal::class;
-			}
-
-			return $type;
-		});
-
-//		add_filter('woocommerce_payment_methods_types', function($types) {
-//			$types['paypal'] = 'PayPal';
-//			return $types;
-//		});
-
 		$settings = $container->get( 'wcgateway.settings' );
 		if ( ! $settings->has( 'vault_enabled' ) || ! $settings->get( 'vault_enabled' ) ) {
 			return;
@@ -180,6 +157,24 @@ class VaultingModule implements ModuleInterface {
 		);
 
 		$this->filterFailedVaultingEmailsForSubscriptionOrders( $container );
+
+		add_filter('woocommerce_payment_token_class', function ($type) {
+			if($type === 'WC_Payment_Token_PayPal') {
+				return PaymentTokenPayPal::class;
+			}
+
+			return $type;
+		});
+
+		add_filter( 'woocommerce_payment_methods_list_item', function($item, $payment_token) {
+			if ( strtolower( $payment_token->get_type() ) !== 'paypal' ) {
+				return $item;
+			}
+
+			$item['method']['brand'] = 'PayPal';
+
+			return $item;
+		}, 10, 2 );
 	}
 
 	/**
