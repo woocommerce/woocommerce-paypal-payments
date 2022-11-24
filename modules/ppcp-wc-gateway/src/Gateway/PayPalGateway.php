@@ -223,6 +223,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 				'subscription_payment_method_change_customer',
 				'subscription_payment_method_change_admin',
 				'multiple_subscriptions',
+				'tokenization'
 			);
 		}
 
