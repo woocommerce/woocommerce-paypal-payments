@@ -28,6 +28,7 @@ use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureReversed;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\VaultCreditCardCreated;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\VaultPaymentTokenCreated;
+use WooCommerce\PayPalCommerce\Webhooks\Handler\VaultPaymentTokenDeleted;
 use WooCommerce\PayPalCommerce\Webhooks\Status\Assets\WebhooksStatusPageAssets;
 use WooCommerce\PayPalCommerce\Webhooks\Status\WebhookSimulation;
 
@@ -83,7 +84,7 @@ return array(
 			new PaymentCaptureReversed( $logger, $prefix ),
 			new PaymentCaptureCompleted( $logger, $prefix, $order_endpoint ),
 			new VaultPaymentTokenCreated( $logger, $prefix, $authorized_payments_processor, $payment_token_paypal ),
-			new VaultCreditCardCreated( $logger, $prefix ),
+			new VaultPaymentTokenDeleted( $logger ),
 			new PaymentCapturePending( $logger ),
 		);
 	},
