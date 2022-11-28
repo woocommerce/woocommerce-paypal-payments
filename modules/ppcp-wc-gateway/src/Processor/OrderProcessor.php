@@ -167,7 +167,8 @@ class OrderProcessor {
 		if ( ! $order ) {
 			$order_id = $wc_order->get_meta( PayPalGateway::ORDER_ID_META_KEY );
 			if ( ! $order_id ) {
-				$this->last_error = __( 'No PayPal order ID found in order meta.', 'woocommerce-paypal-payments' );
+				$this->logger->warning( "No PayPal order ID found in order #{$wc_order->get_id()} meta." );
+				$this->last_error = __( 'Could not retrieve PayPal order.', 'woocommerce-paypal-payments' );
 				return false;
 			}
 
