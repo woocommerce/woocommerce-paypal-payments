@@ -162,7 +162,12 @@ class OrderProcessor {
 	 */
 	public function process( \WC_Order $wc_order ): bool {
 		$order_id = $wc_order->get_meta( PayPalGateway::ORDER_ID_META_KEY );
-		$order    = $this->session_handler->order() ?? $this->order_endpoint->order( $order_id );
+		if ( ! $order_id ) {
+			$this->last_error = __( 'No PayPal order ID found in the current WooCommerce session.', 'woocommerce-paypal-payments' );
+			return false;
+		}
+
+		$order = $this->session_handler->order() ?? $this->order_endpoint->order( $order_id );
 		if ( ! $order ) {
 			$this->last_error = __( 'No PayPal order found in the current WooCommerce session.', 'woocommerce-paypal-payments' );
 			return false;
