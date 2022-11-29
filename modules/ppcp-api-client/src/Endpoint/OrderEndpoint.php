@@ -443,7 +443,7 @@ class OrderEndpoint {
 			$error = new RuntimeException(
 				__( 'Could not retrieve order.', 'woocommerce-paypal-payments' )
 			);
-			$this->logger->warning($error->getMessage());
+			$this->logger->warning( $error->getMessage() );
 
 			throw $error;
 		}
