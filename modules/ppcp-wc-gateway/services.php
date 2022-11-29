@@ -1594,13 +1594,13 @@ return array(
 			$container->get( 'wcgateway.processor.refunds' )
 		);
 	},
-	'wcgateway.fraudnet-session-id'       => static function ( ContainerInterface $container ): FraudNetSessionId {
+	'wcgateway.fraudnet-session-id'                        => static function ( ContainerInterface $container ): FraudNetSessionId {
 		return new FraudNetSessionId();
 	},
-	'wcgateway.fraudnet-source-website-id' => static function ( ContainerInterface $container ): FraudNetSourceWebsiteId {
+	'wcgateway.fraudnet-source-website-id'                 => static function ( ContainerInterface $container ): FraudNetSourceWebsiteId {
 		return new FraudNetSourceWebsiteId( $container->get( 'api.merchant_id' ) );
 	},
-	'wcgateway.fraudnet'                  => static function ( ContainerInterface $container ): FraudNet {
+	'wcgateway.fraudnet'                                   => static function ( ContainerInterface $container ): FraudNet {
 		$session_id = $container->get( 'wcgateway.fraudnet-session-id' );
 		$source_website_id = $container->get( 'wcgateway.fraudnet-source-website-id' );
 		return new FraudNet(
@@ -1980,17 +1980,17 @@ return array(
 		}
 		return $context;
 	},
-    'wcgateway.is-fraudnet-enabled'                            => static function ( ContainerInterface $container ): bool {
-        $settings      = $container->get( 'wcgateway.settings' );
-        assert($settings instanceof Settings);
+	'wcgateway.is-fraudnet-enabled'                        => static function ( ContainerInterface $container ): bool {
+		$settings      = $container->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings );
 
-        return $settings->has( 'fraudnet_enabled' ) && $settings->get( 'fraudnet_enabled' );
-    },
+		return $settings->has( 'fraudnet_enabled' ) && $settings->get( 'fraudnet_enabled' );
+	},
 	'wcgateway.fraudnet-assets'                            => function( ContainerInterface $container ) : FraudNetAssets {
 		return new FraudNetAssets(
 			$container->get( 'wcgateway.url' ),
 			$container->get( 'ppcp.asset-version' ),
-			$container->get( 'wcgateway.pay-upon-invoice-fraudnet' ),
+			$container->get( 'wcgateway.fraudnet' ),
 			$container->get( 'onboarding.environment' ),
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'wcgateway.enabled-ppcp-gateways' ),
