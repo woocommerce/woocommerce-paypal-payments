@@ -105,7 +105,16 @@ class OXXO {
 
 		add_action(
 			'woocommerce_email_before_order_table',
-			function ( WC_Order $order, bool $sent_to_admin ) {
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function ( $order, $sent_to_admin ) {
+				if ( ! is_a( $order, WC_Order::class ) || ! is_bool( $sent_to_admin ) ) {
+					return;
+				}
+
 				if (
 					! $sent_to_admin
 					&& $order->get_payment_method() === OXXOGateway::ID
