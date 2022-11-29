@@ -70,6 +70,13 @@ class FraudNetAssets {
 	protected $context;
 
 	/**
+	 * True if FraudNet support is enabled in settings, otherwise false.
+	 *
+	 * @var bool
+	 */
+	protected $is_fraudnet_enabled;
+
+	/**
 	 * Assets constructor.
 	 *
 	 * @param string      $module_url The url of this module.
@@ -79,6 +86,7 @@ class FraudNetAssets {
 	 * @param Settings    $settings The Settings.
 	 * @param string[]    $enabled_ppcp_gateways The list of enabled PayPal gateways.
 	 * @param string      $context The current context.
+	 * @param bool        $is_fraudnet_enabled true if FraudNet support is enabled in settings, otherwise false.
 	 */
 	public function __construct(
 		string $module_url,
@@ -87,7 +95,8 @@ class FraudNetAssets {
 		Environment $environment,
 		Settings $settings,
 		array $enabled_ppcp_gateways,
-		string $context
+		string $context,
+		bool $is_fraudnet_enabled
 	) {
 		$this->module_url            = $module_url;
 		$this->version               = $version;
@@ -96,6 +105,7 @@ class FraudNetAssets {
 		$this->settings              = $settings;
 		$this->enabled_ppcp_gateways = $enabled_ppcp_gateways;
 		$this->context               = $context;
+		$this->is_fraudnet_enabled   = $is_fraudnet_enabled;
 	}
 
 	/**
@@ -138,15 +148,14 @@ class FraudNetAssets {
 			return false;
 		}
 
-		$is_fraudnet_enabled              = $this->settings->has( 'fraudnet_enabled' ) && $this->settings->get( 'fraudnet_enabled' );
 		$is_pui_gateway_enabled           = in_array( PayUponInvoiceGateway::ID, $this->enabled_ppcp_gateways, true );
 		$is_only_standard_gateway_enabled = $this->enabled_ppcp_gateways === array( PayPalGateway::ID );
 
 		if ( $this->context !== 'checkout' || $is_only_standard_gateway_enabled ) {
-			return $is_fraudnet_enabled && $this->are_buttons_enabled_for_context();
+			return $this->is_fraudnet_enabled && $this->are_buttons_enabled_for_context();
 		}
 
-		return $is_pui_gateway_enabled ? true : $is_fraudnet_enabled;
+		return $is_pui_gateway_enabled ? true : $this->is_fraudnet_enabled;
 
 	}
 

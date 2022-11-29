@@ -95,6 +95,13 @@ class OrderEndpoint {
 	private $application_context_repository;
 
 	/**
+	 * True if FraudNet support is enabled in settings, otherwise false.
+	 *
+	 * @var bool
+	 */
+	protected $is_fraudnet_enabled;
+
+	/**
 	 * The BN Code.
 	 *
 	 * @var string
@@ -120,6 +127,7 @@ class OrderEndpoint {
 	 * @param ApplicationContextRepository $application_context_repository The application context repository.
 	 * @param PayPalRequestIdRepository    $paypal_request_id_repository The paypal request id repository.
 	 * @param SubscriptionHelper           $subscription_helper The subscription helper.
+	 * @param bool                         $is_fraudnet_enabled true if FraudNet support is enabled in settings, otherwise false.
 	 * @param string                       $bn_code The BN Code.
 	 */
 	public function __construct(
@@ -132,6 +140,7 @@ class OrderEndpoint {
 		ApplicationContextRepository $application_context_repository,
 		PayPalRequestIdRepository $paypal_request_id_repository,
 		SubscriptionHelper $subscription_helper,
+		bool $is_fraudnet_enabled,
 		string $bn_code = ''
 	) {
 
@@ -144,6 +153,7 @@ class OrderEndpoint {
 		$this->application_context_repository = $application_context_repository;
 		$this->bn_code                        = $bn_code;
 		$this->paypal_request_id_repository   = $paypal_request_id_repository;
+		$this->is_fraudnet_enabled            = $is_fraudnet_enabled;
 		$this->subscription_helper            = $subscription_helper;
 	}
 

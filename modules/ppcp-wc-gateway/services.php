@@ -1573,7 +1573,7 @@ return array(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
 			$container->get( 'api.factory.order' ),
-			$container->get( 'wcgateway.pay-upon-invoice-fraudnet' ),
+			$container->get( 'wcgateway.fraudnet' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
@@ -1594,15 +1594,15 @@ return array(
 			$container->get( 'wcgateway.processor.refunds' )
 		);
 	},
-	'wcgateway.pay-upon-invoice-fraudnet-session-id'       => static function ( ContainerInterface $container ): FraudNetSessionId {
+	'wcgateway.fraudnet-session-id'       => static function ( ContainerInterface $container ): FraudNetSessionId {
 		return new FraudNetSessionId();
 	},
-	'wcgateway.pay-upon-invoice-fraudnet-source-website-id' => static function ( ContainerInterface $container ): FraudNetSourceWebsiteId {
+	'wcgateway.fraudnet-source-website-id' => static function ( ContainerInterface $container ): FraudNetSourceWebsiteId {
 		return new FraudNetSourceWebsiteId( $container->get( 'api.merchant_id' ) );
 	},
-	'wcgateway.pay-upon-invoice-fraudnet'                  => static function ( ContainerInterface $container ): FraudNet {
-		$session_id = $container->get( 'wcgateway.pay-upon-invoice-fraudnet-session-id' );
-		$source_website_id = $container->get( 'wcgateway.pay-upon-invoice-fraudnet-source-website-id' );
+	'wcgateway.fraudnet'                  => static function ( ContainerInterface $container ): FraudNet {
+		$session_id = $container->get( 'wcgateway.fraudnet-session-id' );
+		$source_website_id = $container->get( 'wcgateway.fraudnet-source-website-id' );
 		return new FraudNet(
 			(string) $session_id(),
 			(string) $source_website_id()
@@ -1964,7 +1964,6 @@ return array(
 		}
 		return true;
 	},
-
 	'wcgateway.current-context'                            => static function ( ContainerInterface $container ): string {
 		$context = 'mini-cart';
 		if ( is_product() || wc_post_content_has_shortcode( 'product_page' ) ) {
@@ -1981,6 +1980,12 @@ return array(
 		}
 		return $context;
 	},
+    'wcgateway.is-fraudnet-enabled'                            => static function ( ContainerInterface $container ): bool {
+        $settings      = $container->get( 'wcgateway.settings' );
+        assert($settings instanceof Settings);
+
+        return $settings->has( 'fraudnet_enabled' ) && $settings->get( 'fraudnet_enabled' );
+    },
 	'wcgateway.fraudnet-assets'                            => function( ContainerInterface $container ) : FraudNetAssets {
 		return new FraudNetAssets(
 			$container->get( 'wcgateway.url' ),
@@ -1989,7 +1994,8 @@ return array(
 			$container->get( 'onboarding.environment' ),
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'wcgateway.enabled-ppcp-gateways' ),
-			$container->get( 'wcgateway.current-context' )
+			$container->get( 'wcgateway.current-context' ),
+			$container->get( 'wcgateway.is-fraudnet-enabled' )
 		);
 	},
 );
