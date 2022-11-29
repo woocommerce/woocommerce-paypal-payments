@@ -1937,6 +1937,7 @@ return array(
 	'wcgateway.enabled-ppcp-gateways'                      => static function ( ContainerInterface $container ): array {
 		$available_gateways = WC()->payment_gateways->get_available_payment_gateways();
 		$ppcp_gateways = $container->get( 'wcgateway.ppcp-gateways' );
+        $enabled_ppcp_gateways = array();
 
 		foreach ( $ppcp_gateways as $gateway ) {
 			if ( ! isset( $available_gateways[ $gateway ] ) ) {
@@ -1945,7 +1946,7 @@ return array(
 			$enabled_ppcp_gateways[] = $gateway;
 		}
 
-		return $enabled_ppcp_gateways ?? array();
+		return $enabled_ppcp_gateways;
 	},
 	'wcgateway.is-paypal-continuation'                     => static function ( ContainerInterface $container ): bool {
 		$session_handler              = $container->get( 'session.handler' );

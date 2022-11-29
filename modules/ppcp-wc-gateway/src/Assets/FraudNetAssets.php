@@ -111,7 +111,7 @@ class FraudNetAssets {
 	/**
 	 * Registers FraudNet assets.
 	 */
-	public function register_assets() {
+	public function register_assets(): void {
 		add_action(
 			'wp_enqueue_scripts',
 			function() {
