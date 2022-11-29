@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway;
 
+use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
@@ -28,6 +29,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Admin\FeesRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\RenderAuthorizeAction;
+use WooCommerce\PayPalCommerce\WcGateway\Assets\FraudNetAssets;
 use WooCommerce\PayPalCommerce\WcGateway\Checkout\CheckoutPayPalAddressPreset;
 use WooCommerce\PayPalCommerce\WcGateway\Checkout\DisableGateways;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
@@ -168,7 +170,7 @@ return array(
 				CreditCardGateway::ID,
 				PayUponInvoiceGateway::ID,
 				CardButtonGateway::ID,
-				OXXOGateway::ID .
+				OXXOGateway::ID,
 				Settings::PAY_LATER_TAB_ID,
 			),
 			true
@@ -1922,5 +1924,72 @@ return array(
 		}
 
 		return $button_locations;
+	},
+	'wcgateway.ppcp-gateways'                              => static function ( ContainerInterface $container ): array {
+		return array(
+			PayPalGateway::ID,
+			CreditCardGateway::ID,
+			PayUponInvoiceGateway::ID,
+			CardButtonGateway::ID,
+			OXXOGateway::ID,
+		);
+	},
+	'wcgateway.enabled-ppcp-gateways'                      => static function ( ContainerInterface $container ): array {
+		$available_gateways = WC()->payment_gateways->get_available_payment_gateways();
+		$ppcp_gateways = $container->get( 'wcgateway.ppcp-gateways' );
+
+		foreach ( $ppcp_gateways as $gateway ) {
+			if ( ! isset( $available_gateways[ $gateway ] ) ) {
+				continue;
+			}
+			$enabled_ppcp_gateways[] = $gateway;
+		}
+
+		return $enabled_ppcp_gateways ?? array();
+	},
+	'wcgateway.is-paypal-continuation'                     => static function ( ContainerInterface $container ): bool {
+		$session_handler              = $container->get( 'session.handler' );
+		assert( $session_handler instanceof SessionHandler );
+
+		$order = $session_handler->order();
+		if ( ! $order ) {
+			return false;
+		}
+		$source = $order->payment_source();
+		if ( $source && $source->card() ) {
+			return false; // Ignore for DCC.
+		}
+		if ( 'card' === $session_handler->funding_source() ) {
+			return false; // Ignore for card buttons.
+		}
+		return true;
+	},
+
+	'wcgateway.current-context'                            => static function ( ContainerInterface $container ): string {
+		$context = 'mini-cart';
+		if ( is_product() || wc_post_content_has_shortcode( 'product_page' ) ) {
+			$context = 'product';
+		}
+		if ( is_cart() ) {
+			$context = 'cart';
+		}
+		if ( is_checkout() && ! $container->get( 'wcgateway.is-paypal-continuation' ) ) {
+			$context = 'checkout';
+		}
+		if ( is_checkout_pay_page() ) {
+			$context = 'pay-now';
+		}
+		return $context;
+	},
+	'wcgateway.fraudnet-assets'                            => function( ContainerInterface $container ) : FraudNetAssets {
+		return new FraudNetAssets(
+			$container->get( 'wcgateway.url' ),
+			$container->get( 'ppcp.asset-version' ),
+			$container->get( 'wcgateway.pay-upon-invoice-fraudnet' ),
+			$container->get( 'onboarding.environment' ),
+			$container->get( 'wcgateway.settings' ),
+			$container->get( 'wcgateway.enabled-ppcp-gateways' ),
+			$container->get( 'wcgateway.current-context' )
+		);
 	},
 );

@@ -22,6 +22,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Admin\FeesRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\RenderAuthorizeAction;
+use WooCommerce\PayPalCommerce\WcGateway\Assets\FraudNetAssets;
 use WooCommerce\PayPalCommerce\WcGateway\Assets\SettingsPageAssets;
 use WooCommerce\PayPalCommerce\WcGateway\Checkout\CheckoutPayPalAddressPreset;
 use WooCommerce\PayPalCommerce\WcGateway\Checkout\DisableGateways;
@@ -258,6 +259,10 @@ class WCGatewayModule implements ModuleInterface {
 				}
 
 				( $c->get( 'wcgateway.oxxo' ) )->init();
+
+				$fraudnet_assets = $c->get( 'wcgateway.fraudnet-assets' );
+				assert( $fraudnet_assets instanceof FraudNetAssets );
+				$fraudnet_assets->register_assets();
 			}
 		);
 
