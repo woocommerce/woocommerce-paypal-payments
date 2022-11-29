@@ -176,7 +176,6 @@ class CompatModule implements ModuleInterface {
 					! $tracking_information ? $endpoint->add_tracking_information( $tracking_data, $wc_order->get_id() ) : $endpoint->update_tracking_information( $tracking_data, $wc_order->get_id() );
 				} catch ( Exception $exception ) {
 					$logger->error( "Couldn't sync tracking information: " . $exception->getMessage() );
-					$shipment->add_note( "Couldn't sync tracking information: " . $exception->getMessage() );
 				}
 			}
 		);
