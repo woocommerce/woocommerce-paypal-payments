@@ -81,12 +81,12 @@ class OXXO {
 		add_filter(
 			'woocommerce_thankyou_order_received_text',
 			/**
-			 * Order can be null.
+			 * Param types removed to avoid third-party issues.
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function( string $message, $order ) {
-				if ( ! $order instanceof WC_Order ) {
+			function( $message, $order ) {
+				if ( ! is_string( $message ) || ! $order instanceof WC_Order ) {
 					return $message;
 				}
 
