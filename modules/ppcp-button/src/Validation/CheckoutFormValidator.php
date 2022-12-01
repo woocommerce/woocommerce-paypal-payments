@@ -32,6 +32,8 @@ class CheckoutFormValidator extends WC_Checkout {
 		foreach ( $data as $key => $value ) {
 			$_POST[ $key ] = $value;
 		}
+		// And we must call get_posted_data because it handles the shipping address.
+		$data = $this->get_posted_data();
 
 		// It throws some notices when checking fields etc., also from other plugins via hooks.
 		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
