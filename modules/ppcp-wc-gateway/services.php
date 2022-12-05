@@ -142,7 +142,8 @@ return array(
 	'wcgateway.disabler'                                   => static function ( ContainerInterface $container ): DisableGateways {
 		$session_handler = $container->get( 'session.handler' );
 		$settings       = $container->get( 'wcgateway.settings' );
-		return new DisableGateways( $session_handler, $settings );
+        $settings_status = $container->get( 'wcgateway.settings.status' );
+		return new DisableGateways( $session_handler, $settings, $settings_status );
 	},
 
 	'wcgateway.is-wc-payments-page'                        => static function ( ContainerInterface $container ): bool {
@@ -1279,32 +1280,9 @@ return array(
 		return array_keys( $container->get( 'wcgateway.settings.pay-later.messaging-locations' ) );
 	},
 	'wcgateway.settings.pay-later.button-locations'        => static function( ContainerInterface $container ): array {
-		$button_locations = array();
-
 		$settings = $container->get( 'wcgateway.settings' );
 		assert( $settings instanceof Settings );
 
-		$is_product_buttons_enabled = $settings->has( 'button_product_enabled' ) && $settings->get( 'button_product_enabled' );
-		$is_mini_cart_buttons_enabled = $settings->has( 'button_mini-cart_enabled' ) && $settings->get( 'button_mini-cart_enabled' );
-		$is_cart_buttons_enabled = $settings->has( 'button_cart_enabled' ) && $settings->get( 'button_cart_enabled' );
-		$is_checkout_buttons_enabled = $settings->has( 'button_enabled' ) && $settings->get( 'button_enabled' );
-
-		if ( $is_product_buttons_enabled ) {
-			$button_locations['product'] = 'Single Product';
-		}
-
-		if ( $is_mini_cart_buttons_enabled ) {
-			$button_locations['mini-cart'] = 'Mini Cart';
-		}
-
-		if ( $is_cart_buttons_enabled ) {
-			$button_locations['cart'] = 'Cart';
-		}
-
-		if ( $is_checkout_buttons_enabled ) {
-			$button_locations['checkout'] = 'Checkout';
-		}
-
-		return $button_locations;
+		return $this->settings->has( 'smart_button_locations' ) ? $this->settings->get( 'smart_button_locations' ) : array();
 	},
 );
