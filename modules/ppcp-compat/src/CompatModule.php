@@ -130,17 +130,10 @@ class CompatModule implements ModuleInterface {
 		$logger = $c->get( 'woocommerce.logger.woocommerce' );
 		assert( $logger instanceof LoggerInterface );
 
-		$status_map = $c->get( 'compat.gzd.tracking_statuses_map' );
-
 		add_action(
-			'woocommerce_gzd_shipment_after_save',
-			static function( Shipment $shipment ) use ( $endpoint, $logger, $status_map ) {
+			'woocommerce_gzd_shipment_status_shipped',
+			static function( int $shipment_id, Shipment $shipment ) use ( $endpoint, $logger ) {
 				if ( ! apply_filters( 'woocommerce_paypal_payments_sync_gzd_tracking', true ) ) {
-					return;
-				}
-
-				$gzd_shipment_status = $shipment->get_status();
-				if ( ! array_key_exists( $gzd_shipment_status, $status_map ) ) {
 					return;
 				}
 
@@ -156,7 +149,7 @@ class CompatModule implements ModuleInterface {
 
 				$tracking_data = array(
 					'transaction_id' => $transaction_id,
-					'status'         => (string) $status_map[ $gzd_shipment_status ],
+					'status'         => 'SHIPPED',
 				);
 
 				$provider = $shipment->get_shipping_provider();
@@ -169,17 +162,17 @@ class CompatModule implements ModuleInterface {
 
 					$tracking_data['tracking_number'] = $tracking_information['tracking_number'] ?? '';
 
-					if ( $shipment->has_tracking() ) {
+					if ( $shipment->get_tracking_id() ) {
 						$tracking_data['tracking_number'] = $shipment->get_tracking_id();
 					}
 
 					! $tracking_information ? $endpoint->add_tracking_information( $tracking_data, $wc_order->get_id() ) : $endpoint->update_tracking_information( $tracking_data, $wc_order->get_id() );
 				} catch ( Exception $exception ) {
 					$logger->error( "Couldn't sync tracking information: " . $exception->getMessage() );
-					$shipment->add_note( "Couldn't sync tracking information: " . $exception->getMessage() );
-					throw $exception;
 				}
-			}
+			},
+			500,
+			2
 		);
 	}
 
