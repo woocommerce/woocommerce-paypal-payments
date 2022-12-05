@@ -1149,6 +1149,11 @@ class SmartButton implements SmartButtonInterface {
 			'tagline' => true,
 		);
 
+		$enable_styling_per_location = $this->settings->has( 'smart_button_enable_styling_per_location' ) && $this->settings->get( 'smart_button_enable_styling_per_location' );
+		if ( ! $enable_styling_per_location ) {
+			$context = 'general';
+		}
+
 		$value = isset( $defaults[ $style ] ) ?
 			$defaults[ $style ] : '';
 		$value = $this->settings->has( 'button_' . $style ) ?
