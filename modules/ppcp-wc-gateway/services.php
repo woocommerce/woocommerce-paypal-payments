@@ -142,7 +142,7 @@ return array(
 	'wcgateway.disabler'                                   => static function ( ContainerInterface $container ): DisableGateways {
 		$session_handler = $container->get( 'session.handler' );
 		$settings       = $container->get( 'wcgateway.settings' );
-        $settings_status = $container->get( 'wcgateway.settings.status' );
+		$settings_status = $container->get( 'wcgateway.settings.status' );
 		return new DisableGateways( $session_handler, $settings, $settings_status );
 	},
 
@@ -195,8 +195,8 @@ return array(
 	},
 
 	'wcgateway.settings'                                   => static function ( ContainerInterface $container ): Settings {
-		$messaging_locations = $container->get( 'wcgateway.settings.pay-later.messaging-locations' );
-		return new Settings( array_keys( $messaging_locations ) );
+		$default_button_locations = $container->get( 'wcgateway.button.default-locations' );
+		return new Settings( $default_button_locations );
 	},
 	'wcgateway.notice.connect'                             => static function ( ContainerInterface $container ): ConnectAdminNotice {
 		$state    = $container->get( 'onboarding.state' );
@@ -1283,6 +1283,6 @@ return array(
 		$settings = $container->get( 'wcgateway.settings' );
 		assert( $settings instanceof Settings );
 
-		return $this->settings->has( 'smart_button_locations' ) ? $this->settings->get( 'smart_button_locations' ) : array();
+		return $settings->has( 'smart_button_locations' ) ? $settings->get( 'smart_button_locations' ) : array();
 	},
 );
