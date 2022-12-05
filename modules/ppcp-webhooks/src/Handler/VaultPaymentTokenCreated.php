@@ -10,6 +10,8 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
 
 use Psr\Log\LoggerInterface;
+use WC_Payment_Token_CC;
+use WC_Payment_Tokens;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenPayPal;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WP_REST_Request;
@@ -54,7 +56,7 @@ class VaultPaymentTokenCreated implements RequestHandler {
 	 * @param LoggerInterface             $logger The logger.
 	 * @param string                      $prefix The prefix.
 	 * @param AuthorizedPaymentsProcessor $authorized_payments_processor The authorized payment processor.
-	 * @param PaymentTokenPayPal $payment_token_paypal WooCommerce Payment token PayPal.
+	 * @param PaymentTokenPayPal          $payment_token_paypal WooCommerce Payment token PayPal.
 	 */
 	public function __construct(
 		LoggerInterface $logger,
@@ -65,7 +67,7 @@ class VaultPaymentTokenCreated implements RequestHandler {
 		$this->logger                        = $logger;
 		$this->prefix                        = $prefix;
 		$this->authorized_payments_processor = $authorized_payments_processor;
-		$this->payment_token_paypal = $payment_token_paypal;
+		$this->payment_token_paypal          = $payment_token_paypal;
 	}
 
 	/**
@@ -98,6 +100,8 @@ class VaultPaymentTokenCreated implements RequestHandler {
 	 * @return WP_REST_Response
 	 */
 	public function handle_request( WP_REST_Request $request ): WP_REST_Response {
+		$this->logger->info( wc_print_r( $request['resource'], true ) );
+
 		$response = array( 'success' => false );
 
 		$customer_id = null !== $request['resource'] && isset( $request['resource']['customer_id'] )
@@ -113,11 +117,24 @@ class VaultPaymentTokenCreated implements RequestHandler {
 		$wc_customer_id = (int) str_replace( $this->prefix, '', $customer_id );
 		$this->authorized_payments_processor->capture_authorized_payments_for_customer( $wc_customer_id );
 
-		if(isset($request['resource']['id'])) {
-			$this->logger->info("Setting token {$request['resource']['id']} for user {$wc_customer_id}");
-			$this->payment_token_paypal->set_token($request['resource']['id']);
-			$this->payment_token_paypal->set_user_id($wc_customer_id);
-			$this->payment_token_paypal->save();
+		if ( isset( $request['resource']['id'] ) ) {
+			if ( isset( $request['resource']['source']['card'] ) ) {
+				$token = new WC_Payment_Token_CC();
+				$token->set_token( $request['resource']['id'] );
+				$token->set_user_id( $wc_customer_id );
+				$token->set_last4( $request['resource']['source']['card']['last_digits'] ?? '' );
+				$expiry = explode( '-', $request['resource']['source']['card']['expiry'] ?? '' );
+				$token->set_expiry_year( $expiry[0] ?? '' );
+				$token->set_expiry_month( $expiry[1] ?? '' );
+				$token->set_card_type( $request['resource']['source']['card']['brand'] ?? '' );
+				$token->save();
+				WC_Payment_Tokens::set_users_default( $wc_customer_id, $token->get_id() );
+			} elseif ( isset( $request['resource']['source']['paypal'] ) ) {
+				$this->payment_token_paypal->set_token( $request['resource']['id'] );
+				$this->payment_token_paypal->set_user_id( $wc_customer_id );
+				$this->payment_token_paypal->save();
+				WC_Payment_Tokens::set_users_default( $wc_customer_id, $this->payment_token_paypal->get_id() );
+			}
 		}
 
 		$response['success'] = true;
