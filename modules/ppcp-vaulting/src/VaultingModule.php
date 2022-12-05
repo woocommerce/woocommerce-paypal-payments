@@ -20,6 +20,8 @@ use WC_Order;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vaulting\Endpoint\DeletePaymentTokenEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 /**
  * Class StatusReportModule
@@ -157,53 +159,68 @@ class VaultingModule implements ModuleInterface {
 
 		$this->filterFailedVaultingEmailsForSubscriptionOrders( $container );
 
-		add_filter('woocommerce_payment_token_class', function ($type) {
-			if($type === 'WC_Payment_Token_PayPal') {
-				return PaymentTokenPayPal::class;
+		add_filter(
+			'woocommerce_payment_token_class',
+			function ( $type ) {
+				if ( $type === 'WC_Payment_Token_PayPal' ) {
+					return PaymentTokenPayPal::class;
+				}
+
+				return $type;
 			}
+		);
 
-			return $type;
-		});
+		add_filter(
+			'woocommerce_payment_methods_list_item',
+			function( $item, $payment_token ) {
+				if ( strtolower( $payment_token->get_type() ) !== 'paypal' ) {
+					return $item;
+				}
 
-		add_filter( 'woocommerce_payment_methods_list_item', function($item, $payment_token) {
-			if ( strtolower( $payment_token->get_type() ) !== 'paypal' ) {
+				$item['method']['brand'] = 'PayPal';
+
 				return $item;
+			},
+			10,
+			2
+		);
+
+		add_action(
+			'wp',
+			function() use ( $container ) {
+				global $wp;
+
+				if ( isset( $wp->query_vars['delete-payment-method'] ) ) {
+					$token_id = absint( $wp->query_vars['delete-payment-method'] );
+					$token    = WC_Payment_Tokens::get( $token_id );
+
+					if (
+						is_null( $token )
+						|| ( $token->get_gateway_id() !== PayPalGateway::ID && $token->get_gateway_id() !== CreditCardGateway::ID )
+					) {
+						return;
+					}
+
+					$wpnonce = wc_clean( wp_unslash( $_REQUEST['_wpnonce'] ?? '' ) );
+					if (
+						$token->get_user_id() !== get_current_user_id()
+						|| ! isset( $wpnonce ) || wp_verify_nonce( $wpnonce, 'delete-payment-method-' . $token_id ) === false
+					) {
+						wc_add_notice( __( 'Invalid payment method.', 'woocommerce-paypal-payments' ), 'error' );
+						wp_safe_redirect( wc_get_account_endpoint_url( 'payment-methods' ) );
+						exit();
+					}
+
+					try {
+						$payment_token_endpoint = $container->get( 'api.endpoint.payment-token' );
+						$payment_token_endpoint->delete_token_by_id( $token->get_token() );
+					} catch ( RuntimeException $exception ) {
+						wc_add_notice( __( 'Could not delete payment token. ', 'woocommerce-paypal-payments' ) . $exception->getMessage(), 'error' );
+						return;
+					}
+				}
 			}
-
-			$item['method']['brand'] = 'PayPal';
-
-			return $item;
-		}, 10, 2 );
-
-		add_action('wp', function() use ( $container ) {
-			global $wp;
-
-			if ( isset( $wp->query_vars['delete-payment-method'] ) ) {
-				$token_id = absint( $wp->query_vars['delete-payment-method'] );
-				$token    = WC_Payment_Tokens::get( $token_id );
-
-				if(is_null( $token ) || $token->get_type() !== 'PayPal') {
-					return;
-				}
-
-				if(
-					$token->get_user_id() !== get_current_user_id()
-					|| ! isset( $_REQUEST['_wpnonce'] ) || false === wp_verify_nonce( wp_unslash( $_REQUEST['_wpnonce'] ), 'delete-payment-method-' . $token_id )
-				) {
-					wc_add_notice( __( 'Invalid payment method.', 'woocommerce' ), 'error' );
-					wp_safe_redirect( wc_get_account_endpoint_url( 'payment-methods' ) );
-					exit();
-				}
-
-				try {
-					$payment_token_endpoint = $container->get('api.endpoint.payment-token');
-					$payment_token_endpoint->delete_token_by_id($token->get_token());
-				} catch (RuntimeException $exception) {
-					wc_add_notice( __( 'Could not delete payment token. ' . $exception->getMessage(), 'woocommerce-paypal-payments' ), 'error' );
-					return;
-				}
-			}
-		});
+		);
 	}
 
 	/**

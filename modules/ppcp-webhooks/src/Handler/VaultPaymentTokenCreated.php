@@ -13,6 +13,8 @@ use Psr\Log\LoggerInterface;
 use WC_Payment_Token_CC;
 use WC_Payment_Tokens;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenPayPal;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -100,8 +102,6 @@ class VaultPaymentTokenCreated implements RequestHandler {
 	 * @return WP_REST_Response
 	 */
 	public function handle_request( WP_REST_Request $request ): WP_REST_Response {
-		$this->logger->info( wc_print_r( $request['resource'], true ) );
-
 		$response = array( 'success' => false );
 
 		$customer_id = null !== $request['resource'] && isset( $request['resource']['customer_id'] )
@@ -122,6 +122,8 @@ class VaultPaymentTokenCreated implements RequestHandler {
 				$token = new WC_Payment_Token_CC();
 				$token->set_token( $request['resource']['id'] );
 				$token->set_user_id( $wc_customer_id );
+				$token->set_gateway_id( CreditCardGateway::ID );
+
 				$token->set_last4( $request['resource']['source']['card']['last_digits'] ?? '' );
 				$expiry = explode( '-', $request['resource']['source']['card']['expiry'] ?? '' );
 				$token->set_expiry_year( $expiry[0] ?? '' );
@@ -132,6 +134,7 @@ class VaultPaymentTokenCreated implements RequestHandler {
 			} elseif ( isset( $request['resource']['source']['paypal'] ) ) {
 				$this->payment_token_paypal->set_token( $request['resource']['id'] );
 				$this->payment_token_paypal->set_user_id( $wc_customer_id );
+				$this->payment_token_paypal->set_gateway_id( PayPalGateway::ID );
 				$this->payment_token_paypal->save();
 				WC_Payment_Tokens::set_users_default( $wc_customer_id, $this->payment_token_paypal->get_id() );
 			}
