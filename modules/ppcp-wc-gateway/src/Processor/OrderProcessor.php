@@ -168,7 +168,7 @@ class OrderProcessor {
 			$order_id = $wc_order->get_meta( PayPalGateway::ORDER_ID_META_KEY );
 			if ( ! $order_id ) {
 				$this->logger->warning( "No PayPal order ID found in order #{$wc_order->get_id()} meta." );
-				$this->last_error = __( 'Could not retrieve PayPal order.', 'woocommerce-paypal-payments' );
+				$this->last_error = __( 'Could not retrieve order. This browser may not be supported. Please try again with a different browser.', 'woocommerce-paypal-payments' );
 				return false;
 			}
 
