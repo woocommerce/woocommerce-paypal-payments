@@ -56,15 +56,6 @@ return array(
 		return function_exists( 'wc_gzd_get_shipments_by_order' ); // 3.0+
 	},
 
-	'compat.gzd.tracking_statuses_map'              => function ( ContainerInterface $container ): array {
-		return array(
-			'draft'      => 'ON_HOLD',
-			'processing' => 'SHIPPED',
-			'shipped'    => 'SHIPPED',
-			'delivered'  => 'DELIVERED',
-		);
-	},
-
 	'compat.module.url'                             => static function ( ContainerInterface $container ): string {
 		/**
 		 * The path cannot be false.
