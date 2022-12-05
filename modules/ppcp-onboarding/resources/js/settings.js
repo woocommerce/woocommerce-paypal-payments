@@ -7,6 +7,10 @@ document.addEventListener(
         const payLaterMessagingLocationsSelect = payLaterMessagingLocationsSelector + ' select';
         const payLaterMessagingEnabledSelector = '#ppcp-pay_later_messaging_enabled';
 
+        const smartButtonLocationsSelector = '#field-smart_button_locations';
+        const smartButtonLocationsSelect = smartButtonLocationsSelector + ' select';
+        const smartButtonSelectableLocations = payLaterMessagingSelectableLocations.concat('mini-cart');
+
         const groupToggle = (selector, group) => {
             const toggleElement = document.querySelector(selector);
             if (! toggleElement) {
@@ -162,40 +166,47 @@ document.addEventListener(
             replace();
         };
 
-        const togglePayLaterMessagingInputsBySelectedLocations = (
-            stylingPerMessagingSelector,
-            messagingLocationsSelector,
+        const toggleInputsBySelectedLocations = (
+            stylingPerSelector,
+            locationsSelector,
             groupToShowOnChecked,
-            groupToHideOnChecked
+            groupToHideOnChecked,
+            inputType
         ) => {
 
             const payLaterMessagingEnabled = document.querySelector(payLaterMessagingEnabledSelector);
-            const stylingPerMessagingElement = document.querySelector(stylingPerMessagingSelector);
-            const messagingLocationsElement = document.querySelector(messagingLocationsSelector);
+            const stylingPerElement = document.querySelector(stylingPerSelector);
+            const locationsElement = document.querySelector(locationsSelector);
 
-            if (! stylingPerMessagingElement) {
+            if (! stylingPerElement) {
                 return;
             }
 
             const toggleElementsBySelectedLocations = () => {
-                if (! stylingPerMessagingElement.checked || ! payLaterMessagingEnabled.checked) {
+                if (! stylingPerElement.checked) {
                     return;
                 }
 
-                let checkedLocations = document.querySelectorAll(messagingLocationsSelector + ' :checked');
+                if (inputType === 'messages' && ! payLaterMessagingEnabled.checked) {
+                    return;
+                }
+
+                let checkedLocations = document.querySelectorAll(locationsSelector + ' :checked');
                 const selectedLocations = [...checkedLocations].map(option => option.value);
 
-                const messagingInputSelectors = payLaterMessagingInputSelectorsByLocations(selectedLocations);
+                const inputSelectors = inputSelectorsByLocations(selectedLocations, inputType);
 
                 groupToShowOnChecked.forEach( (element) => {
-                    if ( messagingInputSelectors.includes(element) ) {
+                    if ( inputSelectors.includes(element) ) {
                         document.querySelector(element).style.display = '';
                         return;
                     }
                     document.querySelector(element).style.display = 'none';
                 })
 
-                togglePayLaterMessageFields();
+                if (inputType === 'messages') {
+                    togglePayLaterMessageFields();
+                }
             }
 
             const hideElements = (selectroGroup) => {
@@ -210,14 +221,14 @@ document.addEventListener(
                 })
             }
 
-            groupToggle(stylingPerMessagingSelector, groupToShowOnChecked);
+            groupToggle(stylingPerSelector, groupToShowOnChecked);
             toggleElementsBySelectedLocations();
 
-            if (stylingPerMessagingElement.checked) {
+            if (stylingPerElement.checked) {
                 hideElements(groupToHideOnChecked);
             }
 
-            stylingPerMessagingElement.addEventListener(
+            stylingPerElement.addEventListener(
                 'change',
                 (event) => {
                     toggleElementsBySelectedLocations();
@@ -228,19 +239,23 @@ document.addEventListener(
                     }
 
                     showElements(groupToHideOnChecked);
-                    togglePayLaterMessageFields();
+                    if (inputType === 'messages') {
+                        togglePayLaterMessageFields();
+                    }
                 }
             );
 
             // We need to use jQuery here as the select might be a select2 element, which doesn't use native events.
-            jQuery(messagingLocationsElement).on('change', toggleElementsBySelectedLocations);
+            jQuery(locationsElement).on('change', toggleElementsBySelectedLocations);
         }
 
-        const payLaterMessagingInputSelectorsByLocations = (locations) => {
+        const inputSelectorsByLocations = (locations, inputType = 'messages') => {
             let inputSelectros = [];
 
             locations.forEach( (location) => {
-                inputSelectros = inputSelectros.concat(payLaterMessagingInputSelectorByLocation(location))
+                inputSelectros = inputType === 'messages'
+                    ? inputSelectros.concat(payLaterMessagingInputSelectorByLocation(location))
+                    : inputSelectros.concat(butttonInputSelectorByLocation(location));
             })
 
             return inputSelectros
@@ -264,8 +279,30 @@ document.addEventListener(
             return inputSelectors
         }
 
+        const butttonInputSelectorByLocation = (location) => {
+            const locationPrefix = location === 'checkout' ? '' : '_' + location;
+            const inputSelectors = [
+                '#field-button' + locationPrefix + '_layout',
+                '#field-button' + locationPrefix + '_tagline',
+                '#field-button' + locationPrefix + '_label',
+                '#field-button' + locationPrefix + '_color',
+                '#field-button' + locationPrefix + '_shape',
+                '#field-button' + locationPrefix + '_preview',
+            ]
+
+            if (location !== 'general') {
+                inputSelectors.push('#field-button_' + location + '_heading');
+            }
+
+            if (location === 'mini-cart') {
+                inputSelectors.push('#field-button' + locationPrefix + '_height');
+            }
+
+            return inputSelectors
+        }
+
         const allPayLaterMessaginginputSelectors = () => {
-            let stylingInputSelectors = payLaterMessagingInputSelectorsByLocations(payLaterMessagingAllLocations);
+            let stylingInputSelectors = inputSelectorsByLocations(payLaterMessagingAllLocations);
 
             return stylingInputSelectors.concat(payLaterMessagingLocationsSelector, '#field-pay_later_enable_styling_per_messaging_location');
         }
@@ -296,17 +333,6 @@ document.addEventListener(
 
         (() => {
             removeDisabledCardIcons('select[name="ppcp[disable_cards][]"]', 'select[name="ppcp[card_icons][]"]');
-            groupToggle(
-                '#ppcp-button_enabled',
-                [
-                    '#field-button_layout',
-                    '#field-button_tagline',
-                    '#field-button_label',
-                    '#field-button_color',
-                    '#field-button_shape',
-                    '#field-button_preview',
-                ]
-            );
 
             groupToggle(
                 '#ppcp-pay_later_button_enabled',
@@ -315,49 +341,22 @@ document.addEventListener(
 
             toggleMessagingEnabled();
 
-            togglePayLaterMessagingInputsBySelectedLocations(
+            toggleInputsBySelectedLocations(
                 '#ppcp-pay_later_enable_styling_per_messaging_location',
                 payLaterMessagingLocationsSelect,
-                payLaterMessagingInputSelectorsByLocations(payLaterMessagingSelectableLocations),
-                payLaterMessagingInputSelectorsByLocations(['general']),
+                inputSelectorsByLocations(payLaterMessagingSelectableLocations),
+                inputSelectorsByLocations(['general']),
+                'messages'
             );
 
-            groupToggle(
-                '#ppcp-button_product_enabled',
-                [
-                    '#field-button_product_layout',
-                    '#field-button_product_tagline',
-                    '#field-button_product_label',
-                    '#field-button_product_color',
-                    '#field-button_product_shape',
-                    '#field-button_product_preview',
-                ]
+            toggleInputsBySelectedLocations(
+                '#ppcp-smart_button_enable_styling_per_location',
+                smartButtonLocationsSelect,
+                inputSelectorsByLocations(smartButtonSelectableLocations, 'buttons'),
+                inputSelectorsByLocations(['general'], 'buttons'),
+                'buttons'
             );
 
-            groupToggle(
-                '#ppcp-button_mini-cart_enabled',
-                [
-                    '#field-button_mini-cart_layout',
-                    '#field-button_mini-cart_tagline',
-                    '#field-button_mini-cart_label',
-                    '#field-button_mini-cart_color',
-                    '#field-button_mini-cart_shape',
-                    '#field-button_mini-cart_height',
-                    '#field-button_mini-cart_preview',
-                ]
-            );
-
-            groupToggle(
-                '#ppcp-button_cart_enabled',
-                [
-                    '#field-button_cart_layout',
-                    '#field-button_cart_tagline',
-                    '#field-button_cart_label',
-                    '#field-button_cart_color',
-                    '#field-button_cart_shape',
-                    '#field-button_cart_preview',
-                ]
-            );
 
             groupToggle(
                 '#ppcp-vault_enabled',
@@ -365,7 +364,6 @@ document.addEventListener(
                     '#field-subscription_behavior_when_vault_fails',
                 ]
             );
-
 
             groupToggleSelect(
                 '#ppcp-intent',
