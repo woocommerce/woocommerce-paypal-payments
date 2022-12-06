@@ -104,19 +104,20 @@ class Settings implements ContainerInterface {
 		$this->settings = get_option( self::KEY, array() );
 
 		$defaults = array(
-			'title'                         => __( 'PayPal', 'woocommerce-paypal-payments' ),
-			'description'                   => __(
+			'title'                                    => __( 'PayPal', 'woocommerce-paypal-payments' ),
+			'description'                              => __(
 				'Pay via PayPal.',
 				'woocommerce-paypal-payments'
 			),
-			'smart_button_locations'        => $this->default_button_locations,
-			'pay_later_messaging_enabled'   => true,
-			'pay_later_button_enabled'      => true,
-			'pay_later_button_locations'    => $this->default_button_locations,
-			'pay_later_messaging_locations' => $this->default_button_locations,
-			'brand_name'                    => get_bloginfo( 'name' ),
-			'dcc_gateway_title'             => __( 'Credit Cards', 'woocommerce-paypal-payments' ),
-			'dcc_gateway_description'       => __(
+			'smart_button_locations'                   => $this->default_button_locations,
+			'smart_button_enable_styling_per_location' => true,
+			'pay_later_messaging_enabled'              => true,
+			'pay_later_button_enabled'                 => true,
+			'pay_later_button_locations'               => $this->default_button_locations,
+			'pay_later_messaging_locations'            => $this->default_button_locations,
+			'brand_name'                               => get_bloginfo( 'name' ),
+			'dcc_gateway_title'                        => __( 'Credit Cards', 'woocommerce-paypal-payments' ),
+			'dcc_gateway_description'                  => __(
 				'Pay with your credit card.',
 				'woocommerce-paypal-payments'
 			),
