@@ -72,7 +72,7 @@ class ClearDatabaseAssets {
 
 		wp_register_script(
 			$this->script_name,
-			"{$module_url}/assets/js/{$this->script_name}",
+			"{$module_url}/assets/js/{$this->script_name}.js",
 			array( 'jquery' ),
 			$this->version,
 			true
