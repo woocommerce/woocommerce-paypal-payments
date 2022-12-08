@@ -18,10 +18,10 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use WC_Order;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
-use WooCommerce\PayPalCommerce\Vaulting\Endpoint\DeletePaymentTokenEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WP_User_Query;
 
 /**
  * Class StatusReportModule
@@ -142,6 +142,32 @@ class VaultingModule implements ModuleInterface {
 						wc_add_notice( __( 'Could not delete payment token. ', 'woocommerce-paypal-payments' ) . $exception->getMessage(), 'error' );
 						return;
 					}
+				}
+			}
+		);
+
+		add_action(
+			'woocommerce_paypal_payments_gateway_migrate_on_update',
+			function () use ( $container ) {
+				$customers = new WP_User_Query(
+					array(
+						'fields'     => 'ID',
+						'limit'      => -1,
+						'meta_key'   => 'ppcp-vault-token',
+						'meta_query' => array(
+							array(
+								'key'     => 'ppcp_tokens_migrated',
+								'compare' => 'NOT EXISTS',
+							),
+						),
+					)
+				);
+
+				$migrate = $container->get( 'vaulting.payment-tokens-migration' );
+				assert( $migrate instanceof PaymentTokensMigration );
+
+				foreach ( $customers->get_results() as $id ) {
+					$migrate->migrate_payment_tokens_for_user( (int) $id );
 				}
 			}
 		);
