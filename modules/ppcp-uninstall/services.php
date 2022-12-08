@@ -44,14 +44,26 @@ return array(
 		);
 	},
 
+	'uninstall.clear-db-endpoint'               => function( ContainerInterface $container ) : string {
+		return 'ppcp-clear-db';
+	},
+
 	'uninstall.clear-database-script-data'      => function( ContainerInterface $container ) : array {
 		return array(
 			'clearDb' => array(
-				'ajaxUrl'             => WC()->ajax_url(),
-				'nonce'               => wp_create_nonce( 'ppc-uninstall-clear-database' ),
+				'endpoint'            => \WC_AJAX::get_endpoint( $container->get( 'uninstall.clear-db-endpoint' ) ),
+				'nonce'               => wp_create_nonce( $container->get( 'uninstall.clear-db-endpoint' ) ),
 				'button'              => '.ppcp-clear_db_now',
-				'failureMessage'      => __( 'Operation failed. Check WooCommerce logs for more details.', 'woocommerce-paypal-payments' ),
-				'ConfirmationMessage' => __( 'Operation failed. Check WooCommerce logs for more details.', 'woocommerce-paypal-payments' ),
+				'messageSelector'     => '.clear-db-info-message',
+				'ConfirmationMessage' => __( 'Are you sure? the operation will remove all plugin data.', 'woocommerce-paypal-payments' ),
+				'successMessage'      => sprintf(
+					'<span class="success clear-db-info-message">%1$s</span>',
+					esc_html__( 'The plugin data is successfully cleared.', 'woocommerce-paypal-payments' )
+				),
+				'failureMessage'      => sprintf(
+					'<span class="error clear-db-info-message">%1$s</span>',
+					esc_html__( 'Operation failed. Check WooCommerce logs for more details.', 'woocommerce-paypal-payments' )
+				),
 			),
 		);
 	},
@@ -63,12 +75,16 @@ return array(
 		);
 	},
 
-    'uninstall.clear-db-assets'                   => function( ContainerInterface $container ) : ClearDatabaseAssets {
-        return new ClearDatabaseAssets(
-            $container->get( 'uninstall.module-url' ),
-            $container->get( 'ppcp.asset-version' ),
-            'ppcp-clear-db',
-            $container->get( 'uninstall.clear-database-script-data' )
-        );
-    },
+	'uninstall.clear-db-assets'                 => function( ContainerInterface $container ) : ClearDatabaseAssets {
+		return new ClearDatabaseAssets(
+			$container->get( 'uninstall.module-url' ),
+			$container->get( 'ppcp.asset-version' ),
+			'ppcp-clear-db',
+			$container->get( 'uninstall.clear-database-script-data' )
+		);
+	},
+
+	'uninstall.clear-db'                        => function( ContainerInterface $container ) : ClearDatabaseInterface {
+		return new ClearDatabase();
+	},
 );
