@@ -40,7 +40,7 @@ return array(
 			'uninstall_clear_db_now'          => array(
 				'title'        => __( 'Remove PayPal Payments data from Database.', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-text',
-				'text'         => '<button type="button" class="button ppcp-uninstall-clear_now">' . esc_html__( 'Clear now', 'woocommerce-paypal-payments' ) . '</button>',
+				'text'         => '<button type="button" class="button ppcp-clear_db_now">' . esc_html__( 'Clear now', 'woocommerce-paypal-payments' ) . '</button>',
 				'screens'      => array(
 					State::STATE_ONBOARDED,
 				),
