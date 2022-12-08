@@ -6,7 +6,7 @@ module.exports = {
     mode: isProduction ? 'production' : 'development',
     target: 'web',
     entry: {
-        'clear-db': path.resolve('./resources/js/ppcp-clear-db.js'),
+        'ppcp-clear-db': path.resolve('./resources/js/ppcp-clear-db.js'),
     },
     output: {
         path: path.resolve(__dirname, 'assets/'),

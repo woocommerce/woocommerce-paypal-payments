@@ -65,7 +65,7 @@ return array(
 
     'uninstall.clear-db-assets'                   => function( ContainerInterface $container ) : ClearDatabaseAssets {
         return new ClearDatabaseAssets(
-            $container->get( 'webhook.module-url' ),
+            $container->get( 'uninstall.module-url' ),
             $container->get( 'ppcp.asset-version' ),
             'ppcp-clear-db',
             $container->get( 'uninstall.clear-database-script-data' )
