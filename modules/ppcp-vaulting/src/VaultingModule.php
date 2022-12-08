@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vaulting;
 
 use RuntimeException;
+use WC_Payment_Token;
 use WC_Payment_Tokens;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
@@ -85,6 +86,11 @@ class VaultingModule implements ModuleInterface {
 
 		add_filter(
 			'woocommerce_payment_token_class',
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
 			function ( $type ) {
 				if ( $type === 'WC_Payment_Token_PayPal' ) {
 					return PaymentTokenPayPal::class;
@@ -96,7 +102,16 @@ class VaultingModule implements ModuleInterface {
 
 		add_filter(
 			'woocommerce_payment_methods_list_item',
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
 			function( $item, $payment_token ) {
+				if ( ! is_array( $item ) || ! is_a( $payment_token, WC_Payment_Token::class ) ) {
+					return $item;
+				}
+
 				if ( strtolower( $payment_token->get_type() ) !== 'paypal' ) {
 					return $item;
 				}
@@ -126,9 +141,12 @@ class VaultingModule implements ModuleInterface {
 					}
 
 					$wpnonce = wc_clean( wp_unslash( $_REQUEST['_wpnonce'] ?? '' ) );
+					$token_id_string = (string) $token_id;
+					$action = 'delete-payment-method-' . $token_id_string;
 					if (
 						$token->get_user_id() !== get_current_user_id()
-						|| ! isset( $wpnonce ) || wp_verify_nonce( $wpnonce, 'delete-payment-method-' . $token_id ) === false
+						|| ! isset( $wpnonce ) || ! is_string($wpnonce)
+						|| wp_verify_nonce( $wpnonce, $action) === false
 					) {
 						wc_add_notice( __( 'Invalid payment method.', 'woocommerce-paypal-payments' ), 'error' );
 						wp_safe_redirect( wc_get_account_endpoint_url( 'payment-methods' ) );

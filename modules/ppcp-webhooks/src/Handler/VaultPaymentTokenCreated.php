@@ -117,8 +117,8 @@ class VaultPaymentTokenCreated implements RequestHandler {
 		$wc_customer_id = (int) str_replace( $this->prefix, '', $customer_id );
 		$this->authorized_payments_processor->capture_authorized_payments_for_customer( $wc_customer_id );
 
-		if ( isset( $request['resource']['id'] ) ) {
-			if ( isset( $request['resource']['source']['card'] ) ) {
+		if ( ! is_null( $request['resource'] ) && isset( $request['resource']['id'] ) ) {
+			if ( ! is_null( $request['resource']['source'] ) && isset( $request['resource']['source']['card'] ) ) {
 				$token = new WC_Payment_Token_CC();
 				$token->set_token( $request['resource']['id'] );
 				$token->set_user_id( $wc_customer_id );

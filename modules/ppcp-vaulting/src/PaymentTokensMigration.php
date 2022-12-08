@@ -39,7 +39,7 @@ class PaymentTokensMigration {
 	 *
 	 * @param int $id WooCommerce customer id.
 	 */
-	public function migrate_payment_tokens_for_user( int $id ) {
+	public function migrate_payment_tokens_for_user( int $id ):void {
 		$tokens          = (array) get_user_meta( $id, PaymentTokenRepository::USER_META, true );
 		$tokens_migrated = 0;
 
