@@ -140,13 +140,13 @@ class VaultingModule implements ModuleInterface {
 						return;
 					}
 
-					$wpnonce = wc_clean( wp_unslash( $_REQUEST['_wpnonce'] ?? '' ) );
+					$wpnonce         = wc_clean( wp_unslash( $_REQUEST['_wpnonce'] ?? '' ) );
 					$token_id_string = (string) $token_id;
-					$action = 'delete-payment-method-' . $token_id_string;
+					$action          = 'delete-payment-method-' . $token_id_string;
 					if (
 						$token->get_user_id() !== get_current_user_id()
-						|| ! isset( $wpnonce ) || ! is_string($wpnonce)
-						|| wp_verify_nonce( $wpnonce, $action) === false
+						|| ! isset( $wpnonce ) || ! is_string( $wpnonce )
+						|| wp_verify_nonce( $wpnonce, $action ) === false
 					) {
 						wc_add_notice( __( 'Invalid payment method.', 'woocommerce-paypal-payments' ), 'error' );
 						wp_safe_redirect( wc_get_account_endpoint_url( 'payment-methods' ) );

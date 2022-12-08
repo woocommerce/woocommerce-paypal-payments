@@ -74,7 +74,7 @@ return array(
 		$prefix         = $container->get( 'api.prefix' );
 		$order_endpoint = $container->get( 'api.endpoint.order' );
 		$authorized_payments_processor = $container->get( 'wcgateway.processor.authorized-payments' );
-		$payment_token_paypal = $container->get('vaulting.payment-token-paypal');
+		$payment_token_paypal = $container->get( 'vaulting.payment-token-paypal' );
 
 		return array(
 			new CheckoutOrderApproved( $logger, $prefix, $order_endpoint ),
