@@ -40,15 +40,15 @@ class UninstallModule implements ModuleInterface {
 		$page_id = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
 		if ( Settings::CONNECTION_TAB_ID === $page_id ) {
 			$this->registerClearDatabaseAssets( $container->get( 'uninstall.clear-db-assets' ) );
-
-			$request_data           = $container->get( 'button.request-data' );
-			$clear_db               = $container->get( 'uninstall.clear-db' );
-			$clear_db_endpoint      = $container->get( 'uninstall.clear-db-endpoint' );
-			$option_names           = $container->get( 'uninstall.ppcp-all-option-names' );
-			$scheduled_action_names = $container->get( 'uninstall.ppcp-all-scheduled-action-names' );
-
-			$this->handleClearDbAjaxRequest( $request_data, $clear_db, $clear_db_endpoint, $option_names, $scheduled_action_names );
 		}
+
+		$request_data           = $container->get( 'button.request-data' );
+		$clear_db               = $container->get( 'uninstall.clear-db' );
+		$clear_db_endpoint      = $container->get( 'uninstall.clear-db-endpoint' );
+		$option_names           = $container->get( 'uninstall.ppcp-all-option-names' );
+		$scheduled_action_names = $container->get( 'uninstall.ppcp-all-scheduled-action-names' );
+
+		$this->handleClearDbAjaxRequest( $request_data, $clear_db, $clear_db_endpoint, $option_names, $scheduled_action_names );
 	}
 
 	/**
@@ -83,7 +83,6 @@ class UninstallModule implements ModuleInterface {
 				try {
 					// Validate nonce.
 					$request_data->read_request( $nonce );
-
 					$clear_db->delete_options( $option_names );
 					$clear_db->clear_scheduled_actions( $scheduled_action_names );
 

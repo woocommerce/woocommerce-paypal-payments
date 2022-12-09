@@ -23,21 +23,18 @@ document.addEventListener(
                 body: JSON.stringify({
                     nonce: clearDbConfig.nonce,
                 })
-            }).then(function (res) {
+            }).then((res)=>{
                 return res.json();
-            }).then(function (data) {
-                const resultMessage = document.querySelector(clearDbConfig.messageSelector);
-
+            }).then((data)=>{
                 if (!data.success) {
-                    clearDbConfig.failureMessage.insertAfter(clearButton);
-                    setTimeout(()=> resultMessage.remove(),3000);
+                    jQuery(clearDbConfig.failureMessage).insertAfter(clearButton);
+                    setTimeout(()=> jQuery(clearDbConfig.messageSelector).remove(),3000);
                     clearButton.removeAttribute('disabled');
-                    console.error(data);
                     throw Error(data.data.message);
                 }
 
-                clearDbConfig.successMessage.insertAfter(clearButton);
-                setTimeout(()=> resultMessage.remove(),3000);
+                jQuery(clearDbConfig.successMessage).insertAfter(clearButton);
+                setTimeout(()=> jQuery(clearDbConfig.messageSelector).remove(),3000);
                 clearButton.removeAttribute('disabled');
             });
         })

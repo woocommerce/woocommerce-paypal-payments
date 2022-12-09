@@ -57,11 +57,11 @@ return array(
 				'messageSelector'     => '.clear-db-info-message',
 				'ConfirmationMessage' => __( 'Are you sure? the operation will remove all plugin data.', 'woocommerce-paypal-payments' ),
 				'successMessage'      => sprintf(
-					'<span class="success clear-db-info-message">%1$s</span>',
+					'<div class="updated clear-db-info-message"><p><strong>%1$s</strong></p></div>',
 					esc_html__( 'The plugin data is successfully cleared.', 'woocommerce-paypal-payments' )
 				),
 				'failureMessage'      => sprintf(
-					'<span class="error clear-db-info-message">%1$s</span>',
+					'<div class="error clear-db-info-message"><p><strong>%1$s</strong></p></div>',
 					esc_html__( 'Operation failed. Check WooCommerce logs for more details.', 'woocommerce-paypal-payments' )
 				),
 			),
