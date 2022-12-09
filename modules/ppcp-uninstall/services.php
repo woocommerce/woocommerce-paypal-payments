@@ -64,6 +64,7 @@ return array(
 					'<div class="error clear-db-info-message"><p><strong>%1$s</strong></p></div>',
 					esc_html__( 'Operation failed. Check WooCommerce logs for more details.', 'woocommerce-paypal-payments' )
 				),
+				'redirectUrl'         => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
 			),
 		);
 	},

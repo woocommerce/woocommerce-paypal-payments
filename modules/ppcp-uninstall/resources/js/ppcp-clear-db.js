@@ -36,6 +36,7 @@ document.addEventListener(
                 jQuery(clearDbConfig.successMessage).insertAfter(clearButton);
                 setTimeout(()=> jQuery(clearDbConfig.messageSelector).remove(),3000);
                 clearButton.removeAttribute('disabled');
+                window.location.replace(clearDbConfig.redirectUrl);
             });
         })
     },
