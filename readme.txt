@@ -91,6 +91,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Fix - Fix PHP 8.1 deprecated error #1009
 * Fix - Wrong asset path Germanized compat #1051
 * Fix - Fix DCC error messages handling #1035
+* Fix - Execute WC validation only for smart buttons in checkout #1074
 * Enhancement - Param types removed in closure to avoid third-party issues #1046
 
 = 2.0.0 =
