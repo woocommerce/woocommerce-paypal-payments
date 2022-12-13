@@ -1,6 +1,6 @@
 *** Changelog ***
 
-= 2.0.1 - TBD =
+= 2.0.1 - 2022-12-13 =
 * Fix - Error while syncing tracking data to PayPal -> Sync GZD Tracking #1020
 * Fix - Fix product price retrieval for variable product buttons #1000
 * Fix - All tabs hidden on OXXO tab visit #1048
