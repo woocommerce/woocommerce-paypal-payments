@@ -103,7 +103,7 @@ class OrderEndpoint {
 	protected $is_fraudnet_enabled;
 
 	/**
-	 * The FrauNet entity.
+	 * The FraudNet entity.
 	 *
 	 * @var FraudNet
 	 */
@@ -136,7 +136,7 @@ class OrderEndpoint {
 	 * @param PayPalRequestIdRepository    $paypal_request_id_repository The paypal request id repository.
 	 * @param SubscriptionHelper           $subscription_helper The subscription helper.
 	 * @param bool                         $is_fraudnet_enabled true if FraudNet support is enabled in settings, otherwise false.
-	 * @param FraudNet                     $fraudnet The FrauNet entity.
+	 * @param FraudNet                     $fraudnet The FraudNet entity.
 	 * @param string                       $bn_code The BN Code.
 	 */
 	public function __construct(
