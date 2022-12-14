@@ -168,7 +168,7 @@ return array(
 				CreditCardGateway::ID,
 				PayUponInvoiceGateway::ID,
 				CardButtonGateway::ID,
-				OXXOGateway::ID .
+				OXXOGateway::ID,
 				Settings::PAY_LATER_TAB_ID,
 			),
 			true

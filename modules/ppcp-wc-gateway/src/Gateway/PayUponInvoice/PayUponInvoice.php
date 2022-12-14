@@ -360,7 +360,16 @@ class PayUponInvoice {
 
 		add_filter(
 			'woocommerce_gateway_description',
-			function( string $description, string $id ): string {
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function( $description, $id ): string {
+				if ( ! is_string( $description ) || ! is_string( $id ) ) {
+					return $description;
+				}
+
 				if ( PayUponInvoiceGateway::ID === $id ) {
 					ob_start();
 
@@ -423,7 +432,16 @@ class PayUponInvoice {
 
 		add_action(
 			'woocommerce_after_checkout_validation',
-			function( array $fields, WP_Error $errors ) {
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function( $fields, WP_Error $errors ) {
+				if ( ! is_array( $fields ) ) {
+					return;
+				}
+
 				// phpcs:ignore WordPress.Security.NonceVerification.Missing
 				$payment_method = wc_clean( wp_unslash( $_POST['payment_method'] ?? '' ) );
 				if ( PayUponInvoiceGateway::ID !== $payment_method ) {
@@ -458,8 +476,13 @@ class PayUponInvoice {
 
 		add_filter(
 			'woocommerce_available_payment_gateways',
-			function ( array $methods ): array {
-				if ( State::STATE_ONBOARDED !== $this->state->current_state() ) {
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function ( $methods ): array {
+				if ( ! is_array( $methods ) || State::STATE_ONBOARDED !== $this->state->current_state() ) {
 					return $methods;
 				}
 

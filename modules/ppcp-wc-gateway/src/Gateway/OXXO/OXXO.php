@@ -81,12 +81,12 @@ class OXXO {
 		add_filter(
 			'woocommerce_thankyou_order_received_text',
 			/**
-			 * Order can be null.
+			 * Param types removed to avoid third-party issues.
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function( string $message, $order ) {
-				if ( ! $order instanceof WC_Order ) {
+			function( $message, $order ) {
+				if ( ! is_string( $message ) || ! $order instanceof WC_Order ) {
 					return $message;
 				}
 
@@ -105,7 +105,16 @@ class OXXO {
 
 		add_action(
 			'woocommerce_email_before_order_table',
-			function ( WC_Order $order, bool $sent_to_admin ) {
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function ( $order, $sent_to_admin ) {
+				if ( ! is_a( $order, WC_Order::class ) || ! is_bool( $sent_to_admin ) ) {
+					return;
+				}
+
 				if (
 					! $sent_to_admin
 					&& $order->get_payment_method() === OXXOGateway::ID

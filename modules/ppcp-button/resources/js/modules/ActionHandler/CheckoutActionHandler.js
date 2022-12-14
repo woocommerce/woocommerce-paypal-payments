@@ -59,9 +59,9 @@ class CheckoutActionHandler {
                         );
                     } else {
                         errorHandler.clear();
-                        if (data.data.errors.length > 0) {
+                        if (data.data.errors?.length > 0) {
                             errorHandler.messages(data.data.errors);
-                        } else if (data.data.details.length > 0) {
+                        } else if (data.data.details?.length > 0) {
                             errorHandler.message(data.data.details.map(d => `${d.issue} ${d.description}`).join('<br/>'), true);
                         } else {
                             errorHandler.message(data.data.message, true);

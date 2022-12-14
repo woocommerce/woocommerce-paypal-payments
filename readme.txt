@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, e-commerce, store, sales, sell, 
 Requires at least: 5.3
 Tested up to: 6.1
 Requires PHP: 7.2
-Stable tag: 2.0.0
+Stable tag: 2.0.1
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -80,6 +80,19 @@ Follow the steps below to connect the plugin to your PayPal account:
 6. Main settings screen.
 
 == Changelog ==
+
+= 2.0.1 =
+* Fix - Error while syncing tracking data to PayPal -> Sync GZD Tracking #1020
+* Fix - Fix product price retrieval for variable product buttons #1000
+* Fix - All tabs hidden on OXXO tab visit #1048
+* Fix - Woocommerce Germanized Invoice bug #1017
+* Fix - Fix shipping address validation #1047
+* Fix - Trigger WC JS validation on button click to highlight empty fields #1004
+* Fix - Fix PHP 8.1 deprecated error #1009
+* Fix - Wrong asset path Germanized compat #1051
+* Fix - Fix DCC error messages handling #1035
+* Fix - Execute WC validation only for smart buttons in checkout #1074
+* Enhancement - Param types removed in closure to avoid third-party issues #1046
 
 = 2.0.0 =
 * Add - Option to separate JSSDK APM payment buttons into individual WooCommerce gateways #671 

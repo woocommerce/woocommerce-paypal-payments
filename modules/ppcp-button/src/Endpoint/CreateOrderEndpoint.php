@@ -248,7 +248,11 @@ class CreateOrderEndpoint implements EndpointInterface {
 
 			$form_fields = $data['form'] ?? null;
 
-			if ( $this->early_validation_enabled && is_array( $form_fields ) ) {
+			if ( $this->early_validation_enabled
+				&& is_array( $form_fields )
+				&& 'checkout' === $data['context']
+				&& in_array( $payment_method, array( PayPalGateway::ID, CardButtonGateway::ID ), true )
+			) {
 				$this->validate_form( $form_fields );
 			}
 
