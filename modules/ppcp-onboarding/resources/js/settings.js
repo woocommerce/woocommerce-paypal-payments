@@ -359,14 +359,6 @@ document.addEventListener(
                 ]
             );
 
-            groupToggle(
-                '#ppcp-vault_enabled',
-                [
-                    '#field-subscription_behavior_when_vault_fails',
-                ]
-            );
-
-
             groupToggleSelect(
                 '#ppcp-intent',
                 [

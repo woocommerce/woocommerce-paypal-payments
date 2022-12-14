@@ -655,26 +655,6 @@ return array(
 				'gateway'      => array( 'paypal', 'dcc' ),
 				'input_class'  => $container->get( 'wcgateway.helper.vaulting-scope' ) ? array() : array( 'ppcp-disabled-checkbox' ),
 			),
-			'subscription_behavior_when_vault_fails' => array(
-				'title'                => __( 'Subscription capture behavior if Vault fails', 'woocommerce-paypal-payments' ),
-				'type'                 => 'select',
-				'classes'              => $subscription_helper->plugin_is_active() ? array() : array( 'hide' ),
-				'input_class'          => array( 'wc-enhanced-select' ),
-				'default'              => 'void_auth',
-				'desc_tip'             => true,
-				'description'          => __( 'By default, subscription payments are captured only when saving the payment method was successful. Without a saved payment method, automatic renewal payments are not possible.', 'woocommerce-paypal-payments' ),
-				'description_with_tip' => __( 'Determines whether authorized payments for subscription orders are captured or voided if there is no saved payment method. This only applies when the intent Capture is used for the subscription order.', 'woocommerce-paypal-payments' ),
-				'options'              => array(
-					'void_auth'           => __( 'Void authorization & fail the order/subscription', 'woocommerce-paypal-payments' ),
-					'capture_auth'        => __( 'Capture authorized payment & set subscription to Manual Renewal', 'woocommerce-paypal-payments' ),
-					'capture_auth_ignore' => __( 'Capture authorized payment & disregard missing payment method', 'woocommerce-paypal-payments' ),
-				),
-				'screens'              => array(
-					State::STATE_ONBOARDED,
-				),
-				'requirements'         => array(),
-				'gateway'              => array( 'paypal', 'dcc' ),
-			),
 			'card_billing_data_mode'                 => array(
 				'title'        => __( 'Card billing data handling', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
