@@ -9,7 +9,7 @@ document.addEventListener(
         const clearDbConfig = config.clearDb;
 
         jQuery(document).on('click', clearDbConfig.button, function () {
-            const isConfirmed = confirm(clearDbConfig.ConfirmationMessage);
+            const isConfirmed = confirm(clearDbConfig.confirmationMessage);
             if (!isConfirmed) {
                 return;
             }

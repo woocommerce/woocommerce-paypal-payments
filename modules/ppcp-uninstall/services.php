@@ -55,7 +55,7 @@ return array(
 				'nonce'               => wp_create_nonce( $container->get( 'uninstall.clear-db-endpoint' ) ),
 				'button'              => '.ppcp-clear_db_now',
 				'messageSelector'     => '.clear-db-info-message',
-				'ConfirmationMessage' => __( 'Are you sure? the operation will remove all plugin data.', 'woocommerce-paypal-payments' ),
+				'confirmationMessage' => __( 'Are you sure? the operation will remove all plugin data.', 'woocommerce-paypal-payments' ),
 				'successMessage'      => sprintf(
 					'<div class="updated clear-db-info-message"><p><strong>%1$s</strong></p></div>',
 					esc_html__( 'The plugin data is successfully cleared.', 'woocommerce-paypal-payments' )
