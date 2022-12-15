@@ -16,7 +16,6 @@ use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
-use WooCommerce\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\FeesRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
@@ -214,7 +213,6 @@ class WCGatewayModule implements ModuleInterface {
 			'woocommerce_paypal_commerce_gateway_deactivate',
 			static function () use ( $c ) {
 				delete_option( Settings::KEY );
-				delete_option( PayPalRequestIdRepository::KEY );
 				delete_option( 'woocommerce_' . PayPalGateway::ID . '_settings' );
 				delete_option( 'woocommerce_' . CreditCardGateway::ID . '_settings' );
 			}
@@ -236,6 +234,8 @@ class WCGatewayModule implements ModuleInterface {
 		add_action(
 			'woocommerce_paypal_payments_gateway_migrate',
 			static function () use ( $c ) {
+				delete_option( 'ppcp-request-ids' );
+
 				$settings = $c->get( 'wcgateway.settings' );
 				assert( $settings instanceof Settings );
 

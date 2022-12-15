@@ -102,13 +102,6 @@ class OrderEndpoint {
 	private $bn_code;
 
 	/**
-	 * The paypal request id repository.
-	 *
-	 * @var PayPalRequestIdRepository
-	 */
-	private $paypal_request_id_repository;
-
-	/**
 	 * OrderEndpoint constructor.
 	 *
 	 * @param string                       $host The host.
@@ -118,7 +111,6 @@ class OrderEndpoint {
 	 * @param string                       $intent The intent.
 	 * @param LoggerInterface              $logger The logger.
 	 * @param ApplicationContextRepository $application_context_repository The application context repository.
-	 * @param PayPalRequestIdRepository    $paypal_request_id_repository The paypal request id repository.
 	 * @param SubscriptionHelper           $subscription_helper The subscription helper.
 	 * @param string                       $bn_code The BN Code.
 	 */
@@ -130,7 +122,6 @@ class OrderEndpoint {
 		string $intent,
 		LoggerInterface $logger,
 		ApplicationContextRepository $application_context_repository,
-		PayPalRequestIdRepository $paypal_request_id_repository,
 		SubscriptionHelper $subscription_helper,
 		string $bn_code = ''
 	) {
@@ -143,7 +134,6 @@ class OrderEndpoint {
 		$this->logger                         = $logger;
 		$this->application_context_repository = $application_context_repository;
 		$this->bn_code                        = $bn_code;
-		$this->paypal_request_id_repository   = $paypal_request_id_repository;
 		$this->subscription_helper            = $subscription_helper;
 	}
 
@@ -169,7 +159,6 @@ class OrderEndpoint {
 	 * @param Payer|null         $payer The payer off the order.
 	 * @param PaymentToken|null  $payment_token The payment token.
 	 * @param PaymentMethod|null $payment_method The payment method.
-	 * @param string             $paypal_request_id The paypal request id.
 	 *
 	 * @return Order
 	 * @throws RuntimeException If the request fails.
@@ -179,8 +168,7 @@ class OrderEndpoint {
 		string $shipping_preference,
 		Payer $payer = null,
 		PaymentToken $payment_token = null,
-		PaymentMethod $payment_method = null,
-		string $paypal_request_id = ''
+		PaymentMethod $payment_method = null
 	): Order {
 		$bearer = $this->bearer->bearer();
 		$data   = array(
@@ -219,8 +207,6 @@ class OrderEndpoint {
 			'body'    => wp_json_encode( $data ),
 		);
 
-		$paypal_request_id                    = $paypal_request_id ? $paypal_request_id : uniqid( 'ppcp-', true );
-		$args['headers']['PayPal-Request-Id'] = $paypal_request_id;
 		if ( $this->bn_code ) {
 			$args['headers']['PayPal-Partner-Attribution-Id'] = $this->bn_code;
 		}
@@ -260,7 +246,6 @@ class OrderEndpoint {
 			throw $error;
 		}
 		$order = $this->order_factory->from_paypal_response( $json );
-		$this->paypal_request_id_repository->set_for_order( $order, $paypal_request_id );
 		return $order;
 	}
 
@@ -281,10 +266,9 @@ class OrderEndpoint {
 		$args   = array(
 			'method'  => 'POST',
 			'headers' => array(
-				'Authorization'     => 'Bearer ' . $bearer->token(),
-				'Content-Type'      => 'application/json',
-				'Prefer'            => 'return=representation',
-				'PayPal-Request-Id' => $this->paypal_request_id_repository->get_for_order( $order ),
+				'Authorization' => 'Bearer ' . $bearer->token(),
+				'Content-Type'  => 'application/json',
+				'Prefer'        => 'return=representation',
 			),
 		);
 		if ( $this->bn_code ) {
@@ -356,10 +340,9 @@ class OrderEndpoint {
 		$args   = array(
 			'method'  => 'POST',
 			'headers' => array(
-				'Authorization'     => 'Bearer ' . $bearer->token(),
-				'Content-Type'      => 'application/json',
-				'Prefer'            => 'return=representation',
-				'PayPal-Request-Id' => $this->paypal_request_id_repository->get_for_order( $order ),
+				'Authorization' => 'Bearer ' . $bearer->token(),
+				'Content-Type'  => 'application/json',
+				'Prefer'        => 'return=representation',
 			),
 		);
 		if ( $this->bn_code ) {
@@ -430,9 +413,8 @@ class OrderEndpoint {
 		$url    = trailingslashit( $this->host ) . 'v2/checkout/orders/' . $id;
 		$args   = array(
 			'headers' => array(
-				'Authorization'     => 'Bearer ' . $bearer->token(),
-				'Content-Type'      => 'application/json',
-				'PayPal-Request-Id' => $this->paypal_request_id_repository->get_for_order_id( $id ),
+				'Authorization' => 'Bearer ' . $bearer->token(),
+				'Content-Type'  => 'application/json',
 			),
 		);
 		if ( $this->bn_code ) {
@@ -517,12 +499,9 @@ class OrderEndpoint {
 		$args   = array(
 			'method'  => 'PATCH',
 			'headers' => array(
-				'Authorization'     => 'Bearer ' . $bearer->token(),
-				'Content-Type'      => 'application/json',
-				'Prefer'            => 'return=representation',
-				'PayPal-Request-Id' => $this->paypal_request_id_repository->get_for_order(
-					$order_to_update
-				),
+				'Authorization' => 'Bearer ' . $bearer->token(),
+				'Content-Type'  => 'application/json',
+				'Prefer'        => 'return=representation',
 			),
 			'body'    => wp_json_encode( $patches_array ),
 		);

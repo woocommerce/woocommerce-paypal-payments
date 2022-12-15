@@ -133,7 +133,7 @@ class PayUponInvoiceOrderEndpoint {
 				'Content-Type'              => 'application/json',
 				'Prefer'                    => 'return=representation',
 				'PayPal-Client-Metadata-Id' => $this->fraudnet->session_id(),
-				'PayPal-Request-Id'         => uniqid( 'ppcp-', true ),
+				'PayPal-Request-Id'         => uniqid( 'ppcp-', true ), // Request-Id header is required.
 			),
 			'body'    => wp_json_encode( $data ),
 		);
