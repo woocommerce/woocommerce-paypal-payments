@@ -55,7 +55,7 @@ define( 'PAYPAL_INTEGRATION_DATE', '2022-04-13' );
 
 			return;
 		}
-		if ( version_compare( PHP_VERSION, '7.1', '<' ) ) {
+		if ( version_compare( PHP_VERSION, '7.2', '<' ) ) {
 			add_action(
 				'admin_notices',
 				function() {
