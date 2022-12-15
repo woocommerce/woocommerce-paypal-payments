@@ -7,7 +7,7 @@
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice;
+namespace WooCommerce\PayPalCommerce\WcGateway\FraudNet;
 
 /**
  * Class FraudNet
