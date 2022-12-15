@@ -43,9 +43,9 @@ class SingleProductBootstap {
     }
 
     shouldRender() {
-
-        return document.querySelector('form.cart') !== null && !this.priceAmountIsZero();
-
+        return document.querySelector('form.cart') !== null
+            && !this.priceAmountIsZero()
+            && !this.isSubscriptionMode();
     }
 
     priceAmount() {
@@ -72,6 +72,11 @@ class SingleProductBootstap {
     priceAmountIsZero() {
         const price = this.priceAmount();
         return !price || price === 0;
+    }
+
+    isSubscriptionMode() {
+        // Check "All products for subscriptions" plugin.
+        return document.querySelector('.wcsatt-options-product .subscription-option input[type="radio"]:checked') !== null;
     }
 
     render() {
