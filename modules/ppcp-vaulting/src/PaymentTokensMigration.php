@@ -51,8 +51,8 @@ class PaymentTokensMigration {
 				$payment_token->set_gateway_id( CreditCardGateway::ID );
 
 				$payment_token->set_last4( $token->source()->card->last_digits );
-				$token->set_card_type( $token->source()->card->brand );
-				$token->save();
+				$payment_token->set_card_type( $token->source()->card->brand );
+				$payment_token->save();
 				$tokens_migrated++;
 
 			} elseif ( $token->source()->paypal ) {
