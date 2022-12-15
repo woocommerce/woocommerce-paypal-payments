@@ -9,31 +9,17 @@ class SingleProductActionHandler {
     constructor(
         config,
         updateCart,
-        showButtonCallback,
-        hideButtonCallback,
         formElement,
         errorHandler
     ) {
         this.config = config;
         this.updateCart = updateCart;
-        this.showButtonCallback = showButtonCallback;
-        this.hideButtonCallback = hideButtonCallback;
         this.formElement = formElement;
         this.errorHandler = errorHandler;
     }
 
     configuration()
     {
-
-        if ( this.hasVariations() ) {
-            const observer = new ButtonsToggleListener(
-                this.formElement.querySelector('.single_add_to_cart_button'),
-                this.showButtonCallback,
-                this.hideButtonCallback
-            );
-            observer.init();
-        }
-
         return {
             createOrder: this.createOrder(),
             onApprove: onApprove(this, this.errorHandler),
