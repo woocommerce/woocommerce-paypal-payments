@@ -135,6 +135,12 @@ class VaultPaymentTokenCreated implements RequestHandler {
 				$this->payment_token_paypal->set_token( $request['resource']['id'] );
 				$this->payment_token_paypal->set_user_id( $wc_customer_id );
 				$this->payment_token_paypal->set_gateway_id( PayPalGateway::ID );
+
+				$email = $request['resource']['source']['paypal']['payer']['email_address'] ?? '';
+				if ( $email && is_email( $email ) ) {
+					$this->payment_token_paypal->set_email( $email );
+				}
+
 				$this->payment_token_paypal->save();
 				WC_Payment_Tokens::set_users_default( $wc_customer_id, $this->payment_token_paypal->get_id() );
 			}

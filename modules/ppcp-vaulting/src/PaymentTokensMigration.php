@@ -84,6 +84,11 @@ class PaymentTokensMigration {
 				$this->payment_token_paypal->set_user_id( $id );
 				$this->payment_token_paypal->set_gateway_id( PayPalGateway::ID );
 
+				$email = $request['resource']['source']['paypal']['payer']['email_address'] ?? '';
+				if ($email && is_email($email)) {
+					$this->payment_token_paypal->set_email($email);
+				}
+
 				try {
 					$this->payment_token_paypal->save();
 				} catch ( Exception $exception ) {
