@@ -116,7 +116,7 @@ class VaultingModule implements ModuleInterface {
 					return $item;
 				}
 
-				$item['method']['brand'] = 'PayPal';
+				$item['method']['brand'] = $payment_token->get_email() ?? 'PayPal';
 
 				return $item;
 			},
