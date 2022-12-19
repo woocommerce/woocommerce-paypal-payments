@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 
 /**
  * Class DisableGateways
@@ -35,18 +36,28 @@ class DisableGateways {
 	private $settings;
 
 	/**
+	 * The Settings status helper.
+	 *
+	 * @var SettingsStatus
+	 */
+	protected $settings_status;
+
+	/**
 	 * DisableGateways constructor.
 	 *
 	 * @param SessionHandler     $session_handler The Session Handler.
 	 * @param ContainerInterface $settings The Settings.
+	 * @param SettingsStatus     $settings_status The Settings status helper.
 	 */
 	public function __construct(
 		SessionHandler $session_handler,
-		ContainerInterface $settings
+		ContainerInterface $settings,
+		SettingsStatus $settings_status
 	) {
 
 		$this->session_handler = $session_handler;
 		$this->settings        = $settings;
+		$this->settings_status = $settings_status;
 	}
 
 	/**
@@ -71,7 +82,7 @@ class DisableGateways {
 			unset( $methods[ CreditCardGateway::ID ] );
 		}
 
-		if ( $this->settings->has( 'button_enabled' ) && ! $this->settings->get( 'button_enabled' ) && ! $this->session_handler->order() && is_checkout() ) {
+		if ( ! $this->settings_status->is_smart_button_enabled_for_location( 'checkout' ) && ! $this->session_handler->order() && is_checkout() ) {
 			unset( $methods[ PayPalGateway::ID ] );
 		}
 

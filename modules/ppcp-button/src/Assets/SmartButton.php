@@ -406,11 +406,9 @@ class SmartButton implements SmartButtonInterface {
 	 */
 	private function render_button_wrapper_registrar(): bool {
 
-		$not_enabled_on_product_page = $this->settings->has( 'button_single_product_enabled' ) &&
-			! $this->settings->get( 'button_single_product_enabled' );
 		if (
 			( is_product() || wc_post_content_has_shortcode( 'product_page' ) )
-			&& ! $not_enabled_on_product_page
+			&& $this->settings_status->is_smart_button_enabled_for_location( 'product' )
 			// TODO: it seems like there is no easy way to properly handle vaulted PayPal free trial,
 			// so disable the buttons for now everywhere except checkout for free trial.
 			&& ! $this->is_free_trial_product()
@@ -435,10 +433,8 @@ class SmartButton implements SmartButtonInterface {
 			);
 		}
 
-		$not_enabled_on_minicart = $this->settings->has( 'button_mini_cart_enabled' ) &&
-			! $this->settings->get( 'button_mini_cart_enabled' );
 		if (
-		! $not_enabled_on_minicart
+			$this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' )
 			&& ! $this->is_free_trial_cart()
 		) {
 			add_action(
@@ -479,12 +475,11 @@ class SmartButton implements SmartButtonInterface {
 				}
 			);
 
-			$not_enabled_on_cart = $this->settings->has( 'button_cart_enabled' ) &&
-				! $this->settings->get( 'button_cart_enabled' );
+			$enabled_on_cart = $this->settings_status->is_smart_button_enabled_for_location( 'cart' );
 			add_action(
 				$this->proceed_to_checkout_button_renderer_hook(),
-				function() use ( $not_enabled_on_cart ) {
-					if ( ! is_cart() || $not_enabled_on_cart || $this->is_free_trial_cart() || $this->is_cart_price_total_zero() ) {
+				function() use ( $enabled_on_cart ) {
+					if ( ! is_cart() || ! $enabled_on_cart || $this->is_free_trial_cart() || $this->is_cart_price_total_zero() ) {
 						return;
 					}
 
@@ -868,8 +863,8 @@ class SmartButton implements SmartButtonInterface {
 				'shipping_field' => _x( 'Shipping %s', 'checkout-validation', 'woocommerce' ),
 			),
 			'order_id'                          => 'pay-now' === $this->context() ? absint( $wp->query_vars['order-pay'] ) : 0,
-			'single_product_buttons_enabled'    => $this->settings->has( 'button_product_enabled' ) && $this->settings->get( 'button_product_enabled' ),
-			'mini_cart_buttons_enabled'         => $this->settings->has( 'button_mini-cart_enabled' ) && $this->settings->get( 'button_mini-cart_enabled' ),
+			'single_product_buttons_enabled'    => $this->settings_status->is_smart_button_enabled_for_location( 'product' ),
+			'mini_cart_buttons_enabled'         => $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' ),
 			'basic_checkout_validation_enabled' => $this->basic_checkout_validation_enabled,
 		);
 
@@ -1050,45 +1045,21 @@ class SmartButton implements SmartButtonInterface {
 	 * @throws NotFoundException If a setting has not been found.
 	 */
 	private function load_button_component() : bool {
-		$load_buttons = false;
-		if (
-			$this->context() === 'checkout'
-			&& $this->settings->has( 'button_enabled' )
-			&& $this->settings->get( 'button_enabled' )
-		) {
-			$load_buttons = true;
-		}
-		if (
-			$this->context() === 'product'
-			&& (
-				( $this->settings->has( 'button_product_enabled' ) && $this->settings->get( 'button_product_enabled' ) ) ||
-				( $this->settings_status->is_pay_later_messaging_enabled_for_location( 'product' ) )
-			)
-		) {
-			$load_buttons = true;
-		}
-		if (
-			$this->settings->has( 'button_mini-cart_enabled' )
-			&& $this->settings->get( 'button_mini-cart_enabled' )
-		) {
-			$load_buttons = true;
-		}
+		$smart_button_enabled_for_current_location = $this->settings_status->is_smart_button_enabled_for_location( $this->context() );
+		$smart_button_enabled_for_mini_cart        = $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' );
+		$messaging_enabled_for_current_location    = $this->settings_status->is_pay_later_messaging_enabled_for_location( $this->context() );
 
-		if (
-			$this->context() === 'cart'
-			&& (
-				( $this->settings->has( 'button_cart_enabled' ) && $this->settings->get( 'button_cart_enabled' ) ) ||
-				( $this->settings_status->is_pay_later_messaging_enabled_for_location( 'cart' ) )
-			)
-		) {
-			$load_buttons = true;
+		switch ( $this->context() ) {
+			case 'checkout':
+			case 'cart':
+				return $smart_button_enabled_for_current_location || $messaging_enabled_for_current_location;
+			case 'product':
+				return $smart_button_enabled_for_current_location || $messaging_enabled_for_current_location || $smart_button_enabled_for_mini_cart;
+			case 'pay-now':
+				return true;
+			default:
+				return $smart_button_enabled_for_mini_cart;
 		}
-
-		if ( $this->context() === 'pay-now' ) {
-			$load_buttons = true;
-		}
-
-		return $load_buttons;
 	}
 
 	/**
@@ -1177,6 +1148,11 @@ class SmartButton implements SmartButtonInterface {
 			'label'   => 'paypal',
 			'tagline' => true,
 		);
+
+		$enable_styling_per_location = $this->settings->has( 'smart_button_enable_styling_per_location' ) && $this->settings->get( 'smart_button_enable_styling_per_location' );
+		if ( ! $enable_styling_per_location ) {
+			$context = 'general';
+		}
 
 		$value = isset( $defaults[ $style ] ) ?
 			$defaults[ $style ] : '';
