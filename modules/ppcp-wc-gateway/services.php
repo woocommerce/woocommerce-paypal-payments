@@ -1355,4 +1355,48 @@ return array(
 			$container->get( 'wcgateway.is-fraudnet-enabled' )
 		);
 	},
+	'wcgateway.wp-paypal-locales-map'                      => static function( ContainerInterface $container ): array {
+		return array(
+			'ar'             => 'ar_EG',
+			'arq'            => 'ar_EG',
+			'ary'            => 'ar_EG',
+			'de_AT'          => 'de_DE',
+			'de_CH'          => 'de_DE',
+			'de_CH_informal' => 'de_DE',
+			'de_DE_formal'   => 'de_DE',
+			'el'             => 'el_GR',
+			'es_AR'          => 'es_ES',
+			'es_CL'          => 'es_ES',
+			'es_CO'          => 'es_ES',
+			'es_CR'          => 'es_ES',
+			'es_DO'          => 'es_ES',
+			'es_GT'          => 'es_ES',
+			'es_HN'          => 'es_ES',
+			'es_MX'          => 'es_ES',
+			'es_PE'          => 'es_ES',
+			'es_PR'          => 'es_ES',
+			'es_ES'          => 'es_ES',
+			'es_UY'          => 'es_ES',
+			'es_VE'          => 'es_ES',
+			'fi'             => 'fi_FI',
+			'fr_BE'          => 'fr_FR',
+			'ja'             => 'ja_JP',
+			'nb_NO'          => 'no_NO',
+			'nn_NO'          => 'no_NO',
+			'nl_BE'          => 'nl_NL',
+			'nl_NL_formal'   => 'nl_NL',
+			'pt_AO'          => 'pt_PT',
+			'pt_PT_ao90'     => 'pt_PT',
+			'th'             => 'th_TH',
+			'zh_SG'          => 'zh_CN',
+		);
+	},
+	'wcgateway.current-paypal-locale'                      => static function( ContainerInterface $container ): string {
+		$locale = get_user_locale();
+		$wp_paypal_locale_map = $container->get( 'wcgateway.wp-paypal-locales-map' );
+
+		$locale = $wp_paypal_locale_map[ $locale ] ?: $locale;
+
+		return apply_filters( 'woocommerce_paypal_payments_button_locale_override', $locale );
+	},
 );
