@@ -982,7 +982,7 @@ class SmartButton implements SmartButtonInterface {
 		}
 
 		if ( $this->settings->has( 'smart_button_locale_override' ) && $this->settings->get( 'smart_button_locale_override' ) ) {
-			$params['lc'] = $this->locale;
+			$params['locale'] = $this->locale;
 		}
 
 		$smart_button_url = add_query_arg( $params, 'https://www.paypal.com/sdk/js' );

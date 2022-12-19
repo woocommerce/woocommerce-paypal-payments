@@ -1395,7 +1395,7 @@ return array(
 		$locale = get_user_locale();
 		$wp_paypal_locale_map = $container->get( 'wcgateway.wp-paypal-locales-map' );
 
-		$locale = $wp_paypal_locale_map[ $locale ] ?: $locale;
+		$locale = $wp_paypal_locale_map[ $locale ] ?? $locale;
 
 		return apply_filters( 'woocommerce_paypal_payments_button_locale_override', $locale );
 	},
