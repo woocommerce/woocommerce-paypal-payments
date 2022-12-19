@@ -1391,7 +1391,7 @@ return array(
 			'zh_SG'          => 'zh_CN',
 		);
 	},
-	'wcgateway.current-paypal-locale'                      => static function( ContainerInterface $container ): string {
+	'wcgateway.paypal-locale'                              => static function( ContainerInterface $container ): string {
 		$locale = get_user_locale();
 		$wp_paypal_locale_map = $container->get( 'wcgateway.wp-paypal-locales-map' );
 

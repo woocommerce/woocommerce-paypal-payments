@@ -104,7 +104,8 @@ return array(
 			$currency,
 			$container->get( 'wcgateway.all-funding-sources' ),
 			$container->get( 'button.basic-checkout-validation-enabled' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
+			$container->get( 'woocommerce.logger.woocommerce' ),
+			$container->get( 'wcgateway.paypal-locale' )
 		);
 	},
 	'button.url'                                  => static function ( ContainerInterface $container ): string {

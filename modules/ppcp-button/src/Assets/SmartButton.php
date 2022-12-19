@@ -169,6 +169,13 @@ class SmartButton implements SmartButtonInterface {
 	private $payment_tokens = null;
 
 	/**
+	 * The locale.
+	 *
+	 * @var string
+	 */
+	protected $locale;
+
+	/**
 	 * SmartButton constructor.
 	 *
 	 * @param string                 $module_url The URL to the module.
@@ -188,6 +195,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @param array                  $all_funding_sources All existing funding sources.
 	 * @param bool                   $basic_checkout_validation_enabled Whether the basic JS validation of the form iss enabled.
 	 * @param LoggerInterface        $logger The logger.
+	 * @param string                 $locale The locale.
 	 */
 	public function __construct(
 		string $module_url,
@@ -206,7 +214,8 @@ class SmartButton implements SmartButtonInterface {
 		string $currency,
 		array $all_funding_sources,
 		bool $basic_checkout_validation_enabled,
-		LoggerInterface $logger
+		LoggerInterface $logger,
+		string $locale
 	) {
 
 		$this->module_url                        = $module_url;
@@ -226,6 +235,7 @@ class SmartButton implements SmartButtonInterface {
 		$this->all_funding_sources               = $all_funding_sources;
 		$this->basic_checkout_validation_enabled = $basic_checkout_validation_enabled;
 		$this->logger                            = $logger;
+		$this->locale                            = $locale;
 	}
 
 	/**
@@ -969,6 +979,10 @@ class SmartButton implements SmartButtonInterface {
 
 		if ( count( $enable_funding ) > 0 ) {
 			$params['enable-funding'] = implode( ',', array_unique( $enable_funding ) );
+		}
+
+		if ( $this->settings->has( 'smart_button_locale_override' ) && $this->settings->get( 'smart_button_locale_override' ) ) {
+			$params['lc'] = $this->locale;
 		}
 
 		$smart_button_url = add_query_arg( $params, 'https://www.paypal.com/sdk/js' );
