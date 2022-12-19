@@ -1279,7 +1279,25 @@ return array(
 		$settings = $container->get( 'wcgateway.settings' );
 		assert( $settings instanceof Settings );
 
-		return $settings->has( 'smart_button_locations' ) ? $settings->get( 'smart_button_locations' ) : array();
+		$button_locations = $container->get( 'wcgateway.button.locations' );
+		unset( $button_locations['mini-cart'] );
+
+		$smart_button_selected_locations = $settings->has( 'smart_button_locations' ) ? $settings->get( 'smart_button_locations' ) : array();
+		$pay_later_button_locations = array();
+
+		if ( empty( $smart_button_selected_locations ) ) {
+			return $pay_later_button_locations;
+		}
+
+		foreach ( $button_locations as $location_key => $location ) {
+			if ( ! in_array( $location_key, $smart_button_selected_locations, true ) ) {
+				continue;
+			}
+
+			$pay_later_button_locations[ $location_key ] = $location;
+		}
+
+		return $pay_later_button_locations;
 	},
 	'wcgateway.ppcp-gateways'                              => static function ( ContainerInterface $container ): array {
 		return array(
