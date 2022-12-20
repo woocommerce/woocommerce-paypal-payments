@@ -116,6 +116,7 @@ class VaultingModule implements ModuleInterface {
 					return $item;
 				}
 
+				assert( $payment_token instanceof PaymentTokenPayPal );
 				$item['method']['brand'] = $payment_token->get_email() ?? 'PayPal';
 
 				return $item;
@@ -190,14 +191,17 @@ class VaultingModule implements ModuleInterface {
 			}
 		);
 
-		add_filter('woocommerce_available_payment_gateways', function($methods) {
-			global $wp;
-			if(isset( $wp->query_vars['add-payment-method'] )) {
-				unset( $methods[ PayPalGateway::ID ] );
-			}
+		add_filter(
+			'woocommerce_available_payment_gateways',
+			function( array $methods ): array {
+				global $wp;
+				if ( isset( $wp->query_vars['add-payment-method'] ) ) {
+					unset( $methods[ PayPalGateway::ID ] );
+				}
 
-			return $methods;
-		});
+				return $methods;
+			}
+		);
 	}
 
 	/**
