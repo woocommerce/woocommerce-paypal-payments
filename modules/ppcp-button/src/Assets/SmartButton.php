@@ -694,7 +694,6 @@ class SmartButton implements SmartButtonInterface {
 	 * Whether we can store vault tokens or not.
 	 *
 	 * @return bool
-	 * @throws NotFoundException If a setting hasn't been found.
 	 */
 	public function can_save_vault_token(): bool {
 
@@ -748,7 +747,6 @@ class SmartButton implements SmartButtonInterface {
 	 * The configuration for the smart buttons.
 	 *
 	 * @return array
-	 * @throws NotFoundException If a setting hasn't been found.
 	 */
 	public function script_data(): array {
 		global $wp;
@@ -907,7 +905,6 @@ class SmartButton implements SmartButtonInterface {
 	 * The JavaScript SDK url parameters.
 	 *
 	 * @return array
-	 * @throws NotFoundException If a setting was not found.
 	 */
 	private function url_params(): array {
 		$intent               = ( $this->settings->has( 'intent' ) ) ? $this->settings->get( 'intent' ) : 'capture';
@@ -1118,7 +1115,6 @@ class SmartButton implements SmartButtonInterface {
 	 * Whether DCC is enabled or not.
 	 *
 	 * @return bool
-	 * @throws NotFoundException If a setting has not been found.
 	 */
 	private function dcc_is_enabled(): bool {
 		if ( ! is_checkout() ) {
@@ -1147,7 +1143,6 @@ class SmartButton implements SmartButtonInterface {
 	 * @param string $context The context.
 	 *
 	 * @return string
-	 * @throws NotFoundException When a setting hasn't been found.
 	 */
 	private function style_for_context( string $style, string $context ): string {
 		$defaults = array(
