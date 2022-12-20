@@ -6,7 +6,7 @@ module.exports = {
     mode: isProduction ? 'production' : 'development',
     target: 'web',
     entry: {
-        'myaccount-payments': path.resolve('./resources/js/myaccount-payments.js'),
+        'ppcp-clear-db': path.resolve('./resources/js/ppcp-clear-db.js'),
     },
     output: {
         path: path.resolve(__dirname, 'assets/'),
@@ -17,6 +17,19 @@ module.exports = {
             test: /\.js?$/,
             exclude: /node_modules/,
             loader: 'babel-loader',
-        }]
+        },
+            {
+                test: /\.scss$/,
+                exclude: /node_modules/,
+                use: [
+                    {
+                        loader: 'file-loader',
+                        options: {
+                            name: 'css/[name].css',
+                        }
+                    },
+                    {loader:'sass-loader'}
+                ]
+            }]
     }
 };

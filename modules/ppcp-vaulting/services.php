@@ -20,26 +20,10 @@ return array(
 			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
 		);
 	},
-	'vaulting.assets.myaccount-payments'  => function( ContainerInterface $container ) : MyAccountPaymentsAssets {
-		return new MyAccountPaymentsAssets(
-			$container->get( 'vaulting.module-url' ),
-			$container->get( 'ppcp.asset-version' )
-		);
-	},
-	'vaulting.payment-tokens-renderer'    => static function (): PaymentTokensRenderer {
-		return new PaymentTokensRenderer();
-	},
 	'vaulting.repository.payment-token'   => static function ( ContainerInterface $container ): PaymentTokenRepository {
 		$factory  = $container->get( 'api.factory.payment-token' );
 		$endpoint = $container->get( 'api.endpoint.payment-token' );
 		return new PaymentTokenRepository( $factory, $endpoint );
-	},
-	'vaulting.endpoint.delete'            => function( ContainerInterface $container ) : DeletePaymentTokenEndpoint {
-		return new DeletePaymentTokenEndpoint(
-			$container->get( 'vaulting.repository.payment-token' ),
-			$container->get( 'button.request-data' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
-		);
 	},
 	'vaulting.payment-token-checker'      => function( ContainerInterface $container ) : PaymentTokenChecker {
 		return new PaymentTokenChecker(
@@ -68,6 +52,15 @@ return array(
 			$container->get( 'onboarding.environment' ),
 			$container->get( 'wcgateway.processor.authorized-payments' ),
 			$container->get( 'wcgateway.settings' )
+		);
+	},
+	'vaulting.payment-token-paypal'       => function( ContainerInterface $container ): PaymentTokenPayPal {
+		return new PaymentTokenPayPal();
+	},
+	'vaulting.payment-tokens-migration'   => function( ContainerInterface $container ): PaymentTokensMigration {
+		return new PaymentTokensMigration(
+			$container->get( 'vaulting.payment-token-paypal' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 );

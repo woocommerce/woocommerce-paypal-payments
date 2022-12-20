@@ -23,7 +23,7 @@ class WebhookSimulation {
 	public const STATE_WAITING  = 'waiting';
 	public const STATE_RECEIVED = 'received';
 
-	private const OPTION_ID = 'ppcp-webhook-simulation';
+	public const OPTION_ID = 'ppcp-webhook-simulation';
 
 	/**
 	 * The webhooks endpoint.

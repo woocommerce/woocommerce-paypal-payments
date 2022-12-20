@@ -1,8 +1,8 @@
 {
-    "name": "ppcp-vaulting",
+    "name": "ppcp-uninstall",
     "version": "1.0.0",
     "license": "GPL-3.0-or-later",
-    "main": "resources/js/myaccount-payments.js",
+    "main": "resources/js/ppcp-clear-db.js",
     "browserslist": [
         "> 0.5%",
         "Safari >= 8",

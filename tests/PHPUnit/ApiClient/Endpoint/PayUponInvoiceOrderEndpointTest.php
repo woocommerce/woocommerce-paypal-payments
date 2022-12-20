@@ -14,7 +14,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Token;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use WooCommerce\PayPalCommerce\TestCase;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\FraudNet;
+use WooCommerce\PayPalCommerce\WcGateway\FraudNet\FraudNet;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PaymentSource;
 use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
