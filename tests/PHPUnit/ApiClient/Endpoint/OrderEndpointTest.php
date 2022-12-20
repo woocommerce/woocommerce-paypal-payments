@@ -29,6 +29,7 @@ use Mockery;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\TestCase;
+use WooCommerce\PayPalCommerce\WcGateway\FraudNet\FraudNet;
 use function Brain\Monkey\Functions\expect;
 use function Brain\Monkey\Functions\when;
 
@@ -74,6 +75,8 @@ class OrderEndpointTest extends TestCase
 		$headers->shouldReceive('getAll');
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 
+        $fraudnet = Mockery::mock(FraudNet::class);
+
         $testee = new OrderEndpoint(
             $host,
             $bearer,
@@ -83,7 +86,9 @@ class OrderEndpointTest extends TestCase
             $logger,
             $applicationContextRepository,
             $paypalRequestIdRepository,
-			$subscription_helper
+			$subscription_helper,
+            false,
+            $fraudnet
         );
 
         $rawResponse = [
@@ -135,6 +140,8 @@ class OrderEndpointTest extends TestCase
 		$headers->shouldReceive('getAll');
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 
+        $fraudnet = Mockery::mock(FraudNet::class);
+
         $testee = new OrderEndpoint(
             $host,
             $bearer,
@@ -144,7 +151,9 @@ class OrderEndpointTest extends TestCase
             $logger,
             $applicationContextRepository,
             $paypalRequestIdRepository,
-			$subscription_helper
+			$subscription_helper,
+            false,
+            $fraudnet
         );
 
         $rawResponse = [
@@ -187,6 +196,8 @@ class OrderEndpointTest extends TestCase
             ->expects('get_for_order_id')->with($orderId)->andReturn('uniqueRequestId');
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 
+        $fraudnet = Mockery::mock(FraudNet::class);
+
         $testee = new OrderEndpoint(
             $host,
             $bearer,
@@ -196,7 +207,9 @@ class OrderEndpointTest extends TestCase
             $logger,
             $applicationContextRepository,
             $paypalRequestIdRepository,
-			$subscription_helper
+			$subscription_helper,
+            false,
+            $fraudnet
         );
 
         expect('wp_remote_get')->andReturn($rawResponse);
@@ -253,6 +266,8 @@ class OrderEndpointTest extends TestCase
             ->expects('get_for_order')->with($orderToCapture)->andReturn('uniqueRequestId');
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 
+        $fraudnet = Mockery::mock(FraudNet::class);
+
         $testee = new OrderEndpoint(
             $host,
             $bearer,
@@ -262,7 +277,9 @@ class OrderEndpointTest extends TestCase
             $logger,
             $applicationContextRepository,
             $paypalRequestIdRepository,
-			$subscription_helper
+			$subscription_helper,
+            false,
+            $fraudnet
         );
 
         expect('wp_remote_get')
@@ -320,6 +337,8 @@ class OrderEndpointTest extends TestCase
         $paypalRequestIdRepository = Mockery::mock(PayPalRequestIdRepository::class);
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 
+        $fraudnet = Mockery::mock(FraudNet::class);
+
         $testee = new OrderEndpoint(
             $host,
             $bearer,
@@ -329,7 +348,9 @@ class OrderEndpointTest extends TestCase
             $logger,
             $applicationContextRepository,
             $paypalRequestIdRepository,
-			$subscription_helper
+			$subscription_helper,
+            false,
+            $fraudnet
         );
 
         $result = $testee->capture($orderToCapture);
@@ -365,6 +386,8 @@ class OrderEndpointTest extends TestCase
             ->expects('get_for_order')->with($orderToCapture)->andReturn('uniqueRequestId');
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 
+        $fraudnet = Mockery::mock(FraudNet::class);
+
         $testee = new OrderEndpoint(
             $host,
             $bearer,
@@ -374,7 +397,9 @@ class OrderEndpointTest extends TestCase
             $logger,
             $applicationContextRepository,
             $paypalRequestIdRepository,
-			$subscription_helper
+			$subscription_helper,
+            false,
+            $fraudnet
         );
 		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
 		$headers->shouldReceive('getAll');
@@ -417,6 +442,8 @@ class OrderEndpointTest extends TestCase
             ->expects('get_for_order')->with($orderToCapture)->andReturn('uniqueRequestId');
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 
+        $fraudnet = Mockery::mock(FraudNet::class);
+
         $testee = new OrderEndpoint(
             $host,
             $bearer,
@@ -426,7 +453,9 @@ class OrderEndpointTest extends TestCase
             $logger,
             $applicationContextRepository,
             $paypalRequestIdRepository,
-			$subscription_helper
+			$subscription_helper,
+            false,
+            $fraudnet
         );
 
 		$headers = Mockery::mock(Requests_Utility_CaseInsensitiveDictionary::class);
@@ -471,6 +500,8 @@ class OrderEndpointTest extends TestCase
             ->expects('get_for_order')->with($orderToCapture)->andReturn('uniqueRequestId');
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 
+        $fraudnet = Mockery::mock(FraudNet::class);
+
         $testee = Mockery::mock(
             OrderEndpoint::class,
             [
@@ -483,6 +514,8 @@ class OrderEndpointTest extends TestCase
                 $applicationContextRepository,
                 $paypalRequestIdRepository,
 				$subscription_helper,
+                false,
+                $fraudnet
             ]
         )->makePartial();
         $orderToExpect = Mockery::mock(Order::class);
@@ -551,6 +584,8 @@ class OrderEndpointTest extends TestCase
             ->expects('get_for_order')->with($orderToUpdate)->andReturn('uniqueRequestId');
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 
+        $fraudnet = Mockery::mock(FraudNet::class);
+
         $testee = Mockery::mock(
             OrderEndpoint::class,
             [
@@ -563,6 +598,8 @@ class OrderEndpointTest extends TestCase
                 $applicationContextRepository,
                 $paypalRequestIdRepository,
 				$subscription_helper,
+                false,
+                $fraudnet
             ]
         )->makePartial();
         $testee
@@ -656,6 +693,8 @@ class OrderEndpointTest extends TestCase
             ->expects('get_for_order')->with($orderToUpdate)->andReturn('uniqueRequestId');
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 
+        $fraudnet = Mockery::mock(FraudNet::class);
+
         $testee = new OrderEndpoint(
             $host,
             $bearer,
@@ -665,7 +704,9 @@ class OrderEndpointTest extends TestCase
             $logger,
             $applicationContextRepository,
             $paypalRequestIdRepository,
-			$subscription_helper
+			$subscription_helper,
+            false,
+            $fraudnet
         );
 
         expect('wp_remote_get')
@@ -755,6 +796,8 @@ class OrderEndpointTest extends TestCase
             ->expects('get_for_order')->with($orderToUpdate)->andReturn('uniqueRequestId');
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 
+        $fraudnet = Mockery::mock(FraudNet::class);
+
         $testee = Mockery::mock(
             OrderEndpoint::class,
             [
@@ -766,7 +809,9 @@ class OrderEndpointTest extends TestCase
                 $logger,
                 $applicationContextRepository,
                 $paypalRequestIdRepository,
-				$subscription_helper
+				$subscription_helper,
+                false,
+                $fraudnet
             ]
         )->makePartial();
 
@@ -831,6 +876,8 @@ class OrderEndpointTest extends TestCase
         $paypalRequestIdRepository = Mockery::mock(PayPalRequestIdRepository::class);
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 
+        $fraudnet = Mockery::mock(FraudNet::class);
+
         $testee = new OrderEndpoint(
             $host,
             $bearer,
@@ -840,7 +887,9 @@ class OrderEndpointTest extends TestCase
             $logger,
             $applicationContextRepository,
             $paypalRequestIdRepository,
-			$subscription_helper
+			$subscription_helper,
+            false,
+            $fraudnet
         );
 
         $result = $testee->patch_order_with($orderToUpdate, $orderToCompare);
@@ -901,6 +950,8 @@ class OrderEndpointTest extends TestCase
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 		$subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(true);
 
+        $fraudnet = Mockery::mock(FraudNet::class);
+
         $testee = new OrderEndpoint(
             $host,
             $bearer,
@@ -910,7 +961,9 @@ class OrderEndpointTest extends TestCase
             $logger,
             $applicationContextRepository,
             $paypalRequestIdRepository,
-			$subscription_helper
+			$subscription_helper,
+            false,
+            $fraudnet
         );
 
         $purchaseUnit = Mockery::mock(PurchaseUnit::class, ['contains_physical_goods' => false]);
@@ -1010,6 +1063,8 @@ class OrderEndpointTest extends TestCase
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 		$subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(true);
 
+        $fraudnet = Mockery::mock(FraudNet::class);
+
         $testee = new OrderEndpoint(
             $host,
             $bearer,
@@ -1019,7 +1074,9 @@ class OrderEndpointTest extends TestCase
             $logger,
             $applicationContextRepository,
             $paypalRequestIdRepository,
-			$subscription_helper
+			$subscription_helper,
+            false,
+            $fraudnet
         );
 
         $purchaseUnit = Mockery::mock(PurchaseUnit::class, ['contains_physical_goods' => true]);
@@ -1088,6 +1145,8 @@ class OrderEndpointTest extends TestCase
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 		$subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(true);
 
+        $fraudnet = Mockery::mock(FraudNet::class);
+
         $testee = new OrderEndpoint(
             $host,
             $bearer,
@@ -1097,7 +1156,9 @@ class OrderEndpointTest extends TestCase
             $logger,
             $applicationContextRepository,
             $paypalRequestIdRepository,
-			$subscription_helper
+			$subscription_helper,
+            false,
+            $fraudnet
         );
 
         $purchaseUnit = Mockery::mock(PurchaseUnit::class, ['contains_physical_goods' => false]);
@@ -1177,6 +1238,8 @@ class OrderEndpointTest extends TestCase
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 		$subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(true);
 
+        $fraudnet = Mockery::mock(FraudNet::class);
+
         $testee = new OrderEndpoint(
             $host,
             $bearer,
@@ -1186,7 +1249,9 @@ class OrderEndpointTest extends TestCase
             $logger,
             $applicationContextRepository,
             $paypalRequestIdRepository,
-			$subscription_helper
+			$subscription_helper,
+            false,
+            $fraudnet
         );
 
         $purchaseUnit = Mockery::mock(PurchaseUnit::class, ['contains_physical_goods' => true]);

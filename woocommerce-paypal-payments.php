@@ -57,7 +57,7 @@ define( 'PPCP_FLAG_SUBSCRIPTION', true );
 
 			return;
 		}
-		if ( version_compare( PHP_VERSION, '7.1', '<' ) ) {
+		if ( version_compare( PHP_VERSION, '7.2', '<' ) ) {
 			add_action(
 				'admin_notices',
 				function() {

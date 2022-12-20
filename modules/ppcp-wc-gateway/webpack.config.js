@@ -7,7 +7,7 @@ module.exports = {
     target: 'web',
     entry: {
         'gateway-settings': path.resolve('./resources/js/gateway-settings.js'),
-        'pay-upon-invoice': path.resolve('./resources/js/pay-upon-invoice.js'),
+        'fraudnet': path.resolve('./resources/js/fraudnet.js'),
         'oxxo': path.resolve('./resources/js/oxxo.js'),
         'gateway-settings-style': path.resolve('./resources/css/gateway-settings.scss'),
     },

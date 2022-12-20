@@ -84,6 +84,8 @@ return array(
 			$application_context_repository,
 			$pay_pal_request_id_repository,
 			$subscription_helper,
+			$container->get( 'wcgateway.is-fraudnet-enabled' ),
+			$container->get( 'wcgateway.fraudnet' ),
 			$bn_code
 		);
 	},
