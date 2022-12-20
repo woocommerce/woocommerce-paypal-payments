@@ -382,6 +382,9 @@ class CreateOrderEndpoint implements EndpointInterface {
 			$funding_source
 		);
 
+		$action = in_array( $this->parsed_request_data['context'], array( 'checkout', 'express' ), true ) ?
+			ApplicationContext::USER_ACTION_PAY_NOW : ApplicationContext::USER_ACTION_CONTINUE;
+
 		if ( 'card' === $funding_source ) {
 			if ( CardBillingMode::MINIMAL_INPUT === $this->card_billing_data_mode ) {
 				if ( ApplicationContext::SHIPPING_PREFERENCE_SET_PROVIDED_ADDRESS === $shipping_preference ) {
@@ -407,7 +410,9 @@ class CreateOrderEndpoint implements EndpointInterface {
 				$shipping_preference,
 				$payer,
 				null,
-				$this->payment_method()
+				$this->payment_method(),
+				'',
+				$action
 			);
 		} catch ( PayPalApiException $exception ) {
 			// Looks like currently there is no proper way to validate the shipping address for PayPal,

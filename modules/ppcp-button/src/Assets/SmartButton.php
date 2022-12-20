@@ -1081,8 +1081,7 @@ class SmartButton implements SmartButtonInterface {
 		if ( is_cart() ) {
 			$context = 'cart';
 		}
-		// TODO: refactor.
-		if ( is_checkout() && ! $this->is_paypal_continuation() || did_action( 'woocommerce_blocks_checkout_enqueue_data' ) ) {
+		if ( is_checkout() && ! $this->is_paypal_continuation() || has_block( 'woocommerce/checkout' ) ) {
 			$context = 'checkout';
 		}
 		if ( is_checkout_pay_page() ) {

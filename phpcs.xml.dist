@@ -52,4 +52,5 @@
 	<exclude-pattern>*/vendor/*</exclude-pattern>
 	<exclude-pattern>./tests/*</exclude-pattern>
 	<exclude-pattern>*/resources/*</exclude-pattern>
+	<exclude-pattern>*.asset.php</exclude-pattern>
 </ruleset>
