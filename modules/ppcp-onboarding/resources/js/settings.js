@@ -177,12 +177,21 @@ document.addEventListener(
             const payLaterMessagingEnabled = document.querySelector(payLaterMessagingEnabledSelector);
             const stylingPerElement = document.querySelector(stylingPerSelector);
             const locationsElement = document.querySelector(locationsSelector);
+            const stylingPerElementWrapper = stylingPerElement?.closest('tr');
+            const stylingPerElementWrapperSelector = '#'+ stylingPerElementWrapper?.getAttribute('id');
 
             if (! stylingPerElement) {
                 return;
             }
 
             const toggleElementsBySelectedLocations = () => {
+                stylingPerElementWrapper.style.display = '';
+                let selectedLocations = getSelectedLocations(locationsSelector);
+
+                if(selectedLocations.length === 0) {
+                    hideElements(groupToHideOnChecked.concat(stylingPerElementWrapperSelector));
+                }
+
                 if (! stylingPerElement.checked) {
                     return;
                 }
@@ -190,9 +199,6 @@ document.addEventListener(
                 if (inputType === 'messages' && ! payLaterMessagingEnabled.checked) {
                     return;
                 }
-
-                let checkedLocations = document.querySelectorAll(locationsSelector + ' :checked');
-                const selectedLocations = [...checkedLocations].map(option => option.value);
 
                 const inputSelectors = inputSelectorsByLocations(selectedLocations, inputType);
 
@@ -238,7 +244,11 @@ document.addEventListener(
                         return;
                     }
 
-                    showElements(groupToHideOnChecked);
+                    let selectedLocations = getSelectedLocations(locationsSelector);
+                    if(selectedLocations.length > 0) {
+                        showElements(groupToHideOnChecked);
+                    }
+
                     if (inputType === 'messages') {
                         togglePayLaterMessageFields();
                     }
@@ -246,7 +256,15 @@ document.addEventListener(
             );
 
             // We need to use jQuery here as the select might be a select2 element, which doesn't use native events.
-            jQuery(locationsElement).on('change', toggleElementsBySelectedLocations);
+            jQuery(locationsElement).on('change', function (){
+                toggleElementsBySelectedLocations()
+                stylingPerElement.dispatchEvent(new Event('change'))
+            });
+        }
+
+        const getSelectedLocations = (selector) => {
+            let checkedLocations = document.querySelectorAll(selector + ' :checked');
+            return [...checkedLocations].map(option => option.value);
         }
 
         const inputSelectorsByLocations = (locations, inputType = 'messages') => {
@@ -311,14 +329,15 @@ document.addEventListener(
             const payLaterMessagingEnabled = document.querySelector(payLaterMessagingEnabledSelector);
             const stylingPerMessagingElement = document.querySelector('#ppcp-pay_later_enable_styling_per_messaging_location');
 
-            if (! payLaterMessagingEnabled) {
-                return;
-            }
-
             groupToggle(
                 payLaterMessagingEnabledSelector,
                 allPayLaterMessaginginputSelectors()
             );
+
+            if (! payLaterMessagingEnabled) {
+                return;
+
+            }
 
             payLaterMessagingEnabled.addEventListener(
                 'change',
@@ -339,8 +358,6 @@ document.addEventListener(
                 ['#field-pay_later_button_locations']
             );
 
-            toggleMessagingEnabled();
-
             toggleInputsBySelectedLocations(
                 '#ppcp-pay_later_enable_styling_per_messaging_location',
                 payLaterMessagingLocationsSelect,
@@ -356,6 +373,8 @@ document.addEventListener(
                 inputSelectorsByLocations(['general'], 'buttons'),
                 'buttons'
             );
+
+            toggleMessagingEnabled();
 
 
             groupToggle(
