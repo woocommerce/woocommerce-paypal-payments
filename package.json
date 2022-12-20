@@ -1,6 +1,6 @@
 {
   "name": "woocommerce-paypal-payments",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "WooCommerce PayPal Payments",
   "repository": "https://github.com/woocommerce/woocommerce-paypal-payments",
   "license": "GPL-2.0",
@@ -14,6 +14,8 @@
     "install:modules:ppcp-vaulting": "cd modules/ppcp-vaulting && yarn install",
     "install:modules:ppcp-order-tracking": "cd modules/ppcp-order-tracking && yarn install",
     "install:modules:ppcp-onboarding": "cd modules/ppcp-onboarding && yarn install",
+    "install:modules:ppcp-compat": "cd modules/ppcp-compat && yarn install",
+    "install:modules:ppcp-uninstall": "cd modules/ppcp-uninstall && yarn install",
 
     "build:modules:ppcp-button": "cd modules/ppcp-button && yarn run build",
     "build:modules:ppcp-wc-gateway": "cd modules/ppcp-wc-gateway && yarn run build",
@@ -21,6 +23,8 @@
     "build:modules:ppcp-vaulting": "cd modules/ppcp-vaulting && yarn run build",
     "build:modules:ppcp-order-tracking": "cd modules/ppcp-order-tracking && yarn run build",
     "build:modules:ppcp-onboarding": "cd modules/ppcp-onboarding && yarn run build",
+    "build:modules:ppcp-compat": "cd modules/ppcp-compat && yarn run build",
+    "build:modules:ppcp-uninstall": "cd modules/ppcp-uninstall && yarn run build",
     "build:modules": "run-p build:modules:*",
 
     "watch:modules:ppcp-button": "cd modules/ppcp-button && yarn run watch",
@@ -29,6 +33,8 @@
     "watch:modules:ppcp-vaulting": "cd modules/ppcp-vaulting && yarn run watch",
     "watch:modules:ppcp-order-tracking": "cd modules/ppcp-order-tracking && yarn run watch",
     "watch:modules:ppcp-onboarding": "cd modules/ppcp-onboarding && yarn run watch",
+    "watch:modules:ppcp-compat": "cd modules/ppcp-compat && yarn run watch",
+    "watch:modules:ppcp-uninstall": "cd modules/ppcp-uninstall && yarn run watch",
     "watch:modules": "run-p watch:modules:*",
 
     "ddev:setup": "ddev start && ddev orchestrate",
