@@ -117,7 +117,7 @@ class VaultingModule implements ModuleInterface {
 				}
 
 				assert( $payment_token instanceof PaymentTokenPayPal );
-				$item['method']['brand'] = $payment_token->get_email() ?? 'PayPal';
+				$item['method']['brand'] = $payment_token->get_email();
 
 				return $item;
 			},
@@ -168,6 +168,8 @@ class VaultingModule implements ModuleInterface {
 		add_action(
 			'woocommerce_paypal_payments_gateway_migrate_on_update',
 			function () use ( $container ) {
+				// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+				// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 				$customers = new WP_User_Query(
 					array(
 						'fields'     => 'ID',
@@ -181,6 +183,7 @@ class VaultingModule implements ModuleInterface {
 						),
 					)
 				);
+				// phpcs:enable
 
 				$migrate = $container->get( 'vaulting.payment-tokens-migration' );
 				assert( $migrate instanceof PaymentTokensMigration );

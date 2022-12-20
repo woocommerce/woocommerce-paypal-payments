@@ -22,10 +22,20 @@ class PaymentTokenPayPal extends WC_Payment_Token {
 	 */
 	protected $type = 'PayPal';
 
+	/**
+	 * Get PayPal account email.
+	 *
+	 * @return string PayPal account email.
+	 */
 	public function get_email() {
 		return $this->get_meta( 'email' );
 	}
 
+	/**
+	 * Set PayPal account email.
+	 *
+	 * @param string $email PayPal account email.
+	 */
 	public function set_email( $email ) {
 		$this->add_meta_data( 'email', $email, true );
 	}
