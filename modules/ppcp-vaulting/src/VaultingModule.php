@@ -117,7 +117,7 @@ class VaultingModule implements ModuleInterface {
 				}
 
 				assert( $payment_token instanceof PaymentTokenPayPal );
-				$item['method']['brand'] = $payment_token->get_email() ?? 'PayPal';
+				$item['method']['brand'] = $payment_token->get_email();
 
 				return $item;
 			},
