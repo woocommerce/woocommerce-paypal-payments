@@ -23,6 +23,16 @@ class PaymentTokenACDC extends WC_Payment_Token {
 	protected $type = 'ACDC';
 
 	/**
+	 * Stores Credit Card payment token data.
+	 *
+	 * @var array
+	 */
+	protected $extra_data = array(
+		'last4'     => '',
+		'card_type' => '',
+	);
+
+	/**
 	 * Returns the last four digits.
 	 *
 	 * @param string $context The context.
@@ -35,7 +45,7 @@ class PaymentTokenACDC extends WC_Payment_Token {
 	/**
 	 * Set the last four digits.
 	 *
-	 * @param string $last4
+	 * @param string $last4 Last four digits.
 	 */
 	public function set_last4( $last4 ) {
 		$this->set_prop( 'last4', $last4 );
@@ -44,7 +54,7 @@ class PaymentTokenACDC extends WC_Payment_Token {
 	/**
 	 * Returns the card type (mastercard, visa, ...).
 	 *
-	 * @param string $context
+	 * @param string $context The context.
 	 * @return string Card type
 	 */
 	public function get_card_type( $context = 'view' ) {
