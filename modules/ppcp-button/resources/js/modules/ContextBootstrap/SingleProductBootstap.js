@@ -90,7 +90,8 @@ class SingleProductBootstap {
 
     isSubscriptionMode() {
         // Check "All products for subscriptions" plugin.
-        return document.querySelector('.wcsatt-options-product .subscription-option input[type="radio"]:checked') !== null;
+        return document.querySelector('.wcsatt-options-product:not(.wcsatt-options-product--hidden) .subscription-option input[type="radio"]:checked') !== null
+            || document.querySelector('.wcsatt-options-prompt-label-subscription input[type="radio"]:checked') !== null; // grouped
     }
 
     render() {
