@@ -50,7 +50,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
 				__(
 					'Customize the appearance of the PayPal smart buttons on the 
-					%1$sCheckout page%5$s, %2$sSingle Product Page%5$s, %3$sCart page%5$s or on %4$sMini Cart page%5$s.',
+					%1$sCheckout page%5$s, %2$sSingle Product Page%5$s, %3$sCart page%5$s or on %4$sMini Cart%5$s.',
 					'woocommerce-paypal-payments'
 				),
 				'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#button-on-checkout" target="_blank">',
@@ -205,7 +205,16 @@ return function ( ContainerInterface $container, array $fields ): array {
 
 		// Checkout page.
 		'button_checkout_heading'                  => array(
-			'heading'      => __( 'Smart Buttons on checkout', 'woocommerce-paypal-payments' ),
+			'heading'      => __( 'Checkout Buttons', 'woocommerce-paypal-payments' ),
+			'description'  => sprintf(
+			// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+				__(
+					'Customize the appearance of the PayPal smart buttons on the %1$sCheckout page%2$s.',
+					'woocommerce-paypal-payments'
+				),
+				'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#button-on-checkout" target="_blank">',
+				'</a>'
+			),
 			'type'         => 'ppcp-heading',
 			'screens'      => array(
 				State::STATE_START,
@@ -338,7 +347,16 @@ return function ( ContainerInterface $container, array $fields ): array {
 
 		// Single product page.
 		'button_product_heading'                   => array(
-			'heading'      => __( 'Smart Buttons on Single Product', 'woocommerce-paypal-payments' ),
+			'heading'      => __( 'Single Product Page Buttons', 'woocommerce-paypal-payments' ),
+			'description'  => sprintf(
+			// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+				__(
+					'Customize the appearance of the PayPal smart buttons on the %1$sSingle Product Page%2$s.',
+					'woocommerce-paypal-payments'
+				),
+				'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#button-on-single-product" target="_blank">',
+				'</a>'
+			),
 			'type'         => 'ppcp-heading',
 			'screens'      => array( State::STATE_START, State::STATE_ONBOARDED ),
 			'requirements' => array(),
@@ -468,7 +486,16 @@ return function ( ContainerInterface $container, array $fields ): array {
 
 		// Cart settings.
 		'button_cart_heading'                      => array(
-			'heading'      => __( 'Smart Buttons on Cart', 'woocommerce-paypal-payments' ),
+			'heading'      => __( 'Cart Buttons', 'woocommerce-paypal-payments' ),
+			'description'  => sprintf(
+			// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+				__(
+					'Customize the appearance of the PayPal smart buttons on the %1$sCart page%2$s.',
+					'woocommerce-paypal-payments'
+				),
+				'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#button-on-cart" target="_blank">',
+				'</a>'
+			),
 			'type'         => 'ppcp-heading',
 			'screens'      => array( State::STATE_START, State::STATE_ONBOARDED ),
 			'requirements' => array(),
@@ -598,7 +625,16 @@ return function ( ContainerInterface $container, array $fields ): array {
 
 		// Mini cart settings.
 		'button_mini-cart_heading'                 => array(
-			'heading'      => __( 'Smart Buttons on Mini Cart', 'woocommerce-paypal-payments' ),
+			'heading'      => __( 'Mini Cart Buttons', 'woocommerce-paypal-payments' ),
+			'description'  => sprintf(
+			// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+				__(
+					'Customize the appearance of the PayPal smart buttons on the %1$sMini Cart%2$s.',
+					'woocommerce-paypal-payments'
+				),
+				'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#button-on-mini-cart" target="_blank">',
+				'</a>'
+			),
 			'type'         => 'ppcp-heading',
 			'screens'      => array( State::STATE_START, State::STATE_ONBOARDED ),
 			'requirements' => array(),
