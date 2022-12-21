@@ -168,6 +168,11 @@ class VaultingModule implements ModuleInterface {
 		add_action(
 			'woocommerce_paypal_payments_gateway_migrate_on_update',
 			function () use ( $container ) {
+				$logger = $container->get('woocommerce.logger.woocommerce');
+				assert($logger instanceof LoggerInterface);
+
+				$logger->info("Starting payment tokens migration on plugin upgrade");
+
 				// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 				// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 				$customers = new WP_User_Query(
@@ -189,6 +194,7 @@ class VaultingModule implements ModuleInterface {
 				assert( $migrate instanceof PaymentTokensMigration );
 
 				foreach ( $customers->get_results() as $id ) {
+					$logger->info("Migrating tokens for user {$id}");
 					$migrate->migrate_payment_tokens_for_user( (int) $id );
 				}
 			}
