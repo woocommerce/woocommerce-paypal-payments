@@ -270,7 +270,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 				'type'        => 'checkbox',
 				'desc_tip'    => true,
 				'description' => __( 'In order to use PayPal or Advanced Card Processing, you need to enable the Gateway.', 'woocommerce-paypal-payments' ),
-				'label'       => __( 'Enable the PayPal Gateway', 'woocommerce-paypal-payments' ),
+				'label'       => __( 'Enable PayPal features for your store', 'woocommerce-paypal-payments' ),
 				'default'     => 'no',
 			),
 			'ppcp'    => array(
