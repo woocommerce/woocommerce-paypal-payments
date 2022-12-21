@@ -187,9 +187,13 @@ document.addEventListener(
             const toggleElementsBySelectedLocations = () => {
                 stylingPerElementWrapper.style.display = '';
                 let selectedLocations = getSelectedLocations(locationsSelector);
+                let emptySmartButtonLocationMessage = jQuery('.ppcp-empty-smart-button-location');
 
                 if(selectedLocations.length === 0) {
                     hideElements(groupToHideOnChecked.concat(stylingPerElementWrapperSelector));
+                    if (emptySmartButtonLocationMessage.length === 0) {
+                        jQuery(PayPalCommerceGatewaySettings.empty_smart_button_location_message).insertAfter(jQuery(smartButtonLocationsSelector).find('.description'));
+                    }
                 }
 
                 if (! stylingPerElement.checked) {
@@ -257,6 +261,8 @@ document.addEventListener(
 
             // We need to use jQuery here as the select might be a select2 element, which doesn't use native events.
             jQuery(locationsElement).on('change', function (){
+                let emptySmartButtonLocationMessage = jQuery('.ppcp-empty-smart-button-location');
+                emptySmartButtonLocationMessage?.remove();
                 toggleElementsBySelectedLocations()
                 stylingPerElement.dispatchEvent(new Event('change'))
             });
