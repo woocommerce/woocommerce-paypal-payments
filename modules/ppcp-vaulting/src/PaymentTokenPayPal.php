@@ -23,6 +23,15 @@ class PaymentTokenPayPal extends WC_Payment_Token {
 	protected $type = 'PayPal';
 
 	/**
+	 * Extra data.
+	 *
+	 * @var string[]
+	 */
+	protected $extra_data = array(
+		'email' => '',
+	);
+
+	/**
 	 * Get PayPal account email.
 	 *
 	 * @return string PayPal account email.
