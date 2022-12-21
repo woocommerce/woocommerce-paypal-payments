@@ -57,6 +57,9 @@ class PaymentTokensMigration {
 		$tokens          = (array) get_user_meta( $id, PaymentTokenRepository::USER_META, true );
 		$tokens_migrated = 0;
 
+		$this->logger->info( "Tokens for user {$id}:" );
+		$this->logger->info( wc_print_r( $tokens, true ) );
+
 		foreach ( $tokens as $token ) {
 			if ( isset( $token->source()->card ) ) {
 				$payment_token = new WC_Payment_Token_CC();
@@ -77,7 +80,7 @@ class PaymentTokensMigration {
 					continue;
 				}
 
-				$this->logger->info("Credit card token {$token->id()} migrated correctly.");
+				$this->logger->info( "Credit card token {$token->id()} migrated correctly." );
 				$tokens_migrated++;
 
 			} elseif ( $token->source()->paypal ) {
@@ -100,13 +103,13 @@ class PaymentTokensMigration {
 					continue;
 				}
 
-				$this->logger->info("PayPal token {$token->id()} migrated correctly.");
+				$this->logger->info( "PayPal token {$token->id()} migrated correctly." );
 				$tokens_migrated++;
 			}
 		}
 
 		if ( $tokens_migrated > 0 && count( $tokens ) === $tokens_migrated ) {
-			$this->logger->info("{$tokens_migrated} tokens were migrated for user {$id}.");
+			$this->logger->info( "{$tokens_migrated} tokens were migrated for user {$id}." );
 			update_user_meta( $id, 'ppcp_tokens_migrated', true );
 		}
 	}
