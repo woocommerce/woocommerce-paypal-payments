@@ -173,7 +173,7 @@ class VaultingModule implements ModuleInterface {
 		);
 
 		add_action(
-			'admin_init',
+			'woocommerce_paypal_payments_gateway_migrate_on_update',
 			function () use ( $container ) {
 				$logger = $container->get('woocommerce.logger.woocommerce');
 				assert($logger instanceof LoggerInterface);
