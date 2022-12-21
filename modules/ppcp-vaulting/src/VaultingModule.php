@@ -112,12 +112,19 @@ class VaultingModule implements ModuleInterface {
 					return $item;
 				}
 
-				if ( strtolower( $payment_token->get_type() ) !== 'paypal' ) {
+				if ( strtolower( $payment_token->get_type() ) === 'acdc' ) {
+					assert( $payment_token instanceof PaymentTokenACDC );
+					$item['method']['brand'] = $payment_token->get_card_type() . ' ...' . $payment_token->get_last4();
+
 					return $item;
 				}
 
-				assert( $payment_token instanceof PaymentTokenPayPal );
-				$item['method']['brand'] = $payment_token->get_email();
+				if ( strtolower( $payment_token->get_type() ) === 'paypal' ) {
+					assert( $payment_token instanceof PaymentTokenPayPal );
+					$item['method']['brand'] = $payment_token->get_email();
+
+					return $item;
+				}
 
 				return $item;
 			},
@@ -166,7 +173,7 @@ class VaultingModule implements ModuleInterface {
 		);
 
 		add_action(
-			'woocommerce_paypal_payments_gateway_migrate_on_update',
+			'admin_init',
 			function () use ( $container ) {
 				$logger = $container->get('woocommerce.logger.woocommerce');
 				assert($logger instanceof LoggerInterface);
