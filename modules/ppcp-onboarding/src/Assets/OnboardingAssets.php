@@ -112,7 +112,7 @@ class OnboardingAssets {
 		);
 		wp_localize_script(
 			'ppcp-settings',
-			'PayPalCommerceGatewaySettings',
+			'PayPalCommerceSettings',
 			array(
 				'empty_smart_button_location_message' => sprintf(
 					'<p class="description ppcp-empty-smart-button-location">%1$s</p>',

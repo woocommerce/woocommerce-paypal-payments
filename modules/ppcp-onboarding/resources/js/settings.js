@@ -192,7 +192,7 @@ document.addEventListener(
                 if(selectedLocations.length === 0) {
                     hideElements(groupToHideOnChecked.concat(stylingPerElementWrapperSelector));
                     if (emptySmartButtonLocationMessage.length === 0) {
-                        jQuery(PayPalCommerceGatewaySettings.empty_smart_button_location_message).insertAfter(jQuery(smartButtonLocationsSelector).find('.description'));
+                        jQuery(PayPalCommerceSettings.empty_smart_button_location_message).insertAfter(jQuery(smartButtonLocationsSelector).find('.description'));
                     }
                 }
 
