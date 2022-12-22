@@ -10,8 +10,6 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Vaulting;
 
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\Vaulting\Assets\MyAccountPaymentsAssets;
-use WooCommerce\PayPalCommerce\Vaulting\Endpoint\DeletePaymentTokenEndpoint;
 
 return array(
 	'vaulting.module-url'                 => static function ( ContainerInterface $container ): string {
@@ -57,8 +55,12 @@ return array(
 	'vaulting.payment-token-paypal'       => function( ContainerInterface $container ): PaymentTokenPayPal {
 		return new PaymentTokenPayPal();
 	},
+	'vaulting.payment-token-acdc' => function( ContainerInterface $container ): PaymentTokenACDC {
+		return new PaymentTokenACDC();
+	},
 	'vaulting.payment-tokens-migration'   => function( ContainerInterface $container ): PaymentTokensMigration {
 		return new PaymentTokensMigration(
+			$container->get( 'vaulting.payment-token-acdc' ),
 			$container->get( 'vaulting.payment-token-paypal' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);

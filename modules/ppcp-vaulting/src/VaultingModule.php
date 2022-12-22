@@ -92,6 +92,10 @@ class VaultingModule implements ModuleInterface {
 			 * @psalm-suppress MissingClosureParamType
 			 */
 			function ( $type ) {
+				if ( $type === 'WC_Payment_Token_ACDC' ) {
+					return PaymentTokenACDC::class;
+				}
+
 				if ( $type === 'WC_Payment_Token_PayPal' ) {
 					return PaymentTokenPayPal::class;
 				}
@@ -112,12 +116,19 @@ class VaultingModule implements ModuleInterface {
 					return $item;
 				}
 
-				if ( strtolower( $payment_token->get_type() ) !== 'paypal' ) {
+				if ( strtolower( $payment_token->get_type() ) === 'acdc' ) {
+					assert( $payment_token instanceof PaymentTokenACDC );
+					$item['method']['brand'] = $payment_token->get_card_type() . ' ...' . $payment_token->get_last4();
+
 					return $item;
 				}
 
-				assert( $payment_token instanceof PaymentTokenPayPal );
-				$item['method']['brand'] = $payment_token->get_email();
+				if ( strtolower( $payment_token->get_type() ) === 'paypal' ) {
+					assert( $payment_token instanceof PaymentTokenPayPal );
+					$item['method']['brand'] = $payment_token->get_email();
+
+					return $item;
+				}
 
 				return $item;
 			},

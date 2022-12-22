@@ -11,7 +11,6 @@ namespace WooCommerce\PayPalCommerce\Vaulting;
 
 use Exception;
 use Psr\Log\LoggerInterface;
-use WC_Payment_Token_CC;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
@@ -19,6 +18,13 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
  * Class PaymentTokensMigration
  */
 class PaymentTokensMigration {
+
+	/**
+	 * WC Payment token ACDC (Advanced Credit and Debit Card).
+	 *
+	 * @var PaymentTokenACDC
+	 */
+	private $payment_token_acdc;
 
 	/**
 	 * WC Payment token PayPal.
@@ -41,9 +47,11 @@ class PaymentTokensMigration {
 	 * @param LoggerInterface    $logger The logger.
 	 */
 	public function __construct(
+		PaymentTokenACDC  $payment_token_acdc,
 		PaymentTokenPayPal $payment_token_paypal,
 		LoggerInterface $logger
 	) {
+		$this->payment_token_acdc = $payment_token_acdc;
 		$this->payment_token_paypal = $payment_token_paypal;
 		$this->logger               = $logger;
 	}
@@ -59,16 +67,14 @@ class PaymentTokensMigration {
 
 		foreach ( $tokens as $token ) {
 			if ( isset( $token->source()->card ) ) {
-				$payment_token = new WC_Payment_Token_CC();
-				$payment_token->set_token( $token->id() );
-				$payment_token->set_user_id( $id );
-				$payment_token->set_gateway_id( CreditCardGateway::ID );
-
-				$payment_token->set_last4( $token->source()->card->last_digits );
-				$payment_token->set_card_type( $token->source()->card->brand );
+				$this->payment_token_acdc->set_token( $token->id() );
+				$this->payment_token_acdc->set_user_id( $id );
+				$this->payment_token_acdc->set_gateway_id( CreditCardGateway::ID );
+				$this->payment_token_acdc->set_last4( $token->source()->card->last_digits );
+				$this->payment_token_acdc->set_card_type( $token->source()->card->brand );
 
 				try {
-					$payment_token->save();
+					$this->payment_token_acdc->save();
 				} catch ( Exception $exception ) {
 					$this->logger->error(
 						"Could not save WC payment token credit card {$token->id()} for user {$id}. "
