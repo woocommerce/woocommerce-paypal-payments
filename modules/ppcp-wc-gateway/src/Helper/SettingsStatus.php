@@ -125,4 +125,20 @@ class SettingsStatus {
 
 		return $context === 'product' ? $enabled_for_product || $enabled_for_mini_cart : $enabled_for_current_location;
 	}
+
+	/**
+	 * Checks whether smart buttons are enabled for a given location.
+	 *
+	 * @param string $location The location.
+	 * @return bool true if is enabled, otherwise false.
+	 */
+	public function is_smart_button_enabled_for_location( string $location ): bool {
+		$selected_locations = $this->settings->has( 'smart_button_locations' ) ? $this->settings->get( 'smart_button_locations' ) : array();
+
+		if ( empty( $selected_locations ) ) {
+			return false;
+		}
+
+		return in_array( $location, $selected_locations, true );
+	}
 }

@@ -9,14 +9,13 @@
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\WcGateway;
+namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\State;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 return function ( ContainerInterface $container, array $fields ): array {
 
