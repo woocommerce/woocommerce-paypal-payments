@@ -110,6 +110,16 @@ class OnboardingAssets {
 			$this->version,
 			true
 		);
+		wp_localize_script(
+			'ppcp-settings',
+			'PayPalCommerceSettings',
+			array(
+				'empty_smart_button_location_message' => sprintf(
+					'<p class="description ppcp-empty-smart-button-location">%1$s</p>',
+					__( 'Note: If no button location is selected, the PayPal gateway will not be available.', 'woocommerce-paypal-payments' )
+				),
+			)
+		);
 
 		$url = untrailingslashit( $this->module_url ) . '/assets/js/onboarding.js';
 		wp_register_script(
