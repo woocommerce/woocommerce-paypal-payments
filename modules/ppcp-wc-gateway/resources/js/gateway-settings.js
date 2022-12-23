@@ -45,11 +45,13 @@ import {setVisibleByClass, isVisible} from "../../../ppcp-button/resources/js/mo
         if (separateCardButtonCheckbox) {
             separateCardButtonCheckbox.addEventListener('change', () => {
                 setVisibleByClass('#field-button_layout', !separateCardButtonCheckbox.checked, 'hide');
+                setVisibleByClass('#field-button_general_layout', !separateCardButtonCheckbox.checked, 'hide');
             });
         }
 
         [
             {layoutSelector: '#ppcp-button_layout', taglineSelector: '#field-button_tagline', canHaveSeparateButtons: true},
+            {layoutSelector: '#ppcp-button_general_layout', taglineSelector: '#field-button_general_tagline', canHaveSeparateButtons: true},
             {layoutSelector: '#ppcp-button_product_layout', taglineSelector: '#field-button_product_tagline'},
             {layoutSelector: '#ppcp-button_cart_layout', taglineSelector: '#field-button_cart_tagline'},
             {layoutSelector: '#ppcp-button_mini-cart_layout', taglineSelector: '#field-button_mini-cart_tagline'},
@@ -262,7 +264,7 @@ import {setVisibleByClass, isVisible} from "../../../ppcp-button/resources/js/mo
 
             loadPaypalScript(oldScriptSettings, () => {
                 const payLaterMessagingLocations = ['product', 'cart', 'checkout', 'general'];
-                const paypalButtonLocations = ['product', 'cart', 'checkout', 'mini-cart'];
+                const paypalButtonLocations = ['product', 'cart', 'checkout', 'mini-cart', 'general'];
 
                 paypalButtonLocations.forEach((location) => {
                     const inputNamePrefix = location === 'checkout' ? '#ppcp-button' : '#ppcp-button_' + location;
