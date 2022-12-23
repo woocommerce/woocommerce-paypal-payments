@@ -9,11 +9,10 @@
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\WcGateway;
+namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 return function ( ContainerInterface $container, array $fields ): array {
 
@@ -31,8 +30,6 @@ return function ( ContainerInterface $container, array $fields ): array {
 	$pay_later_messaging_enabled_label = $vault_enabled
 		? __( "You have PayPal vaulting enabled, that's why Pay Later options are unavailable now. You cannot use both features at the same time.", 'woocommerce-paypal-payments' )
 		: __( 'Enabled', 'woocommerce-paypal-payments' );
-
-	$default_locations = array_keys( $container->get( 'wcgateway.settings.pay-later.messaging-locations' ) );
 
 	$selected_country             = $container->get( 'api.shop.country' );
 	$default_messaging_flex_color = $selected_country === 'US' ? 'white-no-border' : 'white';
@@ -75,7 +72,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'type'         => 'ppcp-multiselect',
 			'class'        => array(),
 			'input_class'  => array( 'wc-enhanced-select' ),
-			'default'      => $default_locations,
+			'default'      => $container->get( 'wcgateway.button.default-locations' ),
 			'desc_tip'     => false,
 			'description'  => __( 'Select where the Pay Later button should be displayed.', 'woocommerce-paypal-payments' ),
 			'options'      => $container->get( 'wcgateway.settings.pay-later.button-locations' ),
@@ -121,7 +118,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'type'         => 'ppcp-multiselect',
 			'class'        => array(),
 			'input_class'  => array( 'wc-enhanced-select' ),
-			'default'      => $default_locations,
+			'default'      => $container->get( 'wcgateway.button.default-locations' ),
 			'desc_tip'     => false,
 			'description'  => __( 'Select where the Pay Later messaging should be displayed.', 'woocommerce-paypal-payments' ),
 			'options'      => $container->get( 'wcgateway.settings.pay-later.messaging-locations' ),
