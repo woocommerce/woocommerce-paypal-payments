@@ -209,11 +209,14 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'description'  => sprintf(
 			// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
 				__(
-					'Customize the appearance of the PayPal smart buttons on the %1$sCheckout page%2$s.',
+					'Customize the appearance of the PayPal smart buttons on the %1$sCheckout page%2$s.
+					%3$sCheckout Buttons must be enabled to display the PayPal gateway on the Checkout page.
+					',
 					'woocommerce-paypal-payments'
 				),
 				'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#button-on-checkout" target="_blank">',
-				'</a>'
+				'</a>',
+				'</ br>'
 			),
 			'type'         => 'ppcp-heading',
 			'screens'      => array(
