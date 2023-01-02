@@ -74,7 +74,7 @@ return array(
 		$prefix         = $container->get( 'api.prefix' );
 		$order_endpoint = $container->get( 'api.endpoint.order' );
 		$authorized_payments_processor = $container->get( 'wcgateway.processor.authorized-payments' );
-		$payment_token_paypal = $container->get( 'vaulting.payment-token-paypal' );
+		$payment_token_factory = $container->get( 'vaulting.payment-token-factory' );
 
 		return array(
 			new CheckoutOrderApproved( $logger, $prefix, $order_endpoint ),
@@ -83,7 +83,7 @@ return array(
 			new PaymentCaptureRefunded( $logger, $prefix ),
 			new PaymentCaptureReversed( $logger, $prefix ),
 			new PaymentCaptureCompleted( $logger, $prefix, $order_endpoint ),
-			new VaultPaymentTokenCreated( $logger, $prefix, $authorized_payments_processor, $payment_token_paypal ),
+			new VaultPaymentTokenCreated( $logger, $prefix, $authorized_payments_processor, $payment_token_factory ),
 			new VaultPaymentTokenDeleted( $logger ),
 			new PaymentCapturePending( $logger ),
 		);
