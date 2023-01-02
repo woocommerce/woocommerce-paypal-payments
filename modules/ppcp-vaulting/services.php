@@ -52,7 +52,7 @@ return array(
 			$container->get( 'wcgateway.settings' )
 		);
 	},
-	'vaulting.payment-token-factory'       => function( ContainerInterface $container ): PaymentTokenFactory {
+	'vaulting.payment-token-factory'      => function( ContainerInterface $container ): PaymentTokenFactory {
 		return new PaymentTokenFactory();
 	},
 	'vaulting.payment-tokens-migration'   => function( ContainerInterface $container ): PaymentTokensMigration {

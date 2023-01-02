@@ -70,7 +70,7 @@ class VaultPaymentTokenCreated implements RequestHandler {
 		$this->logger                        = $logger;
 		$this->prefix                        = $prefix;
 		$this->authorized_payments_processor = $authorized_payments_processor;
-		$this->payment_token_factory          = $payment_token_factory;
+		$this->payment_token_factory         = $payment_token_factory;
 	}
 
 	/**
@@ -133,8 +133,8 @@ class VaultPaymentTokenCreated implements RequestHandler {
 				$token->save();
 				WC_Payment_Tokens::set_users_default( $wc_customer_id, $token->get_id() );
 			} elseif ( isset( $request['resource']['source']['paypal'] ) ) {
-				$payment_token_paypal = $this->payment_token_factory->create('paypal');
-				assert($payment_token_paypal instanceof PaymentTokenPayPal);
+				$payment_token_paypal = $this->payment_token_factory->create( 'paypal' );
+				assert( $payment_token_paypal instanceof PaymentTokenPayPal );
 
 				$payment_token_paypal->set_token( $request['resource']['id'] );
 				$payment_token_paypal->set_user_id( $wc_customer_id );
