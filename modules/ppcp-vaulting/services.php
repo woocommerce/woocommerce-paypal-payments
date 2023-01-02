@@ -52,16 +52,12 @@ return array(
 			$container->get( 'wcgateway.settings' )
 		);
 	},
-	'vaulting.payment-token-paypal'       => function( ContainerInterface $container ): PaymentTokenPayPal {
-		return new PaymentTokenPayPal();
-	},
-	'vaulting.payment-token-acdc' => function( ContainerInterface $container ): PaymentTokenACDC {
-		return new PaymentTokenACDC();
+	'vaulting.payment-token-factory'       => function( ContainerInterface $container ): PaymentTokenFactory {
+		return new PaymentTokenFactory();
 	},
 	'vaulting.payment-tokens-migration'   => function( ContainerInterface $container ): PaymentTokensMigration {
 		return new PaymentTokensMigration(
-			$container->get( 'vaulting.payment-token-acdc' ),
-			$container->get( 'vaulting.payment-token-paypal' ),
+			$container->get( 'vaulting.payment-token-factory' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},

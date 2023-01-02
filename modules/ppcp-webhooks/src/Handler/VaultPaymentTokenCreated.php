@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
 use Psr\Log\LoggerInterface;
 use WC_Payment_Token_CC;
 use WC_Payment_Tokens;
+use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenFactory;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenPayPal;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
@@ -46,11 +47,11 @@ class VaultPaymentTokenCreated implements RequestHandler {
 	protected $authorized_payments_processor;
 
 	/**
-	 * WooCommerce Payment token PayPal.
+	 * The payment token factory.
 	 *
-	 * @var PaymentTokenPayPal
+	 * @var PaymentTokenFactory
 	 */
-	private $payment_token_paypal;
+	protected $payment_token_factory;
 
 	/**
 	 * VaultPaymentTokenCreated constructor.
@@ -58,18 +59,18 @@ class VaultPaymentTokenCreated implements RequestHandler {
 	 * @param LoggerInterface             $logger The logger.
 	 * @param string                      $prefix The prefix.
 	 * @param AuthorizedPaymentsProcessor $authorized_payments_processor The authorized payment processor.
-	 * @param PaymentTokenPayPal          $payment_token_paypal WooCommerce Payment token PayPal.
+	 * @param PaymentTokenFactory         $payment_token_factory The payment token factory.
 	 */
 	public function __construct(
 		LoggerInterface $logger,
 		string $prefix,
 		AuthorizedPaymentsProcessor $authorized_payments_processor,
-		PaymentTokenPayPal $payment_token_paypal
+		PaymentTokenFactory $payment_token_factory
 	) {
 		$this->logger                        = $logger;
 		$this->prefix                        = $prefix;
 		$this->authorized_payments_processor = $authorized_payments_processor;
-		$this->payment_token_paypal          = $payment_token_paypal;
+		$this->payment_token_factory          = $payment_token_factory;
 	}
 
 	/**
@@ -132,17 +133,20 @@ class VaultPaymentTokenCreated implements RequestHandler {
 				$token->save();
 				WC_Payment_Tokens::set_users_default( $wc_customer_id, $token->get_id() );
 			} elseif ( isset( $request['resource']['source']['paypal'] ) ) {
-				$this->payment_token_paypal->set_token( $request['resource']['id'] );
-				$this->payment_token_paypal->set_user_id( $wc_customer_id );
-				$this->payment_token_paypal->set_gateway_id( PayPalGateway::ID );
+				$payment_token_paypal = $this->payment_token_factory->create('paypal');
+				assert($payment_token_paypal instanceof PaymentTokenPayPal);
+
+				$payment_token_paypal->set_token( $request['resource']['id'] );
+				$payment_token_paypal->set_user_id( $wc_customer_id );
+				$payment_token_paypal->set_gateway_id( PayPalGateway::ID );
 
 				$email = $request['resource']['source']['paypal']['payer']['email_address'] ?? '';
 				if ( $email && is_email( $email ) ) {
-					$this->payment_token_paypal->set_email( $email );
+					$payment_token_paypal->set_email( $email );
 				}
 
-				$this->payment_token_paypal->save();
-				WC_Payment_Tokens::set_users_default( $wc_customer_id, $this->payment_token_paypal->get_id() );
+				$payment_token_paypal->save();
+				WC_Payment_Tokens::set_users_default( $wc_customer_id, $payment_token_paypal->get_id() );
 			}
 		}
 

@@ -18,20 +18,12 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
  * Class PaymentTokensMigration
  */
 class PaymentTokensMigration {
-
 	/**
-	 * WC Payment token ACDC (Advanced Credit and Debit Card).
+	 * The payment token factory.
 	 *
-	 * @var PaymentTokenACDC
+	 * @var PaymentTokenFactory
 	 */
-	private $payment_token_acdc;
-
-	/**
-	 * WC Payment token PayPal.
-	 *
-	 * @var PaymentTokenPayPal
-	 */
-	private $payment_token_paypal;
+	private $payment_token_factory;
 
 	/**
 	 * The logger.
@@ -43,17 +35,15 @@ class PaymentTokensMigration {
 	/**
 	 * PaymentTokensMigration constructor.
 	 *
-	 * @param PaymentTokenPayPal $payment_token_paypal WC Payment token PayPal.
-	 * @param LoggerInterface    $logger The logger.
+	 * @param PaymentTokenFactory $payment_token_factory The payment token factory.
+	 * @param LoggerInterface     $logger The logger.
 	 */
 	public function __construct(
-		PaymentTokenACDC  $payment_token_acdc,
-		PaymentTokenPayPal $payment_token_paypal,
+		PaymentTokenFactory $payment_token_factory,
 		LoggerInterface $logger
 	) {
-		$this->payment_token_acdc = $payment_token_acdc;
-		$this->payment_token_paypal = $payment_token_paypal;
-		$this->logger               = $logger;
+		$this->payment_token_factory = $payment_token_factory;
+		$this->logger                = $logger;
 	}
 
 	/**
@@ -67,14 +57,17 @@ class PaymentTokensMigration {
 
 		foreach ( $tokens as $token ) {
 			if ( isset( $token->source()->card ) ) {
-				$this->payment_token_acdc->set_token( $token->id() );
-				$this->payment_token_acdc->set_user_id( $id );
-				$this->payment_token_acdc->set_gateway_id( CreditCardGateway::ID );
-				$this->payment_token_acdc->set_last4( $token->source()->card->last_digits );
-				$this->payment_token_acdc->set_card_type( $token->source()->card->brand );
+				$payment_token_acdc = $this->payment_token_factory->create( 'acdc' );
+				assert( $payment_token_acdc instanceof PaymentTokenACDC );
+
+				$payment_token_acdc->set_token( $token->id() );
+				$payment_token_acdc->set_user_id( $id );
+				$payment_token_acdc->set_gateway_id( CreditCardGateway::ID );
+				$payment_token_acdc->set_last4( $token->source()->card->last_digits );
+				$payment_token_acdc->set_card_type( $token->source()->card->brand );
 
 				try {
-					$this->payment_token_acdc->save();
+					$payment_token_acdc->save();
 				} catch ( Exception $exception ) {
 					$this->logger->error(
 						"Could not save WC payment token credit card {$token->id()} for user {$id}. "
@@ -86,17 +79,20 @@ class PaymentTokensMigration {
 				$tokens_migrated++;
 
 			} elseif ( $token->source()->paypal ) {
-				$this->payment_token_paypal->set_token( $token->id() );
-				$this->payment_token_paypal->set_user_id( $id );
-				$this->payment_token_paypal->set_gateway_id( PayPalGateway::ID );
+				$payment_token_paypal = $this->payment_token_factory->create( 'paypal' );
+				assert( $payment_token_paypal instanceof PaymentTokenPayPal );
+
+				$payment_token_paypal->set_token( $token->id() );
+				$payment_token_paypal->set_user_id( $id );
+				$payment_token_paypal->set_gateway_id( PayPalGateway::ID );
 
 				$email = $token->source()->paypal->payer->email_address ?? '';
 				if ( $email && is_email( $email ) ) {
-					$this->payment_token_paypal->set_email( $email );
+					$payment_token_paypal->set_email( $email );
 				}
 
 				try {
-					$this->payment_token_paypal->save();
+					$payment_token_paypal->save();
 				} catch ( Exception $exception ) {
 					$this->logger->error(
 						"Could not save WC payment token PayPal {$token->id()} for user {$id}. "
