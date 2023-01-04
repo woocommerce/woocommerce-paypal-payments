@@ -60,25 +60,67 @@ return array(
 
 		return $dummy_ids[ $shop_country ] ?? $container->get( 'button.client_id' );
 	},
-	'button.smart-button'                         => static function ( ContainerInterface $container ): SmartButtonInterface {
+	'button.is_paypal_continuation'               => static function( ContainerInterface $container ): bool {
+		$session_handler = $container->get( 'session.handler' );
 
+		$order = $session_handler->order();
+		if ( ! $order ) {
+			return false;
+		}
+		$source = $order->payment_source();
+		if ( $source && $source->card() ) {
+			return false; // Ignore for DCC.
+		}
+		if ( 'card' === $session_handler->funding_source() ) {
+			return false; // Ignore for card buttons.
+		}
+
+		return true;
+	},
+	'button.context'                              => static function( ContainerInterface $container ): string {
+		$is_paypal_continuation = $container->get( 'button.is_paypal_continuation' );
+
+		$context = 'mini-cart';
+		if ( is_product() || wc_post_content_has_shortcode( 'product_page' ) ) {
+			$context = 'product';
+		}
+		if ( is_cart() ) {
+			$context = 'cart';
+		}
+		if ( is_checkout() && ! $is_paypal_continuation ) {
+			$context = 'checkout';
+		}
+		if ( is_checkout_pay_page() ) {
+			$context = 'pay-now';
+		}
+
+		return $context;
+	},
+	'button.intent'                               => static function( ContainerInterface $container ): string {
+		$settings           = $container->get( 'wcgateway.settings' );
+		$subscription_helper = $container->get( 'subscription.helper' );
+		$context = $container->get( 'button.context' );
+
+		$intent               = ( $settings->has( 'intent' ) ) ? $settings->get( 'intent' ) : 'capture';
+		$product_intent       = $subscription_helper->current_product_is_subscription() ? 'authorize' : $intent;
+		$other_context_intent = $subscription_helper->cart_contains_subscription() ? 'authorize' : $intent;
+
+		return $context === 'product' ? $product_intent : $other_context_intent;
+	},
+	'button.smart-button'                         => static function ( ContainerInterface $container ): SmartButtonInterface {
 		$state = $container->get( 'onboarding.state' );
-		/**
-		 * The state.
-		 *
-		 * @var State $state
-		 */
 		if ( $state->current_state() !== State::STATE_ONBOARDED ) {
 			return new DisabledSmartButton();
 		}
+
 		$settings           = $container->get( 'wcgateway.settings' );
 		$paypal_disabled     = ! $settings->has( 'enabled' ) || ! $settings->get( 'enabled' );
 		if ( $paypal_disabled ) {
 			return new DisabledSmartButton();
 		}
+
 		$payer_factory    = $container->get( 'api.factory.payer' );
 		$request_data     = $container->get( 'button.request-data' );
-
 		$client_id           = $container->get( 'button.client_id' );
 		$dcc_applies         = $container->get( 'api.helpers.dccapplies' );
 		$subscription_helper = $container->get( 'subscription.helper' );
@@ -90,7 +132,6 @@ return array(
 		return new SmartButton(
 			$container->get( 'button.url' ),
 			$container->get( 'ppcp.asset-version' ),
-			$container->get( 'session.handler' ),
 			$settings,
 			$payer_factory,
 			$client_id,
@@ -104,6 +145,8 @@ return array(
 			$currency,
 			$container->get( 'wcgateway.all-funding-sources' ),
 			$container->get( 'button.basic-checkout-validation-enabled' ),
+			$container->get( 'button.intent' ),
+			$container->get( 'button.context' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
