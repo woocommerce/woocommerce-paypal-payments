@@ -31,14 +31,4 @@ class DisabledSmartButton implements SmartButtonInterface {
 	public function enqueue(): bool {
 		return true;
 	}
-
-	/**
-	 * Whether tokens can be stored or not.
-	 *
-	 * @return bool
-	 */
-	public function can_save_vault_token(): bool {
-
-		return false;
-	}
 }

@@ -147,6 +147,13 @@ class SmartButton implements SmartButtonInterface {
 	private $basic_checkout_validation_enabled;
 
 	/**
+	 * Cached payment tokens.
+	 *
+	 * @var PaymentToken[]|null
+	 */
+	private $payment_tokens = null;
+
+	/**
 	 * The intent.
 	 *
 	 * @var string
@@ -161,18 +168,25 @@ class SmartButton implements SmartButtonInterface {
 	private $context;
 
 	/**
+	 * Whether vault tokens could be saved.
+	 *
+	 * @var bool
+	 */
+	private $can_save_vault_token;
+
+	/**
+	 * Whether vault could be enabled or not.
+	 *
+	 * @var string
+	 */
+	private $vault;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
 	 */
 	private $logger;
-
-	/**
-	 * Cached payment tokens.
-	 *
-	 * @var PaymentToken[]|null
-	 */
-	private $payment_tokens = null;
 
 	/**
 	 * SmartButton constructor.
@@ -194,6 +208,8 @@ class SmartButton implements SmartButtonInterface {
 	 * @param bool                   $basic_checkout_validation_enabled Whether the basic JS validation of the form iss enabled.
 	 * @param string                 $intent The intent.
 	 * @param string                 $context The current context.
+	 * @param bool                   $can_save_vault_token Whether vault tokens could be saved.
+	 * @param string                 $vault Whether vault could be enabled or not.
 	 * @param LoggerInterface        $logger The logger.
 	 */
 	public function __construct(
@@ -214,6 +230,8 @@ class SmartButton implements SmartButtonInterface {
 		bool $basic_checkout_validation_enabled,
 		string $intent,
 		string $context,
+		bool $can_save_vault_token,
+		string $vault,
 		LoggerInterface $logger
 	) {
 
@@ -235,6 +253,8 @@ class SmartButton implements SmartButtonInterface {
 		$this->intent                            = $intent;
 		$this->logger                            = $logger;
 		$this->context                           = $context;
+		$this->can_save_vault_token              = $can_save_vault_token;
+		$this->vault                             = $vault;
 	}
 
 	/**
@@ -678,25 +698,6 @@ class SmartButton implements SmartButtonInterface {
 	}
 
 	/**
-	 * Whether we can store vault tokens or not.
-	 *
-	 * @return bool
-	 * @throws NotFoundException If a setting hasn't been found.
-	 */
-	public function can_save_vault_token(): bool {
-
-		if ( ! $this->settings->has( 'client_id' ) || ! $this->settings->get( 'client_id' ) ) {
-			return false;
-		}
-
-		if ( ! $this->settings->has( 'vault_enabled' ) || ! $this->settings->get( 'vault_enabled' ) ) {
-			return false;
-		}
-
-		return true;
-	}
-
-	/**
 	 * Whether we need to initialize the script to enable tokenization for subscriptions or not.
 	 *
 	 * @return bool
@@ -746,7 +747,7 @@ class SmartButton implements SmartButtonInterface {
 		$localize = array(
 			'script_attributes'                 => $this->attributes(),
 			'data_client_id'                    => array(
-				'set_attribute'     => ( is_checkout() && $this->dcc_is_enabled() ) || $this->can_save_vault_token(),
+				'set_attribute'     => ( is_checkout() && $this->dcc_is_enabled() ) || $this->can_save_vault_token,
 				'endpoint'          => \WC_AJAX::get_endpoint( DataClientIdEndpoint::ENDPOINT ),
 				'nonce'             => wp_create_nonce( DataClientIdEndpoint::nonce() ),
 				'user'              => get_current_user_id(),
@@ -773,7 +774,7 @@ class SmartButton implements SmartButtonInterface {
 				),
 			),
 			'enforce_vault'                     => $this->has_subscriptions(),
-			'can_save_vault_token'              => $this->can_save_vault_token(),
+			'can_save_vault_token'              => $this->can_save_vault_token,
 			'is_free_trial_cart'                => $is_free_trial_cart,
 			'vaulted_paypal_email'              => ( is_checkout() && $is_free_trial_cart ) ? $this->get_vaulted_paypal_email() : '',
 			'bn_codes'                          => $this->bn_codes(),
@@ -899,7 +900,7 @@ class SmartButton implements SmartButtonInterface {
 			'currency'         => $this->currency,
 			'integration-date' => PAYPAL_INTEGRATION_DATE,
 			'components'       => implode( ',', $this->components() ),
-			'vault'            => $this->can_save_vault_token() ? 'true' : 'false',
+			'vault'            => $this->vault,
 			'commit'           => is_checkout() ? 'true' : 'false',
 			'intent'           => $this->intent,
 		);

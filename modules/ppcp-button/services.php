@@ -107,6 +107,23 @@ return array(
 
 		return $context === 'product' ? $product_intent : $other_context_intent;
 	},
+	'button.can_save_vault_token'                 => static function( ContainerInterface $container ): bool {
+		$settings           = $container->get( 'wcgateway.settings' );
+		if ( ! $settings->has( 'client_id' )
+			|| ! $settings->get( 'client_id' )
+			|| ! $settings->has( 'vault_enabled' )
+			|| ! $settings->get( 'vault_enabled' )
+		) {
+			return false;
+		}
+
+		return true;
+	},
+	'button.vault'                                => static function( ContainerInterface $container ): string {
+		$can_save_vault_token = $container->get( 'button.can_save_vault_token' );
+
+		return $can_save_vault_token ? 'true' : 'false';
+	},
 	'button.smart-button'                         => static function ( ContainerInterface $container ): SmartButtonInterface {
 		$state = $container->get( 'onboarding.state' );
 		if ( $state->current_state() !== State::STATE_ONBOARDED ) {
@@ -147,6 +164,8 @@ return array(
 			$container->get( 'button.basic-checkout-validation-enabled' ),
 			$container->get( 'button.intent' ),
 			$container->get( 'button.context' ),
+			$container->get( 'button.can_save_vault_token' ),
+			$container->get( 'button.vault' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
