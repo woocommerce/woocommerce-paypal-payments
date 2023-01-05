@@ -67,9 +67,9 @@ class CatalogProducts {
 	 * @throws RuntimeException If the request fails.
 	 * @throws PayPalApiException If the request fails.
 	 */
-	public function create(): stdClass {
+	public function create(string $name): stdClass {
 		$data = array(
-			'name' => '',
+			'name' => $name,
 		);
 
 		$bearer = $this->bearer->bearer();

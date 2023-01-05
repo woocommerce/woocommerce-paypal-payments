@@ -70,9 +70,17 @@ class Subscriptions {
 	 * @throws RuntimeException If the request fails.
 	 * @throws PayPalApiException If the request fails.
 	 */
-	public function create_plan( string $product_id ): stdClass {
+	public function create_plan(
+		string $product_id,
+		array $billing_cycles,
+		array $payment_preferences
+	): stdClass {
+
 		$data = array(
 			'product_id' => $product_id,
+			'name' => 'Testing Plan',
+			'billing_cycles' => array($billing_cycles),
+			'payment_preferences' => $payment_preferences
 		);
 
 		$bearer = $this->bearer->bearer();
