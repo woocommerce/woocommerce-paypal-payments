@@ -17,6 +17,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveSubscriptionEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
@@ -756,23 +757,28 @@ class SmartButton implements SmartButtonInterface {
 			'redirect'                          => wc_get_checkout_url(),
 			'context'                           => $this->context,
 			'ajax'                              => array(
-				'change_cart'   => array(
+				'change_cart'          => array(
 					'endpoint' => \WC_AJAX::get_endpoint( ChangeCartEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( ChangeCartEndpoint::nonce() ),
 				),
-				'create_order'  => array(
+				'create_order'         => array(
 					'endpoint' => \WC_AJAX::get_endpoint( CreateOrderEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( CreateOrderEndpoint::nonce() ),
 				),
-				'approve_order' => array(
+				'approve_order'        => array(
 					'endpoint' => \WC_AJAX::get_endpoint( ApproveOrderEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( ApproveOrderEndpoint::nonce() ),
 				),
-				'vault_paypal'  => array(
+				'approve_subscription' => array(
+					'endpoint' => \WC_AJAX::get_endpoint( ApproveSubscriptionEndpoint::ENDPOINT ),
+					'nonce'    => wp_create_nonce( ApproveSubscriptionEndpoint::nonce() ),
+				),
+				'vault_paypal'         => array(
 					'endpoint' => \WC_AJAX::get_endpoint( StartPayPalVaultingEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( StartPayPalVaultingEndpoint::nonce() ),
 				),
 			),
+			'subscription_plan_id'              => $this->settings->has( 'subscription_plan_id' ) ? $this->settings->get( 'subscription_plan_id' ) : '',
 			'enforce_vault'                     => $this->has_subscriptions(),
 			'can_save_vault_token'              => $this->can_save_vault_token,
 			'is_free_trial_cart'                => $is_free_trial_cart,

@@ -174,7 +174,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		if ( $state->current_state() === State::STATE_ONBOARDED ) {
 			$this->supports = array( 'refunds' );
 		}
-		if ($this->gateways_enabled()) {
+		if ( $this->gateways_enabled() ) {
 			$this->supports = array(
 				'refunds',
 				'products',

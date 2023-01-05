@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Button;
 
+use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveSubscriptionEndpoint;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\DisabledSmartButton;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButton;
@@ -105,15 +106,15 @@ return array(
 		$product_intent       = $subscription_helper->current_product_is_subscription() ? 'authorize' : $intent;
 		$other_context_intent = $subscription_helper->cart_contains_subscription() ? 'authorize' : $intent;
 
+		if ( $settings->has( 'subscription_handler' ) && $settings->get( 'subscription_handler' ) ) {
+			return 'subscription';
+		}
+
 		return $context === 'product' ? $product_intent : $other_context_intent;
 	},
 	'button.can_save_vault_token'                 => static function( ContainerInterface $container ): bool {
 		$settings           = $container->get( 'wcgateway.settings' );
-		if ( ! $settings->has( 'client_id' )
-			|| ! $settings->get( 'client_id' )
-			|| ! $settings->has( 'vault_enabled' )
-			|| ! $settings->get( 'vault_enabled' )
-		) {
+		if ( ! $settings->has( 'client_id' ) || ! $settings->get( 'client_id' ) ) {
 			return false;
 		}
 
@@ -241,6 +242,13 @@ return array(
 			$dcc_applies,
 			$order_helper,
 			$logger
+		);
+	},
+	'button.endpoint.approve-subscription'        => static function( ContainerInterface $container ): ApproveSubscriptionEndpoint {
+		return new ApproveSubscriptionEndpoint(
+			$container->get( 'button.request-data' ),
+			$container->get( 'api.endpoint.order' ),
+			$container->get( 'session.handler' )
 		);
 	},
 	'button.endpoint.data-client-id'              => static function( ContainerInterface $container ) : DataClientIdEndpoint {

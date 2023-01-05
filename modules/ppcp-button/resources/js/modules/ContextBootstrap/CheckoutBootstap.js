@@ -64,9 +64,12 @@ class CheckoutBootstap {
             this.spinner
         );
 
-        this.renderer.render(
-            actionHandler.configuration()
-        );
+        if(PayPalCommerceGateway.data_client_id.has_subscriptions) {
+            this.renderer.render(actionHandler.subscriptionsConfiguration());
+            return;
+        }
+
+        this.renderer.render(actionHandler.configuration());
     }
 
     updateUi() {

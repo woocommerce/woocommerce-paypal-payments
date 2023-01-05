@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Button;
 
+use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveSubscriptionEndpoint;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
@@ -140,6 +141,16 @@ class ButtonModule implements ModuleInterface {
 				 *
 				 * @var ApproveOrderEndpoint $endpoint
 				 */
+				$endpoint->handle_request();
+			}
+		);
+
+		add_action(
+			'wc_ajax_' . ApproveSubscriptionEndpoint::ENDPOINT,
+			static function () use ( $container ) {
+				$endpoint = $container->get( 'button.endpoint.approve-subscription' );
+				assert( $endpoint instanceof ApproveSubscriptionEndpoint );
+
 				$endpoint->handle_request();
 			}
 		);

@@ -94,7 +94,8 @@ return array(
 			$environment,
 			$payment_token_repository,
 			$logger,
-			$api_shop_country
+			$api_shop_country,
+			$container->get( 'api.endpoint.order' )
 		);
 	},
 	'wcgateway.credit-card-gateway'                        => static function ( ContainerInterface $container ): CreditCardGateway {
@@ -667,6 +668,26 @@ return array(
 				),
 				'requirements'         => array(),
 				'gateway'              => array( 'paypal', 'dcc' ),
+			),
+			'subscription_handler'                   => array(
+				'title'        => __( 'Subscription handler', 'woocommerce-paypal-payments' ),
+				'type'         => 'checkbox',
+				'default'      => false,
+				'screens'      => array(
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
+			'subscription_plan_id'                   => array(
+				'title'        => __( 'Subscription Plan ID', 'woocommerce-paypal-payments' ),
+				'type'         => 'text',
+				'default'      => false,
+				'screens'      => array(
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
 			),
 			'card_billing_data_mode'                 => array(
 				'title'        => __( 'Card billing data handling', 'woocommerce-paypal-payments' ),
