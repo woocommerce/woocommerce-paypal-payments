@@ -138,57 +138,67 @@ class SubscriptionModule implements ModuleInterface {
 			}
 		);
 
-		add_action('woocommerce_update_product', function($product_id) use($c) {
-			$product = wc_get_product( $product_id );
-			if($product->get_type() === 'subscription') {
-				if(!$product->meta_exists('ppcp_subscription_product_id')) {
-					$products_endpoint = $c->get('api.endpoint.catalog-products');
-					assert($products_endpoint instanceof CatalogProducts);
+		add_action(
+			'save_post',
+			function( $product_id ) use ( $c ) {
+				if ( empty( $_POST['_wcsnonce'] ) || ! wp_verify_nonce( $_POST['_wcsnonce'], 'wcs_subscription_meta' ) ) {
+					return;
+				}
 
-					$subscription_product = $products_endpoint->create($product->get_title());
-					$product->update_meta_data('ppcp_subscription_product_id', $subscription_product->id);
-					$product->save();
+				$product = wc_get_product( $product_id );
+				if ( $product->get_type() === 'subscription' ) {
+					if ( ! $product->meta_exists( 'ppcp_subscription_product_id' ) ) {
+						$products_endpoint = $c->get( 'api.endpoint.catalog-products' );
+						assert( $products_endpoint instanceof CatalogProducts );
 
-					$subscriptions_endpoint = $c->get('api.endpoint.subscriptions');
-					assert($subscriptions_endpoint instanceof Subscriptions);
+						$subscription_product = $products_endpoint->create( $product->get_title() );
+						$product->update_meta_data( 'ppcp_subscription_product_id', $subscription_product->id );
+						$product->save();
+					}
 
-					$billing_cycles = array(
-						'frequency' => array(
-							'interval_unit' => $product->get_meta('_subscription_period'),
-							'interval_count' => $product->get_meta('_subscription_period_interval'),
-						),
-						'tenure_type' => 'REGULAR',
-						'sequence' => 1,
-						'total_cycles' => $product->get_meta('_subscription_length'),
-						'pricing_scheme' => array(
-							'fixed_price' => array(
-								'value' => $product->get_meta('_subscription_price'),
+					if ( ! $product->meta_exists( 'ppcp_subscription_plan' ) ) {
+						$subscriptions_endpoint = $c->get( 'api.endpoint.subscriptions' );
+						assert( $subscriptions_endpoint instanceof Subscriptions );
+
+						$billing_cycles = array(
+							'frequency'      => array(
+								'interval_unit'  => $product->get_meta( '_subscription_period' ),
+								'interval_count' => $product->get_meta( '_subscription_period_interval' ),
+							),
+							'tenure_type'    => 'REGULAR',
+							'sequence'       => 1,
+							'total_cycles'   => $product->get_meta( '_subscription_length' ),
+							'pricing_scheme' => array(
+								'fixed_price' => array(
+									'value'         => $product->get_meta( '_subscription_price' ),
+									'currency_code' => 'USD',
+								),
+							),
+						);
+
+						$payment_preferences = array(
+							'auto_bill_outstanding'     => true,
+							'setup_fee'                 => array(
+								'value'         => $product->get_meta( '_subscription_sign_up_fee' ) ?: '0',
 								'currency_code' => 'USD',
 							),
-						),
-					);
+							'setup_fee_failure_action'  => 'CONTINUE',
+							'payment_failure_threshold' => 3,
+						);
 
-					$payment_preferences = array(
-						'auto_bill_outstanding' => true,
-						'setup_fee' => array(
-							'value' => $product->get_meta('_subscription_sign_up_fee'),
-							'currency_code' => 'USD',
-						),
-						'setup_fee_failure_action' => 'CONTINUE',
-						'payment_failure_threshold' => 3
-					);
+						$subscription_plan = $subscriptions_endpoint->create_plan(
+							$product->get_meta( 'ppcp_subscription_product_id' ),
+							$billing_cycles,
+							$payment_preferences
+						);
 
-					$subscription_plan = $subscriptions_endpoint->create_plan(
-						$subscription_product->id,
-						$billing_cycles,
-						$payment_preferences
-					);
-
-					$product->update_meta_data('ppcp_subscription_plan', $subscription_plan->id);
-					$product->save();
+						$product->update_meta_data( 'ppcp_subscription_plan', $subscription_plan->id );
+						$product->save();
+					}
 				}
-			}
-		});
+			},
+			12
+		);
 	}
 
 	/**
