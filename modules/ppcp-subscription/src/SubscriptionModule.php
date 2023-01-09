@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Subscription;
 
+use WC_Product_Subscription;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\CatalogProducts;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Subscriptions;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
@@ -198,6 +199,33 @@ class SubscriptionModule implements ModuleInterface {
 				}
 			},
 			12
+		);
+
+		add_action(
+			'add_meta_boxes',
+			function( string $post_type ) {
+				if ( $post_type === 'product' ) {
+					$product_id = wc_clean( wp_unslash( $_GET['post'] ?? '' ) );
+					$product    = wc_get_product( $product_id );
+					if ( is_a( $product, WC_Product_Subscription::class ) ) {
+						$subscription_id = $product->get_meta( 'ppcp_subscription_product_id' );
+						$plan_id         = $product->get_meta( 'ppcp_subscription_plan' );
+						if ( $subscription_id && $plan_id ) {
+							add_meta_box(
+								'ppcp_subscription',
+								__( 'PayPal Subscription', 'woocommerce-paypal-payments' ),
+								function() use ( $subscription_id, $plan_id ) {
+									echo '<p>Subscription ID: ' . $subscription_id . '</p>';
+									echo '<p>Plan ID: ' . $plan_id . '</p>';
+								},
+								$post_type,
+								'side',
+								'high'
+							);
+						}
+					}
+				}
+			}
 		);
 	}
 
