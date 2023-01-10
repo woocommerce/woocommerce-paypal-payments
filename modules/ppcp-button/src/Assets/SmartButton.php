@@ -778,7 +778,7 @@ class SmartButton implements SmartButtonInterface {
 					'nonce'    => wp_create_nonce( StartPayPalVaultingEndpoint::nonce() ),
 				),
 			),
-			'subscription_plan_id'              => $this->settings->has( 'subscription_plan_id' ) ? $this->settings->get( 'subscription_plan_id' ) : '',
+			'subscription_plan_id'              => $this->paypal_subscription_id(),
 			'enforce_vault'                     => $this->has_subscriptions(),
 			'can_save_vault_token'              => $this->can_save_vault_token,
 			'is_free_trial_cart'                => $is_free_trial_cart,
@@ -1309,5 +1309,25 @@ class SmartButton implements SmartButtonInterface {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Returns PayPal subscription plan id from WC subscription product.
+	 *
+	 * @return mixed|string
+	 * @throws NotFoundException
+	 */
+	private function paypal_subscription_id(): string {
+		$items = WC()->cart->get_cart_contents();
+		foreach ( $items as $item ) {
+			$product = wc_get_product( $item['product_id'] );
+			assert( $product instanceof WC_Product );
+
+			if ( $product->get_type() === 'subscription' && $product->meta_exists( 'ppcp_subscription_plan' ) ) {
+				return $product->get_meta( 'ppcp_subscription_plan' );
+			}
+		}
+
+		return '';
 	}
 }
