@@ -679,16 +679,6 @@ return array(
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
-			'subscription_plan_id'                   => array(
-				'title'        => __( 'Subscription Plan ID', 'woocommerce-paypal-payments' ),
-				'type'         => 'text',
-				'default'      => false,
-				'screens'      => array(
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
 			'card_billing_data_mode'                 => array(
 				'title'        => __( 'Card billing data handling', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',

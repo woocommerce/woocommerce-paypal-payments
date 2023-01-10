@@ -1314,8 +1314,7 @@ class SmartButton implements SmartButtonInterface {
 	/**
 	 * Returns PayPal subscription plan id from WC subscription product.
 	 *
-	 * @return mixed|string
-	 * @throws NotFoundException
+	 * @return string
 	 */
 	private function paypal_subscription_id(): string {
 		$items = WC()->cart->get_cart_contents();
