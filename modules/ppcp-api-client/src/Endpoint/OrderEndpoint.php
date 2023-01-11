@@ -469,14 +469,8 @@ class OrderEndpoint {
 			$error = new RuntimeException(
 				__( 'Could not retrieve order.', 'woocommerce-paypal-payments' )
 			);
-			$this->logger->log(
-				'warning',
-				$error->getMessage(),
-				array(
-					'args'     => $args,
-					'response' => $response,
-				)
-			);
+			$this->logger->warning( $error->getMessage() );
+
 			throw $error;
 		}
 		$json        = json_decode( $response['body'] );
@@ -511,8 +505,8 @@ class OrderEndpoint {
 			);
 			throw $error;
 		}
-		$order = $this->order_factory->from_paypal_response( $json );
-		return $order;
+
+		return $this->order_factory->from_paypal_response( $json );
 	}
 
 	/**

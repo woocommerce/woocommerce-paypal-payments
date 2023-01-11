@@ -130,7 +130,7 @@ class OrderEndpointTest extends TestCase
         $patchCollectionFactory = Mockery::mock(PatchCollectionFactory::class);
         $intent = 'CAPTURE';
         $logger = Mockery::mock(LoggerInterface::class);
-        $logger->shouldReceive('log');
+        $logger->shouldReceive('warning');
         $logger->shouldReceive('debug');
         $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
         $paypalRequestIdRepository = Mockery::mock(PayPalRequestIdRepository::class);
