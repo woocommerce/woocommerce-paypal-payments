@@ -191,6 +191,7 @@ class OrderEndpoint {
 	 * @param PaymentToken|null  $payment_token The payment token.
 	 * @param PaymentMethod|null $payment_method The payment method.
 	 * @param string             $paypal_request_id The paypal request id.
+	 * @param string             $user_action The user action.
 	 *
 	 * @return Order
 	 * @throws RuntimeException If the request fails.
@@ -201,7 +202,8 @@ class OrderEndpoint {
 		Payer $payer = null,
 		PaymentToken $payment_token = null,
 		PaymentMethod $payment_method = null,
-		string $paypal_request_id = ''
+		string $paypal_request_id = '',
+		string $user_action = ApplicationContext::USER_ACTION_CONTINUE
 	): Order {
 		$bearer = $this->bearer->bearer();
 		$data   = array(
@@ -213,7 +215,7 @@ class OrderEndpoint {
 				$items
 			),
 			'application_context' => $this->application_context_repository
-				->current_context( $shipping_preference )->to_array(),
+				->current_context( $shipping_preference, $user_action )->to_array(),
 		);
 		if ( $payer && ! empty( $payer->email_address() ) ) {
 			$data['payer'] = $payer->to_array();

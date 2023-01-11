@@ -936,7 +936,7 @@ class OrderEndpointTest extends TestCase
         $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
         $applicationContextRepository
             ->expects('current_context')
-            ->with(Matchers::identicalTo(ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING))
+            ->with(ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING, ApplicationContext::USER_ACTION_CONTINUE)
             ->andReturn($applicationContext);
         $paypalRequestIdRepository = Mockery::mock(PayPalRequestIdRepository::class);
         $paypalRequestIdRepository
@@ -1049,7 +1049,7 @@ class OrderEndpointTest extends TestCase
         $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
         $applicationContextRepository
             ->expects('current_context')
-            ->with(Matchers::identicalTo(ApplicationContext::SHIPPING_PREFERENCE_GET_FROM_FILE))
+            ->with(ApplicationContext::SHIPPING_PREFERENCE_GET_FROM_FILE, ApplicationContext::USER_ACTION_CONTINUE)
             ->andReturn($applicationContext);
         $paypalRequestIdRepository = Mockery::mock(PayPalRequestIdRepository::class);
         $paypalRequestIdRepository
@@ -1139,7 +1139,7 @@ class OrderEndpointTest extends TestCase
         $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
         $applicationContextRepository
             ->expects('current_context')
-            ->with(Matchers::identicalTo(ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING))
+            ->with(ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING, ApplicationContext::USER_ACTION_CONTINUE)
             ->andReturn($applicationContext);
         $paypalRequestIdRepository = Mockery::mock(PayPalRequestIdRepository::class);
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
@@ -1232,7 +1232,7 @@ class OrderEndpointTest extends TestCase
         $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
         $applicationContextRepository
             ->expects('current_context')
-            ->with(Matchers::identicalTo(ApplicationContext::SHIPPING_PREFERENCE_GET_FROM_FILE))
+            ->with(ApplicationContext::SHIPPING_PREFERENCE_GET_FROM_FILE, ApplicationContext::USER_ACTION_CONTINUE)
             ->andReturn($applicationContext);
         $paypalRequestIdRepository = Mockery::mock(PayPalRequestIdRepository::class);
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
