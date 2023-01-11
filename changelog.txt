@@ -1,5 +1,13 @@
 *** Changelog ***
 
+= 2.0.2 - TBD =
+* Fix - Do not call PayPal get order by ID if it does not exist #1029
+* Fix - Type check error conflict with German Market #1056 
+* Enhancement - Remove plugin data after uninstalling #1075
+* Enhancement - Add FraudNet to all payments #1040
+* Enhancement - Update "Standard Payments" tab settings #1065
+* Enhancement - Update PHP 7.2 requirement in all relevant files #1084
+
 = 2.0.1 - 2022-12-13 =
 * Fix - Error while syncing tracking data to PayPal -> Sync GZD Tracking #1020
 * Fix - Fix product price retrieval for variable product buttons #1000
