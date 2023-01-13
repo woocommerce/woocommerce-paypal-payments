@@ -61,7 +61,7 @@
     "prearchive": "rm -rf $npm_package_name.zip",
     "archive": "zip -r $npm_package_name.zip . -x **.git/\\* **node_modules/\\*",
     "postarchive": "yarn run archive:cleanup && rm -rf $npm_package_name && unzip $npm_package_name.zip -d $npm_package_name && rm $npm_package_name.zip && zip -r $npm_package_name.zip $npm_package_name && rm -rf $npm_package_name",
-    "archive:cleanup": "zip -d $npm_package_name.zip .env* .ddev/\\* .editorconfig tests/\\* .github/\\* .psalm/\\* wordpress_org_assets/\\* \\*.DS_Store README.md .gitattributes .gitignore .travis.yml composer.json composer.lock package.json package-lock.json patchwork.json yarn.lock phpunit.xml.dist .phpunit.result.cache phpcs.xml.dist modules/ppcp-button/.babelrc modules/ppcp-button/package.json modules/ppcp-button/webpack.config.js modules/ppcp-button/yarn.lock vendor/\\*/.idea/\\* vendor/\\*/.gitignore vendor/\\*/.gitattributes vendor/\\*/.travis.yml"
+    "archive:cleanup": "zip -d $npm_package_name.zip .env* .ddev/\\* \\*.idea/\\* .editorconfig tests/\\* .github/\\* .psalm/\\* wordpress_org_assets/\\* \\*.DS_Store \\*README.md \\*.gitattributes \\*.gitignore \\*composer.json \\*composer.lock patchwork.json phpunit.xml.dist .phpunit.result.cache phpcs.xml* psalm*.xml* \\*.babelrc \\*package.json \\*webpack.config.js \\*yarn.lock \\*.travis.yml"
   },
   "config": {
     "wp_org_slug": "woocommerce-paypal-payments"
