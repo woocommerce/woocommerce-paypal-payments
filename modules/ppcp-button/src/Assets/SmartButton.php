@@ -718,6 +718,21 @@ class SmartButton implements SmartButtonInterface {
 	}
 
 	/**
+	 * Whether PayPal subscriptions is enabled or not.
+	 *
+	 * @return bool
+	 */
+	private function paypal_subscriptions_enabled(): bool {
+		try {
+			$subscription_handler = $this->settings->get( 'subscription_handler' );
+		} catch ( NotFoundException $exception ) {
+			return false;
+		}
+
+		return $subscription_handler;
+	}
+
+	/**
 	 * Retrieves the 3D Secure contingency settings.
 	 *
 	 * @return string
@@ -748,11 +763,12 @@ class SmartButton implements SmartButtonInterface {
 		$localize = array(
 			'script_attributes'                 => $this->attributes(),
 			'data_client_id'                    => array(
-				'set_attribute'     => ( is_checkout() && $this->dcc_is_enabled() ) || $this->can_save_vault_token,
-				'endpoint'          => \WC_AJAX::get_endpoint( DataClientIdEndpoint::ENDPOINT ),
-				'nonce'             => wp_create_nonce( DataClientIdEndpoint::nonce() ),
-				'user'              => get_current_user_id(),
-				'has_subscriptions' => $this->has_subscriptions(),
+				'set_attribute'                => ( is_checkout() && $this->dcc_is_enabled() ) || $this->can_save_vault_token,
+				'endpoint'                     => \WC_AJAX::get_endpoint( DataClientIdEndpoint::ENDPOINT ),
+				'nonce'                        => wp_create_nonce( DataClientIdEndpoint::nonce() ),
+				'user'                         => get_current_user_id(),
+				'has_subscriptions'            => $this->has_subscriptions(),
+				'paypal_subscriptions_enabled' => $this->paypal_subscriptions_enabled(),
 			),
 			'redirect'                          => wc_get_checkout_url(),
 			'context'                           => $this->context,

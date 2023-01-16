@@ -106,7 +106,10 @@ return array(
 		$product_intent       = $subscription_helper->current_product_is_subscription() ? 'authorize' : $intent;
 		$other_context_intent = $subscription_helper->cart_contains_subscription() ? 'authorize' : $intent;
 
-		if ( $settings->has( 'subscription_handler' ) && $settings->get( 'subscription_handler' ) ) {
+		if (
+			$settings->has( 'subscription_handler' )
+			&& $settings->get( 'subscription_handler' ) === true
+		) {
 			return 'subscription';
 		}
 

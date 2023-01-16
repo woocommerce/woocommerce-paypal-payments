@@ -142,7 +142,19 @@ class SubscriptionModule implements ModuleInterface {
 		add_action(
 			'save_post',
 			function( $product_id ) use ( $c ) {
-				if ( empty( $_POST['_wcsnonce'] ) || ! wp_verify_nonce( $_POST['_wcsnonce'], 'wcs_subscription_meta' ) ) {
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+
+				try {
+					$subscription_handler = $settings->get( 'subscription_handler' );
+				} catch ( NotFoundException $exception ) {
+					return;
+				}
+
+				if (
+					$subscription_handler !== true
+					|| empty( $_POST['_wcsnonce'] )
+					|| ! wp_verify_nonce( wc_clean( wp_unslash( $_POST['_wcsnonce'] ) ), 'wcs_subscription_meta' ) ) {
 					return;
 				}
 
@@ -215,8 +227,8 @@ class SubscriptionModule implements ModuleInterface {
 								'ppcp_subscription',
 								__( 'PayPal Subscription', 'woocommerce-paypal-payments' ),
 								function() use ( $subscription_id, $plan_id ) {
-									echo '<p>Subscription ID: ' . $subscription_id . '</p>';
-									echo '<p>Plan ID: ' . $plan_id . '</p>';
+									echo '<p>Subscription ID: ' . esc_attr( $subscription_id ) . '</p>';
+									echo '<p>Plan ID: ' . esc_attr( $plan_id ) . '</p>';
 								},
 								$post_type,
 								'side',
