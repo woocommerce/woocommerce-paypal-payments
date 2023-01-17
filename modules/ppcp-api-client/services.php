@@ -54,7 +54,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Repository\CustomerRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\OrderRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayeeRepository;
-use WooCommerce\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 return array(
@@ -118,8 +117,7 @@ return array(
 			$container->get( 'api.factory.payment-token' ),
 			$container->get( 'api.factory.payment-token-action-links' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'api.repository.customer' ),
-			$container->get( 'api.repository.paypal-request-id' )
+			$container->get( 'api.repository.customer' )
 		);
 	},
 	'api.endpoint.webhook'                      => static function ( ContainerInterface $container ) : WebhookEndpoint {
@@ -187,7 +185,6 @@ return array(
 		$settings                       = $container->get( 'wcgateway.settings' );
 		$intent                         = $settings->has( 'intent' ) && strtoupper( (string) $settings->get( 'intent' ) ) === 'AUTHORIZE' ? 'AUTHORIZE' : 'CAPTURE';
 		$application_context_repository = $container->get( 'api.repository.application-context' );
-		$paypal_request_id              = $container->get( 'api.repository.paypal-request-id' );
 		$subscription_helper = $container->get( 'subscription.helper' );
 		return new OrderEndpoint(
 			$container->get( 'api.host' ),
@@ -197,7 +194,6 @@ return array(
 			$intent,
 			$logger,
 			$application_context_repository,
-			$paypal_request_id,
 			$subscription_helper,
 			$container->get( 'wcgateway.is-fraudnet-enabled' ),
 			$container->get( 'wcgateway.fraudnet' )
@@ -209,9 +205,6 @@ return array(
 			$container->get( 'api.bearer' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
-	},
-	'api.repository.paypal-request-id'          => static function( ContainerInterface $container ) : PayPalRequestIdRepository {
-		return new PayPalRequestIdRepository();
 	},
 	'api.repository.application-context'        => static function( ContainerInterface $container ) : ApplicationContextRepository {
 

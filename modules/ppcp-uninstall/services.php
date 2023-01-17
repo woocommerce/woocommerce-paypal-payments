@@ -24,7 +24,6 @@ return array(
 	'uninstall.ppcp-all-option-names'           => function( ContainerInterface $container ) : array {
 		return array(
 			$container->get( 'webhook.last-webhook-storage.key' ),
-			PayPalRequestIdRepository::KEY,
 			'woocommerce_ppcp-is_pay_later_settings_migrated',
 			'woocommerce_' . PayPalGateway::ID . '_settings',
 			'woocommerce_' . CreditCardGateway::ID . '_settings',
