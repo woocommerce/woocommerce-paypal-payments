@@ -56,6 +56,7 @@ class CompatModule implements ModuleInterface {
 		add_action( 'admin_enqueue_scripts', array( $asset_loader, 'enqueue' ) );
 
 		$this->migrate_pay_later_settings( $c );
+		$this->migrate_smart_button_settings( $c );
 	}
 
 	/**
@@ -201,19 +202,19 @@ class CompatModule implements ModuleInterface {
 				$disable_funding = $settings->has( 'disable_funding' ) ? $settings->get( 'disable_funding' ) : array();
 
 				$available_messaging_locations = array_keys( $c->get( 'wcgateway.settings.pay-later.messaging-locations' ) );
-				$available_button_locations    = array_merge( $available_messaging_locations, array( 'mini-cart' ) );
+				$available_button_locations    = array_keys( $c->get( 'wcgateway.button.locations' ) );
 
 				if ( in_array( 'credit', $disable_funding, true ) ) {
 					$settings->set( 'pay_later_button_enabled', false );
 				} else {
 					$settings->set( 'pay_later_button_enabled', true );
-					$selected_button_locations = $this->pay_later_selected_locations( $settings, $available_button_locations, 'button' );
+					$selected_button_locations = $this->selected_locations( $settings, $available_button_locations, 'button' );
 					if ( ! empty( $selected_button_locations ) ) {
 						$settings->set( 'pay_later_button_locations', $selected_button_locations );
 					}
 				}
 
-				$selected_messaging_locations = $this->pay_later_selected_locations( $settings, $available_messaging_locations, 'message' );
+				$selected_messaging_locations = $this->selected_locations( $settings, $available_messaging_locations, 'message' );
 
 				if ( ! empty( $selected_messaging_locations ) ) {
 					$settings->set( 'pay_later_messaging_enabled', true );
@@ -261,26 +262,58 @@ class CompatModule implements ModuleInterface {
 	}
 
 	/**
-	 * Finds from old settings the locations, which should be selected for new Pay Later tab settings.
+	 * Finds from old settings the selected locations for given type.
 	 *
 	 * @param Settings $settings The settings.
 	 * @param string[] $all_locations The list of all available locations.
-	 * @param string   $setting The setting: 'button' or 'message'.
+	 * @param string   $type The setting type: 'button' or 'message'.
 	 * @return string[] The list of locations, which should be selected.
-	 * @throws NotFoundException When setting was not found.
 	 */
-	protected function pay_later_selected_locations( Settings $settings, array $all_locations, string $setting ): array {
-		$pay_later_locations = array();
+	protected function selected_locations( Settings $settings, array $all_locations, string $type ): array {
+		$button_locations = array();
 
 		foreach ( $all_locations as $location ) {
 			$location_setting_name_part = $location === 'checkout' ? '' : "_{$location}";
-			$setting_name               = "{$setting}{$location_setting_name_part}_enabled";
+			$setting_name               = "{$type}{$location_setting_name_part}_enabled";
 
 			if ( $settings->has( $setting_name ) && $settings->get( $setting_name ) ) {
-				$pay_later_locations[] = $location;
+				$button_locations[] = $location;
 			}
 		}
 
-		return $pay_later_locations;
+		return $button_locations;
+	}
+
+	/**
+	 * Migrates the old smart button settings.
+	 *
+	 * The migration will be done on plugin upgrade if it hasn't already done.
+	 *
+	 * @param ContainerInterface $c The Container.
+	 */
+	protected function migrate_smart_button_settings( ContainerInterface $c ): void {
+		$is_smart_button_settings_migrated_option_name = 'woocommerce_ppcp-is_smart_button_settings_migrated';
+		$is_smart_button_settings_migrated             = get_option( $is_smart_button_settings_migrated_option_name );
+
+		if ( $is_smart_button_settings_migrated ) {
+			return;
+		}
+
+		add_action(
+			'woocommerce_paypal_payments_gateway_migrate_on_update',
+			function () use ( $c, $is_smart_button_settings_migrated_option_name ) {
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+
+				$available_button_locations = array_keys( $c->get( 'wcgateway.button.locations' ) );
+				$selected_button_locations  = $this->selected_locations( $settings, $available_button_locations, 'button' );
+				if ( ! empty( $selected_button_locations ) ) {
+					$settings->set( 'smart_button_locations', $selected_button_locations );
+					$settings->persist();
+				}
+
+				update_option( $is_smart_button_settings_migrated_option_name, true );
+			}
+		);
 	}
 }

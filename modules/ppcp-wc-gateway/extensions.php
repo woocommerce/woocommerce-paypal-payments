@@ -82,6 +82,8 @@ return array(
 			$logger,
 			$application_context_repository,
 			$subscription_helper,
+			$container->get( 'wcgateway.is-fraudnet-enabled' ),
+			$container->get( 'wcgateway.fraudnet' ),
 			$bn_code
 		);
 	},
@@ -98,12 +100,17 @@ return array(
 	},
 
 	'wcgateway.settings.fields'      => function ( ContainerInterface $container, array $fields ): array {
-		$get_connection_tab_fields = require __DIR__ . '/connection-tab-settings.php';
+		$path_to_settings_fields = __DIR__ . '/src/Settings/Fields';
+
+		$get_paypal_button_fields = require $path_to_settings_fields . '/paypal-smart-button-fields.php';
+		$paypal_button_fields = $get_paypal_button_fields( $container, $fields ) ?? array();
+
+		$get_connection_tab_fields = require $path_to_settings_fields . '/connection-tab-fields.php';
 		$connection_tab_fields = $get_connection_tab_fields( $container, $fields ) ?? array();
 
-		$get_pay_later_tab_fields = require __DIR__ . '/pay-later-tab-settings.php';
+		$get_pay_later_tab_fields = require $path_to_settings_fields . '/pay-later-tab-fields.php';
 		$pay_later_tab_fields = $get_pay_later_tab_fields( $container, $fields ) ?? array();
 
-		return array_merge( $connection_tab_fields, $pay_later_tab_fields );
+		return array_merge( $paypal_button_fields, $connection_tab_fields, $pay_later_tab_fields );
 	},
 );

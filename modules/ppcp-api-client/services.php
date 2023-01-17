@@ -194,7 +194,9 @@ return array(
 			$intent,
 			$logger,
 			$application_context_repository,
-			$subscription_helper
+			$subscription_helper,
+			$container->get( 'wcgateway.is-fraudnet-enabled' ),
+			$container->get( 'wcgateway.fraudnet' )
 		);
 	},
 	'api.endpoint.billing-agreements'           => static function ( ContainerInterface $container ): BillingAgreementsEndpoint {

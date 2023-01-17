@@ -26,7 +26,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\FraudNet;
+use WooCommerce\PayPalCommerce\WcGateway\FraudNet\FraudNet;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PaymentSource;
 use WP_Error;
 

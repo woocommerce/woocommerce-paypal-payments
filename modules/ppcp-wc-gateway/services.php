@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway;
 
+use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
@@ -28,6 +29,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Admin\FeesRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\PaymentStatusOrderDetail;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\RenderAuthorizeAction;
+use WooCommerce\PayPalCommerce\WcGateway\Assets\FraudNetAssets;
 use WooCommerce\PayPalCommerce\WcGateway\Checkout\CheckoutPayPalAddressPreset;
 use WooCommerce\PayPalCommerce\WcGateway\Checkout\DisableGateways;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
@@ -38,9 +40,9 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXO;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXOEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXOGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\FraudNet;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\FraudNetSessionId;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\FraudNetSourceWebsiteId;
+use WooCommerce\PayPalCommerce\WcGateway\FraudNet\FraudNet;
+use WooCommerce\PayPalCommerce\WcGateway\FraudNet\FraudNetSessionId;
+use WooCommerce\PayPalCommerce\WcGateway\FraudNet\FraudNetSourceWebsiteId;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PaymentSourceFactory;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoice;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
@@ -142,7 +144,8 @@ return array(
 	'wcgateway.disabler'                                   => static function ( ContainerInterface $container ): DisableGateways {
 		$session_handler = $container->get( 'session.handler' );
 		$settings       = $container->get( 'wcgateway.settings' );
-		return new DisableGateways( $session_handler, $settings );
+		$settings_status = $container->get( 'wcgateway.settings.status' );
+		return new DisableGateways( $session_handler, $settings, $settings_status );
 	},
 
 	'wcgateway.is-wc-payments-page'                        => static function ( ContainerInterface $container ): bool {
@@ -194,8 +197,8 @@ return array(
 	},
 
 	'wcgateway.settings'                                   => static function ( ContainerInterface $container ): Settings {
-		$messaging_locations = $container->get( 'wcgateway.settings.pay-later.messaging-locations' );
-		return new Settings( array_keys( $messaging_locations ) );
+		$default_button_locations = $container->get( 'wcgateway.button.default-locations' );
+		return new Settings( $default_button_locations );
 	},
 	'wcgateway.notice.connect'                             => static function ( ContainerInterface $container ): ConnectAdminNotice {
 		$state    = $container->get( 'onboarding.state' );
@@ -432,18 +435,8 @@ return array(
 		$onboarding_options_renderer = $container->get( 'onboarding.render-options' );
 		assert( $onboarding_options_renderer instanceof OnboardingOptionsRenderer );
 
-		$render_preview_element = function ( string $id ): string {
-			return '
-<div class="ppcp-preview ppcp-button-preview">
-	<h4>' . __( 'Preview', 'woocommerce-paypal-payments' ) . '</h4>
-	<div id="' . $id . '" class="ppcp-button-preview-inner"></div>
-</div>';
-		};
-
 		$subscription_helper = $container->get( 'subscription.helper' );
 		assert( $subscription_helper instanceof SubscriptionHelper );
-
-		$has_enabled_separate_button_gateways = $container->get( 'wcgateway.settings.has_enabled_separate_button_gateways' );
 
 		$fields              = array(
 			'checkout_settings_heading'              => array(
@@ -710,627 +703,6 @@ return array(
 				'gateway'      => 'paypal',
 			),
 
-			// General button styles.
-			'button_style_heading'                   => array(
-				'heading'      => __( 'Checkout Buttons', 'woocommerce-paypal-payments' ),
-				'type'         => 'ppcp-heading',
-				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-				'description'  => sprintf(
-				// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
-					__( 'Customize the appearance of the PayPal smart buttons on the %1$sCheckout page%2$s.', 'woocommerce-paypal-payments' ),
-					'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#button-on-checkout" target="_blank">',
-					'</a>'
-				),
-			),
-			'button_enabled'                         => array(
-				'title'        => __( 'Enable buttons on Checkout', 'woocommerce-paypal-payments' ),
-				'type'         => 'checkbox',
-				'label'        => __( 'Enable on Checkout', 'woocommerce-paypal-payments' ),
-				'default'      => true,
-				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
-			'button_layout'                          => array(
-				'title'        => __( 'Button Layout', 'woocommerce-paypal-payments' ),
-				'type'         => 'select',
-				'classes'      => $has_enabled_separate_button_gateways ? array( 'hide' ) : array(),
-				'input_class'  => array( 'wc-enhanced-select' ),
-				'default'      => 'vertical',
-				'desc_tip'     => true,
-				'description'  => __(
-					'If additional funding sources are available to the buyer through PayPal, then multiple buttons are displayed in the space provided. Choose "vertical" for a dynamic list of alternative and local payment options, or "horizontal" when space is limited.',
-					'woocommerce-paypal-payments'
-				),
-				'options'      => array(
-					'vertical'   => __( 'Vertical', 'woocommerce-paypal-payments' ),
-					'horizontal' => __( 'Horizontal', 'woocommerce-paypal-payments' ),
-				),
-				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
-			'button_tagline'                         => array(
-				'title'        => __( 'Tagline', 'woocommerce-paypal-payments' ),
-				'type'         => 'checkbox',
-				'default'      => false,
-				'label'        => __( 'Enable tagline', 'woocommerce-paypal-payments' ),
-				'desc_tip'     => true,
-				'description'  => __(
-					'Add the tagline. This line will only show up, if you select a horizontal layout.',
-					'woocommerce-paypal-payments'
-				),
-				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
-			'button_label'                           => array(
-				'title'        => __( 'Button Label', 'woocommerce-paypal-payments' ),
-				'type'         => 'select',
-				'class'        => array(),
-				'input_class'  => array( 'wc-enhanced-select' ),
-				/**
-				 * Returns default label ID of the PayPal button.
-				 */
-				'default'      => apply_filters( 'woocommerce_paypal_payments_button_label_default', 'paypal' ),
-				'desc_tip'     => true,
-				'description'  => __(
-					'This controls the label on the primary button.',
-					'woocommerce-paypal-payments'
-				),
-				'options'      => array(
-					'paypal'   => __( 'PayPal', 'woocommerce-paypal-payments' ),
-					'checkout' => __( 'Checkout', 'woocommerce-paypal-payments' ),
-					'buynow'   => __( 'PayPal Buy Now', 'woocommerce-paypal-payments' ),
-					'pay'      => __( 'Pay with PayPal', 'woocommerce-paypal-payments' ),
-				),
-				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
-			'button_color'                           => array(
-				'title'        => __( 'Color', 'woocommerce-paypal-payments' ),
-				'type'         => 'select',
-				'class'        => array(),
-				'input_class'  => array( 'wc-enhanced-select' ),
-				'default'      => 'gold',
-				'desc_tip'     => true,
-				'description'  => __(
-					'Controls the background color of the primary button. Use "Gold" to leverage PayPal\'s recognition and preference, or change it to match your site design or aesthetic.',
-					'woocommerce-paypal-payments'
-				),
-				'options'      => array(
-					'gold'   => __( 'Gold (Recommended)', 'woocommerce-paypal-payments' ),
-					'blue'   => __( 'Blue', 'woocommerce-paypal-payments' ),
-					'silver' => __( 'Silver', 'woocommerce-paypal-payments' ),
-					'black'  => __( 'Black', 'woocommerce-paypal-payments' ),
-				),
-				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
-			'button_shape'                           => array(
-				'title'        => __( 'Shape', 'woocommerce-paypal-payments' ),
-				'type'         => 'select',
-				'class'        => array(),
-				'input_class'  => array( 'wc-enhanced-select' ),
-				'default'      => 'rect',
-				'desc_tip'     => true,
-				'description'  => __(
-					'The pill-shaped button\'s unique and powerful shape signifies PayPal in people\'s minds. Use the rectangular button as an alternative when pill-shaped buttons might pose design challenges.',
-					'woocommerce-paypal-payments'
-				),
-				'options'      => array(
-					'pill' => __( 'Pill', 'woocommerce-paypal-payments' ),
-					'rect' => __( 'Rectangle', 'woocommerce-paypal-payments' ),
-				),
-				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
-			'button_preview'                         => array(
-				'type'         => 'ppcp-text',
-				'text'         => $render_preview_element( 'ppcpCheckoutButtonPreview' ),
-				'screens'      => array(
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
-
-			// Single product page.
-			'button_product_heading'                 => array(
-				'heading'      => __( 'Single Product Page Buttons', 'woocommerce-paypal-payments' ),
-				'type'         => 'ppcp-heading',
-				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-				'description'  => sprintf(
-				// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
-					__( 'Customize the appearance of the PayPal smart buttons on the %1$sSingle Product Page%2$s.', 'woocommerce-paypal-payments' ),
-					'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#button-on-single-product" target="_blank">',
-					'</a>'
-				),
-			),
-			'button_product_enabled'                 => array(
-				'title'        => __( 'Enable buttons on Single Product', 'woocommerce-paypal-payments' ),
-				'type'         => 'checkbox',
-				'label'        => __( 'Enable on Single Product', 'woocommerce-paypal-payments' ),
-				'default'      => true,
-				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
-			'button_product_layout'                  => array(
-				'title'        => __( 'Button Layout', 'woocommerce-paypal-payments' ),
-				'type'         => 'select',
-				'class'        => array(),
-				'input_class'  => array( 'wc-enhanced-select' ),
-				'default'      => 'horizontal',
-				'desc_tip'     => true,
-				'description'  => __(
-					'If additional funding sources are available to the buyer through PayPal, such as Venmo, then multiple buttons are displayed in the space provided. Choose "vertical" for a dynamic list of alternative and local payment options, or "horizontal" when space is limited.',
-					'woocommerce-paypal-payments'
-				),
-				'options'      => array(
-					'vertical'   => __( 'Vertical', 'woocommerce-paypal-payments' ),
-					'horizontal' => __( 'Horizontal', 'woocommerce-paypal-payments' ),
-				),
-				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
-			'button_product_tagline'                 => array(
-				'title'        => __( 'Tagline', 'woocommerce-paypal-payments' ),
-				'type'         => 'checkbox',
-				'label'        => __( 'Enable tagline', 'woocommerce-paypal-payments' ),
-				'default'      => false,
-				'desc_tip'     => true,
-				'description'  => __(
-					'Add the tagline. This line will only show up, if you select a horizontal layout.',
-					'woocommerce-paypal-payments'
-				),
-				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
-			'button_product_label'                   => array(
-				'title'        => __( 'Button Label', 'woocommerce-paypal-payments' ),
-				'type'         => 'select',
-				'class'        => array(),
-				'input_class'  => array( 'wc-enhanced-select' ),
-				/**
-				 * Returns default label ID of the PayPal button on product pages.
-				 */
-				'default'      => apply_filters( 'woocommerce_paypal_payments_button_product_label_default', 'paypal' ),
-				'desc_tip'     => true,
-				'description'  => __(
-					'This controls the label on the primary button.',
-					'woocommerce-paypal-payments'
-				),
-				'options'      => array(
-					'paypal'   => __( 'PayPal', 'woocommerce-paypal-payments' ),
-					'checkout' => __( 'Checkout', 'woocommerce-paypal-payments' ),
-					'buynow'   => __( 'PayPal Buy Now', 'woocommerce-paypal-payments' ),
-					'pay'      => __( 'Pay with PayPal', 'woocommerce-paypal-payments' ),
-				),
-				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
-			'button_product_color'                   => array(
-				'title'        => __( 'Color', 'woocommerce-paypal-payments' ),
-				'type'         => 'select',
-				'class'        => array(),
-				'input_class'  => array( 'wc-enhanced-select' ),
-				'default'      => 'gold',
-				'desc_tip'     => true,
-				'description'  => __(
-					'Controls the background color of the primary button. Use "Gold" to leverage PayPal\'s recognition and preference, or change it to match your site design or aesthetic.',
-					'woocommerce-paypal-payments'
-				),
-				'options'      => array(
-					'gold'   => __( 'Gold (Recommended)', 'woocommerce-paypal-payments' ),
-					'blue'   => __( 'Blue', 'woocommerce-paypal-payments' ),
-					'silver' => __( 'Silver', 'woocommerce-paypal-payments' ),
-					'black'  => __( 'Black', 'woocommerce-paypal-payments' ),
-				),
-				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
-			'button_product_shape'                   => array(
-				'title'        => __( 'Shape', 'woocommerce-paypal-payments' ),
-				'type'         => 'select',
-				'class'        => array(),
-				'input_class'  => array( 'wc-enhanced-select' ),
-				'default'      => 'rect',
-				'desc_tip'     => true,
-				'description'  => __(
-					'The pill-shaped button\'s unique and powerful shape signifies PayPal in people\'s minds. Use the rectangular button as an alternative when pill-shaped buttons might pose design challenges.',
-					'woocommerce-paypal-payments'
-				),
-				'options'      => array(
-					'pill' => __( 'Pill', 'woocommerce-paypal-payments' ),
-					'rect' => __( 'Rectangle', 'woocommerce-paypal-payments' ),
-				),
-				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
-			'button_product_preview'                 => array(
-				'type'         => 'ppcp-text',
-				'text'         => $render_preview_element( 'ppcpProductButtonPreview' ),
-				'screens'      => array(
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
-
-			// Cart settings.
-			'button_cart_heading'                    => array(
-				'heading'      => __( 'Cart Buttons', 'woocommerce-paypal-payments' ),
-				'type'         => 'ppcp-heading',
-				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-				'description'  => sprintf(
-				// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
-					__( 'Customize the appearance of the PayPal smart buttons %1$son the Cart page%2$s.', 'woocommerce-paypal-payments' ),
-					'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#button-on-cart" target="_blank">',
-					'</a>'
-				),
-			),
-			'button_cart_enabled'                    => array(
-				'title'        => __( 'Enable buttons on Cart', 'woocommerce-paypal-payments' ),
-				'type'         => 'checkbox',
-				'label'        => __( 'Enable on Cart', 'woocommerce-paypal-payments' ),
-				'default'      => true,
-				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
-			'button_cart_layout'                     => array(
-				'title'        => __( 'Button Layout', 'woocommerce-paypal-payments' ),
-				'type'         => 'select',
-				'class'        => array(),
-				'input_class'  => array( 'wc-enhanced-select' ),
-				'default'      => 'horizontal',
-				'desc_tip'     => true,
-				'description'  => __(
-					'If additional funding sources are available to the buyer through PayPal, such as Venmo, then multiple buttons are displayed in the space provided. Choose "vertical" for a dynamic list of alternative and local payment options, or "horizontal" when space is limited.',
-					'woocommerce-paypal-payments'
-				),
-				'options'      => array(
-					'vertical'   => __( 'Vertical', 'woocommerce-paypal-payments' ),
-					'horizontal' => __( 'Horizontal', 'woocommerce-paypal-payments' ),
-				),
-				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
-			'button_cart_tagline'                    => array(
-				'title'        => __( 'Tagline', 'woocommerce-paypal-payments' ),
-				'type'         => 'checkbox',
-				'label'        => __( 'Enable tagline', 'woocommerce-paypal-payments' ),
-				'default'      => false,
-				'desc_tip'     => true,
-				'description'  => __(
-					'Add the tagline. This line will only show up, if you select a horizontal layout.',
-					'woocommerce-paypal-payments'
-				),
-				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
-			'button_cart_label'                      => array(
-				'title'        => __( 'Button Label', 'woocommerce-paypal-payments' ),
-				'type'         => 'select',
-				'class'        => array(),
-				'input_class'  => array( 'wc-enhanced-select' ),
-				/**
-				 * Returns default label ID of the PayPal button in cart.
-				 */
-				'default'      => apply_filters( 'woocommerce_paypal_payments_button_cart_label_default', 'paypal' ),
-				'desc_tip'     => true,
-				'description'  => __(
-					'This controls the label on the primary button.',
-					'woocommerce-paypal-payments'
-				),
-				'options'      => array(
-					'paypal'   => __( 'PayPal', 'woocommerce-paypal-payments' ),
-					'checkout' => __( 'Checkout', 'woocommerce-paypal-payments' ),
-					'buynow'   => __( 'PayPal Buy Now', 'woocommerce-paypal-payments' ),
-					'pay'      => __( 'Pay with PayPal', 'woocommerce-paypal-payments' ),
-				),
-				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
-			'button_cart_color'                      => array(
-				'title'        => __( 'Color', 'woocommerce-paypal-payments' ),
-				'type'         => 'select',
-				'class'        => array(),
-				'input_class'  => array( 'wc-enhanced-select' ),
-				'default'      => 'gold',
-				'desc_tip'     => true,
-				'description'  => __(
-					'Controls the background color of the primary button. Use "Gold" to leverage PayPal\'s recognition and preference, or change it to match your site design or aesthetic.',
-					'woocommerce-paypal-payments'
-				),
-				'options'      => array(
-					'gold'   => __( 'Gold (Recommended)', 'woocommerce-paypal-payments' ),
-					'blue'   => __( 'Blue', 'woocommerce-paypal-payments' ),
-					'silver' => __( 'Silver', 'woocommerce-paypal-payments' ),
-					'black'  => __( 'Black', 'woocommerce-paypal-payments' ),
-				),
-				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
-			'button_cart_shape'                      => array(
-				'title'        => __( 'Shape', 'woocommerce-paypal-payments' ),
-				'type'         => 'select',
-				'class'        => array(),
-				'input_class'  => array( 'wc-enhanced-select' ),
-				'default'      => 'rect',
-				'desc_tip'     => true,
-				'description'  => __(
-					'The pill-shaped button\'s unique and powerful shape signifies PayPal in people\'s minds. Use the rectangular button as an alternative when pill-shaped buttons might pose design challenges.',
-					'woocommerce-paypal-payments'
-				),
-				'options'      => array(
-					'pill' => __( 'Pill', 'woocommerce-paypal-payments' ),
-					'rect' => __( 'Rectangle', 'woocommerce-paypal-payments' ),
-				),
-				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
-			'button_cart_preview'                    => array(
-				'type'         => 'ppcp-text',
-				'text'         => $render_preview_element( 'ppcpCartButtonPreview' ),
-				'screens'      => array(
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
-
-			// Mini cart settings.
-			'button_mini-cart_heading'               => array(
-				'heading'      => __( 'Mini Cart Buttons', 'woocommerce-paypal-payments' ),
-				'type'         => 'ppcp-heading',
-				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-				'description'  => sprintf(
-				// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
-					__( 'Customize the appearance of the PayPal smart buttons %1$son the Mini Cart page%2$s.', 'woocommerce-paypal-payments' ),
-					'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#button-on-mini-cart" target="_blank">',
-					'</a>'
-				),
-			),
-			'button_mini-cart_enabled'               => array(
-				'title'        => __( 'Enable buttons on Mini Cart', 'woocommerce-paypal-payments' ),
-				'type'         => 'checkbox',
-				'label'        => __( 'Enable on Mini Cart', 'woocommerce-paypal-payments' ),
-				'default'      => false,
-				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
-			'button_mini-cart_layout'                => array(
-				'title'        => __( 'Button Layout', 'woocommerce-paypal-payments' ),
-				'type'         => 'select',
-				'class'        => array(),
-				'input_class'  => array( 'wc-enhanced-select' ),
-				'default'      => 'vertical',
-				'desc_tip'     => true,
-				'description'  => __(
-					'If additional funding sources are available to the buyer through PayPal, such as Venmo, then multiple buttons are displayed in the space provided. Choose "vertical" for a dynamic list of alternative and local payment options, or "horizontal" when space is limited.',
-					'woocommerce-paypal-payments'
-				),
-				'options'      => array(
-					'vertical'   => __( 'Vertical', 'woocommerce-paypal-payments' ),
-					'horizontal' => __( 'Horizontal', 'woocommerce-paypal-payments' ),
-				),
-				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
-			'button_mini-cart_tagline'               => array(
-				'title'        => __( 'Tagline', 'woocommerce-paypal-payments' ),
-				'type'         => 'checkbox',
-				'label'        => __( 'Enable tagline', 'woocommerce-paypal-payments' ),
-				'default'      => false,
-				'desc_tip'     => true,
-				'description'  => __(
-					'Add the tagline. This line will only show up, if you select a horizontal layout.',
-					'woocommerce-paypal-payments'
-				),
-				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
-			'button_mini-cart_label'                 => array(
-				'title'        => __( 'Button Label', 'woocommerce-paypal-payments' ),
-				'type'         => 'select',
-				'class'        => array(),
-				'input_class'  => array( 'wc-enhanced-select' ),
-				/**
-				 * Returns default label ID of the PayPal button in mini cart.
-				 */
-				'default'      => apply_filters( 'woocommerce_paypal_payments_button_mini_cart_label_default', 'paypal' ),
-				'desc_tip'     => true,
-				'description'  => __(
-					'This controls the label on the primary button.',
-					'woocommerce-paypal-payments'
-				),
-				'options'      => array(
-					'paypal'   => __( 'PayPal', 'woocommerce-paypal-payments' ),
-					'checkout' => __( 'Checkout', 'woocommerce-paypal-payments' ),
-					'buynow'   => __( 'PayPal Buy Now', 'woocommerce-paypal-payments' ),
-					'pay'      => __( 'Pay with PayPal', 'woocommerce-paypal-payments' ),
-				),
-				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
-			'button_mini-cart_color'                 => array(
-				'title'        => __( 'Color', 'woocommerce-paypal-payments' ),
-				'type'         => 'select',
-				'class'        => array(),
-				'input_class'  => array( 'wc-enhanced-select' ),
-				'default'      => 'gold',
-				'desc_tip'     => true,
-				'description'  => __(
-					'Controls the background color of the primary button. Use "Gold" to leverage PayPal\'s recognition and preference, or change it to match your site design or aesthetic.',
-					'woocommerce-paypal-payments'
-				),
-				'options'      => array(
-					'gold'   => __( 'Gold (Recommended)', 'woocommerce-paypal-payments' ),
-					'blue'   => __( 'Blue', 'woocommerce-paypal-payments' ),
-					'silver' => __( 'Silver', 'woocommerce-paypal-payments' ),
-					'black'  => __( 'Black', 'woocommerce-paypal-payments' ),
-				),
-				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
-			'button_mini-cart_shape'                 => array(
-				'title'        => __( 'Shape', 'woocommerce-paypal-payments' ),
-				'type'         => 'select',
-				'class'        => array(),
-				'input_class'  => array( 'wc-enhanced-select' ),
-				'default'      => 'rect',
-				'desc_tip'     => true,
-				'description'  => __(
-					'The pill-shaped button\'s unique and powerful shape signifies PayPal in people\'s minds. Use the rectangular button as an alternative when pill-shaped buttons might pose design challenges.',
-					'woocommerce-paypal-payments'
-				),
-				'options'      => array(
-					'pill' => __( 'Pill', 'woocommerce-paypal-payments' ),
-					'rect' => __( 'Rectangle', 'woocommerce-paypal-payments' ),
-				),
-				'screens'      => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
-			'button_mini-cart_height'                => array(
-				'title'             => __( 'Button Height', 'woocommerce-paypal-payments' ),
-				'type'              => 'number',
-				'default'           => '35',
-				'custom_attributes' => array(
-					'min' => 25,
-					'max' => 55,
-				),
-				'desc_tip'          => true,
-				'description'       => __( 'Add a value from 25 to 55.', 'woocommerce-paypal-payments' ),
-				'screens'           => array(
-					State::STATE_START,
-					State::STATE_ONBOARDED,
-				),
-				'requirements'      => array(),
-				'gateway'           => 'paypal',
-			),
-			'button_mini-cart_preview'               => array(
-				'type'         => 'ppcp-text',
-				'text'         => $render_preview_element( 'ppcpMiniCartButtonPreview' ),
-				'screens'      => array(
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
-
 			'disable_cards'                          => array(
 				'title'        => __( 'Disable specific credit cards', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-multiselect',
@@ -1571,7 +943,7 @@ return array(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
 			$container->get( 'api.factory.order' ),
-			$container->get( 'wcgateway.pay-upon-invoice-fraudnet' ),
+			$container->get( 'wcgateway.fraudnet' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
@@ -1592,15 +964,15 @@ return array(
 			$container->get( 'wcgateway.processor.refunds' )
 		);
 	},
-	'wcgateway.pay-upon-invoice-fraudnet-session-id'       => static function ( ContainerInterface $container ): FraudNetSessionId {
+	'wcgateway.fraudnet-session-id'                        => static function ( ContainerInterface $container ): FraudNetSessionId {
 		return new FraudNetSessionId();
 	},
-	'wcgateway.pay-upon-invoice-fraudnet-source-website-id' => static function ( ContainerInterface $container ): FraudNetSourceWebsiteId {
+	'wcgateway.fraudnet-source-website-id'                 => static function ( ContainerInterface $container ): FraudNetSourceWebsiteId {
 		return new FraudNetSourceWebsiteId( $container->get( 'api.merchant_id' ) );
 	},
-	'wcgateway.pay-upon-invoice-fraudnet'                  => static function ( ContainerInterface $container ): FraudNet {
-		$session_id = $container->get( 'wcgateway.pay-upon-invoice-fraudnet-session-id' );
-		$source_website_id = $container->get( 'wcgateway.pay-upon-invoice-fraudnet-source-website-id' );
+	'wcgateway.fraudnet'                                   => static function ( ContainerInterface $container ): FraudNet {
+		$session_id = $container->get( 'wcgateway.fraudnet-session-id' );
+		$source_website_id = $container->get( 'wcgateway.fraudnet-source-website-id' );
 		return new FraudNet(
 			(string) $session_id(),
 			(string) $source_website_id()
@@ -1621,21 +993,15 @@ return array(
 	},
 	'wcgateway.pay-upon-invoice'                           => static function ( ContainerInterface $container ): PayUponInvoice {
 		return new PayUponInvoice(
-			$container->get( 'wcgateway.url' ),
-			$container->get( 'wcgateway.pay-upon-invoice-fraudnet' ),
 			$container->get( 'wcgateway.pay-upon-invoice-order-endpoint' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'wcgateway.settings' ),
-			$container->get( 'onboarding.environment' ),
-			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'onboarding.state' ),
-			$container->get( 'wcgateway.is-ppcp-settings-page' ),
 			$container->get( 'wcgateway.current-ppcp-settings-page-id' ),
 			$container->get( 'wcgateway.pay-upon-invoice-product-status' ),
 			$container->get( 'wcgateway.pay-upon-invoice-helper' ),
 			$container->get( 'wcgateway.checkout-helper' ),
-			$container->get( 'api.factory.capture' ),
-			$container->get( 'session.handler' )
+			$container->get( 'api.factory.capture' )
 		);
 	},
 	'wcgateway.oxxo'                                       => static function( ContainerInterface $container ): OXXO {
@@ -1893,40 +1259,118 @@ return array(
 	'dcc.status-cache'                                     => static function( ContainerInterface $container ): Cache {
 		return new Cache( 'ppcp-paypal-dcc-status-cache' );
 	},
-	'wcgateway.settings.pay-later.messaging-locations'     => static function( ContainerInterface $container ): array {
+	'wcgateway.button.locations'                           => static function( ContainerInterface $container ): array {
 		return array(
-			'product'  => 'Single Product',
-			'cart'     => 'Cart',
-			'checkout' => 'Checkout',
+			'product'   => 'Single Product',
+			'cart'      => 'Cart',
+			'checkout'  => 'Checkout',
+			'mini-cart' => 'Mini Cart',
 		);
 	},
+	'wcgateway.settings.pay-later.messaging-locations'     => static function( ContainerInterface $container ): array {
+		$button_locations = $container->get( 'wcgateway.button.locations' );
+		unset( $button_locations['mini-cart'] );
+		return $button_locations;
+	},
+	'wcgateway.button.default-locations'                   => static function( ContainerInterface $container ): array {
+		return array_keys( $container->get( 'wcgateway.settings.pay-later.messaging-locations' ) );
+	},
 	'wcgateway.settings.pay-later.button-locations'        => static function( ContainerInterface $container ): array {
-		$button_locations = array();
-
 		$settings = $container->get( 'wcgateway.settings' );
 		assert( $settings instanceof Settings );
 
-		$is_product_buttons_enabled = $settings->has( 'button_product_enabled' ) && $settings->get( 'button_product_enabled' );
-		$is_mini_cart_buttons_enabled = $settings->has( 'button_mini-cart_enabled' ) && $settings->get( 'button_mini-cart_enabled' );
-		$is_cart_buttons_enabled = $settings->has( 'button_cart_enabled' ) && $settings->get( 'button_cart_enabled' );
-		$is_checkout_buttons_enabled = $settings->has( 'button_enabled' ) && $settings->get( 'button_enabled' );
+		$button_locations = $container->get( 'wcgateway.button.locations' );
+		unset( $button_locations['mini-cart'] );
 
-		if ( $is_product_buttons_enabled ) {
-			$button_locations['product'] = 'Single Product';
+		$smart_button_selected_locations = $settings->has( 'smart_button_locations' ) ? $settings->get( 'smart_button_locations' ) : array();
+		$pay_later_button_locations = array();
+
+		if ( empty( $smart_button_selected_locations ) ) {
+			return $pay_later_button_locations;
 		}
 
-		if ( $is_mini_cart_buttons_enabled ) {
-			$button_locations['mini-cart'] = 'Mini Cart';
+		foreach ( $button_locations as $location_key => $location ) {
+			if ( ! in_array( $location_key, $smart_button_selected_locations, true ) ) {
+				continue;
+			}
+
+			$pay_later_button_locations[ $location_key ] = $location;
 		}
 
-		if ( $is_cart_buttons_enabled ) {
-			$button_locations['cart'] = 'Cart';
+		return $pay_later_button_locations;
+	},
+	'wcgateway.ppcp-gateways'                              => static function ( ContainerInterface $container ): array {
+		return array(
+			PayPalGateway::ID,
+			CreditCardGateway::ID,
+			PayUponInvoiceGateway::ID,
+			CardButtonGateway::ID,
+			OXXOGateway::ID,
+		);
+	},
+	'wcgateway.enabled-ppcp-gateways'                      => static function ( ContainerInterface $container ): array {
+		$available_gateways = WC()->payment_gateways->get_available_payment_gateways();
+		$ppcp_gateways = $container->get( 'wcgateway.ppcp-gateways' );
+		$enabled_ppcp_gateways = array();
+
+		foreach ( $ppcp_gateways as $gateway ) {
+			if ( ! isset( $available_gateways[ $gateway ] ) ) {
+				continue;
+			}
+			$enabled_ppcp_gateways[] = $gateway;
 		}
 
-		if ( $is_checkout_buttons_enabled ) {
-			$button_locations['checkout'] = 'Checkout';
-		}
+		return $enabled_ppcp_gateways;
+	},
+	'wcgateway.is-paypal-continuation'                     => static function ( ContainerInterface $container ): bool {
+		$session_handler              = $container->get( 'session.handler' );
+		assert( $session_handler instanceof SessionHandler );
 
-		return $button_locations;
+		$order = $session_handler->order();
+		if ( ! $order ) {
+			return false;
+		}
+		$source = $order->payment_source();
+		if ( $source && $source->card() ) {
+			return false; // Ignore for DCC.
+		}
+		if ( 'card' === $session_handler->funding_source() ) {
+			return false; // Ignore for card buttons.
+		}
+		return true;
+	},
+	'wcgateway.current-context'                            => static function ( ContainerInterface $container ): string {
+		$context = 'mini-cart';
+		if ( is_product() || wc_post_content_has_shortcode( 'product_page' ) ) {
+			$context = 'product';
+		}
+		if ( is_cart() ) {
+			$context = 'cart';
+		}
+		if ( is_checkout() && ! $container->get( 'wcgateway.is-paypal-continuation' ) ) {
+			$context = 'checkout';
+		}
+		if ( is_checkout_pay_page() ) {
+			$context = 'pay-now';
+		}
+		return $context;
+	},
+	'wcgateway.is-fraudnet-enabled'                        => static function ( ContainerInterface $container ): bool {
+		$settings      = $container->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings );
+
+		return $settings->has( 'fraudnet_enabled' ) && $settings->get( 'fraudnet_enabled' );
+	},
+	'wcgateway.fraudnet-assets'                            => function( ContainerInterface $container ) : FraudNetAssets {
+		return new FraudNetAssets(
+			$container->get( 'wcgateway.url' ),
+			$container->get( 'ppcp.asset-version' ),
+			$container->get( 'wcgateway.fraudnet' ),
+			$container->get( 'onboarding.environment' ),
+			$container->get( 'wcgateway.settings' ),
+			$container->get( 'wcgateway.enabled-ppcp-gateways' ),
+			$container->get( 'wcgateway.current-context' ),
+			$container->get( 'wcgateway.is-fraudnet-enabled' )
+		);
 	},
 );

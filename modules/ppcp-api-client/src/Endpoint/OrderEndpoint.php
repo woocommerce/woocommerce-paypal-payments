@@ -29,6 +29,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\WcGateway\FraudNet\FraudNet;
 use WP_Error;
 
 /**
@@ -95,6 +96,20 @@ class OrderEndpoint {
 	private $application_context_repository;
 
 	/**
+	 * True if FraudNet support is enabled in settings, otherwise false.
+	 *
+	 * @var bool
+	 */
+	protected $is_fraudnet_enabled;
+
+	/**
+	 * The FraudNet entity.
+	 *
+	 * @var FraudNet
+	 */
+	protected $fraudnet;
+
+	/**
 	 * The BN Code.
 	 *
 	 * @var string
@@ -112,6 +127,8 @@ class OrderEndpoint {
 	 * @param LoggerInterface              $logger The logger.
 	 * @param ApplicationContextRepository $application_context_repository The application context repository.
 	 * @param SubscriptionHelper           $subscription_helper The subscription helper.
+	 * @param bool                         $is_fraudnet_enabled true if FraudNet support is enabled in settings, otherwise false.
+	 * @param FraudNet                     $fraudnet The FraudNet entity.
 	 * @param string                       $bn_code The BN Code.
 	 */
 	public function __construct(
@@ -123,6 +140,8 @@ class OrderEndpoint {
 		LoggerInterface $logger,
 		ApplicationContextRepository $application_context_repository,
 		SubscriptionHelper $subscription_helper,
+		bool $is_fraudnet_enabled,
+		FraudNet $fraudnet,
 		string $bn_code = ''
 	) {
 
@@ -134,7 +153,9 @@ class OrderEndpoint {
 		$this->logger                         = $logger;
 		$this->application_context_repository = $application_context_repository;
 		$this->bn_code                        = $bn_code;
+		$this->is_fraudnet_enabled            = $is_fraudnet_enabled;
 		$this->subscription_helper            = $subscription_helper;
+		$this->fraudnet                       = $fraudnet;
 	}
 
 	/**
@@ -210,6 +231,11 @@ class OrderEndpoint {
 		if ( $this->bn_code ) {
 			$args['headers']['PayPal-Partner-Attribution-Id'] = $this->bn_code;
 		}
+
+		if ( $this->is_fraudnet_enabled ) {
+			$args['headers']['PayPal-Client-Metadata-Id'] = $this->fraudnet->session_id();
+		}
+
 		$response = $this->request( $url, $args );
 		if ( is_wp_error( $response ) ) {
 			$error = new RuntimeException(
@@ -425,14 +451,8 @@ class OrderEndpoint {
 			$error = new RuntimeException(
 				__( 'Could not retrieve order.', 'woocommerce-paypal-payments' )
 			);
-			$this->logger->log(
-				'warning',
-				$error->getMessage(),
-				array(
-					'args'     => $args,
-					'response' => $response,
-				)
-			);
+			$this->logger->warning( $error->getMessage() );
+
 			throw $error;
 		}
 		$json        = json_decode( $response['body'] );
@@ -467,8 +487,8 @@ class OrderEndpoint {
 			);
 			throw $error;
 		}
-		$order = $this->order_factory->from_paypal_response( $json );
-		return $order;
+
+		return $this->order_factory->from_paypal_response( $json );
 	}
 
 	/**
