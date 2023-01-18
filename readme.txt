@@ -85,6 +85,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Fix - Do not call PayPal get order by ID if it does not exist #1029
 * Fix - Type check error conflict with German Market #1056 
 * Fix - Backend Storage for the PayPalRequestIdRepository does not scale #983
+* Fix - Ensure WC()->payment_gateways is not null #1128
 * Enhancement - Remove plugin data after uninstalling #1075
 * Enhancement - Add FraudNet to all payments #1040
 * Enhancement - Update "Standard Payments" tab settings #1065
