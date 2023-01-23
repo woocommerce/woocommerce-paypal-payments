@@ -236,6 +236,10 @@ class OrderEndpoint {
 			$args['headers']['PayPal-Client-Metadata-Id'] = $this->fraudnet->session_id();
 		}
 
+		if ( isset( $data['payment_source'] ) ) {
+			$args['headers']['PayPal-Request-Id'] = uniqid( 'ppcp-', true );
+		}
+
 		$response = $this->request( $url, $args );
 		if ( is_wp_error( $response ) ) {
 			$error = new RuntimeException(
