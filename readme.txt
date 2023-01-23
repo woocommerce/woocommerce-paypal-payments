@@ -90,6 +90,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Enhancement - Add FraudNet to all payments #1040
 * Enhancement - Update "Standard Payments" tab settings #1065
 * Enhancement - Update PHP 7.2 requirement in all relevant files #1084
+* Enhancement - When PUI is enabled FraudNet should be also enabled #1129
 
 = 2.0.1 =
 * Fix - Error while syncing tracking data to PayPal -> Sync GZD Tracking #1020

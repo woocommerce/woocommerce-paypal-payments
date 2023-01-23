@@ -411,6 +411,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			),
 			'requirements' => array(),
 			'gateway'      => Settings::CONNECTION_TAB_ID,
+			'input_class'  => $container->get( 'wcgateway.settings.should-disable-fraudnet-checkbox' ) ? array( 'ppcp-disabled-checkbox' ) : array(),
 		),
 
 		'credentials_integration_configuration_heading' => array(
