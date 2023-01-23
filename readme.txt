@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, e-commerce, store, sales, sell, 
 Requires at least: 5.3
 Tested up to: 6.1
 Requires PHP: 7.2
-Stable tag: 2.0.1
+Stable tag: 2.0.2
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -80,6 +80,16 @@ Follow the steps below to connect the plugin to your PayPal account:
 6. Main settings screen.
 
 == Changelog ==
+
+= 2.0.2 =
+* Fix - Do not call PayPal get order by ID if it does not exist #1029
+* Fix - Type check error conflict with German Market #1056 
+* Fix - Backend Storage for the PayPalRequestIdRepository does not scale #983
+* Fix - Ensure WC()->payment_gateways is not null #1128
+* Enhancement - Remove plugin data after uninstalling #1075
+* Enhancement - Add FraudNet to all payments #1040
+* Enhancement - Update "Standard Payments" tab settings #1065
+* Enhancement - Update PHP 7.2 requirement in all relevant files #1084
 
 = 2.0.1 =
 * Fix - Error while syncing tracking data to PayPal -> Sync GZD Tracking #1020
