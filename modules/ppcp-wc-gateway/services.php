@@ -1147,6 +1147,16 @@ return array(
 
 		return false;
 	},
+	'wcgateway.settings.should-disable-fraudnet-checkbox'  => static function( ContainerInterface $container ): bool {
+		$pui_helper = $container->get( 'wcgateway.pay-upon-invoice-helper' );
+		assert( $pui_helper instanceof PayUponInvoiceHelper );
+
+		if ( $pui_helper->is_pui_gateway_enabled() ) {
+			return true;
+		}
+
+		return false;
+	},
 	'wcgateway.settings.tracking-label'                    => static function ( ContainerInterface $container ): string {
 		$tracking_label = sprintf(
 		// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
