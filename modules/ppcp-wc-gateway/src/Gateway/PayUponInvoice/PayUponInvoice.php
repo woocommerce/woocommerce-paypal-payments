@@ -139,6 +139,11 @@ class PayUponInvoice {
 	 * @throws NotFoundException When setting is not found.
 	 */
 	public function init(): void {
+		if ( $this->pui_helper->is_pui_gateway_enabled() ) {
+			$this->settings->set( 'fraudnet_enabled', true );
+			$this->settings->persist();
+		}
+
 		add_filter(
 			'ppcp_partner_referrals_data',
 			function ( array $data ): array {
