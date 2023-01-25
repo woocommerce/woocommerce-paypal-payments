@@ -26,6 +26,13 @@ class PaymentTokensMigration {
 	private $payment_token_factory;
 
 	/**
+	 * The payment token repository.
+	 *
+	 * @var PaymentTokenRepository
+	 */
+	private $payment_token_repository;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -35,15 +42,18 @@ class PaymentTokensMigration {
 	/**
 	 * PaymentTokensMigration constructor.
 	 *
-	 * @param PaymentTokenFactory $payment_token_factory The payment token factory.
-	 * @param LoggerInterface     $logger The logger.
+	 * @param PaymentTokenFactory    $payment_token_factory The payment token factory.
+	 * @param PaymentTokenRepository $payment_token_repository The payment token repository.
+	 * @param LoggerInterface        $logger The logger.
 	 */
 	public function __construct(
 		PaymentTokenFactory $payment_token_factory,
+		PaymentTokenRepository $payment_token_repository,
 		LoggerInterface $logger
 	) {
-		$this->payment_token_factory = $payment_token_factory;
-		$this->logger                = $logger;
+		$this->payment_token_factory    = $payment_token_factory;
+		$this->payment_token_repository = $payment_token_repository;
+		$this->logger                   = $logger;
 	}
 
 	/**
@@ -52,8 +62,12 @@ class PaymentTokensMigration {
 	 * @param int $id WooCommerce customer id.
 	 */
 	public function migrate_payment_tokens_for_user( int $id ):void {
-		$tokens          = (array) get_user_meta( $id, PaymentTokenRepository::USER_META, true );
+		$tokens          = (array) get_user_meta( $id, 'ppcp-vault-token', true );
 		$tokens_migrated = 0;
+
+		if ( ! is_main_site() ) {
+			$tokens = $this->payment_token_repository->all_for_user_id( $id );
+		}
 
 		foreach ( $tokens as $token ) {
 			if ( isset( $token->source()->card ) ) {

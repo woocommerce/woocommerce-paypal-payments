@@ -58,6 +58,7 @@ return array(
 	'vaulting.payment-tokens-migration'   => function( ContainerInterface $container ): PaymentTokensMigration {
 		return new PaymentTokensMigration(
 			$container->get( 'vaulting.payment-token-factory' ),
+			$container->get( 'vaulting.repository.payment-token' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
