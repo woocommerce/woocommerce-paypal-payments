@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Button;
 
+use WooCommerce\PayPalCommerce\Button\Endpoint\SaveCheckoutFormEndpoint;
+use WooCommerce\PayPalCommerce\Button\Helper\CheckoutFormSaver;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\DisabledSmartButton;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButton;
@@ -179,6 +181,16 @@ return array(
 			$dcc_applies,
 			$order_helper,
 			$logger
+		);
+	},
+	'button.checkout-form-saver'                  => static function ( ContainerInterface $container ): CheckoutFormSaver {
+		return new CheckoutFormSaver();
+	},
+	'button.endpoint.save-checkout-form'          => static function ( ContainerInterface $container ): SaveCheckoutFormEndpoint {
+		return new SaveCheckoutFormEndpoint(
+			$container->get( 'button.request-data' ),
+			$container->get( 'button.checkout-form-saver' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 	'button.endpoint.data-client-id'              => static function( ContainerInterface $container ) : DataClientIdEndpoint {

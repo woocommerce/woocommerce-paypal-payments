@@ -1,44 +1,50 @@
-import {PaymentMethods} from "../Helper/CheckoutMethodState";
-import errorHandler from "../ErrorHandler";
-
 class FreeTrialHandler {
     constructor(
         config,
+        formSelector,
+        formSaver,
         spinner,
         errorHandler
     ) {
         this.config = config;
+        this.formSelector = formSelector;
+        this.formSaver = formSaver;
         this.spinner = spinner;
         this.errorHandler = errorHandler;
     }
 
-    handle()
+    async handle()
     {
         this.spinner.block();
 
-        fetch(this.config.ajax.vault_paypal.endpoint, {
-            method: 'POST',
-            credentials: 'same-origin',
-            body: JSON.stringify({
-                nonce: this.config.ajax.vault_paypal.nonce,
-                return_url: location.href
-            }),
-        }).then(res => {
-            return res.json();
-        }).then(data => {
+        try {
+            await this.formSaver.save(document.querySelector(this.formSelector));
+        } catch (error) {
+            console.error(error);
+        }
+
+        try {
+            const res = await fetch(this.config.ajax.vault_paypal.endpoint, {
+                method: 'POST',
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    nonce: this.config.ajax.vault_paypal.nonce,
+                    return_url: location.href,
+                }),
+            });
+
+            const data = await res.json();
+
             if (!data.success) {
-                this.spinner.unblock();
-                console.error(data);
-                this.errorHandler.message(data.data.message);
                 throw Error(data.data.message);
             }
 
             location.href = data.data.approve_link;
-        }).catch(error => {
+        } catch (error) {
             this.spinner.unblock();
             console.error(error);
-            this.errorHandler.genericError();
-        });
+            this.errorHandler.message(data.data.message);
+        }
     }
 }
 export default FreeTrialHandler;
