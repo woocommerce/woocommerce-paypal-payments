@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\Subscription;
 use WC_Product_Subscription;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\CatalogProducts;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Subscriptions;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use Psr\Log\LoggerInterface;
@@ -164,12 +165,22 @@ class SubscriptionModule implements ModuleInterface {
 						$products_endpoint = $c->get( 'api.endpoint.catalog-products' );
 						assert( $products_endpoint instanceof CatalogProducts );
 
-						$subscription_product = $products_endpoint->create( $product->get_title() );
-						$product->update_meta_data( 'ppcp_subscription_product_id', $subscription_product->id );
-						$product->save();
+						try {
+							$subscription_product = $products_endpoint->create( $product->get_title() );
+							$product->update_meta_data( 'ppcp_subscription_product_id', $subscription_product->id );
+							$product->save();
+						} catch ( RuntimeException $exception ) {
+							$error = $exception->getMessage();
+							if ( is_a( $exception, PayPalApiException::class ) ) {
+								$error = $exception->get_details( $error );
+							}
+
+							$logger = $c->get( 'woocommerce.logger.woocommerce' );
+							$logger->error( 'Could not create subscription product on PayPal. ' . $error );
+						}
 					}
 
-					if ( ! $product->meta_exists( 'ppcp_subscription_plan' ) ) {
+					if ( $product->get_meta( 'ppcp_subscription_product_id' ) && ! $product->meta_exists( 'ppcp_subscription_plan' ) ) {
 						$subscriptions_endpoint = $c->get( 'api.endpoint.subscriptions' );
 						assert( $subscriptions_endpoint instanceof Subscriptions );
 
@@ -199,14 +210,24 @@ class SubscriptionModule implements ModuleInterface {
 							'payment_failure_threshold' => 3,
 						);
 
-						$subscription_plan = $subscriptions_endpoint->create_plan(
-							$product->get_meta( 'ppcp_subscription_product_id' ),
-							$billing_cycles,
-							$payment_preferences
-						);
+						try {
+							$subscription_plan = $subscriptions_endpoint->create_plan(
+								$product->get_meta( 'ppcp_subscription_product_id' ),
+								$billing_cycles,
+								$payment_preferences
+							);
 
-						$product->update_meta_data( 'ppcp_subscription_plan', $subscription_plan->id );
-						$product->save();
+							$product->update_meta_data( 'ppcp_subscription_plan', $subscription_plan->id );
+							$product->save();
+						} catch ( RuntimeException $exception ) {
+							$error = $exception->getMessage();
+							if ( is_a( $exception, PayPalApiException::class ) ) {
+								$error = $exception->get_details( $error );
+							}
+
+							$logger = $c->get( 'woocommerce.logger.woocommerce' );
+							$logger->error( 'Could not create subscription plan on PayPal. ' . $error );
+						}
 					}
 				}
 			},
