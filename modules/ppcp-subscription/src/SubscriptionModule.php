@@ -147,13 +147,13 @@ class SubscriptionModule implements ModuleInterface {
 				assert( $settings instanceof Settings );
 
 				try {
-					$subscription_handler = $settings->get( 'subscription_handler' );
+					$subscriptions_mode = $settings->get( 'subscriptions_mode' );
 				} catch ( NotFoundException $exception ) {
 					return;
 				}
 
 				if (
-					$subscription_handler !== true
+					$subscriptions_mode !== 'subscriptions_api'
 					|| empty( $_POST['_wcsnonce'] )
 					|| ! wp_verify_nonce( wc_clean( wp_unslash( $_POST['_wcsnonce'] ) ), 'wcs_subscription_meta' ) ) {
 					return;

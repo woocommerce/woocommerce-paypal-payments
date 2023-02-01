@@ -724,12 +724,12 @@ class SmartButton implements SmartButtonInterface {
 	 */
 	private function paypal_subscriptions_enabled(): bool {
 		try {
-			$subscription_handler = $this->settings->get( 'subscription_handler' );
+			$subscriptions_mode = $this->settings->get( 'subscriptions_mode' );
 		} catch ( NotFoundException $exception ) {
 			return false;
 		}
 
-		return $subscription_handler;
+		return $subscriptions_mode === 'subscriptions_api';
 	}
 
 	/**

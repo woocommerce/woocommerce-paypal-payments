@@ -107,8 +107,8 @@ return array(
 		$other_context_intent = $subscription_helper->cart_contains_subscription() ? 'authorize' : $intent;
 
 		if (
-			$settings->has( 'subscription_handler' )
-			&& $settings->get( 'subscription_handler' ) === true
+			$settings->has( 'subscriptions_mode' )
+			&& $settings->get( 'subscriptions_mode' ) === 'subscriptions_api'
 		) {
 			return 'subscription';
 		}

@@ -669,16 +669,6 @@ return array(
 				'requirements'         => array(),
 				'gateway'              => array( 'paypal', 'dcc' ),
 			),
-			'subscription_handler'                   => array(
-				'title'        => __( 'Subscription handler', 'woocommerce-paypal-payments' ),
-				'type'         => 'checkbox',
-				'default'      => false,
-				'screens'      => array(
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
 			'card_billing_data_mode'                 => array(
 				'title'        => __( 'Card billing data handling', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
