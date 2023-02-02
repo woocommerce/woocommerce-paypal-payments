@@ -27,10 +27,11 @@ class CheckoutFormValidator extends WC_Checkout {
 	public function validate( array $data ) {
 		$errors = new WP_Error();
 
-		// Some plugins check their fields using $_POST,
+		// Some plugins check their fields using $_POST or $_REQUEST,
 		// also WC terms checkbox https://github.com/woocommerce/woocommerce/issues/35328 .
 		foreach ( $data as $key => $value ) {
-			$_POST[ $key ] = $value;
+			$_POST[ $key ]    = $value;
+			$_REQUEST[ $key ] = $value;
 		}
 		// And we must call get_posted_data because it handles the shipping address.
 		$data = $this->get_posted_data();
