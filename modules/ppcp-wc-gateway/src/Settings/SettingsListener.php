@@ -217,11 +217,13 @@ class SettingsListener {
 			$token = $this->bearer->bearer();
 			if ( ! $token->vaulting_available() ) {
 				$this->settings->set( 'vault_enabled', false );
+				$this->settings->set( 'vault_enabled_dcc', false );
 				$this->settings->persist();
 				return;
 			}
 		} catch ( RuntimeException $exception ) {
 			$this->settings->set( 'vault_enabled', false );
+			$this->settings->set( 'vault_enabled_dcc', false );
 			$this->settings->persist();
 
 			add_action(

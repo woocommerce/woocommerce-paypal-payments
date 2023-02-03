@@ -390,8 +390,8 @@ class SubscriptionModule implements ModuleInterface {
 		SubscriptionHelper $subscription_helper
 	) {
 
-		if ( $settings->has( 'vault_enabled' )
-			&& $settings->get( 'vault_enabled' )
+		if ( $settings->has( 'vault_enabled_dcc' )
+			&& $settings->get( 'vault_enabled_dcc' )
 			&& $subscription_helper->is_subscription_change_payment()
 			&& CreditCardGateway::ID === $id
 		) {

@@ -103,6 +103,7 @@ class IdentityToken {
 		);
 		if (
 			( $this->settings->has( 'vault_enabled' ) && $this->settings->get( 'vault_enabled' ) )
+			|| ( $this->settings->has( 'vault_enabled_dcc' ) && $this->settings->get( 'vault_enabled_dcc' ) )
 			|| ( $this->settings->has( 'subscriptions_mode' ) && $this->settings->get( 'subscriptions_mode' ) === 'vaulting_api' )
 		) {
 			$customer_id = $this->customer_repository->customer_id_for_user( ( $user_id ) );
