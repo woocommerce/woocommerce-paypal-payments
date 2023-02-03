@@ -640,13 +640,13 @@ return array(
 				'type'         => 'checkbox',
 				'desc_tip'     => true,
 				'label'        => $container->get( 'button.helper.vaulting-label' ),
-				'description'  => __( 'Allow registered buyers to save PayPal and Credit Card accounts. Allow Subscription renewals.', 'woocommerce-paypal-payments' ),
+				'description'  => __( 'Allow registered buyers to save PayPal payments.', 'woocommerce-paypal-payments' ),
 				'default'      => false,
 				'screens'      => array(
 					State::STATE_ONBOARDED,
 				),
 				'requirements' => array(),
-				'gateway'      => array( 'paypal', 'dcc' ),
+				'gateway'      => 'paypal',
 				'input_class'  => $container->get( 'wcgateway.helper.vaulting-scope' ) ? array() : array( 'ppcp-disabled-checkbox' ),
 			),
 			'subscription_behavior_when_vault_fails' => array(
@@ -1053,7 +1053,7 @@ return array(
 	'button.helper.vaulting-label'                         => static function ( ContainerInterface $container ): string {
 		$vaulting_label = sprintf(
 		// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
-			__( 'Enable saved cards, PayPal accounts, and subscription features on your store. Payment methods are saved in the secure %1$sPayPal Vault%2$s.', 'woocommerce-paypal-payments' ),
+			__( 'The %1$sPayPal Vault%2$s feature allows registered buyers to connect their PayPal accounts for faster, easier subsequent checkouts with a single click.', 'woocommerce-paypal-payments' ),
 			'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#vaulting-saving-a-payment-method" target="_blank">',
 			'</a>'
 		);
