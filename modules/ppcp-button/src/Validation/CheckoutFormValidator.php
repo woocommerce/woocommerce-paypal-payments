@@ -35,6 +35,9 @@ class CheckoutFormValidator extends WC_Checkout {
 		// And we must call get_posted_data because it handles the shipping address.
 		$data = $this->get_posted_data();
 
+		// Looks like without this WC()->shipping->get_packages() is empty which is used by some plugins.
+		WC()->cart->calculate_shipping();
+
 		// It throws some notices when checking fields etc., also from other plugins via hooks.
 		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
 		@$this->validate_checkout( $data, $errors );
