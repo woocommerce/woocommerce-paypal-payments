@@ -47,11 +47,6 @@ class VaultingModule implements ModuleInterface {
 	 * @throws NotFoundException When service could not be found.
 	 */
 	public function run( ContainerInterface $container ): void {
-		$settings = $container->get( 'wcgateway.settings' );
-		if ( ! $settings->has( 'vault_enabled' ) || ! $settings->get( 'vault_enabled' ) ) {
-			return;
-		}
-
 		$listener = $container->get( 'vaulting.customer-approval-listener' );
 		assert( $listener instanceof CustomerApprovalListener );
 
