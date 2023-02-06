@@ -109,6 +109,7 @@ return array(
 		if (
 			$settings->has( 'subscriptions_mode' )
 			&& $settings->get( 'subscriptions_mode' ) === 'subscriptions_api'
+			&& ( $subscription_helper->current_product_is_subscription() || $subscription_helper->cart_contains_subscription() )
 		) {
 			return 'subscription';
 		}
