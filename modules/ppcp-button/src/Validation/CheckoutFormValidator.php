@@ -32,12 +32,22 @@ class CheckoutFormValidator extends WC_Checkout {
 		foreach ( $data as $key => $value ) {
 			$_POST[ $key ] = $value;
 		}
-		// And we must call get_posted_data because it handles the shipping address.
-		$data = $this->get_posted_data();
 
-		// It throws some notices when checking fields etc., also from other plugins via hooks.
-		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
-		@$this->validate_checkout( $data, $errors );
+		$is_checkout = function () {
+			return true;
+		};
+		// Some plugins/filters check is_checkout().
+		add_filter( 'woocommerce_is_checkout', $is_checkout );
+		try {
+			// And we must call get_posted_data because it handles the shipping address.
+			$data = $this->get_posted_data();
+
+			// It throws some notices when checking fields etc., also from other plugins via hooks.
+			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+			@$this->validate_checkout( $data, $errors );
+		} finally {
+			remove_filter( 'woocommerce_is_checkout', $is_checkout );
+		}
 
 		if ( $errors->has_errors() ) {
 			throw new ValidationException( $errors->get_error_messages() );
