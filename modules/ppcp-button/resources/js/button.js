@@ -18,6 +18,7 @@ import {hide, setVisible, setVisibleByClass} from "./modules/Helper/Hiding";
 import {isChangePaymentPage} from "./modules/Helper/Subscriptions";
 import FreeTrialHandler from "./modules/ActionHandler/FreeTrialHandler";
 import FormSaver from './modules/Helper/FormSaver';
+import FormValidator from "./modules/Helper/FormValidator";
 
 // TODO: could be a good idea to have a separate spinner for each gateway,
 // but I think we care mainly about the script loading, so one spinner should be enough.
@@ -36,7 +37,13 @@ const bootstrap = () => {
         PayPalCommerceGateway.ajax.save_checkout_form.nonce,
     );
 
-    const freeTrialHandler = new FreeTrialHandler(PayPalCommerceGateway, checkoutFormSelector, formSaver, spinner, errorHandler);
+    const formValidator = PayPalCommerceGateway.early_checkout_validation_enabled ?
+        new FormValidator(
+            PayPalCommerceGateway.ajax.validate_checkout.endpoint,
+            PayPalCommerceGateway.ajax.validate_checkout.nonce,
+    ) : null;
+
+    const freeTrialHandler = new FreeTrialHandler(PayPalCommerceGateway, checkoutFormSelector, formSaver, formValidator, spinner, errorHandler);
 
     jQuery('form.woocommerce-checkout input').on('keydown', e => {
         if (e.key === 'Enter' && [

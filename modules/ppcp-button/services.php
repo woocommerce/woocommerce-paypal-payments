@@ -9,8 +9,10 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Button;
 
-use WooCommerce\PayPalCommerce\Button\Endpoint\SaveCheckoutFormEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\CheckoutFormSaver;
+use WooCommerce\PayPalCommerce\Button\Endpoint\SaveCheckoutFormEndpoint;
+use WooCommerce\PayPalCommerce\Button\Validation\CheckoutFormValidator;
+use WooCommerce\PayPalCommerce\Button\Endpoint\ValidateCheckoutEndpoint;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\DisabledSmartButton;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButton;
@@ -106,6 +108,7 @@ return array(
 			$currency,
 			$container->get( 'wcgateway.all-funding-sources' ),
 			$container->get( 'button.basic-checkout-validation-enabled' ),
+			$container->get( 'button.early-wc-checkout-validation-enabled' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
@@ -210,6 +213,13 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
+	'button.endpoint.validate-checkout'           => static function ( ContainerInterface $container ): ValidateCheckoutEndpoint {
+		return new ValidateCheckoutEndpoint(
+			$container->get( 'button.request-data' ),
+			$container->get( 'button.validation.wc-checkout-validator' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
 	'button.helper.three-d-secure'                => static function ( ContainerInterface $container ): ThreeDSecure {
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
 		return new ThreeDSecure( $logger );
@@ -245,5 +255,8 @@ return array(
 		 * The validation is triggered in a non-standard way and may cause issues on some sites.
 		 */
 		return (bool) apply_filters( 'woocommerce_paypal_payments_early_wc_checkout_validation_enabled', true );
+	},
+	'button.validation.wc-checkout-validator'     => static function ( ContainerInterface $container ): CheckoutFormValidator {
+		return new CheckoutFormValidator();
 	},
 );
