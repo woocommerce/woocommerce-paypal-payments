@@ -1161,7 +1161,7 @@ return array(
 		$label = sprintf(
 			// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
 			__( 'Manage online risk with %1$sFraudNet%2$s.', 'woocommerce-paypal-payments' ),
-			'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#FraudNet" target="_blank">',
+			'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#fraudnet" target="_blank">',
 			'</a>'
 		);
 
