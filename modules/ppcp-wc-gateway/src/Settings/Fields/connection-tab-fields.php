@@ -398,12 +398,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'title'        => __( 'FraudNet', 'woocommerce-paypal-payments' ),
 			'type'         => 'checkbox',
 			'desc_tip'     => true,
-			'label'        => sprintf(
-			// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
-				__( 'Manage online risk with %1$sFraudNet%2$s.', 'woocommerce-paypal-payments' ),
-				'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#FraudNet" target="_blank">',
-				'</a>'
-			),
+			'label'        => $container->get( 'wcgateway.settings.fraudnet-label' ),
 			'description'  => __( 'FraudNet is a JavaScript library developed by PayPal and embedded into a merchant’s web page to collect browser-based data to help reduce fraud.', 'woocommerce-paypal-payments' ),
 			'default'      => false,
 			'screens'      => array(
