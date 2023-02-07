@@ -593,7 +593,7 @@ return array(
 				'type'         => 'select',
 				'class'        => array(),
 				'input_class'  => array( 'wc-enhanced-select' ),
-				'default'      => 'gold',
+				'default'      => ApplicationContext::LANDING_PAGE_LOGIN,
 				'desc_tip'     => true,
 				'description'  => __(
 					'Type of PayPal page to display.',
