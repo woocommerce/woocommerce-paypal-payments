@@ -1158,7 +1158,12 @@ return array(
 		return false;
 	},
 	'wcgateway.settings.tracking-label'                    => static function ( ContainerInterface $container ): string {
-		$tracking_label = __( 'Enable shipment tracking information to be sent to PayPal for seller protection features.', 'woocommerce-paypal-payments' );
+		$tracking_label = sprintf(
+			// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+			__( 'Enable %1$sshipment tracking information%2$s to be sent to PayPal for seller protection features.', 'woocommerce-paypal-payments' ),
+			'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#shipment-tracking" target="_blank">',
+			'</a>'
+		);
 
 		if ( 'DE' === $container->get( 'api.shop.country' ) ) {
 			$tracking_label .= '<br/>' . sprintf(
