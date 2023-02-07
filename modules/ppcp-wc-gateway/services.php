@@ -1158,19 +1158,24 @@ return array(
 		return false;
 	},
 	'wcgateway.settings.tracking-label'                    => static function ( ContainerInterface $container ): string {
-		$tracking_label = sprintf(
-		// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
-			__( 'Enable shipment tracking information to be sent to PayPal for seller protection features. Required when %1$sPay upon Invoice%2$s is used.', 'woocommerce-paypal-payments' ),
-			'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#pay-upon-invoice-PUI" target="_blank">',
-			'</a>'
-		);
+		$tracking_label = __( 'Enable shipment tracking information to be sent to PayPal for seller protection features.', 'woocommerce-paypal-payments' );
+
+		if ( 'DE' === $container->get( 'api.shop.country' ) ) {
+			$tracking_label .= '<br/>' . sprintf(
+				// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+				__( 'Required when %1$sPay upon Invoice%2$s is used.', 'woocommerce-paypal-payments' ),
+				'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#pay-upon-invoice-PUI" target="_blank">',
+				'</a>'
+			);
+		}
+
 		$is_tracking_available = $container->get( 'order-tracking.is-tracking-available' );
 
 		if ( $is_tracking_available ) {
 			return $tracking_label;
 		}
 
-		$tracking_label .= sprintf(
+		$tracking_label .= '<br/>' . sprintf(
 		// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
 			__(
 				' To use tracking features, you must %1$senable tracking on your account%2$s.',
