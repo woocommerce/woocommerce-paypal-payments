@@ -1333,39 +1333,6 @@ return array(
 
 		return $enabled_ppcp_gateways;
 	},
-	'wcgateway.is-paypal-continuation'                     => static function ( ContainerInterface $container ): bool {
-		$session_handler              = $container->get( 'session.handler' );
-		assert( $session_handler instanceof SessionHandler );
-
-		$order = $session_handler->order();
-		if ( ! $order ) {
-			return false;
-		}
-		$source = $order->payment_source();
-		if ( $source && $source->card() ) {
-			return false; // Ignore for DCC.
-		}
-		if ( 'card' === $session_handler->funding_source() ) {
-			return false; // Ignore for card buttons.
-		}
-		return true;
-	},
-	'wcgateway.current-context'                            => static function ( ContainerInterface $container ): string {
-		$context = 'mini-cart';
-		if ( is_product() || wc_post_content_has_shortcode( 'product_page' ) ) {
-			$context = 'product';
-		}
-		if ( is_cart() ) {
-			$context = 'cart';
-		}
-		if ( is_checkout() && ! $container->get( 'wcgateway.is-paypal-continuation' ) ) {
-			$context = 'checkout';
-		}
-		if ( is_checkout_pay_page() ) {
-			$context = 'pay-now';
-		}
-		return $context;
-	},
 	'wcgateway.is-fraudnet-enabled'                        => static function ( ContainerInterface $container ): bool {
 		$settings      = $container->get( 'wcgateway.settings' );
 		assert( $settings instanceof Settings );
@@ -1380,7 +1347,7 @@ return array(
 			$container->get( 'onboarding.environment' ),
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'wcgateway.enabled-ppcp-gateways' ),
-			$container->get( 'wcgateway.current-context' ),
+			$container->get( 'session.handler' ),
 			$container->get( 'wcgateway.is-fraudnet-enabled' )
 		);
 	},
