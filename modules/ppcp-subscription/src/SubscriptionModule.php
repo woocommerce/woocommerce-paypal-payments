@@ -260,6 +260,22 @@ class SubscriptionModule implements ModuleInterface {
 				}
 			}
 		);
+
+		add_filter(
+			'woocommerce_order_data_store_cpt_get_orders_query',
+			function( $query, $query_vars ) {
+				if ( ! empty( $query_vars['ppcp_subscription'] ) ) {
+					$query['meta_query'][] = array(
+						'key'   => 'ppcp_subscription',
+						'value' => esc_attr( $query_vars['ppcp_subscription'] ),
+					);
+				}
+
+				return $query;
+			},
+			10,
+			2
+		);
 	}
 
 	/**
