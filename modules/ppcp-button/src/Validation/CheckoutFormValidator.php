@@ -32,15 +32,25 @@ class CheckoutFormValidator extends WC_Checkout {
 		foreach ( $data as $key => $value ) {
 			$_POST[ $key ] = $value;
 		}
-		// And we must call get_posted_data because it handles the shipping address.
-		$data = $this->get_posted_data();
 
 		// Looks like without this WC()->shipping->get_packages() is empty which is used by some plugins.
 		WC()->cart->calculate_shipping();
 
-		// It throws some notices when checking fields etc., also from other plugins via hooks.
-		// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
-		@$this->validate_checkout( $data, $errors );
+		// Some plugins/filters check is_checkout().
+		$is_checkout = function () {
+			return true;
+		};
+		add_filter( 'woocommerce_is_checkout', $is_checkout );
+		try {
+			// And we must call get_posted_data because it handles the shipping address.
+			$data = $this->get_posted_data();
+
+			// It throws some notices when checking fields etc., also from other plugins via hooks.
+			// phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+			@$this->validate_checkout( $data, $errors );
+		} finally {
+			remove_filter( 'woocommerce_is_checkout', $is_checkout );
+		}
 
 		// Some plugins call wc_add_notice directly.
 		// We should retrieve such notices, and also clear them to avoid duplicates	later.

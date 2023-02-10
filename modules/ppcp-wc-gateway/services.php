@@ -593,7 +593,7 @@ return array(
 				'type'         => 'select',
 				'class'        => array(),
 				'input_class'  => array( 'wc-enhanced-select' ),
-				'default'      => 'gold',
+				'default'      => ApplicationContext::LANDING_PAGE_LOGIN,
 				'desc_tip'     => true,
 				'description'  => __(
 					'Type of PayPal page to display.',
@@ -862,6 +862,7 @@ return array(
 			'p24'         => _x( 'Przelewy24', 'Name of payment method', 'woocommerce-paypal-payments' ),
 			'sofort'      => _x( 'Sofort', 'Name of payment method', 'woocommerce-paypal-payments' ),
 			'venmo'       => _x( 'Venmo', 'Name of payment method', 'woocommerce-paypal-payments' ),
+			'trustly'     => _x( 'Trustly', 'Name of payment method', 'woocommerce-paypal-payments' ),
 		);
 	},
 
