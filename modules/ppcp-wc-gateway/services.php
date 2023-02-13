@@ -1158,20 +1158,49 @@ return array(
 
 		return false;
 	},
-	'wcgateway.settings.tracking-label'                    => static function ( ContainerInterface $container ): string {
-		$tracking_label = sprintf(
-		// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
-			__( 'Enable shipment tracking information to be sent to PayPal for seller protection features. Required when %1$sPay upon Invoice%2$s is used.', 'woocommerce-paypal-payments' ),
-			'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#pay-upon-invoice-PUI" target="_blank">',
+	'wcgateway.settings.fraudnet-label'                    => static function ( ContainerInterface $container ): string {
+		$label = sprintf(
+			// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+			__( 'Manage online risk with %1$sFraudNet%2$s.', 'woocommerce-paypal-payments' ),
+			'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#fraudnet" target="_blank">',
 			'</a>'
 		);
+
+		if ( 'DE' === $container->get( 'api.shop.country' ) ) {
+			$label .= '<br/>' . sprintf(
+				// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+				__( 'Required when %1$sPay upon Invoice%2$s is used.', 'woocommerce-paypal-payments' ),
+				'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#pay-upon-invoice-PUI" target="_blank">',
+				'</a>'
+			);
+		}
+
+		return $label;
+	},
+	'wcgateway.settings.tracking-label'                    => static function ( ContainerInterface $container ): string {
+		$tracking_label = sprintf(
+			// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+			__( 'Enable %1$sshipment tracking information%2$s to be sent to PayPal for seller protection features.', 'woocommerce-paypal-payments' ),
+			'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#shipment-tracking" target="_blank">',
+			'</a>'
+		);
+
+		if ( 'DE' === $container->get( 'api.shop.country' ) ) {
+			$tracking_label .= '<br/>' . sprintf(
+				// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+				__( 'Required when %1$sPay upon Invoice%2$s is used.', 'woocommerce-paypal-payments' ),
+				'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#pay-upon-invoice-PUI" target="_blank">',
+				'</a>'
+			);
+		}
+
 		$is_tracking_available = $container->get( 'order-tracking.is-tracking-available' );
 
 		if ( $is_tracking_available ) {
 			return $tracking_label;
 		}
 
-		$tracking_label .= sprintf(
+		$tracking_label .= '<br/>' . sprintf(
 		// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
 			__(
 				' To use tracking features, you must %1$senable tracking on your account%2$s.',
