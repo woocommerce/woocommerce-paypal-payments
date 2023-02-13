@@ -148,6 +148,12 @@ class WCGatewayModule implements ModuleInterface {
 				if ( ! $wc_order instanceof WC_Order ) {
 					return;
 				}
+				/**
+				 * The filter can be used to remove the rows with PayPal fees in WC orders.
+				 */
+				if ( ! apply_filters( 'woocommerce_paypal_payments_show_fees_on_order_admin_page', true, $wc_order ) ) {
+					return;
+				}
 
 				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 				echo $fees_renderer->render( $wc_order );
