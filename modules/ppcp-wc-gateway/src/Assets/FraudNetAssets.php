@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Assets;
 
+use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
@@ -21,6 +22,8 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
  * Class FraudNetAssets
  */
 class FraudNetAssets {
+
+	use ContextTrait;
 
 	/**
 	 * The URL of this module.
@@ -158,7 +161,6 @@ class FraudNetAssets {
 		}
 
 		return $is_pui_gateway_enabled ? true : $this->is_fraudnet_enabled;
-
 	}
 
 	/**
@@ -185,49 +187,5 @@ class FraudNetAssets {
 		}
 
 		return in_array( $this->context(), $button_locations, true );
-	}
-
-	/**
-	 * Get context.
-	 *
-	 * @return string
-	 */
-	protected function context(): string {
-		$context = 'mini-cart';
-		if ( is_product() || wc_post_content_has_shortcode( 'product_page' ) ) {
-			$context = 'product';
-		}
-		if ( is_cart() ) {
-			$context = 'cart';
-		}
-		if ( is_checkout() && ! $this->is_paypal_continuation() ) {
-			$context = 'checkout';
-		}
-		if ( is_checkout_pay_page() ) {
-			$context = 'pay-now';
-		}
-
-		return $context;
-	}
-
-	/**
-	 * Whether is PayPal continuation or not.
-	 *
-	 * @return bool
-	 */
-	protected function is_paypal_continuation(): bool {
-		$order = $this->session_handler->order();
-		if ( ! $order ) {
-			return false;
-		}
-			$source = $order->payment_source();
-		if ( $source && $source->card() ) {
-			return false; // Ignore for DCC.
-		}
-		if ( 'card' === $this->session_handler->funding_source() ) {
-			return false; // Ignore for card buttons.
-		}
-
-		return true;
 	}
 }
