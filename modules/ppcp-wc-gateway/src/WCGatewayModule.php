@@ -258,7 +258,7 @@ class WCGatewayModule implements ModuleInterface {
 		);
 
 		add_action(
-			'init',
+			'wp_loaded',
 			function () use ( $c ) {
 				if ( 'DE' === $c->get( 'api.shop.country' ) ) {
 					( $c->get( 'wcgateway.pay-upon-invoice' ) )->init();
