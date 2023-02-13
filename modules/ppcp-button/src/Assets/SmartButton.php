@@ -23,6 +23,7 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\Button\Endpoint\SaveCheckoutFormEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\StartPayPalVaultingEndpoint;
+use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -41,7 +42,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
  */
 class SmartButton implements SmartButtonInterface {
 
-	use FreeTrialHandlerTrait;
+	use FreeTrialHandlerTrait, ContextTrait;
 
 	/**
 	 * The Settings status helper.
@@ -1065,48 +1066,6 @@ class SmartButton implements SmartButtonInterface {
 			default:
 				return $smart_button_enabled_for_mini_cart;
 		}
-	}
-
-	/**
-	 * The current context.
-	 *
-	 * @return string
-	 */
-	private function context(): string {
-		$context = 'mini-cart';
-		if ( is_product() || wc_post_content_has_shortcode( 'product_page' ) ) {
-			$context = 'product';
-		}
-		if ( is_cart() ) {
-			$context = 'cart';
-		}
-		if ( is_checkout() && ! $this->is_paypal_continuation() ) {
-			$context = 'checkout';
-		}
-		if ( is_checkout_pay_page() ) {
-			$context = 'pay-now';
-		}
-		return $context;
-	}
-
-	/**
-	 * Checks if PayPal payment was already initiated (on the product or cart pages).
-	 *
-	 * @return bool
-	 */
-	private function is_paypal_continuation(): bool {
-		$order = $this->session_handler->order();
-		if ( ! $order ) {
-			return false;
-		}
-		$source = $order->payment_source();
-		if ( $source && $source->card() ) {
-			return false; // Ignore for DCC.
-		}
-		if ( 'card' === $this->session_handler->funding_source() ) {
-			return false; // Ignore for card buttons.
-		}
-		return true;
 	}
 
 	/**
