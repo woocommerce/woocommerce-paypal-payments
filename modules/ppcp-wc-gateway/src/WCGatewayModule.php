@@ -16,7 +16,6 @@ use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
-use WooCommerce\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\FeesRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
@@ -149,6 +148,12 @@ class WCGatewayModule implements ModuleInterface {
 				if ( ! $wc_order instanceof WC_Order ) {
 					return;
 				}
+				/**
+				 * The filter can be used to remove the rows with PayPal fees in WC orders.
+				 */
+				if ( ! apply_filters( 'woocommerce_paypal_payments_show_fees_on_order_admin_page', true, $wc_order ) ) {
+					return;
+				}
 
 				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 				echo $fees_renderer->render( $wc_order );
@@ -215,7 +220,6 @@ class WCGatewayModule implements ModuleInterface {
 			'woocommerce_paypal_commerce_gateway_deactivate',
 			static function () use ( $c ) {
 				delete_option( Settings::KEY );
-				delete_option( PayPalRequestIdRepository::KEY );
 				delete_option( 'woocommerce_' . PayPalGateway::ID . '_settings' );
 				delete_option( 'woocommerce_' . CreditCardGateway::ID . '_settings' );
 			}
@@ -237,6 +241,8 @@ class WCGatewayModule implements ModuleInterface {
 		add_action(
 			'woocommerce_paypal_payments_gateway_migrate',
 			static function () use ( $c ) {
+				delete_option( 'ppcp-request-ids' );
+
 				$settings = $c->get( 'wcgateway.settings' );
 				assert( $settings instanceof Settings );
 
@@ -252,7 +258,7 @@ class WCGatewayModule implements ModuleInterface {
 		);
 
 		add_action(
-			'init',
+			'wp_loaded',
 			function () use ( $c ) {
 				if ( 'DE' === $c->get( 'api.shop.country' ) ) {
 					( $c->get( 'wcgateway.pay-upon-invoice' ) )->init();
