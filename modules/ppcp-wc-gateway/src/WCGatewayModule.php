@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway;
 
+use Psr\Log\LoggerInterface;
+use Throwable;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WC_Order;
@@ -305,6 +307,57 @@ class WCGatewayModule implements ModuleInterface {
 				$endpoint = $c->get( 'wcgateway.endpoint.oxxo' );
 				$endpoint->handle_request();
 			}
+		);
+
+		add_action(
+			'woocommerce_order_status_changed',
+			static function ( int $order_id, string $from, string $to ) use ( $c ) {
+				$wc_order = wc_get_order( $order_id );
+				if ( ! $wc_order instanceof WC_Order ) {
+					return;
+				}
+
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof ContainerInterface );
+
+				if ( ! $settings->has( 'capture_on_status_change' ) || ! $settings->get( 'capture_on_status_change' ) ) {
+					return;
+				}
+
+				$intent   = strtoupper( (string) $wc_order->get_meta( PayPalGateway::INTENT_META_KEY ) );
+				$captured = wc_string_to_bool( $wc_order->get_meta( AuthorizedPaymentsProcessor::CAPTURED_META_KEY ) );
+				if ( $intent !== 'AUTHORIZE' || $captured ) {
+					return;
+				}
+
+				/**
+				 * The filter returning the WC order statuses which trigger capturing of payment authorization.
+				 */
+				$capture_statuses = apply_filters( 'woocommerce_paypal_payments_auto_capture_statuses', array( 'processing', 'completed' ), $wc_order );
+				if ( ! in_array( $to, $capture_statuses, true ) ) {
+					return;
+				}
+
+				$authorized_payment_processor = $c->get( 'wcgateway.processor.authorized-payments' );
+				assert( $authorized_payment_processor instanceof AuthorizedPaymentsProcessor );
+
+				try {
+					if ( $authorized_payment_processor->capture_authorized_payment( $wc_order ) ) {
+						return;
+					}
+				} catch ( Throwable $error ) {
+					$logger = $c->get( 'woocommerce.logger.woocommerce' );
+					assert( $logger instanceof LoggerInterface );
+					$logger->error( "Capture failed. {$error->getMessage()} {$error->getFile()}:{$error->getLine()}" );
+				}
+
+				$wc_order->update_status(
+					'failed',
+					__( 'Could not capture the payment.', 'woocommerce-paypal-payments' )
+				);
+			},
+			10,
+			3
 		);
 	}
 

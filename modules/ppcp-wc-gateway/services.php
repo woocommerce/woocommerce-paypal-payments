@@ -538,6 +538,23 @@ return array(
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
+			'capture_on_status_change'               => array(
+				'title'        => __( 'Capture On Status Change', 'woocommerce-paypal-payments' ),
+				'type'         => 'checkbox',
+				'default'      => false,
+				'desc_tip'     => true,
+				'description'  => __(
+					'The transaction will be captured automatically when the order status changes to Processing or Completed.',
+					'woocommerce-paypal-payments'
+				),
+				'label'        => __( 'Capture On Status Change', 'woocommerce-paypal-payments' ),
+				'screens'      => array(
+					State::STATE_START,
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
 			'capture_for_virtual_only'               => array(
 				'title'        => __( 'Capture Virtual-Only Orders ', 'woocommerce-paypal-payments' ),
 				'type'         => 'checkbox',
