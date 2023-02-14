@@ -155,7 +155,8 @@ class CompatModule implements ModuleInterface {
 
 				$provider = $shipment->get_shipping_provider();
 				if ( ! empty( $provider ) && $provider !== 'none' ) {
-					$tracking_data['carrier'] = 'DHL_DEUTSCHE_POST';
+					$fallback_carrier = 'DHL_DEUTSCHE_POST';
+					$tracking_data['carrier'] = apply_filters('filter_paypal_payments_tracking_data_carrier',$fallback_carrier,$provider);
 				}
 
 				try {
