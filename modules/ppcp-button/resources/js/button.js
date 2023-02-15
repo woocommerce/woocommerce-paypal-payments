@@ -16,6 +16,8 @@ import {
 import {hide, setVisible, setVisibleByClass} from "./modules/Helper/Hiding";
 import {isChangePaymentPage} from "./modules/Helper/Subscriptions";
 import FreeTrialHandler from "./modules/ActionHandler/FreeTrialHandler";
+import FormSaver from './modules/Helper/FormSaver';
+import FormValidator from "./modules/Helper/FormValidator";
 import {loadPaypalScript} from "./modules/Helper/ScriptLoading";
 
 // TODO: could be a good idea to have a separate spinner for each gateway,
@@ -24,11 +26,24 @@ const buttonsSpinner = new Spinner(document.querySelector('.ppc-button-wrapper')
 const cardsSpinner = new Spinner('#ppcp-hosted-fields');
 
 const bootstrap = () => {
+    const checkoutFormSelector = 'form.woocommerce-checkout';
+
     const errorHandler = new ErrorHandler(PayPalCommerceGateway.labels.error.generic);
     const spinner = new Spinner();
     const creditCardRenderer = new CreditCardRenderer(PayPalCommerceGateway, errorHandler, spinner);
 
-    const freeTrialHandler = new FreeTrialHandler(PayPalCommerceGateway, spinner, errorHandler);
+    const formSaver = new FormSaver(
+        PayPalCommerceGateway.ajax.save_checkout_form.endpoint,
+        PayPalCommerceGateway.ajax.save_checkout_form.nonce,
+    );
+
+    const formValidator = PayPalCommerceGateway.early_checkout_validation_enabled ?
+        new FormValidator(
+            PayPalCommerceGateway.ajax.validate_checkout.endpoint,
+            PayPalCommerceGateway.ajax.validate_checkout.nonce,
+    ) : null;
+
+    const freeTrialHandler = new FreeTrialHandler(PayPalCommerceGateway, checkoutFormSelector, formSaver, formValidator, spinner, errorHandler);
 
     jQuery('form.woocommerce-checkout input').on('keydown', e => {
         if (e.key === 'Enter' && [
@@ -88,7 +103,7 @@ const bootstrap = () => {
             }
         }
 
-        const form = document.querySelector('form.woocommerce-checkout');
+        const form = document.querySelector(checkoutFormSelector);
         if (form) {
             jQuery('#ppcp-funding-source-form-input').remove();
             form.insertAdjacentHTML(

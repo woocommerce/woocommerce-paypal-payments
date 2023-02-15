@@ -63,7 +63,15 @@ class OXXO {
 
 		add_filter(
 			'woocommerce_available_payment_gateways',
-			function ( array $methods ): array {
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function ( $methods ) {
+				if ( ! is_array( $methods ) ) {
+					return $methods;
+				}
 
 				if ( ! $this->checkout_allowed_for_oxxo() ) {
 					unset( $methods[ OXXOGateway::ID ] );

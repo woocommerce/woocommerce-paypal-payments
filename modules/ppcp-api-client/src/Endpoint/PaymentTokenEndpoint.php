@@ -19,7 +19,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenActionLinksFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CustomerRepository;
-use WooCommerce\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
 
 /**
  * Class PaymentTokenEndpoint
@@ -71,13 +70,6 @@ class PaymentTokenEndpoint {
 	protected $customer_repository;
 
 	/**
-	 * The request id repository.
-	 *
-	 * @var PayPalRequestIdRepository
-	 */
-	private $request_id_repository;
-
-	/**
 	 * PaymentTokenEndpoint constructor.
 	 *
 	 * @param string                         $host The host.
@@ -86,7 +78,6 @@ class PaymentTokenEndpoint {
 	 * @param PaymentTokenActionLinksFactory $payment_token_action_links_factory The PaymentTokenActionLinks factory.
 	 * @param LoggerInterface                $logger The logger.
 	 * @param CustomerRepository             $customer_repository The customer repository.
-	 * @param PayPalRequestIdRepository      $request_id_repository The request id repository.
 	 */
 	public function __construct(
 		string $host,
@@ -94,8 +85,7 @@ class PaymentTokenEndpoint {
 		PaymentTokenFactory $factory,
 		PaymentTokenActionLinksFactory $payment_token_action_links_factory,
 		LoggerInterface $logger,
-		CustomerRepository $customer_repository,
-		PayPalRequestIdRepository $request_id_repository
+		CustomerRepository $customer_repository
 	) {
 
 		$this->host                               = $host;
@@ -104,7 +94,6 @@ class PaymentTokenEndpoint {
 		$this->payment_token_action_links_factory = $payment_token_action_links_factory;
 		$this->logger                             = $logger;
 		$this->customer_repository                = $customer_repository;
-		$this->request_id_repository              = $request_id_repository;
 	}
 
 	/**
@@ -243,14 +232,11 @@ class PaymentTokenEndpoint {
 			),
 		);
 
-		$request_id = uniqid( 'ppcp-vault', true );
-
 		$args = array(
 			'method'  => 'POST',
 			'headers' => array(
 				'Authorization' => 'Bearer ' . $bearer->token(),
 				'Content-Type'  => 'application/json',
-				'Request-Id'    => $request_id,
 			),
 			'body'    => wp_json_encode( $data ),
 		);
@@ -277,8 +263,6 @@ class PaymentTokenEndpoint {
 
 		$links = $this->payment_token_action_links_factory->from_paypal_response( $json );
 
-		$this->request_id_repository->set( "ppcp-vault-{$user_id}", $request_id );
-
 		return $links;
 	}
 
@@ -302,7 +286,6 @@ class PaymentTokenEndpoint {
 			'method'  => 'POST',
 			'headers' => array(
 				'Authorization' => 'Bearer ' . $bearer->token(),
-				'Request-Id'    => $this->request_id_repository->get( "ppcp-vault-{$user_id}" ),
 				'Content-Type'  => 'application/json',
 			),
 		);

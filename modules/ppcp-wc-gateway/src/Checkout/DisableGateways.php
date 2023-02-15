@@ -99,6 +99,10 @@ class DisableGateways {
 	 * @return bool
 	 */
 	private function disable_all_gateways() : bool {
+		if ( is_null( WC()->payment_gateways ) ) {
+			return false;
+		}
+
 		foreach ( WC()->payment_gateways->payment_gateways() as $gateway ) {
 			if ( PayPalGateway::ID === $gateway->id && $gateway->enabled !== 'yes' ) {
 				return true;
