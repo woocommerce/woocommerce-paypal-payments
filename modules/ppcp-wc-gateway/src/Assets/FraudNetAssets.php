@@ -194,8 +194,9 @@ class FraudNetAssets {
 	 *
 	 * @return array
 	 */
-	protected function enabled_ppcp_gateways() {
-		$available_gateways = WC()->payment_gateways->get_available_payment_gateways();
+	protected function enabled_ppcp_gateways(): array {
+		$available_gateways    = WC()->payment_gateways->get_available_payment_gateways();
+		$enabled_ppcp_gateways = array();
 		foreach ( $this->ppcp_gateways as $gateway ) {
 			if ( ! isset( $available_gateways[ $gateway ] ) ) {
 				continue;
