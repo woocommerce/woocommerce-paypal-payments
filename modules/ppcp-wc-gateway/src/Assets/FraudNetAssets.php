@@ -61,11 +61,11 @@ class FraudNetAssets {
 	protected $settings;
 
 	/**
-	 * The list of enabled PayPal gateways.
+	 * The list of PayPal gateways.
 	 *
 	 * @var string[]
 	 */
-	protected $enabled_ppcp_gateways;
+	protected $ppcp_gateways;
 
 	/**
 	 * The session handler
@@ -89,7 +89,7 @@ class FraudNetAssets {
 	 * @param FraudNet       $fraud_net The FraudNet entity.
 	 * @param Environment    $environment The environment.
 	 * @param Settings       $settings The Settings.
-	 * @param string[]       $enabled_ppcp_gateways The list of enabled PayPal gateways.
+	 * @param string[]       $ppcp_gateways The list of PayPal gateways.
 	 * @param SessionHandler $session_handler The session handler.
 	 * @param bool           $is_fraudnet_enabled true if FraudNet support is enabled in settings, otherwise false.
 	 */
@@ -99,18 +99,18 @@ class FraudNetAssets {
 		FraudNet $fraud_net,
 		Environment $environment,
 		Settings $settings,
-		array $enabled_ppcp_gateways,
+		array $ppcp_gateways,
 		SessionHandler $session_handler,
 		bool $is_fraudnet_enabled
 	) {
-		$this->module_url            = $module_url;
-		$this->version               = $version;
-		$this->fraud_net             = $fraud_net;
-		$this->environment           = $environment;
-		$this->settings              = $settings;
-		$this->enabled_ppcp_gateways = $enabled_ppcp_gateways;
-		$this->session_handler       = $session_handler;
-		$this->is_fraudnet_enabled   = $is_fraudnet_enabled;
+		$this->module_url          = $module_url;
+		$this->version             = $version;
+		$this->fraud_net           = $fraud_net;
+		$this->environment         = $environment;
+		$this->settings            = $settings;
+		$this->ppcp_gateways       = $ppcp_gateways;
+		$this->session_handler     = $session_handler;
+		$this->is_fraudnet_enabled = $is_fraudnet_enabled;
 	}
 
 	/**
@@ -149,12 +149,12 @@ class FraudNetAssets {
 	 * @return bool true if FraudNet script should be loaded, otherwise false.
 	 */
 	protected function should_load_fraudnet_script(): bool {
-		if ( empty( $this->enabled_ppcp_gateways ) ) {
+		if ( empty( $this->enabled_ppcp_gateways() ) ) {
 			return false;
 		}
 
-		$is_pui_gateway_enabled           = in_array( PayUponInvoiceGateway::ID, $this->enabled_ppcp_gateways, true );
-		$is_only_standard_gateway_enabled = $this->enabled_ppcp_gateways === array( PayPalGateway::ID );
+		$is_pui_gateway_enabled           = in_array( PayUponInvoiceGateway::ID, $this->enabled_ppcp_gateways(), true );
+		$is_only_standard_gateway_enabled = $this->enabled_ppcp_gateways() === array( PayPalGateway::ID );
 
 		if ( $this->context() !== 'checkout' || $is_only_standard_gateway_enabled ) {
 			return $this->is_fraudnet_enabled && $this->are_buttons_enabled_for_context();
@@ -169,7 +169,7 @@ class FraudNetAssets {
 	 * @return bool true if enabled, otherwise false.
 	 */
 	protected function are_buttons_enabled_for_context() : bool {
-		if ( ! in_array( PayPalGateway::ID, $this->enabled_ppcp_gateways, true ) ) {
+		if ( ! in_array( PayPalGateway::ID, $this->enabled_ppcp_gateways(), true ) ) {
 			return false;
 		}
 		try {
@@ -187,5 +187,22 @@ class FraudNetAssets {
 		}
 
 		return in_array( $this->context(), $button_locations, true );
+	}
+
+	/**
+	 * Returns a list of PayPal enabled gateways.
+	 *
+	 * @return array
+	 */
+	protected function enabled_ppcp_gateways() {
+		$available_gateways = WC()->payment_gateways->get_available_payment_gateways();
+		foreach ( $this->ppcp_gateways as $gateway ) {
+			if ( ! isset( $available_gateways[ $gateway ] ) ) {
+				continue;
+			}
+			$enabled_ppcp_gateways[] = $gateway;
+		}
+
+		return $enabled_ppcp_gateways;
 	}
 }

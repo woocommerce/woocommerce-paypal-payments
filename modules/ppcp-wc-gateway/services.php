@@ -1348,20 +1348,6 @@ return array(
 			OXXOGateway::ID,
 		);
 	},
-	'wcgateway.enabled-ppcp-gateways'                      => static function ( ContainerInterface $container ): array {
-		$available_gateways = WC()->payment_gateways->get_available_payment_gateways();
-		$ppcp_gateways = $container->get( 'wcgateway.ppcp-gateways' );
-		$enabled_ppcp_gateways = array();
-
-		foreach ( $ppcp_gateways as $gateway ) {
-			if ( ! isset( $available_gateways[ $gateway ] ) ) {
-				continue;
-			}
-			$enabled_ppcp_gateways[] = $gateway;
-		}
-
-		return $enabled_ppcp_gateways;
-	},
 	'wcgateway.is-fraudnet-enabled'                        => static function ( ContainerInterface $container ): bool {
 		$settings      = $container->get( 'wcgateway.settings' );
 		assert( $settings instanceof Settings );
@@ -1375,7 +1361,7 @@ return array(
 			$container->get( 'wcgateway.fraudnet' ),
 			$container->get( 'onboarding.environment' ),
 			$container->get( 'wcgateway.settings' ),
-			$container->get( 'wcgateway.enabled-ppcp-gateways' ),
+			$container->get( 'wcgateway.ppcp-gateways' ),
 			$container->get( 'session.handler' ),
 			$container->get( 'wcgateway.is-fraudnet-enabled' )
 		);
