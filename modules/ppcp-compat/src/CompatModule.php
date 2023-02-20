@@ -159,7 +159,7 @@ class CompatModule implements ModuleInterface {
 					 * The filter allowing to change the default Germanized carrier for order tracking,
 					 * such as DHL_DEUTSCHE_POST, DPD_DE, ...
 					 */
-					$tracking_data['carrier'] = apply_filters( 'woocommerce_paypal_payments_default_gzd_carrier', 'DHL_DEUTSCHE_POST', $provider );
+					$tracking_data['carrier'] = (string) apply_filters( 'woocommerce_paypal_payments_default_gzd_carrier', 'DHL_DEUTSCHE_POST', $provider );
 				}
 
 				try {
