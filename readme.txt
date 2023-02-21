@@ -97,6 +97,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Enhancement - Add white color option #1167
 * Enhancement - Checkout validation for other fields #861
 * Enhancement - Mention PUI only for German shops and add line breaks #1169
+* Enhancement - Add filter to fallback tracking_data['carrier'] #1188
 
 = 2.0.2 =
 * Fix - Do not call PayPal get order by ID if it does not exist #1029
