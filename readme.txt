@@ -81,7 +81,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 
 == Changelog ==
 
-= 2.0.2 - 2023-xx-xx =
+= 2.0.2 - 2023-01-31 =
 * Fix - Do not call PayPal get order by ID if it does not exist #1029
 * Fix - Type check error conflict with German Market #1056
 * Fix - Backend Storage for the PayPalRequestIdRepository does not scale #983
