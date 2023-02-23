@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, e-commerce, store, sales, sell, 
 Requires at least: 5.3
 Tested up to: 6.1
 Requires PHP: 7.2
-Stable tag: 2.0.2
+Stable tag: 2.0.3
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -80,6 +80,24 @@ Follow the steps below to connect the plugin to your PayPal account:
 6. Main settings screen.
 
 == Changelog ==
+
+= 2.0.3 =
+* Fix - `DEVICE_DATA_NOT_AVAILABLE` error message when FraudNet is enabled #1177
+* Fix - Redirect to connection tab after manual credentials input #1201
+* Fix - Asking for address fields in checkout when not using them #1089
+* Fix - Validate before free trial #1170
+* Fix - Validate new user creation #1131
+* Enhancement - Save checkout form before free trial redirect #1135
+* Enhancement - Add filter for controlling the ditching of items/breakdown #1146
+* Enhancement - Add patch order data filter #1147
+* Enhancement - Add filter for disabling fees on wc order admin pages #1153
+* Enhancement - Use wp_loaded for fraudnet loading to avoid warnings #1172
+* Enhancement - reCaptcha for WooCommerce support #1093
+* Enhancement - Make it possible to hide missing funding resource Trustly #1155
+* Enhancement - Add white color option #1167
+* Enhancement - Checkout validation for other fields #861
+* Enhancement - Mention PUI only for German shops and add line breaks #1169
+* Enhancement - Add filter to fallback tracking_data['carrier'] #1188
 
 = 2.0.2 - 2023-01-31 =
 * Fix - Do not call PayPal get order by ID if it does not exist #1029
