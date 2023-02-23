@@ -87,6 +87,8 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Fix - Asking for address fields in checkout when not using them #1089
 * Fix - Validate before free trial #1170
 * Fix - Validate new user creation #1131
+* Fix - After Updating to 2.0.2, Site Health reports REST API error #1195
+* Fix - Do not send buyer-country for previews in live mode to avoid error #1186
 * Enhancement - Save checkout form before free trial redirect #1135
 * Enhancement - Add filter for controlling the ditching of items/breakdown #1146
 * Enhancement - Add patch order data filter #1147
@@ -98,6 +100,8 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Enhancement - Checkout validation for other fields #861
 * Enhancement - Mention PUI only for German shops and add line breaks #1169
 * Enhancement - Add filter to fallback tracking_data['carrier'] #1188
+* Enhancement - Error notices in checkout do not update / or are shown twice #1168
+* Enhancement - capture authorized payment by changing order status (or programmatically) #587
 
 = 2.0.2 - 2023-01-31 =
 * Fix - Do not call PayPal get order by ID if it does not exist #1029
