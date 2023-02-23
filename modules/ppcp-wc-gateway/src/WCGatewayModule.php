@@ -174,6 +174,7 @@ class WCGatewayModule implements ModuleInterface {
 				$c->get( 'button.client_id_for_admin' ),
 				$c->get( 'api.shop.currency' ),
 				$c->get( 'api.shop.country' ),
+				$c->get( 'onboarding.environment' ),
 				$settings_status->is_pay_later_button_enabled(),
 				$settings->has( 'disable_funding' ) ? $settings->get( 'disable_funding' ) : array(),
 				$c->get( 'wcgateway.all-funding-sources' )

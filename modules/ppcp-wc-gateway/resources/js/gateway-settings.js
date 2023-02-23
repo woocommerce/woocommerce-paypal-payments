@@ -114,10 +114,13 @@ import {setVisibleByClass, isVisible} from "../../../ppcp-button/resources/js/mo
                 'integration-date': PayPalCommerceGatewaySettings.integration_date,
                 'components': ['buttons', 'funding-eligibility', 'messages'],
                 'enable-funding': ['venmo', 'paylater'],
-                'buyer-country': PayPalCommerceGatewaySettings.country,
             };
 
-            if(payLaterButtonPreview?.length) {
+            if (PayPalCommerceGatewaySettings.environment === 'sandbox') {
+                settings['buyer-country'] = PayPalCommerceGatewaySettings.country;
+            }
+
+            if (payLaterButtonPreview?.length) {
                 disabledSources = Object.keys(PayPalCommerceGatewaySettings.all_funding_sources);
             }
 
