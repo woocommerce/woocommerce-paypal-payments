@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\FraudNet\FraudNet;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\GatewayRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
@@ -61,11 +62,18 @@ class FraudNetAssets {
 	protected $settings;
 
 	/**
-	 * The list of PayPal gateways.
+	 * The list of enabled PayPal gateways.
 	 *
-	 * @var string[]
+	 * @var string[]|null
 	 */
-	protected $ppcp_gateways;
+	protected $enabled_ppcp_gateways;
+
+	/**
+	 * The GatewayRepository.
+	 *
+	 * @var GatewayRepository
+	 */
+	protected $gateway_repository;
 
 	/**
 	 * The session handler
@@ -84,14 +92,14 @@ class FraudNetAssets {
 	/**
 	 * Assets constructor.
 	 *
-	 * @param string         $module_url The url of this module.
-	 * @param string         $version The assets version.
-	 * @param FraudNet       $fraud_net The FraudNet entity.
-	 * @param Environment    $environment The environment.
-	 * @param Settings       $settings The Settings.
-	 * @param string[]       $ppcp_gateways The list of PayPal gateways.
-	 * @param SessionHandler $session_handler The session handler.
-	 * @param bool           $is_fraudnet_enabled true if FraudNet support is enabled in settings, otherwise false.
+	 * @param string            $module_url The url of this module.
+	 * @param string            $version The assets version.
+	 * @param FraudNet          $fraud_net The FraudNet entity.
+	 * @param Environment       $environment The environment.
+	 * @param Settings          $settings The Settings.
+	 * @param GatewayRepository $gateway_repository The GatewayRepository.
+	 * @param SessionHandler    $session_handler The session handler.
+	 * @param bool              $is_fraudnet_enabled true if FraudNet support is enabled in settings, otherwise false.
 	 */
 	public function __construct(
 		string $module_url,
@@ -99,7 +107,7 @@ class FraudNetAssets {
 		FraudNet $fraud_net,
 		Environment $environment,
 		Settings $settings,
-		array $ppcp_gateways,
+		GatewayRepository $gateway_repository,
 		SessionHandler $session_handler,
 		bool $is_fraudnet_enabled
 	) {
@@ -108,7 +116,7 @@ class FraudNetAssets {
 		$this->fraud_net           = $fraud_net;
 		$this->environment         = $environment;
 		$this->settings            = $settings;
-		$this->ppcp_gateways       = $ppcp_gateways;
+		$this->gateway_repository  = $gateway_repository;
 		$this->session_handler     = $session_handler;
 		$this->is_fraudnet_enabled = $is_fraudnet_enabled;
 	}
@@ -190,20 +198,14 @@ class FraudNetAssets {
 	}
 
 	/**
-	 * Returns a list of PayPal enabled gateways.
+	 * Returns IDs of the currently enabled PPCP gateways.
 	 *
-	 * @return array
+	 * @return string[]
 	 */
 	protected function enabled_ppcp_gateways(): array {
-		$available_gateways    = WC()->payment_gateways->get_available_payment_gateways();
-		$enabled_ppcp_gateways = array();
-		foreach ( $this->ppcp_gateways as $gateway ) {
-			if ( ! isset( $available_gateways[ $gateway ] ) ) {
-				continue;
-			}
-			$enabled_ppcp_gateways[] = $gateway;
+		if ( null === $this->enabled_ppcp_gateways ) {
+			$this->enabled_ppcp_gateways = $this->gateway_repository->get_enabled_ppcp_gateway_ids();
 		}
-
-		return $enabled_ppcp_gateways;
+		return $this->enabled_ppcp_gateways;
 	}
 }

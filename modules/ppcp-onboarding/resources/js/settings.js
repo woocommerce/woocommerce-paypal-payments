@@ -396,6 +396,10 @@ document.addEventListener(
                     {
                         value:'authorize',
                         selector:'#field-capture_for_virtual_only'
+                    },
+                    {
+                        value:'authorize',
+                        selector:'#field-capture_on_status_change'
                     }
                 ]
             );
