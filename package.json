@@ -7,7 +7,6 @@
   "author": "WooCommerce",
   "scripts": {
     "postinstall": "run-s install:modules:* && run-s build:modules",
-
     "install:modules:ppcp-button": "cd modules/ppcp-button && yarn install",
     "install:modules:ppcp-wc-gateway": "cd modules/ppcp-wc-gateway && yarn install",
     "install:modules:ppcp-webhooks": "cd modules/ppcp-webhooks && yarn install",
@@ -16,7 +15,6 @@
     "install:modules:ppcp-onboarding": "cd modules/ppcp-onboarding && yarn install",
     "install:modules:ppcp-compat": "cd modules/ppcp-compat && yarn install",
     "install:modules:ppcp-uninstall": "cd modules/ppcp-uninstall && yarn install",
-
     "build:modules:ppcp-button": "cd modules/ppcp-button && yarn run build",
     "build:modules:ppcp-wc-gateway": "cd modules/ppcp-wc-gateway && yarn run build",
     "build:modules:ppcp-webhooks": "cd modules/ppcp-webhooks && yarn run build",
@@ -26,7 +24,6 @@
     "build:modules:ppcp-compat": "cd modules/ppcp-compat && yarn run build",
     "build:modules:ppcp-uninstall": "cd modules/ppcp-uninstall && yarn run build",
     "build:modules": "run-p build:modules:*",
-
     "watch:modules:ppcp-button": "cd modules/ppcp-button && yarn run watch",
     "watch:modules:ppcp-wc-gateway": "cd modules/ppcp-wc-gateway && yarn run watch",
     "watch:modules:ppcp-webhooks": "cd modules/ppcp-webhooks && yarn run watch",
@@ -36,7 +33,6 @@
     "watch:modules:ppcp-compat": "cd modules/ppcp-compat && yarn run watch",
     "watch:modules:ppcp-uninstall": "cd modules/ppcp-uninstall && yarn run watch",
     "watch:modules": "run-p watch:modules:*",
-
     "ddev:setup": "ddev start && ddev orchestrate",
     "ddev:start": "ddev start",
     "ddev:stop": "ddev stop",
@@ -55,7 +51,6 @@
     "ddev:xdebug-on": "ddev xdebug",
     "ddev:xdebug-off": "ddev xdebug",
     "ddev:build-package": "ddev yarn build",
-
     "prebuild": "rm -rf ./vendor && find . -name 'node_modules' -type d -maxdepth 3 -exec rm -rf {} +",
     "build": "composer install --no-dev && yarn install && yarn run archive",
     "prearchive": "rm -rf $npm_package_name.zip",
@@ -67,7 +62,10 @@
     "wp_org_slug": "woocommerce-paypal-payments"
   },
   "dependencies": {
+    "dotenv": "^16.0.3",
     "npm-run-all": "^4.1.5"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@playwright/test": "^1.31.1"
+  }
 }
