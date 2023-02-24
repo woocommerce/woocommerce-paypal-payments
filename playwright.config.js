@@ -5,6 +5,7 @@
 require('dotenv').config();
 
 const config = {
+    testDir: './tests/playwright',
     timeout: 30000,
     use: {
         baseURL: process.env.BASEURL,
