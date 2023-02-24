@@ -1,6 +1,6 @@
 const { test, expect } = require('@playwright/test');
 
-test('has ngrok url', async ({page, baseURL}) => {
+test('has title', async ({ page }) => {
     await page.goto('/');
-    await expect(page).toHaveURL(baseURL);
+    await expect(page).toHaveTitle(/WooCommerce PayPal Payments/);
 });
