@@ -11,6 +11,6 @@ modules/ppcp-wc-gateway/assets/css
 .env
 .env.e2e
 auth.json
-/test-results/
-/playwright-report/
+/tests/playwright/test-results/
+/tests/playwright/playwright-report/
 /tests/playwright/.cache/
