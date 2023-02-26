@@ -972,7 +972,7 @@ class SmartButton implements SmartButtonInterface {
 			$disable_funding = $all_sources;
 		}
 
-		if ( ! $this->settings_status->is_pay_later_button_enabled_for_context( $this->context() ) ) {
+		if ( ! $this->settings_status->is_pay_later_button_enabled_for_location( $this->context() ) ) {
 			$disable_funding[] = 'credit';
 		}
 

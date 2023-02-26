@@ -106,31 +106,6 @@ class SettingsStatus {
 	}
 
 	/**
-	 * Check whether Pay Later button is enabled for a given context.
-	 *
-	 * @param string $context The context.
-	 * @return bool true if is enabled, otherwise false.
-	 * @throws NotFoundException When a setting was not found.
-	 */
-	public function is_pay_later_button_enabled_for_context( string $context ): bool {
-		if ( ! $this->is_pay_later_button_enabled() ) {
-			return false;
-		}
-
-		$selected_locations = $this->settings->has( 'pay_later_button_locations' ) ? $this->settings->get( 'pay_later_button_locations' ) : array();
-
-		if ( empty( $selected_locations ) ) {
-			return false;
-		}
-
-		$enabled_for_current_location = $this->is_pay_later_button_enabled_for_location( $context );
-		$enabled_for_product          = $this->is_pay_later_button_enabled_for_location( 'product' );
-		$enabled_for_mini_cart        = $this->is_pay_later_button_enabled_for_location( 'mini-cart' );
-
-		return $context === 'product' ? $enabled_for_product || $enabled_for_mini_cart : $enabled_for_current_location;
-	}
-
-	/**
 	 * Checks whether smart buttons are enabled for a given location.
 	 *
 	 * @param string $location The location.
