@@ -54,6 +54,8 @@ class SettingsStatus {
 	 * @throws NotFoundException When a setting was not found.
 	 */
 	public function is_pay_later_messaging_enabled_for_location( string $location ): bool {
+		$location = $this->normalize_location( $location );
+
 		if ( ! $this->is_pay_later_messaging_enabled() ) {
 			return false;
 		}
@@ -88,6 +90,8 @@ class SettingsStatus {
 	 * @throws NotFoundException When a setting was not found.
 	 */
 	public function is_pay_later_button_enabled_for_location( string $location ): bool {
+		$location = $this->normalize_location( $location );
+
 		if ( ! $this->is_pay_later_button_enabled() ) {
 			return false;
 		}
@@ -133,6 +137,8 @@ class SettingsStatus {
 	 * @return bool true if is enabled, otherwise false.
 	 */
 	public function is_smart_button_enabled_for_location( string $location ): bool {
+		$location = $this->normalize_location( $location );
+
 		$selected_locations = $this->settings->has( 'smart_button_locations' ) ? $this->settings->get( 'smart_button_locations' ) : array();
 
 		if ( empty( $selected_locations ) ) {
@@ -140,5 +146,18 @@ class SettingsStatus {
 		}
 
 		return in_array( $location, $selected_locations, true );
+	}
+
+	/**
+	 * Adapts the context value to match the location settings.
+	 *
+	 * @param string $location The location/context.
+	 * @return string
+	 */
+	protected function normalize_location( string $location ): string {
+		if ( 'pay-now' === $location ) {
+			$location = 'checkout';
+		}
+		return $location;
 	}
 }
