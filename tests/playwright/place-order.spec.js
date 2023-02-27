@@ -46,7 +46,7 @@ test('PayPal button place order from Product page', async ({page}) => {
     await expect(title).toHaveText('Order received');
 });
 
-test('Advanced Credit and Debit Card (ACDC) place order from Checkout page', async ({page}) => {
+test('Advanced Credit and Debit Card (ACDC) place order from Checkout page @ci', async ({page}) => {
 
     await page.goto('/product/product/');
     await page.locator('.single_add_to_cart_button').click();

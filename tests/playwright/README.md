@@ -8,6 +8,7 @@ Allows using environment variables inside the tests.
 ## Run Tests
 ```
 $ npx playwright test
+$ npx playwright test --grep @ci
 $ npx playwright test example.spec.js --headed
 $ npx playwright test example.spec.js --debug
 $ npx playwright test -g "Test name here"
