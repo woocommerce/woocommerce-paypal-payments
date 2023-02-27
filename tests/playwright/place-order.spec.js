@@ -1,5 +1,3 @@
-require('dotenv').config();
-
 const {test, expect} = require('@playwright/test');
 const {
     CUSTOMER_EMAIL,
@@ -20,7 +18,7 @@ async function fillCheckoutForm(page) {
     await page.fill('#billing_email', CUSTOMER_EMAIL);
 }
 
-test('PayPal button place order from product page', async ({page}) => {
+test('PayPal button place order from Product page', async ({page}) => {
 
     await page.goto('/product/product/');
 
@@ -48,7 +46,7 @@ test('PayPal button place order from product page', async ({page}) => {
     await expect(title).toHaveText('Order received');
 });
 
-test('ACDC', async ({page}) => {
+test('Advanced Credit and Debit Card (ACDC) place order from Checkout page', async ({page}) => {
 
     await page.goto('/product/product/');
     await page.locator('.single_add_to_cart_button').click();

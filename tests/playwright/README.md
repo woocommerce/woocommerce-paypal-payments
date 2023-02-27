@@ -3,7 +3,7 @@
 ## Local Environment Variables
 Allows using environment variables inside the tests.
 
-- Duplicate `.env.sample` and rename it as `.env`, set values and add new variables if needed.
+- Duplicate `.env.e2e.example` and rename it as `.env.e2e`, set values and add new variables if needed.
 
 ## Run Tests
 ```
