@@ -1074,11 +1074,10 @@ class SmartButton implements SmartButtonInterface {
 		switch ( $this->context() ) {
 			case 'checkout':
 			case 'cart':
+			case 'pay-now':
 				return $smart_button_enabled_for_current_location || $messaging_enabled_for_current_location;
 			case 'product':
 				return $smart_button_enabled_for_current_location || $messaging_enabled_for_current_location || $smart_button_enabled_for_mini_cart;
-			case 'pay-now':
-				return true;
 			default:
 				return $smart_button_enabled_for_mini_cart;
 		}
