@@ -972,17 +972,18 @@ class SmartButton implements SmartButtonInterface {
 			$disable_funding = $all_sources;
 		}
 
-		if ( ! $this->settings_status->is_pay_later_button_enabled_for_location( $this->context() ) ) {
-			$disable_funding[] = 'credit';
+		$enable_funding = array( 'venmo' );
+
+		if ( $this->settings_status->is_pay_later_button_enabled_for_location( $this->context() ) ||
+			$this->settings_status->is_pay_later_messaging_enabled_for_location( $this->context() )
+		) {
+			$enable_funding[] = 'paylater';
+		} else {
+			$disable_funding[] = 'paylater';
 		}
 
 		if ( count( $disable_funding ) > 0 ) {
 			$params['disable-funding'] = implode( ',', array_unique( $disable_funding ) );
-		}
-
-		$enable_funding = array( 'venmo' );
-		if ( $this->settings_status->is_pay_later_messaging_enabled_for_location( $this->context() ) || ! in_array( 'credit', $disable_funding, true ) ) {
-			$enable_funding[] = 'paylater';
 		}
 
 		if ( $this->is_free_trial_cart() ) {
