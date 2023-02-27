@@ -37,7 +37,6 @@ class SettingsStatus {
 	 * Check whether Pay Later message is enabled either for checkout, cart or product page.
 	 *
 	 * @return bool true if is enabled, otherwise false.
-	 * @throws NotFoundException When a setting was not found.
 	 */
 	public function is_pay_later_messaging_enabled(): bool {
 		$messaging_enabled  = $this->settings->has( 'pay_later_messaging_enabled' ) && $this->settings->get( 'pay_later_messaging_enabled' );
@@ -51,7 +50,6 @@ class SettingsStatus {
 	 *
 	 * @param string $location The location setting name.
 	 * @return bool true if is enabled, otherwise false.
-	 * @throws NotFoundException When a setting was not found.
 	 */
 	public function is_pay_later_messaging_enabled_for_location( string $location ): bool {
 		$location = $this->normalize_location( $location );
@@ -87,7 +85,6 @@ class SettingsStatus {
 	 *
 	 * @param string $location The location.
 	 * @return bool true if is enabled, otherwise false.
-	 * @throws NotFoundException When a setting was not found.
 	 */
 	public function is_pay_later_button_enabled_for_location( string $location ): bool {
 		$location = $this->normalize_location( $location );
