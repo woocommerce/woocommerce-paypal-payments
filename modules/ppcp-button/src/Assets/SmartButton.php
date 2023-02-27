@@ -405,7 +405,7 @@ class SmartButton implements SmartButtonInterface {
 			add_action(
 				$this->pay_order_renderer_hook(),
 				array( $this, 'message_renderer' ),
-				11
+				15
 			);
 		}
 		return true;
@@ -478,7 +478,8 @@ class SmartButton implements SmartButtonInterface {
 				function (): void {
 					$this->button_renderer( PayPalGateway::ID );
 					$this->button_renderer( CardButtonGateway::ID );
-				}
+				},
+				20
 			);
 			add_action(
 				$this->checkout_button_renderer_hook(),
