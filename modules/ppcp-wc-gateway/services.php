@@ -36,6 +36,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\GatewayRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXO;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXOEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXOGateway;
@@ -538,6 +539,23 @@ return array(
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
+			'capture_on_status_change'               => array(
+				'title'        => __( 'Capture On Status Change', 'woocommerce-paypal-payments' ),
+				'type'         => 'checkbox',
+				'default'      => false,
+				'desc_tip'     => true,
+				'description'  => __(
+					'The transaction will be captured automatically when the order status changes to Processing or Completed.',
+					'woocommerce-paypal-payments'
+				),
+				'label'        => __( 'Capture On Status Change', 'woocommerce-paypal-payments' ),
+				'screens'      => array(
+					State::STATE_START,
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
 			'capture_for_virtual_only'               => array(
 				'title'        => __( 'Capture Virtual-Only Orders ', 'woocommerce-paypal-payments' ),
 				'type'         => 'checkbox',
@@ -593,7 +611,7 @@ return array(
 				'type'         => 'select',
 				'class'        => array(),
 				'input_class'  => array( 'wc-enhanced-select' ),
-				'default'      => 'gold',
+				'default'      => ApplicationContext::LANDING_PAGE_LOGIN,
 				'desc_tip'     => true,
 				'description'  => __(
 					'Type of PayPal page to display.',
@@ -862,6 +880,7 @@ return array(
 			'p24'         => _x( 'Przelewy24', 'Name of payment method', 'woocommerce-paypal-payments' ),
 			'sofort'      => _x( 'Sofort', 'Name of payment method', 'woocommerce-paypal-payments' ),
 			'venmo'       => _x( 'Venmo', 'Name of payment method', 'woocommerce-paypal-payments' ),
+			'trustly'     => _x( 'Trustly', 'Name of payment method', 'woocommerce-paypal-payments' ),
 		);
 	},
 
@@ -1157,20 +1176,49 @@ return array(
 
 		return false;
 	},
-	'wcgateway.settings.tracking-label'                    => static function ( ContainerInterface $container ): string {
-		$tracking_label = sprintf(
-		// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
-			__( 'Enable shipment tracking information to be sent to PayPal for seller protection features. Required when %1$sPay upon Invoice%2$s is used.', 'woocommerce-paypal-payments' ),
-			'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#pay-upon-invoice-PUI" target="_blank">',
+	'wcgateway.settings.fraudnet-label'                    => static function ( ContainerInterface $container ): string {
+		$label = sprintf(
+			// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+			__( 'Manage online risk with %1$sFraudNet%2$s.', 'woocommerce-paypal-payments' ),
+			'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#fraudnet" target="_blank">',
 			'</a>'
 		);
+
+		if ( 'DE' === $container->get( 'api.shop.country' ) ) {
+			$label .= '<br/>' . sprintf(
+				// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+				__( 'Required when %1$sPay upon Invoice%2$s is used.', 'woocommerce-paypal-payments' ),
+				'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#pay-upon-invoice-PUI" target="_blank">',
+				'</a>'
+			);
+		}
+
+		return $label;
+	},
+	'wcgateway.settings.tracking-label'                    => static function ( ContainerInterface $container ): string {
+		$tracking_label = sprintf(
+			// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+			__( 'Enable %1$sshipment tracking information%2$s to be sent to PayPal for seller protection features.', 'woocommerce-paypal-payments' ),
+			'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#shipment-tracking" target="_blank">',
+			'</a>'
+		);
+
+		if ( 'DE' === $container->get( 'api.shop.country' ) ) {
+			$tracking_label .= '<br/>' . sprintf(
+				// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+				__( 'Required when %1$sPay upon Invoice%2$s is used.', 'woocommerce-paypal-payments' ),
+				'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#pay-upon-invoice-PUI" target="_blank">',
+				'</a>'
+			);
+		}
+
 		$is_tracking_available = $container->get( 'order-tracking.is-tracking-available' );
 
 		if ( $is_tracking_available ) {
 			return $tracking_label;
 		}
 
-		$tracking_label .= sprintf(
+		$tracking_label .= '<br/>' . sprintf(
 		// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
 			__(
 				' To use tracking features, you must %1$senable tracking on your account%2$s.',
@@ -1318,52 +1366,10 @@ return array(
 			OXXOGateway::ID,
 		);
 	},
-	'wcgateway.enabled-ppcp-gateways'                      => static function ( ContainerInterface $container ): array {
-		$available_gateways = WC()->payment_gateways->get_available_payment_gateways();
-		$ppcp_gateways = $container->get( 'wcgateway.ppcp-gateways' );
-		$enabled_ppcp_gateways = array();
-
-		foreach ( $ppcp_gateways as $gateway ) {
-			if ( ! isset( $available_gateways[ $gateway ] ) ) {
-				continue;
-			}
-			$enabled_ppcp_gateways[] = $gateway;
-		}
-
-		return $enabled_ppcp_gateways;
-	},
-	'wcgateway.is-paypal-continuation'                     => static function ( ContainerInterface $container ): bool {
-		$session_handler              = $container->get( 'session.handler' );
-		assert( $session_handler instanceof SessionHandler );
-
-		$order = $session_handler->order();
-		if ( ! $order ) {
-			return false;
-		}
-		$source = $order->payment_source();
-		if ( $source && $source->card() ) {
-			return false; // Ignore for DCC.
-		}
-		if ( 'card' === $session_handler->funding_source() ) {
-			return false; // Ignore for card buttons.
-		}
-		return true;
-	},
-	'wcgateway.current-context'                            => static function ( ContainerInterface $container ): string {
-		$context = 'mini-cart';
-		if ( is_product() || wc_post_content_has_shortcode( 'product_page' ) ) {
-			$context = 'product';
-		}
-		if ( is_cart() ) {
-			$context = 'cart';
-		}
-		if ( is_checkout() && ! $container->get( 'wcgateway.is-paypal-continuation' ) ) {
-			$context = 'checkout';
-		}
-		if ( is_checkout_pay_page() ) {
-			$context = 'pay-now';
-		}
-		return $context;
+	'wcgateway.gateway-repository'                         => static function ( ContainerInterface $container ): GatewayRepository {
+		return new GatewayRepository(
+			$container->get( 'wcgateway.ppcp-gateways' )
+		);
 	},
 	'wcgateway.is-fraudnet-enabled'                        => static function ( ContainerInterface $container ): bool {
 		$settings      = $container->get( 'wcgateway.settings' );
@@ -1378,8 +1384,8 @@ return array(
 			$container->get( 'wcgateway.fraudnet' ),
 			$container->get( 'onboarding.environment' ),
 			$container->get( 'wcgateway.settings' ),
-			$container->get( 'wcgateway.enabled-ppcp-gateways' ),
-			$container->get( 'wcgateway.current-context' ),
+			$container->get( 'wcgateway.gateway-repository' ),
+			$container->get( 'session.handler' ),
 			$container->get( 'wcgateway.is-fraudnet-enabled' )
 		);
 	},

@@ -518,6 +518,11 @@ class OrderEndpoint {
 			}
 		}
 
+		/**
+		 * The filter can be used to modify the order patching request body data (the final prices, items).
+		 */
+		$patches_array = apply_filters( 'ppcp_patch_order_request_body_data', $patches_array );
+
 		$bearer = $this->bearer->bearer();
 		$url    = trailingslashit( $this->host ) . 'v2/checkout/orders/' . $order_to_update->id();
 		$args   = array(

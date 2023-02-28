@@ -7,7 +7,6 @@
   "author": "WooCommerce",
   "scripts": {
     "postinstall": "run-s install:modules:* && run-s build:modules",
-
     "install:modules:ppcp-button": "cd modules/ppcp-button && yarn install",
     "install:modules:ppcp-wc-gateway": "cd modules/ppcp-wc-gateway && yarn install",
     "install:modules:ppcp-webhooks": "cd modules/ppcp-webhooks && yarn install",
@@ -15,7 +14,6 @@
     "install:modules:ppcp-onboarding": "cd modules/ppcp-onboarding && yarn install",
     "install:modules:ppcp-compat": "cd modules/ppcp-compat && yarn install",
     "install:modules:ppcp-uninstall": "cd modules/ppcp-uninstall && yarn install",
-
     "build:modules:ppcp-button": "cd modules/ppcp-button && yarn run build",
     "build:modules:ppcp-wc-gateway": "cd modules/ppcp-wc-gateway && yarn run build",
     "build:modules:ppcp-webhooks": "cd modules/ppcp-webhooks && yarn run build",
@@ -24,7 +22,6 @@
     "build:modules:ppcp-compat": "cd modules/ppcp-compat && yarn run build",
     "build:modules:ppcp-uninstall": "cd modules/ppcp-uninstall && yarn run build",
     "build:modules": "run-p build:modules:*",
-
     "watch:modules:ppcp-button": "cd modules/ppcp-button && yarn run watch",
     "watch:modules:ppcp-wc-gateway": "cd modules/ppcp-wc-gateway && yarn run watch",
     "watch:modules:ppcp-webhooks": "cd modules/ppcp-webhooks && yarn run watch",
@@ -33,7 +30,6 @@
     "watch:modules:ppcp-compat": "cd modules/ppcp-compat && yarn run watch",
     "watch:modules:ppcp-uninstall": "cd modules/ppcp-uninstall && yarn run watch",
     "watch:modules": "run-p watch:modules:*",
-
     "ddev:setup": "ddev start && ddev orchestrate",
     "ddev:start": "ddev start",
     "ddev:stop": "ddev stop",
@@ -44,7 +40,10 @@
     "ddev:composer-update": "ddev composer update && ddev composer update --lock",
     "ddev:unit-tests": "ddev exec phpunit",
     "ddev:e2e-tests": "cp -n .env.e2e.example .env.e2e && ddev php tests/e2e/PHPUnit/setup.php && ddev exec phpunit -c tests/e2e/phpunit.xml.dist",
-    "ddev:test": "yarn run ddev:unit-tests && yarn run ddev:e2e-tests",
+    "ddev:pw-install": "ddev exec npx playwright install --with-deps",
+    "ddev:pw-tests-ci": "ddev exec npx playwright test --grep @ci",
+    "ddev:pw-tests-headed": "ddev exec npx playwright test --headed",
+    "ddev:test": "yarn run ddev:unit-tests && yarn run ddev:e2e-tests && yarn run ddev:pw-tests-ci",
     "ddev:lint": "yarn ddev:phpcs && yarn ddev:psalm",
     "ddev:phpcs": "ddev exec phpcs --parallel=8 -s",
     "ddev:psalm": "ddev exec psalm --show-info=false --threads=8 --diff",
@@ -52,19 +51,21 @@
     "ddev:xdebug-on": "ddev xdebug",
     "ddev:xdebug-off": "ddev xdebug",
     "ddev:build-package": "ddev yarn build",
-
     "prebuild": "rm -rf ./vendor && find . -name 'node_modules' -type d -maxdepth 3 -exec rm -rf {} +",
     "build": "composer install --no-dev && yarn install && yarn run archive",
     "prearchive": "rm -rf $npm_package_name.zip",
     "archive": "zip -r $npm_package_name.zip . -x **.git/\\* **node_modules/\\*",
     "postarchive": "yarn run archive:cleanup && rm -rf $npm_package_name && unzip $npm_package_name.zip -d $npm_package_name && rm $npm_package_name.zip && zip -r $npm_package_name.zip $npm_package_name && rm -rf $npm_package_name",
-    "archive:cleanup": "zip -d $npm_package_name.zip .env* .ddev/\\* \\*.idea/\\* .editorconfig tests/\\* .github/\\* .psalm/\\* wordpress_org_assets/\\* \\*.DS_Store \\*README.md \\*.gitattributes \\*.gitignore \\*composer.json \\*composer.lock patchwork.json phpunit.xml.dist .phpunit.result.cache phpcs.xml* psalm*.xml* \\*.babelrc \\*package.json \\*webpack.config.js \\*yarn.lock \\*.travis.yml"
+    "archive:cleanup": "zip -d $npm_package_name.zip .env* .ddev/\\* \\*.idea/\\* .editorconfig tests/\\* .github/\\* .psalm/\\* wordpress_org_assets/\\* \\*.DS_Store \\*README.md \\*.gitattributes \\*.gitignore \\*composer.json \\*composer.lock patchwork.json phpunit.xml.dist .phpunit.result.cache phpcs.xml* psalm*.xml* playwright.config.js \\*.babelrc \\*package.json \\*webpack.config.js \\*yarn.lock \\*.travis.yml\\"
   },
   "config": {
     "wp_org_slug": "woocommerce-paypal-payments"
   },
   "dependencies": {
+    "dotenv": "^16.0.3",
     "npm-run-all": "^4.1.5"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "@playwright/test": "^1.31.1"
+  }
 }

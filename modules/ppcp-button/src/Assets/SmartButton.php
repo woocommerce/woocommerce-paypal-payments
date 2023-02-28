@@ -21,7 +21,10 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\Button\Endpoint\SaveCheckoutFormEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\StartPayPalVaultingEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\ValidateCheckoutEndpoint;
+use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -40,7 +43,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
  */
 class SmartButton implements SmartButtonInterface {
 
-	use FreeTrialHandlerTrait;
+	use FreeTrialHandlerTrait, ContextTrait;
 
 	/**
 	 * The Settings status helper.
@@ -155,6 +158,13 @@ class SmartButton implements SmartButtonInterface {
 	private $basic_checkout_validation_enabled;
 
 	/**
+	 * Whether to execute WC validation of the checkout form.
+	 *
+	 * @var bool
+	 */
+	protected $early_validation_enabled;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -187,6 +197,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @param string                 $currency 3-letter currency code of the shop.
 	 * @param array                  $all_funding_sources All existing funding sources.
 	 * @param bool                   $basic_checkout_validation_enabled Whether the basic JS validation of the form iss enabled.
+	 * @param bool                   $early_validation_enabled Whether to execute WC validation of the checkout form.
 	 * @param LoggerInterface        $logger The logger.
 	 */
 	public function __construct(
@@ -206,6 +217,7 @@ class SmartButton implements SmartButtonInterface {
 		string $currency,
 		array $all_funding_sources,
 		bool $basic_checkout_validation_enabled,
+		bool $early_validation_enabled,
 		LoggerInterface $logger
 	) {
 
@@ -225,6 +237,7 @@ class SmartButton implements SmartButtonInterface {
 		$this->currency                          = $currency;
 		$this->all_funding_sources               = $all_funding_sources;
 		$this->basic_checkout_validation_enabled = $basic_checkout_validation_enabled;
+		$this->early_validation_enabled          = $early_validation_enabled;
 		$this->logger                            = $logger;
 	}
 
@@ -761,21 +774,29 @@ class SmartButton implements SmartButtonInterface {
 			'redirect'                          => wc_get_checkout_url(),
 			'context'                           => $this->context(),
 			'ajax'                              => array(
-				'change_cart'   => array(
+				'change_cart'        => array(
 					'endpoint' => \WC_AJAX::get_endpoint( ChangeCartEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( ChangeCartEndpoint::nonce() ),
 				),
-				'create_order'  => array(
+				'create_order'       => array(
 					'endpoint' => \WC_AJAX::get_endpoint( CreateOrderEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( CreateOrderEndpoint::nonce() ),
 				),
-				'approve_order' => array(
+				'approve_order'      => array(
 					'endpoint' => \WC_AJAX::get_endpoint( ApproveOrderEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( ApproveOrderEndpoint::nonce() ),
 				),
-				'vault_paypal'  => array(
+				'vault_paypal'       => array(
 					'endpoint' => \WC_AJAX::get_endpoint( StartPayPalVaultingEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( StartPayPalVaultingEndpoint::nonce() ),
+				),
+				'save_checkout_form' => array(
+					'endpoint' => \WC_AJAX::get_endpoint( SaveCheckoutFormEndpoint::ENDPOINT ),
+					'nonce'    => wp_create_nonce( SaveCheckoutFormEndpoint::nonce() ),
+				),
+				'validate_checkout'  => array(
+					'endpoint' => \WC_AJAX::get_endpoint( ValidateCheckoutEndpoint::ENDPOINT ),
+					'nonce'    => wp_create_nonce( ValidateCheckoutEndpoint::nonce() ),
 				),
 			),
 			'enforce_vault'                     => $this->has_subscriptions(),
@@ -866,6 +887,7 @@ class SmartButton implements SmartButtonInterface {
 			'single_product_buttons_enabled'    => $this->settings_status->is_smart_button_enabled_for_location( 'product' ),
 			'mini_cart_buttons_enabled'         => $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' ),
 			'basic_checkout_validation_enabled' => $this->basic_checkout_validation_enabled,
+			'early_checkout_validation_enabled' => $this->early_validation_enabled,
 		);
 
 		if ( $this->style_for_context( 'layout', 'mini-cart' ) !== 'horizontal' ) {
@@ -1060,48 +1082,6 @@ class SmartButton implements SmartButtonInterface {
 			default:
 				return $smart_button_enabled_for_mini_cart;
 		}
-	}
-
-	/**
-	 * The current context.
-	 *
-	 * @return string
-	 */
-	private function context(): string {
-		$context = 'mini-cart';
-		if ( is_product() || wc_post_content_has_shortcode( 'product_page' ) ) {
-			$context = 'product';
-		}
-		if ( is_cart() ) {
-			$context = 'cart';
-		}
-		if ( is_checkout() && ! $this->is_paypal_continuation() ) {
-			$context = 'checkout';
-		}
-		if ( is_checkout_pay_page() ) {
-			$context = 'pay-now';
-		}
-		return $context;
-	}
-
-	/**
-	 * Checks if PayPal payment was already initiated (on the product or cart pages).
-	 *
-	 * @return bool
-	 */
-	private function is_paypal_continuation(): bool {
-		$order = $this->session_handler->order();
-		if ( ! $order ) {
-			return false;
-		}
-		$source = $order->payment_source();
-		if ( $source && $source->card() ) {
-			return false; // Ignore for DCC.
-		}
-		if ( 'card' === $this->session_handler->funding_source() ) {
-			return false; // Ignore for card buttons.
-		}
-		return true;
 	}
 
 	/**
