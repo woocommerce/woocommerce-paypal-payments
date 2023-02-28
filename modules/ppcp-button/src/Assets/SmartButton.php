@@ -22,7 +22,10 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\Button\Endpoint\SaveCheckoutFormEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\StartPayPalVaultingEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\ValidateCheckoutEndpoint;
+use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Subscription\FreeTrialHandlerTrait;
@@ -40,7 +43,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
  */
 class SmartButton implements SmartButtonInterface {
 
-	use FreeTrialHandlerTrait;
+	use FreeTrialHandlerTrait, ContextTrait;
 
 	/**
 	 * The Settings status helper.
@@ -148,6 +151,13 @@ class SmartButton implements SmartButtonInterface {
 	private $basic_checkout_validation_enabled;
 
 	/**
+	 * Whether to execute WC validation of the checkout form.
+	 *
+	 * @var bool
+	 */
+	protected $early_validation_enabled;
+
+	/**
 	 * Cached payment tokens.
 	 *
 	 * @var PaymentToken[]|null
@@ -207,6 +217,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @param string                 $currency 3-letter currency code of the shop.
 	 * @param array                  $all_funding_sources All existing funding sources.
 	 * @param bool                   $basic_checkout_validation_enabled Whether the basic JS validation of the form iss enabled.
+	 * @param bool                   $early_validation_enabled Whether to execute WC validation of the checkout form.
 	 * @param string                 $intent The intent.
 	 * @param string                 $context The current context.
 	 * @param bool                   $can_save_vault_token Whether vault tokens could be saved.
@@ -229,6 +240,7 @@ class SmartButton implements SmartButtonInterface {
 		string $currency,
 		array $all_funding_sources,
 		bool $basic_checkout_validation_enabled,
+		bool $early_validation_enabled,
 		string $intent,
 		string $context,
 		bool $can_save_vault_token,
@@ -251,6 +263,7 @@ class SmartButton implements SmartButtonInterface {
 		$this->currency                          = $currency;
 		$this->all_funding_sources               = $all_funding_sources;
 		$this->basic_checkout_validation_enabled = $basic_checkout_validation_enabled;
+		$this->early_validation_enabled          = $early_validation_enabled;
 		$this->intent                            = $intent;
 		$this->logger                            = $logger;
 		$this->context                           = $context;
@@ -793,6 +806,14 @@ class SmartButton implements SmartButtonInterface {
 					'endpoint' => \WC_AJAX::get_endpoint( StartPayPalVaultingEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( StartPayPalVaultingEndpoint::nonce() ),
 				),
+				'save_checkout_form' => array(
+					'endpoint' => \WC_AJAX::get_endpoint( SaveCheckoutFormEndpoint::ENDPOINT ),
+					'nonce'    => wp_create_nonce( SaveCheckoutFormEndpoint::nonce() ),
+				),
+				'validate_checkout'  => array(
+					'endpoint' => \WC_AJAX::get_endpoint( ValidateCheckoutEndpoint::ENDPOINT ),
+					'nonce'    => wp_create_nonce( ValidateCheckoutEndpoint::nonce() ),
+				),
 			),
 			'subscription_plan_id'              => $this->paypal_subscription_id(),
 			'enforce_vault'                     => $this->has_subscriptions(),
@@ -883,6 +904,7 @@ class SmartButton implements SmartButtonInterface {
 			'single_product_buttons_enabled'    => $this->settings_status->is_smart_button_enabled_for_location( 'product' ),
 			'mini_cart_buttons_enabled'         => $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' ),
 			'basic_checkout_validation_enabled' => $this->basic_checkout_validation_enabled,
+			'early_checkout_validation_enabled' => $this->early_validation_enabled,
 		);
 
 		if ( $this->style_for_context( 'layout', 'mini-cart' ) !== 'horizontal' ) {

@@ -183,18 +183,19 @@ class SubscriptionsHandler {
 			return true;
 		}
 
-		if ( function_exists( 'get_current_screen' ) && get_current_screen() ) {
-			// Are we on the WC > Subscriptions screen?
-			if ( 'edit-shop_subscription' === get_current_screen()->id ) {
-				return true;
-			}
+		// Are we on the WC > Subscriptions screen?
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$post_type = wc_clean( wp_unslash( $_GET['post_type'] ?? $_POST['post_type'] ?? '' ) );
+		if ( $post_type === 'shop_subscription' ) {
+			return true;
+		}
 
-			// Are we editing an order or subscription tied to PPEC?
-			if ( in_array( get_current_screen()->id, array( 'shop_subscription', 'shop_order' ), true ) ) {
-				$order = wc_get_order( $GLOBALS['post']->ID );
-
-				return ( $order && PPECHelper::PPEC_GATEWAY_ID === $order->get_payment_method() );
-			}
+		// Are we editing an order or subscription tied to PPEC?
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$order_id = wc_clean( wp_unslash( $_GET['post'] ?? $_POST['post_ID'] ?? '' ) );
+		if ( $order_id ) {
+			$order = wc_get_order( $order_id );
+			return ( $order && PPECHelper::PPEC_GATEWAY_ID === $order->get_payment_method() );
 		}
 
 		return false;

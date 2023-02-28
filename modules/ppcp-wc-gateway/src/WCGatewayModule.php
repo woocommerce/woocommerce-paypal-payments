@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway;
 
+use Psr\Log\LoggerInterface;
+use Throwable;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WC_Order;
@@ -148,6 +150,12 @@ class WCGatewayModule implements ModuleInterface {
 				if ( ! $wc_order instanceof WC_Order ) {
 					return;
 				}
+				/**
+				 * The filter can be used to remove the rows with PayPal fees in WC orders.
+				 */
+				if ( ! apply_filters( 'woocommerce_paypal_payments_show_fees_on_order_admin_page', true, $wc_order ) ) {
+					return;
+				}
 
 				// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 				echo $fees_renderer->render( $wc_order );
@@ -168,6 +176,7 @@ class WCGatewayModule implements ModuleInterface {
 				$c->get( 'button.client_id_for_admin' ),
 				$c->get( 'api.shop.currency' ),
 				$c->get( 'api.shop.country' ),
+				$c->get( 'onboarding.environment' ),
 				$settings_status->is_pay_later_button_enabled(),
 				$settings->has( 'disable_funding' ) ? $settings->get( 'disable_funding' ) : array(),
 				$c->get( 'wcgateway.all-funding-sources' )
@@ -252,7 +261,7 @@ class WCGatewayModule implements ModuleInterface {
 		);
 
 		add_action(
-			'init',
+			'wp_loaded',
 			function () use ( $c ) {
 				if ( 'DE' === $c->get( 'api.shop.country' ) ) {
 					( $c->get( 'wcgateway.pay-upon-invoice' ) )->init();
@@ -299,6 +308,57 @@ class WCGatewayModule implements ModuleInterface {
 				$endpoint = $c->get( 'wcgateway.endpoint.oxxo' );
 				$endpoint->handle_request();
 			}
+		);
+
+		add_action(
+			'woocommerce_order_status_changed',
+			static function ( int $order_id, string $from, string $to ) use ( $c ) {
+				$wc_order = wc_get_order( $order_id );
+				if ( ! $wc_order instanceof WC_Order ) {
+					return;
+				}
+
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof ContainerInterface );
+
+				if ( ! $settings->has( 'capture_on_status_change' ) || ! $settings->get( 'capture_on_status_change' ) ) {
+					return;
+				}
+
+				$intent   = strtoupper( (string) $wc_order->get_meta( PayPalGateway::INTENT_META_KEY ) );
+				$captured = wc_string_to_bool( $wc_order->get_meta( AuthorizedPaymentsProcessor::CAPTURED_META_KEY ) );
+				if ( $intent !== 'AUTHORIZE' || $captured ) {
+					return;
+				}
+
+				/**
+				 * The filter returning the WC order statuses which trigger capturing of payment authorization.
+				 */
+				$capture_statuses = apply_filters( 'woocommerce_paypal_payments_auto_capture_statuses', array( 'processing', 'completed' ), $wc_order );
+				if ( ! in_array( $to, $capture_statuses, true ) ) {
+					return;
+				}
+
+				$authorized_payment_processor = $c->get( 'wcgateway.processor.authorized-payments' );
+				assert( $authorized_payment_processor instanceof AuthorizedPaymentsProcessor );
+
+				try {
+					if ( $authorized_payment_processor->capture_authorized_payment( $wc_order ) ) {
+						return;
+					}
+				} catch ( Throwable $error ) {
+					$logger = $c->get( 'woocommerce.logger.woocommerce' );
+					assert( $logger instanceof LoggerInterface );
+					$logger->error( "Capture failed. {$error->getMessage()} {$error->getFile()}:{$error->getLine()}" );
+				}
+
+				$wc_order->update_status(
+					'failed',
+					__( 'Could not capture the payment.', 'woocommerce-paypal-payments' )
+				);
+			},
+			10,
+			3
 		);
 	}
 

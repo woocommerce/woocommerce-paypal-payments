@@ -49,7 +49,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'description'  => sprintf(
 			// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
 				__(
-					'Customize the appearance of the PayPal smart buttons on the 
+					'Customize the appearance of the PayPal smart buttons on the
 					%1$sCheckout page%5$s, %2$sSingle Product Page%5$s, %3$sCart page%5$s or on %4$sMini Cart%5$s.',
 					'woocommerce-paypal-payments'
 				),
@@ -163,6 +163,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'blue'   => __( 'Blue', 'woocommerce-paypal-payments' ),
 				'silver' => __( 'Silver', 'woocommerce-paypal-payments' ),
 				'black'  => __( 'Black', 'woocommerce-paypal-payments' ),
+				'white'  => __( 'White', 'woocommerce-paypal-payments' ),
 			),
 			'screens'      => array(
 				State::STATE_START,
@@ -308,6 +309,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'blue'   => __( 'Blue', 'woocommerce-paypal-payments' ),
 				'silver' => __( 'Silver', 'woocommerce-paypal-payments' ),
 				'black'  => __( 'Black', 'woocommerce-paypal-payments' ),
+				'white'  => __( 'White', 'woocommerce-paypal-payments' ),
 			),
 			'screens'      => array(
 				State::STATE_START,
@@ -447,6 +449,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'blue'   => __( 'Blue', 'woocommerce-paypal-payments' ),
 				'silver' => __( 'Silver', 'woocommerce-paypal-payments' ),
 				'black'  => __( 'Black', 'woocommerce-paypal-payments' ),
+				'white'  => __( 'White', 'woocommerce-paypal-payments' ),
 			),
 			'screens'      => array(
 				State::STATE_START,
@@ -586,6 +589,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'blue'   => __( 'Blue', 'woocommerce-paypal-payments' ),
 				'silver' => __( 'Silver', 'woocommerce-paypal-payments' ),
 				'black'  => __( 'Black', 'woocommerce-paypal-payments' ),
+				'white'  => __( 'White', 'woocommerce-paypal-payments' ),
 			),
 			'screens'      => array(
 				State::STATE_START,
@@ -725,6 +729,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'blue'   => __( 'Blue', 'woocommerce-paypal-payments' ),
 				'silver' => __( 'Silver', 'woocommerce-paypal-payments' ),
 				'black'  => __( 'Black', 'woocommerce-paypal-payments' ),
+				'white'  => __( 'White', 'woocommerce-paypal-payments' ),
 			),
 			'screens'      => array(
 				State::STATE_START,

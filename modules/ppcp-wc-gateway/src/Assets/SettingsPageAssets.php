@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Assets;
 
+use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 
 /**
@@ -59,6 +60,13 @@ class SettingsPageAssets {
 	private $country;
 
 	/**
+	 * The environment object.
+	 *
+	 * @var Environment
+	 */
+	private $environment;
+
+	/**
 	 * Whether Pay Later button is enabled either for checkout, cart or product page.
 	 *
 	 * @var bool
@@ -88,6 +96,7 @@ class SettingsPageAssets {
 	 * @param string             $client_id The PayPal SDK client ID.
 	 * @param string             $currency 3-letter currency code of the shop.
 	 * @param string             $country 2-letter country code of the shop.
+	 * @param Environment        $environment The environment object.
 	 * @param bool               $is_pay_later_button_enabled Whether Pay Later button is enabled either for checkout, cart or product page.
 	 * @param array              $disabled_sources The list of disabled funding sources.
 	 * @param array              $all_funding_sources The list of all existing funding sources.
@@ -99,6 +108,7 @@ class SettingsPageAssets {
 		string $client_id,
 		string $currency,
 		string $country,
+		Environment $environment,
 		bool $is_pay_later_button_enabled,
 		array $disabled_sources,
 		array $all_funding_sources
@@ -109,6 +119,7 @@ class SettingsPageAssets {
 		$this->client_id                   = $client_id;
 		$this->currency                    = $currency;
 		$this->country                     = $country;
+		$this->environment                 = $environment;
 		$this->is_pay_later_button_enabled = $is_pay_later_button_enabled;
 		$this->disabled_sources            = $disabled_sources;
 		$this->all_funding_sources         = $all_funding_sources;
@@ -191,6 +202,7 @@ class SettingsPageAssets {
 				'client_id'                      => $this->client_id,
 				'currency'                       => $this->currency,
 				'country'                        => $this->country,
+				'environment'                    => $this->environment->current_environment(),
 				'integration_date'               => PAYPAL_INTEGRATION_DATE,
 				'is_pay_later_button_enabled'    => $this->is_pay_later_button_enabled,
 				'disabled_sources'               => $this->disabled_sources,
