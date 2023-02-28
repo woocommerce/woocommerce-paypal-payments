@@ -238,17 +238,17 @@ class SubscriptionModule implements ModuleInterface {
 			'add_meta_boxes',
 			function( string $post_type ) {
 				if ( $post_type === 'product' ) {
-					$product_id = wc_clean( wp_unslash( $_GET['post'] ?? '' ) );
-					$product    = wc_get_product( $product_id );
+					$post_id = wc_clean( wp_unslash( $_GET['post'] ?? '' ) );
+					$product    = wc_get_product( $post_id );
 					if ( is_a( $product, WC_Product_Subscription::class ) ) {
-						$subscription_id = $product->get_meta( 'ppcp_subscription_product_id' );
+						$product_id = $product->get_meta( 'ppcp_subscription_product_id' );
 						$plan_id         = $product->get_meta( 'ppcp_subscription_plan' );
-						if ( $subscription_id && $plan_id ) {
+						if ( $product_id && $plan_id ) {
 							add_meta_box(
 								'ppcp_subscription',
 								__( 'PayPal Subscription', 'woocommerce-paypal-payments' ),
-								function() use ( $subscription_id, $plan_id ) {
-									echo '<p>Subscription ID: ' . esc_attr( $subscription_id ) . '</p>';
+								function() use ( $product_id, $plan_id ) {
+									echo '<p>Product ID: ' . esc_attr( $product_id ) . '</p>';
 									echo '<p>Plan ID: ' . esc_attr( $plan_id ) . '</p>';
 								},
 								$post_type,
