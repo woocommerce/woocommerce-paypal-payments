@@ -179,7 +179,7 @@ class WCGatewayModule implements ModuleInterface {
 				$c->get( 'onboarding.environment' ),
 				$settings_status->is_pay_later_button_enabled(),
 				$settings->has( 'disable_funding' ) ? $settings->get( 'disable_funding' ) : array(),
-				$c->get( 'wcgateway.all-funding-sources' )
+				$c->get( 'wcgateway.settings.funding-sources' )
 			);
 			$assets->register_assets();
 		}
