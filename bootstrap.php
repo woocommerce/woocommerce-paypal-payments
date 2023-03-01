@@ -16,9 +16,12 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return function (
 	string $root_dir,
-	ContainerInterface ...$additional_containers
+	array $additional_containers = array(),
+	array $additional_modules = array()
 ): ContainerInterface {
 	$modules = ( require "$root_dir/modules.php" )( $root_dir );
+
+	$modules = array_merge( $modules, $additional_modules );
 
 	/**
 	 * Use this filter to add custom module or remove some of existing ones.
