@@ -409,17 +409,17 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'input_class'  => $container->get( 'wcgateway.settings.should-disable-fraudnet-checkbox' ) ? array( 'ppcp-disabled-checkbox' ) : array(),
 		),
 		'subscriptions_configuration_heading'           => array(
-			'heading'      => __( 'Subscriptions', 'woocommerce-paypal-payments' ),
+			'heading'      => __( 'BillingPlans', 'woocommerce-paypal-payments' ),
 			'type'         => 'ppcp-heading',
 			'screens'      => array(
 				State::STATE_ONBOARDED,
 			),
 			'requirements' => array(),
 			'gateway'      => Settings::CONNECTION_TAB_ID,
-			'description'  => __( 'Configure WooCommerce Subscriptions integration with PayPal.', 'woocommerce-paypal-payments' ),
+			'description'  => __( 'Configure WooCommerce BillingPlans integration with PayPal.', 'woocommerce-paypal-payments' ),
 		),
 		'subscriptions_mode'                            => array(
-			'title'        => __( 'Subscriptions Mode', 'woocommerce-paypal-payments' ),
+			'title'        => __( 'BillingPlans Mode', 'woocommerce-paypal-payments' ),
 			'type'         => 'select',
 			'class'        => array(),
 			'input_class'  => array( 'wc-enhanced-select' ),
@@ -428,7 +428,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'default'      => 'vaulting_api',
 			'options'      => array(
 				'vaulting_api'      => __( 'PayPal Vaulting', 'woocommerce-paypal-payments' ),
-				'subscriptions_api' => __( 'PayPal Subscriptions', 'woocommerce-paypal-payments' ),
+				'subscriptions_api' => __( 'PayPal BillingPlans', 'woocommerce-paypal-payments' ),
 			),
 			'screens'      => array(
 				State::STATE_ONBOARDED,

@@ -10,7 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\ApiClient;
 
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\CatalogProducts;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\Subscriptions;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingPlans;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
@@ -215,8 +215,8 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'api.endpoint.subscriptions'                => static function( ContainerInterface $container ): Subscriptions {
-		return new Subscriptions(
+	'api.endpoint.billing-plans'                => static function( ContainerInterface $container ): BillingPlans {
+		return new BillingPlans(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
 			$container->get( 'woocommerce.logger.woocommerce' )

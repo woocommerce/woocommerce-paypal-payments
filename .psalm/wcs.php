@@ -734,7 +734,7 @@ class WC_Subscriptions_Product
 	/**
 	 * Hooked to the @see 'wp_scheduled_delete' WP-Cron scheduled task to rename the '_wp_trash_meta_time' meta value
 	 * as '_wc_trash_meta_time'. This is the flag used by WordPress to determine which posts should be automatically
-	 * purged from the trash. We want to make sure Subscriptions products are not automatically purged (but still want
+	 * purged from the trash. We want to make sure BillingPlans products are not automatically purged (but still want
 	 * to keep a record of when the product was trashed).
 	 *
 	 * @since 1.4.9
@@ -1629,7 +1629,7 @@ function wcs_get_order_items_product_id($item_id)
 /**
  * Get the variation ID for variation items or the product ID for non-variation items.
  *
- * When acting on cart items or order items, Subscriptions often needs to use an item's canonical product ID. For
+ * When acting on cart items or order items, BillingPlans often needs to use an item's canonical product ID. For
  * items representing a variation, that means the 'variation_id' value, if the item is not a variation, that means
  * the 'product_id value. This function helps save keystrokes on the idiom to check if an item is to a variation or not.
  *

@@ -79,6 +79,7 @@ class CatalogProducts {
 			'headers' => array(
 				'Authorization' => 'Bearer ' . $bearer->token(),
 				'Content-Type'  => 'application/json',
+				'Prefer' => 'return=representation'
 			),
 			'body'    => wp_json_encode( $data ),
 		);

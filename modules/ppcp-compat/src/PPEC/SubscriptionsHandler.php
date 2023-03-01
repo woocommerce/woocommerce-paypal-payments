@@ -38,7 +38,7 @@ class SubscriptionsHandler {
 	/**
 	 * Constructor.
 	 *
-	 * @param RenewalHandler $ppcp_renewal_handler PayPal Payments Subscriptions renewal handler.
+	 * @param RenewalHandler $ppcp_renewal_handler PayPal Payments BillingPlans renewal handler.
 	 * @param MockGateway    $gateway              Mock gateway instance.
 	 */
 	public function __construct( RenewalHandler $ppcp_renewal_handler, MockGateway $gateway ) {
@@ -69,7 +69,7 @@ class SubscriptionsHandler {
 	/**
 	 * Adds a mock gateway to disguise as PPEC when needed. Hooked onto `woocommerce_payment_gateways`.
 	 * The mock gateway fixes display issues where subscriptions paid via PPEC appear as "via Manual Renewal" and also
-	 * prevents Subscriptions from automatically changing the payment method to "manual" when a subscription is edited.
+	 * prevents BillingPlans from automatically changing the payment method to "manual" when a subscription is edited.
 	 *
 	 * @param array $gateways List of gateways.
 	 * @return array
@@ -144,14 +144,14 @@ class SubscriptionsHandler {
 			return true;
 		}
 
-		// My Account > Subscriptions.
+		// My Account > BillingPlans.
 		if ( is_wc_endpoint_url( 'subscriptions' ) ) {
 			return true;
 		}
 
-		// Checks that require Subscriptions.
+		// Checks that require BillingPlans.
 		if ( class_exists( \WC_Subscriptions::class ) ) {
-			// My Account > Subscriptions > (Subscription).
+			// My Account > BillingPlans > (Subscription).
 			if ( wcs_is_view_subscription_page() ) {
 				$subscription = wcs_get_subscription( absint( get_query_var( 'view-subscription' ) ) );
 
@@ -183,7 +183,7 @@ class SubscriptionsHandler {
 			return true;
 		}
 
-		// Are we on the WC > Subscriptions screen?
+		// Are we on the WC > BillingPlans screen?
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
 		$post_type = wc_clean( wp_unslash( $_GET['post_type'] ?? $_POST['post_type'] ?? '' ) );
 		if ( $post_type === 'shop_subscription' ) {
