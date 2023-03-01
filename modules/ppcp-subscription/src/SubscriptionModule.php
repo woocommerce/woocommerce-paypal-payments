@@ -279,7 +279,7 @@ class SubscriptionModule implements ModuleInterface {
 							$subscription_plan = $product->get_meta('ppcp_subscription_plan');
 							add_meta_box('ppcp_subscription', __('PayPal Subscription', 'woocommerce-paypal-payments'),
 								function () use ($subscription_product, $subscription_plan) {
-									echo '<label><input type="checkbox" name="ppcp_connect_subscriptions_api" checked="checked">Connect to BillingPlans API</label>';
+									echo '<label><input type="checkbox" name="ppcp_connect_subscriptions_api" checked="checked">Connect to Subscriptions API</label>';
 									if ($subscription_product && $subscription_plan) {
 										echo '<p>Product ID: ' . esc_attr($subscription_product->id) . '</p>';
 										echo '<p>Plan ID: ' . esc_attr($subscription_plan->id) . '</p>';
