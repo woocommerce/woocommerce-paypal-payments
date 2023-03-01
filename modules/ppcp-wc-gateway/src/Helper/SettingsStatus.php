@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Helper;
 
-use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
@@ -74,7 +73,9 @@ class SettingsStatus {
 	 * @return bool true if is enabled, otherwise false.
 	 */
 	public function is_pay_later_button_enabled_for_location( string $location ): bool {
-		return $this->is_pay_later_button_enabled() && $this->is_enabled_for_location( 'pay_later_button_locations', $location );
+		return $this->is_pay_later_button_enabled() &&
+			( $this->is_enabled_for_location( 'pay_later_button_locations', $location ) ||
+				( 'product' === $location && $this->is_enabled_for_location( 'pay_later_button_locations', 'mini-cart' ) ) );
 	}
 
 	/**
