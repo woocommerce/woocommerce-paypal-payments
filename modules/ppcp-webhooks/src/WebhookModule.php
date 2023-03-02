@@ -127,7 +127,7 @@ class WebhookModule implements ModuleInterface {
 
 			try {
 				$webhooks = $container->get( 'webhook.status.registered-webhooks' );
-				$state       = $container->get( 'onboarding.state' );
+				$state    = $container->get( 'onboarding.state' );
 				if ( empty( $webhooks ) && $state->current_state() >= State::STATE_ONBOARDED ) {
 					$registrar = $container->get( 'webhook.registrar' );
 					assert( $registrar instanceof WebhookRegistrar );
