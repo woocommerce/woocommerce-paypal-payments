@@ -2,6 +2,8 @@ const {test, expect} = require('@playwright/test');
 const {
     WP_MERCHANT_USER,
     WP_MERCHANT_PASSWORD,
+    WP_CUSTOMER_USER,
+    WP_CUSTOMER_PASSWORD,
     AUTHORIZATION
 } = process.env;
 
@@ -9,6 +11,16 @@ async function loginAsAdmin(page) {
     await page.goto('/wp-admin');
     await page.locator('input[name="log"]').fill(WP_MERCHANT_USER);
     await page.locator('input[name="pwd"]').fill(WP_MERCHANT_PASSWORD);
+    await Promise.all([
+        page.waitForNavigation(),
+        page.locator('text=Log In').click()
+    ]);
+}
+
+async function loginAsCustomer(page) {
+    await page.goto('/wp-admin');
+    await page.locator('input[name="log"]').fill(WP_CUSTOMER_USER);
+    await page.locator('input[name="pwd"]').fill(WP_CUSTOMER_PASSWORD);
     await Promise.all([
         page.waitForNavigation(),
         page.locator('text=Log In').click()

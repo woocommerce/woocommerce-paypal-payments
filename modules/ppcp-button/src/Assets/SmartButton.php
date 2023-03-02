@@ -1361,7 +1361,7 @@ class SmartButton implements SmartButtonInterface {
 			assert( $product instanceof WC_Product );
 
 			if ( $product->get_type() === 'subscription' && $product->meta_exists( 'ppcp_subscription_plan' ) ) {
-				return $product->get_meta( 'ppcp_subscription_plan' );
+				return $product->get_meta( 'ppcp_subscription_plan' )->id;
 			}
 		}
 
