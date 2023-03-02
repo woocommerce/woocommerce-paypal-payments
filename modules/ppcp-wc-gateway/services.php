@@ -242,6 +242,11 @@ return array(
 		);
 	},
 	'wcgateway.settings.sections'                          => static function ( ContainerInterface $container ): array {
+		$state       = $container->get( 'onboarding.state' );
+		if ( $state->current_state() < State::STATE_ONBOARDED ) {
+			return array();
+		}
+
 		$sections = array(
 			Settings::CONNECTION_TAB_ID => __( 'Connection', 'woocommerce-paypal-payments' ),
 			PayPalGateway::ID           => __( 'Standard Payments', 'woocommerce-paypal-payments' ),
@@ -1246,6 +1251,11 @@ return array(
 		return 'https://www.paypal.com/bizsignup/entry?country.x=DE&product=payment_methods&capabilities=PAY_UPON_INVOICE';
 	},
 	'wcgateway.settings.connection.dcc-status-text'        => static function ( ContainerInterface $container ): string {
+		$state       = $container->get( 'onboarding.state' );
+		if ( $state->current_state() < State::STATE_ONBOARDED ) {
+			return '';
+		}
+
 		$dcc_product_status = $container->get( 'wcgateway.helper.dcc-product-status' );
 		assert( $dcc_product_status instanceof DCCProductStatus );
 
@@ -1279,6 +1289,11 @@ return array(
 		);
 	},
 	'wcgateway.settings.connection.pui-status-text'        => static function ( ContainerInterface $container ): string {
+		$state       = $container->get( 'onboarding.state' );
+		if ( $state->current_state() < State::STATE_ONBOARDED ) {
+			return '';
+		}
+
 		$pui_product_status = $container->get( 'wcgateway.pay-upon-invoice-product-status' );
 		assert( $pui_product_status instanceof PayUponInvoiceProductStatus );
 
