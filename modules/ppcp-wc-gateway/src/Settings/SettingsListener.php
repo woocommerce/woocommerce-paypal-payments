@@ -18,6 +18,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar;
+use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 
 /**
  * Class SettingsListener
@@ -321,6 +322,16 @@ class SettingsListener {
 		}
 		$this->settings->persist();
 
+		if ( $credentials_change_status ) {
+			if ( in_array(
+				$credentials_change_status,
+				array( self::CREDENTIALS_ADDED, self::CREDENTIALS_CHANGED ),
+				true
+			) ) {
+				$this->webhook_registrar->register();
+			}
+		}
+
 		if ( $this->cache->has( PayPalBearer::CACHE_KEY ) ) {
 			$this->cache->delete( PayPalBearer::CACHE_KEY );
 		}
@@ -349,38 +360,6 @@ class SettingsListener {
 
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
-	}
-
-	/**
-	 * Runs after checkout setting saved.
-	 *
-	 * @return void
-	 */
-	public function after_checkout_settings_saved():void {
-		if ( ! $this->is_valid_site_request() ) {
-			return;
-		}
-
-		// phpcs:disable WordPress.Security.NonceVerification.Missing
-		// phpcs:disable WordPress.Security.NonceVerification.Recommended
-		$raw_data = ( isset( $_POST['ppcp'] ) ) ? (array) wp_unslash( $_POST['ppcp'] ) : array();
-		// phpcs:enable WordPress.Security.NonceVerification.Missing
-		// phpcs:enable WordPress.Security.NonceVerification.Recommended
-
-		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-		$settings                  = $this->retrieve_settings_from_raw_data( $raw_data );
-		$credentials_change_status = null; // Cannot detect on Card Processing page.
-		if ( Settings::CONNECTION_TAB_ID === $this->page_id ) {
-			$credentials_change_status = $this->determine_credentials_change_status( $settings );
-		}
-		if ( in_array(
-			$credentials_change_status,
-			array( self::CREDENTIALS_REMOVED, self::CREDENTIALS_CHANGED ),
-			true
-		) ) {
-			$this->webhook_registrar->unregister();
-			$this->webhook_registrar->register();
-		}
 	}
 
 	/**
