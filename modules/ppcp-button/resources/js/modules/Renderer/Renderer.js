@@ -99,24 +99,6 @@ class Renderer {
         return this.renderedSources.has(wrapper + fundingSource ?? '');
     }
 
-    hideButtons(element) {
-        const domElement = document.querySelector(element);
-        if (! domElement ) {
-            return false;
-        }
-        domElement.style.display = 'none';
-        return true;
-    }
-
-    showButtons(element) {
-        const domElement = document.querySelector(element);
-        if (! domElement ) {
-            return false;
-        }
-        domElement.style.display = 'block';
-        return true;
-    }
-
     disableCreditCardFields() {
         this.creditCardRenderer.disableFields();
     }

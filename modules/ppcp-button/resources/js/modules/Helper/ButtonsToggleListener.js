@@ -14,6 +14,9 @@ class ButtonsToggleListener {
 
     init()
     {
+        if (!this.element) {
+            return;
+        }
         const config = { attributes : true };
         const callback = () => {
             if (this.element.classList.contains('disabled')) {
