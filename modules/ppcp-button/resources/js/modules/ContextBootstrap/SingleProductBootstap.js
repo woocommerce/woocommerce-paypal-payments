@@ -1,5 +1,7 @@
 import UpdateCart from "../Helper/UpdateCart";
 import SingleProductActionHandler from "../ActionHandler/SingleProductActionHandler";
+import {hide, show, setVisible} from "../Helper/Hiding";
+import ButtonsToggleListener from "../Helper/ButtonsToggleListener";
 
 class SingleProductBootstap {
     constructor(gateway, renderer, messages, errorHandler) {
@@ -12,10 +14,10 @@ class SingleProductBootstap {
 
 
     handleChange() {
-        if (!this.shouldRender()) {
-            this.renderer.hideButtons(this.gateway.hosted_fields.wrapper);
-            this.renderer.hideButtons(this.gateway.button.wrapper);
-            this.messages.hideMessages();
+        const shouldRender = this.shouldRender();
+        setVisible(this.gateway.button.wrapper, shouldRender);
+        setVisible(this.gateway.messages.wrapper, shouldRender);
+        if (!shouldRender) {
             return;
         }
 
@@ -23,7 +25,6 @@ class SingleProductBootstap {
     }
 
     init() {
-
         const form = document.querySelector('form.cart');
         if (!form) {
             return;
@@ -32,20 +33,33 @@ class SingleProductBootstap {
         form.addEventListener('change', this.handleChange.bind(this));
         this.mutationObserver.observe(form, {childList: true, subtree: true});
 
+        const buttonObserver = new ButtonsToggleListener(
+            form.querySelector('.single_add_to_cart_button'),
+            () => {
+                show(this.gateway.button.wrapper);
+                show(this.gateway.messages.wrapper);
+                this.messages.renderWithAmount(this.priceAmount())
+            },
+            () => {
+                hide(this.gateway.button.wrapper);
+                hide(this.gateway.messages.wrapper);
+            },
+        );
+        buttonObserver.init();
+
         if (!this.shouldRender()) {
-            this.renderer.hideButtons(this.gateway.hosted_fields.wrapper);
-            this.messages.hideMessages();
+            hide(this.gateway.button.wrapper);
+            hide(this.gateway.messages.wrapper);
             return;
         }
 
         this.render();
-
     }
 
     shouldRender() {
-
-        return document.querySelector('form.cart') !== null && !this.priceAmountIsZero();
-
+        return document.querySelector('form.cart') !== null
+            && !this.priceAmountIsZero()
+            && !this.isSubscriptionMode();
     }
 
     priceAmount() {
@@ -74,6 +88,12 @@ class SingleProductBootstap {
         return !price || price === 0;
     }
 
+    isSubscriptionMode() {
+        // Check "All products for subscriptions" plugin.
+        return document.querySelector('.wcsatt-options-product:not(.wcsatt-options-product--hidden) .subscription-option input[type="radio"]:checked') !== null
+            || document.querySelector('.wcsatt-options-prompt-label-subscription input[type="radio"]:checked') !== null; // grouped
+    }
+
     render() {
         const actionHandler = new SingleProductActionHandler(
             this.gateway,
@@ -81,16 +101,6 @@ class SingleProductBootstap {
                 this.gateway.ajax.change_cart.endpoint,
                 this.gateway.ajax.change_cart.nonce,
             ),
-            () => {
-                this.renderer.showButtons(this.gateway.button.wrapper);
-                this.renderer.showButtons(this.gateway.hosted_fields.wrapper);
-                this.messages.renderWithAmount(this.priceAmount())
-            },
-            () => {
-                this.renderer.hideButtons(this.gateway.button.wrapper);
-                this.renderer.hideButtons(this.gateway.hosted_fields.wrapper);
-                this.messages.hideMessages();
-            },
             document.querySelector('form.cart'),
             this.errorHandler,
         );

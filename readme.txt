@@ -90,6 +90,8 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Fix - After Updating to 2.0.2, Site Health reports REST API error #1195
 * Fix - Do not send buyer-country for previews in live mode to avoid error #1186
 * Fix - PPEC compatibility layer does not take over subscriptions #1193
+* Fix - Checkout conflict with "All products for subscriptions" plugin #629
+* Fix - Pay Later on order pay page #1214
 * Enhancement - Save checkout form before free trial redirect #1135
 * Enhancement - Add filter for controlling the ditching of items/breakdown #1146
 * Enhancement - Add patch order data filter #1147
