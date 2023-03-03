@@ -37,7 +37,6 @@ class SettingsStatus {
 	 * Check whether Pay Later message is enabled either for checkout, cart or product page.
 	 *
 	 * @return bool true if is enabled, otherwise false.
-	 * @throws NotFoundException When a setting was not found.
 	 */
 	public function is_pay_later_messaging_enabled(): bool {
 		$messaging_enabled  = $this->settings->has( 'pay_later_messaging_enabled' ) && $this->settings->get( 'pay_later_messaging_enabled' );
@@ -51,27 +50,15 @@ class SettingsStatus {
 	 *
 	 * @param string $location The location setting name.
 	 * @return bool true if is enabled, otherwise false.
-	 * @throws NotFoundException When a setting was not found.
 	 */
 	public function is_pay_later_messaging_enabled_for_location( string $location ): bool {
-		if ( ! $this->is_pay_later_messaging_enabled() ) {
-			return false;
-		}
-
-		$selected_locations = $this->settings->has( 'pay_later_messaging_locations' ) ? $this->settings->get( 'pay_later_messaging_locations' ) : array();
-
-		if ( empty( $selected_locations ) ) {
-			return false;
-		}
-
-		return in_array( $location, $selected_locations, true );
+		return $this->is_pay_later_messaging_enabled() && $this->is_enabled_for_location( 'pay_later_messaging_locations', $location );
 	}
 
 	/**
 	 * Check whether Pay Later button is enabled either for checkout, cart or product page.
 	 *
 	 * @return bool true if is enabled, otherwise false.
-	 * @throws NotFoundException When a setting was not found.
 	 */
 	public function is_pay_later_button_enabled(): bool {
 		$pay_later_button_enabled = $this->settings->has( 'pay_later_button_enabled' ) && $this->settings->get( 'pay_later_button_enabled' );
@@ -85,45 +72,9 @@ class SettingsStatus {
 	 *
 	 * @param string $location The location.
 	 * @return bool true if is enabled, otherwise false.
-	 * @throws NotFoundException When a setting was not found.
 	 */
 	public function is_pay_later_button_enabled_for_location( string $location ): bool {
-		if ( ! $this->is_pay_later_button_enabled() ) {
-			return false;
-		}
-
-		$selected_locations = $this->settings->has( 'pay_later_button_locations' ) ? $this->settings->get( 'pay_later_button_locations' ) : array();
-
-		if ( empty( $selected_locations ) ) {
-			return false;
-		}
-
-		return in_array( $location, $selected_locations, true );
-	}
-
-	/**
-	 * Check whether Pay Later button is enabled for a given context.
-	 *
-	 * @param string $context The context.
-	 * @return bool true if is enabled, otherwise false.
-	 * @throws NotFoundException When a setting was not found.
-	 */
-	public function is_pay_later_button_enabled_for_context( string $context ): bool {
-		if ( ! $this->is_pay_later_button_enabled() ) {
-			return false;
-		}
-
-		$selected_locations = $this->settings->has( 'pay_later_button_locations' ) ? $this->settings->get( 'pay_later_button_locations' ) : array();
-
-		if ( empty( $selected_locations ) ) {
-			return false;
-		}
-
-		$enabled_for_current_location = $this->is_pay_later_button_enabled_for_location( $context );
-		$enabled_for_product          = $this->is_pay_later_button_enabled_for_location( 'product' );
-		$enabled_for_mini_cart        = $this->is_pay_later_button_enabled_for_location( 'mini-cart' );
-
-		return $context === 'product' ? $enabled_for_product || $enabled_for_mini_cart : $enabled_for_current_location;
+		return $this->is_pay_later_button_enabled() && $this->is_enabled_for_location( 'pay_later_button_locations', $location );
 	}
 
 	/**
@@ -133,7 +84,33 @@ class SettingsStatus {
 	 * @return bool true if is enabled, otherwise false.
 	 */
 	public function is_smart_button_enabled_for_location( string $location ): bool {
-		$selected_locations = $this->settings->has( 'smart_button_locations' ) ? $this->settings->get( 'smart_button_locations' ) : array();
+		return $this->is_enabled_for_location( 'smart_button_locations', $location );
+	}
+
+	/**
+	 * Adapts the context value to match the location settings.
+	 *
+	 * @param string $location The location/context.
+	 * @return string
+	 */
+	protected function normalize_location( string $location ): string {
+		if ( 'pay-now' === $location ) {
+			$location = 'checkout';
+		}
+		return $location;
+	}
+
+	/**
+	 * Checks whether the locations field in the settings includes the given location.
+	 *
+	 * @param string $setting_name The name of the enabled locations field in the settings.
+	 * @param string $location The location.
+	 * @return bool
+	 */
+	protected function is_enabled_for_location( string $setting_name, string $location ): bool {
+		$location = $this->normalize_location( $location );
+
+		$selected_locations = $this->settings->has( $setting_name ) ? $this->settings->get( $setting_name ) : array();
 
 		if ( empty( $selected_locations ) ) {
 			return false;
