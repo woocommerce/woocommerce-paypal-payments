@@ -50,7 +50,7 @@ class SubscriptionHelper {
 			if ( ! isset( $item['data'] ) || ! is_a( $item['data'], WC_Product::class ) ) {
 				continue;
 			}
-			if ( $item['data']->is_type( 'subscription' ) || $item['data']->is_type( 'subscription_variation' ) ) {
+			if ( WC_Subscriptions_Product::is_subscription( $item['data'] ) ) {
 				return true;
 			}
 		}

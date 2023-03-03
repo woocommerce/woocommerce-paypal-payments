@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Button;
 
+use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\SaveCheckoutFormEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ValidateCheckoutEndpoint;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
@@ -174,6 +175,15 @@ class ButtonModule implements ModuleInterface {
 			static function () use ( $container ) {
 				$endpoint = $container->get( 'button.endpoint.validate-checkout' );
 				assert( $endpoint instanceof ValidateCheckoutEndpoint );
+				$endpoint->handle_request();
+			}
+		);
+
+		add_action(
+			'wc_ajax_' . CartScriptParamsEndpoint::ENDPOINT,
+			static function () use ( $container ) {
+				$endpoint = $container->get( 'button.endpoint.cart-script-params' );
+				assert( $endpoint instanceof CartScriptParamsEndpoint );
 				$endpoint->handle_request();
 			}
 		);
