@@ -461,6 +461,7 @@ class WCGatewayModule implements ModuleInterface {
 				$listener->listen_for_merchant_id();
 				$listener->listen_for_vaulting_enabled();
 				$listener->listen_for_tracking_enabled();
+				$listener->after_checkout_settings_saved();
 			}
 		);
 
