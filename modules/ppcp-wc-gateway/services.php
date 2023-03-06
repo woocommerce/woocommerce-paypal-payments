@@ -242,7 +242,7 @@ return array(
 		);
 	},
 	'wcgateway.settings.sections'                          => static function ( ContainerInterface $container ): array {
-		$state       = $container->get( 'onboarding.state' );
+		$state = $container->get( 'onboarding.state' );
 		if ( $state->current_state() < State::STATE_ONBOARDED ) {
 			return array();
 		}
@@ -1251,7 +1251,7 @@ return array(
 		return 'https://www.paypal.com/bizsignup/entry?country.x=DE&product=payment_methods&capabilities=PAY_UPON_INVOICE';
 	},
 	'wcgateway.settings.connection.dcc-status-text'        => static function ( ContainerInterface $container ): string {
-		$state       = $container->get( 'onboarding.state' );
+		$state = $container->get( 'onboarding.state' );
 		if ( $state->current_state() < State::STATE_ONBOARDED ) {
 			return '';
 		}
@@ -1289,7 +1289,7 @@ return array(
 		);
 	},
 	'wcgateway.settings.connection.pui-status-text'        => static function ( ContainerInterface $container ): string {
-		$state       = $container->get( 'onboarding.state' );
+		$state = $container->get( 'onboarding.state' );
 		if ( $state->current_state() < State::STATE_ONBOARDED ) {
 			return '';
 		}

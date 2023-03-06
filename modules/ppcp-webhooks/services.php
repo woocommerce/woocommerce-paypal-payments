@@ -22,7 +22,6 @@ use WooCommerce\PayPalCommerce\Webhooks\Handler\CheckoutOrderApproved;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\CheckoutOrderCompleted;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\CheckoutPaymentApprovalReversed;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureCompleted;
-use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureDenied;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCapturePending;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureRefunded;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureReversed;
@@ -114,7 +113,7 @@ return array(
 		$endpoint = $container->get( 'api.endpoint.webhook' );
 		assert( $endpoint instanceof WebhookEndpoint );
 
-		$state       = $container->get( 'onboarding.state' );
+		$state = $container->get( 'onboarding.state' );
 		if ( $state->current_state() >= State::STATE_ONBOARDED ) {
 			return $endpoint->list();
 		}
