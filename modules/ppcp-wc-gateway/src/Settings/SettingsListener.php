@@ -328,7 +328,10 @@ class SettingsListener {
 				array( self::CREDENTIALS_ADDED, self::CREDENTIALS_CHANGED ),
 				true
 			) ) {
-				$this->webhook_registrar->register();
+				wp_schedule_single_event(
+					time() + 5,
+					WebhookRegistrar::EVENT_HOOK
+				);
 			}
 		}
 
