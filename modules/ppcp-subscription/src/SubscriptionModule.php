@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Subscription;
 
 use WC_Product_Subscription;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingSubscriptions;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\CatalogProducts;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingPlans;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
@@ -164,22 +165,22 @@ class SubscriptionModule implements ModuleInterface {
 					$billing_plans_endpoint = $c->get( 'api.endpoint.billing-plans' );
 					assert( $billing_plans_endpoint instanceof BillingPlans );
 
-					if($product->meta_exists( 'ppcp_subscription_product' ) && $product->meta_exists( 'ppcp_subscription_plan' )) {
-						if($product->get_meta( '_subscription_price' ) === $product->get_meta('ppcp_subscription_plan')->billing_cycles[0]->pricing_scheme->fixed_price->value) {
+					if ( $product->meta_exists( 'ppcp_subscription_product' ) && $product->meta_exists( 'ppcp_subscription_plan' ) ) {
+						if ( $product->get_meta( '_subscription_price' ) === $product->get_meta( 'ppcp_subscription_plan' )->billing_cycles[0]->pricing_scheme->fixed_price->value ) {
 							return;
 						}
 
 						$billing_cycles = array(
 							'pricing_scheme' => array(
 								'fixed_price' => array(
-									'value'         => $product->get_meta( '_subscription_price' ),
+									'value' => $product->get_meta( '_subscription_price' ),
 								),
 							),
 						);
 
 						try {
 							$billing_plans_endpoint->update_pricing(
-								$product->get_meta('ppcp_subscription_plan')->id,
+								$product->get_meta( 'ppcp_subscription_plan' )->id,
 								$billing_cycles
 							);
 						} catch ( RuntimeException $exception ) {
@@ -267,22 +268,25 @@ class SubscriptionModule implements ModuleInterface {
 
 		add_action(
 			'add_meta_boxes',
-			function( string $post_type ) use($c) {
+			function( string $post_type ) use ( $c ) {
 				if ( $post_type === 'product' ) {
+					// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 					$post_id = wc_clean( wp_unslash( $_GET['post'] ?? '' ) );
-					$product    = wc_get_product( $post_id );
-					if (is_a($product, WC_Product_Subscription::class)) {
-						$settings = $c->get('wcgateway.settings');
-						assert($settings instanceof Settings);
-						if ($settings->get('subscriptions_mode') && $settings->get('subscriptions_mode') === 'subscriptions_api') {
-							$subscription_product = $product->get_meta('ppcp_subscription_product');
-							$subscription_plan = $product->get_meta('ppcp_subscription_plan');
-							add_meta_box('ppcp_subscription', __('PayPal Subscription', 'woocommerce-paypal-payments'),
-								function () use ($subscription_product, $subscription_plan) {
+					$product = wc_get_product( $post_id );
+					if ( is_a( $product, WC_Product_Subscription::class ) ) {
+						$settings = $c->get( 'wcgateway.settings' );
+						assert( $settings instanceof Settings );
+						if ( $settings->get( 'subscriptions_mode' ) && $settings->get( 'subscriptions_mode' ) === 'subscriptions_api' ) {
+							$subscription_product = $product->get_meta( 'ppcp_subscription_product' );
+							$subscription_plan    = $product->get_meta( 'ppcp_subscription_plan' );
+							add_meta_box(
+								'ppcp_subscription',
+								__( 'PayPal Subscription', 'woocommerce-paypal-payments' ),
+								function () use ( $subscription_product, $subscription_plan ) {
 									echo '<label><input type="checkbox" name="ppcp_connect_subscriptions_api" checked="checked">Connect to Subscriptions API</label>';
-									if ($subscription_product && $subscription_plan) {
-										echo '<p>Product ID: ' . esc_attr($subscription_product->id) . '</p>';
-										echo '<p>Plan ID: ' . esc_attr($subscription_plan->id) . '</p>';
+									if ( $subscription_product && $subscription_plan ) {
+										echo '<p>Product ID: ' . esc_attr( $subscription_product->id ) . '</p>';
+										echo '<p>Plan ID: ' . esc_attr( $subscription_plan->id ) . '</p>';
 									}
 								},
 								$post_type,
@@ -309,6 +313,52 @@ class SubscriptionModule implements ModuleInterface {
 			},
 			10,
 			2
+		);
+
+		add_action(
+			'woocommerce_customer_changed_subscription_to_cancelled',
+			function( $subscription ) use ( $c ) {
+				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
+				if ( $subscription_id ) {
+					$subscriptions_endpoint = $c->get( 'api.endpoint.billing-subscriptions' );
+					assert( $subscriptions_endpoint instanceof BillingSubscriptions );
+
+					try {
+						$subscriptions_endpoint->suspend( $subscription_id );
+					} catch ( RuntimeException $exception ) {
+						$error = $exception->getMessage();
+						if ( is_a( $exception, PayPalApiException::class ) ) {
+							$error = $exception->get_details( $error );
+						}
+
+						$logger = $c->get( 'woocommerce.logger.woocommerce' );
+						$logger->error( 'Could not suspend subscription product on PayPal. ' . $error );
+					}
+				}
+			}
+		);
+
+		add_action(
+			'woocommerce_customer_changed_subscription_to_active',
+			function( $subscription ) use ( $c ) {
+				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
+				if ( $subscription_id ) {
+					$subscriptions_endpoint = $c->get( 'api.endpoint.billing-subscriptions' );
+					assert( $subscriptions_endpoint instanceof BillingSubscriptions );
+
+					try {
+						$subscriptions_endpoint->activate( $subscription_id );
+					} catch ( RuntimeException $exception ) {
+						$error = $exception->getMessage();
+						if ( is_a( $exception, PayPalApiException::class ) ) {
+							$error = $exception->get_details( $error );
+						}
+
+						$logger = $c->get( 'woocommerce.logger.woocommerce' );
+						$logger->error( 'Could not active subscription product on PayPal. ' . $error );
+					}
+				}
+			}
 		);
 	}
 

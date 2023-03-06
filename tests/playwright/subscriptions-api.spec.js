@@ -109,7 +109,7 @@ test.describe('Subscriptions Customer', () => {
         await popup.fill('#password', CUSTOMER_PASSWORD);
         await popup.locator('#btnLogin').click();
         await popup.locator('text=Continue').click();
-        await popup.locator('text=Agree and Subscribe').click();
+        await popup.locator('text=Agree & Subscribe').click();
 
         await page.waitForTimeout(10000);
 
