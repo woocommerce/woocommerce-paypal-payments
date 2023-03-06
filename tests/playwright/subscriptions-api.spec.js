@@ -1,33 +1,12 @@
 const {test, expect} = require('@playwright/test');
+const {fillCheckoutForm, loginAsAdmin, loginAsCustomer} = require('./utils');
 const {
-    WP_MERCHANT_USER,
-    WP_MERCHANT_PASSWORD,
-    WP_CUSTOMER_USER,
-    WP_CUSTOMER_PASSWORD,
-    AUTHORIZATION
+    AUTHORIZATION,
+    CUSTOMER_EMAIL,
+    CUSTOMER_PASSWORD
 } = process.env;
 
-async function loginAsAdmin(page) {
-    await page.goto('/wp-admin');
-    await page.locator('input[name="log"]').fill(WP_MERCHANT_USER);
-    await page.locator('input[name="pwd"]').fill(WP_MERCHANT_PASSWORD);
-    await Promise.all([
-        page.waitForNavigation(),
-        page.locator('text=Log In').click()
-    ]);
-}
-
-async function loginAsCustomer(page) {
-    await page.goto('/wp-admin');
-    await page.locator('input[name="log"]').fill(WP_CUSTOMER_USER);
-    await page.locator('input[name="pwd"]').fill(WP_CUSTOMER_PASSWORD);
-    await Promise.all([
-        page.waitForNavigation(),
-        page.locator('text=Log In').click()
-    ]);
-}
-
-test.describe.serial('Merchant', () => {
+test.describe.serial('Subscriptions Merchant', () => {
     const title = (Math.random() + 1).toString(36).substring(7);
     let product_id = '';
     let plan_id = '';
@@ -107,5 +86,34 @@ test.describe.serial('Merchant', () => {
 
         const plan_content = await plan.json();
         await expect(plan_content.billing_cycles[0].pricing_scheme.fixed_price.value).toBe('20.0')
+    });
+});
+
+test.describe('Subscriptions Customer', () => {
+    test('Purchase subscription', async ({page}) => {
+        await loginAsCustomer(page);
+
+        await page.goto('/product/another-sub');
+        await page.click("text=Sign up now");
+        await page.goto('/checkout');
+        await fillCheckoutForm(page);
+
+        const [popup] = await Promise.all([
+            page.waitForEvent('popup'),
+            page.frameLocator('.component-frame').locator('[data-funding-source="paypal"]').click(),
+        ]);
+        await popup.waitForLoadState();
+
+        await popup.fill('#email', CUSTOMER_EMAIL);
+        await popup.locator('#btnNext').click();
+        await popup.fill('#password', CUSTOMER_PASSWORD);
+        await popup.locator('#btnLogin').click();
+        await popup.locator('text=Continue').click();
+        await popup.locator('text=Agree and Subscribe').click();
+
+        await page.waitForTimeout(10000);
+
+        const title = page.locator('.entry-title');
+        await expect(title).toHaveText('Order received');
     });
 });

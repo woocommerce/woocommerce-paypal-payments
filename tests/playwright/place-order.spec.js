@@ -1,4 +1,5 @@
 const {test, expect} = require('@playwright/test');
+const {fillCheckoutForm} = require('./utils');
 const {
     CUSTOMER_EMAIL,
     CUSTOMER_PASSWORD,
@@ -7,19 +8,7 @@ const {
     CREDIT_CARD_CVV
 } = process.env;
 
-async function fillCheckoutForm(page) {
-    await page.fill('#billing_first_name', 'John');
-    await page.fill('#billing_last_name', 'Doe');
-    await page.selectOption('select#billing_country', 'DE');
-    await page.fill('#billing_address_1', 'Badensche Str. 24');
-    await page.fill('#billing_postcode', '10715');
-    await page.fill('#billing_city', '10715');
-    await page.fill('#billing_phone', '1234567890');
-    await page.fill('#billing_email', CUSTOMER_EMAIL);
-}
-
 test('PayPal button place order from Product page', async ({page}) => {
-
     await page.goto('/product/product/');
 
     const [popup] = await Promise.all([
