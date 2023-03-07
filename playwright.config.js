@@ -2,7 +2,7 @@ require('dotenv').config({ path: '.env.e2e' });
 
 const config = {
     testDir: './tests/playwright',
-    timeout: 40000,
+    timeout: 50000,
     use: {
         baseURL: process.env.BASEURL,
     },

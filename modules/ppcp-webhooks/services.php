@@ -17,6 +17,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
 use WooCommerce\PayPalCommerce\Webhooks\Endpoint\ResubscribeEndpoint;
 use WooCommerce\PayPalCommerce\Webhooks\Endpoint\SimulateEndpoint;
 use WooCommerce\PayPalCommerce\Webhooks\Endpoint\SimulationStateEndpoint;
+use WooCommerce\PayPalCommerce\Webhooks\Handler\BillingSubscriptionCancelled;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\CheckoutOrderApproved;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\CheckoutOrderCompleted;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\CheckoutPaymentApprovalReversed;
@@ -87,6 +88,7 @@ return array(
 			new VaultPaymentTokenDeleted( $logger ),
 			new PaymentCapturePending( $logger ),
 			new PaymentSaleCompleted( $logger ),
+			new BillingSubscriptionCancelled( $logger ),
 		);
 	},
 
