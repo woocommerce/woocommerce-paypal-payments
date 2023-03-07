@@ -162,13 +162,6 @@ class RenewalHandler {
 
 			return;
 		}
-
-		$this->logger->info(
-			sprintf(
-				'Renewal for order %d is completed.',
-				$wc_order->get_id()
-			)
-		);
 	}
 
 	/**
@@ -186,6 +179,7 @@ class RenewalHandler {
 		if ( ! $token ) {
 			return;
 		}
+
 		$purchase_unit       = $this->purchase_unit_factory->from_wc_order( $wc_order );
 		$payer               = $this->payer_factory->from_customer( $customer );
 		$shipping_preference = $this->shipping_preference_factory->from_state(
@@ -217,6 +211,13 @@ class RenewalHandler {
 		if ( $this->capture_authorized_downloads( $order ) ) {
 			$this->authorized_payments_processor->capture_authorized_payment( $wc_order );
 		}
+
+		$this->logger->info(
+			sprintf(
+				'Renewal for order %d is completed.',
+				$wc_order->get_id()
+			)
+		);
 	}
 
 	/**

@@ -1,13 +1,25 @@
 <?php
+/**
+ * Handles the WebhookPAYMENT.SALE.COMPLETED
+ *
+ * @package WooCommerce\PayPalCommerce\Webhooks\Handler
+ */
+
 declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
 
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 use WP_REST_Request;
 use WP_REST_Response;
 
+/**
+ * Class PaymentSaleCompleted
+ */
 class PaymentSaleCompleted implements RequestHandler {
+
+	use TransactionIdHandlingTrait;
 
 	/**
 	 * The logger.
@@ -17,6 +29,8 @@ class PaymentSaleCompleted implements RequestHandler {
 	private $logger;
 
 	/**
+	 * PaymentSaleCompleted constructor.
+	 *
 	 * @param LoggerInterface $logger The logger.
 	 */
 	public function __construct( LoggerInterface $logger ) {
@@ -44,6 +58,13 @@ class PaymentSaleCompleted implements RequestHandler {
 
 	}
 
+	/**
+	 * Responsible for handling the request.
+	 *
+	 * @param \WP_REST_Request $request The request.
+	 *
+	 * @return \WP_REST_Response
+	 */
 	public function handle_request( WP_REST_Request $request ): WP_REST_Response {
 		$response = array( 'success' => false );
 
@@ -55,7 +76,7 @@ class PaymentSaleCompleted implements RequestHandler {
 			return new WP_REST_Response( $response );
 		}
 
-		$args         = array(
+		$args          = array(
 			'meta_query' => array(
 				array(
 					'key'     => 'ppcp_subscription',
@@ -64,13 +85,23 @@ class PaymentSaleCompleted implements RequestHandler {
 				),
 			),
 		);
-		$subscription = wcs_get_subscriptions( $args );
+		$subscriptions = wcs_get_subscriptions( $args );
 
-		if ( ! $subscription ) {
-			$message = "Could not retrieve WC subscription for billing agreement: {$billing_agreement_id}";
+		if ( ! $subscriptions ) {
+			$message = "Could not retrieve WC subscriptions for billing agreement: {$billing_agreement_id}";
 			$this->logger->warning( $message, array( 'request' => $request ) );
 			$response['message'] = $message;
 			return new WP_REST_Response( $response );
+		}
+
+		foreach ( $subscriptions as $subscription ) {
+			$renewal_order = wcs_create_renewal_order( $subscription );
+			$renewal_order->payment_complete();
+
+			$transaction_id = wc_clean( wp_unslash( $request['resource']['id'] ) ) ?? '';
+			if ( $transaction_id ) {
+				$this->update_transaction_id( $transaction_id, $renewal_order );
+			}
 		}
 
 		$response['success'] = true;
