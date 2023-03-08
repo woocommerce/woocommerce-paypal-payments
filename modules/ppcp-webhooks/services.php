@@ -198,8 +198,8 @@ return array(
 		);
 	},
 
-	'webhook.last-webhook-storage'            => static function ( ContainerInterface $container ): WebhookInfoStorage {
-		return new WebhookInfoStorage( $container->get( 'webhook.last-webhook-storage.key' ) );
+	'webhook.last-webhook-storage'            => static function ( ContainerInterface $container ): WebhookEventStorage {
+		return new WebhookEventStorage( $container->get( 'webhook.last-webhook-storage.key' ) );
 	},
 	'webhook.last-webhook-storage.key'        => static function ( ContainerInterface $container ): string {
 		return 'ppcp-last-webhook';

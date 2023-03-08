@@ -12,9 +12,9 @@ namespace WooCommerce\PayPalCommerce\Webhooks;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\WebhookEvent;
 
 /**
- * Class WebhookInfoStorage
+ * Class WebhookEventStorage
  */
-class WebhookInfoStorage {
+class WebhookEventStorage {
 
 	/**
 	 * The WP option key.
