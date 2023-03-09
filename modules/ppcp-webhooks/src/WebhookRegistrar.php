@@ -88,6 +88,8 @@ class WebhookRegistrar {
 	 * @return bool
 	 */
 	public function register(): bool {
+		$this->unregister();
+
 		$webhook = $this->webhook_factory->for_url_and_events(
 			$this->rest_endpoint->url(),
 			$this->rest_endpoint->handled_event_types()
@@ -113,27 +115,23 @@ class WebhookRegistrar {
 
 	/**
 	 * Unregister webhooks with PayPal.
-	 *
-	 * @return bool
 	 */
-	public function unregister(): bool {
-		$data = (array) get_option( self::KEY, array() );
-		if ( ! $data ) {
-			return false;
-		}
+	public function unregister(): void {
 		try {
-			$webhook = $this->webhook_factory->from_array( $data );
-			$success = $this->endpoint->delete( $webhook );
+			$webhooks = $this->endpoint->list();
+			foreach ( $webhooks as $webhook ) {
+				try {
+					$this->endpoint->delete( $webhook );
+				} catch ( RuntimeException $deletion_error ) {
+					$this->logger->error( "Failed to delete webhook {$webhook->id()}: {$deletion_error->getMessage()}" );
+				}
+			}
 		} catch ( RuntimeException $error ) {
 			$this->logger->error( 'Failed to delete webhooks: ' . $error->getMessage() );
-			return false;
 		}
 
-		if ( $success ) {
-			delete_option( self::KEY );
-			$this->last_webhook_event_storage->clear();
-			$this->logger->info( 'Webhooks deleted.' );
-		}
-		return $success;
+		delete_option( self::KEY );
+		$this->last_webhook_event_storage->clear();
+		$this->logger->info( 'Webhooks deleted.' );
 	}
 }
