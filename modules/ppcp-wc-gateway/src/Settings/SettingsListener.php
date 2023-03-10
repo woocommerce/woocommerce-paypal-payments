@@ -322,19 +322,6 @@ class SettingsListener {
 		}
 		$this->settings->persist();
 
-		if ( $credentials_change_status ) {
-			if ( in_array(
-				$credentials_change_status,
-				array( self::CREDENTIALS_ADDED, self::CREDENTIALS_CHANGED ),
-				true
-			) ) {
-				wp_schedule_single_event(
-					time() + 5,
-					WebhookRegistrar::EVENT_HOOK
-				);
-			}
-		}
-
 		if ( $this->cache->has( PayPalBearer::CACHE_KEY ) ) {
 			$this->cache->delete( PayPalBearer::CACHE_KEY );
 		}
