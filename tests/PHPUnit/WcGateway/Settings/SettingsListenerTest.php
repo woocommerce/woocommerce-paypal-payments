@@ -85,6 +85,8 @@ class SettingsListenerTest extends ModularTestCase
         $dcc_status_cache->shouldReceive('has')
             ->andReturn(false);
 
+		expect('wp_safe_redirect')->once();
+
 		$testee->listen();
 	}
 }

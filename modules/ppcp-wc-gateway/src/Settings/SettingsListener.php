@@ -322,16 +322,6 @@ class SettingsListener {
 		}
 		$this->settings->persist();
 
-		if ( $credentials_change_status ) {
-			if ( in_array(
-				$credentials_change_status,
-				array( self::CREDENTIALS_ADDED, self::CREDENTIALS_CHANGED ),
-				true
-			) ) {
-				$this->webhook_registrar->register();
-			}
-		}
-
 		if ( $this->cache->has( PayPalBearer::CACHE_KEY ) ) {
 			$this->cache->delete( PayPalBearer::CACHE_KEY );
 		}
@@ -345,7 +335,7 @@ class SettingsListener {
 		}
 
 		$redirect_url = false;
-		if ( self::CREDENTIALS_ADDED === $credentials_change_status ) {
+		if ( self::CREDENTIALS_UNCHANGED !== $credentials_change_status ) {
 			$redirect_url = $this->get_onboarding_redirect_url();
 		}
 
