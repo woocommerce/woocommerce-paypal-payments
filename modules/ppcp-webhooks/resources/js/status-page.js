@@ -1,3 +1,5 @@
+import {setVisibleByClass} from "../../../ppcp-button/resources/js/modules/Helper/Hiding"
+
 document.addEventListener(
     'DOMContentLoaded',
     () => {
@@ -147,5 +149,25 @@ document.addEventListener(
                 simulateBtn.prop('disabled', false);
             }
         });
+
+        const sandboxCheckbox = document.querySelector('#ppcp-sandbox_on');
+        if (sandboxCheckbox) {
+            const setWebhooksVisibility = (show) => {
+                [
+                    '#field-webhook_status_heading',
+                    '#field-webhooks_list',
+                    '#field-webhooks_resubscribe',
+                    '#field-webhooks_simulate',
+                ].forEach(selector => {
+                    setVisibleByClass(selector, show, 'hide');
+                });
+            };
+
+            const serverSandboxState = PayPalCommerceGatewayWebhooksStatus.environment === 'sandbox';
+            setWebhooksVisibility(serverSandboxState === sandboxCheckbox.checked);
+            sandboxCheckbox.addEventListener('click', () => {
+                setWebhooksVisibility(serverSandboxState === sandboxCheckbox.checked);
+            });
+        }
     }
 );
