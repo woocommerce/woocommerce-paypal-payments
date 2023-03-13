@@ -11,6 +11,7 @@
 * Fix - PPEC compatibility layer does not take over subscriptions #1193
 * Fix - Checkout conflict with "All products for subscriptions" plugin #629
 * Fix - Pay Later on order pay page #1214
+* Fix - High volume of traffic from merchant-integrations endpoint #1241
 * Enhancement - Save checkout form before free trial redirect #1135
 * Enhancement - Add filter for controlling the ditching of items/breakdown #1146
 * Enhancement - Add patch order data filter #1147
