@@ -939,7 +939,8 @@ return array(
 			$settings,
 			$partner_endpoint,
 			$container->get( 'dcc.status-cache' ),
-			$container->get( 'api.helpers.dccapplies' )
+			$container->get( 'api.helpers.dccapplies' ),
+			$container->get( 'onboarding.state' )
 		);
 	},
 
@@ -1007,7 +1008,8 @@ return array(
 		return new PayUponInvoiceProductStatus(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'api.endpoint.partners' ),
-			$container->get( 'pui.status-cache' )
+			$container->get( 'pui.status-cache' ),
+			$container->get( 'onboarding.state' )
 		);
 	},
 	'wcgateway.pay-upon-invoice'                           => static function ( ContainerInterface $container ): PayUponInvoice {
