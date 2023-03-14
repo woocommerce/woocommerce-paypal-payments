@@ -81,7 +81,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 
 == Changelog ==
 
-= 2.0.3 - 2023-xx-xx =
+= 2.0.3 - 2023-03-14 =
 * Fix - `DEVICE_DATA_NOT_AVAILABLE` error message when FraudNet is enabled #1177
 * Fix - Redirect to connection tab after manual credentials input #1201
 * Fix - Asking for address fields in checkout when not using them #1089
