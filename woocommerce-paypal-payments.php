@@ -74,6 +74,8 @@ define( 'PPCP_FLAG_SUBSCRIPTION', true );
 
 			$app_container = $bootstrap( $root_dir );
 
+			PPCP::init( $app_container );
+
 			$initialized = true;
 			/**
 			 * The hook fired after the plugin bootstrap with the app services container as parameter.
