@@ -19,6 +19,11 @@ return function (
 	array $additional_containers = array(),
 	array $additional_modules = array()
 ): ContainerInterface {
+	/**
+	 * Skip path check.
+	 *
+	 * @psalm-suppress UnresolvableInclude
+	 */
 	$modules = ( require "$root_dir/modules.php" )( $root_dir );
 
 	$modules = array_merge( $modules, $additional_modules );
