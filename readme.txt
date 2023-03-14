@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, e-commerce, store, sales, sell, 
 Requires at least: 5.3
 Tested up to: 6.1
 Requires PHP: 7.2
-Stable tag: 2.0.2
+Stable tag: 2.0.3
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -81,9 +81,35 @@ Follow the steps below to connect the plugin to your PayPal account:
 
 == Changelog ==
 
-= 2.0.2 =
+= 2.0.3 - 2023-03-14 =
+* Fix - `DEVICE_DATA_NOT_AVAILABLE` error message when FraudNet is enabled #1177
+* Fix - Redirect to connection tab after manual credentials input #1201
+* Fix - Asking for address fields in checkout when not using them #1089
+* Fix - Validate before free trial #1170
+* Fix - Validate new user creation #1131
+* Fix - After Updating to 2.0.2, Site Health reports REST API error #1195
+* Fix - Do not send buyer-country for previews in live mode to avoid error #1186
+* Fix - PPEC compatibility layer does not take over subscriptions #1193
+* Fix - Checkout conflict with "All products for subscriptions" plugin #629
+* Fix - Pay Later on order pay page #1214
+* Fix - High volume of traffic from merchant-integrations endpoint #1241
+* Enhancement - Save checkout form before free trial redirect #1135
+* Enhancement - Add filter for controlling the ditching of items/breakdown #1146
+* Enhancement - Add patch order data filter #1147
+* Enhancement - Add filter for disabling fees on wc order admin pages #1153
+* Enhancement - Use wp_loaded for fraudnet loading to avoid warnings #1172
+* Enhancement - reCaptcha for WooCommerce support #1093
+* Enhancement - Make it possible to hide missing funding resource Trustly #1155
+* Enhancement - Add white color option #1167
+* Enhancement - Checkout validation for other fields #861
+* Enhancement - Mention PUI only for German shops and add line breaks #1169
+* Enhancement - Add filter to fallback tracking_data['carrier'] #1188
+* Enhancement - Error notices in checkout do not update / or are shown twice #1168
+* Enhancement - capture authorized payment by changing order status (or programmatically) #587
+
+= 2.0.2 - 2023-01-31 =
 * Fix - Do not call PayPal get order by ID if it does not exist #1029
-* Fix - Type check error conflict with German Market #1056 
+* Fix - Type check error conflict with German Market #1056
 * Fix - Backend Storage for the PayPalRequestIdRepository does not scale #983
 * Fix - Ensure WC()->payment_gateways is not null #1128
 * Enhancement - Remove plugin data after uninstalling #1075
@@ -93,7 +119,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Enhancement - When PUI is enabled FraudNet should be also enabled #1129
 * Enhancement - Add PayPal-Request-Id if payment source exist #1132
 
-= 2.0.1 =
+= 2.0.1 - 2022-12-13 =
 * Fix - Error while syncing tracking data to PayPal -> Sync GZD Tracking #1020
 * Fix - Fix product price retrieval for variable product buttons #1000
 * Fix - All tabs hidden on OXXO tab visit #1048
@@ -106,12 +132,12 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Fix - Execute WC validation only for smart buttons in checkout #1074
 * Enhancement - Param types removed in closure to avoid third-party issues #1046
 
-= 2.0.0 =
-* Add - Option to separate JSSDK APM payment buttons into individual WooCommerce gateways #671 
-* Add - OXXO APM (Alternative Payment Method) #684 
+= 2.0.0 - 2022-11-21 =
+* Add - Option to separate JSSDK APM payment buttons into individual WooCommerce gateways #671
+* Add - OXXO APM (Alternative Payment Method) #684
 * Add - Pay Later tab #961
 * Add - Button preview in settings #929
-* Fix - Prevent Enter key submit for our non-standard button gateways #981 
+* Fix - Prevent Enter key submit for our non-standard button gateways #981
 * Fix - Pay Upon Invoice - Stock correction on failed orders #964
 * Fix - Check that WC session exists before using it #846
 * Fix - Compatibility with One Page Checkout Extension #356
@@ -120,11 +146,11 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Enhancement - PHP 8.1 warning: Constant FILTER_SANITIZE_STRING is deprecated #867
 * Enhancement - Execute server-side WC validation when clicking button #942
 * Enhancement - Update order with order note if payment failed after billing agreement canceled at PayPal #886
-* Enhancement - Missing PUI refund functionality from WC order #937 
+* Enhancement - Missing PUI refund functionality from WC order #937
 * Enhancement - Hide Pay upon Invoice tab if not available for merchant #978
 * Enhancement - Handle synced sub without upfront payment like free trial #936
 * Enhancement - Isolate container and modularity deps #972
-  **NOTE**: if you were extending/modifying the plugin using the modularity system, 
+  **NOTE**: if you were extending/modifying the plugin using the modularity system,
   you will need to add the `WooCommerce\PayPalCommerce\Vendor\`  prefix for the container/modularity namespaces in your code,
   that is `Psr\Container\ContainerInterface` becomes `WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface`,
   and `Dhii\Modular\Module\ModuleInterface` becomes `WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface`.
@@ -132,7 +158,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Enhancement - When Brand Name field is left empty, PUI purchase fails #916
 * Enhancement - Improve styling when using separate buttons #996
 
-= 1.9.5 =
+= 1.9.5 - 2022-11-01 =
 * Fix - Invalid tracking number in logs when adding tracking #903
 * Fix - Tracking on Connection tab always enabled #900
 * Fix - PUI payment instructions printed in the refund email #873
@@ -148,7 +174,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Enhancement - Onboard with PUI Checkbox automatically set when shop is set to Germany #876
 * Enhancement - Update all plugin strings #946
 
-= 1.9.4 =
+= 1.9.4 - 2022-10-11 =
 * Add - Create new connection tab #801
 * Add - Functionality to choose subscription failure behavior #728
 * Fix - Virtual-only orders always move order status to completed #868
@@ -160,7 +186,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Enhancement - PUI-relevant webhook not subscribed to #842
 * Enhancement - Remove WC logo during onboarding #881
 
-= 1.9.3 =
+= 1.9.3 - 2022-08-31 =
 * Add - Tracking API #792
 * Fix - Improve compatibility with Siteground Optimizer plugin #797
 * Fix - Transaction ID in order not updated when manually capturing authorized payment from WC #766
@@ -175,7 +201,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Enhancement - PUI add option for a phone number field next to the Birth Date field #742
 * Enhancement - PUI gateway availability on pay for order page with unsupported currency #744
 
-= 1.9.2 =
+= 1.9.2 - 2022-08-09 =
 * Fix - Do not allow birth date older than 100 years for PUI. #743
 * Fix - Store the customer id for vaulted payment method in usermeta to not lose vaulted methods after the invoice prefix change. #698
 * Fix - Capture Virtual-Only Orders setting did not auto-capture subscription renewal payments. #626
@@ -188,28 +214,28 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Enhancement - Improve Checkout Field Validation Message. #739
 * Enhancement - Handle PAYER_ACTION_REQUIRED error. #759
 
-= 1.9.1 =
+= 1.9.1 - 2022-07-25 =
 * Fix - ITEM_TOTAL_MISMATCH error when checking out with multiple products #721
 * Fix - Unable to purchase a product with Credit card button in pay for order page #718
 * Fix - Pay Later messaging only displayed when smart button is active on the same page #283
 * Fix - Pay Later messaging displayed for out of stock variable products or with no variation selected #667
 * Fix - Placeholders and card type detection not working for PayPal Card Processing (260) #685
 * Fix - PUI gateway is displayed with unsupported store currency #711
-* Fix - Wrong PUI locale sent causing error PAYMENT_SOURCE_CANNOT_BE_USED #741 
+* Fix - Wrong PUI locale sent causing error PAYMENT_SOURCE_CANNOT_BE_USED #741
 * Enhancement - Missing PayPal fee in WC order details for PUI purchase #714
 * Enhancement - Skip loading of PUI js file on all pages where PUI gateway is not displayed #723
-* Enhancement - PUI feature capitalization not consistent #724 
+* Enhancement - PUI feature capitalization not consistent #724
 
-= 1.9.0 =
+= 1.9.0 - 2022-07-04 =
 * Add - New Feature - Pay Upon Invoice (Germany only) #608
 * Fix - Order not approved: payment via vaulted PayPal account fails #677
 * Fix - Cant' refund : "ERROR Refund failed: No country given for address." #639
-* Fix - Something went wrong error in Virtual products when using vaulted payment #673 
+* Fix - Something went wrong error in Virtual products when using vaulted payment #673
 * Fix - PayPal smart buttons are not displayed for product variations when parent product is set to out of stock #669
-* Fix - Pay Later messaging displayed for out of stock variable products or with no variation selected #667 
-* Fix - "Capture Virtual-Only Orders" intent sets virtual+downloadable product orders to "Processing" instead of "Completed" #665 
-* Fix - Free trial period causing incorrerct disable-funding parameters with DCC disabled #661 
-* Fix - Smart button not visible on single product page when product price is below 1 and decimal is "," #654 
+* Fix - Pay Later messaging displayed for out of stock variable products or with no variation selected #667
+* Fix - "Capture Virtual-Only Orders" intent sets virtual+downloadable product orders to "Processing" instead of "Completed" #665
+* Fix - Free trial period causing incorrerct disable-funding parameters with DCC disabled #661
+* Fix - Smart button not visible on single product page when product price is below 1 and decimal is "," #654
 * Fix - Checkout using an email address containing a + symbol results in a "[INVALID_REQUEST]" error #523
 * Fix - Order details are sometimes empty in PayPal dashboard #689
 * Fix - Incorrect TAX details on PayPal order overview #541
@@ -217,7 +243,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Fix - DCC causes checkout continuation state after checkout validation error #695
 * Enhancement - Improve checkout validation & order creation #513
 
-= 1.8.1 =
+= 1.8.1 - 2022-05-31 =
 * Fix - Manual orders return an error for guest users when paying with PayPal Card Processing #530
 * Fix - "No PayPal order found in the current WooCommerce session" error for guests on Pay for Order page #605
 * Fix - Error on order discount by third-party plugins #548
@@ -233,7 +259,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Enhancement - Add Fraud Processor Response as an order note #616
 * Enhancement - Add the Paypal Fee to the Meta Custom Field for export purposes #591
 
-= 1.8.0 =
+= 1.8.0 - 2022-05-03 =
 * Add - Allow free trial subscriptions #580
 * Fix - The Card Processing does not appear as an available payment method when manually creating an order #562
 * Fix - Express buttons & Pay Later visible on variable Subscription products /w disabled vaulting #281
@@ -244,7 +270,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Enhancement - Onboarding errors improvements #558
 * Enhancement - "Place order" button visible during gateway load time when DCC gateway is selected as the default #560
 
-= 1.7.1 =
+= 1.7.1 - 2022-04-06 =
 * Fix - Hide smart buttons for free products and zero-sum carts #499
 * Fix - Unprocessable Entity when paying with AMEX card #516
 * Fix - Multisite path doubled in ajax URLs #528
@@ -257,7 +283,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Enhancement - Improve payment token checking for subscriptions #525
 * Enhancement - Add Spain and Italy to messaging #497
 
-= 1.7.0 =
+= 1.7.0 - 2022-02-28 =
 * Fix - DCC orders randomly failing #503
 * Fix - Multi-currency broke #481
 * Fix - Address information from PayPal shortcut flow not loaded #451
@@ -277,7 +303,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Enhancement - PayPal Payments doesn't set transaction fee metadata #467
 * Enhancement - Show PayPal fee information in order #489
 
-= 1.6.5 =
+= 1.6.5 - 2022-01-31 =
 * Fix - Allow guest users to purchase subscription products from checkout page #422
 * Fix - Transaction ID missing for renewal order #424
 * Fix - Save your credit card checkbox should be removed in pay for order for subscriptions #420
@@ -291,7 +317,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Fix - Improve DCC error notice when not available #435
 * Enhancement - Add View Logs link #416
 
-= 1.6.4 =
+= 1.6.4 - 2021-12-27 =
 * Fix - Non admin user cannot save changes to the plugin settings #278
 * Fix - Empty space in invoice prefix causes smart buttons to not load #390
 * Fix - woocommerce_payment_complete action not triggered for payments completed via webhook #399
@@ -300,7 +326,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Enhancement - Allow formatted text for the Description field #407
 * Enhancement - Remove filter to prevent On-Hold emails #411
 
-= 1.6.3 =
+= 1.6.3 - 2021-12-14 =
 * Fix - Payments fail when using custom order numbers #354
 * Fix - Do not display saved payments on PayPal buttons if vault option is disabled #358
 * Fix - Double "Place Order" button #362
@@ -311,7 +337,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Fix - Error messages are not cleared even when checkout is re-attempted (DCC) #366
 * Add - New additions for system report status #377
 
-= 1.6.2 =
+= 1.6.2 - 2021-11-22 =
 * Fix - Order of WooCommerce checkout actions causing incompatibility with AvaTax address validation #335
 * Fix - Can't checkout to certain countries with optional postcode #330
 * Fix - Prevent subscription from being purchased when saving payment fails #308
@@ -328,14 +354,14 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Fix - When paying for a subscription and vaulting fails, cart is cleared #367
 * Fix - Fatal error when activating PayPal Checkout plugin #363
 
-= 1.6.1 =
+= 1.6.1 - 2021-10-12 =
 * Fix - Handle authorization capture failures #312
 * Fix - Handle denied payment authorization #302
 * Fix - Handle failed authorizations when capturing order #303
 * Fix - Transactions cannot be voided #293
 * Fix - Fatal error: get_3ds_contingency() #310
 
-= 1.6.0 =
+= 1.6.0 - 2021-09-29 =
 * Add - Webhook status. #246 #273
 * Add - Show CC gateway in admin payments list. #236
 * Add - Add 3d secure contingency settings. #230
@@ -349,14 +375,14 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Fix - REFUND_CAPTURE_CURRENCY_MISMATCH on multicurrency sites. #225
 * Fix - Can't checkout to certain countries with optional postcode. #224
 
-= 1.5.1 =
+= 1.5.1 - 2021-08-19 =
 * Fix - Set 3DS contingencies to "SCA_WHEN_REQUIRED". #178
 * Fix - Plugin conflict blocking line item details. #221
 * Fix - WooCommerce orders left in "Pending Payment" after a decline. #222
 * Fix - Do not send decimals when currency does not support them. #202
 * Fix - Gateway can be activated without a connected PayPal account. #205
 
-= 1.5.0 =
+= 1.5.0 - 2021-08-09 =
 * Add - Filter to modify plugin modules list. #203
 * Add - Filters to move PayPal buttons and Pay Later messages. #203
 * Fix - Remove redirection when enabling payment gateway with setup already done. #206
@@ -365,7 +391,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Fix - Hide mini cart height field when mini cart is disabled. #213
 * Fix - Address possible error on frontend pages due to an empty gateway description. #214
 
-= 1.4.0 =
+= 1.4.0 - 2021-07-27 =
 * Add - Venmo update #169
 * Add - Pay Later Button –Global Expansion #182
 * Add - Add Canada to advanced credit and debit card #180
@@ -381,7 +407,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Fix - Remove merchant-id query parameter in JSSDK #179
 * Fix - Error on Plugin activation with Zettle POS Integration for WooCommerce #195
 
-= 1.3.2 =
+= 1.3.2 - 2021-06-08 =
 * Fix - Improve Subscription plugin support. #161
 * Fix - Disable vault setting if vaulting feature is not available. #150
 * Fix - Cast item get_quantity into int. #168
@@ -392,10 +418,10 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Fix - Fix pay later messaging options. #141
 * Fix - UI/UX for vaulting settings. #166
 
-= 1.3.1 =
+= 1.3.1 - 2021-04-30 =
 * Fix - Fix Credit Card fields for non logged-in users. #152
 
-= 1.3.0 =
+= 1.3.0 - 2021-04-28 =
 * Add - Client-side vaulting and allow WooCommerce Subscriptions product renewals through payment tokens. #134
 * Add - Send transaction ids to woocommerce. #125
 * Fix - Validate checkout form before sending request to PayPal #137
@@ -405,31 +431,31 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Fix - Remove disabling credit for UK. #127
 * Fix - Show WC message on account creating error. #136
 
-= 1.2.1 =
+= 1.2.1 - 2021-03-08 =
 * Fix - Address compatibility issue with Jetpack.
 
-= 1.2.0 =
+= 1.2.0 - 2021-03-08 =
 * Add - Rework onboarding code and add REST controller for integration with the OBW. #121
 * Fix - Remove spinner on click, on cancel and on error. #124
 
-= 1.1.0 =
+= 1.1.0 - 2021-02-01 =
 * Add - Buy Now Pay Later for UK. #104
 * Add - DE now has 12 month installments. #106
 * Fix - Check phone for empty string. #102
 
-= 1.0.4 =
+= 1.0.4 - 2021-01-18 =
 * Fix - Check if WooCommerce is active before initialize. #99
 * Fix - Payment buttons only visible on order-pay site when Mini Cart is enabled; payment fails. #96
 * Fix - High volume of failed calls to /v1/notifications/webhooks #93
 * Fix - GB country has ACDC blocked. #91
 
-= 1.0.3 =
+= 1.0.3 - 2020-11-30 =
 * Fix - Order with Payment received when Hosted Fields transaction is declined. #88
 
-= 1.0.2 =
+= 1.0.2 - 2020-11-09 =
 * Fix - Purchases over 1.000 USD fail. #84
 
-= 1.0.1 =
+= 1.0.1 - 2020-11-05 =
 * Fix - PayPal Smart buttons don't load when using a production/live account and `WP_Debug` is turned on/true. #66
 * Fix - [Card Processing] SCA/Visa Verification form loads underneath the Checkout blockUI element. #63
 * Fix - Attempting to checkout without country selected results in unexpected error message. #67
@@ -438,5 +464,5 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Fix - "The value of a field does not conform to the expected format" error when using certain e-mail addresses. #56
 * Fix - HTML tags in Product description. #79
 
-= 1.0.0 =
+= 1.0.0 - 2020-10-15 =
 * Initial release.

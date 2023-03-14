@@ -28,7 +28,10 @@ const cardsSpinner = new Spinner('#ppcp-hosted-fields');
 const bootstrap = () => {
     const checkoutFormSelector = 'form.woocommerce-checkout';
 
-    const errorHandler = new ErrorHandler(PayPalCommerceGateway.labels.error.generic);
+    const errorHandler = new ErrorHandler(
+        PayPalCommerceGateway.labels.error.generic,
+        document.querySelector(checkoutFormSelector) ?? document.querySelector('.woocommerce-notices-wrapper')
+    );
     const spinner = new Spinner();
     const creditCardRenderer = new CreditCardRenderer(PayPalCommerceGateway, errorHandler, spinner);
 

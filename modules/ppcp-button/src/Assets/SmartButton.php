@@ -17,6 +17,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveOrderEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
@@ -405,7 +406,7 @@ class SmartButton implements SmartButtonInterface {
 			add_action(
 				$this->pay_order_renderer_hook(),
 				array( $this, 'message_renderer' ),
-				11
+				15
 			);
 		}
 		return true;
@@ -478,7 +479,8 @@ class SmartButton implements SmartButtonInterface {
 				function (): void {
 					$this->button_renderer( PayPalGateway::ID );
 					$this->button_renderer( CardButtonGateway::ID );
-				}
+				},
+				20
 			);
 			add_action(
 				$this->checkout_button_renderer_hook(),
@@ -807,6 +809,9 @@ class SmartButton implements SmartButtonInterface {
 					'endpoint' => \WC_AJAX::get_endpoint( ValidateCheckoutEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( ValidateCheckoutEndpoint::nonce() ),
 				),
+				'cart_script_params' => array(
+					'endpoint' => \WC_AJAX::get_endpoint( CartScriptParamsEndpoint::ENDPOINT ),
+				),
 			),
 			'enforce_vault'                     => $this->has_subscriptions(),
 			'can_save_vault_token'              => $this->can_save_vault_token(),
@@ -979,17 +984,18 @@ class SmartButton implements SmartButtonInterface {
 			$disable_funding = $all_sources;
 		}
 
-		if ( ! $this->settings_status->is_pay_later_button_enabled_for_context( $this->context() ) ) {
-			$disable_funding[] = 'credit';
+		$enable_funding = array( 'venmo' );
+
+		if ( $this->settings_status->is_pay_later_button_enabled_for_location( $this->context() ) ||
+			$this->settings_status->is_pay_later_messaging_enabled_for_location( $this->context() )
+		) {
+			$enable_funding[] = 'paylater';
+		} else {
+			$disable_funding[] = 'paylater';
 		}
 
 		if ( count( $disable_funding ) > 0 ) {
 			$params['disable-funding'] = implode( ',', array_unique( $disable_funding ) );
-		}
-
-		$enable_funding = array( 'venmo' );
-		if ( $this->settings_status->is_pay_later_messaging_enabled_for_location( $this->context() ) || ! in_array( 'credit', $disable_funding, true ) ) {
-			$enable_funding[] = 'paylater';
 		}
 
 		if ( $this->is_free_trial_cart() ) {
@@ -1080,11 +1086,10 @@ class SmartButton implements SmartButtonInterface {
 		switch ( $this->context() ) {
 			case 'checkout':
 			case 'cart':
+			case 'pay-now':
 				return $smart_button_enabled_for_current_location || $messaging_enabled_for_current_location;
 			case 'product':
 				return $smart_button_enabled_for_current_location || $messaging_enabled_for_current_location || $smart_button_enabled_for_mini_cart;
-			case 'pay-now':
-				return true;
 			default:
 				return $smart_button_enabled_for_mini_cart;
 		}

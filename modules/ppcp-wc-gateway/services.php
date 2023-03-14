@@ -36,6 +36,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\GatewayRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXO;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXOEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXOGateway;
@@ -538,6 +539,23 @@ return array(
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
+			'capture_on_status_change'               => array(
+				'title'        => __( 'Capture On Status Change', 'woocommerce-paypal-payments' ),
+				'type'         => 'checkbox',
+				'default'      => false,
+				'desc_tip'     => true,
+				'description'  => __(
+					'The transaction will be captured automatically when the order status changes to Processing or Completed.',
+					'woocommerce-paypal-payments'
+				),
+				'label'        => __( 'Capture On Status Change', 'woocommerce-paypal-payments' ),
+				'screens'      => array(
+					State::STATE_START,
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
 			'capture_for_virtual_only'               => array(
 				'title'        => __( 'Capture Virtual-Only Orders ', 'woocommerce-paypal-payments' ),
 				'type'         => 'checkbox',
@@ -921,7 +939,8 @@ return array(
 			$settings,
 			$partner_endpoint,
 			$container->get( 'dcc.status-cache' ),
-			$container->get( 'api.helpers.dccapplies' )
+			$container->get( 'api.helpers.dccapplies' ),
+			$container->get( 'onboarding.state' )
 		);
 	},
 
@@ -989,7 +1008,8 @@ return array(
 		return new PayUponInvoiceProductStatus(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'api.endpoint.partners' ),
-			$container->get( 'pui.status-cache' )
+			$container->get( 'pui.status-cache' ),
+			$container->get( 'onboarding.state' )
 		);
 	},
 	'wcgateway.pay-upon-invoice'                           => static function ( ContainerInterface $container ): PayUponInvoice {
@@ -1348,19 +1368,10 @@ return array(
 			OXXOGateway::ID,
 		);
 	},
-	'wcgateway.enabled-ppcp-gateways'                      => static function ( ContainerInterface $container ): array {
-		$available_gateways = WC()->payment_gateways->get_available_payment_gateways();
-		$ppcp_gateways = $container->get( 'wcgateway.ppcp-gateways' );
-		$enabled_ppcp_gateways = array();
-
-		foreach ( $ppcp_gateways as $gateway ) {
-			if ( ! isset( $available_gateways[ $gateway ] ) ) {
-				continue;
-			}
-			$enabled_ppcp_gateways[] = $gateway;
-		}
-
-		return $enabled_ppcp_gateways;
+	'wcgateway.gateway-repository'                         => static function ( ContainerInterface $container ): GatewayRepository {
+		return new GatewayRepository(
+			$container->get( 'wcgateway.ppcp-gateways' )
+		);
 	},
 	'wcgateway.is-fraudnet-enabled'                        => static function ( ContainerInterface $container ): bool {
 		$settings      = $container->get( 'wcgateway.settings' );
@@ -1375,7 +1386,7 @@ return array(
 			$container->get( 'wcgateway.fraudnet' ),
 			$container->get( 'onboarding.environment' ),
 			$container->get( 'wcgateway.settings' ),
-			$container->get( 'wcgateway.enabled-ppcp-gateways' ),
+			$container->get( 'wcgateway.gateway-repository' ),
 			$container->get( 'session.handler' ),
 			$container->get( 'wcgateway.is-fraudnet-enabled' )
 		);

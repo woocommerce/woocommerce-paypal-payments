@@ -422,7 +422,7 @@ class PayUponInvoice {
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function ( $methods ): array {
+			function ( $methods ) {
 				if ( ! is_array( $methods ) || State::STATE_ONBOARDED !== $this->state->current_state() ) {
 					return $methods;
 				}

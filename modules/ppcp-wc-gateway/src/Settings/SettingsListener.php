@@ -193,10 +193,7 @@ class SettingsListener {
 		 */
 		do_action( 'woocommerce_paypal_payments_onboarding_before_redirect' );
 
-		/**
-		 * The URL opened at the end of onboarding after saving the merchant ID/email.
-		 */
-		$redirect_url = apply_filters( 'woocommerce_paypal_payments_onboarding_redirect_url', admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=' . Settings::CONNECTION_TAB_ID ) );
+		$redirect_url = $this->get_onboarding_redirect_url();
 		if ( ! $this->settings->has( 'client_id' ) || ! $this->settings->get( 'client_id' ) ) {
 			$redirect_url = add_query_arg( 'ppcp-onboarding-error', '1', $redirect_url );
 		}
@@ -347,14 +344,34 @@ class SettingsListener {
 			$this->dcc_status_cache->delete( DCCProductStatus::DCC_STATUS_CACHE_KEY );
 		}
 
+		$redirect_url = false;
+		if ( self::CREDENTIALS_ADDED === $credentials_change_status ) {
+			$redirect_url = $this->get_onboarding_redirect_url();
+		}
+
 		if ( isset( $_GET['ppcp-onboarding-error'] ) ) {
-			$url = remove_query_arg( 'ppcp-onboarding-error' );
-			wp_safe_redirect( $url, 302 );
+			$redirect_url = remove_query_arg( 'ppcp-onboarding-error', $redirect_url );
+		}
+
+		if ( $redirect_url ) {
+			wp_safe_redirect( $redirect_url, 302 );
 			exit;
 		}
 
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+	}
+
+	/**
+	 * Returns the URL opened at the end of onboarding.
+	 *
+	 * @return string
+	 */
+	private function get_onboarding_redirect_url(): string {
+		/**
+		 * The URL opened at the end of onboarding after saving the merchant ID/email.
+		 */
+		return apply_filters( 'woocommerce_paypal_payments_onboarding_redirect_url', admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=' . Settings::CONNECTION_TAB_ID ) );
 	}
 
 	/**
