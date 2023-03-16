@@ -644,7 +644,7 @@ return array(
 					>',
 					'</a>'
 				),
-				'options'      => $container->get( 'wcgateway.all-funding-sources' ),
+				'options'      => $container->get( 'wcgateway.settings.funding-sources' ),
 				'screens'      => array(
 					State::STATE_START,
 					State::STATE_ONBOARDED,
@@ -881,6 +881,17 @@ return array(
 			'sofort'      => _x( 'Sofort', 'Name of payment method', 'woocommerce-paypal-payments' ),
 			'venmo'       => _x( 'Venmo', 'Name of payment method', 'woocommerce-paypal-payments' ),
 			'trustly'     => _x( 'Trustly', 'Name of payment method', 'woocommerce-paypal-payments' ),
+			'paylater'    => _x( 'Pay Later', 'Name of payment method', 'woocommerce-paypal-payments' ),
+		);
+	},
+	'wcgateway.settings.funding-sources'                   => static function( ContainerInterface $container ): array {
+		return array_diff_key(
+			$container->get( 'wcgateway.all-funding-sources' ),
+			array_flip(
+				array(
+					'paylater',
+				)
+			)
 		);
 	},
 
@@ -952,9 +963,11 @@ return array(
 
 	'wcgateway.funding-source.renderer'                    => function ( ContainerInterface $container ) : FundingSourceRenderer {
 		return new FundingSourceRenderer(
-			$container->get( 'wcgateway.settings' )
+			$container->get( 'wcgateway.settings' ),
+			$container->get( 'wcgateway.all-funding-sources' )
 		);
 	},
+
 	'wcgateway.checkout-helper'                            => static function ( ContainerInterface $container ): CheckoutHelper {
 		return new CheckoutHelper();
 	},
