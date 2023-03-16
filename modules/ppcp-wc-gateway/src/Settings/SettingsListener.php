@@ -13,6 +13,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
+use WooCommerce\PayPalCommerce\Http\RedirectorInterface;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
@@ -112,19 +113,27 @@ class SettingsListener {
 	protected $dcc_status_cache;
 
 	/**
+	 * The HTTP redirector.
+	 *
+	 * @var RedirectorInterface
+	 */
+	protected $redirector;
+
+	/**
 	 * SettingsListener constructor.
 	 *
-	 * @param Settings         $settings The settings.
-	 * @param array            $setting_fields The setting fields.
-	 * @param WebhookRegistrar $webhook_registrar The Webhook Registrar.
-	 * @param Cache            $cache The Cache.
-	 * @param State            $state The state.
-	 * @param Bearer           $bearer The bearer.
-	 * @param string           $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
-	 * @param Cache            $signup_link_cache The signup link cache.
-	 * @param array            $signup_link_ids Signup link ids.
-	 * @param Cache            $pui_status_cache The PUI status cache.
-	 * @param Cache            $dcc_status_cache The DCC status cache.
+	 * @param Settings            $settings The settings.
+	 * @param array               $setting_fields The setting fields.
+	 * @param WebhookRegistrar    $webhook_registrar The Webhook Registrar.
+	 * @param Cache               $cache The Cache.
+	 * @param State               $state The state.
+	 * @param Bearer              $bearer The bearer.
+	 * @param string              $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
+	 * @param Cache               $signup_link_cache The signup link cache.
+	 * @param array               $signup_link_ids Signup link ids.
+	 * @param Cache               $pui_status_cache The PUI status cache.
+	 * @param Cache               $dcc_status_cache The DCC status cache.
+	 * @param RedirectorInterface $redirector The HTTP redirector.
 	 */
 	public function __construct(
 		Settings $settings,
@@ -137,7 +146,8 @@ class SettingsListener {
 		Cache $signup_link_cache,
 		array $signup_link_ids,
 		Cache $pui_status_cache,
-		Cache $dcc_status_cache
+		Cache $dcc_status_cache,
+		RedirectorInterface $redirector
 	) {
 
 		$this->settings          = $settings;
@@ -151,6 +161,7 @@ class SettingsListener {
 		$this->signup_link_ids   = $signup_link_ids;
 		$this->pui_status_cache  = $pui_status_cache;
 		$this->dcc_status_cache  = $dcc_status_cache;
+		$this->redirector        = $redirector;
 	}
 
 	/**
@@ -198,8 +209,7 @@ class SettingsListener {
 			$redirect_url = add_query_arg( 'ppcp-onboarding-error', '1', $redirect_url );
 		}
 
-		wp_safe_redirect( $redirect_url, 302 );
-		exit;
+		$this->redirector->redirect( $redirect_url );
 	}
 
 	/**
@@ -337,8 +347,7 @@ class SettingsListener {
 		}
 
 		if ( $redirect_url ) {
-			wp_safe_redirect( $redirect_url, 302 );
-			exit;
+			$this->redirector->redirect( $redirect_url );
 		}
 
 		// phpcs:enable WordPress.Security.NonceVerification.Missing

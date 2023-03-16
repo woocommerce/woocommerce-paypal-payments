@@ -336,7 +336,8 @@ return array(
 			$signup_link_cache,
 			$signup_link_ids,
 			$pui_status_cache,
-			$dcc_status_cache
+			$dcc_status_cache,
+			$container->get( 'http.redirector' )
 		);
 	},
 	'wcgateway.order-processor'                            => static function ( ContainerInterface $container ): OrderProcessor {
