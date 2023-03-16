@@ -77,11 +77,11 @@ class IncomingWebhookEndpoint {
 	private $simulation;
 
 	/**
-	 * The last webhook info storage.
+	 * The last webhook event storage.
 	 *
-	 * @var WebhookInfoStorage
+	 * @var WebhookEventStorage
 	 */
-	private $last_webhook_storage;
+	private $last_webhook_event_storage;
 
 	/**
 	 * IncomingWebhookEndpoint constructor.
@@ -92,7 +92,7 @@ class IncomingWebhookEndpoint {
 	 * @param bool                $verify_request Whether requests need to be verified or not.
 	 * @param WebhookEventFactory $webhook_event_factory The webhook event factory.
 	 * @param WebhookSimulation   $simulation The simulation handler.
-	 * @param WebhookInfoStorage  $last_webhook_storage The last webhook info storage.
+	 * @param WebhookEventStorage $last_webhook_event_storage The last webhook event storage.
 	 * @param RequestHandler      ...$handlers The handlers, which process a request in the end.
 	 */
 	public function __construct(
@@ -102,18 +102,18 @@ class IncomingWebhookEndpoint {
 		bool $verify_request,
 		WebhookEventFactory $webhook_event_factory,
 		WebhookSimulation $simulation,
-		WebhookInfoStorage $last_webhook_storage,
+		WebhookEventStorage $last_webhook_event_storage,
 		RequestHandler ...$handlers
 	) {
 
-		$this->webhook_endpoint      = $webhook_endpoint;
-		$this->webhook               = $webhook;
-		$this->handlers              = $handlers;
-		$this->logger                = $logger;
-		$this->verify_request        = $verify_request;
-		$this->webhook_event_factory = $webhook_event_factory;
-		$this->last_webhook_storage  = $last_webhook_storage;
-		$this->simulation            = $simulation;
+		$this->webhook_endpoint           = $webhook_endpoint;
+		$this->webhook                    = $webhook;
+		$this->handlers                   = $handlers;
+		$this->logger                     = $logger;
+		$this->verify_request             = $verify_request;
+		$this->webhook_event_factory      = $webhook_event_factory;
+		$this->last_webhook_event_storage = $last_webhook_event_storage;
+		$this->simulation                 = $simulation;
 	}
 
 	/**
@@ -186,7 +186,7 @@ class IncomingWebhookEndpoint {
 	public function handle_request( \WP_REST_Request $request ): \WP_REST_Response {
 		$event = $this->event_from_request( $request );
 
-		$this->last_webhook_storage->save( $event );
+		$this->last_webhook_event_storage->save( $event );
 
 		if ( $this->simulation->is_simulation_event( $event ) ) {
 			$this->logger->info( 'Received simulated webhook.' );
