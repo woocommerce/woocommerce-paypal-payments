@@ -1269,7 +1269,7 @@ return array(
 
 		$dcc_enabled = $dcc_product_status->dcc_is_active();
 
-		$enabled_status_text  = esc_html__( 'Status: Enabled', 'woocommerce-paypal-payments' );
+		$enabled_status_text  = esc_html__( 'Status: Available', 'woocommerce-paypal-payments' );
 		$disabled_status_text = esc_html__( 'Status: Not yet enabled', 'woocommerce-paypal-payments' );
 
 		$dcc_button_text = $dcc_enabled
@@ -1302,7 +1302,7 @@ return array(
 
 		$pui_enabled = $pui_product_status->pui_is_active();
 
-		$enabled_status_text  = esc_html__( 'Status: Enabled', 'woocommerce-paypal-payments' );
+		$enabled_status_text  = esc_html__( 'Status: Available', 'woocommerce-paypal-payments' );
 		$disabled_status_text = esc_html__( 'Status: Not yet enabled', 'woocommerce-paypal-payments' );
 
 		$enable_pui_url = $environment->current_environment_is( Environment::PRODUCTION )
