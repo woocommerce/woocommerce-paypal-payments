@@ -5,6 +5,7 @@ namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 
 use Exception;
 use Mockery;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\Button\Exception\ValidationException;
 use WooCommerce\PayPalCommerce\Button\Validation\CheckoutFormValidator;
@@ -13,6 +14,8 @@ use function Brain\Monkey\Functions\expect;
 
 class ValidateCheckoutEndpointTest extends TestCase
 {
+	use MockeryPHPUnitIntegration;
+
 	private $requestData;
 	private $formValidator;
 	private $logger;
