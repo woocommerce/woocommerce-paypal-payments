@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce;
 
+use WooCommerce\PayPalCommerce\Helper\RedirectorStub;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
@@ -58,6 +59,12 @@ class ModularTestCase extends TestCase
      */
     protected function bootstrapModule(array $overriddenServices = []): ContainerInterface
     {
+		$overriddenServices = array_merge([
+			'http.redirector' => function () {
+				return new RedirectorStub();
+			}
+		], $overriddenServices);
+
 		$module = new class ($overriddenServices) implements ModuleInterface {
 			public function __construct(array $services) {
 				$this->services = $services;
