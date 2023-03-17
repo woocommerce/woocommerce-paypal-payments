@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway;
 
 use Psr\Log\LoggerInterface;
 use Throwable;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WC_Order;
@@ -179,7 +180,7 @@ class WCGatewayModule implements ModuleInterface {
 				$c->get( 'onboarding.environment' ),
 				$settings_status->is_pay_later_button_enabled(),
 				$settings->has( 'disable_funding' ) ? $settings->get( 'disable_funding' ) : array(),
-				$c->get( 'wcgateway.all-funding-sources' )
+				$c->get( 'wcgateway.settings.funding-sources' )
 			);
 			$assets->register_assets();
 		}
@@ -453,14 +454,30 @@ class WCGatewayModule implements ModuleInterface {
 			'admin_init',
 			static function () use ( $container ) {
 				$listener = $container->get( 'wcgateway.settings.listener' );
-				/**
-				 * The settings listener.
-				 *
-				 * @var SettingsListener $listener
-				 */
+				assert( $listener instanceof SettingsListener );
+
 				$listener->listen_for_merchant_id();
-				$listener->listen_for_vaulting_enabled();
-				$listener->listen_for_tracking_enabled();
+
+				try {
+					$listener->listen_for_vaulting_enabled();
+					$listener->listen_for_tracking_enabled();
+				} catch ( RuntimeException $exception ) {
+					add_action(
+						'admin_notices',
+						function () use ( $exception ) {
+							printf(
+								'<div class="notice notice-error"><p>%1$s</p><p>%2$s</p></div>',
+								esc_html__( 'Authentication with PayPal failed: ', 'woocommerce-paypal-payments' ) . esc_attr( $exception->getMessage() ),
+								wp_kses_post(
+									__(
+										'Please verify your API Credentials and try again to connect your PayPal business account. Visit the <a href="https://docs.woocommerce.com/document/woocommerce-paypal-payments/" target="_blank">plugin documentation</a> for more information about the setup.',
+										'woocommerce-paypal-payments'
+									)
+								)
+							);
+						}
+					);
+				}
 			}
 		);
 

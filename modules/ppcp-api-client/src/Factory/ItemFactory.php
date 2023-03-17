@@ -58,7 +58,7 @@ class ItemFactory {
 					mb_substr( $product->get_name(), 0, 127 ),
 					new Money( $price, $this->currency ),
 					$quantity,
-					substr( wp_strip_all_tags( $product->get_description() ), 0, 127 ) ?: '',
+					$this->prepare_description( $product->get_description() ),
 					null,
 					$product->get_sku(),
 					( $product->is_virtual() ) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS
@@ -130,7 +130,7 @@ class ItemFactory {
 			mb_substr( $item->get_name(), 0, 127 ),
 			new Money( $price_without_tax_rounded, $currency ),
 			$quantity,
-			substr( wp_strip_all_tags( $product instanceof WC_Product ? $product->get_description() : '' ), 0, 127 ) ?: '',
+			$product instanceof WC_Product ? $this->prepare_description( $product->get_description() ) : '',
 			null,
 			$product instanceof WC_Product ? $product->get_sku() : '',
 			( $product instanceof WC_Product && $product->is_virtual() ) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS
@@ -197,5 +197,16 @@ class ItemFactory {
 			$sku,
 			$category
 		);
+	}
+
+	/**
+	 * Cleanups the description and prepares it for sending to PayPal.
+	 *
+	 * @param string $description Item description.
+	 * @return string
+	 */
+	protected function prepare_description( string $description ): string {
+		$description = strip_shortcodes( wp_strip_all_tags( $description ) );
+		return substr( $description, 0, 127 ) ?: '';
 	}
 }
