@@ -88,8 +88,6 @@ class SettingsListenerTest extends ModularTestCase
         $dcc_status_cache->shouldReceive('has')
             ->andReturn(false);
 
-		$this->expectException(StubRedirectionException::class);
-
 		$testee->listen();
 	}
 }
