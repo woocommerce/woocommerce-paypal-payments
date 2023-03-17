@@ -24,11 +24,34 @@ class DisabledSmartButton implements SmartButtonInterface {
 	}
 
 	/**
+	 * Whether the scripts should be loaded.
+	 */
+	public function should_load(): bool {
+		return false;
+	}
+
+	/**
 	 * Enqueues necessary scripts.
+	 */
+	public function enqueue(): void {
+	}
+
+	/**
+	 * Whether tokens can be stored or not.
 	 *
 	 * @return bool
 	 */
-	public function enqueue(): bool {
-		return true;
+	public function can_save_vault_token(): bool {
+
+		return false;
+	}
+
+	/**
+	 * The configuration for the smart buttons.
+	 *
+	 * @return array
+	 */
+	public function script_data(): array {
+		return array();
 	}
 }

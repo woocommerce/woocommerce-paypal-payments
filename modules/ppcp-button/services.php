@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Button;
 
 use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveSubscriptionEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\CheckoutFormSaver;
 use WooCommerce\PayPalCommerce\Button\Endpoint\SaveCheckoutFormEndpoint;
 use WooCommerce\PayPalCommerce\Button\Validation\CheckoutFormValidator;
@@ -158,6 +159,7 @@ return array(
 		return new SmartButton(
 			$container->get( 'button.url' ),
 			$container->get( 'ppcp.asset-version' ),
+			$container->get( 'session.handler' ),
 			$settings,
 			$payer_factory,
 			$client_id,
@@ -291,6 +293,12 @@ return array(
 		return new ValidateCheckoutEndpoint(
 			$container->get( 'button.request-data' ),
 			$container->get( 'button.validation.wc-checkout-validator' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
+	'button.endpoint.cart-script-params'          => static function ( ContainerInterface $container ): CartScriptParamsEndpoint {
+		return new CartScriptParamsEndpoint(
+			$container->get( 'button.smart-button' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},

@@ -6,7 +6,6 @@ import PayNowBootstrap from "./modules/ContextBootstrap/PayNowBootstrap";
 import Renderer from './modules/Renderer/Renderer';
 import ErrorHandler from './modules/ErrorHandler';
 import CreditCardRenderer from "./modules/Renderer/CreditCardRenderer";
-import dataClientIdAttributeHandler from "./modules/DataClientIdAttributeHandler";
 import MessageRenderer from "./modules/Renderer/MessageRenderer";
 import Spinner from "./modules/Helper/Spinner";
 import {
@@ -19,6 +18,7 @@ import {isChangePaymentPage} from "./modules/Helper/Subscriptions";
 import FreeTrialHandler from "./modules/ActionHandler/FreeTrialHandler";
 import FormSaver from './modules/Helper/FormSaver';
 import FormValidator from "./modules/Helper/FormValidator";
+import {loadPaypalScript} from "./modules/Helper/ScriptLoading";
 
 // TODO: could be a good idea to have a separate spinner for each gateway,
 // but I think we care mainly about the script loading, so one spinner should be enough.
@@ -258,24 +258,10 @@ document.addEventListener(
             hideOrderButtonIfPpcpGateway();
         });
 
-        const script = document.createElement('script');
-        script.addEventListener('load', (event) => {
+        loadPaypalScript(PayPalCommerceGateway, () => {
             bootstrapped = true;
 
             bootstrap();
         });
-        script.setAttribute('src', PayPalCommerceGateway.button.url);
-        Object.entries(PayPalCommerceGateway.script_attributes).forEach(
-            (keyValue) => {
-                script.setAttribute(keyValue[0], keyValue[1]);
-            }
-        );
-
-        if (PayPalCommerceGateway.data_client_id.set_attribute) {
-            dataClientIdAttributeHandler(script, PayPalCommerceGateway.data_client_id);
-            return;
-        }
-
-        document.body.appendChild(script);
     },
 );

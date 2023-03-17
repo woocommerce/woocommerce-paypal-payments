@@ -10,6 +10,8 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce;
 
 use Dhii\Versions\StringVersionFactory;
+use WooCommerce\PayPalCommerce\Http\RedirectorInterface;
+use WooCommerce\PayPalCommerce\Http\WpRedirector;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WpOop\WordPress\Plugin\PluginInterface;
 
@@ -23,5 +25,9 @@ return array(
 		assert( $plugin instanceof PluginInterface );
 
 		return (string) $plugin->getVersion();
+	},
+
+	'http.redirector'    => function( ContainerInterface $container ) : RedirectorInterface {
+		return new WpRedirector();
 	},
 );

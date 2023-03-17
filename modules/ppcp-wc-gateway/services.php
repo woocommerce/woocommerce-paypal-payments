@@ -337,7 +337,8 @@ return array(
 			$signup_link_cache,
 			$signup_link_ids,
 			$pui_status_cache,
-			$dcc_status_cache
+			$dcc_status_cache,
+			$container->get( 'http.redirector' )
 		);
 	},
 	'wcgateway.order-processor'                            => static function ( ContainerInterface $container ): OrderProcessor {
@@ -645,7 +646,7 @@ return array(
 					>',
 					'</a>'
 				),
-				'options'      => $container->get( 'wcgateway.all-funding-sources' ),
+				'options'      => $container->get( 'wcgateway.settings.funding-sources' ),
 				'screens'      => array(
 					State::STATE_START,
 					State::STATE_ONBOARDED,
@@ -883,6 +884,17 @@ return array(
 			'sofort'      => _x( 'Sofort', 'Name of payment method', 'woocommerce-paypal-payments' ),
 			'venmo'       => _x( 'Venmo', 'Name of payment method', 'woocommerce-paypal-payments' ),
 			'trustly'     => _x( 'Trustly', 'Name of payment method', 'woocommerce-paypal-payments' ),
+			'paylater'    => _x( 'Pay Later', 'Name of payment method', 'woocommerce-paypal-payments' ),
+		);
+	},
+	'wcgateway.settings.funding-sources'                   => static function( ContainerInterface $container ): array {
+		return array_diff_key(
+			$container->get( 'wcgateway.all-funding-sources' ),
+			array_flip(
+				array(
+					'paylater',
+				)
+			)
 		);
 	},
 
@@ -941,7 +953,8 @@ return array(
 			$settings,
 			$partner_endpoint,
 			$container->get( 'dcc.status-cache' ),
-			$container->get( 'api.helpers.dccapplies' )
+			$container->get( 'api.helpers.dccapplies' ),
+			$container->get( 'onboarding.state' )
 		);
 	},
 
@@ -953,9 +966,11 @@ return array(
 
 	'wcgateway.funding-source.renderer'                    => function ( ContainerInterface $container ) : FundingSourceRenderer {
 		return new FundingSourceRenderer(
-			$container->get( 'wcgateway.settings' )
+			$container->get( 'wcgateway.settings' ),
+			$container->get( 'wcgateway.all-funding-sources' )
 		);
 	},
+
 	'wcgateway.checkout-helper'                            => static function ( ContainerInterface $container ): CheckoutHelper {
 		return new CheckoutHelper();
 	},
@@ -1009,7 +1024,8 @@ return array(
 		return new PayUponInvoiceProductStatus(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'api.endpoint.partners' ),
-			$container->get( 'pui.status-cache' )
+			$container->get( 'pui.status-cache' ),
+			$container->get( 'onboarding.state' )
 		);
 	},
 	'wcgateway.pay-upon-invoice'                           => static function ( ContainerInterface $container ): PayUponInvoice {
@@ -1250,7 +1266,7 @@ return array(
 
 		$dcc_enabled = $dcc_product_status->dcc_is_active();
 
-		$enabled_status_text  = esc_html__( 'Status: Enabled', 'woocommerce-paypal-payments' );
+		$enabled_status_text  = esc_html__( 'Status: Available', 'woocommerce-paypal-payments' );
 		$disabled_status_text = esc_html__( 'Status: Not yet enabled', 'woocommerce-paypal-payments' );
 
 		$dcc_button_text = $dcc_enabled
@@ -1283,7 +1299,7 @@ return array(
 
 		$pui_enabled = $pui_product_status->pui_is_active();
 
-		$enabled_status_text  = esc_html__( 'Status: Enabled', 'woocommerce-paypal-payments' );
+		$enabled_status_text  = esc_html__( 'Status: Available', 'woocommerce-paypal-payments' );
 		$disabled_status_text = esc_html__( 'Status: Not yet enabled', 'woocommerce-paypal-payments' );
 
 		$enable_pui_url = $environment->current_environment_is( Environment::PRODUCTION )
@@ -1334,24 +1350,10 @@ return array(
 		assert( $settings instanceof Settings );
 
 		$button_locations = $container->get( 'wcgateway.button.locations' );
-		unset( $button_locations['mini-cart'] );
 
 		$smart_button_selected_locations = $settings->has( 'smart_button_locations' ) ? $settings->get( 'smart_button_locations' ) : array();
-		$pay_later_button_locations = array();
 
-		if ( empty( $smart_button_selected_locations ) ) {
-			return $pay_later_button_locations;
-		}
-
-		foreach ( $button_locations as $location_key => $location ) {
-			if ( ! in_array( $location_key, $smart_button_selected_locations, true ) ) {
-				continue;
-			}
-
-			$pay_later_button_locations[ $location_key ] = $location;
-		}
-
-		return $pay_later_button_locations;
+		return array_intersect_key( $button_locations, array_flip( $smart_button_selected_locations ) );
 	},
 	'wcgateway.ppcp-gateways'                              => static function ( ContainerInterface $container ): array {
 		return array(

@@ -184,14 +184,14 @@ class SubscriptionsHandler {
 		}
 
 		// Are we on the WC > Subscriptions screen?
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		// phpcs:ignore WordPress.Security.NonceVerification
 		$post_type = wc_clean( wp_unslash( $_GET['post_type'] ?? $_POST['post_type'] ?? '' ) );
 		if ( $post_type === 'shop_subscription' ) {
 			return true;
 		}
 
 		// Are we editing an order or subscription tied to PPEC?
-		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		// phpcs:ignore WordPress.Security.NonceVerification
 		$order_id = wc_clean( wp_unslash( $_GET['post'] ?? $_POST['post_ID'] ?? '' ) );
 		if ( $order_id ) {
 			$order = wc_get_order( $order_id );

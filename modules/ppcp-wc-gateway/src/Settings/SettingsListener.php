@@ -13,6 +13,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
+use WooCommerce\PayPalCommerce\Http\RedirectorInterface;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
@@ -112,19 +113,27 @@ class SettingsListener {
 	protected $dcc_status_cache;
 
 	/**
+	 * The HTTP redirector.
+	 *
+	 * @var RedirectorInterface
+	 */
+	protected $redirector;
+
+	/**
 	 * SettingsListener constructor.
 	 *
-	 * @param Settings         $settings The settings.
-	 * @param array            $setting_fields The setting fields.
-	 * @param WebhookRegistrar $webhook_registrar The Webhook Registrar.
-	 * @param Cache            $cache The Cache.
-	 * @param State            $state The state.
-	 * @param Bearer           $bearer The bearer.
-	 * @param string           $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
-	 * @param Cache            $signup_link_cache The signup link cache.
-	 * @param array            $signup_link_ids Signup link ids.
-	 * @param Cache            $pui_status_cache The PUI status cache.
-	 * @param Cache            $dcc_status_cache The DCC status cache.
+	 * @param Settings            $settings The settings.
+	 * @param array               $setting_fields The setting fields.
+	 * @param WebhookRegistrar    $webhook_registrar The Webhook Registrar.
+	 * @param Cache               $cache The Cache.
+	 * @param State               $state The state.
+	 * @param Bearer              $bearer The bearer.
+	 * @param string              $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
+	 * @param Cache               $signup_link_cache The signup link cache.
+	 * @param array               $signup_link_ids Signup link ids.
+	 * @param Cache               $pui_status_cache The PUI status cache.
+	 * @param Cache               $dcc_status_cache The DCC status cache.
+	 * @param RedirectorInterface $redirector The HTTP redirector.
 	 */
 	public function __construct(
 		Settings $settings,
@@ -137,7 +146,8 @@ class SettingsListener {
 		Cache $signup_link_cache,
 		array $signup_link_ids,
 		Cache $pui_status_cache,
-		Cache $dcc_status_cache
+		Cache $dcc_status_cache,
+		RedirectorInterface $redirector
 	) {
 
 		$this->settings          = $settings;
@@ -151,6 +161,7 @@ class SettingsListener {
 		$this->signup_link_ids   = $signup_link_ids;
 		$this->pui_status_cache  = $pui_status_cache;
 		$this->dcc_status_cache  = $dcc_status_cache;
+		$this->redirector        = $redirector;
 	}
 
 	/**
@@ -198,12 +209,13 @@ class SettingsListener {
 			$redirect_url = add_query_arg( 'ppcp-onboarding-error', '1', $redirect_url );
 		}
 
-		wp_safe_redirect( $redirect_url, 302 );
-		exit;
+		$this->redirector->redirect( $redirect_url );
 	}
 
 	/**
 	 * Prevent enabling both Pay Later messaging and PayPal vaulting
+	 *
+	 * @throws RuntimeException When API request fails.
 	 */
 	public function listen_for_vaulting_enabled() {
 		if ( ! $this->is_valid_site_request() || State::STATE_ONBOARDED !== $this->state->current_state() ) {
@@ -223,16 +235,7 @@ class SettingsListener {
 			$this->settings->set( 'vault_enabled_dcc', false );
 			$this->settings->persist();
 
-			add_action(
-				'admin_notices',
-				function () use ( $exception ) {
-					printf(
-						'<div class="notice notice-error"><p>%1$s</p><p>%2$s</p></div>',
-						esc_html__( 'Authentication with PayPal failed: ', 'woocommerce-paypal-payments' ) . esc_attr( $exception->getMessage() ),
-						wp_kses_post( __( 'Please verify your API Credentials and try again to connect your PayPal business account. Visit the <a href="https://docs.woocommerce.com/document/woocommerce-paypal-payments/" target="_blank">plugin documentation</a> for more information about the setup.', 'woocommerce-paypal-payments' ) )
-					);
-				}
-			);
+			throw $exception;
 		}
 
 		/**
@@ -324,16 +327,6 @@ class SettingsListener {
 		}
 		$this->settings->persist();
 
-		if ( $credentials_change_status ) {
-			if ( in_array(
-				$credentials_change_status,
-				array( self::CREDENTIALS_ADDED, self::CREDENTIALS_CHANGED ),
-				true
-			) ) {
-				$this->webhook_registrar->register();
-			}
-		}
-
 		if ( $this->cache->has( PayPalBearer::CACHE_KEY ) ) {
 			$this->cache->delete( PayPalBearer::CACHE_KEY );
 		}
@@ -347,7 +340,7 @@ class SettingsListener {
 		}
 
 		$redirect_url = false;
-		if ( self::CREDENTIALS_ADDED === $credentials_change_status ) {
+		if ( self::CREDENTIALS_UNCHANGED !== $credentials_change_status ) {
 			$redirect_url = $this->get_onboarding_redirect_url();
 		}
 
@@ -356,8 +349,7 @@ class SettingsListener {
 		}
 
 		if ( $redirect_url ) {
-			wp_safe_redirect( $redirect_url, 302 );
-			exit;
+			$this->redirector->redirect( $redirect_url );
 		}
 
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
@@ -534,6 +526,8 @@ class SettingsListener {
 
 	/**
 	 * Prevent enabling tracking if it is not enabled for merchant account.
+	 *
+	 * @throws RuntimeException When API request fails.
 	 */
 	public function listen_for_tracking_enabled(): void {
 		if ( State::STATE_ONBOARDED !== $this->state->current_state() ) {
@@ -551,16 +545,7 @@ class SettingsListener {
 			$this->settings->set( 'tracking_enabled', false );
 			$this->settings->persist();
 
-			add_action(
-				'admin_notices',
-				function () use ( $exception ) {
-					printf(
-						'<div class="notice notice-error"><p>%1$s</p><p>%2$s</p></div>',
-						esc_html__( 'Authentication with PayPal failed: ', 'woocommerce-paypal-payments' ) . esc_attr( $exception->getMessage() ),
-						wp_kses_post( __( 'Please verify your API Credentials and try again to connect your PayPal business account. Visit the <a href="https://docs.woocommerce.com/document/woocommerce-paypal-payments/" target="_blank">plugin documentation</a> for more information about the setup.', 'woocommerce-paypal-payments' ) )
-					);
-				}
-			);
+			throw $exception;
 		}
 	}
 }
