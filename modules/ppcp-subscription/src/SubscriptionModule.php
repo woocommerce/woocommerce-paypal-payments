@@ -11,8 +11,6 @@ namespace WooCommerce\PayPalCommerce\Subscription;
 
 use WC_Product_Subscription;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingSubscriptions;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\CatalogProducts;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingPlans;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
@@ -162,104 +160,21 @@ class SubscriptionModule implements ModuleInterface {
 
 				$product = wc_get_product( $product_id );
 				if ( $product->get_type() === 'subscription' ) {
-					$billing_plans_endpoint = $c->get( 'api.endpoint.billing-plans' );
-					assert( $billing_plans_endpoint instanceof BillingPlans );
+					$subscriptions_api_handler = $c->get('subscription.api-handler');
+					assert($subscriptions_api_handler instanceof SubscriptionsApiHandler);
 
 					if ( $product->meta_exists( 'ppcp_subscription_product' ) && $product->meta_exists( 'ppcp_subscription_plan' ) ) {
-						if ( $product->get_meta( '_subscription_price' ) === $product->get_meta( 'ppcp_subscription_plan' )->billing_cycles[0]->pricing_scheme->fixed_price->value ) {
-							return;
-						}
-
-						$billing_cycles = array(
-							'pricing_scheme' => array(
-								'fixed_price' => array(
-									'value' => $product->get_meta( '_subscription_price' ),
-								),
-							),
-						);
-
-						try {
-							$billing_plans_endpoint->update_pricing(
-								$product->get_meta( 'ppcp_subscription_plan' )->id,
-								$billing_cycles
-							);
-						} catch ( RuntimeException $exception ) {
-							$error = $exception->getMessage();
-							if ( is_a( $exception, PayPalApiException::class ) ) {
-								$error = $exception->get_details( $error );
-							}
-
-							$logger = $c->get( 'woocommerce.logger.woocommerce' );
-							$logger->error( 'Could not update subscription product on PayPal. ' . $error );
-						}
-
+						$subscriptions_api_handler->update_product();
+						$subscriptions_api_handler->update_plan();
 						return;
 					}
 
 					if ( ! $product->meta_exists( 'ppcp_subscription_product' ) ) {
-						$products_endpoint = $c->get( 'api.endpoint.catalog-products' );
-						assert( $products_endpoint instanceof CatalogProducts );
-
-						try {
-							$subscription_product = $products_endpoint->create( $product->get_title() );
-							$product->update_meta_data( 'ppcp_subscription_product', $subscription_product );
-							$product->save();
-						} catch ( RuntimeException $exception ) {
-							$error = $exception->getMessage();
-							if ( is_a( $exception, PayPalApiException::class ) ) {
-								$error = $exception->get_details( $error );
-							}
-
-							$logger = $c->get( 'woocommerce.logger.woocommerce' );
-							$logger->error( 'Could not create subscription product on PayPal. ' . $error );
-						}
+						$subscriptions_api_handler->create_product($product);
 					}
 
 					if ( $product->get_meta( 'ppcp_subscription_product' ) && ! $product->meta_exists( 'ppcp_subscription_plan' ) ) {
-						$billing_cycles = array(
-							'frequency'      => array(
-								'interval_unit'  => $product->get_meta( '_subscription_period' ),
-								'interval_count' => $product->get_meta( '_subscription_period_interval' ),
-							),
-							'tenure_type'    => 'REGULAR',
-							'sequence'       => 1,
-							'total_cycles'   => $product->get_meta( '_subscription_length' ),
-							'pricing_scheme' => array(
-								'fixed_price' => array(
-									'value'         => $product->get_meta( '_subscription_price' ),
-									'currency_code' => 'USD',
-								),
-							),
-						);
-
-						$payment_preferences = array(
-							'auto_bill_outstanding'     => true,
-							'setup_fee'                 => array(
-								'value'         => $product->get_meta( '_subscription_sign_up_fee' ) ?: '0',
-								'currency_code' => 'USD',
-							),
-							'setup_fee_failure_action'  => 'CONTINUE',
-							'payment_failure_threshold' => 3,
-						);
-
-						try {
-							$subscription_plan = $billing_plans_endpoint->create(
-								$product->get_meta( 'ppcp_subscription_product' )->id,
-								$billing_cycles,
-								$payment_preferences
-							);
-
-							$product->update_meta_data( 'ppcp_subscription_plan', $subscription_plan );
-							$product->save();
-						} catch ( RuntimeException $exception ) {
-							$error = $exception->getMessage();
-							if ( is_a( $exception, PayPalApiException::class ) ) {
-								$error = $exception->get_details( $error );
-							}
-
-							$logger = $c->get( 'woocommerce.logger.woocommerce' );
-							$logger->error( 'Could not create subscription plan on PayPal. ' . $error );
-						}
+						$subscriptions_api_handler->create_plan($product);
 					}
 				}
 			},
@@ -285,8 +200,8 @@ class SubscriptionModule implements ModuleInterface {
 								function () use ( $subscription_product, $subscription_plan ) {
 									echo '<label><input type="checkbox" name="ppcp_connect_subscriptions_api" checked="checked">Connect to Subscriptions API</label>';
 									if ( $subscription_product && $subscription_plan ) {
-										echo '<p>Product ID: ' . esc_attr( $subscription_product->id ) . '</p>';
-										echo '<p>Plan ID: ' . esc_attr( $subscription_plan->id ) . '</p>';
+										echo '<p>Product ID: ' . esc_attr( $subscription_product['id'] ?? '' ) . '</p>';
+										echo '<p>Plan ID: ' . esc_attr( $subscription_plan['id'] ?? '' ) . '</p>';
 									}
 								},
 								$post_type,

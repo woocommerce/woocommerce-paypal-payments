@@ -43,4 +43,13 @@ return array(
 		$endpoint = $container->get( 'api.endpoint.payment-token' );
 		return new PaymentTokenRepository( $factory, $endpoint );
 	},
+	'subscription.api-handler' => static function(ContainerInterface $container): SubscriptionsApiHandler {
+		return new SubscriptionsApiHandler(
+			$container->get('api.endpoint.catalog-products'),
+			$container->get('api.endpoint.billing-plans'),
+			$container->get('api.factory.billing-cycle'),
+			$container->get('api.factory.payment-preferences'),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	}
 );

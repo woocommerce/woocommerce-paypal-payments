@@ -10,10 +10,12 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 
 use Psr\Log\LoggerInterface;
-use stdClass;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Plan;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\BillingCycleFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PlanFactory;
 
 /**
  * Class BillingPlans
@@ -37,6 +39,16 @@ class BillingPlans {
 	private $bearer;
 
 	/**
+	 * @var BillingCycleFactory
+	 */
+	private $billing_cycle_factory;
+
+	/**
+	 * @var PlanFactory
+	 */
+	private $plan_factory;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -53,10 +65,14 @@ class BillingPlans {
 	public function __construct(
 		string $host,
 		Bearer $bearer,
+		BillingCycleFactory $billing_cycle_factory,
+		PlanFactory $plan_factory,
 		LoggerInterface $logger
 	) {
 		$this->host   = $host;
 		$this->bearer = $bearer;
+		$this->billing_cycle_factory = $billing_cycle_factory;
+		$this->plan_factory = $plan_factory;
 		$this->logger = $logger;
 	}
 
@@ -65,7 +81,7 @@ class BillingPlans {
 	 *
 	 * @param string $product_id The product id.
 	 *
-	 * @return stdClass
+	 * @return Plan
 	 *
 	 * @throws RuntimeException If the request fails.
 	 * @throws PayPalApiException If the request fails.
@@ -74,12 +90,12 @@ class BillingPlans {
 		string $product_id,
 		array $billing_cycles,
 		array $payment_preferences
-	): stdClass {
+	): Plan {
 
 		$data = array(
 			'product_id' => $product_id,
 			'name' => 'Testing Plan',
-			'billing_cycles' => array($billing_cycles),
+			'billing_cycles' => $billing_cycles,
 			'payment_preferences' => $payment_preferences
 		);
 
@@ -110,7 +126,7 @@ class BillingPlans {
 			);
 		}
 
-		return $json;
+		return $this->plan_factory->from_paypal_response($json);
 	}
 
 	/**

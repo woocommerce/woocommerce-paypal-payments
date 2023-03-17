@@ -10,10 +10,11 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 
 use Psr\Log\LoggerInterface;
-use stdClass;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Product;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ProductFactory;
 
 /**
  * Class CatalogProduct
@@ -41,6 +42,10 @@ class CatalogProducts {
 	 * @var LoggerInterface
 	 */
 	private $logger;
+	/**
+	 * @var ProductFactory
+	 */
+	private $product_factory;
 
 	/**
 	 * CatalogProducts constructor.
@@ -52,25 +57,34 @@ class CatalogProducts {
 	public function __construct(
 		string $host,
 		Bearer $bearer,
+		ProductFactory $product_factory,
 		LoggerInterface $logger
 	) {
 		$this->host   = $host;
 		$this->bearer = $bearer;
+		$this->product_factory = $product_factory;
 		$this->logger = $logger;
 	}
 
 	/**
 	 * Creates a product.
 	 *
-	 * @return stdClass
+	 * @param string $name Product name.
+	 * @param string $description Product description.
+	 *
+	 * @return Product
 	 *
 	 * @throws RuntimeException If the request fails.
 	 * @throws PayPalApiException If the request fails.
 	 */
-	public function create(string $name): stdClass {
+	public function create(string $name, string $description): Product {
 		$data = array(
 			'name' => $name,
 		);
+
+		if($description) {
+			$data['description'] = $description;
+		}
 
 		$bearer = $this->bearer->bearer();
 		$url    = trailingslashit( $this->host ) . 'v1/catalogs/products';
@@ -99,6 +113,6 @@ class CatalogProducts {
 			);
 		}
 
-		return $json;
+		return $this->product_factory->from_paypal_response($json);
 	}
 }

@@ -12,6 +12,10 @@ namespace WooCommerce\PayPalCommerce\ApiClient;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingSubscriptions;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\CatalogProducts;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingPlans;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\BillingCycleFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentPreferencesFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PlanFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ProductFactory;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
@@ -213,6 +217,7 @@ return array(
 		return new CatalogProducts(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
+			$container->get('api.factory.product'),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
@@ -220,6 +225,8 @@ return array(
 		return new BillingPlans(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
+			$container->get('api.factory.billing-cycle'),
+			$container->get('api.factory.plan'),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
@@ -377,6 +384,21 @@ return array(
 	},
 	'api.factory.fraud-processor-response'      => static function ( ContainerInterface $container ): FraudProcessorResponseFactory {
 		return new FraudProcessorResponseFactory();
+	},
+	'api.factory.product' => static function(ContainerInterface $container): ProductFactory {
+		return new ProductFactory();
+	},
+	'api.factory.billing-cycle' => static function(ContainerInterface $container): BillingCycleFactory {
+		return new BillingCycleFactory();
+	},
+	'api.factory.payment-preferences' => static function(ContainerInterface $container):PaymentPreferencesFactory {
+		return new PaymentPreferencesFactory();
+	},
+	'api.factory.plan' => static function(ContainerInterface $container): PlanFactory {
+		return new PlanFactory(
+			$container->get('api.factory.billing-cycle'),
+			$container->get('api.factory.payment-preferences')
+		);
 	},
 	'api.helpers.dccapplies'                    => static function ( ContainerInterface $container ) : DccApplies {
 		return new DccApplies(
