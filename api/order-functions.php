@@ -20,6 +20,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\PPCP;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 
 /**
  * Returns the PayPal order.
@@ -69,4 +70,38 @@ function ppcp_capture_order( WC_Order $wc_order ): void {
 	if ( ! $authorized_payment_processor->capture_authorized_payment( $wc_order ) ) {
 		throw new RuntimeException( 'Capture failed.' );
 	}
+}
+
+/**
+ * Captures the PayPal order.
+ *
+ * @param WC_Order $wc_order The WC order.
+ * @param float    $amount The refund amount.
+ * @param string   $reason The reason for the refund.
+ * @throws InvalidArgumentException When the order cannot be refunded.
+ * @throws Exception When the operation fails.
+ */
+function ppcp_refund_order( WC_Order $wc_order, float $amount, string $reason = '' ): void {
+	$order = ppcp_get_paypal_order( $wc_order );
+
+	$refund_processor = PPCP::container()->get( 'wcgateway.processor.refunds' );
+	assert( $refund_processor instanceof RefundProcessor );
+
+	$refund_processor->refund( $order, $wc_order, $amount, $reason );
+}
+
+/**
+ * Voids the authorization.
+ *
+ * @param WC_Order $wc_order The WC order.
+ * @throws InvalidArgumentException When the order cannot be voided.
+ * @throws Exception When the operation fails.
+ */
+function ppcp_void_order( WC_Order $wc_order ): void {
+	$order = ppcp_get_paypal_order( $wc_order );
+
+	$refund_processor = PPCP::container()->get( 'wcgateway.processor.refunds' );
+	assert( $refund_processor instanceof RefundProcessor );
+
+	$refund_processor->void( $order );
 }
