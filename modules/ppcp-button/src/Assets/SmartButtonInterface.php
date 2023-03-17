@@ -22,11 +22,14 @@ interface SmartButtonInterface {
 	public function render_wrapper(): bool;
 
 	/**
-	 * Enqueues the necessary scripts.
-	 *
-	 * @return bool
+	 * Whether the scripts should be loaded.
 	 */
-	public function enqueue(): bool;
+	public function should_load(): bool;
+
+	/**
+	 * Enqueues the necessary scripts.
+	 */
+	public function enqueue(): void;
 
 	/**
 	 * Whether the running installation could save vault tokens or not.
@@ -34,4 +37,11 @@ interface SmartButtonInterface {
 	 * @return bool
 	 */
 	public function can_save_vault_token(): bool;
+
+	/**
+	 * The configuration for the smart buttons.
+	 *
+	 * @return array
+	 */
+	public function script_data(): array;
 }

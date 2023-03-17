@@ -43,6 +43,8 @@ class ValidationTest extends TestCase
 			'terms-field'=>'1',
 			'terms'=>'on',
 		]);
+
+		self::assertTrue(true); // no assertions warnings
     }
 
     public function testInvalid()

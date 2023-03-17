@@ -59,7 +59,10 @@ class WcGatewayTest extends TestCase
 		$this->environment = Mockery::mock(Environment::class);
 		$this->paymentTokenRepository = Mockery::mock(PaymentTokenRepository::class);
 		$this->logger = Mockery::mock(LoggerInterface::class);
-		$this->funding_source_renderer = new FundingSourceRenderer($this->settings);
+		$this->funding_source_renderer = new FundingSourceRenderer(
+			$this->settings,
+			['venmo' => 'Venmo', 'paylater' => 'Pay Later', 'blik' => 'BLIK']
+		);
 		$this->apiShopCountry = 'DE';
 
 		$this->onboardingState->shouldReceive('current_state')->andReturn(State::STATE_ONBOARDED);
@@ -271,6 +274,8 @@ class WcGatewayTest extends TestCase
     	return [
     		[null, 'PayPal', 'Pay via PayPal.'],
     		['venmo', 'Venmo', 'Pay via Venmo.'],
+    		['paylater', 'Pay Later', 'Pay via Pay Later.'],
+    		['blik', 'BLIK (via PayPal)', 'Pay via BLIK.'],
     		['qwerty', 'PayPal', 'Pay via PayPal.'],
 	    ];
     }

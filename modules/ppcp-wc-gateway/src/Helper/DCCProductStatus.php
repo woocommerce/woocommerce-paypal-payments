@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatusProduct;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
+use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
@@ -58,23 +59,33 @@ class DCCProductStatus {
 	protected $dcc_applies;
 
 	/**
+	 * The onboarding state.
+	 *
+	 * @var State
+	 */
+	private $onboarding_state;
+
+	/**
 	 * DccProductStatus constructor.
 	 *
 	 * @param Settings         $settings The Settings.
 	 * @param PartnersEndpoint $partners_endpoint The Partner Endpoint.
 	 * @param Cache            $cache The cache.
 	 * @param DccApplies       $dcc_applies The dcc applies helper.
+	 * @param State            $onboarding_state The onboarding state.
 	 */
 	public function __construct(
 		Settings $settings,
 		PartnersEndpoint $partners_endpoint,
 		Cache $cache,
-		DccApplies $dcc_applies
+		DccApplies $dcc_applies,
+		State $onboarding_state
 	) {
 		$this->settings          = $settings;
 		$this->partners_endpoint = $partners_endpoint;
 		$this->cache             = $cache;
 		$this->dcc_applies       = $dcc_applies;
+		$this->onboarding_state  = $onboarding_state;
 	}
 
 	/**
@@ -83,6 +94,10 @@ class DCCProductStatus {
 	 * @return bool
 	 */
 	public function dcc_is_active() : bool {
+		if ( $this->onboarding_state->current_state() < State::STATE_ONBOARDED ) {
+			return false;
+		}
+
 		if ( $this->cache->has( self::DCC_STATUS_CACHE_KEY ) ) {
 			return (bool) $this->cache->get( self::DCC_STATUS_CACHE_KEY );
 		}

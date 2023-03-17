@@ -170,7 +170,8 @@ return array(
 	'webhook.status.assets'                   => function( ContainerInterface $container ) : WebhooksStatusPageAssets {
 		return new WebhooksStatusPageAssets(
 			$container->get( 'webhook.module-url' ),
-			$container->get( 'ppcp.asset-version' )
+			$container->get( 'ppcp.asset-version' ),
+			$container->get( 'onboarding.environment' )
 		);
 	},
 
@@ -201,8 +202,8 @@ return array(
 		);
 	},
 
-	'webhook.last-webhook-storage'            => static function ( ContainerInterface $container ): WebhookInfoStorage {
-		return new WebhookInfoStorage( $container->get( 'webhook.last-webhook-storage.key' ) );
+	'webhook.last-webhook-storage'            => static function ( ContainerInterface $container ): WebhookEventStorage {
+		return new WebhookEventStorage( $container->get( 'webhook.last-webhook-storage.key' ) );
 	},
 	'webhook.last-webhook-storage.key'        => static function ( ContainerInterface $container ): string {
 		return 'ppcp-last-webhook';
