@@ -73,21 +73,23 @@ function ppcp_capture_order( WC_Order $wc_order ): void {
 }
 
 /**
- * Refunds the order.
+ * Refunds the PayPal order.
+ * Note that you can use wc_refund_payment() to trigger the refund in WC and PayPal.
  *
  * @param WC_Order $wc_order The WC order.
  * @param float    $amount The refund amount.
  * @param string   $reason The reason for the refund.
+ * @return string The PayPal refund ID.
  * @throws InvalidArgumentException When the order cannot be refunded.
  * @throws Exception When the operation fails.
  */
-function ppcp_refund_order( WC_Order $wc_order, float $amount, string $reason = '' ): void {
+function ppcp_refund_order( WC_Order $wc_order, float $amount, string $reason = '' ): string {
 	$order = ppcp_get_paypal_order( $wc_order );
 
 	$refund_processor = PPCP::container()->get( 'wcgateway.processor.refunds' );
 	assert( $refund_processor instanceof RefundProcessor );
 
-	$refund_processor->refund( $order, $wc_order, $amount, $reason );
+	return $refund_processor->refund( $order, $wc_order, $amount, $reason );
 }
 
 /**

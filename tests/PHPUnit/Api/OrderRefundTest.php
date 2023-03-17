@@ -48,9 +48,11 @@ class OrderRefundTest extends ModularTestCase
 
 		$this->refundProcessor
 			->expects('refund')
+			->andReturn('456qwe')
 			->once();
 
-		ppcp_refund_order($wcOrder, 42.0, 'reason');
+		$refund_id = ppcp_refund_order($wcOrder, 42.0, 'reason');
+		$this->assertEquals('456qwe', $refund_id);
 	}
 
 	public function testOrderWithoutId(): void {

@@ -103,7 +103,9 @@ class RefundProcessor {
 
 			switch ( $mode ) {
 				case self::REFUND_MODE_REFUND:
-					$this->refund( $order, $wc_order, $amount, $reason );
+					$refund_id = $this->refund( $order, $wc_order, $amount, $reason );
+
+					$this->add_refund_to_meta( $wc_order, $refund_id );
 
 					break;
 				case self::REFUND_MODE_VOID:
@@ -133,13 +135,14 @@ class RefundProcessor {
 	 * @param string   $reason The reason for the refund.
 	 *
 	 * @throws RuntimeException When operation fails.
+	 * @return string The PayPal refund ID.
 	 */
 	public function refund(
 		Order $order,
 		WC_Order $wc_order,
 		float $amount,
 		string $reason = ''
-	): void {
+	): string {
 		$payments = $this->get_payments( $order );
 
 		$captures = $payments->captures();
@@ -157,9 +160,7 @@ class RefundProcessor {
 			)
 		);
 
-		$refund_id = $this->payments_endpoint->refund( $refund );
-
-		$this->add_refund_to_meta( $wc_order, $refund_id );
+		return $this->payments_endpoint->refund( $refund );
 	}
 
 	/**
