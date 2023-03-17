@@ -73,7 +73,7 @@ function ppcp_capture_order( WC_Order $wc_order ): void {
 }
 
 /**
- * Captures the PayPal order.
+ * Refunds the order.
  *
  * @param WC_Order $wc_order The WC order.
  * @param float    $amount The refund amount.
