@@ -15,9 +15,35 @@ use Exception;
 use InvalidArgumentException;
 use RuntimeException;
 use WC_Order;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\PPCP;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
+
+/**
+ * Returns the PayPal order.
+ *
+ * @param string|WC_Order $paypal_id_or_wc_order The ID of PayPal order or a WC order (with the ID in meta).
+ * @throws InvalidArgumentException When the argument cannot be used for retrieving the order.
+ * @throws Exception When the operation fails.
+ */
+function ppcp_get_paypal_order( $paypal_id_or_wc_order ): Order {
+	if ( $paypal_id_or_wc_order instanceof WC_Order ) {
+		$paypal_id_or_wc_order = $paypal_id_or_wc_order->get_meta( PayPalGateway::ORDER_ID_META_KEY );
+		if ( ! $paypal_id_or_wc_order ) {
+			throw new InvalidArgumentException( 'PayPal order ID not found in meta.' );
+		}
+	}
+	if ( ! is_string( $paypal_id_or_wc_order ) ) {
+		throw new InvalidArgumentException( 'Invalid PayPal order ID, string expected.' );
+	}
+
+	$order_endpoint = PPCP::container()->get( 'api.endpoint.order' );
+	assert( $order_endpoint instanceof OrderEndpoint );
+
+	return $order_endpoint->order( $paypal_id_or_wc_order );
+}
 
 /**
  * Captures the PayPal order.
