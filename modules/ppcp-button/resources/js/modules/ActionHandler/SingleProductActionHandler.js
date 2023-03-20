@@ -18,6 +18,34 @@ class SingleProductActionHandler {
         this.errorHandler = errorHandler;
     }
 
+    subscriptionsConfiguration() {
+        return {
+            createSubscription: (data, actions) => {
+                return actions.subscription.create({
+                    'plan_id': this.config.subscription_plan_id
+                });
+            },
+            onApprove: (data, actions) => {
+                fetch(this.config.ajax.approve_subscription.endpoint, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        nonce: this.config.ajax.approve_subscription.nonce,
+                        order_id: data.orderID,
+                        subscription_id: data.subscriptionID
+                    })
+                }).then((res)=>{
+                    return res.json();
+                }).then((data) => {
+                    location.href = this.config.redirect;
+                });
+            },
+            onError: (err) => {
+                console.error(err);
+            }
+        }
+    }
+
     configuration()
     {
         return {

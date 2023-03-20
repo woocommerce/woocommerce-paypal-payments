@@ -1380,13 +1380,23 @@ class SmartButton implements SmartButtonInterface {
 	 * @return string
 	 */
 	private function paypal_subscription_id(): string {
+		if($this->subscription_helper->current_product_is_subscription() ) {
+			$product = wc_get_product();
+			assert( $product instanceof WC_Product );
+
+			if ( $product->get_type() === 'subscription' && $product->meta_exists( 'ppcp_subscription_plan' ) ) {
+				return $product->get_meta( 'ppcp_subscription_plan' )['id'];
+			}
+
+		}
+
 		$items = WC()->cart->get_cart_contents();
 		foreach ( $items as $item ) {
 			$product = wc_get_product( $item['product_id'] );
 			assert( $product instanceof WC_Product );
 
 			if ( $product->get_type() === 'subscription' && $product->meta_exists( 'ppcp_subscription_plan' ) ) {
-				return $product->get_meta( 'ppcp_subscription_plan' )->id;
+				return $product->get_meta( 'ppcp_subscription_plan' )['id'];
 			}
 		}
 
