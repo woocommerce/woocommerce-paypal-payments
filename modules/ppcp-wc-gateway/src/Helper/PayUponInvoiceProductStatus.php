@@ -91,10 +91,10 @@ class PayUponInvoiceProductStatus {
 			return (bool) $this->cache->get( self::PUI_STATUS_CACHE_KEY );
 		}
 
-		if ( is_bool( $this->current_status_cache ) ) {
+		if ( $this->current_status_cache === true ) {
 			return $this->current_status_cache;
 		}
-		if ( $this->settings->has( 'products_pui_enabled' ) && $this->settings->get( 'products_pui_enabled' ) ) {
+		if ( $this->settings->has( 'products_pui_enabled' ) && $this->settings->get( 'products_pui_enabled' ) === true ) {
 			$this->current_status_cache = true;
 			return true;
 		}
