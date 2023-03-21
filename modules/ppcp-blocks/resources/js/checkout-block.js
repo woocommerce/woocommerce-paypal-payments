@@ -105,7 +105,11 @@ const PayPalComponent = ({
     useEffect(() => {
         const unsubscribeProcessing = onPaymentProcessing(() => {
             const shippingAddress = paypalOrderToWcShippingAddress(paypalOrder);
-            const billingAddress = paypalPayerToWc(paypalOrder.payer);
+            let billingAddress = paypalPayerToWc(paypalOrder.payer);
+            // no billing address, such as if billing address retrieval is not allowed in the merchant account
+            if (!billingAddress.address_line_1) {
+                billingAddress = {...shippingAddress, ...paypalPayerToWc(paypalOrder.payer)};
+            }
 
             return {
                 type: responseTypes.SUCCESS,
