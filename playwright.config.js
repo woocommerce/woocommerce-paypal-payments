@@ -5,6 +5,7 @@ const config = {
     timeout: 30000,
     use: {
         baseURL: process.env.BASEURL,
+        ignoreHTTPSErrors: true,
     },
 };
 
