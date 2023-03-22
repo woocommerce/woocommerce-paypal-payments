@@ -47,7 +47,7 @@ class IdentityTokenTest extends TestCase
     public function testGenerateForCustomerReturnsToken()
     {
         $id = 1;
-        define( 'PPCP_FLAG_SUBSCRIPTION', true );
+		!defined('PPCP_FLAG_SUBSCRIPTION') && define('PPCP_FLAG_SUBSCRIPTION', true);
         $token = Mockery::mock(Token::class);
         $token
             ->expects('token')->andReturn('bearer');
