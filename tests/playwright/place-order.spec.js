@@ -30,22 +30,34 @@ async function fillCheckoutForm(page) {
     }
 }
 
-test('PayPal button place order from Product page', async ({page}) => {
-
-    await page.goto(PRODUCT_URL);
-
+async function openPaypalPopup(page) {
     await page.locator('.component-frame').scrollIntoViewIfNeeded();
 
     const [popup] = await Promise.all([
         page.waitForEvent('popup'),
         page.frameLocator('.component-frame').locator('[data-funding-source="paypal"]').click(),
     ]);
+
     await popup.waitForLoadState();
+
+    return popup;
+}
+
+async function loginIntoPaypal(popup) {
     await popup.click("text=Log in");
     await popup.fill('[name="login_email"]', CUSTOMER_EMAIL);
     await popup.locator('#btnNext').click();
     await popup.fill('[name="login_password"]', CUSTOMER_PASSWORD);
     await popup.locator('#btnLogin').click();
+}
+
+test('PayPal button place order from Product page', async ({page}) => {
+
+    await page.goto(PRODUCT_URL);
+
+    const popup = await openPaypalPopup(page);
+
+    await loginIntoPaypal(popup);
 
     await popup.locator('#payment-submit-btn').click();
 
