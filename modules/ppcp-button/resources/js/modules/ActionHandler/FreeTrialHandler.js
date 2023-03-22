@@ -49,6 +49,9 @@ class FreeTrialHandler {
 
             const res = await fetch(this.config.ajax.vault_paypal.endpoint, {
                 method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 credentials: 'same-origin',
                 body: JSON.stringify({
                     nonce: this.config.ajax.vault_paypal.nonce,
