@@ -1,10 +1,12 @@
 const {test, expect} = require('@playwright/test');
+
 const {
     CUSTOMER_EMAIL,
     CUSTOMER_PASSWORD,
     CREDIT_CARD_NUMBER,
     CREDIT_CARD_EXPIRATION,
-    CREDIT_CARD_CVV
+    CREDIT_CARD_CVV,
+    PRODUCT_URL,
 } = process.env;
 
 async function fillCheckoutForm(page) {
@@ -20,7 +22,7 @@ async function fillCheckoutForm(page) {
 
 test('PayPal button place order from Product page', async ({page}) => {
 
-    await page.goto('/product/product/');
+    await page.goto(PRODUCT_URL);
 
     const [popup] = await Promise.all([
         page.waitForEvent('popup'),
@@ -48,7 +50,7 @@ test('PayPal button place order from Product page', async ({page}) => {
 
 test('Advanced Credit and Debit Card (ACDC) place order from Checkout page @ci', async ({page}) => {
 
-    await page.goto('/product/product/');
+    await page.goto(PRODUCT_URL);
     await page.locator('.single_add_to_cart_button').click();
 
     await page.goto('/checkout/');
