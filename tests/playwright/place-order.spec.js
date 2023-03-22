@@ -41,14 +41,14 @@ test('PayPal button place order from Product page', async ({page}) => {
         page.frameLocator('.component-frame').locator('[data-funding-source="paypal"]').click(),
     ]);
     await popup.waitForLoadState();
-
     await popup.click("text=Log in");
-    await popup.fill('#email', CUSTOMER_EMAIL);
+    await popup.fill('[name="login_email"]', CUSTOMER_EMAIL);
     await popup.locator('#btnNext').click();
-    await popup.fill('#password', CUSTOMER_PASSWORD);
+    await popup.fill('[name="login_password"]', CUSTOMER_PASSWORD);
     await popup.locator('#btnLogin').click();
 
     await popup.locator('#payment-submit-btn').click();
+
     await fillCheckoutForm(page);
 
     await Promise.all([
