@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, e-commerce, store, sales, sell, 
 Requires at least: 5.3
 Tested up to: 6.1
 Requires PHP: 7.2
-Stable tag: 2.0.3
+Stable tag: 2.0.4
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -80,6 +80,17 @@ Follow the steps below to connect the plugin to your PayPal account:
 6. Main settings screen.
 
 == Changelog ==
+
+= 2.0.4 - TBD =
+* Fix - Allow Pay Later in mini-cart #1221
+* Fix - Duplicated auth error when credentials become wrong #1229
+* Fix - Webhook issues when switching sandbox, and delete all webhooks when unsubscribing #1239
+* Fix - High volume of traffic from merchant-integrations endpoint #1273
+* Enhancement - Remove shortcodes from description #1226
+* Enhancement - Handle price suffix with price for product button check #1234
+* Enhancement - Show funding source as payment method #1220
+* Enhancement - Change "Enabled" to "Available" in status text #1237
+* Enhancement - Programmatically capturing/voiding authorized payments #590
 
 = 2.0.3 - 2023-03-14 =
 * Fix - `DEVICE_DATA_NOT_AVAILABLE` error message when FraudNet is enabled #1177

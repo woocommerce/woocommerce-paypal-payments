@@ -42,6 +42,7 @@
 	</rule>
 
 	<arg name="extensions" value="php"/>
+	<file>api</file>
 	<file>src</file>
 	<file>modules</file>
 	<file>woocommerce-paypal-payments.php</file>

@@ -23,8 +23,11 @@
 		errorBaseline="psalm-baseline.xml"
 >
     <projectFiles>
+        <directory name="api"/>
         <directory name="src"/>
 		<directory name="modules" />
+		<file name="bootstrap.php" />
+		<file name="woocommerce-paypal-payments.php" />
     </projectFiles>
 
     <stubs>

@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Tests\E2e;
 
-use PPCP_E2E;
+use WooCommerce\PayPalCommerce\PPCP;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WC_Cart;
 use WC_Customer;
@@ -14,7 +14,7 @@ class TestCase extends \PHPUnit\Framework\TestCase
 	protected $container;
 
 	protected function getContainer(): ContainerInterface {
-		return PPCP_E2E::$container;
+		return PPCP::container();
 	}
 
 	protected function cart(): WC_Cart {

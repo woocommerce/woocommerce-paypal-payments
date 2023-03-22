@@ -82,6 +82,8 @@ class ModularTestCase extends TestCase
         $bootstrap = require ("$rootDir/bootstrap.php");
         $appContainer = $bootstrap($rootDir, [], [$module]);
 
+		PPCP::init($appContainer);
+
         return $appContainer;
     }
 }
