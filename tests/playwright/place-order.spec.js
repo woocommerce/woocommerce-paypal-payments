@@ -24,6 +24,8 @@ test('PayPal button place order from Product page', async ({page}) => {
 
     await page.goto(PRODUCT_URL);
 
+    await page.locator('.component-frame').scrollIntoViewIfNeeded();
+
     const [popup] = await Promise.all([
         page.waitForEvent('popup'),
         page.frameLocator('.component-frame').locator('[data-funding-source="paypal"]').click(),
