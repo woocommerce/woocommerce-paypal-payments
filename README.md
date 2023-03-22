@@ -73,6 +73,8 @@ Enable xdebug via `$ ddev xdebug`, and press `Start Listening for PHP Debug Conn
 After creating the server in the PHPStorm dialog, you need to set the local project path for the server plugin path.
 It should look [like this](https://i.imgur.com/ofsF1Mc.png).
 
+See [tests/playwright](tests/playwright) for e2e (browser-based) tests.
+
 ## Test account setup
 
 You will need a PayPal sandbox merchant and customer accounts to configure the plugin and make test purchases with it.

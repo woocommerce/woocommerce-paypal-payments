@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway;
 use Psr\Log\LoggerInterface;
 use Throwable;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WC_Order;
@@ -258,6 +259,24 @@ class WCGatewayModule implements ModuleInterface {
 				} catch ( NotFoundException $exception ) {
 					return;
 				}
+			}
+		);
+
+		add_action(
+			'woocommerce_paypal_payments_gateway_migrate_on_update',
+			static function() use ( $c ) {
+				$dcc_status_cache = $c->get( 'dcc.status-cache' );
+				assert( $dcc_status_cache instanceof Cache );
+				$pui_status_cache = $c->get( 'pui.status-cache' );
+				assert( $pui_status_cache instanceof Cache );
+
+				$dcc_status_cache->delete( DCCProductStatus::DCC_STATUS_CACHE_KEY );
+				$pui_status_cache->delete( PayUponInvoiceProductStatus::PUI_STATUS_CACHE_KEY );
+
+				$settings = $c->get( 'wcgateway.settings' );
+				$settings->set( 'products_dcc_enabled', false );
+				$settings->set( 'products_pui_enabled', false );
+				$settings->persist();
 			}
 		);
 
