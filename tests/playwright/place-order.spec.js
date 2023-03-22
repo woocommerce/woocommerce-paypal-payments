@@ -18,6 +18,16 @@ async function fillCheckoutForm(page) {
     await page.fill('#billing_city', '10715');
     await page.fill('#billing_phone', '1234567890');
     await page.fill('#billing_email', CUSTOMER_EMAIL);
+
+    const differentShippingLocator = page.locator('[name="ship_to_different_address"]');
+    if (await differentShippingLocator.count() > 0) {
+        await differentShippingLocator.uncheck();
+    }
+
+    const termsLocator = page.locator('[name="terms"]');
+    if (await termsLocator.count() > 0) {
+        await termsLocator.check();
+    }
 }
 
 test('PayPal button place order from Product page', async ({page}) => {
