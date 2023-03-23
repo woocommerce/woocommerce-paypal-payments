@@ -13,7 +13,7 @@ const PayPalComponent = ({
                              emitResponse,
                              setExpressPaymentError,
 }) => {
-    const {onPaymentProcessing} = eventRegistration;
+    const {onPaymentSetup} = eventRegistration;
     const {responseTypes} = emitResponse;
 
     const [paypalOrder, setPaypalOrder] = useState(null);
@@ -103,7 +103,7 @@ const PayPalComponent = ({
     };
 
     useEffect(() => {
-        const unsubscribeProcessing = onPaymentProcessing(() => {
+        const unsubscribeProcessing = onPaymentSetup(() => {
             const shippingAddress = paypalOrderToWcShippingAddress(paypalOrder);
             let billingAddress = paypalPayerToWc(paypalOrder.payer);
             // no billing address, such as if billing address retrieval is not allowed in the merchant account
@@ -125,7 +125,7 @@ const PayPalComponent = ({
         return () => {
             unsubscribeProcessing();
         };
-    }, [onPaymentProcessing, paypalOrder]);
+    }, [onPaymentSetup, paypalOrder]);
 
     return (
         <PayPalScriptProvider options={config.scriptData.url_params}>
