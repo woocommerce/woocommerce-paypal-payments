@@ -9,9 +9,9 @@ const PayPalComponent = ({
                              onClick,
                              onClose,
                              onSubmit,
+                             onError,
                              eventRegistration,
                              emitResponse,
-                             setExpressPaymentError,
 }) => {
     const {onPaymentSetup} = eventRegistration;
     const {responseTypes} = emitResponse;
@@ -49,7 +49,7 @@ const PayPalComponent = ({
         } catch (err) {
             console.error(err);
 
-            setExpressPaymentError(err.message);
+            onError(err.message);
 
             onClose();
 
@@ -88,7 +88,7 @@ const PayPalComponent = ({
         } catch (err) {
             console.error(err);
 
-            setExpressPaymentError(err.message);
+            onError(err.message);
 
             onClose();
 
@@ -97,8 +97,6 @@ const PayPalComponent = ({
     };
 
     const handleClick = () => {
-        setExpressPaymentError('');
-
         onClick();
     };
 
