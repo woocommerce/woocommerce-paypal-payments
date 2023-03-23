@@ -71,7 +71,12 @@ export const paypalPayerToWc = (payer) => {
  * @returns {Object}
  */
 export const paypalOrderToWcShippingAddress = (order) => {
-    const res = paypalShippingToWc(order.purchase_units[0].shipping);
+    const shipping = order.purchase_units[0].shipping;
+    if (!shipping) {
+        return {};
+    }
+
+    const res = paypalShippingToWc(shipping);
 
     // use the name from billing if the same, to avoid possible mistakes when splitting full_name
     const billingAddress = paypalPayerToWc(order.payer);
