@@ -117,9 +117,8 @@ const PayPalComponent = ({
                     paymentMethodData: {
                         'paypal_order_id': paypalOrder.id,
                     },
-                    shippingData: {address: shippingAddress},
+                    shippingAddress,
                     billingAddress,
-                    billingData: billingAddress,
                 },
             };
         });

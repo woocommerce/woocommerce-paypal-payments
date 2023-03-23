@@ -32,9 +32,22 @@ export const paypalAddressToWc = (address) => {
         if (address[paypalKey]) {
             result[wcKey] = address[paypalKey];
         }
-    })
+    });
 
-    return result;
+    const defaultAddress = {
+        first_name: '',
+        last_name: '',
+        company: '',
+        address_1: '',
+        address_2: '',
+        city: '',
+        state: '',
+        postcode: '',
+        country: '',
+        phone: '',
+    };
+
+    return {...defaultAddress, ...result};
 }
 
 /**
@@ -44,9 +57,9 @@ export const paypalAddressToWc = (address) => {
 export const paypalShippingToWc = (shipping) => {
     const [firstName, lastName] = splitFullName(shipping.name.full_name);
     return {
+        ...paypalAddressToWc(shipping.address),
         first_name: firstName,
         last_name: lastName,
-        ...paypalAddressToWc(shipping.address),
     }
 }
 
@@ -59,10 +72,10 @@ export const paypalPayerToWc = (payer) => {
     const lastName = payer.name.surname;
     const address = payer.address ? paypalAddressToWc(payer.address) : {};
     return {
+        ...address,
         first_name: firstName,
         last_name: lastName,
         email: payer.email_address,
-        ...address,
     }
 }
 
