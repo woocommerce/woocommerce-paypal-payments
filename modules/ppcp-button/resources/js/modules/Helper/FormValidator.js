@@ -10,6 +10,9 @@ export default class FormValidator {
 
         const res = await fetch(this.url, {
             method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
             credentials: 'same-origin',
             body: JSON.stringify({
                 nonce: this.nonce,
