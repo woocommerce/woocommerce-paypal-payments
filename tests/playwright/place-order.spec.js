@@ -7,6 +7,7 @@ const {
     CREDIT_CARD_EXPIRATION,
     CREDIT_CARD_CVV,
     PRODUCT_URL,
+    PRODUCT_ID,
 } = process.env;
 
 async function fillCheckoutForm(page) {
@@ -95,6 +96,24 @@ test('Advanced Credit and Debit Card (ACDC) place order from Checkout page', asy
         page.waitForNavigation(),
         page.locator('.ppcp-dcc-order-button').click(),
     ]);
+
+    const title = await page.locator('.entry-title');
+    await expect(title).toHaveText('Order received');
+});
+
+test('PayPal express block', async ({page}) => {
+
+    await page.goto('/cart?add-to-cart=' + PRODUCT_ID);
+
+    await page.goto('/blocks-checkout')
+
+    const popup = await openPaypalPopup(page);
+
+    await loginIntoPaypal(popup);
+
+    await popup.locator('#payment-submit-btn').click();
+
+    await page.waitForNavigation();
 
     const title = await page.locator('.entry-title');
     await expect(title).toHaveText('Order received');
