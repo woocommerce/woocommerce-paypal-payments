@@ -1,7 +1,7 @@
 import {useEffect, useState} from '@wordpress/element';
 import {registerExpressPaymentMethod} from '@woocommerce/blocks-registry';
-import {PayPalScriptProvider, PayPalButtons} from "@paypal/react-paypal-js";
 import {paypalOrderToWcShippingAddress, paypalPayerToWc} from "./Helper/Address";
+import {loadPaypalScript} from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading'
 
 const config = wc.wcSettings.getSetting('ppcp-gateway_data');
 
@@ -17,6 +17,15 @@ const PayPalComponent = ({
     const {responseTypes} = emitResponse;
 
     const [paypalOrder, setPaypalOrder] = useState(null);
+
+    const [loaded, setLoaded] = useState(false);
+    useEffect(() => {
+        if (!loaded) {
+            loadPaypalScript(config.scriptData, () => {
+                setLoaded(true);
+            });
+        }
+    }, [loaded]);
 
     const createOrder = async () => {
         try {
@@ -125,17 +134,21 @@ const PayPalComponent = ({
         };
     }, [onPaymentSetup, paypalOrder]);
 
+    if (!loaded) {
+        return null;
+    }
+
+    const PayPalButton = window.paypal.Buttons.driver("react", { React, ReactDOM });
+
     return (
-        <PayPalScriptProvider options={config.scriptData.url_params}>
-            <PayPalButtons
-                style={config.scriptData.button.style}
-                onClick={handleClick}
-                onCancel={onClose}
-                onError={onClose}
-                createOrder={createOrder}
-                onApprove={handleApprove}
-            />
-        </PayPalScriptProvider>
+        <PayPalButton
+            style={config.scriptData.button.style}
+            onClick={handleClick}
+            onCancel={onClose}
+            onError={onClose}
+            createOrder={createOrder}
+            onApprove={handleApprove}
+        />
     );
 }
 
