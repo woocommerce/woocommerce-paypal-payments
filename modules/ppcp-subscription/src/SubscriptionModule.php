@@ -159,7 +159,11 @@ class SubscriptionModule implements ModuleInterface {
 				}
 
 				$product = wc_get_product( $product_id );
-				if ( $product->get_type() === 'subscription' ) {
+				$enable_subscription_product = wc_clean(wp_unslash($_POST['_ppcp_enable_subscription_product'] ?? ''));
+				$product->update_meta_data('_ppcp_enable_subscription_product', $enable_subscription_product);
+				$product->save();
+
+				if ( $product->get_type() === 'subscription' && $enable_subscription_product === 'yes' ) {
 					$subscriptions_api_handler = $c->get('subscription.api-handler');
 					assert($subscriptions_api_handler instanceof SubscriptionsApiHandler);
 
@@ -174,7 +178,11 @@ class SubscriptionModule implements ModuleInterface {
 					}
 
 					if ( $product->meta_exists( 'ppcp_subscription_product' ) && ! $product->meta_exists( 'ppcp_subscription_plan' ) ) {
-						$subscriptions_api_handler->create_plan($product);
+						$subscription_plan_name = wc_clean(wp_unslash($_POST['_ppcp_subscription_plan_name'] ?? ''));
+						$product->update_meta_data('_ppcp_subscription_plan_name', $subscription_plan_name);
+						$product->save();
+
+						$subscriptions_api_handler->create_plan($subscription_plan_name, $product);
 					}
 				}
 			},
@@ -275,6 +283,29 @@ class SubscriptionModule implements ModuleInterface {
 				}
 			}
 		);
+
+		add_action( 'woocommerce_product_options_general_product_data', function() use($c) {
+			$settings = $c->get( 'wcgateway.settings' );
+			assert( $settings instanceof Settings );
+
+			try {
+				$subscriptions_mode = $settings->get( 'subscriptions_mode' );
+				if($subscriptions_mode === 'subscriptions_api') {
+					global $post;
+					$product = wc_get_product( $post->ID );
+					$enable_subscription_product = $product->get_meta('_ppcp_enable_subscription_product');
+					$subscription_plan_name = $product->get_meta('_ppcp_subscription_plan_name');
+
+					echo '<div class="options_group subscription_pricing show_if_subscription hidden">';
+						echo '<p class="form-field"><label for="_ppcp_enable_subscription_product">Connect to PayPal</label><input type="checkbox" name="_ppcp_enable_subscription_product" value="yes" '.checked($enable_subscription_product, 'yes', false).'/><span class="description">Connect Product to PayPal Subscriptions Plan</span></p>';
+						echo '<p class="form-field"><label for="_ppcp_subscription_plan_name">Plan Name</label><input type="text" class="short" name="_ppcp_subscription_plan_name" value="'.esc_attr($subscription_plan_name).'"></p>';
+					echo '</div>';
+				}
+
+			} catch ( NotFoundException $exception ) {
+				return;
+			}
+		} );
 	}
 
 	/**

@@ -87,14 +87,15 @@ class BillingPlans {
 	 * @throws PayPalApiException If the request fails.
 	 */
 	public function create(
+		string $name,
 		string $product_id,
 		array $billing_cycles,
 		array $payment_preferences
 	): Plan {
 
 		$data = array(
+			'name' => $name,
 			'product_id' => $product_id,
-			'name' => 'Testing Plan',
 			'billing_cycles' => $billing_cycles,
 			'payment_preferences' => $payment_preferences
 		);
