@@ -115,4 +115,60 @@ class CatalogProducts {
 
 		return $this->product_factory->from_paypal_response($json);
 	}
+
+	public function update(string $id, array $data) {
+		$bearer = $this->bearer->bearer();
+		$url    = trailingslashit( $this->host ) . 'v1/catalogs/products/' . $id;
+		$args   = array(
+			'method'  => 'PATCH',
+			'headers' => array(
+				'Authorization' => 'Bearer ' . $bearer->token(),
+				'Content-Type'  => 'application/json',
+				'Prefer' => 'return=representation'
+			),
+			'body'    => wp_json_encode( $data ),
+		);
+
+		$response = $this->request( $url, $args );
+		if ( is_wp_error( $response ) || ! is_array( $response ) ) {
+			throw new RuntimeException( 'Not able to update product.' );
+		}
+
+		$json        = json_decode( $response['body'] );
+		$status_code = (int) wp_remote_retrieve_response_code( $response );
+		if ( 204 !== $status_code ) {
+			throw new PayPalApiException(
+				$json,
+				$status_code
+			);
+		}
+	}
+
+	public function product(string $id): Product {
+		$bearer = $this->bearer->bearer();
+		$url    = trailingslashit( $this->host ) . 'v1/catalogs/products/' . $id;
+		$args   = array(
+			'headers' => array(
+				'Authorization' => 'Bearer ' . $bearer->token(),
+				'Content-Type'  => 'application/json',
+				'Prefer' => 'return=representation'
+			),
+		);
+
+		$response = $this->request( $url, $args );
+		if ( is_wp_error( $response ) || ! is_array( $response ) ) {
+			throw new RuntimeException( 'Not able to get product.' );
+		}
+
+		$json        = json_decode( $response['body'] );
+		$status_code = (int) wp_remote_retrieve_response_code( $response );
+		if ( 200 !== $status_code ) {
+			throw new PayPalApiException(
+				$json,
+				$status_code
+			);
+		}
+
+		return $this->product_factory->from_paypal_response($json);
+	}
 }

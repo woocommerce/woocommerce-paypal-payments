@@ -164,7 +164,7 @@ class SubscriptionModule implements ModuleInterface {
 					assert($subscriptions_api_handler instanceof SubscriptionsApiHandler);
 
 					if ( $product->meta_exists( 'ppcp_subscription_product' ) && $product->meta_exists( 'ppcp_subscription_plan' ) ) {
-						$subscriptions_api_handler->update_product();
+						$subscriptions_api_handler->update_product($product);
 						$subscriptions_api_handler->update_plan();
 						return;
 					}
@@ -173,7 +173,7 @@ class SubscriptionModule implements ModuleInterface {
 						$subscriptions_api_handler->create_product($product);
 					}
 
-					if ( $product->get_meta( 'ppcp_subscription_product' ) && ! $product->meta_exists( 'ppcp_subscription_plan' ) ) {
+					if ( $product->meta_exists( 'ppcp_subscription_product' ) && ! $product->meta_exists( 'ppcp_subscription_plan' ) ) {
 						$subscriptions_api_handler->create_plan($product);
 					}
 				}
