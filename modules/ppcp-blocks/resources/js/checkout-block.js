@@ -12,6 +12,7 @@ const PayPalComponent = ({
                              onError,
                              eventRegistration,
                              emitResponse,
+                             activePaymentMethod,
 }) => {
     const {onPaymentSetup} = eventRegistration;
     const {responseTypes} = emitResponse;
@@ -110,6 +111,10 @@ const PayPalComponent = ({
     };
 
     useEffect(() => {
+        if (activePaymentMethod !== config.id) {
+            return;
+        }
+
         const unsubscribeProcessing = onPaymentSetup(() => {
             const shippingAddress = paypalOrderToWcShippingAddress(paypalOrder);
             let billingAddress = paypalPayerToWc(paypalOrder.payer);
@@ -132,7 +137,7 @@ const PayPalComponent = ({
         return () => {
             unsubscribeProcessing();
         };
-    }, [onPaymentSetup, paypalOrder]);
+    }, [onPaymentSetup, paypalOrder, activePaymentMethod]);
 
     if (!loaded) {
         return null;
