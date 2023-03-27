@@ -114,14 +114,14 @@ class SubscriptionsApiHandler {
                         $data[] = (object) array(
                             'op' => 'replace',
                             'path' => '/name',
-                            'value' => $catalog_product_name,
+                            'value' => $product->get_title(),
                         );
                     }
                     if($catalog_product_description !== $product->get_description()) {
                         $data[] = (object) array(
                             'op' => 'replace',
                             'path' => '/description',
-                            'value' => $catalog_product_description,
+                            'value' => $product->get_description(),
                         );
                     }
 
