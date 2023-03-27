@@ -189,39 +189,6 @@ class SubscriptionModule implements ModuleInterface {
 			12
 		);
 
-		add_action(
-			'add_meta_boxes',
-			function( string $post_type ) use ( $c ) {
-				if ( $post_type === 'product' ) {
-					// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-					$post_id = wc_clean( wp_unslash( $_GET['post'] ?? '' ) );
-					$product = wc_get_product( $post_id );
-					if ( is_a( $product, WC_Product_Subscription::class ) ) {
-						$settings = $c->get( 'wcgateway.settings' );
-						assert( $settings instanceof Settings );
-						if ( $settings->get( 'subscriptions_mode' ) && $settings->get( 'subscriptions_mode' ) === 'subscriptions_api' ) {
-							$subscription_product = $product->get_meta( 'ppcp_subscription_product' );
-							$subscription_plan    = $product->get_meta( 'ppcp_subscription_plan' );
-							add_meta_box(
-								'ppcp_subscription',
-								__( 'PayPal Subscription', 'woocommerce-paypal-payments' ),
-								function () use ( $subscription_product, $subscription_plan ) {
-									echo '<label><input type="checkbox" name="ppcp_connect_subscriptions_api" checked="checked">Connect to Subscriptions API</label>';
-									if ( $subscription_product && $subscription_plan ) {
-										echo '<p>Product ID: ' . esc_attr( $subscription_product['id'] ?? '' ) . '</p>';
-										echo '<p>Plan ID: ' . esc_attr( $subscription_plan['id'] ?? '' ) . '</p>';
-									}
-								},
-								$post_type,
-								'side',
-								'high'
-							);
-						}
-					}
-				}
-			}
-		);
-
 		add_filter(
 			'woocommerce_order_data_store_cpt_get_orders_query',
 			function( $query, $query_vars ) {
@@ -298,8 +265,16 @@ class SubscriptionModule implements ModuleInterface {
 
 					echo '<div class="options_group subscription_pricing show_if_subscription hidden">';
 						echo '<p class="form-field"><label for="_ppcp_enable_subscription_product">Connect to PayPal</label><input type="checkbox" name="_ppcp_enable_subscription_product" value="yes" '.checked($enable_subscription_product, 'yes', false).'/><span class="description">Connect Product to PayPal Subscriptions Plan</span></p>';
-						echo '<p class="form-field"><label for="_ppcp_subscription_plan_name">Plan Name</label><input type="text" class="short" name="_ppcp_subscription_plan_name" value="'.esc_attr($subscription_plan_name).'"></p>';
-					echo '</div>';
+
+						$subscription_product = $product->get_meta( 'ppcp_subscription_product' );
+						$subscription_plan    = $product->get_meta( 'ppcp_subscription_plan' );
+						if($subscription_product && $subscription_plan) {
+							echo '<p class="form-field"><label>Product</label><a href="'.esc_url('https://www.sandbox.paypal.com/billing/plans/products/' . $subscription_product['id']).'" target="_blank">'.esc_attr($subscription_product['id']).'</a></p>';
+							echo '<p class="form-field"><label>Plan</label><a href="'.esc_url('https://www.sandbox.paypal.com/billing/plans/' . $subscription_plan['id']).'" target="_blank">'.esc_attr($subscription_plan['id']).'</a></p>';
+						} else {
+							echo '<p class="form-field"><label for="_ppcp_subscription_plan_name">Plan Name</label><input type="text" class="short" name="_ppcp_subscription_plan_name" value="'.esc_attr($subscription_plan_name).'"></p>';
+						}
+						echo '</div>';
 				}
 
 			} catch ( NotFoundException $exception ) {
