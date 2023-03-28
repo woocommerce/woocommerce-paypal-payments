@@ -1292,10 +1292,10 @@ return array(
 	},
 	'wcgateway.button.locations'                           => static function( ContainerInterface $container ): array {
 		return array(
-			'product'   => 'Single Product',
-			'cart'      => 'Cart',
-			'checkout'  => 'Checkout',
-			'mini-cart' => 'Mini Cart',
+			'product'   => _x( 'Single Product', 'Name of Buttons Location', 'woocommerce-paypal-payments' ),
+			'cart'      => _x( 'Cart', 'Name of Buttons Location', 'woocommerce-paypal-payments' ),
+			'checkout'  => _x( 'Checkout', 'Name of Buttons Location', 'woocommerce-paypal-payments' ),
+			'mini-cart' => _x( 'Mini Cart', 'Name of Buttons Location', 'woocommerce-paypal-payments' ),
 		);
 	},
 	'wcgateway.settings.pay-later.messaging-locations'     => static function( ContainerInterface $container ): array {
