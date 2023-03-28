@@ -169,7 +169,7 @@ class SubscriptionModule implements ModuleInterface {
 
 					if ( $product->meta_exists( 'ppcp_subscription_product' ) && $product->meta_exists( 'ppcp_subscription_plan' ) ) {
 						$subscriptions_api_handler->update_product($product);
-						$subscriptions_api_handler->update_plan();
+						$subscriptions_api_handler->update_plan($product);
 						return;
 					}
 
@@ -264,7 +264,7 @@ class SubscriptionModule implements ModuleInterface {
 					$subscription_plan_name = $product->get_meta('_ppcp_subscription_plan_name');
 
 					echo '<div class="options_group subscription_pricing show_if_subscription hidden">';
-						echo '<p class="form-field"><label for="_ppcp_enable_subscription_product">Connect to PayPal</label><input type="checkbox" name="_ppcp_enable_subscription_product" value="yes" '.checked($enable_subscription_product, 'yes', false).'/><span class="description">Connect Product to PayPal Subscriptions Plan</span></p>';
+						echo '<p class="form-field"><label for="_ppcp_enable_subscription_product">Connect to PayPal</label><input type="checkbox" id="ppcp_enable_subscription_product" name="_ppcp_enable_subscription_product" value="yes" '.checked($enable_subscription_product, 'yes', false).'/><span class="description">Connect Product to PayPal Subscriptions Plan</span></p>';
 
 						$subscription_product = $product->get_meta( 'ppcp_subscription_product' );
 						$subscription_plan    = $product->get_meta( 'ppcp_subscription_plan' );
@@ -272,7 +272,7 @@ class SubscriptionModule implements ModuleInterface {
 							echo '<p class="form-field"><label>Product</label><a href="'.esc_url('https://www.sandbox.paypal.com/billing/plans/products/' . $subscription_product['id']).'" target="_blank">'.esc_attr($subscription_product['id']).'</a></p>';
 							echo '<p class="form-field"><label>Plan</label><a href="'.esc_url('https://www.sandbox.paypal.com/billing/plans/' . $subscription_plan['id']).'" target="_blank">'.esc_attr($subscription_plan['id']).'</a></p>';
 						} else {
-							echo '<p class="form-field"><label for="_ppcp_subscription_plan_name">Plan Name</label><input type="text" class="short" name="_ppcp_subscription_plan_name" value="'.esc_attr($subscription_plan_name).'"></p>';
+							echo '<p class="form-field"><label for="_ppcp_subscription_plan_name">Plan Name</label><input type="text" class="short" id="ppcp_subscription_plan_name" name="_ppcp_subscription_plan_name" value="'.esc_attr($subscription_plan_name).'"></p>';
 						}
 						echo '</div>';
 				}

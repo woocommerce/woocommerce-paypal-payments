@@ -7,7 +7,8 @@ const {
 } = process.env;
 
 test.describe.serial('Subscriptions Merchant', () => {
-    const title = (Math.random() + 1).toString(36).substring(7);
+    const productTitle = (Math.random() + 1).toString(36).substring(7);
+    const planName = (Math.random() + 1).toString(36).substring(7);
     let product_id = '';
     let plan_id = '';
 
@@ -15,9 +16,11 @@ test.describe.serial('Subscriptions Merchant', () => {
         await loginAsAdmin(page);
 
         await page.goto('/wp-admin/post-new.php?post_type=product');
-        await page.fill('#title', title);
+        await page.fill('#title', productTitle);
         await page.selectOption('select#product-type', 'subscription');
         await page.fill('#_subscription_price', '10');
+        await page.locator('#ppcp_enable_subscription_product').check();
+        await page.fill('#ppcp_subscription_plan_name', planName);
 
         await Promise.all([
             page.waitForNavigation(),
@@ -37,7 +40,7 @@ test.describe.serial('Subscriptions Merchant', () => {
 
         const productList = await products.json();
         const product = productList.products.find((p) => {
-            return p.name === title;
+            return p.name === productTitle;
         });
         await expect(product.id).toBeTruthy;
 
@@ -64,8 +67,9 @@ test.describe.serial('Subscriptions Merchant', () => {
         await loginAsAdmin(page);
 
         await page.goto('/wp-admin/edit.php?post_type=product');
-        await page.getByRole('link', { name: title, exact: true }).click();
+        await page.getByRole('link', { name: productTitle, exact: true }).click();
 
+        await page.fill('#title', `Updated ${productTitle}`);
         await page.fill('#_subscription_price', '20');
 
         await Promise.all([
@@ -75,6 +79,20 @@ test.describe.serial('Subscriptions Merchant', () => {
 
         const message = await page.locator('.notice-success');
         await expect(message).toContainText('Product updated.');
+
+        const products = await request.get('https://api.sandbox.paypal.com/v1/catalogs/products?page_size=100&page=1&total_required=true', {
+            headers: {
+                'Authorization': AUTHORIZATION,
+                'Content-Type': 'application/json'
+            }
+        });
+        expect(products.ok()).toBeTruthy();
+
+        const productList = await products.json();
+        const product = productList.products.find((p) => {
+            return p.name === `Updated ${productTitle}`;
+        });
+        await expect(product.id).toBeTruthy;
 
         const plan = await request.get(`https://api.sandbox.paypal.com/v1/billing/plans/${plan_id}`, {
             headers: {

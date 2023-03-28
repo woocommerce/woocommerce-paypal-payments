@@ -140,7 +140,27 @@ class SubscriptionsApiHandler {
         }
 	}
 
-	public function update_plan() {
+	public function update_plan(WC_Product $product) {
+        try {
+            $subscription_plan_id = $product->get_meta('ppcp_subscription_plan')['id'] ?? '';
+            if ($subscription_plan_id) {
+                $subscription_plan = $this->billing_plans_endpoint->plan($subscription_plan_id);
 
+                $price = $subscription_plan->billing_cycles()[0]->pricing_scheme()['fixed_price']['value'] ?? '';
+                if($price && round($price, 2) !== round($product->get_price(), 2)) {
+                    $this->billing_plans_endpoint->update_pricing(
+                        $subscription_plan_id,
+                        $this->billing_cycle_factory->from_wc_product($product)
+                    );
+                }
+            }
+        } catch (RuntimeException $exception) {
+            $error = $exception->getMessage();
+            if ( is_a( $exception, PayPalApiException::class ) ) {
+                $error = $exception->get_details( $error );
+            }
+
+            $this->logger->error( 'Could not update subscription plan on PayPal. ' . $error );
+        }
 	}
 }
