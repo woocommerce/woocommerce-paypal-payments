@@ -36,8 +36,30 @@ class SingleProductActionHandler {
                     })
                 }).then((res)=>{
                     return res.json();
-                }).then((data) => {
-                    location.href = this.config.redirect;
+                }).then(() => {
+                    const id = document.querySelector('[name="add-to-cart"]').value;
+                    const products =  [new Product(id, 1, null)];
+
+                    fetch(this.config.ajax.change_cart.endpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        credentials: 'same-origin',
+                        body: JSON.stringify({
+                            nonce: this.config.ajax.change_cart.nonce,
+                            products,
+                        })
+                    }).then((result) => {
+                        return result.json();
+                    }).then((result) => {
+                        if (!result.success) {
+                            console.log(result)
+                            throw Error(result.data.message);
+                        }
+
+                        location.href = this.config.redirect;
+                    })
                 });
             },
             onError: (err) => {
