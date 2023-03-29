@@ -340,7 +340,7 @@ class SettingsListener {
 		}
 
 		$redirect_url = false;
-		if ( self::CREDENTIALS_UNCHANGED !== $credentials_change_status ) {
+		if ( $credentials_change_status && self::CREDENTIALS_UNCHANGED !== $credentials_change_status ) {
 			$redirect_url = $this->get_onboarding_redirect_url();
 		}
 

@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\BillingCycleFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentPreferencesFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PlanFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ProductFactory;
+use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
@@ -184,12 +185,13 @@ return array(
 		$patch_collection_factory = $container->get( 'api.factory.patch-collection-factory' );
 		$logger                   = $container->get( 'woocommerce.logger.woocommerce' );
 
-		/**
-		 * The settings.
-		 *
-		 * @var Settings $settings
-		 */
-		$settings                       = $container->get( 'wcgateway.settings' );
+		$session_handler = $container->get( 'session.handler' );
+		assert( $session_handler instanceof SessionHandler );
+		$bn_code         = $session_handler->bn_code();
+
+		$settings = $container->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings );
+
 		$intent                         = $settings->has( 'intent' ) && strtoupper( (string) $settings->get( 'intent' ) ) === 'AUTHORIZE' ? 'AUTHORIZE' : 'CAPTURE';
 		$application_context_repository = $container->get( 'api.repository.application-context' );
 		$subscription_helper = $container->get( 'subscription.helper' );
@@ -203,7 +205,8 @@ return array(
 			$application_context_repository,
 			$subscription_helper,
 			$container->get( 'wcgateway.is-fraudnet-enabled' ),
-			$container->get( 'wcgateway.fraudnet' )
+			$container->get( 'wcgateway.fraudnet' ),
+			$bn_code
 		);
 	},
 	'api.endpoint.billing-agreements'           => static function ( ContainerInterface $container ): BillingAgreementsEndpoint {

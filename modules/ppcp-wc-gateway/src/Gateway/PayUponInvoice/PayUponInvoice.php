@@ -423,45 +423,30 @@ class PayUponInvoice {
 			 * @psalm-suppress MissingClosureParamType
 			 */
 			function ( $methods ) {
-				if ( ! is_array( $methods ) || State::STATE_ONBOARDED !== $this->state->current_state() ) {
+				if (
+					! is_array( $methods )
+					|| State::STATE_ONBOARDED !== $this->state->current_state()
+					// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+					|| ! ( is_checkout() || isset( $_GET['pay_for_order'] ) && $_GET['pay_for_order'] === 'true' )
+				) {
 					return $methods;
 				}
 
 				if (
 					! $this->pui_product_status->pui_is_active()
 					|| ! $this->pui_helper->is_checkout_ready_for_pui()
-					// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-					|| ( isset( $_GET['pay_for_order'] ) && $_GET['pay_for_order'] === 'true' && ! $this->pui_helper->is_pay_for_order_ready_for_pui() )
+				) {
+					unset( $methods[ PayUponInvoiceGateway::ID ] );
+				}
+
+				if (
+					isset( $_GET['pay_for_order'] ) && $_GET['pay_for_order'] === 'true'
+					&& ! $this->pui_helper->is_pay_for_order_ready_for_pui()
 				) {
 					unset( $methods[ PayUponInvoiceGateway::ID ] );
 				}
 
 				return $methods;
-			}
-		);
-
-		add_action(
-			'woocommerce_settings_checkout',
-			function () {
-				if (
-					PayUponInvoiceGateway::ID === $this->current_ppcp_settings_page_id
-					&& ! $this->pui_product_status->pui_is_active()
-				) {
-					$gateway_settings = get_option( 'woocommerce_ppcp-pay-upon-invoice-gateway_settings' );
-					$gateway_enabled  = $gateway_settings['enabled'] ?? '';
-					if ( 'yes' === $gateway_enabled ) {
-						$gateway_settings['enabled'] = 'no';
-						update_option( 'woocommerce_ppcp-pay-upon-invoice-gateway_settings', $gateway_settings );
-						$redirect_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-pay-upon-invoice-gateway' );
-						wp_safe_redirect( $redirect_url );
-						exit;
-					}
-
-					printf(
-						'<div class="notice notice-error"><p>%1$s</p></div>',
-						esc_html__( 'Could not enable gateway because the connected PayPal account is not activated for Pay upon Invoice. Reconnect your account while Onboard with Pay upon Invoice is selected to try again.', 'woocommerce-paypal-payments' )
-					);
-				}
 			}
 		);
 
@@ -509,6 +494,19 @@ class PayUponInvoice {
 						</div>
 						<?php
 					}
+				} elseif ( PayUponInvoiceGateway::ID === $this->current_ppcp_settings_page_id ) {
+					$pui_gateway = WC()->payment_gateways->payment_gateways()[ PayUponInvoiceGateway::ID ];
+					if ( 'yes' === $pui_gateway->get_option( 'enabled' ) ) {
+						$pui_gateway->update_option( 'enabled', 'no' );
+						$redirect_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-pay-upon-invoice-gateway' );
+						wp_safe_redirect( $redirect_url );
+						exit;
+					}
+
+					printf(
+						'<div class="notice notice-error"><p>%1$s</p></div>',
+						esc_html__( 'Could not enable gateway because the connected PayPal account is not activated for Pay upon Invoice. Reconnect your account while Onboard with Pay upon Invoice is selected to try again.', 'woocommerce-paypal-payments' )
+					);
 				}
 			}
 		);

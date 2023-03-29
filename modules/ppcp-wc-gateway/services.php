@@ -232,8 +232,11 @@ return array(
 	'wcgateway.settings.sections-renderer'                 => static function ( ContainerInterface $container ): SectionsRenderer {
 		return new SectionsRenderer(
 			$container->get( 'wcgateway.current-ppcp-settings-page-id' ),
-			$container->get( 'wcgateway.settings.sections' ),
-			$container->get( 'onboarding.state' )
+			$container->get( 'onboarding.state' ),
+			$container->get( 'wcgateway.helper.dcc-product-status' ),
+			$container->get( 'api.helpers.dccapplies' ),
+			$container->get( 'button.helper.messages-apply' ),
+			$container->get( 'wcgateway.pay-upon-invoice-product-status' )
 		);
 	},
 	'wcgateway.settings.header-renderer'                   => static function ( ContainerInterface $container ): HeaderRenderer {
@@ -241,52 +244,6 @@ return array(
 			$container->get( 'wcgateway.current-ppcp-settings-page-id' ),
 			$container->get( 'wcgateway.url' )
 		);
-	},
-	'wcgateway.settings.sections'                          => static function ( ContainerInterface $container ): array {
-		$sections = array(
-			Settings::CONNECTION_TAB_ID => __( 'Connection', 'woocommerce-paypal-payments' ),
-			PayPalGateway::ID           => __( 'Standard Payments', 'woocommerce-paypal-payments' ),
-			Settings::PAY_LATER_TAB_ID  => __( 'Pay Later', 'woocommerce-paypal-payments' ),
-			CreditCardGateway::ID       => __( 'Advanced Card Processing', 'woocommerce-paypal-payments' ),
-			CardButtonGateway::ID       => __( 'Standard Card Button', 'woocommerce-paypal-payments' ),
-			OXXOGateway::ID             => __( 'OXXO', 'woocommerce-paypal-payments' ),
-			PayUponInvoiceGateway::ID   => __( 'Pay upon Invoice', 'woocommerce-paypal-payments' ),
-		);
-
-		// Remove for all not registered in WC gateways that cannot render anything in this case.
-		$gateways = WC()->payment_gateways->payment_gateways();
-		foreach ( array_diff(
-			array_keys( $sections ),
-			array( Settings::CONNECTION_TAB_ID, PayPalGateway::ID, CreditCardGateway::ID, Settings::PAY_LATER_TAB_ID )
-		) as $id ) {
-			if ( ! isset( $gateways[ $id ] ) ) {
-				unset( $sections[ $id ] );
-			}
-		}
-
-		$dcc_product_status = $container->get( 'wcgateway.helper.dcc-product-status' );
-		assert( $dcc_product_status instanceof DCCProductStatus );
-		$dcc_applies = $container->get( 'api.helpers.dccapplies' );
-		assert( $dcc_applies instanceof DccApplies );
-		if ( ! $dcc_product_status->dcc_is_active() || ! $dcc_applies->for_country_currency() ) {
-			unset( $sections['ppcp-credit-card-gateway'] );
-		}
-
-		$messages_apply = $container->get( 'button.helper.messages-apply' );
-		assert( $messages_apply instanceof MessagesApply );
-
-		if ( ! $messages_apply->for_country() ) {
-			unset( $sections[ Settings::PAY_LATER_TAB_ID ] );
-		}
-
-		$pui_product_status = $container->get( 'wcgateway.pay-upon-invoice-product-status' );
-		assert( $pui_product_status instanceof PayUponInvoiceProductStatus );
-
-		if ( ! $pui_product_status->pui_is_active() ) {
-			unset( $sections[ PayUponInvoiceGateway::ID ] );
-		}
-
-		return $sections;
 	},
 	'wcgateway.settings.status'                            => static function ( ContainerInterface $container ): SettingsStatus {
 		$settings      = $container->get( 'wcgateway.settings' );
