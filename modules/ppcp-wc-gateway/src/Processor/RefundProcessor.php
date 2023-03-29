@@ -11,12 +11,14 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Processor;
 
 use Exception;
 use Psr\Log\LoggerInterface;
+use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Amount;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\AuthorizationStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payments;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Refund;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
@@ -70,7 +72,7 @@ class RefundProcessor {
 	/**
 	 * Processes a refund.
 	 *
-	 * @param \WC_Order  $wc_order The WooCommerce order.
+	 * @param WC_Order   $wc_order The WooCommerce order.
 	 * @param float|null $amount The refund amount.
 	 * @param string     $reason The reason for the refund.
 	 *
@@ -78,7 +80,7 @@ class RefundProcessor {
 	 *
 	 * @phpcs:ignore Squiz.Commenting.FunctionCommentThrowTag.Missing
 	 */
-	public function process( \WC_Order $wc_order, float $amount = null, string $reason = '' ) : bool {
+	public function process( WC_Order $wc_order, float $amount = null, string $reason = '' ) : bool {
 		try {
 			$order_id = $wc_order->get_meta( PayPalGateway::ORDER_ID_META_KEY );
 			if ( ! $order_id ) {
@@ -87,15 +89,7 @@ class RefundProcessor {
 
 			$order = $this->order_endpoint->order( $order_id );
 
-			$purchase_units = $order->purchase_units();
-			if ( ! $purchase_units ) {
-				throw new RuntimeException( 'No purchase units.' );
-			}
-
-			$payments = $purchase_units[0]->payments();
-			if ( ! $payments ) {
-				throw new RuntimeException( 'No payments.' );
-			}
+			$payments = $this->get_payments( $order );
 
 			$this->logger->debug(
 				sprintf(
@@ -109,39 +103,13 @@ class RefundProcessor {
 
 			switch ( $mode ) {
 				case self::REFUND_MODE_REFUND:
-					$captures = $payments->captures();
-					if ( ! $captures ) {
-						throw new RuntimeException( 'No capture.' );
-					}
-
-					$capture   = $captures[0];
-					$refund    = new Refund(
-						$capture,
-						$capture->invoice_id(),
-						$reason,
-						new Amount(
-							new Money( $amount, $wc_order->get_currency() )
-						)
-					);
-					$refund_id = $this->payments_endpoint->refund( $refund );
+					$refund_id = $this->refund( $order, $wc_order, $amount, $reason );
 
 					$this->add_refund_to_meta( $wc_order, $refund_id );
 
 					break;
 				case self::REFUND_MODE_VOID:
-					$voidable_authorizations = array_filter(
-						$payments->authorizations(),
-						function ( Authorization $authorization ): bool {
-							return $authorization->is_voidable();
-						}
-					);
-					if ( ! $voidable_authorizations ) {
-						throw new RuntimeException( 'No voidable authorizations.' );
-					}
-
-					foreach ( $voidable_authorizations as $authorization ) {
-						$this->payments_endpoint->void( $authorization );
-					}
+					$this->void( $order );
 
 					$wc_order->set_status( 'refunded' );
 					$wc_order->save();
@@ -155,6 +123,67 @@ class RefundProcessor {
 		} catch ( Exception $error ) {
 			$this->logger->error( 'Refund failed: ' . $error->getMessage() );
 			return false;
+		}
+	}
+
+	/**
+	 * Adds a refund to the PayPal order.
+	 *
+	 * @param Order    $order The PayPal order.
+	 * @param WC_Order $wc_order The WooCommerce order.
+	 * @param float    $amount The refund amount.
+	 * @param string   $reason The reason for the refund.
+	 *
+	 * @throws RuntimeException When operation fails.
+	 * @return string The PayPal refund ID.
+	 */
+	public function refund(
+		Order $order,
+		WC_Order $wc_order,
+		float $amount,
+		string $reason = ''
+	): string {
+		$payments = $this->get_payments( $order );
+
+		$captures = $payments->captures();
+		if ( ! $captures ) {
+			throw new RuntimeException( 'No capture.' );
+		}
+
+		$capture = $captures[0];
+		$refund  = new Refund(
+			$capture,
+			$capture->invoice_id(),
+			$reason,
+			new Amount(
+				new Money( $amount, $wc_order->get_currency() )
+			)
+		);
+
+		return $this->payments_endpoint->refund( $refund );
+	}
+
+	/**
+	 * Voids the authorization.
+	 *
+	 * @param Order $order The PayPal order.
+	 * @throws RuntimeException When operation fails.
+	 */
+	public function void( Order $order ): void {
+		$payments = $this->get_payments( $order );
+
+		$voidable_authorizations = array_filter(
+			$payments->authorizations(),
+			function ( Authorization $authorization ): bool {
+				return $authorization->is_voidable();
+			}
+		);
+		if ( ! $voidable_authorizations ) {
+			throw new RuntimeException( 'No voidable authorizations.' );
+		}
+
+		foreach ( $voidable_authorizations as $authorization ) {
+			$this->payments_endpoint->void( $authorization );
 		}
 	}
 
@@ -180,5 +209,25 @@ class RefundProcessor {
 		}
 
 		return self::REFUND_MODE_UNKNOWN;
+	}
+
+	/**
+	 * Returns the payments object or throws.
+	 *
+	 * @param Order $order The order.
+	 * @throws RuntimeException When payment not available.
+	 */
+	protected function get_payments( Order $order ): Payments {
+		$purchase_units = $order->purchase_units();
+		if ( ! $purchase_units ) {
+			throw new RuntimeException( 'No purchase units.' );
+		}
+
+		$payments = $purchase_units[0]->payments();
+		if ( ! $payments ) {
+			throw new RuntimeException( 'No payments.' );
+		}
+
+		return $payments;
 	}
 }

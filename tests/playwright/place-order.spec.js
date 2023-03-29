@@ -1,10 +1,12 @@
 const {test, expect} = require('@playwright/test');
+
 const {
     CUSTOMER_EMAIL,
     CUSTOMER_PASSWORD,
     CREDIT_CARD_NUMBER,
     CREDIT_CARD_EXPIRATION,
-    CREDIT_CARD_CVV
+    CREDIT_CARD_CVV,
+    PRODUCT_URL,
 } = process.env;
 
 async function fillCheckoutForm(page) {
@@ -16,25 +18,49 @@ async function fillCheckoutForm(page) {
     await page.fill('#billing_city', '10715');
     await page.fill('#billing_phone', '1234567890');
     await page.fill('#billing_email', CUSTOMER_EMAIL);
+
+    const differentShippingLocator = page.locator('[name="ship_to_different_address"]');
+    if (await differentShippingLocator.count() > 0) {
+        await differentShippingLocator.uncheck();
+    }
+
+    const termsLocator = page.locator('[name="terms"]');
+    if (await termsLocator.count() > 0) {
+        await termsLocator.check();
+    }
 }
 
-test('PayPal button place order from Product page', async ({page}) => {
-
-    await page.goto('/product/product/');
+async function openPaypalPopup(page) {
+    await page.locator('.component-frame').scrollIntoViewIfNeeded();
 
     const [popup] = await Promise.all([
         page.waitForEvent('popup'),
         page.frameLocator('.component-frame').locator('[data-funding-source="paypal"]').click(),
     ]);
+
     await popup.waitForLoadState();
 
+    return popup;
+}
+
+async function loginIntoPaypal(popup) {
     await popup.click("text=Log in");
-    await popup.fill('#email', CUSTOMER_EMAIL);
+    await popup.fill('[name="login_email"]', CUSTOMER_EMAIL);
     await popup.locator('#btnNext').click();
-    await popup.fill('#password', CUSTOMER_PASSWORD);
+    await popup.fill('[name="login_password"]', CUSTOMER_PASSWORD);
     await popup.locator('#btnLogin').click();
+}
+
+test('PayPal button place order from Product page', async ({page}) => {
+
+    await page.goto(PRODUCT_URL);
+
+    const popup = await openPaypalPopup(page);
+
+    await loginIntoPaypal(popup);
 
     await popup.locator('#payment-submit-btn').click();
+
     await fillCheckoutForm(page);
 
     await Promise.all([
@@ -46,9 +72,9 @@ test('PayPal button place order from Product page', async ({page}) => {
     await expect(title).toHaveText('Order received');
 });
 
-test('Advanced Credit and Debit Card (ACDC) place order from Checkout page @ci', async ({page}) => {
+test('Advanced Credit and Debit Card (ACDC) place order from Checkout page', async ({page}) => {
 
-    await page.goto('/product/product/');
+    await page.goto(PRODUCT_URL);
     await page.locator('.single_add_to_cart_button').click();
 
     await page.goto('/checkout/');

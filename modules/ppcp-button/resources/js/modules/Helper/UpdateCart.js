@@ -20,6 +20,9 @@ class UpdateCart {
                 this.endpoint,
                 {
                     method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     credentials: 'same-origin',
                     body: JSON.stringify({
                         nonce: this.nonce,
