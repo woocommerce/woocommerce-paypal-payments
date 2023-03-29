@@ -516,6 +516,10 @@ class SmartButton implements SmartButtonInterface {
 			return false;
 		}
 
+		if ( in_array( $this->context(), array( 'checkout-block', 'cart-block' ), true ) ) {
+			return false;
+		}
+
 		return $this->should_load_buttons() || $this->can_render_dcc();
 	}
 
@@ -537,6 +541,9 @@ class SmartButton implements SmartButtonInterface {
 			case 'cart':
 			case 'pay-now':
 				return $smart_button_enabled_for_current_location || $messaging_enabled_for_current_location;
+			case 'checkout-block':
+			case 'cart-block':
+				return $smart_button_enabled_for_current_location;
 			case 'product':
 				return $smart_button_enabled_for_current_location || $messaging_enabled_for_current_location || $smart_button_enabled_for_mini_cart;
 			default:

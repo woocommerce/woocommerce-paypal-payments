@@ -163,7 +163,7 @@ registerExpressPaymentMethod({
     content: <PayPalComponent/>,
     edit: <b>TODO: editing</b>,
     ariaLabel: config.title,
-    canMakePayment: () => true,
+    canMakePayment: () => config.enabled,
     supports: {
         features: ['products'],
     },

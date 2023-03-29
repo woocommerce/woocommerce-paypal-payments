@@ -22,11 +22,20 @@ trait ContextTrait {
 			$context = 'product';
 		}
 
+		// has_block may not work if called too early, such as during the block registration.
+		if ( has_block( 'woocommerce/cart' ) ) {
+			$context = 'cart-block';
+		}
+
 		if ( is_cart() ) {
 			$context = 'cart';
 		}
 
-		if ( ( is_checkout() || has_block( 'woocommerce/checkout' ) ) && ! $this->is_paypal_continuation() ) {
+		if ( has_block( 'woocommerce/checkout' ) ) {
+			$context = 'checkout-block';
+		}
+
+		if ( ( is_checkout() ) && ! $this->is_paypal_continuation() ) {
 			$context = 'checkout';
 		}
 

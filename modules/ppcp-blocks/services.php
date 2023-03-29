@@ -28,6 +28,8 @@ return array(
 			$container->get( 'blocks.url' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'button.smart-button' ),
+			$container->get( 'wcgateway.settings' ),
+			$container->get( 'wcgateway.settings.status' ),
 			$container->get( 'wcgateway.paypal-gateway' )
 		);
 	},
