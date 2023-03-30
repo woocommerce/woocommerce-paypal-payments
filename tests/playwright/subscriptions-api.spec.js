@@ -108,7 +108,7 @@ test.describe.serial('Subscriptions Merchant', () => {
 });
 
 test.describe('Subscriptions Customer', () => {
-    test('Purchase subscription', async ({page}) => {
+    test('Purchase Subscription from Checkout Page', async ({page}) => {
         await loginAsCustomer(page);
 
         await page.goto('/product/another-sub');
@@ -130,6 +130,31 @@ test.describe('Subscriptions Customer', () => {
         await popup.locator('text=Agree & Subscribe').click();
 
         await page.waitForTimeout(10000);
+
+        const title = page.locator('.entry-title');
+        await expect(title).toHaveText('Order received');
+    });
+
+    test('Purchase Subscription from Single Product Page', async ({page}) => {
+        await loginAsCustomer(page);
+        await page.goto('/product/subscription');
+
+        const [popup] = await Promise.all([
+            page.waitForEvent('popup'),
+            page.frameLocator('.component-frame').locator('[data-funding-source="paypal"]').click(),
+        ]);
+        await popup.waitForLoadState();
+
+        await popup.fill('#email', CUSTOMER_EMAIL);
+        await popup.locator('#btnNext').click();
+        await popup.fill('#password', CUSTOMER_PASSWORD);
+        await popup.locator('#btnLogin').click();
+        await popup.locator('text=Continue').click();
+        await popup.locator('#confirmButtonTop').click();
+
+        await fillCheckoutForm(page);
+
+        await page.locator('text=Sign up now').click();
 
         const title = page.locator('.entry-title');
         await expect(title).toHaveText('Order received');
