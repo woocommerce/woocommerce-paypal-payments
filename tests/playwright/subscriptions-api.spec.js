@@ -111,7 +111,7 @@ test.describe('Subscriptions Customer', () => {
     test('Purchase Subscription from Checkout Page', async ({page}) => {
         await loginAsCustomer(page);
 
-        await page.goto('/product/another-sub');
+        await page.goto('/product/subscription');
         await page.click("text=Sign up now");
         await page.goto('/checkout');
         await fillCheckoutForm(page);
@@ -138,6 +138,33 @@ test.describe('Subscriptions Customer', () => {
     test('Purchase Subscription from Single Product Page', async ({page}) => {
         await loginAsCustomer(page);
         await page.goto('/product/subscription');
+
+        const [popup] = await Promise.all([
+            page.waitForEvent('popup'),
+            page.frameLocator('.component-frame').locator('[data-funding-source="paypal"]').click(),
+        ]);
+        await popup.waitForLoadState();
+
+        await popup.fill('#email', CUSTOMER_EMAIL);
+        await popup.locator('#btnNext').click();
+        await popup.fill('#password', CUSTOMER_PASSWORD);
+        await popup.locator('#btnLogin').click();
+        await popup.locator('text=Continue').click();
+        await popup.locator('#confirmButtonTop').click();
+
+        await fillCheckoutForm(page);
+
+        await page.locator('text=Sign up now').click();
+
+        const title = page.locator('.entry-title');
+        await expect(title).toHaveText('Order received');
+    });
+
+    test('Purchase Subscription from Cart Page', async ({page}) => {
+        await loginAsCustomer(page);
+        await page.goto('/product/subscription');
+        await page.click("text=Sign up now");
+        await page.goto('/cart');
 
         const [popup] = await Promise.all([
             page.waitForEvent('popup'),
