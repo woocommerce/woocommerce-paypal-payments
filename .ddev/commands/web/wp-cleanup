@@ -1,30 +1,32 @@
 #!/bin/bash
 
 help-panel() {
-	echo -e "-d [post_type] Delete all posts"
-	echo -e "\tExample: -d shop_order,product"
+	echo -e "-p [post type] Delete all posts"
+	echo -e "\tExample: -p shop_order,product"
+	echo -e "-l [wp-content path] Delete all logs"
+	echo -e "\tExample: -l uploads/wc-logs"
 }
 
-delete-post() {
+delete-posts() {
 	for post in $(wp post list --post_type=$1 --format=ids --path=.ddev/wordpress); do
 		wp post delete $post --force --path=.ddev/wordpress
 	done
 }
 
-declare -i parameter_counter=0
+delete-logs() {
+	rm .ddev/wordpress/wp-content/$1/*.log
+}
 
-while getopts "d:h" arg; do
+declare -i param_counter=0
+
+while getopts "d:l:h" arg; do
 	case $arg in
-	d)
-		post_type=$OPTARG
-		let parameter_counter+=1
-		;;
+	d) delete-posts $OPTARG; param_counter+=1 ;;
+	l) delete-logs $OPTARG; param_counter+=1 ;;
 	h) help-panel ;;
 	esac
 done
 
-if [ $parameter_counter -eq 1 ]; then
-	delete-post $post_type
-else
+if [ $param_counter -eq 0 ]; then
 	help-panel
 fi
