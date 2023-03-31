@@ -21,8 +21,14 @@ declare -i param_counter=0
 
 while getopts "d:l:h" arg; do
 	case $arg in
-	d) delete-posts $OPTARG; param_counter+=1 ;;
-	l) delete-logs $OPTARG; param_counter+=1 ;;
+	d)
+		delete-posts $OPTARG
+		param_counter+=1
+		;;
+	l)
+		delete-logs $OPTARG
+		param_counter+=1
+		;;
 	h) help-panel ;;
 	esac
 done
