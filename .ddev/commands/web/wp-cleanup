@@ -19,9 +19,9 @@ delete-logs() {
 
 declare -i param_counter=0
 
-while getopts "d:l:h" arg; do
+while getopts "p:l:h" arg; do
 	case $arg in
-	d)
+	p)
 		delete-posts $OPTARG
 		param_counter+=1
 		;;
