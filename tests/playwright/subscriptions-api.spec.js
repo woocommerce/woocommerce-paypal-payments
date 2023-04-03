@@ -218,4 +218,36 @@ test.describe('Subscriber purchase a Subscription', () => {
         details = await subscription.json();
         await expect(details.status).toBe('SUSPENDED');
     });
+
+    test('Subscriber Cancel Subscription', async ({page, request}) => {
+        await loginAsCustomer(page);
+        await page.goto('/my-account/subscriptions');
+        await page.locator('text=View').first().click();
+
+        const subscriptionId = await page.locator('#ppcp-subscription-id').textContent();
+        let subscription = await request.get(`https://api.sandbox.paypal.com/v1/billing/subscriptions/${subscriptionId}`, {
+            headers: {
+                'Authorization': AUTHORIZATION,
+                'Content-Type': 'application/json'
+            }
+        });
+        expect(subscription.ok()).toBeTruthy();
+        let details = await subscription.json();
+        await expect(details.status).toBe('ACTIVE');
+
+        await page.locator('text=Cancel').click();
+        const title = page.locator('.woocommerce-message');
+        await expect(title).toHaveText('Your subscription has been cancelled.');
+
+        subscription = await request.get(`https://api.sandbox.paypal.com/v1/billing/subscriptions/${subscriptionId}`, {
+            headers: {
+                'Authorization': AUTHORIZATION,
+                'Content-Type': 'application/json'
+            }
+        });
+        expect(subscription.ok()).toBeTruthy();
+
+        details = await subscription.json();
+        await expect(details.status).toBe('CANCELLED');
+    });
 });

@@ -158,31 +158,31 @@ class SubscriptionModule implements ModuleInterface {
 					return;
 				}
 
-				$product = wc_get_product( $product_id );
-				$enable_subscription_product = wc_clean(wp_unslash($_POST['_ppcp_enable_subscription_product'] ?? ''));
-				$product->update_meta_data('_ppcp_enable_subscription_product', $enable_subscription_product);
+				$product                     = wc_get_product( $product_id );
+				$enable_subscription_product = wc_clean( wp_unslash( $_POST['_ppcp_enable_subscription_product'] ?? '' ) );
+				$product->update_meta_data( '_ppcp_enable_subscription_product', $enable_subscription_product );
 				$product->save();
 
 				if ( $product->get_type() === 'subscription' && $enable_subscription_product === 'yes' ) {
-					$subscriptions_api_handler = $c->get('subscription.api-handler');
-					assert($subscriptions_api_handler instanceof SubscriptionsApiHandler);
+					$subscriptions_api_handler = $c->get( 'subscription.api-handler' );
+					assert( $subscriptions_api_handler instanceof SubscriptionsApiHandler );
 
 					if ( $product->meta_exists( 'ppcp_subscription_product' ) && $product->meta_exists( 'ppcp_subscription_plan' ) ) {
-						$subscriptions_api_handler->update_product($product);
-						$subscriptions_api_handler->update_plan($product);
+						$subscriptions_api_handler->update_product( $product );
+						$subscriptions_api_handler->update_plan( $product );
 						return;
 					}
 
 					if ( ! $product->meta_exists( 'ppcp_subscription_product' ) ) {
-						$subscriptions_api_handler->create_product($product);
+						$subscriptions_api_handler->create_product( $product );
 					}
 
 					if ( $product->meta_exists( 'ppcp_subscription_product' ) && ! $product->meta_exists( 'ppcp_subscription_plan' ) ) {
-						$subscription_plan_name = wc_clean(wp_unslash($_POST['_ppcp_subscription_plan_name'] ?? ''));
-						$product->update_meta_data('_ppcp_subscription_plan_name', $subscription_plan_name);
+						$subscription_plan_name = wc_clean( wp_unslash( $_POST['_ppcp_subscription_plan_name'] ?? '' ) );
+						$product->update_meta_data( '_ppcp_subscription_plan_name', $subscription_plan_name );
 						$product->save();
 
-						$subscriptions_api_handler->create_plan($subscription_plan_name, $product);
+						$subscriptions_api_handler->create_plan( $subscription_plan_name, $product );
 					}
 				}
 			},
@@ -251,57 +251,134 @@ class SubscriptionModule implements ModuleInterface {
 			}
 		);
 
-		add_action( 'woocommerce_product_options_general_product_data', function() use($c) {
-			$settings = $c->get( 'wcgateway.settings' );
-			assert( $settings instanceof Settings );
+		add_action(
+			'woocommerce_product_options_general_product_data',
+			function() use ( $c ) {
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
 
-			try {
-				$subscriptions_mode = $settings->get( 'subscriptions_mode' );
-				if($subscriptions_mode === 'subscriptions_api') {
-					global $post;
-					$product = wc_get_product( $post->ID );
-					$enable_subscription_product = $product->get_meta('_ppcp_enable_subscription_product');
-					$subscription_plan_name = $product->get_meta('_ppcp_subscription_plan_name');
+				try {
+					$subscriptions_mode = $settings->get( 'subscriptions_mode' );
+					if ( $subscriptions_mode === 'subscriptions_api' ) {
+						global $post;
+						$product                     = wc_get_product( $post->ID );
+						$enable_subscription_product = $product->get_meta( '_ppcp_enable_subscription_product' );
+						$subscription_plan_name      = $product->get_meta( '_ppcp_subscription_plan_name' );
 
-					echo '<div class="options_group subscription_pricing show_if_subscription hidden">';
-						echo '<p class="form-field"><label for="_ppcp_enable_subscription_product">Connect to PayPal</label><input type="checkbox" id="ppcp_enable_subscription_product" name="_ppcp_enable_subscription_product" value="yes" '.checked($enable_subscription_product, 'yes', false).'/><span class="description">Connect Product to PayPal Subscriptions Plan</span></p>';
+						echo '<div class="options_group subscription_pricing show_if_subscription hidden">';
+						echo '<p class="form-field"><label for="_ppcp_enable_subscription_product">Connect to PayPal</label><input type="checkbox" id="ppcp_enable_subscription_product" name="_ppcp_enable_subscription_product" value="yes" ' . checked( $enable_subscription_product, 'yes', false ) . '/><span class="description">Connect Product to PayPal Subscriptions Plan</span></p>';
 
 						$subscription_product = $product->get_meta( 'ppcp_subscription_product' );
 						$subscription_plan    = $product->get_meta( 'ppcp_subscription_plan' );
-						if($subscription_product && $subscription_plan) {
-							echo '<p class="form-field"><label>Product</label><a href="'.esc_url('https://www.sandbox.paypal.com/billing/plans/products/' . $subscription_product['id']).'" target="_blank">'.esc_attr($subscription_product['id']).'</a></p>';
-							echo '<p class="form-field"><label>Plan</label><a href="'.esc_url('https://www.sandbox.paypal.com/billing/plans/' . $subscription_plan['id']).'" target="_blank">'.esc_attr($subscription_plan['id']).'</a></p>';
+						if ( $subscription_product && $subscription_plan ) {
+							echo '<p class="form-field"><label>Product</label><a href="' . esc_url( 'https://www.sandbox.paypal.com/billing/plans/products/' . $subscription_product['id'] ) . '" target="_blank">' . esc_attr( $subscription_product['id'] ) . '</a></p>';
+							echo '<p class="form-field"><label>Plan</label><a href="' . esc_url( 'https://www.sandbox.paypal.com/billing/plans/' . $subscription_plan['id'] ) . '" target="_blank">' . esc_attr( $subscription_plan['id'] ) . '</a></p>';
 						} else {
-							echo '<p class="form-field"><label for="_ppcp_subscription_plan_name">Plan Name</label><input type="text" class="short" id="ppcp_subscription_plan_name" name="_ppcp_subscription_plan_name" value="'.esc_attr($subscription_plan_name).'"></p>';
+							echo '<p class="form-field"><label for="_ppcp_subscription_plan_name">Plan Name</label><input type="text" class="short" id="ppcp_subscription_plan_name" name="_ppcp_subscription_plan_name" value="' . esc_attr( $subscription_plan_name ) . '"></p>';
 						}
 						echo '</div>';
+					}
+				} catch ( NotFoundException $exception ) {
+								return;
 				}
-
-			} catch ( NotFoundException $exception ) {
-				return;
 			}
-		} );
+		);
 
-		add_action('woocommerce_subscription_before_actions', function($subscription) {
-			$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
-			if ( $subscription_id) { ?>
+		add_action(
+			'woocommerce_subscription_before_actions',
+			function( $subscription ) {
+				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
+				if ( $subscription_id ) { ?>
 				<tr>
 					<td><?php esc_html_e( 'PayPal Subscription', 'woocommerce-paypal-payments' ); ?></td>
 					<td>
 						<a href="<?php echo esc_url( "https://www.sandbox.paypal.com/myaccount/autopay/connect/{$subscription_id}" ); ?>" id="ppcp-subscription-id" target="_blank"><?php echo esc_html( $subscription_id ); ?></a>
 					</td>
 				</tr>
-			<?php }
-		});
-
-		add_filter( 'wcs_view_subscription_actions', function($actions, $subscription) {
-			$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
-			if ( $subscription_id && $subscription->get_status() === 'active') {
-				$actions['cancel']['name'] = esc_html__('Suspend', 'woocommerce-paypal-payments');
+					<?php
+				}
 			}
+		);
 
-			return $actions;
-		}, 10, 2);
+		add_filter(
+			'wcs_view_subscription_actions',
+			function( $actions, $subscription ) {
+				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
+				if ( $subscription_id && $subscription->get_status() === 'active' ) {
+					$url = wp_nonce_url(
+						add_query_arg(
+							array(
+								'change_subscription_to'   => 'cancelled',
+								'ppcp_cancel_subscription' => $subscription->get_id(),
+							)
+						),
+						'ppcp_cancel_subscription_nonce'
+					);
+
+					array_unshift(
+						$actions,
+						array(
+							'url'  => esc_url( $url ),
+							'name' => esc_html__( 'Cancel', 'woocommerce-paypal-payments' ),
+						)
+					);
+
+					$actions['cancel']['name'] = esc_html__( 'Suspend', 'woocommerce-paypal-payments' );
+				}
+
+				return $actions;
+			},
+			10,
+			2
+		);
+
+		add_action(
+			'wp_loaded',
+			function() use ( $c ) {
+				$cancel_subscription_id = wc_clean( wp_unslash( $_GET['ppcp_cancel_subscription'] ?? '' ) );
+				$subscription           = wcs_get_subscription( absint( $cancel_subscription_id ) );
+				if ( ! wcs_is_subscription( $subscription ) ) {
+					return;
+				}
+
+				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
+				$nonce           = wc_clean( wp_unslash( $_GET['_wpnonce'] ?? '' ) );
+				if (
+				$subscription_id
+				&& $cancel_subscription_id
+				&& $nonce
+				) {
+					if (
+					! wp_verify_nonce( $nonce, 'ppcp_cancel_subscription_nonce' )
+					|| ! user_can( get_current_user_id(), 'edit_shop_subscription_status', $subscription->get_id() )
+					) {
+						return;
+					}
+
+					$subscriptions_endpoint = $c->get( 'api.endpoint.billing-subscriptions' );
+					$subscription_id        = $subscription->get_meta( 'ppcp_subscription' );
+					try {
+						$subscriptions_endpoint->cancel( $subscription_id );
+
+						$subscription->update_status( 'cancelled' );
+						$subscription->add_order_note( __( 'Subscription cancelled by the subscriber from their account page.', 'woocommerce-paypal-payments' ) );
+						wc_add_notice( __( 'Your subscription has been cancelled.', 'woocommerce-paypal-payments' ) );
+
+						wp_safe_redirect( $subscription->get_view_order_url() );
+						exit;
+					} catch ( RuntimeException $exception ) {
+						$error = $exception->getMessage();
+						if ( is_a( $exception, PayPalApiException::class ) ) {
+							$error = $exception->get_details( $error );
+						}
+
+						$logger = $c->get( 'woocommerce.logger.woocommerce' );
+						$logger->error( 'Could not cancel subscription product on PayPal. ' . $error );
+					}
+				}
+			},
+			100
+		);
 	}
 
 	/**

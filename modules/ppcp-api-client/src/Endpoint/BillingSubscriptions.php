@@ -66,7 +66,7 @@ class BillingSubscriptions {
 	 */
 	public function suspend( string $id ):void {
 		$data = array(
-			'reason' => 'Cancelled by customer',
+			'reason' => 'Suspended by customer',
 		);
 
 		$bearer = $this->bearer->bearer();
@@ -82,7 +82,7 @@ class BillingSubscriptions {
 
 		$response = $this->request( $url, $args );
 		if ( is_wp_error( $response ) || ! is_array( $response ) ) {
-			throw new RuntimeException( 'Not able to create plan.' );
+			throw new RuntimeException( 'Not able to suspend subscription.' );
 		}
 
 		$json        = json_decode( $response['body'] );
@@ -122,7 +122,38 @@ class BillingSubscriptions {
 
 		$response = $this->request( $url, $args );
 		if ( is_wp_error( $response ) || ! is_array( $response ) ) {
-			throw new RuntimeException( 'Not able to create plan.' );
+			throw new RuntimeException( 'Not able to reactivate subscription.' );
+		}
+
+		$json        = json_decode( $response['body'] );
+		$status_code = (int) wp_remote_retrieve_response_code( $response );
+		if ( 204 !== $status_code ) {
+			throw new PayPalApiException(
+				$json,
+				$status_code
+			);
+		}
+	}
+
+	public function cancel( string $id ) {
+		$data = array(
+			'reason' => 'Cancelled by customer',
+		);
+
+		$bearer = $this->bearer->bearer();
+		$url    = trailingslashit( $this->host ) . 'v1/billing/subscriptions/' . $id . '/cancel';
+		$args   = array(
+			'method'  => 'POST',
+			'headers' => array(
+				'Authorization' => 'Bearer ' . $bearer->token(),
+				'Content-Type'  => 'application/json',
+			),
+			'body'    => wp_json_encode( $data ),
+		);
+
+		$response = $this->request( $url, $args );
+		if ( is_wp_error( $response ) || ! is_array( $response ) ) {
+			throw new RuntimeException( 'Not able to cancel subscription.' );
 		}
 
 		$json        = json_decode( $response['body'] );
