@@ -107,7 +107,7 @@ test.describe.serial('Subscriptions Merchant', () => {
     });
 });
 
-test.describe('Subscriptions Customer', () => {
+test.describe('Subscriber purchase a Subscription', () => {
     test('Purchase Subscription from Checkout Page', async ({page}) => {
         await loginAsCustomer(page);
 
@@ -185,5 +185,37 @@ test.describe('Subscriptions Customer', () => {
 
         const title = page.locator('.entry-title');
         await expect(title).toHaveText('Order received');
+    });
+
+    test('Subscriber Suspend Subscription', async ({page, request}) => {
+        await loginAsCustomer(page);
+        await page.goto('/my-account/subscriptions');
+        await page.locator('text=View').first().click();
+
+        const subscriptionId = await page.locator('#ppcp-subscription-id').textContent();
+        let subscription = await request.get(`https://api.sandbox.paypal.com/v1/billing/subscriptions/${subscriptionId}`, {
+            headers: {
+                'Authorization': AUTHORIZATION,
+                'Content-Type': 'application/json'
+            }
+        });
+        expect(subscription.ok()).toBeTruthy();
+        let details = await subscription.json();
+        await expect(details.status).toBe('ACTIVE');
+
+        await page.locator('text=Suspend').click();
+        const title = page.locator('.woocommerce-message');
+        await expect(title).toHaveText('Your subscription has been cancelled.');
+
+        subscription = await request.get(`https://api.sandbox.paypal.com/v1/billing/subscriptions/${subscriptionId}`, {
+            headers: {
+                'Authorization': AUTHORIZATION,
+                'Content-Type': 'application/json'
+            }
+        });
+        expect(subscription.ok()).toBeTruthy();
+
+        details = await subscription.json();
+        await expect(details.status).toBe('SUSPENDED');
     });
 });

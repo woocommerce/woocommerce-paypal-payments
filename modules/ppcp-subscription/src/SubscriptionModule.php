@@ -281,6 +281,27 @@ class SubscriptionModule implements ModuleInterface {
 				return;
 			}
 		} );
+
+		add_action('woocommerce_subscription_before_actions', function($subscription) {
+			$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
+			if ( $subscription_id) { ?>
+				<tr>
+					<td><?php esc_html_e( 'PayPal Subscription', 'woocommerce-paypal-payments' ); ?></td>
+					<td>
+						<a href="<?php echo esc_url( "https://www.sandbox.paypal.com/myaccount/autopay/connect/{$subscription_id}" ); ?>" id="ppcp-subscription-id" target="_blank"><?php echo esc_html( $subscription_id ); ?></a>
+					</td>
+				</tr>
+			<?php }
+		});
+
+		add_filter( 'wcs_view_subscription_actions', function($actions, $subscription) {
+			$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
+			if ( $subscription_id && $subscription->get_status() === 'active') {
+				$actions['cancel']['name'] = esc_html__('Suspend', 'woocommerce-paypal-payments');
+			}
+
+			return $actions;
+		}, 10, 2);
 	}
 
 	/**
