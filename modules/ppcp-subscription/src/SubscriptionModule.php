@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\Subscription;
 use WC_Product_Subscription;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingSubscriptions;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use Psr\Log\LoggerInterface;
@@ -271,8 +272,10 @@ class SubscriptionModule implements ModuleInterface {
 						$subscription_product = $product->get_meta( 'ppcp_subscription_product' );
 						$subscription_plan    = $product->get_meta( 'ppcp_subscription_plan' );
 						if ( $subscription_product && $subscription_plan ) {
-							echo '<p class="form-field"><label>Product</label><a href="' . esc_url( 'https://www.sandbox.paypal.com/billing/plans/products/' . $subscription_product['id'] ) . '" target="_blank">' . esc_attr( $subscription_product['id'] ) . '</a></p>';
-							echo '<p class="form-field"><label>Plan</label><a href="' . esc_url( 'https://www.sandbox.paypal.com/billing/plans/' . $subscription_plan['id'] ) . '" target="_blank">' . esc_attr( $subscription_plan['id'] ) . '</a></p>';
+							$environment = $c->get('onboarding.environment');
+							$host = $environment->current_environment_is( Environment::SANDBOX ) ? 'https://www.sandbox.paypal.com' : 'https://www.paypal.com';
+							echo '<p class="form-field"><label>Product</label><a href="' . esc_url( $host . '/billing/plans/products/' . $subscription_product['id'] ) . '" target="_blank">' . esc_attr( $subscription_product['id'] ) . '</a></p>';
+							echo '<p class="form-field"><label>Plan</label><a href="' . esc_url( $host . '/billing/plans/' . $subscription_plan['id'] ) . '" target="_blank">' . esc_attr( $subscription_plan['id'] ) . '</a></p>';
 						} else {
 							echo '<p class="form-field"><label for="_ppcp_subscription_plan_name">Plan Name</label><input type="text" class="short" id="ppcp_subscription_plan_name" name="_ppcp_subscription_plan_name" value="' . esc_attr( $subscription_plan_name ) . '"></p>';
 						}
@@ -286,13 +289,16 @@ class SubscriptionModule implements ModuleInterface {
 
 		add_action(
 			'woocommerce_subscription_before_actions',
-			function( $subscription ) {
+			function( $subscription ) use($c) {
 				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
-				if ( $subscription_id ) { ?>
+				if ( $subscription_id ) {
+					$environment = $c->get('onboarding.environment');
+					$host = $environment->current_environment_is( Environment::SANDBOX ) ? 'https://www.sandbox.paypal.com' : 'https://www.paypal.com';
+					?>
 				<tr>
 					<td><?php esc_html_e( 'PayPal Subscription', 'woocommerce-paypal-payments' ); ?></td>
 					<td>
-						<a href="<?php echo esc_url( "https://www.sandbox.paypal.com/myaccount/autopay/connect/{$subscription_id}" ); ?>" id="ppcp-subscription-id" target="_blank"><?php echo esc_html( $subscription_id ); ?></a>
+						<a href="<?php echo esc_url( $host . "/myaccount/autopay/connect/{$subscription_id}" ); ?>" id="ppcp-subscription-id" target="_blank"><?php echo esc_html( $subscription_id ); ?></a>
 					</td>
 				</tr>
 					<?php
