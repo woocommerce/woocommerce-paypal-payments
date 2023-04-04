@@ -165,4 +165,32 @@ class BillingSubscriptions {
 			);
 		}
 	}
+
+	public function subscription(string $id) {
+		$bearer = $this->bearer->bearer();
+		$url    = trailingslashit( $this->host ) . 'v1/billing/subscriptions/' . $id;
+		$args   = array(
+			'headers' => array(
+				'Authorization' => 'Bearer ' . $bearer->token(),
+				'Content-Type'  => 'application/json',
+				'Prefer' => 'return=representation'
+			),
+		);
+
+		$response = $this->request( $url, $args );
+		if ( is_wp_error( $response ) || ! is_array( $response ) ) {
+			throw new RuntimeException( 'Not able to get subscription.' );
+		}
+
+		$json        = json_decode( $response['body'] );
+		$status_code = (int) wp_remote_retrieve_response_code( $response );
+		if ( 200 !== $status_code ) {
+			throw new PayPalApiException(
+				$json,
+				$status_code
+			);
+		}
+
+		return $json;
+	}
 }

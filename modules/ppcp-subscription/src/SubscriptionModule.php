@@ -400,6 +400,64 @@ class SubscriptionModule implements ModuleInterface {
 			20,
 			2
 		);
+
+		add_action(
+			'woocommerce_process_shop_subscription_meta',
+			function( $id, $subscription ) use ( $c ) {
+				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
+				if ( $subscription_id ) {
+					$subscriptions_endpoint = $c->get( 'api.endpoint.billing-subscriptions' );
+					assert( $subscriptions_endpoint instanceof BillingSubscriptions );
+
+					if ( $subscription->get_status() === 'cancelled' ) {
+						try {
+							$subscriptions_endpoint->cancel( $subscription_id );
+						} catch ( RuntimeException $exception ) {
+							$error = $exception->getMessage();
+							if ( is_a( $exception, PayPalApiException::class ) ) {
+								$error = $exception->get_details( $error );
+							}
+
+							$logger = $c->get( 'woocommerce.logger.woocommerce' );
+							$logger->error( 'Could not cancel subscription product on PayPal. ' . $error );
+						}
+					}
+
+					if ( $subscription->get_status() === 'pending-cancel' ) {
+						try {
+							$subscriptions_endpoint->suspend( $subscription_id );
+						} catch ( RuntimeException $exception ) {
+							$error = $exception->getMessage();
+							if ( is_a( $exception, PayPalApiException::class ) ) {
+								$error = $exception->get_details( $error );
+							}
+
+							$logger = $c->get( 'woocommerce.logger.woocommerce' );
+							$logger->error( 'Could not suspend subscription product on PayPal. ' . $error );
+						}
+					}
+
+					if ( $subscription->get_status() === 'active' ) {
+						try {
+							$current_subscription = $subscriptions_endpoint->subscription( $subscription_id );
+							if ( $current_subscription->status === 'SUSPENDED' ) {
+								$subscriptions_endpoint->activate( $subscription_id );
+							}
+						} catch ( RuntimeException $exception ) {
+							$error = $exception->getMessage();
+							if ( is_a( $exception, PayPalApiException::class ) ) {
+								$error = $exception->get_details( $error );
+							}
+
+							$logger = $c->get( 'woocommerce.logger.woocommerce' );
+							$logger->error( 'Could not reactivate subscription product on PayPal. ' . $error );
+						}
+					}
+				}
+			},
+			20,
+			2
+		);
 	}
 
 	/**
