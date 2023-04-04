@@ -272,8 +272,8 @@ class SubscriptionModule implements ModuleInterface {
 						$subscription_product = $product->get_meta( 'ppcp_subscription_product' );
 						$subscription_plan    = $product->get_meta( 'ppcp_subscription_plan' );
 						if ( $subscription_product && $subscription_plan ) {
-							$environment = $c->get('onboarding.environment');
-							$host = $environment->current_environment_is( Environment::SANDBOX ) ? 'https://www.sandbox.paypal.com' : 'https://www.paypal.com';
+							$environment = $c->get( 'onboarding.environment' );
+							$host        = $environment->current_environment_is( Environment::SANDBOX ) ? 'https://www.sandbox.paypal.com' : 'https://www.paypal.com';
 							echo '<p class="form-field"><label>Product</label><a href="' . esc_url( $host . '/billing/plans/products/' . $subscription_product['id'] ) . '" target="_blank">' . esc_attr( $subscription_product['id'] ) . '</a></p>';
 							echo '<p class="form-field"><label>Plan</label><a href="' . esc_url( $host . '/billing/plans/' . $subscription_plan['id'] ) . '" target="_blank">' . esc_attr( $subscription_plan['id'] ) . '</a></p>';
 						} else {
@@ -289,11 +289,11 @@ class SubscriptionModule implements ModuleInterface {
 
 		add_action(
 			'woocommerce_subscription_before_actions',
-			function( $subscription ) use($c) {
+			function( $subscription ) use ( $c ) {
 				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
 				if ( $subscription_id ) {
-					$environment = $c->get('onboarding.environment');
-					$host = $environment->current_environment_is( Environment::SANDBOX ) ? 'https://www.sandbox.paypal.com' : 'https://www.paypal.com';
+					$environment = $c->get( 'onboarding.environment' );
+					$host        = $environment->current_environment_is( Environment::SANDBOX ) ? 'https://www.sandbox.paypal.com' : 'https://www.paypal.com';
 					?>
 				<tr>
 					<td><?php esc_html_e( 'PayPal Subscription', 'woocommerce-paypal-payments' ); ?></td>
@@ -385,6 +385,20 @@ class SubscriptionModule implements ModuleInterface {
 				}
 			},
 			100
+		);
+
+		add_filter(
+			'woocommerce_order_actions',
+			function( $actions, $subscription ) {
+				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
+				if ( $subscription_id && isset( $actions['wcs_process_renewal'] ) ) {
+					unset( $actions['wcs_process_renewal'] );
+				}
+
+				return $actions;
+			},
+			20,
+			2
 		);
 	}
 
