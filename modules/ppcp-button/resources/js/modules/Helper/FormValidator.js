@@ -23,6 +23,10 @@ export default class FormValidator {
         const data = await res.json();
 
         if (!data.success) {
+            if (data.data.refresh) {
+                jQuery( document.body ).trigger( 'update_checkout' );
+            }
+
             if (data.data.errors) {
                 return data.data.errors;
             }
