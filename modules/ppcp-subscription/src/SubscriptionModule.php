@@ -324,11 +324,12 @@ class SubscriptionModule implements ModuleInterface {
 					);
 
 					$actions['cancel']['name'] = esc_html__( 'Suspend', 'woocommerce-paypal-payments' );
+					unset( $actions['subscription_renewal_early'] );
 				}
 
 				return $actions;
 			},
-			10,
+			11,
 			2
 		);
 
