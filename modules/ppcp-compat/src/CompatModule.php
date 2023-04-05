@@ -21,6 +21,7 @@ use WooCommerce\PayPalCommerce\Compat\Assets\CompatAssets;
 use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WP_Theme;
 
 /**
  * Class CompatModule
@@ -57,6 +58,8 @@ class CompatModule implements ModuleInterface {
 
 		$this->migrate_pay_later_settings( $c );
 		$this->migrate_smart_button_settings( $c );
+
+		$this->fix_page_builders();
 	}
 
 	/**
@@ -319,5 +322,50 @@ class CompatModule implements ModuleInterface {
 				update_option( $is_smart_button_settings_migrated_option_name, true );
 			}
 		);
+	}
+
+	/**
+	 * Changes the button rendering place for page builders
+	 * that do not work well with our default places.
+	 *
+	 * @return void
+	 */
+	protected function fix_page_builders(): void {
+		if ( $this->is_elementor_pro_active() || $this->is_divi_theme_active() ) {
+			add_filter(
+				'woocommerce_paypal_payments_single_product_renderer_hook',
+				function(): string {
+					return 'woocommerce_after_add_to_cart_form';
+				},
+				5
+			);
+
+			add_filter(
+				'woocommerce_paypal_payments_checkout_button_renderer_hook',
+				function(): string {
+					return 'woocommerce_review_order_after_submit';
+				},
+				5
+			);
+		}
+	}
+
+	/**
+	 * Checks whether the Elementor Pro plugins (allowing integrations with WC) is active.
+	 *
+	 * @return bool
+	 */
+	protected function is_elementor_pro_active(): bool {
+		return is_plugin_active( 'elementor-pro/elementor-pro.php' );
+	}
+
+	/**
+	 * Checks whether the Divi theme is currently used.
+	 *
+	 * @return bool
+	 */
+	protected function is_divi_theme_active(): bool {
+		$theme = wp_get_theme();
+		return $theme->get( 'Name' ) === 'Divi';
 	}
 }
