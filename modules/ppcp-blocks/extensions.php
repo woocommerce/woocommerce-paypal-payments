@@ -26,9 +26,4 @@ return array(
 		unset( $locations['cart-block'] );
 		return $locations;
 	},
-	'wcgateway.settings.pay-later.button-locations'    => function ( ContainerInterface $container, array $locations ): array {
-		unset( $locations['checkout-block-express'] );
-		unset( $locations['cart-block'] );
-		return $locations;
-	},
 );
