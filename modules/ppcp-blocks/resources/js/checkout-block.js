@@ -1,5 +1,5 @@
 import {useEffect, useState} from '@wordpress/element';
-import {registerExpressPaymentMethod} from '@woocommerce/blocks-registry';
+import {registerExpressPaymentMethod, registerPaymentMethod} from '@woocommerce/blocks-registry';
 import {paypalOrderToWcShippingAddress, paypalPayerToWc} from "./Helper/Address";
 import {loadPaypalScript} from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading'
 
@@ -116,6 +116,17 @@ const PayPalComponent = ({
         }
 
         const unsubscribeProcessing = onPaymentSetup(() => {
+            if (config.scriptData.continuation) {
+                return {
+                    type: responseTypes.SUCCESS,
+                    meta: {
+                        paymentMethodData: {
+                            'paypal_order_id': config.scriptData.continuation.order_id,
+                        },
+                    },
+                };
+            }
+
             const shippingAddress = paypalOrderToWcShippingAddress(paypalOrder);
             let billingAddress = paypalPayerToWc(paypalOrder.payer);
             // no billing address, such as if billing address retrieval is not allowed in the merchant account
@@ -139,6 +150,14 @@ const PayPalComponent = ({
         };
     }, [onPaymentSetup, paypalOrder, activePaymentMethod]);
 
+    if (config.scriptData.continuation) {
+        return (
+            <div dangerouslySetInnerHTML={{__html: config.scriptData.continuation.cancel.html}}>
+
+            </div>
+        )
+    }
+
     if (!loaded) {
         return null;
     }
@@ -157,7 +176,14 @@ const PayPalComponent = ({
     );
 }
 
-registerExpressPaymentMethod({
+const features = ['products'];
+let registerMethod = registerExpressPaymentMethod;
+if (config.scriptData.continuation) {
+    features.push('ppcp_continuation');
+    registerMethod = registerPaymentMethod;
+}
+
+registerMethod({
     name: config.id,
     label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
     content: <PayPalComponent/>,
@@ -165,6 +191,6 @@ registerExpressPaymentMethod({
     ariaLabel: config.title,
     canMakePayment: () => config.enabled,
     supports: {
-        features: ['products'],
+        features: features,
     },
 });

@@ -927,6 +927,15 @@ class SmartButton implements SmartButtonInterface {
 			$localize['button']['style']['tagline'] = false;
 		}
 
+		if ( $this->is_paypal_continuation() ) {
+			$order = $this->session_handler->order();
+			assert( $order !== null );
+
+			$localize['continuation'] = array(
+				'order_id' => $order->id(),
+			);
+		}
+
 		$this->request_data->dequeue_nonce_fix();
 		return $localize;
 	}

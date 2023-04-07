@@ -11,6 +11,9 @@ namespace WooCommerce\PayPalCommerce\Blocks;
 
 use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
+use WooCommerce\PayPalCommerce\Session\Cancellation\CancelController;
+use WooCommerce\PayPalCommerce\Session\Cancellation\CancelView;
+use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
@@ -62,6 +65,20 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 	private $gateway;
 
 	/**
+	 * The cancellation view.
+	 *
+	 * @var CancelView
+	 */
+	private $cancellation_view;
+
+	/**
+	 * The Session handler.
+	 *
+	 * @var SessionHandler
+	 */
+	private $session_handler;
+
+	/**
 	 * Assets constructor.
 	 *
 	 * @param string               $module_url The url of this module.
@@ -70,6 +87,8 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 	 * @param Settings             $plugin_settings The settings.
 	 * @param SettingsStatus       $settings_status The Settings status helper.
 	 * @param PayPalGateway        $gateway The WC gateway.
+	 * @param CancelView           $cancellation_view The cancellation view.
+	 * @param SessionHandler       $session_handler The Session handler.
 	 */
 	public function __construct(
 		string $module_url,
@@ -77,15 +96,19 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 		SmartButtonInterface $smart_button,
 		Settings $plugin_settings,
 		SettingsStatus $settings_status,
-		PayPalGateway $gateway
+		PayPalGateway $gateway,
+		CancelView $cancellation_view,
+		SessionHandler $session_handler
 	) {
-		$this->name            = PayPalGateway::ID;
-		$this->module_url      = $module_url;
-		$this->version         = $version;
-		$this->smart_button    = $smart_button;
-		$this->plugin_settings = $plugin_settings;
-		$this->settings_status = $settings_status;
-		$this->gateway         = $gateway;
+		$this->name              = PayPalGateway::ID;
+		$this->module_url        = $module_url;
+		$this->version           = $version;
+		$this->smart_button      = $smart_button;
+		$this->plugin_settings   = $plugin_settings;
+		$this->settings_status   = $settings_status;
+		$this->gateway           = $gateway;
+		$this->cancellation_view = $cancellation_view;
+		$this->session_handler   = $session_handler;
 	}
 
 	/**
@@ -125,6 +148,14 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 	 */
 	public function get_payment_method_data() {
 		$script_data = $this->smart_button->script_data();
+
+		if ( isset( $script_data['continuation'] ) ) {
+			$url = add_query_arg( array( CancelController::NONCE => wp_create_nonce( CancelController::NONCE ) ), wc_get_checkout_url() );
+
+			$script_data['continuation']['cancel'] = array(
+				'html' => $this->cancellation_view->render_session_cancellation( $url, $this->session_handler->funding_source() ),
+			);
+		}
 
 		return array(
 			'id'          => $this->gateway->id,

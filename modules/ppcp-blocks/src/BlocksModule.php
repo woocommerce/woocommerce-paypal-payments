@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Blocks;
 
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
+use WooCommerce\PayPalCommerce\Button\Assets\SmartButton;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
@@ -39,6 +40,21 @@ class BlocksModule implements ModuleInterface {
 				function( PaymentMethodRegistry $payment_method_registry ) use ( $c ): void {
 					$payment_method_registry->register( $c->get( 'blocks.method' ) );
 				}
+			);
+
+			woocommerce_store_api_register_payment_requirements(
+				array(
+					'data_callback' => function() use ( $c ): array {
+						$smart_button = $c->get( 'button.smart-button' );
+						assert( $smart_button instanceof SmartButton );
+
+						if ( isset( $smart_button->script_data()['continuation'] ) ) {
+							return array( 'ppcp_continuation' );
+						}
+
+						return array();
+					},
+				)
 			);
 		}
 	}

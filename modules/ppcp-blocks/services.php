@@ -30,7 +30,9 @@ return array(
 			$container->get( 'button.smart-button' ),
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'wcgateway.settings.status' ),
-			$container->get( 'wcgateway.paypal-gateway' )
+			$container->get( 'wcgateway.paypal-gateway' ),
+			$container->get( 'session.cancellation.view' ),
+			$container->get( 'session.handler' )
 		);
 	},
 );
