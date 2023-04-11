@@ -342,6 +342,10 @@ class SubscriptionModule implements ModuleInterface {
 		add_action(
 			'wp_loaded',
 			function() use ( $c ) {
+				if(! function_exists('wcs_get_subscription')) {
+					return;
+				}
+
 				$cancel_subscription_id = wc_clean( wp_unslash( $_GET['ppcp_cancel_subscription'] ?? '' ) );
 				$subscription           = wcs_get_subscription( absint( $cancel_subscription_id ) );
 				if ( ! wcs_is_subscription( $subscription ) ) {
