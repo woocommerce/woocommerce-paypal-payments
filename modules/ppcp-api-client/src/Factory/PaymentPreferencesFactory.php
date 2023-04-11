@@ -15,16 +15,44 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentPreferences;
 
 class PaymentPreferencesFactory {
 
-	public function from_wc_product(WC_Product $product):PaymentPreferences {
+	/**
+	 * The currency.
+	 *
+	 * @var string
+	 */
+	private $currency;
+
+	/**
+	 * PaymentPreferencesFactory constructor.
+	 *
+	 * @param string $currency The currency.
+	 */
+	public function __construct( string $currency ) {
+		$this->currency = $currency;
+	}
+
+	/**
+	 * Returns a PaymentPreferences object from the given WC product.
+	 *
+	 * @param WC_Product $product WC product.
+	 * @return PaymentPreferences
+	 */
+	public function from_wc_product( WC_Product $product ):PaymentPreferences {
 		return new PaymentPreferences(
 			array(
 				'value'         => $product->get_meta( '_subscription_sign_up_fee' ) ?: '0',
-				'currency_code' => 'USD',
+				'currency_code' => $this->currency,
 			)
 		);
 	}
 
-	public function from_paypal_response(stdClass $data) {
+	/**
+	 * Returns a PaymentPreferences object based off a PayPal response.
+	 *
+	 * @param stdClass $data The data.
+	 * @return PaymentPreferences
+	 */
+	public function from_paypal_response( stdClass $data ) {
 		return new PaymentPreferences(
 			array(
 				'value'         => $data->setup_fee->value,

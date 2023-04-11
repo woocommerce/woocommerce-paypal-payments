@@ -220,7 +220,7 @@ return array(
 		return new CatalogProducts(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
-			$container->get('api.factory.product'),
+			$container->get( 'api.factory.product' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
@@ -228,8 +228,8 @@ return array(
 		return new BillingPlans(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
-			$container->get('api.factory.billing-cycle'),
-			$container->get('api.factory.plan'),
+			$container->get( 'api.factory.billing-cycle' ),
+			$container->get( 'api.factory.plan' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
@@ -388,19 +388,19 @@ return array(
 	'api.factory.fraud-processor-response'      => static function ( ContainerInterface $container ): FraudProcessorResponseFactory {
 		return new FraudProcessorResponseFactory();
 	},
-	'api.factory.product' => static function(ContainerInterface $container): ProductFactory {
+	'api.factory.product'                       => static function( ContainerInterface $container ): ProductFactory {
 		return new ProductFactory();
 	},
-	'api.factory.billing-cycle' => static function(ContainerInterface $container): BillingCycleFactory {
-		return new BillingCycleFactory();
+	'api.factory.billing-cycle'                 => static function( ContainerInterface $container ): BillingCycleFactory {
+		return new BillingCycleFactory( $container->get( 'api.shop.currency' ) );
 	},
-	'api.factory.payment-preferences' => static function(ContainerInterface $container):PaymentPreferencesFactory {
-		return new PaymentPreferencesFactory();
+	'api.factory.payment-preferences'           => static function( ContainerInterface $container ):PaymentPreferencesFactory {
+		return new PaymentPreferencesFactory( $container->get( 'api.shop.currency' ) );
 	},
-	'api.factory.plan' => static function(ContainerInterface $container): PlanFactory {
+	'api.factory.plan'                          => static function( ContainerInterface $container ): PlanFactory {
 		return new PlanFactory(
-			$container->get('api.factory.billing-cycle'),
-			$container->get('api.factory.payment-preferences')
+			$container->get( 'api.factory.billing-cycle' ),
+			$container->get( 'api.factory.payment-preferences' )
 		);
 	},
 	'api.helpers.dccapplies'                    => static function ( ContainerInterface $container ) : DccApplies {
