@@ -288,12 +288,15 @@ class CreateOrderEndpoint implements EndpointInterface {
 			return true;
 
 		} catch ( ValidationException $error ) {
-			wp_send_json_error(
-				array(
-					'message' => $error->getMessage(),
-					'errors'  => $error->errors(),
-				)
+			$response = array(
+				'message' => $error->getMessage(),
+				'errors'  => $error->errors(),
+				'refresh' => isset( WC()->session->refresh_totals ),
 			);
+
+			unset( WC()->session->refresh_totals );
+
+			wp_send_json_error( $response );
 		} catch ( \RuntimeException $error ) {
 			$this->logger->error( 'Order creation failed: ' . $error->getMessage() );
 
