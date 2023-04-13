@@ -18,13 +18,13 @@ use WooCommerce\PayPalCommerce\Webhooks\Endpoint\ResubscribeEndpoint;
 use WooCommerce\PayPalCommerce\Webhooks\Endpoint\SimulateEndpoint;
 use WooCommerce\PayPalCommerce\Webhooks\Endpoint\SimulationStateEndpoint;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\BillingPlanPricingChangeActivated;
+use WooCommerce\PayPalCommerce\Webhooks\Handler\BillingPlanUpdated;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\BillingSubscriptionCancelled;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\CatalogProductUpdated;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\CheckoutOrderApproved;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\CheckoutOrderCompleted;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\CheckoutPaymentApprovalReversed;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureCompleted;
-use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureDenied;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCapturePending;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureRefunded;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureReversed;
@@ -93,6 +93,7 @@ return array(
 			new BillingSubscriptionCancelled( $logger ),
 			new BillingPlanPricingChangeActivated( $logger ),
 			new CatalogProductUpdated($logger),
+			new BillingPlanUpdated($logger),
 		);
 	},
 
