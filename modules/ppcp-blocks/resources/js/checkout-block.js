@@ -108,7 +108,12 @@ const PayPalComponent = ({
                 shipping_address: shippingAddress,
             });
 
-            location.href = config.scriptData.redirect;
+            const checkoutUrl = new URL(config.scriptData.redirect);
+            // sometimes some browsers may load some kind of cached version of the page,
+            // so adding a parameter to avoid that
+            checkoutUrl.searchParams.append('ppcp-continuation-redirect', (new Date()).getTime().toString());
+
+            location.href = checkoutUrl.toString();
         } catch (err) {
             console.error(err);
 

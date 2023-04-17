@@ -141,3 +141,16 @@ test('PayPal express block', async ({page}) => {
 
     await completeBlockContinuation(page);
 });
+
+test('PayPal express block cart', async ({page}) => {
+
+    await page.goto('/cart-block?add-to-cart=' + PRODUCT_ID)
+
+    const popup = await openPaypalPopup(page);
+
+    await loginIntoPaypal(popup);
+
+    await popup.locator('#payment-submit-btn').click();
+
+    await completeBlockContinuation(page);
+});
