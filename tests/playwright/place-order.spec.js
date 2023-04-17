@@ -52,6 +52,11 @@ async function loginIntoPaypal(popup) {
     await popup.locator('#btnLogin').click();
 }
 
+async function expectOrderReceivedPage(page) {
+    const title = await page.locator('.entry-title');
+    await expect(title).toHaveText('Order received');
+}
+
 test('PayPal button place order from Product page', async ({page}) => {
 
     await page.goto(PRODUCT_URL);
@@ -69,8 +74,7 @@ test('PayPal button place order from Product page', async ({page}) => {
         page.locator('#place_order').click(),
     ]);
 
-    const title = await page.locator('.entry-title');
-    await expect(title).toHaveText('Order received');
+    await expectOrderReceivedPage(page);
 });
 
 test('Advanced Credit and Debit Card (ACDC) place order from Checkout page', async ({page}) => {
@@ -97,8 +101,7 @@ test('Advanced Credit and Debit Card (ACDC) place order from Checkout page', asy
         page.locator('.ppcp-dcc-order-button').click(),
     ]);
 
-    const title = await page.locator('.entry-title');
-    await expect(title).toHaveText('Order received');
+    await expectOrderReceivedPage(page);
 });
 
 test('PayPal express block', async ({page}) => {
