@@ -31,17 +31,24 @@ async function fillCheckoutForm(page) {
     }
 }
 
-async function openPaypalPopup(page) {
-    await page.locator('.component-frame').scrollIntoViewIfNeeded();
+async function openPaypalPopup(page, retry = true) {
+    try {
+        await page.locator('.component-frame').scrollIntoViewIfNeeded();
 
-    const [popup] = await Promise.all([
-        page.waitForEvent('popup'),
-        page.frameLocator('.component-frame').locator('[data-funding-source="paypal"]').click(),
-    ]);
+        const [popup] = await Promise.all([
+            page.waitForEvent('popup', {timeout: 5000}),
+            page.frameLocator('.component-frame').locator('[data-funding-source="paypal"]').click(),
+        ]);
 
-    await popup.waitForLoadState();
+        await popup.waitForLoadState();
 
-    return popup;
+        return popup;
+    } catch (err) {
+        if (retry) {
+            return openPaypalPopup(page, false);
+        }
+        throw err;
+    }
 }
 
 async function loginIntoPaypal(popup) {
