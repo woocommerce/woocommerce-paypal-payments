@@ -17,33 +17,32 @@ trait ContextTrait {
 	 * @return string
 	 */
 	protected function context(): string {
-		$context = 'mini-cart';
 		if ( is_product() || wc_post_content_has_shortcode( 'product_page' ) ) {
-			$context = 'product';
+			return 'product';
 		}
 
 		// has_block may not work if called too early, such as during the block registration.
 		if ( has_block( 'woocommerce/cart' ) ) {
-			$context = 'cart-block';
+			return 'cart-block';
 		}
 
 		if ( is_cart() ) {
-			$context = 'cart';
+			return 'cart';
 		}
 
 		if ( has_block( 'woocommerce/checkout' ) ) {
-			$context = 'checkout-block';
+			return 'checkout-block';
 		}
 
 		if ( ( is_checkout() ) && ! $this->is_paypal_continuation() ) {
-			$context = 'checkout';
+			return 'checkout';
 		}
 
 		if ( is_checkout_pay_page() ) {
-			$context = 'pay-now';
+			return 'pay-now';
 		}
 
-		return $context;
+		return 'mini-cart';
 	}
 
 	/**
