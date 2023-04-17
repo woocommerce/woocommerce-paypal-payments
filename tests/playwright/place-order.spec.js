@@ -45,7 +45,11 @@ async function openPaypalPopup(page) {
 }
 
 async function loginIntoPaypal(popup) {
-    await popup.click("text=Log in");
+    await Promise.any([
+        popup.locator('[name="login_email"]'),
+        popup.click("text=Log in"),
+    ]);
+
     await popup.fill('[name="login_email"]', CUSTOMER_EMAIL);
     await popup.locator('#btnNext').click();
     await popup.fill('[name="login_password"]', CUSTOMER_PASSWORD);
