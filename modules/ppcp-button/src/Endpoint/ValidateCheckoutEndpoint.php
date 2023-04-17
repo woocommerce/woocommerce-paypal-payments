@@ -86,12 +86,15 @@ class ValidateCheckoutEndpoint implements EndpointInterface {
 
 			return true;
 		} catch ( ValidationException $exception ) {
-			wp_send_json_error(
-				array(
-					'message' => $exception->getMessage(),
-					'errors'  => $exception->errors(),
-				)
+			$response = array(
+				'message' => $exception->getMessage(),
+				'errors'  => $exception->errors(),
+				'refresh' => isset( WC()->session->refresh_totals ),
 			);
+
+			unset( WC()->session->refresh_totals );
+
+			wp_send_json_error( $response );
 			return false;
 		} catch ( Throwable $error ) {
 			$this->logger->error( "Form validation execution failed. {$error->getMessage()} {$error->getFile()}:{$error->getLine()}" );

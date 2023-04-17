@@ -5,6 +5,9 @@ const onApprove = (context, errorHandler, spinner) => {
 
         return fetch(context.config.ajax.approve_order.endpoint, {
             method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
             credentials: 'same-origin',
             body: JSON.stringify({
                 nonce: context.config.ajax.approve_order.nonce,

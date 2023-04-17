@@ -66,6 +66,9 @@ class SingleProductActionHandler {
                     this.config.bn_codes[this.config.context] : '';
                 return fetch(this.config.ajax.create_order.endpoint, {
                     method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
                     credentials: 'same-origin',
                     body: JSON.stringify({
                         nonce: this.config.ajax.create_order.nonce,

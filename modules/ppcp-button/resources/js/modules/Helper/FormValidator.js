@@ -10,6 +10,9 @@ export default class FormValidator {
 
         const res = await fetch(this.url, {
             method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
             credentials: 'same-origin',
             body: JSON.stringify({
                 nonce: this.nonce,
@@ -20,6 +23,10 @@ export default class FormValidator {
         const data = await res.json();
 
         if (!data.success) {
+            if (data.data.refresh) {
+                jQuery( document.body ).trigger( 'update_checkout' );
+            }
+
             if (data.data.errors) {
                 return data.data.errors;
             }

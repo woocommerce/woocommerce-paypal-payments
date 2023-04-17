@@ -1,10 +1,11 @@
 *** Changelog ***
 
-= 2.0.4 - TBD =
+= 2.0.4 - 2023-04-03 =
 * Fix - Allow Pay Later in mini-cart #1221
 * Fix - Duplicated auth error when credentials become wrong #1229
 * Fix - Webhook issues when switching sandbox, and delete all webhooks when unsubscribing #1239
 * Fix - High volume of traffic from merchant-integrations endpoint #1273
+* Fix - Add content type json to all fetch ajax endpoints #1275
 * Enhancement - Remove shortcodes from description #1226
 * Enhancement - Handle price suffix with price for product button check #1234
 * Enhancement - Show funding source as payment method #1220

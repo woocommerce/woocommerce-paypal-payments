@@ -32,6 +32,9 @@ class CheckoutActionHandler {
 
             return fetch(this.config.ajax.create_order.endpoint, {
                 method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 credentials: 'same-origin',
                 body: JSON.stringify({
                     nonce: this.config.ajax.create_order.nonce,
@@ -59,6 +62,11 @@ class CheckoutActionHandler {
                         );
                     } else {
                         errorHandler.clear();
+
+                        if (data.data.refresh) {
+                            jQuery( document.body ).trigger( 'update_checkout' );
+                        }
+
                         if (data.data.errors?.length > 0) {
                             errorHandler.messages(data.data.errors);
                         } else if (data.data.details?.length > 0) {
