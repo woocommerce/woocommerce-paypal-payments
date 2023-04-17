@@ -90,6 +90,11 @@ class CheckoutActionHandler {
                         );
                     } else {
                         errorHandler.clear();
+
+                        if (data.data.refresh) {
+                            jQuery( document.body ).trigger( 'update_checkout' );
+                        }
+
                         if (data.data.errors?.length > 0) {
                             errorHandler.messages(data.data.errors);
                         } else if (data.data.details?.length > 0) {
