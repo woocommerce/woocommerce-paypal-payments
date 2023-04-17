@@ -382,7 +382,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 			$funding_source
 		);
 
-		$action = in_array( $this->parsed_request_data['context'], array( 'checkout', 'express' ), true ) ?
+		$action = in_array( $this->parsed_request_data['context'], array( 'checkout' ), true ) ?
 			ApplicationContext::USER_ACTION_PAY_NOW : ApplicationContext::USER_ACTION_CONTINUE;
 
 		if ( 'card' === $funding_source ) {

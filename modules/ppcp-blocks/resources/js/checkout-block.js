@@ -92,9 +92,23 @@ const PayPalComponent = ({
                 throw new Error(config.scriptData.labels.error.generic)
             }
 
-            setPaypalOrder(json.data);
+            const order = json.data;
 
-            onSubmit();
+            setPaypalOrder(order);
+
+            const shippingAddress = paypalOrderToWcShippingAddress(order);
+            let billingAddress = paypalPayerToWc(order.payer);
+            // no billing address, such as if billing address retrieval is not allowed in the merchant account
+            if (!billingAddress.address_line_1) {
+                billingAddress = {...shippingAddress, ...paypalPayerToWc(order.payer)};
+            }
+
+            await wp.data.dispatch('wc/store/cart').updateCustomerData({
+                billing_address: billingAddress,
+                shipping_address: shippingAddress,
+            });
+
+            location.href = config.scriptData.redirect;
         } catch (err) {
             console.error(err);
 
@@ -126,24 +140,6 @@ const PayPalComponent = ({
                     },
                 };
             }
-
-            const shippingAddress = paypalOrderToWcShippingAddress(paypalOrder);
-            let billingAddress = paypalPayerToWc(paypalOrder.payer);
-            // no billing address, such as if billing address retrieval is not allowed in the merchant account
-            if (!billingAddress.address_line_1) {
-                billingAddress = {...shippingAddress, ...paypalPayerToWc(paypalOrder.payer)};
-            }
-
-            return {
-                type: responseTypes.SUCCESS,
-                meta: {
-                    paymentMethodData: {
-                        'paypal_order_id': paypalOrder.id,
-                    },
-                    shippingAddress,
-                    billingAddress,
-                },
-            };
         });
         return () => {
             unsubscribeProcessing();

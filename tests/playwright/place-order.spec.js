@@ -68,6 +68,18 @@ async function expectOrderReceivedPage(page) {
     await expect(title).toHaveText('Order received');
 }
 
+async function completeBlockContinuation(page) {
+    await expect(page.locator('#radio-control-wc-payment-method-options-ppcp-gateway')).toBeChecked();
+
+    await expect(page.locator('.component-frame')).toHaveCount(0);
+
+    await page.locator('.wc-block-components-checkout-place-order-button').click();
+
+    await page.waitForNavigation();
+
+    await expectOrderReceivedPage(page);
+}
+
 test('PayPal button place order from Product page', async ({page}) => {
 
     await page.goto(PRODUCT_URL);
@@ -127,8 +139,5 @@ test('PayPal express block', async ({page}) => {
 
     await popup.locator('#payment-submit-btn').click();
 
-    await page.waitForNavigation();
-
-    const title = await page.locator('.entry-title');
-    await expect(title).toHaveText('Order received');
+    await completeBlockContinuation(page);
 });

@@ -960,6 +960,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @return array
 	 */
 	private function url_params(): array {
+		$context              = $this->context();
 		$intent               = ( $this->settings->has( 'intent' ) ) ? $this->settings->get( 'intent' ) : 'capture';
 		$product_intent       = $this->subscription_helper->current_product_is_subscription() ? 'authorize' : $intent;
 		$other_context_intent = $this->subscription_helper->cart_contains_subscription() ? 'authorize' : $intent;
@@ -970,8 +971,8 @@ class SmartButton implements SmartButtonInterface {
 			'integration-date' => PAYPAL_INTEGRATION_DATE,
 			'components'       => implode( ',', $this->components() ),
 			'vault'            => $this->can_save_vault_token() ? 'true' : 'false',
-			'commit'           => is_checkout() ? 'true' : 'false',
-			'intent'           => $this->context() === 'product' ? $product_intent : $other_context_intent,
+			'commit'           => in_array( $context, array( 'checkout', 'pay-now' ), true ) ? 'true' : 'false',
+			'intent'           => $context === 'product' ? $product_intent : $other_context_intent,
 		);
 		if (
 			$this->environment->current_environment_is( Environment::SANDBOX )
@@ -1012,8 +1013,8 @@ class SmartButton implements SmartButtonInterface {
 
 		$enable_funding = array( 'venmo' );
 
-		if ( $this->settings_status->is_pay_later_button_enabled_for_location( $this->context() ) ||
-			$this->settings_status->is_pay_later_messaging_enabled_for_location( $this->context() )
+		if ( $this->settings_status->is_pay_later_button_enabled_for_location( $context ) ||
+			$this->settings_status->is_pay_later_messaging_enabled_for_location( $context )
 		) {
 			$enable_funding[] = 'paylater';
 		} else {
