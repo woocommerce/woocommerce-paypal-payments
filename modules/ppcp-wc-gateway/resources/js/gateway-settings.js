@@ -19,6 +19,17 @@ import {setVisibleByClass, isVisible} from "../../../ppcp-button/resources/js/mo
 
         const form = jQuery('#mainform');
 
+        const noReviewChk = document.querySelector('#ppcp-blocks_no_final_review');
+        if (noReviewChk) {
+            noReviewChk.addEventListener('click', (e) => {
+                if (!noReviewChk.checked) {
+                    if (!window.confirm('Are you sure you want to disable the final review on the Checkout page for Block Express payments?')) {
+                        noReviewChk.checked = true;
+                    }
+                }
+            });
+        }
+
         const payLaterButtonInput = document.querySelector('#ppcp-pay_later_button_enabled');
 
         if (payLaterButtonInput) {
