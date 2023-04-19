@@ -173,7 +173,7 @@ class SettingsListener {
 		}
 
 		$nonce = wc_clean( wp_unslash( $_GET['ppcp-return-url-nonce'] ?? '' ) );
-		if ( ! $nonce || ! wp_verify_nonce( $nonce, 'ppcp-return-url' ) ) {
+		if ( ! $nonce || ! is_string($nonce) || ! wp_verify_nonce( $nonce, 'ppcp-return-url' ) ) {
 			return;
 		}
 
