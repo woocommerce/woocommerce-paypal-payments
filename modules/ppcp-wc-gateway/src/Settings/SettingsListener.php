@@ -168,23 +168,20 @@ class SettingsListener {
 	 * Listens if the merchant ID should be updated.
 	 */
 	public function listen_for_merchant_id() {
-
 		if ( ! $this->is_valid_site_request() ) {
 			return;
 		}
 
-		/**
-		 * No nonce provided.
-		 * phpcs:disable WordPress.Security.NonceVerification.Missing
-		 * phpcs:disable WordPress.Security.NonceVerification.Recommended
-		 */
+		$nonce = wc_clean( wp_unslash( $_GET['ppcp-return-url-nonce'] ?? '' ) );
+		if ( ! $nonce || ! wp_verify_nonce( $nonce, 'ppcp-return-url' ) ) {
+			return;
+		}
+
 		if ( ! isset( $_GET['merchantIdInPayPal'] ) || ! isset( $_GET['merchantId'] ) ) {
 			return;
 		}
 		$merchant_id    = sanitize_text_field( wp_unslash( $_GET['merchantIdInPayPal'] ) );
 		$merchant_email = sanitize_text_field( wp_unslash( $_GET['merchantId'] ) );
-		// phpcs:enable WordPress.Security.NonceVerification.Missing
-		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		$this->settings->set( 'merchant_id', $merchant_id );
 		$this->settings->set( 'merchant_email', $merchant_email );

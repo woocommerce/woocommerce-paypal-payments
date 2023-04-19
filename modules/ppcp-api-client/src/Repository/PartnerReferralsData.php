@@ -84,7 +84,7 @@ class PartnerReferralsData {
 					 */
 					'return_url'             => apply_filters(
 						'woocommerce_paypal_payments_partner_config_override_return_url',
-						admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' )
+						add_query_arg( 'ppcp-return-url-nonce', wp_create_nonce( 'ppcp-return-url' ), admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ) )
 					),
 					/**
 					 * Returns the description of the URL which will be opened at the end of onboarding.
