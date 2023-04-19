@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway;
 
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingAgreementsEndpoint;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
@@ -387,8 +388,6 @@ return array(
 		$state = $container->get( 'onboarding.state' );
 		assert( $state instanceof State );
 
-		$messages_disclaimers = $container->get( 'button.helper.messages-disclaimers' );
-
 		$dcc_applies = $container->get( 'api.helpers.dccapplies' );
 		assert( $dcc_applies instanceof DccApplies );
 
@@ -498,7 +497,7 @@ return array(
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
-			'capture_on_status_change'               => array(
+			'capture_on_status_change'  => array(
 				'title'        => __( 'Capture On Status Change', 'woocommerce-paypal-payments' ),
 				'type'         => 'checkbox',
 				'default'      => false,
@@ -515,7 +514,7 @@ return array(
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
-			'capture_for_virtual_only'               => array(
+			'capture_for_virtual_only'  => array(
 				'title'        => __( 'Capture Virtual-Only Orders ', 'woocommerce-paypal-payments' ),
 				'type'         => 'checkbox',
 				'default'      => false,
@@ -532,7 +531,7 @@ return array(
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
-			'payee_preferred'                        => array(
+			'payee_preferred'           => array(
 				'title'        => __( 'Instant Payments ', 'woocommerce-paypal-payments' ),
 				'type'         => 'checkbox',
 				'default'      => false,
@@ -760,9 +759,9 @@ return array(
 				),
 				'gateway'      => 'dcc',
 			),
-			'paypal_saved_payments' => array(
+			'paypal_saved_payments'     => array(
 				'heading'      => __( 'Saved payments', 'woocommerce-paypal-payments' ),
-				'description' => __('PayPal can save your customers’ payment methods.', 'woocommerce-paypal-payments'),
+				'description'  => __( 'PayPal can save your customers’ payment methods.', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-heading',
 				'screens'      => array(
 					State::STATE_START,
@@ -771,7 +770,7 @@ return array(
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
-			'subscriptions_mode'                            => array(
+			'subscriptions_mode'        => array(
 				'title'        => __( 'Subscriptions Mode', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
 				'class'        => array(),
@@ -795,10 +794,10 @@ return array(
 				'desc_tip'     => true,
 				'label'        => sprintf(
 					// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
-						__( 'The %1$sPayPal Vault%2$s feature allows registered buyers to connect their PayPal accounts for faster, easier subsequent checkouts with a single click.', 'woocommerce-paypal-payments' ),
-						'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#vaulting-saving-a-payment-method" target="_blank">',
-						'</a>'
-					) . $container->get( 'button.helper.vaulting-label' ),
+					__( 'The %1$sPayPal Vault%2$s feature allows registered buyers to connect their PayPal accounts for faster, easier subsequent checkouts with a single click.', 'woocommerce-paypal-payments' ),
+					'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#vaulting-saving-a-payment-method" target="_blank">',
+					'</a>'
+				) . $container->get( 'button.helper.vaulting-label' ),
 				'description'  => __( 'Allow registered buyers to save PayPal payments.', 'woocommerce-paypal-payments' ),
 				'default'      => false,
 				'screens'      => array(
@@ -828,6 +827,16 @@ return array(
 				'input_class'  => $container->get( 'wcgateway.helper.vaulting-scope' ) ? array() : array( 'ppcp-disabled-checkbox' ),
 			),
 		);
+
+		if ( ! $subscription_helper->plugin_is_active() ) {
+			unset( $fields['subscriptions_mode'] );
+		}
+
+		$billing_agreements_endpoint = $container->get( 'api.endpoint.billing-agreements' );
+		if ( ! $billing_agreements_endpoint->reference_transaction_enabled() ) {
+			unset( $fields['vault_enabled'] );
+			unset( $fields['vault_enabled_dcc'] );
+		}
 
 		/**
 		 * Depending on your store location, some credit cards can't be used.
