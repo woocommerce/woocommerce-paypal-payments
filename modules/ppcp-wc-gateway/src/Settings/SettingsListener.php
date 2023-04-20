@@ -172,11 +172,6 @@ class SettingsListener {
 			return;
 		}
 
-		$nonce = wc_clean( wp_unslash( $_GET['ppcp-return-url-nonce'] ?? '' ) );
-		if ( ! $nonce || ! is_string($nonce) || ! wp_verify_nonce( $nonce, 'ppcp-return-url' ) ) {
-			return;
-		}
-
 		if ( ! isset( $_GET['merchantIdInPayPal'] ) || ! isset( $_GET['merchantId'] ) ) {
 			return;
 		}
