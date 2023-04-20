@@ -23,6 +23,7 @@ class ModularTestCase extends TestCase
         when('admin_url')->returnArg();
         when('plugins_url')->returnArg();
         when('plugin_dir_path')->alias(function ($file) { return trailingslashit(dirname($file)); });
+		when('is_plugin_active')->justReturn(true);
         when('get_current_blog_id')->justReturn(42);
         when('get_site_url')->justReturn('example.com');
         when('get_bloginfo')->justReturn('My Shop');
