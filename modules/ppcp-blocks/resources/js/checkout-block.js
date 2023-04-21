@@ -5,6 +5,8 @@ import {loadPaypalScript} from '../../../ppcp-button/resources/js/modules/Helper
 
 const config = wc.wcSettings.getSetting('ppcp-gateway_data');
 
+window.ppcpFundingSource = config.fundingSource;
+
 const PayPalComponent = ({
                              onClick,
                              onClose,
@@ -39,7 +41,6 @@ const PayPalComponent = ({
                     context: 'express',
                     order_id: config.scriptData.order_id,
                     payment_method: 'ppcp-gateway',
-                    funding_source: 'paypal',
                     createaccount: false
                 }),
             });
@@ -75,7 +76,7 @@ const PayPalComponent = ({
                 body: JSON.stringify({
                     nonce: config.scriptData.ajax.approve_order.nonce,
                     order_id: data.orderID,
-                    //funding_source: ,
+                    funding_source: window.ppcpFundingSource ?? 'paypal',
                 })
             });
 
@@ -125,7 +126,9 @@ const PayPalComponent = ({
         }
     };
 
-    const handleClick = () => {
+    const handleClick = (data, actions) => {
+        window.ppcpFundingSource = data.fundingSource;
+
         onClick();
     };
 
@@ -141,6 +144,7 @@ const PayPalComponent = ({
                     meta: {
                         paymentMethodData: {
                             'paypal_order_id': config.scriptData.continuation.order_id,
+                            'funding_source': window.ppcpFundingSource ?? 'paypal',
                         },
                     },
                 };

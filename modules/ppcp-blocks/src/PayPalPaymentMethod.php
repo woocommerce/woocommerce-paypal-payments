@@ -158,11 +158,12 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 		}
 
 		return array(
-			'id'          => $this->gateway->id,
-			'title'       => $this->gateway->title,
-			'description' => $this->gateway->description,
-			'enabled'     => $this->settings_status->is_smart_button_enabled_for_location( $script_data['context'] ),
-			'scriptData'  => $script_data,
+			'id'            => $this->gateway->id,
+			'title'         => $this->gateway->title,
+			'description'   => $this->gateway->description,
+			'enabled'       => $this->settings_status->is_smart_button_enabled_for_location( $script_data['context'] ),
+			'fundingSource' => $this->session_handler->funding_source(),
+			'scriptData'    => $script_data,
 		);
 	}
 }
