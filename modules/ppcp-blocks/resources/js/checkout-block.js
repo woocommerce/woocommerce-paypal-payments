@@ -38,8 +38,7 @@ const PayPalComponent = ({
                 body: JSON.stringify({
                     nonce: config.scriptData.ajax.create_order.nonce,
                     bn_code: '',
-                    context: 'express',
-                    order_id: config.scriptData.order_id,
+                    context: config.scriptData.context,
                     payment_method: 'ppcp-gateway',
                     createaccount: false
                 }),
