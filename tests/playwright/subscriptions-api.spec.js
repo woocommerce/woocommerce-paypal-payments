@@ -6,6 +6,33 @@ const {
     CUSTOMER_PASSWORD
 } = process.env;
 
+async function purchaseSubscriptionFromCart(page) {
+    await loginAsCustomer(page);
+    await page.goto('/product/subscription');
+    await page.click("text=Sign up now");
+    await page.goto('/cart');
+
+    const [popup] = await Promise.all([
+        page.waitForEvent('popup'),
+        page.frameLocator('.component-frame').locator('[data-funding-source="paypal"]').click(),
+    ]);
+    await popup.waitForLoadState();
+
+    await popup.fill('#email', CUSTOMER_EMAIL);
+    await popup.locator('#btnNext').click();
+    await popup.fill('#password', CUSTOMER_PASSWORD);
+    await popup.locator('#btnLogin').click();
+    await popup.locator('text=Continue').click();
+    await popup.locator('#confirmButtonTop').click();
+
+    await fillCheckoutForm(page);
+
+    await page.locator('text=Sign up now').click();
+
+    const title = page.locator('.entry-title');
+    await expect(title).toHaveText('Order received');
+}
+
 test.describe.serial('Subscriptions Merchant', () => {
     const productTitle = (Math.random() + 1).toString(36).substring(7);
     const planName = (Math.random() + 1).toString(36).substring(7);
@@ -161,34 +188,13 @@ test.describe('Subscriber purchase a Subscription', () => {
     });
 
     test('Purchase Subscription from Cart Page', async ({page}) => {
-        await loginAsCustomer(page);
-        await page.goto('/product/subscription');
-        await page.click("text=Sign up now");
-        await page.goto('/cart');
-
-        const [popup] = await Promise.all([
-            page.waitForEvent('popup'),
-            page.frameLocator('.component-frame').locator('[data-funding-source="paypal"]').click(),
-        ]);
-        await popup.waitForLoadState();
-
-        await popup.fill('#email', CUSTOMER_EMAIL);
-        await popup.locator('#btnNext').click();
-        await popup.fill('#password', CUSTOMER_PASSWORD);
-        await popup.locator('#btnLogin').click();
-        await popup.locator('text=Continue').click();
-        await popup.locator('#confirmButtonTop').click();
-
-        await fillCheckoutForm(page);
-
-        await page.locator('text=Sign up now').click();
-
-        const title = page.locator('.entry-title');
-        await expect(title).toHaveText('Order received');
+        await purchaseSubscriptionFromCart(page);
     });
+});
 
+test.describe('Subscriber my account actions', () => {
     test('Subscriber Suspend Subscription', async ({page, request}) => {
-        await loginAsCustomer(page);
+        await purchaseSubscriptionFromCart(page);
         await page.goto('/my-account/subscriptions');
         await page.locator('text=View').first().click();
 
@@ -220,7 +226,7 @@ test.describe('Subscriber purchase a Subscription', () => {
     });
 
     test('Subscriber Cancel Subscription', async ({page, request}) => {
-        await loginAsCustomer(page);
+        await purchaseSubscriptionFromCart(page);
         await page.goto('/my-account/subscriptions');
         await page.locator('text=View').first().click();
 
@@ -250,4 +256,4 @@ test.describe('Subscriber purchase a Subscription', () => {
         details = await subscription.json();
         await expect(details.status).toBe('CANCELLED');
     });
-});
+}) ;
