@@ -166,6 +166,13 @@ class SmartButton implements SmartButtonInterface {
 	protected $early_validation_enabled;
 
 	/**
+	 * The contexts that should have the Pay Now button.
+	 *
+	 * @var string[]
+	 */
+	private $pay_now_contexts;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -199,6 +206,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @param array                  $all_funding_sources All existing funding sources.
 	 * @param bool                   $basic_checkout_validation_enabled Whether the basic JS validation of the form iss enabled.
 	 * @param bool                   $early_validation_enabled Whether to execute WC validation of the checkout form.
+	 * @param string[]               $pay_now_contexts The contexts that should have the Pay Now button.
 	 * @param LoggerInterface        $logger The logger.
 	 */
 	public function __construct(
@@ -219,6 +227,7 @@ class SmartButton implements SmartButtonInterface {
 		array $all_funding_sources,
 		bool $basic_checkout_validation_enabled,
 		bool $early_validation_enabled,
+		array $pay_now_contexts,
 		LoggerInterface $logger
 	) {
 
@@ -239,6 +248,7 @@ class SmartButton implements SmartButtonInterface {
 		$this->all_funding_sources               = $all_funding_sources;
 		$this->basic_checkout_validation_enabled = $basic_checkout_validation_enabled;
 		$this->early_validation_enabled          = $early_validation_enabled;
+		$this->pay_now_contexts                  = $pay_now_contexts;
 		$this->logger                            = $logger;
 	}
 
@@ -971,7 +981,7 @@ class SmartButton implements SmartButtonInterface {
 			'integration-date' => PAYPAL_INTEGRATION_DATE,
 			'components'       => implode( ',', $this->components() ),
 			'vault'            => $this->can_save_vault_token() ? 'true' : 'false',
-			'commit'           => in_array( $context, array( 'checkout', 'pay-now' ), true ) ? 'true' : 'false',
+			'commit'           => in_array( $context, $this->pay_now_contexts, true ) ? 'true' : 'false',
 			'intent'           => $context === 'product' ? $product_intent : $other_context_intent,
 		);
 		if (

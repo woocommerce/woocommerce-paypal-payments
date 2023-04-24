@@ -110,6 +110,7 @@ return array(
 			$container->get( 'wcgateway.all-funding-sources' ),
 			$container->get( 'button.basic-checkout-validation-enabled' ),
 			$container->get( 'button.early-wc-checkout-validation-enabled' ),
+			$container->get( 'button.pay-now-contexts' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
@@ -118,6 +119,9 @@ return array(
 			'/modules/ppcp-button/',
 			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
 		);
+	},
+	'button.pay-now-contexts'                     => static function ( ContainerInterface $container ): array {
+		return array( 'checkout', 'pay-now' );
 	},
 	'button.request-data'                         => static function ( ContainerInterface $container ): RequestData {
 		return new RequestData();
@@ -156,6 +160,7 @@ return array(
 			$registration_needed,
 			$container->get( 'wcgateway.settings.card_billing_data_mode' ),
 			$container->get( 'button.early-wc-checkout-validation-enabled' ),
+			$container->get( 'button.pay-now-contexts' ),
 			$logger
 		);
 	},

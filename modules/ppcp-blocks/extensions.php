@@ -53,4 +53,14 @@ return array(
 			)
 		);
 	},
+
+	'button.pay-now-contexts'                          => function ( ContainerInterface $container, array $contexts ): array {
+		$contexts[] = 'checkout-block';
+
+		if ( ! $container->get( 'blocks.settings.final_review_enabled' ) ) {
+			$contexts[] = 'cart-block';
+		}
+
+		return $contexts;
+	},
 );
