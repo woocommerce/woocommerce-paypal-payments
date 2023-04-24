@@ -20,8 +20,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
 class PaymentTokenRepository {
 
 
-	const USER_META = 'ppcp-vault-token';
-
 	/**
 	 * The payment token factory.
 	 *
@@ -52,27 +50,6 @@ class PaymentTokenRepository {
 	}
 
 	/**
-	 * Return a token for a user.
-	 *
-	 * @param int $id The user id.
-	 *
-	 * @return PaymentToken|null
-	 */
-	public function for_user_id( int $id ) {
-		try {
-			$token = (array) get_user_meta( $id, self::USER_META, true );
-			if ( ! $token || ! isset( $token['id'] ) ) {
-				return $this->fetch_for_user_id( $id );
-			}
-
-			$token = $this->factory->from_array( $token );
-			return $token;
-		} catch ( RuntimeException $error ) {
-			return null;
-		}
-	}
-
-	/**
 	 * Return all tokens for a user.
 	 *
 	 * @param int $id The user id.
@@ -81,7 +58,6 @@ class PaymentTokenRepository {
 	public function all_for_user_id( int $id ) {
 		try {
 			$tokens = $this->endpoint->for_user( $id );
-			update_user_meta( $id, self::USER_META, $tokens );
 			return $tokens;
 		} catch ( RuntimeException $exception ) {
 			return array();
@@ -97,7 +73,6 @@ class PaymentTokenRepository {
 	 * @return bool
 	 */
 	public function delete_token( int $user_id, PaymentToken $token ): bool {
-		delete_user_meta( $user_id, self::USER_META );
 		return $this->endpoint->delete_token( $token );
 	}
 
@@ -119,21 +94,6 @@ class PaymentTokenRepository {
 	 */
 	public function tokens_contains_paypal( array $tokens ): bool {
 		return $this->token_contains_source( $tokens, 'paypal' );
-	}
-
-	/**
-	 * Fetch PaymentToken from PayPal for a user.
-	 *
-	 * @param int $id The user id.
-	 * @return PaymentToken
-	 */
-	private function fetch_for_user_id( int $id ): PaymentToken {
-
-		$tokens      = $this->endpoint->for_user( $id );
-		$token       = current( $tokens );
-		$token_array = $token->to_array();
-		update_user_meta( $id, self::USER_META, $token_array );
-		return $token;
 	}
 
 	/**
