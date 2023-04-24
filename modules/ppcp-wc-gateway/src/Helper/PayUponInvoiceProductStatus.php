@@ -88,7 +88,7 @@ class PayUponInvoiceProductStatus {
 		}
 
 		if ( $this->cache->has( self::PUI_STATUS_CACHE_KEY ) ) {
-			return (bool) $this->cache->get( self::PUI_STATUS_CACHE_KEY );
+			return $this->cache->get( self::PUI_STATUS_CACHE_KEY ) === 'true';
 		}
 
 		if ( $this->current_status_cache === true ) {
@@ -127,11 +127,11 @@ class PayUponInvoiceProductStatus {
 				$this->settings->set( 'products_pui_enabled', true );
 				$this->settings->persist();
 				$this->current_status_cache = true;
-				$this->cache->set( self::PUI_STATUS_CACHE_KEY, true, 3 * MONTH_IN_SECONDS );
+				$this->cache->set( self::PUI_STATUS_CACHE_KEY, 'true', 3 * MONTH_IN_SECONDS );
 				return true;
 			}
 		}
-		$this->cache->set( self::PUI_STATUS_CACHE_KEY, false, 3 * MONTH_IN_SECONDS );
+		$this->cache->set( self::PUI_STATUS_CACHE_KEY, 'false', 3 * MONTH_IN_SECONDS );
 
 		$this->current_status_cache = false;
 		return false;

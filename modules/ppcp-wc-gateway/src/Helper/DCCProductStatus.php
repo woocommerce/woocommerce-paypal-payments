@@ -99,7 +99,7 @@ class DCCProductStatus {
 		}
 
 		if ( $this->cache->has( self::DCC_STATUS_CACHE_KEY ) ) {
-			return (bool) $this->cache->get( self::DCC_STATUS_CACHE_KEY );
+			return $this->cache->get( self::DCC_STATUS_CACHE_KEY ) === 'true';
 		}
 
 		if ( $this->current_status_cache === true ) {
@@ -135,7 +135,7 @@ class DCCProductStatus {
 				$this->settings->set( 'products_dcc_enabled', true );
 				$this->settings->persist();
 				$this->current_status_cache = true;
-				$this->cache->set( self::DCC_STATUS_CACHE_KEY, true, 3 * MONTH_IN_SECONDS );
+				$this->cache->set( self::DCC_STATUS_CACHE_KEY, 'true', 3 * MONTH_IN_SECONDS );
 				return true;
 			}
 		}
@@ -144,7 +144,7 @@ class DCCProductStatus {
 		if ( $this->dcc_applies->for_country_currency() ) {
 			$expiration = 3 * HOUR_IN_SECONDS;
 		}
-		$this->cache->set( self::DCC_STATUS_CACHE_KEY, false, $expiration );
+		$this->cache->set( self::DCC_STATUS_CACHE_KEY, 'false', $expiration );
 
 		$this->current_status_cache = false;
 		return false;

@@ -11,6 +11,8 @@ namespace WooCommerce\PayPalCommerce\Vaulting;
 
 use Exception;
 use Psr\Log\LoggerInterface;
+use WC_Payment_Tokens;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
@@ -62,14 +64,14 @@ class PaymentTokensMigration {
 	 * @param int $id WooCommerce customer id.
 	 */
 	public function migrate_payment_tokens_for_user( int $id ):void {
-		$tokens          = (array) get_user_meta( $id, 'ppcp-vault-token', true );
-		$tokens_migrated = 0;
-
-		if ( ! is_main_site() ) {
-			$tokens = $this->payment_token_repository->all_for_user_id( $id );
-		}
+		$tokens    = $this->payment_token_repository->all_for_user_id( $id );
+		$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $id );
 
 		foreach ( $tokens as $token ) {
+			if ( $this->token_exist( $wc_tokens, $token ) ) {
+				continue;
+			}
+
 			if ( isset( $token->source()->card ) ) {
 				$payment_token_acdc = $this->payment_token_factory->create( 'acdc' );
 				assert( $payment_token_acdc instanceof PaymentTokenACDC );
@@ -89,9 +91,6 @@ class PaymentTokensMigration {
 					);
 					continue;
 				}
-
-				$tokens_migrated++;
-
 			} elseif ( $token->source()->paypal ) {
 				$payment_token_paypal = $this->payment_token_factory->create( 'paypal' );
 				assert( $payment_token_paypal instanceof PaymentTokenPayPal );
@@ -114,13 +113,24 @@ class PaymentTokensMigration {
 					);
 					continue;
 				}
+			}
+		}
+	}
 
-				$tokens_migrated++;
+	/**
+	 * Checks if given PayPal token exist as WC Payment Token.
+	 *
+	 * @param array        $wc_tokens WC Payment Tokens.
+	 * @param PaymentToken $token PayPal Token ID.
+	 * @return bool
+	 */
+	private function token_exist( array $wc_tokens, PaymentToken $token ): bool {
+		foreach ( $wc_tokens as $wc_token ) {
+			if ( $wc_token->get_token() === $token->id() ) {
+				return true;
 			}
 		}
 
-		if ( $tokens_migrated > 0 && count( $tokens ) === $tokens_migrated ) {
-			update_user_meta( $id, 'ppcp_tokens_migrated', true );
-		}
+		return false;
 	}
 }

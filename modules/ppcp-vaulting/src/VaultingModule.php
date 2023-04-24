@@ -178,15 +178,9 @@ class VaultingModule implements ModuleInterface {
 				// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 				$customers = new WP_User_Query(
 					array(
-						'fields'     => 'ID',
-						'limit'      => -1,
-						'meta_key'   => 'ppcp-vault-token',
-						'meta_query' => array(
-							array(
-								'key'     => 'ppcp_tokens_migrated',
-								'compare' => 'NOT EXISTS',
-							),
-						),
+						'fields'   => 'ID',
+						'limit'    => -1,
+						'meta_key' => 'ppcp-vault-token',
 					)
 				);
 				// phpcs:enable
