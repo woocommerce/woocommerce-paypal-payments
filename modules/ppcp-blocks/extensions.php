@@ -41,7 +41,7 @@ return array(
 			$fields,
 			'smart_button_enable_styling_per_location',
 			array(
-				'blocks_no_final_review' => array(
+				'blocks_final_review_enabled' => array(
 					'title'        => __( 'Block Express payments Final Review', 'woocommerce-paypal-payments' ),
 					'type'         => 'checkbox',
 					'label'        => __( 'Require customers to confirm Block Express payments on the Checkout page. If disabled, the Checkout page is skipped for Block Express payments.', 'woocommerce-paypal-payments' ),

@@ -19,12 +19,13 @@ import {setVisibleByClass, isVisible} from "../../../ppcp-button/resources/js/mo
 
         const form = jQuery('#mainform');
 
-        const noReviewChk = document.querySelector('#ppcp-blocks_no_final_review');
-        if (noReviewChk) {
-            noReviewChk.addEventListener('click', (e) => {
-                if (!noReviewChk.checked) {
+        // TODO: maybe move to a separate JS file in blocks module, when we need more JS for block settings
+        const finalReviewCheckbox = document.querySelector('#ppcp-blocks_final_review_enabled');
+        if (finalReviewCheckbox) {
+            finalReviewCheckbox.addEventListener('click', () => {
+                if (!finalReviewCheckbox.checked) {
                     if (!window.confirm('Are you sure you want to disable the final review on the Checkout page for Block Express payments?')) {
-                        noReviewChk.checked = true;
+                        finalReviewCheckbox.checked = true;
                     }
                 }
             });

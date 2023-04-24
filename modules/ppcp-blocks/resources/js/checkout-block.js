@@ -1,6 +1,6 @@
 import {useEffect, useState} from '@wordpress/element';
 import {registerExpressPaymentMethod, registerPaymentMethod} from '@woocommerce/blocks-registry';
-import {paypalOrderToWcShippingAddress, paypalPayerToWc} from "./Helper/Address";
+import {paypalOrderToWcAddresses} from "./Helper/Address";
 import {loadPaypalScript} from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading'
 
 const config = wc.wcSettings.getSetting('ppcp-gateway_data');
@@ -96,24 +96,22 @@ const PayPalComponent = ({
 
             setPaypalOrder(order);
 
-            const shippingAddress = paypalOrderToWcShippingAddress(order);
-            let billingAddress = paypalPayerToWc(order.payer);
-            // no billing address, such as if billing address retrieval is not allowed in the merchant account
-            if (!billingAddress.address_line_1) {
-                billingAddress = {...shippingAddress, ...paypalPayerToWc(order.payer)};
+            if (config.finalReviewEnabled) {
+                const addresses = paypalOrderToWcAddresses(order);
+
+                await wp.data.dispatch('wc/store/cart').updateCustomerData({
+                    billing_address: addresses.billingAddress,
+                    shipping_address: addresses.shippingAddress,
+                });
+                const checkoutUrl = new URL(config.scriptData.redirect);
+                // sometimes some browsers may load some kind of cached version of the page,
+                // so adding a parameter to avoid that
+                checkoutUrl.searchParams.append('ppcp-continuation-redirect', (new Date()).getTime().toString());
+
+                location.href = checkoutUrl.toString();
+            } else {
+                onSubmit();
             }
-
-            await wp.data.dispatch('wc/store/cart').updateCustomerData({
-                billing_address: billingAddress,
-                shipping_address: shippingAddress,
-            });
-
-            const checkoutUrl = new URL(config.scriptData.redirect);
-            // sometimes some browsers may load some kind of cached version of the page,
-            // so adding a parameter to avoid that
-            checkoutUrl.searchParams.append('ppcp-continuation-redirect', (new Date()).getTime().toString());
-
-            location.href = checkoutUrl.toString();
         } catch (err) {
             console.error(err);
 
@@ -144,10 +142,23 @@ const PayPalComponent = ({
                         paymentMethodData: {
                             'paypal_order_id': config.scriptData.continuation.order_id,
                             'funding_source': window.ppcpFundingSource ?? 'paypal',
-                        },
+                        }
                     },
                 };
             }
+
+            const addresses = paypalOrderToWcAddresses(paypalOrder);
+
+            return {
+                type: responseTypes.SUCCESS,
+                meta: {
+                    paymentMethodData: {
+                        'paypal_order_id': paypalOrder.id,
+                        'funding_source': window.ppcpFundingSource ?? 'paypal',
+                    },
+                    ...addresses,
+                },
+            };
         });
         return () => {
             unsubscribeProcessing();

@@ -65,6 +65,13 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 	private $gateway;
 
 	/**
+	 * Whether the final review is enabled.
+	 *
+	 * @var bool
+	 */
+	private $final_review_enabled;
+
+	/**
 	 * The cancellation view.
 	 *
 	 * @var CancelView
@@ -87,6 +94,7 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 	 * @param Settings             $plugin_settings The settings.
 	 * @param SettingsStatus       $settings_status The Settings status helper.
 	 * @param PayPalGateway        $gateway The WC gateway.
+	 * @param bool                 $final_review_enabled Whether the final review is enabled.
 	 * @param CancelView           $cancellation_view The cancellation view.
 	 * @param SessionHandler       $session_handler The Session handler.
 	 */
@@ -97,18 +105,20 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 		Settings $plugin_settings,
 		SettingsStatus $settings_status,
 		PayPalGateway $gateway,
+		bool $final_review_enabled,
 		CancelView $cancellation_view,
 		SessionHandler $session_handler
 	) {
-		$this->name              = PayPalGateway::ID;
-		$this->module_url        = $module_url;
-		$this->version           = $version;
-		$this->smart_button      = $smart_button;
-		$this->plugin_settings   = $plugin_settings;
-		$this->settings_status   = $settings_status;
-		$this->gateway           = $gateway;
-		$this->cancellation_view = $cancellation_view;
-		$this->session_handler   = $session_handler;
+		$this->name                 = PayPalGateway::ID;
+		$this->module_url           = $module_url;
+		$this->version              = $version;
+		$this->smart_button         = $smart_button;
+		$this->plugin_settings      = $plugin_settings;
+		$this->settings_status      = $settings_status;
+		$this->gateway              = $gateway;
+		$this->final_review_enabled = $final_review_enabled;
+		$this->cancellation_view    = $cancellation_view;
+		$this->session_handler      = $session_handler;
 	}
 
 	/**
@@ -158,12 +168,13 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 		}
 
 		return array(
-			'id'            => $this->gateway->id,
-			'title'         => $this->gateway->title,
-			'description'   => $this->gateway->description,
-			'enabled'       => $this->settings_status->is_smart_button_enabled_for_location( $script_data['context'] ),
-			'fundingSource' => $this->session_handler->funding_source(),
-			'scriptData'    => $script_data,
+			'id'                 => $this->gateway->id,
+			'title'              => $this->gateway->title,
+			'description'        => $this->gateway->description,
+			'enabled'            => $this->settings_status->is_smart_button_enabled_for_location( $script_data['context'] ),
+			'fundingSource'      => $this->session_handler->funding_source(),
+			'finalReviewEnabled' => $this->final_review_enabled,
+			'scriptData'         => $script_data,
 		);
 	}
 }
