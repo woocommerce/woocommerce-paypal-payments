@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -39,6 +40,7 @@ class WcGatewayTest extends TestCase
 	private $paymentTokenRepository;
 	private $logger;
 	private $apiShopCountry;
+	private $orderEndpoint;
 
 	public function setUp(): void {
 		parent::setUp();
@@ -64,6 +66,7 @@ class WcGatewayTest extends TestCase
 			['venmo' => 'Venmo', 'paylater' => 'Pay Later', 'blik' => 'BLIK']
 		);
 		$this->apiShopCountry = 'DE';
+		$this->orderEndpoint = Mockery::mock(OrderEndpoint::class);
 
 		$this->onboardingState->shouldReceive('current_state')->andReturn(State::STATE_ONBOARDED);
 
@@ -95,7 +98,8 @@ class WcGatewayTest extends TestCase
 			$this->environment,
 			$this->paymentTokenRepository,
 			$this->logger,
-			$this->apiShopCountry
+			$this->apiShopCountry,
+			$this->orderEndpoint
 		);
 	}
 
@@ -136,6 +140,9 @@ class WcGatewayTest extends TestCase
 		when('WC')->justReturn($woocommerce);
 		$woocommerce->cart = $cart;
 		$cart->shouldReceive('empty_cart');
+		$session = Mockery::mock(\WC_Session::class);
+		$woocommerce->session = $session;
+		$session->shouldReceive('get');
 
         $result = $testee->process_payment($orderId);
 
@@ -203,7 +210,13 @@ class WcGatewayTest extends TestCase
 		when('wc_get_checkout_url')
 			->justReturn($redirectUrl);
 
-        $result = $testee->process_payment($orderId);
+		$woocommerce = Mockery::mock(\WooCommerce::class);
+		when('WC')->justReturn($woocommerce);
+		$session = Mockery::mock(\WC_Session::class);
+		$woocommerce->session = $session;
+		$session->shouldReceive('get');
+
+		$result = $testee->process_payment($orderId);
         $this->assertEquals(
         	[
         		'result' => 'failure',
