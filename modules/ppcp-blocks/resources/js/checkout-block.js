@@ -15,6 +15,7 @@ const PayPalComponent = ({
                              eventRegistration,
                              emitResponse,
                              activePaymentMethod,
+                             shippingData,
 }) => {
     const {onPaymentSetup} = eventRegistration;
     const {responseTypes} = emitResponse;
@@ -129,6 +130,16 @@ const PayPalComponent = ({
         onClick();
     };
 
+    let handleShippingChange = null;
+    if (shippingData.needsShipping && !config.finalReviewEnabled) {
+        handleShippingChange = (data) => {
+            console.log(data)
+
+            const shippingOptionId = data.selected_shipping_option.id;
+            shippingData.setSelectedRates(shippingOptionId)
+        };
+    }
+
     useEffect(() => {
         if (activePaymentMethod !== config.id) {
             return;
@@ -187,6 +198,7 @@ const PayPalComponent = ({
             onError={onClose}
             createOrder={createOrder}
             onApprove={handleApprove}
+            onShippingChange={handleShippingChange}
         />
     );
 }

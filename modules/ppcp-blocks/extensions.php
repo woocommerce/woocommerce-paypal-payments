@@ -63,4 +63,8 @@ return array(
 
 		return $contexts;
 	},
+
+	'button.handle-shipping-in-paypal'                 => function ( ContainerInterface $container ): bool {
+		return ! $container->get( 'blocks.settings.final_review_enabled' );
+	},
 );

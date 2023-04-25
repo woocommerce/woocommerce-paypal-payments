@@ -153,10 +153,11 @@ class PurchaseUnitFactory {
 	 * Creates a PurchaseUnit based off a WooCommerce cart.
 	 *
 	 * @param \WC_Cart|null $cart The cart.
+	 * @param bool          $with_shipping_options Include WC shipping methods.
 	 *
 	 * @return PurchaseUnit
 	 */
-	public function from_wc_cart( ?\WC_Cart $cart = null ): PurchaseUnit {
+	public function from_wc_cart( ?\WC_Cart $cart = null, bool $with_shipping_options = false ): PurchaseUnit {
 		if ( ! $cart ) {
 			$cart = WC()->cart ?? new \WC_Cart();
 		}
@@ -172,7 +173,7 @@ class PurchaseUnitFactory {
 		$shipping = null;
 		$customer = \WC()->customer;
 		if ( $this->shipping_needed( ... array_values( $items ) ) && is_a( $customer, \WC_Customer::class ) ) {
-			$shipping = $this->shipping_factory->from_wc_customer( \WC()->customer );
+			$shipping = $this->shipping_factory->from_wc_customer( \WC()->customer, $with_shipping_options );
 			if (
 				2 !== strlen( $shipping->address()->country_code() ) ||
 				( ! $shipping->address()->postal_code() && ! $this->country_without_postal_code( $shipping->address()->country_code() ) )

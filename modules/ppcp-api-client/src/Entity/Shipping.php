@@ -29,14 +29,23 @@ class Shipping {
 	private $address;
 
 	/**
+	 * Shipping methods.
+	 *
+	 * @var ShippingOption[]
+	 */
+	private $options;
+
+	/**
 	 * Shipping constructor.
 	 *
-	 * @param string  $name The name.
-	 * @param Address $address The address.
+	 * @param string           $name The name.
+	 * @param Address          $address The address.
+	 * @param ShippingOption[] $options Shipping methods.
 	 */
-	public function __construct( string $name, Address $address ) {
+	public function __construct( string $name, Address $address, array $options = array() ) {
 		$this->name    = $name;
 		$this->address = $address;
+		$this->options = $options;
 	}
 
 	/**
@@ -58,16 +67,34 @@ class Shipping {
 	}
 
 	/**
+	 * Returns the shipping methods.
+	 *
+	 * @return ShippingOption[]
+	 */
+	public function options(): array {
+		return $this->options;
+	}
+
+	/**
 	 * Returns the object as array.
 	 *
 	 * @return array
 	 */
 	public function to_array(): array {
-		return array(
+		$result = array(
 			'name'    => array(
 				'full_name' => $this->name(),
 			),
 			'address' => $this->address()->to_array(),
 		);
+		if ( $this->options ) {
+			$result['options'] = array_map(
+				function ( ShippingOption $opt ): array {
+					return $opt->to_array();
+				},
+				$this->options
+			);
+		}
+		return $result;
 	}
 }
