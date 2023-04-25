@@ -44,7 +44,12 @@ return array(
 				'blocks_final_review_enabled' => array(
 					'title'        => __( 'Block Express payments Final Review', 'woocommerce-paypal-payments' ),
 					'type'         => 'checkbox',
-					'label'        => __( 'Require customers to confirm Block Express payments on the Checkout page. If disabled, the Checkout page is skipped for Block Express payments.', 'woocommerce-paypal-payments' ),
+					'label'        => __(
+						'Require customers to confirm Block Express payments on the Checkout page.
+If disabled, the Checkout page is skipped for Block Express payments.
+<p class="description">This can cause issues and poor UX if the server is not handling the requests fast enough.</p>',
+						'woocommerce-paypal-payments'
+					),
 					'default'      => true,
 					'screens'      => array( State::STATE_START, State::STATE_ONBOARDED ),
 					'requirements' => array(),
