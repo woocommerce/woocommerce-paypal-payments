@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\AuthorizationStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\CaptureStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PatchCollection;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentMethod;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
@@ -514,13 +515,22 @@ class OrderEndpoint {
 			return $order_to_update;
 		}
 
+		$this->patch( $order_to_update->id(), $patches );
+
+		$new_order = $this->order( $order_to_update->id() );
+		return $new_order;
+	}
+
+	/**
+	 * Patches an order.
+	 *
+	 * @param string          $order_id The PayPal order ID.
+	 * @param PatchCollection $patches The patches.
+	 *
+	 * @throws RuntimeException If the request fails.
+	 */
+	public function patch( string $order_id, PatchCollection $patches ): void {
 		$patches_array = $patches->to_array();
-		if ( ! isset( $patches_array[0]['value']['shipping'] ) ) {
-			$shipping = isset( $order_to_update->purchase_units()[0] ) && null !== $order_to_update->purchase_units()[0]->shipping() ? $order_to_update->purchase_units()[0]->shipping() : null;
-			if ( $shipping ) {
-				$patches_array[0]['value']['shipping'] = $shipping->to_array();
-			}
-		}
 
 		/**
 		 * The filter can be used to modify the order patching request body data (the final prices, items).
@@ -528,7 +538,7 @@ class OrderEndpoint {
 		$patches_array = apply_filters( 'ppcp_patch_order_request_body_data', $patches_array );
 
 		$bearer = $this->bearer->bearer();
-		$url    = trailingslashit( $this->host ) . 'v2/checkout/orders/' . $order_to_update->id();
+		$url    = trailingslashit( $this->host ) . 'v2/checkout/orders/' . $order_id;
 		$args   = array(
 			'method'  => 'PATCH',
 			'headers' => array(
@@ -544,11 +554,8 @@ class OrderEndpoint {
 		$response = $this->request( $url, $args );
 
 		if ( is_wp_error( $response ) ) {
-			$error = new RuntimeException(
-				__( 'Could not retrieve order.', 'woocommerce-paypal-payments' )
-			);
-			$this->logger->log(
-				'warning',
+			$error = new RuntimeException( 'Could not patch order.' );
+			$this->logger->warning(
 				$error->getMessage(),
 				array(
 					'args'     => $args,
@@ -564,8 +571,7 @@ class OrderEndpoint {
 				$json,
 				$status_code
 			);
-			$this->logger->log(
-				'warning',
+			$this->logger->warning(
 				$error->getMessage(),
 				array(
 					'args'     => $args,
@@ -574,9 +580,6 @@ class OrderEndpoint {
 			);
 			throw $error;
 		}
-
-		$new_order = $this->order( $order_to_update->id() );
-		return $new_order;
 	}
 
 	/**
