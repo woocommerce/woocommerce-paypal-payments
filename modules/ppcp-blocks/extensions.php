@@ -60,9 +60,8 @@ If disabled, the Checkout page is skipped for Block Express payments.
 	},
 
 	'button.pay-now-contexts'                          => function ( ContainerInterface $container, array $contexts ): array {
-		$contexts[] = 'checkout-block';
-
 		if ( ! $container->get( 'blocks.settings.final_review_enabled' ) ) {
+			$contexts[] = 'checkout-block';
 			$contexts[] = 'cart-block';
 		}
 
