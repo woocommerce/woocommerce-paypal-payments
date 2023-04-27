@@ -1014,7 +1014,10 @@ class SmartButton implements SmartButtonInterface {
 		}
 
 		if ( in_array( $context, array( 'checkout-block', 'cart-block' ), true ) ) {
-			$disable_funding[] = 'card';
+			$disable_funding = array_diff(
+				array_keys( $this->all_funding_sources ),
+				array( 'venmo', 'paylater' )
+			);
 		}
 
 		if ( $this->is_free_trial_cart() ) {
