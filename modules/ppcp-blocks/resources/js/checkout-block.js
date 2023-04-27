@@ -133,8 +133,6 @@ const PayPalComponent = ({
     let handleShippingChange = null;
     if (shippingData.needsShipping && !config.finalReviewEnabled) {
         handleShippingChange = async (data, actions) => {
-            console.log(data)
-
             try {
                 const shippingOptionId = data.selected_shipping_option?.id;
                 if (shippingOptionId) {
@@ -146,6 +144,8 @@ const PayPalComponent = ({
                 await wp.data.dispatch('wc/store/cart').updateCustomerData({
                     shipping_address: address,
                 });
+
+                await shippingData.setShippingAddress(address);
 
                 const res = await fetch(config.ajax.update_shipping.endpoint, {
                     method: 'POST',
