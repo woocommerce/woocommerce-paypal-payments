@@ -116,7 +116,14 @@ class CatalogProducts {
 		return $this->product_factory->from_paypal_response($json);
 	}
 
-	public function update(string $id, array $data) {
+	/**
+	 * Updates a Product.
+	 *
+	 * @param string $id Product ID.
+	 * @param array $data Data to update.
+	 * @return void
+	 */
+	public function update(string $id, array $data): void {
 		$bearer = $this->bearer->bearer();
 		$url    = trailingslashit( $this->host ) . 'v1/catalogs/products/' . $id;
 		$args   = array(
@@ -144,6 +151,12 @@ class CatalogProducts {
 		}
 	}
 
+	/**
+	 * Return a Product from the given ID.
+	 *
+	 * @param string $id Product ID.
+	 * @return Product
+	 */
 	public function product(string $id): Product {
 		$bearer = $this->bearer->bearer();
 		$url    = trailingslashit( $this->host ) . 'v1/catalogs/products/' . $id;

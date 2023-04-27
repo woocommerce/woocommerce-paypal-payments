@@ -85,7 +85,12 @@ class BillingCycle {
 		return $this->total_cycles;
 	}
 
-	public function to_array() {
+	/**
+	 * Returns Billing Cycle as array.
+	 *
+	 * @return array
+	 */
+	public function to_array(): array {
 		return array(
 			'frequency' => $this->frequency(),
 			'sequence' => $this->sequence(),

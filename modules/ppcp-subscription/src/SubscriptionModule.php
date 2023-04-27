@@ -152,10 +152,10 @@ class SubscriptionModule implements ModuleInterface {
 					return;
 				}
 
+				$nonce = wc_clean(wp_unslash($_POST['_wcsnonce'])) ?? '';
 				if (
 					$subscriptions_mode !== 'subscriptions_api'
-					|| empty( $_POST['_wcsnonce'] )
-					|| ! wp_verify_nonce( wc_clean( wp_unslash( $_POST['_wcsnonce'] ) ), 'wcs_subscription_meta' ) ) {
+					|| ! wp_verify_nonce( $nonce, 'wcs_subscription_meta' ) ) {
 					return;
 				}
 

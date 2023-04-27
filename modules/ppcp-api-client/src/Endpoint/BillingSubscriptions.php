@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 
 use Psr\Log\LoggerInterface;
+use stdClass;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
@@ -135,7 +136,13 @@ class BillingSubscriptions {
 		}
 	}
 
-	public function cancel( string $id ) {
+	/**
+	 * Cancels a Subscription.
+	 *
+	 * @param string $id Subscription ID.
+	 * @return void
+	 */
+	public function cancel( string $id ): void {
 		$data = array(
 			'reason' => 'Cancelled by customer',
 		);
@@ -166,7 +173,13 @@ class BillingSubscriptions {
 		}
 	}
 
-	public function subscription(string $id) {
+	/**
+	 * Returns a Subscription object from the given ID.
+	 *
+	 * @param string $id Subscription ID.
+	 * @return stdClass
+	 */
+	public function subscription(string $id): stdClass {
 		$bearer = $this->bearer->bearer();
 		$url    = trailingslashit( $this->host ) . 'v1/billing/subscriptions/' . $id;
 		$args   = array(

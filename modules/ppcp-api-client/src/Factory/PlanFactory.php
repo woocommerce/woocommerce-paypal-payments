@@ -52,7 +52,7 @@ class PlanFactory
 			$billing_cycles[] = $this->billing_cycle_factory->from_paypal_response($billing_cycle);
 		}
 
-		$payment_preferences = $this->payment_preferences_factory->from_paypal_response($data->payment_preferences) ?? array();
+		$payment_preferences = $this->payment_preferences_factory->from_paypal_response($data->payment_preferences);
 
 		return new Plan(
 			$data->id,
