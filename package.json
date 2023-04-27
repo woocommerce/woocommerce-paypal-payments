@@ -45,7 +45,7 @@
     "ddev:watch-js": "ddev yarn watch:modules",
     "ddev:composer-update": "ddev composer update && ddev composer update --lock",
     "ddev:unit-tests": "ddev exec phpunit",
-    "ddev:e2e-tests": "cp -n .env.e2e.example .env.e2e && ddev php tests/e2e/PHPUnit/setup.php && ddev exec phpunit -c tests/e2e/phpunit.xml.dist",
+    "ddev:e2e-tests": "(cp -n .env.e2e.example .env.e2e || true) && ddev php tests/e2e/PHPUnit/setup.php && ddev exec phpunit -c tests/e2e/phpunit.xml.dist",
     "ddev:pw-install": "ddev yarn playwright install --with-deps",
     "ddev:pw-tests": "ddev yarn playwright test",
     "ddev:test": "yarn run ddev:unit-tests && yarn run ddev:e2e-tests && yarn run ddev:pw-tests",
