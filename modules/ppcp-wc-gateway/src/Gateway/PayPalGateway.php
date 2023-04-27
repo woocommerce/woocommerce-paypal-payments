@@ -202,7 +202,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->api_shop_country         = $api_shop_country;
 
 		if ( $this->onboarded ) {
-			$this->supports = array( 'refunds' );
+			$this->supports = array( 'refunds', 'tokenization' );
 		}
 		if (
 			defined( 'PPCP_FLAG_SUBSCRIPTION' )
@@ -223,6 +223,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 				'subscription_payment_method_change_customer',
 				'subscription_payment_method_change_admin',
 				'multiple_subscriptions',
+				'tokenization',
 			);
 		}
 

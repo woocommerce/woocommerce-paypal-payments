@@ -1,6 +1,6 @@
 <?php
 /**
- * Handles the Webhook VAULT.CREDIT-CARD.CREATED
+ * Handles the Webhook VAULT.PAYMENT-TOKEN.DELETED
  *
  * @package WooCommerce\PayPalCommerce\Webhooks\Handler
  */
@@ -10,37 +10,29 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
 
 use Psr\Log\LoggerInterface;
+use WC_Payment_Tokens;
 use WP_REST_Request;
 use WP_REST_Response;
 
 /**
- * Class VaultCreditCardCreated
+ * Class VaultPaymentTokenDeleted
  */
-class VaultCreditCardCreated implements RequestHandler {
+class VaultPaymentTokenDeleted implements RequestHandler {
 
 	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
 	 */
-	protected $logger;
+	private $logger;
 
 	/**
-	 * The prefix.
-	 *
-	 * @var string
-	 */
-	protected $prefix;
-
-	/**
-	 * VaultCreditCardCreated constructor.
+	 * VaultPaymentTokenDeleted constructor.
 	 *
 	 * @param LoggerInterface $logger The logger.
-	 * @param string          $prefix The prefix.
 	 */
-	public function __construct( LoggerInterface $logger, string $prefix ) {
+	public function __construct( LoggerInterface $logger ) {
 		$this->logger = $logger;
-		$this->prefix = $prefix;
 	}
 
 	/**
@@ -50,7 +42,7 @@ class VaultCreditCardCreated implements RequestHandler {
 	 */
 	public function event_types(): array {
 		return array(
-			'VAULT.CREDIT-CARD.CREATED',
+			'VAULT.PAYMENT-TOKEN.DELETED',
 		);
 	}
 
@@ -73,15 +65,31 @@ class VaultCreditCardCreated implements RequestHandler {
 	 * @return WP_REST_Response
 	 */
 	public function handle_request( WP_REST_Request $request ): WP_REST_Response {
-		// TODO currently this webhook is not triggered from PayPal, implement it once is available.
+		$response = array( 'success' => false );
 
-		$message = 'VAULT.CREDIT-CARD.CREATED received.';
-		$this->logger->log( 'info', $message );
-		$response = array(
-			'success' => true,
-			'message' => $message,
-		);
+		if ( ! is_null( $request['resource'] ) && isset( $request['resource']['id'] ) ) {
+			$token_id = wc_clean( wp_unslash( $request['resource']['id'] ?? '' ) );
 
+			/**
+			 * Needed for database query.
+			 *
+			 * @psalm-suppress InvalidGlobal
+			 */
+			global $wpdb;
+
+			$token = $wpdb->get_row(
+				$wpdb->prepare(
+					"SELECT * FROM {$wpdb->prefix}woocommerce_payment_tokens WHERE token=%s",
+					$token_id
+				)
+			);
+
+			if ( isset( $token->token_id ) ) {
+				WC_Payment_Tokens::delete( $token->token_id );
+			}
+		}
+
+		$response['success'] = true;
 		return new WP_REST_Response( $response );
 	}
 }
