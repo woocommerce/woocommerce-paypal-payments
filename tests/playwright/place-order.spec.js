@@ -8,6 +8,10 @@ const {
     CREDIT_CARD_CVV,
     PRODUCT_URL,
     PRODUCT_ID,
+    CHECKOUT_URL,
+    CART_URL,
+    BLOCK_CHECKOUT_URL,
+    BLOCK_CART_URL,
 } = process.env;
 
 async function fillCheckoutForm(page) {
@@ -63,6 +67,13 @@ async function loginIntoPaypal(popup) {
     await popup.locator('#btnLogin').click();
 }
 
+async function completePaypalPayment(popup) {
+    await Promise.all([
+        popup.waitForEvent('close', {timeout: 20000}),
+        popup.click('#payment-submit-btn'),
+    ]);
+}
+
 async function expectOrderReceivedPage(page) {
     const title = await page.locator('.entry-title');
     await expect(title).toHaveText('Order received');
@@ -88,7 +99,7 @@ test('PayPal button place order from Product page', async ({page}) => {
 
     await loginIntoPaypal(popup);
 
-    await popup.locator('#payment-submit-btn').click();
+    await completePaypalPayment(popup);
 
     await fillCheckoutForm(page);
 
@@ -105,7 +116,7 @@ test('Advanced Credit and Debit Card (ACDC) place order from Checkout page', asy
     await page.goto(PRODUCT_URL);
     await page.locator('.single_add_to_cart_button').click();
 
-    await page.goto('/checkout/');
+    await page.goto(CHECKOUT_URL);
     await fillCheckoutForm(page);
 
     await page.click("text=Credit Cards");
@@ -127,30 +138,30 @@ test('Advanced Credit and Debit Card (ACDC) place order from Checkout page', asy
     await expectOrderReceivedPage(page);
 });
 
-test('PayPal express block', async ({page}) => {
+test('PayPal express block checkout', async ({page}) => {
 
-    await page.goto('/cart?add-to-cart=' + PRODUCT_ID);
+    await page.goto('?add-to-cart=' + PRODUCT_ID);
 
-    await page.goto('/blocks-checkout')
+    await page.goto(BLOCK_CHECKOUT_URL)
 
     const popup = await openPaypalPopup(page);
 
     await loginIntoPaypal(popup);
 
-    await popup.locator('#payment-submit-btn').click();
+    await completePaypalPayment(popup);
 
     await completeBlockContinuation(page);
 });
 
 test('PayPal express block cart', async ({page}) => {
 
-    await page.goto('/cart-block?add-to-cart=' + PRODUCT_ID)
+    await page.goto(BLOCK_CART_URL + '?add-to-cart=' + PRODUCT_ID)
 
     const popup = await openPaypalPopup(page);
 
     await loginIntoPaypal(popup);
 
-    await popup.locator('#payment-submit-btn').click();
+    await completePaypalPayment(popup);
 
     await completeBlockContinuation(page);
 });
