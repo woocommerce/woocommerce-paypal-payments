@@ -168,8 +168,7 @@ class SettingsListener {
 	 * Listens if the merchant ID should be updated.
 	 */
 	public function listen_for_merchant_id() {
-
-		if ( ! $this->is_valid_site_request() ) {
+		if ( ! $this->is_valid_site_request() || $this->state->current_state() === State::STATE_ONBOARDED ) {
 			return;
 		}
 
