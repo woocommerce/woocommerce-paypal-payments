@@ -216,22 +216,28 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		if ( $this->onboarded ) {
 			$this->supports = array( 'refunds', 'tokenization' );
 		}
-		if ( $this->gateways_enabled() ) {
+		if ( $this->config->has( 'enabled' ) && $this->config->get( 'enabled' ) ) {
 			$this->supports = array(
 				'refunds',
 				'products',
-				'subscriptions',
-				'subscription_cancellation',
-				'subscription_suspension',
-				'subscription_reactivation',
-				'subscription_amount_changes',
-				'subscription_date_changes',
-				'subscription_payment_method_change',
-				'subscription_payment_method_change_customer',
-				'subscription_payment_method_change_admin',
-				'multiple_subscriptions',
-				'tokenization',
 			);
+
+			if ( $this->config->has( 'vault_enabled' ) && $this->config->get( 'vault_enabled' ) ) {
+				array_push(
+					$this->supports,
+					'tokenization',
+					'subscriptions',
+					'subscription_cancellation',
+					'subscription_suspension',
+					'subscription_reactivation',
+					'subscription_amount_changes',
+					'subscription_date_changes',
+					'subscription_payment_method_change',
+					'subscription_payment_method_change_customer',
+					'subscription_payment_method_change_admin',
+					'multiple_subscriptions'
+				);
+			}
 		}
 
 		$this->method_title       = $this->define_method_title();
