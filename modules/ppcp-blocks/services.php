@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Blocks;
 
+use WooCommerce\PayPalCommerce\Blocks\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
@@ -43,5 +44,14 @@ return array(
 		return $settings->has( 'blocks_final_review_enabled' ) ?
 			(bool) $settings->get( 'blocks_final_review_enabled' ) :
 			true;
+	},
+
+	'blocks.endpoint.update-shipping'      => static function ( ContainerInterface $container ): UpdateShippingEndpoint {
+		return new UpdateShippingEndpoint(
+			$container->get( 'button.request-data' ),
+			$container->get( 'api.endpoint.order' ),
+			$container->get( 'api.factory.purchase-unit' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
 	},
 );

@@ -10,6 +10,8 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Blocks;
 
 use Automattic\WooCommerce\Blocks\Payments\Integrations\AbstractPaymentMethodType;
+use WC_AJAX;
+use WooCommerce\PayPalCommerce\Blocks\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Session\Cancellation\CancelController;
 use WooCommerce\PayPalCommerce\Session\Cancellation\CancelView;
@@ -174,6 +176,12 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 			'enabled'            => $this->settings_status->is_smart_button_enabled_for_location( $script_data['context'] ),
 			'fundingSource'      => $this->session_handler->funding_source(),
 			'finalReviewEnabled' => $this->final_review_enabled,
+			'ajax'               => array(
+				'update_shipping' => array(
+					'endpoint' => WC_AJAX::get_endpoint( UpdateShippingEndpoint::ENDPOINT ),
+					'nonce'    => wp_create_nonce( UpdateShippingEndpoint::nonce() ),
+				),
+			),
 			'scriptData'         => $script_data,
 		);
 	}

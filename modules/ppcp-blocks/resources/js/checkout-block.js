@@ -1,6 +1,6 @@
 import {useEffect, useState} from '@wordpress/element';
 import {registerExpressPaymentMethod, registerPaymentMethod} from '@woocommerce/blocks-registry';
-import {paypalOrderToWcAddresses} from "./Helper/Address";
+import {paypalAddressToWc, paypalOrderToWcAddresses} from "./Helper/Address";
 import {loadPaypalScript} from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading'
 
 const config = wc.wcSettings.getSetting('ppcp-gateway_data');
@@ -132,11 +132,40 @@ const PayPalComponent = ({
 
     let handleShippingChange = null;
     if (shippingData.needsShipping && !config.finalReviewEnabled) {
-        handleShippingChange = (data) => {
+        handleShippingChange = async (data, actions) => {
             console.log(data)
 
-            const shippingOptionId = data.selected_shipping_option.id;
-            shippingData.setSelectedRates(shippingOptionId)
+            try {
+                const shippingOptionId = data.selected_shipping_option?.id;
+                if (shippingOptionId) {
+                    await shippingData.setSelectedRates(shippingOptionId);
+                }
+
+                const address = paypalAddressToWc(data.shipping_address);
+
+                await wp.data.dispatch('wc/store/cart').updateCustomerData({
+                    shipping_address: address,
+                });
+
+                const res = await fetch(config.ajax.update_shipping.endpoint, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        nonce: config.ajax.update_shipping.nonce,
+                        order_id: data.orderID,
+                    })
+                });
+
+                const json = await res.json();
+
+                if (!json.success) {
+                    throw new Error(json.data.message);
+                }
+            } catch (e) {
+                console.error(e);
+
+                actions.reject();
+            }
         };
     }
 

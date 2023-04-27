@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Blocks;
 
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
+use WooCommerce\PayPalCommerce\Blocks\Endpoint\UpdateShippingEndpoint;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButton;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
@@ -76,6 +77,16 @@ class BlocksModule implements ModuleInterface {
 					return array();
 				},
 			)
+		);
+
+		add_action(
+			'wc_ajax_' . UpdateShippingEndpoint::ENDPOINT,
+			static function () use ( $c ) {
+				$endpoint = $c->get( 'blocks.endpoint.update-shipping' );
+				assert( $endpoint instanceof UpdateShippingEndpoint );
+
+				$endpoint->handle_request();
+			}
 		);
 	}
 

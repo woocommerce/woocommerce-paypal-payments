@@ -19,7 +19,7 @@ export const splitFullName = (fullName) => {
  * @returns {Object}
  */
 export const paypalAddressToWc = (address) => {
-    const map = {
+    let map = {
         country_code: 'country',
         address_line_1: 'address_1',
         address_line_2: 'address_2',
@@ -27,6 +27,14 @@ export const paypalAddressToWc = (address) => {
         admin_area_2: 'city',
         postal_code: 'postcode',
     };
+    if (address.city) { // address not from API, such as onShippingChange
+        map = {
+            country_code: 'country',
+            state: 'state',
+            city: 'city',
+            postal_code: 'postcode',
+        };
+    }
     const result = {};
     Object.entries(map).forEach(([paypalKey, wcKey]) => {
         if (address[paypalKey]) {
