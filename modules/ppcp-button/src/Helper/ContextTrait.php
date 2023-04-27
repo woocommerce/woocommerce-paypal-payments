@@ -30,16 +30,16 @@ trait ContextTrait {
 			return 'cart';
 		}
 
+		if ( is_checkout_pay_page() ) {
+			return 'pay-now';
+		}
+
 		if ( has_block( 'woocommerce/checkout' ) ) {
 			return 'checkout-block';
 		}
 
 		if ( ( is_checkout() ) && ! $this->is_paypal_continuation() ) {
 			return 'checkout';
-		}
-
-		if ( is_checkout_pay_page() ) {
-			return 'pay-now';
 		}
 
 		return 'mini-cart';
