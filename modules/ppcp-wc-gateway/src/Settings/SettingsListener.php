@@ -172,11 +172,18 @@ class SettingsListener {
 			return;
 		}
 
+		/**
+		 * No nonce provided.
+		 * phpcs:disable WordPress.Security.NonceVerification.Missing
+		 * phpcs:disable WordPress.Security.NonceVerification.Recommended
+		 */
 		if ( ! isset( $_GET['merchantIdInPayPal'] ) || ! isset( $_GET['merchantId'] ) ) {
 			return;
 		}
 		$merchant_id    = sanitize_text_field( wp_unslash( $_GET['merchantIdInPayPal'] ) );
 		$merchant_email = sanitize_text_field( wp_unslash( $_GET['merchantId'] ) );
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		$this->settings->set( 'merchant_id', $merchant_id );
 		$this->settings->set( 'merchant_email', $merchant_email );
