@@ -1,10 +1,10 @@
 #!/bin/bash
 
-help-panel() {
-	echo -e "-p [post type] Delete all posts"
-	echo -e "\tExample: -p shop_order,product"
-	echo -e "-l [wp-content path] Delete all logs"
-	echo -e "\tExample: -l uploads/wc-logs"
+show-help() {
+	echo -e "\nDelete all posts -p [post type]"
+	echo -e "\tExample: ddev wp-cleanup -p shop_order,product"
+	echo -e "\nDelete all logs -l [wp-content path]"
+	echo -e "\tExample: ddev wp-cleanup -l uploads/wc-logs\n"
 }
 
 delete-posts() {
@@ -29,10 +29,10 @@ while getopts "p:l:h" arg; do
 		delete-logs $OPTARG
 		param_counter+=1
 		;;
-	h) help-panel ;;
+	h) show-help ;;
 	esac
 done
 
 if [ $param_counter -eq 0 ]; then
-	help-panel
+	show-help
 fi
