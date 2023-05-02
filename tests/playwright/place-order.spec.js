@@ -1,4 +1,5 @@
 const {test, expect} = require('@playwright/test');
+const {serverExec} = require("./utils/server");
 
 const {
     CUSTOMER_EMAIL,
@@ -9,8 +10,10 @@ const {
     PRODUCT_URL,
     PRODUCT_ID,
     CHECKOUT_URL,
+    CHECKOUT_PAGE_ID,
     CART_URL,
     BLOCK_CHECKOUT_URL,
+    BLOCK_CHECKOUT_PAGE_ID,
     BLOCK_CART_URL,
 } = process.env;
 
@@ -91,77 +94,85 @@ async function completeBlockContinuation(page) {
     await expectOrderReceivedPage(page);
 }
 
-test('PayPal button place order from Product page', async ({page}) => {
+test.describe('Classic checkout', () => {
+    test.beforeAll(async ({ browser }) => {
+        await serverExec('wp option update woocommerce_checkout_page_id ' + CHECKOUT_PAGE_ID);
+    });
 
-    await page.goto(PRODUCT_URL);
+    test('PayPal button place order from Product page', async ({page}) => {
+        await page.goto(PRODUCT_URL);
 
-    const popup = await openPaypalPopup(page);
+        const popup = await openPaypalPopup(page);
 
-    await loginIntoPaypal(popup);
+        await loginIntoPaypal(popup);
 
-    await completePaypalPayment(popup);
+        await completePaypalPayment(popup);
 
-    await fillCheckoutForm(page);
+        await fillCheckoutForm(page);
 
-    await Promise.all([
-        page.waitForNavigation(),
-        page.locator('#place_order').click(),
-    ]);
+        await Promise.all([
+            page.waitForNavigation(),
+            page.locator('#place_order').click(),
+        ]);
 
-    await expectOrderReceivedPage(page);
+        await expectOrderReceivedPage(page);
+    });
+
+    test('Advanced Credit and Debit Card (ACDC) place order from Checkout page', async ({page}) => {
+        await page.goto(PRODUCT_URL);
+        await page.locator('.single_add_to_cart_button').click();
+
+        await page.goto(CHECKOUT_URL);
+        await fillCheckoutForm(page);
+
+        await page.click("text=Credit Cards");
+
+        const creditCardNumber = page.frameLocator('#braintree-hosted-field-number').locator('#credit-card-number');
+        await creditCardNumber.fill(CREDIT_CARD_NUMBER);
+
+        const expirationDate = page.frameLocator('#braintree-hosted-field-expirationDate').locator('#expiration');
+        await expirationDate.fill(CREDIT_CARD_EXPIRATION);
+
+        const cvv = page.frameLocator('#braintree-hosted-field-cvv').locator('#cvv');
+        await cvv.fill(CREDIT_CARD_CVV);
+
+        await Promise.all([
+            page.waitForNavigation(),
+            page.locator('.ppcp-dcc-order-button').click(),
+        ]);
+
+        await expectOrderReceivedPage(page);
+    });
 });
 
-test('Advanced Credit and Debit Card (ACDC) place order from Checkout page', async ({page}) => {
+test.describe('Block checkout', () => {
+    test.beforeAll(async ({browser}) => {
+        await serverExec('wp option update woocommerce_checkout_page_id ' + BLOCK_CHECKOUT_PAGE_ID);
+    });
 
-    await page.goto(PRODUCT_URL);
-    await page.locator('.single_add_to_cart_button').click();
+    test('PayPal express block checkout', async ({page}) => {
+        await page.goto('?add-to-cart=' + PRODUCT_ID);
 
-    await page.goto(CHECKOUT_URL);
-    await fillCheckoutForm(page);
+        await page.goto(BLOCK_CHECKOUT_URL)
 
-    await page.click("text=Credit Cards");
+        const popup = await openPaypalPopup(page);
 
-    const creditCardNumber = page.frameLocator('#braintree-hosted-field-number').locator('#credit-card-number');
-    await creditCardNumber.fill(CREDIT_CARD_NUMBER);
+        await loginIntoPaypal(popup);
 
-    const expirationDate = page.frameLocator('#braintree-hosted-field-expirationDate').locator('#expiration');
-    await expirationDate.fill(CREDIT_CARD_EXPIRATION);
+        await completePaypalPayment(popup);
 
-    const cvv = page.frameLocator('#braintree-hosted-field-cvv').locator('#cvv');
-    await cvv.fill(CREDIT_CARD_CVV);
+        await completeBlockContinuation(page);
+    });
 
-    await Promise.all([
-        page.waitForNavigation(),
-        page.locator('.ppcp-dcc-order-button').click(),
-    ]);
+    test('PayPal express block cart', async ({page}) => {
+        await page.goto(BLOCK_CART_URL + '?add-to-cart=' + PRODUCT_ID)
 
-    await expectOrderReceivedPage(page);
-});
+        const popup = await openPaypalPopup(page);
 
-test('PayPal express block checkout', async ({page}) => {
+        await loginIntoPaypal(popup);
 
-    await page.goto('?add-to-cart=' + PRODUCT_ID);
+        await completePaypalPayment(popup);
 
-    await page.goto(BLOCK_CHECKOUT_URL)
-
-    const popup = await openPaypalPopup(page);
-
-    await loginIntoPaypal(popup);
-
-    await completePaypalPayment(popup);
-
-    await completeBlockContinuation(page);
-});
-
-test('PayPal express block cart', async ({page}) => {
-
-    await page.goto(BLOCK_CART_URL + '?add-to-cart=' + PRODUCT_ID)
-
-    const popup = await openPaypalPopup(page);
-
-    await loginIntoPaypal(popup);
-
-    await completePaypalPayment(popup);
-
-    await completeBlockContinuation(page);
+        await completeBlockContinuation(page);
+    });
 });
