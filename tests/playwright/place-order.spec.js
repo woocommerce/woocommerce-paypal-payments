@@ -70,6 +70,10 @@ async function loginIntoPaypal(popup) {
     await popup.locator('#btnLogin').click();
 }
 
+async function waitForPaypalShippingList(popup) {
+    await expect(popup.locator('#shippingMethodsDropdown')).toBeVisible({timeout: 15000});
+}
+
 async function completePaypalPayment(popup) {
     await Promise.all([
         popup.waitForEvent('close', {timeout: 20000}),
@@ -148,6 +152,7 @@ test.describe('Classic checkout', () => {
 test.describe('Block checkout', () => {
     test.beforeAll(async ({browser}) => {
         await serverExec('wp option update woocommerce_checkout_page_id ' + BLOCK_CHECKOUT_PAGE_ID);
+        await serverExec('wp pcp settings update blocks_final_review_enabled true');
     });
 
     test('PayPal express block checkout', async ({page}) => {
@@ -174,5 +179,41 @@ test.describe('Block checkout', () => {
         await completePaypalPayment(popup);
 
         await completeBlockContinuation(page);
+    });
+
+    test.describe('Without review', () => {
+        test.beforeAll(async ({browser}) => {
+            await serverExec('wp pcp settings update blocks_final_review_enabled false');
+        });
+
+        test('PayPal express block checkout', async ({page}) => {
+            await page.goto('?add-to-cart=' + PRODUCT_ID);
+
+            await page.goto(BLOCK_CHECKOUT_URL)
+
+            const popup = await openPaypalPopup(page);
+
+            await loginIntoPaypal(popup);
+
+            await waitForPaypalShippingList(popup);
+
+            await completePaypalPayment(popup);
+
+            await expectOrderReceivedPage(page);
+        });
+
+        test('PayPal express block cart', async ({page}) => {
+            await page.goto(BLOCK_CART_URL + '?add-to-cart=' + PRODUCT_ID)
+
+            const popup = await openPaypalPopup(page);
+
+            await loginIntoPaypal(popup);
+
+            await waitForPaypalShippingList(popup);
+
+            await completePaypalPayment(popup);
+
+            await expectOrderReceivedPage(page);
+        });
     });
 });
