@@ -13,6 +13,9 @@ use stdClass;
 use WC_Product;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentPreferences;
 
+/**
+ * Class PaymentPreferencesFactory
+ */
 class PaymentPreferencesFactory {
 
 	/**

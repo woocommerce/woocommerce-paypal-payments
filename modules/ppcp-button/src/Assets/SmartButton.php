@@ -200,7 +200,10 @@ class SmartButton implements SmartButtonInterface {
 	 * @var LoggerInterface
 	 */
 	private $logger;
+
 	/**
+	 * Session handler.
+	 *
 	 * @var SessionHandler
 	 */
 	private $session_handler;
@@ -209,7 +212,8 @@ class SmartButton implements SmartButtonInterface {
 	 * SmartButton constructor.
 	 *
 	 * @param string                 $module_url The URL to the module.
-	 * @param string                 $version                            The assets version.
+	 * @param string                 $version The assets version.
+	 * @param SessionHandler         $session_handler The Session handler.
 	 * @param Settings               $settings The Settings.
 	 * @param PayerFactory           $payer_factory The Payer factory.
 	 * @param string                 $client_id The client ID.

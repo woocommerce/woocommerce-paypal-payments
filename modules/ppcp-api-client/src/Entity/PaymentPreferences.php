@@ -9,27 +9,47 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Entity;
 
+/**
+ * Class PaymentPreferences
+ */
 class PaymentPreferences {
+
 	/**
+	 * Setup fee.
+	 *
 	 * @var array
 	 */
 	private $setup_fee;
 
 	/**
+	 * Auto bill outstanding.
+	 *
 	 * @var bool
 	 */
 	private $auto_bill_outstanding;
 
 	/**
+	 * Setup fee failure action.
+	 *
 	 * @var string
 	 */
 	private $setup_fee_failure_action;
 
 	/**
+	 * Payment failure threshold.
+	 *
 	 * @var int
 	 */
 	private $payment_failure_threshold;
 
+	/**
+	 * PaymentPreferences constructor.
+	 *
+	 * @param array  $setup_fee Setup fee.
+	 * @param bool   $auto_bill_outstanding Auto bill outstanding.
+	 * @param string $setup_fee_failure_action Setup fee failure action.
+	 * @param int    $payment_failure_threshold payment failure threshold.
+	 */
 	public function __construct(
 		array $setup_fee,
 		bool $auto_bill_outstanding = true,
@@ -44,6 +64,8 @@ class PaymentPreferences {
 	}
 
 	/**
+	 * Setup fee.
+	 *
 	 * @return array
 	 */
 	public function setup_fee(): array {
@@ -51,6 +73,8 @@ class PaymentPreferences {
 	}
 
 	/**
+	 * Auto bill outstanding.
+	 *
 	 * @return bool
 	 */
 	public function auto_bill_outstanding(): bool {
@@ -58,6 +82,8 @@ class PaymentPreferences {
 	}
 
 	/**
+	 * Setup fee failure action.
+	 *
 	 * @return string
 	 */
 	public function setup_fee_failure_action(): string {
@@ -65,12 +91,19 @@ class PaymentPreferences {
 	}
 
 	/**
+	 * Payment failure threshold.
+	 *
 	 * @return int
 	 */
 	public function payment_failure_threshold(): int {
 		return $this->payment_failure_threshold;
 	}
 
+	/**
+	 * Returns Payment Preferences as array.
+	 *
+	 * @return array
+	 */
 	public function to_array():array {
 		return array(
 			'setup_fee'                 => $this->setup_fee(),

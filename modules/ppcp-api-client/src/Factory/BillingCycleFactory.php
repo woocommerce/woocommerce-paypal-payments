@@ -13,6 +13,9 @@ use stdClass;
 use WC_Product;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\BillingCycle;
 
+/**
+ * Class BillingCycleFactory
+ */
 class BillingCycleFactory {
 
 	/**
@@ -23,9 +26,9 @@ class BillingCycleFactory {
 	private $currency;
 
 	/**
-	 * The currency.
+	 * BillingCycleFactory constructor.
 	 *
-	 * @param string $currency
+	 * @param string $currency The currency.
 	 */
 	public function __construct( string $currency ) {
 		$this->currency = $currency;

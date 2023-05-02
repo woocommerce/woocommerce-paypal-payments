@@ -9,6 +9,9 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Entity;
 
+/**
+ * Class Product
+ */
 class Product {
 
 	/**
@@ -33,6 +36,8 @@ class Product {
 	private $description;
 
 	/**
+	 * Product constructor.
+	 *
 	 * @param string $id Product ID.
 	 * @param string $name Product name.
 	 * @param string $description Product description.

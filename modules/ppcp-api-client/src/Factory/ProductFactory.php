@@ -13,6 +13,9 @@ use stdClass;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Product;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
+/**
+ * Class ProductFactory
+ */
 class ProductFactory {
 
 	/**

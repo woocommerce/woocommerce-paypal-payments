@@ -40,16 +40,22 @@ class BillingPlans {
 	private $bearer;
 
 	/**
+	 * Billing cycle factory
+	 *
 	 * @var BillingCycleFactory
 	 */
 	private $billing_cycle_factory;
 
 	/**
+	 * Plan factory
+	 *
 	 * @var PlanFactory
 	 */
 	private $plan_factory;
 
 	/**
+	 * The logger.
+	 *
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -59,9 +65,11 @@ class BillingPlans {
 	/**
 	 * BillingPlans constructor.
 	 *
-	 * @param string          $host The host.
-	 * @param Bearer          $bearer The bearer.
-	 * @param LoggerInterface $logger The logger.
+	 * @param string              $host The host.
+	 * @param Bearer              $bearer The bearer.
+	 * @param BillingCycleFactory $billing_cycle_factory Billing cycle factory.
+	 * @param PlanFactory         $plan_factory Plan factory.
+	 * @param LoggerInterface     $logger The logger.
 	 */
 	public function __construct(
 		string $host,
@@ -80,7 +88,10 @@ class BillingPlans {
 	/**
 	 * Creates a subscription plan.
 	 *
-	 * @param string $product_id The product id.
+	 * @param string $name Product name.
+	 * @param string $product_id Product ID.
+	 * @param array  $billing_cycles Billing cycles.
+	 * @param array  $payment_preferences Payment preferences.
 	 *
 	 * @return Plan
 	 *
@@ -131,6 +142,16 @@ class BillingPlans {
 		return $this->plan_factory->from_paypal_response( $json );
 	}
 
+	/**
+	 * Returns a plan,
+	 *
+	 * @param string $id Plan ID.
+	 *
+	 * @return Plan
+	 *
+	 * @throws RuntimeException If the request fails.
+	 * @throws PayPalApiException If the request fails.
+	 */
 	public function plan( string $id ): Plan {
 		$bearer = $this->bearer->bearer();
 		$url    = trailingslashit( $this->host ) . 'v1/billing/plans/' . $id;
@@ -159,6 +180,17 @@ class BillingPlans {
 		return $this->plan_factory->from_paypal_response( $json );
 	}
 
+	/**
+	 * Updates pricing.
+	 *
+	 * @param string       $id Plan ID.
+	 * @param BillingCycle $billing_cycle Billing cycle.
+	 *
+	 * @return void
+	 *
+	 * @throws RuntimeException If the request fails.
+	 * @throws PayPalApiException If the request fails.
+	 */
 	public function update_pricing( string $id, BillingCycle $billing_cycle ): void {
 		$data = array(
 			'pricing_schemes' => array(

@@ -140,7 +140,11 @@ class BillingSubscriptions {
 	 * Cancels a Subscription.
 	 *
 	 * @param string $id Subscription ID.
+	 *
 	 * @return void
+	 *
+	 * @throws RuntimeException If the request fails.
+	 * @throws PayPalApiException If the request fails.
 	 */
 	public function cancel( string $id ): void {
 		$data = array(
@@ -177,7 +181,11 @@ class BillingSubscriptions {
 	 * Returns a Subscription object from the given ID.
 	 *
 	 * @param string $id Subscription ID.
+	 *
 	 * @return stdClass
+	 *
+	 * @throws RuntimeException If the request fails.
+	 * @throws PayPalApiException If the request fails.
 	 */
 	public function subscription( string $id ): stdClass {
 		$bearer = $this->bearer->bearer();

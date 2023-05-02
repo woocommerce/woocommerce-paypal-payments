@@ -164,20 +164,21 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	/**
 	 * PayPalGateway constructor.
 	 *
-	 * @param SettingsRenderer       $settings_renderer The Settings Renderer.
-	 * @param FundingSourceRenderer  $funding_source_renderer The funding source renderer.
-	 * @param OrderProcessor         $order_processor The Order Processor.
-	 * @param ContainerInterface     $config The settings.
-	 * @param SessionHandler         $session_handler The Session Handler.
-	 * @param RefundProcessor        $refund_processor The Refund Processor.
-	 * @param State                  $state The state.
+	 * @param SettingsRenderer $settings_renderer The Settings Renderer.
+	 * @param FundingSourceRenderer $funding_source_renderer The funding source renderer.
+	 * @param OrderProcessor $order_processor The Order Processor.
+	 * @param ContainerInterface $config The settings.
+	 * @param SessionHandler $session_handler The Session Handler.
+	 * @param RefundProcessor $refund_processor The Refund Processor.
+	 * @param State $state The state.
 	 * @param TransactionUrlProvider $transaction_url_provider Service providing transaction view URL based on order.
-	 * @param SubscriptionHelper     $subscription_helper The subscription helper.
-	 * @param string                 $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
-	 * @param Environment            $environment The environment.
+	 * @param SubscriptionHelper $subscription_helper The subscription helper.
+	 * @param string $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
+	 * @param Environment $environment The environment.
 	 * @param PaymentTokenRepository $payment_token_repository The payment token repository.
-	 * @param string                 $api_shop_country The api shop country.
-	 * @param LoggerInterface        $logger  The logger.
+	 * @param LoggerInterface $logger The logger.
+	 * @param string $api_shop_country The api shop country.
+	 * @param OrderEndpoint $order_endpoint The order endpoint.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,

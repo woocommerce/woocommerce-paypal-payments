@@ -1,4 +1,11 @@
 <?php
+/**
+ * Plan Factory.
+ *
+ * @package WooCommerce\PayPalCommerce\Webhooks\Handler
+ */
+
+declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
@@ -6,17 +13,31 @@ use stdClass;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Plan;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
+/**
+ * Class PlanFactory
+ */
 class PlanFactory {
 
 	/**
+	 * Billing cycle factory.
+	 *
 	 * @var BillingCycleFactory
 	 */
 	private $billing_cycle_factory;
+
 	/**
+	 * Payment preferences factory.
+	 *
 	 * @var PaymentPreferencesFactory
 	 */
 	private $payment_preferences_factory;
 
+	/**
+	 * PlanFactory constructor.
+	 *
+	 * @param BillingCycleFactory       $billing_cycle_factory Billing cycle factory.
+	 * @param PaymentPreferencesFactory $payment_preferences_factory Payment preferences factory.
+	 */
 	public function __construct(
 		BillingCycleFactory $billing_cycle_factory,
 		PaymentPreferencesFactory $payment_preferences_factory
@@ -25,6 +46,15 @@ class PlanFactory {
 		$this->payment_preferences_factory = $payment_preferences_factory;
 	}
 
+	/**
+	 * Returns a Plan from PayPal response.
+	 *
+	 * @param stdClass $data The data.
+	 *
+	 * @return Plan
+	 *
+	 * @throws RuntimeException If it could not create Plan.
+	 */
 	public function from_paypal_response( stdClass $data ): Plan {
 		if ( ! isset( $data->id ) ) {
 			throw new RuntimeException(

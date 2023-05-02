@@ -9,33 +9,55 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Entity;
 
+/**
+ * Class BillingCycle
+ */
 class BillingCycle {
 
 	/**
+	 * Frequency.
+	 *
 	 * @var array
 	 */
 	private $frequency;
 
 	/**
+	 * Sequence.
+	 *
 	 * @var int
 	 */
 	private $sequence;
 
 	/**
+	 * Tenure Type.
+	 *
 	 * @var string
 	 */
 	private $tenure_type;
 
 	/**
+	 * Pricing scheme.
+	 *
 	 * @var array
 	 */
 	private $pricing_scheme;
 
 	/**
+	 * Total cycles.
+	 *
 	 * @var int
 	 */
 	private $total_cycles;
 
+	/**
+	 * BillingCycle constructor.
+	 *
+	 * @param array  $frequency Frequency.
+	 * @param int    $sequence Sequence.
+	 * @param string $tenure_type Tenure type.
+	 * @param array  $pricing_scheme Pricing scheme.
+	 * @param int    $total_cycles Total cycles.
+	 */
 	public function __construct(
 		array $frequency,
 		int $sequence,
@@ -51,6 +73,8 @@ class BillingCycle {
 	}
 
 	/**
+	 * Returns frequency.
+	 *
 	 * @return array
 	 */
 	public function frequency(): array {
@@ -58,6 +82,8 @@ class BillingCycle {
 	}
 
 	/**
+	 * Returns sequence.
+	 *
 	 * @return int
 	 */
 	public function sequence(): int {
@@ -65,6 +91,8 @@ class BillingCycle {
 	}
 
 	/**
+	 * Returns tenure type.
+	 *
 	 * @return string
 	 */
 	public function tenure_type(): string {
@@ -72,6 +100,8 @@ class BillingCycle {
 	}
 
 	/**
+	 * Returns pricing scheme.
+	 *
 	 * @return array
 	 */
 	public function pricing_scheme(): array {
@@ -79,6 +109,8 @@ class BillingCycle {
 	}
 
 	/**
+	 * Return total cycles.
+	 *
 	 * @return int
 	 */
 	public function total_cycles(): int {

@@ -42,7 +42,10 @@ class CatalogProducts {
 	 * @var LoggerInterface
 	 */
 	private $logger;
+
 	/**
+	 * Product factory.
+	 *
 	 * @var ProductFactory
 	 */
 	private $product_factory;
@@ -52,6 +55,7 @@ class CatalogProducts {
 	 *
 	 * @param string          $host The host.
 	 * @param Bearer          $bearer The bearer.
+	 * @param ProductFactory  $product_factory Product factory.
 	 * @param LoggerInterface $logger The logger.
 	 */
 	public function __construct(
@@ -121,7 +125,11 @@ class CatalogProducts {
 	 *
 	 * @param string $id Product ID.
 	 * @param array  $data Data to update.
+	 *
 	 * @return void
+	 *
+	 * @throws RuntimeException If the request fails.
+	 * @throws PayPalApiException If the request fails.
 	 */
 	public function update( string $id, array $data ): void {
 		$bearer = $this->bearer->bearer();
@@ -155,7 +163,11 @@ class CatalogProducts {
 	 * Return a Product from the given ID.
 	 *
 	 * @param string $id Product ID.
+	 *
 	 * @return Product
+	 *
+	 * @throws RuntimeException If the request fails.
+	 * @throws PayPalApiException If the request fails.
 	 */
 	public function product( string $id ): Product {
 		$bearer = $this->bearer->bearer();
