@@ -1,4 +1,11 @@
 <?php
+/**
+ * The subscription module.
+ *
+ * @package WooCommerce\PayPalCommerce\Subscription
+ */
+
+declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Subscription;
 
@@ -12,63 +19,88 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\BillingCycleFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentPreferencesFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ProductFactory;
 
+/**
+ * Class SubscriptionsApiHandler
+ */
 class SubscriptionsApiHandler {
 
 	/**
+	 * Catalog products.
+	 *
 	 * @var CatalogProducts
 	 */
 	private $products_endpoint;
 
-    /**
-     * @var ProductFactory
-     */
-    private $product_factory;
+	/**
+	 * Product factory.
+	 *
+	 * @var ProductFactory
+	 */
+	private $product_factory;
 
 	/**
+	 * Billing plans.
+	 *
 	 * @var BillingPlans
 	 */
 	private $billing_plans_endpoint;
 
 	/**
+	 * Billing cycle factory.
+	 *
 	 * @var BillingCycleFactory
 	 */
 	private $billing_cycle_factory;
 
 	/**
+	 * Payment preferences factory.
+	 *
 	 * @var PaymentPreferencesFactory
 	 */
 	private $payment_preferences_factory;
 
 	/**
+	 * The logger.
+	 *
 	 * @var LoggerInterface
 	 */
 	private $logger;
 
-    public function __construct(
+	/**
+	 * SubscriptionsApiHandler constructor.
+	 *
+	 * @param CatalogProducts           $products_endpoint Products endpoint.
+	 * @param ProductFactory            $product_factory Product factory.
+	 * @param BillingPlans              $billing_plans_endpoint Billing plans endpoint.
+	 * @param BillingCycleFactory       $billing_cycle_factory Billing cycle factory.
+	 * @param PaymentPreferencesFactory $payment_preferences_factory Payment preferences factory.
+	 * @param LoggerInterface           $logger The logger.
+	 */
+	public function __construct(
 		CatalogProducts $products_endpoint,
-        ProductFactory $product_factory,
+		ProductFactory $product_factory,
 		BillingPlans $billing_plans_endpoint,
 		BillingCycleFactory $billing_cycle_factory,
 		PaymentPreferencesFactory $payment_preferences_factory,
 		LoggerInterface $logger
 	) {
-		$this->products_endpoint = $products_endpoint;
-        $this->product_factory = $product_factory;
-		$this->billing_plans_endpoint = $billing_plans_endpoint;
-		$this->billing_cycle_factory = $billing_cycle_factory;
+		$this->products_endpoint           = $products_endpoint;
+		$this->product_factory             = $product_factory;
+		$this->billing_plans_endpoint      = $billing_plans_endpoint;
+		$this->billing_cycle_factory       = $billing_cycle_factory;
 		$this->payment_preferences_factory = $payment_preferences_factory;
-		$this->logger            = $logger;
-    }
+		$this->logger                      = $logger;
+	}
 
 	/**
 	 * Creates a Catalog Product and adds it as WC product meta.
 	 *
-	 * @param WC_Product $product
+	 * @param WC_Product $product The WC product.
 	 * @return void
 	 */
 	public function create_product( WC_Product $product ) {
 		try {
-			$subscription_product = $this->products_endpoint->create( $product->get_title(), $product->get_description());
+			$subscription_product = $this->products_endpoint->create( $product->get_title(), $product->get_description() );
 			$product->update_meta_data( 'ppcp_subscription_product', $subscription_product->to_array() );
 			$product->save();
 		} catch ( RuntimeException $exception ) {
@@ -81,13 +113,20 @@ class SubscriptionsApiHandler {
 		}
 	}
 
-	public function create_plan( string $plan_name, WC_Product $product ) {
+	/**
+	 * Creates a subscription plan.
+	 *
+	 * @param string     $plan_name The plan name.
+	 * @param WC_Product $product The WC product.
+	 * @return void
+	 */
+	public function create_plan( string $plan_name, WC_Product $product ): void {
 		try {
 			$subscription_plan = $this->billing_plans_endpoint->create(
-                $plan_name,
+				$plan_name,
 				$product->get_meta( 'ppcp_subscription_product' )['id'] ?? '',
-				array($this->billing_cycle_factory->from_wc_product($product)->to_array()),
-				$this->payment_preferences_factory->from_wc_product($product)->to_array()
+				array( $this->billing_cycle_factory->from_wc_product( $product )->to_array() ),
+				$this->payment_preferences_factory->from_wc_product( $product )->to_array()
 			);
 
 			$product->update_meta_data( 'ppcp_subscription_plan', $subscription_plan->to_array() );
@@ -102,65 +141,76 @@ class SubscriptionsApiHandler {
 		}
 	}
 
-	public function update_product(WC_Product $product) {
-        try {
-            $catalog_product_id = $product->get_meta( 'ppcp_subscription_product' )['id'] ?? '';
-            if($catalog_product_id) {
-                $catalog_product = $this->products_endpoint->product($catalog_product_id);
-                $catalog_product_name = $catalog_product->name() ?? '';
-                $catalog_product_description = $catalog_product->description() ?? '';
-                if($catalog_product_name !== $product->get_title() || $catalog_product_description !== $product->get_description()) {
-                    $data = array();
-                    if($catalog_product_name !== $product->get_title()) {
-                        $data[] = (object) array(
-                            'op' => 'replace',
-                            'path' => '/name',
-                            'value' => $product->get_title(),
-                        );
-                    }
-                    if($catalog_product_description !== $product->get_description()) {
-                        $data[] = (object) array(
-                            'op' => 'replace',
-                            'path' => '/description',
-                            'value' => $product->get_description(),
-                        );
-                    }
+	/**
+	 * Updates a product.
+	 *
+	 * @param WC_Product $product The WC product.
+	 * @return void
+	 */
+	public function update_product( WC_Product $product ): void {
+		try {
+			$catalog_product_id = $product->get_meta( 'ppcp_subscription_product' )['id'] ?? '';
+			if ( $catalog_product_id ) {
+				$catalog_product             = $this->products_endpoint->product( $catalog_product_id );
+				$catalog_product_name        = $catalog_product->name() ?: '';
+				$catalog_product_description = $catalog_product->description() ?: '';
+				if ( $catalog_product_name !== $product->get_title() || $catalog_product_description !== $product->get_description() ) {
+					$data = array();
+					if ( $catalog_product_name !== $product->get_title() ) {
+						$data[] = (object) array(
+							'op'    => 'replace',
+							'path'  => '/name',
+							'value' => $product->get_title(),
+						);
+					}
+					if ( $catalog_product_description !== $product->get_description() ) {
+						$data[] = (object) array(
+							'op'    => 'replace',
+							'path'  => '/description',
+							'value' => $product->get_description(),
+						);
+					}
 
-                    $this->products_endpoint->update($catalog_product_id, $data);
-                }
-            }
+					$this->products_endpoint->update( $catalog_product_id, $data );
+				}
+			}
+		} catch ( RuntimeException $exception ) {
+			$error = $exception->getMessage();
+			if ( is_a( $exception, PayPalApiException::class ) ) {
+				$error = $exception->get_details( $error );
+			}
 
-        } catch (RuntimeException $exception) {
-            $error = $exception->getMessage();
-            if ( is_a( $exception, PayPalApiException::class ) ) {
-                $error = $exception->get_details( $error );
-            }
-
-            $this->logger->error( 'Could not update catalog product on PayPal. ' . $error );
-        }
+			$this->logger->error( 'Could not update catalog product on PayPal. ' . $error );
+		}
 	}
 
-	public function update_plan(WC_Product $product) {
-        try {
-            $subscription_plan_id = $product->get_meta('ppcp_subscription_plan')['id'] ?? '';
-            if ($subscription_plan_id) {
-                $subscription_plan = $this->billing_plans_endpoint->plan($subscription_plan_id);
+	/**
+	 * Updates a plan.
+	 *
+	 * @param WC_Product $product The WC product.
+	 * @return void
+	 */
+	public function update_plan( WC_Product $product ): void {
+		try {
+			$subscription_plan_id = $product->get_meta( 'ppcp_subscription_plan' )['id'] ?? '';
+			if ( $subscription_plan_id ) {
+				$subscription_plan = $this->billing_plans_endpoint->plan( $subscription_plan_id );
 
-                $price = $subscription_plan->billing_cycles()[0]->pricing_scheme()['fixed_price']['value'] ?? '';
-                if($price && round($price, 2) !== round($product->get_price(), 2)) {
-                    $this->billing_plans_endpoint->update_pricing(
-                        $subscription_plan_id,
-                        $this->billing_cycle_factory->from_wc_product($product)
-                    );
-                }
-            }
-        } catch (RuntimeException $exception) {
-            $error = $exception->getMessage();
-            if ( is_a( $exception, PayPalApiException::class ) ) {
-                $error = $exception->get_details( $error );
-            }
+				$price = $subscription_plan->billing_cycles()[0]->pricing_scheme()['fixed_price']['value'] ?? '';
+				if ( $price && round( $price, 2 ) !== round( (float) $product->get_price(), 2 ) ) {
+					$this->billing_plans_endpoint->update_pricing(
+						$subscription_plan_id,
+						$this->billing_cycle_factory->from_wc_product( $product )
+					);
+				}
+			}
+		} catch ( RuntimeException $exception ) {
+			$error = $exception->getMessage();
+			if ( is_a( $exception, PayPalApiException::class ) ) {
+				$error = $exception->get_details( $error );
+			}
 
-            $this->logger->error( 'Could not update subscription plan on PayPal. ' . $error );
-        }
+			$this->logger->error( 'Could not update subscription plan on PayPal. ' . $error );
+		}
 	}
 }

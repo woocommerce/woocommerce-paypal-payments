@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Subscription;
 
+use WC_Product;
 use WC_Product_Subscription;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingSubscriptions;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
@@ -142,6 +143,11 @@ class SubscriptionModule implements ModuleInterface {
 
 		add_action(
 			'save_post',
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
 			function( $product_id ) use ( $c ) {
 				$settings = $c->get( 'wcgateway.settings' );
 				assert( $settings instanceof Settings );
@@ -152,14 +158,19 @@ class SubscriptionModule implements ModuleInterface {
 					return;
 				}
 
-				$nonce = wc_clean(wp_unslash($_POST['_wcsnonce'])) ?? '';
+				$nonce = wc_clean( wp_unslash( $_POST['_wcsnonce'] ?? '' ) );
 				if (
 					$subscriptions_mode !== 'subscriptions_api'
+					|| ! is_string( $nonce )
 					|| ! wp_verify_nonce( $nonce, 'wcs_subscription_meta' ) ) {
 					return;
 				}
 
-				$product                     = wc_get_product( $product_id );
+				$product = wc_get_product( $product_id );
+				if ( ! is_a( $product, WC_Product::class ) ) {
+					return;
+				}
+
 				$enable_subscription_product = wc_clean( wp_unslash( $_POST['_ppcp_enable_subscription_product'] ?? '' ) );
 				$product->update_meta_data( '_ppcp_enable_subscription_product', $enable_subscription_product );
 				$product->save();
@@ -180,6 +191,10 @@ class SubscriptionModule implements ModuleInterface {
 
 					if ( $product->meta_exists( 'ppcp_subscription_product' ) && ! $product->meta_exists( 'ppcp_subscription_plan' ) ) {
 						$subscription_plan_name = wc_clean( wp_unslash( $_POST['_ppcp_subscription_plan_name'] ?? '' ) );
+						if ( ! is_string( $subscription_plan_name ) ) {
+							return;
+						}
+
 						$product->update_meta_data( '_ppcp_subscription_plan_name', $subscription_plan_name );
 						$product->save();
 
@@ -192,7 +207,12 @@ class SubscriptionModule implements ModuleInterface {
 
 		add_filter(
 			'woocommerce_order_data_store_cpt_get_orders_query',
-			function( $query, $query_vars ) {
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function( $query, $query_vars ): array {
 				if ( ! empty( $query_vars['ppcp_subscription'] ) ) {
 					$query['meta_query'][] = array(
 						'key'   => 'ppcp_subscription',
@@ -208,6 +228,11 @@ class SubscriptionModule implements ModuleInterface {
 
 		add_action(
 			'woocommerce_customer_changed_subscription_to_cancelled',
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
 			function( $subscription ) use ( $c ) {
 				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
 				if ( $subscription_id ) {
@@ -231,6 +256,11 @@ class SubscriptionModule implements ModuleInterface {
 
 		add_action(
 			'woocommerce_customer_changed_subscription_to_active',
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
 			function( $subscription ) use ( $c ) {
 				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
 				if ( $subscription_id ) {
@@ -261,8 +291,17 @@ class SubscriptionModule implements ModuleInterface {
 				try {
 					$subscriptions_mode = $settings->get( 'subscriptions_mode' );
 					if ( $subscriptions_mode === 'subscriptions_api' ) {
+						/**
+						 * Needed for getting global post object.
+						 *
+						 * @psalm-suppress InvalidGlobal
+						 */
 						global $post;
-						$product                     = wc_get_product( $post->ID );
+						$product = wc_get_product( $post->ID );
+						if ( ! is_a( $product, WC_Product::class ) ) {
+							return;
+						}
+
 						$enable_subscription_product = $product->get_meta( '_ppcp_enable_subscription_product' );
 						$subscription_plan_name      = $product->get_meta( '_ppcp_subscription_plan_name' );
 
@@ -289,6 +328,11 @@ class SubscriptionModule implements ModuleInterface {
 
 		add_action(
 			'woocommerce_subscription_before_actions',
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
 			function( $subscription ) use ( $c ) {
 				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
 				if ( $subscription_id ) {
@@ -308,7 +352,16 @@ class SubscriptionModule implements ModuleInterface {
 
 		add_filter(
 			'wcs_view_subscription_actions',
-			function( $actions, $subscription ) {
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function( $actions, $subscription ): array {
+				if ( ! is_a( $subscription, WC_Subscription::class ) ) {
+					return $actions;
+				}
+
 				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
 				if ( $subscription_id && $subscription->get_status() === 'active' ) {
 					$url = wp_nonce_url(
@@ -342,18 +395,22 @@ class SubscriptionModule implements ModuleInterface {
 		add_action(
 			'wp_loaded',
 			function() use ( $c ) {
-				if(! function_exists('wcs_get_subscription')) {
+				if ( ! function_exists( 'wcs_get_subscription' ) ) {
 					return;
 				}
 
 				$cancel_subscription_id = wc_clean( wp_unslash( $_GET['ppcp_cancel_subscription'] ?? '' ) );
 				$subscription           = wcs_get_subscription( absint( $cancel_subscription_id ) );
-				if ( ! wcs_is_subscription( $subscription ) ) {
+				if ( ! wcs_is_subscription( $subscription ) || $subscription === false ) {
 					return;
 				}
 
 				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
 				$nonce           = wc_clean( wp_unslash( $_GET['_wpnonce'] ?? '' ) );
+				if ( ! is_string( $nonce ) ) {
+					return;
+				}
+
 				if (
 				$subscription_id
 				&& $cancel_subscription_id
@@ -393,7 +450,16 @@ class SubscriptionModule implements ModuleInterface {
 
 		add_filter(
 			'woocommerce_order_actions',
-			function( $actions, $subscription ) {
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function( $actions, $subscription ): array {
+				if ( ! is_a( $subscription, WC_Subscription::class ) ) {
+					return $actions;
+				}
+
 				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
 				if ( $subscription_id && isset( $actions['wcs_process_renewal'] ) ) {
 					unset( $actions['wcs_process_renewal'] );
@@ -407,6 +473,11 @@ class SubscriptionModule implements ModuleInterface {
 
 		add_action(
 			'woocommerce_process_shop_subscription_meta',
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
 			function( $id, $subscription ) use ( $c ) {
 				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
 				if ( $subscription_id ) {

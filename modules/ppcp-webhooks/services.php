@@ -92,8 +92,8 @@ return array(
 			new PaymentSaleCompleted( $logger ),
 			new BillingSubscriptionCancelled( $logger ),
 			new BillingPlanPricingChangeActivated( $logger ),
-			new CatalogProductUpdated($logger),
-			new BillingPlanUpdated($logger),
+			new CatalogProductUpdated( $logger ),
+			new BillingPlanUpdated( $logger ),
 		);
 	},
 

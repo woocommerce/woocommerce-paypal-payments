@@ -101,12 +101,12 @@ class Plan {
 
 	public function to_array():array {
 		return array(
-			'id'          => $this->id(),
-			'name'        => $this->name(),
-			'product_id' => $this->product_id(),
-			'billing_cycles' => $this->billing_cycles(),
+			'id'                  => $this->id(),
+			'name'                => $this->name(),
+			'product_id'          => $this->product_id(),
+			'billing_cycles'      => $this->billing_cycles(),
 			'payment_preferences' => $this->payment_preferences(),
-			'status' => $this->status(),
+			'status'              => $this->status(),
 		);
 	}
 }

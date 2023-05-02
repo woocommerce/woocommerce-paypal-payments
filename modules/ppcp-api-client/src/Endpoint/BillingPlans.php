@@ -70,11 +70,11 @@ class BillingPlans {
 		PlanFactory $plan_factory,
 		LoggerInterface $logger
 	) {
-		$this->host   = $host;
-		$this->bearer = $bearer;
+		$this->host                  = $host;
+		$this->bearer                = $bearer;
 		$this->billing_cycle_factory = $billing_cycle_factory;
-		$this->plan_factory = $plan_factory;
-		$this->logger = $logger;
+		$this->plan_factory          = $plan_factory;
+		$this->logger                = $logger;
 	}
 
 	/**
@@ -95,10 +95,10 @@ class BillingPlans {
 	): Plan {
 
 		$data = array(
-			'name' => $name,
-			'product_id' => $product_id,
-			'billing_cycles' => $billing_cycles,
-			'payment_preferences' => $payment_preferences
+			'name'                => $name,
+			'product_id'          => $product_id,
+			'billing_cycles'      => $billing_cycles,
+			'payment_preferences' => $payment_preferences,
 		);
 
 		$bearer = $this->bearer->bearer();
@@ -108,7 +108,7 @@ class BillingPlans {
 			'headers' => array(
 				'Authorization' => 'Bearer ' . $bearer->token(),
 				'Content-Type'  => 'application/json',
-				'Prefer' => 'return=representation'
+				'Prefer'        => 'return=representation',
 			),
 			'body'    => wp_json_encode( $data ),
 		);
@@ -128,17 +128,17 @@ class BillingPlans {
 			);
 		}
 
-		return $this->plan_factory->from_paypal_response($json);
+		return $this->plan_factory->from_paypal_response( $json );
 	}
 
-	public function plan(string $id): Plan {
+	public function plan( string $id ): Plan {
 		$bearer = $this->bearer->bearer();
 		$url    = trailingslashit( $this->host ) . 'v1/billing/plans/' . $id;
 		$args   = array(
 			'headers' => array(
 				'Authorization' => 'Bearer ' . $bearer->token(),
 				'Content-Type'  => 'application/json',
-				'Prefer' => 'return=representation'
+				'Prefer'        => 'return=representation',
 			),
 		);
 
@@ -156,15 +156,15 @@ class BillingPlans {
 			);
 		}
 
-		return $this->plan_factory->from_paypal_response($json);
+		return $this->plan_factory->from_paypal_response( $json );
 	}
 
-	public function update_pricing(string $id, BillingCycle $billing_cycle): void {
+	public function update_pricing( string $id, BillingCycle $billing_cycle ): void {
 		$data = array(
-			"pricing_schemes" => array(
-				(object)array(
-					"billing_cycle_sequence" => 1,
-					"pricing_scheme" => $billing_cycle->pricing_scheme(),
+			'pricing_schemes' => array(
+				(object) array(
+					'billing_cycle_sequence' => 1,
+					'pricing_scheme'         => $billing_cycle->pricing_scheme(),
 				),
 			),
 		);

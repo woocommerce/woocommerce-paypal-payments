@@ -120,8 +120,8 @@ class BillingAgreementsEndpoint {
 	 */
 	public function reference_transaction_enabled(): bool {
 		try {
-			$reference_transaction_enabled = get_transient('ppcp_reference_transaction_enabled') ?? '';
-			if($reference_transaction_enabled === true) {
+			$reference_transaction_enabled = get_transient( 'ppcp_reference_transaction_enabled' ) ?? '';
+			if ( $reference_transaction_enabled === true ) {
 				return true;
 			}
 
@@ -135,12 +135,12 @@ class BillingAgreementsEndpoint {
 				);
 			} finally {
 				$this->is_request_logging_enabled = true;
-				set_transient('ppcp_reference_transaction_enabled', true, 3 * MONTH_IN_SECONDS);
+				set_transient( 'ppcp_reference_transaction_enabled', true, 3 * MONTH_IN_SECONDS );
 			}
 
 			return true;
 		} catch ( PayPalApiException $exception ) {
-			delete_transient('ppcp_reference_transaction_enabled');
+			delete_transient( 'ppcp_reference_transaction_enabled' );
 			return false;
 		}
 	}

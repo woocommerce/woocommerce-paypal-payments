@@ -798,8 +798,8 @@ return array(
 				'description'  => '',
 				'default'      => 'vaulting_api',
 				'options'      => array(
-					'vaulting_api'      => __( 'PayPal Vaulting', 'woocommerce-paypal-payments' ),
-					'subscriptions_api' => __( 'PayPal Subscriptions', 'woocommerce-paypal-payments' ),
+					'vaulting_api'                 => __( 'PayPal Vaulting', 'woocommerce-paypal-payments' ),
+					'subscriptions_api'            => __( 'PayPal Subscriptions', 'woocommerce-paypal-payments' ),
 					'disable_paypal_subscriptions' => __( 'Disable PayPal for subscriptions', 'woocommerce-paypal-payments' ),
 				),
 				'screens'      => array(

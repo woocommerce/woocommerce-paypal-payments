@@ -257,7 +257,7 @@ class SmartButton implements SmartButtonInterface {
 
 		$this->module_url                        = $module_url;
 		$this->version                           = $version;
-		$this->session_handler = $session_handler;
+		$this->session_handler                   = $session_handler;
 		$this->settings                          = $settings;
 		$this->payer_factory                     = $payer_factory;
 		$this->client_id                         = $client_id;
@@ -826,15 +826,15 @@ class SmartButton implements SmartButtonInterface {
 					'endpoint' => \WC_AJAX::get_endpoint( StartPayPalVaultingEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( StartPayPalVaultingEndpoint::nonce() ),
 				),
-				'save_checkout_form' => array(
+				'save_checkout_form'   => array(
 					'endpoint' => \WC_AJAX::get_endpoint( SaveCheckoutFormEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( SaveCheckoutFormEndpoint::nonce() ),
 				),
-				'validate_checkout'  => array(
+				'validate_checkout'    => array(
 					'endpoint' => \WC_AJAX::get_endpoint( ValidateCheckoutEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( ValidateCheckoutEndpoint::nonce() ),
 				),
-				'cart_script_params' => array(
+				'cart_script_params'   => array(
 					'endpoint' => \WC_AJAX::get_endpoint( CartScriptParamsEndpoint::ENDPOINT ),
 				),
 			),
@@ -1380,14 +1380,13 @@ class SmartButton implements SmartButtonInterface {
 	 * @return string
 	 */
 	private function paypal_subscription_id(): string {
-		if($this->subscription_helper->current_product_is_subscription() ) {
+		if ( $this->subscription_helper->current_product_is_subscription() ) {
 			$product = wc_get_product();
 			assert( $product instanceof WC_Product );
 
 			if ( $product->get_type() === 'subscription' && $product->meta_exists( 'ppcp_subscription_plan' ) ) {
 				return $product->get_meta( 'ppcp_subscription_plan' )['id'];
 			}
-
 		}
 
 		$items = WC()->cart->get_cart_contents();

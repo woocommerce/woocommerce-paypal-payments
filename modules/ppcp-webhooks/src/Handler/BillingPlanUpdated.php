@@ -64,6 +64,11 @@ class BillingPlanUpdated implements RequestHandler {
 	 * @return WP_REST_Response
 	 */
 	public function handle_request( WP_REST_Request $request ): WP_REST_Response {
+		$response = array( 'success' => false );
+		if ( is_null( $request['resource'] ) ) {
+			return new WP_REST_Response( $response );
+		}
+
 		$plan_id = wc_clean( wp_unslash( $request['resource']['id'] ?? '' ) );
 		if ( $plan_id ) {
 			$products = wc_get_products(
@@ -72,29 +77,31 @@ class BillingPlanUpdated implements RequestHandler {
 				)
 			);
 
-			foreach ( $products as $product ) {
-				if ( $product->meta_exists( 'ppcp_subscription_plan' ) ) {
-					$plan_name = wc_clean( wp_unslash( $request['resource']['name'] ?? '' ) );
-					if ( $plan_name !== $product->get_meta( '_ppcp_subscription_plan_name' ) ) {
-						$product->update_meta_data( '_ppcp_subscription_plan_name', $plan_name );
-						$product->save();
-					}
-
-					$billing_cycles = wc_clean( wp_unslash( $request['resource']['billing_cycles'] ?? array() ) );
-					if ( $billing_cycles ) {
-						$price = $billing_cycles[0]['pricing_scheme']['fixed_price']['value'] ?? '';
-						if ( $price && round( $price, 2 ) !== round( $product->get_meta( '_subscription_price' ), 2 ) ) {
-							$product->update_meta_data( '_subscription_price', $price );
+			if ( is_array( $products ) ) {
+				foreach ( $products as $product ) {
+					if ( $product->meta_exists( 'ppcp_subscription_plan' ) ) {
+						$plan_name = wc_clean( wp_unslash( $request['resource']['name'] ?? '' ) );
+						if ( $plan_name !== $product->get_meta( '_ppcp_subscription_plan_name' ) ) {
+							$product->update_meta_data( '_ppcp_subscription_plan_name', $plan_name );
 							$product->save();
 						}
-					}
 
-					$payment_preferences = wc_clean( wp_unslash( $request['resource']['payment_preferences'] ?? array() ) );
-					if ( $payment_preferences ) {
-						$setup_fee = $payment_preferences['setup_fee']['value'] ?? '';
-						if ( $setup_fee && round( $setup_fee, 2 ) !== round( $product->get_meta( '_subscription_sign_up_fee' ), 2 ) ) {
-							$product->update_meta_data( '_subscription_sign_up_fee', $setup_fee );
-							$product->save();
+						$billing_cycles = wc_clean( wp_unslash( $request['resource']['billing_cycles'] ?? array() ) );
+						if ( $billing_cycles ) {
+							$price = $billing_cycles[0]['pricing_scheme']['fixed_price']['value'] ?? '';
+							if ( $price && round( $price, 2 ) !== round( $product->get_meta( '_subscription_price' ), 2 ) ) {
+								$product->update_meta_data( '_subscription_price', $price );
+								$product->save();
+							}
+						}
+
+						$payment_preferences = wc_clean( wp_unslash( $request['resource']['payment_preferences'] ?? array() ) );
+						if ( $payment_preferences ) {
+							$setup_fee = $payment_preferences['setup_fee']['value'] ?? '';
+							if ( $setup_fee && round( $setup_fee, 2 ) !== round( $product->get_meta( '_subscription_sign_up_fee' ), 2 ) ) {
+								$product->update_meta_data( '_subscription_sign_up_fee', $setup_fee );
+								$product->save();
+							}
 						}
 					}
 				}

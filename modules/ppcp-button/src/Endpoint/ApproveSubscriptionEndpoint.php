@@ -44,8 +44,8 @@ class ApproveSubscriptionEndpoint implements EndpointInterface {
 	/**
 	 * ApproveSubscriptionEndpoint constructor.
 	 *
-	 * @param RequestData $request_data The request data helper.
-	 * @param OrderEndpoint $order_endpoint The order endpoint.
+	 * @param RequestData    $request_data The request data helper.
+	 * @param OrderEndpoint  $order_endpoint The order endpoint.
 	 * @param SessionHandler $session_handler The session handler.
 	 */
 	public function __construct(

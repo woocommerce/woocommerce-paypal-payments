@@ -92,11 +92,11 @@ class BillingCycle {
 	 */
 	public function to_array(): array {
 		return array(
-			'frequency' => $this->frequency(),
-			'sequence' => $this->sequence(),
-			'tenure_type' => $this->tenure_type(),
+			'frequency'      => $this->frequency(),
+			'sequence'       => $this->sequence(),
+			'tenure_type'    => $this->tenure_type(),
 			'pricing_scheme' => $this->pricing_scheme(),
-			'total_cycles' => $this->total_cycles(),
+			'total_cycles'   => $this->total_cycles(),
 		);
 	}
 }

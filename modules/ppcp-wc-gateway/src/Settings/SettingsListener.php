@@ -338,9 +338,9 @@ class SettingsListener {
 			$this->dcc_status_cache->delete( DCCProductStatus::DCC_STATUS_CACHE_KEY );
 		}
 
-		$ppcp_reference_transaction_enabled = get_transient('ppcp_reference_transaction_enabled') ?? '';
-		if($ppcp_reference_transaction_enabled) {
-			delete_transient('ppcp_reference_transaction_enabled');
+		$ppcp_reference_transaction_enabled = get_transient( 'ppcp_reference_transaction_enabled' ) ?? '';
+		if ( $ppcp_reference_transaction_enabled ) {
+			delete_transient( 'ppcp_reference_transaction_enabled' );
 		}
 
 		$redirect_url = false;

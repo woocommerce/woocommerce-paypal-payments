@@ -65,6 +65,9 @@ class BillingSubscriptionCancelled implements RequestHandler {
 	 */
 	public function handle_request( WP_REST_Request $request ): WP_REST_Response {
 		$response = array( 'success' => false );
+		if ( is_null( $request['resource'] ) ) {
+			return new WP_REST_Response( $response );
+		}
 
 		$subscription_id = wc_clean( wp_unslash( $request['resource']['id'] ?? '' ) );
 		if ( $subscription_id ) {

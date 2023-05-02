@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
 
 use Psr\Log\LoggerInterface;
+use WC_Order;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -67,8 +68,11 @@ class PaymentSaleCompleted implements RequestHandler {
 	 */
 	public function handle_request( WP_REST_Request $request ): WP_REST_Response {
 		$response = array( 'success' => false );
+		if ( is_null( $request['resource'] ) ) {
+			return new WP_REST_Response( $response );
+		}
 
-		$billing_agreement_id = wc_clean( wp_unslash( $request['resource']['billing_agreement_id'] ) ) ?? '';
+		$billing_agreement_id = wc_clean( wp_unslash( $request['resource']['billing_agreement_id'] ?? '' ) );
 		if ( ! $billing_agreement_id ) {
 			$message = 'Could not retrieve billing agreement id for subscription.';
 			$this->logger->warning( $message, array( 'request' => $request ) );
@@ -88,7 +92,8 @@ class PaymentSaleCompleted implements RequestHandler {
 		$subscriptions = wcs_get_subscriptions( $args );
 
 		if ( ! $subscriptions ) {
-			$message = "Could not retrieve WC subscriptions for billing agreement: {$billing_agreement_id}";
+			$billing_agreement_id = is_string( $billing_agreement_id ) ? $billing_agreement_id : '';
+			$message              = "Could not retrieve WC subscriptions for billing agreement: {$billing_agreement_id}";
 			$this->logger->warning( $message, array( 'request' => $request ) );
 			$response['message'] = $message;
 			return new WP_REST_Response( $response );
@@ -96,11 +101,13 @@ class PaymentSaleCompleted implements RequestHandler {
 
 		foreach ( $subscriptions as $subscription ) {
 			$renewal_order = wcs_create_renewal_order( $subscription );
-			$renewal_order->payment_complete();
+			if ( is_a( $renewal_order, WC_Order::class ) ) {
+				$renewal_order->payment_complete();
 
-			$transaction_id = wc_clean( wp_unslash( $request['resource']['id'] ) ) ?? '';
-			if ( $transaction_id ) {
-				$this->update_transaction_id( $transaction_id, $renewal_order );
+				$transaction_id = wc_clean( wp_unslash( $request['resource']['id'] ?? '' ) );
+				if ( $transaction_id && is_string( $transaction_id ) ) {
+					$this->update_transaction_id( $transaction_id, $renewal_order );
+				}
 			}
 		}
 

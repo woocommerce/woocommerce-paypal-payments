@@ -179,14 +179,14 @@ class BillingSubscriptions {
 	 * @param string $id Subscription ID.
 	 * @return stdClass
 	 */
-	public function subscription(string $id): stdClass {
+	public function subscription( string $id ): stdClass {
 		$bearer = $this->bearer->bearer();
 		$url    = trailingslashit( $this->host ) . 'v1/billing/subscriptions/' . $id;
 		$args   = array(
 			'headers' => array(
 				'Authorization' => 'Bearer ' . $bearer->token(),
 				'Content-Type'  => 'application/json',
-				'Prefer' => 'return=representation'
+				'Prefer'        => 'return=representation',
 			),
 		);
 

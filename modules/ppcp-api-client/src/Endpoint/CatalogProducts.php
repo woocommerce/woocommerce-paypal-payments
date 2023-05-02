@@ -60,10 +60,10 @@ class CatalogProducts {
 		ProductFactory $product_factory,
 		LoggerInterface $logger
 	) {
-		$this->host   = $host;
-		$this->bearer = $bearer;
+		$this->host            = $host;
+		$this->bearer          = $bearer;
 		$this->product_factory = $product_factory;
-		$this->logger = $logger;
+		$this->logger          = $logger;
 	}
 
 	/**
@@ -77,12 +77,12 @@ class CatalogProducts {
 	 * @throws RuntimeException If the request fails.
 	 * @throws PayPalApiException If the request fails.
 	 */
-	public function create(string $name, string $description): Product {
+	public function create( string $name, string $description ): Product {
 		$data = array(
 			'name' => $name,
 		);
 
-		if($description) {
+		if ( $description ) {
 			$data['description'] = $description;
 		}
 
@@ -93,7 +93,7 @@ class CatalogProducts {
 			'headers' => array(
 				'Authorization' => 'Bearer ' . $bearer->token(),
 				'Content-Type'  => 'application/json',
-				'Prefer' => 'return=representation'
+				'Prefer'        => 'return=representation',
 			),
 			'body'    => wp_json_encode( $data ),
 		);
@@ -113,17 +113,17 @@ class CatalogProducts {
 			);
 		}
 
-		return $this->product_factory->from_paypal_response($json);
+		return $this->product_factory->from_paypal_response( $json );
 	}
 
 	/**
 	 * Updates a Product.
 	 *
 	 * @param string $id Product ID.
-	 * @param array $data Data to update.
+	 * @param array  $data Data to update.
 	 * @return void
 	 */
-	public function update(string $id, array $data): void {
+	public function update( string $id, array $data ): void {
 		$bearer = $this->bearer->bearer();
 		$url    = trailingslashit( $this->host ) . 'v1/catalogs/products/' . $id;
 		$args   = array(
@@ -131,7 +131,7 @@ class CatalogProducts {
 			'headers' => array(
 				'Authorization' => 'Bearer ' . $bearer->token(),
 				'Content-Type'  => 'application/json',
-				'Prefer' => 'return=representation'
+				'Prefer'        => 'return=representation',
 			),
 			'body'    => wp_json_encode( $data ),
 		);
@@ -157,14 +157,14 @@ class CatalogProducts {
 	 * @param string $id Product ID.
 	 * @return Product
 	 */
-	public function product(string $id): Product {
+	public function product( string $id ): Product {
 		$bearer = $this->bearer->bearer();
 		$url    = trailingslashit( $this->host ) . 'v1/catalogs/products/' . $id;
 		$args   = array(
 			'headers' => array(
 				'Authorization' => 'Bearer ' . $bearer->token(),
 				'Content-Type'  => 'application/json',
-				'Prefer' => 'return=representation'
+				'Prefer'        => 'return=representation',
 			),
 		);
 
@@ -182,6 +182,6 @@ class CatalogProducts {
 			);
 		}
 
-		return $this->product_factory->from_paypal_response($json);
+		return $this->product_factory->from_paypal_response( $json );
 	}
 }

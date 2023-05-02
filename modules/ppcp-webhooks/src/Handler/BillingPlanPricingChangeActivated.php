@@ -65,19 +65,24 @@ class BillingPlanPricingChangeActivated implements RequestHandler {
 	 */
 	public function handle_request( WP_REST_Request $request ): WP_REST_Response {
 		$response = array( 'success' => false );
+		if ( is_null( $request['resource'] ) ) {
+			return new WP_REST_Response( $response );
+		}
 
 		$plan_id = wc_clean( wp_unslash( $request['resource']['id'] ?? '' ) );
 		$price   = wc_clean( wp_unslash( $request['resource']['billing_cycles'][0]['pricing_scheme']['fixed_price']['value'] ?? '' ) );
 		if ( $plan_id && $price ) {
-			$args     = array(
+			$args = array(
 				'meta_key' => 'ppcp_subscription_plan',
 			);
-			$products = wc_get_products( $args );
 
-			foreach ( $products as $product ) {
-				if ( $product->get_meta( 'ppcp_subscription_plan' )->id === $plan_id ) {
-					$product->update_meta_data( '_subscription_price', $price );
-					$product->save();
+			$products = wc_get_products( $args );
+			if ( is_array( $products ) ) {
+				foreach ( $products as $product ) {
+					if ( $product->get_meta( 'ppcp_subscription_plan' )->id === $plan_id ) {
+						$product->update_meta_data( '_subscription_price', $price );
+						$product->save();
+					}
 				}
 			}
 		}

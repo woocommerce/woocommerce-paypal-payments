@@ -64,6 +64,11 @@ class CatalogProductUpdated implements RequestHandler {
 	 * @return WP_REST_Response
 	 */
 	public function handle_request( WP_REST_Request $request ): WP_REST_Response {
+		$response = array( 'success' => false );
+		if ( is_null( $request['resource'] ) ) {
+			return new WP_REST_Response( $response );
+		}
+
 		$product_id = wc_clean( wp_unslash( $request['resource']['id'] ?? '' ) );
 		$name       = wc_clean( wp_unslash( $request['resource']['name'] ?? '' ) );
 		if ( $product_id && $name ) {
@@ -72,21 +77,28 @@ class CatalogProductUpdated implements RequestHandler {
 			);
 			$products = wc_get_products( $args );
 
-			foreach ( $products as $product ) {
-				if (
-					$product->meta_exists( 'ppcp_subscription_product' )
-					&& isset( $product->get_meta( 'ppcp_subscription_product' )['id'] )
-					&& $product->get_meta( 'ppcp_subscription_product' )['id'] === $product_id
-					&& $product->get_title() !== $name
-				) {
-					wp_update_post(
-						array(
-							'ID'         => $product->get_id(),
-							'post_title' => $name,
-						)
-					);
+			if ( is_array( $products ) ) {
+				foreach ( $products as $product ) {
+					if (
+						$product->meta_exists( 'ppcp_subscription_product' )
+						&& isset( $product->get_meta( 'ppcp_subscription_product' )['id'] )
+						&& $product->get_meta( 'ppcp_subscription_product' )['id'] === $product_id
+						&& $product->get_title() !== $name
+					) {
+						/**
+						 * Suppress ArgumentTypeCoercion
+						 *
+						 * @psalm-suppress ArgumentTypeCoercion
+						 */
+						wp_update_post(
+							array(
+								'ID'         => $product->get_id(),
+								'post_title' => $name,
+							)
+						);
 
-					break;
+						break;
+					}
 				}
 			}
 		}

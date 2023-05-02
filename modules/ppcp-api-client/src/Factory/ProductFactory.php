@@ -23,7 +23,7 @@ class ProductFactory {
 	 * @return Product
 	 * @throws RuntimeException When JSON object is malformed.
 	 */
-	public function from_paypal_response(stdClass $data): Product {
+	public function from_paypal_response( stdClass $data ): Product {
 		if ( ! isset( $data->id ) ) {
 			throw new RuntimeException(
 				__( 'No id for product given', 'woocommerce-paypal-payments' )
