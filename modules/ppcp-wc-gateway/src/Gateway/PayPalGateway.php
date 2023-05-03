@@ -223,7 +223,10 @@ class PayPalGateway extends \WC_Payment_Gateway {
 				'products',
 			);
 
-			if ( $this->config->has( 'vault_enabled' ) && $this->config->get( 'vault_enabled' ) ) {
+			if (
+				( $this->config->has( 'vault_enabled' ) && $this->config->get( 'vault_enabled' ) )
+				|| ( $this->config->has( 'subscriptions_mode' ) && $this->config->get( 'subscriptions_mode' ) === 'subscriptions_api' )
+			) {
 				array_push(
 					$this->supports,
 					'tokenization',
