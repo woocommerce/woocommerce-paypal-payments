@@ -13,6 +13,7 @@ use Psr\Log\LoggerInterface;
 use WC_Product;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingPlans;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\CatalogProducts;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\BillingCycle;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\BillingCycleFactory;
@@ -60,6 +61,13 @@ class SubscriptionsApiHandler {
 	private $payment_preferences_factory;
 
 	/**
+	 * The currency.
+	 *
+	 * @var string
+	 */
+	private $currency;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -74,6 +82,7 @@ class SubscriptionsApiHandler {
 	 * @param BillingPlans              $billing_plans_endpoint Billing plans endpoint.
 	 * @param BillingCycleFactory       $billing_cycle_factory Billing cycle factory.
 	 * @param PaymentPreferencesFactory $payment_preferences_factory Payment preferences factory.
+	 * @param string                    $currency The currency.
 	 * @param LoggerInterface           $logger The logger.
 	 */
 	public function __construct(
@@ -82,6 +91,7 @@ class SubscriptionsApiHandler {
 		BillingPlans $billing_plans_endpoint,
 		BillingCycleFactory $billing_cycle_factory,
 		PaymentPreferencesFactory $payment_preferences_factory,
+		string $currency,
 		LoggerInterface $logger
 	) {
 		$this->products_endpoint           = $products_endpoint;
@@ -89,6 +99,7 @@ class SubscriptionsApiHandler {
 		$this->billing_plans_endpoint      = $billing_plans_endpoint;
 		$this->billing_cycle_factory       = $billing_cycle_factory;
 		$this->payment_preferences_factory = $payment_preferences_factory;
+		$this->currency                    = $currency;
 		$this->logger                      = $logger;
 	}
 
@@ -125,7 +136,7 @@ class SubscriptionsApiHandler {
 			$subscription_plan = $this->billing_plans_endpoint->create(
 				$plan_name,
 				$product->get_meta( 'ppcp_subscription_product' )['id'] ?? '',
-				array( $this->billing_cycle_factory->from_wc_product( $product )->to_array() ),
+				$this->billing_cycles( $product ),
 				$this->payment_preferences_factory->from_wc_product( $product )->to_array()
 			);
 
@@ -212,5 +223,55 @@ class SubscriptionsApiHandler {
 
 			$this->logger->error( 'Could not update subscription plan on PayPal. ' . $error );
 		}
+	}
+
+	/**
+	 * Returns billing cycles based on WC Subscription product.
+	 *
+	 * @param WC_Product $product The WC Subscription product.
+	 * @return array
+	 */
+	private function billing_cycles( WC_Product $product ): array {
+		$billing_cycles = array();
+		$sequence       = 1;
+
+		$trial_length = $product->get_meta( '_subscription_trial_length' ) ?? '';
+		if ( $trial_length ) {
+			$billing_cycles[] = ( new BillingCycle(
+				array(
+					'interval_unit'  => $product->get_meta( '_subscription_trial_period' ),
+					'interval_count' => $product->get_meta( '_subscription_trial_length' ),
+				),
+				$sequence,
+				'TRIAL',
+				array(
+					'fixed_price' => array(
+						'value'         => $product->get_meta( '_subscription_price' ),
+						'currency_code' => $this->currency,
+					),
+				),
+				1
+			) )->to_array();
+
+			$sequence++;
+		}
+
+		$billing_cycles[] = ( new BillingCycle(
+			array(
+				'interval_unit'  => $product->get_meta( '_subscription_period' ),
+				'interval_count' => $product->get_meta( '_subscription_period_interval' ),
+			),
+			$sequence,
+			'REGULAR',
+			array(
+				'fixed_price' => array(
+					'value'         => $product->get_meta( '_subscription_price' ),
+					'currency_code' => $this->currency,
+				),
+			),
+			(int) $product->get_meta( '_subscription_length' )
+		) )->to_array();
+
+		return $billing_cycles;
 	}
 }
