@@ -70,8 +70,8 @@ class BillingPlanPricingChangeActivated implements RequestHandler {
 		}
 
 		$plan_id = wc_clean( wp_unslash( $request['resource']['id'] ?? '' ) );
-		$price   = wc_clean( wp_unslash( $request['resource']['billing_cycles'][0]['pricing_scheme']['fixed_price']['value'] ?? '' ) );
-		if ( $plan_id && $price ) {
+		if ( $plan_id && ! empty( $request['resource']['billing_cycles'] ) ) {
+			$this->logger->info( 'Starting stuff...' );
 			$args = array(
 				'meta_key' => 'ppcp_subscription_plan',
 			);
@@ -79,9 +79,13 @@ class BillingPlanPricingChangeActivated implements RequestHandler {
 			$products = wc_get_products( $args );
 			if ( is_array( $products ) ) {
 				foreach ( $products as $product ) {
-					if ( $product->get_meta( 'ppcp_subscription_plan' )->id === $plan_id ) {
-						$product->update_meta_data( '_subscription_price', $price );
-						$product->save();
+					if ( $product->get_meta( 'ppcp_subscription_plan' )['id'] === $plan_id ) {
+						foreach ( $request['resource']['billing_cycles'] as $cycle ) {
+							if ( $cycle['tenure_type'] === 'REGULAR' ) {
+								$product->update_meta_data( '_subscription_price', $cycle['pricing_scheme']['fixed_price']['value'] );
+								$product->save();
+							}
+						}
 					}
 				}
 			}
