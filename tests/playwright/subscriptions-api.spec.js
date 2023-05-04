@@ -134,6 +134,71 @@ test.describe.serial('Subscriptions Merchant', () => {
     });
 });
 
+test('Create new free trial subscription product', async ({page, request}) => {
+    const productTitle = (Math.random() + 1).toString(36).substring(7);
+    const planName = (Math.random() + 1).toString(36).substring(7);
+    await loginAsAdmin(page);
+
+    await page.goto('/wp-admin/post-new.php?post_type=product');
+    await page.fill('#title', productTitle);
+    await page.selectOption('select#product-type', 'subscription');
+    await page.fill('#_subscription_price', '42');
+    await page.fill('#_subscription_trial_length', '15');
+
+    await page.locator('#ppcp_enable_subscription_product').check();
+    await page.fill('#ppcp_subscription_plan_name', planName);
+
+    await Promise.all([
+        page.waitForNavigation(),
+        page.locator('#publish').click(),
+    ]);
+
+    const message = await page.locator('.notice-success');
+    await expect(message).toContainText('Product published.');
+
+    const products = await request.get('https://api.sandbox.paypal.com/v1/catalogs/products?page_size=100&page=1&total_required=true', {
+        headers: {
+            'Authorization': AUTHORIZATION,
+            'Content-Type': 'application/json'
+        }
+    });
+    expect(products.ok()).toBeTruthy();
+
+    const productList = await products.json();
+    const product = productList.products.find((p) => {
+        return p.name === productTitle;
+    });
+    await expect(product.id).toBeTruthy;
+
+    const plans = await request.get(`https://api.sandbox.paypal.com/v1/billing/plans?product_id=${product.id}&page_size=10&page=1&total_required=true`, {
+        headers: {
+            'Authorization': AUTHORIZATION,
+            'Content-Type': 'application/json'
+        }
+    });
+    expect(plans.ok()).toBeTruthy();
+
+    const planList = await plans.json();
+    const plan = planList.plans.find((p) => {
+        return p.product_id === product.id;
+    });
+    await expect(plan.id).toBeTruthy;
+
+    const planDetail = await request.get(`https://api.sandbox.paypal.com/v1/billing/plans/${plan.id}`, {
+        headers: {
+            'Authorization': AUTHORIZATION,
+            'Content-Type': 'application/json'
+        }
+    });
+    expect(planDetail.ok()).toBeTruthy();
+    const planDetailContent = await planDetail.json();
+
+    await expect(planDetailContent.billing_cycles[0].tenure_type).toBe('TRIAL');
+    await expect(planDetailContent.billing_cycles[0].pricing_scheme.fixed_price.value).toBe('0.0');
+    await expect(planDetailContent.billing_cycles[1].tenure_type).toBe('REGULAR');
+    await expect(planDetailContent.billing_cycles[1].pricing_scheme.fixed_price.value).toBe('42.0');
+});
+
 test.describe('Subscriber purchase a Subscription', () => {
     test('Purchase Subscription from Checkout Page', async ({page}) => {
         await loginAsCustomer(page);

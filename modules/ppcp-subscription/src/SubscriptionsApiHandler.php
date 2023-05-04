@@ -246,7 +246,7 @@ class SubscriptionsApiHandler {
 				'TRIAL',
 				array(
 					'fixed_price' => array(
-						'value'         => $product->get_meta( '_subscription_price' ),
+						'value'         => '0',
 						'currency_code' => $this->currency,
 					),
 				),
