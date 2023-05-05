@@ -625,10 +625,10 @@ class OrderEndpoint {
 	/**
 	 * Adds an improved error message to the response if the error detail is known.
 	 *
-	 * @param Object $json The response.
-	 * @return Object
+	 * @param stdClass $json The response.
+	 * @return stdClass
 	 */
-	public function add_improved_error_message( $json ): object {
+	public function add_improved_error_message( stdClass $json ): stdClass {
 		if ( ! isset( $json->details ) ) {
 			return $json;
 		}
