@@ -13,11 +13,16 @@ use WC_Payment_Gateway;
 use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 
 /**
  * Creates the admin message about the gateway being enabled without the PayPal gateway.
  */
 class GatewayWithoutPayPalAdminNotice {
+	private const NOTICE_OK                = '';
+	private const NOTICE_DISABLED_GATEWAY  = 'disabled_gateway';
+	private const NOTICE_DISABLED_LOCATION = 'disabled_location';
+
 	/**
 	 * The gateway ID.
 	 *
@@ -54,26 +59,36 @@ class GatewayWithoutPayPalAdminNotice {
 	private $is_ppcp_settings_page;
 
 	/**
+	 * The Settings status helper.
+	 *
+	 * @var SettingsStatus|null
+	 */
+	protected $settings_status;
+
+	/**
 	 * ConnectAdminNotice constructor.
 	 *
-	 * @param string             $id The gateway ID.
-	 * @param State              $state The state.
-	 * @param ContainerInterface $settings The settings.
-	 * @param bool               $is_payments_page Whether the current page is the WC payment page.
-	 * @param bool               $is_ppcp_settings_page Whether the current page is the PPCP settings page.
+	 * @param string              $id The gateway ID.
+	 * @param State               $state The state.
+	 * @param ContainerInterface  $settings The settings.
+	 * @param bool                $is_payments_page Whether the current page is the WC payment page.
+	 * @param bool                $is_ppcp_settings_page Whether the current page is the PPCP settings page.
+	 * @param SettingsStatus|null $settings_status The Settings status helper.
 	 */
 	public function __construct(
 		string $id,
 		State $state,
 		ContainerInterface $settings,
 		bool $is_payments_page,
-		bool $is_ppcp_settings_page
+		bool $is_ppcp_settings_page,
+		?SettingsStatus $settings_status = null
 	) {
 		$this->id                    = $id;
 		$this->state                 = $state;
 		$this->settings              = $settings;
 		$this->is_payments_page      = $is_payments_page;
 		$this->is_ppcp_settings_page = $is_ppcp_settings_page;
+		$this->settings_status       = $settings_status;
 	}
 
 	/**
@@ -82,8 +97,25 @@ class GatewayWithoutPayPalAdminNotice {
 	 * @return Message|null
 	 */
 	public function message(): ?Message {
-		if ( ! $this->should_display() ) {
-			return null;
+		$notice_type = $this->check();
+
+		switch ( $notice_type ) {
+			case self::NOTICE_DISABLED_GATEWAY:
+				/* translators: %1$s the gateway name, %2$s URL. */
+				$text = __(
+					'%1$s cannot be used without the PayPal gateway. <a href="%2$s">Enable the PayPal gateway</a>.',
+					'woocommerce-paypal-payments'
+				);
+				break;
+			case self::NOTICE_DISABLED_LOCATION:
+				/* translators: %1$s the gateway name, %2$s URL. */
+				$text = __(
+					'%1$s cannot be used without enabling the Checkout location for the PayPal gateway. <a href="%2$s">Enable the Checkout location</a>.',
+					'woocommerce-paypal-payments'
+				);
+				break;
+			default:
+				return null;
 		}
 
 		$gateway = $this->get_gateway();
@@ -94,11 +126,7 @@ class GatewayWithoutPayPalAdminNotice {
 		$name = $gateway->get_method_title();
 
 		$message = sprintf(
-			/* translators: %1$s the gateway name, %2$s URL. */
-			__(
-				'%1$s cannot be used without the PayPal gateway. <a href="%2$s">Enable the PayPal gateway</a>.',
-				'woocommerce-paypal-payments'
-			),
+			$text,
 			$name,
 			admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' )
 		);
@@ -106,22 +134,33 @@ class GatewayWithoutPayPalAdminNotice {
 	}
 
 	/**
-	 * Whether the message should be displayed.
+	 * Checks whether one of the messages should be displayed.
 	 *
-	 * @return bool
+	 * @return string One of the NOTICE_* constants.
 	 */
-	protected function should_display(): bool {
+	protected function check(): string {
 		if ( State::STATE_ONBOARDED !== $this->state->current_state() ||
 			( ! $this->is_payments_page && ! $this->is_ppcp_settings_page ) ) {
-			return false;
-		}
-		if ( $this->settings->has( 'enabled' ) && $this->settings->get( 'enabled' ) ) {
-			return false;
+			return self::NOTICE_OK;
 		}
 
-		$gateway = $this->get_gateway();
+		$gateway         = $this->get_gateway();
+		$gateway_enabled = $gateway && wc_string_to_bool( $gateway->get_option( 'enabled' ) );
 
-		return $gateway && wc_string_to_bool( $gateway->get_option( 'enabled' ) );
+		if ( ! $gateway_enabled ) {
+			return self::NOTICE_OK;
+		}
+
+		$paypal_enabled = $this->settings->has( 'enabled' ) && $this->settings->get( 'enabled' );
+		if ( ! $paypal_enabled ) {
+			return self::NOTICE_DISABLED_GATEWAY;
+		}
+
+		if ( $this->settings_status && ! $this->settings_status->is_smart_button_enabled_for_location( 'checkout' ) ) {
+			return self::NOTICE_DISABLED_LOCATION;
+		}
+
+		return self::NOTICE_OK;
 	}
 
 	/**

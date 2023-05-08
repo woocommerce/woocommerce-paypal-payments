@@ -223,7 +223,8 @@ return array(
 			$container->get( 'onboarding.state' ),
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'wcgateway.is-wc-payments-page' ),
-			$container->get( 'wcgateway.is-ppcp-settings-page' )
+			$container->get( 'wcgateway.is-ppcp-settings-page' ),
+			$container->get( 'wcgateway.settings.status' )
 		);
 	},
 	'wcgateway.notice.authorize-order-action'              =>
