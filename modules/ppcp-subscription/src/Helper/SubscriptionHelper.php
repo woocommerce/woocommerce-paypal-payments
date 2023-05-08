@@ -127,4 +127,17 @@ class SubscriptionHelper {
 
 		return true;
 	}
+
+	public function need_subscription_intent( string $subscription_mode ): bool {
+		if ( $subscription_mode === 'subscriptions_api' ) {
+			if (
+				$this->current_product_is_subscription()
+				|| ( ( is_cart() || is_checkout() ) && $this->cart_contains_subscription() )
+			) {
+				return true;
+			}
+		}
+
+		return false;
+	}
 }

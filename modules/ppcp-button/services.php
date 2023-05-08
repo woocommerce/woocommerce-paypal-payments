@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\Button\Helper\CheckoutFormSaver;
 use WooCommerce\PayPalCommerce\Button\Endpoint\SaveCheckoutFormEndpoint;
 use WooCommerce\PayPalCommerce\Button\Validation\CheckoutFormValidator;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ValidateCheckoutEndpoint;
+use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\DisabledSmartButton;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButton;
@@ -111,11 +112,8 @@ return array(
 		$product_intent       = $subscription_helper->current_product_is_subscription() ? 'authorize' : $intent;
 		$other_context_intent = $subscription_helper->cart_contains_subscription() ? 'authorize' : $intent;
 
-		if (
-			$settings->has( 'subscriptions_mode' )
-			&& $settings->get( 'subscriptions_mode' ) === 'subscriptions_api'
-			&& ( $subscription_helper->current_product_is_subscription() || $subscription_helper->cart_contains_subscription() )
-		) {
+		$subscription_mode = $settings->has( 'subscriptions_mode' ) ? $settings->get( 'subscriptions_mode' ) : '';
+		if($subscription_helper->need_subscription_intent($subscription_mode)) {
 			return 'subscription';
 		}
 

@@ -795,7 +795,7 @@ return array(
 				'class'        => array(),
 				'input_class'  => array( 'wc-enhanced-select' ),
 				'desc_tip'     => true,
-				'description'  => '',
+				'description'  => __( 'Utilize PayPal Vaulting for flexible subscription processing with saved payment methods, create “PayPal Subscriptions” to bill customers at regular intervals, or disable PayPal for subscription-type products.', 'woocommerce-paypal-payments' ),
 				'default'      => 'vaulting_api',
 				'options'      => array(
 					'vaulting_api'                 => __( 'PayPal Vaulting', 'woocommerce-paypal-payments' ),
