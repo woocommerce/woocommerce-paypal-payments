@@ -131,7 +131,7 @@ class CreditCardRenderer {
                     return event.fields[key].isValid;
                 });
 
-                const className = this._cardNumberFiledCLassNameByCardType(event.cards[0].type);
+                const className = event.cards.length ? this._cardNumberFiledCLassNameByCardType(event.cards[0].type) : '';
                 event.fields.number.isValid
                     ? cardNumber.classList.add(className)
                     : this._recreateElementClassAttribute(cardNumber, cardNumberField.className);
