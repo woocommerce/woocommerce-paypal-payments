@@ -68,11 +68,11 @@ class CheckoutBootstap {
             PayPalCommerceGateway.data_client_id.has_subscriptions
             && PayPalCommerceGateway.data_client_id.paypal_subscriptions_enabled
         ) {
-            this.renderer.render(actionHandler.subscriptionsConfiguration());
+            this.renderer.render(actionHandler.subscriptionsConfiguration(), {}, actionHandler.configuration());
             return;
         }
 
-        this.renderer.render(actionHandler.configuration());
+        this.renderer.render(actionHandler.configuration(), {}, actionHandler.configuration());
     }
 
     updateUi() {
