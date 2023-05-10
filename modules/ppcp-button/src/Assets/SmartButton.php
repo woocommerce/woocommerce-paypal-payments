@@ -1150,6 +1150,9 @@ class SmartButton implements SmartButtonInterface {
 	 * @return string
 	 */
 	private function style_for_context( string $style, string $context ): string {
+		// Use the cart/checkout styles for blocks.
+		$context = str_replace( '-block', '', $context );
+
 		$defaults = array(
 			'layout'  => 'vertical',
 			'size'    => 'responsive',
