@@ -90,24 +90,21 @@ class PaymentSaleCompleted implements RequestHandler {
 			),
 		);
 		$subscriptions = wcs_get_subscriptions( $args );
-
-		if ( ! $subscriptions ) {
-			$billing_agreement_id = is_string( $billing_agreement_id ) ? $billing_agreement_id : '';
-			$message              = "Could not retrieve WC subscriptions for billing agreement: {$billing_agreement_id}";
-			$this->logger->warning( $message, array( 'request' => $request ) );
-			$response['message'] = $message;
-			return new WP_REST_Response( $response );
-		}
-
 		foreach ( $subscriptions as $subscription ) {
-			$renewal_order = wcs_create_renewal_order( $subscription );
-			if ( is_a( $renewal_order, WC_Order::class ) ) {
-				$renewal_order->payment_complete();
+			$parent_order   = wc_get_order( $subscription->get_parent() );
+			$transaction_id = wc_clean( wp_unslash( $request['resource']['id'] ?? '' ) );
+			if ( $transaction_id && is_a( $parent_order, WC_Order::class ) ) {
+				$this->logger->info( "Setting transaction ID: {$transaction_id}" );
+				$parent_order->set_transaction_id( $transaction_id );
+				$parent_order->save();
 
-				$transaction_id = wc_clean( wp_unslash( $request['resource']['id'] ?? '' ) );
-				if ( $transaction_id && is_string( $transaction_id ) ) {
-					$this->update_transaction_id( $transaction_id, $renewal_order );
-				}
+				$parent_order->add_order_note(
+					sprintf(
+					/* translators: %s is the PayPal transaction ID */
+						__( 'PayPal transaction ID: %s', 'woocommerce-paypal-payments' ),
+						$transaction_id
+					)
+				);
 			}
 		}
 
