@@ -1,6 +1,6 @@
 <?php
 /**
- * Handles the WebhookPAYMENT.SALE.COMPLETED
+ * Handles the Webhook PAYMENT.SALE.COMPLETED
  *
  * @package WooCommerce\PayPalCommerce\Webhooks\Handler
  */
@@ -50,7 +50,7 @@ class PaymentSaleCompleted implements RequestHandler {
 	/**
 	 * Whether a handler is responsible for a given request or not.
 	 *
-	 * @param \WP_REST_Request $request The request.
+	 * @param WP_REST_Request $request The request.
 	 *
 	 * @return bool
 	 */
@@ -62,9 +62,9 @@ class PaymentSaleCompleted implements RequestHandler {
 	/**
 	 * Responsible for handling the request.
 	 *
-	 * @param \WP_REST_Request $request The request.
+	 * @param WP_REST_Request $request The request.
 	 *
-	 * @return \WP_REST_Response
+	 * @return WP_REST_Response
 	 */
 	public function handle_request( WP_REST_Request $request ): WP_REST_Response {
 		$response = array( 'success' => false );
@@ -94,17 +94,7 @@ class PaymentSaleCompleted implements RequestHandler {
 			$parent_order   = wc_get_order( $subscription->get_parent() );
 			$transaction_id = wc_clean( wp_unslash( $request['resource']['id'] ?? '' ) );
 			if ( $transaction_id && is_a( $parent_order, WC_Order::class ) ) {
-				$this->logger->info( "Setting transaction ID: {$transaction_id}" );
-				$parent_order->set_transaction_id( $transaction_id );
-				$parent_order->save();
-
-				$parent_order->add_order_note(
-					sprintf(
-					/* translators: %s is the PayPal transaction ID */
-						__( 'PayPal transaction ID: %s', 'woocommerce-paypal-payments' ),
-						$transaction_id
-					)
-				);
+				$this->update_transaction_id( $transaction_id, $parent_order, $this->logger );
 			}
 		}
 
