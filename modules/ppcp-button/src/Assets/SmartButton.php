@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\Button\Assets;
 
 use Exception;
 use Psr\Log\LoggerInterface;
+use WC_Order;
 use WC_Product;
 use WC_Product_Variation;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
@@ -766,8 +767,6 @@ class SmartButton implements SmartButtonInterface {
 	 * @throws NotFoundException If a setting hasn't been found.
 	 */
 	public function script_data(): array {
-		global $wp;
-
 		$is_free_trial_cart = $this->is_free_trial_cart();
 
 		$url_params = $this->url_params();
@@ -898,7 +897,7 @@ class SmartButton implements SmartButtonInterface {
 				// phpcs:ignore WordPress.WP.I18n
 				'shipping_field' => _x( 'Shipping %s', 'checkout-validation', 'woocommerce' ),
 			),
-			'order_id'                          => 'pay-now' === $this->context() ? absint( $wp->query_vars['order-pay'] ) : 0,
+			'order_id'                          => 'pay-now' === $this->context() ? $this->get_order_pay_id() : 0,
 			'single_product_buttons_enabled'    => $this->settings_status->is_smart_button_enabled_for_location( 'product' ),
 			'mini_cart_buttons_enabled'         => $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' ),
 			'basic_checkout_validation_enabled' => $this->basic_checkout_validation_enabled,
@@ -957,6 +956,19 @@ class SmartButton implements SmartButtonInterface {
 			&& 2 === strlen( WC()->customer->get_billing_country() )
 		) {
 			$params['buyer-country'] = WC()->customer->get_billing_country();
+		}
+
+		if ( 'pay-now' === $this->context() ) {
+			$wc_order_id = $this->get_order_pay_id();
+			if ( $wc_order_id ) {
+				$wc_order = wc_get_order( $wc_order_id );
+				if ( $wc_order instanceof WC_Order ) {
+					$currency = $wc_order->get_currency();
+					if ( $currency ) {
+						$params['currency'] = $currency;
+					}
+				}
+			}
 		}
 
 		$disable_funding = $this->settings->has( 'disable_funding' )
@@ -1348,5 +1360,20 @@ class SmartButton implements SmartButtonInterface {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Returns the ID of WC order on the order-pay page, or 0.
+	 *
+	 * @return int
+	 */
+	protected function get_order_pay_id(): int {
+		global $wp;
+
+		if ( ! isset( $wp->query_vars['order-pay'] ) ) {
+			return 0;
+		}
+
+		return absint( $wp->query_vars['order-pay'] );
 	}
 }
