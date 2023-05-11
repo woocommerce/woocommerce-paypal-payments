@@ -49,6 +49,7 @@ return array(
 			'ppcp-gateway-settings',
 			'ppcp-webhooks-status-page',
 			'ppcp-tracking',
+			'ppcp-fraudnet',
 		);
 	},
 
