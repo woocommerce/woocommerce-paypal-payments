@@ -615,7 +615,7 @@ class WCGatewayModule implements ModuleInterface {
 				 * @var OrderTablePaymentStatusColumn $payment_status_column
 				 */
 				$payment_status_column = $container->get( 'wcgateway.admin.orders-payment-status-column' );
-				$payment_status_column->render( $column, intval( $wc_order_id ) );
+				$payment_status_column->render( (string) $column, intval( $wc_order_id ) );
 			},
 			10,
 			2
