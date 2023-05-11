@@ -200,8 +200,15 @@ class OrderEndpoint {
 		$data   = array(
 			'intent'              => ( $this->subscription_helper->cart_contains_subscription() || $this->subscription_helper->current_product_is_subscription() ) ? 'AUTHORIZE' : $this->intent,
 			'purchase_units'      => array_map(
-				static function ( PurchaseUnit $item ): array {
-					return $item->to_array();
+				static function ( PurchaseUnit $item ) use ( $shipping_preference ): array {
+					$data = $item->to_array();
+
+					if ( $shipping_preference !== ApplicationContext::SHIPPING_PREFERENCE_GET_FROM_FILE ) {
+						// Shipping options are not allowed to be sent when not getting the address from PayPal.
+						unset( $data['shipping']['options'] );
+					}
+
+					return $data;
 				},
 				$items
 			),
