@@ -36,9 +36,8 @@ class CreditCardRenderer {
         const buttonSelector = wrapper + ' button';
 
         if (this.currentHostedFieldsInstance) {
-            this.currentHostedFieldsInstance.teardown()
-                .catch(err => console.error(`Hosted fields teardown error: ${err}`));
-            this.currentHostedFieldsInstance = null;
+            // Already rendered.
+            return;
         }
 
         const gateWayBox = document.querySelector('.payment_box.payment_method_ppcp-credit-card-gateway');
