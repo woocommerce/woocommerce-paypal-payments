@@ -28,6 +28,7 @@ use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureReversed;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\VaultCreditCardCreated;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\VaultPaymentTokenCreated;
+use WooCommerce\PayPalCommerce\Webhooks\Handler\VaultPaymentTokenDeleted;
 use WooCommerce\PayPalCommerce\Webhooks\Status\Assets\WebhooksStatusPageAssets;
 use WooCommerce\PayPalCommerce\Webhooks\Status\WebhookSimulation;
 
@@ -73,6 +74,8 @@ return array(
 		$prefix         = $container->get( 'api.prefix' );
 		$order_endpoint = $container->get( 'api.endpoint.order' );
 		$authorized_payments_processor = $container->get( 'wcgateway.processor.authorized-payments' );
+		$payment_token_factory = $container->get( 'vaulting.payment-token-factory' );
+
 		return array(
 			new CheckoutOrderApproved( $logger, $prefix, $order_endpoint ),
 			new CheckoutOrderCompleted( $logger, $prefix ),
@@ -80,8 +83,8 @@ return array(
 			new PaymentCaptureRefunded( $logger, $prefix ),
 			new PaymentCaptureReversed( $logger, $prefix ),
 			new PaymentCaptureCompleted( $logger, $prefix, $order_endpoint ),
-			new VaultPaymentTokenCreated( $logger, $prefix, $authorized_payments_processor ),
-			new VaultCreditCardCreated( $logger, $prefix ),
+			new VaultPaymentTokenCreated( $logger, $prefix, $authorized_payments_processor, $payment_token_factory ),
+			new VaultPaymentTokenDeleted( $logger ),
 			new PaymentCapturePending( $logger ),
 		);
 	},
@@ -172,7 +175,8 @@ return array(
 	'webhook.status.assets'                   => function( ContainerInterface $container ) : WebhooksStatusPageAssets {
 		return new WebhooksStatusPageAssets(
 			$container->get( 'webhook.module-url' ),
-			$container->get( 'ppcp.asset-version' )
+			$container->get( 'ppcp.asset-version' ),
+			$container->get( 'onboarding.environment' )
 		);
 	},
 
@@ -203,8 +207,8 @@ return array(
 		);
 	},
 
-	'webhook.last-webhook-storage'            => static function ( ContainerInterface $container ): WebhookInfoStorage {
-		return new WebhookInfoStorage( $container->get( 'webhook.last-webhook-storage.key' ) );
+	'webhook.last-webhook-storage'            => static function ( ContainerInterface $container ): WebhookEventStorage {
+		return new WebhookEventStorage( $container->get( 'webhook.last-webhook-storage.key' ) );
 	},
 	'webhook.last-webhook-storage.key'        => static function ( ContainerInterface $container ): string {
 		return 'ppcp-last-webhook';

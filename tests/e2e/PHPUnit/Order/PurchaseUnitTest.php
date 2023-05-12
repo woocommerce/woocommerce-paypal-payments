@@ -45,6 +45,10 @@ class PurchaseUnitTest extends TestCase
 
 		$this->puFactory = $this->container->get( 'api.factory.purchase-unit' );
 		assert($this->puFactory instanceof PurchaseUnitFactory);
+
+		add_filter('woocommerce_get_base_location', function () {
+			return 'AQ';
+		});
 	}
 
 	public function tearDown(): void
@@ -195,6 +199,7 @@ class PurchaseUnitTest extends TestCase
 		$product->set_regular_price((string) $data['price']);
 		$product->set_tax_status('taxable');
 		$product->set_tax_class('');
+		$product->set_virtual(true);
 
 		$product->save();
 

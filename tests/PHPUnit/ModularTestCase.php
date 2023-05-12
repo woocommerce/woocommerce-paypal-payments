@@ -3,10 +3,11 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce;
 
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\CompositeCachingServiceProvider;
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\DelegatingContainer;
+use WooCommerce\PayPalCommerce\Helper\RedirectorStub;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
+use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
+use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use function Brain\Monkey\Functions\when;
 
@@ -22,6 +23,7 @@ class ModularTestCase extends TestCase
         when('admin_url')->returnArg();
         when('plugins_url')->returnArg();
         when('plugin_dir_path')->alias(function ($file) { return trailingslashit(dirname($file)); });
+		when('is_plugin_active')->justReturn(true);
         when('get_current_blog_id')->justReturn(42);
         when('get_site_url')->justReturn('example.com');
         when('get_bloginfo')->justReturn('My Shop');
@@ -58,13 +60,30 @@ class ModularTestCase extends TestCase
      */
     protected function bootstrapModule(array $overriddenServices = []): ContainerInterface
     {
-        $overridingContainer = new DelegatingContainer(new CompositeCachingServiceProvider([
-            new ServiceProvider($overriddenServices, []),
-        ]));
+		$overriddenServices = array_merge([
+			'http.redirector' => function () {
+				return new RedirectorStub();
+			}
+		], $overriddenServices);
+
+		$module = new class ($overriddenServices) implements ModuleInterface {
+			public function __construct(array $services) {
+				$this->services = $services;
+			}
+
+			public function setup(): ServiceProviderInterface{
+				return new ServiceProvider($this->services, []);
+			}
+
+			public function run(ContainerInterface $c): void {
+			}
+		};
 
         $rootDir = ROOT_DIR;
         $bootstrap = require ("$rootDir/bootstrap.php");
-        $appContainer = $bootstrap($rootDir, $overridingContainer);
+        $appContainer = $bootstrap($rootDir, [], [$module]);
+
+		PPCP::init($appContainer);
 
         return $appContainer;
     }

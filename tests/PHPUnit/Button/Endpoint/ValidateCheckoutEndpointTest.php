@@ -5,18 +5,24 @@ namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 
 use Exception;
 use Mockery;
+use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\Button\Exception\ValidationException;
 use WooCommerce\PayPalCommerce\Button\Validation\CheckoutFormValidator;
 use WooCommerce\PayPalCommerce\TestCase;
 use function Brain\Monkey\Functions\expect;
+use function Brain\Monkey\Functions\when;
 
 class ValidateCheckoutEndpointTest extends TestCase
 {
+	use MockeryPHPUnitIntegration;
+
 	private $requestData;
 	private $formValidator;
 	private $logger;
 	private $sut;
+
+	private $session = [];
 
 	public function setUp(): void
 	{
@@ -33,6 +39,10 @@ class ValidateCheckoutEndpointTest extends TestCase
 		);
 
 		$this->requestData->expects('read_request')->andReturn(['form' => ['field1' => 'value']]);
+
+		when('WC')->alias(function () {
+			return (object) ['session' => (object) $this->session];
+		});
 	}
 
 	public function testValid()
@@ -51,7 +61,21 @@ class ValidateCheckoutEndpointTest extends TestCase
 			->andThrow($exception);
 
 		expect('wp_send_json_error')->once()
-			->with(['message' => $exception->getMessage(), 'errors' => ['Invalid value']]);
+			->with(['message' => $exception->getMessage(), 'errors' => ['Invalid value'], 'refresh' => false]);
+
+		$this->sut->handle_request();
+	}
+
+	public function testInvalidAndRefresh()
+	{
+		$exception = new ValidationException(['Invalid value']);
+		$this->formValidator->expects('validate')->once()
+			->andThrow($exception);
+
+		$this->session['refresh_totals'] = true;
+
+		expect('wp_send_json_error')->once()
+			->with(['message' => $exception->getMessage(), 'errors' => ['Invalid value'], 'refresh' => true]);
 
 		$this->sut->handle_request();
 	}

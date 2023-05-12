@@ -175,12 +175,12 @@ class WebhookEndpoint {
 	 *
 	 * @param Webhook $hook The webhook to delete.
 	 *
-	 * @return bool
 	 * @throws RuntimeException If the request fails.
+	 * @throws PayPalApiException If the request fails.
 	 */
-	public function delete( Webhook $hook ): bool {
+	public function delete( Webhook $hook ): void {
 		if ( ! $hook->id() ) {
-			return false;
+			return;
 		}
 
 		$bearer   = $this->bearer->bearer();
@@ -198,7 +198,18 @@ class WebhookEndpoint {
 				__( 'Not able to delete the webhook.', 'woocommerce-paypal-payments' )
 			);
 		}
-		return wp_remote_retrieve_response_code( $response ) === 204;
+
+		$status_code = (int) wp_remote_retrieve_response_code( $response );
+		if ( 204 !== $status_code ) {
+			$json = null;
+			if ( is_array( $response ) ) {
+				$json = json_decode( $response['body'] );
+			}
+			throw new PayPalApiException(
+				$json,
+				$status_code
+			);
+		}
 	}
 
 	/**

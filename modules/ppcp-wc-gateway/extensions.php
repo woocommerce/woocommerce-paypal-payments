@@ -9,10 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway;
 
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
-use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
 use WooCommerce\WooCommerce\Logging\Logger\WooCommerceLogger;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -51,41 +48,6 @@ return array(
 	'api.prefix'                     => static function ( ContainerInterface $container ): string {
 		$settings = $container->get( 'wcgateway.settings' );
 		return $settings->has( 'prefix' ) ? (string) $settings->get( 'prefix' ) : 'WC-';
-	},
-	'api.endpoint.order'             => static function ( ContainerInterface $container ): OrderEndpoint {
-		$order_factory           = $container->get( 'api.factory.order' );
-		$patch_collection_factory = $container->get( 'api.factory.patch-collection-factory' );
-		$logger                 = $container->get( 'woocommerce.logger.woocommerce' );
-		/**
-		 * The session handler.
-		 *
-		 * @var SessionHandler $session_handler
-		 */
-		$session_handler = $container->get( 'session.handler' );
-		$bn_code         = $session_handler->bn_code();
-
-		/**
-		 * The settings.
-		 *
-		 * @var Settings $settings
-		 */
-		$settings                     = $container->get( 'wcgateway.settings' );
-		$intent                       = $settings->has( 'intent' ) && strtoupper( (string) $settings->get( 'intent' ) ) === 'AUTHORIZE' ? 'AUTHORIZE' : 'CAPTURE';
-		$application_context_repository = $container->get( 'api.repository.application-context' );
-		$subscription_helper = $container->get( 'subscription.helper' );
-		return new OrderEndpoint(
-			$container->get( 'api.host' ),
-			$container->get( 'api.bearer' ),
-			$order_factory,
-			$patch_collection_factory,
-			$intent,
-			$logger,
-			$application_context_repository,
-			$subscription_helper,
-			$container->get( 'wcgateway.is-fraudnet-enabled' ),
-			$container->get( 'wcgateway.fraudnet' ),
-			$bn_code
-		);
 	},
 	'woocommerce.logger.woocommerce' => function ( ContainerInterface $container ): LoggerInterface {
 		if ( ! function_exists( 'wc_get_logger' ) || ! $container->get( 'wcgateway.logging.is-enabled' ) ) {

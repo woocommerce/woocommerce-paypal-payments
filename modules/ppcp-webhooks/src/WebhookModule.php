@@ -153,7 +153,6 @@ class WebhookModule implements ModuleInterface {
 				add_action(
 					'init',
 					function () use ( $registrar ) {
-						$registrar->unregister();
 						$registrar->register();
 					}
 				);

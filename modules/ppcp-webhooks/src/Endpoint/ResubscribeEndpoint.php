@@ -62,8 +62,6 @@ class ResubscribeEndpoint {
 			// Validate nonce.
 			$this->request_data->read_request( $this->nonce() );
 
-			$this->registrar->unregister();
-
 			if ( ! $this->registrar->register() ) {
 				wp_send_json_error( 'Webhook subscription failed.', 500 );
 				return false;

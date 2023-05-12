@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, e-commerce, store, sales, sell, 
 Requires at least: 5.3
 Tested up to: 6.1
 Requires PHP: 7.2
-Stable tag: 2.0.3
+Stable tag: 2.0.4
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -81,7 +81,19 @@ Follow the steps below to connect the plugin to your PayPal account:
 
 == Changelog ==
 
-= 2.0.3 =
+= 2.0.4 - 2023-04-03 =
+* Fix - Allow Pay Later in mini-cart #1221
+* Fix - Duplicated auth error when credentials become wrong #1229
+* Fix - Webhook issues when switching sandbox, and delete all webhooks when unsubscribing #1239
+* Fix - High volume of traffic from merchant-integrations endpoint #1273
+* Fix - Add content type json to all fetch ajax endpoints #1275
+* Enhancement - Remove shortcodes from description #1226
+* Enhancement - Handle price suffix with price for product button check #1234
+* Enhancement - Show funding source as payment method #1220
+* Enhancement - Change "Enabled" to "Available" in status text #1237
+* Enhancement - Programmatically capturing/voiding authorized payments #590
+
+= 2.0.3 - 2023-03-14 =
 * Fix - `DEVICE_DATA_NOT_AVAILABLE` error message when FraudNet is enabled #1177
 * Fix - Redirect to connection tab after manual credentials input #1201
 * Fix - Asking for address fields in checkout when not using them #1089
@@ -92,6 +104,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Fix - PPEC compatibility layer does not take over subscriptions #1193
 * Fix - Checkout conflict with "All products for subscriptions" plugin #629
 * Fix - Pay Later on order pay page #1214
+* Fix - High volume of traffic from merchant-integrations endpoint #1241
 * Enhancement - Save checkout form before free trial redirect #1135
 * Enhancement - Add filter for controlling the ditching of items/breakdown #1146
 * Enhancement - Add patch order data filter #1147

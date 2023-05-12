@@ -9,6 +9,10 @@ if (!defined('HOUR_IN_SECONDS')) {
 	define('HOUR_IN_SECONDS', 60 * MINUTE_IN_SECONDS);
 }
 
+if (!defined('ABSPATH')) {
+	define('ABSPATH', '');
+}
+
 /**
  * Cancel the next occurrence of a scheduled action.
  *

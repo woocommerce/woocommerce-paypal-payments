@@ -69,8 +69,13 @@ class SingleProductBootstap {
             () => {
                 const priceEl = document.querySelector('.product .woocommerce-Price-amount');
                 // variable products show price like 10.00 - 20.00 here
-                if (priceEl && priceEl.parentElement.querySelectorAll('.woocommerce-Price-amount').length === 1) {
-                    return priceEl.innerText;
+                // but the second price also can be the suffix with the price incl/excl tax
+                if (priceEl) {
+                    const allPriceElements = Array.from(priceEl.parentElement.querySelectorAll('.woocommerce-Price-amount'))
+                        .filter(el => !el.parentElement.classList.contains('woocommerce-price-suffix'));
+                    if (allPriceElements.length === 1) {
+                        return priceEl.innerText;
+                    }
                 }
                 return null;
             },

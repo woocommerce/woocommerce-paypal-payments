@@ -198,6 +198,40 @@ class PaymentTokenEndpoint {
 	}
 
 	/**
+	 * Deletes payment token by the given id.
+	 *
+	 * @param string $token_id Token id.
+	 * @return bool
+	 *
+	 * @throws RuntimeException If something goes wrong while deleting the token.
+	 */
+	public function delete_token_by_id( string $token_id ): bool {
+		$bearer = $this->bearer->bearer();
+
+		$url  = trailingslashit( $this->host ) . 'v2/vault/payment-tokens/' . $token_id;
+		$args = array(
+			'method'  => 'DELETE',
+			'headers' => array(
+				'Authorization' => 'Bearer ' . $bearer->token(),
+				'Content-Type'  => 'application/json',
+			),
+		);
+
+		$response = $this->request( $url, $args );
+
+		if ( is_wp_error( $response ) ) {
+			$error = new RuntimeException(
+				__( 'Could not delete payment token.', 'woocommerce-paypal-payments' )
+			);
+			$this->logger->warning( $error->getMessage() );
+
+			throw $error;
+		}
+
+		return wp_remote_retrieve_response_code( $response ) === 204;
+	}
+
+	/**
 	 * Starts the process of PayPal account vaulting (without payment), returns the links for further actions.
 	 *
 	 * @param int    $user_id The WP user id.

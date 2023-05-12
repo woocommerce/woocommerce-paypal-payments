@@ -3,13 +3,13 @@
  * Plugin Name: WooCommerce PayPal Payments
  * Plugin URI:  https://woocommerce.com/products/woocommerce-paypal-payments/
  * Description: PayPal's latest complete payments processing solution. Accept PayPal, Pay Later, credit/debit cards, alternative digital wallets local payment types and bank accounts. Turn on only PayPal options or process a full suite of payment methods. Enable global transaction with extensive currency and country coverage.
- * Version:     2.0.3
+ * Version:     2.0.4
  * Author:      WooCommerce
  * Author URI:  https://woocommerce.com/
  * License:     GPL-2.0
  * Requires PHP: 7.2
  * WC requires at least: 3.9
- * WC tested up to: 7.4
+ * WC tested up to: 7.5
  * Text Domain: woocommerce-paypal-payments
  *
  * @package WooCommerce\PayPalCommerce
@@ -23,7 +23,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 define( 'PAYPAL_API_URL', 'https://api.paypal.com' );
 define( 'PAYPAL_SANDBOX_API_URL', 'https://api.sandbox.paypal.com' );
-define( 'PAYPAL_INTEGRATION_DATE', '2023-02-21' );
+define( 'PAYPAL_INTEGRATION_DATE', '2023-03-20' );
 
 define( 'PPCP_FLAG_SUBSCRIPTION', true );
 
@@ -43,7 +43,7 @@ define( 'PPCP_FLAG_SUBSCRIPTION', true );
 	/**
 	 * Initialize the plugin and its modules.
 	 */
-	function init() {
+	function init(): void {
 		$root_dir = __DIR__;
 
 		if ( ! is_woocommerce_activated() ) {
@@ -74,6 +74,8 @@ define( 'PPCP_FLAG_SUBSCRIPTION', true );
 
 			$app_container = $bootstrap( $root_dir );
 
+			PPCP::init( $app_container );
+
 			$initialized = true;
 			/**
 			 * The hook fired after the plugin bootstrap with the app services container as parameter.
@@ -88,6 +90,11 @@ define( 'PPCP_FLAG_SUBSCRIPTION', true );
 			init();
 
 			if ( ! function_exists( 'get_plugin_data' ) ) {
+				/**
+				 * Skip check for WP files.
+				 *
+				 * @psalm-suppress MissingFile
+				 */
 				require_once ABSPATH . 'wp-admin/includes/plugin.php';
 			}
 			$plugin_data              = get_plugin_data( __DIR__ . '/woocommerce-paypal-payments.php' );
@@ -130,9 +137,14 @@ define( 'PPCP_FLAG_SUBSCRIPTION', true );
 		}
 	);
 
-	// Add "Settings" link to Plugins screen.
 	add_filter(
 		'plugin_action_links_' . plugin_basename( __FILE__ ),
+		/**
+		 * Add "Settings" link to Plugins screen.
+		 *
+		 * @param array $links
+		 * @retun array
+		 */
 		function( $links ) {
 			if ( ! is_woocommerce_activated() ) {
 				return $links;
@@ -151,9 +163,15 @@ define( 'PPCP_FLAG_SUBSCRIPTION', true );
 		}
 	);
 
-	// Add links below the description on the Plugins page.
 	add_filter(
 		'plugin_row_meta',
+		/**
+		 * Add links below the description on the Plugins page.
+		 *
+		 * @param array $links
+		 * @param string $file
+		 * @retun array
+		 */
 		function( $links, $file ) {
 			if ( plugin_basename( __FILE__ ) !== $file ) {
 				return $links;
@@ -193,6 +211,11 @@ define( 'PPCP_FLAG_SUBSCRIPTION', true );
 		'before_woocommerce_init',
 		function() {
 			if ( class_exists( '\Automattic\WooCommerce\Utilities\FeaturesUtil' ) ) {
+				/**
+				 * Skip WC class check.
+				 *
+				 * @psalm-suppress UndefinedClass
+				 */
 				\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', __FILE__, true );
 			}
 		}

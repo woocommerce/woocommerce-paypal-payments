@@ -16,9 +16,17 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return function (
 	string $root_dir,
-	ContainerInterface ...$additional_containers
+	array $additional_containers = array(),
+	array $additional_modules = array()
 ): ContainerInterface {
+	/**
+	 * Skip path check.
+	 *
+	 * @psalm-suppress UnresolvableInclude
+	 */
 	$modules = ( require "$root_dir/modules.php" )( $root_dir );
+
+	$modules = array_merge( $modules, $additional_modules );
 
 	/**
 	 * Use this filter to add custom module or remove some of existing ones.
@@ -38,7 +46,12 @@ return function (
 	// TODO: caching does not work currently,
 	// may want to consider fixing it later (pass proxy as parent to DelegatingContainer)
 	// for now not fixed since we were using this behavior for long time and fixing it now may break things.
-	$container     = new DelegatingContainer( $provider );
+	$container = new DelegatingContainer( $provider );
+	/**
+	 * Skip iterable vs array check.
+	 *
+	 * @psalm-suppress PossiblyInvalidArgument
+	 */
 	$app_container = new CachingContainer(
 		new CompositeContainer(
 			array_merge(

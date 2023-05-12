@@ -1,0 +1,38 @@
+#!/bin/bash
+
+show-help() {
+	echo -e "\nDelete all posts -p [post type]"
+	echo -e "\tExample: ddev wp-cleanup -p shop_order,product"
+	echo -e "\nDelete all logs -l [wp-content path]"
+	echo -e "\tExample: ddev wp-cleanup -l uploads/wc-logs\n"
+}
+
+delete-posts() {
+	for post in $(wp post list --post_type=$1 --format=ids --path=.ddev/wordpress); do
+		wp post delete $post --force --path=.ddev/wordpress
+	done
+}
+
+delete-logs() {
+	rm .ddev/wordpress/wp-content/$1/*.log
+}
+
+declare -i param_counter=0
+
+while getopts "p:l:h" arg; do
+	case $arg in
+	p)
+		delete-posts $OPTARG
+		param_counter+=1
+		;;
+	l)
+		delete-logs $OPTARG
+		param_counter+=1
+		;;
+	h) show-help ;;
+	esac
+done
+
+if [ $param_counter -eq 0 ]; then
+	show-help
+fi
