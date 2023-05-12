@@ -72,27 +72,29 @@ class PaymentSaleRefunded implements RequestHandler {
 			return new WP_REST_Response( $response );
 		}
 
-		$refund_id      = (string) ( $request['resource']['id'] ?? '' );
-		$transaction_id = $request['resource']['sale_id'] ?? '';
-		if ( ! $refund_id || ! $transaction_id ) {
+		$refund_id             = (string) ( $request['resource']['id'] ?? '' );
+		$transaction_id        = $request['resource']['sale_id'] ?? '';
+		$total_refunded_amount = $request['resource']['total_refunded_amount']['value'] ?? '';
+		if ( ! $refund_id || ! $transaction_id || ! $total_refunded_amount ) {
 			return new WP_REST_Response( $response );
 		}
 
 		$args      = array(
-			'meta_query' => array(
-				array(
-					'key'     => '_transaction_id',
-					'value'   => $transaction_id,
-					'compare' => '=',
-				),
-			),
+			'meta_key'     => '_transaction_id',
+			'meta_value'   => $transaction_id,
+			'meta_compare' => '=',
 		);
 		$wc_orders = wc_get_orders( $args );
+
+		if ( ! is_array( $wc_orders ) ) {
+			return new WP_REST_Response( $response );
+		}
+
 		foreach ( $wc_orders as $wc_order ) {
 			$refund = wc_create_refund(
 				array(
 					'order_id' => $wc_order->get_id(),
-					'amount'   => $request['resource']['amount']['total_refunded_amount'],
+					'amount'   => $total_refunded_amount,
 				)
 			);
 
@@ -109,17 +111,17 @@ class PaymentSaleRefunded implements RequestHandler {
 				return new WP_REST_Response( $response );
 			}
 
-			$this->logger->info(
-				sprintf(
-				// translators: %1$s is the order id %2$s is the amount which has been refunded.
-					__(
-						'Order %1$s has been refunded with %2$s through PayPal',
-						'woocommerce-paypal-payments'
-					),
-					(string) $wc_order->get_id(),
-					(string) $refund->get_amount()
-				)
+			$order_refunded_message = sprintf(
+			// translators: %1$s is the order id %2$s is the amount which has been refunded.
+				__(
+					'Order %1$s has been refunded with %2$s through PayPal.',
+					'woocommerce-paypal-payments'
+				),
+				(string) $wc_order->get_id(),
+				(string) $total_refunded_amount
 			);
+			$this->logger->info( $order_refunded_message );
+			$wc_order->add_order_note( $order_refunded_message );
 
 			$this->update_transaction_id( $refund_id, $wc_order, $this->logger );
 			$this->add_refund_to_meta( $wc_order, $refund_id );
