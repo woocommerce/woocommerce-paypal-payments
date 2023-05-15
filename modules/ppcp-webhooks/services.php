@@ -14,6 +14,7 @@ use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\WebhookEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Webhook;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
+use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Webhooks\Endpoint\ResubscribeEndpoint;
 use WooCommerce\PayPalCommerce\Webhooks\Endpoint\SimulateEndpoint;
 use WooCommerce\PayPalCommerce\Webhooks\Endpoint\SimulationStateEndpoint;
@@ -21,7 +22,6 @@ use WooCommerce\PayPalCommerce\Webhooks\Handler\CheckoutOrderApproved;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\CheckoutOrderCompleted;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\CheckoutPaymentApprovalReversed;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureCompleted;
-use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureDenied;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCapturePending;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureRefunded;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureReversed;
@@ -116,7 +116,12 @@ return array(
 		$endpoint = $container->get( 'api.endpoint.webhook' );
 		assert( $endpoint instanceof WebhookEndpoint );
 
-		return $endpoint->list();
+		$state = $container->get( 'onboarding.state' );
+		if ( $state->current_state() >= State::STATE_ONBOARDED ) {
+			return $endpoint->list();
+		}
+
+		return array();
 	},
 
 	'webhook.status.registered-webhooks-data' => function( ContainerInterface $container ) : array {
