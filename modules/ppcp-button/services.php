@@ -106,6 +106,7 @@ return array(
 	'button.intent'                               => static function( ContainerInterface $container ): string {
 		$settings           = $container->get( 'wcgateway.settings' );
 		$subscription_helper = $container->get( 'subscription.helper' );
+		assert( $subscription_helper instanceof SubscriptionHelper );
 		$context = $container->get( 'button.context' );
 
 		$intent               = ( $settings->has( 'intent' ) ) ? $settings->get( 'intent' ) : 'capture';
@@ -113,7 +114,7 @@ return array(
 		$other_context_intent = $subscription_helper->cart_contains_subscription() ? 'authorize' : $intent;
 
 		$subscription_mode = $settings->has( 'subscriptions_mode' ) ? $settings->get( 'subscriptions_mode' ) : '';
-		if($subscription_helper->need_subscription_intent($subscription_mode)) {
+		if ( $subscription_helper->need_subscription_intent( $subscription_mode ) ) {
 			return 'subscription';
 		}
 
