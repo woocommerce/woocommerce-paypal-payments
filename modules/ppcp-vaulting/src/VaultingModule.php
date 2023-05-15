@@ -22,6 +22,7 @@ use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WP_User_Query;
 
 /**
@@ -174,6 +175,12 @@ class VaultingModule implements ModuleInterface {
 		add_action(
 			'woocommerce_paypal_payments_gateway_migrate_on_update',
 			function () use ( $container ) {
+				$settings = $container->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+				if ( $settings->has( 'vault_enabled' ) && $settings->get( 'vault_enabled' ) && $settings->has( 'vault_enabled_dcc' ) ) {
+					$settings->set( 'vault_enabled_dcc', true );
+				}
+
 				// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 				// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 				$customers = new WP_User_Query(
