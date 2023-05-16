@@ -173,11 +173,11 @@ return array(
 			$container->get( 'wcgateway.all-funding-sources' ),
 			$container->get( 'button.basic-checkout-validation-enabled' ),
 			$container->get( 'button.early-wc-checkout-validation-enabled' ),
+			$container->get( 'button.pay-now-contexts' ),
 			$container->get( 'button.intent' ),
 			$container->get( 'button.context' ),
 			$container->get( 'button.can_save_vault_token' ),
 			$container->get( 'button.vault' ),
-			$container->get( 'button.pay-now-contexts' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
