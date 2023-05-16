@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundMetaTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
+use WP_Error;
 use WP_REST_Request;
 use WP_REST_Response;
 
@@ -100,7 +101,7 @@ class PaymentSaleRefunded implements RequestHandler {
 				)
 			);
 
-			if ( is_wp_error( $refund ) ) {
+			if ( $refund instanceof WP_Error ) {
 				$this->logger->warning(
 					sprintf(
 					// translators: %s is the order id.

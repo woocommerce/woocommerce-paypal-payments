@@ -94,7 +94,7 @@ class PaymentSaleCompleted implements RequestHandler {
 		foreach ( $subscriptions as $subscription ) {
 			$parent_order   = wc_get_order( $subscription->get_parent() );
 			$transaction_id = wc_clean( wp_unslash( $request['resource']['id'] ?? '' ) );
-			if ( $transaction_id && is_a( $parent_order, WC_Order::class ) ) {
+			if ( $transaction_id && is_string( $transaction_id ) && is_a( $parent_order, WC_Order::class ) ) {
 				$this->update_transaction_id( $transaction_id, $parent_order, $this->logger );
 			}
 		}
