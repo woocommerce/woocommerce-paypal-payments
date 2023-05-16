@@ -98,6 +98,9 @@ class SettingsStatus {
 		if ( 'pay-now' === $location ) {
 			$location = 'checkout';
 		}
+		if ( 'checkout-block' === $location ) {
+			$location = 'checkout-block-express';
+		}
 		return $location;
 	}
 

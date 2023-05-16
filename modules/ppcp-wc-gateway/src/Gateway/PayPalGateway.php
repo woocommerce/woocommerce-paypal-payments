@@ -425,7 +425,13 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
-		$funding_source = wc_clean( wp_unslash( $_POST['ppcp-funding-source'] ?? '' ) );
+		$funding_source = wc_clean( wp_unslash( $_POST['ppcp-funding-source'] ?? ( $_POST['funding_source'] ?? '' ) ) );
+
+		if ( $funding_source ) {
+			$wc_order->set_payment_method_title( $this->funding_source_renderer->render_name( $funding_source ) );
+			$wc_order->save();
+		}
+
 		if ( 'card' !== $funding_source && $this->is_free_trial_order( $wc_order ) ) {
 			$user_id = (int) $wc_order->get_customer_id();
 			$tokens  = $this->payment_token_repository->all_for_user_id( $user_id );

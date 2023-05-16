@@ -63,14 +63,12 @@ class ButtonModule implements ModuleInterface {
 		add_action(
 			'wp_enqueue_scripts',
 			static function () use ( $c ) {
-
 				$smart_button = $c->get( 'button.smart-button' );
-				/**
-				 * The Smart Button.
-				 *
-				 * @var SmartButtonInterface $smart_button
-				 */
-				$smart_button->enqueue();
+				assert( $smart_button instanceof SmartButtonInterface );
+
+				if ( $smart_button->should_load_ppcp_script() ) {
+					$smart_button->enqueue();
+				}
 			}
 		);
 

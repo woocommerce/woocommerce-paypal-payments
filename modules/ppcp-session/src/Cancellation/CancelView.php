@@ -50,7 +50,8 @@ class CancelView {
 	 * @param string      $url The URL.
 	 * @param string|null $funding_source The ID of the funding source, such as 'venmo'.
 	 */
-	public function render_session_cancellation( string $url, ?string $funding_source ) {
+	public function render_session_cancellation( string $url, ?string $funding_source ): string {
+		ob_start();
 		?>
 		<p id="ppcp-cancel"
 			class="has-text-align-center ppcp-cancel"
@@ -73,5 +74,6 @@ class CancelView {
 			?>
 		</p>
 		<?php
+		return (string) ob_get_clean();
 	}
 }

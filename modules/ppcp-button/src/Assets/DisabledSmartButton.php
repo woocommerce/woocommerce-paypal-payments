@@ -26,7 +26,7 @@ class DisabledSmartButton implements SmartButtonInterface {
 	/**
 	 * Whether the scripts should be loaded.
 	 */
-	public function should_load(): bool {
+	public function should_load_ppcp_script(): bool {
 		return false;
 	}
 
