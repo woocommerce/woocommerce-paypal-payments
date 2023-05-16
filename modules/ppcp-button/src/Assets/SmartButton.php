@@ -756,6 +756,10 @@ class SmartButton implements SmartButtonInterface {
 	 * @return bool
 	 */
 	private function paypal_subscriptions_enabled(): bool {
+		if ( defined( 'PPCP_FLAG_SUBSCRIPTIONS_API' ) && ! PPCP_FLAG_SUBSCRIPTIONS_API ) {
+			return false;
+		}
+
 		try {
 			$subscriptions_mode = $this->settings->get( 'subscriptions_mode' );
 		} catch ( NotFoundException $exception ) {
