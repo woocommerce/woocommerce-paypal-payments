@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\BillingCycleFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentPreferencesFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PlanFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ProductFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingOptionFactory;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
@@ -320,11 +321,18 @@ return array(
 		);
 	},
 	'api.factory.shipping'                      => static function ( ContainerInterface $container ): ShippingFactory {
-		$address_factory = $container->get( 'api.factory.address' );
-		return new ShippingFactory( $address_factory );
+		return new ShippingFactory(
+			$container->get( 'api.factory.address' ),
+			$container->get( 'api.factory.shipping-option' )
+		);
 	},
 	'api.factory.shipping-preference'           => static function ( ContainerInterface $container ): ShippingPreferenceFactory {
 		return new ShippingPreferenceFactory();
+	},
+	'api.factory.shipping-option'               => static function ( ContainerInterface $container ): ShippingOptionFactory {
+		return new ShippingOptionFactory(
+			$container->get( 'api.factory.money' )
+		);
 	},
 	'api.factory.amount'                        => static function ( ContainerInterface $container ): AmountFactory {
 		$item_factory = $container->get( 'api.factory.item' );

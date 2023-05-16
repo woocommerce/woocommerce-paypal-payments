@@ -381,6 +381,13 @@ class WCGatewayModule implements ModuleInterface {
 			10,
 			3
 		);
+
+		if ( defined( 'WP_CLI' ) && WP_CLI ) {
+			\WP_CLI::add_command(
+				'pcp settings',
+				$c->get( 'wcgateway.cli.settings.command' )
+			);
+		}
 	}
 
 	/**

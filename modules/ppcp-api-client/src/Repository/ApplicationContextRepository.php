@@ -38,11 +38,13 @@ class ApplicationContextRepository {
 	 * Returns the current application context.
 	 *
 	 * @param string $shipping_preferences The shipping preferences.
+	 * @param string $user_action The user action.
 	 *
 	 * @return ApplicationContext
 	 */
 	public function current_context(
-		string $shipping_preferences = ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING
+		string $shipping_preferences = ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING,
+		string $user_action = ApplicationContext::USER_ACTION_CONTINUE
 	): ApplicationContext {
 
 		$brand_name  = $this->settings->has( 'brand_name' ) ? $this->settings->get( 'brand_name' ) : '';
@@ -55,7 +57,8 @@ class ApplicationContextRepository {
 			(string) $brand_name,
 			$locale,
 			(string) $landingpage,
-			$shipping_preferences
+			$shipping_preferences,
+			$user_action
 		);
 		return $context;
 	}

@@ -139,6 +139,20 @@ class CreateOrderEndpoint implements EndpointInterface {
 	protected $early_validation_enabled;
 
 	/**
+	 * The contexts that should have the Pay Now button.
+	 *
+	 * @var string[]
+	 */
+	private $pay_now_contexts;
+
+	/**
+	 * If true, the shipping methods are sent to PayPal allowing the customer to select it inside the popup.
+	 *
+	 * @var bool
+	 */
+	private $handle_shipping_in_paypal;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -159,6 +173,8 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 * @param bool                      $registration_needed  Whether a new user must be registered during checkout.
 	 * @param string                    $card_billing_data_mode The value of card_billing_data_mode from the settings.
 	 * @param bool                      $early_validation_enabled Whether to execute WC validation of the checkout form.
+	 * @param string[]                  $pay_now_contexts The contexts that should have the Pay Now button.
+	 * @param bool                      $handle_shipping_in_paypal If true, the shipping methods are sent to PayPal allowing the customer to select it inside the popup.
 	 * @param LoggerInterface           $logger The logger.
 	 */
 	public function __construct(
@@ -173,6 +189,8 @@ class CreateOrderEndpoint implements EndpointInterface {
 		bool $registration_needed,
 		string $card_billing_data_mode,
 		bool $early_validation_enabled,
+		array $pay_now_contexts,
+		bool $handle_shipping_in_paypal,
 		LoggerInterface $logger
 	) {
 
@@ -187,6 +205,8 @@ class CreateOrderEndpoint implements EndpointInterface {
 		$this->registration_needed         = $registration_needed;
 		$this->card_billing_data_mode      = $card_billing_data_mode;
 		$this->early_validation_enabled    = $early_validation_enabled;
+		$this->pay_now_contexts            = $pay_now_contexts;
+		$this->handle_shipping_in_paypal   = $handle_shipping_in_paypal;
 		$this->logger                      = $logger;
 	}
 
@@ -226,7 +246,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 				}
 				$this->purchase_unit = $this->purchase_unit_factory->from_wc_order( $wc_order );
 			} else {
-				$this->purchase_unit = $this->purchase_unit_factory->from_wc_cart();
+				$this->purchase_unit = $this->purchase_unit_factory->from_wc_cart( null, $this->handle_shipping_in_paypal );
 
 				// The cart does not have any info about payment method, so we must handle free trial here.
 				if ( (
@@ -385,6 +405,9 @@ class CreateOrderEndpoint implements EndpointInterface {
 			$funding_source
 		);
 
+		$action = in_array( $this->parsed_request_data['context'], $this->pay_now_contexts, true ) ?
+			ApplicationContext::USER_ACTION_PAY_NOW : ApplicationContext::USER_ACTION_CONTINUE;
+
 		if ( 'card' === $funding_source ) {
 			if ( CardBillingMode::MINIMAL_INPUT === $this->card_billing_data_mode ) {
 				if ( ApplicationContext::SHIPPING_PREFERENCE_SET_PROVIDED_ADDRESS === $shipping_preference ) {
@@ -410,7 +433,9 @@ class CreateOrderEndpoint implements EndpointInterface {
 				$shipping_preference,
 				$payer,
 				null,
-				$this->payment_method()
+				$this->payment_method(),
+				'',
+				$action
 			);
 		} catch ( PayPalApiException $exception ) {
 			// Looks like currently there is no proper way to validate the shipping address for PayPal,

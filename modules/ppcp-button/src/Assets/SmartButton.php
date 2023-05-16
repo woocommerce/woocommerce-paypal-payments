@@ -195,6 +195,13 @@ class SmartButton implements SmartButtonInterface {
 	private $vault;
 
 	/**
+	 * The contexts that should have the Pay Now button.
+	 *
+	 * @var string[]
+	 */
+	private $pay_now_contexts;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -232,6 +239,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @param string                 $context The current context.
 	 * @param bool                   $can_save_vault_token Whether vault tokens could be saved.
 	 * @param string                 $vault Whether vault could be enabled or not.
+	 * @param string[]               $pay_now_contexts The contexts that should have the Pay Now button.
 	 * @param LoggerInterface        $logger The logger.
 	 */
 	public function __construct(
@@ -252,6 +260,7 @@ class SmartButton implements SmartButtonInterface {
 		array $all_funding_sources,
 		bool $basic_checkout_validation_enabled,
 		bool $early_validation_enabled,
+		array $pay_now_contexts,
 		string $intent,
 		string $context,
 		bool $can_save_vault_token,
@@ -276,6 +285,7 @@ class SmartButton implements SmartButtonInterface {
 		$this->all_funding_sources               = $all_funding_sources;
 		$this->basic_checkout_validation_enabled = $basic_checkout_validation_enabled;
 		$this->early_validation_enabled          = $early_validation_enabled;
+		$this->pay_now_contexts                  = $pay_now_contexts;
 		$this->intent                            = $intent;
 		$this->logger                            = $logger;
 		$this->context                           = $context;
@@ -541,31 +551,70 @@ class SmartButton implements SmartButtonInterface {
 	}
 
 	/**
-	 * Whether the scripts should be loaded.
+	 * Whether any of our scripts (for DCC or product, mini-cart, non-block cart/checkout) should be loaded.
 	 */
-	public function should_load(): bool {
+	public function should_load_ppcp_script(): bool {
 		$buttons_enabled = $this->settings->has( 'enabled' ) && $this->settings->get( 'enabled' );
-		if ( ! is_checkout() && ! $buttons_enabled ) {
+		if ( ! $buttons_enabled ) {
 			return false;
 		}
 
-		return true;
+		if ( in_array( $this->context(), array( 'checkout-block', 'cart-block' ), true ) ) {
+			return false;
+		}
+
+		return $this->should_load_buttons() || $this->can_render_dcc();
 	}
 
 	/**
-	 * Enqueues the scripts.
+	 * Determines whether the button component should be loaded.
 	 */
-	public function enqueue(): void {
-		if ( ! $this->should_load() ) {
-			return;
+	public function should_load_buttons() : bool {
+		$buttons_enabled = $this->settings->has( 'enabled' ) && $this->settings->get( 'enabled' );
+		if ( ! $buttons_enabled ) {
+			return false;
 		}
 
-		$load_script = false;
-		if ( is_checkout() && $this->settings->has( 'dcc_enabled' ) && $this->settings->get( 'dcc_enabled' ) ) {
-			$load_script = true;
+		$smart_button_enabled_for_current_location = $this->settings_status->is_smart_button_enabled_for_location( $this->context() );
+		$smart_button_enabled_for_mini_cart        = $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' );
+		$messaging_enabled_for_current_location    = $this->settings_status->is_pay_later_messaging_enabled_for_location( $this->context() );
+
+		switch ( $this->context() ) {
+			case 'checkout':
+			case 'cart':
+			case 'pay-now':
+				return $smart_button_enabled_for_current_location || $messaging_enabled_for_current_location;
+			case 'checkout-block':
+			case 'cart-block':
+				return $smart_button_enabled_for_current_location;
+			case 'product':
+				return $smart_button_enabled_for_current_location || $messaging_enabled_for_current_location || $smart_button_enabled_for_mini_cart;
+			default:
+				return $smart_button_enabled_for_mini_cart;
 		}
-		if ( $this->load_button_component() ) {
-			$load_script = true;
+	}
+
+	/**
+	 * Whether DCC fields can be rendered.
+	 */
+	public function can_render_dcc() : bool {
+		return $this->settings->has( 'dcc_enabled' ) && $this->settings->get( 'dcc_enabled' )
+			&& $this->settings->has( 'client_id' ) && $this->settings->get( 'client_id' )
+			&& $this->dcc_applies->for_country_currency()
+			&& in_array( $this->context(), array( 'checkout', 'pay-now' ), true );
+	}
+
+	/**
+	 * Enqueues our scripts/styles (for DCC and product, mini-cart and non-block cart/checkout)
+	 */
+	public function enqueue(): void {
+		if ( $this->can_render_dcc() ) {
+			wp_enqueue_style(
+				'ppcp-hosted-fields',
+				untrailingslashit( $this->module_url ) . '/assets/css/hosted-fields.css',
+				array(),
+				$this->version
+			);
 		}
 
 		if ( in_array( $this->context, array( 'pay-now', 'checkout' ), true ) ) {
@@ -575,31 +624,21 @@ class SmartButton implements SmartButtonInterface {
 				array(),
 				$this->version
 			);
-
-			if ( $this->can_render_dcc() ) {
-				wp_enqueue_style(
-					'ppcp-hosted-fields',
-					untrailingslashit( $this->module_url ) . '/assets/css/hosted-fields.css',
-					array(),
-					$this->version
-				);
-			}
 		}
-		if ( $load_script ) {
-			wp_enqueue_script(
-				'ppcp-smart-button',
-				untrailingslashit( $this->module_url ) . '/assets/js/button.js',
-				array( 'jquery' ),
-				$this->version,
-				true
-			);
 
-			wp_localize_script(
-				'ppcp-smart-button',
-				'PayPalCommerceGateway',
-				$this->script_data()
-			);
-		}
+		wp_enqueue_script(
+			'ppcp-smart-button',
+			untrailingslashit( $this->module_url ) . '/assets/js/button.js',
+			array( 'jquery' ),
+			$this->version,
+			true
+		);
+
+		wp_localize_script(
+			'ppcp-smart-button',
+			'PayPalCommerceGateway',
+			$this->script_data()
+		);
 	}
 
 	/**
@@ -692,18 +731,6 @@ class SmartButton implements SmartButtonInterface {
 	}
 
 	/**
-	 * Whether DCC fields can be rendered.
-	 *
-	 * @return bool
-	 * @throws NotFoundException When a setting was not found.
-	 */
-	private function can_render_dcc() : bool {
-
-		$can_render = $this->settings->has( 'dcc_enabled' ) && $this->settings->get( 'dcc_enabled' ) && $this->settings->has( 'client_id' ) && $this->settings->get( 'client_id' ) && $this->dcc_applies->for_country_currency();
-		return $can_render;
-	}
-
-	/**
 	 * Renders the HTML for the DCC fields.
 	 */
 	public function dcc_renderer() {
@@ -729,6 +756,24 @@ class SmartButton implements SmartButtonInterface {
 			esc_attr( $id ),
 			esc_html( $label )
 		);
+	}
+
+	/**
+	 * Whether we can store vault tokens or not.
+	 *
+	 * @return bool
+	 */
+	public function can_save_vault_token(): bool {
+
+		if ( ! $this->settings->has( 'client_id' ) || ! $this->settings->get( 'client_id' ) ) {
+			return false;
+		}
+
+		if ( ! $this->settings->has( 'vault_enabled' ) || ! $this->settings->get( 'vault_enabled' ) ) {
+			return false;
+		}
+
+		return true;
 	}
 
 	/**
@@ -789,7 +834,6 @@ class SmartButton implements SmartButtonInterface {
 	 * The configuration for the smart buttons.
 	 *
 	 * @return array
-	 * @throws NotFoundException If a setting hasn't been found.
 	 */
 	public function script_data(): array {
 		global $wp;
@@ -944,6 +988,15 @@ class SmartButton implements SmartButtonInterface {
 			$localize['button']['style']['tagline'] = false;
 		}
 
+		if ( $this->is_paypal_continuation() ) {
+			$order = $this->session_handler->order();
+			assert( $order !== null );
+
+			$localize['continuation'] = array(
+				'order_id' => $order->id(),
+			);
+		}
+
 		$this->request_data->dequeue_nonce_fix();
 		return $localize;
 	}
@@ -966,9 +1019,9 @@ class SmartButton implements SmartButtonInterface {
 	 * The JavaScript SDK url parameters.
 	 *
 	 * @return array
-	 * @throws NotFoundException If a setting was not found.
 	 */
 	private function url_params(): array {
+		$context              = $this->context();
 		$intent               = ( $this->settings->has( 'intent' ) ) ? $this->settings->get( 'intent' ) : 'capture';
 		$product_intent       = $this->subscription_helper->current_product_is_subscription() ? 'authorize' : $intent;
 		$other_context_intent = $this->subscription_helper->cart_contains_subscription() ? 'authorize' : $intent;
@@ -978,9 +1031,9 @@ class SmartButton implements SmartButtonInterface {
 			'currency'         => $this->currency,
 			'integration-date' => PAYPAL_INTEGRATION_DATE,
 			'components'       => implode( ',', $this->components() ),
-			'vault'            => $this->vault,
-			'commit'           => is_checkout() ? 'true' : 'false',
-			'intent'           => $this->intent,
+			'vault'            => $this->can_save_vault_token() ? 'true' : 'false',
+			'commit'           => in_array( $context, $this->pay_now_contexts, true ) ? 'true' : 'false',
+			'intent'           => $context === 'product' ? $product_intent : $other_context_intent,
 		);
 		if (
 			$this->environment->current_environment_is( Environment::SANDBOX )
@@ -1011,6 +1064,13 @@ class SmartButton implements SmartButtonInterface {
 			}
 		}
 
+		if ( in_array( $context, array( 'checkout-block', 'cart-block' ), true ) ) {
+			$disable_funding = array_diff(
+				array_keys( $this->all_funding_sources ),
+				array( 'venmo', 'paylater' )
+			);
+		}
+
 		if ( $this->is_free_trial_cart() ) {
 			$all_sources = array_keys( $this->all_funding_sources );
 			if ( $is_dcc_enabled || $is_separate_card_enabled ) {
@@ -1021,8 +1081,8 @@ class SmartButton implements SmartButtonInterface {
 
 		$enable_funding = array( 'venmo' );
 
-		if ( $this->settings_status->is_pay_later_button_enabled_for_location( $this->context() ) ||
-			$this->settings_status->is_pay_later_messaging_enabled_for_location( $this->context() )
+		if ( $this->settings_status->is_pay_later_button_enabled_for_location( $context ) ||
+			$this->settings_status->is_pay_later_messaging_enabled_for_location( $context )
 		) {
 			$enable_funding[] = 'paylater';
 		} else {
@@ -1091,7 +1151,7 @@ class SmartButton implements SmartButtonInterface {
 	private function components(): array {
 		$components = array();
 
-		if ( $this->load_button_component() ) {
+		if ( $this->should_load_buttons() ) {
 			$components[] = 'buttons';
 			$components[] = 'funding-eligibility';
 		}
@@ -1108,33 +1168,9 @@ class SmartButton implements SmartButtonInterface {
 	}
 
 	/**
-	 * Determines whether the button component should be loaded.
-	 *
-	 * @return bool
-	 * @throws NotFoundException If a setting has not been found.
-	 */
-	private function load_button_component() : bool {
-		$smart_button_enabled_for_current_location = $this->settings_status->is_smart_button_enabled_for_location( $this->context );
-		$smart_button_enabled_for_mini_cart        = $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' );
-		$messaging_enabled_for_current_location    = $this->settings_status->is_pay_later_messaging_enabled_for_location( $this->context );
-
-		switch ( $this->context ) {
-			case 'checkout':
-			case 'cart':
-			case 'pay-now':
-				return $smart_button_enabled_for_current_location || $messaging_enabled_for_current_location;
-			case 'product':
-				return $smart_button_enabled_for_current_location || $messaging_enabled_for_current_location || $smart_button_enabled_for_mini_cart;
-			default:
-				return $smart_button_enabled_for_mini_cart;
-		}
-	}
-
-	/**
 	 * Whether DCC is enabled or not.
 	 *
 	 * @return bool
-	 * @throws NotFoundException If a setting has not been found.
 	 */
 	private function dcc_is_enabled(): bool {
 		if ( ! is_checkout() ) {
@@ -1163,9 +1199,11 @@ class SmartButton implements SmartButtonInterface {
 	 * @param string $context The context.
 	 *
 	 * @return string
-	 * @throws NotFoundException When a setting hasn't been found.
 	 */
 	private function style_for_context( string $style, string $context ): string {
+		// Use the cart/checkout styles for blocks.
+		$context = str_replace( '-block', '', $context );
+
 		$defaults = array(
 			'layout'  => 'vertical',
 			'size'    => 'responsive',
