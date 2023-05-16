@@ -235,11 +235,11 @@ class SmartButton implements SmartButtonInterface {
 	 * @param array                  $all_funding_sources All existing funding sources.
 	 * @param bool                   $basic_checkout_validation_enabled Whether the basic JS validation of the form iss enabled.
 	 * @param bool                   $early_validation_enabled Whether to execute WC validation of the checkout form.
+	 * @param array                  $pay_now_contexts The contexts that should have the Pay Now button.
 	 * @param string                 $intent The intent.
 	 * @param string                 $context The current context.
 	 * @param bool                   $can_save_vault_token Whether vault tokens could be saved.
 	 * @param string                 $vault Whether vault could be enabled or not.
-	 * @param string[]               $pay_now_contexts The contexts that should have the Pay Now button.
 	 * @param LoggerInterface        $logger The logger.
 	 */
 	public function __construct(
