@@ -84,6 +84,14 @@ class IncomingWebhookEndpoint {
 	private $last_webhook_event_storage;
 
 	/**
+	 * Cached webhook verification results
+	 * to avoid repeating requests when permission_callback is called multiple times.
+	 *
+	 * @var array<string, bool>
+	 */
+	private $verification_results = array();
+
+	/**
 	 * IncomingWebhookEndpoint constructor.
 	 *
 	 * @param WebhookEndpoint     $webhook_endpoint The webhook endpoint.
@@ -160,7 +168,17 @@ class IncomingWebhookEndpoint {
 
 		try {
 			$event = $this->event_from_request( $request );
+		} catch ( RuntimeException $exception ) {
+			$this->logger->error( 'Webhook parsing failed: ' . $exception->getMessage() );
+			return false;
+		}
 
+		$cache_key = $event->id();
+		if ( isset( $this->verification_results[ $cache_key ] ) ) {
+			return $this->verification_results[ $cache_key ];
+		}
+
+		try {
 			if ( $this->simulation->is_simulation_event( $event ) ) {
 				return true;
 			}
@@ -169,9 +187,11 @@ class IncomingWebhookEndpoint {
 			if ( ! $result ) {
 				$this->logger->error( 'Webhook verification failed.' );
 			}
+			$this->verification_results[ $cache_key ] = $result;
 			return $result;
 		} catch ( RuntimeException $exception ) {
 			$this->logger->error( 'Webhook verification failed: ' . $exception->getMessage() );
+			$this->verification_results[ $cache_key ] = false;
 			return false;
 		}
 	}
