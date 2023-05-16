@@ -73,6 +73,7 @@ class BillingPlanUpdated implements RequestHandler {
 		if ( $plan_id ) {
 			$products = wc_get_products(
 				array(
+					// phpcs:ignore WordPress.DB.SlowDBQuery
 					'meta_key' => 'ppcp_subscription_product',
 				)
 			);

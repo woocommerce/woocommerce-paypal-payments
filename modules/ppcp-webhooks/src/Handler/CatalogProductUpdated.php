@@ -73,6 +73,7 @@ class CatalogProductUpdated implements RequestHandler {
 		$name       = wc_clean( wp_unslash( $request['resource']['name'] ?? '' ) );
 		if ( $product_id && $name ) {
 			$args     = array(
+				// phpcs:ignore WordPress.DB.SlowDBQuery
 				'meta_key' => 'ppcp_subscription_product',
 			);
 			$products = wc_get_products( $args );

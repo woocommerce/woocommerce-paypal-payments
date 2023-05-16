@@ -79,10 +79,12 @@ class PaymentSaleRefunded implements RequestHandler {
 			return new WP_REST_Response( $response );
 		}
 
-		$args      = array(
+		$args = array(
+			// phpcs:disable WordPress.DB.SlowDBQuery
 			'meta_key'     => '_transaction_id',
 			'meta_value'   => $transaction_id,
 			'meta_compare' => '=',
+			// phpcs:enable
 		);
 		$wc_orders = wc_get_orders( $args );
 

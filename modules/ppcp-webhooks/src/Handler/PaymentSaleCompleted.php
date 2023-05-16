@@ -81,6 +81,7 @@ class PaymentSaleCompleted implements RequestHandler {
 		}
 
 		$args          = array(
+			// phpcs:ignore WordPress.DB.SlowDBQuery
 			'meta_query' => array(
 				array(
 					'key'     => 'ppcp_subscription',

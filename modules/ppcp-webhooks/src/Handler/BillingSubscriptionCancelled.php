@@ -72,6 +72,7 @@ class BillingSubscriptionCancelled implements RequestHandler {
 		$subscription_id = wc_clean( wp_unslash( $request['resource']['id'] ?? '' ) );
 		if ( $subscription_id ) {
 			$args          = array(
+				// phpcs:ignore WordPress.DB.SlowDBQuery
 				'meta_query' => array(
 					array(
 						'key'     => 'ppcp_subscription',
