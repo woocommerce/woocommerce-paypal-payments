@@ -120,8 +120,7 @@ class BillingAgreementsEndpoint {
 	 */
 	public function reference_transaction_enabled(): bool {
 		try {
-			$reference_transaction_enabled = get_transient( 'ppcp_reference_transaction_enabled' ) ?? '';
-			if ( $reference_transaction_enabled === true ) {
+			if ( get_transient( 'ppcp_reference_transaction_enabled' ) === true ) {
 				return true;
 			}
 

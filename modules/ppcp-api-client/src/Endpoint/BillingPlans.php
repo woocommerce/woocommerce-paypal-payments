@@ -165,7 +165,7 @@ class BillingPlans {
 
 		$response = $this->request( $url, $args );
 		if ( is_wp_error( $response ) || ! is_array( $response ) ) {
-			throw new RuntimeException( 'Not able to get product.' );
+			throw new RuntimeException( 'Not able to get plan.' );
 		}
 
 		$json        = json_decode( $response['body'] );
