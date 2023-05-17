@@ -18,6 +18,56 @@ class SingleProductActionHandler {
         this.errorHandler = errorHandler;
     }
 
+    subscriptionsConfiguration() {
+        return {
+            createSubscription: (data, actions) => {
+                return actions.subscription.create({
+                    'plan_id': this.config.subscription_plan_id
+                });
+            },
+            onApprove: (data, actions) => {
+                fetch(this.config.ajax.approve_subscription.endpoint, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        nonce: this.config.ajax.approve_subscription.nonce,
+                        order_id: data.orderID,
+                        subscription_id: data.subscriptionID
+                    })
+                }).then((res)=>{
+                    return res.json();
+                }).then(() => {
+                    const id = document.querySelector('[name="add-to-cart"]').value;
+                    const products =  [new Product(id, 1, null)];
+
+                    fetch(this.config.ajax.change_cart.endpoint, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        credentials: 'same-origin',
+                        body: JSON.stringify({
+                            nonce: this.config.ajax.change_cart.nonce,
+                            products,
+                        })
+                    }).then((result) => {
+                        return result.json();
+                    }).then((result) => {
+                        if (!result.success) {
+                            console.log(result)
+                            throw Error(result.data.message);
+                        }
+
+                        location.href = this.config.redirect;
+                    })
+                });
+            },
+            onError: (err) => {
+                console.error(err);
+            }
+        }
+    }
+
     configuration()
     {
         return {

@@ -35,6 +35,10 @@ class TestCase extends \PHPUnit\Framework\TestCase
 		when('plugin_basename')->justReturn('woocommerce-paypal-payments/woocommerce-paypal-payments.php');
 		when('get_transient')->returnArg();
 
+		when('wc_clean')->returnArg();
+		when('get_transient')->returnArg();
+		when('delete_transient')->returnArg();
+
 		setUp();
 	}
 

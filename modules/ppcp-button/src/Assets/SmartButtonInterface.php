@@ -32,13 +32,6 @@ interface SmartButtonInterface {
 	public function enqueue(): void;
 
 	/**
-	 * Whether the running installation could save vault tokens or not.
-	 *
-	 * @return bool
-	 */
-	public function can_save_vault_token(): bool;
-
-	/**
 	 * The configuration for the smart buttons.
 	 *
 	 * @return array
