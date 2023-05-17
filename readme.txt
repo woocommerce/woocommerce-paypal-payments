@@ -2,9 +2,9 @@
 Contributors: woocommerce, automattic, inpsyde
 Tags: woocommerce, paypal, payments, ecommerce, e-commerce, store, sales, sell, shop, shopping, cart, checkout
 Requires at least: 5.3
-Tested up to: 6.1
+Tested up to: 6.2
 Requires PHP: 7.2
-Stable tag: 2.0.4
+Stable tag: 2.0.5
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -80,6 +80,18 @@ Follow the steps below to connect the plugin to your PayPal account:
 6. Main settings screen.
 
 == Changelog ==
+
+= 2.0.5 - TBD =
+* Fix - Performance issue #1182
+* Fix - Webhooks not registered when onboarding with manual credentials #1223
+* Fix - Cross Site Request Forgery (CSRF) can invalidate merchant credentials #1339
+* Fix - Boolean false type sent as empty value when setting cache #1313
+* Enhancement - Save and display vaulted payment methods in WC Payment Token API #1059
+* Enhancement - Cache webhook verification results #1379
+* Enhancement - Refresh checkout totals after validation if needed #1294
+* Enhancement - Improve Divi and Elementor Pro compatibility #1254
+* Feature preview - Add express cart/checkout block #1346
+* Feature preview - Integrate PayPal Subscriptions API #1217
 
 = 2.0.4 - 2023-04-03 =
 * Fix - Allow Pay Later in mini-cart #1221
