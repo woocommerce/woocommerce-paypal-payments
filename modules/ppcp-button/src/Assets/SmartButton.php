@@ -167,34 +167,6 @@ class SmartButton implements SmartButtonInterface {
 	private $payment_tokens = null;
 
 	/**
-	 * The intent.
-	 *
-	 * @var string
-	 */
-	private $intent;
-
-	/**
-	 * The current context.
-	 *
-	 * @var string
-	 */
-	private $context;
-
-	/**
-	 * Whether vault tokens could be saved.
-	 *
-	 * @var bool
-	 */
-	private $can_save_vault_token;
-
-	/**
-	 * Whether vault could be enabled or not.
-	 *
-	 * @var string
-	 */
-	private $vault;
-
-	/**
 	 * The contexts that should have the Pay Now button.
 	 *
 	 * @var string[]
@@ -236,10 +208,6 @@ class SmartButton implements SmartButtonInterface {
 	 * @param bool                   $basic_checkout_validation_enabled Whether the basic JS validation of the form iss enabled.
 	 * @param bool                   $early_validation_enabled Whether to execute WC validation of the checkout form.
 	 * @param array                  $pay_now_contexts The contexts that should have the Pay Now button.
-	 * @param string                 $intent The intent.
-	 * @param string                 $context The current context.
-	 * @param bool                   $can_save_vault_token Whether vault tokens could be saved.
-	 * @param string                 $vault Whether vault could be enabled or not.
 	 * @param LoggerInterface        $logger The logger.
 	 */
 	public function __construct(
@@ -261,10 +229,6 @@ class SmartButton implements SmartButtonInterface {
 		bool $basic_checkout_validation_enabled,
 		bool $early_validation_enabled,
 		array $pay_now_contexts,
-		string $intent,
-		string $context,
-		bool $can_save_vault_token,
-		string $vault,
 		LoggerInterface $logger
 	) {
 
@@ -286,11 +250,7 @@ class SmartButton implements SmartButtonInterface {
 		$this->basic_checkout_validation_enabled = $basic_checkout_validation_enabled;
 		$this->early_validation_enabled          = $early_validation_enabled;
 		$this->pay_now_contexts                  = $pay_now_contexts;
-		$this->intent                            = $intent;
 		$this->logger                            = $logger;
-		$this->context                           = $context;
-		$this->can_save_vault_token              = $can_save_vault_token;
-		$this->vault                             = $vault;
 	}
 
 	/**
@@ -617,7 +577,7 @@ class SmartButton implements SmartButtonInterface {
 			);
 		}
 
-		if ( in_array( $this->context, array( 'pay-now', 'checkout' ), true ) ) {
+		if ( in_array( $this->context(), array( 'pay-now', 'checkout' ), true ) ) {
 			wp_enqueue_style(
 				'gateway',
 				untrailingslashit( $this->module_url ) . '/assets/css/gateway.css',
@@ -744,7 +704,7 @@ class SmartButton implements SmartButtonInterface {
 		 * The WC filter returning the WC order button text.
 		 * phpcs:disable WordPress.WP.I18n.TextDomainMismatch
 		 */
-		$label = 'checkout' === $this->context ? apply_filters( 'woocommerce_order_button_text', __( 'Place order', 'woocommerce' ) ) : __( 'Pay for order', 'woocommerce' );
+		$label = 'checkout' === $this->context() ? apply_filters( 'woocommerce_order_button_text', __( 'Place order', 'woocommerce' ) ) : __( 'Pay for order', 'woocommerce' );
 		// phpcs:enable WordPress.WP.I18n.TextDomainMismatch
 
 		printf(
@@ -848,7 +808,7 @@ class SmartButton implements SmartButtonInterface {
 			'url_params'                        => $url_params,
 			'script_attributes'                 => $this->attributes(),
 			'data_client_id'                    => array(
-				'set_attribute'                => ( is_checkout() && $this->dcc_is_enabled() ) || $this->can_save_vault_token,
+				'set_attribute'                => ( is_checkout() && $this->dcc_is_enabled() ) || $this->can_save_vault_token(),
 				'endpoint'                     => \WC_AJAX::get_endpoint( DataClientIdEndpoint::ENDPOINT ),
 				'nonce'                        => wp_create_nonce( DataClientIdEndpoint::nonce() ),
 				'user'                         => get_current_user_id(),
@@ -856,7 +816,7 @@ class SmartButton implements SmartButtonInterface {
 				'paypal_subscriptions_enabled' => $this->paypal_subscriptions_enabled(),
 			),
 			'redirect'                          => wc_get_checkout_url(),
-			'context'                           => $this->context,
+			'context'                           => $this->context(),
 			'ajax'                              => array(
 				'change_cart'          => array(
 					'endpoint' => \WC_AJAX::get_endpoint( ChangeCartEndpoint::ENDPOINT ),
@@ -892,7 +852,7 @@ class SmartButton implements SmartButtonInterface {
 			),
 			'subscription_plan_id'              => $this->paypal_subscription_id(),
 			'enforce_vault'                     => $this->has_subscriptions(),
-			'can_save_vault_token'              => $this->can_save_vault_token,
+			'can_save_vault_token'              => $this->can_save_vault_token(),
 			'is_free_trial_cart'                => $is_free_trial_cart,
 			'vaulted_paypal_email'              => ( is_checkout() && $is_free_trial_cart ) ? $this->get_vaulted_paypal_email() : '',
 			'bn_codes'                          => $this->bn_codes(),
@@ -910,11 +870,11 @@ class SmartButton implements SmartButtonInterface {
 					'height'  => $this->settings->has( 'button_mini-cart_height' ) && $this->settings->get( 'button_mini-cart_height' ) ? $this->normalize_height( (int) $this->settings->get( 'button_mini-cart_height' ) ) : 35,
 				),
 				'style'             => array(
-					'layout'  => $this->style_for_context( 'layout', $this->context ),
-					'color'   => $this->style_for_context( 'color', $this->context ),
-					'shape'   => $this->style_for_context( 'shape', $this->context ),
-					'label'   => $this->style_for_context( 'label', $this->context ),
-					'tagline' => $this->style_for_context( 'tagline', $this->context ),
+					'layout'  => $this->style_for_context( 'layout', $this->context() ),
+					'color'   => $this->style_for_context( 'color', $this->context() ),
+					'shape'   => $this->style_for_context( 'shape', $this->context() ),
+					'label'   => $this->style_for_context( 'label', $this->context() ),
+					'tagline' => $this->style_for_context( 'tagline', $this->context() ),
 				),
 			),
 			'separate_buttons'                  => array(
@@ -922,7 +882,7 @@ class SmartButton implements SmartButtonInterface {
 					'id'      => CardButtonGateway::ID,
 					'wrapper' => '#ppc-button-' . CardButtonGateway::ID,
 					'style'   => array(
-						'shape' => $this->style_for_context( 'shape', $this->context ),
+						'shape' => $this->style_for_context( 'shape', $this->context() ),
 						// TODO: color black, white from the gateway settings.
 					),
 				),
@@ -974,7 +934,7 @@ class SmartButton implements SmartButtonInterface {
 				// phpcs:ignore WordPress.WP.I18n
 				'shipping_field' => _x( 'Shipping %s', 'checkout-validation', 'woocommerce' ),
 			),
-			'order_id'                          => 'pay-now' === $this->context ? absint( $wp->query_vars['order-pay'] ) : 0,
+			'order_id'                          => 'pay-now' === $this->context() ? absint( $wp->query_vars['order-pay'] ) : 0,
 			'single_product_buttons_enabled'    => $this->settings_status->is_smart_button_enabled_for_location( 'product' ),
 			'mini_cart_buttons_enabled'         => $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' ),
 			'basic_checkout_validation_enabled' => $this->basic_checkout_validation_enabled,
@@ -984,7 +944,7 @@ class SmartButton implements SmartButtonInterface {
 		if ( $this->style_for_context( 'layout', 'mini-cart' ) !== 'horizontal' ) {
 			$localize['button']['mini_cart_style']['tagline'] = false;
 		}
-		if ( $this->style_for_context( 'layout', $this->context ) !== 'horizontal' ) {
+		if ( $this->style_for_context( 'layout', $this->context() ) !== 'horizontal' ) {
 			$localize['button']['style']['tagline'] = false;
 		}
 
@@ -1021,10 +981,12 @@ class SmartButton implements SmartButtonInterface {
 	 * @return array
 	 */
 	private function url_params(): array {
-		$context              = $this->context();
-		$intent               = ( $this->settings->has( 'intent' ) ) ? $this->settings->get( 'intent' ) : 'capture';
-		$product_intent       = $this->subscription_helper->current_product_is_subscription() ? 'authorize' : $intent;
-		$other_context_intent = $this->subscription_helper->cart_contains_subscription() ? 'authorize' : $intent;
+		$context = $this->context();
+		try {
+			$intent = $this->intent();
+		} catch ( NotFoundException $exception ) {
+			$intent = 'capture';
+		}
 
 		$params = array(
 			'client-id'        => $this->client_id,
@@ -1033,7 +995,7 @@ class SmartButton implements SmartButtonInterface {
 			'components'       => implode( ',', $this->components() ),
 			'vault'            => $this->can_save_vault_token() ? 'true' : 'false',
 			'commit'           => in_array( $context, $this->pay_now_contexts, true ) ? 'true' : 'false',
-			'intent'           => $context === 'product' ? $product_intent : $other_context_intent,
+			'intent'           => $intent,
 		);
 		if (
 			$this->environment->current_environment_is( Environment::SANDBOX )
@@ -1111,7 +1073,7 @@ class SmartButton implements SmartButtonInterface {
 	 */
 	private function attributes(): array {
 		return array(
-			'data-partner-attribution-id' => $this->bn_code_for_context( $this->context ),
+			'data-partner-attribution-id' => $this->bn_code_for_context( $this->context() ),
 		);
 	}
 
@@ -1446,5 +1408,24 @@ class SmartButton implements SmartButtonInterface {
 		}
 
 		return '';
+	}
+
+	/**
+	 * Returns the intent.
+	 *
+	 * @return string
+	 * @throws NotFoundException If intent is not found.
+	 */
+	private function intent(): string {
+		$intent               = ( $this->settings->has( 'intent' ) ) ? $this->settings->get( 'intent' ) : 'capture';
+		$product_intent       = $this->subscription_helper->current_product_is_subscription() ? 'authorize' : $intent;
+		$other_context_intent = $this->subscription_helper->cart_contains_subscription() ? 'authorize' : $intent;
+
+		$subscription_mode = $this->settings->has( 'subscriptions_mode' ) ? $this->settings->get( 'subscriptions_mode' ) : '';
+		if ( $this->subscription_helper->need_subscription_intent( $subscription_mode ) ) {
+			return 'subscription';
+		}
+
+		return $this->context() === 'product' ? $product_intent : $other_context_intent;
 	}
 }

@@ -84,55 +84,6 @@ return array(
 
 		return true;
 	},
-	'button.context'                              => static function( ContainerInterface $container ): string {
-		$is_paypal_continuation = $container->get( 'button.is_paypal_continuation' );
-
-		$context = 'mini-cart';
-		if ( is_product() || wc_post_content_has_shortcode( 'product_page' ) ) {
-			$context = 'product';
-		}
-		if ( is_cart() ) {
-			$context = 'cart';
-		}
-		if ( is_checkout() && ! $is_paypal_continuation ) {
-			$context = 'checkout';
-		}
-		if ( is_checkout_pay_page() ) {
-			$context = 'pay-now';
-		}
-
-		return $context;
-	},
-	'button.intent'                               => static function( ContainerInterface $container ): string {
-		$settings           = $container->get( 'wcgateway.settings' );
-		$subscription_helper = $container->get( 'subscription.helper' );
-		assert( $subscription_helper instanceof SubscriptionHelper );
-		$context = $container->get( 'button.context' );
-
-		$intent               = ( $settings->has( 'intent' ) ) ? $settings->get( 'intent' ) : 'capture';
-		$product_intent       = $subscription_helper->current_product_is_subscription() ? 'authorize' : $intent;
-		$other_context_intent = $subscription_helper->cart_contains_subscription() ? 'authorize' : $intent;
-
-		$subscription_mode = $settings->has( 'subscriptions_mode' ) ? $settings->get( 'subscriptions_mode' ) : '';
-		if ( $subscription_helper->need_subscription_intent( $subscription_mode ) ) {
-			return 'subscription';
-		}
-
-		return $context === 'product' ? $product_intent : $other_context_intent;
-	},
-	'button.can_save_vault_token'                 => static function( ContainerInterface $container ): bool {
-		$settings           = $container->get( 'wcgateway.settings' );
-		if ( ! $settings->has( 'client_id' ) || ! $settings->get( 'client_id' ) ) {
-			return false;
-		}
-
-		return true;
-	},
-	'button.vault'                                => static function( ContainerInterface $container ): string {
-		$can_save_vault_token = $container->get( 'button.can_save_vault_token' );
-
-		return $can_save_vault_token ? 'true' : 'false';
-	},
 	'button.smart-button'                         => static function ( ContainerInterface $container ): SmartButtonInterface {
 		$state = $container->get( 'onboarding.state' );
 		if ( $state->current_state() !== State::STATE_ONBOARDED ) {
@@ -174,10 +125,6 @@ return array(
 			$container->get( 'button.basic-checkout-validation-enabled' ),
 			$container->get( 'button.early-wc-checkout-validation-enabled' ),
 			$container->get( 'button.pay-now-contexts' ),
-			$container->get( 'button.intent' ),
-			$container->get( 'button.context' ),
-			$container->get( 'button.can_save_vault_token' ),
-			$container->get( 'button.vault' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
