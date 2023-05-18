@@ -988,12 +988,13 @@ class SmartButton implements SmartButtonInterface {
 			$intent = 'capture';
 		}
 
-		$params = array(
+		$subscription_mode = $this->settings->has( 'subscriptions_mode' ) ? $this->settings->get( 'subscriptions_mode' ) : '';
+		$params            = array(
 			'client-id'        => $this->client_id,
 			'currency'         => $this->currency,
 			'integration-date' => PAYPAL_INTEGRATION_DATE,
 			'components'       => implode( ',', $this->components() ),
-			'vault'            => $this->can_save_vault_token() ? 'true' : 'false',
+			'vault'            => ( $this->can_save_vault_token() || $this->subscription_helper->need_subscription_intent( $subscription_mode ) ) ? 'true' : 'false',
 			'commit'           => in_array( $context, $this->pay_now_contexts, true ) ? 'true' : 'false',
 			'intent'           => $intent,
 		);
