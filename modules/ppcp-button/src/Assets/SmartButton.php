@@ -1397,7 +1397,11 @@ class SmartButton implements SmartButtonInterface {
 			}
 		}
 
-		$items = WC()->cart->get_cart_contents();
+		$cart = WC()->cart ?? null;
+		if ( ! $cart || $cart->is_empty() ) {
+			return '';
+		}
+		$items = $cart->get_cart_contents();
 		foreach ( $items as $item ) {
 			$product = wc_get_product( $item['product_id'] );
 			assert( $product instanceof WC_Product );
