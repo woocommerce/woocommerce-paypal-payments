@@ -25,8 +25,6 @@ define( 'PAYPAL_API_URL', 'https://api.paypal.com' );
 define( 'PAYPAL_SANDBOX_API_URL', 'https://api.sandbox.paypal.com' );
 define( 'PAYPAL_INTEGRATION_DATE', '2023-05-17' );
 
-define( 'PPCP_FLAG_SUBSCRIPTIONS_API', apply_filters( 'ppcp_flag_subscriptions_api', getenv( 'PPCP_FLAG_SUBSCRIPTIONS_API' ) === '1' ) );
-
 ! defined( 'CONNECT_WOO_CLIENT_ID' ) && define( 'CONNECT_WOO_CLIENT_ID', 'AcCAsWta_JTL__OfpjspNyH7c1GGHH332fLwonA5CwX4Y10mhybRZmHLA0GdRbwKwjQIhpDQy0pluX_P' );
 ! defined( 'CONNECT_WOO_SANDBOX_CLIENT_ID' ) && define( 'CONNECT_WOO_SANDBOX_CLIENT_ID', 'AYmOHbt1VHg-OZ_oihPdzKEVbU3qg0qXonBcAztuzniQRaKE0w1Hr762cSFwd4n8wxOl-TCWohEa0XM_' );
 ! defined( 'CONNECT_WOO_MERCHANT_ID' ) && define( 'CONNECT_WOO_MERCHANT_ID', 'K8SKZ36LQBWXJ' );
@@ -44,6 +42,8 @@ define( 'PPCP_FLAG_SUBSCRIPTIONS_API', apply_filters( 'ppcp_flag_subscriptions_a
 	 * Initialize the plugin and its modules.
 	 */
 	function init(): void {
+		define( 'PPCP_FLAG_SUBSCRIPTIONS_API', apply_filters( 'ppcp_flag_subscriptions_api', getenv( 'PPCP_FLAG_SUBSCRIPTIONS_API' ) === '1' ) );
+
 		$root_dir = __DIR__;
 
 		if ( ! is_woocommerce_activated() ) {
