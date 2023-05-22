@@ -17,7 +17,7 @@ const PayPalComponent = ({
                              activePaymentMethod,
                              shippingData,
 }) => {
-    const {onPaymentSetup} = eventRegistration;
+    const {onPaymentSetup, onCheckoutAfterProcessingWithError} = eventRegistration;
     const {responseTypes} = emitResponse;
 
     const [paypalOrder, setPaypalOrder] = useState(null);
@@ -204,6 +204,23 @@ const PayPalComponent = ({
             unsubscribeProcessing();
         };
     }, [onPaymentSetup, paypalOrder, activePaymentMethod]);
+
+    useEffect(() => {
+        const unsubscribe = onCheckoutAfterProcessingWithError(({ processingResponse }) => {
+            if (onClose) {
+                onClose();
+            }
+            if (processingResponse?.paymentDetails?.errorMessage) {
+                return {
+                    type: emitResponse.responseTypes.ERROR,
+                    message: processingResponse.paymentDetails.errorMessage,
+                    messageContext: config.scriptData.continuation ? emitResponse.noticeContexts.PAYMENTS : emitResponse.noticeContexts.EXPRESS_PAYMENTS,
+                };
+            }
+            return true;
+        });
+        return unsubscribe;
+    }, [onCheckoutAfterProcessingWithError, onClose]);
 
     if (config.scriptData.continuation) {
         return (
