@@ -171,12 +171,17 @@ class WcGatewayTest extends TestCase
 
         expect('wc_add_notice');
 
+		$result = $testee->process_payment($orderId);
+
+		$this->assertArrayHasKey('errorMessage', $result);
+		unset($result['errorMessage']);
+
         $this->assertEquals(
         	[
         		'result' => 'failure',
-				'redirect' => $redirectUrl
+				'redirect' => $redirectUrl,
 			],
-			$testee->process_payment($orderId)
+			$result
 		);
     }
 
@@ -217,10 +222,14 @@ class WcGatewayTest extends TestCase
 		$session->shouldReceive('get');
 
 		$result = $testee->process_payment($orderId);
-        $this->assertEquals(
-        	[
-        		'result' => 'failure',
-				'redirect' => $redirectUrl
+
+		$this->assertArrayHasKey('errorMessage', $result);
+		unset($result['errorMessage']);
+
+		$this->assertEquals(
+			[
+				'result' => 'failure',
+				'redirect' => $redirectUrl,
 			],
 			$result
 		);
