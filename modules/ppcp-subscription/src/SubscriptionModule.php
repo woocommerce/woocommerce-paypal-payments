@@ -107,8 +107,19 @@ class SubscriptionModule implements ModuleInterface {
 			function( array $data ) use ( $c ) {
 				// phpcs:ignore WordPress.Security.NonceVerification.Missing
 				$wc_order_action = wc_clean( wp_unslash( $_POST['wc_order_action'] ?? '' ) );
+
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing
+				$subscription_id = wc_clean( wp_unslash( $_POST['post_ID'] ?? '' ) );
+				if ( ! $subscription_id ) {
+					return $data;
+				}
+				$subscription = wc_get_order( $subscription_id );
+				if ( ! is_a( $subscription, WC_Subscription::class ) ) {
+					return $data;
+				}
+
 				if (
-					$wc_order_action === 'wcs_process_renewal'
+					$wc_order_action === 'wcs_process_renewal' && $subscription->get_payment_method() === CreditCardGateway::ID
 					&& isset( $data['payment_source']['token'] ) && $data['payment_source']['token']['type'] === 'PAYMENT_METHOD_TOKEN'
 					&& isset( $data['payment_source']['token']['source']->card )
 				) {
