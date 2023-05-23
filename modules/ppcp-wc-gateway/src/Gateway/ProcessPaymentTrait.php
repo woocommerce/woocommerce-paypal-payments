@@ -81,8 +81,9 @@ trait ProcessPaymentTrait {
 		wc_add_notice( $error->getMessage(), 'error' );
 
 		return array(
-			'result'   => 'failure',
-			'redirect' => wc_get_checkout_url(),
+			'result'       => 'failure',
+			'redirect'     => wc_get_checkout_url(),
+			'errorMessage' => $error->getMessage(),
 		);
 	}
 
