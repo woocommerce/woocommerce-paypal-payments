@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Endpoint;
 
+use Exception;
 use stdClass;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
@@ -138,7 +139,7 @@ class BillingAgreementsEndpoint {
 			}
 
 			return true;
-		} catch ( PayPalApiException $exception ) {
+		} catch ( Exception $exception ) {
 			delete_transient( 'ppcp_reference_transaction_enabled' );
 			return false;
 		}
