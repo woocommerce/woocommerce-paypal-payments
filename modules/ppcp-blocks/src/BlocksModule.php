@@ -11,7 +11,7 @@ namespace WooCommerce\PayPalCommerce\Blocks;
 
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 use WooCommerce\PayPalCommerce\Blocks\Endpoint\UpdateShippingEndpoint;
-use WooCommerce\PayPalCommerce\Button\Assets\SmartButton;
+use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
@@ -68,7 +68,7 @@ class BlocksModule implements ModuleInterface {
 			array(
 				'data_callback' => function() use ( $c ): array {
 					$smart_button = $c->get( 'button.smart-button' );
-					assert( $smart_button instanceof SmartButton );
+					assert( $smart_button instanceof SmartButtonInterface );
 
 					if ( isset( $smart_button->script_data()['continuation'] ) ) {
 						return array( 'ppcp_continuation' );
