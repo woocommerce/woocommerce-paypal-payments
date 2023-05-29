@@ -23,7 +23,10 @@ async function purchaseSubscriptionFromCart(page) {
 
     await fillCheckoutForm(page);
 
-    await page.locator('text=Sign up now').click();
+    await Promise.all([
+        page.waitForNavigation(),
+        page.locator('text=Sign up now').click(),
+    ]);
 
     await expectOrderReceivedPage(page);
 }
@@ -207,9 +210,11 @@ test.describe('Subscriber purchase a Subscription', () => {
         await loginIntoPaypal(popup);
 
         await popup.getByText('Continue', { exact: true }).click();
-        await popup.locator('text=Agree & Subscribe').click();
 
-        await page.waitForTimeout(10000);
+        await Promise.all([
+            page.waitForNavigation(),
+            await popup.locator('text=Agree & Subscribe').click(),
+        ]);
 
         await expectOrderReceivedPage(page);
     });
@@ -226,7 +231,10 @@ test.describe('Subscriber purchase a Subscription', () => {
 
         await fillCheckoutForm(page);
 
-        await page.locator('text=Sign up now').click();
+        await Promise.all([
+            page.waitForNavigation(),
+            page.locator('text=Sign up now').click(),
+        ]);
 
         await expectOrderReceivedPage(page);
     });
