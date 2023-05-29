@@ -18,7 +18,7 @@ async function purchaseSubscriptionFromCart(page) {
     const popup = await openPaypalPopup(page);
     await loginIntoPaypal(popup);
 
-    await popup.locator('text=Continue').click();
+    await popup.getByText('Continue', { exact: true }).click();
     await popup.locator('#confirmButtonTop').click();
 
     await fillCheckoutForm(page);
@@ -206,7 +206,7 @@ test.describe('Subscriber purchase a Subscription', () => {
         const popup = await openPaypalPopup(page);
         await loginIntoPaypal(popup);
 
-        await popup.locator('text=Continue').click();
+        await popup.getByText('Continue', { exact: true }).click();
         await popup.locator('text=Agree & Subscribe').click();
 
         await page.waitForTimeout(10000);
@@ -221,7 +221,7 @@ test.describe('Subscriber purchase a Subscription', () => {
         const popup = await openPaypalPopup(page);
         await loginIntoPaypal(popup);
 
-        await popup.locator('text=Continue').click();
+        await popup.getByText('Continue', { exact: true }).click();
         await popup.locator('#confirmButtonTop').click();
 
         await fillCheckoutForm(page);
