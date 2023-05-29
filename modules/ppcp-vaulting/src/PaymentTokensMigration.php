@@ -67,8 +67,11 @@ class PaymentTokensMigration {
 		$tokens    = $this->payment_token_repository->all_for_user_id( $id );
 		$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $id );
 
+		$this->logger->info( 'Migrating ' . count( $tokens ) . ' tokens for user ' . $id );
+
 		foreach ( $tokens as $token ) {
 			if ( $this->token_exist( $wc_tokens, $token ) ) {
+				$this->logger->info( 'Token ' . $token->id() . ' already exist for user ' . $id );
 				continue;
 			}
 

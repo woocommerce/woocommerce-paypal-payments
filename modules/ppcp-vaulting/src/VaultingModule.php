@@ -179,6 +179,7 @@ class VaultingModule implements ModuleInterface {
 				assert( $settings instanceof Settings );
 				if ( $settings->has( 'vault_enabled' ) && $settings->get( 'vault_enabled' ) && $settings->has( 'vault_enabled_dcc' ) ) {
 					$settings->set( 'vault_enabled_dcc', true );
+					$settings->persist();
 				}
 
 				// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_key
@@ -192,12 +193,25 @@ class VaultingModule implements ModuleInterface {
 				);
 				// phpcs:enable
 
+				$logger = $container->get( 'woocommerce.logger.woocommerce' );
+				assert( $logger instanceof LoggerInterface );
+
+				$customers = $customers->get_results();
+				if ( is_array( $customers ) && count( $customers ) === 0 ) {
+					$logger->info( 'No customers for payment tokens migration.' );
+					return;
+				}
+
 				$migrate = $container->get( 'vaulting.payment-tokens-migration' );
 				assert( $migrate instanceof PaymentTokensMigration );
 
-				foreach ( $customers->get_results() as $id ) {
+				$logger->info( 'Starting payment tokens migration for ' . count( $customers ) . ' users' );
+
+				foreach ( $customers as $id ) {
 					$migrate->migrate_payment_tokens_for_user( (int) $id );
 				}
+
+				$logger->info( 'Payment tokens migration finished successfully' );
 			}
 		);
 
