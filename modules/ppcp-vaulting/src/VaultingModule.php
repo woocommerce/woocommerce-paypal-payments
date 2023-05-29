@@ -182,24 +182,30 @@ class VaultingModule implements ModuleInterface {
 					$settings->persist();
 				}
 
-				$migration = $container->get( 'vaulting.payment-tokens-migration' );
-				assert( $migration instanceof PaymentTokensMigration );
 				$logger = $container->get( 'woocommerce.logger.woocommerce' );
 				assert( $logger instanceof LoggerInterface );
 
-				$this->migrate_payment_tokens( $migration, $logger );
+				$this->migrate_payment_tokens( $logger );
 			}
 		);
 
 		add_action(
 			'pcp_migrate_payment_tokens',
 			function() use ( $container ) {
-				$migration = $container->get( 'vaulting.payment-tokens-migration' );
-				assert( $migration instanceof PaymentTokensMigration );
 				$logger = $container->get( 'woocommerce.logger.woocommerce' );
 				assert( $logger instanceof LoggerInterface );
 
-				$this->migrate_payment_tokens( $migration, $logger );
+				$this->migrate_payment_tokens( $logger );
+			}
+		);
+
+		add_action(
+			'woocommerce_paypal_payments_payment_tokens_migration',
+			function( $customer_id ) use ( $container ) {
+				$migration = $container->get( 'vaulting.payment-tokens-migration' );
+				assert( $migration instanceof PaymentTokensMigration );
+
+				$migration->migrate_payment_tokens_for_user( (int) $customer_id );
 			}
 		);
 
@@ -219,11 +225,10 @@ class VaultingModule implements ModuleInterface {
 	/**
 	 * Runs the payment tokens migration for users with saved payments.
 	 *
-	 * @param PaymentTokensMigration $migration Migration procedure.
-	 * @param LoggerInterface        $logger The logger.
+	 * @param LoggerInterface $logger The logger.
 	 * @return void
 	 */
-	public function migrate_payment_tokens( PaymentTokensMigration $migration, LoggerInterface $logger ): void {
+	public function migrate_payment_tokens( LoggerInterface $logger ): void {
 		// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 		// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 		$customers = new WP_User_Query(
@@ -243,11 +248,18 @@ class VaultingModule implements ModuleInterface {
 
 		$logger->info( 'Starting payment tokens migration for ' . count( $customers ) . ' users' );
 
-		foreach ( $customers as $id ) {
-			$migration->migrate_payment_tokens_for_user( (int) $id );
-		}
+		$interval_in_seconds = 5;
+		$timestamp           = time();
 
-		$logger->info( 'Payment tokens migration finished successfully' );
+		foreach ( $customers as $id ) {
+			as_schedule_single_action(
+				$timestamp,
+				'woocommerce_paypal_payments_payment_tokens_migration',
+				array( 'customer_id' => $id )
+			);
+
+			$timestamp += $interval_in_seconds;
+		}
 	}
 
 	/**
