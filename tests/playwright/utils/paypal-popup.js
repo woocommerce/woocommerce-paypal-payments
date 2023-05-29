@@ -8,14 +8,15 @@ const {
 /**
  * Opens the PayPal popup by pressing the button, and returns the popup object.
  * @param page
- * @param {boolean} retry Retries the button click if the popup did not appear after 5 sec.
+ * @param {boolean} retry Retries the button click if the popup did not appear after timeout.
+ * @param {int} timeout
  */
-export const openPaypalPopup = async (page, retry = true) => {
+export const openPaypalPopup = async (page, retry = true, timeout = 5000) => {
     try {
         await page.locator('.component-frame').scrollIntoViewIfNeeded();
 
         const [popup] = await Promise.all([
-            page.waitForEvent('popup', {timeout: 5000}),
+            page.waitForEvent('popup', {timeout}),
             page.frameLocator('.component-frame').locator('[data-funding-source="paypal"]').click(),
         ]);
 
@@ -23,6 +24,22 @@ export const openPaypalPopup = async (page, retry = true) => {
 
         return popup;
     } catch (err) {
+        try {
+            for (const f of page.mainFrame().childFrames()) {
+                if (f.name().startsWith('__paypal_checkout')) {
+                    for (const f2 of f.childFrames()) {
+                        if (f.name().includes('__paypal_checkout')) {
+                            await f2.waitForLoadState();
+                            await expect(await f2.locator('#main')).toBeVisible();
+                            return f2;
+                        }
+                    }
+                }
+            }
+        } catch (frameErr) {
+             console.log(frameErr)
+        }
+
         if (retry) {
             return openPaypalPopup(page, false);
         }
