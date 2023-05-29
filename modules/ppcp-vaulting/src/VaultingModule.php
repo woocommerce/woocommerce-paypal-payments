@@ -182,36 +182,24 @@ class VaultingModule implements ModuleInterface {
 					$settings->persist();
 				}
 
-				// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-				// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-				$customers = new WP_User_Query(
-					array(
-						'fields'   => 'ID',
-						'limit'    => -1,
-						'meta_key' => 'ppcp-vault-token',
-					)
-				);
-				// phpcs:enable
-
+				$migration = $container->get( 'vaulting.payment-tokens-migration' );
+				assert( $migration instanceof PaymentTokensMigration );
 				$logger = $container->get( 'woocommerce.logger.woocommerce' );
 				assert( $logger instanceof LoggerInterface );
 
-				$customers = $customers->get_results();
-				if ( is_array( $customers ) && count( $customers ) === 0 ) {
-					$logger->info( 'No customers for payment tokens migration.' );
-					return;
-				}
+				$this->migrate_payment_tokens( $migration, $logger );
+			}
+		);
 
-				$migrate = $container->get( 'vaulting.payment-tokens-migration' );
-				assert( $migrate instanceof PaymentTokensMigration );
+		add_action(
+			'pcp_migrate_payment_tokens',
+			function() use ( $container ) {
+				$migration = $container->get( 'vaulting.payment-tokens-migration' );
+				assert( $migration instanceof PaymentTokensMigration );
+				$logger = $container->get( 'woocommerce.logger.woocommerce' );
+				assert( $logger instanceof LoggerInterface );
 
-				$logger->info( 'Starting payment tokens migration for ' . count( $customers ) . ' users' );
-
-				foreach ( $customers as $id ) {
-					$migrate->migrate_payment_tokens_for_user( (int) $id );
-				}
-
-				$logger->info( 'Payment tokens migration finished successfully' );
+				$this->migrate_payment_tokens( $migration, $logger );
 			}
 		);
 
@@ -226,6 +214,40 @@ class VaultingModule implements ModuleInterface {
 				return $methods;
 			}
 		);
+	}
+
+	/**
+	 * Runs the payment tokens migration for users with saved payments.
+	 *
+	 * @param PaymentTokensMigration $migration Migration procedure.
+	 * @param LoggerInterface        $logger The logger.
+	 * @return void
+	 */
+	public function migrate_payment_tokens( PaymentTokensMigration $migration, LoggerInterface $logger ): void {
+		// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+		// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+		$customers = new WP_User_Query(
+			array(
+				'fields'   => 'ID',
+				'limit'    => -1,
+				'meta_key' => 'ppcp-vault-token',
+			)
+		);
+		// phpcs:enable
+
+		$customers = $customers->get_results();
+		if ( is_array( $customers ) && count( $customers ) === 0 ) {
+			$logger->info( 'No customers for payment tokens migration.' );
+			return;
+		}
+
+		$logger->info( 'Starting payment tokens migration for ' . count( $customers ) . ' users' );
+
+		foreach ( $customers as $id ) {
+			$migration->migrate_payment_tokens_for_user( (int) $id );
+		}
+
+		$logger->info( 'Payment tokens migration finished successfully' );
 	}
 
 	/**
