@@ -4,13 +4,16 @@ const {openPaypalPopup, loginIntoPaypal, completePaypalPayment} = require("./uti
 const {fillCheckoutForm, expectOrderReceivedPage} = require("./utils/checkout");
 const {
     AUTHORIZATION,
+    SUBSCRIPTION_URL,
+    CHECKOUT_URL,
+    CART_URL,
 } = process.env;
 
 async function purchaseSubscriptionFromCart(page) {
     await loginAsCustomer(page);
-    await page.goto('/product/subscription');
+    await page.goto(SUBSCRIPTION_URL);
     await page.click("text=Sign up now");
-    await page.goto('/cart');
+    await page.goto(CART_URL);
 
     const popup = await openPaypalPopup(page);
     await loginIntoPaypal(popup);
@@ -195,9 +198,9 @@ test.describe('Subscriber purchase a Subscription', () => {
     test('Purchase Subscription from Checkout Page', async ({page}) => {
         await loginAsCustomer(page);
 
-        await page.goto('/product/subscription');
+        await page.goto(SUBSCRIPTION_URL);
         await page.click("text=Sign up now");
-        await page.goto('/checkout');
+        await page.goto(CHECKOUT_URL);
         await fillCheckoutForm(page);
 
         const popup = await openPaypalPopup(page);
@@ -213,7 +216,7 @@ test.describe('Subscriber purchase a Subscription', () => {
 
     test('Purchase Subscription from Single Product Page', async ({page}) => {
         await loginAsCustomer(page);
-        await page.goto('/product/subscription');
+        await page.goto(SUBSCRIPTION_URL);
 
         const popup = await openPaypalPopup(page);
         await loginIntoPaypal(popup);
