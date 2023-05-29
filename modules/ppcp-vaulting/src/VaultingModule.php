@@ -201,11 +201,11 @@ class VaultingModule implements ModuleInterface {
 
 		add_action(
 			'woocommerce_paypal_payments_payment_tokens_migration',
-			function( $customer_id ) use ( $container ) {
+			function( int $customer_id ) use ( $container ) {
 				$migration = $container->get( 'vaulting.payment-tokens-migration' );
 				assert( $migration instanceof PaymentTokensMigration );
 
-				$migration->migrate_payment_tokens_for_user( (int) $customer_id );
+				$migration->migrate_payment_tokens_for_user( $customer_id );
 			}
 		);
 
@@ -241,17 +241,22 @@ class VaultingModule implements ModuleInterface {
 		// phpcs:enable
 
 		$customers = $customers->get_results();
-		if ( is_array( $customers ) && count( $customers ) === 0 ) {
+		if ( count( $customers ) === 0 ) {
 			$logger->info( 'No customers for payment tokens migration.' );
 			return;
 		}
 
-		$logger->info( 'Starting payment tokens migration for ' . count( $customers ) . ' users' );
+		$logger->info( 'Starting payment tokens migration for ' . (string) count( $customers ) . ' users' );
 
 		$interval_in_seconds = 5;
 		$timestamp           = time();
 
 		foreach ( $customers as $id ) {
+			/**
+			 * Function already exist in WooCommerce
+			 *
+			 * @psalm-suppress UndefinedFunction
+			 */
 			as_schedule_single_action(
 				$timestamp,
 				'woocommerce_paypal_payments_payment_tokens_migration',
