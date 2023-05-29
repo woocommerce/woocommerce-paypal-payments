@@ -72,7 +72,7 @@ class PaymentTokensMigration {
 
 		foreach ( $tokens as $token ) {
 			if ( $this->token_exist( $wc_tokens, $token ) ) {
-				$this->logger->info( 'Token ' . $token->id() . ' already exist for user ' . (string) $id );
+				$this->logger->info( 'Token already exist for user ' . (string) $id );
 				continue;
 			}
 
