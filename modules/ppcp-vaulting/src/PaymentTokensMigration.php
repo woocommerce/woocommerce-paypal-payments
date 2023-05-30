@@ -64,19 +64,18 @@ class PaymentTokensMigration {
 	 * @param int $id WooCommerce customer id.
 	 */
 	public function migrate_payment_tokens_for_user( int $id ):void {
-		$tokens    = $this->payment_token_repository->all_for_user_id( $id );
-		$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $id );
-
+		$tokens       = $this->payment_token_repository->all_for_user_id( $id );
 		$total_tokens = count( $tokens );
 		$this->logger->info( 'Migrating ' . (string) $total_tokens . ' tokens for user ' . (string) $id );
 
 		foreach ( $tokens as $token ) {
-			if ( $this->token_exist( $wc_tokens, $token ) ) {
-				$this->logger->info( 'Token already exist for user ' . (string) $id );
-				continue;
-			}
-
 			if ( isset( $token->source()->card ) ) {
+				$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $id, CreditCardGateway::ID );
+				if ( $this->token_exist( $wc_tokens, $token ) ) {
+					$this->logger->info( 'Token already exist for user ' . (string) $id );
+					continue;
+				}
+
 				$payment_token_acdc = $this->payment_token_factory->create( 'acdc' );
 				assert( $payment_token_acdc instanceof PaymentTokenACDC );
 
@@ -96,6 +95,12 @@ class PaymentTokensMigration {
 					continue;
 				}
 			} elseif ( $token->source()->paypal ) {
+				$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $id, PayPalGateway::ID );
+				if ( $this->token_exist( $wc_tokens, $token ) ) {
+					$this->logger->info( 'Token already exist for user ' . (string) $id );
+					continue;
+				}
+
 				$payment_token_paypal = $this->payment_token_factory->create( 'paypal' );
 				assert( $payment_token_paypal instanceof PaymentTokenPayPal );
 
