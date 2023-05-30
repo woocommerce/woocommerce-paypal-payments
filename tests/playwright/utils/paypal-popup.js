@@ -47,15 +47,30 @@ export const openPaypalPopup = async (page, retry = true, timeout = 5000) => {
     }
 }
 
-export const loginIntoPaypal = async (popup) => {
+export const loginIntoPaypal = async (popup, retry = true) => {
     await Promise.any([
         popup.locator('[name="login_email"]'),
         popup.click("text=Log in"),
     ]);
 
     await popup.fill('[name="login_email"]', CUSTOMER_EMAIL);
-    await popup.locator('#btnNext').click();
-    await popup.fill('[name="login_password"]', CUSTOMER_PASSWORD);
+
+    const nextButtonLocator = popup.locator('#btnNext');
+    // Sometimes we get a popup with email and password fields at the same screen
+    if (await nextButtonLocator.count() > 0) {
+        await nextButtonLocator.click();
+    }
+
+    try {
+        await popup.fill('[name="login_password"]', CUSTOMER_PASSWORD, {timeout: 5000});
+    } catch (err) {
+        console.log('Failed to fill password, possibly need to enter email again, retrying')
+        if (retry) {
+            return loginIntoPaypal(popup, false);
+        }
+        throw err;
+    }
+
     await popup.locator('#btnLogin').click();
 }
 
