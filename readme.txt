@@ -81,7 +81,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 
 == Changelog ==
 
-= 2.0.5 - 2023-xx-xx =
+= 2.0.5 - 2023-05-31 =
 * Fix - Potential invalidation of merchant credentials #1339
 
 = 2.0.4 - 2023-04-03 =
