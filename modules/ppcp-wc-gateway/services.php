@@ -40,7 +40,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\GatewayRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXO;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXOEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXOGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\FraudNet\FraudNet;
@@ -1073,15 +1072,6 @@ return array(
 			$container->get( 'wcgateway.url' ),
 			$container->get( 'wcgateway.transaction-url-provider' ),
 			$container->get( 'onboarding.environment' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
-		);
-	},
-	'wcgateway.endpoint.oxxo'                              => static function ( ContainerInterface $container ): OXXOEndpoint {
-		return new OXXOEndpoint(
-			$container->get( 'button.request-data' ),
-			$container->get( 'api.endpoint.order' ),
-			$container->get( 'api.factory.purchase-unit' ),
-			$container->get( 'api.factory.shipping-preference' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
