@@ -82,7 +82,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 == Changelog ==
 
 = 2.0.5 - 2023-xx-xx =
-* Fix - Cross Site Request Forgery (CSRF) can invalidate merchant credentials #1339
+* Fix - Potential invalidation of merchant credentials #1339
 
 = 2.0.4 - 2023-04-03 =
 * Fix - Allow Pay Later in mini-cart #1221
