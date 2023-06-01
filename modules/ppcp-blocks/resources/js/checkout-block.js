@@ -93,7 +93,7 @@ const PayPalComponent = ({
                 throw new Error(config.scriptData.labels.error.generic)
             }
 
-            const order = json.data;
+            const order = await actions.order.get();
 
             setPaypalOrder(order);
 
