@@ -956,7 +956,12 @@ return array(
 	},
 
 	'wcgateway.soft-descriptor'                            => static function ( ContainerInterface $container ): string {
-		return 'soft descriptor test';
+		$settings = $container->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings);
+		if ( $settings->has( 'soft_descriptor' ) ) {
+			return $settings->get( 'soft_descriptor' );
+		}
+		return '';
 	},
 
 	'wcgateway.transaction-url-provider'                   => static function ( ContainerInterface $container ): TransactionUrlProvider {
