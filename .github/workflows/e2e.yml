@@ -22,7 +22,9 @@ jobs:
     - uses: actions/checkout@v1
 
     - name: Configure DDEV
-      run: ddev config --php-version ${{ matrix.php-versions }} --web-environment-add="WC_VERSION=${{ matrix.wc-versions }}"
+      run: |
+        ddev config --php-version ${{ matrix.php-versions }}
+        ddev config --web-environment-add="WC_VERSION=${{ matrix.wc-versions }}"
 
     - name: Start DDEV
       run: ddev start
