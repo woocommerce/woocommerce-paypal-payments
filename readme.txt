@@ -86,7 +86,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Fix - Webhooks not registered when onboarding with manual credentials #1223
 * Fix - Cross Site Request Forgery (CSRF) can invalidate merchant credentials #1339
 * Fix - Boolean false type sent as empty value when setting cache #1313
-* Fix ajax vulnerabilities #1411
+* Fix - Ajax vulnerabilities #1411
 * Enhancement - Save and display vaulted payment methods in WC Payment Token API #1059
 * Enhancement - Cache webhook verification results #1379
 * Enhancement - Refresh checkout totals after validation if needed #1294
