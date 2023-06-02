@@ -81,7 +81,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 
 == Changelog ==
 
-= 2.0.5 - TBD =
+= 2.0.6 - TBD =
 * Fix - Performance issue #1182
 * Fix - Webhooks not registered when onboarding with manual credentials #1223
 * Fix - Cross Site Request Forgery (CSRF) can invalidate merchant credentials #1339
@@ -90,6 +90,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Enhancement - Cache webhook verification results #1379
 * Enhancement - Refresh checkout totals after validation if needed #1294
 * Enhancement - Improve Divi and Elementor Pro compatibility #1254
+* Enhancement - Add MX and JP to ACDC #1415
 * Feature preview - Add express cart/checkout block #1346
 * Feature preview - Integrate PayPal Subscriptions API #1217
 
