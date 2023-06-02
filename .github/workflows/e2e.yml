@@ -7,11 +7,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        php-versions: ['7.2', '7.4', '8.1']
+        php-versions: ['7.3', '7.4', '8.1']
         wc-versions: ['5.9.5', '7.1.0']
-        exclude:
-          - php-versions: 7.2
-            wc-versions: 7.1.0
 
     name: PHP ${{ matrix.php-versions }} WC ${{ matrix.wc-versions }}
     steps:
