@@ -14,6 +14,9 @@
 * Feature preview - Add express cart/checkout block #1346
 * Feature preview - Integrate PayPal Subscriptions API #1217
 
+= 2.0.5 - 2023-05-31 =
+* Fix - Potential invalidation of merchant credentials #1339
+
 = 2.0.4 - 2023-04-03 =
 * Fix - Allow Pay Later in mini-cart #1221
 * Fix - Duplicated auth error when credentials become wrong #1229
