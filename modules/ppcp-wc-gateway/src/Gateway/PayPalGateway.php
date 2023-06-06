@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Order;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
@@ -24,8 +25,11 @@ use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\GatewayGenericException;
 use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\PaymentsStatusHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsRenderer;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -35,7 +39,7 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
  */
 class PayPalGateway extends \WC_Payment_Gateway {
 
-	use ProcessPaymentTrait, FreeTrialHandlerTrait, GatewaySettingsRendererTrait;
+	use ProcessPaymentTrait, FreeTrialHandlerTrait, GatewaySettingsRendererTrait, OrderMetaTrait, TransactionIdHandlingTrait, PaymentsStatusHandlingTrait;
 
 	const ID                            = 'ppcp-gateway';
 	const INTENT_META_KEY               = '_ppcp_paypal_intent';
@@ -151,6 +155,13 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	protected $api_shop_country;
 
 	/**
+	 * The order endpoint.
+	 *
+	 * @var OrderEndpoint
+	 */
+	private $order_endpoint;
+
+	/**
 	 * PayPalGateway constructor.
 	 *
 	 * @param SettingsRenderer       $settings_renderer The Settings Renderer.
@@ -165,8 +176,9 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @param string                 $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
 	 * @param Environment            $environment The environment.
 	 * @param PaymentTokenRepository $payment_token_repository The payment token repository.
-	 * @param LoggerInterface        $logger  The logger.
+	 * @param LoggerInterface        $logger The logger.
 	 * @param string                 $api_shop_country The api shop country.
+	 * @param OrderEndpoint          $order_endpoint The order endpoint.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
@@ -182,7 +194,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		Environment $environment,
 		PaymentTokenRepository $payment_token_repository,
 		LoggerInterface $logger,
-		string $api_shop_country
+		string $api_shop_country,
+		OrderEndpoint $order_endpoint
 	) {
 		$this->id                       = self::ID;
 		$this->settings_renderer        = $settings_renderer;
@@ -204,27 +217,31 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		if ( $this->onboarded ) {
 			$this->supports = array( 'refunds', 'tokenization' );
 		}
-		if (
-			defined( 'PPCP_FLAG_SUBSCRIPTION' )
-			&& PPCP_FLAG_SUBSCRIPTION
-			&& $this->gateways_enabled()
-			&& $this->vault_setting_enabled()
-		) {
+		if ( $this->config->has( 'enabled' ) && $this->config->get( 'enabled' ) ) {
 			$this->supports = array(
 				'refunds',
 				'products',
-				'subscriptions',
-				'subscription_cancellation',
-				'subscription_suspension',
-				'subscription_reactivation',
-				'subscription_amount_changes',
-				'subscription_date_changes',
-				'subscription_payment_method_change',
-				'subscription_payment_method_change_customer',
-				'subscription_payment_method_change_admin',
-				'multiple_subscriptions',
-				'tokenization',
 			);
+
+			if (
+				( $this->config->has( 'vault_enabled' ) && $this->config->get( 'vault_enabled' ) )
+				|| ( $this->config->has( 'subscriptions_mode' ) && $this->config->get( 'subscriptions_mode' ) === 'subscriptions_api' )
+			) {
+				array_push(
+					$this->supports,
+					'tokenization',
+					'subscriptions',
+					'subscription_cancellation',
+					'subscription_suspension',
+					'subscription_reactivation',
+					'subscription_amount_changes',
+					'subscription_date_changes',
+					'subscription_payment_method_change',
+					'subscription_payment_method_change_customer',
+					'subscription_payment_method_change_admin',
+					'multiple_subscriptions'
+				);
+			}
 		}
 
 		$this->method_title       = $this->define_method_title();
@@ -250,6 +267,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 				'process_admin_options',
 			)
 		);
+
+		$this->order_endpoint = $order_endpoint;
 	}
 
 	/**
@@ -425,7 +444,13 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification.Missing
-		$funding_source = wc_clean( wp_unslash( $_POST['ppcp-funding-source'] ?? '' ) );
+		$funding_source = wc_clean( wp_unslash( $_POST['ppcp-funding-source'] ?? ( $_POST['funding_source'] ?? '' ) ) );
+
+		if ( $funding_source ) {
+			$wc_order->set_payment_method_title( $this->funding_source_renderer->render_name( $funding_source ) );
+			$wc_order->save();
+		}
+
 		if ( 'card' !== $funding_source && $this->is_free_trial_order( $wc_order ) ) {
 			$user_id = (int) $wc_order->get_customer_id();
 			$tokens  = $this->payment_token_repository->all_for_user_id( $user_id );
@@ -467,6 +492,28 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		//phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		try {
+			$paypal_subscription_id = WC()->session->get( 'ppcp_subscription_id' ) ?? '';
+			if ( $paypal_subscription_id ) {
+				$order = $this->session_handler->order();
+				$this->add_paypal_meta( $wc_order, $order, $this->environment );
+
+				$subscriptions = wcs_get_subscriptions_for_order( $order_id );
+				foreach ( $subscriptions as $subscription ) {
+					$subscription->update_meta_data( 'ppcp_subscription', $paypal_subscription_id );
+					$subscription->save();
+
+					$subscription->add_order_note( "PayPal subscription {$paypal_subscription_id} added." );
+				}
+
+				$transaction_id = $this->get_paypal_order_transaction_id( $order );
+				if ( $transaction_id ) {
+					$this->update_transaction_id( $transaction_id, $wc_order );
+				}
+
+				$wc_order->payment_complete();
+				return $this->handle_payment_success( $wc_order );
+			}
+
 			if ( ! $this->order_processor->process( $wc_order ) ) {
 				return $this->handle_payment_failure(
 					$wc_order,

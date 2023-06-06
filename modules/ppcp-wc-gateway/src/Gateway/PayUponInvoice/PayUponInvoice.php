@@ -440,6 +440,7 @@ class PayUponInvoice {
 				}
 
 				if (
+					// phpcs:ignore WordPress.Security.NonceVerification
 					isset( $_GET['pay_for_order'] ) && $_GET['pay_for_order'] === 'true'
 					&& ! $this->pui_helper->is_pay_for_order_ready_for_pui()
 				) {

@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Button;
 
+use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveSubscriptionEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\SaveCheckoutFormEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ValidateCheckoutEndpoint;
@@ -63,14 +64,12 @@ class ButtonModule implements ModuleInterface {
 		add_action(
 			'wp_enqueue_scripts',
 			static function () use ( $c ) {
-
 				$smart_button = $c->get( 'button.smart-button' );
-				/**
-				 * The Smart Button.
-				 *
-				 * @var SmartButtonInterface $smart_button
-				 */
-				$smart_button->enqueue();
+				assert( $smart_button instanceof SmartButtonInterface );
+
+				if ( $smart_button->should_load_ppcp_script() ) {
+					$smart_button->enqueue();
+				}
 			}
 		);
 
@@ -143,6 +142,16 @@ class ButtonModule implements ModuleInterface {
 				 *
 				 * @var ApproveOrderEndpoint $endpoint
 				 */
+				$endpoint->handle_request();
+			}
+		);
+
+		add_action(
+			'wc_ajax_' . ApproveSubscriptionEndpoint::ENDPOINT,
+			static function () use ( $container ) {
+				$endpoint = $container->get( 'button.endpoint.approve-subscription' );
+				assert( $endpoint instanceof ApproveSubscriptionEndpoint );
+
 				$endpoint->handle_request();
 			}
 		);

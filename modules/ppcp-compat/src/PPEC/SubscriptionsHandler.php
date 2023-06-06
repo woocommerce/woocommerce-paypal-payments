@@ -69,7 +69,7 @@ class SubscriptionsHandler {
 	/**
 	 * Adds a mock gateway to disguise as PPEC when needed. Hooked onto `woocommerce_payment_gateways`.
 	 * The mock gateway fixes display issues where subscriptions paid via PPEC appear as "via Manual Renewal" and also
-	 * prevents Subscriptions from automatically changing the payment method to "manual" when a subscription is edited.
+	 * prevents subscriptions from automatically changing the payment method to "manual" when a subscription is edited.
 	 *
 	 * @param array $gateways List of gateways.
 	 * @return array

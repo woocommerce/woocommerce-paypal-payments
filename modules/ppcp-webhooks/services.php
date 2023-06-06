@@ -14,19 +14,24 @@ use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\WebhookEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Webhook;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
+use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Webhooks\Endpoint\ResubscribeEndpoint;
 use WooCommerce\PayPalCommerce\Webhooks\Endpoint\SimulateEndpoint;
 use WooCommerce\PayPalCommerce\Webhooks\Endpoint\SimulationStateEndpoint;
+use WooCommerce\PayPalCommerce\Webhooks\Handler\BillingPlanPricingChangeActivated;
+use WooCommerce\PayPalCommerce\Webhooks\Handler\BillingPlanUpdated;
+use WooCommerce\PayPalCommerce\Webhooks\Handler\BillingSubscriptionCancelled;
+use WooCommerce\PayPalCommerce\Webhooks\Handler\CatalogProductUpdated;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\CheckoutOrderApproved;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\CheckoutOrderCompleted;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\CheckoutPaymentApprovalReversed;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureCompleted;
-use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureDenied;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCapturePending;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureRefunded;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureReversed;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\Webhooks\Handler\VaultCreditCardCreated;
+use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentSaleCompleted;
+use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentSaleRefunded;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\VaultPaymentTokenCreated;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\VaultPaymentTokenDeleted;
 use WooCommerce\PayPalCommerce\Webhooks\Status\Assets\WebhooksStatusPageAssets;
@@ -86,6 +91,12 @@ return array(
 			new VaultPaymentTokenCreated( $logger, $prefix, $authorized_payments_processor, $payment_token_factory ),
 			new VaultPaymentTokenDeleted( $logger ),
 			new PaymentCapturePending( $logger ),
+			new PaymentSaleCompleted( $logger ),
+			new PaymentSaleRefunded( $logger ),
+			new BillingSubscriptionCancelled( $logger ),
+			new BillingPlanPricingChangeActivated( $logger ),
+			new CatalogProductUpdated( $logger ),
+			new BillingPlanUpdated( $logger ),
 		);
 	},
 
@@ -116,7 +127,12 @@ return array(
 		$endpoint = $container->get( 'api.endpoint.webhook' );
 		assert( $endpoint instanceof WebhookEndpoint );
 
-		return $endpoint->list();
+		$state = $container->get( 'onboarding.state' );
+		if ( $state->current_state() >= State::STATE_ONBOARDED ) {
+			return $endpoint->list();
+		}
+
+		return array();
 	},
 
 	'webhook.status.registered-webhooks-data' => function( ContainerInterface $container ) : array {

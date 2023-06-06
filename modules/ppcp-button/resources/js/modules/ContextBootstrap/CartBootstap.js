@@ -50,6 +50,14 @@ class CartBootstrap {
             this.errorHandler,
         );
 
+        if(
+            PayPalCommerceGateway.data_client_id.has_subscriptions
+            && PayPalCommerceGateway.data_client_id.paypal_subscriptions_enabled
+        ) {
+            this.renderer.render(actionHandler.subscriptionsConfiguration());
+            return;
+        }
+
         this.renderer.render(
             actionHandler.configuration()
         );

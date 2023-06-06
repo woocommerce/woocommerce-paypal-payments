@@ -174,26 +174,30 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		if ( $state->current_state() === State::STATE_ONBOARDED ) {
 			$this->supports = array( 'refunds' );
 		}
-		if (
-			defined( 'PPCP_FLAG_SUBSCRIPTION' )
-			&& PPCP_FLAG_SUBSCRIPTION
-			&& $this->gateways_enabled()
-			&& $this->vault_setting_enabled()
-		) {
+		if ( $this->config->has( 'dcc_enabled' ) && $this->config->get( 'dcc_enabled' ) ) {
 			$this->supports = array(
 				'refunds',
 				'products',
-				'subscriptions',
-				'subscription_cancellation',
-				'subscription_suspension',
-				'subscription_reactivation',
-				'subscription_amount_changes',
-				'subscription_date_changes',
-				'subscription_payment_method_change',
-				'subscription_payment_method_change_customer',
-				'subscription_payment_method_change_admin',
-				'multiple_subscriptions',
 			);
+
+			if (
+				( $this->config->has( 'vault_enabled_dcc' ) && $this->config->get( 'vault_enabled_dcc' ) )
+				|| ( $this->config->has( 'subscriptions_mode' ) && $this->config->get( 'subscriptions_mode' ) === 'subscriptions_api' )
+			) {
+				array_push(
+					$this->supports,
+					'subscriptions',
+					'subscription_cancellation',
+					'subscription_suspension',
+					'subscription_reactivation',
+					'subscription_amount_changes',
+					'subscription_date_changes',
+					'subscription_payment_method_change',
+					'subscription_payment_method_change_customer',
+					'subscription_payment_method_change_admin',
+					'multiple_subscriptions'
+				);
+			}
 		}
 
 		$this->method_title       = __(
