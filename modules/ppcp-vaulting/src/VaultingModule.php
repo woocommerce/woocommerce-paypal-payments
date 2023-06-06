@@ -22,6 +22,7 @@ use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WP_User_Query;
 
 /**
@@ -47,11 +48,6 @@ class VaultingModule implements ModuleInterface {
 	 * @throws NotFoundException When service could not be found.
 	 */
 	public function run( ContainerInterface $container ): void {
-		$settings = $container->get( 'wcgateway.settings' );
-		if ( ! $settings->has( 'vault_enabled' ) || ! $settings->get( 'vault_enabled' ) ) {
-			return;
-		}
-
 		$listener = $container->get( 'vaulting.customer-approval-listener' );
 		assert( $listener instanceof CustomerApprovalListener );
 
@@ -92,10 +88,6 @@ class VaultingModule implements ModuleInterface {
 			 * @psalm-suppress MissingClosureParamType
 			 */
 			function ( $type ) {
-				if ( $type === 'WC_Payment_Token_ACDC' ) {
-					return PaymentTokenACDC::class;
-				}
-
 				if ( $type === 'WC_Payment_Token_PayPal' ) {
 					return PaymentTokenPayPal::class;
 				}
@@ -113,13 +105,6 @@ class VaultingModule implements ModuleInterface {
 			 */
 			function( $item, $payment_token ) {
 				if ( ! is_array( $item ) || ! is_a( $payment_token, WC_Payment_Token::class ) ) {
-					return $item;
-				}
-
-				if ( strtolower( $payment_token->get_type() ) === 'acdc' ) {
-					assert( $payment_token instanceof PaymentTokenACDC );
-					$item['method']['brand'] = $payment_token->get_card_type() . ' ...' . $payment_token->get_last4();
-
 					return $item;
 				}
 
@@ -179,23 +164,37 @@ class VaultingModule implements ModuleInterface {
 		add_action(
 			'woocommerce_paypal_payments_gateway_migrate_on_update',
 			function () use ( $container ) {
-				// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_key
-				// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_query
-				$customers = new WP_User_Query(
-					array(
-						'fields'   => 'ID',
-						'limit'    => -1,
-						'meta_key' => 'ppcp-vault-token',
-					)
-				);
-				// phpcs:enable
-
-				$migrate = $container->get( 'vaulting.payment-tokens-migration' );
-				assert( $migrate instanceof PaymentTokensMigration );
-
-				foreach ( $customers->get_results() as $id ) {
-					$migrate->migrate_payment_tokens_for_user( (int) $id );
+				$settings = $container->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+				if ( $settings->has( 'vault_enabled' ) && $settings->get( 'vault_enabled' ) && $settings->has( 'vault_enabled_dcc' ) ) {
+					$settings->set( 'vault_enabled_dcc', true );
+					$settings->persist();
 				}
+
+				$logger = $container->get( 'woocommerce.logger.woocommerce' );
+				assert( $logger instanceof LoggerInterface );
+
+				$this->migrate_payment_tokens( $logger );
+			}
+		);
+
+		add_action(
+			'pcp_migrate_payment_tokens',
+			function() use ( $container ) {
+				$logger = $container->get( 'woocommerce.logger.woocommerce' );
+				assert( $logger instanceof LoggerInterface );
+
+				$this->migrate_payment_tokens( $logger );
+			}
+		);
+
+		add_action(
+			'woocommerce_paypal_payments_payment_tokens_migration',
+			function( int $customer_id ) use ( $container ) {
+				$migration = $container->get( 'vaulting.payment-tokens-migration' );
+				assert( $migration instanceof PaymentTokensMigration );
+
+				$migration->migrate_payment_tokens_for_user( $customer_id );
 			}
 		);
 
@@ -210,6 +209,51 @@ class VaultingModule implements ModuleInterface {
 				return $methods;
 			}
 		);
+	}
+
+	/**
+	 * Runs the payment tokens migration for users with saved payments.
+	 *
+	 * @param LoggerInterface $logger The logger.
+	 * @return void
+	 */
+	public function migrate_payment_tokens( LoggerInterface $logger ): void {
+		// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+		// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_query
+		$customers = new WP_User_Query(
+			array(
+				'fields'   => 'ID',
+				'limit'    => -1,
+				'meta_key' => 'ppcp-vault-token',
+			)
+		);
+		// phpcs:enable
+
+		$customers = $customers->get_results();
+		if ( count( $customers ) === 0 ) {
+			$logger->info( 'No customers for payment tokens migration.' );
+			return;
+		}
+
+		$logger->info( 'Starting payment tokens migration for ' . (string) count( $customers ) . ' users' );
+
+		$interval_in_seconds = 5;
+		$timestamp           = time();
+
+		foreach ( $customers as $id ) {
+			/**
+			 * Function already exist in WooCommerce
+			 *
+			 * @psalm-suppress UndefinedFunction
+			 */
+			as_schedule_single_action(
+				$timestamp,
+				'woocommerce_paypal_payments_payment_tokens_migration',
+				array( 'customer_id' => $id )
+			);
+
+			$timestamp += $interval_in_seconds;
+		}
 	}
 
 	/**

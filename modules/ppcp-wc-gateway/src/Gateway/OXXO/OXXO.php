@@ -228,24 +228,5 @@ class OXXO {
 				true
 			);
 		}
-
-		wp_localize_script(
-			'ppcp-oxxo',
-			'OXXOConfig',
-			array(
-				'oxxo_endpoint' => \WC_AJAX::get_endpoint( 'ppc-oxxo' ),
-				'oxxo_nonce'    => wp_create_nonce( 'ppc-oxxo' ),
-				'error'         => array(
-					'generic'       => __(
-						'Something went wrong. Please try again or choose another payment source.',
-						'woocommerce-paypal-payments'
-					),
-					'js_validation' => __(
-						'Required form fields are not filled or invalid.',
-						'woocommerce-paypal-payments'
-					),
-				),
-			)
-		);
 	}
 }

@@ -19,14 +19,12 @@ class PaymentTokenFactory {
 	 *
 	 * @param string $type The type of WC payment token.
 	 *
-	 * @return void|PaymentTokenACDC|PaymentTokenPayPal
+	 * @return void|PaymentTokenPayPal
 	 */
 	public function create( string $type ) {
 		switch ( $type ) {
 			case 'paypal':
 				return new PaymentTokenPayPal();
-			case 'acdc':
-				return new PaymentTokenACDC();
 		}
 	}
 }

@@ -13,6 +13,7 @@ use Psr\Log\LoggerInterface;
 use Throwable;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
+use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WC_Order;
@@ -323,14 +324,6 @@ class WCGatewayModule implements ModuleInterface {
 		);
 
 		add_action(
-			'wc_ajax_ppc-oxxo',
-			static function () use ( $c ) {
-				$endpoint = $c->get( 'wcgateway.endpoint.oxxo' );
-				$endpoint->handle_request();
-			}
-		);
-
-		add_action(
 			'woocommerce_order_status_changed',
 			static function ( int $order_id, string $from, string $to ) use ( $c ) {
 				$wc_order = wc_get_order( $order_id );
@@ -380,6 +373,13 @@ class WCGatewayModule implements ModuleInterface {
 			10,
 			3
 		);
+
+		if ( defined( 'WP_CLI' ) && WP_CLI ) {
+			\WP_CLI::add_command(
+				'pcp settings',
+				$c->get( 'wcgateway.cli.settings.command' )
+			);
+		}
 	}
 
 	/**

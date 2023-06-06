@@ -9,6 +9,14 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient;
 
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingSubscriptions;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\CatalogProducts;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingPlans;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\BillingCycleFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentPreferencesFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PlanFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ProductFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingOptionFactory;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
@@ -209,6 +217,30 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
+	'api.endpoint.catalog-products'             => static function ( ContainerInterface $container ): CatalogProducts {
+		return new CatalogProducts(
+			$container->get( 'api.host' ),
+			$container->get( 'api.bearer' ),
+			$container->get( 'api.factory.product' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
+	'api.endpoint.billing-plans'                => static function( ContainerInterface $container ): BillingPlans {
+		return new BillingPlans(
+			$container->get( 'api.host' ),
+			$container->get( 'api.bearer' ),
+			$container->get( 'api.factory.billing-cycle' ),
+			$container->get( 'api.factory.plan' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
+	'api.endpoint.billing-subscriptions'        => static function( ContainerInterface $container ): BillingSubscriptions {
+		return new BillingSubscriptions(
+			$container->get( 'api.host' ),
+			$container->get( 'api.bearer' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
 	'api.repository.application-context'        => static function( ContainerInterface $container ) : ApplicationContextRepository {
 
 		$settings = $container->get( 'wcgateway.settings' );
@@ -289,11 +321,18 @@ return array(
 		);
 	},
 	'api.factory.shipping'                      => static function ( ContainerInterface $container ): ShippingFactory {
-		$address_factory = $container->get( 'api.factory.address' );
-		return new ShippingFactory( $address_factory );
+		return new ShippingFactory(
+			$container->get( 'api.factory.address' ),
+			$container->get( 'api.factory.shipping-option' )
+		);
 	},
 	'api.factory.shipping-preference'           => static function ( ContainerInterface $container ): ShippingPreferenceFactory {
 		return new ShippingPreferenceFactory();
+	},
+	'api.factory.shipping-option'               => static function ( ContainerInterface $container ): ShippingOptionFactory {
+		return new ShippingOptionFactory(
+			$container->get( 'api.factory.money' )
+		);
 	},
 	'api.factory.amount'                        => static function ( ContainerInterface $container ): AmountFactory {
 		$item_factory = $container->get( 'api.factory.item' );
@@ -356,6 +395,21 @@ return array(
 	},
 	'api.factory.fraud-processor-response'      => static function ( ContainerInterface $container ): FraudProcessorResponseFactory {
 		return new FraudProcessorResponseFactory();
+	},
+	'api.factory.product'                       => static function( ContainerInterface $container ): ProductFactory {
+		return new ProductFactory();
+	},
+	'api.factory.billing-cycle'                 => static function( ContainerInterface $container ): BillingCycleFactory {
+		return new BillingCycleFactory( $container->get( 'api.shop.currency' ) );
+	},
+	'api.factory.payment-preferences'           => static function( ContainerInterface $container ):PaymentPreferencesFactory {
+		return new PaymentPreferencesFactory( $container->get( 'api.shop.currency' ) );
+	},
+	'api.factory.plan'                          => static function( ContainerInterface $container ): PlanFactory {
+		return new PlanFactory(
+			$container->get( 'api.factory.billing-cycle' ),
+			$container->get( 'api.factory.payment-preferences' )
+		);
 	},
 	'api.helpers.dccapplies'                    => static function ( ContainerInterface $container ) : DccApplies {
 		return new DccApplies(
@@ -631,6 +685,27 @@ return array(
 					'SGD',
 					'USD',
 				),
+				'MX' => array(
+					'MXN',
+				),
+				'JP' => array(
+					'AUD',
+					'CAD',
+					'CHF',
+					'CZK',
+					'DKK',
+					'EUR',
+					'GBP',
+					'HKD',
+					'HUF',
+					'JPY',
+					'NOK',
+					'NZD',
+					'PLN',
+					'SEK',
+					'SGD',
+					'USD',
+				),
 			)
 		);
 	},
@@ -686,6 +761,17 @@ return array(
 					'visa'       => array(),
 					'amex'       => array( 'CAD' ),
 					'jcb'        => array( 'CAD' ),
+				),
+				'MX' => array(
+					'mastercard' => array(),
+					'visa'       => array(),
+					'amex'       => array(),
+				),
+				'JP' => array(
+					'mastercard' => array(),
+					'visa'       => array(),
+					'amex'       => array( 'JPY' ),
+					'jcb'        => array( 'JPY' ),
 				),
 			)
 		);

@@ -34,19 +34,6 @@ trait ProcessPaymentTrait {
 	}
 
 	/**
-	 * Checks if vault setting is enabled.
-	 *
-	 * @return bool Whether vault settings are enabled or not.
-	 * @throws \WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException When a setting hasn't been found.
-	 */
-	protected function vault_setting_enabled(): bool {
-		if ( $this->config->has( 'vault_enabled' ) && $this->config->get( 'vault_enabled' ) ) {
-			return true;
-		}
-		return false;
-	}
-
-	/**
 	 * Scheduled the vaulted payment check.
 	 *
 	 * @param int $wc_order_id The WC order ID.
@@ -94,8 +81,9 @@ trait ProcessPaymentTrait {
 		wc_add_notice( $error->getMessage(), 'error' );
 
 		return array(
-			'result'   => 'failure',
-			'redirect' => wc_get_checkout_url(),
+			'result'       => 'failure',
+			'redirect'     => wc_get_checkout_url(),
+			'errorMessage' => $error->getMessage(),
 		);
 	}
 

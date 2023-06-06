@@ -1631,7 +1631,7 @@ function wcs_get_order_items_product_id($item_id)
  *
  * When acting on cart items or order items, Subscriptions often needs to use an item's canonical product ID. For
  * items representing a variation, that means the 'variation_id' value, if the item is not a variation, that means
- * the 'product_id value. This function helps save keystrokes on the idiom to check if an item is to a variation or not.
+ * the product_id value. This function helps save keystrokes on the idiom to check if an item is to a variation or not.
  *
  * @param array or object $item Either a cart item, order/subscription line item, or a product.
  */

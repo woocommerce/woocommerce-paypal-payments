@@ -1,12 +1,13 @@
 {
   "name": "woocommerce-paypal-payments",
-  "version": "2.0.4",
+  "version": "2.1.0",
   "description": "WooCommerce PayPal Payments",
   "repository": "https://github.com/woocommerce/woocommerce-paypal-payments",
   "license": "GPL-2.0",
   "author": "WooCommerce",
   "scripts": {
     "postinstall": "run-s install:modules:* && run-s build:modules",
+    "install:modules:ppcp-blocks": "cd modules/ppcp-blocks && yarn install",
     "install:modules:ppcp-button": "cd modules/ppcp-button && yarn install",
     "install:modules:ppcp-wc-gateway": "cd modules/ppcp-wc-gateway && yarn install",
     "install:modules:ppcp-webhooks": "cd modules/ppcp-webhooks && yarn install",
@@ -14,6 +15,7 @@
     "install:modules:ppcp-onboarding": "cd modules/ppcp-onboarding && yarn install",
     "install:modules:ppcp-compat": "cd modules/ppcp-compat && yarn install",
     "install:modules:ppcp-uninstall": "cd modules/ppcp-uninstall && yarn install",
+    "build:modules:ppcp-blocks": "cd modules/ppcp-blocks && yarn run build",
     "build:modules:ppcp-button": "cd modules/ppcp-button && yarn run build",
     "build:modules:ppcp-wc-gateway": "cd modules/ppcp-wc-gateway && yarn run build",
     "build:modules:ppcp-webhooks": "cd modules/ppcp-webhooks && yarn run build",
@@ -22,6 +24,7 @@
     "build:modules:ppcp-compat": "cd modules/ppcp-compat && yarn run build",
     "build:modules:ppcp-uninstall": "cd modules/ppcp-uninstall && yarn run build",
     "build:modules": "run-p build:modules:*",
+    "watch:modules:ppcp-blocks": "cd modules/ppcp-blocks && yarn run watch",
     "watch:modules:ppcp-button": "cd modules/ppcp-button && yarn run watch",
     "watch:modules:ppcp-wc-gateway": "cd modules/ppcp-wc-gateway && yarn run watch",
     "watch:modules:ppcp-webhooks": "cd modules/ppcp-webhooks && yarn run watch",
@@ -39,7 +42,7 @@
     "ddev:watch-js": "ddev yarn watch:modules",
     "ddev:composer-update": "ddev composer update && ddev composer update --lock",
     "ddev:unit-tests": "ddev exec phpunit",
-    "ddev:e2e-tests": "cp -n .env.e2e.example .env.e2e && ddev php tests/e2e/PHPUnit/setup.php && ddev exec phpunit -c tests/e2e/phpunit.xml.dist",
+    "ddev:e2e-tests": "(cp -n .env.e2e.example .env.e2e || true) && ddev php tests/e2e/PHPUnit/setup.php && ddev exec phpunit -c tests/e2e/phpunit.xml.dist",
     "ddev:pw-install": "ddev yarn playwright install --with-deps",
     "ddev:pw-tests": "ddev yarn playwright test",
     "ddev:test": "yarn run ddev:unit-tests && yarn run ddev:e2e-tests && yarn run ddev:pw-tests",
@@ -58,7 +61,7 @@
     "prearchive": "rm -rf $npm_package_name.zip",
     "archive": "zip -r $npm_package_name.zip . -x **.git/\\* **node_modules/\\*",
     "postarchive": "yarn run archive:cleanup && rm -rf $npm_package_name && unzip $npm_package_name.zip -d $npm_package_name && rm $npm_package_name.zip && zip -r $npm_package_name.zip $npm_package_name && rm -rf $npm_package_name",
-    "archive:cleanup": "zip -d $npm_package_name.zip .env* .ddev/\\* \\*.idea/\\* .editorconfig tests/\\* .github/\\* .psalm/\\* wordpress_org_assets/\\* \\*.DS_Store \\*README.md \\*.gitattributes \\*.gitignore \\*composer.json \\*composer.lock patchwork.json phpunit.xml.dist .phpunit.result.cache phpcs.xml* psalm*.xml* playwright.config.js \\*.babelrc \\*package.json \\*webpack.config.js \\*yarn.lock \\*.travis.yml\\"
+    "archive:cleanup": "zip -d $npm_package_name.zip .env* .ddev/\\* \\*.idea/\\* .editorconfig tests/\\* .github/\\* .psalm/\\* wordpress_org_assets/\\* \\*.DS_Store \\*README.md \\*.gitattributes \\*.gitignore \\*composer.json \\*composer.lock patchwork.json phpunit.xml.dist .phpunit.result.cache phpcs.xml* psalm*.xml* playwright.config.js wp-cli.yml \\*.babelrc \\*package.json \\*webpack.config.js \\*yarn.lock \\*.travis.yml\\"
   },
   "config": {
     "wp_org_slug": "woocommerce-paypal-payments"

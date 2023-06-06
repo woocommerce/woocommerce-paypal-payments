@@ -83,8 +83,8 @@ class Patch {
 	public function to_array(): array {
 		return array(
 			'op'    => $this->op(),
-			'value' => $this->value(),
 			'path'  => $this->path(),
+			'value' => $this->value(),
 		);
 	}
 
