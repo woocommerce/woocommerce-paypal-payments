@@ -50,6 +50,8 @@ return array(
 			'ppcp-webhooks-status-page',
 			'ppcp-tracking',
 			'ppcp-fraudnet',
+			'ppcp-gzd-compat',
+			'ppcp-clear-db',
 		);
 	},
 
