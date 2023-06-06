@@ -49,6 +49,9 @@ return array(
 			'ppcp-gateway-settings',
 			'ppcp-webhooks-status-page',
 			'ppcp-tracking',
+			'ppcp-fraudnet',
+			'ppcp-gzd-compat',
+			'ppcp-clear-db',
 		);
 	},
 

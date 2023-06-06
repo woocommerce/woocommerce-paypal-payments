@@ -91,6 +91,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Enhancement - Refresh checkout totals after validation if needed #1294
 * Enhancement - Improve Divi and Elementor Pro compatibility #1254
 * Enhancement - Add MX and JP to ACDC #1415
+* Enhancement - Add fraudnet script to SGO filter #1366
 * Feature preview - Add express cart/checkout block #1346
 * Feature preview - Integrate PayPal Subscriptions API #1217
 
