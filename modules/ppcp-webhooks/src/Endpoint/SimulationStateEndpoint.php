@@ -51,6 +51,11 @@ class SimulationStateEndpoint {
 	 * Handles the incoming request.
 	 */
 	public function handle_request() {
+		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+			wp_send_json_error( 'Not admin.', 403 );
+			return false;
+		}
+
 		try {
 			$state = $this->simulation->get_state();
 

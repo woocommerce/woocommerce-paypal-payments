@@ -107,6 +107,11 @@ class PayUponInvoiceEndpoint implements EndpointInterface {
 	 * @throws NotFoundException When order not found or handling failed.
 	 */
 	public function handle_request(): bool {
+		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+			wp_send_json_error( 'Not admin.', 403 );
+			return false;
+		}
+
 		$signup_links = array();
 
 		try {

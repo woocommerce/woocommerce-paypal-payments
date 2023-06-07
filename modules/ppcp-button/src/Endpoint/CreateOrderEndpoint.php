@@ -292,7 +292,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 					! $this->early_order_handler->should_create_early_order()
 					|| $this->registration_needed
 					|| isset( $data['createaccount'] ) && '1' === $data['createaccount'] ) {
-					wp_send_json_success( $order->to_array() );
+					wp_send_json_success( $this->make_response( $order ) );
 				}
 
 				$this->early_order_handler->register_for_order( $order );
@@ -304,7 +304,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 				$wc_order->save_meta_data();
 			}
 
-			wp_send_json_success( $order->to_array() );
+			wp_send_json_success( $this->make_response( $order ) );
 			return true;
 
 		} catch ( ValidationException $error ) {
@@ -362,7 +362,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 			 * during the "onApprove"-JS callback or the webhook listener.
 			 */
 			if ( ! $this->early_order_handler->should_create_early_order() ) {
-				wp_send_json_success( $order->to_array() );
+				wp_send_json_success( $this->make_response( $order ) );
 			}
 			$this->early_order_handler->register_for_order( $order );
 			return $data;
@@ -568,5 +568,18 @@ class CreateOrderEndpoint implements EndpointInterface {
 				array( __( 'Please read and accept the terms and conditions to proceed with your order.', 'woocommerce-paypal-payments' ) )
 			);
 		}
+	}
+
+	/**
+	 * Returns the response data for success response.
+	 *
+	 * @param Order $order The PayPal order.
+	 * @return array
+	 */
+	private function make_response( Order $order ): array {
+		return array(
+			'id'        => $order->id(),
+			'custom_id' => $order->purchase_units()[0]->custom_id(),
+		);
 	}
 }
