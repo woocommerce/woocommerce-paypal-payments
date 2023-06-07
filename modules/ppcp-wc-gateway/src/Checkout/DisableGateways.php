@@ -124,7 +124,11 @@ class DisableGateways {
 			return true;
 		}
 
-		if ( is_checkout() && ! $this->subscription_helper->checkout_subscription_product_allowed() ) {
+		if (
+			is_checkout()
+			&& $this->subscription_helper->cart_contains_subscription()
+			&& ! $this->subscription_helper->checkout_subscription_product_allowed()
+		) {
 			return true;
 		}
 

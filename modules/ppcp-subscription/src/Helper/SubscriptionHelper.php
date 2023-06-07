@@ -179,7 +179,6 @@ class SubscriptionHelper {
 		$subscription_mode = $this->settings->has( 'subscriptions_mode' ) ? $this->settings->get( 'subscriptions_mode' ) : '';
 		if (
 			$subscription_mode !== 'subscriptions_api'
-			|| ! $this->cart_contains_subscription()
 			|| ! $this->paypal_subscription_id()
 		) {
 			return false;
