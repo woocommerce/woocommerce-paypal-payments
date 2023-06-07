@@ -943,6 +943,7 @@ return array(
 			$gateway,
 			$endpoint,
 			$prefix,
+			$container->get( 'session.handler' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},

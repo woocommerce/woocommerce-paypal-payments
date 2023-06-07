@@ -11,6 +11,8 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Endpoint;
 
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXOGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PrefixTrait;
@@ -38,6 +40,13 @@ class ReturnUrlEndpoint {
 	private $order_endpoint;
 
 	/**
+	 * The session handler
+	 *
+	 * @var SessionHandler
+	 */
+	protected $session_handler;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -47,21 +56,24 @@ class ReturnUrlEndpoint {
 	/**
 	 * ReturnUrlEndpoint constructor.
 	 *
-	 * @param PayPalGateway   $gateway        The PayPal Gateway.
-	 * @param OrderEndpoint   $order_endpoint The Order Endpoint.
-	 * @param string          $prefix         The prefix.
-	 * @param LoggerInterface $logger         The logger.
+	 * @param PayPalGateway   $gateway         The PayPal Gateway.
+	 * @param OrderEndpoint   $order_endpoint  The Order Endpoint.
+	 * @param string          $prefix          The prefix.
+	 * @param SessionHandler  $session_handler The session handler.
+	 * @param LoggerInterface $logger          The logger.
 	 */
 	public function __construct(
 		PayPalGateway $gateway,
 		OrderEndpoint $order_endpoint,
 		string $prefix,
+		SessionHandler $session_handler,
 		LoggerInterface $logger
 	) {
-		$this->gateway        = $gateway;
-		$this->order_endpoint = $order_endpoint;
-		$this->prefix         = $prefix;
-		$this->logger         = $logger;
+		$this->gateway         = $gateway;
+		$this->order_endpoint  = $order_endpoint;
+		$this->prefix          = $prefix;
+		$this->session_handler = $session_handler;
+		$this->logger          = $logger;
 	}
 
 	/**
@@ -80,6 +92,16 @@ class ReturnUrlEndpoint {
 
 		$wc_order_id = $this->sanitize_custom_id( $order->purchase_units()[0]->custom_id() );
 		if ( ! $wc_order_id ) {
+			// We cannot finish processing here without WC order, but at least go into the continuation mode.
+			if ( $order->status()->is( OrderStatus::APPROVED )
+				|| $order->status()->is( OrderStatus::COMPLETED )
+			) {
+				$this->session_handler->replace_order( $order );
+
+				wp_safe_redirect( wc_get_checkout_url() );
+				exit();
+			}
+
 			$this->logger->warning( "Return URL endpoint $token: no WC order ID." );
 			exit();
 		}
