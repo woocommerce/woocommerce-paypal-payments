@@ -15,7 +15,7 @@ use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 
 return array(
 	'subscription.helper'                   => static function ( ContainerInterface $container ): SubscriptionHelper {
-		return new SubscriptionHelper();
+		return new SubscriptionHelper( $container->get( 'wcgateway.settings' ) );
 	},
 	'subscription.renewal-handler'          => static function ( ContainerInterface $container ): RenewalHandler {
 		$logger                = $container->get( 'woocommerce.logger.woocommerce' );

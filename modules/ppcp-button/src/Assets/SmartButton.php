@@ -850,7 +850,7 @@ class SmartButton implements SmartButtonInterface {
 					'endpoint' => \WC_AJAX::get_endpoint( CartScriptParamsEndpoint::ENDPOINT ),
 				),
 			),
-			'subscription_plan_id'              => $this->paypal_subscription_id(),
+			'subscription_plan_id'              => $this->subscription_helper->paypal_subscription_id(),
 			'enforce_vault'                     => $this->has_subscriptions(),
 			'can_save_vault_token'              => $this->can_save_vault_token(),
 			'is_free_trial_cart'                => $is_free_trial_cart,
@@ -1381,38 +1381,6 @@ class SmartButton implements SmartButtonInterface {
 		}
 
 		return false;
-	}
-
-	/**
-	 * Returns PayPal subscription plan id from WC subscription product.
-	 *
-	 * @return string
-	 */
-	private function paypal_subscription_id(): string {
-		if ( $this->subscription_helper->current_product_is_subscription() ) {
-			$product = wc_get_product();
-			assert( $product instanceof WC_Product );
-
-			if ( $product->get_type() === 'subscription' && $product->meta_exists( 'ppcp_subscription_plan' ) ) {
-				return $product->get_meta( 'ppcp_subscription_plan' )['id'];
-			}
-		}
-
-		$cart = WC()->cart ?? null;
-		if ( ! $cart || $cart->is_empty() ) {
-			return '';
-		}
-		$items = $cart->get_cart_contents();
-		foreach ( $items as $item ) {
-			$product = wc_get_product( $item['product_id'] );
-			assert( $product instanceof WC_Product );
-
-			if ( $product->get_type() === 'subscription' && $product->meta_exists( 'ppcp_subscription_plan' ) ) {
-				return $product->get_meta( 'ppcp_subscription_plan' )['id'];
-			}
-		}
-
-		return '';
 	}
 
 	/**

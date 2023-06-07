@@ -13,11 +13,29 @@ namespace WooCommerce\PayPalCommerce\Subscription\Helper;
 
 use WC_Product;
 use WC_Subscriptions_Product;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 
 /**
  * Class SubscriptionHelper
  */
 class SubscriptionHelper {
+
+	/**
+	 * The settings.
+	 *
+	 * @var Settings
+	 */
+	private $settings;
+
+	/**
+	 * SubscriptionHelper constructor.
+	 *
+	 * @param Settings $settings The settings.
+	 */
+	public function __construct( Settings $settings ) {
+		$this->settings = $settings;
+	}
 
 	/**
 	 * Whether the current product is a subscription.
@@ -149,5 +167,56 @@ class SubscriptionHelper {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Checks if subscription product is allowed.
+	 *
+	 * @return bool
+	 * @throws NotFoundException If setting is not found.
+	 */
+	public function checkout_subscription_product_allowed(): bool {
+		$subscription_mode = $this->settings->has( 'subscriptions_mode' ) ? $this->settings->get( 'subscriptions_mode' ) : '';
+		if (
+			$subscription_mode !== 'subscriptions_api'
+			|| ! $this->cart_contains_subscription()
+			|| ! $this->paypal_subscription_id()
+		) {
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Returns PayPal subscription plan id from WC subscription product.
+	 *
+	 * @return string
+	 */
+	public function paypal_subscription_id(): string {
+		if ( $this->current_product_is_subscription() ) {
+			$product = wc_get_product();
+			assert( $product instanceof WC_Product );
+
+			if ( $product->get_type() === 'subscription' && $product->meta_exists( 'ppcp_subscription_plan' ) ) {
+				return $product->get_meta( 'ppcp_subscription_plan' )['id'];
+			}
+		}
+
+		$cart = WC()->cart ?? null;
+		if ( ! $cart || $cart->is_empty() ) {
+			return '';
+		}
+		$items = $cart->get_cart_contents();
+		foreach ( $items as $item ) {
+			$product = wc_get_product( $item['product_id'] );
+			assert( $product instanceof WC_Product );
+
+			if ( $product->get_type() === 'subscription' && $product->meta_exists( 'ppcp_subscription_plan' ) ) {
+				return $product->get_meta( 'ppcp_subscription_plan' )['id'];
+			}
+		}
+
+		return '';
 	}
 }

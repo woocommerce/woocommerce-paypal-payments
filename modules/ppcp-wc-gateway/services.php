@@ -148,7 +148,8 @@ return array(
 		$session_handler = $container->get( 'session.handler' );
 		$settings       = $container->get( 'wcgateway.settings' );
 		$settings_status = $container->get( 'wcgateway.settings.status' );
-		return new DisableGateways( $session_handler, $settings, $settings_status );
+		$subscription_helper = $container->get( 'subscription.helper' );
+		return new DisableGateways( $session_handler, $settings, $settings_status, $subscription_helper );
 	},
 
 	'wcgateway.is-wc-payments-page'                        => static function ( ContainerInterface $container ): bool {

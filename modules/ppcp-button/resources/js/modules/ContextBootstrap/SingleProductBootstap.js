@@ -59,7 +59,8 @@ class SingleProductBootstap {
     shouldRender() {
         return document.querySelector('form.cart') !== null
             && !this.priceAmountIsZero()
-            && !this.isSubscriptionMode();
+            && !this.isSubscriptionMode()
+            && PayPalCommerceGateway.subscription_plan_id !== '';
     }
 
     priceAmount() {
