@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Endpoint;
 
+use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO\OXXOGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
@@ -37,16 +38,30 @@ class ReturnUrlEndpoint {
 	private $order_endpoint;
 
 	/**
+	 * The logger.
+	 *
+	 * @var LoggerInterface
+	 */
+	protected $logger;
+
+	/**
 	 * ReturnUrlEndpoint constructor.
 	 *
-	 * @param PayPalGateway $gateway        The PayPal Gateway.
-	 * @param OrderEndpoint $order_endpoint The Order Endpoint.
-	 * @param string        $prefix                The prefix.
+	 * @param PayPalGateway   $gateway        The PayPal Gateway.
+	 * @param OrderEndpoint   $order_endpoint The Order Endpoint.
+	 * @param string          $prefix         The prefix.
+	 * @param LoggerInterface $logger         The logger.
 	 */
-	public function __construct( PayPalGateway $gateway, OrderEndpoint $order_endpoint, string $prefix ) {
+	public function __construct(
+		PayPalGateway $gateway,
+		OrderEndpoint $order_endpoint,
+		string $prefix,
+		LoggerInterface $logger
+	) {
 		$this->gateway        = $gateway;
 		$this->order_endpoint = $order_endpoint;
 		$this->prefix         = $prefix;
+		$this->logger         = $logger;
 	}
 
 	/**
@@ -65,11 +80,13 @@ class ReturnUrlEndpoint {
 
 		$wc_order_id = $this->sanitize_custom_id( $order->purchase_units()[0]->custom_id() );
 		if ( ! $wc_order_id ) {
+			$this->logger->warning( "Return URL endpoint $token: no WC order ID." );
 			exit();
 		}
 
 		$wc_order = wc_get_order( $wc_order_id );
 		if ( ! is_a( $wc_order, \WC_Order::class ) ) {
+			$this->logger->warning( "Return URL endpoint $token: WC order $wc_order_id not found." );
 			exit();
 		}
 

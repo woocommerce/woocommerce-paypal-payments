@@ -942,7 +942,8 @@ return array(
 		return new ReturnUrlEndpoint(
 			$gateway,
 			$endpoint,
-			$prefix
+			$prefix,
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 
