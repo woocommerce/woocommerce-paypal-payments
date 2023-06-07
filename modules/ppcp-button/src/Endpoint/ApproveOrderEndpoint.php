@@ -180,7 +180,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 					);
 				}
 				$this->session_handler->replace_order( $order );
-				wp_send_json_success( $order );
+				wp_send_json_success();
 			}
 
 			if ( $this->order_helper->contains_physical_goods( $order ) && ! $order->status()->is( OrderStatus::APPROVED ) && ! $order->status()->is( OrderStatus::CREATED ) ) {
@@ -198,7 +198,7 @@ class ApproveOrderEndpoint implements EndpointInterface {
 			$this->session_handler->replace_funding_source( $funding_source );
 
 			$this->session_handler->replace_order( $order );
-			wp_send_json_success( $order );
+			wp_send_json_success();
 			return true;
 		} catch ( Exception $error ) {
 			$this->logger->error( 'Order approve failed: ' . $error->getMessage() );

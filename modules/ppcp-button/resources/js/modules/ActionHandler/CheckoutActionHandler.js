@@ -11,6 +11,34 @@ class CheckoutActionHandler {
         this.spinner = spinner;
     }
 
+    subscriptionsConfiguration() {
+        return {
+            createSubscription: (data, actions) => {
+                return actions.subscription.create({
+                    'plan_id': this.config.subscription_plan_id
+                });
+            },
+            onApprove: (data, actions) => {
+                fetch(this.config.ajax.approve_subscription.endpoint, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        nonce: this.config.ajax.approve_subscription.nonce,
+                        order_id: data.orderID,
+                        subscription_id: data.subscriptionID
+                    })
+                }).then((res)=>{
+                    return res.json();
+                }).then((data) => {
+                    document.querySelector('#place_order').click();
+                });
+            },
+            onError: (err) => {
+                console.error(err);
+            }
+        }
+    }
+
     configuration() {
         const spinner = this.spinner;
         const createOrder = (data, actions) => {
@@ -81,7 +109,7 @@ class CheckoutActionHandler {
                 const input = document.createElement('input');
                 input.setAttribute('type', 'hidden');
                 input.setAttribute('name', 'ppcp-resume-order');
-                input.setAttribute('value', data.data.purchase_units[0].custom_id);
+                input.setAttribute('value', data.data.custom_id);
                 document.querySelector(formSelector).appendChild(input);
                 return data.data.id;
             });

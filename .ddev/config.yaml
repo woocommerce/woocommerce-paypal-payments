@@ -27,6 +27,7 @@ web_environment:
   - ADMIN_PASS=admin
   - ADMIN_EMAIL=admin@example.com
   - WC_VERSION=6.1.0
+  - PCP_BLOCKS_ENABLED=1
 
 # Key features of ddev's config.yaml:
 

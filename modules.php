@@ -28,5 +28,12 @@ return function ( string $root_dir ): iterable {
 		( require "$modules_dir/ppcp-uninstall/module.php" )(),
 	);
 
+	if ( apply_filters(
+		'woocommerce_paypal_payments_blocks_enabled',
+		getenv( 'PCP_BLOCKS_ENABLED' ) === '1'
+	) ) {
+		$modules[] = ( require "$modules_dir/ppcp-blocks/module.php" )();
+	}
+
 	return $modules;
 };
