@@ -155,6 +155,45 @@ class SubscriptionModule implements ModuleInterface {
 		if ( defined( 'PPCP_FLAG_SUBSCRIPTIONS_API' ) && PPCP_FLAG_SUBSCRIPTIONS_API ) {
 			$this->subscriptions_api_integration( $c );
 		}
+
+		add_action(
+			'admin_enqueue_scripts',
+			function( $hook ) use ( $c ) {
+				$settings          = $c->get( 'wcgateway.settings' );
+				$subscription_mode = $settings->has( 'subscriptions_mode' ) ? $settings->get( 'subscriptions_mode' ) : '';
+				if ( $hook !== 'post.php' || $subscription_mode !== 'subscriptions_api' ) {
+					return;
+				}
+
+				$post_id = wc_clean( wp_unslash( $_GET['post'] ?? '' ) );
+				$product = wc_get_product( $post_id );
+				if ( ! is_a( $product, WC_Product::class ) ) {
+					return;
+				}
+
+				$subscription_product_connected = $product->get_meta( '_ppcp_enable_subscription_product' );
+				if ( $subscription_product_connected !== 'yes' ) {
+					return;
+				}
+
+				$module_url = $c->get( 'subscription.module.url' );
+				wp_enqueue_script(
+					'ppcp-paypal-subscription',
+					untrailingslashit( $module_url ) . '/assets/js/paypal-subscription.js',
+					array( 'jquery' ),
+					$c->get( 'ppcp.asset-version' ),
+					true
+				);
+
+				wp_localize_script(
+					'ppcp-paypal-subscription',
+					'PayPalCommerceGatewayPayPalSubscription',
+					array(
+						'product_connected' => $subscription_product_connected,
+					)
+				);
+			}
+		);
 	}
 
 	/**

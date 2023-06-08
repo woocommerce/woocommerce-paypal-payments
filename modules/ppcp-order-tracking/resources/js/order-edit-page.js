@@ -3,7 +3,7 @@ document.addEventListener(
     () => {
         const config = PayPalCommerceGatewayOrderTrackingInfo;
         if (!typeof (PayPalCommerceGatewayOrderTrackingInfo)) {
-            console.error('trackign cannot be set.');
+            console.error('tracking cannot be set.');
             return;
         }
 

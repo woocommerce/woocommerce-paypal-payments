@@ -54,4 +54,15 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
+	'subscription.module.url'               => static function ( ContainerInterface $container ): string {
+		/**
+		 * The path cannot be false.
+		 *
+		 * @psalm-suppress PossiblyFalseArgument
+		 */
+		return plugins_url(
+			'/modules/ppcp-subscription/',
+			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
+		);
+	},
 );
