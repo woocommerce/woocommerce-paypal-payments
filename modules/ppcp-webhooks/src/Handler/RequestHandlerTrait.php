@@ -45,13 +45,7 @@ trait RequestHandlerTrait {
 	 * @return WC_Order[]
 	 */
 	protected function get_wc_orders_from_custom_ids( array $custom_ids ): array {
-		$order_ids = array_map(
-			array(
-				$this,
-				'sanitize_custom_id',
-			),
-			$custom_ids
-		);
+		$order_ids = $custom_ids;
 		$args      = array(
 			'post__in' => $order_ids,
 			'limit'    => -1,

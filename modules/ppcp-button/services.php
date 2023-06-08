@@ -184,8 +184,7 @@ return array(
 		$state          = $container->get( 'onboarding.state' );
 		$order_processor = $container->get( 'wcgateway.order-processor' );
 		$session_handler = $container->get( 'session.handler' );
-		$prefix         = $container->get( 'api.prefix' );
-		return new EarlyOrderHandler( $state, $order_processor, $session_handler, $prefix );
+		return new EarlyOrderHandler( $state, $order_processor, $session_handler );
 	},
 	'button.endpoint.approve-order'               => static function ( ContainerInterface $container ): ApproveOrderEndpoint {
 		$request_data    = $container->get( 'button.request-data' );

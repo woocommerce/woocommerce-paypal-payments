@@ -18,7 +18,7 @@ use WP_REST_Response;
  */
 class PaymentCapturePending implements RequestHandler {
 
-	use PrefixTrait;
+	use RequestHandlerTrait;
 
 	/**
 	 * The logger.
@@ -68,7 +68,7 @@ class PaymentCapturePending implements RequestHandler {
 	public function handle_request( WP_REST_Request $request ): WP_REST_Response {
 		$response = array( 'success' => false );
 		$order_id = $request['resource'] !== null && isset( $request['resource']['custom_id'] )
-			? $this->sanitize_custom_id( $request['resource']['custom_id'] )
+			? $request['resource']['custom_id']
 			: 0;
 		if ( ! $order_id ) {
 			$message = sprintf(

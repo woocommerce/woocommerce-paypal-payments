@@ -20,7 +20,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGa
  */
 class CheckoutOrderApproved implements RequestHandler {
 
-	use PrefixTrait;
+	use RequestHandlerTrait;
 
 	/**
 	 * The logger.
@@ -40,12 +40,10 @@ class CheckoutOrderApproved implements RequestHandler {
 	 * CheckoutOrderApproved constructor.
 	 *
 	 * @param LoggerInterface $logger The logger.
-	 * @param string          $prefix The prefix.
 	 * @param OrderEndpoint   $order_endpoint The order endpoint.
 	 */
-	public function __construct( LoggerInterface $logger, string $prefix, OrderEndpoint $order_endpoint ) {
+	public function __construct( LoggerInterface $logger, OrderEndpoint $order_endpoint ) {
 		$this->logger         = $logger;
-		$this->prefix         = $prefix;
 		$this->order_endpoint = $order_endpoint;
 	}
 
@@ -160,13 +158,7 @@ class CheckoutOrderApproved implements RequestHandler {
 			return rest_ensure_response( $response );
 		}
 
-		$wc_order_ids = array_map(
-			array(
-				$this,
-				'sanitize_custom_id',
-			),
-			$custom_ids
-		);
+		$wc_order_ids = $custom_ids;
 		$args         = array(
 			'post__in' => $wc_order_ids,
 			'limit'    => -1,

@@ -19,7 +19,7 @@ use WP_REST_Response;
  */
 class CheckoutOrderCompleted implements RequestHandler {
 
-	use PrefixTrait, RequestHandlerTrait;
+	use RequestHandlerTrait;
 
 	/**
 	 * The logger.
@@ -32,11 +32,9 @@ class CheckoutOrderCompleted implements RequestHandler {
 	 * CheckoutOrderCompleted constructor.
 	 *
 	 * @param LoggerInterface $logger The logger.
-	 * @param string          $prefix The prefix.
 	 */
-	public function __construct( LoggerInterface $logger, string $prefix ) {
+	public function __construct( LoggerInterface $logger ) {
 		$this->logger = $logger;
-		$this->prefix = $prefix;
 	}
 
 	/**

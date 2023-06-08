@@ -22,7 +22,7 @@ use WP_REST_Response;
  */
 class PaymentCaptureCompleted implements RequestHandler {
 
-	use PrefixTrait, TransactionIdHandlingTrait;
+	use TransactionIdHandlingTrait;
 
 	/**
 	 * The logger.
@@ -42,16 +42,13 @@ class PaymentCaptureCompleted implements RequestHandler {
 	 * PaymentCaptureCompleted constructor.
 	 *
 	 * @param LoggerInterface $logger The logger.
-	 * @param string          $prefix The prefix.
 	 * @param OrderEndpoint   $order_endpoint The order endpoint.
 	 */
 	public function __construct(
 		LoggerInterface $logger,
-		string $prefix,
 		OrderEndpoint $order_endpoint
 	) {
 		$this->logger         = $logger;
-		$this->prefix         = $prefix;
 		$this->order_endpoint = $order_endpoint;
 	}
 
@@ -95,8 +92,7 @@ class PaymentCaptureCompleted implements RequestHandler {
 			return new WP_REST_Response( $response );
 		}
 
-		$wc_order_id = isset( $resource['custom_id'] ) ?
-			$this->sanitize_custom_id( (string) $resource['custom_id'] ) : 0;
+		$wc_order_id = isset( $resource['custom_id'] ) ? (string) $resource['custom_id'] : 0;
 		if ( ! $wc_order_id ) {
 			$message = sprintf( 'No order for webhook event %s was found.', $webhook_id );
 			$this->logger->warning( $message, array( 'request' => $request ) );

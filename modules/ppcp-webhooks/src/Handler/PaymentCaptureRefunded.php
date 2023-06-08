@@ -20,7 +20,7 @@ use WP_REST_Response;
  */
 class PaymentCaptureRefunded implements RequestHandler {
 
-	use PrefixTrait, TransactionIdHandlingTrait, RefundMetaTrait;
+	use TransactionIdHandlingTrait, RefundMetaTrait;
 
 	/**
 	 * The logger.
@@ -33,11 +33,9 @@ class PaymentCaptureRefunded implements RequestHandler {
 	 * PaymentCaptureRefunded constructor.
 	 *
 	 * @param LoggerInterface $logger The logger.
-	 * @param string          $prefix The prefix.
 	 */
-	public function __construct( LoggerInterface $logger, string $prefix ) {
+	public function __construct( LoggerInterface $logger ) {
 		$this->logger = $logger;
-		$this->prefix = $prefix;
 	}
 
 	/**
@@ -70,7 +68,7 @@ class PaymentCaptureRefunded implements RequestHandler {
 	public function handle_request( WP_REST_Request $request ): WP_REST_Response {
 		$response  = array( 'success' => false );
 		$order_id  = isset( $request['resource']['custom_id'] ) ?
-			$this->sanitize_custom_id( $request['resource']['custom_id'] ) : 0;
+			$request['resource']['custom_id'] : 0;
 		$refund_id = (string) ( $request['resource']['id'] ?? '' );
 		if ( ! $order_id ) {
 			$message = sprintf(

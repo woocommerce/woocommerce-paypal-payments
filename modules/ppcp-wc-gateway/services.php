@@ -938,11 +938,9 @@ return array(
 	'wcgateway.endpoint.return-url'                        => static function ( ContainerInterface $container ) : ReturnUrlEndpoint {
 		$gateway  = $container->get( 'wcgateway.paypal-gateway' );
 		$endpoint = $container->get( 'api.endpoint.order' );
-		$prefix   = $container->get( 'api.prefix' );
 		return new ReturnUrlEndpoint(
 			$gateway,
 			$endpoint,
-			$prefix,
 			$container->get( 'session.handler' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
