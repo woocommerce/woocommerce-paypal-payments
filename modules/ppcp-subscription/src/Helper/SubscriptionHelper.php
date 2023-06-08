@@ -180,6 +180,7 @@ class SubscriptionHelper {
 		if (
 			$subscription_mode !== 'subscriptions_api'
 			|| ! $this->paypal_subscription_id()
+			|| ! $this->cart_contains_only_one_item()
 		) {
 			return false;
 		}
@@ -217,5 +218,26 @@ class SubscriptionHelper {
 		}
 
 		return '';
+	}
+
+	/**
+	 * Checks if cart contains only one item.
+	 *
+	 * @return bool
+	 */
+	public function cart_contains_only_one_item(): bool {
+		if ( ! $this->plugin_is_active() ) {
+			return false;
+		}
+		$cart = WC()->cart;
+		if ( ! $cart || $cart->is_empty() ) {
+			return false;
+		}
+
+		if ( count( $cart->get_cart() ) > 1 ) {
+			return false;
+		}
+
+		return true;
 	}
 }
