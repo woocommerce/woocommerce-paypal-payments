@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
 
-use stdClass;
 use WC_Order;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -19,7 +18,7 @@ trait RequestHandlerTrait {
 	/**
 	 * Get available custom ids from the given request
 	 *
-	 * @param \WP_REST_Request $request The request.
+	 * @param WP_REST_Request $request The request.
 	 * @return array
 	 */
 	protected function get_custom_ids_from_request( WP_REST_Request $request ): array {
@@ -56,49 +55,58 @@ trait RequestHandlerTrait {
 	}
 
 	/**
-	 * Return and log response for no custom ids found in request.
+	 * Logs and returns response for no custom ids found in request.
 	 *
 	 * @param WP_REST_Request $request The request.
-	 * @param array           $response The response.
 	 * @return WP_REST_Response
 	 */
-	protected function no_custom_ids_from_request( WP_REST_Request $request, array $response ): WP_REST_Response {
+	protected function no_custom_ids_response( WP_REST_Request $request ): WP_REST_Response {
 		$message = sprintf(
-		// translators: %s is the PayPal webhook Id.
-			__( 'No order for webhook event %s was found.', 'woocommerce-paypal-payments' ),
+			'No order for webhook event %s was found.',
 			$request['id'] !== null && isset( $request['id'] ) ? $request['id'] : ''
 		);
 
-		return $this->log_and_return_response( $message, $response );
+		return $this->failure_response( $message );
 	}
 
 	/**
-	 * Return and log response for no WC orders found in response.
+	 * Logs and returns response for no WC orders found via custom ids.
 	 *
 	 * @param WP_REST_Request $request The request.
-	 * @param array           $response The response.
 	 * @return WP_REST_Response
 	 */
-	protected function no_wc_orders_from_custom_ids( WP_REST_Request $request, array $response ): WP_REST_Response {
+	protected function no_wc_orders_response( WP_REST_Request $request ): WP_REST_Response {
 		$message = sprintf(
-		// translators: %s is the PayPal order Id.
-			__( 'WC order for PayPal order %s not found.', 'woocommerce-paypal-payments' ),
+			'WC order for PayPal order %s not found.',
 			$request['resource'] !== null && isset( $request['resource']['id'] ) ? $request['resource']['id'] : ''
 		);
 
-		return $this->log_and_return_response( $message, $response );
+		return $this->failure_response( $message );
 	}
 
 	/**
-	 * Return and log response with the given message.
+	 * Returns success response.
 	 *
-	 * @param string $message The message.
-	 * @param array  $response The response.
 	 * @return WP_REST_Response
 	 */
-	private function log_and_return_response( string $message, array $response ): WP_REST_Response {
-		$this->logger->warning( $message );
-		$response['message'] = $message;
+	protected function success_response(): WP_REST_Response {
+		return new WP_REST_Response( array( 'success' => true ) );
+	}
+
+	/**
+	 * Logs and returns failure response with the given message.
+	 *
+	 * @param string $message The message.
+	 * @return WP_REST_Response
+	 */
+	private function failure_response( string $message = '' ): WP_REST_Response {
+		$response = array(
+			'success' => false,
+		);
+		if ( $message ) {
+			$this->logger->warning( $message );
+			$response['message'] = $message;
+		}
 
 		return new WP_REST_Response( $response );
 	}

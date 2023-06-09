@@ -77,39 +77,9 @@ class CheckoutOrderApproved implements RequestHandler {
 	 * @return \WP_REST_Response
 	 */
 	public function handle_request( \WP_REST_Request $request ): \WP_REST_Response {
-		$response   = array( 'success' => false );
-		$custom_ids = array_filter(
-			array_map(
-				static function ( array $purchase_unit ): string {
-					return isset( $purchase_unit['custom_id'] ) ?
-						(string) $purchase_unit['custom_id'] : '';
-				},
-				isset( $request['resource']['purchase_units'] ) ?
-					(array) $request['resource']['purchase_units'] : array()
-			),
-			static function ( string $order_id ): bool {
-				return ! empty( $order_id );
-			}
-		);
-
+		$custom_ids = $this->get_custom_ids_from_request( $request );
 		if ( empty( $custom_ids ) ) {
-			$message = sprintf(
-			// translators: %s is the PayPal webhook Id.
-				__(
-					'No order for webhook event %s was found.',
-					'woocommerce-paypal-payments'
-				),
-				isset( $request['id'] ) ? $request['id'] : ''
-			);
-			$this->logger->log(
-				'warning',
-				$message,
-				array(
-					'request' => $request,
-				)
-			);
-			$response['message'] = $message;
-			return rest_ensure_response( $response );
+			return $this->no_custom_ids_response( $request );
 		}
 
 		try {
@@ -117,22 +87,10 @@ class CheckoutOrderApproved implements RequestHandler {
 				$this->order_endpoint->order( $request['resource']['id'] ) : null;
 			if ( ! $order ) {
 				$message = sprintf(
-				// translators: %s is the PayPal webhook Id.
-					__(
-						'No paypal payment for webhook event %s was found.',
-						'woocommerce-paypal-payments'
-					),
+					'No paypal payment for webhook event %s was found.',
 					isset( $request['id'] ) ? $request['id'] : ''
 				);
-				$this->logger->log(
-					'warning',
-					$message,
-					array(
-						'request' => $request,
-					)
-				);
-				$response['message'] = $message;
-				return rest_ensure_response( $response );
+				return $this->failure_response( $message );
 			}
 
 			if ( $order->intent() === 'CAPTURE' ) {
@@ -140,45 +98,15 @@ class CheckoutOrderApproved implements RequestHandler {
 			}
 		} catch ( RuntimeException $error ) {
 			$message = sprintf(
-			// translators: %s is the PayPal webhook Id.
-				__(
-					'Could not capture payment for webhook event %s.',
-					'woocommerce-paypal-payments'
-				),
+				'Could not capture payment for webhook event %s.',
 				isset( $request['id'] ) ? $request['id'] : ''
 			);
-			$this->logger->log(
-				'warning',
-				$message,
-				array(
-					'request' => $request,
-				)
-			);
-			$response['message'] = $message;
-			return rest_ensure_response( $response );
+			return $this->failure_response( $message );
 		}
 
-		$wc_order_ids = $custom_ids;
-		$args         = array(
-			'post__in' => $wc_order_ids,
-			'limit'    => -1,
-		);
-		$wc_orders    = wc_get_orders( $args );
+		$wc_orders = $this->get_wc_orders_from_custom_ids( $custom_ids );
 		if ( ! $wc_orders ) {
-			$message = sprintf(
-			// translators: %s is the PayPal order Id.
-				__( 'Order for PayPal order %s not found.', 'woocommerce-paypal-payments' ),
-				isset( $request['resource']['id'] ) ? $request['resource']['id'] : ''
-			);
-			$this->logger->log(
-				'warning',
-				$message,
-				array(
-					'request' => $request,
-				)
-			);
-			$response['message'] = $message;
-			return rest_ensure_response( $response );
+			return $this->no_wc_orders_response( $request );
 		}
 
 		foreach ( $wc_orders as $wc_order ) {
@@ -197,23 +125,13 @@ class CheckoutOrderApproved implements RequestHandler {
 					__( 'Payment can be captured.', 'woocommerce-paypal-payments' )
 				);
 			}
-			$this->logger->log(
-				'info',
+			$this->logger->info(
 				sprintf(
-				// translators: %s is the order ID.
-					__(
-						'Order %s has been updated through PayPal',
-						'woocommerce-paypal-payments'
-					),
+					'Order %s has been updated through PayPal',
 					(string) $wc_order->get_id()
-				),
-				array(
-					'request' => $request,
-					'order'   => $wc_order,
 				)
 			);
 		}
-		$response['success'] = true;
-		return rest_ensure_response( $response );
+		return $this->success_response();
 	}
 }

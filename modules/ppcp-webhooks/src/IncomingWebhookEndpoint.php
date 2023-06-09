@@ -17,12 +17,14 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookEventFactory;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\RequestHandler;
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\Webhooks\Handler\RequestHandlerTrait;
 use WooCommerce\PayPalCommerce\Webhooks\Status\WebhookSimulation;
 
 /**
  * Class IncomingWebhookEndpoint
  */
 class IncomingWebhookEndpoint {
+	use RequestHandlerTrait;
 
 	const NAMESPACE = 'paypal/v1';
 	const ROUTE     = 'incoming';
@@ -211,26 +213,16 @@ class IncomingWebhookEndpoint {
 		if ( $this->simulation->is_simulation_event( $event ) ) {
 			$this->logger->info( 'Received simulated webhook.' );
 			$this->simulation->receive( $event );
-			return rest_ensure_response(
-				array(
-					'success' => true,
-				)
-			);
+			return $this->success_response();
 		}
 
 		foreach ( $this->handlers as $handler ) {
 			if ( $handler->responsible_for_request( $request ) ) {
 				$response = $handler->handle_request( $request );
-				$this->logger->log(
-					'info',
+				$this->logger->info(
 					sprintf(
-						// translators: %s is the event type.
-						__( 'Webhook has been handled by %s', 'woocommerce-paypal-payments' ),
+						'Webhook has been handled by %s',
 						( $handler->event_types() ) ? current( $handler->event_types() ) : ''
-					),
-					array(
-						'request'  => $request,
-						'response' => $response,
 					)
 				);
 				return $response;
@@ -238,22 +230,10 @@ class IncomingWebhookEndpoint {
 		}
 
 		$message = sprintf(
-			// translators: %s is the request type.
-			__( 'Could not find handler for request type %s', 'woocommerce-paypal-payments' ),
-			$request['event_type']
+			'Could not find handler for request type %s',
+			$request['event_type'] ?: ''
 		);
-		$this->logger->log(
-			'warning',
-			$message,
-			array(
-				'request' => $request,
-			)
-		);
-		$response = array(
-			'success' => false,
-			'message' => $message,
-		);
-		return rest_ensure_response( $response );
+		return $this->failure_response( $message );
 	}
 
 	/**
