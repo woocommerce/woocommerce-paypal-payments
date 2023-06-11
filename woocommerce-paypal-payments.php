@@ -3,13 +3,13 @@
  * Plugin Name: WooCommerce PayPal Payments
  * Plugin URI:  https://woocommerce.com/products/woocommerce-paypal-payments/
  * Description: PayPal's latest complete payments processing solution. Accept PayPal, Pay Later, credit/debit cards, alternative digital wallets local payment types and bank accounts. Turn on only PayPal options or process a full suite of payment methods. Enable global transaction with extensive currency and country coverage.
- * Version:     2.0.4
+ * Version:     2.1.0
  * Author:      WooCommerce
  * Author URI:  https://woocommerce.com/
  * License:     GPL-2.0
  * Requires PHP: 7.2
  * WC requires at least: 3.9
- * WC tested up to: 7.5
+ * WC tested up to: 7.7
  * Text Domain: woocommerce-paypal-payments
  *
  * @package WooCommerce\PayPalCommerce
@@ -23,9 +23,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 define( 'PAYPAL_API_URL', 'https://api.paypal.com' );
 define( 'PAYPAL_SANDBOX_API_URL', 'https://api.sandbox.paypal.com' );
-define( 'PAYPAL_INTEGRATION_DATE', '2023-03-20' );
-
-define( 'PPCP_FLAG_SUBSCRIPTION', true );
+define( 'PAYPAL_INTEGRATION_DATE', '2023-06-02' );
 
 ! defined( 'CONNECT_WOO_CLIENT_ID' ) && define( 'CONNECT_WOO_CLIENT_ID', 'AcCAsWta_JTL__OfpjspNyH7c1GGHH332fLwonA5CwX4Y10mhybRZmHLA0GdRbwKwjQIhpDQy0pluX_P' );
 ! defined( 'CONNECT_WOO_SANDBOX_CLIENT_ID' ) && define( 'CONNECT_WOO_SANDBOX_CLIENT_ID', 'AYmOHbt1VHg-OZ_oihPdzKEVbU3qg0qXonBcAztuzniQRaKE0w1Hr762cSFwd4n8wxOl-TCWohEa0XM_' );
@@ -44,6 +42,8 @@ define( 'PPCP_FLAG_SUBSCRIPTION', true );
 	 * Initialize the plugin and its modules.
 	 */
 	function init(): void {
+		define( 'PPCP_FLAG_SUBSCRIPTIONS_API', apply_filters( 'ppcp_flag_subscriptions_api', getenv( 'PPCP_FLAG_SUBSCRIPTIONS_API' ) === '1' ) );
+
 		$root_dir = __DIR__;
 
 		if ( ! is_woocommerce_activated() ) {

@@ -162,8 +162,13 @@ class OrderProcessor {
 	 *
 	 * @return bool
 	 */
-	public function process( WC_Order $wc_order ): bool {
-		$order = $this->session_handler->order();
+	public function process( \WC_Order $wc_order ): bool {
+		// phpcs:ignore WordPress.Security.NonceVerification
+		$order_id = $wc_order->get_meta( PayPalGateway::ORDER_ID_META_KEY ) ?: wc_clean( wp_unslash( $_POST['paypal_order_id'] ?? '' ) );
+		$order    = $this->session_handler->order();
+		if ( ! $order && is_string( $order_id ) ) {
+			$order = $this->order_endpoint->order( $order_id );
+		}
 		if ( ! $order ) {
 			$order_id = $wc_order->get_meta( PayPalGateway::ORDER_ID_META_KEY );
 			if ( ! $order_id ) {

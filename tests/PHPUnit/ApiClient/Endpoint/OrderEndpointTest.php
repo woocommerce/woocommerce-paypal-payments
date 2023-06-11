@@ -647,7 +647,7 @@ class OrderEndpointTest extends TestCase
         $intent = 'CAPTURE';
 
         $logger = Mockery::mock(LoggerInterface::class);
-        $logger->shouldReceive('log');
+        $logger->shouldReceive('warning');
         $logger->shouldReceive('debug');
         $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
@@ -742,7 +742,7 @@ class OrderEndpointTest extends TestCase
         $intent = 'CAPTURE';
 
         $logger = Mockery::mock(LoggerInterface::class);
-        $logger->shouldReceive('log');
+        $logger->shouldReceive('warning');
         $logger->shouldReceive('debug');
 
         $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
@@ -882,7 +882,7 @@ class OrderEndpointTest extends TestCase
         $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
         $applicationContextRepository
             ->expects('current_context')
-            ->with(Matchers::identicalTo(ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING))
+            ->with(ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING, ApplicationContext::USER_ACTION_CONTINUE)
             ->andReturn($applicationContext);
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 		$subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(true);
@@ -985,7 +985,7 @@ class OrderEndpointTest extends TestCase
         $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
         $applicationContextRepository
             ->expects('current_context')
-            ->with(Matchers::identicalTo(ApplicationContext::SHIPPING_PREFERENCE_GET_FROM_FILE))
+            ->with(ApplicationContext::SHIPPING_PREFERENCE_GET_FROM_FILE, ApplicationContext::USER_ACTION_CONTINUE)
             ->andReturn($applicationContext);
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 		$subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(true);
@@ -1065,7 +1065,7 @@ class OrderEndpointTest extends TestCase
         $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
         $applicationContextRepository
             ->expects('current_context')
-            ->with(Matchers::identicalTo(ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING))
+            ->with(ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING, ApplicationContext::USER_ACTION_CONTINUE)
             ->andReturn($applicationContext);
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 		$subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(true);
@@ -1156,7 +1156,7 @@ class OrderEndpointTest extends TestCase
         $applicationContextRepository = Mockery::mock(ApplicationContextRepository::class);
         $applicationContextRepository
             ->expects('current_context')
-            ->with(Matchers::identicalTo(ApplicationContext::SHIPPING_PREFERENCE_GET_FROM_FILE))
+            ->with(ApplicationContext::SHIPPING_PREFERENCE_GET_FROM_FILE, ApplicationContext::USER_ACTION_CONTINUE)
             ->andReturn($applicationContext);
 		$subscription_helper = Mockery::mock(SubscriptionHelper::class);
 		$subscription_helper->shouldReceive('cart_contains_subscription')->andReturn(true);

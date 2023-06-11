@@ -67,8 +67,12 @@ class PPECHelper {
 	 * @return bool
 	 */
 	public static function site_has_ppec_subscriptions() {
-		global $wpdb;
+		$has_ppec_subscriptions = get_transient( 'ppcp_has_ppec_subscriptions' );
+		if ( $has_ppec_subscriptions !== false ) {
+			return $has_ppec_subscriptions === 'true';
+		}
 
+		global $wpdb;
 		$result = $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT 1 FROM {$wpdb->posts} p JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID
@@ -78,6 +82,12 @@ class PPECHelper {
 				'_payment_method',
 				self::PPEC_GATEWAY_ID
 			)
+		);
+
+		set_transient(
+			'ppcp_has_ppec_subscriptions',
+			! empty( $result ) ? 'true' : 'false',
+			3 * MONTH_IN_SECONDS
 		);
 
 		return ! empty( $result );
@@ -92,7 +102,9 @@ class PPECHelper {
 		/**
 		 * The filter returning whether the compatibility layer for PPEC Subscriptions should be initialized.
 		 */
-		return ( ! self::is_gateway_available() ) && self::site_has_ppec_subscriptions() && apply_filters( 'woocommerce_paypal_payments_process_legacy_subscriptions', true );
+		return ( ! self::is_gateway_available() )
+			&& self::site_has_ppec_subscriptions()
+			&& apply_filters( 'woocommerce_paypal_payments_process_legacy_subscriptions', true );
 	}
 
 }

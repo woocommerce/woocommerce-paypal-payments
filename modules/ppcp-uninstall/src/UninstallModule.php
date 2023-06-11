@@ -81,8 +81,14 @@ class UninstallModule implements ModuleInterface {
 			"wc_ajax_{$nonce}",
 			static function () use ( $request_data, $clear_db, $nonce, $option_names, $scheduled_action_names ) {
 				try {
+					if ( ! current_user_can( 'manage_woocommerce' ) ) {
+						wp_send_json_error( 'Not admin.', 403 );
+						return false;
+					}
+
 					// Validate nonce.
 					$request_data->read_request( $nonce );
+
 					$clear_db->delete_options( $option_names );
 					$clear_db->clear_scheduled_actions( $scheduled_action_names );
 

@@ -127,4 +127,27 @@ class SubscriptionHelper {
 
 		return true;
 	}
+
+	/**
+	 * Checks whether subscription needs subscription intent.
+	 *
+	 * @param string $subscription_mode The subscriptiopn mode.
+	 * @return bool
+	 */
+	public function need_subscription_intent( string $subscription_mode ): bool {
+		if ( defined( 'PPCP_FLAG_SUBSCRIPTIONS_API' ) && ! PPCP_FLAG_SUBSCRIPTIONS_API ) {
+			return false;
+		}
+
+		if ( $subscription_mode === 'subscriptions_api' ) {
+			if (
+				$this->current_product_is_subscription()
+				|| ( ( is_cart() || is_checkout() ) && $this->cart_contains_subscription() )
+			) {
+				return true;
+			}
+		}
+
+		return false;
+	}
 }

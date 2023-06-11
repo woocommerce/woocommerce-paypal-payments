@@ -294,7 +294,7 @@ class PurchaseUnitFactoryTest extends TestCase
         $shippingFactory = Mockery::mock(ShippingFactory::class);
         $shippingFactory
             ->expects('from_wc_customer')
-            ->with($wcCustomer)
+            ->with($wcCustomer, false)
             ->andReturn($shipping);
         $paymentsFacory = Mockery::mock(PaymentsFactory::class);
         $testee = new PurchaseUnitFactory(

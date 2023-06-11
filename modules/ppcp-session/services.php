@@ -15,17 +15,7 @@ use WooCommerce\PayPalCommerce\Session\Cancellation\CancelView;
 
 return array(
 	'session.handler'                 => function ( ContainerInterface $container ) : SessionHandler {
-
-		if ( is_null( WC()->session ) ) {
-			return new SessionHandler();
-		}
-		$result = WC()->session->get( SessionHandler::ID );
-		if ( is_a( $result, SessionHandler::class ) ) {
-			return $result;
-		}
-		$session_handler = new SessionHandler();
-		WC()->session->set( SessionHandler::ID, $session_handler );
-		return $session_handler;
+		return new SessionHandler();
 	},
 	'session.cancellation.view'       => function ( ContainerInterface $container ) : CancelView {
 		return new CancelView(

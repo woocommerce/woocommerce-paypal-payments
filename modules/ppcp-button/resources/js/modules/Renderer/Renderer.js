@@ -10,7 +10,7 @@ class Renderer {
         this.renderedSources = new Set();
     }
 
-    render(contextConfig, settingsOverride = {}) {
+    render(contextConfig, settingsOverride = {}, contextConfigOverride = () => {}) {
         const settings = merge(this.defaultSettings, settingsOverride);
 
         const enabledSeparateGateways = Object.fromEntries(Object.entries(
@@ -50,7 +50,7 @@ class Renderer {
         }
 
         if (this.creditCardRenderer) {
-            this.creditCardRenderer.render(settings.hosted_fields.wrapper, contextConfig);
+            this.creditCardRenderer.render(settings.hosted_fields.wrapper, contextConfigOverride);
         }
 
         for (const [fundingSource, data] of Object.entries(enabledSeparateGateways)) {

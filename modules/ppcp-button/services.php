@@ -9,11 +9,13 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Button;
 
+use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveSubscriptionEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\CheckoutFormSaver;
 use WooCommerce\PayPalCommerce\Button\Endpoint\SaveCheckoutFormEndpoint;
 use WooCommerce\PayPalCommerce\Button\Validation\CheckoutFormValidator;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ValidateCheckoutEndpoint;
+use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\DisabledSmartButton;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButton;
@@ -65,25 +67,37 @@ return array(
 
 		return $dummy_ids[ $shop_country ] ?? $container->get( 'button.client_id' );
 	},
-	'button.smart-button'                         => static function ( ContainerInterface $container ): SmartButtonInterface {
+	'button.is_paypal_continuation'               => static function( ContainerInterface $container ): bool {
+		$session_handler = $container->get( 'session.handler' );
 
+		$order = $session_handler->order();
+		if ( ! $order ) {
+			return false;
+		}
+		$source = $order->payment_source();
+		if ( $source && $source->card() ) {
+			return false; // Ignore for DCC.
+		}
+		if ( 'card' === $session_handler->funding_source() ) {
+			return false; // Ignore for card buttons.
+		}
+
+		return true;
+	},
+	'button.smart-button'                         => static function ( ContainerInterface $container ): SmartButtonInterface {
 		$state = $container->get( 'onboarding.state' );
-		/**
-		 * The state.
-		 *
-		 * @var State $state
-		 */
 		if ( $state->current_state() !== State::STATE_ONBOARDED ) {
 			return new DisabledSmartButton();
 		}
+
 		$settings           = $container->get( 'wcgateway.settings' );
 		$paypal_disabled     = ! $settings->has( 'enabled' ) || ! $settings->get( 'enabled' );
 		if ( $paypal_disabled ) {
 			return new DisabledSmartButton();
 		}
+
 		$payer_factory    = $container->get( 'api.factory.payer' );
 		$request_data     = $container->get( 'button.request-data' );
-
 		$client_id           = $container->get( 'button.client_id' );
 		$dcc_applies         = $container->get( 'api.helpers.dccapplies' );
 		$subscription_helper = $container->get( 'subscription.helper' );
@@ -110,6 +124,7 @@ return array(
 			$container->get( 'wcgateway.all-funding-sources' ),
 			$container->get( 'button.basic-checkout-validation-enabled' ),
 			$container->get( 'button.early-wc-checkout-validation-enabled' ),
+			$container->get( 'button.pay-now-contexts' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
@@ -118,6 +133,9 @@ return array(
 			'/modules/ppcp-button/',
 			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
 		);
+	},
+	'button.pay-now-contexts'                     => static function ( ContainerInterface $container ): array {
+		return array( 'checkout', 'pay-now' );
 	},
 	'button.request-data'                         => static function ( ContainerInterface $container ): RequestData {
 		return new RequestData();
@@ -156,6 +174,8 @@ return array(
 			$registration_needed,
 			$container->get( 'wcgateway.settings.card_billing_data_mode' ),
 			$container->get( 'button.early-wc-checkout-validation-enabled' ),
+			$container->get( 'button.pay-now-contexts' ),
+			$container->get( 'button.handle-shipping-in-paypal' ),
 			$logger
 		);
 	},
@@ -185,6 +205,13 @@ return array(
 			$dcc_applies,
 			$order_helper,
 			$logger
+		);
+	},
+	'button.endpoint.approve-subscription'        => static function( ContainerInterface $container ): ApproveSubscriptionEndpoint {
+		return new ApproveSubscriptionEndpoint(
+			$container->get( 'button.request-data' ),
+			$container->get( 'api.endpoint.order' ),
+			$container->get( 'session.handler' )
 		);
 	},
 	'button.checkout-form-saver'                  => static function ( ContainerInterface $container ): CheckoutFormSaver {
@@ -265,5 +292,13 @@ return array(
 	},
 	'button.validation.wc-checkout-validator'     => static function ( ContainerInterface $container ): CheckoutFormValidator {
 		return new CheckoutFormValidator();
+	},
+
+	/**
+	 * If true, the shipping methods are sent to PayPal allowing the customer to select it inside the popup.
+	 * May result in slower popup performance, additional loading.
+	 */
+	'button.handle-shipping-in-paypal'            => static function ( ContainerInterface $container ): bool {
+		return false;
 	},
 );
