@@ -25,7 +25,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 	$settings = $container->get( 'wcgateway.settings' );
 	assert( $settings instanceof Settings );
 
-	$vault_enabled = $settings->has( 'vault_enabled' ) && $settings->get( 'vault_enabled' );
+	$vault_enabled = false;//$settings->has( 'vault_enabled' ) && $settings->get( 'vault_enabled' );
 
 	$pay_later_messaging_enabled_label = $vault_enabled
 		? __( "You have PayPal vaulting enabled, that's why Pay Later options are unavailable now. You cannot use both features at the same time.", 'woocommerce-paypal-payments' )
@@ -35,7 +35,6 @@ return function ( ContainerInterface $container, array $fields ): array {
 	$default_messaging_flex_color = $selected_country === 'US' ? 'white-no-border' : 'white';
 	$button_message               = __( 'Pay Later Button Preview', 'woocommerce-paypal-payments' );
 	$messaging_message            = __( 'Pay Later Messaging Preview', 'woocommerce-paypal-payments' );
-	$default_message              = __( 'Preview', 'woocommerce-paypal-payments' );
 	$render_preview_element       = function ( string $id, string $type, string $message ): string {
 		return '
 <div class="ppcp-preview ppcp-' . $type . '-preview pay-later">
@@ -371,7 +370,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 		),
 		'pay_later_product_message_preview'               => array(
 			'type'         => 'ppcp-text',
-			'text'         => $render_preview_element( 'ppcpProductMessagePreview', 'message', $default_message ),
+			'text'         => $render_preview_element( 'ppcpProductMessagePreview', 'message', $messaging_message ),
 			'screens'      => array( State::STATE_ONBOARDED ),
 			'requirements' => array( 'messages' ),
 			'gateway'      => Settings::PAY_LATER_TAB_ID,
@@ -495,7 +494,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 		),
 		'pay_later_cart_message_preview'                  => array(
 			'type'         => 'ppcp-text',
-			'text'         => $render_preview_element( 'ppcpCartMessagePreview', 'message', $default_message ),
+			'text'         => $render_preview_element( 'ppcpCartMessagePreview', 'message', $messaging_message ),
 			'screens'      => array( State::STATE_ONBOARDED ),
 			'requirements' => array( 'messages' ),
 			'gateway'      => Settings::PAY_LATER_TAB_ID,
@@ -619,7 +618,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 		),
 		'pay_later_checkout_message_preview'              => array(
 			'type'         => 'ppcp-text',
-			'text'         => $render_preview_element( 'ppcpCheckoutMessagePreview', 'message', $default_message ),
+			'text'         => $render_preview_element( 'ppcpCheckoutMessagePreview', 'message', $messaging_message ),
 			'screens'      => array( State::STATE_ONBOARDED ),
 			'requirements' => array( 'messages' ),
 			'gateway'      => Settings::PAY_LATER_TAB_ID,
