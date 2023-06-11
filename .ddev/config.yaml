@@ -18,7 +18,7 @@ hooks:
   pre-start:
     - exec-host: "mkdir -p .ddev/wordpress/wp-content/plugins/${DDEV_PROJECT}"
 web_environment:
-  - WP_VERSION=5.9.3
+  - WP_VERSION=6.2.2
   - WP_LOCALE=en_US
   - WP_TITLE=WooCommerce PayPal Payments
   - WP_MULTISITE=true
@@ -26,7 +26,7 @@ web_environment:
   - ADMIN_USER=admin
   - ADMIN_PASS=admin
   - ADMIN_EMAIL=admin@example.com
-  - WC_VERSION=6.1.0
+  - WC_VERSION=7.7.2
   - PCP_BLOCKS_ENABLED=1
 
 # Key features of ddev's config.yaml:
