@@ -109,7 +109,7 @@ class CheckoutActionHandler {
                 const input = document.createElement('input');
                 input.setAttribute('type', 'hidden');
                 input.setAttribute('name', 'ppcp-resume-order');
-                input.setAttribute('value', data.data.purchase_units[0].custom_id);
+                input.setAttribute('value', data.data.custom_id);
                 document.querySelector(formSelector).appendChild(input);
                 return data.data.id;
             });

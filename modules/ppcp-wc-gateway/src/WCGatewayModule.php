@@ -324,14 +324,6 @@ class WCGatewayModule implements ModuleInterface {
 		);
 
 		add_action(
-			'wc_ajax_ppc-oxxo',
-			static function () use ( $c ) {
-				$endpoint = $c->get( 'wcgateway.endpoint.oxxo' );
-				$endpoint->handle_request();
-			}
-		);
-
-		add_action(
 			'woocommerce_order_status_changed',
 			static function ( int $order_id, string $from, string $to ) use ( $c ) {
 				$wc_order = wc_get_order( $order_id );

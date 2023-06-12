@@ -687,6 +687,27 @@ return array(
 					'SGD',
 					'USD',
 				),
+				'MX' => array(
+					'MXN',
+				),
+				'JP' => array(
+					'AUD',
+					'CAD',
+					'CHF',
+					'CZK',
+					'DKK',
+					'EUR',
+					'GBP',
+					'HKD',
+					'HUF',
+					'JPY',
+					'NOK',
+					'NZD',
+					'PLN',
+					'SEK',
+					'SGD',
+					'USD',
+				),
 			)
 		);
 	},
@@ -742,6 +763,17 @@ return array(
 					'visa'       => array(),
 					'amex'       => array( 'CAD' ),
 					'jcb'        => array( 'CAD' ),
+				),
+				'MX' => array(
+					'mastercard' => array(),
+					'visa'       => array(),
+					'amex'       => array(),
+				),
+				'JP' => array(
+					'mastercard' => array(),
+					'visa'       => array(),
+					'amex'       => array( 'JPY' ),
+					'jcb'        => array( 'JPY' ),
 				),
 			)
 		);

@@ -88,7 +88,7 @@ class ApproveSubscriptionEndpoint implements EndpointInterface {
 			WC()->session->set( 'ppcp_subscription_id', $data['subscription_id'] );
 		}
 
-		wp_send_json_success( $order );
+		wp_send_json_success();
 		return true;
 	}
 }
