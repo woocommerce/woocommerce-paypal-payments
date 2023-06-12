@@ -34,7 +34,7 @@ class PayPalApiException extends RuntimeException {
 	 * PayPalApiException constructor.
 	 *
 	 * @param stdClass|null $response The JSON object.
-	 * @param int            $status_code The HTTP status code.
+	 * @param int           $status_code The HTTP status code.
 	 */
 	public function __construct( stdClass $response = null, int $status_code = 0 ) {
 		if ( is_null( $response ) ) {
@@ -59,7 +59,7 @@ class PayPalApiException extends RuntimeException {
 		if ( ! isset( $response->links ) || ! is_array( $response->links ) ) {
 			$response->links = array();
 		}
-		$response  = $this->add_improved_error_message( $response );
+		$response = $this->add_improved_error_message( $response );
 
 		/**
 		 * The JSON response object.
