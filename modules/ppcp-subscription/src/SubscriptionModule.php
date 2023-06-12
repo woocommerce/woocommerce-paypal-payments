@@ -28,6 +28,7 @@ use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
+use WP_Post;
 
 /**
  * Class SubscriptionModule
@@ -165,6 +166,7 @@ class SubscriptionModule implements ModuleInterface {
 					return;
 				}
 
+				//phpcs:disable WordPress.Security.NonceVerification.Recommended
 				$post_id = wc_clean( wp_unslash( $_GET['post'] ?? '' ) );
 				$product = wc_get_product( $post_id );
 				if ( ! is_a( $product, WC_Product::class ) ) {
@@ -193,6 +195,45 @@ class SubscriptionModule implements ModuleInterface {
 					)
 				);
 			}
+		);
+
+		add_action(
+			'add_meta_boxes',
+			function( string $post_type, WP_Post $post ) use ( $c ) {
+				if ( $post_type !== 'shop_subscription' ) {
+					return;
+				}
+
+				$subscription = wcs_get_subscription( $post->ID );
+				if ( ! is_a( $subscription, WC_Subscription::class ) ) {
+					return;
+				}
+
+				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
+				if ( ! $subscription_id ) {
+					return;
+				}
+
+				$screen_id = wc_get_page_screen_id( 'shop_subscription' );
+				remove_meta_box( 'woocommerce-subscription-schedule', $screen_id, 'side' );
+
+				$environment = $c->get( 'onboarding.environment' );
+				add_meta_box(
+					'ppcp_paypal_subscription',
+					__( 'PayPal Subscription', 'woocommerce-paypal-payments' ),
+					function() use ( $subscription_id, $environment ) {
+						$host = $environment->current_environment_is( Environment::SANDBOX ) ? 'https://www.sandbox.paypal.com' : 'https://www.paypal.com';
+						$url  = trailingslashit( $host ) . 'billing/subscriptions/' . $subscription_id;
+						echo '<p>' . esc_html__( 'This subscription is linked to a PayPal Subscription, Cancel it to unlink.', 'woocommerce-paypal-payments' ) . '</p>';
+						echo '<p><strong>' . esc_html__( 'Subscription:', 'woocommerce-paypal-payments' ) . '</strong> <a href="' . esc_url( $url ) . '" target="_blank">' . esc_attr( $subscription_id ) . '</a></p>';
+					},
+					$post_type,
+					'side'
+				);
+
+			},
+			30,
+			2
 		);
 	}
 

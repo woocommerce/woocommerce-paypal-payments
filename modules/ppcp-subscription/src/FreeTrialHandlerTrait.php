@@ -10,8 +10,6 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Subscription;
 
 use WC_Order;
-use WC_Product;
-use WC_Subscription;
 use WC_Subscriptions_Product;
 use WC_Subscriptions_Synchroniser;
 
