@@ -416,7 +416,6 @@ class OrderEndpoint {
 			if ( false !== strpos( $response['body'], ErrorResponse::ORDER_ALREADY_AUTHORIZED ) ) {
 				return $this->order( $order->id() );
 			}
-			$json  = $this->add_improved_error_message( $json );
 			$error = new PayPalApiException(
 				$json,
 				$status_code
@@ -633,41 +632,6 @@ class OrderEndpoint {
 			throw new PayPalApiException( $json, $status_code );
 		}
 
-		return $json;
-	}
-
-	/**
-	 * Adds an improved error message to the response if the error detail is known.
-	 *
-	 * @param stdClass $json The response.
-	 * @return stdClass
-	 */
-	public function add_improved_error_message( stdClass $json ): stdClass {
-		if ( ! isset( $json->details ) ) {
-			return $json;
-		}
-		$improved_keys_messages = array(
-			'PAYMENT_DENIED'           => __( 'PayPal rejected the payment. Please reach out to the PayPal support for more information.', 'woocommerce-paypal-payments' ),
-			'TRANSACTION_REFUSED'      => __( 'The transaction has been refused by the payment processor. Please reach out to the PayPal support for more information.', 'woocommerce-paypal-payments' ),
-			'DUPLICATE_INVOICE_ID'     => __( 'The transaction has been refused because the Invoice ID already exists. Please create a new order or reach out to the store owner.', 'woocommerce-paypal-payments' ),
-			'PAYER_CANNOT_PAY'         => __( 'There was a problem processing this transaction. Please reach out to the store owner.', 'woocommerce-paypal-payments' ),
-			'PAYEE_ACCOUNT_RESTRICTED' => __( 'There was a problem processing this transaction. Please reach out to the store owner.', 'woocommerce-paypal-payments' ),
-		);
-		$improved_errors        = array_filter(
-			array_keys( $improved_keys_messages ),
-			function ( $key ) use ( $json ): bool {
-				foreach ( $json->details as $detail ) {
-					if ( isset( $detail->issue ) && $detail->issue === $key ) {
-						return true;
-					}
-				}
-				return false;
-			}
-		);
-		if ( $improved_errors ) {
-			$improved_errors = array_values( $improved_errors );
-			$json->message   = $improved_keys_messages[ $improved_errors[0] ];
-		}
 		return $json;
 	}
 }
