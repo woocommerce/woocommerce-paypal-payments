@@ -956,7 +956,7 @@ return array(
 
 	'wcgateway.soft-descriptor'                            => static function ( ContainerInterface $container ): string {
 		$settings = $container->get( 'wcgateway.settings' );
-		assert( $settings instanceof Settings);
+		assert( $settings instanceof Settings );
 		if ( $settings->has( 'soft_descriptor' ) ) {
 			return $settings->get( 'soft_descriptor' );
 		}
