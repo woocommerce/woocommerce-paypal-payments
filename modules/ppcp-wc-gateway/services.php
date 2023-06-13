@@ -781,7 +781,14 @@ return array(
 			),
 			'paypal_saved_payments'                  => array(
 				'heading'      => __( 'Saved payments', 'woocommerce-paypal-payments' ),
-				'description'  => __( 'PayPal can save your customers’ payment methods.', 'woocommerce-paypal-payments' ),
+				'description'  => sprintf(
+				// translators: %1$s, %2$s, %3$s and %4$s are a link tags.
+					__( 'PayPal can securely store your customers\' payment methods for %1$sfuture payments%2$s and %3$ssubscriptions%4$s, simplifying the checkout process and enabling recurring transactions on your website.', 'woocommerce-paypal-payments' ),
+					'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#vaulting-saving-a-payment-method" target="_blank">',
+					'</a>',
+					'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#subscriptions-faq" target="_blank">',
+					'</a>'
+				),
 				'type'         => 'ppcp-heading',
 				'screens'      => array(
 					State::STATE_START,
