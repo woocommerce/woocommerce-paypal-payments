@@ -60,7 +60,7 @@ class SingleProductBootstap {
         return document.querySelector('form.cart') !== null
             && !this.priceAmountIsZero()
             && !this.isSubscriptionMode()
-            && PayPalCommerceGateway.subscription_plan_id !== '';
+            && this.subscriptionHasPlan();
     }
 
     priceAmount() {
@@ -98,6 +98,18 @@ class SingleProductBootstap {
         // Check "All products for subscriptions" plugin.
         return document.querySelector('.wcsatt-options-product:not(.wcsatt-options-product--hidden) .subscription-option input[type="radio"]:checked') !== null
             || document.querySelector('.wcsatt-options-prompt-label-subscription input[type="radio"]:checked') !== null; // grouped
+    }
+
+    subscriptionHasPlan() {
+        if (PayPalCommerceGateway.data_client_id.has_subscriptions) {
+            if (PayPalCommerceGateway.subscription_plan_id !== '') {
+                return true;
+            }
+
+            return false;
+        }
+
+        return true;
     }
 
     render() {
