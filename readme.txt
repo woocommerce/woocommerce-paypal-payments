@@ -81,7 +81,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 
 == Changelog ==
 
-= 2.1.0 - TBD =
+= 2.1.0 - xxxx-xx-xx =
 * Fix - Performance issue #1182
 * Fix - Webhooks not registered when onboarding with manual credentials #1223
 * Fix - Boolean false type sent as empty value when setting cache #1313
