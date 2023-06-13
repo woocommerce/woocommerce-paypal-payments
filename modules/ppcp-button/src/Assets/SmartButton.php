@@ -1000,7 +1000,7 @@ class SmartButton implements SmartButtonInterface {
 		);
 		if (
 			$this->environment->current_environment_is( Environment::SANDBOX )
-			&& defined( 'WP_DEBUG' ) && \WP_DEBUG && is_user_logged_in()
+			&& defined( 'WP_DEBUG' ) && \WP_DEBUG
 			&& WC()->customer instanceof \WC_Customer && WC()->customer->get_billing_country()
 			&& 2 === strlen( WC()->customer->get_billing_country() )
 		) {
