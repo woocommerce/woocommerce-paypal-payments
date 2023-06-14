@@ -32,16 +32,24 @@ class UnsupportedCurrencyAdminNotice {
 	 * @var ContainerInterface
 	 */
 	private $settings;
+	/**
+	 * The supported currencies.
+	 *
+	 * @var array
+	 */
+	private $supported_currencies;
 
 	/**
 	 * ConnectAdminNotice constructor.
 	 *
 	 * @param State              $state The state.
 	 * @param ContainerInterface $settings The settings.
+	 * @param array              $supported_currencies The supported currencies.
 	 */
-	public function __construct( State $state, ContainerInterface $settings ) {
-		$this->state    = $state;
-		$this->settings = $settings;
+	public function __construct( State $state, ContainerInterface $settings, array $supported_currencies ) {
+		$this->state                = $state;
+		$this->settings             = $settings;
+		$this->supported_currencies = $supported_currencies;
 	}
 
 	/**
@@ -60,7 +68,7 @@ class UnsupportedCurrencyAdminNotice {
 				'Attention: Your current WooCommerce store currency is not supported by PayPal. Please update your store currency to one that is supported by PayPal to ensure smooth transactions. Visit the <a href="%1$s">PayPal currency support page</a> for more information on supported currencies.',
 				'woocommerce-paypal-payments'
 			),
-			"https://developer.paypal.com/api/rest/reference/currency-codes/"
+			'https://developer.paypal.com/api/rest/reference/currency-codes/'
 		);
 		return new Message( $message, 'warning' );
 	}
@@ -74,8 +82,14 @@ class UnsupportedCurrencyAdminNotice {
 		return $this->state->current_state() === State::STATE_ONBOARDED && ! $this->currency_supported();
 	}
 
-	private function currency_supported()
-	{
-		//TODO - get the currency from the settings
+	/**
+	 * Whether the currency is supported by PayPal.
+	 *
+	 * @return bool
+	 */
+	private function currency_supported(): bool {
+		$currency             = get_woocommerce_currency();
+		$supported_currencies = $this->supported_currencies;
+		return in_array( $currency, $supported_currencies, true );
 	}
 }

@@ -209,10 +209,11 @@ return array(
 		$settings = $container->get( 'wcgateway.settings' );
 		return new ConnectAdminNotice( $state, $settings );
 	},
-	'wcgateway.notice.currency-unsupported' => static function (ContainerInterface $container): UnsupportedCurrencyAdminNotice {
-		$state = $container->get('onboarding.state');
-		$settings = $container->get('wcgateway.settings');
-		return new UnsupportedCurrencyAdminNotice($state, $settings);
+	'wcgateway.notice.currency-unsupported'                => static function ( ContainerInterface $container ): UnsupportedCurrencyAdminNotice {
+		$state = $container->get( 'onboarding.state' );
+		$settings = $container->get( 'wcgateway.settings' );
+		$supported_currencies = $container->get( 'api.supported-currencies' );
+		return new UnsupportedCurrencyAdminNotice( $state, $settings, $supported_currencies );
 	},
 	'wcgateway.notice.dcc-without-paypal'                  => static function ( ContainerInterface $container ): GatewayWithoutPayPalAdminNotice {
 		return new GatewayWithoutPayPalAdminNotice(
