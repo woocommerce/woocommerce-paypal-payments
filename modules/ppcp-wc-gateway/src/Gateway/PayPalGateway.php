@@ -13,6 +13,7 @@ use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
@@ -253,8 +254,13 @@ class PayPalGateway extends \WC_Payment_Gateway {
 
 		$funding_source = $this->session_handler->funding_source();
 		if ( $funding_source ) {
-			$this->title       = $this->funding_source_renderer->render_name( $funding_source );
-			$this->description = $this->funding_source_renderer->render_description( $funding_source );
+			$order = $this->session_handler->order();
+			if ( $order &&
+				( $order->status()->is( OrderStatus::APPROVED ) || $order->status()->is( OrderStatus::COMPLETED ) )
+			) {
+				$this->title       = $this->funding_source_renderer->render_name( $funding_source );
+				$this->description = $this->funding_source_renderer->render_description( $funding_source );
+			}
 		}
 
 		$this->init_form_fields();

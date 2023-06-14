@@ -55,6 +55,8 @@ class SessionHandler {
 	public function order() {
 		$this->load_session();
 
+		do_action( 'ppcp_session_get_order', $this->order, $this );
+
 		return $this->order;
 	}
 
