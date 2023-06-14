@@ -708,7 +708,9 @@ class SubscriptionModule implements ModuleInterface {
 						$subscription_plan_name      = $product->get_meta( '_ppcp_subscription_plan_name' );
 
 						echo '<div class="options_group subscription_pricing show_if_subscription hidden">';
-						echo '<p class="form-field"><label for="_ppcp_enable_subscription_product">Connect to PayPal</label><input type="checkbox" id="ppcp_enable_subscription_product" name="_ppcp_enable_subscription_product" value="yes" ' . checked( $enable_subscription_product, 'yes', false ) . '/><span class="description">Connect Product to PayPal Subscriptions Plan</span></p>';
+						echo '<p class="form-field"><label for="_ppcp_enable_subscription_product">Connect to PayPal</label><input type="checkbox" id="ppcp_enable_subscription_product" name="_ppcp_enable_subscription_product" value="yes" ' . checked( $enable_subscription_product, 'yes', false ) . '/><span class="description">Connect Product to PayPal Subscriptions Plan</span>';
+						echo wc_help_tip( esc_html__( 'Create a subscription product and plan to bill customers at regular intervals. Be aware that certain subscription settings cannot be modified once the PayPal Subscription is linked to this product. Unlink the product to edit disabled fields.', 'woocommerce-paypal-payments' ) );
+						echo '</p>';
 
 						$subscription_product = $product->get_meta( 'ppcp_subscription_product' );
 						$subscription_plan    = $product->get_meta( 'ppcp_subscription_plan' );
