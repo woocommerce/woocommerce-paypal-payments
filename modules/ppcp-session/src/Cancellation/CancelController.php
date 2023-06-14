@@ -52,7 +52,7 @@ class CancelController {
 	/**
 	 * Runs the controller.
 	 */
-	public function run() {
+	public function run(): void {
 		$param_name = self::NONCE;
 		if ( isset( $_GET[ $param_name ] ) && // Input var ok.
 			wp_verify_nonce(
