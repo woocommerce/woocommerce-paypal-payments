@@ -174,6 +174,13 @@ class SmartButton implements SmartButtonInterface {
 	private $pay_now_contexts;
 
 	/**
+	 * The sources that do not cause issues about redirecting (on mobile, ...) and sometimes not returning back.
+	 *
+	 * @var string[]
+	 */
+	private $funding_sources_without_redirect;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -208,6 +215,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @param bool                   $basic_checkout_validation_enabled Whether the basic JS validation of the form iss enabled.
 	 * @param bool                   $early_validation_enabled Whether to execute WC validation of the checkout form.
 	 * @param array                  $pay_now_contexts The contexts that should have the Pay Now button.
+	 * @param string[]               $funding_sources_without_redirect The sources that do not cause issues about redirecting (on mobile, ...) and sometimes not returning back.
 	 * @param LoggerInterface        $logger The logger.
 	 */
 	public function __construct(
@@ -229,6 +237,7 @@ class SmartButton implements SmartButtonInterface {
 		bool $basic_checkout_validation_enabled,
 		bool $early_validation_enabled,
 		array $pay_now_contexts,
+		array $funding_sources_without_redirect,
 		LoggerInterface $logger
 	) {
 
@@ -250,6 +259,7 @@ class SmartButton implements SmartButtonInterface {
 		$this->basic_checkout_validation_enabled = $basic_checkout_validation_enabled;
 		$this->early_validation_enabled          = $early_validation_enabled;
 		$this->pay_now_contexts                  = $pay_now_contexts;
+		$this->funding_sources_without_redirect  = $funding_sources_without_redirect;
 		$this->logger                            = $logger;
 	}
 
@@ -939,6 +949,7 @@ class SmartButton implements SmartButtonInterface {
 			'mini_cart_buttons_enabled'         => $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' ),
 			'basic_checkout_validation_enabled' => $this->basic_checkout_validation_enabled,
 			'early_checkout_validation_enabled' => $this->early_validation_enabled,
+			'funding_sources_without_redirect'  => $this->funding_sources_without_redirect,
 		);
 
 		if ( $this->style_for_context( 'layout', 'mini-cart' ) !== 'horizontal' ) {

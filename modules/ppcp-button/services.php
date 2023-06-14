@@ -216,7 +216,9 @@ return array(
 		);
 	},
 	'button.checkout-form-saver'                  => static function ( ContainerInterface $container ): CheckoutFormSaver {
-		return new CheckoutFormSaver();
+		return new CheckoutFormSaver(
+			$container->get( 'session.handler' )
+		);
 	},
 	'button.endpoint.save-checkout-form'          => static function ( ContainerInterface $container ): SaveCheckoutFormEndpoint {
 		return new SaveCheckoutFormEndpoint(
