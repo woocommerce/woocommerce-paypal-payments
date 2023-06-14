@@ -427,7 +427,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'title'        => __( 'Soft Descriptor', 'woocommerce-paypal-payments' ),
 			'type'         => 'text',
 			'desc_tip'     => true,
-			'description'  => __( 'The soft descriptor is the dynamic text used to construct the statement descriptor that appears on a payer\'s card statement.', 'woocommerce-paypal-payments' ),
+			'description'  => __( 'The soft descriptor is the dynamic text used to construct the statement descriptor that appears on a payer\'s card statement. Text field, max value of 22 characters.', 'woocommerce-paypal-payments' ),
 			'maxlength'    => 22,
 			'default'      => '',
 			'screens'      => array(
