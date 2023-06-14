@@ -135,14 +135,14 @@ class CheckoutOrderApproved implements RequestHandler {
 
 		$wc_orders = array();
 
-		$custom_ids = $this->get_wc_order_ids_from_request( $request );
-		if ( empty( $custom_ids ) ) {
-			$custom_ids = $this->get_wc_customer_ids_from_request( $request );
-			if ( empty( $custom_ids ) ) {
+		$wc_order_ids = $this->get_wc_order_ids_from_request( $request );
+		if ( empty( $wc_order_ids ) ) {
+			$customer_ids = $this->get_wc_customer_ids_from_request( $request );
+			if ( empty( $customer_ids ) ) {
 				return $this->no_custom_ids_response( $request );
 			}
 
-			$customer_id = $custom_ids[0];
+			$customer_id = $customer_ids[0];
 
 			$wc_session = new WC_Session_Handler();
 
@@ -200,7 +200,7 @@ class CheckoutOrderApproved implements RequestHandler {
 				}
 			);
 		} else {
-			$wc_orders = $this->get_wc_orders_from_custom_ids( $custom_ids );
+			$wc_orders = $this->get_wc_orders_from_custom_ids( $wc_order_ids );
 			if ( ! $wc_orders ) {
 				return $this->no_wc_orders_response( $request );
 			}

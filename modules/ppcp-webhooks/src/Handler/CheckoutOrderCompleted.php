@@ -67,7 +67,7 @@ class CheckoutOrderCompleted implements RequestHandler {
 	 * @return WP_REST_Response
 	 */
 	public function handle_request( WP_REST_Request $request ): WP_REST_Response {
-		$custom_ids = $this->get_custom_ids_from_request( $request );
+		$custom_ids = $this->get_wc_order_ids_from_request( $request );
 		if ( empty( $custom_ids ) ) {
 			return $this->no_custom_ids_response( $request );
 		}
