@@ -5,6 +5,8 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -75,6 +77,11 @@ class WcGatewayTest extends TestCase
 			->andReturnUsing(function () {
 				return $this->fundingSource;
 			});
+		$order = Mockery::mock(Order::class);
+		$order->shouldReceive('status')->andReturn(new OrderStatus(OrderStatus::APPROVED));
+		$this->sessionHandler
+			->shouldReceive('order')
+			->andReturn($order);
 
 		$this->settings->shouldReceive('has')->andReturnFalse();
 
