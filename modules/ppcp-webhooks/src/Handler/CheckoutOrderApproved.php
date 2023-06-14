@@ -129,10 +129,6 @@ class CheckoutOrderApproved implements RequestHandler {
 
 		$order = $this->order_endpoint->order( $order_id );
 
-		if ( $order->status()->is( OrderStatus::COMPLETED ) ) {
-			return $this->success_response();
-		}
-
 		$wc_orders = array();
 
 		$wc_order_ids = $this->get_wc_order_ids_from_request( $request );
@@ -143,6 +139,11 @@ class CheckoutOrderApproved implements RequestHandler {
 			}
 
 			$customer_id = $customer_ids[0];
+
+			if ( $order->status()->is( OrderStatus::COMPLETED ) ) {
+				$this->logger->info( "Order {$order->id()} already completed." );
+				return $this->success_response();
+			}
 
 			$wc_session = new WC_Session_Handler();
 
