@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
 
 use WC_Order;
+use WooCommerce\PayPalCommerce\Webhooks\CustomIds;
 use WP_REST_Request;
 use WP_REST_Response;
 
@@ -22,18 +23,74 @@ trait RequestHandlerTrait {
 	 * @return string[]
 	 */
 	protected function get_custom_ids_from_request( WP_REST_Request $request ): array {
-		return array_filter(
-			array_map(
+		$resource = $request['resource'];
+		if ( ! is_array( $resource ) ) {
+			return array();
+		}
+
+		$ids = array();
+		if ( isset( $resource['custom_id'] ) && ! empty( $resource['custom_id'] ) ) {
+			$ids[] = $resource['custom_id'];
+		} elseif ( isset( $resource['purchase_units'] ) ) {
+			$ids = array_map(
 				static function ( array $purchase_unit ): string {
-					return isset( $purchase_unit['custom_id'] ) ?
-						(string) $purchase_unit['custom_id'] : '';
+					return $purchase_unit['custom_id'] ?? '';
 				},
-				$request['resource'] !== null && isset( $request['resource']['purchase_units'] ) ?
-					(array) $request['resource']['purchase_units'] : array()
-			),
-			static function ( string $order_id ): bool {
-				return ! empty( $order_id );
-			}
+				(array) $resource['purchase_units']
+			);
+		}
+
+		return array_values(
+			array_filter(
+				$ids,
+				function ( string $id ): bool {
+					return ! empty( $id );
+				}
+			)
+		);
+	}
+
+	/**
+	 * Get available WC order ids from the given request.
+	 *
+	 * @param WP_REST_Request $request The request.
+	 * @return string[]
+	 */
+	protected function get_wc_order_ids_from_request( WP_REST_Request $request ): array {
+		$ids = $this->get_custom_ids_from_request( $request );
+
+		return array_values(
+			array_filter(
+				$ids,
+				function ( string $id ): bool {
+					return strpos( $id, CustomIds::CUSTOMER_ID_PREFIX ) === false;
+				}
+			)
+		);
+	}
+
+	/**
+	 * Get available WC customer ids from the given request.
+	 *
+	 * @param WP_REST_Request $request The request.
+	 * @return string[]
+	 */
+	protected function get_wc_customer_ids_from_request( WP_REST_Request $request ): array {
+		$ids = $this->get_custom_ids_from_request( $request );
+
+		$customer_ids = array_values(
+			array_filter(
+				$ids,
+				function ( string $id ): bool {
+					return strpos( $id, CustomIds::CUSTOMER_ID_PREFIX ) === 0;
+				}
+			)
+		);
+		return array_map(
+			function ( string $str ): string {
+				return (string) substr( $str, strlen( CustomIds::CUSTOMER_ID_PREFIX ) );
+			},
+			$customer_ids
 		);
 	}
 
