@@ -65,4 +65,10 @@ return array(
 			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
 		);
 	},
+	'subscription.deactivate-plan-endpoint' => static function ( ContainerInterface $container ): DeactivatePlanEndpoint {
+		return new DeactivatePlanEndpoint(
+			$container->get( 'button.request-data' ),
+			$container->get( 'api.endpoint.billing-plans' )
+		);
+	},
 );
