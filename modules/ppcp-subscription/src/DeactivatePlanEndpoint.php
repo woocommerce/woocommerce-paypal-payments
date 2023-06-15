@@ -70,9 +70,9 @@ class DeactivatePlanEndpoint {
 				$product = wc_get_product( $product_id );
 				if ( WC_Subscriptions_Product::is_subscription( $product ) ) {
 					$product->delete_meta_data( '_ppcp_enable_subscription_product' );
+					$product->delete_meta_data( '_ppcp_subscription_plan_name' );
 					$product->delete_meta_data( 'ppcp_subscription_product' );
 					$product->delete_meta_data( 'ppcp_subscription_plan' );
-					$product->delete_meta_data( 'ppcp_subscription_plan_name' );
 					$product->save();
 				}
 			}

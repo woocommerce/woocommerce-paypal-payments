@@ -18,8 +18,13 @@ document.addEventListener(
             subscriptionTrialPeriod.setAttribute('disabled', 'disabled');
         }
 
-        document.getElementById('ppcp_unlink_sub_plan').addEventListener('click', (event)=>{
+        const unlinkBtn = document.getElementById('ppcp_unlink_sub_plan');
+        unlinkBtn.addEventListener('click', (event)=>{
             event.preventDefault();
+            unlinkBtn.disabled = true;
+            const spinner = document.getElementById('spinner-unlink-plan');
+            spinner.style.display = 'inline-block';
+
             fetch(PayPalCommerceGatewayPayPalSubscription.ajax.deactivate_plan.endpoint, {
                 method: 'POST',
                 headers: {
@@ -34,7 +39,26 @@ document.addEventListener(
             }).then(function (res) {
                 return res.json();
             }).then(function (data) {
-                console.log(data)
+                if (!data.success) {
+                    unlinkBtn.disabled = false;
+                    spinner.style.display = 'none';
+                    console.error(data);
+                    throw Error(data.data.message);
+                }
+
+                const enableSubscription = document.getElementById('ppcp-enable-subscription');
+                const product = document.getElementById('pcpp-product');
+                const plan = document.getElementById('pcpp-plan');
+                enableSubscription.style.display = 'none';
+                product.style.display = 'none';
+                plan.style.display = 'none';
+
+                const enable_subscription_product = document.getElementById('ppcp_enable_subscription_product');
+                enable_subscription_product.disabled = true;
+
+                const planUnlinked = document.getElementById('pcpp-plan-unlinked');
+                planUnlinked.style.display = 'block';
+
             });
         });
     });

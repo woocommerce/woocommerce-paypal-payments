@@ -729,12 +729,13 @@ class SubscriptionModule implements ModuleInterface {
 						$subscription_plan    = $product->get_meta( 'ppcp_subscription_plan' );
 						if ( $subscription_product && $subscription_plan ) {
 							if ( $enable_subscription_product !== 'yes' ) {
-								echo '<p class="form-field"><label></label><a href="#" class="button" id="ppcp_unlink_sub_plan">' . esc_html__( 'Unlink PayPal Subscription Plan', 'woocommerce-paypal-payments' ) . '</a></p>';
+								echo '<p class="form-field" id="ppcp-enable-subscription"><label></label><button class="button" id="ppcp_unlink_sub_plan">' . esc_html__( 'Unlink PayPal Subscription Plan', 'woocommerce-paypal-payments' ) . '</button><span class="spinner is-active" id="spinner-unlink-plan" style="float: none; display:none;"></span></p>';
+								echo '<p class="form-field" id="pcpp-plan-unlinked" style="display: none;">Plan unlinked successfully ✔️</p>';
 							}
 							$environment = $c->get( 'onboarding.environment' );
 							$host        = $environment->current_environment_is( Environment::SANDBOX ) ? 'https://www.sandbox.paypal.com' : 'https://www.paypal.com';
-							echo '<p class="form-field"><label>' . esc_html__( 'Product', 'woocommerce-paypal-payments' ) . '</label><a href="' . esc_url( $host . '/billing/plans/products/' . $subscription_product['id'] ) . '" target="_blank">' . esc_attr( $subscription_product['id'] ) . '</a></p>';
-							echo '<p class="form-field"><label>' . esc_html__( 'Plan', 'woocommerce-paypal-payments' ) . '</label><a href="' . esc_url( $host . '/billing/plans/' . $subscription_plan['id'] ) . '" target="_blank">' . esc_attr( $subscription_plan['id'] ) . '</a></p>';
+							echo '<p class="form-field" id="pcpp-product"><label>' . esc_html__( 'Product', 'woocommerce-paypal-payments' ) . '</label><a href="' . esc_url( $host . '/billing/plans/products/' . $subscription_product['id'] ) . '" target="_blank">' . esc_attr( $subscription_product['id'] ) . '</a></p>';
+							echo '<p class="form-field" id="pcpp-plan"><label>' . esc_html__( 'Plan', 'woocommerce-paypal-payments' ) . '</label><a href="' . esc_url( $host . '/billing/plans/' . $subscription_plan['id'] ) . '" target="_blank">' . esc_attr( $subscription_plan['id'] ) . '</a></p>';
 						} else {
 							echo '<p class="form-field"><label for="_ppcp_subscription_plan_name">' . esc_html__( 'Plan Name', 'woocommerce-paypal-payments' ) . '</label><input type="text" class="short" id="ppcp_subscription_plan_name" name="_ppcp_subscription_plan_name" value="' . esc_attr( $subscription_plan_name ) . '"></p>';
 						}
