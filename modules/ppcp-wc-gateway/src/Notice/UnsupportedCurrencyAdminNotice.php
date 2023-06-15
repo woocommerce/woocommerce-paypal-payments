@@ -27,12 +27,6 @@ class UnsupportedCurrencyAdminNotice {
 	private $state;
 
 	/**
-	 * The settings.
-	 *
-	 * @var ContainerInterface
-	 */
-	private $settings;
-	/**
 	 * The supported currencies.
 	 *
 	 * @var array
@@ -40,15 +34,22 @@ class UnsupportedCurrencyAdminNotice {
 	private $supported_currencies;
 
 	/**
+	 * The shop currency.
+	 *
+	 * @var string
+	 */
+	private $shop_currency;
+
+	/**
 	 * ConnectAdminNotice constructor.
 	 *
-	 * @param State              $state The state.
-	 * @param ContainerInterface $settings The settings.
-	 * @param array              $supported_currencies The supported currencies.
+	 * @param State  $state The state.
+	 * @param string $shop_currency The shop currency.
+	 * @param array  $supported_currencies The supported currencies.
 	 */
-	public function __construct( State $state, ContainerInterface $settings, array $supported_currencies ) {
+	public function __construct( State $state, string $shop_currency, array $supported_currencies ) {
 		$this->state                = $state;
-		$this->settings             = $settings;
+		$this->shop_currency        = $shop_currency;
 		$this->supported_currencies = $supported_currencies;
 	}
 
@@ -88,7 +89,7 @@ class UnsupportedCurrencyAdminNotice {
 	 * @return bool
 	 */
 	private function currency_supported(): bool {
-		$currency             = get_woocommerce_currency();
+		$currency             = $this->shop_currency;
 		$supported_currencies = $this->supported_currencies;
 		return in_array( $currency, $supported_currencies, true );
 	}

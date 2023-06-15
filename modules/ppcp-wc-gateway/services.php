@@ -211,9 +211,9 @@ return array(
 	},
 	'wcgateway.notice.currency-unsupported'                => static function ( ContainerInterface $container ): UnsupportedCurrencyAdminNotice {
 		$state = $container->get( 'onboarding.state' );
-		$settings = $container->get( 'wcgateway.settings' );
+		$shop_currency = $container->get( 'api.shop.currency' );
 		$supported_currencies = $container->get( 'api.supported-currencies' );
-		return new UnsupportedCurrencyAdminNotice( $state, $settings, $supported_currencies );
+		return new UnsupportedCurrencyAdminNotice( $state, $shop_currency, $supported_currencies );
 	},
 	'wcgateway.notice.dcc-without-paypal'                  => static function ( ContainerInterface $container ): GatewayWithoutPayPalAdminNotice {
 		return new GatewayWithoutPayPalAdminNotice(
