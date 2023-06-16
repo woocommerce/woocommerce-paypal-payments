@@ -154,6 +154,7 @@ const bootstrap = () => {
         const cartBootstrap = new CartBootstrap(
             PayPalCommerceGateway,
             renderer,
+            messageRenderer,
             errorHandler,
         );
 
