@@ -8,18 +8,15 @@ document.addEventListener(
             const subscriptionPeriod = document.querySelector('#_subscription_period');
             subscriptionPeriod.setAttribute('disabled', 'disabled');
 
-            const subscriptionLength = document.querySelector('#_subscription_length');
-            subscriptionLength.setAttribute('disabled', 'disabled');
+            const subscriptionLength = document.querySelector('._subscription_length_field');
+            subscriptionLength.style.display = 'none';
 
-            const subscriptionTrialLength = document.querySelector('#_subscription_trial_length');
-            subscriptionTrialLength.setAttribute('disabled', 'disabled');
-
-            const subscriptionTrialPeriod = document.querySelector('#_subscription_trial_period');
-            subscriptionTrialPeriod.setAttribute('disabled', 'disabled');
+            const subscriptionTrial = document.querySelector('._subscription_trial_length_field');
+            subscriptionTrial.style.display = 'none';
         }
 
         const unlinkBtn = document.getElementById('ppcp_unlink_sub_plan');
-        unlinkBtn.addEventListener('click', (event)=>{
+        unlinkBtn?.addEventListener('click', (event)=>{
             event.preventDefault();
             unlinkBtn.disabled = true;
             const spinner = document.getElementById('spinner-unlink-plan');
@@ -59,6 +56,9 @@ document.addEventListener(
                 const planUnlinked = document.getElementById('pcpp-plan-unlinked');
                 planUnlinked.style.display = 'block';
 
+                setTimeout(() => {
+                    location.reload();
+                }, 1000)
             });
         });
     });

@@ -91,6 +91,9 @@ class SingleProductBootstap {
     }
 
     priceAmountIsZero() {
+        if(subscriptionHasPlan()) {
+            return false;
+        }
         const price = this.priceAmount();
         return !price || price === 0;
     }

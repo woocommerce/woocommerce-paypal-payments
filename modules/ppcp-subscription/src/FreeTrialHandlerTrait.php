@@ -56,7 +56,10 @@ trait FreeTrialHandlerTrait {
 
 		$product = wc_get_product();
 
-		if ( ! $product || ! WC_Subscriptions_Product::is_subscription( $product ) ) {
+		if (
+			! $product || ! WC_Subscriptions_Product::is_subscription( $product )
+			|| $product->get_meta( '_ppcp_enable_subscription_product' ) === 'yes'
+		) {
 			return false;
 		}
 
