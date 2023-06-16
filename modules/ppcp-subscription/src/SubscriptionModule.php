@@ -160,7 +160,15 @@ class SubscriptionModule implements ModuleInterface {
 
 		add_action(
 			'admin_enqueue_scripts',
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
 			function( $hook ) use ( $c ) {
+				if ( ! is_string( $hook ) ) {
+					return;
+				}
 				$settings          = $c->get( 'wcgateway.settings' );
 				$subscription_mode = $settings->has( 'subscriptions_mode' ) ? $settings->get( 'subscriptions_mode' ) : '';
 				if ( $hook !== 'post.php' || $subscription_mode !== 'subscriptions_api' ) {
@@ -183,7 +191,7 @@ class SubscriptionModule implements ModuleInterface {
 					true
 				);
 
-				$plan    = $product->get_meta( 'ppcp_subscription_plan' ) ?? null;
+				$plan    = $product->get_meta( 'ppcp_subscription_plan' ) ?? array();
 				$plan_id = $plan['id'] ?? '';
 				wp_localize_script(
 					'ppcp-paypal-subscription',

@@ -10,6 +10,7 @@ declare( strict_types=1 );
 namespace WooCommerce\PayPalCommerce\Subscription;
 
 use Exception;
+use WC_Product;
 use WC_Subscriptions_Product;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingPlans;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
@@ -68,7 +69,7 @@ class DeactivatePlanEndpoint {
 			$product_id = $data['product_id'] ?? '';
 			if ( $product_id ) {
 				$product = wc_get_product( $product_id );
-				if ( WC_Subscriptions_Product::is_subscription( $product ) ) {
+				if ( is_a( $product, WC_Product::class ) && WC_Subscriptions_Product::is_subscription( $product ) ) {
 					$product->delete_meta_data( '_ppcp_enable_subscription_product' );
 					$product->delete_meta_data( '_ppcp_subscription_plan_name' );
 					$product->delete_meta_data( 'ppcp_subscription_product' );
