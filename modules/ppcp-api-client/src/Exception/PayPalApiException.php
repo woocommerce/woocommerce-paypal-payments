@@ -67,7 +67,7 @@ class PayPalApiException extends RuntimeException {
 		 */
 		$this->response    = $response;
 		$this->status_code = $status_code;
-		$message           = $this->get_customer_friendly_message($response);
+		$message           = $this->get_customer_friendly_message( $response );
 		if ( $response->name ) {
 			$message = '[' . $response->name . '] ' . $message;
 		}
