@@ -1,6 +1,6 @@
 <?php
 /**
- * Registers the admin message to "connect your account" if necessary.
+ * Registers the admin message about unsupported currency set in WC shop settings.
  *
  * @package WooCommerce\PayPalCommerce\WcGateway\Notice
  */
@@ -15,7 +15,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 /**
- * Class ConnectAdminNotice
+ * Class UnsupportedCurrencyAdminNotice
  */
 class UnsupportedCurrencyAdminNotice {
 
@@ -41,7 +41,7 @@ class UnsupportedCurrencyAdminNotice {
 	private $shop_currency;
 
 	/**
-	 * ConnectAdminNotice constructor.
+	 * UnsupportedCurrencyAdminNotice constructor.
 	 *
 	 * @param State  $state The state.
 	 * @param string $shop_currency The shop currency.
