@@ -59,7 +59,6 @@ class PayPalApiException extends RuntimeException {
 		if ( ! isset( $response->links ) || ! is_array( $response->links ) ) {
 			$response->links = array();
 		}
-		$response = $this->add_improved_error_message( $response );
 
 		/**
 		 * The JSON response object.
@@ -68,7 +67,7 @@ class PayPalApiException extends RuntimeException {
 		 */
 		$this->response    = $response;
 		$this->status_code = $status_code;
-		$message           = $response->message;
+		$message           = $this->get_customer_friendly_message($response);
 		if ( $response->name ) {
 			$message = '[' . $response->name . '] ' . $message;
 		}
@@ -146,14 +145,14 @@ class PayPalApiException extends RuntimeException {
 	}
 
 	/**
-	 * Adds an improved error message to the response if the error detail is known.
+	 * Returns a friendly message if the error detail is known.
 	 *
 	 * @param stdClass $json The response.
-	 * @return stdClass
+	 * @return string
 	 */
-	public function add_improved_error_message( stdClass $json ): stdClass {
-		if ( ! isset( $json->details ) ) {
-			return $json;
+	public function get_customer_friendly_message( stdClass $json ): string {
+		if ( empty( $json->details ) ) {
+			return $json->message;
 		}
 		$improved_keys_messages = array(
 			'PAYMENT_DENIED'           => __( 'PayPal rejected the payment. Please reach out to the PayPal support for more information.', 'woocommerce-paypal-payments' ),
@@ -175,8 +174,8 @@ class PayPalApiException extends RuntimeException {
 		);
 		if ( $improved_errors ) {
 			$improved_errors = array_values( $improved_errors );
-			$json->message   = $improved_keys_messages[ $improved_errors[0] ];
+			return $improved_keys_messages[ $improved_errors[0] ];
 		}
-		return $json;
+		return $json->message;
 	}
 }
