@@ -64,11 +64,12 @@ class UnsupportedCurrencyAdminNotice {
 		}
 
 		$message = sprintf(
-			/* translators: %1$s the gateway name. */
+			/* translators: %1$s the shop currency, 2$s the gateway name. */
 			__(
-				'Attention: Your current WooCommerce store currency is not supported by PayPal. Please update your store currency to one that is supported by PayPal to ensure smooth transactions. Visit the <a href="%1$s">PayPal currency support page</a> for more information on supported currencies.',
+				'Attention: Your current WooCommerce store currency (%1$s) is not supported by PayPal. Please update your store currency to one that is supported by PayPal to ensure smooth transactions. Visit the <a href="%2$s">PayPal currency support page</a> for more information on supported currencies.',
 				'woocommerce-paypal-payments'
 			),
+			$this->shop_currency,
 			'https://developer.paypal.com/api/rest/reference/currency-codes/'
 		);
 		return new Message( $message, 'warning' );
