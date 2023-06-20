@@ -272,6 +272,27 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	}
 
 	/**
+	 * Return the gateway's title.
+	 *
+	 * @return string
+	 */
+	public function get_title() {
+		if ( is_admin() ) {
+			// $theorder and other things for retrieving the order or post info are not available
+			// in the constructor, so must do it here.
+			global $theorder;
+			if ( $theorder instanceof WC_Order ) {
+				$payment_method_title = $theorder->get_payment_method_title();
+				if ( $payment_method_title ) {
+					$this->title = $payment_method_title;
+				}
+			}
+		}
+
+		return parent::get_title();
+	}
+
+	/**
 	 * Whether the Gateway needs to be setup.
 	 *
 	 * @return bool
