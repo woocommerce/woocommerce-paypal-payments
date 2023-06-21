@@ -4,7 +4,7 @@ export const isChangePaymentPage = () => {
 }
 
 export const subscriptionHasPlan = () => {
-    if (PayPalCommerceGateway.data_client_id.has_subscriptions) {
+    if (PayPalCommerceGateway.data_client_id.paypal_subscriptions_enabled && PayPalCommerceGateway.data_client_id.has_subscriptions) {
         if (PayPalCommerceGateway.subscription_plan_id !== '') {
             return true;
         }

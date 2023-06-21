@@ -15,6 +15,8 @@ document.addEventListener(
             subscriptionTrial.style.display = 'none';
         }
 
+        console.log('testing')
+
         const unlinkBtn = document.getElementById('ppcp_unlink_sub_plan');
         unlinkBtn?.addEventListener('click', (event)=>{
             event.preventDefault();

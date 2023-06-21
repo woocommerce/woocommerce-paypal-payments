@@ -176,10 +176,8 @@ class SubscriptionHelper {
 	 * @throws NotFoundException If setting is not found.
 	 */
 	public function checkout_subscription_product_allowed(): bool {
-		$subscription_mode = $this->settings->has( 'subscriptions_mode' ) ? $this->settings->get( 'subscriptions_mode' ) : '';
 		if (
-			$subscription_mode !== 'subscriptions_api'
-			|| ! $this->paypal_subscription_id()
+			! $this->paypal_subscription_id()
 			|| ! $this->cart_contains_only_one_item()
 		) {
 			return false;

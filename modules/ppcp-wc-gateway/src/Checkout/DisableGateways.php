@@ -124,8 +124,9 @@ class DisableGateways {
 			return true;
 		}
 
+		$subscription_mode = $this->settings->has( 'subscriptions_mode' ) ? $this->settings->get( 'subscriptions_mode' ) : '';
 		if (
-			is_checkout()
+			(is_checkout() && $subscription_mode === 'subscriptions_api')
 			&& $this->subscription_helper->cart_contains_subscription()
 			&& ! $this->subscription_helper->checkout_subscription_product_allowed()
 		) {
