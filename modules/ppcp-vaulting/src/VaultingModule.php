@@ -179,16 +179,6 @@ class VaultingModule implements ModuleInterface {
 		);
 
 		add_action(
-			'pcp_migrate_payment_tokens',
-			function() use ( $container ) {
-				$logger = $container->get( 'woocommerce.logger.woocommerce' );
-				assert( $logger instanceof LoggerInterface );
-
-				$this->migrate_payment_tokens( $logger );
-			}
-		);
-
-		add_action(
 			'woocommerce_paypal_payments_payment_tokens_migration',
 			function( int $customer_id ) use ( $container ) {
 				$migration = $container->get( 'vaulting.payment-tokens-migration' );
@@ -218,6 +208,10 @@ class VaultingModule implements ModuleInterface {
 	 * @return void
 	 */
 	public function migrate_payment_tokens( LoggerInterface $logger ): void {
+		$initialized = get_option( 'ppcp_payment_tokens_migration_initialized', null );
+		if ( $initialized ) {
+			return;
+		}
 		// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 		// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 		$customers = new WP_User_Query(
@@ -236,6 +230,7 @@ class VaultingModule implements ModuleInterface {
 		}
 
 		$logger->info( 'Starting payment tokens migration for ' . (string) count( $customers ) . ' users' );
+		update_option( 'ppcp_payment_tokens_migration_initialized', true );
 
 		$interval_in_seconds = 5;
 		$timestamp           = time();
