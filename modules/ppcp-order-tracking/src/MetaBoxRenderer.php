@@ -27,13 +27,6 @@ class MetaBoxRenderer {
 	public const NAME_PREFIX = 'ppcp-tracking';
 
 	/**
-	 * The OrderTrackingEndpoint.
-	 *
-	 * @var OrderTrackingEndpoint
-	 */
-	protected $order_tracking_endpoint;
-
-	/**
 	 * Allowed shipping statuses.
 	 *
 	 * @var string[]
@@ -51,20 +44,17 @@ class MetaBoxRenderer {
 	/**
 	 * MetaBoxRenderer constructor.
 	 *
-	 * @param OrderTrackingEndpoint $order_tracking_endpoint The OrderTrackingEndpoint.
-	 * @param string[]              $allowed_statuses Allowed shipping statuses.
-	 * @param array                 $carriers Available shipping carriers.
-	 * @psalm-param Carriers        $carriers
+	 * @param string[] $allowed_statuses Allowed shipping statuses.
+	 * @param array    $carriers Available shipping carriers.
+	 * @psalm-param Carriers $carriers
 	 */
 	public function __construct(
-		OrderTrackingEndpoint $order_tracking_endpoint,
 		array $allowed_statuses,
 		array $carriers
 	) {
 
-		$this->order_tracking_endpoint = $order_tracking_endpoint;
-		$this->allowed_statuses        = $allowed_statuses;
-		$this->carriers                = $carriers;
+		$this->allowed_statuses = $allowed_statuses;
+		$this->carriers         = $carriers;
 	}
 
 	/**
@@ -78,18 +68,11 @@ class MetaBoxRenderer {
 			return;
 		}
 
-		$tracking_info = $this->order_tracking_endpoint->get_tracking_information( $wc_order->get_id() );
-
-		$transaction_id  = $tracking_info['transaction_id'] ?? $wc_order->get_transaction_id() ?: '';
-		$tracking_number = $tracking_info['tracking_number'] ?? '';
-		$status_value    = $tracking_info['status'] ?? 'SHIPPED';
-		$carrier_value   = $tracking_info['carrier'] ?? '';
-
 		$carriers        = (array) apply_filters( 'woocommerce_paypal_payments_tracking_carriers', $this->carriers, $wc_order->get_id() );
 		$statuses        = (array) apply_filters( 'woocommerce_paypal_payments_tracking_statuses', $this->allowed_statuses, $wc_order->get_id() );
-		$tracking_number = (string) apply_filters( 'woocommerce_paypal_payments_tracking_number', $tracking_number, $wc_order->get_id() );
+		$tracking_number = (string) apply_filters( 'woocommerce_paypal_payments_tracking_number', '', $wc_order->get_id() );
+		$transaction_id  = $wc_order->get_transaction_id() ?: '';
 
-		$action = ! $tracking_info ? 'create' : 'update';
 		?>
 		<p>
 			<label for="<?php echo esc_attr( self::NAME_PREFIX ); ?>-transaction_id"><?php echo esc_html__( 'Transaction ID', 'woocommerce-paypal-payments' ); ?></label>
@@ -101,7 +84,7 @@ class MetaBoxRenderer {
 			<label for="<?php echo esc_attr( self::NAME_PREFIX ); ?>-status"><?php echo esc_html__( 'Status', 'woocommerce-paypal-payments' ); ?></label>
 			<select class="<?php echo esc_attr( self::NAME_PREFIX ); ?>-status" id="<?php echo esc_attr( self::NAME_PREFIX ); ?>-status" name="<?php echo esc_attr( self::NAME_PREFIX ); ?>[status]">
 				<?php foreach ( $statuses as $key => $status ) : ?>
-					<option value="<?php echo esc_attr( $key ); ?>" <?php selected( $status_value, $key ); ?>><?php echo esc_html( $status ); ?></option>
+					<option value="<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $status ); ?></option>
 				<?php endforeach; ?>
 			</select>
 		</p>
@@ -116,7 +99,7 @@ class MetaBoxRenderer {
 					?>
 					<optgroup label="<?php echo esc_attr( $country ); ?>">
 						<?php foreach ( $carrier_items as $carrier_code => $carrier_name ) : ?>
-							<option value="<?php echo esc_attr( $carrier_code ); ?>" <?php selected( $carrier_value, $carrier_code ); ?>><?php echo esc_html( $carrier_name ); ?></option>
+							<option value="<?php echo esc_attr( $carrier_code ); ?>"><?php echo esc_html( $carrier_name ); ?></option>
 						<?php endforeach; ?>
 					</optgroup>
 				<?php endforeach; ?>
@@ -124,7 +107,7 @@ class MetaBoxRenderer {
 		</p>
 		<input type="hidden" class="ppcp-order_id" name="<?php echo esc_attr( self::NAME_PREFIX ); ?>[order_id]" value="<?php echo intval( $post->ID ); ?>"/>
 		<p>
-			<button type="button" class="button submit_tracking_info" data-action="<?php echo esc_attr( $action ); ?>"><?php echo esc_html( ucfirst( $action ) ); ?></button></p>
+			<button type="button" class="button submit_tracking_info"><?php echo esc_html__( 'Add Tracking', 'woocommerce-paypal-payments' ); ?></button></p>
 		<?php
 	}
 }

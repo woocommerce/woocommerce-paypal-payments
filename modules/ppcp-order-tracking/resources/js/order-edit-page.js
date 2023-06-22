@@ -29,7 +29,6 @@ document.addEventListener(
                     status: status ? status.value : null,
                     carrier: carrier ? carrier.value : null,
                     order_id: orderId ? orderId.value : null,
-                    action: submitButton ? submitButton.dataset.action : null,
                 })
             }).then(function (res) {
                 return res.json();
@@ -44,9 +43,6 @@ document.addEventListener(
 
                 jQuery( "<span class='success tracking-info-message'>" + data.data.message + "</span>" ).insertAfter(submitButton);
                 setTimeout(()=> jQuery('.tracking-info-message').remove(),3000);
-
-                submitButton.dataset.action = 'update';
-                submitButton.textContent = 'update';
                 submitButton.removeAttribute('disabled');
             });
         })

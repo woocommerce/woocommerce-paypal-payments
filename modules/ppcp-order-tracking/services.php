@@ -42,7 +42,6 @@ return array(
 	},
 	'order-tracking.meta-box.renderer'         => static function ( ContainerInterface $container ): MetaBoxRenderer {
 		return new MetaBoxRenderer(
-			$container->get( 'order-tracking.endpoint.controller' ),
 			$container->get( 'order-tracking.allowed-shipping-statuses' ),
 			$container->get( 'order-tracking.available-carriers' )
 		);
