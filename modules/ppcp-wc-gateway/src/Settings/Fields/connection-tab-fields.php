@@ -197,7 +197,11 @@ return function ( ContainerInterface $container, array $fields ): array {
 		'toggle_manual_input'                           => array(
 			'type'         => 'ppcp-text',
 			'text'         => '<button type="button" id="ppcp[toggle_manual_input]">' . __( 'Toggle to manual credential input', 'woocommerce-paypal-payments' ) . '</button>',
-			'description'  => __( 'Further information on manual credential input: <a href="https://woocommerce.com/document/woocommerce-paypal-payments/#manual-credential-input" target="_blank">documentation</a>', 'woocommerce-paypal-payments' ),
+			'description'  => sprintf(
+				'%1$s <a href="https://woocommerce.com/document/woocommerce-paypal-payments/#manual-credential-input" target="_blank">%2$s</a>',
+				esc_html__( 'Further information on manual credential input:', 'woocommerce-paypal-payments' ),
+				esc_html__( 'documentation', 'woocommerce-paypal-payments' )
+			),
 			'classes'      => array( 'ppcp-onboarding-element' ),
 			'screens'      => array(
 				State::STATE_START,
