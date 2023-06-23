@@ -21,11 +21,25 @@ async function completeBlockContinuation(page) {
 
     await expect(page.locator('.component-frame')).toHaveCount(0);
 
-    await page.locator('.wc-block-components-checkout-place-order-button').click();
+    await Promise.all(
+        page.waitForNavigation(),
+        page.locator('.wc-block-components-checkout-place-order-button').click(),
+    );
+}
 
-    await page.waitForNavigation();
+async function expectContinuation(page) {
+    await expect(page.locator('#payment_method_ppcp-gateway')).toBeChecked();
 
-    await expectOrderReceivedPage(page);
+    await expect(page.locator('.component-frame')).toHaveCount(0);
+}
+
+async function completeContinuation(page) {
+    await expectContinuation(page);
+
+    await Promise.all([
+        page.waitForNavigation(),
+        page.locator('#place_order').click(),
+    ]);
 }
 
 test.describe('Classic checkout', () => {
@@ -44,10 +58,7 @@ test.describe('Classic checkout', () => {
 
         await fillCheckoutForm(page);
 
-        await Promise.all([
-            page.waitForNavigation(),
-            page.locator('#place_order').click(),
-        ]);
+        await completeContinuation(page);
 
         await expectOrderReceivedPage(page);
     });
@@ -97,6 +108,8 @@ test.describe('Block checkout', () => {
         await completePaypalPayment(popup);
 
         await completeBlockContinuation(page);
+
+        await expectOrderReceivedPage(page);
     });
 
     test('PayPal express block cart', async ({page}) => {
@@ -109,6 +122,8 @@ test.describe('Block checkout', () => {
         await completePaypalPayment(popup);
 
         await completeBlockContinuation(page);
+
+        await expectOrderReceivedPage(page);
     });
 
     test.describe('Without review', () => {
