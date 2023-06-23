@@ -236,6 +236,12 @@ class VaultingModule implements ModuleInterface {
 		$timestamp           = time();
 
 		foreach ( $customers as $id ) {
+			$metadata_exist           = metadata_exists( 'user', $id, 'ppcp-vault-token' );
+			$skip_empty_key_migration = apply_filters( 'ppcp_skip_payment_tokens_empty_key_migration', true );
+			if ( ! $metadata_exist && ! $skip_empty_key_migration ) {
+				return;
+			}
+
 			/**
 			 * Function already exist in WooCommerce
 			 *
