@@ -67,23 +67,6 @@ return array(
 
 		return $dummy_ids[ $shop_country ] ?? $container->get( 'button.client_id' );
 	},
-	'button.is_paypal_continuation'               => static function( ContainerInterface $container ): bool {
-		$session_handler = $container->get( 'session.handler' );
-
-		$order = $session_handler->order();
-		if ( ! $order ) {
-			return false;
-		}
-		$source = $order->payment_source();
-		if ( $source && $source->card() ) {
-			return false; // Ignore for DCC.
-		}
-		if ( 'card' === $session_handler->funding_source() ) {
-			return false; // Ignore for card buttons.
-		}
-
-		return true;
-	},
 	'button.smart-button'                         => static function ( ContainerInterface $container ): SmartButtonInterface {
 		$state = $container->get( 'onboarding.state' );
 		if ( $state->current_state() !== State::STATE_ONBOARDED ) {
