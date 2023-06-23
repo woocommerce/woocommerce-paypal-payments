@@ -2,6 +2,7 @@ class MessageRenderer {
 
     constructor(config) {
         this.config = config;
+        this.optionsFingerprint = null;
     }
 
     render() {
@@ -9,18 +10,20 @@ class MessageRenderer {
             return;
         }
 
-        paypal.Messages({
+        const options = {
             amount: this.config.amount,
             placement: this.config.placement,
             style: this.config.style
-        }).render(this.config.wrapper);
+        };
+
+        if (this.isOptionsFingerprintEqual(options)) {
+            return;
+        }
+
+        paypal.Messages(options).render(this.config.wrapper);
 
         jQuery(document.body).on('updated_cart_totals', () => {
-            paypal.Messages({
-                amount: this.config.amount,
-                placement: this.config.placement,
-                style: this.config.style
-            }).render(this.config.wrapper);
+            paypal.Messages(options).render(this.config.wrapper);
         });
     }
 
@@ -30,17 +33,36 @@ class MessageRenderer {
             return;
         }
 
-        const newWrapper = document.createElement('div');
-        newWrapper.setAttribute('id', this.config.wrapper.replace('#', ''));
-
-        const sibling = document.querySelector(this.config.wrapper).nextSibling;
-        document.querySelector(this.config.wrapper).parentElement.removeChild(document.querySelector(this.config.wrapper));
-        sibling.parentElement.insertBefore(newWrapper, sibling);
-        paypal.Messages({
+        const options = {
             amount,
             placement: this.config.placement,
             style: this.config.style
-        }).render(this.config.wrapper);
+        };
+
+        if (this.isOptionsFingerprintEqual(options)) {
+            return;
+        }
+
+        const newWrapper = document.createElement('div');
+        newWrapper.setAttribute('id', this.config.wrapper.replace('#', ''));
+
+        const oldWrapper = document.querySelector(this.config.wrapper);
+        const sibling = oldWrapper.nextSibling;
+        oldWrapper.parentElement.removeChild(oldWrapper);
+        sibling.parentElement.insertBefore(newWrapper, sibling);
+
+        paypal.Messages(options).render(this.config.wrapper);
+    }
+
+    isOptionsFingerprintEqual(options) {
+        const fingerprint = JSON.stringify(options);
+
+        if (this.optionsFingerprint === fingerprint) {
+            return true;
+        }
+
+        this.optionsFingerprint = fingerprint;
+        return false;
     }
 
     shouldRender() {

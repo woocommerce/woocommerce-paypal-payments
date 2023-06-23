@@ -1,5 +1,6 @@
 import UpdateCart from "../Helper/UpdateCart";
 import SingleProductActionHandler from "../ActionHandler/SingleProductActionHandler";
+import {hide, show} from "../Helper/Hiding";
 import {disable, enable} from "../Helper/ButtonDisabler";
 
 class SingleProductBootstap {
@@ -18,10 +19,16 @@ class SingleProductBootstap {
 
     handleChange() {
         if (!this.shouldRender()) {
+            hide(this.gateway.button.wrapper, this.formSelector);
+            hide(this.gateway.messages.wrapper);
             return;
         }
 
         this.render();
+
+        show(this.gateway.button.wrapper, this.formSelector);
+        show(this.gateway.messages.wrapper);
+
         this.handleButtonStatus();
     }
 
