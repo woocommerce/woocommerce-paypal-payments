@@ -91,9 +91,20 @@ export const waitForPaypalShippingList = async (popup) => {
     await expect(popup.locator('#shippingMethodsDropdown')).toBeVisible({timeout: 15000});
 }
 
-export const completePaypalPayment = async (popup) => {
+/**
+ * @param popup
+ * @param {{timeout: ?int, selector: ?string}} options
+ */
+export const completePaypalPayment = async (popup, options) => {
+    options = {
+        ...{
+            timeout: 20000,
+            selector: '#payment-submit-btn',
+        },
+        ...options
+    };
     await Promise.all([
-        popup.waitForEvent('close', {timeout: 20000}),
-        popup.click('#payment-submit-btn'),
+        popup.waitForEvent('close', {timeout: options.timeout}),
+        popup.click(options.selector),
     ]);
 }

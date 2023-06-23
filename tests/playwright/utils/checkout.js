@@ -26,6 +26,10 @@ export const fillCheckoutForm = async (page) => {
         await differentShippingLocator.uncheck();
     }
 
+    await acceptTerms(page);
+}
+
+export const acceptTerms = async (page) => {
     const termsLocator = page.locator('[name="terms"]');
     if (await termsLocator.count() > 0) {
         await termsLocator.check();
