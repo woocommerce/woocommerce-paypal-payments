@@ -1,7 +1,6 @@
 import UpdateCart from "../Helper/UpdateCart";
 import SingleProductActionHandler from "../ActionHandler/SingleProductActionHandler";
-import {hide, show, setVisible} from "../Helper/Hiding";
-import ButtonsToggleListener from "../Helper/ButtonsToggleListener";
+import {disable, enable} from "../Helper/ButtonDisabler";
 
 class SingleProductBootstap {
     constructor(gateway, renderer, messages, errorHandler) {
@@ -10,56 +9,70 @@ class SingleProductBootstap {
         this.messages = messages;
         this.errorHandler = errorHandler;
         this.mutationObserver = new MutationObserver(this.handleChange.bind(this));
+        this.formSelector = 'form.cart';
     }
 
+    form() {
+        return document.querySelector(this.formSelector);
+    }
 
     handleChange() {
-        const shouldRender = this.shouldRender();
-        setVisible(this.gateway.button.wrapper, shouldRender);
-        setVisible(this.gateway.messages.wrapper, shouldRender);
-        if (!shouldRender) {
+        if (!this.shouldRender()) {
             return;
         }
 
         this.render();
+        this.handleButtonStatus();
+    }
+
+    handleButtonStatus() {
+        if (!this.shouldEnable()) {
+            disable(this.gateway.button.wrapper, this.formSelector);
+            disable(this.gateway.messages.wrapper);
+            return;
+        }
+        enable(this.gateway.button.wrapper);
+        enable(this.gateway.messages.wrapper);
+        this.messages.renderWithAmount(this.priceAmount())
     }
 
     init() {
-        const form = document.querySelector('form.cart');
+        const form = this.form();
+
         if (!form) {
             return;
         }
 
         form.addEventListener('change', this.handleChange.bind(this));
-        this.mutationObserver.observe(form, {childList: true, subtree: true});
+        this.mutationObserver.observe(form, { childList: true, subtree: true });
 
-        const buttonObserver = new ButtonsToggleListener(
-            form.querySelector('.single_add_to_cart_button'),
-            () => {
-                show(this.gateway.button.wrapper);
-                show(this.gateway.messages.wrapper);
-                this.messages.renderWithAmount(this.priceAmount())
-            },
-            () => {
-                hide(this.gateway.button.wrapper);
-                hide(this.gateway.messages.wrapper);
-            },
-        );
-        buttonObserver.init();
+        const addToCartButton = form.querySelector('.single_add_to_cart_button');
+
+        if (addToCartButton) {
+            (new MutationObserver(this.handleButtonStatus.bind(this)))
+                .observe(addToCartButton, { attributes : true });
+        }
 
         if (!this.shouldRender()) {
-            hide(this.gateway.button.wrapper);
-            hide(this.gateway.messages.wrapper);
             return;
         }
 
         this.render();
+        this.handleButtonStatus();
     }
 
     shouldRender() {
-        return document.querySelector('form.cart') !== null
+        return this.form() !== null
+            && !this.isDisabledReasonExternalPlugins();
+    }
+
+    shouldEnable() {
+        const form = this.form();
+        const addToCartButton = form ? form.querySelector('.single_add_to_cart_button') : null;
+
+        return this.shouldRender()
             && !this.priceAmountIsZero()
-            && !this.isSubscriptionMode();
+            && ((null === addToCartButton) || !addToCartButton.classList.contains('disabled'));
     }
 
     priceAmount() {
@@ -93,7 +106,7 @@ class SingleProductBootstap {
         return !price || price === 0;
     }
 
-    isSubscriptionMode() {
+    isDisabledReasonExternalPlugins() {
         // Check "All products for subscriptions" plugin.
         return document.querySelector('.wcsatt-options-product:not(.wcsatt-options-product--hidden) .subscription-option input[type="radio"]:checked') !== null
             || document.querySelector('.wcsatt-options-prompt-label-subscription input[type="radio"]:checked') !== null; // grouped
@@ -106,7 +119,7 @@ class SingleProductBootstap {
                 this.gateway.ajax.change_cart.endpoint,
                 this.gateway.ajax.change_cart.nonce,
             ),
-            document.querySelector('form.cart'),
+            this.form(),
             this.errorHandler,
         );
 
