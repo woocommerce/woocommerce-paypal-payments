@@ -178,6 +178,19 @@ class VaultingModule implements ModuleInterface {
 			}
 		);
 
+		/**
+		 * Allows running migration externally via `do_action('pcp_migrate_payment_tokens')`.
+		 */
+		add_action(
+			'pcp_migrate_payment_tokens',
+			function() use ( $container ) {
+				$logger = $container->get( 'woocommerce.logger.woocommerce' );
+				assert( $logger instanceof LoggerInterface );
+
+				$this->migrate_payment_tokens( $logger );
+			}
+		);
+
 		add_action(
 			'woocommerce_paypal_payments_payment_tokens_migration',
 			function( int $customer_id ) use ( $container ) {
