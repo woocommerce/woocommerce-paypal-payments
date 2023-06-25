@@ -278,6 +278,15 @@ class WCGatewayModule implements ModuleInterface {
 				$settings->set( 'products_dcc_enabled', false );
 				$settings->set( 'products_pui_enabled', false );
 				$settings->persist();
+
+				// Update caches.
+				$dcc_status = $c->get( 'wcgateway.helper.dcc-product-status' );
+				assert( $dcc_status instanceof DCCProductStatus );
+				$dcc_status->dcc_is_active();
+
+				$pui_status = $c->get( 'wcgateway.pay-upon-invoice-product-status' );
+				assert( $pui_status instanceof PayUponInvoiceProductStatus );
+				$pui_status->pui_is_active();
 			}
 		);
 
