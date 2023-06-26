@@ -11,6 +11,12 @@ class SingleProductBootstap {
         this.errorHandler = errorHandler;
         this.mutationObserver = new MutationObserver(this.handleChange.bind(this));
         this.formSelector = 'form.cart';
+
+        if (this.renderer && this.renderer.smartButtonsOptions) {
+            this.renderer.smartButtonsOptions.onInit = () => {
+                this.handleChange();
+            };
+        }
     }
 
     form() {
@@ -19,6 +25,7 @@ class SingleProductBootstap {
 
     handleChange() {
         if (!this.shouldRender()) {
+            this.renderer.disableSmartButtons();
             hide(this.gateway.button.wrapper, this.formSelector);
             hide(this.gateway.messages.wrapper);
             return;
@@ -26,7 +33,8 @@ class SingleProductBootstap {
 
         this.render();
 
-        show(this.gateway.button.wrapper, this.formSelector);
+        this.renderer.enableSmartButtons();
+        show(this.gateway.button.wrapper);
         show(this.gateway.messages.wrapper);
 
         this.handleButtonStatus();
@@ -34,13 +42,14 @@ class SingleProductBootstap {
 
     handleButtonStatus() {
         if (!this.shouldEnable()) {
+            this.renderer.disableSmartButtons();
             disable(this.gateway.button.wrapper, this.formSelector);
             disable(this.gateway.messages.wrapper);
             return;
         }
+        this.renderer.enableSmartButtons();
         enable(this.gateway.button.wrapper);
         enable(this.gateway.messages.wrapper);
-        this.messages.renderWithAmount(this.priceAmount())
     }
 
     init() {
@@ -50,7 +59,15 @@ class SingleProductBootstap {
             return;
         }
 
-        form.addEventListener('change', this.handleChange.bind(this));
+        form.addEventListener('change', () => {
+            this.handleChange();
+
+            setTimeout(() => { // Wait for the DOM to be fully updated
+                // For the moment renderWithAmount should only be done here to prevent undesired side effects due to priceAmount()
+                // not being correctly formatted in some cases, can be moved to handleButtonStatus() once this issue is fixed
+                this.messages.renderWithAmount(this.priceAmount());
+            }, 100);
+        });
         this.mutationObserver.observe(form, { childList: true, subtree: true });
 
         const addToCartButton = form.querySelector('.single_add_to_cart_button');
@@ -65,12 +82,12 @@ class SingleProductBootstap {
         }
 
         this.render();
-        this.handleButtonStatus();
+        this.handleChange();
     }
 
     shouldRender() {
         return this.form() !== null
-            && !this.isDisabledReasonExternalPlugins();
+            && !this.isWcsattSubscriptionMode();
     }
 
     shouldEnable() {
@@ -113,7 +130,7 @@ class SingleProductBootstap {
         return !price || price === 0;
     }
 
-    isDisabledReasonExternalPlugins() {
+    isWcsattSubscriptionMode() {
         // Check "All products for subscriptions" plugin.
         return document.querySelector('.wcsatt-options-product:not(.wcsatt-options-product--hidden) .subscription-option input[type="radio"]:checked') !== null
             || document.querySelector('.wcsatt-options-prompt-label-subscription input[type="radio"]:checked') !== null; // grouped

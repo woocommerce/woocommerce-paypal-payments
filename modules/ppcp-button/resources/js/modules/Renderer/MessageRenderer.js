@@ -16,7 +16,7 @@ class MessageRenderer {
             style: this.config.style
         };
 
-        if (this.isOptionsFingerprintEqual(options)) {
+        if (this.optionsEqual(options)) {
             return;
         }
 
@@ -28,7 +28,6 @@ class MessageRenderer {
     }
 
     renderWithAmount(amount) {
-
         if (! this.shouldRender()) {
             return;
         }
@@ -39,7 +38,7 @@ class MessageRenderer {
             style: this.config.style
         };
 
-        if (this.isOptionsFingerprintEqual(options)) {
+        if (this.optionsEqual(options)) {
             return;
         }
 
@@ -54,7 +53,7 @@ class MessageRenderer {
         paypal.Messages(options).render(this.config.wrapper);
     }
 
-    isOptionsFingerprintEqual(options) {
+    optionsEqual(options) {
         const fingerprint = JSON.stringify(options);
 
         if (this.optionsFingerprint === fingerprint) {
