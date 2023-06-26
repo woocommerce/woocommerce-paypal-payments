@@ -18,20 +18,15 @@ export const setEnabled = (selectorOrElement, enable, form = null) => {
 
     if (enable) {
         jQuery(element).css({
-            'cursor': '',
-            '-webkit-filter': '',
-            'filter': '',
-        } )
+                'cursor': '',
+                '-webkit-filter': '',
+                'filter': '',
+            } )
             .off('mouseup')
             .find('> *')
             .css('pointer-events', '');
     } else {
-        jQuery(element).css( {
-            'cursor': '',
-            '-webkit-filter': '',
-            'filter': '',
-        } )
-            .css({
+        jQuery(element).css({
                 'cursor': 'not-allowed',
                 '-webkit-filter': 'grayscale(100%)',
                 'filter': 'grayscale(100%)',
