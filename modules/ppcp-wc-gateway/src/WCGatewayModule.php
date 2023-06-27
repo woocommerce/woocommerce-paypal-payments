@@ -39,6 +39,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\GatewayWithoutPayPalAdminNotice;
+use WooCommerce\PayPalCommerce\WcGateway\Notice\UnsupportedCurrencyAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\HeaderRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
@@ -195,6 +196,13 @@ class WCGatewayModule implements ModuleInterface {
 				$connect_message = $notice->connect_message();
 				if ( $connect_message ) {
 					$notices[] = $connect_message;
+				}
+
+				$notice = $c->get( 'wcgateway.notice.currency-unsupported' );
+				assert( $notice instanceof UnsupportedCurrencyAdminNotice );
+				$unsupported_currency_message = $notice->unsupported_currency_message();
+				if ( $unsupported_currency_message ) {
+					$notices[] = $unsupported_currency_message;
 				}
 
 				foreach ( array(
