@@ -25,7 +25,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 	$settings = $container->get( 'wcgateway.settings' );
 	assert( $settings instanceof Settings );
 
-	$vault_enabled = false;//$settings->has( 'vault_enabled' ) && $settings->get( 'vault_enabled' );
+	$vault_enabled = $settings->has( 'vault_enabled' ) && $settings->get( 'vault_enabled' );
 
 	$pay_later_messaging_enabled_label = $vault_enabled
 		? __( "You have PayPal vaulting enabled, that's why Pay Later options are unavailable now. You cannot use both features at the same time.", 'woocommerce-paypal-payments' )
