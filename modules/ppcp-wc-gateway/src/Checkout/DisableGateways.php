@@ -82,8 +82,11 @@ class DisableGateways {
 			unset( $methods[ CreditCardGateway::ID ] );
 		}
 
-		if ( ! $this->settings_status->is_smart_button_enabled_for_location( 'checkout' ) && ! $this->session_handler->order() && is_checkout() ) {
-			unset( $methods[ PayPalGateway::ID ] );
+		if ( ! $this->settings_status->is_smart_button_enabled_for_location( 'checkout' ) ) {
+			unset( $methods[ CardButtonGateway::ID ] );
+			if ( ! $this->session_handler->order() && is_checkout() ) {
+				unset( $methods[ PayPalGateway::ID ] );
+			}
 		}
 
 		if ( ! $this->needs_to_disable_gateways() ) {
