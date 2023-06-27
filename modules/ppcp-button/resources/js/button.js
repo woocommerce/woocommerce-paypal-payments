@@ -121,10 +121,22 @@ const bootstrap = () => {
             return actions.reject();
         }
     };
-    const onSmartButtonsInit = () => {
-        buttonsSpinner.unblock();
+
+    let smartButtonsOptions = {
+        onInit: null,
+        init: function (actions) {
+            this.actions = actions;
+            if (typeof this.onInit === 'function') {
+                this.onInit();
+            }
+        }
     };
-    const renderer = new Renderer(creditCardRenderer, PayPalCommerceGateway, onSmartButtonClick, onSmartButtonsInit);
+
+    const onSmartButtonsInit = (data, actions) => {
+        buttonsSpinner.unblock();
+        smartButtonsOptions.init(actions);
+    };
+    const renderer = new Renderer(creditCardRenderer, PayPalCommerceGateway, onSmartButtonClick, onSmartButtonsInit, smartButtonsOptions);
     const messageRenderer = new MessageRenderer(PayPalCommerceGateway.messages);
     const context = PayPalCommerceGateway.context;
     if (context === 'mini-cart' || context === 'product') {

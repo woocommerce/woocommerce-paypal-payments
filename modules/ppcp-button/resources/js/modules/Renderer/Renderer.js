@@ -1,11 +1,12 @@
 import merge from "deepmerge";
 
 class Renderer {
-    constructor(creditCardRenderer, defaultSettings, onSmartButtonClick, onSmartButtonsInit) {
+    constructor(creditCardRenderer, defaultSettings, onSmartButtonClick, onSmartButtonsInit, smartButtonsOptions) {
         this.defaultSettings = defaultSettings;
         this.creditCardRenderer = creditCardRenderer;
         this.onSmartButtonClick = onSmartButtonClick;
         this.onSmartButtonsInit = onSmartButtonsInit;
+        this.smartButtonsOptions = smartButtonsOptions;
 
         this.renderedSources = new Set();
     }
@@ -105,6 +106,20 @@ class Renderer {
 
     enableCreditCardFields() {
         this.creditCardRenderer.enableFields();
+    }
+
+    disableSmartButtons() {
+        if (!this.smartButtonsOptions || !this.smartButtonsOptions.actions) {
+            return;
+        }
+        this.smartButtonsOptions.actions.disable();
+    }
+
+    enableSmartButtons() {
+        if (!this.smartButtonsOptions || !this.smartButtonsOptions.actions) {
+            return;
+        }
+        this.smartButtonsOptions.actions.enable();
     }
 }
 
