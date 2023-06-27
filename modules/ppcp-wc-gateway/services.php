@@ -57,6 +57,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\GatewayWithoutPayPalAdminNotice;
+use WooCommerce\PayPalCommerce\WcGateway\Notice\UnsupportedCurrencyAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
@@ -208,6 +209,12 @@ return array(
 		$settings = $container->get( 'wcgateway.settings' );
 		return new ConnectAdminNotice( $state, $settings );
 	},
+	'wcgateway.notice.currency-unsupported'                => static function ( ContainerInterface $container ): UnsupportedCurrencyAdminNotice {
+		$state = $container->get( 'onboarding.state' );
+		$shop_currency = $container->get( 'api.shop.currency' );
+		$supported_currencies = $container->get( 'api.supported-currencies' );
+		return new UnsupportedCurrencyAdminNotice( $state, $shop_currency, $supported_currencies );
+	},
 	'wcgateway.notice.dcc-without-paypal'                  => static function ( ContainerInterface $container ): GatewayWithoutPayPalAdminNotice {
 		return new GatewayWithoutPayPalAdminNotice(
 			CreditCardGateway::ID,
@@ -223,7 +230,8 @@ return array(
 			$container->get( 'onboarding.state' ),
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'wcgateway.is-wc-payments-page' ),
-			$container->get( 'wcgateway.is-ppcp-settings-page' )
+			$container->get( 'wcgateway.is-ppcp-settings-page' ),
+			$container->get( 'wcgateway.settings.status' )
 		);
 	},
 	'wcgateway.notice.authorize-order-action'              =>

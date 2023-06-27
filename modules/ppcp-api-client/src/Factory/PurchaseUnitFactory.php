@@ -112,7 +112,7 @@ class PurchaseUnitFactory {
 		$items    = array_filter(
 			$this->item_factory->from_wc_order( $order ),
 			function ( Item $item ): bool {
-				return $item->unit_amount()->value() > 0;
+				return $item->unit_amount()->value() >= 0;
 			}
 		);
 		$shipping = $this->shipping_factory->from_wc_order( $order );
@@ -168,7 +168,7 @@ class PurchaseUnitFactory {
 		$items  = array_filter(
 			$this->item_factory->from_wc_cart( $cart ),
 			function ( Item $item ): bool {
-				return $item->unit_amount()->value() > 0;
+				return $item->unit_amount()->value() >= 0;
 			}
 		);
 

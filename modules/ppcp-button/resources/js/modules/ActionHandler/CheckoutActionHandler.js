@@ -102,6 +102,9 @@ class CheckoutActionHandler {
                         } else {
                             errorHandler.message(data.data.message);
                         }
+
+                        // fire WC event for other plugins
+                        jQuery( document.body ).trigger( 'checkout_error' , [ errorHandler.currentHtml() ] );
                     }
 
                     throw {type: 'create-order-error', data: data.data};
