@@ -893,6 +893,10 @@ class SmartButton implements SmartButtonInterface {
 					'credit_card_number'       => '',
 					'cvv'                      => '',
 					'mm_yy'                    => __( 'MM/YY', 'woocommerce-paypal-payments' ),
+					'fields_empty'             => __(
+						'Card payment details are missing. Please fill in all required fields.',
+						'woocommerce-paypal-payments'
+					),
 					'fields_not_valid'         => __(
 						'Unfortunately, your credit card details are not valid.',
 						'woocommerce-paypal-payments'
