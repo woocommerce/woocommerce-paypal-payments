@@ -18,6 +18,12 @@ trait ContextTrait {
 	 */
 	protected function context(): string {
 		if ( is_product() || wc_post_content_has_shortcode( 'product_page' ) ) {
+
+			// Detection if "woocommerce-one-page-checkout" is enabled for this product.
+			if ( is_callable( 'is_wcopc_checkout' ) && is_wcopc_checkout( get_the_ID() ) ) {
+				return 'checkout';
+			}
+
 			return 'product';
 		}
 
