@@ -19,7 +19,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentMethod;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
@@ -32,7 +31,6 @@ use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Subscription\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcGateway\CardBillingMode;
-use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
@@ -448,7 +446,6 @@ class CreateOrderEndpoint implements EndpointInterface {
 				$shipping_preference,
 				$payer,
 				null,
-				$this->payment_method(),
 				'',
 				$action
 			);
@@ -471,8 +468,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 					array( $this->purchase_unit ),
 					$shipping_preference,
 					$payer,
-					null,
-					$this->payment_method()
+					null
 				);
 			}
 
@@ -534,24 +530,6 @@ class CreateOrderEndpoint implements EndpointInterface {
 
 		$this->session_handler->replace_bn_code( $bn_code );
 		$this->api_endpoint->with_bn_code( $bn_code );
-	}
-
-	/**
-	 * Returns the PaymentMethod object for the order.
-	 *
-	 * @return PaymentMethod
-	 */
-	private function payment_method() : PaymentMethod {
-		try {
-			$payee_preferred = $this->settings->has( 'payee_preferred' ) && $this->settings->get( 'payee_preferred' ) ?
-				PaymentMethod::PAYEE_PREFERRED_IMMEDIATE_PAYMENT_REQUIRED
-				: PaymentMethod::PAYEE_PREFERRED_UNRESTRICTED;
-		} catch ( NotFoundException $exception ) {
-			$payee_preferred = PaymentMethod::PAYEE_PREFERRED_UNRESTRICTED;
-		}
-
-		$payment_method = new PaymentMethod( $payee_preferred );
-		return $payment_method;
 	}
 
 	/**
