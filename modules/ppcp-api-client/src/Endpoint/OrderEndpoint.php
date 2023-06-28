@@ -247,16 +247,9 @@ class OrderEndpoint {
 
 		$response = $this->request( $url, $args );
 		if ( is_wp_error( $response ) ) {
-			$error = new RuntimeException(
-				__( 'Could not create order.', 'woocommerce-paypal-payments' )
-			);
-			$this->logger->log(
-				'warning',
-				$error->getMessage(),
-				array(
-					'args'     => $args,
-					'response' => $response,
-				)
+			$error = new RuntimeException( 'Could not create order.' );
+			$this->logger->warning(
+				$error->getMessage()
 			);
 			throw $error;
 		}
@@ -267,15 +260,10 @@ class OrderEndpoint {
 				$json,
 				$status_code
 			);
-			$this->logger->log(
-				'warning',
+			$this->logger->warning(
 				sprintf(
 					'Failed to create order. PayPal API response: %1$s',
 					$error->getMessage()
-				),
-				array(
-					'args'     => $args,
-					'response' => $response,
 				)
 			);
 			throw $error;
