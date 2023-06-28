@@ -91,13 +91,6 @@ class ApplicationContext {
 	private $cancel_url;
 
 	/**
-	 * The payment method.
-	 *
-	 * @var null
-	 */
-	private $payment_method;
-
-	/**
 	 * ApplicationContext constructor.
 	 *
 	 * @param string $return_url The return URL.
@@ -136,9 +129,6 @@ class ApplicationContext {
 		$this->landing_page        = $landing_page;
 		$this->shipping_preference = $shipping_preference;
 		$this->user_action         = $user_action;
-
-		// Currently we have not implemented the payment method.
-		$this->payment_method = null;
 	}
 
 	/**
@@ -205,15 +195,6 @@ class ApplicationContext {
 	}
 
 	/**
-	 * Returns the payment method.
-	 *
-	 * @return PaymentMethod|null
-	 */
-	public function payment_method() {
-		return $this->payment_method;
-	}
-
-	/**
 	 * Returns the object as array.
 	 *
 	 * @return array
@@ -222,9 +203,6 @@ class ApplicationContext {
 		$data = array();
 		if ( $this->user_action() ) {
 			$data['user_action'] = $this->user_action();
-		}
-		if ( $this->payment_method() ) {
-			$data['payment_method'] = $this->payment_method();
 		}
 		if ( $this->shipping_preference() ) {
 			$data['shipping_preference'] = $this->shipping_preference();
