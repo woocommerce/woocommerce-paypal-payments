@@ -19,8 +19,9 @@ trait ContextTrait {
 	protected function context(): string {
 		if ( is_product() || wc_post_content_has_shortcode( 'product_page' ) ) {
 
-			// Detection if "woocommerce-one-page-checkout" is enabled for this product.
-			if ( is_callable( 'is_wcopc_checkout' ) && is_wcopc_checkout( get_the_ID() ) ) {
+			// Do this check here instead of reordering outside conditions.
+			// In order to have more control over the context.
+			if ( ( is_checkout() ) && ! $this->is_paypal_continuation() ) {
 				return 'checkout';
 			}
 
