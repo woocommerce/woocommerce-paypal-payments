@@ -851,6 +851,7 @@ class SmartButton implements SmartButtonInterface {
 				),
 			),
 			'subscription_plan_id'              => $this->subscription_helper->paypal_subscription_id(),
+			'variable_paypal_subscription_variations' => $this->subscription_helper->variable_paypal_subscription_variations(),
 			'enforce_vault'                     => $this->has_subscriptions(),
 			'can_save_vault_token'              => $this->can_save_vault_token(),
 			'is_free_trial_cart'                => $is_free_trial_cart,

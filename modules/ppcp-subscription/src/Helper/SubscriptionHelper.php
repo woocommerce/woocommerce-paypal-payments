@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Subscription\Helper;
 
 use WC_Product;
+use WC_Product_Subscription_Variation;
 use WC_Subscriptions_Product;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
@@ -216,6 +217,36 @@ class SubscriptionHelper {
 		}
 
 		return '';
+	}
+
+	public function variable_paypal_subscription_variations(): array {
+		$variations = array();
+		if ( ! $this->current_product_is_subscription() ) {
+			return $variations;
+		}
+
+		$product = wc_get_product();
+		assert( $product instanceof WC_Product );
+		if ( $product->get_type() !== 'variable-subscription' ) {
+			return $variations;
+		}
+
+		$variation_ids = $product->get_children();
+		foreach ($variation_ids as $id) {
+			$product = wc_get_product($id);
+			if(! is_a($product, WC_Product_Subscription_Variation::class )) {
+				continue;
+			}
+
+			$subscription_plan = $product->get_meta('ppcp_subscription_plan') ?? '';
+			$variations[] = array(
+				'id' => $product->get_id(),
+				'attributes' => $product->get_attributes(),
+				'subscription_plan' => $subscription_plan['id'] ?? '',
+			);
+		}
+
+		return $variations;
 	}
 
 	/**

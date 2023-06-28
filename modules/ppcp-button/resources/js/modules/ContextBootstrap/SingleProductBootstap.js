@@ -13,6 +13,25 @@ class SingleProductBootstap {
         this.mutationObserver = new MutationObserver(this.handleChange.bind(this));
     }
 
+    variations() {
+        if (!this.hasVariations()) {
+            return null;
+        }
+
+        const attributes = [...document.querySelector('form.cart')?.querySelectorAll("[name^='attribute_']")].map(
+            (element) => {
+                return {
+                    value: element.value,
+                    name: element.name
+                }
+            }
+        );
+        return attributes;
+    }
+
+    hasVariations() {
+        return document.querySelector('form.cart')?.classList.contains('variations_form');
+    }
 
     handleChange() {
         const shouldRender = this.shouldRender();
@@ -119,7 +138,7 @@ class SingleProductBootstap {
             PayPalCommerceGateway.data_client_id.has_subscriptions
             && PayPalCommerceGateway.data_client_id.paypal_subscriptions_enabled
         ) {
-            this.renderer.render(actionHandler.subscriptionsConfiguration());
+            this.renderer.render(actionHandler.subscriptionsConfiguration(this.variations()));
             return;
         }
 

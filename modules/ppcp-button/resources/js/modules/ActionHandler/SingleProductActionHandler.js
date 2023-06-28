@@ -18,11 +18,30 @@ class SingleProductActionHandler {
         this.errorHandler = errorHandler;
     }
 
-    subscriptionsConfiguration() {
+    getPlanIdFromVariation = (variation) => {
+        let subscription_plan = '';
+        PayPalCommerceGateway.variable_paypal_subscription_variations.forEach((element) => {
+            let obj =  {};
+            variation.forEach(({name, value}) => {
+                Object.assign(obj, {[name.replace('attribute_', '')]: value});
+            })
+
+            if(JSON.stringify(obj) === JSON.stringify(element.attributes) && element.subscription_plan !== '') {
+                subscription_plan = element.subscription_plan;
+            }
+        });
+
+        return subscription_plan;
+    }
+
+    subscriptionsConfiguration(selected_variation = null) {
+        const subscription_plan = selected_variation !== null ? this.getPlanIdFromVariation(selected_variation) : this.config.subscription_plan_id
+        console.log(subscription_plan)
+
         return {
             createSubscription: (data, actions) => {
                 return actions.subscription.create({
-                    'plan_id': this.config.subscription_plan_id
+                    'plan_id': subscription_plan
                 });
             },
             onApprove: (data, actions) => {
