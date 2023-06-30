@@ -1,4 +1,5 @@
 import Product from '../Entity/Product';
+import BookingProduct from "../Entity/BookingProduct";
 import onApprove from '../OnApproveHandler/onApproveForContinue';
 import {payerData} from "../Helper/PayerData";
 import {PaymentMethods} from "../Helper/CheckoutMethodState";
@@ -80,33 +81,51 @@ class SingleProductActionHandler {
 
     createOrder()
     {
-        var getProducts = null;
-        if (! this.isGroupedProduct() ) {
-            getProducts = () => {
-                const id = document.querySelector('[name="add-to-cart"]').value;
-                const qty = document.querySelector('[name="quantity"]').value;
-                const variations = this.variations();
-                return [new Product(id, qty, variations)];
-            }
-        } else {
-            getProducts = () => {
-                const products = [];
-                this.formElement.querySelectorAll('input[type="number"]').forEach((element) => {
-                    if (! element.value) {
-                        return;
+        let getProducts = (() => {
+            if ( this.isBookingProduct() ) {
+                return () => {
+
+                    const getPrefixedFields = (formElement, prefix) => {
+                        let fields = {};
+                        for(const element of formElement.elements) {
+                            if( element.name.startsWith(prefix) ) {
+                                fields[element.name] = element.value;
+                            }
+                        }
+                        return fields;
                     }
-                    const elementName = element.getAttribute('name').match(/quantity\[([\d]*)\]/);
-                    if (elementName.length !== 2) {
-                        return;
-                    }
-                    const id = parseInt(elementName[1]);
-                    const quantity = parseInt(element.value);
-                    products.push(new Product(id, quantity, null));
-                })
-                return products;
+
+                    const id = document.querySelector('[name="add-to-cart"]').value;
+                    return [new BookingProduct(id, 1, getPrefixedFields(this.formElement, "wc_bookings_field"))];
+                }
+            } else if ( this.isGroupedProduct() ) {
+                return () => {
+                    const products = [];
+                    this.formElement.querySelectorAll('input[type="number"]').forEach((element) => {
+                        if (! element.value) {
+                            return;
+                        }
+                        const elementName = element.getAttribute('name').match(/quantity\[([\d]*)\]/);
+                        if (elementName.length !== 2) {
+                            return;
+                        }
+                        const id = parseInt(elementName[1]);
+                        const quantity = parseInt(element.value);
+                        products.push(new Product(id, quantity, null));
+                    })
+                    return products;
+                }
+            } else {
+                return () => {
+                    const id = document.querySelector('[name="add-to-cart"]').value;
+                    const qty = document.querySelector('[name="quantity"]').value;
+                    const variations = this.variations();
+                    return [new Product(id, qty, variations)];
+                }
             }
-        }
-        const createOrder = (data, actions) => {
+        })();
+
+        return (data, actions) => {
             this.errorHandler.clear();
 
             const onResolve = (purchase_units) => {
@@ -139,19 +158,16 @@ class SingleProductActionHandler {
                 });
             };
 
-            const promise = this.updateCart.update(onResolve, getProducts());
-            return promise;
+            return this.updateCart.update(onResolve, getProducts());
         };
-        return createOrder;
     }
 
     variations()
     {
-
         if (! this.hasVariations()) {
             return null;
         }
-        const attributes = [...this.formElement.querySelectorAll("[name^='attribute_']")].map(
+        return [...this.formElement.querySelectorAll("[name^='attribute_']")].map(
             (element) => {
             return {
                     value:element.value,
@@ -159,7 +175,6 @@ class SingleProductActionHandler {
                 }
             }
         );
-        return attributes;
     }
 
     hasVariations()
@@ -171,5 +186,12 @@ class SingleProductActionHandler {
     {
         return this.formElement.classList.contains('grouped_form');
     }
+
+    isBookingProduct()
+    {
+        // detection for "woocommerce-bookings" plugin
+        return !!this.formElement.querySelector('.wc-booking-product-id');
+    }
+
 }
 export default SingleProductActionHandler;
