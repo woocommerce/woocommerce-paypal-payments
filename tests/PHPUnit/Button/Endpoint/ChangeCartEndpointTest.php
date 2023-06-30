@@ -26,13 +26,8 @@ class ChangeCartEndpointTest extends TestCase
                 ->once()
                 ->with($singleProductArray['id'])
                 ->andReturn($products[$productKey]);
-            if (! $singleProductArray['__test_data_is_variation']) {
-                $cart
-                    ->expects('add_to_cart')
-                    ->with($singleProductArray['id'], $singleProductArray['quantity'])
-                    ->andReturnTrue();
-            }
-            if ($singleProductArray['__test_data_is_variation']) {
+
+            if ($singleProductArray['__test_data_is_variation'] ?? false) {
                 $dataStore
                     ->expects('find_matching_product_variation')
                     ->with($products[$productKey], $singleProductArray['__test_data_variation_map'])
@@ -47,7 +42,34 @@ class ChangeCartEndpointTest extends TestCase
                     )
                     ->andReturnTrue();
             }
-        }
+			elseif ($singleProductArray['__test_data_is_booking'] ?? false) {
+
+				$processedBooking = array();
+				foreach ($singleProductArray['booking'] as $key => $value) {
+					$processedBooking['_processed_' . $key] = $value;
+				}
+
+				expect('wc_bookings_get_posted_data')
+					->with($singleProductArray['booking'])
+					->andReturn($processedBooking);
+				$cart
+					->expects('add_to_cart')
+					->with(
+						$singleProductArray['id'],
+						$singleProductArray['quantity'],
+						0,
+						array(),
+						array('booking' => $processedBooking)
+					)
+					->andReturnTrue();
+			}
+			else {
+				$cart
+					->expects('add_to_cart')
+					->with($singleProductArray['id'], $singleProductArray['quantity'])
+					->andReturnTrue();
+			}
+		}
         $cart
             ->expects('empty_cart')
             ->with(false);
@@ -110,14 +132,33 @@ class ChangeCartEndpointTest extends TestCase
             ->with('variable')
             ->andReturn(true);
 
-        $testData = [
+		$bookingData = [
+			'_duration' => 2,
+			'_start_day' => 12,
+			'_start_month' => 6,
+			'_start_year' => 2023,
+		];
+
+		$bookingProduct = Mockery::mock(\WC_Product::class);
+		$bookingProduct
+			->shouldReceive('get_id')
+			->andReturn(3);
+		$bookingProduct
+			->shouldReceive('is_type')
+			->with('booking')
+			->andReturn(true);
+		$bookingProduct
+			->shouldReceive('is_type')
+			->with('variable')
+			->andReturn(false);
+
+		$testData = [
             'default' => [
                 [
                     'products' => [
                         [
                             'quantity' => 2,
                             'id' => 1,
-                            '__test_data_is_variation' => false,
                         ],
                     ]
                 ],
@@ -129,43 +170,65 @@ class ChangeCartEndpointTest extends TestCase
                 ]
             ],
             'variation' => [
-            [
-                'products' => [
-                    [
-                        'quantity' => 2,
-                        'id' => 1,
-                        '__test_data_is_variation' => false,
-                    ],
-                    [
-                        'quantity' => 2,
-                        'id' => 2,
-                        'variations' => [
-                            [
-                                'name' => 'variation-1',
-                                'value' => 'abc',
-                            ],
-                            [
-                                'name' => 'variation-2',
-                                'value' => 'def',
-                            ],
-                        ],
-                        '__test_data_is_variation' => true,
-                        '__test_data_variation_id' => 123,
-                        '__test_data_variation_map' => [
-                            'variation-1' => 'abc',
-                            'variation-2' => 'def',
-                        ]
-                    ],
-                ]
-            ],
-            [
-                $defaultProduct,
-                $variationProduct,
-            ],
-            [
-                [1, 2]
-            ]
-        ]
+				[
+					'products' => [
+						[
+							'quantity' => 2,
+							'id' => 1,
+						],
+						[
+							'quantity' => 2,
+							'id' => 2,
+							'variations' => [
+								[
+									'name' => 'variation-1',
+									'value' => 'abc',
+								],
+								[
+									'name' => 'variation-2',
+									'value' => 'def',
+								],
+							],
+							'__test_data_is_variation' => true,
+							'__test_data_variation_id' => 123,
+							'__test_data_variation_map' => [
+								'variation-1' => 'abc',
+								'variation-2' => 'def',
+							]
+						],
+					]
+				],
+				[
+					$defaultProduct,
+					$variationProduct,
+				],
+				[
+					[1, 2]
+				]
+			],
+			'booking' => [
+				[
+					'products' => [
+						[
+							'quantity' => 2,
+							'id' => 1,
+						],
+						[
+							'quantity' => 1,
+							'id' => 3,
+							'booking' => $bookingData,
+							'__test_data_is_booking' => true,
+						],
+					]
+				],
+				[
+					$defaultProduct,
+					$bookingProduct,
+				],
+				[
+					[1, 3]
+				]
+			],
         ];
 
         return $testData;
