@@ -88,6 +88,10 @@ class ChangeCartEndpointTest extends TestCase
         $defaultProduct
             ->shouldReceive('get_id')
             ->andReturn(1);
+		$defaultProduct
+			->shouldReceive('is_type')
+			->with('booking')
+			->andReturn(false);
         $defaultProduct
             ->shouldReceive('is_type')
             ->with('variable')
@@ -97,6 +101,10 @@ class ChangeCartEndpointTest extends TestCase
         $variationProduct
             ->shouldReceive('get_id')
             ->andReturn(2);
+		$variationProduct
+			->shouldReceive('is_type')
+			->with('booking')
+			->andReturn(false);
         $variationProduct
             ->shouldReceive('is_type')
             ->with('variable')
