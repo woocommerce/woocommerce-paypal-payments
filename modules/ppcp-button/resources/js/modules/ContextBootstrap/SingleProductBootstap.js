@@ -96,7 +96,8 @@ class SingleProductBootstap {
 
         return this.shouldRender()
             && !this.priceAmountIsZero()
-            && ((null === addToCartButton) || !addToCartButton.classList.contains('disabled'));
+            && ((null === addToCartButton) || !addToCartButton.classList.contains('disabled'))
+            && this.gateway.button.is_disabled !== true;
     }
 
     priceAmount() {

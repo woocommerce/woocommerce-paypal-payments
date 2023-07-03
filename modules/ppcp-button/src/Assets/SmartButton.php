@@ -860,6 +860,7 @@ class SmartButton implements SmartButtonInterface {
 				'wrapper'           => '#ppc-button-' . PayPalGateway::ID,
 				'mini_cart_wrapper' => '#ppc-button-minicart',
 				'cancel_wrapper'    => '#ppcp-cancel',
+				'is_disabled'		=> $this->is_button_disabled(),
 				'mini_cart_style'   => array(
 					'layout'  => $this->style_for_context( 'layout', 'mini-cart' ),
 					'color'   => $this->style_for_context( 'color', 'mini-cart' ),
@@ -1346,6 +1347,23 @@ class SmartButton implements SmartButtonInterface {
 		return apply_filters(
 			'woocommerce_paypal_payments_product_supports_payment_request_button',
 			! $product->is_type( array( 'external', 'grouped' ) ) && $in_stock,
+			$product
+		);
+	}
+
+	protected function is_button_disabled(): bool {
+		if ( 'product' !== $this->context() ) {
+			return false;
+		}
+
+		$product = wc_get_product();
+
+		/**
+		 * Allows to decide if the button should be disabled for a given product
+		 */
+		return apply_filters(
+			'woocommerce_paypal_payments_product_button_disabled',
+			false,
 			$product
 		);
 	}
