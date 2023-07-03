@@ -1,5 +1,6 @@
 import CartActionHandler from '../ActionHandler/CartActionHandler';
 import {setVisible} from "../Helper/Hiding";
+import {disable} from "../Helper/ButtonDisabler";
 
 class CartBootstrap {
     constructor(gateway, renderer, errorHandler) {
@@ -14,6 +15,13 @@ class CartBootstrap {
         }
 
         this.render();
+
+        if (!this.shouldEnable()) {
+            this.renderer.disableSmartButtons();
+            disable(this.gateway.button.wrapper);
+            disable(this.gateway.messages.wrapper);
+            return;
+        }
 
         jQuery(document.body).on('updated_cart_totals updated_checkout', () => {
             this.render();
@@ -42,6 +50,11 @@ class CartBootstrap {
 
     shouldRender() {
         return document.querySelector(this.gateway.button.wrapper) !== null;
+    }
+
+    shouldEnable() {
+        return this.shouldRender()
+            && this.gateway.button.is_disabled !== true;
     }
 
     render() {

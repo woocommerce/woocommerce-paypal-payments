@@ -1357,20 +1357,43 @@ class SmartButton implements SmartButtonInterface {
 	 * @return bool
 	 */
 	protected function is_button_disabled(): bool {
-		if ( 'product' !== $this->context() ) {
-			return false;
+		$context = $this->context();
+
+		if ( 'product' === $context ) {
+			$product = wc_get_product();
+
+			/**
+			 * Allows to decide if the button should be disabled for a given product
+			 */
+			if ( ( $isDisabled = apply_filters(
+				'woocommerce_paypal_payments_product_button_disabled',
+				null,
+				$product )
+			) !== null) {
+				return $isDisabled;
+			}
+		} else {
+			$filterName = 'woocommerce_paypal_payments_'
+				. str_replace('-', '_', $context)
+				. '_button_disabled';
+
+			/**
+			 * Allows to decide if the button should be disabled in a given context
+			 */
+			if ( ( $isDisabled = apply_filters( $filterName, null ) ) !== null ) {
+				return $isDisabled;
+			}
 		}
 
-		$product = wc_get_product();
+		if ( ( $isDisabled = apply_filters(
+			'woocommerce_paypal_payments_button_disabled',
+			null,
+			$context
+		) ) !== null ) {
+			return $isDisabled;
+		}
 
-		/**
-		 * Allows to decide if the button should be disabled for a given product
-		 */
-		return apply_filters(
-			'woocommerce_paypal_payments_product_button_disabled',
-			false,
-			$product
-		);
+		return false;
 	}
 
 	/**

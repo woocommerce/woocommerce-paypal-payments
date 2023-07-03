@@ -5,6 +5,7 @@ import {
     isSavedCardSelected, ORDER_BUTTON_SELECTOR,
     PaymentMethods
 } from "../Helper/CheckoutMethodState";
+import {disable} from "../Helper/ButtonDisabler";
 
 class CheckoutBootstap {
     constructor(gateway, renderer, messages, spinner, errorHandler) {
@@ -19,6 +20,13 @@ class CheckoutBootstap {
 
     init() {
         this.render();
+
+        if (!this.shouldEnable()) {
+            this.renderer.disableSmartButtons();
+            disable(this.gateway.button.wrapper);
+            disable(this.gateway.messages.wrapper);
+            return;
+        }
 
         // Unselect saved card.
         // WC saves form values, so with our current UI it would be a bit weird
@@ -49,6 +57,11 @@ class CheckoutBootstap {
         }
 
         return document.querySelector(this.gateway.button.wrapper) !== null || document.querySelector(this.gateway.hosted_fields.wrapper) !== null;
+    }
+
+    shouldEnable() {
+        return this.shouldRender()
+            && this.gateway.button.is_disabled !== true;
     }
 
     render() {

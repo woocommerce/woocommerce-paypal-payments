@@ -1,4 +1,5 @@
 import CartActionHandler from '../ActionHandler/CartActionHandler';
+import {disable} from "../Helper/ButtonDisabler";
 
 class MiniCartBootstap {
     constructor(gateway, renderer, errorHandler) {
@@ -16,6 +17,13 @@ class MiniCartBootstap {
         );
         this.render();
 
+        if (!this.shouldEnable()) {
+            this.renderer.disableSmartButtons();
+            disable(this.gateway.button.wrapper);
+            disable(this.gateway.messages.wrapper);
+            return;
+        }
+
         jQuery(document.body).on('wc_fragments_loaded wc_fragments_refreshed', () => {
             this.render();
         });
@@ -24,6 +32,11 @@ class MiniCartBootstap {
     shouldRender() {
         return document.querySelector(this.gateway.button.mini_cart_wrapper) !== null
             || document.querySelector(this.gateway.hosted_fields.mini_cart_wrapper) !== null;
+    }
+
+    shouldEnable() {
+        return this.shouldRender()
+            && this.gateway.button.is_disabled !== true;
     }
 
     render() {
