@@ -857,11 +857,12 @@ class SmartButton implements SmartButtonInterface {
 			'bn_codes'                          => $this->bn_codes(),
 			'payer'                             => $this->payerData(),
 			'button'                            => array(
-				'wrapper'           => '#ppc-button-' . PayPalGateway::ID,
-				'mini_cart_wrapper' => '#ppc-button-minicart',
-				'cancel_wrapper'    => '#ppcp-cancel',
-				'is_disabled'       => $this->is_button_disabled(),
-				'mini_cart_style'   => array(
+				'wrapper'               => '#ppc-button-' . PayPalGateway::ID,
+				'is_disabled'           => $this->is_button_disabled(),
+				'mini_cart_wrapper'     => '#ppc-button-minicart',
+				'is_mini_cart_disabled' => $this->is_button_disabled( 'mini-cart' ),
+				'cancel_wrapper'        => '#ppcp-cancel',
+				'mini_cart_style'       => array(
 					'layout'  => $this->style_for_context( 'layout', 'mini-cart' ),
 					'color'   => $this->style_for_context( 'color', 'mini-cart' ),
 					'shape'   => $this->style_for_context( 'shape', 'mini-cart' ),
@@ -869,7 +870,7 @@ class SmartButton implements SmartButtonInterface {
 					'tagline' => $this->style_for_context( 'tagline', 'mini-cart' ),
 					'height'  => $this->settings->has( 'button_mini-cart_height' ) && $this->settings->get( 'button_mini-cart_height' ) ? $this->normalize_height( (int) $this->settings->get( 'button_mini-cart_height' ) ) : 35,
 				),
-				'style'             => array(
+				'style'                 => array(
 					'layout'  => $this->style_for_context( 'layout', $this->context() ),
 					'color'   => $this->style_for_context( 'color', $this->context() ),
 					'shape'   => $this->style_for_context( 'shape', $this->context() ),
@@ -1354,10 +1355,14 @@ class SmartButton implements SmartButtonInterface {
 	/**
 	 * Checks if PayPal buttons/messages should be rendered for the current page.
 	 *
+	 * @param string|null $context The context that should be checked, use default otherwise.
+	 *
 	 * @return bool
 	 */
-	protected function is_button_disabled(): bool {
-		$context = $this->context();
+	protected function is_button_disabled( string $context = null ): bool {
+		if ( null === $context ) {
+			$context = $this->context();
+		}
 
 		if ( 'product' === $context ) {
 			$product = wc_get_product();
@@ -1365,32 +1370,28 @@ class SmartButton implements SmartButtonInterface {
 			/**
 			 * Allows to decide if the button should be disabled for a given product
 			 */
-			if ( ( $isDisabled = apply_filters(
+			$is_disabled = apply_filters(
 				'woocommerce_paypal_payments_product_button_disabled',
 				null,
-				$product )
-			) !== null) {
-				return $isDisabled;
-			}
-		} else {
-			$filterName = 'woocommerce_paypal_payments_'
-				. str_replace('-', '_', $context)
-				. '_button_disabled';
+				$product
+			);
 
-			/**
-			 * Allows to decide if the button should be disabled in a given context
-			 */
-			if ( ( $isDisabled = apply_filters( $filterName, null ) ) !== null ) {
-				return $isDisabled;
+			if ( $is_disabled !== null ) {
+				return $is_disabled;
 			}
 		}
 
-		if ( ( $isDisabled = apply_filters(
+		/**
+		 * Allows to decide if the button should be disabled globally or on a given context
+		 */
+		$is_disabled = apply_filters(
 			'woocommerce_paypal_payments_button_disabled',
 			null,
 			$context
-		) ) !== null ) {
-			return $isDisabled;
+		);
+
+		if ( $is_disabled !== null ) {
+			return $is_disabled;
 		}
 
 		return false;

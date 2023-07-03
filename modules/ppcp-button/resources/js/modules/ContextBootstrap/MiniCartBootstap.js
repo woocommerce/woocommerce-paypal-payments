@@ -1,5 +1,5 @@
 import CartActionHandler from '../ActionHandler/CartActionHandler';
-import {disable} from "../Helper/ButtonDisabler";
+import {disable, enable} from "../Helper/ButtonDisabler";
 
 class MiniCartBootstap {
     constructor(gateway, renderer, errorHandler) {
@@ -16,17 +16,26 @@ class MiniCartBootstap {
             this.errorHandler,
         );
         this.render();
-
-        if (!this.shouldEnable()) {
-            this.renderer.disableSmartButtons();
-            disable(this.gateway.button.wrapper);
-            disable(this.gateway.messages.wrapper);
-            return;
-        }
+        this.handleButtonStatus();
 
         jQuery(document.body).on('wc_fragments_loaded wc_fragments_refreshed', () => {
             this.render();
+            this.handleButtonStatus();
         });
+
+        this.renderer.onButtonsInit(this.gateway.button.mini_cart_wrapper, () => {
+            this.handleButtonStatus();
+        }, true);
+    }
+
+    handleButtonStatus() {
+        if (!this.shouldEnable()) {
+            this.renderer.disableSmartButtons(this.gateway.button.mini_cart_wrapper);
+            disable(this.gateway.button.mini_cart_wrapper);
+            return;
+        }
+        this.renderer.enableSmartButtons(this.gateway.button.mini_cart_wrapper);
+        enable(this.gateway.button.mini_cart_wrapper);
     }
 
     shouldRender() {
@@ -36,7 +45,7 @@ class MiniCartBootstap {
 
     shouldEnable() {
         return this.shouldRender()
-            && this.gateway.button.is_disabled !== true;
+            && this.gateway.button.is_mini_cart_disabled !== true;
     }
 
     render() {

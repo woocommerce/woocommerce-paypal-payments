@@ -12,11 +12,9 @@ class SingleProductBootstap {
         this.mutationObserver = new MutationObserver(this.handleChange.bind(this));
         this.formSelector = 'form.cart';
 
-        if (this.renderer && this.renderer.smartButtonsOptions) {
-            this.renderer.smartButtonsOptions.onInit = () => {
-                this.handleChange();
-            };
-        }
+        this.renderer.onButtonsInit(this.gateway.button.wrapper, () => {
+            this.handleChange();
+        }, true);
     }
 
     form() {
@@ -25,7 +23,7 @@ class SingleProductBootstap {
 
     handleChange() {
         if (!this.shouldRender()) {
-            this.renderer.disableSmartButtons();
+            this.renderer.disableSmartButtons(this.gateway.button.wrapper);
             hide(this.gateway.button.wrapper, this.formSelector);
             hide(this.gateway.messages.wrapper);
             return;
@@ -33,7 +31,7 @@ class SingleProductBootstap {
 
         this.render();
 
-        this.renderer.enableSmartButtons();
+        this.renderer.enableSmartButtons(this.gateway.button.wrapper);
         show(this.gateway.button.wrapper);
         show(this.gateway.messages.wrapper);
 
@@ -42,12 +40,12 @@ class SingleProductBootstap {
 
     handleButtonStatus() {
         if (!this.shouldEnable()) {
-            this.renderer.disableSmartButtons();
+            this.renderer.disableSmartButtons(this.gateway.button.wrapper);
             disable(this.gateway.button.wrapper, this.formSelector);
             disable(this.gateway.messages.wrapper);
             return;
         }
-        this.renderer.enableSmartButtons();
+        this.renderer.enableSmartButtons(this.gateway.button.wrapper);
         enable(this.gateway.button.wrapper);
         enable(this.gateway.messages.wrapper);
     }
