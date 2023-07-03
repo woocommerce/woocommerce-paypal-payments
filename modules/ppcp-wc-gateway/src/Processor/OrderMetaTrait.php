@@ -57,9 +57,6 @@ trait OrderMetaTrait {
 			if ( $source->card() ) {
 				return 'card';
 			}
-			if ( $source->wallet() ) {
-				return 'wallet';
-			}
 		}
 
 		return null;
