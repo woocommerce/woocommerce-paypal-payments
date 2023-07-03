@@ -255,7 +255,7 @@ class OrderEndpoint {
 		}
 		$json        = json_decode( $response['body'] );
 		$status_code = (int) wp_remote_retrieve_response_code( $response );
-		if ( 201 !== $status_code ) {
+		if ( ! in_array( $status_code, array( 200, 201 ), true ) ) {
 			$error = new PayPalApiException(
 				$json,
 				$status_code
