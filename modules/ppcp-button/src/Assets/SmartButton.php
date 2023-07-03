@@ -860,7 +860,7 @@ class SmartButton implements SmartButtonInterface {
 				'wrapper'           => '#ppc-button-' . PayPalGateway::ID,
 				'mini_cart_wrapper' => '#ppc-button-minicart',
 				'cancel_wrapper'    => '#ppcp-cancel',
-				'is_disabled'		=> $this->is_button_disabled(),
+				'is_disabled'       => $this->is_button_disabled(),
 				'mini_cart_style'   => array(
 					'layout'  => $this->style_for_context( 'layout', 'mini-cart' ),
 					'color'   => $this->style_for_context( 'color', 'mini-cart' ),
@@ -1351,6 +1351,11 @@ class SmartButton implements SmartButtonInterface {
 		);
 	}
 
+	/**
+	 * Checks if PayPal buttons/messages should be rendered for the current page.
+	 *
+	 * @return bool
+	 */
 	protected function is_button_disabled(): bool {
 		if ( 'product' !== $this->context() ) {
 			return false;
