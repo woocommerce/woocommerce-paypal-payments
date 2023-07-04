@@ -864,7 +864,6 @@ return array(
 		$billing_agreements_endpoint = $container->get( 'api.endpoint.billing-agreements' );
 		if ( ! $billing_agreements_endpoint->reference_transaction_enabled() ) {
 			unset( $fields['vault_enabled'] );
-			unset( $fields['vault_enabled_dcc'] );
 		}
 
 		/**

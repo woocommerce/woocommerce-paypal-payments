@@ -241,6 +241,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 					'subscription_payment_method_change_admin',
 					'multiple_subscriptions'
 				);
+			} elseif ( $this->config->has( 'vault_enabled_dcc' ) && $this->config->get( 'vault_enabled_dcc' ) ) {
+				$this->supports[] = 'tokenization';
 			}
 		}
 
