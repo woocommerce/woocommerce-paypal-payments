@@ -1,5 +1,5 @@
 import CartActionHandler from '../ActionHandler/CartActionHandler';
-import {disable, enable} from "../Helper/ButtonDisabler";
+import BootstrapHelper from "../Helper/BootstrapHelper";
 
 class MiniCartBootstap {
     constructor(gateway, renderer, errorHandler) {
@@ -29,13 +29,10 @@ class MiniCartBootstap {
     }
 
     handleButtonStatus() {
-        if (!this.shouldEnable()) {
-            this.renderer.disableSmartButtons(this.gateway.button.mini_cart_wrapper);
-            disable(this.gateway.button.mini_cart_wrapper);
-            return;
-        }
-        this.renderer.enableSmartButtons(this.gateway.button.mini_cart_wrapper);
-        enable(this.gateway.button.mini_cart_wrapper);
+        BootstrapHelper.handleButtonStatus(this, {
+            wrapper: this.gateway.button.mini_cart_wrapper,
+            skipMessages: true
+        });
     }
 
     shouldRender() {
@@ -44,8 +41,9 @@ class MiniCartBootstap {
     }
 
     shouldEnable() {
-        return this.shouldRender()
-            && this.gateway.button.is_mini_cart_disabled !== true;
+        return BootstrapHelper.shouldEnable(this, {
+            isDisabled: !!this.gateway.button.is_mini_cart_disabled
+        });
     }
 
     render() {

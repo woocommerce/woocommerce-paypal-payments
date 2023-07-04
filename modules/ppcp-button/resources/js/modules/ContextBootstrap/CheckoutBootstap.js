@@ -5,6 +5,7 @@ import {
     isSavedCardSelected, ORDER_BUTTON_SELECTOR,
     PaymentMethods
 } from "../Helper/CheckoutMethodState";
+import BootstrapHelper from "../Helper/BootstrapHelper";
 import {disable, enable} from "../Helper/ButtonDisabler";
 
 class CheckoutBootstap {
@@ -51,15 +52,7 @@ class CheckoutBootstap {
     }
 
     handleButtonStatus() {
-        if (!this.shouldEnable()) {
-            this.renderer.disableSmartButtons(this.gateway.button.wrapper);
-            disable(this.gateway.button.wrapper);
-            disable(this.gateway.messages.wrapper);
-            return;
-        }
-        this.renderer.enableSmartButtons(this.gateway.button.wrapper);
-        enable(this.gateway.button.wrapper);
-        enable(this.gateway.messages.wrapper);
+        BootstrapHelper.handleButtonStatus(this);
     }
 
     shouldRender() {
@@ -71,8 +64,7 @@ class CheckoutBootstap {
     }
 
     shouldEnable() {
-        return this.shouldRender()
-            && this.gateway.button.is_disabled !== true;
+        return BootstrapHelper.shouldEnable(this);
     }
 
     render() {

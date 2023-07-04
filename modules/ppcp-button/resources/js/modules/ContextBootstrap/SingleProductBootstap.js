@@ -1,7 +1,7 @@
 import UpdateCart from "../Helper/UpdateCart";
 import SingleProductActionHandler from "../ActionHandler/SingleProductActionHandler";
 import {hide, show} from "../Helper/Hiding";
-import {disable, enable} from "../Helper/ButtonDisabler";
+import BootstrapHelper from "../Helper/BootstrapHelper";
 
 class SingleProductBootstap {
     constructor(gateway, renderer, messages, errorHandler) {
@@ -39,15 +39,9 @@ class SingleProductBootstap {
     }
 
     handleButtonStatus() {
-        if (!this.shouldEnable()) {
-            this.renderer.disableSmartButtons(this.gateway.button.wrapper);
-            disable(this.gateway.button.wrapper, this.formSelector);
-            disable(this.gateway.messages.wrapper);
-            return;
-        }
-        this.renderer.enableSmartButtons(this.gateway.button.wrapper);
-        enable(this.gateway.button.wrapper);
-        enable(this.gateway.messages.wrapper);
+        BootstrapHelper.handleButtonStatus(this, {
+            formSelector: this.formSelector
+        });
     }
 
     init() {
@@ -92,10 +86,9 @@ class SingleProductBootstap {
         const form = this.form();
         const addToCartButton = form ? form.querySelector('.single_add_to_cart_button') : null;
 
-        return this.shouldRender()
+        return BootstrapHelper.shouldEnable(this)
             && !this.priceAmountIsZero()
-            && ((null === addToCartButton) || !addToCartButton.classList.contains('disabled'))
-            && this.gateway.button.is_disabled !== true;
+            && ((null === addToCartButton) || !addToCartButton.classList.contains('disabled'));
     }
 
     priceAmount() {

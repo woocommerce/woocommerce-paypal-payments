@@ -1,6 +1,6 @@
 import CartActionHandler from '../ActionHandler/CartActionHandler';
+import BootstrapHelper from "../Helper/BootstrapHelper";
 import {setVisible} from "../Helper/Hiding";
-import {disable, enable} from "../Helper/ButtonDisabler";
 
 class CartBootstrap {
     constructor(gateway, renderer, errorHandler) {
@@ -48,15 +48,7 @@ class CartBootstrap {
     }
 
     handleButtonStatus() {
-        if (!this.shouldEnable()) {
-            this.renderer.disableSmartButtons(this.gateway.button.wrapper);
-            disable(this.gateway.button.wrapper);
-            disable(this.gateway.messages.wrapper);
-            return;
-        }
-        this.renderer.enableSmartButtons(this.gateway.button.wrapper);
-        enable(this.gateway.button.wrapper);
-        enable(this.gateway.messages.wrapper);
+        BootstrapHelper.handleButtonStatus(this);
     }
 
     shouldRender() {
@@ -64,8 +56,7 @@ class CartBootstrap {
     }
 
     shouldEnable() {
-        return this.shouldRender()
-            && this.gateway.button.is_disabled !== true;
+        return BootstrapHelper.shouldEnable(this);
     }
 
     render() {
