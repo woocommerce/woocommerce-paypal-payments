@@ -298,7 +298,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 			}
 
 			if ( 'checkout' === $data['context'] ) {
-				if ( ! in_array( $funding_source, $this->funding_sources_without_redirect, true ) ) {
+				if ( $payment_method === PayPalGateway::ID && ! in_array( $funding_source, $this->funding_sources_without_redirect, true ) ) {
 					$this->session_handler->replace_order( $order );
 					$this->session_handler->replace_funding_source( $funding_source );
 				}
