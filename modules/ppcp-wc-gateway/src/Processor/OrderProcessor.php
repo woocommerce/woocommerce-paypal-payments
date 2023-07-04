@@ -178,7 +178,7 @@ class OrderProcessor {
 						$wc_order->get_id()
 					)
 				);
-				$this->last_error = __( 'Could not retrieve order. This browser may not be supported. Please try again with a different browser.', 'woocommerce-paypal-payments' );
+				$this->last_error = __( 'Could not retrieve order. Maybe it was already completed or this browser is not supported. Please check your email or try again with a different browser.', 'woocommerce-paypal-payments' );
 				return false;
 			}
 
