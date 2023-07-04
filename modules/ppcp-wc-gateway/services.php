@@ -911,6 +911,12 @@ return array(
 			'paylater'    => _x( 'Pay Later', 'Name of payment method', 'woocommerce-paypal-payments' ),
 		);
 	},
+	/**
+	 * The sources that do not cause issues about redirecting (on mobile, ...) and sometimes not returning back.
+	 */
+	'wcgateway.funding-sources-without-redirect'           => static function( ContainerInterface $container ): array {
+		return array( 'paypal', 'paylater', 'venmo', 'card' );
+	},
 	'wcgateway.settings.funding-sources'                   => static function( ContainerInterface $container ): array {
 		return array_diff_key(
 			$container->get( 'wcgateway.all-funding-sources' ),
@@ -946,11 +952,11 @@ return array(
 	'wcgateway.endpoint.return-url'                        => static function ( ContainerInterface $container ) : ReturnUrlEndpoint {
 		$gateway  = $container->get( 'wcgateway.paypal-gateway' );
 		$endpoint = $container->get( 'api.endpoint.order' );
-		$prefix   = $container->get( 'api.prefix' );
 		return new ReturnUrlEndpoint(
 			$gateway,
 			$endpoint,
-			$prefix
+			$container->get( 'session.handler' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 

@@ -28,6 +28,8 @@ const cardsSpinner = new Spinner('#ppcp-hosted-fields');
 const bootstrap = () => {
     const checkoutFormSelector = 'form.woocommerce-checkout';
 
+    const context = PayPalCommerceGateway.context;
+
     const errorHandler = new ErrorHandler(
         PayPalCommerceGateway.labels.error.generic,
         document.querySelector(checkoutFormSelector) ?? document.querySelector('.woocommerce-notices-wrapper')
@@ -58,7 +60,7 @@ const bootstrap = () => {
         }
     });
 
-    const onSmartButtonClick = (data, actions) => {
+    const onSmartButtonClick = async (data, actions) => {
         window.ppcpFundingSource = data.fundingSource;
         const requiredFields = jQuery('form.woocommerce-checkout .validate-required:visible :input');
         requiredFields.each((i, input) => {
@@ -120,6 +122,14 @@ const bootstrap = () => {
             freeTrialHandler.handle();
             return actions.reject();
         }
+
+        if (context === 'checkout' && !PayPalCommerceGateway.funding_sources_without_redirect.includes(data.fundingSource)) {
+            try {
+                await formSaver.save(form);
+            } catch (error) {
+                console.error(error);
+            }
+        }
     };
 
     let smartButtonsOptions = {
@@ -138,7 +148,6 @@ const bootstrap = () => {
     };
     const renderer = new Renderer(creditCardRenderer, PayPalCommerceGateway, onSmartButtonClick, onSmartButtonsInit, smartButtonsOptions);
     const messageRenderer = new MessageRenderer(PayPalCommerceGateway.messages);
-    const context = PayPalCommerceGateway.context;
     if (context === 'mini-cart' || context === 'product') {
         if (PayPalCommerceGateway.mini_cart_buttons_enabled === '1') {
             const miniCartBootstrap = new MiniCartBootstap(

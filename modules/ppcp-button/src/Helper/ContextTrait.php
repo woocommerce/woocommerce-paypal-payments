@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Button\Helper;
 
+use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
+
 trait ContextTrait {
 
 	/**
@@ -60,6 +62,12 @@ trait ContextTrait {
 	private function is_paypal_continuation(): bool {
 		$order = $this->session_handler->order();
 		if ( ! $order ) {
+			return false;
+		}
+
+		if ( ! $order->status()->is( OrderStatus::APPROVED )
+			&& ! $order->status()->is( OrderStatus::COMPLETED )
+		) {
 			return false;
 		}
 

@@ -67,23 +67,6 @@ return array(
 
 		return $dummy_ids[ $shop_country ] ?? $container->get( 'button.client_id' );
 	},
-	'button.is_paypal_continuation'               => static function( ContainerInterface $container ): bool {
-		$session_handler = $container->get( 'session.handler' );
-
-		$order = $session_handler->order();
-		if ( ! $order ) {
-			return false;
-		}
-		$source = $order->payment_source();
-		if ( $source && $source->card() ) {
-			return false; // Ignore for DCC.
-		}
-		if ( 'card' === $session_handler->funding_source() ) {
-			return false; // Ignore for card buttons.
-		}
-
-		return true;
-	},
 	'button.smart-button'                         => static function ( ContainerInterface $container ): SmartButtonInterface {
 		$state = $container->get( 'onboarding.state' );
 		if ( $state->current_state() !== State::STATE_ONBOARDED ) {
@@ -125,6 +108,7 @@ return array(
 			$container->get( 'button.basic-checkout-validation-enabled' ),
 			$container->get( 'button.early-wc-checkout-validation-enabled' ),
 			$container->get( 'button.pay-now-contexts' ),
+			$container->get( 'wcgateway.funding-sources-without-redirect' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
@@ -176,6 +160,7 @@ return array(
 			$container->get( 'button.early-wc-checkout-validation-enabled' ),
 			$container->get( 'button.pay-now-contexts' ),
 			$container->get( 'button.handle-shipping-in-paypal' ),
+			$container->get( 'wcgateway.funding-sources-without-redirect' ),
 			$logger
 		);
 	},
@@ -184,8 +169,7 @@ return array(
 		$state          = $container->get( 'onboarding.state' );
 		$order_processor = $container->get( 'wcgateway.order-processor' );
 		$session_handler = $container->get( 'session.handler' );
-		$prefix         = $container->get( 'api.prefix' );
-		return new EarlyOrderHandler( $state, $order_processor, $session_handler, $prefix );
+		return new EarlyOrderHandler( $state, $order_processor, $session_handler );
 	},
 	'button.endpoint.approve-order'               => static function ( ContainerInterface $container ): ApproveOrderEndpoint {
 		$request_data    = $container->get( 'button.request-data' );
@@ -215,7 +199,9 @@ return array(
 		);
 	},
 	'button.checkout-form-saver'                  => static function ( ContainerInterface $container ): CheckoutFormSaver {
-		return new CheckoutFormSaver();
+		return new CheckoutFormSaver(
+			$container->get( 'session.handler' )
+		);
 	},
 	'button.endpoint.save-checkout-form'          => static function ( ContainerInterface $container ): SaveCheckoutFormEndpoint {
 		return new SaveCheckoutFormEndpoint(

@@ -9,10 +9,12 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
+use WC_Session_Handler;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayeeRepository;
+use WooCommerce\PayPalCommerce\Webhooks\CustomIds;
 
 /**
  * Class PurchaseUnitFactory
@@ -187,7 +189,14 @@ class PurchaseUnitFactory {
 
 		$payee = $this->payee_repository->payee();
 
-		$custom_id       = '';
+		$custom_id = '';
+		$session   = WC()->session;
+		if ( $session instanceof WC_Session_Handler ) {
+			$session_id = $session->get_customer_unique_id();
+			if ( $session_id ) {
+				$custom_id = CustomIds::CUSTOMER_ID_PREFIX . $session_id;
+			}
+		}
 		$invoice_id      = '';
 		$soft_descriptor = '';
 		$purchase_unit   = new PurchaseUnit(

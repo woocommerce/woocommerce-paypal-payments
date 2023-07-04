@@ -8,16 +8,24 @@ const {
 /**
  * Opens the PayPal popup by pressing the button, and returns the popup object.
  * @param page
+ * @param {{timeout: ?int, fundingSource: ?string}} options
  * @param {boolean} retry Retries the button click if the popup did not appear after timeout.
- * @param {int} timeout
  */
-export const openPaypalPopup = async (page, retry = true, timeout = 5000) => {
+export const openPaypalPopup = async (page, options = {}, retry = true) => {
+    options = {
+        ...{
+            timeout: 5000,
+            fundingSource: 'paypal',
+        },
+        ...options
+    };
+
     try {
         await page.locator('.component-frame').scrollIntoViewIfNeeded();
 
         const [popup] = await Promise.all([
-            page.waitForEvent('popup', {timeout}),
-            page.frameLocator('.component-frame').locator('[data-funding-source="paypal"]').click(),
+            page.waitForEvent('popup', {timeout: options.timeout}),
+            page.frameLocator('.component-frame').locator(`[data-funding-source="${options.fundingSource}"]`).click(),
         ]);
 
         await popup.waitForLoadState();
@@ -41,7 +49,7 @@ export const openPaypalPopup = async (page, retry = true, timeout = 5000) => {
         }
 
         if (retry) {
-            return openPaypalPopup(page, false);
+            return openPaypalPopup(page, options, false);
         }
         throw err;
     }
@@ -83,9 +91,20 @@ export const waitForPaypalShippingList = async (popup) => {
     await expect(popup.locator('#shippingMethodsDropdown')).toBeVisible({timeout: 15000});
 }
 
-export const completePaypalPayment = async (popup) => {
+/**
+ * @param popup
+ * @param {{timeout: ?int, selector: ?string}} options
+ */
+export const completePaypalPayment = async (popup, options) => {
+    options = {
+        ...{
+            timeout: 20000,
+            selector: '#payment-submit-btn',
+        },
+        ...options
+    };
     await Promise.all([
-        popup.waitForEvent('close', {timeout: 20000}),
-        popup.click('#payment-submit-btn'),
+        popup.waitForEvent('close', {timeout: options.timeout}),
+        popup.click(options.selector),
     ]);
 }
