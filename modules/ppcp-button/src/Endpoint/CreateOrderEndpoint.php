@@ -23,6 +23,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentSourceFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\Button\Exception\ValidationException;
@@ -65,6 +66,13 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 * @var ShippingPreferenceFactory
 	 */
 	private $shipping_preference_factory;
+
+	/**
+	 * The PaymentSource factory.
+	 *
+	 * @var PaymentSourceFactory
+	 */
+	private $payment_source_factory;
 
 	/**
 	 * The order endpoint.
@@ -170,6 +178,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 * @param RequestData               $request_data The RequestData object.
 	 * @param PurchaseUnitFactory       $purchase_unit_factory The PurchaseUnit factory.
 	 * @param ShippingPreferenceFactory $shipping_preference_factory The shipping_preference factory.
+	 * @param PaymentSourceFactory      $payment_source_factory The PaymentSource factory.
 	 * @param OrderEndpoint             $order_endpoint The OrderEndpoint object.
 	 * @param PayerFactory              $payer_factory The PayerFactory object.
 	 * @param SessionHandler            $session_handler The SessionHandler object.
@@ -187,6 +196,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 		RequestData $request_data,
 		PurchaseUnitFactory $purchase_unit_factory,
 		ShippingPreferenceFactory $shipping_preference_factory,
+		PaymentSourceFactory $payment_source_factory,
 		OrderEndpoint $order_endpoint,
 		PayerFactory $payer_factory,
 		SessionHandler $session_handler,
@@ -204,6 +214,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 		$this->request_data                     = $request_data;
 		$this->purchase_unit_factory            = $purchase_unit_factory;
 		$this->shipping_preference_factory      = $shipping_preference_factory;
+		$this->payment_source_factory           = $payment_source_factory;
 		$this->api_endpoint                     = $order_endpoint;
 		$this->payer_factory                    = $payer_factory;
 		$this->session_handler                  = $session_handler;
@@ -408,6 +419,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 	private function create_paypal_order( \WC_Order $wc_order = null ): Order {
 		assert( $this->purchase_unit instanceof PurchaseUnit );
 
+		$payment_method = $this->parsed_request_data['payment_method'] ?? '';
 		$funding_source = $this->parsed_request_data['funding_source'] ?? '';
 		$payer          = $this->payer( $this->parsed_request_data, $wc_order );
 
@@ -440,12 +452,20 @@ class CreateOrderEndpoint implements EndpointInterface {
 			}
 		}
 
+		$payment_source = $this->payment_source_factory->from_checkout(
+			$payment_method,
+			$funding_source,
+			$payer,
+			$shipping_preference,
+			$action
+		);
+
 		try {
 			return $this->api_endpoint->create(
 				array( $this->purchase_unit ),
 				$shipping_preference,
 				$payer,
-				null,
+				$payment_source,
 				'',
 				$action
 			);
@@ -468,7 +488,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 					array( $this->purchase_unit ),
 					$shipping_preference,
 					$payer,
-					null
+					$payment_source
 				);
 			}
 

@@ -9,58 +9,53 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Entity;
 
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource\Card;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource\PaymentSourceInterface;
+
 /**
  * Class PaymentSource
  */
 class PaymentSource {
-
 	/**
-	 * The card.
+	 * The map of source ID (paypal, card, ...) -> source object.
 	 *
-	 * @var PaymentSourceCard|null
+	 * @var array<string, PaymentSourceInterface>
 	 */
-	private $card;
-
-	/**
-	 * The wallet.
-	 *
-	 * @var PaymentSourceWallet|null
-	 */
-	private $wallet;
+	private $sources = array();
 
 	/**
 	 * PaymentSource constructor.
 	 *
-	 * @param PaymentSourceCard|null   $card The card.
-	 * @param PaymentSourceWallet|null $wallet The wallet.
+	 * @param PaymentSourceInterface ...$sources The payment source objects.
 	 */
 	public function __construct(
-		PaymentSourceCard $card = null,
-		PaymentSourceWallet $wallet = null
+		PaymentSourceInterface ...$sources
 	) {
+		foreach ( $sources as $source ) {
+			$this->sources[ $source->payment_source_id() ] = $source;
+		}
+	}
 
-		$this->card   = $card;
-		$this->wallet = $wallet;
+	/**
+	 * Returns the payment source objects.
+	 *
+	 * @return PaymentSourceInterface[]
+	 */
+	public function sources(): array {
+		return $this->sources;
 	}
 
 	/**
 	 * Returns the card.
 	 *
-	 * @return PaymentSourceCard|null
+	 * @return Card|null
 	 */
 	public function card() {
-
-		return $this->card;
-	}
-
-	/**
-	 * Returns the wallet.
-	 *
-	 * @return PaymentSourceWallet|null
-	 */
-	public function wallet() {
-
-		return $this->wallet;
+		$card = $this->sources['card'] ?? null;
+		if ( $card instanceof Card ) {
+			return $card;
+		}
+		return null;
 	}
 
 	/**
@@ -69,13 +64,9 @@ class PaymentSource {
 	 * @return array
 	 */
 	public function to_array(): array {
-
 		$data = array();
-		if ( $this->card() ) {
-			$data['card'] = $this->card()->to_array();
-		}
-		if ( $this->wallet() ) {
-			$data['wallet'] = $this->wallet()->to_array();
+		foreach ( $this->sources as $source ) {
+			$data[ $source->payment_source_id() ] = $source->to_array();
 		}
 		return $data;
 	}

@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Subscription;
 
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\Dictionary;
 use Exception;
 use Psr\Log\LoggerInterface;
@@ -135,6 +136,8 @@ class RenewalHandlerTest extends TestCase
 		$wcOrder
 			->expects('set_transaction_id');
 
+		$token->shouldReceive('payment_source_id')->andReturn('token');
+
 		$this->repository->shouldReceive('all_for_user_id')
 			->andReturn([$token]);
 
@@ -151,7 +154,7 @@ class RenewalHandlerTest extends TestCase
 			->andReturn('no_shipping');
 
 		$this->orderEndpoint->shouldReceive('create')
-			->with([$purchaseUnit], 'no_shipping', $payer, $token)
+			->with([$purchaseUnit], 'no_shipping', $payer, Mockery::type(PaymentSource::class))
 			->andReturn($order);
 
 		$wcOrder->shouldReceive('update_status');

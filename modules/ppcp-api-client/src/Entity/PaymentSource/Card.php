@@ -1,18 +1,20 @@
 <?php
 /**
- * The PaymentSourceCard object.
+ * The payment source card object.
  *
- * @package WooCommerce\PayPalCommerce\ApiClient\Entity
+ * @package WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource
  */
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\ApiClient\Entity;
+namespace WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
+
+use WooCommerce\PayPalCommerce\ApiClient\Entity\CardAuthenticationResult;
 
 /**
- * Class PaymentSourceCard
+ * Class Card
  */
-class PaymentSourceCard {
+class Card implements PaymentSourceInterface {
 
 	/**
 	 * The last digits of the card.
@@ -43,7 +45,7 @@ class PaymentSourceCard {
 	private $authentication_result;
 
 	/**
-	 * PaymentSourceCard constructor.
+	 * Card constructor.
 	 *
 	 * @param string                        $last_digits The last digits of the card.
 	 * @param string                        $brand The brand of the card.
@@ -61,6 +63,13 @@ class PaymentSourceCard {
 		$this->brand                 = $brand;
 		$this->type                  = $type;
 		$this->authentication_result = $authentication_result;
+	}
+
+	/**
+	 * Returns the payment source ID.
+	 */
+	public function payment_source_id(): string {
+		return 'card';
 	}
 
 	/**
@@ -109,14 +118,22 @@ class PaymentSourceCard {
 	 * @return array
 	 */
 	public function to_array(): array {
-
-		$data = array(
-			'last_digits' => $this->last_digits(),
-			'brand'       => $this->brand(),
-			'type'        => $this->type(),
-		);
-		if ( $this->authentication_result() ) {
-			$data['authentication_result'] = $this->authentication_result()->to_array();
+		$data = array();
+		if ( $this->last_digits ) {
+			$data['last_digits'] = $this->last_digits;
+		}
+		if ( $this->brand ) {
+			$data['brand'] = $this->brand;
+		}
+		if ( $this->type ) {
+			$data['type'] = $this->type;
+		}
+		if ( $this->authentication_result ) {
+			$data['authentication_result'] = $this->authentication_result->to_array();
+		}
+		// Empty arrays become [] instead of {} in JSON. Difficult to fix properly now.
+		if ( ! $data ) {
+			$data['empty'] = 'obj';
 		}
 		return $data;
 	}

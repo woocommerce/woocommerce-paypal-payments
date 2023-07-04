@@ -1056,7 +1056,7 @@ class OrderEndpointTest extends TestCase
         $intent = 'CAPTURE';
 
         $logger = Mockery::mock(LoggerInterface::class);
-        $logger->shouldReceive('log');
+        $logger->shouldReceive('warning');
         $logger->shouldReceive('debug');
         $applicationContext = Mockery::mock(ApplicationContext::class);
         $applicationContext
@@ -1147,7 +1147,7 @@ class OrderEndpointTest extends TestCase
         $intent = 'CAPTURE';
 
         $logger = Mockery::mock(LoggerInterface::class);
-        $logger->shouldReceive('log');
+        $logger->shouldReceive('warning');
         $logger->shouldReceive('debug');
         $applicationContext = Mockery::mock(ApplicationContext::class);
         $applicationContext

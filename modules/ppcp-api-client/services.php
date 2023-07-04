@@ -13,6 +13,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingSubscriptions;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\CatalogProducts;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingPlans;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\BillingCycleFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ExperienceContextFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentPreferencesFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PlanFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ProductFactory;
@@ -268,6 +269,11 @@ return array(
 	'api.factory.application-context'           => static function ( ContainerInterface $container ) : ApplicationContextFactory {
 		return new ApplicationContextFactory();
 	},
+	'api.factory.experience-context'            => static function ( ContainerInterface $container ) : ExperienceContextFactory {
+		return new ExperienceContextFactory(
+			$container->get( 'wcgateway.settings' )
+		);
+	},
 	'api.factory.payment-token'                 => static function ( ContainerInterface $container ) : PaymentTokenFactory {
 		return new PaymentTokenFactory();
 	},
@@ -353,7 +359,9 @@ return array(
 		return new AddressFactory();
 	},
 	'api.factory.payment-source'                => static function ( ContainerInterface $container ): PaymentSourceFactory {
-		return new PaymentSourceFactory();
+		return new PaymentSourceFactory(
+			$container->get( 'api.factory.experience-context' )
+		);
 	},
 	'api.factory.order'                         => static function ( ContainerInterface $container ): OrderFactory {
 		$purchase_unit_factory          = $container->get( 'api.factory.purchase-unit' );

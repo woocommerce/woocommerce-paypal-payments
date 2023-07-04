@@ -18,6 +18,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PatchCollection;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
@@ -175,9 +176,9 @@ class OrderEndpoint {
 	 * Creates an order.
 	 *
 	 * @param PurchaseUnit[]     $items The purchase unit items for the order.
-	 * @param string             $shipping_preference One of ApplicationContext::SHIPPING_PREFERENCE_ values.
+	 * @param string             $shipping_preference One of ExperienceContext::SHIPPING_PREFERENCE_ values.
 	 * @param Payer|null         $payer The payer off the order.
-	 * @param PaymentToken|null  $payment_token The payment token.
+	 * @param PaymentSource|null $payment_source The payment source.
 	 * @param string             $paypal_request_id The paypal request id.
 	 * @param string             $user_action The user action.
 	 *
@@ -188,14 +189,14 @@ class OrderEndpoint {
 		array $items,
 		string $shipping_preference,
 		Payer $payer = null,
-		PaymentToken $payment_token = null,
+		?PaymentSource $payment_source = null,
 		string $paypal_request_id = '',
 		string $user_action = ApplicationContext::USER_ACTION_CONTINUE
 	): Order {
 		$bearer = $this->bearer->bearer();
 		$data   = array(
-			'intent'              => ( $this->subscription_helper->cart_contains_subscription() || $this->subscription_helper->current_product_is_subscription() ) ? 'AUTHORIZE' : $this->intent,
-			'purchase_units'      => array_map(
+			'intent'         => ( $this->subscription_helper->cart_contains_subscription() || $this->subscription_helper->current_product_is_subscription() ) ? 'AUTHORIZE' : $this->intent,
+			'purchase_units' => array_map(
 				static function ( PurchaseUnit $item ) use ( $shipping_preference ): array {
 					$data = $item->to_array();
 
@@ -208,14 +209,14 @@ class OrderEndpoint {
 				},
 				$items
 			),
-			'application_context' => $this->application_context_repository
-				->current_context( $shipping_preference, $user_action )->to_array(),
 		);
+		if ( $payment_source ) {
+			$data['payment_source'] = $payment_source->to_array();
+		} else {
+			$data['application_context'] = $this->application_context_repository->current_context( $shipping_preference, $user_action )->to_array();
+		}
 		if ( $payer && ! empty( $payer->email_address() ) ) {
 			$data['payer'] = $payer->to_array();
-		}
-		if ( $payment_token ) {
-			$data['payment_source']['token'] = $payment_token->to_array();
 		}
 
 		/**

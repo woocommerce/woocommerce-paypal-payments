@@ -9,6 +9,7 @@ use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use ReflectionClass;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentSourceFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
@@ -146,8 +147,9 @@ class CreateOrderEndpointTest extends TestCase
     protected function mockTestee()
     {
         $request_data = Mockery::mock(RequestData::class);
-		$shippingPreferenceFactory = Mockery::mock(ShippingPreferenceFactory::class);
+		$shipping_preference_factory = Mockery::mock(ShippingPreferenceFactory::class);
         $purchase_unit_factory = Mockery::mock(PurchaseUnitFactory::class);
+		$payment_source_factory = Mockery::mock(PaymentSourceFactory::class);
         $order_endpoint = Mockery::mock(OrderEndpoint::class);
         $payer_factory = Mockery::mock(PayerFactory::class);
         $session_handler = Mockery::mock(SessionHandler::class);
@@ -158,7 +160,8 @@ class CreateOrderEndpointTest extends TestCase
         $testee = new CreateOrderEndpoint(
             $request_data,
             $purchase_unit_factory,
-			$shippingPreferenceFactory,
+			$shipping_preference_factory,
+			$payment_source_factory,
             $order_endpoint,
             $payer_factory,
             $session_handler,
