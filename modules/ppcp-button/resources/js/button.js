@@ -131,6 +131,7 @@ const bootstrap = () => {
             }
         }
     };
+
     const onSmartButtonsInit = () => {
         buttonsSpinner.unblock();
     };

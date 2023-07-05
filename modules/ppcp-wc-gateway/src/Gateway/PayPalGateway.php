@@ -560,12 +560,15 @@ class PayPalGateway extends \WC_Payment_Gateway {
 				'INSTRUMENT_DECLINED'   => __( 'Instrument declined.', 'woocommerce-paypal-payments' ),
 				'PAYER_ACTION_REQUIRED' => __( 'Payer action required, possibly overcharge.', 'woocommerce-paypal-payments' ),
 			);
-			$retry_errors        = array_filter(
-				array_keys( $retry_keys_messages ),
-				function ( string $key ) use ( $error ): bool {
-					return $error->has_detail( $key );
-				}
+			$retry_errors        = array_values(
+				array_filter(
+					array_keys( $retry_keys_messages ),
+					function ( string $key ) use ( $error ): bool {
+						return $error->has_detail( $key );
+					}
+				)
 			);
+
 			if ( $retry_errors ) {
 				$retry_error_key = $retry_errors[0];
 
