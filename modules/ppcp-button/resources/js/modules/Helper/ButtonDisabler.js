@@ -36,7 +36,10 @@ export const setEnabled = (selectorOrElement, enable, form = null) => {
 
                 if (form) {
                     // Trigger form submit to show the error message
-                    jQuery(form).find(':submit').trigger('click');
+                    let $form = jQuery(form);
+                    if ($form.find('.single_add_to_cart_button').hasClass('disabled')) {
+                        $form.find(':submit').trigger('click');
+                    }
                 }
             })
             .find('> *')

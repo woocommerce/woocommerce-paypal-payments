@@ -1,4 +1,5 @@
 import CartActionHandler from '../ActionHandler/CartActionHandler';
+import BootstrapHelper from "../Helper/BootstrapHelper";
 import {setVisible} from "../Helper/Hiding";
 
 class CartBootstrap {
@@ -6,6 +7,10 @@ class CartBootstrap {
         this.gateway = gateway;
         this.renderer = renderer;
         this.errorHandler = errorHandler;
+
+        this.renderer.onButtonsInit(this.gateway.button.wrapper, () => {
+            this.handleButtonStatus();
+        }, true);
     }
 
     init() {
@@ -14,9 +19,11 @@ class CartBootstrap {
         }
 
         this.render();
+        this.handleButtonStatus();
 
         jQuery(document.body).on('updated_cart_totals updated_checkout', () => {
             this.render();
+            this.handleButtonStatus();
 
             fetch(
                 this.gateway.ajax.cart_script_params.endpoint,
@@ -40,8 +47,16 @@ class CartBootstrap {
         });
     }
 
+    handleButtonStatus() {
+        BootstrapHelper.handleButtonStatus(this);
+    }
+
     shouldRender() {
         return document.querySelector(this.gateway.button.wrapper) !== null;
+    }
+
+    shouldEnable() {
+        return BootstrapHelper.shouldEnable(this);
     }
 
     render() {

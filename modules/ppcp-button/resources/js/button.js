@@ -28,6 +28,8 @@ const cardsSpinner = new Spinner('#ppcp-hosted-fields');
 const bootstrap = () => {
     const checkoutFormSelector = 'form.woocommerce-checkout';
 
+    const context = PayPalCommerceGateway.context;
+
     const errorHandler = new ErrorHandler(
         PayPalCommerceGateway.labels.error.generic,
         document.querySelector(checkoutFormSelector) ?? document.querySelector('.woocommerce-notices-wrapper')
@@ -58,7 +60,7 @@ const bootstrap = () => {
         }
     });
 
-    const onSmartButtonClick = (data, actions) => {
+    const onSmartButtonClick = async (data, actions) => {
         window.ppcpFundingSource = data.fundingSource;
         const requiredFields = jQuery('form.woocommerce-checkout .validate-required:visible :input');
         requiredFields.each((i, input) => {
@@ -120,25 +122,21 @@ const bootstrap = () => {
             freeTrialHandler.handle();
             return actions.reject();
         }
-    };
 
-    let smartButtonsOptions = {
-        onInit: null,
-        init: function (actions) {
-            this.actions = actions;
-            if (typeof this.onInit === 'function') {
-                this.onInit();
+        if (context === 'checkout' && !PayPalCommerceGateway.funding_sources_without_redirect.includes(data.fundingSource)) {
+            try {
+                await formSaver.save(form);
+            } catch (error) {
+                console.error(error);
             }
         }
     };
 
-    const onSmartButtonsInit = (data, actions) => {
+    const onSmartButtonsInit = () => {
         buttonsSpinner.unblock();
-        smartButtonsOptions.init(actions);
     };
-    const renderer = new Renderer(creditCardRenderer, PayPalCommerceGateway, onSmartButtonClick, onSmartButtonsInit, smartButtonsOptions);
+    const renderer = new Renderer(creditCardRenderer, PayPalCommerceGateway, onSmartButtonClick, onSmartButtonsInit);
     const messageRenderer = new MessageRenderer(PayPalCommerceGateway.messages);
-    const context = PayPalCommerceGateway.context;
     if (context === 'mini-cart' || context === 'product') {
         if (PayPalCommerceGateway.mini_cart_buttons_enabled === '1') {
             const miniCartBootstrap = new MiniCartBootstap(

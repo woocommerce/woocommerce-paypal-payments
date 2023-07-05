@@ -339,14 +339,6 @@ class CompatModule implements ModuleInterface {
 				},
 				5
 			);
-
-			add_filter(
-				'woocommerce_paypal_payments_checkout_button_renderer_hook',
-				function(): string {
-					return 'woocommerce_review_order_after_submit';
-				},
-				5
-			);
 		}
 	}
 

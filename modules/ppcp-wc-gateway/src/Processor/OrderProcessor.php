@@ -166,7 +166,7 @@ class OrderProcessor {
 		// phpcs:ignore WordPress.Security.NonceVerification
 		$order_id = $wc_order->get_meta( PayPalGateway::ORDER_ID_META_KEY ) ?: wc_clean( wp_unslash( $_POST['paypal_order_id'] ?? '' ) );
 		$order    = $this->session_handler->order();
-		if ( ! $order && is_string( $order_id ) ) {
+		if ( ! $order && is_string( $order_id ) && $order_id ) {
 			$order = $this->order_endpoint->order( $order_id );
 		}
 		if ( ! $order ) {
@@ -178,7 +178,7 @@ class OrderProcessor {
 						$wc_order->get_id()
 					)
 				);
-				$this->last_error = __( 'Could not retrieve order. This browser may not be supported. Please try again with a different browser.', 'woocommerce-paypal-payments' );
+				$this->last_error = __( 'Could not retrieve order. Maybe it was already completed or this browser is not supported. Please check your email or try again with a different browser.', 'woocommerce-paypal-payments' );
 				return false;
 			}
 

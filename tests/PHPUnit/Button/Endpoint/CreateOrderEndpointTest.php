@@ -169,6 +169,7 @@ class CreateOrderEndpointTest extends TestCase
 			false,
 			['checkout'],
 			false,
+			['paypal'],
 			new NullLogger()
         );
         return array($payer_factory, $testee);
