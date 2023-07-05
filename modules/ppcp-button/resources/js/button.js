@@ -132,21 +132,10 @@ const bootstrap = () => {
         }
     };
 
-    let smartButtonsOptions = {
-        onInit: null,
-        init: function (actions) {
-            this.actions = actions;
-            if (typeof this.onInit === 'function') {
-                this.onInit();
-            }
-        }
-    };
-
-    const onSmartButtonsInit = (data, actions) => {
+    const onSmartButtonsInit = () => {
         buttonsSpinner.unblock();
-        smartButtonsOptions.init(actions);
     };
-    const renderer = new Renderer(creditCardRenderer, PayPalCommerceGateway, onSmartButtonClick, onSmartButtonsInit, smartButtonsOptions);
+    const renderer = new Renderer(creditCardRenderer, PayPalCommerceGateway, onSmartButtonClick, onSmartButtonsInit);
     const messageRenderer = new MessageRenderer(PayPalCommerceGateway.messages);
     if (context === 'mini-cart' || context === 'product') {
         if (PayPalCommerceGateway.mini_cart_buttons_enabled === '1') {

@@ -1,12 +1,14 @@
 import merge from "deepmerge";
 
 class Renderer {
-    constructor(creditCardRenderer, defaultSettings, onSmartButtonClick, onSmartButtonsInit, smartButtonsOptions) {
+    constructor(creditCardRenderer, defaultSettings, onSmartButtonClick, onSmartButtonsInit) {
         this.defaultSettings = defaultSettings;
         this.creditCardRenderer = creditCardRenderer;
         this.onSmartButtonClick = onSmartButtonClick;
         this.onSmartButtonsInit = onSmartButtonsInit;
-        this.smartButtonsOptions = smartButtonsOptions;
+
+        this.buttonsOptions = {};
+        this.onButtonsInitListeners = {};
 
         this.renderedSources = new Set();
     }
@@ -78,7 +80,10 @@ class Renderer {
             style,
             ...contextConfig,
             onClick: this.onSmartButtonClick,
-            onInit: this.onSmartButtonsInit,
+            onInit: (data, actions) => {
+                this.onSmartButtonsInit(data, actions);
+                this.handleOnButtonsInit(wrapper, data, actions);
+            },
         });
         if (!btn.isEligible()) {
             return;
@@ -108,18 +113,42 @@ class Renderer {
         this.creditCardRenderer.enableFields();
     }
 
-    disableSmartButtons() {
-        if (!this.smartButtonsOptions || !this.smartButtonsOptions.actions) {
-            return;
-        }
-        this.smartButtonsOptions.actions.disable();
+    onButtonsInit(wrapper, handler, reset) {
+        this.onButtonsInitListeners[wrapper] = reset ? [] : (this.onButtonsInitListeners[wrapper] || []);
+        this.onButtonsInitListeners[wrapper].push(handler);
     }
 
-    enableSmartButtons() {
-        if (!this.smartButtonsOptions || !this.smartButtonsOptions.actions) {
+    handleOnButtonsInit(wrapper, data, actions) {
+
+        this.buttonsOptions[wrapper] = {
+            data: data,
+            actions: actions
+        }
+
+        if (this.onButtonsInitListeners[wrapper]) {
+            for (let handler of this.onButtonsInitListeners[wrapper]) {
+                if (typeof handler === 'function') {
+                    handler({
+                        wrapper: wrapper,
+                        ...this.buttonsOptions[wrapper]
+                    });
+                }
+            }
+        }
+    }
+
+    disableSmartButtons(wrapper) {
+        if (!this.buttonsOptions[wrapper]) {
             return;
         }
-        this.smartButtonsOptions.actions.enable();
+        this.buttonsOptions[wrapper].actions.disable();
+    }
+
+    enableSmartButtons(wrapper) {
+        if (!this.buttonsOptions[wrapper]) {
+            return;
+        }
+        this.buttonsOptions[wrapper].actions.enable();
     }
 }
 
