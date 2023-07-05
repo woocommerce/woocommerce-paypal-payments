@@ -452,7 +452,10 @@ class CreateOrderEndpoint implements EndpointInterface {
 			}
 		}
 
-		if ( defined( 'PPCP_FLAG_OLD_APPLICATION_CONTEXT' ) && PPCP_FLAG_OLD_APPLICATION_CONTEXT ) {
+		if (
+			( defined( 'PPCP_FLAG_OLD_APPLICATION_CONTEXT' ) && PPCP_FLAG_OLD_APPLICATION_CONTEXT )
+			|| $payment_method === CreditCardGateway::ID
+		) {
 			$payment_source = null;
 		} else {
 			$payment_source = $this->payment_source_factory->from_checkout(
