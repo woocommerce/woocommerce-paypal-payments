@@ -3,6 +3,8 @@ import BookingProduct from "../Entity/BookingProduct";
 import onApprove from '../OnApproveHandler/onApproveForContinue';
 import {payerData} from "../Helper/PayerData";
 import {PaymentMethods} from "../Helper/CheckoutMethodState";
+import CartJanitor from "../Helper/CartJanitor";
+import FormHelper from "../Helper/FormHelper";
 
 class SingleProductActionHandler {
 
@@ -16,6 +18,7 @@ class SingleProductActionHandler {
         this.updateCart = updateCart;
         this.formElement = formElement;
         this.errorHandler = errorHandler;
+        this.cartJanitor = null;
     }
 
     subscriptionsConfiguration() {
@@ -74,29 +77,36 @@ class SingleProductActionHandler {
             createOrder: this.createOrder(),
             onApprove: onApprove(this, this.errorHandler),
             onError: (error) => {
+                this.refreshMiniCart();
+
+                if (this.isBookingProduct() && error.message) {
+                    this.errorHandler.clear();
+                    this.errorHandler.message(error.message);
+                    return;
+                }
                 this.errorHandler.genericError();
+            },
+            onCancel: () => {
+                // Could be used for every product type,
+                // but only clean the cart for Booking products for now.
+                if (this.isBookingProduct()) {
+                    this.cleanCart();
+                } else {
+                    this.refreshMiniCart();
+                }
             }
         }
     }
 
     createOrder()
     {
+        this.cartJanitor = null;
+
         let getProducts = (() => {
             if ( this.isBookingProduct() ) {
                 return () => {
-
-                    const getPrefixedFields = (formElement, prefix) => {
-                        let fields = {};
-                        for(const element of formElement.elements) {
-                            if( element.name.startsWith(prefix) ) {
-                                fields[element.name] = element.value;
-                            }
-                        }
-                        return fields;
-                    }
-
                     const id = document.querySelector('[name="add-to-cart"]').value;
-                    return [new BookingProduct(id, 1, getPrefixedFields(this.formElement, "wc_bookings_field"))];
+                    return [new BookingProduct(id, 1, FormHelper.getPrefixedFields(this.formElement, "wc_bookings_field"))];
                 }
             } else if ( this.isGroupedProduct() ) {
                 return () => {
@@ -129,6 +139,8 @@ class SingleProductActionHandler {
             this.errorHandler.clear();
 
             const onResolve = (purchase_units) => {
+                this.cartJanitor = (new CartJanitor()).addFromPurchaseUnits(purchase_units);
+
                 const payer = payerData();
                 const bnCode = typeof this.config.bn_codes[this.config.context] !== 'undefined' ?
                     this.config.bn_codes[this.config.context] : '';
@@ -191,6 +203,18 @@ class SingleProductActionHandler {
     {
         // detection for "woocommerce-bookings" plugin
         return !!this.formElement.querySelector('.wc-booking-product-id');
+    }
+
+    cleanCart() {
+        this.cartJanitor.removeFromCart().then(() => {
+            this.refreshMiniCart();
+        }).catch(error => {
+            this.refreshMiniCart();
+        });
+    }
+
+    refreshMiniCart() {
+        jQuery(document.body).trigger('wc_fragment_refresh');
     }
 
 }
