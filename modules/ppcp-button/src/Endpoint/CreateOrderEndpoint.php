@@ -452,13 +452,17 @@ class CreateOrderEndpoint implements EndpointInterface {
 			}
 		}
 
-		$payment_source = $this->payment_source_factory->from_checkout(
-			$payment_method,
-			$funding_source,
-			$payer,
-			$shipping_preference,
-			$action
-		);
+		if ( defined( 'PPCP_FLAG_OLD_APPLICATION_CONTEXT' ) && PPCP_FLAG_OLD_APPLICATION_CONTEXT ) {
+			$payment_source = null;
+		} else {
+			$payment_source = $this->payment_source_factory->from_checkout(
+				$payment_method,
+				$funding_source,
+				$payer,
+				$shipping_preference,
+				$action
+			);
+		}
 
 		try {
 			return $this->api_endpoint->create(

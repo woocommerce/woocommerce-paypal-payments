@@ -33,6 +33,7 @@ return array(
 			'woocommerce-ppcp-version',
 			WebhookSimulation::OPTION_ID,
 			WebhookRegistrar::KEY,
+			'woocommerce-ppcp-old-application-context',
 		);
 	},
 

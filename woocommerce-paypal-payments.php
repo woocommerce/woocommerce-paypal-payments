@@ -44,6 +44,20 @@ define( 'PAYPAL_INTEGRATION_DATE', '2023-06-02' );
 	function init(): void {
 		define( 'PPCP_FLAG_SUBSCRIPTIONS_API', apply_filters( 'ppcp_flag_subscriptions_api', getenv( 'PPCP_FLAG_SUBSCRIPTIONS_API' ) === '1' ) );
 
+		if ( get_option( 'woocommerce-ppcp-old-application-context', null ) === null ) {
+			// Use old format by default for existing installations.
+			update_option( 'woocommerce-ppcp-old-application-context', get_option( 'woocommerce-ppcp-version' ) !== false );
+		}
+		$env_flag_old_application_context = getenv( 'PPCP_FLAG_OLD_APPLICATION_CONTEXT' );
+		$env_flag_old_application_context = is_string( $env_flag_old_application_context ) ? (bool) $env_flag_old_application_context : null;
+		define(
+			'PPCP_FLAG_OLD_APPLICATION_CONTEXT',
+			apply_filters(
+				'ppcp_flag_old_application_context',
+				$env_flag_old_application_context !== null ? $env_flag_old_application_context : get_option( 'woocommerce-ppcp-old-application-context' )
+			)
+		);
+
 		$root_dir = __DIR__;
 
 		if ( ! is_woocommerce_activated() ) {
