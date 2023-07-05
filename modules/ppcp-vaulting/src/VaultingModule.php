@@ -242,7 +242,7 @@ class VaultingModule implements ModuleInterface {
 			return;
 		}
 
-		$logger->info( 'Starting payment tokens migration for ' . (string) count( $customers ) . ' users' );
+		$logger->info( 'Identified ' . (string) count( $customers ) . ' users with payment tokens. Initiating token migration.' );
 		update_option( 'ppcp_payment_tokens_migration_initialized', true );
 
 		$interval_in_seconds = 5;
