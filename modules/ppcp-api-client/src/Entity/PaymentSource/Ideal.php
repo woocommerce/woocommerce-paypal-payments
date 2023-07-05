@@ -44,7 +44,7 @@ class Ideal implements PaymentSourceInterface {
 	private $experience_context;
 
 	/**
-	 * Sofort constructor.
+	 * Ideal constructor.
 	 *
 	 * @param string                 $name The payer's full name.
 	 * @param string                 $country_code The 2-letter country code of the payer.
