@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, e-commerce, store, sales, sell, 
 Requires at least: 5.3
 Tested up to: 6.2
 Requires PHP: 7.2
-Stable tag: 2.1.0
+Stable tag: 2.2.0
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -80,6 +80,27 @@ Follow the steps below to connect the plugin to your PayPal account:
 6. Main settings screen.
 
 == Changelog ==
+
+= 2.2.0 - TBD =
+* Fix - iDeal Payment method have never worked #1233
+* Fix - Use order currency instead of shop currency on order-pay page #1363
+* Fix - Do not show broken card button gateway when no checkout location #1358
+* Fix - Smart buttons not greyed out/removed on single product when deselecting product variation #1469
+* Fix - Type error with advanced columns pro #1367
+* Fix - Undefined array key 0 when checking $retry_errors in process_payment method #1375
+* Fix - Advanced Card Processing gateway becomes invisible post-plugin update unless admin pages are accessed once #1432
+* Fix - Incompatibility with WooCommerce One Page Checkout (or similar use cases) in Version 2.1.0 #1473
+* Fix - Prevent Repetitive Token Migration and Database Overload After 2.1.0 Update #1461
+* Enhancement - Make the blocks integration (partial) available without feature flag #1483
+* Enhancement - Add notice when shop currency is unsupported #1433
+* Enhancement - Improve ACDC error message when empty fields #1360
+* Enhancement - Do not exclude free items #1362
+* Enhancement - Trigger WC checkout_error event #1384
+* Enhancement - Update wording in buttons previews #1408
+* Enhancement - Filter to conditionally block the PayPal buttons #1485
+* Enhancement - Display funding source on the admin order page #1450
+* Enhancement - Update system report plugin status for Vaulting #1471
+* Enhancement - Revert Elementor Pro Checkout hook compatibility #1482
 
 = 2.1.0 - 2023-06-13 =
 * Fix - Performance issue #1182
