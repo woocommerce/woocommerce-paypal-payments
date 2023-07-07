@@ -127,4 +127,18 @@ class PartnerReferralsData {
 			)
 		);
 	}
+
+	/**
+	 * Append the validation token to the return_url
+	 *
+	 * @param array  $data The referral data.
+	 * @param string $token The token to be appended.
+	 * @return array
+	 */
+	public function append_onboarding_token( array $data, string $token ): array {
+		$separator = strpos( $data['partner_config_override']['return_url'], '?' ) === false ? '?' : '&';
+
+		$data['partner_config_override']['return_url'] .= $separator . 'ppcpToken=' . $token;
+		return $data;
+	}
 }
