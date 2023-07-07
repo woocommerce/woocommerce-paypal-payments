@@ -33,6 +33,7 @@ return array(
 			'woocommerce-ppcp-version',
 			WebhookSimulation::OPTION_ID,
 			WebhookRegistrar::KEY,
+			'ppcp_payment_tokens_migration_initialized',
 			'woocommerce-ppcp-old-application-context',
 		);
 	},
@@ -41,6 +42,7 @@ return array(
 		return array(
 			'woocommerce_paypal_payments_check_pui_payment_captured',
 			'woocommerce_paypal_payments_check_saved_payment',
+			'woocommerce_paypal_payments_payment_tokens_migration',
 		);
 	},
 
