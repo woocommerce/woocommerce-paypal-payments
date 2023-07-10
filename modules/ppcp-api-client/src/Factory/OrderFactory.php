@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
+use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
@@ -56,6 +57,13 @@ class OrderFactory {
 	private $payment_source_factory;
 
 	/**
+	 * The logger.
+	 *
+	 * @var LoggerInterface
+	 */
+	private LoggerInterface $logger;
+
+	/**
 	 * OrderFactory constructor.
 	 *
 	 * @param PurchaseUnitFactory          $purchase_unit_factory The PurchaseUnit factory.
@@ -63,13 +71,15 @@ class OrderFactory {
 	 * @param ApplicationContextRepository $application_context_repository The Application Context repository.
 	 * @param ApplicationContextFactory    $application_context_factory The Application Context factory.
 	 * @param PaymentSourceFactory         $payment_source_factory The Payment Source factory.
+	 * @param LoggerInterface $logger The logger.
 	 */
 	public function __construct(
 		PurchaseUnitFactory $purchase_unit_factory,
 		PayerFactory $payer_factory,
 		ApplicationContextRepository $application_context_repository,
 		ApplicationContextFactory $application_context_factory,
-		PaymentSourceFactory $payment_source_factory
+		PaymentSourceFactory $payment_source_factory,
+		LoggerInterface $logger
 	) {
 
 		$this->purchase_unit_factory          = $purchase_unit_factory;
@@ -77,6 +87,7 @@ class OrderFactory {
 		$this->application_context_repository = $application_context_repository;
 		$this->application_context_factory    = $application_context_factory;
 		$this->payment_source_factory         = $payment_source_factory;
+		$this->logger = $logger;
 	}
 
 	/**
@@ -128,6 +139,7 @@ class OrderFactory {
 			);
 		}
 		if ( ! isset( $order_data->intent ) ) {
+			$this->logger->info(wc_print_r($order_data, true));
 			throw new RuntimeException(
 				__( 'Order does not contain intent.', 'woocommerce-paypal-payments' )
 			);
