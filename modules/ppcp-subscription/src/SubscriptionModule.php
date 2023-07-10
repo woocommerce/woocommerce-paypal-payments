@@ -123,29 +123,16 @@ class SubscriptionModule implements ModuleInterface {
 					&& isset( $data['payment_source']['token'] ) && $data['payment_source']['token']['type'] === 'PAYMENT_METHOD_TOKEN'
 					&& isset( $data['payment_source']['token']['source']->card )
 				) {
-					$renewal_order_id     = absint( $data['purchase_units'][0]['custom_id'] );
-					$subscriptions        = wcs_get_subscriptions_for_renewal_order( $renewal_order_id );
-					$subscriptions_values = array_values( $subscriptions );
-					$latest_subscription  = array_shift( $subscriptions_values );
-					if ( is_a( $latest_subscription, WC_Subscription::class ) ) {
-						$related_renewal_orders           = $latest_subscription->get_related_orders( 'ids', 'renewal' );
-						$latest_order_id_with_transaction = array_slice( $related_renewal_orders, 1, 1, false );
-						$order_id                         = ! empty( $latest_order_id_with_transaction ) ? $latest_order_id_with_transaction[0] : 0;
-						if ( count( $related_renewal_orders ) === 1 ) {
-							$order_id = $latest_subscription->get_parent_id();
-						}
-
-						$wc_order = wc_get_order( $order_id );
-						if ( is_a( $wc_order, WC_Order::class ) ) {
-							$transaction_id                                       = $wc_order->get_transaction_id();
-							$data['application_context']['stored_payment_source'] = array(
+					$data['payment_source'] = array(
+						'card' => array(
+							'vault_id'          => $data['payment_source']['token']['id'],
+							'stored_credential' => array(
 								'payment_initiator' => 'MERCHANT',
 								'payment_type'      => 'RECURRING',
 								'usage'             => 'SUBSEQUENT',
-								'previous_transaction_reference' => $transaction_id,
-							);
-						}
-					}
+							),
+						),
+					);
 				}
 
 				return $data;

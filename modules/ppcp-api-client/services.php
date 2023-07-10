@@ -361,14 +361,12 @@ return array(
 		$application_context_repository = $container->get( 'api.repository.application-context' );
 		$application_context_factory    = $container->get( 'api.factory.application-context' );
 		$payment_source_factory         = $container->get( 'api.factory.payment-source' );
-		$logger = $container->get( 'woocommerce.logger.woocommerce' );
 		return new OrderFactory(
 			$purchase_unit_factory,
 			$payer_factory,
 			$application_context_repository,
 			$application_context_factory,
-			$payment_source_factory,
-			$logger
+			$payment_source_factory
 		);
 	},
 	'api.factory.payments'                      => static function ( ContainerInterface $container ): PaymentsFactory {
