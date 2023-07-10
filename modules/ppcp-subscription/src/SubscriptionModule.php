@@ -133,6 +133,11 @@ class SubscriptionModule implements ModuleInterface {
 							),
 						),
 					);
+
+					$previous_transaction_reference = $subscription->get_meta( 'ppcp_previous_transaction_reference' );
+					if ( $previous_transaction_reference ) {
+						$data['payment_source']['card']['stored_credential']['previous_transaction_reference'] = $previous_transaction_reference;
+					}
 				}
 
 				return $data;
