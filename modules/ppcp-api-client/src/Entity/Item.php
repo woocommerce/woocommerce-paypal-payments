@@ -74,7 +74,7 @@ class Item {
 	protected $tax_rate;
 
 	/**
-	 * The tax rate.
+	 * The cart item key.
 	 *
 	 * @var string|null
 	 */
@@ -192,7 +192,7 @@ class Item {
 	/**
 	 * Returns the cart key for this item.
 	 *
-	 * @return string
+	 * @return string|null
 	 */
 	public function cart_item_key():?string {
 		return $this->cart_item_key;

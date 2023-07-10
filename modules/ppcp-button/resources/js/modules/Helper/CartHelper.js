@@ -1,4 +1,4 @@
-class CartJanitor {
+class CartHelper {
 
     constructor(cartItemKeys = [])
     {
@@ -62,4 +62,4 @@ class CartJanitor {
     }
 }
 
-export default CartJanitor;
+export default CartHelper;

@@ -3,7 +3,7 @@ import BookingProduct from "../Entity/BookingProduct";
 import onApprove from '../OnApproveHandler/onApproveForContinue';
 import {payerData} from "../Helper/PayerData";
 import {PaymentMethods} from "../Helper/CheckoutMethodState";
-import CartJanitor from "../Helper/CartJanitor";
+import CartHelper from "../Helper/CartHelper";
 import FormHelper from "../Helper/FormHelper";
 
 class SingleProductActionHandler {
@@ -18,7 +18,7 @@ class SingleProductActionHandler {
         this.updateCart = updateCart;
         this.formElement = formElement;
         this.errorHandler = errorHandler;
-        this.cartJanitor = null;
+        this.cartHelper = null;
     }
 
     subscriptionsConfiguration() {
@@ -100,7 +100,7 @@ class SingleProductActionHandler {
 
     createOrder()
     {
-        this.cartJanitor = null;
+        this.cartHelper = null;
 
         let getProducts = (() => {
             if ( this.isBookingProduct() ) {
@@ -139,7 +139,7 @@ class SingleProductActionHandler {
             this.errorHandler.clear();
 
             const onResolve = (purchase_units) => {
-                this.cartJanitor = (new CartJanitor()).addFromPurchaseUnits(purchase_units);
+                this.cartHelper = (new CartHelper()).addFromPurchaseUnits(purchase_units);
 
                 const payer = payerData();
                 const bnCode = typeof this.config.bn_codes[this.config.context] !== 'undefined' ?
@@ -206,7 +206,7 @@ class SingleProductActionHandler {
     }
 
     cleanCart() {
-        this.cartJanitor.removeFromCart().then(() => {
+        this.cartHelper.removeFromCart().then(() => {
             this.refreshMiniCart();
         }).catch(error => {
             this.refreshMiniCart();
