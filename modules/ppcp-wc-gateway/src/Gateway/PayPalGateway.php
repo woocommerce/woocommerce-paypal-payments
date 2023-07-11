@@ -13,6 +13,7 @@ use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
@@ -253,8 +254,13 @@ class PayPalGateway extends \WC_Payment_Gateway {
 
 		$funding_source = $this->session_handler->funding_source();
 		if ( $funding_source ) {
-			$this->title       = $this->funding_source_renderer->render_name( $funding_source );
-			$this->description = $this->funding_source_renderer->render_description( $funding_source );
+			$order = $this->session_handler->order();
+			if ( $order &&
+				( $order->status()->is( OrderStatus::APPROVED ) || $order->status()->is( OrderStatus::COMPLETED ) )
+			) {
+				$this->title       = $this->funding_source_renderer->render_name( $funding_source );
+				$this->description = $this->funding_source_renderer->render_description( $funding_source );
+			}
 		}
 
 		$this->init_form_fields();
@@ -269,6 +275,27 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		);
 
 		$this->order_endpoint = $order_endpoint;
+	}
+
+	/**
+	 * Return the gateway's title.
+	 *
+	 * @return string
+	 */
+	public function get_title() {
+		if ( is_admin() ) {
+			// $theorder and other things for retrieving the order or post info are not available
+			// in the constructor, so must do it here.
+			global $theorder;
+			if ( $theorder instanceof WC_Order ) {
+				$payment_method_title = $theorder->get_payment_method_title();
+				if ( $payment_method_title ) {
+					$this->title = $payment_method_title;
+				}
+			}
+		}
+
+		return parent::get_title();
 	}
 
 	/**
@@ -533,12 +560,15 @@ class PayPalGateway extends \WC_Payment_Gateway {
 				'INSTRUMENT_DECLINED'   => __( 'Instrument declined.', 'woocommerce-paypal-payments' ),
 				'PAYER_ACTION_REQUIRED' => __( 'Payer action required, possibly overcharge.', 'woocommerce-paypal-payments' ),
 			);
-			$retry_errors        = array_filter(
-				array_keys( $retry_keys_messages ),
-				function ( string $key ) use ( $error ): bool {
-					return $error->has_detail( $key );
-				}
+			$retry_errors        = array_values(
+				array_filter(
+					array_keys( $retry_keys_messages ),
+					function ( string $key ) use ( $error ): bool {
+						return $error->has_detail( $key );
+					}
+				)
 			);
+
 			if ( $retry_errors ) {
 				$retry_error_key = $retry_errors[0];
 

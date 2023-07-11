@@ -20,7 +20,7 @@ use WP_REST_Response;
  */
 class PaymentSaleCompleted implements RequestHandler {
 
-	use TransactionIdHandlingTrait;
+	use TransactionIdHandlingTrait, RequestHandlerTrait;
 
 	/**
 	 * The logger.
@@ -67,17 +67,14 @@ class PaymentSaleCompleted implements RequestHandler {
 	 * @return WP_REST_Response
 	 */
 	public function handle_request( WP_REST_Request $request ): WP_REST_Response {
-		$response = array( 'success' => false );
 		if ( is_null( $request['resource'] ) ) {
-			return new WP_REST_Response( $response );
+			return $this->failure_response();
 		}
 
 		$billing_agreement_id = wc_clean( wp_unslash( $request['resource']['billing_agreement_id'] ?? '' ) );
 		if ( ! $billing_agreement_id ) {
 			$message = 'Could not retrieve billing agreement id for subscription.';
-			$this->logger->warning( $message, array( 'request' => $request ) );
-			$response['message'] = $message;
-			return new WP_REST_Response( $response );
+			return $this->failure_response( $message );
 		}
 
 		$args          = array(
@@ -99,7 +96,6 @@ class PaymentSaleCompleted implements RequestHandler {
 			}
 		}
 
-		$response['success'] = true;
-		return new WP_REST_Response( $response );
+		return $this->success_response();
 	}
 }

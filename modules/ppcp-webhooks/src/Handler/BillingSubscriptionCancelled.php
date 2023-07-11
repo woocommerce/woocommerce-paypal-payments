@@ -17,6 +17,7 @@ use WP_REST_Response;
  * Class BillingSubscriptionCancelled
  */
 class BillingSubscriptionCancelled implements RequestHandler {
+	use RequestHandlerTrait;
 
 	/**
 	 * The logger.
@@ -64,9 +65,8 @@ class BillingSubscriptionCancelled implements RequestHandler {
 	 * @return WP_REST_Response
 	 */
 	public function handle_request( WP_REST_Request $request ): WP_REST_Response {
-		$response = array( 'success' => false );
 		if ( is_null( $request['resource'] ) ) {
-			return new WP_REST_Response( $response );
+			return $this->failure_response();
 		}
 
 		$subscription_id = wc_clean( wp_unslash( $request['resource']['id'] ?? '' ) );
@@ -87,7 +87,6 @@ class BillingSubscriptionCancelled implements RequestHandler {
 			}
 		}
 
-		$response['success'] = true;
-		return new WP_REST_Response( $response );
+		return $this->success_response();
 	}
 }

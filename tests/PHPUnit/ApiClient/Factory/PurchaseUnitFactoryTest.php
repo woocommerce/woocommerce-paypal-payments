@@ -258,7 +258,7 @@ class PurchaseUnitFactoryTest extends TestCase
     {
         $wcCustomer = Mockery::mock(\WC_Customer::class);
         expect('WC')
-            ->andReturn((object) ['customer' => $wcCustomer]);
+            ->andReturn((object) ['customer' => $wcCustomer, 'session' => null]);
 
         $wcCart = Mockery::mock(\WC_Cart::class);
         $amount = Mockery::mock(Amount::class);
@@ -322,7 +322,7 @@ class PurchaseUnitFactoryTest extends TestCase
     public function testWcCartShippingGetsDroppendWhenNoCustomer()
     {
         expect('WC')
-            ->andReturn((object) ['customer' => null]);
+            ->andReturn((object) ['customer' => null, 'session' => null]);
 
         $wcCart = Mockery::mock(\WC_Cart::class);
         $amount = Mockery::mock(Amount::class);
@@ -360,7 +360,7 @@ class PurchaseUnitFactoryTest extends TestCase
     public function testWcCartShippingGetsDroppendWhenNoCountryCode()
     {
         expect('WC')
-            ->andReturn((object) ['customer' => Mockery::mock(\WC_Customer::class)]);
+            ->andReturn((object) ['customer' => Mockery::mock(\WC_Customer::class), 'session' => null]);
 
         $wcCart = Mockery::mock(\WC_Cart::class);
         $amount = Mockery::mock(Amount::class);

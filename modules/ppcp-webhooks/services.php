@@ -82,12 +82,18 @@ return array(
 		$payment_token_factory = $container->get( 'vaulting.payment-token-factory' );
 
 		return array(
-			new CheckoutOrderApproved( $logger, $prefix, $order_endpoint ),
-			new CheckoutOrderCompleted( $logger, $prefix ),
+			new CheckoutOrderApproved(
+				$logger,
+				$order_endpoint,
+				$container->get( 'session.handler' ),
+				$container->get( 'wcgateway.funding-source.renderer' ),
+				$container->get( 'wcgateway.order-processor' )
+			),
+			new CheckoutOrderCompleted( $logger ),
 			new CheckoutPaymentApprovalReversed( $logger ),
-			new PaymentCaptureRefunded( $logger, $prefix ),
-			new PaymentCaptureReversed( $logger, $prefix ),
-			new PaymentCaptureCompleted( $logger, $prefix, $order_endpoint ),
+			new PaymentCaptureRefunded( $logger ),
+			new PaymentCaptureReversed( $logger ),
+			new PaymentCaptureCompleted( $logger, $order_endpoint ),
 			new VaultPaymentTokenCreated( $logger, $prefix, $authorized_payments_processor, $payment_token_factory ),
 			new VaultPaymentTokenDeleted( $logger ),
 			new PaymentCapturePending( $logger ),

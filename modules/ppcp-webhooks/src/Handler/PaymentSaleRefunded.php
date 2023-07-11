@@ -21,7 +21,7 @@ use WP_REST_Response;
  */
 class PaymentSaleRefunded implements RequestHandler {
 
-	use TransactionIdHandlingTrait, RefundMetaTrait;
+	use TransactionIdHandlingTrait, RefundMetaTrait, RequestHandlerTrait;
 
 	/**
 	 * The logger.
@@ -68,16 +68,15 @@ class PaymentSaleRefunded implements RequestHandler {
 	 * @return WP_REST_Response
 	 */
 	public function handle_request( WP_REST_Request $request ): WP_REST_Response {
-		$response = array( 'success' => false );
 		if ( is_null( $request['resource'] ) ) {
-			return new WP_REST_Response( $response );
+			return $this->failure_response();
 		}
 
 		$refund_id             = (string) ( $request['resource']['id'] ?? '' );
 		$transaction_id        = $request['resource']['sale_id'] ?? '';
 		$total_refunded_amount = $request['resource']['total_refunded_amount']['value'] ?? '';
 		if ( ! $refund_id || ! $transaction_id || ! $total_refunded_amount ) {
-			return new WP_REST_Response( $response );
+			return $this->failure_response();
 		}
 
 		$args = array(
@@ -90,7 +89,7 @@ class PaymentSaleRefunded implements RequestHandler {
 		$wc_orders = wc_get_orders( $args );
 
 		if ( ! is_array( $wc_orders ) ) {
-			return new WP_REST_Response( $response );
+			return $this->failure_response();
 		}
 
 		foreach ( $wc_orders as $wc_order ) {
@@ -102,24 +101,17 @@ class PaymentSaleRefunded implements RequestHandler {
 			);
 
 			if ( $refund instanceof WP_Error ) {
-				$this->logger->warning(
-					sprintf(
-					// translators: %s is the order id.
-						__( 'Order %s could not be refunded', 'woocommerce-paypal-payments' ),
-						(string) $wc_order->get_id()
-					)
+				$message = sprintf(
+					'Order %s could not be refunded. %s',
+					(string) $wc_order->get_id(),
+					$refund->get_error_message()
 				);
 
-				$response['message'] = $refund->get_error_message();
-				return new WP_REST_Response( $response );
+				return $this->failure_response( $message );
 			}
 
 			$order_refunded_message = sprintf(
-			// translators: %1$s is the order id %2$s is the amount which has been refunded.
-				__(
-					'Order %1$s has been refunded with %2$s through PayPal.',
-					'woocommerce-paypal-payments'
-				),
+				'Order %1$s has been refunded with %2$s through PayPal.',
 				(string) $wc_order->get_id(),
 				(string) $total_refunded_amount
 			);
@@ -130,7 +122,6 @@ class PaymentSaleRefunded implements RequestHandler {
 			$this->add_refund_to_meta( $wc_order, $refund_id );
 		}
 
-		$response['success'] = true;
-		return new WP_REST_Response( $response );
+		return $this->success_response();
 	}
 }

@@ -22,7 +22,7 @@ use WP_REST_Response;
  */
 class PaymentCaptureCompleted implements RequestHandler {
 
-	use PrefixTrait, TransactionIdHandlingTrait;
+	use TransactionIdHandlingTrait, RequestHandlerTrait;
 
 	/**
 	 * The logger.
@@ -42,16 +42,13 @@ class PaymentCaptureCompleted implements RequestHandler {
 	 * PaymentCaptureCompleted constructor.
 	 *
 	 * @param LoggerInterface $logger The logger.
-	 * @param string          $prefix The prefix.
 	 * @param OrderEndpoint   $order_endpoint The order endpoint.
 	 */
 	public function __construct(
 		LoggerInterface $logger,
-		string $prefix,
 		OrderEndpoint $order_endpoint
 	) {
 		$this->logger         = $logger;
-		$this->prefix         = $prefix;
 		$this->order_endpoint = $order_endpoint;
 	}
 
@@ -83,33 +80,24 @@ class PaymentCaptureCompleted implements RequestHandler {
 	 * @return WP_REST_Response
 	 */
 	public function handle_request( \WP_REST_Request $request ): WP_REST_Response {
-		$response = array( 'success' => false );
-
 		$webhook_id = (string) ( $request['id'] ?? '' );
 
 		$resource = $request['resource'];
 		if ( ! is_array( $resource ) ) {
 			$message = 'Resource data not found in webhook request.';
-			$this->logger->warning( $message, array( 'request' => $request ) );
-			$response['message'] = $message;
-			return new WP_REST_Response( $response );
+			return $this->failure_response( $message );
 		}
 
-		$wc_order_id = isset( $resource['custom_id'] ) ?
-			$this->sanitize_custom_id( (string) $resource['custom_id'] ) : 0;
+		$wc_order_id = isset( $resource['custom_id'] ) ? (string) $resource['custom_id'] : 0;
 		if ( ! $wc_order_id ) {
 			$message = sprintf( 'No order for webhook event %s was found.', $webhook_id );
-			$this->logger->warning( $message, array( 'request' => $request ) );
-			$response['message'] = $message;
-			return new WP_REST_Response( $response );
+			return $this->failure_response( $message );
 		}
 
 		$wc_order = wc_get_order( $wc_order_id );
 		if ( ! is_a( $wc_order, \WC_Order::class ) ) {
 			$message = sprintf( 'No order for webhook event %s was found.', $webhook_id );
-			$this->logger->warning( $message, array( 'request' => $request ) );
-			$response['message'] = $message;
-			return new WP_REST_Response( $response );
+			return $this->failure_response( $message );
 		}
 
 		$order_id = $resource['supplementary_data']['related_ids']['order_id'] ?? null;
@@ -120,8 +108,7 @@ class PaymentCaptureCompleted implements RequestHandler {
 		do_action( 'ppcp_payment_capture_completed_webhook_handler', $wc_order, $order_id );
 
 		if ( $wc_order->get_status() !== 'on-hold' ) {
-			$response['success'] = true;
-			return new WP_REST_Response( $response );
+			return $this->success_response();
 		}
 		$wc_order->add_order_note(
 			__( 'Payment successfully captured.', 'woocommerce-paypal-payments' )
@@ -130,19 +117,10 @@ class PaymentCaptureCompleted implements RequestHandler {
 		$wc_order->payment_complete();
 		$wc_order->update_meta_data( AuthorizedPaymentsProcessor::CAPTURED_META_KEY, 'true' );
 		$wc_order->save();
-		$this->logger->log(
-			'info',
+		$this->logger->info(
 			sprintf(
-			// translators: %s is the order ID.
-				__(
-					'Order %s has been updated through PayPal',
-					'woocommerce-paypal-payments'
-				),
+				'Order %s has been updated through PayPal',
 				(string) $wc_order->get_id()
-			),
-			array(
-				'request' => $request,
-				'order'   => $wc_order,
 			)
 		);
 
@@ -159,7 +137,6 @@ class PaymentCaptureCompleted implements RequestHandler {
 			}
 		}
 
-		$response['success'] = true;
-		return new WP_REST_Response( $response );
+		return $this->success_response();
 	}
 }

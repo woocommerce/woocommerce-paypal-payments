@@ -40,6 +40,10 @@ class FreeTrialHandler {
                     if (errors.length > 0) {
                         this.spinner.unblock();
                         this.errorHandler.messages(errors);
+
+                        // fire WC event for other plugins
+                        jQuery( document.body ).trigger( 'checkout_error' , [ this.errorHandler.currentHtml() ] );
+
                         return;
                     }
                 } catch (error) {

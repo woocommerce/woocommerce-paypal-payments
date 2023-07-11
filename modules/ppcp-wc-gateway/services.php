@@ -57,6 +57,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\GatewayWithoutPayPalAdminNotice;
+use WooCommerce\PayPalCommerce\WcGateway\Notice\UnsupportedCurrencyAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
@@ -208,6 +209,12 @@ return array(
 		$settings = $container->get( 'wcgateway.settings' );
 		return new ConnectAdminNotice( $state, $settings );
 	},
+	'wcgateway.notice.currency-unsupported'                => static function ( ContainerInterface $container ): UnsupportedCurrencyAdminNotice {
+		$state = $container->get( 'onboarding.state' );
+		$shop_currency = $container->get( 'api.shop.currency' );
+		$supported_currencies = $container->get( 'api.supported-currencies' );
+		return new UnsupportedCurrencyAdminNotice( $state, $shop_currency, $supported_currencies );
+	},
 	'wcgateway.notice.dcc-without-paypal'                  => static function ( ContainerInterface $container ): GatewayWithoutPayPalAdminNotice {
 		return new GatewayWithoutPayPalAdminNotice(
 			CreditCardGateway::ID,
@@ -223,7 +230,8 @@ return array(
 			$container->get( 'onboarding.state' ),
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'wcgateway.is-wc-payments-page' ),
-			$container->get( 'wcgateway.is-ppcp-settings-page' )
+			$container->get( 'wcgateway.is-ppcp-settings-page' ),
+			$container->get( 'wcgateway.settings.status' )
 		);
 	},
 	'wcgateway.notice.authorize-order-action'              =>
@@ -903,6 +911,12 @@ return array(
 			'paylater'    => _x( 'Pay Later', 'Name of payment method', 'woocommerce-paypal-payments' ),
 		);
 	},
+	/**
+	 * The sources that do not cause issues about redirecting (on mobile, ...) and sometimes not returning back.
+	 */
+	'wcgateway.funding-sources-without-redirect'           => static function( ContainerInterface $container ): array {
+		return array( 'paypal', 'paylater', 'venmo', 'card' );
+	},
 	'wcgateway.settings.funding-sources'                   => static function( ContainerInterface $container ): array {
 		return array_diff_key(
 			$container->get( 'wcgateway.all-funding-sources' ),
@@ -938,11 +952,11 @@ return array(
 	'wcgateway.endpoint.return-url'                        => static function ( ContainerInterface $container ) : ReturnUrlEndpoint {
 		$gateway  = $container->get( 'wcgateway.paypal-gateway' );
 		$endpoint = $container->get( 'api.endpoint.order' );
-		$prefix   = $container->get( 'api.prefix' );
 		return new ReturnUrlEndpoint(
 			$gateway,
 			$endpoint,
-			$prefix
+			$container->get( 'session.handler' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 

@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\Button\Assets;
 
 use Exception;
 use Psr\Log\LoggerInterface;
+use WC_Order;
 use WC_Product;
 use WC_Product_Variation;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
@@ -174,6 +175,13 @@ class SmartButton implements SmartButtonInterface {
 	private $pay_now_contexts;
 
 	/**
+	 * The sources that do not cause issues about redirecting (on mobile, ...) and sometimes not returning back.
+	 *
+	 * @var string[]
+	 */
+	private $funding_sources_without_redirect;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -208,6 +216,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @param bool                   $basic_checkout_validation_enabled Whether the basic JS validation of the form iss enabled.
 	 * @param bool                   $early_validation_enabled Whether to execute WC validation of the checkout form.
 	 * @param array                  $pay_now_contexts The contexts that should have the Pay Now button.
+	 * @param string[]               $funding_sources_without_redirect The sources that do not cause issues about redirecting (on mobile, ...) and sometimes not returning back.
 	 * @param LoggerInterface        $logger The logger.
 	 */
 	public function __construct(
@@ -229,6 +238,7 @@ class SmartButton implements SmartButtonInterface {
 		bool $basic_checkout_validation_enabled,
 		bool $early_validation_enabled,
 		array $pay_now_contexts,
+		array $funding_sources_without_redirect,
 		LoggerInterface $logger
 	) {
 
@@ -250,6 +260,7 @@ class SmartButton implements SmartButtonInterface {
 		$this->basic_checkout_validation_enabled = $basic_checkout_validation_enabled;
 		$this->early_validation_enabled          = $early_validation_enabled;
 		$this->pay_now_contexts                  = $pay_now_contexts;
+		$this->funding_sources_without_redirect  = $funding_sources_without_redirect;
 		$this->logger                            = $logger;
 	}
 
@@ -796,8 +807,6 @@ class SmartButton implements SmartButtonInterface {
 	 * @return array
 	 */
 	public function script_data(): array {
-		global $wp;
-
 		$is_free_trial_cart = $this->is_free_trial_cart();
 
 		$url_params = $this->url_params();
@@ -858,10 +867,12 @@ class SmartButton implements SmartButtonInterface {
 			'bn_codes'                          => $this->bn_codes(),
 			'payer'                             => $this->payerData(),
 			'button'                            => array(
-				'wrapper'           => '#ppc-button-' . PayPalGateway::ID,
-				'mini_cart_wrapper' => '#ppc-button-minicart',
-				'cancel_wrapper'    => '#ppcp-cancel',
-				'mini_cart_style'   => array(
+				'wrapper'               => '#ppc-button-' . PayPalGateway::ID,
+				'is_disabled'           => $this->is_button_disabled(),
+				'mini_cart_wrapper'     => '#ppc-button-minicart',
+				'is_mini_cart_disabled' => $this->is_button_disabled( 'mini-cart' ),
+				'cancel_wrapper'        => '#ppcp-cancel',
+				'mini_cart_style'       => array(
 					'layout'  => $this->style_for_context( 'layout', 'mini-cart' ),
 					'color'   => $this->style_for_context( 'color', 'mini-cart' ),
 					'shape'   => $this->style_for_context( 'shape', 'mini-cart' ),
@@ -869,7 +880,7 @@ class SmartButton implements SmartButtonInterface {
 					'tagline' => $this->style_for_context( 'tagline', 'mini-cart' ),
 					'height'  => $this->settings->has( 'button_mini-cart_height' ) && $this->settings->get( 'button_mini-cart_height' ) ? $this->normalize_height( (int) $this->settings->get( 'button_mini-cart_height' ) ) : 35,
 				),
-				'style'             => array(
+				'style'                 => array(
 					'layout'  => $this->style_for_context( 'layout', $this->context() ),
 					'color'   => $this->style_for_context( 'color', $this->context() ),
 					'shape'   => $this->style_for_context( 'shape', $this->context() ),
@@ -893,6 +904,10 @@ class SmartButton implements SmartButtonInterface {
 					'credit_card_number'       => '',
 					'cvv'                      => '',
 					'mm_yy'                    => __( 'MM/YY', 'woocommerce-paypal-payments' ),
+					'fields_empty'             => __(
+						'Card payment details are missing. Please fill in all required fields.',
+						'woocommerce-paypal-payments'
+					),
 					'fields_not_valid'         => __(
 						'Unfortunately, your credit card details are not valid.',
 						'woocommerce-paypal-payments'
@@ -934,11 +949,12 @@ class SmartButton implements SmartButtonInterface {
 				// phpcs:ignore WordPress.WP.I18n
 				'shipping_field' => _x( 'Shipping %s', 'checkout-validation', 'woocommerce' ),
 			),
-			'order_id'                          => 'pay-now' === $this->context() ? absint( $wp->query_vars['order-pay'] ) : 0,
+			'order_id'                          => 'pay-now' === $this->context() ? $this->get_order_pay_id() : 0,
 			'single_product_buttons_enabled'    => $this->settings_status->is_smart_button_enabled_for_location( 'product' ),
 			'mini_cart_buttons_enabled'         => $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' ),
 			'basic_checkout_validation_enabled' => $this->basic_checkout_validation_enabled,
 			'early_checkout_validation_enabled' => $this->early_validation_enabled,
+			'funding_sources_without_redirect'  => $this->funding_sources_without_redirect,
 		);
 
 		if ( $this->style_for_context( 'layout', 'mini-cart' ) !== 'horizontal' ) {
@@ -1000,11 +1016,24 @@ class SmartButton implements SmartButtonInterface {
 		);
 		if (
 			$this->environment->current_environment_is( Environment::SANDBOX )
-			&& defined( 'WP_DEBUG' ) && \WP_DEBUG && is_user_logged_in()
+			&& defined( 'WP_DEBUG' ) && \WP_DEBUG
 			&& WC()->customer instanceof \WC_Customer && WC()->customer->get_billing_country()
 			&& 2 === strlen( WC()->customer->get_billing_country() )
 		) {
 			$params['buyer-country'] = WC()->customer->get_billing_country();
+		}
+
+		if ( 'pay-now' === $this->context() ) {
+			$wc_order_id = $this->get_order_pay_id();
+			if ( $wc_order_id ) {
+				$wc_order = wc_get_order( $wc_order_id );
+				if ( $wc_order instanceof WC_Order ) {
+					$currency = $wc_order->get_currency();
+					if ( $currency ) {
+						$params['currency'] = $currency;
+					}
+				}
+			}
 		}
 
 		$disable_funding = $this->settings->has( 'disable_funding' )
@@ -1335,6 +1364,51 @@ class SmartButton implements SmartButtonInterface {
 	}
 
 	/**
+	 * Checks if PayPal buttons/messages should be rendered for the current page.
+	 *
+	 * @param string|null $context The context that should be checked, use default otherwise.
+	 *
+	 * @return bool
+	 */
+	protected function is_button_disabled( string $context = null ): bool {
+		if ( null === $context ) {
+			$context = $this->context();
+		}
+
+		if ( 'product' === $context ) {
+			$product = wc_get_product();
+
+			/**
+			 * Allows to decide if the button should be disabled for a given product
+			 */
+			$is_disabled = apply_filters(
+				'woocommerce_paypal_payments_product_buttons_disabled',
+				null,
+				$product
+			);
+
+			if ( $is_disabled !== null ) {
+				return $is_disabled;
+			}
+		}
+
+		/**
+		 * Allows to decide if the button should be disabled globally or on a given context
+		 */
+		$is_disabled = apply_filters(
+			'woocommerce_paypal_payments_buttons_disabled',
+			null,
+			$context
+		);
+
+		if ( $is_disabled !== null ) {
+			return $is_disabled;
+		}
+
+		return false;
+	}
+
+	/**
 	 * Retrieves all payment tokens for the user, via API or cached if already queried.
 	 *
 	 * @return PaymentToken[]
@@ -1432,5 +1506,20 @@ class SmartButton implements SmartButtonInterface {
 		}
 
 		return $this->context() === 'product' ? $product_intent : $other_context_intent;
+	}
+
+	/**
+	 * Returns the ID of WC order on the order-pay page, or 0.
+	 *
+	 * @return int
+	 */
+	protected function get_order_pay_id(): int {
+		global $wp;
+
+		if ( ! isset( $wp->query_vars['order-pay'] ) ) {
+			return 0;
+		}
+
+		return absint( $wp->query_vars['order-pay'] );
 	}
 }

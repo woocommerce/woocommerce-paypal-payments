@@ -120,11 +120,19 @@ class StatusReportModule implements ModuleInterface {
 						'value'          => $this->bool_to_html( ! $last_webhook_storage->is_empty() ),
 					),
 					array(
-						'label'          => esc_html__( 'Vault enabled', 'woocommerce-paypal-payments' ),
-						'exported_label' => 'Vault enabled',
-						'description'    => esc_html__( 'Whether vaulting is enabled on PayPal account or not.', 'woocommerce-paypal-payments' ),
+						'label'          => esc_html__( 'PayPal Vault enabled', 'woocommerce-paypal-payments' ),
+						'exported_label' => 'PayPal Vault enabled',
+						'description'    => esc_html__( 'Whether vaulting option is enabled on Standard Payments settings or not.', 'woocommerce-paypal-payments' ),
 						'value'          => $this->bool_to_html(
-							$this->vault_enabled( $bearer )
+							$settings->has( 'vault_enabled' ) && $settings->get( 'vault_enabled' )
+						),
+					),
+					array(
+						'label'          => esc_html__( 'ACDC Vault enabled', 'woocommerce-paypal-payments' ),
+						'exported_label' => 'ACDC Vault enabled',
+						'description'    => esc_html__( 'Whether vaulting option is enabled on Advanced Card Processing settings or not.', 'woocommerce-paypal-payments' ),
+						'value'          => $this->bool_to_html(
+							$settings->has( 'vault_enabled_dcc' ) && $settings->get( 'vault_enabled_dcc' )
 						),
 					),
 					array(
@@ -190,21 +198,6 @@ class StatusReportModule implements ModuleInterface {
 
 		$current_state = $state->current_state();
 		return $token->is_valid() && $current_state === $state::STATE_ONBOARDED;
-	}
-
-	/**
-	 * It returns whether vaulting is enabled or not.
-	 *
-	 * @param Bearer $bearer The bearer.
-	 * @return bool
-	 */
-	private function vault_enabled( Bearer $bearer ): bool {
-		try {
-			$token = $bearer->bearer();
-			return $token->vaulting_available();
-		} catch ( RuntimeException $exception ) {
-			return false;
-		}
 	}
 
 	/**
