@@ -34,6 +34,7 @@ return array(
 			WebhookSimulation::OPTION_ID,
 			WebhookRegistrar::KEY,
 			'ppcp_payment_tokens_migration_initialized',
+			'woocommerce-ppcp-old-application-context',
 		);
 	},
 

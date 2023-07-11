@@ -3,6 +3,7 @@
 namespace PHPUnit\Vaulting;
 
 use Mockery;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource\Card;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WC_Customer;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
@@ -100,6 +101,7 @@ class VaultedCreditCardHandlerTest extends TestCase
 		$token = Mockery::mock(PaymentToken::class);
 		$tokenId = 'abc123';
 		$token->shouldReceive('id')->andReturn($tokenId);
+		$token->shouldReceive('payment_source_id')->andReturn('token');
 		$this->paymentTokenRepository->shouldReceive('all_for_user_id')
 			->andReturn([$token]);
 
@@ -119,7 +121,8 @@ class VaultedCreditCardHandlerTest extends TestCase
 		$order->shouldReceive('id')->andReturn('1');
 		$order->shouldReceive('intent')->andReturn('CAPTURE');
 		$paymentSource = Mockery::mock(PaymentSource::class);
-		$paymentSourceCard = Mockery::mock(PaymentSourceCard::class);
+		$paymentSourceCard = Mockery::mock(Card::class);
+		$paymentSourceCard->shouldReceive('payment_source_id')->andReturn('card');
 		$paymentSource->shouldReceive('card')->andReturn($paymentSourceCard);
 		$order->shouldReceive('payment_source')->andReturn($paymentSource);
 		$orderStatus = Mockery::mock(OrderStatus::class);
@@ -138,7 +141,7 @@ class VaultedCreditCardHandlerTest extends TestCase
 		$purchaseUnit->shouldReceive('payments')->andReturn($payments);
 
 		$this->orderEndpoint->shouldReceive('create')
-			->with([$purchaseUnit], 'some_preference', $payer, $token)
+			->with([$purchaseUnit], 'some_preference', $payer, Mockery::type(PaymentSource::class))
 			->andReturn($order);
 
 		$this->environment->shouldReceive('current_environment_is')->andReturn(true);

@@ -62,6 +62,15 @@ class PayerName {
 	}
 
 	/**
+	 * Returns given name + surname.
+	 *
+	 * @return string
+	 */
+	public function full_name(): string {
+		return implode( ' ', array( $this->given_name, $this->surname ) );
+	}
+
+	/**
 	 * Returns the object as array.
 	 *
 	 * @return array

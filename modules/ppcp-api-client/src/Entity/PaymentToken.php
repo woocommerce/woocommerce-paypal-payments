@@ -10,12 +10,13 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\ApiClient\Entity;
 
 use stdClass;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource\PaymentSourceInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
 /**
  * Class PaymentToken
  */
-class PaymentToken {
+class PaymentToken implements PaymentSourceInterface {
 
 	const TYPE_PAYMENT_METHOD_TOKEN = 'PAYMENT_METHOD_TOKEN';
 
@@ -50,9 +51,7 @@ class PaymentToken {
 	 */
 	public function __construct( string $id, stdClass $source, string $type = self::TYPE_PAYMENT_METHOD_TOKEN ) {
 		if ( ! in_array( $type, self::get_valid_types(), true ) ) {
-			throw new RuntimeException(
-				__( 'Not a valid payment source type.', 'woocommerce-paypal-payments' )
-			);
+			throw new RuntimeException( "Not a valid payment source type: $type." );
 		}
 		$this->id     = $id;
 		$this->type   = $type;
@@ -87,6 +86,13 @@ class PaymentToken {
 	}
 
 	/**
+	 * Returns the payment source ID.
+	 */
+	public function payment_source_id(): string {
+		return 'token';
+	}
+
+	/**
 	 * Returns the object as array.
 	 *
 	 * @return array
@@ -116,5 +122,4 @@ class PaymentToken {
 			)
 		);
 	}
-
 }

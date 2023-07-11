@@ -18,7 +18,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PatchCollection;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentMethod;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
@@ -27,7 +27,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PatchCollectionFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\ErrorResponse;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
-use WooCommerce\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\WcGateway\FraudNet\FraudNet;
@@ -177,10 +176,9 @@ class OrderEndpoint {
 	 * Creates an order.
 	 *
 	 * @param PurchaseUnit[]     $items The purchase unit items for the order.
-	 * @param string             $shipping_preference One of ApplicationContext::SHIPPING_PREFERENCE_ values.
+	 * @param string             $shipping_preference One of ExperienceContext::SHIPPING_PREFERENCE_ values.
 	 * @param Payer|null         $payer The payer off the order.
-	 * @param PaymentToken|null  $payment_token The payment token.
-	 * @param PaymentMethod|null $payment_method The payment method.
+	 * @param PaymentSource|null $payment_source The payment source.
 	 * @param string             $paypal_request_id The paypal request id.
 	 * @param string             $user_action The user action.
 	 *
@@ -191,15 +189,14 @@ class OrderEndpoint {
 		array $items,
 		string $shipping_preference,
 		Payer $payer = null,
-		PaymentToken $payment_token = null,
-		PaymentMethod $payment_method = null,
+		?PaymentSource $payment_source = null,
 		string $paypal_request_id = '',
 		string $user_action = ApplicationContext::USER_ACTION_CONTINUE
 	): Order {
 		$bearer = $this->bearer->bearer();
 		$data   = array(
-			'intent'              => ( $this->subscription_helper->cart_contains_subscription() || $this->subscription_helper->current_product_is_subscription() ) ? 'AUTHORIZE' : $this->intent,
-			'purchase_units'      => array_map(
+			'intent'         => ( $this->subscription_helper->cart_contains_subscription() || $this->subscription_helper->current_product_is_subscription() ) ? 'AUTHORIZE' : $this->intent,
+			'purchase_units' => array_map(
 				static function ( PurchaseUnit $item ) use ( $shipping_preference ): array {
 					$data = $item->to_array();
 
@@ -212,17 +209,14 @@ class OrderEndpoint {
 				},
 				$items
 			),
-			'application_context' => $this->application_context_repository
-				->current_context( $shipping_preference, $user_action )->to_array(),
 		);
+		if ( $payment_source ) {
+			$data['payment_source'] = $payment_source->to_array();
+		} else {
+			$data['application_context'] = $this->application_context_repository->current_context( $shipping_preference, $user_action )->to_array();
+		}
 		if ( $payer && ! empty( $payer->email_address() ) ) {
 			$data['payer'] = $payer->to_array();
-		}
-		if ( $payment_token ) {
-			$data['payment_source']['token'] = $payment_token->to_array();
-		}
-		if ( $payment_method ) {
-			$data['payment_method'] = $payment_method->to_array();
 		}
 
 		/**
@@ -254,35 +248,23 @@ class OrderEndpoint {
 
 		$response = $this->request( $url, $args );
 		if ( is_wp_error( $response ) ) {
-			$error = new RuntimeException(
-				__( 'Could not create order.', 'woocommerce-paypal-payments' )
-			);
-			$this->logger->log(
-				'warning',
-				$error->getMessage(),
-				array(
-					'args'     => $args,
-					'response' => $response,
-				)
+			$error = new RuntimeException( 'Could not create order.' );
+			$this->logger->warning(
+				$error->getMessage()
 			);
 			throw $error;
 		}
 		$json        = json_decode( $response['body'] );
 		$status_code = (int) wp_remote_retrieve_response_code( $response );
-		if ( 201 !== $status_code ) {
+		if ( ! in_array( $status_code, array( 200, 201 ), true ) ) {
 			$error = new PayPalApiException(
 				$json,
 				$status_code
 			);
-			$this->logger->log(
-				'warning',
+			$this->logger->warning(
 				sprintf(
 					'Failed to create order. PayPal API response: %1$s',
 					$error->getMessage()
-				),
-				array(
-					'args'     => $args,
-					'response' => $response,
 				)
 			);
 			throw $error;

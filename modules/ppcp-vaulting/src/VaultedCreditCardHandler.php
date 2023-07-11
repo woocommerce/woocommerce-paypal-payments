@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Vaulting;
 
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WC_Customer;
 use WC_Order;
@@ -180,7 +181,7 @@ class VaultedCreditCardHandler {
 				array( $purchase_unit ),
 				$shipping_preference,
 				$payer,
-				$selected_token
+				new PaymentSource( $selected_token )
 			);
 
 			$this->add_paypal_meta( $wc_order, $order, $this->environment );

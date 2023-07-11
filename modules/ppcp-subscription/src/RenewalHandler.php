@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\Subscription;
 
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
@@ -191,7 +192,7 @@ class RenewalHandler {
 			array( $purchase_unit ),
 			$shipping_preference,
 			$payer,
-			$token
+			new PaymentSource( $token )
 		);
 
 		$this->add_paypal_meta( $wc_order, $order, $this->environment );

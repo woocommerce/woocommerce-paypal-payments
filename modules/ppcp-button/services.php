@@ -150,6 +150,7 @@ return array(
 			$request_data,
 			$purchase_unit_factory,
 			$container->get( 'api.factory.shipping-preference' ),
+			$container->get( 'api.factory.payment-source' ),
 			$order_endpoint,
 			$payer_factory,
 			$session_handler,

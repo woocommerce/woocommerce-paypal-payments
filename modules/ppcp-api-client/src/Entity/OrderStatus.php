@@ -15,14 +15,15 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
  * Class OrderStatus
  */
 class OrderStatus {
-	const INTERNAL         = 'INTERNAL';
-	const CREATED          = 'CREATED';
-	const SAVED            = 'SAVED';
-	const APPROVED         = 'APPROVED';
-	const VOIDED           = 'VOIDED';
-	const COMPLETED        = 'COMPLETED';
-	const PENDING_APPROVAL = 'PENDING_APPROVAL';
-	const VALID_STATUS     = array(
+	const INTERNAL              = 'INTERNAL';
+	const CREATED               = 'CREATED';
+	const SAVED                 = 'SAVED';
+	const APPROVED              = 'APPROVED';
+	const VOIDED                = 'VOIDED';
+	const COMPLETED             = 'COMPLETED';
+	const PENDING_APPROVAL      = 'PENDING_APPROVAL';
+	const PAYER_ACTION_REQUIRED = 'PAYER_ACTION_REQUIRED';
+	const VALID_STATUS          = array(
 		self::INTERNAL,
 		self::CREATED,
 		self::SAVED,
@@ -30,6 +31,7 @@ class OrderStatus {
 		self::VOIDED,
 		self::COMPLETED,
 		self::PENDING_APPROVAL,
+		self::PAYER_ACTION_REQUIRED,
 	);
 
 	/**
