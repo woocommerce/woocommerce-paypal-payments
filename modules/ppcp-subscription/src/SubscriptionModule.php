@@ -13,6 +13,7 @@ use Exception;
 use WC_Product;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingSubscriptions;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\OrderRepository;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
@@ -26,6 +27,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 
@@ -33,6 +35,8 @@ use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
  * Class SubscriptionModule
  */
 class SubscriptionModule implements ModuleInterface {
+
+	use TransactionIdHandlingTrait;
 
 	/**
 	 * {@inheritDoc}
@@ -76,8 +80,15 @@ class SubscriptionModule implements ModuleInterface {
 
 				if(count($subscription->get_related_orders()) === 1) {
 					$parent_order = $subscription->get_parent();
-					// get transaction id
-					// add trans as meta to sub
+					if ( is_a( $parent_order, WC_Order::class ) ) {
+						$order_repository = $c->get('api.repository.order');
+						$order = $order_repository->for_wc_order($parent_order);
+						$transaction_id = $this->get_paypal_order_transaction_id( $order );
+						if ( $transaction_id ) {
+							$subscription->update_meta_data( 'ppcp_previous_transaction_reference', $transaction_id );
+							$subscription->save();
+						}
+					}
 				}
 			}
 		);
