@@ -16,6 +16,7 @@ const PayPalComponent = ({
                              emitResponse,
                              activePaymentMethod,
                              shippingData,
+                             isEditing,
 }) => {
     const {onPaymentSetup, onCheckoutAfterProcessingWithError} = eventRegistration;
     const {responseTypes} = emitResponse;
@@ -125,6 +126,10 @@ const PayPalComponent = ({
     };
 
     const handleClick = (data, actions) => {
+        if (isEditing) {
+            return actions.reject();
+        }
+
         window.ppcpFundingSource = data.fundingSource;
 
         onClick();
@@ -259,8 +264,8 @@ if (config.scriptData.continuation) {
 registerMethod({
     name: config.id,
     label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
-    content: <PayPalComponent/>,
-    edit: <b>TODO: editing</b>,
+    content: <PayPalComponent isEditing={false}/>,
+    edit: <PayPalComponent isEditing={true}/>,
     ariaLabel: config.title,
     canMakePayment: () => config.enabled,
     supports: {
