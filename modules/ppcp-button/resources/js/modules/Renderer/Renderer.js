@@ -81,7 +81,9 @@ class Renderer {
             ...contextConfig,
             onClick: this.onSmartButtonClick,
             onInit: (data, actions) => {
-                this.onSmartButtonsInit(data, actions);
+                if (this.onSmartButtonsInit) {
+                    this.onSmartButtonsInit(data, actions);
+                }
                 this.handleOnButtonsInit(wrapper, data, actions);
             },
         });
