@@ -78,12 +78,12 @@ class SubscriptionModule implements ModuleInterface {
 
 				$this->add_payment_token_id( $subscription, $payment_token_repository, $logger );
 
-				if(count($subscription->get_related_orders()) === 1) {
+				if ( count( $subscription->get_related_orders() ) === 1 ) {
 					$parent_order = $subscription->get_parent();
 					if ( is_a( $parent_order, WC_Order::class ) ) {
-						$order_repository = $c->get('api.repository.order');
-						$order = $order_repository->for_wc_order($parent_order);
-						$transaction_id = $this->get_paypal_order_transaction_id( $order );
+						$order_repository = $c->get( 'api.repository.order' );
+						$order            = $order_repository->for_wc_order( $parent_order );
+						$transaction_id   = $this->get_paypal_order_transaction_id( $order );
 						if ( $transaction_id ) {
 							$subscription->update_meta_data( 'ppcp_previous_transaction_reference', $transaction_id );
 							$subscription->save();
