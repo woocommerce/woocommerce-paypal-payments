@@ -73,6 +73,12 @@ class SubscriptionModule implements ModuleInterface {
 				$logger                   = $c->get( 'woocommerce.logger.woocommerce' );
 
 				$this->add_payment_token_id( $subscription, $payment_token_repository, $logger );
+
+				if(count($subscription->get_related_orders()) === 1) {
+					$parent_order = $subscription->get_parent();
+					// get transaction id
+					// add trans as meta to sub
+				}
 			}
 		);
 

@@ -128,7 +128,6 @@ class OrderFactory {
 			);
 		}
 		if ( ! isset( $order_data->intent ) ) {
-			$this->logger->info(wc_print_r($order_data, true));
 			throw new RuntimeException(
 				__( 'Order does not contain intent.', 'woocommerce-paypal-payments' )
 			);
