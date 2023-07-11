@@ -229,7 +229,7 @@ class StatusReportModule implements ModuleInterface {
 	 * @return string
 	 */
 	private function subscriptions_mode_text( bool $is_plugin_active, string $subscriptions_mode, array $field_settings ): string {
-		if ( ! $is_plugin_active || ! $field_settings ) {
+		if ( ! $is_plugin_active || ! $field_settings || $subscriptions_mode === 'disable_paypal_subscriptions' ) {
 			return 'Disabled';
 		}
 
