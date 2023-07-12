@@ -243,55 +243,6 @@ class SettingsRenderer {
 		return $html;
 	}
 
-
-	/**
-	 * Renders the text input field.
-	 *
-	 * @param string $field The current field HTML.
-	 * @param string $key   The current key.
-	 * @param array  $config The configuration array.
-	 * @param string $value The current value.
-	 *
-	 * @return string
-	 */
-	public function render_text_input( $field, $key, $config, $value ): string {
-
-		if ( 'ppcp-text-input' !== $config['type'] ) {
-			return $field;
-		}
-
-		// Custom attribute handling.
-		$custom_attributes           = array();
-		$config['custom_attributes'] = array_filter( (array) $config['custom_attributes'], 'strlen' );
-
-		if ( $config['maxlength'] ) {
-			$config['custom_attributes']['maxlength'] = absint( $config['maxlength'] );
-		}
-
-		if ( ! empty( $config['custom_attributes'] ) ) {
-			foreach ( $config['custom_attributes'] as $attribute => $attribute_value ) {
-				$custom_attributes[] = esc_attr( $attribute ) . '="' . esc_attr( $attribute_value ) . '"';
-			}
-		}
-
-		$html = sprintf(
-			'<input
-                        type="text"
-                        autocomplete="off"
-                        class="input-text %s"
-                        name="%s"
-                        value="%s"
-                        %s
-            >',
-			esc_attr( implode( ' ', $config['class'] ) ),
-			esc_attr( $key ),
-			esc_attr( $value ),
-			implode( ' ', $custom_attributes )
-		);
-
-		return $html;
-	}
-
 	/**
 	 * Renders the heading field.
 	 *

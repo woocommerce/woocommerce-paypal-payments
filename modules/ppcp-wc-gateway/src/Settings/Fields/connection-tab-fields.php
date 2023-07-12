@@ -247,12 +247,13 @@ return function ( ContainerInterface $container, array $fields ): array {
 		'merchant_id_production'                        => array(
 			'title'             => __( 'Live Merchant Id', 'woocommerce-paypal-payments' ),
 			'classes'           => array( State::STATE_ONBOARDED === $state->production_state() ? 'onboarded' : '', 'ppcp-always-shown-element' ),
-			'type'              => 'ppcp-text-input',
+			'type'              => 'text',
 			'desc_tip'          => true,
 			'description'       => __( 'The merchant id of your account. Should be exactly 13 alphanumeric uppercase letters.', 'woocommerce-paypal-payments' ),
 			'maxlength'         => 13,
 			'custom_attributes' => array(
 				'pattern' => '[A-Z0-9]{13}',
+				'autocomplete' => 'off',
 			),
 			'default'           => false,
 			'screens'           => array(
@@ -265,9 +266,12 @@ return function ( ContainerInterface $container, array $fields ): array {
 		'client_id_production'                          => array(
 			'title'        => __( 'Live Client Id', 'woocommerce-paypal-payments' ),
 			'classes'      => array( State::STATE_ONBOARDED === $state->production_state() ? 'onboarded' : '', 'ppcp-always-shown-element' ),
-			'type'         => 'ppcp-text-input',
+			'type'         => 'text',
 			'desc_tip'     => true,
 			'description'  => __( 'The client id of your api ', 'woocommerce-paypal-payments' ),
+			'custom_attributes' => array(
+				'autocomplete' => 'off',
+			),
 			'default'      => false,
 			'screens'      => array(
 				State::STATE_START,
@@ -309,12 +313,13 @@ return function ( ContainerInterface $container, array $fields ): array {
 		'merchant_id_sandbox'                           => array(
 			'title'             => __( 'Sandbox Merchant Id', 'woocommerce-paypal-payments' ),
 			'classes'           => array( State::STATE_ONBOARDED === $state->sandbox_state() ? 'onboarded' : '', 'ppcp-always-shown-element' ),
-			'type'              => 'ppcp-text-input',
+			'type'              => 'text',
 			'desc_tip'          => true,
 			'description'       => __( 'The merchant id of your account. Should be exactly 13 alphanumeric uppercase letters.', 'woocommerce-paypal-payments' ),
 			'maxlength'         => 13,
 			'custom_attributes' => array(
 				'pattern' => '[A-Z0-9]{13}',
+				'autocomplete' => 'off'
 			),
 			'default'           => false,
 			'screens'           => array(
@@ -327,9 +332,12 @@ return function ( ContainerInterface $container, array $fields ): array {
 		'client_id_sandbox'                             => array(
 			'title'        => __( 'Sandbox Client Id', 'woocommerce-paypal-payments' ),
 			'classes'      => array( State::STATE_ONBOARDED === $state->sandbox_state() ? 'onboarded' : '', 'ppcp-always-shown-element' ),
-			'type'         => 'ppcp-text-input',
+			'type'         => 'text',
 			'desc_tip'     => true,
 			'description'  => __( 'The client id of your api ', 'woocommerce-paypal-payments' ),
+			'custom_attributes' => array(
+				'autocomplete' => 'off',
+			),
 			'default'      => false,
 			'screens'      => array(
 				State::STATE_START,
