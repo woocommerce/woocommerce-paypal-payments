@@ -5,6 +5,8 @@ import {
     isSavedCardSelected, ORDER_BUTTON_SELECTOR,
     PaymentMethods
 } from "../Helper/CheckoutMethodState";
+import BootstrapHelper from "../Helper/BootstrapHelper";
+import {disable, enable} from "../Helper/ButtonDisabler";
 
 class CheckoutBootstap {
     constructor(gateway, renderer, messages, spinner, errorHandler) {
@@ -15,10 +17,15 @@ class CheckoutBootstap {
         this.errorHandler = errorHandler;
 
         this.standardOrderButtonSelector = ORDER_BUTTON_SELECTOR;
+
+        this.renderer.onButtonsInit(this.gateway.button.wrapper, () => {
+            this.handleButtonStatus();
+        }, true);
     }
 
     init() {
         this.render();
+        this.handleButtonStatus();
 
         // Unselect saved card.
         // WC saves form values, so with our current UI it would be a bit weird
@@ -28,6 +35,7 @@ class CheckoutBootstap {
 
         jQuery(document.body).on('updated_checkout', () => {
             this.render()
+            this.handleButtonStatus();
         });
 
         jQuery(document.body).on('updated_checkout payment_method_selected', () => {
@@ -43,12 +51,20 @@ class CheckoutBootstap {
         this.updateUi();
     }
 
+    handleButtonStatus() {
+        BootstrapHelper.handleButtonStatus(this);
+    }
+
     shouldRender() {
         if (document.querySelector(this.gateway.button.cancel_wrapper)) {
             return false;
         }
 
         return document.querySelector(this.gateway.button.wrapper) !== null || document.querySelector(this.gateway.hosted_fields.wrapper) !== null;
+    }
+
+    shouldEnable() {
+        return BootstrapHelper.shouldEnable(this);
     }
 
     render() {

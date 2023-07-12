@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Button\Helper;
 
+use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
+
 trait ContextTrait {
 
 	/**
@@ -18,6 +20,13 @@ trait ContextTrait {
 	 */
 	protected function context(): string {
 		if ( is_product() || wc_post_content_has_shortcode( 'product_page' ) ) {
+
+			// Do this check here instead of reordering outside conditions.
+			// In order to have more control over the context.
+			if ( ( is_checkout() ) && ! $this->is_paypal_continuation() ) {
+				return 'checkout';
+			}
+
 			return 'product';
 		}
 
@@ -53,6 +62,12 @@ trait ContextTrait {
 	private function is_paypal_continuation(): bool {
 		$order = $this->session_handler->order();
 		if ( ! $order ) {
+			return false;
+		}
+
+		if ( ! $order->status()->is( OrderStatus::APPROVED )
+			&& ! $order->status()->is( OrderStatus::COMPLETED )
+		) {
 			return false;
 		}
 

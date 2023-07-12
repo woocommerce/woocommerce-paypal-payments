@@ -24,6 +24,7 @@ use WP_REST_Response;
  * Class VaultPaymentTokenCreated
  */
 class VaultPaymentTokenCreated implements RequestHandler {
+	use RequestHandlerTrait;
 
 	/**
 	 * The logger.
@@ -103,16 +104,12 @@ class VaultPaymentTokenCreated implements RequestHandler {
 	 * @return WP_REST_Response
 	 */
 	public function handle_request( WP_REST_Request $request ): WP_REST_Response {
-		$response = array( 'success' => false );
-
 		$customer_id = null !== $request['resource'] && isset( $request['resource']['customer_id'] )
 			? $request['resource']['customer_id']
 			: '';
 		if ( ! $customer_id ) {
 			$message = 'No customer id was found.';
-			$this->logger->warning( $message, array( 'request' => $request ) );
-			$response['message'] = $message;
-			return new WP_REST_Response( $response );
+			return $this->failure_response( $message );
 		}
 
 		$wc_customer_id = (int) str_replace( $this->prefix, '', $customer_id );
@@ -150,7 +147,6 @@ class VaultPaymentTokenCreated implements RequestHandler {
 			}
 		}
 
-		$response['success'] = true;
-		return new WP_REST_Response( $response );
+		return $this->success_response();
 	}
 }

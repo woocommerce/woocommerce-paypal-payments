@@ -178,6 +178,9 @@ class VaultingModule implements ModuleInterface {
 			}
 		);
 
+		/**
+		 * Allows running migration externally via `do_action('pcp_migrate_payment_tokens')`.
+		 */
 		add_action(
 			'pcp_migrate_payment_tokens',
 			function() use ( $container ) {
@@ -218,6 +221,10 @@ class VaultingModule implements ModuleInterface {
 	 * @return void
 	 */
 	public function migrate_payment_tokens( LoggerInterface $logger ): void {
+		$initialized = get_option( 'ppcp_payment_tokens_migration_initialized', null );
+		if ( $initialized ) {
+			return;
+		}
 		// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_key
 		// phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_query
 		$customers = new WP_User_Query(
@@ -235,12 +242,19 @@ class VaultingModule implements ModuleInterface {
 			return;
 		}
 
-		$logger->info( 'Starting payment tokens migration for ' . (string) count( $customers ) . ' users' );
+		$logger->info( 'Identified ' . (string) count( $customers ) . ' users with payment tokens. Initiating token migration.' );
+		update_option( 'ppcp_payment_tokens_migration_initialized', true );
 
 		$interval_in_seconds = 5;
 		$timestamp           = time();
 
 		foreach ( $customers as $id ) {
+			$tokens                   = array_filter( get_user_meta( $id, 'ppcp-vault-token' ) );
+			$skip_empty_key_migration = apply_filters( 'ppcp_skip_payment_tokens_empty_key_migration', true );
+			if ( empty( $tokens ) && $skip_empty_key_migration ) {
+				continue;
+			}
+
 			/**
 			 * Function already exist in WooCommerce
 			 *

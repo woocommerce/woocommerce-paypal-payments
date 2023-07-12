@@ -7,6 +7,9 @@ class Renderer {
         this.onSmartButtonClick = onSmartButtonClick;
         this.onSmartButtonsInit = onSmartButtonsInit;
 
+        this.buttonsOptions = {};
+        this.onButtonsInitListeners = {};
+
         this.renderedSources = new Set();
     }
 
@@ -77,7 +80,12 @@ class Renderer {
             style,
             ...contextConfig,
             onClick: this.onSmartButtonClick,
-            onInit: this.onSmartButtonsInit,
+            onInit: (data, actions) => {
+                if (this.onSmartButtonsInit) {
+                    this.onSmartButtonsInit(data, actions);
+                }
+                this.handleOnButtonsInit(wrapper, data, actions);
+            },
         });
         if (!btn.isEligible()) {
             return;
@@ -105,6 +113,44 @@ class Renderer {
 
     enableCreditCardFields() {
         this.creditCardRenderer.enableFields();
+    }
+
+    onButtonsInit(wrapper, handler, reset) {
+        this.onButtonsInitListeners[wrapper] = reset ? [] : (this.onButtonsInitListeners[wrapper] || []);
+        this.onButtonsInitListeners[wrapper].push(handler);
+    }
+
+    handleOnButtonsInit(wrapper, data, actions) {
+
+        this.buttonsOptions[wrapper] = {
+            data: data,
+            actions: actions
+        }
+
+        if (this.onButtonsInitListeners[wrapper]) {
+            for (let handler of this.onButtonsInitListeners[wrapper]) {
+                if (typeof handler === 'function') {
+                    handler({
+                        wrapper: wrapper,
+                        ...this.buttonsOptions[wrapper]
+                    });
+                }
+            }
+        }
+    }
+
+    disableSmartButtons(wrapper) {
+        if (!this.buttonsOptions[wrapper]) {
+            return;
+        }
+        this.buttonsOptions[wrapper].actions.disable();
+    }
+
+    enableSmartButtons(wrapper) {
+        if (!this.buttonsOptions[wrapper]) {
+            return;
+        }
+        this.buttonsOptions[wrapper].actions.enable();
     }
 }
 
