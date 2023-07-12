@@ -10,7 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Onboarding\Helper;
 
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
-use WooCommerce\PayPalCommerce\Onboarding\Exception\RuntimeException;
+use RuntimeException;
 
 /**
  * Class OnboardingUrl

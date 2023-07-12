@@ -170,7 +170,7 @@ class SettingsListener {
 	/**
 	 * Listens if the merchant ID should be updated.
 	 */
-	public function listen_for_merchant_id() {
+	public function listen_for_merchant_id(): void {
 		if ( ! $this->is_valid_site_request() ) {
 			return;
 		}

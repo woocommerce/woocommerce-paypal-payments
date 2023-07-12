@@ -5,7 +5,7 @@ namespace WooCommerce\PayPalCommerce\Onboarding\Helper;
 
 use PHPUnit\Framework\TestCase;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
-use WooCommerce\PayPalCommerce\Onboarding\Exception\RuntimeException;
+use RuntimeException;
 use function Brain\Monkey\Functions\when;
 
 class OnboardingUrlTest extends TestCase
