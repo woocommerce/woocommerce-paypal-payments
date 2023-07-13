@@ -386,10 +386,6 @@ class SmartButton implements SmartButtonInterface {
 			return false;
 		}
 
-		if ( ! $this->is_pay_later_filter_enabled_for_location( $this->context() ) ) {
-			return false;
-		}
-
 		$selected_locations = $this->settings->has( 'pay_later_messaging_locations' ) ? $this->settings->get( 'pay_later_messaging_locations' ) : array();
 
 		$not_enabled_on_cart = ! in_array( 'cart', $selected_locations, true );
