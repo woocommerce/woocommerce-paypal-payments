@@ -382,7 +382,11 @@ class SmartButton implements SmartButtonInterface {
 	 * @throws NotFoundException When a setting was not found.
 	 */
 	private function render_message_wrapper_registrar(): bool {
-		if ( ! $this->settings_status->is_pay_later_messaging_enabled() ) {
+		if ( ! $this->is_pay_later_messaging_enabled() ) {
+			return false;
+		}
+
+		if ( ! $this->is_pay_later_filter_enabled_for_location( $this->context() ) ) {
 			return false;
 		}
 
@@ -548,7 +552,7 @@ class SmartButton implements SmartButtonInterface {
 
 		$smart_button_enabled_for_current_location = $this->settings_status->is_smart_button_enabled_for_location( $this->context() );
 		$smart_button_enabled_for_mini_cart        = $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' );
-		$messaging_enabled_for_current_location    = $this->settings_status->is_pay_later_messaging_enabled_for_location( $this->context() );
+		$messaging_enabled_for_current_location    = $this->is_pay_later_messaging_enabled_for_location( $this->context() );
 
 		switch ( $this->context() ) {
 			case 'checkout':
@@ -657,7 +661,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @throws NotFoundException When a setting was not found.
 	 */
 	private function message_values(): array {
-		if ( ! $this->settings_status->is_pay_later_messaging_enabled() ) {
+		if ( ! $this->is_pay_later_messaging_enabled() ) {
 			return array();
 		}
 
@@ -1073,8 +1077,8 @@ class SmartButton implements SmartButtonInterface {
 
 		$enable_funding = array( 'venmo' );
 
-		if ( $this->settings_status->is_pay_later_button_enabled_for_location( $context ) ||
-			$this->settings_status->is_pay_later_messaging_enabled_for_location( $context )
+		if ( $this->is_pay_later_button_enabled_for_location( $context ) ||
+			$this->is_pay_later_messaging_enabled_for_location( $context )
 		) {
 			$enable_funding[] = 'paylater';
 		} else {
@@ -1406,6 +1410,80 @@ class SmartButton implements SmartButtonInterface {
 		}
 
 		return false;
+	}
+
+	/**
+	 * Checks a filter if pay_later/messages should be rendered on a given location / context.
+	 *
+	 * @param string $location The location.
+	 * @return bool
+	 */
+	protected function is_pay_later_filter_enabled_for_location( string $location ): bool {
+
+		if ( 'product' === $location ) {
+			$product = wc_get_product();
+
+			/**
+			 * Allows to decide if the button should be disabled for a given product
+			 */
+			$is_disabled = apply_filters(
+				'woocommerce_paypal_payments_product_buttons_paylater_disabled',
+				null,
+				$product
+			);
+
+			if ( $is_disabled !== null ) {
+				return ! $is_disabled;
+			}
+		}
+
+		/**
+		 * Allows to decide if the button should be disabled globally or on a given context
+		 */
+		$is_disabled = apply_filters(
+			'woocommerce_paypal_payments_buttons_paylater_disabled',
+			null,
+			$location
+		);
+
+		if ( $is_disabled !== null ) {
+			return ! $is_disabled;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Check whether Pay Later button is enabled for a given location.
+	 *
+	 * @param string $location The location.
+	 * @return bool true if is enabled, otherwise false.
+	 */
+	private function is_pay_later_button_enabled_for_location( string $location ) {
+		return $this->is_pay_later_filter_enabled_for_location( $location )
+			&& $this->settings_status->is_pay_later_button_enabled_for_location( $location );
+
+	}
+
+	/**
+	 * Check whether Pay Later message is enabled for a given location.
+	 *
+	 * @param string $location The location setting name.
+	 * @return bool true if is enabled, otherwise false.
+	 */
+	private function is_pay_later_messaging_enabled_for_location( string $location ) {
+		return $this->is_pay_later_filter_enabled_for_location( $location )
+			&& $this->settings_status->is_pay_later_messaging_enabled_for_location( $location );
+	}
+
+	/**
+	 * Check whether Pay Later message is enabled
+	 *
+	 * @return bool true if is enabled, otherwise false.
+	 */
+	private function is_pay_later_messaging_enabled() {
+		return $this->is_pay_later_filter_enabled_for_location( $this->context() )
+			&& $this->settings_status->is_pay_later_messaging_enabled();
 	}
 
 	/**
