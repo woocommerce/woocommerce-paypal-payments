@@ -2,7 +2,7 @@ import UpdateCart from "../Helper/UpdateCart";
 import SingleProductActionHandler from "../ActionHandler/SingleProductActionHandler";
 import {hide, show} from "../Helper/Hiding";
 import BootstrapHelper from "../Helper/BootstrapHelper";
-import {subscriptionHasPlan} from "../Helper/Subscriptions";
+import {loadPaypalJsScript} from "../Helper/ScriptLoading";
 
 class SingleProductBootstap {
     constructor(gateway, renderer, messages, errorHandler) {
@@ -80,8 +80,7 @@ class SingleProductBootstap {
 
     shouldRender() {
         return this.form() !== null
-            && !this.isWcsattSubscriptionMode()
-            && subscriptionHasPlan();
+            && !this.isWcsattSubscriptionMode();
     }
 
     shouldEnable() {
@@ -120,10 +119,6 @@ class SingleProductBootstap {
     }
 
     priceAmountIsZero() {
-        if(subscriptionHasPlan()) {
-            return false;
-        }
-
         const price = this.priceAmount();
         return !price || price === 0;
     }
@@ -168,7 +163,18 @@ class SingleProductBootstap {
             PayPalCommerceGateway.data_client_id.has_subscriptions
             && PayPalCommerceGateway.data_client_id.paypal_subscriptions_enabled
         ) {
-            this.renderer.render(actionHandler.subscriptionsConfiguration(this.variations()));
+            const buttonWrapper = document.getElementById('ppc-button-ppcp-gateway');
+            buttonWrapper.innerHTML = '';
+            loadPaypalJsScript(
+                {
+                    clientId: PayPalCommerceGateway.client_id,
+                    currency: PayPalCommerceGateway.currency,
+                    intent: 'subscription',
+                    vault: true
+                },
+                actionHandler.subscriptionsConfiguration(this.variations()),
+                this.gateway.button.wrapper
+            );
             return;
         }
 

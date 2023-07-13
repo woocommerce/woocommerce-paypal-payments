@@ -35,7 +35,6 @@ class SingleProductActionHandler {
 
     subscriptionsConfiguration(selected_variation = null) {
         const subscription_plan = selected_variation !== null ? this.getPlanIdFromVariation(selected_variation) : this.config.subscription_plan_id
-        console.log(subscription_plan)
 
         return {
             createSubscription: (data, actions) => {
@@ -56,7 +55,7 @@ class SingleProductActionHandler {
                     return res.json();
                 }).then(() => {
                     const id = document.querySelector('[name="add-to-cart"]').value;
-                    const products =  [new Product(id, 1, null)];
+                    const products =  [new Product(id, 1, [])];
 
                     fetch(this.config.ajax.change_cart.endpoint, {
                         method: 'POST',

@@ -1,7 +1,6 @@
 import CartActionHandler from '../ActionHandler/CartActionHandler';
 import BootstrapHelper from "../Helper/BootstrapHelper";
 import {setVisible} from "../Helper/Hiding";
-import {subscriptionHasPlan} from "../Helper/Subscriptions";
 
 class CartBootstrap {
     constructor(gateway, renderer, errorHandler) {
@@ -53,7 +52,7 @@ class CartBootstrap {
     }
 
     shouldRender() {
-        return document.querySelector(this.gateway.button.wrapper) !== null && subscriptionHasPlan();
+        return document.querySelector(this.gateway.button.wrapper) !== null;
     }
 
     shouldEnable() {

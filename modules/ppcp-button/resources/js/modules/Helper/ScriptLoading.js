@@ -1,4 +1,5 @@
 import dataClientIdAttributeHandler from "../DataClientIdAttributeHandler";
+import {loadScript} from "@paypal/paypal-js";
 
 export const loadPaypalScript = (config, onLoaded) => {
     if (typeof paypal !== 'undefined') {
@@ -21,4 +22,10 @@ export const loadPaypalScript = (config, onLoaded) => {
     }
 
     document.body.appendChild(script);
+}
+
+export const loadPaypalJsScript = (options, buttons, container) => {
+    loadScript(options).then((paypal) => {
+        paypal.Buttons(buttons).render(container);
+    });
 }
