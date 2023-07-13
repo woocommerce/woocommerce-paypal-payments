@@ -167,6 +167,13 @@ class CreateOrderEndpoint implements EndpointInterface {
 	protected $logger;
 
 	/**
+	 * The form data, or empty if not available.
+	 *
+	 * @var array
+	 */
+	private $form = array();
+
+	/**
 	 * CreateOrderEndpoint constructor.
 	 *
 	 * @param RequestData               $request_data The RequestData object.
@@ -276,18 +283,20 @@ class CreateOrderEndpoint implements EndpointInterface {
 
 			$this->set_bn_code( $data );
 
-			$form_fields = $data['form'] ?? null;
+			if ( isset( $data['form'] ) ) {
+				$this->form = $data['form'];
+			}
 
 			if ( $this->early_validation_enabled
-				&& is_array( $form_fields )
+				&& $this->form
 				&& 'checkout' === $data['context']
 				&& in_array( $payment_method, array( PayPalGateway::ID, CardButtonGateway::ID ), true )
 			) {
-				$this->validate_form( $form_fields );
+				$this->validate_form( $this->form );
 			}
 
-			if ( 'pay-now' === $data['context'] && is_array( $form_fields ) && get_option( 'woocommerce_terms_page_id', '' ) !== '' ) {
-				$this->validate_paynow_form( $form_fields );
+			if ( 'pay-now' === $data['context'] && $this->form && get_option( 'woocommerce_terms_page_id', '' ) !== '' ) {
+				$this->validate_paynow_form( $this->form );
 			}
 
 			try {
@@ -510,11 +519,9 @@ class CreateOrderEndpoint implements EndpointInterface {
 			$payer = $this->payer_factory->from_paypal_response( json_decode( wp_json_encode( $data['payer'] ) ) );
 		}
 
-		if ( ! $payer && isset( $data['form'] ) ) {
-			$form_fields = $data['form'];
-
-			if ( is_array( $form_fields ) && isset( $form_fields['billing_email'] ) && '' !== $form_fields['billing_email'] ) {
-				return $this->payer_factory->from_checkout_form( $form_fields );
+		if ( ! $payer && $this->form ) {
+			if ( isset( $this->form['billing_email'] ) && '' !== $this->form['billing_email'] ) {
+				return $this->payer_factory->from_checkout_form( $this->form );
 			}
 		}
 
