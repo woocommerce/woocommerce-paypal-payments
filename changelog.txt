@@ -10,6 +10,7 @@
 * Fix - Advanced Card Processing gateway becomes invisible post-plugin update unless admin pages are accessed once #1432
 * Fix - Incompatibility with WooCommerce One Page Checkout (or similar use cases) in Version 2.1.0 #1473
 * Fix - Prevent Repetitive Token Migration and Database Overload After 2.1.0 Update #1461
+* Fix - Onboarding from connection page with CSRF parameter manipulates email and merchant id fields #1502
 * Enhancement - Remove feature flag requirement for express cart/checkout block integration #1483
 * Enhancement - Add notice when shop currency is unsupported #1433
 * Enhancement - Improve ACDC error message when empty fields #1360
