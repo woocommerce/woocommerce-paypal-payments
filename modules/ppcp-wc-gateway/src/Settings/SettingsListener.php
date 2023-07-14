@@ -9,12 +9,15 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
+use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
+use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Http\RedirectorInterface;
 use WooCommerce\PayPalCommerce\Onboarding\State;
+use WooCommerce\PayPalCommerce\Onboarding\Helper\OnboardingUrl;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
@@ -167,8 +170,8 @@ class SettingsListener {
 	/**
 	 * Listens if the merchant ID should be updated.
 	 */
-	public function listen_for_merchant_id() {
-		if ( ! $this->is_valid_site_request() || $this->state->current_state() === State::STATE_ONBOARDED ) {
+	public function listen_for_merchant_id(): void {
+		if ( ! $this->is_valid_site_request() ) {
 			return;
 		}
 
@@ -177,16 +180,22 @@ class SettingsListener {
 		 * phpcs:disable WordPress.Security.NonceVerification.Missing
 		 * phpcs:disable WordPress.Security.NonceVerification.Recommended
 		 */
-		if ( ! isset( $_GET['merchantIdInPayPal'] ) || ! isset( $_GET['merchantId'] ) ) {
+		if ( ! isset( $_GET['merchantIdInPayPal'] ) || ! isset( $_GET['merchantId'] ) || ! isset( $_GET['ppcpToken'] ) ) {
 			return;
 		}
-		$merchant_id    = sanitize_text_field( wp_unslash( $_GET['merchantIdInPayPal'] ) );
-		$merchant_email = sanitize_text_field( wp_unslash( $_GET['merchantId'] ) );
+
+		$merchant_id      = sanitize_text_field( wp_unslash( $_GET['merchantIdInPayPal'] ) );
+		$merchant_email   = sanitize_text_field( wp_unslash( $_GET['merchantId'] ) );
+		$onboarding_token = sanitize_text_field( wp_unslash( $_GET['ppcpToken'] ) );
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		$this->settings->set( 'merchant_id', $merchant_id );
 		$this->settings->set( 'merchant_email', $merchant_email );
+
+		if ( ! OnboardingUrl::validate_token_and_delete( $this->signup_link_cache, $onboarding_token, get_current_user_id() ) ) {
+			$this->onboarding_redirect( false );
+		}
 
 		$is_sandbox = $this->settings->has( 'sandbox_on' ) && $this->settings->get( 'sandbox_on' );
 		if ( $is_sandbox ) {
@@ -203,8 +212,23 @@ class SettingsListener {
 		 */
 		do_action( 'woocommerce_paypal_payments_onboarding_before_redirect' );
 
-		$redirect_url = $this->get_onboarding_redirect_url();
 		if ( ! $this->settings->has( 'client_id' ) || ! $this->settings->get( 'client_id' ) ) {
+			$this->onboarding_redirect( false );
+		}
+
+		$this->onboarding_redirect();
+	}
+
+	/**
+	 * Redirect to the onboarding URL.
+	 *
+	 * @param bool $success Should redirect to the success or error URL.
+	 * @return void
+	 */
+	private function onboarding_redirect( bool $success = true ): void {
+		$redirect_url = $this->get_onboarding_redirect_url();
+
+		if ( ! $success ) {
 			$redirect_url = add_query_arg( 'ppcp-onboarding-error', '1', $redirect_url );
 		}
 

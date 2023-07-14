@@ -13,6 +13,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnerReferrals;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PartnerReferralsData;
+use WooCommerce\PayPalCommerce\Onboarding\Helper\OnboardingUrl;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
@@ -96,14 +97,24 @@ class OnboardingRenderer {
 
 		$environment = $is_production ? 'production' : 'sandbox';
 		$product     = 'PPCP' === $data['products'][0] ? 'ppcp' : 'express_checkout';
-		if ( $this->cache->has( $environment . '-' . $product ) ) {
-			return $this->cache->get( $environment . '-' . $product );
+		$cache_key   = $environment . '-' . $product;
+
+		$onboarding_url = new OnboardingUrl( $this->cache, $cache_key, get_current_user_id() );
+
+		if ( $onboarding_url->load() ) {
+			return $onboarding_url->get() ?: '';
 		}
+
+		$onboarding_url->init();
+
+		$data = $this->partner_referrals_data
+			->append_onboarding_token( $data, $onboarding_url->token() ?: '' );
 
 		$url = $is_production ? $this->production_partner_referrals->signup_link( $data ) : $this->sandbox_partner_referrals->signup_link( $data );
 		$url = add_query_arg( $args, $url );
 
-		$this->cache->set( $environment . '-' . $product, $url, 3 * MONTH_IN_SECONDS );
+		$onboarding_url->set( $url );
+		$onboarding_url->persist();
 
 		return $url;
 	}
