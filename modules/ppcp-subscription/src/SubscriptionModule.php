@@ -180,7 +180,7 @@ class SubscriptionModule implements ModuleInterface {
 				//phpcs:disable WordPress.Security.NonceVerification.Recommended
 				$post_id = wc_clean( wp_unslash( $_GET['post'] ?? '' ) );
 				$product = wc_get_product( $post_id );
-				if ( ! ( is_a( $product, WC_Product::class) || is_a( $product, WC_Product_Subscription_Variation::class) ) || ! WC_Subscriptions_Product::is_subscription( $product ) ) {
+				if ( ! ( is_a( $product, WC_Product::class ) || is_a( $product, WC_Product_Subscription_Variation::class ) ) || ! WC_Subscriptions_Product::is_subscription( $product ) ) {
 					return;
 				}
 
@@ -193,22 +193,20 @@ class SubscriptionModule implements ModuleInterface {
 					true
 				);
 
-				$plan    = $product->get_meta( 'ppcp_subscription_plan' ) ?? array();
-				$plan_id = $plan['id'] ?? '';
+				$products = array( $this->set_product_config( $product ) );
+				if ( $product->get_type() === 'variable-subscription' ) {
+					$products             = array();
+					$available_variations = $product->get_available_variations();
+					foreach ( $available_variations as $variation ) {
+						$variation  = wc_get_product_object( 'variation', $variation['variation_id'] );
+						$products[] = $this->set_product_config( $variation );
+					}
+				}
+
 				wp_localize_script(
 					'ppcp-paypal-subscription',
-					'PayPalCommerceGatewayPayPalSubscription',
-					array(
-						'product_connected' => $product->get_meta( '_ppcp_enable_subscription_product' ) ?? '',
-						'ajax'              => array(
-							'deactivate_plan' => array(
-								'endpoint'   => \WC_AJAX::get_endpoint( DeactivatePlanEndpoint::ENDPOINT ),
-								'nonce'      => wp_create_nonce( DeactivatePlanEndpoint::ENDPOINT ),
-								'plan_id'    => $plan_id,
-								'product_id' => $product->get_id(),
-							),
-						),
-					)
+					'PayPalCommerceGatewayPayPalSubscriptionProducts',
+					$products
 				);
 			}
 		);
@@ -465,27 +463,31 @@ class SubscriptionModule implements ModuleInterface {
 					return;
 				}
 
-				$subscriptions_api_handler = $c->get('subscription.api-handler');
-				assert($subscriptions_api_handler instanceof SubscriptionsApiHandler);
-				$this->update_subscription_product_meta($product, $subscriptions_api_handler);
+				$subscriptions_api_handler = $c->get( 'subscription.api-handler' );
+				assert( $subscriptions_api_handler instanceof SubscriptionsApiHandler );
+				$this->update_subscription_product_meta( $product, $subscriptions_api_handler );
 			},
 			12
 		);
 
-		add_action('woocommerce_save_product_variation', function($variation_id) use($c){
-			if ( ! WC_Subscriptions_Product::is_subscription( $variation_id ) || empty( $_POST['_wcsnonce_save_variations'] ) || ! wp_verify_nonce( $_POST['_wcsnonce_save_variations'], 'wcs_subscription_variations' ) ) {
-				return;
-			}
+		add_action(
+			'woocommerce_save_product_variation',
+			function( $variation_id ) use ( $c ) {
+				$wcsnonce_save_variations = wc_clean( wp_unslash( $_POST['_wcsnonce_save_variations'] ?? '' ) );
+				if ( ! WC_Subscriptions_Product::is_subscription( $variation_id ) || empty( $wcsnonce_save_variations ) || ! wp_verify_nonce( $wcsnonce_save_variations, 'wcs_subscription_variations' ) ) {
+					return;
+				}
 
-			$product = wc_get_product( $variation_id );
-			if ( ! is_a( $product, WC_Product_Subscription_Variation::class ) ) {
-				return;
-			}
+				$product = wc_get_product( $variation_id );
+				if ( ! is_a( $product, WC_Product_Subscription_Variation::class ) ) {
+					return;
+				}
 
-			$subscriptions_api_handler = $c->get('subscription.api-handler');
-			assert($subscriptions_api_handler instanceof SubscriptionsApiHandler);
-			$this->update_subscription_product_meta($product, $subscriptions_api_handler);
-		});
+				$subscriptions_api_handler = $c->get( 'subscription.api-handler' );
+				assert( $subscriptions_api_handler instanceof SubscriptionsApiHandler );
+				$this->update_subscription_product_meta( $product, $subscriptions_api_handler );
+			}
+		);
 
 		add_action(
 			'woocommerce_process_shop_subscription_meta',
@@ -839,16 +841,7 @@ class SubscriptionModule implements ModuleInterface {
 	 * @return void
 	 */
 	private function render_paypal_subscription_fields( WC_Product $product, Environment $environment ): void {
-		if(is_a($product, WC_Product_Variable_Subscription::class)) {
-			$variations = $product->get_available_variations();
-			foreach ($variations as $variation) {
-				$a = 1;
-				// $variation['variation_id']
-			}
-		}
-
 		$enable_subscription_product = $product->get_meta( '_ppcp_enable_subscription_product' );
-		$subscription_plan_name      = $product->get_meta( '_ppcp_subscription_plan_name' );
 
 		echo '<p class="form-field">';
 		echo sprintf(
@@ -868,14 +861,15 @@ class SubscriptionModule implements ModuleInterface {
 		echo wc_help_tip( esc_html__( 'Create a subscription product and plan to bill customers at regular intervals. Be aware that certain subscription settings cannot be modified once the PayPal Subscription is linked to this product. Unlink the product to edit disabled fields.', 'woocommerce-paypal-payments' ) );
 		echo '</p>';
 
-		$subscription_product = $product->get_meta( 'ppcp_subscription_product' );
-		$subscription_plan    = $product->get_meta( 'ppcp_subscription_plan' );
+		$subscription_product   = $product->get_meta( 'ppcp_subscription_product' );
+		$subscription_plan      = $product->get_meta( 'ppcp_subscription_plan' );
+		$subscription_plan_name = $product->get_meta( '_ppcp_subscription_plan_name' );
 		if ( $subscription_product && $subscription_plan ) {
 			if ( $enable_subscription_product !== 'yes' ) {
 				echo sprintf(
 				// translators: %1$s and %2$s are button and wrapper html tags.
 					esc_html__( '%1$sUnlink PayPal Subscription Plan%2$s', 'woocommerce-paypal-payments' ),
-					'<p class="form-field" id="ppcp-enable-subscription"><label></label><button class="button" id="ppcp_unlink_sub_plan">',
+					'<p class="form-field" id="ppcp-enable-subscription"><label></label><button class="button" id="ppcp-unlink-sub-plan-' . esc_attr( (string) $product->get_id() ) . '">',
 					'</button><span class="spinner is-active" id="spinner-unlink-plan" style="float: none; display:none;"></span></p>'
 				);
 				echo sprintf(
@@ -912,38 +906,62 @@ class SubscriptionModule implements ModuleInterface {
 	/**
 	 * Updates subscription product meta.
 	 *
-	 * @param WC_Product $product
-	 * @param SubscriptionsApiHandler $subscriptions_api_handler
+	 * @param WC_Product              $product The product.
+	 * @param SubscriptionsApiHandler $subscriptions_api_handler The subscription api handler.
 	 * @return void
 	 */
-	private function update_subscription_product_meta(WC_Product $product, SubscriptionsApiHandler $subscriptions_api_handler): void
-	{
-		$enable_subscription_product = wc_clean(wp_unslash($_POST['_ppcp_enable_subscription_product'] ?? ''));
-		$product->update_meta_data('_ppcp_enable_subscription_product', $enable_subscription_product);
+	private function update_subscription_product_meta( WC_Product $product, SubscriptionsApiHandler $subscriptions_api_handler ): void {
+		// phpcs:ignore WordPress.Security.NonceVerification
+		$enable_subscription_product = wc_clean( wp_unslash( $_POST['_ppcp_enable_subscription_product'] ?? '' ) );
+		$product->update_meta_data( '_ppcp_enable_subscription_product', $enable_subscription_product );
 		$product->save();
 
-		if (($product->get_type() === 'subscription' || $product->get_type() === 'subscription_variation') && $enable_subscription_product === 'yes') {
-			if ($product->meta_exists('ppcp_subscription_product') && $product->meta_exists('ppcp_subscription_plan')) {
-				$subscriptions_api_handler->update_product($product);
-				$subscriptions_api_handler->update_plan($product);
+		if ( ( $product->get_type() === 'subscription' || $product->get_type() === 'subscription_variation' ) && $enable_subscription_product === 'yes' ) {
+			if ( $product->meta_exists( 'ppcp_subscription_product' ) && $product->meta_exists( 'ppcp_subscription_plan' ) ) {
+				$subscriptions_api_handler->update_product( $product );
+				$subscriptions_api_handler->update_plan( $product );
 				return;
 			}
 
-			if (!$product->meta_exists('ppcp_subscription_product')) {
-				$subscriptions_api_handler->create_product($product);
+			if ( ! $product->meta_exists( 'ppcp_subscription_product' ) ) {
+				$subscriptions_api_handler->create_product( $product );
 			}
 
-			if ($product->meta_exists('ppcp_subscription_product') && !$product->meta_exists('ppcp_subscription_plan')) {
-				$subscription_plan_name = wc_clean(wp_unslash($_POST['_ppcp_subscription_plan_name'] ?? ''));
-				if (!is_string($subscription_plan_name)) {
+			if ( $product->meta_exists( 'ppcp_subscription_product' ) && ! $product->meta_exists( 'ppcp_subscription_plan' ) ) {
+				// phpcs:ignore WordPress.Security.NonceVerification
+				$subscription_plan_name = wc_clean( wp_unslash( $_POST['_ppcp_subscription_plan_name'] ?? '' ) );
+				if ( ! is_string( $subscription_plan_name ) ) {
 					return;
 				}
 
-				$product->update_meta_data('_ppcp_subscription_plan_name', $subscription_plan_name);
+				$product->update_meta_data( '_ppcp_subscription_plan_name', $subscription_plan_name );
 				$product->save();
 
-				$subscriptions_api_handler->create_plan($subscription_plan_name, $product);
+				$subscriptions_api_handler->create_plan( $subscription_plan_name, $product );
 			}
 		}
+	}
+
+	/**
+	 * Returns subscription product configuration.
+	 *
+	 * @param WC_Product $product The product.
+	 * @return array
+	 */
+	private function set_product_config( WC_Product $product ): array {
+		$plan    = $product->get_meta( 'ppcp_subscription_plan' ) ?? array();
+		$plan_id = $plan['id'] ?? '';
+
+		return array(
+			'product_connected' => $product->get_meta( '_ppcp_enable_subscription_product' ) ?? '',
+			'ajax'              => array(
+				'deactivate_plan' => array(
+					'endpoint'   => \WC_AJAX::get_endpoint( DeactivatePlanEndpoint::ENDPOINT ),
+					'nonce'      => wp_create_nonce( DeactivatePlanEndpoint::ENDPOINT ),
+					'plan_id'    => $plan_id,
+					'product_id' => $product->get_id(),
+				),
+			),
+		);
 	}
 }
