@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\Subscription;
 use Exception;
 use WC_Product;
 use WC_Product_Subscription_Variation;
+use WC_Product_Variable_Subscription;
 use WC_Subscriptions_Product;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingSubscriptions;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
@@ -694,61 +695,6 @@ class SubscriptionModule implements ModuleInterface {
 			}
 		);
 
-		add_action(
-			'woocommerce_variation_options_pricing',
-			function( $loop, $variation_data, $variation ) use ( $c ) {
-				$settings = $c->get( 'wcgateway.settings' );
-				assert( $settings instanceof Settings );
-
-				try {
-					$subscriptions_mode = $settings->get( 'subscriptions_mode' );
-					if ( $subscriptions_mode === 'subscriptions_api' ) {
-						$product = wc_get_product( $variation->ID );
-						if ( ! is_a( $product, WC_Product_Subscription_Variation::class ) ) {
-							return;
-						}
-
-						$environment = $c->get( 'onboarding.environment' );
-						$this->render_paypal_subscription_fields( $product, $environment );
-
-					}
-				} catch ( NotFoundException $exception ) {
-					return;
-				}
-			},
-			10,
-			3
-		);
-
-		add_action(
-			'woocommerce_product_options_general_product_data',
-			function() use ( $c ) {
-				$settings = $c->get( 'wcgateway.settings' );
-				assert( $settings instanceof Settings );
-
-				try {
-					$subscriptions_mode = $settings->get( 'subscriptions_mode' );
-					if ( $subscriptions_mode === 'subscriptions_api' ) {
-						/**
-						 * Needed for getting global post object.
-						 *
-						 * @psalm-suppress InvalidGlobal
-						 */
-						global $post;
-						$product = wc_get_product( $post->ID );
-						if ( ! is_a( $product, WC_Product::class ) ) {
-							return;
-						}
-
-						$environment = $c->get( 'onboarding.environment' );
-						$this->render_paypal_subscription_fields( $product, $environment );
-					}
-				} catch ( NotFoundException $exception ) {
-					return;
-				}
-			}
-		);
-
 		add_filter(
 			'woocommerce_order_data_store_cpt_get_orders_query',
 			/**
@@ -825,6 +771,64 @@ class SubscriptionModule implements ModuleInterface {
 				}
 			}
 		);
+
+		add_action(
+			'woocommerce_product_options_general_product_data',
+			function() use ( $c ) {
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+
+				try {
+					$subscriptions_mode = $settings->get( 'subscriptions_mode' );
+					if ( $subscriptions_mode === 'subscriptions_api' ) {
+						/**
+						 * Needed for getting global post object.
+						 *
+						 * @psalm-suppress InvalidGlobal
+						 */
+						global $post;
+						$product = wc_get_product( $post->ID );
+						if ( ! is_a( $product, WC_Product::class ) ) {
+							return;
+						}
+
+						$environment = $c->get( 'onboarding.environment' );
+						echo '<div class="options_group subscription_pricing show_if_subscription hidden">';
+						$this->render_paypal_subscription_fields( $product, $environment );
+						echo '</div>';
+
+					}
+				} catch ( NotFoundException $exception ) {
+					return;
+				}
+			}
+		);
+
+		add_action(
+			'woocommerce_variation_options_pricing',
+			function( $loop, $variation_data, $variation ) use ( $c ) {
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+
+				try {
+					$subscriptions_mode = $settings->get( 'subscriptions_mode' );
+					if ( $subscriptions_mode === 'subscriptions_api' ) {
+						$product = wc_get_product( $variation->ID );
+						if ( ! is_a( $product, WC_Product_Subscription_Variation::class ) ) {
+							return;
+						}
+
+						$environment = $c->get( 'onboarding.environment' );
+						$this->render_paypal_subscription_fields( $product, $environment );
+
+					}
+				} catch ( NotFoundException $exception ) {
+					return;
+				}
+			},
+			10,
+			3
+		);
 	}
 
 	/**
@@ -835,10 +839,16 @@ class SubscriptionModule implements ModuleInterface {
 	 * @return void
 	 */
 	private function render_paypal_subscription_fields( WC_Product $product, Environment $environment ): void {
+		if(is_a($product, WC_Product_Variable_Subscription::class)) {
+			$variations = $product->get_available_variations();
+			foreach ($variations as $variation) {
+				$a = 1;
+				// $variation['variation_id']
+			}
+		}
+
 		$enable_subscription_product = $product->get_meta( '_ppcp_enable_subscription_product' );
 		$subscription_plan_name      = $product->get_meta( '_ppcp_subscription_plan_name' );
-
-		//echo '<div class="options_group subscription_pricing show_if_subscription hidden">';
 
 		echo '<p class="form-field">';
 		echo sprintf(
@@ -870,7 +880,7 @@ class SubscriptionModule implements ModuleInterface {
 				);
 				echo sprintf(
 				// translators: %1$s and %2$s is open and closing paragraph tag.
-					esc_html__( 'Plan unlinked successfully ✔️', 'woocommerce-paypal-payments' ),
+					esc_html__( '%1$sPlan unlinked successfully ✔️%2$s', 'woocommerce-paypal-payments' ),
 					'<p class="form-field" id="pcpp-plan-unlinked" style="display: none;">',
 					'</p>'
 				);
@@ -897,7 +907,6 @@ class SubscriptionModule implements ModuleInterface {
 				'</label><input type="text" class="short" id="ppcp_subscription_plan_name" name="_ppcp_subscription_plan_name" value="' . esc_attr( $subscription_plan_name ) . '"></p>'
 			);
 		}
-		//echo '</div>';
 	}
 
 	/**
