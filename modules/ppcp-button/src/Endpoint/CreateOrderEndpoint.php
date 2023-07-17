@@ -258,6 +258,12 @@ class CreateOrderEndpoint implements EndpointInterface {
 			} else {
 				$this->purchase_unit = $this->purchase_unit_factory->from_wc_cart( null, $this->handle_shipping_in_paypal );
 
+				// Do not allow completion by webhooks when started via non-checkout buttons,
+				// it is needed only for some APMs in checkout.
+				if ( in_array( $data['context'], array( 'product', 'cart', 'cart-block' ), true ) ) {
+					$this->purchase_unit->set_custom_id( '' );
+				}
+
 				// The cart does not have any info about payment method, so we must handle free trial here.
 				if ( (
 					in_array( $payment_method, array( CreditCardGateway::ID, CardButtonGateway::ID ), true )
