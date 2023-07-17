@@ -1,6 +1,6 @@
 *** Changelog ***
 
-= 2.2.0 - xxxx-xx-xx =
+= 2.2.0 - 2023-07-17 =
 * Fix - Improve handling of APM payments when buyer did not return to Checkout #1233
 * Fix - Use order currency instead of shop currency on order-pay page #1363
 * Fix - Do not show broken card button gateway when no checkout location #1358
