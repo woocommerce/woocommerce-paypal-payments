@@ -212,6 +212,15 @@ class PurchaseUnit {
 	}
 
 	/**
+	 * Sets the custom ID.
+	 *
+	 * @param string $custom_id The value to set.
+	 */
+	public function set_custom_id( string $custom_id ): void {
+		$this->custom_id = $custom_id;
+	}
+
+	/**
 	 * Returns the invoice id.
 	 *
 	 * @return string
