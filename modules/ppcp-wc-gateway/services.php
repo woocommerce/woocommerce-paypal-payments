@@ -971,6 +971,15 @@ return array(
 		return 'https://www.paypal.com/cgi-bin/webscr?cmd=_view-a-trans&id=%s';
 	},
 
+	'wcgateway.soft-descriptor'                            => static function ( ContainerInterface $container ): string {
+		$settings = $container->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings );
+		if ( $settings->has( 'soft_descriptor' ) ) {
+			return $settings->get( 'soft_descriptor' );
+		}
+		return '';
+	},
+
 	'wcgateway.transaction-url-provider'                   => static function ( ContainerInterface $container ): TransactionUrlProvider {
 		$sandbox_url_base = $container->get( 'wcgateway.transaction-url-sandbox' );
 		$live_url_base    = $container->get( 'wcgateway.transaction-url-live' );
