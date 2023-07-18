@@ -25,6 +25,7 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\CreateOrderEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\DataClientIdEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\Button\Endpoint\SaveCheckoutFormEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\SimulateCartEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\StartPayPalVaultingEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ValidateCheckoutEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
@@ -827,6 +828,10 @@ class SmartButton implements SmartButtonInterface {
 			'redirect'                          => wc_get_checkout_url(),
 			'context'                           => $this->context(),
 			'ajax'                              => array(
+				'simulate_cart'        => array(
+					'endpoint' => \WC_AJAX::get_endpoint( SimulateCartEndpoint::ENDPOINT ),
+					'nonce'    => wp_create_nonce( SimulateCartEndpoint::nonce() ),
+				),
 				'change_cart'          => array(
 					'endpoint' => \WC_AJAX::get_endpoint( ChangeCartEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( ChangeCartEndpoint::nonce() ),
@@ -1330,6 +1335,18 @@ class SmartButton implements SmartButtonInterface {
 	}
 
 	/**
+	 * Returns the cart total.
+	 *
+	 * @return ?float
+	 */
+	protected function get_cart_price_total(): ?float {
+		if ( ! WC()->cart ) {
+			return null;
+		}
+		return (float) WC()->cart->get_total( 'numeric' );
+	}
+
+	/**
 	 * Checks if PayPal buttons/messages can be rendered for the given product.
 	 *
 	 * @param WC_Product $product The product.
@@ -1419,13 +1436,18 @@ class SmartButton implements SmartButtonInterface {
 		if ( 'product' === $location ) {
 			$product = wc_get_product();
 
+			if ( ! $product ) {
+				return true;
+			}
+
 			/**
 			 * Allows to decide if the button should be disabled for a given product
 			 */
 			$is_disabled = apply_filters(
 				'woocommerce_paypal_payments_product_buttons_paylater_disabled',
 				null,
-				$product
+				$product,
+				$product->get_price( 'numeric' )
 			);
 
 			if ( $is_disabled !== null ) {
@@ -1439,7 +1461,8 @@ class SmartButton implements SmartButtonInterface {
 		$is_disabled = apply_filters(
 			'woocommerce_paypal_payments_buttons_paylater_disabled',
 			null,
-			$location
+			$location,
+			$this->get_cart_price_total()
 		);
 
 		if ( $is_disabled !== null ) {
@@ -1455,7 +1478,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @param string $location The location.
 	 * @return bool true if is enabled, otherwise false.
 	 */
-	private function is_pay_later_button_enabled_for_location( string $location ) {
+	private function is_pay_later_button_enabled_for_location( string $location ): bool {
 		return $this->is_pay_later_filter_enabled_for_location( $location )
 			&& $this->settings_status->is_pay_later_button_enabled_for_location( $location );
 
@@ -1467,7 +1490,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @param string $location The location setting name.
 	 * @return bool true if is enabled, otherwise false.
 	 */
-	private function is_pay_later_messaging_enabled_for_location( string $location ) {
+	private function is_pay_later_messaging_enabled_for_location( string $location ): bool {
 		return $this->is_pay_later_filter_enabled_for_location( $location )
 			&& $this->settings_status->is_pay_later_messaging_enabled_for_location( $location );
 	}
@@ -1477,7 +1500,7 @@ class SmartButton implements SmartButtonInterface {
 	 *
 	 * @return bool true if is enabled, otherwise false.
 	 */
-	private function is_pay_later_messaging_enabled() {
+	private function is_pay_later_messaging_enabled(): bool {
 		return $this->is_pay_later_filter_enabled_for_location( $this->context() )
 			&& $this->settings_status->is_pay_later_messaging_enabled();
 	}

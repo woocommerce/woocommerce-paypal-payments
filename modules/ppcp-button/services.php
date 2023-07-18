@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\Button;
 
 use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveSubscriptionEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\SimulateCartEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\CheckoutFormSaver;
 use WooCommerce\PayPalCommerce\Button\Endpoint\SaveCheckoutFormEndpoint;
 use WooCommerce\PayPalCommerce\Button\Validation\CheckoutFormValidator;
@@ -123,6 +124,16 @@ return array(
 	},
 	'button.request-data'                         => static function ( ContainerInterface $container ): RequestData {
 		return new RequestData();
+	},
+	'button.endpoint.simulate-cart'               => static function ( ContainerInterface $container ): SimulateCartEndpoint {
+		if ( ! \WC()->cart ) {
+			throw new RuntimeException( 'cant initialize endpoint at this moment' );
+		}
+		$cart         = WC()->cart;
+		$request_data = $container->get( 'button.request-data' );
+		$data_store   = \WC_Data_Store::load( 'product' );
+		$logger       = $container->get( 'woocommerce.logger.woocommerce' );
+		return new SimulateCartEndpoint( $cart, $request_data, $data_store, $logger );
 	},
 	'button.endpoint.change-cart'                 => static function ( ContainerInterface $container ): ChangeCartEndpoint {
 		if ( ! \WC()->cart ) {
