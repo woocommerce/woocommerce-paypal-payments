@@ -1,7 +1,10 @@
 import Product from '../Entity/Product';
+import BookingProduct from "../Entity/BookingProduct";
 import onApprove from '../OnApproveHandler/onApproveForContinue';
 import {payerData} from "../Helper/PayerData";
 import {PaymentMethods} from "../Helper/CheckoutMethodState";
+import CartHelper from "../Helper/CartHelper";
+import FormHelper from "../Helper/FormHelper";
 
 class SingleProductActionHandler {
 
@@ -15,6 +18,7 @@ class SingleProductActionHandler {
         this.updateCart = updateCart;
         this.formElement = formElement;
         this.errorHandler = errorHandler;
+        this.cartHelper = null;
     }
 
     subscriptionsConfiguration() {
@@ -73,43 +77,70 @@ class SingleProductActionHandler {
             createOrder: this.createOrder(),
             onApprove: onApprove(this, this.errorHandler),
             onError: (error) => {
+                this.refreshMiniCart();
+
+                if (this.isBookingProduct() && error.message) {
+                    this.errorHandler.clear();
+                    this.errorHandler.message(error.message);
+                    return;
+                }
                 this.errorHandler.genericError();
+            },
+            onCancel: () => {
+                // Could be used for every product type,
+                // but only clean the cart for Booking products for now.
+                if (this.isBookingProduct()) {
+                    this.cleanCart();
+                } else {
+                    this.refreshMiniCart();
+                }
             }
         }
     }
 
     createOrder()
     {
-        var getProducts = null;
-        if (! this.isGroupedProduct() ) {
-            getProducts = () => {
-                const id = document.querySelector('[name="add-to-cart"]').value;
-                const qty = document.querySelector('[name="quantity"]').value;
-                const variations = this.variations();
-                return [new Product(id, qty, variations)];
+        this.cartHelper = null;
+
+        let getProducts = (() => {
+            if ( this.isBookingProduct() ) {
+                return () => {
+                    const id = document.querySelector('[name="add-to-cart"]').value;
+                    return [new BookingProduct(id, 1, FormHelper.getPrefixedFields(this.formElement, "wc_bookings_field"))];
+                }
+            } else if ( this.isGroupedProduct() ) {
+                return () => {
+                    const products = [];
+                    this.formElement.querySelectorAll('input[type="number"]').forEach((element) => {
+                        if (! element.value) {
+                            return;
+                        }
+                        const elementName = element.getAttribute('name').match(/quantity\[([\d]*)\]/);
+                        if (elementName.length !== 2) {
+                            return;
+                        }
+                        const id = parseInt(elementName[1]);
+                        const quantity = parseInt(element.value);
+                        products.push(new Product(id, quantity, null));
+                    })
+                    return products;
+                }
+            } else {
+                return () => {
+                    const id = document.querySelector('[name="add-to-cart"]').value;
+                    const qty = document.querySelector('[name="quantity"]').value;
+                    const variations = this.variations();
+                    return [new Product(id, qty, variations)];
+                }
             }
-        } else {
-            getProducts = () => {
-                const products = [];
-                this.formElement.querySelectorAll('input[type="number"]').forEach((element) => {
-                    if (! element.value) {
-                        return;
-                    }
-                    const elementName = element.getAttribute('name').match(/quantity\[([\d]*)\]/);
-                    if (elementName.length !== 2) {
-                        return;
-                    }
-                    const id = parseInt(elementName[1]);
-                    const quantity = parseInt(element.value);
-                    products.push(new Product(id, quantity, null));
-                })
-                return products;
-            }
-        }
-        const createOrder = (data, actions) => {
+        })();
+
+        return (data, actions) => {
             this.errorHandler.clear();
 
             const onResolve = (purchase_units) => {
+                this.cartHelper = (new CartHelper()).addFromPurchaseUnits(purchase_units);
+
                 const payer = payerData();
                 const bnCode = typeof this.config.bn_codes[this.config.context] !== 'undefined' ?
                     this.config.bn_codes[this.config.context] : '';
@@ -139,19 +170,16 @@ class SingleProductActionHandler {
                 });
             };
 
-            const promise = this.updateCart.update(onResolve, getProducts());
-            return promise;
+            return this.updateCart.update(onResolve, getProducts());
         };
-        return createOrder;
     }
 
     variations()
     {
-
         if (! this.hasVariations()) {
             return null;
         }
-        const attributes = [...this.formElement.querySelectorAll("[name^='attribute_']")].map(
+        return [...this.formElement.querySelectorAll("[name^='attribute_']")].map(
             (element) => {
             return {
                     value:element.value,
@@ -159,7 +187,6 @@ class SingleProductActionHandler {
                 }
             }
         );
-        return attributes;
     }
 
     hasVariations()
@@ -171,5 +198,24 @@ class SingleProductActionHandler {
     {
         return this.formElement.classList.contains('grouped_form');
     }
+
+    isBookingProduct()
+    {
+        // detection for "woocommerce-bookings" plugin
+        return !!this.formElement.querySelector('.wc-booking-product-id');
+    }
+
+    cleanCart() {
+        this.cartHelper.removeFromCart().then(() => {
+            this.refreshMiniCart();
+        }).catch(error => {
+            this.refreshMiniCart();
+        });
+    }
+
+    refreshMiniCart() {
+        jQuery(document.body).trigger('wc_fragment_refresh');
+    }
+
 }
 export default SingleProductActionHandler;
