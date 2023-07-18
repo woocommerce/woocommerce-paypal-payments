@@ -44,7 +44,8 @@ class ItemFactory {
 	public function from_wc_cart( \WC_Cart $cart ): array {
 		$items = array_map(
 			function ( array $item ): Item {
-				$product = $item['data'];
+				$product       = $item['data'];
+				$cart_item_key = $item['key'] ?? null;
 
 				/**
 				 * The WooCommerce product.
@@ -61,7 +62,9 @@ class ItemFactory {
 					$this->prepare_description( $product->get_description() ),
 					null,
 					$product->get_sku(),
-					( $product->is_virtual() ) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS
+					( $product->is_virtual() ) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS,
+					0,
+					$cart_item_key
 				);
 			},
 			$cart->get_cart_contents()
