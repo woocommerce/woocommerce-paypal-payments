@@ -954,12 +954,12 @@ class SubscriptionModule implements ModuleInterface {
 
 		return array(
 			'product_connected' => $product->get_meta( '_ppcp_enable_subscription_product' ) ?? '',
+			'plan_id'    => $plan_id,
+			'product_id' => $product->get_id(),
 			'ajax'              => array(
 				'deactivate_plan' => array(
 					'endpoint'   => \WC_AJAX::get_endpoint( DeactivatePlanEndpoint::ENDPOINT ),
 					'nonce'      => wp_create_nonce( DeactivatePlanEndpoint::ENDPOINT ),
-					'plan_id'    => $plan_id,
-					'product_id' => $product->get_id(),
 				),
 			),
 		);

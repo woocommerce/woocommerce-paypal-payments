@@ -1,23 +1,36 @@
 document.addEventListener(
     'DOMContentLoaded',
     () => {
+        const variations = document.querySelector('.woocommerce_variations');
+        const disableFields = (productId) => {
+            if(variations) {
+                const children = variations.children;
+                for(let i=0; i < children.length; i++) {
+                    const variableId = children[i].querySelector('h3').getElementsByClassName('variable_post_id')[0].value
+                    if( parseInt(variableId) === productId ) {
+                        children[i].querySelector('.woocommerce_variable_attributes').getElementsByClassName('wc_input_subscription_period_interval')[0].setAttribute('disabled', 'disabled');
+            }
+
+            const periodInterval = document.querySelector('#_subscription_period_interval');
+            periodInterval.setAttribute('disabled', 'disabled');
+
+            const subscriptionPeriod = document.querySelector('#_subscription_period');
+            subscriptionPeriod.setAttribute('disabled', 'disabled');
+
+            const subscriptionLength = document.querySelector('._subscription_length_field');
+            subscriptionLength.style.display = 'none';
+
+            const subscriptionTrial = document.querySelector('._subscription_trial_length_field');
+            subscriptionTrial.style.display = 'none';
+        }
+
         const setupProducts = () => {
             PayPalCommerceGatewayPayPalSubscriptionProducts?.forEach((product) => {
                 if(product.product_connected === 'yes') {
-                    const periodInterval = document.querySelector('#_subscription_period_interval');
-                    periodInterval.setAttribute('disabled', 'disabled');
-
-                    const subscriptionPeriod = document.querySelector('#_subscription_period');
-                    subscriptionPeriod.setAttribute('disabled', 'disabled');
-
-                    const subscriptionLength = document.querySelector('._subscription_length_field');
-                    subscriptionLength.style.display = 'none';
-
-                    const subscriptionTrial = document.querySelector('._subscription_trial_length_field');
-                    subscriptionTrial.style.display = 'none';
+                    disableFields(product.product_id);
                 }
 
-                const unlinkBtn = document.getElementById(`ppcp-unlink-sub-plan-${product.ajax.deactivate_plan.product_id}`);
+                const unlinkBtn = document.getElementById(`ppcp-unlink-sub-plan-${product.product_id}`);
                 unlinkBtn?.addEventListener('click', (event)=>{
                     event.preventDefault();
                     unlinkBtn.disabled = true;
@@ -32,8 +45,8 @@ document.addEventListener(
                         credentials: 'same-origin',
                         body: JSON.stringify({
                             nonce: product.ajax.deactivate_plan.nonce,
-                            plan_id: product.ajax.deactivate_plan.plan_id,
-                            product_id: product.ajax.deactivate_plan.product_id
+                            plan_id: product.plan_id,
+                            product_id: product.product_id
                         })
                     }).then(function (res) {
                         return res.json();
