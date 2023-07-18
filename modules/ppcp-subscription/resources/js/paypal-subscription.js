@@ -7,8 +7,12 @@ document.addEventListener(
                 const children = variations.children;
                 for(let i=0; i < children.length; i++) {
                     const variableId = children[i].querySelector('h3').getElementsByClassName('variable_post_id')[0].value
-                    if( parseInt(variableId) === productId ) {
-                        children[i].querySelector('.woocommerce_variable_attributes').getElementsByClassName('wc_input_subscription_period_interval')[0].setAttribute('disabled', 'disabled');
+                    if (parseInt(variableId) === productId) {
+                        children[i].querySelector('.woocommerce_variable_attributes')
+                            .getElementsByClassName('wc_input_subscription_period_interval')[0]
+                            .setAttribute('disabled', 'disabled');
+                    }
+                }
             }
 
             const periodInterval = document.querySelector('#_subscription_period_interval');
