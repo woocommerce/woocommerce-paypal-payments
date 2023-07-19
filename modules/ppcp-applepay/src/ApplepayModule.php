@@ -77,16 +77,12 @@ class ApplepayModule implements ModuleInterface {
 				}
 			);
 		}
-		$this->loadAssets( $c );
+		$this->load_assets( $c );
 		$env = $c->get( 'onboarding.environment' );
-		/**
-		 * The environment.
-		 *
-		 * @var Environment $env
-		 */
+		assert($env instanceof Environment);
 		$is_sandobx = $env->current_environment_is( Environment::SANDBOX );
-		$this->domain_association_file( $is_sandobx );
-		$this->renderButtons( $c );
+		$this->load_domain_association_file( $is_sandobx );
+		$this->render_buttons( $c );
 
 		$apple_payment_method->bootstrapAjaxRequest();
 	}
@@ -100,11 +96,11 @@ class ApplepayModule implements ModuleInterface {
 	}
 
 	/**
-	 * Loads the assets.
+	 * Loads the validation file.
 	 *
 	 * @param boolean $is_sandbox The environment for this merchant.
 	 */
-	protected function domain_association_file( $is_sandbox ): void {
+	protected function load_domain_association_file($is_sandbox ): void {
 		if ( ! isset( $_SERVER['REQUEST_URI'] ) ) {
 			return;
 		}
@@ -125,7 +121,7 @@ class ApplepayModule implements ModuleInterface {
 	 * @param ContainerInterface $c The container.
 	 * @return void
 	 */
-	public function loadAssets( ContainerInterface $c ): void {
+	public function load_assets(ContainerInterface $c ): void {
 		add_action(
 			'init',
 			function () use ( $c ) {
@@ -165,7 +161,7 @@ class ApplepayModule implements ModuleInterface {
 	/**
 	 * ApplePay button markup
 	 */
-	protected function applePayDirectButton(): void {
+	protected function apple_pay_direct_button(): void {
 		?>
 		<div class="ppc-button-wrapper">
 			<div id="woocommerce_paypal_payments_applepayDirect-button">
@@ -176,12 +172,12 @@ class ApplepayModule implements ModuleInterface {
 	}
 
 	/**
-	 * Renders the Apple Pay buttons.
+	 * Renders the Apple Pay buttons in the enabled places.
 	 *
 	 * @param ContainerInterface $c The container.
 	 * @return void
 	 */
-	public function renderButtons( ContainerInterface $c ): void {
+	public function render_buttons(ContainerInterface $c ): void {
 		$button_enabled_product = $c->get( 'applepay.setting_button_enabled_product' );
 		$button_enabled_cart    = $c->get( 'applepay.setting_button_enabled_cart' );
 		if ( $button_enabled_product ) {
@@ -190,7 +186,7 @@ class ApplepayModule implements ModuleInterface {
 			add_action(
 				$render_placeholder,
 				function () {
-					$this->applePayDirectButton();
+					$this->apple_pay_direct_button();
 				}
 			);
 		}
@@ -200,7 +196,7 @@ class ApplepayModule implements ModuleInterface {
 			add_action(
 				$render_placeholder,
 				function () {
-					$this->applePayDirectButton();
+					$this->apple_pay_direct_button();
 				}
 			);
 		}
