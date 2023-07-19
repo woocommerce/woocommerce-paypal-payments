@@ -78,7 +78,7 @@ class AppleProductStatus {
 	}
 
 	/**
-	 * Whether the active/subscribed products support PUI.
+	 * Whether the active/subscribed products support Applepay.
 	 *
 	 * @return bool
 	 */
