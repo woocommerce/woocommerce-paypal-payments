@@ -74,6 +74,13 @@ class Item {
 	protected $tax_rate;
 
 	/**
+	 * The cart item key.
+	 *
+	 * @var string|null
+	 */
+	protected $cart_item_key;
+
+	/**
 	 * Item constructor.
 	 *
 	 * @param string     $name The name.
@@ -84,6 +91,7 @@ class Item {
 	 * @param string     $sku The SKU.
 	 * @param string     $category The category.
 	 * @param float      $tax_rate The tax rate.
+	 * @param ?string    $cart_item_key The cart key for this item.
 	 */
 	public function __construct(
 		string $name,
@@ -93,18 +101,20 @@ class Item {
 		Money $tax = null,
 		string $sku = '',
 		string $category = 'PHYSICAL_GOODS',
-		float $tax_rate = 0
+		float $tax_rate = 0,
+		string $cart_item_key = null
 	) {
 
-		$this->name        = $name;
-		$this->unit_amount = $unit_amount;
-		$this->quantity    = $quantity;
-		$this->description = $description;
-		$this->tax         = $tax;
-		$this->sku         = $sku;
-		$this->category    = ( self::DIGITAL_GOODS === $category ) ? self::DIGITAL_GOODS : self::PHYSICAL_GOODS;
-		$this->category    = $category;
-		$this->tax_rate    = $tax_rate;
+		$this->name          = $name;
+		$this->unit_amount   = $unit_amount;
+		$this->quantity      = $quantity;
+		$this->description   = $description;
+		$this->tax           = $tax;
+		$this->sku           = $sku;
+		$this->category      = ( self::DIGITAL_GOODS === $category ) ? self::DIGITAL_GOODS : self::PHYSICAL_GOODS;
+		$this->category      = $category;
+		$this->tax_rate      = $tax_rate;
+		$this->cart_item_key = $cart_item_key;
 	}
 
 	/**
@@ -180,6 +190,15 @@ class Item {
 	}
 
 	/**
+	 * Returns the cart key for this item.
+	 *
+	 * @return string|null
+	 */
+	public function cart_item_key():?string {
+		return $this->cart_item_key;
+	}
+
+	/**
 	 * Returns the object as array.
 	 *
 	 * @return array
@@ -200,6 +219,10 @@ class Item {
 
 		if ( $this->tax_rate() ) {
 			$item['tax_rate'] = (string) $this->tax_rate();
+		}
+
+		if ( $this->cart_item_key() ) {
+			$item['cart_item_key'] = (string) $this->cart_item_key();
 		}
 
 		return $item;

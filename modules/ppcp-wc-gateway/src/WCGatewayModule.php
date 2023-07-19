@@ -528,7 +528,6 @@ class WCGatewayModule implements ModuleInterface {
 				 */
 				$field = $renderer->render_multiselect( $field, $key, $args, $value );
 				$field = $renderer->render_password( $field, $key, $args, $value );
-				$field = $renderer->render_text_input( $field, $key, $args, $value );
 				$field = $renderer->render_heading( $field, $key, $args, $value );
 				$field = $renderer->render_table( $field, $key, $args, $value );
 				return $field;

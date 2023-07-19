@@ -386,6 +386,28 @@ return array(
 		return array_key_exists( $current_page_id, $sections );
 	},
 
+	'wcgateway.settings.fields.subscriptions_mode'         => static function ( ContainerInterface $container ): array {
+		return array(
+			'title'        => __( 'Subscriptions Mode', 'woocommerce-paypal-payments' ),
+			'type'         => 'select',
+			'class'        => array(),
+			'input_class'  => array( 'wc-enhanced-select' ),
+			'desc_tip'     => true,
+			'description'  => __( 'Utilize PayPal Vaulting for flexible subscription processing with saved payment methods, create “PayPal Subscriptions” to bill customers at regular intervals, or disable PayPal for subscription-type products.', 'woocommerce-paypal-payments' ),
+			'default'      => 'vaulting_api',
+			'options'      => array(
+				'vaulting_api'                 => __( 'PayPal Vaulting', 'woocommerce-paypal-payments' ),
+				'subscriptions_api'            => __( 'PayPal Subscriptions', 'woocommerce-paypal-payments' ),
+				'disable_paypal_subscriptions' => __( 'Disable PayPal for subscriptions', 'woocommerce-paypal-payments' ),
+			),
+			'screens'      => array(
+				State::STATE_ONBOARDED,
+			),
+			'requirements' => array(),
+			'gateway'      => 'paypal',
+		);
+	},
+
 	'wcgateway.settings.fields'                            => static function ( ContainerInterface $container ): array {
 
 		$should_render_settings = $container->get( 'wcgateway.settings.should-render-settings' );
@@ -805,25 +827,7 @@ return array(
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
-			'subscriptions_mode'                     => array(
-				'title'        => __( 'Subscriptions Mode', 'woocommerce-paypal-payments' ),
-				'type'         => 'select',
-				'class'        => array(),
-				'input_class'  => array( 'wc-enhanced-select' ),
-				'desc_tip'     => true,
-				'description'  => __( 'Utilize PayPal Vaulting for flexible subscription processing with saved payment methods, create “PayPal Subscriptions” to bill customers at regular intervals, or disable PayPal for subscription-type products.', 'woocommerce-paypal-payments' ),
-				'default'      => 'vaulting_api',
-				'options'      => array(
-					'vaulting_api'                 => __( 'PayPal Vaulting', 'woocommerce-paypal-payments' ),
-					'subscriptions_api'            => __( 'PayPal Subscriptions', 'woocommerce-paypal-payments' ),
-					'disable_paypal_subscriptions' => __( 'Disable PayPal for subscriptions', 'woocommerce-paypal-payments' ),
-				),
-				'screens'      => array(
-					State::STATE_ONBOARDED,
-				),
-				'requirements' => array(),
-				'gateway'      => 'paypal',
-			),
+			'subscriptions_mode'                     => $container->get( 'wcgateway.settings.fields.subscriptions_mode' ),
 			'vault_enabled'                          => array(
 				'title'        => __( 'Vaulting', 'woocommerce-paypal-payments' ),
 				'type'         => 'checkbox',
@@ -872,7 +876,6 @@ return array(
 		$billing_agreements_endpoint = $container->get( 'api.endpoint.billing-agreements' );
 		if ( ! $billing_agreements_endpoint->reference_transaction_enabled() ) {
 			unset( $fields['vault_enabled'] );
-			unset( $fields['vault_enabled_dcc'] );
 		}
 
 		/**
@@ -974,6 +977,15 @@ return array(
 
 	'wcgateway.transaction-url-live'                       => static function ( ContainerInterface $container ): string {
 		return 'https://www.paypal.com/cgi-bin/webscr?cmd=_view-a-trans&id=%s';
+	},
+
+	'wcgateway.soft-descriptor'                            => static function ( ContainerInterface $container ): string {
+		$settings = $container->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings );
+		if ( $settings->has( 'soft_descriptor' ) ) {
+			return $settings->get( 'soft_descriptor' );
+		}
+		return '';
 	},
 
 	'wcgateway.transaction-url-provider'                   => static function ( ContainerInterface $container ): TransactionUrlProvider {

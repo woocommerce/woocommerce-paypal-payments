@@ -67,7 +67,12 @@ class CartScriptParamsEndpoint implements EndpointInterface {
 		try {
 			$script_data = $this->smart_button->script_data();
 
-			wp_send_json_success( $script_data['url_params'] );
+			wp_send_json_success(
+				array(
+					'url_params' => $script_data['url_params'],
+					'amount'     => WC()->cart->get_total( 'raw' ),
+				)
+			);
 
 			return true;
 		} catch ( Throwable $error ) {

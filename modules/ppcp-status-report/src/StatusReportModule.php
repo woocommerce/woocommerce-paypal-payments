@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\StatusReport;
 
+use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
@@ -49,6 +50,8 @@ class StatusReportModule implements ModuleInterface {
 				$settings = $c->get( 'wcgateway.settings' );
 				assert( $settings instanceof ContainerInterface );
 
+				$subscriptions_mode_settings = $c->get( 'wcgateway.settings.fields.subscriptions_mode' ) ?: array();
+
 				/* @var State $state The state. */
 				$state = $c->get( 'onboarding.state' );
 
@@ -60,6 +63,9 @@ class StatusReportModule implements ModuleInterface {
 
 				/* @var MessagesApply $messages_apply The messages apply. */
 				$messages_apply = $c->get( 'button.helper.messages-apply' );
+
+				/* @var SubscriptionHelper $subscription_helper The subscription helper class. */
+				$subscription_helper = $c->get( 'subscription.helper' );
 
 				$last_webhook_storage = $c->get( 'webhook.last-webhook-storage' );
 				assert( $last_webhook_storage instanceof WebhookEventStorage );
@@ -167,6 +173,20 @@ class StatusReportModule implements ModuleInterface {
 					),
 				);
 
+				// For now only show this status if PPCP_FLAG_SUBSCRIPTIONS_API is true.
+				if ( defined( 'PPCP_FLAG_SUBSCRIPTIONS_API' ) && PPCP_FLAG_SUBSCRIPTIONS_API ) {
+					$items[] = array(
+						'label'          => esc_html__( 'Subscriptions Mode', 'woocommerce-paypal-payments' ),
+						'exported_label' => 'Subscriptions Mode',
+						'description'    => esc_html__( 'Whether subscriptions are active and their mode.', 'woocommerce-paypal-payments' ),
+						'value'          => $this->subscriptions_mode_text(
+							$subscription_helper->plugin_is_active(),
+							$settings->has( 'subscriptions_mode' ) ? (string) $settings->get( 'subscriptions_mode' ) : '',
+							$subscriptions_mode_settings
+						),
+					);
+				}
+
 				echo wp_kses_post(
 					$renderer->render(
 						esc_html__( 'WooCommerce PayPal Payments', 'woocommerce-paypal-payments' ),
@@ -198,6 +218,27 @@ class StatusReportModule implements ModuleInterface {
 
 		$current_state = $state->current_state();
 		return $token->is_valid() && $current_state === $state::STATE_ONBOARDED;
+	}
+
+	/**
+	 * Returns the text associated with the subscriptions mode status.
+	 *
+	 * @param bool   $is_plugin_active     Indicates if the WooCommerce Subscriptions plugin is active.
+	 * @param string $subscriptions_mode   The subscriptions mode stored in settings.
+	 * @param array  $field_settings       The subscriptions mode field settings.
+	 * @return string
+	 */
+	private function subscriptions_mode_text( bool $is_plugin_active, string $subscriptions_mode, array $field_settings ): string {
+		if ( ! $is_plugin_active || ! $field_settings || $subscriptions_mode === 'disable_paypal_subscriptions' ) {
+			return 'Disabled';
+		}
+
+		if ( ! $subscriptions_mode ) {
+			$subscriptions_mode = $field_settings['default'] ?? '';
+		}
+
+		// Return the options value or if it's missing from options the settings value.
+		return $field_settings['options'][ $subscriptions_mode ] ?? $subscriptions_mode;
 	}
 
 	/**

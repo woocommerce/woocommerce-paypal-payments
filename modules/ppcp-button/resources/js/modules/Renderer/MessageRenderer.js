@@ -5,28 +5,6 @@ class MessageRenderer {
         this.optionsFingerprint = null;
     }
 
-    render() {
-        if (! this.shouldRender()) {
-            return;
-        }
-
-        const options = {
-            amount: this.config.amount,
-            placement: this.config.placement,
-            style: this.config.style
-        };
-
-        if (this.optionsEqual(options)) {
-            return;
-        }
-
-        paypal.Messages(options).render(this.config.wrapper);
-
-        jQuery(document.body).on('updated_cart_totals', () => {
-            paypal.Messages(options).render(this.config.wrapper);
-        });
-    }
-
     renderWithAmount(amount) {
         if (! this.shouldRender()) {
             return;

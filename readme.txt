@@ -81,7 +81,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 
 == Changelog ==
 
-= 2.2.0 - TBD =
+= 2.2.0 - 2023-07-17 =
 * Fix - Improve handling of APM payments when buyer did not return to Checkout #1233
 * Fix - Use order currency instead of shop currency on order-pay page #1363
 * Fix - Do not show broken card button gateway when no checkout location #1358
@@ -92,6 +92,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Fix - Incompatibility with WooCommerce One Page Checkout (or similar use cases) in Version 2.1.0 #1473
 * Fix - Prevent Repetitive Token Migration and Database Overload After 2.1.0 Update #1461
 * Fix - Onboarding from connection page with CSRF parameter manipulates email and merchant id fields #1502
+* Fix - Do not complete non-checkout button orders via webhooks #1513
 * Enhancement - Remove feature flag requirement for express cart/checkout block integration #1483
 * Enhancement - Add notice when shop currency is unsupported #1433
 * Enhancement - Improve ACDC error message when empty fields #1360

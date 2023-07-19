@@ -153,13 +153,23 @@ class ChangeCartEndpoint implements EndpointInterface {
 		$this->cart->empty_cart( false );
 		$success = true;
 		foreach ( $products as $product ) {
-			$success = $success && ( ! $product['product']->is_type( 'variable' ) ) ?
-				$this->add_product( $product['product'], $product['quantity'] )
-				: $this->add_variable_product(
+			if ( $product['product']->is_type( 'booking' ) ) {
+				$success = $success && $this->add_booking_product(
+					$product['product'],
+					$product['booking']
+				);
+			} elseif ( $product['product']->is_type( 'variable' ) ) {
+				$success = $success && $this->add_variable_product(
 					$product['product'],
 					$product['quantity'],
 					$product['variations']
 				);
+			} else {
+				$success = $success && $this->add_product(
+					$product['product'],
+					$product['quantity']
+				);
+			}
 		}
 		if ( ! $success ) {
 			$this->handle_error();
@@ -234,7 +244,8 @@ class ChangeCartEndpoint implements EndpointInterface {
 			$products[] = array(
 				'product'    => $wc_product,
 				'quantity'   => (int) $product['quantity'],
-				'variations' => isset( $product['variations'] ) ? $product['variations'] : null,
+				'variations' => $product['variations'] ?? null,
+				'booking'    => $product['booking'] ?? null,
 			);
 		}
 		return $products;
@@ -284,6 +295,31 @@ class ChangeCartEndpoint implements EndpointInterface {
 			$variation_id,
 			$variations
 		);
+	}
+
+	/**
+	 * Adds variations to the cart.
+	 *
+	 * @param \WC_Product $product The Product.
+	 * @param array       $data Data used by the booking plugin.
+	 *
+	 * @return bool
+	 * @throws Exception When product could not be added.
+	 */
+	private function add_booking_product(
+		\WC_Product $product,
+		array $data
+	): bool {
+
+		if ( ! is_callable( 'wc_bookings_get_posted_data' ) ) {
+			return false;
+		}
+
+		$cart_item_data = array(
+			'booking' => wc_bookings_get_posted_data( $data, $product ),
+		);
+
+		return false !== $this->cart->add_to_cart( $product->get_id(), 1, 0, array(), $cart_item_data );
 	}
 
 	/**
