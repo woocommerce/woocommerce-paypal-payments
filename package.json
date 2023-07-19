@@ -7,6 +7,7 @@
   "author": "WooCommerce",
   "scripts": {
     "postinstall": "run-s install:modules:* && run-s build:modules",
+    "install:modules:ppcp-applepay": "cd modules/ppcp-applepay && yarn install",
     "install:modules:ppcp-blocks": "cd modules/ppcp-blocks && yarn install",
     "install:modules:ppcp-button": "cd modules/ppcp-button && yarn install",
     "install:modules:ppcp-wc-gateway": "cd modules/ppcp-wc-gateway && yarn install",
@@ -15,6 +16,7 @@
     "install:modules:ppcp-onboarding": "cd modules/ppcp-onboarding && yarn install",
     "install:modules:ppcp-compat": "cd modules/ppcp-compat && yarn install",
     "install:modules:ppcp-uninstall": "cd modules/ppcp-uninstall && yarn install",
+    "build:modules:ppcp-applepay": "cd modules/ppcp-applepay && yarn run build",
     "build:modules:ppcp-blocks": "cd modules/ppcp-blocks && yarn run build",
     "build:modules:ppcp-button": "cd modules/ppcp-button && yarn run build",
     "build:modules:ppcp-wc-gateway": "cd modules/ppcp-wc-gateway && yarn run build",
@@ -24,6 +26,7 @@
     "build:modules:ppcp-compat": "cd modules/ppcp-compat && yarn run build",
     "build:modules:ppcp-uninstall": "cd modules/ppcp-uninstall && yarn run build",
     "build:modules": "run-p build:modules:*",
+    "watch:modules:ppcp-applepay": "cd modules/ppcp-applepay && yarn run watch",
     "watch:modules:ppcp-blocks": "cd modules/ppcp-blocks && yarn run watch",
     "watch:modules:ppcp-button": "cd modules/ppcp-button && yarn run watch",
     "watch:modules:ppcp-wc-gateway": "cd modules/ppcp-wc-gateway && yarn run watch",
