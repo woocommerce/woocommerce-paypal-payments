@@ -50,8 +50,6 @@ class CheckoutActionHandler {
 
             const formSelector = this.config.context === 'checkout' ? 'form.checkout' : 'form#order_review';
             const formData = new FormData(document.querySelector(formSelector));
-            // will not handle fields with multiple values (checkboxes, <select multiple>), but we do not care about this here
-            const formJsonObj = Object.fromEntries(formData.entries());
 
             const createaccount = jQuery('#createaccount').is(":checked") ? true : false;
 
@@ -72,7 +70,8 @@ class CheckoutActionHandler {
                     order_id:this.config.order_id,
                     payment_method: paymentMethod,
                     funding_source: fundingSource,
-                    form: formJsonObj,
+                    // send as urlencoded string to handle complex fields via PHP functions the same as normal form submit
+                    form_encoded: new URLSearchParams(formData).toString(),
                     createaccount: createaccount
                 })
             }).then(function (res) {

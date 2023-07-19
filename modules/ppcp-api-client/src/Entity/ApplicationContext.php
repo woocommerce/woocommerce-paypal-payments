@@ -41,6 +41,9 @@ class ApplicationContext {
 		self::USER_ACTION_PAY_NOW,
 	);
 
+	const PAYMENT_METHOD_UNRESTRICTED               = 'UNRESTRICTED';
+	const PAYMENT_METHOD_IMMEDIATE_PAYMENT_REQUIRED = 'IMMEDIATE_PAYMENT_REQUIRED';
+
 	/**
 	 * The brand name.
 	 *
@@ -91,11 +94,11 @@ class ApplicationContext {
 	private $cancel_url;
 
 	/**
-	 * The payment method.
+	 * The payment method preference.
 	 *
-	 * @var null
+	 * @var string
 	 */
-	private $payment_method;
+	private $payment_method_preference;
 
 	/**
 	 * ApplicationContext constructor.
@@ -107,6 +110,7 @@ class ApplicationContext {
 	 * @param string $landing_page The landing page.
 	 * @param string $shipping_preference The shipping preference.
 	 * @param string $user_action The user action.
+	 * @param string $payment_method_preference The payment method preference.
 	 *
 	 * @throws RuntimeException When values are not valid.
 	 */
@@ -117,7 +121,8 @@ class ApplicationContext {
 		string $locale = '',
 		string $landing_page = self::LANDING_PAGE_NO_PREFERENCE,
 		string $shipping_preference = self::SHIPPING_PREFERENCE_NO_SHIPPING,
-		string $user_action = self::USER_ACTION_CONTINUE
+		string $user_action = self::USER_ACTION_CONTINUE,
+		string $payment_method_preference = self::PAYMENT_METHOD_IMMEDIATE_PAYMENT_REQUIRED
 	) {
 
 		if ( ! in_array( $landing_page, self::VALID_LANDING_PAGE_VALUES, true ) ) {
@@ -129,16 +134,14 @@ class ApplicationContext {
 		if ( ! in_array( $user_action, self::VALID_USER_ACTION_VALUES, true ) ) {
 			throw new RuntimeException( 'User action preference not correct' );
 		}
-		$this->return_url          = $return_url;
-		$this->cancel_url          = $cancel_url;
-		$this->brand_name          = $brand_name;
-		$this->locale              = $locale;
-		$this->landing_page        = $landing_page;
-		$this->shipping_preference = $shipping_preference;
-		$this->user_action         = $user_action;
-
-		// Currently we have not implemented the payment method.
-		$this->payment_method = null;
+		$this->return_url                = $return_url;
+		$this->cancel_url                = $cancel_url;
+		$this->brand_name                = $brand_name;
+		$this->locale                    = $locale;
+		$this->landing_page              = $landing_page;
+		$this->shipping_preference       = $shipping_preference;
+		$this->user_action               = $user_action;
+		$this->payment_method_preference = $payment_method_preference;
 	}
 
 	/**
@@ -205,12 +208,10 @@ class ApplicationContext {
 	}
 
 	/**
-	 * Returns the payment method.
-	 *
-	 * @return PaymentMethod|null
+	 * Returns the payment method preference.
 	 */
-	public function payment_method() {
-		return $this->payment_method;
+	public function payment_method_preference(): string {
+		return $this->payment_method_preference;
 	}
 
 	/**
@@ -222,9 +223,6 @@ class ApplicationContext {
 		$data = array();
 		if ( $this->user_action() ) {
 			$data['user_action'] = $this->user_action();
-		}
-		if ( $this->payment_method() ) {
-			$data['payment_method'] = $this->payment_method();
 		}
 		if ( $this->shipping_preference() ) {
 			$data['shipping_preference'] = $this->shipping_preference();
@@ -243,6 +241,11 @@ class ApplicationContext {
 		}
 		if ( $this->cancel_url() ) {
 			$data['cancel_url'] = $this->cancel_url();
+		}
+		if ( $this->payment_method_preference ) {
+			$data['payment_method'] = array(
+				'payee_preferred' => $this->payment_method_preference,
+			);
 		}
 		return $data;
 	}

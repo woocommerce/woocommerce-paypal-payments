@@ -71,6 +71,13 @@ class PurchaseUnitFactory {
 	private $prefix;
 
 	/**
+	 * The Soft Descriptor.
+	 *
+	 * @var string
+	 */
+	private $soft_descriptor;
+
+	/**
 	 * PurchaseUnitFactory constructor.
 	 *
 	 * @param AmountFactory   $amount_factory The amount factory.
@@ -80,6 +87,7 @@ class PurchaseUnitFactory {
 	 * @param ShippingFactory $shipping_factory The shipping factory.
 	 * @param PaymentsFactory $payments_factory The payments factory.
 	 * @param string          $prefix The prefix.
+	 * @param string          $soft_descriptor The soft descriptor.
 	 */
 	public function __construct(
 		AmountFactory $amount_factory,
@@ -88,7 +96,8 @@ class PurchaseUnitFactory {
 		ItemFactory $item_factory,
 		ShippingFactory $shipping_factory,
 		PaymentsFactory $payments_factory,
-		string $prefix = 'WC-'
+		string $prefix = 'WC-',
+		string $soft_descriptor = ''
 	) {
 
 		$this->amount_factory   = $amount_factory;
@@ -98,6 +107,7 @@ class PurchaseUnitFactory {
 		$this->shipping_factory = $shipping_factory;
 		$this->payments_factory = $payments_factory;
 		$this->prefix           = $prefix;
+		$this->soft_descriptor  = $soft_descriptor;
 	}
 
 	/**
@@ -128,7 +138,7 @@ class PurchaseUnitFactory {
 		$payee           = $this->payee_repository->payee();
 		$custom_id       = (string) $order->get_id();
 		$invoice_id      = $this->prefix . $order->get_order_number();
-		$soft_descriptor = '';
+		$soft_descriptor = $this->soft_descriptor;
 
 		$purchase_unit = new PurchaseUnit(
 			$amount,
@@ -198,7 +208,7 @@ class PurchaseUnitFactory {
 			}
 		}
 		$invoice_id      = '';
-		$soft_descriptor = '';
+		$soft_descriptor = $this->soft_descriptor;
 		$purchase_unit   = new PurchaseUnit(
 			$amount,
 			$items,
@@ -233,7 +243,7 @@ class PurchaseUnitFactory {
 		$description     = ( isset( $data->description ) ) ? $data->description : '';
 		$custom_id       = ( isset( $data->custom_id ) ) ? $data->custom_id : '';
 		$invoice_id      = ( isset( $data->invoice_id ) ) ? $data->invoice_id : '';
-		$soft_descriptor = ( isset( $data->soft_descriptor ) ) ? $data->soft_descriptor : '';
+		$soft_descriptor = ( isset( $data->soft_descriptor ) ) ? $data->soft_descriptor : $this->soft_descriptor;
 		$items           = array();
 		if ( isset( $data->items ) && is_array( $data->items ) ) {
 			$items = array_map(
