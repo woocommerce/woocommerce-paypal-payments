@@ -11,6 +11,18 @@ document.addEventListener(
                         children[i].querySelector('.woocommerce_variable_attributes')
                             .getElementsByClassName('wc_input_subscription_period_interval')[0]
                             .setAttribute('disabled', 'disabled');
+                        children[i].querySelector('.woocommerce_variable_attributes')
+                            .getElementsByClassName('wc_input_subscription_period')[0]
+                            .setAttribute('disabled', 'disabled');
+                        children[i].querySelector('.woocommerce_variable_attributes')
+                            .getElementsByClassName('wc_input_subscription_trial_length')[0]
+                            .setAttribute('disabled', 'disabled');
+                        children[i].querySelector('.woocommerce_variable_attributes')
+                            .getElementsByClassName('wc_input_subscription_trial_period')[0]
+                            .setAttribute('disabled', 'disabled');
+                        children[i].querySelector('.woocommerce_variable_attributes')
+                            .getElementsByClassName('wc_input_subscription_length')[0]
+                            .setAttribute('disabled', 'disabled');
                     }
                 }
             }

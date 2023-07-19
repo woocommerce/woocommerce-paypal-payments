@@ -842,12 +842,13 @@ class SubscriptionModule implements ModuleInterface {
 	 */
 	private function render_paypal_subscription_fields( WC_Product $product, Environment $environment ): void {
 		$enable_subscription_product = $product->get_meta( '_ppcp_enable_subscription_product' );
+		$style                       = $product->get_type() === 'subscription_variation' ? 'float:left; width:150px;' : '';
 
 		echo '<p class="form-field">';
 		echo sprintf(
 		// translators: %1$s and %2$s are label open and close tags.
 			esc_html__( '%1$sConnect to PayPal%2$s', 'woocommerce-paypal-payments' ),
-			'<label for="_ppcp_enable_subscription_product">',
+			'<label for="_ppcp_enable_subscription_product" style="' . esc_attr( $style ) . '">',
 			'</label>'
 		);
 		echo '<input type="checkbox" id="ppcp_enable_subscription_product" name="_ppcp_enable_subscription_product" value="yes" ' . checked( $enable_subscription_product, 'yes', false ) . '/>';
@@ -884,13 +885,13 @@ class SubscriptionModule implements ModuleInterface {
 			echo sprintf(
 			// translators: %1$s and %2$s are wrapper html tags.
 				esc_html__( '%1$sProduct%2$s', 'woocommerce-paypal-payments' ),
-				'<p class="form-field" id="pcpp-product"><label>',
+				'<p class="form-field" id="pcpp-product"><label style="' . esc_attr( $style ) . '">',
 				'</label><a href="' . esc_url( $host . '/billing/plans/products/' . $subscription_product['id'] ) . '" target="_blank">' . esc_attr( $subscription_product['id'] ) . '</a></p>'
 			);
 			echo sprintf(
 			// translators: %1$s and %2$s are wrapper html tags.
 				esc_html__( '%1$sPlan%2$s', 'woocommerce-paypal-payments' ),
-				'<p class="form-field" id="pcpp-plan"><label>',
+				'<p class="form-field" id="pcpp-plan"><label style="' . esc_attr( $style ) . '">',
 				'</label><a href="' . esc_url( $host . '/billing/plans/' . $subscription_plan['id'] ) . '" target="_blank">' . esc_attr( $subscription_plan['id'] ) . '</a></p>'
 			);
 		} else {
@@ -954,12 +955,12 @@ class SubscriptionModule implements ModuleInterface {
 
 		return array(
 			'product_connected' => $product->get_meta( '_ppcp_enable_subscription_product' ) ?? '',
-			'plan_id'    => $plan_id,
-			'product_id' => $product->get_id(),
+			'plan_id'           => $plan_id,
+			'product_id'        => $product->get_id(),
 			'ajax'              => array(
 				'deactivate_plan' => array(
-					'endpoint'   => \WC_AJAX::get_endpoint( DeactivatePlanEndpoint::ENDPOINT ),
-					'nonce'      => wp_create_nonce( DeactivatePlanEndpoint::ENDPOINT ),
+					'endpoint' => \WC_AJAX::get_endpoint( DeactivatePlanEndpoint::ENDPOINT ),
+					'nonce'    => wp_create_nonce( DeactivatePlanEndpoint::ENDPOINT ),
 				),
 			),
 		);
