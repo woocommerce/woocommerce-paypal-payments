@@ -129,11 +129,12 @@ return array(
 		if ( ! \WC()->cart ) {
 			throw new RuntimeException( 'cant initialize endpoint at this moment' );
 		}
+		$smart_button = $container->get( 'button.smart-button' );
 		$cart         = WC()->cart;
 		$request_data = $container->get( 'button.request-data' );
 		$data_store   = \WC_Data_Store::load( 'product' );
 		$logger       = $container->get( 'woocommerce.logger.woocommerce' );
-		return new SimulateCartEndpoint( $cart, $request_data, $data_store, $logger );
+		return new SimulateCartEndpoint( $smart_button, $cart, $request_data, $data_store, $logger );
 	},
 	'button.endpoint.change-cart'                 => static function ( ContainerInterface $container ): ChangeCartEndpoint {
 		if ( ! \WC()->cart ) {

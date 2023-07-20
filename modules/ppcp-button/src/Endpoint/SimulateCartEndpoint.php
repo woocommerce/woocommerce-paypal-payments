@@ -11,95 +11,45 @@ namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 
 use Exception;
 use Psr\Log\LoggerInterface;
-use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
-use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
+use WooCommerce\PayPalCommerce\Button\Assets\SmartButton;
 
 /**
  * Class SimulateCartEndpoint
  */
-class SimulateCartEndpoint implements EndpointInterface {
+class SimulateCartEndpoint extends AbstractCartEndpoint {
 
 	const ENDPOINT = 'ppc-simulate-cart';
 
 	/**
-	 * The cart object.
+	 * The SmartButton.
 	 *
-	 * @var \WC_Cart
+	 * @var SmartButton
 	 */
-	private $cart;
-
-	/**
-	 * The request data helper.
-	 *
-	 * @var RequestData
-	 */
-	private $request_data;
-
-	/**
-	 * The product data store.
-	 *
-	 * @var \WC_Data_Store
-	 */
-	private $product_data_store;
-
-	/**
-	 * The logger.
-	 *
-	 * @var LoggerInterface
-	 */
-	protected $logger;
+	private $smart_button;
 
 	/**
 	 * ChangeCartEndpoint constructor.
 	 *
+	 * @param SmartButton     $smart_button The SmartButton.
 	 * @param \WC_Cart        $cart The current WC cart object.
 	 * @param RequestData     $request_data The request data helper.
 	 * @param \WC_Data_Store  $product_data_store The data store for products.
 	 * @param LoggerInterface $logger The logger.
 	 */
 	public function __construct(
+		SmartButton $smart_button,
 		\WC_Cart $cart,
 		RequestData $request_data,
 		\WC_Data_Store $product_data_store,
 		LoggerInterface $logger
 	) {
-
+		$this->smart_button       = $smart_button;
 		$this->cart               = clone $cart;
 		$this->request_data       = $request_data;
 		$this->product_data_store = $product_data_store;
 		$this->logger             = $logger;
-	}
 
-	/**
-	 * The nonce.
-	 *
-	 * @return string
-	 */
-	public static function nonce(): string {
-		return self::ENDPOINT;
-	}
-
-	/**
-	 * Handles the request.
-	 *
-	 * @return bool
-	 */
-	public function handle_request(): bool {
-		try {
-			return $this->handle_data();
-		} catch ( Exception $error ) {
-			$this->logger->error( 'Cart simulation failed: ' . $error->getMessage() );
-
-			wp_send_json_error(
-				array(
-					'name'    => is_a( $error, PayPalApiException::class ) ? $error->name() : '',
-					'message' => $error->getMessage(),
-					'code'    => $error->getCode(),
-					'details' => is_a( $error, PayPalApiException::class ) ? $error->details() : array(),
-				)
-			);
-			return false;
-		}
+		$this->logger_tag = 'simulation';
 	}
 
 	/**
@@ -108,167 +58,44 @@ class SimulateCartEndpoint implements EndpointInterface {
 	 * @return bool
 	 * @throws Exception On error.
 	 */
-	private function handle_data(): bool {
-		$data     = $this->request_data->read_request( $this->nonce() );
-		$products = $this->products_from_data( $data );
-		if ( ! $products ) {
-			wp_send_json_error(
-				array(
-					'name'    => '',
-					'message' => __(
-						'Necessary fields not defined. Action aborted.',
-						'woocommerce-paypal-payments'
-					),
-					'code'    => 0,
-					'details' => array(),
-				)
-			);
+	protected function handle_data(): bool {
+		if ( ! $products = $this->products_from_request() ) {
 			return false;
 		}
 
-		$this->cart->empty_cart( false );
-		$success = true;
-		foreach ( $products as $product ) {
-			$success = $success && ( ! $product['product']->is_type( 'variable' ) ) ?
-				$this->add_product( $product['product'], $product['quantity'] )
-				: $this->add_variable_product(
-					$product['product'],
-					$product['quantity'],
-					$product['variations']
-				);
-		}
-		if ( ! $success ) {
-			$this->handle_error();
-			return $success;
+		// Set WC default cart as the clone.
+		// Store a reference to the real cart.
+		$activeCart = WC()->cart;
+		WC()->cart = $this->cart;
+
+		if ( ! $this->add_products($products) ) {
+			return false;
 		}
 
 		$this->cart->calculate_totals();
+		$total = (float) $this->cart->get_total( 'numeric' );
 
-		$total = $this->cart->get_total( 'numeric' );
+		$this->remove_cart_items();
 
+		// Restore cart and unset cart clone
+		WC()->cart = $activeCart;
 		unset( $this->cart );
 
 		wp_send_json_success(
 			array(
 				'total' => $total,
-			)
-		);
-		return $success;
-	}
-
-	/**
-	 * Handles errors.
-	 *
-	 * @return bool
-	 */
-	private function handle_error(): bool {
-
-		$message = __(
-			'Something went wrong. Action aborted',
-			'woocommerce-paypal-payments'
-		);
-		$errors  = wc_get_notices( 'error' );
-		if ( count( $errors ) ) {
-			$message = array_reduce(
-				$errors,
-				static function ( string $add, array $error ): string {
-					return $add . $error['notice'] . ' ';
-				},
-				''
-			);
-			wc_clear_notices();
-		}
-
-		wp_send_json_error(
-			array(
-				'name'    => '',
-				'message' => $message,
-				'code'    => 0,
-				'details' => array(),
+				'funding' => [
+					'paylater' => [
+						'enabled' => $this->smart_button->is_pay_later_button_enabled_for_location( 'cart', $total ),
+						'messaging_enabled' => $this->smart_button->is_pay_later_messaging_enabled_for_location( 'cart', $total ),
+					]
+				],
+				'button' => [
+					'is_disabled' => $this->smart_button->is_button_disabled( 'cart', $total ),
+				]
 			)
 		);
 		return true;
-	}
-
-	/**
-	 * Returns product information from an data array.
-	 *
-	 * @param array $data The data array.
-	 *
-	 * @return array|null
-	 */
-	private function products_from_data( array $data ) {
-
-		$products = array();
-
-		if (
-			! isset( $data['products'] )
-			|| ! is_array( $data['products'] )
-		) {
-			return null;
-		}
-		foreach ( $data['products'] as $product ) {
-			if ( ! isset( $product['quantity'] ) || ! isset( $product['id'] ) ) {
-				return null;
-			}
-
-			$wc_product = wc_get_product( (int) $product['id'] );
-
-			if ( ! $wc_product ) {
-				return null;
-			}
-			$products[] = array(
-				'product'    => $wc_product,
-				'quantity'   => (int) $product['quantity'],
-				'variations' => isset( $product['variations'] ) ? $product['variations'] : null,
-			);
-		}
-		return $products;
-	}
-
-	/**
-	 * Adds a product to the cart.
-	 *
-	 * @param \WC_Product $product The Product.
-	 * @param int         $quantity The Quantity.
-	 *
-	 * @return bool
-	 * @throws Exception When product could not be added.
-	 */
-	private function add_product( \WC_Product $product, int $quantity ): bool {
-		return false !== $this->cart->add_to_cart( $product->get_id(), $quantity );
-	}
-
-	/**
-	 * Adds variations to the cart.
-	 *
-	 * @param \WC_Product $product The Product.
-	 * @param int         $quantity The Quantity.
-	 * @param array       $post_variations The variations.
-	 *
-	 * @return bool
-	 * @throws Exception When product could not be added.
-	 */
-	private function add_variable_product(
-		\WC_Product $product,
-		int $quantity,
-		array $post_variations
-	): bool {
-
-		$variations = array();
-		foreach ( $post_variations as $key => $value ) {
-			$variations[ $value['name'] ] = $value['value'];
-		}
-
-		$variation_id = $this->product_data_store->find_matching_product_variation( $product, $variations );
-
-		// ToDo: Check stock status for variation.
-		return false !== $this->cart->add_to_cart(
-			$product->get_id(),
-			$quantity,
-			$variation_id,
-			$variations
-		);
 	}
 
 }

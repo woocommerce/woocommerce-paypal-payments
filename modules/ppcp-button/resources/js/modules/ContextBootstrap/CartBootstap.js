@@ -40,11 +40,21 @@ class CartBootstrap {
                     return;
                 }
 
+                // handle script reload
                 const newParams = result.data.url_params;
-                const reloadRequired = this.gateway.url_params.intent !== newParams.intent;
+                const reloadRequired = JSON.stringify(this.gateway.url_params) !== JSON.stringify(newParams);
 
-                // TODO: should reload the script instead
-                setVisible(this.gateway.button.wrapper, !reloadRequired)
+                if (reloadRequired) {
+                    this.gateway.url_params = newParams;
+                    jQuery(this.gateway.button.wrapper).trigger('ppcp-reload-buttons', this.gateway);
+                }
+
+                // handle button status
+                if ( result.data.button ) {
+                    this.gateway.button = result.data.button;
+                }
+
+                this.handleButtonStatus();
 
                 if (this.lastAmount !== result.data.amount) {
                     this.lastAmount = result.data.amount;

@@ -194,9 +194,6 @@ const bootstrap = () => {
         payNowBootstrap.init();
     }
 
-    if (context !== 'checkout') {
-        messageRenderer.render();
-    }
 };
 document.addEventListener(
     'DOMContentLoaded',

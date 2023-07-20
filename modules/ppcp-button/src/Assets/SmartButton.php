@@ -1384,10 +1384,10 @@ class SmartButton implements SmartButtonInterface {
 	 * Checks if PayPal buttons/messages should be rendered for the current page.
 	 *
 	 * @param string|null $context The context that should be checked, use default otherwise.
-	 *
+	 * @param float|null $price_total The price total to be considered.
 	 * @return bool
 	 */
-	protected function is_button_disabled( string $context = null ): bool {
+	public function is_button_disabled( string $context = null, float $price_total = null ): bool {
 		if ( null === $context ) {
 			$context = $this->context();
 		}
@@ -1415,7 +1415,8 @@ class SmartButton implements SmartButtonInterface {
 		$is_disabled = apply_filters(
 			'woocommerce_paypal_payments_buttons_disabled',
 			null,
-			$context
+			$context,
+			null === $price_total ? $this->get_cart_price_total() : $price_total
 		);
 
 		if ( $is_disabled !== null ) {
@@ -1429,9 +1430,10 @@ class SmartButton implements SmartButtonInterface {
 	 * Checks a filter if pay_later/messages should be rendered on a given location / context.
 	 *
 	 * @param string $location The location.
+	 * @param float|null $price_total The price total to be considered.
 	 * @return bool
 	 */
-	protected function is_pay_later_filter_enabled_for_location( string $location ): bool {
+	private function is_pay_later_filter_enabled_for_location( string $location, float $price_total = null ): bool {
 
 		if ( 'product' === $location ) {
 			$product = wc_get_product();
@@ -1446,8 +1448,7 @@ class SmartButton implements SmartButtonInterface {
 			$is_disabled = apply_filters(
 				'woocommerce_paypal_payments_product_buttons_paylater_disabled',
 				null,
-				$product,
-				$product->get_price( 'numeric' )
+				$product
 			);
 
 			if ( $is_disabled !== null ) {
@@ -1462,7 +1463,7 @@ class SmartButton implements SmartButtonInterface {
 			'woocommerce_paypal_payments_buttons_paylater_disabled',
 			null,
 			$location,
-			$this->get_cart_price_total()
+			null === $price_total ? $this->get_cart_price_total() : $price_total
 		);
 
 		if ( $is_disabled !== null ) {
@@ -1476,10 +1477,11 @@ class SmartButton implements SmartButtonInterface {
 	 * Check whether Pay Later button is enabled for a given location.
 	 *
 	 * @param string $location The location.
+	 * @param float|null $price_total The price total to be considered.
 	 * @return bool true if is enabled, otherwise false.
 	 */
-	private function is_pay_later_button_enabled_for_location( string $location ): bool {
-		return $this->is_pay_later_filter_enabled_for_location( $location )
+	public function is_pay_later_button_enabled_for_location( string $location, float $price_total = null ): bool {
+		return $this->is_pay_later_filter_enabled_for_location( $location, $price_total )
 			&& $this->settings_status->is_pay_later_button_enabled_for_location( $location );
 
 	}
@@ -1488,10 +1490,11 @@ class SmartButton implements SmartButtonInterface {
 	 * Check whether Pay Later message is enabled for a given location.
 	 *
 	 * @param string $location The location setting name.
+	 * @param float|null $price_total The price total to be considered.
 	 * @return bool true if is enabled, otherwise false.
 	 */
-	private function is_pay_later_messaging_enabled_for_location( string $location ): bool {
-		return $this->is_pay_later_filter_enabled_for_location( $location )
+	public function is_pay_later_messaging_enabled_for_location( string $location, float $price_total = null ): bool {
+		return $this->is_pay_later_filter_enabled_for_location( $location, $price_total )
 			&& $this->settings_status->is_pay_later_messaging_enabled_for_location( $location );
 	}
 

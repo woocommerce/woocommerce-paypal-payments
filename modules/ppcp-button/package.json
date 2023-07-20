@@ -11,9 +11,10 @@
         "Edge >= 14"
     ],
     "dependencies": {
+        "@paypal/paypal-js": "^6.0.0",
         "core-js": "^3.25.0",
-        "formdata-polyfill": "^4.0.10",
-        "deepmerge": "^4.2.2"
+        "deepmerge": "^4.2.2",
+        "formdata-polyfill": "^4.0.10"
     },
     "devDependencies": {
         "@babel/core": "^7.19",

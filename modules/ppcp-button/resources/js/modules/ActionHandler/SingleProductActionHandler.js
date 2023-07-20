@@ -98,42 +98,37 @@ class SingleProductActionHandler {
         }
     }
 
+    getProducts()
+    {
+        if ( this.isBookingProduct() ) {
+            const id = document.querySelector('[name="add-to-cart"]').value;
+            return [new BookingProduct(id, 1, FormHelper.getPrefixedFields(this.formElement, "wc_bookings_field"))];
+        } else if ( this.isGroupedProduct() ) {
+            const products = [];
+            this.formElement.querySelectorAll('input[type="number"]').forEach((element) => {
+                if (! element.value) {
+                    return;
+                }
+                const elementName = element.getAttribute('name').match(/quantity\[([\d]*)\]/);
+                if (elementName.length !== 2) {
+                    return;
+                }
+                const id = parseInt(elementName[1]);
+                const quantity = parseInt(element.value);
+                products.push(new Product(id, quantity, null));
+            })
+            return products;
+        } else {
+            const id = document.querySelector('[name="add-to-cart"]').value;
+            const qty = document.querySelector('[name="quantity"]').value;
+            const variations = this.variations();
+            return [new Product(id, qty, variations)];
+        }
+    }
+
     createOrder()
     {
         this.cartHelper = null;
-
-        let getProducts = (() => {
-            if ( this.isBookingProduct() ) {
-                return () => {
-                    const id = document.querySelector('[name="add-to-cart"]').value;
-                    return [new BookingProduct(id, 1, FormHelper.getPrefixedFields(this.formElement, "wc_bookings_field"))];
-                }
-            } else if ( this.isGroupedProduct() ) {
-                return () => {
-                    const products = [];
-                    this.formElement.querySelectorAll('input[type="number"]').forEach((element) => {
-                        if (! element.value) {
-                            return;
-                        }
-                        const elementName = element.getAttribute('name').match(/quantity\[([\d]*)\]/);
-                        if (elementName.length !== 2) {
-                            return;
-                        }
-                        const id = parseInt(elementName[1]);
-                        const quantity = parseInt(element.value);
-                        products.push(new Product(id, quantity, null));
-                    })
-                    return products;
-                }
-            } else {
-                return () => {
-                    const id = document.querySelector('[name="add-to-cart"]').value;
-                    const qty = document.querySelector('[name="quantity"]').value;
-                    const variations = this.variations();
-                    return [new Product(id, qty, variations)];
-                }
-            }
-        })();
 
         return (data, actions) => {
             this.errorHandler.clear();
@@ -170,7 +165,7 @@ class SingleProductActionHandler {
                 });
             };
 
-            return this.updateCart.update(onResolve, getProducts());
+            return this.updateCart.update(onResolve, this.getProducts());
         };
     }
 

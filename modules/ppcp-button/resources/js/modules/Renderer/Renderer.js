@@ -1,4 +1,6 @@
 import merge from "deepmerge";
+import {loadScript} from "@paypal/paypal-js";
+import {keysToCamelCase} from "../Helper/Utils";
 
 class Renderer {
     constructor(creditCardRenderer, defaultSettings, onSmartButtonClick, onSmartButtonsInit) {
@@ -9,6 +11,8 @@ class Renderer {
 
         this.buttonsOptions = {};
         this.onButtonsInitListeners = {};
+
+        this.activeButtons = {};
 
         this.renderedSources = new Set();
     }
@@ -68,32 +72,61 @@ class Renderer {
     }
 
     renderButtons(wrapper, style, contextConfig, hasEnabledSeparateGateways, fundingSource = null) {
-        if (! document.querySelector(wrapper) || this.isAlreadyRendered(wrapper, fundingSource, hasEnabledSeparateGateways) || 'undefined' === typeof paypal.Buttons ) {
+        if (! document.querySelector(wrapper) || this.isAlreadyRendered(wrapper, fundingSource, hasEnabledSeparateGateways) ) {
             return;
         }
+
+        console.log('rendering', wrapper);
 
         if (fundingSource) {
             contextConfig.fundingSource = fundingSource;
         }
 
-        const btn = paypal.Buttons({
-            style,
-            ...contextConfig,
-            onClick: this.onSmartButtonClick,
-            onInit: (data, actions) => {
-                if (this.onSmartButtonsInit) {
-                    this.onSmartButtonsInit(data, actions);
-                }
-                this.handleOnButtonsInit(wrapper, data, actions);
-            },
-        });
-        if (!btn.isEligible()) {
-            return;
+        const buttonsOptions = () => {
+            return {
+                style,
+                ...contextConfig,
+                onClick: this.onSmartButtonClick,
+                onInit: (data, actions) => {
+                    if (this.onSmartButtonsInit) {
+                        this.onSmartButtonsInit(data, actions);
+                    }
+                    this.handleOnButtonsInit(wrapper, data, actions);
+                },
+            }
         }
 
-        btn.render(wrapper);
+        const buildButtons = (paypal) => {
+            const btn = paypal.Buttons(buttonsOptions());
+
+            this.activeButtons[wrapper] = btn;
+
+            if (!btn.isEligible()) {
+                return;
+            }
+
+            btn.render(wrapper);
+        }
+
+        jQuery(wrapper).off('ppcp-reload-buttons');
+        jQuery(wrapper).on('ppcp-reload-buttons', (event, settingsOverride = {}) => {
+            const settings = merge(this.defaultSettings, settingsOverride);
+            const scriptOptions = keysToCamelCase(settings.url_params);
+
+            // if (this.activeButtons[wrapper]) {
+            //     this.activeButtons[wrapper].close();
+            // }
+
+            loadScript(scriptOptions).then((paypal) => {
+                buildButtons(paypal);
+            });
+        });
 
         this.renderedSources.add(wrapper + fundingSource ?? '');
+
+        if (typeof paypal !== 'undefined' && typeof paypal.Buttons !== 'undefined') {
+            buildButtons(paypal);
+        }
     }
 
     isAlreadyRendered(wrapper, fundingSource, hasEnabledSeparateGateways) {
@@ -101,9 +134,10 @@ class Renderer {
         // this will reduce the risk of breaking with different themes/plugins
         // and on the cart page (where we also do not need to render separately), which may fully reload this part of the page.
         // Ideally we should also find a way to detect such full reloads and remove the corresponding keys from the set.
-        if (!hasEnabledSeparateGateways) {
-            return document.querySelector(wrapper).hasChildNodes();
-        }
+
+        // if (!hasEnabledSeparateGateways) {
+        //     return document.querySelector(wrapper).hasChildNodes();
+        // }
         return this.renderedSources.has(wrapper + fundingSource ?? '');
     }
 

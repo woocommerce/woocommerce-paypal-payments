@@ -2,6 +2,8 @@ import UpdateCart from "../Helper/UpdateCart";
 import SingleProductActionHandler from "../ActionHandler/SingleProductActionHandler";
 import {hide, show} from "../Helper/Hiding";
 import BootstrapHelper from "../Helper/BootstrapHelper";
+import SimulateCart from "../Helper/SimulateCart";
+import {strRemoveWord, strAddWord} from "../Helper/Utils";
 
 class SingleProductBootstap {
     constructor(gateway, renderer, messages, errorHandler) {
@@ -38,10 +40,60 @@ class SingleProductBootstap {
         this.handleButtonStatus();
     }
 
-    handleButtonStatus() {
+    handleButtonStatus(simulateCart = true) {
         BootstrapHelper.handleButtonStatus(this, {
             formSelector: this.formSelector
         });
+
+        if (simulateCart) {
+            //------
+
+            const actionHandler = new SingleProductActionHandler(
+                null,
+                null,
+                this.form(),
+                this.errorHandler,
+            );
+
+            (new SimulateCart(
+                this.gateway.ajax.simulate_cart.endpoint,
+                this.gateway.ajax.simulate_cart.nonce,
+            )).simulate((data) => {
+
+                this.messages.renderWithAmount(data.total);
+
+                let enableFunding = this.gateway.url_params['enable-funding'];
+                let disableFunding = this.gateway.url_params['disable-funding'];
+
+                for (const [fundingSource, funding] of Object.entries(data.funding)) {
+                    if (funding.enabled === true) {
+                        enableFunding = strAddWord(enableFunding, fundingSource);
+                        disableFunding = strRemoveWord(disableFunding, fundingSource);
+                    } else if (funding.enabled === false) {
+                        enableFunding = strRemoveWord(enableFunding, fundingSource);
+                        disableFunding = strAddWord(disableFunding, fundingSource);
+                    }
+                }
+
+                if (
+                    (enableFunding !== this.gateway.url_params['enable-funding']) ||
+                    (disableFunding !== this.gateway.url_params['disable-funding'])
+                ) {
+                    this.gateway.url_params['enable-funding'] = enableFunding;
+                    this.gateway.url_params['disable-funding'] = disableFunding;
+                    jQuery(this.gateway.button.wrapper).trigger('ppcp-reload-buttons');
+                }
+
+                if (typeof data.button.is_disabled === 'boolean') {
+                    this.gateway.button.is_disabled = data.button.is_disabled;
+                }
+
+                this.handleButtonStatus(false);
+
+            }, actionHandler.getProducts());
+
+            //------
+        }
     }
 
     init() {
@@ -53,12 +105,6 @@ class SingleProductBootstap {
 
         form.addEventListener('change', () => {
             this.handleChange();
-
-            setTimeout(() => { // Wait for the DOM to be fully updated
-                // For the moment renderWithAmount should only be done here to prevent undesired side effects due to priceAmount()
-                // not being correctly formatted in some cases, can be moved to handleButtonStatus() once this issue is fixed
-                this.messages.renderWithAmount(this.priceAmount());
-            }, 100);
         });
         this.mutationObserver.observe(form, { childList: true, subtree: true });
 

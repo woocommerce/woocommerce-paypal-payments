@@ -44,7 +44,7 @@ class MessageRenderer {
 
     shouldRender() {
 
-        if (typeof paypal.Messages === 'undefined' || typeof this.config.wrapper === 'undefined' ) {
+        if (typeof paypal === 'undefined' || typeof paypal.Messages === 'undefined' || typeof this.config.wrapper === 'undefined' ) {
             return false;
         }
         if (! document.querySelector(this.config.wrapper)) {
