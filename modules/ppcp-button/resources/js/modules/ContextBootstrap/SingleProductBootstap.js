@@ -3,6 +3,7 @@ import SingleProductActionHandler from "../ActionHandler/SingleProductActionHand
 import {hide, show} from "../Helper/Hiding";
 import BootstrapHelper from "../Helper/BootstrapHelper";
 import {loadPaypalJsScript} from "../Helper/ScriptLoading";
+import {getPlanIdFromVariation} from "../Helper/Subscriptions"
 
 class SingleProductBootstap {
     constructor(gateway, renderer, messages, errorHandler) {
@@ -165,6 +166,14 @@ class SingleProductBootstap {
         ) {
             const buttonWrapper = document.getElementById('ppc-button-ppcp-gateway');
             buttonWrapper.innerHTML = '';
+
+            const subscription_plan = this.variations() !== null
+                ? getPlanIdFromVariation(this.variations())
+                : PayPalCommerceGateway.subscription_plan_id
+            if(!subscription_plan) {
+                return;
+            }
+
             loadPaypalJsScript(
                 {
                     clientId: PayPalCommerceGateway.client_id,
@@ -172,7 +181,7 @@ class SingleProductBootstap {
                     intent: 'subscription',
                     vault: true
                 },
-                actionHandler.subscriptionsConfiguration(this.variations()),
+                actionHandler.subscriptionsConfiguration(subscription_plan),
                 this.gateway.button.wrapper
             );
             return;
