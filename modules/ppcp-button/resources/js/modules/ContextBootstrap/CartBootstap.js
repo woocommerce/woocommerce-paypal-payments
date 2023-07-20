@@ -77,6 +77,12 @@ class CartBootstrap {
             && PayPalCommerceGateway.data_client_id.paypal_subscriptions_enabled
         ) {
             this.renderer.render(actionHandler.subscriptionsConfiguration());
+
+            if(!PayPalCommerceGateway.subscription_plan_id) {
+                this.gateway.button.is_disabled = true;
+                this.handleButtonStatus();
+            }
+
             return;
         }
 
