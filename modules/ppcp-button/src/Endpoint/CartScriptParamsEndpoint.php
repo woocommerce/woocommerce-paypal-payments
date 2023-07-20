@@ -65,7 +65,7 @@ class CartScriptParamsEndpoint implements EndpointInterface {
 	 */
 	public function handle_request(): bool {
 		try {
-			if ( is_callable('wc_maybe_define_constant') ) {
+			if ( is_callable( 'wc_maybe_define_constant' ) ) {
 				wc_maybe_define_constant( 'WOOCOMMERCE_CART', true );
 			}
 

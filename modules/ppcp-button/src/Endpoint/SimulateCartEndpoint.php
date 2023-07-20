@@ -59,40 +59,43 @@ class SimulateCartEndpoint extends AbstractCartEndpoint {
 	 * @throws Exception On error.
 	 */
 	protected function handle_data(): bool {
-		if ( ! $products = $this->products_from_request() ) {
+		$products = $this->products_from_request();
+
+		if ( ! $products ) {
 			return false;
 		}
 
 		// Set WC default cart as the clone.
 		// Store a reference to the real cart.
-		$activeCart = WC()->cart;
-		WC()->cart = $this->cart;
+		$active_cart = WC()->cart;
+		WC()->cart   = $this->cart;
 
-		if ( ! $this->add_products($products) ) {
+		if ( ! $this->add_products( $products ) ) {
 			return false;
 		}
 
 		$this->cart->calculate_totals();
 		$total = (float) $this->cart->get_total( 'numeric' );
 
+		// Remove from cart because some plugins reserve resources internally when adding to cart.
 		$this->remove_cart_items();
 
-		// Restore cart and unset cart clone
-		WC()->cart = $activeCart;
+		// Restore cart and unset cart clone.
+		WC()->cart = $active_cart;
 		unset( $this->cart );
 
 		wp_send_json_success(
 			array(
-				'total' => $total,
-				'funding' => [
-					'paylater' => [
-						'enabled' => $this->smart_button->is_pay_later_button_enabled_for_location( 'cart', $total ),
+				'total'   => $total,
+				'funding' => array(
+					'paylater' => array(
+						'enabled'           => $this->smart_button->is_pay_later_button_enabled_for_location( 'cart', $total ),
 						'messaging_enabled' => $this->smart_button->is_pay_later_messaging_enabled_for_location( 'cart', $total ),
-					]
-				],
-				'button' => [
+					),
+				),
+				'button'  => array(
 					'is_disabled' => $this->smart_button->is_button_disabled( 'cart', $total ),
-				]
+				),
 			)
 		);
 		return true;

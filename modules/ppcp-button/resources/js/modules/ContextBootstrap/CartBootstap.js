@@ -49,11 +49,10 @@ class CartBootstrap {
                 }
 
                 // handle button status
-                if ( result.data.button ) {
+                if (result.data.button) {
                     this.gateway.button = result.data.button;
+                    this.handleButtonStatus();
                 }
-
-                this.handleButtonStatus();
 
                 if (this.lastAmount !== result.data.amount) {
                     this.lastAmount = result.data.amount;

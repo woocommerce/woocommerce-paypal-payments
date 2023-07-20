@@ -31,11 +31,54 @@ export const strRemoveWord = (str, word, separator = ',') => {
     return arr.join(separator);
 };
 
+export const debounce = (func, wait) => {
+    let timeout;
+    return function() {
+        const context = this;
+        const args = arguments;
+        const later = function() {
+            timeout = null;
+            func.apply(context, args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+export const throttle = (func, limit) => {
+    let inThrottle, lastArgs, lastContext;
+
+    function execute() {
+        inThrottle = true;
+        func.apply(this, arguments);
+        setTimeout(() => {
+            inThrottle = false;
+            if (lastArgs) {
+                const nextArgs = lastArgs;
+                const nextContext = lastContext;
+                lastArgs = lastContext = null;
+                execute.apply(nextContext, nextArgs);
+            }
+        }, limit);
+    }
+
+    return function() {
+        if (!inThrottle) {
+            execute.apply(this, arguments);
+        } else {
+            lastArgs = arguments;
+            lastContext = this;
+        }
+    };
+}
+
 const Utils = {
     toCamelCase,
     keysToCamelCase,
     strAddWord,
-    strRemoveWord
+    strRemoveWord,
+    debounce,
+    throttle
 };
 
 export default Utils;

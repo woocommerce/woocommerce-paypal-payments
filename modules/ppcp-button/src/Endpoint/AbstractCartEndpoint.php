@@ -1,4 +1,9 @@
 <?php
+/**
+ * Abstract class for cart Endpoints.
+ *
+ * @package WooCommerce\PayPalCommerce\Button\Endpoint
+ */
 
 namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 
@@ -6,6 +11,9 @@ use Exception;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 
+/**
+ * Abstract Class AbstractCartEndpoint
+ */
 abstract class AbstractCartEndpoint implements EndpointInterface {
 
 	const ENDPOINT = '';
@@ -50,7 +58,7 @@ abstract class AbstractCartEndpoint implements EndpointInterface {
 	 *
 	 * @var array
 	 */
-	private $cart_item_keys = [];
+	private $cart_item_keys = array();
 
 	/**
 	 * The nonce.
@@ -97,7 +105,7 @@ abstract class AbstractCartEndpoint implements EndpointInterface {
 	 *
 	 * @param array $products Array of products to be added to cart.
 	 * @return bool
-	 * @throws Exception
+	 * @throws Exception Add to cart methods throw an exception on fail.
 	 */
 	protected function add_products( array $products ): bool {
 		$this->cart->empty_cart( false );
@@ -106,20 +114,20 @@ abstract class AbstractCartEndpoint implements EndpointInterface {
 		foreach ( $products as $product ) {
 			if ( $product['product']->is_type( 'booking' ) ) {
 				$success = $success && $this->add_booking_product(
-						$product['product'],
-						$product['booking']
-					);
+					$product['product'],
+					$product['booking']
+				);
 			} elseif ( $product['product']->is_type( 'variable' ) ) {
 				$success = $success && $this->add_variable_product(
-						$product['product'],
-						$product['quantity'],
-						$product['variations']
-					);
+					$product['product'],
+					$product['quantity'],
+					$product['variations']
+				);
 			} else {
 				$success = $success && $this->add_product(
-						$product['product'],
-						$product['quantity']
-					);
+					$product['product'],
+					$product['quantity']
+				);
 			}
 		}
 
@@ -164,6 +172,8 @@ abstract class AbstractCartEndpoint implements EndpointInterface {
 	}
 
 	/**
+	 * Returns product information from request data.
+	 *
 	 * @return array|false
 	 */
 	protected function products_from_request() {
@@ -304,6 +314,8 @@ abstract class AbstractCartEndpoint implements EndpointInterface {
 	}
 
 	/**
+	 * Removes stored cart items from WooCommerce cart.
+	 *
 	 * @return void
 	 */
 	protected function remove_cart_items(): void {

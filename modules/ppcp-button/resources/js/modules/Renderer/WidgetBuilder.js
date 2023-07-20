@@ -30,6 +30,10 @@ class WidgetBuilder {
             return;
         }
 
+        if (this.hasRendered(wrapper)) {
+            return;
+        }
+
         const entry = this.buttons.get(wrapper);
         const btn = this.paypal.Buttons(entry.options);
 
@@ -58,6 +62,10 @@ class WidgetBuilder {
             return;
         }
 
+        if (this.hasRendered(wrapper)) {
+            return;
+        }
+
         const entry = this.messages.get(wrapper);
         const btn = this.paypal.Messages(entry.options);
 
@@ -70,6 +78,14 @@ class WidgetBuilder {
         }
     }
 
+    renderAll() {
+        this.renderAllButtons();
+        this.renderAllMessages();
+    }
+
+    hasRendered(wrapper) {
+        return document.querySelector(wrapper).hasChildNodes();
+    }
 }
 
 export default new WidgetBuilder();

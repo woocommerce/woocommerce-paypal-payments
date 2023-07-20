@@ -3,7 +3,7 @@ import SingleProductActionHandler from "../ActionHandler/SingleProductActionHand
 import {hide, show} from "../Helper/Hiding";
 import BootstrapHelper from "../Helper/BootstrapHelper";
 import SimulateCart from "../Helper/SimulateCart";
-import {strRemoveWord, strAddWord} from "../Helper/Utils";
+import {strRemoveWord, strAddWord, throttle} from "../Helper/Utils";
 
 class SingleProductBootstap {
     constructor(gateway, renderer, messages, errorHandler) {
@@ -13,6 +13,9 @@ class SingleProductBootstap {
         this.errorHandler = errorHandler;
         this.mutationObserver = new MutationObserver(this.handleChange.bind(this));
         this.formSelector = 'form.cart';
+
+        // Prevent simulate cart being called too many times in a burst.
+        this.simulateCartThrottled = throttle(this.simulateCart, 5000);
 
         this.renderer.onButtonsInit(this.gateway.button.wrapper, () => {
             this.handleChange();
@@ -46,53 +49,7 @@ class SingleProductBootstap {
         });
 
         if (simulateCart) {
-            //------
-
-            const actionHandler = new SingleProductActionHandler(
-                null,
-                null,
-                this.form(),
-                this.errorHandler,
-            );
-
-            (new SimulateCart(
-                this.gateway.ajax.simulate_cart.endpoint,
-                this.gateway.ajax.simulate_cart.nonce,
-            )).simulate((data) => {
-
-                this.messages.renderWithAmount(data.total);
-
-                let enableFunding = this.gateway.url_params['enable-funding'];
-                let disableFunding = this.gateway.url_params['disable-funding'];
-
-                for (const [fundingSource, funding] of Object.entries(data.funding)) {
-                    if (funding.enabled === true) {
-                        enableFunding = strAddWord(enableFunding, fundingSource);
-                        disableFunding = strRemoveWord(disableFunding, fundingSource);
-                    } else if (funding.enabled === false) {
-                        enableFunding = strRemoveWord(enableFunding, fundingSource);
-                        disableFunding = strAddWord(disableFunding, fundingSource);
-                    }
-                }
-
-                if (
-                    (enableFunding !== this.gateway.url_params['enable-funding']) ||
-                    (disableFunding !== this.gateway.url_params['disable-funding'])
-                ) {
-                    this.gateway.url_params['enable-funding'] = enableFunding;
-                    this.gateway.url_params['disable-funding'] = disableFunding;
-                    jQuery(this.gateway.button.wrapper).trigger('ppcp-reload-buttons');
-                }
-
-                if (typeof data.button.is_disabled === 'boolean') {
-                    this.gateway.button.is_disabled = data.button.is_disabled;
-                }
-
-                this.handleButtonStatus(false);
-
-            }, actionHandler.getProducts());
-
-            //------
+            this.simulateCartThrottled();
         }
     }
 
@@ -196,6 +153,52 @@ class SingleProductBootstap {
         this.renderer.render(
             actionHandler.configuration()
         );
+    }
+
+    simulateCart() {
+        const actionHandler = new SingleProductActionHandler(
+            null,
+            null,
+            this.form(),
+            this.errorHandler,
+        );
+
+        (new SimulateCart(
+            this.gateway.ajax.simulate_cart.endpoint,
+            this.gateway.ajax.simulate_cart.nonce,
+        )).simulate((data) => {
+
+            this.messages.renderWithAmount(data.total);
+
+            let enableFunding = this.gateway.url_params['enable-funding'];
+            let disableFunding = this.gateway.url_params['disable-funding'];
+
+            for (const [fundingSource, funding] of Object.entries(data.funding)) {
+                if (funding.enabled === true) {
+                    enableFunding = strAddWord(enableFunding, fundingSource);
+                    disableFunding = strRemoveWord(disableFunding, fundingSource);
+                } else if (funding.enabled === false) {
+                    enableFunding = strRemoveWord(enableFunding, fundingSource);
+                    disableFunding = strAddWord(disableFunding, fundingSource);
+                }
+            }
+
+            if (
+                (enableFunding !== this.gateway.url_params['enable-funding']) ||
+                (disableFunding !== this.gateway.url_params['disable-funding'])
+            ) {
+                this.gateway.url_params['enable-funding'] = enableFunding;
+                this.gateway.url_params['disable-funding'] = disableFunding;
+                jQuery(this.gateway.button.wrapper).trigger('ppcp-reload-buttons');
+            }
+
+            if (typeof data.button.is_disabled === 'boolean') {
+                this.gateway.button.is_disabled = data.button.is_disabled;
+            }
+
+            this.handleButtonStatus(false);
+
+        }, actionHandler.getProducts());
     }
 }
 

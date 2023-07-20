@@ -74,6 +74,8 @@ class Renderer {
 
     renderButtons(wrapper, style, contextConfig, hasEnabledSeparateGateways, fundingSource = null) {
         if (! document.querySelector(wrapper) || this.isAlreadyRendered(wrapper, fundingSource, hasEnabledSeparateGateways) ) {
+            // Try to render registered buttons again in case they were removed from the DOM by an external source.
+            widgetBuilder.renderButtons(wrapper);
             return;
         }
 
@@ -95,19 +97,19 @@ class Renderer {
             }
         }
 
-        //jQuery(document).off('ppcp-reload-buttons');
-        jQuery(document).on('ppcp-reload-buttons', wrapper, (event, settingsOverride = {}) => {
-            const settings = merge(this.defaultSettings, settingsOverride);
-            let scriptOptions = keysToCamelCase(settings.url_params);
-            scriptOptions = merge(scriptOptions, settings.script_attributes);
+        jQuery(document)
+            .off('ppcp-reload-buttons', wrapper)
+            .on('ppcp-reload-buttons', wrapper, (event, settingsOverride = {}) => {
+                const settings = merge(this.defaultSettings, settingsOverride);
+                let scriptOptions = keysToCamelCase(settings.url_params);
+                scriptOptions = merge(scriptOptions, settings.script_attributes);
 
-            loadScript(scriptOptions).then((paypal) => {
-                widgetBuilder.setPaypal(paypal);
-                widgetBuilder.registerButtons(wrapper, buttonsOptions());
-                widgetBuilder.renderAllButtons();
-                widgetBuilder.renderAllMessages();
+                loadScript(scriptOptions).then((paypal) => {
+                    widgetBuilder.setPaypal(paypal);
+                    widgetBuilder.registerButtons(wrapper, buttonsOptions());
+                    widgetBuilder.renderAll();
+                });
             });
-        });
 
         this.renderedSources.add(wrapper + (fundingSource ?? ''));
 

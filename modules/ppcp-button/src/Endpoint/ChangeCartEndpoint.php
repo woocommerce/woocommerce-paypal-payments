@@ -16,7 +16,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 /**
  * Class ChangeCartEndpoint
  */
-class ChangeCartEndpoint extends AbstractCartEndpoint  {
+class ChangeCartEndpoint extends AbstractCartEndpoint {
 
 	const ENDPOINT = 'ppc-change-cart';
 
@@ -70,13 +70,15 @@ class ChangeCartEndpoint extends AbstractCartEndpoint  {
 	 * @throws Exception On error.
 	 */
 	protected function handle_data(): bool {
-		if ( ! $products = $this->products_from_request() ) {
+		$products = $this->products_from_request();
+
+		if ( ! $products ) {
 			return false;
 		}
 
 		$this->shipping->reset_shipping();
 
-		if ( ! $this->add_products($products) ) {
+		if ( ! $this->add_products( $products ) ) {
 			return false;
 		}
 

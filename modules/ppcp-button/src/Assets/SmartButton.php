@@ -1384,7 +1384,7 @@ class SmartButton implements SmartButtonInterface {
 	 * Checks if PayPal buttons/messages should be rendered for the current page.
 	 *
 	 * @param string|null $context The context that should be checked, use default otherwise.
-	 * @param float|null $price_total The price total to be considered.
+	 * @param float|null  $price_total The price total to be considered.
 	 * @return bool
 	 */
 	public function is_button_disabled( string $context = null, float $price_total = null ): bool {
@@ -1429,7 +1429,7 @@ class SmartButton implements SmartButtonInterface {
 	/**
 	 * Checks a filter if pay_later/messages should be rendered on a given location / context.
 	 *
-	 * @param string $location The location.
+	 * @param string     $location The location.
 	 * @param float|null $price_total The price total to be considered.
 	 * @return bool
 	 */
@@ -1476,7 +1476,7 @@ class SmartButton implements SmartButtonInterface {
 	/**
 	 * Check whether Pay Later button is enabled for a given location.
 	 *
-	 * @param string $location The location.
+	 * @param string     $location The location.
 	 * @param float|null $price_total The price total to be considered.
 	 * @return bool true if is enabled, otherwise false.
 	 */
@@ -1489,7 +1489,7 @@ class SmartButton implements SmartButtonInterface {
 	/**
 	 * Check whether Pay Later message is enabled for a given location.
 	 *
-	 * @param string $location The location setting name.
+	 * @param string     $location The location setting name.
 	 * @param float|null $price_total The price total to be considered.
 	 * @return bool true if is enabled, otherwise false.
 	 */
