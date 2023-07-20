@@ -1,3 +1,5 @@
+import widgetBuilder from "./WidgetBuilder";
+
 class MessageRenderer {
 
     constructor(config) {
@@ -28,7 +30,10 @@ class MessageRenderer {
         oldWrapper.parentElement.removeChild(oldWrapper);
         sibling.parentElement.insertBefore(newWrapper, sibling);
 
-        paypal.Messages(options).render(this.config.wrapper);
+        widgetBuilder.registerMessages(this.config.wrapper, options);
+        widgetBuilder.renderMessages(this.config.wrapper);
+
+        // paypal.Messages(options).render(this.config.wrapper);
     }
 
     optionsEqual(options) {

@@ -1,6 +1,7 @@
 import merge from "deepmerge";
 import {loadScript} from "@paypal/paypal-js";
 import {keysToCamelCase} from "../Helper/Utils";
+import widgetBuilder from "./WidgetBuilder";
 
 class Renderer {
     constructor(creditCardRenderer, defaultSettings, onSmartButtonClick, onSmartButtonsInit) {
@@ -12,9 +13,9 @@ class Renderer {
         this.buttonsOptions = {};
         this.onButtonsInitListeners = {};
 
-        this.activeButtons = {};
-
         this.renderedSources = new Set();
+
+        this.reloadEventName = 'ppcp-reload-buttons';
     }
 
     render(contextConfig, settingsOverride = {}, contextConfigOverride = () => {}) {
@@ -76,8 +77,6 @@ class Renderer {
             return;
         }
 
-        console.log('rendering', wrapper);
-
         if (fundingSource) {
             contextConfig.fundingSource = fundingSource;
         }
@@ -96,36 +95,25 @@ class Renderer {
             }
         }
 
-        const buildButtons = (paypal) => {
-            const btn = paypal.Buttons(buttonsOptions());
-
-            this.activeButtons[wrapper] = btn;
-
-            if (!btn.isEligible()) {
-                return;
-            }
-
-            btn.render(wrapper);
-        }
-
-        jQuery(wrapper).off('ppcp-reload-buttons');
-        jQuery(wrapper).on('ppcp-reload-buttons', (event, settingsOverride = {}) => {
+        //jQuery(document).off('ppcp-reload-buttons');
+        jQuery(document).on('ppcp-reload-buttons', wrapper, (event, settingsOverride = {}) => {
             const settings = merge(this.defaultSettings, settingsOverride);
-            const scriptOptions = keysToCamelCase(settings.url_params);
-
-            // if (this.activeButtons[wrapper]) {
-            //     this.activeButtons[wrapper].close();
-            // }
+            let scriptOptions = keysToCamelCase(settings.url_params);
+            scriptOptions = merge(scriptOptions, settings.script_attributes);
 
             loadScript(scriptOptions).then((paypal) => {
-                buildButtons(paypal);
+                widgetBuilder.setPaypal(paypal);
+                widgetBuilder.registerButtons(wrapper, buttonsOptions());
+                widgetBuilder.renderAllButtons();
+                widgetBuilder.renderAllMessages();
             });
         });
 
-        this.renderedSources.add(wrapper + fundingSource ?? '');
+        this.renderedSources.add(wrapper + (fundingSource ?? ''));
 
         if (typeof paypal !== 'undefined' && typeof paypal.Buttons !== 'undefined') {
-            buildButtons(paypal);
+            widgetBuilder.registerButtons(wrapper, buttonsOptions());
+            widgetBuilder.renderButtons(wrapper);
         }
     }
 
@@ -138,7 +126,7 @@ class Renderer {
         // if (!hasEnabledSeparateGateways) {
         //     return document.querySelector(wrapper).hasChildNodes();
         // }
-        return this.renderedSources.has(wrapper + fundingSource ?? '');
+        return this.renderedSources.has(wrapper + (fundingSource ?? ''));
     }
 
     disableCreditCardFields() {

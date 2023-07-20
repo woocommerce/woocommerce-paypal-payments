@@ -1,6 +1,5 @@
 import CartActionHandler from '../ActionHandler/CartActionHandler';
 import BootstrapHelper from "../Helper/BootstrapHelper";
-import {setVisible} from "../Helper/Hiding";
 
 class CartBootstrap {
     constructor(gateway, renderer, messages, errorHandler) {
@@ -46,7 +45,7 @@ class CartBootstrap {
 
                 if (reloadRequired) {
                     this.gateway.url_params = newParams;
-                    jQuery(this.gateway.button.wrapper).trigger('ppcp-reload-buttons', this.gateway);
+                    jQuery(this.gateway.button.wrapper).trigger('ppcp-reload-buttons');
                 }
 
                 // handle button status

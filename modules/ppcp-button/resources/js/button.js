@@ -19,6 +19,7 @@ import FreeTrialHandler from "./modules/ActionHandler/FreeTrialHandler";
 import FormSaver from './modules/Helper/FormSaver';
 import FormValidator from "./modules/Helper/FormValidator";
 import {loadPaypalScript} from "./modules/Helper/ScriptLoading";
+import widgetBuilder from "./modules/Renderer/WidgetBuilder";
 
 // TODO: could be a good idea to have a separate spinner for each gateway,
 // but I think we care mainly about the script loading, so one spinner should be enough.
@@ -267,6 +268,8 @@ document.addEventListener(
         });
 
         loadPaypalScript(PayPalCommerceGateway, () => {
+            widgetBuilder.setPaypal(paypal);
+
             bootstrapped = true;
 
             bootstrap();
