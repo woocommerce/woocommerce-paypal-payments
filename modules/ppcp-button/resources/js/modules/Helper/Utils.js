@@ -31,20 +31,6 @@ export const strRemoveWord = (str, word, separator = ',') => {
     return arr.join(separator);
 };
 
-export const debounce = (func, wait) => {
-    let timeout;
-    return function() {
-        const context = this;
-        const args = arguments;
-        const later = function() {
-            timeout = null;
-            func.apply(context, args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
-
 export const throttle = (func, limit) => {
     let inThrottle, lastArgs, lastContext;
 
@@ -77,7 +63,6 @@ const Utils = {
     keysToCamelCase,
     strAddWord,
     strRemoveWord,
-    debounce,
     throttle
 };
 

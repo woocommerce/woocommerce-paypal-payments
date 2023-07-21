@@ -98,8 +98,8 @@ class Renderer {
         }
 
         jQuery(document)
-            .off('ppcp-reload-buttons', wrapper)
-            .on('ppcp-reload-buttons', wrapper, (event, settingsOverride = {}) => {
+            .off(this.reloadEventName, wrapper)
+            .on(this.reloadEventName, wrapper, (event, settingsOverride = {}) => {
                 const settings = merge(this.defaultSettings, settingsOverride);
                 let scriptOptions = keysToCamelCase(settings.url_params);
                 scriptOptions = merge(scriptOptions, settings.script_attributes);
