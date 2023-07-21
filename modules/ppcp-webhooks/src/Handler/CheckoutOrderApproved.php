@@ -159,6 +159,14 @@ class CheckoutOrderApproved implements RequestHandler {
 			WC()->cart->calculate_shipping();
 
 			$form = $this->session_handler->checkout_form();
+			if ( ! $form ) {
+				return $this->failure_response(
+					sprintf(
+						'Failed to create WC order in webhook event %s, checkout data not found.',
+						$request['id'] ?: ''
+					)
+				);
+			}
 
 			$checkout    = new WC_Checkout();
 			$wc_order_id = $checkout->create_order( $form );
