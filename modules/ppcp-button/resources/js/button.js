@@ -123,7 +123,7 @@ const bootstrap = () => {
             return actions.reject();
         }
 
-        if (context === 'checkout' && !PayPalCommerceGateway.funding_sources_without_redirect.includes(data.fundingSource)) {
+        if (context === 'checkout') {
             try {
                 await formSaver.save(form);
             } catch (error) {
