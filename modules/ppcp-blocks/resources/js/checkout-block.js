@@ -18,7 +18,7 @@ const PayPalComponent = ({
                              shippingData,
                              isEditing,
 }) => {
-    const {onPaymentSetup, onCheckoutAfterProcessingWithError} = eventRegistration;
+    const {onPaymentSetup, onCheckoutAfterProcessingWithError, onCheckoutValidation} = eventRegistration;
     const {responseTypes} = emitResponse;
 
     const [paypalOrder, setPaypalOrder] = useState(null);
@@ -69,6 +69,14 @@ const PayPalComponent = ({
         }
     };
 
+    const getCheckoutRedirectUrl = () => {
+        const checkoutUrl = new URL(config.scriptData.redirect);
+        // sometimes some browsers may load some kind of cached version of the page,
+        // so adding a parameter to avoid that
+        checkoutUrl.searchParams.append('ppcp-continuation-redirect', (new Date()).getTime().toString());
+        return checkoutUrl.toString();
+    }
+
     const handleApprove = async (data, actions) => {
         try {
             const res = await fetch(config.scriptData.ajax.approve_order.endpoint, {
@@ -105,12 +113,8 @@ const PayPalComponent = ({
                     billing_address: addresses.billingAddress,
                     shipping_address: addresses.shippingAddress,
                 });
-                const checkoutUrl = new URL(config.scriptData.redirect);
-                // sometimes some browsers may load some kind of cached version of the page,
-                // so adding a parameter to avoid that
-                checkoutUrl.searchParams.append('ppcp-continuation-redirect', (new Date()).getTime().toString());
 
-                location.href = checkoutUrl.toString();
+                location.href = getCheckoutRedirectUrl();
             } else {
                 onSubmit();
             }
@@ -124,6 +128,19 @@ const PayPalComponent = ({
             throw err;
         }
     };
+
+    useEffect(() => {
+        const unsubscribe = onCheckoutValidation(() => {
+            if (config.scriptData.continuation) {
+                return true;
+            }
+            if (wp.data.select('wc/store/validation').hasValidationErrors()) {
+                location.href = getCheckoutRedirectUrl();
+                return false;
+            }
+        });
+        return unsubscribe;
+    }, [onCheckoutValidation] );
 
     const handleClick = (data, actions) => {
         if (isEditing) {
