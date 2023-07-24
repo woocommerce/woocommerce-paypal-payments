@@ -372,6 +372,8 @@ class SmartButton implements SmartButtonInterface {
 			);
 		}
 
+		$this->sanitize_woocommerce_filters();
+
 		return true;
 	}
 
@@ -1522,4 +1524,26 @@ class SmartButton implements SmartButtonInterface {
 
 		return absint( $wp->query_vars['order-pay'] );
 	}
+
+	/**
+	 * Sanitize woocommerce filter on unexpected states.
+	 *
+	 * @return void
+	 */
+	private function sanitize_woocommerce_filters(): void {
+
+		// Sometimes external plugins like "woocommerce-one-page-checkout" set the $value to null.
+		// Here we also disable the mini-cart on cart-block and checkout-block pages where our buttons aren't supported yet.
+		add_filter( 'woocommerce_widget_cart_is_hidden', function ($value) {
+			if (null === $value) {
+				if ( is_product() ) {
+					return false;
+				}
+				return in_array($this->context(), array('cart', 'checkout', 'cart-block', 'checkout-block'));
+			}
+			return in_array($this->context(), array('cart-block', 'checkout-block')) ? true : $value;
+		}, 11);
+
+	}
+
 }
