@@ -165,8 +165,8 @@ class VaultPaymentTokenCreated implements RequestHandler {
 	private function wc_customer_id_from( string $customer_id ): int {
 		$customers = get_users(
 			array(
-				'meta_key'   => 'ppcp_guest_customer_id',
-				'meta_value' => $customer_id,
+				'meta_key'   => 'ppcp_guest_customer_id', //phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+				'meta_value' => $customer_id, //phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
 				'fields'     => 'ids',
 				'number'     => 1,
 			)
