@@ -1532,17 +1532,25 @@ class SmartButton implements SmartButtonInterface {
 	 */
 	private function sanitize_woocommerce_filters(): void {
 
-		// Sometimes external plugins like "woocommerce-one-page-checkout" set the $value to null.
-		// Here we also disable the mini-cart on cart-block and checkout-block pages where our buttons aren't supported yet.
-		add_filter( 'woocommerce_widget_cart_is_hidden', function ($value) {
-			if (null === $value) {
-				if ( is_product() ) {
-					return false;
+		add_filter(
+			'woocommerce_widget_cart_is_hidden',
+			/**
+			 * Sometimes external plugins like "woocommerce-one-page-checkout" set the $value to null, handle that case here.
+			 * Here we also disable the mini-cart on cart-block and checkout-block pages where our buttons aren't supported yet.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function ( $value ) {
+				if ( null === $value ) {
+					if ( is_product() ) {
+						return false;
+					}
+					return in_array( $this->context(), array( 'cart', 'checkout', 'cart-block', 'checkout-block' ), true );
 				}
-				return in_array($this->context(), array('cart', 'checkout', 'cart-block', 'checkout-block'));
-			}
-			return in_array($this->context(), array('cart-block', 'checkout-block')) ? true : $value;
-		}, 11);
+				return in_array( $this->context(), array( 'cart-block', 'checkout-block' ), true ) ? true : $value;
+			},
+			11
+		);
 
 	}
 
