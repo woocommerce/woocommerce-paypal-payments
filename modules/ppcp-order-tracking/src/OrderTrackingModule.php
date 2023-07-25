@@ -28,6 +28,8 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\SettingsListener;
  */
 class OrderTrackingModule implements ModuleInterface {
 
+	public const PPCP_TRACKING_INFO_META_NAME = '_ppcp_paypal_tracking_info_meta_name';
+
 	/**
 	 * {@inheritDoc}
 	 */
@@ -45,18 +47,7 @@ class OrderTrackingModule implements ModuleInterface {
 	 * @throws NotFoundException
 	 */
 	public function run( ContainerInterface $c ): void {
-		$settings = $c->get( 'wcgateway.settings' );
-		assert( $settings instanceof Settings );
-
-		$pui_helper = $c->get( 'wcgateway.pay-upon-invoice-helper' );
-		assert( $pui_helper instanceof PayUponInvoiceHelper );
-
-		if ( $pui_helper->is_pui_gateway_enabled() ) {
-			$settings->set( 'tracking_enabled', true );
-			$settings->persist();
-		}
-
-		$tracking_enabled = $settings->has( 'tracking_enabled' ) && $settings->get( 'tracking_enabled' );
+		$tracking_enabled = $c->get( 'order-tracking.is-module-enabled' );
 
 		if ( ! $tracking_enabled ) {
 			return;
@@ -64,7 +55,6 @@ class OrderTrackingModule implements ModuleInterface {
 
 		$asset_loader = $c->get( 'order-tracking.assets' );
 		assert( $asset_loader instanceof OrderEditPageAssets );
-		$is_paypal_order_edit_page = $c->get( 'order-tracking.is-paypal-order-edit-page' );
 
 		$endpoint = $c->get( 'order-tracking.endpoint.controller' );
 		assert( $endpoint instanceof OrderTrackingEndpoint );
@@ -72,42 +62,15 @@ class OrderTrackingModule implements ModuleInterface {
 		$logger = $c->get( 'woocommerce.logger.woocommerce' );
 		assert( $logger instanceof LoggerInterface );
 
-		add_action(
-			'init',
-			static function () use ( $asset_loader, $is_paypal_order_edit_page ) {
-				if ( ! $is_paypal_order_edit_page ) {
-					return;
-				}
-
-				$asset_loader->register();
-			}
-		);
-
-		add_action(
-			'admin_enqueue_scripts',
-			static function () use ( $asset_loader, $is_paypal_order_edit_page ) {
-				if ( ! $is_paypal_order_edit_page ) {
-					return;
-				}
-
-				$asset_loader->enqueue();
-			}
-		);
-
-		add_action(
-			'wc_ajax_' . OrderTrackingEndpoint::ENDPOINT,
-			array( $endpoint, 'handle_request' )
-		);
+		add_action( 'init', array( $asset_loader, 'register' ) );
+		add_action( 'admin_enqueue_scripts', array( $asset_loader, 'enqueue' ) );
+		add_action( 'wc_ajax_' . OrderTrackingEndpoint::ENDPOINT, array( $endpoint, 'handle_request' ) );
 
 		$meta_box_renderer = $c->get( 'order-tracking.meta-box.renderer' );
 		add_action(
 			'add_meta_boxes',
-			static function() use ( $meta_box_renderer, $is_paypal_order_edit_page ) {
-				if ( ! $is_paypal_order_edit_page ) {
-					return;
-				}
-
-				add_meta_box( 'ppcp_order-tracking', __( 'Tracking Information', 'woocommerce-paypal-payments' ), array( $meta_box_renderer, 'render' ), 'shop_order', 'side' );
+			static function() use ( $meta_box_renderer ) {
+				add_meta_box( 'ppcp_order-tracking', __( 'PayPal Shipment Tracking', 'woocommerce-paypal-payments' ), array( $meta_box_renderer, 'render' ), 'shop_order', 'normal' );
 			},
 			10,
 			2

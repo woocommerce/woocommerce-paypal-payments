@@ -17,6 +17,9 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\RequestTrait;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\OrderTracking\OrderTrackingModule;
+use WooCommerce\PayPalCommerce\OrderTracking\Shipment\ShipmentFactoryInterface;
+use WooCommerce\PayPalCommerce\OrderTracking\Shipment\ShipmentInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 
@@ -24,8 +27,15 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
  * The OrderTrackingEndpoint.
  *
  * @psalm-type SupportedStatuses = 'SHIPPED'|'ON_HOLD'|'DELIVERED'|'CANCELLED'
- * @psalm-type TrackingInfo = array{transaction_id: string, status: SupportedStatuses, tracking_number?: string, carrier?: string}
- * @psalm-type RequestValues = array{transaction_id: string, status: SupportedStatuses, order_id: int, tracking_number?: string, carrier?: string}
+ * @psalm-type TrackingInfo = array{
+ *     transaction_id: string,
+ *     status: SupportedStatuses,
+ *     tracking_number: string,
+ *     carrier: string,
+ *     items?: string,
+ *     carrier_name_other?: string,
+ *     order_id?: int
+ * }
  * Class OrderTrackingEndpoint
  */
 class OrderTrackingEndpoint {
@@ -46,40 +56,60 @@ class OrderTrackingEndpoint {
 	 *
 	 * @var string
 	 */
-	private $host;
+	protected $host;
 
 	/**
 	 * The bearer.
 	 *
 	 * @var Bearer
 	 */
-	private $bearer;
+	protected $bearer;
 
 	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
 	 */
-	private $logger;
+	protected $logger;
+
+	/**
+	 * The ShipmentFactory.
+	 *
+	 * @var ShipmentFactoryInterface
+	 */
+	protected $shipment_factory;
+
+	/**
+	 * Allowed shipping statuses.
+	 *
+	 * @var string[]
+	 */
+	protected $allowed_statuses;
 
 	/**
 	 * PartnersEndpoint constructor.
 	 *
-	 * @param string          $host The host.
-	 * @param Bearer          $bearer The bearer.
-	 * @param LoggerInterface $logger The logger.
-	 * @param RequestData     $request_data The Request data.
+	 * @param string                   $host The host.
+	 * @param Bearer                   $bearer The bearer.
+	 * @param LoggerInterface          $logger The logger.
+	 * @param RequestData              $request_data The Request data.
+	 * @param ShipmentFactoryInterface $shipment_factory The ShipmentFactory.
+	 * @param string[]                 $allowed_statuses Allowed shipping statuses.
 	 */
 	public function __construct(
 		string $host,
 		Bearer $bearer,
 		LoggerInterface $logger,
-		RequestData $request_data
+		RequestData $request_data,
+		ShipmentFactoryInterface $shipment_factory,
+		array $allowed_statuses
 	) {
-		$this->host         = $host;
-		$this->bearer       = $bearer;
-		$this->logger       = $logger;
-		$this->request_data = $request_data;
+		$this->host             = $host;
+		$this->bearer           = $bearer;
+		$this->logger           = $logger;
+		$this->request_data     = $request_data;
+		$this->shipment_factory = $shipment_factory;
+		$this->allowed_statuses = $allowed_statuses;
 	}
 
 	/**
@@ -92,15 +122,30 @@ class OrderTrackingEndpoint {
 		}
 
 		try {
-			$data         = $this->request_data->read_request( $this->nonce() );
-			$request_body = $this->extract_tracking_information( $data );
-			$order_id     = (int) $data['order_id'];
+			$data     = $this->request_data->read_request( $this->nonce() );
+			$order_id = (int) $data['order_id'];
+			$action   = $data['action'] ?? '';
 
-			$this->add_tracking_information( $request_body, $order_id );
+			$shipment = $this->create_shipment( $order_id, $data );
 
-			$message = _x( 'successfully created', 'tracking info success message', 'woocommerce-paypal-payments' );
+			$action === 'update'
+				? $this->update_tracking_information( $shipment, $order_id )
+				: $this->add_tracking_information( $shipment, $order_id );
 
-			wp_send_json_success( array( 'message' => $message ) );
+			$message = $action === 'update'
+				? _x( 'successfully updated', 'tracking info success message', 'woocommerce-paypal-payments' )
+				: _x( 'successfully created', 'tracking info success message', 'woocommerce-paypal-payments' );
+
+			ob_start();
+			$shipment->render( $this->allowed_statuses );
+			$shipment_html = ob_get_clean();
+
+			wp_send_json_success(
+				array(
+					'message'  => $message,
+					'shipment' => $shipment_html,
+				)
+			);
 		} catch ( Exception $error ) {
 			wp_send_json_error( array( 'message' => $error->getMessage() ), 500 );
 		}
@@ -109,46 +154,30 @@ class OrderTrackingEndpoint {
 	/**
 	 * Creates the tracking information of a given order with the given data.
 	 *
-	 * @param array $data The tracking information to add.
-	 * @psalm-param TrackingInfo $data
-	 * @param int   $order_id The order ID.
-	 * @throws RuntimeException If problem creating.
+	 * @param ShipmentInterface $shipment The shipment.
+	 * @param int               $order_id The order ID.
+	 *
+	 * @throws RuntimeException If problem adding.
 	 */
-	public function add_tracking_information( array $data, int $order_id ) : void {
-		$transaction_id = $data['transaction_id'] ?? '';
-		if ( ! $transaction_id ) {
-			$error = new RuntimeException(
-				'Could not create order tracking information. missing transaction_id'
-			);
-			$this->logger->log( 'error', $error->getMessage() );
-			throw $error;
-		}
-
+	public function add_tracking_information( ShipmentInterface $shipment, int $order_id ) : void {
 		$wc_order        = wc_get_order( $order_id );
 		$paypal_order_id = $wc_order->get_meta( PayPalGateway::ORDER_ID_META_KEY );
+		$host            = trailingslashit( $this->host );
+		$url             = "{$host}v2/checkout/orders/{$paypal_order_id}/track";
+		$shipment_data   = $shipment->to_array( $order_id );
 
-		$url = trailingslashit( $this->host ) . 'v2/checkout/orders/' . $paypal_order_id . '/track';
-
-		$body = array(
-			'trackers' => array( (array) apply_filters( 'woocommerce_paypal_payments_tracking_data_before_sending', $data, $order_id ) ),
-		);
+		unset( $shipment_data['transaction_id'] );
+		$shipment_data['capture_id'] = $shipment->transaction_id();
 
 		$args = array(
 			'method'  => 'POST',
 			'headers' => $this->request_headers(),
-			'body'    => wp_json_encode(array(
-				'capture_id'      => $transaction_id,
-				'tracking_number' => $data['tracking_number'] ?? '',
-				'carrier'         => $data['carrier'] ?? ' ',
-			)
-			),
+			'body'    => wp_json_encode( (array) apply_filters( 'woocommerce_paypal_payments_tracking_data_before_sending', $shipment_data, $order_id ) ),
 		);
 
-		do_action( 'woocommerce_paypal_payments_before_tracking_is_added', $order_id, $data );
+		do_action( 'woocommerce_paypal_payments_before_tracking_is_added', $order_id, $shipment_data );
 
 		$response = $this->request( $url, $args );
-
-		var_dump($args,$response);die;
 
 		if ( is_wp_error( $response ) ) {
 			$error = new RuntimeException(
@@ -172,7 +201,7 @@ class OrderTrackingEndpoint {
 		 */
 		$json        = json_decode( $response['body'] );
 		$status_code = (int) wp_remote_retrieve_response_code( $response );
-		if ( 200 !== $status_code ) {
+		if ( 201 !== $status_code ) {
 			$error = new PayPalApiException(
 				$json,
 				$status_code
@@ -191,35 +220,93 @@ class OrderTrackingEndpoint {
 			throw $error;
 		}
 
-		if ( is_a( $wc_order, WC_Order::class ) ) {
-			$wc_order->update_meta_data( '_ppcp_paypal_tracking_number', $data['tracking_number'] ?? '' );
-			$wc_order->save();
-		}
+		$this->save_tracking_metadata( $wc_order, $shipment->tracking_number(), array_keys( $shipment->line_items() ) );
 
 		do_action( 'woocommerce_paypal_payments_after_tracking_is_added', $order_id, $response );
 	}
 
 	/**
+	 * Updates the tracking information of a given order with the given shipment.
+	 *
+	 * @param ShipmentInterface $shipment The shipment.
+	 * @param int               $order_id The order ID.
+	 *
+	 * @throws RuntimeException If problem updating.
+	 */
+	public function update_tracking_information( ShipmentInterface $shipment, int $order_id ) : void {
+		$host          = trailingslashit( $this->host );
+		$tracker_id    = $this->find_tracker_id( $shipment->transaction_id(), $shipment->tracking_number() );
+		$url           = "{$host}v1/shipping/trackers/{$tracker_id}";
+		$shipment_data = $shipment->to_array( $order_id );
+
+		$args = array(
+			'method'  => 'PUT',
+			'headers' => $this->request_headers(),
+			'body'    => wp_json_encode( (array) apply_filters( 'woocommerce_paypal_payments_tracking_data_before_update', $shipment_data, $order_id ) ),
+		);
+
+		do_action( 'woocommerce_paypal_payments_before_tracking_is_updated', $order_id, $shipment_data );
+
+		$response = $this->request( $url, $args );
+
+		if ( is_wp_error( $response ) ) {
+			$error = new RuntimeException(
+				'Could not update order tracking information.'
+			);
+			$this->logger->log(
+				'warning',
+				$error->getMessage(),
+				array(
+					'args'     => $args,
+					'response' => $response,
+				)
+			);
+			throw $error;
+		}
+
+		/**
+		 * Need to ignore Method WP_Error::offsetGet does not exist
+		 *
+		 * @psalm-suppress UndefinedMethod
+		 */
+		$json        = json_decode( $response['body'] );
+		$status_code = (int) wp_remote_retrieve_response_code( $response );
+		if ( 204 !== $status_code ) {
+			$error = new PayPalApiException(
+				$json,
+				$status_code
+			);
+			$this->logger->log(
+				'warning',
+				sprintf(
+					'Failed to update the order tracking information. PayPal API response: %1$s',
+					$error->getMessage()
+				),
+				array(
+					'args'     => $args,
+					'response' => $response,
+				)
+			);
+			throw $error;
+		}
+
+		do_action( 'woocommerce_paypal_payments_after_tracking_is_updated', $order_id, $response );
+	}
+
+	/**
 	 * Gets the tracking information of a given order.
 	 *
-	 * @param int $wc_order_id The order ID.
-	 * @return array|null The tracking information.
-	 * @psalm-return TrackingInfo|null
+	 * @param int    $wc_order_id The order ID.
+	 * @param string $tracking_number The tracking number.
+	 *
+	 * @return ShipmentInterface|null The tracking information.
 	 * @throws RuntimeException If problem getting.
 	 */
-	public function get_tracking_information( int $wc_order_id ) : ?array {
-		$wc_order = wc_get_order( $wc_order_id );
-		if ( ! is_a( $wc_order, WC_Order::class ) ) {
-			throw new RuntimeException( 'wrong order ID' );
-		}
-
-		if ( ! $wc_order->meta_exists( '_ppcp_paypal_tracking_number' ) ) {
-			return null;
-		}
-
-		$transaction_id  = $wc_order->get_transaction_id();
-		$tracking_number = $wc_order->get_meta( '_ppcp_paypal_tracking_number', true );
-		$url             = trailingslashit( $this->host ) . 'v1/shipping/trackers/' . $this->find_tracker_id( $transaction_id, $tracking_number );
+	public function get_tracking_information( int $wc_order_id, string $tracking_number ) : ?ShipmentInterface {
+		$wc_order   = wc_get_order( $wc_order_id );
+		$host       = trailingslashit( $this->host );
+		$tracker_id = $this->find_tracker_id( $wc_order->get_transaction_id(), $tracking_number );
+		$url        = "{$host}v1/shipping/trackers/{$tracker_id}";
 
 		$args = array(
 			'method'  => 'GET',
@@ -255,7 +342,64 @@ class OrderTrackingEndpoint {
 			return null;
 		}
 
-		return $this->extract_tracking_information( (array) $data );
+		return $this->create_shipment( $wc_order_id, (array) $data );
+	}
+
+	/**
+	 * Gets the tracking information of a given order.
+	 *
+	 * @param int $wc_order_id The order ID.
+	 * @return array|null The tracking information.
+	 * @psalm-return TrackingInfo|null
+	 * @throws RuntimeException If problem getting.
+	 */
+	public function list_tracking_information( int $wc_order_id ) : ?array {
+		$wc_order       = wc_get_order( $wc_order_id );
+		$host           = trailingslashit( $this->host );
+		$transaction_id = $wc_order->get_transaction_id();
+		$url            = "{$host}v1/shipping/trackers?transaction_id={$transaction_id}";
+
+		$args = array(
+			'method'  => 'GET',
+			'headers' => $this->request_headers(),
+		);
+
+		$response = $this->request( $url, $args );
+
+		if ( is_wp_error( $response ) ) {
+			$error = new RuntimeException(
+				'Could not fetch the tracking information.'
+			);
+			$this->logger->log(
+				'warning',
+				$error->getMessage(),
+				array(
+					'args'     => $args,
+					'response' => $response,
+				)
+			);
+			throw $error;
+		}
+
+		/**
+		 * Need to ignore Method WP_Error::offsetGet does not exist
+		 *
+		 * @psalm-suppress UndefinedMethod
+		 */
+		$data        = json_decode( $response['body'] );
+		$status_code = (int) wp_remote_retrieve_response_code( $response );
+
+		if ( 200 !== $status_code ) {
+			return null;
+		}
+
+		$shipments = array();
+
+		foreach ( $data->trackers as $shipment ) {
+			$shipments[] = $this->create_shipment( $wc_order_id, (array) $shipment );
+		}
+
+		return $shipments;
 	}
 
 	/**
@@ -268,33 +412,73 @@ class OrderTrackingEndpoint {
 	}
 
 	/**
-	 * Extracts the needed tracking information from given data.
+	 * Creates the shipment based on requested data.
 	 *
+	 * @param int   $wc_order_id The WC order ID.
 	 * @param array $data The request data map.
-	 * @psalm-param RequestValues $data
-	 * @return array A map of tracking information keys to values.
-	 * @psalm-return TrackingInfo
-	 * @throws RuntimeException If problem extracting.
+	 * @psalm-param TrackingInfo $data
+	 *
+	 * @return ShipmentInterface The shipment.
+	 * @throws RuntimeException If problem creating.
 	 */
-	protected function extract_tracking_information( array $data ): array {
-		if ( empty( $data['transaction_id'] ) || empty( $data['status'] ) ) {
-			$this->logger->log( 'warning', 'Missing transaction_id or status.' );
-			throw new RuntimeException( 'Missing transaction_id or status.' );
-		}
+	protected function create_shipment( int $wc_order_id, array $data ): ShipmentInterface {
+		$carrier = $data['carrier'] ?? '';
 
 		$tracking_info = array(
-			'transaction_id' => $data['transaction_id'],
-			'status'         => $data['status'],
+			'transaction_id'  => $data['transaction_id'] ?? '',
+			'status'          => $data['status'] ?? '',
+			'tracking_number' => $data['tracking_number'] ?? '',
+			'carrier'         => $carrier,
 		);
 
-		if ( ! empty( $data['tracking_number'] ) ) {
-			$tracking_info['tracking_number'] = $data['tracking_number'];
+		if ( ! empty( $data['items'] ) ) {
+			$tracking_info['items'] = array_map( 'intval', $data['items'] );
 		}
 
-		if ( ! empty( $data['carrier'] ) ) {
-			$tracking_info['carrier'] = $data['carrier'];
+		if ( $carrier === 'OTHER' ) {
+			$tracking_info['carrier_name_other'] = $data['carrier_name_other'] ?? '';
 		}
-		return $tracking_info;
+
+		$this->validate_tracking_info( $tracking_info );
+
+		return $this->shipment_factory->create_shipment(
+			$wc_order_id,
+			$tracking_info['transaction_id'],
+			$tracking_info['tracking_number'],
+			$tracking_info['status'],
+			$tracking_info['carrier'],
+			$tracking_info['carrier_name_other'] ?? '',
+			$tracking_info['items'] ?? array()
+		);
+	}
+
+	/**
+	 * Validates the requested tracking info.
+	 *
+	 * @param array $tracking_info A map of tracking information keys to values.
+	 * @psalm-param TrackingInfo $tracking_info
+	 * @return void
+	 * @throws RuntimeException If validation failed.
+	 */
+	protected function validate_tracking_info( array $tracking_info ): void {
+		$error_message = __( 'Missing required information:', 'woocommerce-paypal-payments' );
+		$empty_keys    = array();
+
+		foreach ( $tracking_info as $key => $value ) {
+			if ( ! empty( $value ) ) {
+				continue;
+			}
+
+			$empty_keys[] = $key;
+		}
+
+		if ( empty( $empty_keys ) ) {
+			return;
+		}
+
+		$error_message .= implode( ' ,', $empty_keys );
+
+		throw new RuntimeException( $error_message );
 	}
 
 	/**
@@ -318,5 +502,28 @@ class OrderTrackingEndpoint {
 	 */
 	protected function find_tracker_id( string $transaction_id, string $tracking_number ): string {
 		return ! empty( $tracking_number ) ? "{$transaction_id}-{$tracking_number}" : "{$transaction_id}-NOTRACKER";
+	}
+
+	/**
+	 * Saves the tracking metadata for given line items.
+	 *
+	 * @param WC_Order $wc_order The WooCommerce order.
+	 * @param string   $tracking_number The tracking number.
+	 * @param int[]    $line_items The list of shipment line items.
+	 * @return void
+	 */
+	protected function save_tracking_metadata( WC_Order $wc_order, string $tracking_number, array $line_items ): void {
+		$tracking_meta = $wc_order->get_meta( OrderTrackingModule::PPCP_TRACKING_INFO_META_NAME );
+
+		if ( ! is_array( $tracking_meta ) ) {
+			$tracking_meta = array();
+		}
+
+		foreach ( $line_items as $item ) {
+			$tracking_meta[ $tracking_number ][] = $item;
+		}
+
+		$wc_order->update_meta_data( OrderTrackingModule::PPCP_TRACKING_INFO_META_NAME, $tracking_meta );
+		$wc_order->save();
 	}
 }
