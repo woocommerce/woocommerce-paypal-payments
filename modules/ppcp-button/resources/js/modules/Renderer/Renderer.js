@@ -119,15 +119,7 @@ class Renderer {
         }
     }
 
-    isAlreadyRendered(wrapper, fundingSource, hasEnabledSeparateGateways) {
-        // Simply check that has child nodes when we do not need to render buttons separately,
-        // this will reduce the risk of breaking with different themes/plugins
-        // and on the cart page (where we also do not need to render separately), which may fully reload this part of the page.
-        // Ideally we should also find a way to detect such full reloads and remove the corresponding keys from the set.
-
-        // if (!hasEnabledSeparateGateways) {
-        //     return document.querySelector(wrapper).hasChildNodes();
-        // }
+    isAlreadyRendered(wrapper, fundingSource) {
         return this.renderedSources.has(wrapper + (fundingSource ?? ''));
     }
 

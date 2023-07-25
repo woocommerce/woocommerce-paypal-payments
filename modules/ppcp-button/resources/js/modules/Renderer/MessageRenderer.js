@@ -32,8 +32,6 @@ class MessageRenderer {
 
         widgetBuilder.registerMessages(this.config.wrapper, options);
         widgetBuilder.renderMessages(this.config.wrapper);
-
-        // paypal.Messages(options).render(this.config.wrapper);
     }
 
     optionsEqual(options) {
