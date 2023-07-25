@@ -40,8 +40,7 @@ class SingleProductActionHandler {
                 }).then((res)=>{
                     return res.json();
                 }).then(() => {
-                    const id = document.querySelector('[name="add-to-cart"]').value;
-                    const products =  [new Product(id, 1, null)];
+                    const products = this.getSubscriptionProducts();
 
                     fetch(this.config.ajax.change_cart.endpoint, {
                         method: 'POST',
@@ -69,6 +68,12 @@ class SingleProductActionHandler {
                 console.error(err);
             }
         }
+    }
+
+    getSubscriptionProducts()
+    {
+        const id = document.querySelector('[name="add-to-cart"]').value;
+        return [new Product(id, 1, null)];
     }
 
     configuration()

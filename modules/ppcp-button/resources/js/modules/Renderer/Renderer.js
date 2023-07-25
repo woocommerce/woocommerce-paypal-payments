@@ -75,7 +75,7 @@ class Renderer {
     renderButtons(wrapper, style, contextConfig, hasEnabledSeparateGateways, fundingSource = null) {
         if (! document.querySelector(wrapper) || this.isAlreadyRendered(wrapper, fundingSource, hasEnabledSeparateGateways) ) {
             // Try to render registered buttons again in case they were removed from the DOM by an external source.
-            widgetBuilder.renderButtons(wrapper);
+            widgetBuilder.renderButtons([wrapper, fundingSource]);
             return;
         }
 
@@ -99,14 +99,20 @@ class Renderer {
 
         jQuery(document)
             .off(this.reloadEventName, wrapper)
-            .on(this.reloadEventName, wrapper, (event, settingsOverride = {}) => {
+            .on(this.reloadEventName, wrapper, (event, settingsOverride = {}, triggeredFundingSource) => {
+
+                // Only accept events from the matching funding source
+                if (fundingSource && triggeredFundingSource && (triggeredFundingSource !== fundingSource)) {
+                    return;
+                }
+
                 const settings = merge(this.defaultSettings, settingsOverride);
                 let scriptOptions = keysToCamelCase(settings.url_params);
                 scriptOptions = merge(scriptOptions, settings.script_attributes);
 
                 loadScript(scriptOptions).then((paypal) => {
                     widgetBuilder.setPaypal(paypal);
-                    widgetBuilder.registerButtons(wrapper, buttonsOptions());
+                    widgetBuilder.registerButtons([wrapper, fundingSource], buttonsOptions());
                     widgetBuilder.renderAll();
                 });
             });
@@ -114,8 +120,8 @@ class Renderer {
         this.renderedSources.add(wrapper + (fundingSource ?? ''));
 
         if (typeof paypal !== 'undefined' && typeof paypal.Buttons !== 'undefined') {
-            widgetBuilder.registerButtons(wrapper, buttonsOptions());
-            widgetBuilder.renderButtons(wrapper);
+            widgetBuilder.registerButtons([wrapper, fundingSource], buttonsOptions());
+            widgetBuilder.renderButtons([wrapper, fundingSource]);
         }
     }
 

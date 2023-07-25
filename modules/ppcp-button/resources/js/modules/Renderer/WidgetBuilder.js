@@ -1,4 +1,7 @@
-
+/**
+ * Handles the registration and rendering of PayPal widgets: Buttons and Messages.
+ * To have several Buttons per wrapper, an array should be provided, ex: [wrapper, fundingSource].
+ */
 class WidgetBuilder {
 
     constructor() {
@@ -19,14 +22,18 @@ class WidgetBuilder {
     }
 
     registerButtons(wrapper, options) {
-        this.buttons.set(wrapper, {
+        wrapper = this.sanitizeWrapper(wrapper);
+
+        this.buttons.set(this.toKey(wrapper), {
             wrapper: wrapper,
-            options: options
+            options: options,
         });
     }
 
     renderButtons(wrapper) {
-        if (!this.buttons.has(wrapper)) {
+        wrapper = this.sanitizeWrapper(wrapper);
+
+        if (!this.buttons.has(this.toKey(wrapper))) {
             return;
         }
 
@@ -34,14 +41,21 @@ class WidgetBuilder {
             return;
         }
 
-        const entry = this.buttons.get(wrapper);
+        const entry = this.buttons.get(this.toKey(wrapper));
         const btn = this.paypal.Buttons(entry.options);
 
         if (!btn.isEligible()) {
+            this.buttons.delete(this.toKey(wrapper));
             return;
         }
 
-        btn.render(entry.wrapper);
+        let target = this.buildWrapperTarget(wrapper);
+
+        if (!target) {
+            return;
+        }
+
+        btn.render(target);
     }
 
     renderAllButtons() {
@@ -84,7 +98,64 @@ class WidgetBuilder {
     }
 
     hasRendered(wrapper) {
-        return document.querySelector(wrapper).hasChildNodes();
+        let selector = wrapper;
+
+        if (Array.isArray(wrapper)) {
+            selector = wrapper[0];
+            for (const item of wrapper.slice(1)) {
+                selector += ' .item-' + item;
+            }
+        }
+
+        const element = document.querySelector(selector);
+        return element && element.hasChildNodes();
+    }
+
+    sanitizeWrapper(wrapper) {
+        if (Array.isArray(wrapper)) {
+            wrapper = wrapper.filter(item => !!item);
+            if (wrapper.length === 1) {
+                wrapper = wrapper[0];
+            }
+        }
+        return wrapper;
+    }
+
+    buildWrapperTarget(wrapper) {
+        let target = wrapper;
+
+        if (Array.isArray(wrapper)) {
+            const $wrapper = jQuery(wrapper[0]);
+
+            if (!$wrapper.length) {
+                return;
+            }
+
+            const itemClass = 'item-' + wrapper[1];
+
+            // Check if the parent element exists and it doesn't already have the div with the class
+            let $item = $wrapper.find('.' + itemClass);
+
+            if (!$item.length) {
+                $item = jQuery(`<div class="${itemClass}"></div>`);
+                $wrapper.append($item);
+            }
+
+            target = $item.get(0);
+        }
+
+        if (!jQuery(target).length) {
+            return null;
+        }
+
+        return target;
+    }
+
+    toKey(wrapper) {
+        if (Array.isArray(wrapper)) {
+            return JSON.stringify(wrapper);
+        }
+        return wrapper;
     }
 }
 

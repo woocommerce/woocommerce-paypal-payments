@@ -163,6 +163,13 @@ class SingleProductBootstap {
             this.errorHandler,
         );
 
+        const hasSubscriptions = PayPalCommerceGateway.data_client_id.has_subscriptions
+            && PayPalCommerceGateway.data_client_id.paypal_subscriptions_enabled;
+
+        const products = hasSubscriptions
+            ? actionHandler.getSubscriptionProducts()
+            : actionHandler.getProducts();
+
         (new SimulateCart(
             this.gateway.ajax.simulate_cart.endpoint,
             this.gateway.ajax.simulate_cart.nonce,
@@ -198,7 +205,7 @@ class SingleProductBootstap {
 
             this.handleButtonStatus(false);
 
-        }, actionHandler.getProducts());
+        }, products);
     }
 }
 
