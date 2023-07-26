@@ -1,4 +1,6 @@
 const {test, expect} = require('@playwright/test');
+const wcApi = require('@woocommerce/woocommerce-rest-api').default;
+
 const {loginAsAdmin, loginAsCustomer} = require('./utils/user');
 const {openPaypalPopup, loginIntoPaypal, completePaypalPayment} = require("./utils/paypal-popup");
 const {fillCheckoutForm, expectOrderReceivedPage} = require("./utils/checkout");
@@ -7,6 +9,9 @@ const {
     SUBSCRIPTION_URL,
     CHECKOUT_URL,
     CART_URL,
+    BASEURL,
+    WC_CONSUMER_KEY,
+    WC_CONSUMER_SECRET,
 } = process.env;
 
 async function purchaseSubscriptionFromCart(page) {
@@ -18,7 +23,7 @@ async function purchaseSubscriptionFromCart(page) {
     const popup = await openPaypalPopup(page);
     await loginIntoPaypal(popup);
 
-    await popup.getByText('Continue', { exact: true }).click();
+    await popup.getByText('Continue', {exact: true}).click();
     await popup.locator('#confirmButtonTop').click();
 
     await fillCheckoutForm(page);
@@ -92,7 +97,7 @@ test.describe.serial('Subscriptions Merchant', () => {
         await loginAsAdmin(page);
 
         await page.goto('/wp-admin/edit.php?post_type=product');
-        await page.getByRole('link', { name: productTitle, exact: true }).click();
+        await page.getByRole('link', {name: productTitle, exact: true}).click();
 
         await page.fill('#title', `Updated ${productTitle}`);
         await page.fill('#_subscription_price', '20');
@@ -209,7 +214,7 @@ test.describe('Subscriber purchase a Subscription', () => {
         const popup = await openPaypalPopup(page);
         await loginIntoPaypal(popup);
 
-        await popup.getByText('Continue', { exact: true }).click();
+        await popup.getByText('Continue', {exact: true}).click();
 
         await Promise.all([
             page.waitForNavigation(),
@@ -226,7 +231,7 @@ test.describe('Subscriber purchase a Subscription', () => {
         const popup = await openPaypalPopup(page);
         await loginIntoPaypal(popup);
 
-        await popup.getByText('Continue', { exact: true }).click();
+        await popup.getByText('Continue', {exact: true}).click();
         await popup.locator('#confirmButtonTop').click();
 
         await fillCheckoutForm(page);
@@ -308,4 +313,4 @@ test.describe('Subscriber my account actions', () => {
         details = await subscription.json();
         await expect(details.status).toBe('CANCELLED');
     });
-}) ;
+});
