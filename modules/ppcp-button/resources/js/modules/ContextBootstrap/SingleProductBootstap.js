@@ -53,7 +53,7 @@ class SingleProductBootstap {
             return;
         }
 
-        form.addEventListener('change', () => {
+        jQuery(document).on('change', this.formSelector, () => {
             this.handleChange();
 
             setTimeout(() => { // Wait for the DOM to be fully updated
@@ -93,7 +93,7 @@ class SingleProductBootstap {
             && ((null === addToCartButton) || !addToCartButton.classList.contains('disabled'));
     }
 
-    priceAmount() {
+    priceAmount(returnOnUndefined = 0) {
         const priceText = [
             () => document.querySelector('form.cart ins .woocommerce-Price-amount')?.innerText,
             () => document.querySelector('form.cart .woocommerce-Price-amount')?.innerText,
@@ -112,6 +112,10 @@ class SingleProductBootstap {
             },
         ].map(f => f()).find(val => val);
 
+        if (typeof priceText === 'undefined') {
+            return returnOnUndefined;
+        }
+
         if (!priceText) {
             return 0;
         }
@@ -120,7 +124,13 @@ class SingleProductBootstap {
     }
 
     priceAmountIsZero() {
-        const price = this.priceAmount();
+        const price = this.priceAmount(-1);
+
+        // if we can't find the price in the DOM we want to return true so the button is visible.
+        if (price === -1) {
+            return false;
+        }
+
         return !price || price === 0;
     }
 
