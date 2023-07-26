@@ -15,7 +15,7 @@ jobs:
     - uses: satackey/action-docker-layer-caching@v0.0.11
       continue-on-error: true
 
-    - uses: jonaseberle/github-action-setup-ddev@v1
+    - uses: ddev/github-action-setup-ddev@v1
       with:
         autostart: false
 
