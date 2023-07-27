@@ -1,17 +1,14 @@
 const {test, expect} = require('@playwright/test');
-const wcApi = require('@woocommerce/woocommerce-rest-api').default;
 
 const {loginAsAdmin, loginAsCustomer} = require('./utils/user');
 const {openPaypalPopup, loginIntoPaypal, completePaypalPayment} = require("./utils/paypal-popup");
 const {fillCheckoutForm, expectOrderReceivedPage} = require("./utils/checkout");
+const {createProduct, deleteProduct, updateProduct, updateProductUi} = require("./utils/product");
 const {
     AUTHORIZATION,
     SUBSCRIPTION_URL,
     CHECKOUT_URL,
     CART_URL,
-    BASEURL,
-    WC_CONSUMER_KEY,
-    WC_CONSUMER_SECRET,
 } = process.env;
 
 async function purchaseSubscriptionFromCart(page) {
@@ -314,3 +311,65 @@ test.describe('Subscriber my account actions', () => {
         await expect(details.status).toBe('CANCELLED');
     });
 });
+
+test('Disable buttons if no plan connected', async ({page}) => {
+    const data = {
+        name: 'Subscription',
+        type: 'subscription',
+        meta_data: [
+            {
+                key: '_subscription_price',
+                value: '10'
+            }
+        ]
+    }
+    const productId = await createProduct(data)
+
+    // for some reason product meta is not updated in frontend,
+    // so we need to manually update the product
+    await updateProductUi(productId, page);
+
+    await page.goto('/product/subscription')
+    await expect(page.locator('#ppc-button-ppcp-gateway')).not.toBeVisible();
+
+    await page.locator('.single_add_to_cart_button').click();
+    await page.goto('/cart');
+    await expect(page.locator('#ppc-button-ppcp-gateway')).toBeVisible();
+    await expect(page.locator('#ppc-button-ppcp-gateway')).toHaveCSS('cursor', 'not-allowed')
+
+    await page.goto('/checkout');
+    await expect(page.locator('#ppc-button-ppcp-gateway')).toBeVisible();
+    await expect(page.locator('#ppc-button-ppcp-gateway')).toHaveCSS('cursor', 'not-allowed')
+
+    await deleteProduct(productId)
+})
+
+test('Enable buttons if plan connected', async ({page}) => {
+    const data = {
+        name: 'Subscription',
+        type: 'subscription',
+        meta_data: [
+            {
+                key: '_subscription_price',
+                value: '10'
+            }
+        ]
+    }
+    const productId = await createProduct(data)
+
+    await loginAsAdmin(page);
+    await page.goto(`/wp-admin/post.php?post=${productId}&action=edit`)
+    await page.locator('#ppcp_enable_subscription_product').check();
+    await page.locator('#ppcp_subscription_plan_name').fill('Plan name');
+    await page.locator('#publish').click();
+    await expect(page.getByText('Product updated.')).toBeVisible();
+
+    await page.goto('/product/subscription')
+    await expect(page.locator('#ppc-button-ppcp-gateway')).toBeVisible();
+
+    await page.getByText('Sign up now').click();
+    await page.goto('/cart');
+    await expect(page.locator('#ppc-button-ppcp-gateway')).toBeVisible();
+
+    await deleteProduct(productId)
+})
