@@ -1372,15 +1372,15 @@ class SmartButton implements SmartButtonInterface {
 	/**
 	 * Fills and returns the product context_data array to be used in filters.
 	 *
-	 * @param array $context_data
+	 * @param array $context_data The context data for this filter.
 	 * @return array
 	 */
-	private function product_filter_context_data( array $context_data = [] ): array {
+	private function product_filter_context_data( array $context_data = array() ): array {
 		if ( ! isset( $context_data['product'] ) ) {
 			$context_data['product'] = wc_get_product();
 		}
 		if ( ! $context_data['product'] ) {
-			return [];
+			return array();
 		}
 		if ( ! isset( $context_data['order_total'] ) && ( $context_data['product'] instanceof WC_Product ) ) {
 			$context_data['order_total'] = (float) $context_data['product']->get_price( 'raw' );
@@ -1393,24 +1393,28 @@ class SmartButton implements SmartButtonInterface {
 	 * Checks if PayPal buttons/messages should be rendered for the current page.
 	 *
 	 * @param string|null $context The context that should be checked, use default otherwise.
-	 * @param array $context_data The context data for this filter
+	 * @param array       $context_data The context data for this filter.
 	 * @return bool
 	 */
-	public function is_button_disabled( string $context = null, array $context_data = [] ): bool {
+	public function is_button_disabled( string $context = null, array $context_data = array() ): bool {
 		if ( null === $context ) {
 			$context = $this->context();
 		}
 
 		if ( 'product' === $context ) {
-			// Allows to decide if the button should be disabled for a given product.
+			/**
+			 * Allows to decide if the button should be disabled for a given product.
+			 */
 			return apply_filters(
 				'woocommerce_paypal_payments_product_buttons_disabled',
 				false,
-				$this->product_filter_context_data($context_data)
+				$this->product_filter_context_data( $context_data )
 			);
 		}
 
-		 // Allows to decide if the button should be disabled globally or on a given context.
+		/**
+		 * Allows to decide if the button should be disabled globally or on a given context.
+		 */
 		return apply_filters(
 			'woocommerce_paypal_payments_buttons_disabled',
 			false,
@@ -1422,21 +1426,25 @@ class SmartButton implements SmartButtonInterface {
 	 * Checks a filter if pay_later/messages should be rendered on a given location / context.
 	 *
 	 * @param string $location The location.
-	 * @param array $context_data The context data for this filter
+	 * @param array  $context_data The context data for this filter.
 	 * @return bool
 	 */
-	private function is_pay_later_filter_enabled_for_location( string $location, array $context_data = [] ): bool {
+	private function is_pay_later_filter_enabled_for_location( string $location, array $context_data = array() ): bool {
 
 		if ( 'product' === $location ) {
-			// Allows to decide if the button should be disabled for a given product.
+			/**
+			 * Allows to decide if the button should be disabled for a given product.
+			 */
 			return ! apply_filters(
 				'woocommerce_paypal_payments_product_buttons_paylater_disabled',
 				false,
-				$this->product_filter_context_data($context_data)
+				$this->product_filter_context_data( $context_data )
 			);
 		}
 
-		// Allows to decide if the button should be disabled on a given context.
+		/**
+		 * Allows to decide if the button should be disabled on a given context.
+		 */
 		return ! apply_filters(
 			'woocommerce_paypal_payments_buttons_paylater_disabled',
 			false,
@@ -1448,10 +1456,10 @@ class SmartButton implements SmartButtonInterface {
 	 * Check whether Pay Later button is enabled for a given location.
 	 *
 	 * @param string $location The location.
-	 * @param array $context_data The context data for this filter
+	 * @param array  $context_data The context data for this filter.
 	 * @return bool true if is enabled, otherwise false.
 	 */
-	public function is_pay_later_button_enabled_for_location( string $location, array $context_data = [] ): bool {
+	public function is_pay_later_button_enabled_for_location( string $location, array $context_data = array() ): bool {
 		return $this->is_pay_later_filter_enabled_for_location( $location, $context_data )
 			&& $this->settings_status->is_pay_later_button_enabled_for_location( $location );
 
@@ -1460,11 +1468,11 @@ class SmartButton implements SmartButtonInterface {
 	/**
 	 * Check whether Pay Later message is enabled for a given location.
 	 *
-	 * @param string     $location The location setting name.
-	 * @param array $context_data The context data for this filter
+	 * @param string $location The location setting name.
+	 * @param array  $context_data The context data for this filter.
 	 * @return bool true if is enabled, otherwise false.
 	 */
-	public function is_pay_later_messaging_enabled_for_location( string $location, array $context_data = [] ): bool {
+	public function is_pay_later_messaging_enabled_for_location( string $location, array $context_data = array() ): bool {
 		return $this->is_pay_later_filter_enabled_for_location( $location, $context_data )
 			&& $this->settings_status->is_pay_later_messaging_enabled_for_location( $location );
 	}
