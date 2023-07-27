@@ -84,17 +84,34 @@ class SimulateCartEndpoint extends AbstractCartEndpoint {
 		WC()->cart = $active_cart;
 		unset( $this->cart );
 
+		// Process filters.
+		$pay_later_enabled = true;
+		$pay_later_messaging_enabled = true;
+		$button_enabled = true;
+
+		foreach ( $products as $product ) {
+			$context_data = [
+				'product' => $product['product'],
+				'order_total' => $total,
+			];
+			$pay_later_enabled = $pay_later_enabled && $this->smart_button->is_pay_later_button_enabled_for_location( 'product', $context_data );
+			$pay_later_messaging_enabled = $pay_later_messaging_enabled && $this->smart_button->is_pay_later_messaging_enabled_for_location( 'product', $context_data );
+			$button_enabled = $button_enabled && ! $this->smart_button->is_button_disabled( 'product', $context_data );
+		}
+
 		wp_send_json_success(
 			array(
 				'total'   => $total,
 				'funding' => array(
 					'paylater' => array(
-						'enabled'           => $this->smart_button->is_pay_later_button_enabled_for_location( 'cart', $total ),
-						'messaging_enabled' => $this->smart_button->is_pay_later_messaging_enabled_for_location( 'cart', $total ),
+						'enabled' => $pay_later_enabled,
 					),
 				),
 				'button'  => array(
-					'is_disabled' => $this->smart_button->is_button_disabled( 'cart', $total ),
+					'is_disabled' => ! $button_enabled,
+				),
+				'messages'  => array(
+					'is_hidden' => ! $pay_later_messaging_enabled,
 				),
 			)
 		);

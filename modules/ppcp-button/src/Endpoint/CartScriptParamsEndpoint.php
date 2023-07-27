@@ -75,6 +75,7 @@ class CartScriptParamsEndpoint implements EndpointInterface {
 				array(
 					'url_params' => $script_data['url_params'],
 					'button'     => $script_data['button'],
+					'messages'   => $script_data['messages'],
 					'amount'     => WC()->cart->get_total( 'raw' ),
 				)
 			);

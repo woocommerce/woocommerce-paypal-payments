@@ -202,6 +202,9 @@ class SingleProductBootstap {
             if (typeof data.button.is_disabled === 'boolean') {
                 this.gateway.button.is_disabled = data.button.is_disabled;
             }
+            if (typeof data.messages.is_hidden === 'boolean') {
+                this.gateway.messages.is_hidden = data.messages.is_hidden;
+            }
 
             this.handleButtonStatus(false);
 

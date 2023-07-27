@@ -49,8 +49,9 @@ class CartBootstrap {
                 }
 
                 // handle button status
-                if (result.data.button) {
+                if (result.data.button || result.data.messages) {
                     this.gateway.button = result.data.button;
+                    this.gateway.messages = result.data.messages;
                     this.handleButtonStatus();
                 }
 

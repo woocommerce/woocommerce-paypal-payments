@@ -383,7 +383,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @throws NotFoundException When a setting was not found.
 	 */
 	private function render_message_wrapper_registrar(): bool {
-		if ( ! $this->is_pay_later_messaging_enabled() ) {
+		if ( ! $this->settings_status->is_pay_later_messaging_enabled() ) {
 			return false;
 		}
 
@@ -549,7 +549,7 @@ class SmartButton implements SmartButtonInterface {
 
 		$smart_button_enabled_for_current_location = $this->settings_status->is_smart_button_enabled_for_location( $this->context() );
 		$smart_button_enabled_for_mini_cart        = $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' );
-		$messaging_enabled_for_current_location    = $this->is_pay_later_messaging_enabled_for_location( $this->context() );
+		$messaging_enabled_for_current_location    = $this->settings_status->is_pay_later_messaging_enabled_for_location( $this->context() );
 
 		switch ( $this->context() ) {
 			case 'checkout':
@@ -658,7 +658,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @throws NotFoundException When a setting was not found.
 	 */
 	private function message_values(): array {
-		if ( ! $this->is_pay_later_messaging_enabled() ) {
+		if ( ! $this->settings_status->is_pay_later_messaging_enabled() ) {
 			return array();
 		}
 
@@ -684,6 +684,7 @@ class SmartButton implements SmartButtonInterface {
 
 		return array(
 			'wrapper'   => '#ppcp-messages',
+			'is_hidden' => ! $this->is_pay_later_filter_enabled_for_location( $this->context() ),
 			'amount'    => $amount,
 			'placement' => $placement,
 			'style'     => array(
@@ -1335,18 +1336,6 @@ class SmartButton implements SmartButtonInterface {
 	}
 
 	/**
-	 * Returns the cart total.
-	 *
-	 * @return ?float
-	 */
-	protected function get_cart_price_total(): ?float {
-		if ( ! WC()->cart ) {
-			return null;
-		}
-		return (float) WC()->cart->get_total( 'numeric' );
-	}
-
-	/**
 	 * Checks if PayPal buttons/messages can be rendered for the given product.
 	 *
 	 * @param WC_Product $product The product.
@@ -1381,107 +1370,89 @@ class SmartButton implements SmartButtonInterface {
 	}
 
 	/**
+	 * Fills and returns the product context_data array to be used in filters.
+	 *
+	 * @param array $context_data
+	 * @return array
+	 */
+	private function product_filter_context_data( array $context_data = [] ): array {
+		if ( ! isset( $context_data['product'] ) ) {
+			$context_data['product'] = wc_get_product();
+		}
+		if ( ! $context_data['product'] ) {
+			return [];
+		}
+		if ( ! isset( $context_data['order_total'] ) && ( $context_data['product'] instanceof WC_Product ) ) {
+			$context_data['order_total'] = (float) $context_data['product']->get_price( 'raw' );
+		}
+
+		return $context_data;
+	}
+
+	/**
 	 * Checks if PayPal buttons/messages should be rendered for the current page.
 	 *
 	 * @param string|null $context The context that should be checked, use default otherwise.
-	 * @param float|null  $price_total The price total to be considered.
+	 * @param array $context_data The context data for this filter
 	 * @return bool
 	 */
-	public function is_button_disabled( string $context = null, float $price_total = null ): bool {
+	public function is_button_disabled( string $context = null, array $context_data = [] ): bool {
 		if ( null === $context ) {
 			$context = $this->context();
 		}
 
 		if ( 'product' === $context ) {
-			$product = wc_get_product();
-
-			/**
-			 * Allows to decide if the button should be disabled for a given product
-			 */
-			$is_disabled = apply_filters(
+			// Allows to decide if the button should be disabled for a given product.
+			return apply_filters(
 				'woocommerce_paypal_payments_product_buttons_disabled',
-				null,
-				$product
+				false,
+				$this->product_filter_context_data($context_data)
 			);
-
-			if ( $is_disabled !== null ) {
-				return $is_disabled;
-			}
 		}
 
-		/**
-		 * Allows to decide if the button should be disabled globally or on a given context
-		 */
-		$is_disabled = apply_filters(
+		 // Allows to decide if the button should be disabled globally or on a given context.
+		return apply_filters(
 			'woocommerce_paypal_payments_buttons_disabled',
-			null,
-			$context,
-			null === $price_total ? $this->get_cart_price_total() : $price_total
+			false,
+			$context
 		);
-
-		if ( $is_disabled !== null ) {
-			return $is_disabled;
-		}
-
-		return false;
 	}
 
 	/**
 	 * Checks a filter if pay_later/messages should be rendered on a given location / context.
 	 *
-	 * @param string     $location The location.
-	 * @param float|null $price_total The price total to be considered.
+	 * @param string $location The location.
+	 * @param array $context_data The context data for this filter
 	 * @return bool
 	 */
-	private function is_pay_later_filter_enabled_for_location( string $location, float $price_total = null ): bool {
+	private function is_pay_later_filter_enabled_for_location( string $location, array $context_data = [] ): bool {
 
 		if ( 'product' === $location ) {
-			$product = wc_get_product();
-
-			if ( ! $product ) {
-				return true;
-			}
-
-			/**
-			 * Allows to decide if the button should be disabled for a given product
-			 */
-			$is_disabled = apply_filters(
+			// Allows to decide if the button should be disabled for a given product.
+			return ! apply_filters(
 				'woocommerce_paypal_payments_product_buttons_paylater_disabled',
-				null,
-				$product
+				false,
+				$this->product_filter_context_data($context_data)
 			);
-
-			if ( $is_disabled !== null ) {
-				return ! $is_disabled;
-			}
 		}
 
-		/**
-		 * Allows to decide if the button should be disabled globally or on a given context
-		 */
-		$is_disabled = apply_filters(
+		// Allows to decide if the button should be disabled on a given context.
+		return ! apply_filters(
 			'woocommerce_paypal_payments_buttons_paylater_disabled',
-			null,
-			$location,
-			null === $price_total ? $this->get_cart_price_total() : $price_total
+			false,
+			$location
 		);
-
-		if ( $is_disabled !== null ) {
-			return ! $is_disabled;
-		}
-
-		return true;
 	}
 
 	/**
 	 * Check whether Pay Later button is enabled for a given location.
 	 *
-	 * @param string     $location The location.
-	 * @param float|null $price_total The price total to be considered.
+	 * @param string $location The location.
+	 * @param array $context_data The context data for this filter
 	 * @return bool true if is enabled, otherwise false.
 	 */
-	public function is_pay_later_button_enabled_for_location( string $location, float $price_total = null ): bool {
-		return $this->is_pay_later_filter_enabled_for_location( $location, $price_total )
+	public function is_pay_later_button_enabled_for_location( string $location, array $context_data = [] ): bool {
+		return $this->is_pay_later_filter_enabled_for_location( $location, $context_data )
 			&& $this->settings_status->is_pay_later_button_enabled_for_location( $location );
 
 	}
@@ -1490,22 +1461,12 @@ class SmartButton implements SmartButtonInterface {
 	 * Check whether Pay Later message is enabled for a given location.
 	 *
 	 * @param string     $location The location setting name.
-	 * @param float|null $price_total The price total to be considered.
+	 * @param array $context_data The context data for this filter
 	 * @return bool true if is enabled, otherwise false.
 	 */
-	public function is_pay_later_messaging_enabled_for_location( string $location, float $price_total = null ): bool {
-		return $this->is_pay_later_filter_enabled_for_location( $location, $price_total )
+	public function is_pay_later_messaging_enabled_for_location( string $location, array $context_data = [] ): bool {
+		return $this->is_pay_later_filter_enabled_for_location( $location, $context_data )
 			&& $this->settings_status->is_pay_later_messaging_enabled_for_location( $location );
-	}
-
-	/**
-	 * Check whether Pay Later message is enabled
-	 *
-	 * @return bool true if is enabled, otherwise false.
-	 */
-	private function is_pay_later_messaging_enabled(): bool {
-		return $this->is_pay_later_filter_enabled_for_location( $this->context() )
-			&& $this->settings_status->is_pay_later_messaging_enabled();
 	}
 
 	/**
