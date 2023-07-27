@@ -9,12 +9,20 @@ class WidgetBuilder {
         this.buttons = new Map();
         this.messages = new Map();
 
+        this.renderEventName = 'ppcp-render';
+
         document.ppcpWidgetBuilderStatus = () => {
             console.log({
                 buttons: this.buttons,
                 messages: this.messages,
             });
         }
+
+        jQuery(document)
+            .off(this.renderEventName)
+            .on(this.renderEventName, () => {
+                this.renderAll();
+            });
     }
 
     setPaypal(paypal) {
@@ -84,6 +92,13 @@ class WidgetBuilder {
         const btn = this.paypal.Messages(entry.options);
 
         btn.render(entry.wrapper);
+
+        // watchdog to try to handle some strange cases where the wrapper may not be present
+        setTimeout(() => {
+            if (!this.hasRendered(wrapper)) {
+                btn.render(entry.wrapper);
+            }
+        }, 100);
     }
 
     renderAllMessages() {
