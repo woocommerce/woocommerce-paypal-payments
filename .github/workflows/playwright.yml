@@ -1,0 +1,19 @@
+name: Run Playwright tests via DDEV
+on:
+  push:
+  workflow_dispatch:
+jobs:
+  ddev-playwright:
+    uses: inpsyde/reusable-workflows/.github/workflows/ddev-playwright.yml@feature/ddev-playwright
+    secrets:
+      COMPOSER_AUTH_JSON: ${{ secrets.PACKAGIST_AUTH_JSON }}
+      NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
+      ENV_VARS: >-
+        [
+          {"name": "SOME_USERNAME", "value": "user1"},
+          {"name": "SOME_PASSWORD", "value": "pass123"}
+        ]
+    with:
+      DDEV_ORCHESTRATE_CMD: ddev orchestrate
+      PLAYWRIGHT_INSTALL_CMD: ddev playwright-install
+      PLAYWRIGHT_RUN_CMD: ddev playwright test

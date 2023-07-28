@@ -1,3 +1,5 @@
-test-results/
-playwright-report/
-.cache/
+node_modules
+pw-browsers
+test-results
+.env
+yarn.lock
