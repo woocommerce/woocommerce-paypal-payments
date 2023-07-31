@@ -84,7 +84,7 @@ class OrderEditPageAssets {
 				'tracking_info' => array(
 					'endpoint' => \WC_AJAX::get_endpoint( OrderTrackingEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( OrderTrackingEndpoint::nonce() ),
-					'url' =>  admin_url( 'admin-ajax.php' )
+					'url'      => admin_url( 'admin-ajax.php' ),
 				),
 			),
 		);

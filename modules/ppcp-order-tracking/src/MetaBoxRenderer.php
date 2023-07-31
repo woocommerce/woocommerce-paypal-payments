@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\OrderTracking;
 
+use WC_Order;
 use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
 use WooCommerce\PayPalCommerce\OrderTracking\Shipment\ShipmentInterface;
 use WP_Post;
@@ -47,22 +48,32 @@ class MetaBoxRenderer {
 	protected $order_tracking_endpoint;
 
 	/**
+	 * Whether new API should be used.
+	 *
+	 * @var bool
+	 */
+	protected $should_use_new_api;
+
+	/**
 	 * MetaBoxRenderer constructor.
 	 *
 	 * @param string[]              $allowed_statuses Allowed shipping statuses.
 	 * @param array                 $carriers Available shipping carriers.
 	 * @psalm-param Carriers        $carriers
 	 * @param OrderTrackingEndpoint $order_tracking_endpoint The order tracking endpoint.
+	 * @param bool                  $should_use_new_api Whether new API should be used.
 	 */
 	public function __construct(
 		array $allowed_statuses,
 		array $carriers,
-		OrderTrackingEndpoint $order_tracking_endpoint
+		OrderTrackingEndpoint $order_tracking_endpoint,
+		bool $should_use_new_api
 	) {
 
 		$this->allowed_statuses        = $allowed_statuses;
 		$this->carriers                = $carriers;
 		$this->order_tracking_endpoint = $order_tracking_endpoint;
+		$this->should_use_new_api      = $should_use_new_api;
 	}
 
 	/**
@@ -71,8 +82,12 @@ class MetaBoxRenderer {
 	 * @param WP_Post $post The post object.
 	 */
 	public function render( WP_Post $post ): void {
-		$wc_order_id      = $post->ID;
-		$wc_order         = wc_get_order( $wc_order_id );
+		$wc_order_id = $post->ID;
+		$wc_order    = wc_get_order( $wc_order_id );
+		if ( ! $wc_order instanceof WC_Order ) {
+			return;
+		}
+
 		$transaction_id   = $wc_order->get_transaction_id() ?: '';
 		$order_items      = $wc_order->get_items();
 		$order_item_count = ! empty( $order_items ) ? count( $order_items ) : 0;
@@ -91,7 +106,7 @@ class MetaBoxRenderer {
 					<label for="ppcp-tracking-transaction_id"><?php echo esc_html__( 'Transaction ID', 'woocommerce-paypal-payments' ); ?></label>
 					<input type="text" disabled class="ppcp-tracking-transaction_id disabled" id="ppcp-tracking-transaction_id" name="ppcp-tracking[transaction_id]" value="<?php echo esc_attr( $transaction_id ); ?>" />
 				</p>
-				<?php if ( $order_item_count > 1 ) : ?>
+				<?php if ( $order_item_count > 1 && $this->should_use_new_api ) : ?>
 					<p>
 						<label for="include-all-items"><?php echo esc_html__( 'Include All Products', 'woocommerce-paypal-payments' ); ?></label>
 						<input type="checkbox" id="include-all-items" checked>
@@ -99,7 +114,7 @@ class MetaBoxRenderer {
 							<label for="ppcp-tracking-items"><?php echo esc_html__( 'Select items for this shipment', 'woocommerce-paypal-payments' ); ?></label>
 							<select multiple class="wc-enhanced-select ppcp-tracking-items" id="ppcp-tracking-items" name="ppcp-tracking[items]">
 								<?php foreach ( $order_items as $item ) : ?>
-									<option value="<?php echo esc_attr( $item->get_id() ); ?>"><?php echo esc_html( $item->get_name() ); ?></option>
+									<option value="<?php echo intval( $item->get_id() ); ?>"><?php echo esc_html( $item->get_name() ); ?></option>
 								<?php endforeach; ?>
 							</select>
 						</div>
@@ -140,7 +155,7 @@ class MetaBoxRenderer {
 					<label for="ppcp-tracking-carrier_name_other"><?php echo esc_html__( 'Carrier Name*', 'woocommerce-paypal-payments' ); ?></label>
 					<input type="text" class="ppcp-tracking-carrier_name_other" id="ppcp-tracking-carrier_name_other" name="ppcp-tracking[carrier_name_other]" />
 				</p>
-				<input type="hidden" class="ppcp-tracking-order_id" name="ppcp-tracking[order_id]" value="<?php echo esc_html( $wc_order_id ); ?>"/>
+				<input type="hidden" class="ppcp-tracking-order_id" name="ppcp-tracking[order_id]" value="<?php echo intval( $wc_order_id ); ?>"/>
 				<p><button type="button" class="button submit_tracking_info"><?php echo esc_html__( 'Add Shipment', 'woocommerce-paypal-payments' ); ?></button></p>
 			</div>
 			<div class="ppcp-tracking-column shipments">

@@ -49,6 +49,11 @@ class OrderTrackingModule implements ModuleInterface {
 	public function run( ContainerInterface $c ): void {
 		$tracking_enabled = $c->get( 'order-tracking.is-module-enabled' );
 
+		$endpoint = $c->get( 'order-tracking.endpoint.controller' );
+		assert( $endpoint instanceof OrderTrackingEndpoint );
+
+		add_action( 'wc_ajax_' . OrderTrackingEndpoint::ENDPOINT, array( $endpoint, 'handle_request' ) );
+
 		if ( ! $tracking_enabled ) {
 			return;
 		}
@@ -56,15 +61,11 @@ class OrderTrackingModule implements ModuleInterface {
 		$asset_loader = $c->get( 'order-tracking.assets' );
 		assert( $asset_loader instanceof OrderEditPageAssets );
 
-		$endpoint = $c->get( 'order-tracking.endpoint.controller' );
-		assert( $endpoint instanceof OrderTrackingEndpoint );
-
 		$logger = $c->get( 'woocommerce.logger.woocommerce' );
 		assert( $logger instanceof LoggerInterface );
 
 		add_action( 'init', array( $asset_loader, 'register' ) );
 		add_action( 'admin_enqueue_scripts', array( $asset_loader, 'enqueue' ) );
-		add_action( 'wc_ajax_' . OrderTrackingEndpoint::ENDPOINT, array( $endpoint, 'handle_request' ) );
 
 		$meta_box_renderer = $c->get( 'order-tracking.meta-box.renderer' );
 		add_action(
@@ -74,39 +75,6 @@ class OrderTrackingModule implements ModuleInterface {
 			},
 			10,
 			2
-		);
-
-		add_action(
-			'woocommerce_order_status_completed',
-			static function( int $order_id ) use ( $endpoint, $logger ) {
-				$tracking_information = $endpoint->get_tracking_information( $order_id );
-
-				if ( $tracking_information ) {
-					return;
-				}
-
-				$wc_order = wc_get_order( $order_id );
-				if ( ! is_a( $wc_order, WC_Order::class ) ) {
-					return;
-				}
-
-				$transaction_id = $wc_order->get_transaction_id();
-				if ( empty( $transaction_id ) ) {
-					return;
-				}
-
-				$tracking_data = array(
-					'transaction_id' => $transaction_id,
-					'status'         => 'SHIPPED',
-				);
-
-				try {
-					$endpoint->add_tracking_information( $tracking_data, $order_id );
-				} catch ( Exception $exception ) {
-					$logger->error( "Couldn't create tracking information: " . $exception->getMessage() );
-					throw $exception;
-				}
-			}
 		);
 	}
 }

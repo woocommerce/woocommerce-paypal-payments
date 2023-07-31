@@ -35,7 +35,8 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'button.request-data' ),
 			$container->get( 'order-tracking.shipment.factory' ),
-			$container->get( 'order-tracking.allowed-shipping-statuses' )
+			$container->get( 'order-tracking.allowed-shipping-statuses' ),
+			$container->get( 'order-tracking.is-merchant-country-us' )
 		);
 	},
 	'order-tracking.module.url'                => static function ( ContainerInterface $container ): string {
@@ -53,7 +54,8 @@ return array(
 		return new MetaBoxRenderer(
 			$container->get( 'order-tracking.allowed-shipping-statuses' ),
 			$container->get( 'order-tracking.available-carriers' ),
-			$container->get( 'order-tracking.endpoint.controller' )
+			$container->get( 'order-tracking.endpoint.controller' ),
+			$container->get( 'order-tracking.is-merchant-country-us' )
 		);
 	},
 	'order-tracking.allowed-shipping-statuses' => static function ( ContainerInterface $container ): array {
@@ -112,5 +114,9 @@ return array(
 		$is_tracking_available = $container->get( 'order-tracking.is-tracking-available' );
 
 		return $is_tracking_available && apply_filters( 'woocommerce_paypal_payments_shipment_tracking_enabled', true );
+	},
+
+	'order-tracking.is-merchant-country-us'    => static function ( ContainerInterface $container ): bool {
+		return $container->get( 'api.shop.country' ) === 'US';
 	},
 );

@@ -592,7 +592,6 @@ namespace WooCommerce\PayPalCommerce\OrderTracking;
 					'WHISTL_SFTP'                => _x( 'Whistl', 'Name of carrier', 'woocommerce-paypal-payments' ),
 					'WINESHIPPING_WEBHOOK'       => _x( 'Wineshipping', 'Name of carrier', 'woocommerce-paypal-payments' ),
 					'WISH_EMAIL_PUSH'            => _x( 'Wish', 'Name of carrier', 'woocommerce-paypal-payments' ),
-					'WOOYOUNG_LOGISTICS_SFTP'    => _x( 'WOO YOUNG LOG', 'Name of carrier', 'woocommerce-paypal-payments' ),
 					'WOOYOUNG_LOGISTICS_SFTP'    => _x( 'WOO YOUNG LOGISTICS CO., LTD.', 'Name of carrier', 'woocommerce-paypal-payments' ),
 					'WORLDCOURIER'               => _x( 'World Courier', 'Name of carrier', 'woocommerce-paypal-payments' ),
 					'WORLDNET'                   => _x( 'Worldnet Logistics', 'Name of carrier', 'woocommerce-paypal-payments' ),

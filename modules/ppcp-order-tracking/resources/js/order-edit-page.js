@@ -16,7 +16,7 @@ document.addEventListener(
 
         function toggleLineItemsSelectbox() {
             const selectContainer = document.getElementById('items-select-container');
-            includeAllItemsCheckbox.addEventListener('change', function(){
+            includeAllItemsCheckbox?.addEventListener('change', function(){
                 selectContainer.style.display = includeAllItemsCheckbox.checked ? 'none' : 'block';
             })
         }

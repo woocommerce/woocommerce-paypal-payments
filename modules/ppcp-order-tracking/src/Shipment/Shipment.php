@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\OrderTracking\Shipment;
 
+use WC_Order;
+use WC_Order_Item_Product;
 use WC_Product;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
@@ -135,7 +137,11 @@ class Shipment implements ShipmentInterface {
 	 * {@inheritDoc}
 	 */
 	public function line_items(): array {
-		$wc_order         = wc_get_order( $this->wc_order_id );
+		$wc_order = wc_get_order( $this->wc_order_id );
+		if ( ! $wc_order instanceof WC_Order ) {
+			return array();
+		}
+
 		$wc_order_items   = $wc_order->get_items();
 		$tracking_meta    = $wc_order->get_meta( OrderTrackingModule::PPCP_TRACKING_INFO_META_NAME );
 		$saved_line_items = $tracking_meta[ $this->tracking_number() ] ?? array();
@@ -143,6 +149,7 @@ class Shipment implements ShipmentInterface {
 
 		$tracking_items = array();
 		foreach ( $wc_order_items as $item ) {
+			assert( $item instanceof WC_Order_Item_Product );
 			if ( ! empty( $line_items ) && ! in_array( $item->get_id(), $line_items, true ) ) {
 				continue;
 			}
@@ -242,6 +249,11 @@ class Shipment implements ShipmentInterface {
 	 * @return void
 	 */
 	protected function render_shipment_line_item_info(): void {
+		$line_items = $this->line_items();
+		if ( empty( $line_items ) ) {
+			return;
+		}
+
 		$format           = '<p><strong>%1$s</strong> <span>%2$s</span></p>';
 		$order_items_info = array();
 

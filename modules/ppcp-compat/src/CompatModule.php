@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Compat;
 
+use Vendidero\Germanized\Shipments\ShipmentItem;
 use WooCommerce\PayPalCommerce\OrderTracking\Shipment\ShipmentFactoryInterface;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
@@ -49,11 +50,7 @@ class CompatModule implements ModuleInterface {
 
 		$this->initialize_ppec_compat_layer( $c );
 		$this->fix_site_ground_optimizer_compatibility( $c );
-
-		$tracking_enabled = $c->get( 'order-tracking.is-module-enabled' );
-		if ( $tracking_enabled ) {
-			//$this->initialize_tracking_compat_layer( $c );
-		}
+		$this->initialize_tracking_compat_layer( $c );
 
 		$asset_loader = $c->get( 'compat.assets' );
 		assert( $asset_loader instanceof CompatAssets );
@@ -165,6 +162,7 @@ class CompatModule implements ModuleInterface {
 				}
 
 				$wc_order = $shipment->get_order();
+
 				if ( ! is_a( $wc_order, WC_Order::class ) ) {
 					return;
 				}
@@ -174,7 +172,7 @@ class CompatModule implements ModuleInterface {
 				$tracking_number = $shipment->get_tracking_id();
 				$carrier         = $shipment->get_shipping_provider();
 				$items           = array_map(
-					function ( $item ) {
+					function ( ShipmentItem $item ): int {
 						return $item->get_order_item_id();
 					},
 					$shipment->get_items()
@@ -238,7 +236,7 @@ class CompatModule implements ModuleInterface {
 					return;
 				}
 
-				$order_id = (int) wc_clean( wp_unslash( $_POST['order_id'] ?? 0 ) );
+				$order_id = (int) wc_clean( wp_unslash( $_POST['order_id'] ?? '' ) );
 				$wc_order = wc_get_order( $order_id );
 				if ( ! is_a( $wc_order, WC_Order::class ) ) {
 					return;
@@ -247,8 +245,10 @@ class CompatModule implements ModuleInterface {
 				$transaction_id  = $wc_order->get_transaction_id();
 				$tracking_number = wc_clean( wp_unslash( $_POST['tracking_number'] ?? '' ) );
 				$carrier         = wc_clean( wp_unslash( $_POST['tracking_provider'] ?? '' ) );
+				$carrier_other   = wc_clean( wp_unslash( $_POST['custom_tracking_provider'] ?? '' ) );
+				$carrier         = $carrier ?: $carrier_other ?: '';
 
-				if ( ! $tracking_number || ! $carrier || ! $transaction_id ) {
+				if ( ! $tracking_number || ! is_string( $tracking_number ) || ! $carrier || ! is_string( $carrier ) || ! $transaction_id ) {
 					return;
 				}
 

@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\OrderTracking\Endpoint;
 
 use Exception;
 use Psr\Log\LoggerInterface;
+use stdClass;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\RequestTrait;
@@ -32,9 +33,8 @@ use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
  *     status: SupportedStatuses,
  *     tracking_number: string,
  *     carrier: string,
- *     items?: string,
+ *     items?: list<int>,
  *     carrier_name_other?: string,
- *     order_id?: int
  * }
  * Class OrderTrackingEndpoint
  */
@@ -87,6 +87,13 @@ class OrderTrackingEndpoint {
 	protected $allowed_statuses;
 
 	/**
+	 * Whether new API should be used.
+	 *
+	 * @var bool
+	 */
+	protected $should_use_new_api;
+
+	/**
 	 * PartnersEndpoint constructor.
 	 *
 	 * @param string                   $host The host.
@@ -95,6 +102,7 @@ class OrderTrackingEndpoint {
 	 * @param RequestData              $request_data The Request data.
 	 * @param ShipmentFactoryInterface $shipment_factory The ShipmentFactory.
 	 * @param string[]                 $allowed_statuses Allowed shipping statuses.
+	 * @param bool                     $should_use_new_api Whether new API should be used.
 	 */
 	public function __construct(
 		string $host,
@@ -102,14 +110,16 @@ class OrderTrackingEndpoint {
 		LoggerInterface $logger,
 		RequestData $request_data,
 		ShipmentFactoryInterface $shipment_factory,
-		array $allowed_statuses
+		array $allowed_statuses,
+		bool $should_use_new_api
 	) {
-		$this->host             = $host;
-		$this->bearer           = $bearer;
-		$this->logger           = $logger;
-		$this->request_data     = $request_data;
-		$this->shipment_factory = $shipment_factory;
-		$this->allowed_statuses = $allowed_statuses;
+		$this->host               = $host;
+		$this->bearer             = $bearer;
+		$this->logger             = $logger;
+		$this->request_data       = $request_data;
+		$this->shipment_factory   = $shipment_factory;
+		$this->allowed_statuses   = $allowed_statuses;
+		$this->should_use_new_api = $should_use_new_api;
 	}
 
 	/**
@@ -160,64 +170,33 @@ class OrderTrackingEndpoint {
 	 * @throws RuntimeException If problem adding.
 	 */
 	public function add_tracking_information( ShipmentInterface $shipment, int $order_id ) : void {
-		$wc_order        = wc_get_order( $order_id );
-		$paypal_order_id = $wc_order->get_meta( PayPalGateway::ORDER_ID_META_KEY );
-		$host            = trailingslashit( $this->host );
-		$url             = "{$host}v2/checkout/orders/{$paypal_order_id}/track";
-		$shipment_data   = $shipment->to_array( $order_id );
+		$wc_order = wc_get_order( $order_id );
+		if ( ! $wc_order instanceof WC_Order ) {
+			return;
+		}
 
-		unset( $shipment_data['transaction_id'] );
-		$shipment_data['capture_id'] = $shipment->transaction_id();
+		$shipment_request_data = $this->generate_request_data( $wc_order, $shipment );
 
-		$args = array(
-			'method'  => 'POST',
-			'headers' => $this->request_headers(),
-			'body'    => wp_json_encode( (array) apply_filters( 'woocommerce_paypal_payments_tracking_data_before_sending', $shipment_data, $order_id ) ),
-		);
+		$url  = $shipment_request_data['url'] ?? '';
+		$args = $shipment_request_data['args'] ?? array();
 
-		do_action( 'woocommerce_paypal_payments_before_tracking_is_added', $order_id, $shipment_data );
+		if ( ! $url || empty( $args ) ) {
+			$this->throw_runtime_exception( $shipment_request_data, 'create' );
+		}
 
 		$response = $this->request( $url, $args );
 
 		if ( is_wp_error( $response ) ) {
-			$error = new RuntimeException(
-				'Could not create order tracking information.'
+			$args = array(
+				'args'     => $args,
+				'response' => $response,
 			);
-			$this->logger->log(
-				'warning',
-				$error->getMessage(),
-				array(
-					'args'     => $args,
-					'response' => $response,
-				)
-			);
-			throw $error;
+			$this->throw_runtime_exception( $args, 'create' );
 		}
 
-		/**
-		 * Need to ignore Method WP_Error::offsetGet does not exist
-		 *
-		 * @psalm-suppress UndefinedMethod
-		 */
-		$json        = json_decode( $response['body'] );
 		$status_code = (int) wp_remote_retrieve_response_code( $response );
-		if ( 201 !== $status_code ) {
-			$error = new PayPalApiException(
-				$json,
-				$status_code
-			);
-			$this->logger->log(
-				'warning',
-				sprintf(
-					'Failed to create order tracking information. PayPal API response: %1$s',
-					$error->getMessage()
-				),
-				array(
-					'args'     => $args,
-					'response' => $response,
-				)
-			);
-			throw $error;
+		if ( 201 !== $status_code && ! is_wp_error( $response ) ) {
+			$this->throw_paypal_api_exception( $status_code, $args, $response, 'create' );
 		}
 
 		$this->save_tracking_metadata( $wc_order, $shipment->tracking_number(), array_keys( $shipment->line_items() ) );
@@ -237,7 +216,7 @@ class OrderTrackingEndpoint {
 		$host          = trailingslashit( $this->host );
 		$tracker_id    = $this->find_tracker_id( $shipment->transaction_id(), $shipment->tracking_number() );
 		$url           = "{$host}v1/shipping/trackers/{$tracker_id}";
-		$shipment_data = $shipment->to_array( $order_id );
+		$shipment_data = $shipment->to_array();
 
 		$args = array(
 			'method'  => 'PUT',
@@ -250,44 +229,16 @@ class OrderTrackingEndpoint {
 		$response = $this->request( $url, $args );
 
 		if ( is_wp_error( $response ) ) {
-			$error = new RuntimeException(
-				'Could not update order tracking information.'
+			$args = array(
+				'args'     => $args,
+				'response' => $response,
 			);
-			$this->logger->log(
-				'warning',
-				$error->getMessage(),
-				array(
-					'args'     => $args,
-					'response' => $response,
-				)
-			);
-			throw $error;
+			$this->throw_runtime_exception( $args, 'update' );
 		}
 
-		/**
-		 * Need to ignore Method WP_Error::offsetGet does not exist
-		 *
-		 * @psalm-suppress UndefinedMethod
-		 */
-		$json        = json_decode( $response['body'] );
 		$status_code = (int) wp_remote_retrieve_response_code( $response );
-		if ( 204 !== $status_code ) {
-			$error = new PayPalApiException(
-				$json,
-				$status_code
-			);
-			$this->logger->log(
-				'warning',
-				sprintf(
-					'Failed to update the order tracking information. PayPal API response: %1$s',
-					$error->getMessage()
-				),
-				array(
-					'args'     => $args,
-					'response' => $response,
-				)
-			);
-			throw $error;
+		if ( 204 !== $status_code && ! is_wp_error( $response ) ) {
+			$this->throw_paypal_api_exception( $status_code, $args, $response, 'update' );
 		}
 
 		do_action( 'woocommerce_paypal_payments_after_tracking_is_updated', $order_id, $response );
@@ -303,7 +254,11 @@ class OrderTrackingEndpoint {
 	 * @throws RuntimeException If problem getting.
 	 */
 	public function get_tracking_information( int $wc_order_id, string $tracking_number ) : ?ShipmentInterface {
-		$wc_order   = wc_get_order( $wc_order_id );
+		$wc_order = wc_get_order( $wc_order_id );
+		if ( ! $wc_order instanceof WC_Order ) {
+			return null;
+		}
+
 		$host       = trailingslashit( $this->host );
 		$tracker_id = $this->find_tracker_id( $wc_order->get_transaction_id(), $tracking_number );
 		$url        = "{$host}v1/shipping/trackers/{$tracker_id}";
@@ -316,18 +271,11 @@ class OrderTrackingEndpoint {
 		$response = $this->request( $url, $args );
 
 		if ( is_wp_error( $response ) ) {
-			$error = new RuntimeException(
-				'Could not fetch the tracking information.'
+			$args = array(
+				'args'     => $args,
+				'response' => $response,
 			);
-			$this->logger->log(
-				'warning',
-				$error->getMessage(),
-				array(
-					'args'     => $args,
-					'response' => $response,
-				)
-			);
-			throw $error;
+			$this->throw_runtime_exception( $args, 'fetch' );
 		}
 
 		/**
@@ -346,15 +294,18 @@ class OrderTrackingEndpoint {
 	}
 
 	/**
-	 * Gets the tracking information of a given order.
+	 * Gets the list of shipments of a given order.
 	 *
 	 * @param int $wc_order_id The order ID.
-	 * @return array|null The tracking information.
-	 * @psalm-return TrackingInfo|null
+	 * @return ShipmentInterface[] The list of shipments.
 	 * @throws RuntimeException If problem getting.
 	 */
 	public function list_tracking_information( int $wc_order_id ) : ?array {
-		$wc_order       = wc_get_order( $wc_order_id );
+		$wc_order = wc_get_order( $wc_order_id );
+		if ( ! $wc_order instanceof WC_Order ) {
+			return array();
+		}
+
 		$host           = trailingslashit( $this->host );
 		$transaction_id = $wc_order->get_transaction_id();
 		$url            = "{$host}v1/shipping/trackers?transaction_id={$transaction_id}";
@@ -367,18 +318,11 @@ class OrderTrackingEndpoint {
 		$response = $this->request( $url, $args );
 
 		if ( is_wp_error( $response ) ) {
-			$error = new RuntimeException(
-				'Could not fetch the tracking information.'
+			$args = array(
+				'args'     => $args,
+				'response' => $response,
 			);
-			$this->logger->log(
-				'warning',
-				$error->getMessage(),
-				array(
-					'args'     => $args,
-					'response' => $response,
-				)
-			);
-			throw $error;
+			$this->throw_runtime_exception( $args, 'fetch' );
 		}
 
 		/**
@@ -455,8 +399,7 @@ class OrderTrackingEndpoint {
 	/**
 	 * Validates the requested tracking info.
 	 *
-	 * @param array $tracking_info A map of tracking information keys to values.
-	 * @psalm-param TrackingInfo $tracking_info
+	 * @param array<string, mixed> $tracking_info A map of tracking information keys to values.
 	 * @return void
 	 * @throws RuntimeException If validation failed.
 	 */
@@ -525,5 +468,89 @@ class OrderTrackingEndpoint {
 
 		$wc_order->update_meta_data( OrderTrackingModule::PPCP_TRACKING_INFO_META_NAME, $tracking_meta );
 		$wc_order->save();
+	}
+
+	/**
+	 * Generates the request data.
+	 *
+	 * @param WC_Order          $wc_order The WC order.
+	 * @param ShipmentInterface $shipment The shipment.
+	 * @return array
+	 */
+	protected function generate_request_data( WC_Order $wc_order, ShipmentInterface $shipment ): array {
+		$paypal_order_id = $wc_order->get_meta( PayPalGateway::ORDER_ID_META_KEY );
+		$host            = trailingslashit( $this->host );
+		$shipment_data   = $shipment->to_array();
+
+		$old_api_data = $shipment_data;
+		unset( $old_api_data['items'] );
+		$request_shipment_data = array( 'trackers' => array( $old_api_data ) );
+
+		if ( $this->should_use_new_api ) {
+			unset( $shipment_data['transaction_id'] );
+			$shipment_data['capture_id'] = $shipment->transaction_id();
+			$request_shipment_data       = $shipment_data;
+		}
+
+		$url  = $this->should_use_new_api ? "{$host}v2/checkout/orders/{$paypal_order_id}/track" : "{$host}v1/shipping/trackers";
+		$args = array(
+			'method'  => 'POST',
+			'headers' => $this->request_headers(),
+			'body'    => wp_json_encode( (array) apply_filters( 'woocommerce_paypal_payments_tracking_data_before_sending', $request_shipment_data, $wc_order->get_id() ) ),
+		);
+
+		return array(
+			'url'  => $url,
+			'args' => $args,
+		);
+	}
+
+	/**
+	 * Throws PayPal APi exception and logs the error message with given arguments.
+	 *
+	 * @param int                  $status_code The response status code.
+	 * @param array<string, mixed> $args The arguments.
+	 * @param array                $response The request response.
+	 * @param string               $message_part The part of the message.
+	 * @return void
+	 *
+	 * @throws PayPalApiException PayPal APi exception.
+	 */
+	protected function throw_paypal_api_exception( int $status_code, array $args, array $response, string $message_part ): void {
+		$error = new PayPalApiException(
+			json_decode( $response['body'] ),
+			$status_code
+		);
+		$this->logger->log(
+			'warning',
+			sprintf(
+				"Failed to {$message_part} order tracking information. PayPal API response: %s",
+				$error->getMessage()
+			),
+			array(
+				'args'     => $args,
+				'response' => $response,
+			)
+		);
+		throw $error;
+	}
+
+	/**
+	 * Throws the exception && logs the error message with given arguments.
+	 *
+	 * @param array  $args The arguments.
+	 * @param string $message_part The part of the message.
+	 * @return void
+	 *
+	 * @throws RuntimeException The exception.
+	 */
+	protected function throw_runtime_exception( array $args, string $message_part ): void {
+		$error = new RuntimeException( "Could not {$message_part} the order tracking information." );
+		$this->logger->log(
+			'warning',
+			$error->getMessage(),
+			$args
+		);
+		throw $error;
 	}
 }

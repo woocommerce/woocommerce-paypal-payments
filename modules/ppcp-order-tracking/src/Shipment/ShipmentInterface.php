@@ -28,7 +28,7 @@ namespace WooCommerce\PayPalCommerce\OrderTracking\Shipment;
  *     tracking_number: string,
  *     status: string,
  *     carrier: string,
- *     line_items: array<LineItemMap>,
+ *     items: array<LineItemMap>,
  *     carrier_name_other?: string,
  * }
  */
