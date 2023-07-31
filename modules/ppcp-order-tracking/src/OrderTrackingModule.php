@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\OrderTracking;
 
+use WooCommerce\PayPalCommerce\Compat\AdminContextTrait;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use Exception;
@@ -19,7 +20,6 @@ use WC_Order;
 use WooCommerce\PayPalCommerce\OrderTracking\Assets\OrderEditPageAssets;
 use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
@@ -27,6 +27,8 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
  * Class OrderTrackingModule
  */
 class OrderTrackingModule implements ModuleInterface {
+
+	use AdminContextTrait;
 
 	/**
 	 * {@inheritDoc}
@@ -75,11 +77,7 @@ class OrderTrackingModule implements ModuleInterface {
 			 * @psalm-suppress MissingClosureParamType
 			 */
 			function ( $hook ) use ( $c ): void {
-				if ( $hook !== 'post.php' ) {
-					return;
-				}
-
-				if ( ! $this->is_paypal_order_edit_page() ) {
+				if ( $hook !== 'post.php' || ! $this->is_paypal_order_edit_page() ) {
 					return;
 				}
 
@@ -153,28 +151,5 @@ class OrderTrackingModule implements ModuleInterface {
 				}
 			}
 		);
-	}
-
-	/**
-	 * Checks if current post id is from a PayPal order.
-	 *
-	 * @return bool
-	 */
-	private function is_paypal_order_edit_page(): bool {
-		$post_id = isset( $_GET['post'] ) ? (int) $_GET['post'] : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		if ( ! $post_id ) {
-			return false;
-		}
-
-		$order = wc_get_order( $post_id );
-		if ( ! is_a( $order, WC_Order::class ) ) {
-			return false;
-		}
-
-		if ( ! $order->get_meta( PayPalGateway::ORDER_ID_META_KEY ) ) {
-			return false;
-		}
-
-		return true;
 	}
 }
