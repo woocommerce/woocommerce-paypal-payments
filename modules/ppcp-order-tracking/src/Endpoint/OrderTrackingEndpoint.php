@@ -184,6 +184,8 @@ class OrderTrackingEndpoint {
 			$this->throw_runtime_exception( $shipment_request_data, 'create' );
 		}
 
+		do_action( 'woocommerce_paypal_payments_before_tracking_is_added', $order_id, $shipment_request_data );
+
 		$response = $this->request( $url, $args );
 
 		if ( is_wp_error( $response ) ) {
