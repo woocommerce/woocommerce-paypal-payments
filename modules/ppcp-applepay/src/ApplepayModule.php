@@ -84,7 +84,7 @@ class ApplepayModule implements ModuleInterface {
 		$this->load_domain_association_file( $is_sandobx );
 		$this->render_buttons( $c );
 
-		$apple_payment_method->bootstrapAjaxRequest();
+		$apple_payment_method->bootstrap_ajax_request();
 	}
 
 	/**
@@ -123,7 +123,7 @@ class ApplepayModule implements ModuleInterface {
 	 */
 	public function load_assets(ContainerInterface $c ): void {
 		add_action(
-			'init',
+			'wp',
 			function () use ( $c ) {
 				wp_register_script(
 					'wc-ppcp-applepay-sdk',
@@ -134,25 +134,25 @@ class ApplepayModule implements ModuleInterface {
 				);
 				wp_enqueue_script( 'wc-ppcp-applepay-sdk' );
 				wp_register_script(
-					'wc-ppcp-paypal-sdk',
-					$c->get( 'applepay.paypal_sdk_url' ),
-					array(),
-					$c->get( 'ppcp.asset-version' ),
-					true
-				);
-				wp_enqueue_script( 'wc-ppcp-paypal-sdk' );
-				wp_register_script(
 					'wc-ppcp-applepay',
 					$c->get( 'applepay.script_url' ),
-					array( 'wc-ppcp-applepay-sdk', 'wc-ppcp-paypal-sdk' ),
+					array( 'wc-ppcp-applepay-sdk' ),
 					$c->get( 'ppcp.asset-version' ),
 					true
 				);
+				wp_register_style(
+					'wc-ppcp-applepay',
+					$c->get( 'applepay.style_url' ),
+					array(),
+					$c->get( 'ppcp.asset-version' )
+				);
+				wp_enqueue_style( 'wc-ppcp-applepay');
 				wp_enqueue_script( 'wc-ppcp-applepay' );
+				$data = $c->get( 'applepay.data_to_scripts' )->applePayScriptData();
 				wp_localize_script(
 					'wc-ppcp-applepay',
 					'wc_ppcp_applepay',
-					array()
+					$data
 				);
 			}
 		);
@@ -164,7 +164,7 @@ class ApplepayModule implements ModuleInterface {
 	protected function apple_pay_direct_button(): void {
 		?>
 		<div class="ppc-button-wrapper">
-			<div id="woocommerce_paypal_payments_applepayDirect-button">
+			<div id="applepay-container">
 				<?php wp_nonce_field( 'woocommerce-process_checkout', 'woocommerce-process-checkout-nonce' ); ?>
 			</div>
 		</div>
@@ -180,6 +180,10 @@ class ApplepayModule implements ModuleInterface {
 	public function render_buttons(ContainerInterface $c ): void {
 		$button_enabled_product = $c->get( 'applepay.setting_button_enabled_product' );
 		$button_enabled_cart    = $c->get( 'applepay.setting_button_enabled_cart' );
+		add_filter('woocommerce_paypal_payments_sdk_components_hook', function($components) {
+			$components[] = 'applepay';
+			return $components;
+		});
 		if ( $button_enabled_product ) {
 			$render_placeholder = apply_filters( 'woocommerce_paypal_payments_applepay_render_hook_product', 'woocommerce_after_add_to_cart_form' );
 			$render_placeholder = is_string( $render_placeholder ) ? $render_placeholder : 'woocommerce_after_add_to_cart_form';

@@ -40,8 +40,9 @@ return array(
 	},
 	'applepay.payment_method'                 => static function ( ContainerInterface $container ): ApplepayPaymentMethod {
 		$settings = $container->get( 'wcgateway.settings' );
+		$logger  = $container->get( 'woocommerce.logger.woocommerce' );
 
-		return new ApplepayPaymentMethod( $settings );
+		return new ApplepayPaymentMethod( $settings, $logger );
 	},
 	'applepay.url'                            => static function ( ContainerInterface $container ): string {
 		$path = realpath( __FILE__ );
@@ -56,21 +57,11 @@ return array(
 	'applepay.sdk_script_url'                 => static function ( ContainerInterface $container ): string {
 		return 'https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js';
 	},
-	'applepay.paypal_sdk_url'                 => static function ( ContainerInterface $container ): string {
-		$settings = $container->get( 'wcgateway.settings' );
-		if ( ! $settings->has( 'client_id' ) || ! $settings->has( 'merchant_id' ) ) {
-			return 'https://www.paypal.com/sdk/js?components=applepay';
-		}
-		$client_id = $settings->get( 'client_id' );
-		$shop_currency = get_woocommerce_currency();
-		$merchant_id = $settings->get( 'merchant_id' );
-		return 'https://www.paypal.com/sdk/js?client-id='
-			. $client_id . '&currency='
-			. $shop_currency . '&merchant-id='
-			. $merchant_id . '&components=applepay';
-	},
 	'applepay.script_url'                     => static function ( ContainerInterface $container ): string {
-		return trailingslashit( $container->get( 'applepay.url' ) ) . '/assets/js/paypal-applepay-direct.js';
+		return trailingslashit( $container->get( 'applepay.url' ) ) . '/assets/js/applePayDirect.js';
+	},
+	'applepay.style_url'                     => static function ( ContainerInterface $container ): string {
+		return trailingslashit( $container->get( 'applepay.url' ) ) . '/assets/css/applepaydirect.css';
 	},
 	'applepay.setting_button_enabled_product' => static function ( ContainerInterface $container ): bool {
 		$settings = $container->get( 'wcgateway.settings' );
@@ -87,5 +78,8 @@ return array(
 		return $settings->has( 'applepay_button_enabled_cart' ) ?
 			(bool) $settings->get( 'applepay_button_enabled_cart' ) :
 			false;
+	},
+	'applepay.data_to_scripts' => static function ( ContainerInterface $container ): DataToAppleButtonScripts {
+		return new DataToAppleButtonScripts();
 	},
 );

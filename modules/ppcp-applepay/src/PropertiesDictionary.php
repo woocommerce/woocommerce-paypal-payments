@@ -14,13 +14,6 @@ namespace WooCommerce\PayPalCommerce\Applepay;
  */
 class PropertiesDictionary {
 
-
-	public const VALIDATION_REQUIRED_FIELDS =
-		array(
-			self::WCNONCE,
-			self::VALIDATION_URL,
-		);
-
 	public const BILLING_CONTACT_INVALID = 'billing Contact Invalid';
 
 	public const CREATE_ORDER_SINGLE_PROD_REQUIRED_FIELDS =
@@ -58,8 +51,6 @@ class PropertiesDictionary {
 			self::NEED_SHIPPING,
 		);
 
-	public const VALIDATION_URL = 'validationUrl';
-
 	public const UPDATE_METHOD_SINGLE_PROD_REQUIRED_FIELDS =
 		array(
 			self::WCNONCE,
@@ -70,13 +61,13 @@ class PropertiesDictionary {
 			self::SIMPLIFIED_CONTACT,
 		);
 
-	public const PRODUCT_ID = 'productId';
+	public const PRODUCT_ID = 'product_id';
 
-	public const SIMPLIFIED_CONTACT = 'simplifiedContact';
+	public const SIMPLIFIED_CONTACT = 'simplified_contact';
 
-	public const SHIPPING_METHOD = 'shippingMethod';
+	public const SHIPPING_METHOD = 'shipping_method';
 
-	public const SHIPPING_CONTACT = 'shippingContact';
+	public const SHIPPING_CONTACT = 'shipping_contact';
 
 	public const SHIPPING_CONTACT_INVALID = 'shipping Contact Invalid';
 
@@ -91,23 +82,21 @@ class PropertiesDictionary {
 			self::SHIPPING_CONTACT,
 		);
 
-	public const PRODUCT_QUANTITY = 'productQuantity';
+	public const PRODUCT_QUANTITY = 'product_quantity';
 
-	public const CALLER_PAGE = 'callerPage';
+	public const CALLER_PAGE = 'caller_page';
 
-	public const BILLING_CONTACT = 'billingContact';
+	public const BILLING_CONTACT = 'billing_contact';
 
-	public const NEED_SHIPPING = 'needShipping';
+	public const NEED_SHIPPING = 'need_shipping';
 
-	public const UPDATE_SHIPPING_CONTACT = 'woocommerce_paypal_payments_update_shipping_contact';
+	public const UPDATE_SHIPPING_CONTACT = 'ppcp_update_shipping_contact';
 
-	public const UPDATE_SHIPPING_METHOD = 'woocommerce_paypal_payments_update_shipping_method';
+	public const UPDATE_SHIPPING_METHOD = 'ppcp_update_shipping_method';
 
-	public const VALIDATION = 'woocommerce_paypal_payments_validation';
+	public const CREATE_ORDER = 'ppcp_create_order';
 
-	public const CREATE_ORDER = 'woocommerce_paypal_payments_create_order';
+	public const CREATE_ORDER_CART = 'ppcp_create_order_cart';
 
-	public const CREATE_ORDER_CART = 'woocommerce_paypal_payments_create_order_cart';
-
-	public const REDIRECT = 'woocommerce_paypal_payments_redirect';
+	public const REDIRECT = 'ppcp_redirect';
 }
