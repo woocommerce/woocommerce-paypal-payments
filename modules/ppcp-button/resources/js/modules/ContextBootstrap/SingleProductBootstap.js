@@ -2,6 +2,8 @@ import UpdateCart from "../Helper/UpdateCart";
 import SingleProductActionHandler from "../ActionHandler/SingleProductActionHandler";
 import {hide, show} from "../Helper/Hiding";
 import BootstrapHelper from "../Helper/BootstrapHelper";
+import SimulateCart from "../Helper/SimulateCart";
+import {strRemoveWord, strAddWord, throttle} from "../Helper/Utils";
 
 class SingleProductBootstap {
     constructor(gateway, renderer, messages, errorHandler) {
@@ -11,6 +13,9 @@ class SingleProductBootstap {
         this.errorHandler = errorHandler;
         this.mutationObserver = new MutationObserver(this.handleChange.bind(this));
         this.formSelector = 'form.cart';
+
+        // Prevent simulate cart being called too many times in a burst.
+        this.simulateCartThrottled = throttle(this.simulateCart, 5000);
 
         this.renderer.onButtonsInit(this.gateway.button.wrapper, () => {
             this.handleChange();
@@ -38,10 +43,14 @@ class SingleProductBootstap {
         this.handleButtonStatus();
     }
 
-    handleButtonStatus() {
+    handleButtonStatus(simulateCart = true) {
         BootstrapHelper.handleButtonStatus(this, {
             formSelector: this.formSelector
         });
+
+        if (simulateCart) {
+            this.simulateCartThrottled();
+        }
     }
 
     init() {
@@ -53,12 +62,6 @@ class SingleProductBootstap {
 
         jQuery(document).on('change', this.formSelector, () => {
             this.handleChange();
-
-            setTimeout(() => { // Wait for the DOM to be fully updated
-                // For the moment renderWithAmount should only be done here to prevent undesired side effects due to priceAmount()
-                // not being correctly formatted in some cases, can be moved to handleButtonStatus() once this issue is fixed
-                this.messages.renderWithAmount(this.priceAmount());
-            }, 100);
         });
         this.mutationObserver.observe(form, { childList: true, subtree: true });
 
@@ -160,6 +163,62 @@ class SingleProductBootstap {
         this.renderer.render(
             actionHandler.configuration()
         );
+    }
+
+    simulateCart() {
+        const actionHandler = new SingleProductActionHandler(
+            null,
+            null,
+            this.form(),
+            this.errorHandler,
+        );
+
+        const hasSubscriptions = PayPalCommerceGateway.data_client_id.has_subscriptions
+            && PayPalCommerceGateway.data_client_id.paypal_subscriptions_enabled;
+
+        const products = hasSubscriptions
+            ? actionHandler.getSubscriptionProducts()
+            : actionHandler.getProducts();
+
+        (new SimulateCart(
+            this.gateway.ajax.simulate_cart.endpoint,
+            this.gateway.ajax.simulate_cart.nonce,
+        )).simulate((data) => {
+
+            this.messages.renderWithAmount(data.total);
+
+            let enableFunding = this.gateway.url_params['enable-funding'];
+            let disableFunding = this.gateway.url_params['disable-funding'];
+
+            for (const [fundingSource, funding] of Object.entries(data.funding)) {
+                if (funding.enabled === true) {
+                    enableFunding = strAddWord(enableFunding, fundingSource);
+                    disableFunding = strRemoveWord(disableFunding, fundingSource);
+                } else if (funding.enabled === false) {
+                    enableFunding = strRemoveWord(enableFunding, fundingSource);
+                    disableFunding = strAddWord(disableFunding, fundingSource);
+                }
+            }
+
+            if (
+                (enableFunding !== this.gateway.url_params['enable-funding']) ||
+                (disableFunding !== this.gateway.url_params['disable-funding'])
+            ) {
+                this.gateway.url_params['enable-funding'] = enableFunding;
+                this.gateway.url_params['disable-funding'] = disableFunding;
+                jQuery(this.gateway.button.wrapper).trigger('ppcp-reload-buttons');
+            }
+
+            if (typeof data.button.is_disabled === 'boolean') {
+                this.gateway.button.is_disabled = data.button.is_disabled;
+            }
+            if (typeof data.messages.is_hidden === 'boolean') {
+                this.gateway.messages.is_hidden = data.messages.is_hidden;
+            }
+
+            this.handleButtonStatus(false);
+
+        }, products);
     }
 }
 

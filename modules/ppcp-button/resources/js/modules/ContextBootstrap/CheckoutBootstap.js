@@ -6,7 +6,6 @@ import {
     PaymentMethods
 } from "../Helper/CheckoutMethodState";
 import BootstrapHelper from "../Helper/BootstrapHelper";
-import {disable, enable} from "../Helper/ButtonDisabler";
 
 class CheckoutBootstap {
     constructor(gateway, renderer, messages, spinner, errorHandler) {
