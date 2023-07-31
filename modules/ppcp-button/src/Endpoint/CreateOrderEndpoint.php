@@ -19,7 +19,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentMethod;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
@@ -32,7 +31,6 @@ use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Subscription\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcGateway\CardBillingMode;
-use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
@@ -167,6 +165,13 @@ class CreateOrderEndpoint implements EndpointInterface {
 	protected $logger;
 
 	/**
+	 * The form data, or empty if not available.
+	 *
+	 * @var array
+	 */
+	private $form = array();
+
+	/**
 	 * CreateOrderEndpoint constructor.
 	 *
 	 * @param RequestData               $request_data The RequestData object.
@@ -282,18 +287,20 @@ class CreateOrderEndpoint implements EndpointInterface {
 
 			$this->set_bn_code( $data );
 
-			$form_fields = $data['form'] ?? null;
+			if ( isset( $data['form'] ) ) {
+				$this->form = $data['form'];
+			}
 
 			if ( $this->early_validation_enabled
-				&& is_array( $form_fields )
+				&& $this->form
 				&& 'checkout' === $data['context']
 				&& in_array( $payment_method, array( PayPalGateway::ID, CardButtonGateway::ID ), true )
 			) {
-				$this->validate_form( $form_fields );
+				$this->validate_form( $this->form );
 			}
 
-			if ( 'pay-now' === $data['context'] && is_array( $form_fields ) && get_option( 'woocommerce_terms_page_id', '' ) !== '' ) {
-				$this->validate_paynow_form( $form_fields );
+			if ( 'pay-now' === $data['context'] && $this->form && get_option( 'woocommerce_terms_page_id', '' ) !== '' ) {
+				$this->validate_paynow_form( $this->form );
 			}
 
 			try {
@@ -454,7 +461,6 @@ class CreateOrderEndpoint implements EndpointInterface {
 				$shipping_preference,
 				$payer,
 				null,
-				$this->payment_method(),
 				'',
 				$action
 			);
@@ -477,8 +483,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 					array( $this->purchase_unit ),
 					$shipping_preference,
 					$payer,
-					null,
-					$this->payment_method()
+					null
 				);
 			}
 
@@ -516,11 +521,9 @@ class CreateOrderEndpoint implements EndpointInterface {
 			$payer = $this->payer_factory->from_paypal_response( json_decode( wp_json_encode( $data['payer'] ) ) );
 		}
 
-		if ( ! $payer && isset( $data['form'] ) ) {
-			$form_fields = $data['form'];
-
-			if ( is_array( $form_fields ) && isset( $form_fields['billing_email'] ) && '' !== $form_fields['billing_email'] ) {
-				return $this->payer_factory->from_checkout_form( $form_fields );
+		if ( ! $payer && $this->form ) {
+			if ( isset( $this->form['billing_email'] ) && '' !== $this->form['billing_email'] ) {
+				return $this->payer_factory->from_checkout_form( $this->form );
 			}
 		}
 
@@ -540,24 +543,6 @@ class CreateOrderEndpoint implements EndpointInterface {
 
 		$this->session_handler->replace_bn_code( $bn_code );
 		$this->api_endpoint->with_bn_code( $bn_code );
-	}
-
-	/**
-	 * Returns the PaymentMethod object for the order.
-	 *
-	 * @return PaymentMethod
-	 */
-	private function payment_method() : PaymentMethod {
-		try {
-			$payee_preferred = $this->settings->has( 'payee_preferred' ) && $this->settings->get( 'payee_preferred' ) ?
-				PaymentMethod::PAYEE_PREFERRED_IMMEDIATE_PAYMENT_REQUIRED
-				: PaymentMethod::PAYEE_PREFERRED_UNRESTRICTED;
-		} catch ( NotFoundException $exception ) {
-			$payee_preferred = PaymentMethod::PAYEE_PREFERRED_UNRESTRICTED;
-		}
-
-		$payment_method = new PaymentMethod( $payee_preferred );
-		return $payment_method;
 	}
 
 	/**

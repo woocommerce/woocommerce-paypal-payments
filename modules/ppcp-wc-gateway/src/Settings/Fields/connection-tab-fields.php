@@ -197,6 +197,11 @@ return function ( ContainerInterface $container, array $fields ): array {
 		'toggle_manual_input'                           => array(
 			'type'         => 'ppcp-text',
 			'text'         => '<button type="button" id="ppcp[toggle_manual_input]">' . __( 'Toggle to manual credential input', 'woocommerce-paypal-payments' ) . '</button>',
+			'description'  => sprintf(
+				'%1$s <a href="https://woocommerce.com/document/woocommerce-paypal-payments/#manual-credential-input" target="_blank">%2$s</a>',
+				esc_html__( 'Further information on manual credential input:', 'woocommerce-paypal-payments' ),
+				esc_html__( 'documentation', 'woocommerce-paypal-payments' )
+			),
 			'classes'      => array( 'ppcp-onboarding-element' ),
 			'screens'      => array(
 				State::STATE_START,
@@ -245,32 +250,40 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
 		'merchant_id_production'                        => array(
-			'title'        => __( 'Live Merchant Id', 'woocommerce-paypal-payments' ),
-			'classes'      => array( State::STATE_ONBOARDED === $state->production_state() ? 'onboarded' : '', 'ppcp-always-shown-element' ),
-			'type'         => 'ppcp-text-input',
-			'desc_tip'     => true,
-			'description'  => __( 'The merchant id of your account ', 'woocommerce-paypal-payments' ),
-			'default'      => false,
-			'screens'      => array(
+			'title'             => __( 'Live Merchant Id', 'woocommerce-paypal-payments' ),
+			'classes'           => array( State::STATE_ONBOARDED === $state->production_state() ? 'onboarded' : '', 'ppcp-always-shown-element' ),
+			'type'              => 'text',
+			'desc_tip'          => true,
+			'description'       => __( 'The merchant id of your account. Should be exactly 13 alphanumeric uppercase letters.', 'woocommerce-paypal-payments' ),
+			'maxlength'         => 13,
+			'custom_attributes' => array(
+				'pattern'      => '[A-Z0-9]{13}',
+				'autocomplete' => 'off',
+			),
+			'default'           => false,
+			'screens'           => array(
 				State::STATE_START,
 				State::STATE_ONBOARDED,
 			),
-			'requirements' => array(),
-			'gateway'      => Settings::CONNECTION_TAB_ID,
+			'requirements'      => array(),
+			'gateway'           => Settings::CONNECTION_TAB_ID,
 		),
 		'client_id_production'                          => array(
-			'title'        => __( 'Live Client Id', 'woocommerce-paypal-payments' ),
-			'classes'      => array( State::STATE_ONBOARDED === $state->production_state() ? 'onboarded' : '', 'ppcp-always-shown-element' ),
-			'type'         => 'ppcp-text-input',
-			'desc_tip'     => true,
-			'description'  => __( 'The client id of your api ', 'woocommerce-paypal-payments' ),
-			'default'      => false,
-			'screens'      => array(
+			'title'             => __( 'Live Client Id', 'woocommerce-paypal-payments' ),
+			'classes'           => array( State::STATE_ONBOARDED === $state->production_state() ? 'onboarded' : '', 'ppcp-always-shown-element' ),
+			'type'              => 'text',
+			'desc_tip'          => true,
+			'description'       => __( 'The client id of your api ', 'woocommerce-paypal-payments' ),
+			'custom_attributes' => array(
+				'autocomplete' => 'off',
+			),
+			'default'           => false,
+			'screens'           => array(
 				State::STATE_START,
 				State::STATE_ONBOARDED,
 			),
-			'requirements' => array(),
-			'gateway'      => Settings::CONNECTION_TAB_ID,
+			'requirements'      => array(),
+			'gateway'           => Settings::CONNECTION_TAB_ID,
 		),
 		'client_secret_production'                      => array(
 			'title'        => __( 'Live Secret Key', 'woocommerce-paypal-payments' ),
@@ -303,32 +316,40 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
 		'merchant_id_sandbox'                           => array(
-			'title'        => __( 'Sandbox Merchant Id', 'woocommerce-paypal-payments' ),
-			'classes'      => array( State::STATE_ONBOARDED === $state->sandbox_state() ? 'onboarded' : '', 'ppcp-always-shown-element' ),
-			'type'         => 'ppcp-text-input',
-			'desc_tip'     => true,
-			'description'  => __( 'The merchant id of your account ', 'woocommerce-paypal-payments' ),
-			'default'      => false,
-			'screens'      => array(
+			'title'             => __( 'Sandbox Merchant Id', 'woocommerce-paypal-payments' ),
+			'classes'           => array( State::STATE_ONBOARDED === $state->sandbox_state() ? 'onboarded' : '', 'ppcp-always-shown-element' ),
+			'type'              => 'text',
+			'desc_tip'          => true,
+			'description'       => __( 'The merchant id of your account. Should be exactly 13 alphanumeric uppercase letters.', 'woocommerce-paypal-payments' ),
+			'maxlength'         => 13,
+			'custom_attributes' => array(
+				'pattern'      => '[A-Z0-9]{13}',
+				'autocomplete' => 'off',
+			),
+			'default'           => false,
+			'screens'           => array(
 				State::STATE_START,
 				State::STATE_ONBOARDED,
 			),
-			'requirements' => array(),
-			'gateway'      => Settings::CONNECTION_TAB_ID,
+			'requirements'      => array(),
+			'gateway'           => Settings::CONNECTION_TAB_ID,
 		),
 		'client_id_sandbox'                             => array(
-			'title'        => __( 'Sandbox Client Id', 'woocommerce-paypal-payments' ),
-			'classes'      => array( State::STATE_ONBOARDED === $state->sandbox_state() ? 'onboarded' : '', 'ppcp-always-shown-element' ),
-			'type'         => 'ppcp-text-input',
-			'desc_tip'     => true,
-			'description'  => __( 'The client id of your api ', 'woocommerce-paypal-payments' ),
-			'default'      => false,
-			'screens'      => array(
+			'title'             => __( 'Sandbox Client Id', 'woocommerce-paypal-payments' ),
+			'classes'           => array( State::STATE_ONBOARDED === $state->sandbox_state() ? 'onboarded' : '', 'ppcp-always-shown-element' ),
+			'type'              => 'text',
+			'desc_tip'          => true,
+			'description'       => __( 'The client id of your api ', 'woocommerce-paypal-payments' ),
+			'custom_attributes' => array(
+				'autocomplete' => 'off',
+			),
+			'default'           => false,
+			'screens'           => array(
 				State::STATE_START,
 				State::STATE_ONBOARDED,
 			),
-			'requirements' => array(),
-			'gateway'      => Settings::CONNECTION_TAB_ID,
+			'requirements'      => array(),
+			'gateway'           => Settings::CONNECTION_TAB_ID,
 		),
 		'client_secret_sandbox'                         => array(
 			'title'        => __( 'Sandbox Secret Key', 'woocommerce-paypal-payments' ),
@@ -422,6 +443,20 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#troubleshooting" target="_blank">',
 				'</a>'
 			),
+		),
+		'soft_descriptor'                               => array(
+			'title'        => __( 'Soft Descriptor', 'woocommerce-paypal-payments' ),
+			'type'         => 'text',
+			'desc_tip'     => true,
+			'description'  => __( 'The soft descriptor is the dynamic text used to construct the statement descriptor that appears on a payer\'s card statement. Text field, max value of 22 characters.', 'woocommerce-paypal-payments' ),
+			'maxlength'    => 22,
+			'default'      => '',
+			'screens'      => array(
+				State::STATE_START,
+				State::STATE_ONBOARDED,
+			),
+			'requirements' => array(),
+			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
 		'prefix'                                        => array(
 			'title'             => __( 'Invoice prefix', 'woocommerce-paypal-payments' ),

@@ -1,4 +1,7 @@
 import merge from "deepmerge";
+import {loadScript} from "@paypal/paypal-js";
+import {keysToCamelCase} from "../Helper/Utils";
+import widgetBuilder from "./WidgetBuilder";
 
 class Renderer {
     constructor(creditCardRenderer, defaultSettings, onSmartButtonClick, onSmartButtonsInit) {
@@ -11,6 +14,8 @@ class Renderer {
         this.onButtonsInitListeners = {};
 
         this.renderedSources = new Set();
+
+        this.reloadEventName = 'ppcp-reload-buttons';
     }
 
     render(contextConfig, settingsOverride = {}, contextConfigOverride = () => {}) {
@@ -68,7 +73,9 @@ class Renderer {
     }
 
     renderButtons(wrapper, style, contextConfig, hasEnabledSeparateGateways, fundingSource = null) {
-        if (! document.querySelector(wrapper) || this.isAlreadyRendered(wrapper, fundingSource, hasEnabledSeparateGateways) || 'undefined' === typeof paypal.Buttons ) {
+        if (! document.querySelector(wrapper) || this.isAlreadyRendered(wrapper, fundingSource, hasEnabledSeparateGateways) ) {
+            // Try to render registered buttons again in case they were removed from the DOM by an external source.
+            widgetBuilder.renderButtons([wrapper, fundingSource]);
             return;
         }
 
@@ -76,35 +83,50 @@ class Renderer {
             contextConfig.fundingSource = fundingSource;
         }
 
-        const btn = paypal.Buttons({
-            style,
-            ...contextConfig,
-            onClick: this.onSmartButtonClick,
-            onInit: (data, actions) => {
-                if (this.onSmartButtonsInit) {
-                    this.onSmartButtonsInit(data, actions);
-                }
-                this.handleOnButtonsInit(wrapper, data, actions);
-            },
-        });
-        if (!btn.isEligible()) {
-            return;
+        const buttonsOptions = () => {
+            return {
+                style,
+                ...contextConfig,
+                onClick: this.onSmartButtonClick,
+                onInit: (data, actions) => {
+                    if (this.onSmartButtonsInit) {
+                        this.onSmartButtonsInit(data, actions);
+                    }
+                    this.handleOnButtonsInit(wrapper, data, actions);
+                },
+            }
         }
 
-        btn.render(wrapper);
+        jQuery(document)
+            .off(this.reloadEventName, wrapper)
+            .on(this.reloadEventName, wrapper, (event, settingsOverride = {}, triggeredFundingSource) => {
 
-        this.renderedSources.add(wrapper + fundingSource ?? '');
+                // Only accept events from the matching funding source
+                if (fundingSource && triggeredFundingSource && (triggeredFundingSource !== fundingSource)) {
+                    return;
+                }
+
+                const settings = merge(this.defaultSettings, settingsOverride);
+                let scriptOptions = keysToCamelCase(settings.url_params);
+                scriptOptions = merge(scriptOptions, settings.script_attributes);
+
+                loadScript(scriptOptions).then((paypal) => {
+                    widgetBuilder.setPaypal(paypal);
+                    widgetBuilder.registerButtons([wrapper, fundingSource], buttonsOptions());
+                    widgetBuilder.renderAll();
+                });
+            });
+
+        this.renderedSources.add(wrapper + (fundingSource ?? ''));
+
+        if (typeof paypal !== 'undefined' && typeof paypal.Buttons !== 'undefined') {
+            widgetBuilder.registerButtons([wrapper, fundingSource], buttonsOptions());
+            widgetBuilder.renderButtons([wrapper, fundingSource]);
+        }
     }
 
-    isAlreadyRendered(wrapper, fundingSource, hasEnabledSeparateGateways) {
-        // Simply check that has child nodes when we do not need to render buttons separately,
-        // this will reduce the risk of breaking with different themes/plugins
-        // and on the cart page (where we also do not need to render separately), which may fully reload this part of the page.
-        // Ideally we should also find a way to detect such full reloads and remove the corresponding keys from the set.
-        if (!hasEnabledSeparateGateways) {
-            return document.querySelector(wrapper).hasChildNodes();
-        }
-        return this.renderedSources.has(wrapper + fundingSource ?? '');
+    isAlreadyRendered(wrapper, fundingSource) {
+        return this.renderedSources.has(wrapper + (fundingSource ?? ''));
     }
 
     disableCreditCardFields() {

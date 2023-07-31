@@ -6,7 +6,6 @@ import {
     PaymentMethods
 } from "../Helper/CheckoutMethodState";
 import BootstrapHelper from "../Helper/BootstrapHelper";
-import {disable, enable} from "../Helper/ButtonDisabler";
 
 class CheckoutBootstap {
     constructor(gateway, renderer, messages, spinner, errorHandler) {
@@ -15,6 +14,7 @@ class CheckoutBootstap {
         this.messages = messages;
         this.spinner = spinner;
         this.errorHandler = errorHandler;
+        this.lastAmount = this.gateway.messages.amount;
 
         this.standardOrderButtonSelector = ORDER_BUTTON_SELECTOR;
 
@@ -36,6 +36,27 @@ class CheckoutBootstap {
         jQuery(document.body).on('updated_checkout', () => {
             this.render()
             this.handleButtonStatus();
+
+            if (this.shouldRenderMessages()) { // currently we need amount only for Pay Later
+                fetch(
+                    this.gateway.ajax.cart_script_params.endpoint,
+                    {
+                        method: 'GET',
+                        credentials: 'same-origin',
+                    }
+                )
+                    .then(result => result.json())
+                    .then(result => {
+                        if (! result.success) {
+                            return;
+                        }
+
+                        if (this.lastAmount !== result.data.amount) {
+                            this.lastAmount = result.data.amount;
+                            this.updateUi();
+                        }
+                    });
+            }
         });
 
         jQuery(document.body).on('updated_checkout payment_method_selected', () => {
@@ -117,8 +138,8 @@ class CheckoutBootstap {
             setVisible(wrapper, gatewayId === currentPaymentMethod);
         }
 
-        if (isPaypal && !isFreeTrial) {
-            this.messages.render();
+        if (this.shouldRenderMessages()) {
+            this.messages.renderWithAmount(this.lastAmount);
         }
 
         if (isCard) {
@@ -128,6 +149,12 @@ class CheckoutBootstap {
                 this.enableCreditCardFields();
             }
         }
+    }
+
+    shouldRenderMessages() {
+        return getCurrentPaymentMethod() === PaymentMethods.PAYPAL
+            && !PayPalCommerceGateway.is_free_trial_cart
+            && this.messages.shouldRender();
     }
 
     disableCreditCardFields() {
