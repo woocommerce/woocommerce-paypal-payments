@@ -136,7 +136,7 @@ class SettingsListener {
 	 *
 	 * @var int
 	 */
-	private $onboarding_max_retries = 3;
+	private $onboarding_max_retries = 5;
 
 	/**
 	 * Delay between onboarding URL retries.
@@ -238,7 +238,7 @@ class SettingsListener {
 		}
 
 		// Process token validation.
-		$onboarding_token_sample = ( (string) substr( $onboarding_token, 0, 4 ) ) . '...' . ( (string) substr( $onboarding_token, -4 ) );
+		$onboarding_token_sample = ( (string) substr( $onboarding_token, 0, 2 ) ) . '...' . ( (string) substr( $onboarding_token, -6 ) );
 		$this->logger->debug( 'Validating onboarding ppcpToken: ' . $onboarding_token_sample );
 
 		if ( ! OnboardingUrl::validate_token_and_delete( $this->signup_link_cache, $onboarding_token, get_current_user_id() ) ) {
