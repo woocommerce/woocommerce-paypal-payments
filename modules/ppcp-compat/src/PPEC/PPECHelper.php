@@ -79,7 +79,7 @@ class PPECHelper {
 			$result = $wpdb->get_var(
 				$wpdb->prepare(
 					"SELECT 1 FROM {$wpdb->wc_orders} WHERE payment_method = %s",
-					'ppec_paypal'
+					self::PPEC_GATEWAY_ID
 				)
 			);
 		} else {

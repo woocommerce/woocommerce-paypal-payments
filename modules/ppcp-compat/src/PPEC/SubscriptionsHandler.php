@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Compat\PPEC;
 
+use Automattic\WooCommerce\Utilities\OrderUtil;
 use stdClass;
 use WooCommerce\PayPalCommerce\Subscription\RenewalHandler;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
@@ -183,22 +184,30 @@ class SubscriptionsHandler {
 			return true;
 		}
 
-		// Are we on the WC > Subscriptions screen?
 		// phpcs:ignore WordPress.Security.NonceVerification
-		$post_type = wc_clean( wp_unslash( $_GET['post_type'] ?? $_POST['post_type'] ?? '' ) );
+		$order_id = wc_clean( wp_unslash( $_GET['post'] ?? $_POST['post_ID'] ?? '' ) );
+		if ( ! $order_id ) {
+			return false;
+		}
+
+		// Are we on the WC > Subscriptions screen?
+		/**
+		 * Class exist in WooCommerce.
+		 *
+		 * @psalm-suppress UndefinedClass
+		 */
+		$post_type = class_exists( OrderUtil::class ) && OrderUtil::custom_orders_table_usage_is_enabled()
+			? OrderUtil::get_order_type( $order_id ) ?? ''
+			// phpcs:ignore WordPress.Security.NonceVerification
+			: wc_clean( wp_unslash( $_GET['post_type'] ?? $_POST['post_type'] ?? '' ) );
 		if ( $post_type === 'shop_subscription' ) {
 			return true;
 		}
 
 		// Are we editing an order or subscription tied to PPEC?
 		// phpcs:ignore WordPress.Security.NonceVerification
-		$order_id = wc_clean( wp_unslash( $_GET['post'] ?? $_POST['post_ID'] ?? '' ) );
-		if ( $order_id ) {
-			$order = wc_get_order( $order_id );
-			return ( $order && PPECHelper::PPEC_GATEWAY_ID === $order->get_payment_method() );
-		}
-
-		return false;
+		$order = wc_get_order( $order_id );
+		return ( $order && PPECHelper::PPEC_GATEWAY_ID === $order->get_payment_method() );
 	}
 
 }
