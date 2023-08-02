@@ -145,7 +145,7 @@ class CheckoutOrderApproved implements RequestHandler {
 				return $this->success_response();
 			}
 
-			if ( ! (bool) apply_filters( 'woocommerce_paypal_payments_order_approved_webhook_can_create_wc_order', true ) ) {
+			if ( ! (bool) apply_filters( 'woocommerce_paypal_payments_order_approved_webhook_can_create_wc_order', false ) ) {
 				return $this->success_response();
 			}
 
