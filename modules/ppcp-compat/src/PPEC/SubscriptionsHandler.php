@@ -184,10 +184,12 @@ class SubscriptionsHandler {
 			return true;
 		}
 
+		// Are we editing an order or subscription tied to PPEC?
 		// phpcs:ignore WordPress.Security.NonceVerification
-		$order_id = wc_clean( wp_unslash( $_GET['post'] ?? $_POST['post_ID'] ?? '' ) );
-		if ( ! $order_id ) {
-			return false;
+		$order_id = wc_clean( wp_unslash( $_GET['id'] ?? $_GET['post'] ?? $_POST['post_ID'] ?? '' ) );
+		if ( $order_id ) {
+			$order = wc_get_order( $order_id );
+			return ( $order && PPECHelper::PPEC_GATEWAY_ID === $order->get_payment_method() );
 		}
 
 		// Are we on the WC > Subscriptions screen?
@@ -196,18 +198,15 @@ class SubscriptionsHandler {
 		 *
 		 * @psalm-suppress UndefinedClass
 		 */
-		$post_type = class_exists( OrderUtil::class ) && OrderUtil::custom_orders_table_usage_is_enabled()
-			? OrderUtil::get_order_type( $order_id ) ?? ''
+		$post_type_or_page = class_exists( OrderUtil::class ) && OrderUtil::custom_orders_table_usage_is_enabled()
+			// phpcs:ignore WordPress.Security.NonceVerification
+			? wc_clean( wp_unslash( $_GET['page'] ?? '' ) )
 			// phpcs:ignore WordPress.Security.NonceVerification
 			: wc_clean( wp_unslash( $_GET['post_type'] ?? $_POST['post_type'] ?? '' ) );
-		if ( $post_type === 'shop_subscription' ) {
+		if ( $post_type_or_page === 'shop_subscription' || $post_type_or_page === 'wc-orders--shop_subscription' ) {
 			return true;
 		}
 
-		// Are we editing an order or subscription tied to PPEC?
-		// phpcs:ignore WordPress.Security.NonceVerification
-		$order = wc_get_order( $order_id );
-		return ( $order && PPECHelper::PPEC_GATEWAY_ID === $order->get_payment_method() );
+		return false;
 	}
-
 }
