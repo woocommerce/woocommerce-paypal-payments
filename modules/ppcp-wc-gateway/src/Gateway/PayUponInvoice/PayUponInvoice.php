@@ -513,6 +513,12 @@ class PayUponInvoice {
 		add_action(
 			'add_meta_boxes',
 			function( string $post_type ) {
+				/**
+				 * Class and function exist in WooCommerce.
+				 *
+				 * @psalm-suppress UndefinedClass
+				 * @psalm-suppress UndefinedFunction
+				 */
 				$screen = wc_get_container()->get( CustomOrdersTableController::class )->custom_orders_table_usage_is_enabled()
 					? wc_get_page_screen_id( 'shop-order' )
 					: 'shop_order';
