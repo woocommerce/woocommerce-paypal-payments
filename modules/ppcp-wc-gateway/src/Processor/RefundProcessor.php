@@ -20,7 +20,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\AuthorizationStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payments;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\Refund;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\RefundCapture;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
@@ -151,7 +151,7 @@ class RefundProcessor {
 		}
 
 		$capture = $captures[0];
-		$refund  = new Refund(
+		$refund  = new RefundCapture(
 			$capture,
 			$capture->invoice_id(),
 			$reason,

@@ -1,6 +1,8 @@
 <?php
 /**
- * The refund object.
+ * The refund entity.
+ *
+ * @link https://developer.paypal.com/docs/api/orders/v2/#definition-refund
  *
  * @package WooCommerce\PayPalCommerce\ApiClient\Entity
  */
@@ -15,11 +17,32 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Entity;
 class Refund {
 
 	/**
-	 * The Capture.
+	 * The ID.
 	 *
-	 * @var Capture
+	 * @var string
 	 */
-	private $capture;
+	private $id;
+
+	/**
+	 * The status.
+	 *
+	 * @var RefundStatus
+	 */
+	private $status;
+
+	/**
+	 * The amount.
+	 *
+	 * @var Amount
+	 */
+	private $amount;
+
+	/**
+	 * The detailed breakdown of the refund activity (fees, ...).
+	 *
+	 * @var SellerPayableBreakdown|null
+	 */
+	private $seller_payable_breakdown;
 
 	/**
 	 * The invoice id.
@@ -29,90 +52,13 @@ class Refund {
 	private $invoice_id;
 
 	/**
-	 * The note to the payer.
-	 *
-	 * @var string
-	 */
-	private $note_to_payer;
-
-	/**
-	 * The Amount.
-	 *
-	 * @var Amount|null
-	 */
-	private $amount;
-
-	/**
-	 * Refund constructor.
-	 *
-	 * @param Capture     $capture The capture where the refund is supposed to be applied at.
-	 * @param string      $invoice_id The invoice id.
-	 * @param string      $note_to_payer The note to the payer.
-	 * @param Amount|null $amount The Amount.
-	 */
-	public function __construct(
-		Capture $capture,
-		string $invoice_id,
-		string $note_to_payer = '',
-		Amount $amount = null
-	) {
-		$this->capture       = $capture;
-		$this->invoice_id    = $invoice_id;
-		$this->note_to_payer = $note_to_payer;
-		$this->amount        = $amount;
-	}
-
-	/**
-	 * Returns the capture for the refund.
-	 *
-	 * @return Capture
-	 */
-	public function for_capture() : Capture {
-		return $this->capture;
-	}
-
-	/**
-	 * Return the invoice id.
-	 *
-	 * @return string
-	 */
-	public function invoice_id() : string {
-		return $this->invoice_id;
-	}
-
-	/**
-	 * Returns the note to the payer.
-	 *
-	 * @return string
-	 */
-	public function note_to_payer() : string {
-		return $this->note_to_payer;
-	}
-
-	/**
-	 * Returns the Amount.
-	 *
-	 * @return Amount|null
-	 */
-	public function amount() {
-		return $this->amount;
-	}
-
-	/**
-	 * Returns the object as array.
+	 * Returns the entity as array.
 	 *
 	 * @return array
 	 */
 	public function to_array() : array {
-		$data = array(
-			'invoice_id' => $this->invoice_id(),
+		$data    = array(
 		);
-		if ( $this->note_to_payer() ) {
-			$data['note_to_payer'] = $this->note_to_payer();
-		}
-		if ( $this->amount() ) {
-			$data['amount'] = $this->amount()->to_array();
-		}
 		return $data;
 	}
 }

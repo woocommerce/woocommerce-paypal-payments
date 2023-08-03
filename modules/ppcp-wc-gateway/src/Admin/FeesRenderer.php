@@ -27,17 +27,6 @@ class FeesRenderer {
 		$breakdown = $wc_order->get_meta( PayPalGateway::FEES_META_KEY );
 		$refund_breakdown = $wc_order->get_meta( PayPalGateway::REFUND_FEES_META_KEY ) ?: array();
 
-		$refund_breakdown = [
-			'paypal_fee' => [
-				'value' => 0.25,
-				'currency_code' => 'EUR',
-			],
-			'net_amount' => [
-				'value' => 6.75,
-				'currency_code' => 'EUR',
-			],
-		];
-
 		if ( ! is_array( $breakdown ) ) {
 			return '';
 		}

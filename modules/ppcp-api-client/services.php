@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\CatalogProducts;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingPlans;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\BillingCycleFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentPreferencesFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\RefundFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PlanFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ProductFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingOptionFactory;
@@ -289,6 +290,12 @@ return array(
 			$container->get( 'api.factory.fraud-processor-response' )
 		);
 	},
+	'api.factory.refund'                        => static function ( ContainerInterface $container ): RefundFactory {
+		$amount_factory   = $container->get( 'api.factory.amount' );
+		return new RefundFactory(
+			$amount_factory
+		);
+	},
 	'api.factory.purchase-unit'                 => static function ( ContainerInterface $container ): PurchaseUnitFactory {
 
 		$amount_factory   = $container->get( 'api.factory.amount' );
@@ -374,7 +381,8 @@ return array(
 	'api.factory.payments'                      => static function ( ContainerInterface $container ): PaymentsFactory {
 		$authorizations_factory = $container->get( 'api.factory.authorization' );
 		$capture_factory        = $container->get( 'api.factory.capture' );
-		return new PaymentsFactory( $authorizations_factory, $capture_factory );
+		$refund_factory         = $container->get( 'api.factory.refund' );
+		return new PaymentsFactory( $authorizations_factory, $capture_factory, $refund_factory );
 	},
 	'api.factory.authorization'                 => static function ( ContainerInterface $container ): AuthorizationFactory {
 		return new AuthorizationFactory();
