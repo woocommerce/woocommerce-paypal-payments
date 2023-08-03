@@ -19,6 +19,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenActionLinksFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CustomerRepository;
+use WP_Error;
 
 /**
  * Class PaymentTokenEndpoint
@@ -176,7 +177,7 @@ class PaymentTokenEndpoint {
 		);
 
 		$response = $this->request( $url, $args );
-		if ( is_wp_error( $response ) ) {
+		if ( $response instanceof WP_Error ) {
 			$error = new RuntimeException(
 				__( 'Could not fetch payment token for guest customer id.', 'woocommerce-paypal-payments' )
 			);
