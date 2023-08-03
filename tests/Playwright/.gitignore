@@ -1,0 +1,6 @@
+node_modules
+pw-browsers
+test-results
+.env
+yarn.lock
+playwright-report/*
