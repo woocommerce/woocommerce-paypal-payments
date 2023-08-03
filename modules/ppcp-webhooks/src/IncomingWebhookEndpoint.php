@@ -208,6 +208,15 @@ class IncomingWebhookEndpoint {
 	public function handle_request( \WP_REST_Request $request ): \WP_REST_Response {
 		$event = $this->event_from_request( $request );
 
+		$this->logger->debug(
+			sprintf(
+				'Webhook %s received of type %s and by resource "%s"',
+				$event->id(),
+				$event->event_type(),
+				$event->resource_type()
+			)
+		);
+
 		$this->last_webhook_event_storage->save( $event );
 
 		if ( $this->simulation->is_simulation_event( $event ) ) {
@@ -218,11 +227,19 @@ class IncomingWebhookEndpoint {
 
 		foreach ( $this->handlers as $handler ) {
 			if ( $handler->responsible_for_request( $request ) ) {
+				$this->logger->debug(
+					sprintf(
+						'Webhook is going to be handled by %s on %s',
+						( $handler->event_types() ) ? current( $handler->event_types() ) : '',
+						get_class( $handler )
+					)
+				);
 				$response = $handler->handle_request( $request );
 				$this->logger->info(
 					sprintf(
-						'Webhook has been handled by %s',
-						( $handler->event_types() ) ? current( $handler->event_types() ) : ''
+						'Webhook has been handled by %s on %s',
+						( $handler->event_types() ) ? current( $handler->event_types() ) : '',
+						get_class( $handler )
 					)
 				);
 				return $response;
