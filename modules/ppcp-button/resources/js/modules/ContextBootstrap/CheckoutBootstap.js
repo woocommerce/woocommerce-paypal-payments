@@ -5,6 +5,7 @@ import {
     isSavedCardSelected, ORDER_BUTTON_SELECTOR,
     PaymentMethods
 } from "../Helper/CheckoutMethodState";
+import BootstrapHelper from "../Helper/BootstrapHelper";
 
 class CheckoutBootstap {
     constructor(gateway, renderer, messages, spinner, errorHandler) {
@@ -13,12 +14,18 @@ class CheckoutBootstap {
         this.messages = messages;
         this.spinner = spinner;
         this.errorHandler = errorHandler;
+        this.lastAmount = this.gateway.messages.amount;
 
         this.standardOrderButtonSelector = ORDER_BUTTON_SELECTOR;
+
+        this.renderer.onButtonsInit(this.gateway.button.wrapper, () => {
+            this.handleButtonStatus();
+        }, true);
     }
 
     init() {
         this.render();
+        this.handleButtonStatus();
 
         // Unselect saved card.
         // WC saves form values, so with our current UI it would be a bit weird
@@ -28,6 +35,28 @@ class CheckoutBootstap {
 
         jQuery(document.body).on('updated_checkout', () => {
             this.render()
+            this.handleButtonStatus();
+
+            if (this.shouldRenderMessages()) { // currently we need amount only for Pay Later
+                fetch(
+                    this.gateway.ajax.cart_script_params.endpoint,
+                    {
+                        method: 'GET',
+                        credentials: 'same-origin',
+                    }
+                )
+                    .then(result => result.json())
+                    .then(result => {
+                        if (! result.success) {
+                            return;
+                        }
+
+                        if (this.lastAmount !== result.data.amount) {
+                            this.lastAmount = result.data.amount;
+                            this.updateUi();
+                        }
+                    });
+            }
         });
 
         jQuery(document.body).on('updated_checkout payment_method_selected', () => {
@@ -43,12 +72,20 @@ class CheckoutBootstap {
         this.updateUi();
     }
 
+    handleButtonStatus() {
+        BootstrapHelper.handleButtonStatus(this);
+    }
+
     shouldRender() {
         if (document.querySelector(this.gateway.button.cancel_wrapper)) {
             return false;
         }
 
         return document.querySelector(this.gateway.button.wrapper) !== null || document.querySelector(this.gateway.hosted_fields.wrapper) !== null;
+    }
+
+    shouldEnable() {
+        return BootstrapHelper.shouldEnable(this);
     }
 
     render() {
@@ -101,8 +138,8 @@ class CheckoutBootstap {
             setVisible(wrapper, gatewayId === currentPaymentMethod);
         }
 
-        if (isPaypal && !isFreeTrial) {
-            this.messages.render();
+        if (this.shouldRenderMessages()) {
+            this.messages.renderWithAmount(this.lastAmount);
         }
 
         if (isCard) {
@@ -112,6 +149,12 @@ class CheckoutBootstap {
                 this.enableCreditCardFields();
             }
         }
+    }
+
+    shouldRenderMessages() {
+        return getCurrentPaymentMethod() === PaymentMethods.PAYPAL
+            && !PayPalCommerceGateway.is_free_trial_cart
+            && this.messages.shouldRender();
     }
 
     disableCreditCardFields() {

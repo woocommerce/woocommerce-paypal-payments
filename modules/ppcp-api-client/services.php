@@ -298,6 +298,7 @@ return array(
 		$shipping_factory = $container->get( 'api.factory.shipping' );
 		$payments_factory = $container->get( 'api.factory.payments' );
 		$prefix           = $container->get( 'api.prefix' );
+		$soft_descriptor  = $container->get( 'wcgateway.soft-descriptor' );
 
 		return new PurchaseUnitFactory(
 			$amount_factory,
@@ -306,7 +307,8 @@ return array(
 			$item_factory,
 			$shipping_factory,
 			$payments_factory,
-			$prefix
+			$prefix,
+			$soft_descriptor
 		);
 	},
 	'api.factory.patch-collection-factory'      => static function ( ContainerInterface $container ): PatchCollectionFactory {

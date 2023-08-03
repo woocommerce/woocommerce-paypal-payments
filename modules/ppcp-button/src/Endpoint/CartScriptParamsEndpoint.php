@@ -65,9 +65,20 @@ class CartScriptParamsEndpoint implements EndpointInterface {
 	 */
 	public function handle_request(): bool {
 		try {
+			if ( is_callable( 'wc_maybe_define_constant' ) ) {
+				wc_maybe_define_constant( 'WOOCOMMERCE_CART', true );
+			}
+
 			$script_data = $this->smart_button->script_data();
 
-			wp_send_json_success( $script_data['url_params'] );
+			wp_send_json_success(
+				array(
+					'url_params' => $script_data['url_params'],
+					'button'     => $script_data['button'],
+					'messages'   => $script_data['messages'],
+					'amount'     => WC()->cart->get_total( 'raw' ),
+				)
+			);
 
 			return true;
 		} catch ( Throwable $error ) {

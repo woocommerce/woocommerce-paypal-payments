@@ -33,11 +33,12 @@ return function ( ContainerInterface $container, array $fields ): array {
 
 	$selected_country             = $container->get( 'api.shop.country' );
 	$default_messaging_flex_color = $selected_country === 'US' ? 'white-no-border' : 'white';
-
-	$render_preview_element = function ( string $id, string $type ): string {
+	$button_message               = __( 'Pay Later Button Preview', 'woocommerce-paypal-payments' );
+	$messaging_message            = __( 'Pay Later Messaging Preview', 'woocommerce-paypal-payments' );
+	$render_preview_element       = function ( string $id, string $type, string $message ): string {
 		return '
 <div class="ppcp-preview ppcp-' . $type . '-preview pay-later">
-	<h4>' . __( 'Preview', 'woocommerce-paypal-payments' ) . '</h4>
+	<h4>' . $message . '</h4>
 	<div id="' . $id . '" class="ppcp-' . $type . '-preview-inner"></div>
 </div>';
 	};
@@ -82,7 +83,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 		),
 		'pay_later_button_preview'                        => array(
 			'type'         => 'ppcp-text',
-			'text'         => $render_preview_element( 'ppcpPayLaterButtonPreview', 'button' ),
+			'text'         => $render_preview_element( 'ppcpPayLaterButtonPreview', 'button', $button_message ),
 			'screens'      => array( State::STATE_ONBOARDED ),
 			'requirements' => array( 'messages' ),
 			'gateway'      => Settings::PAY_LATER_TAB_ID,
@@ -245,7 +246,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 		),
 		'pay_later_general_message_preview'               => array(
 			'type'         => 'ppcp-text',
-			'text'         => $render_preview_element( 'ppcpGeneralMessagePreview', 'message' ),
+			'text'         => $render_preview_element( 'ppcpGeneralMessagePreview', 'message', $messaging_message ),
 			'screens'      => array( State::STATE_ONBOARDED ),
 			'requirements' => array( 'messages' ),
 			'gateway'      => Settings::PAY_LATER_TAB_ID,
@@ -369,7 +370,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 		),
 		'pay_later_product_message_preview'               => array(
 			'type'         => 'ppcp-text',
-			'text'         => $render_preview_element( 'ppcpProductMessagePreview', 'message' ),
+			'text'         => $render_preview_element( 'ppcpProductMessagePreview', 'message', $messaging_message ),
 			'screens'      => array( State::STATE_ONBOARDED ),
 			'requirements' => array( 'messages' ),
 			'gateway'      => Settings::PAY_LATER_TAB_ID,
@@ -493,7 +494,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 		),
 		'pay_later_cart_message_preview'                  => array(
 			'type'         => 'ppcp-text',
-			'text'         => $render_preview_element( 'ppcpCartMessagePreview', 'message' ),
+			'text'         => $render_preview_element( 'ppcpCartMessagePreview', 'message', $messaging_message ),
 			'screens'      => array( State::STATE_ONBOARDED ),
 			'requirements' => array( 'messages' ),
 			'gateway'      => Settings::PAY_LATER_TAB_ID,
@@ -617,7 +618,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 		),
 		'pay_later_checkout_message_preview'              => array(
 			'type'         => 'ppcp-text',
-			'text'         => $render_preview_element( 'ppcpCheckoutMessagePreview', 'message' ),
+			'text'         => $render_preview_element( 'ppcpCheckoutMessagePreview', 'message', $messaging_message ),
 			'screens'      => array( State::STATE_ONBOARDED ),
 			'requirements' => array( 'messages' ),
 			'gateway'      => Settings::PAY_LATER_TAB_ID,

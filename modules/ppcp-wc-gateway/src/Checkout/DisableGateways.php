@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Checkout;
 
+use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
@@ -20,6 +21,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
  * Class DisableGateways
  */
 class DisableGateways {
+	use ContextTrait;
 
 	/**
 	 * The Session Handler.
@@ -82,8 +84,11 @@ class DisableGateways {
 			unset( $methods[ CreditCardGateway::ID ] );
 		}
 
-		if ( ! $this->settings_status->is_smart_button_enabled_for_location( 'checkout' ) && ! $this->session_handler->order() && is_checkout() ) {
-			unset( $methods[ PayPalGateway::ID ] );
+		if ( ! $this->settings_status->is_smart_button_enabled_for_location( 'checkout' ) ) {
+			unset( $methods[ CardButtonGateway::ID ] );
+			if ( ! $this->session_handler->order() && is_checkout() ) {
+				unset( $methods[ PayPalGateway::ID ] );
+			}
 		}
 
 		if ( ! $this->needs_to_disable_gateways() ) {
@@ -124,20 +129,6 @@ class DisableGateways {
 	 * @return bool
 	 */
 	private function needs_to_disable_gateways(): bool {
-		$order = $this->session_handler->order();
-		if ( ! $order ) {
-			return false;
-		}
-
-		$source = $order->payment_source();
-		if ( $source && $source->card() ) {
-			return false; // DCC.
-		}
-
-		if ( 'card' === $this->session_handler->funding_source() ) {
-			return false; // Card buttons.
-		}
-
-		return true;
+		return $this->is_paypal_continuation();
 	}
 }

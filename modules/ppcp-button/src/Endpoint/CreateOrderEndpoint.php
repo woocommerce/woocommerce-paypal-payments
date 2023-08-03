@@ -19,7 +19,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentMethod;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
@@ -32,7 +31,6 @@ use WooCommerce\PayPalCommerce\Button\Helper\EarlyOrderHandler;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Subscription\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcGateway\CardBillingMode;
-use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
@@ -153,11 +151,25 @@ class CreateOrderEndpoint implements EndpointInterface {
 	private $handle_shipping_in_paypal;
 
 	/**
+	 * The sources that do not cause issues about redirecting (on mobile, ...) and sometimes not returning back.
+	 *
+	 * @var string[]
+	 */
+	private $funding_sources_without_redirect;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
 	 */
 	protected $logger;
+
+	/**
+	 * The form data, or empty if not available.
+	 *
+	 * @var array
+	 */
+	private $form = array();
 
 	/**
 	 * CreateOrderEndpoint constructor.
@@ -175,6 +187,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 * @param bool                      $early_validation_enabled Whether to execute WC validation of the checkout form.
 	 * @param string[]                  $pay_now_contexts The contexts that should have the Pay Now button.
 	 * @param bool                      $handle_shipping_in_paypal If true, the shipping methods are sent to PayPal allowing the customer to select it inside the popup.
+	 * @param string[]                  $funding_sources_without_redirect The sources that do not cause issues about redirecting (on mobile, ...) and sometimes not returning back.
 	 * @param LoggerInterface           $logger The logger.
 	 */
 	public function __construct(
@@ -191,23 +204,25 @@ class CreateOrderEndpoint implements EndpointInterface {
 		bool $early_validation_enabled,
 		array $pay_now_contexts,
 		bool $handle_shipping_in_paypal,
+		array $funding_sources_without_redirect,
 		LoggerInterface $logger
 	) {
 
-		$this->request_data                = $request_data;
-		$this->purchase_unit_factory       = $purchase_unit_factory;
-		$this->shipping_preference_factory = $shipping_preference_factory;
-		$this->api_endpoint                = $order_endpoint;
-		$this->payer_factory               = $payer_factory;
-		$this->session_handler             = $session_handler;
-		$this->settings                    = $settings;
-		$this->early_order_handler         = $early_order_handler;
-		$this->registration_needed         = $registration_needed;
-		$this->card_billing_data_mode      = $card_billing_data_mode;
-		$this->early_validation_enabled    = $early_validation_enabled;
-		$this->pay_now_contexts            = $pay_now_contexts;
-		$this->handle_shipping_in_paypal   = $handle_shipping_in_paypal;
-		$this->logger                      = $logger;
+		$this->request_data                     = $request_data;
+		$this->purchase_unit_factory            = $purchase_unit_factory;
+		$this->shipping_preference_factory      = $shipping_preference_factory;
+		$this->api_endpoint                     = $order_endpoint;
+		$this->payer_factory                    = $payer_factory;
+		$this->session_handler                  = $session_handler;
+		$this->settings                         = $settings;
+		$this->early_order_handler              = $early_order_handler;
+		$this->registration_needed              = $registration_needed;
+		$this->card_billing_data_mode           = $card_billing_data_mode;
+		$this->early_validation_enabled         = $early_validation_enabled;
+		$this->pay_now_contexts                 = $pay_now_contexts;
+		$this->handle_shipping_in_paypal        = $handle_shipping_in_paypal;
+		$this->funding_sources_without_redirect = $funding_sources_without_redirect;
+		$this->logger                           = $logger;
 	}
 
 	/**
@@ -248,6 +263,12 @@ class CreateOrderEndpoint implements EndpointInterface {
 			} else {
 				$this->purchase_unit = $this->purchase_unit_factory->from_wc_cart( null, $this->handle_shipping_in_paypal );
 
+				// Do not allow completion by webhooks when started via non-checkout buttons,
+				// it is needed only for some APMs in checkout.
+				if ( in_array( $data['context'], array( 'product', 'cart', 'cart-block' ), true ) ) {
+					$this->purchase_unit->set_custom_id( '' );
+				}
+
 				// The cart does not have any info about payment method, so we must handle free trial here.
 				if ( (
 					in_array( $payment_method, array( CreditCardGateway::ID, CardButtonGateway::ID ), true )
@@ -266,18 +287,20 @@ class CreateOrderEndpoint implements EndpointInterface {
 
 			$this->set_bn_code( $data );
 
-			$form_fields = $data['form'] ?? null;
+			if ( isset( $data['form'] ) ) {
+				$this->form = $data['form'];
+			}
 
 			if ( $this->early_validation_enabled
-				&& is_array( $form_fields )
+				&& $this->form
 				&& 'checkout' === $data['context']
 				&& in_array( $payment_method, array( PayPalGateway::ID, CardButtonGateway::ID ), true )
 			) {
-				$this->validate_form( $form_fields );
+				$this->validate_form( $this->form );
 			}
 
-			if ( 'pay-now' === $data['context'] && is_array( $form_fields ) && get_option( 'woocommerce_terms_page_id', '' ) !== '' ) {
-				$this->validate_paynow_form( $form_fields );
+			if ( 'pay-now' === $data['context'] && $this->form && get_option( 'woocommerce_terms_page_id', '' ) !== '' ) {
+				$this->validate_paynow_form( $this->form );
 			}
 
 			try {
@@ -288,6 +311,11 @@ class CreateOrderEndpoint implements EndpointInterface {
 			}
 
 			if ( 'checkout' === $data['context'] ) {
+				if ( $payment_method === PayPalGateway::ID && ! in_array( $funding_source, $this->funding_sources_without_redirect, true ) ) {
+					$this->session_handler->replace_order( $order );
+					$this->session_handler->replace_funding_source( $funding_source );
+				}
+
 				if (
 					! $this->early_order_handler->should_create_early_order()
 					|| $this->registration_needed
@@ -433,7 +461,6 @@ class CreateOrderEndpoint implements EndpointInterface {
 				$shipping_preference,
 				$payer,
 				null,
-				$this->payment_method(),
 				'',
 				$action
 			);
@@ -456,8 +483,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 					array( $this->purchase_unit ),
 					$shipping_preference,
 					$payer,
-					null,
-					$this->payment_method()
+					null
 				);
 			}
 
@@ -495,11 +521,9 @@ class CreateOrderEndpoint implements EndpointInterface {
 			$payer = $this->payer_factory->from_paypal_response( json_decode( wp_json_encode( $data['payer'] ) ) );
 		}
 
-		if ( ! $payer && isset( $data['form'] ) ) {
-			$form_fields = $data['form'];
-
-			if ( is_array( $form_fields ) && isset( $form_fields['billing_email'] ) && '' !== $form_fields['billing_email'] ) {
-				return $this->payer_factory->from_checkout_form( $form_fields );
+		if ( ! $payer && $this->form ) {
+			if ( isset( $this->form['billing_email'] ) && '' !== $this->form['billing_email'] ) {
+				return $this->payer_factory->from_checkout_form( $this->form );
 			}
 		}
 
@@ -519,24 +543,6 @@ class CreateOrderEndpoint implements EndpointInterface {
 
 		$this->session_handler->replace_bn_code( $bn_code );
 		$this->api_endpoint->with_bn_code( $bn_code );
-	}
-
-	/**
-	 * Returns the PaymentMethod object for the order.
-	 *
-	 * @return PaymentMethod
-	 */
-	private function payment_method() : PaymentMethod {
-		try {
-			$payee_preferred = $this->settings->has( 'payee_preferred' ) && $this->settings->get( 'payee_preferred' ) ?
-				PaymentMethod::PAYEE_PREFERRED_IMMEDIATE_PAYMENT_REQUIRED
-				: PaymentMethod::PAYEE_PREFERRED_UNRESTRICTED;
-		} catch ( NotFoundException $exception ) {
-			$payee_preferred = PaymentMethod::PAYEE_PREFERRED_UNRESTRICTED;
-		}
-
-		$payment_method = new PaymentMethod( $payee_preferred );
-		return $payment_method;
 	}
 
 	/**

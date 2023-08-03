@@ -13,7 +13,7 @@ import {
     ORDER_BUTTON_SELECTOR,
     PaymentMethods
 } from "./modules/Helper/CheckoutMethodState";
-import {hide, setVisible, setVisibleByClass} from "./modules/Helper/Hiding";
+import {setVisibleByClass} from "./modules/Helper/Hiding";
 import {isChangePaymentPage} from "./modules/Helper/Subscriptions";
 import FreeTrialHandler from "./modules/ActionHandler/FreeTrialHandler";
 import FormSaver from './modules/Helper/FormSaver';
@@ -27,6 +27,8 @@ const cardsSpinner = new Spinner('#ppcp-hosted-fields');
 
 const bootstrap = () => {
     const checkoutFormSelector = 'form.woocommerce-checkout';
+
+    const context = PayPalCommerceGateway.context;
 
     const errorHandler = new ErrorHandler(
         PayPalCommerceGateway.labels.error.generic,
@@ -58,7 +60,7 @@ const bootstrap = () => {
         }
     });
 
-    const onSmartButtonClick = (data, actions) => {
+    const onSmartButtonClick = async (data, actions) => {
         window.ppcpFundingSource = data.fundingSource;
         const requiredFields = jQuery('form.woocommerce-checkout .validate-required:visible :input');
         requiredFields.each((i, input) => {
@@ -120,13 +122,21 @@ const bootstrap = () => {
             freeTrialHandler.handle();
             return actions.reject();
         }
+
+        if (context === 'checkout') {
+            try {
+                await formSaver.save(form);
+            } catch (error) {
+                console.error(error);
+            }
+        }
     };
+
     const onSmartButtonsInit = () => {
         buttonsSpinner.unblock();
     };
     const renderer = new Renderer(creditCardRenderer, PayPalCommerceGateway, onSmartButtonClick, onSmartButtonsInit);
     const messageRenderer = new MessageRenderer(PayPalCommerceGateway.messages);
-    const context = PayPalCommerceGateway.context;
     if (context === 'mini-cart' || context === 'product') {
         if (PayPalCommerceGateway.mini_cart_buttons_enabled === '1') {
             const miniCartBootstrap = new MiniCartBootstap(
@@ -154,6 +164,7 @@ const bootstrap = () => {
         const cartBootstrap = new CartBootstrap(
             PayPalCommerceGateway,
             renderer,
+            messageRenderer,
             errorHandler,
         );
 
@@ -183,9 +194,6 @@ const bootstrap = () => {
         payNowBootstrap.init();
     }
 
-    if (context !== 'checkout') {
-        messageRenderer.render();
-    }
 };
 document.addEventListener(
     'DOMContentLoaded',

@@ -1,4 +1,7 @@
 <?php
+if (!defined('PAYPAL_INTEGRATION_DATE')) {
+	define('PAYPAL_INTEGRATION_DATE', '2023-06-02');
+}
 if (!defined('EP_PAGES')) {
 	define('EP_PAGES', 4096);
 }

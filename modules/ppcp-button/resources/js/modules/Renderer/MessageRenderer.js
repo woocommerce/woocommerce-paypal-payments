@@ -1,51 +1,53 @@
+import widgetBuilder from "./WidgetBuilder";
+
 class MessageRenderer {
 
     constructor(config) {
         this.config = config;
+        this.optionsFingerprint = null;
     }
 
-    render() {
+    renderWithAmount(amount) {
         if (! this.shouldRender()) {
             return;
         }
 
-        paypal.Messages({
-            amount: this.config.amount,
+        const options = {
+            amount,
             placement: this.config.placement,
             style: this.config.style
-        }).render(this.config.wrapper);
+        };
 
-        jQuery(document.body).on('updated_cart_totals', () => {
-            paypal.Messages({
-                amount: this.config.amount,
-                placement: this.config.placement,
-                style: this.config.style
-            }).render(this.config.wrapper);
-        });
-    }
-
-    renderWithAmount(amount) {
-
-        if (! this.shouldRender()) {
+        if (this.optionsEqual(options)) {
             return;
         }
 
         const newWrapper = document.createElement('div');
         newWrapper.setAttribute('id', this.config.wrapper.replace('#', ''));
 
-        const sibling = document.querySelector(this.config.wrapper).nextSibling;
-        document.querySelector(this.config.wrapper).parentElement.removeChild(document.querySelector(this.config.wrapper));
+        const oldWrapper = document.querySelector(this.config.wrapper);
+        const sibling = oldWrapper.nextSibling;
+        oldWrapper.parentElement.removeChild(oldWrapper);
         sibling.parentElement.insertBefore(newWrapper, sibling);
-        paypal.Messages({
-            amount,
-            placement: this.config.placement,
-            style: this.config.style
-        }).render(this.config.wrapper);
+
+        widgetBuilder.registerMessages(this.config.wrapper, options);
+        widgetBuilder.renderMessages(this.config.wrapper);
+    }
+
+    optionsEqual(options) {
+        const fingerprint = JSON.stringify(options);
+
+        if (this.optionsFingerprint === fingerprint) {
+            return true;
+        }
+
+        this.optionsFingerprint = fingerprint;
+        return false;
     }
 
     shouldRender() {
 
-        if (typeof paypal.Messages === 'undefined' || typeof this.config.wrapper === 'undefined' ) {
+        if (typeof paypal === 'undefined' || typeof paypal.Messages === 'undefined' || typeof this.config.wrapper === 'undefined' ) {
             return false;
         }
         if (! document.querySelector(this.config.wrapper)) {

@@ -2,9 +2,10 @@ import { loadScript } from "@paypal/paypal-js";
 import {debounce} from "./helper/debounce";
 import Renderer from '../../../ppcp-button/resources/js/modules/Renderer/Renderer'
 import MessageRenderer from "../../../ppcp-button/resources/js/modules/Renderer/MessageRenderer";
-import {setVisibleByClass, isVisible} from "../../../ppcp-button/resources/js/modules/Helper/Hiding"
+import {setVisibleByClass, isVisible} from "../../../ppcp-button/resources/js/modules/Helper/Hiding";
+import widgetBuilder from "../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder";
 
-;document.addEventListener(
+document.addEventListener(
     'DOMContentLoaded',
     () => {
         function disableAll(nodeList){
@@ -138,6 +139,8 @@ import {setVisibleByClass, isVisible} from "../../../ppcp-button/resources/js/mo
         function loadPaypalScript(settings, onLoaded = () => {}) {
             loadScript(JSON.parse(JSON.stringify(settings))) // clone the object to prevent modification
                 .then(paypal => {
+                    widgetBuilder.setPaypal(paypal);
+
                     document.dispatchEvent(new CustomEvent('ppcp_paypal_script_loaded'));
 
                     onLoaded(paypal);
