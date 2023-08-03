@@ -23,6 +23,8 @@ use WooCommerce\PayPalCommerce\Compat\Assets\CompatAssets;
 use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WP_REST_Request;
+use WP_REST_Response;
 
 /**
  * Class CompatModule
@@ -145,18 +147,9 @@ class CompatModule implements ModuleInterface {
 	 * @return void
 	 */
 	protected function initialize_gzd_compat_layer( ContainerInterface $c ): void {
-		$endpoint = $c->get( 'order-tracking.endpoint.controller' );
-		assert( $endpoint instanceof OrderTrackingEndpoint );
-
-		$logger = $c->get( 'woocommerce.logger.woocommerce' );
-		assert( $logger instanceof LoggerInterface );
-
-		$shipment_factory = $c->get( 'order-tracking.shipment.factory' );
-		assert( $shipment_factory instanceof ShipmentFactoryInterface );
-
 		add_action(
 			'woocommerce_gzd_shipment_status_shipped',
-			static function( int $shipment_id, Shipment $shipment ) use ( $endpoint, $shipment_factory, $logger ) {
+			function( int $shipment_id, Shipment $shipment ) use ( $c ) {
 				if ( ! apply_filters( 'woocommerce_paypal_payments_sync_gzd_tracking', true ) ) {
 					return;
 				}
@@ -182,26 +175,7 @@ class CompatModule implements ModuleInterface {
 					return;
 				}
 
-				try {
-					$ppcp_shipment = $shipment_factory->create_shipment(
-						$order_id,
-						$transaction_id,
-						$tracking_number,
-						'SHIPPED',
-						'OTHER',
-						$carrier,
-						$items
-					);
-
-					$tracking_information = $endpoint->get_tracking_information( $order_id, $tracking_number );
-
-					$tracking_information
-						? $endpoint->update_tracking_information( $ppcp_shipment, $order_id )
-						: $endpoint->add_tracking_information( $ppcp_shipment, $order_id );
-
-				} catch ( Exception $exception ) {
-					$logger->error( "Couldn't sync tracking information: " . $exception->getMessage() );
-				}
+				$this->create_tracking( $c, $order_id, $transaction_id, $tracking_number, $carrier, $items );
 			},
 			500,
 			2
@@ -218,18 +192,9 @@ class CompatModule implements ModuleInterface {
 	 * @return void
 	 */
 	protected function initialize_wc_shipment_tracking_compat_layer( ContainerInterface $c ): void {
-		$endpoint = $c->get( 'order-tracking.endpoint.controller' );
-		assert( $endpoint instanceof OrderTrackingEndpoint );
-
-		$logger = $c->get( 'woocommerce.logger.woocommerce' );
-		assert( $logger instanceof LoggerInterface );
-
-		$shipment_factory = $c->get( 'order-tracking.shipment.factory' );
-		assert( $shipment_factory instanceof ShipmentFactoryInterface );
-
 		add_action(
 			'wp_ajax_wc_shipment_tracking_save_form',
-			static function() use ( $endpoint, $shipment_factory, $logger ) {
+			function() use ( $c ) {
 				check_ajax_referer( 'create-tracking-item', 'security', true );
 
 				if ( ! apply_filters( 'woocommerce_paypal_payments_sync_wc_shipment_tracking', true ) ) {
@@ -252,28 +217,95 @@ class CompatModule implements ModuleInterface {
 					return;
 				}
 
-				try {
-					$ppcp_shipment = $shipment_factory->create_shipment(
-						$order_id,
-						$transaction_id,
-						$tracking_number,
-						'SHIPPED',
-						'OTHER',
-						$carrier,
-						array()
-					);
-
-					$tracking_information = $endpoint->get_tracking_information( $order_id, $tracking_number );
-
-					$tracking_information
-						? $endpoint->update_tracking_information( $ppcp_shipment, $order_id )
-						: $endpoint->add_tracking_information( $ppcp_shipment, $order_id );
-
-				} catch ( Exception $exception ) {
-					$logger->error( "Couldn't sync tracking information: " . $exception->getMessage() );
-				}
+				$this->create_tracking( $c, $order_id, $transaction_id, $tracking_number, $carrier, array() );
 			}
 		);
+
+		add_filter(
+			'woocommerce_rest_prepare_order_shipment_tracking',
+			function( WP_REST_Response $response, array $tracking_item, WP_REST_Request $request ) use ( $c ): WP_REST_Response {
+				if ( ! apply_filters( 'woocommerce_paypal_payments_sync_wc_shipment_tracking', true ) ) {
+					return $response;
+				}
+
+				$callback = $request->get_attributes()['callback']['1'] ?? '';
+				if ( $callback !== 'create_item' ) {
+					return $response;
+				}
+
+				$order_id = $tracking_item['order_id'] ?? 0;
+				$wc_order = wc_get_order( $order_id );
+				if ( ! is_a( $wc_order, WC_Order::class ) ) {
+					return $response;
+				}
+
+				$transaction_id  = $wc_order->get_transaction_id();
+				$tracking_number = $tracking_item['tracking_number'] ?? '';
+				$carrier         = $tracking_item['tracking_provider'] ?? '';
+				$carrier_other   = $tracking_item['custom_tracking_provider'] ?? '';
+				$carrier         = $carrier ?: $carrier_other ?: '';
+
+				if ( ! $tracking_number || ! $carrier || ! $transaction_id ) {
+					return $response;
+				}
+
+				$this->create_tracking( $c, $order_id, $transaction_id, $tracking_number, $carrier, array() );
+
+				return $response;
+			},
+			10,
+			3
+		);
+	}
+
+	/**
+	 * Creates PayPal tracking.
+	 *
+	 * @param ContainerInterface $c The Container.
+	 * @param int                $wc_order_id The WC order ID.
+	 * @param string             $transaction_id The transaction ID.
+	 * @param string             $tracking_number The tracking number.
+	 * @param string             $carrier The shipment carrier.
+	 * @param int[]              $line_items The list of shipment line item IDs.
+	 * @return void
+	 */
+	protected function create_tracking(
+		ContainerInterface $c,
+		int $wc_order_id,
+		string $transaction_id,
+		string $tracking_number,
+		string $carrier,
+		array $line_items
+	) {
+		$endpoint = $c->get( 'order-tracking.endpoint.controller' );
+		assert( $endpoint instanceof OrderTrackingEndpoint );
+
+		$logger = $c->get( 'woocommerce.logger.woocommerce' );
+		assert( $logger instanceof LoggerInterface );
+
+		$shipment_factory = $c->get( 'order-tracking.shipment.factory' );
+		assert( $shipment_factory instanceof ShipmentFactoryInterface );
+
+		try {
+			$ppcp_shipment = $shipment_factory->create_shipment(
+				$wc_order_id,
+				$transaction_id,
+				$tracking_number,
+				'SHIPPED',
+				'OTHER',
+				$carrier,
+				$line_items
+			);
+
+			$tracking_information = $endpoint->get_tracking_information( $wc_order_id, $tracking_number );
+
+			$tracking_information
+				? $endpoint->update_tracking_information( $ppcp_shipment, $wc_order_id )
+				: $endpoint->add_tracking_information( $ppcp_shipment, $wc_order_id );
+
+		} catch ( Exception $exception ) {
+			$logger->error( "Couldn't sync tracking information: " . $exception->getMessage() );
+		}
 	}
 
 	/**
