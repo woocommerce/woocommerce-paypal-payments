@@ -145,6 +145,10 @@ class CheckoutOrderApproved implements RequestHandler {
 				return $this->success_response();
 			}
 
+			if ( ! (bool) apply_filters( 'woocommerce_paypal_payments_order_approved_webhook_can_create_wc_order', false ) ) {
+				return $this->success_response();
+			}
+
 			$wc_session = new WC_Session_Handler();
 
 			$session_data = $wc_session->get_session( $customer_id );
@@ -159,6 +163,14 @@ class CheckoutOrderApproved implements RequestHandler {
 			WC()->cart->calculate_shipping();
 
 			$form = $this->session_handler->checkout_form();
+			if ( ! $form ) {
+				return $this->failure_response(
+					sprintf(
+						'Failed to create WC order in webhook event %s, checkout data not found.',
+						$request['id'] ?: ''
+					)
+				);
+			}
 
 			$checkout    = new WC_Checkout();
 			$wc_order_id = $checkout->create_order( $form );

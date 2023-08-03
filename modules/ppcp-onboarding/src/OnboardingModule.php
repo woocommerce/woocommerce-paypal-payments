@@ -11,7 +11,6 @@ namespace WooCommerce\PayPalCommerce\Onboarding;
 
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
-use WooCommerce\PayPalCommerce\Button\Endpoint\ChangeCartEndpoint;
 use WooCommerce\PayPalCommerce\Onboarding\Assets\OnboardingAssets;
 use WooCommerce\PayPalCommerce\Onboarding\Endpoint\LoginSellerEndpoint;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingRenderer;
@@ -88,9 +87,9 @@ class OnboardingModule implements ModuleInterface {
 				$endpoint = $c->get( 'onboarding.endpoint.login-seller' );
 
 				/**
-				 * The ChangeCartEndpoint.
+				 * The LoginSellerEndpoint.
 				 *
-				 * @var ChangeCartEndpoint $endpoint
+				 * @var LoginSellerEndpoint $endpoint
 				 */
 				$endpoint->handle_request();
 			}

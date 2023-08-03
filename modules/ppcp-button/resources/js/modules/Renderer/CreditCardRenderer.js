@@ -122,24 +122,17 @@ class CreditCardRenderer {
 
                 const className = this._cardNumberFiledCLassNameByCardType(event.cards[0].type);
                 this._recreateElementClassAttribute(cardNumber, cardNumberField.className);
-                if (event.fields.number.isValid) {
+                if (event.cards.length === 1) {
                     cardNumber.classList.add(className);
                 }
             })
             hostedFields.on('validityChange', (event) => {
-                const formValid = Object.keys(event.fields).every(function (key) {
+                this.formValid = Object.keys(event.fields).every(function (key) {
                     return event.fields[key].isValid;
                 });
-
-                const className = event.cards.length ? this._cardNumberFiledCLassNameByCardType(event.cards[0].type) : '';
-                event.fields.number.isValid
-                    ? cardNumber.classList.add(className)
-                    : this._recreateElementClassAttribute(cardNumber, cardNumberField.className);
-
-               this.formValid = formValid;
-
             });
             hostedFields.on('empty', (event) => {
+                this._recreateElementClassAttribute(cardNumber, cardNumberField.className);
                 this.emptyFields.add(event.emittedBy);
             });
             hostedFields.on('notEmpty', (event) => {
