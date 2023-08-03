@@ -13,7 +13,7 @@ import {
     ORDER_BUTTON_SELECTOR,
     PaymentMethods
 } from "./modules/Helper/CheckoutMethodState";
-import {hide, setVisible, setVisibleByClass} from "./modules/Helper/Hiding";
+import {setVisibleByClass} from "./modules/Helper/Hiding";
 import {isChangePaymentPage} from "./modules/Helper/Subscriptions";
 import FreeTrialHandler from "./modules/ActionHandler/FreeTrialHandler";
 import FormSaver from './modules/Helper/FormSaver';
@@ -123,7 +123,7 @@ const bootstrap = () => {
             return actions.reject();
         }
 
-        if (context === 'checkout' && !PayPalCommerceGateway.funding_sources_without_redirect.includes(data.fundingSource)) {
+        if (context === 'checkout') {
             try {
                 await formSaver.save(form);
             } catch (error) {
@@ -194,9 +194,6 @@ const bootstrap = () => {
         payNowBootstrap.init();
     }
 
-    if (context !== 'checkout') {
-        messageRenderer.render();
-    }
 };
 document.addEventListener(
     'DOMContentLoaded',
