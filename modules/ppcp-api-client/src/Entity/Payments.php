@@ -42,7 +42,7 @@ class Payments {
 	 * @param array $captures The Captures.
 	 * @param array $refunds The Refunds.
 	 */
-	public function __construct( array $authorizations, array $captures, array $refunds ) {
+	public function __construct( array $authorizations, array $captures, array $refunds = array() ) {
 		foreach ( $authorizations as $key => $authorization ) {
 			if ( is_a( $authorization, Authorization::class ) ) {
 				continue;

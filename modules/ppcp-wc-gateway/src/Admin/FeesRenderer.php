@@ -34,7 +34,7 @@ class FeesRenderer {
 		$refund_fee      = $refund_breakdown['paypal_fee'] ?? array();
 		$refund_amount   = $refund_breakdown['net_amount'] ?? array();
 		$refund_total    = ( $refund_fee['value'] ?? 0 ) + ( $refund_amount['value'] ?? 0 );
-		$refund_currency = ( $refund_amount['currency_code'] === $refund_fee['currency_code'] ) ? $refund_amount['currency_code'] : '';
+		$refund_currency = ( ( $refund_amount['currency_code'] ?? '' ) === ( $refund_fee['currency_code'] ?? '' ) ) ? ( $refund_amount['currency_code'] ?? '' ) : '';
 
 		$html = '';
 
