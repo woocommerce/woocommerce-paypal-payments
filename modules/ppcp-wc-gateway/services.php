@@ -53,6 +53,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\CheckoutHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\RefundFeesUpdater;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\AuthorizeOrderActionNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
@@ -333,10 +334,11 @@ return array(
 		);
 	},
 	'wcgateway.processor.refunds'                          => static function ( ContainerInterface $container ): RefundProcessor {
-		$order_endpoint    = $container->get( 'api.endpoint.order' );
-		$payments_endpoint    = $container->get( 'api.endpoint.payments' );
-		$logger                        = $container->get( 'woocommerce.logger.woocommerce' );
-		return new RefundProcessor( $order_endpoint, $payments_endpoint, $logger );
+		$order_endpoint      = $container->get( 'api.endpoint.order' );
+		$payments_endpoint   = $container->get( 'api.endpoint.payments' );
+		$refund_fees_updater = $container->get( 'wcgateway.helper.refund-fees-updater' );
+		$logger              = $container->get( 'woocommerce.logger.woocommerce' );
+		return new RefundProcessor( $order_endpoint, $payments_endpoint, $refund_fees_updater, $logger );
 	},
 	'wcgateway.processor.authorized-payments'              => static function ( ContainerInterface $container ): AuthorizedPaymentsProcessor {
 		$order_endpoint    = $container->get( 'api.endpoint.order' );
@@ -998,6 +1000,12 @@ return array(
 			$container->get( 'api.helpers.dccapplies' ),
 			$container->get( 'onboarding.state' )
 		);
+	},
+
+	'wcgateway.helper.refund-fees-updater'                 => static function ( ContainerInterface $container ): RefundFeesUpdater {
+		$order_endpoint    = $container->get( 'api.endpoint.order' );
+		$logger            = $container->get( 'woocommerce.logger.woocommerce' );
+		return new RefundFeesUpdater( $order_endpoint, $logger );
 	},
 
 	'button.helper.messages-disclaimers'                   => static function ( ContainerInterface $container ): MessagesDisclaimers {

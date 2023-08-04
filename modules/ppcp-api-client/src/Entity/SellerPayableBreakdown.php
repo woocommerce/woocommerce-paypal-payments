@@ -99,7 +99,7 @@ class SellerPayableBreakdown {
 	/**
 	 * The amount for this refunded payment in the currency of the transaction.
 	 *
-	 * @return Money
+	 * @return Money|null
 	 */
 	public function gross_amount(): ?Money {
 		return $this->gross_amount;
