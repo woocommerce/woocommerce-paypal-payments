@@ -45,7 +45,7 @@ class PaymentsFactory {
 	 *
 	 * @param AuthorizationFactory $authorization_factory The Authorization factory.
 	 * @param CaptureFactory       $capture_factory The Capture factory.
-	 * @param RefundFactory $refund_factory The Refund factory.
+	 * @param RefundFactory        $refund_factory The Refund factory.
 	 */
 	public function __construct(
 		AuthorizationFactory $authorization_factory,

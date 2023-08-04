@@ -28,12 +28,12 @@ class Payments {
 	 */
 	private $captures;
 
-    /**
-     * The Captures.
-     *
-     * @var Refund[]
-     */
-    private $refunds;
+	/**
+	 * The Captures.
+	 *
+	 * @var Refund[]
+	 */
+	private $refunds;
 
 	/**
 	 * Payments constructor.
@@ -55,12 +55,12 @@ class Payments {
 			}
 			unset( $captures[ $key ] );
 		}
-        foreach ( $refunds as $key => $refund ) {
-            if ( is_a( $refund, Refund::class ) ) {
-                continue;
-            }
-            unset( $refunds[ $key ] );
-        }
+		foreach ( $refunds as $key => $refund ) {
+			if ( is_a( $refund, Refund::class ) ) {
+				continue;
+			}
+			unset( $refunds[ $key ] );
+		}
 		$this->authorizations = $authorizations;
 		$this->captures       = $captures;
 		$this->refunds        = $refunds;
@@ -112,12 +112,12 @@ class Payments {
 		return $this->captures;
 	}
 
-    /**
-     * Returns the Refunds.
-     *
-     * @return Refund[]
-     **/
-    public function refunds(): array {
-        return $this->refunds;
-    }
+	/**
+	 * Returns the Refunds.
+	 *
+	 * @return Refund[]
+	 **/
+	public function refunds(): array {
+		return $this->refunds;
+	}
 }

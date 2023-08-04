@@ -24,12 +24,17 @@ class FeesRenderer {
 	 * @return string
 	 */
 	public function render( WC_Order $wc_order ) : string {
-		$breakdown = $wc_order->get_meta( PayPalGateway::FEES_META_KEY );
+		$breakdown        = $wc_order->get_meta( PayPalGateway::FEES_META_KEY );
 		$refund_breakdown = $wc_order->get_meta( PayPalGateway::REFUND_FEES_META_KEY ) ?: array();
 
 		if ( ! is_array( $breakdown ) ) {
 			return '';
 		}
+
+		$refund_fee      = $refund_breakdown['paypal_fee'] ?? array();
+		$refund_amount   = $refund_breakdown['net_amount'] ?? array();
+		$refund_total    = ( $refund_fee['value'] ?? 0 ) + ( $refund_amount['value'] ?? 0 );
+		$refund_currency = ( $refund_amount['currency_code'] === $refund_fee['currency_code'] ) ? $refund_amount['currency_code'] : '';
 
 		$html = '';
 
@@ -44,14 +49,7 @@ class FeesRenderer {
 			);
 		}
 
-		$refund_total = 0;
-		$refund_currency = null;
-
-		$refund_fee = $refund_breakdown['paypal_fee'] ?? null;
-		if ( is_array( $refund_fee ) ) {
-			$refund_total += $refund_fee['value'];
-			$refund_currency = $refund_fee['currency_code'];
-
+		if ( $refund_fee ) {
 			$html .= $this->render_money_row(
 				__( 'PayPal Refund Fee:', 'woocommerce-paypal-payments' ),
 				__( 'The fee PayPal collects for the refund transactions.', 'woocommerce-paypal-payments' ),
@@ -62,16 +60,7 @@ class FeesRenderer {
 			);
 		}
 
-		$refund_amount = $refund_breakdown['net_amount'] ?? null;
-		if ( is_array( $refund_amount ) ) {
-			$refund_total += $refund_amount['value'];
-
-			if ( null === $refund_currency ) {
-				$refund_currency = $refund_fee['currency_code'];
-			} else if ( $refund_currency !== $refund_fee['currency_code'] ) {
-				$refund_currency = false;
-			}
-
+		if ( $refund_amount ) {
 			$html .= $this->render_money_row(
 				__( 'PayPal Refunded:', 'woocommerce-paypal-payments' ),
 				__( 'The net amount that was refunded.', 'woocommerce-paypal-payments' ),

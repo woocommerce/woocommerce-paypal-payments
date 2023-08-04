@@ -227,10 +227,12 @@ class IncomingWebhookEndpoint {
 
 		foreach ( $this->handlers as $handler ) {
 			if ( $handler->responsible_for_request( $request ) ) {
+				$event_type = ( $handler->event_types() ? current( $handler->event_types() ) : '' ) ?: '';
+
 				$this->logger->debug(
 					sprintf(
 						'Webhook is going to be handled by %s on %s',
-						( $handler->event_types() ) ? current( $handler->event_types() ) : '',
+						$event_type,
 						get_class( $handler )
 					)
 				);
@@ -238,7 +240,7 @@ class IncomingWebhookEndpoint {
 				$this->logger->info(
 					sprintf(
 						'Webhook has been handled by %s on %s',
-						( $handler->event_types() ) ? current( $handler->event_types() ) : '',
+						$event_type,
 						get_class( $handler )
 					)
 				);

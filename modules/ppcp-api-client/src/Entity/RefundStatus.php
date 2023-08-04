@@ -16,10 +16,10 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Entity;
  */
 class RefundStatus {
 
-	const COMPLETED          = 'COMPLETED';
-	const CANCELLED          = 'CANCELLED';
-	const FAILED             = 'FAILED';
-	const PENDING            = 'PENDING';
+	const COMPLETED = 'COMPLETED';
+	const CANCELLED = 'CANCELLED';
+	const FAILED    = 'FAILED';
+	const PENDING   = 'PENDING';
 
 	/**
 	 * The status.
@@ -29,12 +29,21 @@ class RefundStatus {
 	private $status;
 
 	/**
+	 * The details.
+	 *
+	 * @var RefundStatusDetails|null
+	 */
+	private $details;
+
+	/**
 	 * RefundStatus constructor.
 	 *
-	 * @param string $status The status.
+	 * @param string                   $status The status.
+	 * @param RefundStatusDetails|null $details The details.
 	 */
-	public function __construct( string $status ) {
+	public function __construct( string $status, ?RefundStatusDetails $details = null ) {
 		$this->status  = $status;
+		$this->details = $details;
 	}
 
 	/**
@@ -55,5 +64,14 @@ class RefundStatus {
 	 */
 	public function name(): string {
 		return $this->status;
+	}
+
+	/**
+	 * Returns the details.
+	 *
+	 * @return RefundStatusDetails|null
+	 */
+	public function details(): ?RefundStatusDetails {
+		return $this->details;
 	}
 }

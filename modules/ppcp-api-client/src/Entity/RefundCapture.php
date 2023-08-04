@@ -110,8 +110,8 @@ class RefundCapture {
 		if ( $this->note_to_payer() ) {
 			$data['note_to_payer'] = $this->note_to_payer();
 		}
-		if ( $this->amount() ) {
-			$data['amount'] = $this->amount()->to_array();
+		if ( $this->amount ) {
+			$data['amount'] = $this->amount->to_array();
 		}
 		return $data;
 	}
