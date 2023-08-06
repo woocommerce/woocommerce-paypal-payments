@@ -14,6 +14,7 @@ use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WP_Comment;
 
 /**
  * CheckoutHelper class.
@@ -72,6 +73,7 @@ class RefundFeesUpdater {
 		$fee_total          = 0.0;
 		$net_amount_total   = 0.0;
 		$currency_codes     = array();
+		$refunds_ids        = array();
 
 		foreach ( $purchase_units as $purchase_unit ) {
 			$payments = $purchase_unit->payments();
@@ -83,7 +85,8 @@ class RefundFeesUpdater {
 			$refunds = $payments->refunds();
 
 			foreach ( $refunds as $refund ) {
-				$breakdown = $refund->seller_payable_breakdown();
+				$breakdown     = $refund->seller_payable_breakdown();
+				$refunds_ids[] = $refund->id();
 
 				if ( ! $breakdown ) {
 					continue;
@@ -103,8 +106,8 @@ class RefundFeesUpdater {
 
 				$net_amount = $breakdown->net_amount();
 				if ( $net_amount ) {
-					$gross_amount_total += $net_amount->value();
-					$currency_codes[]    = $net_amount->currency_code();
+					$net_amount_total += $net_amount->value();
+					$currency_codes[]  = $net_amount->currency_code();
 				}
 			}
 		}
@@ -138,8 +141,53 @@ class RefundFeesUpdater {
 		$wc_order->update_meta_data( PayPalGateway::REFUND_FEES_META_KEY, $meta_data );
 		$wc_order->save();
 
+		$order_notes = $this->get_order_notes( $wc_order );
+
+		foreach ( $refunds_ids as $refund_id ) {
+			$has_note = false;
+			foreach ( $order_notes as $order_note ) {
+				if ( strpos( $order_note->comment_content, $refund_id ) !== false ) {
+					$has_note = true;
+				}
+			}
+			if ( ! $has_note ) {
+				$wc_order->add_order_note( sprintf( 'PayPal refund ID: %s', $refund_id ) );
+			}
+		}
+
 		$this->logger->debug(
 			sprintf( 'Updated order paypal refund fees. [wc_order: %s, paypal_order: %s]', $wc_order->get_id(), $paypal_order_id )
 		);
 	}
+
+	/**
+	 * Returns all order notes
+	 * Based on WC_Order::get_customer_order_notes
+	 *
+	 * @param WC_Order $wc_order The WooCommerce order.
+	 * @return WP_Comment[]
+	 */
+	private function get_order_notes( WC_Order $wc_order ): array {
+		$notes = array();
+		$args  = array(
+			'post_id' => $wc_order->get_id(),
+		);
+
+		remove_filter( 'comments_clauses', array( 'WC_Comments', 'exclude_order_comments' ) );
+
+		$comments = get_comments( $args );
+
+		if ( is_array( $comments ) ) {
+			foreach ( $comments as $comment ) {
+				if ( $comment instanceof WP_Comment ) {
+					$notes[] = $comment;
+				}
+			}
+		}
+
+		add_filter( 'comments_clauses', array( 'WC_Comments', 'exclude_order_comments' ) );
+
+		return $notes;
+	}
+
 }
