@@ -94,6 +94,13 @@ class PurchaseUnit {
 	private $contains_physical_goods = false;
 
 	/**
+	 * The sanitizer for this purchase unit output.
+	 *
+	 * @var PurchaseUnitSanitizer|null
+	 */
+	private $sanitizer;
+
+	/**
 	 * PurchaseUnit constructor.
 	 *
 	 * @param Amount        $amount The Amount.
@@ -223,6 +230,16 @@ class PurchaseUnit {
 	}
 
 	/**
+	 * Sets the sanitizer for this purchase unit output.
+	 *
+	 * @param PurchaseUnitSanitizer|null $sanitizer The sanitizer.
+	 * @return void
+	 */
+	public function set_sanitizer( ?PurchaseUnitSanitizer $sanitizer ) {
+		$this->sanitizer = $sanitizer;
+	}
+
+	/**
 	 * Returns the invoice id.
 	 *
 	 * @return string
@@ -317,8 +334,8 @@ class PurchaseUnit {
 			$purchase_unit['soft_descriptor'] = $this->soft_descriptor();
 		}
 
-		if ( $sanitize_output ) {
-			$purchase_unit = ( new PurchaseUnitSanitizer( $purchase_unit, $this->items() ) )->sanitize();
+		if ( $sanitize_output && isset( $this->sanitizer ) ) {
+			$purchase_unit = ( $this->sanitizer->sanitize( $purchase_unit, $this->items() ) );
 		}
 
 		return $purchase_unit;

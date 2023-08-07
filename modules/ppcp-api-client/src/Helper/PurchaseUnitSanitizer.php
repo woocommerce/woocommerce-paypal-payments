@@ -24,31 +24,80 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
  * Class PurchaseUnitSanitizer
  */
 class PurchaseUnitSanitizer {
+	const MODE_DITCH      = 'ditch';
+	const MODE_EXTRA_LINE = 'extra_line';
+	const VALID_MODES     = array(
+		self::MODE_DITCH,
+		self::MODE_EXTRA_LINE,
+	);
+
+	const EXTRA_LINE_NAME = 'Subtotal mismatch';
 
 	/**
 	 * The purchase unit data
 	 *
 	 * @var array
 	 */
-	private $purchase_unit;
+	private $purchase_unit = array();
 
 	/**
 	 * The purchase unit Item objects
 	 *
 	 * @var array|Item[]
 	 */
-	private $item_objects;
+	private $item_objects = array();
+
+	/**
+	 * The working mode
+	 *
+	 * @var string
+	 */
+	private $mode;
+
+	/**
+	 * The name for the extra line
+	 *
+	 * @var string
+	 */
+	private $extra_line_name;
 
 
 	/**
 	 * PurchaseUnitSanitizer constructor.
 	 *
-	 * @param array        $purchase_unit The purchase_unit array that should be sanitized.
-	 * @param array|Item[] $item_objects The purchase unit Item objects used for recalculations.
+	 * @param string|null $mode The mismatch handling mode, ditch or extra_line.
+	 * @param string|null $extra_line_name The name of the extra line.
 	 */
-	public function __construct( array $purchase_unit, array $item_objects ) {
-		$this->purchase_unit = $purchase_unit;
-		$this->item_objects  = $item_objects;
+	public function __construct( string $mode = null, string $extra_line_name = null ) {
+
+		if ( ! in_array( $mode, self::VALID_MODES, true ) ) {
+			$mode = self::MODE_DITCH;
+		}
+
+		if ( ! $extra_line_name ) {
+			$extra_line_name = self::EXTRA_LINE_NAME;
+		}
+
+		$this->mode            = $mode;
+		$this->extra_line_name = $extra_line_name;
+	}
+
+	/**
+	 * Indicates if mode is ditch.
+	 *
+	 * @return bool
+	 */
+	private function is_mode_ditch(): bool {
+		return $this->mode === self::MODE_DITCH;
+	}
+
+	/**
+	 * Indicates if mode is adding extra line.
+	 *
+	 * @return bool
+	 */
+	private function is_mode_extra_line(): bool {
+		return $this->mode === self::MODE_EXTRA_LINE;
 	}
 
 	/**
@@ -103,9 +152,14 @@ class PurchaseUnitSanitizer {
 	/**
 	 * The sanitizes the purchase_unit array.
 	 *
+	 * @param array        $purchase_unit The purchase_unit array that should be sanitized.
+	 * @param array|Item[] $item_objects The purchase unit Item objects used for recalculations.
 	 * @return array
 	 */
-	public function sanitize(): array {
+	public function sanitize( array $purchase_unit, array $item_objects ): array {
+		$this->purchase_unit = $purchase_unit;
+		$this->item_objects  = $item_objects;
+
 		$this->sanitize_item_amount_mismatch();
 		$this->sanitize_item_tax_mismatch();
 		$this->sanitize_breakdown_mismatch();
@@ -120,24 +174,27 @@ class PurchaseUnitSanitizer {
 	private function sanitize_item_amount_mismatch(): void {
 		$item_mismatch = $this->calculate_item_mismatch();
 
-		if ( $item_mismatch < 0 ) {
-			// Do floors on item amounts so item_mismatch is a positive value.
-			foreach ( $this->item_objects as $index => $item ) {
-				$this->purchase_unit['items'][ $index ] = $item->to_array(
-					$item->unit_amount()->is_rounding_up()
-				);
+		if ( $this->is_mode_extra_line() ) {
+			if ( $item_mismatch < 0 ) {
+				// Do floors on item amounts so item_mismatch is a positive value.
+				foreach ( $this->item_objects as $index => $item ) {
+					$this->purchase_unit['items'][ $index ] = $item->to_array(
+						$item->unit_amount()->is_rounding_up()
+					);
+				}
 			}
+
+			$item_mismatch = $this->calculate_item_mismatch();
+
+			if ( $item_mismatch > 0 ) {
+				// Add extra line item with roundings.
+				$line_name                      = $this->extra_line_name;
+				$roundings_money                = new Money( $item_mismatch, $this->currency_code() );
+				$this->purchase_unit['items'][] = ( new Item( $line_name, $roundings_money, 1 ) )->to_array();
+			}
+
+			$item_mismatch = $this->calculate_item_mismatch();
 		}
-
-		$item_mismatch = $this->calculate_item_mismatch();
-
-		if ( $item_mismatch > 0 ) {
-			// Add extra line item with roundings.
-			$roundings_money                = new Money( $item_mismatch, $this->currency_code() );
-			$this->purchase_unit['items'][] = ( new Item( 'Roundings', $roundings_money, 1 ) )->to_array();
-		}
-
-		$item_mismatch = $this->calculate_item_mismatch();
 
 		if ( $item_mismatch !== 0.0 ) {
 			// Ditch items.
@@ -257,8 +314,8 @@ class PurchaseUnitSanitizer {
 		$amount_total += $this->breakdown_value( 'item_total' );
 		$amount_total += $this->breakdown_value( 'tax_total' );
 		$amount_total += $this->breakdown_value( 'shipping' );
-		$amount_total += $this->breakdown_value( 'discount' );
-		$amount_total += $this->breakdown_value( 'shipping_discount' );
+		$amount_total -= $this->breakdown_value( 'discount' );
+		$amount_total -= $this->breakdown_value( 'shipping_discount' );
 		$amount_total += $this->breakdown_value( 'handling' );
 		$amount_total += $this->breakdown_value( 'insurance' );
 

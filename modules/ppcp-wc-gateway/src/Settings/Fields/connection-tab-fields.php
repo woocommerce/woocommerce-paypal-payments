@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
+use WooCommerce\PayPalCommerce\ApiClient\Helper\PurchaseUnitSanitizer;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
@@ -494,6 +495,42 @@ return function ( ContainerInterface $container, array $fields ): array {
 				State::STATE_ONBOARDED,
 			),
 			'requirements' => array(),
+			'gateway'      => Settings::CONNECTION_TAB_ID,
+		),
+		'subtotal_mismatch_behavior'                    => array(
+			'title'        => __( 'Subtotal mismatch behavior', 'woocommerce-paypal-payments' ),
+			'type'         => 'select',
+			'input_class'  => array( 'wc-enhanced-select' ),
+			'default'      => 'vertical',
+			'desc_tip'     => true,
+			'description'  => __(
+				'Differences between WooCommerce and PayPal roundings may give origin to a mismatch in order items subtotal calculations. If not handled these mismatches will cause the PayPal transaction to fail.',
+				'woocommerce-paypal-payments'
+			),
+			'options'      => array(
+				PurchaseUnitSanitizer::MODE_DITCH      => __( 'Do not send line items to PayPal', 'woocommerce-paypal-payments' ),
+				PurchaseUnitSanitizer::MODE_EXTRA_LINE => __( 'Add another line item', 'woocommerce-paypal-payments' ),
+			),
+			'screens'      => array(
+				State::STATE_START,
+				State::STATE_ONBOARDED,
+			),
+			'requirements' => array(),
+			'gateway'      => Settings::CONNECTION_TAB_ID,
+		),
+		'subtotal_mismatch_line_name'                   => array(
+			'title'        => __( 'Subtotal mismatch line name', 'woocommerce-paypal-payments' ),
+			'type'         => 'text',
+			'desc_tip'     => true,
+			'description'  => __( 'The name of the extra line that will be sent to PayPal to correct the subtotal mismatch.', 'woocommerce-paypal-payments' ),
+			'maxlength'    => 22,
+			'default'      => '',
+			'screens'      => array(
+				State::STATE_START,
+				State::STATE_ONBOARDED,
+			),
+			'requirements' => array(),
+			'placeholder'  => PurchaseUnitSanitizer::EXTRA_LINE_NAME,
 			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
 	);
