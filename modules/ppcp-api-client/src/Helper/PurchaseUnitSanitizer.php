@@ -48,6 +48,13 @@ class PurchaseUnitSanitizer {
 	private $item_objects = array();
 
 	/**
+	 * Whether to allow items to be ditched.
+	 *
+	 * @var bool
+	 */
+	private $allow_ditch_items = true;
+
+	/**
 	 * The working mode
 	 *
 	 * @var string
@@ -154,11 +161,13 @@ class PurchaseUnitSanitizer {
 	 *
 	 * @param array        $purchase_unit The purchase_unit array that should be sanitized.
 	 * @param array|Item[] $item_objects The purchase unit Item objects used for recalculations.
+	 * @param bool         $allow_ditch_items Whether to allow items to be ditched.
 	 * @return array
 	 */
-	public function sanitize( array $purchase_unit, array $item_objects ): array {
-		$this->purchase_unit = $purchase_unit;
-		$this->item_objects  = $item_objects;
+	public function sanitize( array $purchase_unit, array $item_objects, bool $allow_ditch_items = true ): array {
+		$this->purchase_unit     = $purchase_unit;
+		$this->item_objects      = $item_objects;
+		$this->allow_ditch_items = $allow_ditch_items;
 
 		$this->sanitize_item_amount_mismatch();
 		$this->sanitize_item_tax_mismatch();
@@ -176,6 +185,7 @@ class PurchaseUnitSanitizer {
 
 		if ( $this->is_mode_extra_line() ) {
 			if ( $item_mismatch < 0 ) {
+
 				// Do floors on item amounts so item_mismatch is a positive value.
 				foreach ( $this->item_objects as $index => $item ) {
 					$this->purchase_unit['items'][ $index ] = $item->to_array(
@@ -198,7 +208,7 @@ class PurchaseUnitSanitizer {
 
 		if ( $item_mismatch !== 0.0 ) {
 			// Ditch items.
-			if ( isset( $this->purchase_unit['items'] ) ) {
+			if ( $this->allow_ditch_items && isset( $this->purchase_unit['items'] ) ) {
 				unset( $this->purchase_unit['items'] );
 			}
 		}
@@ -212,7 +222,7 @@ class PurchaseUnitSanitizer {
 	private function sanitize_item_tax_mismatch(): void {
 		$tax_mismatch = $this->calculate_tax_mismatch();
 
-		if ( $tax_mismatch !== 0.0 ) {
+		if ( $this->allow_ditch_items && $tax_mismatch !== 0.0 ) {
 			// Unset tax in items.
 			foreach ( $this->purchase_unit['items'] as $index => $item ) {
 				if ( isset( $this->purchase_unit['items'][ $index ]['tax'] ) ) {
@@ -233,7 +243,7 @@ class PurchaseUnitSanitizer {
 	private function sanitize_breakdown_mismatch(): void {
 		$breakdown_mismatch = $this->calculate_breakdown_mismatch();
 
-		if ( $breakdown_mismatch !== 0.0 ) {
+		if ( $this->allow_ditch_items && $breakdown_mismatch !== 0.0 ) {
 			// Ditch breakdowns and items.
 			if ( isset( $this->purchase_unit['items'] ) ) {
 				unset( $this->purchase_unit['items'] );

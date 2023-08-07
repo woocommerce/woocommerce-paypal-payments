@@ -95,16 +95,6 @@ class PurchaseUnitTest extends TestCase
 			$doDitchTax = $doDitch;
 		}
 
-//		$dataSetName = $this->dataName();
-//		if ($dataSetName !== 'dont_ditch_with_discount') {
-//			return;
-//		}
-//
-//		print_r($amount->to_array());
-//		foreach ($items as $item) {
-//			print_r($item->to_array());
-//		}
-
         $testee = new PurchaseUnit(
             $amount,
             $items
@@ -114,10 +104,6 @@ class PurchaseUnitTest extends TestCase
 
         $array = $testee->to_array();
         $resultItems = $doDitchItems === ! array_key_exists('items', $array);
-//
-//		echo "------ RESULT ------\n";
-//		print_r($array);
-//		die('.');
 
         $resultBreakdown = $doDitchBreakdown === ! array_key_exists('breakdown', $array['amount']);
         $this->assertTrue($resultItems, $message);
@@ -566,6 +552,262 @@ class PurchaseUnitTest extends TestCase
 
         return $values;
     }
+
+	/**
+	 * @dataProvider dataForExtraLineTests
+	 * @param array $items
+	 * @param Amount $amount
+	 * @param array $expected
+	 * @param string $message
+	 */
+	public function testExtraLineMethod(array $items, Amount $amount, array $expected, string $message)
+	{
+		$testee = new PurchaseUnit(
+			$amount,
+			$items
+		);
+
+		$testee->set_sanitizer(new PurchaseUnitSanitizer(PurchaseUnitSanitizer::MODE_EXTRA_LINE, $expected['extra_line_name'] ?? null));
+
+		$countItemsBefore = count($items);
+		$array = $testee->to_array();
+		$countItemsAfter = count($array['items']);
+		$extraItem = array_pop($array['items']);
+
+		$this->assertEquals($countItemsBefore + 1, $countItemsAfter, $message);
+		$this->assertEquals($expected['extra_line_value'], $extraItem['unit_amount']['value'], $message);
+		$this->assertEquals($expected['extra_line_name'] ?? PurchaseUnitSanitizer::EXTRA_LINE_NAME, $extraItem['name'], $message);
+
+		foreach ($array['items'] as $i => $item) {
+			$this->assertEquals($expected['item_value'][$i], $item['unit_amount']['value'], $message);
+		}
+	}
+
+	public function dataForExtraLineTests() : array
+	{
+		$data = [
+			'default' => [
+				'message' => 'Extra line should be added with price 0.01 and line amount 10.',
+				'expected' => [
+					'item_value' => [10],
+					'extra_line_value' => 0.01,
+				],
+				'items' => [
+					[
+						'value' => 10,
+						'quantity' => 2,
+						'tax' => 3,
+						'category' => Item::PHYSICAL_GOODS,
+					],
+				],
+				'amount' => 26.01,
+				'breakdown' => [
+					'item_total' => 20.01,
+					'tax_total' => 6,
+					'shipping' => null,
+					'discount' => null,
+					'shipping_discount' => null,
+					'handling' => null,
+					'insurance' => null,
+				],
+			],
+			'with_custom_name' => [
+				'message' => 'Extra line should be added with price 0.01 and line amount 10.',
+				'expected' => [
+					'item_value' => [10],
+					'extra_line_value' => 0.01,
+					'extra_line_name' => 'My custom line name',
+				],
+				'items' => [
+					[
+						'value' => 10,
+						'quantity' => 2,
+						'tax' => 3,
+						'category' => Item::PHYSICAL_GOODS,
+					],
+				],
+				'amount' => 26.01,
+				'breakdown' => [
+					'item_total' => 20.01,
+					'tax_total' => 6,
+					'shipping' => null,
+					'discount' => null,
+					'shipping_discount' => null,
+					'handling' => null,
+					'insurance' => null,
+				],
+			],
+			'with_rounding_down' => [
+				'message' => 'Extra line should be added with price 0.01 and line amount 10.00.',
+				'expected' => [
+					'item_value' => [10.00],
+					'extra_line_value' => 0.01
+				],
+				'items' => [
+					[
+						'value' => 10.005,
+						'quantity' => 2,
+						'tax' => 3,
+						'category' => Item::PHYSICAL_GOODS,
+					],
+				],
+				'amount' => 26.01,
+				'breakdown' => [
+					'item_total' => 20.01,
+					'tax_total' => 6,
+					'shipping' => null,
+					'discount' => null,
+					'shipping_discount' => null,
+					'handling' => null,
+					'insurance' => null,
+				],
+			],
+			'with_rounding_down_only_first_item' => [
+				'message' => 'Extra line should be added with price 0.01 and lines amount 10.00 and 5.00.',
+				'expected' => [
+					'item_value' => [10.00, 5.00],
+					'extra_line_value' => 0.01
+				],
+				'items' => [
+					[
+						'value' => 10.005,
+						'quantity' => 2,
+						'tax' => 3,
+						'category' => Item::PHYSICAL_GOODS,
+					],
+					[
+						'value' => 5,
+						'quantity' => 2,
+						'tax' => 3,
+						'category' => Item::PHYSICAL_GOODS,
+					],
+				],
+				'amount' => 36.01,
+				'breakdown' => [
+					'item_total' => 30.01,
+					'tax_total' => 6,
+					'shipping' => null,
+					'discount' => null,
+					'shipping_discount' => null,
+					'handling' => null,
+					'insurance' => null,
+				],
+			],
+			'with_multiple_roundings_down' => [
+				'message' => 'Extra line should be added with price 0.01 and lines amount 10.00, 5.00 and 6.66.',
+				'expected' => [
+					'item_value' => [10.00, 5.00, 6.66],
+					'extra_line_value' => 0.01
+				],
+				'items' => [
+					[
+						'value' => 10.005,
+						'quantity' => 1,
+						'tax' => 3,
+						'category' => Item::PHYSICAL_GOODS,
+					],
+					[
+						'value' => 5.001,
+						'quantity' => 1,
+						'tax' => 3,
+						'category' => Item::PHYSICAL_GOODS,
+					],
+					[
+						'value' => 6.666,
+						'quantity' => 1,
+						'tax' => 3,
+						'category' => Item::PHYSICAL_GOODS,
+					],
+				],
+				'amount' => 27.67,
+				'breakdown' => [
+					'item_total' => 21.67,
+					'tax_total' => 6,
+					'shipping' => null,
+					'discount' => null,
+					'shipping_discount' => null,
+					'handling' => null,
+					'insurance' => null,
+				],
+			]
+		];
+
+		$values = [];
+		foreach ($data as $testKey => $test) {
+			$items = [];
+			foreach ($test['items'] as $key => $item) {
+				$unitAmount = new Money($item['value'], 'EUR');
+				$tax = new Money($item['tax'], 'EUR');
+				$items[$key] = Mockery::mock(
+					Item::class,
+					[
+						'unit_amount' => $unitAmount,
+						'tax' => $tax,
+						'quantity'=> $item['quantity'],
+						'category' => $item['category'],
+					]
+				);
+
+				$items[$key]->shouldReceive('to_array')->andReturnUsing(function (bool $roundToFloor = false) use ($unitAmount, $tax, $item) {
+					return [
+						'unit_amount' => $unitAmount->to_array($roundToFloor),
+						'tax' => $tax->to_array(),
+						'quantity'=> $item['quantity'],
+						'category' => $item['category'],
+					];
+				});
+
+			}
+
+			$breakdown = null;
+			if ($test['breakdown']) {
+				$breakdown = Mockery::mock(AmountBreakdown::class);
+				foreach ($test['breakdown'] as $method => $value) {
+					$breakdown->shouldReceive($method)->andReturnUsing(function () use ($value) {
+						if (! is_numeric($value)) {
+							return null;
+						}
+
+						$money = new Money($value, 'EUR');
+						return $money;
+					});
+				}
+
+				$breakdown
+					->shouldReceive('to_array')
+					->andReturn(
+						array_map(
+							function ($value) {
+								return $value ? (new Money($value, 'EUR'))->to_array() : null;
+							},
+							$test['breakdown']
+						)
+					);
+			}
+
+			$amountMoney = new Money($test['amount'], 'EUR');
+			$amount = Mockery::mock(Amount::class);
+			$amount
+				->shouldReceive('to_array')
+				->andReturn([
+					'value' => $amountMoney->value_str(),
+					'currency_code' => $amountMoney->currency_code(),
+					'breakdown' => $breakdown ? $breakdown->to_array() : [],
+				]);
+			$amount->shouldReceive('value_str')->andReturn($amountMoney->value_str());
+			$amount->shouldReceive('currency_code')->andReturn('EUR');
+			$amount->shouldReceive('breakdown')->andReturn($breakdown);
+
+			$values[$testKey] = [
+				$items,
+				$amount,
+				$test['expected'],
+				$test['message'],
+			];
+		}
+
+		return $values;
+	}
 
     public function testPayee()
     {

@@ -112,7 +112,7 @@ class PayUponInvoiceOrderEndpoint {
 			'processing_instruction' => 'ORDER_COMPLETE_ON_PAYMENT_APPROVAL',
 			'purchase_units'         => array_map(
 				static function ( PurchaseUnit $item ): array {
-					return $item->to_array( false );
+					return $item->to_array( true, false );
 				},
 				$items
 			),

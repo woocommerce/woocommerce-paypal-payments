@@ -297,10 +297,11 @@ class PurchaseUnit {
 	 * Returns the object as array.
 	 *
 	 * @param bool $sanitize_output Whether output should be sanitized for PayPal consumption.
+	 * @param bool $allow_ditch_items Whether to allow items to be ditched.
 	 *
 	 * @return array
 	 */
-	public function to_array( bool $sanitize_output = true ): array {
+	public function to_array( bool $sanitize_output = true, bool $allow_ditch_items = true ): array {
 		$purchase_unit = array(
 			'reference_id' => $this->reference_id(),
 			'amount'       => $this->amount()->to_array(),
@@ -335,7 +336,7 @@ class PurchaseUnit {
 		}
 
 		if ( $sanitize_output && isset( $this->sanitizer ) ) {
-			$purchase_unit = ( $this->sanitizer->sanitize( $purchase_unit, $this->items() ) );
+			$purchase_unit = ( $this->sanitizer->sanitize( $purchase_unit, $this->items(), $allow_ditch_items ) );
 		}
 
 		return $purchase_unit;
