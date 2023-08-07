@@ -29,7 +29,7 @@ class Payments {
 	private $captures;
 
 	/**
-	 * The Captures.
+	 * The Refunds.
 	 *
 	 * @var Refund[]
 	 */
