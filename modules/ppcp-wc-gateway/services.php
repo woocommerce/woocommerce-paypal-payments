@@ -292,6 +292,7 @@ return array(
 		$signup_link_ids = $container->get( 'onboarding.signup-link-ids' );
 		$pui_status_cache = $container->get( 'pui.status-cache' );
 		$dcc_status_cache = $container->get( 'dcc.status-cache' );
+		$logger = $container->get( 'woocommerce.logger.woocommerce' );
 		return new SettingsListener(
 			$settings,
 			$fields,
@@ -304,7 +305,8 @@ return array(
 			$signup_link_ids,
 			$pui_status_cache,
 			$dcc_status_cache,
-			$container->get( 'http.redirector' )
+			$container->get( 'http.redirector' ),
+			$logger
 		);
 	},
 	'wcgateway.order-processor'                            => static function ( ContainerInterface $container ): OrderProcessor {
