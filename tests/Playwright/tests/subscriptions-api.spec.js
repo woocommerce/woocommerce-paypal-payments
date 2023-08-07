@@ -368,7 +368,6 @@ test.describe('Plan connected display buttons', () => {
         await page.goto(`/product/?p=${productId}`)
         await expect(page.locator('#ppc-button-ppcp-gateway')).toBeVisible();
 
-        //await page.getByText('Sign up now').click();
         await page.locator('.single_add_to_cart_button').click();
         await page.goto('/cart');
         await expect(page.locator('#ppc-button-ppcp-gateway')).toBeVisible();
