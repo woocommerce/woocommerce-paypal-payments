@@ -73,7 +73,7 @@ class SingleProductActionHandler {
     getSubscriptionProducts()
     {
         const id = document.querySelector('[name="add-to-cart"]').value;
-        return [new Product(id, 1, [])];
+        return [new Product(id, 1, this.variations())];
     }
 
     configuration()
