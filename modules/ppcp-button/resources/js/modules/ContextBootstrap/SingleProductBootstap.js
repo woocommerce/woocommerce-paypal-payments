@@ -22,6 +22,8 @@ class SingleProductBootstap {
         this.renderer.onButtonsInit(this.gateway.button.wrapper, () => {
             this.handleChange();
         }, true);
+
+        this.subscriptionButtonsLoaded = false
     }
 
     form() {
@@ -29,6 +31,8 @@ class SingleProductBootstap {
     }
 
     handleChange() {
+        this.subscriptionButtonsLoaded = false
+
         if (!this.shouldRender()) {
             this.renderer.disableSmartButtons(this.gateway.button.wrapper);
             hide(this.gateway.button.wrapper, this.formSelector);
@@ -187,6 +191,7 @@ class SingleProductBootstap {
                 return;
             }
 
+            if(this.subscriptionButtonsLoaded) return
             loadPaypalJsScript(
                 {
                     clientId: PayPalCommerceGateway.client_id,
@@ -197,6 +202,8 @@ class SingleProductBootstap {
                 actionHandler.subscriptionsConfiguration(subscription_plan),
                 this.gateway.button.wrapper
             );
+
+            this.subscriptionButtonsLoaded = true
             return;
         }
 
