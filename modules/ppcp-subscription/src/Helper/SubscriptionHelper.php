@@ -219,6 +219,11 @@ class SubscriptionHelper {
 		return '';
 	}
 
+	/**
+	 * Returns variations for variable PayPal subscription product.
+	 *
+	 * @return array
+	 */
 	public function variable_paypal_subscription_variations(): array {
 		$variations = array();
 		if ( ! $this->current_product_is_subscription() ) {
@@ -232,16 +237,16 @@ class SubscriptionHelper {
 		}
 
 		$variation_ids = $product->get_children();
-		foreach ($variation_ids as $id) {
-			$product = wc_get_product($id);
-			if(! is_a($product, WC_Product_Subscription_Variation::class )) {
+		foreach ( $variation_ids as $id ) {
+			$product = wc_get_product( $id );
+			if ( ! is_a( $product, WC_Product_Subscription_Variation::class ) ) {
 				continue;
 			}
 
-			$subscription_plan = $product->get_meta('ppcp_subscription_plan') ?? '';
-			$variations[] = array(
-				'id' => $product->get_id(),
-				'attributes' => $product->get_attributes(),
+			$subscription_plan = $product->get_meta( 'ppcp_subscription_plan' ) ?? array();
+			$variations[]      = array(
+				'id'                => $product->get_id(),
+				'attributes'        => $product->get_attributes(),
 				'subscription_plan' => $subscription_plan['id'] ?? '',
 			);
 		}

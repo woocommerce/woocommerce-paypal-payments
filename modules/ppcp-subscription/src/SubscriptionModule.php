@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\Subscription;
 use Exception;
 use WC_Product;
 use WC_Product_Subscription_Variation;
+use WC_Product_Variable;
 use WC_Product_Variable_Subscription;
 use WC_Subscriptions_Product;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingSubscriptions;
@@ -195,9 +196,15 @@ class SubscriptionModule implements ModuleInterface {
 
 				$products = array( $this->set_product_config( $product ) );
 				if ( $product->get_type() === 'variable-subscription' ) {
-					$products             = array();
+					$products = array();
+					assert( $product instanceof WC_Product_Variable );
 					$available_variations = $product->get_available_variations();
 					foreach ( $available_variations as $variation ) {
+						/**
+						 * The method is defined in WooCommerce.
+						 *
+						 * @psalm-suppress UndefinedMethod
+						 */
 						$variation  = wc_get_product_object( 'variation', $variation['variation_id'] );
 						$products[] = $this->set_product_config( $variation );
 					}
@@ -472,9 +479,18 @@ class SubscriptionModule implements ModuleInterface {
 
 		add_action(
 			'woocommerce_save_product_variation',
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
 			function( $variation_id ) use ( $c ) {
 				$wcsnonce_save_variations = wc_clean( wp_unslash( $_POST['_wcsnonce_save_variations'] ?? '' ) );
-				if ( ! WC_Subscriptions_Product::is_subscription( $variation_id ) || empty( $wcsnonce_save_variations ) || ! wp_verify_nonce( $wcsnonce_save_variations, 'wcs_subscription_variations' ) ) {
+				if (
+					! WC_Subscriptions_Product::is_subscription( $variation_id )
+					|| ! is_string( $wcsnonce_save_variations )
+					|| ! wp_verify_nonce( $wcsnonce_save_variations, 'wcs_subscription_variations' )
+				) {
 					return;
 				}
 
@@ -808,6 +824,11 @@ class SubscriptionModule implements ModuleInterface {
 
 		add_action(
 			'woocommerce_variation_options_pricing',
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
 			function( $loop, $variation_data, $variation ) use ( $c ) {
 				$settings = $c->get( 'wcgateway.settings' );
 				assert( $settings instanceof Settings );
