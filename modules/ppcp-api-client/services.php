@@ -17,6 +17,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentPreferencesFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PlanFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ProductFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingOptionFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderTransient;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PurchaseUnitSanitizer;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -816,6 +817,11 @@ return array(
 	},
 	'api.order-helper'                          => static function( ContainerInterface $container ): OrderHelper {
 		return new OrderHelper();
+	},
+	'api.helper.order-transient'                => static function( ContainerInterface $container ): OrderTransient {
+		$cache                   = new Cache( 'ppcp-paypal-bearer' );
+		$purchase_unit_sanitizer = $container->get( 'api.helper.purchase-unit-sanitizer' );
+		return new OrderTransient( $cache, $purchase_unit_sanitizer );
 	},
 	'api.helper.purchase-unit-sanitizer'        => static function( ContainerInterface $container ): PurchaseUnitSanitizer {
 		$settings  = $container->get( 'wcgateway.settings' );

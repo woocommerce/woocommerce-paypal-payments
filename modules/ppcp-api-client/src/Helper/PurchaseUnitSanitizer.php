@@ -68,6 +68,12 @@ class PurchaseUnitSanitizer {
 	 */
 	private $extra_line_name;
 
+	/**
+	 * The last message. To be added to order notes.
+	 *
+	 * @var string
+	 */
+	private $last_message = '';
 
 	/**
 	 * PurchaseUnitSanitizer constructor.
@@ -201,6 +207,8 @@ class PurchaseUnitSanitizer {
 				$line_name                      = $this->extra_line_name;
 				$roundings_money                = new Money( $item_mismatch, $this->currency_code() );
 				$this->purchase_unit['items'][] = ( new Item( $line_name, $roundings_money, 1 ) )->to_array();
+
+				$this->last_message = __( 'Item amount mismatch. Extra line added.', 'woocommerce-paypal-payments' );
 			}
 
 			$item_mismatch = $this->calculate_item_mismatch();
@@ -210,6 +218,7 @@ class PurchaseUnitSanitizer {
 			// Ditch items.
 			if ( $this->allow_ditch_items && isset( $this->purchase_unit['items'] ) ) {
 				unset( $this->purchase_unit['items'] );
+				$this->last_message = __( 'Item amount mismatch. Items ditched.', 'woocommerce-paypal-payments' );
 			}
 		}
 	}
@@ -251,6 +260,8 @@ class PurchaseUnitSanitizer {
 			if ( isset( $this->purchase_unit['amount']['breakdown'] ) ) {
 				unset( $this->purchase_unit['amount']['breakdown'] );
 			}
+
+			$this->last_message = __( 'Breakdown mismatch. Items and breakdown ditched.', 'woocommerce-paypal-payments' );
 		}
 	}
 
@@ -334,4 +345,14 @@ class PurchaseUnitSanitizer {
 
 		return $amount_str - $amount_total_str;
 	}
+
+	/**
+	 * Returns the last sanitization message.
+	 *
+	 * @return string
+	 */
+	public function get_last_message(): string {
+		return $this->last_message;
+	}
+
 }
