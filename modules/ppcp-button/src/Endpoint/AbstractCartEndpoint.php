@@ -112,6 +112,14 @@ abstract class AbstractCartEndpoint implements EndpointInterface {
 
 		$success = true;
 		foreach ( $products as $product ) {
+
+			// Add extras to POST, they are usually added by custom plugins.
+			if ( $product['extra'] && is_array( $product['extra'] ) ) {
+				foreach ( $product['extra'] as $key => $value ) {
+					$_POST[ $key ] = $value;
+				}
+			}
+
 			if ( $product['product']->is_type( 'booking' ) ) {
 				$success = $success && $this->add_booking_product(
 					$product['product'],
@@ -229,6 +237,7 @@ abstract class AbstractCartEndpoint implements EndpointInterface {
 				'quantity'   => (int) $product['quantity'],
 				'variations' => $product['variations'] ?? null,
 				'booking'    => $product['booking'] ?? null,
+				'extra'      => $product['extra'] ?? null,
 			);
 		}
 		return $products;
