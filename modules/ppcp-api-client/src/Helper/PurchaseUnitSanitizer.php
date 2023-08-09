@@ -172,8 +172,8 @@ class PurchaseUnitSanitizer {
 	/**
 	 * The sanitizes the purchase_unit array.
 	 *
-	 * @param array        $purchase_unit The purchase_unit array that should be sanitized.
-	 * @param bool         $allow_ditch_items Whether to allow items to be ditched.
+	 * @param array $purchase_unit The purchase_unit array that should be sanitized.
+	 * @param bool  $allow_ditch_items Whether to allow items to be ditched.
 	 * @return array
 	 */
 	public function sanitize( array $purchase_unit, bool $allow_ditch_items = true ): array {
@@ -199,8 +199,9 @@ class PurchaseUnitSanitizer {
 
 				// Do floors on item amounts so item_mismatch is a positive value.
 				foreach ( $this->purchase_unit['items'] as $index => $item ) {
-					// get a more intelligent adjustment mechanism
-					$this->purchase_unit['items'][ $index ]['unit_amount']['value'] = ( (float) $this->purchase_unit['items'][ $index ]['unit_amount']['value'] ) - 0.01;
+					// Get a more intelligent adjustment mechanism.
+					$increment = ( new MoneyFormatter() )->minimum_increment( $item['unit_amount']['currency_code'] );
+					$this->purchase_unit['items'][ $index ]['unit_amount']['value'] = ( (float) $item['unit_amount']['value'] ) - $increment;
 				}
 			}
 

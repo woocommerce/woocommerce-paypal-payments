@@ -824,9 +824,11 @@ return array(
 		return new OrderTransient( $cache, $purchase_unit_sanitizer );
 	},
 	'api.helper.purchase-unit-sanitizer'        => static function( ContainerInterface $container ): PurchaseUnitSanitizer {
-		if ( $instance = PurchaseUnitSanitizer::get_instance() ) {
+		$instance = PurchaseUnitSanitizer::get_instance();
+		if ( $instance ) {
 			return $instance;
 		}
+
 		$settings  = $container->get( 'wcgateway.settings' );
 		assert( $settings instanceof Settings );
 
