@@ -187,6 +187,10 @@ class SingleProductBootstap {
 
             this.messages.renderWithAmount(data.total);
 
+            if ( this.gateway.single_product_buttons_enabled !== '1' ) {
+                return;
+            }
+
             let enableFunding = this.gateway.url_params['enable-funding'];
             let disableFunding = this.gateway.url_params['disable-funding'];
 
