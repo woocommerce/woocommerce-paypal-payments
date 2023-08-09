@@ -336,7 +336,7 @@ class PurchaseUnit {
 		}
 
 		if ( $sanitize_output && isset( $this->sanitizer ) ) {
-			$purchase_unit = ( $this->sanitizer->sanitize( $purchase_unit, $this->items(), $allow_ditch_items ) );
+			$purchase_unit = ( $this->sanitizer->sanitize( $purchase_unit, $allow_ditch_items ) );
 		}
 
 		return $purchase_unit;

@@ -824,11 +824,14 @@ return array(
 		return new OrderTransient( $cache, $purchase_unit_sanitizer );
 	},
 	'api.helper.purchase-unit-sanitizer'        => static function( ContainerInterface $container ): PurchaseUnitSanitizer {
+		if ( $instance = PurchaseUnitSanitizer::get_instance() ) {
+			return $instance;
+		}
 		$settings  = $container->get( 'wcgateway.settings' );
 		assert( $settings instanceof Settings );
 
 		$behavior  = $settings->has( 'subtotal_mismatch_behavior' ) ? $settings->get( 'subtotal_mismatch_behavior' ) : null;
 		$line_name = $settings->has( 'subtotal_mismatch_line_name' ) ? $settings->get( 'subtotal_mismatch_line_name' ) : null;
-		return new PurchaseUnitSanitizer( $behavior, $line_name );
+		return PurchaseUnitSanitizer::singleton( $behavior, $line_name );
 	},
 );

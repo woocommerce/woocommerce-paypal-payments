@@ -662,11 +662,11 @@ class PurchaseUnitTest extends TestCase
 					'insurance' => null,
 				],
 			],
-			'with_rounding_down_only_first_item' => [
-				'message' => 'Extra line should be added with price 0.01 and lines amount 10.00 and 5.00.',
+			'with_two_rounding_down' => [
+				'message' => 'Extra line should be added with price 0.03 and lines amount 10.00 and 4.99.',
 				'expected' => [
-					'item_value' => [10.00, 5.00],
-					'extra_line_value' => 0.01
+					'item_value' => [10.00, 4.99],
+					'extra_line_value' => 0.03
 				],
 				'items' => [
 					[
@@ -693,11 +693,11 @@ class PurchaseUnitTest extends TestCase
 					'insurance' => null,
 				],
 			],
-			'with_multiple_roundings_down' => [
+			'with_many_roundings_down' => [
 				'message' => 'Extra line should be added with price 0.01 and lines amount 10.00, 5.00 and 6.66.',
 				'expected' => [
-					'item_value' => [10.00, 5.00, 6.66],
-					'extra_line_value' => 0.01
+					'item_value' => [10.00, 4.99, 6.66],
+					'extra_line_value' => 0.02
 				],
 				'items' => [
 					[

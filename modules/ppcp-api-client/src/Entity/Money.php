@@ -62,11 +62,10 @@ class Money {
 	/**
 	 * The value formatted as string for API requests.
 	 *
-	 * @param bool $round_to_floor If value rounding should be floor.
 	 * @return string
 	 */
-	public function value_str( bool $round_to_floor = false ): string {
-		return $this->money_formatter->format( $this->value, $this->currency_code, $round_to_floor );
+	public function value_str(): string {
+		return $this->money_formatter->format( $this->value, $this->currency_code );
 	}
 
 	/**
@@ -81,22 +80,12 @@ class Money {
 	/**
 	 * Returns the object as array.
 	 *
-	 * @param bool $round_to_floor If value rounding should be floor.
 	 * @return array
 	 */
-	public function to_array( bool $round_to_floor = false ): array {
+	public function to_array(): array {
 		return array(
 			'currency_code' => $this->currency_code(),
-			'value'         => $this->value_str( $round_to_floor ),
+			'value'         => $this->value_str(),
 		);
-	}
-
-	/**
-	 * Indicates if the default rounding for this value is rounding up.
-	 *
-	 * @return bool
-	 */
-	public function is_rounding_up(): bool {
-		return (float) $this->value_str() > $this->value;
 	}
 }

@@ -201,13 +201,12 @@ class Item {
 	/**
 	 * Returns the object as array.
 	 *
-	 * @param bool $round_to_floor If value rounding should be floor.
 	 * @return array
 	 */
-	public function to_array( bool $round_to_floor = false ): array {
+	public function to_array(): array {
 		$item = array(
 			'name'        => $this->name(),
-			'unit_amount' => $this->unit_amount()->to_array( $round_to_floor ),
+			'unit_amount' => $this->unit_amount()->to_array(),
 			'quantity'    => $this->quantity(),
 			'description' => $this->description(),
 			'sku'         => $this->sku(),

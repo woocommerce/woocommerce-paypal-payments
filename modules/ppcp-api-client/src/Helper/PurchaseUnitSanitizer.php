@@ -19,11 +19,14 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Helper;
 
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
+use WooCommerce\PayPalCommerce\Vendor\Pattern\SingletonTrait;
 
 /**
  * Class PurchaseUnitSanitizer
  */
 class PurchaseUnitSanitizer {
+	use SingletonTrait;
+
 	const MODE_DITCH      = 'ditch';
 	const MODE_EXTRA_LINE = 'extra_line';
 	const VALID_MODES     = array(
@@ -39,13 +42,6 @@ class PurchaseUnitSanitizer {
 	 * @var array
 	 */
 	private $purchase_unit = array();
-
-	/**
-	 * The purchase unit Item objects
-	 *
-	 * @var array|Item[]
-	 */
-	private $item_objects = array();
 
 	/**
 	 * Whether to allow items to be ditched.
@@ -93,6 +89,17 @@ class PurchaseUnitSanitizer {
 
 		$this->mode            = $mode;
 		$this->extra_line_name = $extra_line_name;
+	}
+
+	/**
+	 * PurchaseUnitSanitizer singleton.
+	 *
+	 * @param string|null $mode The mismatch handling mode, ditch or extra_line.
+	 * @param string|null $extra_line_name The name of the extra line.
+	 * @return self
+	 */
+	public static function singleton( string $mode = null, string $extra_line_name = null ): self {
+		return self::set_instance( new self( $mode, $extra_line_name ) );
 	}
 
 	/**
@@ -166,13 +173,11 @@ class PurchaseUnitSanitizer {
 	 * The sanitizes the purchase_unit array.
 	 *
 	 * @param array        $purchase_unit The purchase_unit array that should be sanitized.
-	 * @param array|Item[] $item_objects The purchase unit Item objects used for recalculations.
 	 * @param bool         $allow_ditch_items Whether to allow items to be ditched.
 	 * @return array
 	 */
-	public function sanitize( array $purchase_unit, array $item_objects, bool $allow_ditch_items = true ): array {
+	public function sanitize( array $purchase_unit, bool $allow_ditch_items = true ): array {
 		$this->purchase_unit     = $purchase_unit;
-		$this->item_objects      = $item_objects;
 		$this->allow_ditch_items = $allow_ditch_items;
 
 		$this->sanitize_item_amount_mismatch();
@@ -193,10 +198,9 @@ class PurchaseUnitSanitizer {
 			if ( $item_mismatch < 0 ) {
 
 				// Do floors on item amounts so item_mismatch is a positive value.
-				foreach ( $this->item_objects as $index => $item ) {
-					$this->purchase_unit['items'][ $index ] = $item->to_array(
-						$item->unit_amount()->is_rounding_up()
-					);
+				foreach ( $this->purchase_unit['items'] as $index => $item ) {
+					// get a more intelligent adjustment mechanism
+					$this->purchase_unit['items'][ $index ]['unit_amount']['value'] = ( (float) $this->purchase_unit['items'][ $index ]['unit_amount']['value'] ) - 0.01;
 				}
 			}
 
