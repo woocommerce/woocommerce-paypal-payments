@@ -107,7 +107,7 @@ class CheckoutBootstap {
         ) {
             this.renderer.render(actionHandler.subscriptionsConfiguration(), {}, actionHandler.configuration());
 
-            if(!PayPalCommerceGateway.subscription_plan_id) {
+            if(!PayPalCommerceGateway.subscription_product_allowed) {
                 this.gateway.button.is_disabled = true;
                 this.handleButtonStatus();
             }
