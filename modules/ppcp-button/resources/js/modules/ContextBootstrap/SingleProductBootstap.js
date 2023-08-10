@@ -2,6 +2,8 @@ import UpdateCart from "../Helper/UpdateCart";
 import SingleProductActionHandler from "../ActionHandler/SingleProductActionHandler";
 import {hide, show} from "../Helper/Hiding";
 import BootstrapHelper from "../Helper/BootstrapHelper";
+import {loadPaypalJsScript} from "../Helper/ScriptLoading";
+import {getPlanIdFromVariation} from "../Helper/Subscriptions"
 import SimulateCart from "../Helper/SimulateCart";
 import {strRemoveWord, strAddWord, throttle} from "../Helper/Utils";
 
@@ -20,6 +22,8 @@ class SingleProductBootstap {
         this.renderer.onButtonsInit(this.gateway.button.wrapper, () => {
             this.handleChange();
         }, true);
+
+        this.subscriptionButtonsLoaded = false
     }
 
     form() {
@@ -27,6 +31,8 @@ class SingleProductBootstap {
     }
 
     handleChange() {
+        this.subscriptionButtonsLoaded = false
+
         if (!this.shouldRender()) {
             this.renderer.disableSmartButtons(this.gateway.button.wrapper);
             hide(this.gateway.button.wrapper, this.formSelector);
@@ -141,6 +147,25 @@ class SingleProductBootstap {
             || document.querySelector('.wcsatt-options-prompt-label-subscription input[type="radio"]:checked') !== null; // grouped
     }
 
+    variations() {
+        if (!this.hasVariations()) {
+            return null;
+        }
+
+        return [...document.querySelector('form.cart')?.querySelectorAll("[name^='attribute_']")].map(
+            (element) => {
+                return {
+                    value: element.value,
+                    name: element.name
+                }
+            }
+        );
+    }
+
+    hasVariations() {
+        return document.querySelector('form.cart')?.classList.contains('variations_form');
+    }
+
     render() {
         const actionHandler = new SingleProductActionHandler(
             this.gateway,
@@ -156,7 +181,29 @@ class SingleProductBootstap {
             PayPalCommerceGateway.data_client_id.has_subscriptions
             && PayPalCommerceGateway.data_client_id.paypal_subscriptions_enabled
         ) {
-            this.renderer.render(actionHandler.subscriptionsConfiguration());
+            const buttonWrapper = document.getElementById('ppc-button-ppcp-gateway');
+            buttonWrapper.innerHTML = '';
+
+            const subscription_plan = this.variations() !== null
+                ? getPlanIdFromVariation(this.variations())
+                : PayPalCommerceGateway.subscription_plan_id
+            if(!subscription_plan) {
+                return;
+            }
+
+            if(this.subscriptionButtonsLoaded) return
+            loadPaypalJsScript(
+                {
+                    clientId: PayPalCommerceGateway.client_id,
+                    currency: PayPalCommerceGateway.currency,
+                    intent: 'subscription',
+                    vault: true
+                },
+                actionHandler.subscriptionsConfiguration(subscription_plan),
+                this.gateway.button.wrapper
+            );
+
+            this.subscriptionButtonsLoaded = true
             return;
         }
 

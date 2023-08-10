@@ -21,11 +21,11 @@ class SingleProductActionHandler {
         this.cartHelper = null;
     }
 
-    subscriptionsConfiguration() {
+    subscriptionsConfiguration(subscription_plan) {
         return {
             createSubscription: (data, actions) => {
                 return actions.subscription.create({
-                    'plan_id': this.config.subscription_plan_id
+                    'plan_id': subscription_plan
                 });
             },
             onApprove: (data, actions) => {
@@ -73,7 +73,7 @@ class SingleProductActionHandler {
     getSubscriptionProducts()
     {
         const id = document.querySelector('[name="add-to-cart"]').value;
-        return [new Product(id, 1, null)];
+        return [new Product(id, 1, this.variations())];
     }
 
     configuration()
