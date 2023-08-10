@@ -58,6 +58,7 @@ class OnboardingUrlTest extends TestCase
 		// Expectations
 		$this->cache->shouldReceive('has')->once()->andReturn(true);
 		$this->cache->shouldReceive('get')->once()->andReturn($cacheData);
+		$this->cache->shouldReceive('set')->once();
 		$this->cache->shouldReceive('delete')->once();
 
 		$this->assertTrue(
