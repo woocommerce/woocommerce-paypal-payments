@@ -19,14 +19,11 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Helper;
 
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
-use WooCommerce\PayPalCommerce\Vendor\Pattern\SingletonTrait;
 
 /**
  * Class PurchaseUnitSanitizer
  */
 class PurchaseUnitSanitizer {
-	use SingletonTrait;
-
 	const MODE_DITCH      = 'ditch';
 	const MODE_EXTRA_LINE = 'extra_line';
 	const VALID_MODES     = array(
@@ -89,17 +86,6 @@ class PurchaseUnitSanitizer {
 
 		$this->mode            = $mode;
 		$this->extra_line_name = $extra_line_name;
-	}
-
-	/**
-	 * PurchaseUnitSanitizer singleton.
-	 *
-	 * @param string|null $mode The mismatch handling mode, ditch or extra_line.
-	 * @param string|null $extra_line_name The name of the extra line.
-	 * @return self
-	 */
-	public static function singleton( string $mode = null, string $extra_line_name = null ): self {
-		return self::set_instance( new self( $mode, $extra_line_name ) );
 	}
 
 	/**

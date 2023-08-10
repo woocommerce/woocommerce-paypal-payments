@@ -20,6 +20,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingOptionFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderTransient;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PurchaseUnitSanitizer;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\Vendor\Pattern\SingletonDecorator;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\PayPalBearer;
@@ -823,17 +824,12 @@ return array(
 		$purchase_unit_sanitizer = $container->get( 'api.helper.purchase-unit-sanitizer' );
 		return new OrderTransient( $cache, $purchase_unit_sanitizer );
 	},
-	'api.helper.purchase-unit-sanitizer'        => static function( ContainerInterface $container ): PurchaseUnitSanitizer {
-		$instance = PurchaseUnitSanitizer::get_instance();
-		if ( $instance ) {
-			return $instance;
-		}
-
+	'api.helper.purchase-unit-sanitizer'        => SingletonDecorator::make(static function( ContainerInterface $container ): PurchaseUnitSanitizer {
 		$settings  = $container->get( 'wcgateway.settings' );
 		assert( $settings instanceof Settings );
 
 		$behavior  = $settings->has( 'subtotal_mismatch_behavior' ) ? $settings->get( 'subtotal_mismatch_behavior' ) : null;
 		$line_name = $settings->has( 'subtotal_mismatch_line_name' ) ? $settings->get( 'subtotal_mismatch_line_name' ) : null;
-		return PurchaseUnitSanitizer::singleton( $behavior, $line_name );
-	},
+		return new PurchaseUnitSanitizer( $behavior, $line_name );
+	}),
 );
