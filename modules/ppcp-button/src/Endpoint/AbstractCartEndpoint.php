@@ -115,7 +115,11 @@ abstract class AbstractCartEndpoint implements EndpointInterface {
 
 			// Add extras to POST, they are usually added by custom plugins.
 			if ( $product['extra'] && is_array( $product['extra'] ) ) {
-				foreach ( $product['extra'] as $key => $value ) {
+				// Handle cases like field[]
+				$query = http_build_query( $product['extra'] );
+				parse_str( $query, $extra );
+
+				foreach ( $extra as $key => $value ) {
 					$_POST[ $key ] = $value;
 				}
 			}
