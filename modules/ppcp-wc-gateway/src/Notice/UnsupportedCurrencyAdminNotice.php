@@ -60,6 +60,8 @@ class UnsupportedCurrencyAdminNotice {
 	 * @param State  $state The state.
 	 * @param string $shop_currency The shop currency.
 	 * @param array  $supported_currencies The supported currencies.
+	 * @param bool   $is_wc_gateways_list_page Indicates if we're on the WooCommerce gateways list page.
+	 * @param bool   $is_ppcp_settings_page Indicates if we're on a PPCP Settings page.
 	 */
 	public function __construct(
 		State $state,
@@ -109,7 +111,7 @@ class UnsupportedCurrencyAdminNotice {
 	protected function should_display(): bool {
 		return $this->state->current_state() === State::STATE_ONBOARDED
 			&& ! $this->currency_supported()
-			&& ($this->is_wc_gateways_list_page || $this->is_ppcp_settings_page);
+			&& ( $this->is_wc_gateways_list_page || $this->is_ppcp_settings_page );
 	}
 
 	/**
