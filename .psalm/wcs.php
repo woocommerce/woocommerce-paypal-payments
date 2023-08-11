@@ -2084,3 +2084,26 @@ function wcs_find_matching_line_item($order, $subscription_item, $match_type = '
 function wcs_order_contains_product($order, $product)
 {
 }
+
+/**
+ * Get page ID for a specific WC resource.
+ *
+ * @param string $for Name of the resource.
+ *
+ * @return string Page ID. Empty string if resource not found.
+ */
+function wc_get_page_screen_id( $for ) {}
+
+/**
+ * Subscription Product Variation Class
+ *
+ * The subscription product variation class extends the WC_Product_Variation product class
+ * to create subscription product variations.
+ *
+ * @class    WC_Product_Subscription
+ * @package  WooCommerce Subscriptions
+ * @category Class
+ * @since    1.0.0 - Migrated from WooCommerce Subscriptions v1.3
+ *
+ */
+class WC_Product_Subscription_Variation extends WC_Product_Variation {}

@@ -817,10 +817,12 @@ class SmartButton implements SmartButtonInterface {
 
 		$this->request_data->enqueue_nonce_fix();
 		$localize = array(
-			'url'                               => add_query_arg( $url_params, 'https://www.paypal.com/sdk/js' ),
-			'url_params'                        => $url_params,
-			'script_attributes'                 => $this->attributes(),
-			'data_client_id'                    => array(
+			'url'                                     => add_query_arg( $url_params, 'https://www.paypal.com/sdk/js' ),
+			'url_params'                              => $url_params,
+			'script_attributes'                       => $this->attributes(),
+			'client_id'                               => $this->client_id,
+			'currency'                                => $this->currency,
+			'data_client_id'                          => array(
 				'set_attribute'                => ( is_checkout() && $this->dcc_is_enabled() ) || $this->can_save_vault_token(),
 				'endpoint'                     => \WC_AJAX::get_endpoint( DataClientIdEndpoint::ENDPOINT ),
 				'nonce'                        => wp_create_nonce( DataClientIdEndpoint::nonce() ),
@@ -828,9 +830,9 @@ class SmartButton implements SmartButtonInterface {
 				'has_subscriptions'            => $this->has_subscriptions(),
 				'paypal_subscriptions_enabled' => $this->paypal_subscriptions_enabled(),
 			),
-			'redirect'                          => wc_get_checkout_url(),
-			'context'                           => $this->context(),
-			'ajax'                              => array(
+			'redirect'                                => wc_get_checkout_url(),
+			'context'                                 => $this->context(),
+			'ajax'                                    => array(
 				'simulate_cart'        => array(
 					'endpoint' => \WC_AJAX::get_endpoint( SimulateCartEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( SimulateCartEndpoint::nonce() ),
@@ -867,14 +869,16 @@ class SmartButton implements SmartButtonInterface {
 					'endpoint' => \WC_AJAX::get_endpoint( CartScriptParamsEndpoint::ENDPOINT ),
 				),
 			),
-			'subscription_plan_id'              => $this->paypal_subscription_id(),
-			'enforce_vault'                     => $this->has_subscriptions(),
-			'can_save_vault_token'              => $this->can_save_vault_token(),
-			'is_free_trial_cart'                => $is_free_trial_cart,
-			'vaulted_paypal_email'              => ( is_checkout() && $is_free_trial_cart ) ? $this->get_vaulted_paypal_email() : '',
-			'bn_codes'                          => $this->bn_codes(),
-			'payer'                             => $this->payerData(),
-			'button'                            => array(
+			'subscription_plan_id'                    => $this->subscription_helper->paypal_subscription_id(),
+			'variable_paypal_subscription_variations' => $this->subscription_helper->variable_paypal_subscription_variations(),
+			'subscription_product_allowed'            => $this->subscription_helper->checkout_subscription_product_allowed(),
+			'enforce_vault'                           => $this->has_subscriptions(),
+			'can_save_vault_token'                    => $this->can_save_vault_token(),
+			'is_free_trial_cart'                      => $is_free_trial_cart,
+			'vaulted_paypal_email'                    => ( is_checkout() && $is_free_trial_cart ) ? $this->get_vaulted_paypal_email() : '',
+			'bn_codes'                                => $this->bn_codes(),
+			'payer'                                   => $this->payerData(),
+			'button'                                  => array(
 				'wrapper'               => '#ppc-button-' . PayPalGateway::ID,
 				'is_disabled'           => $this->is_button_disabled(),
 				'mini_cart_wrapper'     => '#ppc-button-minicart',
@@ -896,7 +900,7 @@ class SmartButton implements SmartButtonInterface {
 					'tagline' => $this->style_for_context( 'tagline', $this->context() ),
 				),
 			),
-			'separate_buttons'                  => array(
+			'separate_buttons'                        => array(
 				'card' => array(
 					'id'      => CardButtonGateway::ID,
 					'wrapper' => '#ppc-button-' . CardButtonGateway::ID,
@@ -906,7 +910,7 @@ class SmartButton implements SmartButtonInterface {
 					),
 				),
 			),
-			'hosted_fields'                     => array(
+			'hosted_fields'                           => array(
 				'wrapper'     => '#ppcp-hosted-fields',
 				'labels'      => array(
 					'credit_card_number'       => '',
@@ -929,8 +933,8 @@ class SmartButton implements SmartButtonInterface {
 				'valid_cards' => $this->dcc_applies->valid_cards(),
 				'contingency' => $this->get_3ds_contingency(),
 			),
-			'messages'                          => $this->message_values(),
-			'labels'                            => array(
+			'messages'                                => $this->message_values(),
+			'labels'                                  => array(
 				'error'          => array(
 					'generic'  => __(
 						'Something went wrong. Please try again or choose another payment source.',
@@ -957,12 +961,12 @@ class SmartButton implements SmartButtonInterface {
 				// phpcs:ignore WordPress.WP.I18n
 				'shipping_field' => _x( 'Shipping %s', 'checkout-validation', 'woocommerce' ),
 			),
-			'order_id'                          => 'pay-now' === $this->context() ? $this->get_order_pay_id() : 0,
-			'single_product_buttons_enabled'    => $this->settings_status->is_smart_button_enabled_for_location( 'product' ),
-			'mini_cart_buttons_enabled'         => $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' ),
-			'basic_checkout_validation_enabled' => $this->basic_checkout_validation_enabled,
-			'early_checkout_validation_enabled' => $this->early_validation_enabled,
-			'funding_sources_without_redirect'  => $this->funding_sources_without_redirect,
+			'order_id'                                => 'pay-now' === $this->context() ? $this->get_order_pay_id() : 0,
+			'single_product_buttons_enabled'          => $this->settings_status->is_smart_button_enabled_for_location( 'product' ),
+			'mini_cart_buttons_enabled'               => $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' ),
+			'basic_checkout_validation_enabled'       => $this->basic_checkout_validation_enabled,
+			'early_checkout_validation_enabled'       => $this->early_validation_enabled,
+			'funding_sources_without_redirect'        => $this->funding_sources_without_redirect,
 		);
 
 		if ( $this->style_for_context( 'layout', 'mini-cart' ) !== 'horizontal' ) {
@@ -1526,38 +1530,6 @@ class SmartButton implements SmartButtonInterface {
 		}
 
 		return false;
-	}
-
-	/**
-	 * Returns PayPal subscription plan id from WC subscription product.
-	 *
-	 * @return string
-	 */
-	private function paypal_subscription_id(): string {
-		if ( $this->subscription_helper->current_product_is_subscription() ) {
-			$product = wc_get_product();
-			assert( $product instanceof WC_Product );
-
-			if ( $product->get_type() === 'subscription' && $product->meta_exists( 'ppcp_subscription_plan' ) ) {
-				return $product->get_meta( 'ppcp_subscription_plan' )['id'];
-			}
-		}
-
-		$cart = WC()->cart ?? null;
-		if ( ! $cart || $cart->is_empty() ) {
-			return '';
-		}
-		$items = $cart->get_cart_contents();
-		foreach ( $items as $item ) {
-			$product = wc_get_product( $item['product_id'] );
-			assert( $product instanceof WC_Product );
-
-			if ( $product->get_type() === 'subscription' && $product->meta_exists( 'ppcp_subscription_plan' ) ) {
-				return $product->get_meta( 'ppcp_subscription_plan' )['id'];
-			}
-		}
-
-		return '';
 	}
 
 	/**
