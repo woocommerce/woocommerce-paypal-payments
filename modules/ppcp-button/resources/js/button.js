@@ -148,7 +148,13 @@ const bootstrap = () => {
         miniCartBootstrap.init();
     }
 
-    if (context === 'product' && PayPalCommerceGateway.single_product_buttons_enabled === '1') {
+    if (
+        context === 'product'
+        && (
+            PayPalCommerceGateway.single_product_buttons_enabled === '1'
+            || hasMessages()
+        )
+    ) {
         const singleProductBootstrap = new SingleProductBootstap(
             PayPalCommerceGateway,
             renderer,
@@ -194,6 +200,12 @@ const bootstrap = () => {
     }
 
 };
+
+const hasMessages = () => {
+    return PayPalCommerceGateway.messages.is_hidden === false
+        && document.querySelector(PayPalCommerceGateway.messages.wrapper);
+}
+
 document.addEventListener(
     'DOMContentLoaded',
     () => {
