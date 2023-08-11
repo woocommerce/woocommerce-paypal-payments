@@ -87,7 +87,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Fix - PayPal button doesn't work for variable products on product page after recent 2.2.0 release #1533
 * Fix - Send payee_preferred correctly for instant payments #1489
 * Fix - Auto-disabled ACDC vaulting after updating to 2.1.0 #1490
-* Fix - Paypal Payments serializing formData of array inputs #1501
+* Fix - PayPal Payments serializing formData of array inputs #1501
 * Fix - Buttons not working on single product page for WooCommerce Bookings product #1478
 * Enhancement - PayPal Later message price amount doesn't update dynamically #1585
 * Enhancement - Improve WC order creation in webhook #1530
