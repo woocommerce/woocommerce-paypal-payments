@@ -519,7 +519,7 @@ class PayUponInvoice {
 				 * @psalm-suppress UndefinedClass
 				 * @psalm-suppress UndefinedFunction
 				 */
-				$screen = wc_get_container()->get( CustomOrdersTableController::class )->custom_orders_table_usage_is_enabled()
+				$screen = class_exists( CustomOrdersTableController::class ) && wc_get_container()->get( CustomOrdersTableController::class )->custom_orders_table_usage_is_enabled()
 					? wc_get_page_screen_id( 'shop-order' )
 					: 'shop_order';
 
