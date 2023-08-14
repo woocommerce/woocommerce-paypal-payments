@@ -57,7 +57,7 @@ class RefundFeesUpdater {
 
 		if ( ! $paypal_order_id ) {
 			$this->logger->error(
-				sprintf( 'Update order paypal refund fees. No PayPal order_id. [wc_order: %s]', $wc_order->get_id() )
+				sprintf( 'Failed to update order paypal refund fees. No PayPal order_id. [wc_order: %s]', $wc_order->get_id() )
 			);
 			return;
 		}
@@ -173,6 +173,8 @@ class RefundFeesUpdater {
 			'post_id' => $wc_order->get_id(),
 		);
 
+		// By default, WooCommerce excludes comments of the comment_type order_note.
+		// We need to remove this filter to get the order notes.
 		remove_filter( 'comments_clauses', array( 'WC_Comments', 'exclude_order_comments' ) );
 
 		$comments = get_comments( $args );
