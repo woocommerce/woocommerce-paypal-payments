@@ -356,7 +356,7 @@ class PurchaseUnit {
 			unset( $purchase_unit['items'] );
 			unset( $purchase_unit['amount']['breakdown'] );
 
-			if ( isset( $this->sanitizer ) ) {
+			if ( isset( $this->sanitizer ) && ( $ditch !== $ditched_items_breakdown ) ) {
 				$this->sanitizer->set_last_message(
 					__( 'Ditch items breakdown filter. Items and breakdown ditched.', 'woocommerce-paypal-payments' )
 				);
