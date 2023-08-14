@@ -343,8 +343,7 @@ class PurchaseUnitSanitizer {
 	 *
 	 * @return bool
 	 */
-	public function has_ditched_items_breakdown(): bool
-	{
+	public function has_ditched_items_breakdown(): bool {
 		return $this->has_ditched_items_breakdown;
 	}
 
@@ -360,7 +359,7 @@ class PurchaseUnitSanitizer {
 	/**
 	 * Set the last sanitization message.
 	 *
-	 * @param string $message
+	 * @param string $message The message.
 	 */
 	public function set_last_message( string $message ): void {
 		$this->last_message = $message;

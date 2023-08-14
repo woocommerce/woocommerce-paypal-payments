@@ -335,18 +335,28 @@ class PurchaseUnit {
 			$purchase_unit['soft_descriptor'] = $this->soft_descriptor();
 		}
 
+		$has_ditched_items_breakdown = false;
+
 		if ( $sanitize_output && isset( $this->sanitizer ) ) {
-			$purchase_unit = ( $this->sanitizer->sanitize( $purchase_unit, $allow_ditch_items ) );
+			$purchase_unit               = ( $this->sanitizer->sanitize( $purchase_unit, $allow_ditch_items ) );
+			$has_ditched_items_breakdown = $this->sanitizer->has_ditched_items_breakdown();
 		}
 
 		return $this->apply_ditch_items_mismatch_filter(
-			$this->sanitizer->has_ditched_items_breakdown(),
+			$has_ditched_items_breakdown,
 			$purchase_unit
 		);
 	}
 
-	public function apply_ditch_items_mismatch_filter( bool $ditched_items_breakdown, array $purchase_unit ): array
-	{
+	/**
+	 * Applies the ppcp_ditch_items_breakdown filter.
+	 * If true purchase_unit items and breakdown are ditched from PayPal.
+	 *
+	 * @param bool  $ditched_items_breakdown If the breakdown and items were already ditched.
+	 * @param array $purchase_unit The purchase_unit array.
+	 * @return array
+	 */
+	public function apply_ditch_items_mismatch_filter( bool $ditched_items_breakdown, array $purchase_unit ): array {
 		/**
 		 * The filter can be used to control when the items and totals breakdown are removed from PayPal order info.
 		 */
