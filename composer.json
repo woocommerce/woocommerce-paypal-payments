@@ -29,6 +29,7 @@
     "autoload": {
         "psr-4": {
             "WooCommerce\\PayPalCommerce\\": "src",
+            "WooCommerce\\PayPalCommerce\\Isolated\\": "lib/isolated/",
             "WooCommerce\\PayPalCommerce\\Vendor\\": "lib/packages/"
         },
         "files": [

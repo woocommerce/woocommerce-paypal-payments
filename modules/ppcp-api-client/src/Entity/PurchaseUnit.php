@@ -339,6 +339,30 @@ class PurchaseUnit {
 			$purchase_unit = ( $this->sanitizer->sanitize( $purchase_unit, $allow_ditch_items ) );
 		}
 
+		return $this->apply_ditch_items_mismatch_filter(
+			$this->sanitizer->has_ditched_items_breakdown(),
+			$purchase_unit
+		);
+	}
+
+	public function apply_ditch_items_mismatch_filter( bool $ditched_items_breakdown, array $purchase_unit ): array
+	{
+		/**
+		 * The filter can be used to control when the items and totals breakdown are removed from PayPal order info.
+		 */
+		$ditch = apply_filters( 'ppcp_ditch_items_breakdown', $ditched_items_breakdown, $this );
+
+		if ( $ditch ) {
+			unset( $purchase_unit['items'] );
+			unset( $purchase_unit['amount']['breakdown'] );
+
+			if ( isset( $this->sanitizer ) ) {
+				$this->sanitizer->set_last_message(
+					__( 'Ditch items breakdown filter. Items and breakdown ditched.', 'woocommerce-paypal-payments' )
+				);
+			}
+		}
+
 		return $purchase_unit;
 	}
 }

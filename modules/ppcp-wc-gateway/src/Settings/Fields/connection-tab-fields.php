@@ -504,7 +504,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'default'      => 'vertical',
 			'desc_tip'     => true,
 			'description'  => __(
-				'Differences between WooCommerce and PayPal roundings may give origin to a mismatch in order items subtotal calculations. If not handled these mismatches will cause the PayPal transaction to fail.',
+				'Differences between WooCommerce and PayPal roundings may cause mismatch in order items subtotal calculations. If not handled, these mismatches will cause the PayPal transaction to fail.',
 				'woocommerce-paypal-payments'
 			),
 			'options'      => array(

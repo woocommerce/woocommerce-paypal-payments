@@ -69,6 +69,13 @@ class PurchaseUnitSanitizer {
 	private $last_message = '';
 
 	/**
+	 * If the items and breakdown has been ditched.
+	 *
+	 * @var bool
+	 */
+	private $has_ditched_items_breakdown = false;
+
+	/**
 	 * PurchaseUnitSanitizer constructor.
 	 *
 	 * @param string|null $mode The mismatch handling mode, ditch or extra_line.
@@ -86,24 +93,6 @@ class PurchaseUnitSanitizer {
 
 		$this->mode            = $mode;
 		$this->extra_line_name = $extra_line_name;
-	}
-
-	/**
-	 * Indicates if mode is ditch.
-	 *
-	 * @return bool
-	 */
-	private function is_mode_ditch(): bool {
-		return $this->mode === self::MODE_DITCH;
-	}
-
-	/**
-	 * Indicates if mode is adding extra line.
-	 *
-	 * @return bool
-	 */
-	private function is_mode_extra_line(): bool {
-		return $this->mode === self::MODE_EXTRA_LINE;
 	}
 
 	/**
@@ -163,8 +152,9 @@ class PurchaseUnitSanitizer {
 	 * @return array
 	 */
 	public function sanitize( array $purchase_unit, bool $allow_ditch_items = true ): array {
-		$this->purchase_unit     = $purchase_unit;
-		$this->allow_ditch_items = $allow_ditch_items;
+		$this->purchase_unit               = $purchase_unit;
+		$this->allow_ditch_items           = $allow_ditch_items;
+		$this->has_ditched_items_breakdown = false;
 
 		$this->sanitize_item_amount_mismatch();
 		$this->sanitize_item_tax_mismatch();
@@ -180,14 +170,18 @@ class PurchaseUnitSanitizer {
 	private function sanitize_item_amount_mismatch(): void {
 		$item_mismatch = $this->calculate_item_mismatch();
 
-		if ( $this->is_mode_extra_line() ) {
+		if ( $this->mode === self::MODE_EXTRA_LINE ) {
 			if ( $item_mismatch < 0 ) {
 
 				// Do floors on item amounts so item_mismatch is a positive value.
 				foreach ( $this->purchase_unit['items'] as $index => $item ) {
 					// Get a more intelligent adjustment mechanism.
 					$increment = ( new MoneyFormatter() )->minimum_increment( $item['unit_amount']['currency_code'] );
-					$this->purchase_unit['items'][ $index ]['unit_amount']['value'] = ( (float) $item['unit_amount']['value'] ) - $increment;
+
+					$this->purchase_unit['items'][ $index ]['unit_amount'] = ( new Money(
+						( (float) $item['unit_amount']['value'] ) - $increment,
+						$item['unit_amount']['currency_code']
+					) )->to_array();
 				}
 			}
 
@@ -199,7 +193,9 @@ class PurchaseUnitSanitizer {
 				$roundings_money                = new Money( $item_mismatch, $this->currency_code() );
 				$this->purchase_unit['items'][] = ( new Item( $line_name, $roundings_money, 1 ) )->to_array();
 
-				$this->last_message = __( 'Item amount mismatch. Extra line added.', 'woocommerce-paypal-payments' );
+				$this->set_last_message(
+					__( 'Item amount mismatch. Extra line added.', 'woocommerce-paypal-payments' )
+				);
 			}
 
 			$item_mismatch = $this->calculate_item_mismatch();
@@ -209,7 +205,9 @@ class PurchaseUnitSanitizer {
 			// Ditch items.
 			if ( $this->allow_ditch_items && isset( $this->purchase_unit['items'] ) ) {
 				unset( $this->purchase_unit['items'] );
-				$this->last_message = __( 'Item amount mismatch. Items ditched.', 'woocommerce-paypal-payments' );
+				$this->set_last_message(
+					__( 'Item amount mismatch. Items ditched.', 'woocommerce-paypal-payments' )
+				);
 			}
 		}
 	}
@@ -252,7 +250,10 @@ class PurchaseUnitSanitizer {
 				unset( $this->purchase_unit['amount']['breakdown'] );
 			}
 
-			$this->last_message = __( 'Breakdown mismatch. Items and breakdown ditched.', 'woocommerce-paypal-payments' );
+			$this->has_ditched_items_breakdown = true;
+			$this->set_last_message(
+				__( 'Breakdown mismatch. Items and breakdown ditched.', 'woocommerce-paypal-payments' )
+			);
 		}
 	}
 
@@ -338,12 +339,31 @@ class PurchaseUnitSanitizer {
 	}
 
 	/**
+	 * Indicates if the items and breakdown were ditched.
+	 *
+	 * @return bool
+	 */
+	public function has_ditched_items_breakdown(): bool
+	{
+		return $this->has_ditched_items_breakdown;
+	}
+
+	/**
 	 * Returns the last sanitization message.
 	 *
 	 * @return string
 	 */
 	public function get_last_message(): string {
 		return $this->last_message;
+	}
+
+	/**
+	 * Set the last sanitization message.
+	 *
+	 * @param string $message
+	 */
+	public function set_last_message( string $message ): void {
+		$this->last_message = $message;
 	}
 
 }

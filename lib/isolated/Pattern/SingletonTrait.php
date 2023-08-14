@@ -1,6 +1,6 @@
 <?php
 
-namespace WooCommerce\PayPalCommerce\Vendor\Pattern;
+namespace WooCommerce\PayPalCommerce\Isolated\Pattern;
 
 trait SingletonTrait {
 	/**
