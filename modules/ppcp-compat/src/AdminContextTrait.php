@@ -20,7 +20,7 @@ trait AdminContextTrait {
 	 * @return bool
 	 */
 	private function is_paypal_order_edit_page(): bool {
-		$post_id = isset( $_GET['post'] ) ? (int) $_GET['post'] : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$post_id = wc_clean( wp_unslash( $_GET['id'] ?? $_GET['post'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( ! $post_id ) {
 			return false;
 		}

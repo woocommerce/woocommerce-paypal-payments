@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\OrderTracking;
 
+use Automattic\WooCommerce\Internal\DataStores\Orders\CustomOrdersTableController;
 use WooCommerce\PayPalCommerce\Compat\AdminContextTrait;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
@@ -102,7 +103,16 @@ class OrderTrackingModule implements ModuleInterface {
 			 * @psalm-suppress MissingClosureParamType
 			 */
 			function( $post_type ) use ( $c ) {
-				if ( $post_type !== 'shop_order' || ! $this->is_paypal_order_edit_page() ) {
+				/**
+				 * Class and function exist in WooCommerce.
+				 *
+				 * @psalm-suppress UndefinedClass
+				 * @psalm-suppress UndefinedFunction
+				 */
+				$screen = class_exists( CustomOrdersTableController::class ) && wc_get_container()->get( CustomOrdersTableController::class )->custom_orders_table_usage_is_enabled()
+					? wc_get_page_screen_id( 'shop-order' )
+					: 'shop_order';
+				if ( $post_type !== $screen || ! $this->is_paypal_order_edit_page() ) {
 					return;
 				}
 
@@ -111,7 +121,7 @@ class OrderTrackingModule implements ModuleInterface {
 					'ppcp_order-tracking',
 					__( 'Tracking Information', 'woocommerce-paypal-payments' ),
 					array( $meta_box_renderer, 'render' ),
-					'shop_order',
+					$screen,
 					'side'
 				);
 			},
