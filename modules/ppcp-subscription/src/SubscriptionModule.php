@@ -227,12 +227,21 @@ class SubscriptionModule implements ModuleInterface {
 
 		add_action(
 			'add_meta_boxes',
-			function( string $post_type, WP_Post $post ) use ( $c ) {
-				if ( $post_type !== 'shop_subscription' ) {
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function( string $post_type, $post_or_order_object ) use ( $c ) {
+				$order = ( $post_or_order_object instanceof WP_Post )
+					? wc_get_order( $post_or_order_object->ID )
+					: $post_or_order_object;
+
+				if ( ! is_a( $order, WC_Order::class ) ) {
 					return;
 				}
 
-				$subscription = wcs_get_subscription( $post->ID );
+				$subscription = wcs_get_subscription( $order->get_id() );
 				if ( ! is_a( $subscription, WC_Subscription::class ) ) {
 					return;
 				}
