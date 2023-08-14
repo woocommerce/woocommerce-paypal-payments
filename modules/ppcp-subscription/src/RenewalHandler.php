@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Subscription;
 
+use WC_Subscription;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
@@ -139,8 +140,16 @@ class RenewalHandler {
 	 *
 	 * @param \WC_Order $wc_order The WooCommerce order.
 	 */
-	public function renew( \WC_Order $wc_order ) {
+	public function renew( \WC_Order $wc_order ): void {
 		try {
+			$subscription = wcs_get_subscription( $wc_order->get_id() );
+			if ( is_a( $subscription, WC_Subscription::class ) ) {
+				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
+				if ( $subscription_id ) {
+					return;
+				}
+			}
+
 			$this->process_order( $wc_order );
 		} catch ( \Exception $exception ) {
 			$error = $exception->getMessage();
