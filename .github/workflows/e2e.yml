@@ -12,9 +12,6 @@ jobs:
 
     name: PHP ${{ matrix.php-versions }} WC ${{ matrix.wc-versions }}
     steps:
-    - uses: satackey/action-docker-layer-caching@v0.0.11
-      continue-on-error: true
-
     - uses: ddev/github-action-setup-ddev@v1
       with:
         autostart: false
