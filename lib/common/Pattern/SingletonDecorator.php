@@ -1,7 +1,14 @@
 <?php
+/**
+ * The Singleton Trait can be used to wrap an execution block, so it behaves like a Singleton.
+ * It executes the callable once, on subsequent calls returns the same result.
+ */
 
-namespace WooCommerce\PayPalCommerce\Isolated\Pattern;
+namespace WooCommerce\PayPalCommerce\Common\Pattern;
 
+/**
+ * Class SingletonDecorator.
+ */
 class SingletonDecorator {
 
 	/**

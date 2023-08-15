@@ -1,7 +1,15 @@
 <?php
+/**
+ * The Singleton Trait can be used to add singleton behaviour to a class.
+ *
+ * @package WooCommerce\PayPalCommerce\Common\Pattern
+ */
 
-namespace WooCommerce\PayPalCommerce\Isolated\Pattern;
+namespace WooCommerce\PayPalCommerce\Common\Pattern;
 
+/**
+ * Class SingletonTrait.
+ */
 trait SingletonTrait {
 	/**
 	 * The single instance of the class.
