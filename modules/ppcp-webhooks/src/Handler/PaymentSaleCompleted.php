@@ -92,15 +92,10 @@ class PaymentSaleCompleted implements RequestHandler {
 		);
 		$subscriptions = wcs_get_subscriptions( $args );
 		foreach ( $subscriptions as $subscription ) {
+			$parent_order   = wc_get_order( $subscription->get_parent() );
 			$transaction_id = wc_clean( wp_unslash( $request['resource']['id'] ?? '' ) );
-			if ( $transaction_id && is_string( $transaction_id ) ) {
-				$this->logger->info( 'Creating renewal order from PAYMENT.SALE.COMPLETED webhook handler' );
-				$renewal_order = wcs_create_renewal_order( $subscription );
-				if ( is_a( $renewal_order, WC_Order::class ) ) {
-					$renewal_order->payment_complete();
-					$this->update_transaction_id( $transaction_id, $renewal_order, $this->logger );
-					$this->logger->info( 'Updating status completed and transaction id from PAYMENT.SALE.COMPLETED webhook handler' );
-				}
+			if ( $transaction_id && is_string( $transaction_id ) && is_a( $parent_order, WC_Order::class ) ) {
+				$this->update_transaction_id( $transaction_id, $parent_order, $this->logger );
 			}
 		}
 
