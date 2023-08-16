@@ -368,7 +368,7 @@ class OrderProcessor {
 	 * @return void
 	 */
 	private function restore_order_from_filters( WC_Order $wc_order ): void {
-		if ( is_array( $this->restore_order_data['names'] ) ) {
+		if ( is_array( $this->restore_order_data['names'] ?? null ) ) {
 			foreach ( $this->restore_order_data['names'] as $wc_item_id => $original_name ) {
 				$wc_item = $wc_order->get_item( $wc_item_id, false );
 
