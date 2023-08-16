@@ -202,6 +202,11 @@ class WebhookEndpoint {
 		$status_code = (int) wp_remote_retrieve_response_code( $response );
 		if ( 204 !== $status_code ) {
 			$json = null;
+			/**
+			 * Use in array as consistency check.
+			 *
+			 * @psalm-suppress RedundantConditionGivenDocblockType
+			 */
 			if ( is_array( $response ) ) {
 				$json = json_decode( $response['body'] );
 			}
