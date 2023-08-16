@@ -71,10 +71,13 @@ class PaymentSaleCompleted implements RequestHandler {
 			return $this->failure_response();
 		}
 
+		if ( ! function_exists( 'wcs_get_subscriptions' ) ) {
+			return $this->failure_response( 'WooCommerce Subscriptions plugin is not active.' );
+		}
+
 		$billing_agreement_id = wc_clean( wp_unslash( $request['resource']['billing_agreement_id'] ?? '' ) );
 		if ( ! $billing_agreement_id ) {
-			$message = 'Could not retrieve billing agreement id for subscription.';
-			return $this->failure_response( $message );
+			return $this->failure_response( 'Could not retrieve billing agreement id for subscription.' );
 		}
 
 		$args          = array(
