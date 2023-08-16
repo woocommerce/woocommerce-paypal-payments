@@ -215,11 +215,11 @@ class PaymentTokenChecker {
 		$wc_order->update_status( 'failed', $error_message );
 
 		/**
-		 * Function already exist in Subscription plugin
+		 * Function already exist in WC Subscriptions plugin.
 		 *
 		 * @psalm-suppress UndefinedFunction
 		 */
-		$subscriptions = wcs_get_subscriptions_for_order( $wc_order->get_id() );
+		$subscriptions = function_exists( 'wcs_get_subscriptions_for_order' ) ? wcs_get_subscriptions_for_order( $wc_order->get_id() ) : array();
 		foreach ( $subscriptions as $key => $subscription ) {
 			if ( $subscription->get_parent_id() === $wc_order->get_id() ) {
 				try {
