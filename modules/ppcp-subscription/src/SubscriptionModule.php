@@ -233,6 +233,10 @@ class SubscriptionModule implements ModuleInterface {
 			 * @psalm-suppress MissingClosureParamType
 			 */
 			function( string $post_type, $post_or_order_object ) use ( $c ) {
+				if ( ! function_exists( 'wcs_get_subscription' ) ) {
+					return;
+				}
+
 				$order = ( $post_or_order_object instanceof WP_Post )
 					? wc_get_order( $post_or_order_object->ID )
 					: $post_or_order_object;
