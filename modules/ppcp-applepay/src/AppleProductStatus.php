@@ -21,7 +21,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
  */
 class AppleProductStatus {
 
-	const APPLE_STATUS_CACHE_KEY = 'apple_pay_status_cache';
+	const APPLE_STATUS_CACHE_KEY = 'apple_status_cache';
 
 	/**
 	 * The Cache.

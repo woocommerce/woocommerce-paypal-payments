@@ -1,34 +1,43 @@
 <?php
+/**
+ * Prepares the necessary data for the Apple button script.
+ *
+ * @package WooCommerce\PayPalCommerce\Applepay
+ */
 
 declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Applepay;
 
+/**
+ * Class DataToAppleButtonScripts
+ */
 class DataToAppleButtonScripts {
 
 	/**
 	 * Sets the appropriate data to send to ApplePay script
 	 * Data differs between product page and cart page
 	 *
+	 * @param bool $is_block
 	 * @return array
 	 */
-	public function applePayScriptData( bool $isBlock = false ): array {
+	public function apple_pay_script_data( bool $is_block = false ): array {
 		$base_location   = wc_get_base_location();
-		$shopCountryCode = $base_location['country'];
-		$currencyCode    = get_woocommerce_currency();
-		$totalLabel      = get_bloginfo( 'name' );
+		$shop_country_code = $base_location['country'];
+		$currency_code    = get_woocommerce_currency();
+		$total_label      = get_bloginfo( 'name' );
 		if ( is_product() ) {
-			return $this->dataForProductPage(
-				$shopCountryCode,
-				$currencyCode,
-				$totalLabel
+			return $this->data_for_product_page(
+				$shop_country_code,
+				$currency_code,
+				$total_label
 			);
 		}
-		if ( is_cart() || $isBlock ) {
-			return $this->dataForCartPage(
-				$shopCountryCode,
-				$currencyCode,
-				$totalLabel
+		if ( is_cart() || $is_block ) {
+			return $this->data_for_cart_page(
+				$shop_country_code,
+				$currency_code,
+				$total_label
 			);
 		}
 		return array();
@@ -41,7 +50,7 @@ class DataToAppleButtonScripts {
 	 *
 	 * @return bool
 	 */
-	protected function checkIfNeedShipping( $product ) {
+	protected function check_if_need_shipping($product ) {
 		if (
 			! wc_shipping_enabled()
 			|| 0 === wc_get_shipping_method_count(
@@ -60,64 +69,64 @@ class DataToAppleButtonScripts {
 	}
 
 	/**
-	 * @param $shopCountryCode
-	 * @param $currencyCode
-	 * @param $totalLabel
+	 * @param $shop_country_code
+	 * @param $currency_code
+	 * @param $tota_label
 	 *
 	 * @return array
 	 */
-	protected function dataForProductPage(
-		$shopCountryCode,
-		$currencyCode,
-		$totalLabel
+	protected function data_for_product_page(
+		$shop_country_code,
+		$currency_code,
+		$total_label
 	) {
 
 		$product = wc_get_product( get_the_id() );
 		if ( ! $product ) {
 			return array();
 		}
-		$isVariation = false;
+		$is_variation = false;
 		if ( $product->get_type() === 'variable' || $product->get_type() === 'variable-subscription' ) {
-			$isVariation = true;
+			$is_variation = true;
 		}
-		$productNeedShipping = $this->checkIfNeedShipping( $product );
-		$productId           = get_the_id();
-		$productPrice        = $product->get_price();
-		$productStock        = $product->get_stock_status();
+		$product_need_shipping = $this->check_if_need_shipping( $product );
+		$product_id           = get_the_id();
+		$product_price        = $product->get_price();
+		$product_stock        = $product->get_stock_status();
 
 		return array(
 			'product' => array(
-				'needShipping' => $productNeedShipping,
-				'id'           => $productId,
-				'price'        => $productPrice,
-				'isVariation'  => $isVariation,
-				'stock'        => $productStock,
+				'needShipping' => $product_need_shipping,
+				'id'           => $product_id,
+				'price'        => $product_price,
+				'isVariation'  => $is_variation,
+				'stock'        => $product_stock,
 			),
 			'shop'    => array(
-				'countryCode'  => $shopCountryCode,
-				'currencyCode' => $currencyCode,
-				'totalLabel'   => $totalLabel,
+				'countryCode'  => $shop_country_code,
+				'currencyCode' => $currency_code,
+				'totalLabel'   => $total_label,
 			),
 			'ajaxUrl' => admin_url( 'admin-ajax.php' ),
 		);
 	}
 
 	/**
-	 * @param $shopCountryCode
-	 * @param $currencyCode
-	 * @param $totalLabel
+	 * @param $shop_country_code
+	 * @param $currency_code
+	 * @param $total_label
 	 *
 	 * @return array
 	 */
-	protected function dataForCartPage(
-		$shopCountryCode,
-		$currencyCode,
-		$totalLabel
+	protected function data_for_cart_page(
+		$shop_country_code,
+		$currency_code,
+		$total_label
 	) {
 
 		$cart         = WC()->cart;
 		$nonce        = wp_nonce_field( 'woocommerce-process_checkout', 'woocommerce-process-checkout-nonce' );
-		$buttonMarkup =
+		$button_markup =
 			'<div id="applepay-container">'
 			. $nonce
 			. '</div>';
@@ -127,12 +136,12 @@ class DataToAppleButtonScripts {
 				'subtotal'     => $cart->get_subtotal(),
 			),
 			'shop'         => array(
-				'countryCode'  => $shopCountryCode,
-				'currencyCode' => $currencyCode,
-				'totalLabel'   => $totalLabel,
+				'countryCode'  => $shop_country_code,
+				'currencyCode' => $currency_code,
+				'totalLabel'   => $total_label,
 			),
 			'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
-			'buttonMarkup' => $buttonMarkup,
+			'buttonMarkup' => $button_markup,
 		);
 	}
 }

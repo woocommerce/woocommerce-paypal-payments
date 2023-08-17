@@ -1,23 +1,29 @@
-//import {useEffect, useState} from '@wordpress/element';
 import {createAppleErrors} from './Helper/applePayError.js';
 import {maybeShowButton} from './Helper/maybeShowApplePayButton.js';
-import {request} from './Helper/applePayRequest.js';
-import {buttonID, endpoints} from "./Helper/utils";
-import {loadPaypalScript} from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading'
+import ErrorHandler from '../../../ppcp-button/resources/js/modules/ErrorHandler';
+import SingleProductActionHandler
+    from '../../../ppcp-button/resources/js/modules/ActionHandler/SingleProductActionHandler';
+import UpdateCart from '../../../ppcp-button/resources/js/modules/Helper/UpdateCart';
+import {loadPaypalScript} from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading';
+
 (
-    function ({ wc_ppcp_applepay, jQuery}) {
+    function ({wc_ppcp_applepay, jQuery}) {
         document.addEventListener(
             'DOMContentLoaded',
             () => {
                 if (PayPalCommerceGateway) {
                     let bootstrapped = false;
-                    const {product: {id, needShipping = true, isVariation = false, price, stock}, shop: {countryCode, currencyCode = 'EUR', totalLabel = ''}, ajaxUrl} = wc_ppcp_applepay
+                    const {
+                        product: {id, needShipping = true, isVariation = false, price, stock},
+                        shop: {countryCode, currencyCode = 'EUR', totalLabel = ''},
+                        ajaxUrl
+                    } = wc_ppcp_applepay
 
                     if (!id || !price || !countryCode || !ajaxUrl) {
                         return
                     }
                     let outOfStock = stock === 'outofstock'
-                    if(outOfStock || !maybeShowButton()){
+                    if (outOfStock || !maybeShowButton()) {
                         return;
                     }
                     const nonce = document.getElementById('woocommerce-process-checkout-nonce').value
@@ -29,14 +35,17 @@ import {loadPaypalScript} from '../../../ppcp-button/resources/js/modules/Helper
                     document.querySelector('input.qty').addEventListener('change', event => {
                         productQuantity = event.currentTarget.value
                     })
+
                     function disableButton(appleButton) {
                         appleButton.disabled = true;
                         appleButton.classList.add("buttonDisabled");
                     }
+
                     function enableButton(appleButton) {
                         appleButton.disabled = false;
                         appleButton.classList.remove("buttonDisabled");
                     }
+
                     if (isVariation) {
                         let appleButton = document.querySelector('#applepay-container');
                         jQuery('.single_variation_wrap').on('hide_variation', function (event, variation) {
@@ -58,20 +67,20 @@ import {loadPaypalScript} from '../../../ppcp-button/resources/js/modules/Helper
                         disableButton(appleButton);
                     }
                     const amountWithoutTax = productQuantity * price
+
+
                     loadPaypalScript(PayPalCommerceGateway, () => {
                         bootstrapped = true;
-                        //print the button
                         const applepay = paypal.Applepay();
+                        console.log(applepay)
                         applepay.config()
                             .then(applepayConfig => {
                                 const appleContainer = document.getElementById("applepay-container");
                                 if (applepayConfig.isEligible) {
-                                    appleContainer.innerHTML = '<apple-pay-button id="btn-appl"buttonstyle="black" type="buy" locale="en">';
-                                    //handle transaction
+                                    appleContainer.innerHTML = '<apple-pay-button id="btn-appl" buttonstyle="black" type="buy" locale="en">';
                                     const paymentRequest = {
                                         countryCode: applepayConfig.countryCode,
-                                        merchantCapabilities:
-                                        applepayConfig.merchantCapabilities,
+                                        merchantCapabilities: applepayConfig.merchantCapabilities,
                                         supportedNetworks: applepayConfig.supportedNetworks,
                                         currencyCode: currencyCode,
                                         requiredShippingContactFields: ["name", "phone",
@@ -82,13 +91,13 @@ import {loadPaypalScript} from '../../../ppcp-button/resources/js/modules/Helper
                                             label: totalLabel,
                                             type: "final",
                                             amount: amountWithoutTax,
-                                        }}
-                                    console.log(paymentRequest)
-                                    console.log(wc_ppcp_applepay)
+                                        }
+                                    }
                                     let applePaySession = () => {
                                         const session = new ApplePaySession(4, paymentRequest)
                                         session.begin()
-                                       if(needShipping){
+                                        console.log(session)
+                                        if (needShipping) {
                                             session.onshippingmethodselected = function (event) {
                                                 jQuery.ajax({
                                                     url: ajaxUrl,
@@ -155,6 +164,7 @@ import {loadPaypalScript} from '../../../ppcp-button/resources/js/modules/Helper
                                                             selectedShippingMethod = response.newShippingMethods[0]
                                                         }
                                                         this.completeShippingContactSelection(response)
+
                                                     },
                                                     error: (jqXHR, textStatus, errorThrown) => {
                                                         console.warn(textStatus, errorThrown)
@@ -169,89 +179,152 @@ import {loadPaypalScript} from '../../../ppcp-button/resources/js/modules/Helper
                                             })
                                                 .then(validateResult => {
                                                     session.completeMerchantValidation(validateResult.merchantSession);
+                                                    //call backend to update validation to true
                                                     console.log('validated')
                                                 })
                                                 .catch(validateError => {
                                                     console.error(validateError);
+                                                    //call backend to update validation to false
                                                     session.abort();
                                                 });
                                         };
-                                        /*session.onpaymentauthorized = (ApplePayPayment) => {
-                                            const {billingContact, shippingContact } = ApplePayPayment.payment
+                                        session.onpaymentauthorized = (event) => {
+                                            function form() {
+                                                return document.querySelector('form.cart');
+                                            }
+                                            const errorHandler = new ErrorHandler(
+                                                PayPalCommerceGateway.labels.error.generic,
+                                                document.querySelector('.woocommerce-notices-wrapper')
+                                            );
+                                            const actionHandler = new SingleProductActionHandler(
+                                                PayPalCommerceGateway,
+                                                new UpdateCart(
+                                                    PayPalCommerceGateway.ajax.change_cart.endpoint,
+                                                    PayPalCommerceGateway.ajax.change_cart.nonce,
+                                                ),
+                                                form(),
+                                                errorHandler,
+                                            );
 
-                                            jQuery.ajax({
-                                                url: ajaxUrl,
-                                                method: 'POST',
-                                                data: {
-                                                    action: 'mollie_apple_pay_create_order',
-                                                    productId: productId,
-                                                    productQuantity: productQuantity,
-                                                    shippingContact: ApplePayPayment.payment.shippingContact,
-                                                    billingContact: ApplePayPayment.payment.billingContact,
-                                                    token: ApplePayPayment.payment.token,
-                                                    shippingMethod: selectedShippingMethod,
-                                                    'mollie-payments-for-woocommerce_issuer_applepay': 'applepay',
-                                                    'woocommerce-process-checkout-nonce': nonce,
-                                                    'billing_first_name':  billingContact.givenName || '',
-                                                    'billing_last_name' : billingContact.familyName || '',
-                                                    'billing_company': '',
-                                                    'billing_country' : billingContact.countryCode || '',
-                                                    'billing_address_1' : billingContact.addressLines[0] || '',
-                                                    'billing_address_2' : billingContact.addressLines[1] || '',
-                                                    'billing_postcode' : billingContact.postalCode || '',
-                                                    'billing_city': billingContact.locality || '',
-                                                    'billing_state' : billingContact.administrativeArea || '',
-                                                    'billing_phone' : billingContact.phoneNumber || '000000000000',
-                                                    'billing_email' : shippingContact.emailAddress || '',
-                                                    'shipping_first_name':  shippingContact.givenName || '',
-                                                    'shipping_last_name' : shippingContact.familyName || '',
-                                                    'shipping_company': '',
-                                                    'shipping_country' : shippingContact.countryCode || '',
-                                                    'shipping_address_1' : shippingContact.addressLines[0] || '',
-                                                    'shipping_address_2' : shippingContact.addressLines[1] || '',
-                                                    'shipping_postcode' : shippingContact.postalCode || '',
-                                                    'shipping_city': shippingContact.locality || '',
-                                                    'shipping_state' : shippingContact.administrativeArea || '',
-                                                    'shipping_phone' : shippingContact.phoneNumber || '000000000000',
-                                                    'shipping_email' : shippingContact.emailAddress || '',
-                                                    'order_comments' : '',
-                                                    'payment_method' : 'mollie_wc_gateway_applepay',
-                                                    '_wp_http_referer' : '/?wc-ajax=update_order_review'
-                                                },
-                                                complete: (jqXHR, textStatus) => {
-                                                },
-                                                success: (authorizationResult, textStatus, jqXHR) => {
-                                                    let result = authorizationResult.data
+                                            let createOrderInPayPal = actionHandler.createOrder()
+                                            const processInWooAndCapture = async (data) => {
+                                                try {
+                                                    const billingContact = data.billing_contact
+                                                    const shippingContact = data.shipping_contact
+                                                    jQuery.ajax({
+                                                        url: ajaxUrl,
+                                                        method: 'POST',
+                                                        data: {
+                                                            action: 'ppcp_create_order',
+                                                            'product_id': productId,
+                                                            'product_quantity': productQuantity,
+                                                            'shipping_contact': shippingContact,
+                                                            'billing_contact': billingContact,
+                                                            'token': event.payment.token,
+                                                            'shipping_method': selectedShippingMethod,
+                                                            'mollie-payments-for-woocommerce_issuer_applepay': 'applepay',
+                                                            'woocommerce-process-checkout-nonce': nonce,
+                                                            'billing_first_name': billingContact.givenName || '',
+                                                            'billing_last_name': billingContact.familyName || '',
+                                                            'billing_company': '',
+                                                            'billing_country': billingContact.countryCode || '',
+                                                            'billing_address_1': billingContact.addressLines[0] || '',
+                                                            'billing_address_2': billingContact.addressLines[1] || '',
+                                                            'billing_postcode': billingContact.postalCode || '',
+                                                            'billing_city': billingContact.locality || '',
+                                                            'billing_state': billingContact.administrativeArea || '',
+                                                            'billing_phone': billingContact.phoneNumber || '000000000000',
+                                                            'billing_email': shippingContact.emailAddress || '',
+                                                            'shipping_first_name': shippingContact.givenName || '',
+                                                            'shipping_last_name': shippingContact.familyName || '',
+                                                            'shipping_company': '',
+                                                            'shipping_country': shippingContact.countryCode || '',
+                                                            'shipping_address_1': shippingContact.addressLines[0] || '',
+                                                            'shipping_address_2': shippingContact.addressLines[1] || '',
+                                                            'shipping_postcode': shippingContact.postalCode || '',
+                                                            'shipping_city': shippingContact.locality || '',
+                                                            'shipping_state': shippingContact.administrativeArea || '',
+                                                            'shipping_phone': shippingContact.phoneNumber || '000000000000',
+                                                            'shipping_email': shippingContact.emailAddress || '',
+                                                            'order_comments': '',
+                                                            'payment_method': 'ppcp-gateway',
+                                                            'funding_source': 'applepay',
+                                                            '_wp_http_referer': '/?wc-ajax=update_order_review',
+                                                            'paypal_order_id': data.paypal_order_id,
+                                                        },
+                                                        complete: (jqXHR, textStatus) => {
+                                                        },
+                                                        success: (authorizationResult, textStatus, jqXHR) => {
+                                                              let result = authorizationResult.data
 
-                                                    if (authorizationResult.success === true) {
-                                                        redirectionUrl = result['returnUrl'];
-                                                        session.completePayment(result['responseToApple'])
-                                                        window.location.href = redirectionUrl
-                                                    } else {
-                                                        result.errors = createAppleErrors(result.errors)
-                                                        session.completePayment(result)
+                                                              if (authorizationResult.success === true) {
+                                                                  redirectionUrl = result['returnUrl'];
+                                                                  session.completePayment(result['responseToApple'])
+                                                                  window.location.href = redirectionUrl
+                                                              } else {
+                                                                  result.errors = createAppleErrors(result.errors)
+                                                                  session.completePayment(result)
+                                                              }
+                                                        },
+                                                        error: (jqXHR, textStatus, errorThrown) => {
+                                                            console.warn(textStatus, errorThrown)
+                                                            session.abort()
+                                                        },
+                                                    })
+                                                } catch (error) {
+                                                    console.log(error)  // handle error
+                                                }
+                                            }
+                                            createOrderInPayPal([], []).then((orderId) => {
+                                                applepay.confirmOrder(
+                                                    {
+                                                        orderId: orderId,
+                                                        token: event.payment.token,
+                                                        billingContact: event.payment.billingContact
                                                     }
-                                                },
-                                                error: (jqXHR, textStatus, errorThrown) => {
-                                                    console.warn(textStatus, errorThrown)
-                                                    session.abort()
-                                                },
+                                                ).then(
+                                                    confirmResult => {
+                                                        session.completePayment(ApplePaySession.STATUS_SUCCESS);
+                                                        let data = {
+                                                            billing_contact: event.payment.billingContact,
+                                                            shipping_contact: event.payment.shippingContact,
+                                                            paypal_order_id: orderId
+                                                        }
+                                                        processInWooAndCapture(data).then(
+                                                            () => {
+                                                                console.log('done in woo and capture')
+                                                                let result = confirmResult.data
+                                                                redirectionUrl = result['returnUrl'];
+                                                                session.completePayment(result['responseToApple'])
+                                                                window.location.href = redirectionUrl
+                                                            }
+                                                        )
+                                                    }
+                                                )
+                                                    .catch(err => {
+                                                            session.completePayment(ApplePaySession.STATUS_FAILURE);
+                                                            console.error('Error confirming order with applepay token');
+                                                            console.error(err);
+                                                        }
+                                                    );
+                                            }).catch((error) => {
+                                                console.log(error)
+                                                session.abort()
                                             })
-                                        }*/
+                                        };
                                     }
                                     document.querySelector('#btn-appl').addEventListener('click', (evt) => {
                                         evt.preventDefault()
                                         applePaySession()
                                     })
-                                } })
+                                }
+                            })
                             .catch(applepayConfigError => {
                                 console.error(applepayConfigError)
                                 console.error('Error while fetching Apple Pay configuration.');
                             });
                     });
                 }
-
-
             })
     }
 )(window)
