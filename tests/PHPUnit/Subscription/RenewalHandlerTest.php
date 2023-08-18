@@ -116,6 +116,9 @@ class RenewalHandlerTest extends TestCase
 			->andReturn(null);
 
 		$wcOrder
+			->shouldReceive('get_meta')
+			->andReturn('');
+		$wcOrder
 			->shouldReceive('get_id')
 			->andReturn(1);
 		$wcOrder
