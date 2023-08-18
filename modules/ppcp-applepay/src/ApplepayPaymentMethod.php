@@ -292,9 +292,10 @@ class ApplepayPaymentMethod {
 	 * @throws \Exception
 	 */
 	public function create_wc_order() {
-		$this->response_after_successful_result();
+		//$this->response_after_successful_result();
 		$applepay_request_data_object = $this->applepay_data_object_http();
 		$applepay_request_data_object->order_data('productDetail');
+		$this->update_posted_data($applepay_request_data_object);
 		$cart_item_key = $this->prepare_cart($applepay_request_data_object);
 		$cart = WC()->cart;
 		$this->which_calculate_totals($cart, $applepay_request_data_object );
@@ -311,9 +312,12 @@ class ApplepayPaymentMethod {
 		}
 		$this->add_addresses_to_order($applepay_request_data_object);
 		//add_action('woocommerce_checkout_order_processed', array($this, 'process_order_as_paid'), 10, 3);
+		add_filter('woocommerce_payment_successful_result', function (array $result) use ($cart, $cart_item_key) : array {
+			$this->clear_current_cart($cart, $cart_item_key);
+			$this->reload_cart( $cart );
+			return $result;
+		});
 		WC()->checkout()->process_checkout();
-		$this->clear_current_cart($cart, $cart_item_key);
-		$this->reload_cart( $cart );
 	}
 
 	/**
@@ -745,5 +749,45 @@ class ApplepayPaymentMethod {
 		$order->payment_complete();
 		wc_reduce_stock_levels($order_id);
 		$order->save();
+	}
+
+	protected function update_posted_data( $applepay_request_data_object )
+	{
+		add_filter(
+			'woocommerce_checkout_posted_data',
+			function ($data) use ($applepay_request_data_object) {
+
+				$data['payment_method'] = "ppcp-gateway";
+				$data['shipping_method'] = $applepay_request_data_object->shipping_method();
+				$data['billing_first_name'] = $applepay_request_data_object->billing_address()['first_name'] ?? '';
+				$data['billing_last_name'] = $applepay_request_data_object->billing_address()['last_name'] ?? '';
+				$data['billing_company'] = $applepay_request_data_object->billing_address()['company'] ?? '';
+				$data['billing_country'] = $applepay_request_data_object->billing_address()['country'] ?? '';
+				$data['billing_address_1'] = $applepay_request_data_object->billing_address()['address_1'] ?? '';
+				$data['billing_address_2'] = $applepay_request_data_object->billing_address()['address_2'] ?? '';
+				$data['billing_city'] = $applepay_request_data_object->billing_address()['city'] ?? '';
+				$data['billing_state'] = $applepay_request_data_object->billing_address()['state'] ?? '';
+				$data['billing_postcode'] = $applepay_request_data_object->billing_address()['postcode'] ?? '';
+
+
+				if ( $applepay_request_data_object->shipping_method() !== null ) {
+					$data['billing_email'] = $applepay_request_data_object->shipping_address()['email'] ?? '';
+					$data['billing_phone'] = $applepay_request_data_object->shipping_address()['phone'] ?? '';
+					$data['shipping_first_name'] = $applepay_request_data_object->shipping_address()['first_name'] ?? '';
+					$data['shipping_last_name'] = $applepay_request_data_object->shipping_address()['last_name'] ?? '';
+					$data['shipping_company'] = $applepay_request_data_object->shipping_address()['company'] ?? '';
+					$data['shipping_country'] = $applepay_request_data_object->shipping_address()['country'] ?? '';
+					$data['shipping_address_1'] = $applepay_request_data_object->shipping_address()['address_1'] ?? '';
+					$data['shipping_address_2'] = $applepay_request_data_object->shipping_address()['address_2'] ?? '';
+					$data['shipping_city'] = $applepay_request_data_object->shipping_address()['city'] ?? '';
+					$data['shipping_state'] = $applepay_request_data_object->shipping_address()['state'] ?? '';
+					$data['shipping_postcode'] = $applepay_request_data_object->shipping_address()['postcode'] ?? '';
+					$data['shipping_email'] = $applepay_request_data_object->shipping_address()['email'] ?? '';
+					$data['shipping_phone'] = $applepay_request_data_object->shipping_address()['phone'] ?? '';
+				}
+
+				return $data;
+			}
+		);
 	}
 }
