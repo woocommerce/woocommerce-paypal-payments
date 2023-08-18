@@ -74,6 +74,11 @@ class SubscriptionModule implements ModuleInterface {
 		add_action(
 			'woocommerce_subscription_payment_complete',
 			function ( $subscription ) use ( $c ) {
+				$paypal_subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
+				if ( $paypal_subscription_id ) {
+					return;
+				}
+
 				$payment_token_repository = $c->get( 'vaulting.repository.payment-token' );
 				$logger                   = $c->get( 'woocommerce.logger.woocommerce' );
 
