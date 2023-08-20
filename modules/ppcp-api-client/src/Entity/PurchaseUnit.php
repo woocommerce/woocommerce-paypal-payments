@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Entity;
 
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
+
 /**
  * Class PurchaseUnit
  */
@@ -396,7 +398,12 @@ class PurchaseUnit {
 
 		$amount_total = 0.0;
 		if ( $shipping ) {
-			$amount_total += (float) $shipping->value_str();
+			$wc_order = wc_get_order($this->custom_id);
+			if(is_a($wc_order, \WC_Order::class) && $wc_order->get_payment_method() === PayUponInvoiceGateway::ID) {
+				$amount_total += (float) bcdiv((string)$shipping->value(), '1', 2);
+			} else {
+				$amount_total += (float) $shipping->value_str();
+			}
 		}
 		if ( $item_total ) {
 			$amount_total += (float) $item_total->value_str();
