@@ -57,19 +57,24 @@ class OnboardingOptionsRenderer {
 	 */
 	public function render( bool $is_shop_supports_dcc ): string {
 		$checked = $is_shop_supports_dcc ? '' : 'checked';
-		return '
-<ul class="ppcp-onboarding-options">
-	<li>
-		<label><input type="checkbox" disabled checked> ' .
-			__( 'Enable PayPal Payments — includes PayPal, Venmo, Pay Later — with fraud protection', 'woocommerce-paypal-payments' ) . '
-		</label>
-	</li>
-	<li>
-		<label><input type="checkbox" id="ppcp-onboarding-accept-cards" ' . $checked . '> ' . __( 'Securely accept all major credit & debit cards on the strength of the PayPal network', 'woocommerce-paypal-payments' ) . '</label>
-	</li>
-	<li>' . $this->render_dcc( $is_shop_supports_dcc ) . '</li>' .
-			$this->render_pui_option()
-		. '</ul>';
+
+		$on_boarding_options = '
+			<li>
+				<label><input type="checkbox" disabled checked> ' .
+					__( 'Enable PayPal Payments — includes PayPal, Venmo, Pay Later — with fraud protection', 'woocommerce-paypal-payments' ) . '
+				</label>
+			</li>
+			<li>
+				<label><input type="checkbox" id="ppcp-onboarding-accept-cards" ' . $checked . '> ' . __( 'Securely accept all major credit & debit cards on the strength of the PayPal network', 'woocommerce-paypal-payments' ) . '</label>
+			</li>
+			<li>' .
+				$this->render_dcc( $is_shop_supports_dcc ) .
+			'</li>' .
+			$this->render_pui_option();
+
+		return ' <ul class="ppcp-onboarding-options">' .
+			apply_filters( 'ppcp_onboarding_options', $on_boarding_options ) .
+		'</ul>';
 	}
 
 	/**
