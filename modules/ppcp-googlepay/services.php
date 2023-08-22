@@ -18,12 +18,12 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 return array(
 	// TODO.
 
-	'googlepay.button'         => static function ( ContainerInterface $container ): ButtonInterface {
+	'googlepay.button'  => static function ( ContainerInterface $container ): ButtonInterface {
 		// TODO : check other statuses.
 
 		return new GooglepayButton(
 			$container->get( 'googlepay.url' ),
-			$container->get( 'googlepay.sdk_script_url' ),
+			$container->get( 'googlepay.sdk_url' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'session.handler' ),
 			$container->get( 'wcgateway.settings' ),
@@ -33,7 +33,7 @@ return array(
 		);
 	},
 
-	'googlepay.url'            => static function ( ContainerInterface $container ): string {
+	'googlepay.url'     => static function ( ContainerInterface $container ): string {
 		$path = realpath( __FILE__ );
 		if ( false === $path ) {
 			return '';
@@ -43,7 +43,8 @@ return array(
 			dirname( $path, 3 ) . '/woocommerce-paypal-payments.php'
 		);
 	},
-	'googlepay.sdk_script_url' => static function ( ContainerInterface $container ): string {
+
+	'googlepay.sdk_url' => static function ( ContainerInterface $container ): string {
 		return 'https://pay.google.com/gp/p/js/pay.js';
 	},
 

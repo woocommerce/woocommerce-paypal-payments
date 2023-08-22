@@ -1031,6 +1031,13 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
+"@paypal/paypal-js@^6.0.0":
+  version "6.0.1"
+  resolved "https://registry.yarnpkg.com/@paypal/paypal-js/-/paypal-js-6.0.1.tgz#5d68d5863a5176383fee9424bc944231668fcffd"
+  integrity sha512-bvYetmkg2GEC6onsUJQx1E9hdAJWff2bS3IPeiZ9Sh9U7h26/fIgMKm240cq/908sbSoDjHys75XXd8at9OpQA==
+  dependencies:
+    promise-polyfill "^8.3.0"
+
 "@types/eslint-scope@^3.7.3":
   version "3.7.4"
   resolved "https://registry.yarnpkg.com/@types/eslint-scope/-/eslint-scope-3.7.4.tgz#37fc1223f0786c39627068a12e94d6e6fc61de16"
@@ -1867,6 +1874,11 @@ pkg-dir@^4.1.0, pkg-dir@^4.2.0:
   integrity sha512-HRDzbaKjC+AOWVXxAU/x54COGeIv9eb+6CkDSQoNTt4XyWoIJvuPsXizxu/Fr23EiekbtZwmh1IcIG/l/a10GQ==
   dependencies:
     find-up "^4.0.0"
+
+promise-polyfill@^8.3.0:
+  version "8.3.0"
+  resolved "https://registry.yarnpkg.com/promise-polyfill/-/promise-polyfill-8.3.0.tgz#9284810268138d103807b11f4e23d5e945a4db63"
+  integrity sha512-H5oELycFml5yto/atYqmjyigJoAo3+OXwolYiH7OfQuYlAqhxNvTfiNMbV9hsC6Yp83yE5r2KTVmtrG6R9i6Pg==
 
 punycode@^2.1.0:
   version "2.3.0"

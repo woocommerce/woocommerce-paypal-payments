@@ -186,18 +186,9 @@ class GooglepayButton implements ButtonInterface {
 	 */
 	public function enqueue(): void {
 		wp_register_script(
-			'wc-ppcp-googlepay-sdk',
-			$this->sdk_url,
-			array(),
-			$this->version,
-			true
-		);
-		wp_enqueue_script( 'wc-ppcp-googlepay-sdk' );
-
-		wp_register_script(
 			'wc-ppcp-googlepay',
 			untrailingslashit( $this->module_url ) . '/assets/js/boot.js',
-			array( 'wc-ppcp-googlepay-sdk' ),
+			array(),
 			$this->version,
 			true
 		);
@@ -225,7 +216,8 @@ class GooglepayButton implements ButtonInterface {
 	 */
 	public function script_data(): array {
 		return array(
-			'button' => array(
+			'sdk_url' => $this->sdk_url,
+			'button'  => array(
 				'wrapper' => '#ppc-button-googlepay-container',
 			),
 		);
