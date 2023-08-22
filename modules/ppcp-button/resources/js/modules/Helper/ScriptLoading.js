@@ -1,4 +1,8 @@
 import dataClientIdAttributeHandler from "../DataClientIdAttributeHandler";
+import {loadScript} from "@paypal/paypal-js";
+import widgetBuilder from "../Renderer/WidgetBuilder";
+import merge from "deepmerge";
+import {keysToCamelCase} from "./Utils";
 
 export const loadPaypalScript = (config, onLoaded) => {
     if (typeof paypal !== 'undefined') {
@@ -6,19 +10,24 @@ export const loadPaypalScript = (config, onLoaded) => {
         return;
     }
 
-    const script = document.createElement('script');
-    script.addEventListener('load', onLoaded);
-    script.setAttribute('src', config.url);
-    Object.entries(config.script_attributes).forEach(
-        (keyValue) => {
-            script.setAttribute(keyValue[0], keyValue[1]);
-        }
-    );
+    const callback = (paypal) => {
+        widgetBuilder.setPaypal(paypal);
+        onLoaded();
+    }
+
+    let scriptOptions = keysToCamelCase(config.url_params);
+    scriptOptions = merge(scriptOptions, config.script_attributes);
 
     if (config.data_client_id.set_attribute) {
-        dataClientIdAttributeHandler(script, config.data_client_id);
+        dataClientIdAttributeHandler(scriptOptions, config.data_client_id, callback);
         return;
     }
 
-    document.body.appendChild(script);
+    loadScript(scriptOptions).then(callback);
+}
+
+export const loadPaypalJsScript = (options, buttons, container) => {
+    loadScript(options).then((paypal) => {
+        paypal.Buttons(buttons).render(container);
+    });
 }

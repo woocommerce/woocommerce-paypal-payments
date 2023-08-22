@@ -1,6 +1,5 @@
 import CartActionHandler from '../ActionHandler/CartActionHandler';
 import BootstrapHelper from "../Helper/BootstrapHelper";
-import {setVisible} from "../Helper/Hiding";
 
 class CartBootstrap {
     constructor(gateway, renderer, messages, errorHandler) {
@@ -40,11 +39,21 @@ class CartBootstrap {
                     return;
                 }
 
+                // handle script reload
                 const newParams = result.data.url_params;
-                const reloadRequired = this.gateway.url_params.intent !== newParams.intent;
+                const reloadRequired = JSON.stringify(this.gateway.url_params) !== JSON.stringify(newParams);
 
-                // TODO: should reload the script instead
-                setVisible(this.gateway.button.wrapper, !reloadRequired)
+                if (reloadRequired) {
+                    this.gateway.url_params = newParams;
+                    jQuery(this.gateway.button.wrapper).trigger('ppcp-reload-buttons');
+                }
+
+                // handle button status
+                if (result.data.button || result.data.messages) {
+                    this.gateway.button = result.data.button;
+                    this.gateway.messages = result.data.messages;
+                    this.handleButtonStatus();
+                }
 
                 if (this.lastAmount !== result.data.amount) {
                     this.lastAmount = result.data.amount;
@@ -77,6 +86,12 @@ class CartBootstrap {
             && PayPalCommerceGateway.data_client_id.paypal_subscriptions_enabled
         ) {
             this.renderer.render(actionHandler.subscriptionsConfiguration());
+
+            if(!PayPalCommerceGateway.subscription_product_allowed) {
+                this.gateway.button.is_disabled = true;
+                this.handleButtonStatus();
+            }
+
             return;
         }
 

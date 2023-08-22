@@ -65,7 +65,7 @@ test.describe('Classic checkout', () => {
         await expectOrderReceivedPage(page);
     });
 
-    test('Advanced Credit and Debit Card (ACDC) place order from Checkout page', async ({page}) => {
+    test('Advanced Credit and Debit Card place order from Checkout page', async ({page}) => {
         await page.goto(PRODUCT_URL);
         await page.locator('.single_add_to_cart_button').click();
 

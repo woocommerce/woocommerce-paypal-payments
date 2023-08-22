@@ -13,7 +13,7 @@ import {
     ORDER_BUTTON_SELECTOR,
     PaymentMethods
 } from "./modules/Helper/CheckoutMethodState";
-import {hide, setVisible, setVisibleByClass} from "./modules/Helper/Hiding";
+import {setVisibleByClass} from "./modules/Helper/Hiding";
 import {isChangePaymentPage} from "./modules/Helper/Subscriptions";
 import FreeTrialHandler from "./modules/ActionHandler/FreeTrialHandler";
 import FormSaver from './modules/Helper/FormSaver';
@@ -123,7 +123,7 @@ const bootstrap = () => {
             return actions.reject();
         }
 
-        if (context === 'checkout' && !PayPalCommerceGateway.funding_sources_without_redirect.includes(data.fundingSource)) {
+        if (context === 'checkout') {
             try {
                 await formSaver.save(form);
             } catch (error) {
@@ -137,19 +137,24 @@ const bootstrap = () => {
     };
     const renderer = new Renderer(creditCardRenderer, PayPalCommerceGateway, onSmartButtonClick, onSmartButtonsInit);
     const messageRenderer = new MessageRenderer(PayPalCommerceGateway.messages);
-    if (context === 'mini-cart' || context === 'product') {
-        if (PayPalCommerceGateway.mini_cart_buttons_enabled === '1') {
-            const miniCartBootstrap = new MiniCartBootstap(
-                PayPalCommerceGateway,
-                renderer,
-                errorHandler,
-            );
 
-            miniCartBootstrap.init();
-        }
+    if (PayPalCommerceGateway.mini_cart_buttons_enabled === '1') {
+        const miniCartBootstrap = new MiniCartBootstap(
+            PayPalCommerceGateway,
+            renderer,
+            errorHandler,
+        );
+
+        miniCartBootstrap.init();
     }
 
-    if (context === 'product' && PayPalCommerceGateway.single_product_buttons_enabled === '1') {
+    if (
+        context === 'product'
+        && (
+            PayPalCommerceGateway.single_product_buttons_enabled === '1'
+            || hasMessages()
+        )
+    ) {
         const singleProductBootstrap = new SingleProductBootstap(
             PayPalCommerceGateway,
             renderer,
@@ -194,10 +199,13 @@ const bootstrap = () => {
         payNowBootstrap.init();
     }
 
-    if (context !== 'checkout') {
-        messageRenderer.render();
-    }
 };
+
+const hasMessages = () => {
+    return PayPalCommerceGateway.messages.is_hidden === false
+        && document.querySelector(PayPalCommerceGateway.messages.wrapper);
+}
+
 document.addEventListener(
     'DOMContentLoaded',
     () => {

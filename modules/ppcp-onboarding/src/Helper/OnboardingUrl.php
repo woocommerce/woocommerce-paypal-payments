@@ -67,6 +67,13 @@ class OnboardingUrl {
 	private $cache_ttl = 3 * MONTH_IN_SECONDS;
 
 	/**
+	 * The TTL for the previous token cache.
+	 *
+	 * @var int
+	 */
+	private $previous_cache_ttl = 60;
+
+	/**
 	 * The constructor
 	 *
 	 * @param Cache  $cache The cache object to store the URL.
@@ -84,20 +91,19 @@ class OnboardingUrl {
 	}
 
 	/**
-	 * Validates the token, if it's valid then delete it.
-	 * If it's invalid don't delete it, to prevent malicious requests from invalidating the token.
+	 * Instances the object with a $token.
 	 *
 	 * @param Cache  $cache The cache object where the URL is stored.
-	 * @param string $onboarding_token The token to validate.
+	 * @param string $token The token to validate.
 	 * @param int    $user_id User ID to associate the link with.
-	 * @return bool
+	 * @return false|self
 	 */
-	public static function validate_token_and_delete( Cache $cache, string $onboarding_token, int $user_id ): bool {
-		if ( ! $onboarding_token ) {
+	public static function make_from_token( Cache $cache, string $token, int $user_id ) {
+		if ( ! $token ) {
 			return false;
 		}
 
-		$token_data = json_decode( UrlHelper::url_safe_base64_decode( $onboarding_token ) ?: '', true );
+		$token_data = json_decode( UrlHelper::url_safe_base64_decode( $token ) ?: '', true );
 
 		if ( ! $token_data ) {
 			return false;
@@ -111,18 +117,55 @@ class OnboardingUrl {
 			return false;
 		}
 
-		$onboarding_url = new self( $cache, $token_data['k'], $token_data['u'] );
+		return new self( $cache, $token_data['k'], $token_data['u'] );
+	}
+
+	/**
+	 * Validates the token, if it's valid then delete it.
+	 * If it's invalid don't delete it, to prevent malicious requests from invalidating the token.
+	 *
+	 * @param Cache  $cache The cache object where the URL is stored.
+	 * @param string $token The token to validate.
+	 * @param int    $user_id User ID to associate the link with.
+	 * @return bool
+	 */
+	public static function validate_token_and_delete( Cache $cache, string $token, int $user_id ): bool {
+		$onboarding_url = self::make_from_token( $cache, $token, $user_id );
+
+		if ( $onboarding_url === false ) {
+			return false;
+		}
 
 		if ( ! $onboarding_url->load() ) {
 			return false;
 		}
 
-		if ( ( $onboarding_url->token() ?: '' ) !== $onboarding_token ) {
+		if ( ( $onboarding_url->token() ?: '' ) !== $token ) {
 			return false;
 		}
 
+		$onboarding_url->replace_previous_token( $token );
 		$onboarding_url->delete();
 		return true;
+	}
+
+	/**
+	 * Validates the token against the previous token.
+	 * Useful to don't throw errors on burst calls to endpoints.
+	 *
+	 * @param Cache  $cache The cache object where the URL is stored.
+	 * @param string $token The token to validate.
+	 * @param int    $user_id User ID to associate the link with.
+	 * @return bool
+	 */
+	public static function validate_previous_token( Cache $cache, string $token, int $user_id ): bool {
+		$onboarding_url = self::make_from_token( $cache, $token, $user_id );
+
+		if ( $onboarding_url === false ) {
+			return false;
+		}
+
+		return $onboarding_url->check_previous_token( $token );
 	}
 
 	/**
@@ -313,6 +356,45 @@ class OnboardingUrl {
 	 */
 	private function cache_key(): string {
 		return implode( '_', array( $this->cache_key_prefix, $this->user_id ) );
+	}
+
+	/**
+	 * Returns the compiled cache key of the previous token
+	 *
+	 * @return string
+	 */
+	private function previous_cache_key(): string {
+		return $this->cache_key() . '_previous';
+	}
+
+	/**
+	 * Checks it the previous token matches the token provided.
+	 *
+	 * @param string $previous_token The previous token.
+	 * @return bool
+	 */
+	private function check_previous_token( string $previous_token ): bool {
+		if ( ! $this->cache->has( $this->previous_cache_key() ) ) {
+			return false;
+		}
+
+		$cached_token = $this->cache->get( $this->previous_cache_key() );
+
+		return $cached_token === $previous_token;
+	}
+
+	/**
+	 * Replaces the previous token.
+	 *
+	 * @param string $previous_token The previous token.
+	 * @return void
+	 */
+	private function replace_previous_token( string $previous_token ): void {
+		$this->cache->set(
+			$this->previous_cache_key(),
+			$previous_token,
+			$this->previous_cache_ttl
+		);
 	}
 
 }

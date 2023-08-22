@@ -10,8 +10,6 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Subscription;
 
 use WC_Order;
-use WC_Product;
-use WC_Subscription;
 use WC_Subscriptions_Product;
 use WC_Subscriptions_Synchroniser;
 
@@ -58,7 +56,10 @@ trait FreeTrialHandlerTrait {
 
 		$product = wc_get_product();
 
-		if ( ! $product || ! WC_Subscriptions_Product::is_subscription( $product ) ) {
+		if (
+			! $product || ! WC_Subscriptions_Product::is_subscription( $product )
+			|| $product->get_meta( '_ppcp_enable_subscription_product' ) === 'yes'
+		) {
 			return false;
 		}
 

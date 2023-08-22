@@ -7,6 +7,8 @@
 
 namespace WooCommerce\PayPalCommerce\Compat\PPEC;
 
+use Automattic\WooCommerce\Utilities\OrderUtil;
+
 /**
  * Helper class with various constants associated to the PayPal Express Checkout plugin, as well as methods for figuring
  * out the status of the gateway.
@@ -73,16 +75,25 @@ class PPECHelper {
 		}
 
 		global $wpdb;
-		$result = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT 1 FROM {$wpdb->posts} p JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID
+		if ( class_exists( OrderUtil::class ) && OrderUtil::custom_orders_table_usage_is_enabled() ) {
+			$result = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT 1 FROM {$wpdb->wc_orders} WHERE payment_method = %s",
+					self::PPEC_GATEWAY_ID
+				)
+			);
+		} else {
+			$result = $wpdb->get_var(
+				$wpdb->prepare(
+					"SELECT 1 FROM {$wpdb->posts} p JOIN {$wpdb->postmeta} pm ON pm.post_id = p.ID
 				WHERE p.post_type = %s AND p.post_status != %s AND pm.meta_key = %s AND pm.meta_value = %s LIMIT 1",
-				'shop_subscription',
-				'trash',
-				'_payment_method',
-				self::PPEC_GATEWAY_ID
-			)
-		);
+					'shop_subscription',
+					'trash',
+					'_payment_method',
+					self::PPEC_GATEWAY_ID
+				)
+			);
+		}
 
 		set_transient(
 			'ppcp_has_ppec_subscriptions',

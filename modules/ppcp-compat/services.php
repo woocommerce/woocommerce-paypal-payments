@@ -75,7 +75,7 @@ return array(
 		return new CompatAssets(
 			$container->get( 'compat.module.url' ),
 			$container->get( 'ppcp.asset-version' ),
-			$container->get( 'order-tracking.is-paypal-order-edit-page' ) && $container->get( 'compat.should-initialize-gzd-compat-layer' )
+			$container->get( 'compat.should-initialize-gzd-compat-layer' )
 		);
 	},
 
