@@ -9,7 +9,7 @@ import GooglepayManager from "./GooglepayManager";
 }) {
 
     const bootstrap = function () {
-        const manager = new GooglepayManager(buttonConfig);
+        const manager = new GooglepayManager(buttonConfig, ppcpConfig);
         manager.init();
     };
 
