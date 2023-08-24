@@ -1168,6 +1168,16 @@ class SmartButton implements SmartButtonInterface {
 		if ( $this->dcc_is_enabled() ) {
 			$components[] = 'hosted-fields';
 		}
+		/**
+		 * Filter to add further components from the extensions.
+		 *
+		 * @internal Matches filter name in APM extension.
+		 * @since TODO
+		 *
+		 * @param array $components The array of components already registered.
+		 */
+		return apply_filters( 'woocommerce_paypal_payments_sdk_components_hook', $components );
+
 		return $components;
 	}
 
