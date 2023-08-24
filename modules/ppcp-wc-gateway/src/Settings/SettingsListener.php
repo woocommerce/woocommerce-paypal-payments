@@ -425,6 +425,11 @@ class SettingsListener {
 			$this->dcc_status_cache->delete( DCCProductStatus::DCC_STATUS_CACHE_KEY );
 		}
 
+		/**
+		 * The hook fired during listening the request so a module can remove also the cache or other logic.
+		 */
+		do_action( 'woocommerce_paypal_payments_on_listening_request' );
+
 		$ppcp_reference_transaction_enabled = get_transient( 'ppcp_reference_transaction_enabled' ) ?? '';
 		if ( $ppcp_reference_transaction_enabled ) {
 			delete_transient( 'ppcp_reference_transaction_enabled' );
