@@ -463,6 +463,7 @@ class SmartButton implements SmartButtonInterface {
 					}
 
 					$this->button_renderer( PayPalGateway::ID );
+					do_action( 'woocommerce_paypal_payments_single_product_button_render' );
 				},
 				31
 			);
@@ -483,6 +484,7 @@ class SmartButton implements SmartButtonInterface {
                                 id="ppc-button-minicart"
                                 class="woocommerce-mini-cart__buttons buttons"
                           ></p>';
+					do_action( 'woocommerce_paypal_payments_minicart_button_render' );
 				},
 				30
 			);
@@ -496,6 +498,7 @@ class SmartButton implements SmartButtonInterface {
 				function (): void {
 					$this->button_renderer( PayPalGateway::ID );
 					$this->button_renderer( CardButtonGateway::ID );
+					do_action( 'woocommerce_paypal_payments_payorder_button_render' );
 				},
 				20
 			);
@@ -504,6 +507,7 @@ class SmartButton implements SmartButtonInterface {
 				function (): void {
 					$this->button_renderer( PayPalGateway::ID );
 					$this->button_renderer( CardButtonGateway::ID );
+					do_action( 'woocommerce_paypal_payments_checkout_button_render' );
 				}
 			);
 
@@ -516,6 +520,7 @@ class SmartButton implements SmartButtonInterface {
 					}
 
 					$this->button_renderer( PayPalGateway::ID );
+					do_action( 'woocommerce_paypal_payments_cart_button_render' );
 				},
 				20
 			);
