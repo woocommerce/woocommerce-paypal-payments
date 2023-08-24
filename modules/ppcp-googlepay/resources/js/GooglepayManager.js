@@ -1,4 +1,5 @@
 import SingleProductActionHandler from '../../../ppcp-button/resources/js/modules/ActionHandler/SingleProductActionHandler';
+import CartActionHandler from '../../../ppcp-button/resources/js/modules/ActionHandler/CartActionHandler';
 import UpdateCart from '../../../ppcp-button/resources/js/modules/Helper/UpdateCart';
 import ErrorHandler from '../../../ppcp-button/resources/js/modules/ErrorHandler';
 import SimulateCart from "../../../ppcp-button/resources/js/modules/Helper/SimulateCart";
@@ -149,14 +150,16 @@ class GooglepayManager {
     async transactionInfo() {
 
 //-------------
-
-        function form() {
-            return document.querySelector('form.cart');
-        }
         const errorHandler = new ErrorHandler(
             this.ppcpConfig.labels.error.generic,
             document.querySelector('.woocommerce-notices-wrapper')
         );
+
+        // == product page ==
+        function form() {
+            return document.querySelector('form.cart');
+        }
+
         const actionHandler = new SingleProductActionHandler(
             null,
             null,
@@ -215,26 +218,30 @@ class GooglepayManager {
 
         return new Promise(async (resolve, reject) => {
             try {
-                // Create the order on your server
-                // const {id} = await fetch(`/orders`, {
-                //     method: "POST",
-                //     body: ''
-                //     // You can use the "body" parameter to pass optional, additional order information, such as:
-                //     // amount, and amount breakdown elements like tax, shipping, and handling
-                //     // item data, such as sku, name, unit_amount, and quantity
-                //     // shipping information, like name, address, and address type
-                // });
 
 //-------------
                 console.log('ppcpConfig:', this.ppcpConfig);
 
-                function form() {
-                    return document.querySelector('form.cart');
-                }
                 const errorHandler = new ErrorHandler(
                     this.ppcpConfig.labels.error.generic,
                     document.querySelector('.woocommerce-notices-wrapper')
                 );
+
+                // == cart page ==
+                // const actionHandler = new CartActionHandler(
+                //     this.ppcpConfig,
+                //     errorHandler,
+                // );
+                //
+                // const createOrderInPayPal = actionHandler.createOrder();
+                //
+                // let id = await createOrderInPayPal(null, null);
+
+
+                // == product page ==
+                function form() {
+                    return document.querySelector('form.cart');
+                }
                 const actionHandler = new SingleProductActionHandler(
                     this.ppcpConfig,
                     new UpdateCart(
@@ -267,11 +274,6 @@ class GooglepayManager {
                 /** Capture the Order on your Server */
                 if (confirmOrderResponse.status === "APPROVED") {
 
-                    // const response = await fetch(`/capture/${id}`,
-                    //     {
-                    //         method: 'POST',
-                    //     }).then(res => res.json());
-
                     console.log('onApprove', this.ppcpConfig);
 
                     let approveFailed = false;
@@ -281,11 +283,11 @@ class GooglepayManager {
                     }, errorHandler);
 
                     console.log('approveOrderAndContinue', {
-                        order_id: id
+                        orderID: id
                     });
 
                     await approveOrderAndContinue({
-                        order_id: id
+                        orderID: id
                     }, {
                         restart: () => new Promise((resolve, reject) => {
                             approveFailed = true;
