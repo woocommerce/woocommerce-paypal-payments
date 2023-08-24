@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Applepay;
 
+use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
@@ -85,6 +86,24 @@ class ApplepayModule implements ModuleInterface {
 		$this->render_buttons( $c );
 
 		$apple_payment_method->bootstrap_ajax_request();
+		add_action(
+			'woocommerce_paypal_payments_gateway_migrate_on_update',
+			static function() use ( $c ) {
+				$apple_status_cache = $c->get( 'apple.status-cache' );
+				assert( $apple_status_cache instanceof Cache );
+
+				$apple_status_cache->delete( AppleProductStatus::APPLE_STATUS_CACHE_KEY );
+
+				$settings = $c->get( 'wcgateway.settings' );
+				$settings->set( 'products_apple_enabled', false );
+				$settings->persist();
+
+				// Update caches.
+				$apple_status = $c->get( 'applepay.apple-product-status' );
+				assert( $apple_status instanceof AppleProductStatus );
+				$apple_status->apple_is_active();
+			}
+		);
 	}
 
 	/**
