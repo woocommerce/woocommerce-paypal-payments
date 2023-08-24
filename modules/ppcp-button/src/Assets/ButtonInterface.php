@@ -1,13 +1,13 @@
 <?php
 /**
- * The interface for the smart button asset renderer.
+ * The interface for the button asset renderer.
  *
  * @package WooCommerce\PayPalCommerce\Button\Assets
  */
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\Googlepay\Assets;
+namespace WooCommerce\PayPalCommerce\Button\Assets;
 
 /**
  * Interface SmartButtonInterface

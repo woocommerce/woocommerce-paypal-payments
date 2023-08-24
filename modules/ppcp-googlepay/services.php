@@ -9,11 +9,9 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Googlepay;
 
-use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
-use WooCommerce\PayPalCommerce\Googlepay\Assets\ButtonInterface;
+use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 use WooCommerce\PayPalCommerce\Googlepay\Assets\GooglepayButton;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 return array(
 	// TODO.
@@ -28,6 +26,7 @@ return array(
 			$container->get( 'session.handler' ),
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'onboarding.environment' ),
+			$container->get( 'wcgateway.settings.status' ),
 			$container->get( 'api.shop.currency' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);

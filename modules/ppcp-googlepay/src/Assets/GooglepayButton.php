@@ -10,8 +10,10 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Googlepay\Assets;
 
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
@@ -55,6 +57,13 @@ class GooglepayButton implements ButtonInterface {
 	private $environment;
 
 	/**
+	 * The Settings status helper.
+	 *
+	 * @var SettingsStatus
+	 */
+	private $settings_status;
+
+	/**
 	 * 3-letter currency code of the shop.
 	 *
 	 * @var string
@@ -84,6 +93,7 @@ class GooglepayButton implements ButtonInterface {
 	 * @param SessionHandler  $session_handler The Session handler.
 	 * @param Settings        $settings The Settings.
 	 * @param Environment     $environment The environment object.
+	 * @param SettingsStatus  $settings_status The Settings status helper.
 	 * @param string          $currency 3-letter currency code of the shop.
 	 * @param LoggerInterface $logger The logger.
 	 */
@@ -94,6 +104,7 @@ class GooglepayButton implements ButtonInterface {
 		SessionHandler $session_handler,
 		Settings $settings,
 		Environment $environment,
+		SettingsStatus $settings_status,
 		string $currency,
 		LoggerInterface $logger
 	) {
@@ -104,6 +115,7 @@ class GooglepayButton implements ButtonInterface {
 		$this->session_handler = $session_handler;
 		$this->settings        = $settings;
 		$this->environment     = $environment;
+		$this->settings_status = $settings_status;
 		$this->currency        = $currency;
 		$this->logger          = $logger;
 	}
@@ -114,9 +126,11 @@ class GooglepayButton implements ButtonInterface {
 	 * @return bool
 	 */
 	public function render_buttons(): bool {
-		$button_enabled_product  = $this->settings->has( 'googlepay_button_enabled_product' ) ? $this->settings->get( 'googlepay_button_enabled_product' ) : false;
-		$button_enabled_cart     = $this->settings->has( 'googlepay_button_enabled_cart' ) ? $this->settings->get( 'googlepay_button_enabled_cart' ) : false;
-		$button_enabled_checkout = true; // TODO: change enable / disable checks
+		$is_googlepay_button_enabled = $this->settings->has( 'googlepay_button_enabled' ) ? $this->settings->get( 'googlepay_button_enabled' ) : false;
+
+		$button_enabled_product  = $is_googlepay_button_enabled && $this->settings_status->is_smart_button_enabled_for_location( 'product' );
+		$button_enabled_cart     = $is_googlepay_button_enabled && $this->settings_status->is_smart_button_enabled_for_location( 'cart' );
+		$button_enabled_checkout = $is_googlepay_button_enabled;
 
 		/**
 		 * Param types removed to avoid third-party issues.
@@ -132,9 +146,9 @@ class GooglepayButton implements ButtonInterface {
 		);
 
 		if ( $button_enabled_product ) {
-			$default_hookname   = 'woocommerce_paypal_payments_single_product_button_render';
-			$render_placeholder = apply_filters( 'woocommerce_paypal_payments_googlepay_render_hook_product', $default_hookname );
-			$render_placeholder = is_string( $render_placeholder ) ? $render_placeholder : $default_hookname;
+			$default_hook_name  = 'woocommerce_paypal_payments_single_product_button_render';
+			$render_placeholder = apply_filters( 'woocommerce_paypal_payments_googlepay_single_product_button_render_hook', $default_hook_name );
+			$render_placeholder = is_string( $render_placeholder ) ? $render_placeholder : $default_hook_name;
 			add_action(
 				$render_placeholder,
 				function () {
@@ -145,8 +159,9 @@ class GooglepayButton implements ButtonInterface {
 		}
 
 		if ( $button_enabled_cart ) {
-			$render_placeholder = apply_filters( 'woocommerce_paypal_payments_googlepay_render_hook_cart', 'woocommerce_proceed_to_checkout' );
-			$render_placeholder = is_string( $render_placeholder ) ? $render_placeholder : 'woocommerce_proceed_to_checkout';
+			$default_hook_name  = 'woocommerce_paypal_payments_cart_button_render';
+			$render_placeholder = apply_filters( 'woocommerce_paypal_payments_googlepay_cart_button_render_hook', $default_hook_name );
+			$render_placeholder = is_string( $render_placeholder ) ? $render_placeholder : $default_hook_name;
 			add_action(
 				$render_placeholder,
 				function () {
@@ -161,8 +176,9 @@ class GooglepayButton implements ButtonInterface {
 		}
 
 		if ( $button_enabled_checkout ) {
-			$render_placeholder = apply_filters( 'woocommerce_paypal_payments_googlepay_render_hook_checkout', 'woocommerce_review_order_after_payment' );
-			$render_placeholder = is_string( $render_placeholder ) ? $render_placeholder : 'woocommerce_review_order_after_payment';
+			$default_hook_name  = 'woocommerce_paypal_payments_checkout_button_render';
+			$render_placeholder = apply_filters( 'woocommerce_paypal_payments_googlepay_checkout_button_render_hook', $default_hook_name );
+			$render_placeholder = is_string( $render_placeholder ) ? $render_placeholder : $default_hook_name;
 			add_action(
 				$render_placeholder,
 				function () {

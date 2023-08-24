@@ -1,6 +1,14 @@
 #ppc-button-googlepay-container {
-	margin-top: 0.5rem;
+	margin-top: 5px;
 	overflow: hidden;
 	border-radius: 50px;
 	height: 45px;
+}
+
+.woocommerce-checkout {
+	#ppc-button-googlepay-container {
+		margin-top: 0;
+		border-radius: 18px;
+		height: 38px;
+	}
 }
