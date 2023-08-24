@@ -104,6 +104,16 @@ class ApplepayModule implements ModuleInterface {
 				$apple_status->apple_is_active();
 			}
 		);
+
+		add_action(
+			'woocommerce_paypal_payments_on_listening_request',
+			static function() use ( $c ) {
+				$apple_status = $c->get( 'applepay.apple-product-status' );
+				if ( $apple_status->has( AppleProductStatus::APPLE_STATUS_CACHE_KEY ) ) {
+					$apple_status->delete( AppleProductStatus::APPLE_STATUS_CACHE_KEY );
+				}
+			}
+		);
 	}
 
 	/**
