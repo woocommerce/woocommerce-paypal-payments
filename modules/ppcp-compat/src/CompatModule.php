@@ -20,6 +20,7 @@ use WC_Order;
 use WooCommerce\PayPalCommerce\Compat\Assets\CompatAssets;
 use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WP_Theme;
 
@@ -27,6 +28,8 @@ use WP_Theme;
  * Class CompatModule
  */
 class CompatModule implements ModuleInterface {
+
+	use AdminContextTrait;
 
 	/**
 	 * Setup the compatibility module.
@@ -48,13 +51,8 @@ class CompatModule implements ModuleInterface {
 	public function run( ContainerInterface $c ): void {
 		$this->initialize_ppec_compat_layer( $c );
 		$this->fix_site_ground_optimizer_compatibility( $c );
+
 		$this->initialize_gzd_compat_layer( $c );
-
-		$asset_loader = $c->get( 'compat.assets' );
-		assert( $asset_loader instanceof CompatAssets );
-
-		add_action( 'init', array( $asset_loader, 'register' ) );
-		add_action( 'admin_enqueue_scripts', array( $asset_loader, 'enqueue' ) );
 
 		$this->migrate_pay_later_settings( $c );
 		$this->migrate_smart_button_settings( $c );
@@ -127,6 +125,26 @@ class CompatModule implements ModuleInterface {
 		if ( ! $c->get( 'compat.should-initialize-gzd-compat-layer' ) ) {
 			return;
 		}
+
+		add_action(
+			'admin_enqueue_scripts',
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function( $hook ) use ( $c ): void {
+				if ( $hook !== 'post.php' || ! $this->is_paypal_order_edit_page() ) {
+					return;
+				}
+
+				$asset_loader = $c->get( 'compat.assets' );
+				assert( $asset_loader instanceof CompatAssets );
+
+				$asset_loader->register();
+				$asset_loader->enqueue();
+			}
+		);
 
 		$endpoint = $c->get( 'order-tracking.endpoint.controller' );
 		assert( $endpoint instanceof OrderTrackingEndpoint );
@@ -331,15 +349,20 @@ class CompatModule implements ModuleInterface {
 	 * @return void
 	 */
 	protected function fix_page_builders(): void {
-		if ( $this->is_elementor_pro_active() || $this->is_divi_theme_active() ) {
-			add_filter(
-				'woocommerce_paypal_payments_single_product_renderer_hook',
-				function(): string {
-					return 'woocommerce_after_add_to_cart_form';
-				},
-				5
-			);
-		}
+		add_action(
+			'init',
+			function() {
+				if ( $this->is_elementor_pro_active() || $this->is_divi_theme_active() ) {
+					add_filter(
+						'woocommerce_paypal_payments_single_product_renderer_hook',
+						function(): string {
+							return 'woocommerce_after_add_to_cart_form';
+						},
+						5
+					);
+				}
+			}
+		);
 	}
 
 	/**

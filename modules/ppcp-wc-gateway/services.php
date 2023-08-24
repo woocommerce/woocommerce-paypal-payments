@@ -149,7 +149,8 @@ return array(
 		$session_handler = $container->get( 'session.handler' );
 		$settings       = $container->get( 'wcgateway.settings' );
 		$settings_status = $container->get( 'wcgateway.settings.status' );
-		return new DisableGateways( $session_handler, $settings, $settings_status );
+		$subscription_helper = $container->get( 'subscription.helper' );
+		return new DisableGateways( $session_handler, $settings, $settings_status, $subscription_helper );
 	},
 
 	'wcgateway.is-wc-payments-page'                        => static function ( ContainerInterface $container ): bool {
@@ -292,6 +293,7 @@ return array(
 		$signup_link_ids = $container->get( 'onboarding.signup-link-ids' );
 		$pui_status_cache = $container->get( 'pui.status-cache' );
 		$dcc_status_cache = $container->get( 'dcc.status-cache' );
+		$logger = $container->get( 'woocommerce.logger.woocommerce' );
 		return new SettingsListener(
 			$settings,
 			$fields,
@@ -304,7 +306,8 @@ return array(
 			$signup_link_ids,
 			$pui_status_cache,
 			$dcc_status_cache,
-			$container->get( 'http.redirector' )
+			$container->get( 'http.redirector' ),
+			$logger
 		);
 	},
 	'wcgateway.order-processor'                            => static function ( ContainerInterface $container ): OrderProcessor {
@@ -810,7 +813,14 @@ return array(
 			),
 			'paypal_saved_payments'                  => array(
 				'heading'      => __( 'Saved payments', 'woocommerce-paypal-payments' ),
-				'description'  => __( 'PayPal can save your customers’ payment methods.', 'woocommerce-paypal-payments' ),
+				'description'  => sprintf(
+				// translators: %1$s, %2$s, %3$s and %4$s are a link tags.
+					__( 'PayPal can securely store your customers\' payment methods for %1$sfuture payments%2$s and %3$ssubscriptions%4$s, simplifying the checkout process and enabling recurring transactions on your website.', 'woocommerce-paypal-payments' ),
+					'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#vaulting-saving-a-payment-method" target="_blank">',
+					'</a>',
+					'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#subscriptions-faq" target="_blank">',
+					'</a>'
+				),
 				'type'         => 'ppcp-heading',
 				'screens'      => array(
 					State::STATE_START,

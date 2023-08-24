@@ -25,3 +25,9 @@ export const loadPaypalScript = (config, onLoaded) => {
 
     loadScript(scriptOptions).then(callback);
 }
+
+export const loadPaypalJsScript = (options, buttons, container) => {
+    loadScript(options).then((paypal) => {
+        paypal.Buttons(buttons).render(container);
+    });
+}

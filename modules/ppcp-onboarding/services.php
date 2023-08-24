@@ -229,13 +229,15 @@ return array(
 		$partner_referrals_sandbox = $container->get( 'api.endpoint.partner-referrals-sandbox' );
 		$partner_referrals_data    = $container->get( 'api.repository.partner-referrals-data' );
 		$settings                  = $container->get( 'wcgateway.settings' );
-		$signup_link_cache  = $container->get( 'onboarding.signup-link-cache' );
+		$signup_link_cache         = $container->get( 'onboarding.signup-link-cache' );
+		$logger                    = $container->get( 'woocommerce.logger.woocommerce' );
 		return new OnboardingRenderer(
 			$settings,
 			$partner_referrals,
 			$partner_referrals_sandbox,
 			$partner_referrals_data,
-			$signup_link_cache
+			$signup_link_cache,
+			$logger
 		);
 	},
 	'onboarding.render-options'                 => static function ( ContainerInterface $container ) : OnboardingOptionsRenderer {

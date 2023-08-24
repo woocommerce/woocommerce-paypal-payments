@@ -265,7 +265,7 @@ class SubscriptionsApiHandler {
 			'REGULAR',
 			array(
 				'fixed_price' => array(
-					'value'         => $product->get_meta( '_subscription_price' ),
+					'value'         => $product->get_meta( '_subscription_price' ) ?: $product->get_price(),
 					'currency_code' => $this->currency,
 				),
 			),

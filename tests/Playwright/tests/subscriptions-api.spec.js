@@ -1,7 +1,9 @@
 const {test, expect} = require('@playwright/test');
+
 const {loginAsAdmin, loginAsCustomer} = require('./utils/user');
 const {openPaypalPopup, loginIntoPaypal, completePaypalPayment} = require("./utils/paypal-popup");
 const {fillCheckoutForm, expectOrderReceivedPage} = require("./utils/checkout");
+const {createProduct, deleteProduct, updateProduct, updateProductUi} = require("./utils/products");
 const {
     AUTHORIZATION,
     SUBSCRIPTION_URL,
@@ -18,7 +20,7 @@ async function purchaseSubscriptionFromCart(page) {
     const popup = await openPaypalPopup(page);
     await loginIntoPaypal(popup);
 
-    await popup.getByText('Continue', { exact: true }).click();
+    await popup.getByText('Continue', {exact: true}).click();
     await popup.locator('#confirmButtonTop').click();
 
     await fillCheckoutForm(page);
@@ -92,7 +94,7 @@ test.describe.serial('Subscriptions Merchant', () => {
         await loginAsAdmin(page);
 
         await page.goto('/wp-admin/edit.php?post_type=product');
-        await page.getByRole('link', { name: productTitle, exact: true }).click();
+        await page.getByRole('link', {name: productTitle, exact: true}).click();
 
         await page.fill('#title', `Updated ${productTitle}`);
         await page.fill('#_subscription_price', '20');
@@ -209,7 +211,7 @@ test.describe('Subscriber purchase a Subscription', () => {
         const popup = await openPaypalPopup(page);
         await loginIntoPaypal(popup);
 
-        await popup.getByText('Continue', { exact: true }).click();
+        await popup.getByText('Continue', {exact: true}).click();
 
         await Promise.all([
             page.waitForNavigation(),
@@ -226,7 +228,7 @@ test.describe('Subscriber purchase a Subscription', () => {
         const popup = await openPaypalPopup(page);
         await loginIntoPaypal(popup);
 
-        await popup.getByText('Continue', { exact: true }).click();
+        await popup.getByText('Continue', {exact: true}).click();
         await popup.locator('#confirmButtonTop').click();
 
         await fillCheckoutForm(page);
@@ -308,4 +310,69 @@ test.describe('Subscriber my account actions', () => {
         details = await subscription.json();
         await expect(details.status).toBe('CANCELLED');
     });
-}) ;
+});
+
+test.describe('Plan connected display buttons', () => {
+    test('Disable buttons if no plan connected', async ({page}) => {
+        const data = {
+            name: (Math.random() + 1).toString(36).substring(7),
+            type: 'subscription',
+            meta_data: [
+                {
+                    key: '_subscription_price',
+                    value: '10'
+                }
+            ]
+        }
+        const productId = await createProduct(data)
+
+        // for some reason product meta is not updated in frontend,
+        // so we need to manually update the product
+        await updateProductUi(productId, page);
+
+        await page.goto(`/product/?p=${productId}`)
+        await expect(page.locator('#ppc-button-ppcp-gateway')).not.toBeVisible();
+
+        await page.locator('.single_add_to_cart_button').click();
+        await page.goto('/cart');
+        await expect(page.locator('#ppc-button-ppcp-gateway')).toBeVisible();
+        await expect(page.locator('#ppc-button-ppcp-gateway')).toHaveCSS('cursor', 'not-allowed')
+
+        await page.goto('/checkout');
+        await expect(page.locator('#ppc-button-ppcp-gateway')).toBeVisible();
+        await expect(page.locator('#ppc-button-ppcp-gateway')).toHaveCSS('cursor', 'not-allowed')
+
+        await deleteProduct(productId)
+    })
+
+    test('Enable buttons if plan connected', async ({page}) => {
+        const data = {
+            name: (Math.random() + 1).toString(36).substring(7),
+            type: 'subscription',
+            meta_data: [
+                {
+                    key: '_subscription_price',
+                    value: '10'
+                }
+            ]
+        }
+        const productId = await createProduct(data)
+
+        await loginAsAdmin(page);
+        await page.goto(`/wp-admin/post.php?post=${productId}&action=edit`)
+        await page.locator('#ppcp_enable_subscription_product').check();
+        await page.locator('#ppcp_subscription_plan_name').fill('Plan name');
+        await page.locator('#publish').click();
+        await expect(page.getByText('Product updated.')).toBeVisible();
+
+        await page.goto(`/product/?p=${productId}`)
+        await expect(page.locator('#ppc-button-ppcp-gateway')).toBeVisible();
+
+        await page.locator('.single_add_to_cart_button').click();
+        await page.goto('/cart');
+        await expect(page.locator('#ppc-button-ppcp-gateway')).toBeVisible();
+
+        await deleteProduct(productId)
+    })
+})
+

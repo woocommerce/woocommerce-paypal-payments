@@ -70,10 +70,12 @@ class MetaBoxRenderer {
 	/**
 	 * Renders the order tracking MetaBox.
 	 *
-	 * @param WP_Post $post The post object.
+	 * @param mixed $post_or_order_object Either WP_Post or WC_Order when COT is data source.
+	 *
+	 * @return void
 	 */
-	public function render( WP_Post $post ): void {
-		$wc_order = wc_get_order( $post->ID );
+	public function render( $post_or_order_object ): void {
+		$wc_order = ( $post_or_order_object instanceof WP_Post ) ? wc_get_order( $post_or_order_object->ID ) : $post_or_order_object;
 		if ( ! is_a( $wc_order, WC_Order::class ) ) {
 			return;
 		}
@@ -122,7 +124,7 @@ class MetaBoxRenderer {
 				<?php endforeach; ?>
 			</select>
 		</p>
-		<input type="hidden" class="ppcp-order_id" name="<?php echo esc_attr( self::NAME_PREFIX ); ?>[order_id]" value="<?php echo intval( $post->ID ); ?>"/>
+		<input type="hidden" class="ppcp-order_id" name="<?php echo esc_attr( self::NAME_PREFIX ); ?>[order_id]" value="<?php echo (int) $wc_order->get_id(); ?>"/>
 		<p>
 			<button type="button" class="button submit_tracking_info" data-action="<?php echo esc_attr( $action ); ?>"><?php echo esc_html( ucfirst( $action ) ); ?></button></p>
 		<?php

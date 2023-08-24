@@ -12,7 +12,6 @@ namespace WooCommerce\PayPalCommerce\OrderTracking;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\OrderTracking\Assets\OrderEditPageAssets;
 use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 return array(
 	'order-tracking.assets'                    => function( ContainerInterface $container ) : OrderEditPageAssets {
@@ -73,15 +72,5 @@ return array(
 				),
 			),
 		);
-	},
-	'order-tracking.is-paypal-order-edit-page' => static function ( ContainerInterface $container ): bool {
-		$order_id = isset( $_GET['post'] ) ? (int) $_GET['post'] : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		if ( empty( $order_id ) ) {
-			return false;
-		}
-
-		$meta = get_post_meta( $order_id, PayPalGateway::ORDER_ID_META_KEY, true );
-
-		return ! empty( $meta );
 	},
 );

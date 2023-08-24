@@ -1,6 +1,6 @@
 {
   "name": "woocommerce-paypal-payments",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "description": "WooCommerce PayPal Payments",
   "repository": "https://github.com/woocommerce/woocommerce-paypal-payments",
   "license": "GPL-2.0",
@@ -13,6 +13,7 @@
     "install:modules:ppcp-wc-gateway": "cd modules/ppcp-wc-gateway && yarn install",
     "install:modules:ppcp-webhooks": "cd modules/ppcp-webhooks && yarn install",
     "install:modules:ppcp-order-tracking": "cd modules/ppcp-order-tracking && yarn install",
+    "install:modules:ppcp-subscription": "cd modules/ppcp-subscription && yarn install",
     "install:modules:ppcp-onboarding": "cd modules/ppcp-onboarding && yarn install",
     "install:modules:ppcp-compat": "cd modules/ppcp-compat && yarn install",
     "install:modules:ppcp-uninstall": "cd modules/ppcp-uninstall && yarn install",
@@ -22,6 +23,7 @@
     "build:modules:ppcp-wc-gateway": "cd modules/ppcp-wc-gateway && yarn run build",
     "build:modules:ppcp-webhooks": "cd modules/ppcp-webhooks && yarn run build",
     "build:modules:ppcp-order-tracking": "cd modules/ppcp-order-tracking && yarn run build",
+    "build:modules:ppcp-subscription": "cd modules/ppcp-subscription && yarn run build",
     "build:modules:ppcp-onboarding": "cd modules/ppcp-onboarding && yarn run build",
     "build:modules:ppcp-compat": "cd modules/ppcp-compat && yarn run build",
     "build:modules:ppcp-uninstall": "cd modules/ppcp-uninstall && yarn run build",
@@ -32,6 +34,7 @@
     "watch:modules:ppcp-wc-gateway": "cd modules/ppcp-wc-gateway && yarn run watch",
     "watch:modules:ppcp-webhooks": "cd modules/ppcp-webhooks && yarn run watch",
     "watch:modules:ppcp-order-tracking": "cd modules/ppcp-order-tracking && yarn run watch",
+    "watch:modules:ppcp-subscription": "cd modules/ppcp-subscription && yarn run watch",
     "watch:modules:ppcp-onboarding": "cd modules/ppcp-onboarding && yarn run watch",
     "watch:modules:ppcp-compat": "cd modules/ppcp-compat && yarn run watch",
     "watch:modules:ppcp-uninstall": "cd modules/ppcp-uninstall && yarn run watch",
@@ -72,8 +75,5 @@
   "dependencies": {
     "dotenv": "^16.0.3",
     "npm-run-all": "^4.1.5"
-  },
-  "devDependencies": {
-    "@playwright/test": "^1.31.1"
   }
 }

@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Checkout;
 
 use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
@@ -45,21 +46,31 @@ class DisableGateways {
 	protected $settings_status;
 
 	/**
+	 * The subscription helper.
+	 *
+	 * @var SubscriptionHelper
+	 */
+	private $subscription_helper;
+
+	/**
 	 * DisableGateways constructor.
 	 *
 	 * @param SessionHandler     $session_handler The Session Handler.
 	 * @param ContainerInterface $settings The Settings.
 	 * @param SettingsStatus     $settings_status The Settings status helper.
+	 * @param SubscriptionHelper $subscription_helper The subscription helper.
 	 */
 	public function __construct(
 		SessionHandler $session_handler,
 		ContainerInterface $settings,
-		SettingsStatus $settings_status
+		SettingsStatus $settings_status,
+		SubscriptionHelper $subscription_helper
 	) {
 
-		$this->session_handler = $session_handler;
-		$this->settings        = $settings;
-		$this->settings_status = $settings_status;
+		$this->session_handler     = $session_handler;
+		$this->settings            = $settings;
+		$this->settings_status     = $settings_status;
+		$this->subscription_helper = $subscription_helper;
 	}
 
 	/**

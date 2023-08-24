@@ -107,12 +107,18 @@ class VaultPaymentTokenCreated implements RequestHandler {
 		$customer_id = null !== $request['resource'] && isset( $request['resource']['customer_id'] )
 			? $request['resource']['customer_id']
 			: '';
+
 		if ( ! $customer_id ) {
 			$message = 'No customer id was found.';
 			return $this->failure_response( $message );
 		}
 
-		$wc_customer_id = (int) str_replace( $this->prefix, '', $customer_id );
+		$wc_customer_id = $this->wc_customer_id_from( $customer_id );
+		if ( ! $wc_customer_id ) {
+			$message = "No WC customer id was found from PayPal customer id {$customer_id}";
+			return $this->failure_response( $message );
+		}
+
 		$this->authorized_payments_processor->capture_authorized_payments_for_customer( $wc_customer_id );
 
 		if ( ! is_null( $request['resource'] ) && isset( $request['resource']['id'] ) ) {
@@ -148,5 +154,30 @@ class VaultPaymentTokenCreated implements RequestHandler {
 		}
 
 		return $this->success_response();
+	}
+
+	/**
+	 * Returns WC customer id from PayPal customer id.
+	 *
+	 * @param string $customer_id The customer ID from PayPal.
+	 * @return int
+	 */
+	private function wc_customer_id_from( string $customer_id ): int {
+		$customers = get_users(
+			array(
+				'meta_key'   => 'ppcp_guest_customer_id', //phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_key
+				'meta_value' => $customer_id, //phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_meta_value
+				'fields'     => 'ids',
+				'number'     => 1,
+			)
+		);
+
+		$wc_customer_id = $customers[0] ?? '';
+		if ( $wc_customer_id ) {
+			return (int) $wc_customer_id;
+		}
+
+		$id = str_replace( $this->prefix, '', $customer_id );
+		return is_numeric( $id ) ? (int) $id : 0;
 	}
 }
