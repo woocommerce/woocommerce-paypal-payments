@@ -24,6 +24,11 @@ import GooglepayManager from "./GooglepayManager";
                 return;
             }
 
+            // If button wrapper is not present then there is no need to load the scripts.
+            if (!jQuery(buttonConfig.button.wrapper).length) {
+                return;
+            }
+
             let bootstrapped = false;
             let paypalLoaded = false;
             let googlePayLoaded = false;

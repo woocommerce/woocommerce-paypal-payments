@@ -208,7 +208,7 @@ class GooglepayButton implements ButtonInterface {
 	 * Whether any of the scripts should be loaded.
 	 */
 	public function should_load_script(): bool {
-		return true;
+		return true; // TODO.
 	}
 
 	/**
