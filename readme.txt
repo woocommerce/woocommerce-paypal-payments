@@ -81,7 +81,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 
 == Changelog ==
 
-= 2.2.1 - xxxx-xx-xx =
+= 2.2.1 - 2023-08-24 =
 * Fix - One-page checkout causes mini cart not showing the PP button on certain pages #1536
 * Fix - When onboarding loading the return_url too fast may cause the onboarding to fail #1565
 * Fix - PayPal button doesn't work for variable products on product page after recent 2.2.0 release #1533
