@@ -114,8 +114,9 @@ class GooglepayButton implements ButtonInterface {
 	 * @return bool
 	 */
 	public function render_buttons(): bool {
-		$button_enabled_product = $this->settings->has( 'googlepay_button_enabled_product' ) ? $this->settings->get( 'googlepay_button_enabled_product' ) : false;
-		$button_enabled_cart    = $this->settings->has( 'googlepay_button_enabled_cart' ) ? $this->settings->get( 'googlepay_button_enabled_cart' ) : false;
+		$button_enabled_product  = $this->settings->has( 'googlepay_button_enabled_product' ) ? $this->settings->get( 'googlepay_button_enabled_product' ) : false;
+		$button_enabled_cart     = $this->settings->has( 'googlepay_button_enabled_cart' ) ? $this->settings->get( 'googlepay_button_enabled_cart' ) : false;
+		$button_enabled_checkout = true; // TODO: change enable / disable checks
 
 		/**
 		 * Param types removed to avoid third-party issues.
@@ -131,8 +132,9 @@ class GooglepayButton implements ButtonInterface {
 		);
 
 		if ( $button_enabled_product ) {
-			$render_placeholder = apply_filters( 'woocommerce_paypal_payments_googlepay_render_hook_product', 'woocommerce_single_product_summary' );
-			$render_placeholder = is_string( $render_placeholder ) ? $render_placeholder : 'woocommerce_single_product_summary';
+			$default_hookname   = 'woocommerce_paypal_payments_single_product_button_render';
+			$render_placeholder = apply_filters( 'woocommerce_paypal_payments_googlepay_render_hook_product', $default_hookname );
+			$render_placeholder = is_string( $render_placeholder ) ? $render_placeholder : $default_hookname;
 			add_action(
 				$render_placeholder,
 				function () {
@@ -152,6 +154,18 @@ class GooglepayButton implements ButtonInterface {
 						return;
 					}
 
+					$this->googlepay_button();
+				},
+				21
+			);
+		}
+
+		if ( $button_enabled_checkout ) {
+			$render_placeholder = apply_filters( 'woocommerce_paypal_payments_googlepay_render_hook_checkout', 'woocommerce_review_order_after_payment' );
+			$render_placeholder = is_string( $render_placeholder ) ? $render_placeholder : 'woocommerce_review_order_after_payment';
+			add_action(
+				$render_placeholder,
+				function () {
 					$this->googlepay_button();
 				},
 				21

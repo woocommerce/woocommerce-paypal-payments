@@ -4,6 +4,9 @@ import UpdateCart from '../../../ppcp-button/resources/js/modules/Helper/UpdateC
 import ErrorHandler from '../../../ppcp-button/resources/js/modules/ErrorHandler';
 import SimulateCart from "../../../ppcp-button/resources/js/modules/Helper/SimulateCart";
 import onApprove from '../../../ppcp-button/resources/js/modules/OnApproveHandler/onApproveForContinue';
+import CheckoutActionHandler
+    from "../../../ppcp-button/resources/js/modules/ActionHandler/CheckoutActionHandler";
+import Spinner from "../../../ppcp-button/resources/js/modules/Helper/Spinner";
 
 class GooglepayManager {
 
@@ -155,40 +158,71 @@ class GooglepayManager {
             document.querySelector('.woocommerce-notices-wrapper')
         );
 
-        // == product page ==
-        function form() {
-            return document.querySelector('form.cart');
-        }
-
-        const actionHandler = new SingleProductActionHandler(
-            null,
-            null,
-            form(),
-            errorHandler,
-        );
-
-        const hasSubscriptions = PayPalCommerceGateway.data_client_id.has_subscriptions
-            && PayPalCommerceGateway.data_client_id.paypal_subscriptions_enabled;
-
-        const products = hasSubscriptions
-            ? actionHandler.getSubscriptionProducts()
-            : actionHandler.getProducts();
+        //== cart & checkout page ==
 
         return new Promise((resolve, reject) => {
-            (new SimulateCart(
-                this.ppcpConfig.ajax.simulate_cart.endpoint,
-                this.ppcpConfig.ajax.simulate_cart.nonce,
-            )).simulate((data) => {
 
-                resolve({
-                    countryCode: data.country_code,
-                    currencyCode: data.currency_code,
-                    totalPriceStatus: 'FINAL',
-                    totalPrice: data.total_str // Your amount
+            fetch(
+                this.ppcpConfig.ajax.cart_script_params.endpoint,
+                {
+                    method: 'GET',
+                    credentials: 'same-origin',
+                }
+            )
+                .then(result => result.json())
+                .then(result => {
+                    if (! result.success) {
+                        return;
+                    }
+
+                    // handle script reload
+                    const data = result.data;
+
+                    resolve({
+                        countryCode: 'US', // data.country_code,
+                        currencyCode: 'USD', // data.currency_code,
+                        totalPriceStatus: 'FINAL',
+                        totalPrice: data.amount // Your amount
+                    });
+
                 });
-
-            }, products);
         });
+
+
+        // == product page ==
+        // function form() {
+        //     return document.querySelector('form.cart');
+        // }
+        //
+        // const actionHandler = new SingleProductActionHandler(
+        //     null,
+        //     null,
+        //     form(),
+        //     errorHandler,
+        // );
+        //
+        // const hasSubscriptions = PayPalCommerceGateway.data_client_id.has_subscriptions
+        //     && PayPalCommerceGateway.data_client_id.paypal_subscriptions_enabled;
+        //
+        // const products = hasSubscriptions
+        //     ? actionHandler.getSubscriptionProducts()
+        //     : actionHandler.getProducts();
+        //
+        // return new Promise((resolve, reject) => {
+        //     (new SimulateCart(
+        //         this.ppcpConfig.ajax.simulate_cart.endpoint,
+        //         this.ppcpConfig.ajax.simulate_cart.nonce,
+        //     )).simulate((data) => {
+        //
+        //         resolve({
+        //             countryCode: data.country_code,
+        //             currencyCode: data.currency_code,
+        //             totalPriceStatus: 'FINAL',
+        //             totalPrice: data.total_str // Your amount
+        //         });
+        //
+        //     }, products);
+        // });
 //-------------
 
     }
@@ -227,34 +261,42 @@ class GooglepayManager {
                     document.querySelector('.woocommerce-notices-wrapper')
                 );
 
+                // == checkout page ==
+                const spinner = new Spinner();
+
+                const actionHandler = new CheckoutActionHandler(
+                    this.ppcpConfig,
+                    errorHandler,
+                    spinner
+                );
+
+                let id = await actionHandler.configuration().createOrder(null, null);
+
                 // == cart page ==
                 // const actionHandler = new CartActionHandler(
                 //     this.ppcpConfig,
                 //     errorHandler,
                 // );
                 //
+                // let id = await actionHandler.configuration().createOrder(null, null);
+
+                // == product page ==
+                // function form() {
+                //     return document.querySelector('form.cart');
+                // }
+                // const actionHandler = new SingleProductActionHandler(
+                //     this.ppcpConfig,
+                //     new UpdateCart(
+                //         this.ppcpConfig.ajax.change_cart.endpoint,
+                //         this.ppcpConfig.ajax.change_cart.nonce,
+                //     ),
+                //     form(),
+                //     errorHandler,
+                // );
+                //
                 // const createOrderInPayPal = actionHandler.createOrder();
                 //
                 // let id = await createOrderInPayPal(null, null);
-
-
-                // == product page ==
-                function form() {
-                    return document.querySelector('form.cart');
-                }
-                const actionHandler = new SingleProductActionHandler(
-                    this.ppcpConfig,
-                    new UpdateCart(
-                        this.ppcpConfig.ajax.change_cart.endpoint,
-                        this.ppcpConfig.ajax.change_cart.nonce,
-                    ),
-                    form(),
-                    errorHandler,
-                );
-
-                const createOrderInPayPal = actionHandler.createOrder();
-
-                let id = await createOrderInPayPal(null, null);
 
                 console.log('PayPal Order ID:', id);
 
