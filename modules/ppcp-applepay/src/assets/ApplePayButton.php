@@ -7,7 +7,7 @@
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\Applepay;
+namespace WooCommerce\PayPalCommerce\Applepay\Assets;
 
 use Psr\Log\LoggerInterface;
 use WC_Cart;
@@ -27,14 +27,14 @@ use WooCommerce\PayPalCommerce\Webhooks\Handler\RequestHandlerTrait;
 /**
  * Class PayPalPaymentMethod
  */
-class ApplepayPaymentMethod {
+class ApplePayButton implements ButtonInterface {
 	use RequestHandlerTrait;
 	/**
 	 * The settings.
 	 *
 	 * @var Settings
 	 */
-	private $plugin_settings;
+	private $settings;
 	/**
 	 * The logger.
 	 *
@@ -73,25 +73,40 @@ class ApplepayPaymentMethod {
 	 * @var bool Whether to reload the cart after the order is processed.
 	 */
 	protected $reload_cart = false;
+	private $version;
+	/**
+	 * @var string
+	 */
+	private $module_url;
+	/**
+	 * @var string
+	 */
+	private $script_data;
 
 	/**
 	 * PayPalPaymentMethod constructor.
 	 *
-	 * @param Settings $plugin_settings The settings.
+	 * @param Settings $settings The settings.
 	 * @param LoggerInterface $logger The logger.
 	 * @param OrderProcessor           $order_processor The Order processor.
 	 */
 	public function __construct(
-		Settings $plugin_settings,
-		LoggerInterface $logger,
-		OrderProcessor $order_processor
+		Settings                 $settings,
+		LoggerInterface          $logger,
+		OrderProcessor           $order_processor,
+		string                   $module_url,
+		string                   $version,
+		DataToAppleButtonScripts $data
 	) {
-		$this->plugin_settings    = $plugin_settings;
+		$this->settings    = $settings;
 		$this->response_templates = new ResponsesToApple();
 		$this->logger             = $logger;
 		$this->id 			   = 'applepay';
 		$this->method_title    = __( 'Apple Pay', 'woocommerce-paypal-payments' );
 		$this->order_processor = $order_processor;
+		$this->module_url      = $module_url;
+		$this->version         = $version;
+		$this->script_data = $data;
 	}
 
 	/**
@@ -103,7 +118,7 @@ class ApplepayPaymentMethod {
 			'ppcp_partner_referrals_data',
 			function ( array $data ): array {
 				try {
-					$onboard_with_apple = $this->plugin_settings->get( 'ppcp-onboarding-apple' );
+					$onboard_with_apple = $this->settings->get( 'ppcp-onboarding-apple' );
 					if ( $onboard_with_apple !== '1' ) {
 						return $data;
 					}
@@ -150,7 +165,7 @@ class ApplepayPaymentMethod {
 	public function add_apple_onboarding_option( $options ): string {
 		$checked = '';
 		try {
-			$onboard_with_apple = $this->plugin_settings->get( 'ppcp-onboarding-apple' );
+			$onboard_with_apple = $this->settings->get( 'ppcp-onboarding-apple' );
 			if ( $onboard_with_apple === '1' ) {
 				$checked = 'checked';
 			}
@@ -789,5 +804,81 @@ class ApplepayPaymentMethod {
 				return $data;
 			}
 		);
+	}
+
+	public function render_buttons(): bool
+	{
+		$button_enabled_product = $this->settings->has( 'applepay_button_enabled_product' ) ? $this->settings->get( 'applepay_button_enabled_product' ) : false;
+		$button_enabled_cart    = $this->settings->has( 'applepay_button_enabled_cart' ) ? $this->settings->get( 'applepay_button_enabled_cart' ) : false;
+
+		if ( $button_enabled_product ) {
+			$render_placeholder = apply_filters( 'woocommerce_paypal_payments_applepay_render_hook_product', 'woocommerce_after_add_to_cart_form' );
+			$render_placeholder = is_string( $render_placeholder ) ? $render_placeholder : 'woocommerce_after_add_to_cart_form';
+			add_action(
+				$render_placeholder,
+				function () {
+					$this->apple_pay_direct_button();
+				}
+			);
+		}
+		if ( $button_enabled_cart ) {
+			$render_placeholder = apply_filters( 'woocommerce_paypal_payments_applepay_render_hook_cart', 'woocommerce_cart_totals_after_order_total' );
+			$render_placeholder = is_string( $render_placeholder ) ? $render_placeholder : 'woocommerce_cart_totals_after_order_total';
+			add_action(
+				$render_placeholder,
+				function () {
+					$this->apple_pay_direct_button();
+				}
+			);
+		}
+		return true;
+	}
+	/**
+	 * ApplePay button markup
+	 */
+	protected function apple_pay_direct_button(): void {
+		?>
+		<div class="ppc-button-wrapper">
+			<div id="applepay-container">
+				<?php wp_nonce_field( 'woocommerce-process_checkout', 'woocommerce-process-checkout-nonce' ); ?>
+			</div>
+		</div>
+		<?php
+	}
+
+	public function should_load_script(): bool
+	{
+		return true;
+	}
+
+	public function enqueue(): void
+	{
+		wp_register_script(
+			'wc-ppcp-applepay',
+			untrailingslashit( $this->module_url ) . '/assets/js/applePayDirect.js',
+			array(),
+			$this->version,
+			true
+		);
+		wp_enqueue_script( 'wc-ppcp-applepay' );
+
+		wp_register_style(
+			'wc-ppcp-applepay',
+			untrailingslashit( $this->module_url ) . '/assets/css/styles.css',
+			array(),
+			$this->version
+		);
+		wp_enqueue_style( 'wc-ppcp-applepay' );
+
+		wp_localize_script(
+			'wc-ppcp-applepay',
+			'wc_ppcp_applepay',
+			$this->script_data()
+		);
+	}
+
+	public function script_data(): array
+	{
+		return $this->script_data->apple_pay_script_data();
 	}
 }

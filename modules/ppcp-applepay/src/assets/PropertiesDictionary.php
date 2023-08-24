@@ -7,7 +7,7 @@
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\Applepay;
+namespace WooCommerce\PayPalCommerce\Applepay\Assets;
 
 /**
  * Class PropertiesDictionary

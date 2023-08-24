@@ -7,7 +7,7 @@
 
 declare( strict_types=1 );
 
-namespace WooCommerce\PayPalCommerce\Applepay;
+namespace WooCommerce\PayPalCommerce\Applepay\Assets;
 
 use Throwable;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;

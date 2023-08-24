@@ -10,7 +10,7 @@ module.exports = {
     plugins: [ new DependencyExtractionWebpackPlugin() ],
     entry: {
         'applepayDirect': path.resolve('./resources/js/applepayDirect.js'),
-        'applepayDirectCart': path.resolve('./resources/js/applepayDirectCart.js')
+        "styles": path.resolve('./resources/css/styles.scss')
     },
     output: {
         path: path.resolve(__dirname, 'assets/'),

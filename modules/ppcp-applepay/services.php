@@ -10,6 +10,9 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Applepay;
 
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
+use WooCommerce\PayPalCommerce\Applepay\Assets\ApplePayButton;
+use WooCommerce\PayPalCommerce\Applepay\Assets\AppleProductStatus;
+use WooCommerce\PayPalCommerce\Applepay\Assets\DataToAppleButtonScripts;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
@@ -42,13 +45,6 @@ return array(
 		}
 		return $settings->get( 'applepay_validated' ) === 'yes';
 	},
-	'applepay.payment_method'                 => static function ( ContainerInterface $container ): ApplepayPaymentMethod {
-		$settings = $container->get( 'wcgateway.settings' );
-		$logger  = $container->get( 'woocommerce.logger.woocommerce' );
-		$order_processor = $container->get( 'wcgateway.order-processor' );
-
-		return new ApplepayPaymentMethod( $settings, $logger, $order_processor );
-	},
 	'applepay.url'                            => static function ( ContainerInterface $container ): string {
 		$path = realpath( __FILE__ );
 		if ( false === $path ) {
@@ -62,29 +58,18 @@ return array(
 	'applepay.sdk_script_url'                 => static function ( ContainerInterface $container ): string {
 		return 'https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js';
 	},
-	'applepay.script_url'                     => static function ( ContainerInterface $container ): string {
-		return trailingslashit( $container->get( 'applepay.url' ) ) . '/assets/js/applePayDirect.js';
-	},
-	'applepay.style_url'                      => static function ( ContainerInterface $container ): string {
-		return trailingslashit( $container->get( 'applepay.url' ) ) . '/assets/css/applepaydirect.css';
-	},
-	'applepay.setting_button_enabled_product' => static function ( ContainerInterface $container ): bool {
-		$settings = $container->get( 'wcgateway.settings' );
-		assert( $settings instanceof ContainerInterface );
-
-		return $settings->has( 'applepay_button_enabled_product' ) ?
-			(bool) $settings->get( 'applepay_button_enabled_product' ) :
-			false;
-	},
-	'applepay.setting_button_enabled_cart'    => static function ( ContainerInterface $container ): bool {
-		$settings = $container->get( 'wcgateway.settings' );
-		assert( $settings instanceof ContainerInterface );
-
-		return $settings->has( 'applepay_button_enabled_cart' ) ?
-			(bool) $settings->get( 'applepay_button_enabled_cart' ) :
-			false;
-	},
 	'applepay.data_to_scripts'                => static function ( ContainerInterface $container ): DataToAppleButtonScripts {
-		return new DataToAppleButtonScripts();
+		$sdk_url = $container->get( 'applepay.sdk_script_url' );
+		return new DataToAppleButtonScripts($sdk_url);
+	},
+	'applepay.button'                 => static function ( ContainerInterface $container ): ApplePayButton {
+		$settings = $container->get( 'wcgateway.settings' );
+		$logger  = $container->get( 'woocommerce.logger.woocommerce' );
+		$order_processor = $container->get( 'wcgateway.order-processor' );
+		$version = $container->get('ppcp.asset-version');
+		$module_url = $container->get( 'applepay.url' );
+		$data = $container->get('applepay.data_to_scripts');
+
+		return new ApplePayButton( $settings, $logger, $order_processor, $module_url, $version, $data, $settings );
 	},
 );

@@ -7,12 +7,23 @@
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\Applepay;
+namespace WooCommerce\PayPalCommerce\Applepay\Assets;
 
 /**
  * Class DataToAppleButtonScripts
  */
 class DataToAppleButtonScripts {
+
+	/**
+	 * The URL to the SDK.
+	 *
+	 * @var string
+	 */
+	private $sdk_url;
+
+	public function __construct($sdk_url) {
+		$this->sdk_url = $sdk_url;
+	}
 
 	/**
 	 * Sets the appropriate data to send to ApplePay script
@@ -80,7 +91,6 @@ class DataToAppleButtonScripts {
 		$currency_code,
 		$total_label
 	) {
-
 		$product = wc_get_product( get_the_id() );
 		if ( ! $product ) {
 			return array();
@@ -95,6 +105,7 @@ class DataToAppleButtonScripts {
 		$product_stock        = $product->get_stock_status();
 
 		return array(
+			'sdk_url' => $this->sdk_url,
 			'product' => array(
 				'needShipping' => $product_need_shipping,
 				'id'           => $product_id,
@@ -131,6 +142,7 @@ class DataToAppleButtonScripts {
 			. $nonce
 			. '</div>';
 		return array(
+			'sdk_url' => $this->sdk_url,
 			'product'      => array(
 				'needShipping' => $cart->needs_shipping(),
 				'subtotal'     => $cart->get_subtotal(),

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\Applepay;
+namespace WooCommerce\PayPalCommerce\Applepay\Assets;
 
 use Psr\Log\LoggerInterface;
 use WC_Payment_Gateway;
