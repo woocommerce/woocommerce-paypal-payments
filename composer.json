@@ -14,6 +14,7 @@
         "symfony/polyfill-php80": "^1.19"
     },
     "require-dev": {
+        "inpsyde/composer-assets-compiler": "^2.5",
         "psr/container": "^1.0",
         "dhii/module-interface": "^0.2 || ^0.3",
         "container-interop/service-provider": "^0.4.0",
@@ -68,6 +69,15 @@
                 "vendor/bin/phpcbf"
             ]
         },
+        "composer-asset-compiler": {
+            "auto-discover": true,
+            "packages": {
+                "inpsyde/*": {
+                    "dependencies": "install",
+                    "script": "build"
+                }
+            }
+        },
         "mozart": {
             "dep_namespace": "WooCommerce\\PayPalCommerce\\Vendor\\",
             "dep_directory": "/lib/packages/",
@@ -83,6 +93,7 @@
     },
     "config": {
         "allow-plugins": {
+            "inpsyde/composer-assets-compiler": true,
             "dealerdirect/phpcodesniffer-composer-installer": true,
             "wikimedia/composer-merge-plugin": true
         }

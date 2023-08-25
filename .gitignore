@@ -13,3 +13,4 @@ modules/ppcp-wc-gateway/assets/css
 auth.json
 .DS_Store
 tests/.DS_Store
+.composer_compiled_assets

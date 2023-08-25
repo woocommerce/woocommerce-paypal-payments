@@ -14,6 +14,7 @@ psalm*.xml*
 phpunit.xml*
 .phpunit.result.cache
 resources
+node_modules
 *.lock
 webpack.config.js
 wp-cli.yml
@@ -21,6 +22,8 @@ ngrok.yml
 composer.json
 package.json
 package-lock.json
+.composer_compiled_assets
+assets-compiler.json
 patchwork.json
 .babelrc
 README.md
