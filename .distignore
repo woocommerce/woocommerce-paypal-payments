@@ -29,3 +29,5 @@ patchwork.json
 README.md
 wordpress_org_assets
 .DS_Store
+auth.json
+*.log
