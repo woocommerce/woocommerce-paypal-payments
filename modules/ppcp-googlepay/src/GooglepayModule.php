@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Googlepay;
 
+use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
@@ -63,6 +64,12 @@ class GooglepayModule implements ModuleInterface {
 			}
 		);
 
+		add_action(
+			'woocommerce_blocks_payment_method_type_registration',
+			function( PaymentMethodRegistry $payment_method_registry ) use ( $c ): void {
+				$payment_method_registry->register( $c->get( 'googlepay.blocks-payment-method' ) );
+			}
+		);
 	}
 
 	/**

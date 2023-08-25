@@ -12,3 +12,9 @@
 		height: 38px;
 	}
 }
+
+.wp-block-woocommerce-cart, .wp-block-woocommerce-checkout {
+	#ppc-button-googlepay-container {
+		margin-top: 0;
+	}
+}

@@ -17,9 +17,9 @@ use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
- * Class SmartButton
+ * Class Button
  */
-class GooglepayButton implements ButtonInterface {
+class Button implements ButtonInterface {
 
 	/**
 	 * The URL to the module.

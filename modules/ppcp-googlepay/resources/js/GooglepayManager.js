@@ -262,23 +262,23 @@ class GooglepayManager {
                 );
 
                 // == checkout page ==
-                const spinner = new Spinner();
-
-                const actionHandler = new CheckoutActionHandler(
-                    this.ppcpConfig,
-                    errorHandler,
-                    spinner
-                );
-
-                let id = await actionHandler.configuration().createOrder(null, null);
-
-                // == cart page ==
-                // const actionHandler = new CartActionHandler(
+                // const spinner = new Spinner();
+                //
+                // const actionHandler = new CheckoutActionHandler(
                 //     this.ppcpConfig,
                 //     errorHandler,
+                //     spinner
                 // );
                 //
                 // let id = await actionHandler.configuration().createOrder(null, null);
+
+                // == cart page ==
+                const actionHandler = new CartActionHandler(
+                    this.ppcpConfig,
+                    errorHandler,
+                );
+
+                let id = await actionHandler.configuration().createOrder(null, null);
 
                 // == product page ==
                 // function form() {
