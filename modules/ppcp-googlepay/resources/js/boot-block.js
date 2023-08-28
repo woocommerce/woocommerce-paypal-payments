@@ -26,11 +26,11 @@ const GooglePayComponent = () => {
     const [paypalLoaded, setPaypalLoaded] = useState(false);
     const [googlePayLoaded, setGooglePayLoaded] = useState(false);
 
-    const manager = new GooglepayManager(buttonConfig, ppcpConfig);
-
     const bootstrap = function () {
         const manager = new GooglepayManager(buttonConfig, ppcpConfig);
         manager.init();
+
+
     };
 
     useEffect(() => {
@@ -43,7 +43,7 @@ const GooglePayComponent = () => {
         loadPaypalScript(ppcpConfig, () => {
             setPaypalLoaded(true);
         });
-    });
+    }, []);
 
     useEffect(() => {
         if (!bootstrapped && paypalLoaded && googlePayLoaded) {

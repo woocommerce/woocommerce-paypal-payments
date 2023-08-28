@@ -2,6 +2,7 @@ import {useEffect, useState} from '@wordpress/element';
 import {registerExpressPaymentMethod, registerPaymentMethod} from '@woocommerce/blocks-registry';
 import {paypalAddressToWc, paypalOrderToWcAddresses} from "./Helper/Address";
 import {loadPaypalScript} from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading'
+import buttonModuleWatcher from "../../../ppcp-button/resources/js/modules/ButtonModuleWatcher";
 
 const config = wc.wcSettings.getSetting('ppcp-gateway_data');
 
@@ -28,6 +29,7 @@ const PayPalComponent = ({
         if (!loaded) {
             loadPaypalScript(config.scriptData, () => {
                 setLoaded(true);
+                buttonModuleWatcher.registerContextBootstrap(config.scriptData.context, this);
             });
         }
     }, [loaded]);

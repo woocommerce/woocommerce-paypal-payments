@@ -1,0 +1,93 @@
+import SingleProductActionHandler
+    from "../../../../ppcp-button/resources/js/modules/ActionHandler/SingleProductActionHandler";
+import SimulateCart from "../../../../ppcp-button/resources/js/modules/Helper/SimulateCart";
+import ErrorHandler from "../../../../ppcp-button/resources/js/modules/ErrorHandler";
+import UpdateCart from "../../../../ppcp-button/resources/js/modules/Helper/UpdateCart";
+import onApprove
+    from "../../../../ppcp-button/resources/js/modules/OnApproveHandler/onApproveForContinue";
+
+class SingleProductHandler {
+
+    constructor(buttonConfig, ppcpConfig) {
+        console.log('NEW SingleProductHandler');
+
+        this.buttonConfig = buttonConfig;
+        this.ppcpConfig = ppcpConfig;
+    }
+
+    transactionInfo() {
+        const errorHandler = new ErrorHandler(
+            this.ppcpConfig.labels.error.generic,
+            document.querySelector('.woocommerce-notices-wrapper')
+        );
+
+        function form() {
+            return document.querySelector('form.cart');
+        }
+
+        const actionHandler = new SingleProductActionHandler(
+            null,
+            null,
+            form(),
+            errorHandler,
+        );
+
+        const hasSubscriptions = PayPalCommerceGateway.data_client_id.has_subscriptions
+            && PayPalCommerceGateway.data_client_id.paypal_subscriptions_enabled;
+
+        const products = hasSubscriptions
+            ? actionHandler.getSubscriptionProducts()
+            : actionHandler.getProducts();
+
+        return new Promise((resolve, reject) => {
+            (new SimulateCart(
+                this.ppcpConfig.ajax.simulate_cart.endpoint,
+                this.ppcpConfig.ajax.simulate_cart.nonce,
+            )).simulate((data) => {
+
+                resolve({
+                    countryCode: data.country_code,
+                    currencyCode: data.currency_code,
+                    totalPriceStatus: 'FINAL',
+                    totalPrice: data.total_str // Your amount
+                });
+
+            }, products);
+        });
+    }
+
+    createOrder() {
+        const errorHandler = new ErrorHandler(
+            this.ppcpConfig.labels.error.generic,
+            document.querySelector('.woocommerce-notices-wrapper')
+        );
+
+        const actionHandler = new SingleProductActionHandler(
+            this.ppcpConfig,
+            new UpdateCart(
+                this.ppcpConfig.ajax.change_cart.endpoint,
+                this.ppcpConfig.ajax.change_cart.nonce,
+            ),
+            document.querySelector('form.cart'),
+            errorHandler,
+        );
+
+        return actionHandler.configuration().createOrder();
+    }
+
+    approveOrderForContinue(data, actions) {
+        const errorHandler = new ErrorHandler(
+            this.ppcpConfig.labels.error.generic,
+            document.querySelector('.woocommerce-notices-wrapper')
+        );
+
+        let onApproveHandler = onApprove({
+            config: this.ppcpConfig
+        }, errorHandler);
+
+        return onApproveHandler(data, actions);
+    }
+
+}
+
+export default SingleProductHandler;

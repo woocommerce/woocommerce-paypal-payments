@@ -1,12 +1,5 @@
-import SingleProductActionHandler from '../../../ppcp-button/resources/js/modules/ActionHandler/SingleProductActionHandler';
-import CartActionHandler from '../../../ppcp-button/resources/js/modules/ActionHandler/CartActionHandler';
-import UpdateCart from '../../../ppcp-button/resources/js/modules/Helper/UpdateCart';
-import ErrorHandler from '../../../ppcp-button/resources/js/modules/ErrorHandler';
-import SimulateCart from "../../../ppcp-button/resources/js/modules/Helper/SimulateCart";
-import onApprove from '../../../ppcp-button/resources/js/modules/OnApproveHandler/onApproveForContinue';
-import CheckoutActionHandler
-    from "../../../ppcp-button/resources/js/modules/ActionHandler/CheckoutActionHandler";
-import Spinner from "../../../ppcp-button/resources/js/modules/Helper/Spinner";
+import ContextHandlerFactory from "./Context/ContextHandlerFactory";
+import buttonModuleWatcher from "../../../ppcp-button/resources/js/modules/ButtonModuleWatcher";
 
 class GooglepayManager {
 
@@ -21,6 +14,20 @@ class GooglepayManager {
 
         this.isReadyToPayRequest = null;
         this.baseCardPaymentMethod = null;
+
+        // Wait for buttons context handler to be loaded
+        this.contextHandler = null;
+
+        buttonModuleWatcher.watchContextBootstrap((bootstrap) => {
+            if (bootstrap.context === 'mini-cart') {
+                return;
+            }
+            this.contextHandler = ContextHandlerFactory.create(
+                bootstrap.context,
+                buttonConfig,
+                ppcpConfig
+            );
+        });
     }
 
     init() {
@@ -151,80 +158,7 @@ class GooglepayManager {
     }
 
     async transactionInfo() {
-
-//-------------
-        const errorHandler = new ErrorHandler(
-            this.ppcpConfig.labels.error.generic,
-            document.querySelector('.woocommerce-notices-wrapper')
-        );
-
-        //== cart & checkout page ==
-
-        return new Promise((resolve, reject) => {
-
-            fetch(
-                this.ppcpConfig.ajax.cart_script_params.endpoint,
-                {
-                    method: 'GET',
-                    credentials: 'same-origin',
-                }
-            )
-                .then(result => result.json())
-                .then(result => {
-                    if (! result.success) {
-                        return;
-                    }
-
-                    // handle script reload
-                    const data = result.data;
-
-                    resolve({
-                        countryCode: 'US', // data.country_code,
-                        currencyCode: 'USD', // data.currency_code,
-                        totalPriceStatus: 'FINAL',
-                        totalPrice: data.amount // Your amount
-                    });
-
-                });
-        });
-
-
-        // == product page ==
-        // function form() {
-        //     return document.querySelector('form.cart');
-        // }
-        //
-        // const actionHandler = new SingleProductActionHandler(
-        //     null,
-        //     null,
-        //     form(),
-        //     errorHandler,
-        // );
-        //
-        // const hasSubscriptions = PayPalCommerceGateway.data_client_id.has_subscriptions
-        //     && PayPalCommerceGateway.data_client_id.paypal_subscriptions_enabled;
-        //
-        // const products = hasSubscriptions
-        //     ? actionHandler.getSubscriptionProducts()
-        //     : actionHandler.getProducts();
-        //
-        // return new Promise((resolve, reject) => {
-        //     (new SimulateCart(
-        //         this.ppcpConfig.ajax.simulate_cart.endpoint,
-        //         this.ppcpConfig.ajax.simulate_cart.nonce,
-        //     )).simulate((data) => {
-        //
-        //         resolve({
-        //             countryCode: data.country_code,
-        //             currencyCode: data.currency_code,
-        //             totalPriceStatus: 'FINAL',
-        //             totalPrice: data.total_str // Your amount
-        //         });
-        //
-        //     }, products);
-        // });
-//-------------
-
+        return this.contextHandler.transactionInfo();
     }
 
     //------------------------
@@ -252,56 +186,11 @@ class GooglepayManager {
 
         return new Promise(async (resolve, reject) => {
             try {
-
-//-------------
                 console.log('ppcpConfig:', this.ppcpConfig);
 
-                const errorHandler = new ErrorHandler(
-                    this.ppcpConfig.labels.error.generic,
-                    document.querySelector('.woocommerce-notices-wrapper')
-                );
-
-                // == checkout page ==
-                // const spinner = new Spinner();
-                //
-                // const actionHandler = new CheckoutActionHandler(
-                //     this.ppcpConfig,
-                //     errorHandler,
-                //     spinner
-                // );
-                //
-                // let id = await actionHandler.configuration().createOrder(null, null);
-
-                // == cart page ==
-                const actionHandler = new CartActionHandler(
-                    this.ppcpConfig,
-                    errorHandler,
-                );
-
-                let id = await actionHandler.configuration().createOrder(null, null);
-
-                // == product page ==
-                // function form() {
-                //     return document.querySelector('form.cart');
-                // }
-                // const actionHandler = new SingleProductActionHandler(
-                //     this.ppcpConfig,
-                //     new UpdateCart(
-                //         this.ppcpConfig.ajax.change_cart.endpoint,
-                //         this.ppcpConfig.ajax.change_cart.nonce,
-                //     ),
-                //     form(),
-                //     errorHandler,
-                // );
-                //
-                // const createOrderInPayPal = actionHandler.createOrder();
-                //
-                // let id = await createOrderInPayPal(null, null);
+                let id = await this.contextHandler.createOrder();
 
                 console.log('PayPal Order ID:', id);
-
-//-------------
-
                 console.log('paypal.Googlepay().confirmOrder : paymentData', {
                     orderId: id,
                     paymentMethodData: paymentData.paymentMethodData
@@ -315,20 +204,10 @@ class GooglepayManager {
 
                 /** Capture the Order on your Server */
                 if (confirmOrderResponse.status === "APPROVED") {
-
                     console.log('onApprove', this.ppcpConfig);
 
                     let approveFailed = false;
-
-                    const approveOrderAndContinue = onApprove({
-                        config: this.ppcpConfig
-                    }, errorHandler);
-
-                    console.log('approveOrderAndContinue', {
-                        orderID: id
-                    });
-
-                    await approveOrderAndContinue({
+                    await this.contextHandler.approveOrderForContinue({
                         orderID: id
                     }, {
                         restart: () => new Promise((resolve, reject) => {
@@ -350,17 +229,6 @@ class GooglepayManager {
                     }
 
                     resolve({transactionState: 'SUCCESS'});
-
-                    // if (response.capture.status === "COMPLETED")
-                    //     resolve({transactionState: 'SUCCESS'});
-                    // else
-                    //     resolve({
-                    //         transactionState: 'ERROR',
-                    //         error: {
-                    //             intent: 'PAYMENT_AUTHORIZATION',
-                    //             message: 'TRANSACTION FAILED',
-                    //         }
-                    //     })
 
                 } else {
                     resolve({
