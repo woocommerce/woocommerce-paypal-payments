@@ -131,6 +131,10 @@ class Button implements ButtonInterface {
 		$button_enabled_product  = $is_googlepay_button_enabled && $this->settings_status->is_smart_button_enabled_for_location( 'product' );
 		$button_enabled_cart     = $is_googlepay_button_enabled && $this->settings_status->is_smart_button_enabled_for_location( 'cart' );
 		$button_enabled_checkout = $is_googlepay_button_enabled;
+		$button_enabled_payorder = $is_googlepay_button_enabled;
+		$button_enabled_minicart = $is_googlepay_button_enabled && $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' );
+
+
 
 		/**
 		 * Param types removed to avoid third-party issues.
@@ -188,16 +192,45 @@ class Button implements ButtonInterface {
 			);
 		}
 
+		if ( $button_enabled_payorder ) {
+			$default_hook_name  = 'woocommerce_paypal_payments_payorder_button_render';
+			$render_placeholder = apply_filters( 'woocommerce_paypal_payments_googlepay_payorder_button_render_hook', $default_hook_name );
+			$render_placeholder = is_string( $render_placeholder ) ? $render_placeholder : $default_hook_name;
+			add_action(
+				$render_placeholder,
+				function () {
+					$this->googlepay_button();
+				},
+				21
+			);
+		}
+
+		if ( $button_enabled_minicart ) {
+			$default_hook_name  = 'woocommerce_paypal_payments_minicart_button_render';
+			$render_placeholder = apply_filters( 'woocommerce_paypal_payments_googlepay_minicart_button_render_hook', $default_hook_name );
+			$render_placeholder = is_string( $render_placeholder ) ? $render_placeholder : $default_hook_name;
+			add_action(
+				$render_placeholder,
+				function () {
+					$this->googlepay_button( 'ppc-button-googlepay-container-minicart' );
+				},
+				21
+			);
+		}
+
 		return true;
 	}
 
 	/**
 	 * GooglePay button markup
+	 *
+	 * @param string $id The HTML id.
+	 * @return void
 	 */
-	private function googlepay_button(): void {
+	private function googlepay_button( string $id = 'ppc-button-googlepay-container' ): void {
 		?>
 		<div class="ppc-button-wrapper">
-			<div id="ppc-button-googlepay-container">
+			<div id="<?php echo esc_attr( $id ); ?>">
 				<?php wp_nonce_field( 'woocommerce-process_checkout', 'woocommerce-process-checkout-nonce' ); ?>
 			</div>
 		</div>
@@ -248,7 +281,8 @@ class Button implements ButtonInterface {
 		return array(
 			'sdk_url' => $this->sdk_url,
 			'button'  => array(
-				'wrapper' => '#ppc-button-googlepay-container',
+				'wrapper'           => '#ppc-button-googlepay-container',
+				'mini_cart_wrapper' => '#ppc-button-googlepay-container-minicart',
 			),
 		);
 	}

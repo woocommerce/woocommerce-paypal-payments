@@ -4,7 +4,7 @@ import CartActionHandler
 import onApprove
     from "../../../../ppcp-button/resources/js/modules/OnApproveHandler/onApproveForContinue";
 
-class CartHandler {
+class CartBlockHandler {
 
     constructor(buttonConfig, ppcpConfig) {
         console.log('NEW CartHandler');
@@ -72,4 +72,4 @@ class CartHandler {
 
 }
 
-export default CartHandler;
+export default CartBlockHandler;

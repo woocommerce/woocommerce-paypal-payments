@@ -124,6 +124,15 @@ class GooglepayManager {
                 buttonSizeMode: 'fill',
             });
         jQuery(this.buttonConfig.button.wrapper).append(button);
+
+        // const buttonMiniCart =
+        //     paymentsClient.createButton({
+        //         onClick: this.onButtonClick.bind(this),
+        //         allowedPaymentMethods: [this.baseCardPaymentMethod],
+        //         buttonType: 'pay',
+        //         buttonSizeMode: 'fill',
+        //     });
+        // jQuery(this.buttonConfig.button.mini_cart_wrapper).append(buttonMiniCart);
     }
 
     //------------------------
