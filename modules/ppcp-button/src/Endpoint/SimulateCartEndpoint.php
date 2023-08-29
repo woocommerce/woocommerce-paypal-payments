@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 
 use Exception;
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButton;
 
 /**
@@ -100,18 +101,25 @@ class SimulateCartEndpoint extends AbstractCartEndpoint {
 			$button_enabled              = $button_enabled && ! $this->smart_button->is_button_disabled( 'product', $context_data );
 		}
 
+		$base_location     = wc_get_base_location();
+		$shop_country_code = $base_location['country'];
+		$currency_code     = get_woocommerce_currency();
+
 		wp_send_json_success(
 			array(
-				'total'    => $total,
-				'funding'  => array(
+				'total'         => $total,
+				'total_str'     => ( new Money( $total, $currency_code ) )->value_str(),
+				'currency_code' => $currency_code,
+				'country_code'  => $shop_country_code,
+				'funding'       => array(
 					'paylater' => array(
 						'enabled' => $pay_later_enabled,
 					),
 				),
-				'button'   => array(
+				'button'        => array(
 					'is_disabled' => ! $button_enabled,
 				),
-				'messages' => array(
+				'messages'      => array(
 					'is_hidden' => ! $pay_later_messaging_enabled,
 				),
 			)
