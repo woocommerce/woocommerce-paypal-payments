@@ -81,7 +81,7 @@ Follow the steps below to connect the plugin to your PayPal account:
 
 == Changelog ==
 
-= 2.2.2 - xxxx-xx-xx =
+= 2.2.2 - 2023-08-29 =
 * Fix - High rate of auth voids on vaulted subscriptions for guest users #1529 
 * Enhancement - HPOS compatibility issues #1594
 * Feature preview - PayPal Subscriptions API fixes and improvements #1600 #1607
