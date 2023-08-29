@@ -26,18 +26,14 @@ class GooglepayButton {
         this.isInitialized = true;
 
         this.googlePayConfig = config;
-        console.log('googlePayConfig', this.googlePayConfig);
-
         this.allowedPaymentMethods = config.allowedPaymentMethods;
-
-        this.isReadyToPayRequest = this.buildReadyToPayRequest(this.allowedPaymentMethods, config);
-        console.log('googleIsReadyToPayRequest', this.isReadyToPayRequest);
-
         this.baseCardPaymentMethod = this.allowedPaymentMethods[0];
 
         this.initClient();
 
-        this.paymentsClient.isReadyToPay(this.isReadyToPayRequest)
+        this.paymentsClient.isReadyToPay(
+            this.buildReadyToPayRequest(this.allowedPaymentMethods, config)
+        )
             .then((response) => {
                 if (response.result) {
                     this.addButton(this.baseCardPaymentMethod);
@@ -49,8 +45,6 @@ class GooglepayButton {
     }
 
     buildReadyToPayRequest(allowedPaymentMethods, baseRequest) {
-        console.log('allowedPaymentMethods', allowedPaymentMethods);
-
         return Object.assign({}, baseRequest, {
             allowedPaymentMethods: allowedPaymentMethods,
         });
@@ -71,7 +65,7 @@ class GooglepayButton {
      * Add a Google Pay purchase button
      */
     addButton(baseCardPaymentMethod) {
-        console.log('addGooglePayButton');
+        console.log('[GooglePayButton] addButton', this.context);
 
         const wrapper =
             (this.context === 'mini-cart')
@@ -96,9 +90,11 @@ class GooglepayButton {
      * Show Google Pay payment sheet when Google Pay payment button is clicked
      */
     async onButtonClick() {
-        console.log('onGooglePaymentButtonClicked');
+        console.log('[GooglePayButton] onButtonClick', this.context);
 
         const paymentDataRequest = await this.paymentDataRequest();
+        console.log('[GooglePayButton] onButtonClick: paymentDataRequest', paymentDataRequest, this.context);
+
         this.paymentsClient.loadPaymentData(paymentDataRequest);
     }
 
@@ -111,14 +107,10 @@ class GooglepayButton {
         const googlePayConfig = this.googlePayConfig;
         const paymentDataRequest = Object.assign({}, baseRequest);
         paymentDataRequest.allowedPaymentMethods = googlePayConfig.allowedPaymentMethods;
-        paymentDataRequest.transactionInfo = await this.transactionInfo();
+        paymentDataRequest.transactionInfo = await this.contextHandler.transactionInfo();
         paymentDataRequest.merchantInfo = googlePayConfig.merchantInfo;
-        paymentDataRequest.callbackIntents = ["PAYMENT_AUTHORIZATION"];
+        paymentDataRequest.callbackIntents = ['PAYMENT_AUTHORIZATION'];
         return paymentDataRequest;
-    }
-
-    async transactionInfo() {
-        return this.contextHandler.transactionInfo();
     }
 
 
@@ -127,45 +119,28 @@ class GooglepayButton {
     //------------------------
 
     onPaymentAuthorized(paymentData) {
-        console.log('onPaymentAuthorized', paymentData);
-
-        return new Promise((resolve, reject) => {
-            this.processPayment(paymentData)
-                .then(function (data) {
-                    console.log('resolve: ', data);
-                    resolve(data);
-                })
-                .catch(function (errDetails) {
-                    console.log('resolve: ERROR', errDetails);
-                    resolve({ transactionState: "ERROR" });
-                });
-        });
+        console.log('[GooglePayButton] onPaymentAuthorized', this.context);
+        return this.processPayment(paymentData);
     }
 
     async processPayment(paymentData) {
-        console.log('processPayment');
+        console.log('[GooglePayButton] processPayment', this.context);
 
         return new Promise(async (resolve, reject) => {
             try {
-                console.log('ppcpConfig:', this.ppcpConfig);
-
                 let id = await this.contextHandler.createOrder();
 
-                console.log('PayPal Order ID:', id);
-                console.log('paypal.Googlepay().confirmOrder : paymentData', {
-                    orderId: id,
-                    paymentMethodData: paymentData.paymentMethodData
-                });
+                console.log('[GooglePayButton] processPayment: createOrder', id, this.context);
 
                 const confirmOrderResponse = await paypal.Googlepay().confirmOrder({
                     orderId: id,
                     paymentMethodData: paymentData.paymentMethodData
                 });
-                console.log('paypal.Googlepay().confirmOrder : confirmOrderResponse', confirmOrderResponse);
 
-                /** Capture the Order on your Server */
+                console.log('[GooglePayButton] processPayment: confirmOrder', confirmOrderResponse, this.context);
+
+                /** Capture the Order on the Server */
                 if (confirmOrderResponse.status === "APPROVED") {
-                    console.log('onApprove', this.ppcpConfig);
 
                     let approveFailed = false;
                     await this.contextHandler.approveOrderForContinue({
@@ -177,39 +152,36 @@ class GooglepayButton {
                         })
                     });
 
-                    console.log('approveFailed', approveFailed);
-
-                    if (approveFailed) {
-                        resolve({
-                            transactionState: 'ERROR',
-                            error: {
-                                intent: 'PAYMENT_AUTHORIZATION',
-                                message: 'FAILED TO APPROVE',
-                            }
-                        })
+                    if (!approveFailed) {
+                        resolve(this.processPaymentResponse('SUCCESS'));
+                    } else {
+                        resolve(this.processPaymentResponse('ERROR', 'PAYMENT_AUTHORIZATION', 'FAILED TO APPROVE'));
                     }
-
-                    resolve({transactionState: 'SUCCESS'});
 
                 } else {
-                    resolve({
-                        transactionState: 'ERROR',
-                        error: {
-                            intent: 'PAYMENT_AUTHORIZATION',
-                            message: 'TRANSACTION FAILED',
-                        }
-                    })
+                    resolve(this.processPaymentResponse('ERROR', 'PAYMENT_AUTHORIZATION', 'TRANSACTION FAILED'));
                 }
             } catch(err) {
-                resolve({
-                    transactionState: 'ERROR',
-                    error: {
-                        intent: 'PAYMENT_AUTHORIZATION',
-                        message: err.message,
-                    }
-                })
+                resolve(this.processPaymentResponse('ERROR', 'PAYMENT_AUTHORIZATION', err.message));
             }
         });
+    }
+
+    processPaymentResponse(state, intent = null, message = null) {
+        let response = {
+            transactionState: state,
+        }
+
+        if (intent || message) {
+            response.error = {
+                intent: intent,
+                message: message,
+            }
+        }
+
+        console.log('[GooglePayButton] processPaymentResponse', response, this.context);
+
+        return response;
     }
 
 }

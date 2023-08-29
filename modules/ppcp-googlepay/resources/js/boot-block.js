@@ -29,8 +29,6 @@ const GooglePayComponent = () => {
     const bootstrap = function () {
         const manager = new GooglepayManager(buttonConfig, ppcpConfig);
         manager.init();
-
-
     };
 
     useEffect(() => {

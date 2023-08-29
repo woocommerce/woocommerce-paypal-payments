@@ -3,17 +3,9 @@ import SingleProductActionHandler
 import SimulateCart from "../../../../ppcp-button/resources/js/modules/Helper/SimulateCart";
 import ErrorHandler from "../../../../ppcp-button/resources/js/modules/ErrorHandler";
 import UpdateCart from "../../../../ppcp-button/resources/js/modules/Helper/UpdateCart";
-import onApprove
-    from "../../../../ppcp-button/resources/js/modules/OnApproveHandler/onApproveForContinue";
+import BaseHandler from "./BaseHandler";
 
-class SingleProductHandler {
-
-    constructor(buttonConfig, ppcpConfig) {
-        console.log('NEW SingleProductHandler');
-
-        this.buttonConfig = buttonConfig;
-        this.ppcpConfig = ppcpConfig;
-    }
+class SingleProductHandler extends BaseHandler {
 
     transactionInfo() {
         const errorHandler = new ErrorHandler(
@@ -73,19 +65,6 @@ class SingleProductHandler {
         );
 
         return actionHandler.configuration().createOrder();
-    }
-
-    approveOrderForContinue(data, actions) {
-        const errorHandler = new ErrorHandler(
-            this.ppcpConfig.labels.error.generic,
-            document.querySelector('.woocommerce-notices-wrapper')
-        );
-
-        let onApproveHandler = onApprove({
-            config: this.ppcpConfig
-        }, errorHandler);
-
-        return onApproveHandler(data, actions);
     }
 
 }

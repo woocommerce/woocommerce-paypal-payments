@@ -1,6 +1,6 @@
-import CartHandler from "./CartHandler";
+import BaseHandler from "./BaseHandler";
 
-class MiniCartHandler extends CartHandler {
+class MiniCartHandler extends BaseHandler {
 
 }
 

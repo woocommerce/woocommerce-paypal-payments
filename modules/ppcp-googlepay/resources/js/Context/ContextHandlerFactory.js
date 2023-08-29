@@ -14,7 +14,7 @@ class ContextHandlerFactory {
             case 'cart':
                 return new CartHandler(buttonConfig, ppcpConfig);
             case 'checkout':
-            case 'pay-now':
+            case 'pay-now': // same as checkout
                 return new CheckoutHandler(buttonConfig, ppcpConfig);
             case 'mini-cart':
                 return new MiniCartHandler(buttonConfig, ppcpConfig);
