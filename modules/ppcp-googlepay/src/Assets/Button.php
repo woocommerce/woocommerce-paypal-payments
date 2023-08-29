@@ -134,8 +134,6 @@ class Button implements ButtonInterface {
 		$button_enabled_payorder = $is_googlepay_button_enabled;
 		$button_enabled_minicart = $is_googlepay_button_enabled && $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' );
 
-
-
 		/**
 		 * Param types removed to avoid third-party issues.
 		 *
@@ -212,7 +210,7 @@ class Button implements ButtonInterface {
 			add_action(
 				$render_placeholder,
 				function () {
-					$this->googlepay_button( 'ppc-button-googlepay-container-minicart' );
+					echo '<span id="ppc-button-googlepay-container-minicart"></span>';
 				},
 				21
 			);

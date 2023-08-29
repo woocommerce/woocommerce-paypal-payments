@@ -1,4 +1,8 @@
-#ppc-button-googlepay-container {
+#ppc-button-googlepay-container-minicart {
+	display: block;
+}
+
+#ppc-button-googlepay-container, #ppc-button-googlepay-container-minicart {
 	margin-top: 5px;
 	overflow: hidden;
 	border-radius: 50px;
@@ -6,7 +10,7 @@
 }
 
 .woocommerce-checkout {
-	#ppc-button-googlepay-container {
+	#ppc-button-googlepay-container, #ppc-button-googlepay-container-minicart {
 		margin-top: 0;
 		border-radius: 18px;
 		height: 38px;
@@ -14,7 +18,7 @@
 }
 
 .wp-block-woocommerce-cart, .wp-block-woocommerce-checkout {
-	#ppc-button-googlepay-container {
+	#ppc-button-googlepay-container, #ppc-button-googlepay-container-minicart {
 		margin-top: 0;
 	}
 }
