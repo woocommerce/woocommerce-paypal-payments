@@ -2,11 +2,11 @@ import ContextHandlerFactory from "./Context/ContextHandlerFactory";
 
 class GooglepayButton {
 
-    constructor(context, handler, buttonConfig, ppcpConfig) {
+    constructor(context, externalHandler, buttonConfig, ppcpConfig) {
         this.isInitialized = false;
 
         this.context = context;
-        this.handler = handler;
+        this.externalHandler = externalHandler;
         this.buttonConfig = buttonConfig;
         this.ppcpConfig = ppcpConfig;
 
