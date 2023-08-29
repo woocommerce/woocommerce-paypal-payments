@@ -72,6 +72,13 @@ class GooglepayButton {
                 ? this.buttonConfig.button.mini_cart_wrapper
                 : this.buttonConfig.button.wrapper;
 
+        const shape =
+            (this.context === 'mini-cart')
+                ? this.ppcpConfig.button.mini_cart_style.shape
+                : this.ppcpConfig.button.style.shape;
+
+        jQuery(wrapper).addClass('ppcp-button-' + shape);
+
         const button =
             this.paymentsClient.createButton({
                 onClick: this.onButtonClick.bind(this),

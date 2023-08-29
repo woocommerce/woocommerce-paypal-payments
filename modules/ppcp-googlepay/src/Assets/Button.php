@@ -210,7 +210,7 @@ class Button implements ButtonInterface {
 			add_action(
 				$render_placeholder,
 				function () {
-					echo '<span id="ppc-button-googlepay-container-minicart"></span>';
+					echo '<span id="ppc-button-googlepay-container-minicart" class="ppcp-button-googlepay ppcp-button-minicart"></span>';
 				},
 				21
 			);
@@ -221,14 +221,11 @@ class Button implements ButtonInterface {
 
 	/**
 	 * GooglePay button markup
-	 *
-	 * @param string $id The HTML id.
-	 * @return void
 	 */
-	private function googlepay_button( string $id = 'ppc-button-googlepay-container' ): void {
+	private function googlepay_button(): void {
 		?>
 		<div class="ppc-button-wrapper">
-			<div id="<?php echo esc_attr( $id ); ?>">
+			<div id="ppc-button-googlepay-container" class="ppcp-button-googlepay">
 				<?php wp_nonce_field( 'woocommerce-process_checkout', 'woocommerce-process-checkout-nonce' ); ?>
 			</div>
 		</div>
@@ -237,6 +234,8 @@ class Button implements ButtonInterface {
 
 	/**
 	 * Whether any of the scripts should be loaded.
+	 *
+	 * @return bool
 	 */
 	public function should_load_script(): bool {
 		return true; // TODO.
