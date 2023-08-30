@@ -31,10 +31,10 @@ class BaseHandler {
                     const data = result.data;
 
                     resolve({
-                        countryCode: 'US', // data.country_code,
-                        currencyCode: 'USD', // data.currency_code,
+                        countryCode: data.country_code,
+                        currencyCode: data.currency_code,
                         totalPriceStatus: 'FINAL',
-                        totalPrice: data.amount // Your amount
+                        totalPrice: data.total_str
                     });
 
                 });

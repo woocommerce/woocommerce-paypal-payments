@@ -41,7 +41,7 @@ class SingleProductHandler extends BaseHandler {
                     countryCode: data.country_code,
                     currencyCode: data.currency_code,
                     totalPriceStatus: 'FINAL',
-                    totalPrice: data.total_str // Your amount
+                    totalPrice: data.total_str
                 });
 
             }, products);
