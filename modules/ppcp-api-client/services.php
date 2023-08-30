@@ -12,10 +12,14 @@ namespace WooCommerce\PayPalCommerce\ApiClient;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingSubscriptions;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\CatalogProducts;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingPlans;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerPayableBreakdown;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\BillingCycleFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentPreferencesFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\RefundFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PlanFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ProductFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\RefundPayerFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\SellerPayableBreakdownFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingOptionFactory;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -289,6 +293,14 @@ return array(
 			$container->get( 'api.factory.fraud-processor-response' )
 		);
 	},
+	'api.factory.refund'                        => static function ( ContainerInterface $container ): RefundFactory {
+		$amount_factory   = $container->get( 'api.factory.amount' );
+		return new RefundFactory(
+			$amount_factory,
+			$container->get( 'api.factory.seller-payable-breakdown' ),
+			$container->get( 'api.factory.refund_payer' )
+		);
+	},
 	'api.factory.purchase-unit'                 => static function ( ContainerInterface $container ): PurchaseUnitFactory {
 
 		$amount_factory   = $container->get( 'api.factory.amount' );
@@ -351,6 +363,9 @@ return array(
 		$address_factory = $container->get( 'api.factory.address' );
 		return new PayerFactory( $address_factory );
 	},
+	'api.factory.refund_payer'                  => static function ( ContainerInterface $container ): RefundPayerFactory {
+		return new RefundPayerFactory();
+	},
 	'api.factory.address'                       => static function ( ContainerInterface $container ): AddressFactory {
 		return new AddressFactory();
 	},
@@ -374,7 +389,8 @@ return array(
 	'api.factory.payments'                      => static function ( ContainerInterface $container ): PaymentsFactory {
 		$authorizations_factory = $container->get( 'api.factory.authorization' );
 		$capture_factory        = $container->get( 'api.factory.capture' );
-		return new PaymentsFactory( $authorizations_factory, $capture_factory );
+		$refund_factory         = $container->get( 'api.factory.refund' );
+		return new PaymentsFactory( $authorizations_factory, $capture_factory, $refund_factory );
 	},
 	'api.factory.authorization'                 => static function ( ContainerInterface $container ): AuthorizationFactory {
 		return new AuthorizationFactory();
@@ -392,6 +408,12 @@ return array(
 		return new SellerReceivableBreakdownFactory(
 			$container->get( 'api.factory.money' ),
 			$container->get( 'api.factory.exchange-rate' ),
+			$container->get( 'api.factory.platform-fee' )
+		);
+	},
+	'api.factory.seller-payable-breakdown'      => static function ( ContainerInterface $container ): SellerPayableBreakdownFactory {
+		return new SellerPayableBreakdownFactory(
+			$container->get( 'api.factory.money' ),
 			$container->get( 'api.factory.platform-fee' )
 		);
 	},
