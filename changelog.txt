@@ -1,5 +1,30 @@
 *** Changelog ***
 
+= 2.2.2 - 2023-08-29 =
+* Fix - High rate of auth voids on vaulted subscriptions for guest users #1529 
+* Enhancement - HPOS compatibility issues #1594
+* Feature preview - PayPal Subscriptions API fixes and improvements #1600 #1607
+
+= 2.2.1 - 2023-08-24 =
+* Fix - One-page checkout causes mini cart not showing the PP button on certain pages #1536
+* Fix - When onboarding loading the return_url too fast may cause the onboarding to fail #1565
+* Fix - PayPal button doesn't work for variable products on product page after recent 2.2.0 release #1533
+* Fix - Send payee_preferred correctly for instant payments #1489
+* Fix - Auto-disabled ACDC vaulting after updating to 2.1.0 #1490
+* Fix - PayPal Payments serializing formData of array inputs #1501
+* Fix - Buttons not working on single product page for WooCommerce Bookings product #1478
+* Enhancement - PayPal Later message price amount doesn't update dynamically #1585
+* Enhancement - Improve WC order creation in webhook #1530
+* Enhancement - Refactor hosted fields for early card detection #1554
+* Enhancement - Pay Later button and message get hidden when product/cart/checkout value is outside of range #1511
+* Enhancement - Add link to manual credential docs #1430
+* Enhancement - Validate Merchant ID field format when saving settings #1509
+* Enhancement - Include soft descriptor for card's activity #1427
+* Enhancement - Update Pay Later amount on the cart page and checkout when total changes #1441
+* Enhancement - Log Subscription Mode configuration in system report #1507
+* Enhancement - HPOS compatibility issues #1555
+* Feature preview - PayPal Subscriptions API fixes and improvements #1443
+
 = 2.2.0 - 2023-07-17 =
 * Fix - Improve handling of APM payments when buyer did not return to Checkout #1233
 * Fix - Use order currency instead of shop currency on order-pay page #1363

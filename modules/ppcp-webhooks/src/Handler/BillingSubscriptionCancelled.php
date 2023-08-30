@@ -81,7 +81,7 @@ class BillingSubscriptionCancelled implements RequestHandler {
 					),
 				),
 			);
-			$subscriptions = wcs_get_subscriptions( $args );
+			$subscriptions = function_exists( 'wcs_get_subscriptions' ) ? wcs_get_subscriptions( $args ) : array();
 			foreach ( $subscriptions as $subscription ) {
 				$subscription->update_status( 'cancelled' );
 			}

@@ -2,8 +2,8 @@ import Product from "./Product";
 
 class BookingProduct extends Product {
 
-    constructor(id, quantity, booking) {
-        super(id, quantity, null);
+    constructor(id, quantity, booking, extra) {
+        super(id, quantity, null, extra);
         this.booking = booking;
     }
 

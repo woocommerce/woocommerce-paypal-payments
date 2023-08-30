@@ -29,12 +29,20 @@ class Payments {
 	private $captures;
 
 	/**
+	 * The Refunds.
+	 *
+	 * @var Refund[]
+	 */
+	private $refunds;
+
+	/**
 	 * Payments constructor.
 	 *
 	 * @param array $authorizations The Authorizations.
 	 * @param array $captures The Captures.
+	 * @param array $refunds The Refunds.
 	 */
-	public function __construct( array $authorizations, array $captures ) {
+	public function __construct( array $authorizations, array $captures, array $refunds = array() ) {
 		foreach ( $authorizations as $key => $authorization ) {
 			if ( is_a( $authorization, Authorization::class ) ) {
 				continue;
@@ -47,8 +55,15 @@ class Payments {
 			}
 			unset( $captures[ $key ] );
 		}
+		foreach ( $refunds as $key => $refund ) {
+			if ( is_a( $refund, Refund::class ) ) {
+				continue;
+			}
+			unset( $refunds[ $key ] );
+		}
 		$this->authorizations = $authorizations;
 		$this->captures       = $captures;
+		$this->refunds        = $refunds;
 	}
 
 	/**
@@ -70,6 +85,12 @@ class Payments {
 				},
 				$this->captures()
 			),
+			'refunds'        => array_map(
+				static function ( Refund $refund ): array {
+					return $refund->to_array();
+				},
+				$this->refunds()
+			),
 		);
 	}
 
@@ -89,5 +110,14 @@ class Payments {
 	 **/
 	public function captures(): array {
 		return $this->captures;
+	}
+
+	/**
+	 * Returns the Refunds.
+	 *
+	 * @return Refund[]
+	 **/
+	public function refunds(): array {
+		return $this->refunds;
 	}
 }
