@@ -455,15 +455,20 @@ class CompatModule implements ModuleInterface {
 	 * @return void
 	 */
 	protected function fix_page_builders(): void {
-		if ( $this->is_elementor_pro_active() || $this->is_divi_theme_active() ) {
-			add_filter(
-				'woocommerce_paypal_payments_single_product_renderer_hook',
-				function(): string {
-					return 'woocommerce_after_add_to_cart_form';
-				},
-				5
-			);
-		}
+		add_action(
+			'init',
+			function() {
+				if ( $this->is_elementor_pro_active() || $this->is_divi_theme_active() ) {
+					add_filter(
+						'woocommerce_paypal_payments_single_product_renderer_hook',
+						function(): string {
+							return 'woocommerce_after_add_to_cart_form';
+						},
+						5
+					);
+				}
+			}
+		);
 	}
 
 	/**

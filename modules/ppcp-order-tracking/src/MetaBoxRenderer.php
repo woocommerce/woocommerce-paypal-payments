@@ -79,11 +79,10 @@ class MetaBoxRenderer {
 	/**
 	 * Renders the order tracking MetaBox.
 	 *
-	 * @param WP_Post $post The post object.
+	 * @param mixed $post_or_order_object Either WP_Post or WC_Order when COT is data source.
 	 */
-	public function render( WP_Post $post ): void {
-		$wc_order_id = $post->ID;
-		$wc_order    = wc_get_order( $wc_order_id );
+	public function render( $post_or_order_object ): void {
+		$wc_order = ( $post_or_order_object instanceof WP_Post ) ? wc_get_order( $post_or_order_object->ID ) : $post_or_order_object;
 		if ( ! $wc_order instanceof WC_Order ) {
 			return;
 		}
@@ -97,7 +96,7 @@ class MetaBoxRenderer {
 		 *
 		 * @var ShipmentInterface[] $shipments
 		 */
-		$shipments = $this->order_tracking_endpoint->list_tracking_information( $wc_order_id ) ?? array();
+		$shipments = $this->order_tracking_endpoint->list_tracking_information( $wc_order->get_id() ) ?? array();
 		?>
 		<div class="ppcp-tracking-columns-wrapper">
 			<div class="ppcp-tracking-column">
@@ -155,7 +154,7 @@ class MetaBoxRenderer {
 					<label for="ppcp-tracking-carrier_name_other"><?php echo esc_html__( 'Carrier Name*', 'woocommerce-paypal-payments' ); ?></label>
 					<input type="text" class="ppcp-tracking-carrier_name_other" id="ppcp-tracking-carrier_name_other" name="ppcp-tracking[carrier_name_other]" />
 				</p>
-				<input type="hidden" class="ppcp-tracking-order_id" name="ppcp-tracking[order_id]" value="<?php echo intval( $wc_order_id ); ?>"/>
+				<input type="hidden" class="ppcp-tracking-order_id" name="ppcp-tracking[order_id]" value="<?php echo (int) $wc_order->get_id(); ?>"/>
 				<p><button type="button" class="button submit_tracking_info"><?php echo esc_html__( 'Add Shipment', 'woocommerce-paypal-payments' ); ?></button></p>
 			</div>
 			<div class="ppcp-tracking-column shipments">

@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Webhooks\Handler;
 
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\RefundFeesUpdater;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundMetaTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 use WP_Error;
@@ -31,12 +32,21 @@ class PaymentSaleRefunded implements RequestHandler {
 	private $logger;
 
 	/**
+	 * The refund fees updater.
+	 *
+	 * @var RefundFeesUpdater
+	 */
+	private $refund_fees_updater;
+
+	/**
 	 * PaymentSaleRefunded constructor.
 	 *
-	 * @param LoggerInterface $logger The logger.
+	 * @param LoggerInterface   $logger The logger.
+	 * @param RefundFeesUpdater $refund_fees_updater The refund fees updater.
 	 */
-	public function __construct( LoggerInterface $logger ) {
-		$this->logger = $logger;
+	public function __construct( LoggerInterface $logger, RefundFeesUpdater $refund_fees_updater ) {
+		$this->logger              = $logger;
+		$this->refund_fees_updater = $refund_fees_updater;
 	}
 
 	/**
@@ -120,6 +130,7 @@ class PaymentSaleRefunded implements RequestHandler {
 
 			$this->update_transaction_id( $refund_id, $wc_order, $this->logger );
 			$this->add_refund_to_meta( $wc_order, $refund_id );
+			$this->refund_fees_updater->update( $wc_order );
 		}
 
 		return $this->success_response();

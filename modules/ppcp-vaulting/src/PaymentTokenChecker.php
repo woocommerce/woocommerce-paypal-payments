@@ -14,6 +14,8 @@ use Psr\Log\LoggerInterface;
 use RuntimeException;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokenEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\OrderRepository;
 use WooCommerce\PayPalCommerce\Subscription\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
@@ -68,6 +70,13 @@ class PaymentTokenChecker {
 	protected $payments_endpoint;
 
 	/**
+	 * The payment token endpoint.
+	 *
+	 * @var PaymentTokenEndpoint
+	 */
+	protected $payment_token_endpoint;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -82,6 +91,7 @@ class PaymentTokenChecker {
 	 * @param Settings                    $settings The settings.
 	 * @param AuthorizedPaymentsProcessor $authorized_payments_processor The authorized payments processor.
 	 * @param PaymentsEndpoint            $payments_endpoint The payments endpoint.
+	 * @param PaymentTokenEndpoint        $payment_token_endpoint The payment token endpoint.
 	 * @param LoggerInterface             $logger The logger.
 	 */
 	public function __construct(
@@ -90,6 +100,7 @@ class PaymentTokenChecker {
 		Settings $settings,
 		AuthorizedPaymentsProcessor $authorized_payments_processor,
 		PaymentsEndpoint $payments_endpoint,
+		PaymentTokenEndpoint $payment_token_endpoint,
 		LoggerInterface $logger
 	) {
 		$this->payment_token_repository      = $payment_token_repository;
@@ -97,6 +108,7 @@ class PaymentTokenChecker {
 		$this->settings                      = $settings;
 		$this->authorized_payments_processor = $authorized_payments_processor;
 		$this->payments_endpoint             = $payments_endpoint;
+		$this->payment_token_endpoint        = $payment_token_endpoint;
 		$this->logger                        = $logger;
 	}
 
@@ -130,7 +142,7 @@ class PaymentTokenChecker {
 			return;
 		}
 
-		$tokens = $this->payment_token_repository->all_for_user_id( $customer_id );
+		$tokens = $this->tokens_for_user( $customer_id );
 		if ( $tokens ) {
 			try {
 				$this->capture_authorized_payment( $wc_order );
@@ -215,11 +227,11 @@ class PaymentTokenChecker {
 		$wc_order->update_status( 'failed', $error_message );
 
 		/**
-		 * Function already exist in Subscription plugin
+		 * Function already exist in WC Subscriptions plugin.
 		 *
 		 * @psalm-suppress UndefinedFunction
 		 */
-		$subscriptions = wcs_get_subscriptions_for_order( $wc_order->get_id() );
+		$subscriptions = function_exists( 'wcs_get_subscriptions_for_order' ) ? wcs_get_subscriptions_for_order( $wc_order->get_id() ) : array();
 		foreach ( $subscriptions as $key => $subscription ) {
 			if ( $subscription->get_parent_id() === $wc_order->get_id() ) {
 				try {
@@ -230,5 +242,33 @@ class PaymentTokenChecker {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Returns customer tokens either from guest or customer id.
+	 *
+	 * @param int $customer_id The customer id.
+	 * @return PaymentToken[]
+	 */
+	private function tokens_for_user( int $customer_id ): array {
+		$tokens = array();
+
+		$guest_customer_id = get_user_meta( $customer_id, 'ppcp_guest_customer_id', true );
+		if ( $guest_customer_id ) {
+			$tokens = $this->payment_token_endpoint->for_guest( $guest_customer_id );
+		}
+
+		if ( ! $tokens ) {
+			$guest_customer_id = get_user_meta( $customer_id, 'ppcp_customer_id', true );
+			if ( $guest_customer_id ) {
+				$tokens = $this->payment_token_endpoint->for_guest( $guest_customer_id );
+			}
+		}
+
+		if ( ! $tokens ) {
+			$tokens = $this->payment_token_repository->all_for_user_id( $customer_id );
+		}
+
+		return $tokens;
 	}
 }

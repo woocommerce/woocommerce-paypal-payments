@@ -127,8 +127,10 @@ class SettingsPageAssets {
 
 	/**
 	 * Register assets provided by this module.
+	 *
+	 * @return void
 	 */
-	public function register_assets() {
+	public function register_assets(): void {
 		add_action(
 			'admin_enqueue_scripts',
 			function() {

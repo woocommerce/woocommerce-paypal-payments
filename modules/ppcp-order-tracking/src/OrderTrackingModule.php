@@ -71,7 +71,13 @@ class OrderTrackingModule implements ModuleInterface {
 		add_action(
 			'add_meta_boxes',
 			static function() use ( $meta_box_renderer ) {
-				add_meta_box( 'ppcp_order-tracking', __( 'PayPal Shipment Tracking', 'woocommerce-paypal-payments' ), array( $meta_box_renderer, 'render' ), 'shop_order', 'normal' );
+				add_meta_box(
+					'ppcp_order-tracking',
+					__( 'PayPal Shipment Tracking', 'woocommerce-paypal-payments' ),
+					array( $meta_box_renderer, 'render' ),
+					'shop_order',
+					'normal'
+				);
 			},
 			10,
 			2

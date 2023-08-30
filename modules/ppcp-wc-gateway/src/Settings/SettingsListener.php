@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
+use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
 use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
@@ -22,6 +23,8 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
 use WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar;
+use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
+use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
 
 /**
  * Class SettingsListener
@@ -122,6 +125,27 @@ class SettingsListener {
 	protected $redirector;
 
 	/**
+	 * The logger.
+	 *
+	 * @var LoggerInterface
+	 */
+	private $logger;
+
+	/**
+	 * Max onboarding URL retries.
+	 *
+	 * @var int
+	 */
+	private $onboarding_max_retries = 5;
+
+	/**
+	 * Delay between onboarding URL retries.
+	 *
+	 * @var int
+	 */
+	private $onboarding_retry_delay = 2;
+
+	/**
 	 * SettingsListener constructor.
 	 *
 	 * @param Settings            $settings The settings.
@@ -136,6 +160,7 @@ class SettingsListener {
 	 * @param Cache               $pui_status_cache The PUI status cache.
 	 * @param Cache               $dcc_status_cache The DCC status cache.
 	 * @param RedirectorInterface $redirector The HTTP redirector.
+	 * @param ?LoggerInterface    $logger The logger.
 	 */
 	public function __construct(
 		Settings $settings,
@@ -149,7 +174,8 @@ class SettingsListener {
 		array $signup_link_ids,
 		Cache $pui_status_cache,
 		Cache $dcc_status_cache,
-		RedirectorInterface $redirector
+		RedirectorInterface $redirector,
+		LoggerInterface $logger = null
 	) {
 
 		$this->settings          = $settings;
@@ -164,6 +190,7 @@ class SettingsListener {
 		$this->pui_status_cache  = $pui_status_cache;
 		$this->dcc_status_cache  = $dcc_status_cache;
 		$this->redirector        = $redirector;
+		$this->logger            = $logger ?: new NullLogger();
 	}
 
 	/**
@@ -186,16 +213,48 @@ class SettingsListener {
 		$merchant_id      = sanitize_text_field( wp_unslash( $_GET['merchantIdInPayPal'] ) );
 		$merchant_email   = sanitize_text_field( wp_unslash( $_GET['merchantId'] ) );
 		$onboarding_token = sanitize_text_field( wp_unslash( $_GET['ppcpToken'] ) );
+		$retry_count      = isset( $_GET['ppcpRetry'] ) ? ( (int) sanitize_text_field( wp_unslash( $_GET['ppcpRetry'] ) ) ) : 0;
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		$this->settings->set( 'merchant_id', $merchant_id );
 		$this->settings->set( 'merchant_email', $merchant_email );
 
-		if ( ! OnboardingUrl::validate_token_and_delete( $this->signup_link_cache, $onboarding_token, get_current_user_id() ) ) {
-			$this->onboarding_redirect( false );
+		// If no client_id is present we will try to wait for PayPal to invoke LoginSellerEndpoint.
+		if ( ! $this->settings->has( 'client_id' ) || ! $this->settings->get( 'client_id' ) ) {
+
+			// Try at most {onboarding_max_retries} times ({onboarding_retry_delay} seconds delay). Then give up and just fill the merchant fields like before.
+			if ( $retry_count < $this->onboarding_max_retries ) {
+
+				if ( $this->onboarding_retry_delay > 0 ) {
+					sleep( $this->onboarding_retry_delay );
+				}
+
+				$retry_count++;
+				$this->logger->info( 'Retrying onboarding return URL, retry nr: ' . ( (string) $retry_count ) );
+				$redirect_url = add_query_arg( 'ppcpRetry', $retry_count );
+				$this->redirector->redirect( $redirect_url );
+			}
 		}
 
+		// Process token validation.
+		$onboarding_token_sample = ( (string) substr( $onboarding_token, 0, 2 ) ) . '...' . ( (string) substr( $onboarding_token, -6 ) );
+		$this->logger->debug( 'Validating onboarding ppcpToken: ' . $onboarding_token_sample );
+
+		if ( ! OnboardingUrl::validate_token_and_delete( $this->signup_link_cache, $onboarding_token, get_current_user_id() ) ) {
+			if ( OnboardingUrl::validate_previous_token( $this->signup_link_cache, $onboarding_token, get_current_user_id() ) ) {
+				// It's a valid token used previously, don't do anything but silently redirect.
+				$this->logger->info( 'Validated previous token, silently redirecting: ' . $onboarding_token_sample );
+				$this->onboarding_redirect();
+			} else {
+				$this->logger->error( 'Failed to validate onboarding ppcpToken: ' . $onboarding_token_sample );
+				$this->onboarding_redirect( false );
+			}
+		}
+
+		$this->logger->info( 'Validated onboarding ppcpToken: ' . $onboarding_token_sample );
+
+		// Save the merchant data.
 		$is_sandbox = $this->settings->has( 'sandbox_on' ) && $this->settings->get( 'sandbox_on' );
 		if ( $is_sandbox ) {
 			$this->settings->set( 'merchant_id_sandbox', $merchant_id );
@@ -211,6 +270,7 @@ class SettingsListener {
 		 */
 		do_action( 'woocommerce_paypal_payments_onboarding_before_redirect' );
 
+		// If after all the retry redirects there still isn't a valid client_id then just send an error.
 		if ( ! $this->settings->has( 'client_id' ) || ! $this->settings->get( 'client_id' ) ) {
 			$this->onboarding_redirect( false );
 		}
@@ -229,6 +289,10 @@ class SettingsListener {
 
 		if ( ! $success ) {
 			$redirect_url = add_query_arg( 'ppcp-onboarding-error', '1', $redirect_url );
+			$this->logger->info( 'Redirect ERROR: ' . $redirect_url );
+		} else {
+			$redirect_url = remove_query_arg( 'ppcp-onboarding-error', $redirect_url );
+			$this->logger->info( 'Redirect OK: ' . $redirect_url );
 		}
 
 		$this->redirector->redirect( $redirect_url );
