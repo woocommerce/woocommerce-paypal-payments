@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\OrderTracking;
 
+use Automattic\WooCommerce\Internal\DataStores\Orders\CustomOrdersTableController;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use Exception;
@@ -71,11 +72,21 @@ class OrderTrackingModule implements ModuleInterface {
 		add_action(
 			'add_meta_boxes',
 			static function() use ( $meta_box_renderer ) {
+				/**
+				 * Class and function exist in WooCommerce.
+				 *
+				 * @psalm-suppress UndefinedClass
+				 * @psalm-suppress UndefinedFunction
+				 */
+				$screen = class_exists( CustomOrdersTableController::class ) && wc_get_container()->get( CustomOrdersTableController::class )->custom_orders_table_usage_is_enabled()
+					? wc_get_page_screen_id( 'shop-order' )
+					: 'shop_order';
+
 				add_meta_box(
 					'ppcp_order-tracking',
 					__( 'PayPal Shipment Tracking', 'woocommerce-paypal-payments' ),
 					array( $meta_box_renderer, 'render' ),
-					'shop_order',
+					$screen,
 					'normal'
 				);
 			},
