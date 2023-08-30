@@ -101,6 +101,7 @@ class SimulateCartEndpoint extends AbstractCartEndpoint {
 			$button_enabled              = $button_enabled && ! $this->smart_button->is_button_disabled( 'product', $context_data );
 		}
 
+		// Shop settings.
 		$base_location     = wc_get_base_location();
 		$shop_country_code = $base_location['country'];
 		$currency_code     = get_woocommerce_currency();
