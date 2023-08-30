@@ -498,25 +498,38 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
 		'subtotal_mismatch_behavior'                    => array(
-			'title'        => __( 'Subtotal mismatch behavior', 'woocommerce-paypal-payments' ),
-			'type'         => 'select',
-			'input_class'  => array( 'wc-enhanced-select' ),
-			'default'      => 'vertical',
-			'desc_tip'     => true,
-			'description'  => __(
+			'title'             => __( 'Subtotal mismatch behavior', 'woocommerce-paypal-payments' ),
+			'type'              => 'select',
+			'input_class'       => array( 'wc-enhanced-select' ),
+			'default'           => 'vertical',
+			'desc_tip'          => true,
+			'description'       => __(
 				'Differences between WooCommerce and PayPal roundings may cause mismatch in order items subtotal calculations. If not handled, these mismatches will cause the PayPal transaction to fail.',
 				'woocommerce-paypal-payments'
 			),
-			'options'      => array(
+			'options'           => array(
 				PurchaseUnitSanitizer::MODE_DITCH      => __( 'Do not send line items to PayPal', 'woocommerce-paypal-payments' ),
 				PurchaseUnitSanitizer::MODE_EXTRA_LINE => __( 'Add another line item', 'woocommerce-paypal-payments' ),
 			),
-			'screens'      => array(
+			'screens'           => array(
 				State::STATE_START,
 				State::STATE_ONBOARDED,
 			),
-			'requirements' => array(),
-			'gateway'      => Settings::CONNECTION_TAB_ID,
+			'requirements'      => array(),
+			'gateway'           => Settings::CONNECTION_TAB_ID,
+			'custom_attributes' => array(
+				'data-ppcp-handlers' => wp_json_encode(
+					array(
+						array(
+							'handler' => 'SubElementsHandler',
+							'options' => array(
+								'values'   => array( PurchaseUnitSanitizer::MODE_EXTRA_LINE ),
+								'elements' => array( '#field-subtotal_mismatch_line_name' ),
+							),
+						),
+					)
+				),
+			),
 		),
 		'subtotal_mismatch_line_name'                   => array(
 			'title'        => __( 'Subtotal mismatch line name', 'woocommerce-paypal-payments' ),
