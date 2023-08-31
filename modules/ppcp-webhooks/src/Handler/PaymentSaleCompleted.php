@@ -98,6 +98,7 @@ class PaymentSaleCompleted implements RequestHandler {
 				if ( $is_renewal ) {
 					$renewal_order = wcs_create_renewal_order( $subscription );
 					if ( is_a( $renewal_order, WC_Order::class ) ) {
+						$renewal_order->set_payment_method( $subscription->get_payment_method() );
 						$renewal_order->payment_complete();
 						$this->update_transaction_id( $transaction_id, $renewal_order, $this->logger );
 						break;
