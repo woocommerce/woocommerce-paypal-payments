@@ -33,25 +33,23 @@ import ApplepayManager from "./ApplepayManager";
             let paypalLoaded = false;
             let applePayLoaded = false;
 
-           /* const tryToBoot = () => {
+            const tryToBoot = () => {
                 if (!bootstrapped && paypalLoaded && applePayLoaded) {
-                    console.log('Trying to bootstrap')
                     bootstrapped = true;
                     bootstrap();
                 }
-            }*/
+            }
 
             // Load ApplePay SDK
-            /*loadCustomScript({ url: buttonConfig.sdk_url }).then(() => {
-                console.log('ApplePay SDK loaded', buttonConfig.sdk_url)
+            loadCustomScript({ url: buttonConfig.sdk_url }).then(() => {
                 applePayLoaded = true;
-                //tryToBoot();
-            });*/
+                tryToBoot();
+            });
 
             // Load PayPal
             loadPaypalScript(ppcpConfig, () => {
                 paypalLoaded = true;
-                //tryToBoot();
+                tryToBoot();
             });
         },
     );

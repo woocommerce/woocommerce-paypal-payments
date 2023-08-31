@@ -12,7 +12,6 @@ class ApplepayManager {
         this.buttons = [];
 
         buttonModuleWatcher.watchContextBootstrap((bootstrap) => {
-            console.log('ApplepayManager.js: buttonModuleWatcher.watchContextBootstrap', bootstrap)
             const button = new ApplepayButton(
                 bootstrap.context,
                 bootstrap.handler,
@@ -31,9 +30,7 @@ class ApplepayManager {
     init() {
         (async () => {
             await this.config();
-            console.log('ApplepayManager.js: init', this.buttons)
             for (const button of this.buttons) {
-                console.log('ApplepayManager.js: init', button)
                 button.init(this.ApplePayConfig);
             }
         })();
@@ -45,7 +42,6 @@ class ApplepayManager {
      */
     async config() {
         this.ApplePayConfig = await paypal.Applepay().config();
-        console.log('ApplepayManager.js: config', this.ApplePayConfig)
         return this.ApplePayConfig;
     }
 
