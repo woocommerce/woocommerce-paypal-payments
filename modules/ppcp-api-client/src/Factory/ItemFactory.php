@@ -53,6 +53,7 @@ class ItemFactory {
 				 * @var \WC_Product $product
 				 */
 				$quantity = (int) $item['quantity'];
+				$image    = wp_get_attachment_image_src( $product->get_image_id(), 'full' );
 
 				$price = (float) $item['line_subtotal'] / (float) $item['quantity'];
 				return new Item(
@@ -63,6 +64,8 @@ class ItemFactory {
 					null,
 					$product->get_sku(),
 					( $product->is_virtual() ) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS,
+					$product->get_permalink(),
+					$image[0] ?? '',
 					0,
 					$cart_item_key
 				);
@@ -128,6 +131,7 @@ class ItemFactory {
 		$quantity                  = (int) $item->get_quantity();
 		$price_without_tax         = (float) $order->get_item_subtotal( $item, false );
 		$price_without_tax_rounded = round( $price_without_tax, 2 );
+		$image                     = wp_get_attachment_image_src( $product->get_image_id(), 'full' );
 
 		return new Item(
 			mb_substr( $item->get_name(), 0, 127 ),
@@ -136,7 +140,9 @@ class ItemFactory {
 			$product instanceof WC_Product ? $this->prepare_description( $product->get_description() ) : '',
 			null,
 			$product instanceof WC_Product ? $product->get_sku() : '',
-			( $product instanceof WC_Product && $product->is_virtual() ) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS
+			( $product instanceof WC_Product && $product->is_virtual() ) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS,
+			$product->get_permalink(),
+			$image[0] ?? ''
 		);
 	}
 
@@ -190,6 +196,8 @@ class ItemFactory {
 			: null;
 		$sku         = ( isset( $data->sku ) ) ? $data->sku : '';
 		$category    = ( isset( $data->category ) ) ? $data->category : 'PHYSICAL_GOODS';
+		$url         = ( isset( $data->url ) ) ? $data->url : '';
+		$image_url   = ( isset( $data->image_url ) ) ? $data->image_url : '';
 
 		return new Item(
 			$data->name,
@@ -198,7 +206,9 @@ class ItemFactory {
 			$description,
 			$tax,
 			$sku,
-			$category
+			$category,
+			$url,
+			$image_url
 		);
 	}
 
