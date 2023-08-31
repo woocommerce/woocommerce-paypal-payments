@@ -126,13 +126,15 @@ class Button implements ButtonInterface {
 	 * @return bool
 	 */
 	public function render_buttons(): bool {
-		$is_googlepay_button_enabled = $this->settings->has( 'googlepay_button_enabled' ) ? $this->settings->get( 'googlepay_button_enabled' ) : false;
+		if ( ! $this->isGooglePayButtonEnabled() ) {
+			return false;
+		}
 
-		$button_enabled_product  = $is_googlepay_button_enabled && $this->settings_status->is_smart_button_enabled_for_location( 'product' );
-		$button_enabled_cart     = $is_googlepay_button_enabled && $this->settings_status->is_smart_button_enabled_for_location( 'cart' );
-		$button_enabled_checkout = $is_googlepay_button_enabled;
-		$button_enabled_payorder = $is_googlepay_button_enabled;
-		$button_enabled_minicart = $is_googlepay_button_enabled && $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' );
+		$button_enabled_product  = $this->settings_status->is_smart_button_enabled_for_location( 'product' );
+		$button_enabled_cart     = $this->settings_status->is_smart_button_enabled_for_location( 'cart' );
+		$button_enabled_checkout = true;
+		$button_enabled_payorder = true;
+		$button_enabled_minicart = $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' );
 
 		/**
 		 * Param types removed to avoid third-party issues.
@@ -238,7 +240,7 @@ class Button implements ButtonInterface {
 	 * @return bool
 	 */
 	public function should_load_script(): bool {
-		return true; // TODO.
+		return $this->isGooglePayButtonEnabled();
 	}
 
 	/**
@@ -276,12 +278,51 @@ class Button implements ButtonInterface {
 	 */
 	public function script_data(): array {
 		return array(
-			'sdk_url' => $this->sdk_url,
-			'button'  => array(
+			'environment' => $this->environment->current_environment_is( Environment::SANDBOX ) ? 'TEST' : 'PRODUCTION',
+			'sdk_url'     => $this->sdk_url,
+			'button'      => array(
 				'wrapper'           => '#ppc-button-googlepay-container',
+				'style'             => $this->button_styles_for_context( 'cart' ), // For now use cart. Pass the context if necessary.
 				'mini_cart_wrapper' => '#ppc-button-googlepay-container-minicart',
+				'mini_cart_style'   => $this->button_styles_for_context( 'mini-cart' ),
 			),
 		);
+	}
+
+	/**
+	 * Determines the style for a given indicator in a given context.
+	 *
+	 * @param string $context The context.
+	 *
+	 * @return array
+	 */
+	private function button_styles_for_context( string $context ): array {
+		// Use the cart/checkout styles for blocks.
+		$context = str_replace( '-block', '', $context );
+
+		$values = array(
+			'color' => 'black',
+			'type'  => 'pay',
+		);
+
+		foreach ( $values as $style => $value ) {
+			if ( $this->settings->has( 'googlepay_button_' . $context . '_' . $style ) ) {
+				$values[ $style ] = $this->settings->get( 'googlepay_button_' . $context . '_' . $style );
+			} elseif ( $this->settings->has( 'googlepay_button_' . $style ) ) {
+				$values[ $style ] = $this->settings->get( 'googlepay_button_' . $style );
+			}
+		}
+
+		return $values;
+	}
+
+	/**
+	 * Returns if Google Pay button is enabled
+	 *
+	 * @return bool
+	 */
+	private function isGooglePayButtonEnabled(): bool {
+		return $this->settings->has('googlepay_button_enabled') && !!$this->settings->get('googlepay_button_enabled');
 	}
 
 }

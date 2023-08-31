@@ -29,21 +29,13 @@ class GooglepayManager {
 
     init() {
         (async () => {
-            await this.config();
+            // Gets GooglePay configuration of the PayPal merchant.
+            this.googlePayConfig = await paypal.Googlepay().config();
 
             for (const button of this.buttons) {
                 button.init(this.googlePayConfig);
             }
         })();
-    }
-
-    /**
-     * Gets GooglePay configuration of the PayPal merchant.
-     * @returns {Promise<null>}
-     */
-    async config() {
-        this.googlePayConfig = await paypal.Googlepay().config();
-        return this.googlePayConfig;
     }
 
 }

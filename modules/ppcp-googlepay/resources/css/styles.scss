@@ -1,5 +1,5 @@
 .ppcp-button-googlepay {
-	margin-top: 5px;
+	margin: 5px 0;
 	overflow: hidden;
 	height: 45px;
 
@@ -15,7 +15,7 @@
 
 .woocommerce-checkout {
 	.ppcp-button-googlepay {
-		margin-top: 0;
+		margin: 0;
 		border-radius: 18px;
 		height: 38px;
 	}
@@ -23,6 +23,6 @@
 
 .wp-block-woocommerce-cart, .wp-block-woocommerce-checkout {
 	.ppcp-button-googlepay {
-		margin-top: 0;
+		margin: 0;
 	}
 }

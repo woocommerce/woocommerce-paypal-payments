@@ -16,8 +16,6 @@ use WooCommerce\PayPalCommerce\Googlepay\Assets\Button;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
-	// TODO.
-
 	'googlepay.button'                => static function ( ContainerInterface $container ): ButtonInterface {
 		// TODO : check other statuses.
 

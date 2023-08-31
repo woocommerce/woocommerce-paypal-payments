@@ -14,14 +14,7 @@ if (typeof window.PayPalCommerceGateway === 'undefined') {
     window.PayPalCommerceGateway = ppcpConfig;
 }
 
-console.log('ppcpData', ppcpData);
-console.log('ppcpConfig', ppcpConfig);
-console.log('buttonData', buttonData);
-console.log('buttonConfig', buttonConfig);
-
 const GooglePayComponent = () => {
-    console.log('GooglePayComponent render');
-
     const [bootstrapped, setBootstrapped] = useState(false);
     const [paypalLoaded, setPaypalLoaded] = useState(false);
     const [googlePayLoaded, setGooglePayLoaded] = useState(false);

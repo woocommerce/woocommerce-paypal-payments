@@ -25,6 +25,10 @@ class GooglepayButton {
         }
         this.isInitialized = true;
 
+        if (!this.validateConfig()) {
+            return;
+        }
+
         this.googlePayConfig = config;
         this.allowedPaymentMethods = config.allowedPaymentMethods;
         this.baseCardPaymentMethod = this.allowedPaymentMethods[0];
@@ -44,6 +48,20 @@ class GooglepayButton {
             });
     }
 
+    validateConfig() {
+        if ( ['PRODUCTION', 'TEST'].indexOf(this.buttonConfig.environment) === -1) {
+            console.error('[GooglePayButton] Invalid environment.', this.buttonConfig.environment);
+            return false;
+        }
+
+        if ( !this.contextHandler ) {
+            console.error('[GooglePayButton] Invalid context handler.', this.contextHandler);
+            return false;
+        }
+
+        return true;
+    }
+
     buildReadyToPayRequest(allowedPaymentMethods, baseRequest) {
         return Object.assign({}, baseRequest, {
             allowedPaymentMethods: allowedPaymentMethods,
@@ -52,7 +70,7 @@ class GooglepayButton {
 
     initClient() {
         this.paymentsClient = new google.payments.api.PaymentsClient({
-            environment: 'TEST', // TODO: Use 'PRODUCTION' for real transactions
+            environment: this.buttonConfig.environment,
             // add merchant info maybe
             paymentDataCallbacks: {
                 //onPaymentDataChanged: onPaymentDataChanged,
@@ -72,18 +90,24 @@ class GooglepayButton {
                 ? this.buttonConfig.button.mini_cart_wrapper
                 : this.buttonConfig.button.wrapper;
 
-        const shape =
+        const ppcpStyle =
             (this.context === 'mini-cart')
-                ? this.ppcpConfig.button.mini_cart_style.shape
-                : this.ppcpConfig.button.style.shape;
+                ? this.ppcpConfig.button.mini_cart_style
+                : this.ppcpConfig.button.style;
 
-        jQuery(wrapper).addClass('ppcp-button-' + shape);
+        const buttonStyle =
+            (this.context === 'mini-cart')
+                ? this.buttonConfig.button.mini_cart_style
+                : this.buttonConfig.button.style;
+
+        jQuery(wrapper).addClass('ppcp-button-' + ppcpStyle.shape);
 
         const button =
             this.paymentsClient.createButton({
                 onClick: this.onButtonClick.bind(this),
                 allowedPaymentMethods: [baseCardPaymentMethod],
-                buttonType: 'pay',
+                buttonColor: buttonStyle.color || 'black',
+                buttonType: buttonStyle.type || 'pay',
                 buttonSizeMode: 'fill',
             });
         jQuery(wrapper).append(button);
