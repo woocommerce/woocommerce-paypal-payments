@@ -26,7 +26,7 @@ export const loadPaypalScript = (config, onLoaded) => {
         return;
     }
     options.isLoading = true;
-
+console.log('ScriptLoading.js: loadPaypalScript', config)
     // Arm a timeout so the module isn't locked on isLoading state on failure.
     let loadingTimeout = setTimeout(() => {
         console.error('Failed to load PayPal script.');

@@ -9,7 +9,8 @@ module.exports = {
     target: 'web',
     plugins: [ new DependencyExtractionWebpackPlugin() ],
     entry: {
-        'applepayDirect': path.resolve('./resources/js/applepayDirect.js'),
+        'boot': path.resolve('./resources/js/boot.js'),
+        'boot-block': path.resolve('./resources/js/boot-block.js'),
         "styles": path.resolve('./resources/css/styles.scss')
     },
     output: {

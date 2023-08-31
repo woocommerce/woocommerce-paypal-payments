@@ -290,6 +290,12 @@ import {loadPaypalScript} from '../../../ppcp-button/resources/js/modules/Helper
                 }
             })
     }
-)(window)
+)(
+    {
+        buttonConfig: window.wc_ppcp_applepay,
+        ppcpConfig: window.PayPalCommerceGateway,
+        jQuery: window.jQuery
+    }
+)
 
 

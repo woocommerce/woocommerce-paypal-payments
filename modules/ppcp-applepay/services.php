@@ -17,20 +17,22 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 return array(
-	'apple.status-cache'                                     => static function( ContainerInterface $container ): Cache {
+	'applepay.status-cache'                                     => static function( ContainerInterface $container ): Cache {
 		return new Cache( 'ppcp-paypal-apple-status-cache' );
 	},
 	'applepay.apple-product-status'           => static function( ContainerInterface $container ): AppleProductStatus {
 		return new AppleProductStatus(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'api.endpoint.partners' ),
-			$container->get( 'apple.status-cache' ),
+			$container->get( 'applepay.status-cache' ),
 			$container->get( 'onboarding.state' )
 		);
 	},
 	'applepay.enabled'                        => static function ( ContainerInterface $container ): bool {
-		$status = $container->get( 'applepay.apple-product-status' );
-		return $status->apple_is_active();
+		/*$status = $container->get( 'applepay.apple-product-status' );
+		assert( $status instanceof AppleProductStatus);
+		return $status->apple_is_active();*/
+		return true;
 	},
 	'applepay.server_supported'               => static function ( ContainerInterface $container ): bool {
 		return ! empty( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] !== 'off';
@@ -59,17 +61,18 @@ return array(
 		return 'https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js';
 	},
 	'applepay.data_to_scripts'                => static function ( ContainerInterface $container ): DataToAppleButtonScripts {
-		$sdk_url = $container->get( 'applepay.sdk_script_url' );
-		return new DataToAppleButtonScripts($sdk_url);
+		return new DataToAppleButtonScripts($container->get( 'applepay.sdk_script_url' ));
 	},
 	'applepay.button'                 => static function ( ContainerInterface $container ): ApplePayButton {
-		$settings = $container->get( 'wcgateway.settings' );
-		$logger  = $container->get( 'woocommerce.logger.woocommerce' );
-		$order_processor = $container->get( 'wcgateway.order-processor' );
-		$version = $container->get('ppcp.asset-version');
-		$module_url = $container->get( 'applepay.url' );
-		$data = $container->get('applepay.data_to_scripts');
 
-		return new ApplePayButton( $settings, $logger, $order_processor, $module_url, $version, $data, $settings );
+		return new ApplePayButton(
+			$container->get( 'wcgateway.settings' ),
+			$container->get( 'woocommerce.logger.woocommerce' ),
+			$container->get( 'wcgateway.order-processor' ),
+			$container->get( 'applepay.url' ),
+			$container->get('ppcp.asset-version'),
+			$container->get('applepay.data_to_scripts'),
+			$container->get( 'wcgateway.settings.status' ),
+		);
 	},
 );

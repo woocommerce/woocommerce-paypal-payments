@@ -27,19 +27,10 @@ return array(
 			'requirements' => array(),
 			'gateway'      => 'paypal',
 		);
-		$fields['applepay_button_enabled_product'] = array(
+		$fields['applepay_button_enabled'] = array(
 			'title'        => __( 'Apple Pay Button on Product Page', 'woocommerce-paypal-payments' ),
 			'type'         => 'checkbox',
 			'label'        => __( 'Enable Apple Pay button on product page', 'woocommerce-paypal-payments' ),
-			'default'      => 'yes',
-			'screens'      => array( State::STATE_ONBOARDED ),
-			'gateway'      => 'paypal',
-			'requirements' => array(),
-		);
-		$fields['applepay_button_enabled_cart']    = array(
-			'title'        => __( 'Apple Pay Button on Cart Page', 'woocommerce-paypal-payments' ),
-			'type'         => 'checkbox',
-			'label'        => __( 'Enable Apple Pay button on cart page', 'woocommerce-paypal-payments' ),
 			'default'      => 'yes',
 			'screens'      => array( State::STATE_ONBOARDED ),
 			'gateway'      => 'paypal',
@@ -63,8 +54,6 @@ return array(
 			'gateway'      => 'paypal',
 			'requirements' => array(),
 		);
-
-
 
 		return $fields;
 	},
