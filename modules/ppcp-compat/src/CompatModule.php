@@ -127,6 +127,7 @@ class CompatModule implements ModuleInterface {
 	protected function initialize_tracking_compat_layer( ContainerInterface $c ): void {
 		$is_gzd_active                  = $c->get( 'compat.gzd.is_supported_plugin_version_active' );
 		$is_wc_shipment_tracking_active = $c->get( 'compat.wc_shipment_tracking.is_supported_plugin_version_active' );
+		$is_ywot_active                 = $c->get( 'compat.ywot.is_supported_plugin_version_active' );
 
 		if ( $is_gzd_active ) {
 			$this->initialize_gzd_compat_layer( $c );
@@ -134,6 +135,10 @@ class CompatModule implements ModuleInterface {
 
 		if ( $is_wc_shipment_tracking_active ) {
 			$this->initialize_wc_shipment_tracking_compat_layer( $c );
+		}
+
+		if ( $is_ywot_active ) {
+			$this->initialize_ywot_compat_layer( $c );
 		}
 	}
 
@@ -255,6 +260,43 @@ class CompatModule implements ModuleInterface {
 			},
 			10,
 			3
+		);
+	}
+
+	/**
+	 * Sets up the <a href="https://wordpress.org/plugins/yith-woocommerce-order-tracking/">YITH WooCommerce Order & Shipment Tracking</a>
+	 * plugin compatibility layer.
+	 *
+	 * @link https://wordpress.org/plugins/yith-woocommerce-order-tracking/
+	 *
+	 * @param ContainerInterface $c The Container.
+	 * @return void
+	 */
+	protected function initialize_ywot_compat_layer( ContainerInterface $c ): void {
+		add_action(
+			'woocommerce_process_shop_order_meta',
+			function( int $order_id ) use ( $c ) {
+				if ( ! apply_filters( 'woocommerce_paypal_payments_sync_ywot_tracking', true ) ) {
+					return;
+				}
+
+				$wc_order = wc_get_order( $order_id );
+				if ( ! is_a( $wc_order, WC_Order::class ) ) {
+					return;
+				}
+
+				$transaction_id  = $wc_order->get_transaction_id();
+				$tracking_number = wc_clean( wp_unslash( $_POST['ywot_tracking_code'] ?? '' ) );
+				$carrier         = wc_clean( wp_unslash( $_POST['ywot_carrier_name'] ?? '' ) );
+
+				if ( ! $tracking_number || ! is_string( $tracking_number ) || ! $carrier || ! is_string( $carrier ) || ! $transaction_id ) {
+					return;
+				}
+
+				$this->create_tracking( $c, $order_id, $transaction_id, $tracking_number, $carrier, array() );
+			},
+			500,
+			1
 		);
 	}
 
