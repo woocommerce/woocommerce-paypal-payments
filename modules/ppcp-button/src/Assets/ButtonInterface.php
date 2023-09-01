@@ -22,11 +22,6 @@ interface ButtonInterface {
 	public function render_buttons(): bool;
 
 	/**
-	 * Whether any of the scripts should be loaded.
-	 */
-	public function should_load_script(): bool;
-
-	/**
 	 * Enqueues scripts/styles.
 	 */
 	public function enqueue(): void;
