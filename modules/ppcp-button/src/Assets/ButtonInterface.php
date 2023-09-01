@@ -15,11 +15,18 @@ namespace WooCommerce\PayPalCommerce\Button\Assets;
 interface ButtonInterface {
 
 	/**
+	 * Indicates if the button is enabled.
+	 *
+	 * @return bool
+	 */
+	public function is_enabled(): bool;
+
+	/**
 	 * Renders the necessary HTML.
 	 *
 	 * @return bool
 	 */
-	public function render_buttons(): bool;
+	public function render(): bool;
 
 	/**
 	 * Enqueues scripts/styles.
