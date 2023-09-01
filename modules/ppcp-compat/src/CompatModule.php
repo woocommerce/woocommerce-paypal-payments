@@ -285,9 +285,11 @@ class CompatModule implements ModuleInterface {
 					return;
 				}
 
-				$transaction_id  = $wc_order->get_transaction_id();
+				$transaction_id = $wc_order->get_transaction_id();
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing
 				$tracking_number = wc_clean( wp_unslash( $_POST['ywot_tracking_code'] ?? '' ) );
-				$carrier         = wc_clean( wp_unslash( $_POST['ywot_carrier_name'] ?? '' ) );
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing
+				$carrier = wc_clean( wp_unslash( $_POST['ywot_carrier_name'] ?? '' ) );
 
 				if ( ! $tracking_number || ! is_string( $tracking_number ) || ! $carrier || ! is_string( $carrier ) || ! $transaction_id ) {
 					return;
