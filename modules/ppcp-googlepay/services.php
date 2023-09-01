@@ -16,9 +16,16 @@ use WooCommerce\PayPalCommerce\Googlepay\Assets\Button;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
-	'googlepay.button'                => static function ( ContainerInterface $container ): ButtonInterface {
-		// TODO : check other statuses.
+	'googlepay.eligible'              => static function ( ContainerInterface $container ): bool {
+		// TODO : add handlers.
+		return true;
+	},
+	'googlepay.available'             => static function ( ContainerInterface $container ): bool {
+		// TODO : add handlers.
+		return true;
+	},
 
+	'googlepay.button'                => static function ( ContainerInterface $container ): ButtonInterface {
 		return new Button(
 			$container->get( 'googlepay.url' ),
 			$container->get( 'googlepay.sdk_url' ),

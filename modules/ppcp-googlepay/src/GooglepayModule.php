@@ -34,40 +34,42 @@ class GooglepayModule implements ModuleInterface {
 	 * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $c ): void {
+		$button = $c->get( 'googlepay.button' );
+		assert( $button instanceof ButtonInterface );
+
+		if ( ! $c->get( 'googlepay.eligible' ) ) {
+			return;
+		}
+
+		$button->initialize();
+
+		if ( ! $c->get( 'googlepay.available' ) ) {
+			return;
+		}
 
 		add_action(
 			'wp',
-			static function () use ( $c ) {
+			static function () use ( $c, $button ) {
 				if ( is_admin() ) {
 					return;
 				}
-				$button = $c->get( 'googlepay.button' );
-
-				/**
-				 * The Button.
-				 *
-				 * @var ButtonInterface $button
-				 */
-				$button->render_buttons();
+				$button->render();
 			}
 		);
 
 		add_action(
 			'wp_enqueue_scripts',
-			static function () use ( $c ) {
-				$button = $c->get( 'googlepay.button' );
-				assert( $button instanceof ButtonInterface );
-
-				if ( $button->should_load_script() ) {
-					$button->enqueue();
-				}
+			static function () use ( $c, $button ) {
+				$button->enqueue();
 			}
 		);
 
 		add_action(
 			'woocommerce_blocks_payment_method_type_registration',
-			function( PaymentMethodRegistry $payment_method_registry ) use ( $c ): void {
-				$payment_method_registry->register( $c->get( 'googlepay.blocks-payment-method' ) );
+			function( PaymentMethodRegistry $payment_method_registry ) use ( $c, $button ): void {
+				if ( $button->is_enabled() ) {
+					$payment_method_registry->register( $c->get( 'googlepay.blocks-payment-method' ) );
+				}
 			}
 		);
 	}

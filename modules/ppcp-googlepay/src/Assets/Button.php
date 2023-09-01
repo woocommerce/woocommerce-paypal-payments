@@ -9,10 +9,12 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Googlepay\Assets;
 
+use Exception;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
+use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
@@ -121,12 +123,110 @@ class Button implements ButtonInterface {
 	}
 
 	/**
-	 * Registers the necessary action hooks to render the HTML depending on the settings.
+	 * Initializes the button.
+	 */
+	public function initialize(): void {
+		add_filter( 'ppcp_onboarding_options', array( $this, 'add_onboarding_options' ), 10, 1 );
+		add_filter( 'ppcp_partner_referrals_data', array( $this, 'add_partner_referrals_data' ), 10, 1 );
+	}
+
+	/**
+	 * Adds the GooglePay onboarding option.
+	 *
+	 * @param string $options The options.
+	 * @return string
+	 *
+	 * @psalm-suppress MissingClosureParamType
+	 */
+	private function add_onboarding_options( $options ): string {
+		$checked = '';
+		try {
+			$onboard_with_apple = $this->settings->get( 'ppcp-onboarding-apple' );
+			if ( $onboard_with_apple === '1' ) {
+				$checked = 'checked';
+			}
+		} catch ( NotFoundException $exception ) {
+			$checked = '';
+		}
+
+		// TODO : the input has no name, is it doing anything?
+		return $options
+			. '<li><label><input type="checkbox" id="ppcp-onboarding-google" ' . $checked . '> '
+			. __( 'Onboard with GooglePay', 'woocommerce-paypal-payments' )
+			. '</label></li>';
+	}
+
+	/**
+	 * Adds to partner referrals data.
+	 *
+	 * @param array $data The referrals data.
+	 * @return array
+	 */
+	private function add_partner_referrals_data( array $data ): array {
+		try {
+			$onboard_with_google = $this->settings->get( 'ppcp-onboarding-google' );
+			if ( ! wc_string_to_bool( $onboard_with_google ) ) {
+				return $data;
+			}
+		} catch ( NotFoundException $exception ) {
+			return $data;
+		}
+
+		if ( ! in_array( 'PAYMENT_METHODS', $data['products'], true ) ) {
+			if ( in_array( 'PPCP', $data['products'], true ) ) {
+				$data['products'][] = 'PAYMENT_METHODS';
+			} elseif ( in_array( 'EXPRESS_CHECKOUT', $data['products'], true ) ) { // TODO A bit sketchy, maybe replace on the EXPRESS_CHECKOUT index.
+				$data['products'][0] = 'PAYMENT_METHODS';
+			}
+		}
+
+		$data['capabilities'][] = 'GOOGLE_PAY';
+
+		$nonce = $data['operations'][0]['api_integration_preference']['rest_api_integration']['first_party_details']['seller_nonce'];
+
+		$data['operations'][] = array(
+			'operation'                  => 'API_INTEGRATION',
+			'api_integration_preference' => array(
+				'rest_api_integration' => array(
+					'integration_method'  => 'PAYPAL',
+					'integration_type'    => 'THIRD_PARTY',
+					'third_party_details' => array(
+						'features'     => array(
+							'PAYMENT',
+							'REFUND',
+						),
+						'seller_nonce' => $nonce,
+					),
+				),
+			),
+		);
+
+		return $data;
+	}
+
+
+	/**
+	 * Returns if Google Pay button is enabled
 	 *
 	 * @return bool
 	 */
-	public function render_buttons(): bool {
-		if ( ! $this->isGooglePayButtonEnabled() ) {
+	public function is_enabled(): bool {
+		try {
+			return $this->settings->has( 'googlepay_button_enabled' ) && $this->settings->get( 'googlepay_button_enabled' );
+		} catch ( Exception $e ) {
+			return false;
+		}
+	}
+
+	/**
+	 * Registers the necessary action hooks to render the HTML depending on the settings.
+	 *
+	 * @return bool
+	 *
+	 * @psalm-suppress RedundantCondition
+	 */
+	public function render(): bool {
+		if ( ! $this->is_enabled() ) {
 			return false;
 		}
 
@@ -235,18 +335,13 @@ class Button implements ButtonInterface {
 	}
 
 	/**
-	 * Whether any of the scripts should be loaded.
-	 *
-	 * @return bool
-	 */
-	public function should_load_script(): bool {
-		return $this->isGooglePayButtonEnabled();
-	}
-
-	/**
 	 * Enqueues scripts/styles.
 	 */
 	public function enqueue(): void {
+		if ( ! $this->is_enabled() ) {
+			return;
+		}
+
 		wp_register_script(
 			'wc-ppcp-googlepay',
 			untrailingslashit( $this->module_url ) . '/assets/js/boot.js',
@@ -314,15 +409,6 @@ class Button implements ButtonInterface {
 		}
 
 		return $values;
-	}
-
-	/**
-	 * Returns if Google Pay button is enabled
-	 *
-	 * @return bool
-	 */
-	private function isGooglePayButtonEnabled(): bool {
-		return $this->settings->has('googlepay_button_enabled') && !!$this->settings->get('googlepay_button_enabled');
 	}
 
 }
