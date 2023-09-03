@@ -10,21 +10,28 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Button\Assets;
 
 /**
- * Interface SmartButtonInterface
+ * Interface ButtonInterface
  */
 interface ButtonInterface {
+
+	/**
+	 * Initializes the button.
+	 */
+	public function initialize(): void;
+
+	/**
+	 * Indicates if the button is enabled.
+	 *
+	 * @return bool
+	 */
+	public function is_enabled(): bool;
 
 	/**
 	 * Renders the necessary HTML.
 	 *
 	 * @return bool
 	 */
-	public function render_buttons(): bool;
-
-	/**
-	 * Whether any of the scripts should be loaded.
-	 */
-	public function should_load_script(): bool;
+	public function render(): bool;
 
 	/**
 	 * Enqueues scripts/styles.
