@@ -47,7 +47,7 @@ WooCommerce PayPal Payments is compatible with [WooCommerce Subscriptions](http
 
 [PayPal Subscriptions](https://www.paypal.com/webapps/mpp/subscription-payments) allow business and casual sellers to accept reliable recurring payments on a fixed billing schedule (buyers may require a PayPal account).
 
-With the [Vaulting]([Securely Store Customer Payments | PayPal US](https://www.paypal.com/us/brc/article/securely-store-payments)) feature ([business account approval required](https://woocommerce.com/document/woocommerce-paypal-payments/#get-vaulting-approval)), you can offer flexible plans with fixed or quantity pricing, set billing cycles for the time period you want, and offer all kinds of subscriptions with prorated payments or discounted trial periods.
+With the [Vaulting](https://www.paypal.com/us/brc/article/securely-store-payments) feature ([business account approval required](https://woocommerce.com/document/woocommerce-paypal-payments/#get-vaulting-approval)), you can offer flexible plans with fixed or quantity pricing, set billing cycles for the time period you want, and offer all kinds of subscriptions with prorated payments or discounted trial periods.
 
 It’s easy for shoppers, simple for you, and great for your business – with no monthly or setup fees.
 
@@ -157,10 +157,10 @@ Follow the steps below to connect the plugin to your PayPal account:
 3. The Payment methods list may include two PayPal options. Click on **PayPal** (not PayPal Standard).
 4. Click on the **Activate PayPal** button.
 5. Sign in to your PayPal account. If you do not have a PayPal account yet, sign up for a new PayPal business or personal account.
-7. After you have successfully connected your PayPal account, click on the **Standard Payments** tab and check the **Enable Paypal features for your store** checkbox to enable PayPal.
-8. Click **Save changes**.
+6. After you have successfully connected your PayPal account, click on the **Standard Payments** tab and check the **Enable Paypal features for your store** checkbox to enable PayPal.
+7. Click **Save changes**.
 
-Complete onboarding instruction can be found in the [documentation here](https://woocommerce.com/document/woocommerce-paypal-payments/#connect-paypal-account).
+Complete onboarding instructions can be found in the [documentation here](https://woocommerce.com/document/woocommerce-paypal-payments/#connect-paypal-account).
 
 = Updating =
 
