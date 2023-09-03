@@ -528,7 +528,6 @@ class PayPalGateway extends \WC_Payment_Gateway {
 
 				$subscriptions = function_exists( 'wcs_get_subscriptions_for_order' ) ? wcs_get_subscriptions_for_order( $order_id ) : array();
 				foreach ( $subscriptions as $subscription ) {
-					$subscription->set_requires_manual_renewal( true );
 					$subscription->update_meta_data( 'ppcp_subscription', $paypal_subscription_id );
 					$subscription->save();
 
