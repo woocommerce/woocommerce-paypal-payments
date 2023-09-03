@@ -21,7 +21,10 @@ console.log(buttonConfig)
         );
 
         //PRODUCT DETAIL PAGE
-        this.productQuantity = document.querySelector('input.qty').value
+        if(this.context === 'product') {
+            this.productQuantity = document.querySelector('input.qty').value
+        }
+
         this.updatedContactInfo = []
         this.selectedShippingMethod = []
         this.nonce = document.getElementById('woocommerce-process-checkout-nonce').value
