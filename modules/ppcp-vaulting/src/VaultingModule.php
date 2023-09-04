@@ -213,6 +213,20 @@ class VaultingModule implements ModuleInterface {
 				return $methods;
 			}
 		);
+
+		add_filter(
+			'ppcp_partner_referrals_data',
+			function ( array $data ): array {
+				if ( in_array( 'PPCP', $data['products'], true ) ) {
+					$data['products'][] = 'ADVANCED_VAULTING';
+				} elseif ( in_array( 'EXPRESS_CHECKOUT', $data['products'], true ) ) {
+					$data['products'][0] = 'ADVANCED_VAULTING';
+				}
+				$data['capabilities'][] = 'PAYPAL_WALLET_VAULTING_ADVANCED';
+
+				return $data;
+			}
+		);
 	}
 
 	/**
