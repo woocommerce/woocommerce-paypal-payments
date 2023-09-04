@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\Button\Helper;
 
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderTransient;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
@@ -163,6 +164,10 @@ class EarlyOrderHandler {
 		/**
 		 * Patch Order so we have the \WC_Order id added.
 		 */
-		return $this->order_processor->patch_order( $wc_order, $order );
+		$order = $this->order_processor->patch_order( $wc_order, $order );
+
+		do_action( 'woocommerce_paypal_payments_woocommerce_order_created', $wc_order, $order );
+
+		return $order;
 	}
 }

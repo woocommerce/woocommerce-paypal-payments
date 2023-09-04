@@ -364,6 +364,11 @@ class PurchaseUnitTest extends TestCase
 			],
 			self::adaptAmountFormat([
 				'value' => 10.69,
+				'breakdown' => [
+					'item_total' => 10.69,
+					'tax_total' => 0,
+					'shipping' => 0,
+				],
 			]),
 		];
 	}
@@ -432,6 +437,11 @@ class PurchaseUnitTest extends TestCase
 			],
 			self::adaptAmountFormat([
 				'value' => 10.69,
+				'breakdown' => [
+					'item_total' => 10.69,
+					'tax_total' => 0,
+					'shipping' => 0,
+				],
 			], get_woocommerce_currency()),
 		];
 	}
