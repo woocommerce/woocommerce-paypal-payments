@@ -346,7 +346,10 @@ class OnboardingUrl {
 	 * @return void
 	 */
 	public function delete(): void {
-		$this->cache->delete( $this->cache_key() );
+		$cache_key = $this->cache_key();
+		if ( $this->cache->has( $cache_key ) ) {
+			$this->cache->delete( $cache_key );
+		}
 	}
 
 	/**
