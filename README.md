@@ -33,7 +33,8 @@ follow these steps:
 1. Clone the repository and `cd` into it.
 2. Make sure you have the version in the plugin root file updated.
 3. Update the PayPal JavaScript SDK integration date by using the current date for the `PAYPAL_INTEGRATION_DATE` constant.
-4. The following command should get you a ZIP file ready to be used on a WordPress site:
+4. Install WP-CLI archive command: `wp package install wp-cli/dist-archive-command`.
+5. The following command should get you a ZIP file ready to be used on a WordPress site:
 
 ```
 $ yarn run build

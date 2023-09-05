@@ -1,0 +1,5 @@
+{
+    "dependencies": "install",
+    "script": "build",
+    "commands": "yarn"
+}

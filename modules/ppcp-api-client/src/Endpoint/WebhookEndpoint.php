@@ -201,10 +201,7 @@ class WebhookEndpoint {
 
 		$status_code = (int) wp_remote_retrieve_response_code( $response );
 		if ( 204 !== $status_code ) {
-			$json = null;
-			if ( is_array( $response ) ) {
-				$json = json_decode( $response['body'] );
-			}
+			$json = json_decode( $response['body'] );
 			throw new PayPalApiException(
 				$json,
 				$status_code
