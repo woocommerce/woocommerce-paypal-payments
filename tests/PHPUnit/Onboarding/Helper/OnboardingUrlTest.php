@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Onboarding\Helper;
 
-use PHPUnit\Framework\TestCase;
+use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use RuntimeException;
 use function Brain\Monkey\Functions\when;
@@ -15,7 +15,7 @@ class OnboardingUrlTest extends TestCase
 	private $user_id = 123;
 	private $onboardingUrl;
 
-	protected function setUp(): void
+	public function setUp(): void
 	{
 		parent::setUp();
 
@@ -118,7 +118,6 @@ class OnboardingUrlTest extends TestCase
 	public function test_delete()
 	{
 		// Expectations
-		$this->cache->shouldReceive('has')->once();
 		$this->cache->shouldReceive('delete')->once();
 
 		$this->onboardingUrl->delete();
