@@ -45,7 +45,7 @@ return array(
 		} catch ( \Exception $e ) {
 			return false;
 		}
-		return $settings->get( 'applepay_validated' ) === 'yes';
+		return $settings->get( 'applepay_validated' ) === true;
 	},
 	'applepay.url'                            => static function ( ContainerInterface $container ): string {
 		$path = realpath( __FILE__ );
@@ -61,7 +61,7 @@ return array(
 		return 'https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js';
 	},
 	'applepay.data_to_scripts'                => static function ( ContainerInterface $container ): DataToAppleButtonScripts {
-		return new DataToAppleButtonScripts($container->get( 'applepay.sdk_script_url' ));
+		return new DataToAppleButtonScripts($container->get( 'applepay.sdk_script_url' ), $container->get( 'wcgateway.settings' ));
 	},
 	'applepay.button'                 => static function ( ContainerInterface $container ): ApplePayButton {
 

@@ -1,10 +1,16 @@
+#btn-appl {
+	--apple-pay-button-width: 100%;
+	--apple-pay-button-height: 100%;
+	--apple-pay-button-border-radius: 4px;
+	--apple-pay-button-overflow: hidden;
+}
 #applepay-container {
-	margin-top: 5px;
-	overflow: hidden;
-	height: 45px;
+	//margin-top: 5px;
+	//overflow: hidden;
+	//height: 45px;
 
 	&.ppcp-button-pill {
-		border-radius: 50px;
+		//border-radius: 50px;
 	}
 
 	&.ppcp-button-minicart {
@@ -15,9 +21,9 @@
 
 .woocommerce-checkout {
 	#applepay-container {
-		margin-top: 0;
-		border-radius: 18px;
-		height: 38px;
+		//margin-top: 0;
+		//border-radius: 18px;
+		//height: 38px;
 	}
 }
 

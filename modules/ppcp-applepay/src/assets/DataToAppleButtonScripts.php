@@ -20,9 +20,16 @@ class DataToAppleButtonScripts {
 	 * @var string
 	 */
 	private $sdk_url;
+	/**
+	 * The settings.
+	 *
+	 * @var array
+	 */
+	private $settings;
 
-	public function __construct($sdk_url) {
+	public function __construct($sdk_url, $settings) {
 		$this->sdk_url = $sdk_url;
+		$this->settings = $settings;
 	}
 
 	/**
@@ -44,14 +51,12 @@ class DataToAppleButtonScripts {
 				$total_label
 			);
 		}
-		if ( is_cart() || $is_block ) {
-			return $this->data_for_cart_page(
-				$shop_country_code,
-				$currency_code,
-				$total_label
-			);
-		}
-		return array();
+
+		return $this->data_for_cart_page(
+			$shop_country_code,
+			$currency_code,
+			$total_label
+		);
 	}
 
 	/**
@@ -103,12 +108,18 @@ class DataToAppleButtonScripts {
 		$product_id           = get_the_id();
 		$product_price        = $product->get_price();
 		$product_stock        = $product->get_stock_status();
+		$type                = $this->settings->get('applepay_button_type');
+		$color                = $this->settings->get('applepay_button_color');
+		$lang                 = $this->settings->get('applepay_button_language');
 
 		return array(
 			'sdk_url' => $this->sdk_url,
 			'button'  => array(
 				'wrapper'           => '#applepay-container',
 				'mini_cart_wrapper' => '#applepay-container-minicart',
+				'type' => $type,
+				'color' => $color,
+				'lang'  => $lang,
 			),
 			'product' => array(
 				'needShipping' => $product_need_shipping,
@@ -147,6 +158,10 @@ class DataToAppleButtonScripts {
 			. '</div>';
 		return array(
 			'sdk_url' => $this->sdk_url,
+			'button'  => array(
+				'wrapper'           => '#applepay-container',
+				'mini_cart_wrapper' => '#applepay-container-minicart',
+			),
 			'product'      => array(
 				'needShipping' => $cart->needs_shipping(),
 				'subtotal'     => $cart->get_subtotal(),

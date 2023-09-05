@@ -104,21 +104,23 @@ class ApplepayModule implements ModuleInterface {
 	}
 
 	/**
-	 * Loads the validation file.
+	 * Loads the validation string.
 	 *
 	 * @param boolean $is_sandbox The environment for this merchant.
 	 */
-	protected function load_domain_association_file( $is_sandbox ): void {
+	protected function load_domain_association_file(bool $is_sandbox, $settings ): void {
 		if ( ! isset( $_SERVER['REQUEST_URI'] ) ) {
 			return;
 		}
 		$request_uri = (string) filter_var( wp_unslash( $_SERVER['REQUEST_URI'] ), FILTER_SANITIZE_URL );
 		if ( strpos( $request_uri, '.well-known/apple-developer-merchantid-domain-association' ) !== false ) {
-			$validation_string = $is_sandbox ? 'apple-developer-merchantid-domain-association-sandbox' : 'apple-developer-merchantid-domain-association';
-			$validation_file   = file_get_contents( __DIR__ . '/../assets/validation_files/' . $validation_string );
+			$validation_string = $is_sandbox ? 'applepay_sandbox_validation_file' : 'applepay_live_validation_file';
+			$validation_string   = $settings->has( $validation_string ) ? $settings->get( $validation_string ) : '';
+			$validation_string = preg_replace( '/\s+/', '', $validation_string );
+			$validation_string = $validation_string ? preg_replace( '/[^a-zA-Z0-9]/', '', $validation_string ) : '';
 			nocache_headers();
 			header( 'Content-Type: text/plain', true, 200 );
-			echo $validation_file;// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			echo $validation_string;// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 			exit;
 		}
 	}
@@ -163,7 +165,7 @@ class ApplepayModule implements ModuleInterface {
 				 *
 				 * @var ButtonInterface $button
 				 */
-				$button->render_buttons();
+				$button->render();
 			}
 		);
 	}
@@ -213,6 +215,7 @@ class ApplepayModule implements ModuleInterface {
 		$env = $c->get('onboarding.environment');
 		assert($env instanceof Environment);
 		$is_sandobx = $env->current_environment_is(Environment::SANDBOX);
-		$this->load_domain_association_file($is_sandobx);
+		$settings = $c->get('wcgateway.settings');
+		$this->load_domain_association_file($is_sandobx, $settings);
 	}
 }

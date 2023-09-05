@@ -10,8 +10,6 @@ class ApplepayButton {
         this.externalHandler = externalHandler;
         this.buttonConfig = buttonConfig;
         this.ppcpConfig = ppcpConfig;
-console.log(buttonConfig)
-        console.log(ppcpConfig)
         this.paymentsClient = null;
 
         this.contextHandler = ContextHandlerFactory.create(
@@ -45,6 +43,15 @@ console.log(buttonConfig)
                 this.onButtonClick()
             })
         }
+        jQuery.ajax({
+            url: this.buttonConfig.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'ppcp_validate',
+                validation: true,
+                nonce: this.nonce,
+            }
+        })
     }
 
     buildReadyToPayRequest(allowedPaymentMethods, baseRequest) {
@@ -73,7 +80,10 @@ console.log(buttonConfig)
      */
     addButton() {
         const appleContainer = document.getElementById("applepay-container");
-        appleContainer.innerHTML = '<apple-pay-button id="btn-appl" type="buy" locale="en">';
+        const type = this.buttonConfig.button.type;
+        const language = this.buttonConfig.button.lang;
+        const color = this.buttonConfig.button.color;
+        appleContainer.innerHTML = `<apple-pay-button id="btn-appl" buttonstyle="${color}" type="${type}" locale="${language}">`;
 
         const wrapper =
             (this.context === 'mini-cart')
@@ -106,26 +116,56 @@ console.log(buttonConfig)
     paymentDataRequest() {
         const applepayConfig = this.applePayConfig
         const buttonConfig = this.buttonConfig
-
-        document.querySelector('input.qty').addEventListener('change', event => {
-            this.productQuantity = event.currentTarget.value
-        })
-        this.productQuantity = parseInt(productQuantity)
-        const amountWithoutTax = productQuantity * buttonConfig.product.price
-        return {
-            countryCode: applepayConfig.countryCode,
-            merchantCapabilities: applepayConfig.merchantCapabilities,
-            supportedNetworks: applepayConfig.supportedNetworks,
-            currencyCode: buttonConfig.shop.currencyCode,
-            requiredShippingContactFields: ["name", "phone",
-                "email", "postalAddress"],
-            requiredBillingContactFields: ["name", "phone", "email",
-                "postalAddress"],
-            total: {
-                label: buttonConfig.shop.totalLabel,
-                type: "final",
-                amount: amountWithoutTax,
+        console.log('[ApplePayButton] paymentDataRequest', applepayConfig, buttonConfig);
+        function product_request() {
+            document.querySelector('input.qty').addEventListener('change', event => {
+                this.productQuantity = event.currentTarget.value
+            })
+            this.productQuantity = parseInt(this.productQuantity)
+            const amountWithoutTax = this.productQuantity * buttonConfig.product.price
+            return {
+                countryCode: applepayConfig.countryCode,
+                merchantCapabilities: applepayConfig.merchantCapabilities,
+                supportedNetworks: applepayConfig.supportedNetworks,
+                currencyCode: buttonConfig.shop.currencyCode,
+                requiredShippingContactFields: ["name", "phone",
+                    "email", "postalAddress"],
+                requiredBillingContactFields: ["name", "phone", "email",
+                    "postalAddress"],
+                total: {
+                    label: buttonConfig.shop.totalLabel,
+                    type: "final",
+                    amount: amountWithoutTax,
+                }
             }
+        }
+
+        function cart_request() {
+            const priceContent = jQuery('.cart-subtotal .woocommerce-Price-amount bdi').contents()[1]
+            const priceString = priceContent.nodeValue.trim();
+            const price = parseFloat(priceString);
+            return {
+                countryCode: applepayConfig.countryCode,
+                merchantCapabilities: applepayConfig.merchantCapabilities,
+                supportedNetworks: applepayConfig.supportedNetworks,
+                currencyCode: buttonConfig.shop.currencyCode,
+                requiredShippingContactFields: ["name", "phone",
+                    "email", "postalAddress"],
+                requiredBillingContactFields: ["name", "phone", "email",
+                    "postalAddress"],
+                total: {
+                    label: buttonConfig.shop.totalLabel,
+                    type: "final",
+                    amount: price,
+                }
+            }
+        }
+
+        switch (this.context) {
+            case 'product': return product_request.call(this);
+            case 'cart':
+            case 'checkout':
+                return cart_request.call(this);
         }
     }
 
@@ -136,27 +176,35 @@ console.log(buttonConfig)
 
     onvalidatemerchant(session) {
         return (applePayValidateMerchantEvent) => {
-            applepay.validateMerchant({
+            paypal.Applepay().validateMerchant({
                 validationUrl: applePayValidateMerchantEvent.validationURL
             })
                 .then(validateResult => {
                     session.completeMerchantValidation(validateResult.merchantSession);
                     //call backend to update validation to true
+
                     console.log('validated')
                 })
                 .catch(validateError => {
                     console.error(validateError);
                     //call backend to update validation to false
+                    jQuery.ajax({
+                        url: this.buttonConfig.ajax_url,
+                        type: 'POST',
+                        data: {
+                            action: 'ppcp_validate',
+                            validation: false,
+                            nonce: this.nonce,
+                        }
+                    })
                     session.abort();
                 });
         };
     }
     onshippingmethodselected(ajaxUrl, productId, session) {
-        return function (event) {
-            jQuery.ajax({
-                url: ajaxUrl,
-                method: 'POST',
-                data: {
+        function getData(event) {
+            switch (this.context) {
+                case 'product': return {
                     action: 'ppcp_update_shipping_method',
                     shipping_method: event.shippingMethod,
                     product_id: productId,
@@ -164,7 +212,24 @@ console.log(buttonConfig)
                     product_quantity: this.productQuantity,
                     simplified_contact: this.updatedContactInfo,
                     'woocommerce-process-checkout-nonce': this.nonce,
-                },
+                }
+                case 'cart':
+                case 'checkout':
+                    return {
+                    action: 'ppcp_update_shipping_method',
+                    shipping_method: event.shippingMethod,
+                    caller_page: 'cart',
+                    simplified_contact: this.updatedContactInfo,
+                    'woocommerce-process-checkout-nonce': this.nonce,
+                }
+            }
+        }
+
+        return function (event) {
+            jQuery.ajax({
+                url: this.buttonConfig.ajax_url,
+                method: 'POST',
+                data: getData.call(this, event),
                 success: (applePayShippingMethodUpdate, textStatus, jqXHR) => {
                     let response = applePayShippingMethodUpdate.data
                     this.selectedShippingMethod = event.shippingMethod
@@ -189,12 +254,10 @@ console.log(buttonConfig)
             })
         };
     }
-    onshippingcontactselected(ajaxUrl, productId, session) {
-        return function (event) {
-            jQuery.ajax({
-                url: ajaxUrl,
-                method: 'POST',
-                data: {
+    onshippingcontactselected(ajax_url, productId, session) {
+        function getData(event) {
+            switch (this.context) {
+                case 'product': return {
                     action: 'ppcp_update_shipping_contact',
                     product_id: productId,
                     caller_page: 'productDetail',
@@ -202,7 +265,24 @@ console.log(buttonConfig)
                     simplified_contact: event.shippingContact,
                     need_shipping: this.needShipping,
                     'woocommerce-process-checkout-nonce': this.nonce,
-                },
+                }
+                case 'cart':
+                case 'checkout':
+                    return {
+                    action: 'ppcp_update_shipping_contact',
+                    simplified_contact: event.shippingContact,
+                    caller_page: 'cart',
+                    need_shipping: this.needShipping,
+                    'woocommerce-process-checkout-nonce': this.nonce,
+                }
+            }
+        }
+
+        return function (event) {
+            jQuery.ajax({
+                url: this.buttonConfig.ajax_url,
+                method: 'POST',
+                data: getData.call(this, event),
                 success: (applePayShippingContactUpdate, textStatus, jqXHR) => {
                     let response = applePayShippingContactUpdate.data
                     this.updatedContactInfo = event.shippingContact
@@ -255,7 +335,7 @@ console.log(buttonConfig)
                         data: {
                             action: 'ppcp_create_order',
                             'product_id': productId,
-                            'product_quantity': productQuantity,
+                            'product_quantity': this.productQuantity,
                             'shipping_contact': shippingContact,
                             'billing_contact': billingContact,
                             'token': event.payment.token,
@@ -290,7 +370,7 @@ console.log(buttonConfig)
             }
             createOrderInPayPal([], []).then((orderId) => {
                 console.log('createOrderInPayPal', orderId)
-                applepay.confirmOrder(
+                paypal.Applepay().confirmOrder(
                     {
                         orderId: orderId,
                         token: event.payment.token,

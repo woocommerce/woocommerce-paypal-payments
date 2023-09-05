@@ -195,6 +195,14 @@ class ApplePayButton implements ButtonInterface {
 	 */
 	public function bootstrap_ajax_request(): void {
 		add_action(
+			'wp_ajax_' . PropertiesDictionary::VALIDATE,
+			array( $this, 'validate' )
+		);
+		add_action(
+			'wp_ajax_nopriv_' . PropertiesDictionary::VALIDATE,
+			array( $this, 'validate' )
+		);
+		add_action(
 			'wp_ajax_' . PropertiesDictionary::CREATE_ORDER,
 			array( $this, 'create_wc_order' )
 		);
@@ -228,6 +236,23 @@ class ApplePayButton implements ButtonInterface {
 		);
 	}
 
+	/**
+	 * Method to validate the merchant in the db flag
+	 * On fail triggers and option that shows an admin notice showing the error
+	 * On success removes such flag
+	 */
+	public function validate()
+	{
+		$applepay_request_data_object = $this->applepay_data_object_http();
+		if (!$this->is_nonce_valid()) {
+			return;
+		}
+		$applepay_request_data_object->validation_data();
+		$settings = $this->settings;
+		$settings->set('applepay_validated', $applepay_request_data_object->validated_flag());
+
+		wp_send_json_success();
+	}
 	/**
 	 * Method to validate and update the shipping contact of the user
 	 * It updates the amount paying information if needed
@@ -817,7 +842,7 @@ class ApplePayButton implements ButtonInterface {
 		);
 	}
 
-	public function render_buttons(): bool
+	public function render(): bool
 	{
 		$is_applepay_button_enabled = $this->settings->has( 'applepay_button_enabled' ) ? $this->settings->get( 'applepay_button_enabled' ) : false;
 
@@ -943,5 +968,10 @@ class ApplePayButton implements ButtonInterface {
 	public function script_data(): array
 	{
 		return $this->script_data->apple_pay_script_data();
+	}
+
+	public function is_enabled(): bool
+	{
+		// TODO: Implement is_enabled() method.
 	}
 }
