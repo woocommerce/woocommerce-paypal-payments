@@ -20,7 +20,7 @@ One checkout solution. Many ways to pay. PayPal’s all-in-one solution allows y
 Help increase conversion by automatically offering PayPal buttons on product pages and at checkout. **Consumers are nearly three times more likely to purchase when you offer PayPal.¹**
 
 = PayPal Pay Later =
-Let customers pay over time while you get paid up front — at no additional cost. **PayPal’s pay later options are boosting merchant conversion rates and increasing cart sizes by 39%.²**
+Let customers pay over time while you get paid up front — at no additional cost. **PayPal Pay Later options are boosting merchant conversion rates and increasing cart sizes by 39%.²**
 
 = Help increase conversions with Pay Later messaging =
 PayPal Pay Later allows customers to pay over time while you get paid up front — at no additional cost to your business. And since 81% of younger consumers who use buy now, pay later decide which payment method to use before they get to checkout⁴, showing Pay Later messaging on your site lets customers know they have flexible options to pay over time while they are browsing — helping convert your browsers into buyers.
@@ -60,7 +60,7 @@ Need to update your existing PayPal integration? [Learn how to upgrade your inte
 = More reasons it pays to PayPal =
 - **Instant access to funds**: Access card payments, send money or make a payment from your bank account. You’re credited immediately while the payment is processing. Funds settle instantly into your PayPal business account.
   
-- **Fraud Detection**: Save time and money by letting PayPal help you handle the risk of fraudulent transactions with our fraud, chargeback, and Seller Protection capabilities (on eligible transactions†). Our AI technology works hard to monitor all of your transactions — so you can focus on what matters most.†Available on eligible purchases. Limits apply.
+- **Fraud Detection**: Save time and money by letting PayPal help you handle the risk of fraudulent transactions with our fraud, chargeback, and Seller Protection capabilities (on eligible transactions†). Our AI technology works hard to monitor all of your transactions — so you can focus on what matters most. †Available on eligible purchases. Limits apply.
   
 - **Global compliance**: PayPal payment solutions help you meet your global compliance standards, such as PCI and PSD2, bringing international markets within reach for your business. Our platform has built-in compliance with two-factor authentication provided by cards (3D Secure). We include automatic updates as security protocols change.
 
@@ -127,7 +127,7 @@ If you like the plugin, please also consider leaving a review [here](https://wor
 
 = My question is not listed here. Where can I find more answers? =
 
-Check out the [Frequently Asked Questions](https://woocommerce.com/document/woocommerce-paypal-payments/#faqs) for more.
+Check out the [Frequently Asked Questions](https://woocommerce.com/document/woocommerce-paypal-payments/#faqs) for more or contact the support team.
 
 == Installation ==
 
