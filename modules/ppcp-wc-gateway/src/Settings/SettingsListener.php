@@ -640,7 +640,7 @@ class SettingsListener {
 	/**
 	 * Handles onboarding URLs deletion
 	 */
-	public function listen_for_uninstall() {
+	public function listen_for_uninstall(): void {
 		// Clear onboarding links from cache.
 		foreach ( $this->signup_link_ids as $key ) {
 			( new OnboardingUrl( $this->signup_link_cache, $key, get_current_user_id() ) )->delete();
