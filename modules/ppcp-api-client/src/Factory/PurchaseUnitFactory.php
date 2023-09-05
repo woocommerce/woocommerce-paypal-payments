@@ -13,6 +13,7 @@ use WC_Session_Handler;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\PurchaseUnitSanitizer;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayeeRepository;
 use WooCommerce\PayPalCommerce\Webhooks\CustomIds;
 
@@ -78,16 +79,24 @@ class PurchaseUnitFactory {
 	private $soft_descriptor;
 
 	/**
+	 * The sanitizer for purchase unit output data.
+	 *
+	 * @var PurchaseUnitSanitizer|null
+	 */
+	private $sanitizer;
+
+	/**
 	 * PurchaseUnitFactory constructor.
 	 *
-	 * @param AmountFactory   $amount_factory The amount factory.
-	 * @param PayeeRepository $payee_repository The Payee repository.
-	 * @param PayeeFactory    $payee_factory The Payee factory.
-	 * @param ItemFactory     $item_factory The item factory.
-	 * @param ShippingFactory $shipping_factory The shipping factory.
-	 * @param PaymentsFactory $payments_factory The payments factory.
-	 * @param string          $prefix The prefix.
-	 * @param string          $soft_descriptor The soft descriptor.
+	 * @param AmountFactory          $amount_factory The amount factory.
+	 * @param PayeeRepository        $payee_repository The Payee repository.
+	 * @param PayeeFactory           $payee_factory The Payee factory.
+	 * @param ItemFactory            $item_factory The item factory.
+	 * @param ShippingFactory        $shipping_factory The shipping factory.
+	 * @param PaymentsFactory        $payments_factory The payments factory.
+	 * @param string                 $prefix The prefix.
+	 * @param string                 $soft_descriptor The soft descriptor.
+	 * @param ?PurchaseUnitSanitizer $sanitizer The purchase unit to_array sanitizer.
 	 */
 	public function __construct(
 		AmountFactory $amount_factory,
@@ -97,7 +106,8 @@ class PurchaseUnitFactory {
 		ShippingFactory $shipping_factory,
 		PaymentsFactory $payments_factory,
 		string $prefix = 'WC-',
-		string $soft_descriptor = ''
+		string $soft_descriptor = '',
+		PurchaseUnitSanitizer $sanitizer = null
 	) {
 
 		$this->amount_factory   = $amount_factory;
@@ -108,6 +118,7 @@ class PurchaseUnitFactory {
 		$this->payments_factory = $payments_factory;
 		$this->prefix           = $prefix;
 		$this->soft_descriptor  = $soft_descriptor;
+		$this->sanitizer        = $sanitizer;
 	}
 
 	/**
@@ -151,6 +162,9 @@ class PurchaseUnitFactory {
 			$invoice_id,
 			$soft_descriptor
 		);
+
+		$this->init_purchase_unit( $purchase_unit );
+
 		/**
 		 * Returns PurchaseUnit for the WC order.
 		 */
@@ -221,6 +235,8 @@ class PurchaseUnitFactory {
 			$soft_descriptor
 		);
 
+		$this->init_purchase_unit( $purchase_unit );
+
 		return $purchase_unit;
 	}
 
@@ -283,6 +299,9 @@ class PurchaseUnitFactory {
 			$soft_descriptor,
 			$payments
 		);
+
+		$this->init_purchase_unit( $purchase_unit );
+
 		return $purchase_unit;
 	}
 
@@ -312,5 +331,17 @@ class PurchaseUnitFactory {
 	private function country_without_postal_code( string $country_code ): bool {
 		$countries = array( 'AE', 'AF', 'AG', 'AI', 'AL', 'AN', 'AO', 'AW', 'BB', 'BF', 'BH', 'BI', 'BJ', 'BM', 'BO', 'BS', 'BT', 'BW', 'BZ', 'CD', 'CF', 'CG', 'CI', 'CK', 'CL', 'CM', 'CO', 'CR', 'CV', 'DJ', 'DM', 'DO', 'EC', 'EG', 'ER', 'ET', 'FJ', 'FK', 'GA', 'GD', 'GH', 'GI', 'GM', 'GN', 'GQ', 'GT', 'GW', 'GY', 'HK', 'HN', 'HT', 'IE', 'IQ', 'IR', 'JM', 'JO', 'KE', 'KH', 'KI', 'KM', 'KN', 'KP', 'KW', 'KY', 'LA', 'LB', 'LC', 'LK', 'LR', 'LS', 'LY', 'ML', 'MM', 'MO', 'MR', 'MS', 'MT', 'MU', 'MW', 'MZ', 'NA', 'NE', 'NG', 'NI', 'NP', 'NR', 'NU', 'OM', 'PA', 'PE', 'PF', 'PY', 'QA', 'RW', 'SA', 'SB', 'SC', 'SD', 'SL', 'SN', 'SO', 'SR', 'SS', 'ST', 'SV', 'SY', 'TC', 'TD', 'TG', 'TL', 'TO', 'TT', 'TV', 'TZ', 'UG', 'UY', 'VC', 'VE', 'VG', 'VN', 'VU', 'WS', 'XA', 'XB', 'XC', 'XE', 'XL', 'XM', 'XN', 'XS', 'YE', 'ZM', 'ZW' );
 		return in_array( $country_code, $countries, true );
+	}
+
+	/**
+	 * Initializes a purchase unit object.
+	 *
+	 * @param PurchaseUnit $purchase_unit The purchase unit.
+	 * @return void
+	 */
+	private function init_purchase_unit( PurchaseUnit $purchase_unit ): void {
+		if ( $this->sanitizer instanceof PurchaseUnitSanitizer ) {
+			$purchase_unit->set_sanitizer( $this->sanitizer );
+		}
 	}
 }

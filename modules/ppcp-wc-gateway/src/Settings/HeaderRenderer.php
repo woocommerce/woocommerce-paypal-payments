@@ -77,6 +77,8 @@ class HeaderRenderer {
 					'</a>
 				</span>
 			</div>
+
+			<div class="ppcp-notice-wrapper"></div>
 		';
 	}
 }

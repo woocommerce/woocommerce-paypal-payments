@@ -259,6 +259,11 @@
       <code>DAY_IN_SECONDS</code>
     </UndefinedConstant>
   </file>
+  <file src="modules/ppcp-api-client/src/Helper/OrderTransient.php">
+    <UndefinedConstant occurrences="1">
+      <code>DAY_IN_SECONDS</code>
+    </UndefinedConstant>
+  </file>
   <file src="modules/ppcp-button/services.php">
     <PossiblyFalseArgument occurrences="1">
       <code>realpath( __FILE__ )</code>
