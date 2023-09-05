@@ -118,6 +118,7 @@ class OnboardingUrlTest extends TestCase
 	public function test_delete()
 	{
 		// Expectations
+		$this->cache->shouldReceive('has')->once();
 		$this->cache->shouldReceive('delete')->once();
 
 		$this->onboardingUrl->delete();
