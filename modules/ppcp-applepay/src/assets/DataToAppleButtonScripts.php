@@ -133,7 +133,7 @@ class DataToAppleButtonScripts {
 				'currencyCode' => $currency_code,
 				'totalLabel'   => $total_label,
 			),
-			'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+			'ajax_url' => admin_url( 'admin-ajax.php' ),
 		);
 	}
 
@@ -171,7 +171,7 @@ class DataToAppleButtonScripts {
 				'currencyCode' => $currency_code,
 				'totalLabel'   => $total_label,
 			),
-			'ajaxUrl'      => admin_url( 'admin-ajax.php' ),
+			'ajax_url'      => admin_url( 'admin-ajax.php' ),
 			'buttonMarkup' => $button_markup,
 		);
 	}
