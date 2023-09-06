@@ -48,6 +48,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	const ORDER_PAYMENT_MODE_META_KEY   = '_ppcp_paypal_payment_mode';
 	const ORDER_PAYMENT_SOURCE_META_KEY = '_ppcp_paypal_payment_source';
 	const FEES_META_KEY                 = '_ppcp_paypal_fees';
+	const REFUND_FEES_META_KEY          = '_ppcp_paypal_refund_fees';
 	const REFUNDS_META_KEY              = '_ppcp_refunds';
 
 	/**
@@ -289,9 +290,11 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			// in the constructor, so must do it here.
 			global $theorder;
 			if ( $theorder instanceof WC_Order ) {
-				$payment_method_title = $theorder->get_payment_method_title();
-				if ( $payment_method_title ) {
-					$this->title = $payment_method_title;
+				if ( $theorder->get_payment_method() === self::ID ) {
+					$payment_method_title = $theorder->get_payment_method_title();
+					if ( $payment_method_title ) {
+						$this->title = $payment_method_title;
+					}
 				}
 			}
 		}

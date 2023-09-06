@@ -17,6 +17,7 @@ use WC_Product_Variable_Subscription;
 use WC_Subscriptions_Product;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingSubscriptions;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\Repository\OrderRepository;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
@@ -30,6 +31,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WP_Post;
@@ -38,6 +40,8 @@ use WP_Post;
  * Class SubscriptionModule
  */
 class SubscriptionModule implements ModuleInterface {
+
+	use TransactionIdHandlingTrait;
 
 	/**
 	 * {@inheritDoc}
@@ -83,6 +87,19 @@ class SubscriptionModule implements ModuleInterface {
 				$logger                   = $c->get( 'woocommerce.logger.woocommerce' );
 
 				$this->add_payment_token_id( $subscription, $payment_token_repository, $logger );
+
+				if ( count( $subscription->get_related_orders() ) === 1 ) {
+					$parent_order = $subscription->get_parent();
+					if ( is_a( $parent_order, WC_Order::class ) ) {
+						$order_repository = $c->get( 'api.repository.order' );
+						$order            = $order_repository->for_wc_order( $parent_order );
+						$transaction_id   = $this->get_paypal_order_transaction_id( $order );
+						if ( $transaction_id ) {
+							$subscription->update_meta_data( 'ppcp_previous_transaction_reference', $transaction_id );
+							$subscription->save();
+						}
+					}
+				}
 			}
 		);
 
@@ -133,28 +150,20 @@ class SubscriptionModule implements ModuleInterface {
 					&& isset( $data['payment_source']['token'] ) && $data['payment_source']['token']['type'] === 'PAYMENT_METHOD_TOKEN'
 					&& isset( $data['payment_source']['token']['source']->card )
 				) {
-					$renewal_order_id     = absint( $data['purchase_units'][0]['custom_id'] );
-					$subscriptions        = wcs_get_subscriptions_for_renewal_order( $renewal_order_id );
-					$subscriptions_values = array_values( $subscriptions );
-					$latest_subscription  = array_shift( $subscriptions_values );
-					if ( is_a( $latest_subscription, WC_Subscription::class ) ) {
-						$related_renewal_orders           = $latest_subscription->get_related_orders( 'ids', 'renewal' );
-						$latest_order_id_with_transaction = array_slice( $related_renewal_orders, 1, 1, false );
-						$order_id                         = ! empty( $latest_order_id_with_transaction ) ? $latest_order_id_with_transaction[0] : 0;
-						if ( count( $related_renewal_orders ) === 1 ) {
-							$order_id = $latest_subscription->get_parent_id();
-						}
-
-						$wc_order = wc_get_order( $order_id );
-						if ( is_a( $wc_order, WC_Order::class ) ) {
-							$transaction_id                                       = $wc_order->get_transaction_id();
-							$data['application_context']['stored_payment_source'] = array(
+					$data['payment_source'] = array(
+						'card' => array(
+							'vault_id'          => $data['payment_source']['token']['id'],
+							'stored_credential' => array(
 								'payment_initiator' => 'MERCHANT',
 								'payment_type'      => 'RECURRING',
 								'usage'             => 'SUBSEQUENT',
-								'previous_transaction_reference' => $transaction_id,
-							);
-						}
+							),
+						),
+					);
+
+					$previous_transaction_reference = $subscription->get_meta( 'ppcp_previous_transaction_reference' );
+					if ( $previous_transaction_reference ) {
+						$data['payment_source']['card']['stored_credential']['previous_transaction_reference'] = $previous_transaction_reference;
 					}
 				}
 

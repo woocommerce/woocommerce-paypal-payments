@@ -203,7 +203,7 @@ class Item {
 	 *
 	 * @return array
 	 */
-	public function to_array() {
+	public function to_array(): array {
 		$item = array(
 			'name'        => $this->name(),
 			'unit_amount' => $this->unit_amount()->to_array(),

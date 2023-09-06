@@ -1,6 +1,8 @@
 <?php
 /**
- * The refund object.
+ * The refund entity.
+ *
+ * @link https://developer.paypal.com/docs/api/orders/v2/#definition-refund
  *
  * @package WooCommerce\PayPalCommerce\ApiClient\Entity
  */
@@ -15,11 +17,32 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Entity;
 class Refund {
 
 	/**
-	 * The Capture.
+	 * The ID.
 	 *
-	 * @var Capture
+	 * @var string
 	 */
-	private $capture;
+	private $id;
+
+	/**
+	 * The status.
+	 *
+	 * @var RefundStatus
+	 */
+	private $status;
+
+	/**
+	 * The amount.
+	 *
+	 * @var Amount
+	 */
+	private $amount;
+
+	/**
+	 * The detailed breakdown of the refund activity (fees, ...).
+	 *
+	 * @var SellerPayableBreakdown|null
+	 */
+	private $seller_payable_breakdown;
 
 	/**
 	 * The invoice id.
@@ -29,50 +52,97 @@ class Refund {
 	private $invoice_id;
 
 	/**
-	 * The note to the payer.
+	 * The custom id.
+	 *
+	 * @var string
+	 */
+	private $custom_id;
+
+	/**
+	 * The acquirer reference number.
+	 *
+	 * @var string
+	 */
+	private $acquirer_reference_number;
+
+	/**
+	 * The acquirer reference number.
 	 *
 	 * @var string
 	 */
 	private $note_to_payer;
 
 	/**
-	 * The Amount.
+	 * The payer of the refund.
 	 *
-	 * @var Amount|null
+	 * @var ?RefundPayer
 	 */
-	private $amount;
+	private $payer;
 
 	/**
 	 * Refund constructor.
 	 *
-	 * @param Capture     $capture The capture where the refund is supposed to be applied at.
-	 * @param string      $invoice_id The invoice id.
-	 * @param string      $note_to_payer The note to the payer.
-	 * @param Amount|null $amount The Amount.
+	 * @param string                      $id The ID.
+	 * @param RefundStatus                $status The status.
+	 * @param Amount                      $amount The amount.
+	 * @param string                      $invoice_id The invoice id.
+	 * @param string                      $custom_id The custom id.
+	 * @param SellerPayableBreakdown|null $seller_payable_breakdown The detailed breakdown of the refund activity (fees, ...).
+	 * @param string                      $acquirer_reference_number The acquirer reference number.
+	 * @param string                      $note_to_payer The note to payer.
+	 * @param RefundPayer|null            $payer The payer.
 	 */
 	public function __construct(
-		Capture $capture,
+		string $id,
+		RefundStatus $status,
+		Amount $amount,
 		string $invoice_id,
-		string $note_to_payer = '',
-		Amount $amount = null
+		string $custom_id,
+		?SellerPayableBreakdown $seller_payable_breakdown,
+		string $acquirer_reference_number,
+		string $note_to_payer,
+		?RefundPayer $payer
 	) {
-		$this->capture       = $capture;
-		$this->invoice_id    = $invoice_id;
-		$this->note_to_payer = $note_to_payer;
-		$this->amount        = $amount;
+		$this->id                        = $id;
+		$this->status                    = $status;
+		$this->amount                    = $amount;
+		$this->invoice_id                = $invoice_id;
+		$this->custom_id                 = $custom_id;
+		$this->seller_payable_breakdown  = $seller_payable_breakdown;
+		$this->acquirer_reference_number = $acquirer_reference_number;
+		$this->note_to_payer             = $note_to_payer;
+		$this->payer                     = $payer;
 	}
 
 	/**
-	 * Returns the capture for the refund.
+	 * Returns the ID.
 	 *
-	 * @return Capture
+	 * @return string
 	 */
-	public function for_capture() : Capture {
-		return $this->capture;
+	public function id() : string {
+		return $this->id;
 	}
 
 	/**
-	 * Return the invoice id.
+	 * Returns the status.
+	 *
+	 * @return RefundStatus
+	 */
+	public function status() : RefundStatus {
+		return $this->status;
+	}
+
+	/**
+	 * Returns the amount.
+	 *
+	 * @return Amount
+	 */
+	public function amount() : Amount {
+		return $this->amount;
+	}
+
+	/**
+	 * Returns the invoice id.
 	 *
 	 * @return string
 	 */
@@ -81,7 +151,34 @@ class Refund {
 	}
 
 	/**
-	 * Returns the note to the payer.
+	 * Returns the custom id.
+	 *
+	 * @return string
+	 */
+	public function custom_id() : string {
+		return $this->custom_id;
+	}
+
+	/**
+	 * Returns the detailed breakdown of the refund activity (fees, ...).
+	 *
+	 * @return SellerPayableBreakdown|null
+	 */
+	public function seller_payable_breakdown() : ?SellerPayableBreakdown {
+		return $this->seller_payable_breakdown;
+	}
+
+	/**
+	 * The acquirer reference number.
+	 *
+	 * @return string
+	 */
+	public function acquirer_reference_number() : string {
+		return $this->acquirer_reference_number;
+	}
+
+	/**
+	 * The note to payer.
 	 *
 	 * @return string
 	 */
@@ -90,28 +187,38 @@ class Refund {
 	}
 
 	/**
-	 * Returns the Amount.
+	 * Returns the refund payer.
 	 *
-	 * @return Amount|null
+	 * @return RefundPayer|null
 	 */
-	public function amount() {
-		return $this->amount;
+	public function payer() : ?RefundPayer {
+		return $this->payer;
 	}
 
 	/**
-	 * Returns the object as array.
+	 * Returns the entity as array.
 	 *
 	 * @return array
 	 */
 	public function to_array() : array {
-		$data = array(
-			'invoice_id' => $this->invoice_id(),
+		$data    = array(
+			'id'                        => $this->id(),
+			'status'                    => $this->status()->name(),
+			'amount'                    => $this->amount()->to_array(),
+			'invoice_id'                => $this->invoice_id(),
+			'custom_id'                 => $this->custom_id(),
+			'acquirer_reference_number' => $this->acquirer_reference_number(),
+			'note_to_payer'             => (array) $this->note_to_payer(),
 		);
-		if ( $this->note_to_payer() ) {
-			$data['note_to_payer'] = $this->note_to_payer();
+		$details = $this->status()->details();
+		if ( $details ) {
+			$data['status_details'] = array( 'reason' => $details->reason() );
 		}
-		if ( $this->amount() ) {
-			$data['amount'] = $this->amount()->to_array();
+		if ( $this->seller_payable_breakdown ) {
+			$data['seller_payable_breakdown'] = $this->seller_payable_breakdown->to_array();
+		}
+		if ( $this->payer ) {
+			$data['payer'] = $this->payer->to_array();
 		}
 		return $data;
 	}

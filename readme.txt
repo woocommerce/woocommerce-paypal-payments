@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, e-commerce, store, sales, sell, 
 Requires at least: 5.3
 Tested up to: 6.3
 Requires PHP: 7.2
-Stable tag: 2.2.1
+Stable tag: 2.2.2
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -81,7 +81,12 @@ Follow the steps below to connect the plugin to your PayPal account:
 
 == Changelog ==
 
-= 2.2.1 - xxxx-xx-xx =
+= 2.2.2 - 2023-08-29 =
+* Fix - High rate of auth voids on vaulted subscriptions for guest users #1529 
+* Enhancement - HPOS compatibility issues #1594
+* Feature preview - PayPal Subscriptions API fixes and improvements #1600 #1607
+
+= 2.2.1 - 2023-08-24 =
 * Fix - One-page checkout causes mini cart not showing the PP button on certain pages #1536
 * Fix - When onboarding loading the return_url too fast may cause the onboarding to fail #1565
 * Fix - PayPal button doesn't work for variable products on product page after recent 2.2.0 release #1533

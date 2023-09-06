@@ -43,11 +43,32 @@ class FeesRendererTest extends TestCase
 				],
 			]);
 
+		$wcOrder->expects('get_meta')
+			->with(PayPalGateway::REFUND_FEES_META_KEY)
+			->andReturn([
+				'gross_amount' => [
+					'currency_code' => 'USD',
+					'value' => '20.52',
+				],
+				'paypal_fee' => [
+					'currency_code' => 'USD',
+					'value' => '0.51',
+				],
+				'net_amount' => [
+					'currency_code' => 'USD',
+					'value' => '50.01',
+				],
+			]);
+
 		$result = $this->renderer->render($wcOrder);
 		$this->assertStringContainsString('Fee', $result);
 		$this->assertStringContainsString('0.41', $result);
 		$this->assertStringContainsString('Payout', $result);
 		$this->assertStringContainsString('10.01', $result);
+		$this->assertStringContainsString('PayPal Refund Fee', $result);
+		$this->assertStringContainsString('0.51', $result);
+		$this->assertStringContainsString('PayPal Refund', $result);
+		$this->assertStringContainsString('50.01', $result);
 	}
 
 	public function testRenderWithoutNet() {
@@ -61,6 +82,10 @@ class FeesRendererTest extends TestCase
 					'value' => '0.41',
 				],
 			]);
+
+		$wcOrder->expects('get_meta')
+			->with(PayPalGateway::REFUND_FEES_META_KEY)
+			->andReturn([]);
 
 		$result = $this->renderer->render($wcOrder);
 		$this->assertStringContainsString('Fee', $result);
@@ -77,6 +102,10 @@ class FeesRendererTest extends TestCase
         $wcOrder->expects('get_meta')
             ->with(PayPalGateway::FEES_META_KEY)
             ->andReturn($meta);
+
+		$wcOrder->expects('get_meta')
+			->with(PayPalGateway::REFUND_FEES_META_KEY)
+			->andReturn([]);
 
         $this->assertSame('', $this->renderer->render($wcOrder));
     }
