@@ -4,6 +4,9 @@ import SimulateCart from "../../../../ppcp-button/resources/js/modules/Helper/Si
 import ErrorHandler from "../../../../ppcp-button/resources/js/modules/ErrorHandler";
 import UpdateCart from "../../../../ppcp-button/resources/js/modules/Helper/UpdateCart";
 import BaseHandler from "./BaseHandler";
+import CheckoutActionHandler
+    from "../../../../ppcp-button/resources/js/modules/ActionHandler/CheckoutActionHandler";
+import Spinner from "../../../../ppcp-button/resources/js/modules/Helper/Spinner";
 
 class SingleProductHandler extends BaseHandler {
 
@@ -48,23 +51,16 @@ class SingleProductHandler extends BaseHandler {
         });
     }
 
-    createOrder() {
-        const errorHandler = new ErrorHandler(
-            this.ppcpConfig.labels.error.generic,
-            document.querySelector('.woocommerce-notices-wrapper')
-        );
-
-        const actionHandler = new SingleProductActionHandler(
+    actionHandler() {
+        return new SingleProductActionHandler(
             this.ppcpConfig,
             new UpdateCart(
                 this.ppcpConfig.ajax.change_cart.endpoint,
                 this.ppcpConfig.ajax.change_cart.nonce,
             ),
             document.querySelector('form.cart'),
-            errorHandler,
+            this.errorHandler(),
         );
-
-        return actionHandler.configuration().createOrder();
     }
 
 }

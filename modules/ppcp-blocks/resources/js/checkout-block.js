@@ -29,7 +29,15 @@ const PayPalComponent = ({
         if (!loaded) {
             loadPaypalScript(config.scriptData, () => {
                 setLoaded(true);
-                buttonModuleWatcher.registerContextBootstrap(config.scriptData.context, this);
+
+                buttonModuleWatcher.registerContextBootstrap(config.scriptData.context, {
+                    createOrder: () => {
+                        return createOrder();
+                    },
+                    onApprove: (data, actions) => {
+                        return handleApprove(data, actions);
+                    },
+                });
             });
         }
     }, [loaded]);
@@ -101,12 +109,14 @@ const PayPalComponent = ({
             setPaypalOrder(order);
 
             if (config.finalReviewEnabled) {
-                const addresses = paypalOrderToWcAddresses(order);
+                if (order) {
+                    const addresses = paypalOrderToWcAddresses(order);
 
-                await wp.data.dispatch('wc/store/cart').updateCustomerData({
-                    billing_address: addresses.billingAddress,
-                    shipping_address: addresses.shippingAddress,
-                });
+                    await wp.data.dispatch('wc/store/cart').updateCustomerData({
+                        billing_address: addresses.billingAddress,
+                        shipping_address: addresses.shippingAddress,
+                    });
+                }
                 const checkoutUrl = new URL(config.scriptData.redirect);
                 // sometimes some browsers may load some kind of cached version of the page,
                 // so adding a parameter to avoid that

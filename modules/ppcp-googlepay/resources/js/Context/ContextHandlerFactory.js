@@ -7,21 +7,21 @@ import MiniCartHandler from "./MiniCartHandler";
 
 class ContextHandlerFactory {
 
-    static create(context, buttonConfig, ppcpConfig) {
+    static create(context, buttonConfig, ppcpConfig, externalActionHandler) {
         switch (context) {
             case 'product':
-                return new SingleProductHandler(buttonConfig, ppcpConfig);
+                return new SingleProductHandler(buttonConfig, ppcpConfig, externalActionHandler);
             case 'cart':
-                return new CartHandler(buttonConfig, ppcpConfig);
+                return new CartHandler(buttonConfig, ppcpConfig, externalActionHandler);
             case 'checkout':
             case 'pay-now': // same as checkout
-                return new CheckoutHandler(buttonConfig, ppcpConfig);
+                return new CheckoutHandler(buttonConfig, ppcpConfig, externalActionHandler);
             case 'mini-cart':
-                return new MiniCartHandler(buttonConfig, ppcpConfig);
+                return new MiniCartHandler(buttonConfig, ppcpConfig, externalActionHandler);
             case 'cart-block':
-                return new CartBlockHandler(buttonConfig, ppcpConfig);
+                return new CartBlockHandler(buttonConfig, ppcpConfig, externalActionHandler);
             case 'checkout-block':
-                return new CheckoutBlockHandler(buttonConfig, ppcpConfig);
+                return new CheckoutBlockHandler(buttonConfig, ppcpConfig, externalActionHandler);
         }
     }
 }

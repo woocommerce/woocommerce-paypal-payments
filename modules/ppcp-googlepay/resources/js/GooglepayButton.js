@@ -15,8 +15,11 @@ class GooglepayButton {
         this.contextHandler = ContextHandlerFactory.create(
             this.context,
             this.buttonConfig,
-            this.ppcpConfig
+            this.ppcpConfig,
+            this.externalHandler
         );
+
+        console.log('[GooglePayButton] new Button', this);
     }
 
     init(config) {
@@ -176,13 +179,18 @@ class GooglepayButton {
                 if (confirmOrderResponse.status === "APPROVED") {
 
                     let approveFailed = false;
-                    await this.contextHandler.approveOrderForContinue({
+                    await this.contextHandler.approveOrder({
                         orderID: id
-                    }, {
+                    }, { // actions mock object.
                         restart: () => new Promise((resolve, reject) => {
                             approveFailed = true;
                             resolve();
-                        })
+                        }),
+                        order: {
+                            get: () => new Promise((resolve, reject) => {
+                                resolve(null);
+                            })
+                        }
                     });
 
                     if (!approveFailed) {
