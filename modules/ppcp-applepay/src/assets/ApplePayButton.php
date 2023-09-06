@@ -250,7 +250,7 @@ class ApplePayButton implements ButtonInterface {
 		$applepay_request_data_object->validation_data();
 		$settings = $this->settings;
 		$settings->set('applepay_validated', $applepay_request_data_object->validated_flag());
-
+		$settings->persist();
 		wp_send_json_success();
 	}
 	/**
