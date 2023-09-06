@@ -29,10 +29,10 @@ return array(
 		);
 	},
 	'applepay.enabled'                        => static function ( ContainerInterface $container ): bool {
-		/*$status = $container->get( 'applepay.apple-product-status' );
+		$status = $container->get( 'applepay.apple-product-status' );
 		assert( $status instanceof AppleProductStatus);
-		return $status->apple_is_active();*/
-		return true;
+		return $status->apple_is_active();
+
 	},
 	'applepay.server_supported'               => static function ( ContainerInterface $container ): bool {
 		return ! empty( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] !== 'off';
