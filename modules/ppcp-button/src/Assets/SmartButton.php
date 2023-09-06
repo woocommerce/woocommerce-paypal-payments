@@ -462,8 +462,7 @@ class SmartButton implements SmartButtonInterface {
 						return;
 					}
 
-					$this->button_renderer( PayPalGateway::ID );
-					do_action( 'woocommerce_paypal_payments_single_product_button_render' );
+					$this->button_renderer( PayPalGateway::ID, 'woocommerce_paypal_payments_single_product_button_render' );
 				},
 				31
 			);
@@ -495,18 +494,16 @@ class SmartButton implements SmartButtonInterface {
 			add_action(
 				$this->pay_order_renderer_hook(),
 				function (): void {
-					$this->button_renderer( PayPalGateway::ID );
+					$this->button_renderer( PayPalGateway::ID, 'woocommerce_paypal_payments_payorder_button_render' );
 					$this->button_renderer( CardButtonGateway::ID );
-					do_action( 'woocommerce_paypal_payments_payorder_button_render' );
 				},
 				20
 			);
 			add_action(
 				$this->checkout_button_renderer_hook(),
 				function (): void {
-					$this->button_renderer( PayPalGateway::ID );
+					$this->button_renderer( PayPalGateway::ID, 'woocommerce_paypal_payments_checkout_button_render' );
 					$this->button_renderer( CardButtonGateway::ID );
-					do_action( 'woocommerce_paypal_payments_checkout_button_render' );
 				}
 			);
 
@@ -518,8 +515,7 @@ class SmartButton implements SmartButtonInterface {
 						return;
 					}
 
-					$this->button_renderer( PayPalGateway::ID );
-					do_action( 'woocommerce_paypal_payments_cart_button_render' );
+					$this->button_renderer( PayPalGateway::ID, 'woocommerce_paypal_payments_cart_button_render' );
 				},
 				20
 			);
@@ -622,9 +618,10 @@ class SmartButton implements SmartButtonInterface {
 	/**
 	 * Renders the HTML for the buttons.
 	 *
-	 * @param string $gateway_id The gateway ID, like 'ppcp-gateway'.
+	 * @param string      $gateway_id The gateway ID, like 'ppcp-gateway'.
+	 * @param string|null $action_name The action name to be called.
 	 */
-	public function button_renderer( string $gateway_id ) {
+	public function button_renderer( string $gateway_id, string $action_name = null ) {
 
 		$available_gateways = WC()->payment_gateways->get_available_payment_gateways();
 
@@ -634,7 +631,14 @@ class SmartButton implements SmartButtonInterface {
 
 		// The wrapper is needed for the loading spinner,
 		// otherwise jQuery block() prevents buttons rendering.
-		echo '<div class="ppc-button-wrapper"><div id="ppc-button-' . esc_attr( $gateway_id ) . '"></div></div>';
+		echo '<div class="ppc-button-wrapper">';
+		echo '<div id="ppc-button-' . esc_attr( $gateway_id ) . '"></div>';
+
+		if ( null !== $action_name ) {
+			do_action( $action_name );
+		}
+
+		echo '</div>';
 	}
 
 	/**

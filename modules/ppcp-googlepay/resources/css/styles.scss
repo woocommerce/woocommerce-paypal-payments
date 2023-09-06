@@ -1,6 +1,7 @@
 .ppcp-button-googlepay {
-	margin: 5px 0;
+	margin: 7px 0;
 	overflow: hidden;
+	min-height: 40px;
 	height: 45px;
 
 	&.ppcp-button-pill {
@@ -15,14 +16,31 @@
 
 .woocommerce-checkout {
 	.ppcp-button-googlepay {
-		margin: 0;
-		border-radius: 18px;
-		height: 38px;
+		margin-top: 0;
 	}
 }
 
-.wp-block-woocommerce-cart, .wp-block-woocommerce-checkout {
-	.ppcp-button-googlepay {
-		margin: 0;
+.ppcp-has-googlepay-block {
+
+	.wp-block-woocommerce-checkout {
+		.ppcp-button-googlepay {
+			margin: 0;
+			height: 40px;
+		}
 	}
+
+	.wp-block-woocommerce-cart {
+		.ppcp-button-googlepay {
+			margin: 0;
+			height: 40px;
+		}
+		/* Workaround for blocks grid */
+		.wc-block-components-express-payment__event-buttons {
+			display: block;
+			li[id*="express-payment-method-ppcp-"] {
+				padding-bottom: 0;
+			}
+		}
+	}
+
 }

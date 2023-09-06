@@ -138,7 +138,7 @@ class Button implements ButtonInterface {
 	 *
 	 * @psalm-suppress MissingClosureParamType
 	 */
-	private function add_onboarding_options( $options ): string {
+	public function add_onboarding_options( $options ): string {
 		$checked = '';
 		try {
 			$onboard_with_apple = $this->settings->get( 'ppcp-onboarding-apple' );
@@ -162,7 +162,7 @@ class Button implements ButtonInterface {
 	 * @param array $data The referrals data.
 	 * @return array
 	 */
-	private function add_partner_referrals_data( array $data ): array {
+	public function add_partner_referrals_data( array $data ): array {
 		try {
 			$onboard_with_google = $this->settings->get( 'ppcp-onboarding-google' );
 			if ( ! wc_string_to_bool( $onboard_with_google ) ) {
@@ -326,10 +326,8 @@ class Button implements ButtonInterface {
 	 */
 	private function googlepay_button(): void {
 		?>
-		<div class="ppc-button-wrapper">
-			<div id="ppc-button-googlepay-container" class="ppcp-button-googlepay">
-				<?php wp_nonce_field( 'woocommerce-process_checkout', 'woocommerce-process-checkout-nonce' ); ?>
-			</div>
+		<div id="ppc-button-googlepay-container" class="ppcp-button-googlepay">
+			<?php wp_nonce_field( 'woocommerce-process_checkout', 'woocommerce-process-checkout-nonce' ); ?>
 		</div>
 		<?php
 	}

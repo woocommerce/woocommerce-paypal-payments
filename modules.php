@@ -29,7 +29,8 @@ return function ( string $root_dir ): iterable {
 		( require "$modules_dir/ppcp-blocks/module.php" )(),
 	);
 	if ( apply_filters(
-		'inpsyde_feature_flags_woocommerce_paypal_payments_googlepay_enabled',
+		//phpcs:disable WordPress.NamingConventions.ValidHookName.UseUnderscores
+		'woocommerce.feature-flags.woocommerce_paypal_payments.googlepay_enabled',
 		getenv( 'PCP_GOOGLEPAY_ENABLED' ) === '1'
 	) ) {
 		$modules[] = ( require "$modules_dir/ppcp-googlepay/module.php" )();

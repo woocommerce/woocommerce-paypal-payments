@@ -126,6 +126,8 @@ class GooglepayButton {
         const paymentDataRequest = await this.paymentDataRequest();
         console.log('[GooglePayButton] onButtonClick: paymentDataRequest', paymentDataRequest, this.context);
 
+        window.ppcpFundingSource = 'googlepay'; // TODO : do this on another place like on create order
+
         this.paymentsClient.loadPaymentData(paymentDataRequest);
     }
 

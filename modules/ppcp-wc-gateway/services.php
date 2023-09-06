@@ -939,6 +939,13 @@ return array(
 			'paylater'    => _x( 'Pay Later', 'Name of payment method', 'woocommerce-paypal-payments' ),
 		);
 	},
+
+	'wcgateway.extra-funding-sources'                      => static function( ContainerInterface $container ): array {
+		return array(
+			'googlepay' => _x( 'Google Pay', 'Name of payment method', 'woocommerce-paypal-payments' ),
+		);
+	},
+
 	/**
 	 * The sources that do not cause issues about redirecting (on mobile, ...) and sometimes not returning back.
 	 */
@@ -1034,7 +1041,10 @@ return array(
 	'wcgateway.funding-source.renderer'                    => function ( ContainerInterface $container ) : FundingSourceRenderer {
 		return new FundingSourceRenderer(
 			$container->get( 'wcgateway.settings' ),
-			$container->get( 'wcgateway.all-funding-sources' )
+			array_merge(
+				$container->get( 'wcgateway.all-funding-sources' ),
+				$container->get( 'wcgateway.extra-funding-sources' )
+			)
 		);
 	},
 

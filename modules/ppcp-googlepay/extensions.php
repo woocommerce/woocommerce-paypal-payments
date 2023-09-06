@@ -29,7 +29,7 @@ return array(
 			$fields,
 			'allow_card_button_gateway',
 			array(
-				'googlepay_button_enabled' => array(
+				'googlepay_button_enabled'          => array(
 					'title'             => __( 'Google Pay Button', 'woocommerce-paypal-payments' ),
 					'type'              => 'checkbox',
 					'label'             => __( 'Enable Google Pay button', 'woocommerce-paypal-payments' ),
@@ -44,14 +44,18 @@ return array(
 									'handler' => 'SubElementsHandler',
 									'options' => array(
 										'values'   => array( '1' ),
-										'elements' => array( '#field-googlepay_button_color', '#field-googlepay_button_type' ),
+										'elements' => array(
+											'#field-googlepay_button_color',
+											'#field-googlepay_button_type',
+											'#field-googlepay_button_shipping_enabled',
+										),
 									),
 								),
 							)
 						),
 					),
 				),
-				'googlepay_button_color'   => array(
+				'googlepay_button_color'            => array(
 					'title'        => str_repeat( '&nbsp;', 6 ) . __( 'Button Color', 'woocommerce-paypal-payments' ),
 					'type'         => 'select',
 					'label'        => '',
@@ -63,13 +67,22 @@ return array(
 					'gateway'      => 'paypal',
 					'requirements' => array(),
 				),
-				'googlepay_button_type'    => array(
+				'googlepay_button_type'             => array(
 					'title'        => str_repeat( '&nbsp;', 6 ) . __( 'Button Type', 'woocommerce-paypal-payments' ),
 					'type'         => 'select',
 					'class'        => array(),
 					'input_class'  => array( 'wc-enhanced-select' ),
 					'default'      => 'pay',
 					'options'      => PropertiesDictionary::button_types(),
+					'screens'      => array( State::STATE_ONBOARDED ),
+					'gateway'      => 'paypal',
+					'requirements' => array(),
+				),
+				'googlepay_button_shipping_enabled' => array(
+					'title'        => str_repeat( '&nbsp;', 6 ) . __( 'Shipping Callback', 'woocommerce-paypal-payments' ),
+					'type'         => 'checkbox',
+					'label'        => __( 'Enable Google Pay shipping callback', 'woocommerce-paypal-payments' ),
+					'default'      => 'no',
 					'screens'      => array( State::STATE_ONBOARDED ),
 					'gateway'      => 'paypal',
 					'requirements' => array(),

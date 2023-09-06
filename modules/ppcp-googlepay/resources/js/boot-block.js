@@ -25,6 +25,13 @@ const GooglePayComponent = () => {
     };
 
     useEffect(() => {
+        const bodyClass = 'ppcp-has-googlepay-block';
+        if (!document.body.classList.contains(bodyClass)) {
+            document.body.classList.add(bodyClass);
+        }
+    }, []);
+
+    useEffect(() => {
         // Load GooglePay SDK
         loadCustomScript({ url: buttonConfig.sdk_url }).then(() => {
             setGooglePayLoaded(true);
@@ -44,7 +51,7 @@ const GooglePayComponent = () => {
     }, [paypalLoaded, googlePayLoaded]);
 
     return (
-        <div id={buttonConfig.button.wrapper.replace('#', '')}></div>
+        <div id={buttonConfig.button.wrapper.replace('#', '')} className="ppcp-button-googlepay"></div>
     );
 }
 
