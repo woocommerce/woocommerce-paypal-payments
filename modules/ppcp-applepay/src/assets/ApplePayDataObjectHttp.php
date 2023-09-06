@@ -85,6 +85,12 @@ class ApplePayDataObjectHttp {
 	 * @var Logger
 	 */
 	protected $logger;
+	/**
+	 * The validation flag.
+	 *
+	 * @var bool
+	 */
+	protected $validation_flag = false;
 
 	/**
 	 * ApplePayDataObjectHttp constructor.
@@ -117,6 +123,14 @@ class ApplePayDataObjectHttp {
 	 */
 	public function errors(): array {
 		return $this->errors;
+	}
+
+	public function validation_data() {
+		$data = filter_input( INPUT_POST, 'validation', FILTER_VALIDATE_BOOL );
+		if ( ! $data ) {
+			return;
+		}
+		$this->validation_flag = $data;
 	}
 
 	/**
@@ -510,6 +524,16 @@ class ApplePayDataObjectHttp {
 	 */
 	public function simplified_contact() {
 		return $this->simplified_contact;
+	}
+
+	/**
+	 * Returns the validated flag.
+	 *
+	 * @return bool
+	 */
+	public function validated_flag()
+	{
+		return $this->validation_flag;
 	}
 
 	/**

@@ -47,7 +47,7 @@ class ApplepayModule implements ModuleInterface {
 				'admin_notices',
 				static function () {
 					?>
-					<div class="notice notice-error">
+					<div class="notice notice-error is-dismissible">
 						<p>
 							<?php
 							echo wp_kses_post(
@@ -62,12 +62,14 @@ class ApplepayModule implements ModuleInterface {
 
 			return;
 		}
-		if ( ! $c->get( 'applepay.merchant_validated' ) ) {
+		$settings = $c->get( 'wcgateway.settings' );
+		$merchant_validated = $settings->has( 'applepay_validated' ) ? $settings->get( 'applepay_validated' ) === true : false;
+		if ( ! $merchant_validated ) {
 			add_action(
 				'admin_notices',
 				static function () {
 					?>
-					<div class="notice notice-error">
+					<div class="notice notice-error is-dismissible">
 						<p>
 							<?php
 							echo wp_kses_post(
@@ -83,7 +85,7 @@ class ApplepayModule implements ModuleInterface {
 		$this->load_assets( $c );
 		$this->handle_validation_file($c);
 		$this->render_buttons( $c );
-
+		assert( $apple_payment_method instanceof ButtonInterface );
 		$apple_payment_method->bootstrap_ajax_request();
 		/*add_action(
 			'woocommerce_blocks_payment_method_type_registration',

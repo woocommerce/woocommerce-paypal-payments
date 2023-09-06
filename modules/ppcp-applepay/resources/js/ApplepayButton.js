@@ -43,15 +43,8 @@ class ApplepayButton {
                 this.onButtonClick()
             })
         }
-        jQuery.ajax({
-            url: this.buttonConfig.ajax_url,
-            type: 'POST',
-            data: {
-                action: 'ppcp_validate',
-                validation: true,
-                nonce: this.nonce,
-            }
-        })
+        console.log('[ApplePayButton] init done', this.buttonConfig.ajax_url);
+
     }
 
     buildReadyToPayRequest(allowedPaymentMethods, baseRequest) {
@@ -182,7 +175,15 @@ class ApplepayButton {
                 .then(validateResult => {
                     session.completeMerchantValidation(validateResult.merchantSession);
                     //call backend to update validation to true
-
+                    jQuery.ajax({
+                        url: this.buttonConfig.ajax_url,
+                        type: 'POST',
+                        data: {
+                            action: 'ppcp_validate',
+                            validation: true,
+                            'woocommerce-process-checkout-nonce': this.nonce,
+                        }
+                    })
                     console.log('validated')
                 })
                 .catch(validateError => {
@@ -194,7 +195,7 @@ class ApplepayButton {
                         data: {
                             action: 'ppcp_validate',
                             validation: false,
-                            nonce: this.nonce,
+                            'woocommerce-process-checkout-nonce': this.nonce,
                         }
                     })
                     session.abort();

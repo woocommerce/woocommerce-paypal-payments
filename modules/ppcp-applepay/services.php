@@ -37,16 +37,6 @@ return array(
 	'applepay.server_supported'               => static function ( ContainerInterface $container ): bool {
 		return ! empty( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] !== 'off';
 	},
-	'applepay.merchant_validated'             => static function ( ContainerInterface $container ): bool {
-		$settings = $container->get( 'wcgateway.settings' );
-		assert( $settings instanceof Settings );
-		try {
-			$settings->get( 'applepay_validated' );
-		} catch ( \Exception $e ) {
-			return false;
-		}
-		return $settings->get( 'applepay_validated' ) === true;
-	},
 	'applepay.url'                            => static function ( ContainerInterface $container ): string {
 		$path = realpath( __FILE__ );
 		if ( false === $path ) {
