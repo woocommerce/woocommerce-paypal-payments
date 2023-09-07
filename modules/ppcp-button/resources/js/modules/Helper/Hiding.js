@@ -9,6 +9,24 @@ const getElement = (selectorOrElement) => {
     return selectorOrElement;
 }
 
+const triggerHidden = (handler, selectorOrElement, element) => {
+    jQuery(document).trigger('ppcp-hidden', {
+        'handler': handler,
+        'action': 'hide',
+        'selector': selectorOrElement,
+        'element': element
+    });
+}
+
+const triggerShown = (handler, selectorOrElement, element) => {
+    jQuery(document).trigger('ppcp-shown', {
+        'handler': handler,
+        'action': 'show',
+        'selector': selectorOrElement,
+        'element': element
+    });
+}
+
 export const isVisible = (element) => {
     return !!(element.offsetWidth || element.offsetHeight || element.getClientRects().length);
 }
@@ -27,14 +45,18 @@ export const setVisible = (selectorOrElement, show, important = false) => {
         }
 
         element.style.setProperty('display', 'none', important ? 'important' : '');
+        triggerHidden('Hiding.setVisible', selectorOrElement, element);
+
     } else {
         if (currentValue === 'none') {
             element.style.removeProperty('display');
+            triggerShown('Hiding.setVisible', selectorOrElement, element);
         }
 
         // still not visible (if something else added display: none in CSS)
         if (!isVisible(element)) {
             element.style.setProperty('display', 'block');
+            triggerShown('Hiding.setVisible', selectorOrElement, element);
         }
     }
 };
@@ -47,8 +69,10 @@ export const setVisibleByClass = (selectorOrElement, show, hiddenClass) => {
 
     if (show) {
         element.classList.remove(hiddenClass);
+        triggerShown('Hiding.setVisibleByClass', selectorOrElement, element);
     } else {
         element.classList.add(hiddenClass);
+        triggerHidden('Hiding.setVisibleByClass', selectorOrElement, element);
     }
 };
 
