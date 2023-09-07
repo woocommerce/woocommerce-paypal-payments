@@ -165,7 +165,7 @@ class MetaBoxRenderer {
 				}
 				?>
 				<?php if ( empty( $shipments ) ) : ?>
-					<p><?php echo esc_html__( 'No PayPal Shipment Tracking added to this order yet. Add new Shipment Tracking or reload the page to refresh', 'woocommerce-paypal-payments' ); ?></p>
+					<p class="ppcp-tracking-no-shipments"><?php echo esc_html__( 'No PayPal Shipment Tracking added to this order yet. Add new Shipment Tracking or reload the page to refresh', 'woocommerce-paypal-payments' ); ?></p>
 				<?php endif; ?>
 			</div>
 			<div class="blockUI blockOverlay ppcp-tracking-loader"></div>
