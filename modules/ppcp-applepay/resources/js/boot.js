@@ -24,6 +24,7 @@ import ApplepayManager from "./ApplepayManager";
                 return;
             }
             console.log(buttonConfig.button.wrapper)
+            console.log(jQuery(buttonConfig.button.wrapper).length)
             // If button wrapper is not present then there is no need to load the scripts.
             if (!jQuery(buttonConfig.button.wrapper).length) {
                 return;

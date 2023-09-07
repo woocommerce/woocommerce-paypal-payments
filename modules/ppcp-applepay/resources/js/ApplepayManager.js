@@ -8,7 +8,7 @@ class ApplepayManager {
         this.buttonConfig = buttonConfig;
         this.ppcpConfig = ppcpConfig;
         this.ApplePayConfig = null;
-
+console.log('Applepay manager', ppcpConfig, buttonConfig)
         this.buttons = [];
 
         buttonModuleWatcher.watchContextBootstrap((bootstrap) => {

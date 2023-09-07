@@ -37,14 +37,19 @@ class ApplepayButton {
         this.applePayConfig = config;
         const isEligible = this.applePayConfig.isEligible;
         if (isEligible) {
-            this.addButton();
-            document.querySelector('#btn-appl').addEventListener('click', (evt) => {
-                evt.preventDefault()
-                this.onButtonClick()
-            })
+            this.fetchTransactionInfo().then(() => {
+                this.addButton();
+                document.querySelector('#btn-appl').addEventListener('click', (evt) => {
+                    evt.preventDefault();
+                    this.onButtonClick();
+                });
+            });
         }
         console.log('[ApplePayButton] init done', this.buttonConfig.ajax_url);
 
+    }
+    async fetchTransactionInfo() {
+        this.transactionInfo = await this.contextHandler.transactionInfo();
     }
 
     buildReadyToPayRequest(allowedPaymentMethods, baseRequest) {
@@ -53,6 +58,7 @@ class ApplepayButton {
         });
     }
     applePaySession(paymentRequest) {
+        console.log('apple session', paymentRequest)
         const session = new ApplePaySession(4, paymentRequest)
         session.begin()
         const ajaxUrl = this.buttonConfig.ajax_url
@@ -109,57 +115,25 @@ class ApplepayButton {
     paymentDataRequest() {
         const applepayConfig = this.applePayConfig
         const buttonConfig = this.buttonConfig
+        let baseRequest = {
+            countryCode: applepayConfig.countryCode,
+            merchantCapabilities: applepayConfig.merchantCapabilities,
+            supportedNetworks: applepayConfig.supportedNetworks,
+            requiredShippingContactFields: ["name", "phone",
+                "email", "postalAddress"],
+            requiredBillingContactFields: ["name", "phone", "email",
+                "postalAddress"]
+        }
         console.log('[ApplePayButton] paymentDataRequest', applepayConfig, buttonConfig);
-        function product_request() {
-            document.querySelector('input.qty').addEventListener('change', event => {
-                this.productQuantity = event.currentTarget.value
-            })
-            this.productQuantity = parseInt(this.productQuantity)
-            const amountWithoutTax = this.productQuantity * buttonConfig.product.price
-            return {
-                countryCode: applepayConfig.countryCode,
-                merchantCapabilities: applepayConfig.merchantCapabilities,
-                supportedNetworks: applepayConfig.supportedNetworks,
-                currencyCode: buttonConfig.shop.currencyCode,
-                requiredShippingContactFields: ["name", "phone",
-                    "email", "postalAddress"],
-                requiredBillingContactFields: ["name", "phone", "email",
-                    "postalAddress"],
-                total: {
-                    label: buttonConfig.shop.totalLabel,
-                    type: "final",
-                    amount: amountWithoutTax,
-                }
-            }
+        const paymentDataRequest = Object.assign({}, baseRequest);
+        paymentDataRequest.currencyCode = buttonConfig.shop.currencyCode;
+        paymentDataRequest.total = {
+            label: buttonConfig.shop.totalLabel,
+            type: "final",
+            amount: this.transactionInfo.totalPrice,
         }
 
-        function cart_request() {
-            const priceContent = jQuery('.cart-subtotal .woocommerce-Price-amount bdi').contents()[1]
-            const priceString = priceContent.nodeValue.trim();
-            const price = parseFloat(priceString);
-            return {
-                countryCode: applepayConfig.countryCode,
-                merchantCapabilities: applepayConfig.merchantCapabilities,
-                supportedNetworks: applepayConfig.supportedNetworks,
-                currencyCode: buttonConfig.shop.currencyCode,
-                requiredShippingContactFields: ["name", "phone",
-                    "email", "postalAddress"],
-                requiredBillingContactFields: ["name", "phone", "email",
-                    "postalAddress"],
-                total: {
-                    label: buttonConfig.shop.totalLabel,
-                    type: "final",
-                    amount: price,
-                }
-            }
-        }
-
-        switch (this.context) {
-            case 'product': return product_request.call(this);
-            case 'cart':
-            case 'checkout':
-                return cart_request.call(this);
-        }
+        return paymentDataRequest
     }
 
 

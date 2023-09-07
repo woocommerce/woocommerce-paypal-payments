@@ -87,7 +87,7 @@ class AppleProductStatus {
 			return false;
 		}
 
-		/*if ( $this->cache->has( self::APPLE_STATUS_CACHE_KEY ) ) {
+		if ( $this->cache->has( self::APPLE_STATUS_CACHE_KEY ) ) {
 			return $this->cache->get( self::APPLE_STATUS_CACHE_KEY ) === 'true';
 		}
 
@@ -97,7 +97,7 @@ class AppleProductStatus {
 		if ( $this->settings->has( 'products_apple_enabled' ) && $this->settings->get( 'products_apple_enabled' ) === true ) {
 			$this->current_status_cache = true;
 			return true;
-		}*/
+		}
 
 		try {
 			$seller_status = $this->partners_endpoint->seller_status();

@@ -914,7 +914,7 @@ class ApplePayButton implements ButtonInterface {
 			add_action(
 				$render_placeholder,
 				function () {
-					echo '<span id="applepay-container-minicart" class="ppcp-button-applepay ppcp-button-minicart"></span>';
+					echo '<span id="applepay-container" class="ppcp-button-applepay ppcp-button-minicart"></span>';
 				},
 				21
 			);

@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Applepay;
 
+use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Applepay\Assets\AppleProductStatus;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
@@ -87,12 +88,12 @@ class ApplepayModule implements ModuleInterface {
 		$this->render_buttons( $c );
 		assert( $apple_payment_method instanceof ButtonInterface );
 		$apple_payment_method->bootstrap_ajax_request();
-		/*add_action(
+		add_action(
 			'woocommerce_blocks_payment_method_type_registration',
 			function( PaymentMethodRegistry $payment_method_registry ) use ( $c ): void {
-				$payment_method_registry->register( $c->get( 'googlepay.blocks-payment-method' ) );
+				$payment_method_registry->register( $c->get( 'applepay.blocks-payment-method' ) );
 			}
-		);*/
+		);
 
 		$this->remove_status_cache($c);
 	}

@@ -116,7 +116,7 @@ class DataToAppleButtonScripts {
 			'sdk_url' => $this->sdk_url,
 			'button'  => array(
 				'wrapper'           => '#applepay-container',
-				'mini_cart_wrapper' => '#applepay-container-minicart',
+				'mini_cart_wrapper' => '#applepay-container',
 				'type' => $type,
 				'color' => $color,
 				'lang'  => $lang,
@@ -160,7 +160,7 @@ class DataToAppleButtonScripts {
 			'sdk_url' => $this->sdk_url,
 			'button'  => array(
 				'wrapper'           => '#applepay-container',
-				'mini_cart_wrapper' => '#applepay-container-minicart',
+				'mini_cart_wrapper' => '#applepay-container',
 			),
 			'product'      => array(
 				'needShipping' => $cart->needs_shipping(),

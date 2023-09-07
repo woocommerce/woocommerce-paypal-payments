@@ -9,10 +9,12 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Applepay;
 
+use Automattic\WooCommerce\Blocks\Payments\PaymentMethodTypeInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Applepay\Assets\ApplePayButton;
 use WooCommerce\PayPalCommerce\Applepay\Assets\AppleProductStatus;
 use WooCommerce\PayPalCommerce\Applepay\Assets\DataToAppleButtonScripts;
+use WooCommerce\PayPalCommerce\Applepay\Assets\BlocksPaymentMethod;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
@@ -32,7 +34,6 @@ return array(
 		$status = $container->get( 'applepay.apple-product-status' );
 		assert( $status instanceof AppleProductStatus);
 		return $status->apple_is_active();
-
 	},
 	'applepay.server_supported'               => static function ( ContainerInterface $container ): bool {
 		return ! empty( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] !== 'off';
@@ -63,6 +64,15 @@ return array(
 			$container->get('ppcp.asset-version'),
 			$container->get('applepay.data_to_scripts'),
 			$container->get( 'wcgateway.settings.status' ),
+		);
+	},
+	'applepay.blocks-payment-method' => static function ( ContainerInterface $container ): PaymentMethodTypeInterface {
+		return new BlocksPaymentMethod(
+			'ppcp-applepay',
+			$container->get( 'applepay.url' ),
+			$container->get( 'ppcp.asset-version' ),
+			$container->get( 'applepay.button' ),
+			$container->get( 'blocks.method' )
 		);
 	},
 );
