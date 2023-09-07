@@ -78,11 +78,13 @@ class OrderEditPageAssets {
 	 * @return array a map of script data.
 	 */
 	public function get_script_data(): array {
+
 		return array(
 			'ajax' => array(
 				'tracking_info' => array(
 					'endpoint' => \WC_AJAX::get_endpoint( OrderTrackingEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( OrderTrackingEndpoint::nonce() ),
+					'url'      => admin_url( 'admin-ajax.php' ),
 				),
 			),
 		);

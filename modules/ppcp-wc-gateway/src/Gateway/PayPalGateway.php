@@ -290,9 +290,11 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			// in the constructor, so must do it here.
 			global $theorder;
 			if ( $theorder instanceof WC_Order ) {
-				$payment_method_title = $theorder->get_payment_method_title();
-				if ( $payment_method_title ) {
-					$this->title = $payment_method_title;
+				if ( $theorder->get_payment_method() === self::ID ) {
+					$payment_method_title = $theorder->get_payment_method_title();
+					if ( $payment_method_title ) {
+						$this->title = $payment_method_title;
+					}
 				}
 			}
 		}
