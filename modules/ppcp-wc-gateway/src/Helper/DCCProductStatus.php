@@ -135,12 +135,12 @@ class DCCProductStatus {
 				$this->settings->set( 'products_dcc_enabled', true );
 				$this->settings->persist();
 				$this->current_status_cache = true;
-				$this->cache->set( self::DCC_STATUS_CACHE_KEY, 'true', 3 * MONTH_IN_SECONDS );
+				$this->cache->set( self::DCC_STATUS_CACHE_KEY, 'true', MONTH_IN_SECONDS );
 				return true;
 			}
 		}
 
-		$expiration = 3 * MONTH_IN_SECONDS;
+		$expiration = MONTH_IN_SECONDS;
 		if ( $this->dcc_applies->for_country_currency() ) {
 			$expiration = 3 * HOUR_IN_SECONDS;
 		}

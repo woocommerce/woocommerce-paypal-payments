@@ -112,13 +112,7 @@ class PaymentCaptureRefunded implements RequestHandler {
 				'amount'   => $request['resource']['amount']['value'],
 			)
 		);
-		if ( is_wp_error( $refund ) ) {
-			/**
-			 * Helps to asset type.
-			 *
-			 * @psalm-suppress RedundantCondition
-			 */
-			assert( $refund instanceof WP_Error );
+		if ( $refund instanceof WP_Error ) {
 			$message = sprintf(
 				'Order %1$s could not be refunded. %2$s',
 				(string) $wc_order->get_id(),

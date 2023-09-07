@@ -401,9 +401,7 @@ class SettingsListener {
 				$this->webhook_registrar->unregister();
 
 				foreach ( $this->signup_link_ids as $key ) {
-					if ( $this->signup_link_cache->has( $key ) ) {
-						$this->signup_link_cache->delete( $key );
-					}
+					( new OnboardingUrl( $this->signup_link_cache, $key, get_current_user_id() ) )->delete();
 				}
 			}
 		}
@@ -638,4 +636,15 @@ class SettingsListener {
 			throw $exception;
 		}
 	}
+
+	/**
+	 * Handles onboarding URLs deletion
+	 */
+	public function listen_for_uninstall(): void {
+		// Clear onboarding links from cache.
+		foreach ( $this->signup_link_ids as $key ) {
+			( new OnboardingUrl( $this->signup_link_cache, $key, get_current_user_id() ) )->delete();
+		}
+	}
+
 }
