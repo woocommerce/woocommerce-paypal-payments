@@ -29,7 +29,15 @@ const PayPalComponent = ({
         if (!loaded) {
             loadPaypalScript(config.scriptData, () => {
                 setLoaded(true);
-                buttonModuleWatcher.registerContextBootstrap(config.scriptData.context, this);
+
+                buttonModuleWatcher.registerContextBootstrap(config.scriptData.context, {
+                    createOrder: () => {
+                        return createOrder();
+                    },
+                    onApprove: (data, actions) => {
+                        return handleApprove(data, actions);
+                    },
+                });
             });
         }
     }, [loaded]);
