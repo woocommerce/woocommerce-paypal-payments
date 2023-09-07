@@ -497,7 +497,6 @@ class WCGatewayModule implements ModuleInterface {
 
 				try {
 					$listener->listen_for_vaulting_enabled();
-					$listener->listen_for_tracking_enabled();
 				} catch ( RuntimeException $exception ) {
 					add_action(
 						'admin_notices',
