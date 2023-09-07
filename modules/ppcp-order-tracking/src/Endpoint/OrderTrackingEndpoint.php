@@ -414,7 +414,7 @@ class OrderTrackingEndpoint {
 				continue;
 			}
 
-			$empty_keys[] = ucwords(str_replace('_', ' ', $key));;
+			$empty_keys[] = ucwords( str_replace( '_', ' ', $key ) );
 		}
 
 		if ( empty( $empty_keys ) ) {
