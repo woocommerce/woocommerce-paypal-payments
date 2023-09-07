@@ -100,7 +100,8 @@ return array(
 		}
 	},
 	'order-tracking.is-module-enabled'         => static function ( ContainerInterface $container ): bool {
-		$order_id = isset( $_GET['post'] ) ? (int) $_GET['post'] : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$order_id = wc_clean( wp_unslash( $_GET['id'] ?? $_GET['post'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+
 		if ( empty( $order_id ) ) {
 			return false;
 		}
