@@ -183,7 +183,8 @@ class WCGatewayModule implements ModuleInterface {
 				$c->get( 'onboarding.environment' ),
 				$settings_status->is_pay_later_button_enabled(),
 				$settings->has( 'disable_funding' ) ? $settings->get( 'disable_funding' ) : array(),
-				$c->get( 'wcgateway.settings.funding-sources' )
+				$c->get( 'wcgateway.settings.funding-sources' ),
+				$c->get( 'wcgateway.is-ppcp-settings-page' )
 			);
 			$assets->register_assets();
 		}
@@ -496,7 +497,6 @@ class WCGatewayModule implements ModuleInterface {
 
 				try {
 					$listener->listen_for_vaulting_enabled();
-					$listener->listen_for_tracking_enabled();
 				} catch ( RuntimeException $exception ) {
 					add_action(
 						'admin_notices',

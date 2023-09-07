@@ -6,6 +6,7 @@ module.exports = {
     mode: isProduction ? 'production' : 'development',
     target: 'web',
     entry: {
+        'common': path.resolve('./resources/js/common.js'),
         'gateway-settings': path.resolve('./resources/js/gateway-settings.js'),
         'fraudnet': path.resolve('./resources/js/fraudnet.js'),
         'oxxo': path.resolve('./resources/js/oxxo.js'),

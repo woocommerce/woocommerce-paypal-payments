@@ -2,8 +2,17 @@ class CartHelper {
 
     constructor(cartItemKeys = [])
     {
-        this.endpoint = wc_cart_fragments_params.wc_ajax_url.toString().replace('%%endpoint%%', 'remove_from_cart');
         this.cartItemKeys = cartItemKeys;
+    }
+
+    getEndpoint() {
+        let ajaxUrl = "/?wc-ajax=%%endpoint%%";
+
+        if ((typeof wc_cart_fragments_params !== 'undefined') && wc_cart_fragments_params.wc_ajax_url) {
+            ajaxUrl = wc_cart_fragments_params.wc_ajax_url;
+        }
+
+        return ajaxUrl.toString().replace('%%endpoint%%', 'remove_from_cart');
     }
 
     addFromPurchaseUnits(purchaseUnits) {
@@ -46,7 +55,7 @@ class CartHelper {
                     continue;
                 }
 
-                fetch(this.endpoint, {
+                fetch(this.getEndpoint(), {
                     method: 'POST',
                     credentials: 'same-origin',
                     body: params

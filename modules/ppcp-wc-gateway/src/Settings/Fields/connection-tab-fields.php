@@ -402,20 +402,6 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'requirements' => array( 'pui_ready' ),
 			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
-		'tracking_enabled'                              => array(
-			'title'        => __( 'Shipment Tracking', 'woocommerce-paypal-payments' ),
-			'type'         => 'checkbox',
-			'desc_tip'     => true,
-			'label'        => $container->get( 'wcgateway.settings.tracking-label' ),
-			'description'  => __( 'Allows to send shipment tracking numbers to PayPal for PayPal transactions.', 'woocommerce-paypal-payments' ),
-			'default'      => false,
-			'screens'      => array(
-				State::STATE_ONBOARDED,
-			),
-			'requirements' => array(),
-			'gateway'      => Settings::CONNECTION_TAB_ID,
-			'input_class'  => $container->get( 'wcgateway.settings.should-disable-tracking-checkbox' ) ? array( 'ppcp-disabled-checkbox' ) : array(),
-		),
 		'fraudnet_enabled'                              => array(
 			'title'        => __( 'FraudNet', 'woocommerce-paypal-payments' ),
 			'type'         => 'checkbox',
