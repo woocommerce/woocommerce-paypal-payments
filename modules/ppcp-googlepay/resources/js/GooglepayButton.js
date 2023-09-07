@@ -72,21 +72,25 @@ class GooglepayButton {
      * Returns configurations relative to this button context.
      */
     contextConfig() {
-        if (this.context === 'mini-cart') {
-            return {
-                wrapper: this.buttonConfig.button.mini_cart_wrapper,
-                ppcpStyle: this.ppcpConfig.button.mini_cart_style,
-                buttonStyle: this.buttonConfig.button.mini_cart_style,
-                ppcpButtonWrapper: this.ppcpConfig.button.mini_cart_wrapper
-            }
-        }
-
-        return {
+        let config = {
             wrapper: this.buttonConfig.button.wrapper,
             ppcpStyle: this.ppcpConfig.button.style,
             buttonStyle: this.buttonConfig.button.style,
             ppcpButtonWrapper: this.ppcpConfig.button.wrapper
         }
+
+        if (this.context === 'mini-cart') {
+            config.wrapper = this.buttonConfig.button.mini_cart_wrapper;
+            config.ppcpStyle = this.ppcpConfig.button.mini_cart_style;
+            config.buttonStyle = this.buttonConfig.button.mini_cart_style;
+            config.ppcpButtonWrapper = this.ppcpConfig.button.mini_cart_wrapper;
+        }
+
+        if (['cart-block', 'checkout-block'].indexOf(this.context) !== -1) {
+            config.ppcpButtonWrapper = '#express-payment-method-ppcp-gateway';
+        }
+
+        return config;
     }
 
     initClient() {
