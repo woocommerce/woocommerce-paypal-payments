@@ -4,9 +4,6 @@ import SimulateCart from "../../../../ppcp-button/resources/js/modules/Helper/Si
 import ErrorHandler from "../../../../ppcp-button/resources/js/modules/ErrorHandler";
 import UpdateCart from "../../../../ppcp-button/resources/js/modules/Helper/UpdateCart";
 import BaseHandler from "./BaseHandler";
-import CheckoutActionHandler
-    from "../../../../ppcp-button/resources/js/modules/ActionHandler/CheckoutActionHandler";
-import Spinner from "../../../../ppcp-button/resources/js/modules/Helper/Spinner";
 
 class SingleProductHandler extends BaseHandler {
 
