@@ -106,7 +106,7 @@ return array(
 			return false;
 		}
 
-		$meta = get_post_meta( $order_id, PayPalGateway::ORDER_ID_META_KEY, true );
+		$meta = get_post_meta( (int) $order_id, PayPalGateway::ORDER_ID_META_KEY, true );
 
 		if ( empty( $meta ) ) {
 			return false;
