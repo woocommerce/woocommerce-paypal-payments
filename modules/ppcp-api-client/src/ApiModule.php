@@ -9,10 +9,13 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient;
 
+use WC_Order;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderTransient;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 
 /**
  * Class ApiModule
@@ -40,7 +43,6 @@ class ApiModule implements ModuleInterface {
 				WC()->session->set( 'ppcp_fees', $fees );
 			}
 		);
-
 		add_filter(
 			'ppcp_create_order_request_body_data',
 			function( array $data ) use ( $c ) {
@@ -54,6 +56,30 @@ class ApiModule implements ModuleInterface {
 
 				return $data;
 			}
+		);
+		add_action(
+			'woocommerce_paypal_payments_paypal_order_created',
+			function ( Order $order ) use ( $c ) {
+				$transient = $c->has( 'api.helper.order-transient' ) ? $c->get( 'api.helper.order-transient' ) : null;
+
+				if ( $transient instanceof OrderTransient ) {
+					$transient->on_order_created( $order );
+				}
+			},
+			10,
+			1
+		);
+		add_action(
+			'woocommerce_paypal_payments_woocommerce_order_created',
+			function ( WC_Order $wc_order, Order $order ) use ( $c ) {
+				$transient = $c->has( 'api.helper.order-transient' ) ? $c->get( 'api.helper.order-transient' ) : null;
+
+				if ( $transient instanceof OrderTransient ) {
+					$transient->on_woocommerce_order_created( $wc_order, $order );
+				}
+			},
+			10,
+			2
 		);
 	}
 

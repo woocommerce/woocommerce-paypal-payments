@@ -72,6 +72,7 @@ class VaultingModule implements ModuleInterface {
 			'woocommerce_paypal_payments_check_saved_payment',
 			function ( int $order_id, int $customer_id, string $intent ) use ( $container ) {
 				$payment_token_checker = $container->get( 'vaulting.payment-token-checker' );
+				assert( $payment_token_checker instanceof PaymentTokenChecker );
 				$payment_token_checker->check_and_update( $order_id, $customer_id, $intent );
 			},
 			10,

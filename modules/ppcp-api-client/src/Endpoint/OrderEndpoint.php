@@ -281,6 +281,9 @@ class OrderEndpoint {
 			throw $error;
 		}
 		$order = $this->order_factory->from_paypal_response( $json );
+
+		do_action( 'woocommerce_paypal_payments_paypal_order_created', $order );
+
 		return $order;
 	}
 

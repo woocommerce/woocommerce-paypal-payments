@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Processor;
 
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderTransient;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
@@ -22,14 +23,16 @@ trait OrderMetaTrait {
 	/**
 	 * Adds common metadata to the order.
 	 *
-	 * @param WC_Order    $wc_order The WC order to which metadata will be added.
-	 * @param Order       $order The PayPal order.
-	 * @param Environment $environment The environment.
+	 * @param WC_Order            $wc_order The WC order to which metadata will be added.
+	 * @param Order               $order The PayPal order.
+	 * @param Environment         $environment The environment.
+	 * @param OrderTransient|null $order_transient The order transient helper.
 	 */
 	protected function add_paypal_meta(
 		WC_Order $wc_order,
 		Order $order,
-		Environment $environment
+		Environment $environment,
+		OrderTransient $order_transient = null
 	): void {
 		$wc_order->update_meta_data( PayPalGateway::ORDER_ID_META_KEY, $order->id() );
 		$wc_order->update_meta_data( PayPalGateway::INTENT_META_KEY, $order->intent() );
@@ -43,6 +46,8 @@ trait OrderMetaTrait {
 		}
 
 		$wc_order->save();
+
+		do_action( 'woocommerce_paypal_payments_woocommerce_order_created', $wc_order, $order );
 	}
 
 	/**

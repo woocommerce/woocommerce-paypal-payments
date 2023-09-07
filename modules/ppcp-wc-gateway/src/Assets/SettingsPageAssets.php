@@ -88,6 +88,13 @@ class SettingsPageAssets {
 	protected $all_funding_sources;
 
 	/**
+	 * Whether it's a settings page of this plugin.
+	 *
+	 * @var bool
+	 */
+	private $is_settings_page;
+
+	/**
 	 * Assets constructor.
 	 *
 	 * @param string             $module_url The url of this module.
@@ -100,6 +107,7 @@ class SettingsPageAssets {
 	 * @param bool               $is_pay_later_button_enabled Whether Pay Later button is enabled either for checkout, cart or product page.
 	 * @param array              $disabled_sources The list of disabled funding sources.
 	 * @param array              $all_funding_sources The list of all existing funding sources.
+	 * @param bool               $is_settings_page Whether it's a settings page of this plugin.
 	 */
 	public function __construct(
 		string $module_url,
@@ -111,7 +119,8 @@ class SettingsPageAssets {
 		Environment $environment,
 		bool $is_pay_later_button_enabled,
 		array $disabled_sources,
-		array $all_funding_sources
+		array $all_funding_sources,
+		bool $is_settings_page
 	) {
 		$this->module_url                  = $module_url;
 		$this->version                     = $version;
@@ -123,12 +132,15 @@ class SettingsPageAssets {
 		$this->is_pay_later_button_enabled = $is_pay_later_button_enabled;
 		$this->disabled_sources            = $disabled_sources;
 		$this->all_funding_sources         = $all_funding_sources;
+		$this->is_settings_page            = $is_settings_page;
 	}
 
 	/**
 	 * Register assets provided by this module.
+	 *
+	 * @return void
 	 */
-	public function register_assets() {
+	public function register_assets(): void {
 		add_action(
 			'admin_enqueue_scripts',
 			function() {
@@ -136,11 +148,13 @@ class SettingsPageAssets {
 					return;
 				}
 
-				if ( ! $this->is_paypal_payment_method_page() ) {
-					return;
+				if ( $this->is_settings_page ) {
+					$this->register_admin_assets();
 				}
 
-				$this->register_admin_assets();
+				if ( $this->is_paypal_payment_method_page() ) {
+					$this->register_paypal_admin_assets();
+				}
 			}
 		);
 
@@ -171,9 +185,9 @@ class SettingsPageAssets {
 	}
 
 	/**
-	 * Register assets for admin pages.
+	 * Register assets for PayPal admin pages.
 	 */
-	private function register_admin_assets(): void {
+	private function register_paypal_admin_assets(): void {
 		wp_enqueue_style(
 			'ppcp-gateway-settings',
 			trailingslashit( $this->module_url ) . 'assets/css/gateway-settings.css',
@@ -210,4 +224,18 @@ class SettingsPageAssets {
 			)
 		);
 	}
+
+	/**
+	 * Register assets for PayPal admin pages.
+	 */
+	private function register_admin_assets(): void {
+		wp_enqueue_script(
+			'ppcp-admin-common',
+			trailingslashit( $this->module_url ) . 'assets/js/common.js',
+			array(),
+			$this->version,
+			true
+		);
+	}
+
 }
