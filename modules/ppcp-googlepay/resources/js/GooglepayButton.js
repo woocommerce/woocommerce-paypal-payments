@@ -1,4 +1,6 @@
 import ContextHandlerFactory from "./Context/ContextHandlerFactory";
+import {setVisible} from '../../../ppcp-button/resources/js/modules/Helper/Hiding';
+import {setEnabled} from '../../../ppcp-button/resources/js/modules/Helper/ButtonDisabler';
 
 class GooglepayButton {
 
@@ -37,6 +39,7 @@ class GooglepayButton {
         this.baseCardPaymentMethod = this.allowedPaymentMethods[0];
 
         this.initClient();
+        this.initEventHandlers();
 
         this.paymentsClient.isReadyToPay(
             this.buildReadyToPayRequest(this.allowedPaymentMethods, config)
@@ -65,10 +68,25 @@ class GooglepayButton {
         return true;
     }
 
-    buildReadyToPayRequest(allowedPaymentMethods, baseRequest) {
-        return Object.assign({}, baseRequest, {
-            allowedPaymentMethods: allowedPaymentMethods,
-        });
+    /**
+     * Returns configurations relative to this button context.
+     */
+    contextConfig() {
+        if (this.context === 'mini-cart') {
+            return {
+                wrapper: this.buttonConfig.button.mini_cart_wrapper,
+                ppcpStyle: this.ppcpConfig.button.mini_cart_style,
+                buttonStyle: this.buttonConfig.button.mini_cart_style,
+                ppcpButtonWrapper: this.ppcpConfig.button.mini_cart_wrapper
+            }
+        }
+
+        return {
+            wrapper: this.buttonConfig.button.wrapper,
+            ppcpStyle: this.ppcpConfig.button.style,
+            buttonStyle: this.buttonConfig.button.style,
+            ppcpButtonWrapper: this.ppcpConfig.button.wrapper
+        }
     }
 
     initClient() {
@@ -82,26 +100,37 @@ class GooglepayButton {
         });
     }
 
+    initEventHandlers() {
+        const { wrapper, ppcpButtonWrapper } = this.contextConfig();
+
+        const syncButtonVisibility = () => {
+            const $ppcpButtonWrapper = jQuery(ppcpButtonWrapper);
+            setVisible(wrapper, $ppcpButtonWrapper.is(':visible'));
+            setEnabled(wrapper, !$ppcpButtonWrapper.hasClass('ppcp-disabled'));
+        }
+
+        jQuery(document).on('ppcp-shown ppcp-hidden ppcp-enabled ppcp-disabled', (ev, data) => {
+            if (jQuery(data.selector).is(ppcpButtonWrapper)) {
+                syncButtonVisibility();
+            }
+        });
+
+        syncButtonVisibility();
+    }
+
+    buildReadyToPayRequest(allowedPaymentMethods, baseRequest) {
+        return Object.assign({}, baseRequest, {
+            allowedPaymentMethods: allowedPaymentMethods,
+        });
+    }
+
     /**
      * Add a Google Pay purchase button
      */
     addButton(baseCardPaymentMethod) {
         console.log('[GooglePayButton] addButton', this.context);
 
-        const wrapper =
-            (this.context === 'mini-cart')
-                ? this.buttonConfig.button.mini_cart_wrapper
-                : this.buttonConfig.button.wrapper;
-
-        const ppcpStyle =
-            (this.context === 'mini-cart')
-                ? this.ppcpConfig.button.mini_cart_style
-                : this.ppcpConfig.button.style;
-
-        const buttonStyle =
-            (this.context === 'mini-cart')
-                ? this.buttonConfig.button.mini_cart_style
-                : this.buttonConfig.button.style;
+        const { wrapper, ppcpStyle, buttonStyle } = this.contextConfig();
 
         jQuery(wrapper).addClass('ppcp-button-' + ppcpStyle.shape);
 
