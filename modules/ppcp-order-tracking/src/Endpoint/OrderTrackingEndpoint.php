@@ -406,7 +406,7 @@ class OrderTrackingEndpoint {
 	 * @throws RuntimeException If validation failed.
 	 */
 	protected function validate_tracking_info( array $tracking_info ): void {
-		$error_message = __( 'Missing required information:', 'woocommerce-paypal-payments' );
+		$error_message = __( 'Missing required information: ', 'woocommerce-paypal-payments' );
 		$empty_keys    = array();
 
 		foreach ( $tracking_info as $key => $value ) {
@@ -414,7 +414,7 @@ class OrderTrackingEndpoint {
 				continue;
 			}
 
-			$empty_keys[] = $key;
+			$empty_keys[] = ucwords(str_replace('_', ' ', $key));;
 		}
 
 		if ( empty( $empty_keys ) ) {
