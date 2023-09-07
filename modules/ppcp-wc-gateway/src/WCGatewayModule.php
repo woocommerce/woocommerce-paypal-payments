@@ -392,6 +392,16 @@ class WCGatewayModule implements ModuleInterface {
 			3
 		);
 
+		add_action(
+			'woocommerce_paypal_payments_uninstall',
+			static function () use ( $c ) {
+				$listener = $c->get( 'wcgateway.settings.listener' );
+				assert( $listener instanceof SettingsListener );
+
+				$listener->listen_for_uninstall();
+			}
+		);
+
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			\WP_CLI::add_command(
 				'pcp settings',

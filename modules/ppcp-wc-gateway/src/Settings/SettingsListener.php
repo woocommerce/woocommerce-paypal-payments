@@ -401,9 +401,7 @@ class SettingsListener {
 				$this->webhook_registrar->unregister();
 
 				foreach ( $this->signup_link_ids as $key ) {
-					if ( $this->signup_link_cache->has( $key ) ) {
-						$this->signup_link_cache->delete( $key );
-					}
+					( new OnboardingUrl( $this->signup_link_cache, $key, get_current_user_id() ) )->delete();
 				}
 			}
 		}
@@ -613,4 +611,40 @@ class SettingsListener {
 		}
 		return true;
 	}
+
+	/**
+	 * Prevent enabling tracking if it is not enabled for merchant account.
+	 *
+	 * @throws RuntimeException When API request fails.
+	 */
+	public function listen_for_tracking_enabled(): void {
+		if ( State::STATE_ONBOARDED !== $this->state->current_state() ) {
+			return;
+		}
+
+		try {
+			$token = $this->bearer->bearer();
+			if ( ! $token->is_tracking_available() ) {
+				$this->settings->set( 'tracking_enabled', false );
+				$this->settings->persist();
+				return;
+			}
+		} catch ( RuntimeException $exception ) {
+			$this->settings->set( 'tracking_enabled', false );
+			$this->settings->persist();
+
+			throw $exception;
+		}
+	}
+
+	/**
+	 * Handles onboarding URLs deletion
+	 */
+	public function listen_for_uninstall(): void {
+		// Clear onboarding links from cache.
+		foreach ( $this->signup_link_ids as $key ) {
+			( new OnboardingUrl( $this->signup_link_cache, $key, get_current_user_id() ) )->delete();
+		}
+	}
+
 }
