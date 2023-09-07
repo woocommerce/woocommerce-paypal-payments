@@ -81,10 +81,10 @@ class CartScriptParamsEndpoint implements EndpointInterface {
 
 			wp_send_json_success(
 				array(
-					'url_params'    => $script_data['url_params'],
-					'button'        => $script_data['button'],
-					'messages'      => $script_data['messages'],
-					'amount'        => WC()->cart->get_total( 'raw' ),
+					'url_params' => $script_data['url_params'],
+					'button'     => $script_data['button'],
+					'messages'   => $script_data['messages'],
+					'amount'     => WC()->cart->get_total( 'raw' ),
 
 					'total'         => $total,
 					'total_str'     => ( new Money( $total, $currency_code ) )->value_str(),
