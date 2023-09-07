@@ -9,16 +9,18 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Vaulting;
 
+use WC_Payment_Token;
+
 /**
  * Class PaymentTokenHelper
  */
 class PaymentTokenHelper {
 
 	/**
-	 * Checks if given PayPal token exist as WC Payment Token.
+	 * Checks if given token exist as WC Payment Token.
 	 *
-	 * @param array  $wc_tokens WC Payment Tokens.
-	 * @param string $token_id PayPal Token ID.
+	 * @param WC_Payment_Token[] $wc_tokens WC Payment Tokens.
+	 * @param string             $token_id Payment Token ID.
 	 * @return bool
 	 */
 	public function token_exist( array $wc_tokens, string $token_id ): bool {
