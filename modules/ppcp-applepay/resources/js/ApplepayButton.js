@@ -41,6 +41,10 @@ class ApplepayButton {
         const isEligible = this.applePayConfig.isEligible;
         if (isEligible) {
             this.fetchTransactionInfo().then(() => {
+                const isSubscriptionProduct = this.ppcpConfig.data_client_id.has_subscriptions === true;
+                if(isSubscriptionProduct) {
+                    return;
+                }
                 this.addButton();
                 document.querySelector('#btn-appl').addEventListener('click', (evt) => {
                     evt.preventDefault();
