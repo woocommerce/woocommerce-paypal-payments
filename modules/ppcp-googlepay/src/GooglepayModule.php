@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\Googlepay;
 
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
+use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmProductStatus;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
@@ -34,13 +35,13 @@ class GooglepayModule implements ModuleInterface {
 	 * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $c ): void {
-		$button = $c->get( 'googlepay.button' );
-		assert( $button instanceof ButtonInterface );
 
 		if ( ! $c->get( 'googlepay.eligible' ) ) {
 			return;
 		}
 
+		$button = $c->get( 'googlepay.button' );
+		assert( $button instanceof ButtonInterface );
 		$button->initialize();
 
 		if ( ! $c->get( 'googlepay.available' ) ) {
@@ -72,6 +73,17 @@ class GooglepayModule implements ModuleInterface {
 				}
 			}
 		);
+
+		// Clear product status handling.
+		add_action(
+			'woocommerce_paypal_payments_clear_apm_product_status',
+			function() use ( $c ): void {
+				$apm_status = $c->get( 'googlepay.helpers.apm-product-status' );
+				assert( $apm_status instanceof ApmProductStatus );
+				$apm_status->clear();
+			}
+		);
+
 	}
 
 	/**

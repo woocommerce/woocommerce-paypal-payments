@@ -13,19 +13,69 @@ use Automattic\WooCommerce\Blocks\Payments\PaymentMethodTypeInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 use WooCommerce\PayPalCommerce\Googlepay\Assets\BlocksPaymentMethod;
 use WooCommerce\PayPalCommerce\Googlepay\Assets\Button;
+use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmApplies;
+use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmProductStatus;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
-	'googlepay.eligible'              => static function ( ContainerInterface $container ): bool {
-		// TODO : add handlers.
-		return true;
-	},
-	'googlepay.available'             => static function ( ContainerInterface $container ): bool {
-		// TODO : add handlers.
-		return true;
+
+	// If GooglePay can be configured.
+	'googlepay.eligible'                          => static function ( ContainerInterface $container ): bool {
+		$apm_applies = $container->get( 'googlepay.helpers.apm-applies' );
+		assert( $apm_applies instanceof ApmApplies );
+
+		return $apm_applies->for_country_currency();
 	},
 
-	'googlepay.button'                => static function ( ContainerInterface $container ): ButtonInterface {
+	'googlepay.helpers.apm-applies'               => static function ( ContainerInterface $container ) : ApmApplies {
+		return new ApmApplies(
+			$container->get( 'googlepay.supported-country-currency-matrix' ),
+			$container->get( 'api.shop.currency' ),
+			$container->get( 'api.shop.country' )
+		);
+	},
+
+	// If GooglePay is configured.
+	'googlepay.available'                         => static function ( ContainerInterface $container ): bool {
+		/**
+		 * $status = $container->get( 'googlepay.helpers.apm-product-status' );
+		 * assert( $status instanceof ApmProductStatus );
+		 * return $status->is_active();
+		 */
+		return true; // TODO: must test further.
+	},
+
+	'googlepay.helpers.apm-product-status'        => static function( ContainerInterface $container ): ApmProductStatus {
+		return new ApmProductStatus(
+			$container->get( 'wcgateway.settings' ),
+			$container->get( 'api.endpoint.partners' ),
+			$container->get( 'onboarding.state' )
+		);
+	},
+
+	/**
+	 * The matrix which countries and currency combinations can be used for GooglePay.
+	 */
+	'googlepay.supported-country-currency-matrix' => static function ( ContainerInterface $container ) : array {
+		/**
+		 * Returns which countries and currency combinations can be used for GooglePay.
+		 */
+		return apply_filters(
+			'woocommerce_paypal_payments_supported_country_currency_matrix',
+			array(
+				'US' => array(
+					'AUD',
+					'CAD',
+					'EUR',
+					'GBP',
+					'JPY',
+					'USD',
+				),
+			)
+		);
+	},
+
+	'googlepay.button'                            => static function ( ContainerInterface $container ): ButtonInterface {
 		return new Button(
 			$container->get( 'googlepay.url' ),
 			$container->get( 'googlepay.sdk_url' ),
@@ -39,7 +89,7 @@ return array(
 		);
 	},
 
-	'googlepay.blocks-payment-method' => static function ( ContainerInterface $container ): PaymentMethodTypeInterface {
+	'googlepay.blocks-payment-method'             => static function ( ContainerInterface $container ): PaymentMethodTypeInterface {
 		return new BlocksPaymentMethod(
 			'ppcp-googlepay',
 			$container->get( 'googlepay.url' ),
@@ -49,7 +99,7 @@ return array(
 		);
 	},
 
-	'googlepay.url'                   => static function ( ContainerInterface $container ): string {
+	'googlepay.url'                               => static function ( ContainerInterface $container ): string {
 		$path = realpath( __FILE__ );
 		if ( false === $path ) {
 			return '';
@@ -60,7 +110,7 @@ return array(
 		);
 	},
 
-	'googlepay.sdk_url'               => static function ( ContainerInterface $container ): string {
+	'googlepay.sdk_url'                           => static function ( ContainerInterface $container ): string {
 		return 'https://pay.google.com/gp/p/js/pay.js';
 	},
 

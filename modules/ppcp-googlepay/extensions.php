@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Googlepay;
 
-use WooCommerce\PayPalCommerce\Googlepay\Assets\PropertiesDictionary;
+use WooCommerce\PayPalCommerce\Googlepay\Helper\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 

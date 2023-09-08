@@ -2,12 +2,12 @@
 /**
  * Properties of the GooglePay module.
  *
- * @package WooCommerce\PayPalCommerce\Button\Assets
+ * @package WooCommerce\PayPalCommerce\Googlepay\Helper
  */
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\Googlepay\Assets;
+namespace WooCommerce\PayPalCommerce\Googlepay\Helper;
 
 /**
  * Class Button

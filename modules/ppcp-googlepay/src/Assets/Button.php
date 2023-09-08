@@ -2,7 +2,7 @@
 /**
  * Registers and configures the necessary Javascript for the button, credit messaging and DCC fields.
  *
- * @package WooCommerce\PayPalCommerce\Button\Assets
+ * @package WooCommerce\PayPalCommerce\Googlepay\Assets
  */
 
 declare(strict_types=1);
@@ -141,8 +141,8 @@ class Button implements ButtonInterface {
 	public function add_onboarding_options( $options ): string {
 		$checked = '';
 		try {
-			$onboard_with_apple = $this->settings->get( 'ppcp-onboarding-apple' );
-			if ( $onboard_with_apple === '1' ) {
+			$onboard_with_google = $this->settings->get( 'ppcp-onboarding-google' );
+			if ( $onboard_with_google === '1' ) {
 				$checked = 'checked';
 			}
 		} catch ( NotFoundException $exception ) {
@@ -203,7 +203,6 @@ class Button implements ButtonInterface {
 
 		return $data;
 	}
-
 
 	/**
 	 * Returns if Google Pay button is enabled
