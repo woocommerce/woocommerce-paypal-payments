@@ -83,7 +83,8 @@ return array(
 			$container->get( 'compat.module.url' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'compat.gzd.is_supported_plugin_version_active' ),
-			$container->get( 'compat.wc_shipment_tracking.is_supported_plugin_version_active' )
+			$container->get( 'compat.wc_shipment_tracking.is_supported_plugin_version_active' ),
+			$container->get( 'api.bearer' )
 		);
 	},
 );

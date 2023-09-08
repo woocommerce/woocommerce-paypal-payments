@@ -11,7 +11,6 @@ namespace WooCommerce\PayPalCommerce\Compat;
 
 use Vendidero\Germanized\Shipments\ShipmentItem;
 use WooCommerce\PayPalCommerce\OrderTracking\Shipment\ShipmentFactoryInterface;
-use WooCommerce\PayPalCommerce\OrderTracking\TrackingAvailabilityTrait;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use Exception;
@@ -31,9 +30,6 @@ use WP_REST_Response;
  * Class CompatModule
  */
 class CompatModule implements ModuleInterface {
-
-	use TrackingAvailabilityTrait;
-
 	/**
 	 * Setup the compatibility module.
 	 *
@@ -60,28 +56,8 @@ class CompatModule implements ModuleInterface {
 		$asset_loader = $c->get( 'compat.assets' );
 		assert( $asset_loader instanceof CompatAssets );
 
-		$bearer = $c->get( 'api.bearer' );
-
-		add_action(
-			'init',
-			function() use ( $asset_loader, $bearer ) {
-				if ( ! $this->is_tracking_enabled( $bearer ) ) {
-					return;
-				}
-
-				$asset_loader->register();
-			}
-		);
-		add_action(
-			'init',
-			function() use ( $asset_loader, $bearer ) {
-				if ( ! $this->is_tracking_enabled( $bearer ) ) {
-					return;
-				}
-
-				$asset_loader->enqueue();
-			}
-		);
+		add_action( 'init', array( $asset_loader, 'register' ) );
+		add_action( 'admin_enqueue_scripts', array( $asset_loader, 'enqueue' ) );
 
 		$this->migrate_pay_later_settings( $c );
 		$this->migrate_smart_button_settings( $c );
