@@ -56,10 +56,14 @@ return array(
 	'vaulting.payment-token-factory'      => function( ContainerInterface $container ): PaymentTokenFactory {
 		return new PaymentTokenFactory();
 	},
+	'vaulting.payment-token-helper'       => function( ContainerInterface $container ): PaymentTokenHelper {
+		return new PaymentTokenHelper();
+	},
 	'vaulting.payment-tokens-migration'   => function( ContainerInterface $container ): PaymentTokensMigration {
 		return new PaymentTokensMigration(
 			$container->get( 'vaulting.payment-token-factory' ),
 			$container->get( 'vaulting.repository.payment-token' ),
+			$container->get( 'vaulting.payment-token-helper' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},

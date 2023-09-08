@@ -33,6 +33,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Checkout\DisableGateways;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\GatewayRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
@@ -356,6 +357,14 @@ class WCGatewayModule implements ModuleInterface {
 					return;
 				}
 
+				$gateway_repository = $c->get( 'wcgateway.gateway-repository' );
+				assert( $gateway_repository instanceof GatewayRepository );
+
+				// Only allow to proceed if the payment method is one of our Gateways.
+				if ( ! $gateway_repository->exists( $wc_order->get_payment_method() ) ) {
+					return;
+				}
+
 				$intent   = strtoupper( (string) $wc_order->get_meta( PayPalGateway::INTENT_META_KEY ) );
 				$captured = wc_string_to_bool( $wc_order->get_meta( AuthorizedPaymentsProcessor::CAPTURED_META_KEY ) );
 				if ( $intent !== 'AUTHORIZE' || $captured ) {
@@ -390,6 +399,16 @@ class WCGatewayModule implements ModuleInterface {
 			},
 			10,
 			3
+		);
+
+		add_action(
+			'woocommerce_paypal_payments_uninstall',
+			static function () use ( $c ) {
+				$listener = $c->get( 'wcgateway.settings.listener' );
+				assert( $listener instanceof SettingsListener );
+
+				$listener->listen_for_uninstall();
+			}
 		);
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
@@ -497,7 +516,6 @@ class WCGatewayModule implements ModuleInterface {
 
 				try {
 					$listener->listen_for_vaulting_enabled();
-					$listener->listen_for_tracking_enabled();
 				} catch ( RuntimeException $exception ) {
 					add_action(
 						'admin_notices',

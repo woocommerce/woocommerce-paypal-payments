@@ -44,4 +44,14 @@ class GatewayRepository {
 			}
 		);
 	}
+
+	/**
+	 * Indicates if a given gateway ID is registered.
+	 *
+	 * @param string $gateway_id The gateway ID.
+	 * @return bool
+	 */
+	public function exists( string $gateway_id ): bool {
+		return in_array( $gateway_id, $this->ppcp_gateway_ids, true );
+	}
 }

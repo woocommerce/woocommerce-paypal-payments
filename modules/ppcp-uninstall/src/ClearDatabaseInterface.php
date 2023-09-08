@@ -29,4 +29,12 @@ interface ClearDatabaseInterface {
 	 */
 	public function clear_scheduled_actions( array $action_names ): void;
 
+	/**
+	 * Clears the given actions.
+	 *
+	 * @param string[] $action_names The list of action names.
+	 * @throws RuntimeException If problem clearing.
+	 */
+	public function clear_actions( array $action_names ): void;
+
 }

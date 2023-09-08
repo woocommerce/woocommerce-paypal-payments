@@ -117,6 +117,13 @@ class OrderProcessor {
 	private $order_helper;
 
 	/**
+	 * Array to store temporary order data changes to restore after processing.
+	 *
+	 * @var array
+	 */
+	private $restore_order_data = array();
+
+	/**
 	 * OrderProcessor constructor.
 	 *
 	 * @param SessionHandler              $session_handler The Session Handler.
@@ -292,8 +299,12 @@ class OrderProcessor {
 	 * @return Order
 	 */
 	public function patch_order( \WC_Order $wc_order, Order $order ): Order {
+		$this->apply_outbound_order_filters( $wc_order );
 		$updated_order = $this->order_factory->from_wc_order( $wc_order, $order );
-		$order         = $this->order_endpoint->patch_order_with( $order, $updated_order );
+		$this->restore_order_from_filters( $wc_order );
+
+		$order = $this->order_endpoint->patch_order_with( $order, $updated_order );
+
 		return $order;
 	}
 
@@ -322,5 +333,49 @@ class OrderProcessor {
 			),
 			true
 		);
+	}
+
+	/**
+	 * Applies filters to the WC_Order, so they are reflected only on PayPal Order.
+	 *
+	 * @param WC_Order $wc_order The WoocOmmerce Order.
+	 * @return void
+	 */
+	private function apply_outbound_order_filters( WC_Order $wc_order ): void {
+		$items = $wc_order->get_items();
+
+		$this->restore_order_data['names'] = array();
+
+		foreach ( $items as $item ) {
+			if ( ! $item instanceof \WC_Order_Item ) {
+				continue;
+			}
+
+			$original_name = $item->get_name();
+			$new_name      = apply_filters( 'woocommerce_paypal_payments_order_line_item_name', $original_name, $item->get_id(), $wc_order->get_id() );
+
+			if ( $new_name !== $original_name ) {
+				$this->restore_order_data['names'][ $item->get_id() ] = $original_name;
+				$item->set_name( $new_name );
+			}
+		}
+	}
+
+	/**
+	 * Restores the WC_Order to it's state before filters.
+	 *
+	 * @param WC_Order $wc_order The WooCommerce Order.
+	 * @return void
+	 */
+	private function restore_order_from_filters( WC_Order $wc_order ): void {
+		if ( is_array( $this->restore_order_data['names'] ?? null ) ) {
+			foreach ( $this->restore_order_data['names'] as $wc_item_id => $original_name ) {
+				$wc_item = $wc_order->get_item( $wc_item_id, false );
+
+				if ( $wc_item ) {
+					$wc_item->set_name( $original_name );
+				}
+			}
+		}
 	}
 }
