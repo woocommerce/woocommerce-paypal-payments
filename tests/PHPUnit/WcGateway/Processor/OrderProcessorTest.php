@@ -57,6 +57,7 @@ class OrderProcessorTest extends TestCase
             ->andReturn($payments);
 
         $wcOrder = Mockery::mock(\WC_Order::class);
+		$wcOrder->expects('get_items')->andReturn([]);
         $wcOrder->expects('update_meta_data')
             ->with(PayPalGateway::ORDER_PAYMENT_MODE_META_KEY, 'live');
         $wcOrder->shouldReceive('get_id')->andReturn(1);
@@ -193,7 +194,8 @@ class OrderProcessorTest extends TestCase
             ->andReturn($payments);
 
         $wcOrder = Mockery::mock(\WC_Order::class);
-        $orderStatus = Mockery::mock(OrderStatus::class);
+		$wcOrder->expects('get_items')->andReturn([]);
+		$orderStatus = Mockery::mock(OrderStatus::class);
         $orderStatus
             ->shouldReceive('is')
             ->with(OrderStatus::APPROVED)
