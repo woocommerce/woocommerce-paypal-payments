@@ -23,7 +23,7 @@ class ApplepayButton {
             this.productQuantity = document.querySelector('input.qty').value
         }
 
-        this.updatedContactInfo = []
+        this.updated_contact_info = []
         this.selectedShippingMethod = []
         this.nonce = document.getElementById('woocommerce-process-checkout-nonce').value
     }
@@ -58,17 +58,15 @@ class ApplepayButton {
         });
     }
     applePaySession(paymentRequest) {
-        console.log('apple session', paymentRequest)
         const session = new ApplePaySession(4, paymentRequest)
         session.begin()
-        const ajaxUrl = this.buttonConfig.ajax_url
-        const productId = this.buttonConfig.product.id
+
         if (this.buttonConfig.product.needShipping) {
-            session.onshippingmethodselected = this.onshippingmethodselected(ajaxUrl, productId, session)
-            session.onshippingcontactselected = this.onshippingcontactselected(ajaxUrl, productId, session)
+            session.onshippingmethodselected = this.onshippingmethodselected(session)
+            session.onshippingcontactselected = this.onshippingcontactselected(session)
         }
         session.onvalidatemerchant = this.onvalidatemerchant(session);
-        session.onpaymentauthorized = this.onpaymentauthorized(ajaxUrl, productId, session);
+        session.onpaymentauthorized = this.onpaymentauthorized(session);
     }
 
 
@@ -176,37 +174,22 @@ class ApplepayButton {
                 });
         };
     }
-    onshippingmethodselected(ajaxUrl, productId, session) {
-        function getData(event) {
-            switch (this.context) {
-                case 'product': return {
-                    action: 'ppcp_update_shipping_method',
-                    shipping_method: event.shippingMethod,
-                    product_id: productId,
-                    caller_page: 'productDetail',
-                    product_quantity: this.productQuantity,
-                    simplified_contact: this.updatedContactInfo,
-                    'woocommerce-process-checkout-nonce': this.nonce,
-                }
-                case 'cart':
-                case 'checkout':
-                    return {
-                    action: 'ppcp_update_shipping_method',
-                    shipping_method: event.shippingMethod,
-                    caller_page: 'cart',
-                    simplified_contact: this.updatedContactInfo,
-                    'woocommerce-process-checkout-nonce': this.nonce,
-                }
-            }
-        }
+    onshippingmethodselected(session) {
+        const ajax_url = this.buttonConfig.ajax_url
+        console.log('[ApplePayButton] onshippingmethodselected');
 
-        return function (event) {
+        return (event) => {
+            const data = this.getShippingMethodData(event);
             jQuery.ajax({
-                url: this.buttonConfig.ajax_url,
+                url: ajax_url,
                 method: 'POST',
-                data: getData.call(this, event),
+                data: data,
                 success: (applePayShippingMethodUpdate, textStatus, jqXHR) => {
                     let response = applePayShippingMethodUpdate.data
+                    if (applePayShippingMethodUpdate.success === false) {
+                        response.errors = createAppleErrors(response.errors)
+                    }
+                    console.log('shipping method update response', response, applePayShippingMethodUpdate)
                     this.selectedShippingMethod = event.shippingMethod
                     //order the response shipping methods, so that the selected shipping method is the first one
                     let orderedShippingMethods = response.newShippingMethods.sort((a, b) => {
@@ -220,7 +203,7 @@ class ApplepayButton {
                     if (applePayShippingMethodUpdate.success === false) {
                         response.errors = createAppleErrors(response.errors)
                     }
-                    this.completeShippingMethodSelection(response)
+                    session.completeShippingMethodSelection(response)
                 },
                 error: (jqXHR, textStatus, errorThrown) => {
                     console.warn(textStatus, errorThrown)
@@ -229,46 +212,27 @@ class ApplepayButton {
             })
         };
     }
-    onshippingcontactselected(ajax_url, productId, session) {
-        function getData(event) {
-            switch (this.context) {
-                case 'product': return {
-                    action: 'ppcp_update_shipping_contact',
-                    product_id: productId,
-                    caller_page: 'productDetail',
-                    product_quantity: this.productQuantity,
-                    simplified_contact: event.shippingContact,
-                    need_shipping: this.needShipping,
-                    'woocommerce-process-checkout-nonce': this.nonce,
-                }
-                case 'cart':
-                case 'checkout':
-                    return {
-                    action: 'ppcp_update_shipping_contact',
-                    simplified_contact: event.shippingContact,
-                    caller_page: 'cart',
-                    need_shipping: this.needShipping,
-                    'woocommerce-process-checkout-nonce': this.nonce,
-                }
-            }
-        }
+    onshippingcontactselected(session) {
+        const ajax_url = this.buttonConfig.ajax_url
 
-        return function (event) {
+        return (event) => {
+            const data = this.getShippingContactData(event);
+            console.log('shipping contact selected', data, event)
             jQuery.ajax({
-                url: this.buttonConfig.ajax_url,
+                url: ajax_url,
                 method: 'POST',
-                data: getData.call(this, event),
+                data: data,
                 success: (applePayShippingContactUpdate, textStatus, jqXHR) => {
                     let response = applePayShippingContactUpdate.data
-                    this.updatedContactInfo = event.shippingContact
+                    this.updated_contact_info = event.shippingContact
+                    console.log('shipping contact update response', response, applePayShippingContactUpdate, this.updated_contact_info)
                     if (applePayShippingContactUpdate.success === false) {
                         response.errors = createAppleErrors(response.errors)
                     }
                     if (response.newShippingMethods) {
                         this.selectedShippingMethod = response.newShippingMethods[0]
                     }
-                    this.completeShippingContactSelection(response)
-
+                    session.completeShippingContactSelection(response)
                 },
                 error: (jqXHR, textStatus, errorThrown) => {
                     console.warn(textStatus, errorThrown)
@@ -277,8 +241,60 @@ class ApplepayButton {
             })
         };
     }
+    getShippingContactData(event) {
+        const product_id = this.buttonConfig.product.id;
 
-    onpaymentauthorized(ajaxUrl, productId, session) {
+        switch (this.context) {
+            case 'product':
+                return {
+                    action: 'ppcp_update_shipping_contact',
+                    product_id: product_id,
+                    caller_page: 'productDetail',
+                    product_quantity: this.productQuantity,
+                    simplified_contact: event.shippingContact,
+                    need_shipping: this.buttonConfig.product.needShipping,
+                    'woocommerce-process-checkout-nonce': this.nonce,
+                };
+            case 'cart':
+            case 'checkout':
+            case 'cart-block':
+            case 'checkout-block':
+                return {
+                    action: 'ppcp_update_shipping_contact',
+                    simplified_contact: event.shippingContact,
+                    caller_page: 'cart',
+                    need_shipping: this.buttonConfig.product.needShipping,
+                    'woocommerce-process-checkout-nonce': this.nonce,
+                };
+        }
+    }
+    getShippingMethodData(event) {
+        const product_id = this.buttonConfig.product.id;
+        switch (this.context) {
+            case 'product': return {
+                action: 'ppcp_update_shipping_method',
+                shipping_method: event.shippingMethod,
+                product_id: product_id,
+                caller_page: 'productDetail',
+                product_quantity: this.productQuantity,
+                simplified_contact: this.updated_contact_info,
+                'woocommerce-process-checkout-nonce': this.nonce,
+            }
+            case 'cart':
+            case 'checkout':
+            case 'cart-block':
+            case 'checkout-block':
+                return {
+                    action: 'ppcp_update_shipping_method',
+                    shipping_method: event.shippingMethod,
+                    caller_page: 'cart',
+                    simplified_contact: this.updated_contact_info,
+                    'woocommerce-process-checkout-nonce': this.nonce,
+                }
+        }
+    }
+
+    onpaymentauthorized(session) {
         /*return (event) => {
             function form() {
                 return document.querySelector('form.cart');

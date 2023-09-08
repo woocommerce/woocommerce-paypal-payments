@@ -302,11 +302,7 @@ class ApplePayButton implements ButtonInterface {
 			);
 			return;
 		}
-		$cart_item_key = $this->prepare_cart($applepay_request_data_object);
-		$cart = WC()->cart;
-		$payment_details = $this->which_calculate_totals( $cart, $applepay_request_data_object );
-		$this->clear_current_cart($cart, $cart_item_key);
-		$this->reload_cart( $cart );
+		$payment_details = $this->which_calculate_totals( $applepay_request_data_object );
 		$response        = $this->response_templates->apple_formatted_response( $payment_details );
 		$this->response_templates->response_success( $response );
 	}
@@ -327,11 +323,7 @@ class ApplePayButton implements ButtonInterface {
 		if ( $applepay_request_data_object->has_errors() ) {
 			$this->response_templates->response_with_data_errors( $applepay_request_data_object->errors() );
 		}
-		$cart_item_key = $this->prepare_cart($applepay_request_data_object);
-		$cart = WC()->cart;
-		$payment_details = $this->which_calculate_totals( $cart, $applepay_request_data_object );
-		$this->clear_current_cart($cart, $cart_item_key);
-		$this->reload_cart( $cart );
+		$payment_details = $this->which_calculate_totals( $applepay_request_data_object );
 		$response       = $this->response_templates->apple_formatted_response( $payment_details );
 		$this->response_templates->response_success( $response );
 	}
@@ -349,7 +341,12 @@ class ApplePayButton implements ButtonInterface {
 		$this->update_posted_data($applepay_request_data_object);
 		$cart_item_key = $this->prepare_cart($applepay_request_data_object);
 		$cart = WC()->cart;
-		$this->which_calculate_totals($cart, $applepay_request_data_object );
+		$address = $applepay_request_data_object->shipping_address();
+		$this->calculate_totals_single_product(
+			$cart,
+			$address,
+			$applepay_request_data_object->shipping_method()
+		);
 		if (! $cart_item_key) {
 			$this->response_templates->response_with_data_errors(
 				array(
@@ -421,19 +418,23 @@ class ApplePayButton implements ButtonInterface {
 	 * @return array|bool
 	 */
 	protected function which_calculate_totals(
-		$cart,
 		$applepay_request_data_object
 	) {
-		$address = $applepay_request_data_object->shipping_address() ?? $applepay_request_data_object->simplified_contact();
+		$address = empty($applepay_request_data_object->shipping_address()) ? $applepay_request_data_object->simplified_contact() : $applepay_request_data_object->shipping_address();
 		if ( $applepay_request_data_object->caller_page === 'productDetail' ) {
+			$cart_item_key = $this->prepare_cart($applepay_request_data_object);
+			$cart = WC()->cart;
 			if (! assert($cart instanceof WC_Cart)) {
 				return false;
 			}
-			return $this->calculate_totals_single_product(
+			$totals = $this->calculate_totals_single_product(
 				$cart,
 				$address,
 				$applepay_request_data_object->shipping_method()
 			);
+			$this->clear_current_cart($cart, $cart_item_key);
+			$this->reload_cart( $cart );
+			return $totals;
 		}
 		if ( $applepay_request_data_object->caller_page === 'cart' ) {
 			return $this->calculate_totals_cart_page(
@@ -907,7 +908,7 @@ class ApplePayButton implements ButtonInterface {
 			);
 		}
 
-		if ( $button_enabled_minicart ) {
+		/*if ( $button_enabled_minicart ) {
 			$default_hook_name  = 'woocommerce_paypal_payments_minicart_button_render';
 			$render_placeholder = apply_filters( 'woocommerce_paypal_payments_googlepay_minicart_button_render_hook', $default_hook_name );
 			$render_placeholder = is_string( $render_placeholder ) ? $render_placeholder : $default_hook_name;
@@ -918,7 +919,7 @@ class ApplePayButton implements ButtonInterface {
 				},
 				21
 			);
-		}
+		}*/
 		return true;
 	}
 	/**
