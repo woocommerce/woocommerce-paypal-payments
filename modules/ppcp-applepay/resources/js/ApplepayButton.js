@@ -1,5 +1,7 @@
 import ContextHandlerFactory from "./Context/ContextHandlerFactory";
 import {createAppleErrors} from "./Helper/applePayError";
+import {setVisible} from '../../../ppcp-button/resources/js/modules/Helper/Hiding';
+import {setEnabled} from '../../../ppcp-button/resources/js/modules/Helper/ButtonDisabler';
 
 class ApplepayButton {
 
@@ -33,6 +35,7 @@ class ApplepayButton {
         if (this.isInitialized) {
             return;
         }
+        this.initEventHandlers();
         this.isInitialized = true;
         this.applePayConfig = config;
         const isEligible = this.applePayConfig.isEligible;
@@ -51,12 +54,48 @@ class ApplepayButton {
     async fetchTransactionInfo() {
         this.transactionInfo = await this.contextHandler.transactionInfo();
     }
+    /**
+     * Returns configurations relative to this button context.
+     */
+    contextConfig() {
+        let config = {
+            wrapper: this.buttonConfig.button.wrapper,
+            ppcpStyle: this.ppcpConfig.button.style,
+            //buttonStyle: this.buttonConfig.button.style,
+            ppcpButtonWrapper: this.ppcpConfig.button.wrapper
+        }
 
-    buildReadyToPayRequest(allowedPaymentMethods, baseRequest) {
-        return Object.assign({}, baseRequest, {
-            allowedPaymentMethods: allowedPaymentMethods,
-        });
+        if (this.context === 'mini-cart') {
+            config.wrapper = this.buttonConfig.button.mini_cart_wrapper;
+            config.ppcpStyle = this.ppcpConfig.button.mini_cart_style;
+            config.buttonStyle = this.buttonConfig.button.mini_cart_style;
+            config.ppcpButtonWrapper = this.ppcpConfig.button.mini_cart_wrapper;
+        }
+
+        if (['cart-block', 'checkout-block'].indexOf(this.context) !== -1) {
+            config.ppcpButtonWrapper = '#express-payment-method-ppcp-gateway';
+        }
+
+        return config;
     }
+    initEventHandlers() {
+        const { wrapper, ppcpButtonWrapper } = this.contextConfig();
+
+        const syncButtonVisibility = () => {
+            const $ppcpButtonWrapper = jQuery(ppcpButtonWrapper);
+            setVisible(wrapper, $ppcpButtonWrapper.is(':visible'));
+            setEnabled(wrapper, !$ppcpButtonWrapper.hasClass('ppcp-disabled'));
+        }
+
+        jQuery(document).on('ppcp-shown ppcp-hidden ppcp-enabled ppcp-disabled', (ev, data) => {
+            if (jQuery(data.selector).is(ppcpButtonWrapper)) {
+                syncButtonVisibility();
+            }
+        });
+
+        syncButtonVisibility();
+    }
+
     applePaySession(paymentRequest) {
         const session = new ApplePaySession(4, paymentRequest)
         session.begin()
