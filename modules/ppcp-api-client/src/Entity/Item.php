@@ -249,8 +249,11 @@ class Item {
 			'sku'         => $this->sku(),
 			'category'    => $this->category(),
 			'url'         => $this->url(),
-			'image_url'   => $this->image_url(),
 		);
+
+		if ( $this->image_url() ) {
+			$item['image_url'] = $this->image_url();
+		}
 
 		if ( $this->tax() ) {
 			$item['tax'] = $this->tax()->to_array();
