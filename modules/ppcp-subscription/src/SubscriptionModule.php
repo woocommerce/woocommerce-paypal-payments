@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Subscription;
 
+use ActionScheduler_Store;
 use Exception;
 use WC_Product;
 use WC_Product_Subscription_Variation;
@@ -289,6 +290,35 @@ class SubscriptionModule implements ModuleInterface {
 			},
 			30,
 			2
+		);
+
+		add_action(
+			'action_scheduler_before_execute',
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function( $action_id ) {
+				/**
+				 * Class exist in WooCommerce.
+				 *
+				 * @psalm-suppress UndefinedClass
+				 */
+				$store  = ActionScheduler_Store::instance();
+				$action = $store->fetch_action( $action_id );
+
+				$subscription_id = $action->get_args()['subscription_id'] ?? null;
+				if ( $subscription_id ) {
+					$subscription = wcs_get_subscription( $subscription_id );
+					if ( is_a( $subscription, WC_Subscription::class ) ) {
+						$paypal_subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
+						if ( $paypal_subscription_id ) {
+							as_unschedule_action( $action->get_hook(), $action->get_args() );
+						}
+					}
+				}
+			}
 		);
 	}
 
