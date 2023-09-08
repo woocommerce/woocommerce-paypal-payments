@@ -121,7 +121,7 @@ class BillingAgreementsEndpoint {
 	 */
 	public function reference_transaction_enabled(): bool {
 		try {
-			if ( get_transient( 'ppcp_reference_transaction_enabled' ) === true ) {
+			if ( wc_string_to_bool( get_transient( 'ppcp_reference_transaction_enabled' ) ) === true ) {
 				return true;
 			}
 
