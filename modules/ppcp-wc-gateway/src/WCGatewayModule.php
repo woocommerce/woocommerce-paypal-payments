@@ -33,6 +33,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Checkout\DisableGateways;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\GatewayRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
@@ -353,6 +354,14 @@ class WCGatewayModule implements ModuleInterface {
 				assert( $settings instanceof ContainerInterface );
 
 				if ( ! $settings->has( 'capture_on_status_change' ) || ! $settings->get( 'capture_on_status_change' ) ) {
+					return;
+				}
+
+				$gateway_repository = $c->get( 'wcgateway.gateway-repository' );
+				assert( $gateway_repository instanceof GatewayRepository );
+
+				// Only allow to proceed if the payment method is one of our Gateways.
+				if ( ! $gateway_repository->exists( $wc_order->get_payment_method() ) ) {
 					return;
 				}
 
