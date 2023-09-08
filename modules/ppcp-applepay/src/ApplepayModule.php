@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\Applepay;
 
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
+use WooCommerce\PayPalCommerce\Applepay\Assets\ApplePayButton;
 use WooCommerce\PayPalCommerce\Applepay\Assets\AppleProductStatus;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
@@ -18,6 +19,7 @@ use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class ApplepayModule
@@ -63,7 +65,7 @@ class ApplepayModule implements ModuleInterface {
 
 			return;
 		}
-		$settings = $c->get( 'wcgateway.settings' );
+		$settings           = $c->get( 'wcgateway.settings' );
 		$merchant_validated = $settings->has( 'applepay_validated' ) ? $settings->get( 'applepay_validated' ) === true : false;
 		if ( ! $merchant_validated ) {
 			add_action(
@@ -84,9 +86,9 @@ class ApplepayModule implements ModuleInterface {
 			);
 		}
 		$this->load_assets( $c );
-		$this->handle_validation_file($c);
+		$this->handle_validation_file( $c );
 		$this->render_buttons( $c );
-		assert( $apple_payment_method instanceof ButtonInterface );
+		assert( $apple_payment_method instanceof ApplepayButton );
 		$apple_payment_method->bootstrap_ajax_request();
 		add_action(
 			'woocommerce_blocks_payment_method_type_registration',
@@ -95,7 +97,7 @@ class ApplepayModule implements ModuleInterface {
 			}
 		);
 
-		$this->remove_status_cache($c);
+		$this->remove_status_cache( $c );
 	}
 
 	/**
@@ -109,16 +111,17 @@ class ApplepayModule implements ModuleInterface {
 	/**
 	 * Loads the validation string.
 	 *
-	 * @param boolean $is_sandbox The environment for this merchant.
+	 * @param boolean  $is_sandbox The environment for this merchant.
+	 * @param Settings $settings The settings.
 	 */
-	protected function load_domain_association_file(bool $is_sandbox, $settings ): void {
+	protected function load_domain_association_file( bool $is_sandbox, Settings $settings ): void {
 		if ( ! isset( $_SERVER['REQUEST_URI'] ) ) {
 			return;
 		}
 		$request_uri = (string) filter_var( wp_unslash( $_SERVER['REQUEST_URI'] ), FILTER_SANITIZE_URL );
 		if ( strpos( $request_uri, '.well-known/apple-developer-merchantid-domain-association' ) !== false ) {
 			$validation_string = $is_sandbox ? 'applepay_sandbox_validation_file' : 'applepay_live_validation_file';
-			$validation_string   = $settings->has( $validation_string ) ? $settings->get( $validation_string ) : '';
+			$validation_string = $settings->has( $validation_string ) ? $settings->get( $validation_string ) : '';
 			$validation_string = preg_replace( '/\s+/', '', $validation_string );
 			$validation_string = $validation_string ? preg_replace( '/[^a-zA-Z0-9]/', '', $validation_string ) : '';
 			nocache_headers();
@@ -139,8 +142,7 @@ class ApplepayModule implements ModuleInterface {
 			'wp_enqueue_scripts',
 			function () use ( $c ) {
 				$button = $c->get( 'applepay.button' );
-				assert( $button instanceof ButtonInterface );
-
+				assert( $button instanceof ApplePayButton );
 				if ( $button->should_load_script() ) {
 					$button->enqueue();
 				}
@@ -174,51 +176,54 @@ class ApplepayModule implements ModuleInterface {
 	}
 
 	/**
-	 * @param ContainerInterface $c
+	 * Removes the status cache.
+	 *
+	 * @param ContainerInterface $c The container.
+	 *
 	 * @return void
 	 */
-	public function remove_status_cache(ContainerInterface $c): void
-	{
+	public function remove_status_cache( ContainerInterface $c ): void {
 		add_action(
 			'woocommerce_paypal_payments_gateway_migrate_on_update',
-			static function () use ($c) {
-				$apple_status_cache = $c->get('applepay.status-cache');
-				assert($apple_status_cache instanceof Cache);
+			static function () use ( $c ) {
+				$apple_status_cache = $c->get( 'applepay.status-cache' );
+				assert( $apple_status_cache instanceof Cache );
 
-				$apple_status_cache->delete(AppleProductStatus::APPLE_STATUS_CACHE_KEY);
+				$apple_status_cache->delete( AppleProductStatus::APPLE_STATUS_CACHE_KEY );
 
-				$settings = $c->get('wcgateway.settings');
-				$settings->set('products_apple_enabled', false);
+				$settings = $c->get( 'wcgateway.settings' );
+				$settings->set( 'products_apple_enabled', false );
 				$settings->persist();
 
 				// Update caches.
-				$apple_status = $c->get('applepay.apple-product-status');
-				assert($apple_status instanceof AppleProductStatus);
+				$apple_status = $c->get( 'applepay.apple-product-status' );
+				assert( $apple_status instanceof AppleProductStatus );
 				$apple_status->apple_is_active();
 			}
 		);
 
 		add_action(
 			'woocommerce_paypal_payments_on_listening_request',
-			static function () use ($c) {
-				$apple_status = $c->get('applepay.status-cache');
-				if ($apple_status->has(AppleProductStatus::APPLE_STATUS_CACHE_KEY)) {
-					$apple_status->delete(AppleProductStatus::APPLE_STATUS_CACHE_KEY);
+			static function () use ( $c ) {
+				$apple_status = $c->get( 'applepay.status-cache' );
+				if ( $apple_status->has( AppleProductStatus::APPLE_STATUS_CACHE_KEY ) ) {
+					$apple_status->delete( AppleProductStatus::APPLE_STATUS_CACHE_KEY );
 				}
 			}
 		);
 	}
 
 	/**
-	 * @param ContainerInterface $c
+	 * Handles the validation file.
+	 *
+	 * @param ContainerInterface $c The container.
 	 * @return void
 	 */
-	public function handle_validation_file(ContainerInterface $c): void
-	{
-		$env = $c->get('onboarding.environment');
-		assert($env instanceof Environment);
-		$is_sandobx = $env->current_environment_is(Environment::SANDBOX);
-		$settings = $c->get('wcgateway.settings');
-		$this->load_domain_association_file($is_sandobx, $settings);
+	public function handle_validation_file( ContainerInterface $c ): void {
+		$env = $c->get( 'onboarding.environment' );
+		assert( $env instanceof Environment );
+		$is_sandobx = $env->current_environment_is( Environment::SANDBOX );
+		$settings   = $c->get( 'wcgateway.settings' );
+		$this->load_domain_association_file( $is_sandobx, $settings );
 	}
 }

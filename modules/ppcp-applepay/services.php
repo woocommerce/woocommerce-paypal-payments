@@ -19,10 +19,10 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 return array(
-	'applepay.status-cache'                                     => static function( ContainerInterface $container ): Cache {
+	'applepay.status-cache'          => static function( ContainerInterface $container ): Cache {
 		return new Cache( 'ppcp-paypal-apple-status-cache' );
 	},
-	'applepay.apple-product-status'           => static function( ContainerInterface $container ): AppleProductStatus {
+	'applepay.apple-product-status'  => static function( ContainerInterface $container ): AppleProductStatus {
 		return new AppleProductStatus(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'api.endpoint.partners' ),
@@ -30,15 +30,15 @@ return array(
 			$container->get( 'onboarding.state' )
 		);
 	},
-	'applepay.enabled'                        => static function ( ContainerInterface $container ): bool {
+	'applepay.enabled'               => static function ( ContainerInterface $container ): bool {
 		$status = $container->get( 'applepay.apple-product-status' );
-		assert( $status instanceof AppleProductStatus);
+		assert( $status instanceof AppleProductStatus );
 		return $status->apple_is_active();
 	},
-	'applepay.server_supported'               => static function ( ContainerInterface $container ): bool {
+	'applepay.server_supported'      => static function ( ContainerInterface $container ): bool {
 		return ! empty( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] !== 'off';
 	},
-	'applepay.url'                            => static function ( ContainerInterface $container ): string {
+	'applepay.url'                   => static function ( ContainerInterface $container ): string {
 		$path = realpath( __FILE__ );
 		if ( false === $path ) {
 			return '';
@@ -48,22 +48,22 @@ return array(
 			dirname( $path, 3 ) . '/woocommerce-paypal-payments.php'
 		);
 	},
-	'applepay.sdk_script_url'                 => static function ( ContainerInterface $container ): string {
+	'applepay.sdk_script_url'        => static function ( ContainerInterface $container ): string {
 		return 'https://applepay.cdn-apple.com/jsapi/v1/apple-pay-sdk.js';
 	},
-	'applepay.data_to_scripts'                => static function ( ContainerInterface $container ): DataToAppleButtonScripts {
-		return new DataToAppleButtonScripts($container->get( 'applepay.sdk_script_url' ), $container->get( 'wcgateway.settings' ));
+	'applepay.data_to_scripts'       => static function ( ContainerInterface $container ): DataToAppleButtonScripts {
+		return new DataToAppleButtonScripts( $container->get( 'applepay.sdk_script_url' ), $container->get( 'wcgateway.settings' ) );
 	},
-	'applepay.button'                 => static function ( ContainerInterface $container ): ApplePayButton {
+	'applepay.button'                => static function ( ContainerInterface $container ): ApplePayButton {
 
 		return new ApplePayButton(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'wcgateway.order-processor' ),
 			$container->get( 'applepay.url' ),
-			$container->get('ppcp.asset-version'),
-			$container->get('applepay.data_to_scripts'),
-			$container->get( 'wcgateway.settings.status' ),
+			$container->get( 'ppcp.asset-version' ),
+			$container->get( 'applepay.data_to_scripts' ),
+			$container->get( 'wcgateway.settings.status' )
 		);
 	},
 	'applepay.blocks-payment-method' => static function ( ContainerInterface $container ): PaymentMethodTypeInterface {

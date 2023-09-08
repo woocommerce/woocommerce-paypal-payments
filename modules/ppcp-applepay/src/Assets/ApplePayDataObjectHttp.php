@@ -20,6 +20,7 @@ class ApplePayDataObjectHttp {
 	 * The nonce of the request.
 	 *
 	 * @var string
+	 * @psalm-suppress PropertyNotSetInConstructor
 	 */
 	protected $nonce;
 
@@ -43,6 +44,13 @@ class ApplePayDataObjectHttp {
 	 * @var mixed
 	 */
 	protected $product_id;
+
+	/**
+	 * The caller page.
+	 *
+	 * @var mixed
+	 */
+	protected $caller_page;
 
 	/**
 	 * The product quantity.
@@ -104,7 +112,7 @@ class ApplePayDataObjectHttp {
 	/**
 	 * Resets the errors array
 	 */
-	protected function reset_errors() {
+	protected function reset_errors(): void {
 		$this->errors = array();
 	}
 
@@ -113,7 +121,8 @@ class ApplePayDataObjectHttp {
 	 *
 	 * @return bool
 	 */
-	public function has_errors() {
+	public function has_errors(): bool
+	{
 		return ! empty( $this->errors );
 	}
 	/**
@@ -125,7 +134,12 @@ class ApplePayDataObjectHttp {
 		return $this->errors;
 	}
 
-	public function validation_data() {
+	/**
+	 * Assigns the validation flag
+	 *
+	 * @return void
+	 */
+	public function validation_data(): void {
 		$data = filter_input( INPUT_POST, 'validation', FILTER_VALIDATE_BOOL );
 		if ( ! $data ) {
 			return;
@@ -137,8 +151,11 @@ class ApplePayDataObjectHttp {
 	 * Set the object with the data relevant to ApplePay on update shipping contact
 	 * Required data depends on callerPage
 	 */
-	public function update_contact_data() {
-		$nonce        = filter_input( INPUT_POST, 'woocommerce-process-checkout-nonce', FILTER_SANITIZE_SPECIAL_CHARS );
+	public function update_contact_data(): void {
+		$nonce          = filter_input( INPUT_POST, 'woocommerce-process-checkout-nonce', FILTER_SANITIZE_SPECIAL_CHARS );
+		if ( ! $nonce ) {
+			return;
+		}
 		$is_nonce_valid = wp_verify_nonce(
 			$nonce,
 			'woocommerce-process_checkout'
@@ -147,7 +164,9 @@ class ApplePayDataObjectHttp {
 			return;
 		}
 		$data = $this->get_filtered_request_data();
-
+		if ( ! $data ) {
+			return;
+		}
 		$result = $this->update_required_data(
 			$data,
 			PropertiesDictionary::UPDATE_CONTACT_SINGLE_PROD_REQUIRED_FIELDS,
@@ -163,8 +182,11 @@ class ApplePayDataObjectHttp {
 	 * Set the object with the data relevant to ApplePay on update shipping method
 	 * Required data depends on callerPage
 	 */
-	public function update_method_data() {
+	public function update_method_data(): void {
 		$nonce          = filter_input( INPUT_POST, 'woocommerce-process-checkout-nonce', FILTER_SANITIZE_SPECIAL_CHARS );
+		if ( ! $nonce ) {
+			return;
+		}
 		$is_nonce_valid = wp_verify_nonce(
 			$nonce,
 			'woocommerce-process_checkout'
@@ -174,6 +196,9 @@ class ApplePayDataObjectHttp {
 		}
 
 		$data   = $this->get_filtered_request_data();
+		if ( ! $data ) {
+			return;
+		}
 		$result = $this->update_required_data(
 			$data,
 			PropertiesDictionary::UPDATE_METHOD_SINGLE_PROD_REQUIRED_FIELDS,
@@ -192,8 +217,11 @@ class ApplePayDataObjectHttp {
 	 *
 	 * @param string $caller_page The caller page.
 	 */
-	public function order_data( string $caller_page ) {
+	public function order_data( string $caller_page ): void {
 		$nonce          = filter_input( INPUT_POST, 'woocommerce-process-checkout-nonce', FILTER_SANITIZE_SPECIAL_CHARS );
+		if ( ! $nonce ) {
+			return;
+		}
 		$is_nonce_valid = wp_verify_nonce(
 			$nonce,
 			'woocommerce-process_checkout'
@@ -202,6 +230,9 @@ class ApplePayDataObjectHttp {
 			return;
 		}
 		$data                                      = filter_var_array( $_POST, FILTER_SANITIZE_SPECIAL_CHARS );
+		if ( ! $data ) {
+			return;
+		}
 		$data[ PropertiesDictionary::CALLER_PAGE ] = $caller_page;
 		$result                                    = $this->update_required_data(
 			$data,
@@ -273,7 +304,7 @@ class ApplePayDataObjectHttp {
 	 *
 	 * @param array $data The data.
 	 */
-	protected function assign_data_object_values( array $data ) {
+	protected function assign_data_object_values( array $data ): void {
 		foreach ( $data as $key => $value ) {
 			if ( $key === 'woocommerce-process-checkout-nonce' ) {
 				$key = 'nonce';
@@ -285,7 +316,7 @@ class ApplePayDataObjectHttp {
 	/**
 	 * Returns the address details used in pre-authorization steps.
 	 *
-	 * @param array $contact_info
+	 * @param array $contact_info The contact info.
 	 *
 	 * @return string[]
 	 */
@@ -316,9 +347,9 @@ class ApplePayDataObjectHttp {
 	 * are not empty.
 	 * If not it adds a contacField error to the object's error list.
 	 *
-	 * @param array  $post      The address to check
-	 * @param array  $required  The required fields for the given address
-	 * @param string $error_code Either shipping or billing kind
+	 * @param array  $post      The address to check.
+	 * @param array  $required  The required fields for the given address.
+	 * @param string $error_code Either shipping or billing kind.
 	 *
 	 * @return bool
 	 */
@@ -355,8 +386,8 @@ class ApplePayDataObjectHttp {
 	/**
 	 * Returns the address details for after authorization steps.
 	 *
-	 * @param array  $data	   The data.
-	 * @param string $error_code differentiates between billing and shipping information
+	 * @param array  $data     The data.
+	 * @param string $error_code differentiates between billing and shipping information.
 	 *
 	 * @return string[]
 	 */
@@ -397,8 +428,8 @@ class ApplePayDataObjectHttp {
 	 * Updates the object with the required data.
 	 *
 	 * @param array $data The data.
-	 * @param array $required_product_fields
-	 * @param array $required_cart_fields
+	 * @param array $required_product_fields The required product fields.
+	 * @param array $required_cart_fields The required cart fields.
 	 * @return bool
 	 */
 	protected function update_required_data( array $data, array $required_product_fields, array $required_cart_fields ) {
@@ -500,6 +531,15 @@ class ApplePayDataObjectHttp {
 	}
 
 	/**
+	 * Returns the product id.
+	 *
+	 * @return string
+	 */
+	public function caller_page(): string {
+		return $this->caller_page;
+	}
+
+	/**
 	 * Returns the product quantity.
 	 *
 	 * @return string
@@ -511,9 +551,10 @@ class ApplePayDataObjectHttp {
 	/**
 	 * Returns the nonce.
 	 *
-	 * @return mixed
+	 * @return string
 	 */
-	public function nonce() {
+	public function nonce(): string
+	{
 		return $this->nonce;
 	}
 
@@ -531,8 +572,7 @@ class ApplePayDataObjectHttp {
 	 *
 	 * @return bool
 	 */
-	public function validated_flag()
-	{
+	public function validated_flag() {
 		return $this->validation_flag;
 	}
 

@@ -1,12 +1,17 @@
 <?php
+/**
+ * Prepares the data for the response to Apple.
+ *
+ * @package WooCommerce\PayPalCommerce\Applepay
+ */
 
 declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Applepay\Assets;
 
-use Psr\Log\LoggerInterface;
-use WC_Payment_Gateway;
-
+/**
+ * Class ResponsesToApple
+ */
 class ResponsesToApple {
 
 	/**
@@ -14,9 +19,10 @@ class ResponsesToApple {
 	 * Adds the error list if provided to be handled by the script
 	 * On success it adds the redirection url
 	 *
-	 * @param        $status 0 => success, 1 => error
-	 * @param string                          $order_id
-	 * @param array                           $error_list
+	 * @param int    $status 0 => success, 1 => error.
+	 * @param string $order_id The order ID.
+	 * @param array  $error_list [['errorCode'=>required, 'contactField'=>'']].
+	 * @param string $return_url The URL to redirect to.
 	 *
 	 * @return array
 	 */
@@ -44,13 +50,12 @@ class ResponsesToApple {
 	/**
 	 * Returns an error response to be handled by the script
 	 *
-	 * @param array $errorList [['errorCode'=>required, 'contactField'=>'']]
-	 *
+	 * @param array $error_list [['errorCode'=>required, 'contactField'=>'']].
 	 * @return void
 	 */
-	public function response_with_data_errors( $errorList ) {
+	public function response_with_data_errors( $error_list ) {
 		$response             = array();
-		$response['errors']   = $this->apple_pay_error( $errorList );
+		$response['errors']   = $this->apple_pay_error( $error_list );
 		$response['newTotal'] = $this->apple_new_total_response(
 			0,
 			'pending'
@@ -61,6 +66,7 @@ class ResponsesToApple {
 	/**
 	 * Creates a response formatted for ApplePay
 	 *
+	 * @param array $payment_details Payment details.
 	 * @return array
 	 */
 	public function apple_formatted_response( array $payment_details ) {
@@ -81,16 +87,18 @@ class ResponsesToApple {
 
 	/**
 	 * Returns a success response to be handled by the script
+	 *
+	 * @param array $response Response to send.
 	 */
-	public function response_success( array $response ) {
+	public function response_success( array $response ): void {
 		wp_send_json_success( $response );
 	}
 
 	/**
 	 * Creates an array of errors formatted
 	 *
-	 * @param array $error_list
-	 * @param array $errors
+	 * @param array $error_list List of errors.
+	 * @param array $errors (optional).
 	 *
 	 * @return array
 	 */
@@ -110,9 +118,8 @@ class ResponsesToApple {
 	/**
 	 * Creates NewTotals line
 	 *
-	 * @param        $total
-	 *
-	 * @param string $type
+	 * @param float  $total Total amount.
+	 * @param string $type final or pending.
 	 *
 	 * @return array
 	 */
@@ -127,9 +134,9 @@ class ResponsesToApple {
 	/**
 	 * Creates item line
 	 *
-	 * @param $subtotal_label
-	 * @param $subtotal
-	 * @param $type
+	 * @param string $subtotal_label Subtotal label.
+	 * @param float  $subtotal Subtotal amount.
+	 * @param string $type final or pending.
 	 *
 	 * @return array
 	 */
@@ -144,6 +151,7 @@ class ResponsesToApple {
 	/**
 	 * Creates NewLineItems line
 	 *
+	 * @param array $payment_details Payment details.
 	 * @return array[]
 	 */
 	protected function apple_new_line_items_response( array $payment_details ): array {

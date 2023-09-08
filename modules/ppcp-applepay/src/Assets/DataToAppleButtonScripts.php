@@ -9,6 +9,9 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Applepay\Assets;
 
+use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+
 /**
  * Class DataToAppleButtonScripts
  */
@@ -23,12 +26,18 @@ class DataToAppleButtonScripts {
 	/**
 	 * The settings.
 	 *
-	 * @var array
+	 * @var Settings
 	 */
 	private $settings;
 
-	public function __construct($sdk_url, $settings) {
-		$this->sdk_url = $sdk_url;
+	/**
+	 * DataToAppleButtonScripts constructor.
+	 *
+	 * @param string $sdk_url The URL to the SDK.
+	 * @param Settings $settings The settings.
+	 */
+	public function __construct(string $sdk_url, Settings $settings ) {
+		$this->sdk_url  = $sdk_url;
 		$this->settings = $settings;
 	}
 
@@ -36,14 +45,15 @@ class DataToAppleButtonScripts {
 	 * Sets the appropriate data to send to ApplePay script
 	 * Data differs between product page and cart page
 	 *
-	 * @param bool $is_block
+	 * @param bool $is_block Whether the button is in a block or not.
 	 * @return array
+	 * @throws NotFoundException When the setting is not found.
 	 */
 	public function apple_pay_script_data( bool $is_block = false ): array {
-		$base_location   = wc_get_base_location();
+		$base_location     = wc_get_base_location();
 		$shop_country_code = $base_location['country'];
-		$currency_code    = get_woocommerce_currency();
-		$total_label      = get_bloginfo( 'name' );
+		$currency_code     = get_woocommerce_currency();
+		$total_label       = get_bloginfo( 'name' );
 		if ( is_product() ) {
 			return $this->data_for_product_page(
 				$shop_country_code,
@@ -62,11 +72,11 @@ class DataToAppleButtonScripts {
 	/**
 	 * Check if the product needs shipping
 	 *
-	 * @param $product
+	 * @param \WC_Product $product The product.
 	 *
 	 * @return bool
 	 */
-	protected function check_if_need_shipping($product ) {
+	protected function check_if_need_shipping( $product ) {
 		if (
 			! wc_shipping_enabled()
 			|| 0 === wc_get_shipping_method_count(
@@ -85,11 +95,14 @@ class DataToAppleButtonScripts {
 	}
 
 	/**
-	 * @param $shop_country_code
-	 * @param $currency_code
-	 * @param $tota_label
+	 * Prepares the data for the product page.
+	 *
+	 * @param string $shop_country_code The shop country code.
+	 * @param string $currency_code The currency code.
+	 * @param string $total_label The label for the total amount.
 	 *
 	 * @return array
+	 * @throws NotFoundException When the setting is not found.
 	 */
 	protected function data_for_product_page(
 		$shop_country_code,
@@ -105,30 +118,30 @@ class DataToAppleButtonScripts {
 			$is_variation = true;
 		}
 		$product_need_shipping = $this->check_if_need_shipping( $product );
-		$product_id           = get_the_id();
-		$product_price        = $product->get_price();
-		$product_stock        = $product->get_stock_status();
-		$type                = $this->settings->get('applepay_button_type');
-		$color                = $this->settings->get('applepay_button_color');
-		$lang                 = $this->settings->get('applepay_button_language');
+		$product_id            = get_the_id();
+		$product_price         = $product->get_price();
+		$product_stock         = $product->get_stock_status();
+		$type                  = $this->settings->get( 'applepay_button_type' );
+		$color                 = $this->settings->get( 'applepay_button_color' );
+		$lang                  = $this->settings->get( 'applepay_button_language' );
 
 		return array(
-			'sdk_url' => $this->sdk_url,
-			'button'  => array(
+			'sdk_url'  => $this->sdk_url,
+			'button'   => array(
 				'wrapper'           => '#applepay-container',
 				'mini_cart_wrapper' => '#applepay-container',
-				'type' => $type,
-				'color' => $color,
-				'lang'  => $lang,
+				'type'              => $type,
+				'color'             => $color,
+				'lang'              => $lang,
 			),
-			'product' => array(
+			'product'  => array(
 				'needShipping' => $product_need_shipping,
 				'id'           => $product_id,
 				'price'        => $product_price,
 				'isVariation'  => $is_variation,
 				'stock'        => $product_stock,
 			),
-			'shop'    => array(
+			'shop'     => array(
 				'countryCode'  => $shop_country_code,
 				'currencyCode' => $currency_code,
 				'totalLabel'   => $total_label,
@@ -138,9 +151,11 @@ class DataToAppleButtonScripts {
 	}
 
 	/**
-	 * @param $shop_country_code
-	 * @param $currency_code
-	 * @param $total_label
+	 * Prepares the data for the cart page.
+	 *
+	 * @param string $shop_country_code The shop country code.
+	 * @param string $currency_code The currency code.
+	 * @param string $total_label The label for the total amount.
 	 *
 	 * @return array
 	 */
@@ -150,15 +165,15 @@ class DataToAppleButtonScripts {
 		$total_label
 	) {
 
-		$cart         = WC()->cart;
-		$nonce        = wp_nonce_field( 'woocommerce-process_checkout', 'woocommerce-process-checkout-nonce' );
+		$cart          = WC()->cart;
+		$nonce         = wp_nonce_field( 'woocommerce-process_checkout', 'woocommerce-process-checkout-nonce' );
 		$button_markup =
 			'<div id="applepay-container">'
 			. $nonce
 			. '</div>';
 		return array(
-			'sdk_url' => $this->sdk_url,
-			'button'  => array(
+			'sdk_url'      => $this->sdk_url,
+			'button'       => array(
 				'wrapper'           => '#applepay-container',
 				'mini_cart_wrapper' => '#applepay-container',
 			),
@@ -171,7 +186,7 @@ class DataToAppleButtonScripts {
 				'currencyCode' => $currency_code,
 				'totalLabel'   => $total_label,
 			),
-			'ajax_url'      => admin_url( 'admin-ajax.php' ),
+			'ajax_url'     => admin_url( 'admin-ajax.php' ),
 			'buttonMarkup' => $button_markup,
 		);
 	}

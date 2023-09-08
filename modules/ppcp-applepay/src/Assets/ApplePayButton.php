@@ -45,12 +45,16 @@ class ApplePayButton implements ButtonInterface {
 	 */
 	private $logger;
 	/**
+	 * The response templates.
+	 *
 	 * @var ResponsesToApple
 	 */
 	private $response_templates;
 
 	/**
-	 * @var array The old cart contents.
+	 * The old cart contents.
+	 *
+	 * @var array
 	 */
 	private $old_cart_contents;
 
@@ -72,16 +76,29 @@ class ApplePayButton implements ButtonInterface {
 	 * @var OrderProcessor
 	 */
 	protected $order_processor;
+
 	/**
-	 * @var bool Whether to reload the cart after the order is processed.
+	 * Whether to reload the cart after the order is processed.
+	 *
+	 * @var bool
 	 */
 	protected $reload_cart = false;
+
+	/**
+	 * The module version.
+	 *
+	 * @var string
+	 */
 	private $version;
 	/**
+	 * The module URL.
+	 *
 	 * @var string
 	 */
 	private $module_url;
 	/**
+	 * The data to send to the ApplePay button script.
+	 *
 	 * @var DataToAppleButtonScripts
 	 */
 	private $script_data;
@@ -95,29 +112,33 @@ class ApplePayButton implements ButtonInterface {
 	/**
 	 * PayPalPaymentMethod constructor.
 	 *
-	 * @param Settings $settings The settings.
-	 * @param LoggerInterface $logger The logger.
+	 * @param Settings                 $settings The settings.
+	 * @param LoggerInterface          $logger The logger.
 	 * @param OrderProcessor           $order_processor The Order processor.
+	 * @param string                   $module_url The module URL.
+	 * @param string                   $version The module version.
+	 * @param DataToAppleButtonScripts $data The data to send to the ApplePay button script.
+	 * @param SettingsStatus           $settings_status The settings status helper.
 	 */
 	public function __construct(
-		Settings                 $settings,
-		LoggerInterface          $logger,
-		OrderProcessor           $order_processor,
-		string                   $module_url,
-		string                   $version,
+		Settings $settings,
+		LoggerInterface $logger,
+		OrderProcessor $order_processor,
+		string $module_url,
+		string $version,
 		DataToAppleButtonScripts $data,
 		SettingsStatus $settings_status
 	) {
-		$this->settings    = $settings;
+		$this->settings           = $settings;
 		$this->response_templates = new ResponsesToApple();
 		$this->logger             = $logger;
-		$this->id 			   = 'applepay';
-		$this->method_title    = __( 'Apple Pay', 'woocommerce-paypal-payments' );
-		$this->order_processor = $order_processor;
-		$this->module_url      = $module_url;
-		$this->version         = $version;
-		$this->script_data = $data;
-		$this->settings_status = $settings_status;
+		$this->id                 = 'applepay';
+		$this->method_title       = __( 'Apple Pay', 'woocommerce-paypal-payments' );
+		$this->order_processor    = $order_processor;
+		$this->module_url         = $module_url;
+		$this->version            = $version;
+		$this->script_data        = $data;
+		$this->settings_status    = $settings_status;
 	}
 
 	/**
@@ -241,15 +262,14 @@ class ApplePayButton implements ButtonInterface {
 	 * On fail triggers and option that shows an admin notice showing the error
 	 * On success removes such flag
 	 */
-	public function validate()
-	{
+	public function validate() {
 		$applepay_request_data_object = $this->applepay_data_object_http();
-		if (!$this->is_nonce_valid()) {
+		if ( ! $this->is_nonce_valid() ) {
 			return;
 		}
 		$applepay_request_data_object->validation_data();
 		$settings = $this->settings;
-		$settings->set('applepay_validated', $applepay_request_data_object->validated_flag());
+		$settings->set( 'applepay_validated', $applepay_request_data_object->validated_flag() );
 		$settings->persist();
 		wp_send_json_success();
 	}
@@ -258,7 +278,6 @@ class ApplePayButton implements ButtonInterface {
 	 * It updates the amount paying information if needed
 	 * On error returns an array of errors to be handled by the script
 	 * On success returns the new contact data
-	 * @throws \Exception
 	 */
 	public function update_shipping_contact(): void {
 		$applepay_request_data_object = $this->applepay_data_object_http();
@@ -312,7 +331,6 @@ class ApplePayButton implements ButtonInterface {
 	 * It updates the amount paying information if needed
 	 * On error returns an array of errors to be handled by the script
 	 * On success returns the new contact data
-	 * @throws \Exception
 	 */
 	public function update_shipping_method(): void {
 		$applepay_request_data_object = $this->applepay_data_object_http();
@@ -324,7 +342,7 @@ class ApplePayButton implements ButtonInterface {
 			$this->response_templates->response_with_data_errors( $applepay_request_data_object->errors() );
 		}
 		$payment_details = $this->which_calculate_totals( $applepay_request_data_object );
-		$response       = $this->response_templates->apple_formatted_response( $payment_details );
+		$response        = $this->response_templates->apple_formatted_response( $payment_details );
 		$this->response_templates->response_success( $response );
 	}
 
@@ -332,22 +350,23 @@ class ApplePayButton implements ButtonInterface {
 	 * Method to create a WC order from the data received from the ApplePay JS
 	 * On error returns an array of errors to be handled by the script
 	 * On success returns the new order data
-	 * @throws \Exception
+	 *
+	 * @throws \Exception When validation fails.
 	 */
 	public function create_wc_order() {
-		//$this->response_after_successful_result();
+		// $this->response_after_successful_result();
 		$applepay_request_data_object = $this->applepay_data_object_http();
-		$applepay_request_data_object->order_data('productDetail');
-		$this->update_posted_data($applepay_request_data_object);
-		$cart_item_key = $this->prepare_cart($applepay_request_data_object);
-		$cart = WC()->cart;
-		$address = $applepay_request_data_object->shipping_address();
+		$applepay_request_data_object->order_data( 'productDetail' );
+		$this->update_posted_data( $applepay_request_data_object );
+		$cart_item_key = $this->prepare_cart( $applepay_request_data_object );
+		$cart          = WC()->cart;
+		$address       = $applepay_request_data_object->shipping_address();
 		$this->calculate_totals_single_product(
 			$cart,
 			$address,
 			$applepay_request_data_object->shipping_method()
 		);
-		if (! $cart_item_key) {
+		if ( ! $cart_item_key ) {
 			$this->response_templates->response_with_data_errors(
 				array(
 					array(
@@ -358,13 +377,16 @@ class ApplePayButton implements ButtonInterface {
 			);
 			return;
 		}
-		$this->add_addresses_to_order($applepay_request_data_object);
-		//add_action('woocommerce_checkout_order_processed', array($this, 'process_order_as_paid'), 10, 3);
-		add_filter('woocommerce_payment_successful_result', function (array $result) use ($cart, $cart_item_key) : array {
-			$this->clear_current_cart($cart, $cart_item_key);
-			$this->reload_cart( $cart );
-			return $result;
-		});
+		$this->add_addresses_to_order( $applepay_request_data_object );
+		// add_action('woocommerce_checkout_order_processed', array($this, 'process_order_as_paid'), 10, 3).
+		add_filter(
+			'woocommerce_payment_successful_result',
+			function ( array $result ) use ( $cart, $cart_item_key ) : array {
+				$this->clear_current_cart( $cart, $cart_item_key );
+				$this->reload_cart( $cart );
+				return $result;
+			}
+		);
 		WC()->checkout()->process_checkout();
 	}
 
@@ -413,18 +435,18 @@ class ApplePayButton implements ButtonInterface {
 	/**
 	 * Selector between product detail and cart page calculations
 	 *
-	 * @param $applepay_request_data_object
+	 * @param ApplePayDataObjectHttp $applepay_request_data_object The data object.
 	 *
 	 * @return array|bool
 	 */
 	protected function which_calculate_totals(
 		$applepay_request_data_object
 	) {
-		$address = empty($applepay_request_data_object->shipping_address()) ? $applepay_request_data_object->simplified_contact() : $applepay_request_data_object->shipping_address();
-		if ( $applepay_request_data_object->caller_page === 'productDetail' ) {
-			$cart_item_key = $this->prepare_cart($applepay_request_data_object);
-			$cart = WC()->cart;
-			if (! assert($cart instanceof WC_Cart)) {
+		$address = empty( $applepay_request_data_object->shipping_address() ) ? $applepay_request_data_object->simplified_contact() : $applepay_request_data_object->shipping_address();
+		if ( $applepay_request_data_object->caller_page() === 'productDetail' ) {
+			$cart_item_key = $this->prepare_cart( $applepay_request_data_object );
+			$cart          = WC()->cart;
+			if ( ! assert( $cart instanceof WC_Cart ) ) {
 				return false;
 			}
 			$totals = $this->calculate_totals_single_product(
@@ -432,11 +454,11 @@ class ApplePayButton implements ButtonInterface {
 				$address,
 				$applepay_request_data_object->shipping_method()
 			);
-			$this->clear_current_cart($cart, $cart_item_key);
+			$this->clear_current_cart( $cart, $cart_item_key );
 			$this->reload_cart( $cart );
 			return $totals;
 		}
-		if ( $applepay_request_data_object->caller_page === 'cart' ) {
+		if ( $applepay_request_data_object->caller_page() === 'cart' ) {
 			return $this->calculate_totals_cart_page(
 				$address,
 				$applepay_request_data_object->shipping_method()
@@ -451,19 +473,18 @@ class ApplePayButton implements ButtonInterface {
 	 * If no shippingMethodId provided will return the first available shipping
 	 * method
 	 *
-	 * @param      $product_id
-	 * @param      $product_quantity
-	 * @param      $customer_address
-	 * @param null             $shipping_method
+	 * @param WC_Cart    $cart The cart.
+	 * @param array      $customer_address customer address to use.
+	 * @param array|null $shipping_method shipping method to use.
 	 */
 	protected function calculate_totals_single_product(
 		$cart,
 		$customer_address,
 		$shipping_method = null
 	): array {
-		$results     = array();
+		$results = array();
 		try {
-			// I just care about apple address details
+			// I just care about apple address details.
 			$shipping_method_id       = '';
 			$shipping_methods_array   = array();
 			$selected_shipping_method = array();
@@ -476,6 +497,9 @@ class ApplePayButton implements ButtonInterface {
 				);
 			}
 			if ( $cart->needs_shipping() ) {
+				if ( ! $shipping_method ) {
+					return array();
+				}
 				list(
 					$shipping_methods_array, $selected_shipping_method
 					) = $this->cart_shipping_methods(
@@ -495,6 +519,7 @@ class ApplePayButton implements ButtonInterface {
 				$shipping_methods_array
 			);
 		} catch ( Exception $exception ) {
+			return array();
 		}
 		return $results;
 	}
@@ -503,6 +528,8 @@ class ApplePayButton implements ButtonInterface {
 	 * Sets the customer address with ApplePay details to perform correct
 	 * calculations
 	 * If no parameter passed then it resets the customer to shop details
+	 *
+	 * @param array $address customer address.
 	 */
 	protected function customer_address( array $address = array() ) {
 		$base_location     = wc_get_base_location();
@@ -524,10 +551,10 @@ class ApplePayButton implements ButtonInterface {
 	/**
 	 * Add shipping methods to cart to perform correct calculations
 	 *
-	 * @param $cart
-	 * @param $customer_address
-	 * @param $shipping_method
-	 * @param $shipping_method_id
+	 * @param WC_Cart $cart WC Cart instance.
+	 * @param array   $customer_address Customer address.
+	 * @param array   $shipping_method Shipping method.
+	 * @param array   $shipping_method_id Shipping method id.
 	 */
 	protected function cart_shipping_methods(
 		$cart,
@@ -573,13 +600,13 @@ class ApplePayButton implements ButtonInterface {
 	/**
 	 * Sets shipping packages for correct calculations
 	 *
-	 * @param $customer_address
-	 * @param $total
+	 * @param array $customer_address ApplePay address details.
+	 * @param float $total Total amount of the cart.
 	 *
 	 * @return mixed|void|null
 	 */
 	protected function getShippingPackages( $customer_address, $total ) {
-		// Packages array for storing 'carts'
+		// Packages array for storing 'carts'.
 		$packages                                = array();
 		$packages[0]['contents']                 = WC()->cart->cart_contents;
 		$packages[0]['contents_cost']            = $total;
@@ -597,9 +624,9 @@ class ApplePayButton implements ButtonInterface {
 	/**
 	 * Returns the formatted results of the cart calculations
 	 *
-	 * @param $cart
-	 * @param $selected_shipping_method
-	 * @param $shipping_methods_array
+	 * @param WC_Cart $cart WC Cart object.
+	 * @param array   $selected_shipping_method Selected shipping method.
+	 * @param array   $shipping_methods_array Shipping methods array.
 	 */
 	protected function cart_calculation_results(
 		$cart,
@@ -629,12 +656,12 @@ class ApplePayButton implements ButtonInterface {
 	 * If no shippingMethodId provided will return the first available shipping
 	 * method
 	 *
-	 * @param      $customer_address
-	 * @param null             $shipping_method
+	 * @param array $customer_address The customer address.
+	 * @param array|null $shipping_method The shipping method.
 	 */
 	protected function calculate_totals_cart_page(
-		$customer_address = null,
-		$shipping_method = null
+		array $customer_address,
+			  $shipping_method = null
 	): array {
 
 		$results = array();
@@ -644,7 +671,7 @@ class ApplePayButton implements ButtonInterface {
 		try {
 			$shipping_methods_array   = array();
 			$selected_shipping_method = array();
-			// I just care about apple address details
+			// I just care about apple address details.
 			$this->customer_address( $customer_address );
 			$cart = WC()->cart;
 			if ( $shipping_method ) {
@@ -655,6 +682,9 @@ class ApplePayButton implements ButtonInterface {
 			}
 
 			if ( $cart->needs_shipping() ) {
+				if ( ! $shipping_method ) {
+					return [];
+				}
 				list(
 					$shipping_methods_array, $selected_shipping_method
 					) = $this->cart_shipping_methods(
@@ -676,6 +706,7 @@ class ApplePayButton implements ButtonInterface {
 
 			$this->customer_address();
 		} catch ( Exception $e ) {
+			return array();
 		}
 
 		return $results;
@@ -684,19 +715,18 @@ class ApplePayButton implements ButtonInterface {
 	/**
 	 * Add address billing and shipping data to order
 	 *
-	 * @param ApplePayDataObjectHttp $applepay_request_data_object
-	 * @param                        $order
+	 * @param ApplePayDataObjectHttp $applepay_request_data_object ApplePayDataObjectHttp.
 	 */
 	protected function add_addresses_to_order(
 		ApplePayDataObjectHttp $applepay_request_data_object
-	) {
+	): void {
 		add_action(
 			'woocommerce_checkout_create_order',
-			static function ( $order, $data ) use ( $applepay_request_data_object ) {
-				if ( $applepay_request_data_object->shipping_method() !== null ) {
+			static function (WC_Order $order, array $data ) use ( $applepay_request_data_object ) {
+				if ( !empty($applepay_request_data_object->shipping_method()) ) {
 					$billing_address  = $applepay_request_data_object->billing_address();
 					$shipping_address = $applepay_request_data_object->shipping_address();
-					// apple puts email in shipping_address while we get it from WC's billing_address
+					// apple puts email in shipping_address while we get it from WC's billing_address.
 					$billing_address['email'] = $shipping_address['email'];
 					$billing_address['phone'] = $shipping_address['phone'];
 
@@ -712,9 +742,9 @@ class ApplePayButton implements ButtonInterface {
 	 * Empty the cart to use for calculations
 	 * while saving its contents in a field
 	 */
-	protected function save_old_cart() {
+	protected function save_old_cart(): void {
 		$cart = WC()->cart;
-		if ( $cart->is_empty() ||  ! assert($cart instanceof WC_Cart)) {
+		if ( $cart->is_empty() ) {
 			return;
 		}
 		$this->old_cart_contents = $cart->get_cart_contents();
@@ -725,7 +755,9 @@ class ApplePayButton implements ButtonInterface {
 	}
 
 	/**
-	 * @param WC_Cart $cart
+	 * Reloads the previous cart contents
+	 *
+	 * @param WC_Cart $cart The cart to reload.
 	 */
 	protected function reload_cart( WC_Cart $cart ): void {
 		if ( ! $this->reload_cart ) {
@@ -736,106 +768,86 @@ class ApplePayButton implements ButtonInterface {
 		}
 	}
 
-	protected function response_after_successful_result(): void {
-		add_filter(
-			'woocommerce_payment_successful_result',
-			function ( $result, $order_id ) {
-				if (
-					isset( $result['result'] )
-					&& 'success' === $result['result']
-				) {
-					$this->response_templates->response_success(
-						$this->response_templates->authorization_result_response(
-							'STATUS_SUCCESS',
-							$order_id
-						)
-					);
-				} else {
-					wp_send_json_error(
-						$this->response_templates->authorization_result_response(
-							'STATUS_FAILURE',
-							0,
-							array( array( 'errorCode' => 'unknown' ) )
-						)
-					);
-				}
-				return $result;
-			},
-			10,
-			2
-		);
-	}
-
 	/**
-	 * @param WC_Cart|null $cart
-	 * @param $cart_item_key
+	 * Clear the current cart
+	 *
+	 * @param WC_Cart|null $cart The cart object.
+	 * @param string $cart_item_key The cart item key.
 	 * @return void
 	 */
-	public function clear_current_cart(?WC_Cart $cart, $cart_item_key): void
-	{
-		$cart->remove_cart_item($cart_item_key);
+	public function clear_current_cart(?WC_Cart $cart, string $cart_item_key ): void {
+		if ( ! $cart ) {
+			return;
+		}
+		$cart->remove_cart_item( $cart_item_key );
 		$this->customer_address();
 	}
 
 	/**
 	 * Removes the old cart, saves it, and creates a new one
-	 * @param ApplePayDataObjectHttp $applepay_request_data_object
-	 * @return bool | string The cart item key after adding to the new cart
-	 * @throws \Exception
+	 *
+	 * @param ApplePayDataObjectHttp $applepay_request_data_object The request data object.
+	 * @return bool | string The cart item key after adding to the new cart.
+	 * @throws \Exception If cannot be added to cart.
 	 */
-	public function prepare_cart(ApplePayDataObjectHttp $applepay_request_data_object): string
-	{
+	public function prepare_cart( ApplePayDataObjectHttp $applepay_request_data_object ): string {
 		$this->save_old_cart();
 		$cart = WC()->cart;
 		return $cart->add_to_cart(
 			(int) $applepay_request_data_object->product_id(),
-			(int) $applepay_request_data_object->product_quantity());
+			(int) $applepay_request_data_object->product_quantity()
+		);
 	}
 
-	public function process_order_as_paid($order_id): void
-	{
-		$order = wc_get_order($order_id);
-		if (!assert($order instanceof WC_Order)) {
+	/*
+	 TODO
+	public function process_order_as_paid( $order_id ): void {
+		$order = wc_get_order( $order_id );
+		if ( ! assert( $order instanceof WC_Order ) ) {
 			return;
 		}
 		$order->payment_complete();
-		wc_reduce_stock_levels($order_id);
+		wc_reduce_stock_levels( $order_id );
 		$order->save();
 	}
+	*/
 
-	protected function update_posted_data( $applepay_request_data_object )
-	{
+	/**
+	 * Update the posted data to match the Apple Pay request data
+	 *
+	 * @param ApplePayDataObjectHttp $applepay_request_data_object The Apple Pay request data.
+	 */
+	protected function update_posted_data( $applepay_request_data_object ): void {
 		add_filter(
 			'woocommerce_checkout_posted_data',
-			function ($data) use ($applepay_request_data_object) {
+			function (array $data ) use ( $applepay_request_data_object ): array {
 
-				$data['payment_method'] = "ppcp-gateway";
-				$data['shipping_method'] = $applepay_request_data_object->shipping_method();
+				$data['payment_method']     = 'ppcp-gateway';
+				$data['shipping_method']    = $applepay_request_data_object->shipping_method();
 				$data['billing_first_name'] = $applepay_request_data_object->billing_address()['first_name'] ?? '';
-				$data['billing_last_name'] = $applepay_request_data_object->billing_address()['last_name'] ?? '';
-				$data['billing_company'] = $applepay_request_data_object->billing_address()['company'] ?? '';
-				$data['billing_country'] = $applepay_request_data_object->billing_address()['country'] ?? '';
-				$data['billing_address_1'] = $applepay_request_data_object->billing_address()['address_1'] ?? '';
-				$data['billing_address_2'] = $applepay_request_data_object->billing_address()['address_2'] ?? '';
-				$data['billing_city'] = $applepay_request_data_object->billing_address()['city'] ?? '';
-				$data['billing_state'] = $applepay_request_data_object->billing_address()['state'] ?? '';
-				$data['billing_postcode'] = $applepay_request_data_object->billing_address()['postcode'] ?? '';
+				$data['billing_last_name']  = $applepay_request_data_object->billing_address()['last_name'] ?? '';
+				$data['billing_company']    = $applepay_request_data_object->billing_address()['company'] ?? '';
+				$data['billing_country']    = $applepay_request_data_object->billing_address()['country'] ?? '';
+				$data['billing_address_1']  = $applepay_request_data_object->billing_address()['address_1'] ?? '';
+				$data['billing_address_2']  = $applepay_request_data_object->billing_address()['address_2'] ?? '';
+				$data['billing_city']       = $applepay_request_data_object->billing_address()['city'] ?? '';
+				$data['billing_state']      = $applepay_request_data_object->billing_address()['state'] ?? '';
+				$data['billing_postcode']   = $applepay_request_data_object->billing_address()['postcode'] ?? '';
 
-
-				if ( $applepay_request_data_object->shipping_method() !== null ) {
-					$data['billing_email'] = $applepay_request_data_object->shipping_address()['email'] ?? '';
-					$data['billing_phone'] = $applepay_request_data_object->shipping_address()['phone'] ?? '';
+				if ( !empty($applepay_request_data_object->shipping_method()) ) {
+					$data['billing_email']       = $applepay_request_data_object->shipping_address()['email'] ?? '';
+					$data['billing_phone']       = $applepay_request_data_object->shipping_address()['phone'] ?? '';
 					$data['shipping_first_name'] = $applepay_request_data_object->shipping_address()['first_name'] ?? '';
-					$data['shipping_last_name'] = $applepay_request_data_object->shipping_address()['last_name'] ?? '';
-					$data['shipping_company'] = $applepay_request_data_object->shipping_address()['company'] ?? '';
-					$data['shipping_country'] = $applepay_request_data_object->shipping_address()['country'] ?? '';
-					$data['shipping_address_1'] = $applepay_request_data_object->shipping_address()['address_1'] ?? '';
-					$data['shipping_address_2'] = $applepay_request_data_object->shipping_address()['address_2'] ?? '';
-					$data['shipping_city'] = $applepay_request_data_object->shipping_address()['city'] ?? '';
-					$data['shipping_state'] = $applepay_request_data_object->shipping_address()['state'] ?? '';
-					$data['shipping_postcode'] = $applepay_request_data_object->shipping_address()['postcode'] ?? '';
-					$data['shipping_email'] = $applepay_request_data_object->shipping_address()['email'] ?? '';
-					$data['shipping_phone'] = $applepay_request_data_object->shipping_address()['phone'] ?? '';
+					$data['shipping_last_name']  = $applepay_request_data_object->shipping_address()['last_name'] ?? '';
+					$data['shipping_company']    = $applepay_request_data_object->shipping_address()['company'] ?? '';
+					$data['shipping_country']    = $applepay_request_data_object->shipping_address()['country'] ?? '';
+					$data['shipping_address_1']  = $applepay_request_data_object->shipping_address()['address_1'] ?? '';
+					$data['shipping_address_2']  = $applepay_request_data_object->shipping_address()['address_2'] ?? '';
+					$data['shipping_city']       = $applepay_request_data_object->shipping_address()['city'] ?? '';
+					$data['shipping_state']      = $applepay_request_data_object->shipping_address()['state'] ?? '';
+					$data['shipping_postcode']   = $applepay_request_data_object->shipping_address()['postcode'] ?? '';
+					$data['shipping_email']      = $applepay_request_data_object->shipping_address()['email'] ?? '';
+					$data['shipping_phone']      = $applepay_request_data_object->shipping_address()['phone'] ?? '';
 				}
 
 				return $data;
@@ -843,8 +855,12 @@ class ApplePayButton implements ButtonInterface {
 		);
 	}
 
-	public function render(): bool
-	{
+	/**
+	 * Renders the Apple Pay button on the page
+	 *
+	 * @return bool
+	 */
+	public function render(): bool {
 		$is_applepay_button_enabled = $this->settings->has( 'applepay_button_enabled' ) ? $this->settings->get( 'applepay_button_enabled' ) : false;
 
 		$button_enabled_product  = $is_applepay_button_enabled && $this->settings_status->is_smart_button_enabled_for_location( 'product' );
@@ -855,7 +871,7 @@ class ApplePayButton implements ButtonInterface {
 
 		add_filter(
 			'woocommerce_paypal_payments_sdk_components_hook',
-			function( $components ) {
+			function( array $components ) {
 				$components[] = 'applepay';
 				return $components;
 			}
@@ -908,7 +924,9 @@ class ApplePayButton implements ButtonInterface {
 			);
 		}
 
-		/*if ( $button_enabled_minicart ) {
+		/*
+		 TODO
+		if ( $button_enabled_minicart ) {
 			$default_hook_name  = 'woocommerce_paypal_payments_minicart_button_render';
 			$render_placeholder = apply_filters( 'woocommerce_paypal_payments_googlepay_minicart_button_render_hook', $default_hook_name );
 			$render_placeholder = is_string( $render_placeholder ) ? $render_placeholder : $default_hook_name;
@@ -919,7 +937,9 @@ class ApplePayButton implements ButtonInterface {
 				},
 				21
 			);
-		}*/
+		}
+		*/
+
 		return true;
 	}
 	/**
@@ -935,13 +955,21 @@ class ApplePayButton implements ButtonInterface {
 		<?php
 	}
 
-	public function should_load_script(): bool
-	{
+	/**
+	 * Checks if the module should load the script.
+	 *
+	 * @return bool
+	 */
+	public function should_load_script(): bool {
 		return true;
 	}
 
-	public function enqueue(): void
-	{
+	/**
+	 * Enqueues the scripts.
+	 *
+	 * @return void
+	 */
+	public function enqueue(): void {
 		wp_register_script(
 			'wc-ppcp-applepay',
 			untrailingslashit( $this->module_url ) . '/assets/js/boot.js',
@@ -966,13 +994,22 @@ class ApplePayButton implements ButtonInterface {
 		);
 	}
 
-	public function script_data(): array
-	{
+	/**
+	 * Returns the script data.
+	 *
+	 * @return array
+	 */
+	public function script_data(): array {
 		return $this->script_data->apple_pay_script_data();
 	}
 
-	public function is_enabled(): bool
-	{
+	/**
+	 * Returns true if the module is enabled.
+	 *
+	 * @return bool
+	 */
+	public function is_enabled(): bool {
 		// TODO: Implement is_enabled() method.
+		return true;
 	}
 }
