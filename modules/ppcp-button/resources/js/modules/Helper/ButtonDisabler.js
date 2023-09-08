@@ -9,6 +9,24 @@ const getElement = (selectorOrElement) => {
     return selectorOrElement;
 }
 
+const triggerEnabled = (selectorOrElement, element) => {
+    jQuery(document).trigger('ppcp-enabled', {
+        'handler': 'ButtonsDisabler.setEnabled',
+        'action': 'enable',
+        'selector': selectorOrElement,
+        'element': element
+    });
+}
+
+const triggerDisabled = (selectorOrElement, element) => {
+    jQuery(document).trigger('ppcp-disabled', {
+        'handler': 'ButtonsDisabler.setEnabled',
+        'action': 'disable',
+        'selector': selectorOrElement,
+        'element': element
+    });
+}
+
 export const setEnabled = (selectorOrElement, enable, form = null) => {
     const element = getElement(selectorOrElement);
 
@@ -17,7 +35,8 @@ export const setEnabled = (selectorOrElement, enable, form = null) => {
     }
 
     if (enable) {
-        jQuery(element).css({
+        jQuery(element).removeClass('ppcp-disabled')
+            .css({
                 'cursor': '',
                 '-webkit-filter': '',
                 'filter': '',
@@ -25,8 +44,12 @@ export const setEnabled = (selectorOrElement, enable, form = null) => {
             .off('mouseup')
             .find('> *')
             .css('pointer-events', '');
+
+        triggerEnabled(selectorOrElement, element);
+
     } else {
-        jQuery(element).css({
+        jQuery(element).addClass('ppcp-disabled')
+            .css({
                 'cursor': 'not-allowed',
                 '-webkit-filter': 'grayscale(100%)',
                 'filter': 'grayscale(100%)',
@@ -44,6 +67,8 @@ export const setEnabled = (selectorOrElement, enable, form = null) => {
             })
             .find('> *')
             .css('pointer-events', 'none');
+
+        triggerDisabled(selectorOrElement, element);
     }
 };
 

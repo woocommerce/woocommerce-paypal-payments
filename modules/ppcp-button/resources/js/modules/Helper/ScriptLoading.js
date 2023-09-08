@@ -7,8 +7,7 @@ import {keysToCamelCase} from "./Utils";
 // This component may be used by multiple modules. This assures that options are shared between all instances.
 let options = window.ppcpWidgetBuilder = window.ppcpWidgetBuilder || {
     isLoading: false,
-    onLoadedCallbacks: [],
-    loadingWaitTime: 5000 // 5 seconds
+    onLoadedCallbacks: []
 };
 
 export const loadPaypalScript = (config, onLoaded) => {
@@ -27,13 +26,6 @@ export const loadPaypalScript = (config, onLoaded) => {
     }
     options.isLoading = true;
 
-    // Arm a timeout so the module isn't locked on isLoading state on failure.
-    let loadingTimeout = setTimeout(() => {
-        console.error('Failed to load PayPal script.');
-        options.isLoading = false;
-        options.onLoadedCallbacks = [];
-    }, options.loadingWaitTime);
-
     // Callback to be called once the PayPal script is loaded.
     const callback = (paypal) => {
         widgetBuilder.setPaypal(paypal);
@@ -44,7 +36,6 @@ export const loadPaypalScript = (config, onLoaded) => {
 
         options.isLoading = false;
         options.onLoadedCallbacks = [];
-        clearTimeout(loadingTimeout);
     }
 
     // Build the PayPal script options.
