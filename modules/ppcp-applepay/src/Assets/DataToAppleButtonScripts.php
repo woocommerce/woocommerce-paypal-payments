@@ -33,10 +33,10 @@ class DataToAppleButtonScripts {
 	/**
 	 * DataToAppleButtonScripts constructor.
 	 *
-	 * @param string $sdk_url The URL to the SDK.
+	 * @param string   $sdk_url The URL to the SDK.
 	 * @param Settings $settings The settings.
 	 */
-	public function __construct(string $sdk_url, Settings $settings ) {
+	public function __construct( string $sdk_url, Settings $settings ) {
 		$this->sdk_url  = $sdk_url;
 		$this->settings = $settings;
 	}

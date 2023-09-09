@@ -121,8 +121,7 @@ class ApplePayDataObjectHttp {
 	 *
 	 * @return bool
 	 */
-	public function has_errors(): bool
-	{
+	public function has_errors(): bool {
 		return ! empty( $this->errors );
 	}
 	/**
@@ -152,7 +151,7 @@ class ApplePayDataObjectHttp {
 	 * Required data depends on callerPage
 	 */
 	public function update_contact_data(): void {
-		$nonce          = filter_input( INPUT_POST, 'woocommerce-process-checkout-nonce', FILTER_SANITIZE_SPECIAL_CHARS );
+		$nonce = filter_input( INPUT_POST, 'woocommerce-process-checkout-nonce', FILTER_SANITIZE_SPECIAL_CHARS );
 		if ( ! $nonce ) {
 			return;
 		}
@@ -183,7 +182,7 @@ class ApplePayDataObjectHttp {
 	 * Required data depends on callerPage
 	 */
 	public function update_method_data(): void {
-		$nonce          = filter_input( INPUT_POST, 'woocommerce-process-checkout-nonce', FILTER_SANITIZE_SPECIAL_CHARS );
+		$nonce = filter_input( INPUT_POST, 'woocommerce-process-checkout-nonce', FILTER_SANITIZE_SPECIAL_CHARS );
 		if ( ! $nonce ) {
 			return;
 		}
@@ -195,7 +194,7 @@ class ApplePayDataObjectHttp {
 			return;
 		}
 
-		$data   = $this->get_filtered_request_data();
+		$data = $this->get_filtered_request_data();
 		if ( ! $data ) {
 			return;
 		}
@@ -218,7 +217,7 @@ class ApplePayDataObjectHttp {
 	 * @param string $caller_page The caller page.
 	 */
 	public function order_data( string $caller_page ): void {
-		$nonce          = filter_input( INPUT_POST, 'woocommerce-process-checkout-nonce', FILTER_SANITIZE_SPECIAL_CHARS );
+		$nonce = filter_input( INPUT_POST, 'woocommerce-process-checkout-nonce', FILTER_SANITIZE_SPECIAL_CHARS );
 		if ( ! $nonce ) {
 			return;
 		}
@@ -229,7 +228,7 @@ class ApplePayDataObjectHttp {
 		if ( ! $is_nonce_valid ) {
 			return;
 		}
-		$data                                      = filter_var_array( $_POST, FILTER_SANITIZE_SPECIAL_CHARS );
+		$data = filter_var_array( $_POST, FILTER_SANITIZE_SPECIAL_CHARS );
 		if ( ! $data ) {
 			return;
 		}
@@ -553,8 +552,7 @@ class ApplePayDataObjectHttp {
 	 *
 	 * @return string
 	 */
-	public function nonce(): string
-	{
+	public function nonce(): string {
 		return $this->nonce;
 	}
 

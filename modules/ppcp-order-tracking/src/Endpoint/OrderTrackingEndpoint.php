@@ -198,6 +198,11 @@ class OrderTrackingEndpoint {
 
 		$status_code = (int) wp_remote_retrieve_response_code( $response );
 		if ( 201 !== $status_code && ! is_wp_error( $response ) ) {
+			/**
+			 * Cannot be WP_Error because we check for it above.
+			 *
+			 * @psalm-suppress PossiblyInvalidArgument
+			 */
 			$this->throw_paypal_api_exception( $status_code, $args, $response, 'create' );
 		}
 
@@ -240,6 +245,11 @@ class OrderTrackingEndpoint {
 
 		$status_code = (int) wp_remote_retrieve_response_code( $response );
 		if ( 204 !== $status_code && ! is_wp_error( $response ) ) {
+			/**
+			 * Cannot be WP_Error because we check for it above.
+			 *
+			 * @psalm-suppress PossiblyInvalidArgument
+			 */
 			$this->throw_paypal_api_exception( $status_code, $args, $response, 'update' );
 		}
 
