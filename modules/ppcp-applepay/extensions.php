@@ -43,7 +43,7 @@ return array(
 									'handler' => 'SubElementsHandler',
 									'options' => array(
 										'values'   => array( '1' ),
-										'elements' => array( '#field-applepay_button_color', '#field-applepay_button_type', '#field-applepay_button_language' ),
+										'elements' => array( '#field-applepay_sandbox_validation_file', '#field-applepay_live_validation_file', '#field-applepay_button_color', '#field-applepay_button_type', '#field-applepay_button_language' ),
 									),
 								),
 							)
