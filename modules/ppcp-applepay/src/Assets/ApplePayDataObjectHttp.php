@@ -43,7 +43,7 @@ class ApplePayDataObjectHttp {
 	 *
 	 * @var mixed
 	 */
-	protected $product_id;
+	protected $product_id = '';
 
 	/**
 	 * The caller page.
@@ -55,9 +55,9 @@ class ApplePayDataObjectHttp {
 	/**
 	 * The product quantity.
 	 *
-	 * @var mixed
+	 * @var string
 	 */
-	protected $product_quantity;
+	protected $product_quantity = '';
 
 	/**
 	 * The shipping methods.

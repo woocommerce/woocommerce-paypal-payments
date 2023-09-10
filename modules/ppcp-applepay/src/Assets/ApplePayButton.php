@@ -546,9 +546,6 @@ class ApplePayButton implements ButtonInterface {
 				);
 			}
 			if ( $cart->needs_shipping() ) {
-				if ( ! $shipping_method ) {
-					return array();
-				}
 				list(
 					$shipping_methods_array, $selected_shipping_method
 					) = $this->cart_shipping_methods(
@@ -602,14 +599,14 @@ class ApplePayButton implements ButtonInterface {
 	 *
 	 * @param WC_Cart $cart WC Cart instance.
 	 * @param array   $customer_address Customer address.
-	 * @param array   $shipping_method Shipping method.
+	 * @param array|null   $shipping_method Shipping method.
 	 * @param string  $shipping_method_id Shipping method id.
 	 */
 	protected function cart_shipping_methods(
 		$cart,
 		$customer_address,
-		$shipping_method,
-		$shipping_method_id
+		$shipping_method = null,
+		$shipping_method_id = ''
 	): array {
 
 		$shipping_methods_array = array();
@@ -731,9 +728,6 @@ class ApplePayButton implements ButtonInterface {
 			}
 
 			if ( $cart->needs_shipping() ) {
-				if ( ! $shipping_method ) {
-					return array();
-				}
 				list(
 					$shipping_methods_array, $selected_shipping_method
 					) = $this->cart_shipping_methods(
