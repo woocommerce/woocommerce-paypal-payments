@@ -597,10 +597,10 @@ class ApplePayButton implements ButtonInterface {
 	/**
 	 * Add shipping methods to cart to perform correct calculations
 	 *
-	 * @param WC_Cart $cart WC Cart instance.
-	 * @param array   $customer_address Customer address.
-	 * @param array|null   $shipping_method Shipping method.
-	 * @param string  $shipping_method_id Shipping method id.
+	 * @param WC_Cart    $cart WC Cart instance.
+	 * @param array      $customer_address Customer address.
+	 * @param array|null $shipping_method Shipping method.
+	 * @param string     $shipping_method_id Shipping method id.
 	 */
 	protected function cart_shipping_methods(
 		$cart,
@@ -728,13 +728,14 @@ class ApplePayButton implements ButtonInterface {
 			}
 
 			if ( $cart->needs_shipping() ) {
+				$shipping_method_id = $shipping_method['identifier'] ?? '';
 				list(
 					$shipping_methods_array, $selected_shipping_method
 					) = $this->cart_shipping_methods(
 						$cart,
 						$customer_address,
 						$shipping_method,
-						$shipping_method['identifier']
+						$shipping_method_id
 					);
 			}
 			$cart->calculate_shipping();
@@ -967,8 +968,6 @@ class ApplePayButton implements ButtonInterface {
 			);
 		}
 
-		/*
-		 TODO
 		if ( $button_enabled_minicart ) {
 			$default_hook_name  = 'woocommerce_paypal_payments_minicart_button_render';
 			$render_placeholder = apply_filters( 'woocommerce_paypal_payments_googlepay_minicart_button_render_hook', $default_hook_name );
@@ -976,12 +975,11 @@ class ApplePayButton implements ButtonInterface {
 			add_action(
 				$render_placeholder,
 				function () {
-					echo '<span id="applepay-container" class="ppcp-button-applepay ppcp-button-minicart"></span>';
+					echo '<span id="applepay-container-minicart" class="ppcp-button-applepay ppcp-button-minicart"></span>';
 				},
 				21
 			);
 		}
-		*/
 
 		return true;
 	}
@@ -990,10 +988,8 @@ class ApplePayButton implements ButtonInterface {
 	 */
 	protected function applepay_button(): void {
 		?>
-		<div class="ppc-button-wrapper">
-			<div id="applepay-container">
-				<?php wp_nonce_field( 'woocommerce-process_checkout', 'woocommerce-process-checkout-nonce' ); ?>
-			</div>
+		<div id="applepay-container">
+			<?php wp_nonce_field( 'woocommerce-process_checkout', 'woocommerce-process-checkout-nonce' ); ?>
 		</div>
 		<?php
 	}
@@ -1053,7 +1049,7 @@ class ApplePayButton implements ButtonInterface {
 	 */
 	public function is_enabled(): bool {
 		try {
-			//todo add also onboarded apple and enabled buttons
+			// todo add also onboarded apple and enabled buttons.
 			return $this->settings->has( 'applepay_button_enabled' ) && $this->settings->get( 'applepay_button_enabled' );
 		} catch ( Exception $e ) {
 			return false;

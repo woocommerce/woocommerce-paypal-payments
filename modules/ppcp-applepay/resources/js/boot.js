@@ -23,10 +23,11 @@ import ApplepayManager from "./ApplepayManager";
                 console.error('PayPal button could not be configured.');
                 return;
             }
-            console.log(buttonConfig.button.wrapper)
-            console.log(jQuery(buttonConfig.button.wrapper).length)
+            const isMiniCart = ppcpConfig.mini_cart_buttons_enabled;
+            const isButton = jQuery(buttonConfig.button.cart_wrapper).length > 0;
             // If button wrapper is not present then there is no need to load the scripts.
-            if (!jQuery(buttonConfig.button.wrapper).length) {
+            // minicart loads later?
+            if (!isMiniCart && !isButton) {
                 return;
             }
 
