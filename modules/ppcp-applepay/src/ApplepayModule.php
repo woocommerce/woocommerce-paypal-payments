@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Applepay\Assets\ApplePayButton;
 use WooCommerce\PayPalCommerce\Applepay\Assets\AppleProductStatus;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
+use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
@@ -90,12 +91,6 @@ class ApplepayModule implements ModuleInterface {
 		$this->render_buttons( $c );
 		assert( $apple_payment_method instanceof ApplepayButton );
 		$apple_payment_method->bootstrap_ajax_request();
-		add_action(
-			'woocommerce_blocks_payment_method_type_registration',
-			function( PaymentMethodRegistry $payment_method_registry ) use ( $c ): void {
-				$payment_method_registry->register( $c->get( 'applepay.blocks-payment-method' ) );
-			}
-		);
 
 		$this->remove_status_cache( $c );
 	}
@@ -143,9 +138,17 @@ class ApplepayModule implements ModuleInterface {
 			function () use ( $c ) {
 				$button = $c->get( 'applepay.button' );
 				assert( $button instanceof ApplePayButton );
-				if ( $button->should_load_script() ) {
+				$smart_button = $c->get( 'button.smart-button' );
+				assert( $smart_button instanceof SmartButtonInterface );
+				if ( $smart_button->should_load_ppcp_script() ) {
 					$button->enqueue();
 				}
+			}
+		);
+		add_action(
+			'woocommerce_blocks_payment_method_type_registration',
+			function( PaymentMethodRegistry $payment_method_registry ) use ( $c ): void {
+				$payment_method_registry->register( $c->get( 'applepay.blocks-payment-method' ) );
 			}
 		);
 	}
