@@ -38,6 +38,10 @@ export default class BootstrapHelper {
                 disable(options.messagesWrapper);
             }
         }
+
+        if (wasDisabled !== !shouldEnable) {
+            jQuery(options.wrapper).trigger('ppcp_buttons_enabled_changed', [shouldEnable]);
+        }
     }
 
     static shouldEnable(bs, options) {
