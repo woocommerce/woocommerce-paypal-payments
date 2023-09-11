@@ -84,6 +84,11 @@ class GooglepayButton {
             config.ppcpStyle = this.ppcpConfig.button.mini_cart_style;
             config.buttonStyle = this.buttonConfig.button.mini_cart_style;
             config.ppcpButtonWrapper = this.ppcpConfig.button.mini_cart_wrapper;
+
+            // Handle incompatible types.
+            if (config.buttonStyle.type === 'buy') {
+                config.buttonStyle.type = 'pay';
+            }
         }
 
         if (['cart-block', 'checkout-block'].indexOf(this.context) !== -1) {
