@@ -121,9 +121,9 @@ class DataToAppleButtonScripts {
 		$product_id            = get_the_id();
 		$product_price         = $product->get_price();
 		$product_stock         = $product->get_stock_status();
-		$type                  = $this->settings->get( 'applepay_button_type' );
-		$color                 = $this->settings->get( 'applepay_button_color' );
-		$lang                  = $this->settings->get( 'applepay_button_language' );
+		$type                  = $this->settings->has( 'applepay_button_type' ) ? $this->settings->get( 'applepay_button_type' ) : '';
+		$color                 = $this->settings->has( 'applepay_button_color' ) ? $this->settings->get( 'applepay_button_color' ) : '';
+		$lang                  = $this->settings->has( 'applepay_button_language' ) ? $this->settings->get( 'applepay_button_language' ) : '';
 
 		return array(
 			'sdk_url'  => $this->sdk_url,
