@@ -29,7 +29,7 @@ return function ( string $root_dir ): iterable {
 		( require "$modules_dir/ppcp-blocks/module.php" )(),
 	);
 	if ( apply_filters(
-		'woocommerce.feature-flags.woocommerce-paypal-payments.applepay_enabled',
+		'woocommerce.feature-flags.woocommerce_paypal_payments.applepay_enabled',
 		getenv( 'PCP_APPLEPAY_ENABLED' ) === '1'
 	) ) {
 		$modules[] = ( require "$modules_dir/ppcp-applepay/module.php" )();
