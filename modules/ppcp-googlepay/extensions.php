@@ -32,7 +32,15 @@ return array(
 				'googlepay_button_enabled'          => array(
 					'title'             => __( 'Google Pay Button', 'woocommerce-paypal-payments' ),
 					'type'              => 'checkbox',
-					'label'             => __( 'Enable Google Pay button', 'woocommerce-paypal-payments' ),
+					'label'             => __( 'Enable Google Pay button', 'woocommerce-paypal-payments' )
+						. '<p class="description">'
+						. sprintf(
+							// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+							__( 'Buyers can use %1$sGoogle Pay%2$s to make payments on the web using a web browser.', 'woocommerce-paypal-payments' ),
+							'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#google-pay" target="_blank">',
+							'</a>'
+						)
+						. '</p>',
 					'default'           => 'yes',
 					'screens'           => array( State::STATE_ONBOARDED ),
 					'gateway'           => 'paypal',
@@ -55,9 +63,30 @@ return array(
 						),
 					),
 				),
+				'googlepay_button_type'             => array(
+					'title'        => str_repeat( '&nbsp;', 6 ) . __( 'Button Label', 'woocommerce-paypal-payments' ),
+					'type'         => 'select',
+					'desc_tip'     => true,
+					'description'  => __(
+						'This controls the label of the Google Pay button.',
+						'woocommerce-paypal-payments'
+					),
+					'class'        => array(),
+					'input_class'  => array( 'wc-enhanced-select' ),
+					'default'      => 'pay',
+					'options'      => PropertiesDictionary::button_types(),
+					'screens'      => array( State::STATE_ONBOARDED ),
+					'gateway'      => 'paypal',
+					'requirements' => array(),
+				),
 				'googlepay_button_color'            => array(
 					'title'        => str_repeat( '&nbsp;', 6 ) . __( 'Button Color', 'woocommerce-paypal-payments' ),
 					'type'         => 'select',
+					'desc_tip'          => true,
+					'description'       => __(
+						'Google Pay payment buttons exist in two styles: dark and light. To provide contrast, use dark buttons on light backgrounds and light buttons on dark or colorful backgrounds.',
+						'woocommerce-paypal-payments'
+					),
 					'label'        => '',
 					'input_class'  => array( 'wc-enhanced-select' ),
 					'class'        => array(),
@@ -67,20 +96,14 @@ return array(
 					'gateway'      => 'paypal',
 					'requirements' => array(),
 				),
-				'googlepay_button_type'             => array(
-					'title'        => str_repeat( '&nbsp;', 6 ) . __( 'Button Type', 'woocommerce-paypal-payments' ),
-					'type'         => 'select',
-					'class'        => array(),
-					'input_class'  => array( 'wc-enhanced-select' ),
-					'default'      => 'pay',
-					'options'      => PropertiesDictionary::button_types(),
-					'screens'      => array( State::STATE_ONBOARDED ),
-					'gateway'      => 'paypal',
-					'requirements' => array(),
-				),
 				'googlepay_button_shipping_enabled' => array(
 					'title'        => str_repeat( '&nbsp;', 6 ) . __( 'Shipping Callback', 'woocommerce-paypal-payments' ),
 					'type'         => 'checkbox',
+					'desc_tip'     => true,
+					'description'  => __(
+						'Synchronizes your available shipping options with Google Pay. Enabling this may impact the buyer experience.',
+						'woocommerce-paypal-payments'
+					),
 					'label'        => __( 'Enable Google Pay shipping callback', 'woocommerce-paypal-payments' ),
 					'default'      => 'no',
 					'screens'      => array( State::STATE_ONBOARDED ),
