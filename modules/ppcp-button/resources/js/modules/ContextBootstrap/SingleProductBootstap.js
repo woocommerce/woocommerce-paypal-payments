@@ -6,12 +6,12 @@ import {loadPaypalJsScript} from "../Helper/ScriptLoading";
 import {getPlanIdFromVariation} from "../Helper/Subscriptions"
 import SimulateCart from "../Helper/SimulateCart";
 import {strRemoveWord, strAddWord, throttle} from "../Helper/Utils";
+import merge from "deepmerge";
 
 class SingleProductBootstap {
-    constructor(gateway, renderer, messages, errorHandler) {
+    constructor(gateway, renderer, errorHandler) {
         this.gateway = gateway;
         this.renderer = renderer;
-        this.messages = messages;
         this.errorHandler = errorHandler;
         this.mutationObserver = new MutationObserver(this.handleChange.bind(this));
         this.formSelector = 'form.cart';
@@ -36,7 +36,6 @@ class SingleProductBootstap {
         if (!this.shouldRender()) {
             this.renderer.disableSmartButtons(this.gateway.button.wrapper);
             hide(this.gateway.button.wrapper, this.formSelector);
-            hide(this.gateway.messages.wrapper);
             return;
         }
 
@@ -44,7 +43,6 @@ class SingleProductBootstap {
 
         this.renderer.enableSmartButtons(this.gateway.button.wrapper);
         show(this.gateway.button.wrapper);
-        show(this.gateway.messages.wrapper);
 
         this.handleButtonStatus();
     }
@@ -77,6 +75,12 @@ class SingleProductBootstap {
             (new MutationObserver(this.handleButtonStatus.bind(this)))
                 .observe(addToCartButton, { attributes : true });
         }
+
+        jQuery(document).on('ppcp_should_show_messages', (e, data) => {
+            if (!this.shouldRender()) {
+                data.result = false;
+            }
+        });
 
         if (!this.shouldRender()) {
             return;
@@ -232,7 +236,18 @@ class SingleProductBootstap {
             this.gateway.ajax.simulate_cart.nonce,
         )).simulate((data) => {
 
-            this.messages.renderWithAmount(data.total);
+            jQuery(document.body).trigger('ppcp_product_total_updated', [data.total]);
+
+            let newData = {};
+            if (typeof data.button.is_disabled === 'boolean') {
+                newData = merge(newData, {button: {is_disabled: data.button.is_disabled}});
+            }
+            if (typeof data.messages.is_hidden === 'boolean') {
+                newData = merge(newData, {messages: {is_hidden: data.messages.is_hidden}});
+            }
+            if (newData) {
+                BootstrapHelper.updateScriptData(this, newData);
+            }
 
             if ( this.gateway.single_product_buttons_enabled !== '1' ) {
                 return;
@@ -258,13 +273,6 @@ class SingleProductBootstap {
                 this.gateway.url_params['enable-funding'] = enableFunding;
                 this.gateway.url_params['disable-funding'] = disableFunding;
                 jQuery(this.gateway.button.wrapper).trigger('ppcp-reload-buttons');
-            }
-
-            if (typeof data.button.is_disabled === 'boolean') {
-                this.gateway.button.is_disabled = data.button.is_disabled;
-            }
-            if (typeof data.messages.is_hidden === 'boolean') {
-                this.gateway.messages.is_hidden = data.messages.is_hidden;
             }
 
             this.handleButtonStatus(false);

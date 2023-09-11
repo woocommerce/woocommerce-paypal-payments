@@ -19,6 +19,7 @@ import FreeTrialHandler from "./modules/ActionHandler/FreeTrialHandler";
 import FormSaver from './modules/Helper/FormSaver';
 import FormValidator from "./modules/Helper/FormValidator";
 import {loadPaypalScript} from "./modules/Helper/ScriptLoading";
+import MessagesBootstrap from "./modules/ContextBootstrap/MessagesBootstap";
 
 // TODO: could be a good idea to have a separate spinner for each gateway,
 // but I think we care mainly about the script loading, so one spinner should be enough.
@@ -158,7 +159,6 @@ const bootstrap = () => {
         const singleProductBootstrap = new SingleProductBootstap(
             PayPalCommerceGateway,
             renderer,
-            messageRenderer,
             errorHandler,
         );
 
@@ -169,7 +169,6 @@ const bootstrap = () => {
         const cartBootstrap = new CartBootstrap(
             PayPalCommerceGateway,
             renderer,
-            messageRenderer,
             errorHandler,
         );
 
@@ -180,7 +179,6 @@ const bootstrap = () => {
         const checkoutBootstap = new CheckoutBootstap(
             PayPalCommerceGateway,
             renderer,
-            messageRenderer,
             spinner,
             errorHandler,
         );
@@ -199,6 +197,11 @@ const bootstrap = () => {
         payNowBootstrap.init();
     }
 
+    const messagesBootstrap = new MessagesBootstrap(
+        PayPalCommerceGateway,
+        messageRenderer,
+    );
+    messagesBootstrap.init();
 };
 
 const hasMessages = () => {
