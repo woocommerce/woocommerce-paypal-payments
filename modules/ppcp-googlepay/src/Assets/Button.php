@@ -149,7 +149,6 @@ class Button implements ButtonInterface {
 			$checked = '';
 		}
 
-		// TODO : the input has no name, is it doing anything?
 		return $options
 			. '<li><label><input type="checkbox" id="ppcp-onboarding-google" ' . $checked . '> '
 			. __( 'Onboard with GooglePay', 'woocommerce-paypal-payments' )
@@ -175,7 +174,7 @@ class Button implements ButtonInterface {
 		if ( ! in_array( 'PAYMENT_METHODS', $data['products'], true ) ) {
 			if ( in_array( 'PPCP', $data['products'], true ) ) {
 				$data['products'][] = 'PAYMENT_METHODS';
-			} elseif ( in_array( 'EXPRESS_CHECKOUT', $data['products'], true ) ) { // TODO A bit sketchy, maybe replace on the EXPRESS_CHECKOUT index.
+			} elseif ( in_array( 'EXPRESS_CHECKOUT', $data['products'], true ) ) { // A bit sketchy, maybe replace on the EXPRESS_CHECKOUT index.
 				$data['products'][0] = 'PAYMENT_METHODS';
 			}
 		}
@@ -268,10 +267,6 @@ class Button implements ButtonInterface {
 			add_action(
 				$render_placeholder,
 				function () {
-					if ( ! is_cart() /* TODO : check other conditions */ ) {
-						return;
-					}
-
 					$this->googlepay_button();
 				},
 				21
