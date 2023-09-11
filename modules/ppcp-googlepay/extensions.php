@@ -82,8 +82,8 @@ return array(
 				'googlepay_button_color'            => array(
 					'title'        => str_repeat( '&nbsp;', 6 ) . __( 'Button Color', 'woocommerce-paypal-payments' ),
 					'type'         => 'select',
-					'desc_tip'          => true,
-					'description'       => __(
+					'desc_tip'     => true,
+					'description'  => __(
 						'Google Pay payment buttons exist in two styles: dark and light. To provide contrast, use dark buttons on light backgrounds and light buttons on dark or colorful backgrounds.',
 						'woocommerce-paypal-payments'
 					),
