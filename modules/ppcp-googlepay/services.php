@@ -41,7 +41,7 @@ return array(
 			$status = $container->get( 'googlepay.helpers.apm-product-status' );
 			assert( $status instanceof ApmProductStatus );
 			/**
-			 * If merchant isn't onboarded by use via /v1/customer/partner-referrals this returns false as the api call fails.
+			 * If merchant isn't onboarded via /v1/customer/partner-referrals this returns false as the API call fails.
 			 */
 			return apply_filters( 'woocommerce_paypal_payments_googlepay_product_status', $status->is_active() );
 		}
