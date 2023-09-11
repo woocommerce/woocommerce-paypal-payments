@@ -24,7 +24,7 @@ import ApplepayManager from "./ApplepayManager";
                 return;
             }
             const isMiniCart = ppcpConfig.mini_cart_buttons_enabled;
-            const isButton = jQuery(buttonConfig.button.wrapper).length > 0;
+            const isButton = jQuery('#' + buttonConfig.button.wrapper).length > 0;
             console.log('isbutton' ,isButton, buttonConfig.button.wrapper)
             // If button wrapper is not present then there is no need to load the scripts.
             // minicart loads later?
