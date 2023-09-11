@@ -47,6 +47,16 @@ export const setEnabled = (selectorOrElement, enable, form = null) => {
     }
 };
 
+export const isDisabled = (selectorOrElement) => {
+    const element = getElement(selectorOrElement);
+
+    if (!element) {
+        return false;
+    }
+
+    return jQuery(element).hasClass('ppcp-disabled');
+};
+
 export const disable = (selectorOrElement, form = null) => {
     setEnabled(selectorOrElement, false, form);
 };

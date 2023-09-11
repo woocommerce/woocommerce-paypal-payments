@@ -1,4 +1,4 @@
-import {disable, enable} from "./ButtonDisabler";
+import {disable, enable, isDisabled} from "./ButtonDisabler";
 import {hide, show} from "./Hiding";
 
 /**
@@ -19,15 +19,18 @@ export default class BootstrapHelper {
             hide(options.messagesWrapper);
         }
 
+        const wasDisabled = isDisabled(options.wrapper);
+        const shouldEnable = bs.shouldEnable();
+
         // Handle enable / disable
-        if (bs.shouldEnable()) {
+        if (shouldEnable && wasDisabled) {
             bs.renderer.enableSmartButtons(options.wrapper);
             enable(options.wrapper);
 
             if (!options.skipMessages) {
                 enable(options.messagesWrapper);
             }
-        } else {
+        } else if (!shouldEnable && !wasDisabled) {
             bs.renderer.disableSmartButtons(options.wrapper);
             disable(options.wrapper, options.formSelector || null);
 
