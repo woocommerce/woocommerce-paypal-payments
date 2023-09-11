@@ -121,13 +121,19 @@ class ApmProductStatus {
 	/**
 	 * Clears the persisted result to force a recheck.
 	 *
+	 * @param Settings|null $settings The settings object.
+	 * We accept a Settings object to don't override other sequential settings that are being updated elsewhere.
 	 * @return void
 	 */
-	public function clear(): void {
+	public function clear( Settings $settings = null ): void {
+		if ( null === $settings ) {
+			$settings = $this->settings;
+		}
+
 		$this->current_status = null;
 
-		$this->settings->set( self::SETTINGS_KEY, self::SETTINGS_VALUE_UNDEFINED );
-		$this->settings->persist();
+		$settings->set( self::SETTINGS_KEY, self::SETTINGS_VALUE_UNDEFINED );
+		$settings->persist();
 	}
 
 }

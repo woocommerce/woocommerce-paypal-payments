@@ -391,7 +391,7 @@ class SettingsListener {
 			if ( self::CREDENTIALS_UNCHANGED !== $credentials_change_status ) {
 				$this->settings->set( 'products_dcc_enabled', null );
 				$this->settings->set( 'products_pui_enabled', null );
-				do_action( 'woocommerce_paypal_payments_clear_apm_product_status' );
+				do_action( 'woocommerce_paypal_payments_clear_apm_product_status', $this->settings );
 			}
 
 			if ( in_array(

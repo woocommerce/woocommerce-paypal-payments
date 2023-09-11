@@ -238,7 +238,7 @@ class OnboardingRESTController {
 
 		$settings->set( 'products_dcc_enabled', null );
 		$settings->set( 'products_pui_enabled', null );
-		do_action( 'woocommerce_paypal_payments_clear_apm_product_status' );
+		do_action( 'woocommerce_paypal_payments_clear_apm_product_status', $settings );
 
 		if ( ! $settings->persist() ) {
 			return new \WP_Error(

@@ -37,12 +37,15 @@ return array(
 
 	// If GooglePay is configured.
 	'googlepay.available'                         => static function ( ContainerInterface $container ): bool {
-		/**
-		 * $status = $container->get( 'googlepay.helpers.apm-product-status' );
-		 * assert( $status instanceof ApmProductStatus );
-		 * return $status->is_active();
-		 */
-		return true; // TODO: must test further.
+		if ( apply_filters( 'woocommerce_paypal_payments_googlepay_validate_product_status', false ) ) {
+			$status = $container->get( 'googlepay.helpers.apm-product-status' );
+			assert( $status instanceof ApmProductStatus );
+			/**
+			 * If merchant isn't onboarded by use via /v1/customer/partner-referrals this returns false as the api call fails.
+			 */
+			return apply_filters( 'woocommerce_paypal_payments_googlepay_product_status', $status->is_active() );
+		}
+		return true;
 	},
 
 	'googlepay.helpers.apm-product-status'        => static function( ContainerInterface $container ): ApmProductStatus {
@@ -61,7 +64,7 @@ return array(
 		 * Returns which countries and currency combinations can be used for GooglePay.
 		 */
 		return apply_filters(
-			'woocommerce_paypal_payments_supported_country_currency_matrix',
+			'woocommerce_paypal_payments_googlepay_supported_country_currency_matrix',
 			array(
 				'US' => array(
 					'AUD',

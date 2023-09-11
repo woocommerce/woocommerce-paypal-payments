@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class GooglepayModule
@@ -77,10 +78,15 @@ class GooglepayModule implements ModuleInterface {
 		// Clear product status handling.
 		add_action(
 			'woocommerce_paypal_payments_clear_apm_product_status',
-			function() use ( $c ): void {
+			function( Settings $settings = null ) use ( $c ): void {
 				$apm_status = $c->get( 'googlepay.helpers.apm-product-status' );
 				assert( $apm_status instanceof ApmProductStatus );
-				$apm_status->clear();
+
+				if ( ! $settings instanceof Settings ) {
+					$settings = null;
+				}
+
+				$apm_status->clear( $settings );
 			}
 		);
 
