@@ -679,7 +679,7 @@ class ApplePayButton implements ButtonInterface {
 		$selected_shipping_method,
 		$shipping_methods_array
 	): array {
-		$total = $cart->get_total( 'edit' );
+		$total = (float) $cart->get_total( 'edit' );
 		$total = round( $total, 2 );
 		return array(
 			'subtotal'        => $cart->get_subtotal(),
