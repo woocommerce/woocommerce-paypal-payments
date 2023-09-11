@@ -40,7 +40,7 @@ class PropertiesDictionary {
 			'order'     => __( 'Order', 'woocommerce-paypal-payments' ),
 			'pay'       => __( 'Pay', 'woocommerce-paypal-payments' ),
 			'plain'     => __( 'Plain', 'woocommerce-paypal-payments' ),
-			'subscribe' => __( 'Book', 'woocommerce-paypal-payments' ),
+			'subscribe' => __( 'Subscribe', 'woocommerce-paypal-payments' ),
 		);
 	}
 }
