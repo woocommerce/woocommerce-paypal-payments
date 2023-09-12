@@ -129,27 +129,26 @@ class ApplepayButton {
      * Add a Apple Pay purchase button
      */
     addButton() {
-        console.log('[GooglePayButton] addButton', this.context);
+        console.log('[ApplePayButton] context', this.context);
         const wrapper =
             (this.context === 'mini-cart')
                 ? this.buttonConfig.button.mini_cart_wrapper
                 : this.buttonConfig.button.wrapper;
-
+console.log('[ApplePayButton] wrapper', wrapper)
         const shape =
             (this.context === 'mini-cart')
                 ? this.ppcpConfig.button.mini_cart_style.shape
                 : this.ppcpConfig.button.style.shape;
         const appleContainer = this.context === 'mini-cart' ? document.getElementById("applepay-container-minicart") : document.getElementById("applepay-container");
-        console.log('[ApplePayButton] addButton', appleContainer)
+        console.log('[ApplePayButton] shape', shape)
+        console.log('[ApplePayButton] container', appleContainer)
         const type = this.buttonConfig.button.type;
         const language = this.buttonConfig.button.lang;
         const color = this.buttonConfig.button.color;
         const id = "apple-" + wrapper;
         appleContainer.innerHTML = `<apple-pay-button id="${id}" buttonstyle="${color}" type="${type}" locale="${language}">`;
 
-
-
-        jQuery(wrapper).addClass('ppcp-button-' + shape);
+        jQuery('#' + wrapper).addClass('ppcp-button-' + shape);
         jQuery(wrapper).append(appleContainer);
         console.log('[ApplePayButton] addButton', wrapper, appleContainer);
     }
