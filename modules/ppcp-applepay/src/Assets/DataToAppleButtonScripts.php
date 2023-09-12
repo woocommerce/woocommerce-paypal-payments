@@ -164,7 +164,7 @@ class DataToAppleButtonScripts {
 		$currency_code,
 		$total_label
 	) {
-		$cart          = WC()->cart;
+		$cart = WC()->cart;
 		if ( ! $cart ) {
 			return array();
 		}
