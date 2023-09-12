@@ -399,7 +399,6 @@ class ApplePayButton implements ButtonInterface {
 	 * @throws \Exception When validation fails.
 	 */
 	public function create_wc_order(): void {
-		// $this->response_after_successful_result();
 		$applepay_request_data_object = $this->applepay_data_object_http();
 		$applepay_request_data_object->order_data( 'productDetail' );
 		$this->update_posted_data( $applepay_request_data_object );
@@ -423,7 +422,6 @@ class ApplePayButton implements ButtonInterface {
 			return;
 		}
 		$this->add_addresses_to_order( $applepay_request_data_object );
-		// add_action('woocommerce_checkout_order_processed', array($this, 'process_order_as_paid'), 10, 3).
 		add_filter(
 			'woocommerce_payment_successful_result',
 			function ( array $result ) use ( $cart, $cart_item_key ) : array {
@@ -707,7 +705,7 @@ class ApplePayButton implements ButtonInterface {
 	 */
 	protected function calculate_totals_cart_page(
 		array $customer_address,
-			  $shipping_method = null
+		$shipping_method = null
 	): array {
 
 		$results = array();
@@ -731,7 +729,7 @@ class ApplePayButton implements ButtonInterface {
 				$shipping_method_id = $shipping_method['identifier'] ?? '';
 				list(
 					$shipping_methods_array, $selected_shipping_method
-					) = $this->cart_shipping_methods(
+					)               = $this->cart_shipping_methods(
 						$cart,
 						$customer_address,
 						$shipping_method,
@@ -842,19 +840,6 @@ class ApplePayButton implements ButtonInterface {
 			(int) $applepay_request_data_object->product_quantity()
 		);
 	}
-
-	/*
-	 TODO
-	public function process_order_as_paid( $order_id ): void {
-		$order = wc_get_order( $order_id );
-		if ( ! assert( $order instanceof WC_Order ) ) {
-			return;
-		}
-		$order->payment_complete();
-		wc_reduce_stock_levels( $order_id );
-		$order->save();
-	}
-	*/
 
 	/**
 	 * Update the posted data to match the Apple Pay request data

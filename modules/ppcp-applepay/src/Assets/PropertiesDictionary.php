@@ -123,23 +123,23 @@ class PropertiesDictionary {
 	 */
 	public static function button_types(): array {
 		return array(
-			'book'      => __( 'Book', 'woocommerce-paypal-payments' ),
-			'buy'       => __( 'Buy', 'woocommerce-paypal-payments' ),
-			'check-out' => __( 'Checkout', 'woocommerce-paypal-payments' ),
-			'donate'    => __( 'Donate', 'woocommerce-paypal-payments' ),
-			'order'     => __( 'Order', 'woocommerce-paypal-payments' ),
-			'pay'       => __( 'Pay', 'woocommerce-paypal-payments' ),
-			'plain'     => __( 'Plain', 'woocommerce-paypal-payments' ),
-			'subscribe' => __( 'Book', 'woocommerce-paypal-payments' ),
-			'add-money' => __( 'Add money', 'woocommerce-paypal-payments' ),
-			'continue'  => __( 'Continue', 'woocommerce-paypal-payments' ),
+			'book'       => __( 'Book', 'woocommerce-paypal-payments' ),
+			'buy'        => __( 'Buy', 'woocommerce-paypal-payments' ),
+			'check-out'  => __( 'Checkout', 'woocommerce-paypal-payments' ),
+			'donate'     => __( 'Donate', 'woocommerce-paypal-payments' ),
+			'order'      => __( 'Order', 'woocommerce-paypal-payments' ),
+			'pay'        => __( 'Pay', 'woocommerce-paypal-payments' ),
+			'plain'      => __( 'Plain', 'woocommerce-paypal-payments' ),
+			'subscribe'  => __( 'Book', 'woocommerce-paypal-payments' ),
+			'add-money'  => __( 'Add money', 'woocommerce-paypal-payments' ),
+			'continue'   => __( 'Continue', 'woocommerce-paypal-payments' ),
 			'contribute' => __( 'Contribute', 'woocommerce-paypal-payments' ),
-			'reload'    => __( 'Reload', 'woocommerce-paypal-payments' ),
-			'rent'      => __( 'Rent', 'woocommerce-paypal-payments' ),
-			'setup'     => __( 'Setup', 'woocommerce-paypal-payments' ),
-			'support'   => __( 'Support', 'woocommerce-paypal-payments' ),
-			'tip'       => __( 'Tip', 'woocommerce-paypal-payments' ),
-			'top-up'    => __( 'Top up', 'woocommerce-paypal-payments' ),
+			'reload'     => __( 'Reload', 'woocommerce-paypal-payments' ),
+			'rent'       => __( 'Rent', 'woocommerce-paypal-payments' ),
+			'setup'      => __( 'Setup', 'woocommerce-paypal-payments' ),
+			'support'    => __( 'Support', 'woocommerce-paypal-payments' ),
+			'tip'        => __( 'Tip', 'woocommerce-paypal-payments' ),
+			'top-up'     => __( 'Top up', 'woocommerce-paypal-payments' ),
 		);
 	}
 
@@ -150,7 +150,7 @@ class PropertiesDictionary {
 	 */
 	public static function button_languages(): array {
 		return array(
-			'' => __( 'Browser language', 'woocommerce-paypal-payments' ),
+			''      => __( 'Browser language', 'woocommerce-paypal-payments' ),
 			'ar-AB' => __( 'Arabic', 'woocommerce-paypal-payments' ),
 			'ca-ES' => __( 'Catalan', 'woocommerce-paypal-payments' ),
 			'cs-CZ' => __( 'Czech', 'woocommerce-paypal-payments' ),

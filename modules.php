@@ -29,6 +29,7 @@ return function ( string $root_dir ): iterable {
 		( require "$modules_dir/ppcp-blocks/module.php" )(),
 	);
 	if ( apply_filters(
+		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 		'woocommerce.feature-flags.woocommerce_paypal_payments.applepay_enabled',
 		getenv( 'PCP_APPLEPAY_ENABLED' ) === '1'
 	) ) {

@@ -33,7 +33,10 @@ return array(
 	'applepay.enabled'               => static function ( ContainerInterface $container ): bool {
 		$status = $container->get( 'applepay.apple-product-status' );
 		assert( $status instanceof AppleProductStatus );
-		return true;
+		/**
+		 * If merchant isn't onboarded via /v1/customer/partner-referrals this returns false as the API call fails.
+		 */
+		return apply_filters( 'woocommerce_paypal_payments_applepay_product_status', $status->apple_is_active() );
 	},
 	'applepay.server_supported'      => static function ( ContainerInterface $container ): bool {
 		return ! empty( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] !== 'off';
