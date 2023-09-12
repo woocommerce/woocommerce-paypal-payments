@@ -591,14 +591,12 @@ class SmartButton implements SmartButtonInterface {
 			);
 		}
 
-		if ( in_array( $this->context(), array( 'pay-now', 'checkout' ), true ) ) {
-			wp_enqueue_style(
-				'gateway',
-				untrailingslashit( $this->module_url ) . '/assets/css/gateway.css',
-				array(),
-				$this->version
-			);
-		}
+		wp_enqueue_style(
+			'gateway',
+			untrailingslashit( $this->module_url ) . '/assets/css/gateway.css',
+			array(),
+			$this->version
+		);
 
 		wp_enqueue_script(
 			'ppcp-smart-button',
