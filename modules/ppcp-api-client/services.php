@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient;
 
+use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingSubscriptions;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\CatalogProducts;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingPlans;
@@ -62,6 +63,8 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderHelper;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderTransient;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\PurchaseUnitSanitizer;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CustomerRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\OrderRepository;
@@ -311,6 +314,7 @@ return array(
 		$payments_factory = $container->get( 'api.factory.payments' );
 		$prefix           = $container->get( 'api.prefix' );
 		$soft_descriptor  = $container->get( 'wcgateway.soft-descriptor' );
+		$sanitizer        = $container->get( 'api.helper.purchase-unit-sanitizer' );
 
 		return new PurchaseUnitFactory(
 			$amount_factory,
@@ -320,7 +324,8 @@ return array(
 			$shipping_factory,
 			$payments_factory,
 			$prefix,
-			$soft_descriptor
+			$soft_descriptor,
+			$sanitizer
 		);
 	},
 	'api.factory.patch-collection-factory'      => static function ( ContainerInterface $container ): PatchCollectionFactory {
@@ -836,4 +841,19 @@ return array(
 	'api.order-helper'                          => static function( ContainerInterface $container ): OrderHelper {
 		return new OrderHelper();
 	},
+	'api.helper.order-transient'                => static function( ContainerInterface $container ): OrderTransient {
+		$cache                   = new Cache( 'ppcp-paypal-bearer' );
+		$purchase_unit_sanitizer = $container->get( 'api.helper.purchase-unit-sanitizer' );
+		return new OrderTransient( $cache, $purchase_unit_sanitizer );
+	},
+	'api.helper.purchase-unit-sanitizer'        => SingletonDecorator::make(
+		static function( ContainerInterface $container ): PurchaseUnitSanitizer {
+			$settings  = $container->get( 'wcgateway.settings' );
+			assert( $settings instanceof Settings );
+
+			$behavior  = $settings->has( 'subtotal_mismatch_behavior' ) ? $settings->get( 'subtotal_mismatch_behavior' ) : null;
+			$line_name = $settings->has( 'subtotal_mismatch_line_name' ) ? $settings->get( 'subtotal_mismatch_line_name' ) : null;
+			return new PurchaseUnitSanitizer( $behavior, $line_name );
+		}
+	),
 );

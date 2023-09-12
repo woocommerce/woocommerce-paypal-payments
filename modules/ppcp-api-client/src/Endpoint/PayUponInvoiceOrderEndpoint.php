@@ -112,7 +112,7 @@ class PayUponInvoiceOrderEndpoint {
 			'processing_instruction' => 'ORDER_COMPLETE_ON_PAYMENT_APPROVAL',
 			'purchase_units'         => array_map(
 				static function ( PurchaseUnit $item ): array {
-					return $item->to_array( false );
+					return $item->to_array( true, false );
 				},
 				$items
 			),
@@ -166,8 +166,11 @@ class PayUponInvoiceOrderEndpoint {
 
 			throw new PayPalApiException( $json, $status_code );
 		}
+		$order = $this->order_factory->from_paypal_response( $json );
 
-		return $this->order_factory->from_paypal_response( $json );
+		do_action( 'woocommerce_paypal_payments_paypal_order_created', $order );
+
+		return $order;
 	}
 
 	/**

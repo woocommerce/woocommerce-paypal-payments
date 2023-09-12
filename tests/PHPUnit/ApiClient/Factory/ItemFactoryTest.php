@@ -52,6 +52,14 @@ class ItemFactoryTest extends TestCase
         $woocommerce->session = $session;
         $session->shouldReceive('get')->andReturn([]);
 
+		when('wp_get_attachment_image_src')->justReturn('image_url');
+		$product
+			->expects('get_image_id')
+			->andReturn(1);
+		$product
+			->expects('get_permalink')
+			->andReturn('url');
+
         $result = $testee->from_wc_cart($cart);
 
         $this->assertCount(1, $result);
@@ -107,6 +115,13 @@ class ItemFactoryTest extends TestCase
         $woocommerce->session = $session;
         $session->shouldReceive('get')->andReturn([]);
 
+		when('wp_get_attachment_image_src')->justReturn('image_url');
+		$product
+			->expects('get_image_id')
+			->andReturn(1);
+		$product
+			->expects('get_permalink')
+			->andReturn('url');
 
         $result = $testee->from_wc_cart($cart);
 
@@ -131,6 +146,14 @@ class ItemFactoryTest extends TestCase
 
 		expect('wp_strip_all_tags')->andReturnFirstArg();
 		expect('strip_shortcodes')->andReturnFirstArg();
+
+		when('wp_get_attachment_image_src')->justReturn('image_url');
+		$product
+			->expects('get_image_id')
+			->andReturn(1);
+		$product
+			->expects('get_permalink')
+			->andReturn('url');
 
         $item = Mockery::mock(\WC_Order_Item_Product::class);
         $item
@@ -217,6 +240,14 @@ class ItemFactoryTest extends TestCase
             ->expects('get_fees')
             ->andReturn([]);
 
+		when('wp_get_attachment_image_src')->justReturn('image_url');
+		$product
+			->expects('get_image_id')
+			->andReturn(1);
+		$product
+			->expects('get_permalink')
+			->andReturn('url');
+
         $result = $testee->from_wc_order($order);
         $item = current($result);
         /**
@@ -270,6 +301,14 @@ class ItemFactoryTest extends TestCase
         $order
             ->expects('get_fees')
             ->andReturn([]);
+
+		when('wp_get_attachment_image_src')->justReturn('image_url');
+		$product
+			->expects('get_image_id')
+			->andReturn(1);
+		$product
+			->expects('get_permalink')
+			->andReturn('url');
 
         $result = $testee->from_wc_order($order);
         $item = current($result);

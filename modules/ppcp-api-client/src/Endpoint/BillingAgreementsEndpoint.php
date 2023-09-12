@@ -121,7 +121,7 @@ class BillingAgreementsEndpoint {
 	 */
 	public function reference_transaction_enabled(): bool {
 		try {
-			if ( get_transient( 'ppcp_reference_transaction_enabled' ) === true ) {
+			if ( wc_string_to_bool( get_transient( 'ppcp_reference_transaction_enabled' ) ) === true ) {
 				return true;
 			}
 
@@ -135,7 +135,7 @@ class BillingAgreementsEndpoint {
 				);
 			} finally {
 				$this->is_request_logging_enabled = true;
-				set_transient( 'ppcp_reference_transaction_enabled', true, 3 * MONTH_IN_SECONDS );
+				set_transient( 'ppcp_reference_transaction_enabled', true, MONTH_IN_SECONDS );
 			}
 
 			return true;

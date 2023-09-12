@@ -9,10 +9,16 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Compat\Assets;
 
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
+use WooCommerce\PayPalCommerce\OrderTracking\TrackingAvailabilityTrait;
+
 /**
  * Class OrderEditPageAssets
  */
 class CompatAssets {
+
+	use TrackingAvailabilityTrait;
+
 	/**
 	 * The URL to the module.
 	 *
@@ -28,23 +34,48 @@ class CompatAssets {
 	private $version;
 
 	/**
-	 * Whether Germanized synchronization scripts should be loaded.
+	 * Whether Germanized plugin is active.
 	 *
 	 * @var bool
 	 */
-	protected $should_enqueue_gzd_scripts;
+	protected $is_gzd_active;
+
+	/**
+	 * Whether WC Shipments plugin is active
+	 *
+	 * @var bool
+	 */
+	protected $is_wc_shipment_active;
+
+	/**
+	 * The bearer.
+	 *
+	 * @var Bearer
+	 */
+	protected $bearer;
 
 	/**
 	 * Compat module assets constructor.
 	 *
 	 * @param string $module_url The URL to the module.
 	 * @param string $version The assets version.
-	 * @param bool   $should_enqueue_gzd_scripts Whether Germanized synchronization scripts should be loaded.
+	 * @param bool   $is_gzd_active Whether Germanized plugin is active.
+	 * @param bool   $is_wc_shipment_active Whether WC Shipments plugin is active.
+	 * @param Bearer $bearer The bearer.
 	 */
-	public function __construct( string $module_url, string $version, bool $should_enqueue_gzd_scripts ) {
-		$this->module_url                 = $module_url;
-		$this->version                    = $version;
-		$this->should_enqueue_gzd_scripts = $should_enqueue_gzd_scripts;
+	public function __construct(
+		string $module_url,
+		string $version,
+		bool $is_gzd_active,
+		bool $is_wc_shipment_active,
+		Bearer $bearer
+	) {
+
+		$this->module_url            = $module_url;
+		$this->version               = $version;
+		$this->is_gzd_active         = $is_gzd_active;
+		$this->is_wc_shipment_active = $is_wc_shipment_active;
+		$this->bearer                = $bearer;
 	}
 
 	/**
@@ -53,14 +84,22 @@ class CompatAssets {
 	 * @return void
 	 */
 	public function register(): void {
-		$gzd_sync_enabled = apply_filters( 'woocommerce_paypal_payments_sync_gzd_tracking', true );
-		if ( $this->should_enqueue_gzd_scripts && $gzd_sync_enabled ) {
+		if ( $this->is_tracking_enabled( $this->bearer ) ) {
 			wp_register_script(
-				'ppcp-gzd-compat',
-				untrailingslashit( $this->module_url ) . '/assets/js/gzd-compat.js',
+				'ppcp-tracking-compat',
+				untrailingslashit( $this->module_url ) . '/assets/js/tracking-compat.js',
 				array( 'jquery' ),
 				$this->version,
 				true
+			);
+
+			wp_localize_script(
+				'ppcp-tracking-compat',
+				'PayPalCommerceGatewayOrderTrackingCompat',
+				array(
+					'gzd_sync_enabled'         => apply_filters( 'woocommerce_paypal_payments_sync_gzd_tracking', true ) && $this->is_gzd_active,
+					'wc_shipment_sync_enabled' => apply_filters( 'woocommerce_paypal_payments_sync_wc_shipment_tracking', true ) && $this->is_wc_shipment_active,
+				)
 			);
 		}
 	}
@@ -71,9 +110,8 @@ class CompatAssets {
 	 * @return void
 	 */
 	public function enqueue(): void {
-		$gzd_sync_enabled = apply_filters( 'woocommerce_paypal_payments_sync_gzd_tracking', true );
-		if ( $this->should_enqueue_gzd_scripts && $gzd_sync_enabled ) {
-			wp_enqueue_script( 'ppcp-gzd-compat' );
+		if ( $this->is_tracking_enabled( $this->bearer ) ) {
+			wp_enqueue_script( 'ppcp-tracking-compat' );
 		}
 	}
 }

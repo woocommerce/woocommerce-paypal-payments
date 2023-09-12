@@ -212,10 +212,18 @@ return array(
 		return new ConnectAdminNotice( $state, $settings );
 	},
 	'wcgateway.notice.currency-unsupported'                => static function ( ContainerInterface $container ): UnsupportedCurrencyAdminNotice {
-		$state = $container->get( 'onboarding.state' );
-		$shop_currency = $container->get( 'api.shop.currency' );
-		$supported_currencies = $container->get( 'api.supported-currencies' );
-		return new UnsupportedCurrencyAdminNotice( $state, $shop_currency, $supported_currencies );
+		$state                    = $container->get( 'onboarding.state' );
+		$shop_currency            = $container->get( 'api.shop.currency' );
+		$supported_currencies     = $container->get( 'api.supported-currencies' );
+		$is_wc_gateways_list_page = $container->get( 'wcgateway.is-wc-gateways-list-page' );
+		$is_ppcp_settings_page    = $container->get( 'wcgateway.is-ppcp-settings-page' );
+		return new UnsupportedCurrencyAdminNotice(
+			$state,
+			$shop_currency,
+			$supported_currencies,
+			$is_wc_gateways_list_page,
+			$is_ppcp_settings_page
+		);
 	},
 	'wcgateway.notice.dcc-without-paypal'                  => static function ( ContainerInterface $container ): GatewayWithoutPayPalAdminNotice {
 		return new GatewayWithoutPayPalAdminNotice(
@@ -1200,35 +1208,6 @@ return array(
 	'wcgateway.settings.has_enabled_separate_button_gateways' => static function ( ContainerInterface $container ): bool {
 		return (bool) $container->get( 'wcgateway.settings.allow_card_button_gateway' );
 	},
-
-	'order-tracking.is-tracking-available'                 => static function ( ContainerInterface $container ): bool {
-		try {
-			$bearer = $container->get( 'api.bearer' );
-			assert( $bearer instanceof Bearer );
-
-			$token = $bearer->bearer();
-			return $token->is_tracking_available();
-		} catch ( RuntimeException $exception ) {
-			return false;
-		}
-	},
-
-	'wcgateway.settings.should-disable-tracking-checkbox'  => static function ( ContainerInterface $container ): bool {
-		$pui_helper = $container->get( 'wcgateway.pay-upon-invoice-helper' );
-		assert( $pui_helper instanceof PayUponInvoiceHelper );
-
-		$is_tracking_available = $container->get( 'order-tracking.is-tracking-available' );
-
-		if ( ! $is_tracking_available ) {
-			return true;
-		}
-
-		if ( $pui_helper->is_pui_gateway_enabled() ) {
-			return true;
-		}
-
-		return false;
-	},
 	'wcgateway.settings.should-disable-fraudnet-checkbox'  => static function( ContainerInterface $container ): bool {
 		$pui_helper = $container->get( 'wcgateway.pay-upon-invoice-helper' );
 		assert( $pui_helper instanceof PayUponInvoiceHelper );
@@ -1257,44 +1236,6 @@ return array(
 		}
 
 		return $label;
-	},
-	'wcgateway.settings.tracking-label'                    => static function ( ContainerInterface $container ): string {
-		$tracking_label = sprintf(
-			// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
-			__( 'Enable %1$sshipment tracking information%2$s to be sent to PayPal for seller protection features.', 'woocommerce-paypal-payments' ),
-			'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#shipment-tracking" target="_blank">',
-			'</a>'
-		);
-
-		if ( 'DE' === $container->get( 'api.shop.country' ) ) {
-			$tracking_label .= '<br/>' . sprintf(
-				// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
-				__( 'Required when %1$sPay upon Invoice%2$s is used.', 'woocommerce-paypal-payments' ),
-				'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#pay-upon-invoice-PUI" target="_blank">',
-				'</a>'
-			);
-		}
-
-		$is_tracking_available = $container->get( 'order-tracking.is-tracking-available' );
-
-		if ( $is_tracking_available ) {
-			return $tracking_label;
-		}
-
-		$tracking_label .= '<br/>' . sprintf(
-		// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
-			__(
-				' To use tracking features, you must %1$senable tracking on your account%2$s.',
-				'woocommerce-paypal-payments'
-			),
-			'<a
-					href="https://docs.woocommerce.com/document/woocommerce-paypal-payments/#enable-tracking-on-your-live-account"
-					target="_blank"
-				>',
-			'</a>'
-		);
-
-		return $tracking_label;
 	},
 	'wcgateway.enable-dcc-url-sandbox'                     => static function ( ContainerInterface $container ): string {
 		return 'https://www.sandbox.paypal.com/bizsignup/entry/product/ppcp';
