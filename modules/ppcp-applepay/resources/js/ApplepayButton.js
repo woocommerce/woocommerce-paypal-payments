@@ -135,10 +135,10 @@ class ApplepayButton {
                 ? this.buttonConfig.button.mini_cart_wrapper
                 : this.buttonConfig.button.wrapper;
 
-        /*const shape =
+        const shape =
             (this.context === 'mini-cart')
                 ? this.ppcpConfig.button.mini_cart_style.shape
-                : this.ppcpConfig.button.style.shape;*/
+                : this.ppcpConfig.button.style.shape;
         const appleContainer = this.context === 'mini-cart' ? document.getElementById("applepay-container-minicart") : document.getElementById("applepay-container");
         console.log('[ApplePayButton] addButton', appleContainer)
         const type = this.buttonConfig.button.type;
@@ -149,7 +149,7 @@ class ApplepayButton {
 
 
 
-        //jQuery(wrapper).addClass('ppcp-button-' + shape);
+        jQuery(wrapper).addClass('ppcp-button-' + shape);
         jQuery(wrapper).append(appleContainer);
         console.log('[ApplePayButton] addButton', wrapper, appleContainer);
     }
