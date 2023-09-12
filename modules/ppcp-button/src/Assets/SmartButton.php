@@ -591,14 +591,12 @@ class SmartButton implements SmartButtonInterface {
 			);
 		}
 
-		if ( in_array( $this->context(), array( 'pay-now', 'checkout' ), true ) ) {
-			wp_enqueue_style(
-				'gateway',
-				untrailingslashit( $this->module_url ) . '/assets/css/gateway.css',
-				array(),
-				$this->version
-			);
-		}
+		wp_enqueue_style(
+			'gateway',
+			untrailingslashit( $this->module_url ) . '/assets/css/gateway.css',
+			array(),
+			$this->version
+		);
 
 		wp_enqueue_script(
 			'ppcp-smart-button',
@@ -1085,9 +1083,7 @@ class SmartButton implements SmartButtonInterface {
 
 		$enable_funding = array( 'venmo' );
 
-		if ( $this->is_pay_later_button_enabled_for_location( $context ) ||
-			$this->is_pay_later_messaging_enabled_for_location( $context )
-		) {
+		if ( $this->is_pay_later_button_enabled_for_location( $context ) ) {
 			$enable_funding[] = 'paylater';
 		} else {
 			$disable_funding[] = 'paylater';
