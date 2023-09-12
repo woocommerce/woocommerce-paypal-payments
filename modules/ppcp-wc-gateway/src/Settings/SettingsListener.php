@@ -211,7 +211,7 @@ class SettingsListener {
 		}
 
 		$merchant_id      = sanitize_text_field( wp_unslash( $_GET['merchantIdInPayPal'] ) );
-		$merchant_email   = sanitize_text_field( wp_unslash( $_GET['merchantId'] ) );
+		$merchant_email   = $this->sanitize_onboarding_email( sanitize_text_field( wp_unslash( $_GET['merchantId'] ) ) );
 		$onboarding_token = sanitize_text_field( wp_unslash( $_GET['ppcpToken'] ) );
 		$retry_count      = isset( $_GET['ppcpRetry'] ) ? ( (int) sanitize_text_field( wp_unslash( $_GET['ppcpRetry'] ) ) ) : 0;
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
@@ -276,6 +276,16 @@ class SettingsListener {
 		}
 
 		$this->onboarding_redirect();
+	}
+
+	/**
+	 * Sanitizes the onboarding email.
+	 *
+	 * @param string $email The onboarding email.
+	 * @return string
+	 */
+	private function sanitize_onboarding_email( string $email ): string {
+		return str_replace( ' ', '+', $email );
 	}
 
 	/**
@@ -401,9 +411,7 @@ class SettingsListener {
 				$this->webhook_registrar->unregister();
 
 				foreach ( $this->signup_link_ids as $key ) {
-					if ( $this->signup_link_cache->has( $key ) ) {
-						$this->signup_link_cache->delete( $key );
-					}
+					( new OnboardingUrl( $this->signup_link_cache, $key, get_current_user_id() ) )->delete();
 				}
 			}
 		}
@@ -613,4 +621,40 @@ class SettingsListener {
 		}
 		return true;
 	}
+
+	/**
+	 * Prevent enabling tracking if it is not enabled for merchant account.
+	 *
+	 * @throws RuntimeException When API request fails.
+	 */
+	public function listen_for_tracking_enabled(): void {
+		if ( State::STATE_ONBOARDED !== $this->state->current_state() ) {
+			return;
+		}
+
+		try {
+			$token = $this->bearer->bearer();
+			if ( ! $token->is_tracking_available() ) {
+				$this->settings->set( 'tracking_enabled', false );
+				$this->settings->persist();
+				return;
+			}
+		} catch ( RuntimeException $exception ) {
+			$this->settings->set( 'tracking_enabled', false );
+			$this->settings->persist();
+
+			throw $exception;
+		}
+	}
+
+	/**
+	 * Handles onboarding URLs deletion
+	 */
+	public function listen_for_uninstall(): void {
+		// Clear onboarding links from cache.
+		foreach ( $this->signup_link_ids as $key ) {
+			( new OnboardingUrl( $this->signup_link_cache, $key, get_current_user_id() ) )->delete();
+		}
+	}
+
 }
