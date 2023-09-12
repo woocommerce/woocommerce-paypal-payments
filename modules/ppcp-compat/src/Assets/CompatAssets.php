@@ -9,10 +9,16 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Compat\Assets;
 
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
+use WooCommerce\PayPalCommerce\OrderTracking\TrackingAvailabilityTrait;
+
 /**
  * Class OrderEditPageAssets
  */
 class CompatAssets {
+
+	use TrackingAvailabilityTrait;
+
 	/**
 	 * The URL to the module.
 	 *
@@ -26,13 +32,6 @@ class CompatAssets {
 	 * @var string
 	 */
 	private $version;
-
-	/**
-	 * Whether tracking compat scripts should be loaded.
-	 *
-	 * @var bool
-	 */
-	protected $should_enqueue_tracking_scripts;
 
 	/**
 	 * Whether Germanized plugin is active.
@@ -49,27 +48,34 @@ class CompatAssets {
 	protected $is_wc_shipment_active;
 
 	/**
+	 * The bearer.
+	 *
+	 * @var Bearer
+	 */
+	protected $bearer;
+
+	/**
 	 * Compat module assets constructor.
 	 *
 	 * @param string $module_url The URL to the module.
 	 * @param string $version The assets version.
-	 * @param bool   $should_enqueue_tracking_scripts Whether Germanized synchronization scripts should be loaded.
 	 * @param bool   $is_gzd_active Whether Germanized plugin is active.
 	 * @param bool   $is_wc_shipment_active Whether WC Shipments plugin is active.
+	 * @param Bearer $bearer The bearer.
 	 */
 	public function __construct(
 		string $module_url,
 		string $version,
-		bool $should_enqueue_tracking_scripts,
 		bool $is_gzd_active,
-		bool $is_wc_shipment_active
+		bool $is_wc_shipment_active,
+		Bearer $bearer
 	) {
 
-		$this->module_url                      = $module_url;
-		$this->version                         = $version;
-		$this->should_enqueue_tracking_scripts = $should_enqueue_tracking_scripts;
-		$this->is_gzd_active                   = $is_gzd_active;
-		$this->is_wc_shipment_active           = $is_wc_shipment_active;
+		$this->module_url            = $module_url;
+		$this->version               = $version;
+		$this->is_gzd_active         = $is_gzd_active;
+		$this->is_wc_shipment_active = $is_wc_shipment_active;
+		$this->bearer                = $bearer;
 	}
 
 	/**
@@ -78,7 +84,7 @@ class CompatAssets {
 	 * @return void
 	 */
 	public function register(): void {
-		if ( $this->should_enqueue_tracking_scripts ) {
+		if ( $this->is_tracking_enabled( $this->bearer ) ) {
 			wp_register_script(
 				'ppcp-tracking-compat',
 				untrailingslashit( $this->module_url ) . '/assets/js/tracking-compat.js',
@@ -104,7 +110,7 @@ class CompatAssets {
 	 * @return void
 	 */
 	public function enqueue(): void {
-		if ( $this->should_enqueue_tracking_scripts ) {
+		if ( $this->is_tracking_enabled( $this->bearer ) ) {
 			wp_enqueue_script( 'ppcp-tracking-compat' );
 		}
 	}

@@ -1208,22 +1208,6 @@ return array(
 	'wcgateway.settings.has_enabled_separate_button_gateways' => static function ( ContainerInterface $container ): bool {
 		return (bool) $container->get( 'wcgateway.settings.allow_card_button_gateway' );
 	},
-	'wcgateway.settings.should-disable-tracking-checkbox'  => static function ( ContainerInterface $container ): bool {
-		$pui_helper = $container->get( 'wcgateway.pay-upon-invoice-helper' );
-		assert( $pui_helper instanceof PayUponInvoiceHelper );
-
-		$is_tracking_available = $container->get( 'order-tracking.is-module-enabled' );
-
-		if ( ! $is_tracking_available ) {
-			return true;
-		}
-
-		if ( $pui_helper->is_pui_gateway_enabled() ) {
-			return true;
-		}
-
-		return false;
-	},
 	'wcgateway.settings.should-disable-fraudnet-checkbox'  => static function( ContainerInterface $container ): bool {
 		$pui_helper = $container->get( 'wcgateway.pay-upon-invoice-helper' );
 		assert( $pui_helper instanceof PayUponInvoiceHelper );
