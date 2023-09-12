@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\OrderTracking;
 
+use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\OrderTracking\Shipment\ShipmentFactoryInterface;
@@ -88,34 +89,6 @@ return array(
 			),
 		);
 	},
-	'order-tracking.is-tracking-available'     => static function ( ContainerInterface $container ): bool {
-		try {
-			$bearer = $container->get( 'api.bearer' );
-			assert( $bearer instanceof Bearer );
-
-			$token = $bearer->bearer();
-			return $token->is_tracking_available();
-		} catch ( RuntimeException $exception ) {
-			return false;
-		}
-	},
-	'order-tracking.is-module-enabled'         => static function ( ContainerInterface $container ): bool {
-		$order_id = isset( $_GET['post'] ) ? (int) $_GET['post'] : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		if ( empty( $order_id ) ) {
-			return false;
-		}
-
-		$meta = get_post_meta( $order_id, PayPalGateway::ORDER_ID_META_KEY, true );
-
-		if ( empty( $meta ) ) {
-			return false;
-		}
-
-		$is_tracking_available = $container->get( 'order-tracking.is-tracking-available' );
-
-		return $is_tracking_available && apply_filters( 'woocommerce_paypal_payments_shipment_tracking_enabled', true );
-	},
-
 	'order-tracking.is-merchant-country-us'    => static function ( ContainerInterface $container ): bool {
 		return $container->get( 'api.shop.country' ) === 'US';
 	},
