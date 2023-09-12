@@ -35,7 +35,7 @@ return array(
 						. '<p class="description">'
 						. sprintf(
 						// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
-							__( 'Buyers can use %1$sApple Pay%2$s to make payments on the web using a web browser.', 'woocommerce-paypal-payments' ),
+							__( 'Buyers can use %1$sApple Pay%2$s to make payments on the web using the Safari web browser or an iOS device.', 'woocommerce-paypal-payments' ),
 							'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#apple-pay" target="_blank">',
 							'</a>'
 						)
@@ -79,7 +79,7 @@ return array(
 					'requirements' => array(),
 				),
 				'applepay_button_type'             => array(
-					'title'        => str_repeat( '&nbsp;', 6 ) . __( 'Button Type', 'woocommerce-paypal-payments' ),
+					'title'        => str_repeat( '&nbsp;', 6 ) . __( 'Button Label', 'woocommerce-paypal-payments' ),
 					'type'         => 'select',
 					'desc_tip'     => true,
 					'description'  => __(
@@ -99,7 +99,7 @@ return array(
 					'type'         => 'select',
 					'desc_tip'     => true,
 					'description'  => __(
-						'Apple Pay payment buttons styles: black, white and white-outline. To provide contrast, use dark buttons on light backgrounds and light buttons on dark or colorful backgrounds.',
+						'The Apple Pay Button may appear as a black button with white lettering, white button with black lettering, or a white button with black lettering and a black outline.',
 						'woocommerce-paypal-payments'
 					),
 					'label'        => '',
@@ -116,7 +116,7 @@ return array(
 					'type'         => 'select',
 					'desc_tip'     => true,
 					'description'  => __(
-						'A type that indicates the languages and regions that you can specify for the Apple Pay button. The default value is the current language and region setting in a browser.',
+						'The language and region used for the displayed Apple Pay button. The default value is the current language and region setting in a browser.',
 						'woocommerce-paypal-payments'
 					),
 					'class'        => array(),
