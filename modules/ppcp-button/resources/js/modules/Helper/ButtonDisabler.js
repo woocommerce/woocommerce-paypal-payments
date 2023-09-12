@@ -35,12 +35,8 @@ export const setEnabled = (selectorOrElement, enable, form = null) => {
     }
 
     if (enable) {
-        jQuery(element).removeClass('ppcp-disabled')
-            .css({
-                'cursor': '',
-                '-webkit-filter': '',
-                'filter': '',
-            } )
+        jQuery(element)
+            .removeClass('ppcp-disabled')
             .off('mouseup')
             .find('> *')
             .css('pointer-events', '');
@@ -48,12 +44,8 @@ export const setEnabled = (selectorOrElement, enable, form = null) => {
         triggerEnabled(selectorOrElement, element);
 
     } else {
-        jQuery(element).addClass('ppcp-disabled')
-            .css({
-                'cursor': 'not-allowed',
-                '-webkit-filter': 'grayscale(100%)',
-                'filter': 'grayscale(100%)',
-            })
+        jQuery(element)
+            .addClass('ppcp-disabled')
             .on('mouseup', function(event) {
                 event.stopImmediatePropagation();
 
@@ -70,6 +62,16 @@ export const setEnabled = (selectorOrElement, enable, form = null) => {
 
         triggerDisabled(selectorOrElement, element);
     }
+};
+
+export const isDisabled = (selectorOrElement) => {
+    const element = getElement(selectorOrElement);
+
+    if (!element) {
+        return false;
+    }
+
+    return jQuery(element).hasClass('ppcp-disabled');
 };
 
 export const disable = (selectorOrElement, form = null) => {
