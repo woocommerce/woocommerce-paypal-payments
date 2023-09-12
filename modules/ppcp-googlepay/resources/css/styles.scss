@@ -22,14 +22,7 @@
 
 .ppcp-has-googlepay-block {
 
-	.wp-block-woocommerce-checkout {
-		.ppcp-button-googlepay {
-			margin: 0;
-			height: 40px;
-		}
-	}
-
-	.wp-block-woocommerce-cart {
+	.wp-block-woocommerce-cart, .wp-block-woocommerce-checkout {
 		.ppcp-button-googlepay {
 			margin: 0;
 			height: 40px;
