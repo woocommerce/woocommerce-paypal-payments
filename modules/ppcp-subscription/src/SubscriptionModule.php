@@ -559,7 +559,8 @@ class SubscriptionModule implements ModuleInterface {
 				$subscriptions_api_handler = $c->get( 'subscription.api-handler' );
 				assert( $subscriptions_api_handler instanceof SubscriptionsApiHandler );
 				$this->update_subscription_product_meta( $product, $subscriptions_api_handler );
-			}
+			},
+			30
 		);
 
 		add_action(
