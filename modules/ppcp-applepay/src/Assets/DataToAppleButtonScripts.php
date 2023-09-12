@@ -164,8 +164,10 @@ class DataToAppleButtonScripts {
 		$currency_code,
 		$total_label
 	) {
-
 		$cart          = WC()->cart;
+		if ( ! $cart ) {
+			return array();
+		}
 		$nonce         = wp_nonce_field( 'woocommerce-process_checkout', 'woocommerce-process-checkout-nonce' );
 		$button_markup =
 			'<div id="applepay-container">'

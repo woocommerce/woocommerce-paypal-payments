@@ -211,7 +211,7 @@ class SettingsListener {
 		}
 
 		$merchant_id      = sanitize_text_field( wp_unslash( $_GET['merchantIdInPayPal'] ) );
-		$merchant_email   = sanitize_text_field( wp_unslash( $_GET['merchantId'] ) );
+		$merchant_email   = $this->sanitize_onboarding_email( sanitize_text_field( wp_unslash( $_GET['merchantId'] ) ) );
 		$onboarding_token = sanitize_text_field( wp_unslash( $_GET['ppcpToken'] ) );
 		$retry_count      = isset( $_GET['ppcpRetry'] ) ? ( (int) sanitize_text_field( wp_unslash( $_GET['ppcpRetry'] ) ) ) : 0;
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
@@ -276,6 +276,16 @@ class SettingsListener {
 		}
 
 		$this->onboarding_redirect();
+	}
+
+	/**
+	 * Sanitizes the onboarding email.
+	 *
+	 * @param string $email The onboarding email.
+	 * @return string
+	 */
+	private function sanitize_onboarding_email( string $email ): string {
+		return str_replace( ' ', '+', $email );
 	}
 
 	/**

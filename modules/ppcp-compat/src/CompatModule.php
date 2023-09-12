@@ -30,7 +30,6 @@ use WP_REST_Response;
  * Class CompatModule
  */
 class CompatModule implements ModuleInterface {
-
 	/**
 	 * Setup the compatibility module.
 	 *
