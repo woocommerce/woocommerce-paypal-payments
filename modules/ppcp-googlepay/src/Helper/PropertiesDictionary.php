@@ -43,4 +43,46 @@ class PropertiesDictionary {
 			'subscribe' => __( 'Subscribe', 'woocommerce-paypal-payments' ),
 		);
 	}
+
+	/**
+	 * Returns the possible list of button languages.
+	 *
+	 * @return array
+	 */
+	public static function button_languages(): array {
+		return array(
+			''   => __( 'Browser language', 'woocommerce-paypal-payments' ),
+			'ar' => __( 'Arabic', 'woocommerce-paypal-payments' ),
+			'bg' => __( 'Bulgarian', 'woocommerce-paypal-payments' ),
+			'ca' => __( 'Catalan', 'woocommerce-paypal-payments' ),
+			'zh' => __( 'Chinese', 'woocommerce-paypal-payments' ),
+			'hr' => __( 'Croatian', 'woocommerce-paypal-payments' ),
+			'cs' => __( 'Czech', 'woocommerce-paypal-payments' ),
+			'da' => __( 'Danish', 'woocommerce-paypal-payments' ),
+			'nl' => __( 'Dutch', 'woocommerce-paypal-payments' ),
+			'en' => __( 'English', 'woocommerce-paypal-payments' ),
+			'et' => __( 'Estonian', 'woocommerce-paypal-payments' ),
+			'fi' => __( 'Finnish', 'woocommerce-paypal-payments' ),
+			'fr' => __( 'French', 'woocommerce-paypal-payments' ),
+			'de' => __( 'German', 'woocommerce-paypal-payments' ),
+			'el' => __( 'Greek', 'woocommerce-paypal-payments' ),
+			'id' => __( 'Indonesian', 'woocommerce-paypal-payments' ),
+			'it' => __( 'Italian', 'woocommerce-paypal-payments' ),
+			'ja' => __( 'Japanese', 'woocommerce-paypal-payments' ),
+			'ko' => __( 'Korean', 'woocommerce-paypal-payments' ),
+			'ms' => __( 'Malay', 'woocommerce-paypal-payments' ),
+			'no' => __( 'Norwegian', 'woocommerce-paypal-payments' ),
+			'pl' => __( 'Polish', 'woocommerce-paypal-payments' ),
+			'pt' => __( 'Portuguese', 'woocommerce-paypal-payments' ),
+			'ru' => __( 'Russian', 'woocommerce-paypal-payments' ),
+			'sr' => __( 'Serbian', 'woocommerce-paypal-payments' ),
+			'sk' => __( 'Slovak', 'woocommerce-paypal-payments' ),
+			'sl' => __( 'Slovenian', 'woocommerce-paypal-payments' ),
+			'es' => __( 'Spanish', 'woocommerce-paypal-payments' ),
+			'sv' => __( 'Swedish', 'woocommerce-paypal-payments' ),
+			'th' => __( 'Thai', 'woocommerce-paypal-payments' ),
+			'tr' => __( 'Turkish', 'woocommerce-paypal-payments' ),
+			'uk' => __( 'Ukrainian', 'woocommerce-paypal-payments' ),
+		);
+	}
 }

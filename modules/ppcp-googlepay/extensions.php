@@ -55,6 +55,7 @@ return array(
 										'elements' => array(
 											'#field-googlepay_button_color',
 											'#field-googlepay_button_type',
+											'#field-googlepay_button_language',
 											'#field-googlepay_button_shipping_enabled',
 										),
 									),
@@ -92,6 +93,22 @@ return array(
 					'class'        => array(),
 					'default'      => 'black',
 					'options'      => PropertiesDictionary::button_colors(),
+					'screens'      => array( State::STATE_ONBOARDED ),
+					'gateway'      => 'paypal',
+					'requirements' => array(),
+				),
+				'googlepay_button_language'         => array(
+					'title'        => str_repeat( '&nbsp;', 6 ) . __( 'Button Language', 'woocommerce-paypal-payments' ),
+					'type'         => 'select',
+					'desc_tip'     => true,
+					'description'  => __(
+						'The language and region used for the displayed Google Pay button. The default value is the current language and region setting in a browser.',
+						'woocommerce-paypal-payments'
+					),
+					'class'        => array(),
+					'input_class'  => array( 'wc-enhanced-select' ),
+					'default'      => 'en',
+					'options'      => PropertiesDictionary::button_languages(),
 					'screens'      => array( State::STATE_ONBOARDED ),
 					'gateway'      => 'paypal',
 					'requirements' => array(),

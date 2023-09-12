@@ -388,8 +388,9 @@ class Button implements ButtonInterface {
 		$context = str_replace( '-block', '', $context );
 
 		$values = array(
-			'color' => 'black',
-			'type'  => 'pay',
+			'color'    => 'black',
+			'type'     => 'pay',
+			'language' => 'en',
 		);
 
 		foreach ( $values as $style => $value ) {

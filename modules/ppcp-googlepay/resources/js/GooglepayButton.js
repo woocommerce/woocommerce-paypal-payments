@@ -149,6 +149,7 @@ class GooglepayButton {
                 allowedPaymentMethods: [baseCardPaymentMethod],
                 buttonColor: buttonStyle.color || 'black',
                 buttonType: buttonStyle.type || 'pay',
+                buttonLocale: buttonStyle.language || 'en',
                 buttonSizeMode: 'fill',
             });
         jQuery(wrapper).append(button);
