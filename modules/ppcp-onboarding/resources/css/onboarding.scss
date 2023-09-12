@@ -49,6 +49,10 @@ label.error {
 	border: red solid 2px;
 }
 
+.input-text:invalid {
+	border: red solid 2px;
+}
+
 ul.ppcp-onboarding-options, ul.ppcp-onboarding-options-sublist {
 	list-style: none;
 }

@@ -549,6 +549,7 @@ class SettingsListener {
 					break;
 				case 'text':
 				case 'number':
+				case 'email':
 					$settings[ $key ] = isset( $raw_data[ $key ] ) ? wp_kses_post( $raw_data[ $key ] ) : '';
 					break;
 				case 'ppcp-password':
