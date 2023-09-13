@@ -153,9 +153,10 @@ abstract class AbstractCartEndpoint implements EndpointInterface {
 	/**
 	 * Handles errors.
 	 *
+	 * @param bool $send_response If this error handling should return the response.
 	 * @return void
 	 */
-	private function handle_error(): void {
+	protected function handle_error( bool $send_response = true ): void {
 
 		$message = __(
 			'Something went wrong. Action aborted',
@@ -173,14 +174,16 @@ abstract class AbstractCartEndpoint implements EndpointInterface {
 			wc_clear_notices();
 		}
 
-		wp_send_json_error(
-			array(
-				'name'    => '',
-				'message' => $message,
-				'code'    => 0,
-				'details' => array(),
-			)
-		);
+		if ( $send_response ) {
+			wp_send_json_error(
+				array(
+					'name'    => '',
+					'message' => $message,
+					'code'    => 0,
+					'details' => array(),
+				)
+			);
+		}
 	}
 
 	/**
@@ -259,7 +262,9 @@ abstract class AbstractCartEndpoint implements EndpointInterface {
 	private function add_product( \WC_Product $product, int $quantity ): bool {
 		$cart_item_key = $this->cart->add_to_cart( $product->get_id(), $quantity );
 
-		$this->cart_item_keys[] = $cart_item_key;
+		if ( $cart_item_key ) {
+			$this->cart_item_keys[] = $cart_item_key;
+		}
 		return false !== $cart_item_key;
 	}
 
@@ -294,7 +299,9 @@ abstract class AbstractCartEndpoint implements EndpointInterface {
 			$variations
 		);
 
-		$this->cart_item_keys[] = $cart_item_key;
+		if ( $cart_item_key ) {
+			$this->cart_item_keys[] = $cart_item_key;
+		}
 		return false !== $cart_item_key;
 	}
 
@@ -322,7 +329,9 @@ abstract class AbstractCartEndpoint implements EndpointInterface {
 
 		$cart_item_key = $this->cart->add_to_cart( $product->get_id(), 1, 0, array(), $cart_item_data );
 
-		$this->cart_item_keys[] = $cart_item_key;
+		if ( $cart_item_key ) {
+			$this->cart_item_keys[] = $cart_item_key;
+		}
 		return false !== $cart_item_key;
 	}
 
@@ -333,6 +342,9 @@ abstract class AbstractCartEndpoint implements EndpointInterface {
 	 */
 	protected function remove_cart_items(): void {
 		foreach ( $this->cart_item_keys as $cart_item_key ) {
+			if ( ! $cart_item_key ) {
+				continue;
+			}
 			$this->cart->remove_cart_item( $cart_item_key );
 		}
 	}

@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 
 use Exception;
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButton;
 
 /**
@@ -26,6 +27,13 @@ class SimulateCartEndpoint extends AbstractCartEndpoint {
 	 * @var SmartButton
 	 */
 	private $smart_button;
+
+	/**
+	 * The WooCommerce real active cart.
+	 *
+	 * @var \WC_Cart|null
+	 */
+	private $real_cart = null;
 
 	/**
 	 * ChangeCartEndpoint constructor.
@@ -65,24 +73,14 @@ class SimulateCartEndpoint extends AbstractCartEndpoint {
 			return false;
 		}
 
-		// Set WC default cart as the clone.
-		// Store a reference to the real cart.
-		$active_cart = WC()->cart;
-		WC()->cart   = $this->cart;
+		$this->replace_real_cart();
 
-		if ( ! $this->add_products( $products ) ) {
-			return false;
-		}
+		$this->add_products( $products );
 
 		$this->cart->calculate_totals();
 		$total = (float) $this->cart->get_total( 'numeric' );
 
-		// Remove from cart because some plugins reserve resources internally when adding to cart.
-		$this->remove_cart_items();
-
-		// Restore cart and unset cart clone.
-		WC()->cart = $active_cart;
-		unset( $this->cart );
+		$this->restore_real_cart();
 
 		// Process filters.
 		$pay_later_enabled           = true;
@@ -100,23 +98,71 @@ class SimulateCartEndpoint extends AbstractCartEndpoint {
 			$button_enabled              = $button_enabled && ! $this->smart_button->is_button_disabled( 'product', $context_data );
 		}
 
+		// Shop settings.
+		$base_location     = wc_get_base_location();
+		$shop_country_code = $base_location['country'];
+		$currency_code     = get_woocommerce_currency();
+
 		wp_send_json_success(
 			array(
-				'total'    => $total,
-				'funding'  => array(
+				'total'         => $total,
+				'total_str'     => ( new Money( $total, $currency_code ) )->value_str(),
+				'currency_code' => $currency_code,
+				'country_code'  => $shop_country_code,
+				'funding'       => array(
 					'paylater' => array(
 						'enabled' => $pay_later_enabled,
 					),
 				),
-				'button'   => array(
+				'button'        => array(
 					'is_disabled' => ! $button_enabled,
 				),
-				'messages' => array(
+				'messages'      => array(
 					'is_hidden' => ! $pay_later_messaging_enabled,
 				),
 			)
 		);
 		return true;
+	}
+
+	/**
+	 * Handles errors.
+	 *
+	 * @param bool $send_response If this error handling should return the response.
+	 * @return void
+	 *
+	 * phpcs:disable Generic.CodeAnalysis.UselessOverridingMethod.Found
+	 */
+	protected function handle_error( bool $send_response = false ): void {
+		parent::handle_error( $send_response );
+	}
+
+	/**
+	 * Replaces the real cart with the clone.
+	 *
+	 * @return void
+	 */
+	private function replace_real_cart() {
+		// Set WC default cart as the clone.
+		// Store a reference to the real cart.
+		$this->real_cart = WC()->cart;
+		WC()->cart       = $this->cart;
+	}
+
+	/**
+	 * Restores the real cart.
+	 *
+	 * @return void
+	 */
+	private function restore_real_cart() {
+		// Remove from cart because some plugins reserve resources internally when adding to cart.
+		$this->remove_cart_items();
+
+		// Restore cart and unset cart clone.
+		if ( null !== $this->real_cart ) {
+			WC()->cart = $this->real_cart;
+		}
+		unset( $this->cart );
 	}
 
 }

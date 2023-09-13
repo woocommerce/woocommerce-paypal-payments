@@ -28,6 +28,21 @@ return function ( string $root_dir ): iterable {
 		( require "$modules_dir/ppcp-uninstall/module.php" )(),
 		( require "$modules_dir/ppcp-blocks/module.php" )(),
 	);
+	if ( apply_filters(
+		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
+		'woocommerce.feature-flags.woocommerce_paypal_payments.applepay_enabled',
+		getenv( 'PCP_APPLEPAY_ENABLED' ) === '1'
+	) ) {
+		$modules[] = ( require "$modules_dir/ppcp-applepay/module.php" )();
+	}
+
+	if ( apply_filters(
+		//phpcs:disable WordPress.NamingConventions.ValidHookName.UseUnderscores
+		'woocommerce.feature-flags.woocommerce_paypal_payments.googlepay_enabled',
+		getenv( 'PCP_GOOGLEPAY_ENABLED' ) === '1'
+	) ) {
+		$modules[] = ( require "$modules_dir/ppcp-googlepay/module.php" )();
+	}
 
 	return $modules;
 };

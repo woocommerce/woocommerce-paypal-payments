@@ -1,5 +1,5 @@
-import {disable, enable} from "./ButtonDisabler";
-import {hide, show} from "./Hiding";
+import {disable, enable, isDisabled} from "./ButtonDisabler";
+import merge from "deepmerge";
 
 /**
  * Common Bootstrap methods to avoid code repetition.
@@ -9,31 +9,21 @@ export default class BootstrapHelper {
     static handleButtonStatus(bs, options) {
         options = options || {};
         options.wrapper = options.wrapper || bs.gateway.button.wrapper;
-        options.messagesWrapper = options.messagesWrapper || bs.gateway.messages.wrapper;
-        options.skipMessages = options.skipMessages || false;
 
-        // Handle messages hide / show
-        if (this.shouldShowMessages(bs, options)) {
-            show(options.messagesWrapper);
-        } else {
-            hide(options.messagesWrapper);
-        }
+        const wasDisabled = isDisabled(options.wrapper);
+        const shouldEnable = bs.shouldEnable();
 
         // Handle enable / disable
-        if (bs.shouldEnable()) {
+        if (shouldEnable && wasDisabled) {
             bs.renderer.enableSmartButtons(options.wrapper);
             enable(options.wrapper);
-
-            if (!options.skipMessages) {
-                enable(options.messagesWrapper);
-            }
-        } else {
+        } else if (!shouldEnable && !wasDisabled) {
             bs.renderer.disableSmartButtons(options.wrapper);
             disable(options.wrapper, options.formSelector || null);
+        }
 
-            if (!options.skipMessages) {
-                disable(options.messagesWrapper);
-            }
+        if (wasDisabled !== !shouldEnable) {
+            jQuery(options.wrapper).trigger('ppcp_buttons_enabled_changed', [shouldEnable]);
         }
     }
 
@@ -47,12 +37,15 @@ export default class BootstrapHelper {
             && options.isDisabled !== true;
     }
 
-    static shouldShowMessages(bs, options) {
-        options = options || {};
-        if (typeof options.isMessagesHidden === 'undefined') {
-            options.isMessagesHidden = bs.gateway.messages.is_hidden;
-        }
+    static updateScriptData(bs, newData) {
+        const newObj = merge(bs.gateway, newData);
 
-        return options.isMessagesHidden !== true;
+        const isChanged = JSON.stringify(bs.gateway) !== JSON.stringify(newObj);
+
+        bs.gateway = newObj;
+
+        if (isChanged) {
+            jQuery(document.body).trigger('ppcp_script_data_changed', [newObj]);
+        }
     }
 }

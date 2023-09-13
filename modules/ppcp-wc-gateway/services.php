@@ -212,10 +212,18 @@ return array(
 		return new ConnectAdminNotice( $state, $settings );
 	},
 	'wcgateway.notice.currency-unsupported'                => static function ( ContainerInterface $container ): UnsupportedCurrencyAdminNotice {
-		$state = $container->get( 'onboarding.state' );
-		$shop_currency = $container->get( 'api.shop.currency' );
-		$supported_currencies = $container->get( 'api.supported-currencies' );
-		return new UnsupportedCurrencyAdminNotice( $state, $shop_currency, $supported_currencies );
+		$state                    = $container->get( 'onboarding.state' );
+		$shop_currency            = $container->get( 'api.shop.currency' );
+		$supported_currencies     = $container->get( 'api.supported-currencies' );
+		$is_wc_gateways_list_page = $container->get( 'wcgateway.is-wc-gateways-list-page' );
+		$is_ppcp_settings_page    = $container->get( 'wcgateway.is-ppcp-settings-page' );
+		return new UnsupportedCurrencyAdminNotice(
+			$state,
+			$shop_currency,
+			$supported_currencies,
+			$is_wc_gateways_list_page,
+			$is_ppcp_settings_page
+		);
 	},
 	'wcgateway.notice.dcc-without-paypal'                  => static function ( ContainerInterface $container ): GatewayWithoutPayPalAdminNotice {
 		return new GatewayWithoutPayPalAdminNotice(
@@ -621,8 +629,24 @@ return array(
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
+			'alternative_payment_methods'            => array(
+				'heading'      => __( 'Alternative Payment Methods', 'woocommerce-paypal-payments' ),
+				'description'  => sprintf(
+				// translators: %1$s, %2$s, %3$s and %4$s are a link tags.
+					__( '%1$sAlternative Payment Methods%2$s allow you to accept payments from customers around the globe who use their credit cards, bank accounts, wallets, and local payment methods. When a buyer pays in a currency different than yours, PayPal handles currency conversion for you and presents conversion information to the buyer during checkout.', 'woocommerce-paypal-payments' ),
+					'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#alternative-payment-methods" target="_blank">',
+					'</a>'
+				),
+				'type'         => 'ppcp-heading',
+				'screens'      => array(
+					State::STATE_START,
+					State::STATE_ONBOARDED,
+				),
+				'requirements' => array(),
+				'gateway'      => 'paypal',
+			),
 			'disable_funding'                        => array(
-				'title'        => __( 'Hide Funding Source(s)', 'woocommerce-paypal-payments' ),
+				'title'        => __( 'Disable Alternative Payment Methods', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-multiselect',
 				'class'        => array(),
 				'input_class'  => array( 'wc-enhanced-select' ),
@@ -630,7 +654,7 @@ return array(
 				'desc_tip'     => false,
 				'description'  => sprintf(
 				// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
-					__( 'By default, all possible funding sources will be shown. This setting can disable funding sources such as Credit Cards, Pay Later, Venmo, or other %1$sAlternative Payment Methods%2$s.', 'woocommerce-paypal-payments' ),
+					__( 'Choose to hide specific %1$sAlternative Payment Methods%2$s such as Credit Cards, Venmo, or others.', 'woocommerce-paypal-payments' ),
 					'<a
 						href="https://developer.paypal.com/docs/checkout/apm/"
 						target="_blank"
@@ -646,7 +670,7 @@ return array(
 				'gateway'      => 'paypal',
 			),
 			'card_billing_data_mode'                 => array(
-				'title'        => __( 'Card billing data handling', 'woocommerce-paypal-payments' ),
+				'title'        => __( 'Send checkout billing data to card fields', 'woocommerce-paypal-payments' ),
 				'type'         => 'select',
 				'class'        => array(),
 				'input_class'  => array( 'wc-enhanced-select' ),
@@ -666,10 +690,10 @@ return array(
 				'gateway'      => array( 'paypal', CardButtonGateway::ID ),
 			),
 			'allow_card_button_gateway'              => array(
-				'title'        => __( 'Separate Card Button from PayPal gateway', 'woocommerce-paypal-payments' ),
+				'title'        => __( 'Create gateway for Standard Card Button', 'woocommerce-paypal-payments' ),
 				'type'         => 'checkbox',
 				'desc_tip'     => true,
-				'label'        => __( 'Enable a separate payment gateway for the branded PayPal Debit or Credit Card button.', 'woocommerce-paypal-payments' ),
+				'label'        => __( 'Moves the Standard Card Button from the PayPal gateway into its own dedicated gateway.', 'woocommerce-paypal-payments' ),
 				'description'  => __( 'By default, the Debit or Credit Card button is displayed in the Standard Payments payment gateway. This setting creates a second gateway for the Card button.', 'woocommerce-paypal-payments' ),
 				'default'      => $container->get( 'wcgateway.settings.allow_card_button_gateway.default' ),
 				'screens'      => array(
@@ -679,7 +703,6 @@ return array(
 				'requirements' => array(),
 				'gateway'      => 'paypal',
 			),
-
 			'disable_cards'                          => array(
 				'title'        => __( 'Disable specific credit cards', 'woocommerce-paypal-payments' ),
 				'type'         => 'ppcp-multiselect',
@@ -873,7 +896,7 @@ return array(
 			),
 		);
 
-		if ( defined( 'PPCP_FLAG_SUBSCRIPTIONS_API' ) && ! PPCP_FLAG_SUBSCRIPTIONS_API || ! $subscription_helper->plugin_is_active() ) {
+		if ( ! $subscription_helper->plugin_is_active() ) {
 			unset( $fields['subscriptions_mode'] );
 		}
 
@@ -926,6 +949,13 @@ return array(
 			'paylater'    => _x( 'Pay Later', 'Name of payment method', 'woocommerce-paypal-payments' ),
 		);
 	},
+
+	'wcgateway.extra-funding-sources'                      => static function( ContainerInterface $container ): array {
+		return array(
+			'googlepay' => _x( 'Google Pay', 'Name of payment method', 'woocommerce-paypal-payments' ),
+		);
+	},
+
 	/**
 	 * The sources that do not cause issues about redirecting (on mobile, ...) and sometimes not returning back.
 	 */
@@ -1027,7 +1057,10 @@ return array(
 	'wcgateway.funding-source.renderer'                    => function ( ContainerInterface $container ) : FundingSourceRenderer {
 		return new FundingSourceRenderer(
 			$container->get( 'wcgateway.settings' ),
-			$container->get( 'wcgateway.all-funding-sources' )
+			array_merge(
+				$container->get( 'wcgateway.all-funding-sources' ),
+				$container->get( 'wcgateway.extra-funding-sources' )
+			)
 		);
 	},
 
@@ -1200,35 +1233,6 @@ return array(
 	'wcgateway.settings.has_enabled_separate_button_gateways' => static function ( ContainerInterface $container ): bool {
 		return (bool) $container->get( 'wcgateway.settings.allow_card_button_gateway' );
 	},
-
-	'order-tracking.is-tracking-available'                 => static function ( ContainerInterface $container ): bool {
-		try {
-			$bearer = $container->get( 'api.bearer' );
-			assert( $bearer instanceof Bearer );
-
-			$token = $bearer->bearer();
-			return $token->is_tracking_available();
-		} catch ( RuntimeException $exception ) {
-			return false;
-		}
-	},
-
-	'wcgateway.settings.should-disable-tracking-checkbox'  => static function ( ContainerInterface $container ): bool {
-		$pui_helper = $container->get( 'wcgateway.pay-upon-invoice-helper' );
-		assert( $pui_helper instanceof PayUponInvoiceHelper );
-
-		$is_tracking_available = $container->get( 'order-tracking.is-tracking-available' );
-
-		if ( ! $is_tracking_available ) {
-			return true;
-		}
-
-		if ( $pui_helper->is_pui_gateway_enabled() ) {
-			return true;
-		}
-
-		return false;
-	},
 	'wcgateway.settings.should-disable-fraudnet-checkbox'  => static function( ContainerInterface $container ): bool {
 		$pui_helper = $container->get( 'wcgateway.pay-upon-invoice-helper' );
 		assert( $pui_helper instanceof PayUponInvoiceHelper );
@@ -1257,44 +1261,6 @@ return array(
 		}
 
 		return $label;
-	},
-	'wcgateway.settings.tracking-label'                    => static function ( ContainerInterface $container ): string {
-		$tracking_label = sprintf(
-			// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
-			__( 'Enable %1$sshipment tracking information%2$s to be sent to PayPal for seller protection features.', 'woocommerce-paypal-payments' ),
-			'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#shipment-tracking" target="_blank">',
-			'</a>'
-		);
-
-		if ( 'DE' === $container->get( 'api.shop.country' ) ) {
-			$tracking_label .= '<br/>' . sprintf(
-				// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
-				__( 'Required when %1$sPay upon Invoice%2$s is used.', 'woocommerce-paypal-payments' ),
-				'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#pay-upon-invoice-PUI" target="_blank">',
-				'</a>'
-			);
-		}
-
-		$is_tracking_available = $container->get( 'order-tracking.is-tracking-available' );
-
-		if ( $is_tracking_available ) {
-			return $tracking_label;
-		}
-
-		$tracking_label .= '<br/>' . sprintf(
-		// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
-			__(
-				' To use tracking features, you must %1$senable tracking on your account%2$s.',
-				'woocommerce-paypal-payments'
-			),
-			'<a
-					href="https://docs.woocommerce.com/document/woocommerce-paypal-payments/#enable-tracking-on-your-live-account"
-					target="_blank"
-				>',
-			'</a>'
-		);
-
-		return $tracking_label;
 	},
 	'wcgateway.enable-dcc-url-sandbox'                     => static function ( ContainerInterface $container ): string {
 		return 'https://www.sandbox.paypal.com/bizsignup/entry/product/ppcp';

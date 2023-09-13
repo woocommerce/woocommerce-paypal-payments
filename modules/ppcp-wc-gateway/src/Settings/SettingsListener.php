@@ -211,7 +211,7 @@ class SettingsListener {
 		}
 
 		$merchant_id      = sanitize_text_field( wp_unslash( $_GET['merchantIdInPayPal'] ) );
-		$merchant_email   = sanitize_text_field( wp_unslash( $_GET['merchantId'] ) );
+		$merchant_email   = $this->sanitize_onboarding_email( sanitize_text_field( wp_unslash( $_GET['merchantId'] ) ) );
 		$onboarding_token = sanitize_text_field( wp_unslash( $_GET['ppcpToken'] ) );
 		$retry_count      = isset( $_GET['ppcpRetry'] ) ? ( (int) sanitize_text_field( wp_unslash( $_GET['ppcpRetry'] ) ) ) : 0;
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
@@ -276,6 +276,16 @@ class SettingsListener {
 		}
 
 		$this->onboarding_redirect();
+	}
+
+	/**
+	 * Sanitizes the onboarding email.
+	 *
+	 * @param string $email The onboarding email.
+	 * @return string
+	 */
+	private function sanitize_onboarding_email( string $email ): string {
+		return str_replace( ' ', '+', $email );
 	}
 
 	/**
@@ -391,6 +401,7 @@ class SettingsListener {
 			if ( self::CREDENTIALS_UNCHANGED !== $credentials_change_status ) {
 				$this->settings->set( 'products_dcc_enabled', null );
 				$this->settings->set( 'products_pui_enabled', null );
+				do_action( 'woocommerce_paypal_payments_clear_apm_product_status', $this->settings );
 			}
 
 			if ( in_array(
@@ -401,9 +412,7 @@ class SettingsListener {
 				$this->webhook_registrar->unregister();
 
 				foreach ( $this->signup_link_ids as $key ) {
-					if ( $this->signup_link_cache->has( $key ) ) {
-						$this->signup_link_cache->delete( $key );
-					}
+					( new OnboardingUrl( $this->signup_link_cache, $key, get_current_user_id() ) )->delete();
 				}
 			}
 		}
@@ -424,6 +433,11 @@ class SettingsListener {
 		if ( $this->dcc_status_cache->has( DCCProductStatus::DCC_STATUS_CACHE_KEY ) ) {
 			$this->dcc_status_cache->delete( DCCProductStatus::DCC_STATUS_CACHE_KEY );
 		}
+
+		/**
+		 * The hook fired during listening the request so a module can remove also the cache or other logic.
+		 */
+		do_action( 'woocommerce_paypal_payments_on_listening_request' );
 
 		$ppcp_reference_transaction_enabled = get_transient( 'ppcp_reference_transaction_enabled' ) ?? '';
 		if ( $ppcp_reference_transaction_enabled ) {
@@ -638,4 +652,15 @@ class SettingsListener {
 			throw $exception;
 		}
 	}
+
+	/**
+	 * Handles onboarding URLs deletion
+	 */
+	public function listen_for_uninstall(): void {
+		// Clear onboarding links from cache.
+		foreach ( $this->signup_link_ids as $key ) {
+			( new OnboardingUrl( $this->signup_link_cache, $key, get_current_user_id() ) )->delete();
+		}
+	}
+
 }

@@ -462,7 +462,7 @@ class SmartButton implements SmartButtonInterface {
 						return;
 					}
 
-					$this->button_renderer( PayPalGateway::ID );
+					$this->button_renderer( PayPalGateway::ID, 'woocommerce_paypal_payments_single_product_button_render' );
 				},
 				31
 			);
@@ -479,10 +479,10 @@ class SmartButton implements SmartButtonInterface {
 						return;
 					}
 
-					echo '<p
-                                id="ppc-button-minicart"
-                                class="woocommerce-mini-cart__buttons buttons"
-                          ></p>';
+					echo '<p class="woocommerce-mini-cart__buttons buttons">';
+					echo '<span id="ppc-button-minicart"></span>';
+					do_action( 'woocommerce_paypal_payments_minicart_button_render' );
+					echo '</div>';
 				},
 				30
 			);
@@ -494,7 +494,7 @@ class SmartButton implements SmartButtonInterface {
 			add_action(
 				$this->pay_order_renderer_hook(),
 				function (): void {
-					$this->button_renderer( PayPalGateway::ID );
+					$this->button_renderer( PayPalGateway::ID, 'woocommerce_paypal_payments_payorder_button_render' );
 					$this->button_renderer( CardButtonGateway::ID );
 				},
 				20
@@ -502,7 +502,7 @@ class SmartButton implements SmartButtonInterface {
 			add_action(
 				$this->checkout_button_renderer_hook(),
 				function (): void {
-					$this->button_renderer( PayPalGateway::ID );
+					$this->button_renderer( PayPalGateway::ID, 'woocommerce_paypal_payments_checkout_button_render' );
 					$this->button_renderer( CardButtonGateway::ID );
 				}
 			);
@@ -515,7 +515,7 @@ class SmartButton implements SmartButtonInterface {
 						return;
 					}
 
-					$this->button_renderer( PayPalGateway::ID );
+					$this->button_renderer( PayPalGateway::ID, 'woocommerce_paypal_payments_cart_button_render' );
 				},
 				20
 			);
@@ -591,14 +591,12 @@ class SmartButton implements SmartButtonInterface {
 			);
 		}
 
-		if ( in_array( $this->context(), array( 'pay-now', 'checkout' ), true ) ) {
-			wp_enqueue_style(
-				'gateway',
-				untrailingslashit( $this->module_url ) . '/assets/css/gateway.css',
-				array(),
-				$this->version
-			);
-		}
+		wp_enqueue_style(
+			'gateway',
+			untrailingslashit( $this->module_url ) . '/assets/css/gateway.css',
+			array(),
+			$this->version
+		);
 
 		wp_enqueue_script(
 			'ppcp-smart-button',
@@ -618,9 +616,10 @@ class SmartButton implements SmartButtonInterface {
 	/**
 	 * Renders the HTML for the buttons.
 	 *
-	 * @param string $gateway_id The gateway ID, like 'ppcp-gateway'.
+	 * @param string      $gateway_id The gateway ID, like 'ppcp-gateway'.
+	 * @param string|null $action_name The action name to be called.
 	 */
-	public function button_renderer( string $gateway_id ) {
+	public function button_renderer( string $gateway_id, string $action_name = null ) {
 
 		$available_gateways = WC()->payment_gateways->get_available_payment_gateways();
 
@@ -630,7 +629,14 @@ class SmartButton implements SmartButtonInterface {
 
 		// The wrapper is needed for the loading spinner,
 		// otherwise jQuery block() prevents buttons rendering.
-		echo '<div class="ppc-button-wrapper"><div id="ppc-button-' . esc_attr( $gateway_id ) . '"></div></div>';
+		echo '<div class="ppc-button-wrapper">';
+		echo '<div id="ppc-button-' . esc_attr( $gateway_id ) . '"></div>';
+
+		if ( null !== $action_name ) {
+			do_action( $action_name );
+		}
+
+		echo '</div>';
 	}
 
 	/**
@@ -776,10 +782,6 @@ class SmartButton implements SmartButtonInterface {
 	 * @return bool
 	 */
 	private function paypal_subscriptions_enabled(): bool {
-		if ( defined( 'PPCP_FLAG_SUBSCRIPTIONS_API' ) && ! PPCP_FLAG_SUBSCRIPTIONS_API ) {
-			return false;
-		}
-
 		try {
 			$subscriptions_mode = $this->settings->get( 'subscriptions_mode' );
 		} catch ( NotFoundException $exception ) {
@@ -1085,9 +1087,7 @@ class SmartButton implements SmartButtonInterface {
 
 		$enable_funding = array( 'venmo' );
 
-		if ( $this->is_pay_later_button_enabled_for_location( $context ) ||
-			$this->is_pay_later_messaging_enabled_for_location( $context )
-		) {
+		if ( $this->is_pay_later_button_enabled_for_location( $context ) ) {
 			$enable_funding[] = 'paylater';
 		} else {
 			$disable_funding[] = 'paylater';
@@ -1168,7 +1168,15 @@ class SmartButton implements SmartButtonInterface {
 		if ( $this->dcc_is_enabled() ) {
 			$components[] = 'hosted-fields';
 		}
-		return $components;
+		/**
+		 * Filter to add further components from the extensions.
+		 *
+		 * @internal Matches filter name in APM extension.
+		 * @since TODO
+		 *
+		 * @param array $components The array of components already registered.
+		 */
+		return apply_filters( 'woocommerce_paypal_payments_sdk_components_hook', $components );
 	}
 
 	/**
