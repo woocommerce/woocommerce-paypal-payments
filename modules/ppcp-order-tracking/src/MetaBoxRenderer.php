@@ -176,11 +176,10 @@ class MetaBoxRenderer {
 							'<a href="' . esc_url( $documentation_url ) . '">',
 							'</a>'
 						)
-    );
+					);
 					?>
-					<p class="ppcp-tracking-no-shipments"><?php echo $message; ?></p>
+					<p class="ppcp-tracking-no-shipments"><?php echo esc_html( $message ); ?></p>
 				<?php endif; ?>
-
 			</div>
 			<div class="blockUI blockOverlay ppcp-tracking-loader"></div>
 		</div>
