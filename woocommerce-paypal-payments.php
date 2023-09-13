@@ -42,8 +42,6 @@ define( 'PAYPAL_INTEGRATION_DATE', '2023-08-11' );
 	 * Initialize the plugin and its modules.
 	 */
 	function init(): void {
-		define( 'PPCP_FLAG_SUBSCRIPTIONS_API', apply_filters( 'ppcp_flag_subscriptions_api', getenv( 'PPCP_FLAG_SUBSCRIPTIONS_API' ) === '1' ) );
-
 		$root_dir = __DIR__;
 
 		if ( ! is_woocommerce_activated() ) {
