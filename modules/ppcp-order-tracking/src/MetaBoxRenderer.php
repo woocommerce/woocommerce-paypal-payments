@@ -100,7 +100,7 @@ class MetaBoxRenderer {
 		?>
 		<div class="ppcp-tracking-columns-wrapper">
 			<div class="ppcp-tracking-column">
-				<h3><?php echo esc_html__( 'Send Package Tracking Data to PayPal', 'woocommerce-paypal-payments' ); ?></h3>
+				<h3><?php echo esc_html__( 'Share Package Tracking Data with PayPal', 'woocommerce-paypal-payments' ); ?></h3>
 				<p>
 					<label for="ppcp-tracking-transaction_id"><?php echo esc_html__( 'Transaction ID', 'woocommerce-paypal-payments' ); ?></label>
 					<input type="text" disabled class="ppcp-tracking-transaction_id disabled" id="ppcp-tracking-transaction_id" name="ppcp-tracking[transaction_id]" value="<?php echo esc_attr( $transaction_id ); ?>" />
@@ -158,7 +158,7 @@ class MetaBoxRenderer {
 				<p><button type="button" class="button submit_tracking_info"><?php echo esc_html__( 'Add Package Tracking', 'woocommerce-paypal-payments' ); ?></button></p>
 			</div>
 			<div class="ppcp-tracking-column shipments">
-				<h3><?php echo esc_html__( 'Package Tracking', 'woocommerce-paypal-payments' ); ?></h3>
+				<h3><?php echo esc_html__( 'Shared Package Tracking Data', 'woocommerce-paypal-payments' ); ?></h3>
 				<?php
 				foreach ( $shipments as $shipment ) {
 					$shipment->render( $this->allowed_statuses );
@@ -169,10 +169,14 @@ class MetaBoxRenderer {
 					$documentation_url = 'https://woocommerce.com/document/woocommerce-paypal-payments/#package-tracking';
 					$message = sprintf(
 					/* translators: %1$s: the documentation URL opening HTML tag, %2$s: the link ending HTML tag. */
-						esc_html__( 'No PayPal Package Tracking added to this order yet. Add new Package Tracking or reload the page to refresh. %1$sLearn more%2$s about the benefits of sharing package tracking data with PayPal.', 'woocommerce-paypal-payments' ),
-						'<a href="' . esc_url( $documentation_url ) . '">',
-						'</a>'
-					);
+						esc_html__( 'No PayPal Package Tracking added to this order yet. Share new Package Tracking data with PayPal or reload the page to refresh.', 'woocommerce-paypal-payments' ) . '<br>' .
+						sprintf(
+						/* translators: %1$s: the documentation URL opening HTML tag, %2$s: the link ending HTML tag. */
+							esc_html__( '%1$sDiscover the benefits of PayPal Package Tracking%2$s to elevate your post-purchase experiences.', 'woocommerce-paypal-payments' ),
+							'<a href="' . esc_url( $documentation_url ) . '">',
+							'</a>'
+						)
+    );
 					?>
 					<p class="ppcp-tracking-no-shipments"><?php echo $message; ?></p>
 				<?php endif; ?>
