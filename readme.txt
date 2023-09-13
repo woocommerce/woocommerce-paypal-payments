@@ -100,6 +100,8 @@ Follow the steps below to connect the plugin to your PayPal account:
 * Enhancement - Improve invalid currency backend notice (1926) #1588
 * Enhancement - Hide ACDC footer frame via CSS to avoid empty space #1613
 * Enhancement - Compatibility with WooCommerce Product Add-Ons plugin #1586
+* Enhancement - Remove "no shipment" message after adding tracking #1674
+* Enhancement - Improve error & success validation messages #1675
 * Feature preview - Apple Pay integration #1514
 * Feature preview - Google Pay integration #1654
 
