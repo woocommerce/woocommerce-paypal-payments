@@ -17,6 +17,12 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 return array(
 
 	'wcgateway.settings.fields' => function ( ContainerInterface $container, array $fields ): array {
+
+		// Eligibility check.
+		if ( ! $container->has( 'googlepay.eligible' ) || ! $container->get( 'googlepay.eligible' ) ) {
+			return $fields;
+		}
+
 		$insert_after = function( array $array, string $key, array $new ): array {
 			$keys = array_keys( $array );
 			$index = array_search( $key, $keys, true );
