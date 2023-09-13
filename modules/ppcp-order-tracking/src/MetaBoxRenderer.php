@@ -121,7 +121,7 @@ class MetaBoxRenderer {
 				<?php endif; ?>
 				<p>
 					<label for="ppcp-tracking-tracking_number"><?php echo esc_html__( 'Tracking Number*', 'woocommerce-paypal-payments' ); ?></label>
-					<input type="text" class="ppcp-tracking-tracking_number" id="ppcp-tracking-tracking_number" name="ppcp-tracking[tracking_number]" />
+					<input type="text" class="ppcp-tracking-tracking_number" id="ppcp-tracking-tracking_number" name="ppcp-tracking[tracking_number]" maxlength="64" />
 				</p>
 				<p>
 					<label for="ppcp-tracking-status"><?php echo esc_html__( 'Status', 'woocommerce-paypal-payments' ); ?></label>

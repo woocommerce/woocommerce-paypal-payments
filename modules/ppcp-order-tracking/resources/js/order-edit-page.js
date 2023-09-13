@@ -100,14 +100,14 @@ document.addEventListener(
                     toggleLoaderVisibility()
 
                     if (!data.success || ! data.data.shipment) {
-                        jQuery( "<span class='error tracking-info-message'>" + data.data.message + "</span>" ).insertAfter(submitButton);
+                        jQuery( "<p class='error tracking-info-message'>" + data.data.message + "</p>" ).insertAfter(submitButton);
                         setTimeout(()=> jQuery('.tracking-info-message').remove(),3000);
                         submitButton.removeAttribute('disabled');
                         console.error(data);
                         throw Error(data.data.message);
                     }
 
-                    jQuery( "<span class='success tracking-info-message'>" + data.data.message + "</span>" ).insertAfter(submitButton);
+                    jQuery( "<p class='success tracking-info-message'>" + data.data.message + "</p>" ).insertAfter(submitButton);
                     setTimeout(()=> jQuery('.tracking-info-message').remove(),3000);
                     jQuery(data.data.shipment).appendTo(shipmentsWrapper);
                     if (noShipemntsContainer) {
@@ -149,13 +149,13 @@ document.addEventListener(
                     toggleLoaderVisibility()
 
                     if (!data.success) {
-                        jQuery( "<span class='error tracking-info-message'>" + data.data.message + "</span>" ).insertAfter(updateShipment);
+                        jQuery( "<p class='error tracking-info-message'>" + data.data.message + "</p>" ).insertAfter(updateShipment);
                         setTimeout(()=> jQuery('.tracking-info-message').remove(),3000);
                         console.error(data);
                         throw Error(data.data.message);
                     }
 
-                    jQuery( "<span class='success tracking-info-message'>" + data.data.message + "</span>" ).insertAfter(updateShipment);
+                    jQuery( "<p class='success tracking-info-message'>" + data.data.message + "</p>" ).insertAfter(updateShipment);
                     setTimeout(()=> jQuery('.tracking-info-message').remove(),3000);
                 });
             })
