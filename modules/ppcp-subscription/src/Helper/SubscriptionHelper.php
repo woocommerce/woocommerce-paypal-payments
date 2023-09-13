@@ -150,14 +150,10 @@ class SubscriptionHelper {
 	/**
 	 * Checks whether subscription needs subscription intent.
 	 *
-	 * @param string $subscription_mode The subscriptiopn mode.
+	 * @param string $subscription_mode The subscription mode.
 	 * @return bool
 	 */
 	public function need_subscription_intent( string $subscription_mode ): bool {
-		if ( defined( 'PPCP_FLAG_SUBSCRIPTIONS_API' ) && ! PPCP_FLAG_SUBSCRIPTIONS_API ) {
-			return false;
-		}
-
 		if ( $subscription_mode === 'subscriptions_api' ) {
 			if (
 				$this->current_product_is_subscription()

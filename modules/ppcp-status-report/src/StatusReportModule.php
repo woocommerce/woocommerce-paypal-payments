@@ -163,11 +163,7 @@ class StatusReportModule implements ModuleInterface {
 							$had_ppec_plugin
 						),
 					),
-				);
-
-				// For now only show this status if PPCP_FLAG_SUBSCRIPTIONS_API is true.
-				if ( defined( 'PPCP_FLAG_SUBSCRIPTIONS_API' ) && PPCP_FLAG_SUBSCRIPTIONS_API ) {
-					$items[] = array(
+					array(
 						'label'          => esc_html__( 'Subscriptions Mode', 'woocommerce-paypal-payments' ),
 						'exported_label' => 'Subscriptions Mode',
 						'description'    => esc_html__( 'Whether subscriptions are active and their mode.', 'woocommerce-paypal-payments' ),
@@ -176,8 +172,8 @@ class StatusReportModule implements ModuleInterface {
 							$settings->has( 'subscriptions_mode' ) ? (string) $settings->get( 'subscriptions_mode' ) : '',
 							$subscriptions_mode_settings
 						),
-					);
-				}
+					),
+				);
 
 				echo wp_kses_post(
 					$renderer->render(

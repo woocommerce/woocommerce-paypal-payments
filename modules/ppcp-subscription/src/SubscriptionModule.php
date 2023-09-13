@@ -171,9 +171,7 @@ class SubscriptionModule implements ModuleInterface {
 			}
 		);
 
-		if ( defined( 'PPCP_FLAG_SUBSCRIPTIONS_API' ) && PPCP_FLAG_SUBSCRIPTIONS_API ) {
-			$this->subscriptions_api_integration( $c );
-		}
+		$this->subscriptions_api_integration( $c );
 
 		add_action(
 			'admin_enqueue_scripts',

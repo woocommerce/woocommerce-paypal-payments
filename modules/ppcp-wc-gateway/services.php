@@ -881,7 +881,7 @@ return array(
 			),
 		);
 
-		if ( defined( 'PPCP_FLAG_SUBSCRIPTIONS_API' ) && ! PPCP_FLAG_SUBSCRIPTIONS_API || ! $subscription_helper->plugin_is_active() ) {
+		if ( ! $subscription_helper->plugin_is_active() ) {
 			unset( $fields['subscriptions_mode'] );
 		}
 
