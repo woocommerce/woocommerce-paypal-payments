@@ -73,6 +73,7 @@ document.addEventListener(
                 const status = document.querySelector('.ppcp-tracking-status');
                 const submitButton = document.querySelector('.submit_tracking_info');
                 const items = document.querySelector('.ppcp-tracking-items');
+                const noShipemntsContainer = document.querySelector('.ppcp-tracking-no-shipments');
 
                 let checkedItems = includeAllItemsCheckbox?.checked || !items ? 0 : Array.from(items.selectedOptions).map(option => option.value)
 
@@ -109,6 +110,9 @@ document.addEventListener(
                     jQuery( "<span class='success tracking-info-message'>" + data.data.message + "</span>" ).insertAfter(submitButton);
                     setTimeout(()=> jQuery('.tracking-info-message').remove(),3000);
                     jQuery(data.data.shipment).appendTo(shipmentsWrapper);
+                    if (noShipemntsContainer) {
+                        noShipemntsContainer.parentNode.removeChild(noShipemntsContainer);
+                    }
                 });
             })
         }
