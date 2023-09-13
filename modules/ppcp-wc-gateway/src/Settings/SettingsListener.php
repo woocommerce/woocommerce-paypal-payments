@@ -401,6 +401,7 @@ class SettingsListener {
 			if ( self::CREDENTIALS_UNCHANGED !== $credentials_change_status ) {
 				$this->settings->set( 'products_dcc_enabled', null );
 				$this->settings->set( 'products_pui_enabled', null );
+				do_action( 'woocommerce_paypal_payments_clear_apm_product_status', $this->settings );
 			}
 
 			if ( in_array(
@@ -432,6 +433,11 @@ class SettingsListener {
 		if ( $this->dcc_status_cache->has( DCCProductStatus::DCC_STATUS_CACHE_KEY ) ) {
 			$this->dcc_status_cache->delete( DCCProductStatus::DCC_STATUS_CACHE_KEY );
 		}
+
+		/**
+		 * The hook fired during listening the request so a module can remove also the cache or other logic.
+		 */
+		do_action( 'woocommerce_paypal_payments_on_listening_request' );
 
 		$ppcp_reference_transaction_enabled = get_transient( 'ppcp_reference_transaction_enabled' ) ?? '';
 		if ( $ppcp_reference_transaction_enabled ) {

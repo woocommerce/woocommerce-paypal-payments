@@ -19,6 +19,7 @@ import FreeTrialHandler from "./modules/ActionHandler/FreeTrialHandler";
 import FormSaver from './modules/Helper/FormSaver';
 import FormValidator from "./modules/Helper/FormValidator";
 import {loadPaypalScript} from "./modules/Helper/ScriptLoading";
+import buttonModuleWatcher from "./modules/ButtonModuleWatcher";
 import MessagesBootstrap from "./modules/ContextBootstrap/MessagesBootstap";
 
 // TODO: could be a good idea to have a separate spinner for each gateway,
@@ -60,6 +61,11 @@ const bootstrap = () => {
             e.preventDefault();
         }
     });
+
+    const hasMessages = () => {
+        return PayPalCommerceGateway.messages.is_hidden === false
+            && document.querySelector(PayPalCommerceGateway.messages.wrapper);
+    }
 
     const onSmartButtonClick = async (data, actions) => {
         window.ppcpFundingSource = data.fundingSource;
@@ -147,6 +153,7 @@ const bootstrap = () => {
         );
 
         miniCartBootstrap.init();
+        buttonModuleWatcher.registerContextBootstrap('mini-cart', miniCartBootstrap);
     }
 
     if (
@@ -163,6 +170,7 @@ const bootstrap = () => {
         );
 
         singleProductBootstrap.init();
+        buttonModuleWatcher.registerContextBootstrap('product', singleProductBootstrap);
     }
 
     if (context === 'cart') {
@@ -173,6 +181,7 @@ const bootstrap = () => {
         );
 
         cartBootstrap.init();
+        buttonModuleWatcher.registerContextBootstrap('cart', cartBootstrap);
     }
 
     if (context === 'checkout') {
@@ -184,6 +193,7 @@ const bootstrap = () => {
         );
 
         checkoutBootstap.init();
+        buttonModuleWatcher.registerContextBootstrap('checkout', checkoutBootstap);
     }
 
     if (context === 'pay-now' ) {
@@ -195,6 +205,7 @@ const bootstrap = () => {
             errorHandler,
         );
         payNowBootstrap.init();
+        buttonModuleWatcher.registerContextBootstrap('pay-now', payNowBootstrap);
     }
 
     const messagesBootstrap = new MessagesBootstrap(
@@ -203,11 +214,6 @@ const bootstrap = () => {
     );
     messagesBootstrap.init();
 };
-
-const hasMessages = () => {
-    return PayPalCommerceGateway.messages.is_hidden === false
-        && document.querySelector(PayPalCommerceGateway.messages.wrapper);
-}
 
 document.addEventListener(
     'DOMContentLoaded',

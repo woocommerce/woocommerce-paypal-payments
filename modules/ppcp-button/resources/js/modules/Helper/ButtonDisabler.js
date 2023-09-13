@@ -9,6 +9,24 @@ const getElement = (selectorOrElement) => {
     return selectorOrElement;
 }
 
+const triggerEnabled = (selectorOrElement, element) => {
+    jQuery(document).trigger('ppcp-enabled', {
+        'handler': 'ButtonsDisabler.setEnabled',
+        'action': 'enable',
+        'selector': selectorOrElement,
+        'element': element
+    });
+}
+
+const triggerDisabled = (selectorOrElement, element) => {
+    jQuery(document).trigger('ppcp-disabled', {
+        'handler': 'ButtonsDisabler.setEnabled',
+        'action': 'disable',
+        'selector': selectorOrElement,
+        'element': element
+    });
+}
+
 export const setEnabled = (selectorOrElement, enable, form = null) => {
     const element = getElement(selectorOrElement);
 
@@ -22,6 +40,9 @@ export const setEnabled = (selectorOrElement, enable, form = null) => {
             .off('mouseup')
             .find('> *')
             .css('pointer-events', '');
+
+        triggerEnabled(selectorOrElement, element);
+
     } else {
         jQuery(element)
             .addClass('ppcp-disabled')
@@ -38,6 +59,8 @@ export const setEnabled = (selectorOrElement, enable, form = null) => {
             })
             .find('> *')
             .css('pointer-events', 'none');
+
+        triggerDisabled(selectorOrElement, element);
     }
 };
 

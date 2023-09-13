@@ -288,6 +288,7 @@ class WCGatewayModule implements ModuleInterface {
 				$settings->set( 'products_dcc_enabled', false );
 				$settings->set( 'products_pui_enabled', false );
 				$settings->persist();
+				do_action( 'woocommerce_paypal_payments_clear_apm_product_status', $settings );
 
 				// Update caches.
 				$dcc_status = $c->get( 'wcgateway.helper.dcc-product-status' );
