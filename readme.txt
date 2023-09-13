@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, checkout, cart, pay later, apple
 Requires at least: 5.3
 Tested up to: 6.3
 Requires PHP: 7.2
-Stable tag: 2.2.2
+Stable tag: 2.3.0
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -179,6 +179,30 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 
 == Changelog ==
+
+= 2.3.0 - XXXX-XX-XX =
+* Fix - Plus sign in PayPal account email address gets converted to space #771
+* Fix - Payment method dropdown option label on edit order screen for ppcp-gateway option displaying wrong name #1639
+* Fix - WooCommerce Bookings products don't remain in Cart as a guest when PayPal button active on single product #1645
+* Fix - Since version > 2.2.0 the PayPal Checkout button on single product pages does not redirect anymore #1664
+* Fix - PayPal fee and PayPal Payout do not change on order if we do partial refund #1578
+* Fix - Order does not contain intent error when using ACDC payment token while buyer is not present #1506
+* Enhancement - Add support for HPOS for tracking module #1676
+* Enhancement - Billing agreements endpoint called too frequently for Reference Transactions check #1646
+* Enhancement - Do not declare subscription support for PayPal when only ACDC vaulting #1669
+* Enhancement - Apply Capture On Status Change only when order contains PayPal payment method #1595
+* Enhancement - Do not use transient expiration longer than one month to support memcached #1448
+* Enhancement - By disconnecting or disabling the plugin the connection should clear the Onboarding links from cache #1668
+* Enhancement - Upgrade tracking integration #1562
+* Enhancement - Include url & image_url in create order call #1649
+* Enhancement - Add compat layer for Yith tracking #1656
+* Enhancement - Improve invalid currency backend notice (1926) #1588
+* Enhancement - Hide ACDC footer frame via CSS to avoid empty space #1613
+* Enhancement - Compatibility with WooCommerce Product Add-Ons plugin #1586
+* Enhancement - Remove "no shipment" message after adding tracking #1674
+* Enhancement - Improve error & success validation messages #1675
+* Feature preview - Apple Pay integration #1514
+* Feature preview - Google Pay integration #1654
 
 = 2.2.2 - 2023-08-29 =
 * Fix - High rate of auth voids on vaulted subscriptions for guest users #1529 
