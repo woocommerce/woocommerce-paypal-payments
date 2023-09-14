@@ -36,9 +36,9 @@ class FieldDisplayRule {
 	protected $actions = array();
 
 	/**
-	 * The actions of this rule.
+	 * Indicates if this class should add selector prefixes.
 	 *
-	 * @var array
+	 * @var bool
 	 */
 	protected $add_selector_prefixes = true;
 
