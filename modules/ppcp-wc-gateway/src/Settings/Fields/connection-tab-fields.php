@@ -17,6 +17,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\State;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\FieldDisplayManager;
 
 return function ( ContainerInterface $container, array $fields ): array {
 
@@ -38,6 +39,9 @@ return function ( ContainerInterface $container, array $fields ): array {
 	assert( $onboarding_options_renderer instanceof OnboardingOptionsRenderer );
 
 	$module_url = $container->get( 'wcgateway.url' );
+
+	$fields_manager = $container->get( 'wcgateway.field-display-manager' );
+	assert( $fields_manager instanceof FieldDisplayManager );
 
 	$connection_fields = array(
 		'ppcp_onboarading_header'                       => array(
@@ -504,15 +508,13 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'requirements'      => array(),
 			'gateway'           => Settings::CONNECTION_TAB_ID,
 			'custom_attributes' => array(
-				'data-ppcp-handlers' => wp_json_encode(
+				'data-ppcp-display' => wp_json_encode(
 					array(
-						array(
-							'handler' => 'SubElementsHandler',
-							'options' => array(
-								'values'   => array( PurchaseUnitSanitizer::MODE_EXTRA_LINE ),
-								'elements' => array( '#field-subtotal_mismatch_line_name' ),
-							),
-						),
+						$fields_manager
+							->rule()
+							->condition( 'subtotal_mismatch_behavior', 'equals', PurchaseUnitSanitizer::MODE_EXTRA_LINE )
+							->action( 'subtotal_mismatch_line_name', 'visible' )
+							->to_array(),
 					)
 				),
 			),

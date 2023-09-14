@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\Applepay;
 use WooCommerce\PayPalCommerce\Applepay\Assets\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\FieldDisplayManager;
 
 
 return array(
@@ -23,6 +24,9 @@ return array(
 
 			return array_merge( array_slice( $array, 0, $pos ), $new, array_slice( $array, $pos ) );
 		};
+
+		$fields_manager = $container->get( 'wcgateway.field-display-manager' );
+		assert( $fields_manager instanceof FieldDisplayManager );
 
 		return $insert_after(
 			$fields,
@@ -45,15 +49,17 @@ return array(
 					'gateway'           => 'paypal',
 					'requirements'      => array(),
 					'custom_attributes' => array(
-						'data-ppcp-handlers' => wp_json_encode(
+						'data-ppcp-display' => wp_json_encode(
 							array(
-								array(
-									'handler' => 'SubElementsHandler',
-									'options' => array(
-										'values'   => array( '1' ),
-										'elements' => array( '#field-applepay_sandbox_validation_file', '#field-applepay_live_validation_file', '#field-applepay_button_color', '#field-applepay_button_type', '#field-applepay_button_language' ),
-									),
-								),
+								$fields_manager
+									->rule()
+									->condition( 'applepay_button_enabled', 'equals', '1' )
+									->action( 'applepay_sandbox_validation_file', 'visible' )
+									->action( 'applepay_live_validation_file', 'visible' )
+									->action( 'applepay_button_color', 'visible' )
+									->action( 'applepay_button_type', 'visible' )
+									->action( 'applepay_button_language', 'visible' )
+									->to_array(),
 							)
 						),
 					),
