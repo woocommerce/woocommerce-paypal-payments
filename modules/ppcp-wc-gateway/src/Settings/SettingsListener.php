@@ -340,7 +340,20 @@ class SettingsListener {
 		 * phpcs:disable WordPress.Security.NonceVerification.Missing
 		 * phpcs:disable WordPress.Security.NonceVerification.Recommended
 		 */
-		if ( ! isset( $_POST['ppcp']['vault_enabled'] ) ) {
+		$vault_enabled     = wc_clean( wp_unslash( $_POST['ppcp']['vault_enabled'] ?? '' ) );
+		$subscription_mode = wc_clean( wp_unslash( $_POST['ppcp']['subscriptions_mode'] ?? '' ) );
+
+		if ( $subscription_mode === 'vaulting_api' && $vault_enabled !== '1' ) {
+			$this->settings->set( 'vault_enabled', true );
+			$this->settings->persist();
+		}
+
+		if ( $subscription_mode === 'disable_paypal_subscriptions' && $vault_enabled === '1' ) {
+			$this->settings->set( 'vault_enabled', false );
+			$this->settings->persist();
+		}
+
+		if ( $vault_enabled !== '1' ) {
 			return;
 		}
 
