@@ -48,7 +48,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGa
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\TransactionUrlProvider;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CheckoutHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
-use WooCommerce\PayPalCommerce\WcGateway\Helper\FieldDisplayManager;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\DisplayManager;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\RefundFeesUpdater;
@@ -1417,9 +1417,10 @@ return array(
 			$container->get( 'wcgateway.settings' )
 		);
 	},
-	'wcgateway.field-display-manager'                      => SingletonDecorator::make(
-		static function( ContainerInterface $container ): FieldDisplayManager {
-			return new FieldDisplayManager();
+	'wcgateway.display-manager'                            => SingletonDecorator::make(
+		static function( ContainerInterface $container ): DisplayManager {
+			$settings = $container->get( 'wcgateway.settings' );
+			return new DisplayManager( $settings );
 		}
 	),
 );

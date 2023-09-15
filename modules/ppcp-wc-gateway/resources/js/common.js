@@ -1,4 +1,4 @@
-import FieldDisplayManager from "./common/FieldDisplayManager";
+import DisplayManager from "./common/display-manager/DisplayManager";
 import moveWrappedElements from "./common/wrapped-elements";
 
 document.addEventListener(
@@ -10,15 +10,19 @@ document.addEventListener(
             moveWrappedElements();
         }, 0);
 
-
-        // Initialize FieldDisplayManager.
-        const fieldDisplayManager = new FieldDisplayManager();
+        // Initialize DisplayManager.
+        const displayManager = new DisplayManager();
 
         jQuery( '*[data-ppcp-display]' ).each( (index, el) => {
             const rules = jQuery(el).data('ppcpDisplay');
+
+            console.log('rules', rules);
+
             for (const rule of rules) {
-                fieldDisplayManager.addRule(rule);
+                displayManager.addRule(rule);
             }
         });
+
+        displayManager.register();
     }
 );
