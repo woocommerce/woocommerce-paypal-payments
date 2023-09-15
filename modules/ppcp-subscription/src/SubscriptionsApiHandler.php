@@ -178,7 +178,15 @@ class SubscriptionsApiHandler {
 						$data[] = (object) array(
 							'op'    => 'replace',
 							'path'  => '/description',
-							'value' => $product->get_description(),
+							'value' => substr(
+								strip_shortcodes(
+									wp_strip_all_tags(
+										$product->get_description()
+									)
+								),
+								0,
+								127
+							) ?: '',
 						);
 					}
 
