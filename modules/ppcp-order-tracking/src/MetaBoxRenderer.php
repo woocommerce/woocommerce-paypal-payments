@@ -158,7 +158,7 @@ class MetaBoxRenderer {
 				<p><button type="button" class="button submit_tracking_info"><?php echo esc_html__( 'Add Package Tracking', 'woocommerce-paypal-payments' ); ?></button></p>
 			</div>
 			<div class="ppcp-tracking-column shipments">
-				<h3><?php echo esc_html__( 'Shared Package Tracking Data', 'woocommerce-paypal-payments' ); ?></h3>
+				<h3><?php echo esc_html__( 'PayPal Package Tracking Status', 'woocommerce-paypal-payments' ); ?></h3>
 				<?php
 				foreach ( $shipments as $shipment ) {
 					$shipment->render( $this->allowed_statuses );
@@ -167,18 +167,25 @@ class MetaBoxRenderer {
 				<?php if ( empty( $shipments ) ) : ?>
 					<?php
 					$documentation_url = 'https://woocommerce.com/document/woocommerce-paypal-payments/#package-tracking';
-					$message = sprintf(
+					$message1 = esc_html__( 'Package Tracking data has not been shared with PayPal on this order.', 'woocommerce-paypal-payments' );
+					$message2 = esc_html__( 'Add tracking details on this order to qualify for PayPal Seller Protection, faster holds release and automated dispute resolution.', 'woocommerce-paypal-payments' );
+					$message3 = sprintf(
 					/* translators: %1$s: the documentation URL opening HTML tag, %2$s: the link ending HTML tag. */
-						esc_html__( 'No PayPal Package Tracking added to this order yet. Share new Package Tracking data with PayPal or reload the page to refresh.', 'woocommerce-paypal-payments' ) . '<br>' .
-						sprintf(
-						/* translators: %1$s: the documentation URL opening HTML tag, %2$s: the link ending HTML tag. */
-							esc_html__( '%1$sDiscover the benefits of PayPal Package Tracking%2$s to elevate your post-purchase experiences.', 'woocommerce-paypal-payments' ),
-							'<a href="' . esc_url( $documentation_url ) . '">',
-							'</a>'
-						)
+						esc_html__( '%1$sDiscover full benefits of PayPal Package Tracking here.%2$s', 'woocommerce-paypal-payments' ),
+						'<strong><a href="' . esc_url( $documentation_url ) . '">',
+						'</a></strong>'
+					);
+					$allowed_html = array(
+						'a' => array(
+							'href' => array(),
+						),
+						'strong' => array(),
+						'br' => array(),
 					);
 					?>
-					<p class="ppcp-tracking-no-shipments"><?php echo esc_html( $message ); ?></p>
+					<p class="ppcp-tracking-no-shipments">
+						<?php echo wp_kses( $message1 . '<br>' . $message2 . '<br><br>' . $message3, $allowed_html ); ?>
+					</p>
 				<?php endif; ?>
 			</div>
 			<div class="blockUI blockOverlay ppcp-tracking-loader"></div>
