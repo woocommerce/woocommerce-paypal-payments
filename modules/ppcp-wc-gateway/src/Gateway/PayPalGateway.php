@@ -543,7 +543,6 @@ class PayPalGateway extends \WC_Payment_Gateway {
 				}
 
 				$wc_order->payment_complete();
-				WC()->session->set( 'ppcp_subscription_id', '' );
 
 				return $this->handle_payment_success( $wc_order );
 			}

@@ -77,6 +77,7 @@ trait ProcessPaymentTrait {
 		}
 
 		$this->session_handler->destroy_session_data();
+		WC()->session->set( 'ppcp_subscription_id', '' );
 
 		wc_add_notice( $error->getMessage(), 'error' );
 
@@ -100,6 +101,7 @@ trait ProcessPaymentTrait {
 		}
 
 		$this->session_handler->destroy_session_data();
+		WC()->session->set( 'ppcp_subscription_id', '' );
 
 		return array(
 			'result'   => 'success',
