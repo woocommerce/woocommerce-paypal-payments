@@ -13,11 +13,15 @@ use WC_Product;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\ItemTrait;
 
 /**
  * Class ItemFactory
  */
 class ItemFactory {
+
+	use ItemTrait;
+
 	/**
 	 * 3-letter currency code of the shop.
 	 *
@@ -210,16 +214,5 @@ class ItemFactory {
 			$url,
 			$image_url
 		);
-	}
-
-	/**
-	 * Cleanups the description and prepares it for sending to PayPal.
-	 *
-	 * @param string $description Item description.
-	 * @return string
-	 */
-	protected function prepare_description( string $description ): string {
-		$description = strip_shortcodes( wp_strip_all_tags( $description ) );
-		return substr( $description, 0, 127 ) ?: '';
 	}
 }

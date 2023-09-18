@@ -19,11 +19,14 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\BillingCycleFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentPreferencesFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ProductFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\ItemTrait;
 
 /**
  * Class SubscriptionsApiHandler
  */
 class SubscriptionsApiHandler {
+
+	use ItemTrait;
 
 	/**
 	 * Catalog products.
@@ -178,15 +181,7 @@ class SubscriptionsApiHandler {
 						$data[] = (object) array(
 							'op'    => 'replace',
 							'path'  => '/description',
-							'value' => substr(
-								strip_shortcodes(
-									wp_strip_all_tags(
-										$product->get_description()
-									)
-								),
-								0,
-								127
-							) ?: '',
+							'value' => $this->prepare_description( $product->get_description() ),
 						);
 					}
 
