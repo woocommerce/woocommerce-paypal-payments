@@ -181,7 +181,7 @@ class SubscriptionsApiHandler {
 						$data[] = (object) array(
 							'op'    => 'replace',
 							'path'  => '/description',
-							'value' => $this->prepare_description( $product->get_description() ),
+							'value' => $this->prepare_description( $product->get_description() ) ?: '',
 						);
 					}
 
