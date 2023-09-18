@@ -953,6 +953,7 @@ return array(
 	'wcgateway.extra-funding-sources'                      => static function( ContainerInterface $container ): array {
 		return array(
 			'googlepay' => _x( 'Google Pay', 'Name of payment method', 'woocommerce-paypal-payments' ),
+			'applepay'  => _x( 'Apple Pay', 'Name of payment method', 'woocommerce-paypal-payments' ),
 		);
 	},
 
