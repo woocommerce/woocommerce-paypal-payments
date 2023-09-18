@@ -27,9 +27,9 @@ class SubElementsHandler {
         value = (value !== null ? value.toString() : value);
 
         if (this.values.indexOf(value) !== -1) {
-            $elements.show();
+            $elements.removeClass('hide');
         } else {
-            $elements.hide();
+            $elements.addClass('hide');
         }
     }
 
