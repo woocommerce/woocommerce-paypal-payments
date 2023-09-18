@@ -173,11 +173,18 @@ class DataToAppleButtonScripts {
 			'<div id="applepay-container">'
 			. $nonce
 			. '</div>';
+		$type                  = $this->settings->has( 'applepay_button_type' ) ? $this->settings->get( 'applepay_button_type' ) : '';
+		$color                 = $this->settings->has( 'applepay_button_color' ) ? $this->settings->get( 'applepay_button_color' ) : '';
+		$lang                  = $this->settings->has( 'applepay_button_language' ) ? $this->settings->get( 'applepay_button_language' ) : '';
+
 		return array(
 			'sdk_url'      => $this->sdk_url,
 			'button'       => array(
 				'wrapper'           => 'applepay-container',
 				'mini_cart_wrapper' => 'applepay-container-minicart',
+				'type'              => $type,
+				'color'             => $color,
+				'lang'              => $lang,
 			),
 			'product'      => array(
 				'needShipping' => $cart->needs_shipping(),
