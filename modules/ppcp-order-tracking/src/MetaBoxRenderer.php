@@ -109,14 +109,14 @@ class MetaBoxRenderer {
 					<p>
 						<label for="include-all-items"><?php echo esc_html__( 'Include All Products', 'woocommerce-paypal-payments' ); ?></label>
 						<input type="checkbox" id="include-all-items" checked>
-						<div id="items-select-container">
-							<label for="ppcp-tracking-items"><?php echo esc_html__( 'Select items for this shipment', 'woocommerce-paypal-payments' ); ?></label>
-							<select multiple class="wc-enhanced-select ppcp-tracking-items" id="ppcp-tracking-items" name="ppcp-tracking[items]">
-								<?php foreach ( $order_items as $item ) : ?>
-									<option value="<?php echo intval( $item->get_id() ); ?>"><?php echo esc_html( $item->get_name() ); ?></option>
-								<?php endforeach; ?>
-							</select>
-						</div>
+					<div id="items-select-container">
+						<label for="ppcp-tracking-items"><?php echo esc_html__( 'Select items for this shipment', 'woocommerce-paypal-payments' ); ?></label>
+						<select multiple class="wc-enhanced-select ppcp-tracking-items" id="ppcp-tracking-items" name="ppcp-tracking[items]">
+							<?php foreach ( $order_items as $item ) : ?>
+								<option value="<?php echo intval( $item->get_id() ); ?>"><?php echo esc_html( $item->get_name() ); ?></option>
+							<?php endforeach; ?>
+						</select>
+					</div>
 					</p>
 				<?php endif; ?>
 				<p>
@@ -163,28 +163,33 @@ class MetaBoxRenderer {
 				foreach ( $shipments as $shipment ) {
 					$shipment->render( $this->allowed_statuses );
 				}
-				?>
-				<?php if ( empty( $shipments ) ) : ?>
-					<?php
+				if ( empty( $shipments ) ) :
 					$documentation_url = 'https://woocommerce.com/document/woocommerce-paypal-payments/#package-tracking';
 					$message1 = esc_html__( 'Package Tracking data has not been shared with PayPal on this order.', 'woocommerce-paypal-payments' );
 					$message2 = esc_html__( 'Add tracking details on this order to qualify for PayPal Seller Protection, faster holds release and automated dispute resolution.', 'woocommerce-paypal-payments' );
 					$message3 = sprintf(
-					/* translators: %1$s: the documentation URL opening HTML tag, %2$s: the link ending HTML tag. */
+					/* translators: %1$s: opening anchor tag with URL, %2$s: closing anchor tag */
 						esc_html__( '%1$sDiscover full benefits of PayPal Package Tracking here.%2$s', 'woocommerce-paypal-payments' ),
-						'<strong><a href="' . esc_url( $documentation_url ) . '">',
+						'<strong><a target="_blank" href="' . esc_url( $documentation_url ) . '">',
 						'</a></strong>'
 					);
-					$allowed_html = array(
-						'a' => array(
-							'href' => array(),
-						),
-						'strong' => array(),
-						'br' => array(),
-					);
+					$allowed_html = [
+						'a'      => [
+							'href' => [],
+							'target' => [],
+						],
+						'strong' => [],
+						'br'     => [],
+					];
 					?>
 					<p class="ppcp-tracking-no-shipments">
-						<?php echo wp_kses( $message1 . '<br>' . $message2 . '<br><br>' . $message3, $allowed_html ); ?>
+						<?php
+						echo esc_html( $message1 );
+						echo '<br>';
+						echo esc_html( $message2 );
+						echo '<br><br>';
+						echo wp_kses( $message3, $allowed_html );
+						?>
 					</p>
 				<?php endif; ?>
 			</div>
