@@ -180,10 +180,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 				'products',
 			);
 
-			if (
-				( $this->config->has( 'vault_enabled_dcc' ) && $this->config->get( 'vault_enabled_dcc' ) )
-				|| ( $this->config->has( 'subscriptions_mode' ) && $this->config->get( 'subscriptions_mode' ) === 'subscriptions_api' )
-			) {
+			if ( $this->config->has( 'vault_enabled_dcc' ) && $this->config->get( 'vault_enabled_dcc' ) ) {
 				array_push(
 					$this->supports,
 					'subscriptions',
