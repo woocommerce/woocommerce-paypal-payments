@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
 	'wcgateway.settings.fields' => function ( ContainerInterface $container, array $fields ): array {
+
 		$insert_after = function ( array $array, string $key, array $new ): array {
 			$keys = array_keys( $array );
 			$index = array_search( $key, $keys, true );
@@ -24,6 +25,35 @@ return array(
 			return array_merge( array_slice( $array, 0, $pos ), $new, array_slice( $array, $pos ) );
 		};
 
+		if ( ! $container->has( 'applepay.eligible' ) || ! $container->get( 'applepay.eligible' ) ) {
+			$connection_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-connection#field-credentials_feature_onboarding_heading' );
+			$connection_link = '<a href="' . $connection_url . '" target="_blank">';
+			return $insert_after(
+				$fields,
+				'allow_card_button_gateway',
+				array(
+					'applepay_button_enabled'          => array(
+						'title' => __('Apple Pay Button', 'woocommerce-paypal-payments'),
+						'type' => 'checkbox',
+						'class' => array('ppcp-grayed-out-text'),
+						'input_class' => array('ppcp-disabled-checkbox'),
+						'label' => __('Enable Apple Pay button', 'woocommerce-paypal-payments')
+							. '<p class="description">'
+							. sprintf(
+							// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+								__('Your PayPal account  %1$srequires additional permissions%2$s to enable Apple Pay.', 'woocommerce-paypal-payments'),
+								$connection_link,
+								'</a>'
+							)
+							. '</p>',
+						'default' => 'yes',
+						'screens' => array(State::STATE_ONBOARDED),
+						'gateway' => 'paypal',
+						'requirements' => array(),
+						),
+					)
+				);
+		}
 		return $insert_after(
 			$fields,
 			'allow_card_button_gateway',

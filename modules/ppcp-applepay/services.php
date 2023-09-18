@@ -15,10 +15,24 @@ use WooCommerce\PayPalCommerce\Applepay\Assets\ApplePayButton;
 use WooCommerce\PayPalCommerce\Applepay\Assets\AppleProductStatus;
 use WooCommerce\PayPalCommerce\Applepay\Assets\DataToAppleButtonScripts;
 use WooCommerce\PayPalCommerce\Applepay\Assets\BlocksPaymentMethod;
+use WooCommerce\PayPalCommerce\Applepay\Helper\ApmApplies;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 return array(
+	'applepay.eligible'                          => static function ( ContainerInterface $container ): bool {
+		$apm_applies = $container->get( 'applepay.helpers.apm-applies' );
+		assert( $apm_applies instanceof ApmApplies );
+
+		return $apm_applies->for_country_currency();
+	},
+	'applepay.helpers.apm-applies'               => static function ( ContainerInterface $container ) : ApmApplies {
+		return new ApmApplies(
+			$container->get( 'applepay.supported-country-currency-matrix' ),
+			$container->get( 'api.shop.currency' ),
+			$container->get( 'api.shop.country' )
+		);
+	},
 	'applepay.status-cache'          => static function( ContainerInterface $container ): Cache {
 		return new Cache( 'ppcp-paypal-apple-status-cache' );
 	},
@@ -79,6 +93,22 @@ return array(
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'applepay.button' ),
 			$container->get( 'blocks.method' )
+		);
+	},
+	/**
+	 * The matrix which countries and currency combinations can be used for ApplePay.
+	 */
+	'applepay.supported-country-currency-matrix' => static function ( ContainerInterface $container ) : array {
+		/**
+		 * Returns which countries and currency combinations can be used for ApplePay.
+		 */
+		return apply_filters(
+			'woocommerce_paypal_payments_applepay_supported_country_currency_matrix',
+			array(
+				'US' => array(
+					'USD',
+				),
+			)
 		);
 	},
 );
