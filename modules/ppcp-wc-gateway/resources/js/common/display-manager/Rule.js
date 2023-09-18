@@ -8,6 +8,7 @@ class Rule {
         this.conditions = {};
         this.actions = {};
         this.triggerUpdate = triggerUpdate;
+        this.status = null;
 
         const updateStatus = this.updateStatus.bind(this);
         for (const conditionConfig of this.config.conditions) {
@@ -29,7 +30,7 @@ class Rule {
         return this.config.key;
     }
 
-    updateStatus() {
+    updateStatus(forceRunActions = false) {
         let status = true;
 
         for (const [key, condition] of Object.entries(this.conditions)) {
@@ -39,6 +40,8 @@ class Rule {
         if (status !== this.status) {
             this.status = status;
             this.triggerUpdate();
+            this.runActions();
+        } else if (forceRunActions) {
             this.runActions();
         }
     }
@@ -57,7 +60,7 @@ class Rule {
             action.register();
         }
 
-        this.updateStatus();
+        this.updateStatus(true);
     }
 
 }
