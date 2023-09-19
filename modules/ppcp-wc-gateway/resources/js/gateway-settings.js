@@ -4,7 +4,6 @@ import Renderer from '../../../ppcp-button/resources/js/modules/Renderer/Rendere
 import MessageRenderer from "../../../ppcp-button/resources/js/modules/Renderer/MessageRenderer";
 import {setVisibleByClass, isVisible} from "../../../ppcp-button/resources/js/modules/Helper/Hiding";
 import widgetBuilder from "../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder";
-import SubElementsHandler from "./SettingsHandler/SubElementsHandler";
 
 document.addEventListener(
     'DOMContentLoaded',
@@ -308,16 +307,5 @@ document.addEventListener(
                 createButtonPreview(() => getButtonDefaultSettings('#ppcpPayLaterButtonPreview'));
             });
         }
-
-        // Generic behaviours, can be moved to common.js once it's on trunk branch.
-        jQuery( '*[data-ppcp-handlers]' ).each( (index, el) => {
-            const handlers = jQuery(el).data('ppcpHandlers');
-            for (const handlerConfig of handlers) {
-                new {
-                    SubElementsHandler: SubElementsHandler
-                }[handlerConfig.handler](el, handlerConfig.options)
-            }
-        });
-
     }
 );

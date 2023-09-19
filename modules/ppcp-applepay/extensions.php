@@ -12,11 +12,11 @@ namespace WooCommerce\PayPalCommerce\Applepay;
 use WooCommerce\PayPalCommerce\Applepay\Assets\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\DisplayManager;
 
 
 return array(
 	'wcgateway.settings.fields' => function ( ContainerInterface $container, array $fields ): array {
-
 		$insert_after = function ( array $array, string $key, array $new ): array {
 			$keys = array_keys( $array );
 			$index = array_search( $key, $keys, true );
@@ -59,6 +59,14 @@ return array(
 			'allow_card_button_gateway',
 			array(
 				'applepay_button_enabled'  => array(
+		$display_manager = $container->get( 'wcgateway.display-manager' );
+		assert( $display_manager instanceof DisplayManager );
+
+		return $insert_after(
+			$fields,
+			'allow_card_button_gateway',
+			array(
+				'applepay_button_enabled'          => array(
 					'title'             => __( 'Apple Pay Button', 'woocommerce-paypal-payments' ),
 					'type'              => 'checkbox',
 					'label'             => __( 'Enable Apple Pay button', 'woocommerce-paypal-payments' )
@@ -75,15 +83,17 @@ return array(
 					'gateway'           => 'paypal',
 					'requirements'      => array(),
 					'custom_attributes' => array(
-						'data-ppcp-handlers' => wp_json_encode(
+						'data-ppcp-display' => wp_json_encode(
 							array(
-								array(
-									'handler' => 'SubElementsHandler',
-									'options' => array(
-										'values'   => array( '1' ),
-										'elements' => array( '#field-applepay_button_color', '#field-applepay_button_type', '#field-applepay_button_language' ),
-									),
-								),
+								$display_manager
+									->rule()
+									->condition_element( 'applepay_button_enabled', '1' )
+									->action_visible( 'applepay_sandbox_validation_file' )
+									->action_visible( 'applepay_live_validation_file' )
+									->action_visible( 'applepay_button_color' )
+									->action_visible( 'applepay_button_type' )
+									->action_visible( 'applepay_button_language' )
+									->to_array(),
 							)
 						),
 					),

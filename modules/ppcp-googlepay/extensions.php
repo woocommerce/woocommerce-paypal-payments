@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\Googlepay;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\DisplayManager;
 
 
 return array(
@@ -30,6 +31,9 @@ return array(
 
 			return array_merge( array_slice( $array, 0, $pos ), $new, array_slice( $array, $pos ) );
 		};
+
+		$display_manager = $container->get( 'wcgateway.display-manager' );
+		assert( $display_manager instanceof DisplayManager );
 
 		return $insert_after(
 			$fields,
@@ -52,20 +56,16 @@ return array(
 					'gateway'           => 'paypal',
 					'requirements'      => array(),
 					'custom_attributes' => array(
-						'data-ppcp-handlers' => wp_json_encode(
+						'data-ppcp-display' => wp_json_encode(
 							array(
-								array(
-									'handler' => 'SubElementsHandler',
-									'options' => array(
-										'values'   => array( '1' ),
-										'elements' => array(
-											'#field-googlepay_button_color',
-											'#field-googlepay_button_type',
-											'#field-googlepay_button_language',
-											'#field-googlepay_button_shipping_enabled',
-										),
-									),
-								),
+								$display_manager
+									->rule()
+									->condition_element( 'googlepay_button_enabled', '1' )
+									->action_visible( 'googlepay_button_type' )
+									->action_visible( 'googlepay_button_color' )
+									->action_visible( 'googlepay_button_language' )
+									->action_visible( 'googlepay_button_shipping_enabled' )
+									->to_array(),
 							)
 						),
 					),
