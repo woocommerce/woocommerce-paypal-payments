@@ -238,7 +238,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 		'merchant_email_production'                     => array(
 			'title'        => __( 'Live Email address', 'woocommerce-paypal-payments' ),
 			'classes'      => array( State::STATE_ONBOARDED === $state->production_state() ? 'onboarded' : '', 'ppcp-always-shown-element' ),
-			'type'         => 'text',
+			'type'         => 'email',
 			'required'     => true,
 			'desc_tip'     => true,
 			'description'  => __( 'The email address of your PayPal account.', 'woocommerce-paypal-payments' ),
@@ -304,7 +304,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 		'merchant_email_sandbox'                        => array(
 			'title'        => __( 'Sandbox Email address', 'woocommerce-paypal-payments' ),
 			'classes'      => array( State::STATE_ONBOARDED === $state->sandbox_state() ? 'onboarded' : '', 'ppcp-always-shown-element' ),
-			'type'         => 'text',
+			'type'         => 'email',
 			'required'     => true,
 			'desc_tip'     => true,
 			'description'  => __( 'The email address of your PayPal account.', 'woocommerce-paypal-payments' ),
