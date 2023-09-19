@@ -58,7 +58,7 @@ return array(
 			$fields,
 			'allow_card_button_gateway',
 			array(
-				'applepay_button_enabled'          => array(
+				'applepay_button_enabled'  => array(
 					'title'             => __( 'Apple Pay Button', 'woocommerce-paypal-payments' ),
 					'type'              => 'checkbox',
 					'label'             => __( 'Enable Apple Pay button', 'woocommerce-paypal-payments' )
@@ -81,34 +81,14 @@ return array(
 									'handler' => 'SubElementsHandler',
 									'options' => array(
 										'values'   => array( '1' ),
-										'elements' => array( '#field-applepay_sandbox_validation_file', '#field-applepay_live_validation_file', '#field-applepay_button_color', '#field-applepay_button_type', '#field-applepay_button_language' ),
+										'elements' => array( '#field-applepay_button_color', '#field-applepay_button_type', '#field-applepay_button_language' ),
 									),
 								),
 							)
 						),
 					),
 				),
-				'applepay_live_validation_file'    => array(
-					'title'        => __( 'Apple Pay Live Validation File', 'woocommerce-paypal-payments' ),
-					'type'         => 'text',
-					'desc_tip'     => true,
-					'description'  => __( 'Paste here the validation file content', 'woocommerce-paypal-payments' ),
-					'default'      => null,
-					'screens'      => array( State::STATE_ONBOARDED ),
-					'gateway'      => 'paypal',
-					'requirements' => array(),
-				),
-				'applepay_sandbox_validation_file' => array(
-					'title'        => __( 'Apple Pay Sandbox Validation File', 'woocommerce-paypal-payments' ),
-					'type'         => 'text',
-					'desc_tip'     => true,
-					'description'  => __( 'Paste here the validation file content', 'woocommerce-paypal-payments' ),
-					'default'      => null,
-					'screens'      => array( State::STATE_ONBOARDED ),
-					'gateway'      => 'paypal',
-					'requirements' => array(),
-				),
-				'applepay_button_type'             => array(
+				'applepay_button_type'     => array(
 					'title'        => str_repeat( '&nbsp;', 6 ) . __( 'Button Label', 'woocommerce-paypal-payments' ),
 					'type'         => 'select',
 					'desc_tip'     => true,
@@ -124,7 +104,7 @@ return array(
 					'gateway'      => 'paypal',
 					'requirements' => array(),
 				),
-				'applepay_button_color'            => array(
+				'applepay_button_color'    => array(
 					'title'        => str_repeat( '&nbsp;', 6 ) . __( 'Button Color', 'woocommerce-paypal-payments' ),
 					'type'         => 'select',
 					'desc_tip'     => true,
@@ -141,7 +121,7 @@ return array(
 					'gateway'      => 'paypal',
 					'requirements' => array(),
 				),
-				'applepay_button_language'         => array(
+				'applepay_button_language' => array(
 					'title'        => str_repeat( '&nbsp;', 6 ) . __( 'Button Language', 'woocommerce-paypal-payments' ),
 					'type'         => 'select',
 					'desc_tip'     => true,

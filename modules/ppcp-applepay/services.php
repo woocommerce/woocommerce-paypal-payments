@@ -106,7 +106,12 @@ return array(
 			'woocommerce_paypal_payments_applepay_supported_country_currency_matrix',
 			array(
 				'US' => array(
-					'AUD', 'CAD', 'EUR', 'GBP', 'JPY', 'USD'
+					'AUD',
+					'CAD',
+					'EUR',
+					'GBP',
+					'JPY',
+					'USD',
 				),
 			)
 		);
