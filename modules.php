@@ -49,7 +49,7 @@ return function ( string $root_dir ): iterable {
 		'woocommerce.deprecated-flags.woocommerce_paypal_payments.saved_payment_checker_enabled',
 		getenv( 'PCP_SAVED_PAYMENT_CHECKER_ENABLED' ) === '1'
 	) ) {
-		$modules[] = ( require "$modules_dir/ppcp-saved-payment-checked/module.php" )();
+		$modules[] = ( require "$modules_dir/ppcp-saved-payment-checker/module.php" )();
 	}
 
 	return $modules;
