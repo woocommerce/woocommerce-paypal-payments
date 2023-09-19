@@ -543,6 +543,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 				}
 
 				$wc_order->payment_complete();
+
 				return $this->handle_payment_success( $wc_order );
 			}
 
