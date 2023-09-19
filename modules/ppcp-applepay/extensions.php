@@ -24,6 +24,8 @@ return array(
 
 			return array_merge( array_slice( $array, 0, $pos ), $new, array_slice( $array, $pos ) );
 		};
+		$display_manager = $container->get( 'wcgateway.display-manager' );
+		assert( $display_manager instanceof DisplayManager );
 
 		if ( ! $container->has( 'applepay.eligible' ) || ! $container->get( 'applepay.eligible' ) ) {
 			$connection_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-connection#field-credentials_feature_onboarding_heading' );
@@ -50,17 +52,21 @@ return array(
 						'screens'      => array( State::STATE_ONBOARDED ),
 						'gateway'      => 'paypal',
 						'requirements' => array(),
+						'custom_attributes' => array(
+							'data-ppcp-display' => wp_json_encode(
+								array(
+									$display_manager
+										->rule()
+										->condition_element( 'applepay_button_enabled', '1' )
+										->action_enable( 'applepay_button_enabled' )
+										->to_array(),
+								)
+							),
+						),
 					),
 				)
 			);
 		}
-		return $insert_after(
-			$fields,
-			'allow_card_button_gateway',
-			array(
-				'applepay_button_enabled'  => array(
-		$display_manager = $container->get( 'wcgateway.display-manager' );
-		assert( $display_manager instanceof DisplayManager );
 
 		return $insert_after(
 			$fields,
@@ -88,8 +94,6 @@ return array(
 								$display_manager
 									->rule()
 									->condition_element( 'applepay_button_enabled', '1' )
-									->action_visible( 'applepay_sandbox_validation_file' )
-									->action_visible( 'applepay_live_validation_file' )
 									->action_visible( 'applepay_button_color' )
 									->action_visible( 'applepay_button_type' )
 									->action_visible( 'applepay_button_language' )
