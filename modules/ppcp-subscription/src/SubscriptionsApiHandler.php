@@ -211,7 +211,7 @@ class SubscriptionsApiHandler {
 				$subscription_plan = $this->billing_plans_endpoint->plan( $subscription_plan_id );
 
 				$price = $subscription_plan->billing_cycles()[0]->pricing_scheme()['fixed_price']['value'] ?? '';
-				if ( $price && round( $price, 2 ) !== round( (float) $product->get_price(), 2 ) ) {
+				if ( $price && round( (float) $price, 2 ) !== round( (float) $product->get_price(), 2 ) ) {
 					$this->billing_plans_endpoint->update_pricing(
 						$subscription_plan_id,
 						$this->billing_cycle_factory->from_wc_product( $product )
