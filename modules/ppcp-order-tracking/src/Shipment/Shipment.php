@@ -159,6 +159,7 @@ class Shipment implements ShipmentInterface {
 			$quantity                  = (int) $item->get_quantity();
 			$price_without_tax         = (float) $wc_order->get_item_subtotal( $item, false );
 			$price_without_tax_rounded = round( $price_without_tax, 2 );
+            $image                     = wp_get_attachment_image_src( (int) $product->get_image_id(), 'full' );
 
 			$ppcp_order_item = new Item(
 				mb_substr( $item->get_name(), 0, 127 ),
@@ -167,7 +168,9 @@ class Shipment implements ShipmentInterface {
 				$product instanceof WC_Product ? $this->prepare_description( $product->get_description() ) : '',
 				null,
 				$product instanceof WC_Product ? $product->get_sku() : '',
-				( $product instanceof WC_Product && $product->is_virtual() ) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS
+				( $product instanceof WC_Product && $product->is_virtual() ) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS,
+                $product->get_permalink(),
+                $image[0] ?? ''
 			);
 
 			$tracking_items[ $item->get_id() ] = $ppcp_order_item->to_array();
