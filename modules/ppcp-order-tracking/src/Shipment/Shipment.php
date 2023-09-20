@@ -154,23 +154,27 @@ class Shipment implements ShipmentInterface {
 				continue;
 			}
 
-			$product                   = $item->get_product();
+			$product = $item->get_product();
+			if ( ! is_a( $product, WC_Product::class ) ) {
+				continue;
+			}
+
 			$currency                  = $wc_order->get_currency();
 			$quantity                  = (int) $item->get_quantity();
 			$price_without_tax         = (float) $wc_order->get_item_subtotal( $item, false );
 			$price_without_tax_rounded = round( $price_without_tax, 2 );
-            $image                     = wp_get_attachment_image_src( (int) $product->get_image_id(), 'full' );
+			$image                     = wp_get_attachment_image_src( (int) $product->get_image_id(), 'full' );
 
 			$ppcp_order_item = new Item(
 				mb_substr( $item->get_name(), 0, 127 ),
 				new Money( $price_without_tax_rounded, $currency ),
 				$quantity,
-				$product instanceof WC_Product ? $this->prepare_description( $product->get_description() ) : '',
+				$this->prepare_description( $product->get_description() ),
 				null,
-				$product instanceof WC_Product ? $product->get_sku() : '',
-				( $product instanceof WC_Product && $product->is_virtual() ) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS,
-                $product->get_permalink(),
-                $image[0] ?? ''
+				$product->get_sku(),
+				$product->is_virtual() ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS,
+				$product->get_permalink(),
+				$image[0] ?? ''
 			);
 
 			$tracking_items[ $item->get_id() ] = $ppcp_order_item->to_array();
