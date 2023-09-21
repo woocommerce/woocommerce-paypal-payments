@@ -1,6 +1,6 @@
 <?php
 /**
- * Properties of the ApplePay module.
+ * ApmApplies helper.
  *
  * @package WooCommerce\PayPalCommerce\ApplePay\Helper
  */
@@ -36,7 +36,7 @@ class ApmApplies {
 	private $country;
 
 	/**
-	 * DccApplies constructor.
+	 * ApmApplies constructor.
 	 *
 	 * @param array  $allowed_country_currency_matrix The matrix which countries and currency combinations can be used for DCC.
 	 * @param string $currency 3-letter currency code of the shop.
