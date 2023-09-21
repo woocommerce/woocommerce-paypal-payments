@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\Googlepay;
 
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodTypeInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
+use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
 use WooCommerce\PayPalCommerce\Googlepay\Assets\BlocksPaymentMethod;
 use WooCommerce\PayPalCommerce\Googlepay\Assets\Button;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmApplies;
@@ -37,7 +38,7 @@ return array(
 
 	// If GooglePay is configured.
 	'googlepay.available'                         => static function ( ContainerInterface $container ): bool {
-		if ( apply_filters( 'woocommerce_paypal_payments_googlepay_validate_product_status', false ) ) {
+		if ( apply_filters( 'woocommerce_paypal_payments_googlepay_validate_product_status', true ) ) {
 			$status = $container->get( 'googlepay.helpers.apm-product-status' );
 			assert( $status instanceof ApmProductStatus );
 			/**
@@ -48,13 +49,15 @@ return array(
 		return true;
 	},
 
-	'googlepay.helpers.apm-product-status'        => static function( ContainerInterface $container ): ApmProductStatus {
-		return new ApmProductStatus(
-			$container->get( 'wcgateway.settings' ),
-			$container->get( 'api.endpoint.partners' ),
-			$container->get( 'onboarding.state' )
-		);
-	},
+	'googlepay.helpers.apm-product-status'        => SingletonDecorator::make(
+		static function( ContainerInterface $container ): ApmProductStatus {
+			return new ApmProductStatus(
+				$container->get( 'wcgateway.settings' ),
+				$container->get( 'api.endpoint.partners' ),
+				$container->get( 'onboarding.state' )
+			);
+		}
+	),
 
 	/**
 	 * The matrix which countries and currency combinations can be used for GooglePay.

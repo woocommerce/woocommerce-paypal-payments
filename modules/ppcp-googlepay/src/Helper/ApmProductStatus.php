@@ -33,6 +33,13 @@ class ApmProductStatus {
 	private $current_status = null;
 
 	/**
+	 * If there was a request failure.
+	 *
+	 * @var bool
+	 */
+	private $has_request_failure = false;
+
+	/**
 	 * The settings.
 	 *
 	 * @var Settings
@@ -93,7 +100,8 @@ class ApmProductStatus {
 			$seller_status = $this->partners_endpoint->seller_status();
 		} catch ( Throwable $error ) {
 			// It may be a transitory error, don't persist the status.
-			$this->current_status = false;
+			$this->has_request_failure = true;
+			$this->current_status      = false;
 			return $this->current_status;
 		}
 
@@ -116,6 +124,15 @@ class ApmProductStatus {
 
 		$this->current_status = false;
 		return $this->current_status;
+	}
+
+	/**
+	 * Returns if there was a request failure.
+	 *
+	 * @return bool
+	 */
+	public function has_request_failure(): bool {
+		return $this->has_request_failure;
 	}
 
 	/**

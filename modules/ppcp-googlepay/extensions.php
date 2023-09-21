@@ -24,6 +24,8 @@ return array(
 			return $fields;
 		}
 
+		$is_available = $container->get( 'googlepay.available' );
+
 		$insert_after = function( array $array, string $key, array $new ): array {
 			$keys = array_keys( $array );
 			$index = array_search( $key, $keys, true );
@@ -65,6 +67,15 @@ return array(
 									->action_visible( 'googlepay_button_color' )
 									->action_visible( 'googlepay_button_language' )
 									->action_visible( 'googlepay_button_shipping_enabled' )
+									->to_array(),
+								$display_manager
+									->rule()
+									->condition_is_true( $is_available )
+									->action_enable( 'googlepay_button_enabled' )
+									->action_enable( 'googlepay_button_type' )
+									->action_enable( 'googlepay_button_color' )
+									->action_enable( 'googlepay_button_language' )
+									->action_enable( 'googlepay_button_shipping_enabled' )
 									->to_array(),
 							)
 						),
