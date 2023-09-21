@@ -1547,16 +1547,14 @@ class SmartButton implements SmartButtonInterface {
 	 * @throws NotFoundException If intent is not found.
 	 */
 	private function intent(): string {
-		$intent               = ( $this->settings->has( 'intent' ) ) ? $this->settings->get( 'intent' ) : 'capture';
-		$product_intent       = $this->subscription_helper->current_product_is_subscription() ? 'authorize' : $intent;
-		$other_context_intent = $this->subscription_helper->cart_contains_subscription() ? 'authorize' : $intent;
-
 		$subscription_mode = $this->settings->has( 'subscriptions_mode' ) ? $this->settings->get( 'subscriptions_mode' ) : '';
 		if ( $this->subscription_helper->need_subscription_intent( $subscription_mode ) ) {
 			return 'subscription';
 		}
 
-		return $this->context() === 'product' ? $product_intent : $other_context_intent;
+		$intent = $this->settings->has( 'intent' ) ? $this->settings->get( 'intent' ) : 'capture';
+
+		return strtolower( apply_filters( 'woocommerce_paypal_payments_order_intent', $intent ) );
 	}
 
 	/**
