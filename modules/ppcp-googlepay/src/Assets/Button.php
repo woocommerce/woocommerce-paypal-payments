@@ -359,6 +359,34 @@ class Button implements ButtonInterface {
 	}
 
 	/**
+	 * Enqueues scripts/styles for admin.
+	 */
+	public function enqueue_admin(): void {
+		wp_register_style(
+			'wc-ppcp-googlepay-admin',
+			untrailingslashit( $this->module_url ) . '/assets/css/styles.css',
+			array(),
+			$this->version
+		);
+		wp_enqueue_style( 'wc-ppcp-googlepay-admin' );
+
+		wp_register_script(
+			'wc-ppcp-googlepay-admin',
+			untrailingslashit( $this->module_url ) . '/assets/js/boot-admin.js',
+			array(),
+			$this->version,
+			true
+		);
+		wp_enqueue_script( 'wc-ppcp-googlepay-admin' );
+
+		wp_localize_script(
+			'wc-ppcp-googlepay-admin',
+			'wc_ppcp_googlepay_admin',
+			$this->script_data()
+		);
+	}
+
+	/**
 	 * The configuration for the smart buttons.
 	 *
 	 * @return array

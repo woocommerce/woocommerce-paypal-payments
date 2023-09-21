@@ -211,16 +211,20 @@ class SettingsPageAssets {
 		wp_localize_script(
 			'ppcp-gateway-settings',
 			'PayPalCommerceGatewaySettings',
-			array(
-				'is_subscriptions_plugin_active' => $this->subscription_helper->plugin_is_active(),
-				'client_id'                      => $this->client_id,
-				'currency'                       => $this->currency,
-				'country'                        => $this->country,
-				'environment'                    => $this->environment->current_environment(),
-				'integration_date'               => PAYPAL_INTEGRATION_DATE,
-				'is_pay_later_button_enabled'    => $this->is_pay_later_button_enabled,
-				'disabled_sources'               => $this->disabled_sources,
-				'all_funding_sources'            => $this->all_funding_sources,
+			apply_filters(
+				'woocommerce_paypal_payments_admin_gateway_settings',
+				array(
+					'is_subscriptions_plugin_active' => $this->subscription_helper->plugin_is_active(),
+					'client_id'                      => $this->client_id,
+					'currency'                       => $this->currency,
+					'country'                        => $this->country,
+					'environment'                    => $this->environment->current_environment(),
+					'integration_date'               => PAYPAL_INTEGRATION_DATE,
+					'is_pay_later_button_enabled'    => $this->is_pay_later_button_enabled,
+					'disabled_sources'               => $this->disabled_sources,
+					'all_funding_sources'            => $this->all_funding_sources,
+					'components'                     => array( 'buttons', 'funding-eligibility', 'messages' ),
+				)
 			)
 		);
 	}

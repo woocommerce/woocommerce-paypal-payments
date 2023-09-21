@@ -67,11 +67,36 @@ class GooglepayModule implements ModuleInterface {
 		);
 
 		add_action(
+			'admin_enqueue_scripts',
+			static function () use ( $c, $button ) {
+				if ( ! is_admin() ) {
+					return;
+				}
+				/**
+				 * Should add this to the ButtonInterface.
+				 *
+				 * @psalm-suppress UndefinedInterfaceMethod
+				 */
+				$button->enqueue_admin();
+			}
+		);
+
+		add_action(
 			'woocommerce_blocks_payment_method_type_registration',
 			function( PaymentMethodRegistry $payment_method_registry ) use ( $c, $button ): void {
 				if ( $button->is_enabled() ) {
 					$payment_method_registry->register( $c->get( 'googlepay.blocks-payment-method' ) );
 				}
+			}
+		);
+
+		add_action(
+			'woocommerce_paypal_payments_admin_gateway_settings',
+			function( array $settings ) use ( $c, $button ): array {
+				if ( is_array( $settings['components'] ) ) {
+					$settings['components'][] = 'googlepay';
+				}
+				return $settings;
 			}
 		);
 

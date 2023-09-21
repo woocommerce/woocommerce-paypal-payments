@@ -1,6 +1,7 @@
 import ContextHandlerFactory from "./Context/ContextHandlerFactory";
 import {setVisible} from '../../../ppcp-button/resources/js/modules/Helper/Hiding';
 import {setEnabled} from '../../../ppcp-button/resources/js/modules/Helper/ButtonDisabler';
+import widgetBuilder from "../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder";
 
 class GooglepayButton {
 
@@ -152,6 +153,7 @@ class GooglepayButton {
                 buttonLocale: buttonStyle.language || 'en',
                 buttonSizeMode: 'fill',
             });
+
         jQuery(wrapper).append(button);
     }
 
@@ -207,7 +209,7 @@ class GooglepayButton {
 
                 console.log('[GooglePayButton] processPayment: createOrder', id, this.context);
 
-                const confirmOrderResponse = await paypal.Googlepay().confirmOrder({
+                const confirmOrderResponse = await widgetBuilder.paypal.Googlepay().confirmOrder({
                     orderId: id,
                     paymentMethodData: paymentData.paymentMethodData
                 });

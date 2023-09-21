@@ -88,6 +88,7 @@ document.addEventListener(
 
                 try {
                     renderer.render({});
+                    jQuery(document).trigger('ppcp_paypal_render_preview', settings);
                 } catch (err) {
                     console.error(err);
                 }
@@ -114,7 +115,7 @@ document.addEventListener(
                 'client-id': PayPalCommerceGatewaySettings.client_id,
                 'currency': PayPalCommerceGatewaySettings.currency,
                 'integration-date': PayPalCommerceGatewaySettings.integration_date,
-                'components': ['buttons', 'funding-eligibility', 'messages'],
+                'components': PayPalCommerceGatewaySettings.components,
                 'enable-funding': ['venmo', 'paylater'],
             };
 
