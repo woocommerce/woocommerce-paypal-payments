@@ -59,6 +59,9 @@ class ItemTest extends TestCase
         $tax
             ->expects('to_array')
             ->andReturn([2]);
+
+		$image_url = 'https://example.com/wp-content/uploads/2023/06/beanie-2.jpg';
+
         $testee = new Item(
             'name',
             $unitAmount,
@@ -68,7 +71,7 @@ class ItemTest extends TestCase
             'sku',
             'PHYSICAL_GOODS',
 			'url',
-			'image_url'
+			$image_url
         );
 
         $expected = [
@@ -79,7 +82,7 @@ class ItemTest extends TestCase
             'sku' => 'sku',
             'category' => 'PHYSICAL_GOODS',
             'url' => 'url',
-            'image_url' => 'image_url',
+            'image_url' => $image_url,
             'tax' => [2],
         ];
 
