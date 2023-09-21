@@ -9,8 +9,10 @@ import widgetBuilder from "../../../ppcp-button/resources/js/modules/Renderer/Wi
 
     let googlePayConfig;
     let buttonQueue = [];
+    let activeButtons = {};
     let bootstrapped = false;
 
+    // React to PayPal config changes.
     jQuery(document).on('ppcp_paypal_render_preview', (ev, ppcpConfig) => {
         if (bootstrapped) {
             createButton(ppcpConfig);
@@ -21,11 +23,38 @@ import widgetBuilder from "../../../ppcp-button/resources/js/modules/Renderer/Wi
         }
     });
 
+    // React to GooglePay config changes.
+    jQuery([
+        '#ppcp-googlepay_button_enabled',
+        '#ppcp-googlepay_button_type',
+        '#ppcp-googlepay_button_color',
+        '#ppcp-googlepay_button_language',
+        '#ppcp-googlepay_button_shipping_enabled'
+    ].join(',')).on('change', () => {
+        for (const [selector, ppcpConfig] of Object.entries(activeButtons)) {
+            createButton(ppcpConfig);
+        }
+    });
+
+    const applyConfigOptions = function (buttonConfig) {
+        buttonConfig.button = buttonConfig.button || {};
+        buttonConfig.button.style = buttonConfig.button.style || {};
+        buttonConfig.button.style.type = jQuery('#ppcp-googlepay_button_type').val();
+        buttonConfig.button.style.color = jQuery('#ppcp-googlepay_button_color').val();
+        buttonConfig.button.style.language = jQuery('#ppcp-googlepay_button_language').val();
+    }
+
     const createButton = function (ppcpConfig) {
         const selector = ppcpConfig.button.wrapper + 'GooglePay';
 
+        if (!jQuery('#ppcp-googlepay_button_enabled').is(':checked')) {
+            jQuery(selector).remove();
+            return;
+        }
+
         buttonConfig = JSON.parse(JSON.stringify(buttonConfig));
         buttonConfig.button.wrapper = selector;
+        applyConfigOptions(buttonConfig);
 
         const wrapperElement = `<div id="${selector.replace('#', '')}" class="ppcp-button-googlepay"></div>`;
 
@@ -43,6 +72,8 @@ import widgetBuilder from "../../../ppcp-button/resources/js/modules/Renderer/Wi
         );
 
         button.init(googlePayConfig);
+
+        activeButtons[selector] = ppcpConfig;
     }
 
     const bootstrap = async function () {
