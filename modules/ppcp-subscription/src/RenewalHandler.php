@@ -213,6 +213,12 @@ class RenewalHandler {
 		$transaction_id = $this->get_paypal_order_transaction_id( $order );
 		if ( $transaction_id ) {
 			$this->update_transaction_id( $transaction_id, $wc_order );
+
+			$subscriptions = wcs_get_subscriptions_for_order( $wc_order->get_id(), array( 'order_type' => 'any' ) );
+			foreach ( $subscriptions as $id => $subscription ) {
+				$subscription->update_meta_data( 'ppcp_previous_transaction_reference', $transaction_id );
+				$subscription->save();
+			}
 		}
 
 		$this->handle_new_order_status( $order, $wc_order );
@@ -235,7 +241,7 @@ class RenewalHandler {
 	 * @param \WC_Customer $customer The customer.
 	 * @param \WC_Order    $wc_order The current WooCommerce order we want to process.
 	 *
-	 * @return PaymentToken|null
+	 * @return PaymentToken|null|false
 	 */
 	private function get_token_for_customer( \WC_Customer $customer, \WC_Order $wc_order ) {
 		/**

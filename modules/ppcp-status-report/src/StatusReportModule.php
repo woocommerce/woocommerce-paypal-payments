@@ -78,8 +78,6 @@ class StatusReportModule implements ModuleInterface {
 
 				$had_ppec_plugin = PPECHelper::is_plugin_configured();
 
-				$is_tracking_available = $c->get( 'order-tracking.is-tracking-available' );
-
 				$items = array(
 					array(
 						'label'          => esc_html__( 'Onboarded', 'woocommerce-paypal-payments' ),
@@ -166,16 +164,6 @@ class StatusReportModule implements ModuleInterface {
 						),
 					),
 					array(
-						'label'          => esc_html__( 'Tracking enabled', 'woocommerce-paypal-payments' ),
-						'exported_label' => 'Tracking enabled',
-						'description'    => esc_html__( 'Whether tracking is enabled on PayPal account or not.', 'woocommerce-paypal-payments' ),
-						'value'          => $this->bool_to_html( $is_tracking_available ),
-					),
-				);
-
-				// For now only show this status if PPCP_FLAG_SUBSCRIPTIONS_API is true.
-				if ( defined( 'PPCP_FLAG_SUBSCRIPTIONS_API' ) && PPCP_FLAG_SUBSCRIPTIONS_API ) {
-					$items[] = array(
 						'label'          => esc_html__( 'Subscriptions Mode', 'woocommerce-paypal-payments' ),
 						'exported_label' => 'Subscriptions Mode',
 						'description'    => esc_html__( 'Whether subscriptions are active and their mode.', 'woocommerce-paypal-payments' ),
@@ -184,8 +172,8 @@ class StatusReportModule implements ModuleInterface {
 							$settings->has( 'subscriptions_mode' ) ? (string) $settings->get( 'subscriptions_mode' ) : '',
 							$subscriptions_mode_settings
 						),
-					);
-				}
+					),
+				);
 
 				echo wp_kses_post(
 					$renderer->render(

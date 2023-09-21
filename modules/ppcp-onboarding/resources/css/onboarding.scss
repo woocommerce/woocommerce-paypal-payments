@@ -45,7 +45,7 @@ label.error {
 	font-size: 1.1em;
 }
 
-.input-text[pattern]:invalid {
+.input-text[pattern]:invalid, .input-text[type=email]:invalid {
 	border: red solid 2px;
 }
 

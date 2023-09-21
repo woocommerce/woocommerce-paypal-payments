@@ -80,6 +80,8 @@ return array(
 		$order_endpoint = $container->get( 'api.endpoint.order' );
 		$authorized_payments_processor = $container->get( 'wcgateway.processor.authorized-payments' );
 		$payment_token_factory = $container->get( 'vaulting.payment-token-factory' );
+		$payment_token_helper = $container->get( 'vaulting.payment-token-helper' );
+		$refund_fees_updater = $container->get( 'wcgateway.helper.refund-fees-updater' );
 
 		return array(
 			new CheckoutOrderApproved(
@@ -91,14 +93,14 @@ return array(
 			),
 			new CheckoutOrderCompleted( $logger ),
 			new CheckoutPaymentApprovalReversed( $logger ),
-			new PaymentCaptureRefunded( $logger ),
+			new PaymentCaptureRefunded( $logger, $refund_fees_updater ),
 			new PaymentCaptureReversed( $logger ),
 			new PaymentCaptureCompleted( $logger, $order_endpoint ),
-			new VaultPaymentTokenCreated( $logger, $prefix, $authorized_payments_processor, $payment_token_factory ),
+			new VaultPaymentTokenCreated( $logger, $prefix, $authorized_payments_processor, $payment_token_factory, $payment_token_helper ),
 			new VaultPaymentTokenDeleted( $logger ),
 			new PaymentCapturePending( $logger ),
 			new PaymentSaleCompleted( $logger ),
-			new PaymentSaleRefunded( $logger ),
+			new PaymentSaleRefunded( $logger, $refund_fees_updater ),
 			new BillingSubscriptionCancelled( $logger ),
 			new BillingPlanPricingChangeActivated( $logger ),
 			new CatalogProductUpdated( $logger ),

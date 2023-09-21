@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
+use WooCommerce\PayPalCommerce\ApiClient\Helper\PurchaseUnitSanitizer;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
@@ -237,7 +238,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 		'merchant_email_production'                     => array(
 			'title'        => __( 'Live Email address', 'woocommerce-paypal-payments' ),
 			'classes'      => array( State::STATE_ONBOARDED === $state->production_state() ? 'onboarded' : '', 'ppcp-always-shown-element' ),
-			'type'         => 'text',
+			'type'         => 'email',
 			'required'     => true,
 			'desc_tip'     => true,
 			'description'  => __( 'The email address of your PayPal account.', 'woocommerce-paypal-payments' ),
@@ -303,7 +304,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 		'merchant_email_sandbox'                        => array(
 			'title'        => __( 'Sandbox Email address', 'woocommerce-paypal-payments' ),
 			'classes'      => array( State::STATE_ONBOARDED === $state->sandbox_state() ? 'onboarded' : '', 'ppcp-always-shown-element' ),
-			'type'         => 'text',
+			'type'         => 'email',
 			'required'     => true,
 			'desc_tip'     => true,
 			'description'  => __( 'The email address of your PayPal account.', 'woocommerce-paypal-payments' ),
@@ -401,20 +402,6 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'requirements' => array( 'pui_ready' ),
 			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
-		'tracking_enabled'                              => array(
-			'title'        => __( 'Shipment Tracking', 'woocommerce-paypal-payments' ),
-			'type'         => 'checkbox',
-			'desc_tip'     => true,
-			'label'        => $container->get( 'wcgateway.settings.tracking-label' ),
-			'description'  => __( 'Allows to send shipment tracking numbers to PayPal for PayPal transactions.', 'woocommerce-paypal-payments' ),
-			'default'      => false,
-			'screens'      => array(
-				State::STATE_ONBOARDED,
-			),
-			'requirements' => array(),
-			'gateway'      => Settings::CONNECTION_TAB_ID,
-			'input_class'  => $container->get( 'wcgateway.settings.should-disable-tracking-checkbox' ) ? array( 'ppcp-disabled-checkbox' ) : array(),
-		),
 		'fraudnet_enabled'                              => array(
 			'title'        => __( 'FraudNet', 'woocommerce-paypal-payments' ),
 			'type'         => 'checkbox',
@@ -494,6 +481,55 @@ return function ( ContainerInterface $container, array $fields ): array {
 				State::STATE_ONBOARDED,
 			),
 			'requirements' => array(),
+			'gateway'      => Settings::CONNECTION_TAB_ID,
+		),
+		'subtotal_mismatch_behavior'                    => array(
+			'title'             => __( 'Subtotal mismatch behavior', 'woocommerce-paypal-payments' ),
+			'type'              => 'select',
+			'input_class'       => array( 'wc-enhanced-select' ),
+			'default'           => 'vertical',
+			'desc_tip'          => true,
+			'description'       => __(
+				'Differences between WooCommerce and PayPal roundings may cause mismatch in order items subtotal calculations. If not handled, these mismatches will cause the PayPal transaction to fail.',
+				'woocommerce-paypal-payments'
+			),
+			'options'           => array(
+				PurchaseUnitSanitizer::MODE_DITCH      => __( 'Do not send line items to PayPal', 'woocommerce-paypal-payments' ),
+				PurchaseUnitSanitizer::MODE_EXTRA_LINE => __( 'Add another line item', 'woocommerce-paypal-payments' ),
+			),
+			'screens'           => array(
+				State::STATE_START,
+				State::STATE_ONBOARDED,
+			),
+			'requirements'      => array(),
+			'gateway'           => Settings::CONNECTION_TAB_ID,
+			'custom_attributes' => array(
+				'data-ppcp-handlers' => wp_json_encode(
+					array(
+						array(
+							'handler' => 'SubElementsHandler',
+							'options' => array(
+								'values'   => array( PurchaseUnitSanitizer::MODE_EXTRA_LINE ),
+								'elements' => array( '#field-subtotal_mismatch_line_name' ),
+							),
+						),
+					)
+				),
+			),
+		),
+		'subtotal_mismatch_line_name'                   => array(
+			'title'        => __( 'Subtotal mismatch line name', 'woocommerce-paypal-payments' ),
+			'type'         => 'text',
+			'desc_tip'     => true,
+			'description'  => __( 'The name of the extra line that will be sent to PayPal to correct the subtotal mismatch.', 'woocommerce-paypal-payments' ),
+			'maxlength'    => 22,
+			'default'      => '',
+			'screens'      => array(
+				State::STATE_START,
+				State::STATE_ONBOARDED,
+			),
+			'requirements' => array(),
+			'placeholder'  => PurchaseUnitSanitizer::EXTRA_LINE_NAME,
 			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
 	);

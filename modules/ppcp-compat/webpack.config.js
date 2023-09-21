@@ -6,7 +6,7 @@ module.exports = {
     mode: isProduction ? 'production' : 'development',
     target: 'web',
     entry: {
-        'gzd-compat': path.resolve('./resources/js/gzd-compat.js'),
+        'tracking-compat': path.resolve('./resources/js/tracking-compat.js'),
     },
     output: {
         path: path.resolve(__dirname, 'assets/'),

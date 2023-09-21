@@ -19,6 +19,8 @@ import FreeTrialHandler from "./modules/ActionHandler/FreeTrialHandler";
 import FormSaver from './modules/Helper/FormSaver';
 import FormValidator from "./modules/Helper/FormValidator";
 import {loadPaypalScript} from "./modules/Helper/ScriptLoading";
+import buttonModuleWatcher from "./modules/ButtonModuleWatcher";
+import MessagesBootstrap from "./modules/ContextBootstrap/MessagesBootstap";
 
 // TODO: could be a good idea to have a separate spinner for each gateway,
 // but I think we care mainly about the script loading, so one spinner should be enough.
@@ -59,6 +61,11 @@ const bootstrap = () => {
             e.preventDefault();
         }
     });
+
+    const hasMessages = () => {
+        return PayPalCommerceGateway.messages.is_hidden === false
+            && document.querySelector(PayPalCommerceGateway.messages.wrapper);
+    }
 
     const onSmartButtonClick = async (data, actions) => {
         window.ppcpFundingSource = data.fundingSource;
@@ -146,6 +153,7 @@ const bootstrap = () => {
         );
 
         miniCartBootstrap.init();
+        buttonModuleWatcher.registerContextBootstrap('mini-cart', miniCartBootstrap);
     }
 
     if (
@@ -158,53 +166,53 @@ const bootstrap = () => {
         const singleProductBootstrap = new SingleProductBootstap(
             PayPalCommerceGateway,
             renderer,
-            messageRenderer,
             errorHandler,
         );
 
         singleProductBootstrap.init();
+        buttonModuleWatcher.registerContextBootstrap('product', singleProductBootstrap);
     }
 
     if (context === 'cart') {
         const cartBootstrap = new CartBootstrap(
             PayPalCommerceGateway,
             renderer,
-            messageRenderer,
             errorHandler,
         );
 
         cartBootstrap.init();
+        buttonModuleWatcher.registerContextBootstrap('cart', cartBootstrap);
     }
 
     if (context === 'checkout') {
         const checkoutBootstap = new CheckoutBootstap(
             PayPalCommerceGateway,
             renderer,
-            messageRenderer,
             spinner,
             errorHandler,
         );
 
         checkoutBootstap.init();
+        buttonModuleWatcher.registerContextBootstrap('checkout', checkoutBootstap);
     }
 
     if (context === 'pay-now' ) {
         const payNowBootstrap = new PayNowBootstrap(
             PayPalCommerceGateway,
             renderer,
-            messageRenderer,
             spinner,
             errorHandler,
         );
         payNowBootstrap.init();
+        buttonModuleWatcher.registerContextBootstrap('pay-now', payNowBootstrap);
     }
 
+    const messagesBootstrap = new MessagesBootstrap(
+        PayPalCommerceGateway,
+        messageRenderer,
+    );
+    messagesBootstrap.init();
 };
-
-const hasMessages = () => {
-    return PayPalCommerceGateway.messages.is_hidden === false
-        && document.querySelector(PayPalCommerceGateway.messages.wrapper);
-}
 
 document.addEventListener(
     'DOMContentLoaded',

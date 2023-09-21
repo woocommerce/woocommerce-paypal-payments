@@ -5,6 +5,7 @@ class MessageRenderer {
     constructor(config) {
         this.config = config;
         this.optionsFingerprint = null;
+        this.currentNumber = 0;
     }
 
     renderWithAmount(amount) {
@@ -18,12 +19,19 @@ class MessageRenderer {
             style: this.config.style
         };
 
+        // sometimes the element is destroyed while the options stay the same
+        if (document.querySelector(this.config.wrapper).getAttribute('data-render-number') !== this.currentNumber.toString()) {
+            this.optionsFingerprint = null;
+        }
+
         if (this.optionsEqual(options)) {
             return;
         }
 
         const newWrapper = document.createElement('div');
         newWrapper.setAttribute('id', this.config.wrapper.replace('#', ''));
+        this.currentNumber++;
+        newWrapper.setAttribute('data-render-number', this.currentNumber);
 
         const oldWrapper = document.querySelector(this.config.wrapper);
         const sibling = oldWrapper.nextSibling;

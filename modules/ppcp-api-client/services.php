@@ -9,13 +9,18 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient;
 
+use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingSubscriptions;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\CatalogProducts;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingPlans;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerPayableBreakdown;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\BillingCycleFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentPreferencesFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\RefundFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PlanFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ProductFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\RefundPayerFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\SellerPayableBreakdownFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingOptionFactory;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -58,6 +63,8 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderHelper;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderTransient;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\PurchaseUnitSanitizer;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CustomerRepository;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\OrderRepository;
@@ -289,6 +296,14 @@ return array(
 			$container->get( 'api.factory.fraud-processor-response' )
 		);
 	},
+	'api.factory.refund'                        => static function ( ContainerInterface $container ): RefundFactory {
+		$amount_factory   = $container->get( 'api.factory.amount' );
+		return new RefundFactory(
+			$amount_factory,
+			$container->get( 'api.factory.seller-payable-breakdown' ),
+			$container->get( 'api.factory.refund_payer' )
+		);
+	},
 	'api.factory.purchase-unit'                 => static function ( ContainerInterface $container ): PurchaseUnitFactory {
 
 		$amount_factory   = $container->get( 'api.factory.amount' );
@@ -299,6 +314,7 @@ return array(
 		$payments_factory = $container->get( 'api.factory.payments' );
 		$prefix           = $container->get( 'api.prefix' );
 		$soft_descriptor  = $container->get( 'wcgateway.soft-descriptor' );
+		$sanitizer        = $container->get( 'api.helper.purchase-unit-sanitizer' );
 
 		return new PurchaseUnitFactory(
 			$amount_factory,
@@ -308,7 +324,8 @@ return array(
 			$shipping_factory,
 			$payments_factory,
 			$prefix,
-			$soft_descriptor
+			$soft_descriptor,
+			$sanitizer
 		);
 	},
 	'api.factory.patch-collection-factory'      => static function ( ContainerInterface $container ): PatchCollectionFactory {
@@ -351,6 +368,9 @@ return array(
 		$address_factory = $container->get( 'api.factory.address' );
 		return new PayerFactory( $address_factory );
 	},
+	'api.factory.refund_payer'                  => static function ( ContainerInterface $container ): RefundPayerFactory {
+		return new RefundPayerFactory();
+	},
 	'api.factory.address'                       => static function ( ContainerInterface $container ): AddressFactory {
 		return new AddressFactory();
 	},
@@ -374,7 +394,8 @@ return array(
 	'api.factory.payments'                      => static function ( ContainerInterface $container ): PaymentsFactory {
 		$authorizations_factory = $container->get( 'api.factory.authorization' );
 		$capture_factory        = $container->get( 'api.factory.capture' );
-		return new PaymentsFactory( $authorizations_factory, $capture_factory );
+		$refund_factory         = $container->get( 'api.factory.refund' );
+		return new PaymentsFactory( $authorizations_factory, $capture_factory, $refund_factory );
 	},
 	'api.factory.authorization'                 => static function ( ContainerInterface $container ): AuthorizationFactory {
 		return new AuthorizationFactory();
@@ -392,6 +413,12 @@ return array(
 		return new SellerReceivableBreakdownFactory(
 			$container->get( 'api.factory.money' ),
 			$container->get( 'api.factory.exchange-rate' ),
+			$container->get( 'api.factory.platform-fee' )
+		);
+	},
+	'api.factory.seller-payable-breakdown'      => static function ( ContainerInterface $container ): SellerPayableBreakdownFactory {
+		return new SellerPayableBreakdownFactory(
+			$container->get( 'api.factory.money' ),
 			$container->get( 'api.factory.platform-fee' )
 		);
 	},
@@ -814,4 +841,19 @@ return array(
 	'api.order-helper'                          => static function( ContainerInterface $container ): OrderHelper {
 		return new OrderHelper();
 	},
+	'api.helper.order-transient'                => static function( ContainerInterface $container ): OrderTransient {
+		$cache                   = new Cache( 'ppcp-paypal-bearer' );
+		$purchase_unit_sanitizer = $container->get( 'api.helper.purchase-unit-sanitizer' );
+		return new OrderTransient( $cache, $purchase_unit_sanitizer );
+	},
+	'api.helper.purchase-unit-sanitizer'        => SingletonDecorator::make(
+		static function( ContainerInterface $container ): PurchaseUnitSanitizer {
+			$settings  = $container->get( 'wcgateway.settings' );
+			assert( $settings instanceof Settings );
+
+			$behavior  = $settings->has( 'subtotal_mismatch_behavior' ) ? $settings->get( 'subtotal_mismatch_behavior' ) : null;
+			$line_name = $settings->has( 'subtotal_mismatch_line_name' ) ? $settings->get( 'subtotal_mismatch_line_name' ) : null;
+			return new PurchaseUnitSanitizer( $behavior, $line_name );
+		}
+	),
 );

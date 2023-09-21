@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Compat;
 
+use Vendidero\Germanized\Shipments\ShipmentItem;
+use WooCommerce\PayPalCommerce\OrderTracking\Shipment\ShipmentFactoryInterface;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use Exception;
@@ -20,17 +22,14 @@ use WC_Order;
 use WooCommerce\PayPalCommerce\Compat\Assets\CompatAssets;
 use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WP_Theme;
+use WP_REST_Request;
+use WP_REST_Response;
 
 /**
  * Class CompatModule
  */
 class CompatModule implements ModuleInterface {
-
-	use AdminContextTrait;
-
 	/**
 	 * Setup the compatibility module.
 	 *
@@ -49,10 +48,16 @@ class CompatModule implements ModuleInterface {
 	 * @throws NotFoundException
 	 */
 	public function run( ContainerInterface $c ): void {
+
 		$this->initialize_ppec_compat_layer( $c );
 		$this->fix_site_ground_optimizer_compatibility( $c );
+		$this->initialize_tracking_compat_layer( $c );
 
-		$this->initialize_gzd_compat_layer( $c );
+		$asset_loader = $c->get( 'compat.assets' );
+		assert( $asset_loader instanceof CompatAssets );
+
+		add_action( 'init', array( $asset_loader, 'register' ) );
+		add_action( 'admin_enqueue_scripts', array( $asset_loader, 'enqueue' ) );
 
 		$this->migrate_pay_later_settings( $c );
 		$this->migrate_smart_button_settings( $c );
@@ -113,6 +118,30 @@ class CompatModule implements ModuleInterface {
 	}
 
 	/**
+	 * Sets up the 3rd party plugins compatibility layer for PayPal tracking.
+	 *
+	 * @param ContainerInterface $c The Container.
+	 * @return void
+	 */
+	protected function initialize_tracking_compat_layer( ContainerInterface $c ): void {
+		$is_gzd_active                  = $c->get( 'compat.gzd.is_supported_plugin_version_active' );
+		$is_wc_shipment_tracking_active = $c->get( 'compat.wc_shipment_tracking.is_supported_plugin_version_active' );
+		$is_ywot_active                 = $c->get( 'compat.ywot.is_supported_plugin_version_active' );
+
+		if ( $is_gzd_active ) {
+			$this->initialize_gzd_compat_layer( $c );
+		}
+
+		if ( $is_wc_shipment_tracking_active ) {
+			$this->initialize_wc_shipment_tracking_compat_layer( $c );
+		}
+
+		if ( $is_ywot_active ) {
+			$this->initialize_ywot_compat_layer( $c );
+		}
+	}
+
+	/**
 	 * Sets up the <a href="https://wordpress.org/plugins/woocommerce-germanized/">Germanized for WooCommerce</a>
 	 * plugin compatibility layer.
 	 *
@@ -122,84 +151,204 @@ class CompatModule implements ModuleInterface {
 	 * @return void
 	 */
 	protected function initialize_gzd_compat_layer( ContainerInterface $c ): void {
-		if ( ! $c->get( 'compat.should-initialize-gzd-compat-layer' ) ) {
-			return;
-		}
-
 		add_action(
-			'admin_enqueue_scripts',
-			/**
-			 * Param types removed to avoid third-party issues.
-			 *
-			 * @psalm-suppress MissingClosureParamType
-			 */
-			function( $hook ) use ( $c ): void {
-				if ( $hook !== 'post.php' || ! $this->is_paypal_order_edit_page() ) {
+			'woocommerce_gzd_shipment_status_shipped',
+			function( int $shipment_id, Shipment $shipment ) use ( $c ) {
+				if ( ! apply_filters( 'woocommerce_paypal_payments_sync_gzd_tracking', true ) ) {
 					return;
 				}
 
-				$asset_loader = $c->get( 'compat.assets' );
-				assert( $asset_loader instanceof CompatAssets );
+				$wc_order = $shipment->get_order();
 
-				$asset_loader->register();
-				$asset_loader->enqueue();
+				if ( ! is_a( $wc_order, WC_Order::class ) ) {
+					return;
+				}
+
+				$order_id        = $wc_order->get_id();
+				$transaction_id  = $wc_order->get_transaction_id();
+				$tracking_number = $shipment->get_tracking_id();
+				$carrier         = $shipment->get_shipping_provider();
+				$items           = array_map(
+					function ( ShipmentItem $item ): int {
+						return $item->get_order_item_id();
+					},
+					$shipment->get_items()
+				);
+
+				if ( ! $tracking_number || ! $carrier || ! $transaction_id ) {
+					return;
+				}
+
+				$this->create_tracking( $c, $order_id, $transaction_id, $tracking_number, $carrier, $items );
+			},
+			500,
+			2
+		);
+	}
+
+	/**
+	 * Sets up the <a href="https://woocommerce.com/document/shipment-tracking/">Shipment Tracking</a>
+	 * plugin compatibility layer.
+	 *
+	 * @link https://woocommerce.com/document/shipment-tracking/
+	 *
+	 * @param ContainerInterface $c The Container.
+	 * @return void
+	 */
+	protected function initialize_wc_shipment_tracking_compat_layer( ContainerInterface $c ): void {
+		add_action(
+			'wp_ajax_wc_shipment_tracking_save_form',
+			function() use ( $c ) {
+				check_ajax_referer( 'create-tracking-item', 'security', true );
+
+				if ( ! apply_filters( 'woocommerce_paypal_payments_sync_wc_shipment_tracking', true ) ) {
+					return;
+				}
+
+				$order_id = (int) wc_clean( wp_unslash( $_POST['order_id'] ?? '' ) );
+				$wc_order = wc_get_order( $order_id );
+				if ( ! is_a( $wc_order, WC_Order::class ) ) {
+					return;
+				}
+
+				$transaction_id  = $wc_order->get_transaction_id();
+				$tracking_number = wc_clean( wp_unslash( $_POST['tracking_number'] ?? '' ) );
+				$carrier         = wc_clean( wp_unslash( $_POST['tracking_provider'] ?? '' ) );
+				$carrier_other   = wc_clean( wp_unslash( $_POST['custom_tracking_provider'] ?? '' ) );
+				$carrier         = $carrier ?: $carrier_other ?: '';
+
+				if ( ! $tracking_number || ! is_string( $tracking_number ) || ! $carrier || ! is_string( $carrier ) || ! $transaction_id ) {
+					return;
+				}
+
+				$this->create_tracking( $c, $order_id, $transaction_id, $tracking_number, $carrier, array() );
 			}
 		);
 
+		add_filter(
+			'woocommerce_rest_prepare_order_shipment_tracking',
+			function( WP_REST_Response $response, array $tracking_item, WP_REST_Request $request ) use ( $c ): WP_REST_Response {
+				if ( ! apply_filters( 'woocommerce_paypal_payments_sync_wc_shipment_tracking', true ) ) {
+					return $response;
+				}
+
+				$callback = $request->get_attributes()['callback']['1'] ?? '';
+				if ( $callback !== 'create_item' ) {
+					return $response;
+				}
+
+				$order_id = $tracking_item['order_id'] ?? 0;
+				$wc_order = wc_get_order( $order_id );
+				if ( ! is_a( $wc_order, WC_Order::class ) ) {
+					return $response;
+				}
+
+				$transaction_id  = $wc_order->get_transaction_id();
+				$tracking_number = $tracking_item['tracking_number'] ?? '';
+				$carrier         = $tracking_item['tracking_provider'] ?? '';
+				$carrier_other   = $tracking_item['custom_tracking_provider'] ?? '';
+				$carrier         = $carrier ?: $carrier_other ?: '';
+
+				if ( ! $tracking_number || ! $carrier || ! $transaction_id ) {
+					return $response;
+				}
+
+				$this->create_tracking( $c, $order_id, $transaction_id, $tracking_number, $carrier, array() );
+
+				return $response;
+			},
+			10,
+			3
+		);
+	}
+
+	/**
+	 * Sets up the <a href="https://wordpress.org/plugins/yith-woocommerce-order-tracking/">YITH WooCommerce Order & Shipment Tracking</a>
+	 * plugin compatibility layer.
+	 *
+	 * @link https://wordpress.org/plugins/yith-woocommerce-order-tracking/
+	 *
+	 * @param ContainerInterface $c The Container.
+	 * @return void
+	 */
+	protected function initialize_ywot_compat_layer( ContainerInterface $c ): void {
+		add_action(
+			'woocommerce_process_shop_order_meta',
+			function( int $order_id ) use ( $c ) {
+				if ( ! apply_filters( 'woocommerce_paypal_payments_sync_ywot_tracking', true ) ) {
+					return;
+				}
+
+				$wc_order = wc_get_order( $order_id );
+				if ( ! is_a( $wc_order, WC_Order::class ) ) {
+					return;
+				}
+
+				$transaction_id = $wc_order->get_transaction_id();
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing
+				$tracking_number = wc_clean( wp_unslash( $_POST['ywot_tracking_code'] ?? '' ) );
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing
+				$carrier = wc_clean( wp_unslash( $_POST['ywot_carrier_name'] ?? '' ) );
+
+				if ( ! $tracking_number || ! is_string( $tracking_number ) || ! $carrier || ! is_string( $carrier ) || ! $transaction_id ) {
+					return;
+				}
+
+				$this->create_tracking( $c, $order_id, $transaction_id, $tracking_number, $carrier, array() );
+			},
+			500,
+			1
+		);
+	}
+
+	/**
+	 * Creates PayPal tracking.
+	 *
+	 * @param ContainerInterface $c The Container.
+	 * @param int                $wc_order_id The WC order ID.
+	 * @param string             $transaction_id The transaction ID.
+	 * @param string             $tracking_number The tracking number.
+	 * @param string             $carrier The shipment carrier.
+	 * @param int[]              $line_items The list of shipment line item IDs.
+	 * @return void
+	 */
+	protected function create_tracking(
+		ContainerInterface $c,
+		int $wc_order_id,
+		string $transaction_id,
+		string $tracking_number,
+		string $carrier,
+		array $line_items
+	) {
 		$endpoint = $c->get( 'order-tracking.endpoint.controller' );
 		assert( $endpoint instanceof OrderTrackingEndpoint );
 
 		$logger = $c->get( 'woocommerce.logger.woocommerce' );
 		assert( $logger instanceof LoggerInterface );
 
-		add_action(
-			'woocommerce_gzd_shipment_status_shipped',
-			static function( int $shipment_id, Shipment $shipment ) use ( $endpoint, $logger ) {
-				if ( ! apply_filters( 'woocommerce_paypal_payments_sync_gzd_tracking', true ) ) {
-					return;
-				}
+		$shipment_factory = $c->get( 'order-tracking.shipment.factory' );
+		assert( $shipment_factory instanceof ShipmentFactoryInterface );
 
-				$wc_order = $shipment->get_order();
-				if ( ! is_a( $wc_order, WC_Order::class ) ) {
-					return;
-				}
+		try {
+			$ppcp_shipment = $shipment_factory->create_shipment(
+				$wc_order_id,
+				$transaction_id,
+				$tracking_number,
+				'SHIPPED',
+				'OTHER',
+				$carrier,
+				$line_items
+			);
 
-				$transaction_id = $wc_order->get_transaction_id();
-				if ( empty( $transaction_id ) ) {
-					return;
-				}
+			$tracking_information = $endpoint->get_tracking_information( $wc_order_id, $tracking_number );
 
-				$tracking_data = array(
-					'transaction_id' => $transaction_id,
-					'status'         => 'SHIPPED',
-				);
+			$tracking_information
+				? $endpoint->update_tracking_information( $ppcp_shipment, $wc_order_id )
+				: $endpoint->add_tracking_information( $ppcp_shipment, $wc_order_id );
 
-				$provider = $shipment->get_shipping_provider();
-				if ( ! empty( $provider ) && $provider !== 'none' ) {
-					/**
-					 * The filter allowing to change the default Germanized carrier for order tracking,
-					 * such as DHL_DEUTSCHE_POST, DPD_DE, ...
-					 */
-					$tracking_data['carrier'] = (string) apply_filters( 'woocommerce_paypal_payments_default_gzd_carrier', 'DHL_DEUTSCHE_POST', $provider );
-				}
-
-				try {
-					$tracking_information = $endpoint->get_tracking_information( $wc_order->get_id() );
-
-					$tracking_data['tracking_number'] = $tracking_information['tracking_number'] ?? '';
-
-					if ( $shipment->get_tracking_id() ) {
-						$tracking_data['tracking_number'] = $shipment->get_tracking_id();
-					}
-
-					! $tracking_information ? $endpoint->add_tracking_information( $tracking_data, $wc_order->get_id() ) : $endpoint->update_tracking_information( $tracking_data, $wc_order->get_id() );
-				} catch ( Exception $exception ) {
-					$logger->error( "Couldn't sync tracking information: " . $exception->getMessage() );
-				}
-			},
-			500,
-			2
-		);
+		} catch ( Exception $exception ) {
+			$logger->error( "Couldn't sync tracking information: " . $exception->getMessage() );
+		}
 	}
 
 	/**

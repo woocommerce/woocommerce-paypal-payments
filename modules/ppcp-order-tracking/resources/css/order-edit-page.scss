@@ -1,8 +1,4 @@
 #ppcp_order-tracking {
-	.tracking-info-message {
-		padding-left: 20px;
-	}
-
 	.error {
 		color: red;
 		font-weight: bold;
@@ -13,8 +9,132 @@
 		font-weight: bold;
 	}
 
-	input,select {
+	input:not([type="checkbox"]),select {
 		width: 100%;
 	}
+
+	#items-select-container {
+		display:none
+	}
+
+	.ppcp-tracking-columns-wrapper {
+		display: grid;
+		grid-template-columns: 1fr 2fr;
+		grid-gap: 60px;
+
+		.ppcp-tracking-column + .ppcp-tracking-column {
+			border-left: 1px solid #c3c4c7;
+			padding-left: 20px;
+		}
+	}
+
+	.ppcp-shipment {
+
+		border: 1px solid #ccc;
+		border-radius: 4px;
+		background: #fff;
+		margin: 20px 0px;
+
+		.wc-order-item-sku {
+			font-size: .92em!important;
+			color: #888;
+		}
+
+		.ppcp-shipment-header {
+
+			padding: 0px 10px;
+			cursor: pointer;
+			background: #f0f0f1;
+
+			h4 {
+				display: inline-block;
+				margin: 10px 0px;
+			}
+
+			button {
+				float: right;
+				border: 0;
+				background: 0 0;
+				cursor: pointer;
+				height: 38px;
+			}
+		}
+
+		.ppcp-shipment-info {
+			padding: 0px 10px 20px 10px;
+		}
+
+		.ppcp-shipment-info.hidden {
+			display: none;
+		}
+
+		.select2-container--default .select2-selection__rendered {
+			font-weight: bold;
+		}
+
+		.active .ppcp-shipment-header {
+			background-color: #e0e0e0;
+			border-bottom: 1px solid #ccc;
+		}
+
+		select {
+			width: auto;
+		}
+	}
+
+	.ppcp-shipment.closed {
+		.ppcp-shipment-header .shipment-toggle-indicator .toggle-indicator:before {
+			content: "\f140";
+		}
+	}
+
+	.ppcp-tracking-loader {
+		z-index: 1000;
+		border: none;
+		margin: 0px;
+		padding: 0px;
+		width: 100%;
+		height: 100%;
+		top: 0px;
+		left: 0px;
+		background: rgb(255, 255, 255);
+		opacity: 0.6;
+		cursor: wait;
+		position: absolute;
+		display: none;
+	}
+
+	@keyframes spin {
+		0% { transform: rotate(0deg); }
+		100% { transform: rotate(360deg); }
+	}
 }
+
+.ppcp-remove-tracking-item {
+	color: #b32d2e;
+	font-size: 14px;
+	cursor: pointer;
+}
+
+#side-sortables #ppcp_order-tracking {
+	.ppcp-tracking-columns-wrapper {
+		display: block;
+	}
+
+	.ppcp-tracking-columns-wrapper .ppcp-tracking-column+.ppcp-tracking-column {
+		border-top: 1px solid #c3c4c7;
+		padding-left: 0px;
+		margin-top: 20px;
+		border-left: none;
+	}
+
+	.update_shipment {
+		margin-top: 20px;
+	}
+
+	.select2-container {
+		width: 100% !important;
+	}
+}
+
 

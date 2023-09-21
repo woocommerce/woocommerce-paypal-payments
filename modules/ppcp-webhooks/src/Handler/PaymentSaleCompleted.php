@@ -80,6 +80,11 @@ class PaymentSaleCompleted implements RequestHandler {
 			return $this->failure_response( 'Could not retrieve billing agreement id for subscription.' );
 		}
 
+		$transaction_id = wc_clean( wp_unslash( $request['resource']['id'] ?? '' ) );
+		if ( ! $transaction_id || ! is_string( $transaction_id ) ) {
+			return $this->failure_response( 'Could not retrieve transaction id for subscription.' );
+		}
+
 		$args          = array(
 			// phpcs:ignore WordPress.DB.SlowDBQuery
 			'meta_query' => array(
@@ -92,24 +97,22 @@ class PaymentSaleCompleted implements RequestHandler {
 		);
 		$subscriptions = wcs_get_subscriptions( $args );
 		foreach ( $subscriptions as $subscription ) {
-			$transaction_id = wc_clean( wp_unslash( $request['resource']['id'] ?? '' ) );
-			if ( $transaction_id && is_string( $transaction_id ) ) {
-				$is_renewal = $subscription->get_meta( '_ppcp_is_subscription_renewal' ) ?? '';
-				if ( $is_renewal ) {
-					$renewal_order = wcs_create_renewal_order( $subscription );
-					if ( is_a( $renewal_order, WC_Order::class ) ) {
-						$renewal_order->payment_complete();
-						$this->update_transaction_id( $transaction_id, $renewal_order, $this->logger );
-						break;
-					}
+			$is_renewal = $subscription->get_meta( '_ppcp_is_subscription_renewal' ) ?? '';
+			if ( $is_renewal ) {
+				$renewal_order = wcs_create_renewal_order( $subscription );
+				if ( is_a( $renewal_order, WC_Order::class ) ) {
+					$renewal_order->set_payment_method( $subscription->get_payment_method() );
+					$renewal_order->payment_complete();
+					$this->update_transaction_id( $transaction_id, $renewal_order, $this->logger );
+					break;
 				}
+			}
 
-				$parent_order = wc_get_order( $subscription->get_parent() );
-				if ( is_a( $parent_order, WC_Order::class ) ) {
-					$subscription->update_meta_data( '_ppcp_is_subscription_renewal', 'true' );
-					$subscription->save_meta_data();
-					$this->update_transaction_id( $transaction_id, $parent_order, $this->logger );
-				}
+			$parent_order = wc_get_order( $subscription->get_parent() );
+			if ( is_a( $parent_order, WC_Order::class ) ) {
+				$subscription->update_meta_data( '_ppcp_is_subscription_renewal', 'true' );
+				$subscription->save_meta_data();
+				$this->update_transaction_id( $transaction_id, $parent_order, $this->logger );
 			}
 		}
 

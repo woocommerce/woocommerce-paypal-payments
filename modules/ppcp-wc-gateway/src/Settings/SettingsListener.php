@@ -211,7 +211,7 @@ class SettingsListener {
 		}
 
 		$merchant_id      = sanitize_text_field( wp_unslash( $_GET['merchantIdInPayPal'] ) );
-		$merchant_email   = sanitize_text_field( wp_unslash( $_GET['merchantId'] ) );
+		$merchant_email   = $this->sanitize_onboarding_email( sanitize_text_field( wp_unslash( $_GET['merchantId'] ) ) );
 		$onboarding_token = sanitize_text_field( wp_unslash( $_GET['ppcpToken'] ) );
 		$retry_count      = isset( $_GET['ppcpRetry'] ) ? ( (int) sanitize_text_field( wp_unslash( $_GET['ppcpRetry'] ) ) ) : 0;
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
@@ -279,6 +279,16 @@ class SettingsListener {
 	}
 
 	/**
+	 * Sanitizes the onboarding email.
+	 *
+	 * @param string $email The onboarding email.
+	 * @return string
+	 */
+	private function sanitize_onboarding_email( string $email ): string {
+		return str_replace( ' ', '+', $email );
+	}
+
+	/**
 	 * Redirect to the onboarding URL.
 	 *
 	 * @param bool $success Should redirect to the success or error URL.
@@ -330,7 +340,20 @@ class SettingsListener {
 		 * phpcs:disable WordPress.Security.NonceVerification.Missing
 		 * phpcs:disable WordPress.Security.NonceVerification.Recommended
 		 */
-		if ( ! isset( $_POST['ppcp']['vault_enabled'] ) ) {
+		$vault_enabled     = wc_clean( wp_unslash( $_POST['ppcp']['vault_enabled'] ?? '' ) );
+		$subscription_mode = wc_clean( wp_unslash( $_POST['ppcp']['subscriptions_mode'] ?? '' ) );
+
+		if ( $subscription_mode === 'vaulting_api' && $vault_enabled !== '1' ) {
+			$this->settings->set( 'vault_enabled', true );
+			$this->settings->persist();
+		}
+
+		if ( $subscription_mode === 'disable_paypal_subscriptions' && $vault_enabled === '1' ) {
+			$this->settings->set( 'vault_enabled', false );
+			$this->settings->persist();
+		}
+
+		if ( $vault_enabled !== '1' ) {
 			return;
 		}
 
@@ -391,6 +414,7 @@ class SettingsListener {
 			if ( self::CREDENTIALS_UNCHANGED !== $credentials_change_status ) {
 				$this->settings->set( 'products_dcc_enabled', null );
 				$this->settings->set( 'products_pui_enabled', null );
+				do_action( 'woocommerce_paypal_payments_clear_apm_product_status', $this->settings );
 			}
 
 			if ( in_array(
@@ -401,9 +425,7 @@ class SettingsListener {
 				$this->webhook_registrar->unregister();
 
 				foreach ( $this->signup_link_ids as $key ) {
-					if ( $this->signup_link_cache->has( $key ) ) {
-						$this->signup_link_cache->delete( $key );
-					}
+					( new OnboardingUrl( $this->signup_link_cache, $key, get_current_user_id() ) )->delete();
 				}
 			}
 		}
@@ -424,6 +446,11 @@ class SettingsListener {
 		if ( $this->dcc_status_cache->has( DCCProductStatus::DCC_STATUS_CACHE_KEY ) ) {
 			$this->dcc_status_cache->delete( DCCProductStatus::DCC_STATUS_CACHE_KEY );
 		}
+
+		/**
+		 * The hook fired during listening the request so a module can remove also the cache or other logic.
+		 */
+		do_action( 'woocommerce_paypal_payments_on_listening_request' );
 
 		$ppcp_reference_transaction_enabled = get_transient( 'ppcp_reference_transaction_enabled' ) ?? '';
 		if ( $ppcp_reference_transaction_enabled ) {
@@ -541,6 +568,7 @@ class SettingsListener {
 					break;
 				case 'text':
 				case 'number':
+				case 'email':
 					$settings[ $key ] = isset( $raw_data[ $key ] ) ? wp_kses_post( $raw_data[ $key ] ) : '';
 					break;
 				case 'ppcp-password':
@@ -638,4 +666,15 @@ class SettingsListener {
 			throw $exception;
 		}
 	}
+
+	/**
+	 * Handles onboarding URLs deletion
+	 */
+	public function listen_for_uninstall(): void {
+		// Clear onboarding links from cache.
+		foreach ( $this->signup_link_ids as $key ) {
+			( new OnboardingUrl( $this->signup_link_cache, $key, get_current_user_id() ) )->delete();
+		}
+	}
+
 }

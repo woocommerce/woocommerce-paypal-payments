@@ -98,7 +98,7 @@ class PPECHelper {
 		set_transient(
 			'ppcp_has_ppec_subscriptions',
 			! empty( $result ) ? 'true' : 'false',
-			3 * MONTH_IN_SECONDS
+			MONTH_IN_SECONDS
 		);
 
 		return ! empty( $result );

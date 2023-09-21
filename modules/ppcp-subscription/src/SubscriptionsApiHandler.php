@@ -19,11 +19,14 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\BillingCycleFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentPreferencesFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ProductFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\ItemTrait;
 
 /**
  * Class SubscriptionsApiHandler
  */
 class SubscriptionsApiHandler {
+
+	use ItemTrait;
 
 	/**
 	 * Catalog products.
@@ -178,7 +181,7 @@ class SubscriptionsApiHandler {
 						$data[] = (object) array(
 							'op'    => 'replace',
 							'path'  => '/description',
-							'value' => $product->get_description(),
+							'value' => $this->prepare_description( $product->get_description() ) ?: '',
 						);
 					}
 
@@ -208,7 +211,7 @@ class SubscriptionsApiHandler {
 				$subscription_plan = $this->billing_plans_endpoint->plan( $subscription_plan_id );
 
 				$price = $subscription_plan->billing_cycles()[0]->pricing_scheme()['fixed_price']['value'] ?? '';
-				if ( $price && round( $price, 2 ) !== round( (float) $product->get_price(), 2 ) ) {
+				if ( $price && round( (float) $price, 2 ) !== round( (float) $product->get_price(), 2 ) ) {
 					$this->billing_plans_endpoint->update_pricing(
 						$subscription_plan_id,
 						$this->billing_cycle_factory->from_wc_product( $product )
