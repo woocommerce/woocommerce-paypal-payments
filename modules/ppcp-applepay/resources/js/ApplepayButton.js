@@ -2,6 +2,8 @@ import ContextHandlerFactory from "./Context/ContextHandlerFactory";
 import {createAppleErrors} from "./Helper/applePayError";
 import {setVisible} from '../../../ppcp-button/resources/js/modules/Helper/Hiding';
 import {setEnabled} from '../../../ppcp-button/resources/js/modules/Helper/ButtonDisabler';
+import FormValidator from "../../../ppcp-button/resources/js/modules/Helper/FormValidator";
+import ErrorHandler from '../../../ppcp-button/resources/js/modules/ErrorHandler';
 
 class ApplepayButton {
 
@@ -13,6 +15,7 @@ class ApplepayButton {
         this.buttonConfig = buttonConfig;
         this.ppcpConfig = ppcpConfig;
         this.paymentsClient = null;
+        this.form_saved = false;
 
         this.contextHandler = ContextHandlerFactory.create(
             this.context,
@@ -42,14 +45,14 @@ class ApplepayButton {
         if (isEligible) {
             this.fetchTransactionInfo().then(() => {
                 const isSubscriptionProduct = this.ppcpConfig.data_client_id.has_subscriptions === true;
-                if(isSubscriptionProduct) {
+                if (isSubscriptionProduct) {
                     return;
                 }
                 this.addButton();
                 const id_minicart = "#apple-" + this.buttonConfig.button.mini_cart_wrapper;
                 const id = "#apple-" + this.buttonConfig.button.wrapper;
 
-                if(this.context === 'mini-cart') {
+                if (this.context === 'mini-cart') {
                     document.querySelector(id_minicart).addEventListener('click', (evt) => {
                         evt.preventDefault();
                         this.onButtonClick();
@@ -60,10 +63,13 @@ class ApplepayButton {
                         this.onButtonClick();
                     });
                 }
+
+                // Listen for changes on any input within the WooCommerce checkout form
+                jQuery('form.checkout').on('change', 'input, select, textarea', () => {
+                    this.fetchTransactionInfo();
+                });
             });
         }
-        console.log('[ApplePayButton] init done', this.buttonConfig.ajax_url);
-
     }
     async fetchTransactionInfo() {
         this.transactionInfo = await this.contextHandler.transactionInfo();
@@ -94,11 +100,12 @@ class ApplepayButton {
     }
     initEventHandlers() {
         const { wrapper, ppcpButtonWrapper } = this.contextConfig();
+        const wrapper_id = '#' + wrapper;
 
         const syncButtonVisibility = () => {
             const $ppcpButtonWrapper = jQuery(ppcpButtonWrapper);
-            setVisible(wrapper, $ppcpButtonWrapper.is(':visible'));
-            setEnabled(wrapper, !$ppcpButtonWrapper.hasClass('ppcp-disabled'));
+            setVisible(wrapper_id, $ppcpButtonWrapper.is(':visible'));
+            setEnabled(wrapper_id, !$ppcpButtonWrapper.hasClass('ppcp-disabled'));
         }
 
         jQuery(document).on('ppcp-shown ppcp-hidden ppcp-enabled ppcp-disabled', (ev, data) => {
@@ -120,6 +127,7 @@ class ApplepayButton {
         }
         session.onvalidatemerchant = this.onvalidatemerchant(session);
         session.onpaymentauthorized = this.onpaymentauthorized(session);
+        return session;
     }
 
 
@@ -129,19 +137,15 @@ class ApplepayButton {
      * Add a Apple Pay purchase button
      */
     addButton() {
-        console.log('[ApplePayButton] context', this.context);
         const wrapper =
             (this.context === 'mini-cart')
                 ? this.buttonConfig.button.mini_cart_wrapper
                 : this.buttonConfig.button.wrapper;
-console.log('[ApplePayButton] wrapper', wrapper)
         const shape =
             (this.context === 'mini-cart')
                 ? this.ppcpConfig.button.mini_cart_style.shape
                 : this.ppcpConfig.button.style.shape;
         const appleContainer = this.context === 'mini-cart' ? document.getElementById("applepay-container-minicart") : document.getElementById("applepay-container");
-        console.log('[ApplePayButton] shape', shape)
-        console.log('[ApplePayButton] container', appleContainer)
         const type = this.buttonConfig.button.type;
         const language = this.buttonConfig.button.lang;
         const color = this.buttonConfig.button.color;
@@ -150,7 +154,6 @@ console.log('[ApplePayButton] wrapper', wrapper)
 
         jQuery('#' + wrapper).addClass('ppcp-button-' + shape);
         jQuery(wrapper).append(appleContainer);
-        console.log('[ApplePayButton] addButton', wrapper, appleContainer);
     }
 
     //------------------------
@@ -160,11 +163,56 @@ console.log('[ApplePayButton] wrapper', wrapper)
     /**
      * Show Apple Pay payment sheet when Apple Pay payment button is clicked
      */
-    onButtonClick() {
+    async onButtonClick() {
         const paymentDataRequest = this.paymentDataRequest();
-        console.log('[ApplePayButton] onButtonClick: paymentDataRequest', paymentDataRequest, this.context);
-
+        // trigger woocommerce validation if we are in the checkout page
+        if (this.context === 'checkout') {
+            const checkoutFormSelector = 'form.woocommerce-checkout';
+            const errorHandler = new ErrorHandler(
+                PayPalCommerceGateway.labels.error.generic,
+                document.querySelector('.woocommerce-notices-wrapper')
+            );
+            try {
+                const formData = new FormData(document.querySelector(checkoutFormSelector));
+                this.form_saved = Object.fromEntries(formData.entries());
+                this.update_request_data_with_form(paymentDataRequest);
+            } catch (error) {
+                console.error(error);
+            }
+            const session = this.applePaySession(paymentDataRequest)
+            console.log("session", session)
+            const formValidator = PayPalCommerceGateway.early_checkout_validation_enabled ?
+                new FormValidator(
+                    PayPalCommerceGateway.ajax.validate_checkout.endpoint,
+                    PayPalCommerceGateway.ajax.validate_checkout.nonce,
+                ) : null;
+            if (formValidator) {
+                try {
+                    const errors = await formValidator.validate(document.querySelector(checkoutFormSelector));
+                    if (errors.length > 0) {
+                        errorHandler.messages(errors);
+                        // fire WC event for other plugins
+                        jQuery( document.body ).trigger( 'checkout_error' , [ errorHandler.currentHtml() ] );
+                        // stop Apple Pay payment sheet from showing
+                        session.abort();
+                        return;
+                    }
+                } catch (error) {
+                    console.error(error);
+                }
+            }
+            return;
+        }
         this.applePaySession(paymentDataRequest)
+    }
+
+    update_request_data_with_form(paymentDataRequest) {
+        paymentDataRequest.billingContact = this.fill_billing_contact(this.form_saved);
+        paymentDataRequest.applicationData = this.fill_application_data(this.form_saved);
+        if (!this.buttonConfig.product.needShipping) {
+            return;
+        }
+        paymentDataRequest.shippingContact = this.fill_shipping_contact(this.form_saved);
     }
 
     paymentDataRequest() {
@@ -174,12 +222,9 @@ console.log('[ApplePayButton] wrapper', wrapper)
             countryCode: applepayConfig.countryCode,
             merchantCapabilities: applepayConfig.merchantCapabilities,
             supportedNetworks: applepayConfig.supportedNetworks,
-            requiredShippingContactFields: ["name", "phone",
-                "email", "postalAddress"],
-            requiredBillingContactFields: ["name", "phone", "email",
-                "postalAddress"]
+            requiredShippingContactFields: ["postalAddress"],
+            requiredBillingContactFields: ["postalAddress"]
         }
-        console.log('[ApplePayButton] paymentDataRequest', applepayConfig, buttonConfig);
         const paymentDataRequest = Object.assign({}, baseRequest);
         paymentDataRequest.currencyCode = buttonConfig.shop.currencyCode;
         paymentDataRequest.total = {
@@ -197,6 +242,7 @@ console.log('[ApplePayButton] wrapper', wrapper)
     //------------------------
 
     onvalidatemerchant(session) {
+        console.log("onvalidatemerchant")
         return (applePayValidateMerchantEvent) => {
             paypal.Applepay().validateMerchant({
                 validationUrl: applePayValidateMerchantEvent.validationURL
@@ -234,7 +280,6 @@ console.log('[ApplePayButton] wrapper', wrapper)
     onshippingmethodselected(session) {
         const ajax_url = this.buttonConfig.ajax_url
         console.log('[ApplePayButton] onshippingmethodselected');
-
         return (event) => {
             const data = this.getShippingMethodData(event);
             jQuery.ajax({
@@ -271,7 +316,7 @@ console.log('[ApplePayButton] wrapper', wrapper)
     }
     onshippingcontactselected(session) {
         const ajax_url = this.buttonConfig.ajax_url
-
+        console.log('[ApplePayButton] onshippingcontactselected', ajax_url, session)
         return (event) => {
             const data = this.getShippingContactData(event);
             console.log('shipping contact selected', data, event)
@@ -514,6 +559,44 @@ console.log('[ApplePayButton] wrapper', wrapper)
          return response;
      }*/
 
+    fill_billing_contact(form_saved) {
+        return {
+            givenName: form_saved.billing_first_name ?? '',
+            familyName: form_saved.billing_last_name ?? '',
+            emailAddress: form_saved.billing_email  ?? '',
+            phoneNumber: form_saved.billing_phone ?? '',
+            addressLines: [form_saved.billing_address_1, form_saved.billing_address_2],
+            locality: form_saved.billing_city ?? '',
+            postalCode: form_saved.billing_postcode ?? '',
+            countryCode: form_saved.billing_country ?? '',
+            administrativeArea: form_saved.billing_state ?? '',
+        }
+    }
+    fill_shipping_contact(form_saved) {
+        if (form_saved.shipping_first_name === "") {
+            return this.fill_billing_contact(form_saved)
+        }
+        return {
+            givenName: (form_saved?.shipping_first_name && form_saved.shipping_first_name !== "") ? form_saved.shipping_first_name : form_saved?.billing_first_name,
+            familyName: (form_saved?.shipping_last_name && form_saved.shipping_last_name !== "") ? form_saved.shipping_last_name : form_saved?.billing_last_name,
+            emailAddress: (form_saved?.shipping_email && form_saved.shipping_email !== "") ? form_saved.shipping_email : form_saved?.billing_email,
+            phoneNumber: (form_saved?.shipping_phone && form_saved.shipping_phone !== "") ? form_saved.shipping_phone : form_saved?.billing_phone,
+            addressLines: [form_saved.shipping_address_1 ?? '', form_saved.shipping_address_2 ?? ''],
+            locality: (form_saved?.shipping_city && form_saved.shipping_city !== "") ? form_saved.shipping_city : form_saved?.billing_city,
+            postalCode: (form_saved?.shipping_postcode && form_saved.shipping_postcode !== "") ? form_saved.shipping_postcode : form_saved?.billing_postcode,
+            countryCode: (form_saved?.shipping_country && form_saved.shipping_country !== "") ? form_saved.shipping_country : form_saved?.billing_country,
+            administrativeArea: (form_saved?.shipping_state && form_saved.shipping_state !== "") ? form_saved.shipping_state : form_saved?.billing_state,
+        }
+    }
+
+    fill_application_data(form_saved) {
+        const jsonString = JSON.stringify(form_saved);
+        let utf8Str = encodeURIComponent(jsonString).replace(/%([0-9A-F]{2})/g, (match, p1) => {
+            return String.fromCharCode('0x' + p1);
+        });
+
+        return btoa(utf8Str);
+    }
 }
 
 export default ApplepayButton;
