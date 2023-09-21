@@ -1554,7 +1554,7 @@ class SmartButton implements SmartButtonInterface {
 
 		$intent = $this->settings->has( 'intent' ) ? $this->settings->get( 'intent' ) : 'capture';
 
-		return strtolower( apply_filters( 'woocommerce_paypal_payments_saved_payment_subscription_intent', $intent ) );
+		return strtolower( apply_filters( 'woocommerce_paypal_payments_order_intent', $intent ) );
 	}
 
 	/**

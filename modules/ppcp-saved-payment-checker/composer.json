@@ -1,5 +1,5 @@
 {
-    "name": "woocommerce/ppcp-saved-payment-checked",
+    "name": "woocommerce/ppcp-saved-payment-checker",
     "type": "dhii-mod",
     "description": "Saved payments checker module",
     "license": "GPL-2.0",

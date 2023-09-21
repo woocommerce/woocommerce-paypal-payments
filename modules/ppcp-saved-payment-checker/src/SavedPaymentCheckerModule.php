@@ -41,7 +41,7 @@ class SavedPaymentCheckerModule implements ModuleInterface {
 		 * Set authorize intent for vaulted subscriptions, so we can void if payment not saved.
 		 */
 		add_filter(
-			'woocommerce_paypal_payments_saved_payment_subscription_intent',
+			'woocommerce_paypal_payments_order_intent',
 			function( string $intent ) use ( $c ) {
 				$subscription_helper = $c->get( 'subscription.helper' );
 				assert( $subscription_helper instanceof SubscriptionHelper );

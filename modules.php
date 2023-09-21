@@ -46,7 +46,7 @@ return function ( string $root_dir ): iterable {
 
 	if ( apply_filters(
 		//phpcs:disable WordPress.NamingConventions.ValidHookName.UseUnderscores
-		'woocommerce.deprecated-flags.woocommerce_paypal_payments.saved_payment_checker_enabled',
+		'woocommerce.deprecated_flags.woocommerce_paypal_payments.saved_payment_checker_enabled',
 		getenv( 'PCP_SAVED_PAYMENT_CHECKER_ENABLED' ) === '1'
 	) ) {
 		$modules[] = ( require "$modules_dir/ppcp-saved-payment-checker/module.php" )();
