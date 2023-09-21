@@ -194,7 +194,7 @@ class OrderEndpoint {
 	): Order {
 		$bearer = $this->bearer->bearer();
 		$data   = array(
-			'intent'              => ( $this->subscription_helper->cart_contains_subscription() || $this->subscription_helper->current_product_is_subscription() ) ? 'AUTHORIZE' : $this->intent,
+			'intent'              => apply_filters( 'woocommerce_paypal_payments_order_intent', $this->intent ),
 			'purchase_units'      => array_map(
 				static function ( PurchaseUnit $item ) use ( $shipping_preference ): array {
 					$data = $item->to_array();

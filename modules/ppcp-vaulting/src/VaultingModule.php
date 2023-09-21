@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Vaulting;
 
+use Psr\Log\LoggerInterface;
 use RuntimeException;
 use WC_Payment_Token;
 use WC_Payment_Tokens;
@@ -16,9 +17,6 @@ use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use Psr\Log\LoggerInterface;
-use WC_Order;
-use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
@@ -67,19 +65,6 @@ class VaultingModule implements ModuleInterface {
 				}
 			}
 		);
-
-		add_action(
-			'woocommerce_paypal_payments_check_saved_payment',
-			function ( int $order_id, int $customer_id, string $intent ) use ( $container ) {
-				$payment_token_checker = $container->get( 'vaulting.payment-token-checker' );
-				assert( $payment_token_checker instanceof PaymentTokenChecker );
-				$payment_token_checker->check_and_update( $order_id, $customer_id, $intent );
-			},
-			10,
-			3
-		);
-
-		$this->filterFailedVaultingEmailsForSubscriptionOrders( $container );
 
 		add_filter(
 			'woocommerce_payment_token_class',
@@ -272,94 +257,7 @@ class VaultingModule implements ModuleInterface {
 	}
 
 	/**
-	 * Filters the emails when vaulting is failed for subscription orders.
-	 *
-	 * @param ContainerInterface $container A services container instance.
-	 * @throws NotFoundException When service could not be found.
-	 */
-	protected function filterFailedVaultingEmailsForSubscriptionOrders( ContainerInterface $container ):void {
-		add_action(
-			'woocommerce_email_before_order_table',
-			function( WC_Order $order ) use ( $container ) {
-				/**
-				 * The SubscriptionHelper.
-				 *
-				 * @var SubscriptionHelper $subscription_helper
-				 */
-				$subscription_helper = $container->get( 'subscription.helper' );
-
-				/**
-				 * The logger.
-				 *
-				 * @var LoggerInterface $logger
-				 */
-				$logger = $container->get( 'woocommerce.logger.woocommerce' );
-
-				$vault_failed = $order->get_meta( PaymentTokenChecker::VAULTING_FAILED_META_KEY );
-				if ( $subscription_helper->has_subscription( $order->get_id() ) && ! empty( $vault_failed ) ) {
-					$logger->info( "Adding vaulting failure info to email for order #{$order->get_id()}." );
-
-					if ( $vault_failed === 'void_auth' ) {
-						echo wp_kses_post( '<p>' . __( 'The subscription payment failed because the payment method could not be saved. Please try again with a different payment method.', 'woocommerce-paypal-payments' ) . '</p>' );
-					}
-
-					if ( $vault_failed === 'capture_auth' ) {
-						echo wp_kses_post( '<p>' . __( 'The subscription has been activated, but the payment method could not be saved. Please contact the merchant to save a payment method for automatic subscription renewal payments.', 'woocommerce-paypal-payments' ) . '</p>' );
-					}
-				}
-			}
-		);
-
-		add_action(
-			'woocommerce_email_after_order_table',
-			function( WC_Order $order ) use ( $container ) {
-				/**
-				 * The SubscriptionHelper.
-				 *
-				 * @var SubscriptionHelper $subscription_helper
-				 */
-				$subscription_helper = $container->get( 'subscription.helper' );
-
-				/**
-				 * The logger.
-				 *
-				 * @var LoggerInterface $logger
-				 */
-				$logger = $container->get( 'woocommerce.logger.woocommerce' );
-
-				$vault_failed = $order->get_meta( PaymentTokenChecker::VAULTING_FAILED_META_KEY );
-				if ( $subscription_helper->has_subscription( $order->get_id() ) && ! empty( $vault_failed ) ) {
-					$logger->info( "Changing subscription auto-renewal status for order #{$order->get_id()}." );
-
-					if ( $vault_failed === 'capture_auth' ) {
-						$subscriptions = function_exists( 'wcs_get_subscriptions_for_order' ) ? wcs_get_subscriptions_for_order( $order->get_id() ) : array();
-						foreach ( $subscriptions as $subscription ) {
-							$subscription->set_requires_manual_renewal( true );
-							$subscription->save();
-						}
-					}
-				}
-			}
-		);
-	}
-
-	/**
 	 * {@inheritDoc}
 	 */
 	public function getKey() {  }
-
-	/**
-	 * Check if is payments page.
-	 *
-	 * @return bool Whethen page is payments or not.
-	 */
-	private function is_payments_page(): bool {
-		global $wp;
-		$request = explode( '/', wp_parse_url( $wp->request, PHP_URL_PATH ) );
-		if ( end( $request ) === 'ppcp-paypal-payment-tokens' ) {
-			return true;
-		}
-
-		return false;
-	}
 }

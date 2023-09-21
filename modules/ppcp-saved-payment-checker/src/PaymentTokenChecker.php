@@ -7,17 +7,17 @@
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\Vaulting;
+namespace WooCommerce\PayPalCommerce\SavedPaymentChecker;
 
 use Exception;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokenEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\OrderRepository;
 use WooCommerce\PayPalCommerce\Subscription\FreeTrialHandlerTrait;
+use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
@@ -201,6 +201,32 @@ class PaymentTokenChecker {
 
 				break;
 		}
+	}
+
+	/**
+	 * Schedules the vaulted payment check.
+	 *
+	 * @param int $wc_order_id The WC order ID.
+	 * @param int $customer_id The customer ID.
+	 */
+	public function schedule_saved_payment_check( int $wc_order_id, int $customer_id ): void {
+		$timestamp = 3 * MINUTE_IN_SECONDS;
+		if (
+			$this->settings->has( 'subscription_behavior_when_vault_fails' )
+			&& $this->settings->get( 'subscription_behavior_when_vault_fails' ) === 'capture_auth'
+		) {
+			$timestamp = 0;
+		}
+
+		as_schedule_single_action(
+			time() + $timestamp,
+			'woocommerce_paypal_payments_check_saved_payment',
+			array(
+				'order_id'    => $wc_order_id,
+				'customer_id' => $customer_id,
+				'intent'      => $this->settings->has( 'intent' ) ? $this->settings->get( 'intent' ) : '',
+			)
+		);
 	}
 
 	/**

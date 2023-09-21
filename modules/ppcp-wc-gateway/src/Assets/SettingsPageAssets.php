@@ -233,6 +233,13 @@ class SettingsPageAssets {
 	 * Register assets for PayPal admin pages.
 	 */
 	private function register_admin_assets(): void {
+		wp_enqueue_style(
+			'ppcp-admin-common',
+			trailingslashit( $this->module_url ) . 'assets/css/common.css',
+			array(),
+			$this->version
+		);
+
 		wp_enqueue_script(
 			'ppcp-admin-common',
 			trailingslashit( $this->module_url ) . 'assets/js/common.js',
