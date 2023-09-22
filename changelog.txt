@@ -7,6 +7,12 @@
 * Fix - Since version > 2.2.0 the PayPal Checkout button on single product pages does not redirect anymore #1664
 * Fix - PayPal fee and PayPal Payout do not change on order if we do partial refund #1578
 * Fix - Order does not contain intent error when using ACDC payment token while buyer is not present #1506
+* Fix - Error when product description linked with a PayPal subscription exceeds 127 characters #1700
+* Fix - $_POST uses the wrong key to hold the shipping method #1652
+* Fix - WC Payment Token created multiple times when webhook is received #1663
+* Fix - Subtotal mismatch line name shows on Account settings page when merchant is disconnected #1702
+* Fix - Warning prevents payments on Pay for Order page when debugging is enabled #1703
+* Fix - paypal-overlay-uid_ blocks page after closing PayPal popup on Pay for Order page | Terms checkbox validation fails on Pay for Order page #1704
 * Enhancement - Add support for HPOS for tracking module #1676
 * Enhancement - Billing agreements endpoint called too frequently for Reference Transactions check #1646
 * Enhancement - Do not declare subscription support for PayPal when only ACDC vaulting #1669
@@ -21,6 +27,20 @@
 * Enhancement - Compatibility with WooCommerce Product Add-Ons plugin #1586
 * Enhancement - Remove "no shipment" message after adding tracking #1674
 * Enhancement - Improve error & success validation messages #1675
+* Enhancement - Compatibility with third-party "Product Add-Ons" plugins #1601
+* Enhancement - PayPal logo flashes when switching between tabs #1345
+* Enhancement - Include url & image_url in create order call #1649
+* Enhancement - Include item_url & image_url to tracking call #1712
+* Enhancement - Update strings for tracking metabox #1714
+* Enhancement - Validate email address API credentials field #1691
+* Enhancement - Set payment method title for order edit page only if our gateway #1661
+* Enhancement - Fix missing Pay Later messages in cart + refactoring #1683
+* Enhancement - Product page PP button keep loading popup - "wc_add_to_cart_params is not defined" error in WooCommerce #1655
+* Enhancement - Remove PayPal Subscriptions API feature flag #1690
+* Enhancement - Don't send image_url when it is empty #1678
+* Enhancement - Subscription support depending on Vaulting setting instead of subscription mode setting #1697
+* Enhancement - Wrong PayPal subscription id on vaulted subscriptions #1699
+* Enhancement - Remove payment vaulted checker functionality (2030) #1711
 * Feature preview - Apple Pay integration #1514
 * Feature preview - Google Pay integration #1654
 
