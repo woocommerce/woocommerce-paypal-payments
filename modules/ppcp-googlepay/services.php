@@ -16,6 +16,7 @@ use WooCommerce\PayPalCommerce\Googlepay\Assets\BlocksPaymentMethod;
 use WooCommerce\PayPalCommerce\Googlepay\Assets\Button;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmApplies;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmProductStatus;
+use WooCommerce\PayPalCommerce\Googlepay\Helper\AvailabilityNotice;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
@@ -47,6 +48,12 @@ return array(
 			return apply_filters( 'woocommerce_paypal_payments_googlepay_product_status', $status->is_active() );
 		}
 		return true;
+	},
+
+	'googlepay.availability_notice'               => static function ( ContainerInterface $container ): AvailabilityNotice {
+		return new AvailabilityNotice(
+			$container->get( 'googlepay.helpers.apm-product-status' )
+		);
 	},
 
 	'googlepay.helpers.apm-product-status'        => SingletonDecorator::make(
