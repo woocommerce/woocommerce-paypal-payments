@@ -17,7 +17,7 @@ use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 
 /**
- * Class OrderHelper
+ * Class OrderTransient
  */
 class OrderTransient {
 	const CACHE_KEY     = 'order_transient';

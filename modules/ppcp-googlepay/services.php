@@ -61,7 +61,8 @@ return array(
 			return new ApmProductStatus(
 				$container->get( 'wcgateway.settings' ),
 				$container->get( 'api.endpoint.partners' ),
-				$container->get( 'onboarding.state' )
+				$container->get( 'onboarding.state' ),
+				$container->get( 'api.helper.failure-registry' )
 			);
 		}
 	),

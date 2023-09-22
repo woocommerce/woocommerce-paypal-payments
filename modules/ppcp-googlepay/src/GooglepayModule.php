@@ -40,6 +40,17 @@ class GooglepayModule implements ModuleInterface {
 	 */
 	public function run( ContainerInterface $c ): void {
 
+		// Clears product status when appropriate.
+		add_action(
+			'woocommerce_paypal_payments_clear_apm_product_status',
+			function( Settings $settings = null ) use ( $c ): void {
+				$apm_status = $c->get( 'googlepay.helpers.apm-product-status' );
+				assert( $apm_status instanceof ApmProductStatus );
+
+				$apm_status->clear( $settings );
+			}
+		);
+
 		// Check if the module is applicable, correct country, currency, ... etc.
 		if ( ! $c->get( 'googlepay.eligible' ) ) {
 			return;
@@ -113,22 +124,6 @@ class GooglepayModule implements ModuleInterface {
 				return $settings;
 			}
 		);
-
-		// Clears product status when appropriate.
-		add_action(
-			'woocommerce_paypal_payments_clear_apm_product_status',
-			function( Settings $settings = null ) use ( $c ): void {
-				$apm_status = $c->get( 'googlepay.helpers.apm-product-status' );
-				assert( $apm_status instanceof ApmProductStatus );
-
-				if ( ! $settings instanceof Settings ) {
-					$settings = null;
-				}
-
-				$apm_status->clear( $settings );
-			}
-		);
-
 	}
 
 	/**

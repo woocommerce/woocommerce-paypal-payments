@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient;
 
+use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
 use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingSubscriptions;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\CatalogProducts;
@@ -120,7 +121,8 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'api.factory.sellerstatus' ),
 			$container->get( 'api.partner_merchant_id' ),
-			$container->get( 'api.merchant_id' )
+			$container->get( 'api.merchant_id' ),
+			$container->get( 'api.helper.failure-registry' )
 		);
 	},
 	'api.factory.sellerstatus'                  => static function ( ContainerInterface $container ) : SellerStatusFactory {
@@ -845,6 +847,10 @@ return array(
 		$cache                   = new Cache( 'ppcp-paypal-bearer' );
 		$purchase_unit_sanitizer = $container->get( 'api.helper.purchase-unit-sanitizer' );
 		return new OrderTransient( $cache, $purchase_unit_sanitizer );
+	},
+	'api.helper.failure-registry'                => static function( ContainerInterface $container ): FailureRegistry {
+		$cache = new Cache( 'ppcp-paypal-api-status-cache' );
+		return new FailureRegistry( $cache );
 	},
 	'api.helper.purchase-unit-sanitizer'        => SingletonDecorator::make(
 		static function( ContainerInterface $container ): PurchaseUnitSanitizer {
