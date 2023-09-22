@@ -83,7 +83,7 @@ class ApmProductStatus {
 	 * @return bool
 	 */
 	public function is_active() : bool {
-		if ( $this->onboarding_state->current_state() < State::STATE_ONBOARDED ) {
+		if ( ! $this->is_onboarded() ) {
 			return false;
 		}
 
@@ -124,6 +124,15 @@ class ApmProductStatus {
 
 		$this->current_status = false;
 		return $this->current_status;
+	}
+
+	/**
+	 * Returns if the seller is onboarded.
+	 *
+	 * @return bool
+	 */
+	public function is_onboarded(): bool {
+		return $this->onboarding_state->current_state() >= State::STATE_ONBOARDED;
 	}
 
 	/**

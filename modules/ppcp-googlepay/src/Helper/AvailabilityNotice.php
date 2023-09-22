@@ -39,6 +39,10 @@ class AvailabilityNotice {
 	 * @return void
 	 */
 	public function execute(): void {
+		if ( ! $this->product_status->is_onboarded() ) {
+			return;
+		}
+
 		if ( $this->product_status->has_request_failure() ) {
 			$this->add_seller_status_failure_notice();
 		} else {
