@@ -11,7 +11,6 @@ namespace WooCommerce\PayPalCommerce\Applepay\Assets;
 
 use Throwable;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerStatusProduct;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
 use WooCommerce\PayPalCommerce\Onboarding\State;
@@ -128,7 +127,7 @@ class AppleProductStatus {
 		try {
 			$seller_status = $this->partners_endpoint->seller_status();
 		} catch ( Throwable $error ) {
-			$this->has_request_failure = true;
+			$this->has_request_failure  = true;
 			$this->current_status_cache = false;
 			return false;
 		}

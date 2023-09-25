@@ -39,12 +39,14 @@ class FailureRegistry {
 	}
 
 	/**
-	 * @param string $key
-	 * @param int $seconds
+	 * Returns if there was a failure within a given timeframe.
+	 *
+	 * @param string $key The cache key.
+	 * @param int    $seconds The timeframe in seconds.
 	 * @return bool
 	 */
 	public function has_failure_in_timeframe( string $key, int $seconds ): bool {
-		$cache_key = $this->cache_key( $key );
+		$cache_key    = $this->cache_key( $key );
 		$failure_time = $this->cache->get( $cache_key );
 
 		if ( ! $failure_time ) {
@@ -56,7 +58,9 @@ class FailureRegistry {
 	}
 
 	/**
-	 * @param string $key
+	 * Registers a failure.
+	 *
+	 * @param string $key The cache key.
 	 * @return void
 	 */
 	public function add_failure( string $key ) {
@@ -65,7 +69,9 @@ class FailureRegistry {
 	}
 
 	/**
-	 * @param string $key
+	 * Clear a given failure.
+	 *
+	 * @param string $key The cache key.
 	 * @return void
 	 */
 	public function clear_failures( string $key ) {
@@ -79,9 +85,9 @@ class FailureRegistry {
 	 * Build cache key.
 	 *
 	 * @param string $key The cache key.
-	 * @return string|null
+	 * @return string
 	 */
-	private function cache_key( string $key ): ?string {
+	private function cache_key( string $key ): string {
 		return implode( '_', array( self::CACHE_KEY, $key ) );
 	}
 

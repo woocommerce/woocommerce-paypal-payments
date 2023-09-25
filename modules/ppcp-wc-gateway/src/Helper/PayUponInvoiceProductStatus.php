@@ -128,7 +128,7 @@ class PayUponInvoiceProductStatus {
 		try {
 			$seller_status = $this->partners_endpoint->seller_status();
 		} catch ( Throwable $error ) {
-			$this->has_request_failure = true;
+			$this->has_request_failure  = true;
 			$this->current_status_cache = false;
 			return false;
 		}

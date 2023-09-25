@@ -848,7 +848,7 @@ return array(
 		$purchase_unit_sanitizer = $container->get( 'api.helper.purchase-unit-sanitizer' );
 		return new OrderTransient( $cache, $purchase_unit_sanitizer );
 	},
-	'api.helper.failure-registry'                => static function( ContainerInterface $container ): FailureRegistry {
+	'api.helper.failure-registry'               => static function( ContainerInterface $container ): FailureRegistry {
 		$cache = new Cache( 'ppcp-paypal-api-status-cache' );
 		return new FailureRegistry( $cache );
 	},
