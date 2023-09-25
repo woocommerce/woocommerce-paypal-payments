@@ -89,6 +89,19 @@ const PayPalComponent = ({
 
     const handleApprove = async (data, actions) => {
         try {
+            const order = await actions.order.get();
+
+            if (order) {
+                const addresses = paypalOrderToWcAddresses(order);
+
+                await wp.data.dispatch('wc/store/cart').updateCustomerData({
+                    billing_address: addresses.billingAddress,
+                    shipping_address: addresses.shippingAddress,
+                });
+            }
+
+            setPaypalOrder(order);
+
             const res = await fetch(config.scriptData.ajax.approve_order.endpoint, {
                 method: 'POST',
                 credentials: 'same-origin',
@@ -112,20 +125,12 @@ const PayPalComponent = ({
                 throw new Error(config.scriptData.labels.error.generic)
             }
 
-            const order = await actions.order.get();
-
-            setPaypalOrder(order);
+            if (wp.data.select('wc/store/validation').hasValidationErrors()) {
+                location.href = getCheckoutRedirectUrl();
+                return;
+            }
 
             if (config.finalReviewEnabled) {
-                if (order) {
-                    const addresses = paypalOrderToWcAddresses(order);
-
-                    await wp.data.dispatch('wc/store/cart').updateCustomerData({
-                        billing_address: addresses.billingAddress,
-                        shipping_address: addresses.shippingAddress,
-                    });
-                }
-
                 location.href = getCheckoutRedirectUrl();
             } else {
                 onSubmit();
@@ -140,19 +145,6 @@ const PayPalComponent = ({
             throw err;
         }
     };
-
-    useEffect(() => {
-        const unsubscribe = onCheckoutValidation(() => {
-            if (config.scriptData.continuation) {
-                return true;
-            }
-            if (wp.data.select('wc/store/validation').hasValidationErrors()) {
-                location.href = getCheckoutRedirectUrl();
-                return false;
-            }
-        });
-        return unsubscribe;
-    }, [onCheckoutValidation] );
 
     const handleClick = (data, actions) => {
         if (isEditing) {
