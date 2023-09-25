@@ -136,14 +136,8 @@ class PartnersEndpoint {
 					'response' => $response,
 				)
 			);
-
-			// Register the failure on api failure registry.
-			$this->failure_registry->add_failure( FailureRegistry::SELLER_STATUS_KEY );
-
 			throw $error;
 		}
-
-		$this->failure_registry->clear_failures( FailureRegistry::SELLER_STATUS_KEY );
 
 		$json        = json_decode( wp_remote_retrieve_body( $response ) );
 		$status_code = (int) wp_remote_retrieve_response_code( $response );
@@ -157,8 +151,14 @@ class PartnersEndpoint {
 					'response' => $response,
 				)
 			);
+
+			// Register the failure on api failure registry.
+			$this->failure_registry->add_failure( FailureRegistry::SELLER_STATUS_KEY );
+
 			throw $error;
 		}
+
+		$this->failure_registry->clear_failures( FailureRegistry::SELLER_STATUS_KEY );
 
 		$status = $this->seller_status_factory->from_paypal_reponse( $json );
 		return $status;

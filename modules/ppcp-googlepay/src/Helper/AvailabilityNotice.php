@@ -70,7 +70,7 @@ class AvailabilityNotice {
 
 				$message = sprintf(
 					__(
-						'<p>There was an error getting your PayPal seller status. Some features may be disabled.</p><p>Certify that you connected to your account via our onboarding process.</p>',
+						'<p>There was an error getting your PayPal seller status. Some features may be disabled.</p><p>Certify that you connected to your PayPal business account via our onboarding process.</p>',
 						'woocommerce-paypal-payments'
 					)
 				);

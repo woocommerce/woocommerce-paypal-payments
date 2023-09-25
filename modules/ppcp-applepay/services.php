@@ -41,7 +41,8 @@ return array(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'api.endpoint.partners' ),
 			$container->get( 'applepay.status-cache' ),
-			$container->get( 'onboarding.state' )
+			$container->get( 'onboarding.state' ),
+			$container->get( 'api.helper.failure-registry' )
 		);
 	},
 	'applepay.enabled'                           => static function ( ContainerInterface $container ): bool {

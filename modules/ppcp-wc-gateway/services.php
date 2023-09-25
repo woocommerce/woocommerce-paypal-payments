@@ -1017,7 +1017,8 @@ return array(
 			$partner_endpoint,
 			$container->get( 'dcc.status-cache' ),
 			$container->get( 'api.helpers.dccapplies' ),
-			$container->get( 'onboarding.state' )
+			$container->get( 'onboarding.state' ),
+			$container->get( 'api.helper.failure-registry' )
 		);
 	},
 
@@ -1097,7 +1098,8 @@ return array(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'api.endpoint.partners' ),
 			$container->get( 'pui.status-cache' ),
-			$container->get( 'onboarding.state' )
+			$container->get( 'onboarding.state' ),
+			$container->get( 'api.helper.failure-registry' )
 		);
 	},
 	'wcgateway.pay-upon-invoice'                           => static function ( ContainerInterface $container ): PayUponInvoice {
