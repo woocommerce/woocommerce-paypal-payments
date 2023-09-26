@@ -558,8 +558,13 @@ class SubscriptionModule implements ModuleInterface {
 			 */
 			function( $variation_id ) use ( $c ) {
 				$wcsnonce_save_variations = wc_clean( wp_unslash( $_POST['_wcsnonce_save_variations'] ?? '' ) );
+
+				$subscriptions_helper = $c->get('subscription.helper');
+				assert($subscriptions_helper instanceof SubscriptionHelper);
+
 				if (
-					! WC_Subscriptions_Product::is_subscription( $variation_id )
+					!$subscriptions_helper->plugin_is_active()
+					|| ! WC_Subscriptions_Product::is_subscription( $variation_id )
 					|| ! is_string( $wcsnonce_save_variations )
 					|| ! wp_verify_nonce( $wcsnonce_save_variations, 'wcs_subscription_variations' )
 				) {
