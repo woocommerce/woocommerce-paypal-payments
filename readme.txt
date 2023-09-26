@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, checkout, cart, pay later, apple
 Requires at least: 5.3
 Tested up to: 6.3
 Requires PHP: 7.2
-Stable tag: 2.3.0
+Stable tag: 2.3.1
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -179,6 +179,11 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 
 == Changelog ==
+
+= 2.3.1 - xxxx-xx-xx =
+* Fix - Fatal error when saving product while WooCommerce Subscriptions plugin is not active #1731
+* Fix - Validate tracking data only for add/update Package Tracking #1729
+* Fix - Disable Package Tracking for order if transaction ID doesn't exist #1727
 
 = 2.3.0 - 2023-09-26 =
 * Fix - Plus sign in PayPal account email address gets converted to space #771

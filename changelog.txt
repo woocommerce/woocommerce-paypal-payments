@@ -1,5 +1,10 @@
 *** Changelog ***
 
+= 2.3.1 - xxxx-xx-xx =
+* Fix - Fatal error when saving product while WooCommerce Subscriptions plugin is not active #1731
+* Fix - Validate tracking data only for add/update Package Tracking #1729
+* Fix - Disable Package Tracking for order if transaction ID doesn't exist #1727
+
 = 2.3.0 - 2023-09-26 =
 * Fix - Plus sign in PayPal account email address gets converted to space #771
 * Fix - Payment method dropdown option label on edit order screen for ppcp-gateway option displaying wrong name #1639
