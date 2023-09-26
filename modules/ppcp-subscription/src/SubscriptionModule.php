@@ -194,15 +194,15 @@ class SubscriptionModule implements ModuleInterface {
 				//phpcs:disable WordPress.Security.NonceVerification.Recommended
 				$post_id = wc_clean( wp_unslash( $_GET['post'] ?? '' ) );
 				$product = wc_get_product( $post_id );
-				if ( ! ( is_a( $product, WC_Product::class ) )) {
+				if ( ! ( is_a( $product, WC_Product::class ) ) ) {
 					return;
 				}
 
-				$subscriptions_helper = $c->get('subscription.helper');
-				assert($subscriptions_helper instanceof SubscriptionHelper);
+				$subscriptions_helper = $c->get( 'subscription.helper' );
+				assert( $subscriptions_helper instanceof SubscriptionHelper );
 
-				if(
-					!$subscriptions_helper->plugin_is_active()
+				if (
+					! $subscriptions_helper->plugin_is_active()
 					|| ! is_a( $product, WC_Product_Subscription_Variation::class )
 					|| ! WC_Subscriptions_Product::is_subscription( $product )
 				) {
@@ -223,6 +223,8 @@ class SubscriptionModule implements ModuleInterface {
 					$products = array();
 
 					/**
+					 * Suppress pslam.
+					 *
 					 * @psalm-suppress TypeDoesNotContainType
 					 *
 					 * WC_Product_Variable_Subscription extends WC_Product_Variable.
@@ -559,11 +561,11 @@ class SubscriptionModule implements ModuleInterface {
 			function( $variation_id ) use ( $c ) {
 				$wcsnonce_save_variations = wc_clean( wp_unslash( $_POST['_wcsnonce_save_variations'] ?? '' ) );
 
-				$subscriptions_helper = $c->get('subscription.helper');
-				assert($subscriptions_helper instanceof SubscriptionHelper);
+				$subscriptions_helper = $c->get( 'subscription.helper' );
+				assert( $subscriptions_helper instanceof SubscriptionHelper );
 
 				if (
-					!$subscriptions_helper->plugin_is_active()
+					! $subscriptions_helper->plugin_is_active()
 					|| ! WC_Subscriptions_Product::is_subscription( $variation_id )
 					|| ! is_string( $wcsnonce_save_variations )
 					|| ! wp_verify_nonce( $wcsnonce_save_variations, 'wcs_subscription_variations' )

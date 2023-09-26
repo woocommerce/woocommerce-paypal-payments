@@ -121,7 +121,7 @@ class SubscriptionHelper {
 	 */
 	public function plugin_is_active(): bool {
 
-		return class_exists( WC_Subscriptions::class ) && class_exists(WC_Subscriptions_Product::class);
+		return class_exists( WC_Subscriptions::class ) && class_exists( WC_Subscriptions_Product::class );
 	}
 
 	/**
