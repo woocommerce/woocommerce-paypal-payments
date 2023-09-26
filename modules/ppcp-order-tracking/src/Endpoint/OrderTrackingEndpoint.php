@@ -136,6 +136,7 @@ class OrderTrackingEndpoint {
 			$order_id = (int) $data['order_id'];
 			$action   = $data['action'] ?? '';
 
+			$this->validate_tracking_info( $data );
 			$shipment = $this->create_shipment( $order_id, $data );
 
 			$action === 'update'
@@ -381,21 +382,16 @@ class OrderTrackingEndpoint {
 		$carrier = $data['carrier'] ?? '';
 
 		$tracking_info = array(
-			'transaction_id'  => $data['transaction_id'] ?? '',
-			'status'          => $data['status'] ?? '',
-			'tracking_number' => $data['tracking_number'] ?? '',
-			'carrier'         => $carrier,
+			'transaction_id'     => $data['transaction_id'] ?? '',
+			'status'             => $data['status'] ?? '',
+			'tracking_number'    => $data['tracking_number'] ?? '',
+			'carrier'            => $carrier,
+			'carrier_name_other' => $data['carrier_name_other'] ?? '',
 		);
 
 		if ( ! empty( $data['items'] ) ) {
 			$tracking_info['items'] = array_map( 'intval', $data['items'] );
 		}
-
-		if ( $carrier === 'OTHER' ) {
-			$tracking_info['carrier_name_other'] = $data['carrier_name_other'] ?? '';
-		}
-
-		$this->validate_tracking_info( $tracking_info );
 
 		return $this->shipment_factory->create_shipment(
 			$wc_order_id,
@@ -403,23 +399,36 @@ class OrderTrackingEndpoint {
 			$tracking_info['tracking_number'],
 			$tracking_info['status'],
 			$tracking_info['carrier'],
-			$tracking_info['carrier_name_other'] ?? '',
+			$tracking_info['carrier_name_other'],
 			$tracking_info['items'] ?? array()
 		);
 	}
 
 	/**
-	 * Validates the requested tracking info.
+	 * Validates tracking info for given request values.
 	 *
-	 * @param array<string, mixed> $tracking_info A map of tracking information keys to values.
+	 * @param array<string, mixed> $request_values A map of request keys to values.
 	 * @return void
 	 * @throws RuntimeException If validation failed.
 	 */
-	protected function validate_tracking_info( array $tracking_info ): void {
+	protected function validate_tracking_info( array $request_values ): void {
 		$error_message = __( 'Missing required information: ', 'woocommerce-paypal-payments' );
 		$empty_keys    = array();
 
-		foreach ( $tracking_info as $key => $value ) {
+		$carrier = $request_values['carrier'] ?? '';
+
+		$data_to_check = array(
+			'transaction_id'  => $request_values['transaction_id'] ?? '',
+			'status'          => $request_values['status'] ?? '',
+			'tracking_number' => $request_values['tracking_number'] ?? '',
+			'carrier'         => $carrier,
+		);
+
+		if ( $carrier === 'OTHER' ) {
+			$data_to_check['carrier_name_other'] = $request_values['carrier_name_other'] ?? '';
+		}
+
+		foreach ( $data_to_check as $key => $value ) {
 			if ( ! empty( $value ) ) {
 				continue;
 			}
