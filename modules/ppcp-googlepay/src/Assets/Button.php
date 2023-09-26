@@ -127,6 +127,7 @@ class Button implements ButtonInterface {
 	 */
 	public function initialize(): void {
 		add_filter( 'ppcp_onboarding_options', array( $this, 'add_onboarding_options' ), 10, 1 );
+		add_filter( 'ppcp_partner_referrals_option', array( $this, 'filter_partner_referrals_option' ), 10, 1 );
 		add_filter( 'ppcp_partner_referrals_data', array( $this, 'add_partner_referrals_data' ), 10, 1 );
 	}
 
@@ -150,9 +151,26 @@ class Button implements ButtonInterface {
 		}
 
 		return $options
-			. '<li><label><input type="checkbox" id="ppcp-onboarding-google" ' . $checked . '> '
+			. '<li><label><input type="checkbox" id="ppcp-onboarding-google" ' . $checked . ' data-onboarding-option="ppcp-onboarding-google"> '
 			. __( 'Onboard with GooglePay', 'woocommerce-paypal-payments' )
 			. '</label></li>';
+	}
+
+	/**
+	 * Filters a partner referrals option.
+	 *
+	 * @param array $option The option data.
+	 * @return array
+	 */
+	public function filter_partner_referrals_option( array $option ): array {
+		if ( $option['valid'] ) {
+			return $option;
+		}
+		if ( $option['field'] === 'ppcp-onboarding-google' ) {
+			$option['valid'] = true;
+			$option['value'] = ( $option['value'] ? '1' : '' );
+		}
+		return $option;
 	}
 
 	/**

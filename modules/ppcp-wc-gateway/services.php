@@ -200,10 +200,12 @@ return array(
 		return $ppcp_tab ? $ppcp_tab : $section;
 	},
 
-	'wcgateway.settings'                                   => static function ( ContainerInterface $container ): Settings {
-		$default_button_locations = $container->get( 'wcgateway.button.default-locations' );
-		return new Settings( $default_button_locations );
-	},
+	'wcgateway.settings'                                   =>  SingletonDecorator::make(
+		static function ( ContainerInterface $container ): Settings {
+			$default_button_locations = $container->get( 'wcgateway.button.default-locations' );
+			return new Settings( $default_button_locations );
+		}
+	),
 	'wcgateway.notice.connect'                             => static function ( ContainerInterface $container ): ConnectAdminNotice {
 		$state    = $container->get( 'onboarding.state' );
 		$settings = $container->get( 'wcgateway.settings' );

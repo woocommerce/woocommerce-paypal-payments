@@ -148,6 +148,19 @@ class ApplePayButton implements ButtonInterface {
 	public function initialize(): void {
 		add_filter( 'ppcp_onboarding_options', array( $this, 'add_apple_onboarding_option' ), 10, 1 );
 		add_filter(
+			'ppcp_partner_referrals_option',
+			function ( array $option ): array {
+				if ( $option['valid'] ) {
+					return $option;
+				}
+				if ( $option['field'] === 'ppcp-onboarding-apple' ) {
+					$option['valid'] = true;
+					$option['value'] = ( $option['value'] ? '1' : '' );
+				}
+				return $option;
+			}
+		);
+		add_filter(
 			'ppcp_partner_referrals_data',
 			function ( array $data ): array {
 				try {
@@ -206,7 +219,7 @@ class ApplePayButton implements ButtonInterface {
 			$checked = '';
 		}
 
-		return $options . '<li><label><input type="checkbox" id="ppcp-onboarding-apple" ' . $checked . '> ' .
+		return $options . '<li><label><input type="checkbox" id="ppcp-onboarding-apple" ' . $checked . ' data-onboarding-option="ppcp-onboarding-apple"> ' .
 			__( 'Onboard with ApplePay', 'woocommerce-paypal-payments' ) . '
 		</label></li>';
 

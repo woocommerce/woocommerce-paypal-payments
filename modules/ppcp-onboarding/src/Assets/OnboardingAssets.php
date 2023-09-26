@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Onboarding\Assets;
 
 use WooCommerce\PayPalCommerce\Onboarding\Endpoint\LoginSellerEndpoint;
+use WooCommerce\PayPalCommerce\Onboarding\Endpoint\UpdateSignupLinksEndpoint;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
@@ -155,8 +156,8 @@ class OnboardingAssets {
 			'error_messages'   => array(
 				'no_credentials' => __( 'API credentials must be entered to save the settings.', 'woocommerce-paypal-payments' ),
 			),
-			'pui_endpoint'     => \WC_AJAX::get_endpoint( 'ppc-pui' ),
-			'pui_nonce'        => wp_create_nonce( 'ppc-pui' ),
+			'pui_endpoint'     => \WC_AJAX::get_endpoint( UpdateSignupLinksEndpoint::ENDPOINT ),
+			'pui_nonce'        => wp_create_nonce( UpdateSignupLinksEndpoint::ENDPOINT ),
 		);
 	}
 
