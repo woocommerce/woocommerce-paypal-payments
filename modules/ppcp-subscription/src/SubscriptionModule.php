@@ -194,7 +194,18 @@ class SubscriptionModule implements ModuleInterface {
 				//phpcs:disable WordPress.Security.NonceVerification.Recommended
 				$post_id = wc_clean( wp_unslash( $_GET['post'] ?? '' ) );
 				$product = wc_get_product( $post_id );
-				if ( ! ( is_a( $product, WC_Product::class ) || is_a( $product, WC_Product_Subscription_Variation::class ) ) || ! WC_Subscriptions_Product::is_subscription( $product ) ) {
+				if ( ! ( is_a( $product, WC_Product::class ) )) {
+					return;
+				}
+
+				$subscriptions_helper = $c->get('subscription.helper');
+				assert($subscriptions_helper instanceof SubscriptionHelper);
+
+				if(
+					!$subscriptions_helper->plugin_is_active()
+					|| ! is_a( $product, WC_Product_Subscription_Variation::class )
+					|| ! WC_Subscriptions_Product::is_subscription( $product )
+				) {
 					return;
 				}
 
