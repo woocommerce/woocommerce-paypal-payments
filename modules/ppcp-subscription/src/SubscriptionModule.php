@@ -221,6 +221,13 @@ class SubscriptionModule implements ModuleInterface {
 				$products = array( $this->set_product_config( $product ) );
 				if ( $product->get_type() === 'variable-subscription' ) {
 					$products = array();
+
+					/**
+					 * @psalm-suppress TypeDoesNotContainType
+					 *
+					 * WC_Product_Variable_Subscription extends WC_Product_Variable.
+					 */
+					assert( $product instanceof WC_Product_Variable );
 					$available_variations = $product->get_available_variations();
 					foreach ( $available_variations as $variation ) {
 						/**
