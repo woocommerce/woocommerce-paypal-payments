@@ -1,6 +1,6 @@
 *** Changelog ***
 
-= 2.3.0 - XXXX-XX-XX =
+= 2.3.0 - 2023-09-26 =
 * Fix - Plus sign in PayPal account email address gets converted to space #771
 * Fix - Payment method dropdown option label on edit order screen for ppcp-gateway option displaying wrong name #1639
 * Fix - WooCommerce Bookings products don't remain in Cart as a guest when PayPal button active on single product #1645
