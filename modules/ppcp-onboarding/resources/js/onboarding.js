@@ -100,14 +100,14 @@ const ppcp_onboarding = {
                 jQuery(spinner).insertAfter(element);
             });
 
-            fetch(PayPalCommerceGatewayOnboarding.pui_endpoint, {
+            fetch(PayPalCommerceGatewayOnboarding.update_signup_links_endpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 credentials: 'same-origin',
                 body: JSON.stringify({
-                    nonce: PayPalCommerceGatewayOnboarding.pui_nonce,
+                    nonce: PayPalCommerceGatewayOnboarding.update_signup_links_nonce,
                     settings: onboarding_options()
                 })
             }).then((res)=>{
