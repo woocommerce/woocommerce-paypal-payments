@@ -121,11 +121,14 @@ class UpdateSignupLinksEndpoint implements EndpointInterface {
 			$data = $this->request_data->read_request( $this->nonce() );
 
 			foreach ( $data['settings'] ?? array() as $field => $value ) {
-				$option = apply_filters( 'ppcp_partner_referrals_option', array(
-					'field' => $field,
-					'value' => $value,
-					'valid' => false,
-				) );
+				$option = apply_filters(
+					'ppcp_partner_referrals_option',
+					array(
+						'field' => $field,
+						'value' => $value,
+						'valid' => false,
+					)
+				);
 
 				if ( $option['valid'] ) {
 					$this->settings->set( $field, $value );

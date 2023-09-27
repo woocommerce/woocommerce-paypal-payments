@@ -200,7 +200,7 @@ return array(
 		return $ppcp_tab ? $ppcp_tab : $section;
 	},
 
-	'wcgateway.settings'                                   =>  SingletonDecorator::make(
+	'wcgateway.settings'                                   => SingletonDecorator::make(
 		static function ( ContainerInterface $container ): Settings {
 			$default_button_locations = $container->get( 'wcgateway.button.default-locations' );
 			return new Settings( $default_button_locations );
