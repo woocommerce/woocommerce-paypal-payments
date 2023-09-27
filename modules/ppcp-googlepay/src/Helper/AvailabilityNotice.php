@@ -25,12 +25,34 @@ class AvailabilityNotice {
 	private $product_status;
 
 	/**
+	 * Indicates if we're on the WooCommerce gateways list page.
+	 *
+	 * @var bool
+	 */
+	private $is_wc_gateways_list_page;
+
+	/**
+	 * Indicates if we're on a PPCP Settings page.
+	 *
+	 * @var bool
+	 */
+	private $is_ppcp_settings_page;
+
+	/**
 	 * Class ApmProductStatus constructor.
 
 	 * @param ApmProductStatus $product_status The product status handler.
+	 * @param bool             $is_wc_gateways_list_page Indicates if we're on the WooCommerce gateways list page.
+	 * @param bool             $is_ppcp_settings_page Indicates if we're on a PPCP Settings page.
 	 */
-	public function __construct( ApmProductStatus $product_status ) {
-		$this->product_status = $product_status;
+	public function __construct(
+		ApmProductStatus $product_status,
+		bool $is_wc_gateways_list_page,
+		bool $is_ppcp_settings_page
+	) {
+		$this->product_status           = $product_status;
+		$this->is_wc_gateways_list_page = $is_wc_gateways_list_page;
+		$this->is_ppcp_settings_page    = $is_ppcp_settings_page;
 	}
 
 	/**
@@ -39,7 +61,7 @@ class AvailabilityNotice {
 	 * @return void
 	 */
 	public function execute(): void {
-		if ( ! $this->product_status->is_onboarded() ) {
+		if ( ! $this->should_display() ) {
 			return;
 		}
 
@@ -48,6 +70,21 @@ class AvailabilityNotice {
 		} else {
 			$this->add_not_available_notice();
 		}
+	}
+
+	/**
+	 * Whether the message should display.
+	 *
+	 * @return bool
+	 */
+	protected function should_display(): bool {
+		if ( ! $this->product_status->is_onboarded() ) {
+			return false;
+		}
+		if ( ! $this->is_wc_gateways_list_page && ! $this->is_ppcp_settings_page ) {
+			return false;
+		}
+		return true;
 	}
 
 	/**

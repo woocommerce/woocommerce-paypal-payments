@@ -52,7 +52,9 @@ return array(
 
 	'googlepay.availability_notice'               => static function ( ContainerInterface $container ): AvailabilityNotice {
 		return new AvailabilityNotice(
-			$container->get( 'googlepay.helpers.apm-product-status' )
+			$container->get( 'googlepay.helpers.apm-product-status' ),
+			$container->get( 'wcgateway.is-wc-gateways-list-page' ),
+			$container->get( 'wcgateway.is-ppcp-settings-page' )
 		);
 	},
 
