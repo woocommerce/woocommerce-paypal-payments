@@ -198,14 +198,14 @@ class Button implements ButtonInterface {
 		}
 
 		$data['capabilities'][] = 'GOOGLE_PAY';
-		$data['operations'][] = array(
+		$data['operations'][]   = array(
 			'operation'                  => 'API_INTEGRATION',
 			'api_integration_preference' => array(
 				'rest_api_integration' => array(
 					'integration_method'  => 'PAYPAL',
 					'integration_type'    => 'THIRD_PARTY',
 					'third_party_details' => array(
-						'features'     => array(
+						'features' => array(
 							'PAYMENT',
 							'REFUND',
 						),
@@ -407,14 +407,17 @@ class Button implements ButtonInterface {
 	 */
 	public function script_data(): array {
 		return array(
-			'environment' => $this->environment->current_environment_is( Environment::SANDBOX ) ? 'TEST' : 'PRODUCTION',
-			'sdk_url'     => $this->sdk_url,
-			'button'      => array(
+			'environment'     => $this->environment->current_environment_is( Environment::SANDBOX ) ? 'TEST' : 'PRODUCTION',
+			'sdk_url'         => $this->sdk_url,
+			'button'          => array(
 				'wrapper'           => '#ppc-button-googlepay-container',
 				'style'             => $this->button_styles_for_context( 'cart' ), // For now use cart. Pass the context if necessary.
 				'mini_cart_wrapper' => '#ppc-button-googlepay-container-minicart',
 				'mini_cart_style'   => $this->button_styles_for_context( 'mini-cart' ),
 			),
+			'enable_shipping' => $this->settings->has( 'googlepay_button_shipping_enabled' )
+				? $this->settings->get( 'googlepay_button_shipping_enabled' )
+				: false,
 		);
 	}
 

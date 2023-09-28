@@ -100,13 +100,18 @@ class GooglepayButton {
     }
 
     initClient() {
+        const callbacks = {
+            onPaymentAuthorized: this.onPaymentAuthorized.bind(this)
+        }
+
+        if ( this.buttonConfig.enable_shipping ) {
+            callbacks['onPaymentDataChanged'] = this.onPaymentDataChanged.bind(this);
+        }
+
         this.paymentsClient = new google.payments.api.PaymentsClient({
             environment: this.buttonConfig.environment,
             // add merchant info maybe
-            paymentDataCallbacks: {
-                onPaymentDataChanged: this.onPaymentDataChanged.bind(this),
-                onPaymentAuthorized: this.onPaymentAuthorized.bind(this),
-            }
+            paymentDataCallbacks: callbacks
         });
     }
 
@@ -186,14 +191,15 @@ class GooglepayButton {
         paymentDataRequest.allowedPaymentMethods = googlePayConfig.allowedPaymentMethods;
         paymentDataRequest.transactionInfo = await this.contextHandler.transactionInfo();
         paymentDataRequest.merchantInfo = googlePayConfig.merchantInfo;
-        //paymentDataRequest.callbackIntents = ['PAYMENT_AUTHORIZATION'];
 
-        paymentDataRequest.callbackIntents = ["SHIPPING_ADDRESS",  "SHIPPING_OPTION", "PAYMENT_AUTHORIZATION"];
-
-
-        paymentDataRequest.shippingAddressRequired = true;
-        paymentDataRequest.shippingAddressParameters = this.getGoogleShippingAddressParameters();
-        paymentDataRequest.shippingOptionRequired = true;
+        if ( this.buttonConfig.enable_shipping ) {
+            paymentDataRequest.callbackIntents = ["SHIPPING_ADDRESS",  "SHIPPING_OPTION", "PAYMENT_AUTHORIZATION"];
+            paymentDataRequest.shippingAddressRequired = true;
+            paymentDataRequest.shippingAddressParameters = this.getGoogleShippingAddressParameters();
+            paymentDataRequest.shippingOptionRequired = true;
+        } else {
+            paymentDataRequest.callbackIntents = ['PAYMENT_AUTHORIZATION'];
+        }
 
         return paymentDataRequest;
     }

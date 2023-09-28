@@ -185,7 +185,7 @@ class ApplePayButton implements ButtonInterface {
 							'integration_method'  => 'PAYPAL',
 							'integration_type'    => 'THIRD_PARTY',
 							'third_party_details' => array(
-								'features'     => array(
+								'features' => array(
 									'PAYMENT',
 									'REFUND',
 								),
