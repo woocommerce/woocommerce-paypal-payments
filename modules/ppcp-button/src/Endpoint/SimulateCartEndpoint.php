@@ -159,9 +159,7 @@ class SimulateCartEndpoint extends AbstractCartEndpoint {
 		$this->remove_cart_items();
 
 		// Restore cart and unset cart clone.
-		if ( null !== $this->real_cart ) {
-			WC()->cart = $this->real_cart;
-		}
+		unset( WC()->cart );
 		unset( $this->cart );
 	}
 
