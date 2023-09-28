@@ -198,9 +198,6 @@ class Button implements ButtonInterface {
 		}
 
 		$data['capabilities'][] = 'GOOGLE_PAY';
-
-		$nonce = $data['operations'][0]['api_integration_preference']['rest_api_integration']['first_party_details']['seller_nonce'];
-
 		$data['operations'][] = array(
 			'operation'                  => 'API_INTEGRATION',
 			'api_integration_preference' => array(
@@ -212,7 +209,6 @@ class Button implements ButtonInterface {
 							'PAYMENT',
 							'REFUND',
 						),
-						'seller_nonce' => $nonce,
 					),
 				),
 			),

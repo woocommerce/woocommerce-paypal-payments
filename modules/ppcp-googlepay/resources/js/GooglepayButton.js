@@ -104,7 +104,7 @@ class GooglepayButton {
             environment: this.buttonConfig.environment,
             // add merchant info maybe
             paymentDataCallbacks: {
-                //onPaymentDataChanged: onPaymentDataChanged,
+                onPaymentDataChanged: this.onPaymentDataChanged.bind(this),
                 onPaymentAuthorized: this.onPaymentAuthorized.bind(this),
             }
         });
@@ -186,14 +186,33 @@ class GooglepayButton {
         paymentDataRequest.allowedPaymentMethods = googlePayConfig.allowedPaymentMethods;
         paymentDataRequest.transactionInfo = await this.contextHandler.transactionInfo();
         paymentDataRequest.merchantInfo = googlePayConfig.merchantInfo;
-        paymentDataRequest.callbackIntents = ['PAYMENT_AUTHORIZATION'];
+        //paymentDataRequest.callbackIntents = ['PAYMENT_AUTHORIZATION'];
+
+        paymentDataRequest.callbackIntents = ["SHIPPING_ADDRESS",  "SHIPPING_OPTION", "PAYMENT_AUTHORIZATION"];
+
+
+        paymentDataRequest.shippingAddressRequired = true;
+        paymentDataRequest.shippingAddressParameters = this.getGoogleShippingAddressParameters();
+        paymentDataRequest.shippingOptionRequired = true;
+
         return paymentDataRequest;
     }
 
+    getGoogleShippingAddressParameters() {
+        return {
+            allowedCountryCodes: ['US'],
+            phoneNumberRequired: true
+        };
+    }
 
     //------------------------
     // Payment process
     //------------------------
+
+    onPaymentDataChanged(paymentData) {
+        console.log('[GooglePayButton] onPaymentDataChanged', this.context);
+        console.log('[GooglePayButton] paymentData', paymentData);
+    }
 
     onPaymentAuthorized(paymentData) {
         console.log('[GooglePayButton] onPaymentAuthorized', this.context);

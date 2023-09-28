@@ -178,7 +178,6 @@ class ApplePayButton implements ButtonInterface {
 					$data['products'][0] = 'PAYMENT_METHODS';
 				}
 				$data['capabilities'][] = 'APPLE_PAY';
-				$nonce                  = $data['operations'][0]['api_integration_preference']['rest_api_integration']['first_party_details']['seller_nonce'];
 				$data['operations'][]   = array(
 					'operation'                  => 'API_INTEGRATION',
 					'api_integration_preference' => array(
@@ -190,7 +189,6 @@ class ApplePayButton implements ButtonInterface {
 									'PAYMENT',
 									'REFUND',
 								),
-								'seller_nonce' => $nonce,
 							),
 						),
 					),
