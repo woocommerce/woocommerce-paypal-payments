@@ -99,7 +99,7 @@ class OrderTrackingModule implements ModuleInterface {
 
 				add_meta_box(
 					'ppcp_order-tracking',
-					__( 'PayPal Shipment Tracking', 'woocommerce-paypal-payments' ),
+					__( 'PayPal Package Tracking', 'woocommerce-paypal-payments' ),
 					array( $meta_box_renderer, 'render' ),
 					$screen,
 					'normal'

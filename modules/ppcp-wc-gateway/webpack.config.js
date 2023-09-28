@@ -11,6 +11,7 @@ module.exports = {
         'fraudnet': path.resolve('./resources/js/fraudnet.js'),
         'oxxo': path.resolve('./resources/js/oxxo.js'),
         'gateway-settings-style': path.resolve('./resources/css/gateway-settings.scss'),
+        'common-style': path.resolve('./resources/css/common.scss'),
     },
     output: {
         path: path.resolve(__dirname, 'assets/'),

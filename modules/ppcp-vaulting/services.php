@@ -23,17 +23,6 @@ return array(
 		$endpoint = $container->get( 'api.endpoint.payment-token' );
 		return new PaymentTokenRepository( $factory, $endpoint );
 	},
-	'vaulting.payment-token-checker'      => function( ContainerInterface $container ) : PaymentTokenChecker {
-		return new PaymentTokenChecker(
-			$container->get( 'vaulting.repository.payment-token' ),
-			$container->get( 'api.repository.order' ),
-			$container->get( 'wcgateway.settings' ),
-			$container->get( 'wcgateway.processor.authorized-payments' ),
-			$container->get( 'api.endpoint.payments' ),
-			$container->get( 'api.endpoint.payment-token' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
-		);
-	},
 	'vaulting.customer-approval-listener' => function( ContainerInterface $container ) : CustomerApprovalListener {
 		return new CustomerApprovalListener(
 			$container->get( 'api.endpoint.payment-token' ),
