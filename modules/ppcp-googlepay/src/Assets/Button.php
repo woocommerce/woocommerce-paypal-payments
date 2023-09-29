@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\Googlepay\Assets;
 
 use Exception;
 use Psr\Log\LoggerInterface;
+use WC_Countries;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -406,18 +407,26 @@ class Button implements ButtonInterface {
 	 * @return array
 	 */
 	public function script_data(): array {
+		$shipping = array(
+			'enabled' => $this->settings->has( 'googlepay_button_shipping_enabled' )
+				? boolval( $this->settings->get( 'googlepay_button_shipping_enabled' ) )
+				: false,
+		);
+
+		if ( $shipping['enabled'] ) {
+			$shipping['countries'] = array_keys( $this->wc_countries()->get_shipping_countries() );
+		}
+
 		return array(
-			'environment'     => $this->environment->current_environment_is( Environment::SANDBOX ) ? 'TEST' : 'PRODUCTION',
-			'sdk_url'         => $this->sdk_url,
-			'button'          => array(
+			'environment' => $this->environment->current_environment_is( Environment::SANDBOX ) ? 'TEST' : 'PRODUCTION',
+			'sdk_url'     => $this->sdk_url,
+			'button'      => array(
 				'wrapper'           => '#ppc-button-googlepay-container',
 				'style'             => $this->button_styles_for_context( 'cart' ), // For now use cart. Pass the context if necessary.
 				'mini_cart_wrapper' => '#ppc-button-googlepay-container-minicart',
 				'mini_cart_style'   => $this->button_styles_for_context( 'mini-cart' ),
 			),
-			'enable_shipping' => $this->settings->has( 'googlepay_button_shipping_enabled' )
-				? $this->settings->get( 'googlepay_button_shipping_enabled' )
-				: false,
+			'shipping'    => $shipping,
 		);
 	}
 
@@ -449,4 +458,12 @@ class Button implements ButtonInterface {
 		return $values;
 	}
 
+	/**
+	 * Returns a WC_Countries instance to check shipping
+	 *
+	 * @return WC_Countries
+	 */
+	private function wc_countries(): WC_Countries {
+		return new WC_Countries();
+	}
 }

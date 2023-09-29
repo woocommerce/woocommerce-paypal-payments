@@ -104,7 +104,7 @@ class GooglepayButton {
             onPaymentAuthorized: this.onPaymentAuthorized.bind(this)
         }
 
-        if ( this.buttonConfig.enable_shipping ) {
+        if ( this.buttonConfig.shipping.enabled ) {
             callbacks['onPaymentDataChanged'] = this.onPaymentDataChanged.bind(this);
         }
 
@@ -192,10 +192,10 @@ class GooglepayButton {
         paymentDataRequest.transactionInfo = await this.contextHandler.transactionInfo();
         paymentDataRequest.merchantInfo = googlePayConfig.merchantInfo;
 
-        if ( this.buttonConfig.enable_shipping ) {
+        if ( this.buttonConfig.shipping.enabled ) {
             paymentDataRequest.callbackIntents = ["SHIPPING_ADDRESS",  "SHIPPING_OPTION", "PAYMENT_AUTHORIZATION"];
             paymentDataRequest.shippingAddressRequired = true;
-            paymentDataRequest.shippingAddressParameters = this.getGoogleShippingAddressParameters();
+            paymentDataRequest.shippingAddressParameters = this.shippingAddressParameters();
             paymentDataRequest.shippingOptionRequired = true;
         } else {
             paymentDataRequest.callbackIntents = ['PAYMENT_AUTHORIZATION'];
@@ -204,21 +204,91 @@ class GooglepayButton {
         return paymentDataRequest;
     }
 
-    getGoogleShippingAddressParameters() {
+    //------------------------
+    // Shipping processing
+    //------------------------
+
+    shippingAddressParameters() {
         return {
-            allowedCountryCodes: ['US'],
+            allowedCountryCodes: this.buttonConfig.shipping.countries,
             phoneNumberRequired: true
+        };
+    }
+
+    onPaymentDataChanged(paymentData) {
+        console.log('[GooglePayButton] onPaymentDataChanged', this.context);
+        console.log('[GooglePayButton] paymentData', paymentData);
+
+        return new Promise(async (resolve, reject) => {
+            let paymentDataRequestUpdate = {};
+
+            // TODO : update shipping in cart and get price
+
+            if(false) { // TODO : on error
+                paymentDataRequestUpdate.error = this.unserviceableShippingAddressError();
+                resolve(paymentDataRequestUpdate);
+            }
+
+            switch (paymentData.callbackTrigger) {
+                case 'INITIALIZE':
+                case 'SHIPPING_ADDRESS':
+                    paymentDataRequestUpdate.newShippingOptionParameters = this.shippingOptions();
+                    let selectedShippingOptionId = paymentDataRequestUpdate.newShippingOptionParameters.defaultSelectedOptionId;
+                    paymentDataRequestUpdate.newTransactionInfo = await this.calculateNewTransactionInfo(selectedShippingOptionId);
+                    break;
+                case 'SHIPPING_OPTION':
+                    paymentDataRequestUpdate.newTransactionInfo = await this.calculateNewTransactionInfo(paymentData.shippingOptionData.id);
+                    break;
+            }
+
+            resolve(paymentDataRequestUpdate);
+        });
+    }
+
+    unserviceableShippingAddressError() {
+        return {
+            reason: "SHIPPING_ADDRESS_UNSERVICEABLE",
+            message: "Cannot ship to the selected address",
+            intent: "SHIPPING_ADDRESS"
+        };
+    }
+
+    async calculateNewTransactionInfo(shippingOptionId) {
+        let newTransactionInfo = await this.contextHandler.transactionInfo();
+
+        // TODO : update shipping in cart
+
+        newTransactionInfo.totalPrice = Math.floor(10 + Math.random() * 100).toString(); // TODO : testing only
+
+        return newTransactionInfo;
+    }
+
+    shippingOptions() {
+        return {
+            defaultSelectedOptionId: "shipping-001",
+            shippingOptions: [
+                {
+                    "id": "shipping-001",
+                    "label": "Free: Standard shipping",
+                    "description": "Free Shipping delivered in 5 business days."
+                },
+                {
+                    "id": "shipping-002",
+                    "label": "$1.99: Standard shipping",
+                    "description": "Standard shipping delivered in 3 business days."
+                },
+                {
+                    "id": "shipping-003",
+                    "label": "$10: Express shipping",
+                    "description": "Express shipping delivered in 1 business day."
+                },
+            ]
         };
     }
 
     //------------------------
     // Payment process
     //------------------------
-
-    onPaymentDataChanged(paymentData) {
-        console.log('[GooglePayButton] onPaymentDataChanged', this.context);
-        console.log('[GooglePayButton] paymentData', paymentData);
-    }
 
     onPaymentAuthorized(paymentData) {
         console.log('[GooglePayButton] onPaymentAuthorized', this.context);
