@@ -37,7 +37,7 @@ return array(
 		);
 	},
 
-	// If GooglePay is configured.
+	// If GooglePay is configured and onboarded.
 	'googlepay.available'                         => static function ( ContainerInterface $container ): bool {
 		if ( apply_filters( 'woocommerce_paypal_payments_googlepay_validate_product_status', true ) ) {
 			$status = $container->get( 'googlepay.helpers.apm-product-status' );
