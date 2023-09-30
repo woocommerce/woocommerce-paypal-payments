@@ -593,7 +593,10 @@ class SubscriptionModule implements ModuleInterface {
 			 * @psalm-suppress MissingClosureParamType
 			 */
 			function( $id, $subscription ) use ( $c ) {
+				// Get the $subscription variable WC_Subscription again.
+				$subscription = wcs_get_subscription( $id );
 				$subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
+				// Since I don't know exactly what the "ppcp_subscription" meta value is, I'm not touching the code below. However, if the id "$subscription_id" is equal to the existing subscription id, only $id can be used instead of $subscription_id.
 				if ( $subscription_id ) {
 					$subscriptions_endpoint = $c->get( 'api.endpoint.billing-subscriptions' );
 					assert( $subscriptions_endpoint instanceof BillingSubscriptions );
