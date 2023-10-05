@@ -487,7 +487,7 @@ return array(
 					'This controls the title which the user sees during checkout.',
 					'woocommerce-paypal-payments'
 				),
-				'default'      => __( 'Credit Cards', 'woocommerce-paypal-payments' ),
+				'default'      => __( 'Debit & Credit Cards', 'woocommerce-paypal-payments' ),
 				'desc_tip'     => true,
 				'screens'      => array(
 					State::STATE_ONBOARDED,

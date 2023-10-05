@@ -116,7 +116,7 @@ class Settings implements ContainerInterface {
 			'pay_later_button_locations'               => $this->default_button_locations,
 			'pay_later_messaging_locations'            => $this->default_button_locations,
 			'brand_name'                               => get_bloginfo( 'name' ),
-			'dcc_gateway_title'                        => __( 'Credit Cards', 'woocommerce-paypal-payments' ),
+			'dcc_gateway_title'                        => __( 'Debit & Credit Cards', 'woocommerce-paypal-payments' ),
 			'dcc_gateway_description'                  => __(
 				'Pay with your credit card.',
 				'woocommerce-paypal-payments'
