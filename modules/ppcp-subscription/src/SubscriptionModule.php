@@ -656,7 +656,7 @@ class SubscriptionModule implements ModuleInterface {
 			 * @psalm-suppress MissingClosureParamType
 			 */
 			function( $actions, $subscription ): array {
-				if ( ! is_a( $subscription, WC_Subscription::class ) ) {
+				if ( ! is_array( $actions ) || ! is_a( $subscription, WC_Subscription::class ) ) {
 					return $actions;
 				}
 
