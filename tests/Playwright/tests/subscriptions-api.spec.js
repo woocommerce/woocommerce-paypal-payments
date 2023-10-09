@@ -57,7 +57,7 @@ test.describe.serial('Subscriptions Merchant', () => {
         const message = await page.locator('.notice-success');
         await expect(message).toContainText('Product published.');
 
-        const products = await request.get('https://api.sandbox.paypal.com/v1/catalogs/products?page_size=100&page=1&total_required=true', {
+        const products = await request.get('https://api-m.sandbox.paypal.com/v1/catalogs/products?page_size=100&page=1&total_required=true', {
             headers: {
                 'Authorization': AUTHORIZATION,
                 'Content-Type': 'application/json'
@@ -73,7 +73,7 @@ test.describe.serial('Subscriptions Merchant', () => {
 
         product_id = product.id;
 
-        const plans = await request.get(`https://api.sandbox.paypal.com/v1/billing/plans?product_id=${product_id}&page_size=10&page=1&total_required=true`, {
+        const plans = await request.get(`https://api-m.sandbox.paypal.com/v1/billing/plans?product_id=${product_id}&page_size=10&page=1&total_required=true`, {
             headers: {
                 'Authorization': AUTHORIZATION,
                 'Content-Type': 'application/json'
@@ -107,7 +107,7 @@ test.describe.serial('Subscriptions Merchant', () => {
         const message = await page.locator('.notice-success');
         await expect(message).toContainText('Product updated.');
 
-        const products = await request.get('https://api.sandbox.paypal.com/v1/catalogs/products?page_size=100&page=1&total_required=true', {
+        const products = await request.get('https://api-m.sandbox.paypal.com/v1/catalogs/products?page_size=100&page=1&total_required=true', {
             headers: {
                 'Authorization': AUTHORIZATION,
                 'Content-Type': 'application/json'
@@ -121,7 +121,7 @@ test.describe.serial('Subscriptions Merchant', () => {
         });
         await expect(product.id).toBeTruthy;
 
-        const plan = await request.get(`https://api.sandbox.paypal.com/v1/billing/plans/${plan_id}`, {
+        const plan = await request.get(`https://api-m.sandbox.paypal.com/v1/billing/plans/${plan_id}`, {
             headers: {
                 'Authorization': AUTHORIZATION,
                 'Content-Type': 'application/json'
@@ -156,7 +156,7 @@ test('Create new free trial subscription product', async ({page, request}) => {
     const message = await page.locator('.notice-success');
     await expect(message).toContainText('Product published.');
 
-    const products = await request.get('https://api.sandbox.paypal.com/v1/catalogs/products?page_size=100&page=1&total_required=true', {
+    const products = await request.get('https://api-m.sandbox.paypal.com/v1/catalogs/products?page_size=100&page=1&total_required=true', {
         headers: {
             'Authorization': AUTHORIZATION,
             'Content-Type': 'application/json'
@@ -170,7 +170,7 @@ test('Create new free trial subscription product', async ({page, request}) => {
     });
     await expect(product.id).toBeTruthy;
 
-    const plans = await request.get(`https://api.sandbox.paypal.com/v1/billing/plans?product_id=${product.id}&page_size=10&page=1&total_required=true`, {
+    const plans = await request.get(`https://api-m.sandbox.paypal.com/v1/billing/plans?product_id=${product.id}&page_size=10&page=1&total_required=true`, {
         headers: {
             'Authorization': AUTHORIZATION,
             'Content-Type': 'application/json'
@@ -184,7 +184,7 @@ test('Create new free trial subscription product', async ({page, request}) => {
     });
     await expect(plan.id).toBeTruthy;
 
-    const planDetail = await request.get(`https://api.sandbox.paypal.com/v1/billing/plans/${plan.id}`, {
+    const planDetail = await request.get(`https://api-m.sandbox.paypal.com/v1/billing/plans/${plan.id}`, {
         headers: {
             'Authorization': AUTHORIZATION,
             'Content-Type': 'application/json'
@@ -253,7 +253,7 @@ test.describe('Subscriber my account actions', () => {
         await page.locator('text=View').first().click();
 
         const subscriptionId = await page.locator('#ppcp-subscription-id').textContent();
-        let subscription = await request.get(`https://api.sandbox.paypal.com/v1/billing/subscriptions/${subscriptionId}`, {
+        let subscription = await request.get(`https://api-m.sandbox.paypal.com/v1/billing/subscriptions/${subscriptionId}`, {
             headers: {
                 'Authorization': AUTHORIZATION,
                 'Content-Type': 'application/json'
@@ -267,7 +267,7 @@ test.describe('Subscriber my account actions', () => {
         const title = page.locator('.woocommerce-message');
         await expect(title).toHaveText('Your subscription has been cancelled.');
 
-        subscription = await request.get(`https://api.sandbox.paypal.com/v1/billing/subscriptions/${subscriptionId}`, {
+        subscription = await request.get(`https://api-m.sandbox.paypal.com/v1/billing/subscriptions/${subscriptionId}`, {
             headers: {
                 'Authorization': AUTHORIZATION,
                 'Content-Type': 'application/json'
@@ -285,7 +285,7 @@ test.describe('Subscriber my account actions', () => {
         await page.locator('text=View').first().click();
 
         const subscriptionId = await page.locator('#ppcp-subscription-id').textContent();
-        let subscription = await request.get(`https://api.sandbox.paypal.com/v1/billing/subscriptions/${subscriptionId}`, {
+        let subscription = await request.get(`https://api-m.sandbox.paypal.com/v1/billing/subscriptions/${subscriptionId}`, {
             headers: {
                 'Authorization': AUTHORIZATION,
                 'Content-Type': 'application/json'
@@ -299,7 +299,7 @@ test.describe('Subscriber my account actions', () => {
         const title = page.locator('.woocommerce-message');
         await expect(title).toHaveText('Your subscription has been cancelled.');
 
-        subscription = await request.get(`https://api.sandbox.paypal.com/v1/billing/subscriptions/${subscriptionId}`, {
+        subscription = await request.get(`https://api-m.sandbox.paypal.com/v1/billing/subscriptions/${subscriptionId}`, {
             headers: {
                 'Authorization': AUTHORIZATION,
                 'Content-Type': 'application/json'
