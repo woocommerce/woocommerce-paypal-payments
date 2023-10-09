@@ -40,8 +40,8 @@ class ModularTestCase extends TestCase
 		$wpdb->posts = '';
 		$wpdb->postmeta = '';
 
-		!defined('PAYPAL_API_URL') && define('PAYPAL_API_URL', 'https://api.paypal.com');
-		!defined('PAYPAL_SANDBOX_API_URL') && define('PAYPAL_SANDBOX_API_URL', 'https://api.sandbox.paypal.com');
+		!defined('PAYPAL_API_URL') && define('PAYPAL_API_URL', 'https://api-m.paypal.com');
+		!defined('PAYPAL_SANDBOX_API_URL') && define('PAYPAL_SANDBOX_API_URL', 'https://api-m.sandbox.paypal.com');
 		!defined('PAYPAL_INTEGRATION_DATE') && define('PAYPAL_INTEGRATION_DATE', '2020-10-15');
 
 		!defined('PPCP_FLAG_SUBSCRIPTION') && define('PPCP_FLAG_SUBSCRIPTION', true);
