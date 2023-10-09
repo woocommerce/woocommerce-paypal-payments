@@ -151,6 +151,7 @@ class SimulateCartEndpoint extends AbstractCartEndpoint {
 
 	/**
 	 * Restores the real cart.
+	 * Currently, unsets the WC cart to prevent race conditions arising from it being persisted.
 	 *
 	 * @return void
 	 */
@@ -158,7 +159,7 @@ class SimulateCartEndpoint extends AbstractCartEndpoint {
 		// Remove from cart because some plugins reserve resources internally when adding to cart.
 		$this->remove_cart_items();
 
-		// Restore cart and unset cart clone.
+		// Unset cart to prevent it being updated/persisted.
 		unset( WC()->cart );
 		unset( $this->cart );
 	}
