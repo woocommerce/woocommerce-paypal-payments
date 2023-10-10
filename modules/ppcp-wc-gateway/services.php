@@ -202,8 +202,10 @@ return array(
 
 	'wcgateway.settings'                                   => SingletonDecorator::make(
 		static function ( ContainerInterface $container ): Settings {
-			$default_button_locations = $container->get( 'wcgateway.button.default-locations' );
-			return new Settings( $default_button_locations );
+			return new Settings(
+				$container->get( 'wcgateway.button.default-locations' ),
+				$container->get( 'wcgateway.settings.dcc-gateway-title.default' )
+			);
 		}
 	),
 	'wcgateway.notice.connect'                             => static function ( ContainerInterface $container ): ConnectAdminNotice {
