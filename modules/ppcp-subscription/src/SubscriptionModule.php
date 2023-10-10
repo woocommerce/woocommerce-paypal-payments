@@ -204,7 +204,7 @@ class SubscriptionModule implements ModuleInterface {
 
 				if (
 					! $subscriptions_helper->plugin_is_active()
-					|| ! ( is_a( $product, WC_Product_Subscription::class ) || is_a( $product, WC_Product_Subscription_Variation::class ) )
+					|| ! ( is_a( $product, WC_Product_Subscription::class ) || is_a( $product, WC_Product_Variable_Subscription::class ) || is_a( $product, WC_Product_Subscription_Variation::class ) )
 					|| ! WC_Subscriptions_Product::is_subscription( $product )
 				) {
 					return;
