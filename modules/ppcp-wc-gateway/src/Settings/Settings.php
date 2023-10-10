@@ -36,12 +36,21 @@ class Settings implements ContainerInterface {
 	protected $default_button_locations;
 
 	/**
+	 * The default ACDC gateway title.
+	 *
+	 * @var string
+	 */
+	protected $default_dcc_gateway_title;
+
+	/**
 	 * Settings constructor.
 	 *
 	 * @param string[] $default_button_locations The list of selected default button locations.
+	 * @param string   $default_dcc_gateway_title The default ACDC gateway title.
 	 */
-	public function __construct( array $default_button_locations ) {
-		$this->default_button_locations = $default_button_locations;
+	public function __construct( array $default_button_locations, string $default_dcc_gateway_title ) {
+		$this->default_button_locations  = $default_button_locations;
+		$this->default_dcc_gateway_title = $default_dcc_gateway_title;
 	}
 
 	/**
@@ -116,7 +125,7 @@ class Settings implements ContainerInterface {
 			'pay_later_button_locations'               => $this->default_button_locations,
 			'pay_later_messaging_locations'            => $this->default_button_locations,
 			'brand_name'                               => get_bloginfo( 'name' ),
-			'dcc_gateway_title'                        => __( 'Credit Cards', 'woocommerce-paypal-payments' ),
+			'dcc_gateway_title'                        => $this->default_dcc_gateway_title,
 			'dcc_gateway_description'                  => __(
 				'Pay with your credit card.',
 				'woocommerce-paypal-payments'
