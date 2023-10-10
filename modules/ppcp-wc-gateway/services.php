@@ -200,10 +200,14 @@ return array(
 		return $ppcp_tab ? $ppcp_tab : $section;
 	},
 
-	'wcgateway.settings'                                   => static function ( ContainerInterface $container ): Settings {
-		$default_button_locations = $container->get( 'wcgateway.button.default-locations' );
-		return new Settings( $default_button_locations );
-	},
+	'wcgateway.settings'                                   => SingletonDecorator::make(
+		static function ( ContainerInterface $container ): Settings {
+			return new Settings(
+				$container->get( 'wcgateway.button.default-locations' ),
+				$container->get( 'wcgateway.settings.dcc-gateway-title.default' )
+			);
+		}
+	),
 	'wcgateway.notice.connect'                             => static function ( ContainerInterface $container ): ConnectAdminNotice {
 		$state    = $container->get( 'onboarding.state' );
 		$settings = $container->get( 'wcgateway.settings' );
@@ -487,7 +491,7 @@ return array(
 					'This controls the title which the user sees during checkout.',
 					'woocommerce-paypal-payments'
 				),
-				'default'      => __( 'Credit Cards', 'woocommerce-paypal-payments' ),
+				'default'      => $container->get( 'wcgateway.settings.dcc-gateway-title.default' ),
 				'desc_tip'     => true,
 				'screens'      => array(
 					State::STATE_ONBOARDED,
@@ -1184,6 +1188,10 @@ return array(
 		$vaulting_label .= '</p>';
 
 		return $vaulting_label;
+	},
+
+	'wcgateway.settings.dcc-gateway-title.default'         => static function ( ContainerInterface $container ): string {
+		return __( 'Debit & Credit Cards', 'woocommerce-paypal-payments' );
 	},
 
 	'wcgateway.settings.card_billing_data_mode.default'    => static function ( ContainerInterface $container ): string {
