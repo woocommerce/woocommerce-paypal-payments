@@ -482,7 +482,7 @@ class SmartButton implements SmartButtonInterface {
 					echo '<p class="woocommerce-mini-cart__buttons buttons">';
 					echo '<span id="ppc-button-minicart"></span>';
 					do_action( 'woocommerce_paypal_payments_minicart_button_render' );
-					echo '</div>';
+					echo '</p>';
 				},
 				30
 			);
