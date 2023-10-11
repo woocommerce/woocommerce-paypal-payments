@@ -2,6 +2,7 @@ import ContextHandlerFactory from "./Context/ContextHandlerFactory";
 import {setVisible} from '../../../ppcp-button/resources/js/modules/Helper/Hiding';
 import {setEnabled} from '../../../ppcp-button/resources/js/modules/Helper/ButtonDisabler';
 import widgetBuilder from "../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder";
+import UpdatePaymentData from "./Helper/UpdatePaymentData";
 
 class GooglepayButton {
 
@@ -222,26 +223,31 @@ class GooglepayButton {
         return new Promise(async (resolve, reject) => {
             let paymentDataRequestUpdate = {};
 
-            // TODO : update shipping in cart and get price
+            const updateData = new UpdatePaymentData(this.buttonConfig.ajax.update_payment_data)
+            const updatedData = await updateData.update(paymentData);
 
-            if(false) { // TODO : on error
+            // Handle unserviceable address.
+            if(!updatedData.shipping_options || !updatedData.shipping_options.shippingOptions.length) {
                 paymentDataRequestUpdate.error = this.unserviceableShippingAddressError();
                 resolve(paymentDataRequestUpdate);
+                return;
             }
 
             switch (paymentData.callbackTrigger) {
                 case 'INITIALIZE':
                 case 'SHIPPING_ADDRESS':
-                    paymentDataRequestUpdate.newShippingOptionParameters = this.shippingOptions();
-                    let selectedShippingOptionId = paymentDataRequestUpdate.newShippingOptionParameters.defaultSelectedOptionId;
-                    paymentDataRequestUpdate.newTransactionInfo = await this.calculateNewTransactionInfo(selectedShippingOptionId);
+                    paymentDataRequestUpdate.newShippingOptionParameters = updatedData.shipping_options;
+                    paymentDataRequestUpdate.newTransactionInfo = this.calculateNewTransactionInfo(updatedData);
                     break;
                 case 'SHIPPING_OPTION':
-                    paymentDataRequestUpdate.newTransactionInfo = await this.calculateNewTransactionInfo(paymentData.shippingOptionData.id);
+                    paymentDataRequestUpdate.newTransactionInfo = this.calculateNewTransactionInfo(updatedData);
                     break;
             }
 
             resolve(paymentDataRequestUpdate);
+
+            // Update WooCommerce checkout form.
+            jQuery(document.body).trigger('update_checkout');
         });
     }
 
@@ -253,38 +259,15 @@ class GooglepayButton {
         };
     }
 
-    async calculateNewTransactionInfo(shippingOptionId) {
-        let newTransactionInfo = await this.contextHandler.transactionInfo();
-
-        // TODO : update shipping in cart
-
-        newTransactionInfo.totalPrice = Math.floor(10 + Math.random() * 100).toString(); // TODO : testing only
-
-        return newTransactionInfo;
-    }
-
-    shippingOptions() {
+    calculateNewTransactionInfo(updatedData) {
         return {
-            defaultSelectedOptionId: "shipping-001",
-            shippingOptions: [
-                {
-                    "id": "shipping-001",
-                    "label": "Free: Standard shipping",
-                    "description": "Free Shipping delivered in 5 business days."
-                },
-                {
-                    "id": "shipping-002",
-                    "label": "$1.99: Standard shipping",
-                    "description": "Standard shipping delivered in 3 business days."
-                },
-                {
-                    "id": "shipping-003",
-                    "label": "$10: Express shipping",
-                    "description": "Express shipping delivered in 1 business day."
-                },
-            ]
+            countryCode: updatedData.country_code,
+            currencyCode: updatedData.currency_code,
+            totalPriceStatus: 'FINAL',
+            totalPrice: updatedData.total_str
         };
     }
+
 
     //------------------------
     // Payment process

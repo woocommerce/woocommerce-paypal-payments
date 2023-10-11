@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
 use WooCommerce\PayPalCommerce\Googlepay\Assets\BlocksPaymentMethod;
 use WooCommerce\PayPalCommerce\Googlepay\Assets\Button;
+use WooCommerce\PayPalCommerce\Googlepay\Endpoint\UpdatePaymentDataEndpoint;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmApplies;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmProductStatus;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\AvailabilityNotice;
@@ -172,6 +173,13 @@ return array(
 
 	'googlepay.sdk_url'                           => static function ( ContainerInterface $container ): string {
 		return 'https://pay.google.com/gp/p/js/pay.js';
+	},
+
+	'googlepay.endpoint.update-payment-data'      => static function ( ContainerInterface $container ): UpdatePaymentDataEndpoint {
+		return new UpdatePaymentDataEndpoint(
+			$container->get( 'button.request-data' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
 	},
 
 );

@@ -13,6 +13,7 @@ use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Countries;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
+use WooCommerce\PayPalCommerce\Googlepay\Endpoint\UpdatePaymentDataEndpoint;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
@@ -427,6 +428,12 @@ class Button implements ButtonInterface {
 				'mini_cart_style'   => $this->button_styles_for_context( 'mini-cart' ),
 			),
 			'shipping'    => $shipping,
+			'ajax'        => array(
+				'update_payment_data' => array(
+					'endpoint' => \WC_AJAX::get_endpoint( UpdatePaymentDataEndpoint::ENDPOINT ),
+					'nonce'    => wp_create_nonce( UpdatePaymentDataEndpoint::nonce() ),
+				),
+			),
 		);
 	}
 

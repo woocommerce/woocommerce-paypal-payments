@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\Googlepay;
 
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
+use WooCommerce\PayPalCommerce\Googlepay\Endpoint\UpdatePaymentDataEndpoint;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmProductStatus;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\AvailabilityNotice;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
@@ -59,20 +60,15 @@ class GooglepayModule implements ModuleInterface {
 		assert( $button instanceof ButtonInterface );
 		$button->initialize();
 
+		// Show notice if there are product availability issues.
+		$availability_notice = $c->get( 'googlepay.availability_notice' );
+		assert( $availability_notice instanceof AvailabilityNotice );
+		$availability_notice->execute();
+
 		// Check if this merchant can activate / use the buttons.
 		// We allow non referral merchants as they can potentially still use GooglePay, we just have no way of checking the capability.
 		if ( ( ! $c->get( 'googlepay.available' ) ) && $c->get( 'googlepay.is_referral' ) ) {
-			$availability_notice = $c->get( 'googlepay.availability_notice' );
-			assert( $availability_notice instanceof AvailabilityNotice );
-			$availability_notice->execute();
 			return;
-		}
-
-		// Show notice and continue if merchant isn't onboarded via a referral.
-		if ( ! $c->get( 'googlepay.is_referral' ) ) {
-			$availability_notice = $c->get( 'googlepay.availability_notice' );
-			assert( $availability_notice instanceof AvailabilityNotice );
-			$availability_notice->execute();
 		}
 
 		// Initializes button rendering.
@@ -128,6 +124,16 @@ class GooglepayModule implements ModuleInterface {
 					$settings['components'][] = 'googlepay';
 				}
 				return $settings;
+			}
+		);
+
+		// Initialize AJAX endpoints.
+		add_action(
+			'wc_ajax_' . UpdatePaymentDataEndpoint::ENDPOINT,
+			static function () use ( $c ) {
+				$endpoint = $c->get( 'googlepay.endpoint.update-payment-data' );
+				assert( $endpoint instanceof UpdatePaymentDataEndpoint );
+				$endpoint->handle_request();
 			}
 		);
 	}
