@@ -148,7 +148,7 @@ const PayPalComponent = ({
             }
             if (wp.data.select('wc/store/validation').hasValidationErrors()) {
                 location.href = getCheckoutRedirectUrl();
-                return false;
+                return { type: responseTypes.ERROR };
             }
 
             return true;
@@ -211,12 +211,6 @@ const PayPalComponent = ({
         }
 
         const unsubscribeProcessing = onPaymentSetup(() => {
-            if (wp.data.select('wc/store/validation').hasValidationErrors()) {
-                return {
-                    type: responseTypes.ERROR,
-                };
-            }
-
             if (config.scriptData.continuation) {
                 return {
                     type: responseTypes.SUCCESS,
