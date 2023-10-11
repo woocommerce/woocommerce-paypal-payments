@@ -63,7 +63,7 @@ class UpdatePaymentDataEndpoint {
 	 * Handles the request.
 	 *
 	 * @return bool
-	 * @throws RuntimeException
+	 * @throws RuntimeException When a validation fails.
 	 */
 	public function handle_request(): bool {
 		try {
@@ -161,7 +161,10 @@ class UpdatePaymentDataEndpoint {
 		$packages = WC()->cart->get_shipping_packages();
 		$zone     = \WC_Shipping_Zones::get_zone_matching_package( $packages[0] );
 
-		/** @var \WC_Shipping_Method[] $methods The shipping methods. */
+		/**
+		 * The shipping methods.
+		 * @var \WC_Shipping_Method[] $methods
+		 */
 		$methods = $zone->get_shipping_methods( true );
 
 		foreach ( $methods as $method ) {
