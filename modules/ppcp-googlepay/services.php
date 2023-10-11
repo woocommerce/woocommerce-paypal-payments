@@ -50,6 +50,14 @@ return array(
 		return true;
 	},
 
+	// We assume it's a referral if we can check product status without API request failures.
+	'googlepay.is_referral'                       => static function ( ContainerInterface $container ): bool {
+		$status = $container->get( 'googlepay.helpers.apm-product-status' );
+		assert( $status instanceof ApmProductStatus );
+
+		return ! $status->has_request_failure();
+	},
+
 	'googlepay.availability_notice'               => static function ( ContainerInterface $container ): AvailabilityNotice {
 		return new AvailabilityNotice(
 			$container->get( 'googlepay.helpers.apm-product-status' ),

@@ -10,8 +10,6 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Googlepay;
 
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
-use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
-use WooCommerce\PayPalCommerce\AdminNotices\Repository\Repository;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmProductStatus;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\AvailabilityNotice;
@@ -62,11 +60,19 @@ class GooglepayModule implements ModuleInterface {
 		$button->initialize();
 
 		// Check if this merchant can activate / use the buttons.
-		if ( ! $c->get( 'googlepay.available' ) ) {
+		// We allow non referral merchants as they can potentially still use GooglePay, we just have no way of checking the capability.
+		if ( ( ! $c->get( 'googlepay.available' ) ) && $c->get( 'googlepay.is_referral' ) ) {
 			$availability_notice = $c->get( 'googlepay.availability_notice' );
 			assert( $availability_notice instanceof AvailabilityNotice );
 			$availability_notice->execute();
 			return;
+		}
+
+		// Show notice and continue if merchant isn't onboarded via a referral.
+		if ( ! $c->get( 'googlepay.is_referral' ) ) {
+			$availability_notice = $c->get( 'googlepay.availability_notice' );
+			assert( $availability_notice instanceof AvailabilityNotice );
+			$availability_notice->execute();
 		}
 
 		// Initializes button rendering.

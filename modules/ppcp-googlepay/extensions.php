@@ -25,6 +25,7 @@ return array(
 		}
 
 		$is_available = $container->get( 'googlepay.available' );
+		$is_referral  = $container->get( 'googlepay.is_referral' );
 
 		$insert_after = function( array $array, string $key, array $new ): array {
 			$keys = array_keys( $array );
@@ -70,7 +71,7 @@ return array(
 									->to_array(),
 								$display_manager
 									->rule()
-									->condition_is_true( $is_available )
+									->condition_is_true( $is_available || ! $is_referral )
 									->action_enable( 'googlepay_button_enabled' )
 									->action_enable( 'googlepay_button_type' )
 									->action_enable( 'googlepay_button_color' )

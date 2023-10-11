@@ -35,11 +35,11 @@ return array(
 				'allow_card_button_gateway',
 				array(
 					'applepay_button_enabled' => array(
-						'title'             => __( 'Apple Pay Button', 'woocommerce-paypal-payments' ),
-						'type'              => 'checkbox',
-						'class'             => array( 'ppcp-grayed-out-text' ),
-						'input_class'       => array( 'ppcp-disabled-checkbox' ),
-						'label'             => __( 'Enable Apple Pay button', 'woocommerce-paypal-payments' )
+						'title'        => __( 'Apple Pay Button', 'woocommerce-paypal-payments' ),
+						'type'         => 'checkbox',
+						'class'        => array( 'ppcp-grayed-out-text' ),
+						'input_class'  => array( 'ppcp-disabled-checkbox' ),
+						'label'        => __( 'Enable Apple Pay button', 'woocommerce-paypal-payments' )
 							. '<p class="description">'
 							. sprintf(
 							// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
@@ -48,21 +48,10 @@ return array(
 								'</a>'
 							)
 							. '</p>',
-						'default'           => 'yes',
-						'screens'           => array( State::STATE_ONBOARDED ),
-						'gateway'           => 'paypal',
-						'requirements'      => array(),
-						'custom_attributes' => array(
-							'data-ppcp-display' => wp_json_encode(
-								array(
-									$display_manager
-										->rule()
-										->condition_element( 'applepay_button_enabled', '1' )
-										->action_enable( 'applepay_button_enabled' )
-										->to_array(),
-								)
-							),
-						),
+						'default'      => 'yes',
+						'screens'      => array( State::STATE_ONBOARDED ),
+						'gateway'      => 'paypal',
+						'requirements' => array(),
 					),
 				)
 			);
