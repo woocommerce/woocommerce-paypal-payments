@@ -137,7 +137,7 @@ class SubscriptionsApiHandler {
 	public function create_plan( string $plan_name, WC_Product $product ): void {
 		try {
 			$subscription_plan = $this->billing_plans_endpoint->create(
-				$plan_name,
+				$plan_name ?: $product->get_title(),
 				$product->get_meta( 'ppcp_subscription_product' )['id'] ?? '',
 				$this->billing_cycles( $product ),
 				$this->payment_preferences_factory->from_wc_product( $product )->to_array()
