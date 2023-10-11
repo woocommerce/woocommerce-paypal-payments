@@ -488,38 +488,47 @@ class SmartButton implements SmartButtonInterface {
 			);
 		}
 
-		$available_gateways = WC()->payment_gateways->get_available_payment_gateways();
 
-		if ( isset( $available_gateways['ppcp-gateway'] ) ) {
-			add_action(
-				$this->pay_order_renderer_hook(),
-				function (): void {
+		add_action(
+			$this->pay_order_renderer_hook(),
+			function (): void {
+				$available_gateways = WC()->payment_gateways()->get_available_payment_gateways();
+
+				if ( isset( $available_gateways['ppcp-gateway'] ) ) {
 					$this->button_renderer( PayPalGateway::ID, 'woocommerce_paypal_payments_payorder_button_render' );
 					$this->button_renderer( CardButtonGateway::ID );
-				},
-				20
-			);
-			add_action(
-				$this->checkout_button_renderer_hook(),
-				function (): void {
+				}
+			},
+			20
+		);
+		add_action(
+			$this->checkout_button_renderer_hook(),
+			function (): void {
+				$available_gateways = WC()->payment_gateways()->get_available_payment_gateways();
+
+				if ( isset( $available_gateways['ppcp-gateway'] ) ) {
 					$this->button_renderer( PayPalGateway::ID, 'woocommerce_paypal_payments_checkout_button_render' );
 					$this->button_renderer( CardButtonGateway::ID );
 				}
-			);
+			}
+		);
 
-			$enabled_on_cart = $this->settings_status->is_smart_button_enabled_for_location( 'cart' );
-			add_action(
-				$this->proceed_to_checkout_button_renderer_hook(),
-				function() use ( $enabled_on_cart ) {
-					if ( ! is_cart() || ! $enabled_on_cart || $this->is_free_trial_cart() || $this->is_cart_price_total_zero() ) {
-						return;
-					}
+		$enabled_on_cart = $this->settings_status->is_smart_button_enabled_for_location( 'cart' );
+		add_action(
+			$this->proceed_to_checkout_button_renderer_hook(),
+			function() use ( $enabled_on_cart ) {
+				if ( ! is_cart() || ! $enabled_on_cart || $this->is_free_trial_cart() || $this->is_cart_price_total_zero() ) {
+					return;
+				}
 
+				$available_gateways = WC()->payment_gateways()->get_available_payment_gateways();
+
+				if ( isset( $available_gateways['ppcp-gateway'] ) ) {
 					$this->button_renderer( PayPalGateway::ID, 'woocommerce_paypal_payments_cart_button_render' );
-				},
-				20
-			);
-		}
+				}
+			},
+			20
+		);
 
 		return true;
 	}
