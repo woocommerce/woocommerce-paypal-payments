@@ -142,6 +142,10 @@ class Button implements ButtonInterface {
 	 * @psalm-suppress MissingClosureParamType
 	 */
 	public function add_onboarding_options( $options ): string {
+		if ( ! apply_filters( 'woocommerce_paypal_payments_google_pay_onboarding_option', false ) ) {
+			return $options;
+		}
+
 		$checked = '';
 		try {
 			$onboard_with_google = $this->settings->get( 'ppcp-onboarding-google' );
@@ -420,6 +424,7 @@ class Button implements ButtonInterface {
 
 		return array(
 			'environment' => $this->environment->current_environment_is( Environment::SANDBOX ) ? 'TEST' : 'PRODUCTION',
+			'is_debug'    => defined( 'WP_DEBUG' ) && WP_DEBUG ? true : false,
 			'sdk_url'     => $this->sdk_url,
 			'button'      => array(
 				'wrapper'           => '#ppc-button-googlepay-container',

@@ -23,7 +23,11 @@ class GooglepayButton {
             this.externalHandler
         );
 
-        console.log('[GooglePayButton] new Button', this);
+        this.log = (message) => {
+            if ( this.buttonConfig.is_debug ) {
+                console.log('[GooglePayButton] ' + message, this);
+            }
+        }
     }
 
     init(config) {
@@ -144,7 +148,7 @@ class GooglepayButton {
      * Add a Google Pay purchase button
      */
     addButton(baseCardPaymentMethod) {
-        console.log('[GooglePayButton] addButton', this.context);
+        this.log('addButton', this.context);
 
         const { wrapper, ppcpStyle, buttonStyle } = this.contextConfig();
 
@@ -171,10 +175,10 @@ class GooglepayButton {
      * Show Google Pay payment sheet when Google Pay payment button is clicked
      */
     async onButtonClick() {
-        console.log('[GooglePayButton] onButtonClick', this.context);
+        this.log('onButtonClick', this.context);
 
         const paymentDataRequest = await this.paymentDataRequest();
-        console.log('[GooglePayButton] onButtonClick: paymentDataRequest', paymentDataRequest, this.context);
+        this.log('onButtonClick: paymentDataRequest', paymentDataRequest, this.context);
 
         window.ppcpFundingSource = 'googlepay'; // Do this on another place like on create order endpoint handler.
 
@@ -217,8 +221,8 @@ class GooglepayButton {
     }
 
     onPaymentDataChanged(paymentData) {
-        console.log('[GooglePayButton] onPaymentDataChanged', this.context);
-        console.log('[GooglePayButton] paymentData', paymentData);
+        this.log('onPaymentDataChanged', this.context);
+        this.log('paymentData', paymentData);
 
         return new Promise(async (resolve, reject) => {
             let paymentDataRequestUpdate = {};
@@ -274,25 +278,25 @@ class GooglepayButton {
     //------------------------
 
     onPaymentAuthorized(paymentData) {
-        console.log('[GooglePayButton] onPaymentAuthorized', this.context);
+        this.log('onPaymentAuthorized', this.context);
         return this.processPayment(paymentData);
     }
 
     async processPayment(paymentData) {
-        console.log('[GooglePayButton] processPayment', this.context);
+        this.log('processPayment', this.context);
 
         return new Promise(async (resolve, reject) => {
             try {
                 let id = await this.contextHandler.createOrder();
 
-                console.log('[GooglePayButton] processPayment: createOrder', id, this.context);
+                this.log('processPayment: createOrder', id, this.context);
 
                 const confirmOrderResponse = await widgetBuilder.paypal.Googlepay().confirmOrder({
                     orderId: id,
                     paymentMethodData: paymentData.paymentMethodData
                 });
 
-                console.log('[GooglePayButton] processPayment: confirmOrder', confirmOrderResponse, this.context);
+                this.log('processPayment: confirmOrder', confirmOrderResponse, this.context);
 
                 /** Capture the Order on the Server */
                 if (confirmOrderResponse.status === "APPROVED") {
@@ -339,7 +343,7 @@ class GooglepayButton {
             }
         }
 
-        console.log('[GooglePayButton] processPaymentResponse', response, this.context);
+        this.log('processPaymentResponse', response, this.context);
 
         return response;
     }

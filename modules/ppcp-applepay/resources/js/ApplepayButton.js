@@ -31,10 +31,16 @@ class ApplepayButton {
         this.updated_contact_info = []
         this.selectedShippingMethod = []
         this.nonce = document.getElementById('woocommerce-process-checkout-nonce').value
+
+        this.log = (message) => {
+            if ( this.buttonConfig.is_debug ) {
+                console.log('[ApplePayButton] ' + message, this);
+            }
+        }
     }
 
     init(config) {
-        console.log('[ApplePayButton] init', config);
+        this.log('init', config);
         if (this.isInitialized) {
             return;
         }
@@ -53,12 +59,12 @@ class ApplepayButton {
                 const id = "#apple-" + this.buttonConfig.button.wrapper;
 
                 if (this.context === 'mini-cart') {
-                    document.querySelector(id_minicart).addEventListener('click', (evt) => {
+                    document.querySelector(id_minicart)?.addEventListener('click', (evt) => {
                         evt.preventDefault();
                         this.onButtonClick();
                     });
                 } else {
-                    document.querySelector(id).addEventListener('click', (evt) => {
+                    document.querySelector(id)?.addEventListener('click', (evt) => {
                         evt.preventDefault();
                         this.onButtonClick();
                     });
@@ -150,7 +156,10 @@ class ApplepayButton {
         const language = this.buttonConfig.button.lang;
         const color = this.buttonConfig.button.color;
         const id = "apple-" + wrapper;
-        appleContainer.innerHTML = `<apple-pay-button id="${id}" buttonstyle="${color}" type="${type}" locale="${language}">`;
+
+        if (appleContainer) {
+            appleContainer.innerHTML = `<apple-pay-button id="${id}" buttonstyle="${color}" type="${type}" locale="${language}">`;
+        }
 
         jQuery('#' + wrapper).addClass('ppcp-button-' + shape);
         jQuery(wrapper).append(appleContainer);
@@ -180,7 +189,7 @@ class ApplepayButton {
                 console.error(error);
             }
             const session = this.applePaySession(paymentDataRequest)
-            console.log("session", session)
+            this.log("session", session)
             const formValidator = PayPalCommerceGateway.early_checkout_validation_enabled ?
                 new FormValidator(
                     PayPalCommerceGateway.ajax.validate_checkout.endpoint,
@@ -242,7 +251,7 @@ class ApplepayButton {
     //------------------------
 
     onvalidatemerchant(session) {
-        console.log("onvalidatemerchant")
+        this.log("onvalidatemerchant")
         return (applePayValidateMerchantEvent) => {
             paypal.Applepay().validateMerchant({
                 validationUrl: applePayValidateMerchantEvent.validationURL
@@ -259,7 +268,7 @@ class ApplepayButton {
                             'woocommerce-process-checkout-nonce': this.nonce,
                         }
                     })
-                    console.log('validated')
+                    this.log('validated')
                 })
                 .catch(validateError => {
                     console.error(validateError);
@@ -279,7 +288,7 @@ class ApplepayButton {
     }
     onshippingmethodselected(session) {
         const ajax_url = this.buttonConfig.ajax_url
-        console.log('[ApplePayButton] onshippingmethodselected');
+        this.log('onshippingmethodselected');
         return (event) => {
             const data = this.getShippingMethodData(event);
             jQuery.ajax({
@@ -291,7 +300,7 @@ class ApplepayButton {
                     if (applePayShippingMethodUpdate.success === false) {
                         response.errors = createAppleErrors(response.errors)
                     }
-                    console.log('shipping method update response', response, applePayShippingMethodUpdate)
+                    this.log('shipping method update response', response, applePayShippingMethodUpdate)
                     this.selectedShippingMethod = event.shippingMethod
                     //order the response shipping methods, so that the selected shipping method is the first one
                     let orderedShippingMethods = response.newShippingMethods.sort((a, b) => {
@@ -316,10 +325,10 @@ class ApplepayButton {
     }
     onshippingcontactselected(session) {
         const ajax_url = this.buttonConfig.ajax_url
-        console.log('[ApplePayButton] onshippingcontactselected', ajax_url, session)
+        this.log('[ApplePayButton] onshippingcontactselected', ajax_url, session)
         return (event) => {
             const data = this.getShippingContactData(event);
-            console.log('shipping contact selected', data, event)
+            this.log('shipping contact selected', data, event)
             jQuery.ajax({
                 url: ajax_url,
                 method: 'POST',
@@ -327,7 +336,7 @@ class ApplepayButton {
                 success: (applePayShippingContactUpdate, textStatus, jqXHR) => {
                     let response = applePayShippingContactUpdate.data
                     this.updated_contact_info = event.shippingContact
-                    console.log('shipping contact update response', response, applePayShippingContactUpdate, this.updated_contact_info)
+                    this.log('shipping contact update response', response, applePayShippingContactUpdate, this.updated_contact_info)
                     if (applePayShippingContactUpdate.success === false) {
                         response.errors = createAppleErrors(response.errors)
                     }
@@ -421,7 +430,7 @@ class ApplepayButton {
             let createOrderInPayPal = actionHandler.createOrder()
             const processInWooAndCapture = async (data) => {
                 try {
-                    console.log('processInWooAndCapture', data)
+                    this.log('processInWooAndCapture', data)
                     const billingContact = data.billing_contact
                     const shippingContact = data.shipping_contact
                     jQuery.ajax({
@@ -443,7 +452,7 @@ class ApplepayButton {
                         complete: (jqXHR, textStatus) => {
                         },
                         success: (authorizationResult, textStatus, jqXHR) => {
-                            console.log('success authorizationResult', authorizationResult)
+                            this.log('success authorizationResult', authorizationResult)
                             if (authorizationResult.result === "success") {
                                 redirectionUrl = authorizationResult.redirect;
                                 //session.completePayment(ApplePaySession.STATUS_SUCCESS)
@@ -453,18 +462,18 @@ class ApplepayButton {
                             }
                         },
                         error: (jqXHR, textStatus, errorThrown) => {
-                            console.log('error authorizationResult', errorThrown)
+                            this.log('error authorizationResult', errorThrown)
                             session.completePayment(ApplePaySession.STATUS_FAILURE)
                             console.warn(textStatus, errorThrown)
                             session.abort()
                         },
                     })
                 } catch (error) {
-                    console.log(error)  // handle error
+                    this.log(error)  // handle error
                 }
             }
             createOrderInPayPal([], []).then((orderId) => {
-                console.log('createOrderInPayPal', orderId)
+                this.log('createOrderInPayPal', orderId)
                 paypal.Applepay().confirmOrder(
                     {
                         orderId: orderId,
@@ -488,31 +497,31 @@ class ApplepayButton {
                     }
                 );
             }).catch((error) => {
-                console.log(error)
+                console.error(error)
                 session.abort()
             })
         };*/
     }
     /* onPaymentAuthorized(paymentData) {
-         console.log('[ApplePayButton] onPaymentAuthorized', this.context);
+         this.log('[ApplePayButton] onPaymentAuthorized', this.context);
          return this.processPayment(paymentData);
      }
 
      async processPayment(paymentData) {
-         console.log('[ApplePayButton] processPayment', this.context);
+         this.log('[ApplePayButton] processPayment', this.context);
 
          return new Promise(async (resolve, reject) => {
              try {
                  let id = await this.contextHandler.createOrder();
 
-                 console.log('[ApplePayButton] processPayment: createOrder', id, this.context);
+                 this.log('[ApplePayButton] processPayment: createOrder', id, this.context);
 
                  const confirmOrderResponse = await paypal.Applepay().confirmOrder({
                      orderId: id,
                      paymentMethodData: paymentData.paymentMethodData
                  });
 
-                 console.log('[ApplePayButton] processPayment: confirmOrder', confirmOrderResponse, this.context);
+                 this.log('[ApplePayButton] processPayment: confirmOrder', confirmOrderResponse, this.context);
 
                  /!** Capture the Order on the Server *!/
                  if (confirmOrderResponse.status === "APPROVED") {
@@ -554,7 +563,7 @@ class ApplepayButton {
              }
          }
 
-         console.log('[ApplePayButton] processPaymentResponse', response, this.context);
+         this.log('processPaymentResponse', response, this.context);
 
          return response;
      }*/

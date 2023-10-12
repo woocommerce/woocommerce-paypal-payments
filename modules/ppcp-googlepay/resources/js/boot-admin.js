@@ -77,6 +77,10 @@ import widgetBuilder from "../../../ppcp-button/resources/js/modules/Renderer/Wi
     }
 
     const bootstrap = async function () {
+        if (!widgetBuilder.paypal) {
+            return;
+        }
+
         googlePayConfig = await widgetBuilder.paypal.Googlepay().config();
 
         let options;

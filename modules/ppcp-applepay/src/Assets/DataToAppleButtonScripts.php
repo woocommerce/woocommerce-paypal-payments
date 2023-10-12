@@ -127,6 +127,7 @@ class DataToAppleButtonScripts {
 
 		return array(
 			'sdk_url'  => $this->sdk_url,
+			'is_debug' => defined( 'WP_DEBUG' ) && WP_DEBUG ? true : false,
 			'button'   => array(
 				'wrapper'           => 'applepay-container',
 				'mini_cart_wrapper' => 'applepay-container-minicart',
@@ -180,6 +181,7 @@ class DataToAppleButtonScripts {
 
 		return array(
 			'sdk_url'      => $this->sdk_url,
+			'is_debug'     => defined( 'WP_DEBUG' ) && WP_DEBUG ? true : false,
 			'button'       => array(
 				'wrapper'           => 'applepay-container',
 				'mini_cart_wrapper' => 'applepay-container-minicart',

@@ -18,6 +18,8 @@ use WooCommerce\PayPalCommerce\Googlepay\Endpoint\UpdatePaymentDataEndpoint;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmApplies;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmProductStatus;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\AvailabilityNotice;
+use WooCommerce\PayPalCommerce\Onboarding\Environment;
+use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
@@ -179,6 +181,53 @@ return array(
 		return new UpdatePaymentDataEndpoint(
 			$container->get( 'button.request-data' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
+
+	'googlepay.enable-url-sandbox'                => static function ( ContainerInterface $container ): string {
+		return 'https://www.sandbox.paypal.com/bizsignup/add-product?product=payment_methods&capabilities=GOOGLE_PAY';
+	},
+
+	'googlepay.enable-url-live'                   => static function ( ContainerInterface $container ): string {
+		return 'https://www.paypal.com/bizsignup/add-product?product=payment_methods&capabilities=GOOGLE_PAY';
+	},
+
+	'googlepay.settings.connection.status-text'   => static function ( ContainerInterface $container ): string {
+		$state = $container->get( 'onboarding.state' );
+		if ( $state->current_state() < State::STATE_ONBOARDED ) {
+			return '';
+		}
+
+		$product_status = $container->get( 'googlepay.helpers.apm-product-status' );
+		assert( $product_status instanceof ApmProductStatus );
+
+		$environment = $container->get( 'onboarding.environment' );
+		assert( $environment instanceof Environment );
+
+		$enabled = $product_status->is_active();
+
+		$enabled_status_text  = esc_html__( 'Status: Available', 'woocommerce-paypal-payments' );
+		$disabled_status_text = esc_html__( 'Status: Not yet enabled', 'woocommerce-paypal-payments' );
+
+		$button_text = $enabled
+			? esc_html__( 'Settings', 'woocommerce-paypal-payments' )
+			: esc_html__( 'Enable Google Pay', 'woocommerce-paypal-payments' );
+
+		$enable_url = $environment->current_environment_is( Environment::PRODUCTION )
+			? $container->get( 'googlepay.enable-url-live' )
+			: $container->get( 'googlepay.enable-url-sandbox' );
+
+		$button_url = $enabled
+			? admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway#field-alternative_payment_methods' )
+			: $enable_url;
+
+		return sprintf(
+			'<p>%1$s %2$s</p><p><a target="%3$s" href="%4$s" class="button">%5$s</a></p>',
+			$enabled ? $enabled_status_text : $disabled_status_text,
+			$enabled ? '<span class="dashicons dashicons-yes"></span>' : '<span class="dashicons dashicons-no"></span>',
+			$enabled ? '_self' : '_blank',
+			esc_url( $button_url ),
+			esc_html( $button_text )
 		);
 	},
 

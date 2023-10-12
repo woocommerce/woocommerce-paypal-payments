@@ -207,6 +207,10 @@ class ApplePayButton implements ButtonInterface {
 	 * @return string
 	 */
 	public function add_apple_onboarding_option( $options ): string {
+		if ( ! apply_filters( 'woocommerce_paypal_payments_apple_pay_onboarding_option', false ) ) {
+			return $options;
+		}
+
 		$checked = '';
 		try {
 			$onboard_with_apple = $this->settings->get( 'ppcp-onboarding-apple' );

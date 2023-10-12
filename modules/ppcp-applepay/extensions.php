@@ -13,10 +13,20 @@ use WooCommerce\PayPalCommerce\Applepay\Assets\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DisplayManager;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 
 return array(
 	'wcgateway.settings.fields' => function ( ContainerInterface $container, array $fields ): array {
+
+		// Eligibility check.
+		if ( ! $container->has( 'applepay.eligible' ) || ! $container->get( 'applepay.eligible' ) ) {
+			return $fields;
+		}
+
+		$is_available = $container->get( 'applepay.enabled' );
+		$is_referral  = $container->get( 'applepay.is_referral' );
+
 		$insert_after = function ( array $array, string $key, array $new ): array {
 			$keys = array_keys( $array );
 			$index = array_search( $key, $keys, true );
@@ -27,7 +37,25 @@ return array(
 		$display_manager = $container->get( 'wcgateway.display-manager' );
 		assert( $display_manager instanceof DisplayManager );
 
-		if ( ! $container->has( 'applepay.eligible' ) || ! $container->get( 'applepay.eligible' ) ) {
+		// Connection tab fields.
+		$fields = $insert_after(
+			$fields,
+			'ppcp_dcc_status',
+			array(
+				'applepay_status' => array(
+					'title'        => __( 'Apple Pay Payments', 'woocommerce-paypal-payments' ),
+					'type'         => 'ppcp-text',
+					'text'         => $container->get( 'applepay.settings.connection.status-text' ),
+					'screens'      => array(
+						State::STATE_ONBOARDED,
+					),
+					'requirements' => array(),
+					'gateway'      => Settings::CONNECTION_TAB_ID,
+				),
+			)
+		);
+
+		if ( ! $is_available && $is_referral ) {
 			$connection_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-connection#field-credentials_feature_onboarding_heading' );
 			$connection_link = '<a href="' . $connection_url . '" target="_blank">';
 			return $insert_after(
@@ -35,11 +63,11 @@ return array(
 				'allow_card_button_gateway',
 				array(
 					'applepay_button_enabled' => array(
-						'title'        => __( 'Apple Pay Button', 'woocommerce-paypal-payments' ),
-						'type'         => 'checkbox',
-						'class'        => array( 'ppcp-grayed-out-text' ),
-						'input_class'  => array( 'ppcp-disabled-checkbox' ),
-						'label'        => __( 'Enable Apple Pay button', 'woocommerce-paypal-payments' )
+						'title'             => __( 'Apple Pay Button', 'woocommerce-paypal-payments' ),
+						'type'              => 'checkbox',
+						'class'             => array( 'ppcp-grayed-out-text' ),
+						'input_class'       => array( 'ppcp-disabled-checkbox' ),
+						'label'             => __( 'Enable Apple Pay button', 'woocommerce-paypal-payments' )
 							. '<p class="description">'
 							. sprintf(
 							// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
@@ -48,10 +76,21 @@ return array(
 								'</a>'
 							)
 							. '</p>',
-						'default'      => 'yes',
-						'screens'      => array( State::STATE_ONBOARDED ),
-						'gateway'      => 'paypal',
-						'requirements' => array(),
+						'default'           => 'yes',
+						'screens'           => array( State::STATE_ONBOARDED ),
+						'gateway'           => 'paypal',
+						'requirements'      => array(),
+						'custom_attributes' => array(
+							'data-ppcp-display' => wp_json_encode(
+								array(
+									$display_manager
+										->rule()
+										->condition_is_true( false )
+										->action_enable( 'applepay_button_enabled' )
+										->to_array(),
+								)
+							),
+						),
 					),
 				)
 			);
