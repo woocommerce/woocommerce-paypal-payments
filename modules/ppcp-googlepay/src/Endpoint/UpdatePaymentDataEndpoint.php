@@ -95,6 +95,12 @@ class UpdatePaymentDataEndpoint {
 
 			// Update shipping address.
 			if ( $payment_data['callbackTrigger'] === 'SHIPPING_ADDRESS' ) {
+
+				/**
+				 * The shipping methods.
+				 *
+				 * @var \WC_Customer|null $customer
+				 */
 				$customer = WC()->customer;
 
 				if ( $customer ) {
@@ -163,6 +169,7 @@ class UpdatePaymentDataEndpoint {
 
 		/**
 		 * The shipping methods.
+		 *
 		 * @var \WC_Shipping_Method[] $methods
 		 */
 		$methods = $zone->get_shipping_methods( true );
