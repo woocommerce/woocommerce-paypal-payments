@@ -94,10 +94,21 @@ const PayPalComponent = ({
             if (order) {
                 const addresses = paypalOrderToWcAddresses(order);
 
-                await wp.data.dispatch('wc/store/cart').updateCustomerData({
-                    billing_address: addresses.billingAddress,
-                    shipping_address: addresses.shippingAddress,
-                });
+                let promises = [
+                    // save address on server
+                    wp.data.dispatch('wc/store/cart').updateCustomerData({
+                        billing_address: addresses.billingAddress,
+                        shipping_address: addresses.shippingAddress,
+                    }),
+                ];
+                if (!config.finalReviewEnabled) {
+                    // set address in UI
+                    promises.push(wp.data.dispatch('wc/store/cart').setBillingAddress(addresses.billingAddress));
+                    if (shippingData.needsShipping) {
+                        promises.push(wp.data.dispatch('wc/store/cart').setShippingAddress(addresses.shippingAddress))
+                    }
+                }
+                await Promise.all(promises);
             }
 
             setPaypalOrder(order);
