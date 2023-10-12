@@ -21,7 +21,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
  */
 class OrderTransient {
 	const CACHE_KEY     = 'order_transient';
-	const CACHE_TIMEOUT = DAY_IN_SECONDS; // If necessary we can increase this.
+	const CACHE_TIMEOUT = 60 * 60 * 24; // DAY_IN_SECONDS, if necessary we can increase this.
 
 	/**
 	 * The Cache.

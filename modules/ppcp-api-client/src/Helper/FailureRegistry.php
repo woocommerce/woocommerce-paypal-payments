@@ -17,7 +17,7 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Helper;
  */
 class FailureRegistry {
 	const CACHE_KEY     = 'failure_registry';
-	const CACHE_TIMEOUT = DAY_IN_SECONDS; // If necessary we can increase this.
+	const CACHE_TIMEOUT = 60 * 60 * 24; // DAY_IN_SECONDS, if necessary we can increase this.
 
 	const SELLER_STATUS_KEY = 'seller_status';
 
