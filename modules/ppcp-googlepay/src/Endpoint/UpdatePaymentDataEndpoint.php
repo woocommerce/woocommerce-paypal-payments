@@ -93,38 +93,8 @@ class UpdatePaymentDataEndpoint {
 				wc_maybe_define_constant( 'WOOCOMMERCE_CART', true );
 			}
 
-			// Update shipping address.
-			if ( $payment_data['callbackTrigger'] === 'SHIPPING_ADDRESS' ) {
-
-				/**
-				 * The shipping methods.
-				 *
-				 * @var \WC_Customer|null $customer
-				 */
-				$customer = WC()->customer;
-
-				if ( $customer ) {
-					$customer->set_billing_postcode( $payment_data['shippingAddress']['postalCode'] ?? '' );
-					$customer->set_billing_country( $payment_data['shippingAddress']['countryCode'] ?? '' );
-					$customer->set_billing_state( $payment_data['shippingAddress']['locality'] ?? '' );
-
-					$customer->set_shipping_postcode( $payment_data['shippingAddress']['postalCode'] ?? '' );
-					$customer->set_shipping_country( $payment_data['shippingAddress']['countryCode'] ?? '' );
-					$customer->set_shipping_state( $payment_data['shippingAddress']['locality'] ?? '' );
-
-					// Save the data.
-					$customer->save();
-
-					WC()->session->set( 'customer', WC()->customer->get_data() );
-				}
-			}
-
-			// Set shipping method.
-			WC()->shipping->calculate_shipping( WC()->cart->get_shipping_packages() );
-
-			$chosen_shipping_methods    = WC()->session->get( 'chosen_shipping_methods' );
-			$chosen_shipping_methods[0] = $payment_data['shippingOptionData']['id'];
-			WC()->session->set( 'chosen_shipping_methods', $chosen_shipping_methods );
+			$this->update_addresses( $payment_data );
+			$this->update_shipping_method( $payment_data );
 
 			WC()->cart->calculate_shipping();
 			WC()->cart->calculate_fees();
@@ -162,38 +132,94 @@ class UpdatePaymentDataEndpoint {
 	 * @return array
 	 */
 	public function get_shipping_options(): array {
-		$shipping_methods = array();
+		$shipping_options = array();
 
-		$packages = WC()->cart->get_shipping_packages();
-		$zone     = \WC_Shipping_Zones::get_zone_matching_package( $packages[0] );
+		$calculated_packages = WC()->shipping->calculate_shipping(
+			WC()->cart->get_shipping_packages()
+		);
 
-		/**
-		 * The shipping methods.
-		 *
-		 * @var \WC_Shipping_Method[] $methods
-		 */
-		$methods = $zone->get_shipping_methods( true );
+		if ( ! isset( $calculated_packages[0] ) && ! isset( $calculated_packages[0]['rates'] ) ) {
+			return array();
+		}
 
-		foreach ( $methods as $method ) {
-			if ( ! $method->is_available( $packages[0] ) ) {
-				continue;
-			}
-
-			$shipping_methods[] = array(
-				'id'          => $method->get_rate_id(),
-				'label'       => $method->get_title(),
-				'description' => '',
+		foreach ( $calculated_packages[0]['rates'] as $rate ) {
+			/**
+			 * The shipping rate.
+			 *
+			 * @var \WC_Shipping_Rate $rate
+			 */
+			$shipping_options[] = array(
+				'id'          => $rate->get_id(),
+				'label'       => $rate->get_label(),
+				'description' => html_entity_decode(
+					wp_strip_all_tags(
+						wc_price( (float) $rate->get_cost(), array( 'currency' => get_woocommerce_currency() ) )
+					)
+				),
 			);
 		}
 
-		if ( ! isset( $shipping_methods[0] ) ) {
+		if ( ! isset( $shipping_options[0] ) ) {
 			return array();
 		}
 
 		return array(
-			'defaultSelectedOptionId' => $shipping_methods[0]['id'],
-			'shippingOptions'         => $shipping_methods,
+			'defaultSelectedOptionId' => $shipping_options[0]['id'],
+			'shippingOptions'         => $shipping_options,
 		);
+	}
+
+	/**
+	 * Update addresses.
+	 *
+	 * @param array $payment_data The payment data.
+	 * @return void
+	 */
+	private function update_addresses( array $payment_data ): void {
+		if ( ( $payment_data['callbackTrigger'] ?? '' ) !== 'SHIPPING_ADDRESS' ) {
+			return;
+		}
+
+		/**
+		 * The shipping methods.
+		 *
+		 * @var \WC_Customer|null $customer
+		 */
+		$customer = WC()->customer;
+
+		if ( ! $customer ) {
+			return;
+		}
+
+		$customer->set_billing_postcode( $payment_data['shippingAddress']['postalCode'] ?? '' );
+		$customer->set_billing_country( $payment_data['shippingAddress']['countryCode'] ?? '' );
+		$customer->set_billing_state( $payment_data['shippingAddress']['locality'] ?? '' );
+
+		$customer->set_shipping_postcode( $payment_data['shippingAddress']['postalCode'] ?? '' );
+		$customer->set_shipping_country( $payment_data['shippingAddress']['countryCode'] ?? '' );
+		$customer->set_shipping_state( $payment_data['shippingAddress']['locality'] ?? '' );
+
+		// Save the data.
+		$customer->save();
+
+		WC()->session->set( 'customer', WC()->customer->get_data() );
+	}
+
+	/**
+	 * Update shipping method.
+	 *
+	 * @param array $payment_data The payment data.
+	 * @return void
+	 */
+	private function update_shipping_method( array $payment_data ): void {
+		$rate_id             = $payment_data['shippingOptionData']['id'];
+		$calculated_packages = WC()->shipping->calculate_shipping(
+			WC()->cart->get_shipping_packages()
+		);
+
+		if ( $rate_id && isset( $calculated_packages[0]['rates'][ $rate_id ] ) ) {
+			WC()->session->set( 'chosen_shipping_methods', array( $rate_id ) );
+		}
 	}
 
 }

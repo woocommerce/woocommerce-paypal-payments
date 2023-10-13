@@ -23,9 +23,9 @@ class GooglepayButton {
             this.externalHandler
         );
 
-        this.log = (message) => {
+        this.log = function() {
             if ( this.buttonConfig.is_debug ) {
-                console.log('[GooglePayButton] ' + message, this);
+                console.log('[GooglePayButton]', ...arguments);
             }
         }
     }
@@ -109,7 +109,7 @@ class GooglepayButton {
             onPaymentAuthorized: this.onPaymentAuthorized.bind(this)
         }
 
-        if ( this.buttonConfig.shipping.enabled ) {
+        if ( this.buttonConfig.shipping.enabled && this.contextHandler.shippingAllowed() ) {
             callbacks['onPaymentDataChanged'] = this.onPaymentDataChanged.bind(this);
         }
 
@@ -197,7 +197,7 @@ class GooglepayButton {
         paymentDataRequest.transactionInfo = await this.contextHandler.transactionInfo();
         paymentDataRequest.merchantInfo = googlePayConfig.merchantInfo;
 
-        if ( this.buttonConfig.shipping.enabled ) {
+        if ( this.buttonConfig.shipping.enabled && this.contextHandler.shippingAllowed() ) {
             paymentDataRequest.callbackIntents = ["SHIPPING_ADDRESS",  "SHIPPING_OPTION", "PAYMENT_AUTHORIZATION"];
             paymentDataRequest.shippingAddressRequired = true;
             paymentDataRequest.shippingAddressParameters = this.shippingAddressParameters();
@@ -227,9 +227,11 @@ class GooglepayButton {
         return new Promise(async (resolve, reject) => {
             let paymentDataRequestUpdate = {};
 
-            const updateData = new UpdatePaymentData(this.buttonConfig.ajax.update_payment_data)
-            const updatedData = await updateData.update(paymentData);
+            const updatedData = await (new UpdatePaymentData(this.buttonConfig.ajax.update_payment_data)).update(paymentData);
             const transactionInfo = await this.contextHandler.transactionInfo();
+
+            this.log('onPaymentDataChanged:updatedData', updatedData);
+            this.log('onPaymentDataChanged:transactionInfo', transactionInfo);
 
             updatedData.country_code = transactionInfo.countryCode;
             updatedData.currency_code = transactionInfo.currencyCode;
@@ -254,9 +256,6 @@ class GooglepayButton {
             }
 
             resolve(paymentDataRequestUpdate);
-
-            // Update WooCommerce checkout form.
-            jQuery(document.body).trigger('update_checkout');
         });
     }
 

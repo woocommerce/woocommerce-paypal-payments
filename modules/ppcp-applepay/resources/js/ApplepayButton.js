@@ -32,9 +32,9 @@ class ApplepayButton {
         this.selectedShippingMethod = []
         this.nonce = document.getElementById('woocommerce-process-checkout-nonce').value
 
-        this.log = (message) => {
+        this.log = function() {
             if ( this.buttonConfig.is_debug ) {
-                console.log('[ApplePayButton] ' + message, this);
+                console.log('[ApplePayButton]', ...arguments);
             }
         }
     }
