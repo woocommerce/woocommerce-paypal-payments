@@ -84,11 +84,14 @@ class WidgetBuilder {
             return;
         }
 
+        const entry = this.messages.get(wrapper);
+
         if (this.hasRendered(wrapper)) {
+            const element = document.querySelector(wrapper);
+            element.setAttribute('data-pp-amount', entry.options.amount);
             return;
         }
 
-        const entry = this.messages.get(wrapper);
         const btn = this.paypal.Messages(entry.options);
 
         btn.render(entry.wrapper);
