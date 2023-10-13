@@ -217,7 +217,6 @@ class SingleProductBootstap {
     }
 
     simulateCart() {
-        // Check of cart simulation is enabled.
         if (!this.gateway.simulate_cart.enabled) {
             return;
         }
