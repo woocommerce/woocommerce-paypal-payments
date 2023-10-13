@@ -229,6 +229,11 @@ class GooglepayButton {
 
             const updateData = new UpdatePaymentData(this.buttonConfig.ajax.update_payment_data)
             const updatedData = await updateData.update(paymentData);
+            const transactionInfo = await this.contextHandler.transactionInfo();
+
+            updatedData.country_code = transactionInfo.countryCode;
+            updatedData.currency_code = transactionInfo.currencyCode;
+            updatedData.total_str = transactionInfo.totalPrice;
 
             // Handle unserviceable address.
             if(!updatedData.shipping_options || !updatedData.shipping_options.shippingOptions.length) {
