@@ -14,6 +14,7 @@ use Psr\Log\LoggerInterface;
 use WC_Order;
 use WC_Product;
 use WC_Product_Variation;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
@@ -971,6 +972,10 @@ class SmartButton implements SmartButtonInterface {
 			'funding_sources_without_redirect'        => $this->funding_sources_without_redirect,
 		);
 
+		if ( 'pay-now' === $this->context() ) {
+			$localize['pay_now'] = $this->pay_now_script_data();
+		}
+
 		if ( $this->style_for_context( 'layout', 'mini-cart' ) !== 'horizontal' ) {
 			$localize['button']['mini_cart_style']['tagline'] = false;
 		}
@@ -989,6 +994,32 @@ class SmartButton implements SmartButtonInterface {
 
 		$this->request_data->dequeue_nonce_fix();
 		return $localize;
+	}
+
+	/**
+	 * Returns pay-now payment data.
+	 *
+	 * @return array
+	 */
+	private function pay_now_script_data(): array {
+		$order_id          = $this->get_order_pay_id();
+		$base_location     = wc_get_base_location();
+		$shop_country_code = $base_location['country'] ?? '';
+		$currency_code     = get_woocommerce_currency();
+
+		$wc_order = wc_get_order( $order_id );
+		if ( ! $wc_order instanceof WC_Order ) {
+			return array();
+		}
+
+		$total = (float) $wc_order->get_total( 'numeric' );
+
+		return array(
+			'total'         => $total,
+			'total_str'     => ( new Money( $total, $currency_code ) )->value_str(),
+			'currency_code' => $currency_code,
+			'country_code'  => $shop_country_code,
+		);
 	}
 
 	/**

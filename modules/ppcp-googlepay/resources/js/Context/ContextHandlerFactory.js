@@ -4,6 +4,7 @@ import CheckoutHandler from "./CheckoutHandler";
 import CartBlockHandler from "./CartBlockHandler";
 import CheckoutBlockHandler from "./CheckoutBlockHandler";
 import MiniCartHandler from "./MiniCartHandler";
+import PayNowHandler from "./PayNowHandler";
 import PreviewHandler from "./PreviewHandler";
 
 class ContextHandlerFactory {
@@ -15,8 +16,9 @@ class ContextHandlerFactory {
             case 'cart':
                 return new CartHandler(buttonConfig, ppcpConfig, externalActionHandler);
             case 'checkout':
-            case 'pay-now': // same as checkout
                 return new CheckoutHandler(buttonConfig, ppcpConfig, externalActionHandler);
+            case 'pay-now':
+                return new PayNowHandler(buttonConfig, ppcpConfig, externalActionHandler);
             case 'mini-cart':
                 return new MiniCartHandler(buttonConfig, ppcpConfig, externalActionHandler);
             case 'cart-block':
