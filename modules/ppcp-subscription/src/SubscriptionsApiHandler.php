@@ -114,7 +114,7 @@ class SubscriptionsApiHandler {
 	 */
 	public function create_product( WC_Product $product ) {
 		try {
-			$subscription_product = $this->products_endpoint->create( $product->get_title(), $product->get_description() );
+			$subscription_product = $this->products_endpoint->create( $product->get_title(), $this->prepare_description( $product->get_description() ) );
 			$product->update_meta_data( 'ppcp_subscription_product', $subscription_product->to_array() );
 			$product->save();
 		} catch ( RuntimeException $exception ) {
@@ -137,7 +137,7 @@ class SubscriptionsApiHandler {
 	public function create_plan( string $plan_name, WC_Product $product ): void {
 		try {
 			$subscription_plan = $this->billing_plans_endpoint->create(
-				$plan_name,
+				$plan_name ?: $product->get_title(),
 				$product->get_meta( 'ppcp_subscription_product' )['id'] ?? '',
 				$this->billing_cycles( $product ),
 				$this->payment_preferences_factory->from_wc_product( $product )->to_array()
@@ -168,7 +168,10 @@ class SubscriptionsApiHandler {
 				$catalog_product             = $this->products_endpoint->product( $catalog_product_id );
 				$catalog_product_name        = $catalog_product->name() ?: '';
 				$catalog_product_description = $catalog_product->description() ?: '';
-				if ( $catalog_product_name !== $product->get_title() || $catalog_product_description !== $product->get_description() ) {
+
+				$wc_product_description = $this->prepare_description( $product->get_description() ) ?: $product->get_title();
+
+				if ( $catalog_product_name !== $product->get_title() || $catalog_product_description !== $wc_product_description ) {
 					$data = array();
 					if ( $catalog_product_name !== $product->get_title() ) {
 						$data[] = (object) array(
@@ -177,11 +180,11 @@ class SubscriptionsApiHandler {
 							'value' => $product->get_title(),
 						);
 					}
-					if ( $catalog_product_description !== $product->get_description() ) {
+					if ( $catalog_product_description !== $wc_product_description ) {
 						$data[] = (object) array(
 							'op'    => 'replace',
 							'path'  => '/description',
-							'value' => $this->prepare_description( $product->get_description() ) ?: '',
+							'value' => $wc_product_description,
 						);
 					}
 

@@ -2107,3 +2107,16 @@ function wc_get_page_screen_id( $for ) {}
  *
  */
 class WC_Product_Subscription_Variation extends WC_Product_Variation {}
+
+/**
+ * Variable Subscription Product Class
+ *
+ * This class extends the WC Variable product class to create variable products with recurring payments.
+ *
+ * @class WC_Product_Variable_Subscription
+ * @package WooCommerce Subscriptions
+ * @category Class
+ * @since 1.0.0 - Migrated from WooCommerce Subscriptions v1.3
+ *
+ */
+class WC_Product_Variable_Subscription extends WC_Product_Variable {}
