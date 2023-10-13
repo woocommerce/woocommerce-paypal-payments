@@ -963,6 +963,10 @@ class SmartButton implements SmartButtonInterface {
 				// phpcs:ignore WordPress.WP.I18n
 				'shipping_field' => _x( 'Shipping %s', 'checkout-validation', 'woocommerce' ),
 			),
+			'simulate_cart'                           => array(
+				'enabled'    => apply_filters( 'woocommerce_paypal_payments_simulate_cart_enabled', true ),
+				'throttling' => apply_filters( 'woocommerce_paypal_payments_simulate_cart_throttling', 5000 ),
+			),
 			'order_id'                                => 'pay-now' === $this->context() ? $this->get_order_pay_id() : 0,
 			'single_product_buttons_enabled'          => $this->settings_status->is_smart_button_enabled_for_location( 'product' ),
 			'mini_cart_buttons_enabled'               => $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' ),
