@@ -163,8 +163,10 @@ class UpdatePaymentDataEndpoint {
 			return array();
 		}
 
+		$chosen_shipping_methods = WC()->session->get( 'chosen_shipping_methods' );
+
 		return array(
-			'defaultSelectedOptionId' => $shipping_options[0]['id'],
+			'defaultSelectedOptionId' => ( $chosen_shipping_methods[0] ?? null ) ? $chosen_shipping_methods[0] : $shipping_options[0]['id'],
 			'shippingOptions'         => $shipping_options,
 		);
 	}
