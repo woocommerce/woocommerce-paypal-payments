@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, checkout, cart, pay later, apple
 Requires at least: 5.3
 Tested up to: 6.3
 Requires PHP: 7.2
-Stable tag: 2.3.0
+Stable tag: 2.3.1
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -180,13 +180,24 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 2.3.0 - XXXX-XX-XX =
+= 2.3.1 - 2023-09-26 =
+* Fix - Fatal error when saving product while WooCommerce Subscriptions plugin is not active #1731
+* Fix - Validate tracking data only for add/update Package Tracking #1729
+* Fix - Disable Package Tracking for order if transaction ID doesn't exist #1727
+
+= 2.3.0 - 2023-09-26 =
 * Fix - Plus sign in PayPal account email address gets converted to space #771
 * Fix - Payment method dropdown option label on edit order screen for ppcp-gateway option displaying wrong name #1639
 * Fix - WooCommerce Bookings products don't remain in Cart as a guest when PayPal button active on single product #1645
 * Fix - Since version > 2.2.0 the PayPal Checkout button on single product pages does not redirect anymore #1664
 * Fix - PayPal fee and PayPal Payout do not change on order if we do partial refund #1578
 * Fix - Order does not contain intent error when using ACDC payment token while buyer is not present #1506
+* Fix - Error when product description linked with a PayPal subscription exceeds 127 characters #1700
+* Fix - $_POST uses the wrong key to hold the shipping method #1652
+* Fix - WC Payment Token created multiple times when webhook is received #1663
+* Fix - Subtotal mismatch line name shows on Account settings page when merchant is disconnected #1702
+* Fix - Warning prevents payments on Pay for Order page when debugging is enabled #1703
+* Fix - paypal-overlay-uid_ blocks page after closing PayPal popup on Pay for Order page | Terms checkbox validation fails on Pay for Order page #1704
 * Enhancement - Add support for HPOS for tracking module #1676
 * Enhancement - Billing agreements endpoint called too frequently for Reference Transactions check #1646
 * Enhancement - Do not declare subscription support for PayPal when only ACDC vaulting #1669
@@ -201,6 +212,20 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 * Enhancement - Compatibility with WooCommerce Product Add-Ons plugin #1586
 * Enhancement - Remove "no shipment" message after adding tracking #1674
 * Enhancement - Improve error & success validation messages #1675
+* Enhancement - Compatibility with third-party "Product Add-Ons" plugins #1601
+* Enhancement - PayPal logo flashes when switching between tabs #1345
+* Enhancement - Include url & image_url in create order call #1649
+* Enhancement - Include item_url & image_url to tracking call #1712
+* Enhancement - Update strings for tracking metabox #1714
+* Enhancement - Validate email address API credentials field #1691
+* Enhancement - Set payment method title for order edit page only if our gateway #1661
+* Enhancement - Fix missing Pay Later messages in cart + refactoring #1683
+* Enhancement - Product page PP button keep loading popup - "wc_add_to_cart_params is not defined" error in WooCommerce #1655
+* Enhancement - Remove PayPal Subscriptions API feature flag #1690
+* Enhancement - Don't send image_url when it is empty #1678
+* Enhancement - Subscription support depending on Vaulting setting instead of subscription mode setting #1697
+* Enhancement - Wrong PayPal subscription id on vaulted subscriptions #1699
+* Enhancement - Remove payment vaulted checker functionality (2030) #1711
 * Feature preview - Apple Pay integration #1514
 * Feature preview - Google Pay integration #1654
 

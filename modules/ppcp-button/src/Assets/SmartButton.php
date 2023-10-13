@@ -483,7 +483,7 @@ class SmartButton implements SmartButtonInterface {
 					echo '<p class="woocommerce-mini-cart__buttons buttons">';
 					echo '<span id="ppc-button-minicart"></span>';
 					do_action( 'woocommerce_paypal_payments_minicart_button_render' );
-					echo '</div>';
+					echo '</p>';
 				},
 				30
 			);
@@ -963,6 +963,10 @@ class SmartButton implements SmartButtonInterface {
 				'billing_field'  => _x( 'Billing %s', 'checkout-validation', 'woocommerce' ),
 				// phpcs:ignore WordPress.WP.I18n
 				'shipping_field' => _x( 'Shipping %s', 'checkout-validation', 'woocommerce' ),
+			),
+			'simulate_cart'                           => array(
+				'enabled'    => apply_filters( 'woocommerce_paypal_payments_simulate_cart_enabled', true ),
+				'throttling' => apply_filters( 'woocommerce_paypal_payments_simulate_cart_throttling', 5000 ),
 			),
 			'order_id'                                => 'pay-now' === $this->context() ? $this->get_order_pay_id() : 0,
 			'single_product_buttons_enabled'          => $this->settings_status->is_smart_button_enabled_for_location( 'product' ),
