@@ -110,13 +110,13 @@ class AvailabilityNotice {
 
 				$message = sprintf(
 					__(
-						'<p>There was an error getting your PayPal seller status. Some features may be disabled.</p><p>Certify that you connected to your PayPal business account via our onboarding process.</p>',
+						'<p>Notice: We could not determine your PayPal seller status to list your available features. Disconnect and reconnect your PayPal account through our onboarding process to resolve this.</p><p>Don\'t worry if you cannot use the onboarding process; most functionalities available to your account should work.</p>',
 						'woocommerce-paypal-payments'
 					)
 				);
 
 				// Name the key so it can be overridden in other modules.
-				$notices['error_product_status'] = new Message( $message, 'error', true, 'ppcp-notice-wrapper' );
+				$notices['error_product_status'] = new Message( $message, 'warning', true, 'ppcp-notice-wrapper' );
 				return $notices;
 			}
 		);

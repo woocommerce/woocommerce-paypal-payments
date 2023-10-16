@@ -59,7 +59,7 @@ return array(
 
 		if ( ! $is_available && $is_referral ) {
 			$connection_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-connection#field-credentials_feature_onboarding_heading' );
-			$connection_link = '<a href="' . $connection_url . '" target="_blank">';
+			$connection_link = '<a href="' . $connection_url . '" style="pointer-events: auto">';
 			return $insert_after(
 				$fields,
 				'allow_card_button_gateway',
