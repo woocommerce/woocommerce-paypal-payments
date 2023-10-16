@@ -54,18 +54,6 @@ return array(
 		);
 	},
 
-	'compat.gzd.is_supported_plugin_version_active'  => function (): bool {
-		return function_exists( 'wc_gzd_get_shipments_by_order' ); // 3.0+
-	},
-
-	'compat.wc_shipment_tracking.is_supported_plugin_version_active' => function (): bool {
-		return class_exists( 'WC_Shipment_Tracking' );
-	},
-
-	'compat.ywot.is_supported_plugin_version_active' => function (): bool {
-		return function_exists( 'yith_ywot_init' );
-	},
-
 	'compat.module.url'                              => static function ( ContainerInterface $container ): string {
 		/**
 		 * The path cannot be false.
