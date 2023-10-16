@@ -528,8 +528,8 @@ class SmartButton implements SmartButtonInterface {
 	 * Whether any of our scripts (for DCC or product, mini-cart, non-block cart/checkout) should be loaded.
 	 */
 	public function should_load_ppcp_script(): bool {
-		$buttons_enabled = $this->settings->has( 'enabled' ) && $this->settings->get( 'enabled' );
-		if ( ! $buttons_enabled ) {
+		$pcp_gateway_enabled = $this->settings->has( 'enabled' ) && $this->settings->get( 'enabled' );
+		if ( ! $pcp_gateway_enabled ) {
 			return false;
 		}
 
@@ -537,34 +537,62 @@ class SmartButton implements SmartButtonInterface {
 			return false;
 		}
 
-		return $this->should_load_buttons() || $this->can_render_dcc();
+		return $this->should_load_buttons() || $this->should_load_messages() || $this->can_render_dcc();
 	}
 
 	/**
 	 * Determines whether the button component should be loaded.
 	 */
 	public function should_load_buttons() : bool {
-		$buttons_enabled = $this->settings->has( 'enabled' ) && $this->settings->get( 'enabled' );
-		if ( ! $buttons_enabled ) {
+		$pcp_gateway_enabled = $this->settings->has( 'enabled' ) && $this->settings->get( 'enabled' );
+		if ( ! $pcp_gateway_enabled ) {
 			return false;
 		}
 
 		$smart_button_enabled_for_current_location = $this->settings_status->is_smart_button_enabled_for_location( $this->context() );
 		$smart_button_enabled_for_mini_cart        = $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' );
-		$messaging_enabled_for_current_location    = $this->settings_status->is_pay_later_messaging_enabled_for_location( $this->context() );
 
 		switch ( $this->context() ) {
 			case 'checkout':
 			case 'cart':
 			case 'pay-now':
-				return $smart_button_enabled_for_current_location || $messaging_enabled_for_current_location;
 			case 'checkout-block':
 			case 'cart-block':
 				return $smart_button_enabled_for_current_location;
 			case 'product':
-				return $smart_button_enabled_for_current_location || $messaging_enabled_for_current_location || $smart_button_enabled_for_mini_cart;
+				return $smart_button_enabled_for_current_location || $smart_button_enabled_for_mini_cart;
 			default:
 				return $smart_button_enabled_for_mini_cart;
+		}
+	}
+
+	/**
+	 * Determines whether the Pay Later messages component should be loaded.
+	 */
+	public function should_load_messages() : bool {
+		$pcp_gateway_enabled = $this->settings->has( 'enabled' ) && $this->settings->get( 'enabled' );
+		if ( ! $pcp_gateway_enabled ) {
+			return false;
+		}
+
+		if ( ! $this->messages_apply->for_country() || $this->is_free_trial_cart() ) {
+			return false;
+		}
+
+		$location = $this->location();
+
+		$messaging_enabled_for_current_location = $this->settings_status->is_pay_later_messaging_enabled_for_location( $location );
+
+		switch ( $location ) {
+			case 'checkout':
+			case 'cart':
+			case 'pay-now':
+			case 'product':
+			case 'shop':
+			case 'home':
+				return $messaging_enabled_for_current_location;
+			default:
+				return false;
 		}
 	}
 
@@ -1159,10 +1187,7 @@ class SmartButton implements SmartButtonInterface {
 			$components[] = 'buttons';
 			$components[] = 'funding-eligibility';
 		}
-		if (
-			$this->messages_apply->for_country()
-			&& ! $this->is_free_trial_cart()
-		) {
+		if ( $this->should_load_messages() ) {
 			$components[] = 'messages';
 		}
 		if ( $this->dcc_is_enabled() ) {

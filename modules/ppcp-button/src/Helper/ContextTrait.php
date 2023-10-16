@@ -55,6 +55,28 @@ trait ContextTrait {
 	}
 
 	/**
+	 * The current location.
+	 *
+	 * @return string
+	 */
+	protected function location(): string {
+		$context = $this->context();
+		if ( $context !== 'mini-cart' ) {
+			return $context;
+		}
+
+		if ( is_shop() ) {
+			return 'shop';
+		}
+
+		if ( is_front_page() ) {
+			return 'home';
+		}
+
+		return '';
+	}
+
+	/**
 	 * Checks if PayPal payment was already initiated (on the product or cart pages).
 	 *
 	 * @return bool
