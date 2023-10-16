@@ -65,9 +65,12 @@ class AvailabilityNotice {
 			return;
 		}
 
+		// We need to check is active before checking failure requests, otherwise failure status won't be set.
+		$is_active = $this->product_status->is_active();
+
 		if ( $this->product_status->has_request_failure() ) {
 			$this->add_seller_status_failure_notice();
-		} elseif ( ! $this->product_status->is_active() ) {
+		} elseif ( ! $is_active ) {
 			$this->add_not_available_notice();
 		}
 	}
