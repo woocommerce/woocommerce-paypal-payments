@@ -69,16 +69,6 @@ class UpdatePaymentDataEndpoint {
 		try {
 			$data = $this->request_data->read_request( $this->nonce() );
 
-			// Validate nonce.
-			if (
-				! isset( $data['nonce'] )
-				|| ! wp_verify_nonce( $data['nonce'], self::nonce() )
-			) {
-				throw new RuntimeException(
-					__( 'Could not validate nonce.', 'woocommerce-paypal-payments' )
-				);
-			}
-
 			// Validate payment data.
 			if ( ! isset( $data['paymentData'] ) ) {
 				throw new RuntimeException(
