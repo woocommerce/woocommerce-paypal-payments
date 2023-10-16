@@ -34,7 +34,6 @@ class ApplepayButton {
     }
 
     init(config) {
-        console.log('[ApplePayButton] init', config);
         if (this.isInitialized) {
             return;
         }
@@ -180,7 +179,6 @@ class ApplepayButton {
                 console.error(error);
             }
             const session = this.applePaySession(paymentDataRequest)
-            console.log("session", session)
             const formValidator = PayPalCommerceGateway.early_checkout_validation_enabled ?
                 new FormValidator(
                     PayPalCommerceGateway.ajax.validate_checkout.endpoint,
@@ -191,9 +189,7 @@ class ApplepayButton {
                     const errors = await formValidator.validate(document.querySelector(checkoutFormSelector));
                     if (errors.length > 0) {
                         errorHandler.messages(errors);
-                        // fire WC event for other plugins
                         jQuery( document.body ).trigger( 'checkout_error' , [ errorHandler.currentHtml() ] );
-                        // stop Apple Pay payment sheet from showing
                         session.abort();
                         return;
                     }
@@ -222,8 +218,8 @@ class ApplepayButton {
             countryCode: applepayConfig.countryCode,
             merchantCapabilities: applepayConfig.merchantCapabilities,
             supportedNetworks: applepayConfig.supportedNetworks,
-            requiredShippingContactFields: ["postalAddress"],
-            requiredBillingContactFields: ["postalAddress"]
+            requiredShippingContactFields: ["postalAddress", "email", "phone"],
+            requiredBillingContactFields: ["postalAddress", "email", "phone"],
         }
         const paymentDataRequest = Object.assign({}, baseRequest);
         paymentDataRequest.currencyCode = buttonConfig.shop.currencyCode;
@@ -242,7 +238,6 @@ class ApplepayButton {
     //------------------------
 
     onvalidatemerchant(session) {
-        console.log("onvalidatemerchant")
         return (applePayValidateMerchantEvent) => {
             paypal.Applepay().validateMerchant({
                 validationUrl: applePayValidateMerchantEvent.validationURL
@@ -259,10 +254,8 @@ class ApplepayButton {
                             'woocommerce-process-checkout-nonce': this.nonce,
                         }
                     })
-                    console.log('validated')
                 })
                 .catch(validateError => {
-                    console.error(validateError);
                     //call backend to update validation to false
                     jQuery.ajax({
                         url: this.buttonConfig.ajax_url,
@@ -279,7 +272,6 @@ class ApplepayButton {
     }
     onshippingmethodselected(session) {
         const ajax_url = this.buttonConfig.ajax_url
-        console.log('[ApplePayButton] onshippingmethodselected');
         return (event) => {
             const data = this.getShippingMethodData(event);
             jQuery.ajax({
@@ -291,7 +283,6 @@ class ApplepayButton {
                     if (applePayShippingMethodUpdate.success === false) {
                         response.errors = createAppleErrors(response.errors)
                     }
-                    console.log('shipping method update response', response, applePayShippingMethodUpdate)
                     this.selectedShippingMethod = event.shippingMethod
                     //order the response shipping methods, so that the selected shipping method is the first one
                     let orderedShippingMethods = response.newShippingMethods.sort((a, b) => {
@@ -316,10 +307,8 @@ class ApplepayButton {
     }
     onshippingcontactselected(session) {
         const ajax_url = this.buttonConfig.ajax_url
-        console.log('[ApplePayButton] onshippingcontactselected', ajax_url, session)
         return (event) => {
             const data = this.getShippingContactData(event);
-            console.log('shipping contact selected', data, event)
             jQuery.ajax({
                 url: ajax_url,
                 method: 'POST',
@@ -327,7 +316,6 @@ class ApplepayButton {
                 success: (applePayShippingContactUpdate, textStatus, jqXHR) => {
                     let response = applePayShippingContactUpdate.data
                     this.updated_contact_info = event.shippingContact
-                    console.log('shipping contact update response', response, applePayShippingContactUpdate, this.updated_contact_info)
                     if (applePayShippingContactUpdate.success === false) {
                         response.errors = createAppleErrors(response.errors)
                     }
@@ -399,165 +387,90 @@ class ApplepayButton {
     }
 
     onpaymentauthorized(session) {
-        /*return (event) => {
+        return async (event) => {
             function form() {
                 return document.querySelector('form.cart');
             }
-
-            const errorHandler = new ErrorHandler(
-                PayPalCommerceGateway.labels.error.generic,
-                document.querySelector('.woocommerce-notices-wrapper')
-            );
-            const actionHandler = new SingleProductActionHandler(
-                PayPalCommerceGateway,
-                new UpdateCart(
-                    PayPalCommerceGateway.ajax.change_cart.endpoint,
-                    PayPalCommerceGateway.ajax.change_cart.nonce,
-                ),
-                form(),
-                errorHandler,
-            );
-
-            let createOrderInPayPal = actionHandler.createOrder()
             const processInWooAndCapture = async (data) => {
-                try {
-                    console.log('processInWooAndCapture', data)
-                    const billingContact = data.billing_contact
-                    const shippingContact = data.shipping_contact
-                    jQuery.ajax({
-                        url: ajaxUrl,
-                        method: 'POST',
-                        data: {
+                return new Promise((resolve, reject) => {
+                    try {
+                        const billingContact = data.billing_contact
+                        const shippingContact = data.shipping_contact
+                        let request_data = {
                             action: 'ppcp_create_order',
-                            'product_id': productId,
-                            'product_quantity': this.productQuantity,
+                            'caller_page': this.context,
+                            'product_id': this.buttonConfig.product.id ?? null,
+                            'product_quantity': this.productQuantity ?? null,
                             'shipping_contact': shippingContact,
                             'billing_contact': billingContact,
                             'token': event.payment.token,
-                            'shipping_method': selectedShippingMethod,
-                            'woocommerce-process-checkout-nonce': nonce,
+                            'shipping_method': this.selectedShippingMethod,
+                            'woocommerce-process-checkout-nonce': this.nonce,
                             'funding_source': 'applepay',
                             '_wp_http_referer': '/?wc-ajax=update_order_review',
                             'paypal_order_id': data.paypal_order_id,
-                        },
-                        complete: (jqXHR, textStatus) => {
-                        },
-                        success: (authorizationResult, textStatus, jqXHR) => {
-                            console.log('success authorizationResult', authorizationResult)
-                            if (authorizationResult.result === "success") {
-                                redirectionUrl = authorizationResult.redirect;
-                                //session.completePayment(ApplePaySession.STATUS_SUCCESS)
-                                window.location.href = redirectionUrl
-                            } else {
-                                //session.completePayment(ApplePaySession.STATUS_FAILURE)
-                            }
-                        },
-                        error: (jqXHR, textStatus, errorThrown) => {
-                            console.log('error authorizationResult', errorThrown)
-                            session.completePayment(ApplePaySession.STATUS_FAILURE)
-                            console.warn(textStatus, errorThrown)
-                            session.abort()
-                        },
-                    })
-                } catch (error) {
-                    console.log(error)  // handle error
-                }
+                        };
+                        jQuery.ajax({
+                            url: this.buttonConfig.ajax_url,
+                            method: 'POST',
+                            data: request_data,
+                            complete: (jqXHR, textStatus) => {
+                            },
+                            success: (authorizationResult, textStatus, jqXHR) => {
+                                resolve(authorizationResult)
+                            },
+                            error: (jqXHR, textStatus, errorThrown) => {
+                                reject(new Error(errorThrown));
+                            },
+                        })
+                    } catch (error) {
+                        console.log(error)  // handle error
+                    }
+                });
             }
-            createOrderInPayPal([], []).then((orderId) => {
-                console.log('createOrderInPayPal', orderId)
-                paypal.Applepay().confirmOrder(
-                    {
-                        orderId: orderId,
-                        token: event.payment.token,
-                        billingContact: event.payment.billingContact
-                    }
-                ).then(
-                    () => {
-                        session.completePayment(ApplePaySession.STATUS_SUCCESS);
-                        let data = {
-                            billing_contact: event.payment.billingContact,
-                            shipping_contact: event.payment.shippingContact,
-                            paypal_order_id: orderId
+
+            let id = await this.contextHandler.createOrder();
+            try {
+                const confirmOrderResponse = await paypal.Applepay().confirmOrder({
+                    orderId: id,
+                    token: event.payment.token,
+                    billingContact: event.payment.billingContact,
+                });
+                if (confirmOrderResponse && confirmOrderResponse.approveApplePayPayment) {
+                    if (confirmOrderResponse.approveApplePayPayment.status === "APPROVED") {
+                        try {
+                            let data = {
+                                billing_contact: event.payment.billingContact,
+                                shipping_contact: event.payment.shippingContact,
+                                paypal_order_id: id,
+                            };
+                            let authorizationResult = await processInWooAndCapture(data);
+                            if (authorizationResult.result === "success") {
+                                session.completePayment(ApplePaySession.STATUS_SUCCESS)
+                                window.location.href = authorizationResult.redirect
+                            } else {
+                                session.completePayment(ApplePaySession.STATUS_FAILURE)
+                            }
+                        } catch (error) {
+                            session.completePayment(ApplePaySession.STATUS_FAILURE);
+                            session.abort()
+                            console.error(error);
                         }
-                        processInWooAndCapture(data)
-                    }
-                ).catch(err => {
-                        console.error('Error confirming order with applepay token');
+                    } else {
+                        console.error('Error status is not APPROVED');
                         session.completePayment(ApplePaySession.STATUS_FAILURE);
-                        console.error(err);
                     }
-                );
-            }).catch((error) => {
-                console.log(error)
+                } else {
+                    console.error('Invalid confirmOrderResponse');
+                    session.completePayment(ApplePaySession.STATUS_FAILURE);
+                }
+            } catch (error) {
+                console.error('Error confirming order with applepay token', error);
+                session.completePayment(ApplePaySession.STATUS_FAILURE);
                 session.abort()
-            })
-        };*/
+            }
+        };
     }
-    /* onPaymentAuthorized(paymentData) {
-         console.log('[ApplePayButton] onPaymentAuthorized', this.context);
-         return this.processPayment(paymentData);
-     }
-
-     async processPayment(paymentData) {
-         console.log('[ApplePayButton] processPayment', this.context);
-
-         return new Promise(async (resolve, reject) => {
-             try {
-                 let id = await this.contextHandler.createOrder();
-
-                 console.log('[ApplePayButton] processPayment: createOrder', id, this.context);
-
-                 const confirmOrderResponse = await paypal.Applepay().confirmOrder({
-                     orderId: id,
-                     paymentMethodData: paymentData.paymentMethodData
-                 });
-
-                 console.log('[ApplePayButton] processPayment: confirmOrder', confirmOrderResponse, this.context);
-
-                 /!** Capture the Order on the Server *!/
-                 if (confirmOrderResponse.status === "APPROVED") {
-
-                     let approveFailed = false;
-                     await this.contextHandler.approveOrderForContinue({
-                         orderID: id
-                     }, {
-                         restart: () => new Promise((resolve, reject) => {
-                             approveFailed = true;
-                             resolve();
-                         })
-                     });
-
-                     if (!approveFailed) {
-                         resolve(this.processPaymentResponse('SUCCESS'));
-                     } else {
-                         resolve(this.processPaymentResponse('ERROR', 'PAYMENT_AUTHORIZATION', 'FAILED TO APPROVE'));
-                     }
-
-                 } else {
-                     resolve(this.processPaymentResponse('ERROR', 'PAYMENT_AUTHORIZATION', 'TRANSACTION FAILED'));
-                 }
-             } catch(err) {
-                 resolve(this.processPaymentResponse('ERROR', 'PAYMENT_AUTHORIZATION', err.message));
-             }
-         });
-     }
-
-     processPaymentResponse(state, intent = null, message = null) {
-         let response = {
-             transactionState: state,
-         }
-
-         if (intent || message) {
-             response.error = {
-                 intent: intent,
-                 message: message,
-             }
-         }
-
-         console.log('[ApplePayButton] processPaymentResponse', response, this.context);
-
-         return response;
-     }*/
 
     fill_billing_contact(form_saved) {
         return {

@@ -27,25 +27,28 @@
 	}
 }
 
-.ppcp-has-googlepay-block {
+.ppcp-has-applepay-block {
 
 	.wp-block-woocommerce-checkout {
 		#applepay-container {
-			margin: 0;
-			height: 40px;
+			--apple-pay-button-margin: 0;
+			--apple-pay-button-height: 40px;
+			&.ppcp-button-pill {
+				--apple-pay-button-border-radius: 50px;
+			}
 		}
 	}
 
 	.wp-block-woocommerce-cart {
 		#applepay-container {
-			margin: 0;
-			height: 40px;
+			--apple-pay-button-margin: 0;
+			--apple-pay-button-height: 40px;
 		}
 		/* Workaround for blocks grid */
 		.wc-block-components-express-payment__event-buttons {
-			display: block;
+			--apple-pay-button-display: block;
 			li[id*="express-payment-method-ppcp-"] {
-				padding-bottom: 0;
+				--apple-pay-button-padding-bottom: 0;
 			}
 		}
 	}

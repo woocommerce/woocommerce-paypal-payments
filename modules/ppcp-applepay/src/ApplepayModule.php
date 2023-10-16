@@ -136,7 +136,8 @@ class ApplepayModule implements ModuleInterface {
 				assert( $button instanceof ApplePayButton );
 				$smart_button = $c->get( 'button.smart-button' );
 				assert( $smart_button instanceof SmartButtonInterface );
-				if ( $smart_button->should_load_ppcp_script() ) {
+				$page_has_block = has_block( 'woocommerce/checkout' ) || has_block( 'woocommerce/cart' );
+				if ( $smart_button->should_load_ppcp_script() || $page_has_block ) {
 					$button->enqueue();
 				}
 			}

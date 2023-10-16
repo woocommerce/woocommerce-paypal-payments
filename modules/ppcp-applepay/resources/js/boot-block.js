@@ -14,14 +14,7 @@ if (typeof window.PayPalCommerceGateway === 'undefined') {
     window.PayPalCommerceGateway = ppcpConfig;
 }
 
-console.log('ppcpData', ppcpData);
-console.log('ppcpConfig', ppcpConfig);
-console.log('buttonData', buttonData);
-console.log('buttonConfig', buttonConfig);
-
 const ApplePayComponent = () => {
-    console.log('ApplePayComponent render');
-
     const [bootstrapped, setBootstrapped] = useState(false);
     const [paypalLoaded, setPaypalLoaded] = useState(false);
     const [applePayLoaded, setApplePayLoaded] = useState(false);
@@ -30,6 +23,12 @@ const ApplePayComponent = () => {
         const manager = new ApplepayManager(buttonConfig, ppcpConfig);
         manager.init();
     };
+    useEffect(() => {
+        const bodyClass = 'ppcp-has-applepay-block';
+        if (!document.body.classList.contains(bodyClass)) {
+            document.body.classList.add(bodyClass);
+        }
+    }, []);
 
     useEffect(() => {
         // Load ApplePay SDK
