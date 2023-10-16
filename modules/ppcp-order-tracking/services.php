@@ -9,15 +9,14 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\OrderTracking;
 
-use WC_Order;
-use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
-use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\OrderTracking\Integration\GermanizedShipmentIntegration;
+use WooCommerce\PayPalCommerce\OrderTracking\Integration\ShipmentTrackingIntegration;
+use WooCommerce\PayPalCommerce\OrderTracking\Integration\YithShipmentIntegration;
 use WooCommerce\PayPalCommerce\OrderTracking\Shipment\ShipmentFactoryInterface;
 use WooCommerce\PayPalCommerce\OrderTracking\Shipment\ShipmentFactory;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\OrderTracking\Assets\OrderEditPageAssets;
 use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 return array(
 	'order-tracking.assets'                    => function( ContainerInterface $container ) : OrderEditPageAssets {
@@ -91,5 +90,16 @@ return array(
 	},
 	'order-tracking.is-merchant-country-us'    => static function ( ContainerInterface $container ): bool {
 		return $container->get( 'api.shop.country' ) === 'US';
+	},
+	'order-tracking.integrations'              => static function ( ContainerInterface $container ): array {
+		$shipment_factory = $container->get( 'order-tracking.shipment.factory' );
+		$logger           = $container->get( 'woocommerce.logger.woocommerce' );
+		$endpoint         = $container->get( 'order-tracking.endpoint.controller' );
+
+		return array(
+			new GermanizedShipmentIntegration( $shipment_factory, $logger, $endpoint ),
+			new ShipmentTrackingIntegration( $shipment_factory, $logger, $endpoint ),
+			new YithShipmentIntegration( $shipment_factory, $logger, $endpoint ),
+		);
 	},
 );
