@@ -96,17 +96,21 @@ return array(
 		$logger           = $container->get( 'woocommerce.logger.woocommerce' );
 		$endpoint         = $container->get( 'order-tracking.endpoint.controller' );
 
+		$is_gzd_active         = $container->get( 'compat.gzd.is_supported_plugin_version_active' );
+		$is_wc_shipment_active = $container->get( 'compat.wc_shipment_tracking.is_supported_plugin_version_active' );
+		$is_yith_ywot_active   = $container->get( 'compat.ywot.is_supported_plugin_version_active' );
+
 		$integrations = array();
 
-		if ( function_exists( 'wc_gzd_get_shipments_by_order' ) ) {
+		if ( $is_gzd_active ) {
 			$integrations[] = new GermanizedShipmentIntegration( $shipment_factory, $logger, $endpoint );
 		}
 
-		if ( class_exists( 'WC_Shipment_Tracking' ) ) {
+		if ( $is_wc_shipment_active ) {
 			$integrations[] = new ShipmentTrackingIntegration( $shipment_factory, $logger, $endpoint );
 		}
 
-		if ( function_exists( 'yith_ywot_init' ) ) {
+		if ( $is_yith_ywot_active ) {
 			$integrations[] = new YithShipmentIntegration( $shipment_factory, $logger, $endpoint );
 		}
 
