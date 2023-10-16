@@ -2,7 +2,7 @@
 /**
  * Interface for all integration controllers.
  *
- * @package WooCommerce\PayPalCommerce\OrderTracking\Shipment
+ * @package WooCommerce\PayPalCommerce\Compat
  */
 
 declare(strict_types=1);
