@@ -9,22 +9,13 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Compat;
 
-use Vendidero\Germanized\Shipments\ShipmentItem;
-use WooCommerce\PayPalCommerce\OrderTracking\Shipment\ShipmentFactoryInterface;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
-use Exception;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use Psr\Log\LoggerInterface;
-use Vendidero\Germanized\Shipments\Shipment;
-use WC_Order;
 use WooCommerce\PayPalCommerce\Compat\Assets\CompatAssets;
-use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WP_REST_Request;
-use WP_REST_Response;
 
 /**
  * Class CompatModule
