@@ -274,7 +274,7 @@ document.addEventListener(
             }, 1000));
 
             loadPaypalScript(oldScriptSettings, () => {
-                const payLaterMessagingLocations = ['product', 'cart', 'checkout', 'general'];
+                const payLaterMessagingLocations = ['product', 'cart', 'checkout', 'shop', 'home', 'general'];
                 const paypalButtonLocations = ['product', 'cart', 'checkout', 'mini-cart', 'general'];
 
                 paypalButtonLocations.forEach((location) => {
