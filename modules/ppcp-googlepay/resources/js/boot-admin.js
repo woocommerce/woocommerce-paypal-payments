@@ -83,6 +83,9 @@ import widgetBuilder from "../../../ppcp-button/resources/js/modules/Renderer/Wi
 
         googlePayConfig = await widgetBuilder.paypal.Googlepay().config();
 
+        // We need to set bootstrapped here otherwise googlePayConfig may not be set.
+        bootstrapped = true;
+
         let options;
         while (options = buttonQueue.pop()) {
             createButton(options.ppcpConfig);
@@ -103,7 +106,6 @@ import widgetBuilder from "../../../ppcp-button/resources/js/modules/Renderer/Wi
 
             const tryToBoot = () => {
                 if (!bootstrapped && paypalLoaded && googlePayLoaded) {
-                    bootstrapped = true;
                     bootstrap();
                 }
             }
