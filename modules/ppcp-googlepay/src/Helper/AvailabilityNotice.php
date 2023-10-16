@@ -109,10 +109,13 @@ class AvailabilityNotice {
 			static function ( $notices ): array {
 
 				$message = sprintf(
+					// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
 					__(
-						'<p>Notice: We could not determine your PayPal seller status to list your available features. Disconnect and reconnect your PayPal account through our onboarding process to resolve this.</p><p>Don\'t worry if you cannot use the onboarding process; most functionalities available to your account should work.</p>',
+						'<p>Notice: We could not determine your PayPal seller status to list your available features. Disconnect and reconnect your PayPal account through our %1$sonboarding process%2$s to resolve this.</p><p>Don\'t worry if you cannot use the %1$sonboarding process%2$s; most functionalities available to your account should work.</p>',
 						'woocommerce-paypal-payments'
-					)
+					),
+					'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#connect-paypal-account" target="_blank">',
+					'</a>'
 				);
 
 				// Name the key so it can be overridden in other modules.

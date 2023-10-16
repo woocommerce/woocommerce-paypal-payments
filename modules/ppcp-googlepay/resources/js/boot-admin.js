@@ -36,6 +36,17 @@ import widgetBuilder from "../../../ppcp-button/resources/js/modules/Renderer/Wi
         }
     });
 
+    // Maybe we can find a more elegant reload method when transitioning from styling modes.
+    jQuery([
+        '#ppcp-smart_button_enable_styling_per_location'
+    ].join(',')).on('change', () => {
+        setTimeout(() => {
+            for (const [selector, ppcpConfig] of Object.entries(activeButtons)) {
+                createButton(ppcpConfig);
+            }
+        }, 100);
+    });
+
     const applyConfigOptions = function (buttonConfig) {
         buttonConfig.button = buttonConfig.button || {};
         buttonConfig.button.style = buttonConfig.button.style || {};
