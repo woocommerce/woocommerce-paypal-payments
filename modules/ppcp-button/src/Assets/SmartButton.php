@@ -652,7 +652,23 @@ class SmartButton implements SmartButtonInterface {
 		// The wrapper is needed for the loading spinner,
 		// otherwise jQuery block() prevents buttons rendering.
 		echo '<div class="ppc-button-wrapper">';
+
+		$hook_gateway_id = str_replace( '-', '_', $gateway_id );
+		/**
+		 * A hook executed after rendering of the opening tag for the PCP wrapper (before the inner wrapper for the buttons).
+		 *
+		 * For the PayPal gateway the hook name is ppcp_start_button_wrapper_ppcp_gateway.
+		 */
+		do_action( 'ppcp_start_button_wrapper_' . $hook_gateway_id );
+
 		echo '<div id="ppc-button-' . esc_attr( $gateway_id ) . '"></div>';
+
+		/**
+		 * A hook executed before rendering of the closing tag for the PCP wrapper (before the inner wrapper for the buttons).
+		 *
+		 * For the PayPal gateway the hook name is ppcp_end_button_wrapper_ppcp_gateway.
+		 */
+		do_action( 'ppcp_end_button_wrapper_' . $hook_gateway_id );
 
 		if ( null !== $action_name ) {
 			do_action( $action_name );
