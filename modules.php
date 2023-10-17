@@ -20,7 +20,7 @@ return function ( string $root_dir ): iterable {
 		( require "$modules_dir/ppcp-onboarding/module.php" )(),
 		( require "$modules_dir/ppcp-session/module.php" )(),
 		( require "$modules_dir/ppcp-status-report/module.php" )(),
-		( require "$modules_dir/ppcp-subscription/module.php" )(),
+		( require "$modules_dir/ppcp-wc-subscriptions/module.php" )(),
 		( require "$modules_dir/ppcp-wc-gateway/module.php" )(),
 		( require "$modules_dir/ppcp-webhooks/module.php" )(),
 		( require "$modules_dir/ppcp-vaulting/module.php" )(),

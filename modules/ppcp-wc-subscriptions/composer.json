@@ -1,7 +1,7 @@
 {
-    "name": "woocommerce/ppcp-subscription",
+    "name": "woocommerce/ppcp-wc-subscriptions",
     "type": "dhii-mod",
-    "description": "Subscription module for PPCP",
+    "description": "Module for WC Subscriptions plugin integration",
     "license": "GPL-2.0",
     "require": {
         "php": "^7.2 | ^8.0",
@@ -9,7 +9,7 @@
     },
     "autoload": {
         "psr-4": {
-            "WooCommerce\\PayPalCommerce\\Subscription\\": "src"
+            "WooCommerce\\PayPalCommerce\\WcSubscriptions\\": "src"
         }
     },
     "minimum-stability": "dev",

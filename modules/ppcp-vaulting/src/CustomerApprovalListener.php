@@ -13,7 +13,7 @@ use Exception;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokenEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\AlreadyVaultedException;
-use WooCommerce\PayPalCommerce\Subscription\FreeTrialHandlerTrait;
+use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 
 /**
  * Class CustomerApprovalListener

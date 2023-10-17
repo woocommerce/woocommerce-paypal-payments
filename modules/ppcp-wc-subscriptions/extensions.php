@@ -2,7 +2,7 @@
 /**
  * The extensions.
  *
- * @package WooCommerce\PayPalCommerce\Subscription
+ * @package WooCommerce\PayPalCommerce\WcSubscriptions
  */
 
 declare(strict_types=1);

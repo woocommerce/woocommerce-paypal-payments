@@ -2,14 +2,14 @@
 /**
  * The services
  *
- * @package WooCommerce\PayPalCommerce\Subscription
+ * @package WooCommerce\PayPalCommerce\WcSubscriptions
  */
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\Subscription;
+namespace WooCommerce\PayPalCommerce\WcSubscriptions;
 
-use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 

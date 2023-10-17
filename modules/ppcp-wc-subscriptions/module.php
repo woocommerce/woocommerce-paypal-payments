@@ -2,12 +2,12 @@
 /**
  * The module.
  *
- * @package WooCommerce\PayPalCommerce\Subscription
+ * @package WooCommerce\PayPalCommerce\WcSubscriptions
  */
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\Subscription;
+namespace WooCommerce\PayPalCommerce\WcSubscriptions;
 
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 

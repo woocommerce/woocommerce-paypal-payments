@@ -2,12 +2,12 @@
 /**
  * The subscription module.
  *
- * @package WooCommerce\PayPalCommerce\Subscription
+ * @package WooCommerce\PayPalCommerce\WcSubscriptions
  */
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\Subscription;
+namespace WooCommerce\PayPalCommerce\WcSubscriptions;
 
 use ActionScheduler_Store;
 use Exception;
@@ -27,7 +27,7 @@ use Psr\Log\LoggerInterface;
 use WC_Order;
 use WC_Subscription;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
-use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;

@@ -4,12 +4,12 @@
  * whether the cart contains a subscription, the current product is
  * a subscription or the subscription plugin is activated in the first place.
  *
- * @package WooCommerce\PayPalCommerce\Subscription\Helper
+ * @package WooCommerce\PayPalCommerce\WcSubscriptions\Helper
  */
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\Subscription\Helper;
+namespace WooCommerce\PayPalCommerce\WcSubscriptions\Helper;
 
 use WC_Product;
 use WC_Product_Subscription_Variation;
