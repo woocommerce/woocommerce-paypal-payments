@@ -66,6 +66,11 @@ class ShipStationIntegration implements Integration {
 
 		add_action(
 			'woocommerce_shipstation_shipnotify',
+			/**
+			 * Param type for $wc_order can be different.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
 			function( $wc_order, array $data ) {
 				if ( ! apply_filters( 'woocommerce_paypal_payments_sync_ship_station_tracking', true ) ) {
 					return;
