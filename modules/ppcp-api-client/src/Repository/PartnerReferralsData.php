@@ -116,7 +116,6 @@ class PartnerReferralsData {
 										'REFUND',
 										'ADVANCED_TRANSACTIONS_SEARCH',
 										'VAULT',
-										'BILLING_AGREEMENT',
 										'TRACKING_SHIPMENT_READWRITE',
 									),
 									'seller_nonce' => $this->nonce(),
