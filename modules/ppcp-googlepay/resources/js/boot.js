@@ -8,10 +8,16 @@ import GooglepayManager from "./GooglepayManager";
    jQuery
 }) {
 
+    let manager;
+
     const bootstrap = function () {
-        const manager = new GooglepayManager(buttonConfig, ppcpConfig);
+        manager = new GooglepayManager(buttonConfig, ppcpConfig);
         manager.init();
     };
+
+    jQuery(document.body).on('updated_cart_totals updated_checkout', () => {
+        manager.reinit();
+    });
 
     document.addEventListener(
         'DOMContentLoaded',
@@ -20,12 +26,7 @@ import GooglepayManager from "./GooglepayManager";
                 (typeof (buttonConfig) === 'undefined') ||
                 (typeof (ppcpConfig) === 'undefined')
             ) {
-                console.error('PayPal button could not be configured.');
-                return;
-            }
-
-            // If button wrapper is not present then there is no need to load the scripts.
-            if (!jQuery(buttonConfig.button.wrapper).length) {
+                // No PayPal buttons present on this page.
                 return;
             }
 

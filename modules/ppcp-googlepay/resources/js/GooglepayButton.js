@@ -60,6 +60,15 @@ class GooglepayButton {
             });
     }
 
+    reinit() {
+        if (!this.googlePayConfig) {
+            return;
+        }
+
+        this.isInitialized = false;
+        this.init(this.googlePayConfig);
+    }
+
     validateConfig() {
         if ( ['PRODUCTION', 'TEST'].indexOf(this.buttonConfig.environment) === -1) {
             console.error('[GooglePayButton] Invalid environment.', this.buttonConfig.environment);
@@ -152,19 +161,39 @@ class GooglepayButton {
 
         const { wrapper, ppcpStyle, buttonStyle } = this.contextConfig();
 
-        jQuery(wrapper).addClass('ppcp-button-' + ppcpStyle.shape);
+        jQuery(wrapper).length
 
-        const button =
-            this.paymentsClient.createButton({
-                onClick: this.onButtonClick.bind(this),
-                allowedPaymentMethods: [baseCardPaymentMethod],
-                buttonColor: buttonStyle.color || 'black',
-                buttonType: buttonStyle.type || 'pay',
-                buttonLocale: buttonStyle.language || 'en',
-                buttonSizeMode: 'fill',
-            });
+        this.waitForWrapper(wrapper, () => {
+            jQuery(wrapper).addClass('ppcp-button-' + ppcpStyle.shape);
 
-        jQuery(wrapper).append(button);
+            const button =
+                this.paymentsClient.createButton({
+                    onClick: this.onButtonClick.bind(this),
+                    allowedPaymentMethods: [baseCardPaymentMethod],
+                    buttonColor: buttonStyle.color || 'black',
+                    buttonType: buttonStyle.type || 'pay',
+                    buttonLocale: buttonStyle.language || 'en',
+                    buttonSizeMode: 'fill',
+                });
+
+            jQuery(wrapper).append(button);
+        });
+    }
+
+    waitForWrapper(selector, callback, delay = 100, timeout = 2000) {
+        const startTime = Date.now();
+        const interval = setInterval(function() {
+            const el = document.querySelector(selector);
+            const timeElapsed = Date.now() - startTime;
+
+            if (el) {
+                clearInterval(interval);
+                callback(el);
+            } else if (timeElapsed > timeout) {
+                clearInterval(interval);
+                console.error('Waiting for wrapper timed out.', selector);
+            }
+        }, delay);
     }
 
     //------------------------
