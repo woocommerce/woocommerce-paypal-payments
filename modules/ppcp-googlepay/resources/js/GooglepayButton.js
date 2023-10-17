@@ -161,8 +161,6 @@ class GooglepayButton {
 
         const { wrapper, ppcpStyle, buttonStyle } = this.contextConfig();
 
-        jQuery(wrapper).length
-
         this.waitForWrapper(wrapper, () => {
             jQuery(wrapper).addClass('ppcp-button-' + ppcpStyle.shape);
 
@@ -182,7 +180,7 @@ class GooglepayButton {
 
     waitForWrapper(selector, callback, delay = 100, timeout = 2000) {
         const startTime = Date.now();
-        const interval = setInterval(function() {
+        const interval = setInterval(() => {
             const el = document.querySelector(selector);
             const timeElapsed = Date.now() - startTime;
 
