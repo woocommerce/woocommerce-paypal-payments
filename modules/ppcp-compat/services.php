@@ -65,6 +65,9 @@ return array(
 	'compat.ywot.is_supported_plugin_version_active' => function (): bool {
 		return function_exists( 'yith_ywot_init' );
 	},
+	'compat.shipstation.is_supported_plugin_version_active' => function (): bool {
+		return function_exists( 'woocommerce_shipstation_init' );
+	},
 
 	'compat.module.url'                              => static function ( ContainerInterface $container ): string {
 		/**

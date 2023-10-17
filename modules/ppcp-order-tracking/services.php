@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\OrderTracking;
 
 use WooCommerce\PayPalCommerce\OrderTracking\Integration\GermanizedShipmentIntegration;
 use WooCommerce\PayPalCommerce\OrderTracking\Integration\ShipmentTrackingIntegration;
+use WooCommerce\PayPalCommerce\OrderTracking\Integration\ShipStationIntegration;
 use WooCommerce\PayPalCommerce\OrderTracking\Integration\YithShipmentIntegration;
 use WooCommerce\PayPalCommerce\OrderTracking\Shipment\ShipmentFactoryInterface;
 use WooCommerce\PayPalCommerce\OrderTracking\Shipment\ShipmentFactory;
@@ -96,9 +97,10 @@ return array(
 		$logger           = $container->get( 'woocommerce.logger.woocommerce' );
 		$endpoint         = $container->get( 'order-tracking.endpoint.controller' );
 
-		$is_gzd_active         = $container->get( 'compat.gzd.is_supported_plugin_version_active' );
-		$is_wc_shipment_active = $container->get( 'compat.wc_shipment_tracking.is_supported_plugin_version_active' );
-		$is_yith_ywot_active   = $container->get( 'compat.ywot.is_supported_plugin_version_active' );
+		$is_gzd_active          = $container->get( 'compat.gzd.is_supported_plugin_version_active' );
+		$is_wc_shipment_active  = $container->get( 'compat.wc_shipment_tracking.is_supported_plugin_version_active' );
+		$is_yith_ywot_active    = $container->get( 'compat.ywot.is_supported_plugin_version_active' );
+		$is_ship_station_active = $container->get( 'compat.shipstation.is_supported_plugin_version_active' );
 
 		$integrations = array();
 
@@ -112,6 +114,10 @@ return array(
 
 		if ( $is_yith_ywot_active ) {
 			$integrations[] = new YithShipmentIntegration( $shipment_factory, $logger, $endpoint );
+		}
+
+		if ( $is_ship_station_active ) {
+			$integrations[] = new ShipStationIntegration( $shipment_factory, $logger, $endpoint );
 		}
 
 		return $integrations;
