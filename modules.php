@@ -52,5 +52,13 @@ return function ( string $root_dir ): iterable {
 		$modules[] = ( require "$modules_dir/ppcp-saved-payment-checker/module.php" )();
 	}
 
+	if ( apply_filters(
+		//phpcs:disable WordPress.NamingConventions.ValidHookName.UseUnderscores
+		'woocommerce.feature-flags.woocommerce_paypal_payments.save_payment_methods_enabled',
+		getenv( 'PCP_SAVE_PAYMENT_METHODS' ) === '1'
+	) ) {
+		$modules[] = ( require "$modules_dir/ppcp-save-payment-methods/module.php" )();
+	}
+
 	return $modules;
 };
