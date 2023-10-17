@@ -397,7 +397,7 @@ class SmartButton implements SmartButtonInterface {
 		$get_hook = function ( string $location ): ?array {
 			switch ( $location ) {
 				case 'checkout':
-					return $this->messages_renderer_hook( $location, 'woocommerce_review_order_after_submit', 11 );
+					return $this->messages_renderer_hook( $location, 'woocommerce_review_order_before_payment', 10 );
 				case 'cart':
 					return $this->messages_renderer_hook( $location, $this->proceed_to_checkout_button_renderer_hook(), 19 );
 				case 'pay-now':
