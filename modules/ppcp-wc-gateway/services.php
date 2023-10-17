@@ -1354,7 +1354,13 @@ return array(
 	'wcgateway.settings.pay-later.messaging-locations'     => static function( ContainerInterface $container ): array {
 		$button_locations = $container->get( 'wcgateway.button.locations' );
 		unset( $button_locations['mini-cart'] );
-		return $button_locations;
+		return array_merge(
+			$button_locations,
+			array(
+				'shop' => __( 'Shop', 'woocommerce-paypal-payments' ),
+				'home' => __( 'Home', 'woocommerce-paypal-payments' ),
+			)
+		);
 	},
 	'wcgateway.button.default-locations'                   => static function( ContainerInterface $container ): array {
 		return array_keys( $container->get( 'wcgateway.settings.pay-later.messaging-locations' ) );

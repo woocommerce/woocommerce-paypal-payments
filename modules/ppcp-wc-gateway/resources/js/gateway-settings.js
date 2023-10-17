@@ -172,11 +172,16 @@ document.addEventListener(
 
         function createMessagesPreview(settingsCallback) {
             const render = (settings) => {
-                const wrapper = document.querySelector(settings.wrapper);
+                let wrapper = document.querySelector(settings.wrapper);
                 if (!wrapper) {
                     return;
                 }
-                wrapper.innerHTML = '';
+                // looks like .innerHTML = '' is not enough, PayPal somehow renders with old style
+                const parent = wrapper.parentElement;
+                parent.removeChild(wrapper);
+                wrapper = document.createElement('div');
+                wrapper.setAttribute('id', settings.wrapper.replace('#', ''));
+                parent.appendChild(wrapper);
 
                 const messageRenderer = new MessageRenderer(settings);
 
@@ -269,7 +274,7 @@ document.addEventListener(
             }, 1000));
 
             loadPaypalScript(oldScriptSettings, () => {
-                const payLaterMessagingLocations = ['product', 'cart', 'checkout', 'general'];
+                const payLaterMessagingLocations = ['product', 'cart', 'checkout', 'shop', 'home', 'general'];
                 const paypalButtonLocations = ['product', 'cart', 'checkout', 'mini-cart', 'general'];
 
                 paypalButtonLocations.forEach((location) => {

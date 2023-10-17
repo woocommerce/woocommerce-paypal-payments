@@ -382,54 +382,48 @@ class SmartButton implements SmartButtonInterface {
 	 * Registers the hooks to render the credit messaging HTML depending on the settings.
 	 *
 	 * @return bool
-	 * @throws NotFoundException When a setting was not found.
 	 */
 	private function render_message_wrapper_registrar(): bool {
 		if ( ! $this->settings_status->is_pay_later_messaging_enabled() ) {
 			return false;
 		}
 
-		$selected_locations = $this->settings->has( 'pay_later_messaging_locations' ) ? $this->settings->get( 'pay_later_messaging_locations' ) : array();
+		$location = $this->location();
 
-		$not_enabled_on_cart = ! in_array( 'cart', $selected_locations, true );
+		if ( ! $this->settings_status->is_pay_later_messaging_enabled_for_location( $location ) ) {
+			return false;
+		}
+
+		$get_hook = function ( string $location ): ?array {
+			switch ( $location ) {
+				case 'checkout':
+					return $this->messages_renderer_hook( $location, 'woocommerce_review_order_before_payment', 10 );
+				case 'cart':
+					return $this->messages_renderer_hook( $location, $this->proceed_to_checkout_button_renderer_hook(), 19 );
+				case 'pay-now':
+					return $this->messages_renderer_hook( 'pay_order', 'woocommerce_pay_order_before_submit', 10 );
+				case 'product':
+					return $this->messages_renderer_hook( $location, $this->single_product_renderer_hook(), 30 );
+				case 'shop':
+					return $this->messages_renderer_hook( $location, 'woocommerce_archive_description', 10 );
+				case 'home':
+					return $this->messages_renderer_hook( $location, 'loop_start', 20 );
+				default:
+					return null;
+			}
+		};
+
+		$hook = $get_hook( $location );
+		if ( ! $hook ) {
+			return false;
+		}
 
 		add_action(
-			$this->proceed_to_checkout_button_renderer_hook(),
-			function() use ( $not_enabled_on_cart ) {
-				if ( ! is_cart() || $not_enabled_on_cart ) {
-					return;
-				}
-				$this->message_renderer();
-			},
-			19
+			$hook['name'],
+			array( $this, 'message_renderer' ),
+			$hook['priority']
 		);
 
-		$not_enabled_on_product_page = ! in_array( 'product', $selected_locations, true );
-		if (
-			( is_product() || wc_post_content_has_shortcode( 'product_page' ) )
-			&& ! $not_enabled_on_product_page
-			&& ! is_checkout()
-		) {
-			add_action(
-				$this->single_product_renderer_hook(),
-				array( $this, 'message_renderer' ),
-				30
-			);
-		}
-
-		$not_enabled_on_checkout = ! in_array( 'checkout', $selected_locations, true );
-		if ( ! $not_enabled_on_checkout ) {
-			add_action(
-				$this->checkout_dcc_button_renderer_hook(),
-				array( $this, 'message_renderer' ),
-				11
-			);
-			add_action(
-				$this->pay_order_renderer_hook(),
-				array( $this, 'message_renderer' ),
-				15
-			);
-		}
 		return true;
 	}
 
@@ -528,8 +522,8 @@ class SmartButton implements SmartButtonInterface {
 	 * Whether any of our scripts (for DCC or product, mini-cart, non-block cart/checkout) should be loaded.
 	 */
 	public function should_load_ppcp_script(): bool {
-		$buttons_enabled = $this->settings->has( 'enabled' ) && $this->settings->get( 'enabled' );
-		if ( ! $buttons_enabled ) {
+		$pcp_gateway_enabled = $this->settings->has( 'enabled' ) && $this->settings->get( 'enabled' );
+		if ( ! $pcp_gateway_enabled ) {
 			return false;
 		}
 
@@ -537,34 +531,62 @@ class SmartButton implements SmartButtonInterface {
 			return false;
 		}
 
-		return $this->should_load_buttons() || $this->can_render_dcc();
+		return $this->should_load_buttons() || $this->should_load_messages() || $this->can_render_dcc();
 	}
 
 	/**
 	 * Determines whether the button component should be loaded.
 	 */
 	public function should_load_buttons() : bool {
-		$buttons_enabled = $this->settings->has( 'enabled' ) && $this->settings->get( 'enabled' );
-		if ( ! $buttons_enabled ) {
+		$pcp_gateway_enabled = $this->settings->has( 'enabled' ) && $this->settings->get( 'enabled' );
+		if ( ! $pcp_gateway_enabled ) {
 			return false;
 		}
 
 		$smart_button_enabled_for_current_location = $this->settings_status->is_smart_button_enabled_for_location( $this->context() );
 		$smart_button_enabled_for_mini_cart        = $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' );
-		$messaging_enabled_for_current_location    = $this->settings_status->is_pay_later_messaging_enabled_for_location( $this->context() );
 
 		switch ( $this->context() ) {
 			case 'checkout':
 			case 'cart':
 			case 'pay-now':
-				return $smart_button_enabled_for_current_location || $messaging_enabled_for_current_location;
 			case 'checkout-block':
 			case 'cart-block':
 				return $smart_button_enabled_for_current_location;
 			case 'product':
-				return $smart_button_enabled_for_current_location || $messaging_enabled_for_current_location || $smart_button_enabled_for_mini_cart;
+				return $smart_button_enabled_for_current_location || $smart_button_enabled_for_mini_cart;
 			default:
 				return $smart_button_enabled_for_mini_cart;
+		}
+	}
+
+	/**
+	 * Determines whether the Pay Later messages component should be loaded.
+	 */
+	public function should_load_messages() : bool {
+		$pcp_gateway_enabled = $this->settings->has( 'enabled' ) && $this->settings->get( 'enabled' );
+		if ( ! $pcp_gateway_enabled ) {
+			return false;
+		}
+
+		if ( ! $this->messages_apply->for_country() || $this->is_free_trial_cart() ) {
+			return false;
+		}
+
+		$location = $this->location();
+
+		$messaging_enabled_for_current_location = $this->settings_status->is_pay_later_messaging_enabled_for_location( $location );
+
+		switch ( $location ) {
+			case 'checkout':
+			case 'cart':
+			case 'pay-now':
+			case 'product':
+			case 'shop':
+			case 'home':
+				return $messaging_enabled_for_current_location;
+			default:
+				return false;
 		}
 	}
 
@@ -630,7 +652,23 @@ class SmartButton implements SmartButtonInterface {
 		// The wrapper is needed for the loading spinner,
 		// otherwise jQuery block() prevents buttons rendering.
 		echo '<div class="ppc-button-wrapper">';
+
+		$hook_gateway_id = str_replace( '-', '_', $gateway_id );
+		/**
+		 * A hook executed after rendering of the opening tag for the PCP wrapper (before the inner wrapper for the buttons).
+		 *
+		 * For the PayPal gateway the hook name is ppcp_start_button_wrapper_ppcp_gateway.
+		 */
+		do_action( 'ppcp_start_button_wrapper_' . $hook_gateway_id );
+
 		echo '<div id="ppc-button-' . esc_attr( $gateway_id ) . '"></div>';
+
+		/**
+		 * A hook executed before rendering of the closing tag for the PCP wrapper (before the inner wrapper for the buttons).
+		 *
+		 * For the PayPal gateway the hook name is ppcp_end_button_wrapper_ppcp_gateway.
+		 */
+		do_action( 'ppcp_end_button_wrapper_' . $hook_gateway_id );
 
 		if ( null !== $action_name ) {
 			do_action( $action_name );
@@ -646,8 +684,10 @@ class SmartButton implements SmartButtonInterface {
 
 		$product = wc_get_product();
 
+		$location = $this->location();
+
 		if (
-			! is_checkout() && is_a( $product, WC_Product::class )
+			$location === 'product' && is_a( $product, WC_Product::class )
 			/**
 			 * The filter returning true if PayPal buttons can be rendered, or false otherwise.
 			 */
@@ -663,24 +703,47 @@ class SmartButton implements SmartButtonInterface {
 	 * The values for the credit messaging.
 	 *
 	 * @return array
-	 * @throws NotFoundException When a setting was not found.
 	 */
 	private function message_values(): array {
 		if ( ! $this->settings_status->is_pay_later_messaging_enabled() ) {
 			return array();
 		}
 
-		$placement = is_checkout() ? 'payment' : ( is_cart() ? 'cart' : 'product' );
-		$product   = wc_get_product();
-		$amount    = ( is_a( $product, WC_Product::class ) ) ? wc_get_price_including_tax( $product ) : 0;
+		$location = $this->location();
+
+		switch ( $location ) {
+			case 'checkout':
+			case 'checkout-block':
+			case 'pay-now':
+				$placement = 'payment';
+				break;
+			case 'cart':
+			case 'cart-block':
+				$placement = 'cart';
+				break;
+			case 'product':
+				$placement = 'product';
+				break;
+			case 'shop':
+				$placement = 'product-list';
+				break;
+			case 'home':
+				$placement = 'home';
+				break;
+			default:
+				$placement = 'payment';
+				break;
+		}
+
+		$product = wc_get_product();
+		$amount  = ( is_a( $product, WC_Product::class ) ) ? wc_get_price_including_tax( $product ) : 0;
 
 		if ( is_checkout() || is_cart() ) {
 			$amount = WC()->cart->get_total( 'raw' );
 		}
 
 		$styling_per_location = $this->settings->has( 'pay_later_enable_styling_per_messaging_location' ) && $this->settings->get( 'pay_later_enable_styling_per_messaging_location' );
-		$per_location         = is_checkout() ? 'checkout' : ( is_cart() ? 'cart' : 'product' );
-		$location             = $styling_per_location ? $per_location : 'general';
+		$location             = $styling_per_location ? $location : 'general';
 		$setting_name_prefix  = "pay_later_{$location}_message";
 
 		$layout        = $this->settings->has( "{$setting_name_prefix}_layout" ) ? $this->settings->get( "{$setting_name_prefix}_layout" ) : 'text';
@@ -1163,10 +1226,7 @@ class SmartButton implements SmartButtonInterface {
 			$components[] = 'buttons';
 			$components[] = 'funding-eligibility';
 		}
-		if (
-			$this->messages_apply->for_country()
-			&& ! $this->is_free_trial_cart()
-		) {
+		if ( $this->should_load_messages() ) {
 			$components[] = 'messages';
 		}
 		if ( $this->dcc_is_enabled() ) {
@@ -1298,6 +1358,35 @@ class SmartButton implements SmartButtonInterface {
 		 * The filter returning the action name that PayPal button and Pay Later message will use for rendering on the pay-order page.
 		 */
 		return (string) apply_filters( 'woocommerce_paypal_payments_pay_order_dcc_renderer_hook', 'woocommerce_pay_order_after_submit' );
+	}
+
+	/**
+	 * Returns the action name that will be used for rendering Pay Later messages.
+	 *
+	 * @param string $location The location name like 'checkout', 'shop'. See render_message_wrapper_registrar.
+	 * @param string $default_hook The default name of the hook.
+	 * @param int    $default_priority The default priority of the hook.
+	 * @return array An array with 'name' and 'priority' keys.
+	 */
+	private function messages_renderer_hook( string $location, string $default_hook, int $default_priority ): array {
+		/**
+		 * The filter returning the action name that will be used for rendering Pay Later messages.
+		 */
+		$hook = (string) apply_filters(
+			"woocommerce_paypal_payments_${location}_messages_renderer_hook",
+			$default_hook
+		);
+		/**
+		 * The filter returning the action priority that will be used for rendering Pay Later messages.
+		 */
+		$priority = (int) apply_filters(
+			"woocommerce_paypal_payments_${location}_messages_renderer_priority",
+			$default_priority
+		);
+		return array(
+			'name'     => $hook,
+			'priority' => $priority,
+		);
 	}
 
 	/**
