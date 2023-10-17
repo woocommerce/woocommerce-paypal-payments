@@ -1,6 +1,8 @@
 import ContextHandlerFactory from "./Context/ContextHandlerFactory";
 import {setVisible} from '../../../ppcp-button/resources/js/modules/Helper/Hiding';
 import {setEnabled} from '../../../ppcp-button/resources/js/modules/Helper/ButtonDisabler';
+import widgetBuilder from "../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder";
+import UpdatePaymentData from "./Helper/UpdatePaymentData";
 
 class GooglepayButton {
 
@@ -21,7 +23,11 @@ class GooglepayButton {
             this.externalHandler
         );
 
-        console.log('[GooglePayButton] new Button', this);
+        this.log = function() {
+            if ( this.buttonConfig.is_debug ) {
+                console.log('[GooglePayButton]', ...arguments);
+            }
+        }
     }
 
     init(config) {
@@ -52,6 +58,15 @@ class GooglepayButton {
             .catch(function(err) {
                 console.error(err);
             });
+    }
+
+    reinit() {
+        if (!this.googlePayConfig) {
+            return;
+        }
+
+        this.isInitialized = false;
+        this.init(this.googlePayConfig);
     }
 
     validateConfig() {
@@ -99,13 +114,18 @@ class GooglepayButton {
     }
 
     initClient() {
+        const callbacks = {
+            onPaymentAuthorized: this.onPaymentAuthorized.bind(this)
+        }
+
+        if ( this.buttonConfig.shipping.enabled && this.contextHandler.shippingAllowed() ) {
+            callbacks['onPaymentDataChanged'] = this.onPaymentDataChanged.bind(this);
+        }
+
         this.paymentsClient = new google.payments.api.PaymentsClient({
             environment: this.buttonConfig.environment,
             // add merchant info maybe
-            paymentDataCallbacks: {
-                //onPaymentDataChanged: onPaymentDataChanged,
-                onPaymentAuthorized: this.onPaymentAuthorized.bind(this),
-            }
+            paymentDataCallbacks: callbacks
         });
     }
 
@@ -137,22 +157,41 @@ class GooglepayButton {
      * Add a Google Pay purchase button
      */
     addButton(baseCardPaymentMethod) {
-        console.log('[GooglePayButton] addButton', this.context);
+        this.log('addButton', this.context);
 
         const { wrapper, ppcpStyle, buttonStyle } = this.contextConfig();
 
-        jQuery(wrapper).addClass('ppcp-button-' + ppcpStyle.shape);
+        this.waitForWrapper(wrapper, () => {
+            jQuery(wrapper).addClass('ppcp-button-' + ppcpStyle.shape);
 
-        const button =
-            this.paymentsClient.createButton({
-                onClick: this.onButtonClick.bind(this),
-                allowedPaymentMethods: [baseCardPaymentMethod],
-                buttonColor: buttonStyle.color || 'black',
-                buttonType: buttonStyle.type || 'pay',
-                buttonLocale: buttonStyle.language || 'en',
-                buttonSizeMode: 'fill',
-            });
-        jQuery(wrapper).append(button);
+            const button =
+                this.paymentsClient.createButton({
+                    onClick: this.onButtonClick.bind(this),
+                    allowedPaymentMethods: [baseCardPaymentMethod],
+                    buttonColor: buttonStyle.color || 'black',
+                    buttonType: buttonStyle.type || 'pay',
+                    buttonLocale: buttonStyle.language || 'en',
+                    buttonSizeMode: 'fill',
+                });
+
+            jQuery(wrapper).append(button);
+        });
+    }
+
+    waitForWrapper(selector, callback, delay = 100, timeout = 2000) {
+        const startTime = Date.now();
+        const interval = setInterval(() => {
+            const el = document.querySelector(selector);
+            const timeElapsed = Date.now() - startTime;
+
+            if (el) {
+                clearInterval(interval);
+                callback(el);
+            } else if (timeElapsed > timeout) {
+                clearInterval(interval);
+                console.error('Waiting for wrapper timed out.', selector);
+            }
+        }, delay);
     }
 
     //------------------------
@@ -163,10 +202,10 @@ class GooglepayButton {
      * Show Google Pay payment sheet when Google Pay payment button is clicked
      */
     async onButtonClick() {
-        console.log('[GooglePayButton] onButtonClick', this.context);
+        this.log('onButtonClick', this.context);
 
         const paymentDataRequest = await this.paymentDataRequest();
-        console.log('[GooglePayButton] onButtonClick: paymentDataRequest', paymentDataRequest, this.context);
+        this.log('onButtonClick: paymentDataRequest', paymentDataRequest, this.context);
 
         window.ppcpFundingSource = 'googlepay'; // Do this on another place like on create order endpoint handler.
 
@@ -184,8 +223,84 @@ class GooglepayButton {
         paymentDataRequest.allowedPaymentMethods = googlePayConfig.allowedPaymentMethods;
         paymentDataRequest.transactionInfo = await this.contextHandler.transactionInfo();
         paymentDataRequest.merchantInfo = googlePayConfig.merchantInfo;
-        paymentDataRequest.callbackIntents = ['PAYMENT_AUTHORIZATION'];
+
+        if ( this.buttonConfig.shipping.enabled && this.contextHandler.shippingAllowed() ) {
+            paymentDataRequest.callbackIntents = ["SHIPPING_ADDRESS",  "SHIPPING_OPTION", "PAYMENT_AUTHORIZATION"];
+            paymentDataRequest.shippingAddressRequired = true;
+            paymentDataRequest.shippingAddressParameters = this.shippingAddressParameters();
+            paymentDataRequest.shippingOptionRequired = true;
+        } else {
+            paymentDataRequest.callbackIntents = ['PAYMENT_AUTHORIZATION'];
+        }
+
         return paymentDataRequest;
+    }
+
+    //------------------------
+    // Shipping processing
+    //------------------------
+
+    shippingAddressParameters() {
+        return {
+            allowedCountryCodes: this.buttonConfig.shipping.countries,
+            phoneNumberRequired: true
+        };
+    }
+
+    onPaymentDataChanged(paymentData) {
+        this.log('onPaymentDataChanged', this.context);
+        this.log('paymentData', paymentData);
+
+        return new Promise(async (resolve, reject) => {
+            let paymentDataRequestUpdate = {};
+
+            const updatedData = await (new UpdatePaymentData(this.buttonConfig.ajax.update_payment_data)).update(paymentData);
+            const transactionInfo = await this.contextHandler.transactionInfo();
+
+            this.log('onPaymentDataChanged:updatedData', updatedData);
+            this.log('onPaymentDataChanged:transactionInfo', transactionInfo);
+
+            updatedData.country_code = transactionInfo.countryCode;
+            updatedData.currency_code = transactionInfo.currencyCode;
+            updatedData.total_str = transactionInfo.totalPrice;
+
+            // Handle unserviceable address.
+            if(!updatedData.shipping_options || !updatedData.shipping_options.shippingOptions.length) {
+                paymentDataRequestUpdate.error = this.unserviceableShippingAddressError();
+                resolve(paymentDataRequestUpdate);
+                return;
+            }
+
+            switch (paymentData.callbackTrigger) {
+                case 'INITIALIZE':
+                case 'SHIPPING_ADDRESS':
+                    paymentDataRequestUpdate.newShippingOptionParameters = updatedData.shipping_options;
+                    paymentDataRequestUpdate.newTransactionInfo = this.calculateNewTransactionInfo(updatedData);
+                    break;
+                case 'SHIPPING_OPTION':
+                    paymentDataRequestUpdate.newTransactionInfo = this.calculateNewTransactionInfo(updatedData);
+                    break;
+            }
+
+            resolve(paymentDataRequestUpdate);
+        });
+    }
+
+    unserviceableShippingAddressError() {
+        return {
+            reason: "SHIPPING_ADDRESS_UNSERVICEABLE",
+            message: "Cannot ship to the selected address",
+            intent: "SHIPPING_ADDRESS"
+        };
+    }
+
+    calculateNewTransactionInfo(updatedData) {
+        return {
+            countryCode: updatedData.country_code,
+            currencyCode: updatedData.currency_code,
+            totalPriceStatus: 'FINAL',
+            totalPrice: updatedData.total_str
+        };
     }
 
 
@@ -194,25 +309,25 @@ class GooglepayButton {
     //------------------------
 
     onPaymentAuthorized(paymentData) {
-        console.log('[GooglePayButton] onPaymentAuthorized', this.context);
+        this.log('onPaymentAuthorized', this.context);
         return this.processPayment(paymentData);
     }
 
     async processPayment(paymentData) {
-        console.log('[GooglePayButton] processPayment', this.context);
+        this.log('processPayment', this.context);
 
         return new Promise(async (resolve, reject) => {
             try {
                 let id = await this.contextHandler.createOrder();
 
-                console.log('[GooglePayButton] processPayment: createOrder', id, this.context);
+                this.log('processPayment: createOrder', id, this.context);
 
-                const confirmOrderResponse = await paypal.Googlepay().confirmOrder({
+                const confirmOrderResponse = await widgetBuilder.paypal.Googlepay().confirmOrder({
                     orderId: id,
                     paymentMethodData: paymentData.paymentMethodData
                 });
 
-                console.log('[GooglePayButton] processPayment: confirmOrder', confirmOrderResponse, this.context);
+                this.log('processPayment: confirmOrder', confirmOrderResponse, this.context);
 
                 /** Capture the Order on the Server */
                 if (confirmOrderResponse.status === "APPROVED") {
@@ -259,7 +374,7 @@ class GooglepayButton {
             }
         }
 
-        console.log('[GooglePayButton] processPaymentResponse', response, this.context);
+        this.log('processPaymentResponse', response, this.context);
 
         return response;
     }

@@ -456,7 +456,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'description'       => __( 'If you use your PayPal account with more than one installation, please use a distinct prefix to separate those installations. Please use only English letters and "-", "_" characters.', 'woocommerce-paypal-payments' ),
 			'maxlength'         => 15,
 			'custom_attributes' => array(
-				'pattern' => '[a-zA-Z_-]+',
+				'pattern' => '[a-zA-Z_\\-]+',
 			),
 			'default'           => ( static function (): string {
 				$site_url = get_site_url( get_current_blog_id() );

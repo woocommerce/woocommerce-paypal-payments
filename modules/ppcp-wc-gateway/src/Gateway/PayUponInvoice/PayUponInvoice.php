@@ -143,6 +143,20 @@ class PayUponInvoice {
 		}
 
 		add_filter(
+			'ppcp_partner_referrals_option',
+			function ( array $option ): array {
+				if ( $option['valid'] ) {
+					return $option;
+				}
+				if ( $option['field'] === 'ppcp-onboarding-pui' ) {
+					$option['valid'] = true;
+					$option['value'] = ( $option['value'] ? '1' : '' );
+				}
+				return $option;
+			}
+		);
+
+		add_filter(
 			'ppcp_partner_referrals_data',
 			function ( array $data ): array {
 				try {

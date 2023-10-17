@@ -14,14 +14,17 @@ use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\Onboarding\Helper\OnboardingUrl;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 
 /**
- * Class PayUponInvoiceEndpoint
+ * Class UpdateSignupLinksEndpoint
  */
-class PayUponInvoiceEndpoint implements EndpointInterface {
+class UpdateSignupLinksEndpoint implements EndpointInterface {
+
+	const ENDPOINT = 'ppc-update-signup-links';
 
 	/**
 	 * The settings.
@@ -66,7 +69,7 @@ class PayUponInvoiceEndpoint implements EndpointInterface {
 	protected $logger;
 
 	/**
-	 * PayUponInvoiceEndpoint constructor.
+	 * UpdateSignupLinksEndpoint constructor.
 	 *
 	 * @param Settings           $settings The settings.
 	 * @param RequestData        $request_data The request data.
@@ -97,7 +100,7 @@ class PayUponInvoiceEndpoint implements EndpointInterface {
 	 * @return string
 	 */
 	public static function nonce(): string {
-		return 'ppc-pui';
+		return self::ENDPOINT;
 	}
 
 	/**
@@ -116,13 +119,26 @@ class PayUponInvoiceEndpoint implements EndpointInterface {
 
 		try {
 			$data = $this->request_data->read_request( $this->nonce() );
-			$this->settings->set( 'ppcp-onboarding-pui', $data['checked'] );
+
+			foreach ( $data['settings'] ?? array() as $field => $value ) {
+				$option = apply_filters(
+					'ppcp_partner_referrals_option',
+					array(
+						'field' => $field,
+						'value' => $value,
+						'valid' => false,
+					)
+				);
+
+				if ( $option['valid'] ) {
+					$this->settings->set( $field, $value );
+				}
+			}
+
 			$this->settings->persist();
 
 			foreach ( $this->signup_link_ids as $key ) {
-				if ( $this->signup_link_cache->has( $key ) ) {
-					$this->signup_link_cache->delete( $key );
-				}
+				( new OnboardingUrl( $this->signup_link_cache, $key, get_current_user_id() ) )->delete();
 			}
 
 			foreach ( $this->signup_link_ids as $key ) {

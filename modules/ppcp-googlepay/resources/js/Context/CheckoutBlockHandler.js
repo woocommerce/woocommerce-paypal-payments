@@ -2,6 +2,10 @@ import BaseHandler from "./BaseHandler";
 
 class CheckoutBlockHandler extends BaseHandler{
 
+    shippingAllowed() {
+        return false;
+    }
+
     createOrder() {
         return this.externalHandler.createOrder();
     }

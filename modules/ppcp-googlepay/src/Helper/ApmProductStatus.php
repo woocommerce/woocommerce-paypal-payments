@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\Googlepay\Helper;
 
 use Throwable;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnersEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
@@ -31,6 +32,13 @@ class ApmProductStatus {
 	 * @var bool|null
 	 */
 	private $current_status = null;
+
+	/**
+	 * If there was a request failure.
+	 *
+	 * @var bool
+	 */
+	private $has_request_failure = false;
 
 	/**
 	 * The settings.
@@ -54,20 +62,30 @@ class ApmProductStatus {
 	private $onboarding_state;
 
 	/**
+	 * The API failure registry
+	 *
+	 * @var FailureRegistry
+	 */
+	private $api_failure_registry;
+
+	/**
 	 * ApmProductStatus constructor.
 	 *
 	 * @param Settings         $settings The Settings.
 	 * @param PartnersEndpoint $partners_endpoint The Partner Endpoint.
 	 * @param State            $onboarding_state The onboarding state.
+	 * @param FailureRegistry  $api_failure_registry The API failure registry.
 	 */
 	public function __construct(
 		Settings $settings,
 		PartnersEndpoint $partners_endpoint,
-		State $onboarding_state
+		State $onboarding_state,
+		FailureRegistry $api_failure_registry
 	) {
-		$this->settings          = $settings;
-		$this->partners_endpoint = $partners_endpoint;
-		$this->onboarding_state  = $onboarding_state;
+		$this->settings             = $settings;
+		$this->partners_endpoint    = $partners_endpoint;
+		$this->onboarding_state     = $onboarding_state;
+		$this->api_failure_registry = $api_failure_registry;
 	}
 
 	/**
@@ -76,33 +94,47 @@ class ApmProductStatus {
 	 * @return bool
 	 */
 	public function is_active() : bool {
-		if ( $this->onboarding_state->current_state() < State::STATE_ONBOARDED ) {
+
+		// If not onboarded then makes no sense to check status.
+		if ( ! $this->is_onboarded() ) {
 			return false;
 		}
 
+		// If status was already checked on this request return the same result.
 		if ( null !== $this->current_status ) {
 			return $this->current_status;
 		}
 
+		// Check if status was checked on previous requests.
 		if ( $this->settings->has( self::SETTINGS_KEY ) && ( $this->settings->get( self::SETTINGS_KEY ) ) ) {
 			$this->current_status = wc_string_to_bool( $this->settings->get( self::SETTINGS_KEY ) );
 			return $this->current_status;
 		}
 
-		try {
-			$seller_status = $this->partners_endpoint->seller_status();
-		} catch ( Throwable $error ) {
-			// It may be a transitory error, don't persist the status.
-			$this->current_status = false;
+		// Check API failure registry to prevent multiple failed API requests.
+		if ( $this->api_failure_registry->has_failure_in_timeframe( FailureRegistry::SELLER_STATUS_KEY, HOUR_IN_SECONDS ) ) {
+			$this->has_request_failure = true;
+			$this->current_status      = false;
 			return $this->current_status;
 		}
 
+		// Request seller status via PayPal API.
+		try {
+			$seller_status = $this->partners_endpoint->seller_status();
+		} catch ( Throwable $error ) {
+			$this->has_request_failure = true;
+			$this->current_status      = false;
+			return $this->current_status;
+		}
+
+		// Check the seller status for the intended capability.
 		foreach ( $seller_status->products() as $product ) {
 			if ( $product->name() !== 'PAYMENT_METHODS' ) {
 				continue;
 			}
 
 			if ( in_array( self::CAPABILITY_NAME, $product->capabilities(), true ) ) {
+				// Capability found, persist status and return true.
 				$this->settings->set( self::SETTINGS_KEY, self::SETTINGS_VALUE_ENABLED );
 				$this->settings->persist();
 
@@ -111,11 +143,30 @@ class ApmProductStatus {
 			}
 		}
 
+		// Capability not found, persist status and return false.
 		$this->settings->set( self::SETTINGS_KEY, self::SETTINGS_VALUE_DISABLED );
 		$this->settings->persist();
 
 		$this->current_status = false;
 		return $this->current_status;
+	}
+
+	/**
+	 * Returns if the seller is onboarded.
+	 *
+	 * @return bool
+	 */
+	public function is_onboarded(): bool {
+		return $this->onboarding_state->current_state() >= State::STATE_ONBOARDED;
+	}
+
+	/**
+	 * Returns if there was a request failure.
+	 *
+	 * @return bool
+	 */
+	public function has_request_failure(): bool {
+		return $this->has_request_failure;
 	}
 
 	/**
@@ -132,8 +183,10 @@ class ApmProductStatus {
 
 		$this->current_status = null;
 
-		$settings->set( self::SETTINGS_KEY, self::SETTINGS_VALUE_UNDEFINED );
-		$settings->persist();
+		if ( $settings->has( self::SETTINGS_KEY ) ) {
+			$settings->set( self::SETTINGS_KEY, self::SETTINGS_VALUE_UNDEFINED );
+			$settings->persist();
+		}
 	}
 
 }

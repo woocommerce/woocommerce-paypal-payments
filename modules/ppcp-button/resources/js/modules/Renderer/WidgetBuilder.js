@@ -27,6 +27,7 @@ class WidgetBuilder {
 
     setPaypal(paypal) {
         this.paypal = paypal;
+        jQuery(document).trigger('ppcp-paypal-loaded', paypal);
     }
 
     registerButtons(wrapper, options) {
@@ -84,11 +85,14 @@ class WidgetBuilder {
             return;
         }
 
+        const entry = this.messages.get(wrapper);
+
         if (this.hasRendered(wrapper)) {
+            const element = document.querySelector(wrapper);
+            element.setAttribute('data-pp-amount', entry.options.amount);
             return;
         }
 
-        const entry = this.messages.get(wrapper);
         const btn = this.paypal.Messages(entry.options);
 
         btn.render(entry.wrapper);
@@ -174,4 +178,5 @@ class WidgetBuilder {
     }
 }
 
-export default new WidgetBuilder();
+window.widgetBuilder = window.widgetBuilder || new WidgetBuilder();
+export default window.widgetBuilder;

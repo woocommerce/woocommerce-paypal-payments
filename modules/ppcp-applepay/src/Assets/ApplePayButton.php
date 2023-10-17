@@ -148,6 +148,19 @@ class ApplePayButton implements ButtonInterface {
 	public function initialize(): void {
 		add_filter( 'ppcp_onboarding_options', array( $this, 'add_apple_onboarding_option' ), 10, 1 );
 		add_filter(
+			'ppcp_partner_referrals_option',
+			function ( array $option ): array {
+				if ( $option['valid'] ) {
+					return $option;
+				}
+				if ( $option['field'] === 'ppcp-onboarding-apple' ) {
+					$option['valid'] = true;
+					$option['value'] = ( $option['value'] ? '1' : '' );
+				}
+				return $option;
+			}
+		);
+		add_filter(
 			'ppcp_partner_referrals_data',
 			function ( array $data ): array {
 				try {
@@ -165,7 +178,6 @@ class ApplePayButton implements ButtonInterface {
 					$data['products'][0] = 'PAYMENT_METHODS';
 				}
 				$data['capabilities'][] = 'APPLE_PAY';
-				$nonce                  = $data['operations'][0]['api_integration_preference']['rest_api_integration']['first_party_details']['seller_nonce'];
 				$data['operations'][]   = array(
 					'operation'                  => 'API_INTEGRATION',
 					'api_integration_preference' => array(
@@ -173,11 +185,10 @@ class ApplePayButton implements ButtonInterface {
 							'integration_method'  => 'PAYPAL',
 							'integration_type'    => 'THIRD_PARTY',
 							'third_party_details' => array(
-								'features'     => array(
+								'features' => array(
 									'PAYMENT',
 									'REFUND',
 								),
-								'seller_nonce' => $nonce,
 							),
 						),
 					),
@@ -196,6 +207,10 @@ class ApplePayButton implements ButtonInterface {
 	 * @return string
 	 */
 	public function add_apple_onboarding_option( $options ): string {
+		if ( ! apply_filters( 'woocommerce_paypal_payments_apple_pay_onboarding_option', false ) ) {
+			return $options;
+		}
+
 		$checked = '';
 		try {
 			$onboard_with_apple = $this->settings->get( 'ppcp-onboarding-apple' );
@@ -206,7 +221,7 @@ class ApplePayButton implements ButtonInterface {
 			$checked = '';
 		}
 
-		return $options . '<li><label><input type="checkbox" id="ppcp-onboarding-apple" ' . $checked . '> ' .
+		return $options . '<li><label><input type="checkbox" id="ppcp-onboarding-apple" ' . $checked . ' data-onboarding-option="ppcp-onboarding-apple"> ' .
 			__( 'Onboard with ApplePay', 'woocommerce-paypal-payments' ) . '
 		</label></li>';
 

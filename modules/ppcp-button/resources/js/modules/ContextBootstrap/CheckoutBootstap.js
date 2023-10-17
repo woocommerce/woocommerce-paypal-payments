@@ -156,8 +156,15 @@ class CheckoutBootstap {
     }
 
     shouldShowMessages() {
-        return getCurrentPaymentMethod() === PaymentMethods.PAYPAL
-            && !PayPalCommerceGateway.is_free_trial_cart;
+        // hide when another method selected only if messages are near buttons
+        const messagesWrapper = document.querySelector(this.gateway.messages.wrapper);
+        if (getCurrentPaymentMethod() !== PaymentMethods.PAYPAL &&
+            messagesWrapper && jQuery(messagesWrapper).closest('.ppc-button-wrapper').length
+        ) {
+            return false;
+        }
+
+        return !PayPalCommerceGateway.is_free_trial_cart;
     }
 
     disableCreditCardFields() {

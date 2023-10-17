@@ -31,6 +31,12 @@ class ApplepayButton {
         this.updated_contact_info = []
         this.selectedShippingMethod = []
         this.nonce = document.getElementById('woocommerce-process-checkout-nonce').value
+
+        this.log = function() {
+            if ( this.buttonConfig.is_debug ) {
+                console.log('[ApplePayButton]', ...arguments);
+            }
+        }
     }
 
     init(config) {
@@ -52,12 +58,12 @@ class ApplepayButton {
                 const id = "#apple-" + this.buttonConfig.button.wrapper;
 
                 if (this.context === 'mini-cart') {
-                    document.querySelector(id_minicart).addEventListener('click', (evt) => {
+                    document.querySelector(id_minicart)?.addEventListener('click', (evt) => {
                         evt.preventDefault();
                         this.onButtonClick();
                     });
                 } else {
-                    document.querySelector(id).addEventListener('click', (evt) => {
+                    document.querySelector(id)?.addEventListener('click', (evt) => {
                         evt.preventDefault();
                         this.onButtonClick();
                     });
@@ -149,7 +155,10 @@ class ApplepayButton {
         const language = this.buttonConfig.button.lang;
         const color = this.buttonConfig.button.color;
         const id = "apple-" + wrapper;
-        appleContainer.innerHTML = `<apple-pay-button id="${id}" buttonstyle="${color}" type="${type}" locale="${language}">`;
+
+        if (appleContainer) {
+            appleContainer.innerHTML = `<apple-pay-button id="${id}" buttonstyle="${color}" type="${type}" locale="${language}">`;
+        }
 
         jQuery('#' + wrapper).addClass('ppcp-button-' + shape);
         jQuery(wrapper).append(appleContainer);
@@ -256,6 +265,7 @@ class ApplepayButton {
                     })
                 })
                 .catch(validateError => {
+                    console.error(validateError);
                     //call backend to update validation to false
                     jQuery.ajax({
                         url: this.buttonConfig.ajax_url,

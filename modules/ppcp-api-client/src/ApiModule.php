@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\ApiClient;
 
 use WC_Order;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderTransient;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
@@ -76,6 +77,18 @@ class ApiModule implements ModuleInterface {
 
 				if ( $transient instanceof OrderTransient ) {
 					$transient->on_woocommerce_order_created( $wc_order, $order );
+				}
+			},
+			10,
+			2
+		);
+		add_action(
+			'woocommerce_paypal_payments_clear_apm_product_status',
+			function () use ( $c ) {
+				$failure_registry = $c->has( 'api.helper.failure-registry' ) ? $c->get( 'api.helper.failure-registry' ) : null;
+
+				if ( $failure_registry instanceof FailureRegistry ) {
+					$failure_registry->clear_failures( FailureRegistry::SELLER_STATUS_KEY );
 				}
 			},
 			10,
