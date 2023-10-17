@@ -684,8 +684,10 @@ class SmartButton implements SmartButtonInterface {
 
 		$product = wc_get_product();
 
+		$location = $this->location();
+
 		if (
-			! is_checkout() && is_a( $product, WC_Product::class )
+			$location === 'product' && is_a( $product, WC_Product::class )
 			/**
 			 * The filter returning true if PayPal buttons can be rendered, or false otherwise.
 			 */
