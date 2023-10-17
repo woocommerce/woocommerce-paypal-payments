@@ -18,7 +18,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnerReferrals;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Onboarding\Assets\OnboardingAssets;
 use WooCommerce\PayPalCommerce\Onboarding\Endpoint\LoginSellerEndpoint;
-use WooCommerce\PayPalCommerce\Onboarding\Endpoint\PayUponInvoiceEndpoint;
+use WooCommerce\PayPalCommerce\Onboarding\Endpoint\UpdateSignupLinksEndpoint;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\OnboardingRESTController;
@@ -187,8 +187,8 @@ return array(
 			$logger
 		);
 	},
-	'onboarding.endpoint.pui'                   => static function( ContainerInterface $container ) : PayUponInvoiceEndpoint {
-		return new PayUponInvoiceEndpoint(
+	'onboarding.endpoint.pui'                   => static function( ContainerInterface $container ) : UpdateSignupLinksEndpoint {
+		return new UpdateSignupLinksEndpoint(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'button.request-data' ),
 			$container->get( 'onboarding.signup-link-cache' ),

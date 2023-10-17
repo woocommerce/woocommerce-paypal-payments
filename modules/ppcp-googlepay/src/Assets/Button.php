@@ -11,7 +11,9 @@ namespace WooCommerce\PayPalCommerce\Googlepay\Assets;
 
 use Exception;
 use Psr\Log\LoggerInterface;
+use WC_Countries;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
+use WooCommerce\PayPalCommerce\Googlepay\Endpoint\UpdatePaymentDataEndpoint;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
@@ -127,6 +129,7 @@ class Button implements ButtonInterface {
 	 */
 	public function initialize(): void {
 		add_filter( 'ppcp_onboarding_options', array( $this, 'add_onboarding_options' ), 10, 1 );
+		add_filter( 'ppcp_partner_referrals_option', array( $this, 'filter_partner_referrals_option' ), 10, 1 );
 		add_filter( 'ppcp_partner_referrals_data', array( $this, 'add_partner_referrals_data' ), 10, 1 );
 	}
 
@@ -139,6 +142,10 @@ class Button implements ButtonInterface {
 	 * @psalm-suppress MissingClosureParamType
 	 */
 	public function add_onboarding_options( $options ): string {
+		if ( ! apply_filters( 'woocommerce_paypal_payments_google_pay_onboarding_option', false ) ) {
+			return $options;
+		}
+
 		$checked = '';
 		try {
 			$onboard_with_google = $this->settings->get( 'ppcp-onboarding-google' );
@@ -150,9 +157,26 @@ class Button implements ButtonInterface {
 		}
 
 		return $options
-			. '<li><label><input type="checkbox" id="ppcp-onboarding-google" ' . $checked . '> '
+			. '<li><label><input type="checkbox" id="ppcp-onboarding-google" ' . $checked . ' data-onboarding-option="ppcp-onboarding-google"> '
 			. __( 'Onboard with GooglePay', 'woocommerce-paypal-payments' )
 			. '</label></li>';
+	}
+
+	/**
+	 * Filters a partner referrals option.
+	 *
+	 * @param array $option The option data.
+	 * @return array
+	 */
+	public function filter_partner_referrals_option( array $option ): array {
+		if ( $option['valid'] ) {
+			return $option;
+		}
+		if ( $option['field'] === 'ppcp-onboarding-google' ) {
+			$option['valid'] = true;
+			$option['value'] = ( $option['value'] ? '1' : '' );
+		}
+		return $option;
 	}
 
 	/**
@@ -180,21 +204,17 @@ class Button implements ButtonInterface {
 		}
 
 		$data['capabilities'][] = 'GOOGLE_PAY';
-
-		$nonce = $data['operations'][0]['api_integration_preference']['rest_api_integration']['first_party_details']['seller_nonce'];
-
-		$data['operations'][] = array(
+		$data['operations'][]   = array(
 			'operation'                  => 'API_INTEGRATION',
 			'api_integration_preference' => array(
 				'rest_api_integration' => array(
 					'integration_method'  => 'PAYPAL',
 					'integration_type'    => 'THIRD_PARTY',
 					'third_party_details' => array(
-						'features'     => array(
+						'features' => array(
 							'PAYMENT',
 							'REFUND',
 						),
-						'seller_nonce' => $nonce,
 					),
 				),
 			),
@@ -359,19 +379,65 @@ class Button implements ButtonInterface {
 	}
 
 	/**
+	 * Enqueues scripts/styles for admin.
+	 */
+	public function enqueue_admin(): void {
+		wp_register_style(
+			'wc-ppcp-googlepay-admin',
+			untrailingslashit( $this->module_url ) . '/assets/css/styles.css',
+			array(),
+			$this->version
+		);
+		wp_enqueue_style( 'wc-ppcp-googlepay-admin' );
+
+		wp_register_script(
+			'wc-ppcp-googlepay-admin',
+			untrailingslashit( $this->module_url ) . '/assets/js/boot-admin.js',
+			array(),
+			$this->version,
+			true
+		);
+		wp_enqueue_script( 'wc-ppcp-googlepay-admin' );
+
+		wp_localize_script(
+			'wc-ppcp-googlepay-admin',
+			'wc_ppcp_googlepay_admin',
+			$this->script_data()
+		);
+	}
+
+	/**
 	 * The configuration for the smart buttons.
 	 *
 	 * @return array
 	 */
 	public function script_data(): array {
+		$shipping = array(
+			'enabled' => $this->settings->has( 'googlepay_button_shipping_enabled' )
+				? boolval( $this->settings->get( 'googlepay_button_shipping_enabled' ) )
+				: false,
+		);
+
+		if ( $shipping['enabled'] ) {
+			$shipping['countries'] = array_keys( $this->wc_countries()->get_shipping_countries() );
+		}
+
 		return array(
 			'environment' => $this->environment->current_environment_is( Environment::SANDBOX ) ? 'TEST' : 'PRODUCTION',
+			'is_debug'    => defined( 'WP_DEBUG' ) && WP_DEBUG ? true : false,
 			'sdk_url'     => $this->sdk_url,
 			'button'      => array(
 				'wrapper'           => '#ppc-button-googlepay-container',
 				'style'             => $this->button_styles_for_context( 'cart' ), // For now use cart. Pass the context if necessary.
 				'mini_cart_wrapper' => '#ppc-button-googlepay-container-minicart',
 				'mini_cart_style'   => $this->button_styles_for_context( 'mini-cart' ),
+			),
+			'shipping'    => $shipping,
+			'ajax'        => array(
+				'update_payment_data' => array(
+					'endpoint' => \WC_AJAX::get_endpoint( UpdatePaymentDataEndpoint::ENDPOINT ),
+					'nonce'    => wp_create_nonce( UpdatePaymentDataEndpoint::nonce() ),
+				),
 			),
 		);
 	}
@@ -404,4 +470,12 @@ class Button implements ButtonInterface {
 		return $values;
 	}
 
+	/**
+	 * Returns a WC_Countries instance to check shipping
+	 *
+	 * @return WC_Countries
+	 */
+	private function wc_countries(): WC_Countries {
+		return new WC_Countries();
+	}
 }

@@ -38,6 +38,12 @@ class GooglepayManager {
         })();
     }
 
+    reinit() {
+        for (const button of this.buttons) {
+            button.reinit();
+        }
+    }
+
 }
 
 export default GooglepayManager;

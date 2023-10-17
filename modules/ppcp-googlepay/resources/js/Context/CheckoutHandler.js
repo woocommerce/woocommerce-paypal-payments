@@ -6,6 +6,10 @@ import FormValidator from "../../../../ppcp-button/resources/js/modules/Helper/F
 
 class CheckoutHandler extends BaseHandler {
 
+    shippingAllowed() {
+        return false;
+    }
+
     transactionInfo() {
         return new Promise(async (resolve, reject) => {
 

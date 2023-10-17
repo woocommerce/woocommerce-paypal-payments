@@ -27,6 +27,7 @@ class WidgetBuilder {
 
     setPaypal(paypal) {
         this.paypal = paypal;
+        jQuery(document).trigger('ppcp-paypal-loaded', paypal);
     }
 
     registerButtons(wrapper, options) {
@@ -177,4 +178,5 @@ class WidgetBuilder {
     }
 }
 
-export default new WidgetBuilder();
+window.widgetBuilder = window.widgetBuilder || new WidgetBuilder();
+export default window.widgetBuilder;

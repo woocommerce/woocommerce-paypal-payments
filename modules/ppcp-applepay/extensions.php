@@ -13,10 +13,20 @@ use WooCommerce\PayPalCommerce\Applepay\Assets\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DisplayManager;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 
 return array(
 	'wcgateway.settings.fields' => function ( ContainerInterface $container, array $fields ): array {
+
+		// Eligibility check.
+		if ( ! $container->has( 'applepay.eligible' ) || ! $container->get( 'applepay.eligible' ) ) {
+			return $fields;
+		}
+
+		$is_available = $container->get( 'applepay.enabled' );
+		$is_referral  = $container->get( 'applepay.is_referral' );
+
 		$insert_after = function ( array $array, string $key, array $new ): array {
 			$keys = array_keys( $array );
 			$index = array_search( $key, $keys, true );
@@ -27,9 +37,27 @@ return array(
 		$display_manager = $container->get( 'wcgateway.display-manager' );
 		assert( $display_manager instanceof DisplayManager );
 
-		if ( ! $container->has( 'applepay.eligible' ) || ! $container->get( 'applepay.eligible' ) ) {
+		// Connection tab fields.
+		$fields = $insert_after(
+			$fields,
+			'ppcp_dcc_status',
+			array(
+				'applepay_status' => array(
+					'title'        => __( 'Apple Pay Payments', 'woocommerce-paypal-payments' ),
+					'type'         => 'ppcp-text',
+					'text'         => $container->get( 'applepay.settings.connection.status-text' ),
+					'screens'      => array(
+						State::STATE_ONBOARDED,
+					),
+					'requirements' => array(),
+					'gateway'      => Settings::CONNECTION_TAB_ID,
+				),
+			)
+		);
+
+		if ( ! $is_available && $is_referral ) {
 			$connection_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-connection#field-credentials_feature_onboarding_heading' );
-			$connection_link = '<a href="' . $connection_url . '" target="_blank">';
+			$connection_link = '<a href="' . $connection_url . '" style="pointer-events: auto">';
 			return $insert_after(
 				$fields,
 				'allow_card_button_gateway',
@@ -57,7 +85,7 @@ return array(
 								array(
 									$display_manager
 										->rule()
-										->condition_element( 'applepay_button_enabled', '1' )
+										->condition_is_true( false )
 										->action_enable( 'applepay_button_enabled' )
 										->to_array(),
 								)

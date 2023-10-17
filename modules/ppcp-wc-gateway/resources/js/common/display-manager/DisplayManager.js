@@ -14,11 +14,11 @@ class DisplayManager {
     addRule(ruleConfig) {
         const updateStatus = () => {
             this.ruleStatus[ruleConfig.key] = this.rules[ruleConfig.key].status;
-            console.log('ruleStatus', this.ruleStatus);
+            //console.log('ruleStatus', this.ruleStatus);
         }
 
         this.rules[ruleConfig.key] = new Rule(ruleConfig, updateStatus.bind(this));
-        console.log('Rule', this.rules[ruleConfig.key]);
+        //console.log('Rule', this.rules[ruleConfig.key]);
     }
 
     register() {

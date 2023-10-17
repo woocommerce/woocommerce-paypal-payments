@@ -19,7 +19,10 @@ document.addEventListener(
 
             if (! toggleElement.checked) {
                 group.forEach( (elementToHide) => {
-                    document.querySelector(elementToHide).style.display = 'none';
+                    const element = document.querySelector(elementToHide);
+                    if (element) {
+                        element.style.display = 'none';
+                    }
                 })
             }
             toggleElement.addEventListener(
@@ -27,7 +30,10 @@ document.addEventListener(
                 (event) => {
                     if (! event.target.checked) {
                         group.forEach( (elementToHide) => {
-                            document.querySelector(elementToHide).style.display = 'none';
+                            const element = document.querySelector(elementToHide);
+                            if (element) {
+                                element.style.display = 'none';
+                            }
                         });
 
                         return;
