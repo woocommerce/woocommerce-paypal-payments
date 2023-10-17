@@ -703,23 +703,47 @@ class SmartButton implements SmartButtonInterface {
 	 * The values for the credit messaging.
 	 *
 	 * @return array
-	 * @throws NotFoundException When a setting was not found.
 	 */
 	private function message_values(): array {
 		if ( ! $this->settings_status->is_pay_later_messaging_enabled() ) {
 			return array();
 		}
 
-		$placement = is_checkout() ? 'payment' : ( is_cart() ? 'cart' : 'product' );
-		$product   = wc_get_product();
-		$amount    = ( is_a( $product, WC_Product::class ) ) ? wc_get_price_including_tax( $product ) : 0;
+		$location = $this->location();
+
+		switch ( $location ) {
+			case 'checkout':
+			case 'checkout-block':
+			case 'pay-now':
+				$placement = 'payment';
+				break;
+			case 'cart':
+			case 'cart-block':
+				$placement = 'cart';
+				break;
+			case 'product':
+				$placement = 'product';
+				break;
+			case 'shop':
+				$placement = 'product-list';
+				break;
+			case 'home':
+				$placement = 'home';
+				break;
+			default:
+				$placement = 'payment';
+				break;
+		}
+
+		$product = wc_get_product();
+		$amount  = ( is_a( $product, WC_Product::class ) ) ? wc_get_price_including_tax( $product ) : 0;
 
 		if ( is_checkout() || is_cart() ) {
 			$amount = WC()->cart->get_total( 'raw' );
 		}
 
 		$styling_per_location = $this->settings->has( 'pay_later_enable_styling_per_messaging_location' ) && $this->settings->get( 'pay_later_enable_styling_per_messaging_location' );
-		$location             = $styling_per_location ? $this->location() : 'general';
+		$location             = $styling_per_location ? $location : 'general';
 		$setting_name_prefix  = "pay_later_{$location}_message";
 
 		$layout        = $this->settings->has( "{$setting_name_prefix}_layout" ) ? $this->settings->get( "{$setting_name_prefix}_layout" ) : 'text';
