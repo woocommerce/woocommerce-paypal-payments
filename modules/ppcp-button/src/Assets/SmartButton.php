@@ -1236,7 +1236,6 @@ class SmartButton implements SmartButtonInterface {
 		 * Filter to add further components from the extensions.
 		 *
 		 * @internal Matches filter name in APM extension.
-		 * @since TODO
 		 *
 		 * @param array $components The array of components already registered.
 		 */
