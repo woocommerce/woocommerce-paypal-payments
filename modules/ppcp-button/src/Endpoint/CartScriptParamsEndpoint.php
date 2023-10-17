@@ -76,7 +76,7 @@ class CartScriptParamsEndpoint implements EndpointInterface {
 
 			// Shop settings.
 			$base_location     = wc_get_base_location();
-			$shop_country_code = $base_location['country'];
+			$shop_country_code = $base_location['country'] ?? '';
 			$currency_code     = get_woocommerce_currency();
 
 			wp_send_json_success(

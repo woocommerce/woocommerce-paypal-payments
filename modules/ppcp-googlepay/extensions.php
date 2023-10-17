@@ -13,6 +13,7 @@ use WooCommerce\PayPalCommerce\Googlepay\Helper\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DisplayManager;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 
 return array(
@@ -23,6 +24,9 @@ return array(
 		if ( ! $container->has( 'googlepay.eligible' ) || ! $container->get( 'googlepay.eligible' ) ) {
 			return $fields;
 		}
+
+		$is_available = $container->get( 'googlepay.available' );
+		$is_referral  = $container->get( 'googlepay.is_referral' );
 
 		$insert_after = function( array $array, string $key, array $new ): array {
 			$keys = array_keys( $array );
@@ -35,6 +39,66 @@ return array(
 		$display_manager = $container->get( 'wcgateway.display-manager' );
 		assert( $display_manager instanceof DisplayManager );
 
+		// Connection tab fields.
+		$fields = $insert_after(
+			$fields,
+			'ppcp_dcc_status',
+			array(
+				'googlepay_status' => array(
+					'title'        => __( 'Google Pay Payments', 'woocommerce-paypal-payments' ),
+					'type'         => 'ppcp-text',
+					'text'         => $container->get( 'googlepay.settings.connection.status-text' ),
+					'screens'      => array(
+						State::STATE_ONBOARDED,
+					),
+					'requirements' => array(),
+					'gateway'      => Settings::CONNECTION_TAB_ID,
+				),
+			)
+		);
+
+		if ( ! $is_available && $is_referral ) {
+			$connection_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway&ppcp-tab=ppcp-connection#field-credentials_feature_onboarding_heading' );
+			$connection_link = '<a href="' . $connection_url . '" style="pointer-events: auto">';
+			return $insert_after(
+				$fields,
+				'allow_card_button_gateway',
+				array(
+					'googlepay_button_enabled' => array(
+						'title'             => __( 'Google Pay Button', 'woocommerce-paypal-payments' ),
+						'type'              => 'checkbox',
+						'class'             => array( 'ppcp-grayed-out-text' ),
+						'input_class'       => array( 'ppcp-disabled-checkbox' ),
+						'label'             => __( 'Enable Google Pay button', 'woocommerce-paypal-payments' )
+							. '<p class="description">'
+							. sprintf(
+							// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+								__( 'Your PayPal account  %1$srequires additional permissions%2$s to enable Google Pay.', 'woocommerce-paypal-payments' ),
+								$connection_link,
+								'</a>'
+							)
+							. '</p>',
+						'default'           => 'yes',
+						'screens'           => array( State::STATE_ONBOARDED ),
+						'gateway'           => 'paypal',
+						'requirements'      => array(),
+						'custom_attributes' => array(
+							'data-ppcp-display' => wp_json_encode(
+								array(
+									$display_manager
+										->rule()
+										->condition_is_true( false )
+										->action_enable( 'googlepay_button_enabled' )
+										->to_array(),
+								)
+							),
+						),
+					),
+				)
+			);
+		}
+
+		// Standard Payments tab fields.
 		return $insert_after(
 			$fields,
 			'allow_card_button_gateway',

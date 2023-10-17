@@ -95,7 +95,7 @@ class OnboardingOptionsRenderer {
 				$checked = '';
 			}
 
-			return '<li><label><input type="checkbox" id="ppcp-onboarding-pui" ' . $checked . '> ' .
+			return '<li><label><input type="checkbox" id="ppcp-onboarding-pui" ' . $checked . ' data-onboarding-option="ppcp-onboarding-pui"> ' .
 				__( 'Onboard with Pay upon Invoice', 'woocommerce-paypal-payments' ) . '
 		</label></li>';
 		}

@@ -10,6 +10,10 @@ class BaseHandler {
         this.externalHandler = externalHandler;
     }
 
+    shippingAllowed() {
+        return true;
+    }
+
     transactionInfo() {
         return new Promise((resolve, reject) => {
 

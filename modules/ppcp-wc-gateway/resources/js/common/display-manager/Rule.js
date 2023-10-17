@@ -15,14 +15,14 @@ class Rule {
             const condition = ConditionFactory.make(conditionConfig, updateStatus);
             this.conditions[condition.key] = condition;
 
-            console.log('Condition', condition);
+            //console.log('Condition', condition);
         }
 
         for (const actionConfig of this.config.actions) {
             const action = ActionFactory.make(actionConfig);
             this.actions[action.key] = action;
 
-            console.log('Action', action);
+            //console.log('Action', action);
         }
     }
 

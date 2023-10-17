@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Onboarding;
 
+use WooCommerce\PayPalCommerce\Onboarding\Endpoint\UpdateSignupLinksEndpoint;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Onboarding\Assets\OnboardingAssets;
@@ -96,7 +97,7 @@ class OnboardingModule implements ModuleInterface {
 		);
 
 		add_action(
-			'wc_ajax_ppc-pui',
+			'wc_ajax_' . UpdateSignupLinksEndpoint::ENDPOINT,
 			static function () use ( $c ) {
 				$endpoint = $c->get( 'onboarding.endpoint.pui' );
 				$endpoint->handle_request();

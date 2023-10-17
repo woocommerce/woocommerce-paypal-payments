@@ -14,13 +14,13 @@ if (typeof window.PayPalCommerceGateway === 'undefined') {
     window.PayPalCommerceGateway = ppcpConfig;
 }
 
-console.log('ppcpData', ppcpData);
-console.log('ppcpConfig', ppcpConfig);
-console.log('buttonData', buttonData);
-console.log('buttonConfig', buttonConfig);
+//console.log('ppcpData', ppcpData);
+//console.log('ppcpConfig', ppcpConfig);
+//console.log('buttonData', buttonData);
+//console.log('buttonConfig', buttonConfig);
 
 const ApplePayComponent = () => {
-    console.log('ApplePayComponent render');
+    //console.log('ApplePayComponent render');
 
     const [bootstrapped, setBootstrapped] = useState(false);
     const [paypalLoaded, setPaypalLoaded] = useState(false);
