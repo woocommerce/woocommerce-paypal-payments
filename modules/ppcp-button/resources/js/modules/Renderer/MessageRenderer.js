@@ -28,15 +28,9 @@ class MessageRenderer {
             return;
         }
 
-        const newWrapper = document.createElement('div');
-        newWrapper.setAttribute('id', this.config.wrapper.replace('#', ''));
+        const wrapper = document.querySelector(this.config.wrapper);
         this.currentNumber++;
-        newWrapper.setAttribute('data-render-number', this.currentNumber);
-
-        const oldWrapper = document.querySelector(this.config.wrapper);
-        const sibling = oldWrapper.nextSibling;
-        oldWrapper.parentElement.removeChild(oldWrapper);
-        sibling.parentElement.insertBefore(newWrapper, sibling);
+        wrapper.setAttribute('data-render-number', this.currentNumber);
 
         widgetBuilder.registerMessages(this.config.wrapper, options);
         widgetBuilder.renderMessages(this.config.wrapper);

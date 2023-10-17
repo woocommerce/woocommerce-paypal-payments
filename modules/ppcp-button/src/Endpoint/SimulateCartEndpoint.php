@@ -151,6 +151,7 @@ class SimulateCartEndpoint extends AbstractCartEndpoint {
 
 	/**
 	 * Restores the real cart.
+	 * Currently, unsets the WC cart to prevent race conditions arising from it being persisted.
 	 *
 	 * @return void
 	 */
@@ -158,10 +159,17 @@ class SimulateCartEndpoint extends AbstractCartEndpoint {
 		// Remove from cart because some plugins reserve resources internally when adding to cart.
 		$this->remove_cart_items();
 
-		// Restore cart and unset cart clone.
-		if ( null !== $this->real_cart ) {
-			WC()->cart = $this->real_cart;
+		if ( apply_filters( 'woocommerce_paypal_payments_simulate_cart_prevent_updates', true ) ) {
+			// Removes shutdown actions to prevent persisting session, transients and save cookies.
+			remove_all_actions( 'shutdown' );
+			unset( WC()->cart );
+		} else {
+			// Restores cart, may lead to race conditions.
+			if ( null !== $this->real_cart ) {
+				WC()->cart = $this->real_cart;
+			}
 		}
+
 		unset( $this->cart );
 	}
 

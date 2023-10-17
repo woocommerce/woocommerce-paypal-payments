@@ -4,7 +4,6 @@ import Renderer from '../../../ppcp-button/resources/js/modules/Renderer/Rendere
 import MessageRenderer from "../../../ppcp-button/resources/js/modules/Renderer/MessageRenderer";
 import {setVisibleByClass, isVisible} from "../../../ppcp-button/resources/js/modules/Helper/Hiding";
 import widgetBuilder from "../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder";
-import SubElementsHandler from "./SettingsHandler/SubElementsHandler";
 
 document.addEventListener(
     'DOMContentLoaded',
@@ -173,11 +172,16 @@ document.addEventListener(
 
         function createMessagesPreview(settingsCallback) {
             const render = (settings) => {
-                const wrapper = document.querySelector(settings.wrapper);
+                let wrapper = document.querySelector(settings.wrapper);
                 if (!wrapper) {
                     return;
                 }
-                wrapper.innerHTML = '';
+                // looks like .innerHTML = '' is not enough, PayPal somehow renders with old style
+                const parent = wrapper.parentElement;
+                parent.removeChild(wrapper);
+                wrapper = document.createElement('div');
+                wrapper.setAttribute('id', settings.wrapper.replace('#', ''));
+                parent.appendChild(wrapper);
 
                 const messageRenderer = new MessageRenderer(settings);
 
@@ -270,7 +274,7 @@ document.addEventListener(
             }, 1000));
 
             loadPaypalScript(oldScriptSettings, () => {
-                const payLaterMessagingLocations = ['product', 'cart', 'checkout', 'general'];
+                const payLaterMessagingLocations = ['product', 'cart', 'checkout', 'shop', 'home', 'general'];
                 const paypalButtonLocations = ['product', 'cart', 'checkout', 'mini-cart', 'general'];
 
                 paypalButtonLocations.forEach((location) => {
@@ -308,16 +312,5 @@ document.addEventListener(
                 createButtonPreview(() => getButtonDefaultSettings('#ppcpPayLaterButtonPreview'));
             });
         }
-
-        // Generic behaviours, can be moved to common.js once it's on trunk branch.
-        jQuery( '*[data-ppcp-handlers]' ).each( (index, el) => {
-            const handlers = jQuery(el).data('ppcpHandlers');
-            for (const handlerConfig of handlers) {
-                new {
-                    SubElementsHandler: SubElementsHandler
-                }[handlerConfig.handler](el, handlerConfig.options)
-            }
-        });
-
     }
 );

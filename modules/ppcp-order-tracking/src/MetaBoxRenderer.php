@@ -100,7 +100,7 @@ class MetaBoxRenderer {
 		?>
 		<div class="ppcp-tracking-columns-wrapper">
 			<div class="ppcp-tracking-column">
-				<h3><?php echo esc_html__( 'Add New Shipment Tracking to PayPal order', 'woocommerce-paypal-payments' ); ?></h3>
+				<h3><?php echo esc_html__( 'Share Package Tracking Data with PayPal', 'woocommerce-paypal-payments' ); ?></h3>
 				<p>
 					<label for="ppcp-tracking-transaction_id"><?php echo esc_html__( 'Transaction ID', 'woocommerce-paypal-payments' ); ?></label>
 					<input type="text" disabled class="ppcp-tracking-transaction_id disabled" id="ppcp-tracking-transaction_id" name="ppcp-tracking[transaction_id]" value="<?php echo esc_attr( $transaction_id ); ?>" />
@@ -155,17 +155,25 @@ class MetaBoxRenderer {
 					<input type="text" class="ppcp-tracking-carrier_name_other" id="ppcp-tracking-carrier_name_other" name="ppcp-tracking[carrier_name_other]" />
 				</p>
 				<input type="hidden" class="ppcp-tracking-order_id" name="ppcp-tracking[order_id]" value="<?php echo (int) $wc_order->get_id(); ?>"/>
-				<p><button type="button" class="button submit_tracking_info"><?php echo esc_html__( 'Add Shipment', 'woocommerce-paypal-payments' ); ?></button></p>
+				<p><button type="button" class="button submit_tracking_info"><?php echo esc_html__( 'Add Package Tracking', 'woocommerce-paypal-payments' ); ?></button></p>
 			</div>
 			<div class="ppcp-tracking-column shipments">
-				<h3><?php echo esc_html__( 'Shipments', 'woocommerce-paypal-payments' ); ?></h3>
+				<h3><?php echo esc_html__( 'PayPal Package Tracking Status', 'woocommerce-paypal-payments' ); ?></h3>
 				<?php
 				foreach ( $shipments as $shipment ) {
 					$shipment->render( $this->allowed_statuses );
 				}
 				?>
 				<?php if ( empty( $shipments ) ) : ?>
-					<p class="ppcp-tracking-no-shipments"><?php echo esc_html__( 'No PayPal Shipment Tracking added to this order yet. Add new Shipment Tracking or reload the page to refresh', 'woocommerce-paypal-payments' ); ?></p>
+					<p class="ppcp-tracking-no-shipments">
+						<?php echo esc_html__( 'Package Tracking data has not been shared with PayPal on this order.', 'woocommerce-paypal-payments' ); ?><br>
+						<?php echo esc_html__( 'Add tracking details on this order to qualify for PayPal Seller Protection, faster holds release and automated dispute resolution.', 'woocommerce-paypal-payments' ); ?>
+						<p class="ppcp-tracking-link-to-docs">
+							<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#package-tracking" target="_blank">
+								<?php echo esc_html__( 'Discover full benefits of PayPal Package Tracking here.', 'woocommerce-paypal-payments' ); ?>
+							</a>
+						</p>
+					</p>
 				<?php endif; ?>
 			</div>
 			<div class="blockUI blockOverlay ppcp-tracking-loader"></div>

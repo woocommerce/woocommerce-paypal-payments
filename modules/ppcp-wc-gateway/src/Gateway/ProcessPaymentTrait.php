@@ -34,32 +34,6 @@ trait ProcessPaymentTrait {
 	}
 
 	/**
-	 * Scheduled the vaulted payment check.
-	 *
-	 * @param int $wc_order_id The WC order ID.
-	 * @param int $customer_id The customer ID.
-	 */
-	protected function schedule_saved_payment_check( int $wc_order_id, int $customer_id ): void {
-		$timestamp = 3 * MINUTE_IN_SECONDS;
-		if (
-			$this->config->has( 'subscription_behavior_when_vault_fails' )
-			&& $this->config->get( 'subscription_behavior_when_vault_fails' ) === 'capture_auth'
-		) {
-			$timestamp = 0;
-		}
-
-		as_schedule_single_action(
-			time() + $timestamp,
-			'woocommerce_paypal_payments_check_saved_payment',
-			array(
-				'order_id'    => $wc_order_id,
-				'customer_id' => $customer_id,
-				'intent'      => $this->config->has( 'intent' ) ? $this->config->get( 'intent' ) : '',
-			)
-		);
-	}
-
-	/**
 	 * Handles the payment failure.
 	 *
 	 * @param WC_Order|null $wc_order The order.
@@ -77,6 +51,7 @@ trait ProcessPaymentTrait {
 		}
 
 		$this->session_handler->destroy_session_data();
+		WC()->session->set( 'ppcp_subscription_id', '' );
 
 		wc_add_notice( $error->getMessage(), 'error' );
 
@@ -100,6 +75,7 @@ trait ProcessPaymentTrait {
 		}
 
 		$this->session_handler->destroy_session_data();
+		WC()->session->set( 'ppcp_subscription_id', '' );
 
 		return array(
 			'result'   => 'success',

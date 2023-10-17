@@ -1,7 +1,7 @@
 document.addEventListener(
     'DOMContentLoaded',
     () => {
-        const payLaterMessagingSelectableLocations = ['product', 'cart', 'checkout'];
+        const payLaterMessagingSelectableLocations = ['product', 'cart', 'checkout', 'shop', 'home'];
         const payLaterMessagingAllLocations = payLaterMessagingSelectableLocations.concat('general');
         const payLaterMessagingLocationsSelector = '#field-pay_later_messaging_locations';
         const payLaterMessagingLocationsSelect = payLaterMessagingLocationsSelector + ' select';
@@ -9,7 +9,7 @@ document.addEventListener(
 
         const smartButtonLocationsSelector = '#field-smart_button_locations';
         const smartButtonLocationsSelect = smartButtonLocationsSelector + ' select';
-        const smartButtonSelectableLocations = payLaterMessagingSelectableLocations.concat('mini-cart');
+        const smartButtonSelectableLocations = ['product', 'cart', 'checkout', 'mini-cart'];
 
         const groupToggle = (selector, group) => {
             const toggleElement = document.querySelector(selector);

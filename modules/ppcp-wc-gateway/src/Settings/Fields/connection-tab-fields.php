@@ -17,6 +17,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\State;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\DisplayManager;
 
 return function ( ContainerInterface $container, array $fields ): array {
 
@@ -38,6 +39,9 @@ return function ( ContainerInterface $container, array $fields ): array {
 	assert( $onboarding_options_renderer instanceof OnboardingOptionsRenderer );
 
 	$module_url = $container->get( 'wcgateway.url' );
+
+	$display_manager = $container->get( 'wcgateway.display-manager' );
+	assert( $display_manager instanceof DisplayManager );
 
 	$connection_fields = array(
 		'ppcp_onboarading_header'                       => array(
@@ -238,7 +242,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 		'merchant_email_production'                     => array(
 			'title'        => __( 'Live Email address', 'woocommerce-paypal-payments' ),
 			'classes'      => array( State::STATE_ONBOARDED === $state->production_state() ? 'onboarded' : '', 'ppcp-always-shown-element' ),
-			'type'         => 'text',
+			'type'         => 'email',
 			'required'     => true,
 			'desc_tip'     => true,
 			'description'  => __( 'The email address of your PayPal account.', 'woocommerce-paypal-payments' ),
@@ -304,7 +308,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 		'merchant_email_sandbox'                        => array(
 			'title'        => __( 'Sandbox Email address', 'woocommerce-paypal-payments' ),
 			'classes'      => array( State::STATE_ONBOARDED === $state->sandbox_state() ? 'onboarded' : '', 'ppcp-always-shown-element' ),
-			'type'         => 'text',
+			'type'         => 'email',
 			'required'     => true,
 			'desc_tip'     => true,
 			'description'  => __( 'The email address of your PayPal account.', 'woocommerce-paypal-payments' ),
@@ -504,15 +508,13 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'requirements'      => array(),
 			'gateway'           => Settings::CONNECTION_TAB_ID,
 			'custom_attributes' => array(
-				'data-ppcp-handlers' => wp_json_encode(
+				'data-ppcp-display' => wp_json_encode(
 					array(
-						array(
-							'handler' => 'SubElementsHandler',
-							'options' => array(
-								'values'   => array( PurchaseUnitSanitizer::MODE_EXTRA_LINE ),
-								'elements' => array( '#field-subtotal_mismatch_line_name' ),
-							),
-						),
+						$display_manager
+							->rule()
+							->condition_element( 'subtotal_mismatch_behavior', PurchaseUnitSanitizer::MODE_EXTRA_LINE )
+							->action_visible( 'subtotal_mismatch_line_name' )
+							->to_array(),
 					)
 				),
 			),

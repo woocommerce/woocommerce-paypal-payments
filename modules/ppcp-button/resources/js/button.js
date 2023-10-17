@@ -200,7 +200,6 @@ const bootstrap = () => {
         const payNowBootstrap = new PayNowBootstrap(
             PayPalCommerceGateway,
             renderer,
-            messageRenderer,
             spinner,
             errorHandler,
         );

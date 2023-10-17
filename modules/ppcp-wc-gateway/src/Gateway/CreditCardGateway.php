@@ -180,10 +180,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 				'products',
 			);
 
-			if (
-				( $this->config->has( 'vault_enabled_dcc' ) && $this->config->get( 'vault_enabled_dcc' ) )
-				|| ( $this->config->has( 'subscriptions_mode' ) && $this->config->get( 'subscriptions_mode' ) === 'subscriptions_api' )
-			) {
+			if ( $this->config->has( 'vault_enabled_dcc' ) && $this->config->get( 'vault_enabled_dcc' ) ) {
 				array_push(
 					$this->supports,
 					'subscriptions',
@@ -399,9 +396,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 				);
 			}
 
-			if ( $this->subscription_helper->has_subscription( $order_id ) ) {
-				$this->schedule_saved_payment_check( $order_id, $wc_order->get_customer_id() );
-			}
+			do_action( 'woocommerce_paypal_payments_before_handle_payment_success', $wc_order );
 
 			return $this->handle_payment_success( $wc_order );
 		} catch ( PayPalApiException $error ) {

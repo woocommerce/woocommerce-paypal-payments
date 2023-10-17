@@ -17,7 +17,7 @@ class SingleProductBootstap {
         this.formSelector = 'form.cart';
 
         // Prevent simulate cart being called too many times in a burst.
-        this.simulateCartThrottled = throttle(this.simulateCart, 5000);
+        this.simulateCartThrottled = throttle(this.simulateCart, this.gateway.simulate_cart.throttling || 5000);
 
         this.renderer.onButtonsInit(this.gateway.button.wrapper, () => {
             this.handleChange();
@@ -217,6 +217,10 @@ class SingleProductBootstap {
     }
 
     simulateCart() {
+        if (!this.gateway.simulate_cart.enabled) {
+            return;
+        }
+
         const actionHandler = new SingleProductActionHandler(
             null,
             null,

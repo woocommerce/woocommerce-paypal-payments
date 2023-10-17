@@ -214,7 +214,7 @@ class Item {
 	 * @return string
 	 */
 	public function image_url():string {
-		return $this->image_url;
+		return $this->validate_image_url() ? $this->image_url : '';
 	}
 
 	/**
@@ -268,5 +268,15 @@ class Item {
 		}
 
 		return $item;
+	}
+
+	/**
+	 * Validates the image url for PayPal request.
+	 *
+	 * @return bool true if valid, otherwise false.
+	 */
+	protected function validate_image_url(): bool {
+		$pattern = '/^(https:)([\/|\.|\w|\s|-])*\.(?:jpg|gif|png|jpeg|JPG|GIF|PNG|JPEG)$/';
+		return (bool) preg_match( $pattern, $this->image_url );
 	}
 }

@@ -13,6 +13,7 @@ namespace WooCommerce\PayPalCommerce\Subscription\Helper;
 
 use WC_Product;
 use WC_Product_Subscription_Variation;
+use WC_Subscriptions;
 use WC_Subscriptions_Product;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
@@ -120,7 +121,7 @@ class SubscriptionHelper {
 	 */
 	public function plugin_is_active(): bool {
 
-		return class_exists( \WC_Subscriptions::class );
+		return class_exists( WC_Subscriptions::class ) && class_exists( WC_Subscriptions_Product::class );
 	}
 
 	/**

@@ -12,6 +12,27 @@ namespace WooCommerce\PayPalCommerce\Button\Helper;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 
 trait ContextTrait {
+	/**
+	 * Checks WC is_checkout() + WC checkout ajax requests.
+	 */
+	private function is_checkout(): bool {
+		if ( is_checkout() ) {
+			return true;
+		}
+
+		/**
+		 * The filter returning whether to detect WC checkout ajax requests.
+		 */
+		if ( apply_filters( 'ppcp_check_ajax_checkout', true ) ) {
+			// phpcs:ignore WordPress.Security
+			$wc_ajax = $_GET['wc-ajax'] ?? '';
+			if ( in_array( $wc_ajax, array( 'update_order_review' ), true ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
 
 	/**
 	 * The current context.
@@ -23,7 +44,7 @@ trait ContextTrait {
 
 			// Do this check here instead of reordering outside conditions.
 			// In order to have more control over the context.
-			if ( ( is_checkout() ) && ! $this->is_paypal_continuation() ) {
+			if ( $this->is_checkout() && ! $this->is_paypal_continuation() ) {
 				return 'checkout';
 			}
 
@@ -47,11 +68,33 @@ trait ContextTrait {
 			return 'checkout-block';
 		}
 
-		if ( ( is_checkout() ) && ! $this->is_paypal_continuation() ) {
+		if ( $this->is_checkout() && ! $this->is_paypal_continuation() ) {
 			return 'checkout';
 		}
 
 		return 'mini-cart';
+	}
+
+	/**
+	 * The current location.
+	 *
+	 * @return string
+	 */
+	protected function location(): string {
+		$context = $this->context();
+		if ( $context !== 'mini-cart' ) {
+			return $context;
+		}
+
+		if ( is_shop() ) {
+			return 'shop';
+		}
+
+		if ( is_front_page() ) {
+			return 'home';
+		}
+
+		return '';
 	}
 
 	/**
