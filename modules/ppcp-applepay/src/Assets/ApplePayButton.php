@@ -422,7 +422,7 @@ class ApplePayButton implements ButtonInterface {
 		}
 		$applepay_request_data_object->order_data( $context );
 		$this->update_posted_data( $applepay_request_data_object );
-		if ( $context == 'product' ) {
+		if ( $context === 'product' ) {
 			$cart_item_key = $this->prepare_cart( $applepay_request_data_object );
 			$cart          = WC()->cart;
 			$address       = $applepay_request_data_object->shipping_address();
