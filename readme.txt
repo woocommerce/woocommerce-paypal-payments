@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, checkout, cart, pay later, apple
 Requires at least: 5.3
 Tested up to: 6.3
 Requires PHP: 7.2
-Stable tag: 2.3.1
+Stable tag: 2.4.0
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -179,6 +179,20 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 
 == Changelog ==
+
+* Fix - Mini-Cart Bug cause of wrong DOM-Structure in v2.3.1 #1735
+* Fix - ACDC disappearing after plugin updates #1751
+* Fix - Subscription module hooks #1748
+* Fix - Ensure PayPal Subscriptions API products description is 1-127 characters #1738
+* Fix - Add validation on the Plan Name field to not accept a blank value #1754
+* Enhancement - Improve Pay Later messages and add Shop, Home locations #1770
+* Enhancement - Use api-m PayPal API URLs #1740
+* Enhancement - Google Pay Settings improvements #1719
+* Enhancement - Apple Pay transaction improvements #1767
+* Enhancement - Change default ACDC title #1750
+* Enhancement - Cart simulation improvements #1753
+* Enhancement - Billing schedule fields not greyed out when PayPal Subscriptions product is connected #1755
+* Enhancement - Check validation errors when submitting in block #1528
 
 = 2.3.1 - 2023-09-26 =
 * Fix - Fatal error when saving product while WooCommerce Subscriptions plugin is not active #1731
