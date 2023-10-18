@@ -76,7 +76,7 @@ return array(
 		$refund_processor    = $container->get( 'wcgateway.processor.refunds' );
 		$state               = $container->get( 'onboarding.state' );
 		$transaction_url_provider = $container->get( 'wcgateway.transaction-url-provider' );
-		$subscription_helper = $container->get( 'subscription.helper' );
+		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		$page_id             = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
 		$payment_token_repository = $container->get( 'vaulting.repository.payment-token' );
 		$environment         = $container->get( 'onboarding.environment' );
@@ -109,7 +109,7 @@ return array(
 		$refund_processor    = $container->get( 'wcgateway.processor.refunds' );
 		$state               = $container->get( 'onboarding.state' );
 		$transaction_url_provider = $container->get( 'wcgateway.transaction-url-provider' );
-		$subscription_helper = $container->get( 'subscription.helper' );
+		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		$payments_endpoint = $container->get( 'api.endpoint.payments' );
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
 		$vaulted_credit_card_handler = $container->get( 'vaulting.credit-card-handler' );
@@ -137,7 +137,7 @@ return array(
 			$container->get( 'wcgateway.processor.refunds' ),
 			$container->get( 'onboarding.state' ),
 			$container->get( 'wcgateway.transaction-url-provider' ),
-			$container->get( 'subscription.helper' ),
+			$container->get( 'wc-subscriptions.helper' ),
 			$container->get( 'wcgateway.settings.allow_card_button_gateway.default' ),
 			$container->get( 'onboarding.environment' ),
 			$container->get( 'vaulting.repository.payment-token' ),
@@ -148,7 +148,7 @@ return array(
 		$session_handler = $container->get( 'session.handler' );
 		$settings       = $container->get( 'wcgateway.settings' );
 		$settings_status = $container->get( 'wcgateway.settings.status' );
-		$subscription_helper = $container->get( 'subscription.helper' );
+		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		return new DisableGateways( $session_handler, $settings, $settings_status, $subscription_helper );
 	},
 
@@ -331,7 +331,7 @@ return array(
 		$settings                      = $container->get( 'wcgateway.settings' );
 		$environment                   = $container->get( 'onboarding.environment' );
 		$logger                        = $container->get( 'woocommerce.logger.woocommerce' );
-		$subscription_helper = $container->get( 'subscription.helper' );
+		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		$order_helper = $container->get( 'api.order-helper' );
 		return new OrderProcessor(
 			$session_handler,
@@ -359,7 +359,7 @@ return array(
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
 		$notice              = $container->get( 'wcgateway.notice.authorize-order-action' );
 		$settings            = $container->get( 'wcgateway.settings' );
-		$subscription_helper = $container->get( 'subscription.helper' );
+		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		return new AuthorizedPaymentsProcessor(
 			$order_endpoint,
 			$payments_endpoint,
@@ -439,7 +439,7 @@ return array(
 		$onboarding_options_renderer = $container->get( 'onboarding.render-options' );
 		assert( $onboarding_options_renderer instanceof OnboardingOptionsRenderer );
 
-		$subscription_helper = $container->get( 'subscription.helper' );
+		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		assert( $subscription_helper instanceof SubscriptionHelper );
 
 		$fields              = array(

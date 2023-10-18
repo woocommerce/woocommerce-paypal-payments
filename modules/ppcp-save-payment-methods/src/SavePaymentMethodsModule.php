@@ -14,6 +14,9 @@ use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
+/**
+ * Class SavePaymentMethodsModule
+ */
 class SavePaymentMethodsModule implements ModuleInterface {
 
 	/**
@@ -26,5 +29,8 @@ class SavePaymentMethodsModule implements ModuleInterface {
 		);
 	}
 
-	public function run(ContainerInterface $c): void {}
+	/**
+	 * {@inheritDoc}
+	 */
+	public function run( ContainerInterface $c ): void {}
 }

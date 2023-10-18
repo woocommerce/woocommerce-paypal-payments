@@ -204,7 +204,7 @@ return array(
 
 		$intent                         = $settings->has( 'intent' ) && strtoupper( (string) $settings->get( 'intent' ) ) === 'AUTHORIZE' ? 'AUTHORIZE' : 'CAPTURE';
 		$application_context_repository = $container->get( 'api.repository.application-context' );
-		$subscription_helper = $container->get( 'subscription.helper' );
+		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		return new OrderEndpoint(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),

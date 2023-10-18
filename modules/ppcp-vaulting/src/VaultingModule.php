@@ -51,7 +51,7 @@ class VaultingModule implements ModuleInterface {
 
 		$listener->listen();
 
-		$subscription_helper = $container->get( 'subscription.helper' );
+		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		add_action(
 			'woocommerce_created_customer',
 			function( int $customer_id ) use ( $subscription_helper ) {

@@ -83,7 +83,7 @@ return array(
 		$request_data     = $container->get( 'button.request-data' );
 		$client_id           = $container->get( 'button.client_id' );
 		$dcc_applies         = $container->get( 'api.helpers.dccapplies' );
-		$subscription_helper = $container->get( 'subscription.helper' );
+		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		$messages_apply      = $container->get( 'button.helper.messages-apply' );
 		$environment         = $container->get( 'onboarding.environment' );
 		$payment_token_repository = $container->get( 'vaulting.repository.payment-token' );

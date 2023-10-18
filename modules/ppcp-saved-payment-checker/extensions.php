@@ -15,7 +15,7 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
 	'wcgateway.settings.fields' => function ( ContainerInterface $container, array $fields ): array {
-		$subscription_helper = $container->get( 'subscription.helper' );
+		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		assert( $subscription_helper instanceof SubscriptionHelper );
 
 		$insert_after = function( array $array, string $key, array $new ): array {

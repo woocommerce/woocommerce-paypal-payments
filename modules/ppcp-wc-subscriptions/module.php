@@ -12,5 +12,5 @@ namespace WooCommerce\PayPalCommerce\WcSubscriptions;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 
 return static function (): ModuleInterface {
-	return new SubscriptionModule();
+	return new WcSubscriptionsModule();
 };

@@ -27,6 +27,7 @@ return function ( string $root_dir ): iterable {
 		( require "$modules_dir/ppcp-order-tracking/module.php" )(),
 		( require "$modules_dir/ppcp-uninstall/module.php" )(),
 		( require "$modules_dir/ppcp-blocks/module.php" )(),
+		( require "$modules_dir/ppcp-paypal-subscriptions/module.php" )(),
 	);
 	if ( apply_filters(
 		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores

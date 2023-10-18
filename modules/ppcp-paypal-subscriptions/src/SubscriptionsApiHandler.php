@@ -7,7 +7,7 @@
 
 declare(strict_types=1);
 
-namespace WooCommerce\PayPalCommerce\WcSubscriptions;
+namespace WooCommerce\PayPalCommerce\PayPalSubscriptions;
 
 use Psr\Log\LoggerInterface;
 use WC_Product;
