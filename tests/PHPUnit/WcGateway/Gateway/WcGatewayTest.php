@@ -10,7 +10,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;

@@ -20,7 +20,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
-use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\Vaulting\VaultedCreditCardHandler;

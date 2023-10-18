@@ -26,7 +26,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\ErrorResponse;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
 use Mockery;
 use Psr\Log\LoggerInterface;
-use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\FraudNet\FraudNet;
 use function Brain\Monkey\Functions\expect;

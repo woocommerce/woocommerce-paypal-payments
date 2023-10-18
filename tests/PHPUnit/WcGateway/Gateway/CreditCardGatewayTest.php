@@ -10,7 +10,7 @@ use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\Vaulting\VaultedCreditCardHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;

@@ -4,7 +4,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Assets;
 
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
-use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\TestCase;
 use function Brain\Monkey\Functions\when;
 use Mockery;
