@@ -71,14 +71,14 @@ class ApplePayDataObjectHttp {
 	 *
 	 * @var string[]
 	 */
-	protected $billing_address = array();
+	protected $billing_contact = array();
 
 	/**
 	 * The shipping address.
 	 *
 	 * @var string[]
 	 */
-	protected $shipping_address = array();
+	protected $shipping_contact = array();
 
 	/**
 	 * The list of errors.
@@ -217,17 +217,11 @@ class ApplePayDataObjectHttp {
 	 * @param string $caller_page The caller page.
 	 */
 	public function order_data( string $caller_page ): void {
-		$nonce = filter_input( INPUT_POST, 'woocommerce-process-checkout-nonce', FILTER_SANITIZE_SPECIAL_CHARS );
-		if ( ! $nonce ) {
+
+		if ( ! $this->is_nonce_valid() ) {
 			return;
 		}
-		$is_nonce_valid = wp_verify_nonce(
-			$nonce,
-			'woocommerce-process_checkout'
-		);
-		if ( ! $is_nonce_valid ) {
-			return;
-		}
+		//phpcs:disable WordPress.Security.NonceVerification
 		$data = filter_var_array( $_POST, FILTER_SANITIZE_SPECIAL_CHARS );
 		if ( ! $data ) {
 			return;
@@ -238,6 +232,7 @@ class ApplePayDataObjectHttp {
 			PropertiesDictionary::CREATE_ORDER_SINGLE_PROD_REQUIRED_FIELDS,
 			PropertiesDictionary::CREATE_ORDER_CART_REQUIRED_FIELDS
 		);
+
 		if ( ! $result ) {
 			return;
 		}
@@ -254,12 +249,12 @@ class ApplePayDataObjectHttp {
 		}
 
 		$filtered_shipping_contact = $data[ PropertiesDictionary::SHIPPING_CONTACT ];
-		$this->shipping_address    = $this->complete_address(
+		$this->shipping_contact    = $this->complete_address(
 			$filtered_shipping_contact,
 			PropertiesDictionary::SHIPPING_CONTACT_INVALID
 		);
 		$filtered_billing_contact  = $data[ PropertiesDictionary::BILLING_CONTACT ];
-		$this->billing_address     = $this->complete_address(
+		$this->billing_contact     = $this->complete_address(
 			$filtered_billing_contact,
 			PropertiesDictionary::BILLING_CONTACT_INVALID
 		);
@@ -310,6 +305,7 @@ class ApplePayDataObjectHttp {
 			}
 			$this->$key = $value;
 		}
+
 	}
 
 	/**
@@ -436,7 +432,7 @@ class ApplePayDataObjectHttp {
 		$required_fields = $required_product_fields;
 		if (
 			isset( $data[ PropertiesDictionary::CALLER_PAGE ] )
-			&& $data[ PropertiesDictionary::CALLER_PAGE ] === 'cart'
+			&& $data[ PropertiesDictionary::CALLER_PAGE ] !== 'product'
 		) {
 			$required_fields = $required_cart_fields;
 		}
@@ -490,7 +486,7 @@ class ApplePayDataObjectHttp {
 	 * @return string[]
 	 */
 	public function billing_address(): array {
-		return $this->billing_address;
+		return $this->billing_contact;
 	}
 
 	/**
@@ -499,7 +495,7 @@ class ApplePayDataObjectHttp {
 	 * @return string[]
 	 */
 	public function shipping_address(): array {
-		return $this->shipping_address;
+		return $this->shipping_contact;
 	}
 
 	/**
@@ -605,6 +601,22 @@ class ApplePayDataObjectHttp {
 				PropertiesDictionary::PRODUCT_ID         => FILTER_SANITIZE_NUMBER_INT,
 				PropertiesDictionary::PRODUCT_QUANTITY   => FILTER_SANITIZE_NUMBER_INT,
 			)
+		);
+	}
+
+	/**
+	 * Returns if the nonce is valid.
+	 *
+	 * @return bool
+	 */
+	public function is_nonce_valid():bool {
+		$nonce = filter_input( INPUT_POST, 'woocommerce-process-checkout-nonce', FILTER_SANITIZE_SPECIAL_CHARS );
+		if ( ! $nonce ) {
+			return false;
+		}
+		return (bool) wp_verify_nonce(
+			$nonce,
+			'woocommerce-process_checkout'
 		);
 	}
 }

@@ -248,14 +248,6 @@ class ApplePayButton implements ButtonInterface {
 			array( $this, 'create_wc_order' )
 		);
 		add_action(
-			'wp_ajax_' . PropertiesDictionary::CREATE_ORDER_CART,
-			array( $this, 'create_wc_order_from_cart' )
-		);
-		add_action(
-			'wp_ajax_nopriv_' . PropertiesDictionary::CREATE_ORDER_CART,
-			array( $this, 'create_wc_order_from_cart' )
-		);
-		add_action(
 			'wp_ajax_' . PropertiesDictionary::UPDATE_SHIPPING_CONTACT,
 			array( $this, 'update_shipping_contact' )
 		);
@@ -415,17 +407,9 @@ class ApplePayButton implements ButtonInterface {
 	 */
 	public function create_wc_order(): void {
 		$applepay_request_data_object = $this->applepay_data_object_http();
-		$applepay_request_data_object->order_data( 'productDetail' );
-		$this->update_posted_data( $applepay_request_data_object );
-		$cart_item_key = $this->prepare_cart( $applepay_request_data_object );
-		$cart          = WC()->cart;
-		$address       = $applepay_request_data_object->shipping_address();
-		$this->calculate_totals_single_product(
-			$cart,
-			$address,
-			$applepay_request_data_object->shipping_method()
-		);
-		if ( ! $cart_item_key ) {
+		//phpcs:disable WordPress.Security.NonceVerification
+		$context = wc_clean( wp_unslash( $_POST['caller_page'] ?? '' ) );
+		if ( ! is_string( $context ) ) {
 			$this->response_templates->response_with_data_errors(
 				array(
 					array(
@@ -436,27 +420,42 @@ class ApplePayButton implements ButtonInterface {
 			);
 			return;
 		}
-		$this->add_addresses_to_order( $applepay_request_data_object );
-		add_filter(
-			'woocommerce_payment_successful_result',
-			function ( array $result ) use ( $cart, $cart_item_key ) : array {
-				if ( ! is_string( $cart_item_key ) ) {
+		$applepay_request_data_object->order_data( $context );
+		$this->update_posted_data( $applepay_request_data_object );
+		if ( $context == 'product' ) {
+			$cart_item_key = $this->prepare_cart( $applepay_request_data_object );
+			$cart          = WC()->cart;
+			$address       = $applepay_request_data_object->shipping_address();
+			$this->calculate_totals_single_product(
+				$cart,
+				$address,
+				$applepay_request_data_object->shipping_method()
+			);
+			if ( ! $cart_item_key ) {
+				$this->response_templates->response_with_data_errors(
+					array(
+						array(
+							'errorCode' => 'unableToProcess',
+							'message'   => 'Unable to process the order',
+						),
+					)
+				);
+				return;
+			}
+			add_filter(
+				'woocommerce_payment_successful_result',
+				function ( array $result ) use ( $cart, $cart_item_key ) : array {
+					if ( ! is_string( $cart_item_key ) ) {
+						return $result;
+					}
+					$this->clear_current_cart( $cart, $cart_item_key );
+					$this->reload_cart( $cart );
 					return $result;
 				}
-				$this->clear_current_cart( $cart, $cart_item_key );
-				$this->reload_cart( $cart );
-				return $result;
-			}
-		);
+			);
+		}
+		$this->add_addresses_to_order( $applepay_request_data_object );
 		WC()->checkout()->process_checkout();
-	}
-
-	/**
-	 * Method to create a WC order from the data received from the ApplePay JS
-	 * On error returns an array of errors to be handled by the script
-	 * On success returns the new order data
-	 */
-	public function create_wc_order_from_cart(): void {
 	}
 
 
@@ -670,10 +669,10 @@ class ApplePayButton implements ButtonInterface {
 		$packages[0]['contents']                 = WC()->cart->cart_contents;
 		$packages[0]['contents_cost']            = $total;
 		$packages[0]['applied_coupons']          = WC()->session->applied_coupon;
-		$packages[0]['destination']['country']   = $customer_address['country'];
+		$packages[0]['destination']['country']   = $customer_address['country'] ?? '';
 		$packages[0]['destination']['state']     = '';
-		$packages[0]['destination']['postcode']  = $customer_address['postcode'];
-		$packages[0]['destination']['city']      = $customer_address['city'];
+		$packages[0]['destination']['postcode']  = $customer_address['postcode'] ?? '';
+		$packages[0]['destination']['city']      = $customer_address['city'] ?? '';
 		$packages[0]['destination']['address']   = '';
 		$packages[0]['destination']['address_2'] = '';
 
@@ -1030,6 +1029,12 @@ class ApplePayButton implements ButtonInterface {
 			'wc-ppcp-applepay',
 			'wc_ppcp_applepay',
 			$this->script_data()
+		);
+		add_action(
+			'wp_enqueue_scripts',
+			function () {
+				wp_enqueue_script( 'wc-ppcp-applepay' );
+			}
 		);
 	}
 
