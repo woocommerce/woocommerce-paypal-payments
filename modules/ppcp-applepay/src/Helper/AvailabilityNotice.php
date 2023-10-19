@@ -124,7 +124,17 @@ class AvailabilityNotice {
 			$this->add_server_not_supported_notice();
 		}
 
-		if ( ! $this->button->is_enabled() ) {
+		$button_enabled = $this->button->is_enabled();
+
+		// We do this check on $_POST because this is called before settings are saved.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		if ( isset( $_POST['ppcp'] ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing
+			$post_data      = wc_clean( (array) wp_unslash( $_POST['ppcp'] ) );
+			$button_enabled = wc_string_to_bool( $post_data['applepay_button_enabled'] ?? false );
+		}
+
+		if ( ! $button_enabled ) {
 			return;
 		}
 
