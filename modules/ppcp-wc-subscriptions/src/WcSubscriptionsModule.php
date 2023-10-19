@@ -48,6 +48,11 @@ class WcSubscriptionsModule implements ModuleInterface {
 	public function run( ContainerInterface $c ): void {
 		add_action(
 			'woocommerce_scheduled_subscription_payment_' . PayPalGateway::ID,
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
 			function ( $amount, $order ) use ( $c ) {
 				$this->renew( $order, $c );
 			},
@@ -57,6 +62,11 @@ class WcSubscriptionsModule implements ModuleInterface {
 
 		add_action(
 			'woocommerce_scheduled_subscription_payment_' . CreditCardGateway::ID,
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
 			function ( $amount, $order ) use ( $c ) {
 				$this->renew( $order, $c );
 			},
@@ -66,6 +76,11 @@ class WcSubscriptionsModule implements ModuleInterface {
 
 		add_action(
 			'woocommerce_subscription_payment_complete',
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
 			function ( $subscription ) use ( $c ) {
 				$paypal_subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
 				if ( $paypal_subscription_id ) {
@@ -94,6 +109,11 @@ class WcSubscriptionsModule implements ModuleInterface {
 
 		add_filter(
 			'woocommerce_gateway_description',
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
 			function ( $description, $id ) use ( $c ) {
 				$payment_token_repository = $c->get( 'vaulting.repository.payment-token' );
 				$settings                 = $c->get( 'wcgateway.settings' );
@@ -107,6 +127,11 @@ class WcSubscriptionsModule implements ModuleInterface {
 
 		add_filter(
 			'woocommerce_credit_card_form_fields',
+			/**
+			 * Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
 			function ( $default_fields, $id ) use ( $c ) {
 				$payment_token_repository = $c->get( 'vaulting.repository.payment-token' );
 				$settings                 = $c->get( 'wcgateway.settings' );
@@ -172,16 +197,14 @@ class WcSubscriptionsModule implements ModuleInterface {
 	/**
 	 * Handles a Subscription product renewal.
 	 *
-	 * @param \WC_Order               $order WooCommerce order.
-	 * @param ContainerInterface|null $container The container.
+	 * @param WC_Order           $order WooCommerce order.
+	 * @param ContainerInterface $container The container.
 	 * @return void
 	 */
-	protected function renew( $order, $container ) {
-		if ( ! ( $order instanceof \WC_Order ) ) {
-			return;
-		}
-
+	protected function renew( WC_Order $order, ContainerInterface $container ) {
 		$handler = $container->get( 'wc-subscriptions.renewal-handler' );
+		assert( $handler instanceof RenewalHandler );
+
 		$handler->renew( $order );
 	}
 
@@ -196,7 +219,7 @@ class WcSubscriptionsModule implements ModuleInterface {
 		\WC_Subscription $subscription,
 		PaymentTokenRepository $payment_token_repository,
 		LoggerInterface $logger
-	) {
+	): void {
 		try {
 			$tokens = $payment_token_repository->all_for_user_id( $subscription->get_customer_id() );
 			if ( $tokens ) {
