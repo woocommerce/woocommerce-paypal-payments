@@ -363,6 +363,23 @@ class Button implements ButtonInterface {
 		);
 		wp_enqueue_script( 'wc-ppcp-googlepay' );
 
+		$this->enqueue_styles();
+
+		wp_localize_script(
+			'wc-ppcp-googlepay',
+			'wc_ppcp_googlepay',
+			$this->script_data()
+		);
+	}
+
+	/**
+	 * Enqueues styles.
+	 */
+	public function enqueue_styles(): void {
+		if ( ! $this->is_enabled() ) {
+			return;
+		}
+
 		wp_register_style(
 			'wc-ppcp-googlepay',
 			untrailingslashit( $this->module_url ) . '/assets/css/styles.css',
@@ -370,12 +387,6 @@ class Button implements ButtonInterface {
 			$this->version
 		);
 		wp_enqueue_style( 'wc-ppcp-googlepay' );
-
-		wp_localize_script(
-			'wc-ppcp-googlepay',
-			'wc_ppcp_googlepay',
-			$this->script_data()
-		);
 	}
 
 	/**

@@ -89,11 +89,18 @@ class GooglepayModule implements ModuleInterface {
 			static function () use ( $c, $button ) {
 				$smart_button = $c->get( 'button.smart-button' );
 				assert( $smart_button instanceof SmartButtonInterface );
-				$page_has_block = has_block( 'woocommerce/checkout' ) || has_block( 'woocommerce/cart' );
-				if ( ! $smart_button->should_load_ppcp_script() && ! $page_has_block ) {
-					return;
+				if ( $smart_button->should_load_ppcp_script() ) {
+					$button->enqueue();
 				}
-				$button->enqueue();
+
+				if ( has_block( 'woocommerce/checkout' ) || has_block( 'woocommerce/cart' ) ) {
+					/**
+					 * Should add this to the ButtonInterface.
+					 *
+					 * @psalm-suppress UndefinedInterfaceMethod
+					 */
+					$button->enqueue_styles();
+				}
 			}
 		);
 
