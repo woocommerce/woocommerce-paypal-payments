@@ -253,21 +253,24 @@ const PayPalComponent = ({
     }, [onPaymentSetup, paypalOrder, activePaymentMethod]);
 
     useEffect(() => {
+        if (activePaymentMethod !== config.id) {
+            return;
+        }
         const unsubscribe = onCheckoutFail(({ processingResponse }) => {
+            console.error(processingResponse)
             if (onClose) {
                 onClose();
             }
-            if (processingResponse?.paymentDetails?.errorMessage) {
-                return {
-                    type: emitResponse.responseTypes.ERROR,
-                    message: processingResponse.paymentDetails.errorMessage,
-                    messageContext: config.scriptData.continuation ? emitResponse.noticeContexts.PAYMENTS : emitResponse.noticeContexts.EXPRESS_PAYMENTS,
-                };
+            if (config.scriptData.continuation) {
+                return true;
+            }
+            if (!config.finalReviewEnabled) {
+                location.href = getCheckoutRedirectUrl();
             }
             return true;
         });
         return unsubscribe;
-    }, [onCheckoutFail, onClose]);
+    }, [onCheckoutFail, onClose, activePaymentMethod]);
 
     if (config.scriptData.continuation) {
         return (
