@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\Googlepay;
 
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
+use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Googlepay\Endpoint\UpdatePaymentDataEndpoint;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmProductStatus;
 use WooCommerce\PayPalCommerce\Googlepay\Helper\AvailabilityNotice;
@@ -86,6 +87,12 @@ class GooglepayModule implements ModuleInterface {
 		add_action(
 			'wp_enqueue_scripts',
 			static function () use ( $c, $button ) {
+				$smart_button = $c->get( 'button.smart-button' );
+				assert( $smart_button instanceof SmartButtonInterface );
+				$page_has_block = has_block( 'woocommerce/checkout' ) || has_block( 'woocommerce/cart' );
+				if ( ! $smart_button->should_load_ppcp_script() && ! $page_has_block ) {
+					return;
+				}
 				$button->enqueue();
 			}
 		);
