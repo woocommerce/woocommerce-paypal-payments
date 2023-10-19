@@ -19,7 +19,7 @@ const PayPalComponent = ({
                              shippingData,
                              isEditing,
 }) => {
-    const {onPaymentSetup, onCheckoutAfterProcessingWithError, onCheckoutValidation} = eventRegistration;
+    const {onPaymentSetup, onCheckoutFail, onCheckoutValidation} = eventRegistration;
     const {responseTypes} = emitResponse;
 
     const [paypalOrder, setPaypalOrder] = useState(null);
@@ -253,7 +253,7 @@ const PayPalComponent = ({
     }, [onPaymentSetup, paypalOrder, activePaymentMethod]);
 
     useEffect(() => {
-        const unsubscribe = onCheckoutAfterProcessingWithError(({ processingResponse }) => {
+        const unsubscribe = onCheckoutFail(({ processingResponse }) => {
             if (onClose) {
                 onClose();
             }
@@ -267,7 +267,7 @@ const PayPalComponent = ({
             return true;
         });
         return unsubscribe;
-    }, [onCheckoutAfterProcessingWithError, onClose]);
+    }, [onCheckoutFail, onClose]);
 
     if (config.scriptData.continuation) {
         return (
