@@ -61,6 +61,8 @@ class UserIdToken {
 	/**
 	 * Returns `id_token` which uniquely identifies the payer.
 	 *
+	 * @return string
+	 *
 	 * @throws PayPalApiException If the request fails.
 	 * @throws RuntimeException If something unexpected happens.
 	 */

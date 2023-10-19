@@ -260,26 +260,25 @@ class OrderEndpoint {
 			);
 			throw $error;
 		}
+
 		$json        = json_decode( $response['body'] );
 		$status_code = (int) wp_remote_retrieve_response_code( $response );
-		if ( 201 !== $status_code ) {
+		if ( ! in_array( $status_code, array( 200, 201 ), true ) ) {
 			$error = new PayPalApiException(
 				$json,
 				$status_code
 			);
-			$this->logger->log(
-				'warning',
+
+			$this->logger->warning(
 				sprintf(
 					'Failed to create order. PayPal API response: %1$s',
 					$error->getMessage()
-				),
-				array(
-					'args'     => $args,
-					'response' => $response,
 				)
 			);
+
 			throw $error;
 		}
+
 		$order = $this->order_factory->from_paypal_response( $json );
 
 		do_action( 'woocommerce_paypal_payments_paypal_order_created', $order );

@@ -48,7 +48,13 @@ export const loadPaypalScript = (config, onLoaded) => {
         return;
     }
 
-    // Load PayPal script
+    // Adds data-user-id-token to script options.
+    const userIdToken = config.save_payment_methods.id_token;
+    if(userIdToken) {
+        scriptOptions['data-user-id-token'] = userIdToken;
+    }
+
+    // Load PayPal script.
     loadScript(scriptOptions).then(callback);
 }
 

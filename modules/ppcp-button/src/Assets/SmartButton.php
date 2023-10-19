@@ -1060,7 +1060,8 @@ class SmartButton implements SmartButtonInterface {
 		}
 
 		$this->request_data->dequeue_nonce_fix();
-		return $localize;
+
+		return apply_filters( 'woocommerce_paypal_payments_localized_script_data', $localize );
 	}
 
 	/**
