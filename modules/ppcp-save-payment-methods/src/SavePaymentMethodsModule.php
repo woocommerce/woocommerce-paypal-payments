@@ -32,5 +32,9 @@ class SavePaymentMethodsModule implements ModuleInterface {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function run( ContainerInterface $c ): void {}
+	public function run( ContainerInterface $c ): void {
+		if ( ! $c->get( 'save-payment-methods.eligible' ) ) {
+			return;
+		}
+	}
 }
