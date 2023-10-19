@@ -422,7 +422,7 @@ class ApplePayButton implements ButtonInterface {
 		}
 		$applepay_request_data_object->order_data( $context );
 		$this->update_posted_data( $applepay_request_data_object );
-		if ( $context == 'product' ) {
+		if ( $context === 'product' ) {
 			$cart_item_key = $this->prepare_cart( $applepay_request_data_object );
 			$cart          = WC()->cart;
 			$address       = $applepay_request_data_object->shipping_address();
@@ -902,15 +902,19 @@ class ApplePayButton implements ButtonInterface {
 	 * Renders the Apple Pay button on the page
 	 *
 	 * @return bool
+	 *
+	 * @psalm-suppress RedundantCondition
 	 */
 	public function render(): bool {
-		$is_applepay_button_enabled = $this->settings->has( 'applepay_button_enabled' ) ? $this->settings->get( 'applepay_button_enabled' ) : false;
+		if ( ! $this->is_enabled() ) {
+			return true;
+		}
 
-		$button_enabled_product  = $is_applepay_button_enabled && $this->settings_status->is_smart_button_enabled_for_location( 'product' );
-		$button_enabled_cart     = $is_applepay_button_enabled && $this->settings_status->is_smart_button_enabled_for_location( 'cart' );
-		$button_enabled_checkout = $is_applepay_button_enabled;
-		$button_enabled_payorder = $is_applepay_button_enabled;
-		$button_enabled_minicart = $is_applepay_button_enabled && $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' );
+		$button_enabled_product  = $this->settings_status->is_smart_button_enabled_for_location( 'product' );
+		$button_enabled_cart     = $this->settings_status->is_smart_button_enabled_for_location( 'cart' );
+		$button_enabled_checkout = true;
+		$button_enabled_payorder = true;
+		$button_enabled_minicart = $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' );
 
 		add_filter(
 			'woocommerce_paypal_payments_sdk_components_hook',
@@ -1054,7 +1058,6 @@ class ApplePayButton implements ButtonInterface {
 	 */
 	public function is_enabled(): bool {
 		try {
-			// todo add also onboarded apple and enabled buttons.
 			return $this->settings->has( 'applepay_button_enabled' ) && $this->settings->get( 'applepay_button_enabled' );
 		} catch ( Exception $e ) {
 			return false;
