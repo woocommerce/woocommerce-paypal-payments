@@ -20,7 +20,6 @@ import ApplepayManager from "./ApplepayManager";
                 (typeof (buttonConfig) === 'undefined') ||
                 (typeof (ppcpConfig) === 'undefined')
             ) {
-                console.error('PayPal button could not be configured.');
                 return;
             }
             const isMiniCart = ppcpConfig.mini_cart_buttons_enabled;

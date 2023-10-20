@@ -1021,13 +1021,7 @@ class ApplePayButton implements ButtonInterface {
 		);
 		wp_enqueue_script( 'wc-ppcp-applepay' );
 
-		wp_register_style(
-			'wc-ppcp-applepay',
-			untrailingslashit( $this->module_url ) . '/assets/css/styles.css',
-			array(),
-			$this->version
-		);
-		wp_enqueue_style( 'wc-ppcp-applepay' );
+		$this->enqueue_styles();
 
 		wp_localize_script(
 			'wc-ppcp-applepay',
@@ -1040,6 +1034,23 @@ class ApplePayButton implements ButtonInterface {
 				wp_enqueue_script( 'wc-ppcp-applepay' );
 			}
 		);
+	}
+
+	/**
+	 * Enqueues styles.
+	 */
+	public function enqueue_styles(): void {
+		if ( ! $this->is_enabled() ) {
+			return;
+		}
+
+		wp_register_style(
+			'wc-ppcp-applepay',
+			untrailingslashit( $this->module_url ) . '/assets/css/styles.css',
+			array(),
+			$this->version
+		);
+		wp_enqueue_style( 'wc-ppcp-applepay' );
 	}
 
 	/**
