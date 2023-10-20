@@ -45,7 +45,6 @@ class GooglepayModule implements ModuleInterface {
 			function( Settings $settings = null ) use ( $c ): void {
 				$apm_status = $c->get( 'googlepay.helpers.apm-product-status' );
 				assert( $apm_status instanceof ApmProductStatus );
-
 				$apm_status->clear( $settings );
 			}
 		);

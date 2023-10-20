@@ -10,11 +10,11 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Applepay;
 
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
-use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Applepay\Assets\ApplePayButton;
 use WooCommerce\PayPalCommerce\Applepay\Assets\AppleProductStatus;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
+use WooCommerce\PayPalCommerce\Applepay\Helper\AvailabilityNotice;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
@@ -40,59 +40,49 @@ class ApplepayModule implements ModuleInterface {
 	 * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $c ): void {
+
+		// Clears product status when appropriate.
+		add_action(
+			'woocommerce_paypal_payments_clear_apm_product_status',
+			function( Settings $settings = null ) use ( $c ): void {
+				$apm_status = $c->get( 'applepay.apple-product-status' );
+				assert( $apm_status instanceof AppleProductStatus );
+				$apm_status->clear( $settings );
+			}
+		);
+
+		// Check if the module is applicable, correct country, currency, ... etc.
+		if ( ! $c->get( 'applepay.eligible' ) ) {
+			return;
+		}
+
+		// Load the button handler.
 		$apple_payment_method = $c->get( 'applepay.button' );
 		// add onboarding and referrals hooks.
-		$apple_payment_method->initialize();
-		if ( ! $c->get( 'applepay.enabled' ) ) {
-			return;
-		}
-		if ( ! $c->get( 'applepay.server_supported' ) ) {
-			add_action(
-				'admin_notices',
-				static function () {
-					?>
-					<div class="notice notice-error is-dismissible">
-						<p>
-							<?php
-							echo wp_kses_post(
-								__( 'Apple Pay is not supported on this server. Please contact your hosting provider to enable it.', 'woocommerce-paypal-payments' )
-							);
-							?>
-						</p>
-					</div>
-					<?php
-				}
-			);
-
-			return;
-		}
-		$settings           = $c->get( 'wcgateway.settings' );
-		$merchant_validated = $settings->has( 'applepay_validated' ) ? $settings->get( 'applepay_validated' ) === true : false;
-		if ( ! $merchant_validated ) {
-			add_action(
-				'admin_notices',
-				static function () {
-					?>
-					<div class="notice notice-error is-dismissible">
-						<p>
-							<?php
-							echo wp_kses_post(
-								__( 'Apple Pay Validation Error. Please check the requirements.', 'woocommerce-paypal-payments' )
-							);
-							?>
-						</p>
-					</div>
-					<?php
-				}
-			);
-		}
-		$this->load_assets( $c );
-		$this->handle_validation_file( $c );
-		$this->render_buttons( $c );
 		assert( $apple_payment_method instanceof ApplepayButton );
-		$apple_payment_method->bootstrap_ajax_request();
+		$apple_payment_method->initialize();
 
-		$this->remove_status_cache( $c );
+		// Show notice if there are product availability issues.
+		$availability_notice = $c->get( 'applepay.availability_notice' );
+		assert( $availability_notice instanceof AvailabilityNotice );
+		$availability_notice->execute();
+
+		// Return if server not supported.
+		if ( ! $c->get( 'applepay.server_supported' ) ) {
+			return;
+		}
+
+		// Check if this merchant can activate / use the buttons.
+		// We allow non referral merchants as they can potentially still use ApplePay, we just have no way of checking the capability.
+		if ( ( ! $c->get( 'applepay.available' ) ) && $c->get( 'applepay.is_referral' ) ) {
+			return;
+		}
+
+		$this->load_assets( $c, $apple_payment_method );
+		$this->handle_validation_file( $c );
+		$this->render_buttons( $c, $apple_payment_method );
+
+		$apple_payment_method->bootstrap_ajax_request();
 	}
 
 	/**
@@ -126,14 +116,17 @@ class ApplepayModule implements ModuleInterface {
 	 * Registers and enqueues the assets.
 	 *
 	 * @param ContainerInterface $c The container.
+	 * @param ApplePayButton     $button The button.
 	 * @return void
 	 */
-	public function load_assets( ContainerInterface $c ): void {
+	public function load_assets( ContainerInterface $c, ApplePayButton $button ): void {
+		if ( ! $button->is_enabled() ) {
+			return;
+		}
+
 		add_action(
 			'wp_enqueue_scripts',
-			function () use ( $c ) {
-				$button = $c->get( 'applepay.button' );
-				assert( $button instanceof ApplePayButton );
+			function () use ( $c, $button ) {
 				$smart_button = $c->get( 'button.smart-button' );
 				assert( $smart_button instanceof SmartButtonInterface );
 				$page_has_block = has_block( 'woocommerce/checkout' ) || has_block( 'woocommerce/cart' );
@@ -154,9 +147,14 @@ class ApplepayModule implements ModuleInterface {
 	 * Renders the Apple Pay buttons in the enabled places.
 	 *
 	 * @param ContainerInterface $c The container.
+	 * @param ApplePayButton     $button The button.
 	 * @return void
 	 */
-	public function render_buttons( ContainerInterface $c ): void {
+	public function render_buttons( ContainerInterface $c, ApplePayButton $button ): void {
+		if ( ! $button->is_enabled() ) {
+			return;
+		}
+
 		add_action(
 			'wp',
 			static function () use ( $c ) {
@@ -171,44 +169,6 @@ class ApplepayModule implements ModuleInterface {
 				 * @var ButtonInterface $button
 				 */
 				$button->render();
-			}
-		);
-	}
-
-	/**
-	 * Removes the status cache.
-	 *
-	 * @param ContainerInterface $c The container.
-	 *
-	 * @return void
-	 */
-	public function remove_status_cache( ContainerInterface $c ): void {
-		add_action(
-			'woocommerce_paypal_payments_gateway_migrate_on_update',
-			static function () use ( $c ) {
-				$apple_status_cache = $c->get( 'applepay.status-cache' );
-				assert( $apple_status_cache instanceof Cache );
-
-				$apple_status_cache->delete( AppleProductStatus::APPLE_STATUS_CACHE_KEY );
-
-				$settings = $c->get( 'wcgateway.settings' );
-				$settings->set( 'products_apple_enabled', false );
-				$settings->persist();
-
-				// Update caches.
-				$apple_status = $c->get( 'applepay.apple-product-status' );
-				assert( $apple_status instanceof AppleProductStatus );
-				$apple_status->apple_is_active();
-			}
-		);
-
-		add_action(
-			'woocommerce_paypal_payments_on_listening_request',
-			static function () use ( $c ) {
-				$apple_status = $c->get( 'applepay.status-cache' );
-				if ( $apple_status->has( AppleProductStatus::APPLE_STATUS_CACHE_KEY ) ) {
-					$apple_status->delete( AppleProductStatus::APPLE_STATUS_CACHE_KEY );
-				}
 			}
 		);
 	}

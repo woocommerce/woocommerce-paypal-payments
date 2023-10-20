@@ -16,11 +16,10 @@ use WooCommerce\PayPalCommerce\Applepay\Assets\AppleProductStatus;
 use WooCommerce\PayPalCommerce\Applepay\Assets\DataToAppleButtonScripts;
 use WooCommerce\PayPalCommerce\Applepay\Assets\BlocksPaymentMethod;
 use WooCommerce\PayPalCommerce\Applepay\Helper\ApmApplies;
-use WooCommerce\PayPalCommerce\Googlepay\Helper\ApmProductStatus;
+use WooCommerce\PayPalCommerce\Applepay\Helper\AvailabilityNotice;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 return array(
 	'applepay.eligible'                          => static function ( ContainerInterface $container ): bool {
@@ -47,23 +46,37 @@ return array(
 
 		return ! $status->has_request_failure();
 	},
+
+	'applepay.availability_notice'               => static function ( ContainerInterface $container ): AvailabilityNotice {
+		$settings = $container->get( 'wcgateway.settings' );
+
+		return new AvailabilityNotice(
+			$container->get( 'applepay.apple-product-status' ),
+			$container->get( 'wcgateway.is-wc-gateways-list-page' ),
+			$container->get( 'wcgateway.is-ppcp-settings-page' ),
+			$container->get( 'applepay.available' ) || ( ! $container->get( 'applepay.is_referral' ) ),
+			$container->get( 'applepay.server_supported' ),
+			$settings->has( 'applepay_validated' ) ? $settings->get( 'applepay_validated' ) === true : false,
+			$container->get( 'applepay.button' )
+		);
+	},
+
 	'applepay.apple-product-status'              => static function( ContainerInterface $container ): AppleProductStatus {
 		return new AppleProductStatus(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'api.endpoint.partners' ),
-			$container->get( 'applepay.status-cache' ),
 			$container->get( 'onboarding.state' ),
 			$container->get( 'api.helper.failure-registry' )
 		);
 	},
-	'applepay.enabled'                           => static function ( ContainerInterface $container ): bool {
-		if ( apply_filters( 'woocommerce_paypal_payments_applepay_validate_product_status', false ) ) {
+	'applepay.available'                         => static function ( ContainerInterface $container ): bool {
+		if ( apply_filters( 'woocommerce_paypal_payments_applepay_validate_product_status', true ) ) {
 			$status = $container->get( 'applepay.apple-product-status' );
 			assert( $status instanceof AppleProductStatus );
 			/**
 			 * If merchant isn't onboarded via /v1/customer/partner-referrals this returns false as the API call fails.
 			 */
-			return apply_filters( 'woocommerce_paypal_payments_applepay_product_status', $status->apple_is_active() );
+			return apply_filters( 'woocommerce_paypal_payments_applepay_product_status', $status->is_active() );
 		}
 		return true;
 	},
@@ -149,7 +162,7 @@ return array(
 		$environment = $container->get( 'onboarding.environment' );
 		assert( $environment instanceof Environment );
 
-		$enabled = $product_status->apple_is_active();
+		$enabled = $product_status->is_active();
 
 		$enabled_status_text  = esc_html__( 'Status: Available', 'woocommerce-paypal-payments' );
 		$disabled_status_text = esc_html__( 'Status: Not yet enabled', 'woocommerce-paypal-payments' );
