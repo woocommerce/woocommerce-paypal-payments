@@ -8,10 +8,18 @@ import ApplepayManager from "./ApplepayManager";
                jQuery
            }) {
 
+    let manager;
+
     const bootstrap = function () {
-        const manager = new ApplepayManager(buttonConfig, ppcpConfig);
+        manager = new ApplepayManager(buttonConfig, ppcpConfig);
         manager.init();
     };
+
+    jQuery(document.body).on('updated_cart_totals updated_checkout', () => {
+        if (manager) {
+            manager.reinit();
+        }
+    });
 
     document.addEventListener(
         'DOMContentLoaded',

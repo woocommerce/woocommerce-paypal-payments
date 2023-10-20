@@ -35,6 +35,12 @@ class ApplepayManager {
         })();
     }
 
+    reinit() {
+        for (const button of this.buttons) {
+            button.reinit();
+        }
+    }
+
     /**
      * Gets ApplePay configuration of the PayPal merchant.
      * @returns {Promise<null>}

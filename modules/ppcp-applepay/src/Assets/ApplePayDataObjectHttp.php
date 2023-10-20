@@ -300,6 +300,7 @@ class ApplePayDataObjectHttp {
 	 */
 	protected function assign_data_object_values( array $data ): void {
 		foreach ( $data as $key => $value ) {
+			// Null values may give origin to type errors. If necessary replace condition this with a specialized field filter.
 			if ( null === $value ) {
 				continue;
 			}
