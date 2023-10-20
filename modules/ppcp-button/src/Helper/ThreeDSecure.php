@@ -52,14 +52,14 @@ class ThreeDSecure {
 		if ( ! $order->payment_source() ) {
 			return self::NO_DECISION;
 		}
-		if ( ! $order->payment_source()->card() ) {
+		if ( ! $order->payment_source()->properties()->brand ?? '' ) {
 			return self::NO_DECISION;
 		}
-		if ( ! $order->payment_source()->card()->authentication_result() ) {
+		if ( ! $order->payment_source()->properties()->authentication_result ?? '' ) {
 			return self::NO_DECISION;
 		}
 
-		$result = $order->payment_source()->card()->authentication_result();
+		$result = $order->payment_source()->properties()->authentication_result;
 		$this->logger->info( '3DS authentication result: ' . wc_print_r( $result->to_array(), true ) );
 
 		if ( $result->liability_shift() === AuthResult::LIABILITY_SHIFT_POSSIBLE ) {

@@ -115,7 +115,7 @@ trait ContextTrait {
 		}
 
 		$source = $order->payment_source();
-		if ( $source && $source->card() ) {
+		if ( $source && $source->name() === 'card' ) {
 			return false; // Ignore for DCC.
 		}
 

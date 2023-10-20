@@ -59,12 +59,7 @@ trait OrderMetaTrait {
 	private function get_payment_source( Order $order ): ?string {
 		$source = $order->payment_source();
 		if ( $source ) {
-			if ( $source->card() ) {
-				return 'card';
-			}
-			if ( $source->wallet() ) {
-				return 'wallet';
-			}
+			return $source->name();
 		}
 
 		return null;

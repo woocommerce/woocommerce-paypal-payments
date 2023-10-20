@@ -15,7 +15,6 @@ use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingSubscriptions;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\CatalogProducts;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingPlans;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerPayableBreakdown;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\BillingCycleFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentPreferencesFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\RefundFactory;
@@ -51,7 +50,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PatchCollectionFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayeeFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentsFactory;
-use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentSourceFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenActionLinksFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PlatformFeeFactory;
@@ -377,21 +375,16 @@ return array(
 	'api.factory.address'                       => static function ( ContainerInterface $container ): AddressFactory {
 		return new AddressFactory();
 	},
-	'api.factory.payment-source'                => static function ( ContainerInterface $container ): PaymentSourceFactory {
-		return new PaymentSourceFactory();
-	},
 	'api.factory.order'                         => static function ( ContainerInterface $container ): OrderFactory {
 		$purchase_unit_factory          = $container->get( 'api.factory.purchase-unit' );
 		$payer_factory                  = $container->get( 'api.factory.payer' );
 		$application_context_repository = $container->get( 'api.repository.application-context' );
 		$application_context_factory    = $container->get( 'api.factory.application-context' );
-		$payment_source_factory         = $container->get( 'api.factory.payment-source' );
 		return new OrderFactory(
 			$purchase_unit_factory,
 			$payer_factory,
 			$application_context_repository,
-			$application_context_factory,
-			$payment_source_factory
+			$application_context_factory
 		);
 	},
 	'api.factory.payments'                      => static function ( ContainerInterface $container ): PaymentsFactory {

@@ -242,6 +242,9 @@ class OrderProcessor {
 		if ( $this->capture_authorized_downloads( $order ) ) {
 			$this->authorized_payments_processor->capture_authorized_payment( $wc_order );
 		}
+
+		do_action( 'woocommerce_paypal_payments_after_order_processor', $wc_order, $order );
+
 		$this->last_error = '';
 		return true;
 	}
@@ -321,7 +324,7 @@ class OrderProcessor {
 			return true;
 		}
 
-		if ( ! $order->payment_source() || ! $order->payment_source()->card() ) {
+		if ( ! $order->payment_source() || $order->payment_source()->name() !== 'card' ) {
 			return false;
 		}
 

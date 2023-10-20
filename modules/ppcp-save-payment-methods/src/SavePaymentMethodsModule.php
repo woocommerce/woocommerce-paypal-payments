@@ -10,7 +10,9 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\SavePaymentMethods;
 
 use Psr\Log\LoggerInterface;
+use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\UserIdToken;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
@@ -89,6 +91,15 @@ class SavePaymentMethodsModule implements ModuleInterface {
 
 				return $data;
 			}
+		);
+
+		add_action(
+			'woocommerce_paypal_payments_after_order_processor',
+			function( WC_Order $wc_order, Order $order ) {
+				// vault payment here ...
+			},
+			10,
+			2
 		);
 	}
 }
