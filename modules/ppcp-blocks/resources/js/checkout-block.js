@@ -19,7 +19,7 @@ const PayPalComponent = ({
                              shippingData,
                              isEditing,
 }) => {
-    const {onPaymentSetup, onCheckoutAfterProcessingWithError, onCheckoutValidation} = eventRegistration;
+    const {onPaymentSetup, onCheckoutFail, onCheckoutValidation} = eventRegistration;
     const {responseTypes} = emitResponse;
 
     const [paypalOrder, setPaypalOrder] = useState(null);
@@ -253,21 +253,24 @@ const PayPalComponent = ({
     }, [onPaymentSetup, paypalOrder, activePaymentMethod]);
 
     useEffect(() => {
-        const unsubscribe = onCheckoutAfterProcessingWithError(({ processingResponse }) => {
+        if (activePaymentMethod !== config.id) {
+            return;
+        }
+        const unsubscribe = onCheckoutFail(({ processingResponse }) => {
+            console.error(processingResponse)
             if (onClose) {
                 onClose();
             }
-            if (processingResponse?.paymentDetails?.errorMessage) {
-                return {
-                    type: emitResponse.responseTypes.ERROR,
-                    message: processingResponse.paymentDetails.errorMessage,
-                    messageContext: config.scriptData.continuation ? emitResponse.noticeContexts.PAYMENTS : emitResponse.noticeContexts.EXPRESS_PAYMENTS,
-                };
+            if (config.scriptData.continuation) {
+                return true;
+            }
+            if (!config.finalReviewEnabled) {
+                location.href = getCheckoutRedirectUrl();
             }
             return true;
         });
         return unsubscribe;
-    }, [onCheckoutAfterProcessingWithError, onClose]);
+    }, [onCheckoutFail, onClose, activePaymentMethod]);
 
     if (config.scriptData.continuation) {
         return (
