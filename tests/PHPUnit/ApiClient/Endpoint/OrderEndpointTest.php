@@ -1149,6 +1149,7 @@ class OrderEndpointTest extends TestCase
         $logger = Mockery::mock(LoggerInterface::class);
         $logger->shouldReceive('log');
         $logger->shouldReceive('debug');
+        $logger->shouldReceive('warning');
         $applicationContext = Mockery::mock(ApplicationContext::class);
         $applicationContext
             ->expects('to_array')
