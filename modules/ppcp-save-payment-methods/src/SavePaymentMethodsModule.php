@@ -57,7 +57,12 @@ class SavePaymentMethodsModule implements ModuleInterface {
 				assert( $api instanceof UserIdToken );
 
 				try {
-					$id_token                                      = $api->id_token();
+					$target_customer_id = '';
+					if ( get_current_user_id() !== 0 ) {
+						$target_customer_id = get_user_meta( get_current_user_id(), '_ppcp_target_customer_id', true );
+					}
+
+					$id_token                                      = $api->id_token( $target_customer_id );
 					$localized_script_data['save_payment_methods'] = array(
 						'id_token' => $id_token,
 					);

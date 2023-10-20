@@ -61,14 +61,25 @@ class UserIdToken {
 	/**
 	 * Returns `id_token` which uniquely identifies the payer.
 	 *
+	 * @param string $target_customer_id Vaulted customer id.
+	 *
 	 * @return string
 	 *
 	 * @throws PayPalApiException If the request fails.
 	 * @throws RuntimeException If something unexpected happens.
 	 */
-	public function id_token(): string {
+	public function id_token( string $target_customer_id = '' ): string {
 		$bearer = $this->bearer->bearer();
-		$url    = trailingslashit( $this->host ) . 'v1/oauth2/token?grant_type=client_credentials&response_type=id_token';
+
+		$url = trailingslashit( $this->host ) . 'v1/oauth2/token?grant_type=client_credentials&response_type=id_token';
+		if ( $target_customer_id ) {
+			$url = add_query_arg(
+				array(
+					'target_customer_id' => $target_customer_id,
+				),
+				$url
+			);
+		}
 
 		$args = array(
 			'method'  => 'POST',
