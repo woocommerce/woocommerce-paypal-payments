@@ -362,6 +362,7 @@ class ApplepayButton {
                     if (response.newShippingMethods) {
                         this.selectedShippingMethod = response.newShippingMethods[0]
                     }
+                    session.completeShippingContactSelection(response)
                 },
                 error: (jqXHR, textStatus, errorThrown) => {
                     this.log('onshippingcontactselected error', textStatus);
