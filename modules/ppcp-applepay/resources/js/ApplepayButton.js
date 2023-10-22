@@ -24,9 +24,7 @@ class ApplepayButton {
         );
 
         //PRODUCT DETAIL PAGE
-        if(this.context === 'product') {
-            this.productQuantity = document.querySelector('input.qty').value
-        }
+        this.refreshContextData();
 
         this.updated_contact_info = []
         this.selectedShippingMethod = []
@@ -198,7 +196,8 @@ class ApplepayButton {
             try {
                 const formData = new FormData(document.querySelector(checkoutFormSelector));
                 this.form_saved = Object.fromEntries(formData.entries());
-                this.update_request_data_with_form(paymentDataRequest);
+                // This line should be reviewed, the paypal.Applepay().confirmOrder fails if we add it.
+                //this.update_request_data_with_form(paymentDataRequest);
             } catch (error) {
                 console.error(error);
             }
@@ -256,6 +255,14 @@ class ApplepayButton {
         return paymentDataRequest
     }
 
+    refreshContextData() {
+        switch (this.context) {
+            case 'product':
+                // Refresh product data that makes the price change.
+                this.productQuantity = document.querySelector('input.qty').value;
+                break;
+        }
+    }
 
     //------------------------
     // Payment process
@@ -375,6 +382,8 @@ class ApplepayButton {
     getShippingContactData(event) {
         const product_id = this.buttonConfig.product.id;
 
+        this.refreshContextData();
+
         switch (this.context) {
             case 'product':
                 return {
@@ -402,6 +411,9 @@ class ApplepayButton {
     }
     getShippingMethodData(event) {
         const product_id = this.buttonConfig.product.id;
+
+        this.refreshContextData();
+
         switch (this.context) {
             case 'product': return {
                 action: 'ppcp_update_shipping_method',
