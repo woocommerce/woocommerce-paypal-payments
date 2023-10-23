@@ -9,7 +9,7 @@ module.exports = {
     target: 'web',
     plugins: [ new DependencyExtractionWebpackPlugin() ],
     entry: {
-        'boot': path.resolve('./resources/js/boot.js')
+        'add-payment-method': path.resolve('./resources/js/add-payment-method.js')
     },
     output: {
         path: path.resolve(__dirname, 'assets/'),

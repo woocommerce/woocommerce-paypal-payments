@@ -191,7 +191,10 @@ class VaultingModule implements ModuleInterface {
 			'woocommerce_available_payment_gateways',
 			function( array $methods ): array {
 				global $wp;
-				if ( isset( $wp->query_vars['add-payment-method'] ) ) {
+				if (
+					isset( $wp->query_vars['add-payment-method'] )
+					&& apply_filters( 'woocommerce_paypal_payments_disable_add_payment_method', true )
+				) {
 					unset( $methods[ PayPalGateway::ID ] );
 				}
 

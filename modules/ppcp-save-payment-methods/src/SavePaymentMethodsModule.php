@@ -149,5 +149,36 @@ class SavePaymentMethodsModule implements ModuleInterface {
 			10,
 			2
 		);
+
+		add_filter( 'woocommerce_paypal_payments_disable_add_payment_method', '__return_false' );
+
+		add_action(
+			'wp_enqueue_scripts',
+			function() use ( $c ) {
+				if ( ! is_user_logged_in() || ! is_add_payment_method_page() ) {
+					return;
+				}
+
+				$module_url = $c->get( 'save-payment-methods.module.url' );
+				wp_enqueue_script(
+					'ppcp-add-payment-method',
+					untrailingslashit( $module_url ) . '/assets/js/add-payment-method.js',
+					array( 'jquery' ),
+					$c->get( 'ppcp.asset-version' ),
+					true
+				);
+			}
+		);
+
+		add_action(
+			'woocommerce_add_payment_method_form_bottom',
+			function () {
+				if ( ! is_user_logged_in() || ! is_add_payment_method_page() ) {
+					return;
+				}
+
+				echo '<div id="ppc-button-' . PayPalGateway::ID . '-save-payment-method"></div>';
+			}
+		);
 	}
 }

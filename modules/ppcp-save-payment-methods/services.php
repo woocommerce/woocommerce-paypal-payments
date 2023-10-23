@@ -13,7 +13,7 @@ use WooCommerce\PayPalCommerce\SavePaymentMethods\Helper\SavePaymentMethodsAppli
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
-	'save-payment-methods.eligible' => static function ( ContainerInterface $container ): bool {
+	'save-payment-methods.eligible'   => static function ( ContainerInterface $container ): bool {
 		$save_payment_methods_applies = $container->get( 'save-payment-methods.helpers.save-payment-methods-applies' );
 		assert( $save_payment_methods_applies instanceof SavePaymentMethodsApplies );
 
@@ -39,6 +39,17 @@ return array(
 					'USD',
 				),
 			)
+		);
+	},
+	'save-payment-methods.module.url' => static function ( ContainerInterface $container ): string {
+		/**
+		 * The path cannot be false.
+		 *
+		 * @psalm-suppress PossiblyFalseArgument
+		 */
+		return plugins_url(
+			'/modules/ppcp-save-payment-methods/',
+			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
 		);
 	},
 );
