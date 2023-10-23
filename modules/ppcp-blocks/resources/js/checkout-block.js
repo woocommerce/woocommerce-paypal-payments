@@ -24,6 +24,20 @@ const PayPalComponent = ({
 
     const [paypalOrder, setPaypalOrder] = useState(null);
 
+    useEffect(() => {
+        // fill the form if in continuation (for product or mini-cart buttons)
+        if (!config.scriptData.continuation || !config.scriptData.continuation.order || window.ppcpContinuationFilled) {
+            return;
+        }
+        const addresses = paypalOrderToWcAddresses(config.scriptData.continuation.order);
+        wp.data.dispatch('wc/store/cart').setBillingAddress(addresses.billingAddress);
+        if (shippingData.needsShipping) {
+            wp.data.dispatch('wc/store/cart').setShippingAddress(addresses.shippingAddress);
+        }
+        // this useEffect should run only once, but adding this in case of some kind of full re-rendering
+        window.ppcpContinuationFilled = true;
+    }, [])
+
     const [loaded, setLoaded] = useState(false);
     useEffect(() => {
         if (!loaded) {
