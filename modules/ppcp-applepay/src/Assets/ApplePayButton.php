@@ -12,23 +12,16 @@ namespace WooCommerce\PayPalCommerce\Applepay\Assets;
 use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Cart;
-use WC_Checkout;
 use WC_Order;
-use WC_Session_Handler;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
-use WooCommerce\PayPalCommerce\Session\MemoryWcSession;
-use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\RequestHandlerTrait;
 
 /**
- * Class PayPalPaymentMethod
+ * Class ApplePayButton
  */
 class ApplePayButton implements ButtonInterface {
 	use RequestHandlerTrait;
@@ -178,21 +171,6 @@ class ApplePayButton implements ButtonInterface {
 					$data['products'][0] = 'PAYMENT_METHODS';
 				}
 				$data['capabilities'][] = 'APPLE_PAY';
-				$data['operations'][]   = array(
-					'operation'                  => 'API_INTEGRATION',
-					'api_integration_preference' => array(
-						'rest_api_integration' => array(
-							'integration_method'  => 'PAYPAL',
-							'integration_type'    => 'THIRD_PARTY',
-							'third_party_details' => array(
-								'features' => array(
-									'PAYMENT',
-									'REFUND',
-								),
-							),
-						),
-					),
-				);
 
 				return $data;
 			}

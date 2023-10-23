@@ -204,21 +204,6 @@ class Button implements ButtonInterface {
 		}
 
 		$data['capabilities'][] = 'GOOGLE_PAY';
-		$data['operations'][]   = array(
-			'operation'                  => 'API_INTEGRATION',
-			'api_integration_preference' => array(
-				'rest_api_integration' => array(
-					'integration_method'  => 'PAYPAL',
-					'integration_type'    => 'THIRD_PARTY',
-					'third_party_details' => array(
-						'features' => array(
-							'PAYMENT',
-							'REFUND',
-						),
-					),
-				),
-			),
-		);
 
 		return $data;
 	}
