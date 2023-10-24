@@ -318,6 +318,8 @@ return array(
 			$pui_status_cache,
 			$dcc_status_cache,
 			$container->get( 'http.redirector' ),
+			$container->get( 'api.partner_merchant_id-production' ),
+			$container->get( 'api.partner_merchant_id-sandbox' ),
 			$logger
 		);
 	},
