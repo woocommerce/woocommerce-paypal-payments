@@ -3,6 +3,7 @@ import {registerExpressPaymentMethod, registerPaymentMethod} from '@woocommerce/
 import {paypalAddressToWc, paypalOrderToWcAddresses} from "./Helper/Address";
 import {loadPaypalScript} from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading'
 import buttonModuleWatcher from "../../../ppcp-button/resources/js/modules/ButtonModuleWatcher";
+import merge from "deepmerge";
 
 const config = wc.wcSettings.getSetting('ppcp-gateway_data');
 
@@ -29,7 +30,11 @@ const PayPalComponent = ({
         if (!config.scriptData.continuation || !config.scriptData.continuation.order || window.ppcpContinuationFilled) {
             return;
         }
-        const addresses = paypalOrderToWcAddresses(config.scriptData.continuation.order);
+        const paypalAddresses = paypalOrderToWcAddresses(config.scriptData.continuation.order);
+        const wcAddresses = wp.data.select('wc/store/cart').getCustomerData();
+        const addresses = merge(wcAddresses, paypalAddresses, {
+            customMerge: key => (a, b) => a ? a : b, // overwrite empty strings
+        });
         wp.data.dispatch('wc/store/cart').setBillingAddress(addresses.billingAddress);
         if (shippingData.needsShipping) {
             wp.data.dispatch('wc/store/cart').setShippingAddress(addresses.shippingAddress);
