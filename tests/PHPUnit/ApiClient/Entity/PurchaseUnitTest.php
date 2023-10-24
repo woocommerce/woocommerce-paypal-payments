@@ -45,7 +45,6 @@ class PurchaseUnitTest extends TestCase
             $shipping,
             'referenceId',
             'description',
-            null,
             'customId',
             'invoiceId',
             'softDescriptor'
@@ -54,7 +53,6 @@ class PurchaseUnitTest extends TestCase
         $this->assertEquals($amount, $testee->amount());
         $this->assertEquals('referenceId', $testee->reference_id());
         $this->assertEquals('description', $testee->description());
-        $this->assertNull($testee->payee());
         $this->assertEquals('customId', $testee->custom_id());
         $this->assertEquals('invoiceId', $testee->invoice_id());
         $this->assertEquals('softDescriptor', $testee->soft_descriptor());
@@ -808,46 +806,4 @@ class PurchaseUnitTest extends TestCase
 
 		return $values;
 	}
-
-    public function testPayee()
-    {
-        $amount = Mockery::mock(Amount::class);
-        $amount->shouldReceive('breakdown')->andReturnNull();
-        $amount->shouldReceive('to_array')->andReturn(['amount']);
-        $item1 = Mockery::mock(Item::class);
-        $item1->shouldReceive('to_array')->andReturn(['item1']);
-        $item2 = Mockery::mock(Item::class);
-        $item2->shouldReceive('to_array')->andReturn(['item2']);
-        $shipping = Mockery::mock(Shipping::class);
-        $shipping->shouldReceive('to_array')->andReturn(['shipping']);
-        $payee = Mockery::mock(Payee::class);
-        $payee->shouldReceive('to_array')->andReturn(['payee']);
-        $testee = new PurchaseUnit(
-            $amount,
-            [],
-            $shipping,
-            'referenceId',
-            'description',
-            $payee,
-            'customId',
-            'invoiceId',
-            'softDescriptor'
-        );
-
-        $this->assertEquals($payee, $testee->payee());
-
-        $expected = [
-            'reference_id' => 'referenceId',
-            'amount' => ['amount'],
-            'description' => 'description',
-            'items' => [],
-            'shipping' => ['shipping'],
-            'custom_id' => 'customId',
-            'invoice_id' => 'invoiceId',
-            'soft_descriptor' => 'softDescriptor',
-            'payee' => ['payee'],
-        ];
-
-        $this->assertEquals($expected, $testee->to_array());
-    }
 }
