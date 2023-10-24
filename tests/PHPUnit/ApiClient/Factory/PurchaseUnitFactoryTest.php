@@ -75,8 +75,6 @@ class PurchaseUnitFactoryTest extends TestCase
         $paymentsFacory = Mockery::mock(PaymentsFactory::class);
         $testee = new PurchaseUnitFactory(
             $amountFactory,
-            $payeeRepository,
-            $payeeFactory,
             $itemFactory,
             $shippingFactory,
             $paymentsFacory
@@ -139,8 +137,6 @@ class PurchaseUnitFactoryTest extends TestCase
         $paymentsFacory = Mockery::mock(PaymentsFactory::class);
         $testee = new PurchaseUnitFactory(
             $amountFactory,
-            $payeeRepository,
-            $payeeFactory,
             $itemFactory,
             $shippingFactory,
             $paymentsFacory
@@ -194,8 +190,6 @@ class PurchaseUnitFactoryTest extends TestCase
         $paymentsFacory = Mockery::mock(PaymentsFactory::class);
         $testee = new PurchaseUnitFactory(
             $amountFactory,
-            $payeeRepository,
-            $payeeFactory,
             $itemFactory,
             $shippingFactory,
             $paymentsFacory
@@ -243,8 +237,6 @@ class PurchaseUnitFactoryTest extends TestCase
         $paymentsFacory = Mockery::mock(PaymentsFactory::class);
         $testee = new PurchaseUnitFactory(
             $amountFactory,
-            $payeeRepository,
-            $payeeFactory,
             $itemFactory,
             $shippingFactory,
             $paymentsFacory
@@ -299,8 +291,6 @@ class PurchaseUnitFactoryTest extends TestCase
         $paymentsFacory = Mockery::mock(PaymentsFactory::class);
         $testee = new PurchaseUnitFactory(
             $amountFactory,
-            $payeeRepository,
-            $payeeFactory,
             $itemFactory,
             $shippingFactory,
             $paymentsFacory
@@ -346,8 +336,6 @@ class PurchaseUnitFactoryTest extends TestCase
         $paymentsFacory = Mockery::mock(PaymentsFactory::class);
         $testee = new PurchaseUnitFactory(
             $amountFactory,
-            $payeeRepository,
-            $payeeFactory,
             $itemFactory,
             $shippingFactory,
             $paymentsFacory
@@ -395,8 +383,6 @@ class PurchaseUnitFactoryTest extends TestCase
         $paymentsFacory = Mockery::mock(PaymentsFactory::class);
         $testee = new PurchaseUnitFactory(
             $amountFactory,
-            $payeeRepository,
-            $payeeFactory,
             $itemFactory,
             $shippingFactory,
             $paymentsFacory
@@ -427,8 +413,6 @@ class PurchaseUnitFactoryTest extends TestCase
         $paymentsFacory = Mockery::mock(PaymentsFactory::class);
         $testee = new PurchaseUnitFactory(
             $amountFactory,
-            $payeeRepository,
-            $payeeFactory,
             $itemFactory,
             $shippingFactory,
             $paymentsFacory
@@ -478,8 +462,6 @@ class PurchaseUnitFactoryTest extends TestCase
         $paymentsFacory = Mockery::mock(PaymentsFactory::class);
         $testee = new PurchaseUnitFactory(
             $amountFactory,
-            $payeeRepository,
-            $payeeFactory,
             $itemFactory,
             $shippingFactory,
             $paymentsFacory
@@ -518,8 +500,6 @@ class PurchaseUnitFactoryTest extends TestCase
         $paymentsFacory = Mockery::mock(PaymentsFactory::class);
         $testee = new PurchaseUnitFactory(
             $amountFactory,
-            $payeeRepository,
-            $payeeFactory,
             $itemFactory,
             $shippingFactory,
             $paymentsFacory
@@ -550,8 +530,6 @@ class PurchaseUnitFactoryTest extends TestCase
         $paymentsFacory = Mockery::mock(PaymentsFactory::class);
         $testee = new PurchaseUnitFactory(
             $amountFactory,
-            $payeeRepository,
-            $payeeFactory,
             $itemFactory,
             $shippingFactory,
             $paymentsFacory
@@ -600,8 +578,6 @@ class PurchaseUnitFactoryTest extends TestCase
 
         $testee = new PurchaseUnitFactory(
             $amountFactory,
-            $payeeRepository,
-            $payeeFactory,
             $itemFactory,
             $shippingFactory,
             $paymentsFactory
@@ -650,8 +626,6 @@ class PurchaseUnitFactoryTest extends TestCase
 
         $testee = new PurchaseUnitFactory(
             $amountFactory,
-            $payeeRepository,
-            $payeeFactory,
             $itemFactory,
             $shippingFactory,
             $paymentsFactory
