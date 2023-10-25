@@ -125,13 +125,6 @@ class SettingsListener {
 	protected $redirector;
 
 	/**
-	 * The logger.
-	 *
-	 * @var LoggerInterface
-	 */
-	private $logger;
-
-	/**
 	 * Max onboarding URL retries.
 	 *
 	 * @var int
@@ -144,6 +137,27 @@ class SettingsListener {
 	 * @var int
 	 */
 	private $onboarding_retry_delay = 2;
+
+	/**
+	 * Partner merchant ID production.
+	 *
+	 * @var string
+	 */
+	private $partner_merchant_id_production;
+
+	/**
+	 * Partner merchant ID sandbox.
+	 *
+	 * @var string
+	 */
+	private $partner_merchant_id_sandbox;
+
+	/**
+	 * The logger.
+	 *
+	 * @var LoggerInterface
+	 */
+	private $logger;
 
 	/**
 	 * SettingsListener constructor.
@@ -160,6 +174,8 @@ class SettingsListener {
 	 * @param Cache               $pui_status_cache The PUI status cache.
 	 * @param Cache               $dcc_status_cache The DCC status cache.
 	 * @param RedirectorInterface $redirector The HTTP redirector.
+	 * @param string              $partner_merchant_id_production Partner merchant ID production.
+	 * @param string              $partner_merchant_id_sandbox Partner merchant ID sandbox.
 	 * @param ?LoggerInterface    $logger The logger.
 	 */
 	public function __construct(
@@ -175,22 +191,26 @@ class SettingsListener {
 		Cache $pui_status_cache,
 		Cache $dcc_status_cache,
 		RedirectorInterface $redirector,
+		string $partner_merchant_id_production,
+		string $partner_merchant_id_sandbox,
 		LoggerInterface $logger = null
 	) {
 
-		$this->settings          = $settings;
-		$this->setting_fields    = $setting_fields;
-		$this->webhook_registrar = $webhook_registrar;
-		$this->cache             = $cache;
-		$this->state             = $state;
-		$this->bearer            = $bearer;
-		$this->page_id           = $page_id;
-		$this->signup_link_cache = $signup_link_cache;
-		$this->signup_link_ids   = $signup_link_ids;
-		$this->pui_status_cache  = $pui_status_cache;
-		$this->dcc_status_cache  = $dcc_status_cache;
-		$this->redirector        = $redirector;
-		$this->logger            = $logger ?: new NullLogger();
+		$this->settings                       = $settings;
+		$this->setting_fields                 = $setting_fields;
+		$this->webhook_registrar              = $webhook_registrar;
+		$this->cache                          = $cache;
+		$this->state                          = $state;
+		$this->bearer                         = $bearer;
+		$this->page_id                        = $page_id;
+		$this->signup_link_cache              = $signup_link_cache;
+		$this->signup_link_ids                = $signup_link_ids;
+		$this->pui_status_cache               = $pui_status_cache;
+		$this->dcc_status_cache               = $dcc_status_cache;
+		$this->redirector                     = $redirector;
+		$this->partner_merchant_id_production = $partner_merchant_id_production;
+		$this->partner_merchant_id_sandbox    = $partner_merchant_id_sandbox;
+		$this->logger                         = $logger ?: new NullLogger();
 	}
 
 	/**
@@ -210,7 +230,11 @@ class SettingsListener {
 			return;
 		}
 
-		$merchant_id      = sanitize_text_field( wp_unslash( $_GET['merchantIdInPayPal'] ) );
+		$merchant_id = sanitize_text_field( wp_unslash( $_GET['merchantIdInPayPal'] ) );
+		if ( $merchant_id === $this->partner_merchant_id_production || $merchant_id === $this->partner_merchant_id_sandbox ) {
+			return;
+		}
+
 		$merchant_email   = $this->sanitize_onboarding_email( sanitize_text_field( wp_unslash( $_GET['merchantId'] ) ) );
 		$onboarding_token = sanitize_text_field( wp_unslash( $_GET['ppcpToken'] ) );
 		$retry_count      = isset( $_GET['ppcpRetry'] ) ? ( (int) sanitize_text_field( wp_unslash( $_GET['ppcpRetry'] ) ) ) : 0;
@@ -498,10 +522,18 @@ class SettingsListener {
 		if ( ! isset( $settings['client_id_sandbox'] ) && ! isset( $settings['client_id_production'] ) ) {
 			return $settings;
 		}
-		$is_sandbox                 = isset( $settings['sandbox_on'] ) && $settings['sandbox_on'];
-		$settings['client_id']      = $is_sandbox ? $settings['client_id_sandbox'] : $settings['client_id_production'];
-		$settings['client_secret']  = $is_sandbox ? $settings['client_secret_sandbox'] : $settings['client_secret_production'];
-		$settings['merchant_id']    = $is_sandbox ? $settings['merchant_id_sandbox'] : $settings['merchant_id_production'];
+		$is_sandbox                = isset( $settings['sandbox_on'] ) && $settings['sandbox_on'];
+		$settings['client_id']     = $is_sandbox ? $settings['client_id_sandbox'] : $settings['client_id_production'];
+		$settings['client_secret'] = $is_sandbox ? $settings['client_secret_sandbox'] : $settings['client_secret_production'];
+
+		if ( $settings['merchant_id_sandbox'] === $this->partner_merchant_id_sandbox || $settings['merchant_id_sandbox'] === $this->partner_merchant_id_production ) {
+			$settings['merchant_id_sandbox'] = '';
+		}
+		if ( $settings['merchant_id_production'] === $this->partner_merchant_id_sandbox || $settings['merchant_id_sandbox'] === $this->partner_merchant_id_production ) {
+			$settings['merchant_id_production'] = '';
+		}
+		$settings['merchant_id'] = $is_sandbox ? $settings['merchant_id_sandbox'] : $settings['merchant_id_production'];
+
 		$settings['merchant_email'] = $is_sandbox ? $settings['merchant_email_sandbox'] : $settings['merchant_email_production'];
 		return $settings;
 	}

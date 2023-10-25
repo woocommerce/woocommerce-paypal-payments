@@ -14,7 +14,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PurchaseUnitSanitizer;
-use WooCommerce\PayPalCommerce\ApiClient\Repository\PayeeRepository;
 use WooCommerce\PayPalCommerce\Webhooks\CustomIds;
 
 /**
@@ -28,20 +27,6 @@ class PurchaseUnitFactory {
 	 * @var AmountFactory
 	 */
 	private $amount_factory;
-
-	/**
-	 * The payee repository.
-	 *
-	 * @var PayeeRepository
-	 */
-	private $payee_repository;
-
-	/**
-	 * The payee factory.
-	 *
-	 * @var PayeeFactory
-	 */
-	private $payee_factory;
 
 	/**
 	 * The item factory.
@@ -89,8 +74,6 @@ class PurchaseUnitFactory {
 	 * PurchaseUnitFactory constructor.
 	 *
 	 * @param AmountFactory          $amount_factory The amount factory.
-	 * @param PayeeRepository        $payee_repository The Payee repository.
-	 * @param PayeeFactory           $payee_factory The Payee factory.
 	 * @param ItemFactory            $item_factory The item factory.
 	 * @param ShippingFactory        $shipping_factory The shipping factory.
 	 * @param PaymentsFactory        $payments_factory The payments factory.
@@ -100,8 +83,6 @@ class PurchaseUnitFactory {
 	 */
 	public function __construct(
 		AmountFactory $amount_factory,
-		PayeeRepository $payee_repository,
-		PayeeFactory $payee_factory,
 		ItemFactory $item_factory,
 		ShippingFactory $shipping_factory,
 		PaymentsFactory $payments_factory,
@@ -111,8 +92,6 @@ class PurchaseUnitFactory {
 	) {
 
 		$this->amount_factory   = $amount_factory;
-		$this->payee_repository = $payee_repository;
-		$this->payee_factory    = $payee_factory;
 		$this->item_factory     = $item_factory;
 		$this->shipping_factory = $shipping_factory;
 		$this->payments_factory = $payments_factory;
@@ -146,7 +125,6 @@ class PurchaseUnitFactory {
 		}
 		$reference_id    = 'default';
 		$description     = '';
-		$payee           = $this->payee_repository->payee();
 		$custom_id       = (string) $order->get_id();
 		$invoice_id      = $this->prefix . $order->get_order_number();
 		$soft_descriptor = $this->soft_descriptor;
@@ -157,7 +135,6 @@ class PurchaseUnitFactory {
 			$shipping,
 			$reference_id,
 			$description,
-			$payee,
 			$custom_id,
 			$invoice_id,
 			$soft_descriptor
@@ -211,8 +188,6 @@ class PurchaseUnitFactory {
 		$reference_id = 'default';
 		$description  = '';
 
-		$payee = $this->payee_repository->payee();
-
 		$custom_id = '';
 		$session   = WC()->session;
 		if ( $session instanceof WC_Session_Handler ) {
@@ -229,7 +204,6 @@ class PurchaseUnitFactory {
 			$shipping,
 			$reference_id,
 			$description,
-			$payee,
 			$custom_id,
 			$invoice_id,
 			$soft_descriptor
@@ -269,7 +243,6 @@ class PurchaseUnitFactory {
 				$data->items
 			);
 		}
-		$payee    = isset( $data->payee ) ? $this->payee_factory->from_paypal_response( $data->payee ) : null;
 		$shipping = null;
 		try {
 			if ( isset( $data->shipping ) ) {
@@ -293,7 +266,6 @@ class PurchaseUnitFactory {
 			$shipping,
 			$data->reference_id,
 			$description,
-			$payee,
 			$custom_id,
 			$invoice_id,
 			$soft_descriptor,
