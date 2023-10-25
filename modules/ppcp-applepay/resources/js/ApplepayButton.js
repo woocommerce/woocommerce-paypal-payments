@@ -33,20 +33,7 @@ class ApplepayButton {
             }
         }
 
-        //PRODUCT DETAIL PAGE
         this.refreshContextData();
-
-        if (this.context === 'product') {
-            jQuery(document).on('appleclick', () => {
-                (this.onshippingcontactselected())({
-                    shippingContact: {
-                        locality: 'New York',
-                        postalCode: '10001',
-                        countryCode: 'US'
-                    }
-                });
-            });
-        }
     }
 
     init(config) {

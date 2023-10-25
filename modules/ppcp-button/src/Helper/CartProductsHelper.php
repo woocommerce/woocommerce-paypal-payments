@@ -78,7 +78,7 @@ class CartProductsHelper {
 			return null;
 		}
 		foreach ( $data['products'] as $product ) {
-			$product = $this->products_from_data( $product );
+			$product = $this->product_from_data( $product );
 			if ( $product ) {
 				$products[] = $product;
 			}

@@ -254,6 +254,7 @@ class ApplePayDataObjectHttp {
 			return;
 		}
 
+		$data = $this->append_products_to_data( $data, $_POST );
 		$data = $this->preprocess_request_data( $data );
 
 		$data[ PropertiesDictionary::CALLER_PAGE ] = $caller_page;
@@ -697,7 +698,18 @@ class ApplePayDataObjectHttp {
 			)
 		);
 
-		$products = json_decode( wp_unslash( $_POST[ PropertiesDictionary::PRODUCTS ] ?? '' ), true );
+		return $this->append_products_to_data( $data, $_POST );
+	}
+
+	/**
+	 * Appends product to a data array.
+	 *
+	 * @param array $data The data.
+	 * @param array $request_data The request data.
+	 * @return array
+	 */
+	public function append_products_to_data( array $data, array $request_data ): array {
+		$products = json_decode( wp_unslash( $request_data[ PropertiesDictionary::PRODUCTS ] ?? '' ), true );
 
 		if ( $products ) {
 			$data[ PropertiesDictionary::PRODUCTS ] = $products;
