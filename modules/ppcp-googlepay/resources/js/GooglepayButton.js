@@ -189,7 +189,6 @@ class GooglepayButton {
                 callback(el);
             } else if (timeElapsed > timeout) {
                 clearInterval(interval);
-                console.error('Waiting for wrapper timed out.', selector);
             }
         }, delay);
     }

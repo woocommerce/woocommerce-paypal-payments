@@ -107,7 +107,6 @@ class AvailabilityNotice {
 			 * @psalm-suppress MissingClosureParamType
 			 */
 			static function ( $notices ): array {
-
 				$message = sprintf(
 					// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
 					__(
@@ -142,7 +141,6 @@ class AvailabilityNotice {
 			 * @psalm-suppress MissingClosureParamType
 			 */
 			static function ( $notices ): array {
-
 				$message = sprintf(
 					__(
 						'Google Pay is not available on your PayPal seller account.',

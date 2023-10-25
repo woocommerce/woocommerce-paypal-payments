@@ -16,7 +16,9 @@ import GooglepayManager from "./GooglepayManager";
     };
 
     jQuery(document.body).on('updated_cart_totals updated_checkout', () => {
-        manager.reinit();
+        if (manager) {
+            manager.reinit();
+        }
     });
 
     document.addEventListener(

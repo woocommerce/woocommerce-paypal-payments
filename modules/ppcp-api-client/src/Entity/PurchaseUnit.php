@@ -52,13 +52,6 @@ class PurchaseUnit {
 	private $description;
 
 	/**
-	 * The Payee.
-	 *
-	 * @var Payee|null
-	 */
-	private $payee;
-
-	/**
 	 * The custom id.
 	 *
 	 * @var string
@@ -108,7 +101,6 @@ class PurchaseUnit {
 	 * @param Shipping|null $shipping The Shipping.
 	 * @param string        $reference_id The reference ID.
 	 * @param string        $description The description.
-	 * @param Payee|null    $payee The Payee.
 	 * @param string        $custom_id The custom ID.
 	 * @param string        $invoice_id The invoice ID.
 	 * @param string        $soft_descriptor The soft descriptor.
@@ -120,7 +112,6 @@ class PurchaseUnit {
 		Shipping $shipping = null,
 		string $reference_id = 'default',
 		string $description = '',
-		Payee $payee = null,
 		string $custom_id = '',
 		string $invoice_id = '',
 		string $soft_descriptor = '',
@@ -150,7 +141,6 @@ class PurchaseUnit {
 				}
 			)
 		);
-		$this->payee           = $payee;
 		$this->custom_id       = $custom_id;
 		$this->invoice_id      = $invoice_id;
 		$this->soft_descriptor = $soft_descriptor;
@@ -258,15 +248,6 @@ class PurchaseUnit {
 	}
 
 	/**
-	 * Returns the Payee.
-	 *
-	 * @return Payee|null
-	 */
-	public function payee() {
-		return $this->payee;
-	}
-
-	/**
 	 * Returns the Payments.
 	 *
 	 * @return Payments|null
@@ -313,10 +294,6 @@ class PurchaseUnit {
 				$this->items()
 			),
 		);
-
-		if ( $this->payee() ) {
-			$purchase_unit['payee'] = $this->payee()->to_array();
-		}
 
 		if ( $this->payments() ) {
 			$purchase_unit['payments'] = $this->payments()->to_array();

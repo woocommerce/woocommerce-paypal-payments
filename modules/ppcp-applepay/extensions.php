@@ -24,7 +24,7 @@ return array(
 			return $fields;
 		}
 
-		$is_available = $container->get( 'applepay.enabled' );
+		$is_available = $container->get( 'applepay.available' );
 		$is_referral  = $container->get( 'applepay.is_referral' );
 
 		$insert_after = function ( array $array, string $key, array $new ): array {

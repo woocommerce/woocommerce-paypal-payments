@@ -53,7 +53,9 @@ class SettingsListenerTest extends ModularTestCase
 			$signup_link_ids,
             $pui_status_cache,
             $dcc_status_cache,
-			new RedirectorStub()
+			new RedirectorStub(),
+			'',
+			''
 		);
 
 		$_GET['section'] = PayPalGateway::ID;

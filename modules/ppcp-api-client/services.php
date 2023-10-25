@@ -308,8 +308,6 @@ return array(
 	'api.factory.purchase-unit'                 => static function ( ContainerInterface $container ): PurchaseUnitFactory {
 
 		$amount_factory   = $container->get( 'api.factory.amount' );
-		$payee_repository = $container->get( 'api.repository.payee' );
-		$payee_factory    = $container->get( 'api.factory.payee' );
 		$item_factory     = $container->get( 'api.factory.item' );
 		$shipping_factory = $container->get( 'api.factory.shipping' );
 		$payments_factory = $container->get( 'api.factory.payments' );
@@ -319,8 +317,6 @@ return array(
 
 		return new PurchaseUnitFactory(
 			$amount_factory,
-			$payee_repository,
-			$payee_factory,
 			$item_factory,
 			$shipping_factory,
 			$payments_factory,

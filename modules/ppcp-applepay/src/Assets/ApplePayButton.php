@@ -12,23 +12,16 @@ namespace WooCommerce\PayPalCommerce\Applepay\Assets;
 use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Cart;
-use WC_Checkout;
 use WC_Order;
-use WC_Session_Handler;
-use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
-use WooCommerce\PayPalCommerce\Session\MemoryWcSession;
-use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\RequestHandlerTrait;
 
 /**
- * Class PayPalPaymentMethod
+ * Class ApplePayButton
  */
 class ApplePayButton implements ButtonInterface {
 	use RequestHandlerTrait;
@@ -178,21 +171,6 @@ class ApplePayButton implements ButtonInterface {
 					$data['products'][0] = 'PAYMENT_METHODS';
 				}
 				$data['capabilities'][] = 'APPLE_PAY';
-				$data['operations'][]   = array(
-					'operation'                  => 'API_INTEGRATION',
-					'api_integration_preference' => array(
-						'rest_api_integration' => array(
-							'integration_method'  => 'PAYPAL',
-							'integration_type'    => 'THIRD_PARTY',
-							'third_party_details' => array(
-								'features' => array(
-									'PAYMENT',
-									'REFUND',
-								),
-							),
-						),
-					),
-				);
 
 				return $data;
 			}
@@ -422,7 +400,7 @@ class ApplePayButton implements ButtonInterface {
 		}
 		$applepay_request_data_object->order_data( $context );
 		$this->update_posted_data( $applepay_request_data_object );
-		if ( $context == 'product' ) {
+		if ( $context === 'product' ) {
 			$cart_item_key = $this->prepare_cart( $applepay_request_data_object );
 			$cart          = WC()->cart;
 			$address       = $applepay_request_data_object->shipping_address();
@@ -902,15 +880,19 @@ class ApplePayButton implements ButtonInterface {
 	 * Renders the Apple Pay button on the page
 	 *
 	 * @return bool
+	 *
+	 * @psalm-suppress RedundantCondition
 	 */
 	public function render(): bool {
-		$is_applepay_button_enabled = $this->settings->has( 'applepay_button_enabled' ) ? $this->settings->get( 'applepay_button_enabled' ) : false;
+		if ( ! $this->is_enabled() ) {
+			return true;
+		}
 
-		$button_enabled_product  = $is_applepay_button_enabled && $this->settings_status->is_smart_button_enabled_for_location( 'product' );
-		$button_enabled_cart     = $is_applepay_button_enabled && $this->settings_status->is_smart_button_enabled_for_location( 'cart' );
-		$button_enabled_checkout = $is_applepay_button_enabled;
-		$button_enabled_payorder = $is_applepay_button_enabled;
-		$button_enabled_minicart = $is_applepay_button_enabled && $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' );
+		$button_enabled_product  = $this->settings_status->is_smart_button_enabled_for_location( 'product' );
+		$button_enabled_cart     = $this->settings_status->is_smart_button_enabled_for_location( 'cart' );
+		$button_enabled_checkout = true;
+		$button_enabled_payorder = true;
+		$button_enabled_minicart = $this->settings_status->is_smart_button_enabled_for_location( 'mini-cart' );
 
 		add_filter(
 			'woocommerce_paypal_payments_sdk_components_hook',
@@ -1017,13 +999,7 @@ class ApplePayButton implements ButtonInterface {
 		);
 		wp_enqueue_script( 'wc-ppcp-applepay' );
 
-		wp_register_style(
-			'wc-ppcp-applepay',
-			untrailingslashit( $this->module_url ) . '/assets/css/styles.css',
-			array(),
-			$this->version
-		);
-		wp_enqueue_style( 'wc-ppcp-applepay' );
+		$this->enqueue_styles();
 
 		wp_localize_script(
 			'wc-ppcp-applepay',
@@ -1036,6 +1012,23 @@ class ApplePayButton implements ButtonInterface {
 				wp_enqueue_script( 'wc-ppcp-applepay' );
 			}
 		);
+	}
+
+	/**
+	 * Enqueues styles.
+	 */
+	public function enqueue_styles(): void {
+		if ( ! $this->is_enabled() ) {
+			return;
+		}
+
+		wp_register_style(
+			'wc-ppcp-applepay',
+			untrailingslashit( $this->module_url ) . '/assets/css/styles.css',
+			array(),
+			$this->version
+		);
+		wp_enqueue_style( 'wc-ppcp-applepay' );
 	}
 
 	/**
@@ -1054,7 +1047,6 @@ class ApplePayButton implements ButtonInterface {
 	 */
 	public function is_enabled(): bool {
 		try {
-			// todo add also onboarded apple and enabled buttons.
 			return $this->settings->has( 'applepay_button_enabled' ) && $this->settings->get( 'applepay_button_enabled' );
 		} catch ( Exception $e ) {
 			return false;

@@ -180,6 +180,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
+= 2.4.0 - xxxx-xx-xx =
 * Fix - Mini-Cart Bug cause of wrong DOM-Structure in v2.3.1 #1735
 * Fix - ACDC disappearing after plugin updates #1751
 * Fix - Subscription module hooks #1748
@@ -193,6 +194,14 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 * Enhancement - Cart simulation improvements #1753
 * Enhancement - Billing schedule fields not greyed out when PayPal Subscriptions product is connected #1755
 * Enhancement - Check validation errors when submitting in block #1528
+* Enhancement - Improve handling of server error when submitting block #1785
+* Enhancement - Extend Apple Pay country eligibility #1781
+* Enhancement - Apple Pay validation notice improvements #1783
+* Enhancement - Apple Pay payment process issues #1789
+* Enhancement - Disable the tracking if payment is not captured #1780
+* Enhancement - Place order button remains - Could not retrieve order #1786
+* Enhancement - Google Pay for variable product greyed out but clickable #1788
+* Enhancement - Merchant credential validation & remove PAYEE object #1795
 
 = 2.3.1 - 2023-09-26 =
 * Fix - Fatal error when saving product while WooCommerce Subscriptions plugin is not active #1731
