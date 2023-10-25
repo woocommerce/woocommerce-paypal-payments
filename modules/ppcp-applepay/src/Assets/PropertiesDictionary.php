@@ -14,7 +14,6 @@ namespace WooCommerce\PayPalCommerce\Applepay\Assets;
  */
 class PropertiesDictionary {
 
-
 	public const BILLING_CONTACT_INVALID = 'billing Contact Invalid';
 
 	public const CREATE_ORDER_SINGLE_PROD_REQUIRED_FIELDS =
@@ -62,18 +61,20 @@ class PropertiesDictionary {
 			self::SIMPLIFIED_CONTACT,
 		);
 
-	public const PRODUCT_ID = 'product_id';
+	public const PRODUCTS           = 'products';
+	public const PRODUCT_ID         = 'product_id';
+	public const PRODUCT_QUANTITY   = 'product_quantity';
+	public const PRODUCT_VARIATIONS = 'product_variations';
+	public const PRODUCT_EXTRA      = 'product_extra';
+	public const PRODUCT_BOOKING    = 'product_booking';
 
-	public const SIMPLIFIED_CONTACT = 'simplified_contact';
-
-	public const SHIPPING_METHOD = 'shipping_method';
-
-	public const SHIPPING_CONTACT = 'shipping_contact';
-
+	public const SIMPLIFIED_CONTACT       = 'simplified_contact';
+	public const SHIPPING_METHOD          = 'shipping_method';
+	public const SHIPPING_CONTACT         = 'shipping_contact';
 	public const SHIPPING_CONTACT_INVALID = 'shipping Contact Invalid';
+	public const BILLING_CONTACT          = 'billing_contact';
 
-	public const NONCE = 'nonce';
-
+	public const NONCE   = 'nonce';
 	public const WCNONCE = 'woocommerce-process-checkout-nonce';
 
 	public const CREATE_ORDER_CART_REQUIRED_FIELDS =
@@ -83,25 +84,16 @@ class PropertiesDictionary {
 			self::SHIPPING_CONTACT,
 		);
 
-	public const PRODUCT_QUANTITY = 'product_quantity';
-
 	public const CALLER_PAGE = 'caller_page';
-
-	public const BILLING_CONTACT = 'billing_contact';
 
 	public const NEED_SHIPPING = 'need_shipping';
 
 	public const UPDATE_SHIPPING_CONTACT = 'ppcp_update_shipping_contact';
-
-	public const UPDATE_SHIPPING_METHOD = 'ppcp_update_shipping_method';
-
-	public const CREATE_ORDER = 'ppcp_create_order';
-
-	public const CREATE_ORDER_CART = 'ppcp_create_order_cart';
-
-	public const REDIRECT = 'ppcp_redirect';
-
-	public const VALIDATE = 'ppcp_validate';
+	public const UPDATE_SHIPPING_METHOD  = 'ppcp_update_shipping_method';
+	public const CREATE_ORDER            = 'ppcp_create_order';
+	public const CREATE_ORDER_CART       = 'ppcp_create_order_cart';
+	public const REDIRECT                = 'ppcp_redirect';
+	public const VALIDATE                = 'ppcp_validate';
 
 	/**
 	 * Returns the possible list of button colors.

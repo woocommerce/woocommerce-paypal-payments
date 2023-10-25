@@ -49,12 +49,20 @@ class SingleProductHandler extends BaseHandler {
     }
 
     createOrder() {
+        return this.actionHandler().configuration().createOrder();
+    }
+
+    products() {
+        return this.actionHandler().getProducts();
+    }
+
+    actionHandler() {
         const errorHandler = new ErrorHandler(
             this.ppcpConfig.labels.error.generic,
             document.querySelector('.woocommerce-notices-wrapper')
         );
 
-        const actionHandler = new SingleProductActionHandler(
+        return new SingleProductActionHandler(
             this.ppcpConfig,
             new UpdateCart(
                 this.ppcpConfig.ajax.change_cart.endpoint,
@@ -63,8 +71,6 @@ class SingleProductHandler extends BaseHandler {
             document.querySelector('form.cart'),
             errorHandler,
         );
-
-        return actionHandler.configuration().createOrder();
     }
 
 }

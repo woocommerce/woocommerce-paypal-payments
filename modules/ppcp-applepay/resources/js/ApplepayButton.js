@@ -23,9 +23,6 @@ class ApplepayButton {
             this.ppcpConfig
         );
 
-        //PRODUCT DETAIL PAGE
-        this.refreshContextData();
-
         this.updated_contact_info = []
         this.selectedShippingMethod = []
         this.nonce = document.getElementById('woocommerce-process-checkout-nonce').value
@@ -34,6 +31,21 @@ class ApplepayButton {
             if ( this.buttonConfig.is_debug ) {
                 console.log('[ApplePayButton]', ...arguments);
             }
+        }
+
+        //PRODUCT DETAIL PAGE
+        this.refreshContextData();
+
+        if (this.context === 'product') {
+            jQuery(document).on('appleclick', () => {
+                (this.onshippingcontactselected())({
+                    shippingContact: {
+                        locality: 'New York',
+                        postalCode: '10001',
+                        countryCode: 'US'
+                    }
+                });
+            });
         }
     }
 
@@ -260,6 +272,8 @@ class ApplepayButton {
             case 'product':
                 // Refresh product data that makes the price change.
                 this.productQuantity = document.querySelector('input.qty').value;
+                this.products = this.contextHandler.products();
+                this.log('Products updated', this.products);
                 break;
         }
     }
@@ -389,6 +403,7 @@ class ApplepayButton {
                 return {
                     action: 'ppcp_update_shipping_contact',
                     product_id: product_id,
+                    products: JSON.stringify(this.products),
                     caller_page: 'productDetail',
                     product_quantity: this.productQuantity,
                     simplified_contact: event.shippingContact,
@@ -419,6 +434,7 @@ class ApplepayButton {
                 action: 'ppcp_update_shipping_method',
                 shipping_method: event.shippingMethod,
                 product_id: product_id,
+                products: JSON.stringify(this.products),
                 caller_page: 'productDetail',
                 product_quantity: this.productQuantity,
                 simplified_contact: this.updated_contact_info,
@@ -456,6 +472,7 @@ class ApplepayButton {
                             action: 'ppcp_create_order',
                             'caller_page': this.context,
                             'product_id': this.buttonConfig.product.id ?? null,
+                            'products': JSON.stringify(this.products),
                             'product_quantity': this.productQuantity ?? null,
                             'shipping_contact': shippingContact,
                             'billing_contact': billingContact,
