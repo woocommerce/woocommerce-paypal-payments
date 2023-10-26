@@ -76,9 +76,15 @@ class GooglepayModule implements ModuleInterface {
 				}
 
 				// Initializes button rendering.
-				if ( ! is_admin() ) {
-					$button->render();
-				}
+				add_action(
+					'wp',
+					static function () use ( $c, $button ) {
+						if ( is_admin() ) {
+							return;
+						}
+						$button->render();
+					}
+				);
 
 				// Enqueue frontend scripts.
 				add_action(

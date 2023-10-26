@@ -199,7 +199,7 @@ class DataToAppleButtonScripts {
 				'totalLabel'   => $total_label,
 			),
 			'ajax_url'     => admin_url( 'admin-ajax.php' ),
-			'buttonMarkup' => $button_markup,
+			'buttonMarkup' => $button_markup, // Is this being used?
 		);
 	}
 }
