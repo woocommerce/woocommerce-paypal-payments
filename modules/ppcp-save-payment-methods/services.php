@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\SavePaymentMethods;
 
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Helper\SavePaymentMethodsApplies;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
@@ -52,4 +54,16 @@ return array(
 			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
 		);
 	},
+	'save-payment-methods.endpoint.create-setup-token' => static function (ContainerInterface $container): CreateSetupToken {
+		return new CreateSetupToken(
+			$container->get( 'button.request-data' ),
+			$container->get('api.endpoint.payment-method-tokens')
+		);
+	},
+	'save-payment-methods.endpoint.create-payment-token' => static function (ContainerInterface $container): CreatePaymentToken {
+		return new CreatePaymentToken(
+			$container->get('button.request-data'),
+			$container->get('api.endpoint.payment-method-tokens')
+		);
+}
 );

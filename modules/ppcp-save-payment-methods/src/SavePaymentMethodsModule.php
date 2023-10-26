@@ -17,6 +17,8 @@ use WooCommerce\PayPalCommerce\ApiClient\Authentication\UserIdToken;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
+use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenFactory;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenHelper;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenPayPal;
@@ -58,7 +60,7 @@ class SavePaymentMethodsModule implements ModuleInterface {
 
 				try {
 					$target_customer_id = '';
-					if ( get_current_user_id() !== 0 ) {
+					if ( is_user_logged_in() ) {
 						$target_customer_id = get_user_meta( get_current_user_id(), '_ppcp_target_customer_id', true );
 					}
 
@@ -167,6 +169,48 @@ class SavePaymentMethodsModule implements ModuleInterface {
 					$c->get( 'ppcp.asset-version' ),
 					true
 				);
+
+				$api = $c->get('api.user-id-token');
+				assert($api instanceof UserIdToken);
+
+				try {
+					$target_customer_id = '';
+					if (is_user_logged_in()) {
+						$target_customer_id = get_user_meta(get_current_user_id(), '_ppcp_target_customer_id', true);
+					}
+
+					$id_token = $api->id_token($target_customer_id);
+
+					wp_localize_script(
+						'ppcp-add-payment-method',
+						'ppcp_add_payment_method',
+						array(
+							'client_id' => $c->get( 'button.client_id' ),
+							'merchant_id' => $c->get( 'api.merchant_id' ),
+							'id_token' => $id_token,
+							'ajax' => array(
+								'create_setup_token'         => array(
+									'endpoint' => \WC_AJAX::get_endpoint( CreateSetupToken::ENDPOINT ),
+									'nonce'    => wp_create_nonce( CreateSetupToken::nonce() ),
+								),
+								'create_payment_token'         => array(
+									'endpoint' => \WC_AJAX::get_endpoint( CreatePaymentToken::ENDPOINT ),
+									'nonce'    => wp_create_nonce( CreatePaymentToken::nonce() ),
+								),
+							),
+						)
+					);
+				} catch (RuntimeException $exception) {
+					$logger = $c->get('woocommerce.logger.woocommerce');
+					assert($logger instanceof LoggerInterface);
+
+					$error = $exception->getMessage();
+					if (is_a($exception, PayPalApiException::class)) {
+						$error = $exception->get_details($error);
+					}
+
+					$logger->error($error);
+				}
 			}
 		);
 
@@ -178,6 +222,26 @@ class SavePaymentMethodsModule implements ModuleInterface {
 				}
 
 				echo '<div id="ppc-button-' . PayPalGateway::ID . '-save-payment-method"></div>';
+			}
+		);
+
+		add_action(
+			'wc_ajax_' . CreateSetupToken::ENDPOINT,
+			static function () use ( $c ) {
+				$endpoint = $c->get( 'save-payment-methods.endpoint.create-setup-token' );
+				assert($endpoint instanceof CreateSetupToken);
+
+				$endpoint->handle_request();
+			}
+		);
+
+		add_action(
+			'wc_ajax_' . CreatePaymentToken::ENDPOINT,
+			static function () use ( $c ) {
+				$endpoint = $c->get( 'save-payment-methods.endpoint.create-payment-token' );
+				assert($endpoint instanceof CreatePaymentToken);
+
+				$endpoint->handle_request();
 			}
 		);
 	}
