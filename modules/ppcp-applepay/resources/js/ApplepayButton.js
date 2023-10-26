@@ -25,7 +25,7 @@ class ApplepayButton {
 
         this.updated_contact_info = []
         this.selectedShippingMethod = []
-        this.nonce = document.getElementById('woocommerce-process-checkout-nonce').value
+        this.nonce = document.getElementById('woocommerce-process-checkout-nonce')?.value
 
         this.log = function() {
             if ( this.buttonConfig.is_debug ) {

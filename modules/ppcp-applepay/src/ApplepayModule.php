@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\Applepay;
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 use WooCommerce\PayPalCommerce\Applepay\Assets\ApplePayButton;
 use WooCommerce\PayPalCommerce\Applepay\Assets\AppleProductStatus;
+use WooCommerce\PayPalCommerce\Applepay\Assets\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Applepay\Helper\AvailabilityNotice;
@@ -89,6 +90,27 @@ class ApplepayModule implements ModuleInterface {
 
 				$apple_payment_method->bootstrap_ajax_request();
 			}
+		);
+
+		add_filter(
+			'nonce_user_logged_out',
+			/**
+			 * Prevents nonce from being changed for non logged in users.
+			 *
+			 * @param int $uid The uid.
+			 * @param string|int $action The action.
+			 * @return int
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function ( $uid, $action ) {
+				if ( $action === PropertiesDictionary::NONCE_ACTION ) {
+					return 0;
+				}
+				return $uid;
+			},
+			100,
+			2
 		);
 	}
 

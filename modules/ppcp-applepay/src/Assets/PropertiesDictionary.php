@@ -74,8 +74,9 @@ class PropertiesDictionary {
 	public const SHIPPING_CONTACT_INVALID = 'shipping Contact Invalid';
 	public const BILLING_CONTACT          = 'billing_contact';
 
-	public const NONCE   = 'nonce';
-	public const WCNONCE = 'woocommerce-process-checkout-nonce';
+	public const NONCE        = 'nonce';
+	public const NONCE_ACTION = 'woocommerce-process_checkout';
+	public const WCNONCE      = 'woocommerce-process-checkout-nonce';
 
 	public const CREATE_ORDER_CART_REQUIRED_FIELDS =
 		array(
