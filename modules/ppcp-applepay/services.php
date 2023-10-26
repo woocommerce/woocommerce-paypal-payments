@@ -109,7 +109,7 @@ return array(
 			$container->get( 'applepay.data_to_scripts' ),
 			$container->get( 'wcgateway.settings.status' ),
 			$container->get( 'button.helper.cart-products' )
-	);
+		);
 	},
 	'applepay.blocks-payment-method'             => static function ( ContainerInterface $container ): PaymentMethodTypeInterface {
 		return new BlocksPaymentMethod(

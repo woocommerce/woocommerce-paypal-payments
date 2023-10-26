@@ -62,21 +62,21 @@ class ApplePayDataObjectHttp {
 	/**
 	 * The product variations.
 	 *
-	 * @var string
+	 * @var array
 	 */
 	protected $product_variations = array();
 
 	/**
 	 * The product extra.
 	 *
-	 * @var string
+	 * @var array
 	 */
 	protected $product_extra = array();
 
 	/**
 	 * The product booking.
 	 *
-	 * @var string
+	 * @var array
 	 */
 	protected $product_booking = array();
 
@@ -295,7 +295,7 @@ class ApplePayDataObjectHttp {
 	/**
 	 * Pre-processes request data to transform it to a standard format.
 	 *
-	 * @param array $data
+	 * @param array $data The data.
 	 * @return array
 	 */
 	protected function preprocess_request_data( array $data ): array {
@@ -602,7 +602,7 @@ class ApplePayDataObjectHttp {
 	/**
 	 * Returns the product variations.
 	 *
-	 * @return string
+	 * @return array
 	 */
 	public function product_variations(): array {
 		return $this->product_variations;
@@ -611,7 +611,7 @@ class ApplePayDataObjectHttp {
 	/**
 	 * Returns the product extra.
 	 *
-	 * @return string
+	 * @return array
 	 */
 	public function product_extra(): array {
 		return $this->product_extra;
@@ -620,7 +620,7 @@ class ApplePayDataObjectHttp {
 	/**
 	 * Returns the product booking.
 	 *
-	 * @return string
+	 * @return array
 	 */
 	public function product_booking(): array {
 		return $this->product_booking;
@@ -697,6 +697,10 @@ class ApplePayDataObjectHttp {
 				),
 			)
 		);
+
+		if ( ! $data ) {
+			return false;
+		}
 
 		return $this->append_products_to_data( $data, $_POST );
 	}

@@ -254,7 +254,7 @@ return array(
 	},
 
 	'button.helper.cart-products'                 => static function ( ContainerInterface $container ): CartProductsHelper {
-		$data_store   = \WC_Data_Store::load( 'product' );
+		$data_store = \WC_Data_Store::load( 'product' );
 		return new CartProductsHelper( $data_store );
 	},
 

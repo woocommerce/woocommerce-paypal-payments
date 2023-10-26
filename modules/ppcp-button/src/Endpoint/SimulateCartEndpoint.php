@@ -52,11 +52,11 @@ class SimulateCartEndpoint extends AbstractCartEndpoint {
 		CartProductsHelper $cart_products,
 		LoggerInterface $logger
 	) {
-		$this->smart_button       = $smart_button;
-		$this->cart               = clone $cart;
-		$this->request_data       = $request_data;
-		$this->cart_products      = $cart_products;
-		$this->logger             = $logger;
+		$this->smart_button  = $smart_button;
+		$this->cart          = clone $cart;
+		$this->request_data  = $request_data;
+		$this->cart_products = $cart_products;
+		$this->logger        = $logger;
 
 		$this->logger_tag = 'simulation';
 	}

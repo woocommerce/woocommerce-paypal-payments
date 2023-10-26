@@ -53,7 +53,7 @@ class CartProductsHelper {
 	/**
 	 * Sets a new cart instance.
 	 *
-	 * @param WC_Cart $cart
+	 * @param WC_Cart $cart The cart.
 	 * @return void
 	 */
 	public function set_cart( WC_Cart $cart ): void {
@@ -89,7 +89,7 @@ class CartProductsHelper {
 	/**
 	 * Returns product information from a data array.
 	 *
-	 * @param array $product
+	 * @param array $product The product data array, usually provided by the product page form.
 	 * @return array|null
 	 */
 	public function product_from_data( array $product ): ?array {
@@ -135,20 +135,20 @@ class CartProductsHelper {
 
 			if ( $product['product']->is_type( 'booking' ) ) {
 				$success = $success && $this->add_booking_product(
-						$product['product'],
-						$product['booking']
-					);
+					$product['product'],
+					$product['booking']
+				);
 			} elseif ( $product['product']->is_type( 'variable' ) ) {
 				$success = $success && $this->add_variable_product(
-						$product['product'],
-						$product['quantity'],
-						$product['variations']
-					);
+					$product['product'],
+					$product['quantity'],
+					$product['variations']
+				);
 			} else {
 				$success = $success && $this->add_product(
-						$product['product'],
-						$product['quantity']
-					);
+					$product['product'],
+					$product['quantity']
+				);
 			}
 		}
 
@@ -169,7 +169,9 @@ class CartProductsHelper {
 	 * @throws Exception When product could not be added.
 	 */
 	public function add_product( \WC_Product $product, int $quantity ): bool {
-		$this->validate_cart();
+		if ( ! $this->cart ) {
+			throw new Exception( 'Cart not set.' );
+		}
 
 		$cart_item_key = $this->cart->add_to_cart( $product->get_id(), $quantity );
 
@@ -194,7 +196,9 @@ class CartProductsHelper {
 		int $quantity,
 		array $post_variations
 	): bool {
-		$this->validate_cart();
+		if ( ! $this->cart ) {
+			throw new Exception( 'Cart not set.' );
+		}
 
 		$variations = array();
 		foreach ( $post_variations as $key => $value ) {
@@ -230,7 +234,9 @@ class CartProductsHelper {
 		\WC_Product $product,
 		array $data
 	): bool {
-		$this->validate_cart();
+		if ( ! $this->cart ) {
+			throw new Exception( 'Cart not set.' );
+		}
 
 		if ( ! is_callable( 'wc_bookings_get_posted_data' ) ) {
 			return false;
@@ -252,10 +258,12 @@ class CartProductsHelper {
 	 * Removes stored cart items from WooCommerce cart.
 	 *
 	 * @return void
-	 * @throws Exception
+	 * @throws Exception Throws if there's a failure removing the cart items.
 	 */
 	public function remove_cart_items(): void {
-		$this->validate_cart();
+		if ( ! $this->cart ) {
+			throw new Exception( 'Cart not set.' );
+		}
 
 		foreach ( $this->cart_item_keys as $cart_item_key ) {
 			if ( ! $cart_item_key ) {
@@ -266,21 +274,12 @@ class CartProductsHelper {
 	}
 
 	/**
+	 * Returns the cart item keys of the items added to cart.
+	 *
 	 * @return array
 	 */
 	public function cart_item_keys(): array {
 		return $this->cart_item_keys;
 	}
 
-	/**
-	 * Throws the cart not set exception.
-	 *
-	 * @return void
-	 * @throws Exception
-	 */
-	private function validate_cart(): void {
-		if ( ! $this->cart ) {
-			throw new Exception( 'Cart not set.' );
-		}
-	}
 }
