@@ -60,7 +60,6 @@ return array(
 			$source
 		);
 	},
-
 	'wcgateway.settings.fields'      => function ( ContainerInterface $container, array $fields ): array {
 		$path_to_settings_fields = __DIR__ . '/src/Settings/Fields';
 

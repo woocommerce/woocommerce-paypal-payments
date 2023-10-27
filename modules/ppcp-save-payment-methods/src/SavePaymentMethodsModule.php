@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\SavePaymentMethods;
 
 use Exception;
 use Psr\Log\LoggerInterface;
+use stdClass;
 use WC_Order;
 use WC_Payment_Tokens;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\UserIdToken;
@@ -116,36 +117,20 @@ class SavePaymentMethodsModule implements ModuleInterface {
 					$payment_token_helper = $c->get( 'vaulting.payment-token-helper' );
 					assert( $payment_token_helper instanceof PaymentTokenHelper );
 
-					$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $wc_order->get_customer_id(), PayPalGateway::ID );
-					if ( $payment_token_helper->token_exist( $wc_tokens, $payment_vault_attributes->id ) ) {
-						return;
-					}
-
 					$payment_token_factory = $c->get( 'vaulting.payment-token-factory' );
 					assert( $payment_token_factory instanceof PaymentTokenFactory );
 
-					$payment_token_paypal = $payment_token_factory->create( 'paypal' );
-					assert( $payment_token_paypal instanceof PaymentTokenPayPal );
+					$logger = $c->get( 'woocommerce.logger.woocommerce' );
+					assert( $logger instanceof LoggerInterface );
 
-					$payment_token_paypal->set_token( $payment_vault_attributes->id );
-					$payment_token_paypal->set_user_id( $wc_order->get_customer_id() );
-					$payment_token_paypal->set_gateway_id( PayPalGateway::ID );
+					$wc_payment_tokens = $c->get( 'save-payment-methods.wc-payment-tokens' );
+					assert( $wc_payment_tokens instanceof WooCommercePaymentTokens );
 
-					$email = $order->payment_source()->properties()->email_address ?? '';
-					if ( $email && is_email( $email ) ) {
-						$payment_token_paypal->set_email( $email );
-					}
-
-					try {
-						$payment_token_paypal->save();
-					} catch ( Exception $exception ) {
-						$logger = $c->get( 'woocommerce.logger.woocommerce' );
-						assert( $logger instanceof LoggerInterface );
-
-						$logger->error(
-							"Could not save WC payment token PayPal for order #{$wc_order->get_id()}. " . $exception->getMessage()
-						);
-					}
+					$wc_payment_tokens->create_payment_token_paypal(
+						$wc_order->get_customer_id(),
+						$payment_vault_attributes->id,
+						$order->payment_source()->properties()->email_address ?? ''
+					);
 				}
 			},
 			10,
@@ -170,46 +155,46 @@ class SavePaymentMethodsModule implements ModuleInterface {
 					true
 				);
 
-				$api = $c->get('api.user-id-token');
-				assert($api instanceof UserIdToken);
+				$api = $c->get( 'api.user-id-token' );
+				assert( $api instanceof UserIdToken );
 
 				try {
 					$target_customer_id = '';
-					if (is_user_logged_in()) {
-						$target_customer_id = get_user_meta(get_current_user_id(), '_ppcp_target_customer_id', true);
+					if ( is_user_logged_in() ) {
+						$target_customer_id = get_user_meta( get_current_user_id(), '_ppcp_target_customer_id', true );
 					}
 
-					$id_token = $api->id_token($target_customer_id);
+					$id_token = $api->id_token( $target_customer_id );
 
 					wp_localize_script(
 						'ppcp-add-payment-method',
 						'ppcp_add_payment_method',
 						array(
-							'client_id' => $c->get( 'button.client_id' ),
+							'client_id'   => $c->get( 'button.client_id' ),
 							'merchant_id' => $c->get( 'api.merchant_id' ),
-							'id_token' => $id_token,
-							'ajax' => array(
-								'create_setup_token'         => array(
+							'id_token'    => $id_token,
+							'ajax'        => array(
+								'create_setup_token'   => array(
 									'endpoint' => \WC_AJAX::get_endpoint( CreateSetupToken::ENDPOINT ),
 									'nonce'    => wp_create_nonce( CreateSetupToken::nonce() ),
 								),
-								'create_payment_token'         => array(
+								'create_payment_token' => array(
 									'endpoint' => \WC_AJAX::get_endpoint( CreatePaymentToken::ENDPOINT ),
 									'nonce'    => wp_create_nonce( CreatePaymentToken::nonce() ),
 								),
 							),
 						)
 					);
-				} catch (RuntimeException $exception) {
-					$logger = $c->get('woocommerce.logger.woocommerce');
-					assert($logger instanceof LoggerInterface);
+				} catch ( RuntimeException $exception ) {
+					$logger = $c->get( 'woocommerce.logger.woocommerce' );
+					assert( $logger instanceof LoggerInterface );
 
 					$error = $exception->getMessage();
-					if (is_a($exception, PayPalApiException::class)) {
-						$error = $exception->get_details($error);
+					if ( is_a( $exception, PayPalApiException::class ) ) {
+						$error = $exception->get_details( $error );
 					}
 
-					$logger->error($error);
+					$logger->error( $error );
 				}
 			}
 		);
@@ -221,7 +206,7 @@ class SavePaymentMethodsModule implements ModuleInterface {
 					return;
 				}
 
-				echo '<div id="ppc-button-' . PayPalGateway::ID . '-save-payment-method"></div>';
+				echo '<div id="ppc-button-' . esc_attr( PayPalGateway::ID ) . '-save-payment-method"></div>';
 			}
 		);
 
@@ -229,7 +214,7 @@ class SavePaymentMethodsModule implements ModuleInterface {
 			'wc_ajax_' . CreateSetupToken::ENDPOINT,
 			static function () use ( $c ) {
 				$endpoint = $c->get( 'save-payment-methods.endpoint.create-setup-token' );
-				assert($endpoint instanceof CreateSetupToken);
+				assert( $endpoint instanceof CreateSetupToken );
 
 				$endpoint->handle_request();
 			}
@@ -239,7 +224,7 @@ class SavePaymentMethodsModule implements ModuleInterface {
 			'wc_ajax_' . CreatePaymentToken::ENDPOINT,
 			static function () use ( $c ) {
 				$endpoint = $c->get( 'save-payment-methods.endpoint.create-payment-token' );
-				assert($endpoint instanceof CreatePaymentToken);
+				assert( $endpoint instanceof CreatePaymentToken );
 
 				$endpoint->handle_request();
 			}

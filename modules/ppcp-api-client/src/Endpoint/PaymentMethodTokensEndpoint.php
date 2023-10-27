@@ -16,25 +16,61 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 
+/**
+ * Class PaymentMethodTokensEndpoint
+ */
 class PaymentMethodTokensEndpoint {
 
 	use RequestTrait;
 
-	private string $host;
-	private Bearer $bearer;
-	private LoggerInterface $logger;
+	/**
+	 * The host.
+	 *
+	 * @var string
+	 */
+	private $host;
 
-	public function __construct(string $host, Bearer $bearer, LoggerInterface $logger)
-	{
-		$this->host = $host;
+	/**
+	 * The bearer.
+	 *
+	 * @var Bearer
+	 */
+	private $bearer;
+
+	/**
+	 * The logger.
+	 *
+	 * @var LoggerInterface
+	 */
+	private $logger;
+
+	/**
+	 * PaymentMethodTokensEndpoint constructor.
+	 *
+	 * @param string          $host The host.
+	 * @param Bearer          $bearer The bearer.
+	 * @param LoggerInterface $logger The logger.
+	 */
+	public function __construct( string $host, Bearer $bearer, LoggerInterface $logger ) {
+		$this->host   = $host;
 		$this->bearer = $bearer;
 		$this->logger = $logger;
 	}
 
-	public function setup_tokens(PaymentSource $payment_source): stdClass {
+	/**
+	 * Creates a setup token.
+	 *
+	 * @param PaymentSource $payment_source The payment source.
+	 *
+	 * @return stdClass
+	 *
+	 * @throws RuntimeException When something when wrong with the request.
+	 * @throws PayPalApiException When something when wrong setting up the token.
+	 */
+	public function setup_tokens( PaymentSource $payment_source ): stdClass {
 		$data = array(
 			'payment_source' => array(
-				$payment_source->name() => $payment_source->properties()
+				$payment_source->name() => $payment_source->properties(),
 			),
 		);
 
@@ -44,9 +80,9 @@ class PaymentMethodTokensEndpoint {
 		$args = array(
 			'method'  => 'POST',
 			'headers' => array(
-				'Authorization' => 'Bearer ' . $bearer->token(),
-				'Content-Type'  => 'application/json',
-				'PayPal-Request-Id'         => uniqid( 'ppcp-', true ),
+				'Authorization'     => 'Bearer ' . $bearer->token(),
+				'Content-Type'      => 'application/json',
+				'PayPal-Request-Id' => uniqid( 'ppcp-', true ),
 			),
 			'body'    => wp_json_encode( $data ),
 		);
@@ -69,10 +105,20 @@ class PaymentMethodTokensEndpoint {
 		return $json;
 	}
 
-	public function payment_tokens(PaymentSource $payment_source) {
+	/**
+	 * Creates a payment token for the given payment source.
+	 *
+	 * @param PaymentSource $payment_source The payment source.
+	 *
+	 * @return stdClass
+	 *
+	 * @throws RuntimeException When something when wrong with the request.
+	 * @throws PayPalApiException When something when wrong setting up the token.
+	 */
+	public function payment_tokens( PaymentSource $payment_source ): stdClass {
 		$data = array(
 			'payment_source' => array(
-				$payment_source->name() => $payment_source->properties()
+				$payment_source->name() => $payment_source->properties(),
 			),
 		);
 
@@ -82,9 +128,9 @@ class PaymentMethodTokensEndpoint {
 		$args = array(
 			'method'  => 'POST',
 			'headers' => array(
-				'Authorization' => 'Bearer ' . $bearer->token(),
-				'Content-Type'  => 'application/json',
-				'PayPal-Request-Id'         => uniqid( 'ppcp-', true ),
+				'Authorization'     => 'Bearer ' . $bearer->token(),
+				'Content-Type'      => 'application/json',
+				'PayPal-Request-Id' => uniqid( 'ppcp-', true ),
 			),
 			'body'    => wp_json_encode( $data ),
 		);

@@ -1,4 +1,11 @@
 <?php
+/**
+ * The Create Setup Token endpoint.
+ *
+ * @package WooCommerce\PayPalCommerce\ApiClient\Endpoint
+ */
+
+declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint;
 
@@ -8,30 +15,38 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
 
-class CreateSetupToken implements EndpointInterface
-{
+/**
+ * Class CreateSetupToken
+ */
+class CreateSetupToken implements EndpointInterface {
+
 	const ENDPOINT = 'ppc-create-setup-token';
 
 	/**
-	 * * The request data helper.
+	 * The request data helper.
 	 *
 	 * @var RequestData
 	 */
-	private RequestData $request_data;
+	private $request_data;
 
 	/**
 	 * Payment Method Tokens endpoint.
 	 *
 	 * @var PaymentMethodTokensEndpoint
 	 */
-	private PaymentMethodTokensEndpoint $payment_method_tokens_endpoint;
+	private $payment_method_tokens_endpoint;
 
+	/**
+	 * CreateSetupToken constructor.
+	 *
+	 * @param RequestData                 $request_data The request data helper.
+	 * @param PaymentMethodTokensEndpoint $payment_method_tokens_endpoint Payment Method Tokens endpoint.
+	 */
 	public function __construct(
 		RequestData $request_data,
 		PaymentMethodTokensEndpoint $payment_method_tokens_endpoint
-	)
-	{
-		$this->request_data = $request_data;
+	) {
+		$this->request_data                   = $request_data;
 		$this->payment_method_tokens_endpoint = $payment_method_tokens_endpoint;
 	}
 
@@ -40,8 +55,7 @@ class CreateSetupToken implements EndpointInterface
 	 *
 	 * @return string
 	 */
-	public static function nonce(): string
-	{
+	public static function nonce(): string {
 		return self::ENDPOINT;
 	}
 
@@ -51,27 +65,26 @@ class CreateSetupToken implements EndpointInterface
 	 * @return bool
 	 * @throws Exception On Error.
 	 */
-	public function handle_request(): bool
-	{
+	public function handle_request(): bool {
 		try {
 			$this->request_data->read_request( $this->nonce() );
 
 			$payment_source = new PaymentSource(
 				'paypal',
 				(object) array(
-					'usage_type' => 'MERCHANT',
+					'usage_type'         => 'MERCHANT',
 					'experience_context' => (object) array(
 						'return_url' => esc_url( wc_get_account_endpoint_url( 'payment-methods' ) ),
 						'cancel_url' => esc_url( wc_get_account_endpoint_url( 'add-payment-method' ) ),
-					)
+					),
 				)
 			);
 
-			$result = $this->payment_method_tokens_endpoint->setup_tokens($payment_source);
+			$result = $this->payment_method_tokens_endpoint->setup_tokens( $payment_source );
 
-			wp_send_json_success($result);
+			wp_send_json_success( $result );
 			return true;
-		} catch (Exception $exception) {
+		} catch ( Exception $exception ) {
 			wp_send_json_error();
 			return false;
 		}

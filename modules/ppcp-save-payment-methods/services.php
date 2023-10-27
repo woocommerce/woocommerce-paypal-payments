@@ -15,7 +15,7 @@ use WooCommerce\PayPalCommerce\SavePaymentMethods\Helper\SavePaymentMethodsAppli
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 return array(
-	'save-payment-methods.eligible'   => static function ( ContainerInterface $container ): bool {
+	'save-payment-methods.eligible'                      => static function ( ContainerInterface $container ): bool {
 		$save_payment_methods_applies = $container->get( 'save-payment-methods.helpers.save-payment-methods-applies' );
 		assert( $save_payment_methods_applies instanceof SavePaymentMethodsApplies );
 
@@ -43,7 +43,7 @@ return array(
 			)
 		);
 	},
-	'save-payment-methods.module.url' => static function ( ContainerInterface $container ): string {
+	'save-payment-methods.module.url'                    => static function ( ContainerInterface $container ): string {
 		/**
 		 * The path cannot be false.
 		 *
@@ -54,16 +54,24 @@ return array(
 			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
 		);
 	},
-	'save-payment-methods.endpoint.create-setup-token' => static function (ContainerInterface $container): CreateSetupToken {
+	'save-payment-methods.endpoint.create-setup-token'   => static function ( ContainerInterface $container ): CreateSetupToken {
 		return new CreateSetupToken(
 			$container->get( 'button.request-data' ),
-			$container->get('api.endpoint.payment-method-tokens')
+			$container->get( 'api.endpoint.payment-method-tokens' )
 		);
 	},
-	'save-payment-methods.endpoint.create-payment-token' => static function (ContainerInterface $container): CreatePaymentToken {
-		return new CreatePaymentToken(
-			$container->get('button.request-data'),
-			$container->get('api.endpoint.payment-method-tokens')
+	'save-payment-methods.wc-payment-tokens'             => static function( ContainerInterface $container ): WooCommercePaymentTokens {
+		return new WooCommercePaymentTokens(
+			$container->get( 'vaulting.payment-token-helper' ),
+			$container->get( 'vaulting.payment-token-factory' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
-}
+	},
+	'save-payment-methods.endpoint.create-payment-token' => static function ( ContainerInterface $container ): CreatePaymentToken {
+		return new CreatePaymentToken(
+			$container->get( 'button.request-data' ),
+			$container->get( 'api.endpoint.payment-method-tokens' ),
+			$container->get( 'save-payment-methods.wc-payment-tokens' )
+		);
+	},
 );
