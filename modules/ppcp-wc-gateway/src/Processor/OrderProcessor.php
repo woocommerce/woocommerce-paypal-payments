@@ -320,7 +320,6 @@ class OrderProcessor {
 	 * @return bool
 	 */
 	private function order_is_ready_for_process( Order $order ): bool {
-
 		if ( $order->status()->is( OrderStatus::APPROVED ) || $order->status()->is( OrderStatus::CREATED ) ) {
 			return true;
 		}
@@ -330,7 +329,6 @@ class OrderProcessor {
 			return false;
 		}
 
-		assert( $payment_source instanceof PaymentSource );
 		if ( $payment_source->name() !== 'card' ) {
 			return false;
 		}
