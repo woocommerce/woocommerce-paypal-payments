@@ -97,7 +97,6 @@ return array(
 		$shipment_factory = $container->get( 'order-tracking.shipment.factory' );
 		$logger           = $container->get( 'woocommerce.logger.woocommerce' );
 		$endpoint         = $container->get( 'order-tracking.endpoint.controller' );
-		$bearer           = $container->get( 'api.bearer' );
 
 		$is_gzd_active             = $container->get( 'compat.gzd.is_supported_plugin_version_active' );
 		$is_wc_shipment_active     = $container->get( 'compat.wc_shipment_tracking.is_supported_plugin_version_active' );
@@ -124,7 +123,7 @@ return array(
 		}
 
 		if ( $is_wc_shipping_tax_active ) {
-			$integrations[] = new WcShippingTaxIntegration( $shipment_factory, $logger, $endpoint, $bearer );
+			$integrations[] = new WcShippingTaxIntegration( $shipment_factory, $logger, $endpoint );
 		}
 
 		return $integrations;

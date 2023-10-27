@@ -12,7 +12,6 @@ namespace WooCommerce\PayPalCommerce\OrderTracking\Integration;
 use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Order;
-use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\Compat\Integration;
 use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
 use WooCommerce\PayPalCommerce\OrderTracking\Shipment\ShipmentFactoryInterface;
@@ -50,30 +49,20 @@ class WcShippingTaxIntegration implements Integration {
 	protected $endpoint;
 
 	/**
-	 * The bearer.
-	 *
-	 * @var Bearer
-	 */
-	private $bearer;
-
-	/**
 	 * The WcShippingTaxIntegration constructor.
 	 *
 	 * @param ShipmentFactoryInterface $shipment_factory The shipment factory.
 	 * @param LoggerInterface          $logger The logger.
 	 * @param OrderTrackingEndpoint    $endpoint The order tracking endpoint.
-	 * @param Bearer                   $bearer The bearer.
 	 */
 	public function __construct(
 		ShipmentFactoryInterface $shipment_factory,
 		LoggerInterface $logger,
-		OrderTrackingEndpoint $endpoint,
-		Bearer $bearer
+		OrderTrackingEndpoint $endpoint
 	) {
 		$this->shipment_factory = $shipment_factory;
 		$this->logger           = $logger;
 		$this->endpoint         = $endpoint;
-		$this->bearer           = $bearer;
 	}
 
 	/**
@@ -84,14 +73,14 @@ class WcShippingTaxIntegration implements Integration {
 		add_filter(
 			'rest_post_dispatch',
 			function( WP_HTTP_Response $response, WP_REST_Server $server, WP_REST_Request $request ): WP_HTTP_Response {
-				if ( ! $this->is_tracking_enabled( $this->bearer ) || ! apply_filters( 'woocommerce_paypal_payments_sync_wc_shipping_tax', true ) ) {
+				if ( ! apply_filters( 'woocommerce_paypal_payments_sync_wc_shipping_tax', true ) ) {
 					return $response;
 				}
 
-				$params   = $request->get_params() ?? array();
-				$order_id = (int) $params['order_id'] ?? 0;
+				$params   = $request->get_params();
+				$order_id = (int) ( $params['order_id'] ?? 0 );
 
-				if ( ! $order_id > 0 || "/wc/v1/connect/label/{$order_id}" !== $request->get_route() ) {
+				if ( ! $order_id || "/wc/v1/connect/label/{$order_id}" !== $request->get_route() ) {
 					return $response;
 				}
 
