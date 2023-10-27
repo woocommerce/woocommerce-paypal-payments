@@ -68,6 +68,9 @@ return array(
 	'compat.shipstation.is_supported_plugin_version_active' => function (): bool {
 		return function_exists( 'woocommerce_shipstation_init' );
 	},
+	'compat.wc_shipping_tax.is_supported_plugin_version_active' => function (): bool {
+		return class_exists( 'WC_Connect_Loader' );
+	},
 
 	'compat.module.url'                              => static function ( ContainerInterface $container ): string {
 		/**
