@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\Button\Helper;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\CardAuthenticationResult as AuthResult;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 
 /**
  * Class ThreeDSecure
@@ -49,17 +50,19 @@ class ThreeDSecure {
 	 * @return int
 	 */
 	public function proceed_with_order( Order $order ): int {
-		if ( ! $order->payment_source() ) {
-			return self::NO_DECISION;
-		}
-		if ( ! $order->payment_source()->properties()->brand ?? '' ) {
-			return self::NO_DECISION;
-		}
-		if ( ! $order->payment_source()->properties()->authentication_result ?? '' ) {
+		$payment_source = $order->payment_source();
+		if ( ! $payment_source ) {
 			return self::NO_DECISION;
 		}
 
-		$result = $order->payment_source()->properties()->authentication_result;
+		if ( ! $payment_source->properties()->brand ?? '' ) {
+			return self::NO_DECISION;
+		}
+		if ( ! $payment_source->properties()->authentication_result ?? '' ) {
+			return self::NO_DECISION;
+		}
+
+		$result = $payment_source->properties()->authentication_result;
 		$this->logger->info( '3DS authentication result: ' . wc_print_r( $result->to_array(), true ) );
 
 		if ( $result->liability_shift() === AuthResult::LIABILITY_SHIFT_POSSIBLE ) {

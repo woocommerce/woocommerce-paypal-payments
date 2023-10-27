@@ -146,13 +146,18 @@ class OrderFactory {
 
 		$payment_source = null;
 		if ( isset( $order_data->payment_source ) ) {
-			$payment_source_as_array = json_decode( json_encode( $order_data->payment_source ), true );
-			if ( $payment_source_as_array ) {
-				$name           = array_key_first( $payment_source_as_array );
-				$payment_source = new PaymentSource(
-					array_key_first( $payment_source_as_array ),
-					$order_data->payment_source->$name
-				);
+			$json_encoded_payment_source = wp_json_encode( $order_data->payment_source );
+			if ( $json_encoded_payment_source ) {
+				$payment_source_as_array = json_decode( $json_encoded_payment_source, true );
+				if ( $payment_source_as_array ) {
+					$name = array_key_first( $payment_source_as_array );
+					if ( $name ) {
+						$payment_source = new PaymentSource(
+							$name,
+							$order_data->payment_source->$name
+						);
+					}
+				}
 			}
 		}
 

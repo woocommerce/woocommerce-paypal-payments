@@ -14,6 +14,7 @@ use Exception;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderHelper;
@@ -144,10 +145,13 @@ class ApproveOrderEndpoint implements EndpointInterface {
 
 			$order = $this->api_endpoint->order( $data['order_id'] );
 
-			if ( $order->payment_source() && $order->payment_source()->name() === 'card' ) {
+			$payment_source = $order->payment_source();
+			assert( $payment_source instanceof PaymentSource );
+
+			if ( $payment_source->name() === 'card' ) {
 				if ( $this->settings->has( 'disable_cards' ) ) {
 					$disabled_cards = (array) $this->settings->get( 'disable_cards' );
-					$card           = strtolower( $order->payment_source()->properties()->brand ?? '' );
+					$card           = strtolower( $payment_source->properties()->brand ?? '' );
 					if ( 'master_card' === $card ) {
 						$card = 'mastercard';
 					}

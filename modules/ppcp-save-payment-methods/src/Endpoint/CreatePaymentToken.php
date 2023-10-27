@@ -80,6 +80,11 @@ class CreatePaymentToken implements EndpointInterface {
 		try {
 			$data = $this->request_data->read_request( $this->nonce() );
 
+			/**
+			 * Suppress ArgumentTypeCoercion
+			 *
+			 * @psalm-suppress ArgumentTypeCoercion
+			 */
 			$payment_source = new PaymentSource(
 				'token',
 				(object) array(

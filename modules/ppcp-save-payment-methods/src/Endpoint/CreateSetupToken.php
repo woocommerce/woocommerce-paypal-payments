@@ -69,6 +69,11 @@ class CreateSetupToken implements EndpointInterface {
 		try {
 			$this->request_data->read_request( $this->nonce() );
 
+			/**
+			 * Suppress ArgumentTypeCoercion
+			 *
+			 * @psalm-suppress ArgumentTypeCoercion
+			 */
 			$payment_source = new PaymentSource(
 				'paypal',
 				(object) array(

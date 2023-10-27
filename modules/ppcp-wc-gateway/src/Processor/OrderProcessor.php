@@ -14,6 +14,7 @@ use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderHelper;
@@ -324,7 +325,13 @@ class OrderProcessor {
 			return true;
 		}
 
-		if ( ! $order->payment_source() || $order->payment_source()->name() !== 'card' ) {
+		$payment_source = $order->payment_source();
+		if ( ! $payment_source ) {
+			return false;
+		}
+
+		assert( $payment_source instanceof PaymentSource );
+		if ( $payment_source->name() !== 'card' ) {
 			return false;
 		}
 

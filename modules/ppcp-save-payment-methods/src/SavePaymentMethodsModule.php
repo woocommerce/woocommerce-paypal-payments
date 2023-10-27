@@ -9,20 +9,17 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\SavePaymentMethods;
 
-use Exception;
 use Psr\Log\LoggerInterface;
-use stdClass;
 use WC_Order;
-use WC_Payment_Tokens;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\UserIdToken;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenFactory;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenHelper;
-use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenPayPal;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
@@ -91,7 +88,7 @@ class SavePaymentMethodsModule implements ModuleInterface {
 		// Adds attributes needed to save payment method.
 		add_filter(
 			'ppcp_create_order_request_body_data',
-			function( $data ) {
+			function( array $data ): array {
 				$data['payment_source'] = array(
 					'paypal' => array(
 						'attributes' => array(
@@ -110,7 +107,10 @@ class SavePaymentMethodsModule implements ModuleInterface {
 		add_action(
 			'woocommerce_paypal_payments_after_order_processor',
 			function( WC_Order $wc_order, Order $order ) use ( $c ) {
-				$payment_vault_attributes = $order->payment_source()->properties()->attributes->vault ?? null;
+				$payment_source = $order->payment_source();
+				assert( $payment_source instanceof PaymentSource );
+
+				$payment_vault_attributes = $payment_source->properties()->attributes->vault ?? null;
 				if ( $payment_vault_attributes ) {
 					update_user_meta( $wc_order->get_customer_id(), '_ppcp_target_customer_id', $payment_vault_attributes->customer->id );
 
@@ -129,7 +129,7 @@ class SavePaymentMethodsModule implements ModuleInterface {
 					$wc_payment_tokens->create_payment_token_paypal(
 						$wc_order->get_customer_id(),
 						$payment_vault_attributes->id,
-						$order->payment_source()->properties()->email_address ?? ''
+						$payment_source->properties()->email_address ?? ''
 					);
 				}
 			},
