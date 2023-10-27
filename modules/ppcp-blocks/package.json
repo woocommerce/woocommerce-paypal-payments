@@ -10,8 +10,7 @@
         "Edge >= 14"
     ],
     "dependencies": {
-        "core-js": "^3.25.0",
-        "deepmerge": "^4.3.1"
+        "core-js": "^3.25.0"
     },
     "devDependencies": {
         "@babel/core": "^7.19",
