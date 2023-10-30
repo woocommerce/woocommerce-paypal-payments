@@ -71,6 +71,8 @@ class ChangeCartEndpoint extends AbstractCartEndpoint {
 	 * @throws Exception On error.
 	 */
 	protected function handle_data(): bool {
+		$data = $this->request_data->read_request( $this->nonce() );
+
 		$this->cart_products->set_cart( $this->cart );
 
 		$products = $this->products_from_request();
@@ -79,7 +81,9 @@ class ChangeCartEndpoint extends AbstractCartEndpoint {
 			return false;
 		}
 
-		$this->shipping->reset_shipping();
+		if ( ! ( $data['keepShipping'] ?? false ) ) {
+			$this->shipping->reset_shipping();
+		}
 
 		if ( ! $this->add_products( $products ) ) {
 			return false;

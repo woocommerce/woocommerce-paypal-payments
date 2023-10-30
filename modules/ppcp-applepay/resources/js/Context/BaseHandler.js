@@ -68,6 +68,13 @@ class BaseHandler {
         return onApproveHandler(data, actions);
     }
 
+    errorHandler() {
+        return new ErrorHandler(
+            this.ppcpConfig.labels.error.generic,
+            document.querySelector('.woocommerce-notices-wrapper')
+        );
+    }
+
 }
 
 export default BaseHandler;
