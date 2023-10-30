@@ -58,7 +58,7 @@ document.addEventListener(
                         jQuery(orderTrackingContainerSelector).load(loadLocation, "", function(){
                             toggleLoaderVisibility();
                         });
-                    }, 5000);
+                    }, 10000);
                 }
             });
         }
