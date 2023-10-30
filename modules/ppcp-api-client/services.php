@@ -760,8 +760,6 @@ return array(
 				'LU' => array(
 					'EUR',
 					'USD',
-					'GBP',
-					'CAD',
 				),
 				'LV' => array(
 					'EUR',
