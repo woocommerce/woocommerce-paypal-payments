@@ -79,31 +79,32 @@ class WcShippingTaxIntegration implements Integration {
 
 				$params   = $request->get_params();
 				$order_id = (int) ( $params['order_id'] ?? 0 );
+				$label_id = (int) ( $params['label_ids'] ?? 0 );
 
-				if ( ! $order_id || "/wc/v1/connect/label/{$order_id}" !== $request->get_route() ) {
+				if ( ! $order_id || "/wc/v1/connect/label/{$order_id}/{$label_id}" !== $request->get_route() ) {
 					return $response;
 				}
 
 				$data   = $response->get_data() ?? array();
 				$labels = $data['labels'] ?? array();
 
-				if ( empty( $labels ) ) {
-					return $response;
-				}
-
 				foreach ( $labels as $label ) {
-					$wc_order = wc_get_order( $order_id );
-					if ( ! is_a( $wc_order, WC_Order::class ) ) {
-						return $response;
+					$tracking_number = $label['tracking'] ?? '';
+					if ( ! $tracking_number ) {
+						continue;
 					}
 
-					$transaction_id  = $wc_order->get_transaction_id();
-					$tracking_number = $label['tracking'] ?? '';
-					$carrier         = $label['carrier_id'] ?? $label['service_name'] ?? '';
-					$items           = array_map( 'intval', $label['product_ids'] ?? array() );
+					$wc_order = wc_get_order( $order_id );
+					if ( ! is_a( $wc_order, WC_Order::class ) ) {
+						continue;
+					}
 
-					if ( ! $tracking_number || ! $carrier || ! $transaction_id ) {
-						return $response;
+					$transaction_id = $wc_order->get_transaction_id();
+					$carrier        = $label['carrier_id'] ?? $label['service_name'] ?? '';
+					$items          = array_map( 'intval', $label['product_ids'] ?? array() );
+
+					if ( ! $carrier || ! $transaction_id ) {
+						continue;
 					}
 
 					$this->sync_tracking( $order_id, $transaction_id, $tracking_number, $carrier, $items );
