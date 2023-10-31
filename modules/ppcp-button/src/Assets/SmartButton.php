@@ -198,13 +198,6 @@ class SmartButton implements SmartButtonInterface {
 	private $session_handler;
 
 	/**
-	 * The locale.
-	 *
-	 * @var string
-	 */
-	protected $locale;
-
-	/**
 	 * SmartButton constructor.
 	 *
 	 * @param string                 $module_url The URL to the module.
@@ -227,7 +220,6 @@ class SmartButton implements SmartButtonInterface {
 	 * @param array                  $pay_now_contexts The contexts that should have the Pay Now button.
 	 * @param string[]               $funding_sources_without_redirect The sources that do not cause issues about redirecting (on mobile, ...) and sometimes not returning back.
 	 * @param LoggerInterface        $logger The logger.
-	 * @param string                 $locale The locale.
 	 */
 	public function __construct(
 		string $module_url,
@@ -249,8 +241,7 @@ class SmartButton implements SmartButtonInterface {
 		bool $early_validation_enabled,
 		array $pay_now_contexts,
 		array $funding_sources_without_redirect,
-		LoggerInterface $logger,
-		string $locale
+		LoggerInterface $logger
 	) {
 
 		$this->module_url                        = $module_url;
@@ -1213,8 +1204,10 @@ class SmartButton implements SmartButtonInterface {
 			$params['enable-funding'] = implode( ',', array_unique( $enable_funding ) );
 		}
 
-		if ( $this->settings->has( 'smart_button_locale_override' ) && $this->settings->get( 'smart_button_locale_override' ) ) {
-			$params['locale'] = $this->locale;
+		$locale = $this->settings->has( 'smart_button_language' ) ? $this->settings->get( 'smart_button_language' ) : '';
+
+		if ( $locale ) {
+			$params['locale'] = $locale;
 		}
 
 		return $params;

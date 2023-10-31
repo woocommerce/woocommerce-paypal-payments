@@ -110,8 +110,7 @@ return array(
 			$container->get( 'button.early-wc-checkout-validation-enabled' ),
 			$container->get( 'button.pay-now-contexts' ),
 			$container->get( 'wcgateway.funding-sources-without-redirect' ),
-			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'wcgateway.paypal-locale' )
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 	'button.url'                                  => static function ( ContainerInterface $container ): string {
