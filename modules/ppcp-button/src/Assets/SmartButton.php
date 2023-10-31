@@ -264,7 +264,6 @@ class SmartButton implements SmartButtonInterface {
 		$this->pay_now_contexts                  = $pay_now_contexts;
 		$this->funding_sources_without_redirect  = $funding_sources_without_redirect;
 		$this->logger                            = $logger;
-		$this->locale                            = $locale;
 	}
 
 	/**
