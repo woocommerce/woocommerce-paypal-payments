@@ -1,5 +1,192 @@
 *** Changelog ***
 
+= 2.4.0 - 2023-10-31 =
+* Fix - Mini-Cart Bug cause of wrong DOM-Structure in v2.3.1 #1735
+* Fix - ACDC disappearing after plugin updates #1751
+* Fix - Subscription module hooks #1748
+* Fix - Ensure PayPal Subscriptions API products description is 1-127 characters #1738
+* Fix - Add validation on the Plan Name field to not accept a blank value #1754
+* Enhancement - Improve Pay Later messages and add Shop, Home locations #1770
+* Enhancement - Use api-m PayPal API URLs #1740
+* Enhancement - Google Pay Settings improvements #1719
+* Enhancement - Apple Pay transaction improvements #1767
+* Enhancement - Change default ACDC title #1750
+* Enhancement - Cart simulation improvements #1753
+* Enhancement - Billing schedule fields not greyed out when PayPal Subscriptions product is connected #1755
+* Enhancement - Check validation errors when submitting in block #1528
+* Enhancement - Improve handling of server error when submitting block #1785
+* Enhancement - Extend Apple Pay country eligibility #1781
+* Enhancement - Apple Pay validation notice improvements #1783
+* Enhancement - Apple Pay payment process issues #1789
+* Enhancement - Disable the tracking if payment is not captured #1780
+* Enhancement - Place order button remains - Could not retrieve order #1786
+* Enhancement - Google Pay for variable product greyed out but clickable #1788
+* Enhancement - Merchant credential validation & remove PAYEE object #1795
+
+= 2.3.1 - 2023-09-26 =
+* Fix - Fatal error when saving product while WooCommerce Subscriptions plugin is not active #1731
+* Fix - Validate tracking data only for add/update Package Tracking #1729
+* Fix - Disable Package Tracking for order if transaction ID doesn't exist #1727
+
+= 2.3.0 - 2023-09-26 =
+* Fix - Plus sign in PayPal account email address gets converted to space #771
+* Fix - Payment method dropdown option label on edit order screen for ppcp-gateway option displaying wrong name #1639
+* Fix - WooCommerce Bookings products don't remain in Cart as a guest when PayPal button active on single product #1645
+* Fix - Since version > 2.2.0 the PayPal Checkout button on single product pages does not redirect anymore #1664
+* Fix - PayPal fee and PayPal Payout do not change on order if we do partial refund #1578
+* Fix - Order does not contain intent error when using ACDC payment token while buyer is not present #1506
+* Fix - Error when product description linked with a PayPal subscription exceeds 127 characters #1700
+* Fix - $_POST uses the wrong key to hold the shipping method #1652
+* Fix - WC Payment Token created multiple times when webhook is received #1663
+* Fix - Subtotal mismatch line name shows on Account settings page when merchant is disconnected #1702
+* Fix - Warning prevents payments on Pay for Order page when debugging is enabled #1703
+* Fix - paypal-overlay-uid_ blocks page after closing PayPal popup on Pay for Order page | Terms checkbox validation fails on Pay for Order page #1704
+* Enhancement - Add support for HPOS for tracking module #1676
+* Enhancement - Billing agreements endpoint called too frequently for Reference Transactions check #1646
+* Enhancement - Do not declare subscription support for PayPal when only ACDC vaulting #1669
+* Enhancement - Apply Capture On Status Change only when order contains PayPal payment method #1595
+* Enhancement - Do not use transient expiration longer than one month to support memcached #1448
+* Enhancement - By disconnecting or disabling the plugin the connection should clear the Onboarding links from cache #1668
+* Enhancement - Upgrade tracking integration #1562
+* Enhancement - Include url & image_url in create order call #1649
+* Enhancement - Add compat layer for Yith tracking #1656
+* Enhancement - Improve invalid currency backend notice (1926) #1588
+* Enhancement - Hide ACDC footer frame via CSS to avoid empty space #1613
+* Enhancement - Compatibility with WooCommerce Product Add-Ons plugin #1586
+* Enhancement - Remove "no shipment" message after adding tracking #1674
+* Enhancement - Improve error & success validation messages #1675
+* Enhancement - Compatibility with third-party "Product Add-Ons" plugins #1601
+* Enhancement - PayPal logo flashes when switching between tabs #1345
+* Enhancement - Include url & image_url in create order call #1649
+* Enhancement - Include item_url & image_url to tracking call #1712
+* Enhancement - Update strings for tracking metabox #1714
+* Enhancement - Validate email address API credentials field #1691
+* Enhancement - Set payment method title for order edit page only if our gateway #1661
+* Enhancement - Fix missing Pay Later messages in cart + refactoring #1683
+* Enhancement - Product page PP button keep loading popup - "wc_add_to_cart_params is not defined" error in WooCommerce #1655
+* Enhancement - Remove PayPal Subscriptions API feature flag #1690
+* Enhancement - Don't send image_url when it is empty #1678
+* Enhancement - Subscription support depending on Vaulting setting instead of subscription mode setting #1697
+* Enhancement - Wrong PayPal subscription id on vaulted subscriptions #1699
+* Enhancement - Remove payment vaulted checker functionality (2030) #1711
+* Feature preview - Apple Pay integration #1514
+* Feature preview - Google Pay integration #1654
+
+= 2.2.2 - 2023-08-29 =
+* Fix - High rate of auth voids on vaulted subscriptions for guest users #1529 
+* Enhancement - HPOS compatibility issues #1594
+* Feature preview - PayPal Subscriptions API fixes and improvements #1600 #1607
+
+= 2.2.1 - 2023-08-24 =
+* Fix - One-page checkout causes mini cart not showing the PP button on certain pages #1536
+* Fix - When onboarding loading the return_url too fast may cause the onboarding to fail #1565
+* Fix - PayPal button doesn't work for variable products on product page after recent 2.2.0 release #1533
+* Fix - Send payee_preferred correctly for instant payments #1489
+* Fix - Auto-disabled ACDC vaulting after updating to 2.1.0 #1490
+* Fix - PayPal Payments serializing formData of array inputs #1501
+* Fix - Buttons not working on single product page for WooCommerce Bookings product #1478
+* Enhancement - PayPal Later message price amount doesn't update dynamically #1585
+* Enhancement - Improve WC order creation in webhook #1530
+* Enhancement - Refactor hosted fields for early card detection #1554
+* Enhancement - Pay Later button and message get hidden when product/cart/checkout value is outside of range #1511
+* Enhancement - Add link to manual credential docs #1430
+* Enhancement - Validate Merchant ID field format when saving settings #1509
+* Enhancement - Include soft descriptor for card's activity #1427
+* Enhancement - Update Pay Later amount on the cart page and checkout when total changes #1441
+* Enhancement - Log Subscription Mode configuration in system report #1507
+* Enhancement - HPOS compatibility issues #1555
+* Feature preview - PayPal Subscriptions API fixes and improvements #1443
+
+= 2.2.0 - 2023-07-17 =
+* Fix - Improve handling of APM payments when buyer did not return to Checkout #1233
+* Fix - Use order currency instead of shop currency on order-pay page #1363
+* Fix - Do not show broken card button gateway when no checkout location #1358
+* Fix - Smart buttons not greyed out/removed on single product when deselecting product variation #1469
+* Fix - Type error with advanced columns pro #1367
+* Fix - Undefined array key 0 when checking $retry_errors in process_payment method #1375
+* Fix - Advanced Card Processing gateway becomes invisible post-plugin update unless admin pages are accessed once #1432
+* Fix - Incompatibility with WooCommerce One Page Checkout (or similar use cases) in Version 2.1.0 #1473
+* Fix - Prevent Repetitive Token Migration and Database Overload After 2.1.0 Update #1461
+* Fix - Onboarding from connection page with CSRF parameter manipulates email and merchant id fields #1502
+* Fix - Do not complete non-checkout button orders via webhooks #1513
+* Enhancement - Remove feature flag requirement for express cart/checkout block integration #1483
+* Enhancement - Add notice when shop currency is unsupported #1433
+* Enhancement - Improve ACDC error message when empty fields #1360
+* Enhancement - Do not exclude free items #1362
+* Enhancement - Trigger WC checkout_error event #1384
+* Enhancement - Update wording in buttons previews #1408
+* Enhancement - Filter to conditionally block the PayPal buttons #1485
+* Enhancement - Display funding source on the admin order page #1450
+* Enhancement - Update system report plugin status for Vaulting #1471
+* Enhancement - Revert Elementor Pro Checkout hook compatibility #1482
+
+= 2.1.0 - 2023-06-13 =
+* Fix - Performance issue #1182
+* Fix - Webhooks not registered when onboarding with manual credentials #1223
+* Fix - Boolean false type sent as empty value when setting cache #1313
+* Fix - Ajax vulnerabilities #1411
+* Enhancement - Save and display vaulted payment methods in WC Payment Token API #1059
+* Enhancement - Cache webhook verification results #1379
+* Enhancement - Refresh checkout totals after validation if needed #1294
+* Enhancement - Improve Divi and Elementor Pro compatibility #1254
+* Enhancement - Add MX and JP to ACDC #1415
+* Enhancement - Add fraudnet script to SGO filter #1366
+* Feature preview - Add express cart/checkout block #1346
+* Feature preview - Integrate PayPal Subscriptions API #1217
+
+= 2.0.5 - 2023-05-31 =
+* Fix - Potential invalidation of merchant credentials #1339
+
+= 2.0.4 - 2023-04-03 =
+* Fix - Allow Pay Later in mini-cart #1221
+* Fix - Duplicated auth error when credentials become wrong #1229
+* Fix - Webhook issues when switching sandbox, and delete all webhooks when unsubscribing #1239
+* Fix - High volume of traffic from merchant-integrations endpoint #1273
+* Fix - Add content type json to all fetch ajax endpoints #1275
+* Enhancement - Remove shortcodes from description #1226
+* Enhancement - Handle price suffix with price for product button check #1234
+* Enhancement - Show funding source as payment method #1220
+* Enhancement - Change "Enabled" to "Available" in status text #1237
+* Enhancement - Programmatically capturing/voiding authorized payments #590
+
+= 2.0.3 - 2023-03-14 =
+* Fix - `DEVICE_DATA_NOT_AVAILABLE` error message when FraudNet is enabled #1177
+* Fix - Redirect to connection tab after manual credentials input #1201
+* Fix - Asking for address fields in checkout when not using them #1089
+* Fix - Validate before free trial #1170
+* Fix - Validate new user creation #1131
+* Fix - After Updating to 2.0.2, Site Health reports REST API error #1195
+* Fix - Do not send buyer-country for previews in live mode to avoid error #1186
+* Fix - PPEC compatibility layer does not take over subscriptions #1193
+* Fix - Checkout conflict with "All products for subscriptions" plugin #629
+* Fix - Pay Later on order pay page #1214
+* Fix - High volume of traffic from merchant-integrations endpoint #1241
+* Enhancement - Save checkout form before free trial redirect #1135
+* Enhancement - Add filter for controlling the ditching of items/breakdown #1146
+* Enhancement - Add patch order data filter #1147
+* Enhancement - Add filter for disabling fees on wc order admin pages #1153
+* Enhancement - Use wp_loaded for fraudnet loading to avoid warnings #1172
+* Enhancement - reCaptcha for WooCommerce support #1093
+* Enhancement - Make it possible to hide missing funding resource Trustly #1155
+* Enhancement - Add white color option #1167
+* Enhancement - Checkout validation for other fields #861
+* Enhancement - Mention PUI only for German shops and add line breaks #1169
+* Enhancement - Add filter to fallback tracking_data['carrier'] #1188
+* Enhancement - Error notices in checkout do not update / or are shown twice #1168
+* Enhancement - capture authorized payment by changing order status (or programmatically) #587
+
+= 2.0.2 - 2023-01-31 =
+* Fix - Do not call PayPal get order by ID if it does not exist #1029
+* Fix - Type check error conflict with German Market #1056
+* Fix - Backend Storage for the PayPalRequestIdRepository does not scale #983
+* Fix - Ensure WC()->payment_gateways is not null #1128
+* Enhancement - Remove plugin data after uninstalling #1075
+* Enhancement - Add FraudNet to all payments #1040
+* Enhancement - Update "Standard Payments" tab settings #1065
+* Enhancement - Update PHP 7.2 requirement in all relevant files #1084
+* Enhancement - When PUI is enabled FraudNet should be also enabled #1129
+* Enhancement - Add PayPal-Request-Id if payment source exist #1132
+
 = 2.0.1 - 2022-12-13 =
 * Fix - Error while syncing tracking data to PayPal -> Sync GZD Tracking #1020
 * Fix - Fix product price retrieval for variable product buttons #1000

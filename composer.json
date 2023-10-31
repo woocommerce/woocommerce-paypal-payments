@@ -29,8 +29,12 @@
     "autoload": {
         "psr-4": {
             "WooCommerce\\PayPalCommerce\\": "src",
+            "WooCommerce\\PayPalCommerce\\Common\\": "lib/common/",
             "WooCommerce\\PayPalCommerce\\Vendor\\": "lib/packages/"
-        }
+        },
+        "files": [
+            "api/order-functions.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {

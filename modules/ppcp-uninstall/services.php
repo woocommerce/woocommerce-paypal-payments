@@ -24,7 +24,6 @@ return array(
 	'uninstall.ppcp-all-option-names'           => function( ContainerInterface $container ) : array {
 		return array(
 			$container->get( 'webhook.last-webhook-storage.key' ),
-			PayPalRequestIdRepository::KEY,
 			'woocommerce_ppcp-is_pay_later_settings_migrated',
 			'woocommerce_' . PayPalGateway::ID . '_settings',
 			'woocommerce_' . CreditCardGateway::ID . '_settings',
@@ -34,6 +33,7 @@ return array(
 			'woocommerce-ppcp-version',
 			WebhookSimulation::OPTION_ID,
 			WebhookRegistrar::KEY,
+			'ppcp_payment_tokens_migration_initialized',
 		);
 	},
 
@@ -41,6 +41,13 @@ return array(
 		return array(
 			'woocommerce_paypal_payments_check_pui_payment_captured',
 			'woocommerce_paypal_payments_check_saved_payment',
+			'woocommerce_paypal_payments_payment_tokens_migration',
+		);
+	},
+
+	'uninstall.ppcp-all-action-names'           => function( ContainerInterface $container ) : array {
+		return array(
+			'woocommerce_paypal_payments_uninstall',
 		);
 	},
 

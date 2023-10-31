@@ -2,9 +2,10 @@ import { loadScript } from "@paypal/paypal-js";
 import {debounce} from "./helper/debounce";
 import Renderer from '../../../ppcp-button/resources/js/modules/Renderer/Renderer'
 import MessageRenderer from "../../../ppcp-button/resources/js/modules/Renderer/MessageRenderer";
-import {setVisibleByClass, isVisible} from "../../../ppcp-button/resources/js/modules/Helper/Hiding"
+import {setVisibleByClass, isVisible} from "../../../ppcp-button/resources/js/modules/Helper/Hiding";
+import widgetBuilder from "../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder";
 
-;document.addEventListener(
+document.addEventListener(
     'DOMContentLoaded',
     () => {
         function disableAll(nodeList){
@@ -86,6 +87,7 @@ import {setVisibleByClass, isVisible} from "../../../ppcp-button/resources/js/mo
 
                 try {
                     renderer.render({});
+                    jQuery(document).trigger('ppcp_paypal_render_preview', settings);
                 } catch (err) {
                     console.error(err);
                 }
@@ -112,12 +114,15 @@ import {setVisibleByClass, isVisible} from "../../../ppcp-button/resources/js/mo
                 'client-id': PayPalCommerceGatewaySettings.client_id,
                 'currency': PayPalCommerceGatewaySettings.currency,
                 'integration-date': PayPalCommerceGatewaySettings.integration_date,
-                'components': ['buttons', 'funding-eligibility', 'messages'],
+                'components': PayPalCommerceGatewaySettings.components,
                 'enable-funding': ['venmo', 'paylater'],
-                'buyer-country': PayPalCommerceGatewaySettings.country,
             };
 
-            if(payLaterButtonPreview?.length) {
+            if (PayPalCommerceGatewaySettings.environment === 'sandbox') {
+                settings['buyer-country'] = PayPalCommerceGatewaySettings.country;
+            }
+
+            if (payLaterButtonPreview?.length) {
                 disabledSources = Object.keys(PayPalCommerceGatewaySettings.all_funding_sources);
             }
 
@@ -135,6 +140,8 @@ import {setVisibleByClass, isVisible} from "../../../ppcp-button/resources/js/mo
         function loadPaypalScript(settings, onLoaded = () => {}) {
             loadScript(JSON.parse(JSON.stringify(settings))) // clone the object to prevent modification
                 .then(paypal => {
+                    widgetBuilder.setPaypal(paypal);
+
                     document.dispatchEvent(new CustomEvent('ppcp_paypal_script_loaded'));
 
                     onLoaded(paypal);
@@ -166,11 +173,16 @@ import {setVisibleByClass, isVisible} from "../../../ppcp-button/resources/js/mo
 
         function createMessagesPreview(settingsCallback) {
             const render = (settings) => {
-                const wrapper = document.querySelector(settings.wrapper);
+                let wrapper = document.querySelector(settings.wrapper);
                 if (!wrapper) {
                     return;
                 }
-                wrapper.innerHTML = '';
+                // looks like .innerHTML = '' is not enough, PayPal somehow renders with old style
+                const parent = wrapper.parentElement;
+                parent.removeChild(wrapper);
+                wrapper = document.createElement('div');
+                wrapper.setAttribute('id', settings.wrapper.replace('#', ''));
+                parent.appendChild(wrapper);
 
                 const messageRenderer = new MessageRenderer(settings);
 
@@ -263,7 +275,7 @@ import {setVisibleByClass, isVisible} from "../../../ppcp-button/resources/js/mo
             }, 1000));
 
             loadPaypalScript(oldScriptSettings, () => {
-                const payLaterMessagingLocations = ['product', 'cart', 'checkout', 'general'];
+                const payLaterMessagingLocations = ['product', 'cart', 'checkout', 'shop', 'home', 'general'];
                 const paypalButtonLocations = ['product', 'cart', 'checkout', 'mini-cart', 'general'];
 
                 paypalButtonLocations.forEach((location) => {

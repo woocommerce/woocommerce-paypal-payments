@@ -47,8 +47,9 @@ class UninstallModule implements ModuleInterface {
 		$clear_db_endpoint      = $container->get( 'uninstall.clear-db-endpoint' );
 		$option_names           = $container->get( 'uninstall.ppcp-all-option-names' );
 		$scheduled_action_names = $container->get( 'uninstall.ppcp-all-scheduled-action-names' );
+		$action_names           = $container->get( 'uninstall.ppcp-all-action-names' );
 
-		$this->handleClearDbAjaxRequest( $request_data, $clear_db, $clear_db_endpoint, $option_names, $scheduled_action_names );
+		$this->handleClearDbAjaxRequest( $request_data, $clear_db, $clear_db_endpoint, $option_names, $scheduled_action_names, $action_names );
 	}
 
 	/**
@@ -69,22 +70,31 @@ class UninstallModule implements ModuleInterface {
 	 * @param string                 $nonce The nonce.
 	 * @param string[]               $option_names The list of option names.
 	 * @param string[]               $scheduled_action_names The list of scheduled action names.
+	 * @param string[]               $action_names The list of action names.
 	 */
 	protected function handleClearDbAjaxRequest(
 		RequestData $request_data,
 		ClearDatabaseInterface $clear_db,
 		string $nonce,
 		array $option_names,
-		array $scheduled_action_names
+		array $scheduled_action_names,
+		array $action_names
 	): void {
 		add_action(
 			"wc_ajax_{$nonce}",
-			static function () use ( $request_data, $clear_db, $nonce, $option_names, $scheduled_action_names ) {
+			static function () use ( $request_data, $clear_db, $nonce, $option_names, $scheduled_action_names, $action_names ) {
 				try {
+					if ( ! current_user_can( 'manage_woocommerce' ) ) {
+						wp_send_json_error( 'Not admin.', 403 );
+						return false;
+					}
+
 					// Validate nonce.
 					$request_data->read_request( $nonce );
+
 					$clear_db->delete_options( $option_names );
 					$clear_db->clear_scheduled_actions( $scheduled_action_names );
+					$clear_db->clear_actions( $action_names );
 
 					wp_send_json_success();
 					return true;

@@ -17,12 +17,14 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookEventFactory;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\RequestHandler;
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\Webhooks\Handler\RequestHandlerTrait;
 use WooCommerce\PayPalCommerce\Webhooks\Status\WebhookSimulation;
 
 /**
  * Class IncomingWebhookEndpoint
  */
 class IncomingWebhookEndpoint {
+	use RequestHandlerTrait;
 
 	const NAMESPACE = 'paypal/v1';
 	const ROUTE     = 'incoming';
@@ -77,11 +79,19 @@ class IncomingWebhookEndpoint {
 	private $simulation;
 
 	/**
-	 * The last webhook info storage.
+	 * The last webhook event storage.
 	 *
-	 * @var WebhookInfoStorage
+	 * @var WebhookEventStorage
 	 */
-	private $last_webhook_storage;
+	private $last_webhook_event_storage;
+
+	/**
+	 * Cached webhook verification results
+	 * to avoid repeating requests when permission_callback is called multiple times.
+	 *
+	 * @var array<string, bool>
+	 */
+	private $verification_results = array();
 
 	/**
 	 * IncomingWebhookEndpoint constructor.
@@ -92,7 +102,7 @@ class IncomingWebhookEndpoint {
 	 * @param bool                $verify_request Whether requests need to be verified or not.
 	 * @param WebhookEventFactory $webhook_event_factory The webhook event factory.
 	 * @param WebhookSimulation   $simulation The simulation handler.
-	 * @param WebhookInfoStorage  $last_webhook_storage The last webhook info storage.
+	 * @param WebhookEventStorage $last_webhook_event_storage The last webhook event storage.
 	 * @param RequestHandler      ...$handlers The handlers, which process a request in the end.
 	 */
 	public function __construct(
@@ -102,18 +112,18 @@ class IncomingWebhookEndpoint {
 		bool $verify_request,
 		WebhookEventFactory $webhook_event_factory,
 		WebhookSimulation $simulation,
-		WebhookInfoStorage $last_webhook_storage,
+		WebhookEventStorage $last_webhook_event_storage,
 		RequestHandler ...$handlers
 	) {
 
-		$this->webhook_endpoint      = $webhook_endpoint;
-		$this->webhook               = $webhook;
-		$this->handlers              = $handlers;
-		$this->logger                = $logger;
-		$this->verify_request        = $verify_request;
-		$this->webhook_event_factory = $webhook_event_factory;
-		$this->last_webhook_storage  = $last_webhook_storage;
-		$this->simulation            = $simulation;
+		$this->webhook_endpoint           = $webhook_endpoint;
+		$this->webhook                    = $webhook;
+		$this->handlers                   = $handlers;
+		$this->logger                     = $logger;
+		$this->verify_request             = $verify_request;
+		$this->webhook_event_factory      = $webhook_event_factory;
+		$this->last_webhook_event_storage = $last_webhook_event_storage;
+		$this->simulation                 = $simulation;
 	}
 
 	/**
@@ -160,7 +170,17 @@ class IncomingWebhookEndpoint {
 
 		try {
 			$event = $this->event_from_request( $request );
+		} catch ( RuntimeException $exception ) {
+			$this->logger->error( 'Webhook parsing failed: ' . $exception->getMessage() );
+			return false;
+		}
 
+		$cache_key = $event->id();
+		if ( isset( $this->verification_results[ $cache_key ] ) ) {
+			return $this->verification_results[ $cache_key ];
+		}
+
+		try {
 			if ( $this->simulation->is_simulation_event( $event ) ) {
 				return true;
 			}
@@ -169,9 +189,11 @@ class IncomingWebhookEndpoint {
 			if ( ! $result ) {
 				$this->logger->error( 'Webhook verification failed.' );
 			}
+			$this->verification_results[ $cache_key ] = $result;
 			return $result;
 		} catch ( RuntimeException $exception ) {
 			$this->logger->error( 'Webhook verification failed: ' . $exception->getMessage() );
+			$this->verification_results[ $cache_key ] = false;
 			return false;
 		}
 	}
@@ -186,31 +208,40 @@ class IncomingWebhookEndpoint {
 	public function handle_request( \WP_REST_Request $request ): \WP_REST_Response {
 		$event = $this->event_from_request( $request );
 
-		$this->last_webhook_storage->save( $event );
+		$this->logger->debug(
+			sprintf(
+				'Webhook %s received of type %s and by resource "%s"',
+				$event->id(),
+				$event->event_type(),
+				$event->resource_type()
+			)
+		);
+
+		$this->last_webhook_event_storage->save( $event );
 
 		if ( $this->simulation->is_simulation_event( $event ) ) {
 			$this->logger->info( 'Received simulated webhook.' );
 			$this->simulation->receive( $event );
-			return rest_ensure_response(
-				array(
-					'success' => true,
-				)
-			);
+			return $this->success_response();
 		}
 
 		foreach ( $this->handlers as $handler ) {
 			if ( $handler->responsible_for_request( $request ) ) {
-				$response = $handler->handle_request( $request );
-				$this->logger->log(
-					'info',
+				$event_type = ( $handler->event_types() ? current( $handler->event_types() ) : '' ) ?: '';
+
+				$this->logger->debug(
 					sprintf(
-						// translators: %s is the event type.
-						__( 'Webhook has been handled by %s', 'woocommerce-paypal-payments' ),
-						( $handler->event_types() ) ? current( $handler->event_types() ) : ''
-					),
-					array(
-						'request'  => $request,
-						'response' => $response,
+						'Webhook is going to be handled by %s on %s',
+						$event_type,
+						get_class( $handler )
+					)
+				);
+				$response = $handler->handle_request( $request );
+				$this->logger->info(
+					sprintf(
+						'Webhook has been handled by %s on %s',
+						$event_type,
+						get_class( $handler )
 					)
 				);
 				return $response;
@@ -218,22 +249,10 @@ class IncomingWebhookEndpoint {
 		}
 
 		$message = sprintf(
-			// translators: %s is the request type.
-			__( 'Could not find handler for request type %s', 'woocommerce-paypal-payments' ),
-			$request['event_type']
+			'Could not find handler for request type %s',
+			$request['event_type'] ?: ''
 		);
-		$this->logger->log(
-			'warning',
-			$message,
-			array(
-				'request' => $request,
-			)
-		);
-		$response = array(
-			'success' => false,
-			'message' => $message,
-		);
-		return rest_ensure_response( $response );
+		return $this->failure_response( $message );
 	}
 
 	/**

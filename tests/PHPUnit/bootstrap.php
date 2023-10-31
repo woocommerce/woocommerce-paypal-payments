@@ -8,5 +8,6 @@ require_once ROOT_DIR . '/vendor/autoload.php';
 require_once TESTS_ROOT_DIR . '/stubs/WC_Payment_Gateway.php';
 require_once TESTS_ROOT_DIR . '/stubs/WC_Payment_Gateway_CC.php';
 require_once TESTS_ROOT_DIR . '/stubs/WC_Ajax.php';
+require_once TESTS_ROOT_DIR . '/stubs/WC_Checkout.php';
 
 Hamcrest\Util::registerGlobalFunctions();

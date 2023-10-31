@@ -167,6 +167,9 @@ class CreateOrderEndpointTest extends TestCase
 			false,
 			CardBillingMode::MINIMAL_INPUT,
 			false,
+			['checkout'],
+			false,
+			['paypal'],
 			new NullLogger()
         );
         return array($payer_factory, $testee);

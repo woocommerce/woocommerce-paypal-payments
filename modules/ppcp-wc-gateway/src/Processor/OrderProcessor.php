@@ -10,9 +10,11 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Processor;
 
 use Psr\Log\LoggerInterface;
+use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\OrderFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderHelper;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
@@ -115,6 +117,13 @@ class OrderProcessor {
 	private $order_helper;
 
 	/**
+	 * Array to store temporary order data changes to restore after processing.
+	 *
+	 * @var array
+	 */
+	private $restore_order_data = array();
+
+	/**
 	 * OrderProcessor constructor.
 	 *
 	 * @param SessionHandler              $session_handler The Session Handler.
@@ -161,11 +170,31 @@ class OrderProcessor {
 	 * @return bool
 	 */
 	public function process( \WC_Order $wc_order ): bool {
-		$order_id = $wc_order->get_meta( PayPalGateway::ORDER_ID_META_KEY );
-		$order    = $this->session_handler->order() ?? $this->order_endpoint->order( $order_id );
+		// phpcs:ignore WordPress.Security.NonceVerification
+		$order_id = $wc_order->get_meta( PayPalGateway::ORDER_ID_META_KEY ) ?: wc_clean( wp_unslash( $_POST['paypal_order_id'] ?? '' ) );
+		$order    = $this->session_handler->order();
+		if ( ! $order && is_string( $order_id ) && $order_id ) {
+			$order = $this->order_endpoint->order( $order_id );
+		}
 		if ( ! $order ) {
-			$this->last_error = __( 'No PayPal order found in the current WooCommerce session.', 'woocommerce-paypal-payments' );
-			return false;
+			$order_id = $wc_order->get_meta( PayPalGateway::ORDER_ID_META_KEY );
+			if ( ! $order_id ) {
+				$this->logger->warning(
+					sprintf(
+						'No PayPal order ID found in order #%d meta.',
+						$wc_order->get_id()
+					)
+				);
+				$this->last_error = __( 'Could not retrieve order. Maybe it was already completed or this browser is not supported. Please check your email or try again with a different browser.', 'woocommerce-paypal-payments' );
+				return false;
+			}
+
+			try {
+				$order = $this->order_endpoint->order( $order_id );
+			} catch ( RuntimeException $exception ) {
+				$this->last_error = __( 'Could not retrieve PayPal order.', 'woocommerce-paypal-payments' );
+				return false;
+			}
 		}
 
 		$this->add_paypal_meta( $wc_order, $order, $this->environment );
@@ -270,8 +299,12 @@ class OrderProcessor {
 	 * @return Order
 	 */
 	public function patch_order( \WC_Order $wc_order, Order $order ): Order {
+		$this->apply_outbound_order_filters( $wc_order );
 		$updated_order = $this->order_factory->from_wc_order( $wc_order, $order );
-		$order         = $this->order_endpoint->patch_order_with( $order, $updated_order );
+		$this->restore_order_from_filters( $wc_order );
+
+		$order = $this->order_endpoint->patch_order_with( $order, $updated_order );
+
 		return $order;
 	}
 
@@ -300,5 +333,49 @@ class OrderProcessor {
 			),
 			true
 		);
+	}
+
+	/**
+	 * Applies filters to the WC_Order, so they are reflected only on PayPal Order.
+	 *
+	 * @param WC_Order $wc_order The WoocOmmerce Order.
+	 * @return void
+	 */
+	private function apply_outbound_order_filters( WC_Order $wc_order ): void {
+		$items = $wc_order->get_items();
+
+		$this->restore_order_data['names'] = array();
+
+		foreach ( $items as $item ) {
+			if ( ! $item instanceof \WC_Order_Item ) {
+				continue;
+			}
+
+			$original_name = $item->get_name();
+			$new_name      = apply_filters( 'woocommerce_paypal_payments_order_line_item_name', $original_name, $item->get_id(), $wc_order->get_id() );
+
+			if ( $new_name !== $original_name ) {
+				$this->restore_order_data['names'][ $item->get_id() ] = $original_name;
+				$item->set_name( $new_name );
+			}
+		}
+	}
+
+	/**
+	 * Restores the WC_Order to it's state before filters.
+	 *
+	 * @param WC_Order $wc_order The WooCommerce Order.
+	 * @return void
+	 */
+	private function restore_order_from_filters( WC_Order $wc_order ): void {
+		if ( is_array( $this->restore_order_data['names'] ?? null ) ) {
+			foreach ( $this->restore_order_data['names'] as $wc_item_id => $original_name ) {
+				$wc_item = $wc_order->get_item( $wc_item_id, false );
+
+				if ( $wc_item ) {
+					$wc_item->set_name( $original_name );
+				}
+			}
+		}
 	}
 }

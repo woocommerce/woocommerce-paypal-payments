@@ -5,6 +5,8 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 use Requests_Utility_CaseInsensitiveDictionary;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
+use WooCommerce\PayPalCommerce\Helper\RedirectorStub;
+use WooCommerce\PayPalCommerce\Helper\StubRedirectionException;
 use WooCommerce\PayPalCommerce\ModularTestCase;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use Mockery;
@@ -50,7 +52,10 @@ class SettingsListenerTest extends ModularTestCase
 			$signup_link_cache,
 			$signup_link_ids,
             $pui_status_cache,
-            $dcc_status_cache
+            $dcc_status_cache,
+			new RedirectorStub(),
+			'',
+			''
 		);
 
 		$_GET['section'] = PayPalGateway::ID;

@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\Onboarding;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\Webhooks\WebhookRegistrar;
 
 /**
  * Exposes and handles REST routes related to onboarding.
@@ -237,6 +238,7 @@ class OnboardingRESTController {
 
 		$settings->set( 'products_dcc_enabled', null );
 		$settings->set( 'products_pui_enabled', null );
+		do_action( 'woocommerce_paypal_payments_clear_apm_product_status', $settings );
 
 		if ( ! $settings->persist() ) {
 			return new \WP_Error(
@@ -249,7 +251,7 @@ class OnboardingRESTController {
 		}
 
 		$webhook_registrar = $this->container->get( 'webhook.registrar' );
-		$webhook_registrar->unregister();
+		assert( $webhook_registrar instanceof WebhookRegistrar );
 		$webhook_registrar->register();
 
 		return array();

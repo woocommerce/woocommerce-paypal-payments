@@ -4,6 +4,9 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -39,6 +42,7 @@ class WcGatewayTest extends TestCase
 	private $paymentTokenRepository;
 	private $logger;
 	private $apiShopCountry;
+	private $orderEndpoint;
 
 	public function setUp(): void {
 		parent::setUp();
@@ -59,8 +63,12 @@ class WcGatewayTest extends TestCase
 		$this->environment = Mockery::mock(Environment::class);
 		$this->paymentTokenRepository = Mockery::mock(PaymentTokenRepository::class);
 		$this->logger = Mockery::mock(LoggerInterface::class);
-		$this->funding_source_renderer = new FundingSourceRenderer($this->settings);
+		$this->funding_source_renderer = new FundingSourceRenderer(
+			$this->settings,
+			['venmo' => 'Venmo', 'paylater' => 'Pay Later', 'blik' => 'BLIK']
+		);
 		$this->apiShopCountry = 'DE';
+		$this->orderEndpoint = Mockery::mock(OrderEndpoint::class);
 
 		$this->onboardingState->shouldReceive('current_state')->andReturn(State::STATE_ONBOARDED);
 
@@ -69,6 +77,11 @@ class WcGatewayTest extends TestCase
 			->andReturnUsing(function () {
 				return $this->fundingSource;
 			});
+		$order = Mockery::mock(Order::class);
+		$order->shouldReceive('status')->andReturn(new OrderStatus(OrderStatus::APPROVED));
+		$this->sessionHandler
+			->shouldReceive('order')
+			->andReturn($order);
 
 		$this->settings->shouldReceive('has')->andReturnFalse();
 
@@ -92,7 +105,8 @@ class WcGatewayTest extends TestCase
 			$this->environment,
 			$this->paymentTokenRepository,
 			$this->logger,
-			$this->apiShopCountry
+			$this->apiShopCountry,
+			$this->orderEndpoint
 		);
 	}
 
@@ -134,6 +148,11 @@ class WcGatewayTest extends TestCase
 		$woocommerce->cart = $cart;
 		$cart->shouldReceive('empty_cart');
 
+		$session = Mockery::mock(\WC_Session::class);
+		$woocommerce->session = $session;
+		$session->shouldReceive('get');
+		$session->shouldReceive('set');
+
         $result = $testee->process_payment($orderId);
 
         $this->assertIsArray($result);
@@ -146,6 +165,12 @@ class WcGatewayTest extends TestCase
         $orderId = 1;
 
 	    $testee = $this->createGateway();
+
+		$woocommerce = Mockery::mock(\WooCommerce::class);
+		$session = Mockery::mock(\WC_Session::class);
+		when('WC')->justReturn($woocommerce);
+		$woocommerce->session = $session;
+		$session->shouldReceive('set')->andReturn([]);
 
         expect('wc_get_order')
             ->with($orderId)
@@ -161,12 +186,17 @@ class WcGatewayTest extends TestCase
 
         expect('wc_add_notice');
 
+		$result = $testee->process_payment($orderId);
+
+		$this->assertArrayHasKey('errorMessage', $result);
+		unset($result['errorMessage']);
+
         $this->assertEquals(
         	[
         		'result' => 'failure',
-				'redirect' => $redirectUrl
+				'redirect' => $redirectUrl,
 			],
-			$testee->process_payment($orderId)
+			$result
 		);
     }
 
@@ -200,11 +230,22 @@ class WcGatewayTest extends TestCase
 		when('wc_get_checkout_url')
 			->justReturn($redirectUrl);
 
-        $result = $testee->process_payment($orderId);
-        $this->assertEquals(
-        	[
-        		'result' => 'failure',
-				'redirect' => $redirectUrl
+		$woocommerce = Mockery::mock(\WooCommerce::class);
+		when('WC')->justReturn($woocommerce);
+		$session = Mockery::mock(\WC_Session::class);
+		$woocommerce->session = $session;
+		$session->shouldReceive('get');
+		$session->shouldReceive('set');
+
+		$result = $testee->process_payment($orderId);
+
+		$this->assertArrayHasKey('errorMessage', $result);
+		unset($result['errorMessage']);
+
+		$this->assertEquals(
+			[
+				'result' => 'failure',
+				'redirect' => $redirectUrl,
 			],
 			$result
 		);
@@ -271,6 +312,8 @@ class WcGatewayTest extends TestCase
     	return [
     		[null, 'PayPal', 'Pay via PayPal.'],
     		['venmo', 'Venmo', 'Pay via Venmo.'],
+    		['paylater', 'Pay Later', 'Pay via Pay Later.'],
+    		['blik', 'BLIK (via PayPal)', 'Pay via BLIK.'],
     		['qwerty', 'PayPal', 'Pay via PayPal.'],
 	    ];
     }

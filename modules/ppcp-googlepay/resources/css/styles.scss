@@ -1,0 +1,46 @@
+.ppcp-button-googlepay {
+	margin: 7px 0;
+	overflow: hidden;
+	min-height: 40px;
+	height: 45px;
+
+	&.ppcp-button-pill {
+		border-radius: 50px;
+	}
+
+	&.ppcp-button-minicart {
+		display: block;
+		height: 40px;
+	}
+}
+
+.woocommerce-checkout {
+	.ppcp-button-googlepay {
+		margin-top: 0;
+	}
+}
+
+.ppcp-has-googlepay-block {
+
+	.wp-block-woocommerce-checkout {
+		.ppcp-button-googlepay {
+			margin: 0;
+			height: 40px;
+		}
+	}
+
+	.wp-block-woocommerce-cart {
+		.ppcp-button-googlepay {
+			margin: 0;
+			height: 40px;
+		}
+		/* Workaround for blocks grid */
+		.wc-block-components-express-payment__event-buttons {
+			display: block;
+			li[id*="express-payment-method-ppcp-"] {
+				padding-bottom: 0;
+			}
+		}
+	}
+
+}

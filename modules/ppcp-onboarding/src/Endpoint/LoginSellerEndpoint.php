@@ -123,12 +123,18 @@ class LoginSellerEndpoint implements EndpointInterface {
 	public function handle_request(): bool {
 
 		try {
+			if ( ! current_user_can( 'manage_woocommerce' ) ) {
+				wp_send_json_error( 'Not admin.', 403 );
+				return false;
+			}
+
 			$data       = $this->request_data->read_request( $this->nonce() );
 			$is_sandbox = isset( $data['env'] ) && 'sandbox' === $data['env'];
 			$this->settings->set( 'sandbox_on', $is_sandbox );
 			$this->settings->set( 'products_dcc_enabled', null );
 			$this->settings->set( 'products_pui_enabled', null );
 			$this->settings->persist();
+			do_action( 'woocommerce_paypal_payments_clear_apm_product_status', $this->settings );
 
 			$endpoint    = $is_sandbox ? $this->login_seller_sandbox : $this->login_seller_production;
 			$credentials = $endpoint->credentials_for(

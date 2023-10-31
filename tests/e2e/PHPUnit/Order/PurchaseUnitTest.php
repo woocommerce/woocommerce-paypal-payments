@@ -45,6 +45,10 @@ class PurchaseUnitTest extends TestCase
 
 		$this->puFactory = $this->container->get( 'api.factory.purchase-unit' );
 		assert($this->puFactory instanceof PurchaseUnitFactory);
+
+		add_filter('woocommerce_get_base_location', function () {
+			return 'AQ';
+		});
 	}
 
 	public function tearDown(): void
@@ -195,6 +199,7 @@ class PurchaseUnitTest extends TestCase
 		$product->set_regular_price((string) $data['price']);
 		$product->set_tax_status('taxable');
 		$product->set_tax_class('');
+		$product->set_virtual(true);
 
 		$product->save();
 
@@ -359,6 +364,11 @@ class PurchaseUnitTest extends TestCase
 			],
 			self::adaptAmountFormat([
 				'value' => 10.69,
+				'breakdown' => [
+					'item_total' => 10.69,
+					'tax_total' => 0,
+					'shipping' => 0,
+				],
 			]),
 		];
 	}
@@ -427,6 +437,11 @@ class PurchaseUnitTest extends TestCase
 			],
 			self::adaptAmountFormat([
 				'value' => 10.69,
+				'breakdown' => [
+					'item_total' => 10.69,
+					'tax_total' => 0,
+					'shipping' => 0,
+				],
 			], get_woocommerce_currency()),
 		];
 	}

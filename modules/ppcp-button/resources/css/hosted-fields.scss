@@ -15,3 +15,7 @@
 .ppcp-dcc-order-button {
 	float: right;
 }
+
+iframe[id^="hosted-fields-tokenization-frame_"] {
+	display: none;
+}

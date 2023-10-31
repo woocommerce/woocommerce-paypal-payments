@@ -22,16 +22,19 @@ interface SmartButtonInterface {
 	public function render_wrapper(): bool;
 
 	/**
-	 * Enqueues the necessary scripts.
-	 *
-	 * @return bool
+	 * Whether any of our scripts (for DCC or product, mini-cart, non-block cart/checkout) should be loaded.
 	 */
-	public function enqueue(): bool;
+	public function should_load_ppcp_script(): bool;
 
 	/**
-	 * Whether the running installation could save vault tokens or not.
-	 *
-	 * @return bool
+	 * Enqueues our scripts/styles (for DCC and product, mini-cart and non-block cart/checkout)
 	 */
-	public function can_save_vault_token(): bool;
+	public function enqueue(): void;
+
+	/**
+	 * The configuration for the smart buttons.
+	 *
+	 * @return array
+	 */
+	public function script_data(): array;
 }

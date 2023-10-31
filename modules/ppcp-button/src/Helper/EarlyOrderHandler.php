@@ -11,18 +11,16 @@ namespace WooCommerce\PayPalCommerce\Button\Helper;
 
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderTransient;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
-use WooCommerce\PayPalCommerce\Webhooks\Handler\PrefixTrait;
 
 /**
  * Class EarlyOrderHandler
  */
 class EarlyOrderHandler {
-
-	use PrefixTrait;
 
 	/**
 	 * The State.
@@ -51,19 +49,16 @@ class EarlyOrderHandler {
 	 * @param State          $state The State.
 	 * @param OrderProcessor $order_processor The Order Processor.
 	 * @param SessionHandler $session_handler The Session Handler.
-	 * @param string         $prefix The Prefix.
 	 */
 	public function __construct(
 		State $state,
 		OrderProcessor $order_processor,
-		SessionHandler $session_handler,
-		string $prefix
+		SessionHandler $session_handler
 	) {
 
 		$this->state           = $state;
 		$this->order_processor = $order_processor;
 		$this->session_handler = $session_handler;
-		$this->prefix          = $prefix;
 	}
 
 	/**
@@ -101,7 +96,7 @@ class EarlyOrderHandler {
 		$order_id = false;
 		foreach ( $order->purchase_units() as $purchase_unit ) {
 			if ( $purchase_unit->custom_id() === sanitize_text_field( wp_unslash( $_REQUEST['ppcp-resume-order'] ) ) ) {
-				$order_id = (int) $this->sanitize_custom_id( $purchase_unit->custom_id() );
+				$order_id = (int) $purchase_unit->custom_id();
 			}
 		}
 		if ( $order_id === $resume_order_id ) {
@@ -169,6 +164,10 @@ class EarlyOrderHandler {
 		/**
 		 * Patch Order so we have the \WC_Order id added.
 		 */
-		return $this->order_processor->patch_order( $wc_order, $order );
+		$order = $this->order_processor->patch_order( $wc_order, $order );
+
+		do_action( 'woocommerce_paypal_payments_woocommerce_order_created', $wc_order, $order );
+
+		return $order;
 	}
 }

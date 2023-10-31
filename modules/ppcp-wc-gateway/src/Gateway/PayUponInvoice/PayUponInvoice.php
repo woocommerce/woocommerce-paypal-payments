@@ -9,15 +9,13 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice;
 
+use Automattic\WooCommerce\Internal\DataStores\Orders\CustomOrdersTableController;
 use Psr\Log\LoggerInterface;
 use WC_Email;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\CaptureFactory;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
-use WooCommerce\PayPalCommerce\Onboarding\Environment;
-use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\WcGateway\FraudNet\FraudNet;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CheckoutHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceHelper;
@@ -139,6 +137,25 @@ class PayUponInvoice {
 	 * @throws NotFoundException When setting is not found.
 	 */
 	public function init(): void {
+		if ( $this->pui_helper->is_pui_gateway_enabled() ) {
+			$this->settings->set( 'fraudnet_enabled', true );
+			$this->settings->persist();
+		}
+
+		add_filter(
+			'ppcp_partner_referrals_option',
+			function ( array $option ): array {
+				if ( $option['valid'] ) {
+					return $option;
+				}
+				if ( $option['field'] === 'ppcp-onboarding-pui' ) {
+					$option['valid'] = true;
+					$option['value'] = ( $option['value'] ? '1' : '' );
+				}
+				return $option;
+			}
+		);
+
 		add_filter(
 			'ppcp_partner_referrals_data',
 			function ( array $data ): array {
@@ -417,46 +434,32 @@ class PayUponInvoice {
 			 *
 			 * @psalm-suppress MissingClosureParamType
 			 */
-			function ( $methods ): array {
-				if ( ! is_array( $methods ) || State::STATE_ONBOARDED !== $this->state->current_state() ) {
+			function ( $methods ) {
+				if (
+					! is_array( $methods )
+					|| State::STATE_ONBOARDED !== $this->state->current_state()
+					// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+					|| ! ( is_checkout() || isset( $_GET['pay_for_order'] ) && $_GET['pay_for_order'] === 'true' )
+				) {
 					return $methods;
 				}
 
 				if (
 					! $this->pui_product_status->pui_is_active()
 					|| ! $this->pui_helper->is_checkout_ready_for_pui()
-					// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-					|| ( isset( $_GET['pay_for_order'] ) && $_GET['pay_for_order'] === 'true' && ! $this->pui_helper->is_pay_for_order_ready_for_pui() )
+				) {
+					unset( $methods[ PayUponInvoiceGateway::ID ] );
+				}
+
+				if (
+					// phpcs:ignore WordPress.Security.NonceVerification
+					isset( $_GET['pay_for_order'] ) && $_GET['pay_for_order'] === 'true'
+					&& ! $this->pui_helper->is_pay_for_order_ready_for_pui()
 				) {
 					unset( $methods[ PayUponInvoiceGateway::ID ] );
 				}
 
 				return $methods;
-			}
-		);
-
-		add_action(
-			'woocommerce_settings_checkout',
-			function () {
-				if (
-					PayUponInvoiceGateway::ID === $this->current_ppcp_settings_page_id
-					&& ! $this->pui_product_status->pui_is_active()
-				) {
-					$gateway_settings = get_option( 'woocommerce_ppcp-pay-upon-invoice-gateway_settings' );
-					$gateway_enabled  = $gateway_settings['enabled'] ?? '';
-					if ( 'yes' === $gateway_enabled ) {
-						$gateway_settings['enabled'] = 'no';
-						update_option( 'woocommerce_ppcp-pay-upon-invoice-gateway_settings', $gateway_settings );
-						$redirect_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-pay-upon-invoice-gateway' );
-						wp_safe_redirect( $redirect_url );
-						exit;
-					}
-
-					printf(
-						'<div class="notice notice-error"><p>%1$s</p></div>',
-						esc_html__( 'Could not enable gateway because the connected PayPal account is not activated for Pay upon Invoice. Reconnect your account while Onboard with Pay upon Invoice is selected to try again.', 'woocommerce-paypal-payments' )
-					);
-				}
 			}
 		);
 
@@ -504,6 +507,19 @@ class PayUponInvoice {
 						</div>
 						<?php
 					}
+				} elseif ( PayUponInvoiceGateway::ID === $this->current_ppcp_settings_page_id ) {
+					$pui_gateway = WC()->payment_gateways->payment_gateways()[ PayUponInvoiceGateway::ID ];
+					if ( 'yes' === $pui_gateway->get_option( 'enabled' ) ) {
+						$pui_gateway->update_option( 'enabled', 'no' );
+						$redirect_url = admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-pay-upon-invoice-gateway' );
+						wp_safe_redirect( $redirect_url );
+						exit;
+					}
+
+					printf(
+						'<div class="notice notice-error"><p>%1$s</p></div>',
+						esc_html__( 'Could not enable gateway because the connected PayPal account is not activated for Pay upon Invoice. Reconnect your account while Onboard with Pay upon Invoice is selected to try again.', 'woocommerce-paypal-payments' )
+					);
 				}
 			}
 		);
@@ -511,9 +527,19 @@ class PayUponInvoice {
 		add_action(
 			'add_meta_boxes',
 			function( string $post_type ) {
-				if ( $post_type === 'shop_order' ) {
+				/**
+				 * Class and function exist in WooCommerce.
+				 *
+				 * @psalm-suppress UndefinedClass
+				 * @psalm-suppress UndefinedFunction
+				 */
+				$screen = class_exists( CustomOrdersTableController::class ) && wc_get_container()->get( CustomOrdersTableController::class )->custom_orders_table_usage_is_enabled()
+					? wc_get_page_screen_id( 'shop-order' )
+					: 'shop_order';
+
+				if ( $post_type === $screen ) {
 					// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-					$post_id = wc_clean( wp_unslash( $_GET['post'] ?? '' ) );
+					$post_id = wc_clean( wp_unslash( $_GET['id'] ?? $_GET['post'] ?? '' ) );
 					$order   = wc_get_order( $post_id );
 					if ( is_a( $order, WC_Order::class ) && $order->get_payment_method() === PayUponInvoiceGateway::ID ) {
 						$instructions = $order->get_meta( 'ppcp_ratepay_payment_instructions_payment_reference' );
@@ -536,7 +562,7 @@ class PayUponInvoice {
 									echo wp_kses_post( "<li>Verwendungszweck: {$payment_reference}</li>" );
 									echo '</ul>';
 								},
-								$post_type,
+								$screen,
 								'side',
 								'high'
 							);

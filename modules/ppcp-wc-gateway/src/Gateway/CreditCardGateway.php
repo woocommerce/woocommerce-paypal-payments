@@ -174,26 +174,27 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		if ( $state->current_state() === State::STATE_ONBOARDED ) {
 			$this->supports = array( 'refunds' );
 		}
-		if (
-			defined( 'PPCP_FLAG_SUBSCRIPTION' )
-			&& PPCP_FLAG_SUBSCRIPTION
-			&& $this->gateways_enabled()
-			&& $this->vault_setting_enabled()
-		) {
+		if ( $this->config->has( 'dcc_enabled' ) && $this->config->get( 'dcc_enabled' ) ) {
 			$this->supports = array(
 				'refunds',
 				'products',
-				'subscriptions',
-				'subscription_cancellation',
-				'subscription_suspension',
-				'subscription_reactivation',
-				'subscription_amount_changes',
-				'subscription_date_changes',
-				'subscription_payment_method_change',
-				'subscription_payment_method_change_customer',
-				'subscription_payment_method_change_admin',
-				'multiple_subscriptions',
 			);
+
+			if ( $this->config->has( 'vault_enabled_dcc' ) && $this->config->get( 'vault_enabled_dcc' ) ) {
+				array_push(
+					$this->supports,
+					'subscriptions',
+					'subscription_cancellation',
+					'subscription_suspension',
+					'subscription_reactivation',
+					'subscription_amount_changes',
+					'subscription_date_changes',
+					'subscription_payment_method_change',
+					'subscription_payment_method_change_customer',
+					'subscription_payment_method_change_admin',
+					'multiple_subscriptions'
+				);
+			}
 		}
 
 		$this->method_title       = __(
@@ -395,9 +396,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 				);
 			}
 
-			if ( $this->subscription_helper->has_subscription( $order_id ) ) {
-				$this->schedule_saved_payment_check( $order_id, $wc_order->get_customer_id() );
-			}
+			do_action( 'woocommerce_paypal_payments_before_handle_payment_success', $wc_order );
 
 			return $this->handle_payment_success( $wc_order );
 		} catch ( PayPalApiException $error ) {

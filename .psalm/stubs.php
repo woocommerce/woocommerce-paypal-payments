@@ -1,4 +1,7 @@
 <?php
+if (!defined('PAYPAL_INTEGRATION_DATE')) {
+	define('PAYPAL_INTEGRATION_DATE', '2023-06-02');
+}
 if (!defined('EP_PAGES')) {
 	define('EP_PAGES', 4096);
 }
@@ -7,6 +10,13 @@ if (!defined('MONTH_IN_SECONDS')) {
 }
 if (!defined('HOUR_IN_SECONDS')) {
 	define('HOUR_IN_SECONDS', 60 * MINUTE_IN_SECONDS);
+}
+if (!defined('MINUTE_IN_SECONDS')) {
+	define( 'MINUTE_IN_SECONDS', 60 );
+}
+
+if (!defined('ABSPATH')) {
+	define('ABSPATH', '');
 }
 
 /**
@@ -25,6 +35,17 @@ if (!defined('HOUR_IN_SECONDS')) {
  *
  * @return string|null The scheduled action ID if a scheduled action was found, or null if no matching action found.
  */
-function as_unschedule_action($hook, $args = array(), $group = '')
-{
-}
+function as_unschedule_action($hook, $args = array(), $group = '') {}
+
+/**
+ * Schedule an action to run one time
+ *
+ * @param int    $timestamp When the job will run.
+ * @param string $hook The hook to trigger.
+ * @param array  $args Arguments to pass when the hook triggers.
+ * @param string $group The group to assign this job to.
+ * @param bool   $unique Whether the action should be unique.
+ *
+ * @return int The action ID.
+ */
+function as_schedule_single_action( $timestamp, $hook, $args = array(), $group = '', $unique = false ) {}

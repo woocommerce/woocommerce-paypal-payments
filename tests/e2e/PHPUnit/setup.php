@@ -16,18 +16,6 @@ foreach ($options as $key => $value) {
 	update_option($key, $value);
 }
 
-echo 'Adding ppcp-e2e-plugin.' . PHP_EOL;
-
-$pluginDir = WP_ROOT_DIR . '/wp-content/plugins/ppcp-e2e-plugin';
-if (!is_dir($pluginDir)) {
-	mkdir($pluginDir);
-}
-if (!copy(E2E_TESTS_ROOT_DIR . '/PHPUnit/ppcp-e2e-plugin.php', $pluginDir . '/ppcp-e2e-plugin.php')) {
-	echo 'Failed to copy ppcp-e2e-plugin.' . PHP_EOL;
-}
-
-activate_plugin('ppcp-e2e-plugin/ppcp-e2e-plugin.php', '', true);
-
 echo 'Deleting test taxes.' . PHP_EOL;
 
 $taxRates = WC_Tax::get_rates_for_tax_class('');

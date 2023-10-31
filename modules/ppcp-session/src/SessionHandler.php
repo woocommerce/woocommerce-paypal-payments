@@ -16,7 +16,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
  */
 class SessionHandler {
 
-	const ID = 'ppcp';
+	private const SESSION_KEY = 'ppcp';
 
 	/**
 	 * The Order.
@@ -33,7 +33,7 @@ class SessionHandler {
 	private $bn_code = '';
 
 	/**
-	 * If PayPal respondes with INSTRUMENT_DECLINED, we only
+	 * If PayPal responds with INSTRUMENT_DECLINED, we only
 	 * want to go max. three times through the process of trying again.
 	 *
 	 * @var int
@@ -48,11 +48,22 @@ class SessionHandler {
 	private $funding_source = null;
 
 	/**
+	 * The checkout form data.
+	 *
+	 * @var array
+	 */
+	private $checkout_form = array();
+
+	/**
 	 * Returns the order.
 	 *
 	 * @return Order|null
 	 */
 	public function order() {
+		$this->load_session();
+
+		do_action( 'ppcp_session_get_order', $this->order, $this );
+
 		return $this->order;
 	}
 
@@ -60,13 +71,37 @@ class SessionHandler {
 	 * Replaces the current order.
 	 *
 	 * @param Order $order The new order.
-	 *
-	 * @return SessionHandler
 	 */
-	public function replace_order( Order $order ) : SessionHandler {
+	public function replace_order( Order $order ): void {
+		$this->load_session();
+
 		$this->order = $order;
+
 		$this->store_session();
-		return $this;
+	}
+
+	/**
+	 * Returns the checkout form data.
+	 *
+	 * @return array
+	 */
+	public function checkout_form(): array {
+		$this->load_session();
+
+		return $this->checkout_form;
+	}
+
+	/**
+	 * Replaces the checkout form data.
+	 *
+	 * @param array $checkout_form The checkout form data.
+	 */
+	public function replace_checkout_form( array $checkout_form ): void {
+		$this->load_session();
+
+		$this->checkout_form = $checkout_form;
+
+		$this->store_session();
 	}
 
 	/**
@@ -75,6 +110,8 @@ class SessionHandler {
 	 * @return string
 	 */
 	public function bn_code() : string {
+		$this->load_session();
+
 		return $this->bn_code;
 	}
 
@@ -82,13 +119,13 @@ class SessionHandler {
 	 * Replaces the BN Code.
 	 *
 	 * @param string $bn_code The new BN Code.
-	 *
-	 * @return SessionHandler
 	 */
-	public function replace_bn_code( string $bn_code ) : SessionHandler {
+	public function replace_bn_code( string $bn_code ) : void {
+		$this->load_session();
+
 		$this->bn_code = $bn_code;
+
 		$this->store_session();
-		return $this;
 	}
 
 	/**
@@ -97,6 +134,8 @@ class SessionHandler {
 	 * @return string|null
 	 */
 	public function funding_source(): ?string {
+		$this->load_session();
+
 		return $this->funding_source;
 	}
 
@@ -104,13 +143,13 @@ class SessionHandler {
 	 * Replaces the funding source of the current checkout.
 	 *
 	 * @param string|null $funding_source The funding source.
-	 *
-	 * @return SessionHandler
 	 */
-	public function replace_funding_source( ?string $funding_source ): SessionHandler {
+	public function replace_funding_source( ?string $funding_source ): void {
+		$this->load_session();
+
 		$this->funding_source = $funding_source;
+
 		$this->store_session();
-		return $this;
 	}
 
 	/**
@@ -119,18 +158,20 @@ class SessionHandler {
 	 * @return int
 	 */
 	public function insufficient_funding_tries() : int {
+		$this->load_session();
+
 		return $this->insufficient_funding_tries;
 	}
 
 	/**
 	 * Increments the number of tries, the customer has done in this session.
-	 *
-	 * @return SessionHandler
 	 */
-	public function increment_insufficient_funding_tries() : SessionHandler {
+	public function increment_insufficient_funding_tries(): void {
+		$this->load_session();
+
 		$this->insufficient_funding_tries++;
+
 		$this->store_session();
-		return $this;
 	}
 
 	/**
@@ -143,14 +184,60 @@ class SessionHandler {
 		$this->bn_code                    = '';
 		$this->insufficient_funding_tries = 0;
 		$this->funding_source             = null;
+		$this->checkout_form              = array();
 		$this->store_session();
 		return $this;
 	}
 
 	/**
-	 * Stores the session.
+	 * Stores the data into the WC session.
 	 */
-	private function store_session() {
-		WC()->session->set( self::ID, $this );
+	private function store_session(): void {
+		WC()->session->set( self::SESSION_KEY, self::make_array( $this ) );
+	}
+
+	/**
+	 * Loads the data from the session.
+	 */
+	private function load_session(): void {
+		if ( isset( WC()->session ) ) {
+			$data = WC()->session->get( self::SESSION_KEY );
+		} else {
+			$data = array();
+		}
+
+		if ( $data instanceof SessionHandler ) {
+			$data = self::make_array( $data );
+		} elseif ( ! is_array( $data ) ) {
+			$data = array();
+		}
+
+		$this->order = $data['order'] ?? null;
+		if ( ! $this->order instanceof Order ) {
+			$this->order = null;
+		}
+		$this->bn_code                    = (string) ( $data['bn_code'] ?? '' );
+		$this->insufficient_funding_tries = (int) ( $data['insufficient_funding_tries'] ?? '' );
+		$this->funding_source             = $data['funding_source'] ?? null;
+		if ( ! is_string( $this->funding_source ) ) {
+			$this->funding_source = null;
+		}
+		$this->checkout_form = $data['checkout_form'] ?? array();
+	}
+
+	/**
+	 * Converts given SessionHandler object into an array.
+	 *
+	 * @param SessionHandler $obj The object to convert.
+	 * @return array
+	 */
+	private static function make_array( SessionHandler $obj ): array {
+		return array(
+			'order'                      => $obj->order,
+			'bn_code'                    => $obj->bn_code,
+			'insufficient_funding_tries' => $obj->insufficient_funding_tries,
+			'funding_source'             => $obj->funding_source,
+			'checkout_form'              => $obj->checkout_form,
+		);
 	}
 }

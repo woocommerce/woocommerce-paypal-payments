@@ -10,6 +10,7 @@ class CreditCardRenderer {
         this.spinner = spinner;
         this.cardValid = false;
         this.formValid = false;
+        this.emptyFields = new Set(['number', 'cvv', 'expirationDate']);
         this.currentHostedFieldsInstance = null;
     }
 
@@ -121,22 +122,21 @@ class CreditCardRenderer {
 
                 const className = this._cardNumberFiledCLassNameByCardType(event.cards[0].type);
                 this._recreateElementClassAttribute(cardNumber, cardNumberField.className);
-                if (event.fields.number.isValid) {
+                if (event.cards.length === 1) {
                     cardNumber.classList.add(className);
                 }
             })
             hostedFields.on('validityChange', (event) => {
-                const formValid = Object.keys(event.fields).every(function (key) {
+                this.formValid = Object.keys(event.fields).every(function (key) {
                     return event.fields[key].isValid;
                 });
-
-                const className = this._cardNumberFiledCLassNameByCardType(event.cards[0].type);
-                event.fields.number.isValid
-                    ? cardNumber.classList.add(className)
-                    : this._recreateElementClassAttribute(cardNumber, cardNumberField.className);
-
-               this.formValid = formValid;
-
+            });
+            hostedFields.on('empty', (event) => {
+                this._recreateElementClassAttribute(cardNumber, cardNumberField.className);
+                this.emptyFields.add(event.emittedBy);
+            });
+            hostedFields.on('notEmpty', (event) => {
+                this.emptyFields.delete(event.emittedBy);
             });
 
             show(buttonSelector);
@@ -234,22 +234,31 @@ class CreditCardRenderer {
                 this.errorHandler.clear();
 
                 if (err.data?.details?.length) {
-                    this.errorHandler.message(err.data.details.map(d => `${d.issue} ${d.description}`).join('<br/>'), true);
+                    this.errorHandler.message(err.data.details.map(d => `${d.issue} ${d.description}`).join('<br/>'));
                 } else if (err.details?.length) {
-                    this.errorHandler.message(err.details.map(d => `${d.issue} ${d.description}`).join('<br/>'), true);
+                    this.errorHandler.message(err.details.map(d => `${d.issue} ${d.description}`).join('<br/>'));
                 } else if (err.data?.errors?.length > 0) {
                     this.errorHandler.messages(err.data.errors);
                 } else if (err.data?.message) {
-                    this.errorHandler.message(err.data.message, true);
+                    this.errorHandler.message(err.data.message);
                 } else if (err.message) {
-                    this.errorHandler.message(err.message, true);
+                    this.errorHandler.message(err.message);
                 } else {
                     this.errorHandler.genericError();
                 }
             });
         } else {
             this.spinner.unblock();
-            const message = ! this.cardValid ? this.defaultConfig.hosted_fields.labels.card_not_supported : this.defaultConfig.hosted_fields.labels.fields_not_valid;
+
+            let message = this.defaultConfig.labels.error.generic;
+            if (this.emptyFields.size > 0) {
+                message = this.defaultConfig.hosted_fields.labels.fields_empty;
+            } else if (!this.cardValid) {
+                message = this.defaultConfig.hosted_fields.labels.card_not_supported;
+            } else if (!this.formValid) {
+                message = this.defaultConfig.hosted_fields.labels.fields_not_valid;
+            }
+
             this.errorHandler.message(message);
         }
     }
