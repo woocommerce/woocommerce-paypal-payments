@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\SavePaymentMethods;
 
 use Psr\Log\LoggerInterface;
 use WC_Order;
+use WC_Payment_Tokens;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\UserIdToken;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
@@ -89,6 +90,27 @@ class SavePaymentMethodsModule implements ModuleInterface {
 		add_filter(
 			'ppcp_create_order_request_body_data',
 			function( array $data ): array {
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing
+				$wc_order_action = wc_clean( wp_unslash( $_POST['wc_order_action'] ?? '' ) );
+				if ( $wc_order_action === 'wcs_process_renewal' ) {
+					// phpcs:ignore WordPress.Security.NonceVerification.Missing
+					$subscription_id = wc_clean( wp_unslash( $_POST['post_ID'] ?? '' ) );
+					$subscription    = wcs_get_subscription( (int) $subscription_id );
+					if ( $subscription ) {
+						$customer_id = $subscription->get_customer_id();
+						$wc_tokens   = WC_Payment_Tokens::get_customer_tokens( $customer_id, PayPalGateway::ID );
+						foreach ( $wc_tokens as $token ) {
+							$data['payment_source'] = array(
+								'paypal' => array(
+									'vault_id' => $token->get_token(),
+								),
+							);
+
+							return $data;
+						}
+					}
+				}
+
 				$data['payment_source'] = array(
 					'paypal' => array(
 						'attributes' => array(
@@ -138,6 +160,8 @@ class SavePaymentMethodsModule implements ModuleInterface {
 		);
 
 		add_filter( 'woocommerce_paypal_payments_disable_add_payment_method', '__return_false' );
+
+		add_filter('woocommerce_paypal_payments_subscription_renewal_return_before_create_order_without_token', '__return_false');
 
 		add_action(
 			'wp_enqueue_scripts',

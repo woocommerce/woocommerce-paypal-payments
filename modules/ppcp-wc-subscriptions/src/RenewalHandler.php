@@ -181,13 +181,8 @@ class RenewalHandler {
 	 * @throws \Exception If customer cannot be read/found.
 	 */
 	private function process_order( \WC_Order $wc_order ): void {
-
 		$user_id  = (int) $wc_order->get_customer_id();
 		$customer = new \WC_Customer( $user_id );
-		$token    = $this->get_token_for_customer( $customer, $wc_order );
-		if ( ! $token ) {
-			return;
-		}
 
 		$purchase_unit       = $this->purchase_unit_factory->from_wc_order( $wc_order );
 		$payer               = $this->payer_factory->from_customer( $customer );
@@ -196,36 +191,38 @@ class RenewalHandler {
 			'renewal'
 		);
 
+		$token = $this->get_token_for_customer( $customer, $wc_order );
+		if ( $token ) {
+			$order = $this->order_endpoint->create(
+				array( $purchase_unit ),
+				$shipping_preference,
+				$payer,
+				$token
+			);
+
+			$this->handle_paypal_order( $wc_order, $order );
+
+			$this->logger->info(
+				sprintf(
+					'Renewal for order %d is completed.',
+					$wc_order->get_id()
+				)
+			);
+
+			return;
+		}
+
+		if ( apply_filters( 'woocommerce_paypal_payments_subscription_renewal_return_before_create_order_without_token', true ) ) {
+			return;
+		}
+
 		$order = $this->order_endpoint->create(
 			array( $purchase_unit ),
 			$shipping_preference,
-			$payer,
-			$token
+			$payer
 		);
 
-		$this->add_paypal_meta( $wc_order, $order, $this->environment );
-
-		if ( $order->intent() === 'AUTHORIZE' ) {
-			$order = $this->order_endpoint->authorize( $order );
-			$wc_order->update_meta_data( AuthorizedPaymentsProcessor::CAPTURED_META_KEY, 'false' );
-		}
-
-		$transaction_id = $this->get_paypal_order_transaction_id( $order );
-		if ( $transaction_id ) {
-			$this->update_transaction_id( $transaction_id, $wc_order );
-
-			$subscriptions = wcs_get_subscriptions_for_order( $wc_order->get_id(), array( 'order_type' => 'any' ) );
-			foreach ( $subscriptions as $id => $subscription ) {
-				$subscription->update_meta_data( 'ppcp_previous_transaction_reference', $transaction_id );
-				$subscription->save();
-			}
-		}
-
-		$this->handle_new_order_status( $order, $wc_order );
-
-		if ( $this->capture_authorized_downloads( $order ) ) {
-			$this->authorized_payments_processor->capture_authorized_payment( $wc_order );
-		}
+		$this->handle_paypal_order( $wc_order, $order );
 
 		$this->logger->info(
 			sprintf(
@@ -316,5 +313,39 @@ class RenewalHandler {
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * Handles PayPal order creation and updates WC order accordingly.
+	 *
+	 * @param \WC_Order $wc_order WC order.
+	 * @param Order     $order PayPal order.
+	 * @return void
+	 * @throws NotFoundException When something goes wrong while handling the order.
+	 */
+	private function handle_paypal_order( \WC_Order $wc_order, Order $order ): void {
+		$this->add_paypal_meta( $wc_order, $order, $this->environment );
+
+		if ( $order->intent() === 'AUTHORIZE' ) {
+			$order = $this->order_endpoint->authorize( $order );
+			$wc_order->update_meta_data( AuthorizedPaymentsProcessor::CAPTURED_META_KEY, 'false' );
+		}
+
+		$transaction_id = $this->get_paypal_order_transaction_id( $order );
+		if ( $transaction_id ) {
+			$this->update_transaction_id( $transaction_id, $wc_order );
+
+			$subscriptions = wcs_get_subscriptions_for_order( $wc_order->get_id(), array( 'order_type' => 'any' ) );
+			foreach ( $subscriptions as $id => $subscription ) {
+				$subscription->update_meta_data( 'ppcp_previous_transaction_reference', $transaction_id );
+				$subscription->save();
+			}
+		}
+
+		$this->handle_new_order_status( $order, $wc_order );
+
+		if ( $this->capture_authorized_downloads( $order ) ) {
+			$this->authorized_payments_processor->capture_authorized_payment( $wc_order );
+		}
 	}
 }

@@ -178,7 +178,7 @@ class OrderEndpoint {
 	 * @param string            $shipping_preference One of ApplicationContext::SHIPPING_PREFERENCE_ values.
 	 * @param Payer|null        $payer The payer off the order.
 	 * @param PaymentToken|null $payment_token The payment token.
-	 * @param string            $paypal_request_id The paypal request id.
+	 * @param string            $paypal_request_id The PayPal request id.
 	 * @param string            $user_action The user action.
 	 *
 	 * @return Order
