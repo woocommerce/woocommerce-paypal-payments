@@ -71,7 +71,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'requirements' => array(),
 			'gateway'      => 'paypal',
 		),
-		'smart_button_language' => array(
+		'smart_button_language'                    => array(
 			'title'        => __( 'Smart Button Language', 'woocommerce-paypal-payments' ),
 			'type'         => 'select',
 			'desc_tip'     => true,
@@ -82,7 +82,7 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'class'        => array(),
 			'input_class'  => array( 'wc-enhanced-select' ),
 			'default'      => 'en',
-			'options'      => $container->get('wcgateway.wp-paypal-locales-map'),
+			'options'      => $container->get( 'wcgateway.wp-paypal-locales-map' ),
 			'screens'      => array( State::STATE_ONBOARDED ),
 			'gateway'      => 'paypal',
 			'requirements' => array(),
