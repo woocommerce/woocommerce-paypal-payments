@@ -244,6 +244,11 @@ class ApplepayButton {
             requiredShippingContactFields: ["postalAddress", "email", "phone"],
             requiredBillingContactFields: ["postalAddress", "email", "phone"],
         }
+
+        if (!this.contextHandler.shippingAllowed()) {
+            baseRequest.requiredShippingContactFields = [];
+        }
+
         const paymentDataRequest = Object.assign({}, baseRequest);
         paymentDataRequest.currencyCode = buttonConfig.shop.currencyCode;
         paymentDataRequest.total = {
@@ -508,18 +513,53 @@ class ApplepayButton {
                 if (confirmOrderResponse && confirmOrderResponse.approveApplePayPayment) {
                     if (confirmOrderResponse.approveApplePayPayment.status === "APPROVED") {
                         try {
-                            let data = {
-                                billing_contact: event.payment.billingContact,
-                                shipping_contact: event.payment.shippingContact,
-                                paypal_order_id: id,
-                            };
-                            let authorizationResult = await processInWooAndCapture(data);
-                            if (authorizationResult.result === "success") {
-                                session.completePayment(ApplePaySession.STATUS_SUCCESS)
-                                window.location.href = authorizationResult.redirect
+
+                            if (!this.contextHandler.shippingAllowed()) {
+                                // No shipping, expect immediate capture, ex: PayNow.
+
+                                let approveFailed = false;
+                                await this.contextHandler.approveOrder({
+                                    orderID: id
+                                }, { // actions mock object.
+                                    restart: () => new Promise((resolve, reject) => {
+                                        approveFailed = true;
+                                        resolve();
+                                    }),
+                                    order: {
+                                        get: () => new Promise((resolve, reject) => {
+                                            resolve(null);
+                                        })
+                                    }
+                                });
+
+                                if (!approveFailed) {
+                                    this.log('onpaymentauthorized approveOrder OK');
+                                    session.completePayment(ApplePaySession.STATUS_SUCCESS);
+                                } else {
+                                    this.log('onpaymentauthorized approveOrder FAIL');
+                                    session.completePayment(ApplePaySession.STATUS_FAILURE);
+                                    session.abort()
+                                    console.error(error);
+                                }
+
                             } else {
-                                session.completePayment(ApplePaySession.STATUS_FAILURE)
+                                // Default payment.
+
+                                let data = {
+                                    billing_contact: event.payment.billingContact,
+                                    shipping_contact: event.payment.shippingContact,
+                                    paypal_order_id: id,
+                                };
+                                let authorizationResult = await processInWooAndCapture(data);
+                                if (authorizationResult.result === "success") {
+                                    session.completePayment(ApplePaySession.STATUS_SUCCESS)
+                                    window.location.href = authorizationResult.redirect
+                                } else {
+                                    session.completePayment(ApplePaySession.STATUS_FAILURE)
+                                }
+
                             }
+
                         } catch (error) {
                             session.completePayment(ApplePaySession.STATUS_FAILURE);
                             session.abort()
