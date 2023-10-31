@@ -71,15 +71,6 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'requirements' => array(),
 			'gateway'      => 'paypal',
 		),
-		'smart_button_enable_styling_per_location' => array(
-			'title'        => __( 'Customize Smart Buttons Per Location', 'woocommerce-paypal-payments' ),
-			'type'         => 'checkbox',
-			'label'        => __( 'Customize smart button style per location', 'woocommerce-paypal-payments' ),
-			'default'      => true,
-			'screens'      => array( State::STATE_START, State::STATE_ONBOARDED ),
-			'requirements' => array(),
-			'gateway'      => 'paypal',
-		),
 		'smart_button_language' => array(
 			'title'        => __( 'Smart Button Language', 'woocommerce-paypal-payments' ),
 			'type'         => 'select',
@@ -95,6 +86,15 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'screens'      => array( State::STATE_ONBOARDED ),
 			'gateway'      => 'paypal',
 			'requirements' => array(),
+		),
+		'smart_button_enable_styling_per_location' => array(
+			'title'        => __( 'Customize Smart Buttons Per Location', 'woocommerce-paypal-payments' ),
+			'type'         => 'checkbox',
+			'label'        => __( 'Customize smart button style per location', 'woocommerce-paypal-payments' ),
+			'default'      => true,
+			'screens'      => array( State::STATE_START, State::STATE_ONBOARDED ),
+			'requirements' => array(),
+			'gateway'      => 'paypal',
 		),
 		// General button styles.
 		'button_general_layout'                    => array(
