@@ -685,7 +685,8 @@ class SmartButton implements SmartButtonInterface {
 
 		$product = wc_get_product();
 
-		$location = $this->location();
+		$location      = $this->location();
+		$location_hook = $this->location_to_hook( $location );
 
 		if (
 			$location === 'product' && is_a( $product, WC_Product::class )
@@ -697,7 +698,17 @@ class SmartButton implements SmartButtonInterface {
 			return;
 		}
 
+		/**
+		 * A hook executed before rendering of the PCP Pay Later messages wrapper.
+		 */
+		do_action( "ppcp_before_{$location_hook}_message_wrapper" );
+
 		echo '<div id="ppcp-messages" data-partner-attribution-id="Woo_PPCP"></div>';
+
+		/**
+		 * A hook executed after rendering of the PCP Pay Later messages wrapper.
+		 */
+		do_action( "ppcp_after_{$location_hook}_message_wrapper" );
 	}
 
 	/**
