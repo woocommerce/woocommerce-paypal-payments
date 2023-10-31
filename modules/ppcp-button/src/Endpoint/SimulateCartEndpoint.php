@@ -13,6 +13,7 @@ use Exception;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButton;
+use WooCommerce\PayPalCommerce\Button\Helper\CartProductsHelper;
 
 /**
  * Class SimulateCartEndpoint
@@ -38,24 +39,24 @@ class SimulateCartEndpoint extends AbstractCartEndpoint {
 	/**
 	 * ChangeCartEndpoint constructor.
 	 *
-	 * @param SmartButton     $smart_button The SmartButton.
-	 * @param \WC_Cart        $cart The current WC cart object.
-	 * @param RequestData     $request_data The request data helper.
-	 * @param \WC_Data_Store  $product_data_store The data store for products.
-	 * @param LoggerInterface $logger The logger.
+	 * @param SmartButton        $smart_button The SmartButton.
+	 * @param \WC_Cart           $cart The current WC cart object.
+	 * @param RequestData        $request_data The request data helper.
+	 * @param CartProductsHelper $cart_products The cart products helper.
+	 * @param LoggerInterface    $logger The logger.
 	 */
 	public function __construct(
 		SmartButton $smart_button,
 		\WC_Cart $cart,
 		RequestData $request_data,
-		\WC_Data_Store $product_data_store,
+		CartProductsHelper $cart_products,
 		LoggerInterface $logger
 	) {
-		$this->smart_button       = $smart_button;
-		$this->cart               = clone $cart;
-		$this->request_data       = $request_data;
-		$this->product_data_store = $product_data_store;
-		$this->logger             = $logger;
+		$this->smart_button  = $smart_button;
+		$this->cart          = clone $cart;
+		$this->request_data  = $request_data;
+		$this->cart_products = $cart_products;
+		$this->logger        = $logger;
 
 		$this->logger_tag = 'simulation';
 	}
@@ -147,6 +148,7 @@ class SimulateCartEndpoint extends AbstractCartEndpoint {
 		// Store a reference to the real cart.
 		$this->real_cart = WC()->cart;
 		WC()->cart       = $this->cart;
+		$this->cart_products->set_cart( $this->cart );
 	}
 
 	/**

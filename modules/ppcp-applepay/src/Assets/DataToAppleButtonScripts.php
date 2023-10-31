@@ -169,37 +169,32 @@ class DataToAppleButtonScripts {
 		if ( ! $cart ) {
 			return array();
 		}
-		$nonce         = wp_nonce_field( 'woocommerce-process_checkout', 'woocommerce-process-checkout-nonce' );
-		$button_markup =
-			'<div id="applepay-container">'
-			. $nonce
-			. '</div>';
-		$type          = $this->settings->has( 'applepay_button_type' ) ? $this->settings->get( 'applepay_button_type' ) : '';
-		$color         = $this->settings->has( 'applepay_button_color' ) ? $this->settings->get( 'applepay_button_color' ) : '';
-		$lang          = $this->settings->has( 'applepay_button_language' ) ? $this->settings->get( 'applepay_button_language' ) : '';
-		$lang          = apply_filters( 'woocommerce_paypal_payments_applepay_button_language', $lang );
+
+		$type  = $this->settings->has( 'applepay_button_type' ) ? $this->settings->get( 'applepay_button_type' ) : '';
+		$color = $this->settings->has( 'applepay_button_color' ) ? $this->settings->get( 'applepay_button_color' ) : '';
+		$lang  = $this->settings->has( 'applepay_button_language' ) ? $this->settings->get( 'applepay_button_language' ) : '';
+		$lang  = apply_filters( 'woocommerce_paypal_payments_applepay_button_language', $lang );
 
 		return array(
-			'sdk_url'      => $this->sdk_url,
-			'is_debug'     => defined( 'WP_DEBUG' ) && WP_DEBUG ? true : false,
-			'button'       => array(
+			'sdk_url'  => $this->sdk_url,
+			'is_debug' => defined( 'WP_DEBUG' ) && WP_DEBUG ? true : false,
+			'button'   => array(
 				'wrapper'           => 'applepay-container',
 				'mini_cart_wrapper' => 'applepay-container-minicart',
 				'type'              => $type,
 				'color'             => $color,
 				'lang'              => $lang,
 			),
-			'product'      => array(
+			'product'  => array(
 				'needShipping' => $cart->needs_shipping(),
 				'subtotal'     => $cart->get_subtotal(),
 			),
-			'shop'         => array(
+			'shop'     => array(
 				'countryCode'  => $shop_country_code,
 				'currencyCode' => $currency_code,
 				'totalLabel'   => $total_label,
 			),
-			'ajax_url'     => admin_url( 'admin-ajax.php' ),
-			'buttonMarkup' => $button_markup,
+			'ajax_url' => admin_url( 'admin-ajax.php' ),
 		);
 	}
 }

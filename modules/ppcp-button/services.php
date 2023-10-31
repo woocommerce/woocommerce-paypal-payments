@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\Button;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveSubscriptionEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\SimulateCartEndpoint;
+use WooCommerce\PayPalCommerce\Button\Helper\CartProductsHelper;
 use WooCommerce\PayPalCommerce\Button\Helper\CheckoutFormSaver;
 use WooCommerce\PayPalCommerce\Button\Endpoint\SaveCheckoutFormEndpoint;
 use WooCommerce\PayPalCommerce\Button\Validation\CheckoutFormValidator;
@@ -128,24 +129,24 @@ return array(
 		if ( ! \WC()->cart ) {
 			throw new RuntimeException( 'cant initialize endpoint at this moment' );
 		}
-		$smart_button = $container->get( 'button.smart-button' );
-		$cart         = WC()->cart;
-		$request_data = $container->get( 'button.request-data' );
-		$data_store   = \WC_Data_Store::load( 'product' );
-		$logger       = $container->get( 'woocommerce.logger.woocommerce' );
-		return new SimulateCartEndpoint( $smart_button, $cart, $request_data, $data_store, $logger );
+		$smart_button  = $container->get( 'button.smart-button' );
+		$cart          = WC()->cart;
+		$request_data  = $container->get( 'button.request-data' );
+		$cart_products = $container->get( 'button.helper.cart-products' );
+		$logger        = $container->get( 'woocommerce.logger.woocommerce' );
+		return new SimulateCartEndpoint( $smart_button, $cart, $request_data, $cart_products, $logger );
 	},
 	'button.endpoint.change-cart'                 => static function ( ContainerInterface $container ): ChangeCartEndpoint {
 		if ( ! \WC()->cart ) {
 			throw new RuntimeException( 'cant initialize endpoint at this moment' );
 		}
-		$cart        = WC()->cart;
-		$shipping    = WC()->shipping();
-		$request_data = $container->get( 'button.request-data' );
+		$cart                  = WC()->cart;
+		$shipping              = WC()->shipping();
+		$request_data          = $container->get( 'button.request-data' );
 		$purchase_unit_factory = $container->get( 'api.factory.purchase-unit' );
-		$data_store   = \WC_Data_Store::load( 'product' );
-		$logger                        = $container->get( 'woocommerce.logger.woocommerce' );
-		return new ChangeCartEndpoint( $cart, $shipping, $request_data, $purchase_unit_factory, $data_store, $logger );
+		$cart_products         = $container->get( 'button.helper.cart-products' );
+		$logger                = $container->get( 'woocommerce.logger.woocommerce' );
+		return new ChangeCartEndpoint( $cart, $shipping, $request_data, $purchase_unit_factory, $cart_products, $logger );
 	},
 	'button.endpoint.create-order'                => static function ( ContainerInterface $container ): CreateOrderEndpoint {
 		$request_data          = $container->get( 'button.request-data' );
@@ -251,6 +252,12 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
+
+	'button.helper.cart-products'                 => static function ( ContainerInterface $container ): CartProductsHelper {
+		$data_store = \WC_Data_Store::load( 'product' );
+		return new CartProductsHelper( $data_store );
+	},
+
 	'button.helper.three-d-secure'                => static function ( ContainerInterface $container ): ThreeDSecure {
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
 		return new ThreeDSecure( $logger );

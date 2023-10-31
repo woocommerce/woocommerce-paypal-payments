@@ -14,6 +14,7 @@ use Psr\Log\LoggerInterface;
 use WC_Cart;
 use WC_Order;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
+use WooCommerce\PayPalCommerce\Button\Helper\CartProductsHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
@@ -25,18 +26,21 @@ use WooCommerce\PayPalCommerce\Webhooks\Handler\RequestHandlerTrait;
  */
 class ApplePayButton implements ButtonInterface {
 	use RequestHandlerTrait;
+
 	/**
 	 * The settings.
 	 *
 	 * @var Settings
 	 */
 	private $settings;
+
 	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
 	 */
 	private $logger;
+
 	/**
 	 * The response templates.
 	 *
@@ -58,12 +62,14 @@ class ApplePayButton implements ButtonInterface {
 	 * @var string
 	 */
 	protected $id;
+
 	/**
 	 * The method title.
 	 *
 	 * @var string
 	 */
 	protected $method_title;
+
 	/**
 	 * The processor for orders.
 	 *
@@ -84,24 +90,34 @@ class ApplePayButton implements ButtonInterface {
 	 * @var string
 	 */
 	private $version;
+
 	/**
 	 * The module URL.
 	 *
 	 * @var string
 	 */
 	private $module_url;
+
 	/**
 	 * The data to send to the ApplePay button script.
 	 *
 	 * @var DataToAppleButtonScripts
 	 */
 	private $script_data;
+
 	/**
 	 * The Settings status helper.
 	 *
 	 * @var SettingsStatus
 	 */
 	private $settings_status;
+
+	/**
+	 * The cart products helper.
+	 *
+	 * @var CartProductsHelper
+	 */
+	protected $cart_products;
 
 	/**
 	 * PayPalPaymentMethod constructor.
@@ -113,6 +129,7 @@ class ApplePayButton implements ButtonInterface {
 	 * @param string                   $version The module version.
 	 * @param DataToAppleButtonScripts $data The data to send to the ApplePay button script.
 	 * @param SettingsStatus           $settings_status The settings status helper.
+	 * @param CartProductsHelper       $cart_products The cart products helper.
 	 */
 	public function __construct(
 		Settings $settings,
@@ -121,7 +138,8 @@ class ApplePayButton implements ButtonInterface {
 		string $module_url,
 		string $version,
 		DataToAppleButtonScripts $data,
-		SettingsStatus $settings_status
+		SettingsStatus $settings_status,
+		CartProductsHelper $cart_products
 	) {
 		$this->settings           = $settings;
 		$this->response_templates = new ResponsesToApple();
@@ -133,6 +151,7 @@ class ApplePayButton implements ButtonInterface {
 		$this->version            = $version;
 		$this->script_data        = $data;
 		$this->settings_status    = $settings_status;
+		$this->cart_products      = $cart_products;
 	}
 
 	/**
@@ -822,15 +841,24 @@ class ApplePayButton implements ButtonInterface {
 	 *
 	 * @param ApplePayDataObjectHttp $applepay_request_data_object The request data object.
 	 * @return bool | string The cart item key after adding to the new cart.
-	 * @throws \Exception If cannot be added to cart.
+	 * @throws \Exception If it cannot be added to cart.
 	 */
 	public function prepare_cart( ApplePayDataObjectHttp $applepay_request_data_object ): string {
 		$this->save_old_cart();
-		$cart = WC()->cart;
-		return $cart->add_to_cart(
-			(int) $applepay_request_data_object->product_id(),
-			(int) $applepay_request_data_object->product_quantity()
+		$this->cart_products->set_cart( WC()->cart );
+
+		$product = $this->cart_products->product_from_data(
+			array(
+				'id'         => (int) $applepay_request_data_object->product_id(),
+				'quantity'   => (int) $applepay_request_data_object->product_quantity(),
+				'variations' => $applepay_request_data_object->product_variations(),
+				'extra'      => $applepay_request_data_object->product_extra(),
+				'booking'    => $applepay_request_data_object->product_booking(),
+			)
 		);
+
+		$this->cart_products->add_products( array( $product ) );
+		return $this->cart_products->cart_item_keys()[0];
 	}
 
 	/**
