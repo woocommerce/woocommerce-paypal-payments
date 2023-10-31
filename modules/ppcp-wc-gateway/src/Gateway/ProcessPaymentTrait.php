@@ -19,21 +19,6 @@ use WooCommerce\PayPalCommerce\WcGateway\Exception\GatewayGenericException;
  */
 trait ProcessPaymentTrait {
 	/**
-	 * Checks if PayPal or Credit Card gateways are enabled.
-	 *
-	 * @return bool Whether any of the gateways is enabled.
-	 */
-	protected function gateways_enabled(): bool {
-		if ( $this->config->has( 'enabled' ) && $this->config->get( 'enabled' ) ) {
-			return true;
-		}
-		if ( $this->config->has( 'dcc_enabled' ) && $this->config->get( 'dcc_enabled' ) ) {
-			return true;
-		}
-		return false;
-	}
-
-	/**
 	 * Handles the payment failure.
 	 *
 	 * @param WC_Order|null $wc_order The order.

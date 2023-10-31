@@ -60,6 +60,12 @@ class SingleProductHandler extends BaseHandler {
         );
     }
 
+
+    products() {
+        return this.actionHandler().getProducts();
+    }
+
+
 }
 
 export default SingleProductHandler;
