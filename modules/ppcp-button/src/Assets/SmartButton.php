@@ -395,7 +395,9 @@ class SmartButton implements SmartButtonInterface {
 			return false;
 		}
 
-		$get_hook = function ( string $location ): ?array {
+		$default_pay_order_hook = 'woocommerce_pay_order_before_submit';
+
+		$get_hook = function ( string $location ) use ( $default_pay_order_hook ): ?array {
 			switch ( $location ) {
 				case 'checkout':
 					return $this->messages_renderer_hook( $location, 'woocommerce_review_order_before_payment', 10 );
@@ -424,6 +426,28 @@ class SmartButton implements SmartButtonInterface {
 			array( $this, 'message_renderer' ),
 			$hook['priority']
 		);
+
+		// Looks like there are no hooks like woocommerce_review_order_before_payment on the pay for order page, so have to move using JS.
+		if ( $location === 'pay-now' && $hook['name'] === $default_pay_order_hook &&
+			/**
+			 * The filter returning true if Pay Later messages should be displayed before payment methods
+			 * on the pay for order page, like in checkout.
+			 */
+			apply_filters(
+				'woocommerce_paypal_payments_put_pay_order_messages_before_payment_methods',
+				true
+			)
+		) {
+			add_action(
+				'ppcp_after_pay_order_message_wrapper',
+				function () {
+					echo '
+<script>
+document.querySelector("#payment").before(document.querySelector("#ppcp-messages"))
+</script>';
+				}
+			);
+		}
 
 		return true;
 	}
