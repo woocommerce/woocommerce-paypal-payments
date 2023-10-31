@@ -402,7 +402,7 @@ class SmartButton implements SmartButtonInterface {
 				case 'cart':
 					return $this->messages_renderer_hook( $location, $this->proceed_to_checkout_button_renderer_hook(), 19 );
 				case 'pay-now':
-					return $this->messages_renderer_hook( 'pay_order', 'woocommerce_pay_order_before_submit', 10 );
+					return $this->messages_renderer_hook( $location, $default_pay_order_hook, 10 );
 				case 'product':
 					return $this->messages_renderer_hook( $location, $this->single_product_renderer_hook(), 30 );
 				case 'shop':
@@ -1399,18 +1399,20 @@ class SmartButton implements SmartButtonInterface {
 	 * @return array An array with 'name' and 'priority' keys.
 	 */
 	private function messages_renderer_hook( string $location, string $default_hook, int $default_priority ): array {
+		$location_hook = $this->location_to_hook( $location );
+
 		/**
 		 * The filter returning the action name that will be used for rendering Pay Later messages.
 		 */
 		$hook = (string) apply_filters(
-			"woocommerce_paypal_payments_${location}_messages_renderer_hook",
+			"woocommerce_paypal_payments_${location_hook}_messages_renderer_hook",
 			$default_hook
 		);
 		/**
 		 * The filter returning the action priority that will be used for rendering Pay Later messages.
 		 */
 		$priority = (int) apply_filters(
-			"woocommerce_paypal_payments_${location}_messages_renderer_priority",
+			"woocommerce_paypal_payments_${location_hook}_messages_renderer_priority",
 			$default_priority
 		);
 		return array(
@@ -1724,4 +1726,18 @@ class SmartButton implements SmartButtonInterface {
 
 	}
 
+	/**
+	 * Converts the location name into the name used in hooks.
+	 *
+	 * @param string $location The location.
+	 * @return string
+	 */
+	private function location_to_hook( string $location ): string {
+		switch ( $location ) {
+			case 'pay-now':
+				return 'pay_order';
+			default:
+				return $location;
+		}
+	}
 }
