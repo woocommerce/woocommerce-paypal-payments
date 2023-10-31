@@ -6,6 +6,7 @@ namespace WooCommerce\PayPalCommerce\Button\Endpoint;
 
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
+use WooCommerce\PayPalCommerce\Button\Helper\CartProductsHelper;
 use WooCommerce\PayPalCommerce\TestCase;
 use Mockery;
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
@@ -91,12 +92,16 @@ class ChangeCartEndpointTest extends TestCase
             ->expects('from_wc_cart')
             ->andReturn($pu);
 
+		$productsHelper = new CartProductsHelper(
+			$dataStore
+		);
+
         $testee = new ChangeCartEndpoint(
             $cart,
             $shipping,
             $requestData,
             $purchase_unit_factory,
-            $dataStore,
+			$productsHelper,
 			new NullLogger()
         );
 

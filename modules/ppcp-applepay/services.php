@@ -100,7 +100,6 @@ return array(
 		return new DataToAppleButtonScripts( $container->get( 'applepay.sdk_script_url' ), $container->get( 'wcgateway.settings' ) );
 	},
 	'applepay.button'                            => static function ( ContainerInterface $container ): ApplePayButton {
-
 		return new ApplePayButton(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
@@ -108,7 +107,8 @@ return array(
 			$container->get( 'applepay.url' ),
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'applepay.data_to_scripts' ),
-			$container->get( 'wcgateway.settings.status' )
+			$container->get( 'wcgateway.settings.status' ),
+			$container->get( 'button.helper.cart-products' )
 		);
 	},
 	'applepay.blocks-payment-method'             => static function ( ContainerInterface $container ): PaymentMethodTypeInterface {

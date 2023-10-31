@@ -180,7 +180,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 2.4.0 - xxxx-xx-xx =
+= 2.4.0 - 2023-10-31 =
 * Fix - Mini-Cart Bug cause of wrong DOM-Structure in v2.3.1 #1735
 * Fix - ACDC disappearing after plugin updates #1751
 * Fix - Subscription module hooks #1748

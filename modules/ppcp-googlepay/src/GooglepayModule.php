@@ -50,103 +50,111 @@ class GooglepayModule implements ModuleInterface {
 			}
 		);
 
-		// Check if the module is applicable, correct country, currency, ... etc.
-		if ( ! $c->get( 'googlepay.eligible' ) ) {
-			return;
-		}
-
-		// Load the button handler.
-		$button = $c->get( 'googlepay.button' );
-		assert( $button instanceof ButtonInterface );
-		$button->initialize();
-
-		// Show notice if there are product availability issues.
-		$availability_notice = $c->get( 'googlepay.availability_notice' );
-		assert( $availability_notice instanceof AvailabilityNotice );
-		$availability_notice->execute();
-
-		// Check if this merchant can activate / use the buttons.
-		// We allow non referral merchants as they can potentially still use GooglePay, we just have no way of checking the capability.
-		if ( ( ! $c->get( 'googlepay.available' ) ) && $c->get( 'googlepay.is_referral' ) ) {
-			return;
-		}
-
-		// Initializes button rendering.
 		add_action(
-			'wp',
-			static function () use ( $c, $button ) {
-				if ( is_admin() ) {
-					return;
-				}
-				$button->render();
-			}
-		);
-
-		// Enqueue frontend scripts.
-		add_action(
-			'wp_enqueue_scripts',
-			static function () use ( $c, $button ) {
-				$smart_button = $c->get( 'button.smart-button' );
-				assert( $smart_button instanceof SmartButtonInterface );
-				if ( $smart_button->should_load_ppcp_script() ) {
-					$button->enqueue();
-				}
-
-				if ( has_block( 'woocommerce/checkout' ) || has_block( 'woocommerce/cart' ) ) {
-					/**
-					 * Should add this to the ButtonInterface.
-					 *
-					 * @psalm-suppress UndefinedInterfaceMethod
-					 */
-					$button->enqueue_styles();
-				}
-			}
-		);
-
-		// Enqueue backend scripts.
-		add_action(
-			'admin_enqueue_scripts',
-			static function () use ( $c, $button ) {
-				if ( ! is_admin() ) {
-					return;
-				}
-				/**
-				 * Should add this to the ButtonInterface.
-				 *
-				 * @psalm-suppress UndefinedInterfaceMethod
-				 */
-				$button->enqueue_admin();
-			}
-		);
-
-		// Registers buttons on blocks pages.
-		add_action(
-			'woocommerce_blocks_payment_method_type_registration',
-			function( PaymentMethodRegistry $payment_method_registry ) use ( $c, $button ): void {
-				if ( $button->is_enabled() ) {
-					$payment_method_registry->register( $c->get( 'googlepay.blocks-payment-method' ) );
-				}
-			}
-		);
-
-		// Adds GooglePay component to the backend button preview settings.
-		add_action(
-			'woocommerce_paypal_payments_admin_gateway_settings',
-			function( array $settings ) use ( $c, $button ): array {
-				if ( is_array( $settings['components'] ) ) {
-					$settings['components'][] = 'googlepay';
-				}
-				return $settings;
-			}
-		);
-
-		// Initialize AJAX endpoints.
-		add_action(
-			'wc_ajax_' . UpdatePaymentDataEndpoint::ENDPOINT,
+			'init',
 			static function () use ( $c ) {
-				$endpoint = $c->get( 'googlepay.endpoint.update-payment-data' );
-				assert( $endpoint instanceof UpdatePaymentDataEndpoint );
-				$endpoint->handle_request();
+
+				// Check if the module is applicable, correct country, currency, ... etc.
+				if ( ! $c->get( 'googlepay.eligible' ) ) {
+					return;
+				}
+
+				// Load the button handler.
+				$button = $c->get( 'googlepay.button' );
+				assert( $button instanceof ButtonInterface );
+				$button->initialize();
+
+				// Show notice if there are product availability issues.
+				$availability_notice = $c->get( 'googlepay.availability_notice' );
+				assert( $availability_notice instanceof AvailabilityNotice );
+				$availability_notice->execute();
+
+				// Check if this merchant can activate / use the buttons.
+				// We allow non referral merchants as they can potentially still use GooglePay, we just have no way of checking the capability.
+				if ( ( ! $c->get( 'googlepay.available' ) ) && $c->get( 'googlepay.is_referral' ) ) {
+					return;
+				}
+
+				// Initializes button rendering.
+				add_action(
+					'wp',
+					static function () use ( $c, $button ) {
+						if ( is_admin() ) {
+							return;
+						}
+						$button->render();
+					}
+				);
+
+				// Enqueue frontend scripts.
+				add_action(
+					'wp_enqueue_scripts',
+					static function () use ( $c, $button ) {
+						$smart_button = $c->get( 'button.smart-button' );
+						assert( $smart_button instanceof SmartButtonInterface );
+						if ( $smart_button->should_load_ppcp_script() ) {
+							$button->enqueue();
+						}
+
+						if ( has_block( 'woocommerce/checkout' ) || has_block( 'woocommerce/cart' ) ) {
+							/**
+							 * Should add this to the ButtonInterface.
+							 *
+							 * @psalm-suppress UndefinedInterfaceMethod
+							 */
+							$button->enqueue_styles();
+						}
+					}
+				);
+
+				// Enqueue backend scripts.
+				add_action(
+					'admin_enqueue_scripts',
+					static function () use ( $c, $button ) {
+						if ( ! is_admin() ) {
+							return;
+						}
+
+						/**
+						 * Should add this to the ButtonInterface.
+						 *
+						 * @psalm-suppress UndefinedInterfaceMethod
+						 */
+						$button->enqueue_admin();
+					}
+				);
+
+				// Registers buttons on blocks pages.
+				add_action(
+					'woocommerce_blocks_payment_method_type_registration',
+					function( PaymentMethodRegistry $payment_method_registry ) use ( $c, $button ): void {
+						if ( $button->is_enabled() ) {
+							$payment_method_registry->register( $c->get( 'googlepay.blocks-payment-method' ) );
+						}
+					}
+				);
+
+				// Adds GooglePay component to the backend button preview settings.
+				add_action(
+					'woocommerce_paypal_payments_admin_gateway_settings',
+					function( array $settings ) use ( $c ): array {
+						if ( is_array( $settings['components'] ) ) {
+							$settings['components'][] = 'googlepay';
+						}
+						return $settings;
+					}
+				);
+
+				// Initialize AJAX endpoints.
+				add_action(
+					'wc_ajax_' . UpdatePaymentDataEndpoint::ENDPOINT,
+					static function () use ( $c ) {
+						$endpoint = $c->get( 'googlepay.endpoint.update-payment-data' );
+						assert( $endpoint instanceof UpdatePaymentDataEndpoint );
+						$endpoint->handle_request();
+					}
+				);
+
 			}
 		);
 	}
