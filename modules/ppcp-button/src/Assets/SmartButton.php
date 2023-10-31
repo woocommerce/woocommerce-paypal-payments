@@ -705,7 +705,7 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 	/**
 	 * Renders the HTML for the credit messaging.
 	 */
-	public function message_renderer() {
+	public function message_renderer(): void {
 
 		$product = wc_get_product();
 
