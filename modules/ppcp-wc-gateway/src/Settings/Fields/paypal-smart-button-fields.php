@@ -80,6 +80,22 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'requirements' => array(),
 			'gateway'      => 'paypal',
 		),
+		'smart_button_language' => array(
+			'title'        => __( 'Smart Button Language', 'woocommerce-paypal-payments' ),
+			'type'         => 'select',
+			'desc_tip'     => true,
+			'description'  => __(
+				'The language and region used for the displayed PayPal Smart Buttons. The default value is the current language and region setting in a browser.',
+				'woocommerce-paypal-payments'
+			),
+			'class'        => array(),
+			'input_class'  => array( 'wc-enhanced-select' ),
+			'default'      => 'en',
+			'options'      => $container->get('wcgateway.wp-paypal-locales-map'),
+			'screens'      => array( State::STATE_ONBOARDED ),
+			'gateway'      => 'paypal',
+			'requirements' => array(),
+		),
 		// General button styles.
 		'button_general_layout'                    => array(
 			'title'        => __( 'Button Layout', 'woocommerce-paypal-payments' ),
