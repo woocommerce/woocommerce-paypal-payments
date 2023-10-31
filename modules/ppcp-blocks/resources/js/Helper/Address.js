@@ -124,3 +124,29 @@ export const paypalOrderToWcAddresses = (order) => {
 
     return {billingAddress, shippingAddress};
 }
+
+/**
+ * Merges two WC addresses.
+ * The objects can contain either the WC form fields or billingAddress, shippingAddress objects.
+ *
+ * @param {Object} address1
+ * @param {Object} address2
+ * @returns {any}
+ */
+export const mergeWcAddress = (address1, address2) => {
+    if ('billingAddress' in address1) {
+        return {
+            billingAddress: mergeWcAddress(address1.billingAddress, address2.billingAddress),
+            shippingAddress: mergeWcAddress(address1.shippingAddress, address2.shippingAddress),
+        }
+    }
+
+    let address2WithoutEmpty = {...address2};
+    Object.keys(address2).forEach(key => {
+        if (address2[key] === '') {
+            delete address2WithoutEmpty[key];
+        }
+    });
+
+    return {...address1, ...address2WithoutEmpty};
+}

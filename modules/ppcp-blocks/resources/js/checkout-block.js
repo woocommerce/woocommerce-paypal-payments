@@ -1,6 +1,6 @@
 import {useEffect, useState} from '@wordpress/element';
 import {registerExpressPaymentMethod, registerPaymentMethod} from '@woocommerce/blocks-registry';
-import {paypalAddressToWc, paypalOrderToWcAddresses} from "./Helper/Address";
+import {mergeWcAddress, paypalAddressToWc, paypalOrderToWcAddresses} from "./Helper/Address";
 import {loadPaypalScript} from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading'
 import buttonModuleWatcher from "../../../ppcp-button/resources/js/modules/ButtonModuleWatcher";
 
@@ -23,6 +23,22 @@ const PayPalComponent = ({
     const {responseTypes} = emitResponse;
 
     const [paypalOrder, setPaypalOrder] = useState(null);
+
+    useEffect(() => {
+        // fill the form if in continuation (for product or mini-cart buttons)
+        if (!config.scriptData.continuation || !config.scriptData.continuation.order || window.ppcpContinuationFilled) {
+            return;
+        }
+        const paypalAddresses = paypalOrderToWcAddresses(config.scriptData.continuation.order);
+        const wcAddresses = wp.data.select('wc/store/cart').getCustomerData();
+        const addresses = mergeWcAddress(wcAddresses, paypalAddresses);
+        wp.data.dispatch('wc/store/cart').setBillingAddress(addresses.billingAddress);
+        if (shippingData.needsShipping) {
+            wp.data.dispatch('wc/store/cart').setShippingAddress(addresses.shippingAddress);
+        }
+        // this useEffect should run only once, but adding this in case of some kind of full re-rendering
+        window.ppcpContinuationFilled = true;
+    }, [])
 
     const [loaded, setLoaded] = useState(false);
     useEffect(() => {
