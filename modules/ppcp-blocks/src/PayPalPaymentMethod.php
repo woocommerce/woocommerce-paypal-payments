@@ -167,6 +167,11 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 			$script_data['continuation']['cancel'] = array(
 				'html' => $this->cancellation_view->render_session_cancellation( $url, $this->session_handler->funding_source() ),
 			);
+
+			$order = $this->session_handler->order();
+			if ( $order ) {
+				$script_data['continuation']['order'] = $order->to_array();
+			}
 		}
 
 		return array(
