@@ -86,7 +86,7 @@ trait ContextTrait {
 			return $context;
 		}
 
-		if ( is_shop() ) {
+		if ( is_shop() || is_product_category() ) {
 			return 'shop';
 		}
 
