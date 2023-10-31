@@ -71,17 +71,6 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'requirements' => array(),
 			'gateway'      => 'paypal',
 		),
-		'smart_button_locale_override'             => array(
-			'title'        => __( 'PayPal Buttons Locale', 'woocommerce-paypal-payments' ),
-			'type'         => 'checkbox',
-			'label'        => __( 'Display localized PayPal smart buttons by passing the WordPress locale.', 'woocommerce-paypal-payments' ),
-			'desc_tip'     => true,
-			'description'  => __( 'Determine the display language for the PayPal smart buttons and interface.', 'woocommerce-paypal-payments' ),
-			'default'      => false,
-			'screens'      => array( State::STATE_START, State::STATE_ONBOARDED ),
-			'requirements' => array(),
-			'gateway'      => 'paypal',
-		),
 		'smart_button_enable_styling_per_location' => array(
 			'title'        => __( 'Customize Smart Buttons Per Location', 'woocommerce-paypal-payments' ),
 			'type'         => 'checkbox',
