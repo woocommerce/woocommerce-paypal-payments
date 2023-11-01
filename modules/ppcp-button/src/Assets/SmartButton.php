@@ -1204,6 +1204,7 @@ class SmartButton implements SmartButtonInterface {
 		}
 
 		$locale = $this->settings->has( 'smart_button_language' ) ? $this->settings->get( 'smart_button_language' ) : '';
+		$locale = (string) apply_filters( 'woocommerce_paypal_payments_smart_buttons_locale', $locale );
 
 		if ( $locale ) {
 			$params['locale'] = $locale;
