@@ -171,13 +171,17 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 		$this->payment_token_repository = $payment_token_repository;
 		$this->logger                   = $logger;
 
-		if ( $this->onboarded ) {
-			$this->supports = array( 'refunds' );
-		}
-		if ( $this->gateways_enabled() ) {
-			$this->supports = array(
-				'refunds',
-				'products',
+		$this->supports = array(
+			'refunds',
+			'products',
+		);
+
+		if (
+			( $this->config->has( 'vault_enabled' ) && $this->config->get( 'vault_enabled' ) )
+			|| ( $this->config->has( 'subscriptions_mode' ) && $this->config->get( 'subscriptions_mode' ) === 'subscriptions_api' )
+		) {
+			array_push(
+				$this->supports,
 				'subscriptions',
 				'subscription_cancellation',
 				'subscription_suspension',
@@ -187,7 +191,7 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 				'subscription_payment_method_change',
 				'subscription_payment_method_change_customer',
 				'subscription_payment_method_change_admin',
-				'multiple_subscriptions',
+				'multiple_subscriptions'
 			);
 		}
 

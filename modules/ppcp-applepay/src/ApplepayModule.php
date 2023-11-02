@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\Applepay;
 use Automattic\WooCommerce\Blocks\Payments\PaymentMethodRegistry;
 use WooCommerce\PayPalCommerce\Applepay\Assets\ApplePayButton;
 use WooCommerce\PayPalCommerce\Applepay\Assets\AppleProductStatus;
+use WooCommerce\PayPalCommerce\Applepay\Assets\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\Button\Assets\ButtonInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;
 use WooCommerce\PayPalCommerce\Applepay\Helper\AvailabilityNotice;
@@ -40,6 +41,7 @@ class ApplepayModule implements ModuleInterface {
 	 * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $c ): void {
+		$module = $this;
 
 		// Clears product status when appropriate.
 		add_action(
@@ -51,38 +53,65 @@ class ApplepayModule implements ModuleInterface {
 			}
 		);
 
-		// Check if the module is applicable, correct country, currency, ... etc.
-		if ( ! $c->get( 'applepay.eligible' ) ) {
-			return;
-		}
+		add_action(
+			'init',
+			static function () use ( $c, $module ) {
 
-		// Load the button handler.
-		$apple_payment_method = $c->get( 'applepay.button' );
-		// add onboarding and referrals hooks.
-		assert( $apple_payment_method instanceof ApplepayButton );
-		$apple_payment_method->initialize();
+				// Check if the module is applicable, correct country, currency, ... etc.
+				if ( ! $c->get( 'applepay.eligible' ) ) {
+					return;
+				}
 
-		// Show notice if there are product availability issues.
-		$availability_notice = $c->get( 'applepay.availability_notice' );
-		assert( $availability_notice instanceof AvailabilityNotice );
-		$availability_notice->execute();
+				// Load the button handler.
+				$apple_payment_method = $c->get( 'applepay.button' );
+				// add onboarding and referrals hooks.
+				assert( $apple_payment_method instanceof ApplepayButton );
+				$apple_payment_method->initialize();
 
-		// Return if server not supported.
-		if ( ! $c->get( 'applepay.server_supported' ) ) {
-			return;
-		}
+				// Show notice if there are product availability issues.
+				$availability_notice = $c->get( 'applepay.availability_notice' );
+				assert( $availability_notice instanceof AvailabilityNotice );
+				$availability_notice->execute();
 
-		// Check if this merchant can activate / use the buttons.
-		// We allow non referral merchants as they can potentially still use ApplePay, we just have no way of checking the capability.
-		if ( ( ! $c->get( 'applepay.available' ) ) && $c->get( 'applepay.is_referral' ) ) {
-			return;
-		}
+				// Return if server not supported.
+				if ( ! $c->get( 'applepay.server_supported' ) ) {
+					return;
+				}
 
-		$this->load_assets( $c, $apple_payment_method );
-		$this->handle_validation_file( $c );
-		$this->render_buttons( $c, $apple_payment_method );
+				// Check if this merchant can activate / use the buttons.
+				// We allow non referral merchants as they can potentially still use ApplePay, we just have no way of checking the capability.
+				if ( ( ! $c->get( 'applepay.available' ) ) && $c->get( 'applepay.is_referral' ) ) {
+					return;
+				}
 
-		$apple_payment_method->bootstrap_ajax_request();
+				$module->load_assets( $c, $apple_payment_method );
+				$module->handle_validation_file( $c );
+				$module->render_buttons( $c, $apple_payment_method );
+
+				$apple_payment_method->bootstrap_ajax_request();
+			}
+		);
+
+		add_filter(
+			'nonce_user_logged_out',
+			/**
+			 * Prevents nonce from being changed for non logged in users.
+			 *
+			 * @param int $uid The uid.
+			 * @param string|int $action The action.
+			 * @return int
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function ( $uid, $action ) {
+				if ( $action === PropertiesDictionary::NONCE_ACTION ) {
+					return 0;
+				}
+				return $uid;
+			},
+			100,
+			2
+		);
 	}
 
 	/**
