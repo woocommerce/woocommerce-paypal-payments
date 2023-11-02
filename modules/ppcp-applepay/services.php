@@ -90,10 +90,13 @@ return array(
 		return ! empty( $_SERVER['HTTPS'] ) && $_SERVER['HTTPS'] !== 'off';
 	},
 	'applepay.is_browser_supported'              => static function ( ContainerInterface $container ): bool {
-		$user_agent = $_SERVER['HTTP_USER_AGENT'] ?? '';
-		foreach ( PropertiesDictionary::ALLOWED_USER_AGENTS as $allowed_agent ) {
-			if (strpos($user_agent, $allowed_agent) !== false) {
-				return true;
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$user_agent = wp_unslash( $_SERVER['HTTP_USER_AGENT'] ?? '' );
+		if ( $user_agent ) {
+			foreach ( PropertiesDictionary::ALLOWED_USER_AGENTS as $allowed_agent ) {
+				if ( strpos( $user_agent, $allowed_agent ) !== false ) {
+					return true;
+				}
 			}
 		}
 		return false;
