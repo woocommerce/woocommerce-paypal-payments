@@ -9,7 +9,9 @@ document.addEventListener(
         const loadLocation = location.href + " " + orderTrackingContainerSelector + ">*";
         const gzdSyncEnabled = config.gzd_sync_enabled;
         const wcShipmentSyncEnabled = config.wc_shipment_sync_enabled;
+        const wcShippingTaxSyncEnabled = config.wc_shipping_tax_sync_enabled;
         const wcShipmentSaveButton = document.querySelector('#woocommerce-shipment-tracking .button-save-form');
+        const wcShipmentTaxBuyLabelButtonSelector = '.components-modal__screen-overlay .label-purchase-modal__sidebar .purchase-section button.components-button';
 
         const toggleLoaderVisibility = function() {
             const loader = document.querySelector('.ppcp-tracking-loader');
@@ -44,6 +46,21 @@ document.addEventListener(
                 toggleLoaderVisibility();
                 waitForTrackingUpdate(jQuery('#shipment-tracking-form'));
             })
+        }
+
+        if (wcShippingTaxSyncEnabled && typeof(wcShippingTaxSyncEnabled) != 'undefined' && wcShippingTaxSyncEnabled != null) {
+            document.addEventListener('click', function(event) {
+                const wcShipmentTaxBuyLabelButton = event.target.closest(wcShipmentTaxBuyLabelButtonSelector);
+
+                if (wcShipmentTaxBuyLabelButton) {
+                    toggleLoaderVisibility();
+                    setTimeout(function () {
+                        jQuery(orderTrackingContainerSelector).load(loadLocation, "", function(){
+                            toggleLoaderVisibility();
+                        });
+                    }, 10000);
+                }
+            });
         }
     },
 );
