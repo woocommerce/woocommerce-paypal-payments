@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\ApiClient;
 
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\UserIdToken;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentMethodTokensEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
 use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingSubscriptions;
@@ -136,6 +137,13 @@ return array(
 			$container->get( 'api.factory.payment-token-action-links' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
 			$container->get( 'api.repository.customer' )
+		);
+	},
+	'api.endpoint.payment-tokens'               => static function( ContainerInterface $container ) : PaymentTokensEndpoint {
+		return new PaymentTokensEndpoint(
+			$container->get( 'api.host' ),
+			$container->get( 'api.bearer' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
 	'api.endpoint.webhook'                      => static function ( ContainerInterface $container ) : WebhookEndpoint {

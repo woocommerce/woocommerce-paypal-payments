@@ -13,6 +13,7 @@ use Psr\Log\LoggerInterface;
 use WC_Order;
 use WC_Payment_Tokens;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\UserIdToken;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
@@ -161,7 +162,7 @@ class SavePaymentMethodsModule implements ModuleInterface {
 
 		add_filter( 'woocommerce_paypal_payments_disable_add_payment_method', '__return_false' );
 
-		add_filter('woocommerce_paypal_payments_subscription_renewal_return_before_create_order_without_token', '__return_false');
+		add_filter( 'woocommerce_paypal_payments_subscription_renewal_return_before_create_order_without_token', '__return_false' );
 
 		add_action(
 			'wp_enqueue_scripts',
@@ -251,6 +252,28 @@ class SavePaymentMethodsModule implements ModuleInterface {
 				assert( $endpoint instanceof CreatePaymentToken );
 
 				$endpoint->handle_request();
+			}
+		);
+
+		add_action(
+			'woocommerce_paypal_payments_before_delete_payment_token',
+			function( string $token_id ) use ( $c ) {
+				try {
+					$endpoint = $c->get( 'api.endpoint.payment-tokens' );
+					assert( $endpoint instanceof PaymentTokensEndpoint );
+
+					$endpoint->delete( $token_id );
+				} catch ( RuntimeException $exception ) {
+					$logger = $c->get( 'woocommerce.logger.woocommerce' );
+					assert( $logger instanceof LoggerInterface );
+
+					$error = $exception->getMessage();
+					if ( is_a( $exception, PayPalApiException::class ) ) {
+						$error = $exception->get_details( $error );
+					}
+
+					$logger->error( $error );
+				}
 			}
 		);
 	}
