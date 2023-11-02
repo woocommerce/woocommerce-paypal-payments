@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Applepay;
 
 use WooCommerce\PayPalCommerce\Applepay\Assets\PropertiesDictionary;
+use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DisplayManager;
@@ -36,6 +37,34 @@ return array(
 		};
 		$display_manager = $container->get( 'wcgateway.display-manager' );
 		assert( $display_manager instanceof DisplayManager );
+
+		// Domain registration
+		$env = $container->get( 'onboarding.environment' );
+		assert( $env instanceof Environment );
+
+		$domain_registration_url = 'https://www.paypal.com/uccservicing/apm/applepay';
+		if ( $env->current_environment_is( Environment::SANDBOX ) ) {
+			$domain_registration_url = 'https://www.sandbox.paypal.com/uccservicing/apm/applepay';
+		}
+
+		// Domain validation
+		$domain_validation_text = __( 'Status: Domain validation failed ❌', 'woocommerce-paypal-payments' );
+		if ( $container->get( 'applepay.is_validated' ) ) {
+			$domain_validation_text = __( 'Status: Domain successfully validated ✔️', 'woocommerce-paypal-payments' );
+		}
+
+		// Device eligibility
+		$device_eligibility_text = __( 'Your current browser/device does not seem to support Apple Pay ❌.', 'woocommerce-paypal-payments' );
+		$device_eligibility_notes = sprintf(
+		// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+			__( 'Though the button may display in previews, it won\'t appear in the shop. For details, refer to the %1$sApple Pay requirements%2$s.', 'woocommerce-paypal-payments' ),
+			'<a href="https://woo.com/document/woocommerce-paypal-payments/#apple-pay" target="_blank">',
+			'</a>'
+		);
+		if ( $container->get( 'applepay.is_browser_supported' ) ) {
+			$device_eligibility_text = __( 'Your browser/device supports Apple Pay ✔️.', 'woocommerce-paypal-payments' );
+			$device_eligibility_notes = __( 'The Apple Pay button will be visible both in previews and below the PayPal buttons in the shop.', 'woocommerce-paypal-payments' );
+		}
 
 		// Connection tab fields.
 		$fields = $insert_after(
@@ -122,6 +151,9 @@ return array(
 								$display_manager
 									->rule()
 									->condition_element( 'applepay_button_enabled', '1' )
+									->action_visible( 'applepay_button_domain_registration' )
+									->action_visible( 'applepay_button_domain_validation' )
+									->action_visible( 'applepay_button_device_eligibility' )
 									->action_visible( 'applepay_button_color' )
 									->action_visible( 'applepay_button_type' )
 									->action_visible( 'applepay_button_language' )
@@ -130,6 +162,70 @@ return array(
 						),
 					),
 				),
+				'applepay_button_domain_registration'     => array(
+					'title'        => str_repeat( '&nbsp;', 6 ) . __( 'Domain Registration', 'woocommerce-paypal-payments' ),
+					'type'         => 'ppcp-text',
+					'text'             =>
+						'<a href="' . $domain_registration_url . '" class="button" target="_blank">'
+						. __( 'Manage Domain Registration', 'woocommerce-paypal-payments' )
+						. '</a>'
+						. '<p class="description">'
+						. __( 'Any (sub)domain names showing an Apple Pay button must be registered on the PayPal website. If the domain displaying the Apple Pay button isn\'t registered, the payment method won\'t work.', 'woocommerce-paypal-payments' )
+						. '</p>',
+					'desc_tip'     => true,
+					'description'  => __(
+						'Registering the website domain on the PayPal site is mandated by Apple. Payments will fail if the Apple Pay button is used on an unregistered domain.',
+						'woocommerce-paypal-payments'
+					),
+					'class'        => array(),
+					'screens'      => array( State::STATE_ONBOARDED ),
+					'gateway'      => 'paypal',
+					'requirements' => array(),
+				),
+				'applepay_button_domain_validation'     => array(
+					'title'        => str_repeat( '&nbsp;', 6 ) . __( 'Domain Validation', 'woocommerce-paypal-payments' ),
+					'type'         => 'ppcp-text',
+					'text'         => $domain_validation_text
+						. '<p class="description">'
+						. sprintf(
+						// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+							__( '<strong>Note:</strong> PayPal Payments automatically presents the %1$sdomain association file%2$s for Apple to validate your registered domain.', 'woocommerce-paypal-payments' ),
+							'<a href="/.well-known/apple-developer-merchantid-domain-association" target="_blank">',
+							'</a>'
+						)
+						. '</p>',
+					'desc_tip'     => true,
+					'description'  => __(
+						'Apple requires the website domain to be registered and validated. PayPal Payments automatically presents your domain association file for Apple to validate the manually registered domain.',
+						'woocommerce-paypal-payments'
+					),
+					'class'        => array(),
+					'screens'      => array( State::STATE_ONBOARDED ),
+					'gateway'      => 'paypal',
+					'requirements' => array(),
+				),
+				'applepay_button_device_eligibility'     => array(
+					'title'        => str_repeat( '&nbsp;', 6 ) . __( 'Device Eligibility', 'woocommerce-paypal-payments' ),
+					'type'         => 'ppcp-text',
+					'text'         => $device_eligibility_text
+						. '<p class="description">'
+						. $device_eligibility_notes
+						. '</p>',
+					'desc_tip'     => true,
+					'description'  => __(
+						'Apple Pay demands certain Apple devices for secure payment execution. This helps determine if your current device is compliant.',
+						'woocommerce-paypal-payments'
+					),
+					'class'        => array(),
+					'screens'      => array( State::STATE_ONBOARDED ),
+					'gateway'      => 'paypal',
+					'requirements' => array(),
+				),
+
+
+
+
+
 				'applepay_button_type'     => array(
 					'title'        => str_repeat( '&nbsp;', 6 ) . __( 'Button Label', 'woocommerce-paypal-payments' ),
 					'type'         => 'select',
