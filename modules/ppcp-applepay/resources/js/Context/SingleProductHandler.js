@@ -48,20 +48,7 @@ class SingleProductHandler extends BaseHandler {
         });
     }
 
-    createOrder() {
-        return this.actionHandler().configuration().createOrder();
-    }
-
-    products() {
-        return this.actionHandler().getProducts();
-    }
-
     actionHandler() {
-        const errorHandler = new ErrorHandler(
-            this.ppcpConfig.labels.error.generic,
-            document.querySelector('.woocommerce-notices-wrapper')
-        );
-
         return new SingleProductActionHandler(
             this.ppcpConfig,
             new UpdateCart(
@@ -69,9 +56,15 @@ class SingleProductHandler extends BaseHandler {
                 this.ppcpConfig.ajax.change_cart.nonce,
             ),
             document.querySelector('form.cart'),
-            errorHandler,
+            this.errorHandler(),
         );
     }
+
+
+    products() {
+        return this.actionHandler().getProducts();
+    }
+
 
 }
 

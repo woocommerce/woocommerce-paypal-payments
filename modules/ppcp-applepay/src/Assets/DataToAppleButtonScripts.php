@@ -148,6 +148,7 @@ class DataToAppleButtonScripts {
 				'totalLabel'   => $total_label,
 			),
 			'ajax_url' => admin_url( 'admin-ajax.php' ),
+			'nonce'    => wp_create_nonce( 'woocommerce-process_checkout' ),
 		);
 	}
 
@@ -195,6 +196,7 @@ class DataToAppleButtonScripts {
 				'totalLabel'   => $total_label,
 			),
 			'ajax_url' => admin_url( 'admin-ajax.php' ),
+			'nonce'    => wp_create_nonce( 'woocommerce-process_checkout' ),
 		);
 	}
 }
