@@ -1,14 +1,16 @@
 import ErrorHandler from "../../../../ppcp-button/resources/js/modules/ErrorHandler";
 import CartActionHandler
     from "../../../../ppcp-button/resources/js/modules/ActionHandler/CartActionHandler";
-import onApprove
-    from "../../../../ppcp-button/resources/js/modules/OnApproveHandler/onApproveForContinue";
 
 class BaseHandler {
 
     constructor(buttonConfig, ppcpConfig) {
         this.buttonConfig = buttonConfig;
         this.ppcpConfig = ppcpConfig;
+    }
+
+    shippingAllowed() {
+        return true;
     }
 
     transactionInfo() {
@@ -42,30 +44,32 @@ class BaseHandler {
     }
 
     createOrder() {
-        const errorHandler = new ErrorHandler(
-            this.ppcpConfig.labels.error.generic,
-            document.querySelector('.woocommerce-notices-wrapper')
-        );
-
-        const actionHandler = new CartActionHandler(
-            this.ppcpConfig,
-            errorHandler,
-        );
-
-        return actionHandler.configuration().createOrder(null, null);
+        return this.actionHandler().configuration().createOrder(null, null);
     }
 
-    approveOrderForContinue(data, actions) {
-        const errorHandler = new ErrorHandler(
+    approveOrder(data, actions) {
+        return this.actionHandler().configuration().onApprove(data, actions);
+    }
+
+    actionHandler() {
+        return new CartActionHandler(
+            this.ppcpConfig,
+            this.errorHandler(),
+        );
+    }
+
+    errorHandler() {
+        return new ErrorHandler(
             this.ppcpConfig.labels.error.generic,
             document.querySelector('.woocommerce-notices-wrapper')
         );
+    }
 
-        let onApproveHandler = onApprove({
-            config: this.ppcpConfig
-        }, errorHandler);
-
-        return onApproveHandler(data, actions);
+    errorHandler() {
+        return new ErrorHandler(
+            this.ppcpConfig.labels.error.generic,
+            document.querySelector('.woocommerce-notices-wrapper')
+        );
     }
 
 }

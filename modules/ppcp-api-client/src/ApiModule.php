@@ -48,8 +48,8 @@ class ApiModule implements ModuleInterface {
 			'ppcp_create_order_request_body_data',
 			function( array $data ) use ( $c ) {
 
-				foreach ( $data['purchase_units'] as $purchase_unit_index => $purchase_unit ) {
-					foreach ( $purchase_unit['items'] as $item_index => $item ) {
+				foreach ( ( $data['purchase_units'] ?? array() ) as $purchase_unit_index => $purchase_unit ) {
+					foreach ( ( $purchase_unit['items'] ?? array() ) as $item_index => $item ) {
 						$data['purchase_units'][ $purchase_unit_index ]['items'][ $item_index ]['name'] =
 							apply_filters( 'woocommerce_paypal_payments_cart_line_item_name', $item['name'], $item['cart_item_key'] ?? null );
 					}

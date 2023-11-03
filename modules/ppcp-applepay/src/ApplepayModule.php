@@ -84,14 +84,16 @@ class ApplepayModule implements ModuleInterface {
 					return;
 				}
 
-				$module->load_assets( $c, $apple_payment_method );
-				$module->handle_validation_file( $c );
-				$module->render_buttons( $c, $apple_payment_method );
+				if ( $apple_payment_method->is_enabled() ) {
+					$module->load_assets( $c, $apple_payment_method );
+					$module->handle_validation_file( $c, $apple_payment_method );
+					$module->render_buttons( $c, $apple_payment_method );
+					$apple_payment_method->bootstrap_ajax_request();
+				}
 
-				$apple_payment_method->bootstrap_ajax_request();
-
-				$module->load_admin_assets( $c, $apple_payment_method );
-			}
+ 				$module->load_admin_assets( $c, $apple_payment_method );
+      },
+			1
 		);
 
 		add_filter(
@@ -253,9 +255,13 @@ class ApplepayModule implements ModuleInterface {
 	 * Handles the validation file.
 	 *
 	 * @param ContainerInterface $c The container.
+	 * @param ApplePayButton     $button The button.
 	 * @return void
 	 */
-	public function handle_validation_file( ContainerInterface $c ): void {
+	public function handle_validation_file( ContainerInterface $c, ApplePayButton $button ): void {
+		if ( ! $button->is_enabled() ) {
+			return;
+		}
 		$env = $c->get( 'onboarding.environment' );
 		assert( $env instanceof Environment );
 		$is_sandobx = $env->current_environment_is( Environment::SANDBOX );

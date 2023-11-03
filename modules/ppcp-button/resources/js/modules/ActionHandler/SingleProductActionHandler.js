@@ -143,7 +143,7 @@ class SingleProductActionHandler {
     {
         this.cartHelper = null;
 
-        return (data, actions) => {
+        return (data, actions, options = {}) => {
             this.errorHandler.clear();
 
             const onResolve = (purchase_units) => {
@@ -178,7 +178,7 @@ class SingleProductActionHandler {
                 });
             };
 
-            return this.updateCart.update(onResolve, this.getProducts());
+            return this.updateCart.update(onResolve, this.getProducts(), options.updateCartOptions || {});
         };
     }
 

@@ -48,6 +48,14 @@ class SingleProductHandler extends BaseHandler {
         });
     }
 
+    createOrder() {
+        return this.actionHandler().configuration().createOrder(null, null, {
+            'updateCartOptions': {
+                'keepShipping': true
+            }
+        });
+    }
+
     actionHandler() {
         return new SingleProductActionHandler(
             this.ppcpConfig,
