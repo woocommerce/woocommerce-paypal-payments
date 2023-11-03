@@ -80,6 +80,7 @@ class ChangeCartEndpointTest extends TestCase
         $requestData = Mockery::mock(RequestData::class);
         $requestData
             ->expects('read_request')
+			->times(2)
             ->with(ChangeCartEndpoint::nonce())
             ->andReturn($data);
 
