@@ -1,11 +1,11 @@
-#applepay-container {
+#applepay-container, .ppcp-button-applepay {
 	--apple-pay-button-height: 45px;
 	--apple-pay-button-min-height: 40px;
 	--apple-pay-button-width: 100%;
 	--apple-pay-button-max-width: 750px;
 	--apple-pay-button-border-radius: 4px;
 	--apple-pay-button-overflow: hidden;
-	--apple-pay-button-margin:7px 0;
+	margin:7px 0;
 	&.ppcp-button-pill {
 		--apple-pay-button-border-radius: 50px;
 	}
@@ -17,7 +17,7 @@
 }
 
 .woocommerce-checkout {
-	#applepay-container {
+	#applepay-container, .ppcp-button-applepay {
 		margin-top: 0.5em;
 		--apple-pay-button-border-radius: 4px;
 		--apple-pay-button-height: 45px;
@@ -30,7 +30,7 @@
 .ppcp-has-applepay-block {
 
 	.wp-block-woocommerce-checkout {
-		#applepay-container {
+		#applepay-container, .ppcp-button-applepay {
 			--apple-pay-button-margin: 0;
 			--apple-pay-button-height: 40px;
 			&.ppcp-button-pill {
@@ -40,7 +40,7 @@
 	}
 
 	.wp-block-woocommerce-cart {
-		#applepay-container {
+		#applepay-container, .ppcp-button-applepay {
 			--apple-pay-button-margin: 0;
 			--apple-pay-button-height: 40px;
 		}

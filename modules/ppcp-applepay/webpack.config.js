@@ -11,6 +11,7 @@ module.exports = {
     entry: {
         'boot': path.resolve('./resources/js/boot.js'),
         'boot-block': path.resolve('./resources/js/boot-block.js'),
+        'boot-admin': path.resolve('./resources/js/boot-admin.js'),
         "styles": path.resolve('./resources/css/styles.scss')
     },
     output: {
