@@ -99,6 +99,10 @@ import widgetBuilder from "../../../ppcp-button/resources/js/modules/Renderer/Wi
         while (options = buttonQueue.pop()) {
             createButton(options.ppcpConfig);
         }
+
+        if (!window.ApplePaySession) {
+            jQuery('body').addClass('ppcp-non-ios-device')
+        }
     };
 
     document.addEventListener(
