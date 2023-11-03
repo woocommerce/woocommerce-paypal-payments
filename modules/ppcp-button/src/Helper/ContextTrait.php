@@ -35,6 +35,28 @@ trait ContextTrait {
 	}
 
 	/**
+	 * Checks WC is_cart() + WC cart ajax requests.
+	 */
+	private function is_cart(): bool {
+		if ( is_cart() ) {
+			return true;
+		}
+
+		/**
+		 * The filter returning whether to detect WC cart ajax requests.
+		 */
+		if ( apply_filters( 'ppcp_check_ajax_cart', true ) ) {
+			// phpcs:ignore WordPress.Security
+			$wc_ajax = $_GET['wc-ajax'] ?? '';
+			if ( in_array( $wc_ajax, array( 'update_shipping_method' ), true ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
 	 * The current context.
 	 *
 	 * @return string
@@ -56,7 +78,7 @@ trait ContextTrait {
 			return 'cart-block';
 		}
 
-		if ( is_cart() ) {
+		if ( $this->is_cart() ) {
 			return 'cart';
 		}
 
