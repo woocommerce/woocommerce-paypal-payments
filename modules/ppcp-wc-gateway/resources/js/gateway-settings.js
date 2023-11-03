@@ -115,7 +115,7 @@ document.addEventListener(
                 'currency': PayPalCommerceGatewaySettings.currency,
                 'integration-date': PayPalCommerceGatewaySettings.integration_date,
                 'components': PayPalCommerceGatewaySettings.components,
-                'enable-funding': ['venmo', 'paylater'],
+                'enable-funding': ['venmo', 'paylater']
             };
 
             if (PayPalCommerceGatewaySettings.environment === 'sandbox') {
@@ -132,6 +132,11 @@ document.addEventListener(
 
             if (disabledSources?.length) {
                 settings['disable-funding'] = disabledSources;
+            }
+
+            const smartButtonLocale = document.getElementById('ppcp-smart_button_language');
+            if (smartButtonLocale?.length > 0 && smartButtonLocale?.value !== '') {
+                settings['locale'] = smartButtonLocale.value;
             }
 
             return settings;

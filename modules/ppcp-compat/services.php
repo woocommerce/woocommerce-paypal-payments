@@ -65,6 +65,12 @@ return array(
 	'compat.ywot.is_supported_plugin_version_active' => function (): bool {
 		return function_exists( 'yith_ywot_init' );
 	},
+	'compat.shipstation.is_supported_plugin_version_active' => function (): bool {
+		return function_exists( 'woocommerce_shipstation_init' );
+	},
+	'compat.wc_shipping_tax.is_supported_plugin_version_active' => function (): bool {
+		return class_exists( 'WC_Connect_Loader' );
+	},
 
 	'compat.module.url'                              => static function ( ContainerInterface $container ): string {
 		/**
@@ -84,6 +90,7 @@ return array(
 			$container->get( 'ppcp.asset-version' ),
 			$container->get( 'compat.gzd.is_supported_plugin_version_active' ),
 			$container->get( 'compat.wc_shipment_tracking.is_supported_plugin_version_active' ),
+			$container->get( 'compat.wc_shipping_tax.is_supported_plugin_version_active' ),
 			$container->get( 'api.bearer' )
 		);
 	},

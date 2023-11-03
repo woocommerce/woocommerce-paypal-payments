@@ -90,7 +90,8 @@ class ApplepayModule implements ModuleInterface {
 					$module->render_buttons( $c, $apple_payment_method );
 					$apple_payment_method->bootstrap_ajax_request();
 				}
-			}
+			},
+			1
 		);
 
 		add_filter(

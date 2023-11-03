@@ -48,6 +48,13 @@ class CompatAssets {
 	protected $is_wc_shipment_active;
 
 	/**
+	 * Whether WC Shipping & Tax plugin is active
+	 *
+	 * @var bool
+	 */
+	private $is_wc_shipping_tax_active;
+
+	/**
 	 * The bearer.
 	 *
 	 * @var Bearer
@@ -61,6 +68,7 @@ class CompatAssets {
 	 * @param string $version The assets version.
 	 * @param bool   $is_gzd_active Whether Germanized plugin is active.
 	 * @param bool   $is_wc_shipment_active Whether WC Shipments plugin is active.
+	 * @param bool   $is_wc_shipping_tax_active Whether WC Shipping & Tax plugin is active.
 	 * @param Bearer $bearer The bearer.
 	 */
 	public function __construct(
@@ -68,14 +76,16 @@ class CompatAssets {
 		string $version,
 		bool $is_gzd_active,
 		bool $is_wc_shipment_active,
+		bool $is_wc_shipping_tax_active,
 		Bearer $bearer
 	) {
 
-		$this->module_url            = $module_url;
-		$this->version               = $version;
-		$this->is_gzd_active         = $is_gzd_active;
-		$this->is_wc_shipment_active = $is_wc_shipment_active;
-		$this->bearer                = $bearer;
+		$this->module_url                = $module_url;
+		$this->version                   = $version;
+		$this->is_gzd_active             = $is_gzd_active;
+		$this->is_wc_shipment_active     = $is_wc_shipment_active;
+		$this->is_wc_shipping_tax_active = $is_wc_shipping_tax_active;
+		$this->bearer                    = $bearer;
 	}
 
 	/**
@@ -99,6 +109,7 @@ class CompatAssets {
 				array(
 					'gzd_sync_enabled'         => apply_filters( 'woocommerce_paypal_payments_sync_gzd_tracking', true ) && $this->is_gzd_active,
 					'wc_shipment_sync_enabled' => apply_filters( 'woocommerce_paypal_payments_sync_wc_shipment_tracking', true ) && $this->is_wc_shipment_active,
+					'wc_shipping_tax_sync_enabled' => apply_filters( 'woocommerce_paypal_payments_sync_wc_shipping_tax', true ) && $this->is_wc_shipping_tax_active,
 				)
 			);
 		}
