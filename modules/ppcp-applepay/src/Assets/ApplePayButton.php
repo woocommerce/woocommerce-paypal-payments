@@ -1073,7 +1073,7 @@ class ApplePayButton implements ButtonInterface {
 
 		wp_register_script(
 			'wc-ppcp-applepay-admin',
-			untrailingslashit( $this->module_url ) . '/assets/js/boot-admin.js?x=' . time(),
+			untrailingslashit( $this->module_url ) . '/assets/js/boot-admin.js',
 			array(),
 			$this->version,
 			true
