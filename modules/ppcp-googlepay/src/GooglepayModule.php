@@ -155,7 +155,8 @@ class GooglepayModule implements ModuleInterface {
 					}
 				);
 
-			}
+			},
+			1
 		);
 	}
 

@@ -102,7 +102,7 @@ class OrderTransient {
 			$transient = array();
 		}
 
-		if ( ! is_array( $transient['notes'] ) ) {
+		if ( ! is_array( $transient['notes'] ?? null ) ) {
 			$transient['notes'] = array();
 		}
 

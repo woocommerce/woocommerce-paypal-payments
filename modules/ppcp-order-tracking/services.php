@@ -9,15 +9,16 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\OrderTracking;
 
-use WC_Order;
-use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
-use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\OrderTracking\Integration\GermanizedShipmentIntegration;
+use WooCommerce\PayPalCommerce\OrderTracking\Integration\ShipmentTrackingIntegration;
+use WooCommerce\PayPalCommerce\OrderTracking\Integration\ShipStationIntegration;
+use WooCommerce\PayPalCommerce\OrderTracking\Integration\WcShippingTaxIntegration;
+use WooCommerce\PayPalCommerce\OrderTracking\Integration\YithShipmentIntegration;
 use WooCommerce\PayPalCommerce\OrderTracking\Shipment\ShipmentFactoryInterface;
 use WooCommerce\PayPalCommerce\OrderTracking\Shipment\ShipmentFactory;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\OrderTracking\Assets\OrderEditPageAssets;
 use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
-use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 return array(
 	'order-tracking.assets'                    => function( ContainerInterface $container ) : OrderEditPageAssets {
@@ -91,5 +92,40 @@ return array(
 	},
 	'order-tracking.is-merchant-country-us'    => static function ( ContainerInterface $container ): bool {
 		return $container->get( 'api.shop.country' ) === 'US';
+	},
+	'order-tracking.integrations'              => static function ( ContainerInterface $container ): array {
+		$shipment_factory = $container->get( 'order-tracking.shipment.factory' );
+		$logger           = $container->get( 'woocommerce.logger.woocommerce' );
+		$endpoint         = $container->get( 'order-tracking.endpoint.controller' );
+
+		$is_gzd_active             = $container->get( 'compat.gzd.is_supported_plugin_version_active' );
+		$is_wc_shipment_active     = $container->get( 'compat.wc_shipment_tracking.is_supported_plugin_version_active' );
+		$is_yith_ywot_active       = $container->get( 'compat.ywot.is_supported_plugin_version_active' );
+		$is_ship_station_active    = $container->get( 'compat.shipstation.is_supported_plugin_version_active' );
+		$is_wc_shipping_tax_active = $container->get( 'compat.wc_shipping_tax.is_supported_plugin_version_active' );
+
+		$integrations = array();
+
+		if ( $is_gzd_active ) {
+			$integrations[] = new GermanizedShipmentIntegration( $shipment_factory, $logger, $endpoint );
+		}
+
+		if ( $is_wc_shipment_active ) {
+			$integrations[] = new ShipmentTrackingIntegration( $shipment_factory, $logger, $endpoint );
+		}
+
+		if ( $is_yith_ywot_active ) {
+			$integrations[] = new YithShipmentIntegration( $shipment_factory, $logger, $endpoint );
+		}
+
+		if ( $is_ship_station_active ) {
+			$integrations[] = new ShipStationIntegration( $shipment_factory, $logger, $endpoint );
+		}
+
+		if ( $is_wc_shipping_tax_active ) {
+			$integrations[] = new WcShippingTaxIntegration( $shipment_factory, $logger, $endpoint );
+		}
+
+		return $integrations;
 	},
 );
