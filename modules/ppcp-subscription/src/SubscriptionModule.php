@@ -81,11 +81,7 @@ class SubscriptionModule implements ModuleInterface {
 		add_action(
 			'woocommerce_subscription_payment_complete',
 			function ( $subscription ) use ( $c ) {
-				if (
-					$subscription->get_payment_method() !== PayPalGateway::ID
-					|| $subscription->get_payment_method() !== CreditCardGateway::ID
-					|| $subscription->get_payment_method() !== CardButtonGateway::ID
-				) {
+				if ( ! in_array( $subscription->get_payment_method(), array( PayPalGateway::ID, CreditCardGateway::ID, CardButtonGateway::ID ), true ) ) {
 					return;
 				}
 
