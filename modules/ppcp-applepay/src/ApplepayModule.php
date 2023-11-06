@@ -91,8 +91,8 @@ class ApplepayModule implements ModuleInterface {
 					$apple_payment_method->bootstrap_ajax_request();
 				}
 
- 				$module->load_admin_assets( $c, $apple_payment_method );
-      },
+				$module->load_admin_assets( $c, $apple_payment_method );
+			},
 			1
 		);
 
