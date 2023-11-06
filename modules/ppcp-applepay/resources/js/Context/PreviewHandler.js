@@ -7,7 +7,13 @@ class PreviewHandler extends BaseHandler {
     }
 
     transactionInfo() {
-        throw new Error('Transaction info fail. This is just a preview.');
+        // We need to return something as ApplePay button initialization expects valid data.
+        return {
+            countryCode: "US",
+            currencyCode: "USD",
+            totalPrice: "10.00",
+            totalPriceStatus: "FINAL"
+        }
     }
 
     createOrder() {
