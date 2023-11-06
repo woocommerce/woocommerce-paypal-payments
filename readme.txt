@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, checkout, cart, pay later, apple
 Requires at least: 5.3
 Tested up to: 6.3
 Requires PHP: 7.2
-Stable tag: 2.4.0
+Stable tag: 2.4.1
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -179,6 +179,26 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 
 == Changelog ==
+
+= 2.4.1 - xxxx-xx-xx =
+* Fix - Error "PayPal order ID not found in meta" prevents automations from triggering when buying subscription via third-party payment gateway #1822
+* Fix - Card button subscription support declaration #1796
+* Fix - Pay Later messaging disappears when updating shipping option on cart page #1807
+* Fix - Apple Pay payment from single product may fail after changing shipping options in Apple Pay payment sheet #1810
+* Enhancement - Extend list of supported countries for Advanced Card Processing #1808
+* Enhancement - Extend Apple Pay/Google Pay country eligibility to Italy #1811
+* Enhancement - Override language used to display PayPal buttons #600
+* Enhancement - Apple Pay button preview #1824
+* Enhancement - Add Apple Pay & Google Pay logos on the onboarding page #1823
+* Enhancement - Improve Apple Pay compatibility with variable products on single product page #1803
+* Enhancement - Apple Pay domain registration & browser eligibility check #1821
+* Enhancement - Package Tracking compatibility with WooCommerce Shipping & ShipStation for WooCommerce #1813
+* Enhancement - Fill form when continuation in block #1794
+* Enhancement - Display Shop location Pay Later messaging on product category pages #1809
+* Enhancement - Present apple-developer-merchantid-domain-association file only when Apple Pay is enabled #1818
+* Enhancement - Improve Apple Pay compatibility on Pay for Order page #1815
+* Enhancement - Display Pay Later messages before the payment methods on the Pay for Order page #1814
+* Enhancement - Handle undefined array key warnings on PHP 8.1 #1804
 
 = 2.4.0 - 2023-10-31 =
 * Fix - Mini-Cart Bug cause of wrong DOM-Structure in v2.3.1 #1735
