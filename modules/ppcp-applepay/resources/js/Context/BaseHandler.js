@@ -36,7 +36,9 @@ class BaseHandler {
                         countryCode: data.country_code,
                         currencyCode: data.currency_code,
                         totalPriceStatus: 'FINAL',
-                        totalPrice: data.total_str
+                        totalPrice: data.total_str,
+                        chosenShippingMethods: data.chosen_shipping_methods || null,
+                        shippingPackages: data.shipping_packages || null,
                     });
 
                 });

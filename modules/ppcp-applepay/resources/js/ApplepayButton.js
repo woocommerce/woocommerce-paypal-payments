@@ -67,11 +67,6 @@ class ApplepayButton {
                         this.onButtonClick();
                     });
                 }
-
-                // Listen for changes on any input within the WooCommerce checkout form
-                jQuery('form.checkout').on('change', 'input, select, textarea', () => {
-                    this.fetchTransactionInfo();
-                });
             });
         }
     }
@@ -196,11 +191,14 @@ class ApplepayButton {
                 const formData = new FormData(document.querySelector(checkoutFormSelector));
                 this.form_saved = Object.fromEntries(formData.entries());
                 // This line should be reviewed, the paypal.Applepay().confirmOrder fails if we add it.
-                //this.update_request_data_with_form(paymentDataRequest);
+                this.update_request_data_with_form(paymentDataRequest);
             } catch (error) {
                 console.error(error);
             }
-            const session = this.applePaySession(paymentDataRequest)
+
+            this.log('=== paymentDataRequest', paymentDataRequest);
+
+            const session = this.applePaySession(paymentDataRequest);
             const formValidator = PayPalCommerceGateway.early_checkout_validation_enabled ?
                 new FormValidator(
                     PayPalCommerceGateway.ajax.validate_checkout.endpoint,
@@ -226,11 +224,43 @@ class ApplepayButton {
 
     update_request_data_with_form(paymentDataRequest) {
         paymentDataRequest.billingContact = this.fill_billing_contact(this.form_saved);
-        paymentDataRequest.applicationData = this.fill_application_data(this.form_saved);
+
+        // "applicationData" is originating a "PayPalApplePayError: An internal server error has occurred" on paypal.Applepay().confirmOrder().
+        //paymentDataRequest.applicationData = this.fill_application_data(this.form_saved);
+
         if (!this.buttonConfig.product.needShipping) {
             return;
         }
         paymentDataRequest.shippingContact = this.fill_shipping_contact(this.form_saved);
+
+        const rate = this.transactionInfo.chosenShippingMethods[0];
+
+        paymentDataRequest.shippingMethods = [];
+        for (const shippingPackage of this.transactionInfo.shippingPackages) {
+            if (rate === shippingPackage.id) {
+                paymentDataRequest.shippingMethods.push({
+                    'label'      : shippingPackage.label,
+                    'detail'     : '',
+                    'amount'     : shippingPackage.cost_str,
+                    'identifier' : shippingPackage.id,
+                });
+                break;
+            }
+        }
+
+        for (const shippingPackage of this.transactionInfo.shippingPackages) {
+            if (rate !== shippingPackage.id) {
+                paymentDataRequest.shippingMethods.push({
+                    'label'      : shippingPackage.label,
+                    'detail'     : '',
+                    'amount'     : shippingPackage.cost_str,
+                    'identifier' : shippingPackage.id,
+                });
+                break;
+            }
+        }
+
+        this.log('=== paymentDataRequest.shippingMethods', paymentDataRequest.shippingMethods);
     }
 
     paymentDataRequest() {
