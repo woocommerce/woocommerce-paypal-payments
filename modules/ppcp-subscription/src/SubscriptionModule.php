@@ -29,6 +29,7 @@ use WC_Subscription;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
@@ -80,6 +81,10 @@ class SubscriptionModule implements ModuleInterface {
 		add_action(
 			'woocommerce_subscription_payment_complete',
 			function ( $subscription ) use ( $c ) {
+				if ( ! in_array( $subscription->get_payment_method(), array( PayPalGateway::ID, CreditCardGateway::ID, CardButtonGateway::ID ), true ) ) {
+					return;
+				}
+
 				$paypal_subscription_id = $subscription->get_meta( 'ppcp_subscription' ) ?? '';
 				if ( $paypal_subscription_id ) {
 					return;
