@@ -69,6 +69,26 @@ class DataToAppleButtonScripts {
 		);
 	}
 
+
+	/**
+	 * Returns the appropriate admin data to send to ApplePay script
+	 *
+	 * @return array
+	 * @throws NotFoundException When the setting is not found.
+	 */
+	public function apple_pay_script_data_for_admin(): array {
+		$base_location     = wc_get_base_location();
+		$shop_country_code = $base_location['country'];
+		$currency_code     = get_woocommerce_currency();
+		$total_label       = get_bloginfo( 'name' );
+
+		return $this->data_for_admin_page(
+			$shop_country_code,
+			$currency_code,
+			$total_label
+		);
+	}
+
 	/**
 	 * Check if the product needs shipping
 	 *
@@ -197,6 +217,49 @@ class DataToAppleButtonScripts {
 			),
 			'ajax_url' => admin_url( 'admin-ajax.php' ),
 			'nonce'    => wp_create_nonce( 'woocommerce-process_checkout' ),
+		);
+	}
+
+	/**
+	 * Prepares the data for the cart page.
+	 * Consider refactoring this method along with data_for_cart_page() and data_for_product_page() methods.
+	 *
+	 * @param string $shop_country_code The shop country code.
+	 * @param string $currency_code The currency code.
+	 * @param string $total_label The label for the total amount.
+	 *
+	 * @return array
+	 */
+	protected function data_for_admin_page(
+		$shop_country_code,
+		$currency_code,
+		$total_label
+	) {
+		$type  = $this->settings->has( 'applepay_button_type' ) ? $this->settings->get( 'applepay_button_type' ) : '';
+		$color = $this->settings->has( 'applepay_button_color' ) ? $this->settings->get( 'applepay_button_color' ) : '';
+		$lang  = $this->settings->has( 'applepay_button_language' ) ? $this->settings->get( 'applepay_button_language' ) : '';
+		$lang  = apply_filters( 'woocommerce_paypal_payments_applepay_button_language', $lang );
+
+		return array(
+			'sdk_url'  => $this->sdk_url,
+			'is_debug' => defined( 'WP_DEBUG' ) && WP_DEBUG ? true : false,
+			'button'   => array(
+				'wrapper'           => 'applepay-container',
+				'mini_cart_wrapper' => 'applepay-container-minicart',
+				'type'              => $type,
+				'color'             => $color,
+				'lang'              => $lang,
+			),
+			'product'  => array(
+				'needShipping' => false,
+				'subtotal'     => 0,
+			),
+			'shop'     => array(
+				'countryCode'  => $shop_country_code,
+				'currencyCode' => $currency_code,
+				'totalLabel'   => $total_label,
+			),
+			'ajax_url' => admin_url( 'admin-ajax.php' ),
 		);
 	}
 }

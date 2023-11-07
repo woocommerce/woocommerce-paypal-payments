@@ -4,6 +4,7 @@ import {setVisible} from '../../../ppcp-button/resources/js/modules/Helper/Hidin
 import {setEnabled} from '../../../ppcp-button/resources/js/modules/Helper/ButtonDisabler';
 import FormValidator from "../../../ppcp-button/resources/js/modules/Helper/FormValidator";
 import ErrorHandler from '../../../ppcp-button/resources/js/modules/ErrorHandler';
+import widgetBuilder from "../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder";
 
 class ApplepayButton {
 
@@ -48,7 +49,7 @@ class ApplepayButton {
         const isEligible = this.applePayConfig.isEligible;
         if (isEligible) {
             this.fetchTransactionInfo().then(() => {
-                const isSubscriptionProduct = this.ppcpConfig.data_client_id.has_subscriptions === true;
+                const isSubscriptionProduct = this.ppcpConfig?.data_client_id?.has_subscriptions === true;
                 if (isSubscriptionProduct) {
                     return;
                 }
@@ -145,13 +146,12 @@ class ApplepayButton {
         return session;
     }
 
-
-
-
     /**
      * Add a Apple Pay purchase button
      */
     addButton() {
+        this.log('addButton', this.context);
+
         const wrapper =
             (this.context === 'mini-cart')
                 ? this.buttonConfig.button.mini_cart_wrapper
@@ -160,7 +160,7 @@ class ApplepayButton {
             (this.context === 'mini-cart')
                 ? this.ppcpConfig.button.mini_cart_style.shape
                 : this.ppcpConfig.button.style.shape;
-        const appleContainer = this.context === 'mini-cart' ? document.getElementById("applepay-container-minicart") : document.getElementById("applepay-container");
+        const appleContainer = document.getElementById(wrapper);
         const type = this.buttonConfig.button.type;
         const language = this.buttonConfig.button.lang;
         const color = this.buttonConfig.button.color;
@@ -195,7 +195,7 @@ class ApplepayButton {
             try {
                 const formData = new FormData(document.querySelector(checkoutFormSelector));
                 this.form_saved = Object.fromEntries(formData.entries());
-                // This line should be reviewed, the paypal.Applepay().confirmOrder fails if we add it.
+                // This line should be reviewed, the widgetBuilder.paypal.Applepay().confirmOrder fails if we add it.
                 //this.update_request_data_with_form(paymentDataRequest);
             } catch (error) {
                 console.error(error);
@@ -279,7 +279,7 @@ class ApplepayButton {
         return (applePayValidateMerchantEvent) => {
             this.log('onvalidatemerchant call');
 
-            paypal.Applepay().validateMerchant({
+            widgetBuilder.paypal.Applepay().validateMerchant({
                 validationUrl: applePayValidateMerchantEvent.validationURL
             })
                 .then(validateResult => {
@@ -506,7 +506,7 @@ class ApplepayButton {
             this.log('onpaymentauthorized paypal order ID', id, event.payment.token, event.payment.billingContact);
 
             try {
-                const confirmOrderResponse = await paypal.Applepay().confirmOrder({
+                const confirmOrderResponse = await widgetBuilder.paypal.Applepay().confirmOrder({
                     orderId: id,
                     token: event.payment.token,
                     billingContact: event.payment.billingContact,

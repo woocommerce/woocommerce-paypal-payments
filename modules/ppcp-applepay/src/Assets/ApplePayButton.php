@@ -942,7 +942,7 @@ class ApplePayButton implements ButtonInterface {
 		}
 		if ( $button_enabled_cart ) {
 			$default_hook_name  = 'woocommerce_paypal_payments_cart_button_render';
-			$render_placeholder = apply_filters( 'woocommerce_paypal_payments_googlepay_cart_button_render_hook', $default_hook_name );
+			$render_placeholder = apply_filters( 'woocommerce_paypal_payments_applepay_cart_button_render_hook', $default_hook_name );
 			$render_placeholder = is_string( $render_placeholder ) ? $render_placeholder : $default_hook_name;
 			add_action(
 				$render_placeholder,
@@ -954,7 +954,7 @@ class ApplePayButton implements ButtonInterface {
 
 		if ( $button_enabled_checkout ) {
 			$default_hook_name  = 'woocommerce_paypal_payments_checkout_button_render';
-			$render_placeholder = apply_filters( 'woocommerce_paypal_payments_googlepay_checkout_button_render_hook', $default_hook_name );
+			$render_placeholder = apply_filters( 'woocommerce_paypal_payments_applepay_checkout_button_render_hook', $default_hook_name );
 			$render_placeholder = is_string( $render_placeholder ) ? $render_placeholder : $default_hook_name;
 			add_action(
 				$render_placeholder,
@@ -966,7 +966,7 @@ class ApplePayButton implements ButtonInterface {
 		}
 		if ( $button_enabled_payorder ) {
 			$default_hook_name  = 'woocommerce_paypal_payments_payorder_button_render';
-			$render_placeholder = apply_filters( 'woocommerce_paypal_payments_googlepay_payorder_button_render_hook', $default_hook_name );
+			$render_placeholder = apply_filters( 'woocommerce_paypal_payments_applepay_payorder_button_render_hook', $default_hook_name );
 			$render_placeholder = is_string( $render_placeholder ) ? $render_placeholder : $default_hook_name;
 			add_action(
 				$render_placeholder,
@@ -979,7 +979,7 @@ class ApplePayButton implements ButtonInterface {
 
 		if ( $button_enabled_minicart ) {
 			$default_hook_name  = 'woocommerce_paypal_payments_minicart_button_render';
-			$render_placeholder = apply_filters( 'woocommerce_paypal_payments_googlepay_minicart_button_render_hook', $default_hook_name );
+			$render_placeholder = apply_filters( 'woocommerce_paypal_payments_applepay_minicart_button_render_hook', $default_hook_name );
 			$render_placeholder = is_string( $render_placeholder ) ? $render_placeholder : $default_hook_name;
 			add_action(
 				$render_placeholder,
@@ -1060,12 +1060,49 @@ class ApplePayButton implements ButtonInterface {
 	}
 
 	/**
+	 * Enqueues scripts/styles for admin.
+	 */
+	public function enqueue_admin(): void {
+		wp_register_style(
+			'wc-ppcp-applepay-admin',
+			untrailingslashit( $this->module_url ) . '/assets/css/styles.css',
+			array(),
+			$this->version
+		);
+		wp_enqueue_style( 'wc-ppcp-applepay-admin' );
+
+		wp_register_script(
+			'wc-ppcp-applepay-admin',
+			untrailingslashit( $this->module_url ) . '/assets/js/boot-admin.js',
+			array(),
+			$this->version,
+			true
+		);
+		wp_enqueue_script( 'wc-ppcp-applepay-admin' );
+
+		wp_localize_script(
+			'wc-ppcp-applepay-admin',
+			'wc_ppcp_applepay_admin',
+			$this->script_data_for_admin()
+		);
+	}
+
+	/**
 	 * Returns the script data.
 	 *
 	 * @return array
 	 */
 	public function script_data(): array {
 		return $this->script_data->apple_pay_script_data();
+	}
+
+	/**
+	 * Returns the admin script data.
+	 *
+	 * @return array
+	 */
+	public function script_data_for_admin(): array {
+		return $this->script_data->apple_pay_script_data_for_admin();
 	}
 
 	/**

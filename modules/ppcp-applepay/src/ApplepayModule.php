@@ -90,6 +90,8 @@ class ApplepayModule implements ModuleInterface {
 					$module->render_buttons( $c, $apple_payment_method );
 					$apple_payment_method->bootstrap_ajax_request();
 				}
+
+				$module->load_admin_assets( $c, $apple_payment_method );
 			},
 			1
 		);
@@ -178,6 +180,43 @@ class ApplepayModule implements ModuleInterface {
 			'woocommerce_blocks_payment_method_type_registration',
 			function( PaymentMethodRegistry $payment_method_registry ) use ( $c ): void {
 				$payment_method_registry->register( $c->get( 'applepay.blocks-payment-method' ) );
+			}
+		);
+	}
+
+	/**
+	 * Registers and enqueues the assets.
+	 *
+	 * @param ContainerInterface $c The container.
+	 * @param ApplePayButton     $button The button.
+	 * @return void
+	 */
+	public function load_admin_assets( ContainerInterface $c, ApplePayButton $button ): void {
+		// Enqueue backend scripts.
+		add_action(
+			'admin_enqueue_scripts',
+			static function () use ( $c, $button ) {
+				if ( ! is_admin() ) {
+					return;
+				}
+
+				/**
+				 * Should add this to the ButtonInterface.
+				 *
+				 * @psalm-suppress UndefinedInterfaceMethod
+				 */
+				$button->enqueue_admin();
+			}
+		);
+
+		// Adds ApplePay component to the backend button preview settings.
+		add_action(
+			'woocommerce_paypal_payments_admin_gateway_settings',
+			function( array $settings ) use ( $c ): array {
+				if ( is_array( $settings['components'] ) ) {
+					$settings['components'][] = 'applepay';
+				}
+				return $settings;
 			}
 		);
 	}
