@@ -28,7 +28,8 @@ class SettingsPagesAssetsTest extends TestCase
             true,
             array(),
             array(),
-			true
+			true,
+			false
 		);
 
 		when('is_admin')

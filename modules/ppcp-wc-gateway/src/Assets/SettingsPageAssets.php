@@ -97,6 +97,13 @@ class SettingsPageAssets {
 	private $is_settings_page;
 
 	/**
+	 * Whether the ACDC gateway is enabled.
+	 *
+	 * @var bool
+	 */
+	private $is_acdc_enabled;
+
+	/**
 	 * Assets constructor.
 	 *
 	 * @param string             $module_url The url of this module.
@@ -110,6 +117,7 @@ class SettingsPageAssets {
 	 * @param array              $disabled_sources The list of disabled funding sources.
 	 * @param array              $all_funding_sources The list of all existing funding sources.
 	 * @param bool               $is_settings_page Whether it's a settings page of this plugin.
+	 * @param bool               $is_acdc_enabled Whether the ACDC gateway is enabled.
 	 */
 	public function __construct(
 		string $module_url,
@@ -122,7 +130,8 @@ class SettingsPageAssets {
 		bool $is_pay_later_button_enabled,
 		array $disabled_sources,
 		array $all_funding_sources,
-		bool $is_settings_page
+		bool $is_settings_page,
+		bool $is_acdc_enabled
 	) {
 		$this->module_url                  = $module_url;
 		$this->version                     = $version;
@@ -135,6 +144,7 @@ class SettingsPageAssets {
 		$this->disabled_sources            = $disabled_sources;
 		$this->all_funding_sources         = $all_funding_sources;
 		$this->is_settings_page            = $is_settings_page;
+		$this->is_acdc_enabled             = $is_acdc_enabled;
 	}
 
 	/**
@@ -223,6 +233,7 @@ class SettingsPageAssets {
 					'environment'                    => $this->environment->current_environment(),
 					'integration_date'               => PAYPAL_INTEGRATION_DATE,
 					'is_pay_later_button_enabled'    => $this->is_pay_later_button_enabled,
+					'is_acdc_enabled'                => $this->is_acdc_enabled,
 					'disabled_sources'               => $this->disabled_sources,
 					'all_funding_sources'            => $this->all_funding_sources,
 					'components'                     => array( 'buttons', 'funding-eligibility', 'messages' ),

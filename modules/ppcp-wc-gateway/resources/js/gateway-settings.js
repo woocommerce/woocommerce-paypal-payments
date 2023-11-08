@@ -96,6 +96,11 @@ document.addEventListener(
             renderPreview(settingsCallback, render);
         }
 
+        function currentTabId() {
+            const params = new URLSearchParams(location.search);
+            return params.has('ppcp-tab') ? params.get('ppcp-tab') : params.get('section');
+        }
+
         function shouldShowPayLaterButton() {
             const payLaterButtonLocations = document.querySelector('[name="ppcp[pay_later_button_locations][]"]');
 
@@ -104,6 +109,14 @@ document.addEventListener(
             }
 
             return payLaterButtonInput.checked && payLaterButtonLocations.selectedOptions.length > 0
+        }
+
+        function shouldDisableCardButton() {
+            if (currentTabId() === 'ppcp-card-button-gateway') {
+                return false;
+            }
+
+            return PayPalCommerceGatewaySettings.is_acdc_enabled || jQuery('#ppcp-allow_card_button_gateway').is(':checked');
         }
 
         function getPaypalScriptSettings() {
@@ -128,6 +141,10 @@ document.addEventListener(
 
             if (!shouldShowPayLaterButton()) {
                 disabledSources = disabledSources.concat('credit')
+            }
+
+            if (shouldDisableCardButton()) {
+                disabledSources = disabledSources.concat('card');
             }
 
             if (disabledSources?.length) {
