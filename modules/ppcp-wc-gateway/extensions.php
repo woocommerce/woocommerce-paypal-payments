@@ -66,6 +66,7 @@ return array(
 			'paypal-smart-button-fields.php',
 			'connection-tab-fields.php',
 			'pay-later-tab-fields.php',
+			'card-button-fields.php',
 		);
 
 		return array_merge(

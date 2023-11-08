@@ -1006,8 +1006,9 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 					'id'      => CardButtonGateway::ID,
 					'wrapper' => '#ppc-button-' . CardButtonGateway::ID,
 					'style'   => array(
-						'shape' => $this->style_for_context( 'shape', $this->context() ),
-						// TODO: color black, white from the gateway settings.
+						'shape'  => $this->style_for_apm( 'shape', 'card' ),
+						'color'  => $this->style_for_apm( 'color', 'card', 'black' ),
+						'layout' => $this->style_for_apm( 'poweredby_tagline', 'card', false ) === $this->normalize_style_value( true ) ? 'vertical' : 'horizontal',
 					),
 				),
 			),
@@ -1369,6 +1370,21 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 		return $this->get_style_value( "button_{$context}_${style}" )
 			?? $this->get_style_value( "button_${style}" )
 			?? $this->normalize_style_value( $defaults[ $style ] ?? '' );
+	}
+
+	/**
+	 * Determines the style for a given property in a given APM.
+	 *
+	 * @param string $style The name of the style property.
+	 * @param string $apm The APM name, such as 'card'.
+	 * @param ?mixed $default The default value.
+	 *
+	 * @return string
+	 */
+	private function style_for_apm( string $style, string $apm, $default = null ): string {
+		return $this->get_style_value( "${apm}_button_${style}" )
+			?? ( $default ? $this->normalize_style_value( $default ) : null )
+			?? $this->style_for_context( $style, 'checkout' );
 	}
 
 	/**
