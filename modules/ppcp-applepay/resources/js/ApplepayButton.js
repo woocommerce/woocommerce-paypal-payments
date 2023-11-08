@@ -132,7 +132,7 @@ class ApplepayButton {
         const session = new ApplePaySession(4, paymentRequest)
         session.begin()
 
-        if (this.buttonConfig.product.needShipping) {
+        if (this.shouldAllowShippingInButton()) {
             session.onshippingmethodselected = this.onshippingmethodselected(session)
             session.onshippingcontactselected = this.onshippingcontactselected(session)
         }
@@ -222,20 +222,50 @@ class ApplepayButton {
         this.applePaySession(paymentDataRequest)
     }
 
+    /**
+     * If the button should show the shipping fields.
+     *
+     * @returns {false|*}
+     */
+    shouldAllowShippingInButton() {
+        return this.contextHandler.shippingAllowed()
+            && this.buttonConfig.product.needShipping
+            && (this.context !== 'checkout' || this.shouldAllowShippingInButton());
+    }
+
+    /**
+     * If the button should be updated with the form addresses.
+     *
+     * @returns {boolean}
+     */
+    shouldUpdateButtonWithFormData() {
+        return this.ppcpConfig?.preferences?.checkout_data_mode === 'use_applepay';
+    }
+
     update_request_data_with_form(paymentDataRequest) {
-        paymentDataRequest.billingContact = this.fill_billing_contact(this.form_saved);
-
-        // "applicationData" is originating a "PayPalApplePayError: An internal server error has occurred" on paypal.Applepay().confirmOrder().
-        //paymentDataRequest.applicationData = this.fill_application_data(this.form_saved);
-
-        if (!this.buttonConfig.product.needShipping) {
+        if (!this.shouldUpdateButtonWithFormData()) {
             return;
         }
+
+        // Add billing address.
+        paymentDataRequest.billingContact = this.fill_billing_contact(this.form_saved);
+
+        // Add custom data.
+        // "applicationData" is originating a "PayPalApplePayError: An internal server error has occurred" on paypal.Applepay().confirmOrder().
+        // paymentDataRequest.applicationData = this.fill_application_data(this.form_saved);
+
+        if (!this.shouldAllowShippingInButton()) {
+            return;
+        }
+
+        // Add shipping address.
         paymentDataRequest.shippingContact = this.fill_shipping_contact(this.form_saved);
 
+        // Get shipping methods.
         const rate = this.transactionInfo.chosenShippingMethods[0];
-
         paymentDataRequest.shippingMethods = [];
+
+        // Add selected shipping method.
         for (const shippingPackage of this.transactionInfo.shippingPackages) {
             if (rate === shippingPackage.id) {
                 paymentDataRequest.shippingMethods.push({
@@ -248,6 +278,7 @@ class ApplepayButton {
             }
         }
 
+        // Add other shipping methods.
         for (const shippingPackage of this.transactionInfo.shippingPackages) {
             if (rate !== shippingPackage.id) {
                 paymentDataRequest.shippingMethods.push({
@@ -256,7 +287,6 @@ class ApplepayButton {
                     'amount'     : shippingPackage.cost_str,
                     'identifier' : shippingPackage.id,
                 });
-                break;
             }
         }
 
@@ -271,11 +301,11 @@ class ApplepayButton {
             merchantCapabilities: applepayConfig.merchantCapabilities,
             supportedNetworks: applepayConfig.supportedNetworks,
             requiredShippingContactFields: ["postalAddress", "email", "phone"],
-            requiredBillingContactFields: ["postalAddress", "email", "phone"],
+            requiredBillingContactFields: ["postalAddress"],
         }
 
-        if (!this.contextHandler.shippingAllowed()) {
-            baseRequest.requiredShippingContactFields = [];
+        if (!this.shouldAllowShippingInButton()) {
+            baseRequest.requiredShippingContactFields = ["email", "phone"];
         }
 
         const paymentDataRequest = Object.assign({}, baseRequest);
@@ -429,7 +459,7 @@ class ApplepayButton {
                     caller_page: 'productDetail',
                     product_quantity: this.productQuantity,
                     simplified_contact: event.shippingContact,
-                    need_shipping: this.buttonConfig.product.needShipping,
+                    need_shipping: this.shouldAllowShippingInButton(),
                     'woocommerce-process-checkout-nonce': this.nonce,
                 };
             case 'cart':
@@ -441,7 +471,7 @@ class ApplepayButton {
                     action: 'ppcp_update_shipping_contact',
                     simplified_contact: event.shippingContact,
                     caller_page: 'cart',
-                    need_shipping: this.buttonConfig.product.needShipping,
+                    need_shipping: this.shouldAllowShippingInButton(),
                     'woocommerce-process-checkout-nonce': this.nonce,
                 };
         }
@@ -548,7 +578,7 @@ class ApplepayButton {
                     if (confirmOrderResponse.approveApplePayPayment.status === "APPROVED") {
                         try {
 
-                            if (!this.contextHandler.shippingAllowed()) {
+                            if (!this.shouldAllowShippingInButton()) {
                                 // No shipping, expect immediate capture, ex: PayNow.
 
                                 let approveFailed = false;
