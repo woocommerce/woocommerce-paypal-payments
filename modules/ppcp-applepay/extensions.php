@@ -54,7 +54,7 @@ return array(
 		}
 
 		// Device eligibility.
-		$device_eligibility_text = __( 'Status: Your current browser/device does not seem to support Apple Pay ❌.', 'woocommerce-paypal-payments' );
+		$device_eligibility_text = __( 'Status: Your current browser/device does not seem to support Apple Pay ❌', 'woocommerce-paypal-payments' );
 		$device_eligibility_notes = sprintf(
 		// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
 			__( 'Though the button may display in previews, it won\'t appear in the shop. For details, refer to the %1$sApple Pay requirements%2$s.', 'woocommerce-paypal-payments' ),
@@ -62,7 +62,7 @@ return array(
 			'</a>'
 		);
 		if ( $container->get( 'applepay.is_browser_supported' ) ) {
-			$device_eligibility_text = __( 'Status: Your current browser/device seems to support Apple Pay ✔️.', 'woocommerce-paypal-payments' );
+			$device_eligibility_text = __( 'Status: Your current browser/device seems to support Apple Pay ✔️', 'woocommerce-paypal-payments' );
 			$device_eligibility_notes = __( 'The Apple Pay button will be visible both in previews and below the PayPal buttons in the shop.', 'woocommerce-paypal-payments' );
 		}
 
