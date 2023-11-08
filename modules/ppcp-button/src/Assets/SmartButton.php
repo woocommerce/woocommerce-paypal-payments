@@ -1341,9 +1341,9 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 	}
 
 	/**
-	 * Determines the style for a given indicator in a given context.
+	 * Determines the style for a given property in a given context.
 	 *
-	 * @param string $style The style.
+	 * @param string $style The name of the style property.
 	 * @param string $context The context.
 	 *
 	 * @return string
@@ -1366,13 +1366,31 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 			$context = 'general';
 		}
 
-		$value = isset( $defaults[ $style ] ) ?
-			$defaults[ $style ] : '';
-		$value = $this->settings->has( 'button_' . $style ) ?
-			$this->settings->get( 'button_' . $style ) : $value;
-		$value = $this->settings->has( 'button_' . $context . '_' . $style ) ?
-			$this->settings->get( 'button_' . $context . '_' . $style ) : $value;
+		return $this->get_style_value( "button_{$context}_${style}" )
+			?? $this->get_style_value( "button_${style}" )
+			?? $this->normalize_style_value( $defaults[ $style ] ?? '' );
+	}
 
+	/**
+	 * Returns the style property value or null.
+	 *
+	 * @param string $key The style property key in the settings.
+	 * @return string|null
+	 */
+	private function get_style_value( string $key ): ?string {
+		if ( ! $this->settings->has( $key ) ) {
+			return null;
+		}
+		return $this->normalize_style_value( $this->settings->get( $key ) );
+	}
+
+	/**
+	 * Converts the style property value to string.
+	 *
+	 * @param mixed $value The style property value.
+	 * @return string
+	 */
+	private function normalize_style_value( $value ): string {
 		if ( is_bool( $value ) ) {
 			$value = $value ? 'true' : 'false';
 		}
