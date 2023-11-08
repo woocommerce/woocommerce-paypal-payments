@@ -23,14 +23,14 @@ class CardFieldsModule implements ModuleInterface {
 		);
 	}
 
-	public function run(ContainerInterface $c): void {
+	public function run( ContainerInterface $c ): void {
 		if ( ! $c->get( 'card-fields.eligible' ) ) {
 			return;
 		}
 
 		add_action(
 			'wp_enqueue_scripts',
-			function () use ($c) {
+			function () use ( $c ) {
 				$module_url = $c->get( 'card-fields.module.url' );
 				wp_enqueue_script(
 					'ppcp-card-fields-boot',
@@ -39,6 +39,25 @@ class CardFieldsModule implements ModuleInterface {
 					$c->get( 'ppcp.asset-version' ),
 					true
 				);
+			}
+		);
+
+		/**
+		 * Param types removed to avoid third-party issues.
+		 *
+		 * @psalm-suppress MissingClosureParamType
+		 */
+		add_filter(
+			'woocommerce_paypal_payments_sdk_components_hook',
+			function( $components ) {
+				if ( in_array( 'hosted-fields', $components ) ) {
+					if ( ( $key = array_search( 'hosted-fields', $components ) ) !== false ) {
+						unset( $components[ $key ] );
+					}
+				}
+				$components[] = 'card-fields';
+
+				return $components;
 			}
 		);
 	}
