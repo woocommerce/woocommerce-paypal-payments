@@ -93,6 +93,11 @@ return array(
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$user_agent = wp_unslash( $_SERVER['HTTP_USER_AGENT'] ?? '' );
 		if ( $user_agent ) {
+			foreach ( PropertiesDictionary::DISALLOWED_USER_AGENTS as $disallowed_agent ) {
+				if ( strpos( $user_agent, $disallowed_agent ) !== false ) {
+					return false;
+				}
+			}
 			foreach ( PropertiesDictionary::ALLOWED_USER_AGENTS as $allowed_agent ) {
 				if ( strpos( $user_agent, $allowed_agent ) !== false ) {
 					return true;
