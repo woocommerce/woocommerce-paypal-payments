@@ -21,6 +21,14 @@ return function ( ContainerInterface $container, array $fields ): array {
 		return $fields;
 	}
 
+	$render_preview_element = function ( string $id ): string {
+		return '
+<div class="ppcp-preview ppcp-button-preview">
+	<h4>' . __( 'Standard Card Button Styling Preview', 'woocommerce-paypal-payments' ) . '</h4>
+	<div id="' . $id . '" class="ppcp-button-preview-inner"></div>
+</div>';
+	};
+
 	$new_fields = array(
 		'card_button_styling_heading'   => array(
 			'heading'      => __( 'Standard Card Button Styling', 'woocommerce-paypal-payments' ),
@@ -98,6 +106,15 @@ return function ( ContainerInterface $container, array $fields ): array {
 			),
 			'screens'      => array(
 				State::STATE_START,
+				State::STATE_ONBOARDED,
+			),
+			'requirements' => array(),
+			'gateway'      => CardButtonGateway::ID,
+		),
+		'card_button_preview'           => array(
+			'type'         => 'ppcp-text',
+			'text'         => $render_preview_element( 'ppcpCardButtonPreview' ),
+			'screens'      => array(
 				State::STATE_ONBOARDED,
 			),
 			'requirements' => array(),
