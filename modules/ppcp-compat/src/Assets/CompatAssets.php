@@ -107,8 +107,8 @@ class CompatAssets {
 				'ppcp-tracking-compat',
 				'PayPalCommerceGatewayOrderTrackingCompat',
 				array(
-					'gzd_sync_enabled'         => apply_filters( 'woocommerce_paypal_payments_sync_gzd_tracking', true ) && $this->is_gzd_active,
-					'wc_shipment_sync_enabled' => apply_filters( 'woocommerce_paypal_payments_sync_wc_shipment_tracking', true ) && $this->is_wc_shipment_active,
+					'gzd_sync_enabled'             => apply_filters( 'woocommerce_paypal_payments_sync_gzd_tracking', true ) && $this->is_gzd_active,
+					'wc_shipment_sync_enabled'     => apply_filters( 'woocommerce_paypal_payments_sync_wc_shipment_tracking', true ) && $this->is_wc_shipment_active,
 					'wc_shipping_tax_sync_enabled' => apply_filters( 'woocommerce_paypal_payments_sync_wc_shipping_tax', true ) && $this->is_wc_shipping_tax_active,
 				)
 			);
