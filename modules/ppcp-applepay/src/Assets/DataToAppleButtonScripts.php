@@ -202,29 +202,29 @@ class DataToAppleButtonScripts {
 		$checkout_data_mode = $this->settings->has( 'applepay_checkout_data_mode' ) ? $this->settings->get( 'applepay_checkout_data_mode' ) : PropertiesDictionary::BILLING_DATA_MODE_DEFAULT;
 
 		return array(
-			'sdk_url'  => $this->sdk_url,
-			'is_debug' => defined( 'WP_DEBUG' ) && WP_DEBUG ? true : false,
+			'sdk_url'     => $this->sdk_url,
+			'is_debug'    => defined( 'WP_DEBUG' ) && WP_DEBUG ? true : false,
 			'preferences' => array(
 				'checkout_data_mode' => $checkout_data_mode,
 			),
-			'button'   => array(
+			'button'      => array(
 				'wrapper'           => 'applepay-container',
 				'mini_cart_wrapper' => 'applepay-container-minicart',
 				'type'              => $type,
 				'color'             => $color,
 				'lang'              => $lang,
 			),
-			'product'  => array(
+			'product'     => array(
 				'needShipping' => $cart->needs_shipping(),
 				'subtotal'     => $cart->get_subtotal(),
 			),
-			'shop'     => array(
+			'shop'        => array(
 				'countryCode'  => $shop_country_code,
 				'currencyCode' => $currency_code,
 				'totalLabel'   => $total_label,
 			),
-			'ajax_url' => admin_url( 'admin-ajax.php' ),
-			'nonce'    => wp_create_nonce( 'woocommerce-process_checkout' ),
+			'ajax_url'    => admin_url( 'admin-ajax.php' ),
+			'nonce'       => wp_create_nonce( 'woocommerce-process_checkout' ),
 		);
 	}
 
@@ -250,28 +250,28 @@ class DataToAppleButtonScripts {
 		$checkout_data_mode = $this->settings->has( 'applepay_checkout_data_mode' ) ? $this->settings->get( 'applepay_checkout_data_mode' ) : PropertiesDictionary::BILLING_DATA_MODE_DEFAULT;
 
 		return array(
-			'sdk_url'  => $this->sdk_url,
-			'is_debug' => defined( 'WP_DEBUG' ) && WP_DEBUG ? true : false,
+			'sdk_url'     => $this->sdk_url,
+			'is_debug'    => defined( 'WP_DEBUG' ) && WP_DEBUG ? true : false,
 			'preferences' => array(
 				'checkout_data_mode' => $checkout_data_mode,
 			),
-			'button'   => array(
+			'button'      => array(
 				'wrapper'           => 'applepay-container',
 				'mini_cart_wrapper' => 'applepay-container-minicart',
 				'type'              => $type,
 				'color'             => $color,
 				'lang'              => $lang,
 			),
-			'product'  => array(
+			'product'     => array(
 				'needShipping' => false,
 				'subtotal'     => 0,
 			),
-			'shop'     => array(
+			'shop'        => array(
 				'countryCode'  => $shop_country_code,
 				'currencyCode' => $currency_code,
 				'totalLabel'   => $total_label,
 			),
-			'ajax_url' => admin_url( 'admin-ajax.php' ),
+			'ajax_url'    => admin_url( 'admin-ajax.php' ),
 		);
 	}
 }

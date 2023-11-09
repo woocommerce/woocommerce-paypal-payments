@@ -16,7 +16,7 @@ class ApplepayButton {
         this.buttonConfig = buttonConfig;
         this.ppcpConfig = ppcpConfig;
         this.paymentsClient = null;
-        this.form_saved = false;
+        this.formData = null;
 
         this.contextHandler = ContextHandlerFactory.create(
             this.context,
@@ -24,9 +24,12 @@ class ApplepayButton {
             this.ppcpConfig
         );
 
-        this.updated_contact_info = []
+        this.updatedContactInfo = []
         this.selectedShippingMethod = []
         this.nonce = document.getElementById('woocommerce-process-checkout-nonce')?.value || buttonConfig.nonce
+
+        // Stores initialization data sent to the button.
+        this.initialPaymentRequest = null;
 
         this.log = function() {
             if ( this.buttonConfig.is_debug ) {
@@ -35,6 +38,13 @@ class ApplepayButton {
         }
 
         this.refreshContextData();
+
+        // Debug helpers
+        jQuery(document).on('ppcp-applepay-debug', () => {
+            console.log('ApplePayButton', this.context, this);
+        });
+        document.ppcpApplepayButtons = document.ppcpApplepayButtons || {};
+        document.ppcpApplepayButtons[this.context] = this;
     }
 
     init(config) {
@@ -47,6 +57,7 @@ class ApplepayButton {
         this.isInitialized = true;
         this.applePayConfig = config;
         const isEligible = this.applePayConfig.isEligible;
+
         if (isEligible) {
             this.fetchTransactionInfo().then(() => {
                 const isSubscriptionProduct = this.ppcpConfig?.data_client_id?.has_subscriptions === true;
@@ -84,6 +95,7 @@ class ApplepayButton {
     async fetchTransactionInfo() {
         this.transactionInfo = await this.contextHandler.transactionInfo();
     }
+
     /**
      * Returns configurations relative to this button context.
      */
@@ -108,6 +120,7 @@ class ApplepayButton {
 
         return config;
     }
+
     initEventHandlers() {
         const { wrapper, ppcpButtonWrapper } = this.contextConfig();
         const wrapper_id = '#' + wrapper;
@@ -127,22 +140,25 @@ class ApplepayButton {
         syncButtonVisibility();
     }
 
+    /**
+     * Starts an ApplePay session.
+     */
     applePaySession(paymentRequest) {
         this.log('applePaySession', paymentRequest);
-        const session = new ApplePaySession(4, paymentRequest)
-        session.begin()
+        const session = new ApplePaySession(4, paymentRequest);
+        session.begin();
 
-        if (this.shouldAllowShippingInButton()) {
-            session.onshippingmethodselected = this.onshippingmethodselected(session)
-            session.onshippingcontactselected = this.onshippingcontactselected(session)
+        if (this.shouldRequireShippingInButton()) {
+            session.onshippingmethodselected = this.onShippingMethodSelected(session);
+            session.onshippingcontactselected = this.onShippingContactSelected(session);
         }
-        session.onvalidatemerchant = this.onvalidatemerchant(session);
-        session.onpaymentauthorized = this.onpaymentauthorized(session);
+        session.onvalidatemerchant = this.onValidateMerchant(session);
+        session.onpaymentauthorized = this.onPaymentAuthorized(session);
         return session;
     }
 
     /**
-     * Add a Apple Pay purchase button
+     * Adds an Apple Pay purchase button.
      */
     addButton() {
         this.log('addButton', this.context);
@@ -179,8 +195,9 @@ class ApplepayButton {
     async onButtonClick() {
         this.log('onButtonClick', this.context);
 
-        const paymentDataRequest = this.paymentDataRequest();
-        // trigger woocommerce validation if we are in the checkout page
+        const paymentRequest = this.paymentRequest();
+
+        // Trigger woocommerce validation if we are in the checkout page.
         if (this.context === 'checkout') {
             const checkoutFormSelector = 'form.woocommerce-checkout';
             const errorHandler = new ErrorHandler(
@@ -189,16 +206,16 @@ class ApplepayButton {
             );
             try {
                 const formData = new FormData(document.querySelector(checkoutFormSelector));
-                this.form_saved = Object.fromEntries(formData.entries());
-                // This line should be reviewed, the widgetBuilder.paypal.Applepay().confirmOrder fails if we add it.
-                this.update_request_data_with_form(paymentDataRequest);
+                this.formData = Object.fromEntries(formData.entries());
+
+                this.updateRequestDataWithForm(paymentRequest);
             } catch (error) {
                 console.error(error);
             }
 
-            this.log('=== paymentDataRequest', paymentDataRequest);
+            this.log('=== paymentRequest', paymentRequest);
 
-            const session = this.applePaySession(paymentDataRequest);
+            const session = this.applePaySession(paymentRequest);
             const formValidator = PayPalCommerceGateway.early_checkout_validation_enabled ?
                 new FormValidator(
                     PayPalCommerceGateway.ajax.validate_checkout.endpoint,
@@ -219,7 +236,9 @@ class ApplepayButton {
             }
             return;
         }
-        this.applePaySession(paymentDataRequest)
+
+        // Default session initialization.
+        this.applePaySession(paymentRequest);
     }
 
     /**
@@ -227,10 +246,10 @@ class ApplepayButton {
      *
      * @returns {false|*}
      */
-    shouldAllowShippingInButton() {
+    shouldRequireShippingInButton() {
         return this.contextHandler.shippingAllowed()
             && this.buttonConfig.product.needShipping
-            && (this.context !== 'checkout' || this.shouldAllowShippingInButton());
+            && (this.context !== 'checkout' || this.shouldUpdateButtonWithFormData());
     }
 
     /**
@@ -239,41 +258,70 @@ class ApplepayButton {
      * @returns {boolean}
      */
     shouldUpdateButtonWithFormData() {
-        return this.ppcpConfig?.preferences?.checkout_data_mode === 'use_applepay';
+        if (this.context !== 'checkout') {
+            return false;
+        }
+        return this.buttonConfig?.preferences?.checkout_data_mode === 'use_applepay';
     }
 
-    update_request_data_with_form(paymentDataRequest) {
+    /**
+     * Indicates how payment completion should be handled if with the context handler default actions.
+     * Or with ApplePay module specific completion.
+     *
+     * @returns {boolean}
+     */
+    shouldCompletePaymentWithContextHandler() {
+        // Data already handled, ex: PayNow
+        if (!this.contextHandler.shippingAllowed()) {
+            return true;
+        }
+        // Use WC form data mode in Checkout.
+        if (this.context === 'checkout' && !this.shouldUpdateButtonWithFormData()) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Updates ApplePay paymentRequest with form data.
+     */
+    updateRequestDataWithForm(paymentRequest) {
         if (!this.shouldUpdateButtonWithFormData()) {
             return;
         }
 
         // Add billing address.
-        paymentDataRequest.billingContact = this.fill_billing_contact(this.form_saved);
+        paymentRequest.billingContact = this.fillBillingContact(this.formData);
 
         // Add custom data.
         // "applicationData" is originating a "PayPalApplePayError: An internal server error has occurred" on paypal.Applepay().confirmOrder().
-        // paymentDataRequest.applicationData = this.fill_application_data(this.form_saved);
+        // paymentRequest.applicationData = this.fillApplicationData(this.formData);
 
-        if (!this.shouldAllowShippingInButton()) {
+        if (!this.shouldRequireShippingInButton()) {
             return;
         }
 
         // Add shipping address.
-        paymentDataRequest.shippingContact = this.fill_shipping_contact(this.form_saved);
+        paymentRequest.shippingContact = this.fillShippingContact(this.formData);
 
         // Get shipping methods.
         const rate = this.transactionInfo.chosenShippingMethods[0];
-        paymentDataRequest.shippingMethods = [];
+        paymentRequest.shippingMethods = [];
 
         // Add selected shipping method.
         for (const shippingPackage of this.transactionInfo.shippingPackages) {
             if (rate === shippingPackage.id) {
-                paymentDataRequest.shippingMethods.push({
+                const shippingMethod = {
                     'label'      : shippingPackage.label,
                     'detail'     : '',
                     'amount'     : shippingPackage.cost_str,
                     'identifier' : shippingPackage.id,
-                });
+                };
+
+                // Remember this shipping method as the selected one.
+                this.selectedShippingMethod = shippingMethod;
+
+                paymentRequest.shippingMethods.push(shippingMethod);
                 break;
             }
         }
@@ -281,7 +329,7 @@ class ApplepayButton {
         // Add other shipping methods.
         for (const shippingPackage of this.transactionInfo.shippingPackages) {
             if (rate !== shippingPackage.id) {
-                paymentDataRequest.shippingMethods.push({
+                paymentRequest.shippingMethods.push({
                     'label'      : shippingPackage.label,
                     'detail'     : '',
                     'amount'     : shippingPackage.cost_str,
@@ -290,10 +338,13 @@ class ApplepayButton {
             }
         }
 
-        this.log('=== paymentDataRequest.shippingMethods', paymentDataRequest.shippingMethods);
+        // Store for reuse in case this data is not provided by ApplePay on authorization.
+        this.initialPaymentRequest = paymentRequest;
+
+        this.log('=== paymentRequest.shippingMethods', paymentRequest.shippingMethods);
     }
 
-    paymentDataRequest() {
+    paymentRequest() {
         const applepayConfig = this.applePayConfig
         const buttonConfig = this.buttonConfig
         let baseRequest = {
@@ -301,22 +352,28 @@ class ApplepayButton {
             merchantCapabilities: applepayConfig.merchantCapabilities,
             supportedNetworks: applepayConfig.supportedNetworks,
             requiredShippingContactFields: ["postalAddress", "email", "phone"],
-            requiredBillingContactFields: ["postalAddress"],
+            requiredBillingContactFields: ["postalAddress"], // ApplePay does not implement billing email and phone fields.
         }
 
-        if (!this.shouldAllowShippingInButton()) {
-            baseRequest.requiredShippingContactFields = ["email", "phone"];
+        if (!this.shouldRequireShippingInButton()) {
+            if (this.shouldCompletePaymentWithContextHandler()) {
+                // Data needs handled externally.
+                baseRequest.requiredShippingContactFields = [];
+            } else {
+                // Minimum data required for order creation.
+                baseRequest.requiredShippingContactFields = ["email", "phone"];
+            }
         }
 
-        const paymentDataRequest = Object.assign({}, baseRequest);
-        paymentDataRequest.currencyCode = buttonConfig.shop.currencyCode;
-        paymentDataRequest.total = {
+        const paymentRequest = Object.assign({}, baseRequest);
+        paymentRequest.currencyCode = buttonConfig.shop.currencyCode;
+        paymentRequest.total = {
             label: buttonConfig.shop.totalLabel,
             type: "final",
             amount: this.transactionInfo.totalPrice,
         }
 
-        return paymentDataRequest
+        return paymentRequest;
     }
 
     refreshContextData() {
@@ -334,7 +391,7 @@ class ApplepayButton {
     // Payment process
     //------------------------
 
-    onvalidatemerchant(session) {
+    onValidateMerchant(session) {
         this.log('onvalidatemerchant', this.buttonConfig.ajax_url);
         return (applePayValidateMerchantEvent) => {
             this.log('onvalidatemerchant call');
@@ -368,83 +425,90 @@ class ApplepayButton {
                             validation: false,
                             'woocommerce-process-checkout-nonce': this.nonce,
                         }
-                    })
+                    });
                     this.log('onvalidatemerchant session abort');
                     session.abort();
                 });
         };
     }
-    onshippingmethodselected(session) {
+
+    onShippingMethodSelected(session) {
         this.log('onshippingmethodselected', this.buttonConfig.ajax_url);
-        const ajax_url = this.buttonConfig.ajax_url
+        const ajax_url = this.buttonConfig.ajax_url;
         return (event) => {
             this.log('onshippingmethodselected call');
 
             const data = this.getShippingMethodData(event);
+
             jQuery.ajax({
                 url: ajax_url,
                 method: 'POST',
                 data: data,
                 success: (applePayShippingMethodUpdate, textStatus, jqXHR) => {
                     this.log('onshippingmethodselected ok');
-                    let response = applePayShippingMethodUpdate.data
+                    let response = applePayShippingMethodUpdate.data;
                     if (applePayShippingMethodUpdate.success === false) {
-                        response.errors = createAppleErrors(response.errors)
+                        response.errors = createAppleErrors(response.errors);
                     }
-                    this.selectedShippingMethod = event.shippingMethod
-                    //order the response shipping methods, so that the selected shipping method is the first one
-                    let orderedShippingMethods = response.newShippingMethods.sort((a, b) => {
+                    this.selectedShippingMethod = event.shippingMethod;
+
+                    // Sort the response shipping methods, so that the selected shipping method is the first one.
+                    response.newShippingMethods = response.newShippingMethods.sort((a, b) => {
                         if (a.label === this.selectedShippingMethod.label) {
-                            return -1
+                            return -1;
                         }
-                        return 1
-                    })
-                    //update the response.newShippingMethods with the ordered shipping methods
-                    response.newShippingMethods = orderedShippingMethods
+                        return 1;
+                    });
+
                     if (applePayShippingMethodUpdate.success === false) {
-                        response.errors = createAppleErrors(response.errors)
+                        response.errors = createAppleErrors(response.errors);
                     }
-                    session.completeShippingMethodSelection(response)
+                    session.completeShippingMethodSelection(response);
                 },
                 error: (jqXHR, textStatus, errorThrown) => {
                     this.log('onshippingmethodselected error', textStatus);
-                    console.warn(textStatus, errorThrown)
-                    session.abort()
+                    console.warn(textStatus, errorThrown);
+                    session.abort();
                 },
-            })
+            });
         };
     }
-    onshippingcontactselected(session) {
+
+    onShippingContactSelected(session) {
         this.log('onshippingcontactselected', this.buttonConfig.ajax_url);
-        const ajax_url = this.buttonConfig.ajax_url
+
+        const ajax_url = this.buttonConfig.ajax_url;
+
         return (event) => {
             this.log('onshippingcontactselected call');
 
             const data = this.getShippingContactData(event);
+
             jQuery.ajax({
                 url: ajax_url,
                 method: 'POST',
                 data: data,
                 success: (applePayShippingContactUpdate, textStatus, jqXHR) => {
                     this.log('onshippingcontactselected ok');
-                    let response = applePayShippingContactUpdate.data
-                    this.updated_contact_info = event.shippingContact
+                    let response = applePayShippingContactUpdate.data;
+                    this.updatedContactInfo = event.shippingContact;
                     if (applePayShippingContactUpdate.success === false) {
-                        response.errors = createAppleErrors(response.errors)
+                        response.errors = createAppleErrors(response.errors);
                     }
                     if (response.newShippingMethods) {
-                        this.selectedShippingMethod = response.newShippingMethods[0]
+                        this.selectedShippingMethod = response.newShippingMethods[0];
                     }
-                    session.completeShippingContactSelection(response)
+                    session.completeShippingContactSelection(response);
                 },
                 error: (jqXHR, textStatus, errorThrown) => {
                     this.log('onshippingcontactselected error', textStatus);
-                    console.warn(textStatus, errorThrown)
-                    session.abort()
+                    console.warn(textStatus, errorThrown);
+                    session.abort();
                 },
-            })
+            });
         };
     }
+
     getShippingContactData(event) {
         const product_id = this.buttonConfig.product.id;
 
@@ -459,7 +523,7 @@ class ApplepayButton {
                     caller_page: 'productDetail',
                     product_quantity: this.productQuantity,
                     simplified_contact: event.shippingContact,
-                    need_shipping: this.shouldAllowShippingInButton(),
+                    need_shipping: this.shouldRequireShippingInButton(),
                     'woocommerce-process-checkout-nonce': this.nonce,
                 };
             case 'cart':
@@ -471,11 +535,12 @@ class ApplepayButton {
                     action: 'ppcp_update_shipping_contact',
                     simplified_contact: event.shippingContact,
                     caller_page: 'cart',
-                    need_shipping: this.shouldAllowShippingInButton(),
+                    need_shipping: this.shouldRequireShippingInButton(),
                     'woocommerce-process-checkout-nonce': this.nonce,
                 };
         }
     }
+
     getShippingMethodData(event) {
         const product_id = this.buttonConfig.product.id;
 
@@ -485,11 +550,11 @@ class ApplepayButton {
             case 'product': return {
                 action: 'ppcp_update_shipping_method',
                 shipping_method: event.shippingMethod,
+                simplified_contact: this.updatedContactInfo || this.initialPaymentRequest.shippingContact || this.initialPaymentRequest.billingContact,
                 product_id: product_id,
                 products: JSON.stringify(this.products),
                 caller_page: 'productDetail',
                 product_quantity: this.productQuantity,
-                simplified_contact: this.updated_contact_info,
                 'woocommerce-process-checkout-nonce': this.nonce,
             }
             case 'cart':
@@ -500,14 +565,14 @@ class ApplepayButton {
                 return {
                     action: 'ppcp_update_shipping_method',
                     shipping_method: event.shippingMethod,
+                    simplified_contact: this.updatedContactInfo || this.initialPaymentRequest.shippingContact || this.initialPaymentRequest.billingContact,
                     caller_page: 'cart',
-                    simplified_contact: this.updated_contact_info,
                     'woocommerce-process-checkout-nonce': this.nonce,
                 }
         }
     }
 
-    onpaymentauthorized(session) {
+    onPaymentAuthorized(session) {
         this.log('onpaymentauthorized');
         return async (event) => {
             this.log('onpaymentauthorized call');
@@ -518,8 +583,10 @@ class ApplepayButton {
             const processInWooAndCapture = async (data) => {
                 return new Promise((resolve, reject) => {
                     try {
-                        const billingContact = data.billing_contact
-                        const shippingContact = data.shipping_contact
+                        const billingContact = data.billing_contact || this.initialPaymentRequest.billingContact;
+                        const shippingContact = data.shipping_contact || this.initialPaymentRequest.shippingContact;
+                        const shippingMethod = this.selectedShippingMethod || (this.initialPaymentRequest.shippingMethods || [])[0];
+
                         let request_data = {
                             action: 'ppcp_create_order',
                             'caller_page': this.context,
@@ -529,7 +596,7 @@ class ApplepayButton {
                             'shipping_contact': shippingContact,
                             'billing_contact': billingContact,
                             'token': event.payment.token,
-                            'shipping_method': this.selectedShippingMethod,
+                            'shipping_method': shippingMethod,
                             'woocommerce-process-checkout-nonce': this.nonce,
                             'funding_source': 'applepay',
                             '_wp_http_referer': '/?wc-ajax=update_order_review',
@@ -547,16 +614,16 @@ class ApplepayButton {
                             },
                             success: (authorizationResult, textStatus, jqXHR) => {
                                 this.log('onpaymentauthorized ok');
-                                resolve(authorizationResult)
+                                resolve(authorizationResult);
                             },
                             error: (jqXHR, textStatus, errorThrown) => {
                                 this.log('onpaymentauthorized error', textStatus);
                                 reject(new Error(errorThrown));
                             },
-                        })
+                        });
                     } catch (error) {
                         this.log('onpaymentauthorized catch', error);
-                        console.log(error)  // handle error
+                        console.log(error);  // handle error
                     }
                 });
             }
@@ -578,8 +645,8 @@ class ApplepayButton {
                     if (confirmOrderResponse.approveApplePayPayment.status === "APPROVED") {
                         try {
 
-                            if (!this.shouldAllowShippingInButton()) {
-                                // No shipping, expect immediate capture, ex: PayNow.
+                            if (this.shouldCompletePaymentWithContextHandler()) {
+                                // No shipping, expect immediate capture, ex: PayNow, Checkout with form data.
 
                                 let approveFailed = false;
                                 await this.contextHandler.approveOrder({
@@ -602,7 +669,7 @@ class ApplepayButton {
                                 } else {
                                     this.log('onpaymentauthorized approveOrder FAIL');
                                     session.completePayment(ApplePaySession.STATUS_FAILURE);
-                                    session.abort()
+                                    session.abort();
                                     console.error(error);
                                 }
 
@@ -616,17 +683,17 @@ class ApplepayButton {
                                 };
                                 let authorizationResult = await processInWooAndCapture(data);
                                 if (authorizationResult.result === "success") {
-                                    session.completePayment(ApplePaySession.STATUS_SUCCESS)
-                                    window.location.href = authorizationResult.redirect
+                                    session.completePayment(ApplePaySession.STATUS_SUCCESS);
+                                    window.location.href = authorizationResult.redirect;
                                 } else {
-                                    session.completePayment(ApplePaySession.STATUS_FAILURE)
+                                    session.completePayment(ApplePaySession.STATUS_FAILURE);
                                 }
 
                             }
 
                         } catch (error) {
                             session.completePayment(ApplePaySession.STATUS_FAILURE);
-                            session.abort()
+                            session.abort();
                             console.error(error);
                         }
                     } else {
@@ -640,43 +707,44 @@ class ApplepayButton {
             } catch (error) {
                 console.error('Error confirming order with applepay token', error);
                 session.completePayment(ApplePaySession.STATUS_FAILURE);
-                session.abort()
+                session.abort();
             }
         };
     }
 
-    fill_billing_contact(form_saved) {
+    fillBillingContact(data) {
         return {
-            givenName: form_saved.billing_first_name ?? '',
-            familyName: form_saved.billing_last_name ?? '',
-            emailAddress: form_saved.billing_email  ?? '',
-            phoneNumber: form_saved.billing_phone ?? '',
-            addressLines: [form_saved.billing_address_1, form_saved.billing_address_2],
-            locality: form_saved.billing_city ?? '',
-            postalCode: form_saved.billing_postcode ?? '',
-            countryCode: form_saved.billing_country ?? '',
-            administrativeArea: form_saved.billing_state ?? '',
-        }
-    }
-    fill_shipping_contact(form_saved) {
-        if (form_saved.shipping_first_name === "") {
-            return this.fill_billing_contact(form_saved)
-        }
-        return {
-            givenName: (form_saved?.shipping_first_name && form_saved.shipping_first_name !== "") ? form_saved.shipping_first_name : form_saved?.billing_first_name,
-            familyName: (form_saved?.shipping_last_name && form_saved.shipping_last_name !== "") ? form_saved.shipping_last_name : form_saved?.billing_last_name,
-            emailAddress: (form_saved?.shipping_email && form_saved.shipping_email !== "") ? form_saved.shipping_email : form_saved?.billing_email,
-            phoneNumber: (form_saved?.shipping_phone && form_saved.shipping_phone !== "") ? form_saved.shipping_phone : form_saved?.billing_phone,
-            addressLines: [form_saved.shipping_address_1 ?? '', form_saved.shipping_address_2 ?? ''],
-            locality: (form_saved?.shipping_city && form_saved.shipping_city !== "") ? form_saved.shipping_city : form_saved?.billing_city,
-            postalCode: (form_saved?.shipping_postcode && form_saved.shipping_postcode !== "") ? form_saved.shipping_postcode : form_saved?.billing_postcode,
-            countryCode: (form_saved?.shipping_country && form_saved.shipping_country !== "") ? form_saved.shipping_country : form_saved?.billing_country,
-            administrativeArea: (form_saved?.shipping_state && form_saved.shipping_state !== "") ? form_saved.shipping_state : form_saved?.billing_state,
+            givenName:          data.billing_first_name ?? '',
+            familyName:         data.billing_last_name ?? '',
+            emailAddress:       data.billing_email  ?? '',
+            phoneNumber:        data.billing_phone ?? '',
+            addressLines:       [data.billing_address_1, data.billing_address_2],
+            locality:           data.billing_city ?? '',
+            postalCode:         data.billing_postcode ?? '',
+            countryCode:        data.billing_country ?? '',
+            administrativeArea: data.billing_state ?? '',
         }
     }
 
-    fill_application_data(form_saved) {
-        const jsonString = JSON.stringify(form_saved);
+    fillShippingContact(data) {
+        if (data.shipping_first_name === "") {
+            return this.fillBillingContact(data);
+        }
+        return {
+            givenName:          (data?.shipping_first_name && data.shipping_first_name !== "") ? data.shipping_first_name : data?.billing_first_name,
+            familyName:         (data?.shipping_last_name && data.shipping_last_name !== "") ? data.shipping_last_name : data?.billing_last_name,
+            emailAddress:       (data?.shipping_email && data.shipping_email !== "") ? data.shipping_email : data?.billing_email,
+            phoneNumber:        (data?.shipping_phone && data.shipping_phone !== "") ? data.shipping_phone : data?.billing_phone,
+            addressLines:       [data.shipping_address_1 ?? '', data.shipping_address_2 ?? ''],
+            locality:           (data?.shipping_city && data.shipping_city !== "") ? data.shipping_city : data?.billing_city,
+            postalCode:         (data?.shipping_postcode && data.shipping_postcode !== "") ? data.shipping_postcode : data?.billing_postcode,
+            countryCode:        (data?.shipping_country && data.shipping_country !== "") ? data.shipping_country : data?.billing_country,
+            administrativeArea: (data?.shipping_state && data.shipping_state !== "") ? data.shipping_state : data?.billing_state,
+        }
+    }
+
+    fillApplicationData(data) {
+        const jsonString = JSON.stringify(data);
         let utf8Str = encodeURIComponent(jsonString).replace(/%([0-9A-F]{2})/g, (match, p1) => {
             return String.fromCharCode('0x' + p1);
         });

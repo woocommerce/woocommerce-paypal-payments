@@ -312,7 +312,6 @@ class ApplePayButton implements ButtonInterface {
 			$user_country,
 			$allowed_shipping_countries
 		);
-		$product_need_shipping       = $applepay_request_data_object->need_shipping();
 
 		if ( ! $is_allowed_selling_country ) {
 			$this->response_templates->response_with_data_errors(
@@ -320,7 +319,7 @@ class ApplePayButton implements ButtonInterface {
 			);
 			return;
 		}
-		if ( $product_need_shipping && ! $is_allowed_shipping_country ) {
+		if ( $applepay_request_data_object->need_shipping() && ! $is_allowed_shipping_country ) {
 			$this->response_templates->response_with_data_errors(
 				array( array( 'errorCode' => 'addressUnserviceable' ) )
 			);
@@ -406,9 +405,6 @@ class ApplePayButton implements ButtonInterface {
 		$applepay_request_data_object = $this->applepay_data_object_http();
 		//phpcs:disable WordPress.Security.NonceVerification
 
-		$this->logger->info('== $_POST ==');
-		$this->logger->info(print_r($_POST, true));
-
 		$context = wc_clean( wp_unslash( $_POST['caller_page'] ?? '' ) );
 		if ( ! is_string( $context ) ) {
 			$this->response_templates->response_with_data_errors(
@@ -422,9 +418,6 @@ class ApplePayButton implements ButtonInterface {
 			return;
 		}
 		$applepay_request_data_object->order_data( $context );
-
-		$this->logger->info('== $applepay_request_data_object ==');
-		$this->logger->info(print_r($applepay_request_data_object, true));
 
 		$this->update_posted_data( $applepay_request_data_object );
 		if ( $context === 'product' ) {
@@ -459,7 +452,7 @@ class ApplePayButton implements ButtonInterface {
 				}
 			);
 		}
-		$this->add_addresses_to_order( $applepay_request_data_object );
+
 		WC()->checkout()->process_checkout();
 	}
 
@@ -774,33 +767,6 @@ class ApplePayButton implements ButtonInterface {
 	}
 
 	/**
-	 * Add address billing and shipping data to order
-	 *
-	 * @param ApplePayDataObjectHttp $applepay_request_data_object ApplePayDataObjectHttp.
-	 */
-	protected function add_addresses_to_order(
-		ApplePayDataObjectHttp $applepay_request_data_object
-	): void {
-		add_action(
-			'woocommerce_checkout_create_order',
-			static function ( WC_Order $order, array $data ) use ( $applepay_request_data_object ) {
-$this->logger->info('== HOOK woocommerce_checkout_create_order');
-				if ( ! empty( $applepay_request_data_object->shipping_method() ) ) {
-					$billing_address  = $applepay_request_data_object->billing_address();
-					$shipping_address = $applepay_request_data_object->shipping_address();
-					// apple puts email in shipping_address while we get it from WC's billing_address.
-					$billing_address['email'] = $shipping_address['email'];
-					$billing_address['phone'] = $shipping_address['phone'];
-$this->logger->info(print_r($billing_address, true));
-					$order->set_address( $billing_address, 'billing' );
-					$order->set_address( $shipping_address, 'shipping' );
-				}
-			},
-			10,
-			2
-		);
-	}
-	/**
 	 * Empty the cart to use for calculations
 	 * while saving its contents in a field
 	 */
@@ -881,8 +847,6 @@ $this->logger->info(print_r($billing_address, true));
 		add_filter(
 			'woocommerce_checkout_posted_data',
 			function ( array $data ) use ( $applepay_request_data_object ): array {
-$this->logger->info('== HOOK woocommerce_checkout_posted_data');
-
 				$data['payment_method']     = 'ppcp-gateway';
 				$data['shipping_method']    = $applepay_request_data_object->shipping_method();
 				$data['billing_first_name'] = $applepay_request_data_object->billing_address()['first_name'] ?? '';
@@ -894,10 +858,18 @@ $this->logger->info('== HOOK woocommerce_checkout_posted_data');
 				$data['billing_city']       = $applepay_request_data_object->billing_address()['city'] ?? '';
 				$data['billing_state']      = $applepay_request_data_object->billing_address()['state'] ?? '';
 				$data['billing_postcode']   = $applepay_request_data_object->billing_address()['postcode'] ?? '';
+				$data['billing_email']      = $applepay_request_data_object->billing_address()['email'] ?? '';
+				$data['billing_phone']      = $applepay_request_data_object->billing_address()['phone'] ?? '';
 
-				if ( ! empty( $applepay_request_data_object->need_shipping() ) ) {
-					$data['billing_email']       = $applepay_request_data_object->shipping_address()['email'] ?? '';
-					$data['billing_phone']       = $applepay_request_data_object->shipping_address()['phone'] ?? '';
+				// ApplePay doesn't send us a billing email or phone, use the shipping contacts instead.
+				if ( ! ( $data['billing_email'] ?? false ) ) {
+					$data['billing_email'] = $applepay_request_data_object->shipping_address()['email'] ?? '';
+				}
+				if ( ! ( $data['billing_phone'] ?? false ) ) {
+					$data['billing_phone'] = $applepay_request_data_object->shipping_address()['phone'] ?? '';
+				}
+
+				if ( ! empty( $applepay_request_data_object->shipping_method() ) ) {
 					$data['shipping_first_name'] = $applepay_request_data_object->shipping_address()['first_name'] ?? '';
 					$data['shipping_last_name']  = $applepay_request_data_object->shipping_address()['last_name'] ?? '';
 					$data['shipping_company']    = $applepay_request_data_object->shipping_address()['company'] ?? '';
@@ -910,7 +882,6 @@ $this->logger->info('== HOOK woocommerce_checkout_posted_data');
 					$data['shipping_email']      = $applepay_request_data_object->shipping_address()['email'] ?? '';
 					$data['shipping_phone']      = $applepay_request_data_object->shipping_address()['phone'] ?? '';
 				}
-$this->logger->info(print_r($data, true));
 
 				return $data;
 			}

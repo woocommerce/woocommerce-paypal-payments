@@ -15,12 +15,14 @@ class BaseHandler {
 
     transactionInfo() {
         return new Promise((resolve, reject) => {
+            const endpoint = this.ppcpConfig.ajax.cart_script_params.endpoint;
+            const separator = (endpoint.indexOf('?') !== -1) ? '&' : '?';
 
             fetch(
-                this.ppcpConfig.ajax.cart_script_params.endpoint,
+                endpoint + separator + 'shipping=1',
                 {
                     method: 'GET',
-                    credentials: 'same-origin',
+                    credentials: 'same-origin'
                 }
             )
                 .then(result => result.json())

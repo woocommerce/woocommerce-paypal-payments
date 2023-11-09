@@ -142,7 +142,7 @@ return array(
 						'This controls the label of the Google Pay button.',
 						'woocommerce-paypal-payments'
 					),
-					'classes'      => array('ppcp-field-indent'),
+					'classes'      => array( 'ppcp-field-indent' ),
 					'class'        => array(),
 					'input_class'  => array( 'wc-enhanced-select' ),
 					'default'      => 'pay',
@@ -161,7 +161,7 @@ return array(
 					),
 					'label'        => '',
 					'input_class'  => array( 'wc-enhanced-select' ),
-					'classes'      => array('ppcp-field-indent'),
+					'classes'      => array( 'ppcp-field-indent' ),
 					'class'        => array(),
 					'default'      => 'black',
 					'options'      => PropertiesDictionary::button_colors(),
@@ -177,7 +177,7 @@ return array(
 						'The language and region used for the displayed Google Pay button. The default value is the current language and region setting in a browser.',
 						'woocommerce-paypal-payments'
 					),
-					'classes'      => array('ppcp-field-indent'),
+					'classes'      => array( 'ppcp-field-indent' ),
 					'class'        => array(),
 					'input_class'  => array( 'wc-enhanced-select' ),
 					'default'      => 'en',
@@ -194,7 +194,7 @@ return array(
 						'Synchronizes your available shipping options with Google Pay. Enabling this may impact the buyer experience.',
 						'woocommerce-paypal-payments'
 					),
-					'classes'      => array('ppcp-field-indent'),
+					'classes'      => array( 'ppcp-field-indent' ),
 					'label'        => __( 'Enable Google Pay shipping callback', 'woocommerce-paypal-payments' ),
 					'default'      => 'no',
 					'screens'      => array( State::STATE_ONBOARDED ),

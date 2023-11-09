@@ -162,7 +162,7 @@ return array(
 						),
 					),
 				),
-				'applepay_button_domain_registration'  => array(
+				'applepay_button_domain_registration' => array(
 					'title'        => __( 'Domain Registration', 'woocommerce-paypal-payments' ),
 					'type'         => 'ppcp-text',
 					'text'         =>
@@ -177,13 +177,13 @@ return array(
 						'Registering the website domain on the PayPal site is mandated by Apple. Payments will fail if the Apple Pay button is used on an unregistered domain.',
 						'woocommerce-paypal-payments'
 					),
-					'classes'      => array('ppcp-field-indent'),
+					'classes'      => array( 'ppcp-field-indent' ),
 					'class'        => array(),
 					'screens'      => array( State::STATE_ONBOARDED ),
 					'gateway'      => 'paypal',
 					'requirements' => array(),
 				),
-				'applepay_button_domain_validation'    => array(
+				'applepay_button_domain_validation'   => array(
 					'title'        => __( 'Domain Validation', 'woocommerce-paypal-payments' ),
 					'type'         => 'ppcp-text',
 					'text'         => $domain_validation_text
@@ -200,13 +200,13 @@ return array(
 						'Apple requires the website domain to be registered and validated. PayPal Payments automatically presents your domain association file for Apple to validate the manually registered domain.',
 						'woocommerce-paypal-payments'
 					),
-					'classes'      => array('ppcp-field-indent'),
+					'classes'      => array( 'ppcp-field-indent' ),
 					'class'        => array(),
 					'screens'      => array( State::STATE_ONBOARDED ),
 					'gateway'      => 'paypal',
 					'requirements' => array(),
 				),
-				'applepay_button_device_eligibility'   => array(
+				'applepay_button_device_eligibility'  => array(
 					'title'        => __( 'Device Eligibility', 'woocommerce-paypal-payments' ),
 					'type'         => 'ppcp-text',
 					'text'         => $device_eligibility_text
@@ -218,13 +218,13 @@ return array(
 						'Apple Pay demands certain Apple devices for secure payment execution. This helps determine if your current device is compliant.',
 						'woocommerce-paypal-payments'
 					),
-					'classes'      => array('ppcp-field-indent'),
+					'classes'      => array( 'ppcp-field-indent' ),
 					'class'        => array(),
 					'screens'      => array( State::STATE_ONBOARDED ),
 					'gateway'      => 'paypal',
 					'requirements' => array(),
 				),
-				'applepay_button_type'                 => array(
+				'applepay_button_type'                => array(
 					'title'        => __( 'Button Label', 'woocommerce-paypal-payments' ),
 					'type'         => 'select',
 					'desc_tip'     => true,
@@ -232,7 +232,7 @@ return array(
 						'This controls the label of the Apple Pay button.',
 						'woocommerce-paypal-payments'
 					),
-					'classes'      => array('ppcp-field-indent'),
+					'classes'      => array( 'ppcp-field-indent' ),
 					'class'        => array(),
 					'input_class'  => array( 'wc-enhanced-select' ),
 					'default'      => 'pay',
@@ -241,7 +241,7 @@ return array(
 					'gateway'      => 'paypal',
 					'requirements' => array(),
 				),
-				'applepay_button_color'                => array(
+				'applepay_button_color'               => array(
 					'title'        => __( 'Button Color', 'woocommerce-paypal-payments' ),
 					'type'         => 'select',
 					'desc_tip'     => true,
@@ -251,7 +251,7 @@ return array(
 					),
 					'label'        => '',
 					'input_class'  => array( 'wc-enhanced-select' ),
-					'classes'      => array('ppcp-field-indent'),
+					'classes'      => array( 'ppcp-field-indent' ),
 					'class'        => array(),
 					'default'      => 'black',
 					'options'      => PropertiesDictionary::button_colors(),
@@ -259,7 +259,7 @@ return array(
 					'gateway'      => 'paypal',
 					'requirements' => array(),
 				),
-				'applepay_button_language'             => array(
+				'applepay_button_language'            => array(
 					'title'        => __( 'Button Language', 'woocommerce-paypal-payments' ),
 					'type'         => 'select',
 					'desc_tip'     => true,
@@ -267,7 +267,7 @@ return array(
 						'The language and region used for the displayed Apple Pay button. The default value is the current language and region setting in a browser.',
 						'woocommerce-paypal-payments'
 					),
-					'classes'      => array('ppcp-field-indent'),
+					'classes'      => array( 'ppcp-field-indent' ),
 					'class'        => array(),
 					'input_class'  => array( 'wc-enhanced-select' ),
 					'default'      => 'en',
@@ -276,10 +276,10 @@ return array(
 					'gateway'      => 'paypal',
 					'requirements' => array(),
 				),
-				'applepay_checkout_data_mode'          => array(
+				'applepay_checkout_data_mode'         => array(
 					'title'        => __( 'Send checkout billing and shipping data to Apple Pay', 'woocommerce-paypal-payments' ),
 					'type'         => 'select',
-					'classes'      => array('ppcp-field-indent'),
+					'classes'      => array( 'ppcp-field-indent' ),
 					'class'        => array(),
 					'input_class'  => array( 'wc-enhanced-select' ),
 					'desc_tip'     => true,

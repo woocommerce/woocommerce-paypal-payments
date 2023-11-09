@@ -198,8 +198,8 @@ class PropertiesDictionary {
 	 */
 	public static function billing_data_modes(): array {
 		return array(
-			PropertiesDictionary::BILLING_DATA_MODE_USE_WC       => __( 'Use WC checkout form data (do not show shipping address fields)', 'woocommerce-paypal-payments' ),
-			PropertiesDictionary::BILLING_DATA_MODE_USE_APPLEPAY => __( 'Do not use WC checkout form data (request billing and shipping addresses on Apple Pay)', 'woocommerce-paypal-payments' ),
+			self::BILLING_DATA_MODE_USE_WC       => __( 'Use WC checkout form data (do not show shipping address fields)', 'woocommerce-paypal-payments' ),
+			self::BILLING_DATA_MODE_USE_APPLEPAY => __( 'Do not use WC checkout form data (request billing and shipping addresses on Apple Pay)', 'woocommerce-paypal-payments' ),
 		);
 	}
 }
