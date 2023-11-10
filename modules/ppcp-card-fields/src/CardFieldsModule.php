@@ -28,20 +28,6 @@ class CardFieldsModule implements ModuleInterface {
 			return;
 		}
 
-		add_action(
-			'wp_enqueue_scripts',
-			function () use ( $c ) {
-				$module_url = $c->get( 'card-fields.module.url' );
-				wp_enqueue_script(
-					'ppcp-card-fields-boot',
-					untrailingslashit( $module_url ) . '/assets/js/boot.js',
-					array( 'jquery' ),
-					$c->get( 'ppcp.asset-version' ),
-					true
-				);
-			}
-		);
-
 		/**
 		 * Param types removed to avoid third-party issues.
 		 *

@@ -41,15 +41,4 @@ return array(
 			)
 		);
 	},
-	'card-fields.module.url'                    => static function ( ContainerInterface $container ): string {
-		/**
-		 * The path cannot be false.
-		 *
-		 * @psalm-suppress PossiblyFalseArgument
-		 */
-		return plugins_url(
-			'/modules/ppcp-card-fields/',
-			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
-		);
-	},
 );

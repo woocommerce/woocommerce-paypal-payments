@@ -1,6 +1,5 @@
 import dccInputFactory from "../Helper/DccInputFactory";
 import {show} from "../Helper/Hiding";
-import Product from "../Entity/Product";
 
 class CreditCardRenderer {
 
@@ -25,141 +24,208 @@ class CreditCardRenderer {
         ) {
             return;
         }
-        if (
-            typeof paypal.HostedFields === 'undefined'
-            || ! paypal.HostedFields.isEligible()
-        ) {
-            const wrapperElement = document.querySelector(wrapper);
-            wrapperElement.parentNode.removeChild(wrapperElement);
+
+        if (typeof paypal.HostedFields !== 'undefined' && paypal.HostedFields.isEligible()) {
+            const buttonSelector = wrapper + ' button';
+
+            if (this.currentHostedFieldsInstance) {
+                this.currentHostedFieldsInstance.teardown()
+                    .catch(err => console.error(`Hosted fields teardown error: ${err}`));
+                this.currentHostedFieldsInstance = null;
+            }
+
+            const gateWayBox = document.querySelector('.payment_box.payment_method_ppcp-credit-card-gateway');
+            if(! gateWayBox) {
+                return
+            }
+            const oldDisplayStyle = gateWayBox.style.display;
+            gateWayBox.style.display = 'block';
+
+            const hideDccGateway = document.querySelector('#ppcp-hide-dcc');
+            if (hideDccGateway) {
+                hideDccGateway.parentNode.removeChild(hideDccGateway);
+            }
+
+            const cardNumberField = document.querySelector('#ppcp-credit-card-gateway-card-number');
+
+            const stylesRaw = window.getComputedStyle(cardNumberField);
+            let styles = {};
+            Object.values(stylesRaw).forEach( (prop) => {
+                if (! stylesRaw[prop]) {
+                    return;
+                }
+                styles[prop] = '' + stylesRaw[prop];
+            });
+
+            const cardNumber = dccInputFactory(cardNumberField);
+            cardNumberField.parentNode.replaceChild(cardNumber, cardNumberField);
+
+            const cardExpiryField = document.querySelector('#ppcp-credit-card-gateway-card-expiry');
+            const cardExpiry = dccInputFactory(cardExpiryField);
+            cardExpiryField.parentNode.replaceChild(cardExpiry, cardExpiryField);
+
+            const cardCodeField = document.querySelector('#ppcp-credit-card-gateway-card-cvc');
+            const cardCode = dccInputFactory(cardCodeField);
+            cardCodeField.parentNode.replaceChild(cardCode, cardCodeField);
+
+            gateWayBox.style.display = oldDisplayStyle;
+
+            const formWrapper = '.payment_box payment_method_ppcp-credit-card-gateway';
+            if (
+                this.defaultConfig.enforce_vault
+                && document.querySelector(formWrapper + ' .ppcp-credit-card-vault')
+            ) {
+                document.querySelector(formWrapper + ' .ppcp-credit-card-vault').checked = true;
+                document.querySelector(formWrapper + ' .ppcp-credit-card-vault').setAttribute('disabled', true);
+            }
+            paypal.HostedFields.render({
+                createOrder: contextConfig.createOrder,
+                styles: {
+                    'input': styles
+                },
+                fields: {
+                    number: {
+                        selector: '#ppcp-credit-card-gateway-card-number',
+                        placeholder: this.defaultConfig.hosted_fields.labels.credit_card_number,
+                    },
+                    cvv: {
+                        selector: '#ppcp-credit-card-gateway-card-cvc',
+                        placeholder: this.defaultConfig.hosted_fields.labels.cvv,
+                    },
+                    expirationDate: {
+                        selector: '#ppcp-credit-card-gateway-card-expiry',
+                        placeholder: this.defaultConfig.hosted_fields.labels.mm_yy,
+                    }
+                }
+            }).then(hostedFields => {
+                document.dispatchEvent(new CustomEvent("hosted_fields_loaded"));
+                this.currentHostedFieldsInstance = hostedFields;
+
+                hostedFields.on('inputSubmitRequest', () => {
+                    this._submit(contextConfig);
+                });
+                hostedFields.on('cardTypeChange', (event) => {
+                    if ( ! event.cards.length ) {
+                        this.cardValid = false;
+                        return;
+                    }
+                    const validCards = this.defaultConfig.hosted_fields.valid_cards;
+                    this.cardValid = validCards.indexOf(event.cards[0].type) !== -1;
+
+                    const className = this._cardNumberFiledCLassNameByCardType(event.cards[0].type);
+                    this._recreateElementClassAttribute(cardNumber, cardNumberField.className);
+                    if (event.cards.length === 1) {
+                        cardNumber.classList.add(className);
+                    }
+                })
+                hostedFields.on('validityChange', (event) => {
+                    this.formValid = Object.keys(event.fields).every(function (key) {
+                        return event.fields[key].isValid;
+                    });
+                });
+                hostedFields.on('empty', (event) => {
+                    this._recreateElementClassAttribute(cardNumber, cardNumberField.className);
+                    this.emptyFields.add(event.emittedBy);
+                });
+                hostedFields.on('notEmpty', (event) => {
+                    this.emptyFields.delete(event.emittedBy);
+                });
+
+                show(buttonSelector);
+
+                if (document.querySelector(wrapper).getAttribute('data-ppcp-subscribed') !== true) {
+                    document.querySelector(buttonSelector).addEventListener(
+                        'click',
+                        event => {
+                            event.preventDefault();
+                            this._submit(contextConfig);
+                        }
+                    );
+
+                    document.querySelector(wrapper).setAttribute('data-ppcp-subscribed', true);
+                }
+            });
+
+            document.querySelector('#payment_method_ppcp-credit-card-gateway').addEventListener(
+                'click',
+                () => {
+                    document.querySelector('label[for=ppcp-credit-card-gateway-card-number]').click();
+                }
+            )
+
             return;
         }
 
-        const buttonSelector = wrapper + ' button';
+        if (typeof paypal.CardFields !== 'undefined') {
+            const buttonSelector = wrapper + ' button';
 
-        if (this.currentHostedFieldsInstance) {
-            this.currentHostedFieldsInstance.teardown()
-                .catch(err => console.error(`Hosted fields teardown error: ${err}`));
-            this.currentHostedFieldsInstance = null;
-        }
-
-        const gateWayBox = document.querySelector('.payment_box.payment_method_ppcp-credit-card-gateway');
-        if(! gateWayBox) {
-            return
-        }
-        const oldDisplayStyle = gateWayBox.style.display;
-        gateWayBox.style.display = 'block';
-
-        const hideDccGateway = document.querySelector('#ppcp-hide-dcc');
-        if (hideDccGateway) {
-            hideDccGateway.parentNode.removeChild(hideDccGateway);
-        }
-
-        const cardNumberField = document.querySelector('#ppcp-credit-card-gateway-card-number');
-
-        const stylesRaw = window.getComputedStyle(cardNumberField);
-        let styles = {};
-        Object.values(stylesRaw).forEach( (prop) => {
-            if (! stylesRaw[prop]) {
-                return;
+            const gateWayBox = document.querySelector('.payment_box.payment_method_ppcp-credit-card-gateway');
+            if(! gateWayBox) {
+                return
             }
-            styles[prop] = '' + stylesRaw[prop];
-        });
+            const oldDisplayStyle = gateWayBox.style.display;
+            gateWayBox.style.display = 'block';
 
-        const cardNumber = dccInputFactory(cardNumberField);
-        cardNumberField.parentNode.replaceChild(cardNumber, cardNumberField);
-
-        const cardExpiryField = document.querySelector('#ppcp-credit-card-gateway-card-expiry');
-        const cardExpiry = dccInputFactory(cardExpiryField);
-        cardExpiryField.parentNode.replaceChild(cardExpiry, cardExpiryField);
-
-        const cardCodeField = document.querySelector('#ppcp-credit-card-gateway-card-cvc');
-        const cardCode = dccInputFactory(cardCodeField);
-        cardCodeField.parentNode.replaceChild(cardCode, cardCodeField);
-
-        gateWayBox.style.display = oldDisplayStyle;
-
-        const formWrapper = '.payment_box payment_method_ppcp-credit-card-gateway';
-        if (
-            this.defaultConfig.enforce_vault
-            && document.querySelector(formWrapper + ' .ppcp-credit-card-vault')
-        ) {
-            document.querySelector(formWrapper + ' .ppcp-credit-card-vault').checked = true;
-            document.querySelector(formWrapper + ' .ppcp-credit-card-vault').setAttribute('disabled', true);
-        }
-        paypal.HostedFields.render({
-            createOrder: contextConfig.createOrder,
-            styles: {
-                'input': styles
-            },
-            fields: {
-                number: {
-                    selector: '#ppcp-credit-card-gateway-card-number',
-                    placeholder: this.defaultConfig.hosted_fields.labels.credit_card_number,
-                },
-                cvv: {
-                    selector: '#ppcp-credit-card-gateway-card-cvc',
-                    placeholder: this.defaultConfig.hosted_fields.labels.cvv,
-                },
-                expirationDate: {
-                    selector: '#ppcp-credit-card-gateway-card-expiry',
-                    placeholder: this.defaultConfig.hosted_fields.labels.mm_yy,
-                }
+            const hideDccGateway = document.querySelector('#ppcp-hide-dcc');
+            if (hideDccGateway) {
+                hideDccGateway.parentNode.removeChild(hideDccGateway);
             }
-        }).then(hostedFields => {
-            document.dispatchEvent(new CustomEvent("hosted_fields_loaded"));
-            this.currentHostedFieldsInstance = hostedFields;
 
-            hostedFields.on('inputSubmitRequest', () => {
-                this._submit(contextConfig);
-            });
-            hostedFields.on('cardTypeChange', (event) => {
-                if ( ! event.cards.length ) {
-                    this.cardValid = false;
+            const cardNumberField = document.querySelector('#ppcp-credit-card-gateway-card-number');
+            const stylesRaw = window.getComputedStyle(cardNumberField);
+            let styles = {};
+            Object.values(stylesRaw).forEach( (prop) => {
+                if (! stylesRaw[prop]) {
                     return;
                 }
-                const validCards = this.defaultConfig.hosted_fields.valid_cards;
-                this.cardValid = validCards.indexOf(event.cards[0].type) !== -1;
+                styles[prop] = '' + stylesRaw[prop];
+            });
+            const cardNumber = dccInputFactory(cardNumberField);
+            cardNumberField.parentNode.replaceChild(cardNumber, cardNumberField);
 
-                const className = this._cardNumberFiledCLassNameByCardType(event.cards[0].type);
-                this._recreateElementClassAttribute(cardNumber, cardNumberField.className);
-                if (event.cards.length === 1) {
-                    cardNumber.classList.add(className);
+            const cardExpiryField = document.querySelector('#ppcp-credit-card-gateway-card-expiry');
+            const cardExpiry = dccInputFactory(cardExpiryField);
+            cardExpiryField.parentNode.replaceChild(cardExpiry, cardExpiryField);
+
+            const cardCodeField = document.querySelector('#ppcp-credit-card-gateway-card-cvc');
+            const cardCode = dccInputFactory(cardCodeField);
+            cardCodeField.parentNode.replaceChild(cardCode, cardCodeField);
+
+            const cardField = paypal.CardFields({
+                createOrder: contextConfig.createOrder,
+                onApprove: function (data) {
+                    return contextConfig.onApprove(data);
+                },
+                onError: function (error) {
+                    console.error(error)
                 }
-            })
-            hostedFields.on('validityChange', (event) => {
-                this.formValid = Object.keys(event.fields).every(function (key) {
-                    return event.fields[key].isValid;
-                });
             });
-            hostedFields.on('empty', (event) => {
-                this._recreateElementClassAttribute(cardNumber, cardNumberField.className);
-                this.emptyFields.add(event.emittedBy);
-            });
-            hostedFields.on('notEmpty', (event) => {
-                this.emptyFields.delete(event.emittedBy);
-            });
+
+            if (cardField.isEligible()) {
+                const numberField = cardField.NumberField();
+                numberField.render('#ppcp-credit-card-gateway-card-number');
+
+                const cvvField = cardField.CVVField();
+                cvvField.render('#ppcp-credit-card-gateway-card-cvc');
+
+                const expiryField = cardField.ExpiryField();
+                expiryField.render('#ppcp-credit-card-gateway-card-expiry');
+            }
+
+            gateWayBox.style.display = oldDisplayStyle;
 
             show(buttonSelector);
 
-            if (document.querySelector(wrapper).getAttribute('data-ppcp-subscribed') !== true) {
-                document.querySelector(buttonSelector).addEventListener(
-                    'click',
-                    event => {
-                        event.preventDefault();
-                        this._submit(contextConfig);
-                    }
-                );
+            document.querySelector(buttonSelector).addEventListener("click", (event) => {
+                event.preventDefault();
+                cardField.submit();
+            });
 
-                document.querySelector(wrapper).setAttribute('data-ppcp-subscribed', true);
-            }
-        });
+            return;
+        }
 
-        document.querySelector('#payment_method_ppcp-credit-card-gateway').addEventListener(
-            'click',
-            () => {
-                document.querySelector('label[for=ppcp-credit-card-gateway-card-number]').click();
-            }
-        )
+        const wrapperElement = document.querySelector(wrapper);
+        wrapperElement.parentNode.removeChild(wrapperElement);
     }
 
     disableFields() {
