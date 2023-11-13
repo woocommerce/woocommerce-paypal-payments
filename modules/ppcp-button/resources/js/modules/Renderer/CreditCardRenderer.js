@@ -163,33 +163,14 @@ class CreditCardRenderer {
             if(! gateWayBox) {
                 return
             }
-            const oldDisplayStyle = gateWayBox.style.display;
-            gateWayBox.style.display = 'block';
 
-            const hideDccGateway = document.querySelector('#ppcp-hide-dcc');
-            if (hideDccGateway) {
-                hideDccGateway.parentNode.removeChild(hideDccGateway);
-            }
+           const oldDisplayStyle = gateWayBox.style.display;
+           gateWayBox.style.display = 'block';
 
-            const cardNumberField = document.querySelector('#ppcp-credit-card-gateway-card-number');
-            const stylesRaw = window.getComputedStyle(cardNumberField);
-            let styles = {};
-            Object.values(stylesRaw).forEach( (prop) => {
-                if (! stylesRaw[prop]) {
-                    return;
-                }
-                styles[prop] = '' + stylesRaw[prop];
-            });
-            const cardNumber = dccInputFactory(cardNumberField);
-            cardNumberField.parentNode.replaceChild(cardNumber, cardNumberField);
-
-            const cardExpiryField = document.querySelector('#ppcp-credit-card-gateway-card-expiry');
-            const cardExpiry = dccInputFactory(cardExpiryField);
-            cardExpiryField.parentNode.replaceChild(cardExpiry, cardExpiryField);
-
-            const cardCodeField = document.querySelector('#ppcp-credit-card-gateway-card-cvc');
-            const cardCode = dccInputFactory(cardCodeField);
-            cardCodeField.parentNode.replaceChild(cardCode, cardCodeField);
+           const hideDccGateway = document.querySelector('#ppcp-hide-dcc');
+           if (hideDccGateway) {
+               hideDccGateway.parentNode.removeChild(hideDccGateway);
+           }
 
             const cardField = paypal.CardFields({
                 createOrder: contextConfig.createOrder,
@@ -202,14 +183,20 @@ class CreditCardRenderer {
             });
 
             if (cardField.isEligible()) {
+                const numberFieldContainer = document.getElementById('ppcp-credit-card-gateway-card-number').parentNode;
                 const numberField = cardField.NumberField();
-                numberField.render('#ppcp-credit-card-gateway-card-number');
+                numberField.render(numberFieldContainer);
+                document.getElementById("ppcp-credit-card-gateway-card-number").remove();
 
-                const cvvField = cardField.CVVField();
-                cvvField.render('#ppcp-credit-card-gateway-card-cvc');
-
+                const expiryFieldContainer = document.getElementById('ppcp-credit-card-gateway-card-expiry').parentNode;
                 const expiryField = cardField.ExpiryField();
-                expiryField.render('#ppcp-credit-card-gateway-card-expiry');
+                expiryField.render(expiryFieldContainer);
+                document.getElementById("ppcp-credit-card-gateway-card-expiry").remove();
+
+                const cvvFieldContainer = document.getElementById('ppcp-credit-card-gateway-card-cvc').parentNode;
+                const cvvField = cardField.CVVField();
+                cvvField.render(cvvFieldContainer);
+                document.getElementById("ppcp-credit-card-gateway-card-cvc").remove();
             }
 
             gateWayBox.style.display = oldDisplayStyle;
