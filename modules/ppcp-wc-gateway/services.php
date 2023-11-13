@@ -182,6 +182,11 @@ return array(
 		);
 	},
 
+	'wcgateway.is-ppcp-settings-standard-payments-page'    => static function ( ContainerInterface $container ): bool {
+		return $container->get( 'wcgateway.is-ppcp-settings-page' )
+			&& $container->get( 'wcgateway.current-ppcp-settings-page-id' ) === PayPalGateway::ID;
+	},
+
 	'wcgateway.current-ppcp-settings-page-id'              => static function ( ContainerInterface $container ): string {
 		if ( ! $container->get( 'wcgateway.is-ppcp-settings-page' ) ) {
 			return '';

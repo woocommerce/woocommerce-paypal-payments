@@ -164,6 +164,7 @@ class ApplepayModule implements ModuleInterface {
 				assert( $smart_button instanceof SmartButtonInterface );
 				if ( $smart_button->should_load_ppcp_script() ) {
 					$button->enqueue();
+					return;
 				}
 
 				if ( has_block( 'woocommerce/checkout' ) || has_block( 'woocommerce/cart' ) ) {
@@ -196,7 +197,7 @@ class ApplepayModule implements ModuleInterface {
 		add_action(
 			'admin_enqueue_scripts',
 			static function () use ( $c, $button ) {
-				if ( ! is_admin() ) {
+				if ( ! is_admin() || ! $c->get( 'wcgateway.is-ppcp-settings-standard-payments-page' ) ) {
 					return;
 				}
 
