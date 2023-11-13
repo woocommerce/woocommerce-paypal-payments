@@ -271,4 +271,17 @@ class SubscriptionHelper {
 
 		return true;
 	}
+
+	/**
+	 * Returns the locations on the page which have subscription products.
+	 *
+	 * @return array
+	 */
+	public function locations_with_subscription_product(): array {
+		return array(
+			'product'  => is_product() && $this->current_product_is_subscription(),
+			'payorder' => is_wc_endpoint_url( 'order-pay' ) && $this->order_pay_contains_subscription(),
+			'cart'     => $this->cart_contains_subscription(),
+		);
+	}
 }

@@ -10,6 +10,13 @@ class BaseHandler {
         this.externalHandler = externalHandler;
     }
 
+    validateContext() {
+        if ( this.ppcpConfig?.locations_with_subscription_product?.cart ) {
+            return false;
+        }
+        return true;
+    }
+
     shippingAllowed() {
         return true;
     }

@@ -42,6 +42,10 @@ class ApplepayButton {
             return;
         }
 
+        if (!this.contextHandler.validateContext()) {
+            return;
+        }
+
         this.log('Init', this.context);
         this.initEventHandlers();
         this.isInitialized = true;
@@ -263,7 +267,7 @@ class ApplepayButton {
         switch (this.context) {
             case 'product':
                 // Refresh product data that makes the price change.
-                this.productQuantity = document.querySelector('input.qty').value;
+                this.productQuantity = document.querySelector('input.qty')?.value;
                 this.products = this.contextHandler.products();
                 this.log('Products updated', this.products);
                 break;
