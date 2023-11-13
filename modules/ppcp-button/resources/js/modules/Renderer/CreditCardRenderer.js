@@ -35,7 +35,7 @@ class CreditCardRenderer {
             }
 
             const gateWayBox = document.querySelector('.payment_box.payment_method_ppcp-credit-card-gateway');
-            if(! gateWayBox) {
+            if (!gateWayBox) {
                 return
             }
             const oldDisplayStyle = gateWayBox.style.display;
@@ -50,8 +50,8 @@ class CreditCardRenderer {
 
             const stylesRaw = window.getComputedStyle(cardNumberField);
             let styles = {};
-            Object.values(stylesRaw).forEach( (prop) => {
-                if (! stylesRaw[prop]) {
+            Object.values(stylesRaw).forEach((prop) => {
+                if (!stylesRaw[prop]) {
                     return;
                 }
                 styles[prop] = '' + stylesRaw[prop];
@@ -105,7 +105,7 @@ class CreditCardRenderer {
                     this._submit(contextConfig);
                 });
                 hostedFields.on('cardTypeChange', (event) => {
-                    if ( ! event.cards.length ) {
+                    if (!event.cards.length) {
                         this.cardValid = false;
                         return;
                     }
@@ -160,17 +160,17 @@ class CreditCardRenderer {
             const buttonSelector = wrapper + ' button';
 
             const gateWayBox = document.querySelector('.payment_box.payment_method_ppcp-credit-card-gateway');
-            if(! gateWayBox) {
+            if (!gateWayBox) {
                 return
             }
 
-           const oldDisplayStyle = gateWayBox.style.display;
-           gateWayBox.style.display = 'block';
+            const oldDisplayStyle = gateWayBox.style.display;
+            gateWayBox.style.display = 'block';
 
-           const hideDccGateway = document.querySelector('#ppcp-hide-dcc');
-           if (hideDccGateway) {
-               hideDccGateway.parentNode.removeChild(hideDccGateway);
-           }
+            const hideDccGateway = document.querySelector('#ppcp-hide-dcc');
+            if (hideDccGateway) {
+                hideDccGateway.parentNode.removeChild(hideDccGateway);
+            }
 
             const cardField = paypal.CardFields({
                 createOrder: contextConfig.createOrder,
@@ -179,6 +179,7 @@ class CreditCardRenderer {
                 },
                 onError: function (error) {
                     console.error(error)
+                    this.spinner.unblock();
                 }
             });
 
@@ -205,7 +206,15 @@ class CreditCardRenderer {
 
             document.querySelector(buttonSelector).addEventListener("click", (event) => {
                 event.preventDefault();
-                cardField.submit();
+                this.spinner.block();
+                this.errorHandler.clear();
+
+                cardField.submit()
+                    .catch((error) => {
+                        this.spinner.unblock();
+                        console.error(error)
+                        this.errorHandler.genericError();
+                    })
             });
 
             return;
@@ -325,4 +334,5 @@ class CreditCardRenderer {
         element.setAttribute('class', newClassName);
     }
 }
+
 export default CreditCardRenderer;
