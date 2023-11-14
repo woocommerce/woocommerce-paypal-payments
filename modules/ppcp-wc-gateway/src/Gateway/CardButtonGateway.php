@@ -21,6 +21,7 @@ use WooCommerce\PayPalCommerce\Subscription\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\GatewayGenericException;
+use WooCommerce\PayPalCommerce\WcGateway\Exception\PayPalOrderMissingException;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
@@ -127,20 +128,28 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 	private $logger;
 
 	/**
+	 * The function return the PayPal checkout URL for the given order ID.
+	 *
+	 * @var callable(string):string
+	 */
+	private $paypal_checkout_url_factory;
+
+	/**
 	 * CardButtonGateway constructor.
 	 *
-	 * @param SettingsRenderer       $settings_renderer The Settings Renderer.
-	 * @param OrderProcessor         $order_processor The Order Processor.
-	 * @param ContainerInterface     $config The settings.
-	 * @param SessionHandler         $session_handler The Session Handler.
-	 * @param RefundProcessor        $refund_processor The Refund Processor.
-	 * @param State                  $state The state.
-	 * @param TransactionUrlProvider $transaction_url_provider Service providing transaction view URL based on order.
-	 * @param SubscriptionHelper     $subscription_helper The subscription helper.
-	 * @param bool                   $default_enabled Whether the gateway should be enabled by default.
-	 * @param Environment            $environment The environment.
-	 * @param PaymentTokenRepository $payment_token_repository The payment token repository.
-	 * @param LoggerInterface        $logger  The logger.
+	 * @param SettingsRenderer        $settings_renderer The Settings Renderer.
+	 * @param OrderProcessor          $order_processor The Order Processor.
+	 * @param ContainerInterface      $config The settings.
+	 * @param SessionHandler          $session_handler The Session Handler.
+	 * @param RefundProcessor         $refund_processor The Refund Processor.
+	 * @param State                   $state The state.
+	 * @param TransactionUrlProvider  $transaction_url_provider Service providing transaction view URL based on order.
+	 * @param SubscriptionHelper      $subscription_helper The subscription helper.
+	 * @param bool                    $default_enabled Whether the gateway should be enabled by default.
+	 * @param Environment             $environment The environment.
+	 * @param PaymentTokenRepository  $payment_token_repository The payment token repository.
+	 * @param LoggerInterface         $logger  The logger.
+	 * @param callable(string):string $paypal_checkout_url_factory The function return the PayPal checkout URL for the given order ID.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
@@ -154,22 +163,24 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 		bool $default_enabled,
 		Environment $environment,
 		PaymentTokenRepository $payment_token_repository,
-		LoggerInterface $logger
+		LoggerInterface $logger,
+		callable $paypal_checkout_url_factory
 	) {
-		$this->id                       = self::ID;
-		$this->settings_renderer        = $settings_renderer;
-		$this->order_processor          = $order_processor;
-		$this->config                   = $config;
-		$this->session_handler          = $session_handler;
-		$this->refund_processor         = $refund_processor;
-		$this->state                    = $state;
-		$this->transaction_url_provider = $transaction_url_provider;
-		$this->subscription_helper      = $subscription_helper;
-		$this->default_enabled          = $default_enabled;
-		$this->environment              = $environment;
-		$this->onboarded                = $state->current_state() === State::STATE_ONBOARDED;
-		$this->payment_token_repository = $payment_token_repository;
-		$this->logger                   = $logger;
+		$this->id                          = self::ID;
+		$this->settings_renderer           = $settings_renderer;
+		$this->order_processor             = $order_processor;
+		$this->config                      = $config;
+		$this->session_handler             = $session_handler;
+		$this->refund_processor            = $refund_processor;
+		$this->state                       = $state;
+		$this->transaction_url_provider    = $transaction_url_provider;
+		$this->subscription_helper         = $subscription_helper;
+		$this->default_enabled             = $default_enabled;
+		$this->environment                 = $environment;
+		$this->onboarded                   = $state->current_state() === State::STATE_ONBOARDED;
+		$this->payment_token_repository    = $payment_token_repository;
+		$this->logger                      = $logger;
+		$this->paypal_checkout_url_factory = $paypal_checkout_url_factory;
 
 		$this->supports = array(
 			'refunds',
@@ -294,18 +305,20 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 		//phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		try {
-			if ( ! $this->order_processor->process( $wc_order ) ) {
-				return $this->handle_payment_failure(
-					$wc_order,
-					new Exception(
-						$this->order_processor->last_error()
-					)
+			try {
+				$this->order_processor->process( $wc_order );
+
+				do_action( 'woocommerce_paypal_payments_before_handle_payment_success', $wc_order );
+
+				return $this->handle_payment_success( $wc_order );
+			} catch ( PayPalOrderMissingException $exc ) {
+				$order = $this->order_processor->create_order( $wc_order );
+
+				return array(
+					'result'   => 'success',
+					'redirect' => ( $this->paypal_checkout_url_factory )( $order->id() ),
 				);
 			}
-
-			do_action( 'woocommerce_paypal_payments_before_handle_payment_success', $wc_order );
-
-			return $this->handle_payment_success( $wc_order );
 		} catch ( PayPalApiException $error ) {
 			return $this->handle_payment_failure(
 				$wc_order,
@@ -315,7 +328,7 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 					$error
 				)
 			);
-		} catch ( RuntimeException $error ) {
+		} catch ( Exception $error ) {
 			return $this->handle_payment_failure( $wc_order, $error );
 		}
 	}

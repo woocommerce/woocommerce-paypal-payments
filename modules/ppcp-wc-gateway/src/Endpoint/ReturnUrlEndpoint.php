@@ -85,14 +85,14 @@ class ReturnUrlEndpoint {
 		// phpcs:enable WordPress.Security.NonceVerification.Recommended
 		$order = $this->order_endpoint->order( $token );
 
+		$this->session_handler->replace_order( $order );
+
 		$wc_order_id = (int) $order->purchase_units()[0]->custom_id();
 		if ( ! $wc_order_id ) {
 			// We cannot finish processing here without WC order, but at least go into the continuation mode.
 			if ( $order->status()->is( OrderStatus::APPROVED )
 				|| $order->status()->is( OrderStatus::COMPLETED )
 			) {
-				$this->session_handler->replace_order( $order );
-
 				wp_safe_redirect( wc_get_checkout_url() );
 				exit();
 			}

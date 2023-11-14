@@ -4,6 +4,10 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Processor;
 
 
+use Exception;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\Dictionary;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
@@ -143,7 +147,10 @@ class OrderProcessorTest extends TestCase
             $logger,
             $this->environment,
 			$subscription_helper,
-			$order_helper
+			$order_helper,
+			Mockery::mock(PurchaseUnitFactory::class),
+			Mockery::mock(PayerFactory::class),
+			Mockery::mock(ShippingPreferenceFactory::class)
         );
 
         $wcOrder
@@ -173,7 +180,9 @@ class OrderProcessorTest extends TestCase
 
 		$order_helper->shouldReceive('contains_physical_goods')->andReturn(true);
 
-        $this->assertTrue($testee->process($wcOrder));
+        $testee->process($wcOrder);
+
+		$this->expectNotToPerformAssertions();
     }
 
     public function testCapture() {
@@ -268,7 +277,10 @@ class OrderProcessorTest extends TestCase
             $logger,
             $this->environment,
 			$subscription_helper,
-			$order_helper
+			$order_helper,
+			Mockery::mock(PurchaseUnitFactory::class),
+			Mockery::mock(PayerFactory::class),
+			Mockery::mock(ShippingPreferenceFactory::class)
         );
 
         $wcOrder
@@ -293,7 +305,9 @@ class OrderProcessorTest extends TestCase
 
 		$order_helper->shouldReceive('contains_physical_goods')->andReturn(true);
 
-        $this->assertTrue($testee->process($wcOrder));
+        $testee->process($wcOrder);
+
+		$this->expectNotToPerformAssertions();
     }
 
     public function testError() {
@@ -375,7 +389,10 @@ class OrderProcessorTest extends TestCase
             $logger,
             $this->environment,
 			$subscription_helper,
-			$order_helper
+			$order_helper,
+			Mockery::mock(PurchaseUnitFactory::class),
+			Mockery::mock(PayerFactory::class),
+			Mockery::mock(ShippingPreferenceFactory::class)
         );
 
         $wcOrder
@@ -394,8 +411,8 @@ class OrderProcessorTest extends TestCase
 
 		$order_helper->shouldReceive('contains_physical_goods')->andReturn(true);
 
-        $this->assertFalse($testee->process($wcOrder));
-        $this->assertNotEmpty($testee->last_error());
+		$this->expectException(Exception::class);
+        $testee->process($wcOrder);
     }
 
 

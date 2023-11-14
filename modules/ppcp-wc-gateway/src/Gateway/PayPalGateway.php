@@ -24,6 +24,7 @@ use WooCommerce\PayPalCommerce\Subscription\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\GatewayGenericException;
+use WooCommerce\PayPalCommerce\WcGateway\Exception\PayPalOrderMissingException;
 use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
@@ -556,19 +557,20 @@ class PayPalGateway extends \WC_Payment_Gateway {
 
 				return $this->handle_payment_success( $wc_order );
 			}
+			try {
+				$this->order_processor->process( $wc_order );
 
-			if ( ! $this->order_processor->process( $wc_order ) ) {
-				return $this->handle_payment_failure(
-					$wc_order,
-					new Exception(
-						$this->order_processor->last_error()
-					)
+				do_action( 'woocommerce_paypal_payments_before_handle_payment_success', $wc_order );
+
+				return $this->handle_payment_success( $wc_order );
+			} catch ( PayPalOrderMissingException $exc ) {
+				$order = $this->order_processor->create_order( $wc_order );
+
+				return array(
+					'result'   => 'success',
+					'redirect' => ( $this->paypal_checkout_url_factory )( $order->id() ),
 				);
 			}
-
-			do_action( 'woocommerce_paypal_payments_before_handle_payment_success', $wc_order );
-
-			return $this->handle_payment_success( $wc_order );
 		} catch ( PayPalApiException $error ) {
 			$retry_keys_messages = array(
 				'INSTRUMENT_DECLINED'   => __( 'Instrument declined.', 'woocommerce-paypal-payments' ),
@@ -617,7 +619,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 					$error
 				)
 			);
-		} catch ( RuntimeException $error ) {
+		} catch ( Exception $error ) {
 			return $this->handle_payment_failure( $wc_order, $error );
 		}
 	}

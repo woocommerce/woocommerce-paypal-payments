@@ -142,7 +142,8 @@ return array(
 			$container->get( 'wcgateway.settings.allow_card_button_gateway.default' ),
 			$container->get( 'onboarding.environment' ),
 			$container->get( 'vaulting.repository.payment-token' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
+			$container->get( 'woocommerce.logger.woocommerce' ),
+			$container->get( 'api.factory.paypal-checkout-url' )
 		);
 	},
 	'wcgateway.disabler'                                   => static function ( ContainerInterface $container ): DisableGateways {
@@ -346,7 +347,10 @@ return array(
 			$logger,
 			$environment,
 			$subscription_helper,
-			$order_helper
+			$order_helper,
+			$container->get( 'api.factory.purchase-unit' ),
+			$container->get( 'api.factory.payer' ),
+			$container->get( 'api.factory.shipping-preference' )
 		);
 	},
 	'wcgateway.processor.refunds'                          => static function ( ContainerInterface $container ): RefundProcessor {
