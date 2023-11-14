@@ -164,23 +164,31 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	private $order_endpoint;
 
 	/**
+	 * The function return the PayPal checkout URL for the given order ID.
+	 *
+	 * @var callable(string):string
+	 */
+	private $paypal_checkout_url_factory;
+
+	/**
 	 * PayPalGateway constructor.
 	 *
-	 * @param SettingsRenderer       $settings_renderer The Settings Renderer.
-	 * @param FundingSourceRenderer  $funding_source_renderer The funding source renderer.
-	 * @param OrderProcessor         $order_processor The Order Processor.
-	 * @param ContainerInterface     $config The settings.
-	 * @param SessionHandler         $session_handler The Session Handler.
-	 * @param RefundProcessor        $refund_processor The Refund Processor.
-	 * @param State                  $state The state.
-	 * @param TransactionUrlProvider $transaction_url_provider Service providing transaction view URL based on order.
-	 * @param SubscriptionHelper     $subscription_helper The subscription helper.
-	 * @param string                 $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
-	 * @param Environment            $environment The environment.
-	 * @param PaymentTokenRepository $payment_token_repository The payment token repository.
-	 * @param LoggerInterface        $logger The logger.
-	 * @param string                 $api_shop_country The api shop country.
-	 * @param OrderEndpoint          $order_endpoint The order endpoint.
+	 * @param SettingsRenderer        $settings_renderer The Settings Renderer.
+	 * @param FundingSourceRenderer   $funding_source_renderer The funding source renderer.
+	 * @param OrderProcessor          $order_processor The Order Processor.
+	 * @param ContainerInterface      $config The settings.
+	 * @param SessionHandler          $session_handler The Session Handler.
+	 * @param RefundProcessor         $refund_processor The Refund Processor.
+	 * @param State                   $state The state.
+	 * @param TransactionUrlProvider  $transaction_url_provider Service providing transaction view URL based on order.
+	 * @param SubscriptionHelper      $subscription_helper The subscription helper.
+	 * @param string                  $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
+	 * @param Environment             $environment The environment.
+	 * @param PaymentTokenRepository  $payment_token_repository The payment token repository.
+	 * @param LoggerInterface         $logger The logger.
+	 * @param string                  $api_shop_country The api shop country.
+	 * @param OrderEndpoint           $order_endpoint The order endpoint.
+	 * @param callable(string):string $paypal_checkout_url_factory The function return the PayPal checkout URL for the given order ID.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
@@ -197,24 +205,26 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		PaymentTokenRepository $payment_token_repository,
 		LoggerInterface $logger,
 		string $api_shop_country,
-		OrderEndpoint $order_endpoint
+		OrderEndpoint $order_endpoint,
+		callable $paypal_checkout_url_factory
 	) {
-		$this->id                       = self::ID;
-		$this->settings_renderer        = $settings_renderer;
-		$this->funding_source_renderer  = $funding_source_renderer;
-		$this->order_processor          = $order_processor;
-		$this->config                   = $config;
-		$this->session_handler          = $session_handler;
-		$this->refund_processor         = $refund_processor;
-		$this->state                    = $state;
-		$this->transaction_url_provider = $transaction_url_provider;
-		$this->subscription_helper      = $subscription_helper;
-		$this->page_id                  = $page_id;
-		$this->environment              = $environment;
-		$this->onboarded                = $state->current_state() === State::STATE_ONBOARDED;
-		$this->payment_token_repository = $payment_token_repository;
-		$this->logger                   = $logger;
-		$this->api_shop_country         = $api_shop_country;
+		$this->id                          = self::ID;
+		$this->settings_renderer           = $settings_renderer;
+		$this->funding_source_renderer     = $funding_source_renderer;
+		$this->order_processor             = $order_processor;
+		$this->config                      = $config;
+		$this->session_handler             = $session_handler;
+		$this->refund_processor            = $refund_processor;
+		$this->state                       = $state;
+		$this->transaction_url_provider    = $transaction_url_provider;
+		$this->subscription_helper         = $subscription_helper;
+		$this->page_id                     = $page_id;
+		$this->environment                 = $environment;
+		$this->onboarded                   = $state->current_state() === State::STATE_ONBOARDED;
+		$this->payment_token_repository    = $payment_token_repository;
+		$this->logger                      = $logger;
+		$this->api_shop_country            = $api_shop_country;
+		$this->paypal_checkout_url_factory = $paypal_checkout_url_factory;
 
 		if ( $this->onboarded ) {
 			$this->supports = array( 'refunds', 'tokenization' );
@@ -593,12 +603,9 @@ class PayPalGateway extends \WC_Payment_Gateway {
 					);
 				}
 
-				$host = $this->config->has( 'sandbox_on' ) && $this->config->get( 'sandbox_on' ) ?
-					'https://www.sandbox.paypal.com/' : 'https://www.paypal.com/';
-				$url  = $host . 'checkoutnow?token=' . $this->session_handler->order()->id();
 				return array(
 					'result'   => 'success',
-					'redirect' => $url,
+					'redirect' => ( $this->paypal_checkout_url_factory )( $this->session_handler->order()->id() ),
 				);
 			}
 

@@ -97,7 +97,8 @@ return array(
 			$payment_token_repository,
 			$logger,
 			$api_shop_country,
-			$container->get( 'api.endpoint.order' )
+			$container->get( 'api.endpoint.order' ),
+			$container->get( 'api.factory.paypal-checkout-url' )
 		);
 	},
 	'wcgateway.credit-card-gateway'                        => static function ( ContainerInterface $container ): CreditCardGateway {

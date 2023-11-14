@@ -106,7 +106,10 @@ class WcGatewayTest extends TestCase
 			$this->paymentTokenRepository,
 			$this->logger,
 			$this->apiShopCountry,
-			$this->orderEndpoint
+			$this->orderEndpoint,
+			function ($id) {
+				return 'checkoutnow=' . $id;
+			}
 		);
 	}
 

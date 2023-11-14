@@ -71,6 +71,12 @@ return array(
 	'api.paypal-host-sandbox'                   => static function( ContainerInterface $container ) : string {
 		return PAYPAL_SANDBOX_API_URL;
 	},
+	'api.paypal-website-url-production'         => static function( ContainerInterface $container ) : string {
+		return PAYPAL_URL;
+	},
+	'api.paypal-website-url-sandbox'            => static function( ContainerInterface $container ) : string {
+		return PAYPAL_SANDBOX_URL;
+	},
 	'api.partner_merchant_id-production'        => static function( ContainerInterface $container ) : string {
 		return CONNECT_WOO_MERCHANT_ID;
 	},
@@ -88,6 +94,15 @@ return array(
 			return $container->get( 'api.paypal-host-sandbox' );
 		}
 		return $container->get( 'api.paypal-host-production' );
+
+	},
+	'api.paypal-website-url'                    => function( ContainerInterface $container ) : string {
+		$environment = $container->get( 'onboarding.environment' );
+		assert( $environment instanceof Environment );
+		if ( $environment->current_environment_is( Environment::SANDBOX ) ) {
+			return $container->get( 'api.paypal-website-url-sandbox' );
+		}
+		return $container->get( 'api.paypal-website-url-production' );
 
 	},
 

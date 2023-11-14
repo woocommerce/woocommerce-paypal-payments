@@ -22,7 +22,9 @@ namespace WooCommerce\PayPalCommerce;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 define( 'PAYPAL_API_URL', 'https://api-m.paypal.com' );
+define( 'PAYPAL_URL', 'https://www.paypal.com' );
 define( 'PAYPAL_SANDBOX_API_URL', 'https://api-m.sandbox.paypal.com' );
+define( 'PAYPAL_SANDBOX_URL', 'https://www.sandbox.paypal.com' );
 define( 'PAYPAL_INTEGRATION_DATE', '2023-11-06' );
 
 ! defined( 'CONNECT_WOO_CLIENT_ID' ) && define( 'CONNECT_WOO_CLIENT_ID', 'AcCAsWta_JTL__OfpjspNyH7c1GGHH332fLwonA5CwX4Y10mhybRZmHLA0GdRbwKwjQIhpDQy0pluX_P' );
