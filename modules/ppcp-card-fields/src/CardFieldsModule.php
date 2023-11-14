@@ -13,9 +13,16 @@ use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 
+/**
+ * Class CardFieldsModule
+ */
 class CardFieldsModule implements ModuleInterface {
 
+	/**
+	 * {@inheritDoc}
+	 */
 	public function setup(): ServiceProviderInterface {
 		return new ServiceProvider(
 			require __DIR__ . '/../services.php',
@@ -23,6 +30,9 @@ class CardFieldsModule implements ModuleInterface {
 		);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 */
 	public function run( ContainerInterface $c ): void {
 		if ( ! $c->get( 'card-fields.eligible' ) ) {
 			return;
@@ -36,8 +46,9 @@ class CardFieldsModule implements ModuleInterface {
 		add_filter(
 			'woocommerce_paypal_payments_sdk_components_hook',
 			function( $components ) {
-				if ( in_array( 'hosted-fields', $components ) ) {
-					if ( ( $key = array_search( 'hosted-fields', $components ) ) !== false ) {
+				if ( in_array( 'hosted-fields', $components, true ) ) {
+					$key = array_search( 'hosted-fields', $components, true );
+					if ( $key !== false ) {
 						unset( $components[ $key ] );
 					}
 				}
@@ -45,6 +56,24 @@ class CardFieldsModule implements ModuleInterface {
 
 				return $components;
 			}
+		);
+
+		add_filter(
+			'woocommerce_credit_card_form_fields',
+			function( $default_fields, $id ) {
+				if ( CreditCardGateway::ID === $id ) {
+					$default_fields['card-name-field'] = '<p class="form-row form-row-wide"><label for="ppcp-credit-card-gateway-card-name"><input class="ppcp-credit-card-gateway-card-name" type="text" id="ppcp-credit-card-gateway-card-name" name="ppcp-credit-card-gateway-card-name"/></p>';
+
+					// Moves new item to first position.
+					$new_field = $default_fields['card-name-field'];
+					unset( $default_fields['card-name-field'] );
+					array_unshift( $default_fields, $new_field );
+				}
+
+				return $default_fields;
+			},
+			10,
+			2
 		);
 	}
 }
