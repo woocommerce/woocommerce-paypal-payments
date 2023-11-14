@@ -198,6 +198,8 @@ class CreditCardRenderer {
                 const cvvField = cardField.CVVField();
                 cvvField.render(cvvFieldContainer);
                 document.getElementById("ppcp-credit-card-gateway-card-cvc").remove();
+
+                document.dispatchEvent(new CustomEvent("hosted_fields_loaded"));
             }
 
             gateWayBox.style.display = oldDisplayStyle;
