@@ -64,7 +64,7 @@ class CardFieldsModule implements ModuleInterface {
 			function( $default_fields, $id ) {
 				if ( CreditCardGateway::ID === $id && apply_filters( 'woocommerce_paypal_payments_enable_cardholder_name_field', false ) ) {
 					$default_fields['card-name-field'] = '<p class="form-row form-row-wide">
-						<label for="ppcp-credit-card-gateway-card-name">Card Name</label>
+						<label for="ppcp-credit-card-gateway-card-name">' . esc_attr__( 'Cardholder Name', 'woocommerce-paypal-payments' ) . '</label>
 						<input id="ppcp-credit-card-gateway-card-name" class="input-text wc-credit-card-form-card-expiry" type="text" placeholder="' . esc_attr__( 'Cardholder Name (optional)', 'woocommerce-paypal-payments' ) . '" name="ppcp-credit-card-gateway-card-name">
 					</p>';
 

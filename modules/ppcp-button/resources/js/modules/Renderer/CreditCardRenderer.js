@@ -281,7 +281,6 @@ class CreditCardRenderer {
         const stylesRaw = window.getComputedStyle(field);
         const styles = {};
         Object.values(stylesRaw).forEach((prop) => {
-            console.log(prop)
             if (!stylesRaw[prop] || !allowedProperties.includes(prop)) {
                 return;
             }
