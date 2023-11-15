@@ -184,27 +184,33 @@ class CreditCardRenderer {
             });
 
             if (cardField.isEligible()) {
-                const nameFieldContainer = document.getElementById('ppcp-credit-card-gateway-card-name')?.parentNode;
-                if(nameFieldContainer) {
-                    const nameField = cardField.NameField();
-                    nameField.render(nameFieldContainer);
-                    document.getElementById("ppcp-credit-card-gateway-card-name").remove();
+                const nameField = document.getElementById('ppcp-credit-card-gateway-card-name');
+                if(nameField) {
+                    let styles = this.cardFieldStyles(nameField);
+                    cardField.NameField({style: {'input': styles}}).render(nameField.parentNode);
+                    nameField.remove();
                 }
 
-                const numberFieldContainer = document.getElementById('ppcp-credit-card-gateway-card-number').parentNode;
-                const numberField = cardField.NumberField();
-                numberField.render(numberFieldContainer);
-                document.getElementById("ppcp-credit-card-gateway-card-number").remove();
+                const numberField = document.getElementById('ppcp-credit-card-gateway-card-number');
+                if(numberField) {
+                    let styles = this.cardFieldStyles(numberField);
+                    cardField.NumberField({style: {'input': styles}}).render(numberField.parentNode);
+                    numberField.remove();
+                }
 
-                const expiryFieldContainer = document.getElementById('ppcp-credit-card-gateway-card-expiry').parentNode;
-                const expiryField = cardField.ExpiryField();
-                expiryField.render(expiryFieldContainer);
-                document.getElementById("ppcp-credit-card-gateway-card-expiry").remove();
+                const expiryField = document.getElementById('ppcp-credit-card-gateway-card-expiry');
+                if(expiryField) {
+                    let styles = this.cardFieldStyles(expiryField);
+                    cardField.ExpiryField({style: {'input': styles}}).render(expiryField.parentNode);
+                    expiryField.remove();
+                }
 
-                const cvvFieldContainer = document.getElementById('ppcp-credit-card-gateway-card-cvc').parentNode;
-                const cvvField = cardField.CVVField();
-                cvvField.render(cvvFieldContainer);
-                document.getElementById("ppcp-credit-card-gateway-card-cvc").remove();
+                const cvvField = document.getElementById('ppcp-credit-card-gateway-card-cvc');
+                if(cvvField) {
+                    let styles = this.cardFieldStyles(cvvField);
+                    cardField.CVVField({style: {'input': styles}}).render(cvvField.parentNode);
+                    cvvField.remove();
+                }
 
                 document.dispatchEvent(new CustomEvent("hosted_fields_loaded"));
             }
@@ -231,6 +237,58 @@ class CreditCardRenderer {
 
         const wrapperElement = document.querySelector(wrapper);
         wrapperElement.parentNode.removeChild(wrapperElement);
+    }
+
+    cardFieldStyles(field) {
+        const allowedProperties = [
+            'appearance',
+            'color',
+            'direction',
+            'font',
+            'font-family',
+            'font-size',
+            'font-size-adjust',
+            'font-stretch',
+            'font-style',
+            'font-variant',
+            'font-variant-alternates',
+            'font-variant-caps',
+            'font-variant-east-asian',
+            'font-variant-ligatures',
+            'font-variant-numeric',
+            'font-weight',
+            'letter-spacing',
+            'line-height',
+            'opacity',
+            'outline',
+            'padding',
+            'padding-bottom',
+            'padding-left',
+            'padding-right',
+            'padding-top',
+            'text-shadow',
+            'transition',
+            '-moz-appearance',
+            '-moz-osx-font-smoothing',
+            '-moz-tap-highlight-color',
+            '-moz-transition',
+            '-webkit-appearance',
+            '-webkit-osx-font-smoothing',
+            '-webkit-tap-highlight-color',
+            '-webkit-transition',
+        ];
+
+        const stylesRaw = window.getComputedStyle(field);
+        const styles = {};
+        Object.values(stylesRaw).forEach((prop) => {
+            console.log(prop)
+            if (!stylesRaw[prop] || !allowedProperties.includes(prop)) {
+                return;
+            }
+            styles[prop] = '' + stylesRaw[prop];
+        });
+
+        return styles;
     }
 
     disableFields() {
