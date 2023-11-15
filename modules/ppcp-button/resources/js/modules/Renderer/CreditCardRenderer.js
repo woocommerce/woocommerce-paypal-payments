@@ -184,10 +184,12 @@ class CreditCardRenderer {
             });
 
             if (cardField.isEligible()) {
-                const nameFieldContainer = document.getElementById('ppcp-credit-card-gateway-card-name').parentNode;
-                const nameField = cardField.NameField();
-                nameField.render(nameFieldContainer);
-                document.getElementById("ppcp-credit-card-gateway-card-name").remove();
+                const nameFieldContainer = document.getElementById('ppcp-credit-card-gateway-card-name')?.parentNode;
+                if(nameFieldContainer) {
+                    const nameField = cardField.NameField();
+                    nameField.render(nameFieldContainer);
+                    document.getElementById("ppcp-credit-card-gateway-card-name").remove();
+                }
 
                 const numberFieldContainer = document.getElementById('ppcp-credit-card-gateway-card-number').parentNode;
                 const numberField = cardField.NumberField();

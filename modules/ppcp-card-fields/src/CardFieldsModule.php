@@ -62,7 +62,7 @@ class CardFieldsModule implements ModuleInterface {
 		add_filter(
 			'woocommerce_credit_card_form_fields',
 			function( $default_fields, $id ) {
-				if ( CreditCardGateway::ID === $id ) {
+				if ( CreditCardGateway::ID === $id && apply_filters( 'woocommerce_paypal_payments_enable_cardholder_name_field', false ) ) {
 					$default_fields['card-name-field'] = '<p class="form-row form-row-wide"><label for="ppcp-credit-card-gateway-card-name"><input class="ppcp-credit-card-gateway-card-name" type="text" id="ppcp-credit-card-gateway-card-name" name="ppcp-credit-card-gateway-card-name"/></p>';
 
 					// Moves new item to first position.
