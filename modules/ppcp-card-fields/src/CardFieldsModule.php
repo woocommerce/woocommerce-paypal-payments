@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class CardFieldsModule
@@ -74,6 +75,32 @@ class CardFieldsModule implements ModuleInterface {
 			},
 			10,
 			2
+		);
+
+		add_filter(
+			'ppcp_create_order_request_body_data',
+			function( $data ) use ( $c ) {
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+
+				if (
+				$settings->has( '3d_secure_contingency' )
+				&& (
+					$settings->get( '3d_secure_contingency' ) === 'SCA_ALWAYS'
+					|| $settings->get( '3d_secure_contingency' ) === 'SCA_WHEN_REQUIRED'
+				)
+				) {
+					$data['payment_source']['card'] = array(
+						'attributes' => array(
+							'verification' => array(
+								'method' => $settings->get( '3d_secure_contingency' ),
+							),
+						),
+					);
+				}
+
+				return $data;
+			}
 		);
 	}
 }
