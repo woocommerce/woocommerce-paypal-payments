@@ -1156,6 +1156,25 @@ return array(
 		);
 	},
 
+	'wcgateway.use-place-order-button'                     => function ( ContainerInterface $container ) : bool {
+		/**
+		 * Whether to use the standard "Place order" button with redirect to PayPal instead of the PayPal smart buttons.
+		 */
+		return apply_filters(
+			'woocommerce_paypal_payments_use_place_order_button',
+			false
+		);
+	},
+	'wcgateway.place-order-button-text'                    => function ( ContainerInterface $container ) : string {
+		/**
+		 * The text for the standard "Place order" button, when the "Place order" button mode is enabled.
+		 */
+		return apply_filters(
+			'woocommerce_paypal_payments_place_order_button_text',
+			__( 'Pay with PayPal', 'woocommerce-paypal-payments' )
+		);
+	},
+
 	'wcgateway.helper.vaulting-scope'                      => static function ( ContainerInterface $container ): bool {
 		try {
 			$token = $container->get( 'api.bearer' )->bearer();

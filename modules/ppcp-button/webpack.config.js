@@ -7,6 +7,7 @@ module.exports = {
     target: 'web',
     entry: {
         button: path.resolve('./resources/js/button.js'),
+        'place-order-button': path.resolve('./resources/js/place-order-button.js'),
         "hosted-fields": path.resolve('./resources/css/hosted-fields.scss'),
         "gateway": path.resolve('./resources/css/gateway.scss')
     },

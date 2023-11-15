@@ -9,14 +9,17 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Button;
 
+use WooCommerce\PayPalCommerce\Button\Assets\PlaceOrderButtonAssets;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveSubscriptionEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\SimulateCartEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\CartProductsHelper;
 use WooCommerce\PayPalCommerce\Button\Helper\CheckoutFormSaver;
 use WooCommerce\PayPalCommerce\Button\Endpoint\SaveCheckoutFormEndpoint;
+use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
 use WooCommerce\PayPalCommerce\Button\Validation\CheckoutFormValidator;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ValidateCheckoutEndpoint;
+use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\DisabledSmartButton;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButton;
@@ -68,8 +71,41 @@ return array(
 
 		return $dummy_ids[ $shop_country ] ?? $container->get( 'button.client_id' );
 	},
+	// This service may not work correctly when called too early.
+	'button.context'                              => static function ( ContainerInterface $container ): string {
+		$obj = new class() {
+			use ContextTrait;
+
+			/**
+			 * Session handler.
+			 *
+			 * @var SessionHandler
+			 */
+			protected $session_handler;
+
+			/** Constructor. */
+			public function __construct() {
+				// phpcs:ignore PHPCompatibility.FunctionDeclarations.NewClosure.ThisFoundInStatic
+				$this->session_handler = new SessionHandler();
+			}
+
+			/**
+			 * Wrapper for a non-public function.
+			 */
+			public function get_context(): string {
+				// phpcs:ignore PHPCompatibility.FunctionDeclarations.NewClosure.ThisFoundInStatic
+				return $this->context();
+			}
+		};
+		return $obj->get_context();
+	},
 	'button.smart-button'                         => static function ( ContainerInterface $container ): SmartButtonInterface {
 		$state = $container->get( 'onboarding.state' );
+		if ( $container->get( 'wcgateway.use-place-order-button' )
+			&& in_array( $container->get( 'button.context' ), array( 'checkout', 'pay-now' ), true )
+		) {
+			return new DisabledSmartButton();
+		}
 		if ( $state->current_state() !== State::STATE_ONBOARDED ) {
 			return new DisabledSmartButton();
 		}
@@ -111,6 +147,15 @@ return array(
 			$container->get( 'button.pay-now-contexts' ),
 			$container->get( 'wcgateway.funding-sources-without-redirect' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
+	'button.place-order-assets'                   => static function ( ContainerInterface $container ): PlaceOrderButtonAssets {
+		return new PlaceOrderButtonAssets(
+			$container->get( 'button.url' ),
+			$container->get( 'ppcp.asset-version' ),
+			$container->get( 'session.handler' ),
+			$container->get( 'wcgateway.use-place-order-button' ),
+			$container->get( 'wcgateway.place-order-button-text' )
 		);
 	},
 	'button.url'                                  => static function ( ContainerInterface $container ): string {
