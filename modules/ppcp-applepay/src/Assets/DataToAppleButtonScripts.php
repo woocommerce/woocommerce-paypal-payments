@@ -144,31 +144,35 @@ class DataToAppleButtonScripts {
 		$type                  = $this->settings->has( 'applepay_button_type' ) ? $this->settings->get( 'applepay_button_type' ) : '';
 		$color                 = $this->settings->has( 'applepay_button_color' ) ? $this->settings->get( 'applepay_button_color' ) : '';
 		$lang                  = $this->settings->has( 'applepay_button_language' ) ? $this->settings->get( 'applepay_button_language' ) : '';
+		$checkout_data_mode    = $this->settings->has( 'applepay_checkout_data_mode' ) ? $this->settings->get( 'applepay_checkout_data_mode' ) : PropertiesDictionary::BILLING_DATA_MODE_DEFAULT;
 
 		return array(
-			'sdk_url'  => $this->sdk_url,
-			'is_debug' => defined( 'WP_DEBUG' ) && WP_DEBUG ? true : false,
-			'button'   => array(
+			'sdk_url'     => $this->sdk_url,
+			'is_debug'    => defined( 'WP_DEBUG' ) && WP_DEBUG ? true : false,
+			'preferences' => array(
+				'checkout_data_mode' => $checkout_data_mode,
+			),
+			'button'      => array(
 				'wrapper'           => 'applepay-container',
 				'mini_cart_wrapper' => 'applepay-container-minicart',
 				'type'              => $type,
 				'color'             => $color,
 				'lang'              => $lang,
 			),
-			'product'  => array(
+			'product'     => array(
 				'needShipping' => $product_need_shipping,
 				'id'           => $product_id,
 				'price'        => $product_price,
 				'isVariation'  => $is_variation,
 				'stock'        => $product_stock,
 			),
-			'shop'     => array(
+			'shop'        => array(
 				'countryCode'  => $shop_country_code,
 				'currencyCode' => $currency_code,
 				'totalLabel'   => $total_label,
 			),
-			'ajax_url' => admin_url( 'admin-ajax.php' ),
-			'nonce'    => wp_create_nonce( 'woocommerce-process_checkout' ),
+			'ajax_url'    => admin_url( 'admin-ajax.php' ),
+			'nonce'       => wp_create_nonce( 'woocommerce-process_checkout' ),
 		);
 	}
 
@@ -191,32 +195,36 @@ class DataToAppleButtonScripts {
 			return array();
 		}
 
-		$type  = $this->settings->has( 'applepay_button_type' ) ? $this->settings->get( 'applepay_button_type' ) : '';
-		$color = $this->settings->has( 'applepay_button_color' ) ? $this->settings->get( 'applepay_button_color' ) : '';
-		$lang  = $this->settings->has( 'applepay_button_language' ) ? $this->settings->get( 'applepay_button_language' ) : '';
-		$lang  = apply_filters( 'woocommerce_paypal_payments_applepay_button_language', $lang );
+		$type               = $this->settings->has( 'applepay_button_type' ) ? $this->settings->get( 'applepay_button_type' ) : '';
+		$color              = $this->settings->has( 'applepay_button_color' ) ? $this->settings->get( 'applepay_button_color' ) : '';
+		$lang               = $this->settings->has( 'applepay_button_language' ) ? $this->settings->get( 'applepay_button_language' ) : '';
+		$lang               = apply_filters( 'woocommerce_paypal_payments_applepay_button_language', $lang );
+		$checkout_data_mode = $this->settings->has( 'applepay_checkout_data_mode' ) ? $this->settings->get( 'applepay_checkout_data_mode' ) : PropertiesDictionary::BILLING_DATA_MODE_DEFAULT;
 
 		return array(
-			'sdk_url'  => $this->sdk_url,
-			'is_debug' => defined( 'WP_DEBUG' ) && WP_DEBUG ? true : false,
-			'button'   => array(
+			'sdk_url'     => $this->sdk_url,
+			'is_debug'    => defined( 'WP_DEBUG' ) && WP_DEBUG ? true : false,
+			'preferences' => array(
+				'checkout_data_mode' => $checkout_data_mode,
+			),
+			'button'      => array(
 				'wrapper'           => 'applepay-container',
 				'mini_cart_wrapper' => 'applepay-container-minicart',
 				'type'              => $type,
 				'color'             => $color,
 				'lang'              => $lang,
 			),
-			'product'  => array(
+			'product'     => array(
 				'needShipping' => $cart->needs_shipping(),
 				'subtotal'     => $cart->get_subtotal(),
 			),
-			'shop'     => array(
+			'shop'        => array(
 				'countryCode'  => $shop_country_code,
 				'currencyCode' => $currency_code,
 				'totalLabel'   => $total_label,
 			),
-			'ajax_url' => admin_url( 'admin-ajax.php' ),
-			'nonce'    => wp_create_nonce( 'woocommerce-process_checkout' ),
+			'ajax_url'    => admin_url( 'admin-ajax.php' ),
+			'nonce'       => wp_create_nonce( 'woocommerce-process_checkout' ),
 		);
 	}
 
@@ -235,31 +243,35 @@ class DataToAppleButtonScripts {
 		$currency_code,
 		$total_label
 	) {
-		$type  = $this->settings->has( 'applepay_button_type' ) ? $this->settings->get( 'applepay_button_type' ) : '';
-		$color = $this->settings->has( 'applepay_button_color' ) ? $this->settings->get( 'applepay_button_color' ) : '';
-		$lang  = $this->settings->has( 'applepay_button_language' ) ? $this->settings->get( 'applepay_button_language' ) : '';
-		$lang  = apply_filters( 'woocommerce_paypal_payments_applepay_button_language', $lang );
+		$type               = $this->settings->has( 'applepay_button_type' ) ? $this->settings->get( 'applepay_button_type' ) : '';
+		$color              = $this->settings->has( 'applepay_button_color' ) ? $this->settings->get( 'applepay_button_color' ) : '';
+		$lang               = $this->settings->has( 'applepay_button_language' ) ? $this->settings->get( 'applepay_button_language' ) : '';
+		$lang               = apply_filters( 'woocommerce_paypal_payments_applepay_button_language', $lang );
+		$checkout_data_mode = $this->settings->has( 'applepay_checkout_data_mode' ) ? $this->settings->get( 'applepay_checkout_data_mode' ) : PropertiesDictionary::BILLING_DATA_MODE_DEFAULT;
 
 		return array(
-			'sdk_url'  => $this->sdk_url,
-			'is_debug' => defined( 'WP_DEBUG' ) && WP_DEBUG ? true : false,
-			'button'   => array(
+			'sdk_url'     => $this->sdk_url,
+			'is_debug'    => defined( 'WP_DEBUG' ) && WP_DEBUG ? true : false,
+			'preferences' => array(
+				'checkout_data_mode' => $checkout_data_mode,
+			),
+			'button'      => array(
 				'wrapper'           => 'applepay-container',
 				'mini_cart_wrapper' => 'applepay-container-minicart',
 				'type'              => $type,
 				'color'             => $color,
 				'lang'              => $lang,
 			),
-			'product'  => array(
+			'product'     => array(
 				'needShipping' => false,
 				'subtotal'     => 0,
 			),
-			'shop'     => array(
+			'shop'        => array(
 				'countryCode'  => $shop_country_code,
 				'currencyCode' => $currency_code,
 				'totalLabel'   => $total_label,
 			),
-			'ajax_url' => admin_url( 'admin-ajax.php' ),
+			'ajax_url'    => admin_url( 'admin-ajax.php' ),
 		);
 	}
 }
