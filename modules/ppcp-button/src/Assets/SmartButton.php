@@ -973,6 +973,7 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 			'subscription_plan_id'                    => $this->subscription_helper->paypal_subscription_id(),
 			'variable_paypal_subscription_variations' => $this->subscription_helper->variable_paypal_subscription_variations(),
 			'subscription_product_allowed'            => $this->subscription_helper->checkout_subscription_product_allowed(),
+			'locations_with_subscription_product'     => $this->subscription_helper->locations_with_subscription_product(),
 			'enforce_vault'                           => $this->has_subscriptions(),
 			'can_save_vault_token'                    => $this->can_save_vault_token(),
 			'is_free_trial_cart'                      => $is_free_trial_cart,

@@ -7,6 +7,13 @@ import BaseHandler from "./BaseHandler";
 
 class SingleProductHandler extends BaseHandler {
 
+    validateContext() {
+        if ( this.ppcpConfig?.locations_with_subscription_product?.product ) {
+            return false;
+        }
+        return true;
+    }
+
     transactionInfo() {
         const errorHandler = new ErrorHandler(
             this.ppcpConfig.labels.error.generic,
