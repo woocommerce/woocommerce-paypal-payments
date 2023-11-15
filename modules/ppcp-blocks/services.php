@@ -34,7 +34,8 @@ return array(
 			$container->get( 'wcgateway.paypal-gateway' ),
 			$container->get( 'blocks.settings.final_review_enabled' ),
 			$container->get( 'session.cancellation.view' ),
-			$container->get( 'session.handler' )
+			$container->get( 'session.handler' ),
+			$container->get( 'wcgateway.use-place-order-button' )
 		);
 	},
 	'blocks.settings.final_review_enabled' => static function ( ContainerInterface $container ): bool {
