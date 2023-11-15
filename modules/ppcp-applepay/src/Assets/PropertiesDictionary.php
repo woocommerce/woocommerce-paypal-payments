@@ -13,7 +13,15 @@ namespace WooCommerce\PayPalCommerce\Applepay\Assets;
  * Class PropertiesDictionary
  */
 class PropertiesDictionary {
-	public const ALLOWED_USER_AGENTS = array( 'Safari', 'Macintosh', 'iPhone', 'iPad', 'iPod' );
+	public const DISALLOWED_USER_AGENTS = array(
+		'Chrome/',
+		'CriOS/', // Chrome on iOS.
+		'Firefox/',
+		'OPR/', // Opera.
+		'Edg/', // Edge.
+	);
+	public const ALLOWED_USER_BROWSERS  = array( 'Safari' );
+	public const ALLOWED_USER_DEVICES   = array( 'Macintosh', 'iPhone', 'iPad', 'iPod' );
 
 	public const BILLING_CONTACT_INVALID = 'billing Contact Invalid';
 
