@@ -42,7 +42,7 @@ const PayPalComponent = ({
 
     const [loaded, setLoaded] = useState(false);
     useEffect(() => {
-        if (!loaded) {
+        if (!loaded && !config.scriptData.continuation) {
             loadPaypalScript(config.scriptData, () => {
                 setLoaded(true);
 
