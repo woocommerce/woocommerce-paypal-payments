@@ -190,6 +190,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	 * @param string                  $api_shop_country The api shop country.
 	 * @param OrderEndpoint           $order_endpoint The order endpoint.
 	 * @param callable(string):string $paypal_checkout_url_factory The function return the PayPal checkout URL for the given order ID.
+	 * @param string                  $place_order_button_text The text for the standard "Place order" button.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
@@ -207,7 +208,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		LoggerInterface $logger,
 		string $api_shop_country,
 		OrderEndpoint $order_endpoint,
-		callable $paypal_checkout_url_factory
+		callable $paypal_checkout_url_factory,
+		string $place_order_button_text
 	) {
 		$this->id                          = self::ID;
 		$this->settings_renderer           = $settings_renderer;
@@ -226,6 +228,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		$this->logger                      = $logger;
 		$this->api_shop_country            = $api_shop_country;
 		$this->paypal_checkout_url_factory = $paypal_checkout_url_factory;
+		$this->order_button_text           = $place_order_button_text;
 
 		if ( $this->onboarded ) {
 			$this->supports = array( 'refunds', 'tokenization' );

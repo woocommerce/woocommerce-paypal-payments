@@ -98,7 +98,8 @@ return array(
 			$logger,
 			$api_shop_country,
 			$container->get( 'api.endpoint.order' ),
-			$container->get( 'api.factory.paypal-checkout-url' )
+			$container->get( 'api.factory.paypal-checkout-url' ),
+			$container->get( 'wcgateway.place-order-button-text' )
 		);
 	},
 	'wcgateway.credit-card-gateway'                        => static function ( ContainerInterface $container ): CreditCardGateway {
@@ -143,7 +144,8 @@ return array(
 			$container->get( 'onboarding.environment' ),
 			$container->get( 'vaulting.repository.payment-token' ),
 			$container->get( 'woocommerce.logger.woocommerce' ),
-			$container->get( 'api.factory.paypal-checkout-url' )
+			$container->get( 'api.factory.paypal-checkout-url' ),
+			$container->get( 'wcgateway.place-order-button-text' )
 		);
 	},
 	'wcgateway.disabler'                                   => static function ( ContainerInterface $container ): DisableGateways {

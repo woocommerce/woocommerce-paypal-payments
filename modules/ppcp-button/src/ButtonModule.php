@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Button;
 
-use WooCommerce\PayPalCommerce\Button\Assets\PlaceOrderButtonAssets;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveSubscriptionEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\SaveCheckoutFormEndpoint;
@@ -72,11 +71,6 @@ class ButtonModule implements ModuleInterface {
 				if ( $smart_button->should_load_ppcp_script() ) {
 					$smart_button->enqueue();
 				}
-
-				$place_order_assets = $c->get( 'button.place-order-assets' );
-				assert( $place_order_assets instanceof PlaceOrderButtonAssets );
-
-				$place_order_assets->register_assets();
 			}
 		);
 

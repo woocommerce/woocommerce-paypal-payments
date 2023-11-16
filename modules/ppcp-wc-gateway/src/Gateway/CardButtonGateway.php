@@ -150,6 +150,7 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 	 * @param PaymentTokenRepository  $payment_token_repository The payment token repository.
 	 * @param LoggerInterface         $logger  The logger.
 	 * @param callable(string):string $paypal_checkout_url_factory The function return the PayPal checkout URL for the given order ID.
+	 * @param string                  $place_order_button_text The text for the standard "Place order" button.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
@@ -164,7 +165,8 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 		Environment $environment,
 		PaymentTokenRepository $payment_token_repository,
 		LoggerInterface $logger,
-		callable $paypal_checkout_url_factory
+		callable $paypal_checkout_url_factory,
+		string $place_order_button_text
 	) {
 		$this->id                          = self::ID;
 		$this->settings_renderer           = $settings_renderer;
@@ -181,6 +183,7 @@ class CardButtonGateway extends \WC_Payment_Gateway {
 		$this->payment_token_repository    = $payment_token_repository;
 		$this->logger                      = $logger;
 		$this->paypal_checkout_url_factory = $paypal_checkout_url_factory;
+		$this->order_button_text           = $place_order_button_text;
 
 		$this->supports = array(
 			'refunds',

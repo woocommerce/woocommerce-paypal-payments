@@ -9,7 +9,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Button;
 
-use WooCommerce\PayPalCommerce\Button\Assets\PlaceOrderButtonAssets;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveSubscriptionEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\SimulateCartEndpoint;
@@ -147,15 +146,6 @@ return array(
 			$container->get( 'button.pay-now-contexts' ),
 			$container->get( 'wcgateway.funding-sources-without-redirect' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
-		);
-	},
-	'button.place-order-assets'                   => static function ( ContainerInterface $container ): PlaceOrderButtonAssets {
-		return new PlaceOrderButtonAssets(
-			$container->get( 'button.url' ),
-			$container->get( 'ppcp.asset-version' ),
-			$container->get( 'session.handler' ),
-			$container->get( 'wcgateway.use-place-order-button' ),
-			$container->get( 'wcgateway.place-order-button-text' )
 		);
 	},
 	'button.url'                                  => static function ( ContainerInterface $container ): string {

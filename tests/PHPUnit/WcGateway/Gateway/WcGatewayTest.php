@@ -110,7 +110,8 @@ class WcGatewayTest extends TestCase
 			$this->orderEndpoint,
 			function ($id) {
 				return 'checkoutnow=' . $id;
-			}
+			},
+			'Pay via PayPal'
 		);
 	}
 
