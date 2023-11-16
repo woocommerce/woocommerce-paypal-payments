@@ -323,6 +323,7 @@ if (config.usePlaceOrder && !config.scriptData.continuation) {
         label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
         content: <div dangerouslySetInnerHTML={{__html: config.description}}/>,
         edit: <div dangerouslySetInnerHTML={{__html: config.description}}/>,
+        placeOrderButtonLabel: config.placeOrderButtonText,
         ariaLabel: config.title,
         canMakePayment: () => config.enabled,
         supports: {
