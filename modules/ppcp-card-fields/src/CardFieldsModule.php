@@ -61,6 +61,12 @@ class CardFieldsModule implements ModuleInterface {
 
 		add_filter(
 			'woocommerce_credit_card_form_fields',
+			/**
+			 * Return/Param types removed to avoid third-party issues.
+			 *
+			 * @psalm-suppress MissingClosureReturnType
+			 * @psalm-suppress MissingClosureParamType
+			 */
 			function( $default_fields, $id ) {
 				if ( CreditCardGateway::ID === $id && apply_filters( 'woocommerce_paypal_payments_enable_cardholder_name_field', false ) ) {
 					$default_fields['card-name-field'] = '<p class="form-row form-row-wide">
@@ -82,7 +88,7 @@ class CardFieldsModule implements ModuleInterface {
 
 		add_filter(
 			'ppcp_create_order_request_body_data',
-			function( $data ) use ( $c ) {
+			function( array $data ) use ( $c ): array {
 				$settings = $c->get( 'wcgateway.settings' );
 				assert( $settings instanceof Settings );
 
