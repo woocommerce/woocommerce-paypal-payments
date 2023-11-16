@@ -111,7 +111,7 @@ class ShipStationIntegration implements Integration {
 				}
 			},
 			500,
-			1
+			2
 		);
 	}
 }
