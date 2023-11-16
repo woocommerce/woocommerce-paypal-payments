@@ -286,8 +286,6 @@ class OrderProcessor {
 			ApplicationContext::USER_ACTION_PAY_NOW
 		);
 
-		$this->add_paypal_meta( $wc_order, $order, $this->environment );
-
 		return $order;
 	}
 
