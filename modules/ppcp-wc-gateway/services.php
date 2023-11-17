@@ -1372,7 +1372,9 @@ return array(
 		);
 	},
 	'wcgateway.button.default-locations'                   => static function( ContainerInterface $container ): array {
-		return array_keys( $container->get( 'wcgateway.settings.pay-later.messaging-locations' ) );
+		$button_locations = $container->get( 'wcgateway.button.locations' );
+		unset( $button_locations['mini-cart'] );
+		return array_keys( $button_locations );
 	},
 	'wcgateway.settings.pay-later.button-locations'        => static function( ContainerInterface $container ): array {
 		$settings = $container->get( 'wcgateway.settings' );
