@@ -102,7 +102,8 @@ class OrderTrackingModule implements ModuleInterface {
 					__( 'PayPal Package Tracking', 'woocommerce-paypal-payments' ),
 					array( $meta_box_renderer, 'render' ),
 					$screen,
-					'side'
+					'side',
+					'high'
 				);
 			},
 			10,
