@@ -273,7 +273,12 @@ class CompatModule implements ModuleInterface {
 		add_action(
 			'init',
 			function() {
-				if ( $this->is_elementor_pro_active() || $this->is_divi_theme_active() ) {
+				if (
+					$this->is_block_theme_active()
+					|| $this->is_elementor_pro_active()
+					|| $this->is_divi_theme_active()
+					|| $this->is_divi_child_theme_active()
+				) {
 					add_filter(
 						'woocommerce_paypal_payments_single_product_renderer_hook',
 						function(): string {
@@ -284,6 +289,15 @@ class CompatModule implements ModuleInterface {
 				}
 			}
 		);
+	}
+
+	/**
+	 * Checks whether the current theme is a blocks theme.
+	 *
+	 * @return bool
+	 */
+	protected function is_block_theme_active(): bool {
+		return function_exists( 'wp_is_block_theme' ) && wp_is_block_theme();
 	}
 
 	/**
@@ -303,5 +317,16 @@ class CompatModule implements ModuleInterface {
 	protected function is_divi_theme_active(): bool {
 		$theme = wp_get_theme();
 		return $theme->get( 'Name' ) === 'Divi';
+	}
+
+	/**
+	 * Checks whether a Divi child theme is currently used.
+	 *
+	 * @return bool
+	 */
+	protected function is_divi_child_theme_active(): bool {
+		$theme  = wp_get_theme();
+		$parent = $theme->parent();
+		return ( $parent && $parent->get( 'Name' ) === 'Divi' );
 	}
 }
