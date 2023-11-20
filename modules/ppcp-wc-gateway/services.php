@@ -209,7 +209,9 @@ return array(
 		static function ( ContainerInterface $container ): Settings {
 			return new Settings(
 				$container->get( 'wcgateway.button.default-locations' ),
-				$container->get( 'wcgateway.settings.dcc-gateway-title.default' )
+				$container->get( 'wcgateway.settings.dcc-gateway-title.default' ),
+				$container->get( 'wcgateway.settings.pay-later.default-button-locations' ),
+				$container->get( 'wcgateway.settings.pay-later.default-messaging-locations' )
 			);
 		}
 	),
@@ -1360,6 +1362,11 @@ return array(
 			'mini-cart' => 'Mini Cart',
 		);
 	},
+	'wcgateway.button.default-locations'                   => static function( ContainerInterface $container ): array {
+		$button_locations = $container->get( 'wcgateway.button.locations' );
+		unset( $button_locations['mini-cart'] );
+		return array_keys( $button_locations );
+	},
 	'wcgateway.settings.pay-later.messaging-locations'     => static function( ContainerInterface $container ): array {
 		$button_locations = $container->get( 'wcgateway.button.locations' );
 		unset( $button_locations['mini-cart'] );
@@ -1371,10 +1378,8 @@ return array(
 			)
 		);
 	},
-	'wcgateway.button.default-locations'                   => static function( ContainerInterface $container ): array {
-		$button_locations = $container->get( 'wcgateway.button.locations' );
-		unset( $button_locations['mini-cart'] );
-		return array_keys( $button_locations );
+	'wcgateway.settings.pay-later.default-messaging-locations' => static function( ContainerInterface $container ): array {
+		return array_keys( $container->get( 'wcgateway.settings.pay-later.messaging-locations' ) );
 	},
 	'wcgateway.settings.pay-later.button-locations'        => static function( ContainerInterface $container ): array {
 		$settings = $container->get( 'wcgateway.settings' );
@@ -1385,6 +1390,9 @@ return array(
 		$smart_button_selected_locations = $settings->has( 'smart_button_locations' ) ? $settings->get( 'smart_button_locations' ) : array();
 
 		return array_intersect_key( $button_locations, array_flip( $smart_button_selected_locations ) );
+	},
+	'wcgateway.settings.pay-later.default-button-locations' => static function( ContainerInterface $container ): array {
+		return $container->get( 'wcgateway.button.default-locations' );
 	},
 	'wcgateway.ppcp-gateways'                              => static function ( ContainerInterface $container ): array {
 		return array(
