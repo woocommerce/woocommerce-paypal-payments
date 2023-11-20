@@ -5,7 +5,8 @@ import CheckoutBootstap from './modules/ContextBootstrap/CheckoutBootstap';
 import PayNowBootstrap from "./modules/ContextBootstrap/PayNowBootstrap";
 import Renderer from './modules/Renderer/Renderer';
 import ErrorHandler from './modules/ErrorHandler';
-import CreditCardRenderer from "./modules/Renderer/CreditCardRenderer";
+import HostedFieldsRenderer from "./modules/Renderer/HostedFieldsRenderer";
+import CardFieldsRenderer from "./modules/Renderer/CardFieldsRenderer";
 import MessageRenderer from "./modules/Renderer/MessageRenderer";
 import Spinner from "./modules/Helper/Spinner";
 import {
@@ -37,7 +38,11 @@ const bootstrap = () => {
         document.querySelector(checkoutFormSelector) ?? document.querySelector('.woocommerce-notices-wrapper')
     );
     const spinner = new Spinner();
-    const creditCardRenderer = new CreditCardRenderer(PayPalCommerceGateway, errorHandler, spinner);
+
+    let creditCardRenderer = new HostedFieldsRenderer(PayPalCommerceGateway, errorHandler, spinner);
+    if (typeof paypal.CardFields !== 'undefined') {
+        creditCardRenderer = new CardFieldsRenderer(PayPalCommerceGateway, errorHandler, spinner);
+    }
 
     const formSaver = new FormSaver(
         PayPalCommerceGateway.ajax.save_checkout_form.endpoint,
