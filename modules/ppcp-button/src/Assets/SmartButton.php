@@ -1000,6 +1000,7 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 					'shape'   => $this->style_for_context( 'shape', $this->context() ),
 					'label'   => $this->style_for_context( 'label', $this->context() ),
 					'tagline' => $this->style_for_context( 'tagline', $this->context() ),
+					'height'  => 48,
 				),
 			),
 			'separate_buttons'                        => array(
@@ -1207,7 +1208,7 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 		if ( in_array( $context, array( 'checkout-block', 'cart-block' ), true ) ) {
 			$disable_funding = array_diff(
 				array_keys( $this->all_funding_sources ),
-				array( 'venmo', 'paylater' )
+				array( 'venmo', 'paylater', 'card' )
 			);
 		}
 

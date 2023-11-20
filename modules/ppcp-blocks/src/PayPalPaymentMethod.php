@@ -88,6 +88,13 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 	private $session_handler;
 
 	/**
+	 * All existing funding sources for PayPal buttons.
+	 *
+	 * @var array
+	 */
+	private $all_funding_sources;
+
+	/**
 	 * Assets constructor.
 	 *
 	 * @param string               $module_url The url of this module.
@@ -99,6 +106,7 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 	 * @param bool                 $final_review_enabled Whether the final review is enabled.
 	 * @param CancelView           $cancellation_view The cancellation view.
 	 * @param SessionHandler       $session_handler The Session handler.
+	 * @param array                $all_funding_sources All existing funding sources for PayPal buttons.
 	 */
 	public function __construct(
 		string $module_url,
@@ -109,7 +117,8 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 		PayPalGateway $gateway,
 		bool $final_review_enabled,
 		CancelView $cancellation_view,
-		SessionHandler $session_handler
+		SessionHandler $session_handler,
+		array $all_funding_sources
 	) {
 		$this->name                 = PayPalGateway::ID;
 		$this->module_url           = $module_url;
@@ -121,6 +130,7 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 		$this->final_review_enabled = $final_review_enabled;
 		$this->cancellation_view    = $cancellation_view;
 		$this->session_handler      = $session_handler;
+		$this->all_funding_sources  = $all_funding_sources;
 	}
 
 	/**
@@ -174,20 +184,29 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 			}
 		}
 
+		$disabled_funding_sources = explode( ',', $script_data['url_params']['disable-funding'] ) ?: array();
+		$funding_sources          = array_values(
+			array_diff(
+				array_keys( $this->all_funding_sources ),
+				$disabled_funding_sources
+			)
+		);
+
 		return array(
-			'id'                 => $this->gateway->id,
-			'title'              => $this->gateway->title,
-			'description'        => $this->gateway->description,
-			'enabled'            => $this->settings_status->is_smart_button_enabled_for_location( $script_data['context'] ),
-			'fundingSource'      => $this->session_handler->funding_source(),
-			'finalReviewEnabled' => $this->final_review_enabled,
-			'ajax'               => array(
+			'id'                    => $this->gateway->id,
+			'title'                 => $this->gateway->title,
+			'description'           => $this->gateway->description,
+			'enabled'               => $this->settings_status->is_smart_button_enabled_for_location( $script_data['context'] ),
+			'fundingSource'         => $this->session_handler->funding_source(),
+			'finalReviewEnabled'    => $this->final_review_enabled,
+			'enabledFundingSources' => $funding_sources,
+			'ajax'                  => array(
 				'update_shipping' => array(
 					'endpoint' => WC_AJAX::get_endpoint( UpdateShippingEndpoint::ENDPOINT ),
 					'nonce'    => wp_create_nonce( UpdateShippingEndpoint::nonce() ),
 				),
 			),
-			'scriptData'         => $script_data,
+			'scriptData'            => $script_data,
 		);
 	}
 }

@@ -52,6 +52,12 @@ export const loadPaypalScript = (config, onLoaded) => {
     loadScript(scriptOptions).then(callback);
 }
 
+export const loadPaypalScriptPromise = (config) => {
+    return new Promise((resolve, reject) => {
+        loadPaypalScript(config, resolve)
+    })
+}
+
 export const loadPaypalJsScript = (options, buttons, container) => {
     loadScript(options).then((paypal) => {
         paypal.Buttons(buttons).render(container);

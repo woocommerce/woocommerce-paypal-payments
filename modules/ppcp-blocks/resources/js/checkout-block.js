@@ -1,7 +1,9 @@
 import {useEffect, useState} from '@wordpress/element';
 import {registerExpressPaymentMethod, registerPaymentMethod} from '@woocommerce/blocks-registry';
 import {mergeWcAddress, paypalAddressToWc, paypalOrderToWcAddresses} from "./Helper/Address";
-import {loadPaypalScript} from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading'
+import {
+    loadPaypalScriptPromise
+} from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading'
 import buttonModuleWatcher from "../../../ppcp-button/resources/js/modules/ButtonModuleWatcher";
 
 const config = wc.wcSettings.getSetting('ppcp-gateway_data');
@@ -18,6 +20,7 @@ const PayPalComponent = ({
                              activePaymentMethod,
                              shippingData,
                              isEditing,
+                             fundingSource,
 }) => {
     const {onPaymentSetup, onCheckoutFail, onCheckoutValidation} = eventRegistration;
     const {responseTypes} = emitResponse;
@@ -39,24 +42,6 @@ const PayPalComponent = ({
         // this useEffect should run only once, but adding this in case of some kind of full re-rendering
         window.ppcpContinuationFilled = true;
     }, [])
-
-    const [loaded, setLoaded] = useState(false);
-    useEffect(() => {
-        if (!loaded) {
-            loadPaypalScript(config.scriptData, () => {
-                setLoaded(true);
-
-                buttonModuleWatcher.registerContextBootstrap(config.scriptData.context, {
-                    createOrder: () => {
-                        return createOrder();
-                    },
-                    onApprove: (data, actions) => {
-                        return handleApprove(data, actions);
-                    },
-                });
-            });
-        }
-    }, [loaded]);
 
     const createOrder = async () => {
         try {
@@ -296,15 +281,12 @@ const PayPalComponent = ({
         )
     }
 
-    if (!loaded) {
-        return null;
-    }
-
     const PayPalButton = window.paypal.Buttons.driver("react", { React, ReactDOM });
 
     return (
         <PayPalButton
-            style={config.scriptData.button.style}
+            fundingSource={fundingSource}
+            style={{color: fundingSource === 'paypal' || fundingSource === 'paylater' ? 'gold' : null, height:48, layout: 'horizontal'}}
             onClick={handleClick}
             onCancel={onClose}
             onError={onClose}
@@ -315,6 +297,18 @@ const PayPalComponent = ({
     );
 }
 
+const paypalScriptPromise = loadPaypalScriptPromise(config.scriptData);
+paypalScriptPromise.then(() => {
+    buttonModuleWatcher.registerContextBootstrap(config.scriptData.context, {
+        createOrder: () => {
+            return createOrder();
+        },
+        onApprove: (data, actions) => {
+            return handleApprove(data, actions);
+        },
+    });
+})
+
 const features = ['products'];
 let registerMethod = registerExpressPaymentMethod;
 if (config.scriptData.continuation) {
@@ -322,14 +316,20 @@ if (config.scriptData.continuation) {
     registerMethod = registerPaymentMethod;
 }
 
-registerMethod({
-    name: config.id,
-    label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
-    content: <PayPalComponent isEditing={false}/>,
-    edit: <PayPalComponent isEditing={true}/>,
-    ariaLabel: config.title,
-    canMakePayment: () => config.enabled,
-    supports: {
-        features: features,
-    },
-});
+for (const fundingSource of ['paypal', ...config.enabledFundingSources]) {
+    registerMethod({
+        name: fundingSource === 'paypal' ? config.id : `${config.id}-${fundingSource}`,
+        label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
+        content: <PayPalComponent isEditing={false} fundingSource={fundingSource}/>,
+        edit: <PayPalComponent isEditing={true}/>,
+        ariaLabel: config.title,
+        canMakePayment: async () => {
+            await paypalScriptPromise;
+
+            return paypal.Buttons({fundingSource}).isEligible();
+        },
+        supports: {
+            features: features,
+        },
+    });
+}

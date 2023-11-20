@@ -56,9 +56,8 @@ const GooglePayComponent = () => {
 }
 
 const features = ['products'];
-let registerMethod = registerExpressPaymentMethod;
 
-registerMethod({
+registerExpressPaymentMethod({
     name: buttonData.id,
     label: <div dangerouslySetInnerHTML={{__html:  buttonData.title}}/>,
     content: <GooglePayComponent isEditing={false}/>,
