@@ -1379,7 +1379,9 @@ return array(
 		);
 	},
 	'wcgateway.settings.pay-later.default-messaging-locations' => static function( ContainerInterface $container ): array {
-		return array_keys( $container->get( 'wcgateway.settings.pay-later.messaging-locations' ) );
+		$locations = $container->get( 'wcgateway.settings.pay-later.messaging-locations' );
+		unset( $locations['home'] );
+		return array_keys( $locations );
 	},
 	'wcgateway.settings.pay-later.button-locations'        => static function( ContainerInterface $container ): array {
 		$settings = $container->get( 'wcgateway.settings' );

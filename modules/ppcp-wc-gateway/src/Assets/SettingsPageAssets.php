@@ -184,7 +184,7 @@ class SettingsPageAssets {
 		}
 
 		$screen = get_current_screen();
-		if ( $screen->id !== 'woocommerce_page_wc-settings' ) {
+		if ( ! $screen || $screen->id !== 'woocommerce_page_wc-settings' ) {
 			return false;
 		}
 
