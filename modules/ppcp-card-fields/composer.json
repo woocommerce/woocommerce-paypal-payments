@@ -1,0 +1,17 @@
+{
+    "name": "woocommerce/ppcp-card-fields",
+    "type": "dhii-mod",
+    "description": "Advanced Checkout Card Fields module",
+    "license": "GPL-2.0",
+    "require": {
+        "php": "^7.2 | ^8.0",
+        "dhii/module-interface": "^0.3.0-alpha1"
+    },
+    "autoload": {
+        "psr-4": {
+            "WooCommerce\\PayPalCommerce\\CardFields\\": "src"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
