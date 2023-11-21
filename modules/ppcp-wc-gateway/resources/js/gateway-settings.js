@@ -77,7 +77,8 @@ document.addEventListener(
 
         function createButtonPreview(settingsCallback) {
             const render = (settings) => {
-                const wrapper = document.querySelector(settings.button.wrapper);
+                const wrapperSelector = Object.values(settings.separate_buttons).length > 0 ? Object.values(settings.separate_buttons)[0].wrapper : settings.button.wrapper;
+                const wrapper = document.querySelector(wrapperSelector);
                 if (!wrapper) {
                     return;
                 }
@@ -96,6 +97,11 @@ document.addEventListener(
             renderPreview(settingsCallback, render);
         }
 
+        function currentTabId() {
+            const params = new URLSearchParams(location.search);
+            return params.has('ppcp-tab') ? params.get('ppcp-tab') : params.get('section');
+        }
+
         function shouldShowPayLaterButton() {
             const payLaterButtonLocations = document.querySelector('[name="ppcp[pay_later_button_locations][]"]');
 
@@ -104,6 +110,14 @@ document.addEventListener(
             }
 
             return payLaterButtonInput.checked && payLaterButtonLocations.selectedOptions.length > 0
+        }
+
+        function shouldDisableCardButton() {
+            if (currentTabId() === 'ppcp-card-button-gateway') {
+                return false;
+            }
+
+            return PayPalCommerceGatewaySettings.is_acdc_enabled || jQuery('#ppcp-allow_card_button_gateway').is(':checked');
         }
 
         function getPaypalScriptSettings() {
@@ -130,6 +144,10 @@ document.addEventListener(
                 disabledSources = disabledSources.concat('credit')
             }
 
+            if (shouldDisableCardButton()) {
+                disabledSources = disabledSources.concat('card');
+            }
+
             if (disabledSources?.length) {
                 settings['disable-funding'] = disabledSources;
             }
@@ -154,7 +172,7 @@ document.addEventListener(
                 .catch((error) => console.error('failed to load the PayPal JS SDK script', error));
         }
 
-        function getButtonSettings(wrapperSelector, fields) {
+        function getButtonSettings(wrapperSelector, fields, apm = null) {
             const layoutElement = jQuery(fields['layout']);
             const layout = (layoutElement.length && layoutElement.is(':visible')) ? layoutElement.val() : 'vertical';
             const style = {
@@ -167,13 +185,24 @@ document.addEventListener(
             if ('height' in fields) {
                 style['height'] = parseInt(jQuery(fields['height']).val());
             }
-            return {
+            if ('poweredby_tagline' in fields) {
+                style['layout'] = jQuery(fields['poweredby_tagline']).is(':checked') ? 'vertical' : 'horizontal';
+            }
+            const settings = {
                 'button': {
                     'wrapper': wrapperSelector,
                     'style': style,
                 },
                 'separate_buttons': {},
             };
+            if (apm) {
+                settings.separate_buttons[apm] = {
+                    'wrapper': wrapperSelector,
+                    'style': style,
+                };
+                settings.button.wrapper = null;
+            }
+            return settings;
         }
 
         function createMessagesPreview(settingsCallback) {
@@ -316,6 +345,13 @@ document.addEventListener(
                 });
 
                 createButtonPreview(() => getButtonDefaultSettings('#ppcpPayLaterButtonPreview'));
+
+                const apmFieldPrefix = '#ppcp-card_button_';
+                createButtonPreview(() => getButtonSettings('#ppcpCardButtonPreview', {
+                    'color': apmFieldPrefix + 'color',
+                    'shape': apmFieldPrefix + 'shape',
+                    'poweredby_tagline': apmFieldPrefix + 'poweredby_tagline',
+                }, 'card'));
             });
         }
     }
