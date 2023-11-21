@@ -185,7 +185,8 @@ class WCGatewayModule implements ModuleInterface {
 				$settings_status->is_pay_later_button_enabled(),
 				$settings->has( 'disable_funding' ) ? $settings->get( 'disable_funding' ) : array(),
 				$c->get( 'wcgateway.settings.funding-sources' ),
-				$c->get( 'wcgateway.is-ppcp-settings-page' )
+				$c->get( 'wcgateway.is-ppcp-settings-page' ),
+				$settings->has( 'dcc_enabled' ) && $settings->get( 'dcc_enabled' )
 			);
 			$assets->register_assets();
 		}
