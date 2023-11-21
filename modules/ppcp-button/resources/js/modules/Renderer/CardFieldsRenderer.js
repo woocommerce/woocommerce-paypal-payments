@@ -150,6 +150,9 @@ class CardFieldsRenderer {
 
         return styles;
     }
+
+    disableFields() {}
+    enableFields() {}
 }
 
 export default CardFieldsRenderer;
