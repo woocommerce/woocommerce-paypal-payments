@@ -40,6 +40,10 @@ class GooglepayButton {
             return;
         }
 
+        if (!this.contextHandler.validateContext()) {
+            return;
+        }
+
         this.googlePayConfig = config;
         this.allowedPaymentMethods = config.allowedPaymentMethods;
         this.baseCardPaymentMethod = this.allowedPaymentMethods[0];

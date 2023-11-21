@@ -13,9 +13,21 @@ namespace WooCommerce\PayPalCommerce\Applepay\Assets;
  * Class PropertiesDictionary
  */
 class PropertiesDictionary {
-	public const ALLOWED_USER_AGENTS = array( 'Safari', 'Macintosh', 'iPhone', 'iPad', 'iPod' );
+	public const DISALLOWED_USER_AGENTS = array(
+		'Chrome/',
+		'CriOS/', // Chrome on iOS.
+		'Firefox/',
+		'OPR/', // Opera.
+		'Edg/', // Edge.
+	);
+	public const ALLOWED_USER_BROWSERS  = array( 'Safari' );
+	public const ALLOWED_USER_DEVICES   = array( 'Macintosh', 'iPhone', 'iPad', 'iPod' );
 
 	public const BILLING_CONTACT_INVALID = 'billing Contact Invalid';
+
+	public const BILLING_DATA_MODE_USE_WC       = 'use_wc';
+	public const BILLING_DATA_MODE_USE_APPLEPAY = 'use_applepay';
+	public const BILLING_DATA_MODE_DEFAULT      = self::BILLING_DATA_MODE_USE_WC;
 
 	public const CREATE_ORDER_SINGLE_PROD_REQUIRED_FIELDS =
 		array(
@@ -184,6 +196,18 @@ class PropertiesDictionary {
 			'zh-CN' => __( 'Chinese (Simplified)', 'woocommerce-paypal-payments' ),
 			'zh-HK' => __( 'Chinese (Hong Kong)', 'woocommerce-paypal-payments' ),
 			'zh-TW' => __( 'Chinese (Traditional)', 'woocommerce-paypal-payments' ),
+		);
+	}
+
+	/**
+	 * Returns the possible list of billing data modes.
+	 *
+	 * @return array
+	 */
+	public static function billing_data_modes(): array {
+		return array(
+			self::BILLING_DATA_MODE_USE_WC       => __( 'Use WC checkout form data (do not show shipping address fields)', 'woocommerce-paypal-payments' ),
+			self::BILLING_DATA_MODE_USE_APPLEPAY => __( 'Do not use WC checkout form data (request billing and shipping addresses on Apple Pay)', 'woocommerce-paypal-payments' ),
 		);
 	}
 }

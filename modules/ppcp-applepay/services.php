@@ -93,11 +93,29 @@ return array(
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		$user_agent = wp_unslash( $_SERVER['HTTP_USER_AGENT'] ?? '' );
 		if ( $user_agent ) {
-			foreach ( PropertiesDictionary::ALLOWED_USER_AGENTS as $allowed_agent ) {
-				if ( strpos( $user_agent, $allowed_agent ) !== false ) {
-					return true;
+			foreach ( PropertiesDictionary::DISALLOWED_USER_AGENTS as $disallowed_agent ) {
+				if ( strpos( $user_agent, $disallowed_agent ) !== false ) {
+					return false;
 				}
 			}
+
+			$browser_allowed = false;
+			foreach ( PropertiesDictionary::ALLOWED_USER_BROWSERS as $allowed_browser ) {
+				if ( strpos( $user_agent, $allowed_browser ) !== false ) {
+					$browser_allowed = true;
+					break;
+				}
+			}
+
+			$device_allowed = false;
+			foreach ( PropertiesDictionary::ALLOWED_USER_DEVICES as $allowed_devices ) {
+				if ( strpos( $user_agent, $allowed_devices ) !== false ) {
+					$device_allowed = true;
+					break;
+				}
+			}
+
+			return $browser_allowed && $device_allowed;
 		}
 		return false;
 	},
