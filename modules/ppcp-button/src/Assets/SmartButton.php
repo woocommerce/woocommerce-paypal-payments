@@ -973,6 +973,7 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 			'subscription_plan_id'                    => $this->subscription_helper->paypal_subscription_id(),
 			'variable_paypal_subscription_variations' => $this->subscription_helper->variable_paypal_subscription_variations(),
 			'subscription_product_allowed'            => $this->subscription_helper->checkout_subscription_product_allowed(),
+			'locations_with_subscription_product'     => $this->subscription_helper->locations_with_subscription_product(),
 			'enforce_vault'                           => $this->has_subscriptions(),
 			'can_save_vault_token'                    => $this->can_save_vault_token(),
 			'is_free_trial_cart'                      => $is_free_trial_cart,
@@ -1006,8 +1007,9 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 					'id'      => CardButtonGateway::ID,
 					'wrapper' => '#ppc-button-' . CardButtonGateway::ID,
 					'style'   => array(
-						'shape' => $this->style_for_context( 'shape', $this->context() ),
-						// TODO: color black, white from the gateway settings.
+						'shape'  => $this->style_for_apm( 'shape', 'card' ),
+						'color'  => $this->style_for_apm( 'color', 'card', 'black' ),
+						'layout' => $this->style_for_apm( 'poweredby_tagline', 'card', false ) === $this->normalize_style_value( true ) ? 'vertical' : 'horizontal',
 					),
 				),
 			),
@@ -1341,9 +1343,9 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 	}
 
 	/**
-	 * Determines the style for a given indicator in a given context.
+	 * Determines the style for a given property in a given context.
 	 *
-	 * @param string $style The style.
+	 * @param string $style The name of the style property.
 	 * @param string $context The context.
 	 *
 	 * @return string
@@ -1366,13 +1368,46 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 			$context = 'general';
 		}
 
-		$value = isset( $defaults[ $style ] ) ?
-			$defaults[ $style ] : '';
-		$value = $this->settings->has( 'button_' . $style ) ?
-			$this->settings->get( 'button_' . $style ) : $value;
-		$value = $this->settings->has( 'button_' . $context . '_' . $style ) ?
-			$this->settings->get( 'button_' . $context . '_' . $style ) : $value;
+		return $this->get_style_value( "button_{$context}_${style}" )
+			?? $this->get_style_value( "button_${style}" )
+			?? $this->normalize_style_value( $defaults[ $style ] ?? '' );
+	}
 
+	/**
+	 * Determines the style for a given property in a given APM.
+	 *
+	 * @param string $style The name of the style property.
+	 * @param string $apm The APM name, such as 'card'.
+	 * @param ?mixed $default The default value.
+	 *
+	 * @return string
+	 */
+	private function style_for_apm( string $style, string $apm, $default = null ): string {
+		return $this->get_style_value( "${apm}_button_${style}" )
+			?? ( $default ? $this->normalize_style_value( $default ) : null )
+			?? $this->style_for_context( $style, 'checkout' );
+	}
+
+	/**
+	 * Returns the style property value or null.
+	 *
+	 * @param string $key The style property key in the settings.
+	 * @return string|null
+	 */
+	private function get_style_value( string $key ): ?string {
+		if ( ! $this->settings->has( $key ) ) {
+			return null;
+		}
+		return $this->normalize_style_value( $this->settings->get( $key ) );
+	}
+
+	/**
+	 * Converts the style property value to string.
+	 *
+	 * @param mixed $value The style property value.
+	 * @return string
+	 */
+	private function normalize_style_value( $value ): string {
 		if ( is_bool( $value ) ) {
 			$value = $value ? 'true' : 'false';
 		}

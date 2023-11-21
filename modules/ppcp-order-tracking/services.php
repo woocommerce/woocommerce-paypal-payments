@@ -21,16 +21,16 @@ use WooCommerce\PayPalCommerce\OrderTracking\Assets\OrderEditPageAssets;
 use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
 
 return array(
-	'order-tracking.assets'                    => function( ContainerInterface $container ) : OrderEditPageAssets {
+	'order-tracking.assets'                           => function( ContainerInterface $container ) : OrderEditPageAssets {
 		return new OrderEditPageAssets(
 			$container->get( 'order-tracking.module.url' ),
 			$container->get( 'ppcp.asset-version' )
 		);
 	},
-	'order-tracking.shipment.factory'          => static function ( ContainerInterface $container ) : ShipmentFactoryInterface {
+	'order-tracking.shipment.factory'                 => static function ( ContainerInterface $container ) : ShipmentFactoryInterface {
 		return new ShipmentFactory();
 	},
-	'order-tracking.endpoint.controller'       => static function ( ContainerInterface $container ) : OrderTrackingEndpoint {
+	'order-tracking.endpoint.controller'              => static function ( ContainerInterface $container ) : OrderTrackingEndpoint {
 		return new OrderTrackingEndpoint(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
@@ -38,10 +38,10 @@ return array(
 			$container->get( 'button.request-data' ),
 			$container->get( 'order-tracking.shipment.factory' ),
 			$container->get( 'order-tracking.allowed-shipping-statuses' ),
-			$container->get( 'order-tracking.is-merchant-country-us' )
+			$container->get( 'order-tracking.should-use-second-version-of-api' )
 		);
 	},
-	'order-tracking.module.url'                => static function ( ContainerInterface $container ): string {
+	'order-tracking.module.url'                       => static function ( ContainerInterface $container ): string {
 		/**
 		 * The path cannot be false.
 		 *
@@ -52,15 +52,15 @@ return array(
 			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
 		);
 	},
-	'order-tracking.meta-box.renderer'         => static function ( ContainerInterface $container ): MetaBoxRenderer {
+	'order-tracking.meta-box.renderer'                => static function ( ContainerInterface $container ): MetaBoxRenderer {
 		return new MetaBoxRenderer(
 			$container->get( 'order-tracking.allowed-shipping-statuses' ),
 			$container->get( 'order-tracking.available-carriers' ),
 			$container->get( 'order-tracking.endpoint.controller' ),
-			$container->get( 'order-tracking.is-merchant-country-us' )
+			$container->get( 'order-tracking.should-use-second-version-of-api' )
 		);
 	},
-	'order-tracking.allowed-shipping-statuses' => static function ( ContainerInterface $container ): array {
+	'order-tracking.allowed-shipping-statuses'        => static function ( ContainerInterface $container ): array {
 		return (array) apply_filters(
 			'woocommerce_paypal_payments_tracking_statuses',
 			array(
@@ -71,10 +71,10 @@ return array(
 			)
 		);
 	},
-	'order-tracking.allowed-carriers'          => static function ( ContainerInterface $container ): array {
+	'order-tracking.allowed-carriers'                 => static function ( ContainerInterface $container ): array {
 		return require __DIR__ . '/carriers.php';
 	},
-	'order-tracking.available-carriers'        => static function ( ContainerInterface $container ): array {
+	'order-tracking.available-carriers'               => static function ( ContainerInterface $container ): array {
 		$api_shop_country = $container->get( 'api.shop.country' );
 		$allowed_carriers = $container->get( 'order-tracking.allowed-carriers' );
 		$selected_country_carriers = $allowed_carriers[ $api_shop_country ] ?? array();
@@ -90,10 +90,26 @@ return array(
 			),
 		);
 	},
-	'order-tracking.is-merchant-country-us'    => static function ( ContainerInterface $container ): bool {
-		return $container->get( 'api.shop.country' ) === 'US';
+
+	/**
+	 * The list of country codes, for which the 2nd version of PayPal tracking API is supported.
+	 */
+	'order-tracking.second-version-api-supported-countries' => static function (): array {
+		/**
+		 * Returns codes of countries, for which the 2nd version of PayPal tracking API is supported.
+		 */
+		return apply_filters(
+			'woocommerce_paypal_payments_supported_country_codes_for_second_version_of_tracking_api',
+			array( 'US', 'AU', 'CA', 'FR', 'DE', 'IT', 'ES' )
+		);
 	},
-	'order-tracking.integrations'              => static function ( ContainerInterface $container ): array {
+	'order-tracking.should-use-second-version-of-api' => static function ( ContainerInterface $container ): bool {
+		$supported_county_codes = $container->get( 'order-tracking.second-version-api-supported-countries' );
+		$selected_country_code = $container->get( 'api.shop.country' );
+
+		return in_array( $selected_country_code, $supported_county_codes, true );
+	},
+	'order-tracking.integrations'                     => static function ( ContainerInterface $container ): array {
 		$shipment_factory = $container->get( 'order-tracking.shipment.factory' );
 		$logger           = $container->get( 'woocommerce.logger.woocommerce' );
 		$endpoint         = $container->get( 'order-tracking.endpoint.controller' );

@@ -9,18 +9,27 @@ class BaseHandler {
         this.ppcpConfig = ppcpConfig;
     }
 
+    validateContext() {
+        if ( this.ppcpConfig?.locations_with_subscription_product?.cart ) {
+            return false;
+        }
+        return true;
+    }
+
     shippingAllowed() {
         return true;
     }
 
     transactionInfo() {
         return new Promise((resolve, reject) => {
+            const endpoint = this.ppcpConfig.ajax.cart_script_params.endpoint;
+            const separator = (endpoint.indexOf('?') !== -1) ? '&' : '?';
 
             fetch(
-                this.ppcpConfig.ajax.cart_script_params.endpoint,
+                endpoint + separator + 'shipping=1',
                 {
                     method: 'GET',
-                    credentials: 'same-origin',
+                    credentials: 'same-origin'
                 }
             )
                 .then(result => result.json())
@@ -36,7 +45,9 @@ class BaseHandler {
                         countryCode: data.country_code,
                         currencyCode: data.currency_code,
                         totalPriceStatus: 'FINAL',
-                        totalPrice: data.total_str
+                        totalPrice: data.total_str,
+                        chosenShippingMethods: data.chosen_shipping_methods || null,
+                        shippingPackages: data.shipping_packages || null,
                     });
 
                 });
