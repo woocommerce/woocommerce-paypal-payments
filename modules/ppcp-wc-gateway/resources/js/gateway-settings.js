@@ -314,7 +314,7 @@ document.addEventListener(
 
                 paypalButtonLocations.forEach((location) => {
                     const inputNamePrefix = location === 'checkout' ? '#ppcp-button' : '#ppcp-button_' + location;
-                    let wrapperName = location.charAt(0).toUpperCase() + location.slice(1);
+                    const wrapperName = location.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('');
                     const fields = {
                         'color': inputNamePrefix + '_color',
                         'shape': inputNamePrefix + '_shape',
@@ -325,7 +325,6 @@ document.addEventListener(
 
                     if (location === 'mini-cart') {
                         fields['height'] = inputNamePrefix + '_height';
-                        wrapperName = 'MiniCart';
                     }
 
                     createButtonPreview(() => getButtonSettings('#ppcp' + wrapperName + 'ButtonPreview', fields));
