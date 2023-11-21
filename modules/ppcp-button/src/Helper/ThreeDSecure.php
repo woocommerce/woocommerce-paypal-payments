@@ -62,19 +62,28 @@ class ThreeDSecure {
 			return self::NO_DECISION;
 		}
 
-		$result = $payment_source->properties()->authentication_result;
-		$this->logger->info( '3DS authentication result: ' . wc_print_r( $result->to_array(), true ) );
+		$authentication_result = $payment_source->properties()->authentication_result ?? null;
+		if ( $authentication_result ) {
+			$result = new AuthResult(
+				$authentication_result->liability_shift ?? '',
+				$authentication_result->three_d_secure->enrollment_status ?? '',
+				$authentication_result->three_d_secure->authentication_status ?? ''
+			);
 
-		if ( $result->liability_shift() === AuthResult::LIABILITY_SHIFT_POSSIBLE ) {
-			return self::PROCCEED;
+			$this->logger->info( '3DS authentication result: ' . wc_print_r( $result->to_array(), true ) );
+
+			if ( $result->liability_shift() === AuthResult::LIABILITY_SHIFT_POSSIBLE ) {
+				return self::PROCCEED;
+			}
+
+			if ( $result->liability_shift() === AuthResult::LIABILITY_SHIFT_UNKNOWN ) {
+				return self::RETRY;
+			}
+			if ( $result->liability_shift() === AuthResult::LIABILITY_SHIFT_NO ) {
+				return $this->no_liability_shift( $result );
+			}
 		}
 
-		if ( $result->liability_shift() === AuthResult::LIABILITY_SHIFT_UNKNOWN ) {
-			return self::RETRY;
-		}
-		if ( $result->liability_shift() === AuthResult::LIABILITY_SHIFT_NO ) {
-			return $this->no_liability_shift( $result );
-		}
 		return self::NO_DECISION;
 	}
 
