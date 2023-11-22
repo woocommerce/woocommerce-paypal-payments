@@ -279,11 +279,12 @@ document.addEventListener(
         });
 
         let bootstrapped = false;
+        let failed = false;
 
         hideOrderButtonIfPpcpGateway();
 
         jQuery(document.body).on('updated_checkout payment_method_selected', () => {
-            if (bootstrapped) {
+            if (bootstrapped || failed) {
                 return;
             }
 
@@ -294,6 +295,12 @@ document.addEventListener(
             bootstrapped = true;
 
             bootstrap();
+        }, () => {
+            failed = true;
+
+            setVisibleByClass(ORDER_BUTTON_SELECTOR, true, 'ppcp-hidden');
+            buttonsSpinner.unblock();
+            cardsSpinner.unblock();
         });
     },
 );
