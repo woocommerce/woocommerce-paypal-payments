@@ -168,6 +168,10 @@ class GooglepayButton {
         this.waitForWrapper(wrapper, () => {
             jQuery(wrapper).addClass('ppcp-button-' + ppcpStyle.shape);
 
+            if (ppcpStyle.height) {
+                jQuery(wrapper).css('height', `${ppcpStyle.height}px`)
+            }
+
             const button =
                 this.paymentsClient.createButton({
                     onClick: this.onButtonClick.bind(this),
