@@ -20,12 +20,11 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
-use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenFactory;
-use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenHelper;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 /**
@@ -112,16 +111,32 @@ class SavePaymentMethodsModule implements ModuleInterface {
 					}
 				}
 
-				$data['payment_source'] = array(
-					'paypal' => array(
-						'attributes' => array(
-							'vault' => array(
-								'store_in_vault' => 'ON_SUCCESS',
-								'usage_type'     => 'MERCHANT',
+				$payment_method = $data['payment_method'] ?? '';
+
+				if ( $payment_method === CreditCardGateway::ID ) {
+					$data['payment_source'] = array(
+						'card' => array(
+							'attributes' => array(
+								'vault' => array(
+									'store_in_vault' => 'ON_SUCCESS',
+								),
 							),
 						),
-					),
-				);
+					);
+				}
+
+				if ( $payment_method === PayPalGateway::ID ) {
+					$data['payment_source'] = array(
+						'paypal' => array(
+							'attributes' => array(
+								'vault' => array(
+									'store_in_vault' => 'ON_SUCCESS',
+									'usage_type'     => 'MERCHANT',
+								),
+							),
+						),
+					);
+				}
 
 				return $data;
 			}
@@ -137,23 +152,31 @@ class SavePaymentMethodsModule implements ModuleInterface {
 				if ( $payment_vault_attributes ) {
 					update_user_meta( $wc_order->get_customer_id(), '_ppcp_target_customer_id', $payment_vault_attributes->customer->id );
 
-					$payment_token_helper = $c->get( 'vaulting.payment-token-helper' );
-					assert( $payment_token_helper instanceof PaymentTokenHelper );
-
-					$payment_token_factory = $c->get( 'vaulting.payment-token-factory' );
-					assert( $payment_token_factory instanceof PaymentTokenFactory );
-
-					$logger = $c->get( 'woocommerce.logger.woocommerce' );
-					assert( $logger instanceof LoggerInterface );
-
 					$wc_payment_tokens = $c->get( 'save-payment-methods.wc-payment-tokens' );
 					assert( $wc_payment_tokens instanceof WooCommercePaymentTokens );
 
-					$wc_payment_tokens->create_payment_token_paypal(
-						$wc_order->get_customer_id(),
-						$payment_vault_attributes->id,
-						$payment_source->properties()->email_address ?? ''
-					);
+					if ( $wc_order->get_payment_method() === CreditCardGateway::ID ) {
+						$token = new \WC_Payment_Token_CC();
+						$token->set_token( $payment_vault_attributes->id );
+						$token->set_user_id( $wc_order->get_customer_id() );
+						$token->set_gateway_id( CreditCardGateway::ID );
+
+						$token->set_last4( $payment_source->properties()->last_digits ?? '' );
+						$expiry = explode( '-', $payment_source->properties()->expiry ?? '' );
+						$token->set_expiry_year( $expiry[0] ?? '' );
+						$token->set_expiry_month( $expiry[1] ?? '' );
+						$token->set_card_type( $payment_source->properties()->brand ?? '' );
+
+						$token->save();
+					}
+
+					if ( $wc_order->get_payment_method() === PayPalGateway::ID ) {
+						$wc_payment_tokens->create_payment_token_paypal(
+							$wc_order->get_customer_id(),
+							$payment_vault_attributes->id,
+							$payment_source->properties()->email_address ?? ''
+						);
+					}
 				}
 			},
 			10,
@@ -274,6 +297,20 @@ class SavePaymentMethodsModule implements ModuleInterface {
 
 					$logger->error( $error );
 				}
+			}
+		);
+
+		add_filter(
+			'woocommerce_paypal_payments_credit_card_gateway_vault_supports',
+			function( array $supports ) use ( $c ): array {
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof ContainerInterface );
+
+				if ( $settings->has( 'vault_enabled_dcc' ) && $settings->get( 'vault_enabled_dcc' ) ) {
+					$supports[] = 'tokenization';
+				}
+
+				return $supports;
 			}
 		);
 	}

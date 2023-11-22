@@ -180,6 +180,7 @@ class OrderEndpoint {
 	 * @param PaymentToken|null $payment_token The payment token.
 	 * @param string            $paypal_request_id The PayPal request id.
 	 * @param string            $user_action The user action.
+	 * @param string            $payment_method WC payment method.
 	 *
 	 * @return Order
 	 * @throws RuntimeException If the request fails.
@@ -190,7 +191,8 @@ class OrderEndpoint {
 		Payer $payer = null,
 		PaymentToken $payment_token = null,
 		string $paypal_request_id = '',
-		string $user_action = ApplicationContext::USER_ACTION_CONTINUE
+		string $user_action = ApplicationContext::USER_ACTION_CONTINUE,
+		string $payment_method = ''
 	): Order {
 		$bearer = $this->bearer->bearer();
 		$data   = array(
@@ -216,6 +218,9 @@ class OrderEndpoint {
 		}
 		if ( $payment_token ) {
 			$data['payment_source']['token'] = $payment_token->to_array();
+		}
+		if ( $payment_method ) {
+			$data['payment_method'] = $payment_method;
 		}
 
 		/**

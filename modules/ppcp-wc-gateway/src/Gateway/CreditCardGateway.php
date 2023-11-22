@@ -181,18 +181,25 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 			);
 
 			if ( $this->config->has( 'vault_enabled_dcc' ) && $this->config->get( 'vault_enabled_dcc' ) ) {
-				array_push(
+				$supports = apply_filters(
+					'woocommerce_paypal_payments_credit_card_gateway_vault_supports',
+					array(
+						'subscriptions',
+						'subscription_cancellation',
+						'subscription_suspension',
+						'subscription_reactivation',
+						'subscription_amount_changes',
+						'subscription_date_changes',
+						'subscription_payment_method_change',
+						'subscription_payment_method_change_customer',
+						'subscription_payment_method_change_admin',
+						'multiple_subscriptions',
+					)
+				);
+
+				$this->supports = array_merge(
 					$this->supports,
-					'subscriptions',
-					'subscription_cancellation',
-					'subscription_suspension',
-					'subscription_reactivation',
-					'subscription_amount_changes',
-					'subscription_date_changes',
-					'subscription_payment_method_change',
-					'subscription_payment_method_change_customer',
-					'subscription_payment_method_change_admin',
-					'multiple_subscriptions'
+					$supports
 				);
 			}
 		}

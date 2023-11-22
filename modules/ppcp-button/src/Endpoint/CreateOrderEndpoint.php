@@ -304,7 +304,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 			}
 
 			try {
-				$order = $this->create_paypal_order( $wc_order );
+				$order = $this->create_paypal_order( $wc_order, $payment_method );
 			} catch ( Exception $exception ) {
 				$this->logger->error( 'Order creation failed: ' . $exception->getMessage() );
 				throw $exception;
@@ -415,6 +415,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 * Creates the order in the PayPal, uses data from WC order if provided.
 	 *
 	 * @param \WC_Order|null $wc_order WC order to get data from.
+	 * @param string         $payment_method WC payment method.
 	 *
 	 * @return Order Created PayPal order.
 	 *
@@ -422,7 +423,7 @@ class CreateOrderEndpoint implements EndpointInterface {
 	 * @throws PayPalApiException If create order request fails.
 	 * phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber
 	 */
-	private function create_paypal_order( \WC_Order $wc_order = null ): Order {
+	private function create_paypal_order( \WC_Order $wc_order = null, string $payment_method = '' ): Order {
 		assert( $this->purchase_unit instanceof PurchaseUnit );
 
 		$funding_source = $this->parsed_request_data['funding_source'] ?? '';
@@ -464,7 +465,8 @@ class CreateOrderEndpoint implements EndpointInterface {
 				$payer,
 				null,
 				'',
-				$action
+				$action,
+				$payment_method
 			);
 		} catch ( PayPalApiException $exception ) {
 			// Looks like currently there is no proper way to validate the shipping address for PayPal,
