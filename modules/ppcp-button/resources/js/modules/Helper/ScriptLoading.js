@@ -7,10 +7,11 @@ import {keysToCamelCase} from "./Utils";
 // This component may be used by multiple modules. This assures that options are shared between all instances.
 let options = window.ppcpWidgetBuilder = window.ppcpWidgetBuilder || {
     isLoading: false,
-    onLoadedCallbacks: []
+    onLoadedCallbacks: [],
+    onErrorCallbacks: [],
 };
 
-export const loadPaypalScript = (config, onLoaded) => {
+export const loadPaypalScript = (config, onLoaded, onError = null) => {
     // If PayPal is already loaded call the onLoaded callback and return.
     if (typeof paypal !== 'undefined') {
         onLoaded();
@@ -19,12 +20,21 @@ export const loadPaypalScript = (config, onLoaded) => {
 
     // Add the onLoaded callback to the onLoadedCallbacks stack.
     options.onLoadedCallbacks.push(onLoaded);
+    if (onError) {
+        options.onErrorCallbacks.push(onError);
+    }
 
     // Return if it's still loading.
     if (options.isLoading) {
         return;
     }
     options.isLoading = true;
+
+    const resetState = () => {
+        options.isLoading = false;
+        options.onLoadedCallbacks = [];
+        options.onErrorCallbacks = [];
+    }
 
     // Callback to be called once the PayPal script is loaded.
     const callback = (paypal) => {
@@ -34,8 +44,14 @@ export const loadPaypalScript = (config, onLoaded) => {
             onLoadedCallback();
         }
 
-        options.isLoading = false;
-        options.onLoadedCallbacks = [];
+        resetState();
+    }
+    const errorCallback = (err) => {
+        for (const onErrorCallback of options.onErrorCallbacks) {
+            onErrorCallback(err);
+        }
+
+        resetState();
     }
 
     // Build the PayPal script options.
@@ -44,12 +60,20 @@ export const loadPaypalScript = (config, onLoaded) => {
 
     // Load PayPal script for special case with data-client-token
     if (config.data_client_id.set_attribute) {
-        dataClientIdAttributeHandler(scriptOptions, config.data_client_id, callback);
+        dataClientIdAttributeHandler(scriptOptions, config.data_client_id, callback, errorCallback);
         return;
     }
 
     // Load PayPal script
-    loadScript(scriptOptions).then(callback);
+    loadScript(scriptOptions)
+        .then(callback)
+        .catch(errorCallback);
+}
+
+export const loadPaypalScriptPromise = (config) => {
+    return new Promise((resolve, reject) => {
+        loadPaypalScript(config, resolve, reject)
+    });
 }
 
 export const loadPaypalJsScript = (options, buttons, container) => {
