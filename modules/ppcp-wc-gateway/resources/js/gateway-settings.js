@@ -310,7 +310,7 @@ document.addEventListener(
 
             loadPaypalScript(oldScriptSettings, () => {
                 const payLaterMessagingLocations = ['product', 'cart', 'checkout', 'shop', 'home', 'general'];
-                const paypalButtonLocations = ['product', 'cart', 'checkout', 'mini-cart', 'general'];
+                const paypalButtonLocations = ['product', 'cart', 'checkout', 'mini-cart', 'cart-block', 'checkout-block-express', 'general'];
 
                 paypalButtonLocations.forEach((location) => {
                     const inputNamePrefix = location === 'checkout' ? '#ppcp-button' : '#ppcp-button_' + location;
@@ -323,7 +323,7 @@ document.addEventListener(
                         'layout': inputNamePrefix + '_layout',
                     }
 
-                    if (location === 'mini-cart') {
+                    if (document.querySelector(inputNamePrefix + '_height')) {
                         fields['height'] = inputNamePrefix + '_height';
                     }
 

@@ -1003,6 +1003,9 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 						'shape'   => $this->style_for_context( 'shape', $this->context() ),
 						'label'   => $this->style_for_context( 'label', $this->context() ),
 						'tagline' => $this->style_for_context( 'tagline', $this->context() ),
+						'height'  => in_array( $this->context(), array( 'cart-block', 'checkout-block' ), true )
+							? $this->normalize_height( $this->style_for_context( 'height', $this->context(), 48 ), 40, 55 )
+							: null,
 					)
 				),
 			),
@@ -1351,8 +1354,9 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 	 * @return string|int
 	 */
 	private function style_for_context( string $style, string $context, $default = null ) {
-		// Use the cart/checkout styles for blocks.
-		$context = str_replace( '-block', '', $context );
+		if ( $context === 'checkout-block' ) {
+			$context = 'checkout-block-express';
+		}
 
 		$defaults = array(
 			'layout'  => 'vertical',
