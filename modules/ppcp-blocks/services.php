@@ -36,7 +36,8 @@ return array(
 			$container->get( 'session.cancellation.view' ),
 			$container->get( 'session.handler' ),
 			$container->get( 'wcgateway.use-place-order-button' ),
-			$container->get( 'wcgateway.place-order-button-text' )
+			$container->get( 'wcgateway.place-order-button-text' ),
+			$container->get( 'wcgateway.all-funding-sources' )
 		);
 	},
 	'blocks.settings.final_review_enabled' => static function ( ContainerInterface $container ): bool {

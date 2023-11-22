@@ -1,12 +1,19 @@
 import {useEffect, useState} from '@wordpress/element';
 import {registerExpressPaymentMethod, registerPaymentMethod} from '@woocommerce/blocks-registry';
 import {mergeWcAddress, paypalAddressToWc, paypalOrderToWcAddresses} from "./Helper/Address";
-import {loadPaypalScript} from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading'
+import {
+    loadPaypalScriptPromise
+} from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading'
+import {
+    normalizeStyleForFundingSource
+} from '../../../ppcp-button/resources/js/modules/Helper/Style'
 import buttonModuleWatcher from "../../../ppcp-button/resources/js/modules/ButtonModuleWatcher";
 
 const config = wc.wcSettings.getSetting('ppcp-gateway_data');
 
 window.ppcpFundingSource = config.fundingSource;
+
+let registeredContext = false;
 
 const PayPalComponent = ({
                              onClick,
@@ -18,6 +25,7 @@ const PayPalComponent = ({
                              activePaymentMethod,
                              shippingData,
                              isEditing,
+                             fundingSource,
 }) => {
     const {onPaymentSetup, onCheckoutFail, onCheckoutValidation} = eventRegistration;
     const {responseTypes} = emitResponse;
@@ -39,24 +47,6 @@ const PayPalComponent = ({
         // this useEffect should run only once, but adding this in case of some kind of full re-rendering
         window.ppcpContinuationFilled = true;
     }, [])
-
-    const [loaded, setLoaded] = useState(false);
-    useEffect(() => {
-        if (!loaded && !config.scriptData.continuation) {
-            loadPaypalScript(config.scriptData, () => {
-                setLoaded(true);
-
-                buttonModuleWatcher.registerContextBootstrap(config.scriptData.context, {
-                    createOrder: () => {
-                        return createOrder();
-                    },
-                    onApprove: (data, actions) => {
-                        return handleApprove(data, actions);
-                    },
-                });
-            });
-        }
-    }, [loaded]);
 
     const createOrder = async () => {
         try {
@@ -296,15 +286,26 @@ const PayPalComponent = ({
         )
     }
 
-    if (!loaded) {
-        return null;
+    if (!registeredContext) {
+        buttonModuleWatcher.registerContextBootstrap(config.scriptData.context, {
+            createOrder: () => {
+                return createOrder();
+            },
+            onApprove: (data, actions) => {
+                return handleApprove(data, actions);
+            },
+        });
+        registeredContext = true;
     }
+
+    const style = normalizeStyleForFundingSource(config.scriptData.button.style, fundingSource);
 
     const PayPalButton = window.paypal.Buttons.driver("react", { React, ReactDOM });
 
     return (
         <PayPalButton
-            style={config.scriptData.button.style}
+            fundingSource={fundingSource}
+            style={style}
             onClick={handleClick}
             onCancel={onClose}
             onError={onClose}
@@ -331,21 +332,37 @@ if (config.usePlaceOrder && !config.scriptData.continuation) {
         },
     });
 } else {
-    let registerMethod = registerExpressPaymentMethod;
     if (config.scriptData.continuation) {
-        features.push('ppcp_continuation');
-        registerMethod = registerPaymentMethod;
-    }
+        registerPaymentMethod({
+            name: config.id,
+            label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
+            content: <PayPalComponent isEditing={false}/>,
+            edit: <PayPalComponent isEditing={true}/>,
+            ariaLabel: config.title,
+            canMakePayment: () => true,
+            supports: {
+                features: [...features, 'ppcp_continuation'],
+            },
+        });
+    } else {
+        const paypalScriptPromise = loadPaypalScriptPromise(config.scriptData);
 
-    registerMethod({
-        name: config.id,
-        label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
-        content: <PayPalComponent isEditing={false}/>,
-        edit: <PayPalComponent isEditing={true}/>,
-        ariaLabel: config.title,
-        canMakePayment: () => config.enabled,
-        supports: {
-            features: features,
-        },
-    });
+        for (const fundingSource of ['paypal', ...config.enabledFundingSources]) {
+            registerExpressPaymentMethod({
+                name: fundingSource === 'paypal' ? config.id : `${config.id}-${fundingSource}`,
+                label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
+                content: <PayPalComponent isEditing={false} fundingSource={fundingSource}/>,
+                edit: <PayPalComponent isEditing={true}/>,
+                ariaLabel: config.title,
+                canMakePayment: async () => {
+                    await paypalScriptPromise;
+
+                    return paypal.Buttons({fundingSource}).isEligible();
+                },
+                supports: {
+                    features: features,
+                },
+            });
+        }
+    }
 }
