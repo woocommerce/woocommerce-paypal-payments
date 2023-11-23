@@ -9,7 +9,7 @@ document.addEventListener(
 
         const smartButtonLocationsSelector = '#field-smart_button_locations';
         const smartButtonLocationsSelect = smartButtonLocationsSelector + ' select';
-        const smartButtonSelectableLocations = ['product', 'cart', 'checkout', 'mini-cart'];
+        const smartButtonSelectableLocations = ['product', 'cart', 'checkout', 'mini-cart', 'cart-block', 'checkout-block-express'];
 
         const groupToggle = (selector, group) => {
             const toggleElement = document.querySelector(selector);
