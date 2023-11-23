@@ -260,7 +260,7 @@ return array(
 
 	'button.helper.three-d-secure'                => static function ( ContainerInterface $container ): ThreeDSecure {
 		return new ThreeDSecure(
-			$container->get( 'api.factory.card-authentication-result' ),
+			$container->get( 'api.factory.card-authentication-result-factory' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},

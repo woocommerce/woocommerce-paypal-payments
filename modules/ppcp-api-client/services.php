@@ -13,6 +13,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Authentication\UserIdToken;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentMethodTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\CardAuthenticationResult;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\CardAuthenticationResultFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
 use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingSubscriptions;
@@ -449,8 +450,8 @@ return array(
 			$container->get( 'api.factory.payment-preferences' )
 		);
 	},
-	'api.factory.card-authentication-result'    => static function( ContainerInterface $container ): CardAuthenticationResult {
-		return new CardAuthenticationResult();
+	'api.factory.card-authentication-result-factory'    => static function( ContainerInterface $container ): CardAuthenticationResultFactory {
+		return new CardAuthenticationResultFactory();
 	},
 	'api.helpers.dccapplies'                    => static function ( ContainerInterface $container ) : DccApplies {
 		return new DccApplies(
