@@ -219,14 +219,11 @@ class OrderEndpoint {
 		if ( $payment_token ) {
 			$data['payment_source']['token'] = $payment_token->to_array();
 		}
-		if ( $payment_method ) {
-			$data['payment_method'] = $payment_method;
-		}
 
 		/**
 		 * The filter can be used to modify the order creation request body data.
 		 */
-		$data = apply_filters( 'ppcp_create_order_request_body_data', $data );
+		$data = apply_filters( 'ppcp_create_order_request_body_data', $data, $payment_method );
 		$url  = trailingslashit( $this->host ) . 'v2/checkout/orders';
 		$args = array(
 			'method'  => 'POST',

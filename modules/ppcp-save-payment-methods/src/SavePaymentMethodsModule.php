@@ -89,7 +89,7 @@ class SavePaymentMethodsModule implements ModuleInterface {
 		// Adds attributes needed to save payment method.
 		add_filter(
 			'ppcp_create_order_request_body_data',
-			function( array $data ): array {
+			function( array $data, string $payment_method ): array {
 				// phpcs:ignore WordPress.Security.NonceVerification.Missing
 				$wc_order_action = wc_clean( wp_unslash( $_POST['wc_order_action'] ?? '' ) );
 				if ( $wc_order_action === 'wcs_process_renewal' ) {
@@ -111,8 +111,6 @@ class SavePaymentMethodsModule implements ModuleInterface {
 					}
 				}
 
-				$payment_method = $data['payment_method'] ?? '';
-
 				if ( $payment_method === CreditCardGateway::ID ) {
 					$data['payment_source'] = array(
 						'card' => array(
@@ -123,6 +121,13 @@ class SavePaymentMethodsModule implements ModuleInterface {
 							),
 						),
 					);
+
+					$target_customer_id = get_user_meta( get_current_user_id(), '_ppcp_target_customer_id', true );
+					if ( $target_customer_id ) {
+						$data['payment_source']['card']['attributes']['customer'] = array(
+							'id' => $target_customer_id,
+						);
+					}
 				}
 
 				if ( $payment_method === PayPalGateway::ID ) {
@@ -139,7 +144,9 @@ class SavePaymentMethodsModule implements ModuleInterface {
 				}
 
 				return $data;
-			}
+			},
+			10,
+			2
 		);
 
 		add_action(
