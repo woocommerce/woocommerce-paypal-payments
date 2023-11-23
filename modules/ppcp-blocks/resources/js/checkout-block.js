@@ -32,6 +32,8 @@ const PayPalComponent = ({
 
     const [paypalOrder, setPaypalOrder] = useState(null);
 
+    const methodId = fundingSource ? `${config.id}-${fundingSource}` : config.id;
+
     useEffect(() => {
         // fill the form if in continuation (for product or mini-cart buttons)
         if (!config.scriptData.continuation || !config.scriptData.continuation.order || window.ppcpContinuationFilled) {
@@ -223,7 +225,7 @@ const PayPalComponent = ({
     }
 
     useEffect(() => {
-        if (activePaymentMethod !== config.id) {
+        if (activePaymentMethod !== methodId) {
             return;
         }
 
@@ -259,7 +261,7 @@ const PayPalComponent = ({
     }, [onPaymentSetup, paypalOrder, activePaymentMethod]);
 
     useEffect(() => {
-        if (activePaymentMethod !== config.id) {
+        if (activePaymentMethod !== methodId) {
             return;
         }
         const unsubscribe = onCheckoutFail(({ processingResponse }) => {
@@ -349,7 +351,8 @@ if (config.usePlaceOrder && !config.scriptData.continuation) {
 
         for (const fundingSource of ['paypal', ...config.enabledFundingSources]) {
             registerExpressPaymentMethod({
-                name: fundingSource === 'paypal' ? config.id : `${config.id}-${fundingSource}`,
+                name: `${config.id}-${fundingSource}`,
+                paymentMethodId: config.id,
                 label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
                 content: <PayPalComponent isEditing={false} fundingSource={fundingSource}/>,
                 edit: <PayPalComponent isEditing={true}/>,

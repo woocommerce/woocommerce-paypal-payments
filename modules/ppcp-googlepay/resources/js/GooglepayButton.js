@@ -111,7 +111,7 @@ class GooglepayButton {
         }
 
         if (['cart-block', 'checkout-block'].indexOf(this.context) !== -1) {
-            config.ppcpButtonWrapper = '#express-payment-method-ppcp-gateway';
+            config.ppcpButtonWrapper = '#express-payment-method-ppcp-gateway-paypal';
         }
 
         return config;
