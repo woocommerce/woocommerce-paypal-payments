@@ -11,7 +11,8 @@
         "wikimedia/composer-merge-plugin": "^2.0",
         "wp-oop/wordpress-interface": "^0.1.0-alpha1",
         "dhii/versions": "^0.1.0-alpha1",
-        "symfony/polyfill-php80": "^1.19"
+        "symfony/polyfill-php80": "^1.19",
+        "inpsyde/modularity": "^1.7"
     },
     "require-dev": {
         "psr/container": "^1.0",
@@ -77,7 +78,8 @@
             "packages": [
                 "psr/container",
                 "dhii/containers",
-                "dhii/module-interface"
+                "dhii/module-interface",
+                "inpsyde/modularity"
             ],
             "delete_vendor_directories": true
         }
