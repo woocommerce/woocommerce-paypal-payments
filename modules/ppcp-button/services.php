@@ -259,8 +259,10 @@ return array(
 	},
 
 	'button.helper.three-d-secure'                => static function ( ContainerInterface $container ): ThreeDSecure {
-		$logger = $container->get( 'woocommerce.logger.woocommerce' );
-		return new ThreeDSecure( $logger );
+		return new ThreeDSecure(
+			$container->get( 'api.factory.card-authentication-result' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
 	},
 	'button.helper.messages-apply'                => static function ( ContainerInterface $container ): MessagesApply {
 		return new MessagesApply(

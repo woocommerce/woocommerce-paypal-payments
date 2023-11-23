@@ -12,7 +12,7 @@ namespace WooCommerce\PayPalCommerce\Button\Helper;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\CardAuthenticationResult as AuthResult;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\CardAuthenticationResultFactory;
 
 /**
  * Class ThreeDSecure
@@ -25,6 +25,13 @@ class ThreeDSecure {
 	const RETRY       = 3;
 
 	/**
+	 * Card authentication result factory.
+	 *
+	 * @var CardAuthenticationResultFactory
+	 */
+	private $card_authentication_result_factory;
+
+	/**
 	 * The logger.
 	 *
 	 * @var LoggerInterface
@@ -34,10 +41,15 @@ class ThreeDSecure {
 	/**
 	 * ThreeDSecure constructor.
 	 *
-	 * @param LoggerInterface $logger The logger.
+	 * @param CardAuthenticationResultFactory $card_authentication_result_factory Card authentication result factory.
+	 * @param LoggerInterface                 $logger The logger.
 	 */
-	public function __construct( LoggerInterface $logger ) {
-		$this->logger = $logger;
+	public function __construct(
+		CardAuthenticationResultFactory $card_authentication_result_factory,
+		LoggerInterface $logger
+	) {
+		$this->logger                             = $logger;
+		$this->card_authentication_result_factory = $card_authentication_result_factory;
 	}
 
 	/**
@@ -64,11 +76,7 @@ class ThreeDSecure {
 
 		$authentication_result = $payment_source->properties()->authentication_result ?? null;
 		if ( $authentication_result ) {
-			$result = new AuthResult(
-				$authentication_result->liability_shift ?? '',
-				$authentication_result->three_d_secure->enrollment_status ?? '',
-				$authentication_result->three_d_secure->authentication_status ?? ''
-			);
+			$result = $this->card_authentication_result_factory->from_paypal_response( $authentication_result );
 
 			$this->logger->info( '3DS authentication result: ' . wc_print_r( $result->to_array(), true ) );
 

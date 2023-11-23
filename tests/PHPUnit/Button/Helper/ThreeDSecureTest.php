@@ -7,6 +7,7 @@ use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\CardAuthenticationResult;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\CardAuthenticationResultFactory;
 use WooCommerce\PayPalCommerce\TestCase;
 
 class ThreeDSecureTest extends TestCase
@@ -19,27 +20,35 @@ class ThreeDSecureTest extends TestCase
      */
     public function testDefault(int $expected, string $liabilityShift, string $authenticationResult, string $enrollment)
     {
-        $result = \Mockery::mock(CardAuthenticationResult::class);
-        $result->shouldReceive('liability_shift')->andReturn($liabilityShift);
-        $result->shouldReceive('authentication_result')->andReturn($authenticationResult);
-        $result->shouldReceive('enrollment_status')->andReturn($enrollment);
-        $result->shouldReceive('to_array')->andReturn(['foo' => 'bar',]);
+		$authResult = \Mockery::mock(CardAuthenticationResult::class);
+		$authResult->shouldReceive('liability_shift')->andReturn($liabilityShift);
+		$authResult->shouldReceive('authentication_result')->andReturn($authenticationResult);
+		$authResult->shouldReceive('enrollment_status')->andReturn($enrollment);
+		$authResult->shouldReceive('to_array')->andReturn(['foo' => 'bar',]);
 
-        $source = \Mockery::mock(PaymentSource::class);
+		$authenticationResultFactory = \Mockery::mock(CardAuthenticationResultFactory::class);
+		$authenticationResultFactory->shouldReceive('from_paypal_response')
+			->andReturn($authResult);
+
+		$source = \Mockery::mock(PaymentSource::class);
 		$authentication_result = (object)[
 			'brand' => 'visa',
-			'authentication_result' => $result,
+			'authentication_result' => (object)array(
+				'liability_shift' => $liabilityShift,
+				'authentication_result' => $authenticationResult,
+				'enrollment_status' => $enrollment
+			),
 		];
-        $source->shouldReceive('properties')
-			->andReturn($authentication_result);
 
-        $order = \Mockery::mock(Order::class);
-        $order->shouldReceive('payment_source')->andReturn($source);
+		$source->shouldReceive('properties')->andReturn($authentication_result);
 
-        $logger = \Mockery::mock(LoggerInterface::class);
-        $logger->shouldReceive('info');
+		$order = \Mockery::mock(Order::class);
+		$order->shouldReceive('payment_source')->andReturn($source);
 
-        $testee = new ThreeDSecure($logger);
+		$logger = \Mockery::mock(LoggerInterface::class);
+		$logger->shouldReceive('info');
+
+        $testee = new ThreeDSecure($authenticationResultFactory, $logger);
         $result = $testee->proceed_with_order($order);
         $this->assertEquals($expected, $result);
     }
