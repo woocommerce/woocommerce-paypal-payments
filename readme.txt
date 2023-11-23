@@ -180,7 +180,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 2.4.1 - xxxx-xx-xx =
+= 2.4.1 - 2023-11-14 =
 * Fix - Error "PayPal order ID not found in meta" prevents automations from triggering when buying subscription via third-party payment gateway #1822
 * Fix - Card button subscription support declaration #1796
 * Fix - Pay Later messaging disappears when updating shipping option on cart page #1807
