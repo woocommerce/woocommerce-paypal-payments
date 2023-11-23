@@ -320,7 +320,7 @@ const PayPalComponent = ({
 
 const features = ['products'];
 
-if (config.usePlaceOrder && !config.scriptData.continuation) {
+if ((config.addPlaceOrderMethod || config.usePlaceOrder) && !config.scriptData.continuation) {
     registerPaymentMethod({
         name: config.id,
         label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
@@ -333,39 +333,39 @@ if (config.usePlaceOrder && !config.scriptData.continuation) {
             features: features,
         },
     });
-} else {
-    if (config.scriptData.continuation) {
-        registerPaymentMethod({
-            name: config.id,
+}
+
+if (config.scriptData.continuation) {
+    registerPaymentMethod({
+        name: config.id,
+        label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
+        content: <PayPalComponent isEditing={false}/>,
+        edit: <PayPalComponent isEditing={true}/>,
+        ariaLabel: config.title,
+        canMakePayment: () => true,
+        supports: {
+            features: [...features, 'ppcp_continuation'],
+        },
+    });
+} else if (!config.usePlaceOrder) {
+    const paypalScriptPromise = loadPaypalScriptPromise(config.scriptData);
+
+    for (const fundingSource of ['paypal', ...config.enabledFundingSources]) {
+        registerExpressPaymentMethod({
+            name: `${config.id}-${fundingSource}`,
+            paymentMethodId: config.id,
             label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
-            content: <PayPalComponent isEditing={false}/>,
+            content: <PayPalComponent isEditing={false} fundingSource={fundingSource}/>,
             edit: <PayPalComponent isEditing={true}/>,
             ariaLabel: config.title,
-            canMakePayment: () => true,
+            canMakePayment: async () => {
+                await paypalScriptPromise;
+
+                return paypal.Buttons({fundingSource}).isEligible();
+            },
             supports: {
-                features: [...features, 'ppcp_continuation'],
+                features: features,
             },
         });
-    } else {
-        const paypalScriptPromise = loadPaypalScriptPromise(config.scriptData);
-
-        for (const fundingSource of ['paypal', ...config.enabledFundingSources]) {
-            registerExpressPaymentMethod({
-                name: `${config.id}-${fundingSource}`,
-                paymentMethodId: config.id,
-                label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
-                content: <PayPalComponent isEditing={false} fundingSource={fundingSource}/>,
-                edit: <PayPalComponent isEditing={true}/>,
-                ariaLabel: config.title,
-                canMakePayment: async () => {
-                    await paypalScriptPromise;
-
-                    return paypal.Buttons({fundingSource}).isEligible();
-                },
-                supports: {
-                    features: features,
-                },
-            });
-        }
     }
 }

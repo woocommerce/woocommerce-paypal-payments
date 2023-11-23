@@ -88,7 +88,14 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 	private $session_handler;
 
 	/**
-	 * Whether to use the standard "Place order" button.
+	 * Whether to create a non-express method with the standard "Place order" button.
+	 *
+	 * @var bool
+	 */
+	protected $add_place_order_method;
+
+	/**
+	 * Whether to use the standard "Place order" button instead of PayPal buttons.
 	 *
 	 * @var bool
 	 */
@@ -120,7 +127,8 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 	 * @param bool                 $final_review_enabled Whether the final review is enabled.
 	 * @param CancelView           $cancellation_view The cancellation view.
 	 * @param SessionHandler       $session_handler The Session handler.
-	 * @param bool                 $use_place_order Whether to use the standard "Place order" button.
+	 * @param bool                 $add_place_order_method Whether to create a non-express method with the standard "Place order" button.
+	 * @param bool                 $use_place_order Whether to use the standard "Place order" button instead of PayPal buttons.
 	 * @param string               $place_order_button_text The text for the standard "Place order" button.
 	 * @param array                $all_funding_sources All existing funding sources for PayPal buttons.
 	 */
@@ -134,6 +142,7 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 		bool $final_review_enabled,
 		CancelView $cancellation_view,
 		SessionHandler $session_handler,
+		bool $add_place_order_method,
 		bool $use_place_order,
 		string $place_order_button_text,
 		array $all_funding_sources
@@ -148,6 +157,7 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 		$this->final_review_enabled    = $final_review_enabled;
 		$this->cancellation_view       = $cancellation_view;
 		$this->session_handler         = $session_handler;
+		$this->add_place_order_method  = $add_place_order_method;
 		$this->use_place_order         = $use_place_order;
 		$this->place_order_button_text = $place_order_button_text;
 		$this->all_funding_sources     = $all_funding_sources;
@@ -219,6 +229,7 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 			'enabled'               => $this->settings_status->is_smart_button_enabled_for_location( $script_data['context'] ),
 			'fundingSource'         => $this->session_handler->funding_source(),
 			'finalReviewEnabled'    => $this->final_review_enabled,
+			'addPlaceOrderMethod'   => $this->add_place_order_method,
 			'usePlaceOrder'         => $this->use_place_order,
 			'placeOrderButtonText'  => $this->place_order_button_text,
 			'enabledFundingSources' => $funding_sources,
