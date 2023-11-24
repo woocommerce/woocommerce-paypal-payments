@@ -9,7 +9,7 @@ document.addEventListener(
 
         const smartButtonLocationsSelector = '#field-smart_button_locations';
         const smartButtonLocationsSelect = smartButtonLocationsSelector + ' select';
-        const smartButtonSelectableLocations = ['product', 'cart', 'checkout', 'mini-cart'];
+        const smartButtonSelectableLocations = ['product', 'cart', 'checkout', 'mini-cart', 'cart-block', 'checkout-block-express'];
 
         const groupToggle = (selector, group) => {
             const toggleElement = document.querySelector(selector);
@@ -317,6 +317,7 @@ document.addEventListener(
                 '#field-button' + locationPrefix + '_label',
                 '#field-button' + locationPrefix + '_color',
                 '#field-button' + locationPrefix + '_shape',
+                '#field-button' + locationPrefix + '_height',
                 '#field-button' + locationPrefix + '_preview',
             ]
 
@@ -324,11 +325,7 @@ document.addEventListener(
                 inputSelectors.push('#field-button_' + location + '_heading');
             }
 
-            if (location === 'mini-cart') {
-                inputSelectors.push('#field-button' + locationPrefix + '_height');
-            }
-
-            return inputSelectors
+            return inputSelectors.filter(selector => document.querySelector(selector));
         }
 
         const allPayLaterMessaginginputSelectors = () => {

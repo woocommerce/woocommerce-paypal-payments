@@ -1,12 +1,19 @@
 import {useEffect, useState} from '@wordpress/element';
 import {registerExpressPaymentMethod, registerPaymentMethod} from '@woocommerce/blocks-registry';
 import {mergeWcAddress, paypalAddressToWc, paypalOrderToWcAddresses} from "./Helper/Address";
-import {loadPaypalScript} from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading'
+import {
+    loadPaypalScriptPromise
+} from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading'
+import {
+    normalizeStyleForFundingSource
+} from '../../../ppcp-button/resources/js/modules/Helper/Style'
 import buttonModuleWatcher from "../../../ppcp-button/resources/js/modules/ButtonModuleWatcher";
 
 const config = wc.wcSettings.getSetting('ppcp-gateway_data');
 
 window.ppcpFundingSource = config.fundingSource;
+
+let registeredContext = false;
 
 const PayPalComponent = ({
                              onClick,
@@ -18,11 +25,14 @@ const PayPalComponent = ({
                              activePaymentMethod,
                              shippingData,
                              isEditing,
+                             fundingSource,
 }) => {
     const {onPaymentSetup, onCheckoutFail, onCheckoutValidation} = eventRegistration;
     const {responseTypes} = emitResponse;
 
     const [paypalOrder, setPaypalOrder] = useState(null);
+
+    const methodId = fundingSource ? `${config.id}-${fundingSource}` : config.id;
 
     useEffect(() => {
         // fill the form if in continuation (for product or mini-cart buttons)
@@ -39,24 +49,6 @@ const PayPalComponent = ({
         // this useEffect should run only once, but adding this in case of some kind of full re-rendering
         window.ppcpContinuationFilled = true;
     }, [])
-
-    const [loaded, setLoaded] = useState(false);
-    useEffect(() => {
-        if (!loaded && !config.scriptData.continuation) {
-            loadPaypalScript(config.scriptData, () => {
-                setLoaded(true);
-
-                buttonModuleWatcher.registerContextBootstrap(config.scriptData.context, {
-                    createOrder: () => {
-                        return createOrder();
-                    },
-                    onApprove: (data, actions) => {
-                        return handleApprove(data, actions);
-                    },
-                });
-            });
-        }
-    }, [loaded]);
 
     const createOrder = async () => {
         try {
@@ -233,7 +225,7 @@ const PayPalComponent = ({
     }
 
     useEffect(() => {
-        if (activePaymentMethod !== config.id) {
+        if (activePaymentMethod !== methodId) {
             return;
         }
 
@@ -269,7 +261,7 @@ const PayPalComponent = ({
     }, [onPaymentSetup, paypalOrder, activePaymentMethod]);
 
     useEffect(() => {
-        if (activePaymentMethod !== config.id) {
+        if (activePaymentMethod !== methodId) {
             return;
         }
         const unsubscribe = onCheckoutFail(({ processingResponse }) => {
@@ -296,15 +288,26 @@ const PayPalComponent = ({
         )
     }
 
-    if (!loaded) {
-        return null;
+    if (!registeredContext) {
+        buttonModuleWatcher.registerContextBootstrap(config.scriptData.context, {
+            createOrder: () => {
+                return createOrder();
+            },
+            onApprove: (data, actions) => {
+                return handleApprove(data, actions);
+            },
+        });
+        registeredContext = true;
     }
+
+    const style = normalizeStyleForFundingSource(config.scriptData.button.style, fundingSource);
 
     const PayPalButton = window.paypal.Buttons.driver("react", { React, ReactDOM });
 
     return (
         <PayPalButton
-            style={config.scriptData.button.style}
+            fundingSource={fundingSource}
+            style={style}
             onClick={handleClick}
             onCancel={onClose}
             onError={onClose}
@@ -317,7 +320,7 @@ const PayPalComponent = ({
 
 const features = ['products'];
 
-if (config.usePlaceOrder && !config.scriptData.continuation) {
+if ((config.addPlaceOrderMethod || config.usePlaceOrder) && !config.scriptData.continuation) {
     registerPaymentMethod({
         name: config.id,
         label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
@@ -330,22 +333,39 @@ if (config.usePlaceOrder && !config.scriptData.continuation) {
             features: features,
         },
     });
-} else {
-    let registerMethod = registerExpressPaymentMethod;
-    if (config.scriptData.continuation) {
-        features.push('ppcp_continuation');
-        registerMethod = registerPaymentMethod;
-    }
+}
 
-    registerMethod({
+if (config.scriptData.continuation) {
+    registerPaymentMethod({
         name: config.id,
         label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
         content: <PayPalComponent isEditing={false}/>,
         edit: <PayPalComponent isEditing={true}/>,
         ariaLabel: config.title,
-        canMakePayment: () => config.enabled,
+        canMakePayment: () => true,
         supports: {
-            features: features,
+            features: [...features, 'ppcp_continuation'],
         },
     });
+} else if (!config.usePlaceOrder) {
+    const paypalScriptPromise = loadPaypalScriptPromise(config.scriptData);
+
+    for (const fundingSource of ['paypal', ...config.enabledFundingSources]) {
+        registerExpressPaymentMethod({
+            name: `${config.id}-${fundingSource}`,
+            paymentMethodId: config.id,
+            label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
+            content: <PayPalComponent isEditing={false} fundingSource={fundingSource}/>,
+            edit: <PayPalComponent isEditing={true} fundingSource={fundingSource}/>,
+            ariaLabel: config.title,
+            canMakePayment: async () => {
+                await paypalScriptPromise;
+
+                return paypal.Buttons({fundingSource}).isEligible();
+            },
+            supports: {
+                features: features,
+            },
+        });
+    }
 }
