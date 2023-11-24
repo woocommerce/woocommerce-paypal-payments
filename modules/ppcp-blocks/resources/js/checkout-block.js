@@ -356,7 +356,7 @@ if (config.scriptData.continuation) {
             paymentMethodId: config.id,
             label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
             content: <PayPalComponent isEditing={false} fundingSource={fundingSource}/>,
-            edit: <PayPalComponent isEditing={true}/>,
+            edit: <PayPalComponent isEditing={true} fundingSource={fundingSource}/>,
             ariaLabel: config.title,
             canMakePayment: async () => {
                 await paypalScriptPromise;
