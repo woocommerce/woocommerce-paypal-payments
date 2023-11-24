@@ -83,16 +83,16 @@ return array(
 	'api.paypal-host'                                => function( ContainerInterface $container ) : string {
 		return PAYPAL_API_URL;
 	},
-	// It seems this 'api.paypal-website-url' key is always overridden in ppcp-onboarding/services.php
-	'api.paypal-website-url'                    => function( ContainerInterface $container ) : string {
+	// It seems this 'api.paypal-website-url' key is always overridden in ppcp-onboarding/services.php.
+	'api.paypal-website-url'                         => function( ContainerInterface $container ) : string {
 		return PAYPAL_URL;
 	},
-	'api.factory.paypal-checkout-url'           => function( ContainerInterface $container ) : callable {
+	'api.factory.paypal-checkout-url'                => function( ContainerInterface $container ) : callable {
 		return function ( string $id ) use ( $container ): string {
 			return $container->get( 'api.paypal-website-url' ) . '/checkoutnow?token=' . $id;
 		};
 	},
-	'api.partner_merchant_id'                   => static function () : string {
+	'api.partner_merchant_id'                        => static function () : string {
 		return '';
 	},
 	'api.merchant_email'                             => function () : string {

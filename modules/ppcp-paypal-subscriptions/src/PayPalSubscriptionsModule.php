@@ -600,7 +600,7 @@ class PayPalSubscriptionsModule implements ModuleInterface {
 					'ppcp_paypal_subscription',
 					__( 'PayPal Subscription', 'woocommerce-paypal-payments' ),
 					function() use ( $subscription_id, $host ) {
-						$url  = trailingslashit( $host ) . 'billing/subscriptions/' . $subscription_id;
+						$url = trailingslashit( $host ) . 'billing/subscriptions/' . $subscription_id;
 						echo '<p>' . esc_html__( 'This subscription is linked to a PayPal Subscription, Cancel it to unlink.', 'woocommerce-paypal-payments' ) . '</p>';
 						echo '<p><strong>' . esc_html__( 'Subscription:', 'woocommerce-paypal-payments' ) . '</strong> <a href="' . esc_url( $url ) . '" target="_blank">' . esc_attr( $subscription_id ) . '</a></p>';
 					},
