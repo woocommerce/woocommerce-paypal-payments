@@ -4,7 +4,10 @@ import {
     PaymentMethods
 } from "../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState";
 
-import {setVisible} from "../../../ppcp-button/resources/js/modules/Helper/Hiding";
+import {
+    setVisible,
+    setVisibleByClass
+} from "../../../ppcp-button/resources/js/modules/Helper/Hiding";
 import {loadPaypalJsScript} from "../../../ppcp-button/resources/js/modules/Helper/ScriptLoading";
 
 loadPaypalJsScript(
@@ -60,7 +63,7 @@ loadPaypalJsScript(
 
 
 const init = () => {
-    setVisible(ORDER_BUTTON_SELECTOR, getCurrentPaymentMethod() !== PaymentMethods.PAYPAL);
+    setVisibleByClass(ORDER_BUTTON_SELECTOR, getCurrentPaymentMethod() !== PaymentMethods.PAYPAL, 'ppcp-hidden');
     setVisible(`#ppc-button-${PaymentMethods.PAYPAL}-save-payment-method`, getCurrentPaymentMethod() === PaymentMethods.PAYPAL);
 }
 

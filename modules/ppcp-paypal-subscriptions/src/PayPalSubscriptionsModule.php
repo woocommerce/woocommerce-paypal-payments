@@ -594,12 +594,12 @@ class PayPalSubscriptionsModule implements ModuleInterface {
 				$screen_id = wc_get_page_screen_id( 'shop_subscription' );
 				remove_meta_box( 'woocommerce-subscription-schedule', $screen_id, 'side' );
 
-				$environment = $c->get( 'onboarding.environment' );
+				$host = $c->get( 'api.paypal-website-url' );
+
 				add_meta_box(
 					'ppcp_paypal_subscription',
 					__( 'PayPal Subscription', 'woocommerce-paypal-payments' ),
-					function() use ( $subscription_id, $environment ) {
-						$host = $environment->current_environment_is( Environment::SANDBOX ) ? 'https://www.sandbox.paypal.com' : 'https://www.paypal.com';
+					function() use ( $subscription_id, $host ) {
 						$url  = trailingslashit( $host ) . 'billing/subscriptions/' . $subscription_id;
 						echo '<p>' . esc_html__( 'This subscription is linked to a PayPal Subscription, Cancel it to unlink.', 'woocommerce-paypal-payments' ) . '</p>';
 						echo '<p><strong>' . esc_html__( 'Subscription:', 'woocommerce-paypal-payments' ) . '</strong> <a href="' . esc_url( $url ) . '" target="_blank">' . esc_attr( $subscription_id ) . '</a></p>';

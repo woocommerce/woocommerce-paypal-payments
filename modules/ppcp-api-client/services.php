@@ -83,6 +83,7 @@ return array(
 	'api.paypal-host'                                => function( ContainerInterface $container ) : string {
 		return PAYPAL_API_URL;
 	},
+	// It seems this 'api.paypal-website-url' key is always overridden in ppcp-onboarding/services.php
 	'api.paypal-website-url'                    => function( ContainerInterface $container ) : string {
 		return PAYPAL_URL;
 	},
