@@ -1,6 +1,6 @@
 <?php
 /**
- * The wrapper module.
+ * This adapter module maps Dhii Modules to an aggregator Modularity Module.
  *
  * @package WooCommerce\PayPalCommerce
  */
@@ -17,7 +17,7 @@ use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
 /**
- * Class WrapperModule
+ * Class DhiiToModularityModule
  */
 class DhiiToModularityModule implements ServiceModule, ExtendingModule, ExecutableModule {
 	use ModuleClassNameIdTrait;
@@ -51,18 +51,26 @@ class DhiiToModularityModule implements ServiceModule, ExtendingModule, Executab
 	private $is_initialized = false;
 
 	/**
-	 * @param array|ModuleInterface[] $modules
+	 * DhiiToModularityModule constructor.
+	 *
+	 * @param array|ModuleInterface[] $modules The Dhii modules.
 	 */
 	public function __construct( array $modules ) {
 		$this->modules = $modules;
 	}
 
+	/**
+	 * Performs module-specific setup and initializes this object based on module service providers.
+	 *
+	 * @return void
+	 * @throws Vendor\Dhii\Modular\Module\Exception\ModuleExceptionInterface Throws in case of module setup failure.
+	 */
 	private function setup(): void {
 		if ( $this->is_initialized ) {
 			return;
 		}
 
-		$this->services = array();
+		$this->services   = array();
 		$this->extensions = array();
 
 		foreach ( $this->modules as $module ) {
@@ -85,9 +93,7 @@ class DhiiToModularityModule implements ServiceModule, ExtendingModule, Executab
 	}
 
 	/**
-	 * Returns the services.
-	 *
-	 * @return array|callable[]
+	 * {@inheritDoc}
 	 */
 	public function services(): array {
 		$this->setup();
@@ -95,24 +101,32 @@ class DhiiToModularityModule implements ServiceModule, ExtendingModule, Executab
 	}
 
 	/**
-	 * Returns the extensions.
-	 *
-	 * @return array|callable[]
+	 * {@inheritDoc}
 	 */
 	public function extensions(): array {
 		$this->setup();
 
-		$map = array_map( function ( $extension_group ) {
-			return function ( $previous, ContainerInterface $container ) use ( $extension_group ) {
-				$value = $previous;
-				foreach ( $extension_group as $extension ) {
-					$value = $extension( $container, $value );
-				}
-				return $value;
-			};
-		}, $this->extensions );
-
-		return $map;
+		return array_map(
+			function ( $extension_group ) {
+				/**
+				 * Maps Dhii extensions to modularity.
+				 *
+				 * @param mixed $previous The previous value.
+				 * @return ContainerInterface $container The container instance.
+				 *
+				 * @psalm-suppress MissingClosureParamType
+				 * @psalm-suppress MissingClosureReturnType
+				 */
+				return function ( $previous, ContainerInterface $container ) use ( $extension_group ) {
+					$value = $previous;
+					foreach ( $extension_group as $extension ) {
+						$value = $extension( $container, $value );
+					}
+					return $value;
+				};
+			},
+			$this->extensions
+		);
 	}
 
 	/**
