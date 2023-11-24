@@ -397,7 +397,15 @@ class SmartButton implements SmartButtonInterface {
 
 		$default_pay_order_hook = 'woocommerce_pay_order_before_submit';
 
-		$get_hook = function ( string $location ) use ( $default_pay_order_hook ): ?array {
+		/**
+		 * The filter returning if the current theme is a block theme or not.
+		 */
+		$is_block_theme = (bool) apply_filters(
+			'woocommerce_paypal_payments_messages_renderer_is_block',
+			wp_is_block_theme()
+		);
+
+		$get_hook = function ( string $location ) use ( $default_pay_order_hook, $is_block_theme ): ?array {
 			switch ( $location ) {
 				case 'checkout':
 					return $this->messages_renderer_hook( $location, 'woocommerce_review_order_before_payment', 10 );
@@ -408,9 +416,13 @@ class SmartButton implements SmartButtonInterface {
 				case 'product':
 					return $this->messages_renderer_hook( $location, $this->single_product_renderer_hook(), 30 );
 				case 'shop':
-					return $this->messages_renderer_hook( $location, 'woocommerce_archive_description', 10 );
+					return $is_block_theme
+						? $this->messages_renderer_block( $location, 'core/query-title', 10 )
+						: $this->messages_renderer_hook( $location, 'woocommerce_archive_description', 10 );
 				case 'home':
-					return $this->messages_renderer_hook( $location, 'loop_start', 20 );
+					return $is_block_theme
+						? $this->messages_renderer_block( $location, 'core/navigation', 10 )
+						: $this->messages_renderer_hook( $location, 'loop_start', 20 );
 				default:
 					return null;
 			}
@@ -421,11 +433,15 @@ class SmartButton implements SmartButtonInterface {
 			return false;
 		}
 
-		add_action(
-			$hook['name'],
-			array( $this, 'message_renderer' ),
-			$hook['priority']
-		);
+		if ( $hook['blockName'] ?? false ) {
+			$this->message_renderer( $hook );
+		} else {
+			add_action(
+				$hook['name'],
+				array( $this, 'message_renderer' ),
+				$hook['priority']
+			);
+		}
 
 		// Looks like there are no hooks like woocommerce_review_order_before_payment on the pay for order page, so have to move using JS.
 		if ( $location === 'pay-now' && $hook['name'] === $default_pay_order_hook &&
@@ -704,9 +720,11 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 
 	/**
 	 * Renders the HTML for the credit messaging.
+	 *
+	 * @param array|null $block_params If it's to be rendered after a block, contains the block params.
+	 * @return void
 	 */
-	public function message_renderer(): void {
-
+	public function message_renderer( $block_params = array() ): void {
 		$product = wc_get_product();
 
 		$location      = $this->location();
@@ -727,12 +745,57 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 		 */
 		do_action( "ppcp_before_{$location_hook}_message_wrapper" );
 
-		echo '<div id="ppcp-messages" data-partner-attribution-id="Woo_PPCP"></div>';
+		$messages_placeholder = '<div id="ppcp-messages" data-partner-attribution-id="Woo_PPCP"></div>';
+
+		if ( is_array( $block_params ) && ( $block_params['blockName'] ?? false ) ) {
+			$this->render_after_block(
+				$block_params['blockName'],
+				'<div class="wp-block-group alignwide">' . $messages_placeholder . '</div>',
+				$block_params['priority'] ?? 10
+			);
+		} else {
+			// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			echo $messages_placeholder;
+		}
 
 		/**
 		 * A hook executed after rendering of the PCP Pay Later messages wrapper.
 		 */
 		do_action( "ppcp_after_{$location_hook}_message_wrapper" );
+	}
+
+	/**
+	 * Renders content after a given block.
+	 *
+	 * @param string $name The name of the block to render after.
+	 * @param string $content The content to be rendered.
+	 * @param int    $priority The 'render_block' hook priority.
+	 * @return void
+	 */
+	private function render_after_block( string $name, string $content, int $priority = 10 ): void {
+		add_filter(
+			'render_block',
+			/**
+			 * Adds content after a given block.
+			 *
+			 * @param string $block_content The block content.
+			 * @param array|mixed $block_params The block params.
+			 * @return string
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function ( $block_content, $block_params ) use ( $name, $content, $priority ) {
+				if (
+					is_array( $block_params )
+					&& ( $block_params['blockName'] ?? null ) === $name
+				) {
+					$block_content .= $content;
+				}
+				return $block_content;
+			},
+			$priority,
+			2
+		);
 	}
 
 	/**
@@ -1496,6 +1559,37 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 		return array(
 			'name'     => $hook,
 			'priority' => $priority,
+		);
+	}
+
+	/**
+	 * Returns the block name that will be used for rendering Pay Later messages after.
+	 *
+	 * @param string $location The location name like 'checkout', 'shop'. See render_message_wrapper_registrar.
+	 * @param string $default_block The default name of the block.
+	 * @param int    $default_priority The default priority of the 'render_block' hook.
+	 * @return array An array with 'blockName' and 'priority' keys.
+	 */
+	private function messages_renderer_block( string $location, string $default_block, int $default_priority ): array {
+		$location_hook = $this->location_to_hook( $location );
+
+		/**
+		 * The filter returning the action name that will be used for rendering Pay Later messages.
+		 */
+		$block_name = (string) apply_filters(
+			"woocommerce_paypal_payments_${location_hook}_messages_renderer_block",
+			$default_block
+		);
+		/**
+		 * The filter returning the action priority that will be used for rendering Pay Later messages.
+		 */
+		$priority = (int) apply_filters(
+			"woocommerce_paypal_payments_${location_hook}_messages_renderer_block_priority",
+			$default_priority
+		);
+		return array(
+			'blockName' => $block_name,
+			'priority'  => $priority,
 		);
 	}
 
