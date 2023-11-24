@@ -107,7 +107,7 @@ class ApplepayButton {
         let config = {
             wrapper: this.buttonConfig.button.wrapper,
             ppcpStyle: this.ppcpConfig.button.style,
-            //buttonStyle: this.buttonConfig.button.style,
+            buttonStyle: this.buttonConfig.button.style,
             ppcpButtonWrapper: this.ppcpConfig.button.wrapper
         }
 
@@ -119,7 +119,7 @@ class ApplepayButton {
         }
 
         if (['cart-block', 'checkout-block'].indexOf(this.context) !== -1) {
-            config.ppcpButtonWrapper = '#express-payment-method-ppcp-gateway';
+            config.ppcpButtonWrapper = '#express-payment-method-ppcp-gateway-paypal';
         }
 
         return config;
@@ -167,14 +167,8 @@ class ApplepayButton {
     addButton() {
         this.log('addButton', this.context);
 
-        const wrapper =
-            (this.context === 'mini-cart')
-                ? this.buttonConfig.button.mini_cart_wrapper
-                : this.buttonConfig.button.wrapper;
-        const shape =
-            (this.context === 'mini-cart')
-                ? this.ppcpConfig.button.mini_cart_style.shape
-                : this.ppcpConfig.button.style.shape;
+        const { wrapper, ppcpStyle } = this.contextConfig();
+
         const appleContainer = document.getElementById(wrapper);
         const type = this.buttonConfig.button.type;
         const language = this.buttonConfig.button.lang;
@@ -185,7 +179,12 @@ class ApplepayButton {
             appleContainer.innerHTML = `<apple-pay-button id="${id}" buttonstyle="${color}" type="${type}" locale="${language}">`;
         }
 
-        jQuery('#' + wrapper).addClass('ppcp-button-' + shape);
+        jQuery('#' + wrapper).addClass('ppcp-button-' + ppcpStyle.shape);
+
+        if (ppcpStyle.height) {
+            jQuery('#' + wrapper).css('--apple-pay-button-height', `${ppcpStyle.height}px`)
+        }
+
         jQuery(wrapper).append(appleContainer);
     }
 

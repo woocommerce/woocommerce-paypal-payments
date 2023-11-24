@@ -32,7 +32,7 @@
 	.wp-block-woocommerce-checkout {
 		#applepay-container, .ppcp-button-applepay {
 			--apple-pay-button-margin: 0;
-			--apple-pay-button-height: 40px;
+			--apple-pay-button-height: 48px;
 			&.ppcp-button-pill {
 				--apple-pay-button-border-radius: 50px;
 			}
@@ -42,7 +42,7 @@
 	.wp-block-woocommerce-cart {
 		#applepay-container, .ppcp-button-applepay {
 			--apple-pay-button-margin: 0;
-			--apple-pay-button-height: 40px;
+			--apple-pay-button-height: 48px;
 		}
 		/* Workaround for blocks grid */
 		.wc-block-components-express-payment__event-buttons {

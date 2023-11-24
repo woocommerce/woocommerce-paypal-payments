@@ -26,7 +26,7 @@ const storeToken = (token) => {
     sessionStorage.setItem(storageKey, JSON.stringify(token));
 }
 
-const dataClientIdAttributeHandler = (scriptOptions, config, callback) => {
+const dataClientIdAttributeHandler = (scriptOptions, config, callback, errorCallback = null) => {
     fetch(config.endpoint, {
         method: 'POST',
         headers: {
@@ -50,6 +50,10 @@ const dataClientIdAttributeHandler = (scriptOptions, config, callback) => {
         loadScript(scriptOptions).then((paypal) => {
             if (typeof callback === 'function') {
                 callback(paypal);
+            }
+        }).catch(err => {
+            if (typeof errorCallback === 'function') {
+                errorCallback(err);
             }
         });
     });
