@@ -387,14 +387,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		//phpcs:enable WordPress.Security.NonceVerification.Recommended
 
 		try {
-			if ( ! $this->order_processor->process( $wc_order ) ) {
-				return $this->handle_payment_failure(
-					$wc_order,
-					new Exception(
-						$this->order_processor->last_error()
-					)
-				);
-			}
+			$this->order_processor->process( $wc_order );
 
 			do_action( 'woocommerce_paypal_payments_before_handle_payment_success', $wc_order );
 
@@ -408,7 +401,7 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 					$error
 				)
 			);
-		} catch ( RuntimeException $error ) {
+		} catch ( Exception $error ) {
 			return $this->handle_payment_failure( $wc_order, $error );
 		}
 	}

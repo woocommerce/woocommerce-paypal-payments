@@ -42,7 +42,7 @@ const PayPalComponent = ({
 
     const [loaded, setLoaded] = useState(false);
     useEffect(() => {
-        if (!loaded) {
+        if (!loaded && !config.scriptData.continuation) {
             loadPaypalScript(config.scriptData, () => {
                 setLoaded(true);
 
@@ -316,20 +316,36 @@ const PayPalComponent = ({
 }
 
 const features = ['products'];
-let registerMethod = registerExpressPaymentMethod;
-if (config.scriptData.continuation) {
-    features.push('ppcp_continuation');
-    registerMethod = registerPaymentMethod;
-}
 
-registerMethod({
-    name: config.id,
-    label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
-    content: <PayPalComponent isEditing={false}/>,
-    edit: <PayPalComponent isEditing={true}/>,
-    ariaLabel: config.title,
-    canMakePayment: () => config.enabled,
-    supports: {
-        features: features,
-    },
-});
+if (config.usePlaceOrder && !config.scriptData.continuation) {
+    registerPaymentMethod({
+        name: config.id,
+        label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
+        content: <div dangerouslySetInnerHTML={{__html: config.description}}/>,
+        edit: <div dangerouslySetInnerHTML={{__html: config.description}}/>,
+        placeOrderButtonLabel: config.placeOrderButtonText,
+        ariaLabel: config.title,
+        canMakePayment: () => config.enabled,
+        supports: {
+            features: features,
+        },
+    });
+} else {
+    let registerMethod = registerExpressPaymentMethod;
+    if (config.scriptData.continuation) {
+        features.push('ppcp_continuation');
+        registerMethod = registerPaymentMethod;
+    }
+
+    registerMethod({
+        name: config.id,
+        label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
+        content: <PayPalComponent isEditing={false}/>,
+        edit: <PayPalComponent isEditing={true}/>,
+        ariaLabel: config.title,
+        canMakePayment: () => config.enabled,
+        supports: {
+            features: features,
+        },
+    });
+}

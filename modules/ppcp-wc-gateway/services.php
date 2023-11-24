@@ -97,7 +97,9 @@ return array(
 			$payment_token_repository,
 			$logger,
 			$api_shop_country,
-			$container->get( 'api.endpoint.order' )
+			$container->get( 'api.endpoint.order' ),
+			$container->get( 'api.factory.paypal-checkout-url' ),
+			$container->get( 'wcgateway.place-order-button-text' )
 		);
 	},
 	'wcgateway.credit-card-gateway'                        => static function ( ContainerInterface $container ): CreditCardGateway {
@@ -141,7 +143,9 @@ return array(
 			$container->get( 'wcgateway.settings.allow_card_button_gateway.default' ),
 			$container->get( 'onboarding.environment' ),
 			$container->get( 'vaulting.repository.payment-token' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
+			$container->get( 'woocommerce.logger.woocommerce' ),
+			$container->get( 'api.factory.paypal-checkout-url' ),
+			$container->get( 'wcgateway.place-order-button-text' )
 		);
 	},
 	'wcgateway.disabler'                                   => static function ( ContainerInterface $container ): DisableGateways {
@@ -352,7 +356,10 @@ return array(
 			$logger,
 			$environment,
 			$subscription_helper,
-			$order_helper
+			$order_helper,
+			$container->get( 'api.factory.purchase-unit' ),
+			$container->get( 'api.factory.payer' ),
+			$container->get( 'api.factory.shipping-preference' )
 		);
 	},
 	'wcgateway.processor.refunds'                          => static function ( ContainerInterface $container ): RefundProcessor {
@@ -1155,6 +1162,25 @@ return array(
 		return apply_filters(
 			'woocommerce_paypal_payments_is_logging_enabled',
 			$settings->has( 'logging_enabled' ) && $settings->get( 'logging_enabled' )
+		);
+	},
+
+	'wcgateway.use-place-order-button'                     => function ( ContainerInterface $container ) : bool {
+		/**
+		 * Whether to use the standard "Place order" button with redirect to PayPal instead of the PayPal smart buttons.
+		 */
+		return apply_filters(
+			'woocommerce_paypal_payments_use_place_order_button',
+			false
+		);
+	},
+	'wcgateway.place-order-button-text'                    => function ( ContainerInterface $container ) : string {
+		/**
+		 * The text for the standard "Place order" button, when the "Place order" button mode is enabled.
+		 */
+		return apply_filters(
+			'woocommerce_paypal_payments_place_order_button_text',
+			__( 'Pay with PayPal', 'woocommerce-paypal-payments' )
 		);
 	},
 
