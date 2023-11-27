@@ -181,6 +181,7 @@ class OrderEndpoint {
 	 * @param string            $paypal_request_id The PayPal request id.
 	 * @param string            $user_action The user action.
 	 * @param string            $payment_method WC payment method.
+	 * @param array             $request_data Request data.
 	 *
 	 * @return Order
 	 * @throws RuntimeException If the request fails.
@@ -192,7 +193,8 @@ class OrderEndpoint {
 		PaymentToken $payment_token = null,
 		string $paypal_request_id = '',
 		string $user_action = ApplicationContext::USER_ACTION_CONTINUE,
-		string $payment_method = ''
+		string $payment_method = '',
+		array $request_data = array()
 	): Order {
 		$bearer = $this->bearer->bearer();
 		$data   = array(
@@ -223,7 +225,7 @@ class OrderEndpoint {
 		/**
 		 * The filter can be used to modify the order creation request body data.
 		 */
-		$data = apply_filters( 'ppcp_create_order_request_body_data', $data, $payment_method );
+		$data = apply_filters( 'ppcp_create_order_request_body_data', $data, $payment_method, $request_data );
 		$url  = trailingslashit( $this->host ) . 'v2/checkout/orders';
 		$args = array(
 			'method'  => 'POST',
