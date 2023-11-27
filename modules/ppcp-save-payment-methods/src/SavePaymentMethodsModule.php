@@ -157,14 +157,20 @@ class SavePaymentMethodsModule implements ModuleInterface {
 
 				$payment_vault_attributes = $payment_source->properties()->attributes->vault ?? null;
 				if ( $payment_vault_attributes ) {
-					update_user_meta( $wc_order->get_customer_id(), '_ppcp_target_customer_id', $payment_vault_attributes->customer->id );
+					$customer_id = $payment_vault_attributes->customer->id ?? '';
+					$token_id    = $payment_vault_attributes->id ?? '';
+					if ( ! $customer_id || ! $token_id ) {
+						return;
+					}
+
+					update_user_meta( $wc_order->get_customer_id(), '_ppcp_target_customer_id', $customer_id );
 
 					$wc_payment_tokens = $c->get( 'save-payment-methods.wc-payment-tokens' );
 					assert( $wc_payment_tokens instanceof WooCommercePaymentTokens );
 
 					if ( $wc_order->get_payment_method() === CreditCardGateway::ID ) {
 						$token = new \WC_Payment_Token_CC();
-						$token->set_token( $payment_vault_attributes->id );
+						$token->set_token( $token_id );
 						$token->set_user_id( $wc_order->get_customer_id() );
 						$token->set_gateway_id( CreditCardGateway::ID );
 
@@ -180,7 +186,7 @@ class SavePaymentMethodsModule implements ModuleInterface {
 					if ( $wc_order->get_payment_method() === PayPalGateway::ID ) {
 						$wc_payment_tokens->create_payment_token_paypal(
 							$wc_order->get_customer_id(),
-							$payment_vault_attributes->id,
+							$token_id,
 							$payment_source->properties()->email_address ?? ''
 						);
 					}
