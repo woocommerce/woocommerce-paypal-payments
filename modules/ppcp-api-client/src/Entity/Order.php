@@ -228,9 +228,6 @@ class Order {
 		if ( $this->application_context() ) {
 			$order['application_context'] = $this->application_context()->to_array();
 		}
-		if ( $this->payment_source() ) {
-			$order['payment_source'] = $this->payment_source();
-		}
 
 		return $order;
 	}
