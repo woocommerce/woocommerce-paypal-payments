@@ -36,8 +36,6 @@ loadPaypalJsScript(
             }
         },
         onApprove: async ({ vaultSetupToken }) => {
-            console.log(vaultSetupToken)
-
             const response = await fetch(ppcp_add_payment_method.ajax.create_payment_token.endpoint, {
                 method: "POST",
                 credentials: 'same-origin',
@@ -59,8 +57,6 @@ loadPaypalJsScript(
     },
     `#ppc-button-${PaymentMethods.PAYPAL}-save-payment-method`
 );
-
-
 
 const init = () => {
     setVisibleByClass(ORDER_BUTTON_SELECTOR, getCurrentPaymentMethod() !== PaymentMethods.PAYPAL, 'ppcp-hidden');
