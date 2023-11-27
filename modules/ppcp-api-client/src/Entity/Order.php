@@ -190,16 +190,6 @@ class Order {
 	}
 
 	/**
-	 * Returns the payment source.
-	 *
-	 * @return PaymentSource|null
-	 */
-	public function payment_source() {
-
-		return $this->payment_source;
-	}
-
-	/**
 	 * Returns the object as array.
 	 *
 	 * @return array
@@ -227,9 +217,6 @@ class Order {
 		}
 		if ( $this->application_context() ) {
 			$order['application_context'] = $this->application_context()->to_array();
-		}
-		if ( $this->payment_source() ) {
-			$order['payment_source'] = $this->payment_source();
 		}
 
 		return $order;
