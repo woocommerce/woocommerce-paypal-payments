@@ -145,10 +145,8 @@ class ApproveOrderEndpoint implements EndpointInterface {
 
 			$order = $this->api_endpoint->order( $data['order_id'] );
 
-			$payment_source = $order->payment_source();
-			assert( $payment_source instanceof PaymentSource );
-
-			if ( $payment_source->name() === 'card' ) {
+			$payment_source = $order->payment_source() ?? null;
+			if ( $payment_source && $payment_source->name() === 'card' ) {
 				if ( $this->settings->has( 'disable_cards' ) ) {
 					$disabled_cards = (array) $this->settings->get( 'disable_cards' );
 					$card           = strtolower( $payment_source->properties()->brand ?? '' );
