@@ -197,8 +197,8 @@ class SavePaymentMethodsModule implements ModuleInterface {
 		);
 
 		add_filter( 'woocommerce_paypal_payments_disable_add_payment_method', '__return_false' );
-
 		add_filter( 'woocommerce_paypal_payments_subscription_renewal_return_before_create_order_without_token', '__return_false' );
+		add_filter( 'woocommerce_paypal_payments_should_render_card_custom_fields', '__return_false' );
 
 		add_action(
 			'wp_enqueue_scripts',
