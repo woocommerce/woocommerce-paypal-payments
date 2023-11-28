@@ -275,8 +275,9 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			if ( $order &&
 				( $order->status()->is( OrderStatus::APPROVED ) || $order->status()->is( OrderStatus::COMPLETED ) )
 			) {
-				$this->title       = $this->funding_source_renderer->render_name( $funding_source );
-				$this->description = $this->funding_source_renderer->render_description( $funding_source );
+				$this->title             = $this->funding_source_renderer->render_name( $funding_source );
+				$this->description       = $this->funding_source_renderer->render_description( $funding_source );
+				$this->order_button_text = null;
 			}
 		}
 
