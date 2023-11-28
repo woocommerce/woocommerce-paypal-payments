@@ -34,13 +34,6 @@
 			margin: 0;
 			height: 48px;
 		}
-		/* Workaround for blocks grid */
-		.wc-block-components-express-payment__event-buttons {
-			display: block;
-			li[id*="express-payment-method-ppcp-"] {
-				padding-bottom: 0;
-			}
-		}
 	}
 
 }

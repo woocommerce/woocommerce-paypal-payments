@@ -1272,9 +1272,12 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 		}
 
 		if ( in_array( $context, array( 'checkout-block', 'cart-block' ), true ) ) {
-			$disable_funding = array_diff(
-				array_keys( $this->all_funding_sources ),
-				array( 'venmo', 'paylater' )
+			$disable_funding = array_merge(
+				$disable_funding,
+				array_diff(
+					array_keys( $this->all_funding_sources ),
+					array( 'venmo', 'paylater' )
+				)
 			);
 		}
 
