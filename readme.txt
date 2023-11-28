@@ -185,6 +185,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 * Fix - Do not ignore disabled APMs list in blocks #1865
 * Fix - Display Package Tracking metabox below Order actions when HPOS is active #1850
 * Fix - ApplePay use checkout form data to update shipping and billing #1832
+* Fix - Fix Apple Pay CSS #1872
 * Enhancement - Keep default "Place order" button text in continuation #1870
 * Enhancement - Allow redirect to PayPal with "Place order" button if smart buttons failed to load #1840
 * Enhancement - Extend list of supported countries for Package Tracking v2 integration #1848
