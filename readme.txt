@@ -182,12 +182,11 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 = 2.4.2 - xxx-xx-xx =
 * Fix - Action callback arguments count in ShipStation tracking integration #1841
 * Fix - Google Pay scripts loading on unrelated admin pages #1834
-* Fix - Do not ignore disabled APMs list in blocks #1865
 * Fix - Display Package Tracking metabox below Order actions when HPOS is active #1850
 * Fix - ApplePay use checkout form data to update shipping and billing #1832
 * Fix - Fix Apple Pay CSS #1872
 * Enhancement - Keep default "Place order" button text in continuation #1870
-* Enhancement - Allow redirect to PayPal with "Place order" button if smart buttons failed to load #1840
+* Enhancement - Allow redirect to PayPal with "Place order" button if smart buttons failed to load #1840 #1865
 * Enhancement - Extend list of supported countries for Package Tracking v2 integration #1848
 * Enhancement - Improve Block Theme support for Pay Later messaging #1855
 * Enhancement - Render block buttons separately and add block style settings #1858
