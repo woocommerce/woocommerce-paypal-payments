@@ -18,7 +18,7 @@
 
 .woocommerce-checkout {
 	#applepay-container, .ppcp-button-applepay {
-		margin-top: 0.5em;
+		margin-top: 0;
 		--apple-pay-button-border-radius: 4px;
 		--apple-pay-button-height: 45px;
 		&.ppcp-button-pill {
@@ -31,6 +31,7 @@
 
 	.wp-block-woocommerce-checkout {
 		#applepay-container, .ppcp-button-applepay {
+			margin: 0;
 			--apple-pay-button-margin: 0;
 			--apple-pay-button-height: 48px;
 			&.ppcp-button-pill {
@@ -41,15 +42,9 @@
 
 	.wp-block-woocommerce-cart {
 		#applepay-container, .ppcp-button-applepay {
+			margin: 0;
 			--apple-pay-button-margin: 0;
 			--apple-pay-button-height: 48px;
-		}
-		/* Workaround for blocks grid */
-		.wc-block-components-express-payment__event-buttons {
-			--apple-pay-button-display: block;
-			li[id*="express-payment-method-ppcp-"] {
-				--apple-pay-button-padding-bottom: 0;
-			}
 		}
 	}
 }
