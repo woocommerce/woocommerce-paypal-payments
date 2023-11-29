@@ -6,7 +6,6 @@ export default class FormSaver {
 
     async save(form) {
         const formData = new FormData(form);
-        const formJsonObj = Object.fromEntries(formData.entries());
 
         const res = await fetch(this.url, {
             method: 'POST',
@@ -16,7 +15,7 @@ export default class FormSaver {
             credentials: 'same-origin',
             body: JSON.stringify({
                 nonce: this.nonce,
-                form: formJsonObj,
+                form_encoded: new URLSearchParams(formData).toString(),
             }),
         });
 

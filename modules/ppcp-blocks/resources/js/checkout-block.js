@@ -1,11 +1,19 @@
 import {useEffect, useState} from '@wordpress/element';
 import {registerExpressPaymentMethod, registerPaymentMethod} from '@woocommerce/blocks-registry';
-import {paypalAddressToWc, paypalOrderToWcAddresses} from "./Helper/Address";
-import {loadPaypalScript} from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading'
+import {mergeWcAddress, paypalAddressToWc, paypalOrderToWcAddresses} from "./Helper/Address";
+import {
+    loadPaypalScriptPromise
+} from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading'
+import {
+    normalizeStyleForFundingSource
+} from '../../../ppcp-button/resources/js/modules/Helper/Style'
+import buttonModuleWatcher from "../../../ppcp-button/resources/js/modules/ButtonModuleWatcher";
 
 const config = wc.wcSettings.getSetting('ppcp-gateway_data');
 
 window.ppcpFundingSource = config.fundingSource;
+
+let registeredContext = false;
 
 const PayPalComponent = ({
                              onClick,
@@ -16,20 +24,31 @@ const PayPalComponent = ({
                              emitResponse,
                              activePaymentMethod,
                              shippingData,
+                             isEditing,
+                             fundingSource,
 }) => {
-    const {onPaymentSetup, onCheckoutAfterProcessingWithError} = eventRegistration;
+    const {onPaymentSetup, onCheckoutFail, onCheckoutValidation} = eventRegistration;
     const {responseTypes} = emitResponse;
 
     const [paypalOrder, setPaypalOrder] = useState(null);
 
-    const [loaded, setLoaded] = useState(false);
+    const methodId = fundingSource ? `${config.id}-${fundingSource}` : config.id;
+
     useEffect(() => {
-        if (!loaded) {
-            loadPaypalScript(config.scriptData, () => {
-                setLoaded(true);
-            });
+        // fill the form if in continuation (for product or mini-cart buttons)
+        if (!config.scriptData.continuation || !config.scriptData.continuation.order || window.ppcpContinuationFilled) {
+            return;
         }
-    }, [loaded]);
+        const paypalAddresses = paypalOrderToWcAddresses(config.scriptData.continuation.order);
+        const wcAddresses = wp.data.select('wc/store/cart').getCustomerData();
+        const addresses = mergeWcAddress(wcAddresses, paypalAddresses);
+        wp.data.dispatch('wc/store/cart').setBillingAddress(addresses.billingAddress);
+        if (shippingData.needsShipping) {
+            wp.data.dispatch('wc/store/cart').setShippingAddress(addresses.shippingAddress);
+        }
+        // this useEffect should run only once, but adding this in case of some kind of full re-rendering
+        window.ppcpContinuationFilled = true;
+    }, [])
 
     const createOrder = async () => {
         try {
@@ -68,8 +87,40 @@ const PayPalComponent = ({
         }
     };
 
+    const getCheckoutRedirectUrl = () => {
+        const checkoutUrl = new URL(config.scriptData.redirect);
+        // sometimes some browsers may load some kind of cached version of the page,
+        // so adding a parameter to avoid that
+        checkoutUrl.searchParams.append('ppcp-continuation-redirect', (new Date()).getTime().toString());
+        return checkoutUrl.toString();
+    }
+
     const handleApprove = async (data, actions) => {
         try {
+            const order = await actions.order.get();
+
+            if (order) {
+                const addresses = paypalOrderToWcAddresses(order);
+
+                let promises = [
+                    // save address on server
+                    wp.data.dispatch('wc/store/cart').updateCustomerData({
+                        billing_address: addresses.billingAddress,
+                        shipping_address: addresses.shippingAddress,
+                    }),
+                ];
+                if (!config.finalReviewEnabled) {
+                    // set address in UI
+                    promises.push(wp.data.dispatch('wc/store/cart').setBillingAddress(addresses.billingAddress));
+                    if (shippingData.needsShipping) {
+                        promises.push(wp.data.dispatch('wc/store/cart').setShippingAddress(addresses.shippingAddress))
+                    }
+                }
+                await Promise.all(promises);
+            }
+
+            setPaypalOrder(order);
+
             const res = await fetch(config.scriptData.ajax.approve_order.endpoint, {
                 method: 'POST',
                 credentials: 'same-origin',
@@ -93,23 +144,8 @@ const PayPalComponent = ({
                 throw new Error(config.scriptData.labels.error.generic)
             }
 
-            const order = await actions.order.get();
-
-            setPaypalOrder(order);
-
             if (config.finalReviewEnabled) {
-                const addresses = paypalOrderToWcAddresses(order);
-
-                await wp.data.dispatch('wc/store/cart').updateCustomerData({
-                    billing_address: addresses.billingAddress,
-                    shipping_address: addresses.shippingAddress,
-                });
-                const checkoutUrl = new URL(config.scriptData.redirect);
-                // sometimes some browsers may load some kind of cached version of the page,
-                // so adding a parameter to avoid that
-                checkoutUrl.searchParams.append('ppcp-continuation-redirect', (new Date()).getTime().toString());
-
-                location.href = checkoutUrl.toString();
+                location.href = getCheckoutRedirectUrl();
             } else {
                 onSubmit();
             }
@@ -124,7 +160,26 @@ const PayPalComponent = ({
         }
     };
 
+    useEffect(() => {
+        const unsubscribe = onCheckoutValidation(() => {
+            if (config.scriptData.continuation) {
+                return true;
+            }
+            if (wp.data.select('wc/store/validation').hasValidationErrors()) {
+                location.href = getCheckoutRedirectUrl();
+                return { type: responseTypes.ERROR };
+            }
+
+            return true;
+        });
+        return unsubscribe;
+    }, [onCheckoutValidation] );
+
     const handleClick = (data, actions) => {
+        if (isEditing) {
+            return actions.reject();
+        }
+
         window.ppcpFundingSource = data.fundingSource;
 
         onClick();
@@ -170,7 +225,7 @@ const PayPalComponent = ({
     }
 
     useEffect(() => {
-        if (activePaymentMethod !== config.id) {
+        if (activePaymentMethod !== methodId) {
             return;
         }
 
@@ -206,21 +261,24 @@ const PayPalComponent = ({
     }, [onPaymentSetup, paypalOrder, activePaymentMethod]);
 
     useEffect(() => {
-        const unsubscribe = onCheckoutAfterProcessingWithError(({ processingResponse }) => {
+        if (activePaymentMethod !== methodId) {
+            return;
+        }
+        const unsubscribe = onCheckoutFail(({ processingResponse }) => {
+            console.error(processingResponse)
             if (onClose) {
                 onClose();
             }
-            if (processingResponse?.paymentDetails?.errorMessage) {
-                return {
-                    type: emitResponse.responseTypes.ERROR,
-                    message: processingResponse.paymentDetails.errorMessage,
-                    messageContext: config.scriptData.continuation ? emitResponse.noticeContexts.PAYMENTS : emitResponse.noticeContexts.EXPRESS_PAYMENTS,
-                };
+            if (config.scriptData.continuation) {
+                return true;
+            }
+            if (!config.finalReviewEnabled) {
+                location.href = getCheckoutRedirectUrl();
             }
             return true;
         });
         return unsubscribe;
-    }, [onCheckoutAfterProcessingWithError, onClose]);
+    }, [onCheckoutFail, onClose, activePaymentMethod]);
 
     if (config.scriptData.continuation) {
         return (
@@ -230,15 +288,26 @@ const PayPalComponent = ({
         )
     }
 
-    if (!loaded) {
-        return null;
+    if (!registeredContext) {
+        buttonModuleWatcher.registerContextBootstrap(config.scriptData.context, {
+            createOrder: () => {
+                return createOrder();
+            },
+            onApprove: (data, actions) => {
+                return handleApprove(data, actions);
+            },
+        });
+        registeredContext = true;
     }
+
+    const style = normalizeStyleForFundingSource(config.scriptData.button.style, fundingSource);
 
     const PayPalButton = window.paypal.Buttons.driver("react", { React, ReactDOM });
 
     return (
         <PayPalButton
-            style={config.scriptData.button.style}
+            fundingSource={fundingSource}
+            style={style}
             onClick={handleClick}
             onCancel={onClose}
             onError={onClose}
@@ -250,20 +319,53 @@ const PayPalComponent = ({
 }
 
 const features = ['products'];
-let registerMethod = registerExpressPaymentMethod;
-if (config.scriptData.continuation) {
-    features.push('ppcp_continuation');
-    registerMethod = registerPaymentMethod;
+
+if ((config.addPlaceOrderMethod || config.usePlaceOrder) && !config.scriptData.continuation) {
+    registerPaymentMethod({
+        name: config.id,
+        label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
+        content: <div dangerouslySetInnerHTML={{__html: config.description}}/>,
+        edit: <div dangerouslySetInnerHTML={{__html: config.description}}/>,
+        placeOrderButtonLabel: config.placeOrderButtonText,
+        ariaLabel: config.title,
+        canMakePayment: () => config.enabled,
+        supports: {
+            features: features,
+        },
+    });
 }
 
-registerMethod({
-    name: config.id,
-    label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
-    content: <PayPalComponent/>,
-    edit: <b>TODO: editing</b>,
-    ariaLabel: config.title,
-    canMakePayment: () => config.enabled,
-    supports: {
-        features: features,
-    },
-});
+if (config.scriptData.continuation) {
+    registerPaymentMethod({
+        name: config.id,
+        label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
+        content: <PayPalComponent isEditing={false}/>,
+        edit: <PayPalComponent isEditing={true}/>,
+        ariaLabel: config.title,
+        canMakePayment: () => true,
+        supports: {
+            features: [...features, 'ppcp_continuation'],
+        },
+    });
+} else if (!config.usePlaceOrder) {
+    const paypalScriptPromise = loadPaypalScriptPromise(config.scriptData);
+
+    for (const fundingSource of ['paypal', ...config.enabledFundingSources]) {
+        registerExpressPaymentMethod({
+            name: `${config.id}-${fundingSource}`,
+            paymentMethodId: config.id,
+            label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
+            content: <PayPalComponent isEditing={false} fundingSource={fundingSource}/>,
+            edit: <PayPalComponent isEditing={true} fundingSource={fundingSource}/>,
+            ariaLabel: config.title,
+            canMakePayment: async () => {
+                await paypalScriptPromise;
+
+                return paypal.Buttons({fundingSource}).isEligible();
+            },
+            supports: {
+                features: features,
+            },
+        });
+    }
+}

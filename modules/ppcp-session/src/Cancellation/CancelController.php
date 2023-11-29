@@ -9,12 +9,14 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Session\Cancellation;
 
+use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 
 /**
  * Class CancelController
  */
 class CancelController {
+	use ContextTrait;
 
 	public const NONCE = 'ppcp-cancel';
 
@@ -50,7 +52,7 @@ class CancelController {
 	/**
 	 * Runs the controller.
 	 */
-	public function run() {
+	public function run(): void {
 		$param_name = self::NONCE;
 		if ( isset( $_GET[ $param_name ] ) && // Input var ok.
 			wp_verify_nonce(
@@ -61,18 +63,8 @@ class CancelController {
 			$this->session_handler->destroy_session_data();
 		}
 
-		$order = $this->session_handler->order();
-		if ( ! $order ) {
+		if ( ! $this->is_paypal_continuation() ) {
 			return;
-		}
-
-		$source = $order->payment_source();
-		if ( $source && $source->card() ) {
-			return; // Ignore for DCC.
-		}
-
-		if ( 'card' === $this->session_handler->funding_source() ) {
-			return; // Ignore for card buttons.
 		}
 
 		$url = add_query_arg( array( $param_name => wp_create_nonce( self::NONCE ) ), wc_get_checkout_url() );

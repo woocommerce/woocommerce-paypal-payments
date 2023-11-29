@@ -78,6 +78,12 @@ class CreditCardGatewayTest extends TestCase
 		$wc_order = Mockery::mock(WC_Order::class);
 		when('wc_get_order')->justReturn($wc_order);
 
+		$woocommerce = Mockery::mock(\WooCommerce::class);
+		$session = Mockery::mock(\WC_Session::class);
+		when('WC')->justReturn($woocommerce);
+		$woocommerce->session = $session;
+		$session->shouldReceive('set')->andReturn([]);
+
 		$this->orderProcessor->shouldReceive('process')
 			->with($wc_order)
 			->andReturn(true);
@@ -94,6 +100,12 @@ class CreditCardGatewayTest extends TestCase
 		$wc_order = Mockery::mock(WC_Order::class);
 		$wc_order->shouldReceive('get_customer_id')->andReturn(1);
 		when('wc_get_order')->justReturn($wc_order);
+
+		$woocommerce = Mockery::mock(\WooCommerce::class);
+		$session = Mockery::mock(\WC_Session::class);
+		when('WC')->justReturn($woocommerce);
+		$woocommerce->session = $session;
+		$session->shouldReceive('set')->andReturn([]);
 
 		$savedCreditCard = 'abc123';
 		$_POST['saved_credit_card'] = $savedCreditCard;

@@ -25,6 +25,7 @@ use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use function Brain\Monkey\Functions\when;
 
 class RenewalHandlerTest extends TestCase
 {
@@ -116,6 +117,9 @@ class RenewalHandlerTest extends TestCase
 			->andReturn(null);
 
 		$wcOrder
+			->shouldReceive('get_meta')
+			->andReturn('');
+		$wcOrder
 			->shouldReceive('get_id')
 			->andReturn(1);
 		$wcOrder
@@ -153,6 +157,8 @@ class RenewalHandlerTest extends TestCase
 		$this->orderEndpoint->shouldReceive('create')
 			->with([$purchaseUnit], 'no_shipping', $payer, $token)
 			->andReturn($order);
+
+		when('wcs_get_subscriptions_for_order')->justReturn(array());
 
 		$wcOrder->shouldReceive('update_status');
 		$wcOrder->shouldReceive('save');

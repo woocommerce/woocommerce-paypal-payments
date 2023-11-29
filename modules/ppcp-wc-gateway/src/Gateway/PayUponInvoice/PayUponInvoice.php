@@ -9,15 +9,13 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice;
 
+use Automattic\WooCommerce\Internal\DataStores\Orders\CustomOrdersTableController;
 use Psr\Log\LoggerInterface;
 use WC_Email;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\CaptureFactory;
 use WooCommerce\PayPalCommerce\Button\Exception\RuntimeException;
-use WooCommerce\PayPalCommerce\Onboarding\Environment;
-use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\WcGateway\FraudNet\FraudNet;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CheckoutHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceHelper;
@@ -143,6 +141,20 @@ class PayUponInvoice {
 			$this->settings->set( 'fraudnet_enabled', true );
 			$this->settings->persist();
 		}
+
+		add_filter(
+			'ppcp_partner_referrals_option',
+			function ( array $option ): array {
+				if ( $option['valid'] ) {
+					return $option;
+				}
+				if ( $option['field'] === 'ppcp-onboarding-pui' ) {
+					$option['valid'] = true;
+					$option['value'] = ( $option['value'] ? '1' : '' );
+				}
+				return $option;
+			}
+		);
 
 		add_filter(
 			'ppcp_partner_referrals_data',
@@ -515,9 +527,19 @@ class PayUponInvoice {
 		add_action(
 			'add_meta_boxes',
 			function( string $post_type ) {
-				if ( $post_type === 'shop_order' ) {
+				/**
+				 * Class and function exist in WooCommerce.
+				 *
+				 * @psalm-suppress UndefinedClass
+				 * @psalm-suppress UndefinedFunction
+				 */
+				$screen = class_exists( CustomOrdersTableController::class ) && wc_get_container()->get( CustomOrdersTableController::class )->custom_orders_table_usage_is_enabled()
+					? wc_get_page_screen_id( 'shop-order' )
+					: 'shop_order';
+
+				if ( $post_type === $screen ) {
 					// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-					$post_id = wc_clean( wp_unslash( $_GET['post'] ?? '' ) );
+					$post_id = wc_clean( wp_unslash( $_GET['id'] ?? $_GET['post'] ?? '' ) );
 					$order   = wc_get_order( $post_id );
 					if ( is_a( $order, WC_Order::class ) && $order->get_payment_method() === PayUponInvoiceGateway::ID ) {
 						$instructions = $order->get_meta( 'ppcp_ratepay_payment_instructions_payment_reference' );
@@ -540,7 +562,7 @@ class PayUponInvoice {
 									echo wp_kses_post( "<li>Verwendungszweck: {$payment_reference}</li>" );
 									echo '</ul>';
 								},
-								$post_type,
+								$screen,
 								'side',
 								'high'
 							);

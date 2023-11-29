@@ -259,6 +259,16 @@
       <code>DAY_IN_SECONDS</code>
     </UndefinedConstant>
   </file>
+  <file src="modules/ppcp-api-client/src/Helper/OrderTransient.php">
+    <UndefinedConstant occurrences="1">
+      <code>DAY_IN_SECONDS</code>
+    </UndefinedConstant>
+  </file>
+  <file src="modules/ppcp-api-client/src/Helper/FailureRegistry.php">
+    <UndefinedConstant occurrences="1">
+      <code>DAY_IN_SECONDS</code>
+    </UndefinedConstant>
+  </file>
   <file src="modules/ppcp-button/services.php">
     <PossiblyFalseArgument occurrences="1">
       <code>realpath( __FILE__ )</code>
@@ -685,9 +695,11 @@
       <code>listen_for_merchant_id</code>
       <code>listen_for_vaulting_enabled</code>
     </MissingReturnType>
-    <PossiblyInvalidArgument occurrences="3">
+    <PossiblyInvalidArgument occurrences="5">
       <code>wp_unslash( $_GET['merchantId'] )</code>
       <code>wp_unslash( $_GET['merchantIdInPayPal'] )</code>
+      <code>wp_unslash( $_GET['ppcpToken'] )</code>
+      <code>wp_unslash( $_GET['ppcpRetry'] )</code>
       <code>wp_unslash( $_POST['ppcp-nonce'] )</code>
     </PossiblyInvalidArgument>
   </file>

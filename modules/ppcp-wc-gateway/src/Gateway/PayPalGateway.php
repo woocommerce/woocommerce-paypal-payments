@@ -13,6 +13,7 @@ use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
@@ -23,6 +24,7 @@ use WooCommerce\PayPalCommerce\Subscription\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\GatewayGenericException;
+use WooCommerce\PayPalCommerce\WcGateway\Exception\PayPalOrderMissingException;
 use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayUponInvoice\PayUponInvoiceGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
@@ -47,6 +49,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	const ORDER_PAYMENT_MODE_META_KEY   = '_ppcp_paypal_payment_mode';
 	const ORDER_PAYMENT_SOURCE_META_KEY = '_ppcp_paypal_payment_source';
 	const FEES_META_KEY                 = '_ppcp_paypal_fees';
+	const REFUND_FEES_META_KEY          = '_ppcp_paypal_refund_fees';
 	const REFUNDS_META_KEY              = '_ppcp_refunds';
 
 	/**
@@ -162,23 +165,32 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	private $order_endpoint;
 
 	/**
+	 * The function return the PayPal checkout URL for the given order ID.
+	 *
+	 * @var callable(string):string
+	 */
+	private $paypal_checkout_url_factory;
+
+	/**
 	 * PayPalGateway constructor.
 	 *
-	 * @param SettingsRenderer       $settings_renderer The Settings Renderer.
-	 * @param FundingSourceRenderer  $funding_source_renderer The funding source renderer.
-	 * @param OrderProcessor         $order_processor The Order Processor.
-	 * @param ContainerInterface     $config The settings.
-	 * @param SessionHandler         $session_handler The Session Handler.
-	 * @param RefundProcessor        $refund_processor The Refund Processor.
-	 * @param State                  $state The state.
-	 * @param TransactionUrlProvider $transaction_url_provider Service providing transaction view URL based on order.
-	 * @param SubscriptionHelper     $subscription_helper The subscription helper.
-	 * @param string                 $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
-	 * @param Environment            $environment The environment.
-	 * @param PaymentTokenRepository $payment_token_repository The payment token repository.
-	 * @param LoggerInterface        $logger The logger.
-	 * @param string                 $api_shop_country The api shop country.
-	 * @param OrderEndpoint          $order_endpoint The order endpoint.
+	 * @param SettingsRenderer        $settings_renderer The Settings Renderer.
+	 * @param FundingSourceRenderer   $funding_source_renderer The funding source renderer.
+	 * @param OrderProcessor          $order_processor The Order Processor.
+	 * @param ContainerInterface      $config The settings.
+	 * @param SessionHandler          $session_handler The Session Handler.
+	 * @param RefundProcessor         $refund_processor The Refund Processor.
+	 * @param State                   $state The state.
+	 * @param TransactionUrlProvider  $transaction_url_provider Service providing transaction view URL based on order.
+	 * @param SubscriptionHelper      $subscription_helper The subscription helper.
+	 * @param string                  $page_id ID of the current PPCP gateway settings page, or empty if it is not such page.
+	 * @param Environment             $environment The environment.
+	 * @param PaymentTokenRepository  $payment_token_repository The payment token repository.
+	 * @param LoggerInterface         $logger The logger.
+	 * @param string                  $api_shop_country The api shop country.
+	 * @param OrderEndpoint           $order_endpoint The order endpoint.
+	 * @param callable(string):string $paypal_checkout_url_factory The function return the PayPal checkout URL for the given order ID.
+	 * @param string                  $place_order_button_text The text for the standard "Place order" button.
 	 */
 	public function __construct(
 		SettingsRenderer $settings_renderer,
@@ -195,24 +207,28 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		PaymentTokenRepository $payment_token_repository,
 		LoggerInterface $logger,
 		string $api_shop_country,
-		OrderEndpoint $order_endpoint
+		OrderEndpoint $order_endpoint,
+		callable $paypal_checkout_url_factory,
+		string $place_order_button_text
 	) {
-		$this->id                       = self::ID;
-		$this->settings_renderer        = $settings_renderer;
-		$this->funding_source_renderer  = $funding_source_renderer;
-		$this->order_processor          = $order_processor;
-		$this->config                   = $config;
-		$this->session_handler          = $session_handler;
-		$this->refund_processor         = $refund_processor;
-		$this->state                    = $state;
-		$this->transaction_url_provider = $transaction_url_provider;
-		$this->subscription_helper      = $subscription_helper;
-		$this->page_id                  = $page_id;
-		$this->environment              = $environment;
-		$this->onboarded                = $state->current_state() === State::STATE_ONBOARDED;
-		$this->payment_token_repository = $payment_token_repository;
-		$this->logger                   = $logger;
-		$this->api_shop_country         = $api_shop_country;
+		$this->id                          = self::ID;
+		$this->settings_renderer           = $settings_renderer;
+		$this->funding_source_renderer     = $funding_source_renderer;
+		$this->order_processor             = $order_processor;
+		$this->config                      = $config;
+		$this->session_handler             = $session_handler;
+		$this->refund_processor            = $refund_processor;
+		$this->state                       = $state;
+		$this->transaction_url_provider    = $transaction_url_provider;
+		$this->subscription_helper         = $subscription_helper;
+		$this->page_id                     = $page_id;
+		$this->environment                 = $environment;
+		$this->onboarded                   = $state->current_state() === State::STATE_ONBOARDED;
+		$this->payment_token_repository    = $payment_token_repository;
+		$this->logger                      = $logger;
+		$this->api_shop_country            = $api_shop_country;
+		$this->paypal_checkout_url_factory = $paypal_checkout_url_factory;
+		$this->order_button_text           = $place_order_button_text;
 
 		if ( $this->onboarded ) {
 			$this->supports = array( 'refunds', 'tokenization' );
@@ -241,6 +257,8 @@ class PayPalGateway extends \WC_Payment_Gateway {
 					'subscription_payment_method_change_admin',
 					'multiple_subscriptions'
 				);
+			} elseif ( $this->config->has( 'vault_enabled_dcc' ) && $this->config->get( 'vault_enabled_dcc' ) ) {
+				$this->supports[] = 'tokenization';
 			}
 		}
 
@@ -253,8 +271,14 @@ class PayPalGateway extends \WC_Payment_Gateway {
 
 		$funding_source = $this->session_handler->funding_source();
 		if ( $funding_source ) {
-			$this->title       = $this->funding_source_renderer->render_name( $funding_source );
-			$this->description = $this->funding_source_renderer->render_description( $funding_source );
+			$order = $this->session_handler->order();
+			if ( $order &&
+				( $order->status()->is( OrderStatus::APPROVED ) || $order->status()->is( OrderStatus::COMPLETED ) )
+			) {
+				$this->title             = $this->funding_source_renderer->render_name( $funding_source );
+				$this->description       = $this->funding_source_renderer->render_description( $funding_source );
+				$this->order_button_text = null;
+			}
 		}
 
 		$this->init_form_fields();
@@ -269,6 +293,29 @@ class PayPalGateway extends \WC_Payment_Gateway {
 		);
 
 		$this->order_endpoint = $order_endpoint;
+	}
+
+	/**
+	 * Return the gateway's title.
+	 *
+	 * @return string
+	 */
+	public function get_title() {
+		if ( is_admin() ) {
+			// $theorder and other things for retrieving the order or post info are not available
+			// in the constructor, so must do it here.
+			global $theorder;
+			if ( $theorder instanceof WC_Order ) {
+				if ( $theorder->get_payment_method() === self::ID ) {
+					$payment_method_title = $theorder->get_payment_method_title();
+					if ( $payment_method_title ) {
+						$this->title = $payment_method_title;
+					}
+				}
+			}
+		}
+
+		return parent::get_title();
 	}
 
 	/**
@@ -497,7 +544,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 				$order = $this->session_handler->order();
 				$this->add_paypal_meta( $wc_order, $order, $this->environment );
 
-				$subscriptions = wcs_get_subscriptions_for_order( $order_id );
+				$subscriptions = function_exists( 'wcs_get_subscriptions_for_order' ) ? wcs_get_subscriptions_for_order( $order_id ) : array();
 				foreach ( $subscriptions as $subscription ) {
 					$subscription->update_meta_data( 'ppcp_subscription', $paypal_subscription_id );
 					$subscription->save();
@@ -511,34 +558,37 @@ class PayPalGateway extends \WC_Payment_Gateway {
 				}
 
 				$wc_order->payment_complete();
+
 				return $this->handle_payment_success( $wc_order );
 			}
+			try {
+				$this->order_processor->process( $wc_order );
 
-			if ( ! $this->order_processor->process( $wc_order ) ) {
-				return $this->handle_payment_failure(
-					$wc_order,
-					new Exception(
-						$this->order_processor->last_error()
-					)
+				do_action( 'woocommerce_paypal_payments_before_handle_payment_success', $wc_order );
+
+				return $this->handle_payment_success( $wc_order );
+			} catch ( PayPalOrderMissingException $exc ) {
+				$order = $this->order_processor->create_order( $wc_order );
+
+				return array(
+					'result'   => 'success',
+					'redirect' => ( $this->paypal_checkout_url_factory )( $order->id() ),
 				);
 			}
-
-			if ( $this->subscription_helper->has_subscription( $order_id ) ) {
-				$this->schedule_saved_payment_check( $order_id, $wc_order->get_customer_id() );
-			}
-
-			return $this->handle_payment_success( $wc_order );
 		} catch ( PayPalApiException $error ) {
 			$retry_keys_messages = array(
 				'INSTRUMENT_DECLINED'   => __( 'Instrument declined.', 'woocommerce-paypal-payments' ),
 				'PAYER_ACTION_REQUIRED' => __( 'Payer action required, possibly overcharge.', 'woocommerce-paypal-payments' ),
 			);
-			$retry_errors        = array_filter(
-				array_keys( $retry_keys_messages ),
-				function ( string $key ) use ( $error ): bool {
-					return $error->has_detail( $key );
-				}
+			$retry_errors        = array_values(
+				array_filter(
+					array_keys( $retry_keys_messages ),
+					function ( string $key ) use ( $error ): bool {
+						return $error->has_detail( $key );
+					}
+				)
 			);
+
 			if ( $retry_errors ) {
 				$retry_error_key = $retry_errors[0];
 
@@ -559,12 +609,9 @@ class PayPalGateway extends \WC_Payment_Gateway {
 					);
 				}
 
-				$host = $this->config->has( 'sandbox_on' ) && $this->config->get( 'sandbox_on' ) ?
-					'https://www.sandbox.paypal.com/' : 'https://www.paypal.com/';
-				$url  = $host . 'checkoutnow?token=' . $this->session_handler->order()->id();
 				return array(
 					'result'   => 'success',
-					'redirect' => $url,
+					'redirect' => ( $this->paypal_checkout_url_factory )( $this->session_handler->order()->id() ),
 				);
 			}
 
@@ -576,7 +623,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 					$error
 				)
 			);
-		} catch ( RuntimeException $error ) {
+		} catch ( Exception $error ) {
 			return $this->handle_payment_failure( $wc_order, $error );
 		}
 	}

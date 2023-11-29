@@ -1,0 +1,17 @@
+
+.ppcp-field-hidden {
+	display: none !important;
+}
+
+.ppcp-field-disabled {
+	cursor: not-allowed;
+	-webkit-filter: grayscale(100%);
+	filter: grayscale(100%);
+	opacity: 0.5;
+}
+
+.ppcp-field-indent {
+	th {
+		padding-left: 20px;
+	}
+}

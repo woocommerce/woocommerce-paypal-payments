@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\Button;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ApproveSubscriptionEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\SaveCheckoutFormEndpoint;
+use WooCommerce\PayPalCommerce\Button\Endpoint\SimulateCartEndpoint;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ValidateCheckoutEndpoint;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
@@ -116,6 +117,19 @@ class ButtonModule implements ModuleInterface {
 				$endpoint = $container->get( 'button.endpoint.vault-paypal' );
 				assert( $endpoint instanceof StartPayPalVaultingEndpoint );
 
+				$endpoint->handle_request();
+			}
+		);
+
+		add_action(
+			'wc_ajax_' . SimulateCartEndpoint::ENDPOINT,
+			static function () use ( $container ) {
+				$endpoint = $container->get( 'button.endpoint.simulate-cart' );
+				/**
+				 * The Simulate Cart Endpoint.
+				 *
+				 * @var SimulateCartEndpoint $endpoint
+				 */
 				$endpoint->handle_request();
 			}
 		);

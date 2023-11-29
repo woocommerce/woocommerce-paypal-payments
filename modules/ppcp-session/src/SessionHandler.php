@@ -48,12 +48,21 @@ class SessionHandler {
 	private $funding_source = null;
 
 	/**
+	 * The checkout form data.
+	 *
+	 * @var array
+	 */
+	private $checkout_form = array();
+
+	/**
 	 * Returns the order.
 	 *
 	 * @return Order|null
 	 */
 	public function order() {
 		$this->load_session();
+
+		do_action( 'ppcp_session_get_order', $this->order, $this );
 
 		return $this->order;
 	}
@@ -67,6 +76,30 @@ class SessionHandler {
 		$this->load_session();
 
 		$this->order = $order;
+
+		$this->store_session();
+	}
+
+	/**
+	 * Returns the checkout form data.
+	 *
+	 * @return array
+	 */
+	public function checkout_form(): array {
+		$this->load_session();
+
+		return $this->checkout_form;
+	}
+
+	/**
+	 * Replaces the checkout form data.
+	 *
+	 * @param array $checkout_form The checkout form data.
+	 */
+	public function replace_checkout_form( array $checkout_form ): void {
+		$this->load_session();
+
+		$this->checkout_form = $checkout_form;
 
 		$this->store_session();
 	}
@@ -151,6 +184,7 @@ class SessionHandler {
 		$this->bn_code                    = '';
 		$this->insufficient_funding_tries = 0;
 		$this->funding_source             = null;
+		$this->checkout_form              = array();
 		$this->store_session();
 		return $this;
 	}
@@ -188,6 +222,7 @@ class SessionHandler {
 		if ( ! is_string( $this->funding_source ) ) {
 			$this->funding_source = null;
 		}
+		$this->checkout_form = $data['checkout_form'] ?? array();
 	}
 
 	/**
@@ -202,6 +237,7 @@ class SessionHandler {
 			'bn_code'                    => $obj->bn_code,
 			'insufficient_funding_tries' => $obj->insufficient_funding_tries,
 			'funding_source'             => $obj->funding_source,
+			'checkout_form'              => $obj->checkout_form,
 		);
 	}
 }

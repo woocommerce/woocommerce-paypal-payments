@@ -18,7 +18,7 @@ use WP_REST_Response;
  */
 class CheckoutPaymentApprovalReversed implements RequestHandler {
 
-	use RequestHandlerTrait, PrefixTrait;
+	use RequestHandlerTrait;
 
 	/**
 	 * The logger.
@@ -66,26 +66,20 @@ class CheckoutPaymentApprovalReversed implements RequestHandler {
 	 * @return WP_REST_Response
 	 */
 	public function handle_request( WP_REST_Request $request ): WP_REST_Response {
-		$response = array( 'success' => false );
-
-		$custom_ids = $this->get_custom_ids_from_request( $request );
+		$custom_ids = $this->get_wc_order_ids_from_request( $request );
 		if ( empty( $custom_ids ) ) {
-			return $this->no_custom_ids_from_request( $request, $response );
+			return $this->no_custom_ids_response( $request );
 		}
 
 		$wc_orders = $this->get_wc_orders_from_custom_ids( $custom_ids );
 		if ( ! $wc_orders ) {
-			return $this->no_wc_orders_from_custom_ids( $request, $response );
+			return $this->no_wc_orders_response( $request );
 		}
 
 		foreach ( $wc_orders as $wc_order ) {
 			if ( in_array( $wc_order->get_status(), array( 'pending', 'on-hold' ), true ) ) {
 				$error_message = sprintf(
-				// translators: %1$s is the order id.
-					__(
-						'Failed to capture order %1$s through PayPal.',
-						'woocommerce-paypal-payments'
-					),
+					'Failed to capture order %1$s through PayPal.',
 					(string) $wc_order->get_id()
 				);
 
@@ -95,7 +89,6 @@ class CheckoutPaymentApprovalReversed implements RequestHandler {
 			}
 		}
 
-		$response['success'] = true;
-		return new WP_REST_Response( $response );
+		return $this->success_response();
 	}
 }

@@ -13,7 +13,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Authorization;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\Refund;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\RefundCapture;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\AuthorizationFactory;
@@ -196,13 +196,13 @@ class PaymentsEndpoint {
 	/**
 	 * Refunds a payment.
 	 *
-	 * @param Refund $refund The refund to be processed.
+	 * @param RefundCapture $refund The refund to be processed.
 	 *
 	 * @return string Refund ID.
 	 * @throws RuntimeException If the request fails.
 	 * @throws PayPalApiException If the request fails.
 	 */
-	public function refund( Refund $refund ) : string {
+	public function refund( RefundCapture $refund ) : string {
 		$bearer = $this->bearer->bearer();
 		$url    = trailingslashit( $this->host ) . 'v2/payments/captures/' . $refund->for_capture()->id() . '/refund';
 		$args   = array(

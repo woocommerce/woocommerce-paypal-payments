@@ -73,6 +73,7 @@ class ApplicationContextRepositoryTest extends TestCase
                 'container' => [
                     'brand_name' => 'Acme corp.',
                     'landing_page' => ApplicationContext::LANDING_PAGE_BILLING,
+					'payee_preferred' => '',
                 ],
                 'user_locale' => 'de_DE',
                 'shippingPreference' => ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING,
@@ -81,6 +82,7 @@ class ApplicationContextRepositoryTest extends TestCase
                     'brand_name' => 'Acme corp.',
                     'landing_page' => ApplicationContext::LANDING_PAGE_BILLING,
                     'shipping_preference' => ApplicationContext::SHIPPING_PREFERENCE_NO_SHIPPING,
+					'payment_method_preference' => ApplicationContext::PAYMENT_METHOD_UNRESTRICTED,
                 ],
             ],
         ];

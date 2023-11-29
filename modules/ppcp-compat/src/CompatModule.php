@@ -11,23 +11,16 @@ namespace WooCommerce\PayPalCommerce\Compat;
 
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
-use Exception;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
-use Psr\Log\LoggerInterface;
-use Vendidero\Germanized\Shipments\Shipment;
-use WC_Order;
 use WooCommerce\PayPalCommerce\Compat\Assets\CompatAssets;
-use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WP_Theme;
 
 /**
  * Class CompatModule
  */
 class CompatModule implements ModuleInterface {
-
 	/**
 	 * Setup the compatibility module.
 	 *
@@ -46,9 +39,10 @@ class CompatModule implements ModuleInterface {
 	 * @throws NotFoundException
 	 */
 	public function run( ContainerInterface $c ): void {
+
 		$this->initialize_ppec_compat_layer( $c );
 		$this->fix_site_ground_optimizer_compatibility( $c );
-		$this->initialize_gzd_compat_layer( $c );
+		$this->initialize_tracking_compat_layer( $c );
 
 		$asset_loader = $c->get( 'compat.assets' );
 		assert( $asset_loader instanceof CompatAssets );
@@ -115,73 +109,18 @@ class CompatModule implements ModuleInterface {
 	}
 
 	/**
-	 * Sets up the <a href="https://wordpress.org/plugins/woocommerce-germanized/">Germanized for WooCommerce</a>
-	 * plugin compatibility layer.
-	 *
-	 * @link https://wordpress.org/plugins/woocommerce-germanized/
+	 * Sets up the 3rd party plugins compatibility layer for PayPal tracking.
 	 *
 	 * @param ContainerInterface $c The Container.
 	 * @return void
 	 */
-	protected function initialize_gzd_compat_layer( ContainerInterface $c ): void {
-		if ( ! $c->get( 'compat.should-initialize-gzd-compat-layer' ) ) {
-			return;
+	protected function initialize_tracking_compat_layer( ContainerInterface $c ): void {
+		$order_tracking_integrations = $c->get( 'order-tracking.integrations' );
+
+		foreach ( $order_tracking_integrations as $integration ) {
+			assert( $integration instanceof Integration );
+			$integration->integrate();
 		}
-
-		$endpoint = $c->get( 'order-tracking.endpoint.controller' );
-		assert( $endpoint instanceof OrderTrackingEndpoint );
-
-		$logger = $c->get( 'woocommerce.logger.woocommerce' );
-		assert( $logger instanceof LoggerInterface );
-
-		add_action(
-			'woocommerce_gzd_shipment_status_shipped',
-			static function( int $shipment_id, Shipment $shipment ) use ( $endpoint, $logger ) {
-				if ( ! apply_filters( 'woocommerce_paypal_payments_sync_gzd_tracking', true ) ) {
-					return;
-				}
-
-				$wc_order = $shipment->get_order();
-				if ( ! is_a( $wc_order, WC_Order::class ) ) {
-					return;
-				}
-
-				$transaction_id = $wc_order->get_transaction_id();
-				if ( empty( $transaction_id ) ) {
-					return;
-				}
-
-				$tracking_data = array(
-					'transaction_id' => $transaction_id,
-					'status'         => 'SHIPPED',
-				);
-
-				$provider = $shipment->get_shipping_provider();
-				if ( ! empty( $provider ) && $provider !== 'none' ) {
-					/**
-					 * The filter allowing to change the default Germanized carrier for order tracking,
-					 * such as DHL_DEUTSCHE_POST, DPD_DE, ...
-					 */
-					$tracking_data['carrier'] = (string) apply_filters( 'woocommerce_paypal_payments_default_gzd_carrier', 'DHL_DEUTSCHE_POST', $provider );
-				}
-
-				try {
-					$tracking_information = $endpoint->get_tracking_information( $wc_order->get_id() );
-
-					$tracking_data['tracking_number'] = $tracking_information['tracking_number'] ?? '';
-
-					if ( $shipment->get_tracking_id() ) {
-						$tracking_data['tracking_number'] = $shipment->get_tracking_id();
-					}
-
-					! $tracking_information ? $endpoint->add_tracking_information( $tracking_data, $wc_order->get_id() ) : $endpoint->update_tracking_information( $tracking_data, $wc_order->get_id() );
-				} catch ( Exception $exception ) {
-					$logger->error( "Couldn't sync tracking information: " . $exception->getMessage() );
-				}
-			},
-			500,
-			2
-		);
 	}
 
 	/**
@@ -331,23 +270,34 @@ class CompatModule implements ModuleInterface {
 	 * @return void
 	 */
 	protected function fix_page_builders(): void {
-		if ( $this->is_elementor_pro_active() || $this->is_divi_theme_active() ) {
-			add_filter(
-				'woocommerce_paypal_payments_single_product_renderer_hook',
-				function(): string {
-					return 'woocommerce_after_add_to_cart_form';
-				},
-				5
-			);
+		add_action(
+			'init',
+			function() {
+				if (
+					$this->is_block_theme_active()
+					|| $this->is_elementor_pro_active()
+					|| $this->is_divi_theme_active()
+					|| $this->is_divi_child_theme_active()
+				) {
+					add_filter(
+						'woocommerce_paypal_payments_single_product_renderer_hook',
+						function(): string {
+							return 'woocommerce_after_add_to_cart_form';
+						},
+						5
+					);
+				}
+			}
+		);
+	}
 
-			add_filter(
-				'woocommerce_paypal_payments_checkout_button_renderer_hook',
-				function(): string {
-					return 'woocommerce_review_order_after_submit';
-				},
-				5
-			);
-		}
+	/**
+	 * Checks whether the current theme is a blocks theme.
+	 *
+	 * @return bool
+	 */
+	protected function is_block_theme_active(): bool {
+		return function_exists( 'wp_is_block_theme' ) && wp_is_block_theme();
 	}
 
 	/**
@@ -367,5 +317,16 @@ class CompatModule implements ModuleInterface {
 	protected function is_divi_theme_active(): bool {
 		$theme = wp_get_theme();
 		return $theme->get( 'Name' ) === 'Divi';
+	}
+
+	/**
+	 * Checks whether a Divi child theme is currently used.
+	 *
+	 * @return bool
+	 */
+	protected function is_divi_child_theme_active(): bool {
+		$theme  = wp_get_theme();
+		$parent = $theme->parent();
+		return ( $parent && $parent->get( 'Name' ) === 'Divi' );
 	}
 }

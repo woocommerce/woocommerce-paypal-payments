@@ -9,7 +9,52 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Button\Helper;
 
+use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
+
 trait ContextTrait {
+	/**
+	 * Checks WC is_checkout() + WC checkout ajax requests.
+	 */
+	private function is_checkout(): bool {
+		if ( is_checkout() ) {
+			return true;
+		}
+
+		/**
+		 * The filter returning whether to detect WC checkout ajax requests.
+		 */
+		if ( apply_filters( 'ppcp_check_ajax_checkout', true ) ) {
+			// phpcs:ignore WordPress.Security
+			$wc_ajax = $_GET['wc-ajax'] ?? '';
+			if ( in_array( $wc_ajax, array( 'update_order_review' ), true ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Checks WC is_cart() + WC cart ajax requests.
+	 */
+	private function is_cart(): bool {
+		if ( is_cart() ) {
+			return true;
+		}
+
+		/**
+		 * The filter returning whether to detect WC cart ajax requests.
+		 */
+		if ( apply_filters( 'ppcp_check_ajax_cart', true ) ) {
+			// phpcs:ignore WordPress.Security
+			$wc_ajax = $_GET['wc-ajax'] ?? '';
+			if ( in_array( $wc_ajax, array( 'update_shipping_method' ), true ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
 
 	/**
 	 * The current context.
@@ -18,6 +63,13 @@ trait ContextTrait {
 	 */
 	protected function context(): string {
 		if ( is_product() || wc_post_content_has_shortcode( 'product_page' ) ) {
+
+			// Do this check here instead of reordering outside conditions.
+			// In order to have more control over the context.
+			if ( $this->is_checkout() && ! $this->is_paypal_continuation() ) {
+				return 'checkout';
+			}
+
 			return 'product';
 		}
 
@@ -26,7 +78,7 @@ trait ContextTrait {
 			return 'cart-block';
 		}
 
-		if ( is_cart() ) {
+		if ( $this->is_cart() ) {
 			return 'cart';
 		}
 
@@ -38,11 +90,33 @@ trait ContextTrait {
 			return 'checkout-block';
 		}
 
-		if ( ( is_checkout() ) && ! $this->is_paypal_continuation() ) {
+		if ( $this->is_checkout() && ! $this->is_paypal_continuation() ) {
 			return 'checkout';
 		}
 
 		return 'mini-cart';
+	}
+
+	/**
+	 * The current location.
+	 *
+	 * @return string
+	 */
+	protected function location(): string {
+		$context = $this->context();
+		if ( $context !== 'mini-cart' ) {
+			return $context;
+		}
+
+		if ( is_shop() || is_product_category() ) {
+			return 'shop';
+		}
+
+		if ( is_front_page() ) {
+			return 'home';
+		}
+
+		return '';
 	}
 
 	/**
@@ -53,6 +127,12 @@ trait ContextTrait {
 	private function is_paypal_continuation(): bool {
 		$order = $this->session_handler->order();
 		if ( ! $order ) {
+			return false;
+		}
+
+		if ( ! $order->status()->is( OrderStatus::APPROVED )
+			&& ! $order->status()->is( OrderStatus::COMPLETED )
+		) {
 			return false;
 		}
 

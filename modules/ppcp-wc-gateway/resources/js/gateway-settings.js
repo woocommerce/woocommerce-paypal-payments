@@ -2,9 +2,10 @@ import { loadScript } from "@paypal/paypal-js";
 import {debounce} from "./helper/debounce";
 import Renderer from '../../../ppcp-button/resources/js/modules/Renderer/Renderer'
 import MessageRenderer from "../../../ppcp-button/resources/js/modules/Renderer/MessageRenderer";
-import {setVisibleByClass, isVisible} from "../../../ppcp-button/resources/js/modules/Helper/Hiding"
+import {setVisibleByClass, isVisible} from "../../../ppcp-button/resources/js/modules/Helper/Hiding";
+import widgetBuilder from "../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder";
 
-;document.addEventListener(
+document.addEventListener(
     'DOMContentLoaded',
     () => {
         function disableAll(nodeList){
@@ -76,7 +77,8 @@ import {setVisibleByClass, isVisible} from "../../../ppcp-button/resources/js/mo
 
         function createButtonPreview(settingsCallback) {
             const render = (settings) => {
-                const wrapper = document.querySelector(settings.button.wrapper);
+                const wrapperSelector = Object.values(settings.separate_buttons).length > 0 ? Object.values(settings.separate_buttons)[0].wrapper : settings.button.wrapper;
+                const wrapper = document.querySelector(wrapperSelector);
                 if (!wrapper) {
                     return;
                 }
@@ -86,12 +88,18 @@ import {setVisibleByClass, isVisible} from "../../../ppcp-button/resources/js/mo
 
                 try {
                     renderer.render({});
+                    jQuery(document).trigger('ppcp_paypal_render_preview', settings);
                 } catch (err) {
                     console.error(err);
                 }
             };
 
             renderPreview(settingsCallback, render);
+        }
+
+        function currentTabId() {
+            const params = new URLSearchParams(location.search);
+            return params.has('ppcp-tab') ? params.get('ppcp-tab') : params.get('section');
         }
 
         function shouldShowPayLaterButton() {
@@ -104,6 +112,14 @@ import {setVisibleByClass, isVisible} from "../../../ppcp-button/resources/js/mo
             return payLaterButtonInput.checked && payLaterButtonLocations.selectedOptions.length > 0
         }
 
+        function shouldDisableCardButton() {
+            if (currentTabId() === 'ppcp-card-button-gateway') {
+                return false;
+            }
+
+            return PayPalCommerceGatewaySettings.is_acdc_enabled || jQuery('#ppcp-allow_card_button_gateway').is(':checked');
+        }
+
         function getPaypalScriptSettings() {
             const disableFundingInput = jQuery('[name="ppcp[disable_funding][]"]');
             let disabledSources = disableFundingInput.length > 0 ? disableFundingInput.val() : PayPalCommerceGatewaySettings.disabled_sources;
@@ -112,8 +128,8 @@ import {setVisibleByClass, isVisible} from "../../../ppcp-button/resources/js/mo
                 'client-id': PayPalCommerceGatewaySettings.client_id,
                 'currency': PayPalCommerceGatewaySettings.currency,
                 'integration-date': PayPalCommerceGatewaySettings.integration_date,
-                'components': ['buttons', 'funding-eligibility', 'messages'],
-                'enable-funding': ['venmo', 'paylater'],
+                'components': PayPalCommerceGatewaySettings.components,
+                'enable-funding': ['venmo', 'paylater']
             };
 
             if (PayPalCommerceGatewaySettings.environment === 'sandbox') {
@@ -128,8 +144,17 @@ import {setVisibleByClass, isVisible} from "../../../ppcp-button/resources/js/mo
                 disabledSources = disabledSources.concat('credit')
             }
 
+            if (shouldDisableCardButton()) {
+                disabledSources = disabledSources.concat('card');
+            }
+
             if (disabledSources?.length) {
                 settings['disable-funding'] = disabledSources;
+            }
+
+            const smartButtonLocale = document.getElementById('ppcp-smart_button_language');
+            if (smartButtonLocale?.length > 0 && smartButtonLocale?.value !== '') {
+                settings['locale'] = smartButtonLocale.value;
             }
 
             return settings;
@@ -138,6 +163,8 @@ import {setVisibleByClass, isVisible} from "../../../ppcp-button/resources/js/mo
         function loadPaypalScript(settings, onLoaded = () => {}) {
             loadScript(JSON.parse(JSON.stringify(settings))) // clone the object to prevent modification
                 .then(paypal => {
+                    widgetBuilder.setPaypal(paypal);
+
                     document.dispatchEvent(new CustomEvent('ppcp_paypal_script_loaded'));
 
                     onLoaded(paypal);
@@ -145,7 +172,7 @@ import {setVisibleByClass, isVisible} from "../../../ppcp-button/resources/js/mo
                 .catch((error) => console.error('failed to load the PayPal JS SDK script', error));
         }
 
-        function getButtonSettings(wrapperSelector, fields) {
+        function getButtonSettings(wrapperSelector, fields, apm = null) {
             const layoutElement = jQuery(fields['layout']);
             const layout = (layoutElement.length && layoutElement.is(':visible')) ? layoutElement.val() : 'vertical';
             const style = {
@@ -158,22 +185,38 @@ import {setVisibleByClass, isVisible} from "../../../ppcp-button/resources/js/mo
             if ('height' in fields) {
                 style['height'] = parseInt(jQuery(fields['height']).val());
             }
-            return {
+            if ('poweredby_tagline' in fields) {
+                style['layout'] = jQuery(fields['poweredby_tagline']).is(':checked') ? 'vertical' : 'horizontal';
+            }
+            const settings = {
                 'button': {
                     'wrapper': wrapperSelector,
                     'style': style,
                 },
                 'separate_buttons': {},
             };
+            if (apm) {
+                settings.separate_buttons[apm] = {
+                    'wrapper': wrapperSelector,
+                    'style': style,
+                };
+                settings.button.wrapper = null;
+            }
+            return settings;
         }
 
         function createMessagesPreview(settingsCallback) {
             const render = (settings) => {
-                const wrapper = document.querySelector(settings.wrapper);
+                let wrapper = document.querySelector(settings.wrapper);
                 if (!wrapper) {
                     return;
                 }
-                wrapper.innerHTML = '';
+                // looks like .innerHTML = '' is not enough, PayPal somehow renders with old style
+                const parent = wrapper.parentElement;
+                parent.removeChild(wrapper);
+                wrapper = document.createElement('div');
+                wrapper.setAttribute('id', settings.wrapper.replace('#', ''));
+                parent.appendChild(wrapper);
 
                 const messageRenderer = new MessageRenderer(settings);
 
@@ -266,12 +309,12 @@ import {setVisibleByClass, isVisible} from "../../../ppcp-button/resources/js/mo
             }, 1000));
 
             loadPaypalScript(oldScriptSettings, () => {
-                const payLaterMessagingLocations = ['product', 'cart', 'checkout', 'general'];
-                const paypalButtonLocations = ['product', 'cart', 'checkout', 'mini-cart', 'general'];
+                const payLaterMessagingLocations = ['product', 'cart', 'checkout', 'shop', 'home', 'general'];
+                const paypalButtonLocations = ['product', 'cart', 'checkout', 'mini-cart', 'cart-block', 'checkout-block-express', 'general'];
 
                 paypalButtonLocations.forEach((location) => {
                     const inputNamePrefix = location === 'checkout' ? '#ppcp-button' : '#ppcp-button_' + location;
-                    let wrapperName = location.charAt(0).toUpperCase() + location.slice(1);
+                    const wrapperName = location.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('');
                     const fields = {
                         'color': inputNamePrefix + '_color',
                         'shape': inputNamePrefix + '_shape',
@@ -280,9 +323,8 @@ import {setVisibleByClass, isVisible} from "../../../ppcp-button/resources/js/mo
                         'layout': inputNamePrefix + '_layout',
                     }
 
-                    if (location === 'mini-cart') {
+                    if (document.querySelector(inputNamePrefix + '_height')) {
                         fields['height'] = inputNamePrefix + '_height';
-                        wrapperName = 'MiniCart';
                     }
 
                     createButtonPreview(() => getButtonSettings('#ppcp' + wrapperName + 'ButtonPreview', fields));
@@ -302,6 +344,13 @@ import {setVisibleByClass, isVisible} from "../../../ppcp-button/resources/js/mo
                 });
 
                 createButtonPreview(() => getButtonDefaultSettings('#ppcpPayLaterButtonPreview'));
+
+                const apmFieldPrefix = '#ppcp-card_button_';
+                createButtonPreview(() => getButtonSettings('#ppcpCardButtonPreview', {
+                    'color': apmFieldPrefix + 'color',
+                    'shape': apmFieldPrefix + 'shape',
+                    'poweredby_tagline': apmFieldPrefix + 'poweredby_tagline',
+                }, 'card'));
             });
         }
     }

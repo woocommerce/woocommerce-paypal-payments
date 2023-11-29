@@ -6,7 +6,6 @@ export default class FormValidator {
 
     async validate(form) {
         const formData = new FormData(form);
-        const formJsonObj = Object.fromEntries(formData.entries());
 
         const res = await fetch(this.url, {
             method: 'POST',
@@ -16,7 +15,7 @@ export default class FormValidator {
             credentials: 'same-origin',
             body: JSON.stringify({
                 nonce: this.nonce,
-                form: formJsonObj,
+                form_encoded: new URLSearchParams(formData).toString(),
             }),
         });
 

@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\StatusReport;
 
+use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
@@ -49,6 +50,8 @@ class StatusReportModule implements ModuleInterface {
 				$settings = $c->get( 'wcgateway.settings' );
 				assert( $settings instanceof ContainerInterface );
 
+				$subscriptions_mode_settings = $c->get( 'wcgateway.settings.fields.subscriptions_mode' ) ?: array();
+
 				/* @var State $state The state. */
 				$state = $c->get( 'onboarding.state' );
 
@@ -61,6 +64,9 @@ class StatusReportModule implements ModuleInterface {
 				/* @var MessagesApply $messages_apply The messages apply. */
 				$messages_apply = $c->get( 'button.helper.messages-apply' );
 
+				/* @var SubscriptionHelper $subscription_helper The subscription helper class. */
+				$subscription_helper = $c->get( 'subscription.helper' );
+
 				$last_webhook_storage = $c->get( 'webhook.last-webhook-storage' );
 				assert( $last_webhook_storage instanceof WebhookEventStorage );
 
@@ -71,8 +77,6 @@ class StatusReportModule implements ModuleInterface {
 				$renderer = $c->get( 'status-report.renderer' );
 
 				$had_ppec_plugin = PPECHelper::is_plugin_configured();
-
-				$is_tracking_available = $c->get( 'order-tracking.is-tracking-available' );
 
 				$items = array(
 					array(
@@ -120,11 +124,19 @@ class StatusReportModule implements ModuleInterface {
 						'value'          => $this->bool_to_html( ! $last_webhook_storage->is_empty() ),
 					),
 					array(
-						'label'          => esc_html__( 'Vault enabled', 'woocommerce-paypal-payments' ),
-						'exported_label' => 'Vault enabled',
-						'description'    => esc_html__( 'Whether vaulting is enabled on PayPal account or not.', 'woocommerce-paypal-payments' ),
+						'label'          => esc_html__( 'PayPal Vault enabled', 'woocommerce-paypal-payments' ),
+						'exported_label' => 'PayPal Vault enabled',
+						'description'    => esc_html__( 'Whether vaulting option is enabled on Standard Payments settings or not.', 'woocommerce-paypal-payments' ),
 						'value'          => $this->bool_to_html(
-							$this->vault_enabled( $bearer )
+							$settings->has( 'vault_enabled' ) && $settings->get( 'vault_enabled' )
+						),
+					),
+					array(
+						'label'          => esc_html__( 'ACDC Vault enabled', 'woocommerce-paypal-payments' ),
+						'exported_label' => 'ACDC Vault enabled',
+						'description'    => esc_html__( 'Whether vaulting option is enabled on Advanced Card Processing settings or not.', 'woocommerce-paypal-payments' ),
+						'value'          => $this->bool_to_html(
+							$settings->has( 'vault_enabled_dcc' ) && $settings->get( 'vault_enabled_dcc' )
 						),
 					),
 					array(
@@ -152,10 +164,14 @@ class StatusReportModule implements ModuleInterface {
 						),
 					),
 					array(
-						'label'          => esc_html__( 'Tracking enabled', 'woocommerce-paypal-payments' ),
-						'exported_label' => 'Tracking enabled',
-						'description'    => esc_html__( 'Whether tracking is enabled on PayPal account or not.', 'woocommerce-paypal-payments' ),
-						'value'          => $this->bool_to_html( $is_tracking_available ),
+						'label'          => esc_html__( 'Subscriptions Mode', 'woocommerce-paypal-payments' ),
+						'exported_label' => 'Subscriptions Mode',
+						'description'    => esc_html__( 'Whether subscriptions are active and their mode.', 'woocommerce-paypal-payments' ),
+						'value'          => $this->subscriptions_mode_text(
+							$subscription_helper->plugin_is_active(),
+							$settings->has( 'subscriptions_mode' ) ? (string) $settings->get( 'subscriptions_mode' ) : '',
+							$subscriptions_mode_settings
+						),
 					),
 				);
 
@@ -193,18 +209,24 @@ class StatusReportModule implements ModuleInterface {
 	}
 
 	/**
-	 * It returns whether vaulting is enabled or not.
+	 * Returns the text associated with the subscriptions mode status.
 	 *
-	 * @param Bearer $bearer The bearer.
-	 * @return bool
+	 * @param bool   $is_plugin_active     Indicates if the WooCommerce Subscriptions plugin is active.
+	 * @param string $subscriptions_mode   The subscriptions mode stored in settings.
+	 * @param array  $field_settings       The subscriptions mode field settings.
+	 * @return string
 	 */
-	private function vault_enabled( Bearer $bearer ): bool {
-		try {
-			$token = $bearer->bearer();
-			return $token->vaulting_available();
-		} catch ( RuntimeException $exception ) {
-			return false;
+	private function subscriptions_mode_text( bool $is_plugin_active, string $subscriptions_mode, array $field_settings ): string {
+		if ( ! $is_plugin_active || ! $field_settings || $subscriptions_mode === 'disable_paypal_subscriptions' ) {
+			return 'Disabled';
 		}
+
+		if ( ! $subscriptions_mode ) {
+			$subscriptions_mode = $field_settings['default'] ?? '';
+		}
+
+		// Return the options value or if it's missing from options the settings value.
+		return $field_settings['options'][ $subscriptions_mode ] ?? $subscriptions_mode;
 	}
 
 	/**

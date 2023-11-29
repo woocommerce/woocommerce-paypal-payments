@@ -26,13 +26,38 @@ return function ( string $root_dir ): iterable {
 		( require "$modules_dir/ppcp-vaulting/module.php" )(),
 		( require "$modules_dir/ppcp-order-tracking/module.php" )(),
 		( require "$modules_dir/ppcp-uninstall/module.php" )(),
+		( require "$modules_dir/ppcp-blocks/module.php" )(),
 	);
+	if ( apply_filters(
+		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
+		'woocommerce.feature-flags.woocommerce_paypal_payments.applepay_enabled',
+		getenv( 'PCP_APPLEPAY_ENABLED' ) !== '0'
+	) ) {
+		$modules[] = ( require "$modules_dir/ppcp-applepay/module.php" )();
+	}
 
 	if ( apply_filters(
-		'woocommerce_paypal_payments_blocks_enabled',
-		getenv( 'PCP_BLOCKS_ENABLED' ) === '1'
+		//phpcs:disable WordPress.NamingConventions.ValidHookName.UseUnderscores
+		'woocommerce.feature-flags.woocommerce_paypal_payments.googlepay_enabled',
+		getenv( 'PCP_GOOGLEPAY_ENABLED' ) !== '0'
 	) ) {
-		$modules[] = ( require "$modules_dir/ppcp-blocks/module.php" )();
+		$modules[] = ( require "$modules_dir/ppcp-googlepay/module.php" )();
+	}
+
+	if ( apply_filters(
+		//phpcs:disable WordPress.NamingConventions.ValidHookName.UseUnderscores
+		'woocommerce.deprecated_flags.woocommerce_paypal_payments.saved_payment_checker_enabled',
+		getenv( 'PCP_SAVED_PAYMENT_CHECKER_ENABLED' ) === '1'
+	) ) {
+		$modules[] = ( require "$modules_dir/ppcp-saved-payment-checker/module.php" )();
+	}
+
+	if ( apply_filters(
+		//phpcs:disable WordPress.NamingConventions.ValidHookName.UseUnderscores
+		'woocommerce.feature-flags.woocommerce_paypal_payments.card_fields_enabled',
+		getenv( 'PCP_CARD_FIELDS_ENABLED' ) === '1'
+	) ) {
+		$modules[] = ( require "$modules_dir/ppcp-card-fields/module.php" )();
 	}
 
 	return $modules;

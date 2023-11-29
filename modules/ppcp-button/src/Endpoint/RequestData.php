@@ -53,6 +53,11 @@ class RequestData {
 		}
 		$this->dequeue_nonce_fix();
 
+		if ( isset( $json['form_encoded'] ) ) {
+			$json['form'] = array();
+			parse_str( $json['form_encoded'], $json['form'] );
+		}
+
 		$sanitized = $this->sanitize( $json );
 		return $sanitized;
 	}
@@ -80,6 +85,10 @@ class RequestData {
 	private function sanitize( array $assoc_array ): array {
 		$data = array();
 		foreach ( (array) $assoc_array as $raw_key => $raw_value ) {
+			if ( $raw_key === 'form_encoded' ) {
+				$data[ $raw_key ] = $raw_value;
+				continue;
+			}
 			if ( ! is_array( $raw_value ) ) {
 				// Not sure if it is a good idea to sanitize everything at this level,
 				// but should be fine for now since we do not send any HTML or multi-line texts via ajax.

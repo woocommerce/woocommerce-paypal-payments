@@ -1,3 +1,17 @@
 #place_order.ppcp-hidden {
 	display: none !important;
 }
+
+.ppcp-disabled {
+	cursor: not-allowed;
+	-webkit-filter: grayscale(100%);
+	filter: grayscale(100%);
+
+	* {
+		pointer-events: none;
+	}
+}
+
+.ppc-button-wrapper #ppcp-messages:first-child {
+	padding-top: 10px;
+}

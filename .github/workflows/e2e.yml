@@ -7,15 +7,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        php-versions: ['7.3', '7.4', '8.1']
+        php-versions: ['7.3', '7.4', '8.2']
         wc-versions: ['5.9.5', '7.7.2']
 
     name: PHP ${{ matrix.php-versions }} WC ${{ matrix.wc-versions }}
     steps:
-    - uses: satackey/action-docker-layer-caching@v0.0.11
-      continue-on-error: true
-
-    - uses: jonaseberle/github-action-setup-ddev@v1
+    - uses: ddev/github-action-setup-ddev@v1
       with:
         autostart: false
 

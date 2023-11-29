@@ -19,7 +19,9 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\PPCP;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Helper\RefundFeesUpdater;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\RefundProcessor;
 
 /**
@@ -44,6 +46,19 @@ function ppcp_get_paypal_order( $paypal_id_or_wc_order ): Order {
 	assert( $order_endpoint instanceof OrderEndpoint );
 
 	return $order_endpoint->order( $paypal_id_or_wc_order );
+}
+
+/**
+ * Creates a PayPal order for the given WC order.
+ *
+ * @param WC_Order $wc_order The WC order.
+ * @throws Exception When the operation fails.
+ */
+function ppcp_create_paypal_order_for_wc_order( WC_Order $wc_order ): Order {
+	$order_processor = PPCP::container()->get( 'wcgateway.order-processor' );
+	assert( $order_processor instanceof OrderProcessor );
+
+	return $order_processor->create_order( $wc_order );
 }
 
 /**
@@ -106,4 +121,15 @@ function ppcp_void_order( WC_Order $wc_order ): void {
 	assert( $refund_processor instanceof RefundProcessor );
 
 	$refund_processor->void( $order );
+}
+
+/**
+ * Updates the PayPal refund fees totals on an order.
+ *
+ * @param WC_Order $wc_order The WC order.
+ */
+function ppcp_update_order_refund_fees( WC_Order $wc_order ): void {
+	$updater = PPCP::container()->get( 'wcgateway.helper.refund-fees-updater' );
+	assert( $updater instanceof RefundFeesUpdater );
+	$updater->update( $wc_order );
 }

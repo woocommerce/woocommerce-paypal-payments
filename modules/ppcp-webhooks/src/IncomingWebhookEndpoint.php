@@ -17,12 +17,14 @@ use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\WebhookEventFactory;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\RequestHandler;
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\Webhooks\Handler\RequestHandlerTrait;
 use WooCommerce\PayPalCommerce\Webhooks\Status\WebhookSimulation;
 
 /**
  * Class IncomingWebhookEndpoint
  */
 class IncomingWebhookEndpoint {
+	use RequestHandlerTrait;
 
 	const NAMESPACE = 'paypal/v1';
 	const ROUTE     = 'incoming';
@@ -206,31 +208,40 @@ class IncomingWebhookEndpoint {
 	public function handle_request( \WP_REST_Request $request ): \WP_REST_Response {
 		$event = $this->event_from_request( $request );
 
+		$this->logger->debug(
+			sprintf(
+				'Webhook %s received of type %s and by resource "%s"',
+				$event->id(),
+				$event->event_type(),
+				$event->resource_type()
+			)
+		);
+
 		$this->last_webhook_event_storage->save( $event );
 
 		if ( $this->simulation->is_simulation_event( $event ) ) {
 			$this->logger->info( 'Received simulated webhook.' );
 			$this->simulation->receive( $event );
-			return rest_ensure_response(
-				array(
-					'success' => true,
-				)
-			);
+			return $this->success_response();
 		}
 
 		foreach ( $this->handlers as $handler ) {
 			if ( $handler->responsible_for_request( $request ) ) {
-				$response = $handler->handle_request( $request );
-				$this->logger->log(
-					'info',
+				$event_type = ( $handler->event_types() ? current( $handler->event_types() ) : '' ) ?: '';
+
+				$this->logger->debug(
 					sprintf(
-						// translators: %s is the event type.
-						__( 'Webhook has been handled by %s', 'woocommerce-paypal-payments' ),
-						( $handler->event_types() ) ? current( $handler->event_types() ) : ''
-					),
-					array(
-						'request'  => $request,
-						'response' => $response,
+						'Webhook is going to be handled by %s on %s',
+						$event_type,
+						get_class( $handler )
+					)
+				);
+				$response = $handler->handle_request( $request );
+				$this->logger->info(
+					sprintf(
+						'Webhook has been handled by %s on %s',
+						$event_type,
+						get_class( $handler )
 					)
 				);
 				return $response;
@@ -238,22 +249,10 @@ class IncomingWebhookEndpoint {
 		}
 
 		$message = sprintf(
-			// translators: %s is the request type.
-			__( 'Could not find handler for request type %s', 'woocommerce-paypal-payments' ),
-			$request['event_type']
+			'Could not find handler for request type %s',
+			$request['event_type'] ?: ''
 		);
-		$this->logger->log(
-			'warning',
-			$message,
-			array(
-				'request' => $request,
-			)
-		);
-		$response = array(
-			'success' => false,
-			'message' => $message,
-		);
-		return rest_ensure_response( $response );
+		return $this->failure_response( $message );
 	}
 
 	/**

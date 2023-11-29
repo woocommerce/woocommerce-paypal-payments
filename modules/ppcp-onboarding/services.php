@@ -18,7 +18,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PartnerReferrals;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
 use WooCommerce\PayPalCommerce\Onboarding\Assets\OnboardingAssets;
 use WooCommerce\PayPalCommerce\Onboarding\Endpoint\LoginSellerEndpoint;
-use WooCommerce\PayPalCommerce\Onboarding\Endpoint\PayUponInvoiceEndpoint;
+use WooCommerce\PayPalCommerce\Onboarding\Endpoint\UpdateSignupLinksEndpoint;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\OnboardingRESTController;
@@ -71,6 +71,12 @@ return array(
 	'api.paypal-host-sandbox'                   => static function( ContainerInterface $container ) : string {
 		return PAYPAL_SANDBOX_API_URL;
 	},
+	'api.paypal-website-url-production'         => static function( ContainerInterface $container ) : string {
+		return PAYPAL_URL;
+	},
+	'api.paypal-website-url-sandbox'            => static function( ContainerInterface $container ) : string {
+		return PAYPAL_SANDBOX_URL;
+	},
 	'api.partner_merchant_id-production'        => static function( ContainerInterface $container ) : string {
 		return CONNECT_WOO_MERCHANT_ID;
 	},
@@ -88,6 +94,15 @@ return array(
 			return $container->get( 'api.paypal-host-sandbox' );
 		}
 		return $container->get( 'api.paypal-host-production' );
+
+	},
+	'api.paypal-website-url'                    => function( ContainerInterface $container ) : string {
+		$environment = $container->get( 'onboarding.environment' );
+		assert( $environment instanceof Environment );
+		if ( $environment->current_environment_is( Environment::SANDBOX ) ) {
+			return $container->get( 'api.paypal-website-url-sandbox' );
+		}
+		return $container->get( 'api.paypal-website-url-production' );
 
 	},
 
@@ -187,8 +202,8 @@ return array(
 			$logger
 		);
 	},
-	'onboarding.endpoint.pui'                   => static function( ContainerInterface $container ) : PayUponInvoiceEndpoint {
-		return new PayUponInvoiceEndpoint(
+	'onboarding.endpoint.pui'                   => static function( ContainerInterface $container ) : UpdateSignupLinksEndpoint {
+		return new UpdateSignupLinksEndpoint(
 			$container->get( 'wcgateway.settings' ),
 			$container->get( 'button.request-data' ),
 			$container->get( 'onboarding.signup-link-cache' ),
@@ -229,13 +244,15 @@ return array(
 		$partner_referrals_sandbox = $container->get( 'api.endpoint.partner-referrals-sandbox' );
 		$partner_referrals_data    = $container->get( 'api.repository.partner-referrals-data' );
 		$settings                  = $container->get( 'wcgateway.settings' );
-		$signup_link_cache  = $container->get( 'onboarding.signup-link-cache' );
+		$signup_link_cache         = $container->get( 'onboarding.signup-link-cache' );
+		$logger                    = $container->get( 'woocommerce.logger.woocommerce' );
 		return new OnboardingRenderer(
 			$settings,
 			$partner_referrals,
 			$partner_referrals_sandbox,
 			$partner_referrals_data,
-			$signup_link_cache
+			$signup_link_cache,
+			$logger
 		);
 	},
 	'onboarding.render-options'                 => static function ( ContainerInterface $container ) : OnboardingOptionsRenderer {

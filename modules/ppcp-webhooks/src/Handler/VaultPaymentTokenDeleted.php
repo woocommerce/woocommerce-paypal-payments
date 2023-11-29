@@ -18,6 +18,7 @@ use WP_REST_Response;
  * Class VaultPaymentTokenDeleted
  */
 class VaultPaymentTokenDeleted implements RequestHandler {
+	use RequestHandlerTrait;
 
 	/**
 	 * The logger.
@@ -65,8 +66,6 @@ class VaultPaymentTokenDeleted implements RequestHandler {
 	 * @return WP_REST_Response
 	 */
 	public function handle_request( WP_REST_Request $request ): WP_REST_Response {
-		$response = array( 'success' => false );
-
 		if ( ! is_null( $request['resource'] ) && isset( $request['resource']['id'] ) ) {
 			$token_id = wc_clean( wp_unslash( $request['resource']['id'] ?? '' ) );
 
@@ -89,7 +88,6 @@ class VaultPaymentTokenDeleted implements RequestHandler {
 			}
 		}
 
-		$response['success'] = true;
-		return new WP_REST_Response( $response );
+		return $this->success_response();
 	}
 }

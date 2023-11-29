@@ -56,8 +56,6 @@ class BillingPlans {
 	/**
 	 * The logger.
 	 *
-	 * The logger.
-	 *
 	 * @var LoggerInterface
 	 */
 	private $logger;
@@ -215,6 +213,42 @@ class BillingPlans {
 		$response = $this->request( $url, $args );
 		if ( is_wp_error( $response ) || ! is_array( $response ) ) {
 			throw new RuntimeException( 'Could not update pricing.' );
+		}
+
+		$json        = json_decode( $response['body'] );
+		$status_code = (int) wp_remote_retrieve_response_code( $response );
+		if ( 204 !== $status_code ) {
+			throw new PayPalApiException(
+				$json,
+				$status_code
+			);
+		}
+	}
+
+	/**
+	 * Deactivates a Subscription Plan.
+	 *
+	 * @param string $billing_plan_id The Plan ID.
+	 *
+	 * @return void
+	 *
+	 * @throws RuntimeException If the request fails.
+	 * @throws PayPalApiException If the request fails.
+	 */
+	public function deactivate_plan( string $billing_plan_id ) {
+		$bearer = $this->bearer->bearer();
+		$url    = trailingslashit( $this->host ) . 'v1/billing/plans/' . $billing_plan_id . '/deactivate';
+		$args   = array(
+			'method'  => 'POST',
+			'headers' => array(
+				'Authorization' => 'Bearer ' . $bearer->token(),
+				'Content-Type'  => 'application/json',
+			),
+		);
+
+		$response = $this->request( $url, $args );
+		if ( is_wp_error( $response ) || ! is_array( $response ) ) {
+			throw new RuntimeException( 'Could not deactivate plan.' );
 		}
 
 		$json        = json_decode( $response['body'] );

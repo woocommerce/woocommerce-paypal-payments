@@ -63,13 +63,13 @@ class CancelView {
 			printf(
 					// translators: %3$ is funding source like "PayPal" or "Venmo", other placeholders are html tags for a link.
 				esc_html__(
-					'You are currently paying with %3$s. If you want to cancel
-                            this process, please click %1$shere%2$s.',
+					'You are currently paying with %3$s. %4$s%1$sChoose another payment method%2$s.',
 					'woocommerce-paypal-payments'
 				),
 				'<a href="' . esc_url( $url ) . '">',
 				'</a>',
-				esc_html( $name )
+				esc_html( $name ),
+				'<br/>'
 			);
 			?>
 		</p>

@@ -33,6 +33,7 @@ return array(
 			'woocommerce-ppcp-version',
 			WebhookSimulation::OPTION_ID,
 			WebhookRegistrar::KEY,
+			'ppcp_payment_tokens_migration_initialized',
 		);
 	},
 
@@ -40,6 +41,13 @@ return array(
 		return array(
 			'woocommerce_paypal_payments_check_pui_payment_captured',
 			'woocommerce_paypal_payments_check_saved_payment',
+			'woocommerce_paypal_payments_payment_tokens_migration',
+		);
+	},
+
+	'uninstall.ppcp-all-action-names'           => function( ContainerInterface $container ) : array {
+		return array(
+			'woocommerce_paypal_payments_uninstall',
 		);
 	},
 

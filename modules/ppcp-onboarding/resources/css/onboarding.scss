@@ -45,7 +45,7 @@ label.error {
 	font-size: 1.1em;
 }
 
-.input-text[pattern]:invalid {
+.input-text[pattern]:invalid, .input-text[type=email]:invalid {
 	border: red solid 2px;
 }
 
@@ -92,12 +92,19 @@ ul.ppcp-onboarding-options-sublist {
 	margin: 5px;
 }
 
+.ppcp-onboarding-header-apm-logos img {
+	margin: 3px;
+}
+
 .ppcp-onboarding-header-cards img {
 	height: 37px;
 }
 
 .ppcp-onboarding-header-paypal-logos img {
 	height: 32px;
+}
+.ppcp-onboarding-header-apm-logos img {
+	height: 28px;
 }
 
 .ppcp-onboarding-cards-options table {
@@ -158,7 +165,11 @@ ul.ppcp-onboarding-options-sublist {
 	}
 
 	.ppcp-onboarding-header-cards img, .ppcp-onboarding-header-paypal-logos img {
-		margin: 2px;
+		margin: 2.5px;
+	}
+
+	.ppcp-onboarding-header-apm-logos img {
+		margin: 3px;
 	}
 
 	.ppcp-onboarding-header-cards img {
@@ -167,6 +178,9 @@ ul.ppcp-onboarding-options-sublist {
 
 	.ppcp-onboarding-header-paypal-logos img {
 		height: 23px;
+	}
+	.ppcp-onboarding-header-apm-logos img {
+		height: 19.8px;
 	}
 }
 

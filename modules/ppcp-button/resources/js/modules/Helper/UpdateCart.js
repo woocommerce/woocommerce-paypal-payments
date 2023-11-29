@@ -11,9 +11,10 @@ class UpdateCart {
      *
      * @param onResolve
      * @param {Product[]} products
+     * @param {Object} options
      * @returns {Promise<unknown>}
      */
-    update(onResolve, products)
+    update(onResolve, products, options = {})
     {
         return new Promise((resolve, reject) => {
             fetch(
@@ -27,6 +28,7 @@ class UpdateCart {
                     body: JSON.stringify({
                         nonce: this.nonce,
                         products,
+                        ...options
                     })
                 }
             ).then(

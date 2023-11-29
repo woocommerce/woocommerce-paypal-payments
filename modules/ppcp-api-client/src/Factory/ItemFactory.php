@@ -13,11 +13,15 @@ use WC_Product;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Item;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Money;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\ApiClient\Helper\ItemTrait;
 
 /**
  * Class ItemFactory
  */
 class ItemFactory {
+
+	use ItemTrait;
+
 	/**
 	 * 3-letter currency code of the shop.
 	 *
@@ -44,7 +48,8 @@ class ItemFactory {
 	public function from_wc_cart( \WC_Cart $cart ): array {
 		$items = array_map(
 			function ( array $item ): Item {
-				$product = $item['data'];
+				$product       = $item['data'];
+				$cart_item_key = $item['key'] ?? null;
 
 				/**
 				 * The WooCommerce product.
@@ -52,6 +57,7 @@ class ItemFactory {
 				 * @var \WC_Product $product
 				 */
 				$quantity = (int) $item['quantity'];
+				$image    = wp_get_attachment_image_src( (int) $product->get_image_id(), 'full' );
 
 				$price = (float) $item['line_subtotal'] / (float) $item['quantity'];
 				return new Item(
@@ -61,7 +67,11 @@ class ItemFactory {
 					$this->prepare_description( $product->get_description() ),
 					null,
 					$product->get_sku(),
-					( $product->is_virtual() ) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS
+					( $product->is_virtual() ) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS,
+					$product->get_permalink(),
+					$image[0] ?? '',
+					0,
+					$cart_item_key
 				);
 			},
 			$cart->get_cart_contents()
@@ -125,6 +135,7 @@ class ItemFactory {
 		$quantity                  = (int) $item->get_quantity();
 		$price_without_tax         = (float) $order->get_item_subtotal( $item, false );
 		$price_without_tax_rounded = round( $price_without_tax, 2 );
+		$image                     = $product instanceof WC_Product ? wp_get_attachment_image_src( (int) $product->get_image_id(), 'full' ) : '';
 
 		return new Item(
 			mb_substr( $item->get_name(), 0, 127 ),
@@ -133,7 +144,9 @@ class ItemFactory {
 			$product instanceof WC_Product ? $this->prepare_description( $product->get_description() ) : '',
 			null,
 			$product instanceof WC_Product ? $product->get_sku() : '',
-			( $product instanceof WC_Product && $product->is_virtual() ) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS
+			( $product instanceof WC_Product && $product->is_virtual() ) ? Item::DIGITAL_GOODS : Item::PHYSICAL_GOODS,
+			$product instanceof WC_Product ? $product->get_permalink() : '',
+			$image[0] ?? ''
 		);
 	}
 
@@ -187,6 +200,8 @@ class ItemFactory {
 			: null;
 		$sku         = ( isset( $data->sku ) ) ? $data->sku : '';
 		$category    = ( isset( $data->category ) ) ? $data->category : 'PHYSICAL_GOODS';
+		$url         = ( isset( $data->url ) ) ? $data->url : '';
+		$image_url   = ( isset( $data->image_url ) ) ? $data->image_url : '';
 
 		return new Item(
 			$data->name,
@@ -195,18 +210,9 @@ class ItemFactory {
 			$description,
 			$tax,
 			$sku,
-			$category
+			$category,
+			$url,
+			$image_url
 		);
-	}
-
-	/**
-	 * Cleanups the description and prepares it for sending to PayPal.
-	 *
-	 * @param string $description Item description.
-	 * @return string
-	 */
-	protected function prepare_description( string $description ): string {
-		$description = strip_shortcodes( wp_strip_all_tags( $description ) );
-		return substr( $description, 0, 127 ) ?: '';
 	}
 }

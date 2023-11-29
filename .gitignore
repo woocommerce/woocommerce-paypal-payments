@@ -11,3 +11,5 @@ modules/ppcp-wc-gateway/assets/css
 .env
 .env.e2e
 auth.json
+.DS_Store
+tests/.DS_Store

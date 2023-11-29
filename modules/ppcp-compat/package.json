@@ -2,7 +2,7 @@
     "name": "ppcp-compat",
     "version": "1.0.0",
     "license": "GPL-3.0-or-later",
-    "main": "resources/js/compat.js",
+    "main": "resources/js/tracking-compat.js",
     "browserslist": [
         "> 0.5%",
         "Safari >= 8",

@@ -19,6 +19,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenActionLinksFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\CustomerRepository;
+use WP_Error;
 
 /**
  * Class PaymentTokenEndpoint
@@ -97,7 +98,7 @@ class PaymentTokenEndpoint {
 	}
 
 	/**
-	 * Returns the payment tokens for a user.
+	 * Returns the payment tokens for the given user id.
 	 *
 	 * @param int $id The user id.
 	 *
@@ -118,7 +119,67 @@ class PaymentTokenEndpoint {
 		$response = $this->request( $url, $args );
 		if ( is_wp_error( $response ) ) {
 			$error = new RuntimeException(
-				__( 'Could not fetch payment token.', 'woocommerce-paypal-payments' )
+				__( 'Could not fetch payment token for customer id.', 'woocommerce-paypal-payments' )
+			);
+			$this->logger->log(
+				'warning',
+				$error->getMessage(),
+				array(
+					'args'     => $args,
+					'response' => $response,
+				)
+			);
+			throw $error;
+		}
+		$json        = json_decode( $response['body'] );
+		$status_code = (int) wp_remote_retrieve_response_code( $response );
+		if ( 200 !== $status_code ) {
+			$error = new PayPalApiException(
+				$json,
+				$status_code
+			);
+			$this->logger->log(
+				'warning',
+				$error->getMessage(),
+				array(
+					'args'     => $args,
+					'response' => $response,
+				)
+			);
+			throw $error;
+		}
+
+		$tokens = array();
+		foreach ( $json->payment_tokens as $token_value ) {
+			$tokens[] = $this->factory->from_paypal_response( $token_value );
+		}
+
+		return $tokens;
+	}
+
+	/**
+	 * Returns the payment tokens for the given guest customer id.
+	 *
+	 * @param string $customer_id The guest customer id.
+	 *
+	 * @return PaymentToken[]
+	 * @throws RuntimeException If the request fails.
+	 */
+	public function for_guest( string $customer_id ): array {
+		$bearer = $this->bearer->bearer();
+		$url    = trailingslashit( $this->host ) . 'v2/vault/payment-tokens/?customer_id=' . $customer_id;
+		$args   = array(
+			'method'  => 'GET',
+			'headers' => array(
+				'Authorization' => 'Bearer ' . $bearer->token(),
+				'Content-Type'  => 'application/json',
+			),
+		);
+
+		$response = $this->request( $url, $args );
+		if ( $response instanceof WP_Error ) {
+			$error = new RuntimeException(
+				__( 'Could not fetch payment token for guest customer id.', 'woocommerce-paypal-payments' )
 			);
 			$this->logger->log(
 				'warning',

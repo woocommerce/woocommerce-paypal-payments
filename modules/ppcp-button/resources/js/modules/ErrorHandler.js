@@ -41,6 +41,15 @@ class ErrorHandler {
     }
 
     /**
+     * @returns {String}
+     */
+    currentHtml()
+    {
+        const messageContainer = this._getMessageContainer();
+        return messageContainer.outerHTML;
+    }
+
+    /**
      * @private
      * @param {String} text
      */

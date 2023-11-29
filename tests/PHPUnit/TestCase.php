@@ -38,6 +38,7 @@ class TestCase extends \PHPUnit\Framework\TestCase
 		when('wc_clean')->returnArg();
 		when('get_transient')->returnArg();
 		when('delete_transient')->returnArg();
+		when('wcs_get_subscription')->returnArg();
 
 		setUp();
 	}

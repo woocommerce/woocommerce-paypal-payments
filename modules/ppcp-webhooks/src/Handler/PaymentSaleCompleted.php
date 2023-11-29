@@ -20,7 +20,7 @@ use WP_REST_Response;
  */
 class PaymentSaleCompleted implements RequestHandler {
 
-	use TransactionIdHandlingTrait;
+	use TransactionIdHandlingTrait, RequestHandlerTrait;
 
 	/**
 	 * The logger.
@@ -67,17 +67,22 @@ class PaymentSaleCompleted implements RequestHandler {
 	 * @return WP_REST_Response
 	 */
 	public function handle_request( WP_REST_Request $request ): WP_REST_Response {
-		$response = array( 'success' => false );
 		if ( is_null( $request['resource'] ) ) {
-			return new WP_REST_Response( $response );
+			return $this->failure_response();
+		}
+
+		if ( ! function_exists( 'wcs_get_subscriptions' ) ) {
+			return $this->failure_response( 'WooCommerce Subscriptions plugin is not active.' );
 		}
 
 		$billing_agreement_id = wc_clean( wp_unslash( $request['resource']['billing_agreement_id'] ?? '' ) );
 		if ( ! $billing_agreement_id ) {
-			$message = 'Could not retrieve billing agreement id for subscription.';
-			$this->logger->warning( $message, array( 'request' => $request ) );
-			$response['message'] = $message;
-			return new WP_REST_Response( $response );
+			return $this->failure_response( 'Could not retrieve billing agreement id for subscription.' );
+		}
+
+		$transaction_id = wc_clean( wp_unslash( $request['resource']['id'] ?? '' ) );
+		if ( ! $transaction_id || ! is_string( $transaction_id ) ) {
+			return $this->failure_response( 'Could not retrieve transaction id for subscription.' );
 		}
 
 		$args          = array(
@@ -92,14 +97,25 @@ class PaymentSaleCompleted implements RequestHandler {
 		);
 		$subscriptions = wcs_get_subscriptions( $args );
 		foreach ( $subscriptions as $subscription ) {
-			$parent_order   = wc_get_order( $subscription->get_parent() );
-			$transaction_id = wc_clean( wp_unslash( $request['resource']['id'] ?? '' ) );
-			if ( $transaction_id && is_string( $transaction_id ) && is_a( $parent_order, WC_Order::class ) ) {
+			$is_renewal = $subscription->get_meta( '_ppcp_is_subscription_renewal' ) ?? '';
+			if ( $is_renewal ) {
+				$renewal_order = wcs_create_renewal_order( $subscription );
+				if ( is_a( $renewal_order, WC_Order::class ) ) {
+					$renewal_order->set_payment_method( $subscription->get_payment_method() );
+					$renewal_order->payment_complete();
+					$this->update_transaction_id( $transaction_id, $renewal_order, $this->logger );
+					break;
+				}
+			}
+
+			$parent_order = wc_get_order( $subscription->get_parent() );
+			if ( is_a( $parent_order, WC_Order::class ) ) {
+				$subscription->update_meta_data( '_ppcp_is_subscription_renewal', 'true' );
+				$subscription->save_meta_data();
 				$this->update_transaction_id( $transaction_id, $parent_order, $this->logger );
 			}
 		}
 
-		$response['success'] = true;
-		return new WP_REST_Response( $response );
+		return $this->success_response();
 	}
 }

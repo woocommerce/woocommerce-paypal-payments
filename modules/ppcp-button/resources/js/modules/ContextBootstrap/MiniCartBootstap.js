@@ -1,4 +1,5 @@
 import CartActionHandler from '../ActionHandler/CartActionHandler';
+import BootstrapHelper from "../Helper/BootstrapHelper";
 
 class MiniCartBootstap {
     constructor(gateway, renderer, errorHandler) {
@@ -15,15 +16,34 @@ class MiniCartBootstap {
             this.errorHandler,
         );
         this.render();
+        this.handleButtonStatus();
 
         jQuery(document.body).on('wc_fragments_loaded wc_fragments_refreshed', () => {
             this.render();
+            this.handleButtonStatus();
+        });
+
+        this.renderer.onButtonsInit(this.gateway.button.mini_cart_wrapper, () => {
+            this.handleButtonStatus();
+        }, true);
+    }
+
+    handleButtonStatus() {
+        BootstrapHelper.handleButtonStatus(this, {
+            wrapper: this.gateway.button.mini_cart_wrapper,
+            skipMessages: true
         });
     }
 
     shouldRender() {
         return document.querySelector(this.gateway.button.mini_cart_wrapper) !== null
             || document.querySelector(this.gateway.hosted_fields.mini_cart_wrapper) !== null;
+    }
+
+    shouldEnable() {
+        return BootstrapHelper.shouldEnable(this, {
+            isDisabled: !!this.gateway.button.is_mini_cart_disabled
+        });
     }
 
     render() {

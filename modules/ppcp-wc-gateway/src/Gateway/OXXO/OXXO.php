@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway\OXXO;
 
+use Automattic\WooCommerce\Internal\DataStores\Orders\CustomOrdersTableController;
 use WC_Order;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\CheckoutHelper;
 
@@ -154,9 +155,19 @@ class OXXO {
 		add_action(
 			'add_meta_boxes',
 			function( string $post_type ) {
-				if ( $post_type === 'shop_order' ) {
+				/**
+				 * Class and function exist in WooCommerce.
+				 *
+				 * @psalm-suppress UndefinedClass
+				 * @psalm-suppress UndefinedFunction
+				 */
+				$screen = class_exists( CustomOrdersTableController::class ) && wc_get_container()->get( CustomOrdersTableController::class )->custom_orders_table_usage_is_enabled()
+					? wc_get_page_screen_id( 'shop-order' )
+					: 'shop_order';
+
+				if ( $post_type === $screen ) {
 					// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-					$post_id = wc_clean( wp_unslash( $_GET['post'] ?? '' ) );
+					$post_id = wc_clean( wp_unslash( $_GET['id'] ?? $_GET['post'] ?? '' ) );
 					$order   = wc_get_order( $post_id );
 					if ( is_a( $order, WC_Order::class ) && $order->get_payment_method() === OXXOGateway::ID ) {
 						$payer_action = $order->get_meta( 'ppcp_oxxo_payer_action' );
@@ -167,7 +178,7 @@ class OXXO {
 								function() use ( $payer_action ) {
 									echo '<p><a class="button" href="' . esc_url( $payer_action ) . '" target="_blank">' . esc_html__( 'See OXXO voucher', 'woocommerce-paypal-payments' ) . '</a></p>';
 								},
-								$post_type,
+								$screen,
 								'side',
 								'high'
 							);

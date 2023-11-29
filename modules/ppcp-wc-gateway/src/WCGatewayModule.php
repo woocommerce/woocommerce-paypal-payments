@@ -33,12 +33,14 @@ use WooCommerce\PayPalCommerce\WcGateway\Checkout\DisableGateways;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\GatewayRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DCCProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\PayUponInvoiceProductStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\ConnectAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Notice\GatewayWithoutPayPalAdminNotice;
+use WooCommerce\PayPalCommerce\WcGateway\Notice\UnsupportedCurrencyAdminNotice;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\HeaderRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\SectionsRenderer;
@@ -182,7 +184,9 @@ class WCGatewayModule implements ModuleInterface {
 				$c->get( 'onboarding.environment' ),
 				$settings_status->is_pay_later_button_enabled(),
 				$settings->has( 'disable_funding' ) ? $settings->get( 'disable_funding' ) : array(),
-				$c->get( 'wcgateway.settings.funding-sources' )
+				$c->get( 'wcgateway.settings.funding-sources' ),
+				$c->get( 'wcgateway.is-ppcp-settings-page' ),
+				$settings->has( 'dcc_enabled' ) && $settings->get( 'dcc_enabled' )
 			);
 			$assets->register_assets();
 		}
@@ -195,6 +199,13 @@ class WCGatewayModule implements ModuleInterface {
 				$connect_message = $notice->connect_message();
 				if ( $connect_message ) {
 					$notices[] = $connect_message;
+				}
+
+				$notice = $c->get( 'wcgateway.notice.currency-unsupported' );
+				assert( $notice instanceof UnsupportedCurrencyAdminNotice );
+				$unsupported_currency_message = $notice->unsupported_currency_message();
+				if ( $unsupported_currency_message ) {
+					$notices[] = $unsupported_currency_message;
 				}
 
 				foreach ( array(
@@ -278,6 +289,16 @@ class WCGatewayModule implements ModuleInterface {
 				$settings->set( 'products_dcc_enabled', false );
 				$settings->set( 'products_pui_enabled', false );
 				$settings->persist();
+				do_action( 'woocommerce_paypal_payments_clear_apm_product_status', $settings );
+
+				// Update caches.
+				$dcc_status = $c->get( 'wcgateway.helper.dcc-product-status' );
+				assert( $dcc_status instanceof DCCProductStatus );
+				$dcc_status->dcc_is_active();
+
+				$pui_status = $c->get( 'wcgateway.pay-upon-invoice-product-status' );
+				assert( $pui_status instanceof PayUponInvoiceProductStatus );
+				$pui_status->pui_is_active();
 			}
 		);
 
@@ -338,6 +359,14 @@ class WCGatewayModule implements ModuleInterface {
 					return;
 				}
 
+				$gateway_repository = $c->get( 'wcgateway.gateway-repository' );
+				assert( $gateway_repository instanceof GatewayRepository );
+
+				// Only allow to proceed if the payment method is one of our Gateways.
+				if ( ! $gateway_repository->exists( $wc_order->get_payment_method() ) ) {
+					return;
+				}
+
 				$intent   = strtoupper( (string) $wc_order->get_meta( PayPalGateway::INTENT_META_KEY ) );
 				$captured = wc_string_to_bool( $wc_order->get_meta( AuthorizedPaymentsProcessor::CAPTURED_META_KEY ) );
 				if ( $intent !== 'AUTHORIZE' || $captured ) {
@@ -372,6 +401,16 @@ class WCGatewayModule implements ModuleInterface {
 			},
 			10,
 			3
+		);
+
+		add_action(
+			'woocommerce_paypal_payments_uninstall',
+			static function () use ( $c ) {
+				$listener = $c->get( 'wcgateway.settings.listener' );
+				assert( $listener instanceof SettingsListener );
+
+				$listener->listen_for_uninstall();
+			}
 		);
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
@@ -479,7 +518,6 @@ class WCGatewayModule implements ModuleInterface {
 
 				try {
 					$listener->listen_for_vaulting_enabled();
-					$listener->listen_for_tracking_enabled();
 				} catch ( RuntimeException $exception ) {
 					add_action(
 						'admin_notices',
@@ -511,7 +549,6 @@ class WCGatewayModule implements ModuleInterface {
 				 */
 				$field = $renderer->render_multiselect( $field, $key, $args, $value );
 				$field = $renderer->render_password( $field, $key, $args, $value );
-				$field = $renderer->render_text_input( $field, $key, $args, $value );
 				$field = $renderer->render_heading( $field, $key, $args, $value );
 				$field = $renderer->render_table( $field, $key, $args, $value );
 				return $field;
@@ -615,7 +652,7 @@ class WCGatewayModule implements ModuleInterface {
 				 * @var OrderTablePaymentStatusColumn $payment_status_column
 				 */
 				$payment_status_column = $container->get( 'wcgateway.admin.orders-payment-status-column' );
-				$payment_status_column->render( $column, intval( $wc_order_id ) );
+				$payment_status_column->render( (string) $column, intval( $wc_order_id ) );
 			},
 			10,
 			2

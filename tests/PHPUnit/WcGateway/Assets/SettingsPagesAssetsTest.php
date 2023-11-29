@@ -27,8 +27,10 @@ class SettingsPagesAssetsTest extends TestCase
 			Mockery::mock(Environment::class),
             true,
             array(),
-            array()
-        );
+            array(),
+			true,
+			false
+		);
 
 		when('is_admin')
 			->justReturn(true);

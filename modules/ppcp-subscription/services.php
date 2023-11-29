@@ -15,7 +15,7 @@ use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 
 return array(
 	'subscription.helper'                   => static function ( ContainerInterface $container ): SubscriptionHelper {
-		return new SubscriptionHelper();
+		return new SubscriptionHelper( $container->get( 'wcgateway.settings' ) );
 	},
 	'subscription.renewal-handler'          => static function ( ContainerInterface $container ): RenewalHandler {
 		$logger                = $container->get( 'woocommerce.logger.woocommerce' );
@@ -52,6 +52,23 @@ return array(
 			$container->get( 'api.factory.payment-preferences' ),
 			$container->get( 'api.shop.currency' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
+	'subscription.module.url'               => static function ( ContainerInterface $container ): string {
+		/**
+		 * The path cannot be false.
+		 *
+		 * @psalm-suppress PossiblyFalseArgument
+		 */
+		return plugins_url(
+			'/modules/ppcp-subscription/',
+			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
+		);
+	},
+	'subscription.deactivate-plan-endpoint' => static function ( ContainerInterface $container ): DeactivatePlanEndpoint {
+		return new DeactivatePlanEndpoint(
+			$container->get( 'button.request-data' ),
+			$container->get( 'api.endpoint.billing-plans' )
 		);
 	},
 );

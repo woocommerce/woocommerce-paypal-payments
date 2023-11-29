@@ -13,84 +13,102 @@ const ppcp_onboarding = {
 	reload: function() {
 		const buttons = document.querySelectorAll(ppcp_onboarding.BUTTON_SELECTOR);
 
-		if (0 === buttons.length) {
-			return;
+		if (buttons.length > 0) {
+            // Add event listeners to buttons preventing link clicking if PayPal init failed.
+            buttons.forEach(
+                (element) => {
+                    if (element.hasAttribute('data-ppcp-button-initialized')) {
+                        return;
+                    }
+
+                    element.addEventListener(
+                        'click',
+                        (e) => {
+                            if (!element.hasAttribute('data-ppcp-button-initialized') || 'undefined' === typeof window.PAYPAL) {
+                                e.preventDefault();
+                            }
+                        }
+                    );
+                }
+            );
+
+            // Clear any previous PayPal scripts.
+            [ppcp_onboarding.PAYPAL_JS_ID, 'signup-js', 'biz-js'].forEach(
+                (scriptID) => {
+                    const scriptTag = document.getElementById(scriptID);
+
+                    if (scriptTag) {
+                        scriptTag.parentNode.removeChild(scriptTag);
+                    }
+
+                    if ('undefined' !== typeof window.PAYPAL) {
+                        delete window.PAYPAL;
+                    }
+                }
+            );
+
+            // Load PayPal scripts.
+            const paypalScriptTag = document.createElement('script');
+            paypalScriptTag.id = ppcp_onboarding.PAYPAL_JS_ID;
+            paypalScriptTag.src = PayPalCommerceGatewayOnboarding.paypal_js_url;
+            document.body.appendChild(paypalScriptTag);
+
+            if (ppcp_onboarding._timeout) {
+                clearTimeout(ppcp_onboarding._timeout);
+            }
+
+            ppcp_onboarding._timeout = setTimeout(
+                () => {
+                    buttons.forEach((element) => { element.setAttribute('data-ppcp-button-initialized', 'true'); });
+
+                    if ('undefined' !== window.PAYPAL.apps.Signup) {
+                        window.PAYPAL.apps.Signup.render();
+                    }
+                },
+                1000
+            );
 		}
 
-		// Add event listeners to buttons preventing link clicking if PayPal init failed.
-		buttons.forEach(
-			(element) => {
-				if (element.hasAttribute('data-ppcp-button-initialized')) {
-					return;
-				}
+        const $onboarding_inputs = function () {
+            return jQuery('*[data-onboarding-option]');
+        };
+        const onboarding_options = function () {
+            let options = {};
+            $onboarding_inputs().each((index, el) => {
+                const opt = jQuery(el).data('onboardingOption');
+                options[opt] = el.checked;
+            });
+            return options;
+        }
+        const disable_onboarding_options = function () {
+            $onboarding_inputs().each((index, el) => {
+                el.setAttribute('disabled', 'disabled');
+            });
+        }
+        const enable_onboarding_options = function () {
+            $onboarding_inputs().each((index, el) => {
+                el.removeAttribute('disabled');
+            });
+        }
+        const update_onboarding_options = function () {
+            const spinner = '<span class="spinner is-active" style="float: none;"></span>';
 
-				element.addEventListener(
-					'click',
-					(e) => {
-						if (!element.hasAttribute('data-ppcp-button-initialized') || 'undefined' === typeof window.PAYPAL) {
-							e.preventDefault();
-						}
-					}
-				);
-			}
-		);
-
-		// Clear any previous PayPal scripts.
-		[ppcp_onboarding.PAYPAL_JS_ID, 'signup-js', 'biz-js'].forEach(
-			(scriptID) => {
-				const scriptTag = document.getElementById(scriptID);
-
-				if (scriptTag) {
-					scriptTag.parentNode.removeChild(scriptTag);
-				}
-
-				if ('undefined' !== typeof window.PAYPAL) {
-					delete window.PAYPAL;
-				}
-			}
-		);
-
-		// Load PayPal scripts.
-		const paypalScriptTag = document.createElement('script');
-		paypalScriptTag.id = ppcp_onboarding.PAYPAL_JS_ID;
-		paypalScriptTag.src = PayPalCommerceGatewayOnboarding.paypal_js_url;
-		document.body.appendChild(paypalScriptTag);
-
-		if (ppcp_onboarding._timeout) {
-			clearTimeout(ppcp_onboarding._timeout);
-		}
-
-		ppcp_onboarding._timeout = setTimeout(
-			() => {
-				buttons.forEach((element) => { element.setAttribute('data-ppcp-button-initialized', 'true'); });
-
-				if ('undefined' !== window.PAYPAL.apps.Signup) {
-					window.PAYPAL.apps.Signup.render();
-				}
-			},
-			1000
-		);
-
-		const onboard_pui = document.querySelector('#ppcp-onboarding-pui');
-		const spinner = '<span class="spinner is-active" style="float: none;"></span>';
-		onboard_pui?.addEventListener('click', (event) => {
-            event.preventDefault();
-            onboard_pui.setAttribute('disabled', 'disabled');
+            disable_onboarding_options();
             buttons.forEach((element) => {
                 element.removeAttribute('href');
                 element.setAttribute('disabled', 'disabled');
                 jQuery(spinner).insertAfter(element);
             });
 
-            fetch(PayPalCommerceGatewayOnboarding.pui_endpoint, {
+            fetch(PayPalCommerceGatewayOnboarding.update_signup_links_endpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 credentials: 'same-origin',
                 body: JSON.stringify({
-                    nonce: PayPalCommerceGatewayOnboarding.pui_nonce,
-                    checked: onboard_pui.checked
+                    nonce: PayPalCommerceGatewayOnboarding.update_signup_links_nonce,
+                    settings: onboarding_options()
                 })
             }).then((res)=>{
                 return res.json();
@@ -99,7 +117,6 @@ const ppcp_onboarding = {
                     alert('Could not update signup buttons: ' + JSON.stringify(data));
                     return;
                 }
-
                 buttons.forEach((element) => {
                     for (let [key, value] of Object.entries(data.data.signup_links)) {
                         key = 'connect-to' + key.replace(/-/g, '');
@@ -110,9 +127,13 @@ const ppcp_onboarding = {
                         }
                     }
                 });
-                onboard_pui.removeAttribute('disabled');
+                enable_onboarding_options();
             });
-        })
+        }
+        $onboarding_inputs().on('click', (event) => {
+            event.preventDefault();
+            update_onboarding_options();
+        });
 	},
 
 	loginSeller: function(env, authCode, sharedId) {
