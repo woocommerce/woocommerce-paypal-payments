@@ -1183,6 +1183,15 @@ return array(
 			__( 'Proceed to PayPal', 'woocommerce-paypal-payments' )
 		);
 	},
+	'wcgateway.place-order-button-description'             => function ( ContainerInterface $container ) : string {
+		/**
+		 * The text for additional description, when the "Place order" button mode is enabled.
+		 */
+		return apply_filters(
+			'woocommerce_paypal_payments_place_order_button_description',
+			__( 'Clicking "Proceed to PayPal", will redirect you to PayPal to complete your purchase.', 'woocommerce-paypal-payments' )
+		);
+	},
 
 	'wcgateway.helper.vaulting-scope'                      => static function ( ContainerInterface $container ): bool {
 		try {

@@ -38,6 +38,7 @@ return array(
 			$container->get( 'blocks.add-place-order-method' ),
 			$container->get( 'wcgateway.use-place-order-button' ),
 			$container->get( 'wcgateway.place-order-button-text' ),
+			$container->get( 'wcgateway.place-order-button-description' ),
 			$container->get( 'wcgateway.all-funding-sources' )
 		);
 	},
