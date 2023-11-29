@@ -1189,7 +1189,7 @@ return array(
 		 */
 		return apply_filters(
 			'woocommerce_paypal_payments_place_order_button_description',
-			__( 'Clicking "Proceed to PayPal", will redirect you to PayPal to complete your purchase.', 'woocommerce-paypal-payments' )
+			__( 'Clicking "Proceed to PayPal" will redirect you to PayPal to complete your purchase.', 'woocommerce-paypal-payments' )
 		);
 	},
 
