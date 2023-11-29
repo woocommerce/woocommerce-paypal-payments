@@ -91,12 +91,30 @@ class CardFieldsRenderer {
             this.spinner.block();
             this.errorHandler.clear();
 
+            const paymentToken = document.querySelector('input[name="wc-ppcp-credit-card-gateway-payment-token"]:checked').value
+            if(paymentToken !== 'new') {
+                fetch(this.defaultConfig.ajax.capture_card_payment.endpoint, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        nonce: this.defaultConfig.ajax.capture_card_payment.nonce,
+                        payment_token: paymentToken
+                    })
+                }).then((res) => {
+                    return res.json();
+                }).then((data) => {
+                    document.querySelector('#place_order').click();
+                });
+
+                return;
+            }
+
             cardField.submit()
                 .catch((error) => {
                     this.spinner.unblock();
                     console.error(error)
                     this.errorHandler.message(this.defaultConfig.hosted_fields.labels.fields_not_valid);
-                })
+                });
         });
     }
 
