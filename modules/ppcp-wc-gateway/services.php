@@ -1180,7 +1180,7 @@ return array(
 		 */
 		return apply_filters(
 			'woocommerce_paypal_payments_place_order_button_text',
-			__( 'Pay with PayPal', 'woocommerce-paypal-payments' )
+			__( 'Proceed to PayPal', 'woocommerce-paypal-payments' )
 		);
 	},
 
