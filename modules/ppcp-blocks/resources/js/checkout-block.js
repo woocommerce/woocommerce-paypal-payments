@@ -39,12 +39,17 @@ const PayPalComponent = ({
         if (!config.scriptData.continuation || !config.scriptData.continuation.order || window.ppcpContinuationFilled) {
             return;
         }
-        const paypalAddresses = paypalOrderToWcAddresses(config.scriptData.continuation.order);
-        const wcAddresses = wp.data.select('wc/store/cart').getCustomerData();
-        const addresses = mergeWcAddress(wcAddresses, paypalAddresses);
-        wp.data.dispatch('wc/store/cart').setBillingAddress(addresses.billingAddress);
-        if (shippingData.needsShipping) {
-            wp.data.dispatch('wc/store/cart').setShippingAddress(addresses.shippingAddress);
+        try {
+            const paypalAddresses = paypalOrderToWcAddresses(config.scriptData.continuation.order);
+            const wcAddresses = wp.data.select('wc/store/cart').getCustomerData();
+            const addresses = mergeWcAddress(wcAddresses, paypalAddresses);
+            wp.data.dispatch('wc/store/cart').setBillingAddress(addresses.billingAddress);
+            if (shippingData.needsShipping) {
+                wp.data.dispatch('wc/store/cart').setShippingAddress(addresses.shippingAddress);
+            }
+        } catch (err) {
+            // sometimes the PayPal address is missing, skip in this case.
+            console.log(err);
         }
         // this useEffect should run only once, but adding this in case of some kind of full re-rendering
         window.ppcpContinuationFilled = true;
@@ -321,11 +326,19 @@ const PayPalComponent = ({
 const features = ['products'];
 
 if ((config.addPlaceOrderMethod || config.usePlaceOrder) && !config.scriptData.continuation) {
+    let descriptionElement = <div dangerouslySetInnerHTML={{__html: config.description}}></div>;
+    if (config.placeOrderButtonDescription) {
+        descriptionElement = <div>
+            <p dangerouslySetInnerHTML={{__html: config.description}}></p>
+            <p style={{textAlign: 'center'}} className={'ppcp-place-order-description'} dangerouslySetInnerHTML={{__html: config.placeOrderButtonDescription}}></p>
+        </div>;
+    }
+
     registerPaymentMethod({
         name: config.id,
         label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
-        content: <div dangerouslySetInnerHTML={{__html: config.description}}/>,
-        edit: <div dangerouslySetInnerHTML={{__html: config.description}}/>,
+        content: descriptionElement,
+        edit: descriptionElement,
         placeOrderButtonLabel: config.placeOrderButtonText,
         ariaLabel: config.title,
         canMakePayment: () => config.enabled,
