@@ -76,8 +76,8 @@ export const paypalShippingToWc = (shipping) => {
  * @returns {Object}
  */
 export const paypalPayerToWc = (payer) => {
-    const firstName = payer.name.given_name;
-    const lastName = payer.name.surname;
+    const firstName = payer?.name?.given_name ?? '';
+    const lastName = payer?.name?.surname ?? '';
     const address = payer.address ? paypalAddressToWc(payer.address) : {};
     return {
         ...address,
@@ -100,10 +100,12 @@ export const paypalOrderToWcShippingAddress = (order) => {
     const res = paypalShippingToWc(shipping);
 
     // use the name from billing if the same, to avoid possible mistakes when splitting full_name
-    const billingAddress = paypalPayerToWc(order.payer);
-    if (`${res.first_name} ${res.last_name}` === `${billingAddress.first_name} ${billingAddress.last_name}`) {
-        res.first_name = billingAddress.first_name;
-        res.last_name = billingAddress.last_name;
+    if (order.payer) {
+        const billingAddress = paypalPayerToWc(order.payer);
+        if (`${res.first_name} ${res.last_name}` === `${billingAddress.first_name} ${billingAddress.last_name}`) {
+            res.first_name = billingAddress.first_name;
+            res.last_name = billingAddress.last_name;
+        }
     }
 
     return res;
@@ -116,10 +118,13 @@ export const paypalOrderToWcShippingAddress = (order) => {
  */
 export const paypalOrderToWcAddresses = (order) => {
     const shippingAddress = paypalOrderToWcShippingAddress(order);
-    let billingAddress = paypalPayerToWc(order.payer);
-    // no billing address, such as if billing address retrieval is not allowed in the merchant account
-    if (!billingAddress.address_line_1) {
-        billingAddress = {...shippingAddress, ...paypalPayerToWc(order.payer)};
+    let billingAddress = shippingAddress;
+    if (order.payer) {
+        billingAddress = paypalPayerToWc(order.payer);
+        // no billing address, such as if billing address retrieval is not allowed in the merchant account
+        if (!billingAddress.address_line_1) {
+            billingAddress = {...shippingAddress, ...paypalPayerToWc(order.payer)};
+        }
     }
 
     return {billingAddress, shippingAddress};
