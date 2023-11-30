@@ -214,7 +214,7 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 			}
 		}
 
-		$disabled_funding_sources = explode( ',', $script_data['url_params']['disable-funding'] ) ?: array();
+		$disabled_funding_sources = explode( ',', $script_data['url_params']['disable-funding'] ?? '' ) ?: array();
 		$funding_sources          = array_values(
 			array_diff(
 				array_keys( $this->all_funding_sources ),
