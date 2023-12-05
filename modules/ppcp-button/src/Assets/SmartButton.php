@@ -644,7 +644,7 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 		return $this->settings->has( 'dcc_enabled' ) && $this->settings->get( 'dcc_enabled' )
 			&& $this->settings->has( 'client_id' ) && $this->settings->get( 'client_id' )
 			&& $this->dcc_applies->for_country_currency()
-			&& in_array( $this->context(), array( 'checkout', 'pay-now' ), true );
+			&& in_array( $this->context(), array( 'checkout', 'pay-now', 'add-payment-method' ), true );
 	}
 
 	/**
