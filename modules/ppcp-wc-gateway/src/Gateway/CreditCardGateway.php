@@ -365,9 +365,9 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 			);
 		}
 
-		$saved_payment_card = WC()->session->get('ppcp_saved_payment_card');
-		if($saved_payment_card) {
-			if($saved_payment_card['payment_source'] === 'card' && $saved_payment_card['status'] === 'COMPLETED') {
+		$saved_payment_card = WC()->session->get( 'ppcp_saved_payment_card' );
+		if ( $saved_payment_card ) {
+			if ( $saved_payment_card['payment_source'] === 'card' && $saved_payment_card['status'] === 'COMPLETED' ) {
 				$this->update_transaction_id( $saved_payment_card['order_id'], $wc_order );
 				$wc_order->payment_complete();
 				WC()->session->set( 'ppcp_saved_payment_card', null );
