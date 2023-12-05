@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\WcSubscriptions;
 
 use WC_Subscription;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
@@ -224,6 +225,10 @@ class RenewalHandler {
 					$shipping_preference,
 					$payer,
 					null,
+					'',
+					ApplicationContext::USER_ACTION_CONTINUE,
+					'',
+					array(),
 					$payment_source
 				);
 
