@@ -11,14 +11,14 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
 use Exception;
 use Psr\Log\LoggerInterface;
-use WC_Customer;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\Vaulting\VaultedCreditCardHandler;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\GatewayGenericException;
@@ -32,7 +32,7 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
  */
 class CreditCardGateway extends \WC_Payment_Gateway_CC {
 
-	use ProcessPaymentTrait, GatewaySettingsRendererTrait;
+	use ProcessPaymentTrait, GatewaySettingsRendererTrait, TransactionIdHandlingTrait;
 
 	const ID = 'ppcp-credit-card-gateway';
 
@@ -181,18 +181,25 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 			);
 
 			if ( $this->config->has( 'vault_enabled_dcc' ) && $this->config->get( 'vault_enabled_dcc' ) ) {
-				array_push(
+				$supports = apply_filters(
+					'woocommerce_paypal_payments_credit_card_gateway_vault_supports',
+					array(
+						'subscriptions',
+						'subscription_cancellation',
+						'subscription_suspension',
+						'subscription_reactivation',
+						'subscription_amount_changes',
+						'subscription_date_changes',
+						'subscription_payment_method_change',
+						'subscription_payment_method_change_customer',
+						'subscription_payment_method_change_admin',
+						'multiple_subscriptions',
+					)
+				);
+
+				$this->supports = array_merge(
 					$this->supports,
-					'subscriptions',
-					'subscription_cancellation',
-					'subscription_suspension',
-					'subscription_reactivation',
-					'subscription_amount_changes',
-					'subscription_date_changes',
-					'subscription_payment_method_change',
-					'subscription_payment_method_change_customer',
-					'subscription_payment_method_change_admin',
-					'multiple_subscriptions'
+					$supports
 				);
 			}
 		}
@@ -356,6 +363,17 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 				null,
 				new GatewayGenericException( new Exception( 'WC order was not found.' ) )
 			);
+		}
+
+		$saved_payment_card = WC()->session->get( 'ppcp_saved_payment_card' );
+		if ( $saved_payment_card ) {
+			if ( $saved_payment_card['payment_source'] === 'card' && $saved_payment_card['status'] === 'COMPLETED' ) {
+				$this->update_transaction_id( $saved_payment_card['order_id'], $wc_order );
+				$wc_order->payment_complete();
+				WC()->session->set( 'ppcp_saved_payment_card', null );
+
+				return $this->handle_payment_success( $wc_order );
+			}
 		}
 
 		/**

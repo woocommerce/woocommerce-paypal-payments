@@ -119,7 +119,7 @@ return array(
 		$request_data     = $container->get( 'button.request-data' );
 		$client_id           = $container->get( 'button.client_id' );
 		$dcc_applies         = $container->get( 'api.helpers.dccapplies' );
-		$subscription_helper = $container->get( 'subscription.helper' );
+		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		$messages_apply      = $container->get( 'button.helper.messages-apply' );
 		$environment         = $container->get( 'onboarding.environment' );
 		$payment_token_repository = $container->get( 'vaulting.repository.payment-token' );
@@ -294,8 +294,10 @@ return array(
 	},
 
 	'button.helper.three-d-secure'                => static function ( ContainerInterface $container ): ThreeDSecure {
-		$logger = $container->get( 'woocommerce.logger.woocommerce' );
-		return new ThreeDSecure( $logger );
+		return new ThreeDSecure(
+			$container->get( 'api.factory.card-authentication-result-factory' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
 	},
 	'button.helper.messages-apply'                => static function ( ContainerInterface $container ): MessagesApply {
 		return new MessagesApply(

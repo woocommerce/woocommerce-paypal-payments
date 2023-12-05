@@ -94,6 +94,10 @@ trait ContextTrait {
 			return 'checkout';
 		}
 
+		if ( $this->is_add_payment_method_page() ) {
+			return 'add-payment-method';
+		}
+
 		return 'mini-cart';
 	}
 
@@ -125,6 +129,11 @@ trait ContextTrait {
 	 * @return bool
 	 */
 	private function is_paypal_continuation(): bool {
+		/**
+		 * Property is already defined in trait consumers.
+		 *
+		 * @psalm-suppress UndefinedThisPropertyFetch
+		 */
 		$order = $this->session_handler->order();
 		if ( ! $order ) {
 			return false;
@@ -137,7 +146,7 @@ trait ContextTrait {
 		}
 
 		$source = $order->payment_source();
-		if ( $source && $source->card() ) {
+		if ( $source && $source->name() === 'card' ) {
 			return false; // Ignore for DCC.
 		}
 
@@ -146,5 +155,23 @@ trait ContextTrait {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Checks whether current page is Add payment method.
+	 *
+	 * @return bool
+	 */
+	private function is_add_payment_method_page(): bool {
+		/**
+		 * Needed for WordPress `query_vars`.
+		 *
+		 * @psalm-suppress InvalidGlobal
+		 */
+		global $wp;
+
+		$page_id = wc_get_page_id( 'myaccount' );
+
+		return $page_id && is_page( $page_id ) && isset( $wp->query_vars['add-payment-method'] );
 	}
 }

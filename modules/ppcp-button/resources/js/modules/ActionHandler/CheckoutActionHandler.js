@@ -56,6 +56,8 @@ class CheckoutActionHandler {
             const paymentMethod = getCurrentPaymentMethod();
             const fundingSource = window.ppcpFundingSource;
 
+            const savePaymentMethod = !!document.getElementById('wc-ppcp-credit-card-gateway-new-payment-method')?.checked;
+
             return fetch(this.config.ajax.create_order.endpoint, {
                 method: 'POST',
                 headers: {
@@ -72,7 +74,8 @@ class CheckoutActionHandler {
                     funding_source: fundingSource,
                     // send as urlencoded string to handle complex fields via PHP functions the same as normal form submit
                     form_encoded: new URLSearchParams(formData).toString(),
-                    createaccount: createaccount
+                    createaccount: createaccount,
+                    save_payment_method: savePaymentMethod
                 })
             }).then(function (res) {
                 return res.json();

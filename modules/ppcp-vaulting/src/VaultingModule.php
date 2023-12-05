@@ -51,7 +51,7 @@ class VaultingModule implements ModuleInterface {
 
 		$listener->listen();
 
-		$subscription_helper = $container->get( 'subscription.helper' );
+		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		add_action(
 			'woocommerce_created_customer',
 			function( int $customer_id ) use ( $subscription_helper ) {
@@ -137,6 +137,8 @@ class VaultingModule implements ModuleInterface {
 					}
 
 					try {
+						do_action( 'woocommerce_paypal_payments_before_delete_payment_token', $token->get_token() );
+
 						$payment_token_endpoint = $container->get( 'api.endpoint.payment-token' );
 						$payment_token_endpoint->delete_token_by_id( $token->get_token() );
 					} catch ( RuntimeException $exception ) {
@@ -191,7 +193,10 @@ class VaultingModule implements ModuleInterface {
 			'woocommerce_available_payment_gateways',
 			function( array $methods ): array {
 				global $wp;
-				if ( isset( $wp->query_vars['add-payment-method'] ) ) {
+				if (
+					isset( $wp->query_vars['add-payment-method'] )
+					&& apply_filters( 'woocommerce_paypal_payments_disable_add_payment_method', true )
+				) {
 					unset( $methods[ PayPalGateway::ID ] );
 				}
 

@@ -9,12 +9,16 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient;
 
+use WooCommerce\PayPalCommerce\ApiClient\Authentication\UserIdToken;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentMethodTokensEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\CardAuthenticationResult;
+use WooCommerce\PayPalCommerce\ApiClient\Factory\CardAuthenticationResultFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
 use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingSubscriptions;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\CatalogProducts;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingPlans;
-use WooCommerce\PayPalCommerce\ApiClient\Entity\SellerPayableBreakdown;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\BillingCycleFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentPreferencesFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\RefundFactory;
@@ -50,7 +54,6 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PatchCollectionFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayeeFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentsFactory;
-use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentSourceFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenActionLinksFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PaymentTokenFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PlatformFeeFactory;
@@ -74,39 +77,40 @@ use WooCommerce\PayPalCommerce\ApiClient\Repository\PayeeRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 return array(
-	'api.host'                                  => function( ContainerInterface $container ) : string {
+	'api.host'                                       => function( ContainerInterface $container ) : string {
 		return PAYPAL_API_URL;
 	},
-	'api.paypal-host'                           => function( ContainerInterface $container ) : string {
+	'api.paypal-host'                                => function( ContainerInterface $container ) : string {
 		return PAYPAL_API_URL;
 	},
-	'api.paypal-website-url'                    => function( ContainerInterface $container ) : string {
+	// It seems this 'api.paypal-website-url' key is always overridden in ppcp-onboarding/services.php.
+	'api.paypal-website-url'                         => function( ContainerInterface $container ) : string {
 		return PAYPAL_URL;
 	},
-	'api.factory.paypal-checkout-url'           => function( ContainerInterface $container ) : callable {
+	'api.factory.paypal-checkout-url'                => function( ContainerInterface $container ) : callable {
 		return function ( string $id ) use ( $container ): string {
 			return $container->get( 'api.paypal-website-url' ) . '/checkoutnow?token=' . $id;
 		};
 	},
-	'api.partner_merchant_id'                   => static function () : string {
+	'api.partner_merchant_id'                        => static function () : string {
 		return '';
 	},
-	'api.merchant_email'                        => function () : string {
+	'api.merchant_email'                             => function () : string {
 		return '';
 	},
-	'api.merchant_id'                           => function () : string {
+	'api.merchant_id'                                => function () : string {
 		return '';
 	},
-	'api.key'                                   => static function (): string {
+	'api.key'                                        => static function (): string {
 		return '';
 	},
-	'api.secret'                                => static function (): string {
+	'api.secret'                                     => static function (): string {
 		return '';
 	},
-	'api.prefix'                                => static function (): string {
+	'api.prefix'                                     => static function (): string {
 		return 'WC-';
 	},
-	'api.bearer'                                => static function ( ContainerInterface $container ): Bearer {
+	'api.bearer'                                     => static function ( ContainerInterface $container ): Bearer {
 		$cache              = new Cache( 'ppcp-paypal-bearer' );
 		$key                = $container->get( 'api.key' );
 		$secret             = $container->get( 'api.secret' );
@@ -122,7 +126,7 @@ return array(
 			$settings
 		);
 	},
-	'api.endpoint.partners'                     => static function ( ContainerInterface $container ) : PartnersEndpoint {
+	'api.endpoint.partners'                          => static function ( ContainerInterface $container ) : PartnersEndpoint {
 		return new PartnersEndpoint(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
@@ -133,10 +137,10 @@ return array(
 			$container->get( 'api.helper.failure-registry' )
 		);
 	},
-	'api.factory.sellerstatus'                  => static function ( ContainerInterface $container ) : SellerStatusFactory {
+	'api.factory.sellerstatus'                       => static function ( ContainerInterface $container ) : SellerStatusFactory {
 		return new SellerStatusFactory();
 	},
-	'api.endpoint.payment-token'                => static function ( ContainerInterface $container ) : PaymentTokenEndpoint {
+	'api.endpoint.payment-token'                     => static function ( ContainerInterface $container ) : PaymentTokenEndpoint {
 		return new PaymentTokenEndpoint(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
@@ -146,7 +150,14 @@ return array(
 			$container->get( 'api.repository.customer' )
 		);
 	},
-	'api.endpoint.webhook'                      => static function ( ContainerInterface $container ) : WebhookEndpoint {
+	'api.endpoint.payment-tokens'                    => static function( ContainerInterface $container ) : PaymentTokensEndpoint {
+		return new PaymentTokensEndpoint(
+			$container->get( 'api.host' ),
+			$container->get( 'api.bearer' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
+	'api.endpoint.webhook'                           => static function ( ContainerInterface $container ) : WebhookEndpoint {
 
 		return new WebhookEndpoint(
 			$container->get( 'api.host' ),
@@ -156,7 +167,7 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'api.endpoint.partner-referrals'            => static function ( ContainerInterface $container ) : PartnerReferrals {
+	'api.endpoint.partner-referrals'                 => static function ( ContainerInterface $container ) : PartnerReferrals {
 
 		return new PartnerReferrals(
 			$container->get( 'api.host' ),
@@ -164,7 +175,7 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'api.endpoint.identity-token'               => static function ( ContainerInterface $container ) : IdentityToken {
+	'api.endpoint.identity-token'                    => static function ( ContainerInterface $container ) : IdentityToken {
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
 		$settings = $container->get( 'wcgateway.settings' );
 		$customer_repository = $container->get( 'api.repository.customer' );
@@ -176,7 +187,7 @@ return array(
 			$customer_repository
 		);
 	},
-	'api.endpoint.payments'                     => static function ( ContainerInterface $container ): PaymentsEndpoint {
+	'api.endpoint.payments'                          => static function ( ContainerInterface $container ): PaymentsEndpoint {
 		$authorizations_factory = $container->get( 'api.factory.authorization' );
 		$capture_factory = $container->get( 'api.factory.capture' );
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
@@ -189,7 +200,7 @@ return array(
 			$logger
 		);
 	},
-	'api.endpoint.login-seller'                 => static function ( ContainerInterface $container ) : LoginSeller {
+	'api.endpoint.login-seller'                      => static function ( ContainerInterface $container ) : LoginSeller {
 
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
 		return new LoginSeller(
@@ -198,7 +209,7 @@ return array(
 			$logger
 		);
 	},
-	'api.endpoint.order'                        => static function ( ContainerInterface $container ): OrderEndpoint {
+	'api.endpoint.order'                             => static function ( ContainerInterface $container ): OrderEndpoint {
 		$order_factory            = $container->get( 'api.factory.order' );
 		$patch_collection_factory = $container->get( 'api.factory.patch-collection-factory' );
 		$logger                   = $container->get( 'woocommerce.logger.woocommerce' );
@@ -212,7 +223,7 @@ return array(
 
 		$intent                         = $settings->has( 'intent' ) && strtoupper( (string) $settings->get( 'intent' ) ) === 'AUTHORIZE' ? 'AUTHORIZE' : 'CAPTURE';
 		$application_context_repository = $container->get( 'api.repository.application-context' );
-		$subscription_helper = $container->get( 'subscription.helper' );
+		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		return new OrderEndpoint(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
@@ -227,14 +238,14 @@ return array(
 			$bn_code
 		);
 	},
-	'api.endpoint.billing-agreements'           => static function ( ContainerInterface $container ): BillingAgreementsEndpoint {
+	'api.endpoint.billing-agreements'                => static function ( ContainerInterface $container ): BillingAgreementsEndpoint {
 		return new BillingAgreementsEndpoint(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'api.endpoint.catalog-products'             => static function ( ContainerInterface $container ): CatalogProducts {
+	'api.endpoint.catalog-products'                  => static function ( ContainerInterface $container ): CatalogProducts {
 		return new CatalogProducts(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
@@ -242,7 +253,7 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'api.endpoint.billing-plans'                => static function( ContainerInterface $container ): BillingPlans {
+	'api.endpoint.billing-plans'                     => static function( ContainerInterface $container ): BillingPlans {
 		return new BillingPlans(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
@@ -251,53 +262,60 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'api.endpoint.billing-subscriptions'        => static function( ContainerInterface $container ): BillingSubscriptions {
+	'api.endpoint.billing-subscriptions'             => static function( ContainerInterface $container ): BillingSubscriptions {
 		return new BillingSubscriptions(
 			$container->get( 'api.host' ),
 			$container->get( 'api.bearer' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
-	'api.repository.application-context'        => static function( ContainerInterface $container ) : ApplicationContextRepository {
+	'api.endpoint.payment-method-tokens'             => static function( ContainerInterface $container ): PaymentMethodTokensEndpoint {
+		return new PaymentMethodTokensEndpoint(
+			$container->get( 'api.host' ),
+			$container->get( 'api.bearer' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
+	'api.repository.application-context'             => static function( ContainerInterface $container ) : ApplicationContextRepository {
 
 		$settings = $container->get( 'wcgateway.settings' );
 		return new ApplicationContextRepository( $settings );
 	},
-	'api.repository.partner-referrals-data'     => static function ( ContainerInterface $container ) : PartnerReferralsData {
+	'api.repository.partner-referrals-data'          => static function ( ContainerInterface $container ) : PartnerReferralsData {
 
 		$dcc_applies    = $container->get( 'api.helpers.dccapplies' );
 		return new PartnerReferralsData( $dcc_applies );
 	},
-	'api.repository.payee'                      => static function ( ContainerInterface $container ): PayeeRepository {
+	'api.repository.payee'                           => static function ( ContainerInterface $container ): PayeeRepository {
 		$merchant_email = $container->get( 'api.merchant_email' );
 		$merchant_id    = $container->get( 'api.merchant_id' );
 		return new PayeeRepository( $merchant_email, $merchant_id );
 	},
-	'api.repository.customer'                   => static function( ContainerInterface $container ): CustomerRepository {
+	'api.repository.customer'                        => static function( ContainerInterface $container ): CustomerRepository {
 		$prefix           = $container->get( 'api.prefix' );
 		return new CustomerRepository( $prefix );
 	},
-	'api.repository.order'                      => static function( ContainerInterface $container ): OrderRepository {
+	'api.repository.order'                           => static function( ContainerInterface $container ): OrderRepository {
 		return new OrderRepository(
 			$container->get( 'api.endpoint.order' )
 		);
 	},
-	'api.factory.application-context'           => static function ( ContainerInterface $container ) : ApplicationContextFactory {
+	'api.factory.application-context'                => static function ( ContainerInterface $container ) : ApplicationContextFactory {
 		return new ApplicationContextFactory();
 	},
-	'api.factory.payment-token'                 => static function ( ContainerInterface $container ) : PaymentTokenFactory {
+	'api.factory.payment-token'                      => static function ( ContainerInterface $container ) : PaymentTokenFactory {
 		return new PaymentTokenFactory();
 	},
-	'api.factory.payment-token-action-links'    => static function ( ContainerInterface $container ) : PaymentTokenActionLinksFactory {
+	'api.factory.payment-token-action-links'         => static function ( ContainerInterface $container ) : PaymentTokenActionLinksFactory {
 		return new PaymentTokenActionLinksFactory();
 	},
-	'api.factory.webhook'                       => static function ( ContainerInterface $container ): WebhookFactory {
+	'api.factory.webhook'                            => static function ( ContainerInterface $container ): WebhookFactory {
 		return new WebhookFactory();
 	},
-	'api.factory.webhook-event'                 => static function ( ContainerInterface $container ): WebhookEventFactory {
+	'api.factory.webhook-event'                      => static function ( ContainerInterface $container ): WebhookEventFactory {
 		return new WebhookEventFactory();
 	},
-	'api.factory.capture'                       => static function ( ContainerInterface $container ): CaptureFactory {
+	'api.factory.capture'                            => static function ( ContainerInterface $container ): CaptureFactory {
 
 		$amount_factory   = $container->get( 'api.factory.amount' );
 		return new CaptureFactory(
@@ -306,7 +324,7 @@ return array(
 			$container->get( 'api.factory.fraud-processor-response' )
 		);
 	},
-	'api.factory.refund'                        => static function ( ContainerInterface $container ): RefundFactory {
+	'api.factory.refund'                             => static function ( ContainerInterface $container ): RefundFactory {
 		$amount_factory   = $container->get( 'api.factory.amount' );
 		return new RefundFactory(
 			$amount_factory,
@@ -314,7 +332,7 @@ return array(
 			$container->get( 'api.factory.refund_payer' )
 		);
 	},
-	'api.factory.purchase-unit'                 => static function ( ContainerInterface $container ): PurchaseUnitFactory {
+	'api.factory.purchase-unit'                      => static function ( ContainerInterface $container ): PurchaseUnitFactory {
 
 		$amount_factory   = $container->get( 'api.factory.amount' );
 		$item_factory     = $container->get( 'api.factory.item' );
@@ -334,32 +352,32 @@ return array(
 			$sanitizer
 		);
 	},
-	'api.factory.patch-collection-factory'      => static function ( ContainerInterface $container ): PatchCollectionFactory {
+	'api.factory.patch-collection-factory'           => static function ( ContainerInterface $container ): PatchCollectionFactory {
 		return new PatchCollectionFactory();
 	},
-	'api.factory.payee'                         => static function ( ContainerInterface $container ): PayeeFactory {
+	'api.factory.payee'                              => static function ( ContainerInterface $container ): PayeeFactory {
 		return new PayeeFactory();
 	},
-	'api.factory.item'                          => static function ( ContainerInterface $container ): ItemFactory {
+	'api.factory.item'                               => static function ( ContainerInterface $container ): ItemFactory {
 		return new ItemFactory(
 			$container->get( 'api.shop.currency' )
 		);
 	},
-	'api.factory.shipping'                      => static function ( ContainerInterface $container ): ShippingFactory {
+	'api.factory.shipping'                           => static function ( ContainerInterface $container ): ShippingFactory {
 		return new ShippingFactory(
 			$container->get( 'api.factory.address' ),
 			$container->get( 'api.factory.shipping-option' )
 		);
 	},
-	'api.factory.shipping-preference'           => static function ( ContainerInterface $container ): ShippingPreferenceFactory {
+	'api.factory.shipping-preference'                => static function ( ContainerInterface $container ): ShippingPreferenceFactory {
 		return new ShippingPreferenceFactory();
 	},
-	'api.factory.shipping-option'               => static function ( ContainerInterface $container ): ShippingOptionFactory {
+	'api.factory.shipping-option'                    => static function ( ContainerInterface $container ): ShippingOptionFactory {
 		return new ShippingOptionFactory(
 			$container->get( 'api.factory.money' )
 		);
 	},
-	'api.factory.amount'                        => static function ( ContainerInterface $container ): AmountFactory {
+	'api.factory.amount'                             => static function ( ContainerInterface $container ): AmountFactory {
 		$item_factory = $container->get( 'api.factory.item' );
 		return new AmountFactory(
 			$item_factory,
@@ -367,86 +385,84 @@ return array(
 			$container->get( 'api.shop.currency' )
 		);
 	},
-	'api.factory.money'                         => static function ( ContainerInterface $container ): MoneyFactory {
+	'api.factory.money'                              => static function ( ContainerInterface $container ): MoneyFactory {
 		return new MoneyFactory();
 	},
-	'api.factory.payer'                         => static function ( ContainerInterface $container ): PayerFactory {
+	'api.factory.payer'                              => static function ( ContainerInterface $container ): PayerFactory {
 		$address_factory = $container->get( 'api.factory.address' );
 		return new PayerFactory( $address_factory );
 	},
-	'api.factory.refund_payer'                  => static function ( ContainerInterface $container ): RefundPayerFactory {
+	'api.factory.refund_payer'                       => static function ( ContainerInterface $container ): RefundPayerFactory {
 		return new RefundPayerFactory();
 	},
-	'api.factory.address'                       => static function ( ContainerInterface $container ): AddressFactory {
+	'api.factory.address'                            => static function ( ContainerInterface $container ): AddressFactory {
 		return new AddressFactory();
 	},
-	'api.factory.payment-source'                => static function ( ContainerInterface $container ): PaymentSourceFactory {
-		return new PaymentSourceFactory();
-	},
-	'api.factory.order'                         => static function ( ContainerInterface $container ): OrderFactory {
+	'api.factory.order'                              => static function ( ContainerInterface $container ): OrderFactory {
 		$purchase_unit_factory          = $container->get( 'api.factory.purchase-unit' );
 		$payer_factory                  = $container->get( 'api.factory.payer' );
 		$application_context_repository = $container->get( 'api.repository.application-context' );
 		$application_context_factory    = $container->get( 'api.factory.application-context' );
-		$payment_source_factory         = $container->get( 'api.factory.payment-source' );
 		return new OrderFactory(
 			$purchase_unit_factory,
 			$payer_factory,
 			$application_context_repository,
-			$application_context_factory,
-			$payment_source_factory
+			$application_context_factory
 		);
 	},
-	'api.factory.payments'                      => static function ( ContainerInterface $container ): PaymentsFactory {
+	'api.factory.payments'                           => static function ( ContainerInterface $container ): PaymentsFactory {
 		$authorizations_factory = $container->get( 'api.factory.authorization' );
 		$capture_factory        = $container->get( 'api.factory.capture' );
 		$refund_factory         = $container->get( 'api.factory.refund' );
 		return new PaymentsFactory( $authorizations_factory, $capture_factory, $refund_factory );
 	},
-	'api.factory.authorization'                 => static function ( ContainerInterface $container ): AuthorizationFactory {
+	'api.factory.authorization'                      => static function ( ContainerInterface $container ): AuthorizationFactory {
 		return new AuthorizationFactory();
 	},
-	'api.factory.exchange-rate'                 => static function ( ContainerInterface $container ): ExchangeRateFactory {
+	'api.factory.exchange-rate'                      => static function ( ContainerInterface $container ): ExchangeRateFactory {
 		return new ExchangeRateFactory();
 	},
-	'api.factory.platform-fee'                  => static function ( ContainerInterface $container ): PlatformFeeFactory {
+	'api.factory.platform-fee'                       => static function ( ContainerInterface $container ): PlatformFeeFactory {
 		return new PlatformFeeFactory(
 			$container->get( 'api.factory.money' ),
 			$container->get( 'api.factory.payee' )
 		);
 	},
-	'api.factory.seller-receivable-breakdown'   => static function ( ContainerInterface $container ): SellerReceivableBreakdownFactory {
+	'api.factory.seller-receivable-breakdown'        => static function ( ContainerInterface $container ): SellerReceivableBreakdownFactory {
 		return new SellerReceivableBreakdownFactory(
 			$container->get( 'api.factory.money' ),
 			$container->get( 'api.factory.exchange-rate' ),
 			$container->get( 'api.factory.platform-fee' )
 		);
 	},
-	'api.factory.seller-payable-breakdown'      => static function ( ContainerInterface $container ): SellerPayableBreakdownFactory {
+	'api.factory.seller-payable-breakdown'           => static function ( ContainerInterface $container ): SellerPayableBreakdownFactory {
 		return new SellerPayableBreakdownFactory(
 			$container->get( 'api.factory.money' ),
 			$container->get( 'api.factory.platform-fee' )
 		);
 	},
-	'api.factory.fraud-processor-response'      => static function ( ContainerInterface $container ): FraudProcessorResponseFactory {
+	'api.factory.fraud-processor-response'           => static function ( ContainerInterface $container ): FraudProcessorResponseFactory {
 		return new FraudProcessorResponseFactory();
 	},
-	'api.factory.product'                       => static function( ContainerInterface $container ): ProductFactory {
+	'api.factory.product'                            => static function( ContainerInterface $container ): ProductFactory {
 		return new ProductFactory();
 	},
-	'api.factory.billing-cycle'                 => static function( ContainerInterface $container ): BillingCycleFactory {
+	'api.factory.billing-cycle'                      => static function( ContainerInterface $container ): BillingCycleFactory {
 		return new BillingCycleFactory( $container->get( 'api.shop.currency' ) );
 	},
-	'api.factory.payment-preferences'           => static function( ContainerInterface $container ):PaymentPreferencesFactory {
+	'api.factory.payment-preferences'                => static function( ContainerInterface $container ):PaymentPreferencesFactory {
 		return new PaymentPreferencesFactory( $container->get( 'api.shop.currency' ) );
 	},
-	'api.factory.plan'                          => static function( ContainerInterface $container ): PlanFactory {
+	'api.factory.plan'                               => static function( ContainerInterface $container ): PlanFactory {
 		return new PlanFactory(
 			$container->get( 'api.factory.billing-cycle' ),
 			$container->get( 'api.factory.payment-preferences' )
 		);
 	},
-	'api.helpers.dccapplies'                    => static function ( ContainerInterface $container ) : DccApplies {
+	'api.factory.card-authentication-result-factory' => static function( ContainerInterface $container ): CardAuthenticationResultFactory {
+		return new CardAuthenticationResultFactory();
+	},
+	'api.helpers.dccapplies'                         => static function ( ContainerInterface $container ) : DccApplies {
 		return new DccApplies(
 			$container->get( 'api.dcc-supported-country-currency-matrix' ),
 			$container->get( 'api.dcc-supported-country-card-matrix' ),
@@ -455,7 +471,7 @@ return array(
 		);
 	},
 
-	'api.shop.currency'                         => static function ( ContainerInterface $container ) : string {
+	'api.shop.currency'                              => static function ( ContainerInterface $container ) : string {
 		$currency = get_woocommerce_currency();
 		if ( $currency ) {
 			return $currency;
@@ -468,18 +484,18 @@ return array(
 
 		return $currency;
 	},
-	'api.shop.country'                          => static function ( ContainerInterface $container ) : string {
+	'api.shop.country'                               => static function ( ContainerInterface $container ) : string {
 		$location = wc_get_base_location();
 		return $location['country'];
 	},
-	'api.shop.is-psd2-country'                  => static function ( ContainerInterface $container ) : bool {
+	'api.shop.is-psd2-country'                       => static function ( ContainerInterface $container ) : bool {
 		return in_array(
 			$container->get( 'api.shop.country' ),
 			$container->get( 'api.psd2-countries' ),
 			true
 		);
 	},
-	'api.shop.is-currency-supported'            => static function ( ContainerInterface $container ) : bool {
+	'api.shop.is-currency-supported'                 => static function ( ContainerInterface $container ) : bool {
 		return in_array(
 			$container->get( 'api.shop.currency' ),
 			$container->get( 'api.supported-currencies' ),
@@ -488,7 +504,7 @@ return array(
 	},
 
 
-	'api.shop.is-latin-america'                 => static function ( ContainerInterface $container ): bool {
+	'api.shop.is-latin-america'                      => static function ( ContainerInterface $container ): bool {
 		return in_array(
 			$container->get( 'api.shop.country' ),
 			array(
@@ -546,7 +562,7 @@ return array(
 	 *
 	 * From https://developer.paypal.com/docs/reports/reference/paypal-supported-currencies/
 	 */
-	'api.supported-currencies'                  => static function ( ContainerInterface $container ) : array {
+	'api.supported-currencies'                       => static function ( ContainerInterface $container ) : array {
 		return array(
 			'AUD',
 			'BRL',
@@ -579,7 +595,7 @@ return array(
 	/**
 	 * The matrix which countries and currency combinations can be used for DCC.
 	 */
-	'api.dcc-supported-country-currency-matrix' => static function ( ContainerInterface $container ) : array {
+	'api.dcc-supported-country-currency-matrix'      => static function ( ContainerInterface $container ) : array {
 		/**
 		 * Returns which countries and currency combinations can be used for DCC.
 		 */
@@ -901,7 +917,7 @@ return array(
 	/**
 	 * Which countries support which credit cards. Empty credit card arrays mean no restriction on currency.
 	 */
-	'api.dcc-supported-country-card-matrix'     => static function ( ContainerInterface $container ) : array {
+	'api.dcc-supported-country-card-matrix'          => static function ( ContainerInterface $container ) : array {
 		/**
 		 * Returns which countries support which credit cards. Empty credit card arrays mean no restriction on currency.
 		 */
@@ -1070,7 +1086,7 @@ return array(
 		);
 	},
 
-	'api.psd2-countries'                        => static function ( ContainerInterface $container ) : array {
+	'api.psd2-countries'                             => static function ( ContainerInterface $container ) : array {
 		return array(
 			'AT',
 			'BE',
@@ -1102,19 +1118,19 @@ return array(
 			'SE',
 		);
 	},
-	'api.order-helper'                          => static function( ContainerInterface $container ): OrderHelper {
+	'api.order-helper'                               => static function( ContainerInterface $container ): OrderHelper {
 		return new OrderHelper();
 	},
-	'api.helper.order-transient'                => static function( ContainerInterface $container ): OrderTransient {
+	'api.helper.order-transient'                     => static function( ContainerInterface $container ): OrderTransient {
 		$cache                   = new Cache( 'ppcp-paypal-bearer' );
 		$purchase_unit_sanitizer = $container->get( 'api.helper.purchase-unit-sanitizer' );
 		return new OrderTransient( $cache, $purchase_unit_sanitizer );
 	},
-	'api.helper.failure-registry'               => static function( ContainerInterface $container ): FailureRegistry {
+	'api.helper.failure-registry'                    => static function( ContainerInterface $container ): FailureRegistry {
 		$cache = new Cache( 'ppcp-paypal-api-status-cache' );
 		return new FailureRegistry( $cache );
 	},
-	'api.helper.purchase-unit-sanitizer'        => SingletonDecorator::make(
+	'api.helper.purchase-unit-sanitizer'             => SingletonDecorator::make(
 		static function( ContainerInterface $container ): PurchaseUnitSanitizer {
 			$settings  = $container->get( 'wcgateway.settings' );
 			assert( $settings instanceof Settings );
@@ -1124,4 +1140,11 @@ return array(
 			return new PurchaseUnitSanitizer( $behavior, $line_name );
 		}
 	),
+	'api.user-id-token'                              => static function( ContainerInterface $container ): UserIdToken {
+		return new UserIdToken(
+			$container->get( 'api.host' ),
+			$container->get( 'api.bearer' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
 );

@@ -60,7 +60,6 @@ return array(
 			$source
 		);
 	},
-
 	'wcgateway.settings.fields'      => function ( ContainerInterface $container, array $fields ): array {
 		$files = array(
 			'paypal-smart-button-fields.php',

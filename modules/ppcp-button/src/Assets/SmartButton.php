@@ -33,8 +33,8 @@ use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\Subscription\FreeTrialHandlerTrait;
-use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
@@ -303,7 +303,13 @@ class SmartButton implements SmartButtonInterface {
 			add_filter(
 				'woocommerce_credit_card_form_fields',
 				function ( array $default_fields, $id ) use ( $subscription_helper ) : array {
-					if ( is_user_logged_in() && $this->settings->has( 'vault_enabled_dcc' ) && $this->settings->get( 'vault_enabled_dcc' ) && CreditCardGateway::ID === $id ) {
+					if (
+						is_user_logged_in()
+						&& $this->settings->has( 'vault_enabled_dcc' )
+						&& $this->settings->get( 'vault_enabled_dcc' )
+						&& CreditCardGateway::ID === $id
+						&& apply_filters( 'woocommerce_paypal_payments_should_render_card_custom_fields', true )
+					) {
 
 						$default_fields['card-vault'] = sprintf(
 							'<p class="form-row form-row-wide"><label for="ppcp-credit-card-vault"><input class="ppcp-credit-card-vault" type="checkbox" id="ppcp-credit-card-vault" name="vault">%s</label></p>',
@@ -638,7 +644,7 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 		return $this->settings->has( 'dcc_enabled' ) && $this->settings->get( 'dcc_enabled' )
 			&& $this->settings->has( 'client_id' ) && $this->settings->get( 'client_id' )
 			&& $this->dcc_applies->for_country_currency()
-			&& in_array( $this->context(), array( 'checkout', 'pay-now' ), true );
+			&& in_array( $this->context(), array( 'checkout', 'pay-now', 'add-payment-method' ), true );
 	}
 
 	/**
@@ -1162,7 +1168,8 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 		}
 
 		$this->request_data->dequeue_nonce_fix();
-		return $localize;
+
+		return apply_filters( 'woocommerce_paypal_payments_localized_script_data', $localize );
 	}
 
 	/**

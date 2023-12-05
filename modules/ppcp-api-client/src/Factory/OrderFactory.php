@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Factory;
 
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Repository\ApplicationContextRepository;
@@ -49,34 +50,24 @@ class OrderFactory {
 	private $application_context_factory;
 
 	/**
-	 * The PaymentSource factory.
-	 *
-	 * @var PaymentSourceFactory
-	 */
-	private $payment_source_factory;
-
-	/**
 	 * OrderFactory constructor.
 	 *
 	 * @param PurchaseUnitFactory          $purchase_unit_factory The PurchaseUnit factory.
 	 * @param PayerFactory                 $payer_factory The Payer factory.
 	 * @param ApplicationContextRepository $application_context_repository The Application Context repository.
 	 * @param ApplicationContextFactory    $application_context_factory The Application Context factory.
-	 * @param PaymentSourceFactory         $payment_source_factory The Payment Source factory.
 	 */
 	public function __construct(
 		PurchaseUnitFactory $purchase_unit_factory,
 		PayerFactory $payer_factory,
 		ApplicationContextRepository $application_context_repository,
-		ApplicationContextFactory $application_context_factory,
-		PaymentSourceFactory $payment_source_factory
+		ApplicationContextFactory $application_context_factory
 	) {
 
 		$this->purchase_unit_factory          = $purchase_unit_factory;
 		$this->payer_factory                  = $payer_factory;
 		$this->application_context_repository = $application_context_repository;
 		$this->application_context_factory    = $application_context_factory;
-		$this->payment_source_factory         = $payment_source_factory;
 	}
 
 	/**
@@ -152,9 +143,23 @@ class OrderFactory {
 		$application_context = ( isset( $order_data->application_context ) ) ?
 			$this->application_context_factory->from_paypal_response( $order_data->application_context )
 			: null;
-		$payment_source      = ( isset( $order_data->payment_source ) ) ?
-			$this->payment_source_factory->from_paypal_response( $order_data->payment_source ) :
-			null;
+
+		$payment_source = null;
+		if ( isset( $order_data->payment_source ) ) {
+			$json_encoded_payment_source = wp_json_encode( $order_data->payment_source );
+			if ( $json_encoded_payment_source ) {
+				$payment_source_as_array = json_decode( $json_encoded_payment_source, true );
+				if ( $payment_source_as_array ) {
+					$name = array_key_first( $payment_source_as_array );
+					if ( $name ) {
+						$payment_source = new PaymentSource(
+							$name,
+							$order_data->payment_source->$name
+						);
+					}
+				}
+			}
+		}
 
 		return new Order(
 			$order_data->id,
