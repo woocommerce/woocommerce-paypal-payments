@@ -83,6 +83,7 @@ class CreditCardGatewayTest extends TestCase
 		when('WC')->justReturn($woocommerce);
 		$woocommerce->session = $session;
 		$session->shouldReceive('set')->andReturn([]);
+		$session->shouldReceive('get')->andReturn('');
 
 		$this->orderProcessor->shouldReceive('process')
 			->with($wc_order)
@@ -106,6 +107,7 @@ class CreditCardGatewayTest extends TestCase
 		when('WC')->justReturn($woocommerce);
 		$woocommerce->session = $session;
 		$session->shouldReceive('set')->andReturn([]);
+		$session->shouldReceive('get')->andReturn('');
 
 		$savedCreditCard = 'abc123';
 		$_POST['saved_credit_card'] = $savedCreditCard;
