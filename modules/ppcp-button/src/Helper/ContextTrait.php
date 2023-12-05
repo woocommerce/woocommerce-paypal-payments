@@ -129,6 +129,11 @@ trait ContextTrait {
 	 * @return bool
 	 */
 	private function is_paypal_continuation(): bool {
+		/**
+		 * Property is already defined in trait consumers.
+		 *
+		 * @psalm-suppress UndefinedThisPropertyFetch
+		 */
 		$order = $this->session_handler->order();
 		if ( ! $order ) {
 			return false;
@@ -158,7 +163,13 @@ trait ContextTrait {
 	 * @return bool
 	 */
 	private function is_add_payment_method_page(): bool {
+		/**
+		 * Needed for WordPress `query_vars`.
+		 *
+		 * @psalm-suppress InvalidGlobal
+		 */
 		global $wp;
+
 		$page_id = wc_get_page_id( 'myaccount' );
 
 		return $page_id && is_page( $page_id ) && isset( $wp->query_vars['add-payment-method'] );
