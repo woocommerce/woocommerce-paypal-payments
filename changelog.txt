@@ -1,6 +1,6 @@
 *** Changelog ***
 
-= 2.4.2 - xxx-xx-xx =
+= 2.4.2 - 2023-12-04 =
 * Fix - Action callback arguments count in ShipStation tracking integration #1841
 * Fix - Google Pay scripts loading on unrelated admin pages #1834
 * Fix - Do not ignore disabled APMs list in blocks #1865
