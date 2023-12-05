@@ -18,6 +18,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PatchCollection;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Payer;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PurchaseUnit;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
@@ -174,14 +175,15 @@ class OrderEndpoint {
 	/**
 	 * Creates an order.
 	 *
-	 * @param PurchaseUnit[]    $items The purchase unit items for the order.
-	 * @param string            $shipping_preference One of ApplicationContext::SHIPPING_PREFERENCE_ values.
-	 * @param Payer|null        $payer The payer off the order.
-	 * @param PaymentToken|null $payment_token The payment token.
-	 * @param string            $paypal_request_id The PayPal request id.
-	 * @param string            $user_action The user action.
-	 * @param string            $payment_method WC payment method.
-	 * @param array             $request_data Request data.
+	 * @param PurchaseUnit[]     $items The purchase unit items for the order.
+	 * @param string             $shipping_preference One of ApplicationContext::SHIPPING_PREFERENCE_ values.
+	 * @param Payer|null         $payer The payer off the order.
+	 * @param PaymentToken|null  $payment_token The payment token.
+	 * @param PaymentSource|null $payment_source The payment source.
+	 * @param string             $paypal_request_id The PayPal request id.
+	 * @param string             $user_action The user action.
+	 * @param string             $payment_method WC payment method.
+	 * @param array              $request_data Request data.
 	 *
 	 * @return Order
 	 * @throws RuntimeException If the request fails.
@@ -191,6 +193,7 @@ class OrderEndpoint {
 		string $shipping_preference,
 		Payer $payer = null,
 		PaymentToken $payment_token = null,
+		PaymentSource $payment_source = null,
 		string $paypal_request_id = '',
 		string $user_action = ApplicationContext::USER_ACTION_CONTINUE,
 		string $payment_method = '',
@@ -220,6 +223,11 @@ class OrderEndpoint {
 		}
 		if ( $payment_token ) {
 			$data['payment_source']['token'] = $payment_token->to_array();
+		}
+		if ( $payment_source ) {
+			$data['payment_source'] = array(
+				$payment_source->name() => $payment_source->properties(),
+			);
 		}
 
 		/**

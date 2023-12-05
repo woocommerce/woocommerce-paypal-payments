@@ -12,6 +12,7 @@ namespace WooCommerce\PayPalCommerce\WcSubscriptions;
 use WC_Subscription;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
+use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
@@ -21,6 +22,7 @@ use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\PaymentsStatusHandlingTrait;
@@ -193,6 +195,50 @@ class RenewalHandler {
 
 		$token = $this->get_token_for_customer( $customer, $wc_order );
 		if ( $token ) {
+			if ( $wc_order->get_payment_method() === CreditCardGateway::ID ) {
+				$stored_credentials = array(
+					'payment_initiator' => 'MERCHANT',
+					'payment_type'      => 'RECURRING',
+					'usage'             => 'SUBSEQUENT',
+				);
+
+				$subscriptions = wcs_get_subscriptions_for_renewal_order( $wc_order );
+				foreach ( $subscriptions as $post_id => $subscription ) {
+					$previous_transaction_reference = $subscription->get_meta( 'ppcp_previous_transaction_reference' );
+					if ( $previous_transaction_reference ) {
+						$stored_credentials['previous_transaction_reference'] = $previous_transaction_reference;
+						break;
+					}
+				}
+
+				$payment_source = new PaymentSource(
+					'card',
+					(object) array(
+						'vault_id'          => $token->id(),
+						'stored_credential' => $stored_credentials,
+					)
+				);
+
+				$order = $this->order_endpoint->create(
+					array( $purchase_unit ),
+					$shipping_preference,
+					$payer,
+					null,
+					$payment_source
+				);
+
+				$this->handle_paypal_order( $wc_order, $order );
+
+				$this->logger->info(
+					sprintf(
+						'Renewal for order %d is completed.',
+						$wc_order->get_id()
+					)
+				);
+
+				return;
+			}
+
 			$order = $this->order_endpoint->create(
 				array( $purchase_unit ),
 				$shipping_preference,
