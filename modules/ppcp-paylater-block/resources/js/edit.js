@@ -1,11 +1,14 @@
 import { __ } from '@wordpress/i18n';
+import { useState } from '@wordpress/element';
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
-import { PanelBody, SelectControl } from '@wordpress/components';
+import { PanelBody, SelectControl, Spinner } from '@wordpress/components';
 import { PayPalScriptProvider, PayPalMessages } from "@paypal/react-paypal-js";
 
 export default function Edit( { attributes, setAttributes } ) {
     const { layout, logo, position, color, flexColor, flexRatio } = attributes;
     const isFlex = layout === 'flex';
+
+    const [loaded, setLoaded] = useState(false);
 
     const previewStyle = {
         layout,
@@ -102,10 +105,12 @@ export default function Edit( { attributes, setAttributes } ) {
                         <PayPalMessages
                             style={previewStyle}
                             forceReRender={[previewStyle]}
+                            onRender={() => setLoaded(true)}
                         />
                     </PayPalScriptProvider>
                 </div>
                 <div className={'ppcp-overlay-child ppcp-unclicable-overlay'}> {/* make the message not clickable */}
+                    {!loaded && (<Spinner/>)}
                 </div>
             </div>
 		</>
