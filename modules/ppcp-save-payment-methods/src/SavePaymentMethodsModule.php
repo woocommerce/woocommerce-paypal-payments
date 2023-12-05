@@ -18,6 +18,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
+use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CaptureCardPayment;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
@@ -32,6 +33,8 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
  * Class SavePaymentMethodsModule
  */
 class SavePaymentMethodsModule implements ModuleInterface {
+
+	use ContextTrait;
 
 	/**
 	 * {@inheritDoc}
@@ -54,13 +57,13 @@ class SavePaymentMethodsModule implements ModuleInterface {
 		add_filter(
 			'woocommerce_paypal_payments_localized_script_data',
 			function( array $localized_script_data ) use ( $c ) {
-				$api = $c->get('api.user-id-token');
-				assert($api instanceof UserIdToken);
+				$api = $c->get( 'api.user-id-token' );
+				assert( $api instanceof UserIdToken );
 
-				$logger = $c->get('woocommerce.logger.woocommerce');
-				assert($logger instanceof LoggerInterface);
+				$logger = $c->get( 'woocommerce.logger.woocommerce' );
+				assert( $logger instanceof LoggerInterface );
 
-				$localized_script_data = $this->add_id_token_to_script_data($api, $logger, $localized_script_data);
+				$localized_script_data = $this->add_id_token_to_script_data( $api, $logger, $localized_script_data );
 
 				$localized_script_data['ajax']['capture_card_payment'] = array(
 					'endpoint' => \WC_AJAX::get_endpoint( CaptureCardPayment::ENDPOINT ),
@@ -191,7 +194,7 @@ class SavePaymentMethodsModule implements ModuleInterface {
 		add_action(
 			'wp_enqueue_scripts',
 			function() use ( $c ) {
-				if ( ! is_user_logged_in() || ! is_add_payment_method_page() ) {
+				if ( ! is_user_logged_in() || ! $this->is_add_payment_method_page() ) {
 					return;
 				}
 
@@ -329,9 +332,9 @@ class SavePaymentMethodsModule implements ModuleInterface {
 	/**
 	 * Adds id token to localized script data.
 	 *
-	 * @param UserIdToken $api User id token api.
+	 * @param UserIdToken     $api User id token api.
 	 * @param LoggerInterface $logger The logger.
-	 * @param array $localized_script_data The localized script data.
+	 * @param array           $localized_script_data The localized script data.
 	 * @return array
 	 */
 	private function add_id_token_to_script_data(
@@ -341,24 +344,24 @@ class SavePaymentMethodsModule implements ModuleInterface {
 	): array {
 		try {
 			$target_customer_id = '';
-			if (is_user_logged_in()) {
-				$target_customer_id = get_user_meta(get_current_user_id(), '_ppcp_target_customer_id', true);
+			if ( is_user_logged_in() ) {
+				$target_customer_id = get_user_meta( get_current_user_id(), '_ppcp_target_customer_id', true );
 			}
 
-			$id_token = $api->id_token($target_customer_id);
+			$id_token                                      = $api->id_token( $target_customer_id );
 			$localized_script_data['save_payment_methods'] = array(
 				'id_token' => $id_token,
 			);
 
 			$localized_script_data['data_client_id']['set_attribute'] = false;
 
-		} catch (RuntimeException $exception) {
+		} catch ( RuntimeException $exception ) {
 			$error = $exception->getMessage();
-			if (is_a($exception, PayPalApiException::class)) {
-				$error = $exception->get_details($error);
+			if ( is_a( $exception, PayPalApiException::class ) ) {
+				$error = $exception->get_details( $error );
 			}
 
-			$logger->error($error);
+			$logger->error( $error );
 		}
 
 		return $localized_script_data;
