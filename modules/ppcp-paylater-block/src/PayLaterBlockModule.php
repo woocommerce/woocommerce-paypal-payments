@@ -32,6 +32,17 @@ class PayLaterBlockModule implements ModuleInterface {
 	 * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $c ): void {
+		add_action(
+			'init',
+			function (): void {
+				/**
+				 * Cannot return false for this path.
+				 *
+				 * @psalm-suppress PossiblyFalseArgument
+				 */
+				register_block_type( dirname( realpath( __FILE__ ), 2 ) );
+			}
+		);
 	}
 
 	/**

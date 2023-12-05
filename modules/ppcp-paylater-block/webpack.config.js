@@ -9,6 +9,8 @@ module.exports = {
     target: 'web',
     plugins: [ new DependencyExtractionWebpackPlugin() ],
     entry: {
+        'paylater-block': path.resolve('./resources/js/paylater-block.js'),
+        'edit': path.resolve('./resources/css/edit.scss'),
     },
     output: {
         path: path.resolve(__dirname, 'assets/'),
