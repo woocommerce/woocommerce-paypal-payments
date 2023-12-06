@@ -53,7 +53,7 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
                         value={logo}
                         onChange={(value) => setAttributes({logo: value})}
                     />)}
-                    { !isFlex && (<SelectControl
+                    { !isFlex && logo === 'primary' && (<SelectControl
                         label={__('Logo Position', 'woocommerce-paypal-payments')}
                         options={[
                             { label: __( 'Left', 'woocommerce-paypal-payments' ), value: 'left' },
