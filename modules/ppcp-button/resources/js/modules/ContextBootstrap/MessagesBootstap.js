@@ -1,13 +1,18 @@
 import {setVisible} from "../Helper/Hiding";
+import MessageRenderer from "../Renderer/MessageRenderer";
 
 class MessagesBootstrap {
     constructor(gateway, messageRenderer) {
         this.gateway = gateway;
-        this.renderer = messageRenderer;
+        this.renderers = [messageRenderer];
         this.lastAmount = this.gateway.messages.amount;
     }
 
     init() {
+        Array.from(document.querySelectorAll('.ppcp-paylater-message-block')).forEach(blockElement => {
+            this.renderers.push(new MessageRenderer({wrapper: '#' + blockElement.id}));
+        });
+
         jQuery(document.body).on('ppcp_cart_rendered ppcp_checkout_rendered', () => {
             this.render();
         });
@@ -27,28 +32,30 @@ class MessagesBootstrap {
         this.render();
     }
 
-    shouldShow() {
+    shouldShow(renderer) {
         if (this.gateway.messages.is_hidden === true) {
             return false;
         }
 
         const eventData = {result: true}
-        jQuery(document.body).trigger('ppcp_should_show_messages', [eventData]);
+        jQuery(document.body).trigger('ppcp_should_show_messages', [eventData, renderer.config.wrapper]);
         return eventData.result;
     }
 
-    shouldRender() {
-        return this.shouldShow() && this.renderer.shouldRender();
-    }
-
     render() {
-        setVisible(this.gateway.messages.wrapper, this.shouldShow());
+        this.renderers.forEach(renderer => {
+            const shouldShow = this.shouldShow(renderer);
+            setVisible(renderer.config.wrapper, shouldShow);
+            if (!shouldShow) {
+                return;
+            }
 
-        if (!this.shouldRender()) {
-            return;
-        }
+            if (!renderer.shouldRender()) {
+                return;
+            }
 
-        this.renderer.renderWithAmount(this.lastAmount);
+            renderer.renderWithAmount(this.lastAmount);
+        });
     }
 }
 

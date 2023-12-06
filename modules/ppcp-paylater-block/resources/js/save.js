@@ -1,8 +1,8 @@
 import { useBlockProps } from '@wordpress/block-editor';
 
 export default function save( { attributes } ) {
-    const { layout, logo, position, color, flexColor, flexRatio } = attributes;
-    const dataAttributes = layout === 'flex' ? {
+    const { layout, logo, position, color, flexColor, flexRatio, id } = attributes;
+    const paypalAttributes = layout === 'flex' ? {
         'data-pp-style-layout': 'flex',
         'data-pp-style-color': flexColor,
         'data-pp-style-ratio': flexRatio,
@@ -14,7 +14,8 @@ export default function save( { attributes } ) {
     };
     const props = {
         className: 'ppcp-paylater-message-block',
-        ...dataAttributes,
+        id,
+        ...paypalAttributes,
     };
 
 	return <div { ...useBlockProps.save(props) }></div>;

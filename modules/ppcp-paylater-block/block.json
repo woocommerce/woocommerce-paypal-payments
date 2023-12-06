@@ -8,6 +8,9 @@
 	"description": "Pay Later",
 	"example": {},
 	"attributes": {
+        "id": {
+            "type": "string"
+        },
         "layout": {
             "type": "string",
             "default": "flex"

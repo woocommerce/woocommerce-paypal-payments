@@ -620,6 +620,10 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 			return false;
 		}
 
+		if ( has_block( 'woocommerce-paypal-payments/paylater-messages' ) ) {
+			return true;
+		}
+
 		$location = $this->location();
 
 		$messaging_enabled_for_current_location = $this->settings_status->is_pay_later_messaging_enabled_for_location( $location );

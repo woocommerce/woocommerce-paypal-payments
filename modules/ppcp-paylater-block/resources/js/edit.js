@@ -1,11 +1,11 @@
 import { __ } from '@wordpress/i18n';
-import { useState } from '@wordpress/element';
+import { useState, useEffect } from '@wordpress/element';
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, SelectControl, Spinner } from '@wordpress/components';
 import { PayPalScriptProvider, PayPalMessages } from "@paypal/react-paypal-js";
 
-export default function Edit( { attributes, setAttributes } ) {
-    const { layout, logo, position, color, flexColor, flexRatio } = attributes;
+export default function Edit( { attributes, clientId, setAttributes } ) {
+    const { layout, logo, position, color, flexColor, flexRatio, id } = attributes;
     const isFlex = layout === 'flex';
 
     const [loaded, setLoaded] = useState(false);
@@ -22,6 +22,13 @@ export default function Edit( { attributes, setAttributes } ) {
             color,
         },
     };
+
+    useEffect(() => {
+        if (!id) {
+            setAttributes({id: 'ppcp-' + clientId});
+        }
+    }, []);
+
 	return (
 		<>
 			<InspectorControls>
