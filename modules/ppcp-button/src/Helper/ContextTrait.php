@@ -18,6 +18,9 @@ trait ContextTrait {
 	 * @return void
 	 */
 	protected function init_context(): void {
+		if ( ! apply_filters( 'woocommerce_paypal_payments_block_classic_compat', true ) ) {
+			return;
+		}
 
 		/**
 		 * Activate is_checkout() on woocommerce/classic-shortcode checkout blocks.
