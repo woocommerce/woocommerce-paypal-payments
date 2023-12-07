@@ -2,10 +2,9 @@
 	"$schema": "https://schemas.wp.org/trunk/block.json",
 	"apiVersion": 3,
 	"name": "woocommerce-paypal-payments/paylater-messages",
-	"version": "1.0.0",
 	"title": "PayPal Pay Later messages",
-	"category": "widgets",
-	"description": "Pay Later",
+	"category": "woocommerce",
+	"description": "PayPal Pay Later messaging will be displayed for eligible customers. Customers automatically see the most relevant Pay Later offering.",
 	"example": {},
 	"attributes": {
         "id": {
