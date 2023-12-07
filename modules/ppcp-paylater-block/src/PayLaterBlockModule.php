@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\PayLaterBlock;
 
+use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
@@ -34,7 +35,27 @@ class PayLaterBlockModule implements ModuleInterface {
 	public function run( ContainerInterface $c ): void {
 		add_action(
 			'init',
-			function (): void {
+			function () use ( $c ): void {
+				$script_handle = 'ppcp-paylater-block';
+				wp_register_script(
+					$script_handle,
+					$c->get( 'paylater-block.url' ) . '/assets/js/paylater-block.js',
+					array(),
+					$c->get( 'ppcp.asset-version' ),
+					true
+				);
+				wp_localize_script(
+					$script_handle,
+					'PcpPayLaterBlock',
+					array(
+						'ajax' => array(
+							'cart_script_params' => array(
+								'endpoint' => \WC_AJAX::get_endpoint( CartScriptParamsEndpoint::ENDPOINT ),
+							),
+						),
+					)
+				);
+
 				/**
 				 * Cannot return false for this path.
 				 *

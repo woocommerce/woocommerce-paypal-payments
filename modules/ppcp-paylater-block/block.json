@@ -43,6 +43,6 @@
 		"html": false
 	},
 	"textdomain": "woocommerce-paypal-payments",
-	"editorScript": "file:./assets/js/paylater-block.js",
+	"editorScript": "ppcp-paylater-block",
 	"editorStyle": "file:./assets/css/edit.css"
 }

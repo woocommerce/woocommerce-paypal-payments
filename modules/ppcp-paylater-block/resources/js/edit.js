@@ -3,6 +3,7 @@ import { useState, useEffect } from '@wordpress/element';
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, SelectControl, Spinner } from '@wordpress/components';
 import { PayPalScriptProvider, PayPalMessages } from "@paypal/react-paypal-js";
+import { useScriptParams } from "./hooks/script-params";
 
 export default function Edit( { attributes, clientId, setAttributes } ) {
     const { layout, logo, position, color, flexColor, flexRatio, placement, id } = attributes;
@@ -23,11 +24,28 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
         },
     };
 
+    const props = useBlockProps({className: ['ppcp-paylater-block-preview', 'ppcp-overlay-parent']});
+
     useEffect(() => {
         if (!id) {
             setAttributes({id: 'ppcp-' + clientId});
         }
     }, []);
+
+    const scriptParams = useScriptParams(PcpPayLaterBlock.ajax.cart_script_params);
+    if (scriptParams === null) {
+        return (<div {...props}><Spinner/></div>)
+    }
+
+    const urlParams = scriptParams === false ? {
+        clientId: 'test',
+        components: 'messages',
+    } : {
+        ...scriptParams.url_params,
+        ...{
+            components: 'messages',
+        }
+    }
 
 	return (
 		<>
@@ -116,13 +134,10 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
                     />
 				</PanelBody>
 			</InspectorControls>
-            <div {...useBlockProps({className: ['ppcp-paylater-block-preview', 'ppcp-overlay-parent']})}>
+            <div {...props}>
                 <div className={'ppcp-overlay-child'}>
                     <PayPalScriptProvider
-                        options={{
-                            clientId: "test",
-                            components: "messages",
-                        }}
+                        options={urlParams}
                     >
                         <PayPalMessages
                             style={previewStyle}

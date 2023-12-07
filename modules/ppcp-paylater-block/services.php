@@ -11,4 +11,16 @@ namespace WooCommerce\PayPalCommerce\PayLaterBlock;
 
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 
-return array();
+return array(
+	'paylater-block.url' => static function ( ContainerInterface $container ): string {
+		/**
+		 * Cannot return false for this path.
+		 *
+		 * @psalm-suppress PossiblyFalseArgument
+		 */
+		return plugins_url(
+			'/modules/ppcp-paylater-block/',
+			dirname( realpath( __FILE__ ), 3 ) . '/woocommerce-paypal-payments.php'
+		);
+	},
+);
