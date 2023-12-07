@@ -51,7 +51,7 @@ const GooglePayComponent = () => {
     }, [paypalLoaded, googlePayLoaded]);
 
     return (
-        <div id={buttonConfig.button.wrapper.replace('#', '')} className="ppcp-button-googlepay"></div>
+        <div id={buttonConfig.button.wrapper.replace('#', '')} className="ppcp-button-apm ppcp-button-googlepay"></div>
     );
 }
 

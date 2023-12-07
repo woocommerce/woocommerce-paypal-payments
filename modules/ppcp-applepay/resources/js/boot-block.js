@@ -50,7 +50,7 @@ const ApplePayComponent = () => {
     }, [paypalLoaded, applePayLoaded]);
 
     return (
-        <div id={buttonConfig.button.wrapper.replace('#', '')}></div>
+        <div id={buttonConfig.button.wrapper.replace('#', '')} className="ppcp-button-apm ppcp-button-applepay"></div>
     );
 }
 

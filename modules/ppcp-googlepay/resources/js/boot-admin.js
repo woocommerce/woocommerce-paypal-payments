@@ -67,7 +67,7 @@ import widgetBuilder from "../../../ppcp-button/resources/js/modules/Renderer/Wi
         buttonConfig.button.wrapper = selector;
         applyConfigOptions(buttonConfig);
 
-        const wrapperElement = `<div id="${selector.replace('#', '')}" class="ppcp-button-googlepay"></div>`;
+        const wrapperElement = `<div id="${selector.replace('#', '')}" class="ppcp-button-apm ppcp-button-googlepay"></div>`;
 
         if (!jQuery(selector).length) {
             jQuery(ppcpConfig.button.wrapper).after(wrapperElement);
