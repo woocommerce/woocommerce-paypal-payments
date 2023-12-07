@@ -34,6 +34,10 @@
         "flexRatio": {
             "type": "string",
             "default": "8x1"
+        },
+        "placement": {
+            "type": "string",
+            "default": "auto"
         }
 	},
 	"supports": {

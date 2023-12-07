@@ -10,7 +10,11 @@ class MessagesBootstrap {
 
     init() {
         Array.from(document.querySelectorAll('.ppcp-paylater-message-block')).forEach(blockElement => {
-            this.renderers.push(new MessageRenderer({wrapper: '#' + blockElement.id}));
+            const config = {wrapper: '#' + blockElement.id};
+            if (!blockElement.getAttribute('data-pp-placement')) {
+                config.placement = this.gateway.messages.placement;
+            }
+            this.renderers.push(new MessageRenderer(config));
         });
 
         jQuery(document.body).on('ppcp_cart_rendered ppcp_checkout_rendered', () => {
