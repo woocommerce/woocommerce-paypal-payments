@@ -26,7 +26,7 @@ class PaymentSource {
 	/**
 	 * Payment source properties.
 	 *
-	 * @var stdClass
+	 * @var object
 	 */
 	private $properties;
 
