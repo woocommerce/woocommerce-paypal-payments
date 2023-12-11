@@ -33,10 +33,10 @@ class PaymentSource {
 	/**
 	 * PaymentSource constructor.
 	 *
-	 * @param string   $name Payment source name.
-	 * @param stdClass $properties Payment source properties.
+	 * @param string $name Payment source name.
+	 * @param object $properties Payment source properties.
 	 */
-	public function __construct( string $name, stdClass $properties ) {
+	public function __construct( string $name, object $properties ) {
 		$this->name       = $name;
 		$this->properties = $properties;
 	}
@@ -53,9 +53,9 @@ class PaymentSource {
 	/**
 	 * Payment source properties.
 	 *
-	 * @return stdClass
+	 * @return object
 	 */
-	public function properties(): stdClass {
+	public function properties(): object {
 		return $this->properties;
 	}
 }

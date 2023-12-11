@@ -212,11 +212,6 @@ class RenewalHandler {
 					}
 				}
 
-				/**
-				 * Suppress ArgumentTypeCoercion
-				 *
-				 * @psalm-suppress ArgumentTypeCoercion
-				 */
 				$payment_source = new PaymentSource(
 					'card',
 					(object) array(
