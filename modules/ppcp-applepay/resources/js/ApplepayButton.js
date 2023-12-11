@@ -63,7 +63,7 @@ class ApplepayButton {
         this.initEventHandlers();
         this.isInitialized = true;
         this.applePayConfig = config;
-        const isEligible = (this.applePayConfig.isEligible && window.ApplePaySession) || this.buttonConfig.is_admin;
+        const isEligible = (this.applePayConfig.isEligible && window.ApplePaySession) || this.buttonConfig.is_admin || true; // todo remove
 
         if (isEligible) {
             this.fetchTransactionInfo().then(() => {

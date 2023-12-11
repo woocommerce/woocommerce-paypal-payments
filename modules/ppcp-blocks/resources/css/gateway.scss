@@ -1,0 +1,9 @@
+@use "../../../ppcp-button/resources/css/mixins/apm-button" as apm-button;
+
+li[id^="express-payment-method-ppcp-"] {
+	line-height: 0;
+}
+
+.ppcp-button-apm {
+	@include apm-button.button;
+}
