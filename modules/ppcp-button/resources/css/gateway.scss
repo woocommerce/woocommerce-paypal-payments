@@ -23,6 +23,11 @@
 	line-height: 0;
 }
 
+#ppc-button-minicart {
+	line-height: 0;
+	display: block;
+}
+
 .ppcp-button-apm {
 	@include apm-button.button;
 }

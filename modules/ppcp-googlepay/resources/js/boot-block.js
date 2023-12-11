@@ -25,13 +25,6 @@ const GooglePayComponent = () => {
     };
 
     useEffect(() => {
-        const bodyClass = 'ppcp-has-googlepay-block';
-        if (!document.body.classList.contains(bodyClass)) {
-            document.body.classList.add(bodyClass);
-        }
-    }, []);
-
-    useEffect(() => {
         // Load GooglePay SDK
         loadCustomScript({ url: buttonConfig.sdk_url }).then(() => {
             setGooglePayLoaded(true);

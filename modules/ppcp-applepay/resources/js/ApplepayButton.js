@@ -5,12 +5,12 @@ import {setEnabled} from '../../../ppcp-button/resources/js/modules/Helper/Butto
 import FormValidator from "../../../ppcp-button/resources/js/modules/Helper/FormValidator";
 import ErrorHandler from '../../../ppcp-button/resources/js/modules/ErrorHandler';
 import widgetBuilder from "../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder";
-import {apmButtonInit} from "../../../ppcp-button/resources/js/modules/Helper/ApmButton";
+import {apmButtonsInit} from "../../../ppcp-button/resources/js/modules/Helper/ApmButtons";
 
 class ApplepayButton {
 
     constructor(context, externalHandler, buttonConfig, ppcpConfig) {
-        apmButtonInit();
+        apmButtonsInit();
 
         this.isInitialized = false;
 
@@ -63,7 +63,7 @@ class ApplepayButton {
         this.initEventHandlers();
         this.isInitialized = true;
         this.applePayConfig = config;
-        const isEligible = (this.applePayConfig.isEligible && window.ApplePaySession) || this.buttonConfig.is_admin || true; // todo remove
+        const isEligible = (this.applePayConfig.isEligible && window.ApplePaySession) || this.buttonConfig.is_admin;
 
         if (isEligible) {
             this.fetchTransactionInfo().then(() => {

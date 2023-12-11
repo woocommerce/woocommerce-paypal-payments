@@ -2,8 +2,14 @@
 
 li[id^="express-payment-method-ppcp-"] {
 	line-height: 0;
+
+	// Set min-width to 0 as the buttons need to fit in a tight grid.
+	.paypal-buttons {
+		min-width: 0 !important;
+	}
 }
 
 .ppcp-button-apm {
 	@include apm-button.button;
 }
+
