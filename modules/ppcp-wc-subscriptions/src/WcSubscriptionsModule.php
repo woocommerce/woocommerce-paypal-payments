@@ -142,48 +142,6 @@ class WcSubscriptionsModule implements ModuleInterface {
 			20,
 			2
 		);
-
-		add_filter(
-			'ppcp_create_order_request_body_data',
-			function( array $data ) use ( $c ) {
-				// phpcs:ignore WordPress.Security.NonceVerification.Missing
-				$wc_order_action = wc_clean( wp_unslash( $_POST['wc_order_action'] ?? '' ) );
-
-				// phpcs:ignore WordPress.Security.NonceVerification.Missing
-				$subscription_id = wc_clean( wp_unslash( $_POST['post_ID'] ?? '' ) );
-				if ( ! $subscription_id ) {
-					return $data;
-				}
-				$subscription = wc_get_order( $subscription_id );
-				if ( ! is_a( $subscription, WC_Subscription::class ) ) {
-					return $data;
-				}
-
-				if (
-					$wc_order_action === 'wcs_process_renewal' && $subscription->get_payment_method() === CreditCardGateway::ID
-					&& isset( $data['payment_source']['token'] ) && $data['payment_source']['token']['type'] === 'PAYMENT_METHOD_TOKEN'
-					&& isset( $data['payment_source']['token']['source']->card )
-				) {
-					$data['payment_source'] = array(
-						'card' => array(
-							'vault_id'          => $data['payment_source']['token']['id'],
-							'stored_credential' => array(
-								'payment_initiator' => 'MERCHANT',
-								'payment_type'      => 'RECURRING',
-								'usage'             => 'SUBSEQUENT',
-							),
-						),
-					);
-
-					$previous_transaction_reference = $subscription->get_meta( 'ppcp_previous_transaction_reference' );
-					if ( $previous_transaction_reference ) {
-						$data['payment_source']['card']['stored_credential']['previous_transaction_reference'] = $previous_transaction_reference;
-					}
-				}
-
-				return $data;
-			}
-		);
 	}
 
 	/**
