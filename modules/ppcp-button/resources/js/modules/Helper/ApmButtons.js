@@ -73,24 +73,18 @@ export class ApmButtons {
             }
 
             // Check first apm button
-            const $firstApmButton = $container.find(this.selector + ':visible').first();
             const $firstElement = $container.children(':visible').first();
-
-            let isFirstElement = false;
-            if ($firstApmButton.is($firstElement)) {
-                isFirstElement = true;
-            }
 
             // Assign margins to buttons
             $container.find(this.selector).each((index, el) => {
                 const $el = jQuery(el);
-                const height = $el.height();
 
-                if (isFirstElement) {
+                if ($el.is($firstElement)) {
                     $el.css('margin-top', `0px`);
                     return true;
                 }
 
+                const height = $el.height();
                 $el.css('margin-top', `${Math.round(height * 0.3)}px`);
             });
 
