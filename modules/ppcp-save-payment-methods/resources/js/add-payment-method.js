@@ -88,6 +88,7 @@ const init = () => {
                             },
                             body: JSON.stringify({
                                 nonce: ppcp_add_payment_method.ajax.create_setup_token.nonce,
+                                payment_method: PaymentMethods.CARDS
                             })
                         })
 
@@ -106,6 +107,7 @@ const init = () => {
                             body: JSON.stringify({
                                 nonce: ppcp_add_payment_method.ajax.create_payment_token.nonce,
                                 vault_setup_token: vaultSetupToken,
+                                payment_method: PaymentMethods.CARDS
                             })
                         })
 

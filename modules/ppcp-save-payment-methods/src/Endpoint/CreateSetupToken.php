@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentMethodTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 
 /**
  * Class CreateSetupToken
@@ -67,13 +68,8 @@ class CreateSetupToken implements EndpointInterface {
 	 */
 	public function handle_request(): bool {
 		try {
-			$this->request_data->read_request( $this->nonce() );
+			$data = $this->request_data->read_request( $this->nonce() );
 
-			/**
-			 * Suppress ArgumentTypeCoercion
-			 *
-			 * @psalm-suppress ArgumentTypeCoercion
-			 */
 			$payment_source = new PaymentSource(
 				'paypal',
 				(object) array(
@@ -84,6 +80,14 @@ class CreateSetupToken implements EndpointInterface {
 					),
 				)
 			);
+
+			$payment_method = $data['payment_method'] ?? '';
+			if($payment_method === CreditCardGateway::ID) {
+				$payment_source = new PaymentSource(
+					'card',
+					(object) array()
+				);
+			}
 
 			$result = $this->payment_method_tokens_endpoint->setup_tokens( $payment_source );
 
