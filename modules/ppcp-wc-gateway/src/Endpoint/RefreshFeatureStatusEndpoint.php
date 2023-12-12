@@ -109,7 +109,7 @@ class RefreshFeatureStatusEndpoint {
 	 * @return bool
 	 */
 	private function verify_nonce(): bool {
-		$json = json_decode( file_get_contents( 'php://input' ), true );
-		return wp_verify_nonce( $json['nonce'] ?? null, self::nonce() ) !== false;
+		$json = json_decode( file_get_contents( 'php://input' ) ?: '', true );
+		return wp_verify_nonce( $json['nonce'] ?? '', self::nonce() ) !== false;
 	}
 }
