@@ -224,13 +224,16 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 			}
 		}
 
-		$disabled_funding_sources = explode( ',', $script_data['url_params']['disable-funding'] ?? '' ) ?: array();
-		$funding_sources          = array_values(
-			array_diff(
-				array_keys( $this->all_funding_sources ),
-				$disabled_funding_sources
-			)
-		);
+		$funding_sources = array();
+		if ( ! $this->is_editing() ) {
+			$disabled_funding_sources = explode( ',', $script_data['url_params']['disable-funding'] ?? '' ) ?: array();
+			$funding_sources          = array_values(
+				array_diff(
+					array_keys( $this->all_funding_sources ),
+					$disabled_funding_sources
+				)
+			);
+		}
 
 		return array(
 			'id'                          => $this->gateway->id,
@@ -252,5 +255,16 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 			),
 			'scriptData'                  => $script_data,
 		);
+	}
+
+	/**
+	 * Checks if it is the block editing mode.
+	 */
+	private function is_editing(): bool {
+		if ( ! function_exists( 'get_current_screen' ) ) {
+			return true;
+		}
+		$screen = get_current_screen();
+		return $screen && $screen->is_block_editor();
 	}
 }
