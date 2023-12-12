@@ -354,9 +354,8 @@ document.addEventListener(
             });
         }
 
-
-        (() => {
-            const props = PayPalCommerceGatewaySettings.ajax.refresh_feature_status;
+        // Logic to handle the "Check available features" button.
+        ((props) => {
             const $btn = jQuery(props.button);
 
             $btn.click(async () => {
@@ -388,7 +387,7 @@ document.addEventListener(
                 }
             });
 
-        })();
+        })(PayPalCommerceGatewaySettings.ajax.refresh_feature_status);
 
     }
 );

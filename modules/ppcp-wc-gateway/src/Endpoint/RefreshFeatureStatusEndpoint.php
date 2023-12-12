@@ -78,19 +78,38 @@ class RefreshFeatureStatusEndpoint {
 		$last_request_time = $this->cache->get( self::CACHE_KEY ) ?: 0;
 		$seconds_missing   = $last_request_time + self::TIMEOUT - $now;
 
-		if ( $seconds_missing > 0 ) {
-			$response = array(
-				'message' => sprintf(
-				// translators: %1$s is the number of seconds remaining.
-					__( 'Wait %1$s seconds before trying again.', 'woocommerce-paypal-payments' ),
-					$seconds_missing
-				),
+		if ( ! $this->verify_nonce() ) {
+			wp_send_json_error(
+				array(
+					'message' => __( 'Expired request.', 'woocommerce-paypal-payments' ),
+				)
 			);
-			wp_send_json_error( $response );
+		}
+
+		if ( $seconds_missing > 0 ) {
+			wp_send_json_error(
+				array(
+					'message' => sprintf(
+					// translators: %1$s is the number of seconds remaining.
+						__( 'Wait %1$s seconds before trying again.', 'woocommerce-paypal-payments' ),
+						$seconds_missing
+					),
+				)
+			);
 		}
 
 		$this->cache->set( self::CACHE_KEY, $now, self::TIMEOUT );
 		do_action( 'woocommerce_paypal_payments_clear_apm_product_status', $this->settings );
 		wp_send_json_success();
+	}
+
+	/**
+	 * Verifies the nonce.
+	 *
+	 * @return bool
+	 */
+	private function verify_nonce(): bool {
+		$json = json_decode( file_get_contents( 'php://input' ), true );
+		return wp_verify_nonce( $json['nonce'] ?? null, self::nonce() ) !== false;
 	}
 }
