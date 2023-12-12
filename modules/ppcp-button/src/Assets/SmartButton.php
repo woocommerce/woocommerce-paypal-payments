@@ -636,6 +636,8 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 			case 'shop':
 			case 'home':
 				return $messaging_enabled_for_current_location;
+			case 'block-editor':
+				return true;
 			default:
 				return false;
 		}

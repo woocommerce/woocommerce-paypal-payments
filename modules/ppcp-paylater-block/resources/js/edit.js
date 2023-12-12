@@ -43,7 +43,7 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
     } : {
         ...scriptParams.url_params,
         ...{
-            components: 'messages',
+            components: 'messages,buttons,funding-eligibility',
         }
     }
 

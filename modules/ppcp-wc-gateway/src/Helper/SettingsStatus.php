@@ -85,6 +85,9 @@ class SettingsStatus {
 	 * @return bool true if is enabled, otherwise false.
 	 */
 	public function is_smart_button_enabled_for_location( string $location ): bool {
+		if ( $location === 'block-editor' ) {
+			$location = 'checkout-block';
+		}
 		return $this->is_enabled_for_location( 'smart_button_locations', $location );
 	}
 
