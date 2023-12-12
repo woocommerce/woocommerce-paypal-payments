@@ -75,7 +75,7 @@ const init = () => {
             clientId: ppcp_add_payment_method.client_id,
             merchantId: ppcp_add_payment_method.merchant_id,
             dataUserIdToken: ppcp_add_payment_method.id_token,
-            components: 'card-fields'
+            components: 'card-fields',
         }, true)
             .then((paypal) => {
                 const cardField = paypal.CardFields({
@@ -92,7 +92,6 @@ const init = () => {
                         })
 
                         const result = await response.json()
-
                         if (result.data.id) {
                             return result.data.id
                         }
@@ -147,6 +146,15 @@ const init = () => {
                         cvvField.hidden = true;
                     }
                 }
+
+                document.querySelector('#place_order').addEventListener("click", (event) => {
+                    event.preventDefault();
+
+                    cardField.submit()
+                        .catch((error) => {
+                            console.error(error)
+                        });
+                });
             })
             .catch((error) => {
                 console.error(error)
