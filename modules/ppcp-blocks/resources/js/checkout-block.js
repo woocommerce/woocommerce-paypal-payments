@@ -15,6 +15,8 @@ window.ppcpFundingSource = config.fundingSource;
 
 let registeredContext = false;
 
+let paypalScriptPromise = null;
+
 const PayPalComponent = ({
                              onClick,
                              onClose,
@@ -31,6 +33,15 @@ const PayPalComponent = ({
     const {responseTypes} = emitResponse;
 
     const [paypalOrder, setPaypalOrder] = useState(null);
+
+    const [paypalScriptLoaded, setPaypalScriptLoaded] = useState(false);
+
+    if (!paypalScriptLoaded) {
+        if (!paypalScriptPromise) {
+            paypalScriptPromise = loadPaypalScriptPromise(config.scriptData)
+        }
+        paypalScriptPromise.then(() => setPaypalScriptLoaded(true));
+    }
 
     const methodId = fundingSource ? `${config.id}-${fundingSource}` : config.id;
 
@@ -307,7 +318,11 @@ const PayPalComponent = ({
 
     const style = normalizeStyleForFundingSource(config.scriptData.button.style, fundingSource);
 
-    const PayPalButton = window.paypal.Buttons.driver("react", { React, ReactDOM });
+    if (!paypalScriptLoaded) {
+        return null;
+    }
+
+    const PayPalButton = paypal.Buttons.driver("react", { React, ReactDOM });
 
     return (
         <PayPalButton
@@ -361,8 +376,6 @@ if (config.scriptData.continuation) {
         },
     });
 } else if (!config.usePlaceOrder) {
-    const paypalScriptPromise = loadPaypalScriptPromise(config.scriptData);
-
     for (const fundingSource of ['paypal', ...config.enabledFundingSources]) {
         registerExpressPaymentMethod({
             name: `${config.id}-${fundingSource}`,
@@ -372,6 +385,9 @@ if (config.scriptData.continuation) {
             edit: <PayPalComponent isEditing={true} fundingSource={fundingSource}/>,
             ariaLabel: config.title,
             canMakePayment: async () => {
+                if (!paypalScriptPromise) {
+                    paypalScriptPromise = loadPaypalScriptPromise(config.scriptData)
+                }
                 await paypalScriptPromise;
 
                 return paypal.Buttons({fundingSource}).isEligible();
