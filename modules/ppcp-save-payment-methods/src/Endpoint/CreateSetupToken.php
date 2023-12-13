@@ -82,10 +82,24 @@ class CreateSetupToken implements EndpointInterface {
 			);
 
 			$payment_method = $data['payment_method'] ?? '';
-			if($payment_method === CreditCardGateway::ID) {
+			if ( $payment_method === CreditCardGateway::ID ) {
+				$properties = (object) array();
+
+				$verification_method = $data['verification_method'] ?? '';
+				if ( $verification_method === 'SCA_WHEN_REQUIRED' || $verification_method === 'SCA_ALWAYS' ) {
+					$properties = (object) array(
+						'verification_method' => $verification_method,
+						'usage_type'          => 'MERCHANT',
+						'experience_context'  => (object) array(
+							'return_url' => esc_url( wc_get_account_endpoint_url( 'payment-methods' ) ),
+							'cancel_url' => esc_url( wc_get_account_endpoint_url( 'add-payment-method' ) ),
+						),
+					);
+				}
+
 				$payment_source = new PaymentSource(
 					'card',
-					(object) array()
+					$properties
 				);
 			}
 

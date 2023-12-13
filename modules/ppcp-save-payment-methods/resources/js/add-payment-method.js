@@ -69,6 +69,7 @@ const init = () => {
                             const result = await response.json();
                             if(result.success === true) {
                                 window.location.href = ppcp_add_payment_method.payment_methods_page;
+                                return;
                             }
 
                             errorHandler.message(ppcp_add_payment_method.error_message);
@@ -105,7 +106,8 @@ const init = () => {
                             },
                             body: JSON.stringify({
                                 nonce: ppcp_add_payment_method.ajax.create_setup_token.nonce,
-                                payment_method: PaymentMethods.CARDS
+                                payment_method: PaymentMethods.CARDS,
+                                verification_method: ppcp_add_payment_method.verification_method
                             })
                         })
 
@@ -133,6 +135,7 @@ const init = () => {
                         const result = await response.json();
                         if(result.success === true) {
                             window.location.href = ppcp_add_payment_method.payment_methods_page;
+                            return;
                         }
 
                         errorHandler.message(ppcp_add_payment_method.error_message);

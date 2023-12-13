@@ -101,7 +101,7 @@ class CreatePaymentToken implements EndpointInterface {
 				update_user_meta( get_current_user_id(), '_ppcp_target_customer_id', $result->customer->id );
 
 				$payment_method = $data['payment_method'] ?? '';
-				if($payment_method === PayPalGateway::ID) {
+				if ( $payment_method === PayPalGateway::ID ) {
 					$email = '';
 					if ( isset( $result->payment_source->paypal->email_address ) ) {
 						$email = $result->payment_source->paypal->email_address;
@@ -114,17 +114,21 @@ class CreatePaymentToken implements EndpointInterface {
 					);
 				}
 
-				if ($payment_method === CreditCardGateway::ID) {
+				if ( $payment_method === CreditCardGateway::ID ) {
 					$token = new \WC_Payment_Token_CC();
-					$token->set_token($result->id);
-					$token->set_user_id(get_current_user_id());
-					$token->set_gateway_id(CreditCardGateway::ID);
+					$token->set_token( $result->id );
+					$token->set_user_id( get_current_user_id() );
+					$token->set_gateway_id( CreditCardGateway::ID );
 
-					$token->set_last4($result->payment_source->card->last_digits ?? '');
-					$expiry = explode('-', $result->payment_source->card->expiry ?? '');
-					$token->set_expiry_year($expiry[0] ?? '');
-					$token->set_expiry_month($expiry[1] ?? '');
-					$token->set_card_type($result->payment_source->card->brand ?? '');
+					$token->set_last4( $result->payment_source->card->last_digits ?? '' );
+					$expiry = explode( '-', $result->payment_source->card->expiry ?? '' );
+					$token->set_expiry_year( $expiry[0] ?? '' );
+					$token->set_expiry_month( $expiry[1] ?? '' );
+
+					$brand = $result->payment_source->card->brand ?? __( 'N/A', 'woocommerce-paypal-payments' );
+					if ( $brand ) {
+						$token->set_card_type( $brand );
+					}
 
 					$token->save();
 				}
