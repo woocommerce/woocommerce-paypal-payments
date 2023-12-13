@@ -182,7 +182,7 @@ trait ContextTrait {
 	/**
 	 * Checks if it is the block editor page.
 	 */
-	private function is_block_editor(): bool {
+	protected function is_block_editor(): bool {
 		if ( ! function_exists( 'get_current_screen' ) ) {
 			return true;
 		}

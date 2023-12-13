@@ -620,10 +620,6 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 			return false;
 		}
 
-		if ( has_block( 'woocommerce-paypal-payments/paylater-messages' ) ) {
-			return true;
-		}
-
 		$location = $this->location();
 
 		$messaging_enabled_for_current_location = $this->settings_status->is_pay_later_messaging_enabled_for_location( $location );
@@ -638,6 +634,9 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 				return $messaging_enabled_for_current_location;
 			case 'block-editor':
 				return true;
+			case 'checkout-block':
+			case 'cart-block':
+				return has_block( 'woocommerce-paypal-payments/paylater-messages' ) || $this->is_block_editor();
 			default:
 				return false;
 		}
