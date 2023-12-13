@@ -11,6 +11,13 @@ import {
 import {
     loadPaypalJsScriptPromise
 } from "../../../ppcp-button/resources/js/modules/Helper/ScriptLoading";
+import ErrorHandler from "../../../ppcp-button/resources/js/modules/ErrorHandler";
+import {cardFieldStyles} from "../../../ppcp-button/resources/js/modules/Helper/CardFieldsHelper";
+
+const errorHandler = new ErrorHandler(
+    PayPalCommerceGateway.labels.error.generic,
+    document.querySelector('.woocommerce-notices-wrapper')
+);
 
 const init = () => {
     setVisibleByClass(ORDER_BUTTON_SELECTOR, getCurrentPaymentMethod() !== PaymentMethods.PAYPAL, 'ppcp-hidden');
@@ -23,6 +30,8 @@ const init = () => {
             dataUserIdToken: ppcp_add_payment_method.id_token
         })
             .then((paypal) => {
+                errorHandler.clear();
+
                 paypal.Buttons(
                     {
                         createVaultSetupToken: async () => {
@@ -38,10 +47,11 @@ const init = () => {
                             })
 
                             const result = await response.json()
-
                             if (result.data.id) {
                                 return result.data.id
                             }
+
+                            errorHandler.message(ppcp_add_payment_method.error_message);
                         },
                         onApprove: async ({vaultSetupToken}) => {
                             const response = await fetch(ppcp_add_payment_method.ajax.create_payment_token.endpoint, {
@@ -56,11 +66,16 @@ const init = () => {
                                 })
                             })
 
-                            const result = await response.json()
-                            console.log(result)
+                            const result = await response.json();
+                            if(result.success === true) {
+                                window.location.href = ppcp_add_payment_method.payment_methods_page;
+                            }
+
+                            errorHandler.message(ppcp_add_payment_method.error_message);
                         },
                         onError: (error) => {
                             console.error(error)
+                            errorHandler.message(ppcp_add_payment_method.error_message);
                         }
                     },
                 ).render(`#ppc-button-${PaymentMethods.PAYPAL}-save-payment-method`);
@@ -78,6 +93,8 @@ const init = () => {
             components: 'card-fields',
         }, true)
             .then((paypal) => {
+                errorHandler.clear();
+
                 const cardField = paypal.CardFields({
                     createVaultSetupToken: async () => {
                         const response = await fetch(ppcp_add_payment_method.ajax.create_setup_token.endpoint, {
@@ -96,6 +113,8 @@ const init = () => {
                         if (result.data.id) {
                             return result.data.id
                         }
+
+                        errorHandler.message(ppcp_add_payment_method.error_message);
                     },
                     onApprove: async ({vaultSetupToken}) => {
                         const response = await fetch(ppcp_add_payment_method.ajax.create_payment_token.endpoint, {
@@ -111,11 +130,16 @@ const init = () => {
                             })
                         })
 
-                        const result = await response.json()
-                        console.log(result)
+                        const result = await response.json();
+                        if(result.success === true) {
+                            window.location.href = ppcp_add_payment_method.payment_methods_page;
+                        }
+
+                        errorHandler.message(ppcp_add_payment_method.error_message);
                     },
                     onError: (error) => {
                         console.error(error)
+                        errorHandler.message(ppcp_add_payment_method.error_message);
                     }
                 });
 
@@ -162,57 +186,6 @@ const init = () => {
                 console.error(error)
             })
     }
-}
-
-const cardFieldStyles = (field) => {
-    const allowedProperties = [
-        'appearance',
-        'color',
-        'direction',
-        'font',
-        'font-family',
-        'font-size',
-        'font-size-adjust',
-        'font-stretch',
-        'font-style',
-        'font-variant',
-        'font-variant-alternates',
-        'font-variant-caps',
-        'font-variant-east-asian',
-        'font-variant-ligatures',
-        'font-variant-numeric',
-        'font-weight',
-        'letter-spacing',
-        'line-height',
-        'opacity',
-        'outline',
-        'padding',
-        'padding-bottom',
-        'padding-left',
-        'padding-right',
-        'padding-top',
-        'text-shadow',
-        'transition',
-        '-moz-appearance',
-        '-moz-osx-font-smoothing',
-        '-moz-tap-highlight-color',
-        '-moz-transition',
-        '-webkit-appearance',
-        '-webkit-osx-font-smoothing',
-        '-webkit-tap-highlight-color',
-        '-webkit-transition',
-    ];
-
-    const stylesRaw = window.getComputedStyle(field);
-    const styles = {};
-    Object.values(stylesRaw).forEach((prop) => {
-        if (!stylesRaw[prop] || !allowedProperties.includes(prop)) {
-            return;
-        }
-        styles[prop] = '' + stylesRaw[prop];
-    });
-
-    return styles;
 }
 
 document.addEventListener(

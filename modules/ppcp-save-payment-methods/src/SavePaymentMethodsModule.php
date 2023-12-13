@@ -225,6 +225,8 @@ class SavePaymentMethodsModule implements ModuleInterface {
 							'client_id'   => $c->get( 'button.client_id' ),
 							'merchant_id' => $c->get( 'api.merchant_id' ),
 							'id_token'    => $id_token,
+							'payment_methods_page' => wc_get_account_endpoint_url('payment-methods'),
+							'error_message' => __( 'Could not save payment method.', 'woocommerce-paypal-payments' ),
 							'ajax'        => array(
 								'create_setup_token'   => array(
 									'endpoint' => \WC_AJAX::get_endpoint( CreateSetupToken::ENDPOINT ),
