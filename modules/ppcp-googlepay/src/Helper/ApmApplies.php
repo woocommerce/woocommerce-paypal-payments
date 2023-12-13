@@ -1,6 +1,7 @@
 <?php
 /**
- * Properties of the GooglePay module.
+ * ApmApplies helper.
+ * Checks if GooglePay is available for a given country and currency.
  *
  * @package WooCommerce\PayPalCommerce\Googlepay\Helper
  */
@@ -15,7 +16,7 @@ namespace WooCommerce\PayPalCommerce\Googlepay\Helper;
 class ApmApplies {
 
 	/**
-	 * The matrix which countries and currency combinations can be used for DCC.
+	 * The matrix which countries and currency combinations can be used for GooglePay.
 	 *
 	 * @var array
 	 */
@@ -38,7 +39,7 @@ class ApmApplies {
 	/**
 	 * DccApplies constructor.
 	 *
-	 * @param array  $allowed_country_currency_matrix The matrix which countries and currency combinations can be used for DCC.
+	 * @param array  $allowed_country_currency_matrix The matrix which countries and currency combinations can be used for GooglePay.
 	 * @param string $currency 3-letter currency code of the shop.
 	 * @param string $country 2-letter country code of the shop.
 	 */
