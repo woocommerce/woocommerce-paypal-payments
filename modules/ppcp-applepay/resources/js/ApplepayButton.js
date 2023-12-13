@@ -193,8 +193,6 @@ class ApplepayButton {
             $wrapper.css('--apple-pay-button-height', `${ppcpStyle.height}px`)
             $wrapper.css('height', `${ppcpStyle.height}px`)
         }
-
-        jQuery(wrapper).append(appleContainer); // ToDo: this selector doesnt seem valid.
     }
 
     //------------------------
