@@ -1,4 +1,5 @@
 import { registerBlockType } from '@wordpress/blocks';
+import { registerCheckoutFilters } from '@woocommerce/blocks-checkout';
 
 import Edit from './edit';
 import save from './save';
@@ -13,8 +14,22 @@ const paypalIcon = (
     </svg>
 )
 
-registerBlockType( 'woocommerce-paypal-payments/paylater-messages', {
+const blockId = 'woocommerce-paypal-payments/paylater-messages';
+
+registerBlockType( blockId, {
     icon: paypalIcon,
     edit: Edit,
     save,
+} );
+
+document.addEventListener( 'DOMContentLoaded', () => {
+    // allow to add this block inside WC cart/checkout blocks
+    registerCheckoutFilters( blockId, {
+        additionalCartCheckoutInnerBlockTypes: (
+            defaultValue
+        ) => {
+            defaultValue.push( blockId );
+            return defaultValue;
+        },
+    } );
 } );
