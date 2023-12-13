@@ -4,8 +4,11 @@ import MessageRenderer from "../Renderer/MessageRenderer";
 class MessagesBootstrap {
     constructor(gateway, messageRenderer) {
         this.gateway = gateway;
-        this.renderers = [messageRenderer];
+        this.renderers = [];
         this.lastAmount = this.gateway.messages.amount;
+        if (messageRenderer) {
+            this.renderers.push(messageRenderer);
+        }
     }
 
     init() {
@@ -25,7 +28,7 @@ class MessagesBootstrap {
 
             this.render();
         });
-        jQuery(document.body).on('ppcp_cart_total_updated ppcp_checkout_total_updated ppcp_product_total_updated', (e, amount) => {
+        jQuery(document.body).on('ppcp_cart_total_updated ppcp_checkout_total_updated ppcp_product_total_updated ppcp_block_cart_total_updated', (e, amount) => {
             if (this.lastAmount !== amount) {
                 this.lastAmount = amount;
 

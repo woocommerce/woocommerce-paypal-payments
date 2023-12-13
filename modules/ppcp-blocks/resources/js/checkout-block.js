@@ -8,6 +8,7 @@ import {
     normalizeStyleForFundingSource
 } from '../../../ppcp-button/resources/js/modules/Helper/Style'
 import buttonModuleWatcher from "../../../ppcp-button/resources/js/modules/ButtonModuleWatcher";
+import BlockCheckoutMessagesBootstrap from "./Bootstrap/BlockCheckoutMessagesBootstrap";
 
 const config = wc.wcSettings.getSetting('ppcp-gateway_data');
 
@@ -38,6 +39,7 @@ const PayPalComponent = ({
 
     if (!paypalScriptLoaded) {
         if (!paypalScriptPromise) {
+            // for editor, since canMakePayment was not called
             paypalScriptPromise = loadPaypalScriptPromise(config.scriptData)
         }
         paypalScriptPromise.then(() => setPaypalScriptLoaded(true));
@@ -386,7 +388,11 @@ if (config.scriptData.continuation) {
             ariaLabel: config.title,
             canMakePayment: async () => {
                 if (!paypalScriptPromise) {
-                    paypalScriptPromise = loadPaypalScriptPromise(config.scriptData)
+                    paypalScriptPromise = loadPaypalScriptPromise(config.scriptData);
+                    paypalScriptPromise.then(() => {
+                        const messagesBootstrap = new BlockCheckoutMessagesBootstrap(config.scriptData);
+                        messagesBootstrap.init();
+                    });
                 }
                 await paypalScriptPromise;
 
