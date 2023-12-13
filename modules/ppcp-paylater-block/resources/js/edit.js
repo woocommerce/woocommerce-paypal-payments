@@ -2,14 +2,17 @@ import { __ } from '@wordpress/i18n';
 import { useState, useEffect } from '@wordpress/element';
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import { PanelBody, SelectControl, Spinner } from '@wordpress/components';
-import { PayPalScriptProvider, PayPalMessages } from "@paypal/react-paypal-js";
 import { useScriptParams } from "./hooks/script-params";
+import { loadPaypalScript } from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading'
+import PayPalMessages from "./components/PayPalMessages";
 
 export default function Edit( { attributes, clientId, setAttributes } ) {
     const { layout, logo, position, color, flexColor, flexRatio, placement, id } = attributes;
     const isFlex = layout === 'flex';
 
-    const [loaded, setLoaded] = useState(false);
+    const [paypalScriptState, setPaypalScriptState] = useState(null);
+
+    const [rendered, setRendered] = useState(false);
 
     const previewStyle = {
         layout,
@@ -26,25 +29,36 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 
     const props = useBlockProps({className: ['ppcp-paylater-block-preview', 'ppcp-overlay-parent']});
 
+    const loadingElement = <div {...props}><Spinner/></div>;
+
     useEffect(() => {
         if (!id) {
             setAttributes({id: 'ppcp-' + clientId});
         }
     }, []);
 
-    const scriptParams = useScriptParams(PcpPayLaterBlock.ajax.cart_script_params);
+    let scriptParams = useScriptParams(PcpPayLaterBlock.ajax.cart_script_params);
     if (scriptParams === null) {
-        return (<div {...props}><Spinner/></div>)
+        return loadingElement;
+    }
+    if (scriptParams === false) {
+        scriptParams = {
+            url_params: {
+                clientId: 'test',
+                components: 'messages,buttons,funding-eligibility',
+            }
+        }
     }
 
-    const urlParams = scriptParams === false ? {
-        clientId: 'test',
-        components: 'messages',
-    } : {
-        ...scriptParams.url_params,
-        ...{
-            components: 'messages,buttons,funding-eligibility',
-        }
+    if (!paypalScriptState) {
+        loadPaypalScript(scriptParams, () => {
+            setPaypalScriptState('loaded')
+        }, () => {
+            setPaypalScriptState('failed')
+        });
+    }
+    if (paypalScriptState !== 'loaded') {
+        return loadingElement;
     }
 
 	return (
@@ -136,18 +150,13 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 			</InspectorControls>
             <div {...props}>
                 <div className={'ppcp-overlay-child'}>
-                    <PayPalScriptProvider
-                        options={urlParams}
-                    >
-                        <PayPalMessages
-                            style={previewStyle}
-                            forceReRender={[previewStyle]}
-                            onRender={() => setLoaded(true)}
-                        />
-                    </PayPalScriptProvider>
+                    <PayPalMessages
+                        style={previewStyle}
+                        onRender={() => setRendered(true)}
+                    />
                 </div>
                 <div className={'ppcp-overlay-child ppcp-unclicable-overlay'}> {/* make the message not clickable */}
-                    {!loaded && (<Spinner/>)}
+                    {!rendered && (<Spinner/>)}
                 </div>
             </div>
 		</>
