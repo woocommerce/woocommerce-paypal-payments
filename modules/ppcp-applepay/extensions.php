@@ -159,6 +159,7 @@ return array(
 									->action_visible( 'applepay_button_color' )
 									->action_visible( 'applepay_button_type' )
 									->action_visible( 'applepay_button_language' )
+									->action_visible( 'applepay_checkout_data_mode' )
 									->to_array(),
 							)
 						),
