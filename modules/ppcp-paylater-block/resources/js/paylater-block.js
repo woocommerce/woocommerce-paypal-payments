@@ -1,5 +1,4 @@
 import { registerBlockType } from '@wordpress/blocks';
-import { registerCheckoutFilters } from '@woocommerce/blocks-checkout';
 
 import Edit from './edit';
 import save from './save';
@@ -23,6 +22,8 @@ registerBlockType( blockId, {
 } );
 
 document.addEventListener( 'DOMContentLoaded', () => {
+    const { registerCheckoutFilters } = window.wc.blocksCheckout;
+
     // allow to add this block inside WC cart/checkout blocks
     registerCheckoutFilters( blockId, {
         additionalCartCheckoutInnerBlockTypes: (
