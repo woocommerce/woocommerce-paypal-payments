@@ -23,6 +23,11 @@ const init = () => {
     setVisibleByClass(ORDER_BUTTON_SELECTOR, getCurrentPaymentMethod() !== PaymentMethods.PAYPAL, 'ppcp-hidden');
     setVisible(`#ppc-button-${PaymentMethods.PAYPAL}-save-payment-method`, getCurrentPaymentMethod() === PaymentMethods.PAYPAL);
 
+    const buttonWrapper = document.querySelector(`#ppc-button-${PaymentMethods.PAYPAL}-save-payment-method`);
+    while (buttonWrapper.firstChild) {
+        buttonWrapper.removeChild(buttonWrapper.firstChild);
+    }
+
     if(getCurrentPaymentMethod() === PaymentMethods.PAYPAL) {
         loadPaypalJsScriptPromise({
             clientId: ppcp_add_payment_method.client_id,
