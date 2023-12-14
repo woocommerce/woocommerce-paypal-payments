@@ -14,6 +14,12 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
 
     const [rendered, setRendered] = useState(false);
 
+    let amount = undefined;
+    const postContent = String(wp.data.select('core/editor')?.getEditedPostContent());
+    if (postContent.includes('woocommerce/checkout') || postContent.includes('woocommerce/cart')) {
+        amount = 50.0;
+    }
+
     const previewStyle = {
         layout,
         logo: {
@@ -152,6 +158,7 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
                 <div className={'ppcp-overlay-child'}>
                     <PayPalMessages
                         style={previewStyle}
+                        amount={amount}
                         onRender={() => setRendered(true)}
                     />
                 </div>
