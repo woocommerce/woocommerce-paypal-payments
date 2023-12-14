@@ -3,14 +3,11 @@ import {
     ORDER_BUTTON_SELECTOR,
     PaymentMethods
 } from "../../../ppcp-button/resources/js/modules/Helper/CheckoutMethodState";
-
+import {loadScript} from "@paypal/paypal-js";
 import {
     setVisible,
     setVisibleByClass
 } from "../../../ppcp-button/resources/js/modules/Helper/Hiding";
-import {
-    loadPaypalJsScriptPromise
-} from "../../../ppcp-button/resources/js/modules/Helper/ScriptLoading";
 import ErrorHandler from "../../../ppcp-button/resources/js/modules/ErrorHandler";
 import {cardFieldStyles} from "../../../ppcp-button/resources/js/modules/Helper/CardFieldsHelper";
 
@@ -22,17 +19,18 @@ const errorHandler = new ErrorHandler(
 const init = () => {
     setVisibleByClass(ORDER_BUTTON_SELECTOR, getCurrentPaymentMethod() !== PaymentMethods.PAYPAL, 'ppcp-hidden');
     setVisible(`#ppc-button-${PaymentMethods.PAYPAL}-save-payment-method`, getCurrentPaymentMethod() === PaymentMethods.PAYPAL);
+}
 
-    const buttonWrapper = document.querySelector(`#ppc-button-${PaymentMethods.PAYPAL}-save-payment-method`);
-    while (buttonWrapper.firstChild) {
-        buttonWrapper.removeChild(buttonWrapper.firstChild);
-    }
+document.addEventListener(
+    'DOMContentLoaded',
+    () => {
+        init();
 
-    if(getCurrentPaymentMethod() === PaymentMethods.PAYPAL) {
-        loadPaypalJsScriptPromise({
+        loadScript({
             clientId: ppcp_add_payment_method.client_id,
             merchantId: ppcp_add_payment_method.merchant_id,
-            dataUserIdToken: ppcp_add_payment_method.id_token
+            dataUserIdToken: ppcp_add_payment_method.id_token,
+            components: 'buttons,card-fields',
         })
             .then((paypal) => {
                 errorHandler.clear();
@@ -85,21 +83,6 @@ const init = () => {
                         }
                     },
                 ).render(`#ppc-button-${PaymentMethods.PAYPAL}-save-payment-method`);
-            })
-            .catch((error) => {
-                console.error(error);
-            });
-    }
-
-    if(getCurrentPaymentMethod() === PaymentMethods.CARDS) {
-        loadPaypalJsScriptPromise({
-            clientId: ppcp_add_payment_method.client_id,
-            merchantId: ppcp_add_payment_method.merchant_id,
-            dataUserIdToken: ppcp_add_payment_method.id_token,
-            components: 'card-fields',
-        }, true)
-            .then((paypal) => {
-                errorHandler.clear();
 
                 const cardField = paypal.CardFields({
                     createVaultSetupToken: async () => {
@@ -189,19 +172,11 @@ const init = () => {
                             console.error(error)
                         });
                 });
-            })
-            .catch((error) => {
-                console.error(error)
-            })
-    }
-}
 
-document.addEventListener(
-    'DOMContentLoaded',
-    () => {
-        jQuery(document.body).on('click init_add_payment_method', '.payment_methods input.input-radio', function () {
-            init()
-        });
+                jQuery(document.body).on('click init_add_payment_method', '.payment_methods input.input-radio', function () {
+                    init()
+                });
+            })
     }
 );
 
