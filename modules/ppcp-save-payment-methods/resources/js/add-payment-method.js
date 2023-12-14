@@ -24,7 +24,9 @@ const init = () => {
 document.addEventListener(
     'DOMContentLoaded',
     () => {
-        init();
+        jQuery(document.body).on('click init_add_payment_method', '.payment_methods input.input-radio', function () {
+            init()
+        });
 
         loadScript({
             clientId: ppcp_add_payment_method.client_id,
@@ -171,10 +173,6 @@ document.addEventListener(
                         .catch((error) => {
                             console.error(error)
                         });
-                });
-
-                jQuery(document.body).on('click init_add_payment_method', '.payment_methods input.input-radio', function () {
-                    init()
                 });
             })
     }
