@@ -21,6 +21,13 @@
 // Prevents spacing after button group.
 #ppc-button-ppcp-gateway {
 	line-height: 0;
+
+	div[class^="item-"] {
+		margin-top: 14px;
+		&:first-child {
+			margin-top: 0;
+		}
+	}
 }
 
 #ppc-button-minicart {
