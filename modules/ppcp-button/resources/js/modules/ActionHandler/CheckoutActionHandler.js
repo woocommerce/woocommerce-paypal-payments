@@ -2,6 +2,7 @@ import 'formdata-polyfill';
 import onApprove from '../OnApproveHandler/onApproveForPayNow.js';
 import {payerData} from "../Helper/PayerData";
 import {getCurrentPaymentMethod} from "../Helper/CheckoutMethodState";
+import validateCheckoutForm from "../Helper/CheckoutFormValidation";
 
 class CheckoutActionHandler {
 
@@ -13,7 +14,13 @@ class CheckoutActionHandler {
 
     subscriptionsConfiguration() {
         return {
-            createSubscription: (data, actions) => {
+            createSubscription: async (data, actions) => {
+                try {
+                    await validateCheckoutForm(this.config);
+                } catch (error) {
+                    throw {type: 'form-validation-error'};
+                }
+
                 return actions.subscription.create({
                     'plan_id': this.config.subscription_plan_id
                 });
