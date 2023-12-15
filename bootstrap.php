@@ -34,6 +34,19 @@ return function (
 	$properties = PluginProperties::new( __FILE__ );
 	$bootstrap  = Package::new( $properties );
 
+
+
+	foreach ($modules as $key => $module) {
+		if (
+			$module instanceof \WooCommerce\PayPalCommerce\AdminNotices\AdminNotices ||
+			$module instanceof \WooCommerce\PayPalCommerce\Button\ButtonModule
+		) {
+			$bootstrap->addModule( $module );
+			unset($modules[$key]);
+		}
+	}
+
+
 	$bootstrap->addModule( new DhiiToModularityModule( $modules ) );
 	$bootstrap->boot();
 
