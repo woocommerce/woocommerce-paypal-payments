@@ -31,6 +31,7 @@ const PayPalComponent = ({
     const {responseTypes} = emitResponse;
 
     const [paypalOrder, setPaypalOrder] = useState(null);
+    const [gotoContinuationOnError, setGotoContinuationOnError] = useState(false);
 
     const methodId = fundingSource ? `${config.id}-${fundingSource}` : config.id;
 
@@ -152,6 +153,7 @@ const PayPalComponent = ({
             if (config.finalReviewEnabled) {
                 location.href = getCheckoutRedirectUrl();
             } else {
+                setGotoContinuationOnError(true);
                 onSubmit();
             }
         } catch (err) {
@@ -170,7 +172,7 @@ const PayPalComponent = ({
             if (config.scriptData.continuation) {
                 return true;
             }
-            if (wp.data.select('wc/store/validation').hasValidationErrors()) {
+            if (gotoContinuationOnError && wp.data.select('wc/store/validation').hasValidationErrors()) {
                 location.href = getCheckoutRedirectUrl();
                 return { type: responseTypes.ERROR };
             }
@@ -178,7 +180,7 @@ const PayPalComponent = ({
             return true;
         });
         return unsubscribe;
-    }, [onCheckoutValidation] );
+    }, [onCheckoutValidation, gotoContinuationOnError] );
 
     const handleClick = (data, actions) => {
         if (isEditing) {
