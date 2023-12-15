@@ -10,7 +10,7 @@ import {apmButtonsInit} from "../../../ppcp-button/resources/js/modules/Helper/A
 class ApplepayButton {
 
     constructor(context, externalHandler, buttonConfig, ppcpConfig) {
-        apmButtonsInit();
+        apmButtonsInit(ppcpConfig);
 
         this.isInitialized = false;
 
