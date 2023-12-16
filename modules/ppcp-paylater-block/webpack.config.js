@@ -1,5 +1,5 @@
 const path         = require('path');
-const isProduction = process.env.NODE_ENV === 'production8';
+const isProduction = process.env.NODE_ENV === 'production';
 
 const DependencyExtractionWebpackPlugin = require( '@woocommerce/dependency-extraction-webpack-plugin' );
 
