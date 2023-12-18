@@ -100,7 +100,7 @@ class CreatePaymentToken implements EndpointInterface {
 			if ( is_user_logged_in() && isset( $result->customer->id ) ) {
 				update_user_meta( get_current_user_id(), '_ppcp_target_customer_id', $result->customer->id );
 
-				if ( isset($result->payment_source->paypal) ) {
+				if ( isset( $result->payment_source->paypal ) ) {
 					$email = '';
 					if ( isset( $result->payment_source->paypal->email_address ) ) {
 						$email = $result->payment_source->paypal->email_address;
@@ -113,7 +113,7 @@ class CreatePaymentToken implements EndpointInterface {
 					);
 				}
 
-				if ( isset($result->payment_source->card) ) {
+				if ( isset( $result->payment_source->card ) ) {
 					$token = new \WC_Payment_Token_CC();
 					$token->set_token( $result->id );
 					$token->set_user_id( get_current_user_id() );
