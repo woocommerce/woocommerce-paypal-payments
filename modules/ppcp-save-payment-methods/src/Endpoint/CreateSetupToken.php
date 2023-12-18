@@ -14,6 +14,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentMethodTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 
 /**
  * Class CreateSetupToken
@@ -67,13 +68,8 @@ class CreateSetupToken implements EndpointInterface {
 	 */
 	public function handle_request(): bool {
 		try {
-			$this->request_data->read_request( $this->nonce() );
+			$data = $this->request_data->read_request( $this->nonce() );
 
-			/**
-			 * Suppress ArgumentTypeCoercion
-			 *
-			 * @psalm-suppress ArgumentTypeCoercion
-			 */
 			$payment_source = new PaymentSource(
 				'paypal',
 				(object) array(
@@ -84,6 +80,28 @@ class CreateSetupToken implements EndpointInterface {
 					),
 				)
 			);
+
+			$payment_method = $data['payment_method'] ?? '';
+			if ( $payment_method === CreditCardGateway::ID ) {
+				$properties = (object) array();
+
+				$verification_method = $data['verification_method'] ?? '';
+				if ( $verification_method === 'SCA_WHEN_REQUIRED' || $verification_method === 'SCA_ALWAYS' ) {
+					$properties = (object) array(
+						'verification_method' => $verification_method,
+						'usage_type'          => 'MERCHANT',
+						'experience_context'  => (object) array(
+							'return_url' => esc_url( wc_get_account_endpoint_url( 'payment-methods' ) ),
+							'cancel_url' => esc_url( wc_get_account_endpoint_url( 'add-payment-method' ) ),
+						),
+					);
+				}
+
+				$payment_source = new PaymentSource(
+					'card',
+					$properties
+				);
+			}
 
 			$result = $this->payment_method_tokens_endpoint->setup_tokens( $payment_source );
 
