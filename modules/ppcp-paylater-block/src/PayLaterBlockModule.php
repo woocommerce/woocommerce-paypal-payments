@@ -62,7 +62,8 @@ class PayLaterBlockModule implements ModuleInterface {
 				 * @psalm-suppress PossiblyFalseArgument
 				 */
 				register_block_type( dirname( realpath( __FILE__ ), 2 ) );
-			}
+			},
+			20
 		);
 	}
 
