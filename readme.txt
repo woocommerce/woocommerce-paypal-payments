@@ -4,7 +4,7 @@ Tags: woocommerce, paypal, payments, ecommerce, checkout, cart, pay later, apple
 Requires at least: 5.3
 Tested up to: 6.4
 Requires PHP: 7.2
-Stable tag: 2.4.2
+Stable tag: 2.4.3
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -178,6 +178,19 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 6. Main settings screen.
 
 == Changelog ==
+
+= 2.4.3 - xxxx-xx-xx =
+* Fix - PayPal Subscription initiated without a WooCommerce order #1907
+* Fix - Block Checkout reloads when submitting order with empty fields #1904
+* Fix - "Send checkout billing and shipping data to Apple Pay" displayed when Apple Pay is disabled #1883
+* Fix - "Order does not contain intent" error for ACDC renewals when triggering 3D Secure #1888
+* Enhancement - Add button to reload feature eligibility status from Connection tab #1902
+* Enhancement - Apple Pay validation message improvements #1901
+* Enhancement - Improve support for Classic Cart & Classic Checkout blocks #1894
+* Enhancement - Ensure uniform button appearance for PayPal, Google Pay, and Apple Pay buttons #1900
+* Enhancement - remove string translations for package tracking carriers from repository #1885
+* Enhancement - Incorrect margins when PayPal buttons are rendered as separate gateways. #1908
+* Feature preview - Save payment methods (Vault v3) integration  #1779
 
 = 2.4.2 - 2023-12-04 =
 * Fix - Action callback arguments count in ShipStation tracking integration #1841
