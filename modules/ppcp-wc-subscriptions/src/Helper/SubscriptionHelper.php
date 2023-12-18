@@ -220,8 +220,8 @@ class SubscriptionHelper {
 				 */
 				$product_variations = $product->get_available_variations();
 				foreach ( $product_variations as $variation ) {
-					$variation_product = wc_get_product( $variation['variation_id'] );
-					if ( $variation_product !== null && $variation_product !== false && $variation_product->meta_exists( 'ppcp_subscription_plan' ) ) {
+					$variation_product = wc_get_product( $variation['variation_id'] ) ?? '';
+					if ( $variation_product && $variation_product->meta_exists( 'ppcp_subscription_plan' ) ) {
 						return $variation_product->get_meta( 'ppcp_subscription_plan' )['id'];
 					}
 				}
