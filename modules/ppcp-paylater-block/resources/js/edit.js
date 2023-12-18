@@ -51,10 +51,10 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
         scriptParams = {
             url_params: {
                 clientId: 'test',
-                components: 'messages,buttons,funding-eligibility',
             }
         }
     }
+    scriptParams.url_params.components = 'messages,buttons,funding-eligibility';
 
     if (!paypalScriptState) {
         loadPaypalScript(scriptParams, () => {
