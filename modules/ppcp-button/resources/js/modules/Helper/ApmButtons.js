@@ -1,15 +1,31 @@
 
-export const apmButtonsInit = (selector = '.ppcp-button-apm') => {
+export const apmButtonsInit = (config, selector = '.ppcp-button-apm') => {
+    let selectorInContainer = selector;
+
     if (window.ppcpApmButtons) {
         return;
     }
-    window.ppcpApmButtons = new ApmButtons(selector);
+
+    if (config && config.button) {
+
+        // If it's separate gateways, modify wrapper to account for the individual buttons as individual APMs.
+        const wrapper = config.button.wrapper;
+        const isSeparateGateways = jQuery(wrapper).children('div[class^="item-"]').length > 0;
+
+        if (isSeparateGateways) {
+            selector += `, ${wrapper} div[class^="item-"]`;
+            selectorInContainer += `, div[class^="item-"]`;
+        }
+    }
+
+    window.ppcpApmButtons = new ApmButtons(selector, selectorInContainer);
 }
 
 export class ApmButtons {
 
-    constructor(selector) {
+    constructor(selector, selectorInContainer) {
         this.selector = selector;
+        this.selectorInContainer = selectorInContainer;
         this.containers = [];
 
         // Reloads button containers.
@@ -19,6 +35,10 @@ export class ApmButtons {
         jQuery(window).resize(() => {
             this.refresh();
         }).resize();
+
+        jQuery(document).on('ppcp-smart-buttons-init', () => {
+            this.refresh();
+        });
 
         // Observes for new buttons.
         (new MutationObserver(this.observeElementsCallback.bind(this)))
@@ -76,7 +96,7 @@ export class ApmButtons {
             const $firstElement = $container.children(':visible').first();
 
             // Assign margins to buttons
-            $container.find(this.selector).each((index, el) => {
+            $container.find(this.selectorInContainer).each((index, el) => {
                 const $el = jQuery(el);
 
                 if ($el.is($firstElement)) {

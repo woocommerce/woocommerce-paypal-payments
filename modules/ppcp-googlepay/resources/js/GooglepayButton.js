@@ -8,7 +8,7 @@ import {apmButtonsInit} from "../../../ppcp-button/resources/js/modules/Helper/A
 class GooglepayButton {
 
     constructor(context, externalHandler, buttonConfig, ppcpConfig) {
-        apmButtonsInit();
+        apmButtonsInit(ppcpConfig);
 
         this.isInitialized = false;
 
