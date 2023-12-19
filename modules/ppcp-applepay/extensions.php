@@ -18,7 +18,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 
 return array(
-	'wcgateway.settings.fields' => function ( ContainerInterface $container, array $fields ): array {
+	'wcgateway.settings.fields' => function ( array $fields, ContainerInterface $container ): array {
 
 		// Eligibility check.
 		if ( ! $container->has( 'applepay.eligible' ) || ! $container->get( 'applepay.eligible' ) ) {

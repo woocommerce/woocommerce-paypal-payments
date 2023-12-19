@@ -34,11 +34,12 @@ return function (
 	$properties = PluginProperties::new( __FILE__ );
 	$bootstrap  = Package::new( $properties );
 
-
-
 	foreach ($modules as $key => $module) {
 		if (
 			$module instanceof \WooCommerce\PayPalCommerce\AdminNotices\AdminNotices ||
+			$module instanceof \WooCommerce\PayPalCommerce\ApiClient\ApiModule ||
+			$module instanceof \WooCommerce\PayPalCommerce\Applepay\ApplepayModule ||
+			$module instanceof \WooCommerce\PayPalCommerce\Blocks\BlocksModule ||
 			$module instanceof \WooCommerce\PayPalCommerce\Button\ButtonModule
 		) {
 			$bootstrap->addModule( $module );
