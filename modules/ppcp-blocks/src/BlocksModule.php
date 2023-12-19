@@ -96,6 +96,27 @@ class BlocksModule implements ServiceModule, ExtendingModule, ExecutableModule {
 			}
 		);
 
+		// Enqueue frontend scripts.
+		add_action(
+			'wp_enqueue_scripts',
+			static function () use ( $c ) {
+				if ( ! has_block( 'woocommerce/checkout' ) && ! has_block( 'woocommerce/cart' ) ) {
+					return;
+				}
+
+				$module_url    = $c->get( 'blocks.url' );
+				$asset_version = $c->get( 'ppcp.asset-version' );
+
+				wp_register_style(
+					'wc-ppcp-blocks',
+					untrailingslashit( $module_url ) . '/assets/css/gateway.css',
+					array(),
+					$asset_version
+				);
+				wp_enqueue_style( 'wc-ppcp-blocks' );
+			}
+		);
+
 		return true;
 	}
 }

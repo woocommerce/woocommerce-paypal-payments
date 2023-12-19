@@ -20,7 +20,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
-use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\Vaulting\VaultedCreditCardHandler;
@@ -118,10 +118,11 @@ class VaultedCreditCardHandlerTest extends TestCase
 		$order = Mockery::mock(Order::class);
 		$order->shouldReceive('id')->andReturn('1');
 		$order->shouldReceive('intent')->andReturn('CAPTURE');
+
 		$paymentSource = Mockery::mock(PaymentSource::class);
-		$paymentSourceCard = Mockery::mock(PaymentSourceCard::class);
-		$paymentSource->shouldReceive('card')->andReturn($paymentSourceCard);
+		$paymentSource->shouldReceive('name')->andReturn('card');
 		$order->shouldReceive('payment_source')->andReturn($paymentSource);
+
 		$orderStatus = Mockery::mock(OrderStatus::class);
 		$orderStatus->shouldReceive('is')->andReturn(true);
 		$order->shouldReceive('status')->andReturn($orderStatus);

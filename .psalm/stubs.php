@@ -2,6 +2,12 @@
 if (!defined('PAYPAL_INTEGRATION_DATE')) {
 	define('PAYPAL_INTEGRATION_DATE', '2023-06-02');
 }
+if (!defined('PAYPAL_URL')) {
+	define( 'PAYPAL_URL', 'https://www.paypal.com' );
+}
+if (!defined('PAYPAL_SANDBOX_URL')) {
+	define( 'PAYPAL_SANDBOX_URL', 'https://www.sandbox.paypal.com' );
+}
 if (!defined('EP_PAGES')) {
 	define('EP_PAGES', 4096);
 }

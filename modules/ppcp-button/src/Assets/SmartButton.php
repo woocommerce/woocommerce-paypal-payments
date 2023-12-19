@@ -33,8 +33,8 @@ use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\Subscription\FreeTrialHandlerTrait;
-use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
@@ -272,6 +272,8 @@ class SmartButton implements SmartButtonInterface {
 	 * @return bool
 	 */
 	public function render_wrapper(): bool {
+		$this->init_context();
+
 		if ( $this->settings->has( 'enabled' ) && $this->settings->get( 'enabled' ) ) {
 			$this->render_button_wrapper_registrar();
 			$this->render_message_wrapper_registrar();
@@ -303,7 +305,13 @@ class SmartButton implements SmartButtonInterface {
 			add_filter(
 				'woocommerce_credit_card_form_fields',
 				function ( array $default_fields, $id ) use ( $subscription_helper ) : array {
-					if ( is_user_logged_in() && $this->settings->has( 'vault_enabled_dcc' ) && $this->settings->get( 'vault_enabled_dcc' ) && CreditCardGateway::ID === $id ) {
+					if (
+						is_user_logged_in()
+						&& $this->settings->has( 'vault_enabled_dcc' )
+						&& $this->settings->get( 'vault_enabled_dcc' )
+						&& CreditCardGateway::ID === $id
+						&& apply_filters( 'woocommerce_paypal_payments_should_render_card_custom_fields', true )
+					) {
 
 						$default_fields['card-vault'] = sprintf(
 							'<p class="form-row form-row-wide"><label for="ppcp-credit-card-vault"><input class="ppcp-credit-card-vault" type="checkbox" id="ppcp-credit-card-vault" name="vault">%s</label></p>',
@@ -638,7 +646,7 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 		return $this->settings->has( 'dcc_enabled' ) && $this->settings->get( 'dcc_enabled' )
 			&& $this->settings->has( 'client_id' ) && $this->settings->get( 'client_id' )
 			&& $this->dcc_applies->for_country_currency()
-			&& in_array( $this->context(), array( 'checkout', 'pay-now' ), true );
+			&& in_array( $this->context(), array( 'checkout', 'pay-now', 'add-payment-method' ), true );
 	}
 
 	/**
@@ -1049,30 +1057,39 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 				'mini_cart_wrapper'     => '#ppc-button-minicart',
 				'is_mini_cart_disabled' => $this->is_button_disabled( 'mini-cart' ),
 				'cancel_wrapper'        => '#ppcp-cancel',
-				'mini_cart_style'       => array(
-					'layout'  => $this->style_for_context( 'layout', 'mini-cart' ),
-					'color'   => $this->style_for_context( 'color', 'mini-cart' ),
-					'shape'   => $this->style_for_context( 'shape', 'mini-cart' ),
-					'label'   => $this->style_for_context( 'label', 'mini-cart' ),
-					'tagline' => $this->style_for_context( 'tagline', 'mini-cart' ),
-					'height'  => $this->settings->has( 'button_mini-cart_height' ) && $this->settings->get( 'button_mini-cart_height' ) ? $this->normalize_height( (int) $this->settings->get( 'button_mini-cart_height' ) ) : 35,
+				'mini_cart_style'       => $this->normalize_style(
+					array(
+						'layout'  => $this->style_for_context( 'layout', 'mini-cart' ),
+						'color'   => $this->style_for_context( 'color', 'mini-cart' ),
+						'shape'   => $this->style_for_context( 'shape', 'mini-cart' ),
+						'label'   => $this->style_for_context( 'label', 'mini-cart' ),
+						'tagline' => $this->style_for_context( 'tagline', 'mini-cart' ),
+						'height'  => $this->normalize_height( $this->style_for_context( 'height', 'mini-cart', 35 ), 25, 55 ),
+					)
 				),
-				'style'                 => array(
-					'layout'  => $this->style_for_context( 'layout', $this->context() ),
-					'color'   => $this->style_for_context( 'color', $this->context() ),
-					'shape'   => $this->style_for_context( 'shape', $this->context() ),
-					'label'   => $this->style_for_context( 'label', $this->context() ),
-					'tagline' => $this->style_for_context( 'tagline', $this->context() ),
+				'style'                 => $this->normalize_style(
+					array(
+						'layout'  => $this->style_for_context( 'layout', $this->context() ),
+						'color'   => $this->style_for_context( 'color', $this->context() ),
+						'shape'   => $this->style_for_context( 'shape', $this->context() ),
+						'label'   => $this->style_for_context( 'label', $this->context() ),
+						'tagline' => $this->style_for_context( 'tagline', $this->context() ),
+						'height'  => in_array( $this->context(), array( 'cart-block', 'checkout-block' ), true )
+							? $this->normalize_height( $this->style_for_context( 'height', $this->context(), 48 ), 40, 55 )
+							: null,
+					)
 				),
 			),
 			'separate_buttons'                        => array(
 				'card' => array(
 					'id'      => CardButtonGateway::ID,
 					'wrapper' => '#ppc-button-' . CardButtonGateway::ID,
-					'style'   => array(
-						'shape'  => $this->style_for_apm( 'shape', 'card' ),
-						'color'  => $this->style_for_apm( 'color', 'card', 'black' ),
-						'layout' => $this->style_for_apm( 'poweredby_tagline', 'card', false ) === $this->normalize_style_value( true ) ? 'vertical' : 'horizontal',
+					'style'   => $this->normalize_style(
+						array(
+							'shape'  => $this->style_for_apm( 'shape', 'card' ),
+							'color'  => $this->style_for_apm( 'color', 'card', 'black' ),
+							'layout' => $this->style_for_apm( 'poweredby_tagline', 'card', false ) === $this->normalize_style_value( true ) ? 'vertical' : 'horizontal',
+						)
 					),
 				),
 			),
@@ -1143,13 +1160,6 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 			$localize['pay_now'] = $this->pay_now_script_data();
 		}
 
-		if ( $this->style_for_context( 'layout', 'mini-cart' ) !== 'horizontal' ) {
-			$localize['button']['mini_cart_style']['tagline'] = false;
-		}
-		if ( $this->style_for_context( 'layout', $this->context() ) !== 'horizontal' ) {
-			$localize['button']['style']['tagline'] = false;
-		}
-
 		if ( $this->is_paypal_continuation() ) {
 			$order = $this->session_handler->order();
 			assert( $order !== null );
@@ -1160,7 +1170,8 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 		}
 
 		$this->request_data->dequeue_nonce_fix();
-		return $localize;
+
+		return apply_filters( 'woocommerce_paypal_payments_localized_script_data', $localize );
 	}
 
 	/**
@@ -1269,9 +1280,12 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 		}
 
 		if ( in_array( $context, array( 'checkout-block', 'cart-block' ), true ) ) {
-			$disable_funding = array_diff(
-				array_keys( $this->all_funding_sources ),
-				array( 'venmo', 'paylater' )
+			$disable_funding = array_merge(
+				$disable_funding,
+				array_diff(
+					array_keys( $this->all_funding_sources ),
+					array( 'venmo', 'paylater' )
+				)
 			);
 		}
 
@@ -1410,12 +1424,14 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 	 *
 	 * @param string $style The name of the style property.
 	 * @param string $context The context.
+	 * @param ?mixed $default The default value.
 	 *
-	 * @return string
+	 * @return string|int
 	 */
-	private function style_for_context( string $style, string $context ): string {
-		// Use the cart/checkout styles for blocks.
-		$context = str_replace( '-block', '', $context );
+	private function style_for_context( string $style, string $context, $default = null ) {
+		if ( $context === 'checkout-block' ) {
+			$context = 'checkout-block-express';
+		}
 
 		$defaults = array(
 			'layout'  => 'vertical',
@@ -1433,6 +1449,7 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 
 		return $this->get_style_value( "button_{$context}_${style}" )
 			?? $this->get_style_value( "button_${style}" )
+			?? ( $default ? $this->normalize_style_value( $default ) : null )
 			?? $this->normalize_style_value( $defaults[ $style ] ?? '' );
 	}
 
@@ -1443,9 +1460,9 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 	 * @param string $apm The APM name, such as 'card'.
 	 * @param ?mixed $default The default value.
 	 *
-	 * @return string
+	 * @return string|int
 	 */
-	private function style_for_apm( string $style, string $apm, $default = null ): string {
+	private function style_for_apm( string $style, string $apm, $default = null ) {
 		return $this->get_style_value( "${apm}_button_${style}" )
 			?? ( $default ? $this->normalize_style_value( $default ) : null )
 			?? $this->style_for_context( $style, 'checkout' );
@@ -1455,9 +1472,9 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 	 * Returns the style property value or null.
 	 *
 	 * @param string $key The style property key in the settings.
-	 * @return string|null
+	 * @return string|int|null
 	 */
-	private function get_style_value( string $key ): ?string {
+	private function get_style_value( string $key ) {
 		if ( ! $this->settings->has( $key ) ) {
 			return null;
 		}
@@ -1468,27 +1485,49 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 	 * Converts the style property value to string.
 	 *
 	 * @param mixed $value The style property value.
-	 * @return string
+	 * @return string|int
 	 */
-	private function normalize_style_value( $value ): string {
+	private function normalize_style_value( $value ) {
 		if ( is_bool( $value ) ) {
 			$value = $value ? 'true' : 'false';
+		}
+		if ( is_int( $value ) ) {
+			return $value;
 		}
 		return (string) $value;
 	}
 
 	/**
-	 * Returns a value between 25 and 55.
+	 * Fixes the style.
 	 *
-	 * @param int $height The input value.
+	 * @param array $style The style properties.
+	 * @return array
+	 */
+	private function normalize_style( array $style ): array {
+		if ( array_key_exists( 'tagline', $style ) && ( ! array_key_exists( 'layout', $style ) || $style['layout'] !== 'horizontal' ) ) {
+			$style['tagline'] = false;
+		}
+		if ( array_key_exists( 'height', $style ) && ! $style['height'] ) {
+			unset( $style['height'] );
+		}
+		return $style;
+	}
+
+	/**
+	 * Returns a number between min and max.
+	 *
+	 * @param mixed $height The input value.
+	 * @param int   $min The minimum value.
+	 * @param int   $max The maximum value.
 	 * @return int The normalized output value.
 	 */
-	private function normalize_height( int $height ): int {
-		if ( $height < 25 ) {
-			return 25;
+	private function normalize_height( $height, int $min, int $max ): int {
+		$height = (int) $height;
+		if ( $height < $min ) {
+			return $min;
 		}
-		if ( $height > 55 ) {
-			return 55;
+		if ( $height > $max ) {
+			return $max;
 		}
 
 		return $height;

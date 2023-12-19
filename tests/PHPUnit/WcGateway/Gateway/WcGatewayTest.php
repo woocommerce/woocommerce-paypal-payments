@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 
+use Exception;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
@@ -10,7 +11,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
@@ -106,7 +107,11 @@ class WcGatewayTest extends TestCase
 			$this->paymentTokenRepository,
 			$this->logger,
 			$this->apiShopCountry,
-			$this->orderEndpoint
+			$this->orderEndpoint,
+			function ($id) {
+				return 'checkoutnow=' . $id;
+			},
+			'Pay via PayPal'
 		);
 	}
 
@@ -204,13 +209,10 @@ class WcGatewayTest extends TestCase
     public function testProcessPaymentFails() {
         $orderId = 1;
         $wcOrder = Mockery::mock(\WC_Order::class);
-        $lastError = 'some-error';
+        $error = 'some-error';
 		$this->orderProcessor
             ->expects('process')
-            ->andReturnFalse();
-		$this->orderProcessor
-            ->expects('last_error')
-            ->andReturn($lastError);
+            ->andThrow(new Exception($error));
 		$this->subscriptionHelper->shouldReceive('has_subscription')->with($orderId)->andReturn(true);
 		$this->subscriptionHelper->shouldReceive('is_subscription_change_payment')->andReturn(true);
         $wcOrder->shouldReceive('update_status')->andReturn(true);
@@ -223,7 +225,7 @@ class WcGatewayTest extends TestCase
 		$this->sessionHandler
 			->shouldReceive('destroy_session_data');
         expect('wc_add_notice')
-            ->with($lastError, 'error');
+            ->with($error, 'error');
 
 		$redirectUrl = 'http://example.com/checkout';
 

@@ -802,6 +802,242 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'requirements' => array(),
 			'gateway'      => 'paypal',
 		),
+
+		// Block express checkout settings.
+		'button_checkout-block-express_heading'    => array(
+			'heading'      => __( 'Block Express Checkout Buttons', 'woocommerce-paypal-payments' ),
+			'description'  => sprintf(
+			// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+				__(
+					'Customize the appearance of the PayPal smart buttons on the %1$sBlock Express Checkout%2$s.',
+					'woocommerce-paypal-payments'
+				),
+				'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#button-on-block-express-checkout" target="_blank">',
+				'</a>'
+			),
+			'type'         => 'ppcp-heading',
+			'screens'      => array( State::STATE_START, State::STATE_ONBOARDED ),
+			'requirements' => array(),
+			'gateway'      => 'paypal',
+		),
+		'button_checkout-block-express_label'      => array(
+			'title'        => __( 'Button Label', 'woocommerce-paypal-payments' ),
+			'type'         => 'select',
+			'class'        => array(),
+			'input_class'  => array( 'wc-enhanced-select' ),
+			/**
+			 * Returns default label ID of the PayPal button in block express checkout.
+			 */
+			'default'      => apply_filters( 'woocommerce_paypal_payments_button_checkout_block_express_label_default', 'paypal' ),
+			'desc_tip'     => true,
+			'description'  => __(
+				'This controls the label on the primary button.',
+				'woocommerce-paypal-payments'
+			),
+			'options'      => array(
+				'paypal'   => __( 'PayPal', 'woocommerce-paypal-payments' ),
+				'checkout' => __( 'Checkout', 'woocommerce-paypal-payments' ),
+				'buynow'   => __( 'PayPal Buy Now', 'woocommerce-paypal-payments' ),
+				'pay'      => __( 'Pay with PayPal', 'woocommerce-paypal-payments' ),
+			),
+			'screens'      => array(
+				State::STATE_START,
+				State::STATE_ONBOARDED,
+			),
+			'requirements' => array(),
+			'gateway'      => 'paypal',
+		),
+		'button_checkout-block-express_color'      => array(
+			'title'        => __( 'Color', 'woocommerce-paypal-payments' ),
+			'type'         => 'select',
+			'class'        => array(),
+			'input_class'  => array( 'wc-enhanced-select' ),
+			'default'      => 'gold',
+			'desc_tip'     => true,
+			'description'  => __(
+				'Controls the background color of the primary button. Use "Gold" to leverage PayPal\'s recognition and preference, or change it to match your site design or aesthetic.',
+				'woocommerce-paypal-payments'
+			),
+			'options'      => array(
+				'gold'   => __( 'Gold (Recommended)', 'woocommerce-paypal-payments' ),
+				'blue'   => __( 'Blue', 'woocommerce-paypal-payments' ),
+				'silver' => __( 'Silver', 'woocommerce-paypal-payments' ),
+				'black'  => __( 'Black', 'woocommerce-paypal-payments' ),
+				'white'  => __( 'White', 'woocommerce-paypal-payments' ),
+			),
+			'screens'      => array(
+				State::STATE_START,
+				State::STATE_ONBOARDED,
+			),
+			'requirements' => array(),
+			'gateway'      => 'paypal',
+		),
+		'button_checkout-block-express_shape'      => array(
+			'title'        => __( 'Shape', 'woocommerce-paypal-payments' ),
+			'type'         => 'select',
+			'class'        => array(),
+			'input_class'  => array( 'wc-enhanced-select' ),
+			'default'      => 'rect',
+			'desc_tip'     => true,
+			'description'  => __(
+				'The pill-shaped button\'s unique and powerful shape signifies PayPal in people\'s minds. Use the rectangular button as an alternative when pill-shaped buttons might pose design challenges.',
+				'woocommerce-paypal-payments'
+			),
+			'options'      => array(
+				'pill' => __( 'Pill', 'woocommerce-paypal-payments' ),
+				'rect' => __( 'Rectangle', 'woocommerce-paypal-payments' ),
+			),
+			'screens'      => array(
+				State::STATE_START,
+				State::STATE_ONBOARDED,
+			),
+			'requirements' => array(),
+			'gateway'      => 'paypal',
+		),
+		'button_checkout-block-express_height'     => array(
+			'title'             => __( 'Button Height', 'woocommerce-paypal-payments' ),
+			'type'              => 'number',
+			'default'           => '48',
+			'custom_attributes' => array(
+				'min' => 40,
+				'max' => 55,
+			),
+			'desc_tip'          => true,
+			'description'       => __( 'Set a value from 40 to 55.', 'woocommerce-paypal-payments' ),
+			'screens'           => array(
+				State::STATE_START,
+				State::STATE_ONBOARDED,
+			),
+			'requirements'      => array(),
+			'gateway'           => 'paypal',
+		),
+		'button_checkout-block-express_preview'    => array(
+			'type'         => 'ppcp-text',
+			'text'         => $render_preview_element( 'ppcpCheckoutBlockExpressButtonPreview' ),
+			'screens'      => array(
+				State::STATE_ONBOARDED,
+			),
+			'requirements' => array(),
+			'gateway'      => 'paypal',
+		),
+
+		// Block cart settings.
+		'button_cart-block_heading'                => array(
+			'heading'      => __( 'Block Cart Buttons', 'woocommerce-paypal-payments' ),
+			'description'  => sprintf(
+			// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
+				__(
+					'Customize the appearance of the PayPal smart buttons on the %1$sBlock Cart%2$s.',
+					'woocommerce-paypal-payments'
+				),
+				'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#button-on-cart-block" target="_blank">',
+				'</a>'
+			),
+			'type'         => 'ppcp-heading',
+			'screens'      => array( State::STATE_START, State::STATE_ONBOARDED ),
+			'requirements' => array(),
+			'gateway'      => 'paypal',
+		),
+		'button_cart-block_label'                  => array(
+			'title'        => __( 'Button Label', 'woocommerce-paypal-payments' ),
+			'type'         => 'select',
+			'class'        => array(),
+			'input_class'  => array( 'wc-enhanced-select' ),
+			/**
+			 * Returns default label ID of the PayPal button in block cart.
+			 */
+			'default'      => apply_filters( 'woocommerce_paypal_payments_button_cart_block_label_default', 'paypal' ),
+			'desc_tip'     => true,
+			'description'  => __(
+				'This controls the label on the primary button.',
+				'woocommerce-paypal-payments'
+			),
+			'options'      => array(
+				'paypal'   => __( 'PayPal', 'woocommerce-paypal-payments' ),
+				'checkout' => __( 'Checkout', 'woocommerce-paypal-payments' ),
+				'buynow'   => __( 'PayPal Buy Now', 'woocommerce-paypal-payments' ),
+				'pay'      => __( 'Pay with PayPal', 'woocommerce-paypal-payments' ),
+			),
+			'screens'      => array(
+				State::STATE_START,
+				State::STATE_ONBOARDED,
+			),
+			'requirements' => array(),
+			'gateway'      => 'paypal',
+		),
+		'button_cart-block_color'                  => array(
+			'title'        => __( 'Color', 'woocommerce-paypal-payments' ),
+			'type'         => 'select',
+			'class'        => array(),
+			'input_class'  => array( 'wc-enhanced-select' ),
+			'default'      => 'gold',
+			'desc_tip'     => true,
+			'description'  => __(
+				'Controls the background color of the primary button. Use "Gold" to leverage PayPal\'s recognition and preference, or change it to match your site design or aesthetic.',
+				'woocommerce-paypal-payments'
+			),
+			'options'      => array(
+				'gold'   => __( 'Gold (Recommended)', 'woocommerce-paypal-payments' ),
+				'blue'   => __( 'Blue', 'woocommerce-paypal-payments' ),
+				'silver' => __( 'Silver', 'woocommerce-paypal-payments' ),
+				'black'  => __( 'Black', 'woocommerce-paypal-payments' ),
+				'white'  => __( 'White', 'woocommerce-paypal-payments' ),
+			),
+			'screens'      => array(
+				State::STATE_START,
+				State::STATE_ONBOARDED,
+			),
+			'requirements' => array(),
+			'gateway'      => 'paypal',
+		),
+		'button_cart-block_shape'                  => array(
+			'title'        => __( 'Shape', 'woocommerce-paypal-payments' ),
+			'type'         => 'select',
+			'class'        => array(),
+			'input_class'  => array( 'wc-enhanced-select' ),
+			'default'      => 'rect',
+			'desc_tip'     => true,
+			'description'  => __(
+				'The pill-shaped button\'s unique and powerful shape signifies PayPal in people\'s minds. Use the rectangular button as an alternative when pill-shaped buttons might pose design challenges.',
+				'woocommerce-paypal-payments'
+			),
+			'options'      => array(
+				'pill' => __( 'Pill', 'woocommerce-paypal-payments' ),
+				'rect' => __( 'Rectangle', 'woocommerce-paypal-payments' ),
+			),
+			'screens'      => array(
+				State::STATE_START,
+				State::STATE_ONBOARDED,
+			),
+			'requirements' => array(),
+			'gateway'      => 'paypal',
+		),
+		'button_cart-block_height'                 => array(
+			'title'             => __( 'Button Height', 'woocommerce-paypal-payments' ),
+			'type'              => 'number',
+			'default'           => '48',
+			'custom_attributes' => array(
+				'min' => 40,
+				'max' => 55,
+			),
+			'desc_tip'          => true,
+			'description'       => __( 'Set a value from 40 to 55.', 'woocommerce-paypal-payments' ),
+			'screens'           => array(
+				State::STATE_START,
+				State::STATE_ONBOARDED,
+			),
+			'requirements'      => array(),
+			'gateway'           => 'paypal',
+		),
+		'button_cart-block_preview'                => array(
+			'type'         => 'ppcp-text',
+			'text'         => $render_preview_element( 'ppcpCartBlockButtonPreview' ),
+			'screens'      => array(
+				State::STATE_ONBOARDED,
+			),
+			'requirements' => array(),
+			'gateway'      => 'paypal',
+		),
 	);
 
 	return array_merge( $fields, $smart_button_fields );

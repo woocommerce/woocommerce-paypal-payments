@@ -71,7 +71,6 @@ class BillingPlanPricingChangeActivated implements RequestHandler {
 
 		$plan_id = wc_clean( wp_unslash( $request['resource']['id'] ?? '' ) );
 		if ( $plan_id && ! empty( $request['resource']['billing_cycles'] ) ) {
-			$this->logger->info( 'Starting stuff...' );
 			$args = array(
 				// phpcs:ignore WordPress.DB.SlowDBQuery
 				'meta_key' => 'ppcp_subscription_plan',

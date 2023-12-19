@@ -1,4 +1,5 @@
 import {show} from "../Helper/Hiding";
+import {cardFieldStyles} from "../Helper/CardFieldsHelper";
 
 class CardFieldsRenderer {
 
@@ -53,28 +54,28 @@ class CardFieldsRenderer {
         if (cardField.isEligible()) {
             const nameField = document.getElementById('ppcp-credit-card-gateway-card-name');
             if (nameField) {
-                let styles = this.cardFieldStyles(nameField);
+                let styles = cardFieldStyles(nameField);
                 cardField.NameField({style: {'input': styles}}).render(nameField.parentNode);
                 nameField.remove();
             }
 
             const numberField = document.getElementById('ppcp-credit-card-gateway-card-number');
             if (numberField) {
-                let styles = this.cardFieldStyles(numberField);
+                let styles = cardFieldStyles(numberField);
                 cardField.NumberField({style: {'input': styles}}).render(numberField.parentNode);
                 numberField.remove();
             }
 
             const expiryField = document.getElementById('ppcp-credit-card-gateway-card-expiry');
             if (expiryField) {
-                let styles = this.cardFieldStyles(expiryField);
+                let styles = cardFieldStyles(expiryField);
                 cardField.ExpiryField({style: {'input': styles}}).render(expiryField.parentNode);
                 expiryField.remove();
             }
 
             const cvvField = document.getElementById('ppcp-credit-card-gateway-card-cvc');
             if (cvvField) {
-                let styles = this.cardFieldStyles(cvvField);
+                let styles = cardFieldStyles(cvvField);
                 cardField.CVVField({style: {'input': styles}}).render(cvvField.parentNode);
                 cvvField.remove();
             }
@@ -91,65 +92,35 @@ class CardFieldsRenderer {
             this.spinner.block();
             this.errorHandler.clear();
 
+            const paymentToken = document.querySelector('input[name="wc-ppcp-credit-card-gateway-payment-token"]:checked')?.value
+            if(paymentToken && paymentToken !== 'new') {
+                fetch(this.defaultConfig.ajax.capture_card_payment.endpoint, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        nonce: this.defaultConfig.ajax.capture_card_payment.nonce,
+                        payment_token: paymentToken
+                    })
+                }).then((res) => {
+                    return res.json();
+                }).then((data) => {
+                    document.querySelector('#place_order').click();
+                });
+
+                return;
+            }
+
             cardField.submit()
                 .catch((error) => {
                     this.spinner.unblock();
                     console.error(error)
                     this.errorHandler.message(this.defaultConfig.hosted_fields.labels.fields_not_valid);
-                })
+                });
         });
     }
 
-    cardFieldStyles(field) {
-        const allowedProperties = [
-            'appearance',
-            'color',
-            'direction',
-            'font',
-            'font-family',
-            'font-size',
-            'font-size-adjust',
-            'font-stretch',
-            'font-style',
-            'font-variant',
-            'font-variant-alternates',
-            'font-variant-caps',
-            'font-variant-east-asian',
-            'font-variant-ligatures',
-            'font-variant-numeric',
-            'font-weight',
-            'letter-spacing',
-            'line-height',
-            'opacity',
-            'outline',
-            'padding',
-            'padding-bottom',
-            'padding-left',
-            'padding-right',
-            'padding-top',
-            'text-shadow',
-            'transition',
-            '-moz-appearance',
-            '-moz-osx-font-smoothing',
-            '-moz-tap-highlight-color',
-            '-moz-transition',
-            '-webkit-appearance',
-            '-webkit-osx-font-smoothing',
-            '-webkit-tap-highlight-color',
-            '-webkit-transition',
-        ];
-
-        const stylesRaw = window.getComputedStyle(field);
-        const styles = {};
-        Object.values(stylesRaw).forEach((prop) => {
-            if (!stylesRaw[prop] || !allowedProperties.includes(prop)) {
-                return;
-            }
-            styles[prop] = '' + stylesRaw[prop];
-        });
-
-        return styles;
-    }
+    disableFields() {}
+    enableFields() {}
 }
 
 export default CardFieldsRenderer;

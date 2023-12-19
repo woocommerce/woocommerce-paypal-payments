@@ -23,12 +23,6 @@ const ApplePayComponent = () => {
         const manager = new ApplepayManager(buttonConfig, ppcpConfig);
         manager.init();
     };
-    useEffect(() => {
-        const bodyClass = 'ppcp-has-applepay-block';
-        if (!document.body.classList.contains(bodyClass)) {
-            document.body.classList.add(bodyClass);
-        }
-    }, []);
 
     useEffect(() => {
         // Load ApplePay SDK
@@ -50,14 +44,13 @@ const ApplePayComponent = () => {
     }, [paypalLoaded, applePayLoaded]);
 
     return (
-        <div id={buttonConfig.button.wrapper.replace('#', '')}></div>
+        <div id={buttonConfig.button.wrapper.replace('#', '')} className="ppcp-button-apm ppcp-button-applepay"></div>
     );
 }
 
 const features = ['products'];
-let registerMethod = registerExpressPaymentMethod;
 
-registerMethod({
+registerExpressPaymentMethod({
     name: buttonData.id,
     label: <div dangerouslySetInnerHTML={{__html:  buttonData.title}}/>,
     content: <ApplePayComponent isEditing={false}/>,

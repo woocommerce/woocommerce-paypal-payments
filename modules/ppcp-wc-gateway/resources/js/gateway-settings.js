@@ -310,11 +310,11 @@ document.addEventListener(
 
             loadPaypalScript(oldScriptSettings, () => {
                 const payLaterMessagingLocations = ['product', 'cart', 'checkout', 'shop', 'home', 'general'];
-                const paypalButtonLocations = ['product', 'cart', 'checkout', 'mini-cart', 'general'];
+                const paypalButtonLocations = ['product', 'cart', 'checkout', 'mini-cart', 'cart-block', 'checkout-block-express', 'general'];
 
                 paypalButtonLocations.forEach((location) => {
                     const inputNamePrefix = location === 'checkout' ? '#ppcp-button' : '#ppcp-button_' + location;
-                    let wrapperName = location.charAt(0).toUpperCase() + location.slice(1);
+                    const wrapperName = location.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join('');
                     const fields = {
                         'color': inputNamePrefix + '_color',
                         'shape': inputNamePrefix + '_shape',
@@ -323,9 +323,8 @@ document.addEventListener(
                         'layout': inputNamePrefix + '_layout',
                     }
 
-                    if (location === 'mini-cart') {
+                    if (document.querySelector(inputNamePrefix + '_height')) {
                         fields['height'] = inputNamePrefix + '_height';
-                        wrapperName = 'MiniCart';
                     }
 
                     createButtonPreview(() => getButtonSettings('#ppcp' + wrapperName + 'ButtonPreview', fields));
@@ -354,5 +353,41 @@ document.addEventListener(
                 }, 'card'));
             });
         }
+
+        // Logic to handle the "Check available features" button.
+        ((props) => {
+            const $btn = jQuery(props.button);
+
+            $btn.click(async () => {
+                $btn.prop('disabled', true);
+
+                const response = await fetch(
+                    props.endpoint,
+                    {
+                        method: 'POST',
+                        credentials: 'same-origin',
+                        headers: {
+                            'content-type': 'application/json'
+                        },
+                        body: JSON.stringify(
+                            {
+                                nonce: props.nonce,
+                            }
+                        )
+                    }
+                );
+
+                const responseData = await response.json();
+
+                if (!responseData.success) {
+                    alert(responseData.data.message);
+                    $btn.prop('disabled', false);
+                } else {
+                    window.location.reload();
+                }
+            });
+
+        })(PayPalCommerceGatewaySettings.ajax.refresh_feature_status);
+
     }
 );

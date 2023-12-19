@@ -27,7 +27,7 @@ return array(
 	},
 
 	'compat.ppec.subscriptions-handler'              => static function ( ContainerInterface $container ) {
-		$ppcp_renewal_handler = $container->get( 'subscription.renewal-handler' );
+		$ppcp_renewal_handler = $container->get( 'wc-subscriptions.renewal-handler' );
 		$gateway              = $container->get( 'compat.ppec.mock-gateway' );
 
 		return new PPEC\SubscriptionsHandler( $ppcp_renewal_handler, $gateway );

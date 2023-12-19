@@ -2,9 +2,9 @@
 Contributors: woocommerce, automattic, inpsyde
 Tags: woocommerce, paypal, payments, ecommerce, checkout, cart, pay later, apple pay, subscriptions, debit card, credit card, google pay
 Requires at least: 5.3
-Tested up to: 6.3
+Tested up to: 6.4
 Requires PHP: 7.2
-Stable tag: 2.4.1
+Stable tag: 2.4.3
 License: GPLv2
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -177,8 +177,39 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 5. Click "Connect to PayPal" to link your site to your PayPal account.
 6. Main settings screen.
 
-
 == Changelog ==
+
+= 2.4.3 - xxxx-xx-xx =
+* Fix - PayPal Subscription initiated without a WooCommerce order #1907
+* Fix - Block Checkout reloads when submitting order with empty fields #1904
+* Fix - "Send checkout billing and shipping data to Apple Pay" displayed when Apple Pay is disabled #1883
+* Fix - "Order does not contain intent" error for ACDC renewals when triggering 3D Secure #1888
+* Enhancement - Add button to reload feature eligibility status from Connection tab #1902
+* Enhancement - Apple Pay validation message improvements #1901
+* Enhancement - Improve support for Classic Cart & Classic Checkout blocks #1894
+* Enhancement - Ensure uniform button appearance for PayPal, Google Pay, and Apple Pay buttons #1900
+* Enhancement - remove string translations for package tracking carriers from repository #1885
+* Enhancement - Incorrect margins when PayPal buttons are rendered as separate gateways. #1908
+* Feature preview - Save payment methods (Vault v3) integration  #1779
+
+= 2.4.2 - 2023-12-04 =
+* Fix - Action callback arguments count in ShipStation tracking integration #1841
+* Fix - Google Pay scripts loading on unrelated admin pages #1834
+* Fix - Do not ignore disabled APMs list in blocks #1865
+* Fix - Display Package Tracking metabox below Order actions when HPOS is active #1850
+* Fix - ApplePay use checkout form data to update shipping and billing #1832
+* Fix - Fix Apple Pay CSS #1872
+* Enhancement - Allow redirect to PayPal with "Place order" button if smart buttons failed to load #1840 #1870
+* Enhancement - Extend list of supported countries for Package Tracking v2 integration #1848
+* Enhancement - Improve Block Theme support for Pay Later messaging #1855
+* Enhancement - Render block buttons separately and add block style settings #1858
+* Enhancement - Enable Block Cart and Block Express Checkout button locations by default #1852
+* Enhancement - Improve single product page button placement with Block themes #1847
+* Enhancement - Remove the Home location from default enabled Pay Later messaging locations #1856
+* Enhancement - Chrome browser detected as eligible for Apple Pay on settings page #1828
+* Enhancement - Hide Apple Pay & Google Pay for subscription type products #1835
+* Enhancement - Add Standard Card Button gateway styling settings & preview #1827
+* Feature preview - Upgrade to new Hosted Card Fields for Advanced Card Processing #1843
 
 = 2.4.1 - 2023-11-14 =
 * Fix - Error "PayPal order ID not found in meta" prevents automations from triggering when buying subscription via third-party payment gateway #1822
