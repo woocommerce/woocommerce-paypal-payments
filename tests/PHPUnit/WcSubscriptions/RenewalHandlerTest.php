@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcSubscriptions;
 
-use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\Dictionary;
 use Exception;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
@@ -22,6 +21,7 @@ use WooCommerce\PayPalCommerce\TestCase;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
+use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Container\ReadOnlyContainer;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
@@ -50,7 +50,7 @@ class RenewalHandlerTest extends TestCase
 		$this->purchaseUnitFactory = Mockery::mock(PurchaseUnitFactory::class);
 		$this->shippingPreferenceFactory = Mockery::mock(ShippingPreferenceFactory::class);
 		$this->payerFactory = Mockery::mock(PayerFactory::class);
-		$this->environment = new Environment(new Dictionary([]));
+		$this->environment = new Environment(new ReadOnlyContainer([], [], [], []));
         $authorizedPaymentProcessor = Mockery::mock(AuthorizedPaymentsProcessor::class);
         $settings = Mockery::mock(Settings::class);
         $settings
