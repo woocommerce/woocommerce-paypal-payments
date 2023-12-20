@@ -33,7 +33,11 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
         },
     };
 
-    const props = useBlockProps({className: ['ppcp-paylater-block-preview', 'ppcp-overlay-parent']});
+    let classes = ['ppcp-paylater-block-preview', 'ppcp-overlay-parent'];
+    if (PcpPayLaterBlock.vaultingEnabled) {
+        classes = ['ppcp-paylater-block-preview', 'ppcp-paylater-unavailable', 'block-editor-warning'];
+    }
+    const props = useBlockProps({className: classes});
 
     const loadingElement = <div {...props}><Spinner/></div>;
 
@@ -42,6 +46,27 @@ export default function Edit( { attributes, clientId, setAttributes } ) {
             setAttributes({id: 'ppcp-' + clientId});
         }
     }, []);
+
+    if (PcpPayLaterBlock.vaultingEnabled) {
+        return <div {...props}>
+            <div className={'block-editor-warning__contents'}>
+                <h3>{__('PayPal Pay Later Messaging', 'woocommerce-paypal-payments')}</h3>
+                <p className={'block-editor-warning__message'}>{__('Pay Later Messaging cannot be used while PayPal Vaulting is active. Disable PayPal Vaulting in the PayPal Payment settings to reactivate this block', 'woocommerce-paypal-payments')}</p>
+                <div className={'class="block-editor-warning__actions"'}>
+                    <span className={'block-editor-warning__action'}>
+                        <a href={PcpPayLaterBlock.settingsUrl} className={'components-button is-primary'}>
+                            {__('PayPal Payments Settings', 'woocommerce-paypal-payments')}
+                        </a>
+                    </span>
+                    <span className={'block-editor-warning__action'}>
+                        <button onClick={() => wp.data.dispatch( 'core/block-editor' ).removeBlock(clientId)} type={'button'} className={'components-button is-secondary'}>
+                            {__('Remove Block', 'woocommerce-paypal-payments')}
+                        </button>
+                    </span>
+                </div>
+            </div>
+        </div>
+    }
 
     let scriptParams = useScriptParams(PcpPayLaterBlock.ajax.cart_script_params);
     if (scriptParams === null) {

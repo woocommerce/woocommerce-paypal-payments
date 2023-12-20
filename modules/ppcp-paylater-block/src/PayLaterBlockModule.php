@@ -15,6 +15,7 @@ use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class PayLaterBlockModule
@@ -52,9 +53,12 @@ class PayLaterBlockModule implements ModuleInterface {
 			return;
 		}
 
+		$settings = $c->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings );
+
 		add_action(
 			'init',
-			function () use ( $c ): void {
+			function () use ( $c, $settings ): void {
 				$script_handle = 'ppcp-paylater-block';
 				wp_register_script(
 					$script_handle,
@@ -67,11 +71,13 @@ class PayLaterBlockModule implements ModuleInterface {
 					$script_handle,
 					'PcpPayLaterBlock',
 					array(
-						'ajax' => array(
+						'ajax'            => array(
 							'cart_script_params' => array(
 								'endpoint' => \WC_AJAX::get_endpoint( CartScriptParamsEndpoint::ENDPOINT ),
 							),
 						),
+						'settingsUrl'     => admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' ),
+						'vaultingEnabled' => $settings->has( 'vault_enabled' ) && $settings->get( 'vault_enabled' ),
 					)
 				);
 
