@@ -31,7 +31,7 @@ return array(
 	},
 	'vaulting.credit-card-handler'        => function( ContainerInterface $container ): VaultedCreditCardHandler {
 		return new VaultedCreditCardHandler(
-			$container->get( 'subscription.helper' ),
+			$container->get( 'wc-subscriptions.helper' ),
 			$container->get( 'vaulting.repository.payment-token' ),
 			$container->get( 'api.factory.purchase-unit' ),
 			$container->get( 'api.factory.payer' ),

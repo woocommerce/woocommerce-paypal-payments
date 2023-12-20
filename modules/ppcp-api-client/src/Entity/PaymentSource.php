@@ -9,74 +9,53 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\ApiClient\Entity;
 
+use stdClass;
+
 /**
  * Class PaymentSource
  */
 class PaymentSource {
 
 	/**
-	 * The card.
+	 * Payment source name.
 	 *
-	 * @var PaymentSourceCard|null
+	 * @var string
 	 */
-	private $card;
+	private $name;
 
 	/**
-	 * The wallet.
+	 * Payment source properties.
 	 *
-	 * @var PaymentSourceWallet|null
+	 * @var object
 	 */
-	private $wallet;
+	private $properties;
 
 	/**
 	 * PaymentSource constructor.
 	 *
-	 * @param PaymentSourceCard|null   $card The card.
-	 * @param PaymentSourceWallet|null $wallet The wallet.
+	 * @param string $name Payment source name.
+	 * @param object $properties Payment source properties.
 	 */
-	public function __construct(
-		PaymentSourceCard $card = null,
-		PaymentSourceWallet $wallet = null
-	) {
-
-		$this->card   = $card;
-		$this->wallet = $wallet;
+	public function __construct( string $name, object $properties ) {
+		$this->name       = $name;
+		$this->properties = $properties;
 	}
 
 	/**
-	 * Returns the card.
+	 * Payment source name.
 	 *
-	 * @return PaymentSourceCard|null
+	 * @return string
 	 */
-	public function card() {
-
-		return $this->card;
+	public function name(): string {
+		return $this->name;
 	}
 
 	/**
-	 * Returns the wallet.
+	 * Payment source properties.
 	 *
-	 * @return PaymentSourceWallet|null
+	 * @return object
 	 */
-	public function wallet() {
-
-		return $this->wallet;
-	}
-
-	/**
-	 * Returns the array of the object.
-	 *
-	 * @return array
-	 */
-	public function to_array(): array {
-
-		$data = array();
-		if ( $this->card() ) {
-			$data['card'] = $this->card()->to_array();
-		}
-		if ( $this->wallet() ) {
-			$data['wallet'] = $this->wallet()->to_array();
-		}
-		return $data;
+	public function properties(): object {
+		return $this->properties;
 	}
 }

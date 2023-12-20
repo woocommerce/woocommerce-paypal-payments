@@ -390,6 +390,16 @@ return function ( ContainerInterface $container, array $fields ): array {
 				'</a>'
 			),
 		),
+		'refresh_feature_status'                        => array(
+			'title'        => __( 'Refresh feature availability status', 'woocommerce-paypal-payments' ),
+			'type'         => 'ppcp-text',
+			'text'         => '<button type="button" class="button ppcp-refresh-feature-status">' . esc_html__( 'Check available features', 'woocommerce-paypal-payments' ) . '</button>',
+			'screens'      => array(
+				State::STATE_ONBOARDED,
+			),
+			'requirements' => array(),
+			'gateway'      => Settings::CONNECTION_TAB_ID,
+		),
 		'ppcp_dcc_status'                               => array(
 			'title'        => __( 'Advanced Credit and Debit Card Payments', 'woocommerce-paypal-payments' ),
 			'type'         => 'ppcp-text',

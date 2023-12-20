@@ -1,3 +1,5 @@
+@use "mixins/apm-button" as apm-button;
+
 #place_order.ppcp-hidden {
 	display: none !important;
 }
@@ -14,4 +16,25 @@
 
 .ppc-button-wrapper #ppcp-messages:first-child {
 	padding-top: 10px;
+}
+
+// Prevents spacing after button group.
+#ppc-button-ppcp-gateway {
+	line-height: 0;
+
+	div[class^="item-"] {
+		margin-top: 14px;
+		&:first-child {
+			margin-top: 0;
+		}
+	}
+}
+
+#ppc-button-minicart {
+	line-height: 0;
+	display: block;
+}
+
+.ppcp-button-apm {
+	@include apm-button.button;
 }

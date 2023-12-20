@@ -13,6 +13,39 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 
 trait ContextTrait {
 	/**
+	 * Initializes context preconditions like is_cart() and is_checkout().
+	 *
+	 * @return void
+	 */
+	protected function init_context(): void {
+		if ( ! apply_filters( 'woocommerce_paypal_payments_block_classic_compat', true ) ) {
+			return;
+		}
+
+		/**
+		 * Activate is_checkout() on woocommerce/classic-shortcode checkout blocks.
+		 *
+		 * @psalm-suppress MissingClosureParamType
+		 */
+		add_filter(
+			'woocommerce_is_checkout',
+			function ( $is_checkout ) {
+				if ( $is_checkout ) {
+					return $is_checkout;
+				}
+				return has_block( 'woocommerce/classic-shortcode {"shortcode":"checkout"}' );
+			}
+		);
+
+		// Activate is_cart() on woocommerce/classic-shortcode cart blocks.
+		if ( ! is_cart() && is_callable( 'wc_maybe_define_constant' ) ) {
+			if ( has_block( 'woocommerce/classic-shortcode' ) && ! has_block( 'woocommerce/classic-shortcode {"shortcode":"checkout"}' ) ) {
+				wc_maybe_define_constant( 'WOOCOMMERCE_CART', true );
+			}
+		}
+	}
+
+	/**
 	 * Checks WC is_checkout() + WC checkout ajax requests.
 	 */
 	private function is_checkout(): bool {
@@ -94,6 +127,10 @@ trait ContextTrait {
 			return 'checkout';
 		}
 
+		if ( $this->is_add_payment_method_page() ) {
+			return 'add-payment-method';
+		}
+
 		return 'mini-cart';
 	}
 
@@ -125,6 +162,11 @@ trait ContextTrait {
 	 * @return bool
 	 */
 	private function is_paypal_continuation(): bool {
+		/**
+		 * Property is already defined in trait consumers.
+		 *
+		 * @psalm-suppress UndefinedThisPropertyFetch
+		 */
 		$order = $this->session_handler->order();
 		if ( ! $order ) {
 			return false;
@@ -137,7 +179,7 @@ trait ContextTrait {
 		}
 
 		$source = $order->payment_source();
-		if ( $source && $source->card() ) {
+		if ( $source && $source->name() === 'card' ) {
 			return false; // Ignore for DCC.
 		}
 
@@ -146,5 +188,23 @@ trait ContextTrait {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Checks whether current page is Add payment method.
+	 *
+	 * @return bool
+	 */
+	private function is_add_payment_method_page(): bool {
+		/**
+		 * Needed for WordPress `query_vars`.
+		 *
+		 * @psalm-suppress InvalidGlobal
+		 */
+		global $wp;
+
+		$page_id = wc_get_page_id( 'myaccount' );
+
+		return $page_id && is_page( $page_id ) && isset( $wp->query_vars['add-payment-method'] );
 	}
 }

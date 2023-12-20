@@ -65,7 +65,7 @@ import widgetBuilder from "../../../ppcp-button/resources/js/modules/Renderer/Wi
         buttonConfig.button.wrapper = selector.replace('#', '');
         applyConfigOptions(buttonConfig);
 
-        const wrapperElement = `<div id="${selector.replace('#', '')}" class="ppcp-button-applepay"></div>`;
+        const wrapperElement = `<div id="${selector.replace('#', '')}" class="ppcp-button-apm ppcp-button-applepay"></div>`;
 
         if (!jQuery(selector).length) {
             jQuery(ppcpConfig.button.wrapper).after(wrapperElement);

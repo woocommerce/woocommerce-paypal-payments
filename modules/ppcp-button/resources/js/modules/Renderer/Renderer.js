@@ -2,6 +2,7 @@ import merge from "deepmerge";
 import {loadScript} from "@paypal/paypal-js";
 import {keysToCamelCase} from "../Helper/Utils";
 import widgetBuilder from "./WidgetBuilder";
+import {normalizeStyleForFundingSource} from "../Helper/Style";
 
 class Renderer {
     constructor(creditCardRenderer, defaultSettings, onSmartButtonClick, onSmartButtonsInit) {
@@ -36,16 +37,7 @@ class Renderer {
         } else {
             // render each button separately
             for (const fundingSource of paypal.getFundingSources().filter(s => !(s in enabledSeparateGateways))) {
-                let style = settings.button.style;
-                if (fundingSource !== 'paypal') {
-                    style = {
-                        shape: style.shape,
-                        color: style.color,
-                    };
-                    if (fundingSource !== 'paylater') {
-                        delete style.color;
-                    }
-                }
+                const style = normalizeStyleForFundingSource(settings.button.style, fundingSource);
 
                 this.renderButtons(
                     settings.button.wrapper,

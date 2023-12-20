@@ -14,7 +14,6 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Entity;
  */
 class CardAuthenticationResult {
 
-
 	const LIABILITY_SHIFT_POSSIBLE = 'POSSIBLE';
 	const LIABILITY_SHIFT_NO       = 'NO';
 	const LIABILITY_SHIFT_UNKNOWN  = 'UNKNOWN';

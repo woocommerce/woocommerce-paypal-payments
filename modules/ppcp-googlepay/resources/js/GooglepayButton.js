@@ -3,10 +3,13 @@ import {setVisible} from '../../../ppcp-button/resources/js/modules/Helper/Hidin
 import {setEnabled} from '../../../ppcp-button/resources/js/modules/Helper/ButtonDisabler';
 import widgetBuilder from "../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder";
 import UpdatePaymentData from "./Helper/UpdatePaymentData";
+import {apmButtonsInit} from "../../../ppcp-button/resources/js/modules/Helper/ApmButtons";
 
 class GooglepayButton {
 
     constructor(context, externalHandler, buttonConfig, ppcpConfig) {
+        apmButtonsInit(ppcpConfig);
+
         this.isInitialized = false;
 
         this.context = context;
@@ -111,7 +114,7 @@ class GooglepayButton {
         }
 
         if (['cart-block', 'checkout-block'].indexOf(this.context) !== -1) {
-            config.ppcpButtonWrapper = '#express-payment-method-ppcp-gateway';
+            config.ppcpButtonWrapper = '#express-payment-method-ppcp-gateway-paypal';
         }
 
         return config;
@@ -167,6 +170,10 @@ class GooglepayButton {
 
         this.waitForWrapper(wrapper, () => {
             jQuery(wrapper).addClass('ppcp-button-' + ppcpStyle.shape);
+
+            if (ppcpStyle.height) {
+                jQuery(wrapper).css('height', `${ppcpStyle.height}px`)
+            }
 
             const button =
                 this.paymentsClient.createButton({

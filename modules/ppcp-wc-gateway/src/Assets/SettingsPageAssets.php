@@ -10,9 +10,11 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Assets;
 
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
-use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\WcGateway\Endpoint\RefreshFeatureStatusEndpoint;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\Webhooks\Endpoint\ResubscribeEndpoint;
 
 /**
  * Class SettingsPageAssets
@@ -184,7 +186,7 @@ class SettingsPageAssets {
 		}
 
 		$screen = get_current_screen();
-		if ( $screen->id !== 'woocommerce_page_wc-settings' ) {
+		if ( ! $screen || $screen->id !== 'woocommerce_page_wc-settings' ) {
 			return false;
 		}
 
@@ -237,6 +239,13 @@ class SettingsPageAssets {
 					'disabled_sources'               => $this->disabled_sources,
 					'all_funding_sources'            => $this->all_funding_sources,
 					'components'                     => array( 'buttons', 'funding-eligibility', 'messages' ),
+					'ajax'                           => array(
+						'refresh_feature_status' => array(
+							'endpoint' => \WC_AJAX::get_endpoint( RefreshFeatureStatusEndpoint::ENDPOINT ),
+							'nonce'    => wp_create_nonce( RefreshFeatureStatusEndpoint::nonce() ),
+							'button'   => '.ppcp-refresh-feature-status',
+						),
+					),
 				)
 			)
 		);

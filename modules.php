@@ -20,13 +20,14 @@ return function ( string $root_dir ): iterable {
 		( require "$modules_dir/ppcp-onboarding/module.php" )(),
 		( require "$modules_dir/ppcp-session/module.php" )(),
 		( require "$modules_dir/ppcp-status-report/module.php" )(),
-		( require "$modules_dir/ppcp-subscription/module.php" )(),
+		( require "$modules_dir/ppcp-wc-subscriptions/module.php" )(),
 		( require "$modules_dir/ppcp-wc-gateway/module.php" )(),
 		( require "$modules_dir/ppcp-webhooks/module.php" )(),
 		( require "$modules_dir/ppcp-vaulting/module.php" )(),
 		( require "$modules_dir/ppcp-order-tracking/module.php" )(),
 		( require "$modules_dir/ppcp-uninstall/module.php" )(),
 		( require "$modules_dir/ppcp-blocks/module.php" )(),
+		( require "$modules_dir/ppcp-paypal-subscriptions/module.php" )(),
 	);
 	if ( apply_filters(
 		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
@@ -58,6 +59,14 @@ return function ( string $root_dir ): iterable {
 		getenv( 'PCP_CARD_FIELDS_ENABLED' ) === '1'
 	) ) {
 		$modules[] = ( require "$modules_dir/ppcp-card-fields/module.php" )();
+	}
+
+	if ( apply_filters(
+		//phpcs:disable WordPress.NamingConventions.ValidHookName.UseUnderscores
+		'woocommerce.feature-flags.woocommerce_paypal_payments.save_payment_methods_enabled',
+		getenv( 'PCP_SAVE_PAYMENT_METHODS' ) === '1'
+	) ) {
+		$modules[] = ( require "$modules_dir/ppcp-save-payment-methods/module.php" )();
 	}
 
 	return $modules;

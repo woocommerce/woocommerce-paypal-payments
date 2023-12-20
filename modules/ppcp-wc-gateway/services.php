@@ -21,7 +21,8 @@ use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\State;
-use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\WcGateway\Endpoint\RefreshFeatureStatusEndpoint;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\FeesRenderer;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\OrderTablePaymentStatusColumn;
@@ -76,7 +77,7 @@ return array(
 		$refund_processor    = $container->get( 'wcgateway.processor.refunds' );
 		$state               = $container->get( 'onboarding.state' );
 		$transaction_url_provider = $container->get( 'wcgateway.transaction-url-provider' );
-		$subscription_helper = $container->get( 'subscription.helper' );
+		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		$page_id             = $container->get( 'wcgateway.current-ppcp-settings-page-id' );
 		$payment_token_repository = $container->get( 'vaulting.repository.payment-token' );
 		$environment         = $container->get( 'onboarding.environment' );
@@ -97,7 +98,9 @@ return array(
 			$payment_token_repository,
 			$logger,
 			$api_shop_country,
-			$container->get( 'api.endpoint.order' )
+			$container->get( 'api.endpoint.order' ),
+			$container->get( 'api.factory.paypal-checkout-url' ),
+			$container->get( 'wcgateway.place-order-button-text' )
 		);
 	},
 	'wcgateway.credit-card-gateway'                        => static function ( ContainerInterface $container ): CreditCardGateway {
@@ -109,7 +112,7 @@ return array(
 		$refund_processor    = $container->get( 'wcgateway.processor.refunds' );
 		$state               = $container->get( 'onboarding.state' );
 		$transaction_url_provider = $container->get( 'wcgateway.transaction-url-provider' );
-		$subscription_helper = $container->get( 'subscription.helper' );
+		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		$payments_endpoint = $container->get( 'api.endpoint.payments' );
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
 		$vaulted_credit_card_handler = $container->get( 'vaulting.credit-card-handler' );
@@ -137,18 +140,20 @@ return array(
 			$container->get( 'wcgateway.processor.refunds' ),
 			$container->get( 'onboarding.state' ),
 			$container->get( 'wcgateway.transaction-url-provider' ),
-			$container->get( 'subscription.helper' ),
+			$container->get( 'wc-subscriptions.helper' ),
 			$container->get( 'wcgateway.settings.allow_card_button_gateway.default' ),
 			$container->get( 'onboarding.environment' ),
 			$container->get( 'vaulting.repository.payment-token' ),
-			$container->get( 'woocommerce.logger.woocommerce' )
+			$container->get( 'woocommerce.logger.woocommerce' ),
+			$container->get( 'api.factory.paypal-checkout-url' ),
+			$container->get( 'wcgateway.place-order-button-text' )
 		);
 	},
 	'wcgateway.disabler'                                   => static function ( ContainerInterface $container ): DisableGateways {
 		$session_handler = $container->get( 'session.handler' );
 		$settings       = $container->get( 'wcgateway.settings' );
 		$settings_status = $container->get( 'wcgateway.settings.status' );
-		$subscription_helper = $container->get( 'subscription.helper' );
+		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		return new DisableGateways( $session_handler, $settings, $settings_status, $subscription_helper );
 	},
 
@@ -340,7 +345,7 @@ return array(
 		$settings                      = $container->get( 'wcgateway.settings' );
 		$environment                   = $container->get( 'onboarding.environment' );
 		$logger                        = $container->get( 'woocommerce.logger.woocommerce' );
-		$subscription_helper = $container->get( 'subscription.helper' );
+		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		$order_helper = $container->get( 'api.order-helper' );
 		return new OrderProcessor(
 			$session_handler,
@@ -352,7 +357,10 @@ return array(
 			$logger,
 			$environment,
 			$subscription_helper,
-			$order_helper
+			$order_helper,
+			$container->get( 'api.factory.purchase-unit' ),
+			$container->get( 'api.factory.payer' ),
+			$container->get( 'api.factory.shipping-preference' )
 		);
 	},
 	'wcgateway.processor.refunds'                          => static function ( ContainerInterface $container ): RefundProcessor {
@@ -368,7 +376,7 @@ return array(
 		$logger = $container->get( 'woocommerce.logger.woocommerce' );
 		$notice              = $container->get( 'wcgateway.notice.authorize-order-action' );
 		$settings            = $container->get( 'wcgateway.settings' );
-		$subscription_helper = $container->get( 'subscription.helper' );
+		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		return new AuthorizedPaymentsProcessor(
 			$order_endpoint,
 			$payments_endpoint,
@@ -448,7 +456,7 @@ return array(
 		$onboarding_options_renderer = $container->get( 'onboarding.render-options' );
 		assert( $onboarding_options_renderer instanceof OnboardingOptionsRenderer );
 
-		$subscription_helper = $container->get( 'subscription.helper' );
+		$subscription_helper = $container->get( 'wc-subscriptions.helper' );
 		assert( $subscription_helper instanceof SubscriptionHelper );
 
 		$fields              = array(
@@ -996,6 +1004,13 @@ return array(
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},
+	'wcgateway.endpoint.refresh-feature-status'            => static function ( ContainerInterface $container ) : RefreshFeatureStatusEndpoint {
+		return new RefreshFeatureStatusEndpoint(
+			$container->get( 'wcgateway.settings' ),
+			new Cache( 'ppcp-timeout' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
 
 	'wcgateway.transaction-url-sandbox'                    => static function ( ContainerInterface $container ): string {
 		return 'https://www.sandbox.paypal.com/cgi-bin/webscr?cmd=_view-a-trans&id=%s';
@@ -1155,6 +1170,34 @@ return array(
 		return apply_filters(
 			'woocommerce_paypal_payments_is_logging_enabled',
 			$settings->has( 'logging_enabled' ) && $settings->get( 'logging_enabled' )
+		);
+	},
+
+	'wcgateway.use-place-order-button'                     => function ( ContainerInterface $container ) : bool {
+		/**
+		 * Whether to use the standard "Place order" button with redirect to PayPal instead of the PayPal smart buttons.
+		 */
+		return apply_filters(
+			'woocommerce_paypal_payments_use_place_order_button',
+			false
+		);
+	},
+	'wcgateway.place-order-button-text'                    => function ( ContainerInterface $container ) : string {
+		/**
+		 * The text for the standard "Place order" button, when the "Place order" button mode is enabled.
+		 */
+		return apply_filters(
+			'woocommerce_paypal_payments_place_order_button_text',
+			__( 'Proceed to PayPal', 'woocommerce-paypal-payments' )
+		);
+	},
+	'wcgateway.place-order-button-description'             => function ( ContainerInterface $container ) : string {
+		/**
+		 * The text for additional description, when the "Place order" button mode is enabled.
+		 */
+		return apply_filters(
+			'woocommerce_paypal_payments_place_order_button_description',
+			__( 'Clicking "Proceed to PayPal" will redirect you to PayPal to complete your purchase.', 'woocommerce-paypal-payments' )
 		);
 	},
 
@@ -1379,7 +1422,9 @@ return array(
 		);
 	},
 	'wcgateway.settings.pay-later.default-messaging-locations' => static function( ContainerInterface $container ): array {
-		return array_keys( $container->get( 'wcgateway.settings.pay-later.messaging-locations' ) );
+		$locations = $container->get( 'wcgateway.settings.pay-later.messaging-locations' );
+		unset( $locations['home'] );
+		return array_keys( $locations );
 	},
 	'wcgateway.settings.pay-later.button-locations'        => static function( ContainerInterface $container ): array {
 		$settings = $container->get( 'wcgateway.settings' );

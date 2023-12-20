@@ -49,7 +49,9 @@ return array(
 
 		// Domain validation.
 		$domain_validation_text = __( 'Status: Domain validation failed ❌', 'woocommerce-paypal-payments' );
-		if ( $container->get( 'applepay.is_validated' ) ) {
+		if ( ! $container->get( 'applepay.has_validated' ) ) {
+			$domain_validation_text = __( 'The domain has not yet been validated. Use the Apple Pay button to validate the domain ❌', 'woocommerce-paypal-payments' );
+		} elseif ( $container->get( 'applepay.is_validated' ) ) {
 			$domain_validation_text = __( 'Status: Domain successfully validated ✔️', 'woocommerce-paypal-payments' );
 		}
 
@@ -157,6 +159,7 @@ return array(
 									->action_visible( 'applepay_button_color' )
 									->action_visible( 'applepay_button_type' )
 									->action_visible( 'applepay_button_language' )
+									->action_visible( 'applepay_checkout_data_mode' )
 									->to_array(),
 							)
 						),

@@ -13,7 +13,8 @@ use Psr\Log\LoggerInterface;
 use Throwable;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
-use WooCommerce\PayPalCommerce\Subscription\Helper\SubscriptionHelper;
+use WooCommerce\PayPalCommerce\WcGateway\Endpoint\RefreshFeatureStatusEndpoint;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WC_Order;
@@ -177,7 +178,7 @@ class WCGatewayModule implements ModuleInterface {
 			$assets = new SettingsPageAssets(
 				$c->get( 'wcgateway.url' ),
 				$c->get( 'ppcp.asset-version' ),
-				$c->get( 'subscription.helper' ),
+				$c->get( 'wc-subscriptions.helper' ),
 				$c->get( 'button.client_id_for_admin' ),
 				$c->get( 'api.shop.currency' ),
 				$c->get( 'api.shop.country' ),
@@ -251,6 +252,16 @@ class WCGatewayModule implements ModuleInterface {
 				 *
 				 * @var ReturnUrlEndpoint $endpoint
 				 */
+				$endpoint->handle_request();
+			}
+		);
+
+		add_action(
+			'wc_ajax_' . RefreshFeatureStatusEndpoint::ENDPOINT,
+			static function () use ( $c ) {
+				$endpoint = $c->get( 'wcgateway.endpoint.refresh-feature-status' );
+				assert( $endpoint instanceof RefreshFeatureStatusEndpoint );
+
 				$endpoint->handle_request();
 			}
 		);
