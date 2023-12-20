@@ -28,7 +28,6 @@ return function ( string $root_dir ): iterable {
 		( require "$modules_dir/ppcp-uninstall/module.php" )(),
 		( require "$modules_dir/ppcp-blocks/module.php" )(),
 		( require "$modules_dir/ppcp-paypal-subscriptions/module.php" )(),
-		( require "$modules_dir/ppcp-paylater-block/module.php" )(),
 	);
 	if ( apply_filters(
 		// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
@@ -68,6 +67,13 @@ return function ( string $root_dir ): iterable {
 		getenv( 'PCP_SAVE_PAYMENT_METHODS' ) === '1'
 	) ) {
 		$modules[] = ( require "$modules_dir/ppcp-save-payment-methods/module.php" )();
+	}
+
+	if ( apply_filters(
+		'woocommerce.feature-flags.woocommerce_paypal_payments.paylater_block_enabled',
+		getenv( 'PCP_PAYLATER_BLOCK' ) !== '0'
+	) ) {
+		$modules[] = ( require "$modules_dir/ppcp-paylater-block/module.php" )();
 	}
 
 	return $modules;
