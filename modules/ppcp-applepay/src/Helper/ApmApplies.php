@@ -1,6 +1,7 @@
 <?php
 /**
  * ApmApplies helper.
+ * Checks if ApplePay is available for a given country and currency.
  *
  * @package WooCommerce\PayPalCommerce\ApplePay\Helper
  */
@@ -15,7 +16,7 @@ namespace WooCommerce\PayPalCommerce\Applepay\Helper;
 class ApmApplies {
 
 	/**
-	 * The matrix which countries and currency combinations can be used for DCC.
+	 * The matrix which countries and currency combinations can be used for ApplePay.
 	 *
 	 * @var array
 	 */
@@ -38,7 +39,7 @@ class ApmApplies {
 	/**
 	 * ApmApplies constructor.
 	 *
-	 * @param array  $allowed_country_currency_matrix The matrix which countries and currency combinations can be used for DCC.
+	 * @param array  $allowed_country_currency_matrix The matrix which countries and currency combinations can be used for ApplePay.
 	 * @param string $currency 3-letter currency code of the shop.
 	 * @param string $country 2-letter country code of the shop.
 	 */

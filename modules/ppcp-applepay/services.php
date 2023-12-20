@@ -62,6 +62,11 @@ return array(
 		);
 	},
 
+	'applepay.has_validated'                     => static function ( ContainerInterface $container ): bool {
+		$settings = $container->get( 'wcgateway.settings' );
+		return $settings->has( 'applepay_validated' );
+	},
+
 	'applepay.is_validated'                      => static function ( ContainerInterface $container ): bool {
 		$settings = $container->get( 'wcgateway.settings' );
 		return $settings->has( 'applepay_validated' ) ? $settings->get( 'applepay_validated' ) === true : false;

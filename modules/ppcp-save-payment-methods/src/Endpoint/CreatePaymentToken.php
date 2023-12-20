@@ -15,6 +15,8 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentSource;
 use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\WooCommercePaymentTokens;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
 /**
  * Class CreatePaymentToken
@@ -98,16 +100,37 @@ class CreatePaymentToken implements EndpointInterface {
 			if ( is_user_logged_in() && isset( $result->customer->id ) ) {
 				update_user_meta( get_current_user_id(), '_ppcp_target_customer_id', $result->customer->id );
 
-				$email = '';
-				if ( isset( $result->payment_source->paypal->email_address ) ) {
-					$email = $result->payment_source->paypal->email_address;
+				if ( isset( $result->payment_source->paypal ) ) {
+					$email = '';
+					if ( isset( $result->payment_source->paypal->email_address ) ) {
+						$email = $result->payment_source->paypal->email_address;
+					}
+
+					$this->wc_payment_tokens->create_payment_token_paypal(
+						get_current_user_id(),
+						$result->id,
+						$email
+					);
 				}
 
-				$this->wc_payment_tokens->create_payment_token_paypal(
-					get_current_user_id(),
-					$result->id,
-					$email
-				);
+				if ( isset( $result->payment_source->card ) ) {
+					$token = new \WC_Payment_Token_CC();
+					$token->set_token( $result->id );
+					$token->set_user_id( get_current_user_id() );
+					$token->set_gateway_id( CreditCardGateway::ID );
+
+					$token->set_last4( $result->payment_source->card->last_digits ?? '' );
+					$expiry = explode( '-', $result->payment_source->card->expiry ?? '' );
+					$token->set_expiry_year( $expiry[0] ?? '' );
+					$token->set_expiry_month( $expiry[1] ?? '' );
+
+					$brand = $result->payment_source->card->brand ?? __( 'N/A', 'woocommerce-paypal-payments' );
+					if ( $brand ) {
+						$token->set_card_type( $brand );
+					}
+
+					$token->save();
+				}
 			}
 
 			wp_send_json_success( $result );

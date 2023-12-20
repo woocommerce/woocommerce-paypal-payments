@@ -149,6 +149,7 @@ class DataToAppleButtonScripts {
 		return array(
 			'sdk_url'     => $this->sdk_url,
 			'is_debug'    => defined( 'WP_DEBUG' ) && WP_DEBUG ? true : false,
+			'is_admin'    => false,
 			'preferences' => array(
 				'checkout_data_mode' => $checkout_data_mode,
 			),
@@ -204,6 +205,7 @@ class DataToAppleButtonScripts {
 		return array(
 			'sdk_url'     => $this->sdk_url,
 			'is_debug'    => defined( 'WP_DEBUG' ) && WP_DEBUG ? true : false,
+			'is_admin'    => false,
 			'preferences' => array(
 				'checkout_data_mode' => $checkout_data_mode,
 			),
@@ -252,6 +254,7 @@ class DataToAppleButtonScripts {
 		return array(
 			'sdk_url'     => $this->sdk_url,
 			'is_debug'    => defined( 'WP_DEBUG' ) && WP_DEBUG ? true : false,
+			'is_admin'    => true,
 			'preferences' => array(
 				'checkout_data_mode' => $checkout_data_mode,
 			),

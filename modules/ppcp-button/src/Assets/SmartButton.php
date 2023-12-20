@@ -273,6 +273,8 @@ class SmartButton implements SmartButtonInterface {
 	 * @return bool
 	 */
 	public function render_wrapper(): bool {
+		$this->init_context();
+
 		if ( $this->settings->has( 'enabled' ) && $this->settings->get( 'enabled' ) ) {
 			$this->render_button_wrapper_registrar();
 			$this->render_message_wrapper_registrar();

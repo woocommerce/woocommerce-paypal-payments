@@ -28,6 +28,7 @@ use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 
 /**
  * Class SavePaymentMethodsModule
@@ -218,14 +219,21 @@ class SavePaymentMethodsModule implements ModuleInterface {
 
 					$id_token = $api->id_token( $target_customer_id );
 
+					$settings = $c->get( 'wcgateway.settings' );
+					assert( $settings instanceof Settings );
+					$verification_method = $settings->has( '3d_secure_contingency' ) ? $settings->get( '3d_secure_contingency' ) : '';
+
 					wp_localize_script(
 						'ppcp-add-payment-method',
 						'ppcp_add_payment_method',
 						array(
-							'client_id'   => $c->get( 'button.client_id' ),
-							'merchant_id' => $c->get( 'api.merchant_id' ),
-							'id_token'    => $id_token,
-							'ajax'        => array(
+							'client_id'            => $c->get( 'button.client_id' ),
+							'merchant_id'          => $c->get( 'api.merchant_id' ),
+							'id_token'             => $id_token,
+							'payment_methods_page' => wc_get_account_endpoint_url( 'payment-methods' ),
+							'error_message'        => __( 'Could not save payment method.', 'woocommerce-paypal-payments' ),
+							'verification_method'  => $verification_method,
+							'ajax'                 => array(
 								'create_setup_token'   => array(
 									'endpoint' => \WC_AJAX::get_endpoint( CreateSetupToken::ENDPOINT ),
 									'nonce'    => wp_create_nonce( CreateSetupToken::nonce() ),

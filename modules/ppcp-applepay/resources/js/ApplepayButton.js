@@ -5,10 +5,13 @@ import {setEnabled} from '../../../ppcp-button/resources/js/modules/Helper/Butto
 import FormValidator from "../../../ppcp-button/resources/js/modules/Helper/FormValidator";
 import ErrorHandler from '../../../ppcp-button/resources/js/modules/ErrorHandler';
 import widgetBuilder from "../../../ppcp-button/resources/js/modules/Renderer/WidgetBuilder";
+import {apmButtonsInit} from "../../../ppcp-button/resources/js/modules/Helper/ApmButtons";
 
 class ApplepayButton {
 
     constructor(context, externalHandler, buttonConfig, ppcpConfig) {
+        apmButtonsInit(ppcpConfig);
+
         this.isInitialized = false;
 
         this.context = context;
@@ -60,7 +63,7 @@ class ApplepayButton {
         this.initEventHandlers();
         this.isInitialized = true;
         this.applePayConfig = config;
-        const isEligible = this.applePayConfig.isEligible;
+        const isEligible = (this.applePayConfig.isEligible && window.ApplePaySession) || this.buttonConfig.is_admin;
 
         if (isEligible) {
             this.fetchTransactionInfo().then(() => {
@@ -84,6 +87,10 @@ class ApplepayButton {
                     });
                 }
             });
+        } else {
+            jQuery('#' + this.buttonConfig.button.wrapper).hide();
+            jQuery('#' + this.buttonConfig.button.mini_cart_wrapper).hide();
+            jQuery('#express-payment-method-ppcp-applepay').hide();
         }
     }
 
@@ -179,13 +186,13 @@ class ApplepayButton {
             appleContainer.innerHTML = `<apple-pay-button id="${id}" buttonstyle="${color}" type="${type}" locale="${language}">`;
         }
 
-        jQuery('#' + wrapper).addClass('ppcp-button-' + ppcpStyle.shape);
+        const $wrapper = jQuery('#' + wrapper);
+        $wrapper.addClass('ppcp-button-' + ppcpStyle.shape);
 
         if (ppcpStyle.height) {
-            jQuery('#' + wrapper).css('--apple-pay-button-height', `${ppcpStyle.height}px`)
+            $wrapper.css('--apple-pay-button-height', `${ppcpStyle.height}px`)
+            $wrapper.css('height', `${ppcpStyle.height}px`)
         }
-
-        jQuery(wrapper).append(appleContainer);
     }
 
     //------------------------

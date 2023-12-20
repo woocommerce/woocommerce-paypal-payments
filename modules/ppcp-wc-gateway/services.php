@@ -21,6 +21,7 @@ use WooCommerce\PayPalCommerce\Common\Pattern\SingletonDecorator;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;
 use WooCommerce\PayPalCommerce\Onboarding\State;
+use WooCommerce\PayPalCommerce\WcGateway\Endpoint\RefreshFeatureStatusEndpoint;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Admin\FeesRenderer;
@@ -1000,6 +1001,13 @@ return array(
 			$gateway,
 			$endpoint,
 			$container->get( 'session.handler' ),
+			$container->get( 'woocommerce.logger.woocommerce' )
+		);
+	},
+	'wcgateway.endpoint.refresh-feature-status'            => static function ( ContainerInterface $container ) : RefreshFeatureStatusEndpoint {
+		return new RefreshFeatureStatusEndpoint(
+			$container->get( 'wcgateway.settings' ),
+			new Cache( 'ppcp-timeout' ),
 			$container->get( 'woocommerce.logger.woocommerce' )
 		);
 	},

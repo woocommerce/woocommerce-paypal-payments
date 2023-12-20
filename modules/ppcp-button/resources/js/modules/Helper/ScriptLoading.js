@@ -89,3 +89,11 @@ export const loadPaypalJsScript = (options, buttons, container) => {
         paypal.Buttons(buttons).render(container);
     });
 }
+
+export const loadPaypalJsScriptPromise = (options) => {
+    return new Promise((resolve, reject) => {
+        loadScript(options)
+            .then(resolve)
+            .catch(reject);
+    });
+}

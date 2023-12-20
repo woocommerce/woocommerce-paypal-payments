@@ -13,6 +13,39 @@ use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 
 trait ContextTrait {
 	/**
+	 * Initializes context preconditions like is_cart() and is_checkout().
+	 *
+	 * @return void
+	 */
+	protected function init_context(): void {
+		if ( ! apply_filters( 'woocommerce_paypal_payments_block_classic_compat', true ) ) {
+			return;
+		}
+
+		/**
+		 * Activate is_checkout() on woocommerce/classic-shortcode checkout blocks.
+		 *
+		 * @psalm-suppress MissingClosureParamType
+		 */
+		add_filter(
+			'woocommerce_is_checkout',
+			function ( $is_checkout ) {
+				if ( $is_checkout ) {
+					return $is_checkout;
+				}
+				return has_block( 'woocommerce/classic-shortcode {"shortcode":"checkout"}' );
+			}
+		);
+
+		// Activate is_cart() on woocommerce/classic-shortcode cart blocks.
+		if ( ! is_cart() && is_callable( 'wc_maybe_define_constant' ) ) {
+			if ( has_block( 'woocommerce/classic-shortcode' ) && ! has_block( 'woocommerce/classic-shortcode {"shortcode":"checkout"}' ) ) {
+				wc_maybe_define_constant( 'WOOCOMMERCE_CART', true );
+			}
+		}
+	}
+
+	/**
 	 * Checks WC is_checkout() + WC checkout ajax requests.
 	 */
 	private function is_checkout(): bool {

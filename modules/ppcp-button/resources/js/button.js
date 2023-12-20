@@ -22,6 +22,7 @@ import FormValidator from "./modules/Helper/FormValidator";
 import {loadPaypalScript} from "./modules/Helper/ScriptLoading";
 import buttonModuleWatcher from "./modules/ButtonModuleWatcher";
 import MessagesBootstrap from "./modules/ContextBootstrap/MessagesBootstap";
+import {apmButtonsInit} from "./modules/Helper/ApmButtons";
 
 // TODO: could be a good idea to have a separate spinner for each gateway,
 // but I think we care mainly about the script loading, so one spinner should be enough.
@@ -145,6 +146,7 @@ const bootstrap = () => {
     };
 
     const onSmartButtonsInit = () => {
+        jQuery(document).trigger('ppcp-smart-buttons-init', this);
         buttonsSpinner.unblock();
     };
     const renderer = new Renderer(creditCardRenderer, PayPalCommerceGateway, onSmartButtonClick, onSmartButtonsInit);
@@ -217,6 +219,8 @@ const bootstrap = () => {
         messageRenderer,
     );
     messagesBootstrap.init();
+
+    apmButtonsInit(PayPalCommerceGateway);
 };
 
 document.addEventListener(
