@@ -9,12 +9,12 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\StatusReport;
 
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
+use Inpsyde\Modularity\Module\ExecutableModule;
+use Inpsyde\Modularity\Module\ExtendingModule;
+use Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
+use Inpsyde\Modularity\Module\ServiceModule;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\Bearer;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingAgreementsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;

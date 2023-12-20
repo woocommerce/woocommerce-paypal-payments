@@ -12,7 +12,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\WooCommerce\Logging\Logger\NullLogger;
 use WooCommerce\WooCommerce\Logging\Logger\WooCommerceLogger;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 return array(

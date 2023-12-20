@@ -15,7 +15,7 @@ use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 
 /**

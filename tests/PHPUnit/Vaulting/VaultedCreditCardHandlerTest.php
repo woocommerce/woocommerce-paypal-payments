@@ -3,7 +3,7 @@
 namespace PHPUnit\Vaulting;
 
 use Mockery;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 use WC_Customer;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Capture;

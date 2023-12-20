@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\SavedPaymentChecker;
 
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 
 return array(
 	'saved-payment-checker.payment-token-checker' => function( ContainerInterface $container ) : PaymentTokenChecker {

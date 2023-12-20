@@ -16,9 +16,6 @@
     },
     "require-dev": {
         "psr/container": "^1.0",
-        "dhii/module-interface": "^0.2 || ^0.3",
-        "container-interop/service-provider": "^0.4.0",
-        "dhii/containers": "^0.1.0-alpha1",
         "woocommerce/woocommerce-sniffs": "^0.1.0",
         "phpunit/phpunit": "^7.0 | ^8.0 | ^9.0",
         "brain/monkey": "^2.4",
@@ -30,8 +27,7 @@
     "autoload": {
         "psr-4": {
             "WooCommerce\\PayPalCommerce\\": "src",
-            "WooCommerce\\PayPalCommerce\\Common\\": "lib/common/",
-            "WooCommerce\\PayPalCommerce\\Vendor\\": "lib/packages/"
+            "WooCommerce\\PayPalCommerce\\Common\\": "lib/common/"
         },
         "files": [
             "api/order-functions.php"
@@ -69,19 +65,6 @@
             "pre-commit": [
                 "vendor/bin/phpcbf"
             ]
-        },
-        "mozart": {
-            "dep_namespace": "WooCommerce\\PayPalCommerce\\Vendor\\",
-            "dep_directory": "/lib/packages/",
-            "classmap_directory": "/lib/classes/",
-            "classmap_prefix": "PCPP_",
-            "packages": [
-                "psr/container",
-                "dhii/containers",
-                "dhii/module-interface",
-                "inpsyde/modularity"
-            ],
-            "delete_vendor_directories": true
         }
     },
     "config": {

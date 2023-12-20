@@ -12,7 +12,7 @@ namespace WooCommerce\PayPalCommerce\Applepay;
 use WooCommerce\PayPalCommerce\Applepay\Assets\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DisplayManager;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 

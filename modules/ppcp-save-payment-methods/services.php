@@ -13,7 +13,7 @@ use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CaptureCardPayment;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreatePaymentToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Endpoint\CreateSetupToken;
 use WooCommerce\PayPalCommerce\SavePaymentMethods\Helper\SavePaymentMethodsApplies;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 
 return array(
 	'save-payment-methods.eligible'                      => static function ( ContainerInterface $container ): bool {

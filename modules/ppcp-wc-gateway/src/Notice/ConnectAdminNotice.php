@@ -12,7 +12,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Notice;
 use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 
 /**
  * Class ConnectAdminNotice

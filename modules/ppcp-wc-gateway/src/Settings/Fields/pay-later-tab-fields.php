@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
 use WooCommerce\PayPalCommerce\Onboarding\State;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 
 return function ( ContainerInterface $container, array $fields ): array {
 

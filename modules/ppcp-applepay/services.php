@@ -20,7 +20,7 @@ use WooCommerce\PayPalCommerce\Applepay\Helper\ApmApplies;
 use WooCommerce\PayPalCommerce\Applepay\Helper\AvailabilityNotice;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 
 return array(
 	'applepay.eligible'                          => static function ( ContainerInterface $container ): bool {

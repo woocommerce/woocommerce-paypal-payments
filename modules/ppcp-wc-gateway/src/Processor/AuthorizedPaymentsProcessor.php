@@ -10,7 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Processor;
 
 use Exception;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;

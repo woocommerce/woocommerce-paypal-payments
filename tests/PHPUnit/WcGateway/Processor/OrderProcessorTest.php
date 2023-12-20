@@ -22,7 +22,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderHelper;
 use WooCommerce\PayPalCommerce\Button\Helper\ThreeDSecure;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Container\ReadOnlyContainer;
+use Inpsyde\Modularity\Container\ReadOnlyContainer;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 use WooCommerce\PayPalCommerce\TestCase;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;

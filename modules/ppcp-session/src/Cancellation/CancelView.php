@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\Session\Cancellation;
 
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\FundingSource\FundingSourceRenderer;
 
 /**

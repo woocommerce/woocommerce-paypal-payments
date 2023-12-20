@@ -12,7 +12,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcGateway\Settings;
 
 use WooCommerce\PayPalCommerce\ApiClient\Helper\PurchaseUnitSanitizer;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\DccApplies;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingOptionsRenderer;

@@ -16,7 +16,7 @@ use WooCommerce\PayPalCommerce\OrderTracking\Integration\WcShippingTaxIntegratio
 use WooCommerce\PayPalCommerce\OrderTracking\Integration\YithShipmentIntegration;
 use WooCommerce\PayPalCommerce\OrderTracking\Shipment\ShipmentFactoryInterface;
 use WooCommerce\PayPalCommerce\OrderTracking\Shipment\ShipmentFactory;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\OrderTracking\Assets\OrderEditPageAssets;
 use WooCommerce\PayPalCommerce\OrderTracking\Endpoint\OrderTrackingEndpoint;
 

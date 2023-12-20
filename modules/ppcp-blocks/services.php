@@ -10,7 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Blocks;
 
 use WooCommerce\PayPalCommerce\Blocks\Endpoint\UpdateShippingEndpoint;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 
 return array(
 	'blocks.url'                           => static function ( ContainerInterface $container ): string {

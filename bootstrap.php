@@ -5,9 +5,9 @@
  * @package WooCommerce\PayPalCommerce
  */
 
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Package;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Properties\PluginProperties;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use Inpsyde\Modularity\Package;
+use Inpsyde\Modularity\Properties\PluginProperties;
+use Psr\Container\ContainerInterface;
 
 return function (
 	string $root_dir,

@@ -12,7 +12,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Notice;
 use WC_Payment_Gateway;
 use WooCommerce\PayPalCommerce\AdminNotices\Entity\Message;
 use WooCommerce\PayPalCommerce\Onboarding\State;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\SettingsStatus;
 
 /**

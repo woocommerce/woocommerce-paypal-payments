@@ -5,10 +5,10 @@ namespace WooCommerce\PayPalCommerce;
 
 use WooCommerce\PayPalCommerce\Helper\RedirectorStub;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use Inpsyde\Modularity\Module\ExecutableModule;
+use Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
+use Inpsyde\Modularity\Module\ServiceModule;
+use Psr\Container\ContainerInterface;
 use function Brain\Monkey\Functions\when;
 
 class ModularTestCase extends TestCase

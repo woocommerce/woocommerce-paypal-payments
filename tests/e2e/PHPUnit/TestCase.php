@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\Tests\E2e;
 
 use WooCommerce\PayPalCommerce\PPCP;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 use WC_Cart;
 use WC_Customer;
 use WC_Session;

@@ -11,7 +11,7 @@ namespace WooCommerce\PayPalCommerce\SavedPaymentChecker;
 
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 
 return array(
 	'wcgateway.settings.fields' => function ( array $fields, ContainerInterface $container ): array {

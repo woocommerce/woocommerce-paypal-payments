@@ -12,7 +12,7 @@ namespace WooCommerce\PayPalCommerce;
 use Dhii\Versions\StringVersionFactory;
 use WooCommerce\PayPalCommerce\Http\RedirectorInterface;
 use WooCommerce\PayPalCommerce\Http\WpRedirector;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 use WpOop\WordPress\Plugin\PluginInterface;
 
 return array(

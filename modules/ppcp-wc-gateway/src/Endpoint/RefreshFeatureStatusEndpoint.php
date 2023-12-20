@@ -11,7 +11,7 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Endpoint;
 
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\Cache;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 
 /**
  * Class RefreshFeatureStatusEndpoint

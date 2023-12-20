@@ -29,7 +29,7 @@ use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureCompleted;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCapturePending;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureRefunded;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentCaptureReversed;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentSaleCompleted;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\PaymentSaleRefunded;
 use WooCommerce\PayPalCommerce\Webhooks\Handler\VaultPaymentTokenCreated;

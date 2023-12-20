@@ -11,7 +11,7 @@ namespace WooCommerce\PayPalCommerce\Uninstall;
 
 use WooCommerce\PayPalCommerce\ApiClient\Repository\PayPalRequestIdRepository;
 use WooCommerce\PayPalCommerce\Uninstall\Assets\ClearDatabaseAssets;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CardButtonGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;

@@ -10,7 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce;
 
 use LogicException;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 
 /**
  * Internal global data.

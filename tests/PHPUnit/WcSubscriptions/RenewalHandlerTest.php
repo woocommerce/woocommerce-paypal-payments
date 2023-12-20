@@ -21,7 +21,7 @@ use WooCommerce\PayPalCommerce\TestCase;
 use Mockery;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Container\ReadOnlyContainer;
+use Inpsyde\Modularity\Container\ReadOnlyContainer;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;

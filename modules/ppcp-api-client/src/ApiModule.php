@@ -12,11 +12,11 @@ namespace WooCommerce\PayPalCommerce\ApiClient;
 use WC_Order;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\FailureRegistry;
 use WooCommerce\PayPalCommerce\ApiClient\Helper\OrderTransient;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use Inpsyde\Modularity\Module\ExecutableModule;
+use Inpsyde\Modularity\Module\ExtendingModule;
+use Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
+use Inpsyde\Modularity\Module\ServiceModule;
+use Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
 
 /**

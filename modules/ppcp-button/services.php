@@ -19,7 +19,7 @@ use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
 use WooCommerce\PayPalCommerce\Button\Validation\CheckoutFormValidator;
 use WooCommerce\PayPalCommerce\Button\Endpoint\ValidateCheckoutEndpoint;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\Button\Assets\DisabledSmartButton;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButton;
 use WooCommerce\PayPalCommerce\Button\Assets\SmartButtonInterface;

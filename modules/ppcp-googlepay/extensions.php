@@ -11,7 +11,7 @@ namespace WooCommerce\PayPalCommerce\Googlepay;
 
 use WooCommerce\PayPalCommerce\Googlepay\Helper\PropertiesDictionary;
 use WooCommerce\PayPalCommerce\Onboarding\State;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Helper\DisplayManager;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
 

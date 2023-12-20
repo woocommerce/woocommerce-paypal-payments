@@ -13,11 +13,11 @@ use WooCommerce\PayPalCommerce\Onboarding\Endpoint\UpdateSignupLinksEndpoint;
 use WooCommerce\PayPalCommerce\Onboarding\Assets\OnboardingAssets;
 use WooCommerce\PayPalCommerce\Onboarding\Endpoint\LoginSellerEndpoint;
 use WooCommerce\PayPalCommerce\Onboarding\Render\OnboardingRenderer;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExecutableModule;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ExtendingModule;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
-use WooCommerce\PayPalCommerce\Vendor\Inpsyde\Modularity\Module\ServiceModule;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use Inpsyde\Modularity\Module\ExecutableModule;
+use Inpsyde\Modularity\Module\ExtendingModule;
+use Inpsyde\Modularity\Module\ModuleClassNameIdTrait;
+use Inpsyde\Modularity\Module\ServiceModule;
+use Psr\Container\ContainerInterface;
 
 /**
  * Class OnboardingModule

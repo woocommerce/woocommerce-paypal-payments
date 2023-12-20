@@ -10,7 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\CardFields;
 
 use WooCommerce\PayPalCommerce\CardFields\Helper\CardFieldsApplies;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 
 return array(
 	'card-fields.eligible'                             => static function ( ContainerInterface $container ): bool {

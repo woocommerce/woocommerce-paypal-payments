@@ -11,7 +11,7 @@ namespace WooCommerce\PayPalCommerce\ApiClient\Repository;
 
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
 use WooCommerce\PayPalCommerce\WcGateway\Endpoint\ReturnUrlEndpoint;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 
 /**
  * Class ApplicationContextRepository

@@ -12,7 +12,7 @@ namespace WooCommerce\PayPalCommerce\WcSubscriptions;
 use WooCommerce\PayPalCommerce\PayPalSubscriptions\DeactivatePlanEndpoint;
 use WooCommerce\PayPalCommerce\PayPalSubscriptions\SubscriptionsApiHandler;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
-use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 return array(
