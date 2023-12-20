@@ -394,7 +394,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @return bool
 	 */
 	private function render_message_wrapper_registrar(): bool {
-		if ( ! $this->settings_status->is_pay_later_messaging_enabled() ) {
+		if ( ! $this->settings_status->is_pay_later_messaging_enabled() || ! $this->settings_status->has_pay_later_messaging_locations() ) {
 			return false;
 		}
 
