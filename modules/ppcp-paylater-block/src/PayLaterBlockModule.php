@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\PayLaterBlock;
 
 use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
+use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
@@ -44,6 +45,13 @@ class PayLaterBlockModule implements ModuleInterface {
 	 * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $c ): void {
+		$messages_apply = $c->get( 'button.helper.messages-apply' );
+		assert( $messages_apply instanceof MessagesApply );
+
+		if ( ! $messages_apply->for_country() ) {
+			return;
+		}
+
 		add_action(
 			'init',
 			function () use ( $c ): void {
