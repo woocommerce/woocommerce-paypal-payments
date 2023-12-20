@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "5c45654af6d2f3addad4a089950e515f",
+    "content-hash": "6451ae49d3d58728421aa734385ab707",
     "packages": [
         {
             "name": "container-interop/service-provider",
@@ -293,74 +293,6 @@
                 "source": "https://github.com/Dhii/versions/tree/v0.1.0-alpha3"
             },
             "time": "2021-12-08T16:54:50+00:00"
-        },
-        {
-            "name": "inpsyde/modularity",
-            "version": "1.7.2",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/inpsyde/modularity.git",
-                "reference": "43f4b3a7c8fbb585a44fb7a619e2546b338a8934"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/inpsyde/modularity/zipball/43f4b3a7c8fbb585a44fb7a619e2546b338a8934",
-                "reference": "43f4b3a7c8fbb585a44fb7a619e2546b338a8934",
-                "shasum": ""
-            },
-            "require": {
-                "ext-json": "*",
-                "php": ">=7.2",
-                "psr/container": "^1.1.0 || ^2"
-            },
-            "require-dev": {
-                "brain/monkey": "^2.6.1",
-                "inpsyde/php-coding-standards": "^1",
-                "johnpbloch/wordpress-core": ">=5.8",
-                "mikey179/vfsstream": "^v1.6.10",
-                "php-stubs/wordpress-stubs": ">=5.8@stable",
-                "phpunit/phpunit": "^8.5.21 || ^9.6.7",
-                "vimeo/psalm": "^4.13.1"
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "1.x-dev"
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Inpsyde\\Modularity\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "GPL-2.0-or-later"
-            ],
-            "authors": [
-                {
-                    "name": "Inpsyde GmbH",
-                    "email": "hello@inpsyde.com",
-                    "homepage": "https://inpsyde.com/",
-                    "role": "Company"
-                },
-                {
-                    "name": "Christian Leucht",
-                    "email": "c.leucht@inpsyde.com",
-                    "role": "Developer"
-                },
-                {
-                    "name": "Giuseppe Mazzapica",
-                    "email": "g.mazzapica@inpsyde.com",
-                    "role": "Developer"
-                }
-            ],
-            "description": "Modular PSR-11 implementation for WordPress plugins, themes or libraries.",
-            "support": {
-                "issues": "https://github.com/inpsyde/modularity/issues",
-                "source": "https://github.com/inpsyde/modularity/tree/1.7.2"
-            },
-            "time": "2023-11-16T11:19:47+00:00"
         },
         {
             "name": "psr/container",
@@ -1782,6 +1714,74 @@
                 "source": "https://github.com/hamcrest/hamcrest-php/tree/v2.0.1"
             },
             "time": "2020-07-09T08:09:16+00:00"
+        },
+        {
+            "name": "inpsyde/modularity",
+            "version": "1.7.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/inpsyde/modularity.git",
+                "reference": "43f4b3a7c8fbb585a44fb7a619e2546b338a8934"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/inpsyde/modularity/zipball/43f4b3a7c8fbb585a44fb7a619e2546b338a8934",
+                "reference": "43f4b3a7c8fbb585a44fb7a619e2546b338a8934",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "php": ">=7.2",
+                "psr/container": "^1.1.0 || ^2"
+            },
+            "require-dev": {
+                "brain/monkey": "^2.6.1",
+                "inpsyde/php-coding-standards": "^1",
+                "johnpbloch/wordpress-core": ">=5.8",
+                "mikey179/vfsstream": "^v1.6.10",
+                "php-stubs/wordpress-stubs": ">=5.8@stable",
+                "phpunit/phpunit": "^8.5.21 || ^9.6.7",
+                "vimeo/psalm": "^4.13.1"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Inpsyde\\Modularity\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "GPL-2.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "Inpsyde GmbH",
+                    "email": "hello@inpsyde.com",
+                    "homepage": "https://inpsyde.com/",
+                    "role": "Company"
+                },
+                {
+                    "name": "Christian Leucht",
+                    "email": "c.leucht@inpsyde.com",
+                    "role": "Developer"
+                },
+                {
+                    "name": "Giuseppe Mazzapica",
+                    "email": "g.mazzapica@inpsyde.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Modular PSR-11 implementation for WordPress plugins, themes or libraries.",
+            "support": {
+                "issues": "https://github.com/inpsyde/modularity/issues",
+                "source": "https://github.com/inpsyde/modularity/tree/1.7.2"
+            },
+            "time": "2023-11-16T11:19:47+00:00"
         },
         {
             "name": "mockery/mockery",
