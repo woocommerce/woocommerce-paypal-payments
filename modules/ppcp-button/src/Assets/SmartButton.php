@@ -851,9 +851,10 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 		}
 
 		$product = wc_get_product();
-		$amount  = ( is_a( $product, WC_Product::class ) ) ? wc_get_price_including_tax( $product ) : 0;
-
-		if ( is_checkout() || is_cart() ) {
+		$amount  = 0;
+		if ( is_a( $product, WC_Product::class ) ) {
+			$amount = wc_get_price_including_tax( $product );
+		} elseif ( isset( WC()->cart ) ) {
 			$amount = WC()->cart->get_total( 'raw' );
 		}
 
@@ -889,7 +890,6 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 				'ratio'  => $ratio,
 			),
 		);
-
 	}
 
 	/**
