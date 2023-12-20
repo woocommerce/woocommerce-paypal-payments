@@ -184,7 +184,7 @@ trait ContextTrait {
 	 */
 	protected function is_block_editor(): bool {
 		if ( ! function_exists( 'get_current_screen' ) ) {
-			return true;
+			return false;
 		}
 		$screen = get_current_screen();
 		return $screen && $screen->is_block_editor();
