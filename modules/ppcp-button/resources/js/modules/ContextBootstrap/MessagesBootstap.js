@@ -12,7 +12,7 @@ class MessagesBootstrap {
     }
 
     init() {
-        if (this.gateway.messages.block.enabled) {
+        if (this.gateway.messages?.block?.enabled) {
             this.discoverBlocks();
         }
         jQuery(document.body).on('ppcp_cart_rendered ppcp_checkout_rendered', () => {
