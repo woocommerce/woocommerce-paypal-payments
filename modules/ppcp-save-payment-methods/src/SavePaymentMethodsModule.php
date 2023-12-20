@@ -215,6 +215,9 @@ class SavePaymentMethodsModule implements ModuleInterface {
 					$target_customer_id = '';
 					if ( is_user_logged_in() ) {
 						$target_customer_id = get_user_meta( get_current_user_id(), '_ppcp_target_customer_id', true );
+						if ( ! $target_customer_id ) {
+							$target_customer_id = get_user_meta( get_current_user_id(), 'ppcp_customer_id', true );
+						}
 					}
 
 					$id_token = $api->id_token( $target_customer_id );
