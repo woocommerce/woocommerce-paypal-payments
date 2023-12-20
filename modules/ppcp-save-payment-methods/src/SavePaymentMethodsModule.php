@@ -79,27 +79,6 @@ class SavePaymentMethodsModule implements ModuleInterface {
 		add_filter(
 			'ppcp_create_order_request_body_data',
 			function( array $data, string $payment_method, array $request_data ): array {
-				// phpcs:ignore WordPress.Security.NonceVerification.Missing
-				$wc_order_action = wc_clean( wp_unslash( $_POST['wc_order_action'] ?? '' ) );
-				if ( $wc_order_action === 'wcs_process_renewal' ) {
-					// phpcs:ignore WordPress.Security.NonceVerification.Missing
-					$subscription_id = wc_clean( wp_unslash( $_POST['post_ID'] ?? '' ) );
-					$subscription    = wcs_get_subscription( (int) $subscription_id );
-					if ( $subscription ) {
-						$customer_id = $subscription->get_customer_id();
-						$wc_tokens   = WC_Payment_Tokens::get_customer_tokens( $customer_id, PayPalGateway::ID );
-						foreach ( $wc_tokens as $token ) {
-							$data['payment_source'] = array(
-								'paypal' => array(
-									'vault_id' => $token->get_token(),
-								),
-							);
-
-							return $data;
-						}
-					}
-				}
-
 				if ( $payment_method === CreditCardGateway::ID ) {
 					$save_payment_method = $request_data['save_payment_method'] ?? false;
 					if ( $save_payment_method ) {
@@ -114,6 +93,10 @@ class SavePaymentMethodsModule implements ModuleInterface {
 						);
 
 						$target_customer_id = get_user_meta( get_current_user_id(), '_ppcp_target_customer_id', true );
+						if ( ! $target_customer_id ) {
+							$target_customer_id = get_user_meta( get_current_user_id(), 'ppcp_customer_id', true );
+						}
+
 						if ( $target_customer_id ) {
 							$data['payment_source']['card']['attributes']['customer'] = array(
 								'id' => $target_customer_id,
