@@ -211,6 +211,21 @@ class SubscriptionHelper {
 			if ( $product->get_type() === 'subscription' && $product->meta_exists( 'ppcp_subscription_plan' ) ) {
 				return $product->get_meta( 'ppcp_subscription_plan' )['id'];
 			}
+
+			if ( $product->get_type() === 'variable-subscription' ) {
+				/**
+				 * The method is defined in WC_Product_Variable class.
+				 *
+				 * @psalm-suppress UndefinedMethod
+				 */
+				$product_variations = $product->get_available_variations();
+				foreach ( $product_variations as $variation ) {
+					$variation_product = wc_get_product( $variation['variation_id'] ) ?? '';
+					if ( $variation_product && $variation_product->meta_exists( 'ppcp_subscription_plan' ) ) {
+						return $variation_product->get_meta( 'ppcp_subscription_plan' )['id'];
+					}
+				}
+			}
 		}
 
 		return '';
