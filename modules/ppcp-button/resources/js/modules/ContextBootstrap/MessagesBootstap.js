@@ -12,14 +12,9 @@ class MessagesBootstrap {
     }
 
     init() {
-        Array.from(document.querySelectorAll('.ppcp-paylater-message-block')).forEach(blockElement => {
-            const config = {wrapper: '#' + blockElement.id};
-            if (!blockElement.getAttribute('data-pp-placement')) {
-                config.placement = this.gateway.messages.placement;
-            }
-            this.renderers.push(new MessageRenderer(config));
-        });
-
+        if (this.gateway.messages.block.enabled) {
+            this.discoverBlocks();
+        }
         jQuery(document.body).on('ppcp_cart_rendered ppcp_checkout_rendered', () => {
             this.render();
         });
@@ -37,6 +32,16 @@ class MessagesBootstrap {
         });
 
         this.render();
+    }
+
+    discoverBlocks() {
+        Array.from(document.querySelectorAll('.ppcp-paylater-message-block')).forEach(blockElement => {
+            const config = {wrapper: '#' + blockElement.id};
+            if (!blockElement.getAttribute('data-pp-placement')) {
+                config.placement = this.gateway.messages.placement;
+            }
+            this.renderers.push(new MessageRenderer(config));
+        });
     }
 
     shouldShow(renderer) {

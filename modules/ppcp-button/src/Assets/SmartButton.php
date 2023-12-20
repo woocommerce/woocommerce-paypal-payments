@@ -32,6 +32,7 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\ValidateCheckoutEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
+use WooCommerce\PayPalCommerce\PayLaterBlock\PayLaterBlockModule;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
@@ -624,7 +625,7 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 
 		$messaging_enabled_for_current_location = $this->settings_status->is_pay_later_messaging_enabled_for_location( $location );
 
-		$has_paylater_block = has_block( 'woocommerce-paypal-payments/paylater-messages' );
+		$has_paylater_block = has_block( 'woocommerce-paypal-payments/paylater-messages' ) && PayLaterBlockModule::is_enabled();
 
 		switch ( $location ) {
 			case 'checkout':
@@ -868,6 +869,9 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 		return array(
 			'wrapper'   => '#ppcp-messages',
 			'is_hidden' => ! $this->is_pay_later_filter_enabled_for_location( $this->context() ),
+			'block'     => array(
+				'enabled' => PayLaterBlockModule::is_enabled(),
+			),
 			'amount'    => $amount,
 			'placement' => $placement,
 			'style'     => array(
