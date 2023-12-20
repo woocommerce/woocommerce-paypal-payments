@@ -5,6 +5,7 @@
  * @package WooCommerce\PayPalCommerce
  */
 
+use WooCommerce\PayPalCommerce\PayLaterBlock\PayLaterBlockModule;
 use WooCommerce\PayPalCommerce\PluginModule;
 
 return function ( string $root_dir ): iterable {
@@ -66,10 +67,7 @@ return function ( string $root_dir ): iterable {
 		$modules[] = ( require "$modules_dir/ppcp-save-payment-methods/module.php" )();
 	}
 
-	if ( apply_filters(
-		'woocommerce.feature-flags.woocommerce_paypal_payments.paylater_block_enabled',
-		getenv( 'PCP_PAYLATER_BLOCK' ) !== '0'
-	) ) {
+	if ( PayLaterBlockModule::is_enabled() ) {
 		$modules[] = ( require "$modules_dir/ppcp-paylater-block/module.php" )();
 	}
 

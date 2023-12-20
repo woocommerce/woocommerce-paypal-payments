@@ -20,6 +20,17 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
  */
 class PayLaterBlockModule implements ModuleInterface {
 	/**
+	 * Returns whether the block should be loaded.
+	 */
+	public static function is_enabled(): bool {
+		return apply_filters(
+			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
+			'woocommerce.feature-flags.woocommerce_paypal_payments.paylater_block_enabled',
+			getenv( 'PCP_PAYLATER_BLOCK' ) !== '0'
+		);
+	}
+
+	/**
 	 * {@inheritDoc}
 	 */
 	public function setup(): ServiceProviderInterface {
