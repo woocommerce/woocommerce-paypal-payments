@@ -619,6 +619,10 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 			return false;
 		}
 
+		if ( ! $this->settings_status->is_pay_later_messaging_enabled() ) {
+			return false;
+		}
+
 		if ( ! $this->messages_apply->for_country() || $this->is_free_trial_cart() ) {
 			return false;
 		}
