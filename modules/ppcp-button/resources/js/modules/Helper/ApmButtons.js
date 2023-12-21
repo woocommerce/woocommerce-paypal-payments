@@ -104,8 +104,10 @@ export class ApmButtons {
                     return true;
                 }
 
+                const minMargin = 11; // Minimum margin.
                 const height = $el.height();
-                $el.css('margin-top', `${Math.round(height * 0.3)}px`);
+                const margin = Math.max(minMargin, Math.round(height * 0.3));
+                $el.css('margin-top', `${margin}px`);
             });
 
         }
