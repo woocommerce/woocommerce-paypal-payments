@@ -40,6 +40,11 @@ export class ApmButtons {
             this.refresh();
         });
 
+        jQuery(document).on('ppcp-shown ppcp-hidden ppcp-enabled ppcp-disabled', (ev, data) => {
+            this.refresh();
+            setTimeout(this.refresh.bind(this), 200);
+        });
+
         // Observes for new buttons.
         (new MutationObserver(this.observeElementsCallback.bind(this)))
             .observe(document.body, { childList: true, subtree: true });
