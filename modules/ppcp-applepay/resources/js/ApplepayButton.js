@@ -140,17 +140,16 @@ class ApplepayButton {
         const wrapper_id = '#' + wrapper;
 
         const syncButtonVisibility = () => {
+            if (!this.isEligible) {
+                return;
+            }
+
             const $ppcpButtonWrapper = jQuery(ppcpButtonWrapper);
             setVisible(wrapper_id, $ppcpButtonWrapper.is(':visible'));
             setEnabled(wrapper_id, !$ppcpButtonWrapper.hasClass('ppcp-disabled'));
         }
 
         jQuery(document).on('ppcp-shown ppcp-hidden ppcp-enabled ppcp-disabled', (ev, data) => {
-            if (!this.isEligible) {
-                setVisible(wrapper_id, false);
-                return;
-            }
-
             if (jQuery(data.selector).is(ppcpButtonWrapper)) {
                 syncButtonVisibility();
             }
