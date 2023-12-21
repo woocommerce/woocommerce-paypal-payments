@@ -11,7 +11,6 @@ namespace WooCommerce\PayPalCommerce\SavePaymentMethods;
 
 use Psr\Log\LoggerInterface;
 use WC_Order;
-use WC_Payment_Tokens;
 use WooCommerce\PayPalCommerce\ApiClient\Authentication\UserIdToken;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PaymentTokensEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
@@ -172,7 +171,6 @@ class SavePaymentMethodsModule implements ModuleInterface {
 		);
 
 		add_filter( 'woocommerce_paypal_payments_disable_add_payment_method', '__return_false' );
-		add_filter( 'woocommerce_paypal_payments_subscription_renewal_return_before_create_order_without_token', '__return_false' );
 		add_filter( 'woocommerce_paypal_payments_should_render_card_custom_fields', '__return_false' );
 
 		add_action(
