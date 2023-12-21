@@ -90,7 +90,9 @@ class WcSubscriptionsModule implements ModuleInterface {
 				$payment_token_repository = $c->get( 'vaulting.repository.payment-token' );
 				$logger                   = $c->get( 'woocommerce.logger.woocommerce' );
 
-				$this->add_payment_token_id( $subscription, $payment_token_repository, $logger );
+				if ( ! $c->has( 'save-payment-methods.eligible' ) || ! $c->get( 'save-payment-methods.eligible' ) ) {
+					$this->add_payment_token_id( $subscription, $payment_token_repository, $logger );
+				}
 
 				if ( count( $subscription->get_related_orders() ) === 1 ) {
 					$parent_order = $subscription->get_parent();
