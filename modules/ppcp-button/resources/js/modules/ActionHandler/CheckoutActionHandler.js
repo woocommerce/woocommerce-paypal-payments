@@ -18,7 +18,7 @@ class CheckoutActionHandler {
                 try {
                     await validateCheckoutForm(this.config);
                 } catch (error) {
-                    throw {type: 'form-validation-error'};
+                    throw { type: 'form-validation-error' };
                 }
 
                 return actions.subscription.create({
@@ -48,7 +48,13 @@ class CheckoutActionHandler {
 
     configuration() {
         const spinner = this.spinner;
-        const createOrder = (data, actions) => {
+        const createOrder = async (data, actions) => {
+            try {
+                await validateCheckoutForm(this.config);
+            } catch (error) {
+                throw { type: 'form-validation-error' };
+            }
+
             const payer = payerData();
             const bnCode = typeof this.config.bn_codes[this.config.context] !== 'undefined' ?
                 this.config.bn_codes[this.config.context] : '';
@@ -136,7 +142,7 @@ class CheckoutActionHandler {
                 console.error(err);
                 spinner.unblock();
 
-                if (err && err.type === 'create-order-error') {
+                if (err && (err.type === 'create-order-error' || err.type === 'form-validation-error')) {
                     return;
                 }
 
