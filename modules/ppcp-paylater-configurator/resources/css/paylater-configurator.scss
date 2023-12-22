@@ -1,0 +1,10 @@
+#messaging-configurator {
+	& > div {
+		justify-content: left;
+		margin: 0;
+
+		& > div {
+			padding: 0;
+		}
+	}
+}
