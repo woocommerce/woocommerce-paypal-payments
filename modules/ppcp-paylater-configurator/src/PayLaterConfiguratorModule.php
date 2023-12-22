@@ -9,8 +9,9 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\PayLaterConfigurator;
 
-use WooCommerce\PayPalCommerce\Button\Endpoint\CartScriptParamsEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
+use WooCommerce\PayPalCommerce\PayLaterConfigurator\Endpoint\SaveConfig;
+use WooCommerce\PayPalCommerce\PayLaterConfigurator\Factory\ConfigFactory;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Modular\Module\ModuleInterface;
 use WooCommerce\PayPalCommerce\Vendor\Interop\Container\ServiceProviderInterface;
@@ -46,6 +47,77 @@ class PayLaterConfiguratorModule implements ModuleInterface {
 	 * {@inheritDoc}
 	 */
 	public function run( ContainerInterface $c ): void {
+		$messages_apply = $c->get( 'button.helper.messages-apply' );
+		assert( $messages_apply instanceof MessagesApply );
+
+		if ( ! $messages_apply->for_country() ) {
+			return;
+		}
+
+		add_action(
+			'wc_ajax_' . SaveConfig::ENDPOINT,
+			static function () use ( $c ) {
+				$endpoint = $c->get( 'paylater-configurator.endpoint.save-config' );
+				assert( $endpoint instanceof SaveConfig );
+				$endpoint->handle_request();
+			}
+		);
+
+		$current_page_id = $c->get( 'wcgateway.current-ppcp-settings-page-id' );
+
+		if ( $current_page_id !== Settings::PAY_LATER_TAB_ID ) {
+			return;
+		}
+
+		$settings = $c->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings );
+
+		add_action(
+			'init',
+			static function () use ( $c, $settings ) {
+				wp_enqueue_script(
+					'ppcp-paylater-configurator-lib',
+					'https://www.paypalobjects.com/merchant-library/merchant-configurator.js',
+					array(),
+					$c->get( 'ppcp.asset-version' ),
+					true
+				);
+
+				wp_enqueue_script(
+					'ppcp-paylater-configurator',
+					$c->get( 'paylater-configurator.url' ) . '/assets/js/paylater-configurator.js',
+					array(),
+					$c->get( 'ppcp.asset-version' ),
+					true
+				);
+
+				wp_enqueue_style(
+					'ppcp-paylater-configurator-style',
+					$c->get( 'paylater-configurator.url' ) . '/assets/css/paylater-configurator.css',
+					array(),
+					$c->get( 'ppcp.asset-version' )
+				);
+
+				$config_factory = $c->get( 'paylater-configurator.factory.config' );
+				assert( $config_factory instanceof ConfigFactory );
+
+				wp_localize_script(
+					'ppcp-paylater-configurator',
+					'PcpPayLaterConfigurator',
+					array(
+						'ajax'             => array(
+							'save_config' => array(
+								'endpoint' => \WC_AJAX::get_endpoint( SaveConfig::ENDPOINT ),
+								'nonce'    => wp_create_nonce( SaveConfig::nonce() ),
+							),
+						),
+						'config'           => $config_factory->from_settings( $settings ),
+						'merchantClientId' => $settings->get( 'client_id' ),
+						'partnerClientId'  => $c->get( 'api.partner_merchant_id' ),
+					)
+				);
+			}
+		);
 	}
 
 	/**
