@@ -80,6 +80,17 @@ class CardFieldsModule implements ModuleInterface {
 					array_unshift( $default_fields, $new_field );
 				}
 
+				if ( apply_filters( 'woocommerce_paypal_payments_card_fields_translate_card_number', true ) ) {
+					if ( isset( $default_fields['card-number-field'] ) ) {
+						// Replaces the default card number placeholder with a translatable one.
+						$default_fields['card-number-field'] = str_replace(
+							'&bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull; &bull;&bull;&bull;&bull;',
+							esc_attr__( 'Card number', 'woocommerce-paypal-payments' ),
+							$default_fields['card-number-field']
+						);
+					}
+				}
+
 				return $default_fields;
 			},
 			10,
