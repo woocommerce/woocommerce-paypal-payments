@@ -89,6 +89,11 @@ class SaveConfig {
 		}
 	}
 
+	/**
+	 * Saves the config into the old settings.
+	 *
+	 * @param array $config The configurator config.
+	 */
 	private function save_config( array $config ): void {
 		$this->settings->set( 'pay_later_enable_styling_per_messaging_location', true );
 
@@ -109,6 +114,12 @@ class SaveConfig {
 		$this->settings->persist();
 	}
 
+	/**
+	 * Saves the config for a location into the old settings.
+	 *
+	 * @param array  $config The configurator config for a location.
+	 * @param string $location The location name in the old settings.
+	 */
 	private function save_config_for_location( array $config, string $location ): void {
 		$this->set_value_if_present( $config, 'layout', "pay_later_{$location}_message_layout" );
 
@@ -121,12 +132,24 @@ class SaveConfig {
 		$this->set_value_if_present( $config, 'text-size', "pay_later_{$location}_message_text_size" );
 	}
 
+	/**
+	 * Sets the value in the settings if it is available in the config.
+	 *
+	 * @param array  $config The configurator config.
+	 * @param string $key The key in the config.
+	 * @param string $settings_key The key in the settings.
+	 */
 	private function set_value_if_present( array $config, string $key, string $settings_key ): void {
 		if ( isset( $config[ $key ] ) ) {
 			$this->settings->set( $settings_key, $config[ $key ] );
 		}
 	}
 
+	/**
+	 * Converts the configurator placement into location in the old settings.
+	 *
+	 * @param string $placement The configurator placement.
+	 */
 	private function configurator_placement_to_location( string $placement ): string {
 		switch ( $placement ) {
 			case 'cart':
