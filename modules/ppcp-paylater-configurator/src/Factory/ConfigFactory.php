@@ -32,8 +32,8 @@ class ConfigFactory {
 		if ( in_array( $placement, array( 'category', 'homepage' ) ) ) {
 			$config = array(
 				'layout' => 'flex',
-				'color'  => $this->get_or_default( $settings, "pay_later_{$location}_message_flex_color", 'black' ),
-				'ratio'  => $this->get_or_default( $settings, "pay_later_{$location}_message_flex_ratio", '8x1' ),
+				'color'  => $this->get_or_default( $settings, "pay_later_{$location}_message_flex_color", 'black', array( 'black', 'blue', 'white', 'white-no-border' ) ),
+				'ratio'  => $this->get_or_default( $settings, "pay_later_{$location}_message_flex_ratio", '8x1', array( '8x1', '20x1' ) ),
 			);
 		} else {
 			$config = array(
@@ -70,7 +70,13 @@ class ConfigFactory {
 		}
 	}
 
-	private function get_or_default( Settings $settings, string $key, $default ) {
-		return $settings->has( $key ) ? $settings->get( $key ) : $default;
+	private function get_or_default( Settings $settings, string $key, $default, ?array $allowed_values = null ) {
+		if ( $settings->has( $key ) ) {
+			$value = $settings->get( $key );
+			if ( ! $allowed_values || in_array( $value, $allowed_values, true ) ) {
+				return $value;
+			}
+		}
+		return $default;
 	}
 }
