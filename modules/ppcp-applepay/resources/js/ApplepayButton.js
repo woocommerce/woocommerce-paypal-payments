@@ -34,6 +34,9 @@ class ApplepayButton {
         // Stores initialization data sent to the button.
         this.initialPaymentRequest = null;
 
+        // Default eligibility status.
+        this.isEligible = true;
+
         this.log = function() {
             if ( this.buttonConfig.is_debug ) {
                 console.log('[ApplePayButton]', ...arguments);
@@ -63,9 +66,9 @@ class ApplepayButton {
         this.initEventHandlers();
         this.isInitialized = true;
         this.applePayConfig = config;
-        const isEligible = (this.applePayConfig.isEligible && window.ApplePaySession) || this.buttonConfig.is_admin;
+        this.isEligible = (this.applePayConfig.isEligible && window.ApplePaySession) || this.buttonConfig.is_admin;
 
-        if (isEligible) {
+        if (this.isEligible) {
             this.fetchTransactionInfo().then(() => {
                 const isSubscriptionProduct = this.ppcpConfig?.data_client_id?.has_subscriptions === true;
                 if (isSubscriptionProduct) {
@@ -137,6 +140,10 @@ class ApplepayButton {
         const wrapper_id = '#' + wrapper;
 
         const syncButtonVisibility = () => {
+            if (!this.isEligible) {
+                return;
+            }
+
             const $ppcpButtonWrapper = jQuery(ppcpButtonWrapper);
             setVisible(wrapper_id, $ppcpButtonWrapper.is(':visible'));
             setEnabled(wrapper_id, !$ppcpButtonWrapper.hasClass('ppcp-disabled'));

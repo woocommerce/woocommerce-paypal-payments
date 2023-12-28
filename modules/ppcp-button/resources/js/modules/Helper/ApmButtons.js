@@ -40,6 +40,11 @@ export class ApmButtons {
             this.refresh();
         });
 
+        jQuery(document).on('ppcp-shown ppcp-hidden ppcp-enabled ppcp-disabled', (ev, data) => {
+            this.refresh();
+            setTimeout(this.refresh.bind(this), 200);
+        });
+
         // Observes for new buttons.
         (new MutationObserver(this.observeElementsCallback.bind(this)))
             .observe(document.body, { childList: true, subtree: true });
@@ -104,8 +109,10 @@ export class ApmButtons {
                     return true;
                 }
 
+                const minMargin = 11; // Minimum margin.
                 const height = $el.height();
-                $el.css('margin-top', `${Math.round(height * 0.3)}px`);
+                const margin = Math.max(minMargin, Math.round(height * 0.3));
+                $el.css('margin-top', `${margin}px`);
             });
 
         }
