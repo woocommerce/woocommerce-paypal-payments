@@ -184,12 +184,14 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 * Fix - Block Checkout reloads when submitting order with empty fields #1904
 * Fix - "Send checkout billing and shipping data to Apple Pay" displayed when Apple Pay is disabled #1883
 * Fix - "Order does not contain intent" error for ACDC renewals when triggering 3D Secure #1888
+* Fix - PayPal Subscriptions button greyed out (inactive) on Checkout page for variable subscription products #1914
 * Enhancement - Add button to reload feature eligibility status from Connection tab #1902
 * Enhancement - Apple Pay validation message improvements #1901
 * Enhancement - Improve support for Classic Cart & Classic Checkout blocks #1894
 * Enhancement - Ensure uniform button appearance for PayPal, Google Pay, and Apple Pay buttons #1900
 * Enhancement - remove string translations for package tracking carriers from repository #1885
 * Enhancement - Incorrect margins when PayPal buttons are rendered as separate gateways. #1908
+* Enhancement - Improved button spacing when Apple Pay is enabled but current buyer is not eligible #1922
 * Feature preview - Save payment methods (Vault v3) integration  #1779
 
 = 2.4.2 - 2023-12-04 =
