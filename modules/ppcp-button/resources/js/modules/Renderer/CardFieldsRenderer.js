@@ -120,11 +120,6 @@ class CardFieldsRenderer {
                 .catch((error) => {
                     this.spinner.unblock();
                     console.error(error)
-
-                    if (error.type === 'form-validation-error') {
-                        return;
-                    }
-
                     this.errorHandler.message(this.defaultConfig.hosted_fields.labels.fields_not_valid);
                 });
         });
