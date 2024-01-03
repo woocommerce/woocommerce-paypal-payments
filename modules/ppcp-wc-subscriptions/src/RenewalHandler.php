@@ -427,9 +427,11 @@ class RenewalHandler {
 
 		$tokens = $wc_order->get_payment_tokens();
 		if ( $tokens ) {
-			$token = WC_Payment_Tokens::get( $tokens[0] );
-			if ( $token ) {
-				$token_id = $token->get_token();
+			foreach ( $tokens as $token_id ) {
+				$token = WC_Payment_Tokens::get( $token_id );
+				if ( $token && $token->get_gateway_id() === $wc_order->get_payment_method() ) {
+					return $token->get_token();
+				}
 			}
 		}
 

@@ -251,30 +251,21 @@ class WcSubscriptionsModule implements ModuleInterface {
 			&& PayPalGateway::ID === $id
 			&& $subscription_helper->is_subscription_change_payment()
 		) {
-			$tokens = $payment_token_repository->all_for_user_id( get_current_user_id() );
-			if ( ! $tokens || ! $payment_token_repository->tokens_contains_paypal( $tokens ) ) {
-				return esc_html__(
-					'No PayPal payments saved, in order to use a saved payment you first need to create it through a purchase.',
-					'woocommerce-paypal-payments'
-				);
-			}
-
+			$tokens = WC_Payment_Tokens::get_customer_tokens( get_current_user_id(), PayPalGateway::ID );
 			$output = sprintf(
 				'<p class="form-row form-row-wide"><label>%1$s</label><select id="saved-paypal-payment" name="saved_paypal_payment">',
-				esc_html__( 'Select a saved PayPal payment', 'woocommerce-paypal-payments' )
+				esc_html__( 'Select PayPal payment', 'woocommerce-paypal-payments' )
 			);
 			foreach ( $tokens as $token ) {
-				if ( isset( $token->source()->paypal ) ) {
-					$output .= sprintf(
-						'<option value="%1$s">%2$s</option>',
-						$token->id(),
-						$token->source()->paypal->payer->email_address
-					);
-				}
+				$output .= sprintf(
+					'<option value="%1$s">%2$s</option>',
+					$token->get_id(),
+					$token->get_meta( 'email' ) ?? ''
+				);
 			}
-				$output .= '</select></p>';
+			$output .= '</select></p>';
 
-				return $output;
+			return $output;
 		}
 
 		return $description;
