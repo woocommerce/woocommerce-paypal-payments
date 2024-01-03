@@ -9,6 +9,9 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcSubscriptions;
 
+use WC_Customer;
+use WC_Order;
+use WC_Payment_Tokens;
 use WC_Subscription;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
@@ -194,8 +197,8 @@ class RenewalHandler {
 			'renewal'
 		);
 
-		$token = $this->get_token_for_customer( $customer, $wc_order );
-		if ( $token ) {
+		$token_id = $this->token_id( $wc_order, $customer );
+		if ( $token_id ) {
 			if ( $wc_order->get_payment_method() === CreditCardGateway::ID ) {
 				$stored_credentials = array(
 					'payment_initiator' => 'MERCHANT',
@@ -215,7 +218,7 @@ class RenewalHandler {
 				$payment_source = new PaymentSource(
 					'card',
 					(object) array(
-						'vault_id'          => $token->id(),
+						'vault_id'          => $token_id,
 						'stored_credential' => $stored_credentials,
 					)
 				);
@@ -244,11 +247,23 @@ class RenewalHandler {
 				return;
 			}
 
+			$payment_source = new PaymentSource(
+				'paypal',
+				(object) array(
+					'vault_id' => $token_id,
+				)
+			);
+
 			$order = $this->order_endpoint->create(
 				array( $purchase_unit ),
 				$shipping_preference,
 				$payer,
-				$token
+				null,
+				'',
+				ApplicationContext::USER_ACTION_CONTINUE,
+				'',
+				array(),
+				$payment_source
 			);
 
 			$this->handle_paypal_order( $wc_order, $order );
@@ -398,5 +413,31 @@ class RenewalHandler {
 		if ( $this->capture_authorized_downloads( $order ) ) {
 			$this->authorized_payments_processor->capture_authorized_payment( $wc_order );
 		}
+	}
+
+	/**
+	 * Returns a payment token id for the given order or customer.
+	 *
+	 * @param WC_Order    $wc_order WC order.
+	 * @param WC_Customer $customer WC customer.
+	 * @return string
+	 */
+	private function token_id( WC_Order $wc_order, WC_Customer $customer ): string {
+		$token_id = '';
+
+		$tokens = $wc_order->get_payment_tokens();
+		if ( $tokens ) {
+			$token = WC_Payment_Tokens::get( $tokens[0] );
+			if ( $token ) {
+				$token_id = $token->get_token();
+			}
+		}
+
+		if ( ! $token_id ) {
+			$token    = $this->get_token_for_customer( $customer, $wc_order );
+			$token_id = $token->id();
+		}
+
+		return $token_id;
 	}
 }

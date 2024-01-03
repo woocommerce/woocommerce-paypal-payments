@@ -11,7 +11,7 @@ namespace WooCommerce\PayPalCommerce\WcSubscriptions;
 
 use Psr\Log\LoggerInterface;
 use WC_Order;
-use WC_Subscription;
+use WC_Payment_Tokens;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use WooCommerce\PayPalCommerce\Vendor\Dhii\Container\ServiceProvider;
@@ -115,6 +115,10 @@ class WcSubscriptionsModule implements ModuleInterface {
 			 * @psalm-suppress MissingClosureParamType
 			 */
 			function ( $description, $id ) use ( $c ) {
+				if ( $c->has( 'save-payment-methods.eligible' ) && $c->get( 'save-payment-methods.eligible' ) ) {
+					return $description;
+				}
+
 				$payment_token_repository = $c->get( 'vaulting.repository.payment-token' );
 				$settings                 = $c->get( 'wcgateway.settings' );
 				$subscription_helper      = $c->get( 'wc-subscriptions.helper' );
@@ -133,6 +137,10 @@ class WcSubscriptionsModule implements ModuleInterface {
 			 * @psalm-suppress MissingClosureParamType
 			 */
 			function ( $default_fields, $id ) use ( $c ) {
+				if ( $c->has( 'save-payment-methods.eligible' ) && $c->get( 'save-payment-methods.eligible' ) ) {
+					return $default_fields;
+				}
+
 				$payment_token_repository = $c->get( 'vaulting.repository.payment-token' );
 				$settings                 = $c->get( 'wcgateway.settings' );
 				$subscription_helper      = $c->get( 'wc-subscriptions.helper' );
@@ -141,6 +149,27 @@ class WcSubscriptionsModule implements ModuleInterface {
 			},
 			20,
 			2
+		);
+
+		add_filter(
+			'woocommerce_available_payment_gateways',
+			function( array $methods ): array {
+				if ( ! is_wc_endpoint_url( 'order-pay' ) ) {
+					return $methods;
+				}
+
+				$paypal_tokens = WC_Payment_Tokens::get_customer_tokens( get_current_user_id(), PayPalGateway::ID );
+				if ( ! $paypal_tokens ) {
+					unset( $methods[ PayPalGateway::ID ] );
+				}
+
+				$card_tokens = WC_Payment_Tokens::get_customer_tokens( get_current_user_id(), CreditCardGateway::ID );
+				if ( ! $card_tokens ) {
+					unset( $methods[ CreditCardGateway::ID ] );
+				}
+
+				return $methods;
+			}
 		);
 	}
 
@@ -269,35 +298,24 @@ class WcSubscriptionsModule implements ModuleInterface {
 		array $default_fields,
 		SubscriptionHelper $subscription_helper
 	) {
-
 		if ( $settings->has( 'vault_enabled_dcc' )
 			&& $settings->get( 'vault_enabled_dcc' )
 			&& $subscription_helper->is_subscription_change_payment()
 			&& CreditCardGateway::ID === $id
 		) {
-			$tokens = $payment_token_repository->all_for_user_id( get_current_user_id() );
-			if ( ! $tokens || ! $payment_token_repository->tokens_contains_card( $tokens ) ) {
-				$default_fields                      = array();
-				$default_fields['saved-credit-card'] = esc_html__(
-					'No Credit Card saved, in order to use a saved Credit Card you first need to create it through a purchase.',
-					'woocommerce-paypal-payments'
-				);
-				return $default_fields;
-			}
-
+			$tokens = WC_Payment_Tokens::get_customer_tokens( get_current_user_id(), CreditCardGateway::ID );
 			$output = sprintf(
 				'<p class="form-row form-row-wide"><label>%1$s</label><select id="saved-credit-card" name="saved_credit_card">',
 				esc_html__( 'Select a saved Credit Card payment', 'woocommerce-paypal-payments' )
 			);
 			foreach ( $tokens as $token ) {
-				if ( isset( $token->source()->card ) ) {
 					$output .= sprintf(
 						'<option value="%1$s">%2$s ...%3$s</option>',
-						$token->id(),
-						$token->source()->card->brand,
-						$token->source()->card->last_digits
+						$token->get_id(),
+						$token->get_card_type(),
+						$token->get_last4()
 					);
-				}
+
 			}
 			$output .= '</select></p>';
 
