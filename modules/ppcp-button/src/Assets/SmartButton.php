@@ -1447,8 +1447,8 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 			$context = 'general';
 		}
 
-		return $this->get_style_value( "button_{$context}_${style}" )
-			?? $this->get_style_value( "button_${style}" )
+		return $this->get_style_value( "button_{$context}_{$style}" )
+			?? $this->get_style_value( "button_{$style}" )
 			?? ( $default ? $this->normalize_style_value( $default ) : null )
 			?? $this->normalize_style_value( $defaults[ $style ] ?? '' );
 	}
@@ -1463,7 +1463,7 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 	 * @return string|int
 	 */
 	private function style_for_apm( string $style, string $apm, $default = null ) {
-		return $this->get_style_value( "${apm}_button_${style}" )
+		return $this->get_style_value( "{$apm}_button_{$style}" )
 			?? ( $default ? $this->normalize_style_value( $default ) : null )
 			?? $this->style_for_context( $style, 'checkout' );
 	}
@@ -1584,14 +1584,14 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 		 * The filter returning the action name that will be used for rendering Pay Later messages.
 		 */
 		$hook = (string) apply_filters(
-			"woocommerce_paypal_payments_${location_hook}_messages_renderer_hook",
+			"woocommerce_paypal_payments_{$location_hook}_messages_renderer_hook",
 			$default_hook
 		);
 		/**
 		 * The filter returning the action priority that will be used for rendering Pay Later messages.
 		 */
 		$priority = (int) apply_filters(
-			"woocommerce_paypal_payments_${location_hook}_messages_renderer_priority",
+			"woocommerce_paypal_payments_{$location_hook}_messages_renderer_priority",
 			$default_priority
 		);
 		return array(
@@ -1615,14 +1615,14 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 		 * The filter returning the action name that will be used for rendering Pay Later messages.
 		 */
 		$block_name = (string) apply_filters(
-			"woocommerce_paypal_payments_${location_hook}_messages_renderer_block",
+			"woocommerce_paypal_payments_{$location_hook}_messages_renderer_block",
 			$default_block
 		);
 		/**
 		 * The filter returning the action priority that will be used for rendering Pay Later messages.
 		 */
 		$priority = (int) apply_filters(
-			"woocommerce_paypal_payments_${location_hook}_messages_renderer_block_priority",
+			"woocommerce_paypal_payments_{$location_hook}_messages_renderer_block_priority",
 			$default_priority
 		);
 		return array(
