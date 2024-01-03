@@ -48,7 +48,7 @@ class CheckoutActionHandler {
 
     configuration() {
         const spinner = this.spinner;
-        const createOrder = async (data, actions) => {
+        const createOrder = (data, actions) => {
             const payer = payerData();
             const bnCode = typeof this.config.bn_codes[this.config.context] !== 'undefined' ?
                 this.config.bn_codes[this.config.context] : '';
@@ -136,7 +136,7 @@ class CheckoutActionHandler {
                 console.error(err);
                 spinner.unblock();
 
-                if (err && (err.type === 'create-order-error')) {
+                if (err && err.type === 'create-order-error') {
                     return;
                 }
 
