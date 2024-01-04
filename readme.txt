@@ -179,7 +179,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 2.4.3 - xxxx-xx-xx =
+= 2.4.3 - 2024-01-04 =
 * Fix - PayPal Subscription initiated without a WooCommerce order #1907
 * Fix - Block Checkout reloads when submitting order with empty fields #1904
 * Fix - "Send checkout billing and shipping data to Apple Pay" displayed when Apple Pay is disabled #1883
