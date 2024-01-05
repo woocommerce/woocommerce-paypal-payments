@@ -9,10 +9,9 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcSubscriptions;
 
-use WC_Customer;
 use WC_Order;
-use WC_Payment_Tokens;
 use WC_Subscription;
+use WC_Payment_Tokens;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\Order;
@@ -27,6 +26,7 @@ use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
+use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\AuthorizedPaymentsProcessor;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\OrderMetaTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\PaymentsStatusHandlingTrait;
@@ -197,31 +197,59 @@ class RenewalHandler {
 			'renewal'
 		);
 
-		$token_id = $this->token_id( $wc_order, $customer );
-		if ( $token_id ) {
-			if ( $wc_order->get_payment_method() === CreditCardGateway::ID ) {
-				$stored_credentials = array(
-					'payment_initiator' => 'MERCHANT',
-					'payment_type'      => 'RECURRING',
-					'usage'             => 'SUBSEQUENT',
-				);
-
-				$subscriptions = wcs_get_subscriptions_for_renewal_order( $wc_order );
-				foreach ( $subscriptions as $post_id => $subscription ) {
-					$previous_transaction_reference = $subscription->get_meta( 'ppcp_previous_transaction_reference' );
-					if ( $previous_transaction_reference ) {
-						$stored_credentials['previous_transaction_reference'] = $previous_transaction_reference;
-						break;
-					}
-				}
-
+		// Vault v3.
+		$payment_source = null;
+		if ( $wc_order->get_payment_method() === PayPalGateway::ID ) {
+			$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $wc_order->get_customer_id(), PayPalGateway::ID );
+			foreach ( $wc_tokens as $token ) {
 				$payment_source = new PaymentSource(
-					'card',
+					'paypal',
 					(object) array(
-						'vault_id'          => $token_id,
-						'stored_credential' => $stored_credentials,
+						'vault_id' => $token->get_token(),
 					)
 				);
+
+				break;
+			}
+		}
+
+		if ( $wc_order->get_payment_method() === CreditCardGateway::ID ) {
+			$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $wc_order->get_customer_id(), CreditCardGateway::ID );
+			foreach ( $wc_tokens as $token ) {
+				$payment_source = $this->card_payment_source( $token->get_token(), $wc_order );
+			}
+		}
+
+		if ( $payment_source ) {
+			$order = $this->order_endpoint->create(
+				array( $purchase_unit ),
+				$shipping_preference,
+				$payer,
+				null,
+				'',
+				ApplicationContext::USER_ACTION_CONTINUE,
+				'',
+				array(),
+				$payment_source
+			);
+
+			$this->handle_paypal_order( $wc_order, $order );
+
+			$this->logger->info(
+				sprintf(
+					'Renewal for order %d is completed.',
+					$wc_order->get_id()
+				)
+			);
+
+			return;
+		}
+
+		// Vault v2.
+		$token = $this->get_token_for_customer( $customer, $wc_order );
+		if ( $token ) {
+			if ( $wc_order->get_payment_method() === CreditCardGateway::ID ) {
+				$payment_source = $this->card_payment_source( $token->id(), $wc_order );
 
 				$order = $this->order_endpoint->create(
 					array( $purchase_unit ),
@@ -247,55 +275,24 @@ class RenewalHandler {
 				return;
 			}
 
-			$payment_source = new PaymentSource(
-				'paypal',
-				(object) array(
-					'vault_id' => $token_id,
-				)
-			);
+			if ( $wc_order->get_payment_method() === PayPalGateway::ID ) {
+				$order = $this->order_endpoint->create(
+					array( $purchase_unit ),
+					$shipping_preference,
+					$payer,
+					$token
+				);
 
-			$order = $this->order_endpoint->create(
-				array( $purchase_unit ),
-				$shipping_preference,
-				$payer,
-				null,
-				'',
-				ApplicationContext::USER_ACTION_CONTINUE,
-				'',
-				array(),
-				$payment_source
-			);
+				$this->handle_paypal_order( $wc_order, $order );
 
-			$this->handle_paypal_order( $wc_order, $order );
-
-			$this->logger->info(
-				sprintf(
-					'Renewal for order %d is completed.',
-					$wc_order->get_id()
-				)
-			);
-
-			return;
+				$this->logger->info(
+					sprintf(
+						'Renewal for order %d is completed.',
+						$wc_order->get_id()
+					)
+				);
+			}
 		}
-
-		if ( apply_filters( 'woocommerce_paypal_payments_subscription_renewal_return_before_create_order_without_token', true ) ) {
-			return;
-		}
-
-		$order = $this->order_endpoint->create(
-			array( $purchase_unit ),
-			$shipping_preference,
-			$payer
-		);
-
-		$this->handle_paypal_order( $wc_order, $order );
-
-		$this->logger->info(
-			sprintf(
-				'Renewal for order %d is completed.',
-				$wc_order->get_id()
-			)
-		);
 	}
 
 	/**
@@ -317,18 +314,7 @@ class RenewalHandler {
 
 		$tokens = $this->repository->all_for_user_id( (int) $customer->get_id() );
 		if ( ! $tokens ) {
-
-			$error_message = sprintf(
-				'Payment failed. No payment tokens found for customer %d.',
-				$customer->get_id()
-			);
-
-			$wc_order->update_status(
-				'failed',
-				$error_message
-			);
-
-			$this->logger->error( $error_message );
+			return false;
 		}
 
 		$subscription = function_exists( 'wcs_get_subscription' ) ? wcs_get_subscription( $wc_order->get_meta( '_subscription_renewal' ) ) : null;
@@ -416,30 +402,42 @@ class RenewalHandler {
 	}
 
 	/**
-	 * Returns a payment token id for the given order or customer.
+	 * Returns a Card payment source.
 	 *
-	 * @param WC_Order    $wc_order WC order.
-	 * @param WC_Customer $customer WC customer.
-	 * @return string
+	 * @param string   $token Vault token id.
+	 * @param WC_Order $wc_order WC order.
+	 * @return PaymentSource
+	 * @throws NotFoundException If setting is not found.
 	 */
-	private function token_id( WC_Order $wc_order, WC_Customer $customer ): string {
-		$token_id = '';
+	private function card_payment_source( string $token, WC_Order $wc_order ): PaymentSource {
+		$properties = array(
+			'vault_id' => $token,
+		);
 
-		$tokens = $wc_order->get_payment_tokens();
-		if ( $tokens ) {
-			foreach ( $tokens as $token_id ) {
-				$token = WC_Payment_Tokens::get( $token_id );
-				if ( $token && $token->get_gateway_id() === $wc_order->get_payment_method() ) {
-					return $token->get_token();
+		if (
+			$this->settings->has( '3d_secure_contingency' )
+			&& ( $this->settings->get( '3d_secure_contingency' ) === 'SCA_ALWAYS' || $this->settings->get( '3d_secure_contingency' ) === 'SCA_WHEN_REQUIRED' )
+		) {
+			$stored_credentials = array(
+				'payment_initiator' => 'MERCHANT',
+				'payment_type'      => 'RECURRING',
+				'usage'             => 'SUBSEQUENT',
+			);
+
+			$subscriptions = wcs_get_subscriptions_for_renewal_order( $wc_order );
+			foreach ( $subscriptions as $post_id => $subscription ) {
+				$previous_transaction_reference = $subscription->get_meta( 'ppcp_previous_transaction_reference' );
+				if ( $previous_transaction_reference ) {
+					$stored_credentials['previous_transaction_reference'] = $previous_transaction_reference;
+					$properties['stored_credentials']                     = $stored_credentials;
+					break;
 				}
 			}
 		}
 
-		if ( ! $token_id ) {
-			$token    = $this->get_token_for_customer( $customer, $wc_order );
-			$token_id = $token->id();
-		}
-
-		return $token_id;
+		return new PaymentSource(
+			'card',
+			(object) $properties
+		);
 	}
 }
