@@ -430,6 +430,22 @@ class WCGatewayModule implements ModuleInterface {
 				$c->get( 'wcgateway.cli.settings.command' )
 			);
 		}
+
+		// Clears product status when appropriate.
+		add_action(
+			'woocommerce_paypal_payments_clear_apm_product_status',
+			function( Settings $settings = null ) use ( $c ): void {
+				$dcc_product_status = $c->get( 'wcgateway.helper.dcc-product-status' );
+				if ( $dcc_product_status instanceof DCCProductStatus ) {
+					$dcc_product_status->clear( $settings );
+				}
+
+				$pui_product_status = $c->get( 'wcgateway.pay-upon-invoice-product-status' );
+				if ( $pui_product_status instanceof PayUponInvoiceProductStatus ) {
+					$pui_product_status->clear( $settings );
+				}
+			}
+		);
 	}
 
 	/**

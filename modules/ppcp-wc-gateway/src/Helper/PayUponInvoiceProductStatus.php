@@ -173,4 +173,30 @@ class PayUponInvoiceProductStatus {
 		return $this->has_request_failure;
 	}
 
+	/**
+	 * Clears the persisted result to force a recheck.
+	 *
+	 * @param Settings|null $settings The settings object.
+	 * We accept a Settings object to don't override other sequential settings that are being updated elsewhere.
+	 * @return void
+	 */
+	public function clear( Settings $settings = null ): void {
+		if ( null === $settings ) {
+			$settings = $this->settings;
+		}
+
+		// Unset check stored in memory.
+		$this->current_status_cache = null;
+
+		// Unset settings flag.
+		$settings_key = 'products_pui_enabled';
+		if ( $settings->has( $settings_key ) ) {
+			$settings->set( $settings_key, false );
+			$settings->persist();
+		}
+
+		// Delete cached value.
+		$this->cache->delete( self::PUI_STATUS_CACHE_KEY );
+	}
+
 }

@@ -244,6 +244,10 @@ class SettingsPageAssets {
 							'endpoint' => \WC_AJAX::get_endpoint( RefreshFeatureStatusEndpoint::ENDPOINT ),
 							'nonce'    => wp_create_nonce( RefreshFeatureStatusEndpoint::nonce() ),
 							'button'   => '.ppcp-refresh-feature-status',
+							'messages' => array(
+								'waiting' => __( 'Checking features...', 'woocommerce-paypal-payments' ),
+								'success' => __( 'Feature status refreshed.', 'woocommerce-paypal-payments' ),
+							),
 						),
 					),
 				)
