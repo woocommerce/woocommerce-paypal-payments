@@ -3,7 +3,7 @@ import {cardFieldStyles} from "../Helper/CardFieldsHelper";
 
 class CardFieldsRenderer {
 
-    constructor(defaultConfig, errorHandler, spinner) {
+    constructor(defaultConfig, errorHandler, spinner, onCardFieldsBeforeSubmit) {
         this.defaultConfig = defaultConfig;
         this.errorHandler = errorHandler;
         this.spinner = spinner;
@@ -11,6 +11,7 @@ class CardFieldsRenderer {
         this.formValid = false;
         this.emptyFields = new Set(['number', 'cvv', 'expirationDate']);
         this.currentHostedFieldsInstance = null;
+        this.onCardFieldsBeforeSubmit = onCardFieldsBeforeSubmit;
     }
 
     render(wrapper, contextConfig) {
@@ -107,6 +108,11 @@ class CardFieldsRenderer {
                     document.querySelector('#place_order').click();
                 });
 
+                return;
+            }
+
+            if (typeof this.onCardFieldsBeforeSubmit === 'function' && !this.onCardFieldsBeforeSubmit()) {
+                this.spinner.unblock();
                 return;
             }
 
