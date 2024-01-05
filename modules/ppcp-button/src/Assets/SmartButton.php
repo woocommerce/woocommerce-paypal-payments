@@ -606,7 +606,7 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 			case 'product':
 				return $smart_button_enabled_for_current_location || $smart_button_enabled_for_mini_cart;
 			default:
-				return $smart_button_enabled_for_mini_cart;
+				return $smart_button_enabled_for_mini_cart || $this->is_block_editor();
 		}
 	}
 
