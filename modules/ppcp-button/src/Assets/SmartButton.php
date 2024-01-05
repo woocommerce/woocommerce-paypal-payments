@@ -32,6 +32,7 @@ use WooCommerce\PayPalCommerce\Button\Endpoint\ValidateCheckoutEndpoint;
 use WooCommerce\PayPalCommerce\Button\Helper\ContextTrait;
 use WooCommerce\PayPalCommerce\Button\Helper\MessagesApply;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
+use WooCommerce\PayPalCommerce\PayLaterBlock\PayLaterBlockModule;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
 use WooCommerce\PayPalCommerce\WcSubscriptions\FreeTrialHandlerTrait;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
@@ -393,7 +394,7 @@ class SmartButton implements SmartButtonInterface {
 	 * @return bool
 	 */
 	private function render_message_wrapper_registrar(): bool {
-		if ( ! $this->settings_status->is_pay_later_messaging_enabled() ) {
+		if ( ! $this->settings_status->is_pay_later_messaging_enabled() || ! $this->settings_status->has_pay_later_messaging_locations() ) {
 			return false;
 		}
 
@@ -605,7 +606,7 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 			case 'product':
 				return $smart_button_enabled_for_current_location || $smart_button_enabled_for_mini_cart;
 			default:
-				return $smart_button_enabled_for_mini_cart;
+				return $smart_button_enabled_for_mini_cart || $this->is_block_editor();
 		}
 	}
 
@@ -618,6 +619,10 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 			return false;
 		}
 
+		if ( ! $this->settings_status->is_pay_later_messaging_enabled() ) {
+			return false;
+		}
+
 		if ( ! $this->messages_apply->for_country() || $this->is_free_trial_cart() ) {
 			return false;
 		}
@@ -625,6 +630,8 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 		$location = $this->location();
 
 		$messaging_enabled_for_current_location = $this->settings_status->is_pay_later_messaging_enabled_for_location( $location );
+
+		$has_paylater_block = has_block( 'woocommerce-paypal-payments/paylater-messages' ) && PayLaterBlockModule::is_enabled();
 
 		switch ( $location ) {
 			case 'checkout':
@@ -634,8 +641,13 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 			case 'shop':
 			case 'home':
 				return $messaging_enabled_for_current_location;
+			case 'block-editor':
+				return true;
+			case 'checkout-block':
+			case 'cart-block':
+				return $has_paylater_block || $this->is_block_editor();
 			default:
-				return false;
+				return $has_paylater_block;
 		}
 	}
 
@@ -843,9 +855,10 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 		}
 
 		$product = wc_get_product();
-		$amount  = ( is_a( $product, WC_Product::class ) ) ? wc_get_price_including_tax( $product ) : 0;
-
-		if ( is_checkout() || is_cart() ) {
+		$amount  = 0;
+		if ( is_a( $product, WC_Product::class ) ) {
+			$amount = wc_get_price_including_tax( $product );
+		} elseif ( isset( WC()->cart ) ) {
 			$amount = WC()->cart->get_total( 'raw' );
 		}
 
@@ -863,6 +876,9 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 		return array(
 			'wrapper'   => '#ppcp-messages',
 			'is_hidden' => ! $this->is_pay_later_filter_enabled_for_location( $this->context() ),
+			'block'     => array(
+				'enabled' => PayLaterBlockModule::is_enabled(),
+			),
 			'amount'    => $amount,
 			'placement' => $placement,
 			'style'     => array(
@@ -878,7 +894,6 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 				'ratio'  => $ratio,
 			),
 		);
-
 	}
 
 	/**
