@@ -56,28 +56,52 @@ class CardFieldsRenderer {
             const nameField = document.getElementById('ppcp-credit-card-gateway-card-name');
             if (nameField) {
                 let styles = cardFieldStyles(nameField);
-                cardField.NameField({style: {'input': styles}}).render(nameField.parentNode);
+                let fieldOptions = {
+                    style: { 'input': styles }
+                }
+                if (nameField.getAttribute('placeholder')) {
+                    fieldOptions.placeholder = nameField.getAttribute('placeholder');
+                }
+                cardField.NameField(fieldOptions).render(nameField.parentNode);
                 nameField.remove();
             }
 
             const numberField = document.getElementById('ppcp-credit-card-gateway-card-number');
             if (numberField) {
                 let styles = cardFieldStyles(numberField);
-                cardField.NumberField({style: {'input': styles}}).render(numberField.parentNode);
+                let fieldOptions = {
+                    style: { 'input': styles }
+                }
+                if (numberField.getAttribute('placeholder')) {
+                    fieldOptions.placeholder = numberField.getAttribute('placeholder');
+                }
+                cardField.NumberField(fieldOptions).render(numberField.parentNode);
                 numberField.remove();
             }
 
             const expiryField = document.getElementById('ppcp-credit-card-gateway-card-expiry');
             if (expiryField) {
                 let styles = cardFieldStyles(expiryField);
-                cardField.ExpiryField({style: {'input': styles}}).render(expiryField.parentNode);
+                let fieldOptions = {
+                    style: { 'input': styles }
+                }
+                if (expiryField.getAttribute('placeholder')) {
+                    fieldOptions.placeholder = expiryField.getAttribute('placeholder');
+                }
+                cardField.ExpiryField(fieldOptions).render(expiryField.parentNode);
                 expiryField.remove();
             }
 
             const cvvField = document.getElementById('ppcp-credit-card-gateway-card-cvc');
             if (cvvField) {
                 let styles = cardFieldStyles(cvvField);
-                cardField.CVVField({style: {'input': styles}}).render(cvvField.parentNode);
+                let fieldOptions = {
+                    style: { 'input': styles }
+                }
+                if (cvvField.getAttribute('placeholder')) {
+                    fieldOptions.placeholder = cvvField.getAttribute('placeholder');
+                }
+                cardField.CVVField(fieldOptions).render(cvvField.parentNode);
                 cvvField.remove();
             }
 
