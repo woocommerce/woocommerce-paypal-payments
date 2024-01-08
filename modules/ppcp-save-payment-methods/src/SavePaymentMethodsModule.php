@@ -176,7 +176,7 @@ class SavePaymentMethodsModule implements ModuleInterface {
 		add_action(
 			'wp_enqueue_scripts',
 			function() use ( $c ) {
-				if ( ! is_user_logged_in() || ! $this->is_add_payment_method_page() ) {
+				if ( ! is_user_logged_in() || ! ( $this->is_add_payment_method_page() || $this->is_subscription_change_payment_method_page() ) ) {
 					return;
 				}
 

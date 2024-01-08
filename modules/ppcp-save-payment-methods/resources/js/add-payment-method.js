@@ -38,54 +38,57 @@ document.addEventListener(
                 .then((paypal) => {
                     errorHandler.clear();
 
-                    paypal.Buttons(
-                        {
-                            createVaultSetupToken: async () => {
-                                const response = await fetch(ppcp_add_payment_method.ajax.create_setup_token.endpoint, {
-                                    method: "POST",
-                                    credentials: 'same-origin',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                    },
-                                    body: JSON.stringify({
-                                        nonce: ppcp_add_payment_method.ajax.create_setup_token.nonce,
+                    const paypalButtonContainer = document.querySelector(`#ppc-button-${PaymentMethods.PAYPAL}-save-payment-method`);
+                    if(paypalButtonContainer) {
+                        paypal.Buttons(
+                            {
+                                createVaultSetupToken: async () => {
+                                    const response = await fetch(ppcp_add_payment_method.ajax.create_setup_token.endpoint, {
+                                        method: "POST",
+                                        credentials: 'same-origin',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                        },
+                                        body: JSON.stringify({
+                                            nonce: ppcp_add_payment_method.ajax.create_setup_token.nonce,
+                                        })
                                     })
-                                })
 
-                                const result = await response.json()
-                                if (result.data.id) {
-                                    return result.data.id
-                                }
+                                    const result = await response.json()
+                                    if (result.data.id) {
+                                        return result.data.id
+                                    }
 
-                                errorHandler.message(ppcp_add_payment_method.error_message);
-                            },
-                            onApprove: async ({vaultSetupToken}) => {
-                                const response = await fetch(ppcp_add_payment_method.ajax.create_payment_token.endpoint, {
-                                    method: "POST",
-                                    credentials: 'same-origin',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                    },
-                                    body: JSON.stringify({
-                                        nonce: ppcp_add_payment_method.ajax.create_payment_token.nonce,
-                                        vault_setup_token: vaultSetupToken,
+                                    errorHandler.message(ppcp_add_payment_method.error_message);
+                                },
+                                onApprove: async ({vaultSetupToken}) => {
+                                    const response = await fetch(ppcp_add_payment_method.ajax.create_payment_token.endpoint, {
+                                        method: "POST",
+                                        credentials: 'same-origin',
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                        },
+                                        body: JSON.stringify({
+                                            nonce: ppcp_add_payment_method.ajax.create_payment_token.nonce,
+                                            vault_setup_token: vaultSetupToken,
+                                        })
                                     })
-                                })
 
-                                const result = await response.json();
-                                if(result.success === true) {
-                                    window.location.href = ppcp_add_payment_method.payment_methods_page;
-                                    return;
+                                    const result = await response.json();
+                                    if(result.success === true) {
+                                        window.location.href = ppcp_add_payment_method.payment_methods_page;
+                                        return;
+                                    }
+
+                                    errorHandler.message(ppcp_add_payment_method.error_message);
+                                },
+                                onError: (error) => {
+                                    console.error(error)
+                                    errorHandler.message(ppcp_add_payment_method.error_message);
                                 }
-
-                                errorHandler.message(ppcp_add_payment_method.error_message);
                             },
-                            onError: (error) => {
-                                console.error(error)
-                                errorHandler.message(ppcp_add_payment_method.error_message);
-                            }
-                        },
-                    ).render(`#ppc-button-${PaymentMethods.PAYPAL}-save-payment-method`);
+                        ).render(`#ppc-button-${PaymentMethods.PAYPAL}-save-payment-method`);
+                    }
 
                     const cardField = paypal.CardFields({
                         createVaultSetupToken: async () => {
@@ -167,7 +170,7 @@ document.addEventListener(
                         }
                     }
 
-                    document.querySelector('#place_order').addEventListener("click", (event) => {
+                    document.querySelector('#place_order')?.addEventListener("click", (event) => {
                         event.preventDefault();
 
                         cardField.submit()
