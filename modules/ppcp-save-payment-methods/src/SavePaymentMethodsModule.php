@@ -28,6 +28,7 @@ use WooCommerce\PayPalCommerce\Vendor\Psr\Container\ContainerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Endpoint\SubscriptionChangePaymentMethod;
 
 /**
  * Class SavePaymentMethodsModule
@@ -211,13 +212,16 @@ class SavePaymentMethodsModule implements ModuleInterface {
 						'ppcp-add-payment-method',
 						'ppcp_add_payment_method',
 						array(
-							'client_id'            => $c->get( 'button.client_id' ),
-							'merchant_id'          => $c->get( 'api.merchant_id' ),
-							'id_token'             => $id_token,
-							'payment_methods_page' => wc_get_account_endpoint_url( 'payment-methods' ),
-							'error_message'        => __( 'Could not save payment method.', 'woocommerce-paypal-payments' ),
-							'verification_method'  => $verification_method,
-							'ajax'                 => array(
+							'client_id'               => $c->get( 'button.client_id' ),
+							'merchant_id'             => $c->get( 'api.merchant_id' ),
+							'id_token'                => $id_token,
+							'payment_methods_page'    => wc_get_account_endpoint_url( 'payment-methods' ),
+							'view_subscriptions_page' => wc_get_account_endpoint_url( 'view-subscription' ),
+							'is_subscription_change_payment_page' => $this->is_subscription_change_payment_method_page(),
+							'subscription_id_to_change_payment' => $this->is_subscription_change_payment_method_page() ? (int) $_GET['change_payment_method'] : 0,
+							'error_message'           => __( 'Could not save payment method.', 'woocommerce-paypal-payments' ),
+							'verification_method'     => $verification_method,
+							'ajax'                    => array(
 								'create_setup_token'   => array(
 									'endpoint' => \WC_AJAX::get_endpoint( CreateSetupToken::ENDPOINT ),
 									'nonce'    => wp_create_nonce( CreateSetupToken::nonce() ),
@@ -225,6 +229,10 @@ class SavePaymentMethodsModule implements ModuleInterface {
 								'create_payment_token' => array(
 									'endpoint' => \WC_AJAX::get_endpoint( CreatePaymentToken::ENDPOINT ),
 									'nonce'    => wp_create_nonce( CreatePaymentToken::nonce() ),
+								),
+								'subscription_change_payment_method' => array(
+									'endpoint' => \WC_AJAX::get_endpoint( SubscriptionChangePaymentMethod::ENDPOINT ),
+									'nonce'    => wp_create_nonce( SubscriptionChangePaymentMethod::nonce() ),
 								),
 							),
 						)

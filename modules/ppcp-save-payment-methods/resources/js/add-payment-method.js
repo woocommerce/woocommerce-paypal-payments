@@ -128,6 +128,33 @@ document.addEventListener(
 
                             const result = await response.json();
                             if(result.success === true) {
+                                if(ppcp_add_payment_method.is_subscription_change_payment_page) {
+                                    const subscriptionId = ppcp_add_payment_method.subscription_id_to_change_payment;
+                                    if(subscriptionId && result.data) {
+                                        const req = await fetch(ppcp_add_payment_method.ajax.subscription_change_payment_method.endpoint, {
+                                            method: "POST",
+                                            credentials: 'same-origin',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                            },
+                                            body: JSON.stringify({
+                                                nonce: ppcp_add_payment_method.ajax.subscription_change_payment_method.nonce,
+                                                subscription_id: subscriptionId,
+                                                payment_method: getCurrentPaymentMethod(),
+                                                wc_payment_token_id: result.data
+                                            })
+                                        });
+
+                                        const res = await req.json();
+                                        if (res.success === true) {
+                                            window.location.href = `${ppcp_add_payment_method.view_subscriptions_page}/${subscriptionId}`;
+                                            return;
+                                        }
+                                    }
+
+                                    return;
+                                }
+
                                 window.location.href = ppcp_add_payment_method.payment_methods_page;
                                 return;
                             }

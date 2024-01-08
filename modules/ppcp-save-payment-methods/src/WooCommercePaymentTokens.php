@@ -70,17 +70,17 @@ class WooCommercePaymentTokens {
 	 * @param string $token The PayPal payment token.
 	 * @param string $email The PayPal customer email.
 	 *
-	 * @return void
+	 * @return int
 	 */
 	public function create_payment_token_paypal(
 		int $customer_id,
 		string $token,
 		string $email
-	): void {
+	): int {
 
 		$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $customer_id, PayPalGateway::ID );
 		if ( $this->payment_token_helper->token_exist( $wc_tokens, $token ) ) {
-			return;
+			return 0;
 		}
 
 		$payment_token_paypal = $this->payment_token_factory->create( 'paypal' );
@@ -101,6 +101,8 @@ class WooCommercePaymentTokens {
 				"Could not create WC payment token PayPal for customer {$customer_id}. " . $exception->getMessage()
 			);
 		}
+
+		return $payment_token_paypal->get_id();
 	}
 
 	/**
@@ -109,12 +111,12 @@ class WooCommercePaymentTokens {
 	 * @param int      $customer_id The WC customer ID.
 	 * @param stdClass $payment_token The Credit Card payment token.
 	 *
-	 * @return void
+	 * @return int
 	 */
-	public function create_payment_token_card( int $customer_id, stdClass $payment_token ): void {
+	public function create_payment_token_card( int $customer_id, stdClass $payment_token ): int {
 		$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $customer_id, CreditCardGateway::ID );
 		if ( $this->payment_token_helper->token_exist( $wc_tokens, $payment_token->id ) ) {
-			return;
+			return 0;
 		}
 
 		$token = new WC_Payment_Token_CC();
@@ -139,6 +141,8 @@ class WooCommercePaymentTokens {
 				"Could not create WC payment token card for customer {$customer_id}. " . $exception->getMessage()
 			);
 		}
+
 		$token->save();
+		return $token->get_id();
 	}
 }

@@ -80,7 +80,8 @@ class CreatePaymentToken implements EndpointInterface {
 	 */
 	public function handle_request(): bool {
 		try {
-			$data = $this->request_data->read_request( $this->nonce() );
+			$data        = $this->request_data->read_request( $this->nonce() );
+			$wc_token_id = 0;
 
 			/**
 			 * Suppress ArgumentTypeCoercion
@@ -107,7 +108,7 @@ class CreatePaymentToken implements EndpointInterface {
 						$email = $result->payment_source->paypal->email_address;
 					}
 
-					$this->wc_payment_tokens->create_payment_token_paypal(
+					$wc_token_id = $this->wc_payment_tokens->create_payment_token_paypal(
 						$current_user_id,
 						$result->id,
 						$email
@@ -115,11 +116,11 @@ class CreatePaymentToken implements EndpointInterface {
 				}
 
 				if ( isset( $result->payment_source->card ) ) {
-					$this->wc_payment_tokens->create_payment_token_card( $current_user_id, $result );
+					$wc_token_id = $this->wc_payment_tokens->create_payment_token_card( $current_user_id, $result );
 				}
 			}
 
-			wp_send_json_success( $result );
+			wp_send_json_success( $wc_token_id );
 			return true;
 		} catch ( Exception $exception ) {
 			wp_send_json_error();

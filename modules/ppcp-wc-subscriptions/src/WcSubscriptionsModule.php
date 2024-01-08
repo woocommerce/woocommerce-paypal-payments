@@ -23,6 +23,7 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Processor\TransactionIdHandlingTrait;
 use WooCommerce\PayPalCommerce\WcGateway\Settings\Settings;
+use WooCommerce\PayPalCommerce\WcSubscriptions\Endpoint\SubscriptionChangePaymentMethod;
 use WooCommerce\PayPalCommerce\WcSubscriptions\Helper\SubscriptionHelper;
 
 /**
@@ -167,6 +168,16 @@ class WcSubscriptionsModule implements ModuleInterface {
 				}
 
 				return $methods;
+			}
+		);
+
+		add_action(
+			'wc_ajax_' . SubscriptionChangePaymentMethod::ENDPOINT,
+			static function () use ( $c ) {
+				$endpoint = $c->get( 'wc-subscriptions.endpoint.subscription-change-payment-method' );
+				assert( $endpoint instanceof SubscriptionChangePaymentMethod );
+
+				$endpoint->handle_request();
 			}
 		);
 	}
