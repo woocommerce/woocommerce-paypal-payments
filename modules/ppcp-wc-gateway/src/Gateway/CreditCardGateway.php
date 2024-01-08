@@ -400,18 +400,25 @@ class CreditCardGateway extends \WC_Payment_Gateway_CC {
 		 * If customer is changing subscription payment.
 		 */
 		if (
-			// phpcs:ignore WordPress.Security.NonceVerification.Missing
+			// phpcs:disable WordPress.Security.NonceVerification.Missing
 			isset( $_POST['woocommerce_change_payment'] )
 			&& $this->subscription_helper->has_subscription( $wc_order->get_id() )
 			&& $this->subscription_helper->is_subscription_change_payment()
-			&& $saved_credit_card
 		) {
-			$payment_token = WC_Payment_Tokens::get($saved_credit_card);
-			if($payment_token) {
-				$wc_order->add_payment_token($payment_token);
-				$wc_order->save();
+			$saved_credit_card = wc_clean( wp_unslash( $_POST['wc-ppcp-credit-card-gateway-payment-token'] ?? '' ) );
+			if ( ! $saved_credit_card ) {
+				$saved_credit_card = wc_clean( wp_unslash( $_POST['saved_credit_card'] ?? '' ) );
+				// phpcs:enable WordPress.Security.NonceVerification.Missing
+			}
 
-				return $this->handle_payment_success( $wc_order );
+			if ( $saved_credit_card ) {
+				$payment_token = WC_Payment_Tokens::get( $saved_credit_card );
+				if ( $payment_token ) {
+					$wc_order->add_payment_token( $payment_token );
+					$wc_order->save();
+
+					return $this->handle_payment_success( $wc_order );
+				}
 			}
 
 			wc_add_notice( __( 'Could not change payment.', 'woocommerce-paypal-payments' ), 'error' );

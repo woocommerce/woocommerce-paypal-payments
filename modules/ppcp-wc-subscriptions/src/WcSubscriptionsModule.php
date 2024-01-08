@@ -117,10 +117,6 @@ class WcSubscriptionsModule implements ModuleInterface {
 			 * @psalm-suppress MissingClosureParamType
 			 */
 			function ( $description, $id ) use ( $c ) {
-				if ( $c->has( 'save-payment-methods.eligible' ) && $c->get( 'save-payment-methods.eligible' ) ) {
-					return $description;
-				}
-
 				$payment_token_repository = $c->get( 'vaulting.repository.payment-token' );
 				$settings                 = $c->get( 'wcgateway.settings' );
 				$subscription_helper      = $c->get( 'wc-subscriptions.helper' );
