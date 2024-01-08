@@ -1,0 +1,19 @@
+.ppcp-overlay-parent {
+	display: grid;
+	grid-template-columns: 1fr;
+}
+
+.ppcp-overlay-child {
+	grid-row-start: 1;
+	grid-column-start: 1;
+}
+
+.ppcp-unclicable-overlay {
+	z-index: 10;
+}
+
+.ppcp-paylater-unavailable {
+	p.block-editor-warning__message {
+		margin-bottom: 10px;
+	}
+}

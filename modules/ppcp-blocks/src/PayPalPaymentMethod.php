@@ -224,19 +224,22 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 			}
 		}
 
-		$disabled_funding_sources = explode( ',', $script_data['url_params']['disable-funding'] ?? '' ) ?: array();
-		$funding_sources          = array_values(
-			array_diff(
-				array_keys( $this->all_funding_sources ),
-				$disabled_funding_sources
-			)
-		);
+		$funding_sources = array();
+		if ( ! $this->is_editing() ) {
+			$disabled_funding_sources = explode( ',', $script_data['url_params']['disable-funding'] ?? '' ) ?: array();
+			$funding_sources          = array_values(
+				array_diff(
+					array_keys( $this->all_funding_sources ),
+					$disabled_funding_sources
+				)
+			);
+		}
 
 		return array(
 			'id'                          => $this->gateway->id,
 			'title'                       => $this->gateway->title,
 			'description'                 => $this->gateway->description,
-			'enabled'                     => $this->settings_status->is_smart_button_enabled_for_location( $script_data['context'] ),
+			'enabled'                     => $this->settings_status->is_smart_button_enabled_for_location( $script_data['context'] ?? 'checkout' ),
 			'fundingSource'               => $this->session_handler->funding_source(),
 			'finalReviewEnabled'          => $this->final_review_enabled,
 			'addPlaceOrderMethod'         => $this->add_place_order_method,
@@ -252,5 +255,16 @@ class PayPalPaymentMethod extends AbstractPaymentMethodType {
 			),
 			'scriptData'                  => $script_data,
 		);
+	}
+
+	/**
+	 * Checks if it is the block editing mode.
+	 */
+	private function is_editing(): bool {
+		if ( ! function_exists( 'get_current_screen' ) ) {
+			return false;
+		}
+		$screen = get_current_screen();
+		return $screen && $screen->is_block_editor();
 	}
 }

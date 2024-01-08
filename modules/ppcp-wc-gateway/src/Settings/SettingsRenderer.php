@@ -533,19 +533,5 @@ $data_rows_html
 		</tr>
 		<?php
 	}
-
-	/**
-	 * Checks if vaulting admin message can be displayed.
-	 *
-	 * @return bool Whether the message can be displayed or not.
-	 */
-	private function can_display_vaulting_admin_message(): bool {
-		if ( State::STATE_ONBOARDED !== $this->state->current_state() ) {
-			return false;
-		}
-
-		return $this->is_paypal_checkout_screen()
-			&& ( $this->paypal_vaulting_is_enabled() || $this->settings_status->is_pay_later_messaging_enabled() );
-	}
 }
 

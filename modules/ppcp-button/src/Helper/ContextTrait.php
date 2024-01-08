@@ -131,6 +131,10 @@ trait ContextTrait {
 			return 'add-payment-method';
 		}
 
+		if ( $this->is_block_editor() ) {
+			return 'block-editor';
+		}
+
 		return 'mini-cart';
 	}
 
@@ -206,5 +210,16 @@ trait ContextTrait {
 		$page_id = wc_get_page_id( 'myaccount' );
 
 		return $page_id && is_page( $page_id ) && isset( $wp->query_vars['add-payment-method'] );
+	}
+
+	/**
+	 * Checks if it is the block editor page.
+	 */
+	protected function is_block_editor(): bool {
+		if ( ! function_exists( 'get_current_screen' ) ) {
+			return false;
+		}
+		$screen = get_current_screen();
+		return $screen && $screen->is_block_editor();
 	}
 }
