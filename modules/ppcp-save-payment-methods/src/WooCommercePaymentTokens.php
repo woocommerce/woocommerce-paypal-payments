@@ -132,6 +132,13 @@ class WooCommercePaymentTokens {
 			$token->set_card_type( $brand );
 		}
 
+		try {
+			$token->save();
+		} catch ( Exception $exception ) {
+			$this->logger->error(
+				"Could not create WC payment token card for customer {$customer_id}. " . $exception->getMessage()
+			);
+		}
 		$token->save();
 	}
 }
