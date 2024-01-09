@@ -198,6 +198,13 @@ document.addEventListener(
                     }
 
                     document.querySelector('#place_order')?.addEventListener("click", (event) => {
+                        if (
+                            getCurrentPaymentMethod() !== 'ppcp-credit-card-gateway'
+                            || document.querySelector('input[name="wc-ppcp-credit-card-gateway-payment-token"]:checked')?.value !== 'new'
+                        ) {
+                            return;
+                        }
+
                         event.preventDefault();
 
                         cardField.submit()
