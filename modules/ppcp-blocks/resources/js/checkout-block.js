@@ -1,6 +1,15 @@
 import {useEffect, useState} from '@wordpress/element';
 import {registerExpressPaymentMethod, registerPaymentMethod} from '@woocommerce/blocks-registry';
-import {mergeWcAddress, paypalAddressToWc, paypalOrderToWcAddresses} from "./Helper/Address";
+import {
+    mergeWcAddress,
+    paypalAddressToWc,
+    paypalOrderToWcAddresses,
+    paypalSubscriptionToWcAddresses
+} from "./Helper/Address";
+import {
+    cartHasSubscriptionProducts,
+    isPayPalSubscription
+} from "./Helper/Subscription";
 import {
     loadPaypalScriptPromise
 } from '../../../ppcp-button/resources/js/modules/Helper/ScriptLoading'
@@ -9,7 +18,6 @@ import {
 } from '../../../ppcp-button/resources/js/modules/Helper/Style'
 import buttonModuleWatcher from "../../../ppcp-button/resources/js/modules/ButtonModuleWatcher";
 import BlockCheckoutMessagesBootstrap from "./Bootstrap/BlockCheckoutMessagesBootstrap";
-
 const config = wc.wcSettings.getSetting('ppcp-gateway_data');
 
 window.ppcpFundingSource = config.fundingSource;
@@ -95,6 +103,78 @@ const PayPalComponent = ({
                 throw new Error(config.scriptData.labels.error.generic);
             }
             return json.data.id;
+        } catch (err) {
+            console.error(err);
+
+            onError(err.message);
+
+            onClose();
+
+            throw err;
+        }
+    };
+
+    const createSubscription = async (data, actions) => {
+        return actions.subscription.create({
+            'plan_id': config.scriptData.subscription_plan_id
+        });
+    };
+
+    const handleApproveSubscription = async (data, actions) => {
+        try {
+            const subscription = await actions.subscription.get();
+
+            if (subscription) {
+                const addresses = paypalSubscriptionToWcAddresses(subscription);
+
+                let promises = [
+                    // save address on server
+                    wp.data.dispatch('wc/store/cart').updateCustomerData({
+                        billing_address: addresses.billingAddress,
+                        shipping_address: addresses.shippingAddress,
+                    }),
+                ];
+                if (!config.finalReviewEnabled) {
+                    // set address in UI
+                    promises.push(wp.data.dispatch('wc/store/cart').setBillingAddress(addresses.billingAddress));
+                    if (shippingData.needsShipping) {
+                        promises.push(wp.data.dispatch('wc/store/cart').setShippingAddress(addresses.shippingAddress))
+                    }
+                }
+                await Promise.all(promises);
+            }
+
+            setPaypalOrder(subscription);
+
+            const res = await fetch(config.scriptData.ajax.approve_subscription.endpoint, {
+                method: 'POST',
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    nonce: config.scriptData.ajax.approve_subscription.nonce,
+                    order_id: data.orderID,
+                    subscription_id: data.subscriptionID
+                })
+            });
+
+            const json = await res.json();
+
+            if (!json.success) {
+                if (typeof actions !== 'undefined' && typeof actions.restart !== 'undefined') {
+                    return actions.restart();
+                }
+                if (json.data?.message) {
+                    throw new Error(json.data.message);
+                }
+
+                throw new Error(config.scriptData.labels.error.generic)
+            }
+
+            if (config.finalReviewEnabled) {
+                location.href = getCheckoutRedirectUrl();
+            } else {
+                setGotoContinuationOnError(true);
+                onSubmit();
+            }
         } catch (err) {
             console.error(err);
 
@@ -328,6 +408,21 @@ const PayPalComponent = ({
 
     const PayPalButton = paypal.Buttons.driver("react", { React, ReactDOM });
 
+    if(isPayPalSubscription(config.scriptData)) {
+        return (
+            <PayPalButton
+                fundingSource={fundingSource}
+                style={style}
+                onClick={handleClick}
+                onCancel={onClose}
+                onError={onClose}
+                createSubscription={createSubscription}
+                onApprove={handleApproveSubscription}
+                onShippingChange={handleShippingChange}
+            />
+        );
+    }
+
     return (
         <PayPalButton
             fundingSource={fundingSource}
@@ -343,6 +438,10 @@ const PayPalComponent = ({
 }
 
 const features = ['products'];
+
+if(cartHasSubscriptionProducts(config.scriptData)) {
+    features.push('subscriptions');
+}
 
 if ((config.addPlaceOrderMethod || config.usePlaceOrder) && !config.scriptData.continuation) {
     let descriptionElement = <div dangerouslySetInnerHTML={{__html: config.description}}></div>;
@@ -360,7 +459,9 @@ if ((config.addPlaceOrderMethod || config.usePlaceOrder) && !config.scriptData.c
         edit: descriptionElement,
         placeOrderButtonLabel: config.placeOrderButtonText,
         ariaLabel: config.title,
-        canMakePayment: () => config.enabled,
+        canMakePayment: () => {
+            return config.enabled;
+        },
         supports: {
             features: features,
         },
@@ -374,7 +475,9 @@ if (config.scriptData.continuation) {
         content: <PayPalComponent isEditing={false}/>,
         edit: <PayPalComponent isEditing={true}/>,
         ariaLabel: config.title,
-        canMakePayment: () => true,
+        canMakePayment: () => {
+            return true;
+        },
         supports: {
             features: [...features, 'ppcp_continuation'],
         },
