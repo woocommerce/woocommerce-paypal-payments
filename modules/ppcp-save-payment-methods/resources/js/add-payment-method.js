@@ -28,6 +28,14 @@ document.addEventListener(
             init()
         });
 
+        if(ppcp_add_payment_method.is_subscription_change_payment_page) {
+            const saveToAccount = document.querySelector('#wc-ppcp-credit-card-gateway-new-payment-method');
+            if(saveToAccount) {
+                saveToAccount.checked = true;
+                saveToAccount.disabled = true;
+            }
+        }
+
         setTimeout(() => {
             loadScript({
                 clientId: ppcp_add_payment_method.client_id,

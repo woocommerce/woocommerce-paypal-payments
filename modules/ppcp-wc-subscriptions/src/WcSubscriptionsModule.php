@@ -152,8 +152,11 @@ class WcSubscriptionsModule implements ModuleInterface {
 
 		add_filter(
 			'woocommerce_available_payment_gateways',
-			function( array $methods ): array {
-				if ( ! is_wc_endpoint_url( 'order-pay' ) ) {
+			function( array $methods ) use ( $c ) : array {
+				if (
+					! is_wc_endpoint_url( 'order-pay' )
+					|| $c->has( 'save-payment-methods.eligible' ) && $c->get( 'save-payment-methods.eligible' )
+				) {
 					return $methods;
 				}
 
@@ -261,18 +264,15 @@ class WcSubscriptionsModule implements ModuleInterface {
 			&& $subscription_helper->is_subscription_change_payment()
 		) {
 			$tokens = WC_Payment_Tokens::get_customer_tokens( get_current_user_id(), PayPalGateway::ID );
-			$output = sprintf(
-				'<p class="form-row form-row-wide"><label>%1$s</label><select id="saved-paypal-payment" name="saved_paypal_payment">',
-				esc_html__( 'Select PayPal payment', 'woocommerce-paypal-payments' )
-			);
+
+			$output = '<ul class="wc-saved-payment-methods">';
 			foreach ( $tokens as $token ) {
-				$output .= sprintf(
-					'<option value="%1$s">%2$s</option>',
-					$token->get_id(),
-					$token->get_meta( 'email' ) ?? ''
-				);
+				$output     .= '<li>';
+					$output .= sprintf( '<input name="saved_paypal_payment" type="radio" value="%s" style="width:auto;" checked="checked">', $token->get_id() );
+					$output .= sprintf( '<label for="saved_paypal_payment">%s</label>', $token->get_meta( 'email' ) ?? '' );
+				$output     .= '</li>';
 			}
-			$output .= '</select></p>';
+			$output .= '</ul>';
 
 			return $output;
 		}
