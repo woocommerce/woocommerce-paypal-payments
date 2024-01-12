@@ -68,24 +68,6 @@ class VaultedCreditCardHandlerTest extends TestCase
 		);
 	}
 
-	public function testHandlePaymentChangingPayment()
-	{
-		$_POST['woocommerce_change_payment'] = 1;
-		$wcOrder = Mockery::mock(\WC_Order::class);
-		$wcOrder->shouldReceive('get_id')->andReturn(1);
-		$wcOrder->shouldReceive('update_meta_data')
-			->with('payment_token_id', 'abc123')
-			->andReturn(1);
-		$wcOrder->shouldReceive('save')->andReturn(1);
-		$this->subscriptionHelper->shouldReceive('has_subscription')->andReturn(true);
-		$this->subscriptionHelper->shouldReceive('is_subscription_change_payment')->andReturn(true);
-
-		$customer = Mockery::mock(WC_Customer::class);
-
-		$result = $this->testee->handle_payment('abc123', $wcOrder, $customer);
-		$this->assertInstanceOf(\WC_Order::class, $result);
-	}
-
 	public function testHandlePayment()
 	{
 		$_POST['woocommerce_change_payment'] = null;

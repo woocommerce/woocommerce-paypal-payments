@@ -12,11 +12,11 @@ namespace WooCommerce\PayPalCommerce\WcGateway\Gateway;
 use Exception;
 use Psr\Log\LoggerInterface;
 use WC_Order;
+use WC_Payment_Tokens;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\OrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\OrderStatus;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\PaymentToken;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\PayPalApiException;
-use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
 use WooCommerce\PayPalCommerce\Onboarding\State;
 use WooCommerce\PayPalCommerce\Session\SessionHandler;
@@ -522,10 +522,21 @@ class PayPalGateway extends \WC_Payment_Gateway {
 			// phpcs:ignore WordPress.Security.NonceVerification.Missing
 			$saved_paypal_payment = wc_clean( wp_unslash( $_POST['saved_paypal_payment'] ?? '' ) );
 			if ( $saved_paypal_payment ) {
-				$wc_order->update_meta_data( 'payment_token_id', $saved_paypal_payment );
-				$wc_order->save();
+				$payment_token = WC_Payment_Tokens::get( $saved_paypal_payment );
+				if ( $payment_token ) {
+					$wc_order->add_payment_token( $payment_token );
+					$wc_order->save();
 
-				return $this->handle_payment_success( $wc_order );
+					return $this->handle_payment_success( $wc_order );
+				}
+
+				wc_add_notice( __( 'Could not change payment.', 'woocommerce-paypal-payments' ), 'error' );
+
+				return array(
+					'result'       => 'failure',
+					'redirect'     => wc_get_checkout_url(),
+					'errorMessage' => __( 'Could not change payment.', 'woocommerce-paypal-payments' ),
+				);
 			}
 		}
 
