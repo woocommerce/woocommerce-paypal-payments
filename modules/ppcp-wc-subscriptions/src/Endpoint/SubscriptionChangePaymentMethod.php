@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WooCommerce\PayPalCommerce\WcSubscriptions\Endpoint;
 
 use Exception;
+use WC_Order;
 use WC_Payment_Tokens;
 use WooCommerce\PayPalCommerce\Button\Endpoint\EndpointInterface;
 use WooCommerce\PayPalCommerce\Button\Endpoint\RequestData;
@@ -57,16 +58,21 @@ class SubscriptionChangePaymentMethod implements EndpointInterface {
 			$data = $this->request_data->read_request( $this->nonce() );
 
 			$subscription = wcs_get_subscription( $data['subscription_id'] );
-			$subscription->set_payment_method( $data['payment_method'] );
+			if ( $subscription instanceof WC_Order ) {
+				$subscription->set_payment_method( $data['payment_method'] );
 
-			$wc_payment_token = WC_Payment_Tokens::get( $data['wc_payment_token_id'] );
-			if ( $wc_payment_token ) {
-				$subscription->add_payment_token( $wc_payment_token );
-				$subscription->save();
+				$wc_payment_token = WC_Payment_Tokens::get( $data['wc_payment_token_id'] );
+				if ( $wc_payment_token ) {
+					$subscription->add_payment_token( $wc_payment_token );
+					$subscription->save();
+				}
+
+				wp_send_json_success();
+				return true;
 			}
 
-			wp_send_json_success();
-			return true;
+			wp_send_json_error();
+			return false;
 		} catch ( Exception $exception ) {
 			wp_send_json_error();
 			return false;

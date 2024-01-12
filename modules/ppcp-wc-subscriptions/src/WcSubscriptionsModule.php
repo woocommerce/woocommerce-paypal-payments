@@ -11,6 +11,7 @@ namespace WooCommerce\PayPalCommerce\WcSubscriptions;
 
 use Psr\Log\LoggerInterface;
 use WC_Order;
+use WC_Payment_Token_CC;
 use WC_Payment_Tokens;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
@@ -309,13 +310,14 @@ class WcSubscriptionsModule implements ModuleInterface {
 				esc_html__( 'Select a saved Credit Card payment', 'woocommerce-paypal-payments' )
 			);
 			foreach ( $tokens as $token ) {
+				if ( $token instanceof WC_Payment_Token_CC ) {
 					$output .= sprintf(
 						'<option value="%1$s">%2$s ...%3$s</option>',
 						$token->get_id(),
 						$token->get_card_type(),
 						$token->get_last4()
 					);
-
+				}
 			}
 			$output .= '</select></p>';
 
