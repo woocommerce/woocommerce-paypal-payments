@@ -286,6 +286,7 @@ const PayPalComponent = ({
     };
 
     let handleShippingChange = null;
+    let handleSubscriptionShippingChange = null;
     if (shippingData.needsShipping && !config.finalReviewEnabled) {
         handleShippingChange = async (data, actions) => {
             try {
@@ -316,6 +317,30 @@ const PayPalComponent = ({
                 if (!json.success) {
                     throw new Error(json.data.message);
                 }
+            } catch (e) {
+                console.error(e);
+
+                actions.reject();
+            }
+        };
+
+        handleSubscriptionShippingChange = async (data, actions) => {
+            console.log('--- handleSubscriptionShippingChange', data, actions);
+
+            try {
+                const shippingOptionId = data.selected_shipping_option?.id;
+                if (shippingOptionId) {
+                    await shippingData.setSelectedRates(shippingOptionId);
+                }
+
+                const address = paypalAddressToWc(data.shipping_address);
+
+                await wp.data.dispatch('wc/store/cart').updateCustomerData({
+                    shipping_address: address,
+                });
+
+                await shippingData.setShippingAddress(address);
+
             } catch (e) {
                 console.error(e);
 
@@ -418,7 +443,7 @@ const PayPalComponent = ({
                 onError={onClose}
                 createSubscription={createSubscription}
                 onApprove={handleApproveSubscription}
-                onShippingChange={handleShippingChange}
+                onShippingChange={handleSubscriptionShippingChange}
             />
         );
     }
@@ -438,74 +463,86 @@ const PayPalComponent = ({
 }
 
 const features = ['products'];
+let block_enabled = true;
 
 if(cartHasSubscriptionProducts(config.scriptData)) {
+    // Don't show buttons on block cart page if using vault v2
+    if (
+        config.scriptData.context === "cart-block"
+        && ! isPayPalSubscription(config.scriptData) // using vaulting
+        && ! config.scriptData?.save_payment_methods?.id_token // not vault v3
+    ) {
+        block_enabled = false;
+    }
+
     features.push('subscriptions');
 }
 
-if ((config.addPlaceOrderMethod || config.usePlaceOrder) && !config.scriptData.continuation) {
-    let descriptionElement = <div dangerouslySetInnerHTML={{__html: config.description}}></div>;
-    if (config.placeOrderButtonDescription) {
-        descriptionElement = <div>
-            <p dangerouslySetInnerHTML={{__html: config.description}}></p>
-            <p style={{textAlign: 'center'}} className={'ppcp-place-order-description'} dangerouslySetInnerHTML={{__html: config.placeOrderButtonDescription}}></p>
-        </div>;
-    }
+if (block_enabled) {
+    if ((config.addPlaceOrderMethod || config.usePlaceOrder) && !config.scriptData.continuation) {
+        let descriptionElement = <div dangerouslySetInnerHTML={{__html: config.description}}></div>;
+        if (config.placeOrderButtonDescription) {
+            descriptionElement = <div>
+                <p dangerouslySetInnerHTML={{__html: config.description}}></p>
+                <p style={{textAlign: 'center'}} className={'ppcp-place-order-description'} dangerouslySetInnerHTML={{__html: config.placeOrderButtonDescription}}></p>
+            </div>;
+        }
 
-    registerPaymentMethod({
-        name: config.id,
-        label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
-        content: descriptionElement,
-        edit: descriptionElement,
-        placeOrderButtonLabel: config.placeOrderButtonText,
-        ariaLabel: config.title,
-        canMakePayment: () => {
-            return config.enabled;
-        },
-        supports: {
-            features: features,
-        },
-    });
-}
-
-if (config.scriptData.continuation) {
-    registerPaymentMethod({
-        name: config.id,
-        label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
-        content: <PayPalComponent isEditing={false}/>,
-        edit: <PayPalComponent isEditing={true}/>,
-        ariaLabel: config.title,
-        canMakePayment: () => {
-            return true;
-        },
-        supports: {
-            features: [...features, 'ppcp_continuation'],
-        },
-    });
-} else if (!config.usePlaceOrder) {
-    for (const fundingSource of ['paypal', ...config.enabledFundingSources]) {
-        registerExpressPaymentMethod({
-            name: `${config.id}-${fundingSource}`,
-            paymentMethodId: config.id,
+        registerPaymentMethod({
+            name: config.id,
             label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
-            content: <PayPalComponent isEditing={false} fundingSource={fundingSource}/>,
-            edit: <PayPalComponent isEditing={true} fundingSource={fundingSource}/>,
+            content: descriptionElement,
+            edit: descriptionElement,
+            placeOrderButtonLabel: config.placeOrderButtonText,
             ariaLabel: config.title,
-            canMakePayment: async () => {
-                if (!paypalScriptPromise) {
-                    paypalScriptPromise = loadPaypalScriptPromise(config.scriptData);
-                    paypalScriptPromise.then(() => {
-                        const messagesBootstrap = new BlockCheckoutMessagesBootstrap(config.scriptData);
-                        messagesBootstrap.init();
-                    });
-                }
-                await paypalScriptPromise;
-
-                return paypal.Buttons({fundingSource}).isEligible();
+            canMakePayment: () => {
+                return config.enabled;
             },
             supports: {
                 features: features,
             },
         });
+    }
+
+    if (config.scriptData.continuation) {
+        registerPaymentMethod({
+            name: config.id,
+            label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
+            content: <PayPalComponent isEditing={false}/>,
+            edit: <PayPalComponent isEditing={true}/>,
+            ariaLabel: config.title,
+            canMakePayment: () => {
+                return true;
+            },
+            supports: {
+                features: [...features, 'ppcp_continuation'],
+            },
+        });
+    } else if (!config.usePlaceOrder) {
+        for (const fundingSource of ['paypal', ...config.enabledFundingSources]) {
+            registerExpressPaymentMethod({
+                name: `${config.id}-${fundingSource}`,
+                paymentMethodId: config.id,
+                label: <div dangerouslySetInnerHTML={{__html: config.title}}/>,
+                content: <PayPalComponent isEditing={false} fundingSource={fundingSource}/>,
+                edit: <PayPalComponent isEditing={true} fundingSource={fundingSource}/>,
+                ariaLabel: config.title,
+                canMakePayment: async () => {
+                    if (!paypalScriptPromise) {
+                        paypalScriptPromise = loadPaypalScriptPromise(config.scriptData);
+                        paypalScriptPromise.then(() => {
+                            const messagesBootstrap = new BlockCheckoutMessagesBootstrap(config.scriptData);
+                            messagesBootstrap.init();
+                        });
+                    }
+                    await paypalScriptPromise;
+
+                    return paypal.Buttons({fundingSource}).isEligible();
+                },
+                supports: {
+                    features: features,
+                },
+            });
+        }
     }
 }
