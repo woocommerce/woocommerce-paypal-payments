@@ -1056,6 +1056,7 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 					'endpoint' => \WC_AJAX::get_endpoint( CartScriptParamsEndpoint::ENDPOINT ),
 				),
 			),
+			'cart_contains_subscription'              => $this->subscription_helper->cart_contains_subscription(),
 			'subscription_plan_id'                    => $this->subscription_helper->paypal_subscription_id(),
 			'variable_paypal_subscription_variations' => $this->subscription_helper->variable_paypal_subscription_variations(),
 			'subscription_product_allowed'            => $this->subscription_helper->checkout_subscription_product_allowed(),

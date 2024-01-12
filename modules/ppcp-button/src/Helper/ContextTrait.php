@@ -213,6 +213,19 @@ trait ContextTrait {
 	}
 
 	/**
+	 * Checks whether this user is changing the payment method for a subscription.
+	 *
+	 * @return bool
+	 */
+	private function is_subscription_change_payment_method_page(): bool {
+		if ( isset( $_GET['change_payment_method'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+			return wcs_is_subscription( wc_clean( wp_unslash( $_GET['change_payment_method'] ) ) ); // phpcs:ignore WordPress.Security.NonceVerification
+		}
+
+		return false;
+	}
+
+	/**
 	 * Checks if it is the block editor page.
 	 */
 	protected function is_block_editor(): bool {

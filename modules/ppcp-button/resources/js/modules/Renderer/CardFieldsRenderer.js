@@ -112,6 +112,14 @@ class CardFieldsRenderer {
 
         show(buttonSelector);
 
+        if(this.defaultConfig.cart_contains_subscription) {
+            const saveToAccount = document.querySelector('#wc-ppcp-credit-card-gateway-new-payment-method');
+            if(saveToAccount) {
+                saveToAccount.checked = true;
+                saveToAccount.disabled = true;
+            }
+        }
+
         document.querySelector(buttonSelector).addEventListener("click", (event) => {
             event.preventDefault();
             this.spinner.block();
