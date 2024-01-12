@@ -208,6 +208,7 @@ class SavePaymentMethodsModule implements ModuleInterface {
 					assert( $settings instanceof Settings );
 					$verification_method = $settings->has( '3d_secure_contingency' ) ? $settings->get( '3d_secure_contingency' ) : '';
 
+					$change_payment_method = wc_clean( wp_unslash( $_GET['change_payment_method'] ?? 0 ) ); // phpcs:ignore WordPress.Security.NonceVerification
 					wp_localize_script(
 						'ppcp-add-payment-method',
 						'ppcp_add_payment_method',
@@ -218,7 +219,7 @@ class SavePaymentMethodsModule implements ModuleInterface {
 							'payment_methods_page'    => wc_get_account_endpoint_url( 'payment-methods' ),
 							'view_subscriptions_page' => wc_get_account_endpoint_url( 'view-subscription' ),
 							'is_subscription_change_payment_page' => $this->is_subscription_change_payment_method_page(),
-							'subscription_id_to_change_payment' => $this->is_subscription_change_payment_method_page() ? (int) $_GET['change_payment_method'] : 0,
+							'subscription_id_to_change_payment' => $this->is_subscription_change_payment_method_page() ? (int) $change_payment_method : 0,
 							'error_message'           => __( 'Could not save payment method.', 'woocommerce-paypal-payments' ),
 							'verification_method'     => $verification_method,
 							'ajax'                    => array(
