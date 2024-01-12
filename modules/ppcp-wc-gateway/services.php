@@ -1400,8 +1400,8 @@ return array(
 	'wcgateway.button.locations'                           => static function( ContainerInterface $container ): array {
 		return array(
 			'product'   => 'Single Product',
-			'cart'      => 'Cart',
-			'checkout'  => 'Checkout',
+			'cart'      => 'Classic Cart',
+			'checkout'  => 'Classic Checkout',
 			'mini-cart' => 'Mini Cart',
 		);
 	},

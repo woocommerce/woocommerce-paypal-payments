@@ -222,11 +222,11 @@ return function ( ContainerInterface $container, array $fields ): array {
 
 		// Checkout page.
 		'button_checkout_heading'                  => array(
-			'heading'      => __( 'Checkout Buttons', 'woocommerce-paypal-payments' ),
+			'heading'      => __( 'Classic Checkout Buttons', 'woocommerce-paypal-payments' ),
 			'description'  => sprintf(
 			// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
 				__(
-					'Customize the appearance of the PayPal smart buttons on the %1$sCheckout page%2$s.
+					'Customize the appearance of the PayPal smart buttons on the %1$sClassic Checkout page%2$s.
 					%3$sCheckout Buttons must be enabled to display the PayPal gateway on the Checkout page.
 					',
 					'woocommerce-paypal-payments'
@@ -508,11 +508,11 @@ return function ( ContainerInterface $container, array $fields ): array {
 
 		// Cart settings.
 		'button_cart_heading'                      => array(
-			'heading'      => __( 'Cart Buttons', 'woocommerce-paypal-payments' ),
+			'heading'      => __( 'Classic Cart Buttons', 'woocommerce-paypal-payments' ),
 			'description'  => sprintf(
 			// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
 				__(
-					'Customize the appearance of the PayPal smart buttons on the %1$sCart page%2$s.',
+					'Customize the appearance of the PayPal smart buttons on the %1$sClassic Cart page%2$s.',
 					'woocommerce-paypal-payments'
 				),
 				'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#button-on-cart" target="_blank">',
@@ -805,11 +805,11 @@ return function ( ContainerInterface $container, array $fields ): array {
 
 		// Block express checkout settings.
 		'button_checkout-block-express_heading'    => array(
-			'heading'      => __( 'Block Express Checkout Buttons', 'woocommerce-paypal-payments' ),
+			'heading'      => __( 'Express Checkout Buttons', 'woocommerce-paypal-payments' ),
 			'description'  => sprintf(
 			// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
 				__(
-					'Customize the appearance of the PayPal smart buttons on the %1$sBlock Express Checkout%2$s.',
+					'Customize the appearance of the PayPal smart buttons on the %1$sExpress Checkout%2$s.',
 					'woocommerce-paypal-payments'
 				),
 				'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#button-on-block-express-checkout" target="_blank">',
@@ -923,11 +923,11 @@ return function ( ContainerInterface $container, array $fields ): array {
 
 		// Block cart settings.
 		'button_cart-block_heading'                => array(
-			'heading'      => __( 'Block Cart Buttons', 'woocommerce-paypal-payments' ),
+			'heading'      => __( 'Cart Buttons', 'woocommerce-paypal-payments' ),
 			'description'  => sprintf(
 			// translators: %1$s and %2$s are the opening and closing of HTML <a> tag.
 				__(
-					'Customize the appearance of the PayPal smart buttons on the %1$sBlock Cart%2$s.',
+					'Customize the appearance of the PayPal smart buttons on the %1$sCart%2$s.',
 					'woocommerce-paypal-payments'
 				),
 				'<a href="https://woocommerce.com/document/woocommerce-paypal-payments/#button-on-cart-block" target="_blank">',
