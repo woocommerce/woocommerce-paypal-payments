@@ -208,7 +208,8 @@ class SavePaymentMethodsModule implements ModuleInterface {
 					assert( $settings instanceof Settings );
 					$verification_method = $settings->has( '3d_secure_contingency' ) ? $settings->get( '3d_secure_contingency' ) : '';
 
-					$change_payment_method = wc_clean( wp_unslash( $_GET['change_payment_method'] ?? 0 ) ); // phpcs:ignore WordPress.Security.NonceVerification
+					$change_payment_method = wc_clean( wp_unslash( $_GET['change_payment_method'] ?? '' ) ); // phpcs:ignore WordPress.Security.NonceVerification
+
 					wp_localize_script(
 						'ppcp-add-payment-method',
 						'ppcp_add_payment_method',
