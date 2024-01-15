@@ -1253,6 +1253,16 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 			'commit'           => in_array( $context, $this->pay_now_contexts, true ) ? 'true' : 'false',
 			'intent'           => $intent,
 		);
+
+		if (
+			$this->settings->has( 'subscriptions_mode' )
+			&& $this->settings->get( 'subscriptions_mode' ) === 'vaulting_api'
+			&& apply_filters( 'woocommerce_paypal_payments_save_payment_methods_eligible', false )
+		) {
+			// Remove vault parameter to allow for Venmo with Save Payment Methods (Vault V3).
+			unset( $params['vault'] );
+		}
+
 		if (
 			$this->environment->current_environment_is( Environment::SANDBOX )
 			&& defined( 'WP_DEBUG' ) && \WP_DEBUG

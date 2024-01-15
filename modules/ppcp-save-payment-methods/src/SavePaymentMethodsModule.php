@@ -329,6 +329,13 @@ class SavePaymentMethodsModule implements ModuleInterface {
 				$endpoint->handle_request();
 			}
 		);
+
+		add_filter(
+			'woocommerce_paypal_payments_save_payment_methods_eligible',
+			function() {
+				return true;
+			}
+		);
 	}
 
 	/**
