@@ -159,16 +159,17 @@ class WcSubscriptionsModule implements ModuleInterface {
 		add_filter(
 			'woocommerce_available_payment_gateways',
 			function( array $methods ) use ( $c ) : array {
-				if (
-					! is_wc_endpoint_url( 'order-pay' )
-					|| $c->has( 'save-payment-methods.eligible' ) && $c->get( 'save-payment-methods.eligible' )
-				) {
+				if ( ! is_wc_endpoint_url( 'order-pay' ) ) {
 					return $methods;
 				}
 
 				$paypal_tokens = WC_Payment_Tokens::get_customer_tokens( get_current_user_id(), PayPalGateway::ID );
 				if ( ! $paypal_tokens ) {
 					unset( $methods[ PayPalGateway::ID ] );
+				}
+
+				if ( $c->has( 'save-payment-methods.eligible' ) && $c->get( 'save-payment-methods.eligible' ) ) {
+					return $methods;
 				}
 
 				$card_tokens = WC_Payment_Tokens::get_customer_tokens( get_current_user_id(), CreditCardGateway::ID );
