@@ -1381,7 +1381,7 @@ return array(
 			: $container->get( 'wcgateway.enable-reference-transactions-url-sandbox' );
 
 		$button_url = $enabled
-			? admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway' )
+			? admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway#field-paypal_saved_payments' )
 			: $enable_url;
 
 		return sprintf(
