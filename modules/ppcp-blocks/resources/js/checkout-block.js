@@ -476,6 +476,14 @@ if(cartHasSubscriptionProducts(config.scriptData)) {
         block_enabled = false;
     }
 
+    // Don't render buttons if in subscription mode and product not associated with a PayPal subscription
+    if(
+        isPayPalSubscription(config.scriptData)
+        && !config.scriptData.subscription_product_allowed
+    ) {
+        block_enabled = false;
+    }
+
     features.push('subscriptions');
 }
 
