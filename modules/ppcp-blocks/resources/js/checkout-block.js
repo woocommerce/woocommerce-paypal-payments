@@ -466,9 +466,10 @@ const features = ['products'];
 let block_enabled = true;
 
 if(cartHasSubscriptionProducts(config.scriptData)) {
-    // Don't show buttons on block cart page if using vault v2
+    // Don't show buttons on block cart page if using vault v2 and user is not logged in
     if (
-        config.scriptData.context === "cart-block"
+        ! config.scriptData.user.is_logged
+        && config.scriptData.context === "cart-block"
         && ! isPayPalSubscription(config.scriptData) // using vaulting
         && ! config.scriptData?.save_payment_methods?.id_token // not vault v3
     ) {
