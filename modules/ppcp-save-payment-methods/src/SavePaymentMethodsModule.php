@@ -106,16 +106,30 @@ class SavePaymentMethodsModule implements ModuleInterface {
 				}
 
 				if ( $payment_method === PayPalGateway::ID ) {
-					$data['payment_source'] = array(
-						'paypal' => array(
-							'attributes' => array(
-								'vault' => array(
-									'store_in_vault' => 'ON_SUCCESS',
-									'usage_type'     => 'MERCHANT',
+
+					if ( $request_data['funding_source'] === 'venmo' ) {
+						$data['payment_source'] = array(
+							'venmo' => array(
+								'attributes' => array(
+									'vault' => array(
+										'store_in_vault' => 'ON_SUCCESS',
+										'usage_type'     => 'MERCHANT',
+									),
 								),
 							),
-						),
-					);
+						);
+					} else {
+						$data['payment_source'] = array(
+							'paypal' => array(
+								'attributes' => array(
+									'vault' => array(
+										'store_in_vault' => 'ON_SUCCESS',
+										'usage_type'     => 'MERCHANT',
+									),
+								),
+							),
+						);
+					}
 				}
 
 				return $data;
@@ -327,6 +341,13 @@ class SavePaymentMethodsModule implements ModuleInterface {
 				assert( $endpoint instanceof CaptureCardPayment );
 
 				$endpoint->handle_request();
+			}
+		);
+
+		add_filter(
+			'woocommerce_paypal_payments_save_payment_methods_eligible',
+			function() {
+				return true;
 			}
 		);
 	}

@@ -181,6 +181,31 @@ class WcSubscriptionsModule implements ModuleInterface {
 			}
 		);
 
+		add_filter(
+			'woocommerce_subscription_payment_method_to_display',
+			/**
+			 * Corrects the payment method name for subscriptions.
+			 *
+			 * @param string $payment_method_to_display The payment method string.
+			 * @param \WC_Subscription $subscription The subscription instance.
+			 * @param string $context The context, ex: view.
+			 * @return string
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 */
+			function ( $payment_method_to_display, $subscription, $context ) {
+				$payment_gateway = wc_get_payment_gateway_by_order( $subscription );
+
+				if ( $payment_gateway instanceof \WC_Payment_Gateway && $payment_gateway->id === PayPalGateway::ID ) {
+					return $subscription->get_payment_method_title( $context );
+				}
+
+				return $payment_method_to_display;
+			},
+			10,
+			3
+		);
+
 		add_action(
 			'wc_ajax_' . SubscriptionChangePaymentMethod::ENDPOINT,
 			static function () use ( $c ) {
