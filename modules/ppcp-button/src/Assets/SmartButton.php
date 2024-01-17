@@ -1170,6 +1170,9 @@ document.querySelector("#payment").before(document.querySelector("#ppcp-messages
 			'basic_checkout_validation_enabled'       => $this->basic_checkout_validation_enabled,
 			'early_checkout_validation_enabled'       => $this->early_validation_enabled,
 			'funding_sources_without_redirect'        => $this->funding_sources_without_redirect,
+			'user'                                    => array(
+				'is_logged' => is_user_logged_in(),
+			),
 		);
 
 		if ( 'pay-now' === $this->context() ) {
