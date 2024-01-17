@@ -77,7 +77,6 @@ export class ApmButtons {
                 this.containers.push(parent);
             }
         });
-        console.log('this.containers', this.containers);
     }
 
     refresh() {

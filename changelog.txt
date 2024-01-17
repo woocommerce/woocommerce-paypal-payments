@@ -11,6 +11,8 @@
 * Enhancement - Improve feature availability check UX #1941
 * Enhancement - Make all hosted card fields strings translatable #1926
 * Enhancement - PHP 8.2 deprecations #1939
+* Enhancement - Subscription support on Block Cart & Block Express Checkout #1956
+* Enhancement - Venmo Vaulting integration #1958
 
 = 2.4.3 - 2024-01-04 =
 * Fix - PayPal Subscription initiated without a WooCommerce order #1907
