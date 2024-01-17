@@ -190,11 +190,7 @@ class WcSubscriptionsModule implements ModuleInterface {
 			function ( $payment_method_to_display, $subscription, $context ) {
 				$payment_gateway = wc_get_payment_gateway_by_order( $subscription );
 
-				if (
-					$subscription instanceof \WC_Subscription
-					&& $payment_gateway
-					&& $payment_gateway->id === PayPalGateway::ID
-				) {
+				if ( $payment_gateway && $payment_gateway->id === PayPalGateway::ID ) {
 					return $subscription->get_payment_method_title( $context );
 				}
 
