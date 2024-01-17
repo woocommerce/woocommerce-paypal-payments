@@ -175,19 +175,24 @@ class WcSubscriptionsModule implements ModuleInterface {
 			}
 		);
 
-		add_filter( 'woocommerce_subscription_payment_method_to_display', function ( $payment_method_to_display, $subscription, $context ) {
-			$payment_gateway = wc_get_payment_gateway_by_order( $subscription );
+		add_filter(
+			'woocommerce_subscription_payment_method_to_display',
+			function ( $payment_method_to_display, $subscription, $context ) {
+				$payment_gateway = wc_get_payment_gateway_by_order( $subscription );
 
-			if (
-				$subscription instanceof \WC_Subscription
-				&& $payment_gateway
-				&& $payment_gateway->id === PayPalGateway::ID
-			) {
-				return $subscription->get_payment_method_title( $context ); //data['payment_method_title'] ?? '';
-			}
+				if (
+					$subscription instanceof \WC_Subscription
+					&& $payment_gateway
+					&& $payment_gateway->id === PayPalGateway::ID
+				) {
+					return $subscription->get_payment_method_title( $context );
+				}
 
-			return $payment_method_to_display;
-		}, 10, 3 );
+				return $payment_method_to_display;
+			},
+			10,
+			3
+		);
 
 		add_action(
 			'wc_ajax_' . SubscriptionChangePaymentMethod::ENDPOINT,
