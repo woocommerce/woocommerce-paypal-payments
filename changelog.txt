@@ -5,7 +5,6 @@
 * Fix - GooglePay and ApplePay buttons disappear from the minicart when adding a product to the cart on the shop page #1915
 * Enhancement - Enable Vault v3 and Card Fields by default for US merchants #1967
 * Enhancement - Vault v3 WC Subscriptions integration #1920
-* Enhancement - Add Pay Later Messaging block #1897
 * Enhancement - Implement early WC validation for Hosted Card Fields #1925
 * Enhancement - Rename button locations #1946
 * Enhancement - Improve Apple Pay validation notice text #1938
@@ -14,6 +13,7 @@
 * Enhancement - PHP 8.2 deprecations #1939
 * Enhancement - Subscription support on Block Cart & Block Express Checkout #1956
 * Enhancement - Venmo Vaulting integration #1958
+* Enhancement - Add package tracking support for UK #1970
 
 = 2.4.3 - 2024-01-04 =
 * Fix - PayPal Subscription initiated without a WooCommerce order #1907
