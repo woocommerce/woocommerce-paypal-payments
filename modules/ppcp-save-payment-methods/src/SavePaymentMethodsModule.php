@@ -106,14 +106,29 @@ class SavePaymentMethodsModule implements ModuleInterface {
 				}
 
 				if ( $payment_method === PayPalGateway::ID ) {
+					$funding_source = $request_data['funding_source'] ?? null;
 
-					if ( $request_data['funding_source'] === 'venmo' ) {
+					if ( $funding_source === 'venmo' ) {
 						$data['payment_source'] = array(
 							'venmo' => array(
 								'attributes' => array(
 									'vault' => array(
 										'store_in_vault' => 'ON_SUCCESS',
 										'usage_type'     => 'MERCHANT',
+									),
+								),
+							),
+						);
+					} else if ( $funding_source === 'apple_pay' ) {
+						$data['payment_source'] = array(
+							'apple_pay' => array(
+								'stored_credential' => array(
+									'payment_initiator' => 'CUSTOMER',
+									'payment_type'      => 'RECURRING',
+								),
+								'attributes' => array(
+									'vault' => array(
+										'store_in_vault' => 'ON_SUCCESS',
 									),
 								),
 							),
