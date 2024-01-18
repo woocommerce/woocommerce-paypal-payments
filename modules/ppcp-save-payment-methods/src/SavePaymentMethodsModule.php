@@ -108,7 +108,7 @@ class SavePaymentMethodsModule implements ModuleInterface {
 				if ( $payment_method === PayPalGateway::ID ) {
 					$funding_source = $request_data['funding_source'] ?? null;
 
-					if ( $funding_source === 'venmo' ) {
+					if ( $funding_source && $funding_source === 'venmo' ) {
 						$data['payment_source'] = array(
 							'venmo' => array(
 								'attributes' => array(
