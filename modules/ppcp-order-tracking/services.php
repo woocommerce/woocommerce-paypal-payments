@@ -100,7 +100,7 @@ return array(
 		 */
 		return apply_filters(
 			'woocommerce_paypal_payments_supported_country_codes_for_second_version_of_tracking_api',
-			array( 'US', 'AU', 'CA', 'FR', 'DE', 'IT', 'ES' )
+			array( 'US', 'AU', 'CA', 'FR', 'DE', 'IT', 'ES', 'GB' )
 		);
 	},
 	'order-tracking.should-use-second-version-of-api' => static function ( ContainerInterface $container ): bool {
