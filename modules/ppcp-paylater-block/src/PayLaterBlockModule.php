@@ -28,7 +28,7 @@ class PayLaterBlockModule implements ModuleInterface {
 		return apply_filters(
 			// phpcs:ignore WordPress.NamingConventions.ValidHookName.UseUnderscores
 			'woocommerce.feature-flags.woocommerce_paypal_payments.paylater_block_enabled',
-			getenv( 'PCP_PAYLATER_BLOCK' ) !== '0'
+			getenv( 'PCP_PAYLATER_BLOCK' ) === '1'
 		);
 	}
 
