@@ -77,7 +77,7 @@ const PayPalComponent = ({
         window.ppcpContinuationFilled = true;
     }, [])
 
-    const createOrder = async () => {
+    const createOrder = async (data, actions) => {
         try {
             const res = await fetch(config.scriptData.ajax.create_order.endpoint, {
                 method: 'POST',
@@ -87,6 +87,7 @@ const PayPalComponent = ({
                     bn_code: '',
                     context: config.scriptData.context,
                     payment_method: 'ppcp-gateway',
+                    funding_source: data.paymentSource,
                     createaccount: false
                 }),
             });
