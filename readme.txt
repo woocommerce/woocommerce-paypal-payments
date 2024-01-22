@@ -179,7 +179,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 2.5.0 - xxxx-xx-xx =
+= 2.5.0 - 2024-01-22 =
 * Fix - WC Subscriptions change subscription payment #1953
 * Fix - GooglePay and ApplePay buttons disappear from the minicart when adding a product to the cart on the shop page #1915
 * Enhancement - Enable Vault v3 and Card Fields by default for US merchants #1967
