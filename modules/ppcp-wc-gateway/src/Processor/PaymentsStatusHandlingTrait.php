@@ -112,6 +112,10 @@ trait PaymentsStatusHandlingTrait {
 					'on-hold',
 					__( 'Awaiting payment.', 'woocommerce-paypal-payments' )
 				);
+				/**
+				 * Fired when PayPal order is authorized.
+				 */
+				do_action( 'woocommerce_paypal_payments_order_authorized', $wc_order, $authorization );
 				break;
 			case AuthorizationStatus::DENIED:
 				$wc_order->update_status(
