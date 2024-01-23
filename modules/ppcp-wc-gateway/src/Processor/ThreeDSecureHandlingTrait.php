@@ -39,6 +39,7 @@ trait ThreeDSecureHandlingTrait {
 		}
 
 		$authentication_result = $payment_source->properties()->authentication_result ?? null;
+		$card_brand            = $payment_source->properties()->brand ?? __( 'N/A', 'woocommerce-paypal-payments' );
 
 		if ( $authentication_result ) {
 			$card_authentication_result_factory = new CardAuthenticationResultFactory();
@@ -51,6 +52,7 @@ trait ThreeDSecureHandlingTrait {
                                                                 <li>%1$s</li>
                                                                 <li>%2$s</li>
                                                                 <li>%3$s</li>
+                                                                <li>%4$s</li>
                                                             </ul>';
 			$three_d_response_order_note_result        = sprintf(
 				$three_d_response_order_note_result_format,
@@ -59,15 +61,20 @@ trait ThreeDSecureHandlingTrait {
 				/* translators: %s is enrollment status */
 				sprintf( __( 'Enrollment Status: %s', 'woocommerce-paypal-payments' ), esc_html( $result->enrollment_status() ) ),
 				/* translators: %s is authentication status */
-				sprintf( __( 'Authentication Status: %s', 'woocommerce-paypal-payments' ), esc_html( $result->authentication_result() ) )
+				sprintf( __( 'Authentication Status: %s', 'woocommerce-paypal-payments' ), esc_html( $result->authentication_result() ) ),
+				/* translators: %s is card brand */
+				sprintf( __( 'Card Brand: %s', 'woocommerce-paypal-payments' ), esc_html( $card_brand ) )
 			);
 			$three_d_response_order_note = sprintf(
 				$three_d_response_order_note_format,
 				esc_html( $three_d_response_order_note_title ),
 				wp_kses_post( $three_d_response_order_note_result )
 			);
+
 			$wc_order->add_order_note( $three_d_response_order_note );
-			$wc_order->update_meta_data( PayPalGateway::THREE_D_AUTH_RESULT_META_KEY, $result->to_array() );
+
+			$meta_details = array_merge( $result->to_array(), array( 'card_brand' => $card_brand ) );
+			$wc_order->update_meta_data( PayPalGateway::THREE_D_AUTH_RESULT_META_KEY, $meta_details );
 			$wc_order->save_meta_data();
 
 			/**
