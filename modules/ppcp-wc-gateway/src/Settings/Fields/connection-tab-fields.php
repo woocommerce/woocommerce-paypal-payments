@@ -410,6 +410,16 @@ return function ( ContainerInterface $container, array $fields ): array {
 			'requirements' => array( 'dcc' ),
 			'gateway'      => Settings::CONNECTION_TAB_ID,
 		),
+		'ppcp_reference_transactions_status'            => array(
+			'title'        => __( 'Advanced PayPal Wallet', 'woocommerce-paypal-payments' ),
+			'type'         => 'ppcp-text',
+			'text'         => $container->get( 'wcgateway.settings.connection.reference-transactions-status-text' ),
+			'screens'      => array(
+				State::STATE_ONBOARDED,
+			),
+			'requirements' => array( 'dcc' ),
+			'gateway'      => Settings::CONNECTION_TAB_ID,
+		),
 		'ppcp_pui_status'                               => array(
 			'title'        => __( 'Pay upon Invoice', 'woocommerce-paypal-payments' ),
 			'type'         => 'ppcp-text',

@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace WooCommerce\PayPalCommerce\WcGateway;
 
+use WooCommerce\PayPalCommerce\ApiClient\Endpoint\BillingAgreementsEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Endpoint\PayUponInvoiceOrderEndpoint;
 use WooCommerce\PayPalCommerce\ApiClient\Entity\ApplicationContext;
 use WooCommerce\PayPalCommerce\ApiClient\Exception\RuntimeException;
@@ -1315,6 +1316,12 @@ return array(
 	'wcgateway.enable-pui-url-live'                        => static function ( ContainerInterface $container ): string {
 		return 'https://www.paypal.com/bizsignup/entry?country.x=DE&product=payment_methods&capabilities=PAY_UPON_INVOICE';
 	},
+	'wcgateway.enable-reference-transactions-url-sandbox'  => static function ( ContainerInterface $container ): string {
+		return 'https://www.sandbox.paypal.com/bizsignup/entry?product=ADVANCED_VAULTING';
+	},
+	'wcgateway.enable-reference-transactions-url-live'     => static function ( ContainerInterface $container ): string {
+		return 'https://www.paypal.com/bizsignup/entry?product=ADVANCED_VAULTING';
+	},
 	'wcgateway.settings.connection.dcc-status-text'        => static function ( ContainerInterface $container ): string {
 		$state = $container->get( 'onboarding.state' );
 		if ( $state->current_state() < State::STATE_ONBOARDED ) {
@@ -1351,6 +1358,39 @@ return array(
 			$dcc_enabled ? '_self' : '_blank',
 			esc_url( $dcc_button_url ),
 			esc_html( $dcc_button_text )
+		);
+	},
+	'wcgateway.settings.connection.reference-transactions-status-text' => static function ( ContainerInterface $container ): string {
+		$environment = $container->get( 'onboarding.environment' );
+		assert( $environment instanceof Environment );
+
+		$billing_agreements_endpoint = $container->get( 'api.endpoint.billing-agreements' );
+		assert( $billing_agreements_endpoint instanceof BillingAgreementsEndpoint );
+
+		$enabled = $billing_agreements_endpoint->reference_transaction_enabled();
+
+		$enabled_status_text  = esc_html__( 'Status: Available', 'woocommerce-paypal-payments' );
+		$disabled_status_text = esc_html__( 'Status: Not yet enabled', 'woocommerce-paypal-payments' );
+
+		$button_text = $enabled
+			? esc_html__( 'Settings', 'woocommerce-paypal-payments' )
+			: esc_html__( 'Enable Advanced PayPal Wallet', 'woocommerce-paypal-payments' );
+
+		$enable_url = $environment->current_environment_is( Environment::PRODUCTION )
+			? $container->get( 'wcgateway.enable-reference-transactions-url-live' )
+			: $container->get( 'wcgateway.enable-reference-transactions-url-sandbox' );
+
+		$button_url = $enabled
+			? admin_url( 'admin.php?page=wc-settings&tab=checkout&section=ppcp-gateway#field-paypal_saved_payments' )
+			: $enable_url;
+
+		return sprintf(
+			'<p>%1$s %2$s</p><p><a target="%3$s" href="%4$s" class="button">%5$s</a></p>',
+			$enabled ? $enabled_status_text : $disabled_status_text,
+			$enabled ? '<span class="dashicons dashicons-yes"></span>' : '<span class="dashicons dashicons-no"></span>',
+			$enabled ? '_self' : '_blank',
+			esc_url( $button_url ),
+			esc_html( $button_text )
 		);
 	},
 	'wcgateway.settings.connection.pui-status-text'        => static function ( ContainerInterface $container ): string {
