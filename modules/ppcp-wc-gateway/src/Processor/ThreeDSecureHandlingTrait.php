@@ -50,9 +50,12 @@ trait ThreeDSecureHandlingTrait {
 			$three_d_response_order_note_result_format = '<ul class="ppcp_3ds_result">
                                                                 <li>%1$s</li>
                                                                 <li>%2$s</li>
+                                                                <li>%3$s</li>
                                                             </ul>';
 			$three_d_response_order_note_result        = sprintf(
 				$three_d_response_order_note_result_format,
+				/* translators: %s is liability shift */
+				sprintf( __( 'Liability Shift: %s', 'woocommerce-paypal-payments' ), esc_html( $result->liability_shift() ) ),
 				/* translators: %s is enrollment status */
 				sprintf( __( 'Enrollment Status: %s', 'woocommerce-paypal-payments' ), esc_html( $result->enrollment_status() ) ),
 				/* translators: %s is authentication status */
@@ -64,7 +67,7 @@ trait ThreeDSecureHandlingTrait {
 				wp_kses_post( $three_d_response_order_note_result )
 			);
 			$wc_order->add_order_note( $three_d_response_order_note );
-			$wc_order->update_meta_data( PayPalGateway::THREE_D_AUTH_RESULT_META_KEY, $three_d );
+			$wc_order->update_meta_data( PayPalGateway::THREE_D_AUTH_RESULT_META_KEY, $result->to_array() );
 			$wc_order->save_meta_data();
 
 			/**
