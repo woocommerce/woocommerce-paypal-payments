@@ -68,7 +68,7 @@ trait ThreeDSecureHandlingTrait {
 			$wc_order->save_meta_data();
 
 			/**
-			 * Fired when the 3DS secure information is added to WC order.
+			 * Fired when the 3DS information is added to WC order.
 			 */
 			do_action( 'woocommerce_paypal_payments_thee_d_secure_added', $wc_order, $order );
 		}
