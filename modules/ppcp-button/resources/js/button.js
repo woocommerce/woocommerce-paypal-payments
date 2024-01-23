@@ -137,7 +137,7 @@ const bootstrap = () => {
         }
 
         const isFreeTrial = PayPalCommerceGateway.is_free_trial_cart;
-        if (isFreeTrial && data.fundingSource !== 'card') {
+        if (isFreeTrial && data.fundingSource !== 'card' && ! PayPalCommerceGateway.subscription_plan_id) {
             freeTrialHandler.handle();
             return actions.reject();
         }
@@ -240,6 +240,7 @@ document.addEventListener(
     () => {
         if (!typeof (PayPalCommerceGateway)) {
             console.error('PayPal button could not be configured.');
+            return;
             return;
         }
 
