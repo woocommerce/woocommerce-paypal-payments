@@ -20,10 +20,10 @@ use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 trait ThreeDSecureHandlingTrait {
 
 	/**
-	 * Handles the 3DS secure details.
+	 * Handles the 3DS details.
 	 *
-	 * Adds the order note with 3DS secure details.
-	 * Adds the order meta with 3DS secure details.
+	 * Adds the order note with 3DS details.
+	 * Adds the order meta with 3DS details.
 	 *
 	 * @param Order    $order The PayPal order.
 	 * @param WC_Order $wc_order The WC order.
