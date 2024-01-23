@@ -51,6 +51,7 @@ class PayPalGateway extends \WC_Payment_Gateway {
 	const FEES_META_KEY                 = '_ppcp_paypal_fees';
 	const REFUND_FEES_META_KEY          = '_ppcp_paypal_refund_fees';
 	const REFUNDS_META_KEY              = '_ppcp_refunds';
+	const THREE_D_AUTH_RESULT_META_KEY  = '_ppcp_paypal_3DS_auth_result';
 
 	/**
 	 * The Settings Renderer.
