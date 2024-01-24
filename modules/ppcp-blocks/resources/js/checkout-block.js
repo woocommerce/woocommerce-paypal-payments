@@ -77,7 +77,7 @@ const PayPalComponent = ({
         window.ppcpContinuationFilled = true;
     }, [])
 
-    const createOrder = async (data, actions) => {
+    const createOrder = async () => {
         try {
             const res = await fetch(config.scriptData.ajax.create_order.endpoint, {
                 method: 'POST',
