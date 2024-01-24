@@ -78,8 +78,15 @@ class SavePaymentMethodsModule implements ModuleInterface {
 		// Adds attributes needed to save payment method.
 		add_filter(
 			'ppcp_create_order_request_body_data',
-			function( array $data, string $payment_method, array $request_data ): array {
+			function( array $data, string $payment_method, array $request_data ) use ( $c ): array {
+				$settings = $c->get( 'wcgateway.settings' );
+				assert( $settings instanceof Settings );
+
 				if ( $payment_method === CreditCardGateway::ID ) {
+					if ( ! $settings->has( 'vault_enabled_dcc' ) || ! $settings->get( 'vault_enabled_dcc' ) ) {
+						return $data;
+					}
+
 					$save_payment_method = $request_data['save_payment_method'] ?? false;
 					if ( $save_payment_method ) {
 						$data['payment_source'] = array(
@@ -106,6 +113,10 @@ class SavePaymentMethodsModule implements ModuleInterface {
 				}
 
 				if ( $payment_method === PayPalGateway::ID ) {
+					if ( ! $settings->has( 'vault_enabled' ) || ! $settings->get( 'vault_enabled' ) ) {
+						return $data;
+					}
+
 					$funding_source = $request_data['funding_source'] ?? null;
 
 					if ( $funding_source && $funding_source === 'venmo' ) {
