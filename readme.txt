@@ -179,7 +179,7 @@ If you encounter issues with the PayPal buttons not appearing after an update, p
 
 == Changelog ==
 
-= 2.5.1 - xxxx-xx-xx =
+= 2.5.1 - 2024-01-24 =
 * Temporary revert Vaulting integration changes introduced in 2.5.0
 
 = 2.5.0 - 2024-01-22 =
