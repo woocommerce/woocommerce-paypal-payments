@@ -66,9 +66,9 @@ class WooCommercePaymentTokens {
 	/**
 	 * Creates a WC Payment Token for PayPal payment.
 	 *
-	 * @param int     $customer_id    The WC customer ID.
-	 * @param string  $token          The PayPal payment token.
-	 * @param string  $email          The PayPal customer email.
+	 * @param int    $customer_id    The WC customer ID.
+	 * @param string $token          The PayPal payment token.
+	 * @param string $email          The PayPal customer email.
 	 * @param string $payment_source The funding source.
 	 *
 	 * @return int

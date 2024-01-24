@@ -210,8 +210,6 @@ class ApplepayButton {
      * Show Apple Pay payment sheet when Apple Pay payment button is clicked
      */
     async onButtonClick(data, actions) {
-        console.log('data, actions', data, actions);
-
         this.log('onButtonClick', this.context);
 
         const paymentRequest = this.paymentRequest();
