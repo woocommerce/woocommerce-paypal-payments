@@ -22,6 +22,7 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
+use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenPayPal;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use Psr\Log\LoggerInterface;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
@@ -202,11 +203,31 @@ class RenewalHandler {
 		if ( $wc_order->get_payment_method() === PayPalGateway::ID ) {
 			$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $wc_order->get_customer_id(), PayPalGateway::ID );
 			foreach ( $wc_tokens as $token ) {
+				$name = 'paypal';
+				$properties = array(
+					'vault_id' => $token->get_token(),
+				);
+
+				if ( $token instanceof PaymentTokenPayPal ) {
+					$payment_source_name = $token->get_payment_source();
+
+					if ( $payment_source_name ) {
+						$name = $payment_source_name;
+					}
+
+					// Add required stored_credentials for apple_pay
+					if ( $payment_source_name === 'apple_pay' ) {
+						$properties['stored_credential'] = array(
+							'payment_initiator' => 'MERCHANT',
+							'payment_type'      => 'RECURRING',
+							'usage'             => 'SUBSEQUENT',
+						);
+					}
+				}
+
 				$payment_source = new PaymentSource(
-					'paypal',
-					(object) array(
-						'vault_id' => $token->get_token(),
-					)
+					$name,
+					(object) $properties
 				);
 
 				break;
