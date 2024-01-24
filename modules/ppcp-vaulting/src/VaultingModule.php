@@ -87,6 +87,37 @@ class VaultingModule implements ModuleInterface {
 		);
 
 		add_filter(
+			'woocommerce_get_customer_payment_tokens',
+			/**
+			 * Filter available payment tokens depending on context.
+			 *
+			 * @psalm-suppress MissingClosureParamType
+			 * @psalm-suppress MissingClosureReturnType
+			 */
+			function( $tokens, $customer_id, $gateway_id ) {
+				if ( ! is_array( $tokens ) ) {
+					return $tokens;
+				}
+
+				// Exclude ApplePay tokens from payment pages.
+				if ( is_checkout() || is_cart() || is_product() ) {
+					foreach ( $tokens as $index => $token ) {
+						if (
+							$token instanceof PaymentTokenPayPal
+							&& $token->get_payment_source() === 'apple_pay'
+						) {
+							unset( $tokens[ $index ] );
+						}
+					}
+				}
+
+				return $tokens;
+			},
+			10,
+			3
+		);
+
+		add_filter(
 			'woocommerce_payment_methods_list_item',
 			/**
 			 * Param types removed to avoid third-party issues.
@@ -100,8 +131,22 @@ class VaultingModule implements ModuleInterface {
 
 				if ( strtolower( $payment_token->get_type() ) === 'paypal' ) {
 					assert( $payment_token instanceof PaymentTokenPayPal );
-					$item['method']['brand'] = $payment_token->get_email();
 
+					$email          = $payment_token->get_email();
+					$payment_source = $payment_token->get_payment_source();
+					$brand_parts    = array();
+
+					if ( $payment_source !== 'paypal' ) {
+						$brand_parts[] = ucwords( $payment_source );
+					}
+
+					if ( $email ) {
+						$brand_parts[] = $email;
+					} else {
+						$brand_parts[] = '#' . ( (string) $payment_token->get_id() );
+					}
+
+					$item['method']['brand'] = implode( ' / ', array_filter( $brand_parts ) );
 					return $item;
 				}
 

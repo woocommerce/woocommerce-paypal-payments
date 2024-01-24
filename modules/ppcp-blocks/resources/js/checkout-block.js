@@ -87,7 +87,7 @@ const PayPalComponent = ({
                     bn_code: '',
                     context: config.scriptData.context,
                     payment_method: 'ppcp-gateway',
-                    funding_source: data.paymentSource,
+                    funding_source: window.ppcpFundingSource ?? 'paypal',
                     createaccount: false
                 }),
             });

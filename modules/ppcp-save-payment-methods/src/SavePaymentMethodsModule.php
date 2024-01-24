@@ -119,14 +119,14 @@ class SavePaymentMethodsModule implements ModuleInterface {
 								),
 							),
 						);
-					} else if ( $funding_source === 'apple_pay' ) {
+					} elseif ( $funding_source && $funding_source === 'apple_pay' ) {
 						$data['payment_source'] = array(
 							'apple_pay' => array(
 								'stored_credential' => array(
 									'payment_initiator' => 'CUSTOMER',
 									'payment_type'      => 'RECURRING',
 								),
-								'attributes' => array(
+								'attributes'        => array(
 									'vault' => array(
 										'store_in_vault' => 'ON_SUCCESS',
 									),
@@ -191,7 +191,8 @@ class SavePaymentMethodsModule implements ModuleInterface {
 						$wc_payment_tokens->create_payment_token_paypal(
 							$wc_order->get_customer_id(),
 							$token_id,
-							$payment_source->properties()->email_address ?? ''
+							$payment_source->properties()->email_address ?? '',
+							$payment_source->name()
 						);
 					}
 				}

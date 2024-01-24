@@ -28,7 +28,8 @@ class PaymentTokenPayPal extends WC_Payment_Token {
 	 * @var string[]
 	 */
 	protected $extra_data = array(
-		'email' => '',
+		'email'          => '',
+		'payment_source' => '',
 	);
 
 	/**
@@ -47,5 +48,23 @@ class PaymentTokenPayPal extends WC_Payment_Token {
 	 */
 	public function set_email( $email ) {
 		$this->add_meta_data( 'email', $email, true );
+	}
+
+	/**
+	 * Get the payment source.
+	 *
+	 * @return string The payment source.
+	 */
+	public function get_payment_source() {
+		return $this->get_meta( 'payment_source' );
+	}
+
+	/**
+	 * Set the payment source.
+	 *
+	 * @param string $payment_source The payment source.
+	 */
+	public function set_payment_source( string $payment_source ) {
+		$this->add_meta_data( 'payment_source', $payment_source, true );
 	}
 }

@@ -66,16 +66,18 @@ class WooCommercePaymentTokens {
 	/**
 	 * Creates a WC Payment Token for PayPal payment.
 	 *
-	 * @param int    $customer_id The WC customer ID.
-	 * @param string $token The PayPal payment token.
-	 * @param string $email The PayPal customer email.
+	 * @param int     $customer_id    The WC customer ID.
+	 * @param string  $token          The PayPal payment token.
+	 * @param string  $email          The PayPal customer email.
+	 * @param string $payment_source The funding source.
 	 *
 	 * @return int
 	 */
 	public function create_payment_token_paypal(
 		int $customer_id,
 		string $token,
-		string $email
+		string $email,
+		string $payment_source = ''
 	): int {
 
 		$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $customer_id, PayPalGateway::ID );
@@ -92,6 +94,10 @@ class WooCommercePaymentTokens {
 
 		if ( $email && is_email( $email ) ) {
 			$payment_token_paypal->set_email( $email );
+		}
+
+		if ( $payment_source ) {
+			$payment_token_paypal->set_payment_source( $payment_source );
 		}
 
 		try {
