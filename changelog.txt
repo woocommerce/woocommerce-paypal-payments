@@ -1,5 +1,8 @@
 *** Changelog ***
 
+= 2.5.1 - 2024-01-24 =
+* Temporary revert Vaulting integration changes introduced in 2.5.0
+
 = 2.5.0 - 2024-01-22 =
 * Fix - WC Subscriptions change subscription payment #1953
 * Fix - GooglePay and ApplePay buttons disappear from the minicart when adding a product to the cart on the shop page #1915
@@ -142,7 +145,7 @@
 * Feature preview - Google Pay integration #1654
 
 = 2.2.2 - 2023-08-29 =
-* Fix - High rate of auth voids on vaulted subscriptions for guest users #1529 
+* Fix - High rate of auth voids on vaulted subscriptions for guest users #1529
 * Enhancement - HPOS compatibility issues #1594
 * Feature preview - PayPal Subscriptions API fixes and improvements #1600 #1607
 
