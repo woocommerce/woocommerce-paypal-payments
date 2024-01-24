@@ -55,6 +55,15 @@ class SavePaymentMethodsModule implements ModuleInterface {
 			return;
 		}
 
+		$settings = $c->get( 'wcgateway.settings' );
+		assert( $settings instanceof Settings );
+		if (
+			( ! $settings->has( 'vault_enabled' ) || ! $settings->get( 'vault_enabled' ) )
+			&& ( ! $settings->has( 'vault_enabled_dcc' ) || ! $settings->get( 'vault_enabled_dcc' ) )
+		) {
+			return;
+		}
+
 		add_filter(
 			'woocommerce_paypal_payments_localized_script_data',
 			function( array $localized_script_data ) use ( $c ) {
@@ -78,10 +87,7 @@ class SavePaymentMethodsModule implements ModuleInterface {
 		// Adds attributes needed to save payment method.
 		add_filter(
 			'ppcp_create_order_request_body_data',
-			function( array $data, string $payment_method, array $request_data ) use ( $c ): array {
-				$settings = $c->get( 'wcgateway.settings' );
-				assert( $settings instanceof Settings );
-
+			function( array $data, string $payment_method, array $request_data ) use ( $settings ): array {
 				if ( $payment_method === CreditCardGateway::ID ) {
 					if ( ! $settings->has( 'vault_enabled_dcc' ) || ! $settings->get( 'vault_enabled_dcc' ) ) {
 						return $data;
