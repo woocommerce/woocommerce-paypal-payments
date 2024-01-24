@@ -1,5 +1,23 @@
 *** Changelog ***
 
+= 2.5.1 - xxxx-xx-xx =
+* Temporary revert Vaulting integration changes introduced in 2.5.0
+
+= 2.5.0 - 2024-01-22 =
+* Fix - WC Subscriptions change subscription payment #1953
+* Fix - GooglePay and ApplePay buttons disappear from the minicart when adding a product to the cart on the shop page #1915
+* Enhancement - Enable Vault v3 and Card Fields by default for US merchants #1967
+* Enhancement - Vault v3 WC Subscriptions integration #1920
+* Enhancement - Implement early WC validation for Hosted Card Fields #1925
+* Enhancement - Rename button locations #1946
+* Enhancement - Improve Apple Pay validation notice text #1938
+* Enhancement - Improve feature availability check UX #1941
+* Enhancement - Make all hosted card fields strings translatable #1926
+* Enhancement - PHP 8.2 deprecations #1939
+* Enhancement - Subscription support on Block Cart & Block Express Checkout #1956
+* Enhancement - Venmo Vaulting integration #1958
+* Enhancement - Add package tracking support for UK #1970
+
 = 2.4.3 - 2024-01-04 =
 * Fix - PayPal Subscription initiated without a WooCommerce order #1907
 * Fix - Block Checkout reloads when submitting order with empty fields #1904
@@ -127,7 +145,7 @@
 * Feature preview - Google Pay integration #1654
 
 = 2.2.2 - 2023-08-29 =
-* Fix - High rate of auth voids on vaulted subscriptions for guest users #1529 
+* Fix - High rate of auth voids on vaulted subscriptions for guest users #1529
 * Enhancement - HPOS compatibility issues #1594
 * Feature preview - PayPal Subscriptions API fixes and improvements #1600 #1607
 
