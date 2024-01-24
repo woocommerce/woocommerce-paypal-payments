@@ -203,7 +203,7 @@ class RenewalHandler {
 		if ( $wc_order->get_payment_method() === PayPalGateway::ID ) {
 			$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $wc_order->get_customer_id(), PayPalGateway::ID );
 			foreach ( $wc_tokens as $token ) {
-				$name = 'paypal';
+				$name       = 'paypal';
 				$properties = array(
 					'vault_id' => $token->get_token(),
 				);
@@ -215,7 +215,7 @@ class RenewalHandler {
 						$name = $payment_source_name;
 					}
 
-					// Add required stored_credentials for apple_pay
+					// Add required stored_credentials for apple_pay.
 					if ( $payment_source_name === 'apple_pay' ) {
 						$properties['stored_credential'] = array(
 							'payment_initiator' => 'MERCHANT',
