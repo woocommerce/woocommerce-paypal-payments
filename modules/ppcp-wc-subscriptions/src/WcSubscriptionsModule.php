@@ -301,7 +301,7 @@ class WcSubscriptionsModule implements ModuleInterface {
 			foreach ( $tokens as $token ) {
 				$output     .= '<li>';
 					$output .= sprintf( '<input name="saved_paypal_payment" type="radio" value="%s" style="width:auto;" checked="checked">', $token->get_id() );
-					$output .= sprintf( '<label for="saved_paypal_payment">%s</label>', $token->get_meta( 'email' ) ?? '' );
+					$output .= sprintf( '<label for="saved_paypal_payment">%s / %s</label>', $token->get_type(), $token->get_meta( 'email' ) ?? '' );
 				$output     .= '</li>';
 			}
 			$output .= '</ul>';

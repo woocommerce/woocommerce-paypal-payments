@@ -113,8 +113,9 @@ class SavePaymentMethodsModule implements ModuleInterface {
 							'venmo' => array(
 								'attributes' => array(
 									'vault' => array(
-										'store_in_vault' => 'ON_SUCCESS',
-										'usage_type'     => 'MERCHANT',
+										'store_in_vault'                 => 'ON_SUCCESS',
+										'usage_type'                     => 'MERCHANT',
+										'permit_multiple_payment_tokens' => true,
 									),
 								),
 							),
@@ -138,8 +139,9 @@ class SavePaymentMethodsModule implements ModuleInterface {
 							'paypal' => array(
 								'attributes' => array(
 									'vault' => array(
-										'store_in_vault' => 'ON_SUCCESS',
-										'usage_type'     => 'MERCHANT',
+										'store_in_vault'                 => 'ON_SUCCESS',
+										'usage_type'                     => 'MERCHANT',
+										'permit_multiple_payment_tokens' => true,
 									),
 								),
 							),
