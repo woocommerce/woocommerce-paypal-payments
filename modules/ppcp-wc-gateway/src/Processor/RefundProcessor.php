@@ -57,6 +57,13 @@ class RefundProcessor {
 	private $logger;
 
 	/**
+	 * The prefix.
+	 *
+	 * @var string
+	 */
+	private $prefix;
+
+	/**
 	 * The refund fees updater.
 	 *
 	 * @var RefundFeesUpdater
@@ -69,13 +76,21 @@ class RefundProcessor {
 	 * @param OrderEndpoint     $order_endpoint The order endpoint.
 	 * @param PaymentsEndpoint  $payments_endpoint The payments endpoint.
 	 * @param RefundFeesUpdater $refund_fees_updater The refund fees updater.
+	 * @param string            $prefix The prefix.
 	 * @param LoggerInterface   $logger The logger.
 	 */
-	public function __construct( OrderEndpoint $order_endpoint, PaymentsEndpoint $payments_endpoint, RefundFeesUpdater $refund_fees_updater, LoggerInterface $logger ) {
+	public function __construct(
+		OrderEndpoint $order_endpoint,
+		PaymentsEndpoint $payments_endpoint,
+		RefundFeesUpdater $refund_fees_updater,
+		string $prefix,
+		LoggerInterface $logger
+	) {
 
 		$this->order_endpoint      = $order_endpoint;
 		$this->payments_endpoint   = $payments_endpoint;
 		$this->refund_fees_updater = $refund_fees_updater;
+		$this->prefix              = $prefix;
 		$this->logger              = $logger;
 	}
 
@@ -164,7 +179,7 @@ class RefundProcessor {
 		$capture = $captures[0];
 		$refund  = new RefundCapture(
 			$capture,
-			$capture->invoice_id(),
+			$capture->invoice_id() ?: $this->prefix . $wc_order->get_order_number(),
 			$reason,
 			new Amount(
 				new Money( $amount, $wc_order->get_currency() )
