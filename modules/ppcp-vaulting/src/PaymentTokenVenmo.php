@@ -1,6 +1,6 @@
 <?php
 /**
- * WooCommerce Payment token for PayPal.
+ * WooCommerce Payment token for Venmo.
  *
  * @package WooCommerce\PayPalCommerce\Vaulting
  */
@@ -12,15 +12,15 @@ namespace WooCommerce\PayPalCommerce\Vaulting;
 use WC_Payment_Token;
 
 /**
- * Class PaymentTokenPayPal
+ * Class PaymentTokenVenmo
  */
-class PaymentTokenPayPal extends WC_Payment_Token {
+class PaymentTokenVenmo extends WC_Payment_Token {
 	/**
 	 * Token Type String.
 	 *
 	 * @var string
 	 */
-	protected $type = 'PayPal';
+	protected $type = 'Venmo';
 
 	/**
 	 * Extra data.

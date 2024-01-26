@@ -22,9 +22,11 @@ use WooCommerce\PayPalCommerce\ApiClient\Factory\PayerFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\PurchaseUnitFactory;
 use WooCommerce\PayPalCommerce\ApiClient\Factory\ShippingPreferenceFactory;
 use WooCommerce\PayPalCommerce\Onboarding\Environment;
+use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenApplePay;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenPayPal;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenRepository;
 use Psr\Log\LoggerInterface;
+use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenVenmo;
 use WooCommerce\PayPalCommerce\WcGateway\Exception\NotFoundException;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
@@ -209,20 +211,20 @@ class RenewalHandler {
 				);
 
 				if ( $token instanceof PaymentTokenPayPal ) {
-					$payment_source_name = $token->get_payment_source();
+					$name = 'paypal';
+				}
 
-					if ( $payment_source_name ) {
-						$name = $payment_source_name;
-					}
+				if ( $token instanceof PaymentTokenVenmo ) {
+					$name = 'venmo';
+				}
 
-					// Add required stored_credentials for apple_pay.
-					if ( $payment_source_name === 'apple_pay' ) {
-						$properties['stored_credential'] = array(
-							'payment_initiator' => 'MERCHANT',
-							'payment_type'      => 'RECURRING',
-							'usage'             => 'SUBSEQUENT',
-						);
-					}
+				if ( $token instanceof PaymentTokenApplePay ) {
+					$name                            = 'apple_pay';
+					$properties['stored_credential'] = array(
+						'payment_initiator' => 'MERCHANT',
+						'payment_type'      => 'RECURRING',
+						'usage'             => 'SUBSEQUENT',
+					);
 				}
 
 				$payment_source = new PaymentSource(

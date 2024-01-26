@@ -14,9 +14,11 @@ use Psr\Log\LoggerInterface;
 use stdClass;
 use WC_Payment_Token_CC;
 use WC_Payment_Tokens;
+use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenApplePay;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenFactory;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenHelper;
 use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenPayPal;
+use WooCommerce\PayPalCommerce\Vaulting\PaymentTokenVenmo;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\CreditCardGateway;
 use WooCommerce\PayPalCommerce\WcGateway\Gateway\PayPalGateway;
 
@@ -69,19 +71,17 @@ class WooCommercePaymentTokens {
 	 * @param int    $customer_id    The WC customer ID.
 	 * @param string $token          The PayPal payment token.
 	 * @param string $email          The PayPal customer email.
-	 * @param string $payment_source The funding source.
 	 *
 	 * @return int
 	 */
 	public function create_payment_token_paypal(
 		int $customer_id,
 		string $token,
-		string $email,
-		string $payment_source = ''
+		string $email
 	): int {
 
 		$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $customer_id, PayPalGateway::ID );
-		if ( $this->payment_token_helper->token_exist( $wc_tokens, $token ) ) {
+		if ( $this->payment_token_helper->token_exist( $wc_tokens, $token, PaymentTokenPayPal::class ) ) {
 			return 0;
 		}
 
@@ -96,10 +96,6 @@ class WooCommercePaymentTokens {
 			$payment_token_paypal->set_email( $email );
 		}
 
-		if ( $payment_source ) {
-			$payment_token_paypal->set_payment_source( $payment_source );
-		}
-
 		try {
 			$payment_token_paypal->save();
 		} catch ( Exception $exception ) {
@@ -109,6 +105,84 @@ class WooCommercePaymentTokens {
 		}
 
 		return $payment_token_paypal->get_id();
+	}
+
+	/**
+	 * Creates a WC Payment Token for Venmo payment.
+	 *
+	 * @param int    $customer_id The WC customer ID.
+	 * @param string $token       The Venmo payment token.
+	 * @param string $email       The Venmo customer email.
+	 *
+	 * @return int
+	 */
+	public function create_payment_token_venmo(
+		int $customer_id,
+		string $token,
+		string $email
+	): int {
+
+		$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $customer_id, PayPalGateway::ID );
+		if ( $this->payment_token_helper->token_exist( $wc_tokens, $token, PaymentTokenVenmo::class ) ) {
+			return 0;
+		}
+
+		$payment_token_venmo = $this->payment_token_factory->create( 'venmo' );
+		assert( $payment_token_venmo instanceof PaymentTokenVenmo );
+
+		$payment_token_venmo->set_token( $token );
+		$payment_token_venmo->set_user_id( $customer_id );
+		$payment_token_venmo->set_gateway_id( PayPalGateway::ID );
+
+		if ( $email && is_email( $email ) ) {
+			$payment_token_venmo->set_email( $email );
+		}
+
+		try {
+			$payment_token_venmo->save();
+		} catch ( Exception $exception ) {
+			$this->logger->error(
+				"Could not create WC payment token Venmo for customer {$customer_id}. " . $exception->getMessage()
+			);
+		}
+
+		return $payment_token_venmo->get_id();
+	}
+
+	/**
+	 * Creates a WC Payment Token for ApplePay payment.
+	 *
+	 * @param int    $customer_id    The WC customer ID.
+	 * @param string $token          The ApplePay payment token.
+	 *
+	 * @return int
+	 */
+	public function create_payment_token_applepay(
+		int $customer_id,
+		string $token
+	): int {
+
+		$wc_tokens = WC_Payment_Tokens::get_customer_tokens( $customer_id, PayPalGateway::ID );
+		if ( $this->payment_token_helper->token_exist( $wc_tokens, $token, PaymentTokenApplePay::class ) ) {
+			return 0;
+		}
+
+		$payment_token_applepay = $this->payment_token_factory->create( 'apple_pay' );
+		assert( $payment_token_applepay instanceof PaymentTokenApplePay );
+
+		$payment_token_applepay->set_token( $token );
+		$payment_token_applepay->set_user_id( $customer_id );
+		$payment_token_applepay->set_gateway_id( PayPalGateway::ID );
+
+		try {
+			$payment_token_applepay->save();
+		} catch ( Exception $exception ) {
+			$this->logger->error(
+				"Could not create WC payment token ApplePay for customer {$customer_id}. " . $exception->getMessage()
+			);
+		}
+
+		return $payment_token_applepay->get_id();
 	}
 
 	/**

@@ -81,6 +81,12 @@ class VaultingModule implements ModuleInterface {
 				if ( $type === 'WC_Payment_Token_PayPal' ) {
 					return PaymentTokenPayPal::class;
 				}
+				if ( $type === 'WC_Payment_Token_Venmo' ) {
+					return PaymentTokenVenmo::class;
+				}
+				if ( $type === 'WC_Payment_Token_ApplePay' ) {
+					return PaymentTokenApplePay::class;
+				}
 
 				return $type;
 			}
@@ -102,10 +108,7 @@ class VaultingModule implements ModuleInterface {
 				// Exclude ApplePay tokens from payment pages.
 				if ( is_checkout() || is_cart() || is_product() ) {
 					foreach ( $tokens as $index => $token ) {
-						if (
-							$token instanceof PaymentTokenPayPal
-							&& $token->get_payment_source() === 'apple_pay'
-						) {
+						if ( $token instanceof PaymentTokenApplePay ) {
 							unset( $tokens[ $index ] );
 						}
 					}
@@ -129,24 +132,18 @@ class VaultingModule implements ModuleInterface {
 					return $item;
 				}
 
-				if ( strtolower( $payment_token->get_type() ) === 'paypal' ) {
-					assert( $payment_token instanceof PaymentTokenPayPal );
+				if ( $payment_token instanceof PaymentTokenPayPal ) {
+					$item['method']['brand'] = 'PayPal / ' . $payment_token->get_email();
+					return $item;
+				}
 
-					$email          = $payment_token->get_email();
-					$payment_source = $payment_token->get_payment_source();
-					$brand_parts    = array();
+				if ( $payment_token instanceof PaymentTokenVenmo ) {
+					$item['method']['brand'] = 'Venmo / ' . $payment_token->get_email();
+					return $item;
+				}
 
-					if ( $payment_source !== 'paypal' ) {
-						$brand_parts[] = ucwords( $payment_source );
-					}
-
-					if ( $email ) {
-						$brand_parts[] = $email;
-					} else {
-						$brand_parts[] = '#' . ( (string) $payment_token->get_id() );
-					}
-
-					$item['method']['brand'] = implode( ' / ', array_filter( $brand_parts ) );
+				if ( $payment_token instanceof PaymentTokenApplePay ) {
+					$item['method']['brand'] = 'ApplePay #' . ( (string) $payment_token->get_id() );
 					return $item;
 				}
 
